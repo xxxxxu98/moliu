@@ -2,8 +2,6 @@ import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
 import type { GlobalThemeOverrides } from 'naive-ui';
 import { setLocale, type LocaleType } from '@/i18n';
-import { defaultProviders, providerNameMap } from '@/config/ai-providers';
-
 import { defaultProviders, providerNameMap, type ProviderType } from '@/config/ai-providers';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
@@ -61,14 +59,102 @@ export const useSettingsStore = defineStore('settings', () => {
   const aiProviders = ref<AIProvider[]>([]);
   const isInitialized = ref(false);
 
-  // Theme overrides based on accent color
-  const themeOverrides = computed<GlobalThemeOverrides>(() => ({
-    common: {
-      primaryColor: accentColor.value,
-      primaryColorHover: adjustColor(accentColor.value, 10),
-      primaryColorPressed: adjustColor(accentColor.value, -10),
-    },
-  }));
+  // Theme overrides - use computed to ensure reactive updates
+  const themeOverrides = computed<GlobalThemeOverrides>(() => {
+    const primaryColor = accentColor.value || '#6366f1';
+    const primaryColorHover = adjustColor(primaryColor, 10);
+    const primaryColorPressed = adjustColor(primaryColor, -10);
+
+    return {
+      common: {
+        primaryColor: primaryColor,
+        primaryColorHover: primaryColorHover,
+        primaryColorPressed: primaryColorPressed,
+        primaryColorSuppl: primaryColor,
+      },
+      Button: {
+        // Primary button - colored background with white text
+        colorPrimary: primaryColor,
+        colorHoverPrimary: primaryColorHover,
+        colorPressedPrimary: primaryColorPressed,
+        textColorPrimary: '#ffffff',
+        textColorHoverPrimary: '#ffffff',
+        textColorPressedPrimary: '#ffffff',
+        // Default button - gray background with dark text
+        color: '#e5e7eb',
+        textColor: '#374151',
+        border: 'none',
+        borderHover: 'none',
+        textColorHover: '#111827',
+        textColorPressed: '#111827',
+      },
+      Input: {
+        color: '#f3f4f6',
+        colorFocus: '#ffffff',
+        border: '1px solid #d1d5db',
+        borderHover: '1px solid #6366f1',
+        borderFocus: '1px solid #6366f1',
+        boxShadowFocus: '0 0 0 2px rgba(99, 102, 241, 0.2)',
+        textColor: '#111827',
+        placeholderColor: '#9ca3af',
+      },
+      Select: {
+        peers: {
+          InternalSelection: {
+            color: '#f3f4f6',
+            colorActive: '#ffffff',
+            border: '1px solid #d1d5db',
+            borderHover: '1px solid #6366f1',
+            borderActive: '1px solid #6366f1',
+            borderFocus: '1px solid #6366f1',
+            boxShadowFocus: '0 0 0 2px rgba(99, 102, 241, 0.2)',
+            textColor: '#111827',
+          },
+        },
+      },
+      Dialog: {
+        color: '#ffffff',
+        textColor: '#111827',
+      },
+      Modal: {
+        color: '#ffffff',
+        textColor: '#111827',
+      },
+      Card: {
+        color: '#ffffff',
+        textColor: '#111827',
+        borderColor: '#e5e7eb',
+      },
+      Tag: {
+        colorBordered: 'transparent',
+        textColorBordered: '#111827',
+      },
+      Tooltip: {
+        color: '#111827',
+        textColor: '#ffffff',
+      },
+      Message: {
+        colorSuccess: '#10b981',
+        colorError: '#ef4444',
+        colorWarning: '#f59e0b',
+        colorInfo: '#3b82f6',
+        textColorSuccess: '#ffffff',
+        textColorError: '#ffffff',
+        textColorWarning: '#ffffff',
+        textColorInfo: '#ffffff',
+      },
+      Notification: {
+        colorSuccess: '#10b981',
+        colorError: '#ef4444',
+        colorWarning: '#f59e0b',
+        colorInfo: '#3b82f6',
+        textColorSuccess: '#ffffff',
+        textColorError: '#ffffff',
+        textColorWarning: '#ffffff',
+        textColorInfo: '#ffffff',
+      },
+    };
+  });
 
   // Listen for system theme changes
   function setupSystemThemeListener() {
