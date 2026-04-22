@@ -2,8 +2,10 @@
 import { ref } from 'vue';
 import { NButton, NInput, NSwitch, NTag, NModal, NForm, NFormItem, NPopconfirm, useMessage } from 'naive-ui';
 import { Plus, Trash2, TestTube, Check, X, Key, Edit2, Shield, Zap } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
 import { useSettingsStore, type AIProvider } from '@/stores/settings.store';
 
+const { t } = useI18n();
 const message = useMessage();
 const settingsStore = useSettingsStore();
 
@@ -16,11 +18,11 @@ const providerOptions = [
   { label: 'Google (Gemini)', value: 'google' },
   { label: 'Moonshot (Kimi)', value: 'moonshot' },
   { label: 'DeepSeek', value: 'deepseek' },
-  { label: 'Ollama (本地)', value: 'ollama' },
+  { label: 'Ollama (Local)', value: 'ollama' },
 ];
 
 function maskApiKey(key: string): string {
-  if (!key) return '未设置';
+  if (!key) return t('settings.aiProviders.notSet');
   if (key.length <= 8) return '*'.repeat(key.length);
   return key.slice(0, 4) + '*'.repeat(Math.min(key.length - 8, 12)) + key.slice(-4);
 }
@@ -49,32 +51,32 @@ function openEditModal(provider: AIProvider) {
 function saveProvider() {
   if (!editingProvider.value) return;
   if (!editingProvider.value.apiKey) {
-    message.warning('请输入 API Key');
+    message.warning(t('settings.aiProviders.messages.enterApiKey'));
     return;
   }
   if (!editingProvider.value.name) {
-    message.warning('请输入显示名称');
+    message.warning(t('settings.aiProviders.messages.enterDisplayName'));
     return;
   }
 
   if (editingProvider.value.id) {
     settingsStore.updateAIProvider(editingProvider.value.id, editingProvider.value);
-    message.success('保存成功');
+    message.success(t('settings.aiProviders.messages.saveSuccess'));
   } else {
     settingsStore.addAIProvider(editingProvider.value);
-    message.success('添加成功');
+    message.success(t('settings.aiProviders.messages.addSuccess'));
   }
   showAddModal.value = false;
 }
 
 function deleteProvider(id: string) {
   settingsStore.removeAIProvider(id);
-  message.success('删除成功');
+  message.success(t('settings.aiProviders.messages.deleteSuccess'));
 }
 
 async function testConnection(provider: AIProvider) {
-  if (!provider.apiKey || provider.apiKey === '未设置') {
-    message.warning('请先配置 API Key');
+  if (!provider.apiKey || provider.apiKey === t('settings.aiProviders.notSet')) {
+    message.warning(t('settings.aiProviders.messages.testWarning'));
     return;
   }
 
@@ -83,9 +85,9 @@ async function testConnection(provider: AIProvider) {
   provider.isTesting = false;
 
   if (success) {
-    message.success(`${provider.name} 连接成功！`);
+    message.success(t('settings.aiProviders.messages.testSuccess', { name: provider.name }));
   } else {
-    message.error(`${provider.name} 连接失败，请检查 API Key`);
+    message.error(t('settings.aiProviders.messages.testFailed', { name: provider.name }));
   }
 }
 
@@ -109,9 +111,9 @@ function handleDefaultModelChange(modelId: string) {
             <Shield class="w-5 h-5 text-white" />
           </div>
           <div>
-            <h4 class="font-semibold text-green-900 dark:text-green-300 mb-1">安全说明</h4>
+            <h4 class="font-semibold text-green-900 dark:text-green-300 mb-1">{{ t('settings.aiProviders.securityTitle') }}</h4>
             <p class="text-sm text-green-700 dark:text-green-400">
-              所有 API Key 均使用 AES-256 加密存储在本地，不会同步至任何服务器。请勿将您的 API Key 透露给他人。
+              {{ t('settings.aiProviders.securityDesc') }}
             </p>
           </div>
         </div>
@@ -122,15 +124,15 @@ function handleDefaultModelChange(modelId: string) {
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">已配置的 AI 厂商</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400">管理你的 AI 模型连接</p>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('settings.aiProviders.title') }}</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('settings.aiProviders.titleDesc') }}</p>
         </div>
         <button
           class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
           @click="openAddModal"
         >
           <Plus class="w-4 h-4" />
-          添加厂商
+          {{ t('settings.aiProviders.addProvider') }}
         </button>
       </div>
 
@@ -173,7 +175,7 @@ function handleDefaultModelChange(modelId: string) {
                       size="small"
                       round
                     >
-                      已验证
+                      {{ t('settings.common.verified') }}
                     </NTag>
                     <NTag
                       v-if="provider.isValid === false"
@@ -181,11 +183,11 @@ function handleDefaultModelChange(modelId: string) {
                       size="small"
                       round
                     >
-                      验证失败
+                      {{ t('settings.common.failed') }}
                     </NTag>
                   </div>
                   <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {{ provider.baseUrl || '默认端点' }}
+                    {{ provider.baseUrl || t('settings.common.defaultEndpoint') }}
                   </p>
                 </div>
               </div>
@@ -197,13 +199,13 @@ function handleDefaultModelChange(modelId: string) {
 
             <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
               <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/50">
-                <div class="text-gray-500 dark:text-gray-400 mb-1">API Key</div>
+                <div class="text-gray-500 dark:text-gray-400 mb-1">{{ t('settings.common.apiKey') }}</div>
                 <div class="font-mono text-gray-900 dark:text-white">{{ maskApiKey(provider.apiKey) }}</div>
               </div>
               <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/50">
-                <div class="text-gray-500 dark:text-gray-400 mb-1">可用模型</div>
+                <div class="text-gray-500 dark:text-gray-400 mb-1">{{ t('settings.aiProviders.availableModels') }}</div>
                 <div class="text-gray-900 dark:text-white truncate">
-                  {{ provider.models.join(', ') || '未配置' }}
+                  {{ provider.models.join(', ') || t('settings.aiProviders.notConfigured') }}
                 </div>
               </div>
             </div>
@@ -215,14 +217,14 @@ function handleDefaultModelChange(modelId: string) {
                 @click="testConnection(provider)"
               >
                 <TestTube class="w-4 h-4" />
-                {{ provider.isTesting ? '测试中...' : '测试连接' }}
+                {{ provider.isTesting ? t('settings.common.testing') : t('settings.common.test') }}
               </button>
               <button
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 @click="openEditModal(provider)"
               >
                 <Edit2 class="w-4 h-4" />
-                编辑
+                {{ t('settings.common.edit') }}
               </button>
               <NPopconfirm @positive-click="deleteProvider(provider.id)">
                 <template #trigger>
@@ -230,10 +232,10 @@ function handleDefaultModelChange(modelId: string) {
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
                   >
                     <Trash2 class="w-4 h-4" />
-                    删除
+                    {{ t('settings.common.delete') }}
                   </button>
                 </template>
-                确定删除此厂商配置吗？
+                {{ t('settings.aiProviders.confirmDelete') }}
               </NPopconfirm>
             </div>
           </div>
@@ -250,17 +252,17 @@ function handleDefaultModelChange(modelId: string) {
             <Zap class="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 class="font-semibold text-gray-900 dark:text-white">默认模型</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">选择创作时默认使用的 AI 模型</p>
+            <h3 class="font-semibold text-gray-900 dark:text-white">{{ t('settings.aiProviders.defaultModel') }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('settings.aiProviders.defaultModelDesc') }}</p>
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <button
             v-for="model in [
-              { id: 'openai-gpt-4o', name: 'GPT-4o', provider: 'OpenAI', desc: '最新强大模型' },
-              { id: 'anthropic-claude-sonnet', name: 'Claude Sonnet 4', provider: 'Anthropic', desc: '最佳平衡' },
-              { id: 'google-gemini-pro', name: 'Gemini 1.5 Pro', provider: 'Google', desc: '超长上下文' },
+              { id: 'openai-gpt-4o', name: 'GPT-4o', provider: 'OpenAI', desc: t('settings.aiProviders.models.gpt4o') },
+              { id: 'anthropic-claude-sonnet', name: 'Claude Sonnet 4', provider: 'Anthropic', desc: t('settings.aiProviders.models.claudeSonnet') },
+              { id: 'google-gemini-pro', name: 'Gemini 1.5 Pro', provider: 'Google', desc: t('settings.aiProviders.models.geminiPro') },
             ]"
             :key="model.id"
             class="p-4 rounded-xl border-2 text-left transition-all duration-200 hover:scale-[1.02]"
@@ -285,24 +287,24 @@ function handleDefaultModelChange(modelId: string) {
     <NModal
       v-model:show="showAddModal"
       preset="card"
-      :title="editingProvider?.id ? '编辑厂商' : '添加 AI 厂商'"
+      :title="editingProvider?.id ? t('settings.aiProviders.editTitle') : t('settings.aiProviders.addTitle')"
       class="max-w-md"
     >
       <NForm v-if="editingProvider" label-placement="left" label-width="100" class="space-y-4">
-        <NFormItem label="显示名称">
-          <NInput v-model:value="editingProvider.name" placeholder="例如：OpenAI" />
+        <NFormItem :label="t('settings.common.displayName')">
+          <NInput v-model:value="editingProvider.name" :placeholder="'e.g. OpenAI'" />
         </NFormItem>
-        <NFormItem label="厂商类型">
+        <NFormItem :label="t('settings.common.providerType')">
           <NSelect
             v-model:value="editingProvider.provider"
             :options="providerOptions"
           />
         </NFormItem>
-        <NFormItem label="API Key">
+        <NFormItem :label="t('settings.common.apiKey')">
           <NInput
             v-model:value="editingProvider.apiKey"
             type="password"
-            placeholder="输入 API Key"
+            :placeholder="t('settings.aiProviders.messages.enterApiKey')"
             show-password-on="click"
           >
             <template #prefix>
@@ -310,13 +312,13 @@ function handleDefaultModelChange(modelId: string) {
             </template>
           </NInput>
         </NFormItem>
-        <NFormItem label="自定义端点">
+        <NFormItem :label="t('settings.common.customEndpoint')">
           <NInput
             v-model:value="editingProvider.baseUrl"
-            placeholder="留空使用默认端点（可选）"
+            :placeholder="t('settings.aiProviders.endpointPlaceholder')"
           />
         </NFormItem>
-        <NFormItem label="启用状态">
+        <NFormItem :label="t('settings.common.enabled')">
           <NSwitch v-model:value="editingProvider.enabled" />
         </NFormItem>
       </NForm>
@@ -326,13 +328,13 @@ function handleDefaultModelChange(modelId: string) {
             class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             @click="showAddModal = false"
           >
-            取消
+            {{ t('settings.common.cancel') }}
           </button>
           <button
             class="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium shadow-lg hover:shadow-xl transition-all"
             @click="saveProvider"
           >
-            保存
+            {{ t('settings.common.save') }}
           </button>
         </div>
       </template>

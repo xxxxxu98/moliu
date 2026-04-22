@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   Sparkles,
 } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import EditorCore from '@/components/editor/EditorCore.vue';
@@ -21,6 +22,7 @@ import CharacterPanel from '@/components/memory/CharacterPanel.vue';
 import WorldPanel from '@/components/memory/WorldPanel.vue';
 import ForeshadowPanel from '@/components/memory/ForeshadowPanel.vue';
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const projectStore = useProjectStore();
@@ -43,12 +45,12 @@ const chaptersByVolume = computed(() => {
   return grouped;
 });
 
-const sideTabs = [
-  { key: 'chapters', icon: FileText, label: '章节' },
-  { key: 'characters', icon: Users, label: '人物' },
-  { key: 'world', icon: Globe, label: '世界观' },
-  { key: 'foreshadows', icon: Lightbulb, label: '伏笔' },
-] as const;
+const sideTabs = computed(() => [
+  { key: 'chapters', icon: FileText, label: t('editor.title') },
+  { key: 'characters', icon: Users, label: t('editor.characters') },
+  { key: 'world', icon: Globe, label: t('editor.world') },
+  { key: 'foreshadows', icon: Lightbulb, label: t('editor.foreshadows') },
+] as const);
 
 function toggleVolume(volumeId: string) {
   if (expandedVolumes.value.has(volumeId)) {
@@ -64,21 +66,18 @@ function selectChapter(chapterId: string) {
 
 
 function formatWordCount(count: number) {
-  if (count < 10000) return `${count}字`;
-  return `${(count / 10000).toFixed(1)}万字`;
+  if (count < 10000) return `${count}${t('projectList.words')}`;
+  return `${(count / 10000).toFixed(1)}${t('projectList.tenThousands')}`;
 }
 
 function getStatusConfig(status: string) {
-  switch (status) {
-    case 'final':
-      return { color: 'bg-emerald-500', text: '定稿', textColor: 'text-emerald-600' };
-    case 'editing':
-      return { color: 'bg-amber-500', text: '编辑中', textColor: 'text-amber-600' };
-    case 'draft':
-      return { color: 'bg-blue-500', text: '草稿', textColor: 'text-blue-600' };
-    default:
-      return { color: 'bg-gray-500', text: '未知', textColor: 'text-gray-600' };
-  }
+  const statusMap: Record<string, { color: string; text: string; textColor: string }> = {
+    final: { color: 'bg-emerald-500', text: t('projectList.status.completed'), textColor: 'text-emerald-600' },
+    editing: { color: 'bg-amber-500', text: t('projectList.status.writing'), textColor: 'text-amber-600' },
+    draft: { color: 'bg-blue-500', text: t('projectList.status.planning'), textColor: 'text-blue-600' },
+  };
+  const config = statusMap[status] || { color: 'bg-gray-500', text: t('projectList.status.unknown'), textColor: 'text-gray-600' };
+  return config;
 }
 
 onMounted(() => {
@@ -256,7 +255,7 @@ onMounted(() => {
                       :class="getStatusConfig(chapter.status).textColor + ' bg-opacity-10'"
                       style="{ backgroundColor: getStatusConfig(chapter.status).color + '15' }"
                     >
-                      {{ chapter.wordCount }}字
+                      {{ chapter.wordCount }}{{ t('projectList.words') }}
                     </span>
                   </button>
                 </div>
@@ -266,7 +265,7 @@ onMounted(() => {
                 class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
               >
                 <Plus class="w-4 h-4" />
-                新建章节
+                {{ t('editor.newChapter') }}
               </button>
             </div>
 
@@ -321,7 +320,7 @@ onMounted(() => {
               class="flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400"
             >
               <Sparkles class="w-4 h-4" />
-              AI 协作
+              {{ t('editor.aiCollaboration') }}
             </button>
             <button
               class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ml-auto"

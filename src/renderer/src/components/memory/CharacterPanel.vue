@@ -2,6 +2,9 @@
 import { ref } from 'vue';
 import { NButton, NInput, NEmpty, NAvatar, NTag, NCard } from 'naive-ui';
 import { Plus, Search, Users } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const searchQuery = ref('');
 const characters = ref([
@@ -52,7 +55,7 @@ function getRoleColor(role: string) {
       <input
         v-model="searchQuery"
         type="text"
-        placeholder="搜索角色..."
+        :placeholder="t('character.searchPlaceholder')"
         class="w-full pl-10 pr-4 py-2 rounded-lg bg-[var(--moliu-bg-primary)] border border-[var(--moliu-border-color)] text-sm focus:outline-none focus:border-[var(--moliu-primary)]"
       />
     </div>
@@ -62,7 +65,7 @@ function getRoleColor(role: string) {
       <template #icon>
         <Plus class="w-4 h-4" />
       </template>
-      添加角色
+      {{ t('character.addCharacter') }}
     </NButton>
 
     <!-- Character List -->
@@ -95,6 +98,6 @@ function getRoleColor(role: string) {
       </div>
     </div>
 
-    <NEmpty v-else description="暂无角色" size="small" />
+    <NEmpty v-else :description="t('character.noCharacters')" size="small" />
   </div>
 </template>

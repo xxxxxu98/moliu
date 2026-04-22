@@ -4,16 +4,18 @@ import AppHeader from '@/components/layout/AppHeader.vue';
 import ProjectList from '@/components/home/ProjectList.vue';
 import QuickStart from '@/components/home/QuickStart.vue';
 import InspirationPanel from '@/components/home/InspirationPanel.vue';
+import { useI18n } from 'vue-i18n';
 import { BookOpen, Sparkles, Lightbulb } from 'lucide-vue-next';
 
 type TabName = 'projects' | 'quickstart' | 'inspiration';
 
+const { t } = useI18n();
 const activeTab = ref<TabName>('projects');
 
 const tabs = [
-  { key: 'projects', label: '我的项目', icon: BookOpen },
-  { key: 'quickstart', label: '有方向创作', icon: Sparkles },
-  { key: 'inspiration', label: '灵感探索', icon: Lightbulb },
+  { key: 'projects', label: t('home.tabs.projects'), icon: BookOpen },
+  { key: 'quickstart', label: t('home.tabs.quickstart'), icon: Sparkles },
+  { key: 'inspiration', label: t('home.tabs.inspiration'), icon: Lightbulb },
 ] as const;
 </script>
 
@@ -36,13 +38,13 @@ const tabs = [
         <div class="text-center mb-12">
           <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-medium mb-6">
             <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-            墨流 AI 写作助手
+            {{ t('home.badge') }}
           </div>
           <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-indigo-700 to-purple-600 dark:from-white dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent mb-4">
-            让 AI 成为你的创作伙伴
+            {{ t('home.subtitle') }}
           </h1>
           <p class="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-            百万字级长篇小说创作神器，三层记忆系统解决 AI 遗忘问题，让故事连贯如一
+            {{ t('home.description') }}
           </p>
         </div>
 

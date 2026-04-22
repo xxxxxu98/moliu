@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { NSwitch } from 'naive-ui';
+import { useI18n } from 'vue-i18n';
 import { useSettingsStore, type ThemeMode } from '@/stores/settings.store';
 import { Sun, Moon, Monitor, Check } from 'lucide-vue-next';
 
+const { t } = useI18n();
 const settingsStore = useSettingsStore();
 
-const themeOptions = [
-  { label: '跟随系统', value: 'system', icon: Monitor },
-  { label: '浅色模式', value: 'light', icon: Sun },
-  { label: '深色模式', value: 'dark', icon: Moon },
-];
+const themeOptions = computed(() => [
+  { label: t('settings.appearance.followSystem'), value: 'system', icon: Monitor },
+  { label: t('settings.appearance.lightMode'), value: 'light', icon: Sun },
+  { label: t('settings.appearance.darkMode'), value: 'dark', icon: Moon },
+]);
 
 function handleThemeChange(value: ThemeMode) {
   settingsStore.setTheme(value);
@@ -28,8 +30,8 @@ function handleThemeChange(value: ThemeMode) {
             <Monitor class="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 class="font-semibold text-gray-900 dark:text-white">主题模式</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">选择应用的显示模式</p>
+            <h3 class="font-semibold text-gray-900 dark:text-white">{{ t('settings.appearance.themeMode') }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('settings.appearance.themeModeDesc') }}</p>
           </div>
         </div>
 
@@ -82,28 +84,28 @@ function handleThemeChange(value: ThemeMode) {
     <div class="relative group">
       <div class="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-orange-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
       <div class="relative bg-gradient-to-br from-gray-50 to-indigo-50/50 dark:from-gray-800/50 dark:to-indigo-900/30 rounded-2xl p-6 border border-gray-100 dark:border-gray-700/50">
-        <h3 class="font-semibold text-gray-900 dark:text-white mb-4">预览效果</h3>
+        <h3 class="font-semibold text-gray-900 dark:text-white mb-4">{{ t('settings.appearance.preview') }}</h3>
         <div
           class="p-6 rounded-xl border-2 transition-all duration-300 border-indigo-500/40 bg-indigo-50/30"
         >
           <div
             class="text-2xl font-bold mb-3 text-indigo-600 dark:text-indigo-400"
           >
-            墨流 AI 写作助手
+            {{ t('app.name') }}
           </div>
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            这是一个示例卡片，用于预览界面效果
+            {{ t('app.tagline') }}
           </p>
           <div class="flex gap-3">
             <button
               class="px-5 py-2.5 rounded-xl text-white font-medium shadow-lg transition-all hover:scale-105 bg-indigo-500"
             >
-              主要按钮
+              {{ t('settings.common.save') }}
             </button>
             <button
               class="px-5 py-2.5 rounded-xl border-2 border-indigo-500 text-indigo-500 font-medium transition-all hover:scale-105"
             >
-              次要按钮
+              {{ t('settings.common.cancel') }}
             </button>
           </div>
         </div>

@@ -7,7 +7,162 @@
     "home": "Home",
     "projects": "Projects",
     "settings": "Settings",
-    "about": "About"
+    "about": "About",
+    "writing": "Writing"
+  },
+  "home": {
+    "badge": "Moliu AI Writing Assistant",
+    "subtitle": "Let AI be your creative partner",
+    "description": "A million-word novel creation tool with a three-layer memory system that solves AI forgetting problems, keeping your story coherent",
+    "tabs": {
+      "projects": "My Projects",
+      "quickstart": "Guided Creation",
+      "inspiration": "Inspiration"
+    }
+  },
+  "projectList": {
+    "myCreations": "My Creations",
+    "projectCount": "{count} projects",
+    "searchPlaceholder": "Search projects...",
+    "newProject": "New Project",
+    "recentEdits": "Recent Edits",
+    "allProjects": "All Projects",
+    "noDescription": "No description",
+    "emptyTitle": "Start Your Creative Journey",
+    "emptyDesc": "Create your first project and let AI help you write amazing stories",
+    "createFirstProject": "Create First Project",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{days} days ago",
+    "words": " chars",
+    "tenThousands": "0k chars",
+    "status": {
+      "writing": "Writing",
+      "planning": "Planning",
+      "paused": "Paused",
+      "completed": "Completed",
+      "unknown": "Unknown"
+    }
+  },
+  "quickStart": {
+    "title": "Guided Creation",
+    "description": "Describe your story idea and AI will generate multiple carefully designed outline plans for you",
+    "placeholder": "Describe your story idea...",
+    "placeholderExample": "For example: I want to write a story about a cultivation world, the protagonist is a mediocre teenager who was mocked in the family test, later accidentally obtained an ancient inheritance, and started a counterattack journey...",
+    "outlineStyle": "Outline style:",
+    "generating": "AI thinking...",
+    "generate": "Generate Outline",
+    "preparedOutlines": "Carefully prepared outlines for you",
+    "plans": "plans",
+    "characters": "chars",
+    "tenThousands": "0k chars",
+    "createFromOutline": "Create project with this outline",
+    "emptyTitle": "Let AI Inspire You",
+    "emptyDesc": "Enter your story idea and multiple carefully designed outline plans will appear above for you to choose from",
+    "structures": {
+      "threeAct": "Three-Act Structure",
+      "heroJourney": "Hero's Journey",
+      "fourPart": "Four-Part Structure"
+    }
+  },
+  "editor": {
+    "title": "Chapters",
+    "characters": "Characters",
+    "world": "World",
+    "foreshadows": "Foreshadows",
+    "newChapter": "New Chapter",
+    "aiCollaboration": "AI Collaboration",
+    "continueWriting": "Continue Writing",
+    "polish": "Polish",
+    "suggestions": "Suggestions",
+    "memory": "Memory",
+    "smartContinue": "Smart Continue",
+    "smartContinueDesc": "Continue content based on context",
+    "polishDesc": "Improve writing and expression",
+    "promptPlaceholder": "Add writing hints (optional)...",
+    "promptExample": "For example: 'Let the protagonist show hesitation and struggle'",
+    "generating": "Generating...",
+    "startGenerate": "Start Generate",
+    "accept": "Accept",
+    "copy": "Copy",
+    "discard": "Discard",
+    "reAnalyze": "Re-analyze",
+    "currentChapterMemory": "Current Chapter Memory",
+    "charactersInScene": "Characters",
+    "location": "Location",
+    "time": "Time",
+    "relatedForeshadows": "Related Foreshadows",
+    "toBeRevealed": "To be revealed",
+    "revealed": "Revealed",
+    "foreshadowResolutionRate": "Foreshadow Resolution Rate",
+    "resolved": "Resolved",
+    "total": "Total",
+    "addForeshadow": "Add Foreshadow",
+    "noForeshadows": "No foreshadows yet",
+    "chapterWordCount": "chars",
+    "chapterLabel": "Chapter {chapter}",
+    "toolbar": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "strikethrough": "Strikethrough",
+      "heading1": "Heading 1",
+      "heading2": "Heading 2",
+      "heading3": "Heading 3",
+      "bulletList": "Bullet List",
+      "orderedList": "Ordered List",
+      "blockquote": "Quote",
+      "insertLink": "Insert Link",
+      "highlight": "Highlight"
+    },
+    "editorPlaceholder": "Start your creation...",
+    "words": "words",
+    "characters": "chars",
+    "saved": "Saved",
+    "unsaved": "Unsaved",
+    "save": "Save",
+    "linkPrompt": "Enter link address",
+    "chapterTitle": "Chapter title"
+  },
+  "character": {
+    "searchPlaceholder": "Search characters...",
+    "addCharacter": "Add Character",
+    "noCharacters": "No characters yet",
+    "roles": {
+      "protagonist": "Protagonist",
+      "femaleLead": "Female Lead",
+      "mentor": "Mentor",
+      "antagonist": "Antagonist",
+      "supporting": "Supporting",
+      "other": "Other"
+    }
+  },
+  "world": {
+    "searchPlaceholder": "Search settings...",
+    "location": "Location",
+    "faction": "Faction",
+    "rule": "Rule",
+    "locations": "Locations",
+    "factions": "Factions",
+    "rules": "Rules",
+    "locked": "Locked"
+  },
+  "inspiration": {
+    "title": "Inspiration",
+    "description": "Get creative inspiration randomly",
+    "step1Title": "Select Genre Tags",
+    "step1Desc": "Click tags to start your creative journey",
+    "step2Title": "Select Setting Elements",
+    "step2Desc": "Add interesting settings to make the story more exciting",
+    "step3Title": "Select Story Nucleus",
+    "step3Desc": "Select a story as outline basis",
+    "refresh": "Refresh",
+    "reset": "Reset",
+    "coreConflict": "Core Conflict",
+    "coreCharacters": "Core Characters",
+    "generateOutline": "Generate Outline from Inspiration",
+    "startJourney": "Start Your Inspiration Journey",
+    "startJourneyDesc": "Select genre tags above to unlock infinite creative possibilities"
   },
   "settings": {
     "title": "Settings",
@@ -28,16 +183,20 @@
       "accentColorDesc": "Customize the app's theme color",
       "preview": "Preview"
     },
-    "language": {
-      "uiLanguage": "Interface Language",
-      "uiLanguageDesc": "Choose the interface display language",
-      "contentLanguage": "Content Language Preference",
-      "contentLanguageDesc": "Set the default language style for AI-generated content",
-      "infoTitle": "Language Switch Guide",
-      "infoItem1": "Interface language changes take effect immediately without restarting",
-      "infoItem2": "User-generated content (like project names, chapter titles) is not affected",
-      "infoItem3": "AI content language style is controlled by 'Content Language Preference'"
-    },
+  "language": {
+    "uiLanguage": "Interface Language",
+    "uiLanguageDesc": "Choose the interface display language",
+    "contentLanguage": "Content Language Preference",
+    "contentLanguageDesc": "Set the default language style for AI-generated content",
+    "infoTitle": "Language Switch Guide",
+    "infoItem1": "Interface language changes take effect immediately without restarting",
+    "infoItem2": "User-generated content (like project names, chapter titles) is not affected",
+    "infoItem3": "AI content language style is controlled by 'Content Language Preference'",
+    "labels": {
+      "zhCN": "Simplified Chinese",
+      "enUS": "English"
+    }
+  },
     "aiProviders": {
       "title": "Configured AI Providers",
       "titleDesc": "Manage your AI model connections",
@@ -45,7 +204,30 @@
       "securityTitle": "Security Notice",
       "securityDesc": "All API Keys are stored locally with AES-256 encryption and will not be synced to any server. Please do not share your API Keys with others.",
       "defaultModel": "Default Model",
-      "defaultModelDesc": "Choose the default AI model for writing"
+      "defaultModelDesc": "Choose the default AI model for writing",
+      "addTitle": "Add AI Provider",
+      "editTitle": "Edit Provider",
+      "confirmDelete": "Are you sure you want to delete this provider configuration?",
+      "endpointPlaceholder": "Leave empty to use default endpoint (optional)",
+      "notSet": "Not set",
+      "notConfigured": "Not configured",
+      "defaultEndpoint": "Default endpoint",
+      "availableModels": "Available models",
+      "messages": {
+        "enterApiKey": "Please enter API Key",
+        "enterDisplayName": "Please enter display name",
+        "saveSuccess": "Saved successfully",
+        "addSuccess": "Added successfully",
+        "deleteSuccess": "Deleted successfully",
+        "testWarning": "Please configure API Key first",
+        "testSuccess": "{name} connected successfully!",
+        "testFailed": "{name} connection failed, please check API Key"
+      },
+      "models": {
+        "gpt4o": "Latest powerful model",
+        "claudeSonnet": "Best balance",
+        "geminiPro": "Ultra long context"
+      }
     },
     "general": {
       "autoSave": "Auto Save",
@@ -61,7 +243,13 @@
       "lineHeight": "Line Height",
       "compact": "Compact",
       "standard": "Standard",
-      "relaxed": "Relaxed"
+      "relaxed": "Relaxed",
+      "interval": {
+        "30s": "30s",
+        "1m": "1 min",
+        "2m": "2 min",
+        "5m": "5 min"
+      }
     },
     "common": {
       "save": "Save",

@@ -2,8 +2,10 @@
 import { ref } from 'vue';
 import { Sparkles, ArrowRight, Check, Wand2 } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import type { GeneratedOutline } from '@/types/inspiration';
 
+const { t } = useI18n();
 const router = useRouter();
 
 const prompt = ref('');
@@ -12,9 +14,9 @@ const generatedOutlines = ref<GeneratedOutline[]>([]);
 const selectedOutline = ref<GeneratedOutline | null>(null);
 
 const outlineOptions = [
-  { label: '三幕式结构', value: 'three-act' },
-  { label: '英雄之旅', value: 'hero-journey' },
-  { label: '起承转合', value: 'four-part' },
+  { label: t('quickStart.structures.threeAct'), value: 'three-act' },
+  { label: t('quickStart.structures.heroJourney'), value: 'hero-journey' },
+  { label: t('quickStart.structures.fourPart'), value: 'four-part' },
 ];
 
 const selectedStructure = ref<string | null>(null);
@@ -103,9 +105,9 @@ async function createProject() {
 
 function formatWordCount(count: number) {
   if (count >= 10000) {
-    return `${(count / 10000).toFixed(0)}万字`;
+    return `${(count / 10000).toFixed(0)}${t('quickStart.tenThousands', { count })}`;
   }
-  return `${count}字`;
+  return `${count}${t('quickStart.characters', { count })}`;
 }
 </script>
 
@@ -117,10 +119,10 @@ function formatWordCount(count: number) {
         <Wand2 class="w-8 h-8 text-white" />
       </div>
       <h2 class="text-3xl font-bold bg-gradient-to-r from-gray-900 via-indigo-700 to-purple-600 dark:from-white dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent">
-        有方向创作
+        {{ t('quickStart.title') }}
       </h2>
       <p class="text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
-        描述你的故事想法，AI 将为你生成多套精心设计的大纲方案
+        {{ t('quickStart.description') }}
       </p>
     </div>
 
@@ -133,9 +135,7 @@ function formatWordCount(count: number) {
             <textarea
               v-model="prompt"
               class="w-full h-40 p-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-base leading-relaxed"
-              placeholder="描述你的故事想法...
-
-例如：我想写一个关于修仙世界的故事，主角是一个资质平庸的少年，在家族测试中被嘲讽，后来意外获得上古传承，开始了逆袭之路..."
+              :placeholder="t('quickStart.placeholderExample')"
             ></textarea>
             <div class="absolute bottom-3 right-3 text-xs text-gray-400">
               {{ prompt.length }} / 2000
@@ -144,7 +144,7 @@ function formatWordCount(count: number) {
 
           <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
             <div class="flex items-center gap-2">
-              <span class="text-sm text-gray-500 dark:text-gray-400">大纲风格：</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('quickStart.outlineStyle') }}</span>
               <div class="flex gap-2">
                 <button
                   v-for="option in outlineOptions"
@@ -169,7 +169,7 @@ function formatWordCount(count: number) {
             >
               <Sparkles v-if="!isGenerating" class="w-5 h-5" />
               <span v-if="isGenerating" class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-              {{ isGenerating ? 'AI 构思中...' : '生成大纲' }}
+              {{ isGenerating ? t('quickStart.generating') : t('quickStart.generate') }}
             </button>
           </div>
         </div>
@@ -181,10 +181,10 @@ function formatWordCount(count: number) {
       <div class="flex items-center gap-3">
         <div class="w-1 h-6 rounded-full bg-gradient-to-b from-purple-500 to-indigo-500"></div>
         <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-          为你精心准备的大纲
+          {{ t('quickStart.preparedOutlines') }}
         </h3>
         <span class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
-          {{ generatedOutlines.length }} 套方案
+          {{ generatedOutlines.length }} {{ t('quickStart.plans') }}
         </span>
       </div>
 
@@ -230,7 +230,7 @@ function formatWordCount(count: number) {
                 </span>
               </div>
               <div class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
-                <span>{{ outline.characters.length }} 个角色</span>
+                <span>{{ outline.characters.length }} {{ t('quickStart.characters') }}</span>
               </div>
             </div>
 
@@ -254,7 +254,7 @@ function formatWordCount(count: number) {
           class="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold text-lg shadow-2xl shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-105 transition-all"
           @click="createProject"
         >
-          <span>以此大纲创建项目</span>
+          <span>{{ t('quickStart.createFromOutline') }}</span>
           <ArrowRight class="w-6 h-6" />
         </button>
       </div>
@@ -265,9 +265,9 @@ function formatWordCount(count: number) {
       <div class="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center mb-6">
         <Sparkles class="w-12 h-12 text-indigo-400 dark:text-indigo-600" />
       </div>
-      <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">让 AI 为你构思</h3>
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ t('quickStart.emptyTitle') }}</h3>
       <p class="text-gray-500 dark:text-gray-400 text-center max-w-md">
-        输入你的故事想法，上方将出现多套精心设计的大纲方案供你选择
+        {{ t('quickStart.emptyDesc') }}
       </p>
     </div>
   </div>

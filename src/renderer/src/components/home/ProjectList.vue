@@ -2,9 +2,11 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { Plus, Clock, FileText, MoreHorizontal, Feather, BookOpen } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
 import type { Project } from '@/types/project';
 
+const { t } = useI18n();
 const router = useRouter();
 const projectStore = useProjectStore();
 
@@ -40,30 +42,25 @@ function formatDate(dateStr: string) {
   const diff = now.getTime() - date.getTime();
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-  if (days === 0) return '今天';
-  if (days === 1) return '昨天';
-  if (days < 7) return `${days}天前`;
+  if (days === 0) return t('projectList.today');
+  if (days === 1) return t('projectList.yesterday');
+  if (days < 7) return t('projectList.daysAgo', { days });
   return date.toLocaleDateString('zh-CN');
 }
 
 function formatWordCount(count: number) {
-  if (count < 10000) return `${count}字`;
-  return `${(count / 10000).toFixed(1)}万字`;
+  if (count < 10000) return `${count}${t('projectList.words', { count })}`;
+  return `${(count / 10000).toFixed(1)}${t('projectList.tenThousands', { count })}`;
 }
 
 function getStatusConfig(status: Project['status']) {
-  switch (status) {
-    case 'writing':
-      return { color: 'bg-emerald-500', text: '创作中', gradient: 'from-emerald-400 to-teal-500' };
-    case 'planning':
-      return { color: 'bg-blue-500', text: '规划中', gradient: 'from-blue-400 to-indigo-500' };
-    case 'paused':
-      return { color: 'bg-amber-500', text: '已暂停', gradient: 'from-amber-400 to-orange-500' };
-    case 'completed':
-      return { color: 'bg-slate-500', text: '已完成', gradient: 'from-slate-400 to-gray-500' };
-    default:
-      return { color: 'bg-gray-500', text: '未知', gradient: 'from-gray-400 to-gray-500' };
-  }
+  const configs = {
+    writing: { color: 'bg-emerald-500', text: t('projectList.status.writing'), gradient: 'from-emerald-400 to-teal-500' },
+    planning: { color: 'bg-blue-500', text: t('projectList.status.planning'), gradient: 'from-blue-400 to-indigo-500' },
+    paused: { color: 'bg-amber-500', text: t('projectList.status.paused'), gradient: 'from-amber-400 to-orange-500' },
+    completed: { color: 'bg-slate-500', text: t('projectList.status.completed'), gradient: 'from-slate-400 to-gray-500' },
+  };
+  return configs[status] || { color: 'bg-gray-500', text: t('projectList.status.unknown'), gradient: 'from-gray-400 to-gray-500' };
 }
 
 // Project card background gradients based on project index
@@ -84,8 +81,8 @@ function getCardGradient(index: number) {
     <!-- Quick Actions & Stats -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">我的创作</h2>
-        <p class="text-gray-500 dark:text-gray-400">共 {{ projectStore.projects.length }} 个项目</p>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ t('projectList.myCreations') }}</h2>
+        <p class="text-gray-500 dark:text-gray-400">{{ t('projectList.projectCount', { count: projectStore.projects.length }) }}</p>
       </div>
       
       <div class="flex items-center gap-3">
@@ -94,7 +91,7 @@ function getCardGradient(index: number) {
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="搜索项目..."
+            :placeholder="t('projectList.searchPlaceholder')"
             class="w-64 pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
           />
           <Feather class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -106,7 +103,7 @@ function getCardGradient(index: number) {
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-105 transition-all"
         >
           <Plus class="w-4 h-4" />
-          新建项目
+          {{ t('projectList.newProject') }}
         </button>
       </div>
     </div>
@@ -115,7 +112,7 @@ function getCardGradient(index: number) {
     <div v-if="recentProjects.length > 0">
       <div class="flex items-center gap-3 mb-6">
         <div class="w-1 h-6 rounded-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">最近编辑</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('projectList.recentEdits') }}</h3>
       </div>
       
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -141,7 +138,7 @@ function getCardGradient(index: number) {
                   </h4>
                 </div>
                 <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                  {{ project.description || '暂无描述' }}
+                  {{ project.description || t('projectList.noDescription') }}
                 </p>
               </div>
               <button class="p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-gray-700/50 transition-colors opacity-0 group-hover:opacity-100">
@@ -178,7 +175,7 @@ function getCardGradient(index: number) {
     <div>
       <div class="flex items-center gap-3 mb-6">
         <div class="w-1 h-6 rounded-full bg-gradient-to-b from-purple-500 to-pink-500"></div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">全部项目</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('projectList.allProjects') }}</h3>
         <span class="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-500">
           {{ filteredProjects.length }}
         </span>
@@ -205,7 +202,7 @@ function getCardGradient(index: number) {
             {{ project.name }}
           </h4>
           <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">
-            {{ project.description || '暂无描述' }}
+            {{ project.description || t('projectList.noDescription') }}
           </p>
           <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
             <span>{{ formatWordCount(project.wordCount) }}</span>
@@ -219,14 +216,14 @@ function getCardGradient(index: number) {
         <div class="w-20 h-20 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center mb-6">
           <BookOpen class="w-10 h-10 text-gray-300 dark:text-gray-600" />
         </div>
-        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">开始你的创作之旅</h3>
-        <p class="text-gray-500 dark:text-gray-400 mb-6">创建第一个项目，让 AI 帮你写出精彩故事</p>
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ t('projectList.emptyTitle') }}</h3>
+        <p class="text-gray-500 dark:text-gray-400 mb-6">{{ t('projectList.emptyDesc') }}</p>
         <button
           @click="createNewProject"
           class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
         >
           <Plus class="w-5 h-5" />
-          创建第一个项目
+          {{ t('projectList.createFirstProject') }}
         </button>
       </div>
     </div>

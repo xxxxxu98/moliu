@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { NSwitch, NSlider } from 'naive-ui';
 import { Save, Zap, Type } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
 import { useSettingsStore } from '@/stores/settings.store';
 
+const { t } = useI18n();
 const settingsStore = useSettingsStore();
 
 const autoSaveOptions = [
-  { label: '30秒', value: 30 },
-  { label: '1分钟', value: 60 },
-  { label: '2分钟', value: 120 },
-  { label: '5分钟', value: 300 },
+  { label: t('settings.general.interval.30s'), value: 30 },
+  { label: t('settings.general.interval.1m'), value: 60 },
+  { label: t('settings.general.interval.2m'), value: 120 },
+  { label: t('settings.general.interval.5m'), value: 300 },
 ];
 
 function handleAutoSaveChange(value: boolean) {
@@ -44,15 +46,15 @@ function handleLineHeightChange(value: number) {
             <Save class="w-5 h-5 text-white" />
           </div>
           <div class="flex-1">
-            <h3 class="font-semibold text-gray-900 dark:text-white">自动保存</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">定期自动保存您的写作内容，防止意外丢失</p>
+            <h3 class="font-semibold text-gray-900 dark:text-white">{{ t('settings.general.autoSave') }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('settings.general.autoSaveDesc') }}</p>
           </div>
           <NSwitch :value="settingsStore.autoSave" @update:value="handleAutoSaveChange" />
         </div>
 
         <div v-if="settingsStore.autoSave" class="pl-[3.25rem] space-y-4">
           <div class="flex items-center gap-4">
-            <span class="text-sm text-gray-600 dark:text-gray-400">保存间隔：</span>
+            <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('settings.general.autoSaveInterval') }}：</span>
             <div class="flex gap-2">
               <button
                 v-for="option in autoSaveOptions"
@@ -82,16 +84,16 @@ function handleLineHeightChange(value: number) {
             <Zap class="w-5 h-5 text-white" />
           </div>
           <div class="flex-1">
-            <h3 class="font-semibold text-gray-900 dark:text-white">AI 输出设置</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">控制 AI 生成内容的方式</p>
+            <h3 class="font-semibold text-gray-900 dark:text-white">{{ t('settings.general.aiOutput') }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('settings.general.aiOutputDesc') }}</p>
           </div>
         </div>
 
         <div class="space-y-4">
           <div class="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50">
             <div>
-              <div class="font-medium text-gray-900 dark:text-white">流式输出</div>
-              <div class="text-sm text-gray-500 dark:text-gray-400">AI 生成内容时实时显示（打字机效果）</div>
+              <div class="font-medium text-gray-900 dark:text-white">{{ t('settings.general.streamOutput') }}</div>
+              <div class="text-sm text-gray-500 dark:text-gray-400">{{ t('settings.general.streamOutputDesc') }}</div>
             </div>
             <NSwitch :value="settingsStore.streamOutput" @update:value="handleStreamOutputChange" />
           </div>
@@ -108,8 +110,8 @@ function handleLineHeightChange(value: number) {
             <Type class="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 class="font-semibold text-gray-900 dark:text-white">编辑器设置</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">自定义编辑器的外观和行为</p>
+            <h3 class="font-semibold text-gray-900 dark:text-white">{{ t('settings.general.editorSettings') }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('settings.general.editorSettingsDesc') }}</p>
           </div>
         </div>
 
@@ -117,7 +119,7 @@ function handleLineHeightChange(value: number) {
           <!-- Font Size -->
           <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50">
             <div class="flex items-center justify-between mb-3">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">字体大小</span>
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('settings.general.fontSize') }}</span>
               <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ settingsStore.fontSize }}px</span>
             </div>
             <NSlider
@@ -133,7 +135,7 @@ function handleLineHeightChange(value: number) {
           <!-- Line Height -->
           <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50">
             <div class="flex items-center justify-between mb-3">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">行高</span>
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('settings.general.lineHeight') }}</span>
               <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ settingsStore.lineHeight.toFixed(1) }}</span>
             </div>
             <NSlider
@@ -141,7 +143,7 @@ function handleLineHeightChange(value: number) {
               :min="1.2"
               :max="2.5"
               :step="0.1"
-              :marks="{ 1.2: '紧凑', 1.8: '标准', 2.5: '宽松' }"
+              :marks="{ 1.2: t('settings.general.compact'), 1.8: t('settings.general.standard'), 2.5: t('settings.general.relaxed') }"
               @update:value="handleLineHeightChange"
             />
           </div>

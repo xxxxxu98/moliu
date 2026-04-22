@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { Settings, PenTool, BookOpen } from 'lucide-vue-next';
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
 const currentRoute = computed(() => route.path);
 
 const navItems = [
-  { path: '/', label: '写作', icon: PenTool },
-  { path: '/settings', label: '设置', icon: Settings },
+  { path: '/', label: t('nav.writing'), icon: PenTool },
+  { path: '/settings', label: t('nav.settings'), icon: Settings },
 ];
 
 function navigate(path: string) {
@@ -34,9 +36,9 @@ function goToHome() {
       </div>
       <div>
         <h1 class="text-xl font-bold bg-gradient-to-r from-gray-900 via-indigo-700 to-purple-600 dark:from-white dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent">
-          墨流
+          {{ t('app.name') }}
         </h1>
-        <p class="text-xs text-gray-500 dark:text-gray-400">AI小说创作助手</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('app.tagline') }}</p>
       </div>
     </div>
 

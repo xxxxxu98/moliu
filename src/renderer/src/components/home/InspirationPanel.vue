@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { Sparkles, RefreshCw, ArrowRight, Check, X, Feather } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
 import { useInspirationStore } from '@/stores/inspiration.store';
 import type { GenreTag, SettingElement, StoryNucleus } from '@/types/inspiration';
 
+const { t } = useI18n();
 const inspirationStore = useInspirationStore();
 
 const isGenerating = ref(false);
@@ -130,10 +132,10 @@ onMounted(() => {
         <Sparkles class="w-8 h-8 text-white" />
       </div>
       <h2 class="text-3xl font-bold bg-gradient-to-r from-gray-900 via-amber-700 to-orange-600 dark:from-white dark:via-amber-300 dark:to-orange-400 bg-clip-text text-transparent">
-        灵感探索
+        {{ t('inspiration.title') }}
       </h2>
       <p class="text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
-        选择题材标签和设定元素，探索无限创作可能
+        {{ t('inspiration.startJourneyDesc') }}
       </p>
     </div>
 
@@ -145,8 +147,8 @@ onMounted(() => {
             <span class="text-lg font-bold text-white">1</span>
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">选择题材标签</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">点击标签开始你的创作之旅</p>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('inspiration.step1Title') }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('inspiration.step1Desc') }}</p>
           </div>
         </div>
         <button
@@ -154,7 +156,7 @@ onMounted(() => {
           @click="refreshTags"
         >
           <RefreshCw class="w-4 h-4" />
-          换一批
+          {{ t('inspiration.refresh') }}
         </button>
       </div>
 
@@ -199,8 +201,8 @@ onMounted(() => {
             <span class="text-lg font-bold text-white">2</span>
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">选择设定元素</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">添加有趣的设定，让故事更精彩</p>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('inspiration.step2Title') }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('inspiration.step2Desc') }}</p>
           </div>
         </div>
         <button
@@ -208,7 +210,7 @@ onMounted(() => {
           @click="refreshElements"
         >
           <RefreshCw class="w-4 h-4" />
-          换一批
+          {{ t('inspiration.refresh') }}
         </button>
       </div>
 
@@ -238,8 +240,8 @@ onMounted(() => {
             <span class="text-lg font-bold text-white">3</span>
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">选择故事核</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">选择一个故事作为大纲基础</p>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('inspiration.step3Title') }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('inspiration.step3Desc') }}</p>
           </div>
         </div>
         <div class="flex gap-2">
@@ -248,14 +250,14 @@ onMounted(() => {
             @click="clearSelection"
           >
             <X class="w-4 h-4" />
-            重置
+            {{ t('inspiration.reset') }}
           </button>
           <button
             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             @click="refreshNuclei"
           >
             <RefreshCw class="w-4 h-4" />
-            换一批
+            {{ t('inspiration.refresh') }}
           </button>
         </div>
       </div>
@@ -298,7 +300,7 @@ onMounted(() => {
 
             <!-- Conflict -->
             <div class="mb-4">
-              <span class="text-xs font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wider">核心冲突</span>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wider">{{ t('inspiration.coreConflict') }}</span>
               <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">{{ nucleus.conflict }}</p>
             </div>
 
@@ -315,7 +317,7 @@ onMounted(() => {
 
             <!-- Characters -->
             <div class="pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-              <span class="text-xs font-medium text-gray-500 dark:text-gray-500">核心角色</span>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-500">{{ t('inspiration.coreCharacters') }}</span>
               <div class="flex flex-wrap gap-2 mt-2">
                 <span
                   v-for="char in nucleus.characters.slice(0, 3)"
@@ -338,7 +340,7 @@ onMounted(() => {
           @click="generateOutlines"
         >
           <Sparkles class="w-6 h-6" />
-          根据灵感生成大纲
+          {{ t('inspiration.generateOutline') }}
           <ArrowRight class="w-6 h-6" />
         </button>
       </div>
@@ -349,9 +351,9 @@ onMounted(() => {
       <div class="w-24 h-24 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center mb-6">
         <Feather class="w-12 h-12 text-amber-400 dark:text-amber-600" />
       </div>
-      <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">开始你的灵感之旅</h3>
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ t('inspiration.startJourney') }}</h3>
       <p class="text-gray-500 dark:text-gray-400 text-center max-w-md">
-        从上方选择题材标签，开启无限创作可能
+        {{ t('inspiration.startJourneyDesc') }}
       </p>
     </div>
   </div>

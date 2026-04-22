@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -26,8 +26,10 @@ import {
   Save,
   Check,
 } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
 
+const { t } = useI18n();
 const projectStore = useProjectStore();
 
 const editor = useEditor({
@@ -43,7 +45,7 @@ const editor = useEditor({
       openOnClick: false,
     }),
     Placeholder.configure({
-      placeholder: '开始你的创作...',
+      placeholder: t('editor.editorPlaceholder'),
     }),
     CharacterCount,
   ],
@@ -75,7 +77,7 @@ function insertHeading(level: 1 | 2 | 3) {
 }
 
 function setLink() {
-  const url = window.prompt('输入链接地址');
+  const url = window.prompt(t('editor.linkPrompt'));
   if (url) {
     editor.value?.chain().focus().setLink({ href: url }).run();
   } else {
@@ -90,24 +92,24 @@ async function saveChapter() {
   isSaved.value = true;
 }
 
-const toolbarButtons = [
-  { icon: Bold, action: () => editor.value?.chain().focus().toggleBold().run(), isActive: () => editor.value?.isActive('bold'), title: '加粗' },
-  { icon: Italic, action: () => editor.value?.chain().focus().toggleItalic().run(), isActive: () => editor.value?.isActive('italic'), title: '斜体' },
-  { icon: UnderlineIcon, action: () => editor.value?.chain().focus().toggleUnderline().run(), isActive: () => editor.value?.isActive('underline'), title: '下划线' },
-  { icon: Strikethrough, action: () => editor.value?.chain().focus().toggleStrike().run(), isActive: () => editor.value?.isActive('strike'), title: '删除线' },
-];
+const toolbarButtons = computed(() => [
+  { icon: Bold, action: () => editor.value?.chain().focus().toggleBold().run(), isActive: () => editor.value?.isActive('bold'), title: t('editor.toolbar.bold') },
+  { icon: Italic, action: () => editor.value?.chain().focus().toggleItalic().run(), isActive: () => editor.value?.isActive('italic'), title: t('editor.toolbar.italic') },
+  { icon: UnderlineIcon, action: () => editor.value?.chain().focus().toggleUnderline().run(), isActive: () => editor.value?.isActive('underline'), title: t('editor.toolbar.underline') },
+  { icon: Strikethrough, action: () => editor.value?.chain().focus().toggleStrike().run(), isActive: () => editor.value?.isActive('strike'), title: t('editor.toolbar.strikethrough') },
+]);
 
-const headingButtons = [
-  { icon: Heading1, action: () => insertHeading(1), title: '一级标题' },
-  { icon: Heading2, action: () => insertHeading(2), title: '二级标题' },
-  { icon: Heading3, action: () => insertHeading(3), title: '三级标题' },
-];
+const headingButtons = computed(() => [
+  { icon: Heading1, action: () => insertHeading(1), title: t('editor.toolbar.heading1') },
+  { icon: Heading2, action: () => insertHeading(2), title: t('editor.toolbar.heading2') },
+  { icon: Heading3, action: () => insertHeading(3), title: t('editor.toolbar.heading3') },
+]);
 
-const listButtons = [
-  { icon: List, action: () => editor.value?.chain().focus().toggleBulletList().run(), isActive: () => editor.value?.isActive('bulletList'), title: '无序列表' },
-  { icon: ListOrdered, action: () => editor.value?.chain().focus().toggleOrderedList().run(), isActive: () => editor.value?.isActive('orderedList'), title: '有序列表' },
-  { icon: Quote, action: () => editor.value?.chain().focus().toggleBlockquote().run(), isActive: () => editor.value?.isActive('blockquote'), title: '引用' },
-];
+const listButtons = computed(() => [
+  { icon: List, action: () => editor.value?.chain().focus().toggleBulletList().run(), isActive: () => editor.value?.isActive('bulletList'), title: t('editor.toolbar.bulletList') },
+  { icon: ListOrdered, action: () => editor.value?.chain().focus().toggleOrderedList().run(), isActive: () => editor.value?.isActive('orderedList'), title: t('editor.toolbar.orderedList') },
+  { icon: Quote, action: () => editor.value?.chain().focus().toggleBlockquote().run(), isActive: () => editor.value?.isActive('blockquote'), title: t('editor.toolbar.blockquote') },
+]);
 </script>
 
 <template>
@@ -120,7 +122,7 @@ const listButtons = [
           v-model="chapterTitle"
           type="text"
           class="bg-transparent border-none text-lg font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 rounded-lg px-3 py-1 min-w-[200px]"
-          placeholder="章节标题"
+          :placeholder="t('editor.chapterTitle')"
         />
 
         <div class="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-3"></div>
@@ -213,7 +215,7 @@ const listButtons = [
               <LinkIcon class="w-4 h-4" />
             </button>
           </template>
-          插入链接
+          {{ t('editor.toolbar.insertLink') }}
         </NTooltip>
 
         <NTooltip trigger="hover">
@@ -225,7 +227,7 @@ const listButtons = [
               <Highlighter class="w-4 h-4" />
             </button>
           </template>
-          高亮
+          {{ t('editor.toolbar.highlight') }}
         </NTooltip>
       </div>
 
@@ -233,8 +235,8 @@ const listButtons = [
       <div class="flex items-center gap-4">
         <!-- Stats -->
         <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-          <span>{{ wordCount }} 字</span>
-          <span>{{ charCount }} 字符</span>
+          <span>{{ wordCount }} {{ t('editor.words') }}</span>
+          <span>{{ charCount }} {{ t('editor.characters') }}</span>
         </div>
 
         <!-- Save Status -->
@@ -248,7 +250,7 @@ const listButtons = [
             ]"
           >
             <Check v-if="isSaved" class="w-3 h-3" />
-            <span>{{ isSaved ? '已保存' : '未保存' }}</span>
+            <span>{{ isSaved ? t('editor.saved') : t('editor.unsaved') }}</span>
           </span>
           <NButton
             type="primary"
@@ -259,7 +261,7 @@ const listButtons = [
             <template #icon>
               <Save class="w-4 h-4" />
             </template>
-            保存
+            {{ t('editor.save') }}
           </NButton>
         </div>
       </div>

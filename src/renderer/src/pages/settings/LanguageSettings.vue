@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { NSelect } from 'naive-ui';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useI18n } from 'vue-i18n';
@@ -7,15 +8,23 @@ import { Globe, Languages, Info } from 'lucide-vue-next';
 const { t } = useI18n();
 const settingsStore = useSettingsStore();
 
-const languageOptions = [
-  { label: '简体中文', value: 'zh-CN' },
-  { label: 'English', value: 'en-US' },
-];
+const getLanguageLabel = (locale: string) => {
+  return t(`settings.language.labels.${locale === 'zh-CN' ? 'zhCN' : 'enUS'}`);
+};
 
-const contentLanguageOptions = [
-  { label: '简体中文', value: 'zh-CN' },
-  { label: 'English', value: 'en' },
-];
+const getContentLanguageLabel = (lang: string) => {
+  return t(`settings.language.labels.${lang === 'zh-CN' ? 'zhCN' : 'enUS'}`);
+};
+
+const localizedLanguageOptions = computed(() => [
+  { label: getLanguageLabel('zh-CN'), value: 'zh-CN' },
+  { label: getLanguageLabel('en-US'), value: 'en-US' },
+]);
+
+const localizedContentLanguageOptions = computed(() => [
+  { label: getContentLanguageLabel('zh-CN'), value: 'zh-CN' },
+  { label: getContentLanguageLabel('en'), value: 'en' },
+]);
 
 function handleLanguageChange(value: 'zh-CN' | 'en-US') {
   settingsStore.setLocale(value);
@@ -44,7 +53,7 @@ function handleContentLanguageChange(value: string) {
 
         <NSelect
           :value="settingsStore.locale"
-          :options="languageOptions"
+          :options="localizedLanguageOptions"
           class="max-w-xs"
           @update:value="handleLanguageChange"
         />
@@ -67,7 +76,7 @@ function handleContentLanguageChange(value: string) {
 
         <NSelect
           :value="settingsStore.contentLanguage"
-          :options="contentLanguageOptions"
+          :options="localizedContentLanguageOptions"
           class="max-w-xs"
           @update:value="handleContentLanguageChange"
         />

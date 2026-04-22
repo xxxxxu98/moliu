@@ -7,7 +7,162 @@
     "home": "首页",
     "projects": "项目管理",
     "settings": "设置",
-    "about": "关于"
+    "about": "关于",
+    "writing": "写作"
+  },
+  "home": {
+    "badge": "墨流 AI 写作助手",
+    "subtitle": "让 AI 成为你的创作伙伴",
+    "description": "百万字级长篇小说创作神器，三层记忆系统解决 AI 遗忘问题，让故事连贯如一",
+    "tabs": {
+      "projects": "我的项目",
+      "quickstart": "有方向创作",
+      "inspiration": "灵感探索"
+    }
+  },
+  "projectList": {
+    "myCreations": "我的创作",
+    "projectCount": "共 {count} 个项目",
+    "searchPlaceholder": "搜索项目...",
+    "newProject": "新建项目",
+    "recentEdits": "最近编辑",
+    "allProjects": "全部项目",
+    "noDescription": "暂无描述",
+    "emptyTitle": "开始你的创作之旅",
+    "emptyDesc": "创建第一个项目，让 AI 帮你写出精彩故事",
+    "createFirstProject": "创建第一个项目",
+    "today": "今天",
+    "yesterday": "昨天",
+    "daysAgo": "{days}天前",
+    "words": "字",
+    "tenThousands": "万字",
+    "status": {
+      "writing": "创作中",
+      "planning": "规划中",
+      "paused": "已暂停",
+      "completed": "已完成",
+      "unknown": "未知"
+    }
+  },
+  "quickStart": {
+    "title": "有方向创作",
+    "description": "描述你的故事想法，AI 将为你生成多套精心设计的大纲方案",
+    "placeholder": "描述你的故事想法...",
+    "placeholderExample": "例如：我想写一个关于修仙世界的故事，主角是一个资质平庸的少年，在家族测试中被嘲讽，后来意外获得上古传承，开始了逆袭之路...",
+    "outlineStyle": "大纲风格：",
+    "generating": "AI 构思中...",
+    "generate": "生成大纲",
+    "preparedOutlines": "为你精心准备的大纲",
+    "plans": "套方案",
+    "characters": "个角色",
+    "tenThousands": "万字",
+    "createFromOutline": "以此大纲创建项目",
+    "emptyTitle": "让 AI 为你构思",
+    "emptyDesc": "输入你的故事想法，上方将出现多套精心设计的大纲方案供你选择",
+    "structures": {
+      "threeAct": "三幕式结构",
+      "heroJourney": "英雄之旅",
+      "fourPart": "起承转合"
+    }
+  },
+  "editor": {
+    "title": "章节",
+    "characters": "人物",
+    "world": "世界观",
+    "foreshadows": "伏笔",
+    "newChapter": "新建章节",
+    "aiCollaboration": "AI 协作",
+    "continueWriting": "智能续写",
+    "polish": "润色优化",
+    "suggestions": "建议",
+    "memory": "记忆",
+    "smartContinue": "智能续写",
+    "smartContinueDesc": "根据上下文续写内容",
+    "polishDesc": "改善文笔和表达",
+    "promptPlaceholder": "添加写作提示（可选）...",
+    "promptExample": "例如：'让主角表现出犹豫和挣扎'",
+    "generating": "生成中...",
+    "startGenerate": "开始生成",
+    "accept": "采纳",
+    "copy": "复制",
+    "discard": "放弃",
+    "reAnalyze": "重新分析",
+    "currentChapterMemory": "当前章节记忆",
+    "charactersInScene": "出场角色",
+    "location": "地点",
+    "time": "时间",
+    "relatedForeshadows": "相关伏笔",
+    "toBeRevealed": "待回收",
+    "revealed": "已揭示",
+    "foreshadowResolutionRate": "伏笔回收率",
+    "resolved": "已回收",
+    "total": "总计",
+    "addForeshadow": "添加伏笔",
+    "noForeshadows": "暂无伏笔",
+    "chapterWordCount": "字",
+    "chapterLabel": "第{chapter}章",
+    "toolbar": {
+      "bold": "加粗",
+      "italic": "斜体",
+      "underline": "下划线",
+      "strikethrough": "删除线",
+      "heading1": "一级标题",
+      "heading2": "二级标题",
+      "heading3": "三级标题",
+      "bulletList": "无序列表",
+      "orderedList": "有序列表",
+      "blockquote": "引用",
+      "insertLink": "插入链接",
+      "highlight": "高亮"
+    },
+    "editorPlaceholder": "开始你的创作...",
+    "words": "字",
+    "characters": "字符",
+    "saved": "已保存",
+    "unsaved": "未保存",
+    "save": "保存",
+    "linkPrompt": "输入链接地址",
+    "chapterTitle": "章节标题"
+  },
+  "character": {
+    "searchPlaceholder": "搜索角色...",
+    "addCharacter": "添加角色",
+    "noCharacters": "暂无角色",
+    "roles": {
+      "protagonist": "主角",
+      "femaleLead": "女主",
+      "mentor": "导师",
+      "antagonist": "反派",
+      "supporting": "配角",
+      "other": "其他"
+    }
+  },
+  "world": {
+    "searchPlaceholder": "搜索设定...",
+    "location": "地点",
+    "faction": "势力",
+    "rule": "规则",
+    "locations": "地点",
+    "factions": "势力",
+    "rules": "规则",
+    "locked": "已锁定"
+  },
+  "inspiration": {
+    "title": "灵感探索",
+    "description": "随机获取创作灵感",
+    "step1Title": "选择题材标签",
+    "step1Desc": "点击标签开始你的创作之旅",
+    "step2Title": "选择设定元素",
+    "step2Desc": "添加有趣的设定，让故事更精彩",
+    "step3Title": "选择故事核",
+    "step3Desc": "选择一个故事作为大纲基础",
+    "refresh": "换一批",
+    "reset": "重置",
+    "coreConflict": "核心冲突",
+    "coreCharacters": "核心角色",
+    "generateOutline": "根据灵感生成大纲",
+    "startJourney": "开始你的灵感之旅",
+    "startJourneyDesc": "从上方选择题材标签，开启无限创作可能"
   },
   "settings": {
     "title": "设置",
@@ -28,16 +183,20 @@
       "accentColorDesc": "自定义应用的主题颜色",
       "preview": "预览效果"
     },
-    "language": {
-      "uiLanguage": "界面语言",
-      "uiLanguageDesc": "选择应用的界面显示语言",
-      "contentLanguage": "内容语言偏好",
-      "contentLanguageDesc": "设置AI生成内容的默认语言风格",
-      "infoTitle": "语言切换说明",
-      "infoItem1": "界面语言设置将立即生效，无需重启应用",
-      "infoItem2": "用户生成内容（如项目名称、章节标题等）不受此设置影响",
-      "infoItem3": "AI生成内容的语言风格由「内容语言偏好」控制"
-    },
+  "language": {
+    "uiLanguage": "界面语言",
+    "uiLanguageDesc": "选择应用的界面显示语言",
+    "contentLanguage": "内容语言偏好",
+    "contentLanguageDesc": "设置AI生成内容的默认语言风格",
+    "infoTitle": "语言切换说明",
+    "infoItem1": "界面语言设置将立即生效，无需重启应用",
+    "infoItem2": "用户生成内容（如项目名称、章节标题等）不受此设置影响",
+    "infoItem3": "AI生成内容的语言风格由「内容语言偏好」控制",
+    "labels": {
+      "zhCN": "简体中文",
+      "enUS": "English"
+    }
+  },
     "aiProviders": {
       "title": "已配置的AI厂商",
       "titleDesc": "管理你的AI模型连接",
@@ -45,7 +204,30 @@
       "securityTitle": "安全说明",
       "securityDesc": "所有API Key均使用AES-256加密存储在本地，不会同步至任何服务器。请勿将您的API Key透露给他人。",
       "defaultModel": "默认模型",
-      "defaultModelDesc": "选择创作时默认使用的AI模型"
+      "defaultModelDesc": "选择创作时默认使用的AI模型",
+      "addTitle": "添加 AI 厂商",
+      "editTitle": "编辑厂商",
+      "confirmDelete": "确定删除此厂商配置吗？",
+      "endpointPlaceholder": "留空使用默认端点（可选）",
+      "notSet": "未设置",
+      "notConfigured": "未配置",
+      "defaultEndpoint": "默认端点",
+      "availableModels": "可用模型",
+      "messages": {
+        "enterApiKey": "请输入 API Key",
+        "enterDisplayName": "请输入显示名称",
+        "saveSuccess": "保存成功",
+        "addSuccess": "添加成功",
+        "deleteSuccess": "删除成功",
+        "testWarning": "请先配置 API Key",
+        "testSuccess": "{name} 连接成功！",
+        "testFailed": "{name} 连接失败，请检查 API Key"
+      },
+      "models": {
+        "gpt4o": "最新强大模型",
+        "claudeSonnet": "最佳平衡",
+        "geminiPro": "超长上下文"
+      }
     },
     "general": {
       "autoSave": "自动保存",
@@ -61,7 +243,13 @@
       "lineHeight": "行高",
       "compact": "紧凑",
       "standard": "标准",
-      "relaxed": "宽松"
+      "relaxed": "宽松",
+      "interval": {
+        "30s": "30秒",
+        "1m": "1分钟",
+        "2m": "2分钟",
+        "5m": "5分钟"
+      }
     },
     "common": {
       "save": "保存",

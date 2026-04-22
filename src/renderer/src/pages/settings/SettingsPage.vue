@@ -23,10 +23,10 @@ onMounted(() => {
 });
 
 const menuItems = computed(() => [
-  { key: 'appearance', label: t('settings.tabs.appearance'), icon: Palette, description: '主题、颜色' },
-  { key: 'language', label: t('settings.tabs.language'), icon: Globe, description: '界面语言' },
-  { key: 'ai-providers', label: t('settings.tabs.aiProviders'), icon: Cpu, description: 'API配置' },
-  { key: 'general', label: t('settings.tabs.general'), icon: Settings, description: '编辑器设置' },
+  { key: 'appearance', label: t('settings.tabs.appearance'), icon: Palette, description: t('settings.appearance.themeModeDesc') },
+  { key: 'language', label: t('settings.tabs.language'), icon: Globe, description: t('settings.language.uiLanguageDesc') },
+  { key: 'ai-providers', label: t('settings.tabs.aiProviders'), icon: Cpu, description: t('settings.aiProviders.titleDesc') },
+  { key: 'general', label: t('settings.tabs.general'), icon: Settings, description: t('settings.general.editorSettingsDesc') },
 ]);
 
 const activeIndex = computed(() => {

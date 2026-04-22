@@ -2,6 +2,9 @@
 import { ref } from 'vue';
 import { NButton, NTag, NEmpty, NProgress } from 'naive-ui';
 import { Plus, Lightbulb, AlertCircle, CheckCircle } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const foreshadows = ref([
   {
@@ -65,18 +68,13 @@ function getStatusColor(status: string) {
 }
 
 function getStatusText(status: string) {
-  switch (status) {
-    case 'buried':
-      return '已埋';
-    case 'hinted':
-      return '已暗示';
-    case 'foreshadowed':
-      return '伏笔中';
-    case 'resolved':
-      return '已回收';
-    default:
-      return status;
-  }
+  const statusMap: Record<string, string> = {
+    buried: t('editor.toBeRevealed'),
+    hinted: t('editor.revealed'),
+    foreshadowed: t('editor.toBeRevealed'),
+    resolved: t('editor.resolved'),
+  };
+  return statusMap[status] || status;
 }
 </script>
 
@@ -85,7 +83,7 @@ function getStatusText(status: string) {
     <!-- Stats -->
     <div class="p-3 rounded-lg bg-[var(--moliu-bg-primary)] border border-[var(--moliu-border-color)]">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-sm text-[var(--moliu-text-secondary)]">伏笔回收率</span>
+        <span class="text-sm text-[var(--moliu-text-secondary)]">{{ t('editor.foreshadowResolutionRate') }}</span>
         <span class="text-lg font-bold text-[var(--moliu-primary)]">{{ stats.resolutionRate }}%</span>
       </div>
       <NProgress
@@ -98,8 +96,8 @@ function getStatusText(status: string) {
         status="success"
       />
       <div class="flex justify-between mt-2 text-xs text-[var(--moliu-text-secondary)]">
-        <span>已回收: {{ stats.resolved }}</span>
-        <span>总计: {{ stats.total }}</span>
+        <span>{{ t('editor.resolved') }}: {{ stats.resolved }}</span>
+        <span>{{ t('editor.total') }}: {{ stats.total }}</span>
       </div>
     </div>
 
@@ -108,7 +106,7 @@ function getStatusText(status: string) {
       <template #icon>
         <Plus class="w-4 h-4" />
       </template>
-      添加伏笔
+      {{ t('editor.addForeshadow') }}
     </NButton>
 
     <!-- Foreshadow List -->
@@ -136,7 +134,7 @@ function getStatusText(status: string) {
                   {{ getStatusText(foreshadow.status) }}
                 </NTag>
                 <span class="text-xs text-[var(--moliu-text-secondary)]">
-                  第{{ foreshadow.chapter }}章
+                  {{ t('editor.chapterLabel', { chapter: foreshadow.chapter }) }}
                 </span>
               </div>
             </div>
@@ -145,6 +143,6 @@ function getStatusText(status: string) {
       </div>
     </div>
 
-    <NEmpty v-else description="暂无伏笔" size="small" />
+    <NEmpty v-else :description="t('editor.noForeshadows')" size="small" />
   </div>
 </template>

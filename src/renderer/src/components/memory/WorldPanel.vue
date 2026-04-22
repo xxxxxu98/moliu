@@ -2,6 +2,9 @@
 import { ref } from 'vue';
 import { NButton, NInput, NEmpty, NTag, NCard, NCollapse, NCollapseItem } from 'naive-ui';
 import { Plus, Search, Globe, MapPin, Shield } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const searchQuery = ref('');
 
@@ -30,7 +33,7 @@ const worldData = ref({
       <input
         v-model="searchQuery"
         type="text"
-        placeholder="搜索设定..."
+        :placeholder="t('world.searchPlaceholder')"
         class="w-full pl-10 pr-4 py-2 rounded-lg bg-[var(--moliu-bg-primary)] border border-[var(--moliu-border-color)] text-sm focus:outline-none focus:border-[var(--moliu-primary)]"
       />
     </div>
@@ -41,26 +44,26 @@ const worldData = ref({
         <template #icon>
           <MapPin class="w-4 h-4" />
         </template>
-        地点
+        {{ t('world.location') }}
       </NButton>
       <NButton size="small" quaternary>
         <template #icon>
           <Shield class="w-4 h-4" />
         </template>
-        势力
+        {{ t('world.faction') }}
       </NButton>
       <NButton size="small" quaternary>
         <template #icon>
           <Globe class="w-4 h-4" />
         </template>
-        规则
+        {{ t('world.rule') }}
       </NButton>
     </div>
 
     <!-- World Settings -->
     <div class="space-y-4">
       <!-- Locations -->
-      <NCard size="small" title="地点" :bordered="false">
+      <NCard size="small" :title="t('world.locations')" :bordered="false">
         <div class="space-y-2">
           <div
             v-for="location in worldData.locations"
@@ -77,7 +80,7 @@ const worldData = ref({
       </NCard>
 
       <!-- Factions -->
-      <NCard size="small" title="势力" :bordered="false">
+      <NCard size="small" :title="t('world.factions')" :bordered="false">
         <div class="space-y-2">
           <div
             v-for="faction in worldData.factions"
@@ -94,7 +97,7 @@ const worldData = ref({
       </NCard>
 
       <!-- Rules -->
-      <NCard size="small" title="规则" :bordered="false">
+      <NCard size="small" :title="t('world.rules')" :bordered="false">
         <div class="space-y-2">
           <div
             v-for="rule in worldData.rules"
@@ -106,7 +109,7 @@ const worldData = ref({
                 <Globe class="w-3 h-3 text-[var(--moliu-text-secondary)]" />
                 <span class="font-medium text-sm text-[var(--moliu-text-primary)]">{{ rule.name }}</span>
               </div>
-              <NTag v-if="rule.locked" size="tiny" type="warning">已锁定</NTag>
+              <NTag v-if="rule.locked" size="tiny" type="warning">{{ t('world.locked') }}</NTag>
             </div>
             <p class="text-xs text-[var(--moliu-text-secondary)] mt-1 ml-5">{{ rule.description }}</p>
           </div>
