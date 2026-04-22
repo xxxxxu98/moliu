@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -7,7 +7,7 @@ import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
 import CharacterCount from '@tiptap/extension-character-count';
-import { NScrollbar, NButton, NTooltip } from 'naive-ui';
+import { NScrollbar, NButton, NTooltip, useMessage } from 'naive-ui';
 import { timing } from '@/config/timing';
 import {
   Bold,
@@ -26,12 +26,14 @@ import {
   Link as LinkIcon,
   Save,
   Check,
+  FileText,
 } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
 
 const { t } = useI18n();
 const projectStore = useProjectStore();
+const message = useMessage();
 
 const editor = useEditor({
   extensions: [
@@ -39,7 +41,6 @@ const editor = useEditor({
       heading: {
         levels: [1, 2, 3],
       },
-      // 禁用 StarterKit 自带的扩展，使用单独配置的版本
       link: false,
       underline: false,
     }),
@@ -58,22 +59,109 @@ const editor = useEditor({
       class: 'prose prose-lg max-w-none focus:outline-none min-h-[500px]',
     },
   },
+  content: '',
 });
 
-const chapterTitle = ref('第一章 废物少年');
 const wordCount = ref(0);
 const charCount = ref(0);
 const isSaved = ref(true);
 const isSaving = ref(false);
+const autoSaveTimer = ref<number | null>(null);
+const lastSavedContent = ref('');
 
+// Watch for editor content changes
 watch(editor, (newEditor) => {
   if (newEditor) {
     newEditor.on('update', () => {
       wordCount.value = newEditor.storage.characterCount.words();
       charCount.value = newEditor.storage.characterCount.characters();
       isSaved.value = false;
+      scheduleAutoSave();
+    });
+    
+    newEditor.on('selectionUpdate', () => {
+      // Content is being edited
     });
   }
+});
+
+// Watch for current chapter changes
+watch(() => projectStore.currentChapter, (newChapter) => {
+  if (newChapter && editor.value) {
+    const newContent = newChapter.content || '';
+    if (lastSavedContent.value !== newContent) {
+      editor.value.commands.setContent(newContent || '<p></p>');
+      lastSavedContent.value = newContent;
+      wordCount.value = newChapter.wordCount || 0;
+      charCount.value = newContent.length;
+      isSaved.value = true;
+    }
+  }
+}, { immediate: true });
+
+// Watch for chapter ID changes to reload content
+watch(() => projectStore.currentChapterId, (newId) => {
+  if (newId && editor.value) {
+    const chapter = projectStore.chapters.find(c => c.id === newId);
+    if (chapter) {
+      const newContent = chapter.content || '';
+      editor.value.commands.setContent(newContent || '<p></p>');
+      lastSavedContent.value = newContent;
+      wordCount.value = chapter.wordCount || 0;
+      charCount.value = newContent.length;
+      isSaved.value = true;
+    }
+  }
+});
+
+function scheduleAutoSave() {
+  if (autoSaveTimer.value) {
+    clearTimeout(autoSaveTimer.value);
+  }
+  autoSaveTimer.value = window.setTimeout(() => {
+    saveChapter(true);
+  }, 30000); // Auto-save after 30 seconds of inactivity
+}
+
+async function saveChapter(isAutoSave = false) {
+  if (!projectStore.currentChapterId || !editor.value) return;
+  
+  isSaving.value = true;
+  const content = editor.value.getHTML();
+  const plainText = editor.value.getText();
+  const words = plainText.trim() ? plainText.trim().split(/\s+/).length : 0;
+  
+  try {
+    await projectStore.updateChapter(projectStore.currentChapterId, {
+      content,
+      wordCount: words,
+    });
+    lastSavedContent.value = content;
+    isSaved.value = true;
+    if (!isAutoSave) {
+      message.success('保存成功');
+    }
+  } catch (error) {
+    console.error('Failed to save chapter:', error);
+    if (!isAutoSave) {
+      message.error('保存失败');
+    }
+  } finally {
+    isSaving.value = false;
+  }
+}
+
+// Update chapter title
+const chapterTitle = computed({
+  get: () => {
+    const chapter = projectStore.currentChapter;
+    return chapter?.title || '';
+  },
+  set: (value: string) => {
+    if (projectStore.currentChapterId) {
+      projectStore.updateChapter(projectStore.currentChapterId, { title: value });
+    }
+  },
 });
 
 function insertHeading(level: 1 | 2 | 3) {
@@ -87,13 +175,6 @@ function setLink() {
   } else {
     editor.value?.chain().focus().unsetLink().run();
   }
-}
-
-async function saveChapter() {
-  isSaving.value = true;
-  await new Promise(resolve => setTimeout(resolve, timing.animation.medium));
-  isSaving.value = false;
-  isSaved.value = true;
 }
 
 const toolbarButtons = computed(() => [
@@ -114,6 +195,17 @@ const listButtons = computed(() => [
   { icon: ListOrdered, action: () => editor.value?.chain().focus().toggleOrderedList().run(), isActive: () => editor.value?.isActive('orderedList'), title: t('editor.toolbar.orderedList') },
   { icon: Quote, action: () => editor.value?.chain().focus().toggleBlockquote().run(), isActive: () => editor.value?.isActive('blockquote'), title: t('editor.toolbar.blockquote') },
 ]);
+
+// Cleanup on unmount
+onUnmounted(() => {
+  if (autoSaveTimer.value) {
+    clearTimeout(autoSaveTimer.value);
+  }
+  // Save before unmount if there are unsaved changes
+  if (!isSaved.value && projectStore.currentChapterId) {
+    saveChapter(true);
+  }
+});
 </script>
 
 <template>
@@ -272,11 +364,19 @@ const listButtons = computed(() => [
     </div>
 
     <!-- Editor Content -->
-    <NScrollbar class="flex-1">
+    <NScrollbar v-if="projectStore.currentChapter" class="flex-1">
       <div class="max-w-3xl mx-auto py-12 px-8">
         <EditorContent :editor="editor" />
       </div>
     </NScrollbar>
+    
+    <!-- Empty State -->
+    <div v-else class="flex-1 flex items-center justify-center">
+      <div class="text-center">
+        <FileText class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+        <p class="text-gray-500 dark:text-gray-400">{{ t('editor.noChapterSelected') || '请选择或创建一个章节开始写作' }}</p>
+      </div>
+    </div>
   </div>
 </template>
 

@@ -135,6 +135,7 @@
       "highlight": "Highlight"
     },
     "editorPlaceholder": "Start your creation...",
+    "noChapterSelected": "Please select or create a chapter to start writing",
     "words": "words",
     "characters": "chars",
     "saved": "Saved",

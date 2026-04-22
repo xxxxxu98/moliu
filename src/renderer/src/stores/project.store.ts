@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { Project, Volume, Chapter } from '@/types/project';
+import type { Project, Volume, Chapter, Character, WorldSchema, Foreshadow } from '@/types/project';
 
 export const useProjectStore = defineStore('project', () => {
   // State
@@ -8,6 +8,10 @@ export const useProjectStore = defineStore('project', () => {
   const projects = ref<Project[]>([]);
   const chapters = ref<Chapter[]>([]);
   const volumes = ref<Volume[]>([]);
+  const characters = ref<Character[]>([]);
+  const worldSchema = ref<WorldSchema>({ locations: [], rules: [], factions: [] });
+  const foreshadows = ref<Foreshadow[]>([]);
+  const currentChapterId = ref<string | null>(null);
   const isLoading = ref(false);
 
   // Getters
@@ -16,7 +20,7 @@ export const useProjectStore = defineStore('project', () => {
   });
 
   const currentChapter = computed(() => {
-    return chapters.value[0] || null;
+    return chapters.value.find(c => c.id === currentChapterId.value) || chapters.value[0] || null;
   });
 
   const sortedVolumes = computed(() => {
@@ -25,6 +29,15 @@ export const useProjectStore = defineStore('project', () => {
 
   const sortedChapters = computed(() => {
     return [...chapters.value].sort((a, b) => a.orderIndex - b.orderIndex);
+  });
+
+  const resolvedForeshadowCount = computed(() => {
+    return foreshadows.value.filter(f => f.status === 'resolved').length;
+  });
+
+  const foreshadowResolutionRate = computed(() => {
+    if (foreshadows.value.length === 0) return 0;
+    return Math.round((resolvedForeshadowCount.value / foreshadows.value.length) * 100);
   });
 
   // Actions
@@ -49,6 +62,15 @@ export const useProjectStore = defineStore('project', () => {
         currentProject.value = result;
         volumes.value = result.volumes || [];
         chapters.value = result.chapters || [];
+        characters.value = result.characters || [];
+        worldSchema.value = result.worldSchema || { locations: [], rules: [], factions: [] };
+        foreshadows.value = result.foreshadows || [];
+        // Set first chapter as current
+        if (chapters.value.length > 0) {
+          currentChapterId.value = sortedChapters.value[0]?.id || null;
+        } else {
+          currentChapterId.value = null;
+        }
       }
       return result;
     } catch (error) {
@@ -66,6 +88,9 @@ export const useProjectStore = defineStore('project', () => {
       ...currentProject.value,
       volumes: volumes.value,
       chapters: chapters.value,
+      characters: characters.value,
+      worldSchema: worldSchema.value,
+      foreshadows: foreshadows.value,
     };
     
     try {
@@ -79,6 +104,193 @@ export const useProjectStore = defineStore('project', () => {
       }
     } catch (error) {
       console.error('Failed to save project:', error);
+    }
+  }
+
+  // Chapter operations
+  function setCurrentChapter(chapterId: string | null) {
+    currentChapterId.value = chapterId;
+  }
+
+  async function createChapter(volumeId: string): Promise<Chapter | null> {
+    if (!currentProject.value) return null;
+    
+    const volumeChapters = chapters.value.filter(c => c.volumeId === volumeId);
+    const newChapter: Chapter = {
+      id: `chapter-${Date.now()}`,
+      volumeId,
+      title: `第${volumeChapters.length + 1}章`,
+      content: '',
+      wordCount: 0,
+      orderIndex: volumeChapters.length,
+      version: 1,
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    
+    chapters.value.push(newChapter);
+    currentChapterId.value = newChapter.id;
+    await saveCurrentProject();
+    return newChapter;
+  }
+
+  async function updateChapter(id: string, updates: Partial<Chapter>) {
+    const index = chapters.value.findIndex(c => c.id === id);
+    if (index !== -1) {
+      chapters.value[index] = {
+        ...chapters.value[index],
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      };
+      await saveCurrentProject();
+    }
+  }
+
+  async function deleteChapter(id: string) {
+    const index = chapters.value.findIndex(c => c.id === id);
+    if (index !== -1) {
+      chapters.value.splice(index, 1);
+      if (currentChapterId.value === id) {
+        currentChapterId.value = chapters.value[0]?.id || null;
+      }
+      await saveCurrentProject();
+    }
+  }
+
+  // Character operations
+  async function createCharacter(character: Omit<Character, 'id' | 'createdAt' | 'updatedAt'>): Promise<Character | null> {
+    if (!currentProject.value) return null;
+    
+    const newCharacter: Character = {
+      ...character,
+      id: `char-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    
+    characters.value.push(newCharacter);
+    await saveCurrentProject();
+    return newCharacter;
+  }
+
+  async function updateCharacter(id: string, updates: Partial<Character>) {
+    const index = characters.value.findIndex(c => c.id === id);
+    if (index !== -1) {
+      characters.value[index] = {
+        ...characters.value[index],
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      };
+      await saveCurrentProject();
+    }
+  }
+
+  async function deleteCharacter(id: string) {
+    const index = characters.value.findIndex(c => c.id === id);
+    if (index !== -1) {
+      characters.value.splice(index, 1);
+      await saveCurrentProject();
+    }
+  }
+
+  // World Schema operations
+  async function addLocation(location: { name: string; description?: string; parentId?: string }) {
+    const newLocation = {
+      id: `loc-${Date.now()}`,
+      ...location,
+    };
+    worldSchema.value.locations.push(newLocation);
+    await saveCurrentProject();
+    return newLocation;
+  }
+
+  async function updateLocation(id: string, updates: Partial<{ name: string; description?: string; parentId?: string }>) {
+    const index = worldSchema.value.locations.findIndex(l => l.id === id);
+    if (index !== -1) {
+      worldSchema.value.locations[index] = { ...worldSchema.value.locations[index], ...updates };
+      await saveCurrentProject();
+    }
+  }
+
+  async function deleteLocation(id: string) {
+    worldSchema.value.locations = worldSchema.value.locations.filter(l => l.id !== id);
+    await saveCurrentProject();
+  }
+
+  async function addFaction(faction: { name: string; description?: string }) {
+    const newFaction = {
+      id: `faction-${Date.now()}`,
+      ...faction,
+    };
+    worldSchema.value.factions.push(newFaction);
+    await saveCurrentProject();
+    return newFaction;
+  }
+
+  async function updateFaction(id: string, updates: Partial<{ name: string; description?: string }>) {
+    const index = worldSchema.value.factions.findIndex(f => f.id === id);
+    if (index !== -1) {
+      worldSchema.value.factions[index] = { ...worldSchema.value.factions[index], ...updates };
+      await saveCurrentProject();
+    }
+  }
+
+  async function deleteFaction(id: string) {
+    worldSchema.value.factions = worldSchema.value.factions.filter(f => f.id !== id);
+    await saveCurrentProject();
+  }
+
+  async function addWorldRule(rule: { name: string; description: string; locked: boolean }) {
+    const newRule = {
+      id: `rule-${Date.now()}`,
+      ...rule,
+    };
+    worldSchema.value.rules.push(newRule);
+    await saveCurrentProject();
+    return newRule;
+  }
+
+  async function updateWorldRule(id: string, updates: Partial<{ name: string; description: string; locked: boolean }>) {
+    const index = worldSchema.value.rules.findIndex(r => r.id === id);
+    if (index !== -1) {
+      worldSchema.value.rules[index] = { ...worldSchema.value.rules[index], ...updates };
+      await saveCurrentProject();
+    }
+  }
+
+  async function deleteWorldRule(id: string) {
+    worldSchema.value.rules = worldSchema.value.rules.filter(r => r.id !== id);
+    await saveCurrentProject();
+  }
+
+  // Foreshadow operations
+  async function createForeshadow(foreshadow: Omit<Foreshadow, 'id'>): Promise<Foreshadow | null> {
+    if (!currentProject.value) return null;
+    
+    const newForeshadow: Foreshadow = {
+      ...foreshadow,
+      id: `foreshadow-${Date.now()}`,
+    };
+    
+    foreshadows.value.push(newForeshadow);
+    await saveCurrentProject();
+    return newForeshadow;
+  }
+
+  async function updateForeshadow(id: string, updates: Partial<Foreshadow>) {
+    const index = foreshadows.value.findIndex(f => f.id === id);
+    if (index !== -1) {
+      foreshadows.value[index] = { ...foreshadows.value[index], ...updates };
+      await saveCurrentProject();
+    }
+  }
+
+  async function deleteForeshadow(id: string) {
+    const index = foreshadows.value.findIndex(f => f.id === id);
+    if (index !== -1) {
+      foreshadows.value.splice(index, 1);
+      await saveCurrentProject();
     }
   }
 
@@ -170,17 +382,6 @@ export const useProjectStore = defineStore('project', () => {
     chapters.value = list;
   }
 
-  function addChapter(chapter: Chapter) {
-    chapters.value.push(chapter);
-  }
-
-  function updateChapter(id: string, updates: Partial<Chapter>) {
-    const index = chapters.value.findIndex((c) => c.id === id);
-    if (index !== -1) {
-      chapters.value[index] = { ...chapters.value[index], ...updates };
-    }
-  }
-
   function setVolumes(list: Volume[]) {
     volumes.value = list;
   }
@@ -198,11 +399,17 @@ export const useProjectStore = defineStore('project', () => {
     projects,
     chapters,
     volumes,
+    characters,
+    worldSchema,
+    foreshadows,
+    currentChapterId,
     isLoading,
     totalWordCount,
     currentChapter,
     sortedVolumes,
     sortedChapters,
+    resolvedForeshadowCount,
+    foreshadowResolutionRate,
     loadProjects,
     loadProject,
     saveCurrentProject,
@@ -214,10 +421,31 @@ export const useProjectStore = defineStore('project', () => {
     addProject,
     updateProject,
     setChapters,
-    addChapter,
     updateChapter,
     setVolumes,
     addVolume,
     setLoading,
+    // Chapter operations
+    setCurrentChapter,
+    createChapter,
+    deleteChapter,
+    // Character operations
+    createCharacter,
+    updateCharacter,
+    deleteCharacter,
+    // World Schema operations
+    addLocation,
+    updateLocation,
+    deleteLocation,
+    addFaction,
+    updateFaction,
+    deleteFaction,
+    addWorldRule,
+    updateWorldRule,
+    deleteWorldRule,
+    // Foreshadow operations
+    createForeshadow,
+    updateForeshadow,
+    deleteForeshadow,
   };
 });

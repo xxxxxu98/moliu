@@ -135,6 +135,7 @@
       "highlight": "高亮"
     },
     "editorPlaceholder": "开始你的创作...",
+    "noChapterSelected": "请选择或创建一个章节开始写作",
     "words": "字",
     "characters": "字符",
     "saved": "已保存",

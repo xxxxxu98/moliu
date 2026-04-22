@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { NLayout, NLayoutSider, NLayoutContent, NScrollbar, NButton, NTag, useMessage } from 'naive-ui';
+import { NLayout, NLayoutContent, NScrollbar, NButton, NTag, useMessage, NEmpty, NModal, NInput, NSelect } from 'naive-ui';
 import {
   Plus,
   FileText,
@@ -11,7 +11,11 @@ import {
   Lightbulb,
   ChevronDown,
   ChevronLeft,
+  ChevronRight,
   Sparkles,
+  Trash2,
+  Edit3,
+  PanelLeft,
 } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
@@ -35,6 +39,17 @@ const activeSidePanel = ref<'chapters' | 'characters' | 'world' | 'foreshadows'>
 const expandedVolumes = ref<Set<string>>(new Set(['v1']));
 const isLoadingProject = ref(false);
 
+// Chapter dialog state
+const showChapterDialog = ref(false);
+const chapterDialogMode = ref<'create' | 'edit'>('create');
+const editingChapter = ref<{ id: string; title: string } | null>(null);
+const newChapterTitle = ref('');
+const newChapterVolumeId = ref('');
+
+// Volume dialog state
+const showVolumeDialog = ref(false);
+const newVolumeName = ref('');
+
 const currentProject = computed(() => projectStore.currentProject);
 
 const chaptersByVolume = computed(() => {
@@ -45,6 +60,13 @@ const chaptersByVolume = computed(() => {
     grouped[volumeId].push(chapter);
   }
   return grouped;
+});
+
+const volumeOptions = computed(() => {
+  return projectStore.sortedVolumes.map(v => ({
+    label: v.name,
+    value: v.id,
+  }));
 });
 
 const sideTabs = computed(() => [
@@ -67,7 +89,9 @@ async function loadProject(id: string) {
     await projectStore.loadProject(id);
     // Expand first volume by default
     if (projectStore.sortedVolumes.length > 0) {
+      expandedVolumes.value.clear();
       expandedVolumes.value.add(projectStore.sortedVolumes[0].id);
+      newChapterVolumeId.value = projectStore.sortedVolumes[0].id;
     }
   } catch (error) {
     console.error('Failed to load project:', error);
@@ -87,7 +111,75 @@ function toggleVolume(volumeId: string) {
 }
 
 function selectChapter(chapterId: string) {
-  // Update selected chapter
+  projectStore.setCurrentChapter(chapterId);
+}
+
+function openCreateChapterDialog() {
+  chapterDialogMode.value = 'create';
+  newChapterTitle.value = '';
+  newChapterVolumeId.value = projectStore.sortedVolumes[0]?.id || '';
+  editingChapter.value = null;
+  showChapterDialog.value = true;
+}
+
+function openEditChapterDialog(chapter: { id: string; title: string }) {
+  chapterDialogMode.value = 'edit';
+  newChapterTitle.value = chapter.title;
+  editingChapter.value = chapter;
+  showChapterDialog.value = true;
+}
+
+async function handleChapterDialogConfirm() {
+  if (!newChapterTitle.value.trim()) {
+    message.warning('请输入章节标题');
+    return;
+  }
+  
+  if (chapterDialogMode.value === 'create') {
+    if (!newChapterVolumeId.value) {
+      message.warning('请选择所属卷');
+      return;
+    }
+    await projectStore.createChapter(newChapterVolumeId.value);
+    const newChapter = projectStore.chapters.find(c => c.title === `第${projectStore.chapters.filter(ch => ch.volumeId === newChapterVolumeId.value).length}章`);
+    if (newChapter) {
+      await projectStore.updateChapter(newChapter.id, { title: newChapterTitle.value.trim() });
+    }
+    message.success('章节创建成功');
+  } else {
+    if (editingChapter.value) {
+      await projectStore.updateChapter(editingChapter.value.id, { title: newChapterTitle.value.trim() });
+      message.success('章节标题已更新');
+    }
+  }
+  showChapterDialog.value = false;
+}
+
+async function handleDeleteChapter(chapterId: string, event: Event) {
+  event.stopPropagation();
+  try {
+    await projectStore.deleteChapter(chapterId);
+    message.success('章节已删除');
+  } catch (error) {
+    message.error('删除失败');
+  }
+}
+
+async function handleCreateVolume() {
+  if (!newVolumeName.value.trim()) {
+    message.warning('请输入卷名');
+    return;
+  }
+  const newVolume = {
+    id: `vol-${Date.now()}`,
+    name: newVolumeName.value.trim(),
+    orderIndex: projectStore.volumes.length,
+  };
+  projectStore.volumes.push(newVolume);
+  await projectStore.saveCurrentProject();
+  newVolumeName.value = '';
+  showVolumeDialog.value = false;
+  message.success('卷创建成功');
 }
 
 
@@ -134,9 +226,14 @@ function getStatusConfig(status: string) {
           :class="leftSiderCollapsed ? 'w-16' : 'w-72'"
         >
           <!-- Collapse Button -->
-          <div class="h-12 flex items-center justify-end px-3 border-b border-gray-100 dark:border-gray-800">
+          <div class="h-12 flex items-center justify-between px-3 border-b border-gray-100 dark:border-gray-800">
+            <div v-if="!leftSiderCollapsed" class="flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400">
+              <PanelLeft class="w-4 h-4" />
+              {{ t('projectList.myCreations') }}
+            </div>
             <button
               class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              :class="leftSiderCollapsed ? 'ml-auto' : ''"
               @click="leftSiderCollapsed = !leftSiderCollapsed"
             >
               <ChevronLeft
@@ -199,26 +296,56 @@ function getStatusConfig(status: string) {
                     v-for="chapter in chaptersByVolume[volume.id]"
                     :key="chapter.id"
                     class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
+                    :class="[
+                      projectStore.currentChapterId === chapter.id
+                        ? 'bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700'
+                        : ''
+                    ]"
+                    @click="selectChapter(chapter.id)"
                   >
-                    <span class="text-sm text-gray-600 dark:text-gray-400 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                      {{ chapter.title }}
-                    </span>
-                    <span
-                      class="px-1.5 py-0.5 rounded text-xs font-medium"
-                      :class="getStatusConfig(chapter.status).textColor + ' bg-opacity-10'"
-                      :style="{ backgroundColor: getStatusConfig(chapter.status).color + '15' }"
-                    >
-                      {{ chapter.wordCount }}{{ t('projectList.words') }}
-                    </span>
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                      <span class="text-sm text-gray-600 dark:text-gray-400 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                        {{ chapter.title }}
+                      </span>
+                      <span
+                        class="px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0"
+                        :class="getStatusConfig(chapter.status).textColor + ' bg-opacity-10'"
+                        :style="{ backgroundColor: getStatusConfig(chapter.status).color + '15' }"
+                      >
+                        {{ chapter.wordCount }}{{ t('projectList.words') }}
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                        @click.stop="openEditChapterDialog(chapter)"
+                      >
+                        <Edit3 class="w-3 h-3 text-gray-400" />
+                      </button>
+                      <button
+                        class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
+                        @click.stop="handleDeleteChapter(chapter.id, $event)"
+                      >
+                        <Trash2 class="w-3 h-3 text-red-400" />
+                      </button>
+                    </div>
+                  </button>
+                  <button
+                    class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                    @click="openCreateChapterDialog"
+                  >
+                    <Plus class="w-4 h-4" />
+                    {{ t('editor.newChapter') }}
                   </button>
                 </div>
               </div>
 
               <button
                 class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                @click="showVolumeDialog = true"
               >
                 <Plus class="w-4 h-4" />
-                {{ t('editor.newChapter') }}
+                新建卷
               </button>
             </div>
 
@@ -279,7 +406,7 @@ function getStatusConfig(status: string) {
               class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ml-auto"
               @click="rightSiderCollapsed = !rightSiderCollapsed"
             >
-              <ChevronLeft
+              <ChevronRight
                 class="w-4 h-4 text-gray-500 transition-transform duration-200"
                 :class="rightSiderCollapsed ? 'rotate-180' : ''"
               />
@@ -304,4 +431,52 @@ function getStatusConfig(status: string) {
       </div>
     </NLayoutContent>
   </NLayout>
+
+  <!-- Chapter Dialog -->
+  <NModal
+    v-model:show="showChapterDialog"
+    preset="dialog"
+    :title="chapterDialogMode === 'create' ? '新建章节' : '编辑章节'"
+    positive-text="确认"
+    negative-text="取消"
+    @positive-click="handleChapterDialogConfirm"
+    @negative-click="showChapterDialog = false"
+  >
+    <div class="space-y-4 py-4">
+      <div v-if="chapterDialogMode === 'create'">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">所属卷</label>
+        <NSelect
+          v-model:value="newChapterVolumeId"
+          :options="volumeOptions"
+          placeholder="选择卷"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">章节标题</label>
+        <NInput
+          v-model:value="newChapterTitle"
+          placeholder="输入章节标题"
+        />
+      </div>
+    </div>
+  </NModal>
+
+  <!-- Volume Dialog -->
+  <NModal
+    v-model:show="showVolumeDialog"
+    preset="dialog"
+    title="新建卷"
+    positive-text="确认"
+    negative-text="取消"
+    @positive-click="handleCreateVolume"
+    @negative-click="showVolumeDialog = false"
+  >
+    <div class="py-4">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">卷名</label>
+      <NInput
+        v-model:value="newVolumeName"
+        placeholder="输入卷名，例如：第一卷"
+      />
+    </div>
+  </NModal>
 </template>
