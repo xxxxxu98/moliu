@@ -20,7 +20,7 @@
     "jsx": "preserve",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["src/renderer/src/*"],
       "@renderer/*": ["src/renderer/src/*"],
       "@main/*": ["src/main/*"]
     }
