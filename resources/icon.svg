@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="inkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="50%" style="stop-color:#16213e"/>
+      <stop offset="100%" style="stop-color:#0f3460"/>
+    </linearGradient>
+    <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="50%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#a855f7"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#inkGrad)"/>
+  <circle cx="256" cy="256" r="220" fill="none" stroke="url(#flowGrad)" stroke-width="4" opacity="0.5"/>
+  
+  <!-- Ink brush stroke - "¨" radical simplified -->
+  <path d="M160 180 L340 180 L340 200 L180 200 L180 240 L320 240 L320 260 L180 260 L180 320 L340 320" 
+        fill="none" stroke="white" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+  
+  <!-- Flowing water accent -->
+  <path d="M200 380 Q256 350 312 380" 
+        fill="none" stroke="url(#flowGrad)" stroke-width="8" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M220 400 Q256 375 292 400" 
+        fill="none" stroke="url(#flowGrad)" stroke-width="6" stroke-linecap="round" opacity="0.7" filter="url(#glow)"/>
+  
+  <!-- Decorative dots -->
+  <circle cx="256" cy="160" r="8" fill="url(#flowGrad)" filter="url(#glow)"/>
+</svg>

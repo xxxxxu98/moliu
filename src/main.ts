@@ -1,8 +1,11 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import Store from 'electron-store';
 import { testAIProvider, generateOutlineStream, type AIProviderType } from './main/services/ai-providers';
+
+// Remove default application menu for cleaner UI
+Menu.setApplicationMenu(null);
 
 // Initialize electron-store for persistent settings
 const settingsStore = new Store({
@@ -87,6 +90,8 @@ const createWindow = () => {
     height: 1200,
     minWidth: 1200,
     minHeight: 800,
+    title: '墨流 - AI小说创作助手',
+    icon: path.join(__dirname, '../resources/icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

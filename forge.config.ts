@@ -6,14 +6,26 @@ import { MakerRpm } from '@electron-forge/maker-rpm';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
+import path from 'path';
 
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    name: '墨流',
+    executableName: 'moliu',
+    appCopyright: 'Copyright 2026 春秋',
+    win32metadata: {
+      CompanyName: '春秋',
+      ProductName: '墨流 - AI小说创作助手',
+      FileDescription: '墨流 - AI小说创作助手',
+    },
   },
   rebuildConfig: {},
   makers: [
-    new MakerSquirrel({}),
+    new MakerSquirrel({
+      name: 'moliu',
+      setupIcon: path.join(__dirname, 'resources/icon.ico'),
+    }),
     new MakerZIP({}, ['darwin']),
     new MakerRpm({}),
     new MakerDeb({}),
