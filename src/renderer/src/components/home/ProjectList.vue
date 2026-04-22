@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { Plus, Clock, FileText, MoreHorizontal, Feather, BookOpen } from 'lucide-vue-next';
+import { Plus, Clock, FileText, MoreHorizontal, Feather, BookOpen, Filter, ArrowUpDown } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
 import type { Project } from '@/types/project';
@@ -11,17 +11,48 @@ const router = useRouter();
 const projectStore = useProjectStore();
 
 const searchQuery = ref('');
+const statusFilter = ref<Project['status'] | 'all'>('all');
+const sortBy = ref<'updated' | 'created' | 'name' | 'wordCount'>('updated');
 
+// Filter and sort projects
 const filteredProjects = computed(() => {
-  if (!searchQuery.value) return projectStore.projects;
-  const query = searchQuery.value.toLowerCase();
-  return projectStore.projects.filter(
-    (p) =>
-      p.name.toLowerCase().includes(query) ||
-      p.description?.toLowerCase().includes(query)
-  );
+  let projects = [...projectStore.projects];
+  
+  // Apply search filter
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    projects = projects.filter(
+      (p) =>
+        p.name.toLowerCase().includes(query) ||
+        p.description?.toLowerCase().includes(query)
+    );
+  }
+  
+  // Apply status filter
+  if (statusFilter.value !== 'all') {
+    projects = projects.filter((p) => p.status === statusFilter.value);
+  }
+  
+  // Apply sorting
+  projects.sort((a, b) => {
+    switch (sortBy.value) {
+      case 'updated':
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      case 'created':
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case 'name':
+        return a.name.localeCompare(b.name);
+      case 'wordCount':
+        return b.wordCount - a.wordCount;
+      default:
+        return 0;
+    }
+  });
+  
+  return projects;
 });
 
+// Recent projects (always show latest 3 regardless of filter)
 const recentProjects = computed(() => {
   return [...projectStore.projects]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -49,7 +80,7 @@ function formatDate(dateStr: string) {
 }
 
 function formatWordCount(count: number) {
-  if (count < 10000) return `${count}${t('projectList.words', { count })}`;
+  if (count < 10000) return `${count.toLocaleString()}${t('projectList.words', { count })}`;
   return `${(count / 10000).toFixed(1)}${t('projectList.tenThousands', { count })}`;
 }
 
@@ -77,8 +108,8 @@ function getCardGradient(index: number) {
 </script>
 
 <template>
-  <div class="space-y-10">
-    <!-- Quick Actions & Stats -->
+  <div class="space-y-8">
+    <!-- Header with stats -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div>
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ t('projectList.myCreations') }}</h2>
@@ -92,9 +123,52 @@ function getCardGradient(index: number) {
             v-model="searchQuery"
             type="text"
             :placeholder="t('projectList.searchPlaceholder')"
-            class="w-64 pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+            class="w-56 pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
           />
           <Feather class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        </div>
+        
+        <!-- Filter dropdown -->
+        <div class="relative group">
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+          >
+            <Filter class="w-4 h-4" />
+            <span v-if="statusFilter === 'all'">{{ t('projectList.status.all') }}</span>
+            <span v-else>{{ t(`projectList.status.${statusFilter}`) }}</span>
+          </button>
+          <div class="absolute right-0 top-full mt-2 w-40 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+            <button
+              v-for="status in ['all', 'writing', 'planning', 'paused', 'completed'] as const"
+              :key="status"
+              class="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              :class="statusFilter === status ? 'text-indigo-600 dark:text-indigo-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
+              @click="statusFilter = status"
+            >
+              {{ t(`projectList.status.${status}`) }}
+            </button>
+          </div>
+        </div>
+        
+        <!-- Sort dropdown -->
+        <div class="relative group">
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+          >
+            <ArrowUpDown class="w-4 h-4" />
+            {{ t('projectList.sortOptions.' + sortBy) }}
+          </button>
+          <div class="absolute right-0 top-full mt-2 w-40 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+            <button
+              v-for="option in ['updated', 'created', 'name', 'wordCount'] as const"
+              :key="option"
+              class="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              :class="sortBy === option ? 'text-indigo-600 dark:text-indigo-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
+              @click="sortBy = option"
+            >
+              {{ t(`projectList.sortOptions.${option}`) }}
+            </button>
+          </div>
         </div>
         
         <!-- New Project Button -->
@@ -109,7 +183,7 @@ function getCardGradient(index: number) {
     </div>
 
     <!-- Recent Projects -->
-    <div v-if="recentProjects.length > 0">
+    <div v-if="recentProjects.length > 0 && statusFilter === 'all' && !searchQuery">
       <div class="flex items-center gap-3 mb-6">
         <div class="w-1 h-6 rounded-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('projectList.recentEdits') }}</h3>
@@ -176,9 +250,6 @@ function getCardGradient(index: number) {
       <div class="flex items-center gap-3 mb-6">
         <div class="w-1 h-6 rounded-full bg-gradient-to-b from-purple-500 to-pink-500"></div>
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('projectList.allProjects') }}</h3>
-        <span class="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-500">
-          {{ filteredProjects.length }}
-        </span>
       </div>
 
       <div v-if="filteredProjects.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "墨流",
-    "tagline": "AI小说创作助手"
+    "tagline": "AI小说创作助手",
+    "version": "v1.0.0"
   },
   "nav": {
     "home": "首页",
@@ -14,10 +15,17 @@
     "badge": "墨流 AI 写作助手",
     "subtitle": "让 AI 成为你的创作伙伴",
     "description": "百万字级长篇小说创作神器，三层记忆系统解决 AI 遗忘问题，让故事连贯如一",
-    "tabs": {
-      "projects": "我的项目",
-      "quickstart": "有方向创作",
-      "inspiration": "灵感探索"
+    "newProject": "新建项目",
+    "creationPaths": {
+      "title": "开始创作",
+      "guided": "有方向创作",
+      "guidedDesc": "描述你的故事想法，AI 为你生成大纲",
+      "inspiration": "灵感探索",
+      "inspirationDesc": "从灵感标签开始，生成完整故事"
+    },
+    "stats": {
+      "totalWords": "总字数",
+      "totalProjects": "项目数"
     }
   },
   "projectList": {
@@ -36,7 +44,18 @@
     "daysAgo": "{days}天前",
     "words": "字",
     "tenThousands": "万字",
+    "filter": "筛选",
+    "sort": "排序",
+    "filterByStatus": "按状态",
+    "sortBy": "排序方式",
+    "sortOptions": {
+      "updated": "最近编辑",
+      "created": "创建时间",
+      "name": "名称",
+      "wordCount": "字数"
+    },
     "status": {
+      "all": "全部",
       "writing": "创作中",
       "planning": "规划中",
       "paused": "已暂停",

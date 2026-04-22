@@ -33,17 +33,16 @@ async function generateOutlines() {
     {
       id: '1',
       title: `${prompt.value.slice(0, 10)}...的命运之旅`,
-      synopsis: `这是一个发生在${prompt.value}背景下的史诗故事，讲述主角在命运的漩涡中挣扎求存，最终找到自我价值的热血传奇...`,
+      synopsis: `这是一个发生在${prompt.value}背景下的史诗故事，讲述主角在命运的漩涡中挣扎求存...`,
       structure: {
         act1: '主角在一个平凡的世界中生活，突然遭遇了改变命运的变故...',
         act2a: '主角踏上了冒险之旅，在这个过程中结识了伙伴...',
         act2b: '主角面临最大的挑战，必须做出艰难的选择...',
-        act3: '主角克服困难，实现了成长，收获了友情和爱情...',
+        act3: '主角克服困难，实现了成长...',
       },
       characters: [
         { name: '主角', role: '主人公', description: '一个平凡但不甘平凡的年轻人' },
         { name: '导师', role: '引路人', description: '神秘的前辈，指引主角成长' },
-        { name: '反派', role: '对立者', description: '野心勃勃的势力首领' },
       ],
       foreshadows: ['神秘力量的觉醒', '隐藏的血脉', '命运的预言'],
       estimatedWordCount: 500000,
@@ -61,28 +60,9 @@ async function generateOutlines() {
       characters: [
         { name: '热血少年', role: '主人公', description: '充满激情和正义感的年轻人' },
         { name: '亦敌亦友', role: '竞争对手', description: '既是对手又是挚友的存在' },
-        { name: '幕后黑手', role: '反派', description: '操控一切的阴谋家' },
       ],
       foreshadows: ['隐藏的真相', '意外的联盟', '觉醒的力量'],
       estimatedWordCount: 800000,
-    },
-    {
-      id: '3',
-      title: `${prompt.value.slice(0, 10)}...的修仙之路`,
-      synopsis: `在 ${prompt.value} 背景下，讲述修仙者的成长历程，从一介凡人到问鼎巅峰的传奇故事...`,
-      structure: {
-        act1: '主角意外踏入修仙之路，开始了全新的世界...',
-        act2a: '在宗门中修炼，经历各种考验和磨砺...',
-        act2b: '与各方势力周旋，实力逐渐增强...',
-        act3: '突破极限，成为一代宗师...',
-      },
-      characters: [
-        { name: '修炼者', role: '主人公', description: '天赋异禀的年轻修士' },
-        { name: '老爷爷', role: '金手指', description: '神秘的传承者' },
-        { name: '天才对手', role: '竞争者', description: '同辈中的天才人物' },
-      ],
-      foreshadows: ['上古遗迹', '血脉传承', '天地异变'],
-      estimatedWordCount: 1000000,
     },
   ];
 
@@ -112,163 +92,99 @@ function formatWordCount(count: number) {
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto space-y-8">
+  <div class="space-y-4">
     <!-- Header -->
-    <div class="text-center space-y-4">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 mb-4">
-        <Wand2 class="w-8 h-8 text-white" />
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+        <Wand2 class="w-4 h-4 text-white" />
       </div>
-      <h2 class="text-3xl font-bold bg-gradient-to-r from-gray-900 via-indigo-700 to-purple-600 dark:from-white dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent">
-        {{ t('quickStart.title') }}
-      </h2>
-      <p class="text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
-        {{ t('quickStart.description') }}
-      </p>
-    </div>
-
-    <!-- Prompt Input Card -->
-    <div class="relative">
-      <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-3xl blur-xl"></div>
-      <div class="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-gray-200/50 dark:border-gray-700/50">
-        <div class="space-y-6">
-          <div class="relative">
-            <textarea
-              v-model="prompt"
-              class="w-full h-40 p-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-base leading-relaxed"
-              :placeholder="t('quickStart.placeholderExample')"
-            ></textarea>
-            <div class="absolute bottom-3 right-3 text-xs text-gray-400">
-              {{ prompt.length }} / 2000
-            </div>
-          </div>
-
-          <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('quickStart.outlineStyle') }}</span>
-              <div class="flex gap-2">
-                <button
-                  v-for="option in outlineOptions"
-                  :key="option.value"
-                  class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
-                  :class="[
-                    selectedStructure === option.value
-                      ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  ]"
-                  @click="selectedStructure = option.value"
-                >
-                  {{ option.label }}
-                </button>
-              </div>
-            </div>
-
-            <button
-              class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-              :disabled="!prompt.trim() || isGenerating"
-              @click="generateOutlines"
-            >
-              <Sparkles v-if="!isGenerating" class="w-5 h-5" />
-              <span v-if="isGenerating" class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-              {{ isGenerating ? t('quickStart.generating') : t('quickStart.generate') }}
-            </button>
-          </div>
-        </div>
+      <div>
+        <h3 class="font-semibold text-gray-900 dark:text-white">{{ t('quickStart.title') }}</h3>
       </div>
     </div>
+
+    <!-- Prompt Input -->
+    <div>
+      <textarea
+        v-model="prompt"
+        class="w-full h-24 p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+        :placeholder="t('quickStart.placeholder')"
+      ></textarea>
+      <div class="text-xs text-gray-400 text-right mt-1">
+        {{ prompt.length }} / 2000
+      </div>
+    </div>
+
+    <!-- Generate Button -->
+    <button
+      class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-medium shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      :disabled="!prompt.trim() || isGenerating"
+      @click="generateOutlines"
+    >
+      <Sparkles v-if="!isGenerating" class="w-4 h-4" />
+      <span v-if="isGenerating" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+      {{ isGenerating ? t('quickStart.generating') : t('quickStart.generate') }}
+    </button>
 
     <!-- Generated Outlines -->
-    <div v-if="generatedOutlines.length > 0" class="space-y-6">
-      <div class="flex items-center gap-3">
-        <div class="w-1 h-6 rounded-full bg-gradient-to-b from-purple-500 to-indigo-500"></div>
-        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+    <div v-if="generatedOutlines.length > 0" class="space-y-3">
+      <div class="flex items-center gap-2">
+        <div class="w-1 h-4 rounded-full bg-gradient-to-b from-purple-500 to-indigo-500"></div>
+        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">
           {{ t('quickStart.preparedOutlines') }}
-        </h3>
-        <span class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
-          {{ generatedOutlines.length }} {{ t('quickStart.plans') }}
-        </span>
+        </h4>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div class="space-y-2">
         <div
-          v-for="(outline, index) in generatedOutlines"
+          v-for="outline in generatedOutlines"
           :key="outline.id"
-          class="group relative bg-white dark:bg-gray-800/50 rounded-2xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+          class="p-3 rounded-xl border-2 cursor-pointer transition-all duration-200"
           :class="[
             selectedOutline?.id === outline.id
-              ? 'border-indigo-500 shadow-lg shadow-indigo-500/20 ring-4 ring-indigo-500/10'
-              : 'border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700'
+              ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20'
+              : 'border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700 bg-white dark:bg-gray-800'
           ]"
           @click="selectOutline(outline)"
         >
-          <!-- Gradient decoration -->
-          <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-bl-full"></div>
-
-          <div class="relative">
-            <!-- Selection indicator -->
+          <div class="flex items-start gap-2">
             <div
               v-if="selectedOutline?.id === outline.id"
-              class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg"
+              class="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0"
             >
-              <Check class="w-5 h-5 text-white" />
+              <Check class="w-3 h-3 text-white" />
             </div>
-
-            <!-- Title -->
-            <h4 class="font-bold text-lg text-gray-900 dark:text-white mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-              {{ outline.title }}
-            </h4>
-
-            <!-- Synopsis -->
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
-              {{ outline.synopsis }}
-            </p>
-
-            <!-- Stats -->
-            <div class="flex items-center gap-4 py-3 border-t border-gray-100 dark:border-gray-700/50">
-              <div class="flex items-center gap-1.5 text-sm">
-                <span class="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium">
-                  {{ formatWordCount(outline.estimatedWordCount) }}
-                </span>
-              </div>
-              <div class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+            <div class="flex-1 min-w-0">
+              <h5 class="font-medium text-sm text-gray-900 dark:text-white truncate">
+                {{ outline.title }}
+              </h5>
+              <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
+                {{ outline.synopsis }}
+              </p>
+              <div class="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500">
+                <span>{{ formatWordCount(outline.estimatedWordCount) }}</span>
                 <span>{{ outline.characters.length }} {{ t('quickStart.characters') }}</span>
               </div>
-            </div>
-
-            <!-- Foreshadows -->
-            <div class="flex flex-wrap gap-1.5">
-              <span
-                v-for="foreshadow in outline.foreshadows.slice(0, 3)"
-                :key="foreshadow"
-                class="px-2 py-0.5 text-xs rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
-              >
-                {{ foreshadow }}
-              </span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Create Project Button -->
-      <div v-if="selectedOutline" class="flex justify-center pt-4">
-        <button
-          class="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold text-lg shadow-2xl shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-105 transition-all"
-          @click="createProject"
-        >
-          <span>{{ t('quickStart.createFromOutline') }}</span>
-          <ArrowRight class="w-6 h-6" />
-        </button>
-      </div>
+      <!-- Create Button -->
+      <button
+        v-if="selectedOutline"
+        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm font-semibold shadow-lg hover:shadow-xl transition-all"
+        @click="createProject"
+      >
+        <span>{{ t('quickStart.createFromOutline') }}</span>
+        <ArrowRight class="w-4 h-4" />
+      </button>
     </div>
 
     <!-- Empty State -->
-    <div v-if="generatedOutlines.length === 0 && !isGenerating" class="flex flex-col items-center justify-center py-16">
-      <div class="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center mb-6">
-        <Sparkles class="w-12 h-12 text-indigo-400 dark:text-indigo-600" />
-      </div>
-      <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ t('quickStart.emptyTitle') }}</h3>
-      <p class="text-gray-500 dark:text-gray-400 text-center max-w-md">
-        {{ t('quickStart.emptyDesc') }}
-      </p>
+    <div v-if="generatedOutlines.length === 0 && !isGenerating" class="text-center py-4">
+      <Sparkles class="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+      <p class="text-xs text-gray-400 dark:text-gray-500">{{ t('quickStart.emptyDesc') }}</p>
     </div>
   </div>
 </template>

@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Moliu",
-    "tagline": "AI Novel Writing Assistant"
+    "tagline": "AI Novel Writing Assistant",
+    "version": "v1.0.0"
   },
   "nav": {
     "home": "Home",
@@ -14,10 +15,17 @@
     "badge": "Moliu AI Writing Assistant",
     "subtitle": "Let AI be your creative partner",
     "description": "A million-word novel creation tool with a three-layer memory system that solves AI forgetting problems, keeping your story coherent",
-    "tabs": {
-      "projects": "My Projects",
-      "quickstart": "Guided Creation",
-      "inspiration": "Inspiration"
+    "newProject": "New Project",
+    "creationPaths": {
+      "title": "Start Creating",
+      "guided": "Guided Creation",
+      "guidedDesc": "Describe your story idea, AI generates the outline for you",
+      "inspiration": "Inspiration",
+      "inspirationDesc": "Start from inspiration tags, generate a complete story"
+    },
+    "stats": {
+      "totalWords": "Total Words",
+      "totalProjects": "Projects"
     }
   },
   "projectList": {
@@ -36,7 +44,18 @@
     "daysAgo": "{days} days ago",
     "words": " chars",
     "tenThousands": "0k chars",
+    "filter": "Filter",
+    "sort": "Sort",
+    "filterByStatus": "Filter by status",
+    "sortBy": "Sort by",
+    "sortOptions": {
+      "updated": "Last edited",
+      "created": "Created time",
+      "name": "Name",
+      "wordCount": "Word count"
+    },
     "status": {
+      "all": "All",
       "writing": "Writing",
       "planning": "Planning",
       "paused": "Paused",
