@@ -5,6 +5,7 @@ import AppHeader from "@/components/layout/AppHeader.vue";
 import ProjectList from "@/components/home/ProjectList.vue";
 import QuickStart from "@/components/home/QuickStart.vue";
 import InspirationPanel from "@/components/home/InspirationPanel.vue";
+import CreateProjectDialog from "@/components/home/CreateProjectDialog.vue";
 import { Wand2, Sparkles, BookOpen, BarChart3 } from 'lucide-vue-next';
 import { useProjectStore } from '@/stores/project.store';
 
@@ -14,6 +15,7 @@ const projectStore = useProjectStore();
 type CreationMode = 'guided' | 'inspiration' | null;
 
 const creationMode = ref<CreationMode>(null);
+const showCreateDialog = ref(false);
 
 onMounted(async () => {
   await projectStore.loadProjects();
@@ -31,6 +33,11 @@ function formatWordCount(count: number) {
 
 function selectCreationMode(mode: CreationMode) {
   creationMode.value = creationMode.value === mode ? null : mode;
+}
+
+// Listen for create project event from ProjectList
+function openCreateDialog() {
+  showCreateDialog.value = true;
 }
 </script>
 
@@ -72,7 +79,7 @@ function selectCreationMode(mode: CreationMode) {
           </div>
 
           <!-- Project List -->
-          <ProjectList />
+          <ProjectList @create-project="openCreateDialog" />
         </div>
       </div>
 
@@ -178,6 +185,11 @@ function selectCreationMode(mode: CreationMode) {
         <span>{{ t('app.name') }} {{ t('app.version') }}</span>
       </div>
     </div>
+
+    <!-- Create Project Dialog -->
+    <CreateProjectDialog 
+      v-model:show="showCreateDialog"
+    />
   </div>
 </template>
 

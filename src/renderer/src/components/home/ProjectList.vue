@@ -10,6 +10,10 @@ const { t } = useI18n();
 const router = useRouter();
 const projectStore = useProjectStore();
 
+const emit = defineEmits<{
+  (e: 'create-project'): void;
+}>();
+
 const searchQuery = ref('');
 const statusFilter = ref<Project['status'] | 'all'>('all');
 const sortBy = ref<'updated' | 'created' | 'name' | 'wordCount'>('updated');
@@ -64,7 +68,7 @@ function openProject(project: Project) {
 }
 
 function createNewProject() {
-  router.push('/');
+  emit('create-project');
 }
 
 function formatDate(dateStr: string) {
