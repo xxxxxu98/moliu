@@ -1,6 +1,25 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
+import Store from 'electron-store';
+
+// Initialize electron-store for persistent settings
+const store = new Store({
+  name: 'moliu-settings',
+  defaults: {
+    settings: {
+      theme: 'system',
+      accentColor: '#6366f1',
+      locale: 'zh-CN',
+      autoSave: true,
+      autoSaveInterval: 30,
+      streamOutput: true,
+      fontSize: 16,
+      lineHeight: 1.8,
+    },
+    aiProviders: [],
+  },
+});
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -34,6 +53,36 @@ const createWindow = () => {
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
 };
+
+// IPC Handlers for Settings
+ipcMain.handle('settings:get', () => {
+  return store.get('settings');
+});
+
+ipcMain.handle('settings:save', (_event, settings) => {
+  store.set('settings', settings);
+  return { success: true };
+});
+
+ipcMain.handle('ai-providers:get', () => {
+  return store.get('aiProviders');
+});
+
+ipcMain.handle('ai-providers:save', (_event, providers) => {
+  store.set('aiProviders', providers);
+  return { success: true };
+});
+
+ipcMain.handle('ai:test', async (_event, provider: string, config: { apiKey: string; baseUrl?: string }) => {
+  try {
+    // Simulate API test - in production, this would make a real request
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    // For now, just return success for non-empty API keys
+    return { success: !!config.apiKey };
+  } catch {
+    return { success: false, error: 'Connection failed' };
+  }
+});
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

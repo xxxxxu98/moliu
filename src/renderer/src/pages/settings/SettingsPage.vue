@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import AppearanceSettings from '@/pages/settings/AppearanceSettings.vue';
 import LanguageSettings from '@/pages/settings/LanguageSettings.vue';
 import AIModelConfig from '@/pages/settings/AIModelConfig.vue';
 import GeneralSettings from '@/pages/settings/GeneralSettings.vue';
+import { useSettingsStore } from '@/stores/settings.store';
+import { useI18n } from 'vue-i18n';
 import {
   Palette,
   Globe,
@@ -12,17 +14,23 @@ import {
   Settings,
 } from 'lucide-vue-next';
 
+const { t } = useI18n();
+const settingsStore = useSettingsStore();
 const activeKey = ref('appearance');
 
-const menuItems = [
-  { key: 'appearance', label: '外观', icon: Palette, description: '主题、颜色' },
-  { key: 'language', label: '语言', icon: Globe, description: '界面语言' },
-  { key: 'ai-providers', label: 'AI 厂商', icon: Cpu, description: 'API配置' },
-  { key: 'general', label: '应用', icon: Settings, description: '编辑器设置' },
-];
+onMounted(() => {
+  settingsStore.initializeSettings();
+});
+
+const menuItems = computed(() => [
+  { key: 'appearance', label: t('settings.tabs.appearance'), icon: Palette, description: '主题、颜色' },
+  { key: 'language', label: t('settings.tabs.language'), icon: Globe, description: '界面语言' },
+  { key: 'ai-providers', label: t('settings.tabs.aiProviders'), icon: Cpu, description: 'API配置' },
+  { key: 'general', label: t('settings.tabs.general'), icon: Settings, description: '编辑器设置' },
+]);
 
 const activeIndex = computed(() => {
-  return menuItems.findIndex(m => m.key === activeKey.value);
+  return menuItems.value.findIndex(m => m.key === activeKey.value);
 });
 
 function handleMenuClick(key: string) {
@@ -43,9 +51,9 @@ function handleMenuClick(key: string) {
         <!-- Page Header -->
         <div class="text-center mb-10">
           <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 via-indigo-700 to-purple-600 dark:from-white dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent mb-3">
-            设置
+            {{ t('settings.title') }}
           </h1>
-          <p class="text-gray-500 dark:text-gray-400">自定义你的墨流体验</p>
+          <p class="text-gray-500 dark:text-gray-400">{{ t('settings.subtitle') }}</p>
         </div>
 
         <!-- Compact Tab Navigation -->

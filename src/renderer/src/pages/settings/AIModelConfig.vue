@@ -2,42 +2,10 @@
 import { ref } from 'vue';
 import { NButton, NInput, NSwitch, NTag, NModal, NForm, NFormItem, NPopconfirm, useMessage } from 'naive-ui';
 import { Plus, Trash2, TestTube, Check, X, Key, Edit2, Shield, Zap } from 'lucide-vue-next';
-
-interface AIProvider {
-  id: string;
-  name: string;
-  provider: 'openai' | 'anthropic' | 'google' | 'moonshot' | 'deepseek' | 'ollama';
-  apiKey: string;
-  baseUrl?: string;
-  enabled: boolean;
-  models: string[];
-  isValid?: boolean;
-  isTesting?: boolean;
-}
+import { useSettingsStore, type AIProvider } from '@/stores/settings.store';
 
 const message = useMessage();
-
-const providers = ref<AIProvider[]>([
-  {
-    id: '1',
-    name: 'OpenAI',
-    provider: 'openai',
-    apiKey: 'sk-xxxx...xxxx',
-    baseUrl: 'https://api.openai.com',
-    enabled: true,
-    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
-    isValid: true,
-  },
-  {
-    id: '2',
-    name: 'Anthropic',
-    provider: 'anthropic',
-    apiKey: '',
-    baseUrl: 'https://api.anthropic.com',
-    enabled: false,
-    models: ['claude-sonnet-4-20250514', 'claude-haiku-4-20250514'],
-  },
-]);
+const settingsStore = useSettingsStore();
 
 const showAddModal = ref(false);
 const editingProvider = ref<AIProvider | null>(null);
@@ -89,26 +57,19 @@ function saveProvider() {
     return;
   }
 
-  const existingIndex = providers.value.findIndex(p => p.id === editingProvider.value!.id);
-  if (existingIndex >= 0) {
-    providers.value[existingIndex] = { ...editingProvider.value };
+  if (editingProvider.value.id) {
+    settingsStore.updateAIProvider(editingProvider.value.id, editingProvider.value);
     message.success('保存成功');
   } else {
-    providers.value.push({
-      ...editingProvider.value,
-      id: Date.now().toString(),
-    });
+    settingsStore.addAIProvider(editingProvider.value);
     message.success('添加成功');
   }
   showAddModal.value = false;
 }
 
 function deleteProvider(id: string) {
-  const index = providers.value.findIndex(p => p.id === id);
-  if (index >= 0) {
-    providers.value.splice(index, 1);
-    message.success('删除成功');
-  }
+  settingsStore.removeAIProvider(id);
+  message.success('删除成功');
 }
 
 async function testConnection(provider: AIProvider) {
@@ -118,12 +79,10 @@ async function testConnection(provider: AIProvider) {
   }
 
   provider.isTesting = true;
-  await new Promise(resolve => setTimeout(resolve, 1500));
-
-  provider.isValid = Math.random() > 0.3;
+  const success = await settingsStore.testAIProvider(provider);
   provider.isTesting = false;
 
-  if (provider.isValid) {
+  if (success) {
     message.success(`${provider.name} 连接成功！`);
   } else {
     message.error(`${provider.name} 连接失败，请检查 API Key`);
@@ -131,7 +90,7 @@ async function testConnection(provider: AIProvider) {
 }
 
 function toggleProvider(provider: AIProvider) {
-  provider.enabled = !provider.enabled;
+  settingsStore.updateAIProvider(provider.id, { enabled: !provider.enabled });
 }
 </script>
 
@@ -173,7 +132,7 @@ function toggleProvider(provider: AIProvider) {
 
       <div class="space-y-4">
         <div
-          v-for="provider in providers"
+          v-for="provider in settingsStore.aiProviders"
           :key="provider.id"
           class="relative group"
         >

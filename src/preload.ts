@@ -25,6 +25,8 @@ export interface ElectronAPI {
   // Settings
   getSettings: () => Promise<unknown>;
   saveSettings: (settings: unknown) => Promise<unknown>;
+  getAIProviders: () => Promise<unknown>;
+  saveAIProviders: (providers: unknown) => Promise<unknown>;
 
   // Events
   onAIStream: (callback: (chunk: string) => void) => () => void;
@@ -60,6 +62,8 @@ const api: ElectronAPI = {
   // Settings
   getSettings: () => ipcRenderer.invoke('settings:get'),
   saveSettings: (settings: unknown) => ipcRenderer.invoke('settings:save', settings),
+  getAIProviders: () => ipcRenderer.invoke('ai-providers:get'),
+  saveAIProviders: (providers: unknown) => ipcRenderer.invoke('ai-providers:save', providers),
 
   // Events
   onAIStream: (callback: (chunk: string) => void) => {

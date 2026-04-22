@@ -1,14 +1,59 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import type { GlobalThemeOverrides } from 'naive-ui';
+import { setLocale, type LocaleType } from '@/i18n';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
+export interface AIProvider {
+  id: string;
+  name: string;
+  provider: 'openai' | 'anthropic' | 'google' | 'moonshot' | 'deepseek' | 'ollama';
+  apiKey: string;
+  baseUrl?: string;
+  enabled: boolean;
+  models: string[];
+  isValid?: boolean;
+  isTesting?: boolean;
+}
+
+export interface Settings {
+  theme: ThemeMode;
+  accentColor: string;
+  locale: 'zh-CN' | 'en-US';
+  contentLanguage: string;
+  autoSave: boolean;
+  autoSaveInterval: number;
+  streamOutput: boolean;
+  fontSize: number;
+  lineHeight: number;
+}
+
+const defaultSettings: Settings = {
+  theme: 'system',
+  accentColor: '#6366f1',
+  locale: 'zh-CN',
+  contentLanguage: 'zh-CN',
+  autoSave: true,
+  autoSaveInterval: 30,
+  streamOutput: true,
+  fontSize: 16,
+  lineHeight: 1.8,
+};
+
 export const useSettingsStore = defineStore('settings', () => {
-  // State
-  const theme = ref<ThemeMode>('system');
-  const accentColor = ref('#6366f1');
-  const locale = ref<'zh-CN' | 'en-US'>('zh-CN');
+  // State - Initialize with defaults
+  const theme = ref<ThemeMode>(defaultSettings.theme);
+  const accentColor = ref(defaultSettings.accentColor);
+  const locale = ref<'zh-CN' | 'en-US'>(defaultSettings.locale);
+  const contentLanguage = ref(defaultSettings.contentLanguage);
+  const autoSave = ref(defaultSettings.autoSave);
+  const autoSaveInterval = ref(defaultSettings.autoSaveInterval);
+  const streamOutput = ref(defaultSettings.streamOutput);
+  const fontSize = ref(defaultSettings.fontSize);
+  const lineHeight = ref(defaultSettings.lineHeight);
+  const aiProviders = ref<AIProvider[]>([]);
+  const isInitialized = ref(false);
 
   // Theme overrides based on accent color
   const themeOverrides = computed<GlobalThemeOverrides>(() => ({
@@ -19,38 +64,226 @@ export const useSettingsStore = defineStore('settings', () => {
     },
   }));
 
+  // Listen for system theme changes
+  function setupSystemThemeListener() {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', () => {
+      if (theme.value === 'system') {
+        applyTheme(theme.value);
+      }
+    });
+  }
+
+  // Initialize settings from electron-store
+  async function initializeSettings() {
+    if (isInitialized.value) return;
+
+    try {
+      const settings = await window.electronAPI.getSettings() as Settings;
+      if (settings) {
+        theme.value = settings.theme || defaultSettings.theme;
+        accentColor.value = settings.accentColor || defaultSettings.accentColor;
+        locale.value = settings.locale || defaultSettings.locale;
+        contentLanguage.value = settings.contentLanguage || defaultSettings.contentLanguage;
+        autoSave.value = settings.autoSave ?? defaultSettings.autoSave;
+        autoSaveInterval.value = settings.autoSaveInterval || defaultSettings.autoSaveInterval;
+        streamOutput.value = settings.streamOutput ?? defaultSettings.streamOutput;
+        fontSize.value = settings.fontSize || defaultSettings.fontSize;
+        lineHeight.value = settings.lineHeight || defaultSettings.lineHeight;
+      }
+
+      // Load AI providers
+      const providers = await window.electronAPI.getAIProviders() as AIProvider[];
+      if (providers && providers.length > 0) {
+        aiProviders.value = providers;
+      } else {
+        // Set default providers
+        aiProviders.value = [
+          {
+            id: 'default-openai',
+            name: 'OpenAI',
+            provider: 'openai',
+            apiKey: '',
+            baseUrl: 'https://api.openai.com/v1',
+            enabled: true,
+            models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
+          },
+          {
+            id: 'default-anthropic',
+            name: 'Anthropic',
+            provider: 'anthropic',
+            apiKey: '',
+            baseUrl: 'https://api.anthropic.com',
+            enabled: false,
+            models: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+          },
+        ];
+      }
+
+      applyTheme(theme.value);
+      setupSystemThemeListener();
+      isInitialized.value = true;
+    } catch (error) {
+      console.error('Failed to initialize settings:', error);
+      isInitialized.value = true;
+    }
+  }
+
+  // Save all settings to electron-store
+  async function saveAllSettings() {
+    const settings: Settings = {
+      theme: theme.value,
+      accentColor: accentColor.value,
+      locale: locale.value,
+      contentLanguage: contentLanguage.value,
+      autoSave: autoSave.value,
+      autoSaveInterval: autoSaveInterval.value,
+      streamOutput: streamOutput.value,
+      fontSize: fontSize.value,
+      lineHeight: lineHeight.value,
+    };
+
+    try {
+      await window.electronAPI.saveSettings(settings);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+    }
+  }
+
+  // Save AI providers
+  async function saveAIProviders() {
+    try {
+      await window.electronAPI.saveAIProviders(aiProviders.value);
+    } catch (error) {
+      console.error('Failed to save AI providers:', error);
+    }
+  }
+
   // Actions
   function setTheme(newTheme: ThemeMode) {
     theme.value = newTheme;
     applyTheme(newTheme);
+    saveAllSettings();
   }
 
   function setAccentColor(color: string) {
     accentColor.value = color;
+    saveAllSettings();
   }
 
-  function setLocale(newLocale: 'zh-CN' | 'en-US') {
+  function setLocaleAction(newLocale: 'zh-CN' | 'en-US') {
     locale.value = newLocale;
+    setLocale(newLocale as LocaleType);
+    saveAllSettings();
+  }
+
+  function setContentLanguage(lang: string) {
+    contentLanguage.value = lang;
+    saveAllSettings();
+  }
+
+  function setAutoSave(value: boolean) {
+    autoSave.value = value;
+    saveAllSettings();
+  }
+
+  function setAutoSaveInterval(value: number) {
+    autoSaveInterval.value = value;
+    saveAllSettings();
+  }
+
+  function setStreamOutput(value: boolean) {
+    streamOutput.value = value;
+    saveAllSettings();
+  }
+
+  function setFontSize(value: number) {
+    fontSize.value = value;
+    saveAllSettings();
+  }
+
+  function setLineHeight(value: number) {
+    lineHeight.value = value;
+    saveAllSettings();
   }
 
   function applyTheme(mode: ThemeMode) {
     const root = document.documentElement;
+    root.classList.remove('light', 'dark');
     if (mode === 'system') {
       const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      root.classList.add(isDark ? 'dark' : 'light');
     } else {
-      root.setAttribute('data-theme', mode);
+      root.classList.add(mode);
     }
   }
 
+  // AI Provider actions
+  function addAIProvider(provider: Omit<AIProvider, 'id'>) {
+    const newProvider: AIProvider = {
+      ...provider,
+      id: `provider-${Date.now()}`,
+    };
+    aiProviders.value.push(newProvider);
+    saveAIProviders();
+  }
+
+  function updateAIProvider(id: string, updates: Partial<AIProvider>) {
+    const index = aiProviders.value.findIndex(p => p.id === id);
+    if (index >= 0) {
+      aiProviders.value[index] = { ...aiProviders.value[index], ...updates };
+      saveAIProviders();
+    }
+  }
+
+  function removeAIProvider(id: string) {
+    const index = aiProviders.value.findIndex(p => p.id === id);
+    if (index >= 0) {
+      aiProviders.value.splice(index, 1);
+      saveAIProviders();
+    }
+  }
+
+  async function testAIProvider(provider: AIProvider): Promise<boolean> {
+    const result = await window.electronAPI.testAIConnection(provider.provider, {
+      apiKey: provider.apiKey,
+      baseUrl: provider.baseUrl,
+    }) as { success: boolean };
+
+    provider.isValid = result.success;
+    return result.success;
+  }
+
   return {
+    // State
     theme,
     accentColor,
     locale,
+    contentLanguage,
+    autoSave,
+    autoSaveInterval,
+    streamOutput,
+    fontSize,
+    lineHeight,
+    aiProviders,
+    isInitialized,
+    // Computed
     themeOverrides,
+    // Actions
+    initializeSettings,
     setTheme,
     setAccentColor,
-    setLocale,
+    setLocale: setLocaleAction,
+    setContentLanguage,
+    setAutoSave,
+    setAutoSaveInterval,
+    setStreamOutput,
+    setFontSize,
+    setLineHeight,
+    addAIProvider,
+    updateAIProvider,
+    removeAIProvider,
+    testAIProvider,
   };
 });
 

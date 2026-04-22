@@ -1,18 +1,28 @@
 <script setup lang="ts">
 import { NSelect } from 'naive-ui';
 import { useSettingsStore } from '@/stores/settings.store';
+import { useI18n } from 'vue-i18n';
 import { Globe, Languages, Info } from 'lucide-vue-next';
 
+const { t } = useI18n();
 const settingsStore = useSettingsStore();
 
 const languageOptions = [
   { label: '简体中文', value: 'zh-CN' },
-  { label: '繁體中文', value: 'zh-TW' },
   { label: 'English', value: 'en-US' },
+];
+
+const contentLanguageOptions = [
+  { label: '简体中文', value: 'zh-CN' },
+  { label: 'English', value: 'en' },
 ];
 
 function handleLanguageChange(value: 'zh-CN' | 'en-US') {
   settingsStore.setLocale(value);
+}
+
+function handleContentLanguageChange(value: string) {
+  settingsStore.setContentLanguage(value);
 }
 </script>
 
@@ -27,8 +37,8 @@ function handleLanguageChange(value: 'zh-CN' | 'en-US') {
             <Globe class="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 class="font-semibold text-gray-900 dark:text-white">界面语言</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">选择应用的界面显示语言</p>
+            <h3 class="font-semibold text-gray-900 dark:text-white">{{ t('settings.language.uiLanguage') }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('settings.language.uiLanguageDesc') }}</p>
           </div>
         </div>
 
@@ -50,19 +60,16 @@ function handleLanguageChange(value: 'zh-CN' | 'en-US') {
             <Languages class="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 class="font-semibold text-gray-900 dark:text-white">内容语言偏好</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">设置 AI 生成内容的默认语言风格</p>
+            <h3 class="font-semibold text-gray-900 dark:text-white">{{ t('settings.language.contentLanguage') }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('settings.language.contentLanguageDesc') }}</p>
           </div>
         </div>
 
         <NSelect
-          :value="'zh-CN'"
-          :options="[
-            { label: '简体中文', value: 'zh-CN' },
-            { label: '繁體中文', value: 'zh-TW' },
-            { label: 'English', value: 'en' },
-          ]"
+          :value="settingsStore.contentLanguage"
+          :options="contentLanguageOptions"
           class="max-w-xs"
+          @update:value="handleContentLanguageChange"
         />
       </div>
     </div>
@@ -76,11 +83,11 @@ function handleLanguageChange(value: 'zh-CN' | 'en-US') {
             <Info class="w-5 h-5 text-white" />
           </div>
           <div>
-            <h4 class="font-semibold text-indigo-900 dark:text-indigo-300 mb-2">语言切换说明</h4>
+            <h4 class="font-semibold text-indigo-900 dark:text-indigo-300 mb-2">{{ t('settings.language.infoTitle') }}</h4>
             <ul class="text-sm text-indigo-700 dark:text-indigo-400 space-y-1">
-              <li>• 界面语言设置将立即生效，无需重启应用</li>
-              <li>• 用户生成内容（如项目名称、章节标题等）不受此设置影响</li>
-              <li>• AI 生成内容的语言风格由「内容语言偏好」控制</li>
+              <li>• {{ t('settings.language.infoItem1') }}</li>
+              <li>• {{ t('settings.language.infoItem2') }}</li>
+              <li>• {{ t('settings.language.infoItem3') }}</li>
             </ul>
           </div>
         </div>

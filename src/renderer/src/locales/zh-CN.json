@@ -1,0 +1,87 @@
+{
+  "app": {
+    "name": "墨流",
+    "tagline": "AI小说创作助手"
+  },
+  "nav": {
+    "home": "首页",
+    "projects": "项目管理",
+    "settings": "设置",
+    "about": "关于"
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "自定义你的墨流体验",
+    "tabs": {
+      "appearance": "外观",
+      "language": "语言",
+      "aiProviders": "AI厂商",
+      "general": "应用"
+    },
+    "appearance": {
+      "themeMode": "主题模式",
+      "themeModeDesc": "选择应用的显示模式",
+      "followSystem": "跟随系统",
+      "lightMode": "浅色模式",
+      "darkMode": "深色模式",
+      "accentColor": "主题色",
+      "accentColorDesc": "自定义应用的主题颜色",
+      "preview": "预览效果"
+    },
+    "language": {
+      "uiLanguage": "界面语言",
+      "uiLanguageDesc": "选择应用的界面显示语言",
+      "contentLanguage": "内容语言偏好",
+      "contentLanguageDesc": "设置AI生成内容的默认语言风格",
+      "infoTitle": "语言切换说明",
+      "infoItem1": "界面语言设置将立即生效，无需重启应用",
+      "infoItem2": "用户生成内容（如项目名称、章节标题等）不受此设置影响",
+      "infoItem3": "AI生成内容的语言风格由「内容语言偏好」控制"
+    },
+    "aiProviders": {
+      "title": "已配置的AI厂商",
+      "titleDesc": "管理你的AI模型连接",
+      "addProvider": "添加厂商",
+      "securityTitle": "安全说明",
+      "securityDesc": "所有API Key均使用AES-256加密存储在本地，不会同步至任何服务器。请勿将您的API Key透露给他人。",
+      "defaultModel": "默认模型",
+      "defaultModelDesc": "选择创作时默认使用的AI模型"
+    },
+    "general": {
+      "autoSave": "自动保存",
+      "autoSaveDesc": "定期自动保存您的写作内容，防止意外丢失",
+      "autoSaveInterval": "保存间隔",
+      "aiOutput": "AI输出设置",
+      "aiOutputDesc": "控制AI生成内容的方式",
+      "streamOutput": "流式输出",
+      "streamOutputDesc": "AI生成内容时实时显示（打字机效果）",
+      "editorSettings": "编辑器设置",
+      "editorSettingsDesc": "自定义编辑器的外观和行为",
+      "fontSize": "字体大小",
+      "lineHeight": "行高",
+      "compact": "紧凑",
+      "standard": "标准",
+      "relaxed": "宽松"
+    },
+    "common": {
+      "save": "保存",
+      "cancel": "取消",
+      "delete": "删除",
+      "edit": "编辑",
+      "test": "测试连接",
+      "testing": "测试中...",
+      "verified": "已验证",
+      "failed": "验证失败",
+      "apiKey": "API Key",
+      "customEndpoint": "自定义端点",
+      "defaultEndpoint": "默认端点",
+      "displayName": "显示名称",
+      "providerType": "厂商类型",
+      "enabled": "启用状态"
+    }
+  },
+  "time": {
+    "seconds": "秒",
+    "minutes": "分钟"
+  }
+}

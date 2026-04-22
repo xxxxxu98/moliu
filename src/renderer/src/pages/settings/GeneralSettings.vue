@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 import { NSwitch, NSlider } from 'naive-ui';
 import { Save, Zap, Type } from 'lucide-vue-next';
+import { useSettingsStore } from '@/stores/settings.store';
 
-const autoSave = ref(true);
-const autoSaveInterval = ref(30);
-const streamOutput = ref(true);
-const fontSize = ref(16);
-const lineHeight = ref(1.8);
+const settingsStore = useSettingsStore();
 
 const autoSaveOptions = [
   { label: '30秒', value: 30 },
@@ -15,6 +11,26 @@ const autoSaveOptions = [
   { label: '2分钟', value: 120 },
   { label: '5分钟', value: 300 },
 ];
+
+function handleAutoSaveChange(value: boolean) {
+  settingsStore.setAutoSave(value);
+}
+
+function handleAutoSaveIntervalChange(value: number) {
+  settingsStore.setAutoSaveInterval(value);
+}
+
+function handleStreamOutputChange(value: boolean) {
+  settingsStore.setStreamOutput(value);
+}
+
+function handleFontSizeChange(value: number) {
+  settingsStore.setFontSize(value);
+}
+
+function handleLineHeightChange(value: number) {
+  settingsStore.setLineHeight(value);
+}
 </script>
 
 <template>
@@ -31,10 +47,10 @@ const autoSaveOptions = [
             <h3 class="font-semibold text-gray-900 dark:text-white">自动保存</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400">定期自动保存您的写作内容，防止意外丢失</p>
           </div>
-          <NSwitch v-model:value="autoSave" />
+          <NSwitch :value="settingsStore.autoSave" @update:value="handleAutoSaveChange" />
         </div>
 
-        <div v-if="autoSave" class="pl-[3.25rem] space-y-4">
+        <div v-if="settingsStore.autoSave" class="pl-[3.25rem] space-y-4">
           <div class="flex items-center gap-4">
             <span class="text-sm text-gray-600 dark:text-gray-400">保存间隔：</span>
             <div class="flex gap-2">
@@ -43,11 +59,11 @@ const autoSaveOptions = [
                 :key="option.value"
                 class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
                 :class="[
-                  autoSaveInterval === option.value
+                  settingsStore.autoSaveInterval === option.value
                     ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 ]"
-                @click="autoSaveInterval = option.value"
+                @click="handleAutoSaveIntervalChange(option.value)"
               >
                 {{ option.label }}
               </button>
@@ -77,7 +93,7 @@ const autoSaveOptions = [
               <div class="font-medium text-gray-900 dark:text-white">流式输出</div>
               <div class="text-sm text-gray-500 dark:text-gray-400">AI 生成内容时实时显示（打字机效果）</div>
             </div>
-            <NSwitch v-model:value="streamOutput" />
+            <NSwitch :value="settingsStore.streamOutput" @update:value="handleStreamOutputChange" />
           </div>
         </div>
       </div>
@@ -102,14 +118,15 @@ const autoSaveOptions = [
           <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50">
             <div class="flex items-center justify-between mb-3">
               <span class="text-sm font-medium text-gray-700 dark:text-gray-300">字体大小</span>
-              <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ fontSize }}px</span>
+              <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ settingsStore.fontSize }}px</span>
             </div>
             <NSlider
-              v-model:value="fontSize"
+              :value="settingsStore.fontSize"
               :min="12"
               :max="24"
               :step="1"
               :marks="{ 12: '12', 16: '16', 20: '20', 24: '24' }"
+              @update:value="handleFontSizeChange"
             />
           </div>
 
@@ -117,14 +134,15 @@ const autoSaveOptions = [
           <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/50">
             <div class="flex items-center justify-between mb-3">
               <span class="text-sm font-medium text-gray-700 dark:text-gray-300">行高</span>
-              <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ lineHeight.toFixed(1) }}</span>
+              <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ settingsStore.lineHeight.toFixed(1) }}</span>
             </div>
             <NSlider
-              v-model:value="lineHeight"
+              :value="settingsStore.lineHeight"
               :min="1.2"
               :max="2.5"
               :step="0.1"
               :marks="{ 1.2: '紧凑', 1.8: '标准', 2.5: '宽松' }"
+              @update:value="handleLineHeightChange"
             />
           </div>
         </div>

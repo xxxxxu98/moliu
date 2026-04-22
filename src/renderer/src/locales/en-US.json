@@ -1,0 +1,87 @@
+{
+  "app": {
+    "name": "Moliu",
+    "tagline": "AI Novel Writing Assistant"
+  },
+  "nav": {
+    "home": "Home",
+    "projects": "Projects",
+    "settings": "Settings",
+    "about": "About"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Customize your Moliu experience",
+    "tabs": {
+      "appearance": "Appearance",
+      "language": "Language",
+      "aiProviders": "AI Providers",
+      "general": "General"
+    },
+    "appearance": {
+      "themeMode": "Theme Mode",
+      "themeModeDesc": "Choose the display mode for the app",
+      "followSystem": "Follow System",
+      "lightMode": "Light Mode",
+      "darkMode": "Dark Mode",
+      "accentColor": "Accent Color",
+      "accentColorDesc": "Customize the app's theme color",
+      "preview": "Preview"
+    },
+    "language": {
+      "uiLanguage": "Interface Language",
+      "uiLanguageDesc": "Choose the interface display language",
+      "contentLanguage": "Content Language Preference",
+      "contentLanguageDesc": "Set the default language style for AI-generated content",
+      "infoTitle": "Language Switch Guide",
+      "infoItem1": "Interface language changes take effect immediately without restarting",
+      "infoItem2": "User-generated content (like project names, chapter titles) is not affected",
+      "infoItem3": "AI content language style is controlled by 'Content Language Preference'"
+    },
+    "aiProviders": {
+      "title": "Configured AI Providers",
+      "titleDesc": "Manage your AI model connections",
+      "addProvider": "Add Provider",
+      "securityTitle": "Security Notice",
+      "securityDesc": "All API Keys are stored locally with AES-256 encryption and will not be synced to any server. Please do not share your API Keys with others.",
+      "defaultModel": "Default Model",
+      "defaultModelDesc": "Choose the default AI model for writing"
+    },
+    "general": {
+      "autoSave": "Auto Save",
+      "autoSaveDesc": "Automatically save your writing periodically to prevent data loss",
+      "autoSaveInterval": "Save Interval",
+      "aiOutput": "AI Output Settings",
+      "aiOutputDesc": "Control how AI generates content",
+      "streamOutput": "Streaming Output",
+      "streamOutputDesc": "Display AI-generated content in real-time (typewriter effect)",
+      "editorSettings": "Editor Settings",
+      "editorSettingsDesc": "Customize the editor's appearance and behavior",
+      "fontSize": "Font Size",
+      "lineHeight": "Line Height",
+      "compact": "Compact",
+      "standard": "Standard",
+      "relaxed": "Relaxed"
+    },
+    "common": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "test": "Test Connection",
+      "testing": "Testing...",
+      "verified": "Verified",
+      "failed": "Failed",
+      "apiKey": "API Key",
+      "customEndpoint": "Custom Endpoint",
+      "defaultEndpoint": "Default Endpoint",
+      "displayName": "Display Name",
+      "providerType": "Provider Type",
+      "enabled": "Enabled"
+    }
+  },
+  "time": {
+    "seconds": "s",
+    "minutes": "m"
+  }
+}
