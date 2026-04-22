@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { NLayout, NLayoutContent, NScrollbar, NButton, NTag, useMessage, NEmpty, NModal, NInput, NSelect } from 'naive-ui';
+import { NLayout, NLayoutContent, NScrollbar, NButton, NTag, useMessage, NEmpty, NModal, NInput, NSelect, type InputInst } from 'naive-ui';
 import {
   Plus,
   FileText,
@@ -45,10 +45,14 @@ const chapterDialogMode = ref<'create' | 'edit'>('create');
 const editingChapter = ref<{ id: string; title: string } | null>(null);
 const newChapterTitle = ref('');
 const newChapterVolumeId = ref('');
+const chapterTitleInputRef = ref<InputInst | null>(null);
 
 // Volume dialog state
 const showVolumeDialog = ref(false);
+const volumeDialogMode = ref<'create' | 'edit'>('create');
 const newVolumeName = ref('');
+const editingVolume = ref<{ id: string; name: string } | null>(null);
+const volumeNameInputRef = ref<InputInst | null>(null);
 
 const currentProject = computed(() => projectStore.currentProject);
 
@@ -120,6 +124,9 @@ function openCreateChapterDialog() {
   newChapterVolumeId.value = projectStore.sortedVolumes[0]?.id || '';
   editingChapter.value = null;
   showChapterDialog.value = true;
+  nextTick(() => {
+    chapterTitleInputRef.value?.focus();
+  });
 }
 
 function openEditChapterDialog(chapter: { id: string; title: string }) {
@@ -127,6 +134,9 @@ function openEditChapterDialog(chapter: { id: string; title: string }) {
   newChapterTitle.value = chapter.title;
   editingChapter.value = chapter;
   showChapterDialog.value = true;
+  nextTick(() => {
+    chapterTitleInputRef.value?.focus();
+  });
 }
 
 async function handleChapterDialogConfirm() {
@@ -170,16 +180,54 @@ async function handleCreateVolume() {
     message.warning('请输入卷名');
     return;
   }
-  const newVolume = {
-    id: `vol-${Date.now()}`,
-    name: newVolumeName.value.trim(),
-    orderIndex: projectStore.volumes.length,
-  };
-  projectStore.volumes.push(newVolume);
+  
+  if (volumeDialogMode.value === 'create') {
+    const newVolume = {
+      id: `vol-${Date.now()}`,
+      name: newVolumeName.value.trim(),
+      orderIndex: projectStore.volumes.length,
+    };
+    projectStore.volumes.push(newVolume);
+    message.success('卷创建成功');
+  } else if (editingVolume.value) {
+    await projectStore.updateVolume(editingVolume.value.id, { name: newVolumeName.value.trim() });
+    message.success('卷名已更新');
+  }
+  
   await projectStore.saveCurrentProject();
   newVolumeName.value = '';
+  editingVolume.value = null;
   showVolumeDialog.value = false;
-  message.success('卷创建成功');
+}
+
+function openEditVolumeDialog(volume: { id: string; name: string }) {
+  volumeDialogMode.value = 'edit';
+  newVolumeName.value = volume.name;
+  editingVolume.value = volume;
+  showVolumeDialog.value = true;
+  nextTick(() => {
+    volumeNameInputRef.value?.focus();
+  });
+}
+
+function openCreateVolumeDialog() {
+  volumeDialogMode.value = 'create';
+  newVolumeName.value = '';
+  editingVolume.value = null;
+  showVolumeDialog.value = true;
+  nextTick(() => {
+    volumeNameInputRef.value?.focus();
+  });
+}
+
+async function handleDeleteVolume(volumeId: string, event: Event) {
+  event.stopPropagation();
+  try {
+    await projectStore.deleteVolume(volumeId);
+    message.success('卷已删除');
+  } catch (error) {
+    message.error('删除失败');
+  }
 }
 
 
@@ -200,9 +248,9 @@ function getStatusConfig(status: string) {
 </script>
 
 <template>
-  <NLayout class="h-full">
+  <NLayout class="h-screen overflow-hidden">
     <!-- Header -->
-    <div class="sticky top-0 z-50 backdrop-blur-xl bg-white/90 dark:bg-gray-900/90 border-b border-gray-200/50 dark:border-gray-700/50">
+    <div class="h-16 shrink-0 z-50 backdrop-blur-xl bg-white/90 dark:bg-gray-900/90 border-b border-gray-200/50 dark:border-gray-700/50">
       <AppHeader>
         <template #center>
           <div v-if="currentProject" class="flex items-center gap-3 px-4">
@@ -218,177 +266,192 @@ function getStatusConfig(status: string) {
       </AppHeader>
     </div>
 
-    <NLayoutContent class="h-[calc(100%-4rem)]">
-      <div class="flex h-full">
-        <!-- Left Sidebar: Navigation -->
-        <div
-          class="h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-all duration-300"
-          :class="leftSiderCollapsed ? 'w-16' : 'w-72'"
-        >
-          <!-- Collapse Button -->
-          <div class="h-12 flex items-center justify-between px-3 border-b border-gray-100 dark:border-gray-800">
-            <div v-if="!leftSiderCollapsed" class="flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400">
-              <PanelLeft class="w-4 h-4" />
-              {{ t('projectList.myCreations') }}
-            </div>
-            <button
-              class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              :class="leftSiderCollapsed ? 'ml-auto' : ''"
-              @click="leftSiderCollapsed = !leftSiderCollapsed"
-            >
-              <ChevronLeft
-                class="w-4 h-4 text-gray-500 transition-transform duration-200"
-                :class="leftSiderCollapsed ? 'rotate-180' : ''"
-              />
-            </button>
+    <div class="flex-1 flex min-h-0">
+      <!-- Left Sidebar: Navigation -->
+      <div
+        class="h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-all duration-300"
+        :class="leftSiderCollapsed ? 'w-16' : 'w-72'"
+      >
+        <!-- Collapse Button -->
+        <div class="h-12 flex items-center justify-between px-3 border-b border-gray-100 dark:border-gray-800">
+          <div v-if="!leftSiderCollapsed" class="flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400">
+            <PanelLeft class="w-4 h-4" />
+            {{ t('projectList.myCreations') }}
           </div>
+          <button
+            class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            :class="leftSiderCollapsed ? 'ml-auto' : ''"
+            @click="leftSiderCollapsed = !leftSiderCollapsed"
+          >
+            <ChevronLeft
+              class="w-4 h-4 text-gray-500 transition-transform duration-200"
+              :class="leftSiderCollapsed ? 'rotate-180' : ''"
+            />
+          </button>
+        </div>
 
-          <!-- Side Tabs -->
-          <div v-if="!leftSiderCollapsed" class="flex border-b border-gray-100 dark:border-gray-800">
-            <button
-              v-for="tab in sideTabs"
-              :key="tab.key"
-              class="flex-1 py-3 flex flex-col items-center gap-1 text-xs transition-colors relative"
-              :class="[
-                activeSidePanel === tab.key
-                  ? 'text-indigo-600 dark:text-indigo-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              ]"
-              @click="activeSidePanel = tab.key"
+        <!-- Side Tabs -->
+        <div v-if="!leftSiderCollapsed" class="flex border-b border-gray-100 dark:border-gray-800">
+          <button
+            v-for="tab in sideTabs"
+            :key="tab.key"
+            class="flex-1 py-3 flex flex-col items-center gap-1 text-xs transition-colors relative"
+            :class="[
+              activeSidePanel === tab.key
+                ? 'text-indigo-600 dark:text-indigo-400'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            ]"
+            @click="activeSidePanel = tab.key"
+          >
+            <component :is="tab.icon" class="w-5 h-5" />
+            <span>{{ tab.label }}</span>
+            <div
+              v-if="activeSidePanel === tab.key"
+              class="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"
+            ></div>
+          </button>
+        </div>
+
+        <!-- Content -->
+        <NScrollbar v-if="!leftSiderCollapsed" class="flex-1">
+          <!-- Chapters -->
+          <div v-show="activeSidePanel === 'chapters'" class="p-3 space-y-2">
+            <div
+              v-for="volume in projectStore.sortedVolumes"
+              :key="volume.id"
+              class="rounded-xl overflow-hidden"
             >
-              <component :is="tab.icon" class="w-5 h-5" />
-              <span>{{ tab.label }}</span>
-              <div
-                v-if="activeSidePanel === tab.key"
-                class="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"
-              ></div>
-            </button>
-          </div>
-
-          <!-- Content -->
-          <NScrollbar v-if="!leftSiderCollapsed" class="flex-1">
-            <!-- Chapters -->
-            <div v-show="activeSidePanel === 'chapters'" class="p-3 space-y-2">
-              <div
-                v-for="volume in projectStore.sortedVolumes"
-                :key="volume.id"
-                class="rounded-xl overflow-hidden"
+              <button
+                class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
+                @click="toggleVolume(volume.id)"
               >
-                <button
-                  class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                  @click="toggleVolume(volume.id)"
-                >
-                  <div class="flex items-center gap-2">
-                    <ChevronDown
-                      class="w-4 h-4 text-gray-400 transition-transform"
-                      :class="expandedVolumes.has(volume.id) ? '' : '-rotate-90'"
-                    />
-                    <BookOpen class="w-4 h-4 text-indigo-500" />
-                    <span class="font-medium text-sm text-gray-900 dark:text-white">{{ volume.name }}</span>
-                  </div>
+                <div class="flex items-center gap-2">
+                  <ChevronDown
+                    class="w-4 h-4 text-gray-400 transition-transform"
+                    :class="expandedVolumes.has(volume.id) ? '' : '-rotate-90'"
+                  />
+                  <BookOpen class="w-4 h-4 text-indigo-500" />
+                  <span class="font-medium text-sm text-gray-900 dark:text-white">{{ volume.name }}</span>
+                </div>
+                <div class="flex items-center gap-2">
                   <NTag size="small" round :bordered="false" type="info">
                     {{ chaptersByVolume[volume.id]?.length || 0 }}
                   </NTag>
-                </button>
-
-                <div v-if="expandedVolumes.has(volume.id)" class="ml-4 mt-1 space-y-1 pb-2">
-                  <button
-                    v-for="chapter in chaptersByVolume[volume.id]"
-                    :key="chapter.id"
-                    class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
-                    :class="[
-                      projectStore.currentChapterId === chapter.id
-                        ? 'bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700'
-                        : ''
-                    ]"
-                    @click="selectChapter(chapter.id)"
-                  >
-                    <div class="flex items-center gap-2 flex-1 min-w-0">
-                      <span class="text-sm text-gray-600 dark:text-gray-400 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                        {{ chapter.title }}
-                      </span>
-                      <span
-                        class="px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0"
-                        :class="getStatusConfig(chapter.status).textColor + ' bg-opacity-10'"
-                        :style="{ backgroundColor: getStatusConfig(chapter.status).color + '15' }"
-                      >
-                        {{ chapter.wordCount }}{{ t('projectList.words') }}
-                      </span>
-                    </div>
-                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                        @click.stop="openEditChapterDialog(chapter)"
-                      >
-                        <Edit3 class="w-3 h-3 text-gray-400" />
-                      </button>
-                      <button
-                        class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
-                        @click.stop="handleDeleteChapter(chapter.id, $event)"
-                      >
-                        <Trash2 class="w-3 h-3 text-red-400" />
-                      </button>
-                    </div>
-                  </button>
-                  <button
-                    class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                    @click="openCreateChapterDialog"
-                  >
-                    <Plus class="w-4 h-4" />
-                    {{ t('editor.newChapter') }}
-                  </button>
+                  <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                      @click.stop="openEditVolumeDialog(volume)"
+                    >
+                      <Edit3 class="w-3 h-3 text-gray-400" />
+                    </button>
+                    <button
+                      class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
+                      @click.stop="handleDeleteVolume(volume.id, $event)"
+                    >
+                      <Trash2 class="w-3 h-3 text-red-400" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              <button
-                class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                @click="showVolumeDialog = true"
-              >
-                <Plus class="w-4 h-4" />
-                新建卷
               </button>
+
+              <div v-if="expandedVolumes.has(volume.id)" class="ml-4 mt-1 space-y-1 pb-2">
+                <button
+                  v-for="chapter in chaptersByVolume[volume.id]"
+                  :key="chapter.id"
+                  class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
+                  :class="[
+                    projectStore.currentChapterId === chapter.id
+                      ? 'bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700'
+                      : ''
+                  ]"
+                  @click="selectChapter(chapter.id)"
+                >
+                  <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <span class="text-sm text-gray-600 dark:text-gray-400 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                      {{ chapter.title }}
+                    </span>
+                    <span
+                      class="px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0"
+                      :class="getStatusConfig(chapter.status).textColor + ' bg-opacity-10'"
+                      :style="{ backgroundColor: getStatusConfig(chapter.status).color + '15' }"
+                    >
+                      {{ chapter.wordCount }}{{ t('projectList.words') }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                      @click.stop="openEditChapterDialog(chapter)"
+                    >
+                      <Edit3 class="w-3 h-3 text-gray-400" />
+                    </button>
+                    <button
+                      class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
+                      @click.stop="handleDeleteChapter(chapter.id, $event)"
+                    >
+                      <Trash2 class="w-3 h-3 text-red-400" />
+                    </button>
+                  </div>
+                </button>
+                <button
+                  class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  @click="openCreateChapterDialog"
+                >
+                  <Plus class="w-4 h-4" />
+                  {{ t('editor.newChapter') }}
+                </button>
+              </div>
             </div>
 
-            <!-- Characters -->
-            <div v-show="activeSidePanel === 'characters'" class="p-3">
-              <CharacterPanel />
-            </div>
-
-            <!-- World -->
-            <div v-show="activeSidePanel === 'world'" class="p-3">
-              <WorldPanel />
-            </div>
-
-            <!-- Foreshadows -->
-            <div v-show="activeSidePanel === 'foreshadows'" class="p-3">
-              <ForeshadowPanel />
-            </div>
-          </NScrollbar>
-
-          <!-- Collapsed icons -->
-          <div v-if="leftSiderCollapsed" class="flex-1 flex flex-col items-center py-3 gap-2">
             <button
-              v-for="tab in sideTabs"
-              :key="tab.key"
-              class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors"
-              :class="[
-                activeSidePanel === tab.key
-                  ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300'
-              ]"
-              @click="activeSidePanel = tab.key; leftSiderCollapsed = false"
+              class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+              @click="openCreateVolumeDialog"
             >
-              <component :is="tab.icon" class="w-5 h-5" />
+              <Plus class="w-4 h-4" />
+              新建卷
             </button>
           </div>
+
+          <!-- Characters -->
+          <div v-show="activeSidePanel === 'characters'" class="p-3">
+            <CharacterPanel />
+          </div>
+
+          <!-- World -->
+          <div v-show="activeSidePanel === 'world'" class="p-3">
+            <WorldPanel />
+          </div>
+
+          <!-- Foreshadows -->
+          <div v-show="activeSidePanel === 'foreshadows'" class="p-3">
+            <ForeshadowPanel />
+          </div>
+        </NScrollbar>
+
+        <!-- Collapsed icons -->
+        <div v-if="leftSiderCollapsed" class="flex-1 flex flex-col items-center py-3 gap-2">
+          <button
+            v-for="tab in sideTabs"
+            :key="tab.key"
+            class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors"
+            :class="[
+              activeSidePanel === tab.key
+                ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg'
+                : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300'
+            ]"
+            @click="activeSidePanel = tab.key; leftSiderCollapsed = false"
+          >
+            <component :is="tab.icon" class="w-5 h-5" />
+          </button>
         </div>
+      </div>
 
-        <!-- Main Content: Editor -->
-        <NLayoutContent class="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-900/50">
-          <EditorCore />
-        </NLayoutContent>
+      <!-- Main Content: Editor -->
+      <div class="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-900/50">
+        <EditorCore />
+      </div>
 
-        <!-- Right Sidebar: AI Panel -->
+      <!-- Right Sidebar: AI Panel -->
         <div
           class="h-full bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 flex flex-col transition-all duration-300"
           :class="rightSiderCollapsed ? 'w-12' : 'w-80'"
@@ -429,8 +492,7 @@ function getStatusConfig(status: string) {
           </div>
         </div>
       </div>
-    </NLayoutContent>
-  </NLayout>
+    </NLayout>
 
   <!-- Chapter Dialog -->
   <NModal
@@ -454,6 +516,7 @@ function getStatusConfig(status: string) {
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">章节标题</label>
         <NInput
+          ref="chapterTitleInputRef"
           v-model:value="newChapterTitle"
           placeholder="输入章节标题"
         />
@@ -465,15 +528,16 @@ function getStatusConfig(status: string) {
   <NModal
     v-model:show="showVolumeDialog"
     preset="dialog"
-    title="新建卷"
+    :title="volumeDialogMode === 'create' ? '新建卷' : '编辑卷'"
     positive-text="确认"
     negative-text="取消"
     @positive-click="handleCreateVolume"
-    @negative-click="showVolumeDialog = false"
+    @negative-click="showVolumeDialog = false; newVolumeName = ''; editingVolume = null"
   >
     <div class="py-4">
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">卷名</label>
       <NInput
+        ref="volumeNameInputRef"
         v-model:value="newVolumeName"
         placeholder="输入卷名，例如：第一卷"
       />

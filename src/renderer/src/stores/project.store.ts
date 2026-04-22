@@ -84,14 +84,14 @@ export const useProjectStore = defineStore('project', () => {
   async function saveCurrentProject() {
     if (!currentProject.value) return;
     
-    const projectToSave: Project = {
+    const projectToSave: Project = JSON.parse(JSON.stringify({
       ...currentProject.value,
       volumes: volumes.value,
       chapters: chapters.value,
       characters: characters.value,
       worldSchema: worldSchema.value,
       foreshadows: foreshadows.value,
-    };
+    }));
     
     try {
       await window.electronAPI.saveProject(projectToSave);
@@ -390,6 +390,24 @@ export const useProjectStore = defineStore('project', () => {
     volumes.value.push(volume);
   }
 
+  async function updateVolume(id: string, updates: Partial<Volume>) {
+    const index = volumes.value.findIndex(v => v.id === id);
+    if (index !== -1) {
+      volumes.value[index] = { ...volumes.value[index], ...updates };
+      await saveCurrentProject();
+    }
+  }
+
+  async function deleteVolume(id: string) {
+    const index = volumes.value.findIndex(v => v.id === id);
+    if (index !== -1) {
+      volumes.value.splice(index, 1);
+      // Also delete all chapters belonging to this volume
+      chapters.value = chapters.value.filter(c => c.volumeId !== id);
+      await saveCurrentProject();
+    }
+  }
+
   function setLoading(loading: boolean) {
     isLoading.value = loading;
   }
@@ -424,6 +442,8 @@ export const useProjectStore = defineStore('project', () => {
     updateChapter,
     setVolumes,
     addVolume,
+    updateVolume,
+    deleteVolume,
     setLoading,
     // Chapter operations
     setCurrentChapter,
