@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { Settings, PenTool, BookOpen } from 'lucide-vue-next';
+import { Settings, Home, BookOpen } from 'lucide-vue-next';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -11,7 +11,7 @@ const router = useRouter();
 const currentRoute = computed(() => route.path);
 
 const navItems = [
-  { path: '/', label: t('nav.writing'), icon: PenTool },
+  { path: '/home', label: '首页', icon: Home },
   { path: '/settings', label: t('nav.settings'), icon: Settings },
 ];
 
@@ -20,7 +20,7 @@ function navigate(path: string) {
 }
 
 function goToHome() {
-  router.push('/');
+  router.push('/home');
 }
 </script>
 
@@ -52,7 +52,7 @@ function goToHome() {
         :key="item.path"
         class="relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
         :class="[
-          currentRoute === item.path || (item.path === '/' && currentRoute.startsWith('/project'))
+          currentRoute === item.path
             ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
             : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
         ]"
@@ -62,7 +62,7 @@ function goToHome() {
           :is="item.icon"
           class="w-4 h-4"
           :class="[
-            currentRoute === item.path || (item.path === '/' && currentRoute.startsWith('/project'))
+            currentRoute === item.path
               ? 'text-indigo-600 dark:text-indigo-400'
               : ''
           ]"

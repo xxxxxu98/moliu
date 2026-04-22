@@ -7,9 +7,13 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     {
-      path: '/',
+      path: '/home',
       name: 'home',
       component: HomePage,
+    },
+    {
+      path: '/',
+      redirect: '/home',
     },
     {
       path: '/project/:id',

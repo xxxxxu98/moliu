@@ -39,6 +39,9 @@ const editor = useEditor({
       heading: {
         levels: [1, 2, 3],
       },
+      // 禁用 StarterKit 自带的扩展，使用单独配置的版本
+      link: false,
+      underline: false,
     }),
     Underline,
     Highlight,

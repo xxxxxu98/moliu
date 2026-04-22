@@ -72,7 +72,7 @@ async function loadProject(id: string) {
   } catch (error) {
     console.error('Failed to load project:', error);
     message.error('加载项目失败');
-    router.push('/');
+    router.push('/home');
   } finally {
     isLoadingProject.value = false;
   }
