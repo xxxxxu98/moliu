@@ -27,6 +27,7 @@ export interface Settings {
   streamOutput: boolean;
   fontSize: number;
   lineHeight: number;
+  defaultModel: string;
 }
 
 const defaultSettings: Settings = {
@@ -39,6 +40,7 @@ const defaultSettings: Settings = {
   streamOutput: true,
   fontSize: 16,
   lineHeight: 1.8,
+  defaultModel: 'openai-gpt-4o',
 };
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -52,6 +54,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const streamOutput = ref(defaultSettings.streamOutput);
   const fontSize = ref(defaultSettings.fontSize);
   const lineHeight = ref(defaultSettings.lineHeight);
+  const defaultModel = ref(defaultSettings.defaultModel);
   const aiProviders = ref<AIProvider[]>([]);
   const isInitialized = ref(false);
 
@@ -85,11 +88,12 @@ export const useSettingsStore = defineStore('settings', () => {
         accentColor.value = settings.accentColor || defaultSettings.accentColor;
         locale.value = settings.locale || defaultSettings.locale;
         contentLanguage.value = settings.contentLanguage || defaultSettings.contentLanguage;
-        autoSave.value = settings.autoSave ?? defaultSettings.autoSave;
-        autoSaveInterval.value = settings.autoSaveInterval || defaultSettings.autoSaveInterval;
-        streamOutput.value = settings.streamOutput ?? defaultSettings.streamOutput;
-        fontSize.value = settings.fontSize || defaultSettings.fontSize;
-        lineHeight.value = settings.lineHeight || defaultSettings.lineHeight;
+      autoSave.value = settings.autoSave ?? defaultSettings.autoSave;
+      autoSaveInterval.value = settings.autoSaveInterval || defaultSettings.autoSaveInterval;
+      streamOutput.value = settings.streamOutput ?? defaultSettings.streamOutput;
+      fontSize.value = settings.fontSize || defaultSettings.fontSize;
+      lineHeight.value = settings.lineHeight || defaultSettings.lineHeight;
+      defaultModel.value = settings.defaultModel || defaultSettings.defaultModel;
       }
 
       // Load AI providers
@@ -141,6 +145,7 @@ export const useSettingsStore = defineStore('settings', () => {
       streamOutput: streamOutput.value,
       fontSize: fontSize.value,
       lineHeight: lineHeight.value,
+      defaultModel: defaultModel.value,
     };
 
     try {
@@ -207,6 +212,11 @@ export const useSettingsStore = defineStore('settings', () => {
     saveAllSettings();
   }
 
+  function setDefaultModel(modelId: string) {
+    defaultModel.value = modelId;
+    saveAllSettings();
+  }
+
   function applyTheme(mode: ThemeMode) {
     const root = document.documentElement;
     root.classList.remove('light', 'dark');
@@ -265,6 +275,7 @@ export const useSettingsStore = defineStore('settings', () => {
     streamOutput,
     fontSize,
     lineHeight,
+    defaultModel,
     aiProviders,
     isInitialized,
     // Computed
@@ -280,6 +291,7 @@ export const useSettingsStore = defineStore('settings', () => {
     setStreamOutput,
     setFontSize,
     setLineHeight,
+    setDefaultModel,
     addAIProvider,
     updateAIProvider,
     removeAIProvider,

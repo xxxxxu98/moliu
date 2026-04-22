@@ -92,6 +92,10 @@ async function testConnection(provider: AIProvider) {
 function toggleProvider(provider: AIProvider) {
   settingsStore.updateAIProvider(provider.id, { enabled: !provider.enabled });
 }
+
+function handleDefaultModelChange(modelId: string) {
+  settingsStore.setDefaultModel(modelId);
+}
 </script>
 
 <template>
@@ -261,10 +265,11 @@ function toggleProvider(provider: AIProvider) {
             :key="model.id"
             class="p-4 rounded-xl border-2 text-left transition-all duration-200 hover:scale-[1.02]"
             :class="[
-              model.id === 'openai-gpt-4o'
+              model.id === settingsStore.defaultModel
                 ? 'border-indigo-500 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30'
                 : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700'
             ]"
+            @click="handleDefaultModelChange(model.id)"
           >
             <div class="flex items-center justify-between mb-2">
               <span class="font-semibold text-gray-900 dark:text-white">{{ model.name }}</span>
