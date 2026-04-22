@@ -18,15 +18,20 @@ const tabs = [
 </script>
 
 <template>
-  <div class="h-full flex flex-col bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950">
+  <div class="h-full flex flex-col">
+    <!-- Background Gradient Layer -->
+    <div class="fixed inset-0 bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950 pointer-events-none -z-10"></div>
+
     <!-- Header -->
     <div class="flex-shrink-0 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-700/50">
       <AppHeader />
     </div>
 
-    <!-- Scrollable Content -->
-    <div class="flex-1 overflow-y-auto">
-      <div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Main Content Container -->
+    <div class="flex-1 min-h-0 flex flex-col relative">
+      <!-- Scrollable Content Area -->
+      <div class="flex-1 overflow-y-auto overscroll-contain">
+        <div class="max-w-7xl mx-auto px-6 py-8">
         <!-- Hero Section -->
         <div class="text-center mb-12">
           <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-medium mb-6">
@@ -86,15 +91,16 @@ const tabs = [
             <InspirationPanel />
           </div>
         </div>
-      </div>
-
-      <!-- Decorative Elements -->
-      <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div class="absolute top-20 left-10 w-72 h-72 bg-indigo-200/30 dark:bg-indigo-500/10 rounded-full blur-3xl"></div>
-        <div class="absolute top-40 right-20 w-96 h-96 bg-purple-200/20 dark:bg-purple-500/10 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-20 left-1/3 w-80 h-80 bg-cyan-200/20 dark:bg-cyan-500/10 rounded-full blur-3xl"></div>
+        </div>
       </div>
     </div>
+  </div>
+
+  <!-- Decorative Elements (fixed position, doesn't scroll) -->
+  <div class="fixed top-0 left-0 right-0 bottom-0 pointer-events-none overflow-hidden -z-10">
+    <div class="absolute top-20 left-10 w-72 h-72 bg-indigo-200/30 dark:bg-indigo-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute top-40 right-20 w-96 h-96 bg-purple-200/20 dark:bg-purple-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-20 left-1/3 w-80 h-80 bg-cyan-200/20 dark:bg-cyan-500/10 rounded-full blur-3xl"></div>
   </div>
 </template>
 
