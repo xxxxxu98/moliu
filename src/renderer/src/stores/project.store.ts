@@ -112,6 +112,26 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
+  async function updateProjectInfo(id: string, updates: Partial<Project>) {
+    try {
+      const result = await window.electronAPI.updateProject(id, updates) as Project | null;
+      if (result) {
+        const index = projects.value.findIndex(p => p.id === id);
+        if (index >= 0) {
+          projects.value[index] = result;
+        }
+        if (currentProject.value?.id === id) {
+          currentProject.value = result;
+        }
+        return result;
+      }
+      return null;
+    } catch (error) {
+      console.error('Failed to update project:', error);
+      return null;
+    }
+  }
+
   async function deleteProject(id: string) {
     try {
       await window.electronAPI.deleteProject(id);
@@ -187,6 +207,7 @@ export const useProjectStore = defineStore('project', () => {
     loadProject,
     saveCurrentProject,
     createProject,
+    updateProjectInfo,
     deleteProject,
     setCurrentProject,
     setProjects,

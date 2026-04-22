@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, h } from 'vue';
 import { useRouter } from 'vue-router';
-import { Plus, Clock, FileText, MoreHorizontal, Feather, BookOpen, Filter, ArrowUpDown } from 'lucide-vue-next';
+import { Plus, Clock, FileText, MoreHorizontal, Feather, BookOpen, Filter, ArrowUpDown, Pencil, Trash2, ExternalLink } from 'lucide-vue-next';
+import { NDropdown, NModal, NCard, NInput, NButton, NPopconfirm } from 'naive-ui';
 import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
 import type { Project } from '@/types/project';
@@ -17,6 +18,111 @@ const emit = defineEmits<{
 const searchQuery = ref('');
 const statusFilter = ref<Project['status'] | 'all'>('all');
 const sortBy = ref<'updated' | 'created' | 'name' | 'wordCount'>('updated');
+
+// Add this for dropdown menu
+const activeMenuProject = ref<string | null>(null);
+
+// Rename modal state
+const showRenameModal = ref(false);
+const renameProjectId = ref<string | null>(null);
+const renameProjectName = ref('');
+
+// Delete confirmation
+const projectToDelete = ref<Project | null>(null);
+const showDeleteModal = ref(false);
+
+const menuOptions = computed(() => [
+  {
+    label: () => h('div', { class: 'flex items-center gap-2' }, [
+      h(ExternalLink, { class: 'w-4 h-4' }),
+      '打开项目',
+    ]),
+    key: 'open',
+  },
+  {
+    label: () => h('div', { class: 'flex items-center gap-2' }, [
+      h(Pencil, { class: 'w-4 h-4' }),
+      '重命名',
+    ]),
+    key: 'rename',
+  },
+  {
+    type: 'divider',
+    key: 'd1',
+  },
+  {
+    label: () => h('div', { class: 'flex items-center gap-2 text-red-500' }, [
+      h(Trash2, { class: 'w-4 h-4' }),
+      '删除项目',
+    ]),
+    key: 'delete',
+  },
+]);
+
+function handleMenuSelect(key: string, project: Project) {
+  activeMenuProject.value = null;
+  
+  switch (key) {
+    case 'open':
+      openProject(project);
+      break;
+    case 'rename':
+      startRename(project);
+      break;
+    case 'delete':
+      confirmDelete(project);
+      break;
+  }
+}
+
+function toggleMenu(projectId: string, event: Event) {
+  event.stopPropagation();
+  activeMenuProject.value = activeMenuProject.value === projectId ? null : projectId;
+}
+
+// Rename functions
+function startRename(project: Project) {
+  renameProjectId.value = project.id;
+  renameProjectName.value = project.name;
+  showRenameModal.value = true;
+}
+
+async function handleRename() {
+  if (!renameProjectId.value || !renameProjectName.value.trim()) return;
+  
+  await projectStore.updateProjectInfo(renameProjectId.value, {
+    name: renameProjectName.value.trim(),
+  });
+  
+  showRenameModal.value = false;
+  renameProjectId.value = null;
+  renameProjectName.value = '';
+}
+
+function cancelRename() {
+  showRenameModal.value = false;
+  renameProjectId.value = null;
+  renameProjectName.value = '';
+}
+
+// Delete functions
+function confirmDelete(project: Project) {
+  projectToDelete.value = project;
+  showDeleteModal.value = true;
+}
+
+async function handleDelete() {
+  if (!projectToDelete.value) return;
+  
+  await projectStore.deleteProject(projectToDelete.value.id);
+  projectToDelete.value = null;
+  showDeleteModal.value = false;
+}
+
+function cancelDelete() {
+  projectToDelete.value = null;
+  showDeleteModal.value = false;
+}
 
 // Filter and sort projects
 const filteredProjects = computed(() => {
@@ -188,61 +294,88 @@ function getCardGradient(index: number) {
 
     <!-- Recent Projects -->
     <div v-if="recentProjects.length > 0 && statusFilter === 'all' && !searchQuery">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="w-1 h-6 rounded-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('projectList.recentEdits') }}</h3>
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <div class="w-1 h-6 rounded-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('projectList.recentEdits') }}</h3>
+        </div>
+        <span class="text-sm text-gray-400 dark:text-gray-500">最近 3 个项目</span>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div
           v-for="(project, index) in recentProjects"
           :key="project.id"
-          class="group relative bg-gradient-to-br rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
-          :class="getCardGradient(index)"
+          class="group relative bg-white dark:bg-gray-800 rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border border-gray-100 dark:border-gray-700/50 overflow-hidden"
+          :style="{
+            '--accent-color': getStatusConfig(project.status).gradient.split(' ')[1]
+          }"
           @click="openProject(project)"
         >
-          <!-- Gradient border effect -->
-          <div class="absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" 
-               :class="'bg-gradient-to-br ' + getStatusConfig(project.status).gradient + ' blur-xl opacity-30'"></div>
+          <!-- Top accent line -->
+          <div 
+            class="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
+            :class="'bg-gradient-to-r ' + getStatusConfig(project.status).gradient"
+          ></div>
+          
+          <!-- Background decoration -->
+          <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-5 group-hover:opacity-10 transition-opacity duration-300"
+               :class="'bg-gradient-to-br ' + getStatusConfig(project.status).gradient">
+          </div>
           
           <div class="relative">
             <!-- Header -->
-            <div class="flex justify-between items-start mb-4">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                  <BookOpen class="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
-                  <h4 class="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            <div class="flex justify-between items-start mb-5">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-400/20 dark:to-purple-400/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <BookOpen class="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <h4 class="font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-1">
                     {{ project.name }}
                   </h4>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                        :class="getStatusConfig(project.status).color + '/10 text-' + getStatusConfig(project.status).color.replace('bg-', '')">
+                    {{ getStatusConfig(project.status).text }}
+                  </span>
                 </div>
-                <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                  {{ project.description || t('projectList.noDescription') }}
-                </p>
               </div>
-              <button class="p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-gray-700/50 transition-colors opacity-0 group-hover:opacity-100">
-                <MoreHorizontal class="w-4 h-4 text-gray-400" />
-              </button>
+              <NDropdown
+                :show="activeMenuProject === project.id"
+                :options="menuOptions"
+                @select="(key: string) => handleMenuSelect(key, project)"
+                @clickoutside="activeMenuProject = null"
+                placement="bottom-end"
+                trigger="manual"
+              >
+                <button 
+                  class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100"
+                  @click="toggleMenu(project.id, $event)"
+                >
+                  <MoreHorizontal class="w-5 h-5 text-gray-400" />
+                </button>
+              </NDropdown>
             </div>
 
-            <!-- Stats -->
-            <div class="flex items-center justify-between pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+            <!-- Description -->
+            <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-5 min-h-[2.5rem]">
+              {{ project.description || t('projectList.noDescription') }}
+            </p>
+
+            <!-- Stats Row -->
+            <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700/50">
               <div class="flex items-center gap-4">
-                <span class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
-                  <FileText class="w-4 h-4" />
-                  {{ formatWordCount(project.wordCount) }}
+                <span class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                  <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
+                    <FileText class="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                  </div>
+                  <span class="font-medium">{{ formatWordCount(project.wordCount) }}</span>
                 </span>
               </div>
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                    :class="getStatusConfig(project.status).color + ' text-white'">
-                <span class="w-1.5 h-1.5 rounded-full bg-white/80"></span>
-                {{ getStatusConfig(project.status).text }}
+              <span class="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+                <Clock class="w-3.5 h-3.5" />
+                {{ formatDate(project.updatedAt) }}
               </span>
-            </div>
-
-            <!-- Footer -->
-            <div class="flex items-center gap-1.5 mt-3 text-xs text-gray-400 dark:text-gray-500">
-              <Clock class="w-3 h-3" />
-              {{ formatDate(project.updatedAt) }}
             </div>
           </div>
         </div>
@@ -303,4 +436,86 @@ function getCardGradient(index: number) {
       </div>
     </div>
   </div>
+
+  <!-- Rename Modal -->
+  <NModal
+    v-model:show="showRenameModal"
+    preset="card"
+    title="重命名项目"
+    class="max-w-md w-full"
+    :bordered="false"
+  >
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          项目名称
+        </label>
+        <NInput
+          v-model:value="renameProjectName"
+          placeholder="输入新名称"
+          @keydown.enter="handleRename"
+        />
+      </div>
+    </div>
+    <template #footer>
+      <div class="flex justify-end gap-3">
+        <button 
+          @click="cancelRename"
+          class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+        >
+          取消
+        </button>
+        <button 
+          @click="handleRename"
+          :disabled="!renameProjectName.trim()"
+          class="px-4 py-2 text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          确定
+        </button>
+      </div>
+    </template>
+  </NModal>
+
+  <!-- Delete Confirmation Modal -->
+  <NModal
+    v-model:show="showDeleteModal"
+    preset="card"
+    title="删除项目"
+    class="max-w-md w-full"
+    :bordered="false"
+    @after-leave="projectToDelete = null"
+  >
+    <div class="space-y-4">
+      <div class="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
+        <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
+          <Trash2 class="w-5 h-5 text-red-500" />
+        </div>
+        <div>
+          <h4 class="font-medium text-gray-900 dark:text-white mb-1">确定要删除此项目吗？</h4>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            项目名称：<span class="font-medium">{{ projectToDelete?.name }}</span>
+          </p>
+          <p class="text-sm text-red-500 dark:text-red-400 mt-2">
+            此操作不可撤销，所有项目数据将被永久删除。
+          </p>
+        </div>
+      </div>
+    </div>
+    <template #footer>
+      <div class="flex justify-end gap-3">
+        <button 
+          @click="cancelDelete"
+          class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+        >
+          取消
+        </button>
+        <button 
+          @click="handleDelete"
+          class="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg shadow-md hover:shadow-lg transition-all"
+        >
+          删除
+        </button>
+      </div>
+    </template>
+  </NModal>
 </template>

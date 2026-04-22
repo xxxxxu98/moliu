@@ -5,6 +5,7 @@ export interface ElectronAPI {
   getProject: (id: string) => Promise<unknown>;
   listProjects: () => Promise<unknown>;
   saveProject: (project: unknown) => Promise<unknown>;
+  updateProject: (id: string, updates: unknown) => Promise<unknown>;
   createProject: (data: unknown) => Promise<unknown>;
   deleteProject: (id: string) => Promise<unknown>;
 
@@ -45,6 +46,7 @@ const api: ElectronAPI = {
   getProject: (id: string) => ipcRenderer.invoke('project:get', id),
   listProjects: () => ipcRenderer.invoke('project:list'),
   saveProject: (project: unknown) => ipcRenderer.invoke('project:save', project),
+  updateProject: (id: string, updates: unknown) => ipcRenderer.invoke('project:update', id, updates),
   createProject: (data: unknown) => ipcRenderer.invoke('project:create', data),
   deleteProject: (id: string) => ipcRenderer.invoke('project:delete', id),
 

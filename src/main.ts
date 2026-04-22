@@ -179,6 +179,21 @@ ipcMain.handle('project:save', (_event, project: Project) => {
   return { success: true };
 });
 
+ipcMain.handle('project:update', (_event, id: string, updates: Partial<Project>) => {
+  const projects = projectStore.get('projects') as Project[];
+  const index = projects.findIndex(p => p.id === id);
+  if (index >= 0) {
+    projects[index] = {
+      ...projects[index],
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    projectStore.set('projects', projects);
+    return projects[index];
+  }
+  return null;
+});
+
 ipcMain.handle('project:delete', (_event, id: string) => {
   const projects = projectStore.get('projects') as Project[];
   const filtered = projects.filter(p => p.id !== id);
