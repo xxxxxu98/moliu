@@ -44,7 +44,7 @@
 |------|----------|------|
 | **桌面框架** | Electron 41 + Electron Forge | 跨平台桌面应用 |
 | **前端框架** | Vue 3 + Composition API | UI 渲染 |
-| **编辑器** | TipTap / Milkdown | 富文本 + AI建议渲染 |
+| **编辑器** | TipTap | 富文本 + AI建议渲染 |
 | **构建工具** | Vite 5 | 主进程/预加载/渲染进程统一构建 |
 | **向量数据库** | LanceDB | 嵌入式，无需独立服务 |
 | **LLM 调用** | 统一封装层 | 支持 OpenAI / Anthropic / Google 等标准接口 |
@@ -1251,7 +1251,7 @@ declare global {
 
 ### 6.4 状态管理规范
 
-使用 **Zustand** 进行前端状态管理：
+使用 **Pinia** 进行前端状态管理（Vue 3 官方推荐）：
 
 | Store | 职责 |
 |-------|------|
@@ -1262,8 +1262,8 @@ declare global {
 
 ```typescript
 // src/renderer/stores/project.store.ts
-import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
 
 interface ProjectState {
   currentProject: Project | null;
@@ -1275,52 +1275,66 @@ interface ProjectState {
   updateChapter: (id: string, updates: Partial<Chapter>) => void;
 }
 
-export const useProjectStore = create<ProjectState>()(
-  immer((set) => ({
-    currentProject: null,
-    chapters: [],
-    volumes: [],
-    wordCount: 0,
-    setProject: (project) =>
-      set((state) => {
-        state.currentProject = project;
-      }),
-    addChapter: (chapter) =>
-      set((state) => {
-        state.chapters.push(chapter);
-      }),
-    updateChapter: (id, updates) =>
-      set((state) => {
-        const idx = state.chapters.findIndex((c) => c.id === id);
-        if (idx !== -1) Object.assign(state.chapters[idx], updates);
-      }),
-  }))
-);
+export const useProjectStore = defineStore('project', () => {
+  // State
+  const currentProject = ref<Project | null>(null);
+  const chapters = ref<Chapter[]>([]);
+  const volumes = ref<Volume[]>([]);
+  const wordCount = ref(0);
+
+  // Actions
+  function setProject(project: Project) {
+    currentProject.value = project;
+  }
+
+  function addChapter(chapter: Chapter) {
+    chapters.value.push(chapter);
+  }
+
+  function updateChapter(id: string, updates: Partial<Chapter>) {
+    const idx = chapters.value.findIndex((c) => c.id === id);
+    if (idx !== -1) {
+      chapters.value[idx] = { ...chapters.value[idx], ...updates };
+    }
+  }
+
+  return {
+    currentProject,
+    chapters,
+    volumes,
+    wordCount,
+    setProject,
+    addChapter,
+    updateChapter,
+  };
+});
 ```
 
-### 6.5 React 组件规范
+### 6.5 Vue 组件规范
 
 1. **组件拆分**：优先拆分为小而专注的组件，单个组件不超过 300 行
-2. **Hooks 提取**：复杂逻辑提取到自定义 Hooks 中
+2. **Composables 提取**：复杂逻辑提取到自定义 Composables 中
 3. **Props 类型**：所有组件 Props 必须有 TypeScript 接口
-4. **cleanup 机制**：使用 IPC 事件监听时，必须在 `useEffect` 的 cleanup 函数中取消订阅
+4. **cleanup 机制**：使用 IPC 事件监听时，必须在 `onUnmounted` 或 `onBeforeUnmount` 中取消订阅
 
 ```typescript
 // Good
-useEffect(() => {
+import { onMounted, onUnmounted } from 'vue';
+
+onMounted(() => {
   const cleanup = window.electronAPI.onProjectUpdate((data) => {
     setProject(data);
   });
-  return cleanup;
-}, []);
+  onUnmounted(() => cleanup());
+});
 
 // Bad
-useEffect(() => {
+onMounted(() => {
   window.electronAPI.onProjectUpdate((data) => {
     setProject(data);
   });
   // Missing cleanup!
-}, []);
+});
 ```
 
 ### 6.6 命名规范
@@ -1614,7 +1628,7 @@ export function useTheme() {
 
 ---
 
-### 7.3 必要的环境变量### 7.3 必要的环境变量
+### 7.3 必要的环境变量
 
 ```bash
 # .env.example
@@ -1691,7 +1705,7 @@ new FusesPlugin({
 - [ ] **灵感推荐系统**（L1/L2/L3 三级卡片 + 刷新机制）
 - [ ] **大纲生成流程**（提示词 → 多套大纲 → 选择 → 创建项目）
 - [ ] **设置页**（主题色 + 语言 + API Key 配置 + 连接测试）
-- [ ] 富文本编辑器核心（Slate.js / ProseMirror）
+- [ ] 富文本编辑器核心（TipTap）
 - [ ] 单厂商 AI 接入（OpenAI / Claude）
 - [ ] 章节管理（创建、编辑、保存）
 - [ ] 角色 / 地点基础档案
@@ -1728,7 +1742,7 @@ new FusesPlugin({
 |------|------|
 | Electron 官方文档 | https://www.electronjs.org/zh/docs/latest/ |
 | Electron Forge | https://www.electronforge.io |
-| React 官方文档 | https://react.dev |
+| Vue 3 官方文档 | https://vuejs.org |
 | Vite | https://vitejs.dev |
 | LanceDB | https://lancedb.com |
 | ProseMirror | https://prosemirror.net |
@@ -1736,7 +1750,7 @@ new FusesPlugin({
 | LangChain | https://python.langchain.com |
 | LlamaIndex | https://www.llamaindex.ai |
 | Electron 安全最佳实践 | https://www.electronjs.org/zh/docs/latest/tutorial/security |
-| Electron + React 最佳实践 | `electron-best-practices` skill |
+| Vue + Electron 最佳实践 | `electron-best-practices` skill |
 
 ---
 
