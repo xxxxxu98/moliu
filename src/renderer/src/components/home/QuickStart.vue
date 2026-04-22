@@ -4,6 +4,7 @@ import { Sparkles, ArrowRight, Check, Wand2 } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import type { GeneratedOutline } from '@/types/inspiration';
+import { timing } from '@/config/timing';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -27,7 +28,7 @@ async function generateOutlines() {
   isGenerating.value = true;
   selectedOutline.value = null;
 
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, timing.mockApi.verySlow));
 
   generatedOutlines.value = [
     {
@@ -77,7 +78,7 @@ async function createProject() {
   if (!selectedOutline.value) return;
 
   isGenerating.value = true;
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, timing.mockApi.standard));
   isGenerating.value = false;
 
   router.push(`/project/${selectedOutline.value.id}`);

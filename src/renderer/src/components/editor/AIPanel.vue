@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { NScrollbar, NButton, NInput, NSpin, NTabs, NTabPane, NCard, NTag } from 'naive-ui';
 import { Sparkles, RefreshCw, Copy, Check, Wand2, History, Settings, MessageSquare, Lightbulb, Database } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
+import { timing } from '@/config/timing';
 
 const { t } = useI18n();
 
@@ -27,7 +28,7 @@ const tabOptions = computed(() => [
 async function generateContinue() {
   isGenerating.value = true;
   showResult.value = false;
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  await new Promise(resolve => setTimeout(resolve, timing.mockApi.verySlow));
 
   generatedText.value = `就在这时，一道耀眼的光芒从天际划过，照亮了整个山谷。
 

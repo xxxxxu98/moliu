@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { NButton, NInput, NSwitch, NTag, NModal, NForm, NFormItem, NPopconfirm, useMessage } from 'naive-ui';
-import { Plus, Trash2, TestTube, Check, X, Key, Edit2, Shield, Zap } from 'lucide-vue-next';
+import { Plus, Trash2, TestTube, Check, X, Key, Edit2, Shield, Zap, AlertCircle } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useSettingsStore, type AIProvider } from '@/stores/settings.store';
+import { providerNameMap, defaultProviders, type ProviderType } from '@/config/ai-providers';
 
 const { t } = useI18n();
 const message = useMessage();
@@ -12,14 +13,38 @@ const settingsStore = useSettingsStore();
 const showAddModal = ref(false);
 const editingProvider = ref<AIProvider | null>(null);
 
-const providerOptions = [
-  { label: 'OpenAI', value: 'openai' },
-  { label: 'Anthropic (Claude)', value: 'anthropic' },
-  { label: 'Google (Gemini)', value: 'google' },
-  { label: 'Moonshot (Kimi)', value: 'moonshot' },
-  { label: 'DeepSeek', value: 'deepseek' },
-  { label: 'Ollama (Local)', value: 'ollama' },
-];
+const providerOptions = defaultProviders.map(p => ({
+  label: providerNameMap[p.provider],
+  value: p.provider,
+}));
+
+const availableModels = computed(() => {
+  const models: Array<{ id: string; name: string; provider: string; providerName: string }> = [];
+  
+  settingsStore.aiProviders
+    .filter(p => p.enabled && p.apiKey)
+    .forEach(provider => {
+      if (provider.models && provider.models.length > 0) {
+        provider.models.forEach(model => {
+          models.push({
+            id: `${provider.id}:${model}`,
+            name: model,
+            provider: provider.provider,
+            providerName: providerNameMap[provider.provider] || provider.provider,
+          });
+        });
+      } else {
+        models.push({
+          id: `${provider.id}:default`,
+          name: t('settings.aiProviders.defaultModelOption'),
+          provider: provider.provider,
+          providerName: providerNameMap[provider.provider] || provider.provider,
+        });
+      }
+    });
+  
+  return models;
+});
 
 function maskApiKey(key: string): string {
   if (!key) return t('settings.aiProviders.notSet');
@@ -264,13 +289,20 @@ function handleDefaultModelChange(modelId: string) {
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <!-- No providers configured -->
+        <div
+          v-if="availableModels.length === 0"
+          class="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-gray-50 dark:bg-gray-900/50 text-center"
+        >
+          <AlertCircle class="w-10 h-10 text-gray-400 mb-3" />
+          <p class="text-gray-500 dark:text-gray-400 mb-2">{{ t('settings.aiProviders.noModelsAvailable') }}</p>
+          <p class="text-sm text-gray-400 dark:text-gray-500">{{ t('settings.aiProviders.noModelsHint') }}</p>
+        </div>
+
+        <!-- Model selection grid -->
+        <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <button
-            v-for="model in [
-              { id: 'openai-gpt-4o', name: 'GPT-4o', provider: 'OpenAI', desc: t('settings.aiProviders.models.gpt4o') },
-              { id: 'anthropic-claude-sonnet', name: 'Claude Sonnet 4', provider: 'Anthropic', desc: t('settings.aiProviders.models.claudeSonnet') },
-              { id: 'google-gemini-pro', name: 'Gemini 1.5 Pro', provider: 'Google', desc: t('settings.aiProviders.models.geminiPro') },
-            ]"
+            v-for="model in availableModels"
             :key="model.id"
             class="p-4 rounded-xl border-2 text-left transition-all duration-200 hover:scale-[1.02]"
             :class="[
@@ -282,9 +314,9 @@ function handleDefaultModelChange(modelId: string) {
           >
             <div class="flex items-center justify-between mb-2">
               <span class="font-semibold text-gray-900 dark:text-white">{{ model.name }}</span>
-              <span class="text-xs text-gray-500 dark:text-gray-400">{{ model.provider }}</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">{{ model.providerName }}</span>
             </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400">{{ model.desc }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ model.provider }}</p>
           </button>
         </div>
       </div>

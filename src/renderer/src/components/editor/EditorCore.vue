@@ -8,6 +8,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
 import CharacterCount from '@tiptap/extension-character-count';
 import { NScrollbar, NButton, NTooltip } from 'naive-ui';
+import { timing } from '@/config/timing';
 import {
   Bold,
   Italic,
@@ -87,7 +88,7 @@ function setLink() {
 
 async function saveChapter() {
   isSaving.value = true;
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, timing.animation.medium));
   isSaving.value = false;
   isSaved.value = true;
 }

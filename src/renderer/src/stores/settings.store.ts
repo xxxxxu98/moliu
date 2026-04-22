@@ -2,13 +2,16 @@ import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
 import type { GlobalThemeOverrides } from 'naive-ui';
 import { setLocale, type LocaleType } from '@/i18n';
+import { defaultProviders, providerNameMap } from '@/config/ai-providers';
+
+import { defaultProviders, providerNameMap, type ProviderType } from '@/config/ai-providers';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 export interface AIProvider {
   id: string;
   name: string;
-  provider: 'openai' | 'anthropic' | 'google' | 'moonshot' | 'deepseek' | 'ollama';
+  provider: ProviderType;
   apiKey: string;
   baseUrl?: string;
   enabled: boolean;
@@ -101,27 +104,16 @@ export const useSettingsStore = defineStore('settings', () => {
       if (providers && providers.length > 0) {
         aiProviders.value = providers;
       } else {
-        // Set default providers
-        aiProviders.value = [
-          {
-            id: 'default-openai',
-            name: 'OpenAI',
-            provider: 'openai',
-            apiKey: '',
-            baseUrl: 'https://api.openai.com/v1',
-            enabled: true,
-            models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
-          },
-          {
-            id: 'default-anthropic',
-            name: 'Anthropic',
-            provider: 'anthropic',
-            apiKey: '',
-            baseUrl: 'https://api.anthropic.com',
-            enabled: false,
-            models: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
-          },
-        ];
+        // Set default providers from config
+        aiProviders.value = defaultProviders.map(p => ({
+          id: `default-${p.provider}`,
+          name: providerNameMap[p.provider],
+          provider: p.provider,
+          apiKey: '',
+          baseUrl: p.baseUrl,
+          enabled: p.provider === 'openai', // Only enable OpenAI by default
+          models: p.models,
+        }));
       }
 
       applyTheme(theme.value);

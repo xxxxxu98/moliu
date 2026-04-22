@@ -232,6 +232,9 @@
       "notConfigured": "Not configured",
       "defaultEndpoint": "Default endpoint",
       "availableModels": "Available models",
+      "noModelsAvailable": "No models available",
+      "noModelsHint": "Please configure and verify at least one AI provider first",
+      "defaultModelOption": "Default Model",
       "messages": {
         "enterApiKey": "Please enter API Key",
         "enterDisplayName": "Please enter display name",

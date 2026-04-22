@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { NButton, NInput, NEmpty, NAvatar, NTag, NCard } from 'naive-ui';
 import { Plus, Search, Users } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
+import { getRoleColor } from '@/config/character-roles';
 
 const { t } = useI18n();
 
@@ -31,19 +32,8 @@ const characters = ref([
   },
 ]);
 
-function getRoleColor(role: string) {
-  switch (role) {
-    case '主角':
-      return '#6366f1';
-    case '女主':
-      return '#ec4899';
-    case '导师':
-      return '#f59e0b';
-    case '反派':
-      return '#ef4444';
-    default:
-      return '#6b7280';
-  }
+function handleSearch() {
+  // Search implementation
 }
 </script>
 

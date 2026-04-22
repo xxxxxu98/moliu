@@ -232,6 +232,9 @@
       "notConfigured": "未配置",
       "defaultEndpoint": "默认端点",
       "availableModels": "可用模型",
+      "noModelsAvailable": "暂无可用模型",
+      "noModelsHint": "请先配置并验证至少一个 AI 厂商",
+      "defaultModelOption": "默认模型",
       "messages": {
         "enterApiKey": "请输入 API Key",
         "enterDisplayName": "请输入显示名称",
