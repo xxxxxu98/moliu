@@ -64,7 +64,7 @@ function openProject(project: Project) {
 }
 
 function createNewProject() {
-  router.push('/?tab=quickstart');
+  router.push('/');
 }
 
 function formatDate(dateStr: string) {

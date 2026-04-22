@@ -1,18 +1,95 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { Sparkles, ArrowRight, Check, Wand2 } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { useSettingsStore } from '@/stores/settings.store';
+import { useProjectStore } from '@/stores/project.store';
 import type { GeneratedOutline } from '@/types/inspiration';
-import { timing } from '@/config/timing';
 
 const { t } = useI18n();
 const router = useRouter();
+const settingsStore = useSettingsStore();
+const projectStore = useProjectStore();
 
 const prompt = ref('');
 const isGenerating = ref(false);
 const generatedOutlines = ref<GeneratedOutline[]>([]);
 const selectedOutline = ref<GeneratedOutline | null>(null);
+const streamingContent = ref('');
+const streamingError = ref<string | null>(null);
+
+// Event listeners cleanup
+let unsubscribeChunk: (() => void) | null = null;
+let unsubscribeDone: (() => void) | null = null;
+let unsubscribeComplete: (() => void) | null = null;
+let unsubscribeError: (() => void) | null = null;
+
+onMounted(() => {
+  // Set up streaming event listeners
+  unsubscribeChunk = window.electronAPI.onOutlineChunk(({ content, fullContent }) => {
+    streamingContent.value = fullContent;
+    
+    // Try to parse partial JSON to show progress
+    try {
+      const jsonMatch = fullContent.match(/\{[\s\S]*$/);
+      if (jsonMatch) {
+        const partialJson = jsonMatch[0];
+        // Try to extract outlines from partial JSON
+        const outlinesMatch = partialJson.match(/"outlines"\s*:\s*\[([\s\S]*?)\](?=\s*\}[,\]]|$)/);
+        if (outlinesMatch) {
+          const partialOutlines = JSON.parse(`{"outlines":[${outlinesMatch[1]}]}`);
+          if (partialOutlines.outlines && partialOutlines.outlines.length > 0) {
+            generatedOutlines.value = partialOutlines.outlines.map((o: any, i: number) => ({
+              id: `streaming-${i}-${Date.now()}`,
+              title: o.title || '生成中...',
+              synopsis: o.synopsis || '',
+              structure: o.structure || { act1: '', act2a: '', act2b: '', act3: '' },
+              characters: o.characters || [],
+              foreshadows: o.foreshadows || [],
+              estimatedWordCount: o.estimatedWordCount || 500000,
+            }));
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore parsing errors during streaming
+    }
+  });
+
+  unsubscribeDone = window.electronAPI.onOutlineDone(() => {
+    // Streaming completed, waiting for final parse
+  });
+
+  unsubscribeComplete = window.electronAPI.onOutlineComplete(({ result }) => {
+    if (result && result.outlines) {
+      generatedOutlines.value = result.outlines.map((o: any, i: number) => ({
+        id: `outline-${i}-${Date.now()}`,
+        title: o.title,
+        synopsis: o.synopsis,
+        structure: o.structure,
+        characters: o.characters,
+        foreshadows: o.foreshadows,
+        estimatedWordCount: o.estimatedWordCount,
+      }));
+    }
+    isGenerating.value = false;
+    streamingContent.value = '';
+  });
+
+  unsubscribeError = window.electronAPI.onOutlineError(({ error }) => {
+    streamingError.value = error;
+    isGenerating.value = false;
+    streamingContent.value = '';
+  });
+});
+
+onUnmounted(() => {
+  unsubscribeChunk?.();
+  unsubscribeDone?.();
+  unsubscribeComplete?.();
+  unsubscribeError?.();
+});
 
 const outlineOptions = [
   { label: t('quickStart.structures.threeAct'), value: 'three-act' },
@@ -25,49 +102,32 @@ const selectedStructure = ref<string | null>(null);
 async function generateOutlines() {
   if (!prompt.value.trim()) return;
 
+  // Check if AI provider is configured
+  const enabledProvider = settingsStore.aiProviders.find(p => p.enabled && p.apiKey);
+  if (!enabledProvider) {
+    streamingError.value = '请先在设置中配置 AI 提供商';
+    return;
+  }
+
   isGenerating.value = true;
   selectedOutline.value = null;
+  generatedOutlines.value = [];
+  streamingContent.value = '';
+  streamingError.value = null;
 
-  await new Promise((resolve) => setTimeout(resolve, timing.mockApi.verySlow));
-
-  generatedOutlines.value = [
-    {
-      id: '1',
-      title: `${prompt.value.slice(0, 10)}...的命运之旅`,
-      synopsis: `这是一个发生在${prompt.value}背景下的史诗故事，讲述主角在命运的漩涡中挣扎求存...`,
-      structure: {
-        act1: '主角在一个平凡的世界中生活，突然遭遇了改变命运的变故...',
-        act2a: '主角踏上了冒险之旅，在这个过程中结识了伙伴...',
-        act2b: '主角面临最大的挑战，必须做出艰难的选择...',
-        act3: '主角克服困难，实现了成长...',
+  try {
+    await window.electronAPI.generateOutline({
+      prompt: prompt.value,
+      provider: enabledProvider.provider,
+      config: {
+        apiKey: enabledProvider.apiKey,
+        baseUrl: enabledProvider.baseUrl,
       },
-      characters: [
-        { name: '主角', role: '主人公', description: '一个平凡但不甘平凡的年轻人' },
-        { name: '导师', role: '引路人', description: '神秘的前辈，指引主角成长' },
-      ],
-      foreshadows: ['神秘力量的觉醒', '隐藏的血脉', '命运的预言'],
-      estimatedWordCount: 500000,
-    },
-    {
-      id: '2',
-      title: `${prompt.value.slice(0, 10)}...的热血传奇`,
-      synopsis: `在 ${prompt.value} 的世界中，热血与梦想交织，每一个平凡的灵魂都有机会成为传奇...`,
-      structure: {
-        act1: '一个充满挑战的时代，主角立下了远大的志向...',
-        act2a: '在追求梦想的道路上，主角不断突破自我...',
-        act2b: '危机降临，主角必须证明自己的价值...',
-        act3: '经过不懈努力，主角终于站在了巅峰...',
-      },
-      characters: [
-        { name: '热血少年', role: '主人公', description: '充满激情和正义感的年轻人' },
-        { name: '亦敌亦友', role: '竞争对手', description: '既是对手又是挚友的存在' },
-      ],
-      foreshadows: ['隐藏的真相', '意外的联盟', '觉醒的力量'],
-      estimatedWordCount: 800000,
-    },
-  ];
-
-  isGenerating.value = false;
+    });
+  } catch (error) {
+    streamingError.value = String(error);
+    isGenerating.value = false;
+  }
 }
 
 function selectOutline(outline: GeneratedOutline) {
@@ -78,10 +138,34 @@ async function createProject() {
   if (!selectedOutline.value) return;
 
   isGenerating.value = true;
-  await new Promise((resolve) => setTimeout(resolve, timing.mockApi.standard));
-  isGenerating.value = false;
 
-  router.push(`/project/${selectedOutline.value.id}`);
+  try {
+    // Create project from selected outline
+    const newProject = await projectStore.createProject({
+      name: selectedOutline.value.title,
+      description: selectedOutline.value.synopsis,
+      plotOutline: selectedOutline.value.structure,
+      characters: selectedOutline.value.characters.map(c => ({
+        id: `char-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: c.name,
+        role: c.role,
+        description: c.description,
+      })),
+      foreshadows: selectedOutline.value.foreshadows.map((f, i) => ({
+        id: `foreshadow-${Date.now()}-${i}`,
+        content: f,
+        status: 'pending',
+      })),
+    });
+
+    if (newProject) {
+      router.push(`/project/${newProject.id}`);
+    }
+  } catch (error) {
+    console.error('Failed to create project:', error);
+  } finally {
+    isGenerating.value = false;
+  }
 }
 
 function formatWordCount(count: number) {
@@ -126,6 +210,19 @@ function formatWordCount(count: number) {
       <span v-if="isGenerating" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
       {{ isGenerating ? t('quickStart.generating') : t('quickStart.generate') }}
     </button>
+
+    <!-- Streaming Content Preview -->
+    <div v-if="streamingContent" class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+      <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ t('quickStart.generating') }}</div>
+      <div class="text-sm text-gray-700 dark:text-gray-300 font-mono whitespace-pre-wrap line-clamp-6">
+        {{ streamingContent }}
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div v-if="streamingError" class="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+      <div class="text-sm text-red-600 dark:text-red-400">{{ streamingError }}</div>
+    </div>
 
     <!-- Generated Outlines -->
     <div v-if="generatedOutlines.length > 0" class="space-y-3">
@@ -183,7 +280,7 @@ function formatWordCount(count: number) {
     </div>
 
     <!-- Empty State -->
-    <div v-if="generatedOutlines.length === 0 && !isGenerating" class="text-center py-4">
+    <div v-if="generatedOutlines.length === 0 && !isGenerating && !streamingError" class="text-center py-4">
       <Sparkles class="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
       <p class="text-xs text-gray-400 dark:text-gray-500">{{ t('quickStart.emptyDesc') }}</p>
     </div>

@@ -28,6 +28,102 @@ export const useProjectStore = defineStore('project', () => {
   });
 
   // Actions
+  async function loadProjects() {
+    isLoading.value = true;
+    try {
+      const result = await window.electronAPI.listProjects() as Project[];
+      projects.value = result || [];
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+      projects.value = [];
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  async function loadProject(id: string) {
+    isLoading.value = true;
+    try {
+      const result = await window.electronAPI.getProject(id) as Project | null;
+      if (result) {
+        currentProject.value = result;
+        volumes.value = result.volumes || [];
+        chapters.value = result.chapters || [];
+      }
+      return result;
+    } catch (error) {
+      console.error('Failed to load project:', error);
+      return null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  async function saveCurrentProject() {
+    if (!currentProject.value) return;
+    
+    const projectToSave: Project = {
+      ...currentProject.value,
+      volumes: volumes.value,
+      chapters: chapters.value,
+    };
+    
+    try {
+      await window.electronAPI.saveProject(projectToSave);
+      // Update local list
+      const index = projects.value.findIndex(p => p.id === projectToSave.id);
+      if (index >= 0) {
+        projects.value[index] = projectToSave;
+      } else {
+        projects.value.unshift(projectToSave);
+      }
+    } catch (error) {
+      console.error('Failed to save project:', error);
+    }
+  }
+
+  async function createProject(projectData: Partial<Project>): Promise<Project | null> {
+    try {
+      const newProject = await window.electronAPI.createProject({
+        id: `proj-${Date.now()}`,
+        name: projectData.name || '新项目',
+        description: projectData.description || '',
+        genre: projectData.genre || [],
+        wordCount: 0,
+        status: 'planning',
+        volumes: [{
+          id: `vol-${Date.now()}`,
+          name: '第一卷',
+          orderIndex: 0,
+        }],
+        chapters: [],
+        characters: [],
+        worldSchema: { locations: [], rules: [], factions: [] },
+        foreshadows: [],
+        plotOutline: [],
+        ...projectData,
+      }) as Project;
+      
+      projects.value.unshift(newProject);
+      return newProject;
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      return null;
+    }
+  }
+
+  async function deleteProject(id: string) {
+    try {
+      await window.electronAPI.deleteProject(id);
+      projects.value = projects.value.filter(p => p.id !== id);
+      if (currentProject.value?.id === id) {
+        currentProject.value = null;
+      }
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+    }
+  }
+
   function setCurrentProject(project: Project | null) {
     currentProject.value = project;
   }
@@ -87,6 +183,11 @@ export const useProjectStore = defineStore('project', () => {
     currentChapter,
     sortedVolumes,
     sortedChapters,
+    loadProjects,
+    loadProject,
+    saveCurrentProject,
+    createProject,
+    deleteProject,
     setCurrentProject,
     setProjects,
     addProject,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { NLayout, NLayoutSider, NLayoutContent, NScrollbar, NButton, NTag } from 'naive-ui';
+import { NLayout, NLayoutSider, NLayoutContent, NScrollbar, NButton, NTag, useMessage } from 'naive-ui';
 import {
   Plus,
   FileText,
@@ -26,12 +26,14 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const projectStore = useProjectStore();
+const message = useMessage();
 
 const projectId = computed(() => route.params.id as string);
 const leftSiderCollapsed = ref(false);
 const rightSiderCollapsed = ref(false);
 const activeSidePanel = ref<'chapters' | 'characters' | 'world' | 'foreshadows'>('chapters');
 const expandedVolumes = ref<Set<string>>(new Set(['v1']));
+const isLoadingProject = ref(false);
 
 const currentProject = computed(() => projectStore.currentProject);
 
@@ -51,6 +53,30 @@ const sideTabs = computed(() => [
   { key: 'world', icon: Globe, label: t('editor.world') },
   { key: 'foreshadows', icon: Lightbulb, label: t('editor.foreshadows') },
 ] as const);
+
+// Load project data when projectId changes
+watch(() => projectId.value, async (newId) => {
+  if (newId) {
+    await loadProject(newId);
+  }
+}, { immediate: true });
+
+async function loadProject(id: string) {
+  isLoadingProject.value = true;
+  try {
+    await projectStore.loadProject(id);
+    // Expand first volume by default
+    if (projectStore.sortedVolumes.length > 0) {
+      expandedVolumes.value.add(projectStore.sortedVolumes[0].id);
+    }
+  } catch (error) {
+    console.error('Failed to load project:', error);
+    message.error('加载项目失败');
+    router.push('/');
+  } finally {
+    isLoadingProject.value = false;
+  }
+}
 
 function toggleVolume(volumeId: string) {
   if (expandedVolumes.value.has(volumeId)) {
@@ -79,79 +105,6 @@ function getStatusConfig(status: string) {
   const config = statusMap[status] || { color: 'bg-gray-500', text: t('projectList.status.unknown'), textColor: 'text-gray-600' };
   return config;
 }
-
-onMounted(() => {
-  projectStore.setCurrentProject({
-    id: projectId.value,
-    name: '仙侠世界',
-    description: '一个关于修仙的奇幻故事',
-    genre: [],
-    wordCount: 125000,
-    status: 'writing',
-    volumes: [
-      { id: 'v1', name: '第一卷 觉醒', orderIndex: 0 },
-      { id: 'v2', name: '第二卷 崛起', orderIndex: 1 },
-    ],
-    chapters: [],
-    characters: [],
-    worldSchema: { locations: [], rules: [], factions: [] },
-    foreshadows: [],
-    plotOutline: [],
-    createdAt: '2026-01-15',
-    updatedAt: '2026-04-20',
-  });
-
-  projectStore.setChapters([
-    {
-      id: 'c1',
-      volumeId: 'v1',
-      title: '第一章 废物少年',
-      content: '',
-      wordCount: 3200,
-      orderIndex: 0,
-      version: 1,
-      status: 'final',
-      createdAt: '2026-01-15',
-      updatedAt: '2026-04-20',
-    },
-    {
-      id: 'c2',
-      volumeId: 'v1',
-      title: '第二章 意外觉醒',
-      content: '',
-      wordCount: 4500,
-      orderIndex: 1,
-      version: 1,
-      status: 'editing',
-      createdAt: '2026-01-16',
-      updatedAt: '2026-04-19',
-    },
-    {
-      id: 'c3',
-      volumeId: 'v1',
-      title: '第三章 宗门测试',
-      content: '',
-      wordCount: 2800,
-      orderIndex: 2,
-      version: 1,
-      status: 'draft',
-      createdAt: '2026-01-17',
-      updatedAt: '2026-04-18',
-    },
-    {
-      id: 'c4',
-      volumeId: 'v2',
-      title: '第一章 新的开始',
-      content: '',
-      wordCount: 1500,
-      orderIndex: 0,
-      version: 1,
-      status: 'draft',
-      createdAt: '2026-03-01',
-      updatedAt: '2026-04-15',
-    },
-  ]);
-});
 </script>
 
 <template>
@@ -253,7 +206,7 @@ onMounted(() => {
                     <span
                       class="px-1.5 py-0.5 rounded text-xs font-medium"
                       :class="getStatusConfig(chapter.status).textColor + ' bg-opacity-10'"
-                      style="{ backgroundColor: getStatusConfig(chapter.status).color + '15' }"
+                      :style="{ backgroundColor: getStatusConfig(chapter.status).color + '15' }"
                     >
                       {{ chapter.wordCount }}{{ t('projectList.words') }}
                     </span>

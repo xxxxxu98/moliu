@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppHeader from "@/components/layout/AppHeader.vue";
 import ProjectList from "@/components/home/ProjectList.vue";
@@ -14,6 +14,10 @@ const projectStore = useProjectStore();
 type CreationMode = 'guided' | 'inspiration' | null;
 
 const creationMode = ref<CreationMode>(null);
+
+onMounted(async () => {
+  await projectStore.loadProjects();
+});
 
 // Calculate stats
 const totalWordCount = computed(() => {
