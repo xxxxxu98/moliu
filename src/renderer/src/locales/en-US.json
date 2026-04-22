@@ -220,8 +220,8 @@
         "addSuccess": "Added successfully",
         "deleteSuccess": "Deleted successfully",
         "testWarning": "Please configure API Key first",
-        "testSuccess": "{name} connected successfully!",
-        "testFailed": "{name} connection failed, please check API Key"
+        "testSuccess": "{name} connected successfully! ({models} models)",
+        "testFailed": "{name} connection failed: {error}"
       },
       "models": {
         "gpt4o": "Latest powerful model",

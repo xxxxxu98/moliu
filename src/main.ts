@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import Store from 'electron-store';
+import { testAIProvider, type AIProviderType } from './main/services/ai-providers';
 
 // Initialize electron-store for persistent settings
 const store = new Store({
@@ -75,15 +76,8 @@ ipcMain.handle('ai-providers:save', (_event, providers) => {
   return { success: true };
 });
 
-ipcMain.handle('ai:test', async (_event, provider: string, config: { apiKey: string; baseUrl?: string }) => {
-  try {
-    // Simulate API test - in production, this would make a real request
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // For now, just return success for non-empty API keys
-    return { success: !!config.apiKey };
-  } catch {
-    return { success: false, error: 'Connection failed' };
-  }
+ipcMain.handle('ai:test', async (_event, provider: AIProviderType, config: { apiKey: string; baseUrl?: string }) => {
+  return await testAIProvider(provider, config);
 });
 
 // This method will be called when Electron has finished

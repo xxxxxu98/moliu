@@ -220,8 +220,8 @@
         "addSuccess": "添加成功",
         "deleteSuccess": "删除成功",
         "testWarning": "请先配置 API Key",
-        "testSuccess": "{name} 连接成功！",
-        "testFailed": "{name} 连接失败，请检查 API Key"
+        "testSuccess": "{name} 连接成功！可用模型：{models}",
+        "testFailed": "{name} 连接失败：{error}"
       },
       "models": {
         "gpt4o": "最新强大模型",

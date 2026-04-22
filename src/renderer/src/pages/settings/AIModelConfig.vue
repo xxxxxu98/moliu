@@ -81,13 +81,20 @@ async function testConnection(provider: AIProvider) {
   }
 
   provider.isTesting = true;
-  const success = await settingsStore.testAIProvider(provider);
+  const result = await settingsStore.testAIProvider(provider);
   provider.isTesting = false;
 
-  if (success) {
-    message.success(t('settings.aiProviders.messages.testSuccess', { name: provider.name }));
+  if (result.success) {
+    const models = result.models?.slice(0, 5).join(', ') || '';
+    message.success(t('settings.aiProviders.messages.testSuccess', {
+      name: provider.name,
+      models: result.models ? `${result.models.length} 个` : ''
+    }));
   } else {
-    message.error(t('settings.aiProviders.messages.testFailed', { name: provider.name }));
+    message.error(t('settings.aiProviders.messages.testFailed', {
+      name: provider.name,
+      error: result.error || 'Unknown error'
+    }));
   }
 }
 

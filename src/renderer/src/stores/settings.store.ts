@@ -158,7 +158,9 @@ export const useSettingsStore = defineStore('settings', () => {
   // Save AI providers
   async function saveAIProviders() {
     try {
-      await window.electronAPI.saveAIProviders(aiProviders.value);
+      // Deep clone to remove reactive proxies before IPC transfer
+      const plainProviders = JSON.parse(JSON.stringify(aiProviders.value));
+      await window.electronAPI.saveAIProviders(plainProviders);
     } catch (error) {
       console.error('Failed to save AI providers:', error);
     }
@@ -254,14 +256,18 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  async function testAIProvider(provider: AIProvider): Promise<boolean> {
+  async function testAIProvider(provider: AIProvider): Promise<{ success: boolean; models?: string[]; error?: string; errorCode?: string }> {
     const result = await window.electronAPI.testAIConnection(provider.provider, {
       apiKey: provider.apiKey,
       baseUrl: provider.baseUrl,
-    }) as { success: boolean };
+    }) as { success: boolean; models?: string[]; error?: string; errorCode?: string };
 
     provider.isValid = result.success;
-    return result.success;
+    // Update provider with discovered models
+    if (result.success && result.models && result.models.length > 0) {
+      updateAIProvider(provider.id, { models: result.models });
+    }
+    return result;
   }
 
   return {

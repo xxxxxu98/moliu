@@ -15,7 +15,7 @@ export interface ElectronAPI {
   // AI
   generateText: (params: unknown) => Promise<unknown>;
   checkConsistency: (text: string) => Promise<unknown>;
-  testAIConnection: (provider: string, config: unknown) => Promise<unknown>;
+  testAIConnection: (provider: string, config: { apiKey: string; baseUrl?: string }) => Promise<{ success: boolean; error?: string; errorCode?: string; models?: string[]; responseTime?: number }>;
 
   // Memory
   searchMemory: (query: string) => Promise<unknown>;
