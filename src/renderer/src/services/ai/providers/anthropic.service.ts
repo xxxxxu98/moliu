@@ -114,7 +114,7 @@ export class AnthropicService extends BaseAIService {
     }
 
     return {
-      content: content.text,
+      content: content.text || '',
       usage: {
         promptTokens: data.usage.input_tokens,
         completionTokens: data.usage.output_tokens,
@@ -270,6 +270,80 @@ ${contentToPolish}`;
 ${contentToPolish}`;
 
     this.streamMessage(systemPrompt, userPrompt, 0.7, onChunk, onComplete, onError);
+  }
+
+  /**
+   * 润色文本（使用专用润色提示词）
+   */
+  async polishWithPrompt(
+    context: ProjectContext,
+    selectedText?: string
+  ): Promise<AIWriteResult> {
+    const { systemPrompt, userPrompt } = PromptBuilder.buildPolishPrompt(context, selectedText);
+    const combinedSystem = systemPrompt + '\n\n请直接输出润色后的内容，不要添加任何说明。';
+    return this.sendMessage(combinedSystem, userPrompt, 0.7);
+  }
+
+  /**
+   * 生成对话
+   */
+  async generateDialogue(
+    context: ProjectContext,
+    options?: {
+      speaker?: string;
+      situation?: string;
+      emotion?: string;
+    }
+  ): Promise<AIWriteResult> {
+    const { systemPrompt, userPrompt } = PromptBuilder.buildDialoguePrompt(context, options || {});
+    const combinedSystem = systemPrompt + '\n\n请直接输出对话内容。';
+    return this.sendMessage(combinedSystem, userPrompt, 0.8);
+  }
+
+  /**
+   * 生成情节发展
+   */
+  async generatePlot(
+    context: ProjectContext,
+    options?: {
+      plotPoint?: string;
+      targetChapter?: string;
+    }
+  ): Promise<AIWriteResult> {
+    const { systemPrompt, userPrompt } = PromptBuilder.buildPlotPrompt(context, options || {});
+    const combinedSystem = systemPrompt + '\n\n请输出情节发展建议。';
+    return this.sendMessage(combinedSystem, userPrompt, 0.7);
+  }
+
+  /**
+   * 生成场景描写
+   */
+  async generateScene(
+    context: ProjectContext,
+    options?: {
+      location?: string;
+      time?: string;
+      mood?: string;
+    }
+  ): Promise<AIWriteResult> {
+    const { systemPrompt, userPrompt } = PromptBuilder.buildScenePrompt(context, options || {});
+    const combinedSystem = systemPrompt + '\n\n请直接输出场景描写。';
+    return this.sendMessage(combinedSystem, userPrompt, 0.75);
+  }
+
+  /**
+   * 生成角色描写
+   */
+  async generateCharacterDescription(
+    context: ProjectContext,
+    options?: {
+      characterName?: string;
+      descriptionType?: 'appearance' | 'action' | 'psychology' | 'dialogue';
+    }
+  ): Promise<AIWriteResult> {
+    const { systemPrompt, userPrompt } = PromptBuilder.buildCharacterDescriptionPrompt(context, options || {});
+    const combinedSystem = systemPrompt + '\n\n请直接输出角色描写。';
+    return this.sendMessage(combinedSystem, userPrompt, 0.75);
   }
 
   /**

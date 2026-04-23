@@ -364,4 +364,94 @@ ${contentToPolish}
         }
       });
   }
+
+  /**
+   * 润色文本（使用专用润色提示词）
+   */
+  async polishWithPrompt(
+    context: ProjectContext,
+    selectedText?: string
+  ): Promise<AIWriteResult> {
+    const { systemPrompt, userPrompt } = PromptBuilder.buildPolishPrompt(context, selectedText);
+
+    return this.chat([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ], 0.7);
+  }
+
+  /**
+   * 生成对话
+   */
+  async generateDialogue(
+    context: ProjectContext,
+    options?: {
+      speaker?: string;
+      situation?: string;
+      emotion?: string;
+    }
+  ): Promise<AIWriteResult> {
+    const { systemPrompt, userPrompt } = PromptBuilder.buildDialoguePrompt(context, options || {});
+
+    return this.chat([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ], 0.8);
+  }
+
+  /**
+   * 生成情节发展
+   */
+  async generatePlot(
+    context: ProjectContext,
+    options?: {
+      plotPoint?: string;
+      targetChapter?: string;
+    }
+  ): Promise<AIWriteResult> {
+    const { systemPrompt, userPrompt } = PromptBuilder.buildPlotPrompt(context, options || {});
+
+    return this.chat([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ], 0.7);
+  }
+
+  /**
+   * 生成场景描写
+   */
+  async generateScene(
+    context: ProjectContext,
+    options?: {
+      location?: string;
+      time?: string;
+      mood?: string;
+    }
+  ): Promise<AIWriteResult> {
+    const { systemPrompt, userPrompt } = PromptBuilder.buildScenePrompt(context, options || {});
+
+    return this.chat([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ], 0.75);
+  }
+
+  /**
+   * 生成角色描写
+   */
+  async generateCharacterDescription(
+    context: ProjectContext,
+    options?: {
+      characterName?: string;
+      descriptionType?: 'appearance' | 'action' | 'psychology' | 'dialogue';
+    }
+  ): Promise<AIWriteResult> {
+    const { systemPrompt, userPrompt } = PromptBuilder.buildCharacterDescriptionPrompt(context, options || {});
+
+    return this.chat([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ], 0.75);
+  }
 }
+
