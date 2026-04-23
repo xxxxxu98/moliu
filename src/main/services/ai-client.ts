@@ -172,23 +172,12 @@ async function testConnectionWithFetch(
   const cleanBaseUrl = baseUrl.replace(/\/$/, '');
   const endpoint = `${cleanBaseUrl}/chat/completions`;
 
-  console.log(`[AI-Client-Fetch] Starting connection test`);
-  console.log(`[AI-Client-Fetch] Provider: ${provider}`);
-  console.log(`[AI-Client-Fetch] API Key: "${apiKey}"`);
-  console.log(`[AI-Client-Fetch] Model: "${model}"`);
-  console.log(`[AI-Client-Fetch] Base URL: ${cleanBaseUrl}`);
-  console.log(`[AI-Client-Fetch] Endpoint: ${endpoint}`);
-  console.log(`[AI-Client-Fetch] Timeout: ${timeout}ms`);
-
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
-    console.log(`[AI-Client-Fetch] Timeout triggered after ${timeout}ms`);
     controller.abort();
   }, timeout);
 
   try {
-    console.log(`[AI-Client-Fetch] Sending request to ${endpoint}...`);
-
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -204,10 +193,8 @@ async function testConnectionWithFetch(
     });
 
     clearTimeout(timeoutId);
-    console.log(`[AI-Client-Fetch] Response received: status=${response.status}`);
 
     if (response.ok) {
-      console.log(`[AI-Client-Fetch] Success! Status: ${response.status}`);
       return {
         success: true,
         models: getDefaultModels(provider),
@@ -215,9 +202,7 @@ async function testConnectionWithFetch(
       };
     }
 
-    console.log(`[AI-Client-Fetch] Response not OK, status: ${response.status}`);
     const errorData = await response.json().catch(() => ({}));
-    console.log(`[AI-Client-Fetch] Error response:`, errorData);
 
     return {
       success: false,
@@ -227,10 +212,6 @@ async function testConnectionWithFetch(
     };
   } catch (error) {
     clearTimeout(timeoutId);
-    console.log(`[AI-Client-Fetch] Exception caught!`);
-    console.log(`[AI-Client-Fetch] Error name: ${error instanceof Error ? error.name : 'Unknown'}`);
-    console.log(`[AI-Client-Fetch] Error message: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    console.log(`[AI-Client-Fetch] Error cause: ${error instanceof Error && error.cause ? JSON.stringify(error.cause) : 'None'}`);
 
     const errorMessage = error instanceof Error ? error.message : 'Connection failed';
 
@@ -238,11 +219,9 @@ async function testConnectionWithFetch(
     if (error instanceof Error) {
       if (error.name === 'AbortError' || errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
         code = 'TIMEOUT';
-        console.log(`[AI-Client-Fetch] Error classified as: TIMEOUT`);
       } else if (errorMessage.includes('fetch') || errorMessage.includes('network') ||
                  errorMessage.includes('ENOTFOUND') || errorMessage.includes('ECONNREFUSED')) {
         code = 'NETWORK_ERROR';
-        console.log(`[AI-Client-Fetch] Error classified as: NETWORK_ERROR`);
       }
     }
 
@@ -290,25 +269,14 @@ export async function testConnection(
   const isZhipu = provider === 'zhipu';
   const timeout = isZhipu ? 30000 : (provider === 'ollama' ? 5000 : 10000);
 
-  console.log(`[AI-Client] === Connection Test ===`);
-  console.log(`[AI-Client] Provider: ${provider}`);
-  console.log(`[AI-Client] API Key: "${apiKey}"`);
-  console.log(`[AI-Client] Model: "${targetModel}"`);
-  console.log(`[AI-Client] Custom Model provided: "${model || 'none'}"`);
-  console.log(`[AI-Client] Custom BaseURL provided: "${baseUrl}"`);
-  console.log(`[AI-Client] Default BaseURL: "${getDefaultBaseUrl(provider)}"`);
-  console.log(`[AI-Client] Resolved Target BaseURL: "${targetBaseUrl}"`);
-  console.log(`[AI-Client] Timeout: ${timeout}ms`);
-
   // 对于使用自定义 URL 的情况，使用原生 fetch（绕过 SDK 的 baseUrl 问题）
-  const shouldUseDirectFetch = Boolean(targetBaseUrl && supportsCustomBaseUrl(provider) && baseUrl?.trim());
-  console.log(`[AI-Client] Should use direct fetch: ${shouldUseDirectFetch}`);
-  console.log(`[AI-Client] - has targetBaseUrl: ${!!targetBaseUrl}`);
-  console.log(`[AI-Client] - supportsCustomBaseUrl: ${supportsCustomBaseUrl(provider)}`);
-  console.log(`[AI-Client] - has custom baseUrl: ${!!baseUrl?.trim()}`);
+  // 或者对于智谱（zhipu），始终使用直接 fetch 因为 SDK 对它的 baseUrl 处理有问题
+  const shouldUseDirectFetch = Boolean(
+    (targetBaseUrl && supportsCustomBaseUrl(provider) && baseUrl?.trim()) ||
+    provider === 'zhipu'
+  );
 
   if (shouldUseDirectFetch) {
-    console.log(`[AI-Client] Using direct fetch path`);
     return testConnectionWithFetch(provider, apiKey, targetBaseUrl, timeout, targetModel);
   }
 
@@ -330,22 +298,14 @@ export async function testConnection(
       { model: targetModel, maxTokens: 5 }
     );
 
-    console.log(`[AI-Client] ${provider} test SUCCESS!`);
-
     return {
       success: true,
       models: getDefaultModels(provider as SDKProviderName),
       responseTime: Date.now() - startTime,
     };
   } catch (error) {
-    console.error(`[AI-Client] SDK call FAILED:`, error);
-    console.log(`[AI-Client] Error type: ${error?.constructor?.name || typeof error}`);
-    console.log(`[AI-Client] Error message: ${error instanceof Error ? error.message : 'Unknown'}`);
-
     const errorCode = error instanceof AIError ? error.code : undefined;
     const errorStatus = error instanceof AIError ? error.status : undefined;
-
-    console.log(`[AI-Client] AIError code: ${errorCode}, status: ${errorStatus}`);
 
     let code = 'UNKNOWN';
     if (errorStatus === 401 || errorCode === 'invalid_api_key') {
