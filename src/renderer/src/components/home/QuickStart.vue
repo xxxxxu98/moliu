@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Sparkles, ArrowRight, Check, Wand2, BookOpen, Save, Edit3, RotateCcw, ChevronDown } from 'lucide-vue-next';
+import { Sparkles, ArrowRight, Check, Wand2, BookOpen, Save, Edit3, RotateCcw, ChevronDown, RefreshCw } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useSettingsStore } from '@/stores/settings.store';
@@ -9,6 +9,7 @@ import { useInspirationStore } from '@/stores/inspiration.store';
 import { UnifiedAIService } from '@/services/ai/unified.service';
 import type { GeneratedOutline } from '@/types/inspiration';
 import { writingTemplates } from '@/data/inspirations';
+import { NTooltip } from 'naive-ui';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -600,11 +601,26 @@ function formatWordCount(count: number) {
 
     <!-- Generated Outlines -->
     <div v-if="generatedOutlines.length > 0" class="space-y-3">
-      <div class="flex items-center gap-2">
-        <div class="w-1 h-4 rounded-full bg-gradient-to-b from-purple-500 to-indigo-500"></div>
-        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {{ t('quickStart.preparedOutlines') }}
-        </h4>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-1 h-4 rounded-full bg-gradient-to-b from-purple-500 to-indigo-500"></div>
+          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {{ t('quickStart.preparedOutlines') }}
+          </h4>
+          <span class="text-xs text-gray-400 dark:text-gray-500">({{ generatedOutlines.length }}{{ t('quickStart.plans') }})</span>
+        </div>
+        <NTooltip trigger="hover">
+          <template #trigger>
+            <button
+              class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="isGenerating"
+              @click="generateOutlines"
+            >
+              <RefreshCw class="w-4 h-4 text-gray-500 dark:text-gray-400" :class="{ 'animate-spin': isGenerating }" />
+            </button>
+          </template>
+          换一批大纲
+        </NTooltip>
       </div>
 
       <div class="space-y-2">
@@ -630,12 +646,19 @@ function formatWordCount(count: number) {
               <h5 class="font-medium text-sm text-gray-900 dark:text-white truncate">
                 {{ outline.title }}
               </h5>
-              <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
-                {{ outline.synopsis }}
-              </p>
+              <NTooltip trigger="hover" placement="top" :delay="300">
+                <template #trigger>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1 cursor-help">
+                    {{ outline.synopsis }}
+                  </p>
+                </template>
+                <div class="max-w-sm max-h-48 overflow-y-auto text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                  {{ outline.synopsis }}
+                </div>
+              </NTooltip>
               <div class="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500">
                 <span>{{ formatWordCount(outline.estimatedWordCount) }}</span>
-                <span>{{ outline.characters.length }} {{ t('quickStart.characters') }}</span>
+                <span>{{ outline.characters.length }}{{ t('quickStart.characters') }}</span>
               </div>
             </div>
           </div>
