@@ -84,7 +84,7 @@ function openCreateDialog() {
       </div>
 
       <!-- Right Panel: Creation Entry -->
-      <div class="w-96 border-l border-gray-200 dark:border-gray-700/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
+      <div class="w-[520px] border-l border-gray-200 dark:border-gray-700/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
         <div class="p-6">
           <!-- Stats Summary -->
           <div class="mb-8 p-4 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20">

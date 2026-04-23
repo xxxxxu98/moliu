@@ -1,23 +1,67 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { Sparkles, ArrowRight, Check, Wand2 } from 'lucide-vue-next';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { Sparkles, ArrowRight, Check, Wand2, BookOpen, Save, Edit3, RotateCcw, ChevronDown } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useProjectStore } from '@/stores/project.store';
+import { useInspirationStore } from '@/stores/inspiration.store';
 import type { GeneratedOutline } from '@/types/inspiration';
+import { writingTemplates } from '@/data/inspirations';
 
 const { t } = useI18n();
 const router = useRouter();
 const settingsStore = useSettingsStore();
 const projectStore = useProjectStore();
+const inspirationStore = useInspirationStore();
 
+const activeTab = ref<'templates' | 'custom'>('templates');
+const selectedTemplate = ref<typeof writingTemplates[0] | null>(null);
 const prompt = ref('');
+const storyType = ref('');
+const mainCharacter = ref('');
+const storyGoal = ref('');
+const conflict = ref('');
+const customSettings = ref('');
+
+const showStructuredInput = ref(false);
+
 const isGenerating = ref(false);
 const generatedOutlines = ref<GeneratedOutline[]>([]);
 const selectedOutline = ref<GeneratedOutline | null>(null);
 const streamingContent = ref('');
 const streamingError = ref<string | null>(null);
+
+// Draft state
+const savedDraft = ref<{
+  prompt: string;
+  storyType: string;
+  mainCharacter: string;
+  storyGoal: string;
+  conflict: string;
+  customSettings: string;
+  templateId: string | null;
+  timestamp: number;
+} | null>(null);
+
+const showDraftMenu = ref(false);
+
+const canGenerate = computed(() => {
+  if (activeTab.value === 'templates' && selectedTemplate.value) {
+    return true;
+  }
+  if (activeTab.value === 'custom') {
+    return prompt.value.trim().length >= 10;
+  }
+  return false;
+});
+
+const promptPreview = computed(() => {
+  if (activeTab.value === 'templates' && selectedTemplate.value) {
+    return selectedTemplate.value.prompt;
+  }
+  return prompt.value;
+});
 
 // Event listeners cleanup
 let unsubscribeChunk: (() => void) | null = null;
@@ -26,6 +70,16 @@ let unsubscribeComplete: (() => void) | null = null;
 let unsubscribeError: (() => void) | null = null;
 
 onMounted(() => {
+  // Load saved draft from localStorage
+  const draft = localStorage.getItem('quickStartDraft');
+  if (draft) {
+    try {
+      savedDraft.value = JSON.parse(draft);
+    } catch (e) {
+      console.error('Failed to parse saved draft:', e);
+    }
+  }
+
   // Set up streaming event listeners
   unsubscribeChunk = window.electronAPI.onOutlineChunk(({ content, fullContent }) => {
     streamingContent.value = fullContent;
@@ -35,7 +89,6 @@ onMounted(() => {
       const jsonMatch = fullContent.match(/\{[\s\S]*$/);
       if (jsonMatch) {
         const partialJson = jsonMatch[0];
-        // Try to extract outlines from partial JSON
         const outlinesMatch = partialJson.match(/"outlines"\s*:\s*\[([\s\S]*?)\](?=\s*\}[,\]]|$)/);
         if (outlinesMatch) {
           const partialOutlines = JSON.parse(`{"outlines":[${outlinesMatch[1]}]}`);
@@ -75,6 +128,7 @@ onMounted(() => {
     }
     isGenerating.value = false;
     streamingContent.value = '';
+    clearDraft();
   });
 
   unsubscribeError = window.electronAPI.onOutlineError(({ error }) => {
@@ -91,16 +145,79 @@ onUnmounted(() => {
   unsubscribeError?.();
 });
 
-const outlineOptions = [
-  { label: t('quickStart.structures.threeAct'), value: 'three-act' },
-  { label: t('quickStart.structures.heroJourney'), value: 'hero-journey' },
-  { label: t('quickStart.structures.fourPart'), value: 'four-part' },
-];
+function selectTemplate(template: typeof writingTemplates[0]) {
+  selectedTemplate.value = template;
+}
 
-const selectedStructure = ref<string | null>(null);
+function useStructuredInput() {
+  showStructuredInput.value = !showStructuredInput.value;
+  if (showStructuredInput.value) {
+    activeTab.value = 'custom';
+  }
+}
+
+function updatePromptFromStructured() {
+  const parts: string[] = [];
+  
+  if (storyType.value) {
+    parts.push(`题材类型：${storyType.value}`);
+  }
+  if (mainCharacter.value) {
+    parts.push(`主角设定：${mainCharacter.value}`);
+  }
+  if (storyGoal.value) {
+    parts.push(`故事目标：${storyGoal.value}`);
+  }
+  if (conflict.value) {
+    parts.push(`核心冲突：${conflict.value}`);
+  }
+  if (customSettings.value) {
+    parts.push(`其他设定：${customSettings.value}`);
+  }
+  
+  prompt.value = parts.join('\n');
+}
+
+function saveDraft() {
+  const draft = {
+    prompt: prompt.value,
+    storyType: storyType.value,
+    mainCharacter: mainCharacter.value,
+    storyGoal: storyGoal.value,
+    conflict: conflict.value,
+    customSettings: customSettings.value,
+    templateId: selectedTemplate.value?.id || null,
+    timestamp: Date.now(),
+  };
+  localStorage.setItem('quickStartDraft', JSON.stringify(draft));
+  savedDraft.value = draft;
+  showDraftMenu.value = false;
+}
+
+function loadDraft() {
+  if (savedDraft.value) {
+    prompt.value = savedDraft.value.prompt;
+    storyType.value = savedDraft.value.storyType;
+    mainCharacter.value = savedDraft.value.mainCharacter;
+    storyGoal.value = savedDraft.value.storyGoal;
+    conflict.value = savedDraft.value.conflict;
+    customSettings.value = savedDraft.value.customSettings;
+    if (savedDraft.value.templateId) {
+      selectedTemplate.value = writingTemplates.find(t => t.id === savedDraft.value?.templateId) || null;
+    }
+    activeTab.value = savedDraft.value.templateId ? 'templates' : 'custom';
+    showStructuredInput.value = !!(storyType.value || mainCharacter.value || storyGoal.value || conflict.value || customSettings.value);
+  }
+  showDraftMenu.value = false;
+}
+
+function clearDraft() {
+  localStorage.removeItem('quickStartDraft');
+  savedDraft.value = null;
+}
 
 async function generateOutlines() {
-  if (!prompt.value.trim()) return;
+  if (!canGenerate.value) return;
 
   // Check if AI provider is configured
   const enabledProvider = settingsStore.aiProviders.find(p => p.enabled && p.apiKey);
@@ -117,7 +234,7 @@ async function generateOutlines() {
 
   try {
     await window.electronAPI.generateOutline({
-      prompt: prompt.value,
+      prompt: promptPreview.value,
       provider: enabledProvider.provider,
       config: {
         apiKey: enabledProvider.apiKey,
@@ -140,7 +257,6 @@ async function createProject() {
   isGenerating.value = true;
 
   try {
-    // Create project from selected outline
     const newProject = await projectStore.createProject({
       name: selectedOutline.value.title,
       description: selectedOutline.value.synopsis,
@@ -179,31 +295,184 @@ function formatWordCount(count: number) {
 <template>
   <div class="space-y-4">
     <!-- Header -->
-    <div class="flex items-center gap-3 mb-4">
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-        <Wand2 class="w-4 h-4 text-white" />
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <Wand2 class="w-4 h-4 text-white" />
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 dark:text-white">{{ t('quickStart.title') }}</h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('quickStart.description') }}</p>
+        </div>
       </div>
-      <div>
-        <h3 class="font-semibold text-gray-900 dark:text-white">{{ t('quickStart.title') }}</h3>
+      <div class="relative">
+        <button
+          v-if="savedDraft"
+          class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          @click="showDraftMenu = !showDraftMenu"
+        >
+          <BookOpen class="w-4 h-4 text-amber-500" />
+        </button>
+        <div
+          v-if="showDraftMenu"
+          class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10"
+        >
+          <button
+            class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            @click="loadDraft"
+          >
+            <BookOpen class="w-4 h-4" />
+            加载草稿
+          </button>
+          <button
+            class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            @click="clearDraft"
+          >
+            <RotateCcw class="w-4 h-4" />
+            清除草稿
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Prompt Input -->
-    <div>
-      <textarea
-        v-model="prompt"
-        class="w-full h-24 p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
-        :placeholder="t('quickStart.placeholder')"
-      ></textarea>
-      <div class="text-xs text-gray-400 text-right mt-1">
-        {{ prompt.length }} / 2000
+    <!-- Tab Switcher -->
+    <div class="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+      <button
+        class="flex-1 py-1.5 text-sm font-medium rounded-md transition-all"
+        :class="activeTab === 'templates' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'"
+        @click="activeTab = 'templates'"
+      >
+        {{ t('quickStart.templateMarket') }}
+      </button>
+      <button
+        class="flex-1 py-1.5 text-sm font-medium rounded-md transition-all"
+        :class="activeTab === 'custom' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'"
+        @click="activeTab = 'custom'"
+      >
+        {{ t('quickStart.customInput') }}
+      </button>
+    </div>
+
+    <!-- Templates Tab -->
+    <div v-if="activeTab === 'templates'" class="space-y-3">
+      <div class="grid grid-cols-2 gap-2">
+        <button
+          v-for="template in writingTemplates"
+          :key="template.id"
+          class="p-3 rounded-xl border-2 text-left transition-all duration-200"
+          :class="[
+            selectedTemplate?.id === template.id
+              ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20'
+              : 'border-gray-100 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700 bg-white dark:bg-gray-800'
+          ]"
+          @click="selectTemplate(template)"
+        >
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-lg">{{ template.icon }}</span>
+            <span class="font-medium text-sm text-gray-900 dark:text-white">{{ template.name }}</span>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{{ template.description }}</p>
+        </button>
+      </div>
+
+      <!-- Template Detail -->
+      <div v-if="selectedTemplate" class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-2 mb-2">
+          <Edit3 class="w-4 h-4 text-indigo-500" />
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('quickStart.templatePrompt') }}</span>
+        </div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">{{ selectedTemplate.prompt }}</p>
+      </div>
+    </div>
+
+    <!-- Custom Input Tab -->
+    <div v-else class="space-y-3">
+      <!-- Structured Input Toggle -->
+      <button
+        class="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-left transition-all hover:border-indigo-300 dark:hover:border-indigo-700"
+        @click="useStructuredInput"
+      >
+        <div class="flex items-center gap-2">
+          <Edit3 class="w-4 h-4 text-indigo-500" />
+          <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('quickStart.useStructuredInput') }}</span>
+        </div>
+        <ChevronDown class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': showStructuredInput }" />
+      </button>
+
+      <!-- Structured Input Fields -->
+      <div v-if="showStructuredInput" class="space-y-2 p-3 rounded-xl bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
+        <div>
+          <label class="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{{ t('quickStart.storyType') }}</label>
+          <input
+            v-model="storyType"
+            class="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            :placeholder="t('quickStart.storyTypePlaceholder')"
+            @input="updatePromptFromStructured"
+          />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{{ t('quickStart.mainCharacter') }}</label>
+          <input
+            v-model="mainCharacter"
+            class="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            :placeholder="t('quickStart.mainCharacterPlaceholder')"
+            @input="updatePromptFromStructured"
+          />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{{ t('quickStart.storyGoal') }}</label>
+          <input
+            v-model="storyGoal"
+            class="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            :placeholder="t('quickStart.storyGoalPlaceholder')"
+            @input="updatePromptFromStructured"
+          />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{{ t('quickStart.conflict') }}</label>
+          <input
+            v-model="conflict"
+            class="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            :placeholder="t('quickStart.conflictPlaceholder')"
+            @input="updatePromptFromStructured"
+          />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{{ t('quickStart.customSettings') }}</label>
+          <textarea
+            v-model="customSettings"
+            class="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none"
+            rows="2"
+            :placeholder="t('quickStart.customSettingsPlaceholder')"
+            @input="updatePromptFromStructured"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Free-form Prompt -->
+      <div>
+        <textarea
+          v-model="prompt"
+          class="w-full h-28 p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+          :placeholder="t('quickStart.placeholder')"
+        ></textarea>
+        <div class="flex items-center justify-between mt-1">
+          <span class="text-xs text-gray-400">{{ prompt.length }} / 2000</span>
+          <button
+            v-if="prompt.trim()"
+            class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            @click="saveDraft"
+          >
+            <Save class="w-3.5 h-3.5 text-gray-400" />
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- Generate Button -->
     <button
       class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-medium shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-      :disabled="!prompt.trim() || isGenerating"
+      :disabled="!canGenerate || isGenerating"
       @click="generateOutlines"
     >
       <Sparkles v-if="!isGenerating" class="w-4 h-4" />
@@ -233,7 +502,7 @@ function formatWordCount(count: number) {
         </h4>
       </div>
 
-      <div class="space-y-2">
+      <div class="space-y-2 max-h-64 overflow-y-auto">
         <div
           v-for="outline in generatedOutlines"
           :key="outline.id"

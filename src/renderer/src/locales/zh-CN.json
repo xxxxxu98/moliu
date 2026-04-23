@@ -82,7 +82,21 @@
       "threeAct": "三幕式结构",
       "heroJourney": "英雄之旅",
       "fourPart": "起承转合"
-    }
+    },
+    "templateMarket": "模板市场",
+    "customInput": "自定义输入",
+    "templatePrompt": "模板提示词",
+    "useStructuredInput": "使用结构化输入",
+    "storyType": "故事类型",
+    "storyTypePlaceholder": "例如：修仙、玄幻、都市等",
+    "mainCharacter": "主角设定",
+    "mainCharacterPlaceholder": "例如：资质平庸的少年、重生者等",
+    "storyGoal": "故事目标",
+    "storyGoalPlaceholder": "例如：成为修仙界第一人、复仇等",
+    "conflict": "核心冲突",
+    "conflictPlaceholder": "例如：与大家族的矛盾、资源争夺等",
+    "customSettings": "其他设定",
+    "customSettingsPlaceholder": "添加你想要的特殊设定..."
   },
   "editor": {
     "title": "章节",
@@ -183,7 +197,16 @@
     "coreCharacters": "核心角色",
     "generateOutline": "根据灵感生成大纲",
     "startJourney": "开始你的灵感之旅",
-    "startJourneyDesc": "从上方选择题材标签，开启无限创作可能"
+    "startJourneyDesc": "从上方选择题材标签，开启无限创作可能",
+    "quickStart": "快速开始",
+    "randomPick": "随机组合",
+    "aiSuggestions": "AI智能推荐",
+    "generating": "生成中...",
+    "generate": "生成灵感",
+    "loadDraft": "加载草稿",
+    "saveDraft": "保存草稿",
+    "storyStart": "故事起点",
+    "emotionalResonance": "情感共鸣"
   },
   "settings": {
     "title": "设置",

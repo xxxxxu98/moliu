@@ -82,7 +82,21 @@
       "threeAct": "Three-Act Structure",
       "heroJourney": "Hero's Journey",
       "fourPart": "Four-Part Structure"
-    }
+    },
+    "templateMarket": "Templates",
+    "customInput": "Custom",
+    "templatePrompt": "Template Prompt",
+    "useStructuredInput": "Use Structured Input",
+    "storyType": "Story Type",
+    "storyTypePlaceholder": "e.g. Cultivation, Fantasy, Urban",
+    "mainCharacter": "Main Character",
+    "mainCharacterPlaceholder": "e.g. Mediocre youth, Reborn person",
+    "storyGoal": "Story Goal",
+    "storyGoalPlaceholder": "e.g. Become the strongest, Revenge",
+    "conflict": "Core Conflict",
+    "conflictPlaceholder": "e.g. Conflict with powerful clan",
+    "customSettings": "Other Settings",
+    "customSettingsPlaceholder": "Add any special settings..."
   },
   "editor": {
     "title": "Chapters",
@@ -183,7 +197,16 @@
     "coreCharacters": "Core Characters",
     "generateOutline": "Generate Outline from Inspiration",
     "startJourney": "Start Your Inspiration Journey",
-    "startJourneyDesc": "Select genre tags above to unlock infinite creative possibilities"
+    "startJourneyDesc": "Select genre tags above to unlock infinite creative possibilities",
+    "quickStart": "Quick Start",
+    "randomPick": "Random",
+    "aiSuggestions": "AI Recommendations",
+    "generating": "Generating...",
+    "generate": "Generate Inspiration",
+    "loadDraft": "Load Draft",
+    "saveDraft": "Save Draft",
+    "storyStart": "Story Start",
+    "emotionalResonance": "Emotional Resonance"
   },
   "settings": {
     "title": "Settings",

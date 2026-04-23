@@ -17,7 +17,7 @@ export const useInspirationStore = defineStore('inspiration', () => {
 
   // Getters
   const canGenerateOutlines = computed(() => selectedNucleus.value !== null);
-  const canGenerateNuclei = computed(() => selectedTags.value.length > 0 || selectedElements.value.length > 0);
+  const canGenerateNuclei = computed(() => selectedElements.value.length > 0);
   const canGenerateElements = computed(() => selectedTags.value.length > 0);
 
   // Actions
