@@ -1,7 +1,7 @@
 import { ref, computed, readonly } from 'vue';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useProjectStore } from '@/stores/project.store';
-import { AIServiceFactory, type BaseAIService, type ProjectContext, type AIWriteResult, type AISuggestion } from './factory';
+import { AIServiceFactory, type UnifiedAIService, type ProjectContext, type AIWriteResult, type AISuggestion } from './factory';
 import type { AIWriteMode } from './types';
 
 /**
@@ -13,7 +13,7 @@ export function useAIService() {
   const projectStore = useProjectStore();
 
   // 当前 AI 服务实例
-  const aiService = ref<BaseAIService | null>(null);
+  const aiService = ref<UnifiedAIService | null>(null);
 
   // 生成状态
   const isGenerating = ref(false);
@@ -55,17 +55,8 @@ export function useAIService() {
     const provider = activeProvider.value;
     if (!provider) return null;
 
-    // 使用默认模型或配置的模型
-    if (provider.models && provider.models.length > 0) {
-      // 尝试使用默认模型
-      const defaultModel = AIServiceFactory.getDefaultModel(provider.provider);
-      if (provider.models.includes(defaultModel)) {
-        return defaultModel;
-      }
-      // 否则使用第一个可用模型
-      return provider.models[0];
-    }
-    return provider.models[0] || AIServiceFactory.getDefaultModel(provider.provider);
+    // 使用配置的模型名称
+    return provider.modelName || AIServiceFactory.getDefaultModel(provider.provider);
   });
 
   /**
@@ -83,7 +74,8 @@ export function useAIService() {
         provider.provider,
         provider.apiKey,
         provider.baseUrl,
-        currentModel.value || undefined
+        currentModel.value || undefined,
+        provider.maxTokens || 4096
       );
       return true;
     } catch (err) {

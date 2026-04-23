@@ -6,6 +6,20 @@ import { defaultProviders, providerNameMap, type ProviderType } from '@/config/a
 
 export type ThemeMode = 'light' | 'dark';
 
+/**
+ * AI 生成参数配置
+ */
+export interface AIGenerationConfig {
+  /** 温度参数，控制创造性 (0-2)，默认 0.8 */
+  temperature: number;
+  /** 核采样参数 (0-1)，默认 0.9 */
+  topP: number;
+  /** 频率惩罚，减少重复 (-2 to 2)，默认 0 */
+  frequencyPenalty: number;
+  /** 存在惩罚，增加话题多样性 (-2 to 2)，默认 0 */
+  presencePenalty: number;
+}
+
 export interface AIProvider {
   id: string;
   name: string;
@@ -13,7 +27,9 @@ export interface AIProvider {
   apiKey: string;
   baseUrl?: string;
   enabled: boolean;
-  models: string[];
+  modelName: string;
+  maxTokens: number;
+  generationConfig?: AIGenerationConfig;
   isValid?: boolean;
   isTesting?: boolean;
 }
@@ -211,17 +227,13 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  async function testAIProvider(provider: AIProvider): Promise<{ success: boolean; models?: string[]; error?: string; errorCode?: string }> {
+  async function testAIProvider(provider: AIProvider): Promise<{ success: boolean; error?: string; errorCode?: string; models?: string[] }> {
     const result = await window.electronAPI.testAIConnection(provider.provider, {
       apiKey: provider.apiKey,
       baseUrl: provider.baseUrl,
-    }) as { success: boolean; models?: string[]; error?: string; errorCode?: string };
+    }) as { success: boolean; error?: string; errorCode?: string; models?: string[] };
 
     provider.isValid = result.success;
-    // Update provider with discovered models
-    if (result.success && result.models && result.models.length > 0) {
-      updateAIProvider(provider.id, { models: result.models });
-    }
     return result;
   }
 

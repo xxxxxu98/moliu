@@ -1,4 +1,3 @@
-import type { ProviderType } from '@/config/ai-providers';
 import type { Project, Character, Foreshadow } from '@/types/project';
 import { useSettingsStore } from '@/stores/settings.store';
 
@@ -54,152 +53,6 @@ export interface AIWriteResult {
     totalTokens: number;
   };
   reasoning?: string;
-}
-
-/**
- * AI 服务基类
- */
-export abstract class BaseAIService {
-  abstract readonly provider: ProviderType;
-  abstract readonly defaultModel: string;
-
-  protected apiKey: string;
-  protected baseUrl: string;
-  protected model: string;
-
-  constructor(apiKey: string, baseUrl: string, model?: string) {
-    this.apiKey = apiKey;
-    this.baseUrl = baseUrl;
-    this.model = model || this.defaultModel;
-  }
-
-  /**
-   * 测试连接是否可用
-   */
-  abstract testConnection(): Promise<{ success: boolean; models?: string[]; error?: string }>;
-
-  /**
-   * 续写内容
-   * @param context 项目上下文
-   * @param mode 续写模式
-   */
-  abstract continueWriting(
-    context: ProjectContext,
-    mode: 'smartContinue' | 'polish'
-  ): Promise<AIWriteResult>;
-
-  /**
-   * 润色优化
-   * @param context 项目上下文
-   * @param selectedText 可选的选中文本
-   */
-  abstract polishText(
-    context: ProjectContext,
-    selectedText?: string
-  ): Promise<AIWriteResult>;
-
-  /**
-   * 分析章节并提供建议
-   * @param context 项目上下文
-   */
-  abstract analyzeChapter(context: ProjectContext): Promise<AISuggestion[]>;
-
-  /**
-   * 获取当前章节的记忆上下文
-   * @param context 项目上下文
-   */
-  abstract getMemoryContext(context: ProjectContext): Promise<{
-    charactersInScene: Character[];
-    location: string;
-    time: string;
-    mood: string;
-  }>;
-
-  /**
-   * 流式续写（支持流式输出）
-   */
-  continueWritingStream?(
-    context: ProjectContext,
-    mode: 'smartContinue' | 'polish',
-    onChunk: (text: string) => void,
-    onComplete: () => void,
-    onError: (error: string) => void
-  ): void;
-
-  /**
-   * 流式润色
-   */
-  polishTextStream?(
-    context: ProjectContext,
-    selectedText: string | undefined,
-    onChunk: (text: string) => void,
-    onComplete: () => void,
-    onError: (error: string) => void
-  ): void;
-
-  /**
-   * 润色文本（使用专用润色提示词）
-   * @param context 项目上下文
-   * @param selectedText 可选的选中文本
-   */
-  polishWithPrompt?(
-    context: ProjectContext,
-    selectedText?: string
-  ): Promise<AIWriteResult>;
-
-  /**
-   * 生成对话
-   * @param context 项目上下文
-   * @param options 对话生成选项
-   */
-  generateDialogue?(
-    context: ProjectContext,
-    options?: {
-      speaker?: string;
-      situation?: string;
-      emotion?: string;
-    }
-  ): Promise<AIWriteResult>;
-
-  /**
-   * 生成情节发展
-   * @param context 项目上下文
-   * @param options 情节选项
-   */
-  generatePlot?(
-    context: ProjectContext,
-    options?: {
-      plotPoint?: string;
-      targetChapter?: string;
-    }
-  ): Promise<AIWriteResult>;
-
-  /**
-   * 生成场景描写
-   * @param context 项目上下文
-   * @param options 场景选项
-   */
-  generateScene?(
-    context: ProjectContext,
-    options?: {
-      location?: string;
-      time?: string;
-      mood?: string;
-    }
-  ): Promise<AIWriteResult>;
-
-  /**
-   * 生成角色描写
-   * @param context 项目上下文
-   * @param options 角色描写选项
-   */
-  generateCharacterDescription?(
-    context: ProjectContext,
-    options?: {
-      characterName?: string;
-      descriptionType?: 'appearance' | 'action' | 'psychology' | 'dialogue';
-    }
-  ): Promise<AIWriteResult>;
 }
 
 /**
@@ -856,7 +709,7 @@ ${descriptionType === 'appearance' ? '外貌描写' :
 /**
  * 获取内容语言设置
  */
-function getContentLanguage(): string {
+export function getContentLanguage(): string {
   try {
     // 在客户端代码中动态获取 settings store
     const settingsStore = useSettingsStore();

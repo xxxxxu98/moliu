@@ -3,6 +3,7 @@ import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import Store from 'electron-store';
 import { testAIProvider, generateOutlineStream, type AIProviderType } from './main/services/ai-providers';
+import { encryptApiKey, decryptApiKey, isEncrypted } from './main/crypto';
 
 // Remove default application menu for cleaner UI
 Menu.setApplicationMenu(null);
@@ -151,12 +152,41 @@ ipcMain.handle('settings:save', (_event, settings) => {
   return { success: true };
 });
 
+// IPC Handlers for AI Providers with encryption
+interface StoredProvider {
+  id: string;
+  name: string;
+  provider: string;
+  apiKey: string; // Stored encrypted
+  baseUrl?: string;
+  enabled: boolean;
+  modelName: string;
+  maxTokens: number;
+  generationConfig?: {
+    temperature: number;
+    topP: number;
+    frequencyPenalty: number;
+    presencePenalty: number;
+  };
+  isValid?: boolean;
+}
+
 ipcMain.handle('ai-providers:get', () => {
-  return settingsStore.get('aiProviders');
+  const stored = settingsStore.get('aiProviders') as StoredProvider[] || [];
+  // Decrypt API keys before sending to renderer
+  return stored.map(p => ({
+    ...p,
+    apiKey: decryptApiKey(p.apiKey),
+  }));
 });
 
-ipcMain.handle('ai-providers:save', (_event, providers) => {
-  settingsStore.set('aiProviders', providers);
+ipcMain.handle('ai-providers:save', (_event, providers: StoredProvider[]) => {
+  // Encrypt API keys before storing
+  const encrypted = providers.map(p => ({
+    ...p,
+    apiKey: encryptApiKey(p.apiKey),
+  }));
+  settingsStore.set('aiProviders', encrypted);
   return { success: true };
 });
 

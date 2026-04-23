@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import {
   NButton,
   NInput,
+  NSelect,
   NSwitch,
   NTag,
   NModal,
@@ -23,6 +24,8 @@ import {
   Zap,
   AlertCircle,
   Cpu,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useSettingsStore, type AIProvider } from "@/stores/settings.store";
@@ -38,11 +41,73 @@ const settingsStore = useSettingsStore();
 
 const showAddModal = ref(false);
 const editingProvider = ref<AIProvider | null>(null);
+const showAdvancedSettings = ref(false);
 
 const providerOptions = defaultProviders.map((p) => ({
   label: providerNameMap[p.provider],
   value: p.provider,
 }));
+
+// Token options based on common AI model context limits
+const tokenOptions = [
+  { label: "4K", value: 4096 },
+  { label: "8K", value: 8192 },
+  { label: "16K", value: 16384 },
+  { label: "32K", value: 32768 },
+  { label: "64K", value: 65536 },
+  { label: "128K", value: 131072 },
+  { label: "192K", value: 196608 },
+  { label: "200K", value: 200000 },
+  { label: "256K", value: 262144 },
+  { label: "512K", value: 524288 },
+  { label: "1M", value: 1048576 },
+  { label: "2M", value: 2097152 },
+];
+
+// Temperature presets for creative writing
+const temperatureOptions = [
+  { label: "0.5 (精确)", value: 0.5 },
+  { label: "0.7 (平衡)", value: 0.7 },
+  { label: "0.8 (创意)", value: 0.8 },
+  { label: "1.0 (高创意)", value: 1.0 },
+  { label: "1.2 (激进)", value: 1.2 },
+];
+
+// Top P presets
+const topPOptions = [
+  { label: "0.5", value: 0.5 },
+  { label: "0.7", value: 0.7 },
+  { label: "0.8", value: 0.8 },
+  { label: "0.9 (默认)", value: 0.9 },
+  { label: "1.0", value: 1.0 },
+];
+
+// Frequency penalty presets
+const frequencyPenaltyOptions = [
+  { label: "-1.0 (高重复)", value: -1.0 },
+  { label: "-0.5", value: -0.5 },
+  { label: "0.0 (默认)", value: 0 },
+  { label: "0.5", value: 0.5 },
+  { label: "1.0 (低重复)", value: 1.0 },
+  { label: "2.0 (极低重复)", value: 2.0 },
+];
+
+// Presence penalty presets
+const presencePenaltyOptions = [
+  { label: "-1.0", value: -1.0 },
+  { label: "0.0 (默认)", value: 0 },
+  { label: "0.5", value: 0.5 },
+  { label: "1.0", value: 1.0 },
+  { label: "2.0 (多话题)", value: 2.0 },
+];
+
+// Default generation config
+const defaultGenerationConfig = {
+  temperature: 0.8,
+  topP: 0.9,
+  frequencyPenalty: 0,
+  presencePenalty: 0,
+};
 
 const availableModels = computed(() => {
   const models: Array<{
@@ -55,27 +120,41 @@ const availableModels = computed(() => {
   settingsStore.aiProviders
     .filter((p) => p.enabled && p.apiKey)
     .forEach((provider) => {
-      if (provider.models && provider.models.length > 0) {
-        provider.models.forEach((model) => {
-          models.push({
-            id: `${provider.id}:${model}`,
-            name: model,
-            provider: provider.provider,
-            providerName:
-              providerNameMap[provider.provider] || provider.provider,
-          });
-        });
-      } else {
+      if (provider.modelName) {
         models.push({
-          id: `${provider.id}:default`,
-          name: t("settings.aiProviders.defaultModelOption"),
+          id: `${provider.id}:${provider.modelName}`,
+          name: provider.modelName,
           provider: provider.provider,
-          providerName: providerNameMap[provider.provider] || provider.provider,
+          providerName:
+            providerNameMap[provider.provider] || provider.provider,
         });
       }
     });
 
   return models;
+});
+
+// Effective default model - validates and falls back gracefully
+const effectiveDefaultModel = computed(() => {
+  const defaultModelId = settingsStore.defaultModel;
+  
+  // If no default set, use first available model
+  if (!defaultModelId && availableModels.value.length > 0) {
+    return availableModels.value[0].id;
+  }
+  
+  // Validate current default model exists
+  const exists = availableModels.value.some(m => m.id === defaultModelId);
+  if (exists) {
+    return defaultModelId;
+  }
+  
+  // Fallback to first available model if current default is invalid
+  if (availableModels.value.length > 0) {
+    return availableModels.value[0].id;
+  }
+  
+  return null;
 });
 
 function maskApiKey(key: string): string {
@@ -86,8 +165,133 @@ function maskApiKey(key: string): string {
   );
 }
 
+function formatTokens(tokens: number | undefined): string {
+  if (!tokens) return "200K";
+  if (tokens >= 1000000) {
+    return `${Math.round(tokens / 1000000)}M`;
+  }
+  if (tokens >= 1000) {
+    return `${Math.round(tokens / 1000)}K`;
+  }
+  return tokens.toString();
+}
+
 function getProviderIcon(provider: string) {
   return "AI";
+}
+
+// Validation functions
+function validateApiKey(apiKey: string, provider: string): string | null {
+  if (!apiKey || !apiKey.trim()) {
+    return t("settings.aiProviders.messages.enterApiKey");
+  }
+  
+  // Ollama doesn't require API key
+  if (provider === 'ollama') {
+    return null;
+  }
+  
+  const trimmedKey = apiKey.trim();
+  
+  // Minimum length check
+  if (trimmedKey.length < 10) {
+    return t("settings.aiProviders.messages.apiKeyTooShort");
+  }
+  
+  // Provider-specific prefix validation
+  switch (provider) {
+    case 'openai':
+      if (!trimmedKey.startsWith('sk-')) {
+        return t("settings.aiProviders.messages.openaiKeyFormat");
+      }
+      break;
+    case 'anthropic':
+      if (!trimmedKey.startsWith('sk-ant-')) {
+        return t("settings.aiProviders.messages.anthropicKeyFormat");
+      }
+      break;
+    case 'google':
+      if (trimmedKey.length !== 39 || !/^[A-Za-z0-9_-]+$/.test(trimmedKey)) {
+        return t("settings.aiProviders.messages.googleKeyFormat");
+      }
+      break;
+    case 'deepseek':
+      if (!trimmedKey.startsWith('sk-')) {
+        return t("settings.aiProviders.messages.deepseekKeyFormat");
+      }
+      break;
+    case 'moonshot':
+      if (!trimmedKey.startsWith('sk-')) {
+        return t("settings.aiProviders.messages.moonshotKeyFormat");
+      }
+      break;
+  }
+  
+  return null;
+}
+
+function validateModelName(modelName: string, provider: string): string | null {
+  if (!modelName || !modelName.trim()) {
+    return t("settings.aiProviders.messages.enterModelName");
+  }
+  
+  // Basic format check (alphanumeric, hyphen, underscore, dot)
+  const validFormat = /^[a-zA-Z0-9_\-\.]+$/;
+  if (!validFormat.test(modelName.trim())) {
+    return t("settings.aiProviders.messages.invalidModelFormat");
+  }
+  
+  return null;
+}
+
+function validateBaseUrl(baseUrl: string | undefined): string | null {
+  if (!baseUrl || !baseUrl.trim()) {
+    return null; // Optional field
+  }
+  
+  try {
+    const url = new URL(baseUrl.trim());
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      return t("settings.aiProviders.messages.invalidUrlProtocol");
+    }
+    return null;
+  } catch {
+    return t("settings.aiProviders.messages.invalidUrlFormat");
+  }
+}
+
+// Form validation
+const formErrors = ref<{
+  apiKey?: string;
+  modelName?: string;
+  baseUrl?: string;
+}>({});
+
+function validateForm(): boolean {
+  if (!editingProvider.value) return false;
+  
+  const errors: typeof formErrors.value = {};
+  
+  // Validate API Key
+  const apiKeyError = validateApiKey(editingProvider.value.apiKey, editingProvider.value.provider);
+  if (apiKeyError) {
+    errors.apiKey = apiKeyError;
+  }
+  
+  // Validate Model Name
+  const modelNameError = validateModelName(editingProvider.value.modelName, editingProvider.value.provider);
+  if (modelNameError) {
+    errors.modelName = modelNameError;
+  }
+  
+  // Validate Base URL
+  const baseUrlError = validateBaseUrl(editingProvider.value.baseUrl);
+  if (baseUrlError) {
+    errors.baseUrl = baseUrlError;
+  }
+  
+  formErrors.value = errors;
+  return Object.keys(errors).length === 0;
 }
 
 function openAddModal() {
@@ -97,8 +301,12 @@ function openAddModal() {
     provider: "openai",
     apiKey: "",
     enabled: true,
-    models: [],
+    modelName: "",
+    maxTokens: 200000,
+    generationConfig: { ...defaultGenerationConfig },
   };
+  showAdvancedSettings.value = false;
+  formErrors.value = {};
   showAddModal.value = true;
 }
 
@@ -109,15 +317,19 @@ function openEditModal(provider: AIProvider) {
 
 function saveProvider() {
   if (!editingProvider.value) return;
-  if (!editingProvider.value.apiKey) {
-    message.warning(t("settings.aiProviders.messages.enterApiKey"));
+  
+  // Validate form before saving
+  if (!validateForm()) {
+    message.warning(t("settings.aiProviders.messages.validationFailed"));
     return;
   }
-  if (!editingProvider.value.name) {
+  
+  // Additional required field checks
+  if (!editingProvider.value.name.trim()) {
     message.warning(t("settings.aiProviders.messages.enterDisplayName"));
     return;
   }
-
+  
   if (editingProvider.value.id) {
     settingsStore.updateAIProvider(
       editingProvider.value.id,
@@ -172,7 +384,11 @@ function toggleProvider(provider: AIProvider) {
 }
 
 function handleDefaultModelChange(modelId: string) {
-  settingsStore.setDefaultModel(modelId);
+  // Validate model exists before setting
+  const modelExists = availableModels.value.some(m => m.id === modelId);
+  if (modelExists) {
+    settingsStore.setDefaultModel(modelId);
+  }
 }
 </script>
 
@@ -335,13 +551,26 @@ function handleDefaultModelChange(modelId: string) {
               </div>
               <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/50">
                 <div class="text-gray-500 dark:text-gray-400 mb-1">
-                  {{ t("settings.aiProviders.availableModels") }}
+                  {{ t("settings.aiProviders.modelName") }}
                 </div>
-                <div class="text-gray-900 dark:text-white truncate">
-                  {{
-                    provider.models.join(", ") ||
-                    t("settings.aiProviders.notConfigured")
-                  }}
+                <div class="text-gray-900 dark:text-white">
+                  {{ provider.modelName || t("settings.aiProviders.notConfigured") }}
+                </div>
+              </div>
+              <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+                <div class="text-gray-500 dark:text-gray-400 mb-1">
+                  {{ t("settings.aiProviders.maxTokens") }}
+                </div>
+                <div class="text-gray-900 dark:text-white">
+                  {{ formatTokens(provider.maxTokens) }}
+                </div>
+              </div>
+              <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+                <div class="text-gray-500 dark:text-gray-400 mb-1">
+                  {{ t("settings.aiProviders.temperature") }}
+                </div>
+                <div class="text-gray-900 dark:text-white">
+                  {{ provider.generationConfig?.temperature ?? 0.8 }}
                 </div>
               </div>
             </div>
@@ -430,7 +659,7 @@ function handleDefaultModelChange(modelId: string) {
             :key="model.id"
             class="p-4 rounded-xl border-2 text-left transition-all duration-200 hover:scale-[1.02]"
             :class="[
-              model.id === settingsStore.defaultModel
+              model.id === effectiveDefaultModel
                 ? 'border-indigo-500 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30'
                 : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700',
             ]"
@@ -440,6 +669,12 @@ function handleDefaultModelChange(modelId: string) {
               <span class="font-semibold text-gray-900 dark:text-white">{{
                 model.name
               }}</span>
+              <span
+                v-if="model.id === effectiveDefaultModel"
+                class="px-2 py-0.5 text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-full"
+              >
+                {{ t("settings.aiProviders.defaultModelOption") }}
+              </span>
               <span class="text-xs text-gray-500 dark:text-gray-400">{{
                 model.providerName
               }}</span>
@@ -466,7 +701,7 @@ function handleDefaultModelChange(modelId: string) {
       <NForm
         v-if="editingProvider"
         label-placement="left"
-        label-width="100"
+        label-width="120"
         class="space-y-4"
       >
         <NFormItem :label="t('settings.common.displayName')">
@@ -481,11 +716,11 @@ function handleDefaultModelChange(modelId: string) {
             :options="providerOptions"
           />
         </NFormItem>
-        <NFormItem :label="t('settings.common.apiKey')">
+        <NFormItem :label="t('settings.common.apiKey')" :validation-status="formErrors.apiKey ? 'error' : undefined" :feedback="formErrors.apiKey">
           <NInput
             v-model:value="editingProvider.apiKey"
             type="password"
-            :placeholder="t('settings.aiProviders.messages.enterApiKey')"
+            :placeholder="editingProvider.provider === 'ollama' ? t('settings.aiProviders.messages.ollamaNoKey') : t('settings.aiProviders.messages.enterApiKey')"
             show-password-on="click"
           >
             <template #prefix>
@@ -493,12 +728,76 @@ function handleDefaultModelChange(modelId: string) {
             </template>
           </NInput>
         </NFormItem>
-        <NFormItem :label="t('settings.common.customEndpoint')">
+        <NFormItem :label="t('settings.aiProviders.modelName')" :validation-status="formErrors.modelName ? 'error' : undefined" :feedback="formErrors.modelName">
           <NInput
-            v-model:value="editingProvider.baseUrl"
-            :placeholder="t('settings.aiProviders.endpointPlaceholder')"
+            v-model:value="editingProvider.modelName"
+            :placeholder="'e.g. gpt-4o, claude-3-5-sonnet-20241022'"
           />
         </NFormItem>
+        <NFormItem :label="t('settings.aiProviders.maxTokens')">
+          <NSelect
+            v-model:value="editingProvider.maxTokens"
+            :options="tokenOptions"
+            class="w-full"
+          />
+        </NFormItem>
+
+        <!-- Advanced Settings Toggle -->
+        <div class="border-t border-gray-100 dark:border-gray-700 pt-4 mt-2">
+          <button
+            type="button"
+            class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            @click="showAdvancedSettings = !showAdvancedSettings"
+          >
+            <component
+              :is="showAdvancedSettings ? ChevronDown : ChevronRight"
+              class="w-4 h-4"
+            />
+            {{ t("settings.aiProviders.advancedSettings") }}
+            <span class="text-xs text-gray-400 dark:text-gray-500">
+              ({{ t("settings.aiProviders.optional") }})
+            </span>
+          </button>
+
+          <!-- Advanced Settings Panel -->
+          <div v-show="showAdvancedSettings" class="mt-4 space-y-4 pl-2">
+            <NFormItem :label="t('settings.common.customEndpoint')" :validation-status="formErrors.baseUrl ? 'error' : undefined" :feedback="formErrors.baseUrl">
+              <NInput
+                v-model:value="editingProvider.baseUrl"
+                :placeholder="t('settings.aiProviders.endpointPlaceholder')"
+              />
+            </NFormItem>
+            <NFormItem :label="t('settings.aiProviders.temperature')">
+              <NSelect
+                v-model:value="editingProvider.generationConfig!.temperature"
+                :options="temperatureOptions"
+                class="w-full"
+              />
+            </NFormItem>
+            <NFormItem :label="t('settings.aiProviders.topP')">
+              <NSelect
+                v-model:value="editingProvider.generationConfig!.topP"
+                :options="topPOptions"
+                class="w-full"
+              />
+            </NFormItem>
+            <NFormItem :label="t('settings.aiProviders.frequencyPenalty')">
+              <NSelect
+                v-model:value="editingProvider.generationConfig!.frequencyPenalty"
+                :options="frequencyPenaltyOptions"
+                class="w-full"
+              />
+            </NFormItem>
+            <NFormItem :label="t('settings.aiProviders.presencePenalty')">
+              <NSelect
+                v-model:value="editingProvider.generationConfig!.presencePenalty"
+                :options="presencePenaltyOptions"
+                class="w-full"
+              />
+            </NFormItem>
+          </div>
+        </div>
+
         <NFormItem :label="t('settings.common.enabled')">
           <NSwitch v-model:value="editingProvider.enabled" />
         </NFormItem>
