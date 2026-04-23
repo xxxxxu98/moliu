@@ -2,8 +2,8 @@ import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import Store from 'electron-store';
-import { testAIProvider, type AIProviderType } from './main/services/ai-providers';
-import { testConnection, generateOutline, type SDKProviderName } from './main/services/ai-client';
+import { testAIProvider, generateOutlineStream, type AIProviderType } from './main/services/ai-providers';
+import { testConnection } from './main/services/ai-client';
 import { encryptApiKey, decryptApiKey, isEncrypted } from './main/crypto';
 
 // Remove default application menu for cleaner UI
@@ -191,7 +191,7 @@ ipcMain.handle('ai-providers:save', (_event, providers: StoredProvider[]) => {
   return { success: true };
 });
 
-ipcMain.handle('ai:test', async (_event, provider: SDKProviderName, config: { apiKey: string; baseUrl?: string }) => {
+ipcMain.handle('ai:test', async (_event, provider: string, config: { apiKey: string; baseUrl?: string }) => {
   return await testConnection(provider, config.apiKey, config.baseUrl);
 });
 
@@ -261,35 +261,16 @@ ipcMain.handle('project:delete', (_event, id: string) => {
 });
 
 // IPC Handler for AI Outline Generation (Streaming)
-ipcMain.handle('ai:generate-outline', async (event, { prompt, provider, config, model }: { 
+ipcMain.handle('ai:generate-outline', async (event, { prompt, provider, config }: { 
   prompt: string; 
-  provider: SDKProviderName; 
+  provider: string; 
   config: { apiKey: string; baseUrl?: string };
-  model?: string;
 }) => {
-  let fullContent = '';
-  
-  await generateOutline(
-    provider,
-    config.apiKey,
-    prompt,
-    { baseUrl: config.baseUrl, model },
-    {
-      onChunk: (data) => {
-        fullContent += data.content;
-        event.sender.send('ai:outline-chunk', { content: data.content, fullContent });
-      },
-      onDone: () => {
-        event.sender.send('ai:outline-done', {});
-      },
-      onComplete: (data) => {
-        event.sender.send('ai:outline-complete', data);
-      },
-      onError: (data) => {
-        event.sender.send('ai:outline-error', data);
-      },
-    }
-  );
+  try {
+    await generateOutlineStream(event, prompt, provider, config);
+  } catch (error) {
+    event.sender.send('ai:outline-error', { error: String(error) });
+  }
 });
 
 // IPC Handlers for Chapters

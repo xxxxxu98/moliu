@@ -49,8 +49,8 @@ const DEFAULT_ENDPOINTS: Record<AIProviderType, string> = {
 /**
  * Get the effective base URL for a provider
  */
-export function getBaseUrl(provider: AIProviderType, customUrl?: string): string {
-  return customUrl?.trim() || DEFAULT_ENDPOINTS[provider];
+export function getBaseUrl(provider: string, customUrl?: string): string {
+  return customUrl?.trim() || DEFAULT_ENDPOINTS[provider as AIProviderType] || '';
 }
 
 /**
@@ -436,8 +436,8 @@ const OUTLINE_SYSTEM_PROMPT = `你是一位专业的小说创作顾问和故事�
 export async function generateOutlineStream(
   event: Electron.IpcMainInvokeEvent,
   prompt: string,
-  provider: AIProviderType,
-  config: ProviderConfig
+  provider: string,
+  config: { apiKey: string; baseUrl?: string }
 ): Promise<void> {
   const baseUrl = getBaseUrl(provider, config.baseUrl);
   const model = provider === 'anthropic' ? 'claude-3-5-sonnet-20241022' : 

@@ -364,15 +364,40 @@ async function testConnection(provider: AIProvider) {
         }),
       );
     } else {
+      // 根据错误码显示国际化的错误消息
+      const errorKey = getErrorMessageKey(result.errorCode);
       message.error(
         t("settings.aiProviders.messages.testFailed", {
           name: provider.name,
-          error: result.error || "Unknown error",
-        }),
+        }) + ": " + t(`settings.aiProviders.messages.${errorKey}`)
       );
     }
   } finally {
     provider.isTesting = false;
+  }
+}
+
+// 根据错误码获取对应的国际化消息 key
+function getErrorMessageKey(errorCode?: string): string {
+  switch (errorCode) {
+    case 'NO_ENDPOINT':
+      return 'testErrorNoEndpoint';
+    case 'INVALID_API_KEY':
+      return 'testErrorInvalidApiKey';
+    case 'PERMISSION_DENIED':
+      return 'testErrorPermissionDenied';
+    case 'RATE_LIMITED':
+    case 'RATE_LIMIT':
+      return 'testErrorRateLimit';
+    case 'TIMEOUT':
+      return 'testErrorTimeout';
+    case 'NETWORK_ERROR':
+    case 'CONNECTION_FAILED':
+    case 'CONNECTION_REFUSED':
+    case 'SERVICE_NOT_FOUND':
+      return 'testErrorNetwork';
+    default:
+      return 'testErrorUnknown';
   }
 }
 

@@ -73,38 +73,187 @@ export interface TestConnectionResult {
   responseTime?: number;
 }
 
-// 测试连接
+// 测试连接 - 直接使用 HTTP 请求而非 multi-ai-sdk
 export async function testConnection(
-  provider: SDKProviderName,
+  provider: string,
   apiKey: string,
   baseUrl?: string
 ): Promise<TestConnectionResult> {
   const startTime = Date.now();
 
-  try {
-    const client = createAIClient(provider, apiKey, { baseUrl });
+  // 获取默认的 baseUrl
+  const defaultBaseUrl = getDefaultBaseUrl(provider);
+  const targetBaseUrl = baseUrl?.trim() || defaultBaseUrl;
 
-    // 尝试发送一个简单的测试请求
-    const response = await client.chat(
-      [{ role: 'user', content: 'Hi' }],
-      { maxTokens: 5 }
-    );
-
+  if (!targetBaseUrl) {
     return {
-      success: true,
+      success: false,
+      error: 'No API endpoint configured',
+      errorCode: 'NO_ENDPOINT',
       responseTime: Date.now() - startTime,
-      models: getDefaultModels(provider),
     };
-  } catch (error) {
-    if (error instanceof AIError) {
-      return {
-        success: false,
-        error: error.message,
-        errorCode: String(error.status || error.code || 'UNKNOWN'),
-        responseTime: Date.now() - startTime,
+  }
+
+  try {
+    let endpoint: string;
+    let headers: Record<string, string>;
+    let body: any;
+
+    if (provider === 'anthropic') {
+      // Anthropic 使用不同的 API 格式
+      endpoint = `${targetBaseUrl}/v1/messages`;
+      headers = {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      };
+      body = {
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 10,
+        messages: [{ role: 'user', content: 'Hi' }],
+      };
+    } else if (provider === 'ollama') {
+      // Ollama 使用 /api/tags 获取模型列表
+      const ollamaController = new AbortController();
+      const ollamaTimeoutId = setTimeout(() => ollamaController.abort(), 5000);
+
+      try {
+        const response = await fetch(`${targetBaseUrl}/api/tags`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          signal: ollamaController.signal,
+        });
+        clearTimeout(ollamaTimeoutId);
+
+        if (!response.ok) {
+          return {
+            success: false,
+            error: `Connection failed: ${response.status}`,
+            errorCode: String(response.status),
+            responseTime: Date.now() - startTime,
+          };
+        }
+
+        const data = await response.json();
+        const models = (data.models || [])
+          .map((m: { name: string }) => m.name)
+          .slice(0, 20);
+
+        return {
+          success: true,
+          models,
+          responseTime: Date.now() - startTime,
+        };
+      } catch (e) {
+        clearTimeout(ollamaTimeoutId);
+        if (e instanceof Error && e.name === 'AbortError') {
+          return {
+            success: false,
+            error: `Ollama connection timed out after 5 seconds - ensure Ollama is running at ${targetBaseUrl}`,
+            errorCode: 'TIMEOUT',
+            responseTime: Date.now() - startTime,
+          };
+        }
+        return {
+          success: false,
+          error: `Cannot connect to Ollama: ${e instanceof Error ? e.message : 'Unknown error'}`,
+          errorCode: 'CONNECTION_FAILED',
+          responseTime: Date.now() - startTime,
+        };
+      }
+    } else {
+      // 其他厂商使用 OpenAI 兼容格式
+      const model = getDefaultModel(provider);
+      endpoint = `${targetBaseUrl}/chat/completions`;
+      headers = {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      };
+      body = {
+        model,
+        messages: [{ role: 'user', content: 'Hi' }],
+        max_tokens: 5,
+        stream: false,
       };
     }
 
+    // 为 Anthropic 和其他厂商发送请求
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        let errorMsg = `API error: ${response.status}`;
+        let errorCode = String(response.status);
+
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.error?.message || errorData.error || errorMsg;
+          errorCode = errorData.error?.type || errorCode;
+        } catch {
+          // Ignore JSON parse error
+        }
+
+        if (response.status === 401) {
+          errorCode = 'INVALID_API_KEY';
+          errorMsg = 'Invalid API key';
+        } else if (response.status === 403) {
+          errorCode = 'PERMISSION_DENIED';
+          errorMsg = 'Permission denied - check your API key';
+        } else if (response.status === 429) {
+          errorCode = 'RATE_LIMITED';
+          errorMsg = 'Rate limit exceeded - try again later';
+        }
+
+        return {
+          success: false,
+          error: errorMsg,
+          errorCode,
+          responseTime: Date.now() - startTime,
+        };
+      }
+
+      return {
+        success: true,
+        models: getDefaultModels(provider as SDKProviderName),
+        responseTime: Date.now() - startTime,
+      };
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            return {
+              success: false,
+              error: `Connection timed out after 10 seconds - check your network or base URL`,
+            errorCode: 'TIMEOUT',
+            responseTime: Date.now() - startTime,
+          };
+        }
+        if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+          return {
+            success: false,
+            error: `Cannot connect to ${targetBaseUrl} - check your network or base URL`,
+            errorCode: 'NETWORK_ERROR',
+            responseTime: Date.now() - startTime,
+          };
+        }
+      }
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorCode: 'UNKNOWN',
+        responseTime: Date.now() - startTime,
+      };
+    }
+  } catch (error) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -114,6 +263,50 @@ export async function testConnection(
   }
 }
 
+// 获取提供商的默认基础 URL
+function getDefaultBaseUrl(provider: string): string {
+  const baseUrls: Record<string, string> = {
+    openai: 'https://api.openai.com/v1',
+    anthropic: 'https://api.anthropic.com',
+    google: 'https://generativelanguage.googleapis.com/v1beta',
+    moonshot: 'https://api.moonshot.cn/v1',
+    deepseek: 'https://api.deepseek.com/v1',
+    ollama: 'http://localhost:11434',
+    groq: 'https://api.groq.com/openai/v1',
+    gemini: 'https://generativelanguage.googleapis.com/v1beta',
+    qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    mistral: 'https://api.mistral.ai/v1',
+    cohere: 'https://api.cohere.ai/v1',
+    nvidia: 'https://integrate.api.nvidia.com/v1',
+    perplexity: 'https://api.perplexity.ai',
+    together: 'https://api.together.xyz/v1',
+    cerebras: 'https://api.cerebras.ai/v1',
+    azure: '',
+    grok: 'https://api.x.ai/v1',
+  };
+  return baseUrls[provider] || '';
+}
+
+// 获取提供商的默认模型
+function getDefaultModel(provider: string): string {
+  const models: Record<string, string> = {
+    openai: 'gpt-4o-mini',
+    google: 'gemini-2.0-flash',
+    moonshot: 'moonshot-v1-8k',
+    deepseek: 'deepseek-chat',
+    groq: 'llama-3.3-70b-versatile',
+    qwen: 'qwen-plus',
+    mistral: 'mistral-small-latest',
+    cohere: 'command-r-plus-08-2024',
+    nvidia: 'meta/llama-3.1-8b-instruct',
+    perplexity: 'sonar',
+    together: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+    cerebras: 'llama3.3-70b',
+    grok: 'grok-2-latest',
+  };
+  return models[provider] || 'gpt-4o-mini';
+}
+
 // 获取提供商的默认模型列表
 function getDefaultModels(provider: SDKProviderName): string[] {
   switch (provider) {
@@ -121,7 +314,6 @@ function getDefaultModels(provider: SDKProviderName): string[] {
       return ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'];
     case 'anthropic':
       return ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-latest', 'claude-3-opus-20240229'];
-    case 'google':
     case 'gemini':
       return ['gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
     case 'moonshot':
