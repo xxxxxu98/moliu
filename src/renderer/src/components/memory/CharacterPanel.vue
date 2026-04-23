@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { NButton, NInput, NEmpty, NAvatar, NTag, NCard, NModal, useMessage } from 'naive-ui';
+import { NButton, NInput, NEmpty, NTag, NCard, NModal, useMessage } from 'naive-ui';
 import { Plus, Search, Users, Trash2, Edit3 } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
-import { getRoleColor } from '@/config/character-roles';
 import type { Character } from '@/types/project';
 
 const { t } = useI18n();
@@ -143,13 +142,6 @@ async function handleDeleteCharacter(character: Character) {
         class="p-3 rounded-lg bg-[var(--moliu-bg-primary)] border border-[var(--moliu-border-color)] hover:border-[var(--moliu-primary)] transition-colors cursor-pointer group"
       >
         <div class="flex items-start gap-3">
-          <NAvatar
-            :style="{ backgroundColor: getRoleColor(char.name) }"
-            round
-            size="small"
-          >
-            {{ char.name.slice(0, 1) }}
-          </NAvatar>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2">
               <span class="font-medium text-[var(--moliu-text-primary)]">{{ char.name }}</span>

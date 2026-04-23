@@ -299,7 +299,7 @@ function getCardGradient(index: number) {
           <div class="w-1 h-6 rounded-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('projectList.recentEdits') }}</h3>
         </div>
-        <span class="text-sm text-gray-400 dark:text-gray-500">最近 3 个项目</span>
+        <span class="text-sm text-gray-400 dark:text-gray-500">最近 {{ recentProjects.length }} 个项目</span>
       </div>
       
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
