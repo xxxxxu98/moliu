@@ -6,6 +6,13 @@
 import { AIClient, type Message, type ProviderName } from 'multi-ai-sdk';
 import { PromptBuilder, type ProjectContext, type AIWriteResult, type AISuggestion } from './base.service';
 
+export interface AIGenerationConfig {
+  temperature: number;
+  topP: number;
+  frequencyPenalty: number;
+  presencePenalty: number;
+}
+
 /**
  * Provider name mapping from our config to multi-ai-sdk
  */
@@ -38,11 +45,30 @@ export class UnifiedAIService {
   private provider: string;
   private model: string;
   private maxTokens: number;
+  private generationConfig: {
+    temperature: number;
+    topP: number;
+    frequencyPenalty: number;
+    presencePenalty: number;
+  };
 
-  constructor(provider: string, apiKey: string, baseUrl?: string, model?: string, maxTokens?: number) {
+  constructor(
+    provider: string,
+    apiKey: string,
+    baseUrl?: string,
+    model?: string,
+    maxTokens?: number,
+    generationConfig?: { temperature: number; topP: number; frequencyPenalty: number; presencePenalty: number }
+  ) {
     this.provider = provider;
     this.model = model || '';
     this.maxTokens = maxTokens || 4096;
+    this.generationConfig = generationConfig || {
+      temperature: 0.8,
+      topP: 0.9,
+      frequencyPenalty: 0,
+      presencePenalty: 0,
+    };
     this.initClient(apiKey, baseUrl);
   }
 
@@ -87,9 +113,18 @@ export class UnifiedAIService {
   /**
    * Update service configuration
    */
-  updateConfig(apiKey: string, baseUrl?: string, model?: string, maxTokens?: number) {
+  updateConfig(
+    apiKey: string,
+    baseUrl?: string,
+    model?: string,
+    maxTokens?: number,
+    generationConfig?: { temperature: number; topP: number; frequencyPenalty: number; presencePenalty: number }
+  ) {
     this.model = model || this.model;
     this.maxTokens = maxTokens || this.maxTokens;
+    if (generationConfig) {
+      this.generationConfig = generationConfig;
+    }
     this.initClient(apiKey, baseUrl);
   }
 
@@ -138,6 +173,10 @@ export class UnifiedAIService {
 
     const response = await this.client.chat(messages, {
       maxTokens: this.maxTokens,
+      temperature: this.generationConfig.temperature,
+      topP: this.generationConfig.topP,
+      frequencyPenalty: this.generationConfig.frequencyPenalty,
+      presencePenalty: this.generationConfig.presencePenalty,
     });
 
     return {
@@ -191,6 +230,10 @@ export class UnifiedAIService {
 
     const response = await this.client.chat(messages, {
       maxTokens: this.maxTokens,
+      temperature: this.generationConfig.temperature,
+      topP: this.generationConfig.topP,
+      frequencyPenalty: this.generationConfig.frequencyPenalty,
+      presencePenalty: this.generationConfig.presencePenalty,
     });
 
     return {
@@ -241,6 +284,10 @@ export class UnifiedAIService {
     try {
       const response = await this.client.chat(messages, {
         maxTokens: 2048,
+        temperature: this.generationConfig.temperature,
+        topP: this.generationConfig.topP,
+        frequencyPenalty: this.generationConfig.frequencyPenalty,
+        presencePenalty: this.generationConfig.presencePenalty,
       });
 
       const content = typeof response === 'string' ? response : JSON.stringify(response);
@@ -291,6 +338,10 @@ export class UnifiedAIService {
     try {
       const response = await this.client.chat(messages, {
         maxTokens: 512,
+        temperature: this.generationConfig.temperature,
+        topP: this.generationConfig.topP,
+        frequencyPenalty: this.generationConfig.frequencyPenalty,
+        presencePenalty: this.generationConfig.presencePenalty,
       });
 
       const content = typeof response === 'string' ? response : JSON.stringify(response);
@@ -348,6 +399,10 @@ export class UnifiedAIService {
 
     const response = await this.client.chat(messages, {
       maxTokens: 1024,
+      temperature: this.generationConfig.temperature,
+      topP: this.generationConfig.topP,
+      frequencyPenalty: this.generationConfig.frequencyPenalty,
+      presencePenalty: this.generationConfig.presencePenalty,
     });
 
     return {
@@ -378,6 +433,10 @@ export class UnifiedAIService {
 
     const response = await this.client.chat(messages, {
       maxTokens: 2048,
+      temperature: this.generationConfig.temperature,
+      topP: this.generationConfig.topP,
+      frequencyPenalty: this.generationConfig.frequencyPenalty,
+      presencePenalty: this.generationConfig.presencePenalty,
     });
 
     return {
@@ -409,6 +468,10 @@ export class UnifiedAIService {
 
     const response = await this.client.chat(messages, {
       maxTokens: 512,
+      temperature: this.generationConfig.temperature,
+      topP: this.generationConfig.topP,
+      frequencyPenalty: this.generationConfig.frequencyPenalty,
+      presencePenalty: this.generationConfig.presencePenalty,
     });
 
     return {
@@ -439,6 +502,10 @@ export class UnifiedAIService {
 
     const response = await this.client.chat(messages, {
       maxTokens: 512,
+      temperature: this.generationConfig.temperature,
+      topP: this.generationConfig.topP,
+      frequencyPenalty: this.generationConfig.frequencyPenalty,
+      presencePenalty: this.generationConfig.presencePenalty,
     });
 
     return {
@@ -463,6 +530,10 @@ export class UnifiedAIService {
     try {
       const stream = this.client.stream(messages, {
         maxTokens: this.maxTokens,
+        temperature: this.generationConfig.temperature,
+        topP: this.generationConfig.topP,
+        frequencyPenalty: this.generationConfig.frequencyPenalty,
+        presencePenalty: this.generationConfig.presencePenalty,
       });
 
       for await (const chunk of stream) {

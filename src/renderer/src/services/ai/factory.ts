@@ -16,7 +16,8 @@ export class AIServiceFactory {
     apiKey: string,
     baseUrl?: string,
     model?: string,
-    maxTokens?: number
+    maxTokens?: number,
+    generationConfig?: { temperature: number; topP: number; frequencyPenalty: number; presencePenalty: number }
   ): UnifiedAIService {
     const serviceKey = `${provider}-${model || 'default'}`;
 
@@ -26,7 +27,7 @@ export class AIServiceFactory {
       return existing;
     }
 
-    const service = new UnifiedAIService(provider, apiKey, baseUrl, model, maxTokens);
+    const service = new UnifiedAIService(provider, apiKey, baseUrl, model, maxTokens, generationConfig);
 
     this.services.set(serviceKey, service);
     return service;
@@ -111,7 +112,7 @@ export class AIServiceFactory {
   }
 }
 
-export { UnifiedAIService } from './unified.service';
+export { UnifiedAIService, type AIGenerationConfig } from './unified.service';
 export { PromptBuilder } from './base.service';
 export type { ProjectContext, AISuggestion, AIWriteResult } from './base.service';
 export type { AIWriteMode, ContinueMode, SuggestionType, SuggestionSeverity } from './types';

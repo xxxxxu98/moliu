@@ -18,8 +18,19 @@ export interface ElectronAPI {
   // AI
   generateText: (params: unknown) => Promise<unknown>;
   checkConsistency: (text: string) => Promise<unknown>;
-  testAIConnection: (provider: string, config: { apiKey: string; baseUrl?: string }) => Promise<{ success: boolean; error?: string; errorCode?: string; models?: string[]; responseTime?: number }>;
-  generateOutline: (params: { prompt: string; provider: string; config: { apiKey: string; baseUrl?: string } }) => Promise<void>;
+  testAIConnection: (provider: string, config: { apiKey: string; baseUrl?: string; model?: string }) => Promise<{ success: boolean; error?: string; errorCode?: string; models?: string[]; responseTime?: number }>;
+  generateOutline: (params: {
+    prompt: string;
+    provider: string;
+    config: {
+      apiKey: string;
+      baseUrl?: string;
+      model?: string;
+      maxTokens?: number;
+      temperature?: number;
+      topP?: number;
+    };
+  }) => Promise<void>;
 
   // Memory - Characters
   updateCharacter: (data: { projectId: string; character: unknown }) => Promise<{ success: boolean; error?: string }>;

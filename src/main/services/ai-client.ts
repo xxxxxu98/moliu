@@ -65,6 +65,13 @@ export function createAIClient(
     maxRetries?: number;
   }
 ): AIClient {
+  if (!apiKey || apiKey.trim() === '') {
+    throw new Error('API key is required');
+  }
+  if (provider !== 'ollama' && apiKey === 'dummy') {
+    throw new Error('Invalid API key for non-Ollama provider');
+  }
+
   return createClient(provider, apiKey, {
     timeout: options?.timeout || 10000,
     maxRetries: options?.maxRetries || 3,
@@ -145,17 +152,121 @@ export function getDefaultModels(provider: string): string[] {
   }
 }
 
+// 检查提供商是否支持自定义 baseUrl（ollama 和 azure 由 SDK 原生支持）
+function supportsCustomBaseUrl(provider: string): boolean {
+  const unsupported = ['ollama', 'azure'];
+  return !unsupported.includes(provider);
+}
+
 /**
- * 测试连接 - 使用 multi-ai-sdk
+ * 使用 fetch 直接测试连接（绕过 multi-ai-sdk 的 baseUrl 限制）
+ */
+async function testConnectionWithFetch(
+  provider: string,
+  apiKey: string,
+  baseUrl: string,
+  timeout: number,
+  model: string
+): Promise<TestConnectionResult> {
+  const startTime = Date.now();
+  const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+  const endpoint = `${cleanBaseUrl}/chat/completions`;
+
+  console.log(`[AI-Client-Fetch] Starting connection test`);
+  console.log(`[AI-Client-Fetch] Provider: ${provider}`);
+  console.log(`[AI-Client-Fetch] API Key: "${apiKey}"`);
+  console.log(`[AI-Client-Fetch] Model: "${model}"`);
+  console.log(`[AI-Client-Fetch] Base URL: ${cleanBaseUrl}`);
+  console.log(`[AI-Client-Fetch] Endpoint: ${endpoint}`);
+  console.log(`[AI-Client-Fetch] Timeout: ${timeout}ms`);
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    console.log(`[AI-Client-Fetch] Timeout triggered after ${timeout}ms`);
+    controller.abort();
+  }, timeout);
+
+  try {
+    console.log(`[AI-Client-Fetch] Sending request to ${endpoint}...`);
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: 'user', content: 'Hi' }],
+        max_tokens: 5,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+    console.log(`[AI-Client-Fetch] Response received: status=${response.status}`);
+
+    if (response.ok) {
+      console.log(`[AI-Client-Fetch] Success! Status: ${response.status}`);
+      return {
+        success: true,
+        models: getDefaultModels(provider),
+        responseTime: Date.now() - startTime,
+      };
+    }
+
+    console.log(`[AI-Client-Fetch] Response not OK, status: ${response.status}`);
+    const errorData = await response.json().catch(() => ({}));
+    console.log(`[AI-Client-Fetch] Error response:`, errorData);
+
+    return {
+      success: false,
+      error: errorData.error?.message || `HTTP ${response.status}`,
+      errorCode: response.status === 401 ? 'INVALID_API_KEY' : 'UNKNOWN',
+      responseTime: Date.now() - startTime,
+    };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    console.log(`[AI-Client-Fetch] Exception caught!`);
+    console.log(`[AI-Client-Fetch] Error name: ${error instanceof Error ? error.name : 'Unknown'}`);
+    console.log(`[AI-Client-Fetch] Error message: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.log(`[AI-Client-Fetch] Error cause: ${error instanceof Error && error.cause ? JSON.stringify(error.cause) : 'None'}`);
+
+    const errorMessage = error instanceof Error ? error.message : 'Connection failed';
+
+    let code = 'UNKNOWN';
+    if (error instanceof Error) {
+      if (error.name === 'AbortError' || errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+        code = 'TIMEOUT';
+        console.log(`[AI-Client-Fetch] Error classified as: TIMEOUT`);
+      } else if (errorMessage.includes('fetch') || errorMessage.includes('network') ||
+                 errorMessage.includes('ENOTFOUND') || errorMessage.includes('ECONNREFUSED')) {
+        code = 'NETWORK_ERROR';
+        console.log(`[AI-Client-Fetch] Error classified as: NETWORK_ERROR`);
+      }
+    }
+
+    return {
+      success: false,
+      error: errorMessage,
+      errorCode: code,
+      responseTime: Date.now() - startTime,
+    };
+  }
+}
+
+/**
+ * 测试连接
  */
 export async function testConnection(
   provider: string,
   apiKey: string,
-  baseUrl?: string
+  baseUrl?: string,
+  model?: string
 ): Promise<TestConnectionResult> {
   const startTime = Date.now();
+  const targetModel = model?.trim() || getDefaultModel(provider);
 
-  // 检查是否支持该提供商
   if (!isProviderSupported(provider)) {
     return {
       success: false,
@@ -176,15 +287,32 @@ export async function testConnection(
     };
   }
 
-  // 智谱 AI 需要更长的超时时间
   const isZhipu = provider === 'zhipu';
   const timeout = isZhipu ? 30000 : (provider === 'ollama' ? 5000 : 10000);
 
-  console.log(`[AI-Client] Testing ${provider}, timeout: ${timeout}ms`);
-  console.log(`[AI-Client] BaseURL: ${targetBaseUrl}`);
+  console.log(`[AI-Client] === Connection Test ===`);
+  console.log(`[AI-Client] Provider: ${provider}`);
+  console.log(`[AI-Client] API Key: "${apiKey}"`);
+  console.log(`[AI-Client] Model: "${targetModel}"`);
+  console.log(`[AI-Client] Custom Model provided: "${model || 'none'}"`);
+  console.log(`[AI-Client] Custom BaseURL provided: "${baseUrl}"`);
+  console.log(`[AI-Client] Default BaseURL: "${getDefaultBaseUrl(provider)}"`);
+  console.log(`[AI-Client] Resolved Target BaseURL: "${targetBaseUrl}"`);
+  console.log(`[AI-Client] Timeout: ${timeout}ms`);
+
+  // 对于使用自定义 URL 的情况，使用原生 fetch（绕过 SDK 的 baseUrl 问题）
+  const shouldUseDirectFetch = Boolean(targetBaseUrl && supportsCustomBaseUrl(provider) && baseUrl?.trim());
+  console.log(`[AI-Client] Should use direct fetch: ${shouldUseDirectFetch}`);
+  console.log(`[AI-Client] - has targetBaseUrl: ${!!targetBaseUrl}`);
+  console.log(`[AI-Client] - supportsCustomBaseUrl: ${supportsCustomBaseUrl(provider)}`);
+  console.log(`[AI-Client] - has custom baseUrl: ${!!baseUrl?.trim()}`);
+
+  if (shouldUseDirectFetch) {
+    console.log(`[AI-Client] Using direct fetch path`);
+    return testConnectionWithFetch(provider, apiKey, targetBaseUrl, timeout, targetModel);
+  }
 
   try {
-    // 使用 multi-ai-sdk 测试
     const sdkProvider = provider === 'zhipu' ? 'openai' : provider;
 
     const config: AIClientOptions = {
@@ -197,9 +325,9 @@ export async function testConnection(
 
     const client = new AIClient(config);
 
-    const response = await client.chat(
+    await client.chat(
       [{ role: 'user', content: 'Hi' }],
-      { maxTokens: 5 }
+      { model: targetModel, maxTokens: 5 }
     );
 
     console.log(`[AI-Client] ${provider} test SUCCESS!`);
@@ -210,11 +338,15 @@ export async function testConnection(
       responseTime: Date.now() - startTime,
     };
   } catch (error) {
-    console.error(`[AI-Client] ${provider} test FAILED:`, error);
+    console.error(`[AI-Client] SDK call FAILED:`, error);
+    console.log(`[AI-Client] Error type: ${error?.constructor?.name || typeof error}`);
+    console.log(`[AI-Client] Error message: ${error instanceof Error ? error.message : 'Unknown'}`);
+
     const errorCode = error instanceof AIError ? error.code : undefined;
     const errorStatus = error instanceof AIError ? error.status : undefined;
 
-    // 根据错误类型设置错误码
+    console.log(`[AI-Client] AIError code: ${errorCode}, status: ${errorStatus}`);
+
     let code = 'UNKNOWN';
     if (errorStatus === 401 || errorCode === 'invalid_api_key') {
       code = 'INVALID_API_KEY';
@@ -225,7 +357,8 @@ export async function testConnection(
     } else if (error instanceof Error) {
       if (error.message.includes('timeout') || error.message.includes('Timeout')) {
         code = 'TIMEOUT';
-      } else if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+      } else if (error.message.includes('fetch') || error.message.includes('network') ||
+                 error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
         code = 'NETWORK_ERROR';
       }
     }
@@ -332,13 +465,12 @@ export async function chatJSON<T>(
     : messages;
 
   return await client.askJSON<T>(
-    allMessages.map(m => m.content).join('\n'),
+    allMessages.map(m => `[${m.role}]: ${m.content}`).join('\n'),
     {
       model: options.model,
       temperature: options.temperature,
       maxTokens: options.maxTokens,
       topP: options.topP,
-      systemPrompt: options.systemPrompt,
     }
   );
 }

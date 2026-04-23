@@ -191,10 +191,22 @@ export async function generateOutlineStream(
   event: Electron.IpcMainInvokeEvent,
   prompt: string,
   provider: string,
-  config: { apiKey: string; baseUrl?: string }
+  config: {
+    apiKey: string;
+    baseUrl?: string;
+    model?: string;
+    maxTokens?: number;
+    temperature?: number;
+    topP?: number;
+  }
 ): Promise<void> {
   const baseUrl = getBaseUrl(provider, config.baseUrl);
-  const model = getModelForProvider(provider);
+  // 优先使用用户配置的模型，否则使用默认模型
+  const model = config.model?.trim() || getModelForProvider(provider);
+  // 使用用户配置的参数，否则使用默认值
+  const maxTokens = config.maxTokens || 4096;
+  const temperature = config.temperature ?? 0.8;
+  const topP = config.topP ?? 0.9;
 
   try {
     // Ollama 不需要真实的 API key
@@ -217,7 +229,9 @@ export async function generateOutlineStream(
     // 使用流式 API
     const stream = client.stream(messages, {
       model,
-      maxTokens: 4096,
+      maxTokens,
+      temperature,
+      topP,
     });
 
     let fullContent = '';

@@ -231,6 +231,7 @@ export const useSettingsStore = defineStore('settings', () => {
     const result = await window.electronAPI.testAIConnection(provider.provider, {
       apiKey: provider.apiKey,
       baseUrl: provider.baseUrl,
+      model: provider.modelName,
     }) as { success: boolean; error?: string; errorCode?: string; models?: string[] };
 
     provider.isValid = result.success;

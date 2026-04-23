@@ -191,8 +191,8 @@ ipcMain.handle('ai-providers:save', (_event, providers: StoredProvider[]) => {
   return { success: true };
 });
 
-ipcMain.handle('ai:test', async (_event, provider: string, config: { apiKey: string; baseUrl?: string }) => {
-  return await testConnection(provider, config.apiKey, config.baseUrl);
+ipcMain.handle('ai:test', async (_event, provider: string, config: { apiKey: string; baseUrl?: string; model?: string }) => {
+  return await testConnection(provider, config.apiKey, config.baseUrl, config.model);
 });
 
 // IPC Handlers for Projects
@@ -261,10 +261,17 @@ ipcMain.handle('project:delete', (_event, id: string) => {
 });
 
 // IPC Handler for AI Outline Generation (Streaming)
-ipcMain.handle('ai:generate-outline', async (event, { prompt, provider, config }: { 
-  prompt: string; 
-  provider: string; 
-  config: { apiKey: string; baseUrl?: string };
+ipcMain.handle('ai:generate-outline', async (event, { prompt, provider, config }: {
+  prompt: string;
+  provider: string;
+  config: {
+    apiKey: string;
+    baseUrl?: string;
+    model?: string;
+    maxTokens?: number;
+    temperature?: number;
+    topP?: number;
+  };
 }) => {
   try {
     await generateOutlineStream(event, prompt, provider, config);

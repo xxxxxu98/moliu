@@ -275,6 +275,10 @@ async function generateOutlines() {
       config: {
         apiKey: enabledProvider.apiKey,
         baseUrl: enabledProvider.baseUrl,
+        model: enabledProvider.modelName,
+        maxTokens: enabledProvider.maxTokens,
+        temperature: enabledProvider.generationConfig?.temperature,
+        topP: enabledProvider.generationConfig?.topP,
       },
     });
   } catch (error) {

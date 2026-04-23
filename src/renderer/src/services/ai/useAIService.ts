@@ -1,7 +1,7 @@
 import { ref, computed, readonly } from 'vue';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useProjectStore } from '@/stores/project.store';
-import { AIServiceFactory, type UnifiedAIService, type ProjectContext, type AIWriteResult, type AISuggestion } from './factory';
+import { AIServiceFactory, type UnifiedAIService, type ProjectContext, type AIWriteResult, type AISuggestion, type AIGenerationConfig } from './factory';
 import type { AIWriteMode } from './types';
 
 /**
@@ -75,7 +75,8 @@ export function useAIService() {
         provider.apiKey,
         provider.baseUrl,
         currentModel.value || undefined,
-        provider.maxTokens || 4096
+        provider.maxTokens || 4096,
+        provider.generationConfig
       );
       return true;
     } catch (err) {
