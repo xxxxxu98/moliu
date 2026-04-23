@@ -11,8 +11,9 @@ export interface ElectronAPI {
 
   // Chapter
   loadChapter: (id: string) => Promise<unknown>;
-  saveChapter: (data: unknown) => Promise<unknown>;
+  saveChapter: (data: { projectId: string; chapter: unknown }) => Promise<{ success: boolean; error?: string }>;
   listChapters: (projectId: string) => Promise<unknown>;
+  deleteChapter: (data: { projectId: string; chapterId: string }) => Promise<{ success: boolean; error?: string }>;
 
   // AI
   generateText: (params: unknown) => Promise<unknown>;
@@ -20,10 +21,18 @@ export interface ElectronAPI {
   testAIConnection: (provider: string, config: { apiKey: string; baseUrl?: string }) => Promise<{ success: boolean; error?: string; errorCode?: string; models?: string[]; responseTime?: number }>;
   generateOutline: (params: { prompt: string; provider: string; config: { apiKey: string; baseUrl?: string } }) => Promise<void>;
 
-  // Memory
-  searchMemory: (query: string) => Promise<unknown>;
-  updateCharacter: (character: unknown) => Promise<unknown>;
-  updateForeshadow: (foreshadow: unknown) => Promise<unknown>;
+  // Memory - Characters
+  updateCharacter: (data: { projectId: string; character: unknown }) => Promise<{ success: boolean; error?: string }>;
+  deleteCharacter: (data: { projectId: string; characterId: string }) => Promise<{ success: boolean; error?: string }>;
+  listCharacters: (projectId: string) => Promise<unknown>;
+
+  // Memory - Foreshadows
+  updateForeshadow: (data: { projectId: string; foreshadow: unknown }) => Promise<{ success: boolean; error?: string }>;
+  deleteForeshadow: (data: { projectId: string; foreshadowId: string }) => Promise<{ success: boolean; error?: string }>;
+  listForeshadows: (projectId: string) => Promise<unknown>;
+
+  // Memory - Search
+  searchMemory: (data: { projectId: string; query: string }) => Promise<{ characters: unknown[]; foreshadows: unknown[] }>;
 
   // Settings
   getSettings: () => Promise<unknown>;
@@ -52,8 +61,11 @@ const api: ElectronAPI = {
 
   // Chapter
   loadChapter: (id: string) => ipcRenderer.invoke('chapter:load', id),
-  saveChapter: (data: unknown) => ipcRenderer.invoke('chapter:save', data),
+  saveChapter: (data: { projectId: string; chapter: unknown }) =>
+    ipcRenderer.invoke('chapter:save', data),
   listChapters: (projectId: string) => ipcRenderer.invoke('chapter:list', projectId),
+  deleteChapter: (data: { projectId: string; chapterId: string }) =>
+    ipcRenderer.invoke('chapter:delete', data),
 
   // AI
   generateText: (params: unknown) => ipcRenderer.invoke('ai:generate', params),
@@ -62,12 +74,23 @@ const api: ElectronAPI = {
     ipcRenderer.invoke('ai:test', provider, config),
   generateOutline: (params) => ipcRenderer.invoke('ai:generate-outline', params),
 
-  // Memory
-  searchMemory: (query: string) => ipcRenderer.invoke('memory:search', query),
-  updateCharacter: (character: unknown) =>
-    ipcRenderer.invoke('character:update', character),
-  updateForeshadow: (foreshadow: unknown) =>
-    ipcRenderer.invoke('foreshadow:update', foreshadow),
+  // Memory - Characters
+  updateCharacter: (data: { projectId: string; character: unknown }) =>
+    ipcRenderer.invoke('character:update', data),
+  deleteCharacter: (data: { projectId: string; characterId: string }) =>
+    ipcRenderer.invoke('character:delete', data),
+  listCharacters: (projectId: string) => ipcRenderer.invoke('character:list', projectId),
+
+  // Memory - Foreshadows
+  updateForeshadow: (data: { projectId: string; foreshadow: unknown }) =>
+    ipcRenderer.invoke('foreshadow:update', data),
+  deleteForeshadow: (data: { projectId: string; foreshadowId: string }) =>
+    ipcRenderer.invoke('foreshadow:delete', data),
+  listForeshadows: (projectId: string) => ipcRenderer.invoke('foreshadow:list', projectId),
+
+  // Memory - Search
+  searchMemory: (data: { projectId: string; query: string }) =>
+    ipcRenderer.invoke('memory:search', data),
 
   // Settings
   getSettings: () => ipcRenderer.invoke('settings:get'),
