@@ -7,6 +7,46 @@ import { AIClient, type Message, type ProviderName } from 'multi-ai-sdk';
 import { PromptBuilder, type ProjectContext, type AIWriteResult, type AISuggestion } from './base.service';
 import { getSDKProvider, type ProviderType, defaultProviders } from '@/config/ai-providers';
 
+/**
+ * 从原始响应中提取纯文本内容
+ * 某些 SDK 可能返回原始 SSE 行而不是纯文本，需要统一处理
+ */
+function extractPureText(rawContent: string): string {
+  // 检测是否包含 SSE JSON 格式
+  if (rawContent.includes('"object":"chat.completion.chunk"') || 
+      (rawContent.includes('"choices"') && rawContent.includes('"delta"'))) {
+    const texts: string[] = [];
+    const lines = rawContent.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('data: ')) {
+        const jsonStr = trimmed.slice(6);
+        if (jsonStr && jsonStr !== '[DONE]') {
+          try {
+            const obj = JSON.parse(jsonStr);
+            if (obj.choices?.[0]?.delta?.content) {
+              texts.push(obj.choices[0].delta.content);
+            }
+          } catch {
+            texts.push(jsonStr);
+          }
+        }
+      } else if (trimmed && trimmed !== '[DONE]') {
+        try {
+          const obj = JSON.parse(trimmed);
+          if (obj.choices?.[0]?.delta?.content) {
+            texts.push(obj.choices[0].delta.content);
+          }
+        } catch {
+          texts.push(trimmed);
+        }
+      }
+    }
+    return texts.join('');
+  }
+  return rawContent;
+}
+
 // Outline generation system prompt
 const OUTLINE_SYSTEM_PROMPT = `你是一位专业的小说创作顾问和故事架构师。你的任务是根据用户提供的创意种子，生成多个独特的故事大纲。
 
@@ -312,7 +352,9 @@ export class UnifiedAIService {
         presencePenalty: this.generationConfig.presencePenalty,
       } as any);
 
-      const content = typeof response === 'string' ? response : JSON.stringify(response);
+      const content = extractPureText(
+        typeof response === 'string' ? response : JSON.stringify(response)
+      );
       
       // Try to parse JSON response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -366,7 +408,9 @@ export class UnifiedAIService {
         presencePenalty: this.generationConfig.presencePenalty,
       } as any);
 
-      const content = typeof response === 'string' ? response : JSON.stringify(response);
+      const content = extractPureText(
+        typeof response === 'string' ? response : JSON.stringify(response)
+      );
       
       // Parse JSON response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -647,30 +691,73 @@ export class UnifiedAIService {
 
       // Parse JSON result
       try {
-        // 清理 SSE 的 [DONE] 标记和空白字符
-        const cleanedContent = fullContent.replace(/\[DONE\]\s*$/g, '').trim();
+        // 从原始 SSE 数据中提取纯文本内容
+        const pureText = extractPureText(fullContent);
+        
+        // 清理 [DONE] 标记和空白字符
+        let cleanedContent = pureText.replace(/\[DONE\]\s*$/g, '').trim();
         
         // 尝试多种方式解析 JSON
         let jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const result = JSON.parse(jsonMatch[0]);
-          onComplete(result);
-        } else {
-          // 如果没有找到 JSON 格式，尝试清理常见的格式问题
-          // 例如：移除最后一个可能的尾随逗号或多余的闭合括号
-          const cleanedForJson = cleanedContent
-            .replace(/,\s*\]/g, ']')  // 移除数组末尾的逗号
-            .replace(/,\s*\}/g, '}'); // 移除对象末尾的逗号
+        
+        // 如果没有找到 JSON，尝试清理常见的格式问题
+        if (!jsonMatch) {
+          // 移除 markdown 代码块标记
+          cleanedContent = cleanedContent
+            .replace(/```json\s*/g, '')
+            .replace(/```\s*$/g, '')
+            .trim();
           
-          jsonMatch = cleanedForJson.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const result = JSON.parse(jsonMatch[0]);
+          // 再次尝试匹配 JSON
+          jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+        }
+        
+        if (jsonMatch) {
+          let jsonStr = jsonMatch[0];
+          
+          // 尝试解析 JSON
+          try {
+            const result = JSON.parse(jsonStr);
             onComplete(result);
-          } else {
-            onError('Failed to parse AI response as JSON');
+            return;
+          } catch {
+            // JSON 不完整，尝试修复常见的尾随逗号问题
+            const cleanedForJson = jsonStr
+              .replace(/,\s*\]/g, ']')
+              .replace(/,\s*\}/g, '}')
+              .replace(/([\]\}])\s*[\n\r]+\s*$/g, '$1'); // 移除末尾换行
+            
+            try {
+              const result = JSON.parse(cleanedForJson);
+              onComplete(result);
+              return;
+            } catch {
+              // 如果仍然失败，尝试提取 outlines 数组
+              const outlinesMatch = cleanedContent.match(/"outlines"\s*:\s*\[([\s\S]*)\]/);
+              if (outlinesMatch) {
+                try {
+                  const outlinesStr = '[' + outlinesMatch[1];
+                  // 尝试修复 outlines 数组
+                  const fixedOutlinesStr = outlinesStr
+                    .replace(/,\s*\]/g, ']')
+                    .replace(/}\s*\n\s*\{/g, '},{');
+                  
+                  const outlines = JSON.parse(fixedOutlinesStr);
+                  onComplete({ outlines });
+                  return;
+                } catch {
+                  // 继续尝试其他方法
+                }
+              }
+            }
           }
         }
-      } catch {
+        
+        // 如果所有方法都失败，打印调试信息
+        console.error('[UnifiedAIService] Failed to parse JSON. Response preview:', cleanedContent.substring(0, 500));
+        onError('Failed to parse AI response as JSON');
+      } catch (e) {
+        console.error('[UnifiedAIService] JSON parsing error:', e);
         onError('Failed to parse AI response as JSON');
       }
     } catch (error) {

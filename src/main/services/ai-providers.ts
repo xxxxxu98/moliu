@@ -41,6 +41,46 @@ export function getBaseUrl(provider: string, customUrl?: string): string {
   return customUrl?.trim() || getDefaultBaseUrl(provider);
 }
 
+/**
+ * 从原始响应中提取纯文本内容
+ * 某些 SDK 可能返回原始 SSE 行而不是纯文本，需要统一处理
+ */
+function extractPureText(rawContent: string): string {
+  // 检测是否包含 SSE JSON 格式
+  if (rawContent.includes('"object":"chat.completion.chunk"') || 
+      (rawContent.includes('"choices"') && rawContent.includes('"delta"'))) {
+    const texts: string[] = [];
+    const lines = rawContent.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('data: ')) {
+        const jsonStr = trimmed.slice(6);
+        if (jsonStr && jsonStr !== '[DONE]') {
+          try {
+            const obj = JSON.parse(jsonStr);
+            if (obj.choices?.[0]?.delta?.content) {
+              texts.push(obj.choices[0].delta.content);
+            }
+          } catch {
+            texts.push(jsonStr);
+          }
+        }
+      } else if (trimmed && trimmed !== '[DONE]') {
+        try {
+          const obj = JSON.parse(trimmed);
+          if (obj.choices?.[0]?.delta?.content) {
+            texts.push(obj.choices[0].delta.content);
+          }
+        } catch {
+          texts.push(trimmed);
+        }
+      }
+    }
+    return texts.join('');
+  }
+  return rawContent;
+}
+
 // System prompt for outline generation
 const OUTLINE_SYSTEM_PROMPT = `你是一位专业的小说创作顾问和故事架构师。你的任务是根据用户提供的创意种子，生成多个独特的故事大纲。
 
@@ -145,12 +185,28 @@ export async function generateOutlineStream(
 
     // 解析 JSON 结果
     try {
-      const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
+        // 从原始 SSE 数据中提取纯文本内容
+      const pureText = extractPureText(fullContent);
+      
+      // 清理 [DONE] 标记和空白字符
+      const cleanedContent = pureText.replace(/\[DONE\]\s*$/g, '').trim();
+      
+      const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const result = JSON.parse(jsonMatch[0]);
         event.sender.send('ai:outline-complete', { result });
       } else {
-        event.sender.send('ai:outline-error', { error: 'Failed to parse AI response' });
+        // 尝试清理常见格式问题后重试
+        const cleanedForJson = cleanedContent
+          .replace(/,\s*\]/g, ']')
+          .replace(/,\s*\}/g, '}');
+        const retryMatch = cleanedForJson.match(/\{[\s\S]*\}/);
+        if (retryMatch) {
+          const result = JSON.parse(retryMatch[0]);
+          event.sender.send('ai:outline-complete', { result });
+        } else {
+          event.sender.send('ai:outline-error', { error: 'Failed to parse AI response' });
+        }
       }
     } catch (e) {
       event.sender.send('ai:outline-error', { error: 'Failed to parse AI response as JSON' });
