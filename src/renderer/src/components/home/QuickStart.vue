@@ -56,6 +56,27 @@ const canGenerate = computed(() => {
   return false;
 });
 
+const MIN_PROMPT_LENGTH = 10;
+const MAX_PROMPT_LENGTH = 2000;
+
+const inputStatus = computed(() => {
+  if (activeTab.value !== 'custom') return null;
+  const len = prompt.value.trim().length;
+  if (len === 0) return { type: 'empty', message: '' };
+  if (len < MIN_PROMPT_LENGTH) {
+    return { type: 'insufficient', message: `还需 ${MIN_PROMPT_LENGTH - len} 个字符`, remaining: MIN_PROMPT_LENGTH - len };
+  }
+  if (len >= MIN_PROMPT_LENGTH && len < 50) {
+    return { type: 'progress', message: '继续输入，让 AI 更好地理解你的想法', remaining: 0 };
+  }
+  if (len >= 50 && len < 100) {
+    return { type: 'good', message: '很好，已有足够信息', remaining: 0 };
+  }
+  return { type: 'excellent', message: '非常详细，AI 将生成更精准的大纲', remaining: 0 };
+});
+
+const isPromptTooLong = computed(() => prompt.value.length > MAX_PROMPT_LENGTH);
+
 const promptPreview = computed(() => {
   if (activeTab.value === 'templates' && selectedTemplate.value) {
     return selectedTemplate.value.prompt;
@@ -453,32 +474,99 @@ function formatWordCount(count: number) {
       <div>
         <textarea
           v-model="prompt"
-          class="w-full h-28 p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+          class="w-full h-28 p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500"
+          :class="[
+            isPromptTooLong 
+              ? 'border-red-400 dark:border-red-500' 
+              : prompt.trim().length >= MIN_PROMPT_LENGTH 
+                ? 'border-green-400 dark:border-green-500' 
+                : 'border-gray-200 dark:border-gray-700'
+          ]"
           :placeholder="t('quickStart.placeholder')"
         ></textarea>
-        <div class="flex items-center justify-between mt-1">
-          <span class="text-xs text-gray-400">{{ prompt.length }} / 2000</span>
-          <button
-            v-if="prompt.trim()"
-            class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            @click="saveDraft"
-          >
-            <Save class="w-3.5 h-3.5 text-gray-400" />
-          </button>
+        <div class="flex items-center justify-between mt-1.5">
+          <!-- Input Status Message -->
+          <div v-if="activeTab === 'custom'" class="flex items-center gap-1.5">
+            <span 
+              v-if="inputStatus?.type === 'insufficient'" 
+              class="flex items-center gap-1 text-xs text-amber-500"
+            >
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              {{ inputStatus.message }}
+            </span>
+            <span 
+              v-else-if="inputStatus?.type === 'progress'" 
+              class="flex items-center gap-1 text-xs text-indigo-500"
+            >
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+              {{ inputStatus.message }}
+            </span>
+            <span 
+              v-else-if="inputStatus?.type === 'good'" 
+              class="flex items-center gap-1 text-xs text-green-500"
+            >
+              <Check class="w-3 h-3" />
+              {{ inputStatus.message }}
+            </span>
+            <span 
+              v-else-if="inputStatus?.type === 'excellent'" 
+              class="flex items-center gap-1 text-xs text-emerald-500"
+            >
+              <Check class="w-3 h-3" />
+              {{ inputStatus.message }}
+            </span>
+          </div>
+          <div v-else></div>
+          
+          <!-- Character Count -->
+          <div class="flex items-center gap-2">
+            <span 
+              class="text-xs transition-colors"
+              :class="isPromptTooLong ? 'text-red-500' : 'text-gray-400'"
+            >
+              {{ prompt.length }} / {{ MAX_PROMPT_LENGTH }}
+            </span>
+            <button
+              v-if="prompt.trim()"
+              class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              @click="saveDraft"
+            >
+              <Save class="w-3.5 h-3.5 text-gray-400" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Generate Button -->
-    <button
-      class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-medium shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-      :disabled="!canGenerate || isGenerating"
-      @click="generateOutlines"
-    >
-      <Sparkles v-if="!isGenerating" class="w-4 h-4" />
-      <span v-if="isGenerating" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-      {{ isGenerating ? t('quickStart.generating') : t('quickStart.generate') }}
-    </button>
+    <div class="relative">
+      <button
+        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-medium shadow-lg transition-all"
+        :class="[
+          canGenerate && !isGenerating
+            ? 'bg-gradient-to-r from-indigo-500 to-purple-600 shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30'
+            : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
+        ]"
+        :disabled="!canGenerate || isGenerating"
+        @click="generateOutlines"
+      >
+        <Sparkles v-if="!isGenerating" class="w-4 h-4" />
+        <span v-if="isGenerating" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+        {{ isGenerating ? t('quickStart.generating') : t('quickStart.generate') }}
+      </button>
+      
+      <!-- Tooltip for disabled state -->
+      <div 
+        v-if="!canGenerate && !isGenerating && activeTab === 'custom' && prompt.trim().length > 0"
+        class="absolute left-1/2 -translate-x-1/2 -top-8 px-2 py-1 bg-gray-800 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap pointer-events-none z-10"
+      >
+        <span class="flex items-center gap-1">
+          <span class="text-red-400">✕</span>
+          请至少输入 {{ MIN_PROMPT_LENGTH }} 个字符
+        </span>
+        <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-px w-2 h-2 bg-gray-800 dark:bg-gray-700 rotate-45"></div>
+      </div>
+    </div>
 
     <!-- Streaming Content Preview -->
     <div v-if="streamingContent" class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
