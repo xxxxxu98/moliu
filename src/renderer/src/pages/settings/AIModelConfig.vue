@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { NButton, NInput, NSwitch, NTag, NModal, NForm, NFormItem, NPopconfirm, useMessage } from 'naive-ui';
-import { Plus, Trash2, TestTube, Check, X, Key, Edit2, Shield, Zap, AlertCircle } from 'lucide-vue-next';
+import { Plus, Trash2, TestTube, Check, X, Key, Edit2, Shield, Zap, AlertCircle, Cpu } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useSettingsStore, type AIProvider } from '@/stores/settings.store';
 import { providerNameMap, defaultProviders, type ProviderType } from '@/config/ai-providers';
@@ -168,6 +168,29 @@ function handleDefaultModelChange(modelId: string) {
         </button>
       </div>
 
+      <!-- Empty State -->
+      <div
+        v-if="settingsStore.aiProviders.length === 0"
+        class="relative group"
+      >
+        <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div class="relative bg-white dark:bg-gray-800/50 rounded-2xl p-10 border border-gray-100 dark:border-gray-700/50 border-dashed text-center">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center">
+            <Cpu class="w-8 h-8 text-indigo-500 dark:text-indigo-400" />
+          </div>
+          <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ t('settings.aiProviders.emptyTitle') }}</h4>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">{{ t('settings.aiProviders.emptyDesc') }}</p>
+          <button
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
+            @click="openAddModal"
+          >
+            <Plus class="w-4 h-4" />
+            {{ t('settings.aiProviders.addFirstProvider') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Provider List -->
       <div class="space-y-4">
         <div
           v-for="provider in settingsStore.aiProviders"
@@ -258,7 +281,7 @@ function handleDefaultModelChange(modelId: string) {
                 <Edit2 class="w-4 h-4" />
                 {{ t('settings.common.edit') }}
               </button>
-              <NPopconfirm @positive-click="deleteProvider(provider.id)">
+              <NPopconfirm @positive-click="deleteProvider(provider.id)" :positive-text="t('settings.common.confirm')" :negative-text="t('settings.common.cancel')">
                 <template #trigger>
                   <button
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"

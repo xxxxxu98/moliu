@@ -88,18 +88,8 @@ export const useSettingsStore = defineStore('settings', () => {
       const providers = await window.electronAPI.getAIProviders() as AIProvider[];
       if (providers && providers.length > 0) {
         aiProviders.value = providers;
-      } else {
-        // Set default providers from config
-        aiProviders.value = defaultProviders.map(p => ({
-          id: `default-${p.provider}`,
-          name: providerNameMap[p.provider],
-          provider: p.provider,
-          apiKey: '',
-          baseUrl: p.baseUrl,
-          enabled: p.provider === 'openai', // Only enable OpenAI by default
-          models: p.models,
-        }));
       }
+      // 默认不加载任何厂商，用户需要手动配置
 
       applyTheme(theme.value);
       isInitialized.value = true;

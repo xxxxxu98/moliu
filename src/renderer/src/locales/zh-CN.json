@@ -245,6 +245,9 @@
       "title": "已配置的AI厂商",
       "titleDesc": "管理你的AI模型连接",
       "addProvider": "添加厂商",
+      "addFirstProvider": "添加第一个厂商",
+      "emptyTitle": "暂无AI厂商配置",
+      "emptyDesc": "添加你的AI厂商配置，开始使用智能创作功能",
       "securityTitle": "安全说明",
       "securityDesc": "所有API Key均使用AES-256加密存储在本地，不会同步至任何服务器。请勿将您的API Key透露给他人。",
       "defaultModel": "默认模型",
@@ -301,6 +304,7 @@
     "common": {
       "save": "保存",
       "cancel": "取消",
+      "confirm": "确认",
       "delete": "删除",
       "edit": "编辑",
       "test": "测试连接",

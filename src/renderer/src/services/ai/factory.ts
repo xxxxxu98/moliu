@@ -7,6 +7,7 @@ import {
   MoonshotService,
   OllamaService,
   GoogleService,
+  ZhipuService,
 } from './providers';
 
 /**
@@ -54,6 +55,9 @@ export class AIServiceFactory {
       case 'google':
         service = new GoogleService(apiKey, baseUrl, model);
         break;
+      case 'zhipu':
+        service = new ZhipuService(apiKey, baseUrl, model);
+        break;
       default:
         throw new Error(`Unsupported provider: ${provider}`);
     }
@@ -99,6 +103,7 @@ export class AIServiceFactory {
       moonshot: 'moonshot-v1-8k',
       deepseek: 'deepseek-chat',
       ollama: 'llama3',
+      zhipu: 'glm-4.7-flash',
     };
     return defaults[provider];
   }
@@ -114,6 +119,7 @@ export class AIServiceFactory {
       moonshot: 'https://api.moonshot.cn/v1',
       deepseek: 'https://api.deepseek.com/v1',
       ollama: 'http://localhost:11434/v1',
+      zhipu: 'https://open.bigmodel.cn/api',
     };
     return baseUrls[provider];
   }

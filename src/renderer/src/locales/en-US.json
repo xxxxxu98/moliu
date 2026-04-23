@@ -245,6 +245,9 @@
       "title": "Configured AI Providers",
       "titleDesc": "Manage your AI model connections",
       "addProvider": "Add Provider",
+      "addFirstProvider": "Add First Provider",
+      "emptyTitle": "No AI Provider Configured",
+      "emptyDesc": "Add your AI provider configuration to start using smart creation features",
       "securityTitle": "Security Notice",
       "securityDesc": "All API Keys are stored locally with AES-256 encryption and will not be synced to any server. Please do not share your API Keys with others.",
       "defaultModel": "Default Model",
@@ -301,6 +304,7 @@
     "common": {
       "save": "Save",
       "cancel": "Cancel",
+      "confirm": "Confirm",
       "delete": "Delete",
       "edit": "Edit",
       "test": "Test Connection",

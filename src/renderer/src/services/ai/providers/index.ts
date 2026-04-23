@@ -4,3 +4,4 @@ export * from './deepseek.service';
 export * from './moonshot.service';
 export * from './ollama.service';
 export * from './google.service';
+export * from './zhipu.service';
