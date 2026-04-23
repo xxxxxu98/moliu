@@ -356,7 +356,6 @@ async function testConnection(provider: AIProvider) {
     const result = await settingsStore.testAIProvider(provider);
 
     if (result.success) {
-      const models = result.models?.slice(0, 5).join(", ") || "";
       message.success(
         t("settings.aiProviders.messages.testSuccess", {
           name: provider.name,
@@ -364,7 +363,6 @@ async function testConnection(provider: AIProvider) {
         }),
       );
     } else {
-      // 根据错误码显示国际化的错误消息
       const errorKey = getErrorMessageKey(result.errorCode);
       message.error(
         t("settings.aiProviders.messages.testFailed", {

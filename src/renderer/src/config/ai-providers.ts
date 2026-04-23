@@ -4,7 +4,7 @@
  * ProviderName = "groq" | "openai" | "gemini" | "anthropic" | "grok" | "qwen" | "nvidia" | "ollama" | "mistral" | "deepseek" | "cohere" | "together" | "perplexity" | "fireworks" | "cerebras" | "azure" | "moonshot"
  */
 
-export type ProviderType = 'openai' | 'anthropic' | 'gemini' | 'moonshot' | 'deepseek' | 'ollama' | 'groq' | 'qwen' | 'mistral' | 'cohere' | 'nvidia' | 'perplexity' | 'together' | 'cerebras' | 'azure' | 'grok' | 'fireworks';
+export type ProviderType = 'openai' | 'anthropic' | 'gemini' | 'moonshot' | 'deepseek' | 'ollama' | 'groq' | 'qwen' | 'mistral' | 'cohere' | 'nvidia' | 'perplexity' | 'together' | 'cerebras' | 'azure' | 'grok' | 'fireworks' | 'zhipu';
 
 /**
  * 模型配置信息
@@ -46,6 +46,7 @@ export const providerNameMap: Record<ProviderType, string> = {
   azure: 'Azure OpenAI',
   grok: 'xAI Grok',
   fireworks: 'Fireworks AI',
+  zhipu: '智谱 AI (GLM)',
 };
 
 export const defaultProviders: ProviderConfig[] = [
@@ -132,6 +133,11 @@ export const defaultProviders: ProviderConfig[] = [
   {
     provider: 'fireworks',
     baseUrl: 'https://api.fireworks.ai/v1',
+    models: [],
+  },
+  {
+    provider: 'zhipu',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
     models: [],
   },
 ];

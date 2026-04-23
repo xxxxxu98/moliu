@@ -37,10 +37,11 @@ export const SUPPORTED_PROVIDERS: Record<string, { name: string; defaultModel: s
   azure: { name: 'Azure OpenAI', defaultModel: 'gpt-4o' },
   grok: { name: 'xAI Grok', defaultModel: 'grok-2-latest' },
   fireworks: { name: 'Fireworks AI', defaultModel: 'accounts/fireworks/models/llama-v3-70b-instruct' },
+  zhipu: { name: '智谱 AI (GLM)', defaultModel: 'glm-4-flash' },
 };
 
-// 检查提供商是否被支持
-export function isProviderSupported(provider: string): provider is SDKProviderName {
+// 检查提供商是否被支持（包括通过 OpenAI 兼容模式支持的 zhipu）
+export function isProviderSupported(provider: string): boolean {
   return provider in SUPPORTED_PROVIDERS;
 }
 
@@ -92,6 +93,7 @@ export function getDefaultBaseUrl(provider: string): string {
     azure: '',
     grok: 'https://api.x.ai/v1',
     fireworks: 'https://api.fireworks.ai/v1',
+    zhipu: 'https://open.bigmodel.cn/api/paas/v4',
   };
   return baseUrls[provider] || '';
 }
@@ -102,7 +104,7 @@ export function getDefaultModel(provider: string): string {
 }
 
 // 获取提供商的默认模型列表
-export function getDefaultModels(provider: SDKProviderName): string[] {
+export function getDefaultModels(provider: string): string[] {
   switch (provider) {
     case 'openai':
       return ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'];
@@ -136,6 +138,8 @@ export function getDefaultModels(provider: SDKProviderName): string[] {
       return ['grok-2-latest', 'grok-2-mini'];
     case 'fireworks':
       return ['accounts/fireworks/models/llama-v3-70b-instruct', 'accounts/fireworks/models/llama-v3-8b-instruct'];
+    case 'zhipu':
+      return ['glm-4-plus', 'glm-4-flash', 'glm-4-0520', 'glm-4-airx', 'glm-4-air', 'glm-4-flashx', 'glm-4-flash-plus', 'glm-4', 'glm-3.5-turbo', 'glm-3.5-turbo-250528', 'glm-3.5-turbo-250614'];
     default:
       return [];
   }
@@ -172,23 +176,33 @@ export async function testConnection(
     };
   }
 
+  // 智谱 AI 需要更长的超时时间
+  const isZhipu = provider === 'zhipu';
+  const timeout = isZhipu ? 30000 : (provider === 'ollama' ? 5000 : 10000);
+
+  console.log(`[AI-Client] Testing ${provider}, timeout: ${timeout}ms`);
+  console.log(`[AI-Client] BaseURL: ${targetBaseUrl}`);
+
   try {
-    // Ollama 不需要 API key
+    // 使用 multi-ai-sdk 测试
+    const sdkProvider = provider === 'zhipu' ? 'openai' : provider;
+
     const config: AIClientOptions = {
-      provider: provider as SDKProviderName,
+      provider: sdkProvider as SDKProviderName,
       apiKey: provider === 'ollama' ? 'dummy' : apiKey,
       baseUrl: targetBaseUrl || undefined,
-      timeout: provider === 'ollama' ? 5000 : 10000,
-      maxRetries: 0, // 测试连接不需要重试
+      timeout,
+      maxRetries: 0,
     };
 
     const client = new AIClient(config);
 
-    // 发送一个简单的测试请求
     const response = await client.chat(
       [{ role: 'user', content: 'Hi' }],
       { maxTokens: 5 }
     );
+
+    console.log(`[AI-Client] ${provider} test SUCCESS!`);
 
     return {
       success: true,
@@ -196,6 +210,7 @@ export async function testConnection(
       responseTime: Date.now() - startTime,
     };
   } catch (error) {
+    console.error(`[AI-Client] ${provider} test FAILED:`, error);
     const errorCode = error instanceof AIError ? error.code : undefined;
     const errorStatus = error instanceof AIError ? error.status : undefined;
 

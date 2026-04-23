@@ -9,7 +9,7 @@ import {
 } from 'multi-ai-sdk';
 
 // 支持的提供商类型（与 multi-ai-sdk 保持一致）
-export type AIProviderType = 'openai' | 'anthropic' | 'gemini' | 'moonshot' | 'deepseek' | 'ollama' | 'groq' | 'qwen' | 'mistral' | 'cohere' | 'nvidia' | 'perplexity' | 'together' | 'cerebras' | 'azure' | 'grok' | 'fireworks';
+export type AIProviderType = 'openai' | 'anthropic' | 'gemini' | 'moonshot' | 'deepseek' | 'ollama' | 'groq' | 'qwen' | 'mistral' | 'cohere' | 'nvidia' | 'perplexity' | 'together' | 'cerebras' | 'azure' | 'grok' | 'fireworks' | 'zhipu';
 
 export interface ProviderConfig {
   apiKey: string;
@@ -49,6 +49,7 @@ const DEFAULT_ENDPOINTS: Record<AIProviderType, string> = {
   azure: '',
   grok: 'https://api.x.ai/v1',
   fireworks: 'https://api.fireworks.ai/v1',
+  zhipu: 'https://open.bigmodel.cn/api/paas/v4',
 };
 
 /**
@@ -95,6 +96,8 @@ export function getDefaultModels(provider: AIProviderType): string[] {
       return ['grok-2-latest', 'grok-2-mini'];
     case 'fireworks':
       return ['accounts/fireworks/models/llama-v3-70b-instruct', 'accounts/fireworks/models/llama-v3-8b-instruct'];
+    case 'zhipu':
+      return ['glm-4-plus', 'glm-4-flash', 'glm-4-0520', 'glm-4-airx', 'glm-4-air', 'glm-4-flashx', 'glm-4-flash-plus', 'glm-4', 'glm-3.5-turbo', 'glm-3.5-turbo-250528', 'glm-3.5-turbo-250614'];
     default:
       return [];
   }
@@ -171,6 +174,8 @@ function getModelForProvider(provider: string): string {
       return 'grok-2-latest';
     case 'fireworks':
       return 'accounts/fireworks/models/llama-v3-70b-instruct';
+    case 'zhipu':
+      return 'glm-4-flash';
     case 'azure':
       return 'gpt-4o';
     case 'openai':
