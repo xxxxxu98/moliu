@@ -16,7 +16,6 @@ const PROVIDER_MAP: Record<string, string> = {
   moonshot: 'moonshot',
   deepseek: 'deepseek',
   ollama: 'ollama',
-  zhipu: 'qwen', // Zhipu uses Qwen-compatible API
 };
 
 /**

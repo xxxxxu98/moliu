@@ -1,4 +1,4 @@
-export type ProviderType = 'openai' | 'anthropic' | 'google' | 'moonshot' | 'deepseek' | 'ollama' | 'zhipu';
+export type ProviderType = 'openai' | 'anthropic' | 'google' | 'moonshot' | 'deepseek' | 'ollama' | 'groq' | 'gemini' | 'qwen' | 'mistral' | 'cohere' | 'nvidia' | 'perplexity' | 'together' | 'cerebras' | 'azure' | 'grok';
 
 /**
  * 模型配置信息
@@ -25,11 +25,21 @@ export interface ProviderConfig {
 export const providerNameMap: Record<ProviderType, string> = {
   openai: 'OpenAI',
   anthropic: 'Anthropic',
-  google: 'Google',
-  moonshot: 'Moonshot',
+  google: 'Google Gemini',
+  moonshot: 'Moonshot (Kimi)',
   deepseek: 'DeepSeek',
-  ollama: 'Ollama',
-  zhipu: '智谱 AI',
+  ollama: 'Ollama (本地)',
+  groq: 'Groq',
+  gemini: 'Google Gemini',
+  qwen: '通义千问',
+  mistral: 'Mistral',
+  cohere: 'Cohere',
+  nvidia: 'NVIDIA NIM',
+  perplexity: 'Perplexity',
+  together: 'Together AI',
+  cerebras: 'Cerebras',
+  azure: 'Azure OpenAI',
+  grok: 'xAI Grok',
 };
 
 export const defaultProviders: ProviderConfig[] = [
@@ -64,8 +74,53 @@ export const defaultProviders: ProviderConfig[] = [
     models: [],
   },
   {
-    provider: 'zhipu',
-    baseUrl: 'https://open.bigmodel.cn/api',
+    provider: 'groq',
+    baseUrl: 'https://api.groq.com/openai/v1',
+    models: [],
+  },
+  {
+    provider: 'qwen',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    models: [],
+  },
+  {
+    provider: 'mistral',
+    baseUrl: 'https://api.mistral.ai/v1',
+    models: [],
+  },
+  {
+    provider: 'cohere',
+    baseUrl: 'https://api.cohere.ai/v1',
+    models: [],
+  },
+  {
+    provider: 'nvidia',
+    baseUrl: 'https://integrate.api.nvidia.com/v1',
+    models: [],
+  },
+  {
+    provider: 'perplexity',
+    baseUrl: 'https://api.perplexity.ai',
+    models: [],
+  },
+  {
+    provider: 'together',
+    baseUrl: 'https://api.together.xyz/v1',
+    models: [],
+  },
+  {
+    provider: 'cerebras',
+    baseUrl: 'https://api.cerebras.ai/v1',
+    models: [],
+  },
+  {
+    provider: 'azure',
+    baseUrl: '',
+    models: [],
+  },
+  {
+    provider: 'grok',
+    baseUrl: 'https://api.x.ai/v1',
     models: [],
   },
 ];

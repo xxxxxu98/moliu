@@ -69,7 +69,17 @@ export class AIServiceFactory {
       moonshot: 'moonshot-v1-8k',
       deepseek: 'deepseek-chat',
       ollama: 'llama3',
-      zhipu: 'glm-4-flash',
+      groq: 'llama-3.3-70b-versatile',
+      gemini: 'gemini-2.0-flash',
+      qwen: 'qwen-plus',
+      mistral: 'mistral-large-latest',
+      cohere: 'command-r-plus-08-2024',
+      nvidia: 'meta/llama-3.1-70b-instruct',
+      perplexity: 'sonar',
+      together: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+      cerebras: 'llama3.3-70b',
+      azure: 'gpt-4o',
+      grok: 'grok-2-latest',
     };
     return defaults[provider];
   }
@@ -85,7 +95,17 @@ export class AIServiceFactory {
       moonshot: 'https://api.moonshot.cn/v1',
       deepseek: 'https://api.deepseek.com/v1',
       ollama: 'http://localhost:11434',
-      zhipu: 'https://open.bigmodel.cn/api/paulin/v1',
+      groq: 'https://api.groq.com/openai/v1',
+      gemini: 'https://generativelanguage.googleapis.com/v1beta',
+      qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      mistral: 'https://api.mistral.ai/v1',
+      cohere: 'https://api.cohere.ai/v1',
+      nvidia: 'https://integrate.api.nvidia.com/v1',
+      perplexity: 'https://api.perplexity.ai',
+      together: 'https://api.together.xyz/v1',
+      cerebras: 'https://api.cerebras.ai/v1',
+      azure: '',
+      grok: 'https://api.x.ai/v1',
     };
     return baseUrls[provider];
   }

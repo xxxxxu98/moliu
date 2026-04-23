@@ -1,9 +1,10 @@
 /**
  * AI Provider Service
  * Handles connection testing and model listing for various AI providers
+ * 基于 multi-ai-sdk 实现
  */
 
-export type AIProviderType = 'openai' | 'anthropic' | 'google' | 'moonshot' | 'deepseek' | 'ollama';
+export type AIProviderType = 'openai' | 'anthropic' | 'google' | 'moonshot' | 'deepseek' | 'ollama' | 'groq' | 'gemini' | 'qwen' | 'mistral' | 'cohere' | 'nvidia' | 'perplexity' | 'together' | 'cerebras' | 'azure' | 'grok';
 
 export interface ProviderConfig {
   apiKey: string;
@@ -32,6 +33,17 @@ const DEFAULT_ENDPOINTS: Record<AIProviderType, string> = {
   moonshot: 'https://api.moonshot.cn/v1',
   deepseek: 'https://api.deepseek.com/v1',
   ollama: 'http://localhost:11434',
+  groq: 'https://api.groq.com/openai/v1',
+  qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  mistral: 'https://api.mistral.ai/v1',
+  cohere: 'https://api.cohere.ai/v1',
+  nvidia: 'https://integrate.api.nvidia.com/v1',
+  perplexity: 'https://api.perplexity.ai',
+  together: 'https://api.together.xyz/v1',
+  cerebras: 'https://api.cerebras.ai/v1',
+  azure: '',
+  grok: 'https://api.x.ai/v1',
+  gemini: 'https://generativelanguage.googleapis.com/v1beta',
 };
 
 /**
@@ -316,6 +328,7 @@ export async function testAIProvider(provider: AIProviderType, config: ProviderC
     case 'anthropic':
       return testAnthropic(config);
     case 'google':
+    case 'gemini':
       return testGoogle(config);
     case 'moonshot':
       return testMoonshot(config);
@@ -323,6 +336,16 @@ export async function testAIProvider(provider: AIProviderType, config: ProviderC
       return testDeepSeek(config);
     case 'ollama':
       return testOllama(config);
+    case 'groq':
+    case 'qwen':
+    case 'mistral':
+    case 'cohere':
+    case 'nvidia':
+    case 'perplexity':
+    case 'together':
+    case 'cerebras':
+    case 'grok':
+      return testOpenAI(config); // OpenAI-compatible APIs
     default:
       return { success: false, error: `Unknown provider type: ${provider}`, errorCode: 'UNKNOWN_PROVIDER' };
   }
@@ -338,6 +361,7 @@ export function getDefaultModels(provider: AIProviderType): string[] {
     case 'anthropic':
       return ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229'];
     case 'google':
+    case 'gemini':
       return ['gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
     case 'moonshot':
       return ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'];
@@ -345,6 +369,24 @@ export function getDefaultModels(provider: AIProviderType): string[] {
       return ['deepseek-chat', 'deepseek-coder'];
     case 'ollama':
       return ['llama3', 'llama3.1', 'mistral', 'qwen2.5', 'phi3'];
+    case 'groq':
+      return ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
+    case 'qwen':
+      return ['qwen-max', 'qwen-plus', 'qwen-turbo'];
+    case 'mistral':
+      return ['mistral-large-latest', 'mistral-small-latest'];
+    case 'cohere':
+      return ['command-r-plus-08-2024', 'command-r-08-2024'];
+    case 'nvidia':
+      return ['meta/llama-3.1-70b-instruct', 'meta/llama-3.1-8b-instruct'];
+    case 'perplexity':
+      return ['sonar', 'sonar-pro'];
+    case 'together':
+      return ['meta-llama/Llama-3.3-70B-Instruct-Turbo'];
+    case 'cerebras':
+      return ['llama3.3-70b'];
+    case 'grok':
+      return ['grok-2-latest', 'grok-2-mini'];
     default:
       return [];
   }
@@ -492,7 +534,14 @@ export async function generateOutlineStream(
               event.sender.send('ai:outline-chunk', { content, fullContent });
             }
           } else {
-            const content = parsed.choices?.[0]?.delta?.content || '';
+            // Handle OpenAI-compatible format
+            const delta = parsed.choices?.[0]?.delta;
+            let content = '';
+            
+            if (delta?.content) {
+              content = delta.content;
+            }
+            
             if (content) {
               fullContent += content;
               event.sender.send('ai:outline-chunk', { content, fullContent });

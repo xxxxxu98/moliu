@@ -103,26 +103,41 @@ onMounted(() => {
 
   // Set up streaming event listeners
   unsubscribeChunk = window.electronAPI.onOutlineChunk(({ content, fullContent }) => {
-    streamingContent.value = fullContent;
-    
     // Try to parse partial JSON to show progress
     try {
+      // Find the JSON object in the full content
       const jsonMatch = fullContent.match(/\{[\s\S]*$/);
       if (jsonMatch) {
         const partialJson = jsonMatch[0];
-        const outlinesMatch = partialJson.match(/"outlines"\s*:\s*\[([\s\S]*?)\](?=\s*\}[,\]]|$)/);
+        
+        // Try to extract outlines array
+        const outlinesMatch = partialJson.match(/"outlines"\s*:\s*\[([\s\S]*)\]/);
         if (outlinesMatch) {
-          const partialOutlines = JSON.parse(`{"outlines":[${outlinesMatch[1]}]}`);
-          if (partialOutlines.outlines && partialOutlines.outlines.length > 0) {
-            generatedOutlines.value = partialOutlines.outlines.map((o: any, i: number) => ({
-              id: `streaming-${i}-${Date.now()}`,
-              title: o.title || '生成中...',
-              synopsis: o.synopsis || '',
-              structure: o.structure || { act1: '', act2a: '', act2b: '', act3: '' },
-              characters: o.characters || [],
-              foreshadows: o.foreshadows || [],
-              estimatedWordCount: o.estimatedWordCount || 500000,
-            }));
+          const arrayContent = outlinesMatch[1];
+          // Try to parse individual outline objects
+          const outlineMatches = arrayContent.match(/\{[^}]*(?:\{[^}]*\}[^}]*)*\}/g);
+          if (outlineMatches) {
+            const validOutlines = outlineMatches
+              .map((match: string) => {
+                try {
+                  return JSON.parse(match);
+                } catch {
+                  return null;
+                }
+              })
+              .filter((o: any) => o && o.title);
+            
+            if (validOutlines.length > 0) {
+              generatedOutlines.value = validOutlines.map((o: any, i: number) => ({
+                id: `streaming-${i}-${Date.now()}`,
+                title: o.title || '生成中...',
+                synopsis: o.synopsis || '',
+                structure: o.structure || { act1: '', act2a: '', act2b: '', act3: '' },
+                characters: o.characters || [],
+                foreshadows: o.foreshadows || [],
+                estimatedWordCount: o.estimatedWordCount || 500000,
+              }));
+            }
           }
         }
       }
@@ -569,11 +584,12 @@ function formatWordCount(count: number) {
     </div>
 
     <!-- Streaming Content Preview -->
-    <div v-if="streamingContent" class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-      <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ t('quickStart.generating') }}</div>
-      <div class="text-sm text-gray-700 dark:text-gray-300 font-mono whitespace-pre-wrap line-clamp-6">
-        {{ streamingContent }}
+    <div v-if="isGenerating && !generatedOutlines.length" class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+        <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('quickStart.generating') }}</span>
       </div>
+      <div class="text-xs text-gray-400 dark:text-gray-500">AI 正在构思故事大纲，请稍候...</div>
     </div>
 
     <!-- Error Message -->

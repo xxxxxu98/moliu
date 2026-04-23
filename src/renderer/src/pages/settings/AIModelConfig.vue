@@ -272,12 +272,6 @@ function validateForm(): boolean {
   
   const errors: typeof formErrors.value = {};
   
-  // Validate API Key
-  const apiKeyError = validateApiKey(editingProvider.value.apiKey, editingProvider.value.provider);
-  if (apiKeyError) {
-    errors.apiKey = apiKeyError;
-  }
-  
   // Validate Model Name
   const modelNameError = validateModelName(editingProvider.value.modelName, editingProvider.value.provider);
   if (modelNameError) {
@@ -358,24 +352,27 @@ async function testConnection(provider: AIProvider) {
   }
 
   provider.isTesting = true;
-  const result = await settingsStore.testAIProvider(provider);
-  provider.isTesting = false;
+  try {
+    const result = await settingsStore.testAIProvider(provider);
 
-  if (result.success) {
-    const models = result.models?.slice(0, 5).join(", ") || "";
-    message.success(
-      t("settings.aiProviders.messages.testSuccess", {
-        name: provider.name,
-        models: result.models ? `${result.models.length} 个` : "",
-      }),
-    );
-  } else {
-    message.error(
-      t("settings.aiProviders.messages.testFailed", {
-        name: provider.name,
-        error: result.error || "Unknown error",
-      }),
-    );
+    if (result.success) {
+      const models = result.models?.slice(0, 5).join(", ") || "";
+      message.success(
+        t("settings.aiProviders.messages.testSuccess", {
+          name: provider.name,
+          models: result.models ? `${result.models.length} 个` : "",
+        }),
+      );
+    } else {
+      message.error(
+        t("settings.aiProviders.messages.testFailed", {
+          name: provider.name,
+          error: result.error || "Unknown error",
+        }),
+      );
+    }
+  } finally {
+    provider.isTesting = false;
   }
 }
 
@@ -716,7 +713,7 @@ function handleDefaultModelChange(modelId: string) {
             :options="providerOptions"
           />
         </NFormItem>
-        <NFormItem :label="t('settings.common.apiKey')" :validation-status="formErrors.apiKey ? 'error' : undefined" :feedback="formErrors.apiKey">
+        <NFormItem :label="t('settings.common.apiKey')">
           <NInput
             v-model:value="editingProvider.apiKey"
             type="password"
