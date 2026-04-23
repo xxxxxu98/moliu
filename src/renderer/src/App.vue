@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from "vue-router";
+import { computed } from "vue";
 import {
   NConfigProvider,
   NMessageProvider,
@@ -7,8 +8,11 @@ import {
   NNotificationProvider,
   darkTheme,
   lightTheme,
+  zhCN,
+  dateZhCN,
+  enUS,
+  dateEnUS,
 } from "naive-ui";
-import { computed } from "vue";
 import { useSettingsStore } from "./stores/settings.store";
 
 const settingsStore = useSettingsStore();
@@ -19,10 +23,18 @@ const theme = computed(() => {
     ? darkTheme
     : lightTheme;
 });
+
+const naiveLocale = computed(() => {
+  return settingsStore.locale === "en-US" ? enUS : zhCN;
+});
+
+const naiveDateLocale = computed(() => {
+  return settingsStore.locale === "en-US" ? dateEnUS : dateZhCN;
+});
 </script>
 
 <template>
-  <NConfigProvider :theme="theme">
+  <NConfigProvider :theme="theme" :locale="naiveLocale" :date-locale="naiveDateLocale">
     <NMessageProvider>
       <NDialogProvider>
         <NNotificationProvider>
