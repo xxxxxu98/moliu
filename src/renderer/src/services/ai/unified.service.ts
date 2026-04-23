@@ -97,14 +97,11 @@ export class UnifiedAIService {
     const sdkProvider = getSDKProvider(this.provider);
 
     // 解析 baseUrl：如果用户没有提供自定义 URL，使用 provider 的默认 URL
-    // 重要：对于 zhipu（映射到 openai），必须显式传递 baseUrl，因为 SDK 内部会用 openai 的默认 URL
     let resolvedBaseUrl = baseUrl;
     if (!resolvedBaseUrl?.trim()) {
       const providerConfig = defaultProviders.find(p => p.provider === this.provider);
       resolvedBaseUrl = providerConfig?.baseUrl || '';
     }
-
-    // 保存 baseUrl 供 testConnection 使用（因为 SDK 的 baseUrl 配置不生效）
     this._baseUrl = resolvedBaseUrl;
 
     // Create client with explicit provider
@@ -126,11 +123,6 @@ export class UnifiedAIService {
       config.apiKey = apiKey;
     }
 
-    // Set base URL - 始终设置，因为我们需要在 zhipu 场景下覆盖 SDK 默认值
-    if (resolvedBaseUrl) {
-      config.baseUrl = resolvedBaseUrl;
-    }
-
     // Set model if provided
     if (this.model) {
       config.model = this.model;
@@ -144,6 +136,11 @@ export class UnifiedAIService {
     });
 
     this.client = new AIClient(config);
+
+    // 重要：SDK 的 baseUrl 参数对大多数 provider 不生效，需要直接设置 adapter 的 baseUrl
+    if (this.client && resolvedBaseUrl) {
+      (this.client as any).adapter.baseUrl = resolvedBaseUrl.replace(/\/$/, '');
+    }
   }
 
   /**
