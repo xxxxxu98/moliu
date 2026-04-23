@@ -647,12 +647,28 @@ export class UnifiedAIService {
 
       // Parse JSON result
       try {
-        const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
+        // 清理 SSE 的 [DONE] 标记和空白字符
+        const cleanedContent = fullContent.replace(/\[DONE\]\s*$/g, '').trim();
+        
+        // 尝试多种方式解析 JSON
+        let jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const result = JSON.parse(jsonMatch[0]);
           onComplete(result);
         } else {
-          onError('Failed to parse AI response');
+          // 如果没有找到 JSON 格式，尝试清理常见的格式问题
+          // 例如：移除最后一个可能的尾随逗号或多余的闭合括号
+          const cleanedForJson = cleanedContent
+            .replace(/,\s*\]/g, ']')  // 移除数组末尾的逗号
+            .replace(/,\s*\}/g, '}'); // 移除对象末尾的逗号
+          
+          jsonMatch = cleanedForJson.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const result = JSON.parse(jsonMatch[0]);
+            onComplete(result);
+          } else {
+            onError('Failed to parse AI response as JSON');
+          }
         }
       } catch {
         onError('Failed to parse AI response as JSON');

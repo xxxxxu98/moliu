@@ -607,7 +607,7 @@ function formatWordCount(count: number) {
         </h4>
       </div>
 
-      <div class="space-y-2 max-h-64 overflow-y-auto">
+      <div class="space-y-2">
         <div
           v-for="outline in generatedOutlines"
           :key="outline.id"
