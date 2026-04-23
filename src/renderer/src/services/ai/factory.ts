@@ -1,5 +1,6 @@
 import type { ProviderType } from '@/config/ai-providers';
 import { UnifiedAIService } from './unified.service';
+import { getDefaultModels, getBaseUrl } from '@/config/ai-providers';
 
 /**
  * AI 服务工厂
@@ -61,54 +62,18 @@ export class AIServiceFactory {
 
   /**
    * 获取提供商对应的默认模型
+   * 优先使用用户配置的模型，否则使用厂商推荐的第一个模型
    */
   static getDefaultModel(provider: ProviderType): string {
-    const defaults: Record<ProviderType, string> = {
-      openai: 'gpt-4o',
-      anthropic: 'claude-3-5-sonnet-20241022',
-      gemini: 'gemini-2.0-flash',
-      moonshot: 'moonshot-v1-8k',
-      deepseek: 'deepseek-chat',
-      ollama: 'llama3',
-      groq: 'llama-3.3-70b-versatile',
-      qwen: 'qwen-plus',
-      mistral: 'mistral-large-latest',
-      cohere: 'command-r-plus-08-2024',
-      nvidia: 'meta/llama-3.1-70b-instruct',
-      perplexity: 'sonar',
-      together: 'accounts/fireworks/models/llama-v3-70b-instruct',
-      cerebras: 'llama3.3-70b',
-      azure: 'gpt-4o',
-      grok: 'grok-2-latest',
-      fireworks: 'accounts/fireworks/models/llama-v3-70b-instruct',
-    };
-    return defaults[provider];
+    const models = getDefaultModels(provider);
+    return models[0] || 'gpt-4o';
   }
 
   /**
    * 获取提供商对应的基础 URL
    */
   static getDefaultBaseUrl(provider: ProviderType): string {
-    const baseUrls: Record<ProviderType, string> = {
-      openai: 'https://api.openai.com/v1',
-      anthropic: 'https://api.anthropic.com',
-      gemini: 'https://generativelanguage.googleapis.com/v1beta',
-      moonshot: 'https://api.moonshot.cn/v1',
-      deepseek: 'https://api.deepseek.com/v1',
-      ollama: 'http://localhost:11434',
-      groq: 'https://api.groq.com/openai/v1',
-      qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-      mistral: 'https://api.mistral.ai/v1',
-      cohere: 'https://api.cohere.ai/v1',
-      nvidia: 'https://integrate.api.nvidia.com/v1',
-      perplexity: 'https://api.perplexity.ai',
-      together: 'https://api.together.xyz/v1',
-      cerebras: 'https://api.cerebras.ai/v1',
-      azure: '',
-      grok: 'https://api.x.ai/v1',
-      fireworks: 'https://api.fireworks.ai/v1',
-    };
-    return baseUrls[provider];
+    return getBaseUrl(provider);
   }
 }
 

@@ -5,56 +5,7 @@
 
 import { AIClient, type Message, type ProviderName } from 'multi-ai-sdk';
 import { PromptBuilder, type ProjectContext, type AIWriteResult, type AISuggestion } from './base.service';
-
-// Default API endpoints for each provider (同步自 ai-providers.ts)
-const DEFAULT_ENDPOINTS: Record<string, string> = {
-  openai: 'https://api.openai.com/v1',
-  anthropic: 'https://api.anthropic.com',
-  gemini: 'https://generativelanguage.googleapis.com/v1beta',
-  moonshot: 'https://api.moonshot.cn/v1',
-  deepseek: 'https://api.deepseek.com/v1',
-  ollama: 'http://localhost:11434',
-  groq: 'https://api.groq.com/openai/v1',
-  qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-  mistral: 'https://api.mistral.ai/v1',
-  cohere: 'https://api.cohere.ai/v1',
-  nvidia: 'https://integrate.api.nvidia.com/v1',
-  perplexity: 'https://api.perplexity.ai',
-  together: 'https://api.together.xyz/v1',
-  cerebras: 'https://api.cerebras.ai/v1',
-  azure: '',
-  grok: 'https://api.x.ai/v1',
-  fireworks: 'https://api.fireworks.ai/v1',
-  zhipu: 'https://open.bigmodel.cn/api/paas/v4',
-};
-
-function getBaseUrl(provider: string, customUrl?: string): string {
-  return customUrl?.trim() || DEFAULT_ENDPOINTS[provider] || '';
-}
-
-function getModelForProvider(provider: string): string {
-  switch (provider) {
-    case 'anthropic': return 'claude-3-5-sonnet-20241022';
-    case 'moonshot': return 'moonshot-v1-128k';
-    case 'deepseek': return 'deepseek-chat';
-    case 'gemini': return 'gemini-2.0-flash';
-    case 'qwen': return 'qwen-plus';
-    case 'mistral': return 'mistral-large-latest';
-    case 'ollama': return 'llama3';
-    case 'groq': return 'llama-3.3-70b-versatile';
-    case 'cohere': return 'command-r-plus-08-2024';
-    case 'nvidia': return 'meta/llama-3.1-70b-instruct';
-    case 'perplexity': return 'sonar';
-    case 'together': return 'accounts/fireworks/models/llama-v3-70b-instruct';
-    case 'cerebras': return 'llama3.3-70b';
-    case 'grok': return 'grok-2-latest';
-    case 'fireworks': return 'accounts/fireworks/models/llama-v3-70b-instruct';
-    case 'zhipu': return 'glm-4-flash';
-    case 'azure': return 'gpt-4o';
-    case 'openai':
-    default: return 'gpt-4o';
-  }
-}
+import { getSDKProvider, getBaseUrl, type ProviderType, defaultProviders } from '@/config/ai-providers';
 
 // Outline generation system prompt
 const OUTLINE_SYSTEM_PROMPT = `你是一位专业的小说创作顾问和故事架构师。你的任务是根据用户提供的创意种子，生成多个独特的故事大纲。
@@ -102,35 +53,12 @@ export interface AIGenerationConfig {
 }
 
 /**
- * Provider name mapping from our config to multi-ai-sdk
- */
-const PROVIDER_MAP: Record<string, ProviderName> = {
-  openai: 'openai',
-  anthropic: 'anthropic',
-  gemini: 'gemini',
-  moonshot: 'moonshot',
-  deepseek: 'deepseek',
-  ollama: 'ollama',
-  groq: 'groq',
-  qwen: 'qwen',
-  mistral: 'mistral',
-  cohere: 'cohere',
-  nvidia: 'nvidia',
-  perplexity: 'perplexity',
-  together: 'together',
-  cerebras: 'cerebras',
-  azure: 'azure',
-  grok: 'grok',
-  fireworks: 'fireworks',
-};
-
-/**
  * Unified AI Service
  * Uses multi-ai-sdk to provide consistent API across all providers
  */
 export class UnifiedAIService {
   private client: AIClient | null = null;
-  private provider: string;
+  private provider: ProviderType;
   private model: string;
   private maxTokens: number;
   private generationConfig: {
@@ -139,9 +67,11 @@ export class UnifiedAIService {
     frequencyPenalty: number;
     presencePenalty: number;
   };
+  private _baseUrl: string;
+  private _apiKey: string;
 
   constructor(
-    provider: string,
+    provider: ProviderType,
     apiKey: string,
     baseUrl?: string,
     model?: string,
@@ -157,14 +87,25 @@ export class UnifiedAIService {
       frequencyPenalty: 0,
       presencePenalty: 0,
     };
+    this._baseUrl = '';
+    this._apiKey = apiKey;
     this.initClient(apiKey, baseUrl);
   }
 
   private initClient(apiKey: string, baseUrl?: string) {
-    const sdkProvider = PROVIDER_MAP[this.provider];
-    if (!sdkProvider) {
-      throw new Error(`Unsupported provider: ${this.provider}`);
+    // 使用统一的 SDK provider 映射
+    const sdkProvider = getSDKProvider(this.provider);
+
+    // 解析 baseUrl：如果用户没有提供自定义 URL，使用 provider 的默认 URL
+    // 重要：对于 zhipu（映射到 openai），必须显式传递 baseUrl，因为 SDK 内部会用 openai 的默认 URL
+    let resolvedBaseUrl = baseUrl;
+    if (!resolvedBaseUrl?.trim()) {
+      const providerConfig = defaultProviders.find(p => p.provider === this.provider);
+      resolvedBaseUrl = providerConfig?.baseUrl || '';
     }
+
+    // 保存 baseUrl 供 testConnection 使用（因为 SDK 的 baseUrl 配置不生效）
+    this._baseUrl = resolvedBaseUrl;
 
     // Create client with explicit provider
     const config: {
@@ -185,15 +126,22 @@ export class UnifiedAIService {
       config.apiKey = apiKey;
     }
 
-    // Set custom base URL if provided
-    if (baseUrl && baseUrl.trim()) {
-      config.baseUrl = baseUrl;
+    // Set base URL - 始终设置，因为我们需要在 zhipu 场景下覆盖 SDK 默认值
+    if (resolvedBaseUrl) {
+      config.baseUrl = resolvedBaseUrl;
     }
 
     // Set model if provided
     if (this.model) {
       config.model = this.model;
     }
+
+    console.log('[UnifiedAIService] Initializing client', {
+      appProvider: this.provider,
+      sdkProvider,
+      baseUrl: resolvedBaseUrl,
+      model: this.model,
+    });
 
     this.client = new AIClient(config);
   }
@@ -213,11 +161,13 @@ export class UnifiedAIService {
     if (generationConfig) {
       this.generationConfig = generationConfig;
     }
+    this._apiKey = apiKey;
     this.initClient(apiKey, baseUrl);
   }
 
   /**
    * Test connection
+   * 注意：multi-ai-sdk 的 baseUrl 配置不生效，这里使用原生 fetch 确保 baseUrl 正确
    */
   async testConnection(): Promise<{ success: boolean; error?: string }> {
     if (!this.client) {
@@ -225,14 +175,38 @@ export class UnifiedAIService {
     }
 
     try {
-      const response = await this.client.chat([
-        { role: 'user', content: 'Hi' },
-      ]);
+      // 使用原生 fetch 确保 baseUrl 被正确使用
+      const baseUrl = getBaseUrl(this.provider, this._baseUrl);
+      const endpoint = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
       
-      if (response && typeof response === 'string') {
+      console.log('[testConnection] Testing connection', {
+        provider: this.provider,
+        endpoint,
+        model: this.model || 'default',
+      });
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this._apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.model || 'default',
+          messages: [{ role: 'user', content: 'Hi' }],
+          max_tokens: 5,
+        }),
+      });
+
+      if (response.ok) {
         return { success: true };
       }
-      return { success: false, error: 'Invalid response format' };
+
+      const errorData = await response.json().catch(() => ({}));
+      return { 
+        success: false, 
+        error: errorData.error?.message || `HTTP ${response.status}` 
+      };
     } catch (error) {
       return {
         success: false,
@@ -265,7 +239,7 @@ export class UnifiedAIService {
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
       presencePenalty: this.generationConfig.presencePenalty,
-    });
+    } as any);
 
     return {
       content: typeof response === 'string' ? response : JSON.stringify(response),
@@ -322,7 +296,7 @@ export class UnifiedAIService {
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
       presencePenalty: this.generationConfig.presencePenalty,
-    });
+    } as any);
 
     return {
       content: typeof response === 'string' ? response : JSON.stringify(response),
@@ -376,7 +350,7 @@ export class UnifiedAIService {
         topP: this.generationConfig.topP,
         frequencyPenalty: this.generationConfig.frequencyPenalty,
         presencePenalty: this.generationConfig.presencePenalty,
-      });
+      } as any);
 
       const content = typeof response === 'string' ? response : JSON.stringify(response);
       
@@ -430,7 +404,7 @@ export class UnifiedAIService {
         topP: this.generationConfig.topP,
         frequencyPenalty: this.generationConfig.frequencyPenalty,
         presencePenalty: this.generationConfig.presencePenalty,
-      });
+      } as any);
 
       const content = typeof response === 'string' ? response : JSON.stringify(response);
       
@@ -491,7 +465,7 @@ export class UnifiedAIService {
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
       presencePenalty: this.generationConfig.presencePenalty,
-    });
+    } as any);
 
     return {
       content: typeof response === 'string' ? response : JSON.stringify(response),
@@ -525,7 +499,7 @@ export class UnifiedAIService {
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
       presencePenalty: this.generationConfig.presencePenalty,
-    });
+    } as any);
 
     return {
       content: typeof response === 'string' ? response : JSON.stringify(response),
@@ -560,7 +534,7 @@ export class UnifiedAIService {
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
       presencePenalty: this.generationConfig.presencePenalty,
-    });
+    } as any);
 
     return {
       content: typeof response === 'string' ? response : JSON.stringify(response),
@@ -594,7 +568,7 @@ export class UnifiedAIService {
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
       presencePenalty: this.generationConfig.presencePenalty,
-    });
+    } as any);
 
     return {
       content: typeof response === 'string' ? response : JSON.stringify(response),
@@ -622,7 +596,7 @@ export class UnifiedAIService {
         topP: this.generationConfig.topP,
         frequencyPenalty: this.generationConfig.frequencyPenalty,
         presencePenalty: this.generationConfig.presencePenalty,
-      });
+      } as any);
 
       for await (const chunk of stream) {
         if (chunk.content) {

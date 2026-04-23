@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import type { GlobalThemeOverrides } from 'naive-ui';
 import { setLocale, type LocaleType } from '@/i18n';
 import { defaultProviders, providerNameMap, type ProviderType } from '@/config/ai-providers';
+import { UnifiedAIService } from '@/services/ai/unified.service';
 
 export type ThemeMode = 'light' | 'dark';
 
@@ -228,14 +229,64 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   async function testAIProvider(provider: AIProvider): Promise<{ success: boolean; error?: string; errorCode?: string; models?: string[] }> {
-    const result = await window.electronAPI.testAIConnection(provider.provider, {
-      apiKey: provider.apiKey,
-      baseUrl: provider.baseUrl,
-      model: provider.modelName,
-    }) as { success: boolean; error?: string; errorCode?: string; models?: string[] };
-
-    provider.isValid = result.success;
-    return result;
+    try {
+      console.log('[testAIProvider] Starting test for provider:', {
+        name: provider.name,
+        provider: provider.provider,
+        baseUrl: provider.baseUrl,
+        modelName: provider.modelName,
+      });
+      
+      // 使用与实际调用相同的 UnifiedAIService 进行测试
+      const service = new UnifiedAIService(
+        provider.provider,
+        provider.apiKey,
+        provider.baseUrl,
+        provider.modelName,
+        provider.maxTokens,
+        provider.generationConfig
+      );
+      
+      console.log('[testAIProvider] UnifiedAIService created successfully');
+      
+      const result = await service.testConnection();
+      provider.isValid = result.success;
+      
+      if (result.success) {
+        return { success: true };
+      } else {
+        return { 
+          success: false, 
+          error: result.error,
+          errorCode: mapErrorToCode(result.error || 'Unknown error')
+        };
+      }
+    } catch (error) {
+      provider.isValid = false;
+      const errorMessage = error instanceof Error ? error.message : 'Connection test failed';
+      return { 
+        success: false, 
+        error: errorMessage,
+        errorCode: mapErrorToCode(errorMessage)
+      };
+    }
+  }
+  
+  function mapErrorToCode(errorMessage: string): string {
+    const msg = errorMessage.toLowerCase();
+    if (msg.includes('api key') || msg.includes('invalid') || msg.includes('unauthorized') || msg.includes('401')) {
+      return 'INVALID_API_KEY';
+    }
+    if (msg.includes('timeout') || msg.includes('timed out')) {
+      return 'TIMEOUT';
+    }
+    if (msg.includes('network') || msg.includes('fetch') || msg.includes('connection')) {
+      return 'NETWORK_ERROR';
+    }
+    if (msg.includes('rate') || msg.includes('429')) {
+      return 'RATE_LIMITED';
+    }
+    return 'UNKNOWN';
   }
 
   return {

@@ -7,6 +7,10 @@ import {
   AIClient,
   type ProviderName,
 } from 'multi-ai-sdk';
+import { getDefaultModels, getDefaultBaseUrl } from './ai-client';
+
+// Re-export from ai-client for convenience
+export { getDefaultModels, getDefaultBaseUrl };
 
 // 支持的提供商类型（与 multi-ai-sdk 保持一致）
 export type AIProviderType = 'openai' | 'anthropic' | 'gemini' | 'moonshot' | 'deepseek' | 'ollama' | 'groq' | 'qwen' | 'mistral' | 'cohere' | 'nvidia' | 'perplexity' | 'together' | 'cerebras' | 'azure' | 'grok' | 'fireworks' | 'zhipu';
@@ -30,77 +34,11 @@ export interface ModelInfo {
   description?: string;
 }
 
-// Default API endpoints for each provider
-const DEFAULT_ENDPOINTS: Record<AIProviderType, string> = {
-  openai: 'https://api.openai.com/v1',
-  anthropic: 'https://api.anthropic.com',
-  gemini: 'https://generativelanguage.googleapis.com/v1beta',
-  moonshot: 'https://api.moonshot.cn/v1',
-  deepseek: 'https://api.deepseek.com/v1',
-  ollama: 'http://localhost:11434',
-  groq: 'https://api.groq.com/openai/v1',
-  qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-  mistral: 'https://api.mistral.ai/v1',
-  cohere: 'https://api.cohere.ai/v1',
-  nvidia: 'https://integrate.api.nvidia.com/v1',
-  perplexity: 'https://api.perplexity.ai',
-  together: 'https://api.together.xyz/v1',
-  cerebras: 'https://api.cerebras.ai/v1',
-  azure: '',
-  grok: 'https://api.x.ai/v1',
-  fireworks: 'https://api.fireworks.ai/v1',
-  zhipu: 'https://open.bigmodel.cn/api/paas/v4',
-};
-
 /**
  * Get the effective base URL for a provider
  */
 export function getBaseUrl(provider: string, customUrl?: string): string {
-  return customUrl?.trim() || DEFAULT_ENDPOINTS[provider as AIProviderType] || '';
-}
-
-/**
- * Get default models for a provider
- */
-export function getDefaultModels(provider: AIProviderType): string[] {
-  switch (provider) {
-    case 'openai':
-      return ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'];
-    case 'anthropic':
-      return ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-latest', 'claude-3-opus-20240229'];
-    case 'gemini':
-      return ['gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
-    case 'moonshot':
-      return ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'];
-    case 'deepseek':
-      return ['deepseek-chat', 'deepseek-reasoner', 'deepseek-coder'];
-    case 'ollama':
-      return ['llama3', 'llama3.1', 'mistral', 'qwen2.5', 'phi3'];
-    case 'groq':
-      return ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'];
-    case 'qwen':
-      return ['qwen-max', 'qwen-plus', 'qwen-turbo', 'qwen-coder-plus'];
-    case 'mistral':
-      return ['mistral-large-latest', 'mistral-small-latest', 'codestral-latest'];
-    case 'cohere':
-      return ['command-r-plus-08-2024', 'command-r-08-2024', 'command-light'];
-    case 'nvidia':
-      return ['meta/llama-3.1-70b-instruct', 'meta/llama-3.1-8b-instruct'];
-    case 'perplexity':
-      return ['sonar', 'sonar-pro', 'sonar-reasoning'];
-    case 'together':
-      return ['meta-llama/Llama-3.3-70B-Instruct-Turbo', 'mistralai/Mistral-7B-Instruct-v0.3'];
-    case 'cerebras':
-      return ['llama3.3-70b', 'llama3.1-8b-instant'];
-    case 'grok':
-      return ['grok-2-latest', 'grok-2-mini'];
-    case 'fireworks':
-      return ['accounts/fireworks/models/llama-v3-70b-instruct', 'accounts/fireworks/models/llama-v3-8b-instruct'];
-    case 'zhipu':
-      return ['glm-4-plus', 'glm-4-flash', 'glm-4-0520', 'glm-4-airx', 'glm-4-air', 'glm-4-flashx', 'glm-4-flash-plus', 'glm-4', 'glm-3.5-turbo', 'glm-3.5-turbo-250528', 'glm-3.5-turbo-250614'];
-    default:
-      return [];
-  }
+  return customUrl?.trim() || getDefaultBaseUrl(provider);
 }
 
 // System prompt for outline generation
@@ -141,49 +79,6 @@ const OUTLINE_SYSTEM_PROMPT = `你是一位专业的小说创作顾问和故事�
 
 请确保生成的故事大纲具有独特性，避免套路化，富有创意。`;
 
-// 获取模型的默认选择
-function getModelForProvider(provider: string): string {
-  switch (provider) {
-    case 'anthropic':
-      return 'claude-3-5-sonnet-20241022';
-    case 'moonshot':
-      return 'moonshot-v1-128k';
-    case 'deepseek':
-      return 'deepseek-chat';
-    case 'gemini':
-      return 'gemini-2.0-flash';
-    case 'qwen':
-      return 'qwen-plus';
-    case 'mistral':
-      return 'mistral-large-latest';
-    case 'ollama':
-      return 'llama3';
-    case 'groq':
-      return 'llama-3.3-70b-versatile';
-    case 'cohere':
-      return 'command-r-plus-08-2024';
-    case 'nvidia':
-      return 'meta/llama-3.1-70b-instruct';
-    case 'perplexity':
-      return 'sonar';
-    case 'together':
-      return 'accounts/fireworks/models/llama-v3-70b-instruct';
-    case 'cerebras':
-      return 'llama3.3-70b';
-    case 'grok':
-      return 'grok-2-latest';
-    case 'fireworks':
-      return 'accounts/fireworks/models/llama-v3-70b-instruct';
-    case 'zhipu':
-      return 'glm-4-flash';
-    case 'azure':
-      return 'gpt-4o';
-    case 'openai':
-    default:
-      return 'gpt-4o';
-  }
-}
-
 /**
  * Stream outline generation using multi-ai-sdk
  */
@@ -201,8 +96,8 @@ export async function generateOutlineStream(
   }
 ): Promise<void> {
   const baseUrl = getBaseUrl(provider, config.baseUrl);
-  // 优先使用用户配置的模型，否则使用默认模型
-  const model = config.model?.trim() || getModelForProvider(provider);
+  // 优先使用用户配置的模型，否则使用厂商推荐的第一个模型
+  const model = config.model?.trim() || getDefaultModels(provider)[0] || 'gpt-4o';
   // 使用用户配置的参数，否则使用默认值
   const maxTokens = config.maxTokens || 4096;
   const temperature = config.temperature ?? 0.8;

@@ -2,8 +2,8 @@ import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import Store from 'electron-store';
-import { testAIProvider, generateOutlineStream, type AIProviderType } from './main/services/ai-providers';
 import { testConnection } from './main/services/ai-client';
+import { generateOutlineStream } from './main/services/ai-providers';
 import { encryptApiKey, decryptApiKey, isEncrypted } from './main/crypto';
 
 // Remove default application menu for cleaner UI
