@@ -49,19 +49,21 @@ function extractPureText(rawContent: string): string {
 }
 
 // Outline generation system prompt - optimized for reliable JSON parsing
-const OUTLINE_SYSTEM_PROMPT = `你是一位专业的小说创作顾问和故事架构师。你的任务是根据用户提供的创意种子，生成多个独特的故事大纲。
+// @param wordCountRange - 用户选择的字数范围，如 "50万-100万字"
+function buildOutlineSystemPrompt(wordCountRange: string = '50万-100万字'): string {
+  return `你是一位专业的小说创作顾问和故事架构师。你的任务是根据用户提供的创意种子，生成多个独特且详尽的故事大纲。
 
 请生成2-3个不同风格的故事大纲，每个大纲包含：
 1. 标题：一个吸引人的故事标题
-2. 简介：200字以内的故事概述
-3. 结构：按照三幕式结构描述
-   - 第一幕：建置（介绍背景和主要冲突）
-   - 第二幕上：对抗（主角面临的挑战）
-   - 第二幕下：危机（最困难的时刻）
-   - 第三幕：解决（成长和结局）
-4. 主要角色：2-3个核心角色，包括名字、角色定位、简要描述
-5. 伏笔设定：2-3个贯穿全文的伏笔或悬念
-6. 预估字数：50万-100万字
+2. 简介：300-500字的详细故事概述，包含世界观、主要冲突和核心主题
+3. 结构：按照四幕式结构详细描述，每个章节至少3-5个关键情节点
+   - 第一幕：建置（介绍背景、主要人物、世界观规则和初始冲突）
+   - 第二幕上：对抗（主角面临的挑战和成长，中间的转折点）
+   - 第二幕下：危机（最困难的时刻，重大牺牲或失败）
+   - 第三幕：解决（成长蜕变和圆满结局）
+4. 主要角色：3-5个核心角色，包括名字、角色定位、性格特点、背景故事、人物弧线
+5. 伏笔设定：4-5个贯穿全文的伏笔或悬念，包括首次出现的时机和揭晓方式
+6. 预估字数：${wordCountRange}
 
 【重要格式要求】
 1. 只输出纯JSON，不要任何解释、前缀、后缀或markdown代码块
@@ -72,6 +74,19 @@ const OUTLINE_SYSTEM_PROMPT = `你是一位专业的小说创作顾问和故事�
 
 标准JSON格式示例：
 {"outlines":[{"title":"标题","synopsis":"简介","structure":{"act1":"第一幕","act2a":"第二幕上","act2b":"第二幕下","act3":"第三幕"},"characters":[{"name":"名字","role":"角色定位","description":"描述"}],"foreshadows":["伏笔1","伏笔2"],"estimatedWordCount":"字数"}]}`;
+}
+
+export const DEFAULT_WORD_COUNT_RANGE = '80万-150万字';
+
+export const WORD_COUNT_OPTIONS = [
+  { label: '短篇 (1-3万字)', value: '1万-3万字', min: 10000, max: 30000 },
+  { label: '中短篇 (3-10万字)', value: '3万-10万字', min: 30000, max: 100000 },
+  { label: '中篇 (10-30万字)', value: '10万-30万字', min: 100000, max: 300000 },
+  { label: '长篇 (30-80万字)', value: '30万-80万字', min: 300000, max: 800000 },
+  { label: '长篇巨著 (80-150万字)', value: '80万-150万字', min: 800000, max: 1500000 },
+  { label: '超长篇 (150-300万字)', value: '150万-300万字', min: 1500000, max: 3000000 },
+  { label: '史诗级 (300万字以上)', value: '300万字以上', min: 3000000, max: 10000000 },
+];
 
 export interface AIGenerationConfig {
   temperature: number;
@@ -650,6 +665,7 @@ export class UnifiedAIService {
   /**
    * Generate outline with streaming
    * This method runs in Renderer process, so requests are visible in DevTools
+   * @param wordCountRange - 字数范围，可选
    */
   generateOutlineStream(
     prompt: string,
@@ -661,7 +677,8 @@ export class UnifiedAIService {
       maxTokens?: number;
       temperature?: number;
       topP?: number;
-    }
+    },
+    wordCountRange?: string
   ): void {
     if (!this.client) {
       onError('Client not initialized');
@@ -672,8 +689,11 @@ export class UnifiedAIService {
     const temperature = config?.temperature ?? 0.8;
     const topP = config?.topP ?? 0.9;
 
+    // 构建动态的系统提示词
+    const systemPrompt = buildOutlineSystemPrompt(wordCountRange || DEFAULT_WORD_COUNT_RANGE);
+
     const messages = [
-      { role: 'system' as const, content: OUTLINE_SYSTEM_PROMPT },
+      { role: 'system' as const, content: systemPrompt },
       { role: 'user' as const, content: `用户的创意种子：${prompt}` },
     ];
 
@@ -690,6 +710,9 @@ export class UnifiedAIService {
   /**
    * Generate outline without streaming (recommended for better JSON parsing)
    * Returns the complete result after AI finishes generating
+   * @param prompt - 用户的创意种子
+   * @param config - 生成配置
+   * @param wordCountRange - 字数范围，可选，默认为 "50万-100万字"
    */
   async generateOutline(
     prompt: string,
@@ -697,7 +720,8 @@ export class UnifiedAIService {
       maxTokens?: number;
       temperature?: number;
       topP?: number;
-    }
+    },
+    wordCountRange?: string
   ): Promise<{ outlines: any[] } | null> {
     if (!this.client) {
       throw new Error('Client not initialized');
@@ -707,8 +731,11 @@ export class UnifiedAIService {
     const temperature = config?.temperature ?? 0.8;
     const topP = config?.topP ?? 0.9;
 
+    // 构建动态的系统提示词
+    const systemPrompt = buildOutlineSystemPrompt(wordCountRange || DEFAULT_WORD_COUNT_RANGE);
+
     const messages = [
-      { role: 'system' as const, content: OUTLINE_SYSTEM_PROMPT },
+      { role: 'system' as const, content: systemPrompt },
       { role: 'user' as const, content: `用户的创意种子：${prompt}` },
     ];
 
