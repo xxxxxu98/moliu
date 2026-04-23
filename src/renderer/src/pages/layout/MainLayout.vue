@@ -38,6 +38,7 @@ const rightSiderCollapsed = ref(false);
 const activeSidePanel = ref<'chapters' | 'characters' | 'world' | 'foreshadows'>('chapters');
 const expandedVolumes = ref<Set<string>>(new Set(['v1']));
 const isLoadingProject = ref(false);
+const editorCoreRef = ref<InstanceType<typeof EditorCore> | null>(null);
 
 // Chapter dialog state
 const showChapterDialog = ref(false);
@@ -448,7 +449,7 @@ function getStatusConfig(status: string) {
 
       <!-- Main Content: Editor -->
       <div class="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-900/50">
-        <EditorCore />
+        <EditorCore ref="editorCoreRef" />
       </div>
 
       <!-- Right Sidebar: AI Panel -->
@@ -478,7 +479,7 @@ function getStatusConfig(status: string) {
 
           <!-- AI Panel Content -->
           <div v-if="!rightSiderCollapsed" class="flex-1 overflow-hidden">
-            <AIPanel />
+            <AIPanel :editor-ref="editorCoreRef" />
           </div>
 
           <!-- Collapsed Icon -->

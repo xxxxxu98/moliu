@@ -3,13 +3,12 @@ import { ref, computed } from 'vue';
 import { NSwitch } from 'naive-ui';
 import { useI18n } from 'vue-i18n';
 import { useSettingsStore, type ThemeMode } from '@/stores/settings.store';
-import { Sun, Moon, Monitor, Check } from 'lucide-vue-next';
+import { Sun, Moon, Check } from 'lucide-vue-next';
 
 const { t } = useI18n();
 const settingsStore = useSettingsStore();
 
 const themeOptions = computed(() => [
-  { label: t('settings.appearance.followSystem'), value: 'system', icon: Monitor },
   { label: t('settings.appearance.lightMode'), value: 'light', icon: Sun },
   { label: t('settings.appearance.darkMode'), value: 'dark', icon: Moon },
 ]);
@@ -27,7 +26,7 @@ function handleThemeChange(value: ThemeMode) {
       <div class="relative bg-white dark:bg-gray-800/50 rounded-2xl p-6 border border-gray-100 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-shadow">
         <div class="flex items-center gap-3 mb-6">
           <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-            <Monitor class="w-5 h-5 text-white" />
+            <Sun class="w-5 h-5 text-white" />
           </div>
           <div>
             <h3 class="font-semibold text-gray-900 dark:text-white">{{ t('settings.appearance.themeMode') }}</h3>
@@ -35,7 +34,7 @@ function handleThemeChange(value: ThemeMode) {
           </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 gap-3 max-w-md">
           <button
             v-for="option in themeOptions"
             :key="option.value"

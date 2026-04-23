@@ -94,6 +94,7 @@
     "continueWriting": "Continue Writing",
     "polish": "Polish",
     "suggestions": "Suggestions",
+    "noSuggestions": "No suggestions yet, click the button below to start analyzing",
     "memory": "Memory",
     "smartContinue": "Smart Continue",
     "smartContinueDesc": "Continue content based on context",

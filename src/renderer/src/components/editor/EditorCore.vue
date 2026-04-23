@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed, onUnmounted } from 'vue';
+import { ref, watch, computed, onUnmounted, expose, nextTick } from 'vue';
 import { NScrollbar, NButton, useMessage } from 'naive-ui';
 import { Save, Check, FileText } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
@@ -130,6 +130,126 @@ function handleKeyDown(event: KeyboardEvent) {
     }, 0);
   }
 }
+
+/**
+ * 在光标位置插入文本
+ * @param text 要插入的文本
+ */
+function insertText(text: string) {
+  const textarea = editorRef.value;
+  if (!textarea) return;
+
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const before = content.value.substring(0, start);
+  const after = content.value.substring(end);
+
+  content.value = before + text + after;
+
+  // 设置光标位置到插入文本之后
+  nextTick(() => {
+    const newPosition = start + text.length;
+    textarea.selectionStart = newPosition;
+    textarea.selectionEnd = newPosition;
+    textarea.focus();
+  });
+
+  // 触发更新
+  updateCounts(content.value);
+  isSaved.value = false;
+  scheduleAutoSave();
+}
+
+/**
+ * 在内容末尾追加文本
+ * @param text 要追加的文本
+ */
+function appendText(text: string) {
+  const textarea = editorRef.value;
+  if (!textarea) return;
+
+  // 确保末尾有换行
+  const separator = content.value.length > 0 && !content.value.endsWith('\n') ? '\n\n' : '';
+  content.value += separator + text;
+
+  // 滚动到底部
+  nextTick(() => {
+    if (textarea) {
+      textarea.scrollTop = textarea.scrollHeight;
+    }
+  });
+
+  updateCounts(content.value);
+  isSaved.value = false;
+  scheduleAutoSave();
+}
+
+/**
+ * 替换选中的文本
+ * @param newText 替换后的文本
+ */
+function replaceSelectedText(newText: string) {
+  const textarea = editorRef.value;
+  if (!textarea) return;
+
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const before = content.value.substring(0, start);
+  const after = content.value.substring(end);
+
+  content.value = before + newText + after;
+
+  // 设置光标位置
+  nextTick(() => {
+    const newPosition = start + newText.length;
+    textarea.selectionStart = newPosition;
+    textarea.selectionEnd = newPosition;
+    textarea.focus();
+  });
+
+  updateCounts(content.value);
+  isSaved.value = false;
+  scheduleAutoSave();
+}
+
+/**
+ * 获取当前编辑器内容
+ */
+function getContent(): string {
+  return content.value;
+}
+
+/**
+ * 获取当前选中的文本
+ */
+function getSelectedText(): string {
+  const textarea = editorRef.value;
+  if (!textarea) return '';
+  return textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+}
+
+/**
+ * 获取光标位置
+ */
+function getCursorPosition(): { start: number; end: number } | null {
+  const textarea = editorRef.value;
+  if (!textarea) return null;
+  return {
+    start: textarea.selectionStart,
+    end: textarea.selectionEnd,
+  };
+}
+
+// 暴露方法给父组件
+defineExpose({
+  insertText,
+  appendText,
+  replaceSelectedText,
+  getContent,
+  getSelectedText,
+  getCursorPosition,
+  saveChapter,
+});
 
 onUnmounted(() => {
   if (autoSaveTimer.value) {

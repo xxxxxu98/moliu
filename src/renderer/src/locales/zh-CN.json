@@ -94,6 +94,7 @@
     "continueWriting": "智能续写",
     "polish": "润色优化",
     "suggestions": "建议",
+    "noSuggestions": "暂无建议，点击下方按钮开始分析",
     "memory": "记忆",
     "smartContinue": "智能续写",
     "smartContinueDesc": "根据上下文续写内容",

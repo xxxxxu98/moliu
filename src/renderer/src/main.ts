@@ -1,12 +1,16 @@
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
-import App from './App.vue';
-import router from './router';
-import i18n, { setLocale } from './i18n';
-import { useSettingsStore } from '@/stores/settings.store';
-import 'virtual:uno.css';
-import '@unocss/reset/tailwind.css';
-import './styles/global.css';
+import { createApp } from "vue";
+import { createPinia } from "pinia";
+import App from "./App.vue";
+import router from "./router";
+import i18n, { setLocale } from "./i18n";
+import { useSettingsStore } from "@/stores/settings.store";
+import "virtual:uno.css";
+import "@unocss/reset/tailwind.css";
+import "./styles/global.css";
+// 通用字体
+import "vfonts/Lato.css";
+// 等宽字体
+import "vfonts/FiraCode.css";
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -20,5 +24,10 @@ const settingsStore = useSettingsStore();
 settingsStore.initializeSettings().then(() => {
   // Apply saved locale
   setLocale(settingsStore.locale);
-  app.mount('#app');
+
+  const meta = document.createElement("meta");
+  meta.name = "naive-ui-style";
+  document.head.appendChild(meta);
+
+  app.mount("#app");
 });
