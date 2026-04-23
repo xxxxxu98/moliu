@@ -11,7 +11,6 @@ const message = useMessage();
 
 const editorRef = ref<HTMLTextAreaElement | null>(null);
 const content = ref('');
-const wordCount = ref(0);
 const charCount = ref(0);
 const isSaved = ref(true);
 const isSaving = ref(false);
@@ -19,9 +18,7 @@ const autoSaveTimer = ref<number | null>(null);
 const lastSavedContent = ref('');
 
 function updateCounts(text: string) {
-  const trimmed = text.trim();
   charCount.value = text.length;
-  wordCount.value = trimmed ? trimmed.split(/\s+/).length : 0;
 }
 
 function handleInput(event: Event) {
@@ -45,12 +42,11 @@ async function saveChapter(isAutoSave = false) {
   if (!projectStore.currentChapterId) return;
   
   isSaving.value = true;
-  const words = content.value.trim() ? content.value.trim().split(/\s+/).length : 0;
   
   try {
     await projectStore.updateChapter(projectStore.currentChapterId, {
       content: content.value,
-      wordCount: words,
+      wordCount: charCount.value,
     });
     lastSavedContent.value = content.value;
     isSaved.value = true;
@@ -86,13 +82,12 @@ watch(() => projectStore.currentChapter, (newChapter) => {
     if (lastSavedContent.value !== newContent) {
       content.value = newContent;
       lastSavedContent.value = newContent;
-      wordCount.value = newChapter.wordCount || 0;
+      charCount.value = newContent.length;
       updateCounts(newContent);
       isSaved.value = true;
     }
   } else {
     content.value = '';
-    wordCount.value = 0;
     charCount.value = 0;
   }
 }, { immediate: true });
@@ -104,7 +99,7 @@ watch(() => projectStore.currentChapterId, (newId) => {
       const newContent = chapter.content || '';
       content.value = newContent;
       lastSavedContent.value = newContent;
-      wordCount.value = chapter.wordCount || 0;
+      charCount.value = newContent.length;
       updateCounts(newContent);
       isSaved.value = true;
     }
@@ -279,8 +274,7 @@ onUnmounted(() => {
       <div class="flex items-center gap-4">
         <!-- Stats -->
         <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-          <span>{{ wordCount }} {{ t('editor.words') }}</span>
-          <span>{{ charCount }} {{ t('editor.characters') }}</span>
+          <span>{{ charCount }} {{ t('editor.charCount') }}</span>
         </div>
 
         <!-- Save Status -->
