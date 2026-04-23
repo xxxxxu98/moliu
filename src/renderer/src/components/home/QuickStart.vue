@@ -42,7 +42,6 @@ const showStructuredInput = ref(false);
 const isGenerating = ref(false);
 const generatedOutlines = ref<GeneratedOutline[]>([]);
 const selectedOutline = ref<GeneratedOutline | null>(null);
-const streamingContent = ref("");
 const streamingError = ref<string | null>(null);
 
 // Draft state
@@ -210,10 +209,25 @@ function clearDraft() {
 async function generateOutlines() {
   if (!canGenerate.value) return;
 
-  // Check if AI provider is configured
-  const enabledProvider = settingsStore.aiProviders.find(
-    (p) => p.enabled && p.apiKey,
-  );
+  // 优先使用用户在设置页面选择的默认模型
+  let enabledProvider = null;
+  const defaultModelId = settingsStore.defaultModel;
+  
+  if (defaultModelId) {
+    // 解析 defaultModelId，格式为 "providerId:modelName"
+    const [providerId, modelName] = defaultModelId.split(':');
+    enabledProvider = settingsStore.aiProviders.find(
+      (p) => p.id === providerId && p.modelName === modelName && p.enabled && p.apiKey,
+    );
+  }
+  
+  // Fallback: 如果默认模型无效或未设置，找第一个启用的厂商
+  if (!enabledProvider) {
+    enabledProvider = settingsStore.aiProviders.find(
+      (p) => p.enabled && p.apiKey,
+    );
+  }
+  
   if (!enabledProvider) {
     streamingError.value = "请先在设置中配置 AI 提供商";
     return;
@@ -222,7 +236,6 @@ async function generateOutlines() {
   isGenerating.value = true;
   selectedOutline.value = null;
   generatedOutlines.value = [];
-  streamingContent.value = "";
   streamingError.value = null;
 
   try {
@@ -236,102 +249,33 @@ async function generateOutlines() {
       enabledProvider.generationConfig,
     );
 
-    aiServiceInstance.generateOutlineStream(
-      promptPreview.value,
-      // onChunk - streaming progress
-      ({ content, fullContent }) => {
-        // Try to parse partial JSON to show progress
-        try {
-          const jsonMatch = fullContent.match(/\{[\s\S]*$/);
-          if (jsonMatch) {
-            const partialJson = jsonMatch[0];
-            const outlinesMatch = partialJson.match(
-              /"outlines"\s*:\s*\[([\s\S]*)\]/,
-            );
-            if (outlinesMatch) {
-              const arrayContent = outlinesMatch[1];
-              const outlineMatches = arrayContent.match(
-                /\{[^}]*(?:\{[^}]*\}[^}]*)*\}/g,
-              );
-              if (outlineMatches) {
-                const validOutlines = outlineMatches
-                  .map((match: string) => {
-                    try {
-                      return JSON.parse(match);
-                    } catch {
-                      return null;
-                    }
-                  })
-                  .filter((o: any) => o && o.title);
+    // Use non-streaming method for better JSON parsing reliability
+    const result = await aiServiceInstance.generateOutline(promptPreview.value, {
+      maxTokens: enabledProvider.maxTokens,
+      temperature: enabledProvider.generationConfig?.temperature,
+      topP: enabledProvider.generationConfig?.topP,
+    });
 
-                if (validOutlines.length > 0) {
-                  generatedOutlines.value = validOutlines.map(
-                    (o: any, i: number) => ({
-                      id: `streaming-${i}-${Date.now()}`,
-                      title: o.title || "生成中...",
-                      synopsis: o.synopsis || "",
-                      structure: o.structure || {
-                        act1: "",
-                        act2a: "",
-                        act2b: "",
-                        act3: "",
-                      },
-                      characters: o.characters || [],
-                      foreshadows: o.foreshadows || [],
-                      estimatedWordCount: o.estimatedWordCount || 500000,
-                    }),
-                  );
-                }
-              }
-            }
-          }
-        } catch (e) {
-          // Ignore parsing errors during streaming
-        }
-      },
-      // onDone
-      () => {},
-      // onComplete - final result
-      (result) => {
-        if (result && result.outlines) {
-          generatedOutlines.value = result.outlines.map(
-            (o: any, i: number) => ({
-              id: `outline-${i}-${Date.now()}`,
-              title: o.title,
-              synopsis: o.synopsis,
-              structure: o.structure,
-              characters: o.characters,
-              foreshadows: o.foreshadows,
-              estimatedWordCount: o.estimatedWordCount,
-            }),
-          );
-        }
-        isGenerating.value = false;
-        streamingContent.value = "";
-        clearDraft();
-      },
-      // onError
-      (error) => {
-        console.error("[QuickStart] Outline generation error:", error);
-        // 检查是否是 JSON 解析错误
-        if (error.includes("JSON")) {
-          streamingError.value = "AI 返回格式异常，请重试或更换模型";
-        } else {
-          streamingError.value = error;
-        }
-        isGenerating.value = false;
-        streamingContent.value = "";
-      },
-      // config options
-      {
-        maxTokens: enabledProvider.maxTokens,
-        temperature: enabledProvider.generationConfig?.temperature,
-        topP: enabledProvider.generationConfig?.topP,
-      },
-    );
+    if (result && result.outlines) {
+      generatedOutlines.value = result.outlines.map(
+        (o: any, i: number) => ({
+          id: `outline-${i}-${Date.now()}`,
+          title: o.title,
+          synopsis: o.synopsis,
+          structure: o.structure,
+          characters: o.characters,
+          foreshadows: o.foreshadows,
+          estimatedWordCount: o.estimatedWordCount,
+        }),
+      );
+      clearDraft();
+    } else {
+      streamingError.value = "AI 返回格式异常，请重试或更换模型";
+    }
   } catch (error) {
-    console.error("[QuickStart] Failed to start outline generation:", error);
+    console.error("[QuickStart] Outline generation error:", error);
     streamingError.value = String(error);
+  } finally {
     isGenerating.value = false;
   }
 }

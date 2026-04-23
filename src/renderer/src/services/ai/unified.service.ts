@@ -6,6 +6,7 @@
 import { AIClient, type Message, type ProviderName } from 'multi-ai-sdk';
 import { PromptBuilder, type ProjectContext, type AIWriteResult, type AISuggestion } from './base.service';
 import { getSDKProvider, type ProviderType, defaultProviders } from '@/config/ai-providers';
+import { robustJsonParse, parseJsonWithRetry, type ParseResult } from '@/utils/json-parser';
 
 /**
  * 从原始响应中提取纯文本内容
@@ -47,7 +48,7 @@ function extractPureText(rawContent: string): string {
   return rawContent;
 }
 
-// Outline generation system prompt
+// Outline generation system prompt - optimized for reliable JSON parsing
 const OUTLINE_SYSTEM_PROMPT = `你是一位专业的小说创作顾问和故事架构师。你的任务是根据用户提供的创意种子，生成多个独特的故事大纲。
 
 请生成2-3个不同风格的故事大纲，每个大纲包含：
@@ -62,28 +63,15 @@ const OUTLINE_SYSTEM_PROMPT = `你是一位专业的小说创作顾问和故事�
 5. 伏笔设定：2-3个贯穿全文的伏笔或悬念
 6. 预估字数：50万-100万字
 
-请用JSON格式返回，结构如下：
-{
-  "outlines": [
-    {
-      "title": "标题",
-      "synopsis": "简介",
-      "structure": {
-        "act1": "第一幕内容",
-        "act2a": "第二幕上内容",
-        "act2b": "第二幕下内容",
-        "act3": "第三幕内容"
-      },
-      "characters": [
-        {"name": "角色名", "role": "角色定位", "description": "角色描述"}
-      ],
-      "foreshadows": ["伏笔1", "伏笔2"],
-      "estimatedWordCount": 预估字数
-    }
-  ]
-}
+【重要格式要求】
+1. 只输出纯JSON，不要任何解释、前缀、后缀或markdown代码块
+2. 不要写'以下是'、'JSON如下'、'返回结果'等任何文字
+3. 确保JSON语法正确：大括号匹配、引号闭合、逗号位置正确
+4. 中文字符串内的换行请使用\\n转义
+5. 确保数组和对象完整闭合
 
-请确保生成的故事大纲具有独特性，避免套路化，富有创意。`;
+标准JSON格式示例：
+{"outlines":[{"title":"标题","synopsis":"简介","structure":{"act1":"第一幕","act2a":"第二幕上","act2b":"第二幕下","act3":"第三幕"},"characters":[{"name":"名字","role":"角色定位","description":"描述"}],"foreshadows":["伏笔1","伏笔2"],"estimatedWordCount":"字数"}]}`;
 
 export interface AIGenerationConfig {
   temperature: number;
@@ -352,26 +340,47 @@ export class UnifiedAIService {
         presencePenalty: this.generationConfig.presencePenalty,
       } as any);
 
-      const content = extractPureText(
+      const rawContent = extractPureText(
         typeof response === 'string' ? response : JSON.stringify(response)
       );
-      
-      // Try to parse JSON response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+
+      // Use robust JSON parser
+      const result = robustJsonParse<{ suggestions: any[] }>(rawContent, {
+        expectedType: 'object',
+        enableCompletion: true,
+      });
+
+      if (result.success && result.data?.suggestions && Array.isArray(result.data.suggestions)) {
+        return result.data.suggestions.map((s: any, index: number) => ({
+          id: `suggestion-${index}`,
+          type: this.mapSuggestionType(s.type),
+          severity: this.mapSeverity(s.severity),
+          title: s.title || 'Suggestion',
+          description: s.description || '',
+          suggestion: s.suggestion,
+        }));
+      }
+
+      // Fallback to regex extraction
+      const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        if (parsed.suggestions && Array.isArray(parsed.suggestions)) {
-          return parsed.suggestions.map((s: any, index: number) => ({
-            id: `suggestion-${index}`,
-            type: this.mapSuggestionType(s.type),
-            severity: this.mapSeverity(s.severity),
-            title: s.title || 'Suggestion',
-            description: s.description || '',
-            suggestion: s.suggestion,
-          }));
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (parsed.suggestions && Array.isArray(parsed.suggestions)) {
+            return parsed.suggestions.map((s: any, index: number) => ({
+              id: `suggestion-${index}`,
+              type: this.mapSuggestionType(s.type),
+              severity: this.mapSeverity(s.severity),
+              title: s.title || 'Suggestion',
+              description: s.description || '',
+              suggestion: s.suggestion,
+            }));
+          }
+        } catch {
+          // Regex fallback failed
         }
       }
-      
+
       return [];
     } catch (error) {
       console.error('Failed to analyze chapter:', error);
@@ -408,22 +417,46 @@ export class UnifiedAIService {
         presencePenalty: this.generationConfig.presencePenalty,
       } as any);
 
-      const content = extractPureText(
+      const rawContent = extractPureText(
         typeof response === 'string' ? response : JSON.stringify(response)
       );
-      
-      // Parse JSON response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
+
+      // Use robust JSON parser
+      const result = robustJsonParse<{
+        charactersInScene?: any[];
+        location?: string;
+        time?: string;
+        mood?: string;
+      }>(rawContent, {
+        expectedType: 'object',
+        enableCompletion: true,
+      });
+
+      if (result.success && result.data) {
         return {
-          charactersInScene: parsed.charactersInScene || [],
-          location: parsed.location || '未明确',
-          time: parsed.time || '未明确',
-          mood: parsed.mood || '未明确',
+          charactersInScene: result.data.charactersInScene || [],
+          location: result.data.location || '未明确',
+          time: result.data.time || '未明确',
+          mood: result.data.mood || '未明确',
         };
       }
-      
+
+      // Fallback to regex extraction
+      const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return {
+            charactersInScene: parsed.charactersInScene || [],
+            location: parsed.location || '未明确',
+            time: parsed.time || '未明确',
+            mood: parsed.mood || '未明确',
+          };
+        } catch {
+          // Regex fallback failed
+        }
+      }
+
       return {
         charactersInScene: [],
         location: '未明确',
@@ -654,6 +687,132 @@ export class UnifiedAIService {
     );
   }
 
+  /**
+   * Generate outline without streaming (recommended for better JSON parsing)
+   * Returns the complete result after AI finishes generating
+   */
+  async generateOutline(
+    prompt: string,
+    config?: {
+      maxTokens?: number;
+      temperature?: number;
+      topP?: number;
+    }
+  ): Promise<{ outlines: any[] } | null> {
+    if (!this.client) {
+      throw new Error('Client not initialized');
+    }
+
+    const maxTokens = config?.maxTokens || 4096;
+    const temperature = config?.temperature ?? 0.8;
+    const topP = config?.topP ?? 0.9;
+
+    const messages = [
+      { role: 'system' as const, content: OUTLINE_SYSTEM_PROMPT },
+      { role: 'user' as const, content: `用户的创意种子：${prompt}` },
+    ];
+
+    try {
+      const response = await this.client.chat(messages, {
+        maxTokens,
+        temperature,
+        topP,
+      } as any);
+
+      const rawContent = extractPureText(
+        typeof response === 'string' ? response : JSON.stringify(response)
+      );
+
+      // Use robust JSON parser
+      const result = robustJsonParse<{ outlines: any[] }>(rawContent, {
+        expectedType: 'object',
+        enableCompletion: true,
+      });
+
+      if (result.success && result.data) {
+        // Validate the structure
+        if (Array.isArray(result.data.outlines)) {
+          if (result.warnings) {
+            console.warn('[UnifiedAIService] JSON parsed with warnings:', result.warnings);
+          }
+          return result.data;
+        }
+      }
+
+      // Fallback: try to extract outlines field specifically
+      const outlinesResult = robustJsonParse<any[]>(rawContent, {
+        expectedType: 'array',
+        enableCompletion: true,
+      });
+
+      if (outlinesResult.success && outlinesResult.data) {
+        return { outlines: outlinesResult.data };
+      }
+
+      // Last resort: try the original extraction logic
+      const legacyResult = this.extractOutlinesLegacy(rawContent);
+      if (legacyResult) {
+        return legacyResult;
+      }
+
+      console.error('[UnifiedAIService] All JSON parsing methods failed');
+      console.error('[UnifiedAIService] Response preview:', rawContent.substring(0, 500));
+      return null;
+    } catch (error) {
+      console.error('[UnifiedAIService] Outline generation error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Legacy outline extraction - kept for backward compatibility
+   */
+  private extractOutlinesLegacy(content: string): { outlines: any[] } | null {
+    let cleanedContent = content.trim();
+
+    // Remove markdown code blocks
+    cleanedContent = cleanedContent
+      .replace(/```json\s*/g, '')
+      .replace(/```\s*$/g, '')
+      .trim();
+
+    const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+
+    if (jsonMatch) {
+      try {
+        return JSON.parse(jsonMatch[0]);
+      } catch {
+        // Try fixing trailing commas
+        const cleaned = jsonMatch[0]
+          .replace(/,\s*\]/g, ']')
+          .replace(/,\s*\}/g, '}')
+          .trim();
+
+        try {
+          return JSON.parse(cleaned);
+        } catch {
+          // Try extracting outlines array
+          const outlinesMatch = cleanedContent.match(/"outlines"\s*:\s*\[([\s\S]*)\]/);
+          if (outlinesMatch) {
+            const outlinesStr = '[' + outlinesMatch[1];
+            const fixed = outlinesStr
+              .replace(/,\s*\]/g, ']')
+              .replace(/}\s*\n\s*\{/g, '},{');
+
+            try {
+              const outlines = JSON.parse(fixed);
+              return { outlines };
+            } catch {
+              console.error('[UnifiedAIService] Legacy extraction also failed');
+            }
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
   private async generateOutlineStreamInternal(
     messages: Message[],
     options: { maxTokens: number; temperature: number; topP: number },
@@ -661,7 +820,7 @@ export class UnifiedAIService {
     onDone: () => void,
     onComplete: (result: any) => void,
     onError: (error: string) => void
-  ): Promise<void> {
+  ): void {
     if (!this.client) {
       onError('Client not initialized');
       return;
@@ -674,7 +833,6 @@ export class UnifiedAIService {
         maxTokens: options.maxTokens,
         temperature: options.temperature,
         topP: options.topP,
-        // Note: frequencyPenalty and presencePenalty are not supported by all providers
       });
 
       for await (const chunk of stream) {
@@ -689,78 +847,46 @@ export class UnifiedAIService {
 
       onDone();
 
-      // Parse JSON result
-      try {
-        // 从原始 SSE 数据中提取纯文本内容
-        const pureText = extractPureText(fullContent);
-        
-        // 清理 [DONE] 标记和空白字符
-        let cleanedContent = pureText.replace(/\[DONE\]\s*$/g, '').trim();
-        
-        // 尝试多种方式解析 JSON
-        let jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
-        
-        // 如果没有找到 JSON，尝试清理常见的格式问题
-        if (!jsonMatch) {
-          // 移除 markdown 代码块标记
-          cleanedContent = cleanedContent
-            .replace(/```json\s*/g, '')
-            .replace(/```\s*$/g, '')
-            .trim();
-          
-          // 再次尝试匹配 JSON
-          jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+      // Parse JSON result using robust parser
+      const rawContent = extractPureText(fullContent);
+      let cleanedContent = rawContent.replace(/\[DONE\]\s*$/g, '').trim();
+
+      // Use robust JSON parser with completion enabled
+      const result = robustJsonParse<{ outlines: any[] }>(cleanedContent, {
+        expectedType: 'object',
+        enableCompletion: true,
+      });
+
+      if (result.success && result.data) {
+        if (result.warnings) {
+          console.warn('[UnifiedAIService] Stream JSON parsed with warnings:', result.warnings);
         }
-        
-        if (jsonMatch) {
-          let jsonStr = jsonMatch[0];
-          
-          // 尝试解析 JSON
-          try {
-            const result = JSON.parse(jsonStr);
-            onComplete(result);
-            return;
-          } catch {
-            // JSON 不完整，尝试修复常见的尾随逗号问题
-            const cleanedForJson = jsonStr
-              .replace(/,\s*\]/g, ']')
-              .replace(/,\s*\}/g, '}')
-              .replace(/([\]\}])\s*[\n\r]+\s*$/g, '$1'); // 移除末尾换行
-            
-            try {
-              const result = JSON.parse(cleanedForJson);
-              onComplete(result);
-              return;
-            } catch {
-              // 如果仍然失败，尝试提取 outlines 数组
-              const outlinesMatch = cleanedContent.match(/"outlines"\s*:\s*\[([\s\S]*)\]/);
-              if (outlinesMatch) {
-                try {
-                  const outlinesStr = '[' + outlinesMatch[1];
-                  // 尝试修复 outlines 数组
-                  const fixedOutlinesStr = outlinesStr
-                    .replace(/,\s*\]/g, ']')
-                    .replace(/}\s*\n\s*\{/g, '},{');
-                  
-                  const outlines = JSON.parse(fixedOutlinesStr);
-                  onComplete({ outlines });
-                  return;
-                } catch {
-                  // 继续尝试其他方法
-                }
-              }
-            }
-          }
-        }
-        
-        // 如果所有方法都失败，打印调试信息
-        console.error('[UnifiedAIService] Failed to parse JSON. Response preview:', cleanedContent.substring(0, 500));
-        onError('Failed to parse AI response as JSON');
-      } catch (e) {
-        console.error('[UnifiedAIService] JSON parsing error:', e);
-        onError('Failed to parse AI response as JSON');
+        onComplete(result.data);
+        return;
       }
+
+      // Fallback: try to extract outlines array
+      const arrayResult = robustJsonParse<any[]>(cleanedContent, {
+        expectedType: 'array',
+        enableCompletion: true,
+      });
+
+      if (arrayResult.success && arrayResult.data) {
+        onComplete({ outlines: arrayResult.data });
+        return;
+      }
+
+      // Last fallback: legacy extraction
+      const legacyResult = this.extractOutlinesLegacy(cleanedContent);
+      if (legacyResult) {
+        onComplete(legacyResult);
+        return;
+      }
+
+      console.error('[UnifiedAIService] Stream JSON parsing failed. Preview:', cleanedContent.substring(0, 500));
+      onError('Failed to parse AI response as JSON');
     } catch (error) {
+      console.error('[UnifiedAIService] Stream error:', error);
       onError(error instanceof Error ? error.message : 'Stream failed');
     }
   }

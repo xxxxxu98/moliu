@@ -3,14 +3,18 @@ import { ref, computed, onMounted } from 'vue';
 import { Sparkles, RefreshCw, Check, X, Shuffle, Save, BookOpen } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useInspirationStore } from '@/stores/inspiration.store';
+import { useSettingsStore } from '@/stores/settings.store';
+import { UnifiedAIService } from '@/services/ai/unified.service';
 import type { GenreTag, SettingElement, StoryNucleus } from '@/types/inspiration';
 import { genreTags as configGenreTags, settingElements as configSettingElements, storyNuclei as configStoryNuclei } from '@/data/inspirations';
 import { timing } from '@/config/timing';
 
 const { t } = useI18n();
 const inspirationStore = useInspirationStore();
+const settingsStore = useSettingsStore();
 
 const isGenerating = ref(false);
+const generationError = ref<string | null>(null);
 
 // Use config data
 const genreTags = configGenreTags;
@@ -116,42 +120,76 @@ function clearSelection() {
 }
 
 async function generateOutlines() {
-  inspirationStore.setGenerating(true, 'generating-outlines');
+  // 优先使用用户在设置页面选择的默认模型
+  let enabledProvider = null;
+  const defaultModelId = settingsStore.defaultModel;
   
-  // Simulate generating outlines based on selected nucleus
-  await new Promise((resolve) => setTimeout(resolve, timing.mockApi.slow));
-  
-  // Generate mock outlines based on selected nucleus
-  if (inspirationStore.selectedNucleus) {
-    const nucleus = inspirationStore.selectedNucleus;
-    const mockOutlines: { 
-      id: string; 
-      title: string; 
-      synopsis: string;
-      structure: { act1: string; act2a: string; act2b: string; act3: string };
-      characters: { name: string; role: string; description: string }[];
-    }[] = [
-      {
-        id: '1',
-        title: nucleus.title,
-        synopsis: nucleus.premise + '\n\n' + nucleus.conflict,
-        structure: {
-          act1: `故事开篇：${nucleus.characters[0]?.name || '主角'}在一个平凡的日子里遭遇了改变命运的转折点...`,
-          act2a: `冲突升级：主角面临前所未有的挑战，必须快速成长以应对危机...`,
-          act2b: `高潮前夕：真相逐渐浮出水面，主角必须做出艰难的选择...`,
-          act3: `结局：主角克服困难，实现成长，故事圆满落幕...`,
-        },
-        characters: nucleus.characters.map(c => ({
-          name: c.name,
-          role: c.role,
-          description: `${c.name}是一个${c.traits.join('、')}的角色`,
-        })),
-      },
-    ];
-    inspirationStore.setGeneratedOutlines(mockOutlines);
+  if (defaultModelId) {
+    // 解析 defaultModelId，格式为 "providerId:modelName"
+    const [providerId, modelName] = defaultModelId.split(':');
+    enabledProvider = settingsStore.aiProviders.find(
+      (p) => p.id === providerId && p.modelName === modelName && p.enabled && p.apiKey,
+    );
   }
   
-  inspirationStore.setGenerating(false);
+  // Fallback: 如果默认模型无效或未设置，找第一个启用的厂商
+  if (!enabledProvider) {
+    enabledProvider = settingsStore.aiProviders.find(p => p.enabled && p.apiKey);
+  }
+  
+  if (!enabledProvider) {
+    generationError.value = '请先在设置中配置 AI 提供商';
+    return;
+  }
+
+  isGenerating.value = true;
+  generationError.value = null;
+  inspirationStore.setGenerating(true, 'generating-outlines');
+
+  try {
+    // Create AI service instance
+    const aiService = new UnifiedAIService(
+      enabledProvider.provider,
+      enabledProvider.apiKey,
+      enabledProvider.baseUrl,
+      enabledProvider.modelName,
+      enabledProvider.maxTokens,
+      enabledProvider.generationConfig
+    );
+
+    // Build prompt from selected inspiration
+    const nucleus = inspirationStore.selectedNucleus;
+    const tags = inspirationStore.selectedTags.map(id => genreTags.find(t => t.id === id)?.name).filter(Boolean);
+    const elements = inspirationStore.selectedElements.map(id => settingElements.find(e => e.id === id)?.name).filter(Boolean);
+
+    const prompt = `类型标签：${tags.join('、')}
+设定元素：${elements.join('、')}
+
+核心故事核：
+- 标题：${nucleus.title}
+- 前提：${nucleus.premise}
+- 冲突：${nucleus.conflict}
+- 主要角色：${nucleus.characters.map(c => `${c.name}(${c.role}: ${c.traits.join('、')})`).join('、')}`;
+
+    // Use non-streaming method for better JSON parsing
+    const result = await aiService.generateOutline(prompt, {
+      maxTokens: enabledProvider.maxTokens,
+      temperature: enabledProvider.generationConfig?.temperature,
+      topP: enabledProvider.generationConfig?.topP,
+    });
+
+    if (result && result.outlines && result.outlines.length > 0) {
+      inspirationStore.setGeneratedOutlines(result.outlines);
+    } else {
+      generationError.value = 'AI 返回格式异常，请重试';
+    }
+  } catch (error) {
+    console.error('[InspirationPanel] Outline generation error:', error);
+    generationError.value = String(error);
+  } finally {
+    isGenerating.value = false;
+    inspirationStore.setGenerating(false);
+  }
 }
 
 function saveDraft() {
@@ -495,6 +533,11 @@ function applyQuickScenario(scenario: typeof quickScenarios[0]) {
         <span v-if="isGenerating" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
         {{ t('inspiration.generateOutline') }}
       </button>
+    </div>
+
+    <!-- Error Message -->
+    <div v-if="generationError" class="mt-2 p-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+      <p class="text-xs text-red-600 dark:text-red-400">{{ generationError }}</p>
     </div>
 
     <!-- Empty State -->

@@ -41,10 +41,25 @@ export function useAIService() {
 
   /**
    * 获取当前启用的 AI 提供商配置
+   * 优先使用用户在设置页面选择的默认模型
    */
   const activeProvider = computed(() => {
     const providers = settingsStore.aiProviders;
-    // 查找已启用且配置了 API Key 的提供商
+    const defaultModelId = settingsStore.defaultModel;
+    
+    // 优先查找与 defaultModel 匹配的厂商
+    if (defaultModelId) {
+      const [providerId, modelName] = defaultModelId.split(':');
+      const matched = providers.find(p => 
+        p.id === providerId && 
+        p.modelName === modelName && 
+        p.enabled && 
+        p.apiKey
+      );
+      if (matched) return matched;
+    }
+    
+    // Fallback: 查找第一个已启用且配置了 API Key 的提供商
     return providers.find(p => p.enabled && p.apiKey);
   });
 
