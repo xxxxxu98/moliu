@@ -1,10 +1,15 @@
 /**
  * AI Provider Service
- * Handles connection testing and model listing for various AI providers
- * 基于 multi-ai-sdk 实现
+ * 使用 multi-ai-sdk 统一处理 AI API 调用
  */
 
-export type AIProviderType = 'openai' | 'anthropic' | 'google' | 'moonshot' | 'deepseek' | 'ollama' | 'groq' | 'gemini' | 'qwen' | 'mistral' | 'cohere' | 'nvidia' | 'perplexity' | 'together' | 'cerebras' | 'azure' | 'grok';
+import {
+  AIClient,
+  type ProviderName,
+} from 'multi-ai-sdk';
+
+// 支持的提供商类型（与 multi-ai-sdk 保持一致）
+export type AIProviderType = 'openai' | 'anthropic' | 'gemini' | 'moonshot' | 'deepseek' | 'ollama' | 'groq' | 'qwen' | 'mistral' | 'cohere' | 'nvidia' | 'perplexity' | 'together' | 'cerebras' | 'azure' | 'grok' | 'fireworks';
 
 export interface ProviderConfig {
   apiKey: string;
@@ -29,7 +34,7 @@ export interface ModelInfo {
 const DEFAULT_ENDPOINTS: Record<AIProviderType, string> = {
   openai: 'https://api.openai.com/v1',
   anthropic: 'https://api.anthropic.com',
-  google: 'https://generativelanguage.googleapis.com/v1beta',
+  gemini: 'https://generativelanguage.googleapis.com/v1beta',
   moonshot: 'https://api.moonshot.cn/v1',
   deepseek: 'https://api.deepseek.com/v1',
   ollama: 'http://localhost:11434',
@@ -43,7 +48,7 @@ const DEFAULT_ENDPOINTS: Record<AIProviderType, string> = {
   cerebras: 'https://api.cerebras.ai/v1',
   azure: '',
   grok: 'https://api.x.ai/v1',
-  gemini: 'https://generativelanguage.googleapis.com/v1beta',
+  fireworks: 'https://api.fireworks.ai/v1',
 };
 
 /**
@@ -54,339 +59,42 @@ export function getBaseUrl(provider: string, customUrl?: string): string {
 }
 
 /**
- * Test connection to OpenAI API
- */
-async function testOpenAI(config: ProviderConfig): Promise<TestResult> {
-  const baseUrl = getBaseUrl('openai', config.baseUrl);
-  const startTime = Date.now();
-
-  try {
-    const response = await fetch(`${baseUrl}/models`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${config.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        return { success: false, error: 'Invalid API key', errorCode: 'INVALID_API_KEY' };
-      }
-      if (response.status === 403) {
-        return { success: false, error: 'API key lacks permission', errorCode: 'PERMISSION_DENIED' };
-      }
-      return { success: false, error: `API error: ${response.status} ${response.statusText}`, errorCode: 'API_ERROR' };
-    }
-
-    const data = await response.json();
-    const models = (data.data || [])
-      .filter((m: { id: string }) => m.id.startsWith('gpt-'))
-      .map((m: { id: string }) => m.id)
-      .slice(0, 20);
-
-    return {
-      success: true,
-      models,
-      responseTime: Date.now() - startTime,
-    };
-  } catch (error) {
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      return { success: false, error: 'Network error - check your connection', errorCode: 'NETWORK_ERROR' };
-    }
-    return { success: false, error: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`, errorCode: 'CONNECTION_FAILED' };
-  }
-}
-
-/**
- * Test connection to Anthropic API
- */
-async function testAnthropic(config: ProviderConfig): Promise<TestResult> {
-  const baseUrl = getBaseUrl('anthropic', config.baseUrl);
-  const startTime = Date.now();
-
-  try {
-    // Anthropic doesn't have a models list endpoint, so we test with a minimal completion request
-    const response = await fetch(`${baseUrl}/v1/messages`, {
-      method: 'POST',
-      headers: {
-        'x-api-key': config.apiKey,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
-        max_tokens: 1,
-        messages: [{ role: 'user', content: 'test' }],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      if (response.status === 401) {
-        return { success: false, error: 'Invalid API key', errorCode: 'INVALID_API_KEY' };
-      }
-      if (response.status === 429) {
-        return { success: false, error: 'Rate limit exceeded', errorCode: 'RATE_LIMIT' };
-      }
-      return {
-        success: false,
-        error: errorData.error?.message || `API error: ${response.status}`,
-        errorCode: 'API_ERROR'
-      };
-    }
-
-    return {
-      success: true,
-      models: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
-      responseTime: Date.now() - startTime,
-    };
-  } catch (error) {
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      return { success: false, error: 'Network error - check your connection', errorCode: 'NETWORK_ERROR' };
-    }
-    return { success: false, error: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`, errorCode: 'CONNECTION_FAILED' };
-  }
-}
-
-/**
- * Test connection to Google Gemini API
- */
-async function testGoogle(config: ProviderConfig): Promise<TestResult> {
-  const baseUrl = getBaseUrl('google', config.baseUrl);
-  const startTime = Date.now();
-
-  try {
-    // Use the models list endpoint
-    const response = await fetch(`${baseUrl}/models?key=${config.apiKey}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        return { success: false, error: 'Invalid or malformed API key', errorCode: 'INVALID_API_KEY' };
-      }
-      if (response.status === 429) {
-        return { success: false, error: 'Rate limit exceeded', errorCode: 'RATE_LIMIT' };
-      }
-      return { success: false, error: `API error: ${response.status}`, errorCode: 'API_ERROR' };
-    }
-
-    const data = await response.json();
-    const models = (data.models || [])
-      .filter((m: { name: string }) => m.name.includes('gemini'))
-      .map((m: { name: string }) => m.name.replace('models/', ''))
-      .slice(0, 20);
-
-    return {
-      success: true,
-      models,
-      responseTime: Date.now() - startTime,
-    };
-  } catch (error) {
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      return { success: false, error: 'Network error - check your connection', errorCode: 'NETWORK_ERROR' };
-    }
-    return { success: false, error: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`, errorCode: 'CONNECTION_FAILED' };
-  }
-}
-
-/**
- * Test connection to Moonshot (Kimi) API
- */
-async function testMoonshot(config: ProviderConfig): Promise<TestResult> {
-  const baseUrl = getBaseUrl('moonshot', config.baseUrl);
-  const startTime = Date.now();
-
-  try {
-    const response = await fetch(`${baseUrl}/models`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${config.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        return { success: false, error: 'Invalid API key', errorCode: 'INVALID_API_KEY' };
-      }
-      if (response.status === 403) {
-        return { success: false, error: 'Insufficient permissions', errorCode: 'PERMISSION_DENIED' };
-      }
-      return { success: false, error: `API error: ${response.status}`, errorCode: 'API_ERROR' };
-    }
-
-    const data = await response.json();
-    const models = (data.data || []).map((m: { id: string }) => m.id).slice(0, 20);
-
-    return {
-      success: true,
-      models,
-      responseTime: Date.now() - startTime,
-    };
-  } catch (error) {
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      return { success: false, error: 'Network error - check your connection', errorCode: 'NETWORK_ERROR' };
-    }
-    return { success: false, error: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`, errorCode: 'CONNECTION_FAILED' };
-  }
-}
-
-/**
- * Test connection to DeepSeek API
- */
-async function testDeepSeek(config: ProviderConfig): Promise<TestResult> {
-  const baseUrl = getBaseUrl('deepseek', config.baseUrl);
-  const startTime = Date.now();
-
-  try {
-    const response = await fetch(`${baseUrl}/models`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${config.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        return { success: false, error: 'Invalid API key', errorCode: 'INVALID_API_KEY' };
-      }
-      return { success: false, error: `API error: ${response.status}`, errorCode: 'API_ERROR' };
-    }
-
-    const data = await response.json();
-    const models = (data.data || [])
-      .filter((m: { id: string }) => m.id.startsWith('deepseek-'))
-      .map((m: { id: string }) => m.id)
-      .slice(0, 20);
-
-    return {
-      success: true,
-      models,
-      responseTime: Date.now() - startTime,
-    };
-  } catch (error) {
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      return { success: false, error: 'Network error - check your connection', errorCode: 'NETWORK_ERROR' };
-    }
-    return { success: false, error: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`, errorCode: 'CONNECTION_FAILED' };
-  }
-}
-
-/**
- * Test connection to Ollama (Local) API
- */
-async function testOllama(config: ProviderConfig): Promise<TestResult> {
-  const baseUrl = getBaseUrl('ollama', config.baseUrl);
-  const startTime = Date.now();
-
-  try {
-    const response = await fetch(`${baseUrl}/api/tags`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        return { success: false, error: 'Ollama service not found - make sure it is running', errorCode: 'SERVICE_NOT_FOUND' };
-      }
-      return { success: false, error: `Service error: ${response.status}`, errorCode: 'SERVICE_ERROR' };
-    }
-
-    const data = await response.json();
-    const models = (data.models || [])
-      .map((m: { name: string }) => m.name)
-      .slice(0, 20);
-
-    return {
-      success: true,
-      models,
-      responseTime: Date.now() - startTime,
-    };
-  } catch (error) {
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      return { success: false, error: 'Cannot connect to Ollama - ensure it is running (default: localhost:11434)', errorCode: 'CONNECTION_REFUSED' };
-    }
-    return { success: false, error: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`, errorCode: 'CONNECTION_FAILED' };
-  }
-}
-
-/**
- * Main test function - routes to the appropriate provider
- */
-export async function testAIProvider(provider: AIProviderType, config: ProviderConfig): Promise<TestResult> {
-  switch (provider) {
-    case 'openai':
-      return testOpenAI(config);
-    case 'anthropic':
-      return testAnthropic(config);
-    case 'google':
-    case 'gemini':
-      return testGoogle(config);
-    case 'moonshot':
-      return testMoonshot(config);
-    case 'deepseek':
-      return testDeepSeek(config);
-    case 'ollama':
-      return testOllama(config);
-    case 'groq':
-    case 'qwen':
-    case 'mistral':
-    case 'cohere':
-    case 'nvidia':
-    case 'perplexity':
-    case 'together':
-    case 'cerebras':
-    case 'grok':
-      return testOpenAI(config); // OpenAI-compatible APIs
-    default:
-      return { success: false, error: `Unknown provider type: ${provider}`, errorCode: 'UNKNOWN_PROVIDER' };
-  }
-}
-
-/**
- * Get default models for a provider (fallback when API call fails)
+ * Get default models for a provider
  */
 export function getDefaultModels(provider: AIProviderType): string[] {
   switch (provider) {
     case 'openai':
       return ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'];
     case 'anthropic':
-      return ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229'];
-    case 'google':
+      return ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-latest', 'claude-3-opus-20240229'];
     case 'gemini':
       return ['gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
     case 'moonshot':
       return ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'];
     case 'deepseek':
-      return ['deepseek-chat', 'deepseek-coder'];
+      return ['deepseek-chat', 'deepseek-reasoner', 'deepseek-coder'];
     case 'ollama':
       return ['llama3', 'llama3.1', 'mistral', 'qwen2.5', 'phi3'];
     case 'groq':
-      return ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
+      return ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'];
     case 'qwen':
-      return ['qwen-max', 'qwen-plus', 'qwen-turbo'];
+      return ['qwen-max', 'qwen-plus', 'qwen-turbo', 'qwen-coder-plus'];
     case 'mistral':
-      return ['mistral-large-latest', 'mistral-small-latest'];
+      return ['mistral-large-latest', 'mistral-small-latest', 'codestral-latest'];
     case 'cohere':
-      return ['command-r-plus-08-2024', 'command-r-08-2024'];
+      return ['command-r-plus-08-2024', 'command-r-08-2024', 'command-light'];
     case 'nvidia':
       return ['meta/llama-3.1-70b-instruct', 'meta/llama-3.1-8b-instruct'];
     case 'perplexity':
-      return ['sonar', 'sonar-pro'];
+      return ['sonar', 'sonar-pro', 'sonar-reasoning'];
     case 'together':
-      return ['meta-llama/Llama-3.3-70B-Instruct-Turbo'];
+      return ['meta-llama/Llama-3.3-70B-Instruct-Turbo', 'mistralai/Mistral-7B-Instruct-v0.3'];
     case 'cerebras':
-      return ['llama3.3-70b'];
+      return ['llama3.3-70b', 'llama3.1-8b-instant'];
     case 'grok':
       return ['grok-2-latest', 'grok-2-mini'];
+    case 'fireworks':
+      return ['accounts/fireworks/models/llama-v3-70b-instruct', 'accounts/fireworks/models/llama-v3-8b-instruct'];
     default:
       return [];
   }
@@ -430,8 +138,49 @@ const OUTLINE_SYSTEM_PROMPT = `你是一位专业的小说创作顾问和故事�
 
 请确保生成的故事大纲具有独特性，避免套路化，富有创意。`;
 
+// 获取模型的默认选择
+function getModelForProvider(provider: string): string {
+  switch (provider) {
+    case 'anthropic':
+      return 'claude-3-5-sonnet-20241022';
+    case 'moonshot':
+      return 'moonshot-v1-128k';
+    case 'deepseek':
+      return 'deepseek-chat';
+    case 'gemini':
+      return 'gemini-2.0-flash';
+    case 'qwen':
+      return 'qwen-plus';
+    case 'mistral':
+      return 'mistral-large-latest';
+    case 'ollama':
+      return 'llama3';
+    case 'groq':
+      return 'llama-3.3-70b-versatile';
+    case 'cohere':
+      return 'command-r-plus-08-2024';
+    case 'nvidia':
+      return 'meta/llama-3.1-70b-instruct';
+    case 'perplexity':
+      return 'sonar';
+    case 'together':
+      return 'accounts/fireworks/models/llama-v3-70b-instruct';
+    case 'cerebras':
+      return 'llama3.3-70b';
+    case 'grok':
+      return 'grok-2-latest';
+    case 'fireworks':
+      return 'accounts/fireworks/models/llama-v3-70b-instruct';
+    case 'azure':
+      return 'gpt-4o';
+    case 'openai':
+    default:
+      return 'gpt-4o';
+  }
+}
+
 /**
- * Stream outline generation using OpenAI-compatible API
+ * Stream outline generation using multi-ai-sdk
  */
 export async function generateOutlineStream(
   event: Electron.IpcMainInvokeEvent,
@@ -440,120 +189,47 @@ export async function generateOutlineStream(
   config: { apiKey: string; baseUrl?: string }
 ): Promise<void> {
   const baseUrl = getBaseUrl(provider, config.baseUrl);
-  const model = provider === 'anthropic' ? 'claude-3-5-sonnet-20241022' : 
-                provider === 'moonshot' ? 'moonshot-v1-128k' :
-                provider === 'deepseek' ? 'deepseek-chat' :
-                'gpt-4o';
+  const model = getModelForProvider(provider);
 
   try {
-    let endpoint: string;
-    let headers: Record<string, string>;
-    let body: any;
+    // Ollama 不需要真实的 API key
+    const apiKey = provider === 'ollama' ? 'dummy' : config.apiKey;
 
-    if (provider === 'anthropic') {
-      endpoint = `${baseUrl}/v1/messages`;
-      headers = {
-        'x-api-key': config.apiKey,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      };
-      body = {
-        model,
-        max_tokens: 4096,
-        messages: [
-          { role: 'user', content: `${OUTLINE_SYSTEM_PROMPT}\n\n用户的创意种子：${prompt}` }
-        ],
-        stream: true,
-      };
-    } else {
-      endpoint = `${baseUrl}/chat/completions`;
-      headers = {
-        'Authorization': `Bearer ${config.apiKey}`,
-        'Content-Type': 'application/json',
-      };
-      body = {
-        model,
-        messages: [
-          { role: 'system', content: OUTLINE_SYSTEM_PROMPT },
-          { role: 'user', content: `用户的创意种子：${prompt}` }
-        ],
-        stream: true,
-      };
-    }
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
+    const client = new AIClient({
+      provider: provider as ProviderName,
+      apiKey,
+      baseUrl: baseUrl || undefined,
+      timeout: 60000,
+      maxRetries: 2,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      event.sender.send('ai:outline-error', { 
-        error: errorData.error?.message || `API error: ${response.status}` 
-      });
-      return;
-    }
+    // 构建消息
+    const messages = [
+      { role: 'system' as const, content: OUTLINE_SYSTEM_PROMPT },
+      { role: 'user' as const, content: `用户的创意种子：${prompt}` },
+    ];
 
-    // Handle streaming response
-    const reader = response.body?.getReader();
-    if (!reader) {
-      event.sender.send('ai:outline-error', { error: 'No response stream available' });
-      return;
-    }
+    // 使用流式 API
+    const stream = client.stream(messages, {
+      model,
+      maxTokens: 4096,
+    });
 
-    const decoder = new TextDecoder();
-    let buffer = '';
     let fullContent = '';
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        if (line.trim() === '') continue;
-        if (!line.startsWith('data: ')) continue;
-        
-        const data = line.slice(6).trim();
-        if (data === '[DONE]') {
-          event.sender.send('ai:outline-done', {});
-          return;
-        }
-
-        try {
-          const parsed = JSON.parse(data);
-          
-          if (provider === 'anthropic') {
-            const content = parsed.delta?.text || parsed.content?.[0]?.text || '';
-            if (content) {
-              fullContent += content;
-              event.sender.send('ai:outline-chunk', { content, fullContent });
-            }
-          } else {
-            // Handle OpenAI-compatible format
-            const delta = parsed.choices?.[0]?.delta;
-            let content = '';
-            
-            if (delta?.content) {
-              content = delta.content;
-            }
-            
-            if (content) {
-              fullContent += content;
-              event.sender.send('ai:outline-chunk', { content, fullContent });
-            }
-          }
-        } catch (e) {
-          // Skip malformed JSON
-        }
+    for await (const chunk of stream) {
+      if (chunk.content) {
+        fullContent += chunk.content;
+        event.sender.send('ai:outline-chunk', { content: chunk.content, fullContent });
+      }
+      if (chunk.done) {
+        break;
       }
     }
 
-    // Parse final result
+    event.sender.send('ai:outline-done', {});
+
+    // 解析 JSON 结果
     try {
       const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -567,8 +243,8 @@ export async function generateOutlineStream(
     }
 
   } catch (error) {
-    event.sender.send('ai:outline-error', { 
-      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+    event.sender.send('ai:outline-error', {
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
     });
   }
 }

@@ -1,6 +1,6 @@
 /**
- * AI Client Factory
- * 基于 multi-ai-sdk 的统一 AI 客户端创建模块
+ * AI Client Service
+ * 使用 multi-ai-sdk 统一处理 AI API 调用
  */
 
 import {
@@ -15,34 +15,42 @@ import {
   AIError,
 } from 'multi-ai-sdk';
 
+// multi-ai-sdk 支持的提供商类型
+export type SDKProviderName = ProviderName;
+
 // 支持的提供商映射
 export const SUPPORTED_PROVIDERS: Record<string, { name: string; defaultModel: string }> = {
   openai: { name: 'OpenAI', defaultModel: 'gpt-4o' },
   anthropic: { name: 'Anthropic', defaultModel: 'claude-3-5-sonnet-20241022' },
-  google: { name: 'Google Gemini', defaultModel: 'gemini-2.0-flash' },
+  gemini: { name: 'Google Gemini', defaultModel: 'gemini-2.0-flash' },
   moonshot: { name: 'Moonshot (Kimi)', defaultModel: 'moonshot-v1-8k' },
   deepseek: { name: 'DeepSeek', defaultModel: 'deepseek-chat' },
   ollama: { name: 'Ollama (本地)', defaultModel: 'llama3' },
   groq: { name: 'Groq', defaultModel: 'llama-3.3-70b-versatile' },
-  gemini: { name: 'Google Gemini', defaultModel: 'gemini-2.0-flash' },
   qwen: { name: '通义千问', defaultModel: 'qwen-plus' },
   mistral: { name: 'Mistral', defaultModel: 'mistral-large-latest' },
   cohere: { name: 'Cohere', defaultModel: 'command-r-plus-08-2024' },
   nvidia: { name: 'NVIDIA NIM', defaultModel: 'meta/llama-3.1-70b-instruct' },
   perplexity: { name: 'Perplexity', defaultModel: 'sonar' },
-  fireworks: { name: 'Fireworks AI', defaultModel: 'accounts/fireworks/models/llama-v3-70b-instruct' },
-  together: { name: 'Together AI', defaultModel: 'meta-llama/Llama-3.3-70B-Instruct-Turbo' },
+  together: { name: 'Together AI', defaultModel: 'accounts/fireworks/models/llama-v3-70b-instruct' },
   cerebras: { name: 'Cerebras', defaultModel: 'llama3.3-70b' },
   azure: { name: 'Azure OpenAI', defaultModel: 'gpt-4o' },
   grok: { name: 'xAI Grok', defaultModel: 'grok-2-latest' },
+  fireworks: { name: 'Fireworks AI', defaultModel: 'accounts/fireworks/models/llama-v3-70b-instruct' },
 };
-
-// multi-ai-sdk 的 ProviderName 类型
-export type SDKProviderName = ProviderName;
 
 // 检查提供商是否被支持
 export function isProviderSupported(provider: string): provider is SDKProviderName {
   return provider in SUPPORTED_PROVIDERS;
+}
+
+// 测试连接结果
+export interface TestConnectionResult {
+  success: boolean;
+  error?: string;
+  errorCode?: string;
+  models?: string[];
+  responseTime?: number;
 }
 
 // 创建 AI 客户端
@@ -57,223 +65,23 @@ export function createAIClient(
   }
 ): AIClient {
   return createClient(provider, apiKey, {
-    timeout: options?.timeout || 60000,
+    timeout: options?.timeout || 10000,
     maxRetries: options?.maxRetries || 3,
     baseUrl: options?.baseUrl,
     model: options?.model,
   });
 }
 
-// 测试连接结果
-export interface TestConnectionResult {
-  success: boolean;
-  error?: string;
-  errorCode?: string;
-  models?: string[];
-  responseTime?: number;
-}
-
-// 测试连接 - 直接使用 HTTP 请求而非 multi-ai-sdk
-export async function testConnection(
-  provider: string,
-  apiKey: string,
-  baseUrl?: string
-): Promise<TestConnectionResult> {
-  const startTime = Date.now();
-
-  // 获取默认的 baseUrl
-  const defaultBaseUrl = getDefaultBaseUrl(provider);
-  const targetBaseUrl = baseUrl?.trim() || defaultBaseUrl;
-
-  if (!targetBaseUrl) {
-    return {
-      success: false,
-      error: 'No API endpoint configured',
-      errorCode: 'NO_ENDPOINT',
-      responseTime: Date.now() - startTime,
-    };
-  }
-
-  try {
-    let endpoint: string;
-    let headers: Record<string, string>;
-    let body: any;
-
-    if (provider === 'anthropic') {
-      // Anthropic 使用不同的 API 格式
-      endpoint = `${targetBaseUrl}/v1/messages`;
-      headers = {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      };
-      body = {
-        model: 'claude-3-5-haiku-20241022',
-        max_tokens: 10,
-        messages: [{ role: 'user', content: 'Hi' }],
-      };
-    } else if (provider === 'ollama') {
-      // Ollama 使用 /api/tags 获取模型列表
-      const ollamaController = new AbortController();
-      const ollamaTimeoutId = setTimeout(() => ollamaController.abort(), 5000);
-
-      try {
-        const response = await fetch(`${targetBaseUrl}/api/tags`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          signal: ollamaController.signal,
-        });
-        clearTimeout(ollamaTimeoutId);
-
-        if (!response.ok) {
-          return {
-            success: false,
-            error: `Connection failed: ${response.status}`,
-            errorCode: String(response.status),
-            responseTime: Date.now() - startTime,
-          };
-        }
-
-        const data = await response.json();
-        const models = (data.models || [])
-          .map((m: { name: string }) => m.name)
-          .slice(0, 20);
-
-        return {
-          success: true,
-          models,
-          responseTime: Date.now() - startTime,
-        };
-      } catch (e) {
-        clearTimeout(ollamaTimeoutId);
-        if (e instanceof Error && e.name === 'AbortError') {
-          return {
-            success: false,
-            error: `Ollama connection timed out after 5 seconds - ensure Ollama is running at ${targetBaseUrl}`,
-            errorCode: 'TIMEOUT',
-            responseTime: Date.now() - startTime,
-          };
-        }
-        return {
-          success: false,
-          error: `Cannot connect to Ollama: ${e instanceof Error ? e.message : 'Unknown error'}`,
-          errorCode: 'CONNECTION_FAILED',
-          responseTime: Date.now() - startTime,
-        };
-      }
-    } else {
-      // 其他厂商使用 OpenAI 兼容格式
-      const model = getDefaultModel(provider);
-      endpoint = `${targetBaseUrl}/chat/completions`;
-      headers = {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      };
-      body = {
-        model,
-        messages: [{ role: 'user', content: 'Hi' }],
-        max_tokens: 5,
-        stream: false,
-      };
-    }
-
-    // 为 Anthropic 和其他厂商发送请求
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        let errorMsg = `API error: ${response.status}`;
-        let errorCode = String(response.status);
-
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.error?.message || errorData.error || errorMsg;
-          errorCode = errorData.error?.type || errorCode;
-        } catch {
-          // Ignore JSON parse error
-        }
-
-        if (response.status === 401) {
-          errorCode = 'INVALID_API_KEY';
-          errorMsg = 'Invalid API key';
-        } else if (response.status === 403) {
-          errorCode = 'PERMISSION_DENIED';
-          errorMsg = 'Permission denied - check your API key';
-        } else if (response.status === 429) {
-          errorCode = 'RATE_LIMITED';
-          errorMsg = 'Rate limit exceeded - try again later';
-        }
-
-        return {
-          success: false,
-          error: errorMsg,
-          errorCode,
-          responseTime: Date.now() - startTime,
-        };
-      }
-
-      return {
-        success: true,
-        models: getDefaultModels(provider as SDKProviderName),
-        responseTime: Date.now() - startTime,
-      };
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof Error) {
-          if (error.name === 'AbortError') {
-            return {
-              success: false,
-              error: `Connection timed out after 10 seconds - check your network or base URL`,
-            errorCode: 'TIMEOUT',
-            responseTime: Date.now() - startTime,
-          };
-        }
-        if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
-          return {
-            success: false,
-            error: `Cannot connect to ${targetBaseUrl} - check your network or base URL`,
-            errorCode: 'NETWORK_ERROR',
-            responseTime: Date.now() - startTime,
-          };
-        }
-      }
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        errorCode: 'UNKNOWN',
-        responseTime: Date.now() - startTime,
-      };
-    }
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      errorCode: 'UNKNOWN',
-      responseTime: Date.now() - startTime,
-    };
-  }
-}
-
 // 获取提供商的默认基础 URL
-function getDefaultBaseUrl(provider: string): string {
+export function getDefaultBaseUrl(provider: string): string {
   const baseUrls: Record<string, string> = {
     openai: 'https://api.openai.com/v1',
     anthropic: 'https://api.anthropic.com',
-    google: 'https://generativelanguage.googleapis.com/v1beta',
+    gemini: 'https://generativelanguage.googleapis.com/v1beta',
     moonshot: 'https://api.moonshot.cn/v1',
     deepseek: 'https://api.deepseek.com/v1',
     ollama: 'http://localhost:11434',
     groq: 'https://api.groq.com/openai/v1',
-    gemini: 'https://generativelanguage.googleapis.com/v1beta',
     qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     mistral: 'https://api.mistral.ai/v1',
     cohere: 'https://api.cohere.ai/v1',
@@ -283,32 +91,18 @@ function getDefaultBaseUrl(provider: string): string {
     cerebras: 'https://api.cerebras.ai/v1',
     azure: '',
     grok: 'https://api.x.ai/v1',
+    fireworks: 'https://api.fireworks.ai/v1',
   };
   return baseUrls[provider] || '';
 }
 
 // 获取提供商的默认模型
-function getDefaultModel(provider: string): string {
-  const models: Record<string, string> = {
-    openai: 'gpt-4o-mini',
-    google: 'gemini-2.0-flash',
-    moonshot: 'moonshot-v1-8k',
-    deepseek: 'deepseek-chat',
-    groq: 'llama-3.3-70b-versatile',
-    qwen: 'qwen-plus',
-    mistral: 'mistral-small-latest',
-    cohere: 'command-r-plus-08-2024',
-    nvidia: 'meta/llama-3.1-8b-instruct',
-    perplexity: 'sonar',
-    together: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-    cerebras: 'llama3.3-70b',
-    grok: 'grok-2-latest',
-  };
-  return models[provider] || 'gpt-4o-mini';
+export function getDefaultModel(provider: string): string {
+  return SUPPORTED_PROVIDERS[provider]?.defaultModel || 'gpt-4o-mini';
 }
 
 // 获取提供商的默认模型列表
-function getDefaultModels(provider: SDKProviderName): string[] {
+export function getDefaultModels(provider: SDKProviderName): string[] {
   switch (provider) {
     case 'openai':
       return ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'];
@@ -340,15 +134,102 @@ function getDefaultModels(provider: SDKProviderName): string[] {
       return ['llama3.3-70b', 'llama3.1-8b-instant'];
     case 'grok':
       return ['grok-2-latest', 'grok-2-mini'];
+    case 'fireworks':
+      return ['accounts/fireworks/models/llama-v3-70b-instruct', 'accounts/fireworks/models/llama-v3-8b-instruct'];
     default:
       return [];
+  }
+}
+
+/**
+ * 测试连接 - 使用 multi-ai-sdk
+ */
+export async function testConnection(
+  provider: string,
+  apiKey: string,
+  baseUrl?: string
+): Promise<TestConnectionResult> {
+  const startTime = Date.now();
+
+  // 检查是否支持该提供商
+  if (!isProviderSupported(provider)) {
+    return {
+      success: false,
+      error: `Unsupported provider: ${provider}`,
+      errorCode: 'UNSUPPORTED_PROVIDER',
+      responseTime: Date.now() - startTime,
+    };
+  }
+
+  const targetBaseUrl = baseUrl?.trim() || getDefaultBaseUrl(provider);
+
+  if (!targetBaseUrl && provider !== 'ollama') {
+    return {
+      success: false,
+      error: 'No API endpoint configured',
+      errorCode: 'NO_ENDPOINT',
+      responseTime: Date.now() - startTime,
+    };
+  }
+
+  try {
+    // Ollama 不需要 API key
+    const config: AIClientOptions = {
+      provider: provider as SDKProviderName,
+      apiKey: provider === 'ollama' ? 'dummy' : apiKey,
+      baseUrl: targetBaseUrl || undefined,
+      timeout: provider === 'ollama' ? 5000 : 10000,
+      maxRetries: 0, // 测试连接不需要重试
+    };
+
+    const client = new AIClient(config);
+
+    // 发送一个简单的测试请求
+    const response = await client.chat(
+      [{ role: 'user', content: 'Hi' }],
+      { maxTokens: 5 }
+    );
+
+    return {
+      success: true,
+      models: getDefaultModels(provider as SDKProviderName),
+      responseTime: Date.now() - startTime,
+    };
+  } catch (error) {
+    const errorCode = error instanceof AIError ? error.code : undefined;
+    const errorStatus = error instanceof AIError ? error.status : undefined;
+
+    // 根据错误类型设置错误码
+    let code = 'UNKNOWN';
+    if (errorStatus === 401 || errorCode === 'invalid_api_key') {
+      code = 'INVALID_API_KEY';
+    } else if (errorStatus === 403 || errorCode === 'insufficient_permissions') {
+      code = 'PERMISSION_DENIED';
+    } else if (errorStatus === 429 || errorCode === 'rate_limit_exceeded') {
+      code = 'RATE_LIMITED';
+    } else if (error instanceof Error) {
+      if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+        code = 'TIMEOUT';
+      } else if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+        code = 'NETWORK_ERROR';
+      }
+    }
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Connection failed',
+      errorCode: code,
+      responseTime: Date.now() - startTime,
+    };
   }
 }
 
 // 流式生成回调类型
 export type StreamCallback = (chunk: StreamChunk) => void;
 
-// 带流式输出的聊天
+/**
+ * 带流式输出的聊天
+ */
 export async function chatWithStream(
   provider: SDKProviderName,
   apiKey: string,
@@ -396,7 +277,9 @@ export async function chatWithStream(
   return fullContent;
 }
 
-// 同步聊天（等待完整响应）
+/**
+ * 同步聊天（等待完整响应）
+ */
 export async function chat(
   provider: SDKProviderName,
   apiKey: string,
@@ -418,7 +301,9 @@ export async function chat(
   });
 }
 
-// JSON 响应（自动解析 JSON）
+/**
+ * JSON 响应（自动解析 JSON）
+ */
 export async function chatJSON<T>(
   provider: SDKProviderName,
   apiKey: string,
@@ -441,114 +326,4 @@ export async function chatJSON<T>(
       systemPrompt: options.systemPrompt,
     }
   );
-}
-
-// 大纲生成系统提示词
-const OUTLINE_SYSTEM_PROMPT = `你是一位专业的小说创作顾问和故事架构师。你的任务是根据用户提供的创意种子，生成多个独特的故事大纲。
-
-请生成2-3个不同风格的故事大纲，每个大纲包含：
-1. 标题：一个吸引人的故事标题
-2. 简介：200字以内的故事概述
-3. 结构：按照三幕式结构描述
-   - 第一幕：建置（介绍背景和主要冲突）
-   - 第二幕上：对抗（主角面临的挑战）
-   - 第二幕下：危机（最困难的时刻）
-   - 第三幕：解决（成长和结局）
-4. 主要角色：2-3个核心角色，包括名字、角色定位、简要描述
-5. 伏笔设定：2-3个贯穿全文的伏笔或悬念
-6. 预估字数：50万-100万字
-
-请用JSON格式返回，结构如下：
-{
-  "outlines": [
-    {
-      "title": "标题",
-      "synopsis": "简介",
-      "structure": {
-        "act1": "第一幕内容",
-        "act2a": "第二幕上内容",
-        "act2b": "第二幕下内容",
-        "act3": "第三幕内容"
-      },
-      "characters": [
-        {"name": "角色名", "role": "角色定位", "description": "角色描述"}
-      ],
-      "foreshadows": ["伏笔1", "伏笔2"],
-      "estimatedWordCount": 预估字数
-    }
-  ]
-}
-
-请确保生成的故事大纲具有独特性，避免套路化，富有创意。`;
-
-// 大纲生成回调类型
-export type OutlineChunkCallback = (data: { content: string; fullContent: string }) => void;
-export type OutlineDoneCallback = () => void;
-export type OutlineCompleteCallback = (data: { result: unknown }) => void;
-export type OutlineErrorCallback = (data: { error: string }) => void;
-
-/**
- * 生成故事大纲（流式）
- */
-export async function generateOutline(
-  provider: SDKProviderName,
-  apiKey: string,
-  prompt: string,
-  options: { baseUrl?: string; model?: string },
-  callbacks: {
-    onChunk: OutlineChunkCallback;
-    onDone: OutlineDoneCallback;
-    onComplete: OutlineCompleteCallback;
-    onError: OutlineErrorCallback;
-  },
-  signal?: AbortSignal
-): Promise<void> {
-  try {
-    const messages: Message[] = [
-      { role: 'user', content: `用户的创意种子：${prompt}` }
-    ];
-
-    const stream = await chatWithStream(
-      provider,
-      apiKey,
-      messages,
-      {
-        model: options.model,
-        systemPrompt: OUTLINE_SYSTEM_PROMPT,
-        temperature: 0.8,
-        maxTokens: 4096,
-        baseUrl: options.baseUrl,
-      },
-      (chunk) => {
-        callbacks.onChunk({
-          content: chunk.content,
-          fullContent: '', // 由调用方累积
-        });
-      },
-      signal
-    );
-
-    callbacks.onDone();
-
-    // 尝试解析 JSON
-    try {
-      const jsonMatch = stream.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const result = JSON.parse(jsonMatch[0]);
-        callbacks.onComplete({ result });
-      } else {
-        callbacks.onError({ error: 'Failed to parse AI response' });
-      }
-    } catch (e) {
-      callbacks.onError({ error: 'Failed to parse AI response as JSON' });
-    }
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      callbacks.onError({ error: 'Request cancelled' });
-    } else {
-      callbacks.onError({
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
-    }
-  }
 }

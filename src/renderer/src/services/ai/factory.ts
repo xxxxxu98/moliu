@@ -65,21 +65,21 @@ export class AIServiceFactory {
     const defaults: Record<ProviderType, string> = {
       openai: 'gpt-4o',
       anthropic: 'claude-3-5-sonnet-20241022',
-      google: 'gemini-2.0-flash',
+      gemini: 'gemini-2.0-flash',
       moonshot: 'moonshot-v1-8k',
       deepseek: 'deepseek-chat',
       ollama: 'llama3',
       groq: 'llama-3.3-70b-versatile',
-      gemini: 'gemini-2.0-flash',
       qwen: 'qwen-plus',
       mistral: 'mistral-large-latest',
       cohere: 'command-r-plus-08-2024',
       nvidia: 'meta/llama-3.1-70b-instruct',
       perplexity: 'sonar',
-      together: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+      together: 'accounts/fireworks/models/llama-v3-70b-instruct',
       cerebras: 'llama3.3-70b',
       azure: 'gpt-4o',
       grok: 'grok-2-latest',
+      fireworks: 'accounts/fireworks/models/llama-v3-70b-instruct',
     };
     return defaults[provider];
   }
@@ -91,12 +91,11 @@ export class AIServiceFactory {
     const baseUrls: Record<ProviderType, string> = {
       openai: 'https://api.openai.com/v1',
       anthropic: 'https://api.anthropic.com',
-      google: 'https://generativelanguage.googleapis.com/v1beta',
+      gemini: 'https://generativelanguage.googleapis.com/v1beta',
       moonshot: 'https://api.moonshot.cn/v1',
       deepseek: 'https://api.deepseek.com/v1',
       ollama: 'http://localhost:11434',
       groq: 'https://api.groq.com/openai/v1',
-      gemini: 'https://generativelanguage.googleapis.com/v1beta',
       qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
       mistral: 'https://api.mistral.ai/v1',
       cohere: 'https://api.cohere.ai/v1',
@@ -106,6 +105,7 @@ export class AIServiceFactory {
       cerebras: 'https://api.cerebras.ai/v1',
       azure: '',
       grok: 'https://api.x.ai/v1',
+      fireworks: 'https://api.fireworks.ai/v1',
     };
     return baseUrls[provider];
   }

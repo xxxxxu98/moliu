@@ -3,19 +3,30 @@
  * Provides a unified interface for multiple AI providers
  */
 
-import { AIClient, type Message } from 'multi-ai-sdk';
+import { AIClient, type Message, type ProviderName } from 'multi-ai-sdk';
 import { PromptBuilder, type ProjectContext, type AIWriteResult, type AISuggestion } from './base.service';
 
 /**
  * Provider name mapping from our config to multi-ai-sdk
  */
-const PROVIDER_MAP: Record<string, string> = {
+const PROVIDER_MAP: Record<string, ProviderName> = {
   openai: 'openai',
   anthropic: 'anthropic',
-  google: 'gemini',
+  gemini: 'gemini',
   moonshot: 'moonshot',
   deepseek: 'deepseek',
   ollama: 'ollama',
+  groq: 'groq',
+  qwen: 'qwen',
+  mistral: 'mistral',
+  cohere: 'cohere',
+  nvidia: 'nvidia',
+  perplexity: 'perplexity',
+  together: 'together',
+  cerebras: 'cerebras',
+  azure: 'azure',
+  grok: 'grok',
+  fireworks: 'fireworks',
 };
 
 /**
@@ -43,16 +54,16 @@ export class UnifiedAIService {
 
     // Create client with explicit provider
     const config: {
-      provider: 'openai' | 'anthropic' | 'gemini' | 'moonshot' | 'deepseek' | 'ollama' | 'qwen';
+      provider: ProviderName;
       apiKey?: string;
       baseUrl?: string;
       model?: string;
       maxTokens?: number;
       contextWindowSafe?: boolean;
     } = {
-      provider: sdkProvider as 'openai' | 'anthropic' | 'gemini' | 'moonshot' | 'deepseek' | 'ollama' | 'qwen',
+      provider: sdkProvider,
       maxTokens: this.maxTokens,
-      contextWindowSafe: true, // Enable context window protection
+      contextWindowSafe: true,
     };
 
     // Set API key (not needed for ollama)

@@ -1,4 +1,10 @@
-export type ProviderType = 'openai' | 'anthropic' | 'google' | 'moonshot' | 'deepseek' | 'ollama' | 'groq' | 'gemini' | 'qwen' | 'mistral' | 'cohere' | 'nvidia' | 'perplexity' | 'together' | 'cerebras' | 'azure' | 'grok';
+/**
+ * AI 厂商配置
+ * 仅包含 multi-ai-sdk 支持的厂商
+ * ProviderName = "groq" | "openai" | "gemini" | "anthropic" | "grok" | "qwen" | "nvidia" | "ollama" | "mistral" | "deepseek" | "cohere" | "together" | "perplexity" | "fireworks" | "cerebras" | "azure" | "moonshot"
+ */
+
+export type ProviderType = 'openai' | 'anthropic' | 'gemini' | 'moonshot' | 'deepseek' | 'ollama' | 'groq' | 'qwen' | 'mistral' | 'cohere' | 'nvidia' | 'perplexity' | 'together' | 'cerebras' | 'azure' | 'grok' | 'fireworks';
 
 /**
  * 模型配置信息
@@ -25,12 +31,11 @@ export interface ProviderConfig {
 export const providerNameMap: Record<ProviderType, string> = {
   openai: 'OpenAI',
   anthropic: 'Anthropic',
-  google: 'Google Gemini',
+  gemini: 'Google Gemini',
   moonshot: 'Moonshot (Kimi)',
   deepseek: 'DeepSeek',
   ollama: 'Ollama (本地)',
   groq: 'Groq',
-  gemini: 'Google Gemini',
   qwen: '通义千问',
   mistral: 'Mistral',
   cohere: 'Cohere',
@@ -40,6 +45,7 @@ export const providerNameMap: Record<ProviderType, string> = {
   cerebras: 'Cerebras',
   azure: 'Azure OpenAI',
   grok: 'xAI Grok',
+  fireworks: 'Fireworks AI',
 };
 
 export const defaultProviders: ProviderConfig[] = [
@@ -54,7 +60,7 @@ export const defaultProviders: ProviderConfig[] = [
     models: [],
   },
   {
-    provider: 'google',
+    provider: 'gemini',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     models: [],
   },
@@ -70,7 +76,7 @@ export const defaultProviders: ProviderConfig[] = [
   },
   {
     provider: 'ollama',
-    baseUrl: 'http://localhost:11434/v1',
+    baseUrl: 'http://localhost:11434',
     models: [],
   },
   {
@@ -121,6 +127,11 @@ export const defaultProviders: ProviderConfig[] = [
   {
     provider: 'grok',
     baseUrl: 'https://api.x.ai/v1',
+    models: [],
+  },
+  {
+    provider: 'fireworks',
+    baseUrl: 'https://api.fireworks.ai/v1',
     models: [],
   },
 ];
