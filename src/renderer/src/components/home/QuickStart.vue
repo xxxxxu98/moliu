@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useProjectStore } from '@/stores/project.store';
 import { useInspirationStore } from '@/stores/inspiration.store';
+import { UnifiedAIService } from '@/services/ai/unified.service';
 import type { GeneratedOutline } from '@/types/inspiration';
 import { writingTemplates } from '@/data/inspirations';
 
@@ -84,11 +85,8 @@ const promptPreview = computed(() => {
   return prompt.value;
 });
 
-// Event listeners cleanup
-let unsubscribeChunk: (() => void) | null = null;
-let unsubscribeDone: (() => void) | null = null;
-let unsubscribeComplete: (() => void) | null = null;
-let unsubscribeError: (() => void) | null = null;
+// Event listeners cleanup (no longer needed since we use direct service calls)
+let aiServiceInstance: UnifiedAIService | null = null;
 
 onMounted(() => {
   // Load saved draft from localStorage
@@ -100,85 +98,10 @@ onMounted(() => {
       console.error('Failed to parse saved draft:', e);
     }
   }
-
-  // Set up streaming event listeners
-  unsubscribeChunk = window.electronAPI.onOutlineChunk(({ content, fullContent }) => {
-    // Try to parse partial JSON to show progress
-    try {
-      // Find the JSON object in the full content
-      const jsonMatch = fullContent.match(/\{[\s\S]*$/);
-      if (jsonMatch) {
-        const partialJson = jsonMatch[0];
-        
-        // Try to extract outlines array
-        const outlinesMatch = partialJson.match(/"outlines"\s*:\s*\[([\s\S]*)\]/);
-        if (outlinesMatch) {
-          const arrayContent = outlinesMatch[1];
-          // Try to parse individual outline objects
-          const outlineMatches = arrayContent.match(/\{[^}]*(?:\{[^}]*\}[^}]*)*\}/g);
-          if (outlineMatches) {
-            const validOutlines = outlineMatches
-              .map((match: string) => {
-                try {
-                  return JSON.parse(match);
-                } catch {
-                  return null;
-                }
-              })
-              .filter((o: any) => o && o.title);
-            
-            if (validOutlines.length > 0) {
-              generatedOutlines.value = validOutlines.map((o: any, i: number) => ({
-                id: `streaming-${i}-${Date.now()}`,
-                title: o.title || '生成中...',
-                synopsis: o.synopsis || '',
-                structure: o.structure || { act1: '', act2a: '', act2b: '', act3: '' },
-                characters: o.characters || [],
-                foreshadows: o.foreshadows || [],
-                estimatedWordCount: o.estimatedWordCount || 500000,
-              }));
-            }
-          }
-        }
-      }
-    } catch (e) {
-      // Ignore parsing errors during streaming
-    }
-  });
-
-  unsubscribeDone = window.electronAPI.onOutlineDone(() => {
-    // Streaming completed, waiting for final parse
-  });
-
-  unsubscribeComplete = window.electronAPI.onOutlineComplete(({ result }) => {
-    if (result && result.outlines) {
-      generatedOutlines.value = result.outlines.map((o: any, i: number) => ({
-        id: `outline-${i}-${Date.now()}`,
-        title: o.title,
-        synopsis: o.synopsis,
-        structure: o.structure,
-        characters: o.characters,
-        foreshadows: o.foreshadows,
-        estimatedWordCount: o.estimatedWordCount,
-      }));
-    }
-    isGenerating.value = false;
-    streamingContent.value = '';
-    clearDraft();
-  });
-
-  unsubscribeError = window.electronAPI.onOutlineError(({ error }) => {
-    streamingError.value = error;
-    isGenerating.value = false;
-    streamingContent.value = '';
-  });
 });
 
 onUnmounted(() => {
-  unsubscribeChunk?.();
-  unsubscribeDone?.();
-  unsubscribeComplete?.();
-  unsubscribeError?.();
+  // Cleanup is no longer needed since we use direct service calls
 });
 
 function selectTemplate(template: typeof writingTemplates[0]) {
@@ -269,19 +192,103 @@ async function generateOutlines() {
   streamingError.value = null;
 
   try {
-    await window.electronAPI.generateOutline({
-      prompt: promptPreview.value,
+    // Create AI service instance in Renderer process
+    aiServiceInstance = new UnifiedAIService(
+      enabledProvider.provider,
+      enabledProvider.apiKey,
+      enabledProvider.baseUrl,
+      enabledProvider.modelName,
+      enabledProvider.maxTokens,
+      enabledProvider.generationConfig
+    );
+
+    console.log('[QuickStart] Starting outline generation in Renderer process', {
       provider: enabledProvider.provider,
-      config: {
-        apiKey: enabledProvider.apiKey,
-        baseUrl: enabledProvider.baseUrl,
-        model: enabledProvider.modelName,
+      model: enabledProvider.modelName,
+    });
+
+    aiServiceInstance.generateOutlineStream(
+      promptPreview.value,
+      // onChunk - streaming progress
+      ({ content, fullContent }) => {
+        console.log('[QuickStart] Streaming chunk received:', content?.substring(0, 50));
+        
+        // Try to parse partial JSON to show progress
+        try {
+          const jsonMatch = fullContent.match(/\{[\s\S]*$/);
+          if (jsonMatch) {
+            const partialJson = jsonMatch[0];
+            const outlinesMatch = partialJson.match(/"outlines"\s*:\s*\[([\s\S]*)\]/);
+            if (outlinesMatch) {
+              const arrayContent = outlinesMatch[1];
+              const outlineMatches = arrayContent.match(/\{[^}]*(?:\{[^}]*\}[^}]*)*\}/g);
+              if (outlineMatches) {
+                const validOutlines = outlineMatches
+                  .map((match: string) => {
+                    try {
+                      return JSON.parse(match);
+                    } catch {
+                      return null;
+                    }
+                  })
+                  .filter((o: any) => o && o.title);
+                
+                if (validOutlines.length > 0) {
+                  generatedOutlines.value = validOutlines.map((o: any, i: number) => ({
+                    id: `streaming-${i}-${Date.now()}`,
+                    title: o.title || '生成中...',
+                    synopsis: o.synopsis || '',
+                    structure: o.structure || { act1: '', act2a: '', act2b: '', act3: '' },
+                    characters: o.characters || [],
+                    foreshadows: o.foreshadows || [],
+                    estimatedWordCount: o.estimatedWordCount || 500000,
+                  }));
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore parsing errors during streaming
+        }
+      },
+      // onDone
+      () => {
+        console.log('[QuickStart] Streaming done');
+      },
+      // onComplete - final result
+      (result) => {
+        console.log('[QuickStart] Outline generation complete', result);
+        if (result && result.outlines) {
+          generatedOutlines.value = result.outlines.map((o: any, i: number) => ({
+            id: `outline-${i}-${Date.now()}`,
+            title: o.title,
+            synopsis: o.synopsis,
+            structure: o.structure,
+            characters: o.characters,
+            foreshadows: o.foreshadows,
+            estimatedWordCount: o.estimatedWordCount,
+          }));
+        }
+        isGenerating.value = false;
+        streamingContent.value = '';
+        clearDraft();
+      },
+      // onError
+      (error) => {
+        console.error('[QuickStart] Outline generation error:', error);
+        streamingError.value = error;
+        isGenerating.value = false;
+        streamingContent.value = '';
+      },
+      // config options
+      {
         maxTokens: enabledProvider.maxTokens,
         temperature: enabledProvider.generationConfig?.temperature,
         topP: enabledProvider.generationConfig?.topP,
-      },
-    });
+      }
+    );
   } catch (error) {
+    console.error('[QuickStart] Failed to start outline generation:', error);
     streamingError.value = String(error);
     isGenerating.value = false;
   }

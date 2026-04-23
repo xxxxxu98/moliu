@@ -6,6 +6,94 @@
 import { AIClient, type Message, type ProviderName } from 'multi-ai-sdk';
 import { PromptBuilder, type ProjectContext, type AIWriteResult, type AISuggestion } from './base.service';
 
+// Default API endpoints for each provider (同步自 ai-providers.ts)
+const DEFAULT_ENDPOINTS: Record<string, string> = {
+  openai: 'https://api.openai.com/v1',
+  anthropic: 'https://api.anthropic.com',
+  gemini: 'https://generativelanguage.googleapis.com/v1beta',
+  moonshot: 'https://api.moonshot.cn/v1',
+  deepseek: 'https://api.deepseek.com/v1',
+  ollama: 'http://localhost:11434',
+  groq: 'https://api.groq.com/openai/v1',
+  qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  mistral: 'https://api.mistral.ai/v1',
+  cohere: 'https://api.cohere.ai/v1',
+  nvidia: 'https://integrate.api.nvidia.com/v1',
+  perplexity: 'https://api.perplexity.ai',
+  together: 'https://api.together.xyz/v1',
+  cerebras: 'https://api.cerebras.ai/v1',
+  azure: '',
+  grok: 'https://api.x.ai/v1',
+  fireworks: 'https://api.fireworks.ai/v1',
+  zhipu: 'https://open.bigmodel.cn/api/paas/v4',
+};
+
+function getBaseUrl(provider: string, customUrl?: string): string {
+  return customUrl?.trim() || DEFAULT_ENDPOINTS[provider] || '';
+}
+
+function getModelForProvider(provider: string): string {
+  switch (provider) {
+    case 'anthropic': return 'claude-3-5-sonnet-20241022';
+    case 'moonshot': return 'moonshot-v1-128k';
+    case 'deepseek': return 'deepseek-chat';
+    case 'gemini': return 'gemini-2.0-flash';
+    case 'qwen': return 'qwen-plus';
+    case 'mistral': return 'mistral-large-latest';
+    case 'ollama': return 'llama3';
+    case 'groq': return 'llama-3.3-70b-versatile';
+    case 'cohere': return 'command-r-plus-08-2024';
+    case 'nvidia': return 'meta/llama-3.1-70b-instruct';
+    case 'perplexity': return 'sonar';
+    case 'together': return 'accounts/fireworks/models/llama-v3-70b-instruct';
+    case 'cerebras': return 'llama3.3-70b';
+    case 'grok': return 'grok-2-latest';
+    case 'fireworks': return 'accounts/fireworks/models/llama-v3-70b-instruct';
+    case 'zhipu': return 'glm-4-flash';
+    case 'azure': return 'gpt-4o';
+    case 'openai':
+    default: return 'gpt-4o';
+  }
+}
+
+// Outline generation system prompt
+const OUTLINE_SYSTEM_PROMPT = `你是一位专业的小说创作顾问和故事架构师。你的任务是根据用户提供的创意种子，生成多个独特的故事大纲。
+
+请生成2-3个不同风格的故事大纲，每个大纲包含：
+1. 标题：一个吸引人的故事标题
+2. 简介：200字以内的故事概述
+3. 结构：按照三幕式结构描述
+   - 第一幕：建置（介绍背景和主要冲突）
+   - 第二幕上：对抗（主角面临的挑战）
+   - 第二幕下：危机（最困难的时刻）
+   - 第三幕：解决（成长和结局）
+4. 主要角色：2-3个核心角色，包括名字、角色定位、简要描述
+5. 伏笔设定：2-3个贯穿全文的伏笔或悬念
+6. 预估字数：50万-100万字
+
+请用JSON格式返回，结构如下：
+{
+  "outlines": [
+    {
+      "title": "标题",
+      "synopsis": "简介",
+      "structure": {
+        "act1": "第一幕内容",
+        "act2a": "第二幕上内容",
+        "act2b": "第二幕下内容",
+        "act3": "第三幕内容"
+      },
+      "characters": [
+        {"name": "角色名", "role": "角色定位", "description": "角色描述"}
+      ],
+      "foreshadows": ["伏笔1", "伏笔2"],
+      "estimatedWordCount": 预估字数
+    }
+  ]
+}
+
+请确保生成的故事大纲具有独特性，避免套路化，富有创意。`;
+
 export interface AIGenerationConfig {
   temperature: number;
   topP: number;
@@ -544,6 +632,107 @@ export class UnifiedAIService {
 
       onComplete();
     } catch (error) {
+      onError(error instanceof Error ? error.message : 'Stream failed');
+    }
+  }
+
+  /**
+   * Generate outline with streaming
+   * This method runs in Renderer process, so requests are visible in DevTools
+   */
+  generateOutlineStream(
+    prompt: string,
+    onChunk: (data: { content: string; fullContent: string }) => void,
+    onDone: () => void,
+    onComplete: (result: any) => void,
+    onError: (error: string) => void,
+    config?: {
+      maxTokens?: number;
+      temperature?: number;
+      topP?: number;
+    }
+  ): void {
+    if (!this.client) {
+      onError('Client not initialized');
+      return;
+    }
+
+    console.log('[Outline] Starting outline generation in Renderer process', {
+      provider: this.provider,
+      model: this.model,
+    });
+
+    const maxTokens = config?.maxTokens || 4096;
+    const temperature = config?.temperature ?? 0.8;
+    const topP = config?.topP ?? 0.9;
+
+    const messages = [
+      { role: 'system' as const, content: OUTLINE_SYSTEM_PROMPT },
+      { role: 'user' as const, content: `用户的创意种子：${prompt}` },
+    ];
+
+    console.log('[Outline] Sending request to AI API...', { model: this.model });
+
+    this.generateOutlineStreamInternal(
+      messages,
+      { maxTokens, temperature, topP },
+      onChunk,
+      onDone,
+      onComplete,
+      onError
+    );
+  }
+
+  private async generateOutlineStreamInternal(
+    messages: Message[],
+    options: { maxTokens: number; temperature: number; topP: number },
+    onChunk: (data: { content: string; fullContent: string }) => void,
+    onDone: () => void,
+    onComplete: (result: any) => void,
+    onError: (error: string) => void
+  ): Promise<void> {
+    if (!this.client) {
+      onError('Client not initialized');
+      return;
+    }
+
+    let fullContent = '';
+
+    try {
+      const stream = this.client.stream(messages, {
+        maxTokens: options.maxTokens,
+        temperature: options.temperature,
+        topP: options.topP,
+        // Note: frequencyPenalty and presencePenalty are not supported by all providers
+      });
+
+      for await (const chunk of stream) {
+        if (chunk.content) {
+          fullContent += chunk.content;
+          onChunk({ content: chunk.content, fullContent });
+        }
+        if (chunk.done) {
+          break;
+        }
+      }
+
+      onDone();
+
+      // Parse JSON result
+      try {
+        const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const result = JSON.parse(jsonMatch[0]);
+          console.log('[Outline] Successfully parsed result', result);
+          onComplete(result);
+        } else {
+          onError('Failed to parse AI response');
+        }
+      } catch (e) {
+        onError('Failed to parse AI response as JSON');
+      }
+    } catch (error) {
+      console.error('[Outline] Stream error:', error);
       onError(error instanceof Error ? error.message : 'Stream failed');
     }
   }
