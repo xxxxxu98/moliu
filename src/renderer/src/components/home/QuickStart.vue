@@ -20,6 +20,7 @@ import { useInspirationStore } from "@/stores/inspiration.store";
 import { UnifiedAIService } from "@/services/ai/unified.service";
 import { WORD_COUNT_OPTIONS, DEFAULT_WORD_COUNT_RANGE } from "@/services/ai/unified.service";
 import type { GeneratedOutline } from "@/types/inspiration";
+import type { PlotNode } from "@/types/project";
 import { writingTemplates } from "@/data/inspirations";
 import { NTooltip } from "naive-ui";
 
@@ -301,20 +302,35 @@ async function createProject() {
   isGenerating.value = true;
 
   try {
+    const structure = selectedOutline.value.structure;
+    const plotOutline: PlotNode[] = [
+      { id: `plot-${Date.now()}-1`, title: '第一幕', description: structure.act1, type: 'main' },
+      { id: `plot-${Date.now()}-2`, title: '第二幕上', description: structure.act2a, type: 'main' },
+      { id: `plot-${Date.now()}-3`, title: '第二幕下', description: structure.act2b, type: 'main' },
+      { id: `plot-${Date.now()}-4`, title: '第三幕', description: structure.act3, type: 'main' },
+    ];
+
     const newProject = await projectStore.createProject({
       name: selectedOutline.value.title,
       description: selectedOutline.value.synopsis,
-      plotOutline: selectedOutline.value.structure,
+      plotOutline,
       characters: selectedOutline.value.characters.map((c) => ({
         id: `char-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: c.name,
-        role: c.role,
         description: c.description,
+        profile: {
+          personality: [],
+          background: c.description,
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       })),
       foreshadows: selectedOutline.value.foreshadows.map((f, i) => ({
         id: `foreshadow-${Date.now()}-${i}`,
-        content: f,
-        status: "pending",
+        hint: f,
+        type: 'mystery' as const,
+        status: 'buried' as const,
+        createdChapter: 1,
       })),
     });
 
