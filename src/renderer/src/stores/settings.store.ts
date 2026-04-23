@@ -230,14 +230,6 @@ export const useSettingsStore = defineStore('settings', () => {
 
   async function testAIProvider(provider: AIProvider): Promise<{ success: boolean; error?: string; errorCode?: string; models?: string[] }> {
     try {
-      console.log('[testAIProvider] Starting test for provider:', {
-        name: provider.name,
-        provider: provider.provider,
-        baseUrl: provider.baseUrl,
-        modelName: provider.modelName,
-      });
-      
-      // 使用与实际调用相同的 UnifiedAIService 进行测试
       const service = new UnifiedAIService(
         provider.provider,
         provider.apiKey,
@@ -246,9 +238,7 @@ export const useSettingsStore = defineStore('settings', () => {
         provider.maxTokens,
         provider.generationConfig
       );
-      
-      console.log('[testAIProvider] UnifiedAIService created successfully');
-      
+
       const result = await service.testConnection();
       provider.isValid = result.success;
       

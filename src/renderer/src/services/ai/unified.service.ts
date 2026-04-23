@@ -5,7 +5,7 @@
 
 import { AIClient, type Message, type ProviderName } from 'multi-ai-sdk';
 import { PromptBuilder, type ProjectContext, type AIWriteResult, type AISuggestion } from './base.service';
-import { getSDKProvider, getBaseUrl, type ProviderType, defaultProviders } from '@/config/ai-providers';
+import { getSDKProvider, type ProviderType, defaultProviders } from '@/config/ai-providers';
 
 // Outline generation system prompt
 const OUTLINE_SYSTEM_PROMPT = `你是一位专业的小说创作顾问和故事架构师。你的任务是根据用户提供的创意种子，生成多个独特的故事大纲。
@@ -128,12 +128,6 @@ export class UnifiedAIService {
       config.model = this.model;
     }
 
-    console.log('[UnifiedAIService] Initializing client', {
-      appProvider: this.provider,
-      sdkProvider,
-      baseUrl: resolvedBaseUrl,
-      model: this.model,
-    });
 
     this.client = new AIClient(config);
 
@@ -164,7 +158,6 @@ export class UnifiedAIService {
 
   /**
    * Test connection
-   * 注意：multi-ai-sdk 的 baseUrl 配置不生效，这里使用原生 fetch 确保 baseUrl 正确
    */
   async testConnection(): Promise<{ success: boolean; error?: string }> {
     if (!this.client) {
@@ -172,38 +165,8 @@ export class UnifiedAIService {
     }
 
     try {
-      // 使用原生 fetch 确保 baseUrl 被正确使用
-      const baseUrl = getBaseUrl(this.provider, this._baseUrl);
-      const endpoint = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
-      
-      console.log('[testConnection] Testing connection', {
-        provider: this.provider,
-        endpoint,
-        model: this.model || 'default',
-      });
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this._apiKey}`,
-        },
-        body: JSON.stringify({
-          model: this.model || 'default',
-          messages: [{ role: 'user', content: 'Hi' }],
-          max_tokens: 5,
-        }),
-      });
-
-      if (response.ok) {
-        return { success: true };
-      }
-
-      const errorData = await response.json().catch(() => ({}));
-      return { 
-        success: false, 
-        error: errorData.error?.message || `HTTP ${response.status}` 
-      };
+      await this.client.chat([{ role: 'user', content: 'Hi' }], { maxTokens: 5 });
+      return { success: true };
     } catch (error) {
       return {
         success: false,
@@ -628,11 +591,6 @@ export class UnifiedAIService {
       return;
     }
 
-    console.log('[Outline] Starting outline generation in Renderer process', {
-      provider: this.provider,
-      model: this.model,
-    });
-
     const maxTokens = config?.maxTokens || 4096;
     const temperature = config?.temperature ?? 0.8;
     const topP = config?.topP ?? 0.9;
@@ -641,8 +599,6 @@ export class UnifiedAIService {
       { role: 'system' as const, content: OUTLINE_SYSTEM_PROMPT },
       { role: 'user' as const, content: `用户的创意种子：${prompt}` },
     ];
-
-    console.log('[Outline] Sending request to AI API...', { model: this.model });
 
     this.generateOutlineStreamInternal(
       messages,
@@ -694,16 +650,14 @@ export class UnifiedAIService {
         const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const result = JSON.parse(jsonMatch[0]);
-          console.log('[Outline] Successfully parsed result', result);
           onComplete(result);
         } else {
           onError('Failed to parse AI response');
         }
-      } catch (e) {
+      } catch {
         onError('Failed to parse AI response as JSON');
       }
     } catch (error) {
-      console.error('[Outline] Stream error:', error);
       onError(error instanceof Error ? error.message : 'Stream failed');
     }
   }

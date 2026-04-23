@@ -202,17 +202,10 @@ async function generateOutlines() {
       enabledProvider.generationConfig
     );
 
-    console.log('[QuickStart] Starting outline generation in Renderer process', {
-      provider: enabledProvider.provider,
-      model: enabledProvider.modelName,
-    });
-
     aiServiceInstance.generateOutlineStream(
       promptPreview.value,
       // onChunk - streaming progress
       ({ content, fullContent }) => {
-        console.log('[QuickStart] Streaming chunk received:', content?.substring(0, 50));
-        
         // Try to parse partial JSON to show progress
         try {
           const jsonMatch = fullContent.match(/\{[\s\S]*$/);
@@ -252,12 +245,9 @@ async function generateOutlines() {
         }
       },
       // onDone
-      () => {
-        console.log('[QuickStart] Streaming done');
-      },
+      () => {},
       // onComplete - final result
       (result) => {
-        console.log('[QuickStart] Outline generation complete', result);
         if (result && result.outlines) {
           generatedOutlines.value = result.outlines.map((o: any, i: number) => ({
             id: `outline-${i}-${Date.now()}`,
