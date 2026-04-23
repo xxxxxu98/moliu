@@ -443,7 +443,7 @@ function applyQuickScenario(scenario: typeof quickScenarios[0]) {
       </div>
 
       <!-- Story Nuclei Cards -->
-      <div class="space-y-2 max-h-48 overflow-y-auto">
+      <div class="space-y-2">
         <div
           v-for="nucleus in inspirationStore.storyNuclei"
           :key="nucleus.id"
