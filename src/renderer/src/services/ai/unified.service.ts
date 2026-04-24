@@ -56,14 +56,29 @@ function buildOutlineSystemPrompt(wordCountRange: string = '50万-100万字'): s
 请生成2-3个不同风格的故事大纲，每个大纲包含：
 1. 标题：一个吸引人的故事标题
 2. 简介：300-500字的详细故事概述，包含世界观、主要冲突和核心主题
-3. 结构：按照四幕式结构详细描述，每个章节至少3-5个关键情节点
+3. 世界观设定（worldSetting）：详细描述故事发生的世界规则，包含：
+   - locations: 地点数组，每个地点包含 name（名称）和 description（描述），3-5个关键地点
+   - factions: 势力数组，每个势力包含 name（名称）和 description（描述），2-4个主要势力
+   - rules: 规则数组，每个规则包含 name（名称）和 description（描述），2-4个核心规则（如修炼体系、社会法则、世界运行规律等）
+4. 结构：按照四幕式结构详细描述，每个章节至少3-5个关键情节点
    - 第一幕：建置（介绍背景、主要人物、世界观规则和初始冲突）
    - 第二幕上：对抗（主角面临的挑战和成长，中间的转折点）
    - 第二幕下：危机（最困难的时刻，重大牺牲或失败）
    - 第三幕：解决（成长蜕变和圆满结局）
-4. 主要角色：3-5个核心角色，包括名字、角色定位、性格特点、背景故事、人物弧线
-5. 伏笔设定：4-5个贯穿全文的伏笔或悬念，包括首次出现的时机和揭晓方式
-6. 预估字数：${wordCountRange}
+5. 主要角色：3-5个核心角色，每个角色需要包含以下详细信息：
+   - name: 角色名字
+   - role: 角色定位（如"主角"、"反派"、"导师"、"盟友"等）
+   - description: 角色描述
+   - personality: 性格特点数组，如 ["坚韧不拔", "内心孤独", "幽默风趣"]
+   - appearance: 外貌特征描述
+   - abilities: 特殊能力数组，如 ["剑术", "魔法"]
+   - background: 背景故事
+   - relationships: 与其他角色的关系描述
+6. 伏笔设定：4-5个贯穿全文的伏笔或悬念，每个伏笔需要包含：
+   - hint: 伏笔内容描述
+   - type: 伏笔类型（"item"物品、"dialogue"对话、"event"事件、"mystery"悬疑）
+   - suggestedChapter: 建议揭晓的章节数（数字）
+7. 预估字数：${wordCountRange}
 
 【重要格式要求】
 1. 只输出纯JSON，不要任何解释、前缀、后缀或markdown代码块
@@ -71,9 +86,11 @@ function buildOutlineSystemPrompt(wordCountRange: string = '50万-100万字'): s
 3. 确保JSON语法正确：大括号匹配、引号闭合、逗号位置正确
 4. 中文字符串内的换行请使用\\n转义
 5. 确保数组和对象完整闭合
+6. 角色、伏笔和世界观字段要完整，即使某些字段没有信息也要返回空数组或空字符串
+7. 世界观设定（worldSetting）是必填字段，即使简介中没有明确提到，也要根据故事类型合理推断
 
 标准JSON格式示例：
-{"outlines":[{"title":"标题","synopsis":"简介","structure":{"act1":"第一幕","act2a":"第二幕上","act2b":"第二幕下","act3":"第三幕"},"characters":[{"name":"名字","role":"角色定位","description":"描述"}],"foreshadows":["伏笔1","伏笔2"],"estimatedWordCount":"字数"}]}`;
+{"outlines":[{"title":"标题","synopsis":"简介","worldSetting":{"locations":[{"name":"地点名称","description":"地点描述"}],"factions":[{"name":"势力名称","description":"势力描述"}],"rules":[{"name":"规则名称","description":"规则描述"}]},"structure":{"act1":"第一幕","act2a":"第二幕上","act2b":"第二幕下","act3":"第三幕"},"characters":[{"name":"名字","role":"主角","description":"描述","personality":["性格1","性格2"],"appearance":"外貌","abilities":["能力1"],"background":"背景","relationships":"与反派的对抗关系"}],"foreshadows":[{"hint":"伏笔内容","type":"mystery","suggestedChapter":15}],"estimatedWordCount":100000}]}`;
 }
 
 export const DEFAULT_WORD_COUNT_RANGE = '80万-150万字';
@@ -847,7 +864,7 @@ export class UnifiedAIService {
     onDone: () => void,
     onComplete: (result: any) => void,
     onError: (error: string) => void
-  ): void {
+  ): Promise<void> {
     if (!this.client) {
       onError('Client not initialized');
       return;

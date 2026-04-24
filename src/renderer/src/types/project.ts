@@ -4,6 +4,7 @@ export interface Project {
   description: string;
   genre: GenreTag[];
   wordCount: number;
+  targetWordCount?: number; // 目标字数，来源于AI大纲
   status: 'planning' | 'writing' | 'paused' | 'completed';
   volumes: Volume[];
   chapters: Chapter[];
@@ -45,6 +46,7 @@ export interface Chapter {
 export interface Character {
   id: string;
   name: string;
+  role?: string; // 角色定位，如"主角"、"反派"、"导师"等
   description?: string;
   profile: CharacterProfile;
   avatarPath?: string;

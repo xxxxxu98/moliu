@@ -16,6 +16,8 @@ import {
   Trash2,
   Edit3,
   PanelLeft,
+  ChevronUp,
+  Info,
 } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
@@ -54,6 +56,12 @@ const volumeDialogMode = ref<'create' | 'edit'>('create');
 const newVolumeName = ref('');
 const editingVolume = ref<{ id: string; name: string } | null>(null);
 const volumeNameInputRef = ref<InputInst | null>(null);
+
+// Synopsis dialog state
+const showSynopsisDialog = ref(false);
+const synopsisContent = ref('');
+const synopsisEditMode = ref(false);
+const tempSynopsis = ref('');
 
 const currentProject = computed(() => projectStore.currentProject);
 
@@ -231,6 +239,39 @@ async function handleDeleteVolume(volumeId: string, event: Event) {
   }
 }
 
+// Synopsis functions
+function openSynopsisDialog() {
+  synopsisContent.value = currentProject.value?.description || '';
+  tempSynopsis.value = synopsisContent.value;
+  showSynopsisDialog.value = true;
+  synopsisEditMode.value = false;
+}
+
+function toggleSynopsisEditMode() {
+  if (synopsisEditMode.value) {
+    // Save changes
+    synopsisContent.value = tempSynopsis.value;
+    // Update project description
+    if (currentProject.value) {
+      // Update local state immediately
+      projectStore.updateProject(currentProject.value.id, { description: tempSynopsis.value });
+      // Persist to backend
+      projectStore.updateProjectInfo(currentProject.value.id, { description: tempSynopsis.value });
+    }
+    synopsisEditMode.value = false;
+    message.success('简介已保存');
+  } else {
+    // Enter edit mode
+    tempSynopsis.value = synopsisContent.value;
+    synopsisEditMode.value = true;
+  }
+}
+
+function cancelSynopsisEdit() {
+  synopsisEditMode.value = false;
+  tempSynopsis.value = synopsisContent.value;
+}
+
 
 function formatWordCount(count: number) {
   if (count < 10000) return `${count}${t('projectList.words')}`;
@@ -251,20 +292,65 @@ function getStatusConfig(status: string) {
 <template>
   <NLayout class="h-screen overflow-hidden">
     <!-- Header -->
-    <div class="h-16 shrink-0 z-50 backdrop-blur-xl bg-white/90 dark:bg-gray-900/90 border-b border-gray-200/50 dark:border-gray-700/50">
-      <AppHeader>
-        <template #center>
-          <div v-if="currentProject" class="flex items-center gap-3 px-4">
-            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <BookOpen class="w-4 h-4 text-white" />
+    <div class="shrink-0 z-50 backdrop-blur-xl bg-white/90 dark:bg-gray-900/90 border-b border-gray-200/50 dark:border-gray-700/50">
+      <!-- Main Header Row -->
+      <div class="h-16 flex items-center px-4">
+        <AppHeader>
+          <template #center>
+            <div v-if="currentProject" class="flex items-center gap-3 px-4">
+              <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                <BookOpen class="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h2 class="font-semibold text-sm text-gray-900 dark:text-white">{{ currentProject.name }}</h2>
+                <p class="text-xs text-gray-500">{{ formatWordCount(projectStore.totalWordCount) }}</p>
+              </div>
             </div>
-            <div>
-              <h2 class="font-semibold text-sm text-gray-900 dark:text-white">{{ currentProject.name }}</h2>
-              <p class="text-xs text-gray-500">{{ formatWordCount(projectStore.totalWordCount) }}</p>
-            </div>
+          </template>
+        </AppHeader>
+      </div>
+      
+      <!-- Synopsis Bar (only show if project has description) -->
+      <div 
+        v-if="currentProject?.description && !synopsisEditMode"
+        class="px-4 pb-2 cursor-pointer group"
+        @click="openSynopsisDialog"
+      >
+        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors border border-transparent hover:border-indigo-200 dark:hover:border-indigo-700">
+          <Info class="w-4 h-4 text-indigo-500 flex-shrink-0" />
+          <p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-1 flex-1">
+            {{ currentProject.description }}
+          </p>
+          <ChevronUp class="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+      </div>
+      
+      <!-- Synopsis Edit Bar (shown when editing) -->
+      <div v-if="synopsisEditMode" class="px-4 pb-2">
+        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700">
+          <Info class="w-4 h-4 text-indigo-500 flex-shrink-0" />
+          <input
+            v-model="tempSynopsis"
+            class="flex-1 bg-transparent text-xs text-gray-700 dark:text-gray-300 outline-none"
+            placeholder="输入项目简介..."
+            @keydown.enter="toggleSynopsisEditMode"
+          />
+          <div class="flex items-center gap-1">
+            <button
+              class="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              @click="cancelSynopsisEdit"
+            >
+              取消
+            </button>
+            <button
+              class="px-2 py-1 text-xs text-white bg-indigo-500 rounded hover:bg-indigo-600"
+              @click="toggleSynopsisEditMode"
+            >
+              保存
+            </button>
           </div>
-        </template>
-      </AppHeader>
+        </div>
+      </div>
     </div>
 
     <div class="flex-1 flex min-h-0">
@@ -543,5 +629,64 @@ function getStatusConfig(status: string) {
         placeholder="输入卷名，例如：第一卷"
       />
     </div>
+  </NModal>
+
+  <!-- Synopsis Dialog -->
+  <NModal
+    v-model:show="showSynopsisDialog"
+    preset="card"
+    :title="synopsisEditMode ? '编辑简介' : '项目简介'"
+    class="w-[600px]"
+    :segmented="{ content: true, footer: true }"
+  >
+    <template #header-extra>
+      <NButton
+        v-if="!synopsisEditMode"
+        size="small"
+        quaternary
+        @click="toggleSynopsisEditMode"
+      >
+        <template #icon>
+          <Edit3 class="w-4 h-4" />
+        </template>
+        编辑
+      </NButton>
+    </template>
+    <div class="py-2">
+      <NInput
+        v-if="synopsisEditMode"
+        v-model:value="tempSynopsis"
+        type="textarea"
+        :rows="8"
+        placeholder="输入项目简介..."
+        class="font-sans"
+      />
+      <div v-else class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+        {{ synopsisContent || '暂无简介' }}
+      </div>
+    </div>
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <NButton
+          v-if="synopsisEditMode"
+          @click="cancelSynopsisEdit"
+        >
+          取消
+        </NButton>
+        <NButton
+          v-if="synopsisEditMode"
+          type="primary"
+          @click="toggleSynopsisEditMode"
+        >
+          保存
+        </NButton>
+        <NButton
+          v-else
+          @click="showSynopsisDialog = false"
+        >
+          关闭
+        </NButton>
+      </div>
+    </template>
   </NModal>
 </template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { NButton, NTag, NEmpty, NProgress, NModal, NInput, NSelect, useMessage } from 'naive-ui';
-import { Plus, Lightbulb, AlertCircle, CheckCircle, Trash2 } from 'lucide-vue-next';
+import { NButton, NTag, NEmpty, NProgress, NModal, NInput, NSelect, NPopconfirm, useMessage } from 'naive-ui';
+import { Plus, Lightbulb, AlertCircle, CheckCircle, Trash2, Target } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
 import type { Foreshadow } from '@/types/project';
@@ -13,6 +13,16 @@ const message = useMessage();
 // Dialog state
 const showForeshadowDialog = ref(false);
 const foreshadowForm = ref({
+  hint: '',
+  type: 'event' as 'item' | 'dialogue' | 'event' | 'mystery',
+  createdChapter: 1,
+  suggestedResolutionChapter: undefined as number | undefined,
+});
+
+// Edit dialog state
+const showEditDialog = ref(false);
+const editingForeshadow = ref<Foreshadow | null>(null);
+const editForm = ref({
   hint: '',
   type: 'event' as 'item' | 'dialogue' | 'event' | 'mystery',
   createdChapter: 1,
@@ -86,6 +96,17 @@ function openAddForeshadowDialog() {
   showForeshadowDialog.value = true;
 }
 
+function openEditDialog(foreshadow: Foreshadow) {
+  editingForeshadow.value = foreshadow;
+  editForm.value = {
+    hint: foreshadow.hint,
+    type: foreshadow.type,
+    createdChapter: foreshadow.createdChapter,
+    suggestedResolutionChapter: foreshadow.suggestedResolutionChapter,
+  };
+  showEditDialog.value = true;
+}
+
 async function handleAddForeshadow() {
   if (!foreshadowForm.value.hint.trim()) {
     message.warning('请输入伏笔内容');
@@ -104,6 +125,26 @@ async function handleAddForeshadow() {
     showForeshadowDialog.value = false;
   } catch (error) {
     message.error('添加失败');
+  }
+}
+
+async function handleEditForeshadow() {
+  if (!editingForeshadow.value || !editForm.value.hint.trim()) {
+    message.warning('请输入伏笔内容');
+    return;
+  }
+  
+  try {
+    await projectStore.updateForeshadow(editingForeshadow.value.id, {
+      hint: editForm.value.hint.trim(),
+      type: editForm.value.type,
+      createdChapter: editForm.value.createdChapter,
+      suggestedResolutionChapter: editForm.value.suggestedResolutionChapter,
+    });
+    message.success('伏笔已更新');
+    showEditDialog.value = false;
+  } catch (error) {
+    message.error('更新失败');
   }
 }
 
@@ -177,7 +218,7 @@ async function handleDeleteForeshadow(id: string) {
             />
             <div class="flex-1 min-w-0">
               <p class="text-sm text-[var(--moliu-text-primary)]">{{ foreshadow.hint }}</p>
-              <div class="flex items-center gap-2 mt-2">
+              <div class="flex items-center gap-2 mt-2 flex-wrap">
                 <NTag size="tiny" :type="getStatusColor(foreshadow.status)">
                   {{ getStatusText(foreshadow.status) }}
                 </NTag>
@@ -185,11 +226,21 @@ async function handleDeleteForeshadow(id: string) {
                   {{ getTypeLabel(foreshadow.type) }}
                 </NTag>
                 <span class="text-xs text-[var(--moliu-text-secondary)]">
-                  {{ t('editor.chapterLabel', { chapter: foreshadow.createdChapter }) }}
+                  第{{ foreshadow.createdChapter }}章埋下
+                </span>
+                <span v-if="foreshadow.suggestedResolutionChapter" class="flex items-center gap-1 text-xs text-purple-500">
+                  <Target class="w-3 h-3" />
+                  建议第{{ foreshadow.suggestedResolutionChapter }}章揭晓
                 </span>
               </div>
               <!-- Status actions -->
               <div v-if="foreshadow.status !== 'resolved'" class="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  class="text-xs px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                  @click.stop="openEditDialog(foreshadow)"
+                >
+                  编辑
+                </button>
                 <button
                   v-if="foreshadow.status === 'buried'"
                   class="text-xs px-2 py-1 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-900/50"
@@ -204,12 +255,18 @@ async function handleDeleteForeshadow(id: string) {
                 >
                   标记为已回收
                 </button>
-                <button
-                  class="text-xs px-2 py-1 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50"
-                  @click.stop="handleDeleteForeshadow(foreshadow.id)"
+                <NPopconfirm
+                  @positive-click="handleDeleteForeshadow(foreshadow.id)"
                 >
-                  删除
-                </button>
+                  <template #trigger>
+                    <button
+                      class="text-xs px-2 py-1 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50"
+                    >
+                      删除
+                    </button>
+                  </template>
+                  确定要删除这个伏笔吗？
+                </NPopconfirm>
               </div>
             </div>
           </div>
@@ -247,13 +304,72 @@ async function handleDeleteForeshadow(id: string) {
             placeholder="选择类型"
           />
         </div>
+        <div class="flex gap-4">
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">埋下章节</label>
+            <NInput
+              v-model:value="foreshadowForm.createdChapter"
+              type="number"
+              placeholder="输入章节号"
+            />
+          </div>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">建议揭晓章节（可选）</label>
+            <NInput
+              v-model:value="foreshadowForm.suggestedResolutionChapter"
+              type="number"
+              placeholder="预计揭晓章节"
+            />
+          </div>
+        </div>
+      </div>
+    </NModal>
+
+    <!-- Edit Foreshadow Dialog -->
+    <NModal
+      v-model:show="showEditDialog"
+      preset="dialog"
+      title="编辑伏笔"
+      positive-text="确认"
+      negative-text="取消"
+      @positive-click="handleEditForeshadow"
+      @negative-click="showEditDialog = false"
+    >
+      <div class="space-y-4 py-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">埋下章节</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">伏笔内容</label>
           <NInput
-            v-model:value="foreshadowForm.createdChapter"
-            type="number"
-            placeholder="输入章节号"
+            v-model:value="editForm.hint"
+            type="textarea"
+            :rows="3"
+            placeholder="描述这个伏笔的内容"
           />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">伏笔类型</label>
+          <NSelect
+            v-model:value="editForm.type"
+            :options="typeOptions"
+            placeholder="选择类型"
+          />
+        </div>
+        <div class="flex gap-4">
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">埋下章节</label>
+            <NInput
+              v-model:value="editForm.createdChapter"
+              type="number"
+              placeholder="输入章节号"
+            />
+          </div>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">建议揭晓章节（可选）</label>
+            <NInput
+              v-model:value="editForm.suggestedResolutionChapter"
+              type="number"
+              placeholder="预计揭晓章节"
+            />
+          </div>
         </div>
       </div>
     </NModal>

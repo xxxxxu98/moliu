@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { NButton, NInput, NEmpty, NTag, NCard, NModal, useMessage } from 'naive-ui';
-import { Plus, Search, Users, Trash2, Edit3 } from 'lucide-vue-next';
+import { NButton, NInput, NEmpty, NTag, NCard, NModal, NPopconfirm, useMessage } from 'naive-ui';
+import { Plus, Search, Users, Trash2, Edit3, User, Eye, Zap, BookOpen, Heart } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
 import type { Character } from '@/types/project';
@@ -14,13 +14,23 @@ const searchQuery = ref('');
 const showCharacterDialog = ref(false);
 const characterDialogMode = ref<'create' | 'edit'>('create');
 const editingCharacter = ref<Character | null>(null);
+const expandedCharacterId = ref<string | null>(null);
 
 // Character form
 const characterForm = ref({
   name: '',
+  role: '',
   description: '',
   personality: [] as string[],
+  appearance: '',
+  background: '',
+  abilities: [] as string[],
+  relationships: '',
 });
+
+// New personality/ability input
+const newPersonality = ref('');
+const newAbility = ref('');
 
 // Role options
 const roleOptions = [
@@ -41,13 +51,27 @@ const filteredCharacters = computed(() => {
   const query = searchQuery.value.toLowerCase();
   return projectStore.characters.filter(c => 
     c.name.toLowerCase().includes(query) || 
-    c.description?.toLowerCase().includes(query)
+    c.description?.toLowerCase().includes(query) ||
+    c.role?.toLowerCase().includes(query)
   );
 });
 
+function toggleExpand(characterId: string) {
+  expandedCharacterId.value = expandedCharacterId.value === characterId ? null : characterId;
+}
+
 function openCreateCharacterDialog() {
   characterDialogMode.value = 'create';
-  characterForm.value = { name: '', description: '', personality: [] };
+  characterForm.value = { 
+    name: '', 
+    role: '', 
+    description: '', 
+    personality: [], 
+    appearance: '',
+    background: '',
+    abilities: [],
+    relationships: '',
+  };
   selectedRole.value = 'protagonist';
   editingCharacter.value = null;
   showCharacterDialog.value = true;
@@ -58,11 +82,38 @@ function openEditCharacterDialog(character: Character) {
   editingCharacter.value = character;
   characterForm.value = {
     name: character.name,
+    role: character.role || '',
     description: character.description || '',
     personality: character.profile?.personality || [],
+    appearance: character.profile?.appearance || '',
+    background: character.profile?.background || '',
+    abilities: character.profile?.abilities || [],
+    relationships: character.profile?.relationships?.[0]?.description || '',
   };
   selectedRole.value = 'protagonist';
   showCharacterDialog.value = true;
+}
+
+function addPersonality() {
+  if (newPersonality.value.trim() && !characterForm.value.personality.includes(newPersonality.value.trim())) {
+    characterForm.value.personality.push(newPersonality.value.trim());
+    newPersonality.value = '';
+  }
+}
+
+function removePersonality(index: number) {
+  characterForm.value.personality.splice(index, 1);
+}
+
+function addAbility() {
+  if (newAbility.value.trim() && !characterForm.value.abilities.includes(newAbility.value.trim())) {
+    characterForm.value.abilities.push(newAbility.value.trim());
+    newAbility.value = '';
+  }
+}
+
+function removeAbility(index: number) {
+  characterForm.value.abilities.splice(index, 1);
 }
 
 async function handleCharacterDialogConfirm() {
@@ -73,23 +124,23 @@ async function handleCharacterDialogConfirm() {
   
   const characterData = {
     name: characterForm.value.name.trim(),
+    role: characterForm.value.role.trim(),
     description: characterForm.value.description.trim(),
     profile: {
       personality: characterForm.value.personality,
-      appearance: '',
-      background: '',
-      abilities: [],
-      relationships: [],
+      appearance: characterForm.value.appearance.trim(),
+      background: characterForm.value.background.trim(),
+      abilities: characterForm.value.abilities,
+      relationships: characterForm.value.relationships.trim() 
+        ? [{ characterId: '', type: 'neutral' as const, description: characterForm.value.relationships.trim() }]
+        : [],
     },
     avatarPath: undefined,
   };
   
   try {
     if (characterDialogMode.value === 'create') {
-      await projectStore.createCharacter({
-        ...characterData,
-        name: `${characterData.name} (${roleOptions.find(r => r.value === selectedRole.value)?.label || '其他'})`,
-      } as any);
+      await projectStore.createCharacter(characterData as any);
       message.success('角色创建成功');
     } else {
       if (editingCharacter.value) {
@@ -139,30 +190,137 @@ async function handleDeleteCharacter(character: Character) {
       <div
         v-for="char in filteredCharacters"
         :key="char.id"
-        class="p-3 rounded-lg bg-[var(--moliu-bg-primary)] border border-[var(--moliu-border-color)] hover:border-[var(--moliu-primary)] transition-colors cursor-pointer group"
+        class="rounded-lg bg-[var(--moliu-bg-primary)] border border-[var(--moliu-border-color)] hover:border-[var(--moliu-primary)] transition-colors group"
       >
-        <div class="flex items-start gap-3">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between gap-2">
-              <span class="font-medium text-[var(--moliu-text-primary)]">{{ char.name }}</span>
-              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                  @click.stop="openEditCharacterDialog(char)"
+        <!-- Character Header -->
+        <div 
+          class="p-3 cursor-pointer"
+          @click="toggleExpand(char.id)"
+        >
+          <div class="flex items-start gap-3">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-[var(--moliu-text-primary)]">{{ char.name }}</span>
+                  <NTag v-if="char.role" size="tiny" type="info">{{ char.role }}</NTag>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button
+                    class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                    @click.stop="openEditCharacterDialog(char)"
+                  >
+                    <Edit3 class="w-3 h-3 text-gray-400" />
+                  </button>
+                  <NPopconfirm
+                    @positive-click="handleDeleteCharacter(char)"
+                  >
+                    <template #trigger>
+                      <button
+                        class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
+                      >
+                        <Trash2 class="w-3 h-3 text-red-400" />
+                      </button>
+                    </template>
+                    确定要删除这个角色吗？
+                  </NPopconfirm>
+                </div>
+              </div>
+              <p class="text-xs text-[var(--moliu-text-secondary)] mt-1 truncate">
+                {{ char.description || '暂无描述' }}
+              </p>
+              <!-- Quick preview of personality -->
+              <div v-if="char.profile?.personality?.length" class="flex flex-wrap gap-1 mt-2">
+                <NTag
+                  v-for="trait in char.profile.personality.slice(0, 3)"
+                  :key="trait"
+                  size="tiny"
+                  :bordered="false"
+                  type="warning"
                 >
-                  <Edit3 class="w-3 h-3 text-gray-400" />
-                </button>
-                <button
-                  class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
-                  @click.stop="handleDeleteCharacter(char)"
-                >
-                  <Trash2 class="w-3 h-3 text-red-400" />
-                </button>
+                  {{ trait }}
+                </NTag>
+                <NTag v-if="char.profile.personality.length > 3" size="tiny" :bordered="false" type="default">
+                  +{{ char.profile.personality.length - 3 }}
+                </NTag>
               </div>
             </div>
-            <p class="text-xs text-[var(--moliu-text-secondary)] mt-1 truncate">
-              {{ char.description || '暂无描述' }}
-            </p>
+          </div>
+        </div>
+
+        <!-- Expanded Details -->
+        <div 
+          v-if="expandedCharacterId === char.id"
+          class="px-3 pb-3 border-t border-[var(--moliu-border-color)] pt-3 space-y-3"
+        >
+          <!-- Appearance -->
+          <div v-if="char.profile?.appearance" class="flex items-start gap-2">
+            <Eye class="w-4 h-4 text-[var(--moliu-text-secondary)] mt-0.5" />
+            <div>
+              <span class="text-xs text-[var(--moliu-text-secondary)]">外貌特征</span>
+              <p class="text-sm text-[var(--moliu-text-primary)]">{{ char.profile.appearance }}</p>
+            </div>
+          </div>
+
+          <!-- Background -->
+          <div v-if="char.profile?.background" class="flex items-start gap-2">
+            <BookOpen class="w-4 h-4 text-[var(--moliu-text-secondary)] mt-0.5" />
+            <div>
+              <span class="text-xs text-[var(--moliu-text-secondary)]">背景故事</span>
+              <p class="text-sm text-[var(--moliu-text-primary)]">{{ char.profile.background }}</p>
+            </div>
+          </div>
+
+          <!-- Abilities -->
+          <div v-if="char.profile?.abilities?.length" class="flex items-start gap-2">
+            <Zap class="w-4 h-4 text-[var(--moliu-text-secondary)] mt-0.5" />
+            <div class="flex-1">
+              <span class="text-xs text-[var(--moliu-text-secondary)]">特殊能力</span>
+              <div class="flex flex-wrap gap-1 mt-1">
+                <NTag
+                  v-for="ability in char.profile.abilities"
+                  :key="ability"
+                  size="tiny"
+                  type="success"
+                >
+                  {{ ability }}
+                </NTag>
+              </div>
+            </div>
+          </div>
+
+          <!-- Relationships -->
+          <div v-if="char.profile?.relationships?.length" class="flex items-start gap-2">
+            <Heart class="w-4 h-4 text-[var(--moliu-text-secondary)] mt-0.5" />
+            <div class="flex-1">
+              <span class="text-xs text-[var(--moliu-text-secondary)]">人物关系</span>
+              <div class="space-y-1 mt-1">
+                <p 
+                  v-for="rel in char.profile.relationships" 
+                  :key="rel.characterId"
+                  class="text-sm text-[var(--moliu-text-primary)]"
+                >
+                  {{ rel.description }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Personality tags -->
+          <div v-if="char.profile?.personality?.length" class="flex items-start gap-2">
+            <User class="w-4 h-4 text-[var(--moliu-text-secondary)] mt-0.5" />
+            <div class="flex-1">
+              <span class="text-xs text-[var(--moliu-text-secondary)]">性格特点</span>
+              <div class="flex flex-wrap gap-1 mt-1">
+                <NTag
+                  v-for="trait in char.profile.personality"
+                  :key="trait"
+                  size="tiny"
+                  type="warning"
+                >
+                  {{ trait }}
+                </NTag>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -187,10 +345,17 @@ async function handleDeleteCharacter(character: Character) {
     >
       <div class="space-y-4 py-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">角色名称</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">角色名称 *</label>
           <NInput
             v-model:value="characterForm.name"
             placeholder="输入角色名称"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">角色定位</label>
+          <NInput
+            v-model:value="characterForm.role"
+            placeholder="如：主角、反派、导师等"
           />
         </div>
         <div>
@@ -198,8 +363,78 @@ async function handleDeleteCharacter(character: Character) {
           <NInput
             v-model:value="characterForm.description"
             type="textarea"
+            :rows="2"
+            placeholder="简要描述这个角色（可选）"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">外貌特征</label>
+          <NInput
+            v-model:value="characterForm.appearance"
+            type="textarea"
+            :rows="2"
+            placeholder="描述角色的外貌特征（可选）"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">性格特点</label>
+          <div class="flex flex-wrap gap-2 mb-2">
+            <NTag
+              v-for="(trait, index) in characterForm.personality"
+              :key="trait"
+              closable
+              @close="removePersonality(index)"
+            >
+              {{ trait }}
+            </NTag>
+          </div>
+          <div class="flex gap-2">
+            <NInput
+              v-model:value="newPersonality"
+              placeholder="输入性格特点后按回车添加"
+              @keyup.enter="addPersonality"
+            />
+            <NButton @click="addPersonality">添加</NButton>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">特殊能力</label>
+          <div class="flex flex-wrap gap-2 mb-2">
+            <NTag
+              v-for="(ability, index) in characterForm.abilities"
+              :key="ability"
+              closable
+              type="success"
+              @close="removeAbility(index)"
+            >
+              {{ ability }}
+            </NTag>
+          </div>
+          <div class="flex gap-2">
+            <NInput
+              v-model:value="newAbility"
+              placeholder="输入特殊能力后按回车添加"
+              @keyup.enter="addAbility"
+            />
+            <NButton @click="addAbility">添加</NButton>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">背景故事</label>
+          <NInput
+            v-model:value="characterForm.background"
+            type="textarea"
             :rows="3"
-            placeholder="输入角色描述（可选）"
+            placeholder="描述角色的背景故事（可选）"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">人物关系</label>
+          <NInput
+            v-model:value="characterForm.relationships"
+            type="textarea"
+            :rows="2"
+            placeholder="描述与其他角色的关系（可选）"
           />
         </div>
       </div>

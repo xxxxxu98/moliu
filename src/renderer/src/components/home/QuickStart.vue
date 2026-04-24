@@ -270,15 +270,59 @@ async function generateOutlines() {
 
     if (result && result.outlines) {
       generatedOutlines.value = result.outlines.map(
-        (o: any, i: number) => ({
-          id: `outline-${i}-${Date.now()}`,
-          title: o.title,
-          synopsis: o.synopsis,
-          structure: o.structure,
-          characters: o.characters,
-          foreshadows: o.foreshadows,
-          estimatedWordCount: o.estimatedWordCount,
-        }),
+        (o: any, i: number) => {
+          // 确保角色信息格式正确
+          const characters = (o.characters || []).map((c: any) => ({
+            name: c.name || '',
+            role: c.role || '',
+            description: c.description || '',
+            personality: Array.isArray(c.personality) ? c.personality : [],
+            appearance: c.appearance || '',
+            abilities: Array.isArray(c.abilities) ? c.abilities : [],
+            background: c.background || '',
+            relationships: c.relationships || '',
+          }));
+
+          // 确保伏笔信息格式正确
+          const foreshadows = (o.foreshadows || []).map((f: any) => {
+            if (typeof f === 'string') {
+              // 兼容旧格式（字符串数组）
+              return { hint: f, type: 'mystery', suggestedChapter: undefined };
+            }
+            return {
+              hint: f.hint || '',
+              type: f.type || 'mystery',
+              suggestedChapter: f.suggestedChapter,
+            };
+          });
+
+          // 确保世界观信息格式正确
+          const worldSetting = o.worldSetting ? {
+            locations: (o.worldSetting.locations || []).map((l: any) => ({
+              name: l.name || '',
+              description: l.description || '',
+            })),
+            factions: (o.worldSetting.factions || []).map((f: any) => ({
+              name: f.name || '',
+              description: f.description || '',
+            })),
+            rules: (o.worldSetting.rules || []).map((r: any) => ({
+              name: r.name || '',
+              description: r.description || '',
+            })),
+          } : undefined;
+
+          return {
+            id: `outline-${i}-${Date.now()}`,
+            title: o.title || '',
+            synopsis: o.synopsis || '',
+            worldSetting,
+            structure: o.structure || { act1: '', act2a: '', act2b: '', act3: '' },
+            characters,
+            foreshadows,
+            estimatedWordCount: o.estimatedWordCount || 0,
+          };
+        },
       );
       clearDraft();
     } else {
@@ -302,7 +346,10 @@ async function createProject() {
   isGenerating.value = true;
 
   try {
-    const structure = selectedOutline.value.structure;
+    const outline = selectedOutline.value;
+    const structure = outline.structure;
+
+    // 构建剧情大纲
     const plotOutline: PlotNode[] = [
       { id: `plot-${Date.now()}-1`, title: '第一幕', description: structure.act1, type: 'main' },
       { id: `plot-${Date.now()}-2`, title: '第二幕上', description: structure.act2a, type: 'main' },
@@ -310,28 +357,66 @@ async function createProject() {
       { id: `plot-${Date.now()}-4`, title: '第三幕', description: structure.act3, type: 'main' },
     ];
 
+    // 构建角色信息（完整保存大纲中的所有角色信息）
+    const characters = outline.characters.map((c, i) => ({
+      id: `char-${Date.now()}-${i}`,
+      name: c.name,
+      role: c.role,
+      description: c.description,
+      profile: {
+        personality: c.personality || [],
+        appearance: c.appearance || '',
+        background: c.background || c.description,
+        abilities: c.abilities || [],
+        relationships: c.relationships ? [{ characterId: '', type: 'neutral' as const, description: c.relationships }] : [],
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+
+    // 构建伏笔信息（完整保存大纲中的所有伏笔信息）
+    const foreshadows = outline.foreshadows.map((f, i) => ({
+      id: `foreshadow-${Date.now()}-${i}`,
+      hint: f.hint,
+      type: f.type || 'mystery',
+      status: 'buried' as const,
+      createdChapter: 1,
+      suggestedResolutionChapter: f.suggestedChapter,
+    }));
+
+    // 使用 AI 生成的世界观设定
+    let worldSchema = { locations: [] as any[], rules: [] as any[], factions: [] as any[] };
+    if (outline.worldSetting) {
+      // 转换 AI 生成的世界观到项目格式
+      worldSchema = {
+        locations: outline.worldSetting.locations.map((l, i) => ({
+          id: `loc-${Date.now()}-${i}`,
+          name: l.name,
+          description: l.description || '',
+        })),
+        factions: outline.worldSetting.factions.map((f, i) => ({
+          id: `faction-${Date.now()}-${i}`,
+          name: f.name,
+          description: f.description || '',
+        })),
+        rules: outline.worldSetting.rules.map((r, i) => ({
+          id: `rule-${Date.now()}-${i}`,
+          name: r.name,
+          description: r.description || '',
+          locked: false,
+        })),
+      };
+    }
+
     const newProject = await projectStore.createProject({
-      name: selectedOutline.value.title,
-      description: selectedOutline.value.synopsis,
+      name: outline.title,
+      description: outline.synopsis,
       plotOutline,
-      characters: selectedOutline.value.characters.map((c) => ({
-        id: `char-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        name: c.name,
-        description: c.description,
-        profile: {
-          personality: [],
-          background: c.description,
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })),
-      foreshadows: selectedOutline.value.foreshadows.map((f, i) => ({
-        id: `foreshadow-${Date.now()}-${i}`,
-        hint: f,
-        type: 'mystery' as const,
-        status: 'buried' as const,
-        createdChapter: 1,
-      })),
+      characters,
+      foreshadows,
+      worldSchema,
+      // 保存目标字数
+      targetWordCount: outline.estimatedWordCount,
     });
 
     if (newProject) {
@@ -342,6 +427,97 @@ async function createProject() {
   } finally {
     isGenerating.value = false;
   }
+}
+
+/**
+ * 从故事简介中提取世界观设定（基础实现）
+ * 后续可以增强为更智能的AI提取
+ */
+function extractWorldSchemaFromSynopsis(synopsis: string): { locations: any[]; rules: any[]; factions: any[] } {
+  const worldSchema = { locations: [] as any[], rules: [] as any[], factions: [] as any[] };
+
+  // 简单关键词匹配来识别世界观元素
+  // 这些关键词可以根据实际需求扩展
+
+  const locationKeywords = ['城', '镇', '村', '国', '山', '河', '海', '森林', '沙漠', '大陆', '世界'];
+  const ruleKeywords = ['法则', '规则', '力量', '体系', '设定'];
+  const factionKeywords = ['门派', '家族', '组织', '势力', '帮派', '宗门'];
+
+  // 按句子分割简介
+  const sentences = synopsis.split(/[。；！？]/).filter(s => s.trim());
+
+  for (const sentence of sentences) {
+    // 尝试提取地点
+    for (const keyword of locationKeywords) {
+      if (sentence.includes(keyword) && sentence.length < 100) {
+        const locationName = extractMainEntity(sentence, keyword);
+        if (locationName && !worldSchema.locations.find(l => l.name === locationName)) {
+          worldSchema.locations.push({
+            id: `loc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: locationName,
+            description: sentence.trim(),
+          });
+        }
+        break;
+      }
+    }
+
+    // 尝试提取规则/法则
+    for (const keyword of ruleKeywords) {
+      if (sentence.includes(keyword) && sentence.length < 150) {
+        const ruleName = extractMainEntity(sentence, keyword);
+        if (ruleName && !worldSchema.rules.find(r => r.name === ruleName)) {
+          worldSchema.rules.push({
+            id: `rule-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: ruleName,
+            description: sentence.trim(),
+            locked: false,
+          });
+        }
+        break;
+      }
+    }
+
+    // 尝试提取势力
+    for (const keyword of factionKeywords) {
+      if (sentence.includes(keyword) && sentence.length < 100) {
+        const factionName = extractMainEntity(sentence, keyword);
+        if (factionName && !worldSchema.factions.find(f => f.name === factionName)) {
+          worldSchema.factions.push({
+            id: `faction-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: factionName,
+            description: sentence.trim(),
+          });
+        }
+        break;
+      }
+    }
+  }
+
+  return worldSchema;
+}
+
+/**
+ * 从句子中提取主体实体
+ */
+function extractMainEntity(sentence: string, keyword: string): string {
+  // 找到关键词的位置
+  const index = sentence.indexOf(keyword);
+  if (index === -1) return '';
+
+  // 尝试往前取实体名称（最多8个字符）
+  let start = Math.max(0, index - 8);
+  let entity = sentence.slice(start, index).trim();
+
+  // 如果实体太短或包含逗号等，尝试往后取一点
+  if (entity.length < 2) {
+    entity = sentence.slice(index, Math.min(sentence.length, index + 10)).trim();
+  }
+
+  // 清理实体名称
+  entity = entity.replace(/[，、：:]/g, '').trim();
+
+  return entity;
 }
 
 function formatWordCount(count: number) {

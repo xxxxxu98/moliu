@@ -25,7 +25,7 @@ function goToHome() {
 </script>
 
 <template>
-  <div class="h-full flex items-center justify-between px-6 py-2">
+  <div class="w-full h-full flex items-center justify-between px-6 py-2">
     <!-- Left: Logo -->
     <div class="flex items-center gap-3 cursor-pointer group" @click="goToHome">
       <div class="relative">
