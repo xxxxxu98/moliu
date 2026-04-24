@@ -6,6 +6,7 @@
 import { ref, reactive, computed, readonly } from 'vue';
 import { useProjectStore } from '@/stores/project.store';
 import { useSettingsStore } from '@/stores/settings.store';
+import { useActiveAIProvider } from './useActiveAIProvider';
 import type {
   WritingTask,
   WritingQueue,
@@ -15,7 +16,6 @@ import type {
 } from '@/types/writing';
 import { PromptBuilder } from '@/services/writing/prompt-builder';
 import { ContextManager } from '@/services/writing/context-manager';
-import { AIServiceFactory } from '@/services/ai/factory';
 
 export interface UseBatchWriterReturn {
   // 状态
@@ -73,6 +73,7 @@ const RETRY_DELAY = 2000;
 export function useBatchWriter(): UseBatchWriterReturn {
   const projectStore = useProjectStore();
   const settingsStore = useSettingsStore();
+  const { requireAIService } = useActiveAIProvider();
 
   let config: WritingConfig | null = null;
   let shouldStop = false;
@@ -128,21 +129,10 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
   /**
    * 获取 AI 客户端
+   * 使用统一的 AI Provider 获取逻辑
    */
   function getAIClient() {
-    const provider = settingsStore.aiProviders.find(p => p.enabled && p.apiKey);
-    if (!provider) {
-      throw new Error('请先配置 AI 服务');
-    }
-
-    return AIServiceFactory.createService(
-      provider.provider,
-      provider.apiKey,
-      provider.baseUrl,
-      provider.modelName,
-      undefined,
-      provider.generationConfig
-    );
+    return requireAIService();
   }
 
   /**

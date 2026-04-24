@@ -6,10 +6,10 @@
 import { ref, readonly } from 'vue';
 import { useProjectStore } from '@/stores/project.store';
 import { useSettingsStore } from '@/stores/settings.store';
+import { useActiveAIProvider } from './useActiveAIProvider';
 import type { WritingStyle, GenerateChapterResponse } from '@/types/writing';
 import type { PlotNode, Character } from '@/types/project';
 import { PromptBuilder } from '@/services/writing/prompt-builder';
-import { AIServiceFactory } from '@/services/ai/factory';
 
 export interface GeneratedChapter {
   title: string;
@@ -42,24 +42,14 @@ const generatedChapters = ref<GeneratedChapter[]>([]);
 export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
   const projectStore = useProjectStore();
   const settingsStore = useSettingsStore();
+  const { requireAIService } = useActiveAIProvider();
 
   /**
    * 获取 AI 客户端
+   * 使用统一的 AI Provider 获取逻辑
    */
   function getAIClient() {
-    const provider = settingsStore.aiProviders.find(p => p.enabled && p.apiKey);
-    if (!provider) {
-      throw new Error('请先配置 AI 服务');
-    }
-
-    return AIServiceFactory.createService(
-      provider.provider,
-      provider.apiKey,
-      provider.baseUrl,
-      provider.modelName,
-      undefined,
-      provider.generationConfig
-    );
+    return requireAIService();
   }
 
   /**

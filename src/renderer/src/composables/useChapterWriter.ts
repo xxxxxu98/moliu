@@ -6,10 +6,10 @@
 import { ref, computed, readonly } from 'vue';
 import { useProjectStore } from '@/stores/project.store';
 import { useSettingsStore } from '@/stores/settings.store';
+import { useActiveAIProvider } from './useActiveAIProvider';
 import type { WritingStyle, ChapterWritingContext } from '@/types/writing';
 import { PromptBuilder } from '@/services/writing/prompt-builder';
 import { ContextManager } from '@/services/writing/context-manager';
-import { AIServiceFactory } from '@/services/ai/factory';
 
 export interface UseChapterWriterReturn {
   // 状态
@@ -37,6 +37,7 @@ const generatedContent = ref('');
 export function useChapterWriter(): UseChapterWriterReturn {
   const projectStore = useProjectStore();
   const settingsStore = useSettingsStore();
+  const { requireAIService } = useActiveAIProvider();
   const contextManager = new ContextManager();
 
   let currentGeneratedContent = '';
@@ -44,21 +45,10 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
   /**
    * 获取 AI 客户端
+   * 使用统一的 AI Provider 获取逻辑
    */
   function getAIClient() {
-    const provider = settingsStore.aiProviders.find(p => p.enabled && p.apiKey);
-    if (!provider) {
-      throw new Error('请先配置 AI 服务');
-    }
-
-    return AIServiceFactory.createService(
-      provider.provider,
-      provider.apiKey,
-      provider.baseUrl,
-      provider.modelName,
-      undefined,
-      provider.generationConfig
-    );
+    return requireAIService();
   }
 
   /**

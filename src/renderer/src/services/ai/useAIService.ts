@@ -1,19 +1,18 @@
 import { ref, computed, readonly } from 'vue';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useProjectStore } from '@/stores/project.store';
-import { AIServiceFactory, type UnifiedAIService, type ProjectContext, type AIWriteResult, type AISuggestion, type AIGenerationConfig } from './factory';
-import type { AIWriteMode } from './types';
+import { useActiveAIProvider } from '@/composables/useActiveAIProvider';
+import type { ProjectContext, AIWriteResult, AISuggestion, AIWriteMode } from './factory';
 
 /**
  * AI 服务 Composable
  * 提供 AI 协作功能的响应式接口
+ * 使用统一的 AI Provider 获取逻辑
  */
 export function useAIService() {
   const settingsStore = useSettingsStore();
   const projectStore = useProjectStore();
-
-  // 当前 AI 服务实例
-  const aiService = ref<UnifiedAIService | null>(null);
+  const { activeProvider, currentModel, requireAIService, hasProvider } = useActiveAIProvider();
 
   // 生成状态
   const isGenerating = ref(false);
@@ -38,68 +37,6 @@ export function useAIService() {
 
   // 错误信息
   const error = ref<string | null>(null);
-
-  /**
-   * 获取当前启用的 AI 提供商配置
-   * 优先使用用户在设置页面选择的默认模型
-   */
-  const activeProvider = computed(() => {
-    const providers = settingsStore.aiProviders;
-    const defaultModelId = settingsStore.defaultModel;
-    
-    // 优先查找与 defaultModel 匹配的厂商
-    if (defaultModelId) {
-      const [providerId, modelName] = defaultModelId.split(':');
-      const matched = providers.find(p => 
-        p.id === providerId && 
-        p.modelName === modelName && 
-        p.enabled && 
-        p.apiKey
-      );
-      if (matched) return matched;
-    }
-    
-    // Fallback: 查找第一个已启用且配置了 API Key 的提供商
-    return providers.find(p => p.enabled && p.apiKey);
-  });
-
-  /**
-   * 获取当前模型
-   */
-  const currentModel = computed(() => {
-    const provider = activeProvider.value;
-    if (!provider) return null;
-
-    // 使用配置的模型名称
-    return provider.modelName || AIServiceFactory.getDefaultModel(provider.provider);
-  });
-
-  /**
-   * 初始化 AI 服务
-   */
-  function initAIService() {
-    const provider = activeProvider.value;
-    if (!provider) {
-      aiService.value = null;
-      return false;
-    }
-
-    try {
-      aiService.value = AIServiceFactory.createService(
-        provider.provider,
-        provider.apiKey,
-        provider.baseUrl,
-        currentModel.value || undefined,
-        undefined, // 不设置 maxTokens
-        provider.generationConfig
-      );
-      return true;
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to initialize AI service';
-      aiService.value = null;
-      return false;
-    }
-  }
 
   /**
    * 构建项目上下文
@@ -147,13 +84,23 @@ export function useAIService() {
   }
 
   /**
+   * 初始化 AI 服务
+   */
+  function initAIService() {
+    if (!hasProvider.value) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
    * 生成内容
    */
   async function generate(
     mode: AIWriteMode,
     customPrompt?: string
   ): Promise<AIWriteResult | null> {
-    if (!initAIService()) {
+    if (!hasProvider.value) {
       error.value = '请先配置 AI 服务';
       return null;
     }
@@ -164,12 +111,13 @@ export function useAIService() {
       return null;
     }
 
+    const aiService = requireAIService();
     isGenerating.value = true;
     error.value = '';
     generatedText.value = '';
 
     try {
-      const result = await aiService.value!.continueWriting(context, mode);
+      const result = await aiService.continueWriting(context, mode);
       generatedText.value = result.content;
       return result;
     } catch (err) {
@@ -189,7 +137,7 @@ export function useAIService() {
     onChunk?: (text: string) => void
   ): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (!initAIService()) {
+      if (!hasProvider.value) {
         error.value = '请先配置 AI 服务';
         reject(new Error(error.value));
         return;
@@ -202,14 +150,15 @@ export function useAIService() {
         return;
       }
 
+      const aiService = requireAIService();
       isGenerating.value = true;
       isStreaming.value = true;
       error.value = '';
       generatedText.value = '';
 
       // 检查是否支持流式输出
-      if (aiService.value?.continueWritingStream) {
-        aiService.value.continueWritingStream(
+      if (aiService.continueWritingStream) {
+        aiService.continueWritingStream(
           context,
           mode,
           (chunk) => {
@@ -244,7 +193,7 @@ export function useAIService() {
    * 分析章节
    */
   async function analyzeChapter(): Promise<AISuggestion[]> {
-    if (!initAIService()) {
+    if (!hasProvider.value) {
       error.value = '请先配置 AI 服务';
       return [];
     }
@@ -255,11 +204,12 @@ export function useAIService() {
       return [];
     }
 
+    const aiService = requireAIService();
     isAnalyzing.value = true;
     error.value = '';
 
     try {
-      suggestions.value = await aiService.value!.analyzeChapter(context);
+      suggestions.value = await aiService.analyzeChapter(context);
       return suggestions.value;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Analysis failed';
@@ -273,7 +223,7 @@ export function useAIService() {
    * 加载记忆上下文
    */
   async function loadMemoryContext(): Promise<void> {
-    if (!initAIService()) {
+    if (!hasProvider.value) {
       return;
     }
 
@@ -282,10 +232,11 @@ export function useAIService() {
       return;
     }
 
+    const aiService = requireAIService();
     isLoadingMemory.value = true;
 
     try {
-      memoryContext.value = await aiService.value!.getMemoryContext(context);
+      memoryContext.value = await aiService.getMemoryContext(context);
     } catch (err) {
       console.error('Failed to load memory context:', err);
     } finally {
@@ -305,12 +256,13 @@ export function useAIService() {
    * 测试连接
    */
   async function testConnection(): Promise<{ success: boolean; error?: string }> {
-    if (!initAIService()) {
+    if (!hasProvider.value) {
       return { success: false, error: '请先配置 AI 服务' };
     }
 
     try {
-      const result = await aiService.value!.testConnection();
+      const aiService = requireAIService();
+      const result = await aiService.testConnection();
       return result;
     } catch (err) {
       return {
@@ -332,6 +284,7 @@ export function useAIService() {
     error: readonly(error),
     activeProvider,
     currentModel,
+    hasProvider,
     // 方法
     initAIService,
     generate,
