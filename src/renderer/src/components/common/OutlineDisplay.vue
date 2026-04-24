@@ -52,11 +52,6 @@ const emit = defineEmits<Emits>();
 /** 是否有大纲 */
 const hasOutlines = computed(() => props.outlines.length > 0);
 
-/** 是否显示加载状态（无大纲时） */
-const showLoading = computed(
-  () => props.isGenerating && props.outlines.length === 0,
-);
-
 /** 是否显示流式预览（有进度消息且正在生成） */
 const showStreaming = computed(
   () =>
@@ -64,6 +59,11 @@ const showStreaming = computed(
     props.showStreamingPreview &&
     props.outlines.length === 0 &&
     props.progress,
+);
+
+/** 是否显示加载状态（无大纲、无进度消息时） */
+const showLoading = computed(
+  () => props.isGenerating && props.outlines.length === 0 && !props.progress,
 );
 
 /** 是否显示错误 */
