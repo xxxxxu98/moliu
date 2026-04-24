@@ -327,118 +327,437 @@ function getPlotColor(index: number): string {
 }
 
 // Quick scenario cards
-const quickScenarios = [
+interface QuickScenario {
+  id: string;
+  title: string;
+  audience: AudienceType;
+  tags: string[];
+  elements: string[];
+  icon: string;
+  gradient: string;
+}
+
+const quickScenarios: QuickScenario[] = [
+  // ==================== 男性向 - 玄幻仙侠 ====================
   {
-    id: '1',
+    id: 'qs-fan-1',
     title: '废物流逆袭',
+    audience: 'male',
     tags: ['修仙', '玄幻'],
-    elements: ['资质平平', '灭门惨案'],
+    elements: ['资质平平', '灭门惨案', '逆袭打脸'],
     icon: '💫',
     gradient: 'from-indigo-500 to-purple-600',
   },
   {
-    id: '2',
-    title: '都市兵王',
-    tags: ['都市', '军旅'],
-    elements: ['神秘导师', '隐藏血脉'],
-    icon: '🎖️',
-    gradient: 'from-slate-600 to-gray-700',
-  },
-  {
-    id: '3',
-    title: '重生复仇',
-    tags: ['都市', '穿越'],
-    elements: ['重生者', '背叛陷害'],
-    icon: '⏰',
-    gradient: 'from-red-500 to-rose-600',
-  },
-  {
-    id: '4',
-    title: '星际探险',
-    tags: ['星际', '科幻'],
-    elements: ['穿越异界', '星际争霸'],
-    icon: '🚀',
-    gradient: 'from-cyan-500 to-blue-600',
-  },
-  {
-    id: '5',
-    title: '末世生存',
-    tags: ['末世', '废土'],
-    elements: ['末日生存', '废土末世'],
-    icon: '☢️',
-    gradient: 'from-lime-500 to-green-600',
-  },
-  {
-    id: '6',
+    id: 'qs-fan-2',
     title: '洪荒崛起',
+    audience: 'male',
     tags: ['洪荒', '玄幻'],
-    elements: ['穿越者', '宗门崛起'],
+    elements: ['穿越者', '宗门崛起', '势力崛起'],
     icon: '🌋',
     gradient: 'from-amber-500 to-red-600',
   },
   {
-    id: '7',
-    title: '都市系统流',
-    tags: ['都市', '言情'],
-    elements: ['系统流', '校花/总裁'],
-    icon: '🎮',
-    gradient: 'from-pink-500 to-rose-600',
-  },
-  {
-    id: '8',
+    id: 'qs-fan-3',
     title: '剑道至尊',
+    audience: 'male',
     tags: ['玄幻', '武侠'],
-    elements: ['传承觉醒', '宗门大比'],
+    elements: ['传承觉醒', '宗门大比', '天才流'],
     icon: '⚔️',
     gradient: 'from-emerald-500 to-teal-600',
   },
   {
-    id: '9',
-    title: '宫斗权谋',
-    tags: ['宫斗', '穿越'],
-    elements: ['权力斗争', '兄弟情义'],
-    icon: '👑',
-    gradient: 'from-red-600 to-rose-700',
-  },
-  {
-    id: '10',
-    title: '游戏异界',
-    tags: ['游戏', '奇幻'],
-    elements: ['游戏世界', '穿越异界'],
-    icon: '🎲',
+    id: 'qs-fan-4',
+    title: '系统修仙',
+    audience: 'male',
+    tags: ['修仙', '都市'],
+    elements: ['系统流', '神秘导师', '资质平平'],
+    icon: '🎮',
     gradient: 'from-violet-500 to-purple-600',
   },
   {
-    id: '11',
+    id: 'qs-fan-5',
+    title: '重生夺舍',
+    audience: 'male',
+    tags: ['修仙', '穿越'],
+    elements: ['重生者', '身份伪装', '逆袭打脸'],
+    icon: '⏰',
+    gradient: 'from-slate-600 to-indigo-700',
+  },
+  {
+    id: 'qs-fan-6',
+    title: '都市修仙',
+    audience: 'male',
+    tags: ['都市', '修仙'],
+    elements: ['灵气复苏', '隐藏血脉', '都市修仙'],
+    icon: '🌃',
+    gradient: 'from-cyan-500 to-blue-600',
+  },
+
+  // ==================== 男性向 - 都市军旅 ====================
+  {
+    id: 'qs-urb-1',
+    title: '都市兵王',
+    audience: 'male',
+    tags: ['都市', '军旅'],
+    elements: ['神秘导师', '隐藏血脉', '逆袭打脸'],
+    icon: '🎖️',
+    gradient: 'from-slate-600 to-gray-700',
+  },
+  {
+    id: 'qs-urb-2',
+    title: '特种兵王',
+    audience: 'male',
+    tags: ['都市', '特种兵'],
+    elements: ['神秘导师', '红颜知己', '兄弟情义'],
+    icon: '🗡️',
+    gradient: 'from-green-700 to-emerald-800',
+  },
+  {
+    id: 'qs-urb-3',
+    title: '商战霸主',
+    audience: 'male',
+    tags: ['都市', '职场'],
+    elements: ['重生者', '商战博弈', '背叛陷害'],
+    icon: '💼',
+    gradient: 'from-amber-500 to-orange-600',
+  },
+  {
+    id: 'qs-urb-4',
+    title: '神医归来',
+    audience: 'male',
+    tags: ['都市', '医疗'],
+    elements: ['传承觉醒', '都市修仙', '红颜知己'],
+    icon: '💉',
+    gradient: 'from-teal-500 to-cyan-600',
+  },
+
+  // ==================== 男性向 - 科幻星际 ====================
+  {
+    id: 'qs-sci-1',
+    title: '星际探险',
+    audience: 'male',
+    tags: ['星际', '科幻'],
+    elements: ['穿越异界', '星际争霸', '正邪对立'],
+    icon: '🚀',
+    gradient: 'from-cyan-500 to-blue-600',
+  },
+  {
+    id: 'qs-sci-2',
+    title: '末世生存',
+    audience: 'male',
+    tags: ['末世', '废土'],
+    elements: ['末日生存', '废土末世', '生存危机'],
+    icon: '☢️',
+    gradient: 'from-lime-500 to-green-600',
+  },
+  {
+    id: 'qs-sci-3',
     title: '赛博朋克',
+    audience: 'male',
     tags: ['赛博朋克', '科幻'],
-    elements: ['赛博都市', '正邪对立'],
+    elements: ['赛博都市', '正邪对立', '机械改造'],
     icon: '🤖',
     gradient: 'from-cyan-400 to-blue-500',
   },
   {
-    id: '12',
+    id: 'qs-sci-4',
+    title: '虚拟现实',
+    audience: 'male',
+    tags: ['虚拟现实', '科幻'],
+    elements: ['游戏世界', '穿越异界', '系统流'],
+    icon: '🕶️',
+    gradient: 'from-indigo-400 to-purple-500',
+  },
+  {
+    id: 'qs-sci-5',
+    title: '机甲战士',
+    audience: 'male',
+    tags: ['科幻', '星际'],
+    elements: ['机械改造', '星际争霸', '正邪对立'],
+    icon: '🦾',
+    gradient: 'from-gray-400 to-slate-500',
+  },
+
+  // ==================== 男性向 - 历史战争 ====================
+  {
+    id: 'qs-his-1',
+    title: '回到古代当王爷',
+    audience: 'male',
+    tags: ['穿越', '历史'],
+    elements: ['权力斗争', '皇子/贵族', '逆袭打脸'],
+    icon: '🏯',
+    gradient: 'from-amber-600 to-orange-600',
+  },
+  {
+    id: 'qs-his-2',
+    title: '抗战烽火',
+    audience: 'male',
+    tags: ['战争', '历史'],
+    elements: ['正邪对立', '兄弟情义', '牺牲救赎'],
+    icon: '💥',
+    gradient: 'from-red-700 to-orange-800',
+  },
+  {
+    id: 'qs-his-3',
+    title: '军工科技',
+    audience: 'male',
+    tags: ['都市', '科技'],
+    elements: ['科技创业', '爱国情怀', '商战博弈'],
+    icon: '🔧',
+    gradient: 'from-blue-600 to-indigo-700',
+  },
+
+  // ==================== 女性向 - 甜宠言情 ====================
+  {
+    id: 'qs-rom-1',
+    title: '甜宠总裁',
+    audience: 'female',
+    tags: ['都市', '言情', '总裁'],
+    elements: ['总裁/大佬', '甜宠', '误会重重'],
+    icon: '👔',
+    gradient: 'from-pink-500 to-rose-600',
+  },
+  {
+    id: 'qs-rom-2',
+    title: '校园暗恋',
+    audience: 'female',
+    tags: ['校园', '言情'],
+    elements: ['校花/学霸', '青梅竹马', '暗恋追求'],
+    icon: '🌸',
+    gradient: 'from-pink-400 to-rose-500',
+  },
+  {
+    id: 'qs-rom-3',
+    title: '豪门联姻',
+    audience: 'female',
+    tags: ['都市', '言情'],
+    elements: ['总裁/大佬', '误会重重', '逆袭打脸'],
+    icon: '💍',
+    gradient: 'from-rose-500 to-pink-600',
+  },
+  {
+    id: 'qs-rom-4',
+    title: '医见钟情',
+    audience: 'female',
+    tags: ['都市', '医疗', '言情'],
+    elements: ['温柔贤惠', '腹黑深沉', '红颜知己'],
+    icon: '💕',
+    gradient: 'from-teal-400 to-cyan-500',
+  },
+  {
+    id: 'qs-rom-5',
+    title: '国民女神',
+    audience: 'female',
+    tags: ['娱乐', '言情', '都市'],
+    elements: ['女强人', '总裁/大佬', '三角恋'],
+    icon: '⭐',
+    gradient: 'from-violet-500 to-purple-600',
+  },
+
+  // ==================== 女性向 - 古风穿越 ====================
+  {
+    id: 'qs-gus-1',
+    title: '宫墙之内',
+    audience: 'female',
+    tags: ['宫斗', '穿越'],
+    elements: ['权力斗争', '误会重重', '皇帝'],
+    icon: '👑',
+    gradient: 'from-red-500 to-rose-600',
+  },
+  {
+    id: 'qs-gus-2',
+    title: '宅斗风云',
+    audience: 'female',
+    tags: ['宅斗', '穿越'],
+    elements: ['家族羁绊', '逆袭打脸', '姐妹情深'],
+    icon: '🏠',
+    gradient: 'from-amber-500 to-orange-600',
+  },
+  {
+    id: 'qs-gus-3',
     title: '种田发家',
+    audience: 'female',
     tags: ['种田', '穿越'],
-    elements: ['势力崛起', '红颜知己'],
+    elements: ['势力崛起', '红颜知己', '萌宠/灵兽'],
     icon: '🌾',
     gradient: 'from-green-500 to-emerald-600',
   },
+  {
+    id: 'qs-gus-4',
+    title: '王爷宠妻',
+    audience: 'female',
+    tags: ['穿越', '历史'],
+    elements: ['皇子/贵族', '甜宠', '师尊/师父'],
+    icon: '🕊️',
+    gradient: 'from-pink-400 to-rose-500',
+  },
+  {
+    id: 'qs-gus-5',
+    title: '江湖女侠',
+    audience: 'female',
+    tags: ['武侠', '言情'],
+    elements: ['江湖武林', '师尊/师父', '妖女/魔女'],
+    icon: '⚔️',
+    gradient: 'from-emerald-500 to-teal-600',
+  },
+
+  // ==================== 女性向 - 奇幻仙侠 ====================
+  {
+    id: 'qs-xia-1',
+    title: '师尊在上',
+    audience: 'female',
+    tags: ['仙侠', '言情'],
+    elements: ['师尊/师父', '修仙', '误会重重'],
+    icon: '🧘',
+    gradient: 'from-violet-500 to-purple-600',
+  },
+  {
+    id: 'qs-xia-2',
+    title: '废柴逆袭',
+    audience: 'female',
+    tags: ['修仙', '玄幻'],
+    elements: ['资质平平', '师尊/师父', '逆袭打脸'],
+    icon: '💫',
+    gradient: 'from-indigo-500 to-purple-600',
+  },
+  {
+    id: 'qs-xia-3',
+    title: '魔法学院',
+    audience: 'female',
+    tags: ['奇幻', '校园'],
+    elements: ['魔法学院', '青梅竹马', '师尊/师父'],
+    icon: '🏰',
+    gradient: 'from-violet-400 to-purple-500',
+  },
+
+  // ==================== 大众向 - 游戏电竞 ====================
+  {
+    id: 'qs-gam-1',
+    title: '全息游戏',
+    audience: 'general',
+    tags: ['游戏', '虚拟现实'],
+    elements: ['游戏世界', '穿越异界', '系统流'],
+    icon: '🎮',
+    gradient: 'from-violet-500 to-purple-600',
+  },
+  {
+    id: 'qs-gam-2',
+    title: '电竞冠军',
+    audience: 'general',
+    tags: ['电竞', '都市'],
+    elements: ['兄弟情义', '逆袭打脸', '直播'],
+    icon: '🏆',
+    gradient: 'from-indigo-500 to-blue-600',
+  },
+  {
+    id: 'qs-gam-3',
+    title: '异界召唤',
+    audience: 'general',
+    tags: ['游戏', '奇幻'],
+    elements: ['穿越异界', '萌宠/灵兽', '正邪对立'],
+    icon: '🎲',
+    gradient: 'from-amber-500 to-orange-600',
+  },
+
+  // ==================== 大众向 - 悬疑推理 ====================
+  {
+    id: 'qs-mys-1',
+    title: '心理罪者',
+    audience: 'general',
+    tags: ['悬疑', '推理'],
+    elements: ['身世之谜', '身份认同', '正邪对立'],
+    icon: '🔍',
+    gradient: 'from-slate-500 to-gray-600',
+  },
+  {
+    id: 'qs-mys-2',
+    title: '灵异事务所',
+    audience: 'general',
+    tags: ['灵异', '都市'],
+    elements: ['身世之谜', '萌宠/灵兽', '正邪对立'],
+    icon: '👻',
+    gradient: 'from-purple-500 to-indigo-600',
+  },
+  {
+    id: 'qs-mys-3',
+    title: '密室逃生',
+    audience: 'general',
+    tags: ['悬疑', '惊悚'],
+    elements: ['生存危机', '身份认同', '逃生'],
+    icon: '🚪',
+    gradient: 'from-gray-700 to-slate-800',
+  },
+
+  // ==================== 大众向 - 轻松日常 ====================
+  {
+    id: 'qs-lif-1',
+    title: '美食日常',
+    audience: 'general',
+    tags: ['美食', '都市'],
+    elements: ['萌宠/灵兽', '红颜知己', '创业致富'],
+    icon: '🍳',
+    gradient: 'from-yellow-500 to-amber-600',
+  },
+  {
+    id: 'qs-lif-2',
+    title: '音乐人生',
+    audience: 'general',
+    tags: ['音乐', '都市'],
+    elements: ['青梅竹马', '兄弟情义', '梦想信念'],
+    icon: '🎵',
+    gradient: 'from-violet-500 to-purple-600',
+  },
+  {
+    id: 'qs-lif-3',
+    title: '体育竞技',
+    audience: 'general',
+    tags: ['运动', '校园'],
+    elements: ['热血青春', '兄弟情义', '逆袭打脸'],
+    icon: '⚽',
+    gradient: 'from-green-500 to-teal-600',
+  },
+
+  // ==================== 大众向 - 同人衍生 ====================
+  {
+    id: 'qs-der-1',
+    title: '综漫之旅',
+    audience: 'general',
+    tags: ['综漫', '衍生'],
+    elements: ['穿越异界', '系统流', '收小弟'],
+    icon: '🌐',
+    gradient: 'from-pink-500 to-violet-600',
+  },
+  {
+    id: 'qs-der-2',
+    title: '同人创作',
+    audience: 'general',
+    tags: ['同人', '衍生'],
+    elements: ['游戏世界', '萌宠/灵兽', '兄弟情义'],
+    icon: '📝',
+    gradient: 'from-rose-500 to-pink-600',
+  },
 ];
 
-function applyQuickScenario(scenario: typeof quickScenarios[0]) {
+function applyQuickScenario(scenario: QuickScenario) {
   inspirationStore.reset();
 
+  // 设置受众人群
+  selectedAudience.value = scenario.audience;
+  audienceSelected.value = true;
+
+  // 应用题材标签
   scenario.tags.forEach(tagName => {
     const tag = genreTags.find(g => g.name === tagName);
     if (tag) inspirationStore.toggleTag(tag.id);
   });
 
+  // 应用设定元素
   scenario.elements.forEach(elementName => {
     const element = settingElements.find(e => e.name === elementName);
     if (element) inspirationStore.toggleElement(element.id);
   });
-  
+
   panelState.value = 'selecting';
   generatedOutlines.value = [];
   selectedOutline.value = null;
