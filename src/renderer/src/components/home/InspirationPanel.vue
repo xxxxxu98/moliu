@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Sparkles, RefreshCw, Check, X, Zap, ArrowRight, BookOpen } from 'lucide-vue-next';
+import { Sparkles, RefreshCw, Check, X, Zap, ArrowRight, BookOpen, ChevronDown } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useInspirationStore } from '@/stores/inspiration.store';
@@ -22,9 +22,9 @@ const isGenerating = ref(false);
 const generationError = ref<string | null>(null);
 const generationProgress = ref('');
 
-// Display counts - 显示全部数据
-const TAG_DISPLAY_COUNT = 999;
-const ELEMENT_DISPLAY_COUNT = 999;
+// Display counts - 收起时显示数量
+const TAG_DISPLAY_COUNT = 10;
+const ELEMENT_DISPLAY_COUNT = 10;
 
 const genreTags = configGenreTags;
 const settingElements = configSettingElements;
@@ -62,9 +62,9 @@ const currentStep = computed(() => {
   return 0;
 });
 
-// 显示模式控制（保留但默认全显示）
-const tagDisplayMode = ref<DisplayMode>('all');
-const elementDisplayMode = ref<DisplayMode>('all');
+// 显示模式控制（默认收起）
+const tagDisplayMode = ref<DisplayMode>('collapsed');
+const elementDisplayMode = ref<DisplayMode>('collapsed');
 
 const shuffledGenreTags = ref<typeof genreTags>([]);
 const shuffledSettingElements = ref<typeof settingElements>([]);
@@ -72,9 +72,20 @@ const shuffledSettingElements = ref<typeof settingElements>([]);
 shuffledGenreTags.value = shuffleArray(genreTags);
 shuffledSettingElements.value = shuffleArray(settingElements);
 
-// 显示逻辑：默认显示全部数据
-const displayedTags = computed(() => shuffledGenreTags.value);
-const displayedElements = computed(() => shuffledSettingElements.value);
+// 显示逻辑：根据显示模式过滤数据
+const displayedTags = computed(() => {
+  if (tagDisplayMode.value === 'all') {
+    return shuffledGenreTags.value;
+  }
+  return shuffledGenreTags.value.slice(0, TAG_DISPLAY_COUNT);
+});
+
+const displayedElements = computed(() => {
+  if (elementDisplayMode.value === 'all') {
+    return shuffledSettingElements.value;
+  }
+  return shuffledSettingElements.value.slice(0, ELEMENT_DISPLAY_COUNT);
+});
 
 const tagsTotalCount = computed(() => shuffledGenreTags.value.length);
 const elementsTotalCount = computed(() => shuffledSettingElements.value.length);
@@ -873,6 +884,14 @@ function applyQuickScenario(scenario: QuickScenario) {
           <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('inspiration.step1Title') }}</span>
           <span class="text-xs text-gray-400 dark:text-gray-500">({{ tagsTotalCount }})</span>
         </div>
+        <button
+          v-if="shuffledGenreTags.length > TAG_DISPLAY_COUNT"
+          class="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+          @click="toggleTagDisplayMode"
+        >
+          <span>{{ tagDisplayMode === 'collapsed' ? '展开' : '收起' }}</span>
+          <ChevronDown class="w-3.5 h-3.5 transition-transform" :class="{ 'rotate-180': tagDisplayMode === 'all' }" />
+        </button>
       </div>
 
       <div class="flex flex-wrap gap-2">
@@ -897,6 +916,11 @@ function applyQuickScenario(scenario: QuickScenario) {
           </span>
         </button>
       </div>
+
+      <!-- 收起时显示提示 -->
+      <div v-if="tagDisplayMode === 'collapsed' && shuffledGenreTags.length > TAG_DISPLAY_COUNT" class="mt-2 text-center">
+        <span class="text-xs text-gray-400 dark:text-gray-500">还有 {{ shuffledGenreTags.length - TAG_DISPLAY_COUNT }} 个标签，点击展开查看全部</span>
+      </div>
     </div>
 
     <!-- Step 3: Setting Elements (选择标签后显示) -->
@@ -909,6 +933,14 @@ function applyQuickScenario(scenario: QuickScenario) {
           <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('inspiration.step2Title') }}</span>
           <span class="text-xs text-gray-400 dark:text-gray-500">({{ elementsTotalCount }})</span>
         </div>
+        <button
+          v-if="shuffledSettingElements.length > ELEMENT_DISPLAY_COUNT"
+          class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
+          @click="toggleElementDisplayMode"
+        >
+          <span>{{ elementDisplayMode === 'collapsed' ? '展开' : '收起' }}</span>
+          <ChevronDown class="w-3.5 h-3.5 transition-transform" :class="{ 'rotate-180': elementDisplayMode === 'all' }" />
+        </button>
       </div>
 
       <div class="flex flex-wrap gap-2">
@@ -926,6 +958,11 @@ function applyQuickScenario(scenario: QuickScenario) {
           <span class="mr-1">{{ element.icon }}</span>
           {{ element.name }}
         </button>
+      </div>
+
+      <!-- 收起时显示提示 -->
+      <div v-if="elementDisplayMode === 'collapsed' && shuffledSettingElements.length > ELEMENT_DISPLAY_COUNT" class="mt-2 text-center">
+        <span class="text-xs text-gray-400 dark:text-gray-500">还有 {{ shuffledSettingElements.length - ELEMENT_DISPLAY_COUNT }} 个元素，点击展开查看全部</span>
       </div>
     </div>
 
