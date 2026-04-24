@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { ref, watch, computed, onUnmounted, expose, nextTick } from 'vue';
-import { NScrollbar, NButton, useMessage } from 'naive-ui';
-import { Save, Check, FileText } from 'lucide-vue-next';
-import { useI18n } from 'vue-i18n';
-import { useProjectStore } from '@/stores/project.store';
+import { ref, watch, computed, onUnmounted, nextTick } from "vue";
+import { NScrollbar, NButton, useMessage } from "naive-ui";
+import { Save, Check, FileText } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
+import { useProjectStore } from "@/stores/project.store";
 
 const { t } = useI18n();
 const projectStore = useProjectStore();
 const message = useMessage();
 
 const editorRef = ref<HTMLTextAreaElement | null>(null);
-const content = ref('');
+const content = ref("");
 const charCount = ref(0);
 const isSaved = ref(true);
 const isSaving = ref(false);
 const autoSaveTimer = ref<number | null>(null);
-const lastSavedContent = ref('');
+const lastSavedContent = ref("");
 
 function updateCounts(text: string) {
   charCount.value = text.length;
@@ -40,9 +40,9 @@ function scheduleAutoSave() {
 
 async function saveChapter(isAutoSave = false) {
   if (!projectStore.currentChapterId) return;
-  
+
   isSaving.value = true;
-  
+
   try {
     await projectStore.updateChapter(projectStore.currentChapterId, {
       content: content.value,
@@ -51,12 +51,12 @@ async function saveChapter(isAutoSave = false) {
     lastSavedContent.value = content.value;
     isSaved.value = true;
     if (!isAutoSave) {
-      message.success('保存成功');
+      message.success("保存成功");
     }
   } catch (error) {
-    console.error('Failed to save chapter:', error);
+    console.error("Failed to save chapter:", error);
     if (!isAutoSave) {
-      message.error('保存失败');
+      message.error("保存失败");
     }
   } finally {
     isSaving.value = false;
@@ -66,59 +66,69 @@ async function saveChapter(isAutoSave = false) {
 const chapterTitle = computed({
   get: () => {
     const chapter = projectStore.currentChapter;
-    return chapter?.title || '';
+    return chapter?.title || "";
   },
   set: (value: string) => {
     if (projectStore.currentChapterId) {
-      projectStore.updateChapter(projectStore.currentChapterId, { title: value });
+      projectStore.updateChapter(projectStore.currentChapterId, {
+        title: value,
+      });
     }
   },
 });
 
 // Watch for chapter changes
-watch(() => projectStore.currentChapter, (newChapter) => {
-  if (newChapter) {
-    const newContent = newChapter.content || '';
-    if (lastSavedContent.value !== newContent) {
-      content.value = newContent;
-      lastSavedContent.value = newContent;
-      charCount.value = newContent.length;
-      updateCounts(newContent);
-      isSaved.value = true;
+watch(
+  () => projectStore.currentChapter,
+  (newChapter) => {
+    if (newChapter) {
+      const newContent = newChapter.content || "";
+      if (lastSavedContent.value !== newContent) {
+        content.value = newContent;
+        lastSavedContent.value = newContent;
+        charCount.value = newContent.length;
+        updateCounts(newContent);
+        isSaved.value = true;
+      }
+    } else {
+      content.value = "";
+      charCount.value = 0;
     }
-  } else {
-    content.value = '';
-    charCount.value = 0;
-  }
-}, { immediate: true });
+  },
+  { immediate: true },
+);
 
-watch(() => projectStore.currentChapterId, (newId) => {
-  if (newId) {
-    const chapter = projectStore.chapters.find(c => c.id === newId);
-    if (chapter) {
-      const newContent = chapter.content || '';
-      content.value = newContent;
-      lastSavedContent.value = newContent;
-      charCount.value = newContent.length;
-      updateCounts(newContent);
-      isSaved.value = true;
+watch(
+  () => projectStore.currentChapterId,
+  (newId) => {
+    if (newId) {
+      const chapter = projectStore.chapters.find((c) => c.id === newId);
+      if (chapter) {
+        const newContent = chapter.content || "";
+        content.value = newContent;
+        lastSavedContent.value = newContent;
+        charCount.value = newContent.length;
+        updateCounts(newContent);
+        isSaved.value = true;
+      }
     }
-  }
-});
+  },
+);
 
 function handleKeyDown(event: KeyboardEvent) {
   // Ctrl/Cmd + S to save
-  if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+  if ((event.ctrlKey || event.metaKey) && event.key === "s") {
     event.preventDefault();
     saveChapter();
   }
   // Tab for indentation
-  if (event.key === 'Tab') {
+  if (event.key === "Tab") {
     event.preventDefault();
     const target = event.target as HTMLTextAreaElement;
     const start = target.selectionStart;
     const end = target.selectionEnd;
-    content.value = content.value.substring(0, start) + '    ' + content.value.substring(end);
+    content.value =
+      content.value.substring(0, start) + "    " + content.value.substring(end);
     // Restore cursor position
     setTimeout(() => {
       target.selectionStart = target.selectionEnd = start + 4;
@@ -164,7 +174,8 @@ function appendText(text: string) {
   if (!textarea) return;
 
   // 确保末尾有换行
-  const separator = content.value.length > 0 && !content.value.endsWith('\n') ? '\n\n' : '';
+  const separator =
+    content.value.length > 0 && !content.value.endsWith("\n") ? "\n\n" : "";
   content.value += separator + text;
 
   // 滚动到底部
@@ -219,8 +230,11 @@ function getContent(): string {
  */
 function getSelectedText(): string {
   const textarea = editorRef.value;
-  if (!textarea) return '';
-  return textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+  if (!textarea) return "";
+  return textarea.value.substring(
+    textarea.selectionStart,
+    textarea.selectionEnd,
+  );
 }
 
 /**
@@ -259,7 +273,9 @@ onUnmounted(() => {
 <template>
   <div class="flex flex-col h-full">
     <!-- Toolbar -->
-    <div class="h-14 flex items-center justify-between px-4 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+    <div
+      class="h-14 flex items-center justify-between px-4 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800"
+    >
       <div class="flex items-center gap-4">
         <!-- Title Input -->
         <input
@@ -273,8 +289,10 @@ onUnmounted(() => {
       <!-- Right: Stats & Save -->
       <div class="flex items-center gap-4">
         <!-- Stats -->
-        <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-          <span>{{ charCount }} {{ t('editor.charCount') }}</span>
+        <div
+          class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400"
+        >
+          <span class="text-nowrap">{{ charCount }} {{ t("editor.charCount") }}</span>
         </div>
 
         <!-- Save Status -->
@@ -284,23 +302,23 @@ onUnmounted(() => {
             :class="[
               isSaved
                 ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-                : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
             ]"
           >
             <Check v-if="isSaved" class="w-3 h-3" />
-            <span>{{ isSaved ? t('editor.saved') : t('editor.unsaved') }}</span>
+            <span class="text-nowrap">{{ isSaved ? t("editor.saved") : t("editor.unsaved") }}</span>
           </span>
           <NButton
             type="primary"
             size="small"
             :loading="isSaving"
             class="!text-white"
-            @click="saveChapter"
+            @click="() => saveChapter()"
           >
             <template #icon>
               <Save class="w-4 h-4" />
             </template>
-            {{ t('editor.save') }}
+            {{ t("editor.save") }}
           </NButton>
         </div>
       </div>
@@ -308,7 +326,7 @@ onUnmounted(() => {
 
     <!-- Editor Content -->
     <NScrollbar v-if="projectStore.currentChapter" class="flex-1">
-      <div class="max-w-3xl mx-auto py-12 px-8">
+      <div class="mx-auto py-6 px-6">
         <textarea
           ref="editorRef"
           v-model="content"
@@ -319,12 +337,16 @@ onUnmounted(() => {
         ></textarea>
       </div>
     </NScrollbar>
-    
+
     <!-- Empty State -->
     <div v-else class="flex-1 flex items-center justify-center">
       <div class="text-center">
-        <FileText class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-        <p class="text-gray-500 dark:text-gray-400">{{ t('editor.noChapterSelected') }}</p>
+        <FileText
+          class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4"
+        />
+        <p class="text-gray-500 dark:text-gray-400">
+          {{ t("editor.noChapterSelected") }}
+        </p>
       </div>
     </div>
   </div>

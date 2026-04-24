@@ -923,9 +923,9 @@ function handleStopOneClickWrite() {
           </div>
         </template>
       </div>
-    </NScrollbar>
 
-    <!-- Batch Writing Panel -->
-    <BatchWritingPanel v-show="effectiveSelectedMode === 'batch'" />
+      <!-- Batch Writing Panel -->
+      <BatchWritingPanel v-show="effectiveSelectedMode === 'batch'" />
+    </NScrollbar>
   </div>
 </template>

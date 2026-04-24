@@ -5,7 +5,6 @@
  */
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import {
-  NScrollbar,
   NButton,
   NProgress,
   NTag,
@@ -147,9 +146,8 @@ function handlePauseResume() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
-    <NScrollbar class="flex-1 p-4">
-      <!-- 批量写作控制区 -->
+  <div class="flex flex-col h-full space-y-4">
+    <!-- 批量写作控制区 -->
       <div class="mb-6">
         <!-- 标题 -->
         <div class="flex items-center gap-3 mb-4">
@@ -382,6 +380,5 @@ function handlePauseResume() {
           </div>
         </div>
       </div>
-    </NScrollbar>
   </div>
 </template>
