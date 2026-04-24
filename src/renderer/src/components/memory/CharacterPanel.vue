@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { NButton, NInput, NEmpty, NTag, NCard, NModal, NPopconfirm, useMessage } from 'naive-ui';
-import { Plus, Search, Users, Trash2, Edit3, User, Eye, Zap, BookOpen, Heart } from 'lucide-vue-next';
+import { NButton, NInput, NEmpty, NTag, NCard, NModal, NPopconfirm, NSelect, useMessage } from 'naive-ui';
+import { Plus, Search, Users, Trash2, Edit3, User, Eye, Zap, BookOpen, Heart, X } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
-import type { Character } from '@/types/project';
+import type { Character, Relationship, RelationshipType } from '@/types/project';
+import { RELATIONSHIP_TYPE_LABELS } from '@/types/project';
 
 const { t } = useI18n();
 const projectStore = useProjectStore();
@@ -25,24 +26,32 @@ const characterForm = ref({
   appearance: '',
   background: '',
   abilities: [] as string[],
-  relationships: '',
+  relationships: [] as Relationship[],
 });
 
 // New personality/ability input
 const newPersonality = ref('');
 const newAbility = ref('');
 
-// Role options
-const roleOptions = [
-  { label: '主角', value: 'protagonist' },
-  { label: '女主', value: 'femaleLead' },
-  { label: '导师', value: 'mentor' },
-  { label: '反派', value: 'antagonist' },
-  { label: '配角', value: 'supporting' },
-  { label: '其他', value: 'other' },
-];
+// Relationship form
+const showRelationshipDialog = ref(false);
+const relationshipForm = ref({
+  targetName: '',
+  type: 'neutral' as RelationshipType,
+  description: '',
+});
+const editingRelationshipIndex = ref<number | null>(null);
 
-const selectedRole = ref('protagonist');
+// Relationship type options
+const relationshipTypeOptions = Object.entries(RELATIONSHIP_TYPE_LABELS).map(([value, data]) => ({
+  label: data.label,
+  value,
+}));
+
+// Other characters for selection
+const otherCharacters = computed(() => {
+  return projectStore.characters.filter(c => c.id !== editingCharacter.value?.id);
+});
 
 const filteredCharacters = computed(() => {
   if (!searchQuery.value.trim()) {
@@ -70,9 +79,8 @@ function openCreateCharacterDialog() {
     appearance: '',
     background: '',
     abilities: [],
-    relationships: '',
+    relationships: [],
   };
-  selectedRole.value = 'protagonist';
   editingCharacter.value = null;
   showCharacterDialog.value = true;
 }
@@ -88,9 +96,8 @@ function openEditCharacterDialog(character: Character) {
     appearance: character.profile?.appearance || '',
     background: character.profile?.background || '',
     abilities: character.profile?.abilities || [],
-    relationships: character.profile?.relationships?.[0]?.description || '',
+    relationships: character.profile?.relationships || [],
   };
-  selectedRole.value = 'protagonist';
   showCharacterDialog.value = true;
 }
 
@@ -116,6 +123,53 @@ function removeAbility(index: number) {
   characterForm.value.abilities.splice(index, 1);
 }
 
+// Relationship functions
+function openAddRelationshipDialog() {
+  relationshipForm.value = {
+    targetName: '',
+    type: 'neutral',
+    description: '',
+  };
+  editingRelationshipIndex.value = null;
+  showRelationshipDialog.value = true;
+}
+
+function openEditRelationshipDialog(index: number) {
+  const rel = characterForm.value.relationships[index];
+  relationshipForm.value = {
+    targetName: rel.targetName || '',
+    type: rel.type,
+    description: rel.description || '',
+  };
+  editingRelationshipIndex.value = index;
+  showRelationshipDialog.value = true;
+}
+
+function removeRelationship(index: number) {
+  characterForm.value.relationships.splice(index, 1);
+}
+
+function handleRelationshipDialogConfirm() {
+  if (!relationshipForm.value.targetName.trim()) {
+    message.warning('请输入关联角色名称');
+    return;
+  }
+  
+  const rel: Relationship = {
+    targetName: relationshipForm.value.targetName.trim(),
+    type: relationshipForm.value.type,
+    description: relationshipForm.value.description.trim(),
+  };
+  
+  if (editingRelationshipIndex.value !== null) {
+    characterForm.value.relationships[editingRelationshipIndex.value] = rel;
+  } else {
+    characterForm.value.relationships.push(rel);
+  }
+  
+  showRelationshipDialog.value = false;
+}
+
 async function handleCharacterDialogConfirm() {
   if (!characterForm.value.name.trim()) {
     message.warning('请输入角色名称');
@@ -131,9 +185,7 @@ async function handleCharacterDialogConfirm() {
       appearance: characterForm.value.appearance.trim(),
       background: characterForm.value.background.trim(),
       abilities: characterForm.value.abilities,
-      relationships: characterForm.value.relationships.trim() 
-        ? [{ characterId: '', type: 'neutral' as const, description: characterForm.value.relationships.trim() }]
-        : [],
+      relationships: characterForm.value.relationships,
     },
     avatarPath: undefined,
   };
@@ -161,6 +213,14 @@ async function handleDeleteCharacter(character: Character) {
   } catch (error) {
     message.error('删除失败');
   }
+}
+
+function getRelationTypeLabel(type: string): string {
+  return RELATIONSHIP_TYPE_LABELS[type as RelationshipType]?.label || type;
+}
+
+function getRelationTypeColor(type: string): string {
+  return RELATIONSHIP_TYPE_LABELS[type as RelationshipType]?.color || '#6b7280';
 }
 </script>
 
@@ -288,19 +348,26 @@ async function handleDeleteCharacter(character: Character) {
             </div>
           </div>
 
-          <!-- Relationships -->
+          <!-- Relationships - Structured -->
           <div v-if="char.profile?.relationships?.length" class="flex items-start gap-2">
             <Heart class="w-4 h-4 text-[var(--moliu-text-secondary)] mt-0.5" />
             <div class="flex-1">
               <span class="text-xs text-[var(--moliu-text-secondary)]">人物关系</span>
               <div class="space-y-1 mt-1">
-                <p 
+                <div 
                   v-for="rel in char.profile.relationships" 
-                  :key="rel.characterId"
-                  class="text-sm text-[var(--moliu-text-primary)]"
+                  :key="rel.targetName + rel.type"
+                  class="flex items-center gap-2 p-1.5 rounded bg-[var(--moliu-bg-secondary)]"
                 >
-                  {{ rel.description }}
-                </p>
+                  <NTag 
+                    size="tiny" 
+                    :style="{ backgroundColor: getRelationTypeColor(rel.type) + '20', color: getRelationTypeColor(rel.type) }"
+                  >
+                    {{ getRelationTypeLabel(rel.type) }}
+                  </NTag>
+                  <span class="text-sm font-medium text-[var(--moliu-text-primary)]">{{ rel.targetName || rel.characterId }}</span>
+                  <span v-if="rel.description" class="text-xs text-[var(--moliu-text-secondary)]">{{ rel.description }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -338,12 +405,10 @@ async function handleDeleteCharacter(character: Character) {
       v-model:show="showCharacterDialog"
       preset="dialog"
       :title="characterDialogMode === 'create' ? '添加角色' : '编辑角色'"
-      positive-text="确认"
-      negative-text="取消"
-      @positive-click="handleCharacterDialogConfirm"
-      @negative-click="showCharacterDialog = false"
+      style="width: 600px; max-height: 90vh;"
+      :mask-closable="false"
     >
-      <div class="space-y-4 py-4">
+      <div class="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">角色名称 *</label>
           <NInput
@@ -428,16 +493,111 @@ async function handleDeleteCharacter(character: Character) {
             placeholder="描述角色的背景故事（可选）"
           />
         </div>
+        
+        <!-- Structured Relationships -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">人物关系</label>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">人物关系</label>
+            <NButton size="small" @click="openAddRelationshipDialog">
+              <template #icon>
+                <Plus class="w-3 h-3" />
+              </template>
+              添加关系
+            </NButton>
+          </div>
+          
+          <div v-if="characterForm.relationships.length > 0" class="space-y-2">
+            <div 
+              v-for="(rel, index) in characterForm.relationships" 
+              :key="index"
+              class="flex items-center gap-2 p-2 rounded bg-[var(--moliu-bg-secondary)] border border-[var(--moliu-border-color)]"
+            >
+              <NTag 
+                size="tiny" 
+                :style="{ backgroundColor: getRelationTypeColor(rel.type) + '20', color: getRelationTypeColor(rel.type) }"
+              >
+                {{ getRelationTypeLabel(rel.type) }}
+              </NTag>
+              <span class="text-sm font-medium text-[var(--moliu-text-primary)] flex-1">{{ rel.targetName }}</span>
+              <span v-if="rel.description" class="text-xs text-[var(--moliu-text-secondary)] truncate flex-1 max-w-[200px]">{{ rel.description }}</span>
+              <button
+                class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                @click="openEditRelationshipDialog(index)"
+              >
+                <Edit3 class="w-3 h-3 text-gray-400" />
+              </button>
+              <button
+                class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
+                @click="removeRelationship(index)"
+              >
+                <X class="w-3 h-3 text-red-400" />
+              </button>
+            </div>
+          </div>
+          <div v-else class="text-center py-4 text-sm text-[var(--moliu-text-secondary)] border border-dashed border-[var(--moliu-border-color)] rounded">
+            暂无人物关系，点击上方按钮添加
+          </div>
+        </div>
+      </div>
+      
+      <template #action>
+        <div class="flex justify-end gap-2">
+          <NButton @click="showCharacterDialog = false">取消</NButton>
+          <NButton type="primary" @click="handleCharacterDialogConfirm">确认</NButton>
+        </div>
+      </template>
+    </NModal>
+
+    <!-- Relationship Dialog -->
+    <NModal
+      v-model:show="showRelationshipDialog"
+      preset="dialog"
+      :title="editingRelationshipIndex !== null ? '编辑关系' : '添加关系'"
+      style="width: 400px;"
+    >
+      <div class="space-y-4 py-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">关联角色 *</label>
           <NInput
-            v-model:value="characterForm.relationships"
+            v-model:value="relationshipForm.targetName"
+            placeholder="输入关联角色名称"
+          />
+          <div v-if="otherCharacters.length > 0" class="mt-2 flex flex-wrap gap-1">
+            <NTag
+              v-for="char in otherCharacters"
+              :key="char.id"
+              size="tiny"
+              class="cursor-pointer hover:opacity-80"
+              @click="relationshipForm.targetName = char.name"
+            >
+              {{ char.name }}
+            </NTag>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">关系类型</label>
+          <NSelect
+            v-model:value="relationshipForm.type"
+            :options="relationshipTypeOptions"
+            placeholder="选择关系类型"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">关系描述</label>
+          <NInput
+            v-model:value="relationshipForm.description"
             type="textarea"
             :rows="2"
-            placeholder="描述与其他角色的关系（可选）"
+            placeholder="描述这段关系（可选）"
           />
         </div>
       </div>
+      <template #action>
+        <div class="flex justify-end gap-2">
+          <NButton @click="showRelationshipDialog = false">取消</NButton>
+          <NButton type="primary" @click="handleRelationshipDialogConfirm">确认</NButton>
+        </div>
+      </template>
     </NModal>
   </div>
 </template>

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { Project, Volume, Chapter, Character, WorldSchema, Foreshadow } from '@/types/project';
+import type { Project, Volume, Chapter, Character, WorldSchema, Foreshadow, PlotNode, LocationLevel, RuleCategory, FactionRelation } from '@/types/project';
 
 export const useProjectStore = defineStore('project', () => {
   // State
@@ -11,6 +11,7 @@ export const useProjectStore = defineStore('project', () => {
   const characters = ref<Character[]>([]);
   const worldSchema = ref<WorldSchema>({ locations: [], rules: [], factions: [] });
   const foreshadows = ref<Foreshadow[]>([]);
+  const plotOutline = ref<PlotNode[]>([]);
   const currentChapterId = ref<string | null>(null);
   const isLoading = ref(false);
 
@@ -65,6 +66,7 @@ export const useProjectStore = defineStore('project', () => {
         characters.value = result.characters || [];
         worldSchema.value = result.worldSchema || { locations: [], rules: [], factions: [] };
         foreshadows.value = result.foreshadows || [];
+        plotOutline.value = result.plotOutline || [];
         // Set first chapter as current
         if (chapters.value.length > 0) {
           currentChapterId.value = sortedChapters.value[0]?.id || null;
@@ -195,17 +197,18 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   // World Schema operations
-  async function addLocation(location: { name: string; description?: string; parentId?: string }) {
+  async function addLocation(location: { name: string; description?: string; level?: LocationLevel; parentId?: string }) {
     const newLocation = {
       id: `loc-${Date.now()}`,
       ...location,
+      level: location.level || 'city',
     };
     worldSchema.value.locations.push(newLocation);
     await saveCurrentProject();
     return newLocation;
   }
 
-  async function updateLocation(id: string, updates: Partial<{ name: string; description?: string; parentId?: string }>) {
+  async function updateLocation(id: string, updates: Partial<{ name: string; description?: string; parentId?: string; level?: LocationLevel }>) {
     const index = worldSchema.value.locations.findIndex(l => l.id === id);
     if (index !== -1) {
       worldSchema.value.locations[index] = { ...worldSchema.value.locations[index], ...updates };
@@ -218,7 +221,7 @@ export const useProjectStore = defineStore('project', () => {
     await saveCurrentProject();
   }
 
-  async function addFaction(faction: { name: string; description?: string }) {
+  async function addFaction(faction: { name: string; description?: string; parentId?: string; relation?: FactionRelation }) {
     const newFaction = {
       id: `faction-${Date.now()}`,
       ...faction,
@@ -228,7 +231,7 @@ export const useProjectStore = defineStore('project', () => {
     return newFaction;
   }
 
-  async function updateFaction(id: string, updates: Partial<{ name: string; description?: string }>) {
+  async function updateFaction(id: string, updates: Partial<{ name: string; description?: string; parentId?: string; relation?: FactionRelation }>) {
     const index = worldSchema.value.factions.findIndex(f => f.id === id);
     if (index !== -1) {
       worldSchema.value.factions[index] = { ...worldSchema.value.factions[index], ...updates };
@@ -241,17 +244,18 @@ export const useProjectStore = defineStore('project', () => {
     await saveCurrentProject();
   }
 
-  async function addWorldRule(rule: { name: string; description: string; locked: boolean }) {
+  async function addWorldRule(rule: { name: string; description: string; locked: boolean; category?: RuleCategory; relatedRuleIds?: string[] }) {
     const newRule = {
       id: `rule-${Date.now()}`,
       ...rule,
+      category: rule.category || 'custom',
     };
     worldSchema.value.rules.push(newRule);
     await saveCurrentProject();
     return newRule;
   }
 
-  async function updateWorldRule(id: string, updates: Partial<{ name: string; description: string; locked: boolean }>) {
+  async function updateWorldRule(id: string, updates: Partial<{ name: string; description: string; locked: boolean; category?: RuleCategory; relatedRuleIds?: string[] }>) {
     const index = worldSchema.value.rules.findIndex(r => r.id === id);
     if (index !== -1) {
       worldSchema.value.rules[index] = { ...worldSchema.value.rules[index], ...updates };
@@ -261,6 +265,42 @@ export const useProjectStore = defineStore('project', () => {
 
   async function deleteWorldRule(id: string) {
     worldSchema.value.rules = worldSchema.value.rules.filter(r => r.id !== id);
+    await saveCurrentProject();
+  }
+
+  // PlotNode operations
+  async function createPlotNode(plot: Omit<PlotNode, 'id'>): Promise<PlotNode | null> {
+    if (!currentProject.value) return null;
+    
+    const newPlot: PlotNode = {
+      ...plot,
+      id: `plot-${Date.now()}`,
+    };
+    
+    plotOutline.value.push(newPlot);
+    if (currentProject.value) {
+      currentProject.value.plotOutline = plotOutline.value;
+    }
+    await saveCurrentProject();
+    return newPlot;
+  }
+
+  async function updatePlotNode(id: string, updates: Partial<PlotNode>) {
+    const index = plotOutline.value.findIndex(p => p.id === id);
+    if (index !== -1) {
+      plotOutline.value[index] = { ...plotOutline.value[index], ...updates };
+      if (currentProject.value) {
+        currentProject.value.plotOutline = plotOutline.value;
+      }
+      await saveCurrentProject();
+    }
+  }
+
+  async function deletePlotNode(id: string) {
+    plotOutline.value = plotOutline.value.filter(p => p.id !== id);
+    if (currentProject.value) {
+      currentProject.value.plotOutline = plotOutline.value;
+    }
     await saveCurrentProject();
   }
 
@@ -420,6 +460,7 @@ export const useProjectStore = defineStore('project', () => {
     characters,
     worldSchema,
     foreshadows,
+    plotOutline,
     currentChapterId,
     isLoading,
     totalWordCount,
@@ -463,6 +504,10 @@ export const useProjectStore = defineStore('project', () => {
     addWorldRule,
     updateWorldRule,
     deleteWorldRule,
+    // PlotNode operations
+    createPlotNode,
+    updatePlotNode,
+    deletePlotNode,
     // Foreshadow operations
     createForeshadow,
     updateForeshadow,

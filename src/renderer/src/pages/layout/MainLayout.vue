@@ -18,6 +18,7 @@ import {
   PanelLeft,
   ChevronUp,
   Info,
+  Map,
 } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
@@ -27,6 +28,7 @@ import AIPanel from '@/components/editor/AIPanel.vue';
 import CharacterPanel from '@/components/memory/CharacterPanel.vue';
 import WorldPanel from '@/components/memory/WorldPanel.vue';
 import ForeshadowPanel from '@/components/memory/ForeshadowPanel.vue';
+import PlotOutlinePanel from '@/components/memory/PlotOutlinePanel.vue';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -37,7 +39,7 @@ const message = useMessage();
 const projectId = computed(() => route.params.id as string);
 const leftSiderCollapsed = ref(false);
 const rightSiderCollapsed = ref(false);
-const activeSidePanel = ref<'chapters' | 'characters' | 'world' | 'foreshadows'>('chapters');
+const activeSidePanel = ref<'chapters' | 'plotOutline' | 'characters' | 'world' | 'foreshadows'>('chapters');
 const expandedVolumes = ref<Set<string>>(new Set(['v1']));
 const isLoadingProject = ref(false);
 const editorCoreRef = ref<InstanceType<typeof EditorCore> | null>(null);
@@ -84,6 +86,7 @@ const volumeOptions = computed(() => {
 
 const sideTabs = computed(() => [
   { key: 'chapters', icon: FileText, label: t('editor.title') },
+  { key: 'plotOutline', icon: Map, label: '大纲' },
   { key: 'characters', icon: Users, label: t('editor.characters') },
   { key: 'world', icon: Globe, label: t('editor.world') },
   { key: 'foreshadows', icon: Lightbulb, label: t('editor.foreshadows') },
@@ -502,6 +505,11 @@ function getStatusConfig(status: string) {
           <!-- Characters -->
           <div v-show="activeSidePanel === 'characters'" class="p-3">
             <CharacterPanel />
+          </div>
+
+          <!-- Plot Outline -->
+          <div v-show="activeSidePanel === 'plotOutline'" class="p-3">
+            <PlotOutlinePanel />
           </div>
 
           <!-- World -->

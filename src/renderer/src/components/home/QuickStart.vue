@@ -271,22 +271,41 @@ async function generateOutlines() {
     if (result && result.outlines) {
       generatedOutlines.value = result.outlines.map(
         (o: any, i: number) => {
-          // 确保角色信息格式正确
-          const characters = (o.characters || []).map((c: any) => ({
-            name: c.name || '',
-            role: c.role || '',
-            description: c.description || '',
-            personality: Array.isArray(c.personality) ? c.personality : [],
-            appearance: c.appearance || '',
-            abilities: Array.isArray(c.abilities) ? c.abilities : [],
-            background: c.background || '',
-            relationships: c.relationships || '',
-          }));
+          // 确保角色信息格式正确（支持结构化关系）
+          const characters = (o.characters || []).map((c: any) => {
+            // 处理旧格式的 relationships（字符串）
+            if (typeof c.relationships === 'string') {
+              return {
+                name: c.name || '',
+                role: c.role || '',
+                description: c.description || '',
+                personality: Array.isArray(c.personality) ? c.personality : [],
+                appearance: c.appearance || '',
+                abilities: Array.isArray(c.abilities) ? c.abilities : [],
+                background: c.background || '',
+                relationships: c.relationships ? [{ targetName: '', type: 'neutral', description: c.relationships }] : [],
+              };
+            }
+            // 新格式的结构化关系
+            return {
+              name: c.name || '',
+              role: c.role || '',
+              description: c.description || '',
+              personality: Array.isArray(c.personality) ? c.personality : [],
+              appearance: c.appearance || '',
+              abilities: Array.isArray(c.abilities) ? c.abilities : [],
+              background: c.background || '',
+              relationships: (c.relationships || []).map((r: any) => ({
+                targetName: r.targetName || '',
+                type: r.type || 'neutral',
+                description: r.description || '',
+              })),
+            };
+          });
 
           // 确保伏笔信息格式正确
           const foreshadows = (o.foreshadows || []).map((f: any) => {
             if (typeof f === 'string') {
-              // 兼容旧格式（字符串数组）
               return { hint: f, type: 'mystery', suggestedChapter: undefined };
             }
             return {
@@ -296,27 +315,54 @@ async function generateOutlines() {
             };
           });
 
-          // 确保世界观信息格式正确
+          // 确保世界观信息格式正确（支持层级关系）
           const worldSetting = o.worldSetting ? {
             locations: (o.worldSetting.locations || []).map((l: any) => ({
               name: l.name || '',
               description: l.description || '',
+              level: l.level || 'city',
+              parentName: l.parentName || '',
             })),
             factions: (o.worldSetting.factions || []).map((f: any) => ({
               name: f.name || '',
               description: f.description || '',
+              parentName: f.parentName || '',
+              allies: Array.isArray(f.allies) ? f.allies : [],
+              enemies: Array.isArray(f.enemies) ? f.enemies : [],
             })),
             rules: (o.worldSetting.rules || []).map((r: any) => ({
               name: r.name || '',
               description: r.description || '',
+              category: r.category || 'custom',
+              relatedRuleNames: Array.isArray(r.relatedRuleNames) ? r.relatedRuleNames : [],
             })),
           } : undefined;
+
+          // 确保子情节格式正确
+          const subplots = (o.subplots || []).map((s: any) => ({
+            title: s.title || '',
+            description: s.description || '',
+            relatedCharacters: Array.isArray(s.relatedCharacters) ? s.relatedCharacters : [],
+            chapterRange: s.chapterRange || undefined,
+            purpose: s.purpose || '',
+          }));
+
+          // 确保章节级大纲格式正确
+          const chapters = (o.chapters || []).map((ch: any) => ({
+            title: ch.title || '',
+            summary: ch.summary || '',
+            keyEvents: Array.isArray(ch.keyEvents) ? ch.keyEvents : [],
+            involvedCharacters: Array.isArray(ch.involvedCharacters) ? ch.involvedCharacters : [],
+          }));
 
           return {
             id: `outline-${i}-${Date.now()}`,
             title: o.title || '',
             synopsis: o.synopsis || '',
+            genres: Array.isArray(o.genres) ? o.genres : [],
             worldSetting,
+            subplots,
+            chapters,
             structure: o.structure || { act1: '', act2a: '', act2b: '', act3: '' },
             characters,
             foreshadows,
@@ -349,15 +395,48 @@ async function createProject() {
     const outline = selectedOutline.value;
     const structure = outline.structure;
 
-    // 构建剧情大纲
-    const plotOutline: PlotNode[] = [
-      { id: `plot-${Date.now()}-1`, title: '第一幕', description: structure.act1, type: 'main' },
-      { id: `plot-${Date.now()}-2`, title: '第二幕上', description: structure.act2a, type: 'main' },
-      { id: `plot-${Date.now()}-3`, title: '第二幕下', description: structure.act2b, type: 'main' },
-      { id: `plot-${Date.now()}-4`, title: '第三幕', description: structure.act3, type: 'main' },
-    ];
+    // 构建剧情大纲（包含四幕 + 子情节 + 章节级大纲）
+    const plotOutline: PlotNode[] = [];
+    let plotIndex = 0;
+    
+    // 添加四幕
+    plotOutline.push(
+      { id: `plot-${Date.now()}-${plotIndex++}`, title: '第一幕', description: structure.act1, type: 'act', orderIndex: 0 },
+      { id: `plot-${Date.now()}-${plotIndex++}`, title: '第二幕上', description: structure.act2a, type: 'act', orderIndex: 1 },
+      { id: `plot-${Date.now()}-${plotIndex++}`, title: '第二幕下', description: structure.act2b, type: 'act', orderIndex: 2 },
+      { id: `plot-${Date.now()}-${plotIndex++}`, title: '第三幕', description: structure.act3, type: 'act', orderIndex: 3 },
+    );
 
-    // 构建角色信息（完整保存大纲中的所有角色信息）
+    // 添加子情节
+    if (outline.subplots && outline.subplots.length > 0) {
+      outline.subplots.forEach((subplot, idx) => {
+        plotOutline.push({
+          id: `plot-${Date.now()}-${plotIndex++}`,
+          title: subplot.title,
+          description: subplot.description,
+          type: 'subplot' as const,
+          chapterRange: subplot.chapterRange,
+          purpose: subplot.purpose,
+          orderIndex: plotIndex,
+        });
+      });
+    }
+
+    // 添加章节级大纲（作为子节点或直接节点）
+    if (outline.chapters && outline.chapters.length > 0) {
+      outline.chapters.forEach((chapter, idx) => {
+        plotOutline.push({
+          id: `plot-${Date.now()}-${plotIndex++}`,
+          title: chapter.title,
+          description: chapter.summary,
+          type: 'chapter' as const,
+          keyEvents: chapter.keyEvents,
+          orderIndex: plotIndex,
+        });
+      });
+    }
+
+    // 构建角色信息（支持结构化关系）
     const characters = outline.characters.map((c, i) => ({
       id: `char-${Date.now()}-${i}`,
       name: c.name,
@@ -368,13 +447,19 @@ async function createProject() {
         appearance: c.appearance || '',
         background: c.background || c.description,
         abilities: c.abilities || [],
-        relationships: c.relationships ? [{ characterId: '', type: 'neutral' as const, description: c.relationships }] : [],
+        // 处理结构化关系
+        relationships: (c.relationships || []).map((r: any) => ({
+          characterId: '', // 后续需要根据角色名匹配填充
+          targetName: r.targetName || '',
+          type: (r.type || 'neutral') as any,
+          description: r.description || '',
+        })),
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }));
 
-    // 构建伏笔信息（完整保存大纲中的所有伏笔信息）
+    // 构建伏笔信息
     const foreshadows = outline.foreshadows.map((f, i) => ({
       id: `foreshadow-${Date.now()}-${i}`,
       hint: f.hint,
@@ -384,38 +469,133 @@ async function createProject() {
       suggestedResolutionChapter: f.suggestedChapter,
     }));
 
-    // 使用 AI 生成的世界观设定
+    // 使用 AI 生成的世界观设定（支持层级关系）
     let worldSchema = { locations: [] as any[], rules: [] as any[], factions: [] as any[] };
     if (outline.worldSetting) {
-      // 转换 AI 生成的世界观到项目格式
-      worldSchema = {
-        locations: outline.worldSetting.locations.map((l, i) => ({
-          id: `loc-${Date.now()}-${i}`,
+      // 先建立地点名称到ID的映射，用于处理层级关系
+      const locationNameToId = new Map<string, string>();
+      const factionNameToId = new Map<string, string>();
+      const ruleNameToId = new Map<string, string>();
+
+      // 转换地点
+      const locations = outline.worldSetting.locations.map((l, i) => {
+        const id = `loc-${Date.now()}-${i}`;
+        locationNameToId.set(l.name, id);
+        return {
+          id,
           name: l.name,
           description: l.description || '',
-        })),
-        factions: outline.worldSetting.factions.map((f, i) => ({
-          id: `faction-${Date.now()}-${i}`,
-          name: f.name,
-          description: f.description || '',
-        })),
-        rules: outline.worldSetting.rules.map((r, i) => ({
-          id: `rule-${Date.now()}-${i}`,
+          level: l.level || 'city',
+          parentId: '', // 后续填充
+        };
+      });
+
+      // 填充层级关系
+      locations.forEach(loc => {
+        const sourceLoc = outline.worldSetting!.locations.find(l => l.name === loc.name);
+        if (sourceLoc?.parentName) {
+          loc.parentId = locationNameToId.get(sourceLoc.parentName) || '';
+        }
+      });
+
+      // 转换规则
+      const rules: Array<{
+        id: string;
+        name: string;
+        description: string;
+        locked: boolean;
+        category: string;
+        relatedRuleIds: string[];
+      }> = outline.worldSetting.rules.map((r, i) => {
+        const id = `rule-${Date.now()}-${i}`;
+        ruleNameToId.set(r.name, id);
+        return {
+          id,
           name: r.name,
           description: r.description || '',
           locked: false,
-        })),
-      };
+          category: r.category || 'custom',
+          relatedRuleIds: [],
+        };
+      });
+
+      // 填充规则关联
+      rules.forEach(rule => {
+        const sourceRule = outline.worldSetting!.rules.find(r => r.name === rule.name);
+        if (sourceRule?.relatedRuleNames) {
+          const mappedIds: string[] = [];
+          sourceRule.relatedRuleNames.forEach(name => {
+            const id = ruleNameToId.get(name);
+            if (id) mappedIds.push(id);
+          });
+          rule.relatedRuleIds = mappedIds;
+        }
+      });
+
+      // 转换势力
+      const factions = outline.worldSetting.factions.map((f, i) => {
+        const id = `faction-${Date.now()}-${i}`;
+        factionNameToId.set(f.name, id);
+        return {
+          id,
+          name: f.name,
+          description: f.description || '',
+          parentId: '', // 后续填充
+          relation: undefined as { targetFactionId: string; targetFactionName: string; type: string; description: string } | undefined,
+        };
+      });
+
+      // 填充势力层级和关系
+      factions.forEach(faction => {
+        const sourceFaction = outline.worldSetting!.factions.find(f => f.name === faction.name);
+        if (sourceFaction?.parentName) {
+          faction.parentId = factionNameToId.get(sourceFaction.parentName) || '';
+        }
+        // 添加友好/敌对关系
+        const relations: { targetFactionId: string; targetFactionName: string; type: string; description: string }[] = [];
+        if (sourceFaction?.allies?.length) {
+          sourceFaction.allies.forEach(allyName => {
+            relations.push({
+              targetFactionId: factionNameToId.get(allyName) || '',
+              targetFactionName: allyName,
+              type: 'ally',
+              description: '',
+            });
+          });
+        }
+        if (sourceFaction?.enemies?.length) {
+          sourceFaction.enemies.forEach(enemyName => {
+            relations.push({
+              targetFactionId: factionNameToId.get(enemyName) || '',
+              targetFactionName: enemyName,
+              type: 'enemy',
+              description: '',
+            });
+          });
+        }
+        if (relations.length > 0) {
+          faction.relation = relations[0]; // 简化为单个关系
+        }
+      });
+
+      worldSchema = { locations, rules, factions };
     }
+
+    // 转换题材标签
+    const genreTags = (outline.genres || []).map((genreName: string) => ({
+      id: `genre-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: genreName,
+      color: '#8b5cf6', // 默认紫色
+    }));
 
     const newProject = await projectStore.createProject({
       name: outline.title,
       description: outline.synopsis,
+      genre: genreTags,
       plotOutline,
       characters,
       foreshadows,
       worldSchema,
-      // 保存目标字数
       targetWordCount: outline.estimatedWordCount,
     });
 
