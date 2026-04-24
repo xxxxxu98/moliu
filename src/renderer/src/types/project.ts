@@ -182,9 +182,10 @@ export interface PlotNode {
   chapterRange?: [number, number]; // 涉及章节范围
   parentId?: string; // 父节点（如：子情节属于某个幕）
   orderIndex: number;
-  // 章节级大纲专用
+  // 章节级大纲/子情节专用
   keyEvents?: string[]; // 关键事件列表
   purpose?: string; // 本节点的目的/主题
+  relatedCharacters?: string[]; // 涉及的角色名称列表
 }
 
 export type PlotNodeType = 'act' | 'subplot' | 'chapter' | 'foreshadow';

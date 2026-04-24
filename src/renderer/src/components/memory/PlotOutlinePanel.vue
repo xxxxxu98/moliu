@@ -24,12 +24,14 @@ const plotForm = ref({
   chapterRange: undefined as [number, number] | undefined,
   purpose: '',
   keyEvents: [] as string[],
+  relatedCharacters: [] as string[],
   parentId: '',
   orderIndex: 0,
 });
 
 // New key event input
 const newKeyEvent = ref('');
+const newRelatedCharacter = ref('');
 
 // Expanded nodes
 const expandedNodes = ref<Set<string>>(new Set());
@@ -96,6 +98,7 @@ function openAddPlotDialog(type: PlotNodeType = 'chapter') {
     chapterRange: undefined,
     purpose: '',
     keyEvents: [],
+    relatedCharacters: [],
     parentId: '',
     orderIndex: projectStore.plotOutline?.length || 0,
   };
@@ -113,6 +116,7 @@ function openEditPlotDialog(plot: PlotNode) {
     chapterRange: plot.chapterRange,
     purpose: plot.purpose || '',
     keyEvents: plot.keyEvents || [],
+    relatedCharacters: plot.relatedCharacters || [],
     parentId: plot.parentId || '',
     orderIndex: plot.orderIndex || 0,
   };
@@ -130,6 +134,28 @@ function removeKeyEvent(index: number) {
   plotForm.value.keyEvents.splice(index, 1);
 }
 
+// Related Characters - quick selection from existing characters
+const existingCharacterNames = computed(() => {
+  return projectStore.characters.map(c => c.name);
+});
+
+function addRelatedCharacter() {
+  if (newRelatedCharacter.value.trim() && !plotForm.value.relatedCharacters.includes(newRelatedCharacter.value.trim())) {
+    plotForm.value.relatedCharacters.push(newRelatedCharacter.value.trim());
+    newRelatedCharacter.value = '';
+  }
+}
+
+function selectRelatedCharacter(name: string) {
+  if (!plotForm.value.relatedCharacters.includes(name)) {
+    plotForm.value.relatedCharacters.push(name);
+  }
+}
+
+function removeRelatedCharacter(index: number) {
+  plotForm.value.relatedCharacters.splice(index, 1);
+}
+
 async function handlePlotDialogConfirm() {
   if (!plotForm.value.title.trim()) {
     message.warning('请输入标题');
@@ -144,6 +170,7 @@ async function handlePlotDialogConfirm() {
       chapterRange: plotForm.value.chapterRange,
       purpose: plotForm.value.purpose.trim(),
       keyEvents: plotForm.value.keyEvents,
+      relatedCharacters: plotForm.value.relatedCharacters,
       parentId: plotForm.value.parentId || undefined,
       orderIndex: plotForm.value.orderIndex,
     };
@@ -317,6 +344,17 @@ async function handleDeletePlot(id: string) {
               <p v-if="plot.purpose" class="text-xs text-orange-600 dark:text-orange-400">
                 目的：{{ plot.purpose }}
               </p>
+              <div v-if="plot.relatedCharacters?.length" class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs text-[var(--moliu-text-secondary)]">涉及角色：</span>
+                <NTag
+                  v-for="char in plot.relatedCharacters"
+                  :key="char"
+                  size="tiny"
+                  type="info"
+                >
+                  {{ char }}
+                </NTag>
+              </div>
             </div>
           </div>
         </div>
@@ -366,6 +404,17 @@ async function handleDeletePlot(id: string) {
                 <ul class="text-xs text-[var(--moliu-text-secondary)] list-disc list-inside space-y-0.5">
                   <li v-for="event in plot.keyEvents" :key="event">{{ event }}</li>
                 </ul>
+              </div>
+              <div v-if="plot.relatedCharacters?.length" class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-medium text-[var(--moliu-text-secondary)]">涉及角色：</span>
+                <NTag
+                  v-for="char in plot.relatedCharacters"
+                  :key="char"
+                  size="tiny"
+                  type="info"
+                >
+                  {{ char }}
+                </NTag>
               </div>
             </div>
           </div>
@@ -462,6 +511,42 @@ async function handleDeletePlot(id: string) {
               @keyup.enter="addKeyEvent"
             />
             <NButton @click="addKeyEvent">添加</NButton>
+          </div>
+        </div>
+
+        <!-- Related Characters (for subplot and chapter types) -->
+        <div v-if="plotForm.type === 'subplot' || plotForm.type === 'chapter'">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">涉及角色</label>
+          <div class="flex flex-wrap gap-2 mb-2">
+            <NTag
+              v-for="(char, index) in plotForm.relatedCharacters"
+              :key="index"
+              closable
+              @close="removeRelatedCharacter(index)"
+            >
+              {{ char }}
+            </NTag>
+          </div>
+          <div class="flex flex-wrap gap-2 mb-2" v-if="existingCharacterNames.length > 0">
+            <span class="text-xs text-[var(--moliu-text-secondary)]">快速添加：</span>
+            <NTag
+              v-for="name in existingCharacterNames"
+              :key="name"
+              size="tiny"
+              class="cursor-pointer hover:opacity-80"
+              :type="plotForm.relatedCharacters.includes(name) ? 'info' : 'default'"
+              @click="selectRelatedCharacter(name)"
+            >
+              {{ name }}
+            </NTag>
+          </div>
+          <div class="flex gap-2">
+            <NInput
+              v-model:value="newRelatedCharacter"
+              placeholder="输入角色名称后按回车添加"
+              @keyup.enter="addRelatedCharacter"
+            />
+            <NButton @click="addRelatedCharacter">添加</NButton>
           </div>
         </div>
       </div>

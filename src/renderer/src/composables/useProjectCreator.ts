@@ -77,6 +77,7 @@ export function useProjectCreator(): UseProjectCreatorReturn {
           type: "subplot" as const,
           chapterRange: subplot.chapterRange,
           purpose: subplot.purpose,
+          relatedCharacters: Array.isArray(subplot.relatedCharacters) ? subplot.relatedCharacters : undefined,
           orderIndex: plotOutline.length,
         });
       });
@@ -91,6 +92,7 @@ export function useProjectCreator(): UseProjectCreatorReturn {
           description: chapter.summary,
           type: "chapter" as const,
           keyEvents: chapter.keyEvents,
+          relatedCharacters: Array.isArray(chapter.involvedCharacters) ? chapter.involvedCharacters : undefined,
           orderIndex: plotOutline.length,
         });
       });
