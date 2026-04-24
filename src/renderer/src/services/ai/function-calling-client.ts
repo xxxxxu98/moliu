@@ -77,16 +77,16 @@ export class FunctionCallingClient {
     wordCountRange: string = DEFAULT_WORD_COUNT_RANGE,
     onProgress?: (message: string) => void
   ): Promise<{ outlines: any[] } | null> {
-    onProgress?.('正在连接 AI...');
+    onProgress?.('正在唤醒 AI，请稍候...');
     
     // 如果不支持 Function Calling，回退到 JSON 模式
     if (!this.isSupported()) {
-      onProgress?.('该 Provider 不支持 Function Calling，使用 JSON 模式...');
+      onProgress?.('当前模型不支持高级模式，使用标准模式...');
       return this.fallbackGenerateOutline(prompt, wordCountRange);
     }
 
     try {
-      onProgress?.('正在生成大纲...');
+      onProgress?.('正在构思故事结构...');
       
       // 根据 Provider 选择不同的调用方式
       if (needsCustomFunctionCalling(this.config.provider)) {
@@ -98,7 +98,7 @@ export class FunctionCallingClient {
       }
     } catch (error) {
       console.error('[FunctionCallingClient] Error:', error);
-      onProgress?.('Function Calling 调用失败，尝试回退到 JSON 模式...');
+      onProgress?.('遇到小问题，尝试备用方案...');
       
       // 回退到 JSON 模式
       return this.fallbackGenerateOutline(prompt, wordCountRange);
@@ -137,7 +137,7 @@ export class FunctionCallingClient {
       delete requestBody.tool_choice;
     }
 
-    onProgress?.('正在等待 AI 响应...');
+    onProgress?.('正在等待 AI 响应，预计需要 1-5 分钟...');
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -311,27 +311,28 @@ export class FunctionCallingClient {
    * 构建系统提示词
    */
   private buildSystemPrompt(wordCountRange: string): string {
-    return `你是一位专业的小说创作顾问。你的任务是根据用户提供的创意种子，生成多个简洁但完整的故事大纲。
+    return `你是一位专业的小说创作顾问。根据用户的创意种子，生成简洁的故事大纲。
 
-重要：你必须使用 generate_story_outline 函数来返回结果，这是唯一的输出方式。
+重要：必须使用 generate_story_outline 函数返回结果。
 
-请生成2-3个不同风格的故事大纲，遵循以下简洁规范：
-
-【输出规范 - 严格遵守】
-- 简介：80-120字，简明扼要描述核心冲突和主题
-- 世界观：地点最多3个，规则最多2条，势力最多2个，每个描述20-50字
-- 角色：3-4个核心角色，每个角色用30-50字描述，包含姓名、身份、核心特质
-- 四幕结构：每幕用2-3句话概括核心情节点（每幕60-100字）
-- 子情节：1-2个，每个用一句话概括
-- 伏笔：2-3个伏笔，每个用一句话描述
-- 章节大纲：根据字数范围生成6-10章，每章用1-2句话概括（字数多时生成更多章节）
+生成2个不同风格的大纲，每个大纲包含：
+- 标题：一个吸引人的故事标题
+- 题材标签：1-2个题材
+- 简介：60-80字核心冲突和主题
+- 世界观（精简）：
+  - 地点1-2个，每个描述15-30字
+  - 规则1条，描述20字
+  - 势力1个，描述20字
+- 角色：2-3个，每个20-40字（姓名+身份+核心特质）
+- 四幕结构：每幕1-2句话（40-60字/幕）
+- 子情节：0-1个，一句话概括
+- 伏笔：1-2个，每个一句话
+- 章节大纲：5-8章，每章用一句话概括
 - 预估字数：${wordCountRange}
 
-【语言风格】
-- 使用简洁有力的语言
-- 避免冗长的修饰词和详细描写
-- 聚焦于故事的核心框架和关键情节点
-
-请确保所有字段都填写完整，空字段用空数组[]或空字符串""表示。`;
+【要求】
+- 语言简洁，避免冗长描写
+- 只输出纯JSON，不要markdown代码块
+- 确保JSON语法正确`;
   }
 }

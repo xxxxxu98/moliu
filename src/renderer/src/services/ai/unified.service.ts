@@ -68,40 +68,31 @@ function extractPureText(rawContent: string): string {
 function buildOutlineSystemPrompt(
   wordCountRange: string = "50万-100万字",
 ): string {
-  return `你是一位专业的小说创作顾问。你的任务是根据用户提供的创意种子，生成多个简洁但完整的故事大纲。
+  return `你是一位专业的小说创作顾问。根据用户的创意种子，生成简洁的故事大纲。
 
-请生成2-3个不同风格的故事大纲。
-
-【输出规范 - 严格遵守字数限制】
-- 简介：80-120字，简洁描述核心冲突和主题
-- 世界观：
-  - 地点最多3个，每个描述20-50字
-  - 规则最多2条，每条描述20-40字
-  - 势力最多2个，每个描述20-40字
-- 角色：3-4个核心角色
-  - 每个角色：姓名、身份（主角/反派等）、30-50字核心特质描述
-  - 关系：简化为1-2个关键关系
-- 四幕结构：每幕2-3句话概括（60-100字/幕）
-- 子情节：1-2个，每个一句话概括
-- 伏笔：2-3个，每个一句话描述
-- 章节大纲：
-  - 根据字数范围生成6-10章
-  - 每章用1-2句话概括关键情节点
-  - 字数多时生成更多章节，但保持描述简洁
+生成2个不同风格的大纲，每个大纲包含：
+- 标题：一个吸引人的故事标题
+- 题材标签：1-2个题材
+- 简介：60-80字核心冲突和主题
+- 世界观（精简）：
+  - 地点1-2个，每个描述15-30字
+  - 规则1条，描述20字
+  - 势力1个，描述20字
+- 角色：2-3个，每个20-40字（姓名+身份+核心特质）
+- 四幕结构：每幕1-2句话（40-60字/幕）
+- 子情节：0-1个，一句话概括
+- 伏笔：1-2个，每个一句话
+- 章节大纲：5-8章，每章用一句话概括
 - 预估字数：${wordCountRange}
 
-【语言风格】
-- 使用简洁有力的语言
-- 避免冗长的修饰词和详细描写
-- 聚焦于故事的核心框架
-
-【格式要求】
-1. 只输出纯JSON，不要任何解释、前缀、后缀或markdown代码块
-2. 确保JSON语法正确：大括号匹配、引号闭合、逗号位置正确
-3. 所有字段填写完整，空字段用空数组[]或空字符串""表示
+【要求】
+- 语言简洁，避免冗长描写
+- 只输出纯JSON，不要markdown代码块
+- 确保JSON语法正确
+- 所有字段填写完整
 
 JSON示例：
-{"outlines":[{"title":"标题","genres":["仙侠"],"synopsis":"80-120字简介","worldSetting":{"locations":[{"name":"地点名","description":"20-50字","level":"city"}],"factions":[{"name":"势力名","description":"20-40字"}],"rules":[{"name":"规则名","description":"20-40字","category":"custom"}]},"structure":{"act1":"第一幕60-100字","act2a":"第二幕上60-100字","act2b":"第二幕下60-100字","act3":"第三幕60-100字"},"subplots":[{"title":"子情节","description":"一句话"}],"chapters":[{"title":"第一章","summary":"1-2句话概括"}],"characters":[{"name":"角色名","role":"主角","description":"30-50字核心特质","personality":[],"appearance":"","abilities":[],"background":"","relationships":[{"targetName":"","type":"neutral","description":""}]}],"foreshadows":[{"hint":"一句话伏笔","type":"mystery","suggestedChapter":1}],"estimatedWordCount":0}]}
+{"outlines":[{"title":"标题","genres":["仙侠"],"synopsis":"60-80字简介","worldSetting":{"locations":[{"name":"地点","description":"15-30字","level":"city"}],"factions":[{"name":"势力","description":"20字"}],"rules":[{"name":"规则","description":"20字","category":"custom"}]},"structure":{"act1":"第一幕40-60字","act2a":"第二幕上40-60字","act2b":"第二幕下40-60字","act3":"第三幕40-60字"},"subplots":[],"chapters":[{"title":"第一章","summary":"一句话概括"}],"characters":[{"name":"角色","role":"主角","description":"20-40字","personality":[],"appearance":"","abilities":[],"background":"","relationships":[]}],"foreshadows":[{"hint":"一句话伏笔","type":"mystery","suggestedChapter":1}],"estimatedWordCount":0}]}
 `;
 }
 

@@ -1074,7 +1074,10 @@ function formatWordCount(count: number) {
         }}</span>
       </div>
       <div class="text-xs text-gray-400 dark:text-gray-500">
-        {{ generationProgress || 'AI 正在构思故事大纲，请稍候...' }}
+        {{ generationProgress || 'AI 正在构思故事，请稍候...' }}
+      </div>
+      <div class="mt-1.5 text-xs text-gray-400 dark:text-gray-500/70">
+        大纲内容较为丰富，预计需要 1-5 分钟
       </div>
     </div>
 
