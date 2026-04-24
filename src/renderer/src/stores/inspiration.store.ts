@@ -16,9 +16,7 @@ export const useInspirationStore = defineStore('inspiration', () => {
   const generationPhase = ref<'idle' | 'generating-L1' | 'generating-L2' | 'generating-L3' | 'generating-outlines'>('idle');
 
   // Getters
-  const canGenerateOutlines = computed(() => selectedNucleus.value !== null);
-  const canGenerateNuclei = computed(() => selectedElements.value.length > 0);
-  const canGenerateElements = computed(() => selectedTags.value.length > 0);
+  const canGenerateOutlines = computed(() => selectedElements.value.length > 0 && selectedTags.value.length > 0);
 
   // Actions
   function setTags(newTags: GenreTag[]) {
@@ -103,8 +101,6 @@ export const useInspirationStore = defineStore('inspiration', () => {
     isGenerating,
     generationPhase,
     canGenerateOutlines,
-    canGenerateNuclei,
-    canGenerateElements,
     setTags,
     setElements,
     setStoryNuclei,

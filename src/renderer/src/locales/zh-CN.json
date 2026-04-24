@@ -185,6 +185,7 @@
   "inspiration": {
     "title": "灵感探索",
     "description": "随机获取创作灵感",
+    "audienceTitle": "选择目标受众",
     "step1Title": "选择题材标签",
     "step1Desc": "点击标签开始你的创作之旅",
     "step2Title": "选择设定元素",

@@ -1,62 +1,101 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Sparkles, RefreshCw, Check, X, Zap } from 'lucide-vue-next';
+import { Sparkles, RefreshCw, Check, X, Zap, ArrowRight, BookOpen } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { useInspirationStore } from '@/stores/inspiration.store';
 import { useSettingsStore } from '@/stores/settings.store';
-import { UnifiedAIService } from '@/services/ai/unified.service';
-import { genreTags as configGenreTags, settingElements as configSettingElements, storyNuclei as configStoryNuclei } from '@/data/inspirations';
+import { useProjectStore } from '@/stores/project.store';
+import { FunctionCallingClient } from '@/services/ai/function-calling-client';
+import { genreTags as configGenreTags, settingElements as configSettingElements } from '@/data/inspirations';
 import { timing } from '@/config/timing';
+import type { GeneratedOutline } from '@/types/inspiration';
+import type { PlotNode } from '@/types/project';
 
 const { t } = useI18n();
+const router = useRouter();
 const inspirationStore = useInspirationStore();
 const settingsStore = useSettingsStore();
+const projectStore = useProjectStore();
 
 const isGenerating = ref(false);
 const generationError = ref<string | null>(null);
+const generationProgress = ref('');
 
-// Display counts - 每步展示数量
-const TAG_DISPLAY_COUNT = 8;
-const ELEMENT_DISPLAY_COUNT = 4;
-const NUCLEUS_DISPLAY_COUNT = 4;
+// Display counts - 显示全部数据
+const TAG_DISPLAY_COUNT = 999;
+const ELEMENT_DISPLAY_COUNT = 999;
 
-// Use config data
 const genreTags = configGenreTags;
 const settingElements = configSettingElements;
-const storyNuclei = configStoryNuclei;
 
+// 当前状态: selecting = 选择中, generating = 生成中, generated = 已生成
+type PanelState = 'selecting' | 'generating' | 'generated';
+const panelState = ref<PanelState>('selecting');
+
+// 大纲列表
+const generatedOutlines = ref<GeneratedOutline[]>([]);
+const selectedOutline = ref<GeneratedOutline | null>(null);
+
+// 受众人群选项
+type AudienceType = 'general' | 'male' | 'female';
+const audienceTypes: { id: AudienceType; name: string; icon: string; description: string }[] = [
+  { id: 'general', name: '大众', icon: '👥', description: '适合所有读者' },
+  { id: 'male', name: '男生', icon: '♂️', description: '男性向作品' },
+  { id: 'female', name: '女生', icon: '♀️', description: '女性向作品' },
+];
+
+// 当前选中的受众人群，默认为大众
+const selectedAudience = ref<AudienceType>('general');
+
+// 是否已完成受众人群选择（默认已选择大众）
+const audienceSelected = ref(true);
+
+// 显示模式: all = 全部, collapsed = 收起
+type DisplayMode = 'all' | 'collapsed';
+
+// Current step: 0=受众人群, 1=标签, 2=元素, 3=生成
 const currentStep = computed(() => {
-  if (inspirationStore.selectedNucleus) return 4;
   if (inspirationStore.selectedElements.length > 0) return 3;
   if (inspirationStore.selectedTags.length > 0) return 2;
-  return 1;
+  if (audienceSelected.value) return 1;
+  return 0;
 });
 
-// Display shuffled data - 初始化时随机打乱
+// 显示模式控制（保留但默认全显示）
+const tagDisplayMode = ref<DisplayMode>('all');
+const elementDisplayMode = ref<DisplayMode>('all');
+
 const shuffledGenreTags = ref<typeof genreTags>([]);
 const shuffledSettingElements = ref<typeof settingElements>([]);
-const shuffledStoryNuclei = ref<typeof storyNuclei>([]);
 
-// 初始化时随机打乱数据
 shuffledGenreTags.value = shuffleArray(genreTags);
 shuffledSettingElements.value = shuffleArray(settingElements);
-shuffledStoryNuclei.value = shuffleArray(storyNuclei);
 
-// Display data
-const displayedTags = computed(() => shuffledGenreTags.value.slice(0, TAG_DISPLAY_COUNT));
-const displayedElements = computed(() => shuffledSettingElements.value.slice(0, ELEMENT_DISPLAY_COUNT));
-const displayedNuclei = computed(() => shuffledStoryNuclei.value.slice(0, NUCLEUS_DISPLAY_COUNT));
+// 显示逻辑：默认显示全部数据
+const displayedTags = computed(() => shuffledGenreTags.value);
+const displayedElements = computed(() => shuffledSettingElements.value);
+
+const tagsTotalCount = computed(() => shuffledGenreTags.value.length);
+const elementsTotalCount = computed(() => shuffledSettingElements.value.length);
 
 function toggleTag(tagId: string) {
   inspirationStore.toggleTag(tagId);
 }
 
-function toggleElement(elementId: string) {
-  inspirationStore.toggleElement(elementId);
+function selectAudience(audienceId: AudienceType) {
+  selectedAudience.value = audienceId;
+  audienceSelected.value = true;
+  // 切换受众人群时重置其他选择
+  inspirationStore.reset();
+  shuffledGenreTags.value = shuffleArray(genreTags);
+  shuffledSettingElements.value = shuffleArray(settingElements);
+  tagDisplayMode.value = 'all';
+  elementDisplayMode.value = 'all';
 }
 
-function selectNucleus(nucleus: typeof storyNuclei[0]) {
-  inspirationStore.selectNucleus(nucleus);
+function toggleElement(elementId: string) {
+  inspirationStore.toggleElement(elementId);
 }
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -68,39 +107,35 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-// 刷新标签
 async function refreshTags() {
   isGenerating.value = true;
   await new Promise((resolve) => setTimeout(resolve, timing.mockApi.quick));
   shuffledGenreTags.value = shuffleArray(genreTags);
-  inspirationStore.reset(); // 重置所有选中状态
+  inspirationStore.reset();
+  panelState.value = 'selecting';
+  tagDisplayMode.value = 'all';
   isGenerating.value = false;
 }
 
-// 刷新元素
 async function refreshElements() {
   if (inspirationStore.selectedTags.length === 0) return;
   isGenerating.value = true;
   await new Promise((resolve) => setTimeout(resolve, timing.mockApi.quick));
   shuffledSettingElements.value = shuffleArray(settingElements);
-  inspirationStore.selectedElements = []; // 只重置元素选中
-  inspirationStore.storyNuclei = [];
-  inspirationStore.selectedNucleus = null;
+  inspirationStore.selectedElements = [];
+  panelState.value = 'selecting';
+  elementDisplayMode.value = 'all';
   isGenerating.value = false;
 }
 
-// 刷新故事核
-async function refreshNuclei() {
-  if (inspirationStore.selectedTags.length === 0 && inspirationStore.selectedElements.length === 0) return;
-  isGenerating.value = true;
-  await new Promise((resolve) => setTimeout(resolve, timing.animation.long));
-  shuffledStoryNuclei.value = shuffleArray(storyNuclei);
-  inspirationStore.setStoryNuclei(shuffledStoryNuclei.value);
-  inspirationStore.selectedNucleus = null; // 只重置故事核选中
-  isGenerating.value = false;
+function toggleTagDisplayMode() {
+  tagDisplayMode.value = tagDisplayMode.value === 'all' ? 'collapsed' : 'all';
 }
 
-// 随机选择
+function toggleElementDisplayMode() {
+  elementDisplayMode.value = elementDisplayMode.value === 'all' ? 'collapsed' : 'all';
+}
+
 async function randomPick() {
   isGenerating.value = true;
   await new Promise((resolve) => setTimeout(resolve, 800));
@@ -112,18 +147,26 @@ async function randomPick() {
   randomTags.forEach(tag => inspirationStore.toggleTag(tag.id));
   randomElements.forEach(element => inspirationStore.toggleElement(element.id));
   
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  shuffledStoryNuclei.value = shuffleArray(storyNuclei);
-  inspirationStore.setStoryNuclei(shuffledStoryNuclei.value);
+  // 重置显示模式
+  shuffledGenreTags.value = shuffleArray(genreTags);
+  shuffledSettingElements.value = shuffleArray(settingElements);
+  tagDisplayMode.value = 'all';
+  elementDisplayMode.value = 'all';
   
   isGenerating.value = false;
 }
 
 function clearSelection() {
   inspirationStore.reset();
+  selectedAudience.value = 'general';
+  // 重置后仍保持大众已选，标签步骤默认显示
   shuffledGenreTags.value = shuffleArray(genreTags);
   shuffledSettingElements.value = shuffleArray(settingElements);
-  shuffledStoryNuclei.value = shuffleArray(storyNuclei);
+  panelState.value = 'selecting';
+  generatedOutlines.value = [];
+  selectedOutline.value = null;
+  tagDisplayMode.value = 'all';
+  elementDisplayMode.value = 'all';
 }
 
 async function generateOutlines() {
@@ -146,50 +189,141 @@ async function generateOutlines() {
     return;
   }
 
+  panelState.value = 'generating';
   isGenerating.value = true;
   generationError.value = null;
-  inspirationStore.setGenerating(true, 'generating-outlines');
+  generationProgress.value = '';
+  selectedOutline.value = null;
+  generatedOutlines.value = [];
 
   try {
-    const aiService = new UnifiedAIService(
-      enabledProvider.provider,
-      enabledProvider.apiKey,
-      enabledProvider.baseUrl,
-      enabledProvider.modelName,
-      undefined,
-      enabledProvider.generationConfig
-    );
+    const fcClient = new FunctionCallingClient({
+      provider: enabledProvider.provider,
+      apiKey: enabledProvider.apiKey,
+      baseUrl: enabledProvider.baseUrl,
+      model: enabledProvider.modelName,
+      temperature: enabledProvider.generationConfig?.temperature,
+    });
 
-    const nucleus = inspirationStore.selectedNucleus;
     const tags = inspirationStore.selectedTags.map(id => genreTags.find(t => t.id === id)?.name).filter(Boolean);
     const elements = inspirationStore.selectedElements.map(id => settingElements.find(e => e.id === id)?.name).filter(Boolean);
 
-    const prompt = `类型标签：${tags.join('、')}
+    const prompt = `请根据以下设定，为我生成小说大纲。
+
+类型标签：${tags.join('、')}
 设定元素：${elements.join('、')}
 
-核心故事核：
-- 标题：${nucleus.title}
-- 前提：${nucleus.premise}
-- 冲突：${nucleus.conflict}
-- 主要角色：${nucleus.characters.map(c => `${c.name}(${c.role}: ${c.traits.join('、')})`).join('、')}`;
+请确保：
+1. 融合所有选定的类型标签特点
+2. 包含选定的设定元素
+3. 有明确的主角设定和成长弧线
+4. 有清晰的故事冲突和解决
+5. 生成3个不同风格的大纲备选`;
 
-    const result = await aiService.generateOutline(prompt, {
-      temperature: enabledProvider.generationConfig?.temperature,
-      topP: enabledProvider.generationConfig?.topP,
+    const result = await fcClient.generateOutline(prompt, 'medium', (msg) => {
+      generationProgress.value = msg;
     });
 
     if (result && result.outlines && result.outlines.length > 0) {
-      inspirationStore.setGeneratedOutlines(result.outlines);
+      generatedOutlines.value = result.outlines.map((o: any, i: number) => ({
+        id: `outline-${i}-${Date.now()}`,
+        title: o.title || '',
+        synopsis: o.synopsis || '',
+        genres: Array.isArray(o.genres) ? o.genres : tags,
+        characters: (Array.isArray(o.characters) ? o.characters : []).map((c: any) => ({
+          name: c.name || '',
+          role: c.role || '',
+          description: c.description || '',
+          personality: Array.isArray(c.personality) ? c.personality : [],
+          appearance: c.appearance || '',
+          abilities: Array.isArray(c.abilities) ? c.abilities : [],
+          background: c.background || '',
+          relationships: [],
+        })),
+        worldSetting: o.worldSetting,
+        foreshadows: Array.isArray(o.foreshadows) ? o.foreshadows.map((f: any) => ({
+          hint: typeof f === 'string' ? f : f.hint || '',
+          type: 'mystery',
+        })) : [],
+        chapters: [],
+        subplots: [],
+      }));
+      panelState.value = 'generated';
     } else {
       generationError.value = 'AI 返回格式异常，请重试';
+      panelState.value = 'selecting';
     }
   } catch (error) {
     console.error('[InspirationPanel] Outline generation error:', error);
     generationError.value = String(error);
+    panelState.value = 'selecting';
   } finally {
     isGenerating.value = false;
-    inspirationStore.setGenerating(false);
   }
+}
+
+function selectOutline(outline: GeneratedOutline) {
+  selectedOutline.value = outline;
+}
+
+async function createProject() {
+  if (!selectedOutline.value) return;
+
+  isGenerating.value = true;
+
+  try {
+    const outline = selectedOutline.value;
+    const structure = outline.structure;
+
+    const plotOutline: PlotNode[] = [];
+    let plotIndex = 0;
+
+    if (structure) {
+      // 使用 AI 返回的结构
+      structure.forEach((act: any) => {
+        plotOutline.push({
+          id: `plot-${plotIndex++}`,
+          title: act.title || act.name || '',
+          description: act.description || '',
+          chapterRange: act.chapterRange || [1, 10],
+          nodes: [],
+          color: getPlotColor(plotOutline.length),
+        });
+      });
+    } else {
+      // 默认结构
+      plotOutline.push(
+        { id: `plot-${plotIndex++}`, title: '第一幕：建置', description: '介绍世界观和主要人物', chapterRange: [1, 3], nodes: [], color: '#6366f1' },
+        { id: `plot-${plotIndex++}`, title: '第二幕：对抗', description: '主角面临主要冲突', chapterRange: [4, 7], nodes: [], color: '#8b5cf6' },
+        { id: `plot-${plotIndex++}`, title: '第三幕：解决', description: '冲突解决，故事收尾', chapterRange: [8, 10], nodes: [], color: '#a855f7' }
+      );
+    }
+
+    const projectName = outline.title || `新项目 ${new Date().toLocaleDateString()}`;
+    
+    await projectStore.createProject({
+      name: projectName,
+      synopsis: outline.synopsis,
+      genres: outline.genres,
+      characters: outline.characters,
+      worldSetting: outline.worldSetting,
+      foreshadows: outline.foreshadows,
+      plotOutline,
+    });
+
+    // 导航到编辑器
+    router.push(`/editor/${projectStore.currentProject?.id}`);
+  } catch (error) {
+    console.error('[InspirationPanel] Create project error:', error);
+    generationError.value = String(error);
+  } finally {
+    isGenerating.value = false;
+  }
+}
+
+function getPlotColor(index: number): string {
+  const colors = ['#6366f1', '#8b5cf6', '#a855f7', '#ec4899', '#f43f5e'];
+  return colors[index % colors.length];
 }
 
 // Quick scenario cards
@@ -198,12 +332,52 @@ const quickScenarios = [
     id: '1',
     title: '废物流逆袭',
     tags: ['修仙', '玄幻'],
-    elements: ['资质平平', '神秘导师'],
+    elements: ['资质平平', '灭门惨案'],
     icon: '💫',
     gradient: 'from-indigo-500 to-purple-600',
   },
   {
     id: '2',
+    title: '都市兵王',
+    tags: ['都市', '军旅'],
+    elements: ['神秘导师', '隐藏血脉'],
+    icon: '🎖️',
+    gradient: 'from-slate-600 to-gray-700',
+  },
+  {
+    id: '3',
+    title: '重生复仇',
+    tags: ['都市', '穿越'],
+    elements: ['重生者', '背叛陷害'],
+    icon: '⏰',
+    gradient: 'from-red-500 to-rose-600',
+  },
+  {
+    id: '4',
+    title: '星际探险',
+    tags: ['星际', '科幻'],
+    elements: ['穿越异界', '星际争霸'],
+    icon: '🚀',
+    gradient: 'from-cyan-500 to-blue-600',
+  },
+  {
+    id: '5',
+    title: '末世生存',
+    tags: ['末世', '废土'],
+    elements: ['末日生存', '废土末世'],
+    icon: '☢️',
+    gradient: 'from-lime-500 to-green-600',
+  },
+  {
+    id: '6',
+    title: '洪荒崛起',
+    tags: ['洪荒', '玄幻'],
+    elements: ['穿越者', '宗门崛起'],
+    icon: '🌋',
+    gradient: 'from-amber-500 to-red-600',
+  },
+  {
+    id: '7',
     title: '都市系统流',
     tags: ['都市', '言情'],
     elements: ['系统流', '校花/总裁'],
@@ -211,55 +385,65 @@ const quickScenarios = [
     gradient: 'from-pink-500 to-rose-600',
   },
   {
-    id: '3',
-    title: '星际探险',
-    tags: ['科幻'],
-    elements: ['星际争霸', '穿越异界'],
-    icon: '🚀',
-    gradient: 'from-cyan-500 to-blue-600',
-  },
-  {
-    id: '4',
-    title: '重生复仇',
-    tags: ['都市'],
-    elements: ['重生复仇', '天才流'],
-    icon: '⏰',
-    gradient: 'from-amber-500 to-orange-600',
-  },
-  {
-    id: '5',
+    id: '8',
     title: '剑道至尊',
     tags: ['玄幻', '武侠'],
-    elements: ['传承觉醒', '宗门崛起'],
+    elements: ['传承觉醒', '宗门大比'],
     icon: '⚔️',
-    gradient: 'from-slate-500 to-indigo-600',
+    gradient: 'from-emerald-500 to-teal-600',
   },
   {
-    id: '6',
-    title: '末世生存',
-    tags: ['末世'],
-    elements: ['末日生存', '废土'],
-    icon: '☢️',
-    gradient: 'from-lime-500 to-green-600',
+    id: '9',
+    title: '宫斗权谋',
+    tags: ['宫斗', '穿越'],
+    elements: ['权力斗争', '兄弟情义'],
+    icon: '👑',
+    gradient: 'from-red-600 to-rose-700',
+  },
+  {
+    id: '10',
+    title: '游戏异界',
+    tags: ['游戏', '奇幻'],
+    elements: ['游戏世界', '穿越异界'],
+    icon: '🎲',
+    gradient: 'from-violet-500 to-purple-600',
+  },
+  {
+    id: '11',
+    title: '赛博朋克',
+    tags: ['赛博朋克', '科幻'],
+    elements: ['赛博都市', '正邪对立'],
+    icon: '🤖',
+    gradient: 'from-cyan-400 to-blue-500',
+  },
+  {
+    id: '12',
+    title: '种田发家',
+    tags: ['种田', '穿越'],
+    elements: ['势力崛起', '红颜知己'],
+    icon: '🌾',
+    gradient: 'from-green-500 to-emerald-600',
   },
 ];
 
 function applyQuickScenario(scenario: typeof quickScenarios[0]) {
   inspirationStore.reset();
-  
+
   scenario.tags.forEach(tagName => {
     const tag = genreTags.find(g => g.name === tagName);
     if (tag) inspirationStore.toggleTag(tag.id);
   });
-  
+
   scenario.elements.forEach(elementName => {
     const element = settingElements.find(e => e.name === elementName);
     if (element) inspirationStore.toggleElement(element.id);
   });
   
-  shuffledStoryNuclei.value = shuffleArray(storyNuclei);
-  inspirationStore.setStoryNuclei(shuffledStoryNuclei.value);
-  saveDraft();
+  panelState.value = 'selecting';
+  generatedOutlines.value = [];
+  selectedOutline.value = null;
+  tagDisplayMode.value = 'all';
+  elementDisplayMode.value = 'all';
 }
 </script>
 
@@ -277,7 +461,7 @@ function applyQuickScenario(scenario: typeof quickScenarios[0]) {
         </div>
       </div>
       <button
-        v-if="currentStep > 1"
+        v-if="currentStep > 1 || panelState !== 'selecting'"
         class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         @click="clearSelection"
       >
@@ -286,7 +470,7 @@ function applyQuickScenario(scenario: typeof quickScenarios[0]) {
     </div>
 
     <!-- Quick Scenarios -->
-    <div v-if="currentStep === 1" class="mb-4">
+    <div v-if="panelState === 'selecting' && currentStep === 0" class="mb-4">
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('inspiration.quickStart') }}</span>
         <button
@@ -323,31 +507,53 @@ function applyQuickScenario(scenario: typeof quickScenarios[0]) {
     </div>
 
     <!-- Progress Indicator -->
-    <div class="flex items-center gap-1 mb-3">
+    <div v-if="panelState === 'selecting'" class="flex items-center gap-1 mb-3">
       <div
-        v-for="step in 4"
+        v-for="step in 3"
         :key="step"
         class="h-1 flex-1 rounded-full transition-all duration-300"
         :class="step <= currentStep ? 'bg-gradient-to-r from-amber-500 to-orange-500' : 'bg-gray-200 dark:bg-gray-700'"
       ></div>
     </div>
 
-    <!-- Step 1: Genre Tags -->
-    <div>
+    <!-- Step 0: Audience Selection (始终显示) -->
+    <div v-if="panelState === 'selecting'" class="mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+            <span class="text-xs font-bold text-white">1</span>
+          </div>
+          <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('inspiration.audienceTitle') }}</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        <button
+          v-for="audience in audienceTypes"
+          :key="audience.id"
+          class="p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-1"
+          :class="[
+            selectedAudience === audience.id
+              ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+              : 'border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 bg-white dark:bg-gray-800'
+          ]"
+          @click="selectAudience(audience.id)"
+        >
+          <span class="text-xl">{{ audience.icon }}</span>
+          <span class="font-medium text-xs text-gray-900 dark:text-white">{{ audience.name }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 1: Genre Tags (选择受众人群后显示) -->
+    <div v-if="panelState === 'selecting' && currentStep >= 1">
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-2">
           <div class="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-            <span class="text-xs font-bold text-white">1</span>
+            <span class="text-xs font-bold text-white">2</span>
           </div>
           <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('inspiration.step1Title') }}</span>
+          <span class="text-xs text-gray-400 dark:text-gray-500">({{ tagsTotalCount }})</span>
         </div>
-        <button
-          class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          :class="{ 'animate-spin': isGenerating }"
-          @click="refreshTags"
-        >
-          <RefreshCw class="w-3.5 h-3.5 text-gray-400" />
-        </button>
       </div>
 
       <div class="flex flex-wrap gap-2">
@@ -374,22 +580,16 @@ function applyQuickScenario(scenario: typeof quickScenarios[0]) {
       </div>
     </div>
 
-    <!-- Step 2: Setting Elements -->
-    <div v-if="inspirationStore.selectedTags.length > 0" class="animate-fade-in">
+    <!-- Step 3: Setting Elements (选择标签后显示) -->
+    <div v-if="panelState === 'selecting' && currentStep >= 2" class="animate-fade-in">
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-2">
           <div class="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-            <span class="text-xs font-bold text-white">2</span>
+            <span class="text-xs font-bold text-white">3</span>
           </div>
           <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('inspiration.step2Title') }}</span>
+          <span class="text-xs text-gray-400 dark:text-gray-500">({{ elementsTotalCount }})</span>
         </div>
-        <button
-          class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          :class="{ 'animate-spin': isGenerating }"
-          @click="refreshElements"
-        >
-          <RefreshCw class="w-3.5 h-3.5 text-gray-400" />
-        </button>
       </div>
 
       <div class="flex flex-wrap gap-2">
@@ -410,68 +610,8 @@ function applyQuickScenario(scenario: typeof quickScenarios[0]) {
       </div>
     </div>
 
-    <!-- Step 3: Story Nuclei -->
-    <div v-if="inspirationStore.canGenerateNuclei" class="animate-fade-in">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-            <span class="text-xs font-bold text-white">3</span>
-          </div>
-          <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('inspiration.step3Title') }}</span>
-        </div>
-        <button
-          class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          :class="{ 'animate-spin': isGenerating }"
-          @click="refreshNuclei"
-        >
-          <RefreshCw class="w-3.5 h-3.5 text-gray-400" />
-        </button>
-      </div>
-
-      <!-- Story Nuclei Cards -->
-      <div class="space-y-2">
-        <div
-          v-for="nucleus in displayedNuclei"
-          :key="nucleus.id"
-          class="p-3 rounded-xl border-2 cursor-pointer transition-all duration-200"
-          :class="[
-            inspirationStore.selectedNucleus?.id === nucleus.id
-              ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-900/20'
-              : 'border-gray-100 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-700 bg-white dark:bg-gray-800'
-          ]"
-          @click="selectNucleus(nucleus)"
-        >
-          <div class="flex items-start gap-2">
-            <div
-              v-if="inspirationStore.selectedNucleus?.id === nucleus.id"
-              class="w-5 h-5 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0"
-            >
-              <Check class="w-3 h-3 text-white" />
-            </div>
-            <div class="flex-1 min-w-0">
-              <h4 class="font-medium text-sm text-gray-900 dark:text-white">
-                {{ nucleus.title }}
-              </h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
-                {{ nucleus.premise }}
-              </p>
-              <div class="flex flex-wrap gap-1 mt-2">
-                <span
-                  v-for="tag in nucleus.genreTags"
-                  :key="tag"
-                  class="px-1.5 py-0.5 text-xs rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
-                >
-                  {{ tag }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Generate Button -->
-    <div v-if="inspirationStore.canGenerateOutlines" class="animate-fade-in pt-2">
+    <div v-if="panelState === 'selecting' && currentStep >= 3" class="animate-fade-in pt-2">
       <button
         class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 text-white text-sm font-semibold shadow-lg hover:shadow-xl transition-all"
         :disabled="isGenerating"
@@ -483,13 +623,87 @@ function applyQuickScenario(scenario: typeof quickScenarios[0]) {
       </button>
     </div>
 
+    <!-- Generating Progress -->
+    <div v-if="panelState === 'generating'" class="py-8 text-center">
+      <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center animate-pulse">
+        <Sparkles class="w-6 h-6 text-white" />
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-400">{{ generationProgress || '正在生成大纲...' }}</p>
+    </div>
+
+    <!-- Generated Outlines -->
+    <div v-if="panelState === 'generated'" class="space-y-3">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <BookOpen class="w-4 h-4 text-indigo-500" />
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">生成的大纲</span>
+        </div>
+        <button
+          class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          @click="panelState = 'selecting'; generatedOutlines = []; selectedOutline = null;"
+        >
+          <RefreshCw class="w-3.5 h-3.5 text-gray-400" />
+        </button>
+      </div>
+
+      <div
+        v-for="outline in generatedOutlines"
+        :key="outline.id"
+        class="p-3 rounded-xl border-2 cursor-pointer transition-all duration-200"
+        :class="[
+          selectedOutline?.id === outline.id
+            ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20'
+            : 'border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700 bg-white dark:bg-gray-800'
+        ]"
+        @click="selectOutline(outline)"
+      >
+        <div class="flex items-start gap-2">
+          <div
+            v-if="selectedOutline?.id === outline.id"
+            class="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0"
+          >
+            <Check class="w-3 h-3 text-white" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="font-medium text-sm text-gray-900 dark:text-white">
+              {{ outline.title }}
+            </h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
+              {{ outline.synopsis }}
+            </p>
+            <div class="flex flex-wrap gap-1 mt-2">
+              <span
+                v-for="genre in outline.genres.slice(0, 3)"
+                :key="genre"
+                class="px-1.5 py-0.5 text-xs rounded bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400"
+              >
+                {{ genre }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create Project Button -->
+      <button
+        v-if="selectedOutline"
+        class="w-full mt-4 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm font-semibold shadow-lg hover:shadow-xl transition-all"
+        :disabled="isGenerating"
+        @click="createProject"
+      >
+        <span v-if="!isGenerating">{{ t('quickStart.createFromOutline') }}</span>
+        <span v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+        <ArrowRight v-if="!isGenerating" class="w-4 h-4" />
+      </button>
+    </div>
+
     <!-- Error Message -->
     <div v-if="generationError" class="mt-2 p-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
       <p class="text-xs text-red-600 dark:text-red-400">{{ generationError }}</p>
     </div>
 
     <!-- Empty State -->
-    <div v-if="currentStep === 1" class="text-center py-4">
+    <div v-if="panelState === 'selecting' && currentStep === 1" class="text-center py-4">
       <Sparkles class="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
       <p class="text-xs text-gray-400 dark:text-gray-500">{{ t('inspiration.startJourneyDesc') }}</p>
     </div>
