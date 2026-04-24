@@ -4,6 +4,8 @@
  * Handles various AI response formats and edge cases
  */
 
+import { jsonrepair } from 'jsonrepair';
+
 export interface ParseResult<T = any> {
   success: boolean;
   data?: T;
@@ -116,6 +118,16 @@ export function robustJsonParse<T = any>(
     } catch {
       // Regex fallback failed
     }
+  }
+
+  // Strategy 7: Use jsonrepair for final recovery attempt
+  try {
+    const repaired = jsonRepair(content);
+    const data = JSON.parse(repaired);
+    warnings.push('Used jsonrepair to fix malformed JSON');
+    return { success: true, data: data as T, warnings };
+  } catch (e) {
+    warnings.push(`jsonrepair failed: ${(e as Error).message}`);
   }
 
   // All strategies failed

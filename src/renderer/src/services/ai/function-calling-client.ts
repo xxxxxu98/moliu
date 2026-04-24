@@ -3,6 +3,7 @@
  * 提供跨 Provider 的统一 Function Calling 调用接口
  */
 
+import { robustJsonParse } from '@/utils/json-parser';
 import { UnifiedAIService } from './unified.service';
 import { DEFAULT_WORD_COUNT_RANGE } from './unified.service';
 import type { ProviderType } from '@/config/ai-providers';
@@ -105,6 +106,28 @@ export class FunctionCallingClient {
   }
 
   /**
+   * 使用 robustJsonParse 解析 JSON（内部已集成 jsonrepair）
+   */
+  private safeJsonParse(jsonString: string): any {
+    // 先尝试原生解析
+    try {
+      return JSON.parse(jsonString);
+    } catch {
+      // 使用 robustJsonParse（内部使用 jsonrepair）修复并解析
+      const result = robustJsonParse(jsonString, {
+        expectedType: 'object',
+        enableCompletion: true,
+      });
+      if (result.success && result.data) {
+        console.warn('[FunctionCallingClient] JSON parsed with jsonrepair:', result.warnings);
+        return result.data;
+      }
+      // 最后再尝试原生解析（兜底）
+      return JSON.parse(jsonString);
+    }
+  }
+
+  /**
    * OpenAI 兼容 API 的 Function Calling 调用
    */
   private async callOpenAICompatible(
@@ -154,7 +177,7 @@ export class FunctionCallingClient {
     // 解析 tool_call
     if (data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments) {
       const args = data.choices[0].message.tool_calls[0].function.arguments;
-      const parsed = JSON.parse(args);
+      const parsed = this.safeJsonParse(args);
       onProgress?.('大纲生成成功！');
       return { outlines: parsed.outlines || [] };
     }
@@ -162,7 +185,7 @@ export class FunctionCallingClient {
     // 部分 Provider 返回格式不同，尝试其他字段
     if (data.choices?.[0]?.message?.function_call?.arguments) {
       const args = data.choices[0].message.function_call.arguments;
-      const parsed = typeof args === 'string' ? JSON.parse(args) : args;
+      const parsed = typeof args === 'string' ? this.safeJsonParse(args) : args;
       onProgress?.('大纲生成成功！');
       return { outlines: parsed.outlines || [] };
     }
@@ -170,7 +193,7 @@ export class FunctionCallingClient {
     // 如果没有 tool_call，尝试解析 content
     if (data.choices?.[0]?.message?.content) {
       try {
-        const parsed = JSON.parse(data.choices[0].message.content);
+        const parsed = this.safeJsonParse(data.choices[0].message.content);
         return { outlines: parsed.outlines || [] };
       } catch {
         throw new Error('无法解析 AI 返回的内容');
@@ -284,6 +307,21 @@ export class FunctionCallingClient {
     if (functionCall?.args) {
       onProgress?.('大纲生成成功！');
       return { outlines: functionCall.args.outlines || [] };
+    }
+
+    // 尝试使用 safeJsonParse 解析
+    if (functionCall) {
+      try {
+        const args = typeof functionCall.args === 'string' 
+          ? this.safeJsonParse(functionCall.args) 
+          : functionCall.args;
+        if (args?.outlines) {
+          onProgress?.('大纲生成成功！');
+          return { outlines: args.outlines };
+        }
+      } catch {
+        // 解析失败
+      }
     }
 
     throw new Error('Gemini 返回格式异常');
