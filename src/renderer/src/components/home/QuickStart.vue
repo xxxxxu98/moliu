@@ -275,7 +275,7 @@ async function generateOutlines() {
       generatedOutlines.value = result.outlines.map(
         (o: any, i: number) => {
           // 确保角色信息格式正确（支持结构化关系）
-          const characters = (o.characters || []).map((c: any) => {
+          const characters = (Array.isArray(o.characters) ? o.characters : []).map((c: any) => {
             // 处理旧格式的 relationships（字符串）
             if (typeof c.relationships === 'string') {
               return {
@@ -298,16 +298,18 @@ async function generateOutlines() {
               appearance: c.appearance || '',
               abilities: Array.isArray(c.abilities) ? c.abilities : [],
               background: c.background || '',
-              relationships: (c.relationships || []).map((r: any) => ({
-                targetName: r.targetName || '',
-                type: r.type || 'neutral',
-                description: r.description || '',
-              })),
+              relationships: Array.isArray(c.relationships)
+                ? c.relationships.map((r: any) => ({
+                    targetName: r.targetName || '',
+                    type: r.type || 'neutral',
+                    description: r.description || '',
+                  }))
+                : [],
             };
           });
 
           // 确保伏笔信息格式正确
-          const foreshadows = (o.foreshadows || []).map((f: any) => {
+          const foreshadows = (Array.isArray(o.foreshadows) ? o.foreshadows : []).map((f: any) => {
             if (typeof f === 'string') {
               return { hint: f, type: 'mystery', suggestedChapter: undefined };
             }
@@ -320,20 +322,20 @@ async function generateOutlines() {
 
           // 确保世界观信息格式正确（支持层级关系）
           const worldSetting = o.worldSetting ? {
-            locations: (o.worldSetting.locations || []).map((l: any) => ({
+            locations: (Array.isArray(o.worldSetting.locations) ? o.worldSetting.locations : []).map((l: any) => ({
               name: l.name || '',
               description: l.description || '',
               level: l.level || 'city',
               parentName: l.parentName || '',
             })),
-            factions: (o.worldSetting.factions || []).map((f: any) => ({
+            factions: (Array.isArray(o.worldSetting.factions) ? o.worldSetting.factions : []).map((f: any) => ({
               name: f.name || '',
               description: f.description || '',
               parentName: f.parentName || '',
               allies: Array.isArray(f.allies) ? f.allies : [],
               enemies: Array.isArray(f.enemies) ? f.enemies : [],
             })),
-            rules: (o.worldSetting.rules || []).map((r: any) => ({
+            rules: (Array.isArray(o.worldSetting.rules) ? o.worldSetting.rules : []).map((r: any) => ({
               name: r.name || '',
               description: r.description || '',
               category: r.category || 'custom',
@@ -342,7 +344,7 @@ async function generateOutlines() {
           } : undefined;
 
           // 确保子情节格式正确
-          const subplots = (o.subplots || []).map((s: any) => ({
+          const subplots = (Array.isArray(o.subplots) ? o.subplots : []).map((s: any) => ({
             title: s.title || '',
             description: s.description || '',
             relatedCharacters: Array.isArray(s.relatedCharacters) ? s.relatedCharacters : [],
@@ -351,7 +353,7 @@ async function generateOutlines() {
           }));
 
           // 确保章节级大纲格式正确
-          const chapters = (o.chapters || []).map((ch: any) => ({
+          const chapters = (Array.isArray(o.chapters) ? o.chapters : []).map((ch: any) => ({
             title: ch.title || '',
             summary: ch.summary || '',
             keyEvents: Array.isArray(ch.keyEvents) ? ch.keyEvents : [],
@@ -440,7 +442,7 @@ async function createProject() {
     }
 
     // 构建角色信息（支持结构化关系）
-    const characters = outline.characters.map((c, i) => ({
+    const characters = (Array.isArray(outline.characters) ? outline.characters : []).map((c, i) => ({
       id: `char-${Date.now()}-${i}`,
       name: c.name,
       role: c.role,
@@ -451,19 +453,21 @@ async function createProject() {
         background: c.background || c.description,
         abilities: c.abilities || [],
         // 处理结构化关系
-        relationships: (c.relationships || []).map((r: any) => ({
-          characterId: '', // 后续需要根据角色名匹配填充
-          targetName: r.targetName || '',
-          type: (r.type || 'neutral') as any,
-          description: r.description || '',
-        })),
+        relationships: Array.isArray(c.relationships)
+          ? c.relationships.map((r: any) => ({
+              characterId: '', // 后续需要根据角色名匹配填充
+              targetName: r.targetName || '',
+              type: (r.type || 'neutral') as any,
+              description: r.description || '',
+            }))
+          : [],
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }));
 
     // 构建伏笔信息
-    const foreshadows = outline.foreshadows.map((f, i) => ({
+    const foreshadows = (Array.isArray(outline.foreshadows) ? outline.foreshadows : []).map((f, i) => ({
       id: `foreshadow-${Date.now()}-${i}`,
       hint: f.hint,
       type: f.type || 'mystery',
@@ -481,7 +485,7 @@ async function createProject() {
       const ruleNameToId = new Map<string, string>();
 
       // 转换地点
-      const locations = outline.worldSetting.locations.map((l, i) => {
+      const locations = (Array.isArray(outline.worldSetting.locations) ? outline.worldSetting.locations : []).map((l, i) => {
         const id = `loc-${Date.now()}-${i}`;
         locationNameToId.set(l.name, id);
         return {
@@ -509,7 +513,7 @@ async function createProject() {
         locked: boolean;
         category: string;
         relatedRuleIds: string[];
-      }> = outline.worldSetting.rules.map((r, i) => {
+      }> = (Array.isArray(outline.worldSetting.rules) ? outline.worldSetting.rules : []).map((r, i) => {
         const id = `rule-${Date.now()}-${i}`;
         ruleNameToId.set(r.name, id);
         return {
@@ -536,7 +540,7 @@ async function createProject() {
       });
 
       // 转换势力
-      const factions = outline.worldSetting.factions.map((f, i) => {
+      const factions = (Array.isArray(outline.worldSetting.factions) ? outline.worldSetting.factions : []).map((f, i) => {
         const id = `faction-${Date.now()}-${i}`;
         factionNameToId.set(f.name, id);
         return {
