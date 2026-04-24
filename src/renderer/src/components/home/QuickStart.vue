@@ -448,14 +448,14 @@ async function createProject() {
       role: c.role,
       description: c.description,
       profile: {
-        personality: c.personality || [],
+        personality: Array.isArray(c.personality) ? c.personality : [],
         appearance: c.appearance || '',
-        background: c.background || c.description,
-        abilities: c.abilities || [],
-        // 处理结构化关系
+        background: c.background || c.description || '',
+        abilities: Array.isArray(c.abilities) ? c.abilities : [],
+        // 处理结构化关系 - 暂时保存 targetName，后续会通过 finalizeProjectCreation 填充 characterId
         relationships: Array.isArray(c.relationships)
           ? c.relationships.map((r: any) => ({
-              characterId: '', // 后续需要根据角色名匹配填充
+              characterId: '', // 将在 finalizeProjectCreation 中根据 targetName 填充
               targetName: r.targetName || '',
               type: (r.type || 'neutral') as any,
               description: r.description || '',
@@ -470,7 +470,7 @@ async function createProject() {
     const foreshadows = (Array.isArray(outline.foreshadows) ? outline.foreshadows : []).map((f, i) => ({
       id: `foreshadow-${Date.now()}-${i}`,
       hint: f.hint,
-      type: f.type || 'mystery',
+      type: (f.type || 'mystery') as 'item' | 'dialogue' | 'event' | 'mystery',
       status: 'buried' as const,
       createdChapter: 1,
       suggestedResolutionChapter: f.suggestedChapter,
@@ -608,6 +608,8 @@ async function createProject() {
 
     if (newProject) {
       router.push(`/project/${newProject.id}`);
+      // 完善项目数据（填充角色关系等）
+      projectStore.finalizeProjectCreation(newProject.id);
     }
   } catch (error) {
     console.error("Failed to create project:", error);

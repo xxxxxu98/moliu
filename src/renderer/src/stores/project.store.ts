@@ -334,6 +334,51 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
+  /**
+   * 解析并填充角色关系中的 characterId
+   * 在项目创建后调用，根据 targetName 填充对应的 characterId
+   */
+  function resolveCharacterRelationships() {
+    if (!currentProject.value) return;
+
+    // 建立角色名到ID的映射
+    const characterNameToId = new Map<string, string>();
+    characters.value.forEach(char => {
+      characterNameToId.set(char.name, char.id);
+    });
+
+    // 遍历所有角色，填充关系中的 characterId
+    let hasUpdates = false;
+    characters.value.forEach(char => {
+      if (char.profile.relationships && char.profile.relationships.length > 0) {
+        char.profile.relationships.forEach(rel => {
+          if (!rel.characterId && rel.targetName) {
+            const targetId = characterNameToId.get(rel.targetName);
+            if (targetId) {
+              rel.characterId = targetId;
+              hasUpdates = true;
+            }
+          }
+        });
+      }
+    });
+
+    // 如果有更新，保存项目
+    if (hasUpdates) {
+      currentProject.value.characters = characters.value;
+      saveCurrentProject();
+    }
+  }
+
+  /**
+   * 批量创建项目后初始化
+   * 包含角色关系解析等后处理
+   */
+  async function finalizeProjectCreation(projectId: string) {
+    await loadProject(projectId);
+    resolveCharacterRelationships();
+  }
+
   async function createProject(projectData: Partial<Project>): Promise<Project | null> {
     try {
       const newProject = await window.electronAPI.createProject({
@@ -512,5 +557,8 @@ export const useProjectStore = defineStore('project', () => {
     createForeshadow,
     updateForeshadow,
     deleteForeshadow,
+    // Character relationship resolution
+    resolveCharacterRelationships,
+    finalizeProjectCreation,
   };
 });
