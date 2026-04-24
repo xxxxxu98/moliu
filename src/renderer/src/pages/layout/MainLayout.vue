@@ -636,7 +636,7 @@ function getStatusConfig(status: string) {
     v-model:show="showSynopsisDialog"
     preset="card"
     :title="synopsisEditMode ? '编辑简介' : '项目简介'"
-    class="w-[600px]"
+    style="width: 80%;"
     :segmented="{ content: true, footer: true }"
   >
     <template #header-extra>
