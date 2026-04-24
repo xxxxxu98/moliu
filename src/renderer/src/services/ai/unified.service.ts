@@ -68,75 +68,41 @@ function extractPureText(rawContent: string): string {
 function buildOutlineSystemPrompt(
   wordCountRange: string = "50万-100万字",
 ): string {
-  return `你是一位专业的小说创作顾问和故事架构师。你的任务是根据用户提供的创意种子，生成多个独特且详尽的故事大纲。
+  return `你是一位专业的小说创作顾问。你的任务是根据用户提供的创意种子，生成多个简洁但完整的故事大纲。
 
-请生成2-3个不同风格的故事大纲，每个大纲包含：
-1. 标题：一个吸引人的故事标题
-2. 题材标签（genres）：故事的题材类型，从以下选项中选择1-3个：仙侠、武侠、言情、悬疑、科幻、魔幻、灵异、都市、奇幻、历史、同人、轻小说。如果都不适合，可以添加自定义题材。
-3. 简介：300-500字的详细故事概述，包含世界观、主要冲突和核心主题
-4. 世界观设定（worldSetting）：详细描述故事发生的世界规则，包含：
-   - locations: 地点数组，每个地点包含：
-     - name: 地点名称
-     - description: 地点描述
-     - level: 地点层级（world世界/continent大陆/country国家/city城市/district城区/special特殊地点）
-     - parentName: 上级地点名称（可选，用于建立层级关系）
-   - factions: 势力数组，每个势力包含：
-     - name: 势力名称
-     - description: 势力描述
-     - parentName: 上级势力名称（可选）
-     - allies: 友好势力名称数组（可选）
-     - enemies: 敌对势力名称数组（可选）
-   - rules: 规则数组，每个规则包含：
-     - name: 规则名称（如修炼体系、社会法则、世界运行规律等）
-     - description: 规则描述
-     - category: 规则类别（cultivation修炼/magic魔法/social社会/physics世界/custom自定义）
-     - relatedRuleNames: 关联规则名称数组（可选）
-5. 四幕式结构：每个幕包含详细描述
-   - 第一幕：建置（介绍背景、主要人物、世界观规则和初始冲突）
-   - 第二幕上：对抗（主角面临的挑战和成长，中间的转折点）
-   - 第二幕下：危机（最困难的时刻，重大牺牲或失败）
-   - 第三幕：解决（成长蜕变和圆满结局）
-6. 子情节（subplots）：2-3个重要的支线情节，每个子情节包含：
-   - title: 子情节标题
-   - description: 子情节详细描述
-   - relatedCharacters: 涉及的角色名称数组
-   - chapterRange: 预计章节范围 [起始章节, 结束章节]
-   - purpose: 子情节的目的/主题
-7. 章节级大纲（chapters）：根据字数范围生成适当数量的章节大纲
-   - 1-3万字：生成5-8章，每章包含 title（标题）和 summary（章节摘要）
-   - 3-10万字：生成10-20章，每章包含 title 和 summary
-   - 10-30万字：生成20-40章，每章包含 title、summary 和 keyEvents（关键事件数组）
-   - 30万字以上：生成40-80章，每章包含 title、summary、keyEvents 和 involvedCharacters（涉及角色）
-8. 主要角色：3-5个核心角色，每个角色需要包含以下详细信息：
-   - name: 角色名字
-   - role: 角色定位（如"主角"、"反派"、"导师"、"盟友"等）
-   - description: 角色描述
-   - personality: 性格特点数组，如 ["坚韧不拔", "内心孤独", "幽默风趣"]
-   - appearance: 外貌特征描述
-   - abilities: 特殊能力数组，如 ["剑术", "魔法"]
-   - background: 背景故事
-   - relationships: 结构化关系数组，每个关系包含：
-     - targetName: 关联的角色名称
-     - type: 关系类型（friend朋友/enemy敌人/family家人/lover恋人/rival竞争对手/mentor导师/student弟子/alliance盟友/neutral中立）
-     - description: 关系描述
-9. 伏笔设定：4-5个贯穿全文的伏笔或悬念，每个伏笔需要包含：
-   - hint: 伏笔内容描述
-   - type: 伏笔类型（"item"物品、"dialogue"对话、"event"事件、"mystery"悬疑）
-   - suggestedChapter: 建议揭晓的章节数（数字）
-10. 预估字数：${wordCountRange}
+请生成2-3个不同风格的故事大纲。
 
-【重要格式要求】
+【输出规范 - 严格遵守字数限制】
+- 简介：80-120字，简洁描述核心冲突和主题
+- 世界观：
+  - 地点最多3个，每个描述20-50字
+  - 规则最多2条，每条描述20-40字
+  - 势力最多2个，每个描述20-40字
+- 角色：3-4个核心角色
+  - 每个角色：姓名、身份（主角/反派等）、30-50字核心特质描述
+  - 关系：简化为1-2个关键关系
+- 四幕结构：每幕2-3句话概括（60-100字/幕）
+- 子情节：1-2个，每个一句话概括
+- 伏笔：2-3个，每个一句话描述
+- 章节大纲：
+  - 根据字数范围生成6-10章
+  - 每章用1-2句话概括关键情节点
+  - 字数多时生成更多章节，但保持描述简洁
+- 预估字数：${wordCountRange}
+
+【语言风格】
+- 使用简洁有力的语言
+- 避免冗长的修饰词和详细描写
+- 聚焦于故事的核心框架
+
+【格式要求】
 1. 只输出纯JSON，不要任何解释、前缀、后缀或markdown代码块
-2. 不要写'以下是'、'JSON如下'、'返回结果'等任何文字
-3. 确保JSON语法正确：大括号匹配、引号闭合、逗号位置正确
-4. 中文字符串内的换行请使用\\n转义
-5. 确保数组和对象完整闭合
-6. 所有字段要完整，即使某些字段没有信息也要返回空数组或空字符串
-7. 世界观设定（worldSetting）是必填字段，即使简介中没有明确提到，也要根据故事类型合理推断
-8. 子情节（subplots）和章节级大纲（chapters）是可选的，但建议包含1-2个子情节
+2. 确保JSON语法正确：大括号匹配、引号闭合、逗号位置正确
+3. 所有字段填写完整，空字段用空数组[]或空字符串""表示
 
-标准JSON格式示例：
-{"outlines":[{"title":"标题","genres":["仙侠","玄幻"],"synopsis":"简介","worldSetting":{"locations":[{"name":"青云山","description":"修仙门派所在地","level":"country","parentName":"九州"},{"name":"九州","description":"凡人世界的中心","level":"continent","parentName":"世界"}],"factions":[{"name":"青云宗","description":"正道第一门派","allies":["天道盟"],"enemies":["魔教"}],"rules":[{"name":"修炼境界","description":"炼气、筑基、金丹、元婴...","category":"cultivation","relatedRuleNames":["灵气"]},{"name":"灵气","description":"修炼的基础资源","category":"custom"}]},"structure":{"act1":"第一幕","act2a":"第二幕上","act2b":"第二幕下","act3":"第三幕"},"subplots":[{"title":"爱情线","description":"主角与女主的感情发展","relatedCharacters":["李逍遥","赵灵儿"],"chapterRange":[5,30],"purpose":"增加故事的情感张力"}],"chapters":[{"title":"第一章 少年拜师","summary":"描述主角拜入青云宗的经过","keyEvents":["主角出现在山脚下","遇到女主角","通过入门考核"]}],"characters":[{"name":"李逍遥","role":"主角","description":"坚韧不拔的少年","personality":["坚韧不拔","内心孤独"],"appearance":"身高七尺，剑眉星目","abilities":["御剑术"],"background":"孤儿出身","relationships":[{"targetName":"赵灵儿","type":"lover","description":"命中注定的恋人"},{"targetName":"魔教教主","type":"enemy","description":"不共戴天之仇"}]}],"foreshadows":[{"hint":"神秘玉佩","type":"item","suggestedChapter":10}],"estimatedWordCount":500000}]}`;
+JSON示例：
+{"outlines":[{"title":"标题","genres":["仙侠"],"synopsis":"80-120字简介","worldSetting":{"locations":[{"name":"地点名","description":"20-50字","level":"city"}],"factions":[{"name":"势力名","description":"20-40字"}],"rules":[{"name":"规则名","description":"20-40字","category":"custom"}]},"structure":{"act1":"第一幕60-100字","act2a":"第二幕上60-100字","act2b":"第二幕下60-100字","act3":"第三幕60-100字"},"subplots":[{"title":"子情节","description":"一句话"}],"chapters":[{"title":"第一章","summary":"1-2句话概括"}],"characters":[{"name":"角色名","role":"主角","description":"30-50字核心特质","personality":[],"appearance":"","abilities":[],"background":"","relationships":[{"targetName":"","type":"neutral","description":""}]}],"foreshadows":[{"hint":"一句话伏笔","type":"mystery","suggestedChapter":1}],"estimatedWordCount":0}]}
+`;
 }
 
 export const DEFAULT_WORD_COUNT_RANGE = "80万-150万字";
