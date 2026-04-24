@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { Sparkles, RefreshCw, Check, X, Shuffle, Save, BookOpen } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
+import { Sparkles, RefreshCw, Check, X, Zap } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 import { useInspirationStore } from '@/stores/inspiration.store';
 import { useSettingsStore } from '@/stores/settings.store';
 import { UnifiedAIService } from '@/services/ai/unified.service';
-import type { GenreTag, SettingElement, StoryNucleus } from '@/types/inspiration';
 import { genreTags as configGenreTags, settingElements as configSettingElements, storyNuclei as configStoryNuclei } from '@/data/inspirations';
 import { timing } from '@/config/timing';
 
@@ -16,17 +15,15 @@ const settingsStore = useSettingsStore();
 const isGenerating = ref(false);
 const generationError = ref<string | null>(null);
 
+// Display counts - 每步展示数量
+const TAG_DISPLAY_COUNT = 8;
+const ELEMENT_DISPLAY_COUNT = 4;
+const NUCLEUS_DISPLAY_COUNT = 4;
+
 // Use config data
 const genreTags = configGenreTags;
 const settingElements = configSettingElements;
 const storyNuclei = configStoryNuclei;
-
-// Draft state
-const savedDraft = ref<{
-  selectedTags: string[];
-  selectedElements: string[];
-  timestamp: number;
-} | null>(null);
 
 const currentStep = computed(() => {
   if (inspirationStore.selectedNucleus) return 4;
@@ -35,27 +32,32 @@ const currentStep = computed(() => {
   return 1;
 });
 
+// Display shuffled data - 初始化时随机打乱
+const shuffledGenreTags = ref<typeof genreTags>([]);
+const shuffledSettingElements = ref<typeof settingElements>([]);
+const shuffledStoryNuclei = ref<typeof storyNuclei>([]);
+
+// 初始化时随机打乱数据
+shuffledGenreTags.value = shuffleArray(genreTags);
+shuffledSettingElements.value = shuffleArray(settingElements);
+shuffledStoryNuclei.value = shuffleArray(storyNuclei);
+
+// Display data
+const displayedTags = computed(() => shuffledGenreTags.value.slice(0, TAG_DISPLAY_COUNT));
+const displayedElements = computed(() => shuffledSettingElements.value.slice(0, ELEMENT_DISPLAY_COUNT));
+const displayedNuclei = computed(() => shuffledStoryNuclei.value.slice(0, NUCLEUS_DISPLAY_COUNT));
+
 function toggleTag(tagId: string) {
   inspirationStore.toggleTag(tagId);
-  saveDraft();
 }
 
 function toggleElement(elementId: string) {
   inspirationStore.toggleElement(elementId);
-  // Restore nuclei after element selection (store clears them)
-  inspirationStore.setStoryNuclei(shuffledStoryNuclei.value.length > 0 ? shuffledStoryNuclei.value : storyNuclei);
-  saveDraft();
 }
 
 function selectNucleus(nucleus: typeof storyNuclei[0]) {
   inspirationStore.selectNucleus(nucleus);
-  saveDraft();
 }
-
-// Shuffled data for refresh functionality
-const shuffledGenreTags = ref<typeof genreTags>([]);
-const shuffledSettingElements = ref<typeof settingElements>([]);
-const shuffledStoryNuclei = ref<typeof storyNuclei>([]);
 
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
@@ -66,73 +68,75 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+// 刷新标签
 async function refreshTags() {
   isGenerating.value = true;
   await new Promise((resolve) => setTimeout(resolve, timing.mockApi.quick));
   shuffledGenreTags.value = shuffleArray(genreTags);
+  inspirationStore.reset(); // 重置所有选中状态
   isGenerating.value = false;
 }
 
+// 刷新元素
 async function refreshElements() {
   if (inspirationStore.selectedTags.length === 0) return;
   isGenerating.value = true;
   await new Promise((resolve) => setTimeout(resolve, timing.mockApi.quick));
   shuffledSettingElements.value = shuffleArray(settingElements);
+  inspirationStore.selectedElements = []; // 只重置元素选中
+  inspirationStore.storyNuclei = [];
+  inspirationStore.selectedNucleus = null;
   isGenerating.value = false;
 }
 
+// 刷新故事核
 async function refreshNuclei() {
   if (inspirationStore.selectedTags.length === 0 && inspirationStore.selectedElements.length === 0) return;
   isGenerating.value = true;
   await new Promise((resolve) => setTimeout(resolve, timing.animation.long));
   shuffledStoryNuclei.value = shuffleArray(storyNuclei);
   inspirationStore.setStoryNuclei(shuffledStoryNuclei.value);
+  inspirationStore.selectedNucleus = null; // 只重置故事核选中
   isGenerating.value = false;
 }
 
+// 随机选择
 async function randomPick() {
   isGenerating.value = true;
-  
-  // Simulate thinking
   await new Promise((resolve) => setTimeout(resolve, 800));
   
-  // Random pick one tag
-  const randomTag = genreTags[Math.floor(Math.random() * genreTags.length)];
-  const randomElement = settingElements[Math.floor(Math.random() * settingElements.length)];
+  const randomTags = shuffleArray(genreTags).slice(0, 2 + Math.floor(Math.random() * 2));
+  const randomElements = shuffleArray(settingElements).slice(0, 2 + Math.floor(Math.random() * 2));
   
   inspirationStore.reset();
-  inspirationStore.toggleTag(randomTag.id);
-  inspirationStore.toggleElement(randomElement.id);
+  randomTags.forEach(tag => inspirationStore.toggleTag(tag.id));
+  randomElements.forEach(element => inspirationStore.toggleElement(element.id));
   
-  // Refresh nuclei
   await new Promise((resolve) => setTimeout(resolve, 300));
-  inspirationStore.setStoryNuclei(storyNuclei);
+  shuffledStoryNuclei.value = shuffleArray(storyNuclei);
+  inspirationStore.setStoryNuclei(shuffledStoryNuclei.value);
   
   isGenerating.value = false;
 }
 
 function clearSelection() {
   inspirationStore.reset();
-  clearDraft();
-  shuffledGenreTags.value = [];
-  shuffledSettingElements.value = [];
-  shuffledStoryNuclei.value = [];
+  shuffledGenreTags.value = shuffleArray(genreTags);
+  shuffledSettingElements.value = shuffleArray(settingElements);
+  shuffledStoryNuclei.value = shuffleArray(storyNuclei);
 }
 
 async function generateOutlines() {
-  // 优先使用用户在设置页面选择的默认模型
   let enabledProvider = null;
   const defaultModelId = settingsStore.defaultModel;
   
   if (defaultModelId) {
-    // 解析 defaultModelId，格式为 "providerId:modelName"
     const [providerId, modelName] = defaultModelId.split(':');
     enabledProvider = settingsStore.aiProviders.find(
       (p) => p.id === providerId && p.modelName === modelName && p.enabled && p.apiKey,
     );
   }
   
-  // Fallback: 如果默认模型无效或未设置，找第一个启用的厂商
   if (!enabledProvider) {
     enabledProvider = settingsStore.aiProviders.find(p => p.enabled && p.apiKey);
   }
@@ -147,17 +151,15 @@ async function generateOutlines() {
   inspirationStore.setGenerating(true, 'generating-outlines');
 
   try {
-    // Create AI service instance（不传递 maxTokens）
     const aiService = new UnifiedAIService(
       enabledProvider.provider,
       enabledProvider.apiKey,
       enabledProvider.baseUrl,
       enabledProvider.modelName,
-      undefined, // 不设置 maxTokens
+      undefined,
       enabledProvider.generationConfig
     );
 
-    // Build prompt from selected inspiration
     const nucleus = inspirationStore.selectedNucleus;
     const tags = inspirationStore.selectedTags.map(id => genreTags.find(t => t.id === id)?.name).filter(Boolean);
     const elements = inspirationStore.selectedElements.map(id => settingElements.find(e => e.id === id)?.name).filter(Boolean);
@@ -171,7 +173,6 @@ async function generateOutlines() {
 - 冲突：${nucleus.conflict}
 - 主要角色：${nucleus.characters.map(c => `${c.name}(${c.role}: ${c.traits.join('、')})`).join('、')}`;
 
-    // Use non-streaming method for better JSON parsing
     const result = await aiService.generateOutline(prompt, {
       temperature: enabledProvider.generationConfig?.temperature,
       topP: enabledProvider.generationConfig?.topP,
@@ -190,51 +191,6 @@ async function generateOutlines() {
     inspirationStore.setGenerating(false);
   }
 }
-
-function saveDraft() {
-  const draft = {
-    selectedTags: [...inspirationStore.selectedTags],
-    selectedElements: [...inspirationStore.selectedElements],
-    timestamp: Date.now(),
-  };
-  localStorage.setItem('inspirationDraft', JSON.stringify(draft));
-  savedDraft.value = draft;
-}
-
-function loadDraft() {
-  const draft = localStorage.getItem('inspirationDraft');
-  if (draft) {
-    try {
-      const parsed = JSON.parse(draft);
-      inspirationStore.reset();
-      parsed.selectedTags.forEach((id: string) => inspirationStore.toggleTag(id));
-      parsed.selectedElements.forEach((id: string) => inspirationStore.toggleElement(id));
-      inspirationStore.setStoryNuclei(storyNuclei);
-      savedDraft.value = parsed;
-    } catch (e) {
-      console.error('Failed to load draft:', e);
-    }
-  }
-}
-
-function clearDraft() {
-  localStorage.removeItem('inspirationDraft');
-  savedDraft.value = null;
-}
-
-onMounted(() => {
-  inspirationStore.setStoryNuclei(storyNuclei);
-  
-  // Load saved draft
-  const draft = localStorage.getItem('inspirationDraft');
-  if (draft) {
-    try {
-      savedDraft.value = JSON.parse(draft);
-    } catch (e) {
-      console.error('Failed to parse saved draft:', e);
-    }
-  }
-});
 
 // Quick scenario cards
 const quickScenarios = [
@@ -270,24 +226,39 @@ const quickScenarios = [
     icon: '⏰',
     gradient: 'from-amber-500 to-orange-600',
   },
+  {
+    id: '5',
+    title: '剑道至尊',
+    tags: ['玄幻', '武侠'],
+    elements: ['传承觉醒', '宗门崛起'],
+    icon: '⚔️',
+    gradient: 'from-slate-500 to-indigo-600',
+  },
+  {
+    id: '6',
+    title: '末世生存',
+    tags: ['末世'],
+    elements: ['末日生存', '废土'],
+    icon: '☢️',
+    gradient: 'from-lime-500 to-green-600',
+  },
 ];
 
 function applyQuickScenario(scenario: typeof quickScenarios[0]) {
   inspirationStore.reset();
   
-  // Map tag names to IDs
   scenario.tags.forEach(tagName => {
     const tag = genreTags.find(g => g.name === tagName);
     if (tag) inspirationStore.toggleTag(tag.id);
   });
   
-  // Map element names to IDs
   scenario.elements.forEach(elementName => {
     const element = settingElements.find(e => e.name === elementName);
     if (element) inspirationStore.toggleElement(element.id);
   });
   
-  inspirationStore.setStoryNuclei(storyNuclei);
+  shuffledStoryNuclei.value = shuffleArray(storyNuclei);
+  inspirationStore.setStoryNuclei(shuffledStoryNuclei.value);
   saveDraft();
 }
 </script>
@@ -305,23 +276,13 @@ function applyQuickScenario(scenario: typeof quickScenarios[0]) {
           <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('inspiration.description') }}</p>
         </div>
       </div>
-      <div class="flex items-center gap-1">
-        <button
-          v-if="savedDraft"
-          class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          title="加载草稿"
-          @click="loadDraft"
-        >
-          <BookOpen class="w-4 h-4 text-amber-500" />
-        </button>
-        <button
-          v-if="currentStep > 1"
-          class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          @click="clearSelection"
-        >
-          <X class="w-4 h-4 text-gray-400" />
-        </button>
-      </div>
+      <button
+        v-if="currentStep > 1"
+        class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        @click="clearSelection"
+      >
+        <X class="w-4 h-4 text-gray-400" />
+      </button>
     </div>
 
     <!-- Quick Scenarios -->
@@ -332,7 +293,7 @@ function applyQuickScenario(scenario: typeof quickScenarios[0]) {
           class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300"
           @click="randomPick"
         >
-          <Shuffle class="w-3 h-3" />
+          <Zap class="w-3 h-3" />
           {{ t('inspiration.randomPick') }}
         </button>
       </div>
@@ -391,7 +352,7 @@ function applyQuickScenario(scenario: typeof quickScenarios[0]) {
 
       <div class="flex flex-wrap gap-2">
         <button
-          v-for="tag in (shuffledGenreTags.length > 0 ? shuffledGenreTags : genreTags)"
+          v-for="tag in displayedTags"
           :key="tag.id"
           class="px-3 py-1.5 rounded-lg text-sm transition-all duration-200 relative group"
           :class="[
@@ -431,33 +392,21 @@ function applyQuickScenario(scenario: typeof quickScenarios[0]) {
         </button>
       </div>
 
-      <div class="space-y-2">
-        <!-- Group by category -->
-        <div v-for="category in ['character', 'plot', 'world', 'conflict']" :key="category">
-          <div v-if="(shuffledSettingElements.length > 0 ? shuffledSettingElements : settingElements).filter(e => e.category === category).length > 0" class="mb-2">
-            <span class="text-xs text-gray-400 dark:text-gray-500 capitalize">{{
-              category === 'character' ? '角色设定' :
-              category === 'plot' ? '剧情元素' :
-              category === 'world' ? '世界观' : '核心冲突'
-            }}</span>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <button
-              v-for="element in (shuffledSettingElements.length > 0 ? shuffledSettingElements : settingElements).filter(e => e.category === category)"
-              :key="element.id"
-              class="px-3 py-1.5 rounded-lg text-sm transition-all duration-200"
-              :class="[
-                inspirationStore.selectedElements.includes(element.id)
-                  ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/50'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30'
-              ]"
-              @click="toggleElement(element.id)"
-            >
-              <span class="mr-1">{{ element.icon }}</span>
-              {{ element.name }}
-            </button>
-          </div>
-        </div>
+      <div class="flex flex-wrap gap-2">
+        <button
+          v-for="element in displayedElements"
+          :key="element.id"
+          class="px-3 py-1.5 rounded-lg text-sm transition-all duration-200"
+          :class="[
+            inspirationStore.selectedElements.includes(element.id)
+              ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/50'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30'
+          ]"
+          @click="toggleElement(element.id)"
+        >
+          <span class="mr-1">{{ element.icon }}</span>
+          {{ element.name }}
+        </button>
       </div>
     </div>
 
@@ -482,7 +431,7 @@ function applyQuickScenario(scenario: typeof quickScenarios[0]) {
       <!-- Story Nuclei Cards -->
       <div class="space-y-2">
         <div
-          v-for="nucleus in inspirationStore.storyNuclei"
+          v-for="nucleus in displayedNuclei"
           :key="nucleus.id"
           class="p-3 rounded-xl border-2 cursor-pointer transition-all duration-200"
           :class="[
