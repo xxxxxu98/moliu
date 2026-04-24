@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import {
   NButton,
   NInput,
@@ -34,6 +34,12 @@ import {
   defaultProviders,
   type ProviderType,
 } from "@/config/ai-providers";
+
+// Test connection timeout in milliseconds
+const TEST_TIMEOUT_MS = 30000;
+
+// Track active test controller for cleanup
+let activeTestController: AbortController | null = null;
 
 const { t } = useI18n();
 const message = useMessage();
@@ -351,9 +357,23 @@ async function testConnection(provider: AIProvider) {
     return;
   }
 
+  // Cancel any existing test
+  if (activeTestController) {
+    activeTestController.abort();
+  }
+  activeTestController = new AbortController();
+
   provider.isTesting = true;
+  
+  // Timeout handler
+  const timeoutId = setTimeout(() => {
+    activeTestController?.abort();
+  }, TEST_TIMEOUT_MS);
+
   try {
-    const result = await settingsStore.testAIProvider(provider);
+    const result = await settingsStore.testAIProvider(provider, activeTestController.signal);
+
+    clearTimeout(timeoutId);
 
     if (result.success) {
       message.success(
@@ -370,8 +390,24 @@ async function testConnection(provider: AIProvider) {
         }) + ": " + t(`settings.aiProviders.messages.${errorKey}`)
       );
     }
+  } catch (error) {
+    clearTimeout(timeoutId);
+    // Check if it was aborted
+    if (error instanceof Error && error.name === 'AbortError') {
+      message.warning(t("settings.aiProviders.messages.testTimeout"));
+    } else {
+      const errorMessage = error instanceof Error ? error.message : 'Test failed';
+      message.error(
+        t("settings.aiProviders.messages.testFailed", {
+          name: provider.name,
+        }) + ": " + errorMessage
+      );
+    }
   } finally {
     provider.isTesting = false;
+    if (activeTestController) {
+      activeTestController = null;
+    }
   }
 }
 
@@ -410,6 +446,29 @@ function handleDefaultModelChange(modelId: string) {
     settingsStore.setDefaultModel(modelId);
   }
 }
+
+// Cleanup on component unmount - reset any stuck testing states
+onUnmounted(() => {
+  if (activeTestController) {
+    activeTestController.abort();
+    activeTestController = null;
+  }
+  // Reset testing state for all providers
+  settingsStore.aiProviders.forEach(p => {
+    if (p.isTesting) {
+      p.isTesting = false;
+    }
+  });
+});
+
+// Reset any stuck testing states on page mount
+onMounted(() => {
+  const hasStuckProviders = settingsStore.resetTestingStates();
+  if (hasStuckProviders) {
+    console.warn('[AIModelConfig] Found stuck testing states on mount, resetting...');
+    message.warning(t("settings.aiProviders.messages.stuckStateReset"));
+  }
+});
 </script>
 
 <template>

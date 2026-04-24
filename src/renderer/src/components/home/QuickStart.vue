@@ -18,6 +18,7 @@ import { useSettingsStore } from "@/stores/settings.store";
 import { useProjectStore } from "@/stores/project.store";
 import { useInspirationStore } from "@/stores/inspiration.store";
 import { UnifiedAIService } from "@/services/ai/unified.service";
+import { FunctionCallingClient } from "@/services/ai/function-calling-client";
 import { WORD_COUNT_OPTIONS, DEFAULT_WORD_COUNT_RANGE } from "@/services/ai/unified.service";
 import type { GeneratedOutline } from "@/types/inspiration";
 import type { PlotNode } from "@/types/project";
@@ -117,6 +118,8 @@ const promptPreview = computed(() => {
 
 // Event listeners cleanup (no longer needed since we use direct service calls)
 let aiServiceInstance: UnifiedAIService | null = null;
+// 进度消息
+const generationProgress = ref<string>('');
 
 onMounted(() => {
   // Load saved draft from localStorage
@@ -249,24 +252,25 @@ async function generateOutlines() {
   selectedOutline.value = null;
   generatedOutlines.value = [];
   streamingError.value = null;
+  generationProgress.value = '';
 
   try {
-    // Create AI service instance in Renderer process
-    aiServiceInstance = new UnifiedAIService(
-      enabledProvider.provider,
-      enabledProvider.apiKey,
-      enabledProvider.baseUrl,
-      enabledProvider.modelName,
-      enabledProvider.maxTokens,
-      enabledProvider.generationConfig,
-    );
-
-    // Use non-streaming method for better JSON parsing reliability
-    const result = await aiServiceInstance.generateOutline(promptPreview.value, {
+    // 优先使用 Function Calling Client（更可靠）
+    const fcClient = new FunctionCallingClient({
+      provider: enabledProvider.provider,
+      apiKey: enabledProvider.apiKey,
+      baseUrl: enabledProvider.baseUrl,
+      model: enabledProvider.modelName,
       maxTokens: enabledProvider.maxTokens,
       temperature: enabledProvider.generationConfig?.temperature,
-      topP: enabledProvider.generationConfig?.topP,
-    }, selectedWordCountRange.value);
+    });
+
+    // 使用 Function Calling 生成大纲
+    const result = await fcClient.generateOutline(
+      promptPreview.value,
+      selectedWordCountRange.value,
+      (msg) => { generationProgress.value = msg; }
+    );
 
     if (result && result.outlines) {
       generatedOutlines.value = result.outlines.map(
@@ -1071,7 +1075,7 @@ function formatWordCount(count: number) {
         }}</span>
       </div>
       <div class="text-xs text-gray-400 dark:text-gray-500">
-        AI 正在构思故事大纲，请稍候...
+        {{ generationProgress || 'AI 正在构思故事大纲，请稍候...' }}
       </div>
     </div>
 

@@ -246,17 +246,52 @@ export class UnifiedAIService {
   }
 
   /**
-   * Test connection
+   * Test connection with abort signal support
    */
-  async testConnection(): Promise<{ success: boolean; error?: string }> {
+  async testConnection(signal?: AbortSignal): Promise<{ success: boolean; error?: string }> {
     if (!this.client) {
       return { success: false, error: 'Client not initialized' };
     }
 
+    // Check if already aborted
+    if (signal?.aborted) {
+      return { success: false, error: 'Test cancelled' };
+    }
+
     try {
-      await this.client.chat([{ role: 'user', content: 'Hi' }], { maxTokens: 5 });
-      return { success: true };
+      return await new Promise((resolve, reject) => {
+        // Listen for abort event
+        const abortHandler = () => {
+          reject(new DOMException('Aborted', 'AbortError'));
+        };
+        
+        // Add abort listener if signal provided
+        if (signal) {
+          signal.addEventListener('abort', abortHandler, { once: true });
+        }
+
+        // Execute the chat call
+        this.client!.chat([{ role: 'user', content: 'Hi' }], { maxTokens: 5 })
+          .then(() => {
+            // Clean up abort listener
+            if (signal) {
+              signal.removeEventListener('abort', abortHandler);
+            }
+            resolve({ success: true });
+          })
+          .catch((error) => {
+            // Clean up abort listener
+            if (signal) {
+              signal.removeEventListener('abort', abortHandler);
+            }
+            reject(error);
+          });
+      });
     } catch (error) {
+      // Handle abort error specially
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return { success: false, error: 'Test cancelled' };
+      }
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Connection test failed',

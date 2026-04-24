@@ -228,7 +228,19 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  async function testAIProvider(provider: AIProvider): Promise<{ success: boolean; error?: string; errorCode?: string; models?: string[] }> {
+  // Reset all testing states - useful for cleanup on page mount
+  function resetTestingStates() {
+    let hasChanges = false;
+    aiProviders.value.forEach(p => {
+      if (p.isTesting) {
+        p.isTesting = false;
+        hasChanges = true;
+      }
+    });
+    return hasChanges;
+  }
+
+  async function testAIProvider(provider: AIProvider, signal?: AbortSignal): Promise<{ success: boolean; error?: string; errorCode?: string; models?: string[] }> {
     try {
       const service = new UnifiedAIService(
         provider.provider,
@@ -239,12 +251,20 @@ export const useSettingsStore = defineStore('settings', () => {
         provider.generationConfig
       );
 
-      const result = await service.testConnection();
+      const result = await service.testConnection(signal);
       provider.isValid = result.success;
       
       if (result.success) {
         return { success: true };
       } else {
+        // Check if aborted
+        if (signal?.aborted) {
+          return { 
+            success: false, 
+            error: 'Test cancelled',
+            errorCode: 'CANCELLED'
+          };
+        }
         return { 
           success: false, 
           error: result.error,
@@ -252,6 +272,16 @@ export const useSettingsStore = defineStore('settings', () => {
         };
       }
     } catch (error) {
+      // Check if aborted
+      if (signal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
+        provider.isTesting = false;
+        return { 
+          success: false, 
+          error: 'Test cancelled',
+          errorCode: 'CANCELLED'
+        };
+      }
+      
       provider.isValid = false;
       const errorMessage = error instanceof Error ? error.message : 'Connection test failed';
       return { 
@@ -308,6 +338,7 @@ export const useSettingsStore = defineStore('settings', () => {
     addAIProvider,
     updateAIProvider,
     removeAIProvider,
+    resetTestingStates,
     testAIProvider,
   };
 });
