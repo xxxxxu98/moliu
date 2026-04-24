@@ -237,20 +237,6 @@ function validateApiKey(apiKey: string, provider: string): string | null {
   return null;
 }
 
-function validateModelName(modelName: string, provider: string): string | null {
-  if (!modelName || !modelName.trim()) {
-    return t("settings.aiProviders.messages.enterModelName");
-  }
-  
-  // Basic format check (alphanumeric, hyphen, underscore, dot)
-  const validFormat = /^[a-zA-Z0-9_\-\.]+$/;
-  if (!validFormat.test(modelName.trim())) {
-    return t("settings.aiProviders.messages.invalidModelFormat");
-  }
-  
-  return null;
-}
-
 function validateBaseUrl(baseUrl: string | undefined): string | null {
   if (!baseUrl || !baseUrl.trim()) {
     return null; // Optional field
@@ -270,7 +256,6 @@ function validateBaseUrl(baseUrl: string | undefined): string | null {
 // Form validation
 const formErrors = ref<{
   apiKey?: string;
-  modelName?: string;
   baseUrl?: string;
 }>({});
 
@@ -278,12 +263,6 @@ function validateForm(): boolean {
   if (!editingProvider.value) return false;
   
   const errors: typeof formErrors.value = {};
-  
-  // Validate Model Name
-  const modelNameError = validateModelName(editingProvider.value.modelName, editingProvider.value.provider);
-  if (modelNameError) {
-    errors.modelName = modelNameError;
-  }
   
   // Validate Base URL
   const baseUrlError = validateBaseUrl(editingProvider.value.baseUrl);
@@ -807,7 +786,7 @@ onMounted(() => {
             </template>
           </NInput>
         </NFormItem>
-        <NFormItem :label="t('settings.aiProviders.modelName')" :validation-status="formErrors.modelName ? 'error' : undefined" :feedback="formErrors.modelName">
+        <NFormItem :label="t('settings.aiProviders.modelName')">
           <NInput
             v-model:value="editingProvider.modelName"
             :placeholder="'e.g. gpt-4o, claude-3-5-sonnet-20241022'"

@@ -77,16 +77,16 @@ export class FunctionCallingClient {
     wordCountRange: string = DEFAULT_WORD_COUNT_RANGE,
     onProgress?: (message: string) => void
   ): Promise<{ outlines: any[] } | null> {
-    onProgress?.('正在唤醒 AI，请稍候...');
+    onProgress?.('正在初始化 AI 模型，请稍候...');
     
     // 如果不支持 Function Calling，回退到 JSON 模式
     if (!this.isSupported()) {
-      onProgress?.('当前模型不支持高级模式，使用标准模式...');
+      onProgress?.('当前模型不支持 Function Calling，使用标准模式生成...');
       return this.fallbackGenerateOutline(prompt, wordCountRange);
     }
 
     try {
-      onProgress?.('正在构思故事结构...');
+      onProgress?.('正在分析创意种子，构建故事框架...');
       
       // 根据 Provider 选择不同的调用方式
       if (needsCustomFunctionCalling(this.config.provider)) {
@@ -98,9 +98,8 @@ export class FunctionCallingClient {
       }
     } catch (error) {
       console.error('[FunctionCallingClient] Error:', error);
-      onProgress?.('遇到小问题，尝试备用方案...');
       
-      // 回退到 JSON 模式
+      // 静默回退到 JSON 模式
       return this.fallbackGenerateOutline(prompt, wordCountRange);
     }
   }
@@ -137,7 +136,7 @@ export class FunctionCallingClient {
       delete requestBody.tool_choice;
     }
 
-    onProgress?.('正在等待 AI 响应，预计需要 1-5 分钟...');
+    onProgress?.(`正在生成大纲内容，请耐心等待...\n（大纲内容丰富，包含世界观、角色、四幕结构等多维度内容，预计需要 1-5 分钟）`);
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -203,7 +202,7 @@ export class FunctionCallingClient {
       tools: [toAnthropicSchema(OUTLINE_FUNCTION_SCHEMA)]
     };
 
-    onProgress?.('正在等待 Claude 响应...');
+    onProgress?.(`正在生成大纲内容，请耐心等待...\n（需要构建完整的世界观、角色关系和情节发展，预计需要 1-5 分钟）`);
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -265,7 +264,7 @@ export class FunctionCallingClient {
       }
     };
 
-    onProgress?.('正在等待 Gemini 响应...');
+    onProgress?.(`正在生成大纲内容，请耐心等待...\n（需要构建完整的世界观、角色关系和情节发展，预计需要 1-5 分钟）`);
 
     const response = await fetch(endpoint, {
       method: 'POST',
