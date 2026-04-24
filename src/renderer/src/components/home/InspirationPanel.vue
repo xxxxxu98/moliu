@@ -51,6 +51,9 @@ const panelState = ref<PanelState>("selecting");
 const generatedOutlines = ref<GeneratedOutline[]>([]);
 const selectedOutline = ref<GeneratedOutline | null>(null);
 
+// 当前选中的快速开始卡片
+const selectedQuickScenario = ref<string | null>(null);
+
 // 受众人群选项
 type AudienceType = "general" | "male" | "female";
 const audienceTypes: {
@@ -126,12 +129,18 @@ const tagsTotalCount = computed(() => shuffledGenreTags.value.length);
 const elementsTotalCount = computed(() => shuffledSettingElements.value.length);
 
 function toggleTag(tagId: string) {
+  // 清除快速开始选中状态（切换到自定义模式）
+  if (creationTab.value === 'custom') {
+    selectedQuickScenario.value = null;
+  }
   inspirationStore.toggleTag(tagId);
 }
 
 function selectAudience(audienceId: AudienceType) {
   selectedAudience.value = audienceId;
   audienceSelected.value = true;
+  // 清除快速开始选中状态
+  selectedQuickScenario.value = null;
   // 切换受众人群时重置其他选择
   inspirationStore.reset();
   shuffledGenreTags.value = shuffleArray(genreTags);
@@ -840,6 +849,9 @@ const quickScenarios: QuickScenario[] = [
 function applyQuickScenario(scenario: QuickScenario) {
   inspirationStore.reset();
 
+  // 设置当前选中的快速开始卡片
+  selectedQuickScenario.value = scenario.id;
+
   // 设置受众人群
   selectedAudience.value = scenario.audience;
   audienceSelected.value = true;
@@ -865,6 +877,7 @@ function applyQuickScenario(scenario: QuickScenario) {
 
 function switchTab(tab: CreationTab) {
   creationTab.value = tab;
+  selectedQuickScenario.value = null;
   if (tab === "custom") {
     // 切换到自定义模式时，清空快速开始的选择
     inspirationStore.reset();
@@ -875,6 +888,7 @@ function switchTab(tab: CreationTab) {
 function resetToQuickStart() {
   inspirationStore.reset();
   selectedAudience.value = "general";
+  selectedQuickScenario.value = null;
   creationTab.value = "quick";
   panelState.value = "selecting";
   generatedOutlines.value = [];
@@ -957,10 +971,22 @@ function resetToQuickStart() {
         <button
           v-for="scenario in quickScenarios"
           :key="scenario.id"
-          class="p-3 rounded-xl bg-gradient-to-br text-left transition-all duration-200 hover:scale-[1.02]"
-          :class="scenario.gradient"
+          class="p-3 rounded-xl bg-gradient-to-br text-left transition-all duration-200 relative group"
+          :class="[
+            scenario.gradient,
+            selectedQuickScenario === scenario.id
+              ? 'ring-2 ring-white ring-offset-2 dark:ring-offset-gray-900 scale-[1.02]'
+              : 'hover:scale-[1.02]',
+          ]"
           @click="applyQuickScenario(scenario)"
         >
+          <!-- 选中状态指示器 -->
+          <div
+            v-if="selectedQuickScenario === scenario.id"
+            class="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center"
+          >
+            <Check class="w-3 h-3 text-white" />
+          </div>
           <div class="flex items-center gap-2 mb-1.5">
             <span class="text-lg">{{ scenario.icon }}</span>
             <span class="font-medium text-sm text-white">{{
@@ -1188,26 +1214,39 @@ function resetToQuickStart() {
         v-if="creationTab === 'quick'"
         class="mb-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
       >
-        <div class="text-xs text-amber-700 dark:text-amber-400 mb-2">
-          已选择 {{ inspirationStore.selectedTags.length }} 个标签，{{
-            inspirationStore.selectedElements.length
-          }}
-          个元素
+        <!-- 受众人群 -->
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-amber-600 dark:text-amber-400 font-medium">受众人群</span>
+          <span class="px-2 py-0.5 text-xs rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+            {{ audienceTypes.find(a => a.id === selectedAudience)?.icon }}
+            {{ audienceTypes.find(a => a.id === selectedAudience)?.name }}
+          </span>
         </div>
-        <div class="flex flex-wrap gap-1">
-          <span
-            v-for="tagId in inspirationStore.selectedTags.slice(0, 5)"
-            :key="tagId"
-            class="px-2 py-0.5 text-xs rounded bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400"
-          >
-            {{ genreTags.find((t) => t.id === tagId)?.name }}
-          </span>
-          <span
-            v-if="inspirationStore.selectedTags.length > 5"
-            class="px-2 py-0.5 text-xs text-gray-500"
-          >
-            +{{ inspirationStore.selectedTags.length - 5 }}
-          </span>
+        <!-- 题材标签 -->
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-indigo-600 dark:text-indigo-400 font-medium">题材标签</span>
+          <div class="flex flex-wrap gap-1">
+            <span
+              v-for="tagId in inspirationStore.selectedTags"
+              :key="tagId"
+              class="px-2 py-0.5 text-xs rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400"
+            >
+              {{ genreTags.find((t) => t.id === tagId)?.name }}
+            </span>
+          </div>
+        </div>
+        <!-- 设定元素 -->
+        <div class="flex items-start gap-2">
+          <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium pt-0.5">设定元素</span>
+          <div class="flex flex-wrap gap-1">
+            <span
+              v-for="elementId in inspirationStore.selectedElements"
+              :key="elementId"
+              class="px-2 py-0.5 text-xs rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400"
+            >
+              {{ settingElements.find((e) => e.id === elementId)?.name }}
+            </span>
+          </div>
         </div>
       </div>
       <button
