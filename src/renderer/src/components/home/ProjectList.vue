@@ -19,8 +19,9 @@ const searchQuery = ref('');
 const statusFilter = ref<Project['status'] | 'all'>('all');
 const sortBy = ref<'updated' | 'created' | 'name' | 'wordCount'>('updated');
 
-// Add this for dropdown menu
-const activeMenuProject = ref<string | null>(null);
+// Add this for dropdown menu - separate states for recent and all projects sections
+const activeMenuProjectRecent = ref<string | null>(null);
+const activeMenuProjectAll = ref<string | null>(null);
 
 // Rename modal state
 const showRenameModal = ref(false);
@@ -59,8 +60,13 @@ const menuOptions = computed(() => [
   },
 ]);
 
-function handleMenuSelect(key: string, project: Project) {
-  activeMenuProject.value = null;
+function handleMenuSelect(key: string, project: Project, section: 'recent' | 'all') {
+  // Close the menu for the correct section
+  if (section === 'recent') {
+    activeMenuProjectRecent.value = null;
+  } else {
+    activeMenuProjectAll.value = null;
+  }
   
   switch (key) {
     case 'open':
@@ -75,9 +81,13 @@ function handleMenuSelect(key: string, project: Project) {
   }
 }
 
-function toggleMenu(projectId: string, event: Event) {
+function toggleMenu(projectId: string, event: Event, section: 'recent' | 'all') {
   event.stopPropagation();
-  activeMenuProject.value = activeMenuProject.value === projectId ? null : projectId;
+  if (section === 'recent') {
+    activeMenuProjectRecent.value = activeMenuProjectRecent.value === projectId ? null : projectId;
+  } else {
+    activeMenuProjectAll.value = activeMenuProjectAll.value === projectId ? null : projectId;
+  }
 }
 
 // Rename functions
@@ -341,16 +351,16 @@ function getCardGradient(index: number) {
                 </div>
               </div>
               <NDropdown
-                :show="activeMenuProject === project.id"
+                :show="activeMenuProjectRecent === project.id"
                 :options="menuOptions"
-                @select="(key: string) => handleMenuSelect(key, project)"
-                @clickoutside="activeMenuProject = null"
+                @select="(key: string) => handleMenuSelect(key, project, 'recent')"
+                @clickoutside="activeMenuProjectRecent = null"
                 placement="bottom-end"
                 trigger="manual"
               >
                 <button 
                   class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100"
-                  @click="toggleMenu(project.id, $event)"
+                  @click="toggleMenu(project.id, $event, 'recent')"
                 >
                   <MoreHorizontal class="w-5 h-5 text-gray-400" />
                 </button>
@@ -397,18 +407,37 @@ function getCardGradient(index: number) {
           @click="openProject(project)"
         >
           <div class="flex justify-between items-start mb-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 flex items-center justify-center">
-              <BookOpen class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 flex items-center justify-center">
+                <BookOpen class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  {{ project.name }}
+                </h4>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                      :class="getStatusConfig(project.status).color + '/10 text-' + getStatusConfig(project.status).color.replace('bg-', '')">
+                  {{ getStatusConfig(project.status).text }}
+                </span>
+              </div>
             </div>
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-                  :class="getStatusConfig(project.status).color + '/10 text-' + getStatusConfig(project.status).color.replace('bg-', '')">
-              {{ getStatusConfig(project.status).text }}
-            </span>
+            <NDropdown
+              :show="activeMenuProjectAll === project.id"
+              :options="menuOptions"
+              @select="(key: string) => handleMenuSelect(key, project, 'all')"
+              @clickoutside="activeMenuProjectAll = null"
+              placement="bottom-end"
+              trigger="manual"
+            >
+              <button 
+                class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100"
+                @click="toggleMenu(project.id, $event, 'all')"
+              >
+                <MoreHorizontal class="w-4 h-4 text-gray-400" />
+              </button>
+            </NDropdown>
           </div>
 
-          <h4 class="font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-            {{ project.name }}
-          </h4>
           <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">
             {{ project.description || t('projectList.noDescription') }}
           </p>
