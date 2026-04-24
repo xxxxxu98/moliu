@@ -90,7 +90,7 @@ export function useAIService() {
         provider.apiKey,
         provider.baseUrl,
         currentModel.value || undefined,
-        provider.maxTokens || 4096,
+        undefined, // 不设置 maxTokens
         provider.generationConfig
       );
       return true;

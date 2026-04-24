@@ -49,14 +49,14 @@ export class FunctionCallingClient {
   constructor(config: FunctionCallingConfig) {
     this.config = config;
     
-    // 创建 fallback 服务用于 JSON 模式
+    // 创建 fallback 服务用于 JSON 模式（不传递 maxTokens，使用默认值）
     if (config.apiKey) {
       this.fallbackService = new UnifiedAIService(
         config.provider,
         config.apiKey,
         config.baseUrl,
         config.model,
-        config.maxTokens,
+        undefined, // 不设置 maxTokens
         { temperature: config.temperature ?? 0.8, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0 }
       );
     }
@@ -129,7 +129,6 @@ export class FunctionCallingClient {
         type: 'function',
         function: { name: OUTLINE_FUNCTION_SCHEMA.name }
       },
-      max_tokens: this.config.maxTokens || 4096,
       temperature: this.config.temperature ?? 0.8,
     };
 
@@ -197,7 +196,6 @@ export class FunctionCallingClient {
     
     const requestBody = {
       model: this.config.model || 'claude-3-5-sonnet-20241022',
-      max_tokens: this.config.maxTokens || 4096,
       system: systemPrompt,
       messages: [
         { role: 'user', content: `用户的创意种子：${prompt}` }
@@ -263,7 +261,6 @@ export class FunctionCallingClient {
         functionDeclarations: [geminiSchema]
       }],
       generationConfig: {
-        maxOutputTokens: this.config.maxTokens || 4096,
         temperature: this.config.temperature ?? 0.8,
       }
     };
@@ -305,7 +302,6 @@ export class FunctionCallingClient {
     }
     
     return await this.fallbackService.generateOutline(prompt, {
-      maxTokens: this.config.maxTokens,
       temperature: this.config.temperature,
       topP: 0.9,
     }, wordCountRange);

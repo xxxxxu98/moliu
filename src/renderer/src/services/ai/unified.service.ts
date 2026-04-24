@@ -149,7 +149,7 @@ export class UnifiedAIService {
   private client: AIClient | null = null;
   private provider: ProviderType;
   private model: string;
-  private maxTokens: number;
+  private maxTokens: number | undefined;
   private generationConfig: {
     temperature: number;
     topP: number;
@@ -169,7 +169,7 @@ export class UnifiedAIService {
   ) {
     this.provider = provider;
     this.model = model || '';
-    this.maxTokens = maxTokens || 4096;
+    this.maxTokens = maxTokens;
     this.generationConfig = generationConfig || {
       temperature: 0.8,
       topP: 0.9,
@@ -203,9 +203,13 @@ export class UnifiedAIService {
       contextWindowSafe?: boolean;
     } = {
       provider: sdkProvider,
-      maxTokens: this.maxTokens,
       contextWindowSafe: true,
     };
+
+    // Only set maxTokens if explicitly provided
+    if (this.maxTokens !== undefined) {
+      config.maxTokens = this.maxTokens;
+    }
 
     // Set API key (not needed for ollama)
     if (sdkProvider !== 'ollama' && apiKey) {
@@ -237,7 +241,7 @@ export class UnifiedAIService {
     generationConfig?: { temperature: number; topP: number; frequencyPenalty: number; presencePenalty: number }
   ) {
     this.model = model || this.model;
-    this.maxTokens = maxTokens || this.maxTokens;
+    this.maxTokens = maxTokens;
     if (generationConfig) {
       this.generationConfig = generationConfig;
     }

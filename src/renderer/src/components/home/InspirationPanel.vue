@@ -147,13 +147,13 @@ async function generateOutlines() {
   inspirationStore.setGenerating(true, 'generating-outlines');
 
   try {
-    // Create AI service instance
+    // Create AI service instance（不传递 maxTokens）
     const aiService = new UnifiedAIService(
       enabledProvider.provider,
       enabledProvider.apiKey,
       enabledProvider.baseUrl,
       enabledProvider.modelName,
-      enabledProvider.maxTokens,
+      undefined, // 不设置 maxTokens
       enabledProvider.generationConfig
     );
 
@@ -173,7 +173,6 @@ async function generateOutlines() {
 
     // Use non-streaming method for better JSON parsing
     const result = await aiService.generateOutline(prompt, {
-      maxTokens: enabledProvider.maxTokens,
       temperature: enabledProvider.generationConfig?.temperature,
       topP: enabledProvider.generationConfig?.topP,
     });
