@@ -56,6 +56,7 @@ const providerOptions = defaultProviders.map((p) => ({
 
 // Token options based on common AI model context limits
 const tokenOptions = [
+  { label: "不限制 (默认)", value: undefined },
   { label: "4K", value: 4096 },
   { label: "8K", value: 8192 },
   { label: "16K", value: 16384 },
@@ -172,7 +173,7 @@ function maskApiKey(key: string): string {
 }
 
 function formatTokens(tokens: number | undefined): string {
-  if (!tokens) return "200K";
+  if (!tokens) return t("settings.aiProviders.notSet");
   if (tokens >= 1000000) {
     return `${Math.round(tokens / 1000000)}M`;
   }
@@ -302,7 +303,7 @@ function openAddModal() {
     apiKey: "",
     enabled: true,
     modelName: "",
-    maxTokens: 200000,
+    maxTokens: undefined,
     generationConfig: { ...defaultGenerationConfig },
   };
   showAdvancedSettings.value = false;
@@ -817,6 +818,8 @@ onMounted(() => {
             v-model:value="editingProvider.maxTokens"
             :options="tokenOptions"
             class="w-full"
+            clearable
+            placeholder="不限制 (默认)"
           />
         </NFormItem>
 

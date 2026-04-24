@@ -29,7 +29,7 @@ export interface AIProvider {
   baseUrl?: string;
   enabled: boolean;
   modelName: string;
-  maxTokens: number;
+  maxTokens?: number;
   generationConfig?: AIGenerationConfig;
   isValid?: boolean;
   isTesting?: boolean;

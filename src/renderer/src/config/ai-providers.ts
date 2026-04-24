@@ -223,11 +223,11 @@ export function getModelContextLength(provider: ProviderType, modelId: string): 
 
 /**
  * 获取模型的最大输出 token 数
- * 用户自定义模型时，默认使用 4096
+ * 用户自定义模型时
  */
-export function getModelMaxOutputTokens(provider: ProviderType, modelId: string): number {
+export function getModelMaxOutputTokens(provider: ProviderType, modelId: string): number | undefined {
   const modelConfig = getModelConfig(provider, modelId);
-  return modelConfig?.maxOutputTokens ?? 4096;
+  return modelConfig?.maxOutputTokens;
 }
 
 /**

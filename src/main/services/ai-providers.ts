@@ -139,7 +139,7 @@ export async function generateOutlineStream(
   // 优先使用用户配置的模型，否则使用厂商推荐的第一个模型
   const model = config.model?.trim() || getDefaultModels(provider)[0] || 'gpt-4o';
   // 使用用户配置的参数，否则使用默认值
-  const maxTokens = config.maxTokens || 4096;
+  const maxTokens = config.maxTokens;
   const temperature = config.temperature ?? 0.8;
   const topP = config.topP ?? 0.9;
 
