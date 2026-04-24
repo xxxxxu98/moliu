@@ -83,7 +83,7 @@ export class PromptBuilder {
 ## 续写要求
 1. 仔细阅读用户提供的上下文，理解当前情节走向和写作风格
 2. 续写内容要与前文自然衔接，从内容结尾处继续，不可重复已写内容
-3. 篇幅控制在 300-500 字为宜，避免过长或过短
+3. **篇幅要求【强制】**：严格按照用户指定的字数要求生成内容，字数不足将视为任务失败
 4. 可以添加适当的环境描写、人物对话和心理活动，丰富故事层次
 5. 结尾要有吸引力，设置悬念或自然过渡，为下一段情节做好铺垫
 6. 合理运用叙述、描写、对话等手法，保持文本的可读性
@@ -109,10 +109,14 @@ export class PromptBuilder {
 
   /**
    * 构建续写提示词
+   * @param context 项目上下文
+   * @param mode 续写模式
+   * @param targetWordCount 目标字数（默认3000）
    */
   static buildContinuePrompt(
     context: ProjectContext,
-    mode: 'smartContinue' | 'polish'
+    mode: 'smartContinue' | 'polish',
+    targetWordCount: number = 3000
   ): { systemPrompt: string; userPrompt: string } {
     const { project, currentChapterContent, customPrompt, adjacentChaptersSummary } = context;
 
@@ -147,7 +151,7 @@ export class PromptBuilder {
 3. **角色一致**：确保角色的语言风格、行为方式与设定一致
 
 ### 内容要求
-1. **篇幅控制**：续写内容控制在 300-500 字左右
+1. **篇幅控制【重要】**：续写内容必须控制在 ${targetWordCount} 字左右，允许±10%的偏差
 2. **元素丰富**：可以包含对话、动作、心理描写、环境描写等多种元素
 3. **节奏把控**：合理安排情节发展，不要过于平淡或突兀
 
@@ -174,9 +178,9 @@ export class PromptBuilder {
 直接输出润色后的完整内容，不要添加任何说明。`;
     }
 
-    // 构建字数控制说明
+    // 构建字数控制说明（使用动态字数）
     const wordCountInstruction = mode === 'smartContinue'
-      ? '\n\n### 篇幅参考\n- 续写：300-500 字'
+      ? `\n\n### 篇幅要求【强制】\n- 续写：必须生成至少 ${Math.floor(targetWordCount * 0.9)} 字，最多 ${Math.ceil(targetWordCount * 1.1)} 字\n- 字数不足将导致任务失败，请务必达到字数要求`
       : '\n\n### 篇幅参考\n- 润色：保持与原文相近的长度';
 
     let userPrompt = `# 当前作品信息

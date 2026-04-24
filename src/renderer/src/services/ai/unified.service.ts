@@ -308,10 +308,14 @@ export class UnifiedAIService {
 
   /**
    * Continue writing content
+   * @param context 项目上下文
+   * @param mode 续写模式
+   * @param targetWordCount 目标字数（默认3000）
    */
   async continueWriting(
     context: ProjectContext,
     mode: "smartContinue" | "polish",
+    targetWordCount: number = 3000,
   ): Promise<AIWriteResult> {
     if (!this.client) {
       throw new Error("Client not initialized");
@@ -320,6 +324,7 @@ export class UnifiedAIService {
     const { systemPrompt, userPrompt } = PromptBuilder.buildContinuePrompt(
       context,
       mode,
+      targetWordCount,
     );
 
     const messages = [
@@ -343,10 +348,14 @@ export class UnifiedAIService {
 
   /**
    * Stream continue writing
+   * @param context 项目上下文
+   * @param mode 续写模式
+   * @param targetWordCount 目标字数（默认3000）
    */
   continueWritingStream(
     context: ProjectContext,
     mode: "smartContinue" | "polish",
+    targetWordCount: number = 3000,
     onChunk: (text: string) => void,
     onComplete: () => void,
     onError: (error: string) => void,
@@ -359,6 +368,7 @@ export class UnifiedAIService {
     const { systemPrompt, userPrompt } = PromptBuilder.buildContinuePrompt(
       context,
       mode,
+      targetWordCount,
     );
 
     const messages = [

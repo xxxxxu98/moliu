@@ -168,6 +168,9 @@ onMounted(() => {
 });
 
 // Methods
+// 自定义续写的默认字数（用于没有字数选择器的场景）
+const customWritingWordCount = ref<number>(3000);
+
 async function handleGenerate() {
   if (!hasProvider.value) {
     message.warning("请先在设置中配置 AI 服务");
@@ -181,14 +184,15 @@ async function handleGenerate() {
 
   try {
     if (settingsStore.streamOutput && !isGenerating.value) {
-      // Stream mode
+      // Stream mode - 传递目标字数
       await generateStream(
         selectedSubMode.value,
         customPrompt.value || undefined,
+        customWritingWordCount.value,
       );
     } else {
-      // Non-stream mode
-      await generate(selectedSubMode.value, customPrompt.value || undefined);
+      // Non-stream mode - 传递目标字数
+      await generate(selectedSubMode.value, customPrompt.value || undefined, customWritingWordCount.value);
     }
   } catch (err) {
     message.error(err instanceof Error ? err.message : "生成失败");

@@ -325,8 +325,8 @@ onUnmounted(() => {
     </div>
 
     <!-- Editor Content -->
-    <NScrollbar v-if="projectStore.currentChapter" class="flex-1">
-      <div class="mx-auto py-6 px-6">
+    <NScrollbar v-if="projectStore.currentChapter" class="flex-1" content-class="h-full">
+      <div class="mx-auto py-6 px-6 h-full">
         <textarea
           ref="editorRef"
           v-model="content"

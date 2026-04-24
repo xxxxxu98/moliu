@@ -144,6 +144,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
   /**
    * 写入章节
+   * @param options.targetWordCount 目标字数（默认3000）
    */
   async function writeChapter(options?: {
     targetWordCount?: number;
@@ -201,6 +202,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
               relatedForeshadows: context.foreshadows,
             },
             'smartContinue',
+            targetWordCount,
             (chunk: string) => {
               currentGeneratedContent += chunk;
               generatedContent.value = currentGeneratedContent;
@@ -234,7 +236,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
             charactersInScene: context.characters,
             relatedForeshadows: context.foreshadows,
           },
-          'smartContinue'
+          'smartContinue',
+          targetWordCount
         );
 
         if (result?.content) {

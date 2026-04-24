@@ -95,10 +95,14 @@ export function useAIService() {
 
   /**
    * 生成内容
+   * @param mode 续写模式
+   * @param customPrompt 自定义提示词
+   * @param targetWordCount 目标字数（默认3000）
    */
   async function generate(
     mode: AIWriteMode,
-    customPrompt?: string
+    customPrompt?: string,
+    targetWordCount: number = 3000
   ): Promise<AIWriteResult | null> {
     if (!hasProvider.value) {
       error.value = '请先配置 AI 服务';
@@ -117,7 +121,7 @@ export function useAIService() {
     generatedText.value = '';
 
     try {
-      const result = await aiService.continueWriting(context, mode);
+      const result = await aiService.continueWriting(context, mode, targetWordCount);
       generatedText.value = result.content;
       return result;
     } catch (err) {
@@ -130,10 +134,15 @@ export function useAIService() {
 
   /**
    * 流式生成内容
+   * @param mode 续写模式
+   * @param customPrompt 自定义提示词
+   * @param targetWordCount 目标字数（默认3000）
+   * @param onChunk 每次接收到的文本块
    */
   function generateStream(
     mode: AIWriteMode,
     customPrompt?: string,
+    targetWordCount: number = 3000,
     onChunk?: (text: string) => void
   ): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -161,6 +170,7 @@ export function useAIService() {
         aiService.continueWritingStream(
           context,
           mode,
+          targetWordCount,
           (chunk) => {
             generatedText.value += chunk;
             onChunk?.(chunk);
@@ -179,7 +189,7 @@ export function useAIService() {
         );
       } else {
         // 如果不支持流式，回退到普通生成
-        generate(mode, customPrompt)
+        generate(mode, customPrompt, targetWordCount)
           .then(() => resolve())
           .catch(reject)
           .finally(() => {

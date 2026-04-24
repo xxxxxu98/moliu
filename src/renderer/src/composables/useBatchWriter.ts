@@ -249,6 +249,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
     let generatedContent = '';
 
     // 检查是否支持流式输出
+    const targetWordCount = config?.wordsPerChapter || 4000;
     if ((client as any).continueWritingStream) {
       await new Promise<void>((resolve, reject) => {
         let lastProgress = 0;
@@ -268,12 +269,12 @@ export function useBatchWriter(): UseBatchWriterReturn {
             relatedForeshadows: context.foreshadows,
           },
           'smartContinue',
+          targetWordCount,
           (chunk: string) => {
             generatedContent += chunk;
             task.generatedContent = generatedContent;
-            const targetWords = config?.wordsPerChapter || 4000;
             const currentProgress = Math.min(
-              Math.floor((generatedContent.length / (targetWords * 1.5)) * 100),
+              Math.floor((generatedContent.length / (targetWordCount * 1.5)) * 100),
               95
             );
             if (currentProgress > lastProgress) {
@@ -314,7 +315,8 @@ export function useBatchWriter(): UseBatchWriterReturn {
           charactersInScene: context.characters,
           relatedForeshadows: context.foreshadows,
         },
-        'smartContinue'
+        'smartContinue',
+        targetWordCount
       );
 
       if (result?.content) {
