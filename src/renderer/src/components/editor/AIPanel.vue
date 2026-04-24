@@ -5,8 +5,11 @@ import {
   NInput,
   NSpin,
   NTag,
+  NSelect,
   useMessage,
   useDialog,
+  NDropdown,
+  type DropdownOption,
 } from "naive-ui";
 import {
   Sparkles,
@@ -17,11 +20,18 @@ import {
   Lightbulb,
   Database,
   AlertCircle,
+  ChevronDown,
+  Zap,
+  Play,
+  Pause,
+  Square,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useProjectStore } from "@/stores/project.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import { useAIService } from "@/services/ai/useAIService";
+import { useChapterWriter } from "@/composables/useChapterWriter";
+import BatchWritingPanel from "./BatchWritingPanel.vue";
 import type { AISuggestion } from "@/services/ai/types";
 
 const { t } = useI18n();
@@ -64,11 +74,33 @@ const {
 } = useAIService();
 
 // UI State
-const selectedMode = ref<"continue" | "suggestions" | "memory">("continue");
+const selectedMode = ref<"continue" | "suggestions" | "memory" | "batch">("continue");
 const selectedSubMode = ref<"smartContinue" | "polish">("smartContinue");
 const customPrompt = ref("");
 const copied = ref(false);
 const showSettingsTip = ref(false);
+
+// 一键续写相关
+const selectedWordCount = ref<number>(3000);
+const showWordCountDropdown = ref(false);
+
+const wordCountOptions = [
+  { label: '续写 1000 字', value: 1000 },
+  { label: '续写 2000 字', value: 2000 },
+  { label: '续写 3000 字', value: 3000 },
+  { label: '续写 5000 字', value: 5000 },
+];
+
+// 使用单章写作 composable
+const {
+  isGenerating: isOneClickGenerating,
+  progress: oneClickProgress,
+  error: oneClickError,
+  generatedContent: oneClickGeneratedContent,
+  writeChapter,
+  applyGeneratedContent,
+  copyToClipboard: copyOneClickContent,
+} = useChapterWriter();
 
 // Computed
 const hasContent = computed(
@@ -94,6 +126,11 @@ const tabOptions = computed(() => [
     icon: Sparkles,
   },
   {
+    key: "batch" as const,
+    label: "批量写作",
+    icon: Zap,
+  },
+  {
     key: "suggestions" as const,
     label: t("editor.suggestions"),
     icon: Lightbulb,
@@ -109,7 +146,7 @@ watch(selectedMode, (newMode) => {
 });
 
 // 切换标签页
-function handleTabChange(tabKey: "continue" | "suggestions" | "memory") {
+function handleTabChange(tabKey: "continue" | "suggestions" | "memory" | "batch") {
   if (
     !hasProvider.value &&
     (tabKey === "continue" || tabKey === "suggestions")
@@ -305,6 +342,39 @@ function getForeshadowStatusType(
   };
   return typeMap[status] || "default";
 }
+
+// 一键续写相关方法
+async function handleOneClickWrite() {
+  if (isOneClickGenerating.value) return;
+
+  try {
+    const result = await writeChapter({
+      targetWordCount: selectedWordCount.value,
+    });
+    if (result) {
+      message.success("生成完成，请查看生成内容");
+    }
+  } catch (err) {
+    message.error(err instanceof Error ? err.message : "生成失败");
+  }
+}
+
+async function handleApplyOneClickContent() {
+  const success = await applyGeneratedContent();
+  if (success) {
+    message.success("已应用到章节");
+  }
+}
+
+function handleCopyOneClickContent() {
+  copyOneClickContent();
+  message.success("已复制到剪贴板");
+}
+
+function handleStopOneClickWrite() {
+  // 停止逻辑
+  message.info("已停止生成");
+}
 </script>
 
 <template>
@@ -360,6 +430,106 @@ function getForeshadowStatusType(
     <NScrollbar class="flex-1 p-4">
       <!-- Continue Tab -->
       <div v-show="effectiveSelectedMode === 'continue'" class="space-y-4">
+        <!-- 一键续写区域 -->
+        <div class="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/50">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <Zap class="w-5 h-5 text-indigo-500" />
+              <span class="font-semibold text-sm text-gray-900 dark:text-white">一键续写</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 mb-3">
+            <NSelect
+              v-model:value="selectedWordCount"
+              :options="wordCountOptions"
+              size="small"
+              class="flex-1"
+              :disabled="isOneClickGenerating"
+            />
+          </div>
+
+          <button
+            v-if="!isOneClickGenerating"
+            class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+            :disabled="!hasProvider"
+            @click="handleOneClickWrite"
+          >
+            <Play class="w-5 h-5" />
+            一键续写 {{ selectedWordCount }} 字
+          </button>
+
+          <div v-else class="space-y-2">
+            <div class="flex items-center gap-3">
+              <div class="flex-1">
+                <div class="h-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all"
+                    :style="{ width: `${oneClickProgress}%` }"
+                  ></div>
+                </div>
+              </div>
+              <span class="text-sm text-indigo-600 dark:text-indigo-400">{{ oneClickProgress }}%</span>
+            </div>
+            <button
+              class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+              @click="handleStopOneClickWrite"
+            >
+              <Square class="w-4 h-4" />
+              停止
+            </button>
+          </div>
+
+          <!-- 生成进度显示 -->
+          <div v-if="isOneClickGenerating && oneClickGeneratedContent" class="mt-3 p-3 rounded-lg bg-white/50 dark:bg-gray-800/50">
+            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">生成中...</div>
+            <div class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap line-clamp-3">
+              {{ oneClickGeneratedContent.slice(-200) }}...
+            </div>
+          </div>
+
+          <!-- 生成结果 -->
+          <div v-if="!isOneClickGenerating && oneClickGeneratedContent" class="mt-3 space-y-2">
+            <div class="p-3 rounded-lg bg-white/50 dark:bg-gray-800/50">
+              <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">生成结果</div>
+              <div class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                {{ oneClickGeneratedContent }}
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                class="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm font-medium hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors"
+                @click="handleApplyOneClickContent"
+              >
+                <Check class="w-4 h-4" />
+                应用
+              </button>
+              <button
+                class="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                @click="handleCopyOneClickContent"
+              >
+                <Copy class="w-4 h-4" />
+                复制
+              </button>
+            </div>
+          </div>
+
+          <!-- 错误提示 -->
+          <div v-if="oneClickError" class="mt-3 p-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <p class="text-xs text-red-600 dark:text-red-400">{{ oneClickError }}</p>
+          </div>
+        </div>
+
+        <!-- 分隔线 -->
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
+          </div>
+          <div class="relative flex justify-center text-xs uppercase">
+            <span class="px-2 bg-gray-50 dark:bg-gray-900 text-gray-500">自定义续写</span>
+          </div>
+        </div>
+
         <!-- Provider Info -->
         <div
           v-if="hasProvider"
@@ -754,5 +924,8 @@ function getForeshadowStatusType(
         </template>
       </div>
     </NScrollbar>
+
+    <!-- Batch Writing Panel -->
+    <BatchWritingPanel v-show="effectiveSelectedMode === 'batch'" />
   </div>
 </template>
