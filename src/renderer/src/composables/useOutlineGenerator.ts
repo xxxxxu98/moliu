@@ -1,6 +1,7 @@
 import { ref } from "vue";
 import { FunctionCallingClient } from "@/services/ai/function-calling-client";
 import { useSettingsStore } from "@/stores/settings.store";
+import { DEFAULT_WORD_COUNT_RANGE } from "@/services/ai/unified.service";
 import type { GeneratedOutline } from "@/types/inspiration";
 
 export interface UseOutlineGeneratorOptions {
@@ -107,8 +108,8 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
         temperature: provider.generationConfig?.temperature,
       });
 
-      // 使用指定的字数范围或默认 medium
-      const wordCountRange = options?.wordCountRange || "medium";
+      // 使用指定的字数范围或默认范围
+      const wordCountRange = options?.wordCountRange || DEFAULT_WORD_COUNT_RANGE;
 
       const result = await fcClient.generateOutline(
         prompt,

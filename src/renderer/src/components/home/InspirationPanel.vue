@@ -17,6 +17,8 @@ import type { GeneratedOutline } from "@/types/inspiration";
 import { useOutlineGenerator } from "@/composables/useOutlineGenerator";
 import { useProjectCreator } from "@/composables/useProjectCreator";
 import OutlineDisplay from "@/components/common/OutlineDisplay.vue";
+import WordCountSelector from "@/components/common/WordCountSelector.vue";
+import { DEFAULT_WORD_COUNT_RANGE } from "@/services/ai/unified.service";
 
 // 使用别名以保持与模板中的引用一致
 const genreTags = configGenreTags;
@@ -61,6 +63,9 @@ const isProcessing = computed(() => isGenerating.value || isCreating.value);
 
 // 合并错误状态
 const combinedError = computed(() => generationError.value || projectCreateError.value);
+
+// 字数范围选择
+const selectedWordCountRange = ref(DEFAULT_WORD_COUNT_RANGE);
 
 // 受众人群选项
 type AudienceType = "general" | "male" | "female";
@@ -278,8 +283,10 @@ async function handleGenerateOutlines() {
   // 构建 prompt
   const prompt = buildPrompt();
 
-  // 调用 composable 生成大纲
-  const results = await generateOutlines(prompt);
+  // 调用 composable 生成大纲，传递字数范围
+  const results = await generateOutlines(prompt, {
+    wordCountRange: selectedWordCountRange.value,
+  });
 
   if (results.length > 0) {
     panelState.value = "generated";
@@ -1071,7 +1078,7 @@ function resetToQuickStart() {
     <!-- Generate Button -->
     <div
       v-if="panelState === 'selecting' && currentStep >= 3"
-      class="animate-fade-in pt-2"
+      class="animate-fade-in pt-2 space-y-3"
     >
       <!-- Selected Items Summary (快速开始模式) -->
       <div
@@ -1113,6 +1120,16 @@ function resetToQuickStart() {
           </div>
         </div>
       </div>
+      
+      <!-- Word Count Range Selector -->
+      <div class="flex items-center justify-between px-1">
+        <WordCountSelector
+          v-model="selectedWordCountRange"
+          :disabled="isProcessing"
+        />
+        <span class="text-xs text-gray-400 dark:text-gray-500">字数范围</span>
+      </div>
+      
       <button
         class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 text-white text-sm font-semibold shadow-lg hover:shadow-xl transition-all"
         :disabled="isProcessing"
@@ -1132,7 +1149,7 @@ function resetToQuickStart() {
       v-if="panelState === 'generated' || isGenerating"
       :outlines="generatedOutlines || []"
       :selected-outline="selectedOutline ?? null"
-      :is-generating="isGenerating ?? false"
+      :is-generating="!!isGenerating"
       :progress="generationProgress || ''"
       :error="combinedError"
       :show-word-count="false"

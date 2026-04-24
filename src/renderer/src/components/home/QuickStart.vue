@@ -15,10 +15,10 @@ import { useSettingsStore } from "@/stores/settings.store";
 import { WORD_COUNT_OPTIONS, DEFAULT_WORD_COUNT_RANGE } from "@/services/ai/unified.service";
 import type { GeneratedOutline } from "@/types/inspiration";
 import { writingTemplates } from "@/data/inspirations";
-import { NTooltip } from "naive-ui";
 import { useOutlineGenerator } from "@/composables/useOutlineGenerator";
 import { useProjectCreator } from "@/composables/useProjectCreator";
 import OutlineDisplay from "@/components/common/OutlineDisplay.vue";
+import WordCountSelector from "@/components/common/WordCountSelector.vue";
 
 const { t } = useI18n();
 const settingsStore = useSettingsStore();
@@ -59,7 +59,6 @@ const showStructuredInput = ref(false);
 
 // 字数范围选择
 const selectedWordCountRange = ref(DEFAULT_WORD_COUNT_RANGE);
-const showWordCountDropdown = ref(false);
 
 // 选中的大纲
 const selectedOutline = ref<GeneratedOutline | null>(null);
@@ -234,7 +233,7 @@ async function handleGenerateOutlines() {
   });
 
   // 生成成功后清除草稿
-  if (generatedOutlines.value.length > 0) {
+  if (generatedOutlines.value && generatedOutlines.value.length > 0) {
     clearDraft();
   }
 }
@@ -610,38 +609,10 @@ function extractMainEntity(sentence: string, keyword: string): string {
 
     <!-- Word Count Range Selector -->
     <div class="flex items-center justify-between px-1">
-      <div class="relative">
-        <button
-          class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs text-gray-600 dark:text-gray-400"
-          @click="showWordCountDropdown = !showWordCountDropdown"
-        >
-          <span>📏</span>
-          <span>{{ selectedWordCountRange }}</span>
-          <ChevronDown
-            class="w-3 h-3 transition-transform"
-            :class="{ 'rotate-180': showWordCountDropdown }"
-          />
-        </button>
-        <div
-          v-if="showWordCountDropdown"
-          class="absolute left-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20"
-        >
-          <button
-            v-for="option in WORD_COUNT_OPTIONS"
-            :key="option.value"
-            class="w-full px-3 py-2 text-left text-sm transition-colors flex items-center justify-between"
-            :class="[
-              selectedWordCountRange === option.value
-                ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-            @click="selectedWordCountRange = option.value; showWordCountDropdown = false"
-          >
-            <span>{{ option.label }}</span>
-            <Check v-if="selectedWordCountRange === option.value" class="w-4 h-4 text-indigo-500" />
-          </button>
-        </div>
-      </div>
+      <WordCountSelector
+        v-model="selectedWordCountRange"
+        :disabled="isProcessing"
+      />
       <span class="text-xs text-gray-400 dark:text-gray-500">字数范围</span>
     </div>
 
@@ -691,7 +662,7 @@ function extractMainEntity(sentence: string, keyword: string): string {
     <OutlineDisplay
       :outlines="generatedOutlines || []"
       :selected-outline="selectedOutline ?? null"
-      :is-generating="isProcessing"
+      :is-generating="!!isProcessing"
       :progress="generationProgress || ''"
       :error="combinedError"
       :show-word-count="true"
