@@ -6,53 +6,61 @@ import {
   Check,
   X,
   Zap,
-  ArrowRight,
-  BookOpen,
   ChevronDown,
   Wand2,
-  LayoutGrid,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
 import { useInspirationStore } from "@/stores/inspiration.store";
-import { useSettingsStore } from "@/stores/settings.store";
-import { useProjectStore } from "@/stores/project.store";
-import { FunctionCallingClient } from "@/services/ai/function-calling-client";
-import {
-  genreTags as configGenreTags,
-  settingElements as configSettingElements,
-} from "@/data/inspirations";
+import { genreTags as configGenreTags, settingElements as configSettingElements } from "@/data/inspirations";
 import { timing } from "@/config/timing";
 import type { GeneratedOutline } from "@/types/inspiration";
-import type { PlotNode } from "@/types/project";
+import { useOutlineGenerator } from "@/composables/useOutlineGenerator";
+import { useProjectCreator } from "@/composables/useProjectCreator";
+import OutlineDisplay from "@/components/common/OutlineDisplay.vue";
 
-const { t } = useI18n();
-const router = useRouter();
-const inspirationStore = useInspirationStore();
-const settingsStore = useSettingsStore();
-const projectStore = useProjectStore();
-
-const isGenerating = ref(false);
-const generationError = ref<string | null>(null);
-const generationProgress = ref("");
-
-// Display counts - 收起时显示数量
-const TAG_DISPLAY_COUNT = 10;
-const ELEMENT_DISPLAY_COUNT = 10;
-
+// 使用别名以保持与模板中的引用一致
 const genreTags = configGenreTags;
 const settingElements = configSettingElements;
+
+const { t } = useI18n();
+const inspirationStore = useInspirationStore();
+
+// 使用 Composable 封装的大纲生成和项目创建逻辑
+const {
+  isGenerating,
+  error: generationError,
+  progress: generationProgress,
+  outlines: generatedOutlines,
+  generateOutlines,
+  reset: resetOutlineState,
+} = useOutlineGenerator();
+
+const {
+  isCreating,
+  error: projectCreateError,
+  createProject: doCreateProject,
+  reset: resetProjectState,
+} = useProjectCreator();
+
+// 选中的大纲
+const selectedOutline = ref<GeneratedOutline | null>(null);
+
+// 显示模式: all = 全部, collapsed = 收起
+type DisplayMode = "all" | "collapsed";
+
+// Tab 模式: quick = 快速开始, custom = 自定义
+type CreationTab = "quick" | "custom";
+const creationTab = ref<CreationTab>("quick");
 
 // 当前状态: selecting = 选择中, generating = 生成中, generated = 已生成
 type PanelState = "selecting" | "generating" | "generated";
 const panelState = ref<PanelState>("selecting");
 
-// 大纲列表
-const generatedOutlines = ref<GeneratedOutline[]>([]);
-const selectedOutline = ref<GeneratedOutline | null>(null);
+// 合并生成和创建状态
+const isProcessing = computed(() => isGenerating.value || isCreating.value);
 
-// 当前选中的快速开始卡片
-const selectedQuickScenario = ref<string | null>(null);
+// 合并错误状态
+const combinedError = computed(() => generationError.value || projectCreateError.value);
 
 // 受众人群选项
 type AudienceType = "general" | "male" | "female";
@@ -73,12 +81,12 @@ const selectedAudience = ref<AudienceType>("general");
 // 是否已完成受众人群选择（默认已选择大众）
 const audienceSelected = ref(true);
 
-// 显示模式: all = 全部, collapsed = 收起
-type DisplayMode = "all" | "collapsed";
+// 当前选中的快速开始卡片
+const selectedQuickScenario = ref<string | null>(null);
 
-// Tab 模式: quick = 快速开始, custom = 自定义
-type CreationTab = "quick" | "custom";
-const creationTab = ref<CreationTab>("quick");
+// Display counts - 收起时显示数量
+const TAG_DISPLAY_COUNT = 10;
+const ELEMENT_DISPLAY_COUNT = 10;
 
 // Current step: 0=受众人群, 1=标签, 2=元素, 3=生成
 const currentStep = computed(() => {
@@ -234,62 +242,26 @@ function clearSelection() {
   shuffledGenreTags.value = shuffleArray(genreTags);
   shuffledSettingElements.value = shuffleArray(settingElements);
   panelState.value = "selecting";
-  generatedOutlines.value = [];
   selectedOutline.value = null;
   tagDisplayMode.value = "collapsed";
   elementDisplayMode.value = "collapsed";
+  resetOutlineState();
+  resetProjectState();
 }
 
-async function generateOutlines() {
-  let enabledProvider = null;
-  const defaultModelId = settingsStore.defaultModel;
+/**
+ * 构建生成大纲的 prompt
+ * 将用户选择的标签和元素组合成结构化的提示词
+ */
+function buildPrompt(): string {
+  const tags = inspirationStore.selectedTags
+    .map((id) => genreTags.find((t) => t.id === id)?.name)
+    .filter(Boolean);
+  const elements = inspirationStore.selectedElements
+    .map((id) => settingElements.find((e) => e.id === id)?.name)
+    .filter(Boolean);
 
-  if (defaultModelId) {
-    const [providerId, modelName] = defaultModelId.split(":");
-    enabledProvider = settingsStore.aiProviders.find(
-      (p) =>
-        p.id === providerId &&
-        p.modelName === modelName &&
-        p.enabled &&
-        p.apiKey,
-    );
-  }
-
-  if (!enabledProvider) {
-    enabledProvider = settingsStore.aiProviders.find(
-      (p) => p.enabled && p.apiKey,
-    );
-  }
-
-  if (!enabledProvider) {
-    generationError.value = "请先在设置中配置 AI 提供商";
-    return;
-  }
-
-  panelState.value = "generating";
-  isGenerating.value = true;
-  generationError.value = null;
-  generationProgress.value = "";
-  selectedOutline.value = null;
-  generatedOutlines.value = [];
-
-  try {
-    const fcClient = new FunctionCallingClient({
-      provider: enabledProvider.provider,
-      apiKey: enabledProvider.apiKey,
-      baseUrl: enabledProvider.baseUrl,
-      model: enabledProvider.modelName,
-      temperature: enabledProvider.generationConfig?.temperature,
-    });
-
-    const tags = inspirationStore.selectedTags
-      .map((id) => genreTags.find((t) => t.id === id)?.name)
-      .filter(Boolean);
-    const elements = inspirationStore.selectedElements
-      .map((id) => settingElements.find((e) => e.id === id)?.name)
-      .filter(Boolean);
-
-    const prompt = `请根据以下设定，为我生成小说大纲。
+  return `请根据以下设定，为我生成小说大纲。
 
 类型标签：${tags.join("、")}
 设定元素：${elements.join("、")}
@@ -300,50 +272,19 @@ async function generateOutlines() {
 3. 有明确的主角设定和成长弧线
 4. 有清晰的故事冲突和解决
 5. 生成3个不同风格的大纲备选`;
+}
 
-    const result = await fcClient.generateOutline(prompt, "medium", (msg) => {
-      generationProgress.value = msg;
-    });
+async function handleGenerateOutlines() {
+  // 构建 prompt
+  const prompt = buildPrompt();
 
-    if (result && result.outlines && result.outlines.length > 0) {
-      generatedOutlines.value = result.outlines.map((o: any, i: number) => ({
-        id: `outline-${i}-${Date.now()}`,
-        title: o.title || "",
-        synopsis: o.synopsis || "",
-        genres: Array.isArray(o.genres) ? o.genres : tags,
-        characters: (Array.isArray(o.characters) ? o.characters : []).map(
-          (c: any) => ({
-            name: c.name || "",
-            role: c.role || "",
-            description: c.description || "",
-            personality: Array.isArray(c.personality) ? c.personality : [],
-            appearance: c.appearance || "",
-            abilities: Array.isArray(c.abilities) ? c.abilities : [],
-            background: c.background || "",
-            relationships: [],
-          }),
-        ),
-        worldSetting: o.worldSetting,
-        foreshadows: Array.isArray(o.foreshadows)
-          ? o.foreshadows.map((f: any) => ({
-              hint: typeof f === "string" ? f : f.hint || "",
-              type: "mystery",
-            }))
-          : [],
-        chapters: [],
-        subplots: [],
-      }));
-      panelState.value = "generated";
-    } else {
-      generationError.value = "AI 返回格式异常，请重试";
-      panelState.value = "selecting";
-    }
-  } catch (error) {
-    console.error("[InspirationPanel] Outline generation error:", error);
-    generationError.value = String(error);
+  // 调用 composable 生成大纲
+  const results = await generateOutlines(prompt);
+
+  if (results.length > 0) {
+    panelState.value = "generated";
+  } else {
     panelState.value = "selecting";
-  } finally {
-    isGenerating.value = false;
   }
 }
 
@@ -351,86 +292,9 @@ function selectOutline(outline: GeneratedOutline) {
   selectedOutline.value = outline;
 }
 
-async function createProject() {
+async function handleCreateProject() {
   if (!selectedOutline.value) return;
-
-  isGenerating.value = true;
-
-  try {
-    const outline = selectedOutline.value;
-    const structure = outline.structure;
-
-    const plotOutline: PlotNode[] = [];
-    let plotIndex = 0;
-
-    if (structure) {
-      // 使用 AI 返回的结构
-      structure.forEach((act: any) => {
-        plotOutline.push({
-          id: `plot-${plotIndex++}`,
-          title: act.title || act.name || "",
-          description: act.description || "",
-          chapterRange: act.chapterRange || [1, 10],
-          nodes: [],
-          color: getPlotColor(plotOutline.length),
-        });
-      });
-    } else {
-      // 默认结构
-      plotOutline.push(
-        {
-          id: `plot-${plotIndex++}`,
-          title: "第一幕：建置",
-          description: "介绍世界观和主要人物",
-          chapterRange: [1, 3],
-          nodes: [],
-          color: "#6366f1",
-        },
-        {
-          id: `plot-${plotIndex++}`,
-          title: "第二幕：对抗",
-          description: "主角面临主要冲突",
-          chapterRange: [4, 7],
-          nodes: [],
-          color: "#8b5cf6",
-        },
-        {
-          id: `plot-${plotIndex++}`,
-          title: "第三幕：解决",
-          description: "冲突解决，故事收尾",
-          chapterRange: [8, 10],
-          nodes: [],
-          color: "#a855f7",
-        },
-      );
-    }
-
-    const projectName =
-      outline.title || `新项目 ${new Date().toLocaleDateString()}`;
-
-    await projectStore.createProject({
-      name: projectName,
-      synopsis: outline.synopsis,
-      genres: outline.genres,
-      characters: outline.characters,
-      worldSetting: outline.worldSetting,
-      foreshadows: outline.foreshadows,
-      plotOutline,
-    });
-
-    // 导航到编辑器
-    router.push(`/editor/${projectStore.currentProject?.id}`);
-  } catch (error) {
-    console.error("[InspirationPanel] Create project error:", error);
-    generationError.value = String(error);
-  } finally {
-    isGenerating.value = false;
-  }
-}
-
-function getPlotColor(index: number): string {
-  const colors = ["#6366f1", "#8b5cf6", "#a855f7", "#ec4899", "#f43f5e"];
-  return colors[index % colors.length];
+  await doCreateProject(selectedOutline.value);
 }
 
 // Quick scenario cards
@@ -1251,116 +1115,39 @@ function resetToQuickStart() {
       </div>
       <button
         class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 text-white text-sm font-semibold shadow-lg hover:shadow-xl transition-all"
-        :disabled="isGenerating"
-        @click="generateOutlines"
+        :disabled="isProcessing"
+        @click="handleGenerateOutlines"
       >
-        <Sparkles v-if="!isGenerating" class="w-4 h-4" />
+        <Sparkles v-if="!isProcessing" class="w-4 h-4" />
         <span
-          v-if="isGenerating"
+          v-if="isProcessing"
           class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
         ></span>
         {{ t("inspiration.generateOutline") }}
       </button>
     </div>
 
-    <!-- Generating Progress -->
-    <div v-if="panelState === 'generating'" class="py-8 text-center">
-      <div
-        class="w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center animate-pulse"
-      >
-        <Sparkles class="w-6 h-6 text-white" />
-      </div>
-      <p class="text-sm text-gray-600 dark:text-gray-400">
-        {{ generationProgress || "正在生成大纲..." }}
-      </p>
-    </div>
+    <!-- 大纲列表展示（使用通用组件） -->
+    <OutlineDisplay
+      v-if="panelState === 'generated' || isGenerating"
+      :outlines="generatedOutlines || []"
+      :selected-outline="selectedOutline ?? null"
+      :is-generating="isGenerating ?? false"
+      :progress="generationProgress || ''"
+      :error="combinedError"
+      :show-word-count="false"
+      @select="selectOutline"
+      @regenerate="handleGenerateOutlines"
+      @create="handleCreateProject"
+    />
 
-    <!-- Generated Outlines -->
-    <div v-if="panelState === 'generated'" class="space-y-3">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2">
-          <BookOpen class="w-4 h-4 text-indigo-500" />
-          <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
-            >生成的大纲</span
-          >
-        </div>
-        <button
-          class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          @click="
-            panelState = 'selecting';
-            generatedOutlines = [];
-            selectedOutline = null;
-          "
-        >
-          <RefreshCw class="w-3.5 h-3.5 text-gray-400" />
-        </button>
-      </div>
-
-      <div
-        v-for="outline in generatedOutlines"
-        :key="outline.id"
-        class="p-3 rounded-xl border-2 cursor-pointer transition-all duration-200"
-        :class="[
-          selectedOutline?.id === outline.id
-            ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20'
-            : 'border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700 bg-white dark:bg-gray-800',
-        ]"
-        @click="selectOutline(outline)"
-      >
-        <div class="flex items-start gap-2">
-          <div
-            v-if="selectedOutline?.id === outline.id"
-            class="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0"
-          >
-            <Check class="w-3 h-3 text-white" />
-          </div>
-          <div class="flex-1 min-w-0">
-            <h4 class="font-medium text-sm text-gray-900 dark:text-white">
-              {{ outline.title }}
-            </h4>
-            <p
-              class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1"
-            >
-              {{ outline.synopsis }}
-            </p>
-            <div class="flex flex-wrap gap-1 mt-2">
-              <span
-                v-for="genre in outline.genres.slice(0, 3)"
-                :key="genre"
-                class="px-1.5 py-0.5 text-xs rounded bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400"
-              >
-                {{ genre }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Create Project Button -->
-      <button
-        v-if="selectedOutline"
-        class="w-full mt-4 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-sm font-semibold shadow-lg hover:shadow-xl transition-all"
-        :disabled="isGenerating"
-        @click="createProject"
-      >
-        <span v-if="!isGenerating">{{
-          t("quickStart.createFromOutline")
-        }}</span>
-        <span
-          v-else
-          class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-        ></span>
-        <ArrowRight v-if="!isGenerating" class="w-4 h-4" />
-      </button>
-    </div>
-
-    <!-- Error Message -->
+    <!-- Error Message (仅在未生成时显示) -->
     <div
-      v-if="generationError"
+      v-if="combinedError && panelState !== 'generated'"
       class="mt-2 p-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
     >
       <p class="text-xs text-red-600 dark:text-red-400">
-        {{ generationError }}
+        {{ combinedError }}
       </p>
     </div>
 
