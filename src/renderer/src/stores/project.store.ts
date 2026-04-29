@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Project, Volume, Chapter, Character, WorldSchema, Foreshadow, PlotNode, LocationLevel, RuleCategory, FactionRelation } from '@/types/project';
+import type { ChapterMemory, PlotThread, CharacterArc, MemoryConfig } from '@/types/project';
+import { DEFAULT_MEMORY_CONFIG } from '@/types/project';
 
 export const useProjectStore = defineStore('project', () => {
   // State
@@ -14,6 +16,12 @@ export const useProjectStore = defineStore('project', () => {
   const plotOutline = ref<PlotNode[]>([]);
   const currentChapterId = ref<string | null>(null);
   const isLoading = ref(false);
+
+  // 记忆系统状态
+  const chapterMemories = ref<ChapterMemory[]>([]);
+  const plotThreads = ref<PlotThread[]>([]);
+  const characterArcs = ref<CharacterArc[]>([]);
+  const memoryConfig = ref<MemoryConfig>(DEFAULT_MEMORY_CONFIG);
 
   // Getters
   const totalWordCount = computed(() => {
@@ -334,6 +342,147 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
+  // ============================================
+  // 记忆系统操作
+  // ============================================
+
+  /**
+   * 添加章节记忆
+   */
+  function addChapterMemory(memory: ChapterMemory) {
+    // 检查是否已存在，存在则更新
+    const existingIndex = chapterMemories.value.findIndex(m => m.chapterId === memory.chapterId);
+    if (existingIndex >= 0) {
+      chapterMemories.value[existingIndex] = memory;
+    } else {
+      chapterMemories.value.push(memory);
+    }
+    // 按章节顺序排序
+    chapterMemories.value.sort((a, b) => a.chapterIndex - b.chapterIndex);
+  }
+
+  /**
+   * 获取章节记忆
+   */
+  function getChapterMemory(chapterId: string): ChapterMemory | undefined {
+    return chapterMemories.value.find(m => m.chapterId === chapterId);
+  }
+
+  /**
+   * 获取短期记忆（最近N章的完整记忆）
+   */
+  function getShortTermMemories(): ChapterMemory[] {
+    const count = memoryConfig.value.shortTermChapterCount;
+    return chapterMemories.value.slice(-count);
+  }
+
+  /**
+   * 获取中期记忆（更早章节的摘要）
+   */
+  function getMediumTermMemories(): ChapterMemory[] {
+    const shortTermCount = memoryConfig.value.shortTermChapterCount;
+    const mediumTermCount = memoryConfig.value.mediumTermChapterCount;
+    const start = Math.max(0, chapterMemories.value.length - mediumTermCount - shortTermCount);
+    const end = chapterMemories.value.length - shortTermCount;
+    return chapterMemories.value.slice(start, end);
+  }
+
+  /**
+   * 获取长期记忆（所有记忆的摘要）
+   */
+  function getLongTermSummary(): {
+    allKeyEvents: string[];
+    allLocations: string[];
+    characterStates: { name: string; latestState: string; chapterIndex: number }[];
+    activeForeshadows: string[];
+    timeline: string[];
+  } {
+    const memories = chapterMemories.value;
+    
+    // 收集所有关键事件
+    const allKeyEvents = memories.flatMap(m => m.keyEvents);
+    
+    // 收集所有地点
+    const allLocations = [...new Set(memories.flatMap(m => m.locations))];
+    
+    // 收集角色最新状态
+    const characterStateMap = new Map<string, { state: string; chapterIndex: number }>();
+    memories.forEach(m => {
+      m.characterStateChanges.forEach(change => {
+        const existing = characterStateMap.get(change.characterName);
+        if (!existing || m.chapterIndex > existing.chapterIndex) {
+          characterStateMap.set(change.characterName, { state: change.detail, chapterIndex: m.chapterIndex });
+        }
+      });
+    });
+    const characterStates = Array.from(characterStateMap.entries()).map(([name, data]) => ({
+      name,
+      latestState: data.state,
+      chapterIndex: data.chapterIndex,
+    }));
+    
+    // 收集活跃伏笔
+    const activeForeshadows = memories.flatMap(m => [...m.newForeshadows]);
+    
+    // 收集时间线标记
+    const timeline = memories.filter(m => m.timelineMark).map(m => `${m.chapterIndex}: ${m.timelineMark}`);
+    
+    return {
+      allKeyEvents,
+      allLocations,
+      characterStates,
+      activeForeshadows,
+      timeline,
+    };
+  }
+
+  /**
+   * 更新/创建情节线
+   */
+  function updatePlotThread(thread: PlotThread) {
+    const index = plotThreads.value.findIndex(t => t.id === thread.id);
+    if (index >= 0) {
+      plotThreads.value[index] = thread;
+    } else {
+      plotThreads.value.push(thread);
+    }
+  }
+
+  /**
+   * 更新/创建角色弧线
+   */
+  function updateCharacterArc(arc: CharacterArc) {
+    const index = characterArcs.value.findIndex(a => a.characterId === arc.characterId);
+    if (index >= 0) {
+      characterArcs.value[index] = arc;
+    } else {
+      characterArcs.value.push(arc);
+    }
+  }
+
+  /**
+   * 清除所有记忆
+   */
+  function clearMemories() {
+    chapterMemories.value = [];
+    plotThreads.value = [];
+    characterArcs.value = [];
+  }
+
+  /**
+   * 更新记忆配置
+   */
+  function updateMemoryConfig(updates: Partial<MemoryConfig>) {
+    memoryConfig.value = { ...memoryConfig.value, ...updates };
+  }
+
+  /**
+   * 根据章节ID列表获取相关记忆
+   */
+  function getMemoriesForChapters(chapterIds: string[]): ChapterMemory[] {
+    return chapterMemories.value.filter(m => chapterIds.includes(m.chapterId));
+  }
+
   /**
    * 解析并填充角色关系中的 characterId
    * 在项目创建后调用，根据 targetName 填充对应的 characterId
@@ -560,5 +709,20 @@ export const useProjectStore = defineStore('project', () => {
     // Character relationship resolution
     resolveCharacterRelationships,
     finalizeProjectCreation,
+    // 记忆系统操作
+    chapterMemories,
+    plotThreads,
+    characterArcs,
+    memoryConfig,
+    addChapterMemory,
+    getChapterMemory,
+    getShortTermMemories,
+    getMediumTermMemories,
+    getLongTermSummary,
+    updatePlotThread,
+    updateCharacterArc,
+    clearMemories,
+    updateMemoryConfig,
+    getMemoriesForChapters,
   };
 });

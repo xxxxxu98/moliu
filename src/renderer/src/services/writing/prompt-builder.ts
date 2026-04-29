@@ -342,6 +342,9 @@ export class PromptBuilder {
       ? foreshadowTasks.join('\n\n')
       : '';
 
+    // ========== 记忆系统相关 ==========
+    const memorySection = this.buildMemorySection(context);
+
     return `# 小说续写任务
 
 ## 章节信息
@@ -350,6 +353,8 @@ export class PromptBuilder {
 ${isFirstChapter ? '- **重要提示**：这是小说的第一章，需要介绍故事背景和世界观！' : ''}
 
 ${chapterTypeStrategy}
+
+${memorySection}
 
 ## 任务要求
 请续写以下小说内容，要求：
@@ -400,6 +405,86 @@ ${additionalInstructions}
 
 ## 输出要求
 请直接输出续写内容，不需要任何前缀说明。`;
+  }
+
+  /**
+   * 构建记忆系统相关的 prompt 部分
+   */
+  static buildMemorySection(context: ChapterWritingContext): string {
+    const memoryData = context.memoryData;
+    
+    if (!memoryData) {
+      return ''; // 没有记忆数据时返回空
+    }
+
+    const sections: string[] = [];
+
+    // 1. 情节进度（最重要，放最前面）
+    if (memoryData.plotProgressTable) {
+      sections.push(`## 【情节进度】故事已发展到哪了？
+最近情节进展：
+${memoryData.plotProgressTable}
+
+请确保本章续写与上述情节保持连贯！`);
+    }
+
+    // 2. 角色当前状态
+    if (memoryData.characterStateTable) {
+      sections.push(`## 【角色状态】角色现在是什么状态？
+${memoryData.characterStateTable}
+
+请确保角色表现与上述状态一致！`);
+    }
+
+    // 3. 短期记忆（最近几章的完整原文）
+    if (memoryData.shortTermFullText) {
+      sections.push(`## 【近期章节原文】（最近${(memoryData.shortTermMemories as any[])?.length || 0}章）
+请仔细阅读以下近期章节原文，确保续写与前文保持风格和内容的一致性：
+
+==========
+
+${memoryData.shortTermFullText}
+
+==========
+`);
+    }
+
+    // 4. 中期记忆（更早章节的摘要）
+    if (memoryData.mediumTermMemories && memoryData.mediumTermMemories.length > 0) {
+      const mediumTermContent = memoryData.mediumTermMemories.map((m: any) => {
+        return `- 第${m.chapterIndex}章【${m.chapterTitle}】：${m.corePlot}`;
+      }).join('\n');
+
+      sections.push(`## 【中期回顾】（更早章节）
+${mediumTermContent}`);
+    }
+
+    // 5. 长期记忆摘要
+    if (memoryData.longTermSummary) {
+      const { allKeyEvents, allLocations, activeForeshadows } = memoryData.longTermSummary as any;
+      
+      if (allKeyEvents?.length > 0) {
+        const recentKeyEvents = allKeyEvents.slice(-10).join('、');
+        sections.push(`## 【已发生的关键事件】
+${recentKeyEvents}`);
+      }
+      
+      if (allLocations?.length > 0) {
+        sections.push(`## 【已涉及的场景】
+${allLocations.join('、')}`);
+      }
+      
+      if (activeForeshadows?.length > 0) {
+        sections.push(`## 【进行中的悬念】
+${activeForeshadows.join('、')}`);
+      }
+    }
+
+    if (sections.length === 0) {
+      return '';
+    }
+
+    return sections.join('\n\n');
   }
 
   /**

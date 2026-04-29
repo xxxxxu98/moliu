@@ -217,3 +217,130 @@ export interface ProviderConfig {
     resetDate?: string;
   };
 }
+
+// ============================================
+// 分层记忆系统类型定义
+// ============================================
+
+/**
+ * 章节情节快照 - 每次续写后自动提取
+ * 这是系统的"记忆单元"，用于保持情节连贯性
+ */
+export interface ChapterMemory {
+  /** 章节ID */
+  chapterId: string;
+  /** 章节标题 */
+  chapterTitle: string;
+  /** 章节序号（从1开始） */
+  chapterIndex: number;
+  
+  /** 核心情节摘要（100字内）- 用于中期记忆 */
+  corePlot: string;
+  
+  /** 关键事件列表 */
+  keyEvents: string[];
+  
+  /** 场景/地点列表 */
+  locations: string[];
+  
+  /** 时间线标记（如"故事第3天"、"修炼开始后1年"） */
+  timelineMark?: string;
+  
+  /** 角色状态变化 */
+  characterStateChanges: CharacterStateChange[];
+  
+  /** 本章揭示/推进的伏笔 */
+  revealedForeshadows: string[];
+  
+  /** 本章新埋的伏笔 */
+  newForeshadows: string[];
+  
+  /** 情感基调（如"紧张"、"温馨"、"压抑"） */
+  emotionalTone?: string;
+  
+  /** 章节字数 */
+  wordCount: number;
+  
+  /** 创建时间 */
+  createdAt: string;
+}
+
+/**
+ * 角色状态变化
+ */
+export interface CharacterStateChange {
+  /** 角色名称 */
+  characterName: string;
+  /** 状态类型 */
+  stateType: 'appearance' | 'emotion' | 'ability' | 'relationship' | 'location' | 'status';
+  /** 状态描述 */
+  state: string;
+  /** 详细变化 */
+  detail: string;
+}
+
+/**
+ * 情节线进度追踪
+ */
+export interface PlotThread {
+  /** 情节线ID */
+  id: string;
+  /** 情节线标题 */
+  title: string;
+  /** 类型：主线/支线/感情线等 */
+  type: 'main' | 'subplot' | 'romance' | 'mystery';
+  /** 进度百分比（0-100） */
+  progress: number;
+  /** 当前阶段描述 */
+  currentStage: string;
+  /** 已完成阶段列表 */
+  completedStages: string[];
+  /** 待完成阶段列表 */
+  pendingStages: string[];
+  /** 关联章节ID列表 */
+  relatedChapterIds: string[];
+}
+
+/**
+ * 角色弧线状态
+ */
+export interface CharacterArc {
+  /** 角色ID */
+  characterId: string;
+  /** 角色名称 */
+  characterName: string;
+  /** 初始状态描述 */
+  initialState: string;
+  /** 当前心理状态 */
+  currentPsychology: string;
+  /** 当前外貌/状态描述 */
+  currentAppearance: string;
+  /** 成长轨迹摘要 */
+  growthTrack: string;
+  /** 关联的情节线 */
+  relatedPlotThreads: string[];
+  /** 最后更新时间 */
+  updatedAt: string;
+}
+
+/**
+ * 记忆系统配置
+ */
+export interface MemoryConfig {
+  /** 短期记忆：保留最近N章的完整内容 */
+  shortTermChapterCount: number;
+  /** 中期记忆：保留最近N章的情节摘要 */
+  mediumTermChapterCount: number;
+  /** 是否启用情节线追踪 */
+  enablePlotThreadTracking: boolean;
+  /** 是否启用角色弧线追踪 */
+  enableCharacterArcTracking: boolean;
+}
+
+// 默认配置
+export const DEFAULT_MEMORY_CONFIG: MemoryConfig = {
+  shortTermChapterCount: 5,
+  mediumTermChapterCount: 20,
+  enablePlotThreadTracking: true,
+  enableCharacterArcTracking: true,
+};

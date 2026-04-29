@@ -151,6 +151,16 @@ export interface ChapterWritingContext {
     foreshadowToBury?: string[];   // 本章埋设伏笔
     foreshadowToReveal?: string[]; // 本章揭示伏笔
   };
+
+  // 记忆系统数据
+  memoryData?: {
+    shortTermMemories: any[];      // 短期记忆
+    mediumTermMemories: any[];     // 中期记忆
+    longTermSummary: any;          // 长期记忆摘要
+    shortTermFullText: string;    // 短期记忆的完整文本
+    characterStateTable: string;   // 角色状态表
+    plotProgressTable: string;    // 情节进度表
+  };
 }
 
 /**

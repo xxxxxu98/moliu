@@ -400,8 +400,8 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
         const task = queue.tasks[queue.currentTaskIndex];
 
-        // 跳过已完成的
-        if (task.status === 'completed') {
+        // 跳过已完成的或无效的任务
+        if (!task || task.status === 'completed') {
           queue.currentTaskIndex++;
           continue;
         }

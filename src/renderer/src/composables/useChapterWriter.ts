@@ -10,6 +10,8 @@ import { useActiveAIProvider } from './useActiveAIProvider';
 import type { WritingStyle, ChapterWritingContext, ChapterType } from '@/types/writing';
 import { PromptBuilder } from '@/services/writing/prompt-builder';
 import { ContextManager } from '@/services/writing/context-manager';
+import { extractChapterMemory, buildCharacterStateTable, buildPlotProgressTable } from '@/services/writing/extract-plot-memory';
+import type { ChapterMemory } from '@/types/project';
 
 /**
  * 从章节大纲中提取章节类型
@@ -167,6 +169,19 @@ export function useChapterWriter(): UseChapterWriterReturn {
         suggestedChapter: f.suggestedResolutionChapter,
       }));
 
+      // ========== 记忆系统相关 ==========
+    // 获取短期记忆（最近几章的完整记忆）
+    const shortTermMemories = projectStore.getShortTermMemories();
+
+    // 获取中期记忆（更早章节的摘要）
+    const mediumTermMemories = projectStore.getMediumTermMemories();
+
+    // 获取长期记忆摘要
+    const longTermSummary = projectStore.getLongTermSummary();
+
+    // 构建短期记忆的完整文本（最近几章的原文）
+    const shortTermFullText = buildShortTermFullText(shortTermMemories);
+
     return {
       projectTitle: project.name,
       projectSynopsis: project.description || '',
@@ -206,7 +221,42 @@ export function useChapterWriter(): UseChapterWriterReturn {
         style: 'concise',
         customStyle: additionalInstructions,
       },
+      // 记忆系统数据
+      memoryData: {
+        shortTermMemories,
+        mediumTermMemories,
+        longTermSummary,
+        shortTermFullText,
+        characterStateTable: buildCharacterStateTable(shortTermMemories),
+        plotProgressTable: buildPlotProgressTable(shortTermMemories),
+      },
     };
+  }
+
+  /**
+   * 构建短期记忆的完整文本（最近几章的原文）
+   */
+  function buildShortTermFullText(shortTermMemories: any[]): string {
+    if (!shortTermMemories || shortTermMemories.length === 0) {
+      return '';
+    }
+
+    // 获取章节列表
+    const chapters = projectStore.sortedChapters;
+
+    // 收集短期记忆对应的章节完整内容
+    const chapterIds = shortTermMemories.map(m => m.chapterId);
+
+    const fullTextParts = chapters
+      .filter(c => chapterIds.includes(c.id))
+      .sort((a, b) => a.orderIndex - b.orderIndex)
+      .map(c => {
+        return `【第${c.orderIndex + 1}章 · ${c.title}】
+
+${c.content || '（本章暂无内容）'}`;
+      });
+
+    return fullTextParts.join('\n\n==========\n\n');
   }
 
   /**
@@ -215,6 +265,39 @@ export function useChapterWriter(): UseChapterWriterReturn {
   function extractChapterOutlineFromPlot(plotOutline: any[], chapterId: string): string {
     const chapter = plotOutline?.find((p: any) => p.chapterId === chapterId);
     return chapter?.description || '';
+  }
+
+  /**
+   * 构建完整大纲字符串（用于传给 AI）
+   */
+  function buildFullOutlineString(): string | undefined {
+    const plotOutline = projectStore.plotOutline;
+    if (!plotOutline || plotOutline.length === 0) {
+      return undefined;
+    }
+
+    // 获取所有章节节点，按顺序排列
+    const chapterNodes = plotOutline
+      .filter((p: any) => p.type === 'chapter')
+      .sort((a: any, b: any) => a.orderIndex - b.orderIndex);
+
+    if (chapterNodes.length === 0) {
+      return undefined;
+    }
+
+    // 构建大纲字符串
+    const outlineParts = chapterNodes.map((node: any, index: number) => {
+      const chapterNum = index + 1;
+      const title = node.title || `第${chapterNum}章`;
+      const description = node.description || '（暂无大纲）';
+      const keyEvents = node.keyEvents?.length > 0 
+        ? `\n关键事件：${node.keyEvents.join('、')}` 
+        : '';
+      
+      return `【第${chapterNum}章】${title}\n${description}${keyEvents}`;
+    });
+
+    return outlineParts.join('\n\n');
   }
 
   /**
@@ -269,6 +352,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
               currentChapterIndex: context.chapter.orderIndex,
               currentChapterTitle: context.chapter.title,
               currentChapterContent: context.chapter.existingContent || '',
+              currentChapterOutline: context.chapter.outline || undefined,
+              fullOutline: buildFullOutlineString(),
               adjacentChaptersSummary: context.previousChapter ? {
                 previousChapterTitle: context.previousChapter.title,
                 previousChapterSummary: context.previousChapter.summary,
@@ -306,6 +391,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
             currentChapterIndex: context.chapter.orderIndex,
             currentChapterTitle: context.chapter.title,
             currentChapterContent: context.chapter.existingContent || '',
+            currentChapterOutline: context.chapter.outline || undefined,
+            fullOutline: buildFullOutlineString(),
             adjacentChaptersSummary: context.previousChapter ? {
               previousChapterTitle: context.previousChapter.title,
               previousChapterSummary: context.previousChapter.summary,
@@ -366,10 +453,18 @@ export function useChapterWriter(): UseChapterWriterReturn {
       const separator = currentContent.length > 0 && !currentContent.endsWith('\n') ? '\n\n' : '';
       const newContent = currentContent + separator + currentGeneratedContent;
 
-      await projectStore.updateChapter(projectStore.currentChapterId, {
+      // 获取章节索引
+      const currentIndex = projectStore.sortedChapters.findIndex(
+        c => c.id === projectStore.currentChapterId
+      );
+
+      await projectStore.updateChapter(projectStore.currentChapterId!, {
         content: newContent,
         wordCount: newContent.length,
       });
+
+      // 提取情节记忆（异步，不阻塞主流程）
+      extractMemoryAfterApply(projectStore.currentChapter!, currentIndex + 1);
 
       // 清空生成的内容
       currentGeneratedContent = '';
@@ -380,6 +475,25 @@ export function useChapterWriter(): UseChapterWriterReturn {
     } catch (err) {
       error.value = err instanceof Error ? err.message : '保存失败';
       return false;
+    }
+  }
+
+  /**
+   * 应用内容后提取情节记忆
+   */
+  async function extractMemoryAfterApply(chapter: any, chapterIndex: number): Promise<void> {
+    try {
+      // 等待内容保存完成
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const memory = await extractChapterMemory(chapter, chapterIndex);
+
+      // 添加到记忆系统
+      projectStore.addChapterMemory(memory);
+
+      console.log('[记忆系统] 已提取章节记忆:', chapter.title, memory.corePlot.slice(0, 50) + '...');
+    } catch (err) {
+      console.error('[记忆系统] 提取记忆失败:', err);
     }
   }
 

@@ -15,6 +15,10 @@ export interface ProjectContext {
   currentChapterTitle?: string;
   /** 当前章节内容 */
   currentChapterContent: string;
+  /** 当前章节的大纲描述（来自生成的大纲） */
+  currentChapterOutline?: string;
+  /** 完整的章节大纲（所有章节的大纲，用于参考） */
+  fullOutline?: string;
   /** 当前章节前后的章节内容摘要 */
   adjacentChaptersSummary?: {
     previousChapterTitle?: string;
@@ -122,7 +126,7 @@ export class PromptBuilder {
     mode: 'smartContinue' | 'polish',
     targetWordCount: number = 3000
   ): { systemPrompt: string; userPrompt: string } {
-    const { project, currentChapterContent, customPrompt, adjacentChaptersSummary, currentChapterIndex, currentChapterTitle } = context;
+    const { project, currentChapterContent, customPrompt, adjacentChaptersSummary, currentChapterIndex, currentChapterTitle, currentChapterOutline, fullOutline } = context;
 
     // 构建角色信息
     const charactersInfo = this.buildCharactersInfo(project.characters);
@@ -151,8 +155,30 @@ export class PromptBuilder {
     // 构建续写/润色指令
     let modeInstruction: string;
     if (mode === 'smartContinue') {
-      // 第一章特殊处理
-      if (isFirstChapter) {
+      // 基于大纲的续写指令
+      if (currentChapterOutline) {
+        modeInstruction = `请续写以下故事内容。根据本章大纲完成任务：
+
+### 本章任务（来自大纲）【必须完成】
+${currentChapterOutline}
+
+### 任务执行原则
+1. **严格按照大纲**：本章的所有内容都必须围绕上述大纲展开
+2. **完成大纲后再结束**：即使字数达到要求，如果大纲任务未完成，应继续完成
+3. **自然衔接**：如果已有内容，要从结尾处自然衔接
+4. **动态调整**：如果大纲任务简单可提前完成，可适当扩展细节；如果复杂，字数可适当超出
+
+### 内容要求
+1. **篇幅控制**：续写内容约 ${targetWordCount} 字，允许±15%的偏差
+2. **元素丰富**：包含对话、动作、心理描写、环境描写等多种元素
+3. **节奏把控**：合理安排情节发展
+
+### 结尾要求
+1. 完成大纲任务后再考虑结尾
+2. 设置适当的悬念或转折，吸引读者继续阅读
+3. 自然过渡，为下一段情节做好铺垫`;
+      } else if (isFirstChapter) {
+        // 没有大纲但有第一章特殊要求
         modeInstruction = `请续写以下故事内容。这是小说的第一章，需要特别注意：
 
 ### 第一章特殊要求【重要】
@@ -179,6 +205,7 @@ export class PromptBuilder {
 1. 设置适当的悬念或转折，吸引读者继续阅读
 2. 自然过渡，为下一段情节做好铺垫`;
       } else {
+        // 普通章节
         modeInstruction = `请续写以下故事内容。注意以下要点：
 
 ### 衔接要求
@@ -229,11 +256,23 @@ export class PromptBuilder {
     if (chapterNumber !== undefined) {
       userPrompt += `\n\n## 当前章节信息
 章节序号：第 ${chapterNumber} 章
-章节标题：${currentChapterTitle || '未命名'}${isFirstChapter ? '\n【重要提示】这是小说的第一章！' : ''}`;
+章节标题：${currentChapterTitle || '未命名'}`;
+    }
+
+    // 添加本章大纲（如果有）
+    if (currentChapterOutline) {
+      userPrompt += `\n\n## 本章大纲【本章核心任务】
+${currentChapterOutline}`;
     }
 
     if (contextSummary) {
       userPrompt += `\n\n${contextSummary}`;
+    }
+
+    // 添加完整大纲参考（如果有）
+    if (fullOutline) {
+      userPrompt += `\n\n## 完整大纲参考
+${fullOutline}`;
     }
 
     userPrompt += `# 作品世界观设定
@@ -246,7 +285,7 @@ ${charactersInfo}
 ${foreshadowInfo}
 
 # 待续写/润色的内容
-${currentChapterContent || '(当前章节为空，请从头开始创作)'}`;
+${currentChapterContent || '(当前章节为空，请根据本章大纲创作)'}`;
 
     if (customPrompt) {
       userPrompt += `\n\n# 用户补充要求
