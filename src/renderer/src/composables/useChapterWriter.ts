@@ -85,11 +85,13 @@ export interface UseChapterWriterReturn {
   writeChapter: (options?: {
     targetWordCount?: number;
     additionalInstructions?: string;
+    writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient';
   }) => Promise<string | null>;
   stopWriting: () => void;
   buildContext: (additionalInstructions?: string) => ChapterWritingContext | null;
   applyGeneratedContent: () => Promise<boolean>;
   copyToClipboard: () => void;
+  reset: () => void;
 }
 
 const isGenerating = ref(false);
@@ -117,7 +119,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
   /**
    * 构建章节写作上下文
    */
-  function buildContext(additionalInstructions?: string): ChapterWritingContext | null {
+  function buildContext(additionalInstructions?: string, writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient'): ChapterWritingContext | null {
     const project = projectStore.currentProject;
     const currentChapter = projectStore.currentChapter;
 
@@ -218,7 +220,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
       foreshadows: activeForeshadows,
       requirements: {
         targetWordCount: 3000,
-        style: 'concise',
+        style: writingStyle || 'concise',
         customStyle: additionalInstructions,
       },
       // 记忆系统数据
@@ -307,9 +309,11 @@ ${c.content || '（本章暂无内容）'}`;
   async function writeChapter(options?: {
     targetWordCount?: number;
     additionalInstructions?: string;
+    writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient';
   }): Promise<string | null> {
     const targetWordCount = options?.targetWordCount || 3000;
     const additionalInstructions = options?.additionalInstructions;
+    const writingStyle = options?.writingStyle || 'concise';
 
     // 验证状态
     if (isGenerating.value) {
@@ -317,7 +321,7 @@ ${c.content || '（本章暂无内容）'}`;
       return null;
     }
 
-    const context = buildContext(additionalInstructions);
+    const context = buildContext(additionalInstructions, writingStyle);
     if (!context) {
       return null;
     }
@@ -362,6 +366,7 @@ ${c.content || '（本章暂无内容）'}`;
               } : undefined,
               charactersInScene: context.characters,
               relatedForeshadows: context.foreshadows,
+              writingStyle: writingStyle,
             },
             'smartContinue',
             targetWordCount,
@@ -401,6 +406,7 @@ ${c.content || '（本章暂无内容）'}`;
             } : undefined,
             charactersInScene: context.characters,
             relatedForeshadows: context.foreshadows,
+            writingStyle: writingStyle,
           },
           'smartContinue',
           targetWordCount
@@ -498,6 +504,21 @@ ${c.content || '（本章暂无内容）'}`;
   }
 
   /**
+   * 重置所有状态
+   */
+  function reset(): void {
+    isGenerating.value = false;
+    progress.value = 0;
+    error.value = null;
+    currentGeneratedContent = '';
+    generatedContent.value = '';
+    if (abortController) {
+      abortController.abort();
+      abortController = null;
+    }
+  }
+
+  /**
    * 复制到剪贴板
    */
   function copyToClipboard(): void {
@@ -519,5 +540,6 @@ ${c.content || '（本章暂无内容）'}`;
     buildContext,
     applyGeneratedContent,
     copyToClipboard,
+    reset,
   };
 }

@@ -101,6 +101,15 @@ const deAIResult = ref<{
 const deAIFixedContent = ref<string>("");
 const selectedTextForDeAI = ref("");
 
+// 写作风格相关状态
+const selectedWritingStyle = ref<'concise' | 'elegant' | 'humorous' | 'ancient'>('concise');
+const writingStyleOptions = [
+  { label: '简洁有力', value: 'concise' },
+  { label: '文笔华丽', value: 'elegant' },
+  { label: '幽默风趣', value: 'humorous' },
+  { label: '古风典雅', value: 'ancient' },
+];
+
 // 一键续写相关
 const selectedWordCount = ref<number>(3000);
 const showWordCountDropdown = ref(false);
@@ -121,6 +130,7 @@ const {
   writeChapter,
   applyGeneratedContent,
   copyToClipboard: copyOneClickContent,
+  reset: resetChapterWriter,
 } = useChapterWriter();
 
 // Computed
@@ -169,6 +179,12 @@ watch(selectedMode, (newMode) => {
   if (newMode === "memory" && !memoryContext.value.location) {
     loadMemoryContext();
   }
+});
+
+// Watch for chapter changes to reset generated content
+watch(() => projectStore.currentChapterId, () => {
+  resetChapterWriter();
+  clearResult();
 });
 
 // 切换标签页
@@ -386,6 +402,7 @@ async function handleOneClickWrite() {
   try {
     const result = await writeChapter({
       targetWordCount: selectedWordCount.value,
+      writingStyle: selectedWritingStyle.value,
     });
     if (result) {
       message.success("生成完成，请查看生成内容");
@@ -582,6 +599,13 @@ function getSeverityColorForDeAI(severity: string): string {
               class="flex-1"
               :disabled="isOneClickGenerating"
             />
+            <NSelect
+              v-model:value="selectedWritingStyle"
+              :options="writingStyleOptions"
+              size="small"
+              class="flex-1"
+              :disabled="isOneClickGenerating"
+            />
           </div>
 
           <button
@@ -741,6 +765,18 @@ function getSeverityColorForDeAI(severity: string): string {
               {{ t("editor.polishDesc") }}
             </div>
           </button>
+        </div>
+
+        <!-- Writing Style Selection -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">写作风格</span>
+          <NSelect
+            v-model:value="selectedWritingStyle"
+            :options="writingStyleOptions"
+            size="small"
+            class="flex-1"
+            :disabled="isGenerating"
+          />
         </div>
 
         <!-- Custom Prompt -->
