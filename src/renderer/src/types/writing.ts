@@ -108,6 +108,7 @@ export interface ChapterWritingContext {
     orderIndex: number;
     outline?: string;        // 章节大纲
     existingContent?: string; // 已写内容
+    chapterType?: ChapterType; // 章节类型
   };
 
   // 前情摘要
@@ -184,6 +185,35 @@ export interface GenerateChapterRequest {
 }
 
 /**
+ * 章节类型
+ */
+export type ChapterType = 
+  | 'world_intro'      // 世界观/背景介绍
+  | 'character_intro'  // 人物登场/介绍
+  | 'plot_setup'       // 情节铺陈
+  | 'conflict'         // 冲突展开
+  | 'climax'          // 高潮
+  | 'resolution'       // 冲突解决
+  | 'transitional'     // 过渡章节
+  | 'ending'          // 结尾/收束
+  | 'normal';         // 普通章节
+
+/**
+ * 章节类型描述映射
+ */
+export const CHAPTER_TYPE_DESCRIPTIONS: Record<ChapterType, string> = {
+  world_intro: '世界观/背景介绍 - 需要详细介绍故事发生的世界、历史、社会结构等背景信息',
+  character_intro: '人物登场/介绍 - 需要重点描写新角色的外貌、性格、能力、背景等',
+  plot_setup: '情节铺陈 - 故事的开端，需要建立冲突的种子，为后续发展做铺垫',
+  conflict: '冲突展开 - 矛盾冲突逐渐激化，情节逐步推进',
+  climax: '高潮 - 故事最激烈的部分，核心冲突达到顶点',
+  resolution: '冲突解决 - 矛盾得到化解，问题得到解决',
+  transitional: '过渡章节 - 连接前后情节的过渡段落，可以放缓节奏',
+  ending: '结尾/收束 - 故事接近尾声，需要收束所有线索，给出结局',
+  normal: '普通章节 - 正常推进情节的章节',
+};
+
+/**
  * 章节生成响应
  */
 export interface GenerateChapterResponse {
@@ -193,6 +223,7 @@ export interface GenerateChapterResponse {
     orderIndex: number;
     keyEvents: string[];
     foreshadows: string[];
+    chapterType?: ChapterType;  // 章节类型（新增）
   }>;
 }
 

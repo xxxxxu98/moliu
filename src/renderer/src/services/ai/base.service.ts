@@ -9,6 +9,10 @@ export interface ProjectContext {
   project: Project;
   /** 当前章节 ID */
   currentChapterId: string;
+  /** 当前章节序号（从0开始） */
+  currentChapterIndex?: number;
+  /** 当前章节标题 */
+  currentChapterTitle?: string;
   /** 当前章节内容 */
   currentChapterContent: string;
   /** 当前章节前后的章节内容摘要 */
@@ -118,7 +122,7 @@ export class PromptBuilder {
     mode: 'smartContinue' | 'polish',
     targetWordCount: number = 3000
   ): { systemPrompt: string; userPrompt: string } {
-    const { project, currentChapterContent, customPrompt, adjacentChaptersSummary } = context;
+    const { project, currentChapterContent, customPrompt, adjacentChaptersSummary, currentChapterIndex, currentChapterTitle } = context;
 
     // 构建角色信息
     const charactersInfo = this.buildCharactersInfo(project.characters);
@@ -140,10 +144,42 @@ export class PromptBuilder {
       }
     }
 
+    // 判断是否为第一章（没有已有内容）
+    const isFirstChapter = (currentChapterIndex === 0 || currentChapterIndex === undefined) && !currentChapterContent;
+    const chapterNumber = currentChapterIndex !== undefined ? currentChapterIndex + 1 : undefined;
+
     // 构建续写/润色指令
     let modeInstruction: string;
     if (mode === 'smartContinue') {
-      modeInstruction = `请续写以下故事内容。注意以下要点：
+      // 第一章特殊处理
+      if (isFirstChapter) {
+        modeInstruction = `请续写以下故事内容。这是小说的第一章，需要特别注意：
+
+### 第一章特殊要求【重要】
+1. **世界观介绍【强制】**：本章必须详细介绍故事发生的世界背景，包括：
+   - 时代背景（朝代/纪元/时间线等）
+   - 世界格局（国家分布、势力划分、地理环境）
+   - 社会结构（阶层、组织门派、社会规则等）
+   - 核心设定（如果作品有独特的修炼体系、魔法规则等，必须在本章说明）
+2. **自然融入**：世界观信息要通过人物视角、场景描写自然带出，避免大段说明文
+3. **引入主角**：第一章应同时引入主角，让读者快速代入
+4. **建立基调**：通过场景和氛围建立整部作品的基调
+
+### 衔接要求
+1. **从头开始**：这是第一章，直接开始故事，不需要衔接前文
+2. **开篇吸引**：开头要有吸引力，能让读者快速进入故事世界
+3. **风格建立**：确定整部作品的文风基调
+
+### 内容要求
+1. **篇幅控制【重要】**：续写内容必须控制在 ${targetWordCount} 字左右，允许±10%的偏差
+2. **元素丰富**：包含对话、动作、心理描写、环境描写等多种元素
+3. **节奏把控**：合理安排情节发展
+
+### 结尾要求
+1. 设置适当的悬念或转折，吸引读者继续阅读
+2. 自然过渡，为下一段情节做好铺垫`;
+      } else {
+        modeInstruction = `请续写以下故事内容。注意以下要点：
 
 ### 衔接要求
 1. **从结尾继续**：仔细阅读原文结尾，从那里自然衔接续写，不要重复已写内容
@@ -159,6 +195,7 @@ export class PromptBuilder {
 1. 设置适当的悬念或转折，吸引读者继续阅读
 2. 自然过渡，为下一段情节做好铺垫
 3. 避免戛然而止或草率收尾`;
+      }
     } else {
       modeInstruction = `请润色优化以下内容。注意以下要点：
 
@@ -188,6 +225,13 @@ export class PromptBuilder {
 作品简介：${project.description || '暂无'}
 类型标签：${project.genre.map(g => g.name).join('、')}`
 
+    // 添加章节信息
+    if (chapterNumber !== undefined) {
+      userPrompt += `\n\n## 当前章节信息
+章节序号：第 ${chapterNumber} 章
+章节标题：${currentChapterTitle || '未命名'}${isFirstChapter ? '\n【重要提示】这是小说的第一章！' : ''}`;
+    }
+
     if (contextSummary) {
       userPrompt += `\n\n${contextSummary}`;
     }
@@ -202,7 +246,7 @@ ${charactersInfo}
 ${foreshadowInfo}
 
 # 待续写/润色的内容
-${currentChapterContent || '(当前章节为空)'}`;
+${currentChapterContent || '(当前章节为空，请从头开始创作)'}`;
 
     if (customPrompt) {
       userPrompt += `\n\n# 用户补充要求

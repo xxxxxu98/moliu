@@ -7,9 +7,70 @@ import { ref, computed, readonly } from 'vue';
 import { useProjectStore } from '@/stores/project.store';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useActiveAIProvider } from './useActiveAIProvider';
-import type { WritingStyle, ChapterWritingContext } from '@/types/writing';
+import type { WritingStyle, ChapterWritingContext, ChapterType } from '@/types/writing';
 import { PromptBuilder } from '@/services/writing/prompt-builder';
 import { ContextManager } from '@/services/writing/context-manager';
+
+/**
+ * 从章节大纲中提取章节类型
+ */
+function extractChapterTypeFromOutline(outline: string, orderIndex: number): ChapterType {
+  if (!outline) {
+    // 如果没有大纲，根据章节序号判断
+    if (orderIndex === 0) {
+      return 'world_intro';
+    }
+    return 'normal';
+  }
+
+  const lowerOutline = outline.toLowerCase();
+
+  // 关键词匹配
+  if (lowerOutline.includes('世界观') || lowerOutline.includes('背景') || 
+      lowerOutline.includes('设定') || lowerOutline.includes('大陆') ||
+      lowerOutline.includes('世界') || lowerOutline.includes('历史')) {
+    return 'world_intro';
+  }
+
+  if (lowerOutline.includes('登场') || lowerOutline.includes('出场') ||
+      lowerOutline.includes('初遇') || lowerOutline.includes('相遇') ||
+      lowerOutline.includes('介绍') || lowerOutline.includes('主角')) {
+    return 'character_intro';
+  }
+
+  if (lowerOutline.includes('开端') || lowerOutline.includes('开始') ||
+      lowerOutline.includes('序幕') || lowerOutline.includes('引入')) {
+    return 'plot_setup';
+  }
+
+  if (lowerOutline.includes('高潮') || lowerOutline.includes('决战') ||
+      lowerOutline.includes('对决') || lowerOutline.includes('爆发')) {
+    return 'climax';
+  }
+
+  if (lowerOutline.includes('解决') || lowerOutline.includes('结束') ||
+      lowerOutline.includes('落幕') || lowerOutline.includes('结局') ||
+      lowerOutline.includes('收尾')) {
+    return 'resolution';
+  }
+
+  if (lowerOutline.includes('过渡') || lowerOutline.includes('间章') ||
+      lowerOutline.includes('日常') || lowerOutline.includes('休息')) {
+    return 'transitional';
+  }
+
+  if (lowerOutline.includes('终章') || lowerOutline.includes('尾声') ||
+      lowerOutline.includes('最终') || lowerOutline.includes('完结')) {
+    return 'ending';
+  }
+
+  // 第一章默认世界观介绍
+  if (orderIndex === 0) {
+    return 'world_intro';
+  }
+
+  return 'normal';
+}
 
 export interface UseChapterWriterReturn {
   // 状态
@@ -73,23 +134,26 @@ export function useChapterWriter(): UseChapterWriterReturn {
       previousSummary = contextManager.extractPreviousChapterSummary(prevChapter.content, 300);
     }
 
-    // 获取本章大纲
-    const chapterOutline = currentChapter.outline || extractChapterOutlineFromPlot(projectStore.plotOutline, currentChapter.id);
+    // 获取本章大纲（从 plotSummary 或大纲中获取）
+    const chapterOutline = currentChapter.plotSummary || extractChapterOutlineFromPlot(projectStore.plotOutline, currentChapter.id);
+
+    // 提取章节类型
+    const chapterType = extractChapterTypeFromOutline(chapterOutline, currentIndex);
 
     // 准备角色信息
     const characters: ChapterWritingContext['characters'] = (project.characters || []).map(char => ({
       id: char.id,
       name: char.name,
-      role: char.role,
-      description: char.description,
+      role: char.role || '角色',
+      description: char.description || '',
       personality: char.profile?.personality || [],
       appearance: char.profile?.appearance,
       speakingStyle: undefined,
       currentStatus: undefined,
-      relationships: char.profile?.relationships?.map(r => ({
+      relationships: (char.profile?.relationships || []).map(r => ({
         targetName: r.targetName,
         type: r.type,
-        description: r.description,
+        description: r.description || '',
       })),
     }));
 
@@ -107,9 +171,19 @@ export function useChapterWriter(): UseChapterWriterReturn {
       projectTitle: project.name,
       projectSynopsis: project.description || '',
       worldSetting: project.worldSchema ? {
-        locations: project.worldSchema.locations || [],
-        rules: project.worldSchema.rules || [],
-        factions: project.worldSchema.factions || [],
+        locations: (project.worldSchema.locations || []).map(l => ({
+          name: l.name,
+          description: l.description || '',
+          level: l.level || 'other',
+        })),
+        rules: (project.worldSchema.rules || []).map(r => ({
+          name: r.name,
+          description: r.description || '',
+        })),
+        factions: (project.worldSchema.factions || []).map(f => ({
+          name: f.name,
+          description: f.description || '',
+        })),
       } : undefined,
       chapter: {
         id: currentChapter.id,
@@ -117,6 +191,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
         orderIndex: currentIndex,
         outline: chapterOutline,
         existingContent: currentChapter.content || '',
+        chapterType: chapterType,
       },
       previousChapter: prevChapter ? {
         title: prevChapter.title,
@@ -191,6 +266,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
             {
               project: projectStore.currentProject,
               currentChapterId: context.chapter.id,
+              currentChapterIndex: context.chapter.orderIndex,
+              currentChapterTitle: context.chapter.title,
               currentChapterContent: context.chapter.existingContent || '',
               adjacentChaptersSummary: context.previousChapter ? {
                 previousChapterTitle: context.previousChapter.title,
@@ -226,6 +303,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
           {
             project: projectStore.currentProject,
             currentChapterId: context.chapter.id,
+            currentChapterIndex: context.chapter.orderIndex,
+            currentChapterTitle: context.chapter.title,
             currentChapterContent: context.chapter.existingContent || '',
             adjacentChaptersSummary: context.previousChapter ? {
               previousChapterTitle: context.previousChapter.title,
@@ -290,8 +369,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
       await projectStore.updateChapter(projectStore.currentChapterId, {
         content: newContent,
         wordCount: newContent.length,
-        isGenerated: true,
-        generatedAt: new Date().toISOString(),
       });
 
       // 清空生成的内容

@@ -17,6 +17,7 @@ export interface GeneratedChapter {
   orderIndex: number;
   keyEvents: string[];
   foreshadows: string[];
+  chapterType?: string;  // 章节类型
 }
 
 export interface UseChapterOutlineGeneratorReturn {
@@ -148,6 +149,7 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
             orderIndex: i,
             keyEvents: Array.isArray(c.keyEvents) ? c.keyEvents : [],
             foreshadows: Array.isArray(c.foreshadows) ? c.foreshadows : [],
+            chapterType: c.chapterType || (i === 0 ? 'world_intro' : 'normal'),
           }));
         }
       }
@@ -189,6 +191,7 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
           orderIndex: chapters.length,
           keyEvents: [],
           foreshadows: [],
+          chapterType: chapters.length === 0 ? 'world_intro' : 'normal',
         };
       } else if (inChapter && trimmed) {
         // 累积大纲内容
@@ -209,6 +212,7 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
         orderIndex: chapters.length,
         keyEvents: [],
         foreshadows: [],
+        chapterType: chapters.length === 0 ? 'world_intro' : 'normal',
       });
     }
 
