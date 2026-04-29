@@ -653,7 +653,7 @@ function getStatusConfig(status: string) {
       <!-- Right Sidebar: AI Panel -->
       <div
         class="h-full bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 flex flex-col transition-all duration-300"
-        :class="rightSiderCollapsed ? 'w-12' : 'w-90'"
+        :class="rightSiderCollapsed ? 'w-12' : 'w-96'"
       >
         <!-- Collapse Button -->
         <div

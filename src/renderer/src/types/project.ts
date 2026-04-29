@@ -59,6 +59,8 @@ export interface Chapter {
   createdAt: string;
   updatedAt: string;
   plotSummary?: string; // 章节大纲摘要
+  isGenerated?: boolean; // 是否为 AI 生成
+  generatedAt?: string; // AI 生成时间
 }
 
 export interface Character {
