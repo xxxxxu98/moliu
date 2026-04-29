@@ -8,14 +8,19 @@ import {
   Zap,
   ChevronDown,
   Wand2,
+  FileText,
+  Search,
+  Copy,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
+import { useMessage } from "naive-ui";
 import { useInspirationStore } from "@/stores/inspiration.store";
 import { genreTags as configGenreTags, settingElements as configSettingElements } from "@/data/inspirations";
 import { timing } from "@/config/timing";
 import type { GeneratedOutline } from "@/types/inspiration";
 import { useOutlineGenerator } from "@/composables/useOutlineGenerator";
 import { useProjectCreator } from "@/composables/useProjectCreator";
+import { TextAnalysisService, type AnalysisFocus } from "@/services/writing/text-analysis-service";
 import OutlineDisplay from "@/components/common/OutlineDisplay.vue";
 import WordCountSelector from "@/components/common/WordCountSelector.vue";
 import { DEFAULT_WORD_COUNT_RANGE } from "@/services/ai/unified.service";
@@ -25,6 +30,7 @@ const genreTags = configGenreTags;
 const settingElements = configSettingElements;
 
 const { t } = useI18n();
+const message = useMessage();
 const inspirationStore = useInspirationStore();
 
 // 使用 Composable 封装的大纲生成和项目创建逻辑
@@ -43,6 +49,17 @@ const {
   createProject: doCreateProject,
   reset: resetProjectState,
 } = useProjectCreator();
+
+// 拆文分析相关状态
+const showAnalysisModal = ref(false);
+const isAnalyzing = ref(false);
+const analysisInput = ref({
+  title: "",
+  content: "",
+  genre: "都市",
+});
+const analysisResult = ref<string>("");
+const selectedAnalysisFocus = ref<AnalysisFocus>("all");
 
 // 选中的大纲
 const selectedOutline = ref<GeneratedOutline | null>(null);
@@ -767,6 +784,119 @@ function resetToQuickStart() {
   tagDisplayMode.value = "collapsed";
   elementDisplayMode.value = "collapsed";
 }
+
+// 拆文分析相关方法
+function openAnalysisModal() {
+  showAnalysisModal.value = true;
+  analysisInput.value = {
+    title: "",
+    content: "",
+    genre: "都市",
+  };
+  analysisResult.value = "";
+}
+
+function closeAnalysisModal() {
+  showAnalysisModal.value = false;
+}
+
+async function handleStartAnalysis() {
+  if (!analysisInput.value.title || !analysisInput.value.content) {
+    message.warning("请填写书名和内容");
+    return;
+  }
+
+  isAnalyzing.value = true;
+  analysisResult.value = "";
+
+  try {
+    // 获取 AI 服务
+    const { useAIService } = await import("@/services/ai/useAIService");
+    const aiService = useAIService();
+    
+    const aiClient = async (prompt: string): Promise<string> => {
+      const response = await aiService.generate(prompt, "concise");
+      return response;
+    };
+
+    const report = await TextAnalysisService.analyze(
+      {
+        title: analysisInput.value.title,
+        content: analysisInput.value.content,
+        mode: "quick",
+        focus: selectedAnalysisFocus.value,
+        genre: analysisInput.value.genre,
+      },
+      aiClient
+    );
+
+    // 将报告转换为 Markdown 格式
+    analysisResult.value = convertReportToMarkdown(report);
+    message.success("分析完成");
+  } catch (err) {
+    message.error(err instanceof Error ? err.message : "分析失败");
+  } finally {
+    isAnalyzing.value = false;
+  }
+}
+
+function convertReportToMarkdown(report: any): string {
+  let md = `# 《${report.basicInfo.title}》拆文报告\n\n`;
+  
+  md += `## 基本信息\n`;
+  md += `- **题材**：${report.basicInfo.genre}\n`;
+  md += `- **预估章节数**：${report.basicInfo.estimatedChapters} 章\n`;
+  md += `- **预估字数**：约 ${report.basicInfo.estimatedWords.toLocaleString()} 字\n\n`;
+
+  if (report.goldenThreeChapters.length > 0) {
+    md += `## 黄金三章分析\n\n`;
+    report.goldenThreeChapters.forEach((chapter: any, index: number) => {
+      md += `### 第${index + 1}章：${chapter.chapterTitle}\n\n`;
+      md += `- **开篇钩子**：${chapter.openingHook}\n`;
+      md += `- **核心冲突**：${chapter.coreConflict}\n`;
+      md += `- **爽点设计**：${chapter.highlightDesign.join("、")}\n`;
+      md += `- **节奏特点**：${chapter.pacingFeatures.join("、")}\n`;
+      md += `- **值得学习**：${chapter.learnings.join("、")}\n\n`;
+    });
+  }
+
+  if (report.characterArchitecture.length > 0) {
+    md += `## 人物架构\n\n`;
+    report.characterArchitecture.forEach((char: any) => {
+      md += `### ${char.name}（${char.role}）\n\n`;
+      md += `- **性格特点**：${char.personalityTraits.join("、")}\n`;
+      md += `- **人物弧线**：${char.arcDescription}\n`;
+      md += `- **关系网络**：${char.relationshipMap.map((r: any) => `${r.with}（${r.type}）`).join("、")}\n\n`;
+    });
+  }
+
+  if (report.writingTechniques.openingTechniques.length > 0) {
+    md += `## 写作技法\n\n`;
+    md += `### 开篇技法\n`;
+    md += report.writingTechniques.openingTechniques.map((t: string) => `- ${t}`).join("\n");
+    md += "\n\n### 对话技法\n";
+    md += report.writingTechniques.dialogueTechniques.map((t: string) => `- ${t}`).join("\n");
+    md += "\n\n### 悬念技法\n";
+    md += report.writingTechniques.tensionTechniques.map((t: string) => `- ${t}`).join("\n");
+    md += "\n";
+  }
+
+  if (report.keyLearnings.length > 0) {
+    md += `## 关键学习点\n\n`;
+    report.keyLearnings.forEach((learning: string, index: number) => {
+      md += `${index + 1}. ${learning}\n`;
+    });
+  }
+
+  return md;
+}
+
+function copyAnalysisResult() {
+  if (analysisResult.value) {
+    navigator.clipboard.writeText(analysisResult.value);
+    message.success("已复制到剪贴板");
+  }
+}
 </script>
 
 <template>
@@ -1182,6 +1312,140 @@ function resetToQuickStart() {
         {{ t("inspiration.startJourneyDesc") }}
       </p>
     </div>
+
+    <!-- 拆文分析入口按钮 -->
+    <div class="pt-4 border-t border-gray-100 dark:border-gray-800">
+      <button
+        class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 font-medium hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+        @click="openAnalysisModal"
+      >
+        <Search class="w-4 h-4" />
+        拆文分析
+      </button>
+      <p class="text-xs text-gray-400 dark:text-gray-500 text-center mt-1">分析爆款，学习写作技巧</p>
+    </div>
+
+    <!-- 拆文分析 Modal -->
+    <Teleport to="body">
+      <div
+        v-if="showAnalysisModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        @click.self="closeAnalysisModal"
+      >
+        <div class="w-full max-w-3xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+            <div class="flex items-center gap-3">
+              <FileText class="w-5 h-5 text-purple-500" />
+              <h3 class="font-semibold text-gray-900 dark:text-white">拆文分析</h3>
+            </div>
+            <button
+              class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              @click="closeAnalysisModal"
+            >
+              <X class="w-4 h-4 text-gray-400" />
+            </button>
+          </div>
+
+          <!-- Modal Content -->
+          <div class="flex-1 overflow-y-auto p-6 space-y-4">
+            <!-- 输入区域 -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">书名</label>
+                <input
+                  v-model="analysisInput.title"
+                  type="text"
+                  placeholder="请输入要分析的书名"
+                  class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">题材</label>
+                <select
+                  v-model="analysisInput.genre"
+                  class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="都市">都市</option>
+                  <option value="玄幻">玄幻</option>
+                  <option value="仙侠">仙侠</option>
+                  <option value="穿越">穿越</option>
+                  <option value="言情">言情</option>
+                  <option value="科幻">科幻</option>
+                  <option value="悬疑">悬疑</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">分析重点</label>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="focus in [
+                    { value: 'all', label: '全部' },
+                    { value: 'golden3', label: '黄金三章' },
+                    { value: 'structure', label: '整体结构' },
+                    { value: 'character', label: '人物架构' },
+                    { value: 'plot', label: '情节设计' },
+                  ]"
+                  :key="focus.value"
+                  class="px-3 py-1.5 rounded-lg text-sm transition-colors"
+                  :class="[
+                    selectedAnalysisFocus === focus.value
+                      ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-purple-900/30'
+                  ]"
+                  @click="selectedAnalysisFocus = focus.value as AnalysisFocus"
+                >
+                  {{ focus.label }}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">原文内容</label>
+              <textarea
+                v-model="analysisInput.content"
+                rows="8"
+                placeholder="请粘贴要分析的原文内容（前3000字左右效果最佳）"
+                class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+              ></textarea>
+              <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                建议粘贴3000-5000字，AI将分析其结构、技法和亮点
+              </div>
+            </div>
+
+            <!-- 分析按钮 -->
+            <button
+              class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+              :disabled="isAnalyzing || !analysisInput.title || !analysisInput.content"
+              @click="handleStartAnalysis"
+            >
+              <Search v-if="!isAnalyzing" class="w-4 h-4" />
+              <span v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              {{ isAnalyzing ? "分析中..." : "开始分析" }}
+            </button>
+
+            <!-- 分析结果 -->
+            <div v-if="analysisResult" class="pt-4 border-t border-gray-100 dark:border-gray-800">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="font-medium text-gray-900 dark:text-white">分析报告</h4>
+                <button
+                  class="flex items-center gap-1 px-2 py-1 text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                  @click="copyAnalysisResult"
+                >
+                  <Copy class="w-3 h-3" />
+                  复制报告
+                </button>
+              </div>
+              <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 max-h-96 overflow-y-auto">
+                <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-sans">{{ analysisResult }}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 

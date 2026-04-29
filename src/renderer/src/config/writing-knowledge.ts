@@ -1,0 +1,251 @@
+/**
+ * Writing Knowledge Base - 网文写作知识库
+ * 整合 oh-story-claudecode skills 的核心方法论
+ */
+
+export interface WritingKnowledge {
+  // 核心写作原则
+  principles: {
+    outline: string[];        // 大纲原则
+    chapter: string[];        // 章节原则
+    hook: string[];          // 钩子原则
+  };
+  
+  // 禁用词表（去AI味）
+  bannedWords: {
+    level1: string[];  // 一级禁用词（出现即替换）
+    level2: string[];  // 二级禁用词（高频出现时替换）
+    patterns: string[]; // 禁用句式模板
+  };
+  
+  // 章节类型定义
+  chapterTypes: {
+    type: string;
+    description: string;
+    keyPoints: string[];
+  }[];
+  
+  // 钩子技法
+  hooks: {
+    chapterEnd: string[];   // 章尾钩子13式
+    chapterStart: string[];   // 章首钩子7式
+  };
+  
+  // 写作公式
+  formulas: {
+    opening: string;      // 开篇公式
+    climax: string;      // 高潮公式
+    conflict: string;     // 冲突公式
+    shuangbai: string;   // 装逼打脸公式
+  };
+  
+  // 八节点故事结构
+  eightNodes: {
+    name: string;
+    ratio: string;
+    keyPoints: string[];
+  }[];
+}
+
+// 核心写作原则
+export const WRITING_PRINCIPLES = {
+  outline: [
+    "大纲是地图，不是牢笼",
+    "日更是底线，质量是上限",
+    "爽点密度决定存亡",
+    "先写30章，再谈其他的",
+    "前3章全力打磨：钩子+人设+爽点+悬念四管齐下"
+  ],
+  chapter: [
+    "开篇500字必须有钩子，不能从天气/风景开始",
+    "对话要推进剧情或揭示性格，不能只为了凑字数",
+    "打斗不要流水账，写策略和反转",
+    "日常要有人物互动和伏笔，不能只是吃饭睡觉",
+    "爽点释放要充分、干脆",
+    "章尾都要有让读者想翻下一页的东西"
+  ],
+  hook: [
+    "每章结尾必须有钩子",
+    "钩子类型要多样化：13种章尾钩子 + 7种章首钩子",
+    "两长一短：确保读者脑中有两个长期目标+一个短期目标",
+    "期待感不能断"
+  ]
+};
+
+// AI味禁用词表
+export const BANNED_WORDS = {
+  level1: [
+    "仿佛", "好像", "犹如", "宛若", "一丝", "一抹", "些许", "隐约",
+    "深吸一口气", "缓缓", "不禁", "微微", "轻轻", "淡淡",
+    "眼中闪过", "嘴角勾起", "眉头微皱", "眉眼低垂", "瞳孔微缩",
+    "心中一动", "心头一震", "心下了然", "心中暗道", "心底泛起", "不由得",
+    "不容置疑", "不易察觉", "显而易见", "毫无疑问", "不可否认",
+    "坚定", "闪烁着光芒", "狡黠", "深邃", "凛冽",
+    "突然", "瞬间", "不由自主", "情不自禁", "自然而然"
+  ],
+  level2: [
+    "他/她终于明白",
+    "他/她这才意识到",
+    "此刻，他/她",
+    "一切...都",
+    "原来"
+  ],
+  patterns: [
+    "...，带着...",
+    "像XX一样",
+    "他/她感到...",
+    "他/她意识到...",
+    "眼中闪过一丝XX",
+    "嘴角勾起一抹XX",
+    "心中涌起一股XX"
+  ]
+};
+
+// 章尾钩子13式
+export const CHAPTER_END_HOOKS = [
+  "突然揭示：抛出改变全局的信息",
+  "紧急危机：下章必须回应的紧迫威胁",
+  "未完成动作：动作被新变量打断",
+  "身份反转：某人不是我们认为的那个人",
+  "两难抉择：被迫在两个坏选项中选一个",
+  "神秘物品/线索：重要但含义未知的物件",
+  "倒计时：时间不够用",
+  "承诺/威胁：有人宣布了行动意图",
+  "离奇消失：不可能的消失",
+  "隐藏含义：表面正常的对话，实际暗藏信息",
+  "意象钩子：反复出现的意象在章尾发生变化",
+  "回声钩子：章尾句子呼应开头，关键细节变了",
+  "留白钩子：故意不揭示发生了什么"
+];
+
+// 章首钩子7式
+export const CHAPTER_START_HOOKS = [
+  "悬念对话开局：直接从一段意味深长的对话开始",
+  "闪前碎片：先给一个结果碎片，再回到正常叙事",
+  "倒计时开局：开头就建立紧迫感",
+  "神秘独白：第一人称的诡异内心独白",
+  "反差场景：两个截然不同的场景并列",
+  "未完成动作开局：动作进行中被截断",
+  "意象预示：用环境意象暗示即将发生的事"
+];
+
+// 八节点故事结构
+export const EIGHT_NODES = [
+  {
+    name: "开篇（Opening）",
+    ratio: "5-10%",
+    keyPoints: [
+      "必须 in media res",
+      "前500字必须有钩子",
+      "必备元素：主角出场、核心冲突露出、至少一个悬念"
+    ]
+  },
+  {
+    name: "发展（Development）",
+    ratio: "30-40%",
+    keyPoints: [
+      "3-5个递进事件",
+      "每3000-5000字有爽点",
+      "至少埋设2条伏笔"
+    ]
+  },
+  {
+    name: "转折一（Twist 1）",
+    ratio: "5-10%",
+    keyPoints: [
+      "意外性：读者难猜到",
+      "合理性：回头看有伏笔",
+      "推动力：转折后故事走向不同"
+    ]
+  },
+  {
+    name: "转折二（Twist 2）",
+    ratio: "5-10%",
+    keyPoints: [
+      "赌注升级",
+      "情感冲击",
+      "通往高潮的桥梁"
+    ]
+  },
+  {
+    name: "高潮（Climax）",
+    ratio: "10-15%",
+    keyPoints: [
+      "快节奏，短句为主",
+      "主角发挥核心能力",
+      "至少一个燃点或泪点"
+    ]
+  },
+  {
+    name: "矛盾结果（Conflict Resolution）",
+    ratio: "10-15%",
+    keyPoints: [
+      "主要矛盾解决",
+      "战利品/收获盘点",
+      "新悬念露出"
+    ]
+  },
+  {
+    name: "转折三（Twist 3）",
+    ratio: "5-10%",
+    keyPoints: [
+      "颠覆读者对结局的预判",
+      "为结局定调",
+      "情感余韵"
+    ]
+  },
+  {
+    name: "结局（Ending）",
+    ratio: "10-15%",
+    keyPoints: [
+      "主线收束",
+      "核心人物结局交代",
+      "风格统一，留有余韵"
+    ]
+  }
+];
+
+// 爽点节奏公式
+export const PACE_FORMULAS = {
+  microPerChapter: "每章至少1个微爽点",
+  conflictPerThreeChapters: "每3章解决1个冲突",
+  climaxPerSevenChapters: "每7章1个大爽点",
+  
+  // 情绪拉扯公式
+  emotionalPull: "斗地主法：主角稍占上风→每次小角力胜利→最后大胜利",
+  
+  // 逼格塑造
+  bage: "歇斯底里解决→不爽；风轻云淡一指灭杀→爽"
+};
+
+// 装逼打脸公式
+export const SHUANGBAI_FORMULA = {
+  basic: "被打压嘲讽（可选铺垫项） + 展示金手指/能力 + 打造落差 + 震惊",
+  patterns: [
+    "作对比",
+    "装逼打脸（反转）",
+    "主角自我否定 + 他人吹捧",
+    "他人否定 + 被主角打脸",
+    "借人之手"
+  ]
+};
+
+// 故事卡公式
+export const STORY_CARDS = {
+  heroRescueBeauty: "英雄救美：关系平平或恶劣 + 危机产生 + 化解危机 + 关系质变",
+ 装着: "装逼：被打压嘲讽 + 展示能力 + 打造落差 + 震惊",
+  yixiaobodab: "以小博大：小的代价 + 入水之鱼的环境 + 获得大的收获",
+  dianshichengjin: "点石成金：不被看好 + 主角改造 + 产生价值",
+  huiyanlishi: "慧眼识真：主角已知价值 + 众人不看好 + 真相揭晓 + 震惊"
+};
+
+export default {
+  WRITING_PRINCIPLES,
+  BANNED_WORDS,
+  CHAPTER_END_HOOKS,
+  CHAPTER_START_HOOKS,
+  EIGHT_NODES,
+  PACE_FORMULAS,
+  SHUANGBAI_FORMULA,
+  STORY_CARDS
+};

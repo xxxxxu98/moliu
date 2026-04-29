@@ -1,6 +1,7 @@
 /**
  * Prompt 构建器
  * 负责构建各种写作场景的 Prompt
+ * 集成了 oh-story-claudecode skills 的核心方法论
  */
 
 import type { 
@@ -12,6 +13,14 @@ import type {
 } from '@/types/writing';
 import type { Character } from '@/types/project';
 import type { WorldSchema } from '@/types/project';
+import {
+  BANNED_WORDS,
+  CHAPTER_END_HOOKS,
+  CHAPTER_START_HOOKS,
+  EIGHT_NODES,
+  PACE_FORMULAS,
+  WRITING_PRINCIPLES
+} from '@/config/writing-knowledge';
 
 /**
  * Token 估算（中文约 1 token ≈ 1-2 字符，英文约 1 token ≈ 0.75 词）
@@ -68,7 +77,7 @@ function formatCharacter(char: ChapterWritingContext['characters'][0]): string {
 function formatWorldRules(rules: Array<{ name: string; description?: string }>): string {
   if (!rules || rules.length === 0) return '（未设定特殊规则）';
   
-  return rules.map((r: { name: string; description?: string }) => `- ${r.name}：${r.description || ''}`).join('\n');
+  return rules.map((r) => `- ${r.name}：${r.description || ''}`).join('\n');
 }
 
 /**
@@ -77,8 +86,7 @@ function formatWorldRules(rules: Array<{ name: string; description?: string }>):
 function formatWorldLocations(locations: Array<{ name: string; description?: string; level?: string }>): string {
   if (!locations || locations.length === 0) return '（未设定地点）';
 
-  // 按层级分组
-  const byLevel = locations.reduce((acc: Record<string, typeof locations>, loc: { name: string; description?: string; level?: string }) => {
+  const byLevel = locations.reduce((acc: Record<string, typeof locations>, loc) => {
     const level = loc.level || 'other';
     if (!acc[level]) acc[level] = [];
     acc[level].push(loc);
@@ -183,16 +191,92 @@ function parseChapterType(typeStr: string): ChapterType {
   };
   return typeMap[typeStr.toLowerCase()] || 'normal';
 }
+
 export class PromptBuilder {
   /**
-   * 根据章节类型生成写作策略
+   * 获取写作核心原则
+   */
+  static getWritingPrinciples(): string {
+    return `# 【网文写作核心原则】来自 oh-story-claudecode skills
+
+${WRITING_PRINCIPLES.outline.map(p => `- ${p}`).join('\n')}
+`;
+  }
+
+  /**
+   * 获取章尾钩子技法
+   */
+  static getChapterEndHooks(): string {
+    return `## 【章尾钩子13式】来自 oh-story-claudecode skills
+
+${CHAPTER_END_HOOKS.map((hook, i) => `${i + 1}. ${hook}`).join('\n')}
+`;
+  }
+
+  /**
+   * 获取章首钩子技法
+   */
+  static getChapterStartHooks(): string {
+    return `## 【章首钩子7式】来自 oh-story-claudecode skills
+
+${CHAPTER_START_HOOKS.map((hook, i) => `${i + 1}. ${hook}`).join('\n')}
+`;
+  }
+
+  /**
+   * 获取爽点节奏公式
+   */
+  static getPaceFormulas(): string {
+    return `## 【爽点节奏公式】来自 oh-story-claudecode skills
+
+- ${PACE_FORMULAS.microPerChapter}
+- ${PACE_FORMULAS.conflictPerThreeChapters}
+- ${PACE_FORMULAS.climaxPerSevenChapters}
+- 情绪拉扯：${PACE_FORMULAS.emotionalPull}
+- 逼格塑造：${PACE_FORMULAS.bage}
+`;
+  }
+
+  /**
+   * 获取AI味禁用词表
+   */
+  static getBannedWords(): string {
+    return `## 【AI味禁用词表】来自 oh-story-claudecode skills
+
+### 一级禁用词（出现即替换）
+${BANNED_WORDS.level1.join('、')}
+
+### 禁用句式模板
+${BANNED_WORDS.patterns.map(p => `- ${p}`).join('\n')}
+
+### 替换策略
+- 抽象情绪词 → 具体动作
+- "感到XX" → 外化表现
+- 书面表达 → 口语化
+- 连续排比 → 保留最强一条
+- 总结升华句 → 直接删除
+`;
+  }
+
+  /**
+   * 获取八节点故事结构
+   */
+  static getEightNodesStructure(): string {
+    return `## 【八节点故事结构】来自 oh-story-claudecode skills
+
+${EIGHT_NODES.map(node => `### ${node.name}（${node.ratio}）
+${node.keyPoints.map(p => `- ${p}`).join('\n')}`).join('\n\n')}
+`;
+  }
+
+  /**
+   * 根据章节类型生成写作策略（增强版）
    */
   static getChapterTypeStrategy(
     chapterType: ChapterType | undefined,
     orderIndex: number,
     hasExistingContent: boolean
   ): string {
-    // 判断是否为第一章（没有已有内容）
     const isFirstChapter = orderIndex === 0 && !hasExistingContent;
     const effectiveType = chapterType || (isFirstChapter ? 'world_intro' : 'normal');
 
@@ -204,7 +288,14 @@ export class PromptBuilder {
 3. 社会结构：介绍社会阶层、组织门派、势力划分等
 4. 核心规则：阐释这个世界的重要规则（如修炼体系、法律、社会习俗等）
 5. 自然环境：描写故事主要发生地的地理环境
-请注意：背景描写要与故事情节自然融合，避免大段说明文，通过人物视角和事件自然带出世界观信息。`,
+请注意：背景描写要与故事情节自然融合，避免大段说明文，通过人物视角和事件自然带出世界观信息。
+
+【黄金五章开篇公式】来自 skills
+- 第1章：穿越/世界背景/主角人设/金手指/建立欲望
+- 第2章：明确主线（获取力量/金钱/地位）
+- 第3章：展示金手指强大，获得行动能力
+- 第4章：拉仇恨/设立正方反方/安排信息差/铺垫期待
+- 第5章：装逼成功/获得接下来装逼资格/触发新事件`,
 
       character_intro: `【本章写作策略：人物登场/介绍】
 本章需要重点介绍角色。请按以下方式展开：
@@ -213,16 +304,26 @@ export class PromptBuilder {
 3. 性格展现：通过言行举止、决策方式展现角色性格
 4. 背景交代：通过回忆、对话或内心独白交代角色背景
 5. 能力展示：通过具体事件展现角色的能力或特长
-请注意：人物介绍要与情节推进相结合，避免孤立的人物描写。`,
+请注意：人物介绍要与情节推进相结合，避免孤立的人物描写。
+
+【人物设计要点】
+- 给角色贴标签，让读者一看到某个特征就想起这个角色
+- 性格特点：勇敢/机智/腹黑/热血等关键词
+- 外貌特征：与性格相符的独特标志`,
 
       plot_setup: `【本章写作策略：情节铺陈/故事开端】
 本章是故事的开端，需要建立故事的框架：
-1. 开篇引人：以一个吸引人的场景或事件开篇
+1. 开篇引人：以一个吸引人的场景或事件开篇（in media res）
 2. 主角处境：明确主角当前的生活状态和处境
 3. 埋下伏笔：在故事早期埋设后续发展的重要伏笔
 4. 冲突种子：建立故事的核心矛盾或冲突
 5. 目标建立：为主角建立明确的目标或动机
-请注意：开篇要简洁有力，尽快进入故事节奏。`,
+请注意：开篇要简洁有力，尽快进入故事节奏。
+
+【开头危机五词法则】
+开头的事件必须足够简单，让读者一眼看懂：
+- 用五个以内的词讲清楚事件是什么
+- 不需要额外解释，读者就能产生情绪`,
 
       conflict: `【本章写作策略：冲突展开】
 本章是冲突发展的阶段：
@@ -231,7 +332,12 @@ export class PromptBuilder {
 3. 人物关系：发展和深化人物之间的矛盾或对立
 4. 节奏加快：适当加快叙事节奏
 5. 悬念保持：在关键处设置悬念，吸引继续阅读
-请注意：冲突要有层次感，避免一步到位。`,
+请注意：冲突要有层次感，避免一步到位。
+
+【冲突设计要点】
+- 冲突必须升级：言语冲突→行动冲突→激烈对抗→决定胜负
+- 冲突本质是"有人阻止主角得到他想要的东西"
+- 主角行动力：突破常规的能力，做别人不敢/做不到/没想到的事`,
 
       climax: `【本章写作策略：高潮】
 这是故事最激烈的部分：
@@ -240,7 +346,13 @@ export class PromptBuilder {
 3. 重大转折：可能发生重大剧情转折
 4. 牺牲/代价：可能需要付出重大代价
 5. 悬念高潮：故事张力达到最大
-请注意：高潮要集中、激烈、不可预测。`,
+请注意：高潮要集中、激烈、不可预测。
+
+【高潮写作要点】
+- 快节奏，短句为主，动作+对话+情绪密集交织
+- 回合制卡牌思路：每个回合一般只能使用一张"牌"
+- 震惊三层结构：点震惊→网震惊→深度震惊
+- 逼格塑造：歇斯底里解决→不爽；风轻云淡一指灭杀→爽`,
 
       resolution: `【本章写作策略：冲突解决】
 本章是矛盾化解的阶段：
@@ -248,7 +360,11 @@ export class PromptBuilder {
 2. 情感收尾：角色情感得到释放或升华
 3. 逻辑自洽：结局要符合前面的铺垫和逻辑
 4. 留有余味：可以留下一些悬念为后续做铺垫
-请注意：结局要自然流畅，水到渠成。`,
+请注意：结局要自然流畅，水到渠成。
+
+【收获盘点要点】
+- 超额收获是万能技巧：当场收获+额外收获
+- 收获要通过情节展现而非罗列清单`,
 
       transitional: `【本章写作策略：过渡章节】
 本章是连接前后情节的过渡段落：
@@ -256,7 +372,12 @@ export class PromptBuilder {
 2. 伏笔铺垫：为后续情节做铺垫
 3. 人物休整：让角色有时间休整和思考
 4. 细节填充：可以填充一些支线细节
-请注意：过渡不等于平淡，仍需保持故事的可读性。`,
+请注意：过渡不等于平淡，仍需保持故事的可读性。
+
+【期待感维持】
+- 当前目标完成前，提前铺设下一目标线索
+- 满足当前期待后迅速给出新期待
+- 同一核心梗做好差异化`,
 
       ending: `【本章写作策略：结尾/收束】
 本章是故事的结尾：
@@ -264,7 +385,12 @@ export class PromptBuilder {
 2. 情感落幕：给主要情感线一个交代
 3. 结局明确：给出明确的结局
 4. 余韵悠长：可以留下一些余味让人回味
-请注意：结尾要给人满足感，同时保持故事的整体性。`,
+请注意：结尾要给人满足感，同时保持故事的整体性。
+
+【结尾处理】
+- 不要所有伏笔都回收，保持自然感
+- 避免突然说教/总结人生感悟
+- 风格统一，不突然变调`,
 
       normal: `【本章写作策略：普通章节】
 本章是正常推进情节的章节：
@@ -272,14 +398,19 @@ export class PromptBuilder {
 2. 人物成长：展现角色的成长或变化
 3. 关系发展：推进人物关系的发展
 4. 节奏适中：保持合理的叙事节奏
-请注意：普通章节也需要有看点，避免流水账。`,
+请注意：普通章节也需要有看点，避免流水账。
+
+【每章必做】
+- 每章至少1个微爽点
+- 每章结尾必须设置钩子（从章尾钩子13式中选择）
+- 确保读者脑中有"两长一短"：两个长期目标+一个短期目标`,
     };
 
     return strategies[effectiveType];
   }
 
   /**
-   * 构建章节续写 Prompt
+   * 构建章节续写 Prompt（增强版，集成 skills 方法论）
    */
   static buildChapterContinuePrompt(
     context: ChapterWritingContext,
@@ -290,30 +421,24 @@ export class PromptBuilder {
     const styleDesc = context.requirements.customStyle 
       || STYLE_DESCRIPTIONS[context.requirements.style];
 
-    // 主角信息
     const protagonist = context.characters.find(c => 
       c.role.includes('主角') || c.role.includes('男主') || c.role.includes('女主')
     );
 
-    // 本章出场角色
     const charactersInScene = context.characters.filter(c => 
       context.charactersInScene.includes(c.id)
     );
 
-    // 活跃伏笔（未揭示的）
     const activeForeshadows = context.foreshadows.filter(f => f.status !== 'resolved');
 
-    // 判断是否为第一章（没有已有内容）
     const isFirstChapter = context.chapter.orderIndex === 0 && !existingContent;
 
-    // 获取章节类型策略
     const chapterTypeStrategy = this.getChapterTypeStrategy(
       context.chapter.chapterType,
       context.chapter.orderIndex,
       !!existingContent
     );
 
-    // 构建约束规则
     const constraints: string[] = [];
     
     if (protagonist) {
@@ -324,12 +449,10 @@ export class PromptBuilder {
       constraints.push(`【世界观约束】当前世界的核心规则：\n${formatWorldRules(context.worldSetting.rules)}`);
     }
 
-    // 构建伏笔提醒
     const foreshadowReminder = activeForeshadows.length > 0
       ? `【伏笔提醒】当前故事中有以下伏笔尚未揭示：\n${activeForeshadows.map(f => `- ${f.hint}`).join('\n')}\n请根据剧情发展适当铺垫或揭示。`
       : '';
 
-    // 构建埋设/揭示任务
     const foreshadowTasks: string[] = [];
     if (context.requirements.foreshadowToBury && context.requirements.foreshadowToBury.length > 0) {
       foreshadowTasks.push(`【本章需要埋设伏笔】\n${context.requirements.foreshadowToBury.map(f => `- ${f}`).join('\n')}`);
@@ -342,10 +465,11 @@ export class PromptBuilder {
       ? foreshadowTasks.join('\n\n')
       : '';
 
-    // ========== 记忆系统相关 ==========
     const memorySection = this.buildMemorySection(context);
 
     return `# 小说续写任务
+
+${this.getWritingPrinciples()}
 
 ## 章节信息
 - **章节序号**：第 ${context.chapter.orderIndex + 1} 章
@@ -353,6 +477,8 @@ export class PromptBuilder {
 ${isFirstChapter ? '- **重要提示**：这是小说的第一章，需要介绍故事背景和世界观！' : ''}
 
 ${chapterTypeStrategy}
+
+${this.getChapterEndHooks()}
 
 ${memorySection}
 
@@ -396,8 +522,12 @@ ${foreshadowReminder}
 
 ${foreshadowSection}
 
+${this.getPaceFormulas()}
+
 ## 约束规则
 ${constraints.join('\n\n')}
+
+${this.getBannedWords()}
 
 ${additionalInstructions ? `## 额外指令
 ${additionalInstructions}
@@ -414,12 +544,11 @@ ${additionalInstructions}
     const memoryData = context.memoryData;
     
     if (!memoryData) {
-      return ''; // 没有记忆数据时返回空
+      return '';
     }
 
     const sections: string[] = [];
 
-    // 1. 情节进度（最重要，放最前面）
     if (memoryData.plotProgressTable) {
       sections.push(`## 【情节进度】故事已发展到哪了？
 最近情节进展：
@@ -428,7 +557,6 @@ ${memoryData.plotProgressTable}
 请确保本章续写与上述情节保持连贯！`);
     }
 
-    // 2. 角色当前状态
     if (memoryData.characterStateTable) {
       sections.push(`## 【角色状态】角色现在是什么状态？
 ${memoryData.characterStateTable}
@@ -436,7 +564,6 @@ ${memoryData.characterStateTable}
 请确保角色表现与上述状态一致！`);
     }
 
-    // 3. 短期记忆（最近几章的完整原文）
     if (memoryData.shortTermFullText) {
       sections.push(`## 【近期章节原文】（最近${(memoryData.shortTermMemories as any[])?.length || 0}章）
 请仔细阅读以下近期章节原文，确保续写与前文保持风格和内容的一致性：
@@ -449,7 +576,6 @@ ${memoryData.shortTermFullText}
 `);
     }
 
-    // 4. 中期记忆（更早章节的摘要）
     if (memoryData.mediumTermMemories && memoryData.mediumTermMemories.length > 0) {
       const mediumTermContent = memoryData.mediumTermMemories.map((m: any) => {
         return `- 第${m.chapterIndex}章【${m.chapterTitle}】：${m.corePlot}`;
@@ -459,7 +585,6 @@ ${memoryData.shortTermFullText}
 ${mediumTermContent}`);
     }
 
-    // 5. 长期记忆摘要
     if (memoryData.longTermSummary) {
       const { allKeyEvents, allLocations, activeForeshadows } = memoryData.longTermSummary as any;
       
@@ -488,7 +613,7 @@ ${activeForeshadows.join('、')}`);
   }
 
   /**
-   * 构建章节生成 Prompt（用于从大纲生成章节目录）
+   * 构建章节生成 Prompt（增强版，集成八节点结构）
    */
   static buildChapterOutlinePrompt(
     projectTitle: string,
@@ -503,6 +628,10 @@ ${activeForeshadows.join('、')}`);
     const totalWordCount = chapterCount * wordsPerChapter;
 
     return `# 小说章节目录生成任务
+
+${this.getWritingPrinciples()}
+
+${this.getEightNodesStructure()}
 
 ## 项目信息
 - **书名**：${projectTitle}
@@ -527,7 +656,6 @@ ${characters && characters.length > 0 ? `## 核心角色
 ${characters.slice(0, 5).map(c => `- ${c.name}（${c.role}）：${c.description}`).join('\n')}
 ` : ''}
 
-## 章节类型说明
 ${CHAPTER_TYPE_HINTS}
 
 ## 任务要求
@@ -541,10 +669,11 @@ ${CHAPTER_TYPE_HINTS}
 **重要提醒**：
 - **第一章必须是 'world_intro' 或 'plot_setup' 类型**，用于介绍故事背景和世界观
 - 如果是玄幻/奇幻题材，前2-3章应包含 world_intro 类型，介绍世界观设定
-- 如果是都市/现实题材，前1-2章应包含 world_intro 或 character_intro 类型，介绍社会背景或主角
+- 如果是都市/现实题材，前1-2章应包含 world_intro 或 character_intro 类型
 - 故事中段可以有 transitional 类型作为节奏调节
 - 高潮章节使用 climax 类型
 - 结局章节使用 ending 类型
+- **每章结尾必须设计钩子**
 
 ## 输出格式
 请按以下 JSON 格式输出：
@@ -556,34 +685,43 @@ ${CHAPTER_TYPE_HINTS}
       "chapterType": "world_intro",
       "outline": "本章大纲概述...",
       "keyEvents": ["关键事件1", "关键事件2"],
-      "foreshadows": ["伏笔1", "伏笔2"]
+      "foreshadows": ["伏笔1", "伏笔2"],
+      "hookType": "紧急危机"
     }
   ]
 }
 \`\`\`
 
 请确保：
-- 章节安排符合故事节奏（开端、发展、高潮、结局）
+- 章节安排符合八节点故事结构
 - 伏笔埋设有层次感，前后呼应
-- 每章有明确的目标和冲突
-- **第一章必须包含世界观/背景介绍内容**`;
+- 每章有明确的钩子设计
+- 每章有明确的目标和冲突`;
   }
 
   /**
-   * 构建章节润色 Prompt
+   * 构建章节润色 Prompt（增强版，集成去AI味方法论）
    */
   static buildPolishPrompt(
     content: string,
     style: WritingStyle,
-    focus?: 'grammar' | 'style' | 'consistency'
+    focus?: 'grammar' | 'style' | 'consistency' | 'deai'
   ): string {
     const styleDesc = STYLE_DESCRIPTIONS[style];
 
-    const focusInstructions: Record<string, string> = {
-      grammar: '重点检查语法错误、错别字、病句等基础问题',
-      style: '重点优化文笔，使语言更加流畅优美，符合' + styleDesc + '的风格',
-      consistency: '重点检查前后一致性，包括人物称呼、时间线、地理设定等',
-    };
+    let focusInstructions: Record<string, string>;
+    
+    if (focus === 'deai') {
+      focusInstructions = {
+        deai: '**重点：去AI味！** 检查并替换AI高频词和句式，让文字回归自然。'
+      };
+    } else {
+      focusInstructions = {
+        grammar: '重点检查语法错误、错别字、病句等基础问题',
+        style: `重点优化文笔，使语言更加流畅优美，符合${styleDesc}的风格`,
+        consistency: '重点检查前后一致性，包括人物称呼、时间线、地理设定等',
+      };
+    }
 
     return `# 文章润色任务
 
@@ -591,12 +729,14 @@ ${CHAPTER_TYPE_HINTS}
 - **目标风格**：${styleDesc}
 - **重点方向**：${focusInstructions[focus || 'style']}
 
+${focus === 'deai' ? this.getBannedWords() : ''}
+
 ## 待润色内容
 ${content}
 
 ## 任务
 请对上述内容进行润色，输出修改后的完整内容。
-如有任何重大改动，请在改动处添加【注释】说明改动原因。
+${focus === 'deai' ? '### 去AI味操作步骤\n1. 逐句检查禁用词表中的词汇，有则替换\n2. 检查禁用句式模板，有则改写\n3. 抽象心理描写改为具体动作展示\n4. 删除总结升华句和排比句' : ''}
 
 ## 输出
 请直接输出润色后的内容，不需要任何前缀说明。`;
@@ -685,10 +825,41 @@ ${content}
   }
 
   /**
+   * 构建AI味检测 Prompt
+   */
+  static buildAIDetectionPrompt(content: string): string {
+    return `# AI味检测任务
+
+${this.getBannedWords()}
+
+## 待检测内容
+${content}
+
+## 检测要求
+请检测上述内容中的AI味程度，并标记需要修改的位置：
+
+### AI味检测报告格式
+\`\`\`
+## AI味检测报告
+
+### 整体评估
+- AI味等级：{轻度/中度/重度}
+- 主要问题：{1-3 个关键词}
+
+### 问题标记
+| 位置 | 类型 | 原文 | 问题 |
+|------|------|------|------|
+| 第X段 | 禁用词 | "眼中闪过一丝..." | 典型AI高频词 |
+| 第Y段 | 句式 | "...，带着..." | AI惯用句式 |
+| 第Z段 | 节奏 | 连续3句排比 | 过于工整 |
+\`\`\`
+`;
+  }
+
+  /**
    * 估算文本 Token 数量
    */
   static estimateTokens(text: string): number {
-    // 简单估算：中文按字符数 / CHINESE_CHARS_PER_TOKEN，英文按空格分隔的词数 / ENGLISH_WORDS_PER_TOKEN
     const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
     const englishWords = (text.match(/[a-zA-Z]+/g) || []).length;
     const otherChars = text.length - chineseChars - englishWords;
@@ -712,7 +883,6 @@ ${content}
     const currentTokens = this.estimateTokens(text);
     if (currentTokens <= maxTokens) return text;
 
-    // 估算每字符对应的 token 数
     const tokenPerChar = currentTokens / text.length;
     const targetLength = Math.floor(maxTokens / tokenPerChar);
     

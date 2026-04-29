@@ -25,12 +25,14 @@ import {
   Play,
   Pause,
   Square,
+  Sparkle,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useProjectStore } from "@/stores/project.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import { useAIService } from "@/services/ai/useAIService";
 import { useChapterWriter } from "@/composables/useChapterWriter";
+import { DeAIService } from "@/services/writing/de-ai-service";
 import BatchWritingPanel from "./BatchWritingPanel.vue";
 import type { AISuggestion } from "@/services/ai/types";
 
@@ -74,21 +76,40 @@ const {
 } = useAIService();
 
 // UI State
-const selectedMode = ref<"continue" | "suggestions" | "memory" | "batch">("continue");
+const selectedMode = ref<
+  "continue" | "suggestions" | "memory" | "batch" | "deai"
+>("continue");
 const selectedSubMode = ref<"smartContinue" | "polish">("smartContinue");
 const customPrompt = ref("");
 const copied = ref(false);
 const showSettingsTip = ref(false);
+
+// 去AI味相关状态
+const isDeAIDetecting = ref(false);
+const isDeAIFixing = ref(false);
+const deAIResult = ref<{
+  level: string;
+  issues: Array<{
+    type: string;
+    severity: string;
+    position: string;
+    original: string;
+    suggestion: string;
+  }>;
+  suggestions: string[];
+} | null>(null);
+const deAIFixedContent = ref<string>("");
+const selectedTextForDeAI = ref("");
 
 // 一键续写相关
 const selectedWordCount = ref<number>(3000);
 const showWordCountDropdown = ref(false);
 
 const wordCountOptions = [
-  { label: '续写 1000 字', value: 1000 },
-  { label: '续写 2000 字', value: 2000 },
-  { label: '续写 3000 字', value: 3000 },
-  { label: '续写 5000 字', value: 5000 },
+  { label: "续写 1000 字", value: 1000 },
+  { label: "续写 2000 字", value: 2000 },
+  { label: "续写 3000 字", value: 3000 },
+  { label: "续写 5000 字", value: 5000 },
 ];
 
 // 使用单章写作 composable
@@ -126,6 +147,11 @@ const tabOptions = computed(() => [
     icon: Sparkles,
   },
   {
+    key: "deai" as const,
+    label: "去AI味",
+    icon: Sparkle,
+  },
+  {
     key: "batch" as const,
     label: "批量写作",
     icon: Zap,
@@ -146,13 +172,15 @@ watch(selectedMode, (newMode) => {
 });
 
 // 切换标签页
-function handleTabChange(tabKey: "continue" | "suggestions" | "memory" | "batch") {
+function handleTabChange(
+  tabKey: "continue" | "suggestions" | "memory" | "batch" | "deai",
+) {
   if (
     !hasProvider.value &&
     (tabKey === "continue" || tabKey === "suggestions")
   ) {
-    message.warning("请先在设置中配置 AI 服务",{
-      duration:2000000
+    message.warning("请先在设置中配置 AI 服务", {
+      duration: 2000000,
     });
     return;
   }
@@ -192,7 +220,11 @@ async function handleGenerate() {
       );
     } else {
       // Non-stream mode - 传递目标字数
-      await generate(selectedSubMode.value, customPrompt.value || undefined, customWritingWordCount.value);
+      await generate(
+        selectedSubMode.value,
+        customPrompt.value || undefined,
+        customWritingWordCount.value,
+      );
     }
   } catch (err) {
     message.error(err instanceof Error ? err.message : "生成失败");
@@ -379,6 +411,101 @@ function handleStopOneClickWrite() {
   // 停止逻辑
   message.info("已停止生成");
 }
+
+// 去AI味相关方法
+async function handleDeAIDetect() {
+  if (!selectedTextForDeAI.value) {
+    message.warning("请先选择要检测的文本");
+    return;
+  }
+
+  isDeAIDetecting.value = true;
+  deAIResult.value = null;
+
+  try {
+    const result = await DeAIService.detect(selectedTextForDeAI.value);
+    deAIResult.value = {
+      level: result.level,
+      issues: result.issues,
+      suggestions: result.suggestions,
+    };
+    message.success(`检测完成，AI味等级：${result.level}`);
+  } catch (err) {
+    message.error(err instanceof Error ? err.message : "检测失败");
+  } finally {
+    isDeAIDetecting.value = false;
+  }
+}
+
+async function handleDeAIFix() {
+  if (!selectedTextForDeAI.value) {
+    message.warning("请先选择要处理的文本");
+    return;
+  }
+
+  isDeAIFixing.value = true;
+
+  try {
+    const result = await DeAIService.fix(selectedTextForDeAI.value);
+    deAIFixedContent.value = result.content;
+    message.success(`处理完成，已修复 ${result.fixedCount} 处问题`);
+  } catch (err) {
+    message.error(err instanceof Error ? err.message : "处理失败");
+  } finally {
+    isDeAIFixing.value = false;
+  }
+}
+
+function handleApplyDeAIContent() {
+  if (deAIFixedContent.value) {
+    props.editorRef?.replaceSelectedText(deAIFixedContent.value);
+    message.success("已应用修改");
+  }
+}
+
+function handleCopyDeAIContent() {
+  if (deAIFixedContent.value) {
+    navigator.clipboard.writeText(deAIFixedContent.value);
+    copied.value = true;
+    message.success("已复制到剪贴板");
+    setTimeout(() => {
+      copied.value = false;
+    }, 2000);
+  }
+}
+
+function handleDeAISelectText() {
+  const text = props.editorRef?.getSelectedText();
+  if (text) {
+    selectedTextForDeAI.value = text;
+    deAIResult.value = null;
+    deAIFixedContent.value = "";
+    message.success("已选中要处理的文本");
+  } else {
+    message.warning("请先在编辑器中选择文本");
+  }
+}
+
+function getDeAILevelColor(level: string): string {
+  const colors: Record<string, string> = {
+    none: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    mild: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    moderate:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    severe: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  };
+  return colors[level] || colors.mild;
+}
+
+function getSeverityColorForDeAI(severity: string): string {
+  const colors: Record<string, string> = {
+    high: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    medium:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    low: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  };
+  return colors[severity] || colors.medium;
+}
 </script>
 
 <template>
@@ -414,7 +541,7 @@ function handleStopOneClickWrite() {
       <button
         v-for="tab in tabOptions"
         :key="tab.key"
-        class="flex-1 py-3 flex items-center justify-center gap-2 text-sm font-medium transition-colors relative"
+        class="flex-1 py-3 flex items-center justify-center gap-1 text-xs font-medium transition-colors relative"
         :class="[
           effectiveSelectedMode === tab.key
             ? 'text-indigo-600 dark:text-indigo-400'
@@ -435,11 +562,15 @@ function handleStopOneClickWrite() {
       <!-- Continue Tab -->
       <div v-show="effectiveSelectedMode === 'continue'" class="space-y-4">
         <!-- 一键续写区域 -->
-        <div class="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/50">
+        <div
+          class="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/50"
+        >
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
               <Zap class="w-5 h-5 text-indigo-500" />
-              <span class="font-semibold text-sm text-gray-900 dark:text-white">一键续写</span>
+              <span class="font-semibold text-sm text-gray-900 dark:text-white"
+                >一键续写</span
+              >
             </div>
           </div>
 
@@ -466,14 +597,18 @@ function handleStopOneClickWrite() {
           <div v-else class="space-y-2">
             <div class="flex items-center gap-3">
               <div class="flex-1">
-                <div class="h-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-full overflow-hidden">
+                <div
+                  class="h-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-full overflow-hidden"
+                >
                   <div
                     class="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all"
                     :style="{ width: `${oneClickProgress}%` }"
                   ></div>
                 </div>
               </div>
-              <span class="text-sm text-indigo-600 dark:text-indigo-400">{{ oneClickProgress }}%</span>
+              <span class="text-sm text-indigo-600 dark:text-indigo-400"
+                >{{ oneClickProgress }}%</span
+              >
             </div>
             <button
               class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
@@ -485,18 +620,32 @@ function handleStopOneClickWrite() {
           </div>
 
           <!-- 生成进度显示 -->
-          <div v-if="isOneClickGenerating && oneClickGeneratedContent" class="mt-3 p-3 rounded-lg bg-white/50 dark:bg-gray-800/50">
-            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">生成中...</div>
-            <div class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap line-clamp-3">
+          <div
+            v-if="isOneClickGenerating && oneClickGeneratedContent"
+            class="mt-3 p-3 rounded-lg bg-white/50 dark:bg-gray-800/50"
+          >
+            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              生成中...
+            </div>
+            <div
+              class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap line-clamp-3"
+            >
               {{ oneClickGeneratedContent.slice(-200) }}...
             </div>
           </div>
 
           <!-- 生成结果 -->
-          <div v-if="!isOneClickGenerating && oneClickGeneratedContent" class="mt-3 space-y-2">
+          <div
+            v-if="!isOneClickGenerating && oneClickGeneratedContent"
+            class="mt-3 space-y-2"
+          >
             <div class="p-3 rounded-lg bg-white/50 dark:bg-gray-800/50">
-              <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">生成结果</div>
-              <div class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap max-h-48 overflow-y-auto">
+              <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                生成结果
+              </div>
+              <div
+                class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap max-h-48 overflow-y-auto"
+              >
                 {{ oneClickGeneratedContent }}
               </div>
             </div>
@@ -519,18 +668,27 @@ function handleStopOneClickWrite() {
           </div>
 
           <!-- 错误提示 -->
-          <div v-if="oneClickError" class="mt-3 p-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-            <p class="text-xs text-red-600 dark:text-red-400">{{ oneClickError }}</p>
+          <div
+            v-if="oneClickError"
+            class="mt-3 p-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+          >
+            <p class="text-xs text-red-600 dark:text-red-400">
+              {{ oneClickError }}
+            </p>
           </div>
         </div>
 
         <!-- 分隔线 -->
         <div class="relative">
           <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
+            <div
+              class="w-full border-t border-gray-200 dark:border-gray-700"
+            ></div>
           </div>
           <div class="relative flex justify-center text-xs uppercase">
-            <span class="px-2 bg-gray-50 dark:bg-gray-900 text-gray-500">自定义续写</span>
+            <span class="px-2 bg-gray-50 dark:bg-gray-900 text-gray-500"
+              >自定义续写</span
+            >
           </div>
         </div>
 
@@ -930,6 +1088,253 @@ function handleStopOneClickWrite() {
 
       <!-- Batch Writing Panel -->
       <BatchWritingPanel v-show="effectiveSelectedMode === 'batch'" />
+
+      <!-- DeAI Tab (去AI味) -->
+      <div v-show="effectiveSelectedMode === 'deai'" class="space-y-4">
+        <!-- 说明卡片 -->
+        <div
+          class="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-100 dark:border-purple-800/50"
+        >
+          <div class="flex items-center gap-2 mb-2">
+            <Sparkle class="w-5 h-5 text-purple-500" />
+            <span class="font-semibold text-sm text-gray-900 dark:text-white"
+              >去AI味工具</span
+            >
+          </div>
+          <p class="text-xs text-gray-600 dark:text-gray-400">
+            自动检测并修复AI生成文本中的"AI味"，让文字更加自然流畅。
+            请先在编辑器中选择要处理的文本。
+          </p>
+        </div>
+
+        <!-- 选择文本按钮 -->
+        <button
+          class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 font-medium hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+          @click="handleDeAISelectText"
+        >
+          <Sparkle class="w-4 h-4" />
+          选择编辑器文本
+        </button>
+
+        <!-- 已选文本预览 -->
+        <div
+          v-if="selectedTextForDeAI"
+          class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700"
+        >
+          <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            已选择文本
+          </div>
+          <div
+            class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap line-clamp-3"
+          >
+            {{ selectedTextForDeAI.substring(0, 200)
+            }}{{ selectedTextForDeAI.length > 200 ? "..." : "" }}
+          </div>
+          <div class="text-xs text-gray-400 mt-1">
+            {{ selectedTextForDeAI.length }} 字符
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div v-if="selectedTextForDeAI" class="grid grid-cols-2 gap-2">
+          <button
+            class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium shadow-lg hover:shadow-xl transition-all"
+            :disabled="isDeAIDetecting"
+            @click="handleDeAIDetect"
+          >
+            <Sparkle v-if="!isDeAIDetecting" class="w-4 h-4" />
+            <span
+              v-else
+              class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+            ></span>
+            {{ isDeAIDetecting ? "检测中..." : "检测AI味" }}
+          </button>
+          <button
+            class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium shadow-lg hover:shadow-xl transition-all"
+            :disabled="isDeAIFixing"
+            @click="handleDeAIFix"
+          >
+            <Wand2 v-if="!isDeAIFixing" class="w-4 h-4" />
+            <span
+              v-else
+              class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+            ></span>
+            {{ isDeAIFixing ? "处理中..." : "一键去味" }}
+          </button>
+        </div>
+
+        <!-- 检测结果 -->
+        <div v-if="deAIResult" class="space-y-3">
+          <!-- AI味等级 -->
+          <div
+            class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700"
+          >
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                >AI味检测结果</span
+              >
+              <span
+                class="px-2 py-1 rounded-full text-xs font-medium"
+                :class="getDeAILevelColor(deAIResult.level)"
+              >
+                {{
+                  deAIResult.level === "none"
+                    ? "无AI味"
+                    : deAIResult.level === "mild"
+                      ? "轻度"
+                      : deAIResult.level === "moderate"
+                        ? "中度"
+                        : "重度"
+                }}
+              </span>
+            </div>
+            <!-- 问题统计 -->
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div
+                class="p-2 rounded bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+              >
+                禁用词:
+                {{
+                  deAIResult.issues.filter((i) => i.type === "banned_word")
+                    .length
+                }}
+                处
+              </div>
+              <div
+                class="p-2 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400"
+              >
+                AI句式:
+                {{
+                  deAIResult.issues.filter((i) => i.type === "ai_pattern")
+                    .length
+                }}
+                处
+              </div>
+              <div
+                class="p-2 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
+              >
+                过度解释:
+                {{
+                  deAIResult.issues.filter((i) => i.type === "over_explanation")
+                    .length
+                }}
+                处
+              </div>
+              <div
+                class="p-2 rounded bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400"
+              >
+                节奏问题:
+                {{
+                  deAIResult.issues.filter((i) => i.type === "rhythm_issue")
+                    .length
+                }}
+                处
+              </div>
+            </div>
+          </div>
+
+          <!-- 问题列表 -->
+          <div v-if="deAIResult.issues.length > 0" class="space-y-2">
+            <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              问题详情
+            </div>
+            <div
+              v-for="(issue, index) in deAIResult.issues.slice(0, 10)"
+              :key="index"
+              class="p-3 rounded-lg border"
+              :class="
+                issue.severity === 'high'
+                  ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800/50'
+                  : 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/50'
+              "
+            >
+              <div class="flex items-center gap-2 mb-1">
+                <span
+                  class="text-xs px-1.5 py-0.5 rounded"
+                  :class="getSeverityColorForDeAI(issue.severity)"
+                >
+                  {{
+                    issue.severity === "high"
+                      ? "严重"
+                      : issue.severity === "medium"
+                        ? "中等"
+                        : "轻微"
+                  }}
+                </span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">{{
+                  issue.position
+                }}</span>
+              </div>
+              <div
+                class="text-xs text-gray-600 dark:text-gray-400 mb-1 truncate"
+              >
+                {{ issue.original }}
+              </div>
+              <div class="text-xs text-purple-600 dark:text-purple-400">
+                {{ issue.suggestion }}
+              </div>
+            </div>
+            <div
+              v-if="deAIResult.issues.length > 10"
+              class="text-xs text-gray-500 dark:text-gray-400 text-center"
+            >
+              还有 {{ deAIResult.issues.length - 10 }} 处问题...
+            </div>
+          </div>
+
+          <!-- 改进建议 -->
+          <div
+            v-if="deAIResult.suggestions.length > 0"
+            class="p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/50"
+          >
+            <div
+              class="text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-1"
+            >
+              改进建议
+            </div>
+            <div class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+              <div
+                v-for="(suggestion, index) in deAIResult.suggestions"
+                :key="index"
+              >
+                {{ index + 1 }}. {{ suggestion }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 修复结果 -->
+        <div v-if="deAIFixedContent" class="space-y-2">
+          <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            修复后内容
+          </div>
+          <div
+            class="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-100 dark:border-emerald-800/50"
+          >
+            <div
+              class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap max-h-64 overflow-y-auto"
+            >
+              {{ deAIFixedContent }}
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              class="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm font-medium hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors"
+              @click="handleApplyDeAIContent"
+            >
+              <Check class="w-4 h-4" />
+              应用
+            </button>
+            <button
+              class="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              @click="handleCopyDeAIContent"
+            >
+              <component :is="copied ? Check : Copy" class="w-4 h-4" />
+              {{ copied ? "已复制" : "复制" }}
+            </button>
+          </div>
+        </div>
+      </div>
     </NScrollbar>
   </div>
 </template>

@@ -282,6 +282,74 @@ export function useAIService() {
     }
   }
 
+  /**
+   * 简单文本补全（用于记忆提取等内部任务）
+   * @param prompt 提示词
+   * @param options 可选参数
+   */
+  async function complete(
+    prompt: string,
+    options?: {
+      temperature?: number;
+      maxTokens?: number;
+    }
+  ): Promise<string> {
+    if (!hasProvider.value) {
+      throw new Error('请先配置 AI 服务');
+    }
+
+    const aiService = requireAIService();
+
+    // 如果 AI 服务有 complete 方法，使用它
+    if (typeof aiService.complete === 'function') {
+      return await aiService.complete(prompt, options);
+    }
+
+    // 否则使用 generate 方法（需要一个简单的上下文）
+    const context = buildProjectContext();
+    if (!context) {
+      // 如果没有上下文，使用项目无关的 generate
+      const projectContext: ProjectContext = {
+        project: {
+          id: 'memory-extraction',
+          name: 'Memory Extraction',
+          description: '',
+          genre: [],
+          wordCount: 0,
+          status: 'planning',
+          volumes: [],
+          chapters: [],
+          characters: [],
+          worldSchema: { locations: [], factions: [], rules: [] },
+          foreshadows: [],
+          plotOutline: [],
+          modelConfig: {},
+          createdAt: '',
+          updatedAt: '',
+        },
+        currentChapterId: 'memory-extraction',
+        currentChapterContent: '',
+        adjacentChaptersSummary: {
+          previousChapterTitle: '',
+          previousChapterSummary: '',
+          nextChapterTitle: '',
+          nextChapterSummary: '',
+        },
+        charactersInScene: [],
+        relatedForeshadows: [],
+        customPrompt: prompt,
+      };
+
+      const result = await aiService.continueWriting(projectContext, 'smartContinue', 2000);
+      return result.content;
+    }
+
+    // 使用 generate 方法，将 prompt 作为 customPrompt
+    context.customPrompt = prompt;
+    const result = await aiService.continueWriting(context, 'smartContinue', options?.maxTokens || 2000);
+    return result.content;
+  }
+
   return {
     // 状态
     isGenerating: readonly(isGenerating),
@@ -303,5 +371,6 @@ export function useAIService() {
     loadMemoryContext,
     clearResult,
     testConnection,
+    complete,
   };
 }
