@@ -139,8 +139,8 @@ async function callAIForMemoryExtraction(
         maxTokens: 2000,
       });
       
-      // 解析 JSON 响应
-      const memoryData = JSON.parse(response);
+      // 解析 JSON 响应，处理可能的 markdown 代码块包裹
+      const memoryData = parseJSONResponse(response);
       
       return buildChapterMemory(chapter, chapterIndex, wordCount, memoryData);
     }
@@ -150,6 +150,42 @@ async function callAIForMemoryExtraction(
   
   // 后备方案：使用规则提取
   return extractWithRules(chapter, chapterIndex, wordCount);
+}
+
+/**
+ * 解析 AI 返回的 JSON 响应
+ * 处理 markdown 代码块包裹或其他格式问题
+ */
+function parseJSONResponse(response: string): any {
+  // 尝试直接解析
+  try {
+    return JSON.parse(response);
+  } catch {
+    // 继续尝试其他方法
+  }
+  
+  // 尝试从 markdown 代码块中提取 JSON
+  const jsonBlockMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (jsonBlockMatch) {
+    try {
+      return JSON.parse(jsonBlockMatch[1].trim());
+    } catch {
+      // 继续尝试
+    }
+  }
+  
+  // 尝试查找 JSON 对象（以 { 开始，以 } 结束）
+  const jsonObjectMatch = response.match(/\{[\s\S]*\}/);
+  if (jsonObjectMatch) {
+    try {
+      return JSON.parse(jsonObjectMatch[0]);
+    } catch {
+      // 继续尝试
+    }
+  }
+  
+  // 如果都无法解析，抛出错误
+  throw new Error(`无法解析 AI 返回的 JSON 响应: ${response.slice(0, 100)}...`);
 }
 
 /**
