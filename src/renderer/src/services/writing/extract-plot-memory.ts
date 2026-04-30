@@ -71,7 +71,8 @@ const EXTRACT_MEMORY_PROMPT = `# 情节记忆提取任务
 例如：紧张、温馨、压抑、热血、悲伤、轻松等
 
 ## 输出格式
-请严格按以下JSON格式输出，不要添加任何额外说明：
+请严格按以下JSON格式输出，不要添加任何额外说明，禁止输出任何其他内容：
+
 \`\`\`json
 {
   "corePlot": "核心情节描述（50-100字）",
@@ -91,6 +92,11 @@ const EXTRACT_MEMORY_PROMPT = `# 情节记忆提取任务
   "emotionalTone": "情感基调"
 }
 \`\`\`
+
+重要提醒：
+1. 只输出上面的JSON格式，不要有任何前缀、后缀或说明文字
+2. 所有字段都要填写，如果没有对应内容则填"无"或空数组[]
+3. 确保JSON格式完全正确，可以被标准JSON解析器解析
 `;
 
 /**
@@ -125,27 +131,37 @@ async function callAIForMemoryExtraction(
   chapterIndex: number,
   wordCount: number
 ): Promise<ChapterMemory> {
-  // 这里应该调用 AI 服务
-  // 暂时使用简单的规则提取作为后备方案
+  // 最大重试次数
+  const MAX_RETRIES = 2;
   
-  try {
-    // 尝试调用 AI 服务
-    const { useAIService } = await import('@/services/ai/useAIService');
-    const aiService = useAIService();
-    
-    if (aiService) {
-      const response = await aiService.complete(prompt, {
-        temperature: 0.3, // 较低的随机性，确保结果稳定
-        maxTokens: 2000,
-      });
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      // 尝试调用 AI 服务
+      const { useAIService } = await import('@/services/ai/useAIService');
+      const aiService = useAIService();
       
-      // 解析 JSON 响应，处理可能的 markdown 代码块包裹
-      const memoryData = parseJSONResponse(response);
+      if (aiService) {
+        const response = await aiService.complete(prompt, {
+          temperature: 0.3, // 较低的随机性，确保结果稳定
+          maxTokens: 2000,
+        });
+        
+        // 解析 JSON 响应，处理可能的 markdown 代码块包裹
+        const memoryData = parseJSONResponse(response);
+        
+        return buildChapterMemory(chapter, chapterIndex, wordCount, memoryData);
+      }
+    } catch (error) {
+      console.warn(`AI memory extraction attempt ${attempt + 1} failed:`, error);
       
-      return buildChapterMemory(chapter, chapterIndex, wordCount, memoryData);
+      // 如果是最后一次尝试，或者错误不是 JSON 解析错误，不再重试
+      if (attempt === MAX_RETRIES) {
+        break;
+      }
+      
+      // 短暂等待后重试
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
-  } catch (error) {
-    console.warn('AI memory extraction failed, using fallback:', error);
   }
   
   // 后备方案：使用规则提取
@@ -157,15 +173,32 @@ async function callAIForMemoryExtraction(
  * 处理 markdown 代码块包裹或其他格式问题
  */
 function parseJSONResponse(response: string): any {
+  // 清理响应文本，去除常见的前缀/后缀
+  let cleaned = response.trim();
+  
+  // 移除可能的前缀说明文字（如"以下是JSON输出："、"以下是分析结果："等）
+  const prefixPatterns = [
+    /^以下是[^：]*：?\s*/,
+    /^【[^】]*】\s*/,
+    /^【分析结果】\s*/,
+    /^【记忆提取】\s*/,
+    /^##\s*[^#\n]*\s*/,
+    /^\s*分析[:：]\s*/,
+    /^\s*记忆[:：]\s*/,
+  ];
+  prefixPatterns.forEach(pattern => {
+    cleaned = cleaned.replace(pattern, '');
+  });
+  
   // 尝试直接解析
   try {
-    return JSON.parse(response);
+    return JSON.parse(cleaned);
   } catch {
     // 继续尝试其他方法
   }
   
   // 尝试从 markdown 代码块中提取 JSON
-  const jsonBlockMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const jsonBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (jsonBlockMatch) {
     try {
       return JSON.parse(jsonBlockMatch[1].trim());
@@ -175,7 +208,7 @@ function parseJSONResponse(response: string): any {
   }
   
   // 尝试查找 JSON 对象（以 { 开始，以 } 结束）
-  const jsonObjectMatch = response.match(/\{[\s\S]*\}/);
+  const jsonObjectMatch = cleaned.match(/\{[\s\S]*\}/);
   if (jsonObjectMatch) {
     try {
       return JSON.parse(jsonObjectMatch[0]);
@@ -185,7 +218,7 @@ function parseJSONResponse(response: string): any {
   }
   
   // 如果都无法解析，抛出错误
-  throw new Error(`无法解析 AI 返回的 JSON 响应: ${response.slice(0, 100)}...`);
+  throw new Error(`无法解析 AI 返回的 JSON 响应: ${cleaned.slice(0, 200)}...`);
 }
 
 /**
