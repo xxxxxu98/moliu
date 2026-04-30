@@ -39,6 +39,30 @@ export function useAIService() {
   const error = ref<string | null>(null);
 
   /**
+   * 构建近期章节完整原文（用于保持风格一致性）
+   */
+  function buildRecentChaptersFullText(): string {
+    const shortTermMemories = projectStore.getShortTermMemories();
+    if (!shortTermMemories || shortTermMemories.length === 0) {
+      return '';
+    }
+
+    const chapters = projectStore.sortedChapters;
+    const chapterIds = shortTermMemories.map(m => m.chapterId);
+
+    const fullTextParts = chapters
+      .filter(c => chapterIds.includes(c.id))
+      .sort((a, b) => a.orderIndex - b.orderIndex)
+      .map(c => {
+        return `【第${c.orderIndex + 1}章 · ${c.title}】
+
+${c.content || '（本章暂无内容）'}`;
+      });
+
+    return fullTextParts.join('\n\n==========\n\n');
+  }
+
+  /**
    * 构建项目上下文
    */
   function buildProjectContext(customPrompt?: string): ProjectContext | null {
@@ -70,6 +94,8 @@ export function useAIService() {
     return {
       project,
       currentChapterId: currentChapter.id,
+      currentChapterIndex,
+      currentChapterTitle: currentChapter.title,
       currentChapterContent: currentChapter.content || '',
       adjacentChaptersSummary: {
         previousChapterTitle: prevChapter?.title,
@@ -77,6 +103,7 @@ export function useAIService() {
         nextChapterTitle: nextChapter?.title,
         nextChapterSummary: nextChapter?.content?.slice(0, 200) + '...',
       },
+      recentChaptersFullText: buildRecentChaptersFullText(), // 【重要】传递完整原文
       charactersInScene: project.characters || [],
       relatedForeshadows,
       customPrompt,

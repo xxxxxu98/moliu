@@ -359,6 +359,7 @@ export class UnifiedAIService {
     onChunk: (text: string) => void,
     onComplete: () => void,
     onError: (error: string) => void,
+    signal?: AbortSignal,
   ): void {
     if (!this.client) {
       onError("Client not initialized");
@@ -377,7 +378,7 @@ export class UnifiedAIService {
     ];
 
     // Start streaming
-    this.streamChat(messages, onChunk, onComplete, onError);
+    this.streamChat(messages, onChunk, onComplete, onError, signal);
   }
 
   /**
@@ -767,6 +768,7 @@ export class UnifiedAIService {
     onChunk: (text: string) => void,
     onComplete: () => void,
     onError: (error: string) => void,
+    signal?: AbortSignal,
   ): Promise<void> {
     if (!this.client) {
       onError("Client not initialized");
@@ -780,9 +782,15 @@ export class UnifiedAIService {
         topP: this.generationConfig.topP,
         frequencyPenalty: this.generationConfig.frequencyPenalty,
         presencePenalty: this.generationConfig.presencePenalty,
+        signal, // 传递 AbortSignal
       } as any);
 
       for await (const chunk of stream) {
+        // 检查是否已中止
+        if (signal?.aborted) {
+          onError("Generation stopped by user");
+          return;
+        }
         if (chunk.content) {
           onChunk(chunk.content);
         }
@@ -790,6 +798,11 @@ export class UnifiedAIService {
 
       onComplete();
     } catch (error) {
+      // 如果是 AbortError，说明是用户主动停止，不算错误
+      if (error instanceof DOMException && error.name === "AbortError") {
+        onError("Generation stopped by user");
+        return;
+      }
       onError(error instanceof Error ? error.message : "Stream failed");
     }
   }

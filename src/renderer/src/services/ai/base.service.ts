@@ -26,6 +26,8 @@ export interface ProjectContext {
     nextChapterTitle?: string;
     nextChapterSummary?: string;
   };
+  /** 近期章节完整原文（无裁剪，用于保持风格一致性）【重要】 */
+  recentChaptersFullText?: string;
   /** 当前场景中出现的角色列表 */
   charactersInScene?: Character[];
   /** 当前章节的伏笔 */
@@ -80,16 +82,21 @@ export class PromptBuilder {
     return `你是一位专业的${lang}小说作家，拥有丰富的创作经验。你的任务是帮助用户续写和润色小说内容。
 
 ## 创作原则
-1. **文风一致**：保持与原文一致的文风、语气和叙事节奏，包括句式长短、修辞偏好
-2. **角色真实**：深入理解人物性格，确保人物行为、语言、决策符合角色设定
-3. **逻辑自洽**：注重情节的合理性和逻辑性，避免前后矛盾
-4. **细节生动**：善用细节描写来增强画面感，让场景栩栩如生
-5. **创新表达**：避免使用重复的表达和俗套的桥段，追求新颖的叙述方式
-6. **悬念自然**：伏笔和悬念的处理要自然，不要过于刻意或明显
-7. **情感共鸣**：注重情感描写，让读者能够与角色产生共鸣
+1. **【最重要】仔细阅读近期章节原文**：在续写前，务必认真阅读"近期章节完整原文"，理解原文的：
+   - 文风特点（句式长短、修辞偏好、描写密度）
+   - 叙事节奏（快节奏/慢节奏、对话与描写的比例）
+   - 角色语言风格（每个角色的说话方式、用词习惯）
+   - 整体基调（严肃/轻松、文艺/直白）
+2. **文风一致【强制】**：续写内容必须与原文保持完全一致的文风、语气和叙事节奏
+3. **角色真实**：深入理解人物性格，确保人物行为、语言、决策符合角色设定
+4. **逻辑自洽**：注重情节的合理性和逻辑性，避免前后矛盾
+5. **细节生动**：善用细节描写来增强画面感，让场景栩栩如生
+6. **创新表达**：避免使用重复的表达和俗套的桥段，追求新颖的叙述方式
+7. **悬念自然**：伏笔和悬念的处理要自然，不要过于刻意或明显
+8. **情感共鸣**：注重情感描写，让读者能够与角色产生共鸣
 
 ## 续写要求
-1. 仔细阅读用户提供的上下文，理解当前情节走向和写作风格
+1. **【强制】先阅读原文**：仔细阅读用户提供的近期章节完整原文，理解当前情节走向和写作风格
 2. 续写内容要与前文自然衔接，从内容结尾处继续，不可重复已写内容
 3. **篇幅要求【强制】**：严格按照用户指定的字数要求生成内容，字数不足将视为任务失败
 4. 可以添加适当的环境描写、人物对话和心理活动，丰富故事层次
@@ -109,6 +116,7 @@ export class PromptBuilder {
 2. 不要添加任何色情、暴力、歧视等不当内容
 3. 不要在输出中添加任何解释、说明或标记
 4. 不要超出用户指定的内容范围进行创作
+5. **【禁止】不要在续写中使用与原文风格不一致的表达**
 
 ## 输出格式
 请直接输出续写/润色后的内容，不要添加任何前缀说明（如"以下是续写内容："、"润色结果如下："等）。
@@ -126,7 +134,7 @@ export class PromptBuilder {
     mode: 'smartContinue' | 'polish',
     targetWordCount: number = 3000
   ): { systemPrompt: string; userPrompt: string } {
-    const { project, currentChapterContent, customPrompt, adjacentChaptersSummary, currentChapterIndex, currentChapterTitle, currentChapterOutline, fullOutline } = context;
+    const { project, currentChapterContent, customPrompt, adjacentChaptersSummary, currentChapterIndex, currentChapterTitle, currentChapterOutline, fullOutline, recentChaptersFullText } = context;
 
     // 构建角色信息
     const charactersInfo = this.buildCharactersInfo(project.characters);
@@ -273,6 +281,14 @@ ${currentChapterOutline}`;
     if (fullOutline) {
       userPrompt += `\n\n## 完整大纲参考
 ${fullOutline}`;
+    }
+
+    // 添加近期章节完整原文（保持风格一致性）【重要】
+    if (recentChaptersFullText) {
+      userPrompt += `\n\n## 【重要】近期章节完整原文（请仔细阅读，确保续写风格与前文一致）
+==========
+${recentChaptersFullText}
+==========`;
     }
 
     userPrompt += `# 作品世界观设定

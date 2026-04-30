@@ -425,7 +425,8 @@ function handleCopyOneClickContent() {
 }
 
 function handleStopOneClickWrite() {
-  // 停止逻辑
+  // 实际停止生成
+  resetChapterWriter();
   message.info("已停止生成");
 }
 

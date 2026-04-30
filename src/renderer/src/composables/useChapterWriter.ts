@@ -364,6 +364,7 @@ ${c.content || '（本章暂无内容）'}`;
                 nextChapterTitle: undefined,
                 nextChapterSummary: undefined,
               } : undefined,
+              recentChaptersFullText: context.memoryData.shortTermFullText, // 【重要】传递完整原文
               charactersInScene: context.characters,
               relatedForeshadows: context.foreshadows,
               writingStyle: writingStyle,
@@ -384,7 +385,8 @@ ${c.content || '（本章暂无内容）'}`;
             },
             (errMsg: string) => {
               reject(new Error(errMsg));
-            }
+            },
+            abortController?.signal, // 传递 AbortSignal 以支持停止
           );
         });
       } else {
@@ -404,6 +406,7 @@ ${c.content || '（本章暂无内容）'}`;
               nextChapterTitle: undefined,
               nextChapterSummary: undefined,
             } : undefined,
+            recentChaptersFullText: context.memoryData.shortTermFullText, // 【重要】传递完整原文
             charactersInScene: context.characters,
             relatedForeshadows: context.foreshadows,
             writingStyle: writingStyle,
@@ -422,7 +425,13 @@ ${c.content || '（本章暂无内容）'}`;
       return currentGeneratedContent;
 
     } catch (err) {
-      error.value = err instanceof Error ? err.message : '生成失败';
+      // 如果是用户主动停止，不显示错误
+      if (err instanceof Error && err.message === 'Generation stopped by user') {
+        // 用户停止，保持已生成的内容
+        error.value = null;
+      } else {
+        error.value = err instanceof Error ? err.message : '生成失败';
+      }
       return null;
     } finally {
       isGenerating.value = false;
@@ -436,7 +445,7 @@ ${c.content || '（本章暂无内容）'}`;
   function stopWriting(): void {
     if (abortController) {
       abortController.abort();
-      isGenerating.value = false;
+      // 不立即设置 isGenerating = false，让 streamChat 回调处理
     }
   }
 
