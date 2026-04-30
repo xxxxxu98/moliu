@@ -12,6 +12,7 @@ export interface Project {
   worldSchema: WorldSchema;
   foreshadows: Foreshadow[];
   plotOutline: PlotNode[];
+  chapterMemories: ChapterMemory[];
   modelConfig?: ModelConfig;
   createdAt: string;
   updatedAt: string;

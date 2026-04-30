@@ -75,6 +75,7 @@ export const useProjectStore = defineStore('project', () => {
         worldSchema.value = result.worldSchema || { locations: [], rules: [], factions: [] };
         foreshadows.value = result.foreshadows || [];
         plotOutline.value = result.plotOutline || [];
+        chapterMemories.value = result.chapterMemories || [];
         // Set first chapter as current
         if (chapters.value.length > 0) {
           currentChapterId.value = sortedChapters.value[0]?.id || null;
@@ -101,6 +102,7 @@ export const useProjectStore = defineStore('project', () => {
       characters: characters.value,
       worldSchema: worldSchema.value,
       foreshadows: foreshadows.value,
+      chapterMemories: chapterMemories.value,
     }));
     
     try {

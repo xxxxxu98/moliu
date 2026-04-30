@@ -238,24 +238,46 @@ ${CHAPTER_START_HOOKS.map((hook, i) => `${i + 1}. ${hook}`).join('\n')}
   }
 
   /**
-   * 获取AI味禁用词表
+   * 获取AI味禁用词表（增强版：带替换示例）
    */
   static getBannedWords(): string {
-    return `## 【AI味禁用词表】来自 oh-story-claudecode skills
+    const examples = BANNED_WORDS.replacementExamples.map(
+      ([bad, good]) => `【AI味】${bad}\n【自然】${good}`
+    ).join('\n\n');
 
-### 一级禁用词（出现即替换）
+    return `## 【AI味强制检查清单】每段写完必须自检
+
+### 一级禁用词（出现即删除或改写）
 ${BANNED_WORDS.level1.join('、')}
+
+### 二级禁用词（高频出现时替换）
+${BANNED_WORDS.level2.join('、')}
 
 ### 禁用句式模板
 ${BANNED_WORDS.patterns.map(p => `- ${p}`).join('\n')}
 
-### 替换策略
-- 抽象情绪词 → 具体动作
-- "感到XX" → 外化表现
-- 书面表达 → 口语化
-- 连续排比 → 保留最强一条
-- 总结升华句 → 直接删除
-`;
+### 替换对照示例【严格遵循】
+${examples}
+
+### 核心检查规则【必须执行】
+1. 情绪词 → 必须改为具体动作、表情、行为
+   - ❌「他感到愤怒」→ ✅「他摔门而出」
+   - ❌「她心中一惊」→ ✅「她手一抖，杯子差点掉了」
+2. 抽象描写 → 改为具体感官细节
+   - ❌「房间里一片寂静」→ ✅「安静得能听见墙上时钟的滴答声」
+3. 连续排比 → 只保留最有力的一条，其余删除
+   - ❌「他聪明、勇敢、善良」→ ✅「这小子脑子灵光，胆子更大」
+4. 总结升华句 → 直接删除，不说教
+   - ❌「这次经历让他明白了一个道理」→ 直接写他做了什么
+5. AI惯用连接词 → 删除或替换
+   - ❌「就在这时」「就在此时」「与此同时」→ 改用具体时间或事件衔接
+
+### 自检五问【每段必须】
+- [ ] 这句话像真人说出来/做出来的吗？
+- [ ] 对话用了"引号了吗？（这是强制要求！）
+- [ ] 有没有连续3个以上的四字词？（AI味的重灾区！）
+- [ ] 短句够不够多？（感叹、情绪爆发处必须用短句！）
+- [ ] 有没有在用一级禁用词？（列表在上面，一经发现立即替换）`;
   }
 
   /**
@@ -410,6 +432,39 @@ ${node.keyPoints.map(p => `- ${p}`).join('\n')}`).join('\n\n')}
   }
 
   /**
+   * 获取对话格式规范（强制要求）
+   */
+  static getDialogueFormatSpec(): string {
+    return `## 【对话格式规范】强制要求，必须遵守
+
+### 中文引号使用规则
+- **必须使用中文引号"包裹所有对话**
+- "内是角色的原话，必须口语化、符合角色性格
+- 禁止用英文引号 "" 或 '' 包裹对话
+- 禁止用转述代替直接引语（如："他表示这个方案不错" ❌）
+
+### 正确示例
+- "你疯了吗？"他说。
+- "我没听错吧，"她冷笑一声，"你居然敢来？"
+- "我……"他欲言又止，拳头攥得咯咯响。
+- "这事我管定了，"他站起身，"谁也别想拦我。"
+
+### 错误示例（禁止出现）
+- "你疯了吗？"（英文引号 ❌）
+- 他表示这个问题很难解决。（转述代替对话 ❌）
+- "这也太离谱了吧！"她高兴地说。（感叹词直接说 ❌ 改："太好了！"她高兴得跳了起来。）
+- "今天天气真好"，他说。（逗号在引号内 ❌ 改："今天天气真好。"他说。）
+
+### 对话写作要点
+- 每段对话必须有推进剧情的作用，不能为了凑字数闲聊
+- 对话要体现角色性格：急躁的人说话短快，腹黑的人说话绕弯子
+- 重要对话前可加动作/神态描写（短句），后接引号内容
+- 反驳、质问、震惊类对话用短句，制造节奏感
+- 禁止在"内写心理活动，如："他心想这事不简单"（❌）
+  应改为："这事不简单。"他眉头一皱。`;
+  }
+
+  /**
    * 构建章节续写 Prompt（增强版，集成 skills 方法论）
    */
   static buildChapterContinuePrompt(
@@ -418,14 +473,14 @@ ${node.keyPoints.map(p => `- ${p}`).join('\n')}`).join('\n\n')}
     targetWordCount: number,
     additionalInstructions?: string
   ): string {
-    const styleDesc = context.requirements.customStyle 
+    const styleDesc = context.requirements.customStyle
       || STYLE_DESCRIPTIONS[context.requirements.style];
 
-    const protagonist = context.characters.find(c => 
+    const protagonist = context.characters.find(c =>
       c.role.includes('主角') || c.role.includes('男主') || c.role.includes('女主')
     );
 
-    const charactersInScene = context.characters.filter(c => 
+    const charactersInScene = context.characters.filter(c =>
       context.charactersInScene.includes(c.id)
     );
 
@@ -440,7 +495,7 @@ ${node.keyPoints.map(p => `- ${p}`).join('\n')}`).join('\n\n')}
     );
 
     const constraints: string[] = [];
-    
+
     if (protagonist) {
       constraints.push(`【主角约束】${protagonist.name}的性格特点：${protagonist.personality.join('、')}。请确保对话和行为符合其性格设定。`);
     }
@@ -482,6 +537,8 @@ ${this.getChapterEndHooks()}
 
 ${memorySection}
 
+${this.getDialogueFormatSpec()}
+
 ## 任务要求
 请续写以下小说内容，要求：
 1. **字数要求**：约 ${targetWordCount} 字
@@ -502,7 +559,7 @@ ${formatCharacter(protagonist)}
 ` : ''}
 
 ### 本章出场角色
-${charactersInScene.length > 0 
+${charactersInScene.length > 0
   ? charactersInScene.map(c => formatCharacter(c)).join('\n\n')
   : '（本章暂无特定角色要求）'
 }
@@ -534,7 +591,8 @@ ${additionalInstructions}
 ` : ''}
 
 ## 输出要求
-请直接输出续写内容，不需要任何前缀说明。`;
+请直接输出续写内容，不需要任何前缀说明。
+**重要提醒：对话必须用"引号，禁止转述！**`;
   }
 
   /**

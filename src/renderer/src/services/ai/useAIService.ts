@@ -39,25 +39,32 @@ export function useAIService() {
   const error = ref<string | null>(null);
 
   /**
-   * 构建近期章节完整原文（用于保持风格一致性）
+   * 构建近期章节完整原文（直接从 sortedChapters 读取，不依赖记忆系统）
    */
   function buildRecentChaptersFullText(): string {
-    const shortTermMemories = projectStore.getShortTermMemories();
-    if (!shortTermMemories || shortTermMemories.length === 0) {
+    const chapters = projectStore.sortedChapters;
+    const currentChapter = projectStore.currentChapter;
+    const currentIndex = chapters.findIndex(c => c.id === currentChapter?.id);
+    const recentChapterCount = projectStore.memoryConfig?.shortTermChapterCount || 5;
+
+    if (currentIndex < 0) {
       return '';
     }
 
-    const chapters = projectStore.sortedChapters;
-    const chapterIds = shortTermMemories.map(m => m.chapterId);
+    // 收集最近 N 章的完整原文（不含当前章节）
+    const recentChapters = chapters
+      .filter((c, i) => i < currentIndex && i >= Math.max(0, currentIndex - recentChapterCount))
+      .sort((a, b) => a.orderIndex - b.orderIndex);
 
-    const fullTextParts = chapters
-      .filter(c => chapterIds.includes(c.id))
-      .sort((a, b) => a.orderIndex - b.orderIndex)
-      .map(c => {
-        return `【第${c.orderIndex + 1}章 · ${c.title}】
+    if (recentChapters.length === 0) {
+      return '';
+    }
+
+    const fullTextParts = recentChapters.map(c => {
+      return `【第${c.orderIndex + 1}章 · ${c.title}】
 
 ${c.content || '（本章暂无内容）'}`;
-      });
+    });
 
     return fullTextParts.join('\n\n==========\n\n');
   }

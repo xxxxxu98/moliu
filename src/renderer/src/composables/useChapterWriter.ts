@@ -171,18 +171,9 @@ export function useChapterWriter(): UseChapterWriterReturn {
         suggestedChapter: f.suggestedResolutionChapter,
       }));
 
-      // ========== 记忆系统相关 ==========
-    // 获取短期记忆（最近几章的完整记忆）
-    const shortTermMemories = projectStore.getShortTermMemories();
-
-    // 获取中期记忆（更早章节的摘要）
-    const mediumTermMemories = projectStore.getMediumTermMemories();
-
-    // 获取长期记忆摘要
-    const longTermSummary = projectStore.getLongTermSummary();
-
-    // 构建短期记忆的完整文本（最近几章的原文）
-    const shortTermFullText = buildShortTermFullText(shortTermMemories);
+      // ========== 近期章节原文（直接从章节数据读取，不依赖记忆系统） ==========
+    const recentChapterCount = projectStore.memoryConfig?.shortTermChapterCount || 5;
+    const shortTermFullText = buildRecentChaptersFullText(currentIndex, recentChapterCount);
 
     return {
       projectTitle: project.name,
@@ -223,40 +214,37 @@ export function useChapterWriter(): UseChapterWriterReturn {
         style: writingStyle || 'concise',
         customStyle: additionalInstructions,
       },
-      // 记忆系统数据
+      // 近期章节原文和记忆数据
       memoryData: {
-        shortTermMemories,
-        mediumTermMemories,
-        longTermSummary,
         shortTermFullText,
-        characterStateTable: buildCharacterStateTable(shortTermMemories),
-        plotProgressTable: buildPlotProgressTable(shortTermMemories),
+        characterStateTable: buildCharacterStateTable(projectStore.chapterMemories),
+        plotProgressTable: buildPlotProgressTable(projectStore.chapterMemories),
       },
     };
   }
 
   /**
-   * 构建短期记忆的完整文本（最近几章的原文）
+   * 构建近期章节完整原文（直接从 sortedChapters 读取，不依赖记忆系统）
+   * @param currentIndex 当前章节索引
+   * @param recentChapterCount 包含最近几章（不含当前章节）
    */
-  function buildShortTermFullText(shortTermMemories: any[]): string {
-    if (!shortTermMemories || shortTermMemories.length === 0) {
+  function buildRecentChaptersFullText(currentIndex: number, recentChapterCount: number): string {
+    const chapters = projectStore.sortedChapters;
+
+    // 收集最近 N 章的完整原文（从当前章节往前数）
+    const recentChapters = chapters
+      .filter((c, i) => i < currentIndex && i >= Math.max(0, currentIndex - recentChapterCount))
+      .sort((a, b) => a.orderIndex - b.orderIndex);
+
+    if (recentChapters.length === 0) {
       return '';
     }
 
-    // 获取章节列表
-    const chapters = projectStore.sortedChapters;
-
-    // 收集短期记忆对应的章节完整内容
-    const chapterIds = shortTermMemories.map(m => m.chapterId);
-
-    const fullTextParts = chapters
-      .filter(c => chapterIds.includes(c.id))
-      .sort((a, b) => a.orderIndex - b.orderIndex)
-      .map(c => {
-        return `【第${c.orderIndex + 1}章 · ${c.title}】
+    const fullTextParts = recentChapters.map(c => {
+      return `【第${c.orderIndex + 1}章 · ${c.title}】
 
 ${c.content || '（本章暂无内容）'}`;
-      });
+    });
 
     return fullTextParts.join('\n\n==========\n\n');
   }
