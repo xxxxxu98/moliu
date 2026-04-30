@@ -25,6 +25,7 @@ export interface WritingTask {
   id: string;
   chapterId: string;
   chapterTitle: string;
+  chapterIndex: number;      // 章节在排序列表中的索引
   status: ChapterWritingStatus;
   progress: number;         // 0-100
   targetWordCount: number; // 目标字数

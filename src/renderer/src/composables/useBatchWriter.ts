@@ -16,6 +16,7 @@ import type {
 } from '@/types/writing';
 import { PromptBuilder } from '@/services/writing/prompt-builder';
 import { ContextManager } from '@/services/writing/context-manager';
+import { extractChapterMemory, buildCharacterStateTable, buildPlotProgressTable } from '@/services/writing/extract-plot-memory';
 
 /**
  * 写作范围类型
@@ -105,11 +106,146 @@ export function useBatchWriter(): UseBatchWriterReturn {
   const projectStore = useProjectStore();
   const settingsStore = useSettingsStore();
   const { requireAIService } = useActiveAIProvider();
+  const contextManager = new ContextManager();
 
   let activeConfig: WritingConfig | null = null;
   let shouldStop = false;
   let shouldPause = false;
   let abortController: AbortController | null = null;
+
+  /**
+   * 从章节大纲中提取章节类型
+   */
+  function extractChapterTypeFromOutline(outline: string, orderIndex: number): string {
+    if (!outline) {
+      if (orderIndex === 0) {
+        return 'world_intro';
+      }
+      return 'normal';
+    }
+
+    const lowerOutline = outline.toLowerCase();
+
+    if (lowerOutline.includes('世界观') || lowerOutline.includes('背景') ||
+        lowerOutline.includes('设定') || lowerOutline.includes('大陆') ||
+        lowerOutline.includes('世界') || lowerOutline.includes('历史')) {
+      return 'world_intro';
+    }
+
+    if (lowerOutline.includes('登场') || lowerOutline.includes('出场') ||
+        lowerOutline.includes('初遇') || lowerOutline.includes('相遇') ||
+        lowerOutline.includes('介绍') || lowerOutline.includes('主角')) {
+      return 'character_intro';
+    }
+
+    if (lowerOutline.includes('开端') || lowerOutline.includes('开始') ||
+        lowerOutline.includes('序幕') || lowerOutline.includes('引入')) {
+      return 'plot_setup';
+    }
+
+    if (lowerOutline.includes('高潮') || lowerOutline.includes('决战') ||
+        lowerOutline.includes('对决') || lowerOutline.includes('爆发')) {
+      return 'climax';
+    }
+
+    if (lowerOutline.includes('解决') || lowerOutline.includes('结束') ||
+        lowerOutline.includes('落幕') || lowerOutline.includes('结局') ||
+        lowerOutline.includes('收尾')) {
+      return 'resolution';
+    }
+
+    if (lowerOutline.includes('过渡') || lowerOutline.includes('间章') ||
+        lowerOutline.includes('日常') || lowerOutline.includes('休息')) {
+      return 'transitional';
+    }
+
+    if (lowerOutline.includes('终章') || lowerOutline.includes('尾声') ||
+        lowerOutline.includes('最终') || lowerOutline.includes('完结')) {
+      return 'ending';
+    }
+
+    if (orderIndex === 0) {
+      return 'world_intro';
+    }
+
+    return 'normal';
+  }
+
+  /**
+   * 构建近期章节完整原文
+   */
+  function buildRecentChaptersFullText(currentIndex: number, recentChapterCount: number): string {
+    const chapters = projectStore.sortedChapters;
+
+    const recentChapters = chapters
+      .filter((c, i) => i < currentIndex && i >= Math.max(0, currentIndex - recentChapterCount))
+      .sort((a, b) => a.orderIndex - b.orderIndex);
+
+    if (recentChapters.length === 0) {
+      return '';
+    }
+
+    const fullTextParts = recentChapters.map(c => {
+      return `【第${c.orderIndex + 1}章 · ${c.title}】
+
+${c.content || '（本章暂无内容）'}`;
+    });
+
+    return fullTextParts.join('\n\n==========\n\n');
+  }
+
+  /**
+   * 从大纲中提取章节概要
+   */
+  function extractChapterOutlineFromPlot(plotOutline: any[], chapterId: string): string {
+    const chapter = plotOutline?.find((p: any) => p.chapterId === chapterId);
+    return chapter?.description || '';
+  }
+
+  /**
+   * 构建完整大纲字符串
+   */
+  function buildFullOutlineString(): string | undefined {
+    const plotOutline = projectStore.plotOutline;
+    if (!plotOutline || plotOutline.length === 0) {
+      return undefined;
+    }
+
+    const chapterNodes = plotOutline
+      .filter((p: any) => p.type === 'chapter')
+      .sort((a: any, b: any) => a.orderIndex - b.orderIndex);
+
+    if (chapterNodes.length === 0) {
+      return undefined;
+    }
+
+    const outlineParts = chapterNodes.map((node: any, index: number) => {
+      const chapterNum = index + 1;
+      const title = node.title || `第${chapterNum}章`;
+      const description = node.description || '（暂无大纲）';
+      const keyEvents = node.keyEvents?.length > 0
+        ? `\n关键事件：${node.keyEvents.join('、')}`
+        : '';
+
+      return `【第${chapterNum}章】${title}\n${description}${keyEvents}`;
+    });
+
+    return outlineParts.join('\n\n');
+  }
+
+  /**
+   * 提取章节记忆
+   */
+  async function extractMemoryAfterApply(chapter: any, chapterIndex: number): Promise<void> {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const memory = await extractChapterMemory(chapter, chapterIndex);
+      projectStore.addChapterMemory(memory);
+      console.log('[批量写作-记忆系统] 已提取章节记忆:', chapter.title, memory.corePlot.slice(0, 50) + '...');
+    } catch (err) {
+      console.error('[批量写作-记忆系统] 提取记忆失败:', err);
+    }
+  }
 
   /**
    * 已完成的任务数
@@ -210,8 +346,15 @@ export function useBatchWriter(): UseBatchWriterReturn {
     const chapters = projectStore.sortedChapters;
     const project = projectStore.currentProject;
 
-    if (!project || chapters.length === 0) {
-      error.value = '没有可写的章节';
+    if (!project) {
+      error.value = '请先选择一个项目';
+      queue.tasks = [];
+      return;
+    }
+
+    // 等待章节数据加载
+    if (chapters.length === 0) {
+      error.value = null; // 清除错误，章节可能在加载中
       queue.tasks = [];
       return;
     }
@@ -221,6 +364,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
       id: `task-${chapter.id}-${Date.now()}`,
       chapterId: chapter.id,
       chapterTitle: chapter.title,
+      chapterIndex: index,
       // 初始状态：待写
       status: 'idle' as const,
       progress: 0,
@@ -288,13 +432,22 @@ export function useBatchWriter(): UseBatchWriterReturn {
     const chapter = projectStore.chapters.find(c => c.id === task.chapterId);
     if (!chapter) return null;
 
-    const contextManager = new ContextManager();
+    // 获取章节索引
+    const currentIndex = task.chapterIndex >= 0 ? task.chapterIndex : projectStore.sortedChapters.findIndex(c => c.id === chapter.id);
+
+    // 提取章节类型
+    const chapterOutline = chapter.plotSummary || extractChapterOutlineFromPlot(projectStore.plotOutline, chapter.id);
+    const chapterType = extractChapterTypeFromOutline(chapterOutline, currentIndex);
 
     // 提取前情摘要
     let previousSummary = '';
     if (previousChapter?.content) {
       previousSummary = contextManager.extractPreviousChapterSummary(previousChapter.content, 300);
     }
+
+    // 近期章节原文
+    const recentChapterCount = projectStore.memoryConfig?.shortTermChapterCount || 5;
+    const shortTermFullText = buildRecentChaptersFullText(currentIndex, recentChapterCount);
 
     // 准备角色信息
     const characters: ChapterWritingContext['characters'] = (project.characters || []).map(char => ({
@@ -334,9 +487,10 @@ export function useBatchWriter(): UseBatchWriterReturn {
       chapter: {
         id: chapter.id,
         title: chapter.title,
-        orderIndex: projectStore.sortedChapters.findIndex(c => c.id === chapter.id),
-        outline: (chapter as any).outline || '',
+        orderIndex: currentIndex,
+        outline: chapterOutline,
         existingContent: chapter.content || '',
+        chapterType: chapterType as any,
       },
       previousChapter: previousChapter ? {
         title: previousChapter.title,
@@ -350,6 +504,12 @@ export function useBatchWriter(): UseBatchWriterReturn {
         targetWordCount: activeConfig?.wordsPerChapter || 4000,
         style: (activeConfig?.writingStyle as WritingStyle) || 'concise',
         customStyle: activeConfig?.customStyleDescription,
+      },
+      // 新增：与智能续写保持一致的上下文
+      memoryData: {
+        shortTermFullText,
+        characterStateTable: buildCharacterStateTable(projectStore.chapterMemories),
+        plotProgressTable: buildPlotProgressTable(projectStore.chapterMemories),
       },
     };
   }
@@ -380,12 +540,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
       throw new Error('无法构建章节上下文');
     }
 
-    const prompt = PromptBuilder.buildChapterContinuePrompt(
-      context,
-      context.chapter.existingContent || '',
-      activeConfig?.wordsPerChapter || 4000
-    );
-
     task.status = 'writing';
     task.startedAt = new Date().toISOString();
 
@@ -401,15 +555,21 @@ export function useBatchWriter(): UseBatchWriterReturn {
           {
             project: projectStore.currentProject,
             currentChapterId: context.chapter.id,
+            currentChapterIndex: context.chapter.orderIndex,
+            currentChapterTitle: context.chapter.title,
             currentChapterContent: context.chapter.existingContent || '',
+            currentChapterOutline: context.chapter.outline || undefined,
+            fullOutline: buildFullOutlineString(),
             adjacentChaptersSummary: context.previousChapter ? {
               previousChapterTitle: context.previousChapter.title,
               previousChapterSummary: context.previousChapter.summary,
               nextChapterTitle: undefined,
               nextChapterSummary: undefined,
             } : undefined,
+            recentChaptersFullText: context.memoryData?.shortTermFullText,
             charactersInScene: context.characters,
             relatedForeshadows: context.foreshadows,
+            writingStyle: activeConfig?.writingStyle,
           },
           'smartContinue',
           targetWordCount,
@@ -436,11 +596,9 @@ export function useBatchWriter(): UseBatchWriterReturn {
           },
           (errMsg: string) => {
             reject(new Error(errMsg));
-          }
+          },
+          abortController?.signal
         );
-
-        // 处理中止
-        abortController = new AbortController();
       });
     } else {
       // 非流式模式
@@ -448,15 +606,21 @@ export function useBatchWriter(): UseBatchWriterReturn {
         {
           project: projectStore.currentProject,
           currentChapterId: context.chapter.id,
+          currentChapterIndex: context.chapter.orderIndex,
+          currentChapterTitle: context.chapter.title,
           currentChapterContent: context.chapter.existingContent || '',
+          currentChapterOutline: context.chapter.outline || undefined,
+          fullOutline: buildFullOutlineString(),
           adjacentChaptersSummary: context.previousChapter ? {
             previousChapterTitle: context.previousChapter.title,
             previousChapterSummary: context.previousChapter.summary,
             nextChapterTitle: undefined,
             nextChapterSummary: undefined,
           } : undefined,
+          recentChaptersFullText: context.memoryData?.shortTermFullText,
           charactersInScene: context.characters,
           relatedForeshadows: context.foreshadows,
+          writingStyle: activeConfig?.writingStyle,
         },
         'smartContinue',
         targetWordCount
@@ -486,6 +650,9 @@ export function useBatchWriter(): UseBatchWriterReturn {
         isGenerated: true,
         generatedAt: new Date().toISOString(),
       });
+
+      // 提取情节记忆
+      extractMemoryAfterApply(chapter, task.chapterIndex + 1);
     }
   }
 

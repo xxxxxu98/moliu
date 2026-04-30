@@ -29,12 +29,15 @@ import {
   ListOrdered,
   FileText,
   Info,
+  Loader2,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useBatchWriter } from "@/composables/useBatchWriter";
+import { useProjectStore } from "@/stores/project.store";
 
 const { t } = useI18n();
 const message = useMessage();
+const projectStore = useProjectStore();
 
 const {
   isWriting,
@@ -59,6 +62,27 @@ const {
   retryFailedChapters,
   resetQueue,
 } = useBatchWriter();
+
+// 监听章节列表变化，重新初始化队列
+watch(
+  () => projectStore.sortedChapters.length,
+  (newLength, oldLength) => {
+    // 只有当章节数量发生变化时才重新初始化
+    if (newLength > 0 && !isWriting.value) {
+      initializeQueue();
+    }
+  }
+);
+
+// 监听当前项目变化
+watch(
+  () => projectStore.currentProject?.id,
+  (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      initializeQueue();
+    }
+  }
+);
 
 // 写作模式
 type WritingModeType = 'all' | 'remaining' | 'specific';
@@ -123,16 +147,26 @@ const remainingChapters = computed(() => {
   return queue.tasks.filter(t => t.status === 'idle' || t.status === 'failed').length;
 });
 
+// 获取总章节数（实时从 store 获取）
+const totalChaptersCount = computed(() => projectStore.sortedChapters.length);
+
+// 是否有章节可以写作
+const hasChapters = computed(() => totalChaptersCount.value > 0);
+
 // 获取目标描述
 const targetDescription = computed(() => {
-  const total = queue.tasks.length;
+  if (!hasChapters.value) {
+    return '请先创建章节';
+  }
+
+  const total = totalChaptersCount.value;
   const completed = completedCount.value;
-  const remaining = pendingCount.value;
-  
+  const remaining = total - completed;
+
   if (remaining === 0) {
     return `目标已完成（${completed}/${total} 章）`;
   }
-  
+
   switch (writingMode.value) {
     case 'remaining':
       return `目标：写完 ${remaining} 章待写章节`;
@@ -147,15 +181,21 @@ const targetDescription = computed(() => {
 
 // 获取实际要写的章节数
 const chaptersToWrite = computed(() => {
+  // 如果没有章节，返回0
+  if (totalChaptersCount.value === 0) {
+    return 0;
+  }
+
   switch (writingMode.value) {
     case 'remaining':
-      return pendingCount.value;
+      // 待写章节 = 总章节数 - 已完成数
+      return totalChaptersCount.value - completedCount.value;
     case 'all':
-      return queue.tasks.length;
+      return queue.tasks.length || totalChaptersCount.value;
     case 'specific':
-      return Math.min(localConfig.value.chapterCount, queue.tasks.length);
+      return Math.min(localConfig.value.chapterCount, totalChaptersCount.value);
     default:
-      return pendingCount.value;
+      return pendingCount.value || (totalChaptersCount.value - completedCount.value);
   }
 });
 
@@ -326,13 +366,13 @@ onMounted(() => {
           v-if="!isWriting"
           type="primary"
           class="flex-1"
-          :disabled="chaptersToWrite === 0"
+          :disabled="!hasChapters || chaptersToWrite === 0"
           @click="handleStartWriting"
         >
           <template #icon>
             <Play class="w-4 h-4" />
           </template>
-          {{ chaptersToWrite === 0 ? '无可写章节' : `开始写作（${chaptersToWrite} 章）` }}
+          {{ !hasChapters ? '请先创建章节' : chaptersToWrite === 0 ? '所有章节已写完' : `开始写作（${chaptersToWrite} 章）` }}
         </NButton>
 
         <!-- 暂停/继续 -->
@@ -445,7 +485,7 @@ onMounted(() => {
             <div class="text-xs text-gray-500 dark:text-gray-400">{{ option.description }}</div>
           </div>
           <div v-if="option.value === 'remaining'" class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
-            {{ remainingChapters }} 章
+            {{ totalChaptersCount }} 章可选
           </div>
         </div>
       </div>
