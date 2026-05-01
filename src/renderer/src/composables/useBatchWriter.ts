@@ -1,174 +1,134 @@
 /**
  * 批量写作 Composable
- * 封装批量写作的业务逻辑
+ * 简化的连续续写逻辑 - 从第一个空章节开始，自动连续写
  */
 
-import { ref, reactive, computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useProjectStore } from '@/stores/project.store';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useActiveAIProvider } from './useActiveAIProvider';
-import type {
-  WritingTask,
-  WritingQueue,
-  WritingConfig,
-  WritingStyle,
-  ChapterWritingContext,
-} from '@/types/writing';
-import { PromptBuilder } from '@/services/writing/prompt-builder';
-import { ContextManager } from '@/services/writing/context-manager';
 import { extractChapterMemory, buildCharacterStateTable, buildPlotProgressTable } from '@/services/writing/extract-plot-memory';
+import { ContextManager } from '@/services/writing/context-manager';
 
-/**
- * 写作范围类型
- */
-export type WritingScope = 'all' | 'remaining' | 'specific';
-
-/**
- * 写作范围配置
- */
-export interface WritingScopeConfig {
-  scope: WritingScope;
-  specificCount?: number; // 当 scope 为 'specific' 时指定的数量
-}
+export type WritingTarget = 'specific' | 'finish';
 
 export interface UseBatchWriterReturn {
   // 状态
   isWriting: typeof isWriting;
   isPaused: typeof isPaused;
-  currentChapterId: typeof currentChapterId;
+  currentChapterIndex: typeof currentChapterIndex;
   currentChapterTitle: typeof currentChapterTitle;
-  progress: typeof progress;
-  queue: typeof queue;
   error: typeof error;
-  writingScope: typeof writingScope;
 
-  // 计算属性
-  completedCount: typeof completedCount;
-  totalCount: typeof totalCount;
-  pendingCount: typeof pendingCount;
-  progressPercentage: typeof progressPercentage;
+  // 统计
+  totalChapters: typeof totalChapters;
+  writtenChapters: typeof writtenChapters;
+  remainingChapters: typeof remainingChapters;
+  writtenWordCount: typeof writtenWordCount;
+  progress: typeof progress;
+
+  // 配置
+  target: typeof target;
   config: typeof config;
 
   // 方法
-  initializeQueue: () => void;
-  setWritingScope: (scope: WritingScope, specificCount?: number) => void;
-  startBatchWriting: (options?: Partial<WritingConfig>) => Promise<void>;
+  startBatchWriting: (targetChapters?: number, batchConfig?: BatchConfig) => Promise<void>;
   pauseWriting: () => void;
   resumeWriting: () => void;
   stopWriting: () => void;
-  skipChapter: () => void;
-  retryFailedChapters: () => void;
-  resetQueue: () => void;
+  getNextChapterIndex: () => number;
+  getTotalChapters: () => number;
+}
+
+// 批量写作配置
+export interface BatchConfig {
+  wordsPerChapter: number;
+  writingStyle: 'concise' | 'elegant' | 'humorous' | 'ancient';
 }
 
 const isWriting = ref(false);
 const isPaused = ref(false);
-const currentChapterId = ref<string | null>(null);
-const currentChapterTitle = ref<string>('');
-
-// 写作范围配置
-const writingScope = reactive<WritingScopeConfig>({
-  scope: 'remaining',
-  specificCount: undefined,
-});
-
-const progress = reactive({
-  completed: 0,
-  total: 0,
-  percentage: 0,
-  currentWordCount: 0,
-  totalWordCount: 0,
-});
-
-const queue = reactive<WritingQueue>({
-  projectId: '',
-  tasks: [],
-  currentTaskIndex: -1,
-  isPaused: false,
-  isActive: false,
-  totalWordCount: 0,
-  targetWordCount: 0,
-});
-
+const currentChapterIndex = ref(-1);
+const currentChapterTitle = ref('');
 const error = ref<string | null>(null);
 
+// 写作目标
+const target = ref<WritingTarget>('specific');
+const targetChapterCount = ref(10); // 目标写作数量
+
+// 进度统计
+const progress = ref({
+  writtenChapters: 0,
+  writtenWords: 0,
+  targetChapters: 0,
+});
+
 // 写作配置
-const config = reactive<Partial<WritingConfig>>({
+const config = ref({
   wordsPerChapter: 3000,
-  writingStyle: 'concise',
+  writingStyle: 'concise' as 'concise' | 'elegant' | 'humorous' | 'ancient',
   temperature: 0.7,
 });
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 2000;
+const contextManager = new ContextManager();
+let shouldStop = false;
+let shouldPause = false;
+let abortController: AbortController | null = null;
 
 export function useBatchWriter(): UseBatchWriterReturn {
   const projectStore = useProjectStore();
   const settingsStore = useSettingsStore();
   const { requireAIService } = useActiveAIProvider();
-  const contextManager = new ContextManager();
-
-  let activeConfig: WritingConfig | null = null;
-  let shouldStop = false;
-  let shouldPause = false;
-  let abortController: AbortController | null = null;
 
   /**
-   * 从章节大纲中提取章节类型
+   * 获取总章节数
    */
-  function extractChapterTypeFromOutline(outline: string, orderIndex: number): string {
-    if (!outline) {
-      if (orderIndex === 0) {
-        return 'world_intro';
+  const totalChapters = computed(() => projectStore.sortedChapters.length);
+
+  /**
+   * 获取已写字数
+   */
+  const writtenWordCount = computed(() => {
+    return projectStore.sortedChapters.reduce((total, chapter) => {
+      return total + (chapter.wordCount || 0);
+    }, 0);
+  });
+
+  /**
+   * 获取已写章节数（内容非空的章节）
+   */
+  const writtenChapters = computed(() => {
+    return projectStore.sortedChapters.filter(
+      c => c.content && c.content.trim().length > 0
+    ).length;
+  });
+
+  /**
+   * 获取剩余章节数
+   */
+  const remainingChapters = computed(() => {
+    return totalChapters.value - writtenChapters.value;
+  });
+
+  /**
+   * 获取下一个待写章节的索引
+   * 如果不存在空章节，返回 -1 表示需要创建新章节
+   */
+  function getNextChapterIndex(): number {
+    const chapters = projectStore.sortedChapters;
+    for (let i = 0; i < chapters.length; i++) {
+      if (!chapters[i].content || chapters[i].content.trim().length === 0) {
+        return i;
       }
-      return 'normal';
     }
+    return -1; // 所有章节都已写，需要创建新章节
+  }
 
-    const lowerOutline = outline.toLowerCase();
-
-    if (lowerOutline.includes('世界观') || lowerOutline.includes('背景') ||
-        lowerOutline.includes('设定') || lowerOutline.includes('大陆') ||
-        lowerOutline.includes('世界') || lowerOutline.includes('历史')) {
-      return 'world_intro';
-    }
-
-    if (lowerOutline.includes('登场') || lowerOutline.includes('出场') ||
-        lowerOutline.includes('初遇') || lowerOutline.includes('相遇') ||
-        lowerOutline.includes('介绍') || lowerOutline.includes('主角')) {
-      return 'character_intro';
-    }
-
-    if (lowerOutline.includes('开端') || lowerOutline.includes('开始') ||
-        lowerOutline.includes('序幕') || lowerOutline.includes('引入')) {
-      return 'plot_setup';
-    }
-
-    if (lowerOutline.includes('高潮') || lowerOutline.includes('决战') ||
-        lowerOutline.includes('对决') || lowerOutline.includes('爆发')) {
-      return 'climax';
-    }
-
-    if (lowerOutline.includes('解决') || lowerOutline.includes('结束') ||
-        lowerOutline.includes('落幕') || lowerOutline.includes('结局') ||
-        lowerOutline.includes('收尾')) {
-      return 'resolution';
-    }
-
-    if (lowerOutline.includes('过渡') || lowerOutline.includes('间章') ||
-        lowerOutline.includes('日常') || lowerOutline.includes('休息')) {
-      return 'transitional';
-    }
-
-    if (lowerOutline.includes('终章') || lowerOutline.includes('尾声') ||
-        lowerOutline.includes('最终') || lowerOutline.includes('完结')) {
-      return 'ending';
-    }
-
-    if (orderIndex === 0) {
-      return 'world_intro';
-    }
-
-    return 'normal';
+  /**
+   * 获取总章节数（包含待创建的）
+   */
+  function getTotalChapters(): number {
+    return projectStore.sortedChapters.length;
   }
 
   /**
@@ -176,14 +136,11 @@ export function useBatchWriter(): UseBatchWriterReturn {
    */
   function buildRecentChaptersFullText(currentIndex: number, recentChapterCount: number): string {
     const chapters = projectStore.sortedChapters;
-
     const recentChapters = chapters
       .filter((c, i) => i < currentIndex && i >= Math.max(0, currentIndex - recentChapterCount))
       .sort((a, b) => a.orderIndex - b.orderIndex);
 
-    if (recentChapters.length === 0) {
-      return '';
-    }
+    if (recentChapters.length === 0) return '';
 
     const fullTextParts = recentChapters.map(c => {
       return `【第${c.orderIndex + 1}章 · ${c.title}】
@@ -203,34 +160,51 @@ ${c.content || '（本章暂无内容）'}`;
   }
 
   /**
+   * 从章节大纲中提取章节类型
+   */
+  function extractChapterTypeFromOutline(outline: string, orderIndex: number): string {
+    if (!outline) return orderIndex === 0 ? 'world_intro' : 'normal';
+
+    const lowerOutline = outline.toLowerCase();
+
+    if (lowerOutline.includes('高潮') || lowerOutline.includes('决战') ||
+        lowerOutline.includes('对决') || lowerOutline.includes('爆发')) {
+      return 'climax';
+    }
+    if (lowerOutline.includes('解决') || lowerOutline.includes('结束') ||
+        lowerOutline.includes('落幕') || lowerOutline.includes('结局')) {
+      return 'resolution';
+    }
+    if (lowerOutline.includes('终章') || lowerOutline.includes('尾声') ||
+        lowerOutline.includes('最终') || lowerOutline.includes('完结')) {
+      return 'ending';
+    }
+
+    return 'normal';
+  }
+
+  /**
    * 构建完整大纲字符串
    */
   function buildFullOutlineString(): string | undefined {
     const plotOutline = projectStore.plotOutline;
-    if (!plotOutline || plotOutline.length === 0) {
-      return undefined;
-    }
+    if (!plotOutline || plotOutline.length === 0) return undefined;
 
     const chapterNodes = plotOutline
       .filter((p: any) => p.type === 'chapter')
       .sort((a: any, b: any) => a.orderIndex - b.orderIndex);
 
-    if (chapterNodes.length === 0) {
-      return undefined;
-    }
+    if (chapterNodes.length === 0) return undefined;
 
-    const outlineParts = chapterNodes.map((node: any, index: number) => {
+    return chapterNodes.map((node: any, index: number) => {
       const chapterNum = index + 1;
       const title = node.title || `第${chapterNum}章`;
       const description = node.description || '（暂无大纲）';
       const keyEvents = node.keyEvents?.length > 0
         ? `\n关键事件：${node.keyEvents.join('、')}`
         : '';
-
       return `【第${chapterNum}章】${title}\n${description}${keyEvents}`;
-    });
-
-    return outlineParts.join('\n\n');
+    }).join('\n\n');
   }
 
   /**
@@ -241,541 +215,296 @@ ${c.content || '（本章暂无内容）'}`;
       await new Promise(resolve => setTimeout(resolve, 500));
       const memory = await extractChapterMemory(chapter, chapterIndex);
       projectStore.addChapterMemory(memory);
-      console.log('[批量写作-记忆系统] 已提取章节记忆:', chapter.title, memory.corePlot.slice(0, 50) + '...');
+      console.log('[批量写作] 已提取章节记忆:', chapter.title);
     } catch (err) {
-      console.error('[批量写作-记忆系统] 提取记忆失败:', err);
+      console.error('[批量写作] 提取记忆失败:', err);
     }
   }
 
   /**
-   * 已完成的任务数
+   * 执行单章写作
    */
-  const completedCount = computed(() => 
-    queue.tasks.filter(t => t.status === 'completed').length
-  );
-
-  /**
-   * 总任务数
-   */
-  const totalCount = computed(() => queue.tasks.length);
-
-  /**
-   * 待写的任务数（idle + failed）
-   */
-  const pendingCount = computed(() => 
-    queue.tasks.filter(t => t.status === 'idle' || t.status === 'failed').length
-  );
-
-  /**
-   * 根据写作范围获取实际要写的任务数
-   */
-  const tasksToWrite = computed(() => {
-    switch (writingScope.scope) {
-      case 'all':
-        return queue.tasks.length;
-      case 'remaining':
-        return pendingCount.value;
-      case 'specific':
-        return Math.min(writingScope.specificCount || pendingCount.value, queue.tasks.length);
-      default:
-        return pendingCount.value;
-    }
-  });
-
-  /**
-   * 进度百分比（基于写作范围的目标）
-   */
-  const progressPercentage = computed(() => {
-    const target = tasksToWrite.value;
-    if (target === 0) return 100;
-    // 进度 = 已完成数 / 目标数
-    return Math.min(Math.floor((completedCount.value / target) * 100), 100);
-  });
-
-  /**
-   * 设置写作范围
-   */
-  function setWritingScope(scope: WritingScope, specificCount?: number): void {
-    writingScope.scope = scope;
-    writingScope.specificCount = specificCount;
-    
-    // 根据范围更新任务状态
-    updateTaskStatusByScope();
-  }
-
-  /**
-   * 根据写作范围更新任务状态
-   */
-  function updateTaskStatusByScope(): void {
-    queue.tasks.forEach(task => {
-      // 如果任务已完成，保持不变
-      if (task.status === 'completed') return;
-      
-      // 如果任务失败或待写，根据范围决定是否纳入写作
-      switch (writingScope.scope) {
-        case 'remaining':
-          // 保持 idle/failed 状态，这些是需要写的
-          break;
-        case 'all':
-          // 所有任务都要写，如果是 completed 则设为 idle 重新写
-          if (task.status !== 'writing' && task.status !== 'paused') {
-            task.status = 'idle';
-            task.progress = 0;
-            task.error = undefined;
-          }
-          break;
-        case 'specific':
-          // 只写前 N 个待写任务
-          if (task.status !== 'writing' && task.status !== 'paused') {
-            task.status = 'idle';
-            task.progress = 0;
-            task.error = undefined;
-          }
-          break;
-      }
-    });
-
-    // 更新当前任务索引
-    queue.currentTaskIndex = queue.tasks.findIndex(t => t.status === 'idle');
-  }
-
-  /**
-   * 初始化写作队列
-   */
-  function initializeQueue(): void {
+  async function writeChapter(chapterIndex: number): Promise<boolean> {
+    const client = requireAIService();
     const chapters = projectStore.sortedChapters;
-    const project = projectStore.currentProject;
 
-    if (!project) {
-      error.value = '请先选择一个项目';
-      queue.tasks = [];
-      return;
+    if (chapterIndex >= chapters.length) {
+      return false; // 章节不存在
     }
 
-    // 等待章节数据加载
-    if (chapters.length === 0) {
-      error.value = null; // 清除错误，章节可能在加载中
-      queue.tasks = [];
-      return;
+    const chapter = chapters[chapterIndex];
+
+    // 检查是否已有内容
+    if (chapter.content && chapter.content.trim().length > 0) {
+      return true; // 跳过已有内容的章节
     }
 
-    queue.projectId = project.id;
-    queue.tasks = chapters.map((chapter, index) => ({
-      id: `task-${chapter.id}-${Date.now()}`,
-      chapterId: chapter.id,
-      chapterTitle: chapter.title,
-      chapterIndex: index,
-      // 初始状态：待写
-      status: 'idle' as const,
-      progress: 0,
-      targetWordCount: config.wordsPerChapter || 4000,
-      generatedContent: '',
-      retryCount: 0,
-    }));
+    currentChapterIndex.value = chapterIndex;
+    currentChapterTitle.value = chapter.title;
 
-    // 找到第一个待写的任务
-    queue.currentTaskIndex = queue.tasks.findIndex(t => t.status === 'idle');
-    queue.isActive = false;
-    queue.isPaused = false;
-    queue.totalWordCount = 0;
-    queue.targetWordCount = chapters.length * (config.wordsPerChapter || 4000);
-
-    // 更新进度
-    progress.completed = completedCount.value;
-    progress.total = totalCount.value;
-    progress.percentage = progressPercentage.value;
-
-    // 根据范围更新状态
-    updateTaskStatusByScope();
-  }
-
-  /**
-   * 重置队列
-   */
-  function resetQueue(): void {
-    queue.tasks.forEach(task => {
-      if (task.status !== 'writing') {
-        task.status = 'idle';
-        task.progress = 0;
-        task.error = undefined;
-        task.generatedContent = '';
-        task.retryCount = 0;
-      }
-    });
-
-    queue.currentTaskIndex = queue.tasks.findIndex(t => t.status === 'idle');
-    queue.totalWordCount = 0;
-    queue.isActive = false;
-    queue.isPaused = false;
-
-    progress.completed = 0;
-    progress.totalWordCount = 0;
-    progress.percentage = 0;
-
-    updateTaskStatusByScope();
-  }
-
-  /**
-   * 获取 AI 客户端
-   */
-  function getAIClient() {
-    return requireAIService();
-  }
-
-  /**
-   * 构建章节上下文
-   */
-  function buildChapterContext(task: WritingTask, previousChapter?: { title: string; content: string }): ChapterWritingContext | null {
+    // 获取上下文
     const project = projectStore.currentProject;
-    if (!project) return null;
-
-    const chapter = projectStore.chapters.find(c => c.id === task.chapterId);
-    if (!chapter) return null;
-
-    // 获取章节索引
-    const currentIndex = task.chapterIndex >= 0 ? task.chapterIndex : projectStore.sortedChapters.findIndex(c => c.id === chapter.id);
-
-    // 提取章节类型
     const chapterOutline = chapter.plotSummary || extractChapterOutlineFromPlot(projectStore.plotOutline, chapter.id);
-    const chapterType = extractChapterTypeFromOutline(chapterOutline, currentIndex);
+    const chapterType = extractChapterTypeFromOutline(chapterOutline, chapterIndex);
+    const recentChapterCount = projectStore.memoryConfig?.shortTermChapterCount || 5;
+    const shortTermFullText = buildRecentChaptersFullText(chapterIndex, recentChapterCount);
 
     // 提取前情摘要
+    const prevChapter = chapterIndex > 0 ? chapters[chapterIndex - 1] : null;
     let previousSummary = '';
-    if (previousChapter?.content) {
-      previousSummary = contextManager.extractPreviousChapterSummary(previousChapter.content, 300);
+    let previousChapterEnding = '';
+    if (prevChapter?.content) {
+      previousSummary = contextManager.extractPreviousChapterSummary(prevChapter.content, 300);
+      previousChapterEnding = contextManager.extractChapterEnding(prevChapter.content);
     }
 
-    // 近期章节原文
-    const recentChapterCount = projectStore.memoryConfig?.shortTermChapterCount || 5;
-    const shortTermFullText = buildRecentChaptersFullText(currentIndex, recentChapterCount);
-
-    // 准备角色信息
-    const characters: ChapterWritingContext['characters'] = (project.characters || []).map(char => ({
+    // 角色信息
+    const characters = (project?.characters || []).map((char: any) => ({
       id: char.id,
       name: char.name,
-      role: char.role,
-      description: char.description,
+      role: char.role || '角色',
+      description: char.description || '',
       personality: char.profile?.personality || [],
       appearance: char.profile?.appearance,
-      speakingStyle: undefined,
-      currentStatus: undefined,
-      relationships: char.profile?.relationships?.map(r => ({
+      relationships: (char.profile?.relationships || []).map((r: any) => ({
         targetName: r.targetName,
         type: r.type,
-        description: r.description,
+        description: r.description || '',
       })),
     }));
 
-    // 获取活跃伏笔
-    const activeForeshadows: ChapterWritingContext['foreshadows'] = (project.foreshadows || [])
-      .filter(f => f.status !== 'resolved')
-      .map(f => ({
+    // 活跃伏笔
+    const activeForeshadows = (project?.foreshadows || [])
+      .filter((f: any) => f.status !== 'resolved')
+      .map((f: any) => ({
         id: f.id,
         hint: f.hint,
         status: f.status,
         suggestedChapter: f.suggestedResolutionChapter,
       }));
 
-    return {
-      projectTitle: project.name,
-      projectSynopsis: project.description || '',
-      worldSetting: project.worldSchema ? {
-        locations: project.worldSchema.locations || [],
-        rules: project.worldSchema.rules || [],
-        factions: project.worldSchema.factions || [],
-      } : undefined,
-      chapter: {
-        id: chapter.id,
-        title: chapter.title,
-        orderIndex: currentIndex,
-        outline: chapterOutline,
-        existingContent: chapter.content || '',
-        chapterType: chapterType as any,
-      },
-      previousChapter: previousChapter ? {
-        title: previousChapter.title,
-        summary: previousSummary,
-        ending: contextManager.extractChapterEnding(previousChapter.content),
-      } : undefined,
-      characters,
-      charactersInScene: (project.characters || []).map(c => c.id),
-      foreshadows: activeForeshadows,
-      requirements: {
-        targetWordCount: activeConfig?.wordsPerChapter || 4000,
-        style: (activeConfig?.writingStyle as WritingStyle) || 'concise',
-        customStyle: activeConfig?.customStyleDescription,
-      },
-      // 新增：与智能续写保持一致的上下文
-      memoryData: {
-        shortTermFullText,
-        characterStateTable: buildCharacterStateTable(projectStore.chapterMemories),
-        plotProgressTable: buildPlotProgressTable(projectStore.chapterMemories),
-      },
-    };
-  }
-
-  /**
-   * 执行单个写作任务
-   */
-  async function executeTask(task: WritingTask): Promise<void> {
-    const client = getAIClient();
-
-    // 获取上一章信息
-    const taskIndex = queue.tasks.findIndex(t => t.id === task.id);
-    const prevTask = taskIndex > 0 ? queue.tasks[taskIndex - 1] : null;
-    let previousChapter: { title: string; content: string } | undefined;
-
-    if (prevTask) {
-      const prevChapter = projectStore.chapters.find(c => c.id === prevTask.chapterId);
-      if (prevChapter?.content) {
-        previousChapter = {
-          title: prevChapter.title,
-          content: prevChapter.content,
-        };
-      }
-    }
-
-    const context = buildChapterContext(task, previousChapter);
-    if (!context) {
-      throw new Error('无法构建章节上下文');
-    }
-
-    task.status = 'writing';
-    task.startedAt = new Date().toISOString();
-
+    const targetWordCount = config.value.wordsPerChapter || 3000;
     let generatedContent = '';
 
-    // 检查是否支持流式输出
-    const targetWordCount = activeConfig?.wordsPerChapter || 4000;
-    if ((client as any).continueWritingStream) {
-      await new Promise<void>((resolve, reject) => {
-        let lastProgress = 0;
-
+    return new Promise((resolve, reject) => {
+      if ((client as any).continueWritingStream) {
         (client as any).continueWritingStream(
           {
             project: projectStore.currentProject,
-            currentChapterId: context.chapter.id,
-            currentChapterIndex: context.chapter.orderIndex,
-            currentChapterTitle: context.chapter.title,
-            currentChapterContent: context.chapter.existingContent || '',
-            currentChapterOutline: context.chapter.outline || undefined,
+            currentChapterId: chapter.id,
+            currentChapterIndex: chapterIndex,
+            currentChapterTitle: chapter.title,
+            currentChapterContent: '',
+            currentChapterOutline: chapterOutline || undefined,
             fullOutline: buildFullOutlineString(),
-            adjacentChaptersSummary: context.previousChapter ? {
-              previousChapterTitle: context.previousChapter.title,
-              previousChapterSummary: context.previousChapter.summary,
+            adjacentChaptersSummary: prevChapter ? {
+              previousChapterTitle: prevChapter.title,
+              previousChapterSummary: previousSummary,
+              previousChapterEnding: previousChapterEnding,
               nextChapterTitle: undefined,
               nextChapterSummary: undefined,
             } : undefined,
-            recentChaptersFullText: context.memoryData?.shortTermFullText,
-            charactersInScene: context.characters,
-            relatedForeshadows: context.foreshadows,
-            writingStyle: activeConfig?.writingStyle,
+            recentChaptersFullText: shortTermFullText,
+            charactersInScene: characters,
+            relatedForeshadows: activeForeshadows,
+            writingStyle: config.value.writingStyle,
           },
           'smartContinue',
           targetWordCount,
           (chunk: string) => {
             generatedContent += chunk;
-            task.generatedContent = generatedContent;
-            const currentProgress = Math.min(
-              Math.floor((generatedContent.length / (targetWordCount * 1.5)) * 100),
-              95
-            );
-            if (currentProgress > lastProgress) {
-              lastProgress = currentProgress;
-              task.progress = currentProgress;
-              progress.currentWordCount += chunk.length;
-            }
           },
-          () => {
-            task.progress = 100;
-            task.status = 'completed';
-            task.completedAt = new Date().toISOString();
-            queue.totalWordCount += generatedContent.length;
-            progress.totalWordCount = queue.totalWordCount;
-            resolve();
+          async () => {
+            // 保存内容
+            if (generatedContent) {
+              await projectStore.updateChapter(chapter.id, {
+                content: generatedContent,
+                wordCount: generatedContent.length,
+                isGenerated: true,
+                generatedAt: new Date().toISOString(),
+              });
+
+              // 提取记忆
+              extractMemoryAfterApply(chapter, chapterIndex + 1);
+
+              // 更新统计
+              progress.value.writtenChapters++;
+              progress.value.writtenWords += generatedContent.length;
+            }
+            resolve(true);
           },
           (errMsg: string) => {
+            error.value = errMsg;
             reject(new Error(errMsg));
           },
           abortController?.signal
         );
-      });
-    } else {
-      // 非流式模式
-      const result = await (client as any).continueWriting(
-        {
-          project: projectStore.currentProject,
-          currentChapterId: context.chapter.id,
-          currentChapterIndex: context.chapter.orderIndex,
-          currentChapterTitle: context.chapter.title,
-          currentChapterContent: context.chapter.existingContent || '',
-          currentChapterOutline: context.chapter.outline || undefined,
-          fullOutline: buildFullOutlineString(),
-          adjacentChaptersSummary: context.previousChapter ? {
-            previousChapterTitle: context.previousChapter.title,
-            previousChapterSummary: context.previousChapter.summary,
-            nextChapterTitle: undefined,
-            nextChapterSummary: undefined,
-          } : undefined,
-          recentChaptersFullText: context.memoryData?.shortTermFullText,
-          charactersInScene: context.characters,
-          relatedForeshadows: context.foreshadows,
-          writingStyle: activeConfig?.writingStyle,
-        },
-        'smartContinue',
-        targetWordCount
-      );
-
-      if (result?.content) {
-        generatedContent = result.content;
-        task.generatedContent = generatedContent;
-        task.status = 'completed';
-        task.completedAt = new Date().toISOString();
-        task.progress = 100;
-        queue.totalWordCount += generatedContent.length;
-        progress.totalWordCount = queue.totalWordCount;
+      } else {
+        // 非流式模式
+        (client as any).continueWriting(
+          {
+            project: projectStore.currentProject,
+            currentChapterId: chapter.id,
+            currentChapterIndex: chapterIndex,
+            currentChapterTitle: chapter.title,
+            currentChapterContent: '',
+            currentChapterOutline: chapterOutline || undefined,
+            fullOutline: buildFullOutlineString(),
+            adjacentChaptersSummary: prevChapter ? {
+              previousChapterTitle: prevChapter.title,
+              previousChapterSummary: previousSummary,
+              previousChapterEnding: previousChapterEnding,
+              nextChapterTitle: undefined,
+              nextChapterSummary: undefined,
+            } : undefined,
+            recentChaptersFullText: shortTermFullText,
+            charactersInScene: characters,
+            relatedForeshadows: activeForeshadows,
+            writingStyle: config.value.writingStyle,
+          },
+          'smartContinue',
+          targetWordCount
+        ).then(async (result: any) => {
+          if (result?.content) {
+            generatedContent = result.content;
+            await projectStore.updateChapter(chapter.id, {
+              content: generatedContent,
+              wordCount: generatedContent.length,
+              isGenerated: true,
+              generatedAt: new Date().toISOString(),
+            });
+            extractMemoryAfterApply(chapter, chapterIndex + 1);
+            progress.value.writtenChapters++;
+            progress.value.writtenWords += generatedContent.length;
+          }
+          resolve(true);
+        }).catch((err: Error) => {
+          error.value = err.message;
+          reject(err);
+        });
       }
+    });
+  }
+
+  /**
+   * 创建新章节
+   */
+  async function createNewChapter(): Promise<number> {
+    const project = projectStore.currentProject;
+    if (!project) return -1;
+
+    // 获取或创建默认卷
+    let volumeId = projectStore.sortedVolumes[0]?.id;
+    if (!volumeId) {
+      // 如果没有卷，创建一个
+      const newVolume: Volume = {
+        id: `vol-${Date.now()}`,
+        name: '第一卷',
+        orderIndex: 0,
+      };
+      projectStore.addVolume(newVolume);
+      volumeId = newVolume.id;
     }
 
-    // 保存到项目
-    if (generatedContent) {
-      const chapter = projectStore.chapters.find(c => c.id === task.chapterId);
-      const currentContent = chapter?.content || '';
-      const separator = currentContent.length > 0 && !currentContent.endsWith('\n') ? '\n\n' : '';
-      const newContent = currentContent + separator + generatedContent;
+    if (!volumeId) return -1;
 
-      await projectStore.updateChapter(task.chapterId, {
-        content: newContent,
-        wordCount: newContent.length,
-        isGenerated: true,
-        generatedAt: new Date().toISOString(),
-      });
-
-      // 提取情节记忆
-      extractMemoryAfterApply(chapter, task.chapterIndex + 1);
+    // 创建新章节
+    const newChapter = await projectStore.createChapter(volumeId);
+    if (newChapter) {
+      // 返回新章节的索引
+      return projectStore.sortedChapters.findIndex(c => c.id === newChapter.id);
     }
+    return -1;
   }
 
   /**
    * 开始批量写作
    */
-  async function startBatchWriting(options?: Partial<WritingConfig>): Promise<void> {
+  async function startBatchWriting(targetChapters?: number, batchConfig?: BatchConfig): Promise<void> {
     if (isWriting.value) {
       error.value = '正在写作中';
       return;
     }
 
-    // 如果是特定数量模式，先更新范围
-    if (writingScope.scope === 'specific') {
-      // 限制只写前 N 个任务
-      let count = 0;
-      queue.tasks.forEach(task => {
-        if (task.status === 'idle' || task.status === 'failed') {
-          if (count < (writingScope.specificCount || 0)) {
-            count++;
-          } else {
-            // 超出数量的设为 paused，不纳入本次写作
-            task.status = 'paused';
-          }
-        }
-      });
-    }
-
-    activeConfig = {
-      targetWordCount: options?.targetWordCount || 800000,
-      wordsPerChapter: options?.wordsPerChapter || config.wordsPerChapter || 4000,
-      chapterCount: options?.chapterCount || 200,
-      writingStyle: options?.writingStyle || config.writingStyle || 'concise',
-      temperature: options?.temperature || config.temperature || 0.7,
-      maxTokensPerChapter: options?.maxTokensPerChapter || 4000,
-      includePreviousChapter: options?.includePreviousChapter ?? true,
-      includeCharacterProfiles: options?.includeCharacterProfiles ?? true,
-      includeWorldSetting: options?.includeWorldSetting ?? true,
-      includeForeshadows: options?.includeForeshadows ?? true,
-      ...options,
-    };
-
-    // 更新配置
-    Object.assign(config, {
-      wordsPerChapter: activeConfig.wordsPerChapter,
-      writingStyle: activeConfig.writingStyle,
-      temperature: activeConfig.temperature,
-    });
-
-    // 找到下一个待写的任务
-    queue.currentTaskIndex = queue.tasks.findIndex(t => t.status === 'idle');
-
-    if (queue.currentTaskIndex === -1) {
-      error.value = '没有待写的章节';
+    const project = projectStore.currentProject;
+    if (!project) {
+      error.value = '请先选择一个项目';
       return;
     }
 
-    shouldStop = false;
-    shouldPause = false;
+    // 应用配置
+    if (batchConfig) {
+      config.value.wordsPerChapter = batchConfig.wordsPerChapter;
+      config.value.writingStyle = batchConfig.writingStyle;
+    }
+
+    // 设置目标
+    const chaptersToWrite = targetChapters || targetChapterCount.value;
+    progress.value = {
+      writtenChapters: 0,
+      writtenWords: 0,
+      targetChapters: chaptersToWrite,
+    };
+
     isWriting.value = true;
     isPaused.value = false;
-    queue.isActive = true;
+    shouldStop = false;
+    shouldPause = false;
     error.value = null;
 
     try {
-      // 从当前任务开始，逐个处理
-      while (queue.currentTaskIndex < queue.tasks.length) {
-        // 检查停止信号
+      // 从第一个空章节开始
+      let currentIndex = getNextChapterIndex();
+      let writtenCount = 0;
+
+      while (currentIndex >= 0 || writtenCount < chaptersToWrite) {
+        // 检查停止
         if (shouldStop) {
+          console.log('[批量写作] 已停止');
           break;
         }
 
-        // 检查暂停信号
+        // 检查暂停
         while (shouldPause && !shouldStop) {
-          await sleep(500);
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
 
         if (shouldStop) break;
 
-        const task = queue.tasks[queue.currentTaskIndex];
-
-        // 跳过已完成的任务
-        if (!task || task.status === 'completed') {
-          queue.currentTaskIndex++;
-          continue;
+        // 检查是否达到目标
+        if (target.value === 'specific' && writtenCount >= chaptersToWrite) {
+          console.log('[批量写作] 已完成目标数量');
+          break;
         }
 
-        // 跳过非待写状态的任务（已暂停或已失败且不需要重试）
-        if (task.status !== 'idle' && task.status !== 'failed') {
-          queue.currentTaskIndex++;
-          continue;
-        }
-
-        currentChapterId.value = task.chapterId;
-        currentChapterTitle.value = task.chapterTitle;
-        progress.percentage = progressPercentage.value;
-
-        try {
-          await executeTask(task);
-        } catch (err) {
-          console.error(`[BatchWriter] Task ${task.id} failed:`, err);
-          task.error = err instanceof Error ? err.message : 'Unknown error';
-          task.status = 'failed';
-
-          // 自动重试
-          if (task.retryCount < MAX_RETRIES) {
-            task.retryCount++;
-            await sleep(RETRY_DELAY * task.retryCount);
-            continue;
+        // 如果没有空章节，创建新的
+        if (currentIndex < 0) {
+          currentIndex = await createNewChapter();
+          if (currentIndex < 0) {
+            console.log('[批量写作] 无法创建新章节');
+            break;
           }
         }
 
-        queue.currentTaskIndex++;
-        progress.completed = completedCount.value;
-        progress.percentage = progressPercentage.value;
+        try {
+          const result = await writeChapter(currentIndex);
+          if (result) {
+            writtenCount++;
+          }
+        } catch (err) {
+          console.error('[批量写作] 章节写作失败:', err);
+          // 单章失败，继续下一章
+        }
+
+        // 找下一个空章节
+        currentIndex = getNextChapterIndex();
       }
     } finally {
       isWriting.value = false;
-      queue.isActive = false;
-      currentChapterId.value = null;
+      isPaused.value = false;
+      currentChapterIndex.value = -1;
       currentChapterTitle.value = '';
-      shouldStop = false;
-      shouldPause = false;
+      abortController = null;
     }
   }
 
@@ -785,12 +514,6 @@ ${c.content || '（本章暂无内容）'}`;
   function pauseWriting(): void {
     shouldPause = true;
     isPaused.value = true;
-    queue.isPaused = true;
-
-    const currentTask = queue.tasks[queue.currentTaskIndex];
-    if (currentTask && currentTask.status === 'writing') {
-      currentTask.status = 'paused';
-    }
   }
 
   /**
@@ -799,12 +522,6 @@ ${c.content || '（本章暂无内容）'}`;
   function resumeWriting(): void {
     shouldPause = false;
     isPaused.value = false;
-    queue.isPaused = false;
-
-    const currentTask = queue.tasks[queue.currentTaskIndex];
-    if (currentTask && currentTask.status === 'paused') {
-      currentTask.status = 'idle';
-    }
   }
 
   /**
@@ -815,12 +532,6 @@ ${c.content || '（本章暂无内容）'}`;
     shouldPause = false;
     isPaused.value = false;
     isWriting.value = false;
-    queue.isActive = false;
-
-    const currentTask = queue.tasks[queue.currentTaskIndex];
-    if (currentTask && currentTask.status === 'writing') {
-      currentTask.status = 'paused';
-    }
 
     if (abortController) {
       abortController.abort();
@@ -828,72 +539,24 @@ ${c.content || '（本章暂无内容）'}`;
     }
   }
 
-  /**
-   * 跳过当前章节
-   */
-  function skipChapter(): void {
-    const currentTask = queue.tasks[queue.currentTaskIndex];
-    if (currentTask) {
-      currentTask.status = 'paused';
-      currentTask.error = 'Skipped by user';
-    }
-    queue.currentTaskIndex++;
-    progress.completed = completedCount.value;
-    progress.percentage = progressPercentage.value;
-  }
-
-  /**
-   * 重试失败的章节
-   */
-  function retryFailedChapters(): void {
-    queue.tasks.forEach(task => {
-      if (task.status === 'failed') {
-        task.status = 'idle';
-        task.error = undefined;
-        task.retryCount = 0;
-        task.progress = 0;
-        task.generatedContent = '';
-      }
-    });
-
-    // 从第一个失败的任务开始
-    const firstFailedIndex = queue.tasks.findIndex(t => t.status === 'idle');
-    if (firstFailedIndex !== -1) {
-      queue.currentTaskIndex = firstFailedIndex;
-    }
-  }
-
-  function sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
   return {
-    // 状态
     isWriting,
     isPaused,
-    currentChapterId,
+    currentChapterIndex,
     currentChapterTitle,
-    progress,
-    queue,
     error,
-    writingScope,
-
-    // 计算属性
-    completedCount,
-    totalCount,
-    pendingCount,
-    progressPercentage,
+    totalChapters,
+    writtenChapters,
+    remainingChapters,
+    writtenWordCount,
+    progress,
+    target,
     config,
-
-    // 方法
-    initializeQueue,
-    setWritingScope,
     startBatchWriting,
     pauseWriting,
     resumeWriting,
     stopWriting,
-    skipChapter,
-    retryFailedChapters,
-    resetQueue,
+    getNextChapterIndex,
+    getTotalChapters,
   };
 }
