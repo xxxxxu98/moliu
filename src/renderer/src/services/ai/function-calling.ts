@@ -158,13 +158,13 @@ export const OUTLINE_FUNCTION_SCHEMA: FunctionDef = {
             },
             chapters: {
               type: 'array',
-              description: '章节级大纲，根据字数范围生成适当数量',
+              description: '章节级大纲，必须生成完整的所有章节。章节数量计算规则：50万字≈125-166章，100万字≈250-333章，200万字≈500-666章。前30章需要详细摘要（200-500字），后续章节用简短标题+一句话概括（50-100字）。',
               items: {
                 type: 'object',
                 properties: {
                   title: { type: 'string', description: '章节标题' },
-                  summary: { type: 'string', description: '章节摘要' },
-                  keyEvents: { type: 'array', items: { type: 'string' }, description: '关键事件' },
+                  summary: { type: 'string', description: '章节摘要：前30章200-500字详细描述，后续章节50-100字简短概括' },
+                  keyEvents: { type: 'array', items: { type: 'string' }, description: '关键事件，2-3个' },
                   involvedCharacters: { type: 'array', items: { type: 'string' }, description: '涉及角色' }
                 },
                 required: ['title', 'summary']
@@ -226,7 +226,7 @@ export const OUTLINE_FUNCTION_SCHEMA: FunctionDef = {
               description: '预估字数'
             }
           },
-          required: ['title', 'genres', 'synopsis', 'worldSetting', 'structure', 'characters', 'foreshadows', 'estimatedWordCount']
+          required: ['title', 'genres', 'synopsis', 'worldSetting', 'structure', 'characters', 'foreshadows', 'estimatedWordCount', 'chapters']
         }
       }
     },

@@ -10,7 +10,8 @@ import { useActiveAIProvider } from './useActiveAIProvider';
 import type { WritingStyle, ChapterWritingContext, ChapterType } from '@/types/writing';
 import { PromptBuilder } from '@/services/writing/prompt-builder';
 import { ContextManager } from '@/services/writing/context-manager';
-import { extractChapterMemory, buildCharacterStateTable, buildPlotProgressTable } from '@/services/writing/extract-plot-memory';
+import { extractChapterMemory, buildCharacterStateTable, buildPlotProgressTable, safeExtractChapterMemory } from '@/services/writing/extract-plot-memory';
+import { initializeMemoryManager, getMemoryManager } from '@/services/writing/memory-manager';
 import type { ChapterMemory } from '@/types/project';
 
 /**
@@ -107,6 +108,18 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
   let currentGeneratedContent = '';
   let abortController: AbortController | null = null;
+
+  // 初始化记忆管理器
+  function initMemoryManager() {
+    if (projectStore.currentProject) {
+      initializeMemoryManager(
+        projectStore.currentProject.id,
+        projectStore.currentProject.name,
+        true // 启用文件系统备份
+      );
+      console.log('[ChapterWriter] 记忆管理器已初始化');
+    }
+  }
 
   /**
    * 获取 AI 客户端
@@ -483,20 +496,40 @@ ${c.content || '（本章暂无内容）'}`;
 
   /**
    * 应用内容后提取情节记忆
+   * 使用安全提取函数，带完整容错机制
    */
   async function extractMemoryAfterApply(chapter: any, chapterIndex: number): Promise<void> {
     try {
+      // 确保记忆管理器已初始化
+      initMemoryManager();
+
       // 等待内容保存完成
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const memory = await extractChapterMemory(chapter, chapterIndex);
+      // 使用安全提取函数
+      const memory = await safeExtractChapterMemory(
+        { ...chapter, content: chapter.content || '' },
+        chapterIndex,
+        {
+          enableAIEnhancement: true,
+          enableFileBackup: true,
+          fallbackToPrevious: true, // 允许从缓存恢复
+        }
+      );
 
-      // 添加到记忆系统
-      projectStore.addChapterMemory(memory);
+      if (memory) {
+        // 添加到记忆系统
+        projectStore.addChapterMemory(memory);
 
-      console.log('[记忆系统] 已提取章节记忆:', chapter.title, memory.corePlot.slice(0, 50) + '...');
+        // 同时保存到 MemoryManager
+        const manager = getMemoryManager();
+        await manager.saveMemory(memory);
+
+        console.log('[记忆系统] 已提取章节记忆:', chapter.title, memory.corePlot.slice(0, 50) + '...');
+      }
     } catch (err) {
       console.error('[记忆系统] 提取记忆失败:', err);
+      // 容错：提取失败不影响主流程
     }
   }
 

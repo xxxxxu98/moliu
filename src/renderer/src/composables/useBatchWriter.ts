@@ -7,7 +7,8 @@ import { ref, computed } from 'vue';
 import { useProjectStore } from '@/stores/project.store';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useActiveAIProvider } from './useActiveAIProvider';
-import { extractChapterMemory, buildCharacterStateTable, buildPlotProgressTable } from '@/services/writing/extract-plot-memory';
+import { extractChapterMemory, buildCharacterStateTable, buildPlotProgressTable, safeExtractChapterMemory } from '@/services/writing/extract-plot-memory';
+import { initializeMemoryManager, getMemoryManager } from '@/services/writing/memory-manager';
 import { ContextManager } from '@/services/writing/context-manager';
 
 export type WritingTarget = 'specific' | 'finish';
@@ -209,15 +210,44 @@ ${c.content || '（本章暂无内容）'}`;
 
   /**
    * 提取章节记忆
+   * 使用安全提取函数，带完整容错机制
    */
   async function extractMemoryAfterApply(chapter: any, chapterIndex: number): Promise<void> {
     try {
+      // 确保记忆管理器已初始化
+      if (projectStore.currentProject) {
+        initializeMemoryManager(
+          projectStore.currentProject.id,
+          projectStore.currentProject.name,
+          true // 启用文件系统备份
+        );
+      }
+
       await new Promise(resolve => setTimeout(resolve, 500));
-      const memory = await extractChapterMemory(chapter, chapterIndex);
-      projectStore.addChapterMemory(memory);
-      console.log('[批量写作] 已提取章节记忆:', chapter.title);
+
+      // 使用安全提取函数
+      const memory = await safeExtractChapterMemory(
+        { ...chapter, content: chapter.content || '' },
+        chapterIndex,
+        {
+          enableAIEnhancement: true,
+          enableFileBackup: true,
+          fallbackToPrevious: true,
+        }
+      );
+
+      if (memory) {
+        projectStore.addChapterMemory(memory);
+
+        // 同时保存到 MemoryManager
+        const manager = getMemoryManager();
+        await manager.saveMemory(memory);
+
+        console.log('[批量写作] 已提取章节记忆:', chapter.title);
+      }
     } catch (err) {
       console.error('[批量写作] 提取记忆失败:', err);
+      // 容错：提取失败不影响主流程
     }
   }
 

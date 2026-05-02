@@ -45,6 +45,12 @@ export interface ElectronAPI {
   // Memory - Search
   searchMemory: (data: { projectId: string; query: string }) => Promise<{ characters: unknown[]; foreshadows: unknown[] }>;
 
+  // Memory Files - File System Backup
+  saveMemoryFile: (data: { projectId: string; filePath: string; content: string }) => Promise<{ success: boolean; error?: string }>;
+  loadMemoryFile: (data: { projectId: string; filePath: string }) => Promise<string | null>;
+  listMemoryFiles: (data: { projectId: string; basePath: string }) => Promise<string[]>;
+  deleteMemoryFile: (data: { projectId: string; filePath: string }) => Promise<{ success: boolean; error?: string }>;
+
   // Settings
   getSettings: () => Promise<unknown>;
   saveSettings: (settings: unknown) => Promise<unknown>;
@@ -102,6 +108,16 @@ const api: ElectronAPI = {
   // Memory - Search
   searchMemory: (data: { projectId: string; query: string }) =>
     ipcRenderer.invoke('memory:search', data),
+
+  // Memory Files - File System Backup
+  saveMemoryFile: (data: { projectId: string; filePath: string; content: string }) =>
+    ipcRenderer.invoke('memory:file:save', data),
+  loadMemoryFile: (data: { projectId: string; filePath: string }) =>
+    ipcRenderer.invoke('memory:file:load', data),
+  listMemoryFiles: (data: { projectId: string; basePath: string }) =>
+    ipcRenderer.invoke('memory:file:list', data),
+  deleteMemoryFile: (data: { projectId: string; filePath: string }) =>
+    ipcRenderer.invoke('memory:file:delete', data),
 
   // Settings
   getSettings: () => ipcRenderer.invoke('settings:get'),

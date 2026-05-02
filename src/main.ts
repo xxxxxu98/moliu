@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import path from 'node:path';
+import fs from 'node:fs';
 import started from 'electron-squirrel-startup';
 import Store from 'electron-store';
 import { testConnection } from './main/services/ai-client';
@@ -523,29 +524,94 @@ ipcMain.handle('foreshadow:list', (_event, projectId: string) => {
   return project.foreshadows || [];
 });
 
-ipcMain.handle('chapter:delete', (_event, data: { projectId: string; chapterId: string }) => {
-  const { projectId, chapterId } = data;
-  const projects = projectStore.get('projects') as Project[];
-  const projectIndex = projects.findIndex(p => p.id === projectId);
+// Helper function to get project data path
+function getProjectDataPath(projectId: string): string {
+  const userDataPath = app.getPath('userData');
+  return path.join(userDataPath, 'projects', projectId);
+}
 
-  if (projectIndex < 0) {
-    return { success: false, error: 'Project not found' };
+// Ensure directory exists
+function ensureDir(dirPath: string): void {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
   }
+}
 
-  const project = projects[projectIndex];
-  if (!project.chapters) {
-    return { success: false, error: 'No chapters found' };
+// IPC Handlers for Memory Files (File System Backup)
+ipcMain.handle('memory:file:save', async (_event, data: { projectId: string; filePath: string; content: string }) => {
+  const { projectId, filePath, content } = data;
+
+  try {
+    const baseDir = getProjectDataPath(projectId);
+    ensureDir(baseDir);
+
+    const fullPath = path.join(baseDir, filePath);
+    const fileDir = path.dirname(fullPath);
+    ensureDir(fileDir);
+
+    fs.writeFileSync(fullPath, content, 'utf-8');
+    console.log(`[MemoryFile] Saved: ${fullPath}`);
+    return { success: true };
+  } catch (error) {
+    console.error('[MemoryFile] Save error:', error);
+    return { success: false, error: String(error) };
   }
+});
 
-  const chapterIndex = project.chapters.findIndex((c: Chapter) => c.id === chapterId);
-  if (chapterIndex < 0) {
-    return { success: false, error: 'Chapter not found' };
+ipcMain.handle('memory:file:load', async (_event, data: { projectId: string; filePath: string }) => {
+  const { projectId, filePath } = data;
+
+  try {
+    const fullPath = path.join(getProjectDataPath(projectId), filePath);
+
+    if (!fs.existsSync(fullPath)) {
+      console.log(`[MemoryFile] File not found: ${fullPath}`);
+      return null;
+    }
+
+    const content = fs.readFileSync(fullPath, 'utf-8');
+    console.log(`[MemoryFile] Loaded: ${fullPath}`);
+    return content;
+  } catch (error) {
+    console.error('[MemoryFile] Load error:', error);
+    return null;
   }
+});
 
-  project.chapters.splice(chapterIndex, 1);
-  project.updatedAt = new Date().toISOString();
-  projectStore.set('projects', projects);
-  return { success: true };
+ipcMain.handle('memory:file:list', async (_event, data: { projectId: string; basePath: string }) => {
+  const { projectId, basePath } = data;
+
+  try {
+    const fullPath = path.join(getProjectDataPath(projectId), basePath);
+
+    if (!fs.existsSync(fullPath)) {
+      return [];
+    }
+
+    const files = fs.readdirSync(fullPath);
+    return files.filter(f => f.endsWith('.md'));
+  } catch (error) {
+    console.error('[MemoryFile] List error:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('memory:file:delete', async (_event, data: { projectId: string; filePath: string }) => {
+  const { projectId, filePath } = data;
+
+  try {
+    const fullPath = path.join(getProjectDataPath(projectId), filePath);
+
+    if (fs.existsSync(fullPath)) {
+      fs.unlinkSync(fullPath);
+      console.log(`[MemoryFile] Deleted: ${fullPath}`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('[MemoryFile] Delete error:', error);
+    return { success: false, error: String(error) };
+  }
 });
 
 // This method will be called when Electron has finished
