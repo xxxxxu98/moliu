@@ -468,11 +468,14 @@ ${c.content || '（本章暂无内容）'}`;
     try {
       // 应用去 AI 味处理
       let processedContent = currentGeneratedContent;
+      let extractedTitle: string | null | undefined;
       const deAIResult = await DeAIService.fix(processedContent);
       if (deAIResult.fixedCount > 0) {
         console.log(`[智能续写] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
         processedContent = deAIResult.content;
       }
+      // 获取提取的标题
+      extractedTitle = deAIResult.title;
 
       const currentContent = projectStore.currentChapter?.content || '';
       const separator = currentContent.length > 0 && !currentContent.endsWith('\n') ? '\n\n' : '';
@@ -483,10 +486,22 @@ ${c.content || '（本章暂无内容）'}`;
         c => c.id === projectStore.currentChapterId
       );
 
-      await projectStore.updateChapter(projectStore.currentChapterId!, {
+      // 构建更新对象
+      const updateData: Record<string, any> = {
         content: newContent,
         wordCount: newContent.length,
-      });
+      };
+      // 如果提取到标题且当前章节没有自定义标题，则更新标题
+      if (extractedTitle && projectStore.currentChapter) {
+        // 检查当前标题是否是默认生成的（如"第X章"）
+        const defaultTitlePattern = /^第[一二三四五六七八九十百千\d]+章$/;
+        if (defaultTitlePattern.test(projectStore.currentChapter.title)) {
+          updateData.title = extractedTitle;
+          console.log(`[智能续写] 更新章节标题: ${extractedTitle}`);
+        }
+      }
+
+      await projectStore.updateChapter(projectStore.currentChapterId!, updateData);
 
       // 提取情节记忆（异步，不阻塞主流程）
       extractMemoryAfterApply(projectStore.currentChapter!, currentIndex + 1);

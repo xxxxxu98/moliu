@@ -349,22 +349,35 @@ ${c.content || '（本章暂无内容）'}`;
           },
           async () => {
             // 应用去 AI 味处理
+            let extractedTitle: string | null | undefined;
             if (config.value.deAIEnabled && generatedContent) {
               const deAIResult = await DeAIService.fix(generatedContent);
               if (deAIResult.fixedCount > 0) {
                 console.log(`[批量写作] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
                 generatedContent = deAIResult.content;
               }
+              // 获取提取的标题
+              extractedTitle = deAIResult.title;
             }
 
             // 保存内容
             if (generatedContent) {
-              await projectStore.updateChapter(chapter.id, {
+              // 构建更新对象
+              const updateData: Record<string, any> = {
                 content: generatedContent,
                 wordCount: generatedContent.length,
                 isGenerated: true,
                 generatedAt: new Date().toISOString(),
-              });
+              };
+              // 如果提取到标题且当前章节没有自定义标题，则更新标题
+              if (extractedTitle) {
+                const defaultTitlePattern = /^第[一二三四五六七八九十百千\d]+章$/;
+                if (defaultTitlePattern.test(chapter.title)) {
+                  updateData.title = extractedTitle;
+                  console.log(`[批量写作] 更新章节标题: ${extractedTitle}`);
+                }
+              }
+              await projectStore.updateChapter(chapter.id, updateData);
 
               // 提取记忆
               extractMemoryAfterApply(chapter, chapterIndex + 1);
@@ -411,20 +424,33 @@ ${c.content || '（本章暂无内容）'}`;
             generatedContent = result.content;
 
             // 应用去 AI 味处理
+            let extractedTitle: string | null | undefined;
             if (config.value.deAIEnabled && generatedContent) {
               const deAIResult = await DeAIService.fix(generatedContent);
               if (deAIResult.fixedCount > 0) {
                 console.log(`[批量写作] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
                 generatedContent = deAIResult.content;
               }
+              // 获取提取的标题
+              extractedTitle = deAIResult.title;
             }
 
-            await projectStore.updateChapter(chapter.id, {
+            // 构建更新对象
+            const updateData: Record<string, any> = {
               content: generatedContent,
               wordCount: generatedContent.length,
               isGenerated: true,
               generatedAt: new Date().toISOString(),
-            });
+            };
+            // 如果提取到标题且当前章节没有自定义标题，则更新标题
+            if (extractedTitle) {
+              const defaultTitlePattern = /^第[一二三四五六七八九十百千\d]+章$/;
+              if (defaultTitlePattern.test(chapter.title)) {
+                updateData.title = extractedTitle;
+                console.log(`[批量写作] 更新章节标题: ${extractedTitle}`);
+              }
+            }
+            await projectStore.updateChapter(chapter.id, updateData);
             extractMemoryAfterApply(chapter, chapterIndex + 1);
             progress.value.writtenChapters++;
             progress.value.writtenWords += generatedContent.length;

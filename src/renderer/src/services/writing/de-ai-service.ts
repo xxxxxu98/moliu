@@ -28,6 +28,8 @@ export interface DeAIDetectionResult {
 export interface DeAIFixResult {
   /** 修复后的内容 */
   content: string;
+  /** 提取的章节标题（如果有） */
+  title?: string | null;
   /** 修复的问题数量 */
   fixedCount: number;
   /** 修复详情 */
@@ -579,10 +581,90 @@ export class DeAIService {
     // 14. 删除无意义的"其实"开头
     content = content.replace(/^其实，/gm, '');
 
+    // 15. 【新增】提取章节标题并清理内容
+    const { title, content: cleanedContent } = this.extractAndCleanTitle(content);
+    if (title) {
+      content = cleanedContent;
+      fixes.push({
+        original: `生成内容包含标题: ${title}`,
+        replacement: '已提取章节标题',
+        reason: '清理生成内容，移除标题行',
+      });
+    }
+
     return {
       content: content.trim(),
+      title: title,
       fixedCount: fixes.length,
       fixes,
+    };
+  }
+
+  /**
+   * 【新增】提取章节标题并清理内容
+   * AI生成的内容可能包含章节标题，需要提取并处理
+   * @param content 原始生成内容
+   * @returns 标题和清理后的正文
+   */
+  static extractAndCleanTitle(content: string): { title: string | null; content: string } {
+    // 匹配常见章节标题格式
+    // 格式1: 第X章 标题 或 第X章.标题
+    // 格式2: 第X卷 第X章 标题
+    // 格式3: 直接是标题（无章节号）
+    const titlePatterns = [
+      /^#\s*(.+?)\s*\n+/,                           // # 标题
+      /^(第[一二三四五六七八九十百千\d]+章)[.、\s]*(.+?)\s*\n+/,  // 第X章 标题
+      /^(第[一二三四五六七八九十百千\d]+卷)[.、\s]*(第[一二三四五六七八九十百千\d]+章)[.、\s]*(.+?)\s*\n+/,  // 第X卷 第X章 标题
+      /^(【[^】]+】)\s*\n+/,                         // 【标题】
+      /^《([^》]+)》\s*\n+/,                         // 《标题》
+    ];
+
+    for (const pattern of titlePatterns) {
+      const match = content.match(pattern);
+      if (match) {
+        // 提取标题
+        // 如果有捕获组1和2，说明是"第X章 标题"格式，需要拼接
+        // 如果只有捕获组1，说明整个匹配就是标题
+        let title: string;
+        if (match[1] && match[2]) {
+          // 第X章 标题 格式
+          title = match[1] + ' ' + match[2];
+        } else if (match[1]) {
+          title = match[1];
+        } else {
+          title = match[0];
+        }
+        // 移除标题和后续的空行
+        const remainingContent = content.substring(match[0].length).trim();
+        return {
+          title: title.trim(),
+          content: remainingContent,
+        };
+      }
+    }
+
+    // 如果没有匹配到标题格式，检查第一行是否是标题
+    // 标题特征：很短（< 20字），不包含句号或逗号
+    const lines = content.split('\n');
+    if (lines.length > 0) {
+      const firstLine = lines[0].trim();
+      // 检查第一行是否符合标题特征
+      if (firstLine.length > 0 && firstLine.length < 30 && !firstLine.includes('。') && !firstLine.includes('，')) {
+        // 可能是标题，检查是否像章节标题
+        if (/^(第[一二三四五六七八九十百千\d]+|[一二三四五六七八九十百千\d]+、|\d+、|\d+\.)/.test(firstLine) ||
+            /^【/.test(firstLine) || /^《/.test(firstLine)) {
+          const remainingContent = lines.slice(1).join('\n').trim();
+          return {
+            title: firstLine,
+            content: remainingContent,
+          };
+        }
+      }
+    }
+
+    return {
+      title: null,
+      content: content,
     };
   }
 
