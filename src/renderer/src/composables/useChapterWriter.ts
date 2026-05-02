@@ -348,8 +348,8 @@ ${c.content || '（本章暂无内容）'}`;
         additionalInstructions
       );
 
-      // 检查是否支持流式输出
-      if ((client as any).continueWritingStream) {
+      // 检查是否启用流式输出（根据用户设置）
+      if (settingsStore.streamOutput && (client as any).continueWritingStream) {
         await new Promise<void>((resolve, reject) => {
           (client as any).continueWritingStream(
             {

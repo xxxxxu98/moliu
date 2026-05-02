@@ -320,7 +320,8 @@ ${c.content || '（本章暂无内容）'}`;
     let generatedContent = '';
 
     return new Promise((resolve, reject) => {
-      if ((client as any).continueWritingStream) {
+      // 检查是否启用流式输出（根据用户设置）
+      if (settingsStore.streamOutput && (client as any).continueWritingStream) {
         (client as any).continueWritingStream(
           {
             project: projectStore.currentProject,
