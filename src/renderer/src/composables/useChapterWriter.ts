@@ -12,6 +12,7 @@ import { PromptBuilder } from '@/services/writing/prompt-builder';
 import { ContextManager } from '@/services/writing/context-manager';
 import { extractChapterMemory, buildCharacterStateTable, buildPlotProgressTable, safeExtractChapterMemory } from '@/services/writing/extract-plot-memory';
 import { initializeMemoryManager, getMemoryManager } from '@/services/writing/memory-manager';
+import { DeAIService } from '@/services/writing/de-ai-service';
 import type { ChapterMemory } from '@/types/project';
 
 /**
@@ -465,9 +466,17 @@ ${c.content || '（本章暂无内容）'}`;
     }
 
     try {
+      // 应用去 AI 味处理
+      let processedContent = currentGeneratedContent;
+      const deAIResult = await DeAIService.fix(processedContent);
+      if (deAIResult.fixedCount > 0) {
+        console.log(`[智能续写] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
+        processedContent = deAIResult.content;
+      }
+
       const currentContent = projectStore.currentChapter?.content || '';
       const separator = currentContent.length > 0 && !currentContent.endsWith('\n') ? '\n\n' : '';
-      const newContent = currentContent + separator + currentGeneratedContent;
+      const newContent = currentContent + separator + processedContent;
 
       // 获取章节索引
       const currentIndex = projectStore.sortedChapters.findIndex(
