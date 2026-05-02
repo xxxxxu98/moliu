@@ -165,7 +165,7 @@ export class UnifiedAIService {
     this.model = model || "";
     this.maxTokens = maxTokens;
     this.generationConfig = generationConfig || {
-      temperature: 0.8,
+      temperature: 0.5,
       topP: 0.9,
       frequencyPenalty: 0,
       presencePenalty: 0,
@@ -831,7 +831,7 @@ export class UnifiedAIService {
     }
 
     const maxTokens = config?.maxTokens;
-    const temperature = config?.temperature ?? 0.8;
+    const temperature = config?.temperature ?? 0.5;
     const topP = config?.topP ?? 0.9;
 
     // 构建动态的系统提示词
@@ -875,7 +875,7 @@ export class UnifiedAIService {
     }
 
     const maxTokens = config?.maxTokens;
-    const temperature = config?.temperature ?? 0.8;
+    const temperature = config?.temperature ?? 0.5;
     const topP = config?.topP ?? 0.9;
 
     // 构建动态的系统提示词

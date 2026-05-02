@@ -10,6 +10,7 @@ import { useActiveAIProvider } from './useActiveAIProvider';
 import { extractChapterMemory, buildCharacterStateTable, buildPlotProgressTable, safeExtractChapterMemory } from '@/services/writing/extract-plot-memory';
 import { initializeMemoryManager, getMemoryManager } from '@/services/writing/memory-manager';
 import { ContextManager } from '@/services/writing/context-manager';
+import { DeAIService } from '@/services/writing/de-ai-service';
 
 export type WritingTarget = 'specific' | 'finish';
 
@@ -45,6 +46,7 @@ export interface UseBatchWriterReturn {
 export interface BatchConfig {
   wordsPerChapter: number;
   writingStyle: 'concise' | 'elegant' | 'humorous' | 'ancient';
+  deAIEnabled?: boolean; // 是否启用去 AI 味处理
 }
 
 const isWriting = ref(false);
@@ -68,7 +70,8 @@ const progress = ref({
 const config = ref({
   wordsPerChapter: 3000,
   writingStyle: 'concise' as 'concise' | 'elegant' | 'humorous' | 'ancient',
-  temperature: 0.7,
+  temperature: 0.5, // 降低温度，减少 AI 机械感
+  deAIEnabled: true, // 启用去 AI 味后处理
 });
 
 const contextManager = new ContextManager();
@@ -345,6 +348,15 @@ ${c.content || '（本章暂无内容）'}`;
             generatedContent += chunk;
           },
           async () => {
+            // 应用去 AI 味处理
+            if (config.value.deAIEnabled && generatedContent) {
+              const deAIResult = await DeAIService.fix(generatedContent);
+              if (deAIResult.fixedCount > 0) {
+                console.log(`[批量写作] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
+                generatedContent = deAIResult.content;
+              }
+            }
+
             // 保存内容
             if (generatedContent) {
               await projectStore.updateChapter(chapter.id, {
@@ -397,6 +409,16 @@ ${c.content || '（本章暂无内容）'}`;
         ).then(async (result: any) => {
           if (result?.content) {
             generatedContent = result.content;
+
+            // 应用去 AI 味处理
+            if (config.value.deAIEnabled && generatedContent) {
+              const deAIResult = await DeAIService.fix(generatedContent);
+              if (deAIResult.fixedCount > 0) {
+                console.log(`[批量写作] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
+                generatedContent = deAIResult.content;
+              }
+            }
+
             await projectStore.updateChapter(chapter.id, {
               content: generatedContent,
               wordCount: generatedContent.length,

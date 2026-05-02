@@ -175,7 +175,7 @@ export function useWritingOrchestrator(): WritingOrchestratorReturn {
       wordsPerChapter: 4000,
       chapterCount: 200,
       writingStyle: 'concise',
-      temperature: 0.7,
+      temperature: 0.5,
       maxTokensPerChapter: 4000,
       includePreviousChapter: true,
       includeCharacterProfiles: true,
@@ -601,7 +601,7 @@ export function useSingleChapterWriter() {
       if (client.generateContentStream) {
         await new Promise<void>((resolve, reject) => {
           client.generateContentStream(prompt, {
-            temperature: 0.7,
+            temperature: 0.5,
             maxTokens: Math.ceil(targetWordCount * 1.5),
             onChunk: (chunk) => {
               content += chunk;
@@ -624,7 +624,7 @@ export function useSingleChapterWriter() {
         });
       } else {
         content = await client.generateContent(prompt, {
-          temperature: 0.7,
+          temperature: 0.5,
           maxTokens: Math.ceil(targetWordCount * 1.5),
         });
         progress.value = 100;

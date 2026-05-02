@@ -58,7 +58,7 @@ export class FunctionCallingClient {
         config.baseUrl,
         config.model,
         undefined, // 不设置 maxTokens
-        { temperature: config.temperature ?? 0.8, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0 }
+        { temperature: config.temperature ?? 0.5, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0 }
       );
     }
   }
@@ -151,7 +151,7 @@ export class FunctionCallingClient {
         type: 'function',
         function: { name: OUTLINE_FUNCTION_SCHEMA.name }
       },
-      temperature: this.config.temperature ?? 0.8,
+      temperature: this.config.temperature ?? 0.5,
     };
 
     // 部分 Provider 不支持 tool_choice
@@ -283,7 +283,7 @@ export class FunctionCallingClient {
         functionDeclarations: [geminiSchema]
       }],
       generationConfig: {
-        temperature: this.config.temperature ?? 0.8,
+        temperature: this.config.temperature ?? 0.5,
       }
     };
 
