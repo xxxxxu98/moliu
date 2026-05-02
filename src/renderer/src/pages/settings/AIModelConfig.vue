@@ -71,12 +71,14 @@ const tokenOptions = [
   { label: "2M", value: 2097152 },
 ];
 
-// Temperature presets for creative writing
+// Temperature presets for creative writing (range: 0.1-1.2)
 const temperatureOptions = [
-  { label: "0.5 (精确)", value: 0.5 },
-  { label: "0.7 (平衡)", value: 0.7 },
-  { label: "0.8 (创意)", value: 0.8 },
-  { label: "1.0 (高创意)", value: 1.0 },
+  { label: "0.1 (精确)", value: 0.1 },
+  { label: "0.3", value: 0.3 },
+  { label: "0.5 (平衡)", value: 0.5 },
+  { label: "0.7 (创意)", value: 0.7 },
+  { label: "0.9", value: 0.9 },
+  { label: "1.0", value: 1.0 },
   { label: "1.2 (激进)", value: 1.2 },
 ];
 
@@ -110,7 +112,7 @@ const presencePenaltyOptions = [
 
 // Default generation config
 const defaultGenerationConfig = {
-  temperature: 0.8,
+  temperature: 0.5,
   topP: 0.9,
   frequencyPenalty: 0,
   presencePenalty: 0,
@@ -701,7 +703,7 @@ onMounted(() => {
                   {{ t("settings.aiProviders.temperature") }}
                 </div>
                 <div class="text-gray-700 dark:text-gray-300">
-                  {{ provider.generationConfig?.temperature ?? 0.8 }}
+                  {{ provider.generationConfig?.temperature ?? 0.5 }}
                 </div>
               </div>
             </div>
