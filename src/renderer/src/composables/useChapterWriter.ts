@@ -491,14 +491,10 @@ ${c.content || '（本章暂无内容）'}`;
         content: newContent,
         wordCount: newContent.length,
       };
-      // 如果提取到标题且当前章节没有自定义标题，则更新标题
+      // 如果提取到标题，则更新章节标题（不检查是否为默认标题）
       if (extractedTitle && projectStore.currentChapter) {
-        // 检查当前标题是否是默认生成的（如"第X章"）
-        const defaultTitlePattern = /^第[一二三四五六七八九十百千\d]+章$/;
-        if (defaultTitlePattern.test(projectStore.currentChapter.title)) {
-          updateData.title = extractedTitle;
-          console.log(`[智能续写] 更新章节标题: ${extractedTitle}`);
-        }
+        updateData.title = extractedTitle;
+        console.log(`[智能续写] 更新章节标题: ${extractedTitle}`);
       }
 
       await projectStore.updateChapter(projectStore.currentChapterId!, updateData);

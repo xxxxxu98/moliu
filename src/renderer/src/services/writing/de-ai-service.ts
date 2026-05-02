@@ -607,33 +607,70 @@ export class DeAIService {
    * @returns 标题和清理后的正文
    */
   static extractAndCleanTitle(content: string): { title: string | null; content: string } {
+    if (!content || content.trim().length === 0) {
+      return { title: null, content };
+    }
+
     // 匹配常见章节标题格式
-    // 格式1: 第X章 标题 或 第X章.标题
+    // 格式1: 第X章 标题 或 第X章.标题 或 第X章——标题
     // 格式2: 第X卷 第X章 标题
     // 格式3: 直接是标题（无章节号）
-    const titlePatterns = [
+    const titlePatterns: Array<RegExp | {
+      regex: RegExp;
+      extract: (match: RegExpMatchArray) => { chapterNum?: string; title?: string };
+    }> = [
+      // 【优化】第X章 标题 格式 - 支持各种分隔符
+      {
+        regex: /^(第[一二三四五六七八九十百千零\d]+章)[.、\s\u2014\u2013\u2014\-–—]*(.+?)\s*\n+/,
+        extract: (match: RegExpMatchArray) => ({
+          chapterNum: match[1],
+          title: match[2].trim(),
+        }),
+      },
+      // 【新增】无分隔符格式：第X章标题（AI生成常见）
+      {
+        regex: /^(第[一二三四五六七八九十百千零\d]+章)([^\n。．，,、；;：:！!？?\u4e00-\u9fa5]{2,15})\s*\n+/,
+        extract: (match: RegExpMatchArray) => ({
+          chapterNum: match[1],
+          title: match[2].trim(),
+        }),
+      },
       /^#\s*(.+?)\s*\n+/,                           // # 标题
-      /^(第[一二三四五六七八九十百千\d]+章)[.、\s]*(.+?)\s*\n+/,  // 第X章 标题
       /^(第[一二三四五六七八九十百千\d]+卷)[.、\s]*(第[一二三四五六七八九十百千\d]+章)[.、\s]*(.+?)\s*\n+/,  // 第X卷 第X章 标题
       /^(【[^】]+】)\s*\n+/,                         // 【标题】
       /^《([^》]+)》\s*\n+/,                         // 《标题》
     ];
 
     for (const pattern of titlePatterns) {
-      const match = content.match(pattern);
+      let match: RegExpMatchArray | null;
+      const regex = typeof pattern === 'object' && 'regex' in pattern ? pattern.regex : pattern;
+      match = content.match(regex);
+      
       if (match) {
-        // 提取标题
-        // 如果有捕获组1和2，说明是"第X章 标题"格式，需要拼接
-        // 如果只有捕获组1，说明整个匹配就是标题
         let title: string;
-        if (match[1] && match[2]) {
-          // 第X章 标题 格式
-          title = match[1] + ' ' + match[2];
-        } else if (match[1]) {
-          title = match[1];
+        
+        // 如果是对象格式（有 extract 方法），使用特殊处理
+        if (typeof pattern === 'object' && 'extract' in pattern) {
+          const extracted = pattern.extract(match);
+          // 组合标题：如果提取到章节号和标题，组合在一起
+          if (extracted.chapterNum && extracted.title) {
+            title = `${extracted.chapterNum} ${extracted.title}`;
+          } else if (extracted.chapterNum) {
+            title = extracted.chapterNum;
+          } else {
+            title = extracted.title || match[0];
+          }
         } else {
-          title = match[0];
+          // 标准正则匹配 - 如果有捕获组1和2，拼接
+          if (match[1] && match[2]) {
+            title = match[1] + ' ' + match[2];
+          } else if (match[1]) {
+            title = match[1];
+          } else {
+            title = match[0];
+          }
         }
+        
         // 移除标题和后续的空行
         const remainingContent = content.substring(match[0].length).trim();
         return {
