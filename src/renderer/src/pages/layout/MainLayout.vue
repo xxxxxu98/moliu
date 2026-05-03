@@ -31,6 +31,8 @@ import {
   ChevronUp,
   Info,
   Map,
+  Wand2,
+  RefreshCw,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useProjectStore } from "@/stores/project.store";
@@ -41,12 +43,14 @@ import CharacterPanel from "@/components/memory/CharacterPanel.vue";
 import WorldPanel from "@/components/memory/WorldPanel.vue";
 import ForeshadowPanel from "@/components/memory/ForeshadowPanel.vue";
 import PlotOutlinePanel from "@/components/memory/PlotOutlinePanel.vue";
+import { useActiveAIProvider } from "@/composables/useActiveAIProvider";
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const projectStore = useProjectStore();
 const message = useMessage();
+const { aiService: activeAIService } = useActiveAIProvider();
 
 const projectId = computed(() => route.params.id as string);
 const leftSiderCollapsed = ref(false);
@@ -78,6 +82,13 @@ const showSynopsisDialog = ref(false);
 const synopsisContent = ref("");
 const synopsisEditMode = ref(false);
 const tempSynopsis = ref("");
+
+// AI Title Recommendation state
+const showTitleRecommendDialog = ref(false);
+const recommendedTitles = ref<string[]>([]);
+const selectedTitle = ref<string | null>(null);
+const isGeneratingTitle = ref(false);
+const titleRecommendChapterId = ref<string | null>(null);
 
 const currentProject = computed(() => projectStore.currentProject);
 
@@ -343,6 +354,84 @@ function getStatusConfig(status: string) {
   };
   return config;
 }
+
+// AI Title Recommendation
+async function handleRecommendTitles(chapterId: string, event: Event) {
+  event.stopPropagation();
+  
+  const chapter = projectStore.chapters.find(c => c.id === chapterId);
+  if (!chapter) return;
+  
+  titleRecommendChapterId.value = chapterId;
+  recommendedTitles.value = [];
+  selectedTitle.value = null;
+  isGeneratingTitle.value = true;
+  showTitleRecommendDialog.value = true;
+  
+  await generateTitles();
+}
+
+async function generateTitles() {
+  const chapterId = titleRecommendChapterId.value;
+  if (!chapterId || !activeAIService.value) return;
+  
+  const chapter = projectStore.chapters.find(c => c.id === chapterId);
+  if (!chapter) return;
+  
+  const allChapters = projectStore.sortedChapters;
+  const chapterIndex = allChapters.findIndex(c => c.id === chapterId);
+  const prevChapter = chapterIndex > 0 ? allChapters[chapterIndex - 1] : null;
+  const nextChapter = chapterIndex < allChapters.length - 1 ? allChapters[chapterIndex + 1] : null;
+  
+  isGeneratingTitle.value = true;
+  recommendedTitles.value = [];
+  selectedTitle.value = null;
+  
+  try {
+    const titlesResult = await activeAIService.value.generateChapterTitle(
+      chapter.title,
+      chapter.content || "",
+      {
+        previousChapterTitle: prevChapter?.title,
+        nextChapterTitle: nextChapter?.title,
+        projectDescription: currentProject.value?.description,
+        chapterNumber: chapterIndex + 1,
+      }
+    );
+    
+    // titlesResult is a string with multiple titles separated by "、"
+    // Parse it into an array and add chapter number
+    const chapterPrefix = `第${chapterIndex + 1}章 `;
+    const titles = titlesResult
+      .split(/[、，,]/)
+      .map((t: string) => chapterPrefix + t.trim())
+      .filter((t: string) => t.length >= 4 && t.length <= 15);
+    
+    if (titles.length > 0) {
+      recommendedTitles.value = titles;
+      selectedTitle.value = titles[0];
+    }
+  } catch (error) {
+    console.error("Failed to generate titles:", error);
+    message.error("生成标题失败，请重试");
+  } finally {
+    isGeneratingTitle.value = false;
+  }
+}
+
+async function handleApplyRecommendedTitle() {
+  if (!selectedTitle.value || !titleRecommendChapterId.value) return;
+  
+  try {
+    await projectStore.updateChapter(titleRecommendChapterId.value, {
+      title: selectedTitle.value,
+    });
+    message.success("章节标题已更新");
+    showTitleRecommendDialog.value = false;
+  } catch (error) {
+    message.error("更新标题失败");
+  }
+}
 </script>
 
 <template>
@@ -567,6 +656,12 @@ function getStatusConfig(status: string) {
                   <div
                     class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
+                    <button
+                      class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                      @click.stop="handleRecommendTitles(chapter.id, $event)"
+                    >
+                      <Wand2 class="w-3 h-3 text-purple-500" />
+                    </button>
                     <button
                       class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
                       @click.stop="openEditChapterDialog(chapter)"
@@ -811,6 +906,74 @@ function getStatusConfig(status: string) {
           保存
         </NButton>
         <NButton v-else @click="showSynopsisDialog = false"> 关闭 </NButton>
+      </div>
+    </template>
+  </NModal>
+
+  <!-- AI Title Recommendation Dialog -->
+  <NModal
+    v-model:show="showTitleRecommendDialog"
+    preset="card"
+    title="AI推荐章节标题"
+    style="width: 480px"
+    :segmented="{ content: true, footer: true }"
+  >
+    <div class="py-4">
+      <!-- Loading state -->
+      <div v-if="isGeneratingTitle" class="flex flex-col items-center justify-center py-8">
+        <div class="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-500 dark:text-gray-400">正在生成推荐标题...</p>
+      </div>
+
+      <!-- Recommendations list -->
+      <div v-else-if="recommendedTitles.length > 0" class="space-y-3">
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          选择一个喜欢的标题：
+        </p>
+        <div
+          v-for="(title, index) in recommendedTitles"
+          :key="index"
+          class="p-4 rounded-lg border-2 cursor-pointer transition-all text-center"
+          :class="[
+            selectedTitle === title
+              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30'
+              : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600'
+          ]"
+          @click="selectedTitle = title"
+        >
+          <span class="text-lg font-medium text-gray-900 dark:text-white">{{ title }}</span>
+        </div>
+        <p class="text-xs text-gray-400 dark:text-gray-500 text-center mt-3">
+          点击刷新按钮获取更多推荐
+        </p>
+      </div>
+
+      <!-- Empty state -->
+      <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+        点击刷新按钮获取推荐
+      </div>
+    </div>
+    <template #footer>
+      <div class="flex justify-between items-center w-full">
+        <NButton
+          :loading="isGeneratingTitle"
+          @click="generateTitles"
+        >
+          <template #icon>
+            <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': isGeneratingTitle }" />
+          </template>
+          刷新
+        </NButton>
+        <div class="flex gap-2">
+          <NButton @click="showTitleRecommendDialog = false"> 取消 </NButton>
+          <NButton
+            type="primary"
+            :disabled="!selectedTitle"
+            @click="handleApplyRecommendedTitle"
+          >
+            应用此标题
+          </NButton>
+        </div>
       </div>
     </template>
   </NModal>

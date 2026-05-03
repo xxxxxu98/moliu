@@ -1117,4 +1117,152 @@ export class UnifiedAIService {
     };
     return severityMap[severity] || "info";
   }
+
+  /**
+   * Generate alternative chapter titles based on chapter content
+   * @param chapterTitle - Current chapter title
+   * @param chapterContent - Current chapter content (full content)
+   * @param context - Additional context
+   * @returns Array of alternative titles
+   */
+  async generateChapterTitle(
+    chapterTitle: string,
+    chapterContent: string,
+    context?: {
+      previousChapterTitle?: string;
+      nextChapterTitle?: string;
+      projectDescription?: string;
+      genre?: string;
+      chapterNumber?: number;
+    }
+  ): Promise<string> {
+    if (!this.client) {
+      throw new Error("AI client not initialized");
+    }
+
+    const temperature = 0.7; // Lower temperature for more focused output
+
+    // Build context info
+    let contextInfo = "";
+    if (context?.projectDescription) {
+      contextInfo += `\n作品简介：${context.projectDescription}`;
+    }
+    if (context?.previousChapterTitle) {
+      contextInfo += `\n上一章：${context.previousChapterTitle}`;
+    }
+    if (context?.nextChapterTitle) {
+      contextInfo += `\n下一章：${context.nextChapterTitle}`;
+    }
+
+    // Use full content
+    const fullContent = chapterContent || "（暂无内容）";
+
+    const messages: Message[] = [
+      {
+        role: "user",
+        content: `# 任务
+为小说章节生成3个吸引人的替代标题。
+
+# 输出格式（严格遵守）
+直接输出3个标题，用中文顿号"、"分隔，不要换行，不要加引号，不要任何解释。
+格式示例：又收一徒、第二个坑、龙落青云
+（注意：不要在标题前加"第X章"，那是显示时自动加的）
+
+# 要求
+- 每个标题2-15个字（不含章节号前缀）
+- 能概括本章核心内容
+- 风格要有差异
+
+# 章节信息
+当前标题：${chapterTitle}${contextInfo}
+这是第${context?.chapterNumber || '?'}章的内容
+
+# 正文（关键内容）
+${fullContent}`,
+      },
+    ];
+
+    try {
+      const response = await this.client.chat(messages, {
+        temperature,
+        topP: 0.9,
+        // Try to disable reasoning/thinking if supported
+        thinking: false,
+      } as any);
+
+      const content = extractPureText(
+        typeof response === "string" ? response : JSON.stringify(response),
+      ).trim();
+
+      // Parse titles: look for 2-6 character Chinese strings
+      // Strategy: find all candidate lines that look like titles
+      const lines = content.split(/[\n\r]+/).map(l => l.trim()).filter(l => l.length > 0);
+      
+      // Extract potential titles (2-10 chars, mostly Chinese)
+      const potentialTitles: string[] = [];
+      const chinesePattern = /^[\u4e00-\u9fa5]+$/;
+      const mixedPattern = /^[\u4e00-\u9fa5\w，。！？、：；""''「」『』·]+$/;
+
+      for (const line of lines) {
+        // Clean the line
+        let cleaned = line
+          .replace(/^[""''「」『』【】\[\]（）\(\)]+/, "")
+          .replace(/[""''「」『』【】\[\]（）\(\)]+$/, "")
+          .replace(/^[\d\.\、\-\*\•\▸\▶\→]+\s*/, "")
+          .replace(/^(标题|Title|推荐|建议)[:：]\s*/i, "")
+          .trim();
+
+        // Check if this looks like a title (2-15 Chinese chars)
+        const pureChinese = cleaned.replace(/[^\u4e00-\u9fa5]/g, '');
+        if (pureChinese.length >= 2 && pureChinese.length <= 15) {
+          // Likely a title
+          if (chinesePattern.test(pureChinese) || mixedPattern.test(cleaned)) {
+            potentialTitles.push(cleaned);
+          }
+        }
+      }
+
+      // Also try splitting by common separators
+      if (potentialTitles.length === 0) {
+        const separators = ['、', '，', ',', '|', '｜'];
+        for (const sep of separators) {
+          if (content.includes(sep)) {
+            const parts = content.split(sep).map(p => p.trim()).filter(p => p.length >= 2 && p.length <= 15);
+            if (parts.length > 0) {
+              potentialTitles.push(...parts);
+              break;
+            }
+          }
+        }
+      }
+
+      // Remove duplicates and limit to 3
+      const uniqueTitles = [...new Set(potentialTitles)].slice(0, 3);
+
+      // If still no valid titles, try to find the shortest non-empty line
+      if (uniqueTitles.length === 0 && lines.length > 0) {
+        const shortestLine = lines.reduce((shortest, line) => 
+          line.length < shortest.length && line.length >= 2 ? line : shortest, lines[0]);
+        if (shortestLine.length >= 2 && shortestLine.length <= 15) {
+          uniqueTitles.push(shortestLine);
+        }
+      }
+
+      // Final fallback
+      if (uniqueTitles.length === 0) {
+        return chapterTitle;
+      }
+
+      // Return all unique titles joined by "、"
+      if (uniqueTitles.length === 0) {
+        return chapterTitle;
+      }
+
+      // Return all titles joined by "、" for display
+      return uniqueTitles.join("、");
+    } catch (error) {
+      console.error("[UnifiedAIService] Failed to generate chapter title:", error);
+      throw error;
+    }
+  }
 }
