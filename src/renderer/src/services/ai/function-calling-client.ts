@@ -352,7 +352,7 @@ export class FunctionCallingClient {
 
 重要：必须使用 generate_story_outline 函数返回结果。
 
-生成2个不同风格的大纲，每个大纲包含：
+生成3个不同风格的大纲，每个大纲包含：
 - 标题：一个吸引人的故事标题
 - 题材标签：1-2个题材
 - 简介：60-80字核心冲突和主题
