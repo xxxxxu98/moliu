@@ -357,8 +357,13 @@ ${c.content || '（本章暂无内容）'}`;
                 console.log(`[批量写作] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
                 generatedContent = deAIResult.content;
               }
-              // 获取提取的标题
-              extractedTitle = deAIResult.title;
+              // 获取提取的标题并进行验证
+              const titleValidation = DeAIService.extractAndValidateTitle(deAIResult.content || generatedContent);
+              extractedTitle = titleValidation.titleValid ? titleValidation.title : null;
+              if (titleValidation.title && !titleValidation.titleValid) {
+                const reason = DeAIService.validateTitle(titleValidation.title).reason || '';
+                console.log(`[批量写作] 提取标题但验证失败（${reason}）：${titleValidation.title}`);
+              }
             }
 
             // 保存内容
@@ -429,8 +434,13 @@ ${c.content || '（本章暂无内容）'}`;
                 console.log(`[批量写作] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
                 generatedContent = deAIResult.content;
               }
-              // 获取提取的标题
-              extractedTitle = deAIResult.title;
+              // 获取提取的标题并进行验证
+              const titleValidation = DeAIService.extractAndValidateTitle(deAIResult.content || generatedContent);
+              extractedTitle = titleValidation.titleValid ? titleValidation.title : null;
+              if (titleValidation.title && !titleValidation.titleValid) {
+                const reason = DeAIService.validateTitle(titleValidation.title).reason || '';
+                console.log(`[批量写作] 提取标题但验证失败（${reason}）：${titleValidation.title}`);
+              }
             }
 
             // 构建更新对象

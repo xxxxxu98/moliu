@@ -705,6 +705,109 @@ export class DeAIService {
     };
   }
 
+  // ==================== 章节标题验证相关 ====================
+
+  /** 标题长度限制 */
+  static readonly TITLE_MIN_LENGTH = 2;
+  static readonly TITLE_MAX_LENGTH = 15;
+
+  /** 文言文/成语特征词（过于文绉绉的特征） */
+  private static readonly LITERARY_PATTERNS = [
+    // 单字文言词
+    '之', '乎', '者', '也', '矣', '哉', '焉', '兮',
+    // 四字成语常见词
+    '风云', '江湖', '天下', '天下', '苍穹', '九天', '玄天',
+    '龙啸', '凤鸣', '麒麟', '玄武', '白虎', '青龙', '朱雀',
+    '江山', '社稷', '苍生', '苍茫', '茫茫', '悠悠', '漫漫',
+    '蹉跎', '沧桑', '浮沉', '沉浮', '轮回', '因果', '轮回',
+    // 常见过于文雅的四字组合
+    '岁月如梭', '江湖再见', '风云际会', '龙啸九天',
+    '暗箭难防', '风云变色', '山雨欲来', '一叶知秋',
+    '物是人非', '时过境迁', '沧海桑田', '斗转星移',
+    '日月如梭', '光阴似箭', '白驹过隙', '似水流年',
+    '风起云涌', '电闪雷鸣', '雷霆万钧', '天崩地裂',
+    '惊天地泣鬼神', '气吞山河', '横扫千军', '一夫当关',
+  ];
+
+  /**
+   * 验证章节标题是否符合要求
+   * @param title 待验证的标题
+   * @returns 验证结果，包含是否有效及修改建议
+   */
+  static validateTitle(title: string | null | undefined): { valid: boolean; title: string; reason?: string } {
+    // 空标题
+    if (!title || title.trim().length === 0) {
+      return { valid: false, title: '', reason: '标题为空' };
+    }
+
+    const trimmedTitle = title.trim();
+
+    // 1. 检查长度
+    const pureChineseLength = trimmedTitle.replace(/[^\u4e00-\u9fa5]/g, '').length;
+    if (pureChineseLength < this.TITLE_MIN_LENGTH) {
+      return { valid: false, title: trimmedTitle, reason: `标题太短（至少${this.TITLE_MIN_LENGTH}个字）` };
+    }
+    if (pureChineseLength > this.TITLE_MAX_LENGTH) {
+      return { valid: false, title: trimmedTitle, reason: `标题太长（最多${this.TITLE_MAX_LENGTH}个字）` };
+    }
+
+    // 2. 检查是否过于文绉绉
+    const isTooLiterary = this.isTooLiterary(trimmedTitle);
+    if (isTooLiterary) {
+      return { valid: false, title: trimmedTitle, reason: '标题过于文绉绉/像成语诗词' };
+    }
+
+    return { valid: true, title: trimmedTitle };
+  }
+
+  /**
+   * 检查标题是否过于文绉绉
+   */
+  private static isTooLiterary(title: string): boolean {
+    // 统计文言词/成语特征词出现次数
+    let literaryCount = 0;
+    for (const pattern of this.LITERARY_PATTERNS) {
+      if (title.includes(pattern)) {
+        literaryCount++;
+      }
+    }
+
+    // 如果文言词/成语特征超过2个，认为过于文绉绉
+    if (literaryCount >= 2) {
+      return true;
+    }
+
+    // 如果4字成语比例过高（>50%），也认为过于文绉绉
+    const fourCharMatches = title.match(/[\u4e00-\u9fa5]{4}/g) || [];
+    const totalChineseChars = title.replace(/[^\u4e00-\u9fa5]/g, '').length;
+    if (totalChineseChars >= 4 && fourCharMatches.length / totalChineseChars * 4 > 0.5) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * 提取并验证章节标题
+   * 从内容中提取标题并进行验证，确保标题符合要求
+   * @param content 原始内容
+   * @returns 验证后的标题和清理后的正文
+   */
+  static extractAndValidateTitle(content: string): { title: string | null; content: string; titleValid: boolean } {
+    const { title, content: cleanedContent } = this.extractAndCleanTitle(content);
+
+    if (!title) {
+      return { title: null, content: cleanedContent, titleValid: false };
+    }
+
+    const validation = this.validateTitle(title);
+    return {
+      title: validation.title,
+      content: cleanedContent,
+      titleValid: validation.valid,
+    };
+  }
+
   /**
    * 使用AI模型检测并修复AI味
    */

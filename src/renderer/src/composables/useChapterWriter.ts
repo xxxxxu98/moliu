@@ -469,13 +469,25 @@ ${c.content || '（本章暂无内容）'}`;
       // 应用去 AI 味处理
       let processedContent = currentGeneratedContent;
       let extractedTitle: string | null | undefined;
+      let titleValid = false;
+      let titleValidationReason = '';
       const deAIResult = await DeAIService.fix(processedContent);
       if (deAIResult.fixedCount > 0) {
         console.log(`[智能续写] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
         processedContent = deAIResult.content;
       }
-      // 获取提取的标题
-      extractedTitle = deAIResult.title;
+      // 获取提取的标题并进行验证
+      const titleValidation = DeAIService.extractAndValidateTitle(deAIResult.content || processedContent);
+      extractedTitle = titleValidation.title;
+      titleValid = titleValidation.titleValid;
+      titleValidationReason = titleValidation.title ? DeAIService.validateTitle(titleValidation.title).reason || '' : '';
+      if (extractedTitle) {
+        if (titleValid) {
+          console.log(`[智能续写] 提取并验证通过：${extractedTitle}`);
+        } else {
+          console.log(`[智能续写] 提取标题但验证失败（${titleValidationReason}）：${extractedTitle}`);
+        }
+      }
 
       const currentContent = projectStore.currentChapter?.content || '';
       const separator = currentContent.length > 0 && !currentContent.endsWith('\n') ? '\n\n' : '';
