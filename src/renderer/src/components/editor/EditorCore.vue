@@ -281,7 +281,7 @@ onUnmounted(() => {
         <input
           v-model="chapterTitle"
           type="text"
-          class="bg-transparent border-none text-lg font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 rounded-lg px-3 py-1 min-w-[200px]"
+          class="bg-transparent border-none text-lg font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 rounded-lg px-3 py-1 min-w-[480px]"
           :placeholder="t('editor.chapterTitle')"
         />
       </div>
