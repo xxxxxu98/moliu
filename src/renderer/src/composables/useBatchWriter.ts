@@ -350,19 +350,49 @@ ${c.content || '（本章暂无内容）'}`;
           },
           async () => {
             // 应用去 AI 味处理
+            console.log('[批量写作-流式] 生成完成，开始去AI味处理，生成内容前100字:', generatedContent.substring(0, 100));
             let extractedTitle: string | null | undefined;
             if (config.value.deAIEnabled && generatedContent) {
               const deAIResult = await DeAIService.fix(generatedContent);
+              console.log('[批量写作-流式] 去AI味处理完成:', {
+                title: deAIResult.title,
+                contentLength: deAIResult.content.length,
+                fixedCount: deAIResult.fixedCount
+              });
               if (deAIResult.fixedCount > 0) {
-                console.log(`[批量写作] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
+                console.log(`[批量写作-流式] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
                 generatedContent = deAIResult.content;
               }
-              // 获取提取的标题并进行验证
-              const titleValidation = DeAIService.extractAndValidateTitle(deAIResult.content || generatedContent);
-              extractedTitle = titleValidation.titleValid ? titleValidation.title : null;
-              if (titleValidation.title && !titleValidation.titleValid) {
-                const reason = DeAIService.validateTitle(titleValidation.title).reason || '';
-                console.log(`[批量写作] 提取标题但验证失败（${reason}）：${titleValidation.title}`);
+              // 使用 deAIResult.title 而不是重新提取
+              console.log('[批量写作-流式] 使用 deAIResult.title 作为章节标题:', deAIResult.title);
+              extractedTitle = deAIResult.title || null;
+              if (extractedTitle) {
+                const titleValidation = DeAIService.validateTitle(extractedTitle);
+                console.log('[批量写作-流式] 标题验证结果:', {
+                  title: titleValidation.title,
+                  valid: titleValidation.valid,
+                  reason: titleValidation.reason
+                });
+                if (titleValidation.valid) {
+                  console.log(`[批量写作-流式] 标题验证通过：${extractedTitle}`);
+                } else {
+                  console.log(`[批量写作-流式] 标题验证失败（${titleValidation.reason}），但仍使用原标题`);
+                  extractedTitle = titleValidation.title; // 即使验证不通过也使用
+                }
+              } else {
+                console.log('[批量写作-流式] deAIResult.title 为空，尝试从内容中提取');
+                // 备用：从内容中提取
+                const titleValidation = DeAIService.extractAndValidateTitle(deAIResult.content || generatedContent);
+                console.log('[批量写作-流式] 备用提取结果:', {
+                  title: titleValidation.title,
+                  titleValid: titleValidation.titleValid
+                });
+                extractedTitle = titleValidation.titleValid ? titleValidation.title : null;
+                if (titleValidation.title && !titleValidation.titleValid) {
+                  const reason = DeAIService.validateTitle(titleValidation.title).reason || '';
+                  console.log(`[批量写作-流式] 备用提取标题但验证失败（${reason}），但仍使用`);
+                  extractedTitle = titleValidation.title;
+                }
               }
             }
 
@@ -378,7 +408,9 @@ ${c.content || '（本章暂无内容）'}`;
               // 如果提取到标题，则更新章节标题（不检查是否为默认标题）
               if (extractedTitle) {
                 updateData.title = extractedTitle;
-                console.log(`[批量写作] 更新章节标题: ${extractedTitle}`);
+                console.log(`[批量写作-流式] 更新章节标题: ${extractedTitle}`);
+              } else {
+                console.log(`[批量写作-流式] 未提取到有效标题，章节标题将保持为: ${chapter.title}`);
               }
               await projectStore.updateChapter(chapter.id, updateData);
 
@@ -427,19 +459,49 @@ ${c.content || '（本章暂无内容）'}`;
             generatedContent = result.content;
 
             // 应用去 AI 味处理
+            console.log('[批量写作-非流式] 生成完成，开始去AI味处理，生成内容前100字:', generatedContent.substring(0, 100));
             let extractedTitle: string | null | undefined;
             if (config.value.deAIEnabled && generatedContent) {
               const deAIResult = await DeAIService.fix(generatedContent);
+              console.log('[批量写作-非流式] 去AI味处理完成:', {
+                title: deAIResult.title,
+                contentLength: deAIResult.content.length,
+                fixedCount: deAIResult.fixedCount
+              });
               if (deAIResult.fixedCount > 0) {
-                console.log(`[批量写作] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
+                console.log(`[批量写作-非流式] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
                 generatedContent = deAIResult.content;
               }
-              // 获取提取的标题并进行验证
-              const titleValidation = DeAIService.extractAndValidateTitle(deAIResult.content || generatedContent);
-              extractedTitle = titleValidation.titleValid ? titleValidation.title : null;
-              if (titleValidation.title && !titleValidation.titleValid) {
-                const reason = DeAIService.validateTitle(titleValidation.title).reason || '';
-                console.log(`[批量写作] 提取标题但验证失败（${reason}）：${titleValidation.title}`);
+              // 使用 deAIResult.title 而不是重新提取
+              console.log('[批量写作-非流式] 使用 deAIResult.title 作为章节标题:', deAIResult.title);
+              extractedTitle = deAIResult.title || null;
+              if (extractedTitle) {
+                const titleValidation = DeAIService.validateTitle(extractedTitle);
+                console.log('[批量写作-非流式] 标题验证结果:', {
+                  title: titleValidation.title,
+                  valid: titleValidation.valid,
+                  reason: titleValidation.reason
+                });
+                if (titleValidation.valid) {
+                  console.log(`[批量写作-非流式] 标题验证通过：${extractedTitle}`);
+                } else {
+                  console.log(`[批量写作-非流式] 标题验证失败（${titleValidation.reason}），但仍使用原标题`);
+                  extractedTitle = titleValidation.title; // 即使验证不通过也使用
+                }
+              } else {
+                console.log('[批量写作-非流式] deAIResult.title 为空，尝试从内容中提取');
+                // 备用：从内容中提取
+                const titleValidation = DeAIService.extractAndValidateTitle(deAIResult.content || generatedContent);
+                console.log('[批量写作-非流式] 备用提取结果:', {
+                  title: titleValidation.title,
+                  titleValid: titleValidation.titleValid
+                });
+                extractedTitle = titleValidation.titleValid ? titleValidation.title : null;
+                if (titleValidation.title && !titleValidation.titleValid) {
+                  const reason = DeAIService.validateTitle(titleValidation.title).reason || '';
+                  console.log(`[批量写作-非流式] 备用提取标题但验证失败（${reason}），但仍使用`);
+                  extractedTitle = titleValidation.title;
+                }
               }
             }
 
@@ -453,7 +515,9 @@ ${c.content || '（本章暂无内容）'}`;
             // 如果提取到标题，则更新章节标题（不检查是否为默认标题）
             if (extractedTitle) {
               updateData.title = extractedTitle;
-              console.log(`[批量写作] 更新章节标题: ${extractedTitle}`);
+              console.log(`[批量写作-非流式] 更新章节标题: ${extractedTitle}`);
+            } else {
+              console.log(`[批量写作-非流式] 未提取到有效标题，章节标题将保持为: ${chapter.title}`);
             }
             await projectStore.updateChapter(chapter.id, updateData);
             extractMemoryAfterApply(chapter, chapterIndex + 1);

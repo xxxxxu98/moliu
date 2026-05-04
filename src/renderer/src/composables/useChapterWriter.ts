@@ -471,21 +471,56 @@ ${c.content || '（本章暂无内容）'}`;
       let extractedTitle: string | null | undefined;
       let titleValid = false;
       let titleValidationReason = '';
+      
+      console.log('[智能续写] 开始处理，generatedContent前200字:', currentGeneratedContent.substring(0, 200));
+      
       const deAIResult = await DeAIService.fix(processedContent);
+      console.log('[智能续写] DeAIService.fix 返回结果:', {
+        hasTitle: !!deAIResult.title,
+        title: deAIResult.title,
+        contentLength: deAIResult.content.length,
+        fixedCount: deAIResult.fixedCount
+      });
+      
       if (deAIResult.fixedCount > 0) {
         console.log(`[智能续写] 去AI味处理：修复了 ${deAIResult.fixedCount} 处`);
         processedContent = deAIResult.content;
       }
-      // 获取提取的标题并进行验证
-      const titleValidation = DeAIService.extractAndValidateTitle(deAIResult.content || processedContent);
-      extractedTitle = titleValidation.title;
-      titleValid = titleValidation.titleValid;
-      titleValidationReason = titleValidation.title ? DeAIService.validateTitle(titleValidation.title).reason || '' : '';
+      // 使用 deAIResult.title 而不是重新提取（因为 fix 已经提取过了）
+      console.log('[智能续写] 使用 deAIResult.title 作为章节标题:', deAIResult.title);
+      extractedTitle = deAIResult.title || null;
       if (extractedTitle) {
+        const titleValidation = DeAIService.validateTitle(extractedTitle);
+        console.log('[智能续写] 标题验证结果:', {
+          title: titleValidation.title,
+          valid: titleValidation.valid,
+          reason: titleValidation.reason
+        });
+        titleValid = titleValidation.valid;
+        titleValidationReason = titleValidation.reason || '';
         if (titleValid) {
-          console.log(`[智能续写] 提取并验证通过：${extractedTitle}`);
+          console.log(`[智能续写] 标题验证通过：${extractedTitle}`);
         } else {
-          console.log(`[智能续写] 提取标题但验证失败（${titleValidationReason}）：${extractedTitle}`);
+          console.log(`[智能续写] 标题验证失败（${titleValidationReason}），但仍使用原标题：${extractedTitle}`);
+          titleValid = true; // 即使验证不通过也使用原标题
+        }
+      } else {
+        console.log('[智能续写] deAIResult.title 为空，尝试从内容中提取');
+        // 备用：从内容中提取
+        const titleValidation = DeAIService.extractAndValidateTitle(deAIResult.content || generatedContent);
+        console.log('[智能续写] 备用提取结果:', {
+          title: titleValidation.title,
+          titleValid: titleValidation.titleValid
+        });
+        extractedTitle = titleValidation.title;
+        titleValid = titleValidation.titleValid;
+        titleValidationReason = titleValidation.title ? DeAIService.validateTitle(titleValidation.title).reason || '' : '';
+        if (extractedTitle) {
+          if (titleValid) {
+            console.log(`[智能续写] 备用提取并验证通过：${extractedTitle}`);
+          } else {
+            console.log(`[智能续写] 备用提取标题但验证失败（${titleValidationReason}）：${extractedTitle}`);
+          }
         }
       }
 

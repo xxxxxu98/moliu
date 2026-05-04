@@ -583,6 +583,11 @@ export class DeAIService {
 
     // 15. 【新增】提取章节标题并清理内容
     const { title, content: cleanedContent } = this.extractAndCleanTitle(content);
+    console.log('[DeAIService.fix] extractAndCleanTitle 结果:', {
+      title: title,
+      contentLength: cleanedContent.length,
+      contentPreview: cleanedContent.substring(0, 100)
+    });
     if (title) {
       content = cleanedContent;
       fixes.push({
@@ -590,6 +595,8 @@ export class DeAIService {
         replacement: '已提取章节标题',
         reason: '清理生成内容，移除标题行',
       });
+    } else {
+      console.log('[DeAIService.fix] 未从内容中提取到章节标题');
     }
 
     return {
@@ -607,7 +614,10 @@ export class DeAIService {
    * @returns 标题和清理后的正文
    */
   static extractAndCleanTitle(content: string): { title: string | null; content: string } {
+    console.log('[DeAIService] extractAndCleanTitle 开始处理，内容前100字:', content.substring(0, 100));
+    
     if (!content || content.trim().length === 0) {
+      console.log('[DeAIService] extractAndCleanTitle: 内容为空');
       return { title: null, content };
     }
 
@@ -671,6 +681,8 @@ export class DeAIService {
           }
         }
         
+        console.log('[DeAIService] extractAndCleanTitle: 匹配到标题正则，提取结果:', title);
+        
         // 移除标题和后续的空行
         const remainingContent = content.substring(match[0].length).trim();
         return {
@@ -685,11 +697,13 @@ export class DeAIService {
     const lines = content.split('\n');
     if (lines.length > 0) {
       const firstLine = lines[0].trim();
+      console.log('[DeAIService] extractAndCleanTitle: 未匹配正则，检查第一行:', firstLine, '长度:', firstLine.length);
       // 检查第一行是否符合标题特征
       if (firstLine.length > 0 && firstLine.length < 30 && !firstLine.includes('。') && !firstLine.includes('，')) {
         // 可能是标题，检查是否像章节标题
         if (/^(第[一二三四五六七八九十百千\d]+|[一二三四五六七八九十百千\d]+、|\d+、|\d+\.)/.test(firstLine) ||
             /^【/.test(firstLine) || /^《/.test(firstLine)) {
+          console.log('[DeAIService] extractAndCleanTitle: 第一行符合标题特征');
           const remainingContent = lines.slice(1).join('\n').trim();
           return {
             title: firstLine,
@@ -699,6 +713,7 @@ export class DeAIService {
       }
     }
 
+    console.log('[DeAIService] extractAndCleanTitle: 未找到任何标题格式');
     return {
       title: null,
       content: content,
@@ -709,7 +724,7 @@ export class DeAIService {
 
   /** 标题长度限制 */
   static readonly TITLE_MIN_LENGTH = 2;
-  static readonly TITLE_MAX_LENGTH = 15;
+  static readonly TITLE_MAX_LENGTH = 50;
 
   /** 文言文/成语特征词（过于文绉绉的特征） */
   private static readonly LITERARY_PATTERNS = [
@@ -735,56 +750,74 @@ export class DeAIService {
    * @returns 验证结果，包含是否有效及修改建议
    */
   static validateTitle(title: string | null | undefined): { valid: boolean; title: string; reason?: string } {
+    console.log('[DeAIService.validateTitle] 开始验证标题:', title);
+    
     // 空标题
     if (!title || title.trim().length === 0) {
+      console.log('[DeAIService.validateTitle] 验证失败: 标题为空');
       return { valid: false, title: '', reason: '标题为空' };
     }
 
     const trimmedTitle = title.trim();
+    console.log('[DeAIService.validateTitle] 原始长度:', title.length, '中文字符数:', trimmedTitle.replace(/[^\u4e00-\u9fa5]/g, '').length);
 
     // 1. 检查长度
     const pureChineseLength = trimmedTitle.replace(/[^\u4e00-\u9fa5]/g, '').length;
+    console.log('[DeAIService.validateTitle] 中文字符数:', pureChineseLength, '限制:', this.TITLE_MIN_LENGTH, '-', this.TITLE_MAX_LENGTH);
     if (pureChineseLength < this.TITLE_MIN_LENGTH) {
+      console.log('[DeAIService.validateTitle] 验证失败: 标题太短');
       return { valid: false, title: trimmedTitle, reason: `标题太短（至少${this.TITLE_MIN_LENGTH}个字）` };
     }
     if (pureChineseLength > this.TITLE_MAX_LENGTH) {
+      console.log('[DeAIService.validateTitle] 验证失败: 标题太长');
       return { valid: false, title: trimmedTitle, reason: `标题太长（最多${this.TITLE_MAX_LENGTH}个字）` };
     }
 
     // 2. 检查是否过于文绉绉
-    const isTooLiterary = this.isTooLiterary(trimmedTitle);
-    if (isTooLiterary) {
+    const isTooLiteraryResult = this.isTooLiterary(trimmedTitle);
+    console.log('[DeAIService.validateTitle] 文绉绉检查结果:', isTooLiteraryResult);
+    if (isTooLiteraryResult.tooLiterary) {
+      console.log('[DeAIService.validateTitle] 验证失败: 标题过于文绉绉', isTooLiteraryResult.details);
       return { valid: false, title: trimmedTitle, reason: '标题过于文绉绉/像成语诗词' };
     }
 
+    console.log('[DeAIService.validateTitle] 验证通过!');
     return { valid: true, title: trimmedTitle };
   }
 
   /**
    * 检查标题是否过于文绉绉
    */
-  private static isTooLiterary(title: string): boolean {
+  private static isTooLiterary(title: string): { tooLiterary: boolean; details?: string } {
     // 统计文言词/成语特征词出现次数
     let literaryCount = 0;
+    const matchedPatterns: string[] = [];
+    
     for (const pattern of this.LITERARY_PATTERNS) {
       if (title.includes(pattern)) {
         literaryCount++;
+        matchedPatterns.push(pattern);
       }
     }
+    
+    console.log('[DeAIService.isTooLiterary] 标题:', title, '匹配到的文言词:', matchedPatterns, '数量:', literaryCount);
 
     // 如果文言词/成语特征超过2个，认为过于文绉绉
     if (literaryCount >= 2) {
-      return true;
+      return { tooLiterary: true, details: `匹配到${literaryCount}个文言词: ${matchedPatterns.join(', ')}` };
     }
 
     // 如果4字成语比例过高（>50%），也认为过于文绉绉
     const fourCharMatches = title.match(/[\u4e00-\u9fa5]{4}/g) || [];
     const totalChineseChars = title.replace(/[^\u4e00-\u9fa5]/g, '').length;
-    if (totalChineseChars >= 4 && fourCharMatches.length / totalChineseChars * 4 > 0.5) {
-      return true;
+    const ratio = totalChineseChars >= 4 ? fourCharMatches.length / totalChineseChars * 4 : 0;
+    console.log('[DeAIService.isTooLiterary] 四字词匹配:', fourCharMatches, '总中文字符:', totalChineseChars, '比例:', ratio);
+    
+    if (totalChineseChars >= 4 && ratio > 0.5) {
+      return { tooLiterary: true, details: `四字成语比例过高: ${ratio.toFixed(2)} > 0.5` };
     }
 
-    return false;
+    return { tooLiterary: false };
   }
 
   /**
