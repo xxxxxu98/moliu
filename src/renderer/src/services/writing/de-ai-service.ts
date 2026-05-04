@@ -619,7 +619,7 @@ export class DeAIService {
       regex: RegExp;
       extract: (match: RegExpMatchArray) => { chapterNum?: string; title?: string };
     }> = [
-      // 【优化】第X章 标题 格式 - 支持各种分隔符
+      // 【修改】第X章 标题 格式 - 支持各种分隔符
       {
         regex: /^(第[一二三四五六七八九十百千零\d]+章)[.、\s\u2014\u2013\u2014\-–—]*(.+?)\s*\n+/,
         extract: (match: RegExpMatchArray) => ({
@@ -627,9 +627,9 @@ export class DeAIService {
           title: match[2].trim(),
         }),
       },
-      // 【修改】无分隔符格式：第X章标题（AI生成常见）- 标题控制在2-15字
+      // 【修改】无分隔符格式：第X章标题（AI生成常见）- 匹配中文标题2-15字
       {
-        regex: /^(第[一二三四五六七八九十百千零\d]+章)([^\n。．，,、；;：:！!？?\u4e00-\u9fa5]{2,15})\s*\n+/,
+        regex: /^(第[一二三四五六七八九十百千零\d]+章)([\u4e00-\u9fa5]{2,15})\s*\n+/,
         extract: (match: RegExpMatchArray) => ({
           chapterNum: match[1],
           title: match[2].trim(),
