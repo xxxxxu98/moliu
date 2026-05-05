@@ -57,7 +57,7 @@ export class ChapterCommitService {
   private chapter: Chapter;
   private chapterIndex: number;
   private artifacts: ChapterCommitArtifacts | null = null;
-  private commit: ChapterCommit | null = null;
+  private commitResult: ChapterCommit | null = null;
 
   constructor(context: CommitContext) {
     this.project = context.project;
@@ -91,7 +91,7 @@ export class ChapterCommitService {
     // 判定提交状态
     const status = this.determineStatus(forceAccept);
 
-    this.commit = {
+    this.commitResultResult = {
       chapterId: this.chapter.id,
       chapterNumber: this.chapterIndex + 1,
       status,
@@ -112,7 +112,7 @@ export class ChapterCommitService {
       await this.executeProjection();
     }
 
-    return this.commit;
+    return this.commitResult;
   }
 
   /**
@@ -149,7 +149,7 @@ export class ChapterCommitService {
    * 将 commit artifacts 投影到 state / summaries / memories
    */
   async executeProjection(): Promise<ProjectionResult> {
-    if (!this.commit || this.commit.status !== 'accepted') {
+    if (!this.commitResult || this.commitResult.status !== 'accepted') {
       return { success: false, error: 'commit 状态不是 accepted' };
     }
 
@@ -158,18 +158,18 @@ export class ChapterCommitService {
     try {
       // 1. 投影到 state
       result.state = await this.projectState();
-      this.commit.projectionStatus.state = result.state;
+      this.commitResult.projectionStatus.state = result.state;
 
       // 2. 投影到 summaries
       result.summary = await this.projectSummary();
-      this.commit.projectionStatus.summary = result.summary;
+      this.commitResult.projectionStatus.summary = result.summary;
 
       // 3. 投影到 memories
       result.memory = await this.projectMemory();
-      this.commit.projectionStatus.memory = result.memory;
+      this.commitResult.projectionStatus.memory = result.memory;
 
       // 更新 commit 时间
-      this.commit.updatedAt = new Date().toISOString();
+      this.commitResult.updatedAt = new Date().toISOString();
 
     } catch (error) {
       result.success = false;
@@ -300,7 +300,7 @@ export class ChapterCommitService {
    * 获取提交结果
    */
   getCommit(): ChapterCommit | null {
-    return this.commit;
+    return this.commitResult;
   }
 
   /**
