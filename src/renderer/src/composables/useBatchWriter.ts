@@ -3,7 +3,8 @@
  * 简化的连续续写逻辑 - 从第一个空章节开始，自动连续写
  */
 
-import { ref, computed } from 'vue';
+import type { Ref, ComputedRef } from 'vue';
+import type { Volume } from '@/types/project';
 import { useProjectStore } from '@/stores/project.store';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useActiveAIProvider } from './useActiveAIProvider';
@@ -11,27 +12,40 @@ import { extractChapterMemory, buildCharacterStateTable, buildPlotProgressTable,
 import { initializeMemoryManager, getMemoryManager } from '@/services/writing/memory-manager';
 import { ContextManager } from '@/services/writing/context-manager';
 import { DeAIService } from '@/services/writing/de-ai-service';
+import { createTaskBookBuilder, WritingTaskBuilder } from '@/services/writing/writing-task-builder';
+import { reviewChapter } from '@/services/review/review-service';
+import { createChapterCommit, extractChapterFacts } from '@/services/writing/chapter-commit';
+import { createForeshadowTracker, analyzeForeshadows } from '@/services/writing/foreshadow-tracker';
+import type { WritingTaskBook } from '@/types/writing-task';
 
 export type WritingTarget = 'specific' | 'finish';
 
 export interface UseBatchWriterReturn {
   // 状态
-  isWriting: typeof isWriting;
-  isPaused: typeof isPaused;
-  currentChapterIndex: typeof currentChapterIndex;
-  currentChapterTitle: typeof currentChapterTitle;
-  error: typeof error;
+  isWriting: Ref<boolean>;
+  isPaused: Ref<boolean>;
+  currentChapterIndex: Ref<number>;
+  currentChapterTitle: Ref<string>;
+  error: Ref<string | null>;
 
   // 统计
-  totalChapters: typeof totalChapters;
-  writtenChapters: typeof writtenChapters;
-  remainingChapters: typeof remainingChapters;
-  writtenWordCount: typeof writtenWordCount;
-  progress: typeof progress;
+  totalChapters: ComputedRef<number>;
+  writtenChapters: ComputedRef<number>;
+  remainingChapters: ComputedRef<number>;
+  writtenWordCount: ComputedRef<number>;
+  progress: Ref<{ writtenChapters: number; writtenWords: number; targetChapters: number }>;
 
   // 配置
-  target: typeof target;
-  config: typeof config;
+  target: Ref<WritingTarget>;
+  config: Ref<{
+    wordsPerChapter: number;
+    writingStyle: 'concise' | 'elegant' | 'humorous' | 'ancient';
+    temperature: number;
+    deAIEnabled: boolean;
+    useTaskBook: boolean;
+    useReview: boolean;
+    useCommit: boolean;
+  }>;
 
   // 方法
   startBatchWriting: (targetChapters?: number, batchConfig?: BatchConfig) => Promise<void>;
@@ -46,7 +60,11 @@ export interface UseBatchWriterReturn {
 export interface BatchConfig {
   wordsPerChapter: number;
   writingStyle: 'concise' | 'elegant' | 'humorous' | 'ancient';
+  temperature?: number;
   deAIEnabled?: boolean; // 是否启用去 AI 味处理
+  useTaskBook?: boolean; // 是否启用任务书机制
+  useReview?: boolean; // 是否启用六维审查
+  useCommit?: boolean; // 是否启用 Commit 机制
 }
 
 const isWriting = ref(false);
@@ -72,6 +90,9 @@ const config = ref({
   writingStyle: 'concise' as 'concise' | 'elegant' | 'humorous' | 'ancient',
   temperature: 0.5, // 降低温度，减少 AI 机械感
   deAIEnabled: true, // 启用去 AI 味后处理
+  useTaskBook: false, // 是否启用任务书机制
+  useReview: false, // 是否启用六维审查
+  useCommit: false, // 是否启用 Commit 机制
 });
 
 const contextManager = new ContextManager();
@@ -250,7 +271,293 @@ ${c.content || '（本章暂无内容）'}`;
   }
 
   /**
-   * 执行单章写作
+   * 提取前情摘要
+   */
+  async function extractPreviousChapterSummary(content: string, maxLength: number = 300): Promise<{
+    summary: string;
+    ending: string;
+  }> {
+    if (!content) return { summary: '', ending: '' };
+    
+    const summary = contextManager.extractPreviousChapterSummary(content, maxLength);
+    const ending = contextManager.extractChapterEnding(content);
+    
+    return { summary, ending };
+  }
+
+  /**
+   * 生成写作任务书
+   */
+  async function generateTaskBook(chapterIndex: number, chapterOutline?: string): Promise<WritingTaskBook | null> {
+    const project = projectStore.currentProject;
+    if (!project) return null;
+
+    try {
+      const builder = createTaskBookBuilder({
+        project,
+        chapterIndex,
+        chapterOutline,
+        writingStyle: config.value.writingStyle as any,
+        targetWordCount: config.value.wordsPerChapter || 3000,
+      });
+      
+      const taskBook = await builder.buildTaskBook();
+      console.log('[批量写作] 任务书已生成:', taskBook.chapterTitle);
+      
+      return taskBook;
+    } catch (err) {
+      console.error('[批量写作] 生成任务书失败:', err);
+      return null;
+    }
+  }
+
+  /**
+   * 执行六维审查
+   */
+  async function performReview(chapter: any, chapterIndex: number): Promise<boolean> {
+    const project = projectStore.currentProject;
+    if (!project) return true;
+
+    try {
+      const result = await reviewChapter({
+        project,
+        chapter,
+        chapterIndex,
+        previousChapter: chapterIndex > 0 ? projectStore.sortedChapters[chapterIndex - 1] : undefined,
+      });
+
+      const hasBlocking = result.overall.blockingCount > 0;
+      
+      if (hasBlocking) {
+        console.warn('[批量写作] 审查发现阻断问题:', result.overall.summary);
+        // 可以选择自动修复或停止
+        return false;
+      }
+
+      console.log('[批量写作] 审查通过:', result.overall.summary);
+      return true;
+    } catch (err) {
+      console.error('[批量写作] 审查失败:', err);
+      return true; // 审查失败不影响写作流程
+    }
+  }
+
+  /**
+   * 执行 Commit 提交
+   */
+  async function performCommit(chapter: any, chapterIndex: number): Promise<boolean> {
+    try {
+      // 1. 提取事实
+      const extraction = await extractChapterFacts(chapter, chapterIndex);
+      
+      // 2. 创建 Commit
+      const commit = await createChapterCommit(
+        { project: projectStore.currentProject!, chapter, chapterIndex },
+        {
+          fulfillment: { coveredNodes: [], missedNodes: [] },
+          disambiguation: [],
+          extraction,
+        },
+        { autoProject: true }
+      );
+
+      console.log('[批量写作] Commit 完成:', commit.status);
+      return commit.status === 'accepted';
+    } catch (err) {
+      console.error('[批量写作] Commit 失败:', err);
+      return true; // Commit 失败不影响写作流程
+    }
+  }
+
+  /**
+   * 提取并追踪伏笔
+   */
+  async function trackForeshadows(content: string, chapterIndex: number): Promise<void> {
+    try {
+      const foreshadows = analyzeForeshadows(content, chapterIndex + 1);
+      if (foreshadows.length > 0) {
+        console.log(`[批量写作] 发现 ${foreshadows.length} 个伏笔`);
+        // 可以更新项目伏笔列表
+      }
+    } catch (err) {
+      console.error('[批量写作] 伏笔追踪失败:', err);
+    }
+  }
+
+  /**
+   * 执行单章写作（增强版：集成任务书机制）
+   */
+  async function writeChapterEnhanced(chapterIndex: number): Promise<boolean> {
+    const client = requireAIService();
+    const chapters = projectStore.sortedChapters;
+
+    if (chapterIndex >= chapters.length) {
+      return false;
+    }
+
+    const chapter = chapters[chapterIndex];
+
+    // 跳过已有内容的章节
+    if (chapter.content && chapter.content.trim().length > 0) {
+      return true;
+    }
+
+    currentChapterIndex.value = chapterIndex;
+    currentChapterTitle.value = chapter.title;
+
+    const project = projectStore.currentProject!;
+    const chapterOutline = chapter.plotSummary || extractChapterOutlineFromPlot(projectStore.plotOutline, chapter.id);
+
+    // ========== 步骤 1: 生成写作任务书 ==========
+    let taskBook: WritingTaskBook | null = null;
+    if (config.value.useTaskBook) {
+      taskBook = await generateTaskBook(chapterIndex, chapterOutline);
+    }
+
+    // ========== 步骤 2: 起草正文 ==========
+    const prevChapter = chapterIndex > 0 ? chapters[chapterIndex - 1] : null;
+    const { summary: previousSummary, ending: previousChapterEnding } = prevChapter?.content
+      ? await extractPreviousChapterSummary(prevChapter.content, 300)
+      : { summary: '', ending: '' };
+
+    const characters = (project.characters || []).slice(0, 5).map((char: any) => ({
+      id: char.id,
+      name: char.name,
+      role: char.role || '角色',
+      description: char.description || '',
+      personality: char.profile?.personality || [],
+      appearance: char.profile?.appearance,
+      relationships: (char.profile?.relationships || []).map((r: any) => ({
+        targetName: r.targetName,
+        type: r.type,
+        description: r.description || '',
+      })),
+    }));
+
+    const activeForeshadows = (project.foreshadows || [])
+      .filter((f: any) => f.status !== 'resolved')
+      .slice(0, 5)
+      .map((f: any) => ({
+        id: f.id,
+        hint: f.hint,
+        status: f.status,
+        suggestedChapter: f.suggestedResolutionChapter,
+      }));
+
+    const targetWordCount = config.value.wordsPerChapter || 3000;
+    let generatedContent = '';
+
+    // 构建增强版 Prompt（包含任务书内容）
+    let enhancedOutline = chapterOutline || '';
+    if (taskBook) {
+      // 使用任务书增强大纲
+      const taskBookSection = `
+=== 写作任务书 ===
+【CBN】${taskBook.CBN}
+【CPNs】${taskBook.CPNs.join(' / ')}
+【CEN】${taskBook.CEN}
+【必须覆盖】${taskBook.mustCover.join(' / ')}
+【禁区】${taskBook.forbiddenZones.join(' / ')}
+【风格指引】${taskBook.styleGuidance.pacingStrategy}
+【结尾感觉】${taskBook.endingSensation}
+【开放问题】${taskBook.openQuestion}
+=== 任务书结束 ===
+
+`;
+      enhancedOutline = taskBookSection + enhancedOutline;
+    }
+
+    try {
+      // 调用 AI 写作
+      const result = await (client as any).continueWriting(
+        {
+          project,
+          currentChapterId: chapter.id,
+          currentChapterIndex: chapterIndex,
+          currentChapterTitle: chapter.title,
+          currentChapterContent: '',
+          currentChapterOutline: enhancedOutline || undefined,
+          fullOutline: buildFullOutlineString(),
+          adjacentChaptersSummary: prevChapter ? {
+            previousChapterTitle: prevChapter.title,
+            previousChapterSummary: previousSummary,
+            previousChapterEnding: previousChapterEnding,
+            nextChapterTitle: undefined,
+            nextChapterSummary: undefined,
+          } : undefined,
+          recentChaptersFullText: buildRecentChaptersFullText(chapterIndex, projectStore.memoryConfig?.shortTermChapterCount || 5),
+          charactersInScene: characters,
+          relatedForeshadows: activeForeshadows,
+          writingStyle: config.value.writingStyle,
+        },
+        'smartContinue',
+        targetWordCount
+      );
+
+      if (result?.content) {
+        generatedContent = result.content;
+      }
+    } catch (err) {
+      console.error('[批量写作] AI 写作失败:', err);
+      return false;
+    }
+
+    // ========== 步骤 3: 去 AI 味处理 ==========
+    if (config.value.deAIEnabled && generatedContent) {
+      const deAIResult = await DeAIService.fix(generatedContent);
+      if (deAIResult.fixedCount > 0) {
+        generatedContent = deAIResult.content;
+        console.log('[批量写作] 去 AI 味处理完成，修复', deAIResult.fixedCount, '处');
+      }
+    }
+
+    // ========== 步骤 4: 提取标题 ==========
+    let extractedTitle: string | null = null;
+    if (generatedContent) {
+      const titleValidation = DeAIService.extractAndValidateTitle(generatedContent);
+      if (titleValidation.titleValid) {
+        extractedTitle = titleValidation.title;
+      }
+    }
+
+    // ========== 步骤 5: 保存章节内容 ==========
+    if (generatedContent) {
+      const updateData: Record<string, any> = {
+        content: generatedContent,
+        wordCount: generatedContent.length,
+        isGenerated: true,
+        generatedAt: new Date().toISOString(),
+      };
+      if (extractedTitle) {
+        updateData.title = extractedTitle;
+      }
+      await projectStore.updateChapter(chapter.id, updateData);
+
+      // ========== 步骤 6: 六维审查（可选） ==========
+      if (config.value.useReview) {
+        await performReview({ ...chapter, content: generatedContent }, chapterIndex);
+      }
+
+      // ========== 步骤 7: 提取记忆 ==========
+      await extractMemoryAfterApply(chapter, chapterIndex + 1);
+
+      // ========== 步骤 8: Commit 提交（可选） ==========
+      if (config.value.useCommit) {
+        await performCommit({ ...chapter, content: generatedContent }, chapterIndex);
+      }
+
+      // ========== 步骤 9: 伏笔追踪 ==========
+      await trackForeshadows(generatedContent, chapterIndex);
+
+      progress.value.writtenChapters++;
+      progress.value.writtenWords += generatedContent.length;
+    }
+
+    return true;
+  }
+
+  /**
+   * 执行单章写作（原始版本）
    */
   async function writeChapter(chapterIndex: number): Promise<boolean> {
     const client = requireAIService();
@@ -351,17 +658,11 @@ ${c.content || '（本章暂无内容）'}`;
                 generatedContent = deAIResult.content;
               }
               extractedTitle = deAIResult.title || null;
-              if (extractedTitle) {
-                const titleValidation = DeAIService.validateTitle(extractedTitle);
-                if (titleValidation.valid) {
-                  extractedTitle = titleValidation.title;
-                } else {
-                  extractedTitle = titleValidation.title;
-                }
-              } else {
+              if (!extractedTitle) {
                 const titleValidation = DeAIService.extractAndValidateTitle(deAIResult.content || generatedContent);
-                extractedTitle = titleValidation.titleValid ? titleValidation.title : null;
-                if (titleValidation.title && !titleValidation.titleValid) {
+                if (titleValidation.titleValid) {
+                  extractedTitle = titleValidation.title;
+                } else if (titleValidation.title) {
                   extractedTitle = titleValidation.title;
                 }
               }
@@ -425,15 +726,11 @@ ${c.content || '（本章暂无内容）'}`;
                 generatedContent = deAIResult.content;
               }
               extractedTitle = deAIResult.title || null;
-              if (extractedTitle) {
-                const titleValidation = DeAIService.validateTitle(extractedTitle);
-                if (!titleValidation.valid) {
-                  extractedTitle = titleValidation.title;
-                }
-              } else {
+              if (!extractedTitle) {
                 const titleValidation = DeAIService.extractAndValidateTitle(deAIResult.content || generatedContent);
-                extractedTitle = titleValidation.titleValid ? titleValidation.title : null;
-                if (titleValidation.title && !titleValidation.titleValid) {
+                if (titleValidation.titleValid) {
+                  extractedTitle = titleValidation.title;
+                } else if (titleValidation.title) {
                   extractedTitle = titleValidation.title;
                 }
               }
@@ -512,6 +809,11 @@ ${c.content || '（本章暂无内容）'}`;
     if (batchConfig) {
       config.value.wordsPerChapter = batchConfig.wordsPerChapter;
       config.value.writingStyle = batchConfig.writingStyle;
+      config.value.temperature = batchConfig.temperature ?? 0.5;
+      config.value.deAIEnabled = batchConfig.deAIEnabled ?? true;
+      config.value.useTaskBook = batchConfig.useTaskBook ?? false;
+      config.value.useReview = batchConfig.useReview ?? false;
+      config.value.useCommit = batchConfig.useCommit ?? false;
     }
 
     // 设置目标
@@ -563,7 +865,11 @@ ${c.content || '（本章暂无内容）'}`;
         }
 
         try {
-          const result = await writeChapter(currentIndex);
+          // 根据配置选择写作方法
+          const useEnhancedWrite = config.value.useTaskBook || config.value.useReview || config.value.useCommit;
+          const result = useEnhancedWrite
+            ? await writeChapterEnhanced(currentIndex)
+            : await writeChapter(currentIndex);
           if (result) {
             writtenCount++;
           }

@@ -11,13 +11,46 @@ import type { WritingStyle, GenerateChapterResponse } from '@/types/writing';
 import type { PlotNode, Character } from '@/types/project';
 import { PromptBuilder } from '@/services/writing/prompt-builder';
 
+/**
+ * 章节结构化节点
+ * 参考 webnovel-writer 的 CBN/CPNs/CEN 设计
+ */
+export interface ChapterStructureNodes {
+  /** 章节起点 (CBN) */
+  CBN: string;
+  /** 推进节点 (CPNs) */
+  CPNs: string[];
+  /** 章节终点 (CEN) */
+  CEN: string;
+  /** 必须覆盖节点 */
+  mustCover: string[];
+  /** 本章禁区 */
+  forbiddenZones: string[];
+}
+
 export interface GeneratedChapter {
   title: string;
   outline: string;
   orderIndex: number;
   keyEvents: string[];
   foreshadows: string[];
-  chapterType?: string;  // 章节类型
+  chapterType?: string;
+  
+  // ========== 新增：结构化节点 ==========
+  /** 章节起点 (CBN) */
+  CBN?: string;
+  /** 推进节点 (CPNs) */
+  CPNs?: string[];
+  /** 章节终点 (CEN) */
+  CEN?: string;
+  /** 必须覆盖节点（≤4个）*/
+  mustCover?: string[];
+  /** 本章禁区（≤5条）*/
+  forbiddenZones?: string[];
+  /** 章节时长 */
+  timeSpan?: string;
+  /** 涉及角色 */
+  involvedCharacters?: string[];
 }
 
 export interface UseChapterOutlineGeneratorReturn {
@@ -78,8 +111,6 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
     generatedChapters.value = [];
 
     try {
-      const client = getAIClient();
-
       // 构建 prompt
       const worldSchema = project.worldSchema;
       const characters = project.characters?.slice(0, 5) || [];
@@ -91,32 +122,51 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
         wordsPerChapter,
         style,
         worldSchema ? {
-          locations: worldSchema.locations || [],
-          rules: worldSchema.rules || [],
-          factions: worldSchema.factions || [],
+          locations: (worldSchema.locations || []).map(l => ({
+            name: l.name,
+            description: l.description || '',
+            level: l.level || 'other',
+          })),
+          rules: (worldSchema.rules || []).map(r => ({
+            name: r.name,
+            description: r.description,
+          })),
+          factions: (worldSchema.factions || []).map(f => ({
+            name: f.name,
+            description: f.description || '',
+          })),
         } : undefined,
         characters.map(c => ({
           id: c.id,
           name: c.name,
-          role: c.role,
-          description: c.description,
+          role: c.role || '',
+          description: c.description || '',
           personality: c.profile?.personality || [],
         }))
       );
 
       // 生成内容
-      const result = await client.generateText(prompt, {
-        temperature: 0.7,
-        maxTokens: 8000,
-      });
+      const aiClient = getAIClient() as any;
+      const result = await aiClient.continueWriting(
+        {
+          project,
+          currentChapterId: '',
+          currentChapterIndex: 0,
+          currentChapterTitle: project.name,
+          currentChapterContent: '',
+          currentChapterOutline: prompt,
+        },
+        'smartContinue',
+        4000
+      );
 
-      if (!result) {
+      if (!result?.content) {
         error.value = 'AI 返回内容为空';
         return null;
       }
 
       // 解析 JSON
-      const chapters = parseChaptersFromResult(result, chapterCount);
+      const chapters = parseChaptersFromResult(result.content, chapterCount);
       generatedChapters.value = chapters;
 
       return chapters;
@@ -150,6 +200,14 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
             keyEvents: Array.isArray(c.keyEvents) ? c.keyEvents : [],
             foreshadows: Array.isArray(c.foreshadows) ? c.foreshadows : [],
             chapterType: c.chapterType || (i === 0 ? 'world_intro' : 'normal'),
+            // 结构化节点
+            CBN: c.CBN || undefined,
+            CPNs: Array.isArray(c.CPNs) ? c.CPNs : undefined,
+            CEN: c.CEN || undefined,
+            mustCover: Array.isArray(c.mustCover) ? c.mustCover : undefined,
+            forbiddenZones: Array.isArray(c.forbiddenZones) ? c.forbiddenZones : undefined,
+            timeSpan: c.timeSpan || undefined,
+            involvedCharacters: Array.isArray(c.involvedCharacters) ? c.involvedCharacters : undefined,
           }));
         }
       }
@@ -232,10 +290,12 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
         type: 'chapter' as const,
         orderIndex: index,
         keyEvents: chapter.keyEvents,
-        relatedCharacters: [],
+        relatedCharacters: chapter.involvedCharacters || [],
+        // 扩展字段：存储结构化节点
+        purpose: chapter.CBN ? `CBN: ${chapter.CBN}` : undefined,
       }));
 
-      projectStore.setPlotOutline(plotOutline);
+      projectStore.plotOutline = plotOutline;
       await projectStore.saveCurrentProject();
 
       return true;
@@ -262,7 +322,11 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
       const firstVolume = projectStore.sortedVolumes[0];
       if (!firstVolume) {
         // 创建默认卷
-        await projectStore.createVolume('第一卷');
+        projectStore.addVolume({
+          id: `vol-${Date.now()}`,
+          name: '第一卷',
+          orderIndex: 0,
+        });
       }
 
       const volumeId = projectStore.sortedVolumes[0]?.id;
@@ -272,16 +336,28 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
 
       // 创建章节
       for (const chapter of chapters) {
-        const chapterId = await projectStore.createChapter(volumeId);
-
-        // 更新章节标题和大纲
-        const existingChapters = projectStore.chapters;
-        const newChapter = existingChapters.find(c => c.id === chapterId);
+        const newChapter = await projectStore.createChapter(volumeId);
 
         if (newChapter) {
+          const chapterId = newChapter.id;
+          // 构建扩展大纲（包含结构化节点）
+          let extendedOutline = chapter.outline || '';
+          if (chapter.CBN || chapter.CPNs || chapter.CEN) {
+            const structureSection = [
+              '\n\n--- 结构化节点 ---',
+              chapter.CBN ? `【CBN】${chapter.CBN}` : '',
+              chapter.CPNs?.length ? `【CPNs】${chapter.CPNs.join('\n')}` : '',
+              chapter.CEN ? `【CEN】${chapter.CEN}` : '',
+              chapter.mustCover?.length ? `【必须覆盖】${chapter.mustCover.join('、')}` : '',
+              chapter.forbiddenZones?.length ? `【禁区】${chapter.forbiddenZones.join('、')}` : '',
+            ].filter(Boolean).join('\n');
+            extendedOutline += structureSection;
+          }
+
           await projectStore.updateChapter(chapterId, {
             title: chapter.title,
-            outline: chapter.outline,
+            outline: extendedOutline,
+            plotSummary: chapter.CBN ? `CBN: ${chapter.CBN}\nCEN: ${chapter.CEN}` : undefined,
           });
           createdChapterIds.push(chapterId);
         }
@@ -299,7 +375,7 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
     // 状态
     isGenerating: readonly(isGenerating),
     error: readonly(error),
-    generatedChapters: readonly(generatedChapters),
+    generatedChapters,
 
     // 方法
     generateOutlines,

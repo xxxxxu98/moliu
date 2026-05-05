@@ -60,6 +60,7 @@ export interface Chapter {
   createdAt: string;
   updatedAt: string;
   plotSummary?: string; // 章节大纲摘要
+  outline?: string; // 章节详细大纲
   isGenerated?: boolean; // 是否为 AI 生成
   generatedAt?: string; // AI 生成时间
 }
