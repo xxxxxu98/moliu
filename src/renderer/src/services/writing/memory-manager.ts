@@ -37,8 +37,6 @@ export class MemoryManager {
     } else {
       this.fileService = null;
     }
-
-    console.log(`[MemoryManager] 初始化: projectId=${projectId}, enableFileBackup=${enableFileBackup}`);
   }
 
   /**
@@ -188,7 +186,6 @@ export class MemoryManager {
     if (this.fileService) {
       this.fileService.clearCache();
     }
-    console.log('[MemoryManager] 缓存已清除');
   }
 
   /**
@@ -226,7 +223,6 @@ export class MemoryManager {
       }
     }
 
-    console.log(`[MemoryManager] 已同步 ${count} 个记忆从文件系统`);
     return count;
   }
 }
