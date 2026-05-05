@@ -142,7 +142,6 @@ async function loadProject(id: string) {
       newChapterVolumeId.value = projectStore.sortedVolumes[0].id;
     }
   } catch (error) {
-    console.error("Failed to load project:", error);
     message.error("加载项目失败");
     router.push("/home");
   } finally {
@@ -412,7 +411,6 @@ async function generateTitles() {
       selectedTitle.value = titles[0];
     }
   } catch (error) {
-    console.error("Failed to generate titles:", error);
     message.error("生成标题失败，请重试");
   } finally {
     isGeneratingTitle.value = false;
