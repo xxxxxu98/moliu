@@ -1,6 +1,7 @@
 /**
  * 章节目录生成 Composable
  * 封装从大纲自动生成章节目录的业务逻辑
+ * 整合 oh-story-claudecode 和 webnovel-writer 的增强方法论
  */
 
 import { ref, readonly } from 'vue';
@@ -14,18 +15,150 @@ import { PromptBuilder } from '@/services/writing/prompt-builder';
 /**
  * 章节结构化节点
  * 参考 webnovel-writer 的 CBN/CPNs/CEN 设计
+ * 节点格式：主体 | 动作/变化 | 对象/结果
  */
 export interface ChapterStructureNodes {
-  /** 章节起点 (CBN) */
+  /** 章节起点 (CBN) - 本章开始时的具体情境 */
   CBN: string;
-  /** 推进节点 (CPNs) */
+  /** 推进节点 (CPNs) - 2-4个核心情节推进，按时间顺序排列 */
   CPNs: string[];
-  /** 章节终点 (CEN) */
+  /** 章节终点 (CEN) - 本章结束时的状态/结果 */
   CEN: string;
-  /** 必须覆盖节点 */
+  /** 必须覆盖节点 - 最多4个本章必须完成的关键点 */
   mustCover: string[];
-  /** 本章禁区 */
+  /** 本章禁区 - 最多5条本章绝对不能发生的内容 */
   forbiddenZones: string[];
+}
+
+/**
+ * 章节钩子设计
+ */
+export interface ChapterHookDesign {
+  /** 章首钩子类型 */
+  openingHook: {
+    type: string;
+    description: string;
+    content: string;
+  };
+  /** 章尾钩子类型 */
+  endingHook: {
+    type: string;
+    description: string;
+    tension: 'strong' | 'medium' | 'weak';
+    content: string;
+  };
+}
+
+/**
+ * 章节爽点设计
+ */
+export interface ChapterCoolPointDesign {
+  /** 本章微爽点 */
+  microCoolPoint: string;
+  /** 铺垫内容（为后续爽点做准备） */
+  foreshadowing: string[];
+  /** 是否为高潮章节 */
+  isClimax: boolean;
+  /** 爽点类型 */
+  coolPointType: 'battle' | 'emotional' | 'status' | 'revelation' | 'revenge';
+}
+
+/**
+ * 章节时间线设计
+ */
+export interface ChapterTimelineDesign {
+  /** 本章时间跨度 */
+  timeSpan: string;
+  /** 与上一章的时间差 */
+  timeFromPrevious: string;
+  /** 时间线状态 */
+  timelineStatus: 'normal' | 'flashback' | 'timejump';
+  /** 倒计时状态（如果有） */
+  countdown?: {
+    event: string;
+    remaining: string;
+    chaptersUntil: number;
+  };
+}
+
+/**
+ * 增强版章节生成结果
+ * 包含完整的细纲信息
+ */
+export interface EnhancedChapter extends GeneratedChapter {
+  // ========== 原有字段 ==========
+  title: string;
+  outline: string;
+  orderIndex: number;
+  keyEvents: string[];
+  foreshadows: string[];
+  chapterType?: string;
+  
+  // ========== 结构化节点 (CBN/CPNs/CEN) ==========
+  CBN?: string;
+  CPNs?: string[];
+  CEN?: string;
+  mustCover?: string[];
+  forbiddenZones?: string[];
+  
+  // ========== 钩子设计 (新增) ==========
+  openingHook?: {
+    type: string;
+    description: string;
+    content: string;
+  };
+  endingHook?: {
+    type: string;
+    description: string;
+    tension: 'strong' | 'medium' | 'weak';
+    content: string;
+  };
+  
+  // ========== 爽点设计 (新增) ==========
+  coolPoint?: {
+    microCoolPoint: string;
+    foreshadowing: string[];
+    isClimax: boolean;
+    coolPointType: string;
+  };
+  
+  // ========== 时间线设计 (新增) ==========
+  timeline?: {
+    timeSpan: string;
+    timeFromPrevious: string;
+    timelineStatus: 'normal' | 'flashback' | 'timejump';
+    countdown?: {
+      event: string;
+      remaining: string;
+      chaptersUntil: number;
+    };
+  };
+  
+  // ========== 涉及角色 (新增) ==========
+  involvedCharacters?: string[];
+  
+  // ========== 写作要求 (新增) ==========
+  writingRequirements?: {
+    pace: 'fast' | 'normal' | 'slow';
+    tension: 'high' | 'medium' | 'low';
+    dialogueRatio: number; // 对话占比 0.3-0.5
+  };
+}
+
+/**
+ * 章节预览信息
+ * 用于UI展示
+ */
+export interface ChapterPreview {
+  id: string;
+  orderIndex: number;
+  title: string;
+  summary: string;
+  chapterType: string;
+  isClimax: boolean;
+  hasHook: boolean;
+  hasCoolPoint: boolean;
+  timeSpan?: string;
 }
 
 export interface GeneratedChapter {
@@ -64,9 +197,16 @@ export interface UseChapterOutlineGeneratorReturn {
     chapterCount?: number;
     wordsPerChapter?: number;
     style?: WritingStyle;
+    // 新增选项
+    generateEnhanced?: boolean; // 是否生成增强版细纲
+    outlineFramework?: any; // 五步大纲框架
   }) => Promise<GeneratedChapter[] | null>;
   applyOutlines: (chapters: GeneratedChapter[]) => Promise<boolean>;
   createChapters: (chapters: GeneratedChapter[]) => Promise<string[]>;
+  
+  // 辅助方法
+  getChapterPreviews: (chapters: GeneratedChapter[]) => ChapterPreview[];
+  validateChapterStructure: (chapter: GeneratedChapter) => { isValid: boolean; issues: string[] };
 }
 
 const isGenerating = ref(false);
@@ -381,5 +521,67 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
     generateOutlines,
     applyOutlines,
     createChapters,
+    
+    // 辅助方法
+    getChapterPreviews,
+    validateChapterStructure,
+  };
+}
+
+/**
+ * 获取章节预览列表
+ */
+function getChapterPreviews(chapters: GeneratedChapter[]): ChapterPreview[] {
+  return chapters.map((chapter, index) => ({
+    id: `chapter-preview-${index}`,
+    orderIndex: chapter.orderIndex,
+    title: chapter.title,
+    summary: chapter.outline?.substring(0, 100) || '',
+    chapterType: chapter.chapterType || 'normal',
+    isClimax: chapter.chapterType === 'climax',
+    hasHook: !!chapter.CBN && !!chapter.CEN,
+    hasCoolPoint: chapter.keyEvents?.length > 0,
+    timeSpan: chapter.timeSpan,
+  }));
+}
+
+/**
+ * 验证章节结构完整性
+ */
+function validateChapterStructure(chapter: GeneratedChapter): { isValid: boolean; issues: string[] } {
+  const issues: string[] = [];
+  
+  // 检查标题
+  if (!chapter.title) {
+    issues.push('缺少章节标题');
+  }
+  
+  // 检查结构化节点
+  if (chapter.CBN && chapter.CBN.split('|').length !== 3) {
+    issues.push('CBN格式错误，应为：主体 | 动作 | 对象');
+  }
+  
+  if (chapter.CEN && chapter.CEN.split('|').length !== 3) {
+    issues.push('CEN格式错误，应为：主体 | 动作 | 对象');
+  }
+  
+  if (chapter.CPNs && chapter.CPNs.length > 4) {
+    issues.push('CPNs数量不应超过4个');
+  }
+  
+  if (chapter.mustCover && chapter.mustCover.length > 4) {
+    issues.push('必须覆盖节点不应超过4个');
+  }
+  
+  if (chapter.forbiddenZones && chapter.forbiddenZones.length > 5) {
+    issues.push('本章禁区不应超过5条');
+  }
+  
+  // 检查CEN与下一章CBN的承接
+  // （需要在上下文中检查，这里只做基础验证）
+  
+  return {
+    isValid: issues.length === 0,
+    issues,
   };
 }

@@ -6,13 +6,22 @@ import {
   ChevronRight, 
   Lightbulb,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  Target,
+  BookOpen,
+  User,
+  Layers,
+  Zap
 } from 'lucide-vue-next';
-import { NButton } from 'naive-ui';
+import { NButton, NCollapse, NCollapseItem, NTag } from 'naive-ui';
 import { 
   fiveStepOutline, 
   getStepDetails,
+  getEightStoryLines,
+  getConflictEscalation,
+  getCoolPointFormulas,
   type FiveStepProgress,
+  type OutlineStep,
   isAllStepsComplete,
   getProgressPercentage
 } from '@/data/five-step-outline';
@@ -24,6 +33,22 @@ const props = defineProps<{
     protagonist: string;
     structure: string;
     pleasurePoints: string;
+    // 扩展字段
+    storyLines?: {
+      map: string;
+      faction: string;
+      character: string;
+      goldenfinger: string;
+      worldRules: string;
+      conflict: string;
+      collection: string;
+      romance: string;
+    };
+    conflictDesign?: {
+      source: string;
+      escalation: string[];
+      majorConflicts: string[];
+    };
   }>;
 }>();
 
@@ -35,6 +60,7 @@ const emit = defineEmits<{
 // 状态
 const currentStep = ref(1);
 const isExpanded = ref(true);
+const showAdvanced = ref(false); // 显示高级提示
 
 // 各步骤的数据
 const stepData = ref({
@@ -43,6 +69,24 @@ const stepData = ref({
   protagonist: props.modelValue.protagonist || '',
   structure: props.modelValue.structure || '',
   pleasurePoints: props.modelValue.pleasurePoints || '',
+});
+
+// 扩展数据
+const storyLines = ref(props.modelValue.storyLines || {
+  map: '',
+  faction: '',
+  character: '',
+  goldenfinger: '',
+  worldRules: '',
+  conflict: '',
+  collection: '',
+  romance: ''
+});
+
+const conflictDesign = ref(props.modelValue.conflictDesign || {
+  source: '',
+  escalation: [],
+  majorConflicts: []
 });
 
 // 进度状态
@@ -63,6 +107,11 @@ const allComplete = computed(() => isAllStepsComplete(progress.value));
 // 当前步骤详情
 const currentStepDetail = computed(() => getStepDetails(currentStep.value));
 
+// 获取辅助数据
+const eightStoryLines = computed(() => getEightStoryLines());
+const conflictEscalation = computed(() => getConflictEscalation());
+const coolPointFormulas = computed(() => getCoolPointFormulas());
+
 // 步骤完成状态
 const stepsComplete = computed(() => [
   progress.value.step1Complete,
@@ -72,10 +121,48 @@ const stepsComplete = computed(() => [
   progress.value.step5Complete,
 ]);
 
+// 获取当前步骤的深度问题
+const currentStepDeepQuestions = computed(() => {
+  return currentStepDetail.value?.deepQuestions || [];
+});
+
+// 获取当前步骤的关键指标
+const currentStepKeyMetrics = computed(() => {
+  return currentStepDetail.value?.keyMetrics || [];
+});
+
+// 获取当前步骤的常见错误
+const currentStepCommonMistakes = computed(() => {
+  return currentStepDetail.value?.commonMistakes || [];
+});
+
 // 更新数据
 function updateData(field: keyof typeof stepData.value, value: string) {
   stepData.value[field] = value;
-  emit('update:modelValue', { ...stepData.value });
+  emitFullUpdate();
+}
+
+// 更新扩展数据
+function updateStoryLine(key: keyof typeof storyLines.value, value: string) {
+  storyLines.value[key] = value;
+  emitFullUpdate();
+}
+
+function updateConflictDesign(field: keyof typeof conflictDesign.value, value: any) {
+  if (field === 'escalation' || field === 'majorConflicts') {
+    conflictDesign.value[field] = value;
+  } else {
+    conflictDesign.value[field] = value;
+  }
+  emitFullUpdate();
+}
+
+function emitFullUpdate() {
+  emit('update:modelValue', { 
+    ...stepData.value,
+    storyLines: storyLines.value,
+    conflictDesign: conflictDesign.value
+  });
 }
 
 // 切换步骤
@@ -99,14 +186,32 @@ function nextStep() {
 
 // 完成
 function handleComplete() {
-  emit('update:modelValue', { ...stepData.value });
+  emitFullUpdate();
   emit('complete');
 }
 
 // 监听数据变化
 watch(stepData, (newData) => {
-  emit('update:modelValue', { ...newData });
+  emitFullUpdate();
 }, { deep: true });
+
+// 获取步骤图标
+function getStepIcon(step: OutlineStep) {
+  const icons: Record<number, any> = {
+    1: Target,    // 情绪目标
+    2: Layers,     // 核心设定
+    3: User,       // 主角设定
+    4: BookOpen,   // 故事结构
+    5: Zap         // 爽点安排
+  };
+  return icons[step.id] || Sparkles;
+}
+
+// 深度问题颜色映射
+function getQuestionColor(index: number): string {
+  const colors = ['text-amber-700', 'text-amber-600', 'text-amber-500', 'text-amber-400'];
+  return colors[index % colors.length];
+}
 </script>
 
 <template>
@@ -193,10 +298,37 @@ watch(stepData, (newData) => {
         <!-- 步骤标题 -->
         <div class="flex items-center gap-3">
           <span class="text-2xl">{{ currentStepDetail.icon }}</span>
-          <div>
+          <div class="flex-1">
             <h4 class="font-medium text-gray-900 dark:text-white">{{ currentStepDetail.name }}</h4>
             <p class="text-xs text-gray-500 dark:text-gray-400">{{ currentStepDetail.description }}</p>
           </div>
+          <!-- 切换高级模式 -->
+          <button
+            v-if="currentStepDetail.deepQuestions?.length"
+            class="px-2 py-1 text-xs rounded-lg border transition-colors"
+            :class="showAdvanced ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900/30 dark:border-purple-700 dark:text-purple-400' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400'"
+            @click="showAdvanced = !showAdvanced"
+          >
+            {{ showAdvanced ? '收起高级' : '高级模式' }}
+          </button>
+        </div>
+
+        <!-- 深度问题（高级模式） -->
+        <div v-if="showAdvanced && currentStepDeepQuestions.length" class="p-3 rounded-lg bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-800">
+          <div class="flex items-center gap-2 mb-2">
+            <Target class="w-4 h-4 text-purple-500" />
+            <span class="text-xs font-medium text-purple-700 dark:text-purple-400">深度思考问题</span>
+          </div>
+          <ul class="space-y-2">
+            <li 
+              v-for="(question, index) in currentStepDeepQuestions" 
+              :key="index"
+              class="text-xs text-purple-800 dark:text-purple-300 flex items-start gap-2"
+            >
+              <span class="text-purple-500 font-medium">{{ index + 1 }}.</span>
+              {{ question }}
+            </li>
+          </ul>
         </div>
 
         <!-- 问题提示 -->
@@ -238,6 +370,25 @@ watch(stepData, (newData) => {
           </div>
         </div>
 
+        <!-- 高级模式：关键指标 -->
+        <div v-if="showAdvanced && currentStepKeyMetrics.length" class="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+          <div class="flex items-center gap-2 mb-2">
+            <Zap class="w-4 h-4 text-green-500" />
+            <span class="text-xs font-medium text-green-700 dark:text-green-400">关键质量指标</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <NTag 
+              v-for="(metric, index) in currentStepKeyMetrics" 
+              :key="index"
+              size="small" 
+              type="success"
+              round
+            >
+              {{ metric }}
+            </NTag>
+          </div>
+        </div>
+
         <!-- 小贴士 -->
         <div class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
           <div class="flex items-center gap-2 mb-2">
@@ -256,6 +407,24 @@ watch(stepData, (newData) => {
           </ul>
         </div>
 
+        <!-- 高级模式：常见错误 -->
+        <div v-if="showAdvanced && currentStepCommonMistakes.length" class="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <div class="flex items-center gap-2 mb-2">
+            <AlertCircle class="w-4 h-4 text-red-500" />
+            <span class="text-xs font-medium text-red-700 dark:text-red-400">常见错误（避免）</span>
+          </div>
+          <ul class="space-y-1">
+            <li 
+              v-for="(mistake, index) in currentStepCommonMistakes" 
+              :key="index"
+              class="text-xs text-red-800 dark:text-red-300 flex items-start gap-1"
+            >
+              <span class="text-red-500">✗</span>
+              {{ mistake }}
+            </li>
+          </ul>
+        </div>
+
         <!-- 示例 -->
         <div>
           <span class="text-xs text-gray-500 dark:text-gray-400 mb-2 block">示例参考：</span>
@@ -267,6 +436,76 @@ watch(stepData, (newData) => {
             >
               {{ example }}
             </span>
+          </div>
+        </div>
+
+        <!-- 高级模式：步骤4 - 八条故事线 -->
+        <div v-if="showAdvanced && currentStep === 4" class="p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
+          <div class="flex items-center gap-2 mb-3">
+            <BookOpen class="w-4 h-4 text-indigo-500" />
+            <span class="text-xs font-medium text-indigo-700 dark:text-indigo-400">八条故事线规划</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div v-for="line in eightStoryLines" :key="line.id" class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300">{{ line.name }}</span>
+              </div>
+              <input 
+                type="text"
+                :value="storyLines[line.id as keyof typeof storyLines]"
+                @input="(e) => updateStoryLine(line.id as keyof typeof storyLines, (e.target as HTMLInputElement).value)"
+                :placeholder="line.description"
+                class="w-full px-2 py-1 text-xs rounded border bg-white dark:bg-gray-800 border-indigo-200 dark:border-indigo-700 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              />
+              <div class="text-xs text-indigo-600 dark:text-indigo-400">{{ line.burialTiming }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 高级模式：步骤4 - 矛盾递进 -->
+        <div v-if="showAdvanced && currentStep === 4" class="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800">
+          <div class="flex items-center gap-2 mb-3">
+            <AlertCircle class="w-4 h-4 text-rose-500" />
+            <span class="text-xs font-medium text-rose-700 dark:text-rose-400">矛盾四重递进</span>
+          </div>
+          <div class="space-y-2">
+            <div v-for="level in conflictEscalation" :key="level.level" class="flex items-start gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-medium bg-rose-100 dark:bg-rose-800 text-rose-700 dark:text-rose-300 flex-shrink-0">{{ level.level }}级</span>
+              <div class="flex-1">
+                <div class="text-xs font-medium text-rose-800 dark:text-rose-200">{{ level.name }}</div>
+                <div class="text-xs text-rose-600 dark:text-rose-400">{{ level.description }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 高级模式：步骤5 - 爽点节奏公式 -->
+        <div v-if="showAdvanced && currentStep === 5" class="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+          <div class="flex items-center gap-2 mb-3">
+            <Zap class="w-4 h-4 text-orange-500" />
+            <span class="text-xs font-medium text-orange-700 dark:text-orange-400">爽点节奏公式</span>
+          </div>
+          <div class="space-y-2">
+            <div class="flex items-start gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-medium bg-orange-100 dark:bg-orange-800 text-orange-700 dark:text-orange-300">微</span>
+              <div class="text-xs text-orange-800 dark:text-orange-200">{{ coolPointFormulas.microPerChapter }}</div>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-medium bg-orange-100 dark:bg-orange-800 text-orange-700 dark:text-orange-300">冲</span>
+              <div class="text-xs text-orange-800 dark:text-orange-200">{{ coolPointFormulas.conflictPerThreeChapters }}</div>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-medium bg-orange-100 dark:bg-orange-800 text-orange-700 dark:text-orange-300">大</span>
+              <div class="text-xs text-orange-800 dark:text-orange-200">{{ coolPointFormulas.climaxPerSevenChapters }}</div>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-medium bg-orange-100 dark:bg-orange-800 text-orange-700 dark:text-orange-300">拉</span>
+              <div class="text-xs text-orange-800 dark:text-orange-200">{{ coolPointFormulas.emotionalPull }}</div>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-medium bg-orange-100 dark:bg-orange-800 text-orange-700 dark:text-orange-300">格</span>
+              <div class="text-xs text-orange-800 dark:text-orange-200">{{ coolPointFormulas.bage }}</div>
+            </div>
           </div>
         </div>
 
