@@ -768,8 +768,6 @@ ${characters.slice(0, 5).map(c => `- ${c.name}（${c.role}）：${c.description}
 
 ${CHAPTER_TYPE_HINTS}
 
-/** 章节钩子类型提示词 */
-const CHAPTER_HOOK_HINTS = `
 ## 【章节钩子设计指南】
 
 ### 章首钩子类型
@@ -789,10 +787,8 @@ const CHAPTER_HOOK_HINTS = `
 ### 钩子张力等级
 - **strong（强）**：致命危机、重大抉择、核心秘密揭露
 - **medium（中）**：新障碍出现、情感波动加剧
-- **weak（弱）**：小插曲、轻松场景结尾`;
+- **weak（弱）**：小插曲、轻松场景结尾
 
-/** 章节爽点类型提示词 */
-const CHAPTER_COOL_POINT_HINTS = `
 ## 【章节爽点设计指南】
 
 ### 爽点类型
@@ -810,10 +806,8 @@ const CHAPTER_COOL_POINT_HINTS = `
 
 ### 高潮章节标记
 - isClimax: true 表示这是全书或阶段性高潮章节
-- 高潮章节需要更强的钩子和更密集的爽点`;
+- 高潮章节需要更强的钩子和更密集的爽点
 
-/** 章节时间线设计提示词 */
-const CHAPTER_TIMELINE_HINTS = `
 ## 【章节时间线设计指南】
 
 ### 时间线状态
@@ -831,7 +825,7 @@ const CHAPTER_TIMELINE_HINTS = `
 如果有紧迫的截止事件（如宗门大比、婚礼、决战等），需要设计倒计时：
 - countdown.event: 倒计时目标事件
 - countdown.remaining: 剩余时间
-- countdown.chaptersUntil: 距事件还有多少章`;
+- countdown.chaptersUntil: 距事件还有多少章
 
 ## 任务要求
 请根据上述信息，生成详细的章节目录，包括：
