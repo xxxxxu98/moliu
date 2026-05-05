@@ -20,7 +20,7 @@ describe('ForeshadowAnalyzer', () => {
       const text = '她似乎看到了什么，总觉得有什么不对劲。';
       const result = ForeshadowAnalyzer.analyze(text, 1);
       
-      const mysteryForeshadows = result.filter(f => f.type === 'mystery');
+      const mysteryForeshadows = result.filter(f => f.loopType === 'mystery');
       expect(mysteryForeshadows.length).toBeGreaterThanOrEqual(0);
     });
 
@@ -38,12 +38,8 @@ describe('ForeshadowAnalyzer', () => {
   describe('calculateUrgency', () => {
     it('should calculate urgency based on analysis', () => {
       const analysis = {
-        id: 'fs-1',
-        content: '神秘力量觉醒',
-        type: 'mystery' as LoopType,
-        urgency: 'medium' as UrgencyLevel,
         plantedChapter: 1,
-        confidence: 0.8,
+        expectedPayoffChapter: 10,
       };
       
       const urgency = ForeshadowAnalyzer.calculateUrgency(analysis, 10);
@@ -64,7 +60,8 @@ describe('ForeshadowTracker', () => {
         {
           id: 'fs-1',
           content: '测试伏笔',
-          type: 'mystery',
+          loopType: 'mystery',
+          urgency: 'medium',
           plantedChapter: 1,
           status: 'buried',
           plantedAt: new Date().toISOString(),
@@ -81,7 +78,8 @@ describe('ForeshadowTracker', () => {
       const foreshadow: EnhancedForeshadow = {
         id: 'fs-1',
         content: '神秘力量的觉醒',
-        type: 'mystery',
+        loopType: 'mystery',
+        urgency: 'medium',
         plantedChapter: 1,
         expectedPayoffChapter: 10,
         status: 'buried',
@@ -101,7 +99,8 @@ describe('ForeshadowTracker', () => {
       const foreshadow: EnhancedForeshadow = {
         id: 'fs-1',
         content: '神秘力量的觉醒',
-        type: 'mystery',
+        loopType: 'mystery',
+        urgency: 'medium',
         plantedChapter: 1,
         status: 'buried',
         plantedAt: new Date().toISOString(),
@@ -119,7 +118,8 @@ describe('ForeshadowTracker', () => {
       const foreshadow: EnhancedForeshadow = {
         id: 'fs-1',
         content: '神秘力量的觉醒',
-        type: 'mystery',
+        loopType: 'mystery',
+        urgency: 'medium',
         plantedChapter: 1,
         status: 'foreshadowed',
         plantedAt: new Date().toISOString(),
@@ -148,7 +148,8 @@ describe('ForeshadowTracker', () => {
       tracker.add({
         id: 'fs-1',
         content: '伏笔1',
-        type: 'mystery',
+        loopType: 'mystery',
+        urgency: 'medium',
         plantedChapter: 1,
         status: 'buried',
         plantedAt: new Date().toISOString(),
@@ -157,7 +158,8 @@ describe('ForeshadowTracker', () => {
       tracker.add({
         id: 'fs-2',
         content: '伏笔2',
-        type: 'conflict',
+        loopType: 'conflict',
+        urgency: 'high',
         plantedChapter: 2,
         status: 'resolved',
         payoffChapter: 5,
@@ -177,7 +179,8 @@ describe('ForeshadowTracker', () => {
       tracker.add({
         id: 'fs-1',
         content: '伏笔1',
-        type: 'mystery',
+        loopType: 'mystery',
+        urgency: 'medium',
         plantedChapter: 1,
         status: 'buried',
         plantedAt: new Date().toISOString(),
@@ -199,7 +202,8 @@ describe('ForeshadowTracker', () => {
       tracker.add({
         id: 'fs-1',
         content: '伏笔1',
-        type: 'mystery',
+        loopType: 'mystery',
+        urgency: 'medium',
         plantedChapter: 1,
         status: 'buried',
         plantedAt: new Date().toISOString(),
@@ -208,7 +212,8 @@ describe('ForeshadowTracker', () => {
       tracker.add({
         id: 'fs-2',
         content: '伏笔2',
-        type: 'conflict',
+        loopType: 'conflict',
+        urgency: 'high',
         plantedChapter: 2,
         status: 'resolved',
         payoffChapter: 5,
