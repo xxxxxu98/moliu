@@ -159,6 +159,9 @@ function toggleVolume(volumeId: string) {
 
 function selectChapter(chapterId: string) {
   projectStore.setCurrentChapter(chapterId);
+  nextTick(() => {
+    editorCoreRef.value?.scrollToTop();
+  });
 }
 
 function openCreateChapterDialog() {

@@ -10,6 +10,7 @@ const projectStore = useProjectStore();
 const message = useMessage();
 
 const editorRef = ref<HTMLTextAreaElement | null>(null);
+const scrollbarRef = ref<InstanceType<typeof NScrollbar> | null>(null);
 const content = ref("");
 const charCount = ref(0);
 const isSaved = ref(true);
@@ -249,6 +250,19 @@ function getCursorPosition(): { start: number; end: number } | null {
   };
 }
 
+/**
+ * 滚动到编辑器顶部
+ */
+function scrollToTop() {
+  const textarea = editorRef.value;
+  if (textarea) {
+    textarea.scrollTop = 0;
+  }
+  if (scrollbarRef.value) {
+    scrollbarRef.value.scrollTo({ top: 0 });
+  }
+}
+
 // 暴露方法给父组件
 defineExpose({
   insertText,
@@ -258,6 +272,7 @@ defineExpose({
   getSelectedText,
   getCursorPosition,
   saveChapter,
+  scrollToTop,
 });
 
 onUnmounted(() => {
@@ -325,7 +340,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Editor Content -->
-    <NScrollbar v-if="projectStore.currentChapter" class="flex-1" content-class="h-full">
+    <NScrollbar v-if="projectStore.currentChapter" ref="scrollbarRef" class="flex-1" content-class="h-full">
       <div class="mx-auto py-6 px-6 h-full">
         <textarea
           ref="editorRef"
