@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed, onUnmounted, nextTick } from "vue";
-import { NScrollbar, NButton, useMessage } from "naive-ui";
-import { Save, Check, FileText } from "lucide-vue-next";
+import { NScrollbar, NButton, NProgress, useMessage } from "naive-ui";
+import { Save, Check, FileText, Bold, Italic, List, Heading1, Heading2, Undo, Redo } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useProjectStore } from "@/stores/project.store";
 
@@ -13,13 +13,43 @@ const editorRef = ref<HTMLTextAreaElement | null>(null);
 const scrollbarRef = ref<InstanceType<typeof NScrollbar> | null>(null);
 const content = ref("");
 const charCount = ref(0);
+const wordCount = ref(0);
 const isSaved = ref(true);
 const isSaving = ref(false);
 const autoSaveTimer = ref<number | null>(null);
 const lastSavedContent = ref("");
+const writingTarget = ref(3000); // 写作目标字数
+
+/**
+ * 计算中文字符数（不含标点）
+ */
+function countChineseChars(text: string): number {
+  const chineseChars = text.match(/[\u4e00-\u9fa5]/g);
+  return chineseChars ? chineseChars.length : 0;
+}
+
+/**
+ * 计算中文词数（粗略估计）
+ * 中文词数 ≈ 中文字符数 / 2 + 英文单词数
+ */
+function countChineseWords(text: string): number {
+  const chineseChars = countChineseChars(text);
+  const englishWords = text.match(/[a-zA-Z]+/g);
+  const englishCount = englishWords ? englishWords.length : 0;
+  return Math.round(chineseChars / 2) + englishCount;
+}
+
+/**
+ * 计算写作进度百分比
+ */
+const writingProgress = computed(() => {
+  if (writingTarget.value <= 0) return 0;
+  return Math.min(100, Math.round((wordCount.value / writingTarget.value) * 100));
+});
 
 function updateCounts(text: string) {
   charCount.value = text.length;
+  wordCount.value = countChineseWords(text);
 }
 
 function handleInput(event: Event) {
@@ -191,6 +221,84 @@ function appendText(text: string) {
   scheduleAutoSave();
 }
 
+// ========== 格式化功能 ==========
+
+/**
+ * 插入加粗标记
+ */
+function insertBold() {
+  const selected = getSelectedText();
+  if (selected) {
+    replaceSelectedText(`**${selected}**`);
+  } else {
+    insertText("**加粗文字**");
+  }
+}
+
+/**
+ * 插入斜体标记
+ */
+function insertItalic() {
+  const selected = getSelectedText();
+  if (selected) {
+    replaceSelectedText(`*${selected}*`);
+  } else {
+    insertText("*斜体文字*");
+  }
+}
+
+/**
+ * 插入一级标题
+ */
+function insertHeading1() {
+  const selected = getSelectedText();
+  if (selected) {
+    replaceSelectedText(`# ${selected}`);
+  } else {
+    insertText("# 第一级标题\n");
+  }
+}
+
+/**
+ * 插入二级标题
+ */
+function insertHeading2() {
+  const selected = getSelectedText();
+  if (selected) {
+    replaceSelectedText(`## ${selected}`);
+  } else {
+    insertText("## 第二级标题\n");
+  }
+}
+
+/**
+ * 插入列表项
+ */
+function insertList() {
+  insertText("- 列表项\n");
+}
+
+/**
+ * 插入引用块
+ */
+function insertQuote() {
+  insertText("> 引用文本\n");
+}
+
+/**
+ * 撤销操作
+ */
+function undoAction() {
+  document.execCommand("undo", false);
+}
+
+/**
+ * 重做操作
+ */
+function redoAction() {
+  document.execCommand("redo", false);
+}
+
 /**
  * 替换选中的文本
  * @param newText 替换后的文本
@@ -273,6 +381,15 @@ defineExpose({
   getCursorPosition,
   saveChapter,
   scrollToTop,
+  // 格式化方法
+  insertBold,
+  insertItalic,
+  insertHeading1,
+  insertHeading2,
+  insertList,
+  insertQuote,
+  undoAction,
+  redoAction,
 });
 
 onUnmounted(() => {
@@ -308,6 +425,8 @@ onUnmounted(() => {
           class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400"
         >
           <span class="text-nowrap">{{ charCount }} {{ t("editor.charCount") }}</span>
+          <span class="text-gray-300 dark:text-gray-600">|</span>
+          <span class="text-nowrap">{{ wordCount }} 字</span>
         </div>
 
         <!-- Save Status -->
@@ -336,6 +455,109 @@ onUnmounted(() => {
             {{ t("editor.save") }}
           </NButton>
         </div>
+      </div>
+    </div>
+
+    <!-- Format Toolbar -->
+    <div
+      class="h-10 flex items-center gap-1 px-4 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800"
+    >
+      <NButton
+        quaternary
+        size="tiny"
+        @click="undoAction"
+        :title="t('editor.undo')"
+      >
+        <template #icon>
+          <Undo class="w-4 h-4" />
+        </template>
+      </NButton>
+      <NButton
+        quaternary
+        size="tiny"
+        @click="redoAction"
+        :title="t('editor.redo')"
+      >
+        <template #icon>
+          <Redo class="w-4 h-4" />
+        </template>
+      </NButton>
+
+      <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+
+      <NButton
+        quaternary
+        size="tiny"
+        @click="insertHeading1"
+        :title="t('editor.heading1')"
+      >
+        <template #icon>
+          <Heading1 class="w-4 h-4" />
+        </template>
+      </NButton>
+      <NButton
+        quaternary
+        size="tiny"
+        @click="insertHeading2"
+        :title="t('editor.heading2')"
+      >
+        <template #icon>
+          <Heading2 class="w-4 h-4" />
+        </template>
+      </NButton>
+
+      <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+
+      <NButton
+        quaternary
+        size="tiny"
+        @click="insertBold"
+        :title="t('editor.bold')"
+      >
+        <template #icon>
+          <Bold class="w-4 h-4" />
+        </template>
+      </NButton>
+      <NButton
+        quaternary
+        size="tiny"
+        @click="insertItalic"
+        :title="t('editor.italic')"
+      >
+        <template #icon>
+          <Italic class="w-4 h-4" />
+        </template>
+      </NButton>
+
+      <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+
+      <NButton
+        quaternary
+        size="tiny"
+        @click="insertList"
+        :title="t('editor.list')"
+      >
+        <template #icon>
+          <List class="w-4 h-4" />
+        </template>
+      </NButton>
+
+      <!-- Writing Progress -->
+      <div class="flex items-center gap-2 ml-auto">
+        <span class="text-xs text-gray-500 dark:text-gray-400">
+          {{ writingProgress }}%
+        </span>
+        <NProgress
+          type="line"
+          :percentage="writingProgress"
+          :show-indicator="false"
+          :height="6"
+          :border-radius="3"
+          :fill-border-radius="3"
+          :color="writingProgress >= 100 ? '#10b981' : '#6366f1'"
+          :rail-color="'#e5e7eb'"
+          class="!w-24"
+        />
       </div>
     </div>
 
