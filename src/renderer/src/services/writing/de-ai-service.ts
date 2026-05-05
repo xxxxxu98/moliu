@@ -506,6 +506,46 @@ export class DeAIService {
     // 5.2 【新增】删除段落末尾的升华句
     content = content.replace(/[，。；].*?(这就是成长|这就是人生|这就是命运|这就是全部).*?。?$/gm, '');
 
+    // 5.3 【新增】常见错别字自动纠正（后处理）
+    const typoFixes: Array<[RegExp, string]> = [
+      // 的/地/得 错误（常见且重要）
+      [/应该的/g, '应该地'],
+      [/高高兴兴的/g, '高高兴兴地'],
+      [/慢慢吞吞的/g, '慢慢吞吞地'],
+      [/认认真真的/g, '认认真真地'],
+      // 在/再 错误
+      [/在次/g, '再次'],
+      [/在来/g, '再来'],
+      [/在次/g, '再次'],
+      // 那/哪 错误
+      [/那是/g, '那是'], // 那个是可以的
+      // 做/作 错误
+      [/做用/g, '作用'],
+      [/做为/g, '作为'],
+      // 其他常见错误
+      [/象像/g, '像'], // 象像不分
+      [/坐做/g, '做'],
+      [/候后/g, '后'],
+      [/已已经/g, '已经'],
+    ];
+
+    for (const [pattern, replacement] of typoFixes) {
+      content = content.replace(pattern, replacement);
+    }
+
+    // 5.4 【新增】检查并修复"的"后面是否该用"地"
+    // 修复副词性短语中的"的"替换为"地"
+    const adverbPhraseFixes: Array<[RegExp, string]> = [
+      // 动词性短语前的副词应该用"地"而不是"的"
+      [/(悄悄|静静|慢慢|匆匆|偷偷|默默|轻轻|呆呆|悄悄)的说/g, '$1地说'],
+      [/(认真|努力|仔细|专心的)看/g, '$1看'],
+      [/(认真|努力|仔细)听/g, '$1听'],
+    ];
+
+    for (const [pattern, replacement] of adverbPhraseFixes) {
+      content = content.replace(pattern, replacement);
+    }
+
     // 6. 处理连续四字词（AI味的重灾区）
     // 检测连续出现3个以上的四字词组合
     const fourCharPattern = /([^，。！？；：""''\n]{4}[，。！？；：""''\n]?){3,}/g;
