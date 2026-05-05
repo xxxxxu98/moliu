@@ -9,8 +9,10 @@ import {
   Edit3,
   RotateCcw,
   ChevronDown,
+  Heart,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
+import { useMessage } from "naive-ui";
 import { useSettingsStore } from "@/stores/settings.store";
 import { WORD_COUNT_OPTIONS, DEFAULT_WORD_COUNT_RANGE } from "@/services/ai/unified.service";
 import type { GeneratedOutline } from "@/types/inspiration";
@@ -19,8 +21,87 @@ import { useOutlineGenerator } from "@/composables/useOutlineGenerator";
 import { useProjectCreator } from "@/composables/useProjectCreator";
 import OutlineDisplay from "@/components/common/OutlineDisplay.vue";
 import WordCountSelector from "@/components/common/WordCountSelector.vue";
+import FiveStepOutline from "@/components/home/FiveStepOutline.vue";
+
+// 情绪目标选项
+interface EmotionGoal {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  gradient: string;
+  example: string;
+}
+
+const emotionGoals: EmotionGoal[] = [
+  {
+    id: 'excitement',
+    name: '热血沸腾',
+    icon: '🔥',
+    description: '让人心跳加速、热血沸腾',
+    gradient: 'from-red-500 to-orange-500',
+    example: '主角在绝境中爆发出惊人潜力，一招击败强敌',
+  },
+  {
+    id: 'tears',
+    name: '催人泪下',
+    icon: '💧',
+    description: '让人感动落泪、情感共鸣',
+    gradient: 'from-blue-500 to-cyan-500',
+    example: '为主角的不幸遭遇而心痛，为主角的坚持而流泪',
+  },
+  {
+    id: 'thrill',
+    name: '紧张刺激',
+    icon: '⚡',
+    description: '心跳加速、欲罢不能',
+    gradient: 'from-purple-500 to-pink-500',
+    example: '主角陷入绝境，生死只在一线之间',
+  },
+  {
+    id: 'sweet',
+    name: '甜蜜心动',
+    icon: '💕',
+    description: '少女心爆棚、甜到齁',
+    gradient: 'from-pink-400 to-rose-500',
+    example: '霸道总裁的宠溺情节，各种名场面',
+  },
+  {
+    id: 'laugh',
+    name: '轻松搞笑',
+    icon: '😂',
+    description: '捧腹大笑、欢乐不断',
+    gradient: 'from-amber-400 to-yellow-500',
+    example: '沙雕队友的逗比日常，反差萌的角色',
+  },
+  {
+    id: 'shock',
+    name: '震惊反转',
+    icon: '🤯',
+    description: '出人意料、惊天大反转',
+    gradient: 'from-gray-700 to-gray-900',
+    example: '原本的反派竟是主角的父亲？',
+  },
+  {
+    id: 'comfort',
+    name: '治愈温暖',
+    icon: '🌸',
+    description: '温暖人心、被治愈',
+    gradient: 'from-emerald-400 to-teal-500',
+    example: '主角帮助流浪猫的温馨场景',
+  },
+  {
+    id: 'anger',
+    name: '义愤填膺',
+    icon: '😤',
+    description: '让人气愤、想打反派',
+    gradient: 'from-red-600 to-rose-700',
+    example: '恶毒女配陷害女主，看得人牙痒痒',
+  },
+];
 
 const { t } = useI18n();
+const message = useMessage();
 const settingsStore = useSettingsStore();
 
 // 使用 Composable 封装的大纲生成和项目创建逻辑
@@ -46,7 +127,7 @@ const isProcessing = computed(() => isGenerating.value || isCreating.value);
 // 合并错误状态
 const combinedError = computed(() => generationError.value || projectCreateError.value);
 
-const activeTab = ref<"templates" | "custom">("templates");
+const activeTab = ref<"templates" | "custom" | "fiveStep">("templates");
 const selectedTemplate = ref<(typeof writingTemplates)[0] | null>(null);
 const prompt = ref("");
 const storyType = ref("");
@@ -62,6 +143,18 @@ const selectedWordCountRange = ref(DEFAULT_WORD_COUNT_RANGE);
 
 // 选中的大纲
 const selectedOutline = ref<GeneratedOutline | null>(null);
+
+// 五步大纲数据
+const fiveStepData = ref({
+  emotionGoal: '',
+  setting: '',
+  protagonist: '',
+  structure: '',
+  pleasurePoints: '',
+});
+
+// 选中的情绪目标
+const selectedEmotionGoals = ref<string[]>([]);
 
 // Draft state
 const savedDraft = ref<{
@@ -84,6 +177,10 @@ const canGenerate = computed(() => {
   }
   if (activeTab.value === "custom") {
     return prompt.value.trim().length >= 10;
+  }
+  // 五步大纲完成后 prompt 会有内容，在 custom 模式下可以生成
+  if (activeTab.value === "fiveStep" && prompt.value.trim().length >= 10) {
+    return true;
   }
   return false;
 });
@@ -125,6 +222,7 @@ const promptPreview = computed(() => {
   if (activeTab.value === "templates" && selectedTemplate.value) {
     return selectedTemplate.value.prompt;
   }
+  // 五步大纲和自定义模式都使用 prompt
   return prompt.value;
 });
 
@@ -144,6 +242,57 @@ function selectTemplate(template: (typeof writingTemplates)[0]) {
   selectedTemplate.value = template;
 }
 
+function toggleEmotionGoal(goalId: string) {
+  const index = selectedEmotionGoals.value.indexOf(goalId);
+  if (index === -1) {
+    selectedEmotionGoals.value.push(goalId);
+  } else {
+    selectedEmotionGoals.value.splice(index, 1);
+  }
+  updatePromptFromStructured();
+}
+
+// 切换五步大纲
+function toggleFiveStepOutline() {
+  activeTab.value = activeTab.value === "fiveStep" ? "templates" : "fiveStep";
+}
+
+// 五步大纲完成
+function handleFiveStepComplete() {
+  // 将五步大纲数据转换为prompt
+  const parts: string[] = [];
+  
+  if (fiveStepData.value.emotionGoal) {
+    parts.push(`【情绪目标】${fiveStepData.value.emotionGoal}`);
+  }
+  if (fiveStepData.value.setting) {
+    parts.push(`【核心设定】${fiveStepData.value.setting}`);
+  }
+  if (fiveStepData.value.protagonist) {
+    parts.push(`【主角设定】${fiveStepData.value.protagonist}`);
+  }
+  if (fiveStepData.value.structure) {
+    parts.push(`【故事结构】${fiveStepData.value.structure}`);
+  }
+  if (fiveStepData.value.pleasurePoints) {
+    parts.push(`【爽点安排】${fiveStepData.value.pleasurePoints}`);
+  }
+  
+  prompt.value = parts.join('\n\n');
+  
+  // 切换到自定义输入模式查看结果
+  activeTab.value = "custom";
+  
+  message.success('五步大纲已转换，请点击生成');
+}
+
+// 选中的情绪目标详情
+const selectedEmotionGoalsDetail = computed(() => {
+  return selectedEmotionGoals.value
+    .map(id => emotionGoals.find(g => g.id === id))
+    .filter(Boolean);
+});
+
 function useStructuredInput() {
   showStructuredInput.value = !showStructuredInput.value;
   if (showStructuredInput.value) {
@@ -153,6 +302,16 @@ function useStructuredInput() {
 
 function updatePromptFromStructured() {
   const parts: string[] = [];
+
+  // 情绪目标
+  if (selectedEmotionGoals.value.length > 0) {
+    const goalNames = selectedEmotionGoals.value
+      .map(id => emotionGoals.find(g => g.id === id)?.name)
+      .filter(Boolean)
+      .join('、');
+    parts.push(`情绪目标：${goalNames}`);
+    parts.push(`情绪案例：${selectedEmotionGoals.value.map(id => emotionGoals.find(g => g.id === id)?.example).filter(Boolean).join('；')}`);
+  }
 
   if (storyType.value) {
     parts.push(`题材类型：${storyType.value}`);
@@ -410,6 +569,18 @@ function extractMainEntity(sentence: string, keyword: string): string {
       >
         {{ t("quickStart.customInput") }}
       </button>
+      <button
+        class="flex-1 py-1.5 text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1"
+        :class="
+          activeTab === 'fiveStep'
+            ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
+            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+        "
+        @click="toggleFiveStepOutline"
+      >
+        <Sparkles class="w-3.5 h-3.5" />
+        五步法
+      </button>
     </div>
 
     <!-- Templates Tab -->
@@ -455,8 +626,16 @@ function extractMainEntity(sentence: string, keyword: string): string {
       </div>
     </div>
 
+    <!-- Five Step Outline Tab -->
+    <div v-else-if="activeTab === 'fiveStep'" class="space-y-3">
+      <FiveStepOutline
+        v-model="fiveStepData"
+        @complete="handleFiveStepComplete"
+      />
+    </div>
+
     <!-- Custom Input Tab -->
-    <div v-else class="space-y-3">
+    <div v-else-if="activeTab === 'custom'" class="space-y-3">
       <!-- Structured Input Toggle -->
       <button
         class="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-left transition-all hover:border-indigo-300 dark:hover:border-indigo-700"
@@ -477,8 +656,50 @@ function extractMainEntity(sentence: string, keyword: string): string {
       <!-- Structured Input Fields -->
       <div
         v-if="showStructuredInput"
-        class="space-y-2 p-3 rounded-xl bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800"
+        class="space-y-3 p-3 rounded-xl bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800"
       >
+        <!-- 情绪目标选择 -->
+        <div>
+          <label class="text-xs text-gray-500 dark:text-gray-400 mb-2 block">
+            <span class="flex items-center gap-1">
+              <Heart class="w-3 h-3 text-pink-500" />
+              情绪目标（可多选）
+            </span>
+          </label>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button
+              v-for="goal in emotionGoals"
+              :key="goal.id"
+              class="p-2 rounded-lg text-left transition-all duration-200 border"
+              :class="[
+                selectedEmotionGoals.includes(goal.id)
+                  ? 'bg-gradient-to-br border-transparent text-white shadow-lg'
+                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-indigo-300'
+              ]"
+              :style="selectedEmotionGoals.includes(goal.id) ? { background: `linear-gradient(135deg, var(--tw-gradient-stops))`, '--tw-gradient-from': 'rgb(236 72 153)', '--tw-gradient-to': 'rgb(244 63 94)' } : {}"
+              @click="toggleEmotionGoal(goal.id)"
+            >
+              <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="text-sm">{{ goal.icon }}</span>
+                <span class="text-xs font-medium">{{ goal.name }}</span>
+              </div>
+              <p 
+                class="text-xs line-clamp-1"
+                :class="selectedEmotionGoals.includes(goal.id) ? 'text-white/80' : 'text-gray-400'"
+              >
+                {{ goal.description }}
+              </p>
+            </button>
+          </div>
+          <!-- 选中的情绪目标案例 -->
+          <div v-if="selectedEmotionGoalsDetail.length > 0" class="mt-2 p-2 rounded-lg bg-white/50 dark:bg-gray-800/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">案例参考：</p>
+            <p class="text-xs text-gray-600 dark:text-gray-300 italic">
+              "{{ selectedEmotionGoalsDetail.map(g => g?.example).filter(Boolean).join('；') }}"
+            </p>
+          </div>
+        </div>
+
         <div>
           <label class="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{{
             t("quickStart.storyType")

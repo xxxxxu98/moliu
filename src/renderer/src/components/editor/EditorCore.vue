@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, watch, computed, onUnmounted, nextTick } from "vue";
-import { NScrollbar, NButton, NProgress, useMessage } from "naive-ui";
-import { Save, Check, FileText, Bold, Italic, List, Heading1, Heading2, Undo, Redo } from "lucide-vue-next";
+import { NScrollbar, NButton, NProgress, useMessage, NDrawer, NDrawerContent } from "naive-ui";
+import { Save, Check, FileText, Bold, Italic, List, Heading1, Heading2, Undo, Redo, Wand2 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useProjectStore } from "@/stores/project.store";
+import DeAIPolishPanel from "@/components/editor/DeAIPolishPanel.vue";
 
 const { t } = useI18n();
 const projectStore = useProjectStore();
@@ -19,6 +20,21 @@ const isSaving = ref(false);
 const autoSaveTimer = ref<number | null>(null);
 const lastSavedContent = ref("");
 const writingTarget = ref(3000); // 写作目标字数
+
+// 去AI味润色相关状态
+const showDeAIDrawer = ref(false);
+
+function openDeAIPanel() {
+  showDeAIDrawer.value = true;
+}
+
+function handleApplyPolished(polished: string) {
+  content.value = polished;
+  updateCounts(polished);
+  isSaved.value = false;
+  scheduleAutoSave();
+  showDeAIDrawer.value = false;
+}
 
 /**
  * 计算中文字符数（不含标点）
@@ -542,6 +558,20 @@ onUnmounted(() => {
         </template>
       </NButton>
 
+      <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+
+      <!-- 去AI味按钮 -->
+      <NButton
+        quaternary
+        size="tiny"
+        @click="openDeAIPanel"
+        title="去AI味润色"
+      >
+        <template #icon>
+          <Wand2 class="w-4 h-4" />
+        </template>
+      </NButton>
+
       <!-- Writing Progress -->
       <div class="flex items-center gap-2 ml-auto">
         <span class="text-xs text-gray-500 dark:text-gray-400">
@@ -586,6 +616,20 @@ onUnmounted(() => {
         </p>
       </div>
     </div>
+
+    <!-- 去AI味润色抽屉 -->
+    <NDrawer
+      v-model:show="showDeAIDrawer"
+      :width="420"
+      placement="right"
+    >
+      <NDrawerContent :title="'去AI味润色'" :native-scrollbar="false">
+        <DeAIPolishPanel
+          :content="content"
+          @apply="handleApplyPolished"
+        />
+      </NDrawerContent>
+    </NDrawer>
   </div>
 </template>
 

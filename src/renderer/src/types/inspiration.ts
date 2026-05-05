@@ -142,3 +142,23 @@ export interface InspirationPack {
   elements: SettingElement[];
   storyNuclei: StoryNucleus[];
 }
+
+/**
+ * 五维潜力评估
+ */
+export interface FiveDimensionEvaluation {
+  originality: number;      // 原创性 (1-5)
+  marketPotential: number;  // 市场潜力 (1-5)
+  expandability: number;    // 扩展性 (1-5)
+  difficulty: number;        // 创作难度 (1-5, 反向)
+  personalMatch: number;    // 个人匹配 (1-5)
+}
+
+export interface EvaluationDimension {
+  id: keyof FiveDimensionEvaluation;
+  name: string;
+  icon: string;
+  description: string;
+  color: string;
+  gradient: string;
+}

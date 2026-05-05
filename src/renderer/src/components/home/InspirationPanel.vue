@@ -11,6 +11,7 @@ import {
   FileText,
   Search,
   Copy,
+  TrendingUp,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useMessage } from "naive-ui";
@@ -21,8 +22,14 @@ import type { GeneratedOutline } from "@/types/inspiration";
 import { useOutlineGenerator } from "@/composables/useOutlineGenerator";
 import { useProjectCreator } from "@/composables/useProjectCreator";
 import { TextAnalysisService, type AnalysisFocus } from "@/services/writing/text-analysis-service";
+import { calculateFiveDimensionEvaluation, getEvaluationAdvice } from "@/composables/useInspirationEvaluation";
+import type { FiveDimensionEvaluation } from "@/types/inspiration";
 import OutlineDisplay from "@/components/common/OutlineDisplay.vue";
 import WordCountSelector from "@/components/common/WordCountSelector.vue";
+import InspirationScore from "@/components/home/InspirationScore.vue";
+import StoryCardSelector from "@/components/home/StoryCardSelector.vue";
+import MarketTrendsPanel from "@/components/home/MarketTrendsPanel.vue";
+import type { StoryCardComposition } from "@/data/story-cards";
 import { DEFAULT_WORD_COUNT_RANGE } from "@/services/ai/unified.service";
 
 // 使用别名以保持与模板中的引用一致
@@ -105,6 +112,96 @@ const audienceSelected = ref(true);
 
 // 当前选中的快速开始卡片
 const selectedQuickScenario = ref<string | null>(null);
+
+// 五维评估
+const fiveDimensionEvaluation = computed<FiveDimensionEvaluation | null>(() => {
+  if (inspirationStore.selectedTags.length === 0 && inspirationStore.selectedElements.length === 0) {
+    return null;
+  }
+  
+  // 获取选中的标签和元素名称
+  const selectedTagNames = inspirationStore.selectedTags
+    .map(id => genreTags.find(t => t.id === id)?.name || '')
+    .filter(Boolean);
+  
+  const selectedElementNames = inspirationStore.selectedElements
+    .map(id => settingElements.find(e => e.id === id)?.name || '')
+    .filter(Boolean);
+  
+  return calculateFiveDimensionEvaluation(selectedTagNames, selectedElementNames);
+});
+
+// 评估建议
+const evaluationAdvice = computed(() => {
+  if (!fiveDimensionEvaluation.value) return [];
+  return getEvaluationAdvice(fiveDimensionEvaluation.value);
+});
+
+// 是否显示评估
+const showEvaluation = computed(() => {
+  return hasQuickSelection.value && fiveDimensionEvaluation.value !== null;
+});
+
+// 故事卡选择器相关
+const showStoryCardSelector = ref(false);
+
+// 市场趋势面板相关
+const showMarketTrendsPanel = ref(false);
+
+function openStoryCardSelector() {
+  showStoryCardSelector.value = true;
+}
+
+function openMarketTrendsPanel() {
+  showMarketTrendsPanel.value = true;
+}
+
+function handleMarketTrendsSelectTag(tag: string) {
+  // 将标签添加到选中标签
+  const tagConfig = genreTags.find(t => t.name === tag || t.name.includes(tag));
+  if (tagConfig) {
+    inspirationStore.toggleTag(tagConfig.id);
+  }
+  showMarketTrendsPanel.value = false;
+}
+
+function handleStoryCardSelect(composition: StoryCardComposition) {
+  // 将故事卡组合转换为大纲生成
+  const { primaryCard, secondaryCard } = composition;
+  
+  // 构建prompt
+  let prompt = `请根据以下故事卡组合，为我生成小说大纲。\n\n`;
+  prompt += `主要故事卡：${primaryCard.name}\n`;
+  prompt += `- 设定：${primaryCard.setup}\n`;
+  prompt += `- 发展：${primaryCard.development}\n`;
+  prompt += `- 高潮：${primaryCard.climax}\n`;
+  prompt += `- 解决：${primaryCard.resolution}\n`;
+  
+  if (secondaryCard) {
+    prompt += `\n次要故事卡：${secondaryCard.name}\n`;
+    prompt += `- 设定：${secondaryCard.setup}\n`;
+    prompt += `- 发展：${secondaryCard.development}\n`;
+    prompt += `- 高潮：${secondaryCard.climax}\n`;
+    prompt += `- 解决：${secondaryCard.resolution}\n`;
+  }
+  
+  prompt += `\n请融合这两个故事卡的特点，生成一个完整的大纲。`;
+  
+  // 使用自定义prompt
+  inspirationStore.reset();
+  panelState.value = "selecting";
+  
+  // 触发大纲生成
+  generateOutlines(prompt, {
+    wordCountRange: selectedWordCountRange.value,
+  }).then(results => {
+    if (results.length > 0) {
+      panelState.value = "generated";
+    }
+  });
+  
+  showStoryCardSelector.value = false;
+}
 
 // Display counts - 收起时显示数量
 const TAG_DISPLAY_COUNT = 10;
@@ -1251,6 +1348,31 @@ function copyAnalysisResult() {
         </div>
       </div>
       
+      <!-- 五维潜力评估 -->
+      <div 
+        v-if="showEvaluation && fiveDimensionEvaluation"
+        class="mb-3 p-3 rounded-xl bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 border border-violet-200 dark:border-violet-800"
+      >
+        <div class="flex items-center gap-2 mb-3">
+          <TrendingUp class="w-4 h-4 text-violet-500" />
+          <span class="text-sm font-medium text-violet-700 dark:text-violet-400">创意评估</span>
+        </div>
+        <InspirationScore 
+          :evaluation="fiveDimensionEvaluation" 
+          :compact="true" 
+        />
+        <!-- 评估建议 -->
+        <div v-if="evaluationAdvice.length > 0" class="mt-3 pt-2 border-t border-violet-200 dark:border-violet-700">
+          <p 
+            v-for="(advice, index) in evaluationAdvice" 
+            :key="index"
+            class="text-xs text-violet-600 dark:text-violet-400 mb-1"
+          >
+            • {{ advice }}
+          </p>
+        </div>
+      </div>
+      
       <!-- Word Count Range Selector -->
       <div class="flex items-center justify-between px-1">
         <WordCountSelector
@@ -1315,15 +1437,47 @@ function copyAnalysisResult() {
 
     <!-- 拆文分析入口按钮 -->
     <div class="pt-4 border-t border-gray-100 dark:border-gray-800">
-      <button
-        class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 font-medium hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
-        @click="openAnalysisModal"
-      >
-        <Search class="w-4 h-4" />
-        拆文分析
-      </button>
-      <p class="text-xs text-gray-400 dark:text-gray-500 text-center mt-1">分析爆款，学习写作技巧</p>
+      <div class="grid grid-cols-3 gap-2">
+        <button
+          class="flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl border-2 border-dashed border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 font-medium hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors text-xs"
+          @click="openAnalysisModal"
+        >
+          <Search class="w-3.5 h-3.5" />
+          拆文分析
+        </button>
+        <button
+          class="flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl border-2 border-dashed border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 font-medium hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors text-xs"
+          @click="openStoryCardSelector"
+        >
+          <Wand2 class="w-3.5 h-3.5" />
+          故事卡
+        </button>
+        <button
+          class="flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl border-2 border-dashed border-amber-200 dark:border-amber-700 text-amber-600 dark:text-amber-400 font-medium hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors text-xs"
+          @click="openMarketTrendsPanel"
+        >
+          <TrendingUp class="w-3.5 h-3.5" />
+          市场趋势
+        </button>
+      </div>
+      <p class="text-xs text-gray-400 dark:text-gray-500 text-center mt-1">探索创意的无限可能</p>
     </div>
+
+    <!-- 市场趋势面板 -->
+    <MarketTrendsPanel
+      v-if="showMarketTrendsPanel"
+      :selected-tags="inspirationStore.selectedTags.map(id => genreTags.find(t => t.id === id)?.name || '')"
+      @close="showMarketTrendsPanel = false"
+      @select="handleMarketTrendsSelectTag"
+    />
+
+    <!-- 故事卡选择器 -->
+    <StoryCardSelector
+      v-if="showStoryCardSelector"
+      :selected-tags="inspirationStore.selectedTags.map(id => genreTags.find(t => t.id === id)?.name || '')"
+      @select="handleStoryCardSelect"
+      @close="showStoryCardSelector = false"
+    />
 
     <!-- 拆文分析 Modal -->
     <Teleport to="body">
