@@ -386,18 +386,23 @@ async function processDeAIAndTitle(
   let fixedCount = 0;
   let title: string | null = null;
 
-    if (deAIEnabled) {
-      const deAIResult = await DeAIService.fix(fixedContent);
-      if (deAIResult.fixedCount > 0) {
-        fixedContent = deAIResult.content;
-        fixedCount = deAIResult.fixedCount;
-      }
+  if (deAIEnabled) {
+    const deAIResult = await DeAIService.fix(fixedContent);
+    if (deAIResult.fixedCount > 0) {
+      fixedContent = deAIResult.content;
+      fixedCount = deAIResult.fixedCount;
     }
-
-  // 提取标题
-  const titleValidation = DeAIService.extractAndValidateTitle(fixedContent);
-  if (titleValidation.titleValid) {
-    title = titleValidation.title;
+    
+    // 【修复】直接使用 fix() 返回的 title，因为 fix() 内部已经提取了标题
+    if (deAIResult.title) {
+      title = deAIResult.title;
+    }
+  } else {
+    // 不去AI味时，直接提取标题
+    const titleValidation = DeAIService.extractAndValidateTitle(fixedContent);
+    if (titleValidation.titleValid) {
+      title = titleValidation.title;
+    }
   }
 
   return { fixedContent, title, fixedCount };
