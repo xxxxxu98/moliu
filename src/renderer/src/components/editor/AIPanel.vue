@@ -102,7 +102,7 @@ const deAIFixedContent = ref<string>("");
 const selectedTextForDeAI = ref("");
 
 // 写作风格相关状态
-const selectedWritingStyle = ref<'concise' | 'elegant' | 'humorous' | 'ancient'>('concise');
+const selectedWritingStyle = ref<'concise' | 'elegant' | 'humorous' | 'ancient'>('humorous');
 const writingStyleOptions = [
   { label: '简洁有力', value: 'concise' },
   { label: '文笔华丽', value: 'elegant' },
@@ -111,7 +111,7 @@ const writingStyleOptions = [
 ];
 
 // 一键续写相关
-const selectedWordCount = ref<number>(3000);
+const selectedWordCount = ref<number>(2000);
 const showWordCountDropdown = ref(false);
 
 const wordCountOptions = [

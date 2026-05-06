@@ -238,8 +238,6 @@ async function generateTaskBook(
     });
 
     const taskBook = await builder.buildTaskBook();
-    console.log('[批量写作] 任务书已生成:', taskBook.chapterTitle);
-
     return taskBook;
   } catch (err) {
     console.error('[批量写作] 生成任务书失败:', err);
@@ -270,8 +268,6 @@ async function performReview(
       console.warn('[批量写作] 审查发现阻断问题:', result.overall.summary);
       return false;
     }
-
-    console.log('[批量写作] 审查通过:', result.overall.summary);
     return true;
   } catch (err) {
     console.error('[批量写作] 审查失败:', err);
@@ -302,7 +298,6 @@ async function performCommit(
       { autoProject: true }
     );
 
-    console.log('[批量写作] Commit 完成:', commit.status);
     return commit.status === 'accepted';
   } catch (err) {
     console.error('[批量写作] Commit 失败:', err);
@@ -315,10 +310,7 @@ async function performCommit(
  */
 async function trackForeshadows(content: string, chapterIndex: number): Promise<void> {
   try {
-    const foreshadows = analyzeForeshadows(content, chapterIndex + 1);
-    if (foreshadows.length > 0) {
-      console.log(`[批量写作] 发现 ${foreshadows.length} 个伏笔`);
-    }
+    analyzeForeshadows(content, chapterIndex + 1);
   } catch (err) {
     console.error('[批量写作] 伏笔追踪失败:', err);
   }
@@ -394,14 +386,13 @@ async function processDeAIAndTitle(
   let fixedCount = 0;
   let title: string | null = null;
 
-  if (deAIEnabled) {
-    const deAIResult = await DeAIService.fix(fixedContent);
-    if (deAIResult.fixedCount > 0) {
-      fixedContent = deAIResult.content;
-      fixedCount = deAIResult.fixedCount;
-      console.log('[批量写作] 去 AI 味处理完成，修复', fixedCount, '处');
+    if (deAIEnabled) {
+      const deAIResult = await DeAIService.fix(fixedContent);
+      if (deAIResult.fixedCount > 0) {
+        fixedContent = deAIResult.content;
+        fixedCount = deAIResult.fixedCount;
+      }
     }
-  }
 
   // 提取标题
   const titleValidation = DeAIService.extractAndValidateTitle(fixedContent);
@@ -806,7 +797,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
       while (currentIndex >= 0 || writtenCount < chaptersToWrite) {
         // 检查停止
         if (internalState.shouldStop) {
-          console.log('[批量写作] 已停止');
           break;
         }
 
@@ -819,7 +809,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
         // 检查是否达到目标
         if (target.value === 'specific' && writtenCount >= chaptersToWrite) {
-          console.log('[批量写作] 已完成目标数量');
           break;
         }
 
@@ -827,7 +816,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
         if (currentIndex < 0) {
           currentIndex = await createNewChapter();
           if (currentIndex < 0) {
-            console.log('[批量写作] 无法创建新章节');
             break;
           }
         }

@@ -60,6 +60,20 @@ export class ForeshadowAnalyzer {
   }
 }
 
+/**
+ * 分析伏笔（兼容旧API）
+ */
+export function analyzeForeshadows(content: string, chapterNumber: number): EnhancedForeshadow[] {
+  return ForeshadowAnalyzer.analyze(content, chapterNumber);
+}
+
+/**
+ * 创建伏笔追踪器（兼容旧API）
+ */
+export function createForeshadowTracker(initialForeshadows?: EnhancedForeshadow[], currentChapter?: number): ForeshadowTracker {
+  return new ForeshadowTracker(initialForeshadows, currentChapter);
+}
+
 // ============================================
 // 伏笔追踪器
 // ============================================

@@ -66,8 +66,8 @@ const writingMode = ref<'specific' | 'finish'>('specific');
 
 // 批量写作配置
 const batchConfig = ref({
-  wordsPerChapter: 3000,
-  writingStyle: 'concise' as 'concise' | 'elegant' | 'humorous' | 'ancient',
+  wordsPerChapter: 2000,
+  writingStyle: 'humorous' as 'concise' | 'elegant' | 'humorous' | 'ancient',
 });
 
 // 下一章编号
