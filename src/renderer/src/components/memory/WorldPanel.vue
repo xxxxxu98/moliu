@@ -325,15 +325,11 @@ const factionParentOptions = computed(() => {
 <template>
   <div class="space-y-4">
     <!-- Search -->
-    <div class="relative">
-      <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--moliu-text-secondary)]" />
-      <input
-        v-model="searchQuery"
-        type="text"
-        :placeholder="t('world.searchPlaceholder')"
-        class="w-full pl-10 pr-4 py-2 rounded-lg bg-[var(--moliu-bg-primary)] border border-[var(--moliu-border-color)] text-sm focus:outline-none focus:border-[var(--moliu-primary)]"
-      />
-    </div>
+    <NInput
+      v-model:value="searchQuery"
+      :placeholder="t('world.searchPlaceholder')"
+      clearable
+    />
 
     <!-- Add Buttons -->
     <div class="flex gap-2">
@@ -379,18 +375,21 @@ const factionParentOptions = computed(() => {
                 </span>
               </div>
               <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                  @click="openEditDialog('location', location)"
-                >
-                  <Edit3 class="w-3 h-3 text-gray-400" />
-                </button>
-                <button
-                  class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
-                  @click="handleDelete('location', location.id)"
-                >
-                  <Trash2 class="w-3 h-3 text-red-400" />
-                </button>
+                <NButton quaternary circle size="small" @click="openEditDialog('location', location)">
+                  <template #icon>
+                    <Edit3 class="w-3 h-3 text-gray-400" />
+                  </template>
+                </NButton>
+                <NPopconfirm @positive-click="handleDelete('location', location.id)">
+                  <template #trigger>
+                    <NButton quaternary circle size="small">
+                      <template #icon>
+                        <Trash2 class="w-3 h-3 text-red-400" />
+                      </template>
+                    </NButton>
+                  </template>
+                  确定要删除这个地点吗？
+                </NPopconfirm>
               </div>
             </div>
             <p v-if="location.description" class="text-xs text-[var(--moliu-text-secondary)] mt-1 ml-5">{{ location.description }}</p>
@@ -421,18 +420,21 @@ const factionParentOptions = computed(() => {
                 </NTag>
               </div>
               <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                  @click="openEditDialog('faction', faction)"
-                >
-                  <Edit3 class="w-3 h-3 text-gray-400" />
-                </button>
-                <button
-                  class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
-                  @click="handleDelete('faction', faction.id)"
-                >
-                  <Trash2 class="w-3 h-3 text-red-400" />
-                </button>
+                <NButton quaternary circle size="small" @click="openEditDialog('faction', faction)">
+                  <template #icon>
+                    <Edit3 class="w-3 h-3 text-gray-400" />
+                  </template>
+                </NButton>
+                <NPopconfirm @positive-click="handleDelete('faction', faction.id)">
+                  <template #trigger>
+                    <NButton quaternary circle size="small">
+                      <template #icon>
+                        <Trash2 class="w-3 h-3 text-red-400" />
+                      </template>
+                    </NButton>
+                  </template>
+                  确定要删除这个势力吗？
+                </NPopconfirm>
               </div>
             </div>
             <p v-if="faction.description" class="text-xs text-[var(--moliu-text-secondary)] mt-1 ml-5">{{ faction.description }}</p>
@@ -465,18 +467,21 @@ const factionParentOptions = computed(() => {
               <div class="flex items-center gap-1">
                 <NTag v-if="rule.locked" size="tiny" type="warning">{{ t('world.locked') }}</NTag>
                 <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                    @click="openEditDialog('rule', rule)"
-                  >
-                    <Edit3 class="w-3 h-3 text-gray-400" />
-                  </button>
-                  <button
-                    class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
-                    @click="handleDelete('rule', rule.id)"
-                  >
-                    <Trash2 class="w-3 h-3 text-red-400" />
-                  </button>
+                  <NButton quaternary circle size="small" @click="openEditDialog('rule', rule)">
+                    <template #icon>
+                      <Edit3 class="w-3 h-3 text-gray-400" />
+                    </template>
+                  </NButton>
+                  <NPopconfirm @positive-click="handleDelete('rule', rule.id)">
+                    <template #trigger>
+                      <NButton quaternary circle size="small">
+                        <template #icon>
+                          <Trash2 class="w-3 h-3 text-red-400" />
+                        </template>
+                      </NButton>
+                    </template>
+                    确定要删除这个规则吗？
+                  </NPopconfirm>
                 </div>
               </div>
             </div>

@@ -172,6 +172,23 @@ const filteredProjects = computed(() => {
   return projects;
 });
 
+// Filter options for dropdown
+const filterOptions = computed(() => [
+  { label: t('projectList.status.all'), key: 'all' },
+  { label: t('projectList.status.writing'), key: 'writing' },
+  { label: t('projectList.status.planning'), key: 'planning' },
+  { label: t('projectList.status.paused'), key: 'paused' },
+  { label: t('projectList.status.completed'), key: 'completed' },
+]);
+
+// Sort options for dropdown
+const sortOptions = computed(() => [
+  { label: t('projectList.sortOptions.updated'), key: 'updated' },
+  { label: t('projectList.sortOptions.created'), key: 'created' },
+  { label: t('projectList.sortOptions.name'), key: 'name' },
+  { label: t('projectList.sortOptions.wordCount'), key: 'wordCount' },
+]);
+
 // Recent projects (always show latest 3 regardless of filter)
 const recentProjects = computed(() => {
   return [...projectStore.projects]
@@ -239,66 +256,57 @@ function getCardGradient(index: number) {
       <div class="flex items-center gap-3">
         <!-- Search -->
         <div class="relative">
-          <input
-            v-model="searchQuery"
-            type="text"
+          <NInput
+            v-model:value="searchQuery"
             :placeholder="t('projectList.searchPlaceholder')"
-            class="w-56 pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
-          />
-          <Feather class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            class="w-56"
+            clearable
+          >
+            <template #prefix>
+              <Feather class="w-4 h-4 text-gray-400" />
+            </template>
+          </NInput>
         </div>
         
         <!-- Filter dropdown -->
-        <div class="relative group">
-          <button
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-          >
-            <Filter class="w-4 h-4" />
+        <NDropdown
+          :options="filterOptions"
+          @select="(key: string) => statusFilter = key as any"
+          trigger="click"
+        >
+          <NButton>
+            <template #icon>
+              <Filter class="w-4 h-4" />
+            </template>
             <span v-if="statusFilter === 'all'">{{ t('projectList.status.all') }}</span>
             <span v-else>{{ t(`projectList.status.${statusFilter}`) }}</span>
-          </button>
-          <div class="absolute right-0 top-full mt-2 w-40 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-            <button
-              v-for="status in ['all', 'writing', 'planning', 'paused', 'completed'] as const"
-              :key="status"
-              class="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              :class="statusFilter === status ? 'text-indigo-600 dark:text-indigo-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
-              @click="statusFilter = status"
-            >
-              {{ t(`projectList.status.${status}`) }}
-            </button>
-          </div>
-        </div>
+          </NButton>
+        </NDropdown>
         
         <!-- Sort dropdown -->
-        <div class="relative group">
-          <button
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-          >
-            <ArrowUpDown class="w-4 h-4" />
+        <NDropdown
+          :options="sortOptions"
+          @select="(key: string) => sortBy = key as any"
+          trigger="click"
+        >
+          <NButton>
+            <template #icon>
+              <ArrowUpDown class="w-4 h-4" />
+            </template>
             {{ t('projectList.sortOptions.' + sortBy) }}
-          </button>
-          <div class="absolute right-0 top-full mt-2 w-40 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-            <button
-              v-for="option in ['updated', 'created', 'name', 'wordCount'] as const"
-              :key="option"
-              class="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              :class="sortBy === option ? 'text-indigo-600 dark:text-indigo-400 font-medium' : 'text-gray-700 dark:text-gray-300'"
-              @click="sortBy = option"
-            >
-              {{ t(`projectList.sortOptions.${option}`) }}
-            </button>
-          </div>
-        </div>
+          </NButton>
+        </NDropdown>
         
         <!-- New Project Button -->
-        <button
+        <NButton
+          type="primary"
           @click="createNewProject"
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-105 transition-all"
         >
-          <Plus class="w-4 h-4" />
+          <template #icon>
+            <Plus class="w-4 h-4" />
+          </template>
           {{ t('projectList.newProject') }}
-        </button>
+        </NButton>
       </div>
     </div>
 
@@ -488,19 +496,16 @@ function getCardGradient(index: number) {
     </div>
     <template #footer>
       <div class="flex justify-end gap-3">
-        <button 
-          @click="cancelRename"
-          class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-        >
+        <NButton @click="cancelRename">
           取消
-        </button>
-        <button 
-          @click="handleRename"
+        </NButton>
+        <NButton
+          type="primary"
           :disabled="!renameProjectName.trim()"
-          class="px-4 py-2 text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          @click="handleRename"
         >
           确定
-        </button>
+        </NButton>
       </div>
     </template>
   </NModal>
@@ -532,18 +537,18 @@ function getCardGradient(index: number) {
     </div>
     <template #footer>
       <div class="flex justify-end gap-3">
-        <button 
-          @click="cancelDelete"
-          class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-        >
+        <NButton @click="cancelDelete">
           取消
-        </button>
-        <button 
+        </NButton>
+        <NButton
+          type="error"
           @click="handleDelete"
-          class="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg shadow-md hover:shadow-lg transition-all"
         >
+          <template #icon>
+            <Trash2 class="w-4 h-4" />
+          </template>
           删除
-        </button>
+        </NButton>
       </div>
     </template>
   </NModal>

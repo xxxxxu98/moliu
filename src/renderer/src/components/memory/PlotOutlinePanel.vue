@@ -203,15 +203,11 @@ async function handleDeletePlot(id: string) {
 <template>
   <div class="space-y-4">
     <!-- Search -->
-    <div class="relative">
-      <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--moliu-text-secondary)]" />
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="搜索剧情大纲..."
-        class="w-full pl-10 pr-4 py-2 rounded-lg bg-[var(--moliu-bg-primary)] border border-[var(--moliu-border-color)] text-sm focus:outline-none focus:border-[var(--moliu-primary)]"
-      />
-    </div>
+    <NInput
+      v-model:value="searchQuery"
+      placeholder="搜索剧情大纲..."
+      clearable
+    />
 
     <!-- Add Buttons -->
     <div class="flex flex-wrap gap-2">
@@ -266,18 +262,21 @@ async function handleDeletePlot(id: string) {
                   第{{ plot.chapterRange[0] }}-{{ plot.chapterRange[1] }}章
                 </span>
                 <div class="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100">
-                  <button
-                    class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                    @click.stop="openEditPlotDialog(plot)"
-                  >
-                    <Edit3 class="w-3 h-3 text-gray-400" />
-                  </button>
-                  <button
-                    class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
-                    @click.stop="handleDeletePlot(plot.id)"
-                  >
-                    <Trash2 class="w-3 h-3 text-red-400" />
-                  </button>
+                  <NButton quaternary circle size="small" @click.stop="openEditPlotDialog(plot)">
+                    <template #icon>
+                      <Edit3 class="w-3 h-3 text-gray-400" />
+                    </template>
+                  </NButton>
+                  <NPopconfirm @positive-click="handleDeletePlot(plot.id)">
+                    <template #trigger>
+                      <NButton quaternary circle size="small">
+                        <template #icon>
+                          <Trash2 class="w-3 h-3 text-red-400" />
+                        </template>
+                      </NButton>
+                    </template>
+                    确定要删除这个剧情吗？
+                  </NPopconfirm>
                 </div>
               </div>
             </div>
@@ -322,18 +321,21 @@ async function handleDeletePlot(id: string) {
                   第{{ plot.chapterRange[0] }}-{{ plot.chapterRange[1] }}章
                 </span>
                 <div class="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100">
-                  <button
-                    class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                    @click.stop="openEditPlotDialog(plot)"
-                  >
-                    <Edit3 class="w-3 h-3 text-gray-400" />
-                  </button>
-                  <button
-                    class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
-                    @click.stop="handleDeletePlot(plot.id)"
-                  >
-                    <Trash2 class="w-3 h-3 text-red-400" />
-                  </button>
+                  <NButton quaternary circle size="small" @click.stop="openEditPlotDialog(plot)">
+                    <template #icon>
+                      <Edit3 class="w-3 h-3 text-gray-400" />
+                    </template>
+                  </NButton>
+                  <NPopconfirm @positive-click="handleDeletePlot(plot.id)">
+                    <template #trigger>
+                      <NButton quaternary circle size="small">
+                        <template #icon>
+                          <Trash2 class="w-3 h-3 text-red-400" />
+                        </template>
+                      </NButton>
+                    </template>
+                    确定要删除这个剧情吗？
+                  </NPopconfirm>
                 </div>
               </div>
             </div>

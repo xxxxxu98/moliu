@@ -15,7 +15,9 @@ import {
   StarOff,
   ChevronRight,
   FolderOpen,
+  Search,
 } from "lucide-vue-next";
+import { NInput, NButton, NSelect, NDropdown } from "naive-ui";
 
 // ============================================================
 // Types
@@ -189,6 +191,22 @@ function getStatusText(status: Draft["status"]): string {
       return "已完成";
   }
 }
+
+// Sort options
+const sortOptions = [
+  { label: "最近更新", value: "updated" },
+  { label: "创建时间", value: "created" },
+  { label: "标题", value: "title" },
+];
+
+// Menu options - 使用静态配置，收藏状态在 handleMenuSelect 中动态处理
+const menuOptions = [
+  { label: "收藏/取消收藏", key: "favorite", icon: Star },
+  { label: "复制", key: "duplicate", icon: Copy },
+  { label: "导出", key: "export", icon: Download },
+  { type: "divider", key: "d1" },
+  { label: "删除", key: "delete", icon: Trash2 },
+];
 </script>
 
 <template>
@@ -206,52 +224,39 @@ function getStatusText(status: Draft["status"]): string {
 
     <!-- Search & Filter -->
     <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 space-y-3">
-      <div class="relative">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="搜索草稿..."
-          class="w-full px-3 py-2 pl-9 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-        />
-        <svg
-          class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </div>
+      <NInput
+        v-model:value="searchQuery"
+        placeholder="搜索草稿..."
+        clearable
+      >
+        <template #prefix>
+          <Search class="w-4 h-4 text-gray-400" />
+        </template>
+      </NInput>
 
       <!-- Status Filter -->
       <div class="flex gap-1 overflow-x-auto pb-1">
-        <button
+        <NButton
           v-for="(count, status) in statusCounts"
           :key="status"
-          class="px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors"
-          :class="[
-            filterStatus === status
-              ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700',
-          ]"
+          size="small"
+          :type="filterStatus === status ? 'primary' : 'default'"
+          :quaternary="filterStatus !== status"
           @click="filterStatus = status as any"
         >
           {{ status === 'all' ? '全部' : getStatusText(status as Draft['status']) }}
           <span class="ml-1 opacity-60">{{ count }}</span>
-        </button>
+        </NButton>
       </div>
     </div>
 
     <!-- Sort -->
     <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
-      <select
-        v-model="sortBy"
-        class="w-full px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 focus:outline-none"
-      >
-        <option value="updated">最近更新</option>
-        <option value="created">创建时间</option>
-        <option value="title">标题</option>
-      </select>
+      <NSelect
+        v-model:value="sortBy"
+        :options="sortOptions"
+        size="small"
+      />
     </div>
 
     <!-- Draft List -->
@@ -285,16 +290,20 @@ function getStatusText(status: Draft["status"]): string {
               <div class="flex-1 min-w-0">
                 <!-- Title Row -->
                 <div class="flex items-center gap-2 mb-1">
-                  <button
-                    class="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  <NButton
+                    quaternary
+                    circle
+                    size="small"
                     @click.stop="toggleFavorite(draft.id)"
                   >
-                    <Star
-                      v-if="draft.isFavorite"
-                      class="w-4 h-4 text-amber-500 fill-current"
-                    />
-                    <StarOff v-else class="w-4 h-4 text-gray-300 dark:text-gray-600" />
-                  </button>
+                    <template #icon>
+                      <Star
+                        v-if="draft.isFavorite"
+                        class="w-4 h-4 text-amber-500 fill-current"
+                      />
+                      <StarOff v-else class="w-4 h-4 text-gray-400" />
+                    </template>
+                  </NButton>
                   <h4 class="font-medium text-gray-900 dark:text-white truncate">
                     {{ draft.title || "无标题" }}
                   </h4>
@@ -341,41 +350,32 @@ function getStatusText(status: Draft["status"]): string {
           </div>
 
           <!-- Actions Menu -->
-          <div
-            v-if="openMenuId === draft.id"
-            class="absolute right-2 top-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10"
+          <NDropdown
+            :trigger="'manual'"
+            :show="openMenuId === draft.id"
+            :options="[
+              { label: draft.isFavorite ? '取消收藏' : '收藏', key: 'favorite' },
+              { label: '复制', key: 'duplicate' },
+              { label: '导出', key: 'export' },
+              { type: 'divider', key: 'd1' },
+              { label: '删除', key: 'delete' },
+            ]"
+            @select="(key: string) => {
+              openMenuId = null;
+              if (key === 'favorite') toggleFavorite(draft.id);
+              if (key === 'duplicate') duplicateDraft(draft);
+              if (key === 'export') exportDraft(draft);
+              if (key === 'delete') deleteDraft(draft.id);
+            }"
+            @clickoutside="openMenuId = null"
+            placement="bottom-end"
           >
-            <button
-              class="w-full px-3 py-1.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-              @click.stop="toggleFavorite(draft.id)"
-            >
-              <Star v-if="draft.isFavorite" class="w-4 h-4 text-amber-500" />
-              <StarOff v-else class="w-4 h-4" />
-              {{ draft.isFavorite ? "取消收藏" : "收藏" }}
-            </button>
-            <button
-              class="w-full px-3 py-1.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-              @click.stop="duplicateDraft(draft)"
-            >
-              <Copy class="w-4 h-4" />
-              复制
-            </button>
-            <button
-              class="w-full px-3 py-1.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-              @click.stop="exportDraft(draft)"
-            >
-              <Download class="w-4 h-4" />
-              导出
-            </button>
-            <hr class="my-1 border-gray-200 dark:border-gray-700" />
-            <button
-              class="w-full px-3 py-1.5 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-              @click.stop="deleteDraft(draft.id)"
-            >
-              <Trash2 class="w-4 h-4" />
-              删除
-            </button>
-          </div>
+            <NButton quaternary circle size="small" @click.stop="toggleMenu(draft.id)">
+              <template #icon>
+                <MoreVertical class="w-4 h-4 text-gray-400" />
+              </template>
+            </NButton>
+          </NDropdown>
         </div>
       </div>
     </div>

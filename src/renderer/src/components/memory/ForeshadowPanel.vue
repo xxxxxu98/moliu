@@ -235,35 +235,32 @@ async function handleDeleteForeshadow(id: string) {
               </div>
               <!-- Status actions -->
               <div v-if="foreshadow.status !== 'resolved'" class="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  class="text-xs px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50"
-                  @click.stop="openEditDialog(foreshadow)"
-                >
+                <NButton size="tiny" type="info" @click.stop="openEditDialog(foreshadow)">
                   编辑
-                </button>
-                <button
+                </NButton>
+                <NButton
                   v-if="foreshadow.status === 'buried'"
-                  class="text-xs px-2 py-1 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-900/50"
+                  size="tiny"
+                  type="warning"
                   @click.stop="handleUpdateStatus(foreshadow, 'foreshadowed')"
                 >
-                  标记为伏笔
-                </button>
-                <button
+                  标记伏笔
+                </NButton>
+                <NButton
                   v-if="foreshadow.status === 'foreshadowed'"
-                  class="text-xs px-2 py-1 rounded bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50"
+                  size="tiny"
+                  type="success"
                   @click.stop="handleUpdateStatus(foreshadow, 'resolved')"
                 >
-                  标记为已回收
-                </button>
+                  标记回收
+                </NButton>
                 <NPopconfirm
                   @positive-click="handleDeleteForeshadow(foreshadow.id)"
                 >
                   <template #trigger>
-                    <button
-                      class="text-xs px-2 py-1 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50"
-                    >
+                    <NButton size="tiny" type="error">
                       删除
-                    </button>
+                    </NButton>
                   </template>
                   确定要删除这个伏笔吗？
                 </NPopconfirm>

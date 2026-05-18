@@ -3,7 +3,7 @@
  * QuickStart v2 - 新三步创作法组件
  * Moliu v2.0 - 基于三步创作法的快速开始组件
  */
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import {
   Sparkles,
   Check,
@@ -17,6 +17,7 @@ import {
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useMessage } from "naive-ui";
+import { NButton, NInput } from "naive-ui";
 import { useSettingsStore } from "@/stores/settings.store";
 import { DEFAULT_WORD_COUNT_RANGE } from "@/services/ai/unified.service";
 import type { GeneratedOutline } from "@/types/inspiration";
@@ -359,71 +360,73 @@ const writingTemplates = [
         </div>
       </div>
       <div class="relative">
-        <button
+        <NButton
           v-if="savedDraft"
-          class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          quaternary
+          circle
           @click="showDraftMenu = !showDraftMenu"
         >
-          <BookOpen class="w-4 h-4 text-amber-500" />
-        </button>
+          <template #icon>
+            <BookOpen class="w-4 h-4 text-amber-500" />
+          </template>
+        </NButton>
         <div
           v-if="showDraftMenu"
           class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10"
         >
-          <button
-            class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+          <NButton
+            quaternary
+            block
             @click="loadDraft"
           >
-            <BookOpen class="w-4 h-4" />
+            <template #icon>
+              <BookOpen class="w-4 h-4" />
+            </template>
             加载草稿
-          </button>
-          <button
-            class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+          </NButton>
+          <NButton
+            quaternary
+            block
             @click="clearDraft"
           >
-            <RotateCcw class="w-4 h-4" />
+            <template #icon>
+              <RotateCcw class="w-4 h-4" />
+            </template>
             清除草稿
-          </button>
+          </NButton>
         </div>
       </div>
     </div>
 
     <!-- Tab Switcher -->
     <div class="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-      <button
-        class="flex-1 py-1.5 text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1"
-        :class="
-          activeTab === 'wizard'
-            ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm'
-            : 'text-gray-500 dark:text-gray-400'
-        "
+      <NButton
+        class="flex-1"
+        :type="activeTab === 'wizard' ? 'primary' : 'default'"
+        :quaternary="activeTab !== 'wizard'"
         @click="switchTab('wizard')"
       >
-        <Sparkles class="w-3.5 h-3.5" />
+        <template #icon>
+          <Sparkles class="w-3.5 h-3.5" />
+        </template>
         三步法
-      </button>
-      <button
-        class="flex-1 py-1.5 text-sm font-medium rounded-md transition-all"
-        :class="
-          activeTab === 'templates'
-            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-            : 'text-gray-500 dark:text-gray-400'
-        "
+      </NButton>
+      <NButton
+        class="flex-1"
+        :type="activeTab === 'templates' ? 'primary' : 'default'"
+        :quaternary="activeTab !== 'templates'"
         @click="switchTab('templates')"
       >
         {{ t("quickStart.templateMarket") }}
-      </button>
-      <button
-        class="flex-1 py-1.5 text-sm font-medium rounded-md transition-all"
-        :class="
-          activeTab === 'custom'
-            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-            : 'text-gray-500 dark:text-gray-400'
-        "
+      </NButton>
+      <NButton
+        class="flex-1"
+        :type="activeTab === 'custom' ? 'primary' : 'default'"
+        :quaternary="activeTab !== 'custom'"
         @click="switchTab('custom')"
       >
         {{ t("quickStart.customInput") }}
-      </button>
+      </NButton>
     </div>
 
     <!-- Wizard Tab -->
@@ -438,27 +441,23 @@ const writingTemplates = [
     <!-- Templates Tab -->
     <div v-else-if="activeTab === 'templates'" class="space-y-3">
       <div class="grid grid-cols-2 gap-2">
-        <button
+        <NButton
           v-for="template in writingTemplates"
           :key="template.id"
-          class="p-3 rounded-xl border-2 text-left transition-all duration-200"
-          :class="[
-            selectedTemplate?.id === template.id
-              ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20'
-              : 'border-gray-100 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700 bg-white dark:bg-gray-800',
-          ]"
+          secondary
+          block
+          class="text-left h-auto py-3"
+          :type="selectedTemplate?.id === template.id ? 'primary' : 'default'"
           @click="selectTemplate(template)"
         >
-          <div class="flex items-center gap-2 mb-1.5">
+          <div class="flex items-center gap-2 mb-1.5 w-full">
             <span class="text-lg">{{ template.icon }}</span>
-            <span class="font-medium text-sm text-gray-900 dark:text-white">{{
-              template.name
-            }}</span>
+            <span class="font-medium text-sm">{{ template.name }}</span>
           </div>
-          <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+          <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 w-full text-left">
             {{ template.description }}
           </p>
-        </button>
+        </NButton>
       </div>
 
       <!-- Template Detail -->
@@ -474,17 +473,13 @@ const writingTemplates = [
 
     <!-- Custom Input Tab -->
     <div v-else-if="activeTab === 'custom'" class="space-y-3">
-      <textarea
-        v-model="prompt"
-        class="w-full h-28 p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border transition-all text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500"
-        :class="[
-          isPromptTooLong
-            ? 'border-red-400 dark:border-red-500'
-            : prompt.trim().length >= MIN_PROMPT_LENGTH
-              ? 'border-green-400 dark:border-green-500'
-              : 'border-gray-200 dark:border-gray-700',
-        ]"
+      <NInput
+        v-model:value="prompt"
+        type="textarea"
         :placeholder="t('quickStart.placeholder')"
+        :autosize="{ minRows: 4, maxRows: 8 }"
+        show-count
+        :status="isPromptTooLong ? 'error' : prompt.trim().length >= MIN_PROMPT_LENGTH ? 'success' : undefined"
       />
       <div class="flex items-center justify-between mt-1.5">
         <div v-if="inputStatus?.type === 'insufficient'" class="flex items-center gap-1 text-xs text-amber-500">
@@ -497,16 +492,19 @@ const writingTemplates = [
         </div>
         <div v-else></div>
         <div class="flex items-center gap-2">
-          <span class="text-xs transition-colors" :class="isPromptTooLong ? 'text-red-500' : 'text-gray-400'">
+          <span class="text-xs transition-colors" :class="isPromptTooLong ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'">
             {{ prompt.length }} / {{ MAX_PROMPT_LENGTH }}
           </span>
-          <button
+          <NButton
             v-if="prompt.trim()"
-            class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            quaternary
+            size="small"
             @click="saveDraft"
           >
-            <Save class="w-3.5 h-3.5 text-gray-400" />
-          </button>
+            <template #icon>
+              <Save class="w-3.5 h-3.5" />
+            </template>
+          </NButton>
         </div>
       </div>
     </div>
@@ -522,23 +520,19 @@ const writingTemplates = [
 
     <!-- Generate Button -->
     <div v-if="activeTab !== 'wizard'" class="relative">
-      <button
-        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-medium shadow-lg transition-all"
-        :class="[
-          canGenerate && !isProcessing
-            ? 'bg-gradient-to-r from-indigo-500 to-purple-600 shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30'
-            : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed',
-        ]"
+      <NButton
+        class="w-full"
+        type="primary"
+        size="large"
         :disabled="!canGenerate || isProcessing"
+        :loading="isProcessing"
         @click="handleGenerateOutlines"
       >
-        <Sparkles v-if="!isProcessing" class="w-4 h-4" />
-        <span
-          v-if="isProcessing"
-          class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-        ></span>
+        <template #icon>
+          <Sparkles v-if="!isProcessing" class="w-4 h-4" />
+        </template>
         {{ isProcessing ? t("quickStart.generating") : t("quickStart.generate") }}
-      </button>
+      </NButton>
     </div>
 
     <!-- Outline Display -->

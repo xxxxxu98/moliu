@@ -12,7 +12,9 @@ import {
   Sparkles,
   Star,
   Flame,
+  Search,
 } from "lucide-vue-next";
+import { NInput, NButton } from "naive-ui";
 
 // ============================================================
 // Types
@@ -188,31 +190,27 @@ function getTrendColor(trend: "rising" | "stable" | "declining"): string {
 
     <!-- Search & Filter -->
     <div class="px-4 py-3 space-y-3 border-b border-gray-100 dark:border-gray-800">
-      <input
-        v-model="searchQuery"
-        type="text"
+      <NInput
+        v-model:value="searchQuery"
         placeholder="搜索题材..."
-        class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
+        clearable
       />
 
       <div class="flex gap-2">
-        <button
+        <NButton
           v-for="filter in [
             { id: 'all', name: '全部' },
             { id: 'rising', name: '上升' },
             { id: 'hot', name: '热门' },
           ]"
           :key="filter.id"
-          class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-          :class="[
-            activeFilter === filter.id
-              ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700',
-          ]"
+          size="small"
+          :type="activeFilter === filter.id ? 'warning' : 'default'"
+          :quaternary="activeFilter !== filter.id"
           @click="activeFilter = filter.id as any"
         >
           {{ filter.name }}
-        </button>
+        </NButton>
       </div>
     </div>
 
@@ -223,14 +221,15 @@ function getTrendColor(trend: "rising" | "stable" | "declining"): string {
         <span class="text-xs font-medium text-gray-700 dark:text-gray-300">编辑推荐</span>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button
+        <NButton
           v-for="tag in recommendedTags"
           :key="tag.id"
-          class="px-3 py-1.5 rounded-lg text-sm bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 hover:shadow-md transition-all"
+          size="small"
+          type="warning"
           @click="selectTag(tag.name)"
         >
           {{ tag.name }}
-        </button>
+        </NButton>
       </div>
     </div>
 
@@ -244,20 +243,17 @@ function getTrendColor(trend: "rising" | "stable" | "declining"): string {
           <div class="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
         </div>
         <div class="space-y-2">
-          <button
+          <NButton
             v-for="tag in filteredTags.filter(t => t.category === category)"
             :key="tag.id"
-            class="w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all"
-            :class="[
-              isSelected(tag.name)
-                ? 'bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700'
-                : 'bg-gray-50 dark:bg-gray-800/50 border border-transparent hover:border-gray-200 dark:hover:border-gray-700',
-            ]"
+            class="w-full flex items-center gap-3 p-2.5 text-left"
+            :type="isSelected(tag.name) ? 'primary' : 'default'"
+            :tertiary="!isSelected(tag.name)"
             @click="selectTag(tag.name)"
           >
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-gray-900 dark:text-white">
+                <span class="text-sm font-medium">
                   {{ tag.name }}
                 </span>
                 <component
@@ -272,14 +268,14 @@ function getTrendColor(trend: "rising" | "stable" | "declining"): string {
               </p>
             </div>
             <div class="text-right flex-shrink-0">
-              <div class="text-sm font-semibold text-gray-900 dark:text-white">
+              <div class="text-sm font-semibold">
                 {{ tag.hotScore }}
               </div>
               <div class="text-xs" :class="tag.growth >= 0 ? 'text-emerald-500' : 'text-red-500'">
                 {{ tag.growth >= 0 ? '+' : '' }}{{ tag.growth }}%
               </div>
             </div>
-          </button>
+          </NButton>
         </div>
       </div>
     </div>

@@ -227,15 +227,15 @@ function getRelationTypeColor(type: string): string {
 <template>
   <div class="space-y-4">
     <!-- Search -->
-    <div class="relative">
-      <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--moliu-text-secondary)]" />
-      <input
-        v-model="searchQuery"
-        type="text"
-        :placeholder="t('character.searchPlaceholder')"
-        class="w-full pl-10 pr-4 py-2 rounded-lg bg-[var(--moliu-bg-primary)] border border-[var(--moliu-border-color)] text-sm focus:outline-none focus:border-[var(--moliu-primary)]"
-      />
-    </div>
+    <NInput
+      v-model:value="searchQuery"
+      :placeholder="t('character.searchPlaceholder')"
+      clearable
+    >
+      <template #prefix>
+        <Search class="w-4 h-4 text-[var(--moliu-text-secondary)]" />
+      </template>
+    </NInput>
 
     <!-- Add Button -->
     <NButton class="w-full" quaternary @click="openCreateCharacterDialog">
@@ -265,21 +265,20 @@ function getRelationTypeColor(type: string): string {
                   <NTag v-if="char.role" size="tiny" type="info">{{ char.role }}</NTag>
                 </div>
                 <div class="flex items-center gap-1">
-                  <button
-                    class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                    @click.stop="openEditCharacterDialog(char)"
-                  >
-                    <Edit3 class="w-3 h-3 text-gray-400" />
-                  </button>
+                  <NButton quaternary circle size="small" @click.stop="openEditCharacterDialog(char)">
+                    <template #icon>
+                      <Edit3 class="w-3 h-3 text-gray-400" />
+                    </template>
+                  </NButton>
                   <NPopconfirm
                     @positive-click="handleDeleteCharacter(char)"
                   >
                     <template #trigger>
-                      <button
-                        class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
-                      >
-                        <Trash2 class="w-3 h-3 text-red-400" />
-                      </button>
+                      <NButton quaternary circle size="small" @click.stop>
+                        <template #icon>
+                          <Trash2 class="w-3 h-3 text-red-400" />
+                        </template>
+                      </NButton>
                     </template>
                     确定要删除这个角色吗？
                   </NPopconfirm>
@@ -512,7 +511,7 @@ function getRelationTypeColor(type: string): string {
               :key="index"
               class="flex items-center gap-2 p-2 rounded bg-[var(--moliu-bg-secondary)] border border-[var(--moliu-border-color)]"
             >
-              <NTag 
+              <NTag
                 size="tiny" 
                 :style="{ backgroundColor: getRelationTypeColor(rel.type) + '20', color: getRelationTypeColor(rel.type) }"
               >
@@ -520,18 +519,16 @@ function getRelationTypeColor(type: string): string {
               </NTag>
               <span class="text-sm font-medium text-[var(--moliu-text-primary)] flex-1">{{ rel.targetName }}</span>
               <span v-if="rel.description" class="text-xs text-[var(--moliu-text-secondary)] truncate flex-1 max-w-[200px]">{{ rel.description }}</span>
-              <button
-                class="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                @click="openEditRelationshipDialog(index)"
-              >
-                <Edit3 class="w-3 h-3 text-gray-400" />
-              </button>
-              <button
-                class="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30"
-                @click="removeRelationship(index)"
-              >
-                <X class="w-3 h-3 text-red-400" />
-              </button>
+              <NButton quaternary circle size="tiny" @click="openEditRelationshipDialog(index)">
+                <template #icon>
+                  <Edit3 class="w-3 h-3 text-gray-400" />
+                </template>
+              </NButton>
+              <NButton quaternary circle size="tiny" @click="removeRelationship(index)">
+                <template #icon>
+                  <X class="w-3 h-3 text-red-400" />
+                </template>
+              </NButton>
             </div>
           </div>
           <div v-else class="text-center py-4 text-sm text-[var(--moliu-text-secondary)] border border-dashed border-[var(--moliu-border-color)] rounded">

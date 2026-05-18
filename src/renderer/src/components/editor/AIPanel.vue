@@ -544,12 +544,14 @@ function getSeverityColorForDeAI(severity: string): string {
           <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
             点击下方按钮前往设置页面配置您的 AI API
           </p>
-          <button
-            class="mt-2 px-3 py-1.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors"
+          <NButton
+            class="mt-2"
+            size="small"
+            type="warning"
             @click="handleOpenSettings"
           >
             前往设置
-          </button>
+          </NButton>
         </div>
       </div>
     </div>
