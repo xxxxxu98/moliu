@@ -4,10 +4,10 @@
  * Moliu v2.0 - 三步创作法的第一步
  */
 import { ref, computed, watch } from "vue";
-import { useI18n } from "vue-i18n";
 import { Sparkles, Heart } from "lucide-vue-next";
 import { GENRE_PROFILES, matchGenreProfile } from "@/data/genre-profiles";
-import type { GenreType } from "@/types/evaluation";
+import { HOOK_TECHNIQUES } from "@/data/hook-techniques";
+import { COOLPOINT_FORMULAS } from "@/data/coolpoint-formulas";
 
 // ============================================================
 // Props & Emits
@@ -125,12 +125,26 @@ const emotionGoals: EmotionGoal[] = [
 
 // 题材选项
 const genreOptions = computed(() => {
+  // Hook 翻译映射
+  const hookNameMap: Record<string, string> = {};
+  HOOK_TECHNIQUES.forEach((h) => {
+    hookNameMap[h.type] = h.name;
+  });
+
+  // CoolPoint 翻译映射
+  const coolpointNameMap: Record<string, string> = {};
+  COOLPOINT_FORMULAS.forEach((cp) => {
+    coolpointNameMap[cp.type] = cp.name;
+  });
+
   return GENRE_PROFILES.slice(0, 8).map((profile) => ({
     id: profile.id,
     name: profile.name,
     description: profile.typicalPatterns[0]?.description || "",
-    hooks: profile.hooks.opening.slice(0, 2),
-    coolpoints: profile.coolpoints.primary.slice(0, 2),
+    hooks: profile.hooks.opening.slice(0, 2).map((h) => hookNameMap[h] || h),
+    coolpoints: profile.coolpoints.primary
+      .slice(0, 2)
+      .map((cp) => coolpointNameMap[cp] || cp),
   }));
 });
 
@@ -211,7 +225,7 @@ watch(
     selectedGenres.value = newVal.genres;
     customPrompt.value = newVal.customPrompt;
   },
-  { deep: true }
+  { deep: true },
 );
 </script>
 
@@ -267,7 +281,11 @@ watch(
             v-if="selectedEmotions.includes(goal.id)"
             class="absolute top-2 right-2 w-5 h-5 rounded-full bg-white/30 flex items-center justify-center"
           >
-            <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <svg
+              class="w-3 h-3 text-white"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
               <path
                 fill-rule="evenodd"
                 d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -285,7 +303,12 @@ watch(
       >
         <p class="text-xs text-pink-600 dark:text-pink-400 mb-1">参考案例：</p>
         <p class="text-xs text-pink-700 dark:text-pink-300 italic">
-          "{{ selectedEmotionDetails.map((g) => g?.example).filter(Boolean).join('；') }}"
+          "{{
+            selectedEmotionDetails
+              .map((g) => g?.example)
+              .filter(Boolean)
+              .join("；")
+          }}"
         </p>
       </div>
     </div>
@@ -299,7 +322,9 @@ watch(
           <Sparkles class="w-4 h-4 text-white" />
         </div>
         <div>
-          <h4 class="text-sm font-medium text-gray-900 dark:text-white">题材类型</h4>
+          <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+            题材类型
+          </h4>
           <p class="text-xs text-gray-500 dark:text-gray-400">
             选择故事发生的背景和类型
           </p>
@@ -323,9 +348,7 @@ watch(
               {{ genre.name }}
             </span>
           </div>
-          <p
-            class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1"
-          >
+          <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
             {{ genre.description }}
           </p>
           <div class="flex flex-wrap gap-1 mt-2">
