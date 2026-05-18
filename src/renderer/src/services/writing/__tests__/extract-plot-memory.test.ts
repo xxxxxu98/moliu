@@ -28,7 +28,10 @@ describe('extractChapterMemory', () => {
       content: '张三走进长安城，他是一个勇敢的修士。',
     });
     
-    const result = await extractChapterMemory(chapter, 0);
+    const result = await extractChapterMemory(chapter, 0, {
+      enableAIEnhancement: false,
+      enableFileBackup: false,
+    });
     
     expect(result).toBeDefined();
     expect(result.chapterId).toBe(chapter.id);
