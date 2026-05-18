@@ -20,6 +20,7 @@ import {
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useMessage } from "naive-ui";
+import { NModal, NInput, NSelect, NButton } from "naive-ui";
 import { useInspirationStore } from "@/stores/inspiration.store";
 import { genreTags as configGenreTags, settingElements as configSettingElements } from "@/data/inspirations";
 import { timing } from "@/config/timing";
@@ -85,6 +86,29 @@ const isAnalyzing = ref(false);
 const analysisInput = ref({ title: "", content: "", genre: "都市" });
 const analysisResult = ref<string>("");
 const selectedAnalysisFocus = ref<AnalysisFocus>("all");
+
+// Genre options for NSelect
+const genreOptions = [
+  { label: "都市", value: "都市" },
+  { label: "玄幻", value: "玄幻" },
+  { label: "仙侠", value: "仙侠" },
+  { label: "穿越", value: "穿越" },
+  { label: "言情", value: "言情" },
+  { label: "科幻", value: "科幻" },
+  { label: "悬疑", value: "悬疑" },
+  { label: "武侠", value: "武侠" },
+  { label: "军事", value: "军事" },
+  { label: "游戏", value: "游戏" },
+];
+
+// Analysis focus options
+const analysisFocusOptions = [
+  { label: "全部", value: "all" },
+  { label: "黄金三章", value: "golden3" },
+  { label: "整体结构", value: "structure" },
+  { label: "人物架构", value: "character" },
+  { label: "情节设计", value: "plot" },
+];
 
 // Selectors
 const selectedOutline = ref<GeneratedOutline | null>(null);
@@ -898,90 +922,100 @@ const settingElements = configSettingElements;
     />
 
     <!-- Analysis Modal -->
-    <Teleport to="body">
-      <div
-        v-if="showAnalysisModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-        @click.self="closeAnalysisModal"
-      >
-        <div class="w-full max-w-3xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-            <div class="flex items-center gap-3">
-              <FileText class="w-5 h-5 text-purple-500" />
-              <h3 class="font-semibold text-gray-900 dark:text-white">拆文分析</h3>
-            </div>
-            <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" @click="closeAnalysisModal">
-              <X class="w-4 h-4 text-gray-400" />
-            </button>
+    <NModal
+      v-model:show="showAnalysisModal"
+      preset="card"
+      title="拆文分析"
+      :style="{ width: '800px', maxHeight: '85vh' }"
+      :mask-closable="true"
+      :bordered="false"
+      class="!bg-white dark:!bg-gray-800 !rounded-2xl"
+    >
+      <template #header-extra>
+        <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <FileText class="w-4 h-4 text-purple-500" />
+          <span>AI智能分析</span>
+        </div>
+      </template>
+
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">书名</label>
+            <NInput
+              v-model:value="analysisInput.title"
+              placeholder="请输入要分析的书名"
+              clearable
+            />
           </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">题材</label>
+            <NSelect
+              v-model:value="analysisInput.genre"
+              :options="genreOptions"
+              placeholder="选择题材"
+            />
+          </div>
+        </div>
 
-          <div class="flex-1 overflow-y-auto p-6 space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">书名</label>
-                <input v-model="analysisInput.title" type="text" placeholder="请输入要分析的书名" class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">题材</label>
-                <select v-model="analysisInput.genre" class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
-                  <option value="都市">都市</option>
-                  <option value="玄幻">玄幻</option>
-                  <option value="仙侠">仙侠</option>
-                  <option value="穿越">穿越</option>
-                  <option value="言情">言情</option>
-                  <option value="科幻">科幻</option>
-                  <option value="悬疑">悬疑</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">分析重点</label>
-              <div class="flex flex-wrap gap-2">
-                <button
-                  v-for="focus in [{ value: 'all', label: '全部' }, { value: 'golden3', label: '黄金三章' }, { value: 'structure', label: '整体结构' }, { value: 'character', label: '人物架构' }, { value: 'plot', label: '情节设计' }]"
-                  :key="focus.value"
-                  class="px-3 py-1.5 rounded-lg text-sm transition-colors"
-                  :class="[selectedAnalysisFocus === focus.value ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-purple-900/30']"
-                  @click="selectedAnalysisFocus = focus.value as AnalysisFocus"
-                >
-                  {{ focus.label }}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">原文内容</label>
-              <textarea v-model="analysisInput.content" rows="8" placeholder="请粘贴要分析的原文内容（前3000字左右效果最佳）" class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
-              <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">建议粘贴3000-5000字，AI将分析其结构、技法和亮点</div>
-            </div>
-
-            <button
-              class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
-              :disabled="isAnalyzing || !analysisInput.title || !analysisInput.content"
-              @click="handleStartAnalysis"
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">分析重点</label>
+          <div class="flex flex-wrap gap-2">
+            <NButton
+              v-for="focus in analysisFocusOptions"
+              :key="focus.value"
+              size="small"
+              :type="selectedAnalysisFocus === focus.value ? 'primary' : 'default'"
+              :quaternary="selectedAnalysisFocus !== focus.value"
+              @click="selectedAnalysisFocus = focus.value as AnalysisFocus"
             >
-              <Search v-if="!isAnalyzing" class="w-4 h-4" />
-              <span v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-              {{ isAnalyzing ? "分析中..." : "开始分析" }}
-            </button>
+              {{ focus.label }}
+            </NButton>
+          </div>
+        </div>
 
-            <div v-if="analysisResult" class="pt-4 border-t border-gray-100 dark:border-gray-800">
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="font-medium text-gray-900 dark:text-white">分析报告</h4>
-                <button class="flex items-center gap-1 px-2 py-1 text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors" @click="copyAnalysisResult">
-                  <Copy class="w-3 h-3" />
-                  复制报告
-                </button>
-              </div>
-              <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 max-h-96 overflow-y-auto">
-                <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-sans">{{ analysisResult }}</pre>
-              </div>
-            </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">原文内容</label>
+          <NInput
+            v-model:value="analysisInput.content"
+            type="textarea"
+            placeholder="请粘贴要分析的原文内容（前3000字左右效果最佳）"
+            :autosize="{ minRows: 6, maxRows: 12 }"
+            show-count
+          />
+          <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">建议粘贴3000-5000字，AI将分析其结构、技法和亮点</div>
+        </div>
+
+        <NButton
+          class="w-full"
+          type="primary"
+          size="large"
+          :loading="isAnalyzing"
+          :disabled="!analysisInput.title || !analysisInput.content"
+          @click="handleStartAnalysis"
+        >
+          <template #icon>
+            <Search v-if="!isAnalyzing" class="w-4 h-4" />
+          </template>
+          {{ isAnalyzing ? "分析中..." : "开始分析" }}
+        </NButton>
+
+        <div v-if="analysisResult" class="pt-4 border-t border-gray-100 dark:border-gray-700">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-medium text-gray-900 dark:text-white">分析报告</h4>
+            <NButton size="small" quaternary @click="copyAnalysisResult">
+              <template #icon>
+                <Copy class="w-3 h-3" />
+              </template>
+              复制报告
+            </NButton>
+          </div>
+          <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 max-h-80 overflow-y-auto">
+            <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-sans">{{ analysisResult }}</pre>
           </div>
         </div>
       </div>
-    </Teleport>
+    </NModal>
   </div>
 </template>
 

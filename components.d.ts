@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    NButton: typeof import('naive-ui')['NButton']
     NColorPicker: typeof import('naive-ui')['NColorPicker']
     NInputNumber: typeof import('naive-ui')['NInputNumber']
     NSelect: typeof import('naive-ui')['NSelect']

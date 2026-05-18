@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Sparkles, Check, ChevronRight, Info } from 'lucide-vue-next';
-import { NModal } from 'naive-ui';
+import { NModal, NButton } from 'naive-ui';
 import { 
   storyCards, 
   getRecommendedCombos, 
@@ -229,14 +229,16 @@ function getDifficultyColor(level: number): string {
             搭配推荐
           </p>
           <div class="flex flex-wrap gap-2">
-            <button
+            <NButton
               v-for="combo in suggestedCombos"
               :key="combo.id"
-              class="px-2 py-1 rounded-lg bg-white dark:bg-gray-800 border border-teal-200 dark:border-teal-700 text-xs text-gray-700 dark:text-gray-300 hover:border-teal-400 transition-colors"
+              size="small"
+              quaternary
+              type="success"
               @click="toggleCard(combo)"
             >
               {{ combo.icon }} {{ combo.name }}
-            </button>
+            </NButton>
           </div>
         </div>
       </template>
@@ -299,39 +301,40 @@ function getDifficultyColor(level: number): string {
 
       <!-- 操作按钮 -->
       <div class="flex justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-        <button
+        <NButton
           v-if="currentStep === 'confirm'"
-          class="px-4 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          quaternary
           @click="backToSelect"
         >
           返回修改
-        </button>
+        </NButton>
         <div v-else></div>
         
         <div class="flex gap-2">
-          <button
-            class="px-4 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            @click="handleClose"
-          >
+          <NButton @click="handleClose">
             取消
-          </button>
-          <button
+          </NButton>
+          <NButton
             v-if="currentStep === 'select'"
-            class="px-4 py-2 rounded-lg text-sm bg-indigo-500 text-white hover:bg-indigo-600 transition-colors disabled:opacity-50"
+            type="primary"
             :disabled="selectedCards.length === 0"
             @click="confirmSelection"
           >
             确认选择 ({{ selectedCards.length }})
-            <ChevronRight class="w-4 h-4 inline" />
-          </button>
-          <button
+            <template #icon>
+              <ChevronRight class="w-4 h-4" />
+            </template>
+          </NButton>
+          <NButton
             v-else
-            class="px-4 py-2 rounded-lg text-sm bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:opacity-90 transition-opacity"
+            type="primary"
             @click="handleConfirm"
           >
             生成大纲
-            <Sparkles class="w-4 h-4 inline" />
-          </button>
+            <template #icon>
+              <Sparkles class="w-4 h-4" />
+            </template>
+          </NButton>
         </div>
       </div>
     </div>
