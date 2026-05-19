@@ -1786,7 +1786,7 @@ function clearTemplateSearch() {
           </div>
 
           <!-- Description - 不截断完整显示 -->
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-3 leading-relaxed">
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-3 leading-relaxed">
             {{ template.description }}
           </p>
 
@@ -1800,10 +1800,6 @@ function clearTemplateSearch() {
               >
                 {{ tag }}
               </span>
-            </div>
-            <div class="flex items-center gap-1 text-xs text-gray-400">
-              <TrendingUp class="w-3.5 h-3.5" />
-              <span>{{ formatUsageCount(template.usageCount) }}人</span>
             </div>
           </div>
         </div>
