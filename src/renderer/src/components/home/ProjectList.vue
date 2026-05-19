@@ -86,7 +86,7 @@ function toggleMenu(projectId: string, event: Event, section: 'recent' | 'all') 
   if (section === 'recent') {
     activeMenuProjectRecent.value = activeMenuProjectRecent.value === projectId ? null : projectId;
   } else {
-    activeMenuProjectAll.value = activeMenuProjectAll.value === projectId ? null : projectId;
+    activeMenuProjectAll.value = activeMenuProjectAll.value === projectId ? projectId : null;
   }
 }
 
@@ -242,6 +242,12 @@ const cardGradients = [
 function getCardGradient(index: number) {
   return cardGradients[index % cardGradients.length];
 }
+
+// Truncate text with ellipsis
+function truncateText(text: string, maxLength: number): string {
+  if (!text || text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + '...';
+}
 </script>
 
 <template>
@@ -324,40 +330,38 @@ function getCardGradient(index: number) {
         <div
           v-for="(project, index) in recentProjects"
           :key="project.id"
-          class="group relative bg-white dark:bg-gray-800 rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border border-gray-100 dark:border-gray-700/50 overflow-hidden"
-          :style="{
-            '--accent-color': getStatusConfig(project.status).gradient.split(' ')[1]
-          }"
+          class="group relative flex flex-col bg-white dark:bg-gray-800 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border border-gray-100 dark:border-gray-700/50 overflow-hidden"
           @click="openProject(project)"
         >
-          <!-- Top accent line -->
+          <!-- Top accent line with gradient -->
           <div 
-            class="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
+            class="h-1.5 flex-shrink-0"
             :class="'bg-gradient-to-r ' + getStatusConfig(project.status).gradient"
           ></div>
           
-          <!-- Background decoration -->
-          <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-5 group-hover:opacity-10 transition-opacity duration-300"
-               :class="'bg-gradient-to-br ' + getStatusConfig(project.status).gradient">
-          </div>
-          
-          <div class="relative">
-            <!-- Header -->
-            <div class="flex justify-between items-start mb-5">
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-400/20 dark:to-purple-400/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+          <!-- Card Content - Fixed height layout -->
+          <div class="flex flex-col flex-1 p-6">
+            <!-- Header Row - Fixed height -->
+            <div class="flex items-start justify-between mb-4 h-[72px]">
+              <div class="flex items-start gap-3 flex-1 min-w-0">
+                <!-- Icon -->
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-400/20 dark:to-purple-400/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
                   <BookOpen class="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
                 </div>
-                <div>
-                  <h4 class="font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-1">
+                <!-- Title & Status -->
+                <div class="flex flex-col min-w-0 flex-1">
+                  <h4 class="font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-tight line-clamp-1" :title="project.name">
                     {{ project.name }}
                   </h4>
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-                        :class="getStatusConfig(project.status).color + '/10 text-' + getStatusConfig(project.status).color.replace('bg-', '')">
-                    {{ getStatusConfig(project.status).text }}
-                  </span>
+                  <div class="mt-1.5">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                          :class="getStatusConfig(project.status).color + '/10 text-' + getStatusConfig(project.status).color.replace('bg-', '')">
+                      {{ getStatusConfig(project.status).text }}
+                    </span>
+                  </div>
                 </div>
               </div>
+              <!-- Menu Button -->
               <NDropdown
                 :show="activeMenuProjectRecent === project.id"
                 :options="menuOptions"
@@ -367,7 +371,7 @@ function getCardGradient(index: number) {
                 trigger="manual"
               >
                 <button 
-                  class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100"
+                  class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 opacity-0 group-hover:opacity-100 flex-shrink-0 ml-2"
                   @click="toggleMenu(project.id, $event, 'recent')"
                 >
                   <MoreHorizontal class="w-5 h-5 text-gray-400" />
@@ -375,13 +379,18 @@ function getCardGradient(index: number) {
               </NDropdown>
             </div>
 
-            <!-- Description -->
-            <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-5 min-h-[2.5rem]">
-              {{ project.description || t('projectList.noDescription') }}
-            </p>
+            <!-- Description - Fixed height container -->
+            <div class="flex-shrink-0 mb-4 h-12">
+              <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                {{ project.description || t('projectList.noDescription') }}
+              </p>
+            </div>
 
-            <!-- Stats Row -->
-            <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700/50">
+            <!-- Spacer -->
+            <div class="flex-1"></div>
+
+            <!-- Stats Row - Fixed at bottom -->
+            <div class="flex-shrink-0 flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700/50 mt-auto">
               <div class="flex items-center gap-4">
                 <span class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                   <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
@@ -407,51 +416,77 @@ function getCardGradient(index: number) {
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('projectList.allProjects') }}</h3>
       </div>
 
-      <div v-if="filteredProjects.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div v-if="filteredProjects.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div
           v-for="(project, index) in filteredProjects"
           :key="project.id"
-          class="group bg-white dark:bg-gray-800/50 rounded-xl p-5 border border-gray-100 dark:border-gray-700/50 cursor-pointer hover:border-indigo-200 dark:hover:border-indigo-700/50 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300"
+          class="group relative flex flex-col bg-white dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 cursor-pointer hover:border-indigo-200 dark:hover:border-indigo-700/50 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300 overflow-hidden"
           @click="openProject(project)"
         >
-          <div class="flex justify-between items-start mb-3">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 flex items-center justify-center">
-                <BookOpen class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          <!-- Top accent line -->
+          <div 
+            class="h-1 flex-shrink-0"
+            :class="'bg-gradient-to-r ' + getStatusConfig(project.status).gradient"
+          ></div>
+          
+          <!-- Card Content -->
+          <div class="flex flex-col flex-1 p-4">
+            <!-- Header Row -->
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+                  <BookOpen class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div class="flex flex-col min-w-0 flex-1">
+                  <h4 class="font-semibold text-gray-900 dark:text-white text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1 leading-tight" :title="project.name">
+                    {{ project.name }}
+                  </h4>
+                  <div class="mt-1">
+                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium"
+                          :class="getStatusConfig(project.status).color + '/10 text-' + getStatusConfig(project.status).color.replace('bg-', '')">
+                      {{ getStatusConfig(project.status).text }}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h4 class="font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                  {{ project.name }}
-                </h4>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-                      :class="getStatusConfig(project.status).color + '/10 text-' + getStatusConfig(project.status).color.replace('bg-', '')">
-                  {{ getStatusConfig(project.status).text }}
-                </span>
-              </div>
-            </div>
-            <NDropdown
-              :show="activeMenuProjectAll === project.id"
-              :options="menuOptions"
-              @select="(key: string) => handleMenuSelect(key, project, 'all')"
-              @clickoutside="activeMenuProjectAll = null"
-              placement="bottom-end"
-              trigger="manual"
-            >
-              <button 
-                class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100"
-                @click="toggleMenu(project.id, $event, 'all')"
+              <NDropdown
+                :show="activeMenuProjectAll === project.id"
+                :options="menuOptions"
+                @select="(key: string) => handleMenuSelect(key, project, 'all')"
+                @clickoutside="activeMenuProjectAll = null"
+                placement="bottom-end"
+                trigger="manual"
               >
-                <MoreHorizontal class="w-4 h-4 text-gray-400" />
-              </button>
-            </NDropdown>
-          </div>
+                <button 
+                  class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
+                  @click="toggleMenu(project.id, $event, 'all')"
+                >
+                  <MoreHorizontal class="w-4 h-4 text-gray-400" />
+                </button>
+              </NDropdown>
+            </div>
 
-          <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">
-            {{ project.description || t('projectList.noDescription') }}
-          </p>
-          <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
-            <span>{{ formatWordCount(project.wordCount) }}</span>
-            <span>{{ formatDate(project.updatedAt) }}</span>
+            <!-- Description - Fixed height -->
+            <div class="flex-shrink-0 mb-3 h-10">
+              <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                {{ project.description || t('projectList.noDescription') }}
+              </p>
+            </div>
+
+            <!-- Spacer -->
+            <div class="flex-1"></div>
+
+            <!-- Footer - Fixed at bottom -->
+            <div class="flex-shrink-0 flex items-center justify-between text-[11px] text-gray-400 dark:text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-700/50 mt-auto">
+              <span class="flex items-center gap-1">
+                <FileText class="w-3 h-3" />
+                {{ formatWordCount(project.wordCount) }}
+              </span>
+              <span class="flex items-center gap-1">
+                <Clock class="w-3 h-3" />
+                {{ formatDate(project.updatedAt) }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
