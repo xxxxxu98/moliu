@@ -55,6 +55,10 @@ export const useProjectStore = defineStore('project', () => {
     try {
       const result = await window.electronAPI.listProjects() as Project[];
       projects.value = result || [];
+      // 自动计算每个项目的 wordCount（根据章节字数总和）
+      projects.value.forEach(p => {
+        p.wordCount = (p.chapters || []).reduce((sum, ch) => sum + (ch.wordCount || 0), 0);
+      });
     } catch (error) {
       console.error('Failed to load projects:', error);
       projects.value = [];
@@ -95,8 +99,12 @@ export const useProjectStore = defineStore('project', () => {
   async function saveCurrentProject() {
     if (!currentProject.value) return;
     
+    // 同步更新项目总字数
+    const calculatedWordCount = chapters.value.reduce((sum, ch) => sum + (ch.wordCount || 0), 0);
+    
     const projectToSave: Project = JSON.parse(JSON.stringify({
       ...currentProject.value,
+      wordCount: calculatedWordCount,
       volumes: volumes.value,
       chapters: chapters.value,
       characters: characters.value,
@@ -155,6 +163,10 @@ export const useProjectStore = defineStore('project', () => {
         ...updates,
         updatedAt: new Date().toISOString(),
       };
+      // 同步更新当前项目的总字数
+      if (currentProject.value) {
+        currentProject.value.wordCount = chapters.value.reduce((sum, ch) => sum + (ch.wordCount || 0), 0);
+      }
       await saveCurrentProject();
     }
   }
@@ -165,6 +177,10 @@ export const useProjectStore = defineStore('project', () => {
       chapters.value.splice(index, 1);
       if (currentChapterId.value === id) {
         currentChapterId.value = chapters.value[0]?.id || null;
+      }
+      // 同步更新当前项目的总字数
+      if (currentProject.value) {
+        currentProject.value.wordCount = chapters.value.reduce((sum, ch) => sum + (ch.wordCount || 0), 0);
       }
       await saveCurrentProject();
     }

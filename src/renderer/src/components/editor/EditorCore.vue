@@ -37,22 +37,10 @@ function handleApplyPolished(polished: string) {
 }
 
 /**
- * 计算中文字符数（不含标点）
+ * 计算字数（直接用字符串长度）
  */
 function countChineseChars(text: string): number {
-  const chineseChars = text.match(/[\u4e00-\u9fa5]/g);
-  return chineseChars ? chineseChars.length : 0;
-}
-
-/**
- * 计算中文词数（粗略估计）
- * 中文词数 ≈ 中文字符数 / 2 + 英文单词数
- */
-function countChineseWords(text: string): number {
-  const chineseChars = countChineseChars(text);
-  const englishWords = text.match(/[a-zA-Z]+/g);
-  const englishCount = englishWords ? englishWords.length : 0;
-  return Math.round(chineseChars / 2) + englishCount;
+  return text.length;
 }
 
 /**
@@ -65,7 +53,7 @@ const writingProgress = computed(() => {
 
 function updateCounts(text: string) {
   charCount.value = text.length;
-  wordCount.value = countChineseWords(text);
+  wordCount.value = countChineseChars(text);
 }
 
 function handleInput(event: Event) {
@@ -93,7 +81,7 @@ async function saveChapter(isAutoSave = false) {
   try {
     await projectStore.updateChapter(projectStore.currentChapterId, {
       content: content.value,
-      wordCount: charCount.value,
+      wordCount: wordCount.value,
     });
     lastSavedContent.value = content.value;
     isSaved.value = true;
