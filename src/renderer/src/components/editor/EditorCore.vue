@@ -4,10 +4,12 @@ import { NScrollbar, NButton, NProgress, useMessage, NDrawer, NDrawerContent } f
 import { Save, Check, FileText, Bold, Italic, List, Heading1, Heading2, Undo, Redo, Wand2 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useProjectStore } from "@/stores/project.store";
+import { useSettingsStore } from "@/stores/settings.store";
 import DeAIPolishPanel from "@/components/editor/DeAIPolishPanel.vue";
 
 const { t } = useI18n();
 const projectStore = useProjectStore();
+const settingsStore = useSettingsStore();
 const message = useMessage();
 
 const editorRef = ref<HTMLTextAreaElement | null>(null);
@@ -68,9 +70,13 @@ function scheduleAutoSave() {
   if (autoSaveTimer.value) {
     clearTimeout(autoSaveTimer.value);
   }
+  // 只在自动保存启用时调度
+  if (!settingsStore.autoSave) {
+    return;
+  }
   autoSaveTimer.value = window.setTimeout(() => {
     saveChapter(true);
-  }, 30000);
+  }, settingsStore.autoSaveInterval * 1000);
 }
 
 async function saveChapter(isAutoSave = false) {
@@ -585,7 +591,11 @@ onUnmounted(() => {
         <textarea
           ref="editorRef"
           v-model="content"
-          class="w-full h-full min-h-[60vh] bg-transparent border-none resize-none focus:outline-none text-gray-900 dark:text-white text-lg leading-relaxed"
+          class="w-full h-full min-h-[60vh] bg-transparent border-none resize-none focus:outline-none text-gray-900 dark:text-white"
+          :style="{
+            fontSize: `${settingsStore.fontSize}px`,
+            lineHeight: settingsStore.lineHeight
+          }"
           :placeholder="t('editor.editorPlaceholder')"
           @input="handleInput"
           @keydown="handleKeyDown"
@@ -622,11 +632,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-textarea {
-  font-family: inherit;
-  line-height: 1.8;
-}
-
 textarea::placeholder {
   color: var(--moliu-text-secondary);
 }
