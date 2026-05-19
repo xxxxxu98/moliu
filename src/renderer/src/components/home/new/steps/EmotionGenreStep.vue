@@ -15,6 +15,7 @@ import { COOLPOINT_FORMULAS } from "@/data/coolpoint-formulas";
 
 interface Props {
   modelValue?: StepData;
+  isGenerating?: boolean;
 }
 
 interface Emits {
@@ -28,6 +29,7 @@ const props = withDefaults(defineProps<Props>(), {
     genres: [],
     customPrompt: "",
   }),
+  isGenerating: false,
 });
 
 const emit = defineEmits<Emits>();
@@ -365,7 +367,7 @@ watch(
         <button
           v-for="genre in genreOptions"
           :key="genre.id"
-          class="p-3 rounded-xl text-left transition-all duration-200 border-2"
+          class="p-3 rounded-xl text-left transition-all duration-200 border-2 relative"
           :class="[
             selectedGenres.includes(genre.id)
               ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20'
@@ -373,6 +375,15 @@ watch(
           ]"
           @click="toggleGenre(genre.id)"
         >
+          <!-- Selected indicator -->
+          <div
+            v-if="selectedGenres.includes(genre.id)"
+            class="absolute top-2 right-2 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center"
+          >
+            <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+          </div>
           <div class="flex items-center justify-between mb-1">
             <span class="text-sm font-medium text-gray-900 dark:text-white">
               {{ genre.name }}
@@ -422,16 +433,17 @@ watch(
 
     <!-- Next Button -->
     <button
-      class="w-full py-3 rounded-xl font-medium transition-all"
+      class="w-full py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2"
       :class="[
-        canProceed
+        canProceed && !isGenerating
           ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg hover:shadow-xl'
           : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed',
       ]"
-      :disabled="!canProceed"
+      :disabled="!canProceed || isGenerating"
       @click="handleNext"
     >
-      下一步：核心设定
+      <span v-if="isGenerating" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+      <span>{{ isGenerating ? '生成中...' : '下一步：核心设定' }}</span>
     </button>
   </div>
 </template>

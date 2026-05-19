@@ -5,7 +5,7 @@
  */
 import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { Settings, Sword, Crown, MapPin, Zap, ChevronRight } from "lucide-vue-next";
+import { Settings, Sword, Crown, MapPin, Zap, ChevronRight, ChevronLeft } from "lucide-vue-next";
 import { GENRE_PROFILES } from "@/data/genre-profiles";
 
 // ============================================================
@@ -15,6 +15,7 @@ import { GENRE_PROFILES } from "@/data/genre-profiles";
 interface Props {
   modelValue?: StepData;
   genres?: string[];
+  isGenerating?: boolean;
 }
 
 interface Emits {
@@ -33,6 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
     antagonistType: "",
   }),
   genres: () => [],
+  isGenerating: false,
 });
 
 const emit = defineEmits<Emits>();
@@ -301,22 +303,31 @@ watch(
     <!-- Navigation Buttons -->
     <div class="flex gap-3">
       <button
-        class="flex-1 py-3 rounded-xl font-medium border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+        class="flex-1 py-3 rounded-xl font-medium border-2 transition-all flex items-center justify-center gap-2"
+        :class="[
+          !isGenerating
+            ? 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+            : 'border-gray-100 dark:border-gray-800 text-gray-400 cursor-not-allowed',
+        ]"
+        :disabled="isGenerating"
         @click="handleBack"
       >
-        上一步
+        <ChevronLeft v-if="!isGenerating" class="w-4 h-4" />
+        <span v-if="isGenerating" class="w-4 h-4 border-2 border-gray-400/30 border-t-gray-400 rounded-full animate-spin"></span>
+        {{ isGenerating ? '生成中...' : '上一步' }}
       </button>
       <button
-        class="flex-1 py-3 rounded-xl font-medium transition-all"
+        class="flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2"
         :class="[
-          canProceed
+          canProceed && !isGenerating
             ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg hover:shadow-xl'
             : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed',
         ]"
-        :disabled="!canProceed"
+        :disabled="!canProceed || isGenerating"
         @click="handleNext"
       >
-        下一步：爽点规划
+        <span v-if="isGenerating" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+        {{ isGenerating ? '生成中...' : '下一步：爽点规划' }}
       </button>
     </div>
   </div>

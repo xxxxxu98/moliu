@@ -3,8 +3,8 @@
  * 步骤向导组件
  * Moliu v2.0 - 三步创作法的主容器
  */
-import { ref, computed, provide, watch } from "vue";
-import { ChevronRight, ChevronLeft, Sparkles, RotateCcw } from "lucide-vue-next";
+import { ref, computed, provide } from "vue";
+import { Sparkles, RotateCcw } from "lucide-vue-next";
 import EmotionGenreStep from "./steps/EmotionGenreStep.vue";
 import CoreSettingStep from "./steps/CoreSettingStep.vue";
 import CoolPointStep from "./steps/CoolPointStep.vue";
@@ -12,6 +12,8 @@ import CoolPointStep from "./steps/CoolPointStep.vue";
 // ============================================================
 // Types
 // ============================================================
+
+type RhythmType = "single" | "combo" | "cascade";
 
 interface StepData {
   emotionGenre: {
@@ -30,16 +32,25 @@ interface StepData {
   coolPoint: {
     coolPoints: any[];
     hooks: any[];
-    rhythmType: string;
+    rhythmType: RhythmType;
     antiTropes: string[];
     customCoolPoints: string;
   };
+}
+
+interface Props {
+  /** 是否正在生成中 */
+  isGenerating?: boolean;
 }
 
 interface Emits {
   (e: "complete", data: StepData): void;
   (e: "back"): void;
 }
+
+const props = withDefaults(defineProps<Props>(), {
+  isGenerating: false,
+});
 
 const emit = defineEmits<Emits>();
 
@@ -50,7 +61,7 @@ const emit = defineEmits<Emits>();
 const currentStep = ref(0);
 const totalSteps = 3;
 
-const stepData = ref<StepData>({
+const defaultStepData = (): StepData => ({
   emotionGenre: {
     emotionGoals: [],
     genres: [],
@@ -67,11 +78,13 @@ const stepData = ref<StepData>({
   coolPoint: {
     coolPoints: [],
     hooks: [],
-    rhythmType: "single",
+    rhythmType: "single" as "single" | "combo" | "cascade",
     antiTropes: [],
     customCoolPoints: "",
   },
 });
+
+const stepData = ref<StepData>(defaultStepData());
 
 // ============================================================
 // Computed
@@ -114,28 +127,7 @@ function handleStepBack() {
 
 function handleReset() {
   currentStep.value = 0;
-  stepData.value = {
-    emotionGenre: {
-      emotionGoals: [],
-      genres: [],
-      customPrompt: "",
-    },
-    coreSetting: {
-      worldType: "",
-      powerSystem: "",
-      goldenFinger: "",
-      mainConflict: "",
-      protagonistType: "",
-      antagonistType: "",
-    },
-    coolPoint: {
-      coolPoints: [],
-      hooks: [],
-      rhythmType: "single",
-      antiTropes: [],
-      customCoolPoints: "",
-    },
-  };
+  stepData.value = defaultStepData();
 }
 
 // Provide shared data to child components
@@ -196,6 +188,7 @@ defineExpose({
         <div v-if="currentStep === 0" :key="0">
           <EmotionGenreStep
             v-model="stepData.emotionGenre"
+            :is-generating="isGenerating"
             @complete="handleStepComplete"
           />
         </div>
@@ -205,6 +198,7 @@ defineExpose({
           <CoreSettingStep
             v-model="stepData.coreSetting"
             :genres="currentGenres"
+            :is-generating="isGenerating"
             @complete="handleStepComplete"
             @back="handleStepBack"
           />
@@ -215,6 +209,7 @@ defineExpose({
           <CoolPointStep
             v-model="stepData.coolPoint"
             :genres="currentGenres"
+            :is-generating="isGenerating"
             @complete="handleStepComplete"
             @back="handleStepBack"
           />

@@ -500,7 +500,7 @@ function truncateText(text: string, maxLength: number): string {
         <p class="text-gray-500 dark:text-gray-400 mb-6">{{ t('projectList.emptyDesc') }}</p>
         <button
           @click="createNewProject"
-          class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
+          class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 hover:from-indigo-600 hover:to-purple-700 transition-all duration-200"
         >
           <Plus class="w-5 h-5" />
           {{ t('projectList.createFirstProject') }}

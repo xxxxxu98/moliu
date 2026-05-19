@@ -142,14 +142,13 @@ const showMarketTrendsPanel = ref(false);
 
 const isProcessing = computed(() => isGenerating.value || isCreating.value);
 const combinedError = computed(() => generationError.value || projectCreateError.value);
-const audienceSelected = ref(true);
 
+// 当前步骤索引（0=受众选择, 1=标签, 2=元素, 3=生成）
 const currentStep = computed(() => {
   if (creationTab.value === "quick" && hasQuickSelection.value) return 3;
   if (inspirationStore.selectedElements.length > 0) return 3;
   if (inspirationStore.selectedTags.length > 0) return 2;
-  if (audienceSelected.value) return 1;
-  return 0;
+  return 1;
 });
 
 const hasQuickSelection = computed(() => {
@@ -173,6 +172,14 @@ const displayedElements = computed(() => {
 
 const tagsTotalCount = computed(() => shuffledGenreTags.value.length);
 const elementsTotalCount = computed(() => shuffledSettingElements.value.length);
+
+// 按受众过滤的快速场景
+const filteredQuickScenarios = computed(() => {
+  if (selectedAudience.value === "general") {
+    return quickScenarios;
+  }
+  return quickScenarios.filter(s => s.audience === selectedAudience.value);
+});
 
 // Five dimension evaluation
 const fiveDimensionEvaluation = computed<FiveDimensionEvaluation | null>(() => {
@@ -284,7 +291,6 @@ function toggleElement(elementId: string) {
 
 function selectAudience(audienceId: AudienceType) {
   selectedAudience.value = audienceId;
-  audienceSelected.value = true;
   selectedQuickScenario.value = null;
   inspirationStore.reset();
   shuffledGenreTags.value = shuffleArray(configGenreTags);
@@ -297,7 +303,6 @@ function applyQuickScenario(scenario: QuickScenario) {
   inspirationStore.reset();
   selectedQuickScenario.value = scenario.id;
   selectedAudience.value = scenario.audience;
-  audienceSelected.value = true;
 
   scenario.tags.forEach((tagName) => {
     const tag = configGenreTags.find((g) => g.name === tagName);
@@ -336,7 +341,6 @@ async function randomPick() {
 
   const randomAudience = audienceTypes[Math.floor(Math.random() * audienceTypes.length)];
   selectedAudience.value = randomAudience.id;
-  audienceSelected.value = true;
 
   const tagCount = 1 + Math.floor(Math.random() * 3);
   const elementCount = 1 + Math.floor(Math.random() * 3);
@@ -452,8 +456,7 @@ async function handleStartAnalysis() {
     const aiService = useAIService();
 
     const aiClient = async (prompt: string): Promise<string> => {
-      const response = await aiService.generate(prompt, "concise");
-      return response;
+      return await aiService.complete(prompt);
     };
 
     const report = await TextAnalysisService.analyze(
@@ -639,11 +642,12 @@ const settingElements = configSettingElements;
     <!-- Quick Scenarios -->
     <div v-if="panelState === 'selecting' && creationTab === 'quick'" class="mb-4">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-xs text-gray-500 dark:text-gray-400">选择一个预设模板开始创作</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400">选择{{ selectedAudience === 'general' ? '所有' : audienceTypes.find(a => a.id === selectedAudience)?.name }}类型的模板开始创作</span>
+        <span class="text-xs text-amber-500">{{ filteredQuickScenarios.length }} 个可用</span>
       </div>
       <div class="grid grid-cols-2 gap-2">
         <button
-          v-for="scenario in quickScenarios"
+          v-for="scenario in filteredQuickScenarios"
           :key="scenario.id"
           class="p-3 rounded-xl bg-gradient-to-br text-left transition-all duration-200 relative group"
           :class="[scenario.gradient, selectedQuickScenario === scenario.id ? 'ring-2 ring-white ring-offset-2 dark:ring-offset-gray-900 scale-[1.02]' : 'hover:scale-[1.02]']"
@@ -881,28 +885,28 @@ const settingElements = configSettingElements;
     <div class="pt-4 border-t border-gray-100 dark:border-gray-800">
       <div class="grid grid-cols-3 gap-2">
         <button
-          class="flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl border-2 border-dashed border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400 font-medium hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors text-xs"
+          class="flex flex-col items-center justify-center gap-1 px-3 py-3 rounded-xl bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200 shadow-sm hover:shadow-md"
           @click="openAnalysisModal"
         >
-          <Search class="w-3.5 h-3.5" />
-          拆文分析
+          <Search class="w-5 h-5" />
+          <span class="text-xs font-medium">拆文分析</span>
         </button>
         <button
-          class="flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl border-2 border-dashed border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 font-medium hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors text-xs"
+          class="flex flex-col items-center justify-center gap-1 px-3 py-3 rounded-xl bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-200 shadow-sm hover:shadow-md"
           @click="openStoryCardSelector"
         >
-          <Wand2 class="w-3.5 h-3.5" />
-          故事卡
+          <Wand2 class="w-5 h-5" />
+          <span class="text-xs font-medium">故事卡</span>
         </button>
         <button
-          class="flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl border-2 border-dashed border-amber-200 dark:border-amber-700 text-amber-600 dark:text-amber-400 font-medium hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors text-xs"
+          class="flex flex-col items-center justify-center gap-1 px-3 py-3 rounded-xl bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all duration-200 shadow-sm hover:shadow-md"
           @click="openMarketTrendsPanel"
         >
-          <TrendingUp class="w-3.5 h-3.5" />
-          市场趋势
+          <TrendingUp class="w-5 h-5" />
+          <span class="text-xs font-medium">市场趋势</span>
         </button>
       </div>
-      <p class="text-xs text-gray-400 dark:text-gray-500 text-center mt-1">探索创意的无限可能</p>
+      <p class="text-xs text-gray-400 dark:text-gray-500 text-center mt-3">探索创意的无限可能</p>
     </div>
 
     <!-- Market Trends Panel -->
