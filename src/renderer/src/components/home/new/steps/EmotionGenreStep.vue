@@ -171,6 +171,36 @@ const matchedProfile = computed(() => {
   return matchGenreProfile(selectedGenres.value);
 });
 
+// 翻译映射
+const hookNameMap = computed(() => {
+  const map: Record<string, string> = {};
+  HOOK_TECHNIQUES.forEach((h) => {
+    map[h.type] = h.name;
+  });
+  return map;
+});
+
+const coolpointNameMap = computed(() => {
+  const map: Record<string, string> = {};
+  COOLPOINT_FORMULAS.forEach((cp) => {
+    map[cp.type] = cp.name;
+  });
+  return map;
+});
+
+// 翻译后的 hooks 和 coolpoints
+const translatedHooks = computed(() => {
+  if (!matchedProfile.value) return [];
+  return matchedProfile.value.hooks.opening.map((h) => hookNameMap.value[h] || h);
+});
+
+const translatedCoolpoints = computed(() => {
+  if (!matchedProfile.value) return [];
+  return matchedProfile.value.coolpoints.primary
+    .slice(0, 3)
+    .map((cp) => coolpointNameMap.value[cp] || cp);
+});
+
 const canProceed = computed(() => {
   return (
     selectedEmotions.value.length > 0 ||
@@ -378,13 +408,13 @@ watch(
         <div>
           <span class="text-gray-500 dark:text-gray-400">推荐钩子：</span>
           <span class="text-gray-700 dark:text-gray-300">
-            {{ matchedProfile.hooks.opening.join("、") }}
+            {{ translatedHooks.join("、") }}
           </span>
         </div>
         <div>
           <span class="text-gray-500 dark:text-gray-400">核心爽点：</span>
           <span class="text-gray-700 dark:text-gray-300">
-            {{ matchedProfile.coolpoints.primary.slice(0, 3).join("、") }}
+            {{ translatedCoolpoints.join("、") }}
           </span>
         </div>
       </div>

@@ -187,31 +187,6 @@ defineExpose({
           :style="{ width: `${stepProgress}%` }"
         />
       </div>
-      <!-- Step indicators -->
-      <div class="flex justify-between mt-2">
-        <div
-          v-for="step in totalSteps"
-          :key="step"
-          class="flex items-center"
-          :class="step <= currentStep + 1 ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'"
-        >
-          <div
-            class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-colors"
-            :class="[
-              step <= currentStep + 1
-                ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-400',
-            ]"
-          >
-            {{ step }}
-          </div>
-          <span
-            v-if="step < totalSteps"
-            class="w-8 h-0.5 mx-1"
-            :class="step <= currentStep ? 'bg-indigo-500' : 'bg-gray-200 dark:bg-gray-700'"
-          />
-        </div>
-      </div>
     </div>
 
     <!-- Step Content -->
