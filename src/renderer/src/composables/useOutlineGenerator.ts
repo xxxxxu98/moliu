@@ -1,14 +1,27 @@
-import { ref } from "vue";
-import { FunctionCallingClient } from "@/services/ai/function-calling-client";
-import { useSettingsStore } from "@/stores/settings.store";
-import { DEFAULT_WORD_COUNT_RANGE } from "@/services/ai/unified.service";
-import type { GeneratedOutline } from "@/types/inspiration";
+import { ref, computed } from 'vue';
+import { UnifiedOutlineGenerator, type GenerateOptions, type GenerationResult } from '@/services/outline/generators/unified-generator';
+import type { Outline } from '@/services/outline/schemas/outline.schema';
+import type { GeneratedOutline } from '@/types/inspiration';
 
+/**
+ * 生成选项
+ */
 export interface UseOutlineGeneratorOptions {
-  /** 字数范围，可选 */
+  /** 字数范围 */
   wordCountRange?: string;
+  /** 温度参数 */
+  temperature?: number;
+  /** Top P 参数 */
+  topP?: number;
+  /** 最大 Token 数 */
+  maxTokens?: number;
+  /** 最大重试次数 */
+  maxRetries?: number;
 }
 
+/**
+ * 返回值接口
+ */
 export interface UseOutlineGeneratorReturn {
   /** 是否正在生成 */
   isGenerating: ReturnType<typeof ref<boolean>>;
@@ -16,8 +29,16 @@ export interface UseOutlineGeneratorReturn {
   error: ReturnType<typeof ref<string | null>>;
   /** 生成进度 */
   progress: ReturnType<typeof ref<string>>;
+  /** 警告信息列表 */
+  warnings: ReturnType<typeof ref<string[]>>;
+  /** 生成策略 */
+  strategy: ReturnType<typeof ref<string>>;
   /** 生成的大纲列表 */
   outlines: ReturnType<typeof ref<GeneratedOutline[]>>;
+  /** 是否生成成功 */
+  isSuccess: ReturnType<typeof ref<boolean>>;
+  /** 原始 Markdown（用于调试） */
+  rawMarkdown: ReturnType<typeof ref<string>>;
   /** 生成大纲方法 */
   generateOutlines: (prompt: string, options?: UseOutlineGeneratorOptions) => Promise<GeneratedOutline[]>;
   /** 重置状态 */
@@ -26,54 +47,28 @@ export interface UseOutlineGeneratorReturn {
 
 /**
  * 大纲生成 Composable
- * 封装大纲生成的通用逻辑，供 InspirationPanel 和 QuickStart 共用
+ * 使用多层级降级策略，优先 Markdown 解析，兼容所有模型
  */
 export function useOutlineGenerator(): UseOutlineGeneratorReturn {
-  const settingsStore = useSettingsStore();
-
   const isGenerating = ref(false);
   const error = ref<string | null>(null);
-  const progress = ref<string>("");
+  const progress = ref<string>('');
+  const warnings = ref<string[]>([]);
+  const strategy = ref<string>('');
   const outlines = ref<GeneratedOutline[]>([]);
+  const rawMarkdown = ref<string>('');
+
+  // 生成器实例
+  let generator: UnifiedOutlineGenerator | null = null;
 
   /**
-   * 获取可用的 AI Provider
+   * 获取生成器实例
    */
-  function getEnabledProvider() {
-    // 优先使用用户在设置页面选择的默认模型
-    let enabledProvider = null;
-    const defaultModelId = settingsStore.defaultModel;
-
-    if (defaultModelId) {
-      const [providerId, modelName] = defaultModelId.split(":");
-      enabledProvider = settingsStore.aiProviders.find(
-        (p) =>
-          p.id === providerId &&
-          p.modelName === modelName &&
-          p.enabled &&
-          p.apiKey,
-      );
+  function getGenerator(): UnifiedOutlineGenerator {
+    if (!generator) {
+      generator = new UnifiedOutlineGenerator();
     }
-
-    // Fallback: 如果默认模型无效或未设置，找第一个启用的厂商
-    if (!enabledProvider) {
-      enabledProvider = settingsStore.aiProviders.find(
-        (p) => p.enabled && p.apiKey,
-      );
-    }
-
-    return enabledProvider;
-  }
-
-  /**
-   * 验证 AI Provider 配置
-   */
-  function validateProvider(): string | null {
-    const provider = getEnabledProvider();
-    if (!provider) {
-      return "请先在设置中配置 AI 提供商";
-    }
-    return null;
+    return generator;
   }
 
   /**
@@ -86,199 +81,159 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     prompt: string,
     options?: UseOutlineGeneratorOptions,
   ): Promise<GeneratedOutline[]> {
-    const validationError = validateProvider();
-    if (validationError) {
-      error.value = validationError;
-      return [];
-    }
-
-    const provider = getEnabledProvider()!;
-
+    // 重置状态
     isGenerating.value = true;
     error.value = null;
-    progress.value = "";
+    progress.value = '准备生成...';
+    warnings.value = [];
+    strategy.value = '';
     outlines.value = [];
+    rawMarkdown.value = '';
 
     try {
-      const fcClient = new FunctionCallingClient({
-        provider: provider.provider,
-        apiKey: provider.apiKey,
-        baseUrl: provider.baseUrl,
-        model: provider.modelName,
-        temperature: provider.generationConfig?.temperature,
-      });
+      const generator = getGenerator();
 
-      // 使用指定的字数范围或默认范围
-      const wordCountRange = options?.wordCountRange || DEFAULT_WORD_COUNT_RANGE;
+      // 构建生成选项
+      const generateOptions: GenerateOptions = {
+        temperature: options?.temperature ?? 0.7,
+        topP: options?.topP ?? 0.9,
+        maxTokens: options?.maxTokens ?? 8192,
+        wordCountRange: options?.wordCountRange ?? '50万-100万字',
+        maxRetries: options?.maxRetries ?? 2,
+      };
 
-      const result = await fcClient.generateOutline(
+      // 执行生成
+      const result = await generator.generate(
         prompt,
-        wordCountRange,
+        generateOptions,
         (msg) => {
           progress.value = msg;
         },
       );
 
-      if (result && result.outlines && result.outlines.length > 0) {
-        outlines.value = normalizeOutlines(result.outlines);
-        return outlines.value;
-      } else {
-        error.value = "AI 返回格式异常，请重试或更换模型";
-        return [];
-      }
+      // 处理结果
+      return handleGenerationResult(result);
     } catch (err) {
-      console.error("[useOutlineGenerator] Outline generation error:", err);
+      console.error('[useOutlineGenerator] Outline generation error:', err);
       error.value = String(err);
       return [];
     } finally {
       isGenerating.value = false;
+      progress.value = '';
     }
   }
 
   /**
-   * 标准化大纲数据
-   * 统一处理 AI 返回的数据格式，确保包含所有必要字段
+   * 处理生成结果
    */
-  function normalizeOutlines(aiOutlines: any[]): GeneratedOutline[] {
-    return aiOutlines.map((o: any, i: number) => {
-      // 处理角色信息（支持结构化关系）
-      const characters = (Array.isArray(o.characters) ? o.characters : []).map(
-        (c: any) => {
-          // 处理旧格式的 relationships（字符串）
-          if (typeof c.relationships === "string") {
-            return {
-              name: c.name || "",
-              role: c.role || "",
-              description: c.description || "",
-              personality: Array.isArray(c.personality) ? c.personality : [],
-              appearance: c.appearance || "",
-              abilities: Array.isArray(c.abilities) ? c.abilities : [],
-              background: c.background || "",
-              relationships: c.relationships
-                ? [
-                    {
-                      targetName: "",
-                      type: "neutral",
-                      description: c.relationships,
-                    },
-                  ]
-                : [],
-            };
-          }
-          // 新格式的结构化关系
-          return {
-            name: c.name || "",
-            role: c.role || "",
-            description: c.description || "",
-            personality: Array.isArray(c.personality) ? c.personality : [],
-            appearance: c.appearance || "",
-            abilities: Array.isArray(c.abilities) ? c.abilities : [],
-            background: c.background || "",
-            relationships: Array.isArray(c.relationships)
-              ? c.relationships.map((r: any) => ({
-                  targetName: r.targetName || "",
-                  type: r.type || "neutral",
-                  description: r.description || "",
-                }))
-              : [],
-          };
-        },
+  function handleGenerationResult(result: GenerationResult): GeneratedOutline[] {
+    // 更新状态
+    warnings.value = result.warnings;
+    strategy.value = result.strategy;
+    rawMarkdown.value = result.rawMarkdown || '';
+
+    if (result.success && result.outlines.length > 0) {
+      // 转换为 GeneratedOutline 格式
+      const generatedOutlines = result.outlines.map((outline, index) =>
+        convertToGeneratedOutline(outline, index),
       );
 
-      // 处理伏笔信息
-      const foreshadows = (
-        Array.isArray(o.foreshadows) ? o.foreshadows : []
-      ).map((f: any) => {
-        if (typeof f === "string") {
-          return {
-            hint: f,
-            type: "mystery",
-            suggestedChapter: undefined,
-          };
+      outlines.value = generatedOutlines;
+      return generatedOutlines;
+    }
+
+    // 生成失败
+    if (result.errors.length > 0) {
+      error.value = result.errors.join('; ');
+    } else {
+      error.value = '生成失败，请重试';
+    }
+
+    return [];
+  }
+
+  /**
+   * 将 Outline 转换为 GeneratedOutline
+   */
+  function convertToGeneratedOutline(outline: Outline, index: number): GeneratedOutline {
+    // 处理角色信息
+    const characters = (outline.characters || []).map((c) => ({
+      name: c.name || '',
+      role: c.role || '',
+      description: c.description || '',
+      personality: c.personality || [],
+      appearance: c.appearance || '',
+      abilities: c.abilities || [],
+      background: c.background || '',
+      relationships: (c.relationships || []).map((r) => ({
+        targetName: r.targetName || '',
+        type: r.type || 'neutral',
+        description: r.description || '',
+      })),
+    }));
+
+    // 处理伏笔信息
+    const foreshadows = (outline.foreshadows || []).map((f) => ({
+      hint: f.hint || '',
+      type: f.type || 'mystery',
+      suggestedChapter: f.suggestedChapter,
+    }));
+
+    // 处理世界观设定
+    const worldSetting = outline.worldSetting
+      ? {
+          locations: (outline.worldSetting.locations || []).map((l) => ({
+            name: l.name || '',
+            description: l.description || '',
+            level: l.level || 'city',
+            parentName: l.parentName || '',
+          })),
+          factions: (outline.worldSetting.factions || []).map((f) => ({
+            name: f.name || '',
+            description: f.description || '',
+            parentName: f.parentName || '',
+            allies: f.allies || [],
+            enemies: f.enemies || [],
+          })),
+          rules: (outline.worldSetting.rules || []).map((r) => ({
+            name: r.name || '',
+            description: r.description || '',
+            category: r.category || 'custom',
+            relatedRuleNames: r.relatedRuleNames || [],
+          })),
         }
-        return {
-          hint: f.hint || "",
-          type: f.type || "mystery",
-          suggestedChapter: f.suggestedChapter,
-        };
-      });
+      : undefined;
 
-      // 处理世界观设定（支持层级关系）
-      const worldSetting = o.worldSetting
-        ? {
-            locations: (
-              Array.isArray(o.worldSetting.locations)
-                ? o.worldSetting.locations
-                : []
-            ).map((l: any) => ({
-              name: l.name || "",
-              description: l.description || "",
-              level: l.level || "city",
-              parentName: l.parentName || "",
-            })),
-            factions: (
-              Array.isArray(o.worldSetting.factions)
-                ? o.worldSetting.factions
-                : []
-            ).map((f: any) => ({
-              name: f.name || "",
-              description: f.description || "",
-              parentName: f.parentName || "",
-              allies: Array.isArray(f.allies) ? f.allies : [],
-              enemies: Array.isArray(f.enemies) ? f.enemies : [],
-            })),
-            rules: (
-              Array.isArray(o.worldSetting.rules) ? o.worldSetting.rules : []
-            ).map((r: any) => ({
-              name: r.name || "",
-              description: r.description || "",
-              category: r.category || "custom",
-              relatedRuleNames: Array.isArray(r.relatedRuleNames)
-                ? r.relatedRuleNames
-                : [],
-            })),
-          }
-        : undefined;
+    // 处理子情节
+    const subplots = (outline.subplots || []).map((s) => ({
+      title: s.title || '',
+      description: s.description || '',
+      relatedCharacters: s.relatedCharacters || [],
+      chapterRange: s.chapterRange,
+      purpose: s.purpose || '',
+    }));
 
-      // 处理子情节
-      const subplots = (
-        Array.isArray(o.subplots) ? o.subplots : []
-      ).map((s: any) => ({
-        title: s.title || "",
-        description: s.description || "",
-        relatedCharacters: Array.isArray(s.relatedCharacters)
-          ? s.relatedCharacters
-          : [],
-        chapterRange: s.chapterRange || undefined,
-        purpose: s.purpose || "",
-      }));
+    // 处理章节
+    const chapters = (outline.chapters || []).map((ch) => ({
+      title: ch.title || '',
+      summary: ch.summary || '',
+      keyEvents: ch.keyEvents || [],
+      involvedCharacters: ch.involvedCharacters || [],
+    }));
 
-      // 处理章节级大纲
-      const chapters = (
-        Array.isArray(o.chapters) ? o.chapters : []
-      ).map((ch: any) => ({
-        title: ch.title || "",
-        summary: ch.summary || "",
-        keyEvents: Array.isArray(ch.keyEvents) ? ch.keyEvents : [],
-        involvedCharacters: Array.isArray(ch.involvedCharacters)
-          ? ch.involvedCharacters
-          : [],
-      }));
-
-      return {
-        id: `outline-${i}-${Date.now()}`,
-        title: o.title || "",
-        synopsis: o.synopsis || "",
-        genres: Array.isArray(o.genres) ? o.genres : [],
-        worldSetting,
-        subplots,
-        chapters,
-        structure: o.structure || { act1: "", act2a: "", act2b: "", act3: "" },
-        characters,
-        foreshadows,
-        estimatedWordCount: o.estimatedWordCount || 0,
-      };
-    });
+    return {
+      id: outline.id || `outline-${index}-${Date.now()}`,
+      title: outline.title || '未命名大纲',
+      synopsis: outline.synopsis || '',
+      genres: outline.genres || [],
+      worldSetting,
+      subplots,
+      chapters,
+      structure: outline.structure || { act1: '', act2a: '', act2b: '', act3: '' },
+      characters,
+      foreshadows,
+      estimatedWordCount: outline.estimatedWordCount || 0,
+    };
   }
 
   /**
@@ -287,15 +242,25 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
   function reset() {
     isGenerating.value = false;
     error.value = null;
-    progress.value = "";
+    progress.value = '';
+    warnings.value = [];
+    strategy.value = '';
     outlines.value = [];
+    rawMarkdown.value = '';
   }
+
+  // 计算属性
+  const isSuccess = computed(() => outlines.value.length > 0 && !error.value);
 
   return {
     isGenerating,
     error,
     progress,
+    warnings,
+    strategy,
     outlines,
+    isSuccess,
+    rawMarkdown,
     generateOutlines,
     reset,
   };

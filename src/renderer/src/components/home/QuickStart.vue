@@ -1898,9 +1898,9 @@ function clearTemplateSearch() {
       </NButton>
     </div>
 
-    <!-- Outline Display -->
+    <!-- Outline Display - 非 Wizard Tab 时显示 -->
     <OutlineDisplay
-      v-if="generatedOutlines && generatedOutlines.length > 0"
+      v-if="activeTab !== 'wizard' && generatedOutlines && generatedOutlines.length > 0"
       :outlines="generatedOutlines"
       :selected-outline="selectedOutline ?? null"
       :is-generating="!!isProcessing"
