@@ -336,11 +336,3 @@ export function generateChapterTechniquesPrompt(
   
   return sections.join('\n');
 }
-
-// ====== 导出 ======
-
-export {
-  OPENING_TECHNIQUES,
-  ENDING_TECHNIQUES,
-  EMOTION_ARC_CONFIGS,
-};

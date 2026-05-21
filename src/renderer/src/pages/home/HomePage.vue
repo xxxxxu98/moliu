@@ -6,13 +6,14 @@ import ProjectList from "@/components/home/ProjectList.vue";
 import QuickStart from "@/components/home/QuickStart.vue";
 import InspirationPanel from "@/components/home/InspirationPanel.vue";
 import CreateProjectDialog from "@/components/home/CreateProjectDialog.vue";
-import { Wand2, Sparkles, BookOpen, BarChart3 } from 'lucide-vue-next';
+import { Wand2, Sparkles, BookOpen, BarChart3, ListChecks } from 'lucide-vue-next';
 import { useProjectStore } from '@/stores/project.store';
+import ProOutliner from "@/components/home/ProOutliner.vue";
 
 const { t } = useI18n();
 const projectStore = useProjectStore();
 
-type CreationMode = 'guided' | 'inspiration' | null;
+type CreationMode = 'guided' | 'inspiration' | 'professional' | null;
 
 const creationMode = ref<CreationMode>(null);
 const showCreateDialog = ref(false);
@@ -131,7 +132,7 @@ function openCreateDialog() {
 
             <!-- Inspiration -->
             <div
-              class="p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200"
+              class="mb-4 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200"
               :class="[
                 creationMode === 'inspiration'
                   ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-900/20 shadow-lg shadow-amber-500/10'
@@ -149,6 +150,27 @@ function openCreateDialog() {
                 </div>
               </div>
             </div>
+
+            <!-- Professional Outliner -->
+            <div
+              class="p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200"
+              :class="[
+                creationMode === 'professional'
+                  ? 'border-violet-500 bg-violet-50/50 dark:bg-violet-900/20 shadow-lg shadow-violet-500/10'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-violet-300 dark:hover:border-violet-700 bg-white dark:bg-gray-800/50'
+              ]"
+              @click="selectCreationMode('professional')"
+            >
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                  <ListChecks class="w-5 h-5 text-white" />
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-gray-900 dark:text-white mb-1">{{ t('home.creationPaths.professional') || '专业大纲' }}</h4>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('home.creationPaths.professionalDesc') || '五步大纲法 · 卷节拍表 · 卷时间线' }}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Expanded Creation Panel -->
@@ -158,6 +180,9 @@ function openCreateDialog() {
             </div>
             <div v-else-if="creationMode === 'inspiration'" class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
               <InspirationPanel />
+            </div>
+            <div v-else-if="creationMode === 'professional'" class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+              <ProOutliner />
             </div>
           </div>
 

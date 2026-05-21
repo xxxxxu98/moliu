@@ -4,7 +4,6 @@
  */
 
 // Chapter writing techniques
-export * from './chapter-techniques';
 export {
   OPENING_TECHNIQUES,
   ENDING_TECHNIQUES,
@@ -23,7 +22,6 @@ export type {
 } from './chapter-techniques';
 
 // Emotion design
-export * from './emotion-design';
 export {
   EMOTION_CURVE_CONFIGS,
   EMOTION_TYPE_CONFIGS,

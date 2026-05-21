@@ -21,7 +21,9 @@
       "guided": "有方向创作",
       "guidedDesc": "描述你的故事想法，AI 为你生成大纲",
       "inspiration": "灵感探索",
-      "inspirationDesc": "从灵感标签开始，生成完整故事"
+      "inspirationDesc": "从灵感标签开始，生成完整故事",
+      "professional": "专业大纲",
+      "professionalDesc": "五步大纲法 · 卷节拍表 · 卷时间线"
     },
     "stats": {
       "totalWords": "总字数",

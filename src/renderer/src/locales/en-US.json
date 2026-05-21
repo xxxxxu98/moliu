@@ -21,7 +21,9 @@
       "guided": "Guided Creation",
       "guidedDesc": "Describe your story idea, AI generates the outline for you",
       "inspiration": "Inspiration",
-      "inspirationDesc": "Start from inspiration tags, generate a complete story"
+      "inspirationDesc": "Start from inspiration tags, generate a complete story",
+      "professional": "Pro Outliner",
+      "professionalDesc": "Five-Step Outline · Volume Beat · Volume Timeline"
     },
     "stats": {
       "totalWords": "Total Words",

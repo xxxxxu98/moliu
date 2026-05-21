@@ -476,19 +476,3 @@ export function generateEmotionDesignPrompt(config: EmotionDesignConfig): string
   
   return sections.join('\n');
 }
-
-// ====== 导出 ======
-
-export {
-  EMOTION_CURVE_CONFIGS,
-  EMOTION_TYPE_CONFIGS,
-};
-
-export {
-  calculateEmotionAnchors,
-  generateHighPointsFromBeats,
-  createEmotionDesign,
-  getSuggestedEmotionCurves,
-  validateEmotionDesign,
-  generateEmotionDesignPrompt,
-};
