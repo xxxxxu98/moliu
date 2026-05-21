@@ -17,7 +17,6 @@ import { robustJsonParse } from '@/utils/json-parser';
 export interface GenerateOptions {
   temperature?: number;
   topP?: number;
-  maxTokens?: number;
   wordCountRange?: string;
   maxRetries?: number;
 }
@@ -47,7 +46,6 @@ export class UnifiedOutlineGenerator {
   private defaultOptions: GenerateOptions = {
     temperature: 0.7,
     topP: 0.9,
-    maxTokens: 8192,
     maxRetries: 2,
   };
 
@@ -208,7 +206,6 @@ export class UnifiedOutlineGenerator {
           messages,
           temperature: options.temperature || 0.7,
           top_p: options.topP || 0.9,
-          max_tokens: options.maxTokens || 8192,
           response_format: { type: 'json_object' },
         }),
       });
@@ -267,7 +264,6 @@ export class UnifiedOutlineGenerator {
       const result = await service.generateOutline(prompt, {
         temperature: options.temperature,
         topP: options.topP,
-        maxTokens: options.maxTokens,
       }, options.wordCountRange);
 
       if (result && result.outlines) {

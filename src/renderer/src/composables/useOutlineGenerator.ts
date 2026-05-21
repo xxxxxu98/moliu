@@ -13,8 +13,6 @@ export interface UseOutlineGeneratorOptions {
   temperature?: number;
   /** Top P 参数 */
   topP?: number;
-  /** 最大 Token 数 */
-  maxTokens?: number;
   /** 最大重试次数 */
   maxRetries?: number;
 }
@@ -97,7 +95,6 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
       const generateOptions: GenerateOptions = {
         temperature: options?.temperature ?? 0.7,
         topP: options?.topP ?? 0.9,
-        maxTokens: options?.maxTokens ?? 8192,
         wordCountRange: options?.wordCountRange ?? '50万-100万字',
         maxRetries: options?.maxRetries ?? 2,
       };

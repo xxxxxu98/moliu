@@ -13,7 +13,6 @@ import { getSDKProvider, type ProviderType } from '@/config/ai-providers';
 export interface MarkdownGenerateOptions {
   temperature?: number;
   topP?: number;
-  maxTokens?: number;
   wordCountRange?: string;
 }
 
@@ -49,7 +48,6 @@ export class MarkdownOutlineGenerator {
       apiKey?: string;
       baseUrl?: string;
       model?: string;
-      maxTokens?: number;
       contextWindowSafe?: boolean;
     } = {
       provider: sdkProvider,
@@ -82,7 +80,6 @@ export class MarkdownOutlineGenerator {
     const {
       temperature = 0.7,
       topP = 0.9,
-      maxTokens = 8192,
       wordCountRange = '50万-100万字',
     } = options;
 
@@ -96,7 +93,6 @@ export class MarkdownOutlineGenerator {
 
     try {
       const response = await this.client!.chat(messages, {
-        maxTokens,
         temperature,
         topP,
       } as any);
@@ -123,7 +119,6 @@ export class MarkdownOutlineGenerator {
     const {
       temperature = 0.7,
       topP = 0.9,
-      maxTokens = 8192,
       wordCountRange = '50万-100万字',
     } = options;
 
@@ -137,7 +132,6 @@ export class MarkdownOutlineGenerator {
 
     try {
       const stream = this.client!.stream(messages, {
-        maxTokens,
         temperature,
         topP,
       } as any);
