@@ -16,6 +16,12 @@ export interface Project {
   modelConfig?: ModelConfig;
   createdAt: string;
   updatedAt: string;
+  
+  // ====== 大纲增强系统 ======
+  emotionGoal?: EmotionGoal;         // 情绪目标
+  conflictDesign?: ConflictDesign;   // 矛盾设计
+  coolPointDesign?: CoolPointDesign; // 爽点设计
+  storyLines?: StoryLines;          // 八条故事线
 }
 
 // 题材标签
@@ -282,6 +288,220 @@ export interface CharacterStateChange {
   /** 详细变化 */
   detail: string;
 }
+
+// ============================================
+// 大纲增强系统类型定义
+// ============================================
+
+/**
+ * 情绪目标
+ */
+export interface EmotionGoal {
+  id: string;
+  primary: string;          // 核心情绪
+  secondary?: string;       // 次要情绪
+  arc: EmotionArcType;      // 情绪弧线
+  density: number;          // 情绪波动间隔(字)
+  highPoints: number[];     // 情绪高点章节
+  lowPoints: number[];      // 情绪低点章节
+}
+
+export type EmotionArcType = 'rising' | 'falling' | 'wave' | 'mixed';
+
+export const EMOTION_ARC_LABELS: Record<EmotionArcType, { label: string; description: string }> = {
+  rising: { label: '上升型', description: '情绪从低到高，渐入佳境' },
+  falling: { label: '下降型', description: '情绪从高到低，虐心路线' },
+  wave: { label: '波浪型', description: '起伏交替，张弛有度' },
+  mixed: { label: '混合型', description: '多种情绪交织' },
+};
+
+/**
+ * 矛盾设计
+ */
+export interface ConflictDesign {
+  id: string;
+  source: ConflictSourceType;  // 冲突来源
+  escalation: ConflictLevel[];   // 矛盾递进
+  majorConflicts: MajorConflict[]; // 主要冲突
+}
+
+export type ConflictSourceType = 
+  | 'resource'        // 资源/利益
+  | 'faction'         // 阵营/种族
+  | 'path'            // 超凡途径
+  | 'faith'           // 信仰/宗教
+  | 'factionFight'    // 派系之争
+  | 'ideology';       // 理念/三观
+
+export const CONFLICT_SOURCE_LABELS: Record<ConflictSourceType, { label: string; description: string }> = {
+  resource: { label: '资源/利益', description: '争夺资源、利益分配' },
+  faction: { label: '阵营/种族', description: '不同阵营或种族之间的对立' },
+  path: { label: '超凡途径', description: '修炼道路、力量体系的竞争' },
+  faith: { label: '信仰/宗教', description: '宗教信仰、意识形态冲突' },
+  factionFight: { label: '派系之争', description: '同一阵营内部的派系斗争' },
+  ideology: { label: '理念/三观', description: '价值观、人生观的对立' },
+};
+
+export interface ConflictLevel {
+  level: number;        // 层级 1-4
+  name: string;         // 名称
+  description: string;   // 描述
+  examples: string[];    // 示例
+}
+
+export interface MajorConflict {
+  id: string;
+  title: string;         // 标题
+  type: ConflictIntensityType;  // 强度级别
+  status: ConflictStatus;
+  chapters: number[];    // 涉及章节
+  stakes: string;       // 赌注/风险
+  resolution?: string;   // 解决方式
+}
+
+export type ConflictIntensityType = 'S' | 'A' | 'B' | 'C';
+export type ConflictStatus = 'pending' | 'active' | 'resolved';
+
+export const CONFLICT_INTENSITY_LABELS: Record<ConflictIntensityType, { label: string; color: string }> = {
+  S: { label: 'S级', color: '#ef4444' },  // 红色 - 史诗级
+  A: { label: 'A级', color: '#f97316' },  // 橙色 - 重要
+  B: { label: 'B级', color: '#eab308' },  // 黄色 - 中等
+  C: { label: 'C级', color: '#22c55e' },  // 绿色 - 较小
+};
+
+/**
+ * 爽点设计
+ */
+export interface CoolPointDesign {
+  id: string;
+  patterns: CoolPointPattern[];     // 爽点类型
+  arranged: CoolPointArrangement[];  // 已安排爽点
+  density: CoolPointDensity;        // 爽点密度
+}
+
+export interface CoolPointDensity {
+  micro: number;   // 微爽点间隔(字)
+  small: number;   // 小爽点间隔(字)
+  big: number;     // 大爽点间隔(字)
+}
+
+export type CoolPointPattern = 
+  | 'face-slapping'     // 打脸
+  | 'show-off'          // 装逼
+  | 'identity-reveal'   // 身份揭秘
+  | 'growth'            // 成长突破
+  | 'rescue'            // 英雄救美
+  | 'treasure'          // 寻宝获宝
+  | 'breakthrough'       // 境界突破
+  | 'romance'           // 甜蜜恋爱
+  | 'revenge'           // 复仇快感
+  | 'mystery-reveal'    // 谜题揭开
+  | 'comedy'            // 搞笑逗比
+  | 'justice';          // 伸张正义
+
+export const COOL_POINT_PATTERN_LABELS: Record<CoolPointPattern, { label: string; emoji: string }> = {
+  'face-slapping': { label: '打脸爽', emoji: '👋' },
+  'show-off': { label: '装逼爽', emoji: '😎' },
+  'identity-reveal': { label: '身份揭秘', emoji: '🎭' },
+  'growth': { label: '成长突破', emoji: '📈' },
+  'rescue': { label: '英雄救美', emoji: '🛡️' },
+  'treasure': { label: '寻宝获宝', emoji: '💎' },
+  'breakthrough': { label: '境界突破', emoji: '⚡' },
+  'romance': { label: '甜蜜恋爱', emoji: '💕' },
+  'revenge': { label: '复仇快感', emoji: '🔥' },
+  'mystery-reveal': { label: '谜题揭开', emoji: '🔮' },
+  'comedy': { label: '搞笑逗比', emoji: '😄' },
+  'justice': { label: '伸张正义', emoji: '⚖️' },
+};
+
+export interface CoolPointArrangement {
+  id: string;
+  chapter: number;      // 章节
+  type: CoolPointPattern;
+  description: string;   // 描述
+}
+
+/**
+ * 八条故事线
+ */
+export interface StoryLines {
+  id: string;
+  map: MapLine;         // 地图线
+  faction: FactionLine;  // 阵营线
+  character: CharacterLine;  // 人物线
+  goldenfinger: GoldenFingerLine;  // 金手指线
+  worldRules: WorldRulesLine;  // 世界观线
+  conflict: StoryConflictLine;  // 矛盾线
+  collection: CollectionLine;  // 收集线
+  romance: RomanceLine;    // 感情线
+}
+
+export interface MapLine {
+  planned: string[];           // 规划地点
+  introduced: string[];        // 已引入
+  current: string;             // 当前地点
+  chaptersPerLocation: number; // 每地点章节数
+}
+
+export interface FactionLine {
+  planned: string[];          // 规划势力
+  introduced: string[];        // 已引入
+  currentLevel: number;        // 当前等级
+  escalationChapters: number[]; // 升级章节
+}
+
+export interface CharacterLine {
+  planned: { id: string; role: string }[];  // 规划角色
+  introduced: string[];        // 已引入
+  keyRelationships: { from: string; to: string; type: string }[]; // 关键关系
+}
+
+export interface GoldenFingerLine {
+  type: string;               // 金手指类型
+  currentStage: number;       // 当前阶段
+  upgrades: { chapter: number; description: string }[];  // 升级节点
+  nextUpgrade?: { chapter: number; description: string }; // 下次升级
+}
+
+export interface WorldRulesLine {
+  revealed: string[];          // 已揭示规则
+  pending: string[];           // 待揭示规则
+  nextReveal?: { chapter: number; rule: string }; // 下次揭示
+}
+
+export interface StoryConflictLine {
+  chains: {
+    level: number;
+    name: string;
+    description: string;
+    chapters: number[];
+    status: ConflictStatus;
+  }[];
+  activeConflict?: string;     // 当前冲突
+}
+
+export interface CollectionLine {
+  target: string[];            // 收集目标
+  progress: { item: string; acquired: boolean; chapter?: number }[]; // 收集进度
+}
+
+export interface RomanceLine {
+  currentStage: RomanceStageType;  // 当前阶段
+  progression: { chapter: number; stage: RomanceStageType; description: string }[]; // 感情进展
+}
+
+export type RomanceStageType = 'cold' | 'warm' | 'hot' | 'climax';
+
+export const ROMANCE_STAGE_LABELS: Record<RomanceStageType, { label: string; description: string }> = {
+  cold: { label: '冷淡期', description: '两人关系冷淡或尚未相识' },
+  warm: { label: '暧昧期', description: '产生好感，暗生情愫' },
+  hot: { label: '热恋期', description: '确认关系，甜蜜互动' },
+  climax: { label: '高潮期', description: '感情升华，突破难关' },
+};
+
+// ============================================
+// 情节线进度追踪
+// ============================================
 
 /**
  * 情节线进度追踪

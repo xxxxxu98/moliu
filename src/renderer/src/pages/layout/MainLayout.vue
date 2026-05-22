@@ -33,6 +33,11 @@ import {
   Map,
   Wand2,
   RefreshCw,
+  Heart,
+  Swords,
+  Zap,
+  Layers,
+  ChevronsUpDown,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useProjectStore } from "@/stores/project.store";
@@ -43,6 +48,10 @@ import CharacterPanel from "@/components/memory/CharacterPanel.vue";
 import WorldPanel from "@/components/memory/WorldPanel.vue";
 import ForeshadowPanel from "@/components/memory/ForeshadowPanel.vue";
 import PlotOutlinePanel from "@/components/memory/PlotOutlinePanel.vue";
+import EmotionGoalsPanel from "@/components/memory/EmotionGoalsPanel.vue";
+import ConflictDesignPanel from "@/components/memory/ConflictDesignPanel.vue";
+import CoolPointsPanel from "@/components/memory/CoolPointsPanel.vue";
+import StoryLinesPanel from "@/components/memory/StoryLinesPanel.vue";
 import { useActiveAIProvider } from "@/composables/useActiveAIProvider";
 
 const { t } = useI18n();
@@ -55,8 +64,17 @@ const { aiService: activeAIService } = useActiveAIProvider();
 const projectId = computed(() => route.params.id as string);
 const leftSiderCollapsed = ref(false);
 const rightSiderCollapsed = ref(false);
+const showSecondaryTabs = ref(true);
 const activeSidePanel = ref<
-  "chapters" | "plotOutline" | "characters" | "world" | "foreshadows"
+  | "chapters" 
+  | "plotOutline" 
+  | "characters" 
+  | "world" 
+  | "foreshadows"
+  | "emotionGoals"
+  | "conflictDesign"
+  | "coolPoints"
+  | "storyLines"
 >("chapters");
 const expandedVolumes = ref<Set<string>>(new Set(["v1"]));
 const isLoadingProject = ref(false);
@@ -109,7 +127,7 @@ const volumeOptions = computed(() => {
   }));
 });
 
-const sideTabs = computed(
+const primaryTabs = computed(
   () =>
     [
       { key: "chapters", icon: FileText, label: t("editor.title") },
@@ -117,6 +135,16 @@ const sideTabs = computed(
       { key: "characters", icon: Users, label: t("editor.characters") },
       { key: "world", icon: Globe, label: t("editor.world") },
       { key: "foreshadows", icon: Lightbulb, label: t("editor.foreshadows") },
+    ] as const,
+);
+
+const secondaryTabs = computed(
+  () =>
+    [
+      { key: "emotionGoals", icon: Heart, label: "情绪" },
+      { key: "conflictDesign", icon: Swords, label: "矛盾" },
+      { key: "coolPoints", icon: Zap, label: "爽点" },
+      { key: "storyLines", icon: Layers, label: "故事线" },
     ] as const,
 );
 
@@ -550,26 +578,67 @@ async function handleApplyRecommendedTitle() {
         <!-- Side Tabs -->
         <div
           v-if="!leftSiderCollapsed"
-          class="flex border-b border-gray-100 dark:border-gray-800"
+          class="shrink-0 flex flex-col border-b border-gray-100 dark:border-gray-800"
         >
-          <button
-            v-for="tab in sideTabs"
-            :key="tab.key"
-            class="flex-1 py-3 flex flex-col items-center gap-1 text-xs transition-colors relative"
-            :class="[
-              activeSidePanel === tab.key
-                ? 'text-indigo-600 dark:text-indigo-400'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300',
-            ]"
-            @click="activeSidePanel = tab.key"
+          <!-- Primary Tabs -->
+          <div class="flex border-b border-gray-100 dark:border-gray-800">
+            <button
+              v-for="tab in primaryTabs"
+              :key="tab.key"
+              class="flex-1 py-3 flex flex-col items-center gap-1 text-xs transition-colors relative"
+              :class="[
+                activeSidePanel === tab.key
+                  ? 'text-indigo-600 dark:text-indigo-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300',
+              ]"
+              @click="activeSidePanel = tab.key"
+            >
+              <component :is="tab.icon" class="w-5 h-5" />
+              <span>{{ tab.label }}</span>
+              <div
+                v-if="activeSidePanel === tab.key"
+                class="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"
+              ></div>
+            </button>
+          </div>
+
+          <!-- Secondary Tabs -->
+          <div
+            v-show="showSecondaryTabs"
+            class="flex items-center border-t border-gray-100 dark:border-gray-800"
           >
-            <component :is="tab.icon" class="w-5 h-5" />
-            <span>{{ tab.label }}</span>
-            <div
-              v-if="activeSidePanel === tab.key"
-              class="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"
-            ></div>
-          </button>
+            <div class="flex flex-1">
+              <button
+                v-for="tab in secondaryTabs"
+                :key="tab.key"
+                class="flex-1 py-3 flex flex-col items-center gap-1 text-xs transition-colors relative"
+                :class="[
+                  activeSidePanel === tab.key
+                    ? 'text-indigo-600 dark:text-indigo-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300',
+                ]"
+                @click="activeSidePanel = tab.key"
+              >
+                <component :is="tab.icon" class="w-5 h-5" />
+                <span>{{ tab.label }}</span>
+                <div
+                  v-if="activeSidePanel === tab.key"
+                  class="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"
+                ></div>
+              </button>
+            </div>
+            <button
+              class="px-2 py-2 flex items-center justify-center transition-colors"
+              :class="[
+                showSecondaryTabs
+                  ? 'text-indigo-500'
+                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300',
+              ]"
+              @click="showSecondaryTabs = !showSecondaryTabs"
+            >
+              <ChevronsUpDown class="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <!-- Content -->
@@ -715,6 +784,26 @@ async function handleApplyRecommendedTitle() {
           <div v-show="activeSidePanel === 'foreshadows'" class="p-3">
             <ForeshadowPanel />
           </div>
+
+          <!-- Emotion Goals -->
+          <div v-show="activeSidePanel === 'emotionGoals'" class="p-3">
+            <EmotionGoalsPanel />
+          </div>
+
+          <!-- Conflict Design -->
+          <div v-show="activeSidePanel === 'conflictDesign'" class="p-3">
+            <ConflictDesignPanel />
+          </div>
+
+          <!-- Cool Points -->
+          <div v-show="activeSidePanel === 'coolPoints'" class="p-3">
+            <CoolPointsPanel />
+          </div>
+
+          <!-- Story Lines -->
+          <div v-show="activeSidePanel === 'storyLines'" class="p-3">
+            <StoryLinesPanel />
+          </div>
         </NScrollbar>
 
         <!-- Collapsed icons -->
@@ -723,7 +812,24 @@ async function handleApplyRecommendedTitle() {
           class="flex-1 flex flex-col items-center py-3 gap-2"
         >
           <button
-            v-for="tab in sideTabs"
+            v-for="tab in primaryTabs"
+            :key="tab.key"
+            class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors"
+            :class="[
+              activeSidePanel === tab.key
+                ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg'
+                : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300',
+            ]"
+            @click="
+              activeSidePanel = tab.key;
+              leftSiderCollapsed = false;
+            "
+          >
+            <component :is="tab.icon" class="w-5 h-5" />
+          </button>
+          <div class="w-6 h-px bg-gray-200 dark:bg-gray-700 my-1"></div>
+          <button
+            v-for="tab in secondaryTabs"
             :key="tab.key"
             class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors"
             :class="[

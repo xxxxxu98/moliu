@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { Project, Volume, Chapter, Character, WorldSchema, Foreshadow, PlotNode, LocationLevel, RuleCategory, FactionRelation } from '@/types/project';
+import type { 
+  Project, Volume, Chapter, Character, WorldSchema, Foreshadow, PlotNode, LocationLevel, RuleCategory, FactionRelation,
+  EmotionGoal, ConflictDesign, CoolPointDesign, StoryLines
+} from '@/types/project';
 import type { ChapterMemory, PlotThread, CharacterArc, MemoryConfig } from '@/types/project';
 import { DEFAULT_MEMORY_CONFIG } from '@/types/project';
 
@@ -22,6 +25,12 @@ export const useProjectStore = defineStore('project', () => {
   const plotThreads = ref<PlotThread[]>([]);
   const characterArcs = ref<CharacterArc[]>([]);
   const memoryConfig = ref<MemoryConfig>(DEFAULT_MEMORY_CONFIG);
+
+  // 大纲增强系统状态
+  const emotionGoal = ref<EmotionGoal | null>(null);
+  const conflictDesign = ref<ConflictDesign | null>(null);
+  const coolPointDesign = ref<CoolPointDesign | null>(null);
+  const storyLines = ref<StoryLines | null>(null);
 
   // Getters
   const totalWordCount = computed(() => {
@@ -80,6 +89,11 @@ export const useProjectStore = defineStore('project', () => {
         foreshadows.value = result.foreshadows || [];
         plotOutline.value = result.plotOutline || [];
         chapterMemories.value = result.chapterMemories || [];
+        // 加载大纲增强系统数据
+        emotionGoal.value = result.emotionGoal || null;
+        conflictDesign.value = result.conflictDesign || null;
+        coolPointDesign.value = result.coolPointDesign || null;
+        storyLines.value = result.storyLines || null;
         // Set first chapter as current
         if (chapters.value.length > 0) {
           currentChapterId.value = sortedChapters.value[0]?.id || null;
@@ -111,6 +125,10 @@ export const useProjectStore = defineStore('project', () => {
       worldSchema: worldSchema.value,
       foreshadows: foreshadows.value,
       chapterMemories: chapterMemories.value,
+      emotionGoal: emotionGoal.value,
+      conflictDesign: conflictDesign.value,
+      coolPointDesign: coolPointDesign.value,
+      storyLines: storyLines.value,
     }));
     
     try {
@@ -664,6 +682,98 @@ export const useProjectStore = defineStore('project', () => {
     isLoading.value = loading;
   }
 
+  // ============================================
+  // 大纲增强系统操作
+  // ============================================
+
+  /**
+   * 更新情绪目标
+   */
+  async function updateEmotionGoal(goal: EmotionGoal) {
+    emotionGoal.value = goal;
+    if (currentProject.value) {
+      currentProject.value.emotionGoal = goal;
+    }
+    await saveCurrentProject();
+  }
+
+  /**
+   * 删除情绪目标
+   */
+  async function deleteEmotionGoal() {
+    emotionGoal.value = null;
+    if (currentProject.value) {
+      currentProject.value.emotionGoal = undefined;
+    }
+    await saveCurrentProject();
+  }
+
+  /**
+   * 更新矛盾设计
+   */
+  async function updateConflictDesign(design: ConflictDesign) {
+    conflictDesign.value = design;
+    if (currentProject.value) {
+      currentProject.value.conflictDesign = design;
+    }
+    await saveCurrentProject();
+  }
+
+  /**
+   * 删除矛盾设计
+   */
+  async function deleteConflictDesign() {
+    conflictDesign.value = null;
+    if (currentProject.value) {
+      currentProject.value.conflictDesign = undefined;
+    }
+    await saveCurrentProject();
+  }
+
+  /**
+   * 更新爽点设计
+   */
+  async function updateCoolPointDesign(design: CoolPointDesign) {
+    coolPointDesign.value = design;
+    if (currentProject.value) {
+      currentProject.value.coolPointDesign = design;
+    }
+    await saveCurrentProject();
+  }
+
+  /**
+   * 删除爽点设计
+   */
+  async function deleteCoolPointDesign() {
+    coolPointDesign.value = null;
+    if (currentProject.value) {
+      currentProject.value.coolPointDesign = undefined;
+    }
+    await saveCurrentProject();
+  }
+
+  /**
+   * 更新八条故事线
+   */
+  async function updateStoryLines(lines: StoryLines) {
+    storyLines.value = lines;
+    if (currentProject.value) {
+      currentProject.value.storyLines = lines;
+    }
+    await saveCurrentProject();
+  }
+
+  /**
+   * 删除八条故事线
+   */
+  async function deleteStoryLines() {
+    storyLines.value = null;
+    if (currentProject.value) {
+      currentProject.value.storyLines = undefined;
+    }
+    await saveCurrentProject();
+  }
+
   return {
     currentProject,
     projects,
@@ -742,5 +852,18 @@ export const useProjectStore = defineStore('project', () => {
     clearMemories,
     updateMemoryConfig,
     getMemoriesForChapters,
+    // 大纲增强系统
+    emotionGoal,
+    conflictDesign,
+    coolPointDesign,
+    storyLines,
+    updateEmotionGoal,
+    deleteEmotionGoal,
+    updateConflictDesign,
+    deleteConflictDesign,
+    updateCoolPointDesign,
+    deleteCoolPointDesign,
+    updateStoryLines,
+    deleteStoryLines,
   };
 });
