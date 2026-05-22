@@ -4,6 +4,10 @@
  */
 
 import type { Beat, StrandStatus, StoryContract } from '../../contracts';
+import {
+  buildCorePrinciplesPrompt,
+  COOL_POINT_DENSITY,
+} from '../system/core-principles';
 
 /**
  * 卷节拍表选项
@@ -49,8 +53,13 @@ export function buildVolumeBeatPrompt(options: VolumeBeatPromptOptions): {
 function buildSystemPrompt(totalChapters: number, genre?: string, strandConfig?: VolumeBeatPromptOptions['strandConfig']): string {
   const genreSection = genre ? `\n【题材】\n${genre}\n` : '';
   const strandSection = strandConfig ? buildStrandSection(strandConfig) : '';
-  
+
   return `你是一位专业的小说创作顾问。现在需要为卷生成卷节拍表。
+
+${buildCorePrinciplesPrompt()}
+
+${genreSection}
+${strandSection}
 
 【八节点故事结构】
 
@@ -126,6 +135,11 @@ function buildSystemPrompt(totalChapters: number, genre?: string, strandConfig?:
 
 ${genreSection}
 ${strandSection}
+
+【爽点密度要求】
+- 微爽点：每${COOL_POINT_DENSITY.micro}字至少1个
+- 小爽点：每${COOL_POINT_DENSITY.small}字1个
+- 大爽点：每${COOL_POINT_DENSITY.big}字1个
 
 【字数分配建议】
 本卷共${totalChapters}章，约${Math.round(totalChapters * 3000 / 10000)}万字

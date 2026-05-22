@@ -265,6 +265,8 @@ export class OutlinePostProcessor {
       foreshadows: extracted.foreshadows as any,
       worldSetting: extracted.worldSetting,
       estimatedWordCount: extracted.estimatedWordCount,
+      // 新增：支持核心卖点
+      coreSellingPoints: extracted.coreSellingPoints,
     };
 
     // 智能补全标题
@@ -411,6 +413,11 @@ export class OutlinePostProcessor {
       summary: ch.summary || ch.description || ch.content || '',
       keyEvents: this.normalizeArray(ch.keyEvents || ch.events || []),
       involvedCharacters: this.normalizeArray(ch.involvedCharacters || ch.characters || []),
+      // 新增：支持章节核心元素
+      coreEvent: ch.coreEvent || undefined,
+      hook: ch.hook || undefined,
+      coolPoints: this.normalizeArray(ch.coolPoints || []),
+      foreshadows: this.normalizeArray(ch.foreshadows || []),
     }));
   }
 
@@ -438,6 +445,8 @@ export class OutlinePostProcessor {
       hint: fs.hint || fs.content || fs.description || String(fs),
       type: fs.type || 'event',
       suggestedChapter: fs.suggestedChapter || fs.chapter || undefined,
+      // 新增：支持伏笔分期
+      phase: fs.phase || undefined,
     }));
   }
 

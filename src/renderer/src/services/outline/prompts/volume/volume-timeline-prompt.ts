@@ -4,6 +4,7 @@
  */
 
 import type { Beat, TimeAnchor } from '../../contracts';
+import { buildTimelineConstraintPrompt } from '../system/core-principles';
 
 /**
  * 时间线选项
@@ -36,19 +37,17 @@ export function buildTimelinePrompt(options: TimelinePromptOptions): {
  * 构建系统提示词
  */
 function buildSystemPrompt(): string {
+  const timelineConstraints = buildTimelineConstraintPrompt();
+  
   return `你是一位专业的小说创作顾问。现在需要为卷生成卷时间线表。
+
+${timelineConstraints}
 
 【时间线要求】
 1. **时间基准**：确定故事发生的时间点
 2. **单调递增**：时间必须向前推进，不能倒退
 3. **倒计时**：如果有紧迫事件，需要设置倒计时
 4. **合理间隔**：章与章之间的时间间隔要符合情节
-
-【硬约束】
-- 时间线不能倒流
-- 倒计时事件的时间必须递减
-- 长时间跳跃需要交代原因
-- 每章必须有时间锚点
 
 【时间锚点格式】
 {

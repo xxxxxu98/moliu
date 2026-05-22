@@ -1,9 +1,15 @@
 /**
- * Prompt System - Core Prompts
- * Centralized prompt definitions for outline generation
+ * Prompt System - Quick Outline Prompt (v2)
+ * 快速大纲提示词 - 基于 oh-story 和 webnovel-writer 方法论重构
  */
 
 import type { GenreTemplate } from '../../knowledge';
+import {
+  buildCorePrinciplesPrompt,
+  buildEightStrandsPrompt,
+  buildConflictEscalationPrompt,
+  COOL_POINT_DENSITY,
+} from './core-principles';
 
 /**
  * 快速大纲生成选项
@@ -23,17 +29,17 @@ export function buildQuickOutlinePrompt(options: QuickOutlinePromptOptions): {
   system: string;
   user: string;
 } {
-  const { 
-    seed, 
-    genre = '通用', 
-    wordCountRange = '50万-100万字', 
+  const {
+    seed,
+    genre = '通用',
+    wordCountRange = '50万-100万字',
     template,
-    generateCount = 3 
+    generateCount = 3
   } = options;
-  
+
   const system = buildSystemPrompt(genre, template, wordCountRange, generateCount);
   const user = buildUserPrompt(seed, generateCount);
-  
+
   return { system, user };
 }
 
@@ -47,15 +53,16 @@ function buildSystemPrompt(
   generateCount: number
 ): string {
   const genreSection = template ? buildGenreSection(template) : '';
-  
+
   return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
 
-【核心原则】
-1. 生成${generateCount}个不同风格的大纲供选择
-2. 每个大纲要有明确的特色和卖点
-3. 遵循网文创作的核心规律
+${buildCorePrinciplesPrompt()}
 
 ${genreSection}
+
+${buildEightStrandsPrompt()}
+
+${buildConflictEscalationPrompt()}
 
 【大纲结构】
 每个大纲必须包含：
@@ -71,24 +78,76 @@ ${genreSection}
    - 核心性格标签（2-3个关键词）
    - 金手指/独特优势
    - 当前困境
-6. **四幕结构**：
-   - 第一幕（建置）：20%，介绍主角和世界观
-   - 第二幕A（对抗上）：25%，主角遭遇冲突
-   - 第二幕B（对抗下）：25%，冲突升级
-   - 第三幕（结局）：30%，问题解决
-7. **章节大纲**：6-10章，每章一句话
-8. **核心爽点**：2-3个
-9. **主要伏笔**：1-2个
+6. **反派设定**：
+   - 小反派（新手村/前10章）
+   - 中反派（中期势力）
+   - 大反派（终极Boss）
+7. **情绪目标**：
+   - 核心情绪
+   - 情绪弧线
+8. **八条故事线规划**（简要）
+9. **爽点规划**：
+   - 核心爽点2-3个
+   - 爽点节奏
+10. **卷级规划**（2-3卷）
 
 【字数要求】
 预估字数：${wordCountRange}
 
-【格式要求】
-- 输出纯JSON格式：{"outlines":[...]}
-- 每个大纲包含所有上述字段
-- 语言简洁，避免冗长描写
-- 章节标题格式统一为"第X章：标题"
-- 不要输出任何其他内容`;
+【输出格式】
+请以JSON格式输出${generateCount}个大纲：
+
+{
+  "outlines": [
+    {
+      "title": "故事标题",
+      "genre": "题材",
+      "subGenres": ["子题材1", "子题材2"],
+      "oneLineSummary": "一句话概括",
+      
+      "emotionGoal": {
+        "primary": "核心情绪",
+        "arc": "rising/falling/wave/mixed"
+      },
+      
+      "worldSetting": {
+        "type": "世界类型",
+        "locations": ["地点1", "地点2"],
+        "factions": ["势力1", "势力2"],
+        "powerSystem": "力量体系"
+      },
+      
+      "protagonist": {
+        "name": "主角名",
+        "tags": ["标签1", "标签2"],
+        "identity": "身份背景",
+        "goldenFinger": "金手指",
+        "motivation": "核心动机",
+        "currentDilemma": "当前困境"
+      },
+      
+      "antagonist": {
+        "small": "小反派",
+        "medium": "中反派",
+        "big": "大反派"
+      },
+      
+      "eightStrands": {
+        "quest": "主线递进",
+        "faction": "阵营发展",
+        "romance": "感情发展"
+      },
+      
+      "coolPoints": ["爽点1", "爽点2"],
+      
+      "volumes": [
+        { "volumeId": 1, "title": "卷1", "chapterRange": [1, 30], "coreConflict": "核心冲突" }
+      ]
+    }
+  ]
+}
+
+请确保每个大纲都有独特的卖点和风格。`;
 }
 
 /**
@@ -96,33 +155,33 @@ ${genreSection}
  */
 function buildGenreSection(template: GenreTemplate): string {
   let section = `\n【题材：${template.name}】\n${template.description}\n`;
-  
+
   if (template.subGenres?.length) {
     section += `\n可选流派：${template.subGenres.map(s => `${s.name}：${s.description}`).join('、')}\n`;
   }
-  
+
   section += `\n核心爽点：${template.coreCoolPoints.join('、')}\n`;
-  
+
   if (template.powerSystem) {
     section += `\n力量体系：${template.powerSystem.name}\n`;
     section += `等级划分：${template.powerSystem.levels.slice(0, 5).join(' → ')}...\n`;
   }
-  
+
   if (template.factionTypes) {
     section += `\n势力类型：${template.factionTypes.slice(0, 3).join('、')}...\n`;
   }
-  
+
   if (template.paceCharacteristics) {
     section += `\n节奏特点：\n`;
     section += `- 开篇：${template.paceCharacteristics.opening}\n`;
     section += `- 发展：${template.paceCharacteristics.development}\n`;
     section += `- 高潮：${template.paceCharacteristics.climax}\n`;
   }
-  
+
   if (template.antiPatterns.length > 0) {
     section += `\n禁忌：${template.antiPatterns.slice(0, 2).join('、')}\n`;
   }
-  
+
   return section;
 }
 
@@ -134,7 +193,7 @@ function buildUserPrompt(seed: string, count: number): string {
 
 ${seed}
 
-请根据以上创意种子，生成${count}个不同风格的${count > 1 ? '故事大纲' : '故事大纲'}。确保每个大纲都有独特的卖点和吸引力。`;
+请根据以上创意种子，生成${count}个不同风格的网文大纲。每个大纲都要有独特的卖点，避免同质化。`;
 }
 
 /**
@@ -147,7 +206,7 @@ export function buildFiveStepPrompt(params: {
   genre?: string;
 }): { system: string; user: string } {
   const { step, userInput, previousSteps = {}, genre } = params;
-  
+
   const stepPrompts: Record<number, { title: string; system: string; user: string }> = {
     1: {
       title: '确定情绪目标',
@@ -156,23 +215,29 @@ export function buildFiveStepPrompt(params: {
 【任务】
 分析用户的创意种子，确定故事要传达的核心情绪。
 
+${buildCorePrinciplesPrompt()}
+
 【需要输出的内容】
 1. 核心情绪：主要让读者感受到什么？（热血/甜蜜/虐心/紧张/悬疑/治愈等）
 2. 情绪弧线：情绪如何发展？（从低到高/波动起伏/M形/N形等）
 3. 情绪密度：多久需要有一个情绪波动？（建议每3000字）
 4. 情绪高点：计划在哪几个章节设置情绪高峰？
 
-【注意事项】
-- 情绪目标要贯穿全文
-- 选择1-2个核心情绪即可
-- 每个高潮场景都要服务于核心情绪`,
+【输出格式】
+{
+  "primary": "核心情绪",
+  "arc": "rising/falling/wave/mixed",
+  "density": 3000,
+  "highPoints": [5, 20, 50],
+  "lowPoints": [10, 30]
+}`,
       user: `用户的创意种子：
 
 ${userInput}
 
 请分析并输出情绪目标规划。`,
     },
-    
+
     2: {
       title: '设计核心设定',
       system: `你是一位专业的小说创作顾问。现在需要帮助用户设计故事的世界观和核心设定。
@@ -184,20 +249,30 @@ ${userInput}
 1. 世界类型：都市/古代/异世界/未来/玄幻
 2. 核心规则：力量体系/社会规则/特殊设定
 3. 世界矛盾：这个世界的核心冲突是什么？
-4. 金手指设计：主角的独特优势是什么？
+4. 金手指设计：主角的独特优势
 5. 升级体系：实力如何递进？
 
 【参考已有信息】
-${JSON.stringify(previousSteps, null, 2)}`,
+${JSON.stringify(previousSteps, null, 2)}
+
+【输出格式】
+{
+  "type": "世界类型",
+  "powerSystem": { "name": "力量体系", "levels": [] },
+  "goldenFinger": "金手指设计",
+  "coreConflict": "世界核心冲突"
+}`,
       user: `请基于上述信息设计世界观和核心设定。`,
     },
-    
+
     3: {
       title: '设计主角设定',
       system: `你是一位专业的小说创作顾问。现在需要帮助用户设计故事的主角。
 
 【任务】
 设计一个能让读者代入的主角。
+
+${buildCorePrinciplesPrompt()}
 
 【需要输出的内容】
 1. 主角标签：让读者一想到这个词就想到主角的关键词
@@ -210,10 +285,22 @@ ${JSON.stringify(previousSteps, null, 2)}`,
 【注意事项】
 - 主角要有明显的优点和缺点
 - 困境要具体，让读者有代入感
-- 性格要能在压力下展现变化`,
+- 性格要能在压力下展现变化
+
+【输出格式】
+{
+  "name": "主角名",
+  "tags": ["标签1", "标签2"],
+  "identity": "身份背景",
+  "goldenFinger": "金手指",
+  "strengths": ["优势1"],
+  "weaknesses": ["短板1"],
+  "motivation": "核心动机",
+  "currentDilemma": "当前困境"
+}`,
       user: `请设计主角的完整设定。`,
     },
-    
+
     4: {
       title: '设计故事结构',
       system: `你是一位专业的小说创作顾问。现在需要帮助用户设计故事的整体结构。
@@ -221,38 +308,34 @@ ${JSON.stringify(previousSteps, null, 2)}`,
 【任务】
 规划故事的整体框架和关键节点。
 
-【需要输出的内容】
-1. 八条故事线规划：
-   - 地图线：地点如何递进
-   - 阵营线：势力如何发展
-   - 人物线：关键角色何时登场
-   - 金手指线：能力如何升级
-   - 世界观线：设定如何揭示
-   - 矛盾线：冲突如何递进
-   - 收集线：资源/道具如何收集
-   - 感情线：感情如何发展
+${buildEightStrandsPrompt()}
 
-2. 矛盾递进：
-   - 人与自我（内心挣扎）
-   - 人与自然（环境挑战）
-   - 人与人（人际冲突）
-   - 人与世界（终极对抗）
+${buildConflictEscalationPrompt()}
 
 3. 关键转折点：列出3-5个重大转折
 
 【注意事项】
 - 开篇前3000字决定读者去留
 - 每个大情节要有起伏
-- 高潮要足够震撼`,
+- 高潮要足够震撼
+
+【输出格式】
+{
+  "eightStrands": { "quest": {}, "faction": {}, ... },
+  "conflictEscalation": [...],
+  "keyTurningPoints": ["转折1", "转折2"]
+}`,
       user: `请设计故事的完整结构。`,
     },
-    
+
     5: {
       title: '设计爽点安排',
       system: `你是一位专业的小说创作顾问。现在需要帮助用户规划故事的爽点。
 
 【任务】
 设计让读者过瘾的精彩场景。
+
+${buildCorePrinciplesPrompt()}
 
 【需要输出的内容】
 1. 爽点类型：准备使用哪些类型的爽点
@@ -264,9 +347,9 @@ ${JSON.stringify(previousSteps, null, 2)}`,
    - 复仇成功
 
 2. 爽点节奏：
-   - 每章至少1个微爽点
-   - 每3章1个小爽点
-   - 每7章1个大爽点
+   - 每章至少1个微爽点（每${COOL_POINT_DENSITY.micro}字）
+   - 每3章1个小爽点（每${COOL_POINT_DENSITY.small}字）
+   - 每7章1个大爽点（每${COOL_POINT_DENSITY.big}字）
 
 3. 核心高潮：计划2-3个大高潮场景
 
@@ -275,13 +358,21 @@ ${JSON.stringify(previousSteps, null, 2)}`,
 【注意事项】
 - 爽点要提前铺垫
 - 爽点要有递进，越来越大
-- 形式要多样化`,
+- 形式要多样化
+
+【输出格式】
+{
+  "patterns": ["装逼打脸", "实力碾压"],
+  "arranged": [
+    { "chapter": 5, "type": "micro", "description": "描述" }
+  ]
+}`,
       user: `请设计爽点的完整安排。`,
     },
   };
-  
+
   const stepData = stepPrompts[step] || stepPrompts[1];
-  
+
   return {
     system: stepData.system,
     user: stepData.user,
@@ -299,15 +390,15 @@ export function buildChapterWritingPrompt(params: {
   knowledgeContext?: string;
   genre?: string;
 }): { system: string; user: string } {
-  const { 
-    chapterNumber, 
-    chapterTitle, 
-    previousContent, 
+  const {
+    chapterNumber,
+    chapterTitle,
+    previousContent,
     chapterOutline,
     knowledgeContext,
     genre = '通用'
   } = params;
-  
+
   const system = `你是一位专业的小说作家。你的任务是续写第${chapterNumber}章。
 
 【核心原则】写得真实，而非写得正确
@@ -343,6 +434,6 @@ ${previousContent.slice(-500)}
 ${chapterOutline}
 
 请续写第${chapterNumber}章的内容。`;
-  
+
   return { system, user };
 }

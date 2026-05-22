@@ -1,9 +1,17 @@
 /**
- * Prompt System - Chapter Outline Prompt
- * CBN/CPN/CEN 章纲提示词
+ * Prompt System - Chapter Outline Prompt (v2)
+ * CBN/CPN/CEN 章纲提示词 - 基于 webnovel-writer 方法论重构
  */
 
 import type { Beat, StrandStatus, ChapterCommit } from '../../contracts';
+import {
+  buildWritingTipsPrompt,
+  buildChapterNodePrompt,
+  buildTimelineConstraintPrompt,
+  SHOW_DONT_TELL,
+  CUT_SUBLIMATION,
+  COOL_POINT_DENSITY,
+} from '../system/core-principles';
 
 /**
  * 章纲选项
@@ -26,12 +34,12 @@ export function buildChapterOutlinePrompt(options: ChapterOutlinePromptOptions):
   system: string;
   user: string;
 } {
-  const { volumeId, chapterNumber, previousChapterCommit, currentBeat, 
+  const { volumeId, chapterNumber, previousChapterCommit, currentBeat,
           strandStatus, genre, knowledgeContext } = options;
-  
+
   const system = buildSystemPrompt();
   const user = buildUserPrompt(options);
-  
+
   return { system, user };
 }
 
@@ -39,36 +47,35 @@ export function buildChapterOutlinePrompt(options: ChapterOutlinePromptOptions):
  * 构建系统提示词
  */
 function buildSystemPrompt(): string {
-  return `你是一位专业的小说创作顾问。现在需要为章生成章纲。
+  return `你是一位专业的小说创作顾问，擅长章级大纲规划。
 
-【章节结构】
+【章节规划原则】
+1. 每章必须有明确的目标和阻力
+2. 结构化节点：CBN + 2-4 CPN + CEN
+3. 章末必须有未闭合问题（钩子）
+4. 遵守"本章禁区"，不越界
 
-## CBN - 章节起点（必须1个）
-- 功能：承接上文，自然过渡
-- 格式：「主体 | 动作/变化 | 对象/结果」
-- 示例：萧炎 | 抵达 | 迦南学院入口
-- 必须包含：时间锚点、情绪延续
+${buildChapterNodePrompt()}
 
-## CPN - 推进节点（必须2-4个）
-- 功能：推进剧情，制造冲突
-- 按时间顺序排列
-- 每个CPN要有明确的戏剧功能
-- 格式：「主体 | 动作 | 结果」
+${buildTimelineConstraintPrompt()}
 
-## CEN - 章节终点（必须1个）
-- 功能：设置悬念，吸引订阅
-- 格式：「主体 | 动作 | 结果 + 悬念」
-- 必须包含：悬念、钩子类型
+${buildWritingTipsPrompt()}
 
-【核心要素】
-| 要素 | 说明 | 示例 |
-|------|------|------|
-| 目标 | 本章主角要完成什么 | 参加宗门大比 |
-| 阻力 | 遇到什么阻碍 | 对手实力强劲 |
-| 代价 | 失败会有什么后果 | 被逐出宗门 |
-| 时间锚点 | 章节发生在什么时间 | 仙历3021年春 |
-| 爽点 | 本章的亮点（每章必须有） | 越级挑战成功 |
-| Strand | Quest/Fire/Constellation | Quest |
+【Show, Don't Tell 规则】
+禁止直接描写情绪：
+❌ "他感到非常愤怒"
+❌ "她感到十分惊讶"
+✅ "他一拳砸在桌上，杯子震得跳了起来。"
+✅ "她愣住了，半天才回过神来。"
+
+【掐断升华规则】
+禁止在结尾进行总结、说教：
+❌ "这就是成长"、"这就是人生"
+✅ 停在对话/悬念/未完成动作上
+
+【爽点密度要求】
+- 微爽点：每${COOL_POINT_DENSITY.micro}字至少1个
+- 小爽点：每${COOL_POINT_DENSITY.small}字1个
 
 【故事卡类型参考】
 故事卡可以组合使用：
@@ -78,73 +85,82 @@ function buildSystemPrompt(): string {
 - 临危受命：危机到来 + 配角无法解决 + 主角接手
 - 歪打正着：暗示重要性 + 错误方向努力 + 偶然获得
 
-【爽点密度要求】
-- 每章至少1个微爽点
-- 爽点类型：打脸/实力展示/意外收获/感情进展
-
-【本章禁区】（不超过5条）
-只写本章绝对不能发生的硬禁区：
-- 禁止：角色死亡（除非剧情需要）
-- 禁止：关键设定揭示
-- 禁止：感情关系突变
-- 禁止：战力体系崩坏
-
-【伏笔追踪】
-- 本章新埋的伏笔
-- 本章回收的伏笔
-
 【输出格式】
 请以JSON格式输出章纲：
+
 {
-  "chapterId": 1,
-  "volumeId": 1,
+  "chapter_id": 1,
+  "volume_id": 1,
+  
   "nodes": {
-    "cbn": {
-      "statement": "主体 | 动作 | 结果",
-      "承接上文": "...",
-      "情绪延续": "..."
-    },
+    "cbn": "主体 | 动作 | 对象",
     "cpns": [
-      {
-        "id": "CPN1",
-        "statement": "主体 | 动作 | 结果",
-        "戏剧功能": "制造冲突/推进情节/揭示信息",
-        "coolPoint": "爽点描述（可选）"
-      }
+      "主体 | 动作 | 对象",
+      "主体 | 动作 | 对象",
+      "主体 | 动作 | 对象"
     ],
-    "cen": {
-      "statement": "主体 | 动作 | 结果 + 悬念",
-      "悬念": "...",
-      "钩子类型": "冲突悬念/信息悬念/情感悬念"
-    }
+    "cen": "主体 | 动作 | 对象"
   },
+  
   "requirements": {
-    "objective": "本章目标",
-    "resistance": "阻碍",
-    "cost": "代价",
-    "timeAnchor": "时间锚点",
-    "coolPoint": "爽点（必须填写）",
-    "strand": "Quest/Fire/Constellation",
-    "storyCard": "应用的故事卡（可选）"
+    "objective": "本章目标（一句话）",
+    "resistance": "本章阻力（一句话）",
+    "cost": "本章代价（一句话）",
+    "time_anchor": "具体时间点或时间线位置",
+    "chapter_time_span": "本章节内时间跨度",
+    "time_diff_from_prev": "与上章时间差（如：当天/次日/三月后）",
+    "countdown_status": "倒计时状态（如：距宗门大比30天）",
+    "cool_point": {
+      "type": "爽点类型（装逼打脸/实力碾压/意外收获等）",
+      "description": "爽点描述",
+      "setup_chapter": "铺垫章节（如：3）"
+    },
+    "strand": "主线/感情线/副线",
+    "antagonist_level": "小反派/中反派/无"
   },
+  
+  "main_entities": ["本章关键人物", "物品", "地点"],
+  
+  "changes": {
+    "protagonist_change": "主角在本章的变化",
+    "relationship_change": "关系变化（如有）",
+    "plot_change": "剧情变化"
+  },
+  
   "foreshadow": {
-    "new": [{"id": "fs1", "content": "伏笔内容", "payoffChapter": 10}],
+    "new": [
+      { "id": "fs1", "content": "伏笔内容", "buried_in": 1, "payoff_chapter": 50, "type": "mystery/item/dialogue" }
+    ],
     "fulfilled": []
   },
-  "forbiddenZones": [
-    {"type": "character_death", "target": "主角", "reason": "剧情阶段不对"}
+  
+  "unfinished_question": "章末未闭合问题（必须填写，用于设置钩子）",
+  "hook_type": "悬念/转折/危机/意外",
+  
+  "forbidden": [
+    "本章绝对不能发生的硬禁区1",
+    "本章绝对不能发生的硬禁区2"
   ],
-  "wordCount": 3000
-}`;
+  
+  "word_count_target": 3000
+}
+
+【关键要求】
+1. CBN 承接上文自然过渡
+2. CEN 必须有未闭合问题（钩子）
+3. 每章必须有爽点
+4. 时间线必须单调递增
+5. 禁区不超过5条
+6. CPNs 必须按时间顺序`;
 }
 
 /**
  * 构建用户提示词
  */
 function buildUserPrompt(options: ChapterOutlinePromptOptions): string {
-  const { volumeId, chapterNumber, previousChapterCommit, currentBeat, 
+  const { volumeId, chapterNumber, previousChapterCommit, currentBeat,
           strandStatus, genre, knowledgeContext } = options;
-  
+
   let user = `# 第${chapterNumber}章
 
 **所属卷**：第${volumeId}卷
@@ -154,24 +170,24 @@ function buildUserPrompt(options: ChapterOutlinePromptOptions): string {
   if (currentBeat) {
     user += `
 ## 所属节拍
-- **节拍**：${currentBeat.node}
-- **描述**：${currentBeat.description}
+- **节拍类型**：${currentBeat.type}
+- **节拍描述**：${currentBeat.description}
 `;
   }
 
   user += `
 ## 三线状态
-- **Quest**：${strandStatus.quest.mainObjective}
-- **Fire**：${strandStatus.fire.relationshipStage}
-- **Constellation**：${strandStatus.constellation.newRevelations.join('、') || '无'}
+- **Quest（主线）**：${strandStatus.quest.mainObjective}
+- **Fire（感情线）**：关系阶段 ${strandStatus.fire.relationshipStage}
+- **Constellation（世界观线）**：${strandStatus.constellation.newRevelations.join('、') || '无新揭示'}
 `;
 
   if (previousChapterCommit) {
     user += `
 ## 上章回顾
-- **上章终点**：${previousChapterCommit.nodes.cen.statement}
+- **上章终点（CEN）**：${previousChapterCommit.nodes.cen.description}
 - **上章爽点**：${previousChapterCommit.requirements.coolPoint}
-- **上章情绪**：${previousChapterCommit.nodes.cbn.情绪延续 || '待延续'}
+- **上章情绪延续**：${previousChapterCommit.nodes.cbn.requiredElements?.join('、') || '待延续'}
 `;
   }
 
@@ -183,12 +199,7 @@ ${knowledgeContext}
   }
 
   user += `
-请生成第${chapterNumber}章的详细章纲，确保：
-1. 每章必须有爽点
-2. CBN承接上文自然
-3. CEN设置悬念吸引订阅
-4. 节点格式：「主体 | 动作 | 结果」
-`;
+请生成第${chapterNumber}章的详细章纲。`;
 
   return user;
 }
@@ -203,7 +214,7 @@ export function buildSimpleChapterPrompt(params: {
   previousSummary?: string;
 }): { system: string; user: string } {
   const { chapterNumber, beatType, strand, previousSummary } = params;
-  
+
   const system = `你是一位专业的小说创作顾问。现在需要为第${chapterNumber}章生成章纲。
 
 【章纲要求】
@@ -211,6 +222,26 @@ export function buildSimpleChapterPrompt(params: {
 - 包含：目标、阻力、代价、爽点
 - 节点格式：「主体 | 动作 | 结果」
 - 本章禁区不超过5条
+- 必须有时间锚点
+
+【输出格式】
+{
+  "chapter_id": ${chapterNumber},
+  "nodes": {
+    "cbn": "主体 | 动作 | 对象",
+    "cpns": ["主体 | 动作 | 对象"],
+    "cen": "主体 | 动作 | 对象"
+  },
+  "requirements": {
+    "objective": "目标",
+    "resistance": "阻力",
+    "cost": "代价",
+    "cool_point": "爽点",
+    "time_anchor": "时间锚点"
+  },
+  "unfinished_question": "章末未闭合问题",
+  "forbidden": []
+}
 
 请以JSON格式输出。`;
 
@@ -235,15 +266,16 @@ export function buildBatchChapterPrompt(params: {
   strandStatus: StrandStatus;
 }): { system: string; user: string } {
   const { volumeId, startChapter, endChapter, beatTable, strandStatus } = params;
-  
+
   const system = `你是一位专业的小说创作顾问。现在需要为第${startChapter}-${endChapter}章批量生成章纲。
 
 【章纲要求】
 每个章节必须包含：
 1. nodes: { cbn, cpns[], cen }
-2. requirements: { objective, resistance, cost, coolPoint, strand }
+2. requirements: { objective, resistance, cost, cool_point, strand, time_anchor, countdown_status }
 3. foreshadow: { new[], fulfilled[] }
-4. forbiddenZones: []
+4. unfinished_question: 章末未闭合问题
+5. forbidden: []
 
 【节点格式】
 - CBN：「主体 | 动作 | 结果」
@@ -255,10 +287,15 @@ export function buildBatchChapterPrompt(params: {
 - 微爽点：打脸/实力展示
 - 小爽点：身份揭示/关系突破
 
+【时间约束】
+- 必须有时间锚点
+- 时间差必须标注
+- 倒计时必须更新
+
 请以JSON数组格式输出${endChapter - startChapter + 1}个章纲。`;
 
   const user = `卷ID：${volumeId}
-章节范围：第${startChapter}-${endChapter}章
+章节范围：第${startChapter}-${endChapter}章（共${endChapter - startChapter + 1}章）
 
 节拍表：
 ${beatTable.map(b => `- ${b.node}：第${b.chapterRange[0]}-${b.chapterRange[1]}章`).join('\n')}
@@ -268,7 +305,83 @@ ${beatTable.map(b => `- ${b.node}：第${b.chapterRange[0]}-${b.chapterRange[1]}
 - Fire：${strandStatus.fire.relationshipStage}
 - Constellation：${strandStatus.constellation.newRevelations.join('、')}
 
-请批量生成章纲。`;
+请批量生成章纲，确保每个章纲都有：
+1. CBN 承接上一章 CEN
+2. CEN 有未闭合问题
+3. 时间线单调递增
+4. 每章有爽点`;
+
+  return { system, user };
+}
+
+/**
+ * 章节写作提示词（用于写作阶段）
+ */
+export function buildChapterWritingPrompt(params: {
+  chapterNumber: number;
+  chapterOutline: ChapterCommit;
+  previousContent?: string;
+  knowledgeContext?: string;
+  genre?: string;
+}): { system: string; user: string } {
+  const { chapterNumber, chapterOutline, previousContent, knowledgeContext, genre } = params;
+
+  const system = `你是一位专业的小说作家。你的任务是续写第${chapterNumber}章。
+
+【核心原则】写得真实，而非写得正确
+- 不要写出"正确"的文章，要写出"像那么回事"的文章
+- 有脾气、有漏洞、有意外才是真人写作
+
+${buildWritingTipsPrompt()}
+
+【Show, Don't Tell】
+禁止直接描写情绪：
+❌ "他感到非常愤怒"
+❌ "她感到十分惊讶"
+✅ "他一拳砸在桌上，杯子震得跳了起来。"
+✅ "她愣住了，半天才回过神来。"
+
+【掐断升华】
+禁止在结尾进行总结、说教：
+❌ "这就是成长"、"这就是人生"
+✅ 停在对话/悬念/未完成动作上
+
+${knowledgeContext ? `\n【知识参考】\n${knowledgeContext}\n` : ''}
+
+【题材提示】
+${genre !== '通用' ? `当前题材：${genre}` : '通用题材'}
+
+【章节节点要求】
+请严格遵循以下节点：
+
+**章节起点（CBN）**：
+${chapterOutline.nodes.cbn.description}
+
+**推进节点（CPNs）**：
+${chapterOutline.nodes.cpns.map((n, i) => `${i + 1}. ${n.description}`).join('\n')}
+
+**章节终点（CEN）**：
+${chapterOutline.nodes.cen.description}
+
+【本章要求】
+- 目标：${chapterOutline.requirements.objective}
+- 阻力：${chapterOutline.requirements.resistance}
+- 代价：${chapterOutline.requirements.cost}
+- 爽点：${chapterOutline.requirements.coolPoint}
+- 故事线：${chapterOutline.requirements.strand}
+- 禁区：${chapterOutline.forbiddenZones.map(f => f.target).join('、')}`;
+
+  const user = `【上章结尾】
+${previousContent?.slice(-500) || '（无上文，从本章开始）'}
+
+【本章节点】
+${JSON.stringify({
+  cbn: chapterOutline.nodes.cbn.description,
+  cpns: chapterOutline.nodes.cpns.map(n => n.description),
+  cen: chapterOutline.nodes.cen.description
+}, null, 2)}
+
+请续写第${chapterNumber}章的内容，直接输出正文，不要有其他内容。`;
 
   return { system, user };
 }

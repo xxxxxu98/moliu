@@ -30,12 +30,45 @@ export interface ParseResult {
   title: string;
   synopsis: string;
   genres: string[];
-  chapters: Chapter[];
+  chapters: ChapterEnhanced[];
   characters: Character[];
   structure: Structure;
-  foreshadows: Foreshadow[];
+  foreshadows: ForeshadowEnhanced[];
   worldSetting?: WorldSetting;
   estimatedWordCount?: number;
+  coreSellingPoints?: string[];
+}
+
+/**
+ * 增强的章节类型
+ */
+interface ChapterEnhanced {
+  id?: string;
+  number: number;
+  title: string;
+  summary: string;
+  objectives: string[];
+  coolPoints: string[];
+  foreshadows: string[];
+  strand: 'quest' | 'fire' | 'constellation';
+  timeAnchor?: string;
+  status: 'outline' | 'draft' | 'complete';
+  keyEvents: string[];
+  involvedCharacters: string[];
+  coreEvent?: string;
+  hook?: string;
+}
+
+/**
+ * 增强的伏笔类型
+ */
+interface ForeshadowEnhanced {
+  id?: string;
+  hint: string;
+  type: 'item' | 'dialogue' | 'event' | 'mystery';
+  suggestedChapter?: number;
+  status: 'active' | 'fulfilled' | 'abandoned';
+  phase?: 'early' | 'mid' | 'late';
 }
 
 /**
@@ -76,7 +109,7 @@ export class RemarkParser {
   private extractContent(node: Root, result: ParseResult): void {
     // 当前状态追踪
     let currentSection = '';
-    let currentChapter: Chapter | null = null;
+    let currentChapter: ChapterEnhanced | null = null;
     let currentCharacter: Partial<Character> | null = null;
     let inWorldSection = false;
     let worldSectionType: 'locations' | 'factions' | 'rules' | null = null;
@@ -85,6 +118,14 @@ export class RemarkParser {
     // 标题待定状态：# 标题 后面紧跟的内容才是真正的小说名
     let titlePending = false;
 
+    // 章节详情状态
+    let inChapterDetail = false;
+    let currentChapterDetail: 'coreEvent' | 'coolPoint' | 'hook' | null = null;
+
+    // 伏笔分期状态
+    let inForeshadowSection = false;
+    let foreshadowPhase: 'early' | 'mid' | 'late' | null = null;
+
     visit(node, (node: MDElement, index) => {
       // 标题处理
       if (node.type === 'heading') {
@@ -92,6 +133,10 @@ export class RemarkParser {
         const level = heading.depth;
         const text = this.extractHeadingText(heading);
         const normalizedText = text.toLowerCase();
+
+        // 重置章节详情状态
+        inChapterDetail = false;
+        currentChapterDetail = null;
 
         // H1: 主标题
         if (level === 1) {
@@ -108,6 +153,10 @@ export class RemarkParser {
             result.title = text.trim();
             currentSection = 'title';
           }
+          inWorldSection = false;
+          inStructureSection = false;
+          inForeshadowSection = false;
+          foreshadowPhase = null;
         }
 
         // H2: 主要区块
@@ -118,23 +167,57 @@ export class RemarkParser {
           // 识别区块类型
           if (normalizedText.includes('简介') || normalizedText.includes('概述')) {
             currentSection = 'synopsis';
+            inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalizedText.includes('题材') || normalizedText.includes('标签')) {
             currentSection = 'genres';
+            inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalizedText.includes('世界观') || normalizedText.includes('设定')) {
             currentSection = 'worldSetting';
             inWorldSection = true;
+            inForeshadowSection = false;
           } else if (normalizedText.includes('四幕') || normalizedText.includes('结构')) {
             currentSection = 'structure';
             inStructureSection = true;
             inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalizedText.includes('章节') || normalizedText.includes('大纲')) {
             currentSection = 'chapters';
+            inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalizedText.includes('角色') || normalizedText.includes('人物')) {
             currentSection = 'characters';
+            inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalizedText.includes('伏笔')) {
             currentSection = 'foreshadows';
+            inWorldSection = false;
+            inForeshadowSection = true;
+            foreshadowPhase = null;
           } else if (normalizedText.includes('字数') || normalizedText.includes('预估')) {
             currentSection = 'wordCount';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('核心卖点') || normalizedText.includes('爽点设计')) {
+            currentSection = 'coreSellingPoints';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('早期伏笔')) {
+            currentSection = 'foreshadows';
+            inForeshadowSection = true;
+            foreshadowPhase = 'early';
+            inWorldSection = false;
+          } else if (normalizedText.includes('中期伏笔')) {
+            currentSection = 'foreshadows';
+            inForeshadowSection = true;
+            foreshadowPhase = 'mid';
+            inWorldSection = false;
+          } else if (normalizedText.includes('长期伏笔') || normalizedText.includes('全篇伏笔')) {
+            currentSection = 'foreshadows';
+            inForeshadowSection = true;
+            foreshadowPhase = 'late';
+            inWorldSection = false;
           } else {
             currentSection = 'other';
           }
@@ -149,11 +232,18 @@ export class RemarkParser {
               }
               // 开始新章节
               currentChapter = {
+                number: parseInt(chapterMatch[1]),
                 title: `第${chapterMatch[1]}章：${chapterMatch[2].trim()}`,
                 summary: '',
+                objectives: [],
+                coolPoints: [],
+                foreshadows: [],
+                strand: 'quest',
+                status: 'outline',
                 keyEvents: [],
                 involvedCharacters: [],
               };
+              inChapterDetail = false;
             }
           }
 
@@ -189,15 +279,35 @@ export class RemarkParser {
         }
 
         // H3: 子区块
-        if (level === 3 && currentSection === 'characters') {
-          currentCharacter = {
-            name: text.replace(/^#+\s*/, '').trim(),
-            role: '角色',
-            description: '',
-            personality: [],
-            abilities: [],
-            relationships: [],
-          };
+        if (level === 3) {
+          // 章节详情
+          if (currentSection === 'chapters' && currentChapter) {
+            if (normalizedText.includes('核心事件') || normalizedText.includes('核心冲突')) {
+              inChapterDetail = true;
+              currentChapterDetail = 'coreEvent';
+            } else if (normalizedText.includes('爽点') || normalizedText.includes('爽点安排')) {
+              inChapterDetail = true;
+              currentChapterDetail = 'coolPoint';
+            } else if (normalizedText.includes('钩子') || normalizedText.includes('章尾钩子') || normalizedText.includes('悬念')) {
+              inChapterDetail = true;
+              currentChapterDetail = 'hook';
+            } else {
+              inChapterDetail = false;
+              currentChapterDetail = null;
+            }
+          }
+
+          // 角色详情
+          if (currentSection === 'characters') {
+            currentCharacter = {
+              name: text.replace(/^#+\s*/, '').trim(),
+              role: '角色',
+              description: '',
+              personality: [],
+              abilities: [],
+              relationships: [],
+            };
+          }
         }
       }
 
@@ -217,7 +327,6 @@ export class RemarkParser {
         if (titlePending && text.trim()) {
           result.title = text.trim();
           titlePending = false; // 重置状态
-          // 不设置 currentSection，让它保持默认，下一个段落会正常处理
           return; // 跳过后续 switch
         }
 
@@ -245,12 +354,34 @@ export class RemarkParser {
               result.foreshadows.push({
                 hint: text.trim(),
                 type: 'mystery',
+                status: 'active',
+                phase: foreshadowPhase || undefined,
               });
+            }
+            break;
+          case 'coreSellingPoints':
+            if (!result.coreSellingPoints) {
+              result.coreSellingPoints = [];
+            }
+            if (text.trim()) {
+              result.coreSellingPoints.push(text.trim());
+            }
+            break;
+          case 'chapters':
+            // 章节详情
+            if (currentChapter) {
+              if (inChapterDetail && currentChapterDetail === 'coreEvent') {
+                currentChapter.coreEvent = (currentChapter.coreEvent || '') + ' ' + text;
+              } else if (inChapterDetail && currentChapterDetail === 'hook') {
+                currentChapter.hook = (currentChapter.hook || '') + ' ' + text;
+              } else if (!currentChapter.summary) {
+                currentChapter.summary = text.substring(0, 100);
+              }
             }
             break;
         }
 
-        // 当前章节的摘要
+        // 当前章节的摘要（兜底）
         if (currentChapter && !currentChapter.summary) {
           currentChapter.summary = text.substring(0, 100);
         }
@@ -287,9 +418,17 @@ export class RemarkParser {
                 result.foreshadows.push({
                   hint: item.trim(),
                   type: 'mystery',
+                  status: 'active',
+                  phase: foreshadowPhase || undefined,
                 });
               }
             }
+            break;
+          case 'coreSellingPoints':
+            if (!result.coreSellingPoints) {
+              result.coreSellingPoints = [];
+            }
+            result.coreSellingPoints.push(...items.filter(Boolean));
             break;
         }
 
@@ -322,9 +461,20 @@ export class RemarkParser {
           }
         }
 
-        // 章节内容（列表形式的要点）
-        if (currentChapter && items.length > 0 && !currentChapter.keyEvents?.length) {
-          currentChapter.keyEvents = items.filter(Boolean);
+        // 章节内容处理
+        if (currentChapter) {
+          if (inChapterDetail && currentChapterDetail === 'coolPoint') {
+            // 爽点列表
+            currentChapter.coolPoints.push(...items.filter(Boolean));
+          } else if (inChapterDetail && currentChapterDetail === 'hook') {
+            // 钩子 - 只取第一个
+            if (!currentChapter.hook && items.length > 0) {
+              currentChapter.hook = items[0];
+            }
+          } else if (!currentChapter.keyEvents?.length) {
+            // keyEvents 兜底
+            currentChapter.keyEvents = items.filter(Boolean);
+          }
         }
       }
 

@@ -12,12 +12,45 @@ export interface ExtractedContent {
   title: string;
   synopsis: string;
   genres: string[];
-  chapters: Chapter[];
-  characters: Character[];
+  chapters: ChapterExtracted[];
+  characters: CharacterExtracted[];
   structure: Structure;
-  foreshadows: { hint: string; type: string }[];
+  foreshadows: ForeshadowExtracted[];
   worldSetting?: WorldSetting;
   estimatedWordCount?: number;
+  coreSellingPoints?: string[];
+}
+
+/**
+ * 章节提取结果（增强版）
+ */
+interface ChapterExtracted {
+  title: string;
+  summary: string;
+  coreEvent?: string;
+  coolPoints?: string[];
+  hook?: string;
+  keyEvents: string[];
+  involvedCharacters: string[];
+}
+
+/**
+ * 角色提取结果
+ */
+interface CharacterExtracted {
+  name: string;
+  role: string;
+  description: string;
+  personality: string[];
+}
+
+/**
+ * 伏笔提取结果（增强版）
+ */
+interface ForeshadowExtracted {
+  hint: string;
+  type: string;
+  phase?: 'early' | 'mid' | 'late';
 }
 
 /**
@@ -42,12 +75,18 @@ export class MarkdownExtractor {
     };
 
     let currentSection = '';
-    let currentChapter: Chapter | null = null;
+    let currentChapter: ChapterExtracted | null = null;
     let inWorldSection = false;
     let worldSectionType: 'locations' | 'factions' | 'rules' | null = null;
+    let inForeshadowSection = false;
+    let foreshadowPhase: 'early' | 'mid' | 'late' | null = null;
 
     // 标题待定状态：# 标题 后面紧跟的才是真正的小说名
     let titlePending = false;
+
+    // 章节详情状态
+    let inChapterDetail = false;
+    let currentChapterDetail: 'coreEvent' | 'coolPoint' | 'hook' | null = null;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -60,6 +99,10 @@ export class MarkdownExtractor {
       if (headingMatch) {
         const level = headingMatch[1].length;
         const text = headingMatch[2].trim();
+
+        // 重置章节详情状态
+        inChapterDetail = false;
+        currentChapterDetail = null;
 
         // H1: 主标题
         if (level === 1) {
@@ -74,6 +117,8 @@ export class MarkdownExtractor {
             titlePending = false;
           }
           inWorldSection = false;
+          inForeshadowSection = false;
+          foreshadowPhase = null;
         }
 
         // H2: 主要区块
@@ -83,48 +128,82 @@ export class MarkdownExtractor {
           if (normalized.includes('简介') || normalized.includes('概述')) {
             currentSection = 'synopsis';
             inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalized.includes('题材') || normalized.includes('标签')) {
             currentSection = 'genres';
             inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalized.includes('章节')) {
             currentSection = 'chapters';
             inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalized.includes('角色') || normalized.includes('人物')) {
             currentSection = 'characters';
             inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalized.includes('伏笔')) {
             currentSection = 'foreshadows';
             inWorldSection = false;
+            inForeshadowSection = true;
+            foreshadowPhase = null;
           } else if (normalized.includes('字数')) {
             currentSection = 'wordCount';
             inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalized.includes('第一幕') || normalized.includes('建置')) {
             currentSection = 'act1';
             inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalized.includes('第二幕a') || normalized.includes('对抗（上）') || normalized.includes('对抗(上)')) {
             currentSection = 'act2a';
             inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalized.includes('第二幕b') || normalized.includes('对抗（下）') || normalized.includes('对抗(下)')) {
             currentSection = 'act2b';
             inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalized.includes('第三幕') || normalized.includes('结局')) {
             currentSection = 'act3';
             inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalized.includes('世界观') || normalized.includes('设定')) {
             currentSection = 'worldSetting';
             inWorldSection = true;
+            inForeshadowSection = false;
           } else if (normalized.includes('地点')) {
             currentSection = 'worldLocation';
             inWorldSection = true;
             worldSectionType = 'locations';
+            inForeshadowSection = false;
           } else if (normalized.includes('势力')) {
             currentSection = 'worldFaction';
             inWorldSection = true;
             worldSectionType = 'factions';
+            inForeshadowSection = false;
           } else if (normalized.includes('规则') || normalized.includes('力量')) {
             currentSection = 'worldRule';
             inWorldSection = true;
             worldSectionType = 'rules';
+            inForeshadowSection = false;
+          } else if (normalized.includes('核心卖点') || normalized.includes('爽点设计')) {
+            currentSection = 'coreSellingPoints';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalized.includes('早期伏笔')) {
+            currentSection = 'foreshadows';
+            inForeshadowSection = true;
+            foreshadowPhase = 'early';
+            inWorldSection = false;
+          } else if (normalized.includes('中期伏笔')) {
+            currentSection = 'foreshadows';
+            inForeshadowSection = true;
+            foreshadowPhase = 'mid';
+            inWorldSection = false;
+          } else if (normalized.includes('长期伏笔') || normalized.includes('全篇伏笔')) {
+            currentSection = 'foreshadows';
+            inForeshadowSection = true;
+            foreshadowPhase = 'late';
+            inWorldSection = false;
           } else {
             currentSection = 'other';
           }
@@ -142,6 +221,7 @@ export class MarkdownExtractor {
                 keyEvents: [],
                 involvedCharacters: [],
               };
+              inChapterDetail = false;
             }
           }
 
@@ -168,12 +248,32 @@ export class MarkdownExtractor {
           continue;
         }
 
-        // H3: 子区块（角色详情）
-        if (level === 3 && currentSection === 'characters' && result.characters.length > 0) {
-          const lastChar = result.characters[result.characters.length - 1];
-          const descMatch = text.match(/[:-]\s*(.+)/);
-          if (descMatch) {
-            lastChar.description = descMatch[1].trim();
+        // H3: 子区块（角色详情、章节详情、伏笔）
+        if (level === 3) {
+          // 章节详情
+          if (currentSection === 'chapters' && currentChapter) {
+            if (text.includes('核心事件') || text.includes('核心冲突')) {
+              inChapterDetail = true;
+              currentChapterDetail = 'coreEvent';
+            } else if (text.includes('爽点') || text.includes('爽点安排')) {
+              inChapterDetail = true;
+              currentChapterDetail = 'coolPoint';
+            } else if (text.includes('钩子') || text.includes('章尾钩子') || text.includes('悬念')) {
+              inChapterDetail = true;
+              currentChapterDetail = 'hook';
+            } else {
+              inChapterDetail = false;
+              currentChapterDetail = null;
+            }
+          }
+
+          // 角色详情
+          if (currentSection === 'characters' && result.characters.length > 0) {
+            const lastChar = result.characters[result.characters.length - 1];
+            const descMatch = text.match(/[:-]\s*(.+)/);
+            if (descMatch) {
+              lastChar.description = descMatch[1].trim();
+            }
           }
         }
       }
@@ -196,12 +296,25 @@ export class MarkdownExtractor {
             break;
 
           case 'foreshadows':
-            result.foreshadows.push({ hint: item, type: 'mystery' });
+            result.foreshadows.push({
+              hint: item,
+              type: 'mystery',
+              phase: foreshadowPhase || undefined,
+            });
             break;
 
           case 'chapters':
-            if (currentChapter && !currentChapter.summary) {
-              currentChapter.summary = item;
+            if (currentChapter) {
+              if (inChapterDetail && currentChapterDetail === 'coolPoint') {
+                if (!currentChapter.coolPoints) {
+                  currentChapter.coolPoints = [];
+                }
+                currentChapter.coolPoints.push(item);
+              } else if (inChapterDetail && currentChapterDetail === 'hook') {
+                currentChapter.hook = item;
+              } else if (!currentChapter.summary) {
+                currentChapter.summary = item;
+              }
             }
             break;
 
@@ -213,6 +326,13 @@ export class MarkdownExtractor {
             }
             break;
           }
+
+          case 'coreSellingPoints':
+            if (!result.coreSellingPoints) {
+              result.coreSellingPoints = [];
+            }
+            result.coreSellingPoints.push(item);
+            break;
 
           case 'worldLocation':
           case 'worldFaction':
@@ -287,8 +407,25 @@ export class MarkdownExtractor {
             break;
 
           case 'chapters':
-            if (currentChapter && !currentChapter.summary) {
-              currentChapter.summary = line.substring(0, 100);
+            if (currentChapter) {
+              if (inChapterDetail && currentChapterDetail === 'coreEvent') {
+                currentChapter.coreEvent = (currentChapter.coreEvent || '') + ' ' + line;
+              } else if (inChapterDetail && currentChapterDetail === 'hook') {
+                currentChapter.hook = (currentChapter.hook || '') + ' ' + line;
+              } else if (!currentChapter.summary) {
+                currentChapter.summary = line.substring(0, 100);
+              }
+            }
+            break;
+
+          case 'coreSellingPoints':
+            if (!result.coreSellingPoints) {
+              result.coreSellingPoints = [];
+            }
+            if (!result.coreSellingPoints.length || result.coreSellingPoints[result.coreSellingPoints.length - 1].length > 0) {
+              result.coreSellingPoints.push(line);
+            } else {
+              result.coreSellingPoints[result.coreSellingPoints.length - 1] += ' ' + line;
             }
             break;
 

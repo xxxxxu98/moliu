@@ -117,6 +117,8 @@ export const ForeshadowSchema = z.object({
   type: z.enum(['item', 'dialogue', 'event', 'mystery']).default('mystery').describe('伏笔类型'),
   suggestedChapter: z.number().optional().describe('建议揭晓章节'),
   status: z.enum(['active', 'fulfilled', 'abandoned']).default('active').describe('状态'),
+  // 新增：伏笔分期
+  phase: z.enum(['early', 'mid', 'late']).optional().describe('伏笔分期：早期(1-10章)、中期(11-30章)、长期(30章后或全篇)'),
 });
 export type Foreshadow = z.infer<typeof ForeshadowSchema>;
 
@@ -135,6 +137,9 @@ export const ChapterSchema = z.object({
   status: z.enum(['outline', 'draft', 'complete']).default('outline').describe('状态'),
   keyEvents: z.array(z.string()).optional().default([]).describe('关键事件'),
   involvedCharacters: z.array(z.string()).optional().default([]).describe('涉及角色'),
+  // 新增：章节核心元素
+  coreEvent: z.string().optional().describe('核心事件'),
+  hook: z.string().optional().describe('章尾钩子'),
 });
 export type Chapter = z.infer<typeof ChapterSchema>;
 
