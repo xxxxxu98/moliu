@@ -86,7 +86,7 @@ function toggleMenu(projectId: string, event: Event, section: 'recent' | 'all') 
   if (section === 'recent') {
     activeMenuProjectRecent.value = activeMenuProjectRecent.value === projectId ? null : projectId;
   } else {
-    activeMenuProjectAll.value = activeMenuProjectAll.value === projectId ? projectId : null;
+    activeMenuProjectAll.value = activeMenuProjectAll.value === projectId ? null : projectId;
   }
 }
 
