@@ -133,7 +133,7 @@ export interface GeneratedOutline {
  */
 export interface GeneratedForeshadow {
   hint: string;           // 伏笔内容
-  type?: 'item' | 'dialogue' | 'event' | 'mystery';  // 伏笔类型
+  type?: 'item' | 'dialogue' | 'event' | 'mystery' | 'character' | 'ability';  // 伏笔类型
   suggestedChapter?: number; // 建议揭晓的章节
 }
 

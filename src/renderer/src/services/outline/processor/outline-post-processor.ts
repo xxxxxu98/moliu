@@ -436,7 +436,7 @@ export class OutlinePostProcessor {
   private normalizeForeshadows(foreshadows: any[]): any[] {
     return foreshadows.map((fs) => ({
       hint: fs.hint || fs.content || fs.description || String(fs),
-      type: fs.type || 'mystery',
+      type: fs.type || 'event',
       suggestedChapter: fs.suggestedChapter || fs.chapter || undefined,
     }));
   }

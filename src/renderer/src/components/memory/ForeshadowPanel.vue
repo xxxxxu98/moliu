@@ -82,6 +82,8 @@ function getTypeLabel(type: string) {
     dialogue: '对话',
     event: '事件',
     mystery: '悬念',
+    character: '人物',
+    ability: '能力',
   };
   return typeMap[type] || type;
 }

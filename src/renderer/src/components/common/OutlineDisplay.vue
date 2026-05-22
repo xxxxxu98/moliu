@@ -3,11 +3,12 @@
  * 大纲列表展示组件
  * 封装大纲生成进度、列表展示、选中状态等通用 UI 逻辑
  */
-import { computed } from "vue";
-import { ArrowRight, BookOpen, RefreshCw } from "lucide-vue-next";
+import { computed, ref } from "vue";
+import { ArrowRight, BookOpen, RefreshCw, Eye, LayoutGrid } from "lucide-vue-next";
 import { NTooltip } from "naive-ui";
 import { useI18n } from "vue-i18n";
 import type { GeneratedOutline } from "@/types/inspiration";
+import OutlineVisualizer from './OutlineVisualizer.vue';
 
 const { t } = useI18n();
 
@@ -51,6 +52,16 @@ const emit = defineEmits<Emits>();
 
 /** 是否有大纲 */
 const hasOutlines = computed(() => props.outlines.length > 0);
+
+/** 是否显示可视化视图 */
+const showVisualization = ref(false);
+
+/** 是否有可视化数据 */
+const hasVisualizationData = computed(() => {
+  if (!props.selectedOutline) return false;
+  const outline = props.selectedOutline;
+  return !!(outline.worldSetting || outline.characters?.length || outline.foreshadows?.length);
+});
 
 /** 是否显示流式预览（有进度消息且正在生成） */
 const showStreaming = computed(
@@ -240,6 +251,36 @@ function handleCreate() {
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- 可视化视图切换按钮 -->
+      <div v-if="selectedOutline && hasVisualizationData" class="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+        <span class="text-xs text-gray-500 dark:text-gray-400">视图模式</span>
+        <div class="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <button
+            class="px-2 py-1 rounded text-xs transition-colors"
+            :class="!showVisualization 
+              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' 
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+            @click="showVisualization = false"
+          >
+            列表
+          </button>
+          <button
+            class="px-2 py-1 rounded text-xs transition-colors"
+            :class="showVisualization 
+              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' 
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+            @click="showVisualization = true"
+          >
+            可视化
+          </button>
+        </div>
+      </div>
+
+      <!-- 可视化视图 -->
+      <div v-if="showVisualization && selectedOutline" class="mt-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto">
+        <OutlineVisualizer :outline="selectedOutline" />
       </div>
 
       <!-- 创建项目按钮 -->

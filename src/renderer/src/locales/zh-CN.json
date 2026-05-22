@@ -98,7 +98,8 @@
     "conflict": "核心冲突",
     "conflictPlaceholder": "例如：与大家族的矛盾、资源争夺等",
     "customSettings": "其他设定",
-    "customSettingsPlaceholder": "添加你想要的特殊设定..."
+    "customSettingsPlaceholder": "添加你想要的特殊设定...",
+    "openedInPro": "已在专业版中打开"
   },
   "editor": {
     "title": "章节",

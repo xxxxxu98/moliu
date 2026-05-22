@@ -98,7 +98,8 @@
     "conflict": "Core Conflict",
     "conflictPlaceholder": "e.g. Conflict with powerful clan",
     "customSettings": "Other Settings",
-    "customSettingsPlaceholder": "Add any special settings..."
+    "customSettingsPlaceholder": "Add any special settings...",
+    "openedInPro": "Opened in Pro"
   },
   "editor": {
     "title": "Chapters",

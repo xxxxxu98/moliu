@@ -172,7 +172,7 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     // 处理伏笔信息
     const foreshadows = (outline.foreshadows || []).map((f) => ({
       hint: f.hint || '',
-      type: f.type || 'mystery',
+      type: f.type || 'event',
       suggestedChapter: f.suggestedChapter,
     }));
 

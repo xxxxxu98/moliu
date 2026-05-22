@@ -3,7 +3,7 @@
  * ProOutliner - 专业大纲系统
  * 整合五步大纲法、卷节拍表、卷时间线等高级功能
  */
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import {
   Sparkles,
   Check,
@@ -54,6 +54,11 @@ import type { StoryContract } from '@/services/outline/contracts';
 import OutlineDisplay from '@/components/common/OutlineDisplay.vue';
 import type { GeneratedOutline } from '@/types/inspiration';
 import { useOutlineGenerator } from '@/composables/useOutlineGenerator';
+import type { WritingTemplate } from './QuickStart.vue';
+
+const props = defineProps<{
+  importedTemplate?: WritingTemplate | null;
+}>();
 
 const { t } = useI18n();
 const message = useMessage();
@@ -112,6 +117,55 @@ const progress = ref<FiveStepProgress>({
   step4Complete: false,
   step5Complete: false,
 });
+
+// Handle imported template from QuickStart
+watch(
+  () => props.importedTemplate,
+  (template) => {
+    if (template) {
+      // Extract information from the template and populate the fields
+      const prompt = template.prompt;
+
+      // Try to extract core formula from prompt
+      const coreFormulaMatch = prompt.match(/## 【核心公式】\s*\n([\s\S]*?)(?=## 【)/);
+      if (coreFormulaMatch) {
+        stepData.value.emotionGoal = `基于模板「${template.name}」的大纲创作。\n核心方向：${template.coreFormula || '根据模板特点进行创作'}`;
+      }
+
+      // Extract required elements
+      if (template.requiredElements && template.requiredElements.length > 0) {
+        stepData.value.setting = `类型：${template.category}\n核心元素：${template.requiredElements.join('、')}`;
+      }
+
+      // Set structure hint
+      if (template.rhythmAdvice) {
+        stepData.value.structure = `节奏建议：${template.rhythmAdvice}`;
+      }
+
+      // Set pleasure points hint
+      if (template.structureTemplate) {
+        stepData.value.pleasurePoints = `结构模板：${template.structureTemplate}`;
+      }
+
+      // If template has detailed prompt, use it as reference
+      if (prompt.length > 100) {
+        stepData.value.protagonist = `模板参考：${template.description}`;
+      }
+
+      // 手动更新进度状态，确保生成按钮显示
+      progress.value = {
+        step1Complete: stepData.value.emotionGoal.length >= 10,
+        step2Complete: stepData.value.setting.length >= 10,
+        step3Complete: stepData.value.protagonist.length >= 10,
+        step4Complete: stepData.value.structure.length >= 10,
+        step5Complete: stepData.value.pleasurePoints.length >= 10,
+      };
+
+      message.success(`已导入模板「${template.name}」到专业大纲`);
+    }
+  },
+  { immediate: true }
+);
 
 // 监听 stepData 变化，更新进度
 watch(
