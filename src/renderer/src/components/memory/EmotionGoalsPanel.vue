@@ -38,20 +38,23 @@ const isEditing = ref(false);
 const editingGoal = ref<EmotionGoal | null>(null);
 
 // 高点/低点输入
-const newHighPoint = ref<number | null>(null);
-const newLowPoint = ref<number | null>(null);
+const newHighPoint = ref<string>('');
+const newLowPoint = ref<string>('');
 
 // 初始化编辑数据
 function initEditData() {
   if (projectStore.emotionGoal) {
-    editingGoal.value = JSON.parse(JSON.stringify(projectStore.emotionGoal));
+    editingGoal.value = {
+      ...JSON.parse(JSON.stringify(projectStore.emotionGoal)),
+      density: String(projectStore.emotionGoal.density),
+    };
   } else {
     editingGoal.value = {
       id: `emotion-${Date.now()}`,
       primary: '',
       secondary: '',
       arc: 'rising',
-      density: 3000,
+      density: '3000',
       highPoints: [],
       lowPoints: [],
     };
@@ -79,7 +82,13 @@ async function saveGoal() {
     return;
   }
   
-  await projectStore.updateEmotionGoal(editingGoal.value);
+  // 转换为数字
+  const goalToSave = {
+    ...editingGoal.value,
+    density: parseInt(editingGoal.value.density) || 3000,
+  };
+  
+  await projectStore.updateEmotionGoal(goalToSave);
   message.success('情绪目标已保存');
   isEditing.value = false;
 }
@@ -93,12 +102,12 @@ async function deleteGoal() {
 // 添加高点章节
 function addHighPoint() {
   if (newHighPoint.value && editingGoal.value) {
-    const chapter = newHighPoint.value;
-    if (!editingGoal.value.highPoints.includes(chapter)) {
+    const chapter = parseInt(newHighPoint.value);
+    if (!isNaN(chapter) && !editingGoal.value.highPoints.includes(chapter)) {
       editingGoal.value.highPoints.push(chapter);
       editingGoal.value.highPoints.sort((a, b) => a - b);
     }
-    newHighPoint.value = null;
+    newHighPoint.value = '';
   }
 }
 
@@ -112,12 +121,12 @@ function removeHighPoint(chapter: number) {
 // 添加低点章节
 function addLowPoint() {
   if (newLowPoint.value && editingGoal.value) {
-    const chapter = newLowPoint.value;
-    if (!editingGoal.value.lowPoints.includes(chapter)) {
+    const chapter = parseInt(newLowPoint.value);
+    if (!isNaN(chapter) && !editingGoal.value.lowPoints.includes(chapter)) {
       editingGoal.value.lowPoints.push(chapter);
       editingGoal.value.lowPoints.sort((a, b) => a - b);
     }
-    newLowPoint.value = null;
+    newLowPoint.value = '';
   }
 }
 

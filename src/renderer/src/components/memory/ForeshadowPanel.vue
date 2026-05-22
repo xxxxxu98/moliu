@@ -15,8 +15,8 @@ const showForeshadowDialog = ref(false);
 const foreshadowForm = ref({
   hint: '',
   type: 'event' as 'item' | 'dialogue' | 'event' | 'mystery',
-  createdChapter: 1,
-  suggestedResolutionChapter: undefined as number | undefined,
+  createdChapter: '1',
+  suggestedResolutionChapter: undefined as string | undefined,
 });
 
 // Edit dialog state
@@ -25,8 +25,8 @@ const editingForeshadow = ref<Foreshadow | null>(null);
 const editForm = ref({
   hint: '',
   type: 'event' as 'item' | 'dialogue' | 'event' | 'mystery',
-  createdChapter: 1,
-  suggestedResolutionChapter: undefined as number | undefined,
+  createdChapter: '1',
+  suggestedResolutionChapter: undefined as string | undefined,
 });
 
 const typeOptions = [
@@ -92,7 +92,7 @@ function openAddForeshadowDialog() {
   foreshadowForm.value = {
     hint: '',
     type: 'event',
-    createdChapter: 1,
+    createdChapter: '1',
     suggestedResolutionChapter: undefined,
   };
   showForeshadowDialog.value = true;
@@ -103,8 +103,10 @@ function openEditDialog(foreshadow: Foreshadow) {
   editForm.value = {
     hint: foreshadow.hint,
     type: foreshadow.type,
-    createdChapter: foreshadow.createdChapter,
-    suggestedResolutionChapter: foreshadow.suggestedResolutionChapter,
+    createdChapter: String(foreshadow.createdChapter),
+    suggestedResolutionChapter: foreshadow.suggestedResolutionChapter 
+      ? String(foreshadow.suggestedResolutionChapter) 
+      : undefined,
   };
   showEditDialog.value = true;
 }
@@ -120,8 +122,10 @@ async function handleAddForeshadow() {
       hint: foreshadowForm.value.hint.trim(),
       type: foreshadowForm.value.type,
       status: 'buried',
-      createdChapter: foreshadowForm.value.createdChapter,
-      suggestedResolutionChapter: foreshadowForm.value.suggestedResolutionChapter,
+      createdChapter: parseInt(foreshadowForm.value.createdChapter) || 1,
+      suggestedResolutionChapter: foreshadowForm.value.suggestedResolutionChapter 
+        ? parseInt(foreshadowForm.value.suggestedResolutionChapter) 
+        : undefined,
     });
     message.success('伏笔添加成功');
     showForeshadowDialog.value = false;
@@ -140,8 +144,10 @@ async function handleEditForeshadow() {
     await projectStore.updateForeshadow(editingForeshadow.value.id, {
       hint: editForm.value.hint.trim(),
       type: editForm.value.type,
-      createdChapter: editForm.value.createdChapter,
-      suggestedResolutionChapter: editForm.value.suggestedResolutionChapter,
+      createdChapter: parseInt(editForm.value.createdChapter) || 1,
+      suggestedResolutionChapter: editForm.value.suggestedResolutionChapter 
+        ? parseInt(editForm.value.suggestedResolutionChapter) 
+        : undefined,
     });
     message.success('伏笔已更新');
     showEditDialog.value = false;

@@ -21,7 +21,7 @@ const plotForm = ref({
   title: '',
   description: '',
   type: 'act' as PlotNodeType,
-  chapterRange: undefined as [number, number] | undefined,
+  chapterRange: undefined as [string, string] | undefined,
   purpose: '',
   keyEvents: [] as string[],
   relatedCharacters: [] as string[],
@@ -95,7 +95,7 @@ function openAddPlotDialog(type: PlotNodeType = 'chapter') {
     title: '',
     description: '',
     type,
-    chapterRange: undefined,
+    chapterRange: ['1', '1'],
     purpose: '',
     keyEvents: [],
     relatedCharacters: [],
@@ -113,7 +113,9 @@ function openEditPlotDialog(plot: PlotNode) {
     title: plot.title,
     description: plot.description || '',
     type: plot.type,
-    chapterRange: plot.chapterRange,
+    chapterRange: plot.chapterRange 
+      ? [String(plot.chapterRange[0]), String(plot.chapterRange[1])]
+      : ['1', '1'],
     purpose: plot.purpose || '',
     keyEvents: plot.keyEvents || [],
     relatedCharacters: plot.relatedCharacters || [],
@@ -167,7 +169,9 @@ async function handlePlotDialogConfirm() {
       title: plotForm.value.title.trim(),
       description: plotForm.value.description.trim(),
       type: plotForm.value.type,
-      chapterRange: plotForm.value.chapterRange,
+      chapterRange: plotForm.value.chapterRange 
+        ? [parseInt(plotForm.value.chapterRange[0]), parseInt(plotForm.value.chapterRange[1])]
+        : undefined,
       purpose: plotForm.value.purpose.trim(),
       keyEvents: plotForm.value.keyEvents,
       relatedCharacters: plotForm.value.relatedCharacters,
@@ -243,7 +247,7 @@ async function handleDeletePlot(id: string) {
           <div
             v-for="plot in groupedPlots.act"
             :key="plot.id"
-            class="rounded-lg bg-[var(--moliu-bg-primary)] border border-purple-200 dark:border-purple-800 overflow-hidden"
+            class="rounded-lg bg-[var(--moliu-bg-primary)] border border-purple-200 dark:border-purple-800 overflow-hidden group"
           >
             <div 
               class="p-3 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
@@ -302,7 +306,7 @@ async function handleDeletePlot(id: string) {
           <div
             v-for="plot in groupedPlots.subplot"
             :key="plot.id"
-            class="rounded-lg bg-[var(--moliu-bg-primary)] border border-orange-200 dark:border-orange-800 overflow-hidden"
+            class="rounded-lg bg-[var(--moliu-bg-primary)] border border-orange-200 dark:border-orange-800 overflow-hidden group"
           >
             <div 
               class="p-3 cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
@@ -372,7 +376,7 @@ async function handleDeletePlot(id: string) {
           <div
             v-for="plot in groupedPlots.chapter"
             :key="plot.id"
-            class="rounded-lg bg-[var(--moliu-bg-primary)] border border-blue-200 dark:border-blue-800 p-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+            class="rounded-lg bg-[var(--moliu-bg-primary)] border border-blue-200 dark:border-blue-800 p-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group"
             @click="toggleExpand(plot.id)"
           >
             <div class="flex items-center gap-2">

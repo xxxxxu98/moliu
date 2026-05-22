@@ -9,7 +9,6 @@ import {
   type CoolPointDesign,
   type CoolPointPattern,
   type CoolPointArrangement,
-  type CoolPointDensity,
 } from '@/types/project';
 
 const { t } = useI18n();
@@ -32,17 +31,17 @@ const editingDesign = ref<CoolPointDesign | null>(null);
 const showArrangementDialog = ref(false);
 const editingArrangement = ref<CoolPointArrangement | null>(null);
 const arrangementForm = ref({
-  chapter: 1,
+  chapter: '1',
   type: 'face-slapping' as CoolPointPattern,
   description: '',
 });
-const newChapter = ref<number | null>(null);
+const newChapter = ref<string>('');
 
 // 密度编辑
-const densityForm = ref<CoolPointDensity>({
-  micro: 3000,
-  small: 9000,
-  big: 21000,
+const densityForm = ref({
+  micro: '3000',
+  small: '9000',
+  big: '21000',
 });
 
 // 初始化编辑数据
@@ -61,11 +60,17 @@ function initEditData() {
       },
     };
   }
-  densityForm.value = editingDesign.value?.density || {
-    micro: 3000,
-    small: 9000,
-    big: 21000,
-  };
+  densityForm.value = editingDesign.value?.density 
+    ? {
+        micro: String(editingDesign.value.density.micro),
+        small: String(editingDesign.value.density.small),
+        big: String(editingDesign.value.density.big),
+      }
+    : {
+        micro: '3000',
+        small: '9000',
+        big: '21000',
+      };
 }
 
 // 开始编辑
@@ -84,7 +89,11 @@ function cancelEdit() {
 async function saveDesign() {
   if (!editingDesign.value) return;
   
-  editingDesign.value.density = densityForm.value;
+  editingDesign.value.density = {
+    micro: parseInt(densityForm.value.micro) || 3000,
+    small: parseInt(densityForm.value.small) || 9000,
+    big: parseInt(densityForm.value.big) || 21000,
+  };
   await projectStore.updateCoolPointDesign(editingDesign.value);
   message.success('爽点设计已保存');
   isEditing.value = false;
@@ -118,14 +127,14 @@ function openArrangementDialog(arrangement?: CoolPointArrangement) {
   if (arrangement) {
     editingArrangement.value = arrangement;
     arrangementForm.value = {
-      chapter: arrangement.chapter,
+      chapter: String(arrangement.chapter),
       type: arrangement.type,
       description: arrangement.description,
     };
   } else {
     editingArrangement.value = null;
     arrangementForm.value = {
-      chapter: 1,
+      chapter: '1',
       type: 'face-slapping',
       description: '',
     };
@@ -144,7 +153,7 @@ function saveArrangement() {
   
   const arrangementData: CoolPointArrangement = {
     id: editingArrangement.value?.id || `arrangement-${Date.now()}`,
-    chapter: arrangementForm.value.chapter,
+    chapter: parseInt(arrangementForm.value.chapter) || 1,
     type: arrangementForm.value.type,
     description: arrangementForm.value.description,
   };
