@@ -62,6 +62,7 @@ export interface UseChapterWriterReturn {
   // 流水线控制
   retryCurrentStep: () => void;
   skipBlockingIssues: () => void;
+  forceProceedToPolish: () => void;
 }
 
 // ============================================
@@ -175,7 +176,8 @@ async function performBlockingReview(
   project: any,
   chapter: any,
   chapterIndex: number,
-  previousChapter: any
+  previousChapter: any,
+  strictness: 'relaxed' | 'normal' | 'strict' = 'normal'
 ): Promise<BlockingReviewResult> {
   const context = {
     project,
@@ -187,12 +189,13 @@ async function performBlockingReview(
       : undefined,
   };
 
-  const result = await blockingReview(context);
+  const result = await blockingReview(context, undefined, strictness);
   
   console.log('[智能续写] 审查结果:', {
     passed: result.passed,
     blockingCount: result.blockingCount,
     totalIssues: result.totalIssues,
+    strictness,
   });
 
   return result;
@@ -650,6 +653,28 @@ export function useChapterWriter(): UseChapterWriterReturn {
     }
   }
 
+  // 审查严格度
+  let currentStrictness: 'relaxed' | 'normal' | 'strict' = 'normal';
+  let forceProceed = false;  // 强制继续标志
+
+  function getLowerStrictness(strictness: 'relaxed' | 'normal' | 'strict'): 'relaxed' | 'normal' | 'strict' | null {
+    const levels: Array<'relaxed' | 'normal' | 'strict'> = ['strict', 'normal', 'relaxed'];
+    const currentIndex = levels.indexOf(strictness);
+    if (currentIndex < levels.length - 1) {
+      return levels[currentIndex + 1];
+    }
+    return null;
+  }
+
+  function getStrictnessLabel(strictness: 'relaxed' | 'normal' | 'strict'): string {
+    switch (strictness) {
+      case 'strict': return '严格';
+      case 'normal': return '正常';
+      case 'relaxed': return '宽松';
+      default: return strictness;
+    }
+  }
+
   /**
    * 应用生成的内容到章节
    */
@@ -672,21 +697,55 @@ export function useChapterWriter(): UseChapterWriterReturn {
       );
       const prevChapter = currentIndex > 0 ? projectStore.sortedChapters[currentIndex - 1] : null;
 
-      // ========== 步骤 3: 审查（Blocking 闸门） ==========
+      // ========== 步骤 3: 审查（自适应 Blocking 闸门） ==========
       currentStep.value = 'review';
-      const blockingReviewResult = await performBlockingReview(
-        project,
-        { ...currentChapter, content: currentGeneratedContent },
-        currentIndex,
-        prevChapter
-      );
-      reviewResult.value = blockingReviewResult;
-      blockingIssues.value = getBlockingIssuesToFix(blockingReviewResult, 10);
+      
+      // 初始化审查严格度
+      currentStrictness = 'normal';
+      forceProceed = false;
+      let reviewPassed = false;
+      let lastReviewResult: BlockingReviewResult | null = null;
+      let attempts = 0;
+      const maxAttempts = 3;
 
-      // Blocking 闸门检查
-      if (!canProceedToPolish(blockingReviewResult)) {
-        console.warn('[智能续写] 审查未通过，blocking 问题:', blockingReviewResult.blockingCount);
-        error.value = `审查未通过：${blockingReviewResult.blockingCount}个阻断问题`;
+      // 自适应审查循环：失败时降低严格度
+      while (!reviewPassed && attempts < maxAttempts) {
+        attempts++;
+        console.log(`[智能续写] 审查尝试 ${attempts}/${maxAttempts}，严格度: ${getStrictnessLabel(currentStrictness)}`);
+
+        lastReviewResult = await performBlockingReview(
+          project,
+          { ...currentChapter, content: currentGeneratedContent },
+          currentIndex,
+          prevChapter,
+          currentStrictness
+        );
+        reviewResult.value = lastReviewResult;
+        blockingIssues.value = getBlockingIssuesToFix(lastReviewResult, 10);
+
+        // 检查是否通过
+        if (canProceedToPolish(lastReviewResult)) {
+          reviewPassed = true;
+          console.log(`[智能续写] 审查通过（${getStrictnessLabel(currentStrictness)}模式）`);
+          break;
+        }
+
+        // 未通过，尝试降低严格度
+        const lowerStrictness = getLowerStrictness(currentStrictness);
+        if (lowerStrictness) {
+          console.log(`[智能续写] 审查未通过，降低严格度: ${getStrictnessLabel(currentStrictness)} → ${getStrictnessLabel(lowerStrictness)}`);
+          currentStrictness = lowerStrictness;
+        } else {
+          // 已到最低严格度
+          console.warn(`[智能续写] 已达最低严格度，审查仍未通过`);
+          break;
+        }
+      }
+
+      // 如果仍未通过且未强制继续，显示错误
+      if (!reviewPassed && !forceProceed && lastReviewResult) {
+        console.warn('[智能续写] 审查未通过，blocking 问题:', lastReviewResult.blockingCount);
+        error.value = `审查未通过：${lastReviewResult.blockingCount}个阻断问题（已达最低严格度，可选择跳过）`;
         return false;
       }
 
@@ -782,6 +841,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
     blockingIssues.value = [];
     reviewResult.value = null;
     currentTaskBook = null;
+    currentStrictness = 'normal';
+    forceProceed = false;
     if (abortController) {
       abortController.abort();
       abortController = null;
@@ -802,9 +863,15 @@ export function useChapterWriter(): UseChapterWriterReturn {
   }
 
   function skipBlockingIssues(): void {
-    console.warn('[智能续写] 用户选择跳过 blocking 问题');
+    console.warn('[智能续写] 用户选择跳过 blocking 问题，强制继续');
     blockingIssues.value = [];
     reviewResult.value = null;
+    forceProceed = true;
+  }
+
+  function forceProceedToPolish(): void {
+    console.warn('[智能续写] 用户强制继续进行润色');
+    forceProceed = true;
   }
 
   return {
@@ -823,5 +890,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
     reset,
     retryCurrentStep,
     skipBlockingIssues,
+    forceProceedToPolish,
   };
 }

@@ -6,6 +6,7 @@
  * 1. 引入 blocking 闸门机制
  * 2. blocking=true 时强制阻断后续流程
  * 3. 严格输出问题分类和严重度
+ * 4. 自适应审查 - 根据问题类型和严重度智能判断是否阻断
  */
 
 import type { ReviewIssue, ReviewSeverity, ReviewCategory } from '@/types/writing-task';
@@ -16,6 +17,61 @@ import {
   performSpecialChecks,
   type SpecialCheckResult,
 } from './special-checks.service';
+
+// ============================================
+// 问题类型与阻断策略
+// ============================================
+
+/** 不应该阻断的问题类型 - 润色阶段会处理 */
+const NON_BLOCKING_ISSUE_TYPES: Record<string, boolean> = {
+  'ai_flavor': true,
+  'show_dont_tell': true,
+  'pacing': true,
+  'excitement': true,
+  'chapter_ending': true,
+};
+
+/** 严重问题类型 - 总是阻断 */
+const ALWAYS_BLOCKING_TYPES: Record<string, boolean> = {
+  'character_consistency': true,
+  'logic_gap': true,
+  'setting_conflict': true,
+  'timeline_error': true,
+  'continuity': true,
+};
+
+/** 问题严重度到阻断的映射 */
+const SEVERITY_TO_BLOCKING: Record<ReviewSeverity, boolean> = {
+  critical: true,
+  high: true,
+  medium: false,
+  low: false,
+};
+
+export type ReviewStrictness = 'relaxed' | 'normal' | 'strict';
+
+/** 严格度配置 */
+const STRICTNESS_CONFIG: Record<ReviewStrictness, {
+  blockingThreshold: number;
+  requireAllCriticalPass: boolean;
+  autoFixAIFlavor: boolean;
+}> = {
+  relaxed: {
+    blockingThreshold: 2,     // 只有2个以上 blocking 才阻断
+    requireAllCriticalPass: false,  // 不要求所有 critical 通过
+    autoFixAIFlavor: true,   // 自动修复 AI 味
+  },
+  normal: {
+    blockingThreshold: 1,    // 1个 blocking 就阻断
+    requireAllCriticalPass: true,   // 要求所有 critical 通过
+    autoFixAIFlavor: true,   // 自动修复 AI 味
+  },
+  strict: {
+    blockingThreshold: 1,    // 1个 blocking 就阻断
+    requireAllCriticalPass: true,   // 要求所有 critical 通过
+    autoFixAIFlavor: false,  // 不自动修复，让用户决定
+  },
+};
 
 export interface BlockingReviewResult {
   /** 是否通过审查 */
@@ -36,6 +92,14 @@ export interface BlockingReviewResult {
   summary: string;
   /** 详细审查结果 */
   detail: SixDimensionReview;
+  /** 审查严格度 */
+  strictness: ReviewStrictness;
+  /** 智能决策信息 */
+  decision?: {
+    shouldBlock: boolean;
+    reason: string;
+    canAutoFix: boolean;
+  };
 }
 
 export interface ReviewStage {
@@ -50,20 +114,30 @@ export interface ReviewStage {
 }
 
 /**
- * 增强版审查服务 - 支持 blocking 闸门
+ * 增强版审查服务 - 支持 blocking 闸门和自适应审查
  */
 export class BlockingReviewService {
   private reviewService: ReviewService;
   private context: ReviewContext;
   private options: ReviewOptions;
+  private strictness: ReviewStrictness;
 
-  constructor(context: ReviewContext, options: ReviewOptions = {}) {
+  constructor(context: ReviewContext, options: ReviewOptions = {}, strictness: ReviewStrictness = 'normal') {
     this.context = context;
     this.options = {
       ...options,
-      strictMode: true, // 强制启用严格模式
+      strictMode: strictness === 'strict', // 只有 strict 模式才强制启用严格模式
     };
+    this.strictness = strictness;
     this.reviewService = new ReviewService(context, this.options);
+  }
+
+  /**
+   * 设置审查严格度
+   */
+  setStrictness(strictness: ReviewStrictness): void {
+    this.strictness = strictness;
+    this.options.strictMode = strictness === 'strict';
   }
 
   /**
@@ -121,10 +195,11 @@ export class BlockingReviewService {
   }
 
   /**
-   * 分析审查结果，判断 blocking 状态
+   * 分析审查结果，判断 blocking 状态（自适应版本）
    */
   private analyzeBlockingResult(detail: SixDimensionReview): BlockingReviewResult {
     const issues = detail.overall.issues;
+    const config = STRICTNESS_CONFIG[this.strictness];
     
     // 统计各类问题
     const categoryStats: Record<ReviewCategory, { total: number; blocking: number }> = {
@@ -135,7 +210,6 @@ export class BlockingReviewService {
       logic: { total: 0, blocking: 0 },
       ai_flavor: { total: 0, blocking: 0 },
       pacing: { total: 0, blocking: 0 },
-      // 新增维度
       chapter_ending: { total: 0, blocking: 0 },
       excitement: { total: 0, blocking: 0 },
       show_dont_tell: { total: 0, blocking: 0 },
@@ -144,6 +218,8 @@ export class BlockingReviewService {
 
     let blockingCount = 0;
     let highPriorityCount = 0;
+    let autoFixableCount = 0;
+    let alwaysBlockCount = 0;
 
     for (const issue of issues) {
       const category = issue.category as ReviewCategory;
@@ -152,7 +228,10 @@ export class BlockingReviewService {
       }
       categoryStats[category].total++;
 
-      if (issue.blocking) {
+      // 根据严格度和问题类型判断是否阻断
+      const shouldBlock = this.shouldBlockIssue(issue);
+      
+      if (shouldBlock) {
         categoryStats[category].blocking++;
         blockingCount++;
       }
@@ -160,9 +239,31 @@ export class BlockingReviewService {
       if (issue.severity === 'high' || issue.severity === 'critical') {
         highPriorityCount++;
       }
+
+      // 统计可自动修复的问题
+      if (NON_BLOCKING_ISSUE_TYPES[category] || 
+          (config.autoFixAIFlavor && category === 'ai_flavor')) {
+        autoFixableCount++;
+      }
+
+      // 统计必须阻断的问题
+      if (ALWAYS_BLOCKING_TYPES[category]) {
+        alwaysBlockCount++;
+      }
     }
 
-    const hasBlocking = blockingCount > 0;
+    // 自适应判断是否阻断
+    const decision = this.makeBlockingDecision({
+      issues,
+      blockingCount,
+      highPriorityCount,
+      autoFixableCount,
+      alwaysBlockCount,
+      totalIssues: issues.length,
+      config,
+    });
+
+    const hasBlocking = decision.shouldBlock;
     const passed = !hasBlocking;
 
     // 生成摘要
@@ -184,6 +285,118 @@ export class BlockingReviewService {
       categoryStats,
       summary,
       detail,
+      strictness: this.strictness,
+      decision,
+    };
+  }
+
+  /**
+   * 判断单个问题是否应该阻断
+   */
+  private shouldBlockIssue(issue: ReviewIssue): boolean {
+    const category = issue.category as string;
+    
+    // 如果是总是阻断的类型，直接返回 issue.blocking
+    if (ALWAYS_BLOCKING_TYPES[category]) {
+      return issue.blocking;
+    }
+
+    // 如果是不应该阻断的类型，根据严格度判断
+    if (NON_BLOCKING_ISSUE_TYPES[category]) {
+      // relaxed 模式：非阻断
+      // normal 模式：只有 high/critical 才阻断
+      // strict 模式：medium 及以上都阻断
+      if (this.strictness === 'relaxed') {
+        return false;
+      } else if (this.strictness === 'normal') {
+        return issue.severity === 'critical' || issue.severity === 'high';
+      } else {
+        return SEVERITY_TO_BLOCKING[issue.severity] || false;
+      }
+    }
+
+    // 默认：根据 issue.blocking 字段和严重度判断
+    if (this.strictness === 'relaxed') {
+      // relaxed 模式：只有 critical 才阻断
+      return issue.severity === 'critical' && issue.blocking;
+    }
+
+    return issue.blocking || SEVERITY_TO_BLOCKING[issue.severity] || false;
+  }
+
+  /**
+   * 做出阻断决策
+   */
+  private makeBlockingDecision(params: {
+    issues: ReviewIssue[];
+    blockingCount: number;
+    highPriorityCount: number;
+    autoFixableCount: number;
+    alwaysBlockCount: number;
+    totalIssues: number;
+    config: typeof STRICTNESS_CONFIG['normal'];
+  }): {
+    shouldBlock: boolean;
+    reason: string;
+    canAutoFix: boolean;
+  } {
+    const { blockingCount, autoFixableCount, alwaysBlockCount, config } = params;
+
+    // 1. 如果有必须阻断的问题，直接阻断
+    if (alwaysBlockCount > 0) {
+      return {
+        shouldBlock: true,
+        reason: `存在 ${alwaysBlockCount} 个必须阻断的严重问题（人物一致性/逻辑漏洞/设定冲突/时间线）`,
+        canAutoFix: false,
+      };
+    }
+
+    // 2. 根据严格度判断
+    if (this.strictness === 'relaxed') {
+      // relaxed 模式：只有超过阈值才阻断
+      if (blockingCount >= config.blockingThreshold) {
+        // 但如果都是可自动修复的，不阻断
+        if (autoFixableCount === blockingCount) {
+          return {
+            shouldBlock: false,
+            reason: `发现 ${blockingCount} 个问题，但都是可自动修复的（润色阶段会处理）`,
+            canAutoFix: true,
+          };
+        }
+        return {
+          shouldBlock: true,
+          reason: `存在 ${blockingCount} 个阻断问题（relaxed 模式阈值：${config.blockingThreshold}）`,
+          canAutoFix: autoFixableCount > 0,
+        };
+      }
+      return {
+        shouldBlock: false,
+        reason: '审查通过（relaxed 模式）',
+        canAutoFix: true,
+      };
+    }
+
+    // 3. normal/strict 模式
+    if (blockingCount >= config.blockingThreshold) {
+      // 检查是否可以自动修复
+      if (autoFixableCount > 0 && autoFixableCount === blockingCount) {
+        return {
+          shouldBlock: false,
+          reason: `发现 ${blockingCount} 个问题，但都是可自动修复的（润色阶段会处理）`,
+          canAutoFix: true,
+        };
+      }
+      return {
+        shouldBlock: true,
+        reason: `存在 ${blockingCount} 个阻断问题`,
+        canAutoFix: autoFixableCount > 0,
+      };
+    }
+
+    return {
+      shouldBlock: false,
+      reason: '审查通过',
+      canAutoFix: autoFixableCount > 0,
     };
   }
 
@@ -198,13 +411,13 @@ export class BlockingReviewService {
     totalIssues: number;
   }): string {
     if (stats.passed) {
-      return `审查通过（${stats.totalIssues}个问题，均非阻断）`;
+      return `审查通过（${stats.totalIssues}个问题，均已处理）`;
     }
 
     const parts: string[] = [];
     
     if (stats.blockingCount > 0) {
-      parts.push(`⚠️ ${stats.blockingCount}个阻断问题`);
+      parts.push(`${stats.blockingCount}个阻断问题`);
     }
     
     if (stats.highPriorityCount > 0) {
@@ -431,9 +644,10 @@ export class WritingPipelineManager {
  */
 export async function blockingReview(
   context: ReviewContext,
-  options?: ReviewOptions
+  options?: ReviewOptions,
+  strictness: ReviewStrictness = 'normal'
 ): Promise<BlockingReviewResult> {
-  const service = new BlockingReviewService(context, options);
+  const service = new BlockingReviewService(context, options, strictness);
   return await service.reviewWithBlocking();
 }
 
@@ -441,6 +655,10 @@ export async function blockingReview(
  * 快速检查 blocking 状态
  */
 export function canProceedToPolish(result: BlockingReviewResult): boolean {
+  // 如果有 decision 信息，使用智能决策
+  if (result.decision) {
+    return !result.decision.shouldBlock;
+  }
   return BlockingReviewService.canProceed(result);
 }
 
@@ -462,11 +680,57 @@ export function getBlockingIssuesToFix(
 export async function enhancedReview(
   context: ReviewContext,
   chapterNumber: number,
-  options?: ReviewOptions
+  options?: ReviewOptions,
+  strictness: ReviewStrictness = 'normal'
 ): Promise<{
   blockingResult: BlockingReviewResult;
   specialResult: SpecialCheckResult;
 }> {
-  const service = new BlockingReviewService(context, options);
+  const service = new BlockingReviewService(context, options, strictness);
   return await service.reviewWithSpecialChecks(chapterNumber);
+}
+
+/**
+ * 创建带特定严格度的审查服务
+ */
+export function createBlockingReviewService(
+  context: ReviewContext,
+  options?: ReviewOptions,
+  strictness: ReviewStrictness = 'normal'
+): BlockingReviewService {
+  return new BlockingReviewService(context, options, strictness);
+}
+
+/**
+ * 智能审查 - 根据上下文自动选择严格度
+ */
+export async function smartBlockingReview(
+  context: ReviewContext,
+  options?: {
+    chapterIndex?: number;
+    totalChapters?: number;
+    retryCount?: number;
+  }
+): Promise<BlockingReviewResult> {
+  const { chapterIndex = 0, totalChapters = 1, retryCount = 0 } = options || {};
+  
+  // 智能选择严格度
+  let strictness: ReviewStrictness = 'normal';
+  
+  // 如果是重试，降低严格度
+  if (retryCount > 0) {
+    strictness = retryCount >= 2 ? 'relaxed' : 'normal';
+  }
+  
+  // 如果是开头或结尾章节，使用正常严格度
+  // 中间章节可以使用 relaxed
+  if (chapterIndex > 2 && chapterIndex < totalChapters - 3) {
+    if (strictness === 'normal') {
+      strictness = 'relaxed';
+    }
+  }
+  
+  console.log(`[智能审查] 章节 ${chapterIndex + 1}，严格度: ${strictness}，重试次数: ${retryCount}`);
+  
+  return await blockingReview(context, undefined, strictness);
 }

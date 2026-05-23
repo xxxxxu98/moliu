@@ -5,9 +5,10 @@
  * 核心改进：
  * 1. 显示流水线状态（TaskBook → 起草 → 审查 → 润色 → 提交）
  * 2. 显示 Blocking 闸门状态
- * 3. 显示阻塞问题列表
+ * 3. 自适应审查严格度 - 失败时逐步降低
+ * 4. 自动化程度高 - 无需人工干预
  */
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import {
   NButton,
   NProgress,
@@ -19,6 +20,7 @@ import {
   NCollapse,
   NCollapseItem,
   NAlert,
+  NTooltip,
 } from "naive-ui";
 import {
   Play,
@@ -31,18 +33,21 @@ import {
   AlertCircle,
   Settings,
   Type,
-  ChevronRight,
   FileText,
   Sparkles,
   RefreshCw,
   Shield,
   ShieldAlert,
+  ShieldCheck,
   CheckCircle,
+  Gauge,
+  ChevronDown,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useBatchWriter } from "@/composables/useBatchWriter";
 import { useProjectStore } from "@/stores/project.store";
 import type { UseBatchWriterReturn } from "@/composables/useBatchWriter";
+import type { ReviewStrictness } from "@/services/review/blocking-review.service";
 
 const { t } = useI18n();
 const message = useMessage();
@@ -67,6 +72,12 @@ const {
   pipelineStatus,
   currentPipelineStep,
   blockingIssues,
+  // 自适应审查相关
+  currentStrictness,
+  initialStrictness,
+  reviewAttempts,
+  strictnessHistory,
+  lowerStrictness,
 } = batchWriter;
 
 const startBatchWriting: UseBatchWriterReturn['startBatchWriting'] = batchWriter.startBatchWriting;
@@ -81,9 +92,10 @@ const writingMode = ref<'specific' | 'finish'>('specific');
 const batchConfig = ref({
   wordsPerChapter: 2000,
   writingStyle: 'humorous' as 'concise' | 'elegant' | 'humorous' | 'ancient',
-  useTaskBook: true,        // 强制为 true
+  useTaskBook: true,
   useReview: true,
   requireBlockingPass: true,
+  initialStrictness: 'normal' as ReviewStrictness,
 });
 
 // 流水线步骤图标映射
@@ -110,6 +122,13 @@ const stepColors = {
   '提取记忆': 'text-gray-500',
 };
 
+// 审查严格度选项
+const strictnessOptions = [
+  { label: '宽松', value: 'relaxed', desc: 'AI味等问题自动通过', icon: ShieldCheck },
+  { label: '正常', value: 'normal', desc: '中等严格，平衡质量与效率', icon: Shield },
+  { label: '严格', value: 'strict', desc: '所有问题都会阻断', icon: ShieldAlert },
+];
+
 // 下一章编号
 const nextChapterNumber = computed(() => writtenChapters.value + 1);
 
@@ -134,6 +153,9 @@ const progressPercentage = computed(() => {
 
 // 是否有阻塞问题
 const hasBlockingIssues = computed(() => blockingIssues.value.length > 0);
+
+// 是否达到最大跳过限制
+const reachedMaxSkips = computed(() => consecutiveSkips.value >= batchConfig.value.maxConsecutiveSkips);
 
 // 流水线步骤列表
 const pipelineSteps = computed(() => [
@@ -198,6 +220,36 @@ function getSeverityType(severity: string): 'error' | 'warning' | 'info' {
       return 'info';
   }
 }
+
+// 获取严格度显示标签
+function getStrictnessLabel(strictness: ReviewStrictness): string {
+  switch (strictness) {
+    case 'strict': return '严格';
+    case 'normal': return '正常';
+    case 'relaxed': return '宽松';
+    default: return strictness;
+  }
+}
+
+// 获取严格度颜色
+function getStrictnessColor(strictness: ReviewStrictness): string {
+  switch (strictness) {
+    case 'strict': return 'text-red-500';
+    case 'normal': return 'text-purple-500';
+    case 'relaxed': return 'text-emerald-500';
+    default: return 'text-gray-500';
+  }
+}
+
+// 获取严格度背景色
+function getStrictnessBg(strictness: ReviewStrictness): string {
+  switch (strictness) {
+    case 'strict': return 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400';
+    case 'normal': return 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400';
+    case 'relaxed': return 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400';
+    default: return 'bg-gray-100 text-gray-600';
+  }
+}
 </script>
 
 <template>
@@ -217,12 +269,19 @@ function getSeverityType(severity: string): 'error' | 'warning' | 'info' {
     <div v-if="isWriting" class="mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs font-medium text-gray-600 dark:text-gray-400">写作流水线</span>
-        <span 
-          class="text-xs font-medium"
-          :class="stepColors[currentPipelineStep] || 'text-gray-500'"
-        >
-          {{ currentPipelineStep }}
-        </span>
+        <div class="flex items-center gap-2">
+          <!-- 审查严格度指示器 -->
+          <div class="flex items-center gap-1 px-2 py-1 rounded-full" :class="getStrictnessBg(currentStrictness)">
+            <Shield class="w-3 h-3" />
+            <span class="text-xs font-medium">{{ getStrictnessLabel(currentStrictness) }}</span>
+          </div>
+          <span 
+            class="text-xs font-medium"
+            :class="stepColors[currentPipelineStep] || 'text-gray-500'"
+          >
+            {{ currentPipelineStep }}
+          </span>
+        </div>
       </div>
       <div class="flex items-center gap-1">
         <template v-for="(step, index) in pipelineSteps" :key="step.key">
@@ -246,30 +305,26 @@ function getSeverityType(severity: string): 'error' | 'warning' | 'info' {
           {{ step.name }}
         </span>
       </div>
+      <!-- 审查尝试次数 -->
+      <div v-if="reviewAttempts > 0" class="mt-2 text-xs text-gray-500">
+        审查尝试: {{ reviewAttempts }} 次
+      </div>
     </div>
 
-    <!-- Blocking 闸门警告 -->
-    <div v-if="hasBlockingIssues" class="mb-4">
-      <NAlert type="error" :title="`${blockingIssues.length} 个阻断问题`" size="small">
-        <div class="space-y-2 max-h-32 overflow-y-auto">
-          <div 
-            v-for="(issue, index) in blockingIssues" 
-            :key="index"
-            class="text-xs"
-          >
-            <span class="font-medium">{{ issue.category }}:</span>
-            {{ issue.description }}
-          </div>
+    <!-- 严格度降级提示 -->
+    <div v-if="isWriting && reviewAttempts > 1" class="mb-4">
+      <NAlert type="info" size="small" :show-icon="false">
+        <div class="flex items-center gap-2">
+          <RefreshCw class="w-3 h-3 text-blue-500 animate-spin" />
+          <span class="text-xs">审查未通过，正在降低严格度继续...</span>
         </div>
-        <div class="mt-2 flex gap-2">
-          <NButton size="tiny" @click="batchWriter.retryCurrentStep">
-            <template #icon><RefreshCw class="w-3 h-3" /></template>
-            重试
-          </NButton>
-          <NButton size="tiny" quaternary @click="batchWriter.skipBlockingIssues">
-            跳过
-          </NButton>
-        </div>
+      </NAlert>
+    </div>
+
+    <!-- 章节完成提示 -->
+    <div v-if="error" class="mb-4">
+      <NAlert type="warning" size="small">
+        {{ error }}
       </NAlert>
     </div>
 
@@ -398,6 +453,37 @@ function getSeverityType(severity: string): 'error' | 'warning' | 'info' {
               />
             </div>
 
+            <!-- 审查严格度 -->
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <Gauge class="w-4 h-4 text-purple-500" />
+                <span class="text-sm text-gray-700 dark:text-gray-300">初始审查严格度</span>
+              </div>
+              <div class="text-xs text-gray-400 mb-2">
+                失败时会自动降低严格度，下一章重置
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  v-for="option in strictnessOptions"
+                  :key="option.value"
+                  class="p-2 rounded-lg border-2 transition-all text-center"
+                  :class="[
+                    batchConfig.initialStrictness === option.value
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
+                  ]"
+                  @click="batchConfig.initialStrictness = option.value as ReviewStrictness"
+                >
+                  <component :is="option.icon" class="w-4 h-4 mx-auto mb-1" :class="batchConfig.initialStrictness === option.value ? 'text-purple-500' : 'text-gray-400'" />
+                  <div class="text-xs font-medium" :class="batchConfig.initialStrictness === option.value ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-400'">
+                    {{ option.label }}
+                  </div>
+                  <div class="text-[10px] text-gray-400 mt-1">
+                    {{ option.desc }}
+                  </div>
+                </button>
+              </div>
+
             <!-- Blocking 闸门配置 -->
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-2">
@@ -409,11 +495,16 @@ function getSeverityType(severity: string): 'error' | 'warning' | 'info' {
               </NTag>
             </div>
 
-            <!-- TaskBook 强制提示 -->
+            <!-- 自适应审查说明 -->
             <div class="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50">
-              <div class="flex items-center gap-2 text-xs text-indigo-600 dark:text-indigo-400">
+              <div class="flex items-center gap-2 text-xs text-indigo-600 dark:text-indigo-400 mb-1">
                 <FileText class="w-3 h-3" />
-                <span>写作任务书（TaskBook）已作为核心前置步骤</span>
+                <span>自适应审查策略</span>
+              </div>
+              <div class="text-[10px] text-indigo-500 dark:text-indigo-400 space-y-1">
+                <div>1. 审查失败时自动降低严格度</div>
+                <div>2. 每章不跳过，直到通过或最低严格度</div>
+                <div>3. 下一章自动重置为初始严格度</div>
               </div>
             </div>
           </div>

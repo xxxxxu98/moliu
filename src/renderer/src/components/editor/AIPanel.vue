@@ -717,7 +717,8 @@ function getSeverityClass(severity: string): string {
                 重试
               </NButton>
               <NButton size="tiny" quaternary @click="skipBlockingIssues">
-                跳过
+                <template #icon><SkipForward class="w-3 h-3" /></template>
+                强制继续
               </NButton>
             </div>
           </div>

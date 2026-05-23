@@ -2,9 +2,17 @@
  * 批量写作 Composable - 增强版
  * 
  * 核心改进：
- * 1. TaskBook 作为核心前置步骤（不再是可选）
+ * 1. TaskBook 作为核心前置步骤
  * 2. 引入 blocking 闸门机制
  * 3. 流水线式管理：起草 → 审查 → 润色 → 提交
+ * 4. 自适应审查严格度 - 审查失败时逐步降低严格度，直到通过
+ * 5. 自动化程度高 - 无需人工干预，避免死循环
+ * 
+ * 审查策略：
+ * - 每章从目标严格度开始（如 normal）
+ * - 审查失败时，逐步降低严格度（normal → relaxed）
+ * - 章节完成后，下一章重置为初始严格度
+ * - 这样既保证质量，又避免无限循环
  */
 
 import { ref, computed, type Ref, type ComputedRef } from 'vue';
@@ -32,12 +40,41 @@ import {
   BlockingReviewService,
   WritingPipelineManager,
   type BlockingReviewResult,
-  type WritingPipelineStage
+  type WritingPipelineStage,
+  type ReviewStrictness
 } from '@/services/review/blocking-review.service';
 import { createChapterCommit, extractChapterFacts } from '@/services/writing/chapter-commit';
 import { createForeshadowTracker, analyzeForeshadows } from '@/services/writing/foreshadow-tracker';
 import type { WritingTaskBook } from '@/types/writing-task';
 import { WritingError, ErrorCode, getErrorMessage } from '@/types/errors';
+
+export type WritingTarget = 'specific' | 'finish';
+
+// ============================================
+// 严格度降级策略
+// ============================================
+
+/** 严格度降级顺序 */
+const STRICTNESS_LEVELS: ReviewStrictness[] = ['strict', 'normal', 'relaxed'];
+
+/** 获取下一个更宽松的严格度 */
+function getLowerStrictness(current: ReviewStrictness): ReviewStrictness | null {
+  const currentIndex = STRICTNESS_LEVELS.indexOf(current);
+  if (currentIndex < STRICTNESS_LEVELS.length - 1) {
+    return STRICTNESS_LEVELS[currentIndex + 1];
+  }
+  return null; // 已经是最宽松的
+}
+
+/** 获取严格度显示名称 */
+function getStrictnessLabel(strictness: ReviewStrictness): string {
+  switch (strictness) {
+    case 'strict': return '严格';
+    case 'normal': return '正常';
+    case 'relaxed': return '宽松';
+    default: return strictness;
+  }
+}
 
 export type WritingTarget = 'specific' | 'finish';
 
@@ -65,6 +102,12 @@ export interface UseBatchWriterReturn {
   writtenWordCount: ComputedRef<number>;
   progress: Ref<{ writtenChapters: number; writtenWords: number; targetChapters: number }>;
 
+  // 自适应审查状态
+  currentStrictness: Ref<ReviewStrictness>;          // 当前使用的严格度
+  initialStrictness: Ref<ReviewStrictness>;           // 初始目标严格度
+  reviewAttempts: Ref<number>;                       // 当前章节审查尝试次数
+  strictnessHistory: Ref<Array<{chapter: number; strictness: ReviewStrictness; passed: boolean}>>;
+
   // 配置
   target: Ref<WritingTarget>;
   config: Ref<{
@@ -72,10 +115,12 @@ export interface UseBatchWriterReturn {
     writingStyle: 'concise' | 'elegant' | 'humorous' | 'ancient';
     temperature: number;
     deAIEnabled: boolean;
-    useTaskBook: boolean;  // 强制为 true
+    useTaskBook: boolean;
     useReview: boolean;
     useCommit: boolean;
-    requireBlockingPass: boolean;  // 新增：是否要求 blocking 通过
+    requireBlockingPass: boolean;
+    // 审查配置
+    initialStrictness: ReviewStrictness;           // 初始严格度
   }>;
 
   // 方法
@@ -85,10 +130,6 @@ export interface UseBatchWriterReturn {
   stopWriting: () => void;
   getNextChapterIndex: () => number;
   getTotalChapters: () => number;
-  
-  // 流水线控制
-  retryCurrentStep: () => Promise<void>;
-  skipBlockingIssues: () => void;
 }
 
 // 批量写作配置
@@ -97,10 +138,11 @@ export interface BatchConfig {
   writingStyle: 'concise' | 'elegant' | 'humorous' | 'ancient';
   temperature?: number;
   deAIEnabled?: boolean;
-  useTaskBook?: boolean;  // 强制为 true
+  useTaskBook?: boolean;
   useReview?: boolean;
   useCommit?: boolean;
-  requireBlockingPass?: boolean;  // 是否要求 blocking 通过
+  requireBlockingPass?: boolean;
+  initialStrictness?: ReviewStrictness;  // 初始审查严格度
 }
 
 // ============================================
@@ -114,6 +156,10 @@ interface InternalWritingState {
   targetChapterCount: number;
   pipeline: WritingPipelineManager;
   currentReviewResult: BlockingReviewResult | null;
+  // 自适应审查相关状态
+  currentStrictness: ReviewStrictness;           // 当前使用的严格度
+  reviewAttempts: number;                       // 当前章节审查尝试次数
+  currentChapter: number;                       // 当前处理的章节索引
 }
 
 // ============================================
@@ -299,21 +345,22 @@ async function performBlockingReview(
   project: any,
   chapter: any,
   chapterIndex: number,
-  previousChapter: any
+  previousChapter: any,
+  strictness: ReviewStrictness = 'normal'
 ): Promise<BlockingReviewResult> {
   const context = {
     project,
     chapter,
     chapterIndex,
     previousChapter,
-    previousSummary: previousChapter?.content 
+    previousSummary: previousChapter?.content
       ? new ContextManager().extractPreviousChapterSummary(previousChapter.content, 300)
       : undefined,
   };
 
-  const result = await blockingReview(context);
-  
-  console.log(`[批量写作] 第${chapterIndex + 1}章审查结果:`, {
+  const result = await blockingReview(context, undefined, strictness);
+
+  console.log(`[批量写作] 第${chapterIndex + 1}章审查 [${getStrictnessLabel(strictness)}]:`, {
     passed: result.passed,
     blockingCount: result.blockingCount,
     totalIssues: result.totalIssues,
@@ -469,6 +516,10 @@ export function useBatchWriter(): UseBatchWriterReturn {
     targetChapterCount: 10,
     pipeline: new WritingPipelineManager(),
     currentReviewResult: null,
+    // 自适应审查相关状态
+    currentStrictness: 'normal',
+    reviewAttempts: 0,
+    currentChapter: 0,
   };
 
   // 响应式状态
@@ -493,16 +544,23 @@ export function useBatchWriter(): UseBatchWriterReturn {
     targetChapters: 0,
   });
 
+  // 自适应审查状态
+  const currentStrictness = ref<ReviewStrictness>('normal');
+  const initialStrictness = ref<ReviewStrictness>('normal');
+  const reviewAttempts = ref(0);
+  const strictnessHistory = ref<Array<{chapter: number; strictness: ReviewStrictness; passed: boolean}>>([]);
+
   // 写作配置
   const config = ref({
     wordsPerChapter: 3000,
     writingStyle: 'concise' as 'concise' | 'elegant' | 'humorous' | 'ancient',
     temperature: 0.5,
     deAIEnabled: true,
-    useTaskBook: true,      // 强制为 true
-    useReview: true,        // 默认启用审查
+    useTaskBook: true,
+    useReview: true,
     useCommit: true,
-    requireBlockingPass: true,  // 默认要求 blocking 通过
+    requireBlockingPass: true,
+    initialStrictness: 'normal' as ReviewStrictness,
   });
 
   // 上下文管理器
@@ -567,6 +625,11 @@ export function useBatchWriter(): UseBatchWriterReturn {
    * 执行单章写作（核心逻辑）
    * 
    * 流水线：TaskBook(前置) → 起草 → 审查(Blocking闸门) → 润色 → 提交
+   * 
+   * 审查策略：
+   * - 从当前严格度开始审查
+   * - 失败时降低严格度（normal → relaxed）
+   * - 通过后进入润色阶段
    */
   async function executeChapterWriting(
     chapterIndex: number,
@@ -601,10 +664,18 @@ export function useBatchWriter(): UseBatchWriterReturn {
     const chapterOutline = chapter.plotSummary || extractChapterOutlineFromPlot(projectStore.plotOutline, chapter.id);
     const recentChapterCount = projectStore.memoryConfig?.shortTermChapterCount || 5;
 
+    // 初始化本章审查状态
+    internalState.reviewAttempts = 0;
+    internalState.currentChapter = chapterIndex;
+    
+    // 获取当前使用的严格度（从初始严格度开始）
+    let currentReviewStrictness = internalState.currentStrictness;
+
     // ========== 步骤 1: 生成写作任务书（核心前置） ==========
     let taskBook: WritingTaskBook | null = null;
     if (options.useTaskBook) {
       currentPipelineStep.value = '生成任务书';
+      
       taskBook = await generateTaskBook(
         project,
         chapterIndex,
@@ -699,35 +770,68 @@ export function useBatchWriter(): UseBatchWriterReturn {
       throw new WritingError(errorMessage, ErrorCode.AI_GENERATION_FAILED);
     }
 
-    // ========== 步骤 4: 审查（Blocking 闸门） ==========
+    // ========== 步骤 4: 审查（带自适应严格度） ==========
     if (options.useReview) {
       currentPipelineStep.value = '审查（Blocking闸门）';
 
-      const reviewResult = await performBlockingReview(
-        project,
-        { ...chapter, content: generatedContent },
-        chapterIndex,
-        prevChapter
-      );
-
-      internalState.currentReviewResult = reviewResult;
-      blockingIssues.value = getBlockingIssuesToFix(reviewResult, 10);
-
-      // Blocking 闸门检查
-      if (options.requireBlockingPass && !canProceedToPolish(reviewResult)) {
-        console.warn('[批量写作] 审查未通过，blocking 问题:', reviewResult.blockingCount);
-
-        // 抛出错误让上层处理
-        throw new WritingError(
-          `审查未通过：${reviewResult.blockingCount}个阻断问题，需要修复后重试`,
-          ErrorCode.REVIEW_BLOCKED
+      // 自适应审查循环：失败时降低严格度
+      let reviewPassed = false;
+      let lastReviewResult: BlockingReviewResult | null = null;
+      
+      while (!reviewPassed) {
+        internalState.reviewAttempts++;
+        
+        console.log(`[批量写作] 第${chapterIndex + 1}章审查 [${getStrictnessLabel(currentReviewStrictness)}] (第${internalState.reviewAttempts}次尝试)`);
+        
+        lastReviewResult = await performBlockingReview(
+          project,
+          { ...chapter, content: generatedContent },
+          chapterIndex,
+          prevChapter,
+          currentReviewStrictness
         );
+
+        blockingIssues.value = getBlockingIssuesToFix(lastReviewResult, 10);
+        currentStrictness.value = currentReviewStrictness;
+        
+        // 记录审查历史
+        strictnessHistory.value.push({
+          chapter: chapterIndex,
+          strictness: currentReviewStrictness,
+          passed: lastReviewResult.passed
+        });
+
+        // 检查是否通过
+        if (canProceedToPolish(lastReviewResult)) {
+          reviewPassed = true;
+          console.log(`[批量写作] 第${chapterIndex + 1}章审查通过 [${getStrictnessLabel(currentReviewStrictness)}]`);
+          break;
+        }
+
+        // 未通过，尝试降低严格度
+        const lowerStrictness = getLowerStrictness(currentReviewStrictness);
+        
+        if (lowerStrictness) {
+          console.log(`[批量写作] 审查未通过，降低严格度: ${getStrictnessLabel(currentReviewStrictness)} → ${getStrictnessLabel(lowerStrictness)}`);
+          currentReviewStrictness = lowerStrictness;
+          // 继续循环，用更宽松的严格度重新审查
+        } else {
+          // 已经是最宽松的严格度，仍然未通过
+          console.warn(`[批量写作] 第${chapterIndex + 1}章在最低严格度下仍未通过，将继续（润色会处理部分问题）`);
+          
+          // 记录警告但仍然继续（润色阶段会处理）
+          error.value = `第${chapterIndex + 1}章审查未通过，但继续进行润色`;
+          
+          // 重置严格度为初始值，为下一章做准备
+          currentReviewStrictness = internalState.currentStrictness;
+          break;
+        }
       }
     }
 
-    // ========== 步骤 5: 润色（必须在 blocking 通过后） ==========
+    // ========== 步骤 5: 润色（去AI味） ==========
     currentPipelineStep.value = '润色（去AI味）';
-    const { fixedContent, title, fixedCount } = await performPolish(generatedContent, options.deAIEnabled);
+    const { fixedContent, title } = await performPolish(generatedContent, options.deAIEnabled);
     generatedContent = fixedContent;
 
     // ========== 步骤 6: 保存章节 ==========
@@ -749,6 +853,10 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
     progress.value.writtenChapters++;
     progress.value.writtenWords += generatedContent.length;
+
+    // 重置当前章节的严格度，为下一章做准备
+    internalState.currentStrictness = config.value.initialStrictness;
+    currentStrictness.value = config.value.initialStrictness;
 
     // 重置流水线状态
     internalState.pipeline.reset();
@@ -777,6 +885,18 @@ export function useBatchWriter(): UseBatchWriterReturn {
     blockingIssues.value = [];
     internalState.pipeline.advance();
   }
+  
+  /**
+   * 手动降低审查严格度
+   */
+  function lowerStrictness(): void {
+    const lower = getLowerStrictness(internalState.currentStrictness);
+    if (lower) {
+      internalState.currentStrictness = lower;
+      currentStrictness.value = lower;
+      console.log(`[批量写作] 手动降低严格度: ${getStrictnessLabel(lower)}`);
+    }
+  }
 
   /**
    * 开始批量写作
@@ -802,10 +922,11 @@ export function useBatchWriter(): UseBatchWriterReturn {
       config.value.writingStyle = batchConfig.writingStyle;
       config.value.temperature = batchConfig.temperature ?? 0.5;
       config.value.deAIEnabled = batchConfig.deAIEnabled ?? true;
-      config.value.useTaskBook = true;  // 强制为 true
+      config.value.useTaskBook = true;
       config.value.useReview = batchConfig.useReview ?? true;
       config.value.useCommit = batchConfig.useCommit ?? true;
       config.value.requireBlockingPass = batchConfig.requireBlockingPass ?? true;
+      config.value.initialStrictness = batchConfig.initialStrictness ?? 'normal';
     }
 
     // 设置目标
@@ -822,7 +943,11 @@ export function useBatchWriter(): UseBatchWriterReturn {
     internalState.shouldStop = false;
     internalState.shouldPause = false;
     internalState.pipeline.reset();
+    internalState.currentStrictness = config.value.initialStrictness;
+    internalState.reviewAttempts = 0;
+    internalState.currentChapter = 0;
     error.value = null;
+    strictnessHistory.value = [];
 
     try {
       let currentIndex = getNextChapterIndex();
@@ -831,6 +956,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
       while (currentIndex >= 0 || writtenCount < chaptersToWrite) {
         // 检查停止
         if (internalState.shouldStop) {
+          console.log('[批量写作] 用户停止写作');
           break;
         }
 
@@ -843,6 +969,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
         // 检查是否达到目标
         if (target.value === 'specific' && writtenCount >= chaptersToWrite) {
+          console.log(`[批量写作] 已完成目标: ${writtenCount} 章`);
           break;
         }
 
@@ -855,7 +982,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
         }
 
         try {
-          await executeChapterWriting(currentIndex, {
+          const success = await executeChapterWriting(currentIndex, {
             useTaskBook: config.value.useTaskBook,
             useReview: config.value.useReview,
             useCommit: config.value.useCommit,
@@ -864,13 +991,13 @@ export function useBatchWriter(): UseBatchWriterReturn {
             wordsPerChapter: config.value.wordsPerChapter,
             requireBlockingPass: config.value.requireBlockingPass,
           });
-          writtenCount++;
+          
+          if (success) {
+            writtenCount++;
+          }
         } catch (err) {
-          // 处理 blocking 错误
-          if (err instanceof WritingError && err.code === ErrorCode.REVIEW_BLOCKED) {
-            console.warn('[批量写作] 章节因审查阻断而跳过');
-            // 可以选择继续写下一章或停止
-            // 目前策略：继续下一章
+          if (err instanceof WritingError && err.code === ErrorCode.TASK_BOOK_FAILED) {
+            console.error('[批量写作] 任务书生成失败，跳过章节');
           } else {
             console.error('[批量写作] 章节写作失败:', err);
           }
@@ -879,6 +1006,13 @@ export function useBatchWriter(): UseBatchWriterReturn {
         // 找下一个空章节
         currentIndex = getNextChapterIndex();
       }
+      
+      // 输出统计
+      console.log('[批量写作] 完成统计:', {
+        写入: writtenCount,
+        总字数: progress.value.writtenWords,
+        审查历史: strictnessHistory.value.length
+      });
     } finally {
       isWriting.value = false;
       isPaused.value = false;
@@ -936,5 +1070,11 @@ export function useBatchWriter(): UseBatchWriterReturn {
     getTotalChapters,
     retryCurrentStep,
     skipBlockingIssues,
+    // 自适应审查状态
+    currentStrictness,
+    initialStrictness,
+    reviewAttempts,
+    strictnessHistory,
+    lowerStrictness,
   };
 }
