@@ -55,194 +55,227 @@ ${buildEightStrandsPrompt()}
 ${buildConflictEscalationPrompt()}
 
 【输出格式要求】
-请以JSON格式输出完整的大纲，遵循以下结构：
+请以 Markdown 格式输出完整的大纲，使用清晰的标题和列表结构：
 
-{
-  "basic": {
-    "title": "故事标题",
-    "genre": "题材",
-    "subGenres": ["子题材1", "子题材2"],
-    "tone": ["文风标签1", "文风标签2"],
-    "targetWordCount": 500000,
-    "platform": "目标平台",
-    "targetAudience": "目标读者画像",
-    "oneLineSummary": "主角+目标+阻碍+反转，一句话概括全书"
-  },
-  
-  "emotionGoal": {
-    "primary": "核心情绪（热血/甜蜜/虐心/紧张/悬疑/治愈/搞笑/悲壮）",
-    "secondary": "次要情绪（可选）",
-    "arc": "rising/falling/wave/mixed/m_shape/n_shape",
-    "density": 3000,
-    "highPoints": [5, 20, 50, 100],
-    "lowPoints": [10, 30, 60]
-  },
-  
-  "worldSetting": {
-    "type": "都市/古代/异世界/未来/玄幻",
-    "description": "世界描述（50字以内）",
-    "locations": [
-      { "name": "地点名", "description": "描述15-30字", "level": "新手村/主城/禁地" }
-    ],
-    "factions": [
-      { "name": "势力名", "description": "描述20字", "alignment": "正派/反派/中立" }
-    ],
-    "rules": [
-      { "name": "规则名", "description": "描述20字" }
-    ],
-    "powerSystem": {
-      "name": "力量体系名称",
-      "levels": ["等级1", "等级2", "等级3", "等级4", "等级5", "等级6", "等级7"],
-      "breakthroughConditions": ["突破条件1", "突破条件2"]
-    }
-  },
-  
-  "protagonist": {
-    "name": "主角名",
-    "tags": ["标签1", "标签2"],
-    "identity": "身份背景（50字以内）",
-    "goldenFinger": {
-      "name": "金手指名称",
-      "description": "金手指描述（50字以内）",
-      "cost": "代价描述（无代价写'无'）"
-    },
-    "strengths": ["优势1", "优势2"],
-    "weaknesses": ["短板1", "短板2"],
-    "motivation": "核心动机（他为什么要做这件事）",
-    "currentDilemma": "当前困境（开篇面临的问题，30字以内）",
-    "growthArc": "成长弧线描述"
-  },
-  
-  "antagonist": {
-    "tiers": {
-      "small": "小反派描述（新手村/前10章，30字）",
-      "medium": "中反派描述（中期势力，30字）",
-      "big": "大反派描述（终极Boss，30字）"
-    },
-    "mirror": "反派与主角的镜像关系（20字）"
-  },
-  
-  "worldConstraints": {
-    "timeBaseline": "时间基准（如：玄幻纪元2024年）",
-    "timeDirection": "forward/backward/mixed",
-    "timeMonotonic": true,
-    "maxTimeGaps": 1,
-    "forbiddenTimeLoops": true,
-    "abilitySources": ["能力来源1", "能力来源2"],
-    "maxLevelReached": "最高等级",
-    "forbiddenCombinations": [["禁止组合1"], ["禁止组合2"]],
-    "maxMajorCharacters": 20,
-    "maxMinorCharacters": 50,
-    "forbiddenDeaths": ["禁止死亡的角色名"]
-  },
-  
-  "strands": {
-    "quest": { "ratio": 0.6, "status": "active", "currentArc": "当前弧线" },
-    "fire": { "ratio": 0.25, "status": "active", "currentStage": "cold/warm/hot/climax" },
-    "constellation": { "ratio": 0.15, "status": "active", "revealedLocations": ["已揭示地点"] }
-  },
-  
-  "eightStrands": {
-    "quest": {
-      "description": "地图递进描述",
-      "milestones": [
-        { "chapter": 5, "location": "新地图", "event": "解锁事件" },
-        { "chapter": 20, "location": "进阶地图", "event": "解锁事件" }
-      ]
-    },
-    "faction": {
-      "description": "阵营发展描述",
-      "milestones": [
-        { "chapter": 10, "faction": "势力名", "event": "加入/冲突事件" }
-      ]
-    },
-    "character": {
-      "description": "人物登场描述",
-      "milestones": [
-        { "chapter": 3, "name": "角色名", "role": "女主/配角/Boss", "event": "登场方式" }
-      ]
-    },
-    "goldenFinger": {
-      "description": "能力升级描述",
-      "milestones": [
-        { "chapter": 5, "ability": "能力名", "event": "能力升级" }
-      ]
-    },
-    "worldBuilding": {
-      "description": "设定揭示描述",
-      "milestones": [
-        { "chapter": 10, "rule": "规则名", "event": "揭示方式" }
-      ]
-    },
-    "conflict": {
-      "description": "冲突递进描述",
-      "milestones": [
-        { "chapter": 15, "conflict": "冲突名", "escalation": "升级" }
-      ]
-    },
-    "collection": {
-      "description": "资源收集描述",
-      "milestones": [
-        { "chapter": 8, "item": "物品名", "progress": "收集进度" }
-      ]
-    },
-    "romance": {
-      "description": "感情发展描述",
-      "milestones": [
-        { "chapter": 5, "with": "对象", "stage": "相遇/相知/暧昧/表白/相守" }
-      ]
-    }
-  },
-  
-  "conflictEscalation": [
-    { "level": 1, "name": "人与自我", "description": "内心挣扎、自我怀疑", "chapters": [], "status": "pending" },
-    { "level": 2, "name": "人与自然", "description": "环境挑战、生存危机", "chapters": [], "status": "pending" },
-    { "level": 3, "name": "人与人", "description": "人际冲突、恩怨情仇", "chapters": [], "status": "pending" },
-    { "level": 4, "name": "人与世界", "description": "终极对抗、命运挑战", "chapters": [], "status": "pending" }
-  ],
-  
-  "promises": {
-    "coreHook": "核心卖点一句话",
-    "mainSatisfactions": ["满足点1", "满足点2"],
-    "genreSpecificPromise": "题材特定承诺（可选）"
-  },
-  
-  "coolPointDesign": {
-    "density": {
-      "micro": ${COOL_POINT_DENSITY.micro},
-      "small": ${COOL_POINT_DENSITY.small},
-      "big": ${COOL_POINT_DENSITY.big}
-    },
-    "patterns": ["装逼打脸", "实力碾压", "意外收获", "感情突破", "真相揭示", "复仇成功"],
-    "arranged": [
-      { "chapter": 5, "type": "micro", "description": "微爽点描述" },
-      { "chapter": 10, "type": "small", "description": "小爽点描述" },
-      { "chapter": 30, "type": "big", "description": "大爽点描述" }
-    ],
-    "storyCardUsage": [
-      { "cardId": "1", "cardName": "英雄救美", "chapters": [8, 25], "variation": "变体描述" }
-    ]
-  },
-  
-  "foreshadowTable": [
-    { "id": "fs1", "content": "伏笔内容", "buriedChapter": 3, "payoffChapter": 50, "level": "story/volume/chapter", "status": "active", "type": "mystery/dialogue/event/item" }
-  ],
-  
-  "volumes": [
-    {
-      "volumeId": 1,
-      "title": "卷1标题",
-      "chapterRange": [1, 30],
-      "wordCount": 150000,
-      "function": "铺垫/起步/第一个大爽点",
-      "coreConflict": "本卷核心冲突",
-      "startState": "主角起始状态",
-      "endState": "主角结束状态",
-      "climax": "本卷高潮事件",
-      "newHooks": "本卷新钩子"
-    }
-  ]
-}
+# 基本信息
+
+- **书名**：故事标题
+- **题材**：题材
+- **子题材**：子题材1、子题材2
+- **文风**：文风标签1、文风标签2
+- **目标字数**：500000
+- **目标平台**：目标平台
+- **目标读者**：目标读者画像
+- **一句话概括**：主角+目标+阻碍+反转
+
+# 情绪目标
+
+- **核心情绪**：热血/甜蜜/虐心/紧张/悬疑/治愈/搞笑/悲壮
+- **次要情绪**：可选
+- **情绪弧线**：rising/falling/wave/mixed/m_shape/n_shape
+- **情绪密度**：3000
+- **情绪高点**：5, 20, 50, 100
+- **情绪低点**：10, 30, 60
+
+# 世界设定
+
+- **世界类型**：都市/古代/异世界/未来/玄幻
+- **世界描述**：50字以内
+
+## 主要地点
+
+| 地点名 | 描述 | 等级 |
+|--------|------|------|
+| 地点1 | 描述15-30字 | 新手村/主城/禁地 |
+
+## 主要势力
+
+| 势力名 | 描述 | 阵营 |
+|--------|------|------|
+| 势力1 | 描述20字 | 正派/反派/中立 |
+
+## 核心规则
+
+| 规则名 | 描述 |
+|--------|------|
+| 规则1 | 描述20字 |
+
+## 力量体系
+
+- **体系名称**：力量体系名称
+- **等级划分**：等级1 → 等级2 → 等级3 → 等级4 → 等级5 → 等级6 → 等级7
+- **突破条件**：突破条件1、突破条件2
+
+# 主角设定
+
+- **姓名**：主角名
+- **标签**：标签1、标签2
+- **身份背景**：身份背景（50字以内）
+
+## 金手指
+
+- **名称**：金手指名称
+- **描述**：金手指描述（50字以内）
+- **代价**：代价描述（无代价写'无'）
+
+## 优势与短板
+
+- **优势**：优势1、优势2
+- **短板**：短板1、短板2
+
+## 核心设定
+
+- **核心动机**：他为什么要做这件事
+- **当前困境**：开篇面临的问题（30字以内）
+- **成长弧线**：成长弧线描述
+
+# 反派体系
+
+## 三层反派
+
+- **小反派**（新手村/前10章）：小反派描述（30字）
+- **中反派**（中期势力）：中反派描述（30字）
+- **大反派**（终极Boss）：大反派描述（30字）
+
+## 镜像关系
+
+反派与主角的镜像关系（20字）
+
+# 世界约束
+
+- **时间基准**：如玄幻纪元2024年
+- **时间方向**：forward/backward/mixed
+- **能力来源**：能力来源1、能力来源2
+- **最高等级**：最高等级
+- **最大主角数**：20
+- **最大配角数**：50
+
+## 禁止项
+
+- **禁止时间循环**：是/否
+- **禁止组合**：禁止组合1、禁止组合2
+- **禁止死亡角色**：角色名
+
+# 三线交织
+
+| 故事线 | 比例 | 状态 | 当前内容 |
+|--------|------|------|----------|
+| Quest（主线） | 60% | active | 当前弧线 |
+| Fire（感情线） | 25% | active | cold/warm/hot/climax |
+| Constellation（世界观线） | 15% | active | 已揭示地点 |
+
+# 八条故事线
+
+## 1. 地图线
+
+- **描述**：地图递进描述
+- **里程碑**：
+  - 第5章：新地图 - 解锁事件
+  - 第20章：进阶地图 - 解锁事件
+
+## 2. 阵营线
+
+- **描述**：阵营发展描述
+- **里程碑**：
+  - 第10章：势力名 - 加入/冲突事件
+
+## 3. 人物线
+
+- **描述**：人物登场描述
+- **里程碑**：
+  - 第3章：角色名（女主/配角/Boss）- 登场方式
+
+## 4. 金手指线
+
+- **描述**：能力升级描述
+- **里程碑**：
+  - 第5章：能力名 - 能力升级
+
+## 5. 世界观线
+
+- **描述**：设定揭示描述
+- **里程碑**：
+  - 第10章：规则名 - 揭示方式
+
+## 6. 矛盾线
+
+- **描述**：冲突递进描述
+- **里程碑**：
+  - 第15章：冲突名 - 升级
+
+## 7. 收集线
+
+- **描述**：资源收集描述
+- **里程碑**：
+  - 第8章：物品名 - 收集进度
+
+## 8. 感情线
+
+- **描述**：感情发展描述
+- **里程碑**：
+  - 第5章：对象 - 相遇/相知/暧昧/表白/相守
+
+# 矛盾递进
+
+| 层级 | 名称 | 描述 | 状态 |
+|------|------|------|------|
+| 1 | 人与自我 | 内心挣扎、自我怀疑 | pending |
+| 2 | 人与自然 | 环境挑战、生存危机 | pending |
+| 3 | 人与人 | 人际冲突、恩怨情仇 | pending |
+| 4 | 人与世界 | 终极对抗、命运挑战 | pending |
+
+# 核心承诺
+
+- **核心卖点**：一句话概括
+- **主要满足点**：满足点1、满足点2
+- **题材特定承诺**：可选
+
+# 爽点设计
+
+## 爽点密度
+
+- **微爽点**：每${COOL_POINT_DENSITY.micro}字至少1个
+- **小爽点**：每${COOL_POINT_DENSITY.small}字1个
+- **大爽点**：每${COOL_POINT_DENSITY.big}字1个
+
+## 爽点类型
+
+装逼打脸、实力碾压、意外收获、感情突破、真相揭示、复仇成功
+
+## 爽点安排
+
+| 章节 | 类型 | 描述 |
+|------|------|------|
+| 5 | micro | 微爽点描述 |
+| 10 | small | 小爽点描述 |
+| 30 | big | 大爽点描述 |
+
+## 故事卡使用
+
+| 故事卡ID | 名称 | 应用章节 | 变体 |
+|----------|------|----------|------|
+| 1 | 英雄救美 | 8, 25 | 变体描述 |
+
+# 伏笔表
+
+| ID | 内容 | 埋设章节 | 回收章节 | 层级 | 状态 | 类型 |
+|----|------|----------|----------|------|------|------|
+| fs1 | 伏笔内容 | 3 | 50 | story/volume/chapter | active | mystery/dialogue/event/item |
+
+# 卷划分
+
+## 第1卷
+
+- **卷ID**：1
+- **卷名**：卷1标题
+- **章节范围**：1-30
+- **目标字数**：150000
+- **功能**：铺垫/起步/第一个大爽点
+- **核心冲突**：本卷核心冲突
+- **起始状态**：主角起始状态
+- **结束状态**：主角结束状态
+- **高潮事件**：本卷高潮事件
+- **新钩子**：本卷新钩子
 
 【关键要求】
 1. 所有字段都必须有实际内容，不能使用占位符
@@ -251,7 +284,7 @@ ${buildConflictEscalationPrompt()}
 4. 爽点节奏必须符合密度要求
 5. 八条故事线必须有具体的里程碑节点
 
-请确保输出完整的JSON，不要截断，不要省略字段。`;
+请用 Markdown 格式输出完整的大纲，使用清晰的分级标题和列表结构。`;
 }
 
 /**

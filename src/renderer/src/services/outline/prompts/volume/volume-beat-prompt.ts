@@ -162,34 +162,85 @@ ${strandSection}
 - 经过拉扯后的爽感远比单纯碾压爽
 
 【输出格式】
-请以JSON格式输出卷节拍表：
-{
-  "beats": [
-    {
-      "node": "Opening",
-      "chapterRange": [1, ${Math.ceil(totalChapters * 0.08)}],
-      "description": "节拍描述",
-      "promise": "开卷承诺",
-      "events": ["事件1", "事件2"],
-      "coolPoints": ["微爽点1"],
-      "foreshadows": ["伏笔1"]
-    },
-    {
-      "node": "Development",
-      "chapterRange": [${Math.ceil(totalChapters * 0.10)}, ${Math.ceil(totalChapters * 0.45)}],
-      "description": "节拍描述",
-      "events": ["事件1", "事件2", "事件3"],
-      "coolPoints": ["微爽点1", "小爽点1"],
-      "foreshadows": ["伏笔1", "伏笔2"]
-    },
-    ...
-  ],
-  "strandDistribution": {
-    "quest": { "chapters": [], "mainEvents": [] },
-    "fire": { "chapters": [], "mainEvents": [] },
-    "constellation": { "chapters": [], "mainEvents": [] }
-  }
-}
+请以 Markdown 格式输出卷节拍表，使用清晰的标题和列表结构：
+
+# 卷节拍表
+
+## 1. 开篇（Opening）
+
+- **章节范围**：第1-${Math.ceil(totalChapters * 0.08)}章
+- **节拍描述**：描述开篇的核心内容和目标
+- **开卷承诺**：告诉读者这卷会给他们什么
+- **核心事件**：事件1、事件2
+- **爽点安排**：微爽点1
+- **伏笔埋设**：伏笔1
+
+## 2. 发展（Development）
+
+- **章节范围**：第${Math.ceil(totalChapters * 0.10)}-${Math.ceil(totalChapters * 0.45)}章
+- **节拍描述**：描述发展阶段的核心内容和目标
+- **核心事件**：事件1、事件2、事件3
+- **爽点安排**：微爽点1、小爽点1
+- **伏笔埋设**：伏笔1、伏笔2
+
+## 3. 转折一（Twist 1）
+
+- **章节范围**：第${Math.ceil(totalChapters * 0.40)}-${Math.ceil(totalChapters * 0.48)}章
+- **节拍描述**：描述转折一的意外性和推动力
+- **核心事件**：事件描述
+- **预期效果**：转折后故事走向的变化
+
+## 4. 转折二（Twist 2）
+
+- **章节范围**：第${Math.ceil(totalChapters * 0.50)}-${Math.ceil(totalChapters * 0.55)}章
+- **节拍描述**：描述升级版的转折，赌注更高
+- **核心事件**：事件描述
+- **预期效果**：主角陷入更深困境
+
+## 5. 高潮（Climax）
+
+- **章节范围**：第${Math.ceil(totalChapters * 0.55)}-${Math.ceil(totalChapters * 0.65)}章
+- **节拍描述**：描述高潮场景的核心冲突正面对决
+- **核心事件**：事件描述
+- **燃点/泪点**：至少一个情绪爆发点
+
+## 6. 矛盾结果（Conflict Resolution）
+
+- **章节范围**：第${Math.ceil(totalChapters * 0.65)}-${Math.ceil(totalChapters * 0.75)}章
+- **节拍描述**：描述解决主要矛盾的过程
+- **核心事件**：事件描述
+- **收获盘点**：主角获得的东西
+
+## 7. 转折三（Twist 3）
+
+- **章节范围**：第${Math.ceil(totalChapters * 0.75)}-${Math.ceil(totalChapters * 0.85)}章
+- **节拍描述**：描述颠覆读者预期的最终转折
+- **核心事件**：事件描述
+- **为下一卷铺垫**：新危机或新悬念
+
+## 8. 结局（Ending）
+
+- **章节范围**：第${totalChapters - Math.ceil(totalChapters * 0.85) + 1}-${totalChapters}章
+- **节拍描述**：描述收束情感和人物归宿
+- **核心悬念解决**：解决的悬念
+- **情感收束**：情感落点
+
+## 三线交织分配
+
+### Quest线（主线）
+
+- **涉及章节**：章节列表
+- **主要事件**：事件列表
+
+### Fire线（感情线）
+
+- **涉及章节**：章节列表
+- **主要事件**：事件列表
+
+### Constellation线（世界观线）
+
+- **涉及章节**：章节列表
+- **主要事件**：事件列表
 
 请确保每个节点都有完整的描述，不要使用占位符。`;
 }

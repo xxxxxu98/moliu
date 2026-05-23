@@ -111,51 +111,33 @@ export class QuickOutlineGenerator {
         generateCount,
       });
       
-      // 4. 尝试 JSON Mode 生成
-      onProgress?.('正在生成大纲...');
-      const jsonResult = await this.tryJSONMode(system, user, {
-        temperature,
-        topP,
-        maxTokens,
-      });
-      
-      if (jsonResult.success && jsonResult.data) {
-        // 5. 验证大纲
-        const validation = this.validateOutlines(jsonResult.data);
-        
-        if (validation.valid) {
-          return {
-            success: true,
-            data: validation.outlines,
-            warnings: [...warnings, ...validation.warnings],
-            errors: [],
-            strategy: 'json-mode',
-          };
-        }
-        
-        warnings.push(...validation.warnings);
-      }
-      
-      // 6. 尝试 Markdown 模式
-      onProgress?.('JSON Mode 失败，尝试 Markdown 模式...');
+      // 4. 优先尝试 Markdown 模式生成
+      onProgress?.('正在生成大纲（Markdown 模式）...');
       const markdownResult = await this.tryMarkdownMode(system, user, {
         temperature,
         topP,
         maxTokens,
       });
-      
+
       if (markdownResult.success && markdownResult.data) {
         return {
           success: true,
           data: markdownResult.data,
-          warnings: [...warnings, ...markdownResult.warnings],
+          warnings: [...warnings, ...(markdownResult.warnings || [])],
           errors: [],
           strategy: markdownResult.strategy as GenerationStrategy,
         };
       }
-      
-      // 7. 尝试备用策略
+
       warnings.push(...(markdownResult.warnings || []));
+
+      // 5. 如果 Markdown 失败，尝试 JSON Mode 作为降级
+      onProgress?.('Markdown 模式失败，尝试 JSON Mode...');
+      const jsonResult = await this.tryJSONMode(system, user, {
+        temperature,
+        topP,
+        maxTokens,
+      });
       
       if (maxRetries > 0) {
         onProgress?.('重试生成...');

@@ -86,64 +86,92 @@ ${buildWritingTipsPrompt()}
 - 歪打正着：暗示重要性 + 错误方向努力 + 偶然获得
 
 【输出格式】
-请以JSON格式输出章纲：
+请以 Markdown 格式输出章纲，使用清晰的标题和列表结构：
 
-{
-  "chapter_id": 1,
-  "volume_id": 1,
-  
-  "nodes": {
-    "cbn": "主体 | 动作 | 对象",
-    "cpns": [
-      "主体 | 动作 | 对象",
-      "主体 | 动作 | 对象",
-      "主体 | 动作 | 对象"
-    ],
-    "cen": "主体 | 动作 | 对象"
-  },
-  
-  "requirements": {
-    "objective": "本章目标（一句话）",
-    "resistance": "本章阻力（一句话）",
-    "cost": "本章代价（一句话）",
-    "time_anchor": "具体时间点或时间线位置",
-    "chapter_time_span": "本章节内时间跨度",
-    "time_diff_from_prev": "与上章时间差（如：当天/次日/三月后）",
-    "countdown_status": "倒计时状态（如：距宗门大比30天）",
-    "cool_point": {
-      "type": "爽点类型（装逼打脸/实力碾压/意外收获等）",
-      "description": "爽点描述",
-      "setup_chapter": "铺垫章节（如：3）"
-    },
-    "strand": "主线/感情线/副线",
-    "antagonist_level": "小反派/中反派/无"
-  },
-  
-  "main_entities": ["本章关键人物", "物品", "地点"],
-  
-  "changes": {
-    "protagonist_change": "主角在本章的变化",
-    "relationship_change": "关系变化（如有）",
-    "plot_change": "剧情变化"
-  },
-  
-  "foreshadow": {
-    "new": [
-      { "id": "fs1", "content": "伏笔内容", "buried_in": 1, "payoff_chapter": 50, "type": "mystery/item/dialogue" }
-    ],
-    "fulfilled": []
-  },
-  
-  "unfinished_question": "章末未闭合问题（必须填写，用于设置钩子）",
-  "hook_type": "悬念/转折/危机/意外",
-  
-  "forbidden": [
-    "本章绝对不能发生的硬禁区1",
-    "本章绝对不能发生的硬禁区2"
-  ],
-  
-  "word_count_target": 3000
-}
+# 第1章 章纲
+
+## 章节基本信息
+
+- **章节ID**：1
+- **卷ID**：1
+- **字数目标**：3000字
+
+## 节点结构
+
+### 章节起点（CBN）
+
+主体 | 动作 | 对象
+（如：萧炎 | 抵达 | 迦南学院入口）
+
+### 推进节点（CPNs）
+
+1. 主体 | 动作 | 对象
+2. 主体 | 动作 | 对象
+3. 主体 | 动作 | 对象
+
+### 章节终点（CEN）
+
+主体 | 动作 | 对象 + 悬念
+
+## 本章要求
+
+### 目标与阻力
+
+- **本章目标**：一句话描述
+- **本章阻力**：一句话描述
+- **本章代价**：一句话描述
+
+### 时间设定
+
+- **时间锚点**：具体时间点或时间线位置
+- **章内跨度**：约3000字
+- **与上章间隔**：当天/次日/三月后
+- **倒计时状态**：如距宗门大比30天
+
+### 爽点
+
+- **爽点类型**：装逼打脸/实力碾压/意外收获等
+- **爽点描述**：具体描述
+- **铺垫章节**：铺垫的章节号
+
+### 故事线
+
+- **主线类型**：主线/感情线/副线
+- **反派等级**：小反派/中反派/无
+
+## 主要实体
+
+- **关键人物**：角色1、角色2
+- **涉及物品**：物品名
+- **涉及地点**：地点名
+
+## 本章变化
+
+- **主角变化**：主角在本章的变化
+- **关系变化**：关系变化（如有）
+- **剧情变化**：剧情变化
+
+## 伏笔
+
+### 新伏笔
+
+| ID | 内容 | 埋设章节 | 回收章节 | 类型 |
+|----|------|----------|----------|------|
+| fs1 | 伏笔内容 | 1 | 50 | mystery/item/dialogue |
+
+### 已回收伏笔
+
+- 伏笔描述
+
+## 钩子与悬念
+
+- **未闭合问题**：章末未闭合问题（必须填写）
+- **钩子类型**：悬念/转折/危机/意外
+
+## 本章禁区
+
+- 禁区1
+- 禁区2
 
 【关键要求】
 1. CBN 承接上文自然过渡
@@ -225,25 +253,41 @@ export function buildSimpleChapterPrompt(params: {
 - 必须有时间锚点
 
 【输出格式】
-{
-  "chapter_id": ${chapterNumber},
-  "nodes": {
-    "cbn": "主体 | 动作 | 对象",
-    "cpns": ["主体 | 动作 | 对象"],
-    "cen": "主体 | 动作 | 对象"
-  },
-  "requirements": {
-    "objective": "目标",
-    "resistance": "阻力",
-    "cost": "代价",
-    "cool_point": "爽点",
-    "time_anchor": "时间锚点"
-  },
-  "unfinished_question": "章末未闭合问题",
-  "forbidden": []
-}
+请以 Markdown 格式输出章纲，使用清晰的标题和列表结构：
 
-请以JSON格式输出。`;
+# 第${chapterNumber}章 章纲
+
+## 节点结构
+
+### 章节起点（CBN）
+
+主体 | 动作 | 对象
+
+### 推进节点（CPNs）
+
+主体 | 动作 | 对象
+
+### 章节终点（CEN）
+
+主体 | 动作 | 对象 + 悬念
+
+## 本章要求
+
+- **目标**：一句话描述
+- **阻力**：一句话描述
+- **代价**：一句话描述
+- **爽点**：爽点描述
+- **时间锚点**：具体时间点
+
+## 钩子与悬念
+
+- **未闭合问题**：章末未闭合问题
+
+## 本章禁区
+
+- 禁区描述
+
+请用 Markdown 格式输出章纲。`;
 
   const user = `第${chapterNumber}章
 节拍：${beatType}
@@ -271,11 +315,11 @@ export function buildBatchChapterPrompt(params: {
 
 【章纲要求】
 每个章节必须包含：
-1. nodes: { cbn, cpns[], cen }
-2. requirements: { objective, resistance, cost, cool_point, strand, time_anchor, countdown_status }
-3. foreshadow: { new[], fulfilled[] }
-4. unfinished_question: 章末未闭合问题
-5. forbidden: []
+1. 节点：CBN（起点）、CPNs（推进节点）、CEN（终点）
+2. 要求：目标、阻力、代价、爽点、时间锚点
+3. 伏笔：新埋设的伏笔
+4. 钩子：章末未闭合问题
+5. 禁区：绝对不能发生的事
 
 【节点格式】
 - CBN：「主体 | 动作 | 结果」
@@ -292,7 +336,7 @@ export function buildBatchChapterPrompt(params: {
 - 时间差必须标注
 - 倒计时必须更新
 
-请以JSON数组格式输出${endChapter - startChapter + 1}个章纲。`;
+请以 Markdown 格式输出${endChapter - startChapter + 1}个章纲，每个章纲使用二级标题（## 第X章）。`;
 
   const user = `卷ID：${volumeId}
 章节范围：第${startChapter}-${endChapter}章（共${endChapter - startChapter + 1}章）

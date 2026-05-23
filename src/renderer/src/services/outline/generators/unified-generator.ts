@@ -33,14 +33,14 @@ export interface GenerationResult {
   rawMarkdown?: string;
 }
 
-/**
- * 统一大纲生成器
- * 实现多层级降级策略：
- * 1. Markdown 生成 -> Remark AST 解析
- * 2. Markdown 生成 -> 正则提取
- * 3. JSON Mode 生成 -> JSON 解析
- * 4. 传统 JSON 解析
- */
+  /**
+   * 统一大纲生成器
+   * 实现多层级降级策略：
+   * 1. Markdown 生成 -> Remark AST 解析
+   * 2. Markdown 生成 -> 正则提取
+   * 3. JSON Mode 生成 -> JSON 解析（兜底）
+   * 4. 传统模式
+   */
 export class UnifiedOutlineGenerator {
   private markdownGenerator: MarkdownOutlineGenerator | null = null;
   private defaultOptions: GenerateOptions = {
@@ -71,21 +71,25 @@ export class UnifiedOutlineGenerator {
       attempts++;
 
       try {
-        // 尝试 Markdown 生成 + 多层解析
-        const result = await this.generateWithFallback(
-          prompt,
-          opts,
-          onProgress,
-        );
+        // 优先使用 Markdown 模式生成
+        const result = await this.callMarkdownMode(prompt, opts);
 
         if (result.success) {
           return result;
         }
 
-        // 如果失败，尝试降级到 JSON Mode
-        onProgress?.(`Markdown 解析失败，尝试 JSON Mode...`);
-        const jsonResult = await this.callJSONMode(prompt, opts);
+        // 如果 Markdown 模式失败，尝试降级策略
+        onProgress?.(`Markdown 解析失败，尝试其他解析策略...`);
 
+        // 尝试 Remark AST 解析
+        const remarkResult = await this.generateWithFallback(prompt, opts, onProgress);
+        if (remarkResult.success) {
+          return remarkResult;
+        }
+
+        // 最后尝试 JSON Mode 作为兜底
+        onProgress?.(`尝试 JSON Mode 作为兜底...`);
+        const jsonResult = await this.callJSONModeFallback(prompt, opts);
         if (jsonResult.success) {
           return jsonResult;
         }
@@ -179,15 +183,15 @@ export class UnifiedOutlineGenerator {
   }
 
   /**
-   * JSON Mode 生成
+   * Markdown 模式生成（优先使用）
    */
-  private async callJSONMode(
+  private async callMarkdownMode(
     prompt: string,
     options: GenerateOptions,
   ): Promise<GenerationResult> {
     const config = this.getAIConfig();
 
-    const systemPrompt = this.buildJSONSystemPrompt(options.wordCountRange || '50万-100万字');
+    const systemPrompt = this.buildMarkdownSystemPrompt(options.wordCountRange || '50万-100万字');
     const messages = [
       { role: 'system' as const, content: systemPrompt },
       { role: 'user' as const, content: `用户的创意种子：${prompt}` },
@@ -206,7 +210,6 @@ export class UnifiedOutlineGenerator {
           messages,
           temperature: options.temperature || 0.7,
           top_p: options.topP || 0.9,
-          response_format: { type: 'json_object' },
         }),
       });
 
@@ -221,15 +224,16 @@ export class UnifiedOutlineGenerator {
         throw new Error('API 未返回内容');
       }
 
-      // 解析 JSON
-      const result = outlinePostProcessor.processJSON(content);
+      // 使用后处理器解析 Markdown
+      const result = outlinePostProcessor.process(content);
 
       return {
         success: result.success,
         outlines: result.outlines,
         warnings: result.warnings,
         errors: result.errors,
-        strategy: 'json-mode',
+        strategy: 'markdown-remark',
+        rawMarkdown: content,
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -237,8 +241,8 @@ export class UnifiedOutlineGenerator {
         success: false,
         outlines: [],
         warnings: [],
-        errors: [`JSON Mode 失败: ${errorMsg}`],
-        strategy: 'json-mode',
+        errors: [`Markdown 模式失败: ${errorMsg}`],
+        strategy: 'markdown-remark',
       };
     }
   }
@@ -296,7 +300,247 @@ export class UnifiedOutlineGenerator {
   }
 
   /**
-   * 构建 JSON Mode 系统提示词
+   * 构建 Markdown 格式系统提示词（优先使用）
+   */
+  private buildMarkdownSystemPrompt(wordCountRange: string): string {
+    return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
+
+请生成3个不同风格的大纲，每个大纲必须包含以下所有内容：
+
+# 大纲1
+
+## 基本信息
+
+- **标题**：故事标题
+- **题材标签**：题材1、题材2
+- **预估字数**：500000
+- **一句话简介**：60-80字的故事简介
+
+## 情绪目标
+
+- **核心情绪**：热血/甜蜜/紧张等
+- **次要情绪**：次要情绪
+- **情绪弧线**：rising/falling/wave/mixed
+- **情绪密度**：3000
+- **情绪高点**：5, 20, 50
+- **情绪低点**：10, 30
+
+## 世界设定
+
+- **世界类型**：世界类型
+
+### 主要地点
+
+| 地点名称 | 描述 | 等级 |
+|----------|------|------|
+| 地点1 | 描述 | city/district/special |
+
+### 主要势力
+
+| 势力名称 | 描述 | 盟友 | 敌人 |
+|----------|------|------|------|
+| 势力1 | 描述 | 盟友 | 敌人 |
+
+### 核心规则
+
+| 规则名称 | 描述 | 类别 |
+|----------|------|------|
+| 规则1 | 描述 | cultivation/magic/social |
+
+## 角色设定
+
+### 主角
+
+- **姓名**：角色名
+- **角色类型**：protagonist
+- **描述**：角色描述
+- **性格标签**：性格标签1、性格标签2
+- **金手指**：金手指（如有）
+- **优势**：优势1
+- **短板**：短板1
+- **人际关系**：
+  - 关联角色（friend/enemy/mentor）：关系描述
+
+### 其他角色
+
+- 角色名（角色类型）：描述
+
+## 三幕结构
+
+### 第一幕（建置，约20%）
+
+第一幕描述
+
+### 第二幕A（对抗上半，约25%）
+
+第二幕A描述
+
+### 第二幕B（对抗下半，约25%）
+
+第二幕B描述
+
+### 第三幕（结局，约30%）
+
+第三幕描述
+
+## 爽点设计
+
+### 爽点类型
+
+打脸爽、装逼爽、身份揭秘、实力碾压
+
+### 爽点安排
+
+| 章节 | 类型 | 描述 |
+|------|------|------|
+| 5 | micro | 爽点描述 |
+| 10 | small | 爽点描述 |
+| 30 | big | 爽点描述 |
+
+## 核心卖点
+
+| 名称 | 描述 | 优先级 |
+|------|------|--------|
+| 卖点名称 | 卖点描述 | 1 |
+
+## 矛盾设计
+
+- **冲突来源**：资源/利益、阵营/种族等
+
+### 矛盾递进
+
+1. 一级矛盾
+2. 二级矛盾
+3. 三级矛盾
+4. 四级矛盾
+
+### 主要冲突
+
+- 主要冲突1
+- 主要冲突2
+
+## 八条故事线
+
+### 地图线
+
+地图线规划（地点递进）
+
+### 阵营线
+
+阵营线规划（势力发展）
+
+### 人物线
+
+人物线规划（角色登场）
+
+### 金手指线
+
+金手指线规划（能力升级）
+
+### 世界观线
+
+世界观线规划（设定揭示）
+
+### 矛盾线
+
+矛盾线规划（冲突递进）
+
+### 收集线
+
+收集线规划（材料收集）
+
+### 感情线
+
+感情线规划（感情发展）
+
+## 伏笔规划
+
+| 内容 | 类型 | 建议章节 |
+|------|------|----------|
+| 伏笔内容 | item/dialogue/event/mystery | 10 |
+
+## 章节概览
+
+| 章节 | 标题 | 摘要 | 关键事件 | 涉及角色 |
+|------|------|------|----------|----------|
+| 1 | 章节标题 | 章节摘要 | 关键事件1 | 角色1 |
+| 2 | 章节标题 | 章节摘要 | 关键事件2 | 角色2 |
+
+【要求】
+- 使用 Markdown 格式输出
+- 每个大纲使用二级标题（## 大纲X）
+- 确保所有字段都有具体内容
+- 所有大纲都要完整填写以上所有模块`;
+
+  }
+
+  /**
+   * JSON Mode 降级方法（兜底用）
+   */
+  private async callJSONModeFallback(
+    prompt: string,
+    options: GenerateOptions,
+  ): Promise<GenerationResult> {
+    const config = this.getAIConfig();
+
+    const systemPrompt = this.buildJSONSystemPrompt(options.wordCountRange || '50万-100万字');
+    const messages = [
+      { role: 'system' as const, content: systemPrompt },
+      { role: 'user' as const, content: `用户的创意种子：${prompt}` },
+    ];
+
+    try {
+      // 使用 fetch 直接调用 API
+      const response = await fetch(config.baseUrl + '/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(config.apiKey ? { 'Authorization': `Bearer ${config.apiKey}` } : {}),
+        },
+        body: JSON.stringify({
+          model: config.model || undefined,
+          messages,
+          temperature: options.temperature || 0.7,
+          top_p: options.topP || 0.9,
+          response_format: { type: 'json_object' },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API 请求失败: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+
+      if (!content) {
+        throw new Error('API 未返回内容');
+      }
+
+      // 解析 JSON
+      const result = outlinePostProcessor.processJSON(content);
+
+      return {
+        success: result.success,
+        outlines: result.outlines,
+        warnings: result.warnings,
+        errors: result.errors,
+        strategy: 'json-mode',
+      };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      return {
+        success: false,
+        outlines: [],
+        warnings: [],
+        errors: [`JSON Mode 降级失败: ${errorMsg}`],
+        strategy: 'json-mode',
+      };
+    }
+  }
+
+  /**
+   * 旧版 JSON 系统提示词（仅用于降级）
    */
   private buildJSONSystemPrompt(wordCountRange: string): string {
     return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
@@ -310,76 +554,16 @@ export class UnifiedOutlineGenerator {
       "synopsis": "60-80字简介",
       "genres": ["题材标签"],
       "estimatedWordCount": 500000,
-      
-      "emotionGoal": {
-        "primary": "核心情绪",
-        "secondary": "次要情绪",
-        "arc": "rising/falling/wave/mixed",
-        "density": 3000,
-        "highPoints": [5, 20, 50],
-        "lowPoints": [10, 30]
-      },
-      
-      "worldSetting": {
-        "type": "世界类型",
-        "locations": [{ "name": "地点", "description": "描述", "level": "city" }],
-        "factions": [{ "name": "势力", "description": "描述", "allies": [], "enemies": [] }],
-        "rules": [{ "name": "规则", "description": "描述", "category": "cultivation" }]
-      },
-      
-      "characters": [
-        {
-          "name": "角色名",
-          "role": "protagonist/antagonist/mentor/supporting",
-          "description": "描述",
-          "personality": ["性格标签"],
-          "goldenFinger": "金手指",
-          "strengths": ["优势"],
-          "weaknesses": ["短板"],
-          "relationships": [{ "targetName": "角色", "type": "friend/enemy/mentor", "description": "关系" }]
-        }
-      ],
-      
-      "structure": {
-        "act1": "第一幕（建置，约20%）",
-        "act2a": "第二幕A（对抗上，约25%）",
-        "act2b": "第二幕B（对抗下，约25%）",
-        "act3": "第三幕（结局，约30%）"
-      },
-      
-      "coolPointDesign": {
-        "patterns": ["打脸爽", "装逼爽", "身份揭秘", "实力碾压"],
-        "arranged": [{ "type": "类型", "description": "描述", "suggestedChapter": 5 }]
-      },
-      
-      "coreSellingPoints": [
-        { "name": "卖点名称", "description": "描述", "priority": 1 }
-      ],
-      
-      "conflictDesign": {
-        "source": "冲突来源",
-        "escalation": ["一级矛盾", "二级矛盾", "三级矛盾", "四级矛盾"],
-        "majorConflicts": ["冲突1", "冲突2"]
-      },
-      
-      "storyLines": {
-        "map": "地图线规划",
-        "faction": "阵营线规划",
-        "character": "人物线规划",
-        "goldenfinger": "金手指线规划",
-        "worldRules": "世界观线规划",
-        "conflict": "矛盾线规划",
-        "collection": "收集线规划",
-        "romance": "感情线规划"
-      },
-      
-      "foreshadows": [
-        { "hint": "伏笔内容", "type": "item/dialogue/event/mystery", "suggestedChapter": 10 }
-      ],
-      
-      "chapters": [
-        { "title": "章节标题", "summary": "摘要", "keyEvents": ["事件"], "involvedCharacters": ["角色"] }
-      ]
+      "emotionGoal": { "primary": "核心情绪", "secondary": "次要情绪", "arc": "rising/falling/wave/mixed", "density": 3000, "highPoints": [5, 20, 50], "lowPoints": [10, 30] },
+      "worldSetting": { "type": "世界类型", "locations": [{ "name": "地点", "description": "描述", "level": "city" }], "factions": [{ "name": "势力", "description": "描述" }], "rules": [{ "name": "规则", "description": "描述" }] },
+      "characters": [{ "name": "角色名", "role": "protagonist", "description": "描述", "personality": ["性格标签"], "goldenFinger": "金手指", "strengths": ["优势"], "weaknesses": ["短板"] }],
+      "structure": { "act1": "第一幕", "act2a": "第二幕A", "act2b": "第二幕B", "act3": "第三幕" },
+      "coolPointDesign": { "patterns": ["打脸爽", "装逼爽"], "arranged": [{ "type": "类型", "description": "描述", "suggestedChapter": 5 }] },
+      "coreSellingPoints": [{ "name": "卖点", "description": "描述", "priority": 1 }],
+      "conflictDesign": { "source": "冲突来源", "escalation": ["一级", "二级", "三级", "四级"], "majorConflicts": ["冲突1"] },
+      "storyLines": { "map": "地图线", "faction": "阵营线", "character": "人物线", "goldenfinger": "金手指线", "worldRules": "世界观线", "conflict": "矛盾线", "collection": "收集线", "romance": "感情线" },
+      "foreshadows": [{ "hint": "伏笔", "type": "mystery", "suggestedChapter": 10 }],
+      "chapters": [{ "title": "章节标题", "summary": "摘要", "keyEvents": ["事件"], "involvedCharacters": ["角色"] }]
     }
   ]
 }
@@ -389,7 +573,6 @@ export class UnifiedOutlineGenerator {
 - JSON格式：{"outlines":[...]}
 - 确保JSON语法完全正确
 - 所有大纲都要完整填写以上所有字段`;
-
   }
 
   /**
