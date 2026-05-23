@@ -18,7 +18,38 @@ export interface ExtractedContent {
   foreshadows: ForeshadowExtracted[];
   worldSetting?: WorldSetting;
   estimatedWordCount?: number;
-  coreSellingPoints?: string[];
+  coreSellingPoints?: Array<{ name: string; description: string; priority: number }>;
+  // 新增：情绪目标
+  emotionGoal?: {
+    primary: string;
+    secondary?: string;
+    arc?: string;
+    density?: number;
+    highPoints?: number[];
+    lowPoints?: number[];
+  };
+  // 新增：爽点设计
+  coolPointDesign?: {
+    patterns: string[];
+    arranged: Array<{ type: string; description: string; suggestedChapter?: number }>;
+  };
+  // 新增：八条故事线
+  storyLines?: {
+    map: string;
+    faction: string;
+    character: string;
+    goldenfinger: string;
+    worldRules: string;
+    conflict: string;
+    collection: string;
+    romance: string;
+  };
+  // 新增：矛盾设计
+  conflictDesign?: {
+    source: string;
+    escalation: string[];
+    majorConflicts: string[];
+  };
 }
 
 /**
@@ -154,11 +185,11 @@ export class MarkdownExtractor {
             currentSection = 'act1';
             inWorldSection = false;
             inForeshadowSection = false;
-          } else if (normalized.includes('第二幕a') || normalized.includes('对抗（上）') || normalized.includes('对抗(上)')) {
+          } else if (normalized.includes('第二幕a') || normalized.includes('对抗（上') || normalized.includes('对抗(上)')) {
             currentSection = 'act2a';
             inWorldSection = false;
             inForeshadowSection = false;
-          } else if (normalized.includes('第二幕b') || normalized.includes('对抗（下）') || normalized.includes('对抗(下)')) {
+          } else if (normalized.includes('第二幕b') || normalized.includes('对抗（下') || normalized.includes('对抗(下)')) {
             currentSection = 'act2b';
             inWorldSection = false;
             inForeshadowSection = false;
@@ -185,8 +216,24 @@ export class MarkdownExtractor {
             inWorldSection = true;
             worldSectionType = 'rules';
             inForeshadowSection = false;
-          } else if (normalized.includes('核心卖点') || normalized.includes('爽点设计')) {
+          } else if (normalized.includes('核心卖点') || normalized.includes('卖点')) {
             currentSection = 'coreSellingPoints';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalized.includes('情绪目标') || normalized.includes('情绪')) {
+            currentSection = 'emotionGoal';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalized.includes('爽点设计')) {
+            currentSection = 'coolPointDesign';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalized.includes('八条故事线') || normalized.includes('故事线')) {
+            currentSection = 'storyLines';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalized.includes('矛盾设计') || normalized.includes('冲突设计')) {
+            currentSection = 'conflictDesign';
             inWorldSection = false;
             inForeshadowSection = false;
           } else if (normalized.includes('早期伏笔')) {
@@ -204,6 +251,38 @@ export class MarkdownExtractor {
             inForeshadowSection = true;
             foreshadowPhase = 'late';
             inWorldSection = false;
+          } else if (normalized.includes('地图线')) {
+            currentSection = 'storyLine-map';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalized.includes('阵营线')) {
+            currentSection = 'storyLine-faction';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalized.includes('人物线')) {
+            currentSection = 'storyLine-character';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalized.includes('金手指线')) {
+            currentSection = 'storyLine-goldenfinger';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalized.includes('矛盾线')) {
+            currentSection = 'storyLine-conflict';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalized.includes('感情线') || normalized.includes('浪漫线')) {
+            currentSection = 'storyLine-romance';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalized.includes('收集线')) {
+            currentSection = 'storyLine-collection';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalized.includes('世界观线')) {
+            currentSection = 'storyLine-worldRules';
+            inWorldSection = false;
+            inForeshadowSection = false;
           } else {
             currentSection = 'other';
           }
@@ -331,7 +410,119 @@ export class MarkdownExtractor {
             if (!result.coreSellingPoints) {
               result.coreSellingPoints = [];
             }
-            result.coreSellingPoints.push(item);
+            // 解析卖点格式：名称 - 描述
+            const [spName, ...spDescParts] = item.split(/[-：:]/);
+            result.coreSellingPoints.push({
+              name: spName.trim(),
+              description: spDescParts.join(':').trim() || '',
+              priority: result.coreSellingPoints.length + 1,
+            });
+            break;
+
+          // 情绪目标
+          case 'emotionGoal':
+            if (!result.emotionGoal) {
+              result.emotionGoal = {
+                primary: '',
+              };
+            }
+            if (item.includes('核心情绪') || item.includes('primary')) {
+              const match = item.match(/[：:]\s*(.+)/);
+              if (match) result.emotionGoal.primary = match[1].trim();
+            } else if (item.includes('情绪弧线') || item.includes('arc')) {
+              const match = item.match(/[：:]\s*(.+)/);
+              if (match) result.emotionGoal.arc = match[1].trim();
+            }
+            break;
+
+          // 爽点设计
+          case 'coolPointDesign':
+            if (!result.coolPointDesign) {
+              result.coolPointDesign = { patterns: [], arranged: [] };
+            }
+            if (item.startsWith('类型') || item.startsWith('爽点类型')) {
+              const patterns = item.replace(/^[^-：:]+[：:]\s*/, '').split(/[、，,]/).filter(Boolean);
+              result.coolPointDesign.patterns.push(...patterns);
+            } else {
+              // 作为爽点安排
+              const chapterMatch = item.match(/第\s*(\d+)\s*章/);
+              result.coolPointDesign.arranged.push({
+                type: item.substring(0, 20),
+                description: item,
+                suggestedChapter: chapterMatch ? parseInt(chapterMatch[1]) : undefined,
+              });
+            }
+            break;
+
+          // 八条故事线
+          case 'storyLine-map':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.map = item;
+            break;
+          case 'storyLine-faction':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.faction = item;
+            break;
+          case 'storyLine-character':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.character = item;
+            break;
+          case 'storyLine-goldenfinger':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.goldenfinger = item;
+            break;
+          case 'storyLine-worldRules':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.worldRules = item;
+            break;
+          case 'storyLine-conflict':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.conflict = item;
+            break;
+          case 'storyLine-collection':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.collection = item;
+            break;
+          case 'storyLine-romance':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.romance = item;
+            break;
+
+          // 矛盾设计
+          case 'conflictDesign':
+            if (!result.conflictDesign) {
+              result.conflictDesign = { source: '', escalation: [], majorConflicts: [] };
+            }
+            if (item.includes('冲突来源') || item.includes('source')) {
+              const match = item.match(/[：:]\s*(.+)/);
+              if (match) result.conflictDesign.source = match[1].trim();
+            } else if (item.includes('矛盾递进') || item.includes('escalation')) {
+              const match = item.match(/[：:]\s*(.+)/);
+              if (match) {
+                result.conflictDesign.escalation = match[1].split(/[、，,]/).filter(Boolean);
+              }
+            } else if (item.includes('主要冲突') || item.includes('major')) {
+              const match = item.match(/[：:]\s*(.+)/);
+              if (match) {
+                result.conflictDesign.majorConflicts = match[1].split(/[、，,]/).filter(Boolean);
+              }
+            }
             break;
 
           case 'worldLocation':
@@ -418,14 +609,111 @@ export class MarkdownExtractor {
             }
             break;
 
+          // 核心卖点（段落形式）
           case 'coreSellingPoints':
             if (!result.coreSellingPoints) {
               result.coreSellingPoints = [];
             }
-            if (!result.coreSellingPoints.length || result.coreSellingPoints[result.coreSellingPoints.length - 1].length > 0) {
-              result.coreSellingPoints.push(line);
-            } else {
-              result.coreSellingPoints[result.coreSellingPoints.length - 1] += ' ' + line;
+            // 检查最后一个卖点是否已有内容，有则追加，无则新建
+            const lastSP = result.coreSellingPoints[result.coreSellingPoints.length - 1];
+            if (lastSP && lastSP.description && !lastSP.priority) {
+              lastSP.description += ' ' + line;
+            } else if (line.trim()) {
+              result.coreSellingPoints.push({
+                name: line.substring(0, 20),
+                description: line,
+                priority: result.coreSellingPoints.length + 1,
+              });
+            }
+            break;
+
+          // 情绪目标（段落形式）
+          case 'emotionGoal':
+            if (!result.emotionGoal) {
+              result.emotionGoal = { primary: '' };
+            }
+            if (!result.emotionGoal.primary && line.trim()) {
+              result.emotionGoal.primary = line;
+            } else if (result.emotionGoal.primary) {
+              result.emotionGoal.primary += ' ' + line;
+            }
+            break;
+
+          // 爽点设计（段落形式）
+          case 'coolPointDesign':
+            if (!result.coolPointDesign) {
+              result.coolPointDesign = { patterns: [], arranged: [] };
+            }
+            const lastCool = result.coolPointDesign.arranged[result.coolPointDesign.arranged.length - 1];
+            if (lastCool && !lastCool.type) {
+              lastCool.description += ' ' + line;
+            } else if (line.trim()) {
+              result.coolPointDesign.arranged.push({
+                type: line.substring(0, 20),
+                description: line,
+              });
+            }
+            break;
+
+          // 八条故事线（段落形式）
+          case 'storyLine-map':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.map = (result.storyLines.map + ' ' + line).trim();
+            break;
+          case 'storyLine-faction':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.faction = (result.storyLines.faction + ' ' + line).trim();
+            break;
+          case 'storyLine-character':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.character = (result.storyLines.character + ' ' + line).trim();
+            break;
+          case 'storyLine-goldenfinger':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.goldenfinger = (result.storyLines.goldenfinger + ' ' + line).trim();
+            break;
+          case 'storyLine-worldRules':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.worldRules = (result.storyLines.worldRules + ' ' + line).trim();
+            break;
+          case 'storyLine-conflict':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.conflict = (result.storyLines.conflict + ' ' + line).trim();
+            break;
+          case 'storyLine-collection':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.collection = (result.storyLines.collection + ' ' + line).trim();
+            break;
+          case 'storyLine-romance':
+            if (!result.storyLines) {
+              result.storyLines = { map: '', faction: '', character: '', goldenfinger: '', worldRules: '', conflict: '', collection: '', romance: '' };
+            }
+            result.storyLines.romance = (result.storyLines.romance + ' ' + line).trim();
+            break;
+
+          // 矛盾设计（段落形式）
+          case 'conflictDesign':
+            if (!result.conflictDesign) {
+              result.conflictDesign = { source: '', escalation: [], majorConflicts: [] };
+            }
+            if (!result.conflictDesign.source && line.trim()) {
+              result.conflictDesign.source = line;
+            } else if (line.trim()) {
+              result.conflictDesign.source += ' ' + line;
             }
             break;
 

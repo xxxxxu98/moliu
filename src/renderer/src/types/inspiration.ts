@@ -94,8 +94,72 @@ export interface GeneratedSubplot {
 export interface GeneratedChapter {
   title: string;           // 章节标题
   summary: string;        // 章节摘要/大纲
+  number?: number;         // 章节编号
+  status?: 'outline' | 'draft' | 'complete'; // 状态
   keyEvents?: string[];   // 关键事件
   involvedCharacters?: string[]; // 涉及角色
+  coreEvent?: string;     // 核心事件
+  coolPoints?: string[];   // 爽点
+  hook?: string;          // 章尾钩子
+  strand?: 'quest' | 'fire' | 'constellation'; // 故事线
+}
+
+/**
+ * 情绪目标
+ */
+export interface GeneratedEmotionGoal {
+  primary: string;           // 核心情绪
+  secondary?: string;        // 次要情绪
+  arc: 'rising' | 'falling' | 'wave' | 'mixed';  // 情绪弧线
+  density?: number;           // 情绪波动间隔（字）
+  highPoints?: number[];     // 情绪高点章节
+  lowPoints?: number[];      // 情绪低点章节
+}
+
+/**
+ * 爽点规划
+ */
+export interface GeneratedCoolPoint {
+  type: string;              // 爽点类型：打脸爽/装逼爽/身份揭秘等
+  description: string;        // 爽点描述
+  suggestedChapter?: number;  // 建议章节
+}
+
+export interface GeneratedCoolPointDesign {
+  patterns: string[];         // 爽点类型列表
+  arranged: GeneratedCoolPoint[];  // 已安排的爽点
+}
+
+/**
+ * 核心卖点
+ */
+export interface GeneratedCoreSellingPoint {
+  name: string;              // 卖点名称
+  description: string;        // 卖点描述
+  priority: number;          // 优先级 1-5
+}
+
+/**
+ * 矛盾设计（简化版）
+ */
+export interface GeneratedConflictDesign {
+  source: string;             // 冲突来源
+  escalation: string[];      // 矛盾递进描述
+  majorConflicts: string[];   // 主要冲突列表
+}
+
+/**
+ * 八条故事线（简化版）
+ */
+export interface GeneratedStoryLines {
+  map: string;               // 地图线规划
+  faction: string;           // 阵营线规划
+  character: string;         // 人物线规划
+  goldenfinger: string;      // 金手指线规划
+  worldRules: string;        // 世界观线规划
+  conflict: string;          // 矛盾线规划
+  collection: string;         // 收集线规划
+  romance: string;           // 感情线规划
 }
 
 /**
@@ -126,6 +190,22 @@ export interface GeneratedOutline {
   foreshadows: GeneratedForeshadow[];
   // 预估字数
   estimatedWordCount: number;
+  
+  // ====== 新增增强字段 ======
+  // 情绪目标
+  emotionGoal?: GeneratedEmotionGoal;
+  // 爽点设计
+  coolPointDesign?: GeneratedCoolPointDesign;
+  // 核心卖点
+  coreSellingPoints?: GeneratedCoreSellingPoint[];
+  // 矛盾设计（简化版）
+  conflictDesign?: GeneratedConflictDesign;
+  // 八条故事线（简化版）
+  storyLines?: GeneratedStoryLines;
+  
+  // ====== 元数据 ======
+  /** 卷数（兼容 OutlineSchema） */
+  volumes?: number;
 }
 
 /**

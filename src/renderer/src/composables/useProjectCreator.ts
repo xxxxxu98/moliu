@@ -317,6 +317,48 @@ export function useProjectCreator(): UseProjectCreatorReturn {
   }
 
   /**
+   * 从大纲构建项目元数据
+   * 包含情绪目标、爽点设计、核心卖点等增强信息
+   */
+  function buildProjectMetadata(outline: GeneratedOutline) {
+    return {
+      // 情绪目标
+      emotionGoal: outline.emotionGoal ? {
+        primary: outline.emotionGoal.primary,
+        secondary: outline.emotionGoal.secondary,
+        arc: outline.emotionGoal.arc,
+        density: outline.emotionGoal.density,
+        highPoints: outline.emotionGoal.highPoints || [],
+        lowPoints: outline.emotionGoal.lowPoints || [],
+      } : undefined,
+      // 爽点设计
+      coolPointDesign: outline.coolPointDesign ? {
+        patterns: outline.coolPointDesign.patterns || [],
+        arranged: outline.coolPointDesign.arranged || [],
+      } : undefined,
+      // 核心卖点
+      coreSellingPoints: outline.coreSellingPoints || [],
+      // 矛盾设计
+      conflictDesign: outline.conflictDesign ? {
+        source: outline.conflictDesign.source,
+        escalation: outline.conflictDesign.escalation || [],
+        majorConflicts: outline.conflictDesign.majorConflicts || [],
+      } : undefined,
+      // 八条故事线
+      storyLines: outline.storyLines ? {
+        map: outline.storyLines.map,
+        faction: outline.storyLines.faction,
+        character: outline.storyLines.character,
+        goldenfinger: outline.storyLines.goldenfinger,
+        worldRules: outline.storyLines.worldRules,
+        conflict: outline.storyLines.conflict,
+        collection: outline.storyLines.collection,
+        romance: outline.storyLines.romance,
+      } : undefined,
+    };
+  }
+
+  /**
    * 创建项目
    * @param outline 选定的大纲
    * @returns 创建成功返回项目ID，否则返回 null
@@ -335,6 +377,7 @@ export function useProjectCreator(): UseProjectCreatorReturn {
       const foreshadows = buildForeshadows(outlineData);
       const worldSchema = buildWorldSchema(outlineData);
       const genreTags = buildGenreTags(outlineData);
+      const metadata = buildProjectMetadata(outlineData);
 
       const newProject = await projectStore.createProject({
         name: outlineData.title,
@@ -348,6 +391,19 @@ export function useProjectCreator(): UseProjectCreatorReturn {
       });
 
       if (newProject) {
+        // 保存增强数据到项目元数据
+        if (metadata.emotionGoal || metadata.coreSellingPoints?.length || metadata.conflictDesign) {
+          await projectStore.updateProjectInfo(newProject.id, {
+            metadata: {
+              emotionGoal: metadata.emotionGoal,
+              coolPointDesign: metadata.coolPointDesign,
+              coreSellingPoints: metadata.coreSellingPoints,
+              conflictDesign: metadata.conflictDesign,
+              storyLines: metadata.storyLines,
+            },
+          } as any);
+        }
+
         // 导航到项目编辑器
         router.push(`/project/${newProject.id}`);
         // 完善项目数据（填充角色关系等）

@@ -3,7 +3,7 @@
  * 快速大纲提示词 - 基于 oh-story 和 webnovel-writer 方法论重构
  */
 
-import type { GenreTemplate } from '../../knowledge';
+import type { ExtendedGenreTemplate } from '../../knowledge';
 import {
   buildCorePrinciplesPrompt,
   buildEightStrandsPrompt,
@@ -18,7 +18,7 @@ export interface QuickOutlinePromptOptions {
   seed: string;
   genre?: string;
   wordCountRange?: string;
-  template?: GenreTemplate;
+  template?: ExtendedGenreTemplate;
   generateCount?: number;
 }
 
@@ -48,7 +48,7 @@ export function buildQuickOutlinePrompt(options: QuickOutlinePromptOptions): {
  */
 function buildSystemPrompt(
   genre: string,
-  template: GenreTemplate | undefined,
+  template: ExtendedGenreTemplate | undefined,
   wordCountRange: string,
   generateCount: number
 ): string {
@@ -95,72 +95,115 @@ ${buildConflictEscalationPrompt()}
 预估字数：${wordCountRange}
 
 【输出格式】
-请以JSON格式输出${generateCount}个大纲：
+请以JSON格式输出${generateCount}个大纲。每个大纲必须包含以下所有字段：
 
 {
   "outlines": [
     {
       "title": "故事标题",
-      "genre": "题材",
-      "subGenres": ["子题材1", "子题材2"],
-      "oneLineSummary": "一句话概括",
+      "synopsis": "60-80字的故事简介",
+      "genres": ["题材1", "题材2"],
+      "estimatedWordCount": 500000,
       
       "emotionGoal": {
-        "primary": "核心情绪",
-        "arc": "rising/falling/wave/mixed"
+        "primary": "核心情绪（热血/甜蜜/紧张等）",
+        "secondary": "次要情绪",
+        "arc": "rising/falling/wave/mixed",
+        "density": 3000,
+        "highPoints": [5, 20, 50],
+        "lowPoints": [10, 30]
       },
       
       "worldSetting": {
         "type": "世界类型",
-        "locations": ["地点1", "地点2"],
-        "factions": ["势力1", "势力2"],
-        "powerSystem": "力量体系"
+        "locations": [
+          { "name": "地点名称", "description": "地点描述", "level": "city/district/special" }
+        ],
+        "factions": [
+          { "name": "势力名称", "description": "势力描述", "allies": [], "enemies": [] }
+        ],
+        "rules": [
+          { "name": "规则名称", "description": "规则描述", "category": "cultivation/magic/social" }
+        ]
       },
       
-      "protagonist": {
-        "name": "主角名",
-        "tags": ["标签1", "标签2"],
-        "identity": "身份背景",
-        "goldenFinger": "金手指",
-        "motivation": "核心动机",
-        "currentDilemma": "当前困境"
+      "characters": [
+        {
+          "name": "角色名",
+          "role": "protagonist/antagonist/mentor/supporting",
+          "description": "角色描述",
+          "personality": ["性格标签1", "性格标签2"],
+          "goldenFinger": "金手指（如有）",
+          "strengths": ["优势1"],
+          "weaknesses": ["短板1"],
+          "relationships": [
+            { "targetName": "关联角色", "type": "friend/enemy/mentor/lover", "description": "关系描述" }
+          ]
+        }
+      ],
+      
+      "structure": {
+        "act1": "第一幕描述（建置，约20%字数）",
+        "act2a": "第二幕A描述（对抗上半，约25%字数）",
+        "act2b": "第二幕B描述（对抗下半，约25%字数）",
+        "act3": "第三幕描述（结局，约30%字数）"
       },
       
-      "antagonist": {
-        "small": "小反派",
-        "medium": "中反派",
-        "big": "大反派"
+      "coolPointDesign": {
+        "patterns": ["打脸爽", "装逼爽", "身份揭秘", "实力碾压"],
+        "arranged": [
+          { "type": "爽点类型", "description": "爽点描述", "suggestedChapter": 5 }
+        ]
       },
       
-      "eightStrands": {
-        "quest": "主线递进",
-        "faction": "阵营发展",
-        "romance": "感情发展"
+      "coreSellingPoints": [
+        { "name": "卖点名称", "description": "卖点描述", "priority": 1 }
+      ],
+      
+      "conflictDesign": {
+        "source": "冲突来源（资源/利益、阵营/种族等）",
+        "escalation": ["一级矛盾", "二级矛盾", "三级矛盾", "四级矛盾"],
+        "majorConflicts": ["主要冲突1", "主要冲突2"]
       },
       
-      "coolPoints": ["爽点1", "爽点2"],
+      "storyLines": {
+        "map": "地图线规划（地点递进）",
+        "faction": "阵营线规划（势力发展）",
+        "character": "人物线规划（角色登场）",
+        "goldenfinger": "金手指线规划（能力升级）",
+        "worldRules": "世界观线规划（设定揭示）",
+        "conflict": "矛盾线规划（冲突递进）",
+        "collection": "收集线规划（材料收集）",
+        "romance": "感情线规划（感情发展）"
+      },
       
-      "volumes": [
-        { "volumeId": 1, "title": "卷1", "chapterRange": [1, 30], "coreConflict": "核心冲突" }
+      "foreshadows": [
+        { "hint": "伏笔内容", "type": "item/dialogue/event/mystery", "suggestedChapter": 10 }
+      ],
+      
+      "chapters": [
+        { "title": "章节标题", "summary": "章节摘要", "keyEvents": ["关键事件1"], "involvedCharacters": ["角色1"] }
       ]
     }
   ]
 }
 
-请确保每个大纲都有独特的卖点和风格。`;
+请确保每个大纲都有独特的卖点和风格，所有字段都要完整填写。`;
 }
 
 /**
  * 构建题材特定章节
  */
-function buildGenreSection(template: GenreTemplate): string {
+function buildGenreSection(template: ExtendedGenreTemplate): string {
   let section = `\n【题材：${template.name}】\n${template.description}\n`;
 
   if (template.subGenres?.length) {
-    section += `\n可选流派：${template.subGenres.map(s => `${s.name}：${s.description}`).join('、')}\n`;
+    section += `\n可选流派：${template.subGenres.map((s: { name: string; description: string }) => `${s.name}：${s.description}`).join('、')}\n`;
   }
 
-  section += `\n核心爽点：${template.coreCoolPoints.join('、')}\n`;
+  if (template.coreCoolPoints?.length) {
+    section += `\n核心爽点：${template.coreCoolPoints.join('、')}\n`;
+  }
 
   if (template.powerSystem) {
     section += `\n力量体系：${template.powerSystem.name}\n`;
@@ -178,7 +221,7 @@ function buildGenreSection(template: GenreTemplate): string {
     section += `- 高潮：${template.paceCharacteristics.climax}\n`;
   }
 
-  if (template.antiPatterns.length > 0) {
+  if (template.antiPatterns?.length) {
     section += `\n禁忌：${template.antiPatterns.slice(0, 2).join('、')}\n`;
   }
 

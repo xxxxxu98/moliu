@@ -21,7 +21,7 @@ import {
   Layers,
 } from 'lucide-vue-next';
 import { NCollapse, NCollapseItem, NTag, NCard, NEmpty, NButton } from 'naive-ui';
-import type { Outline, Chapter, Character, Foreshadow } from '@/services/outline/schemas';
+import type { GeneratedOutline, GeneratedChapter, GeneratedCharacter, GeneratedForeshadow } from '@/types/inspiration';
 
 /**
  * 可视化节点
@@ -39,15 +39,15 @@ interface VisualNode {
 
 const props = defineProps<{
   /** 大纲数据 */
-  outline: Outline;
+  outline: GeneratedOutline;
   /** 是否默认展开 */
   defaultExpanded?: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: 'selectChapter', chapter: Chapter): void;
-  (e: 'selectCharacter', character: Character): void;
-  (e: 'selectForeshadow', foreshadow: Foreshadow): void;
+  (e: 'selectChapter', chapter: GeneratedChapter): void;
+  (e: 'selectCharacter', character: GeneratedCharacter): void;
+  (e: 'selectForeshadow', foreshadow: GeneratedForeshadow): void;
 }>();
 
 // 展开状态
@@ -272,8 +272,118 @@ const visualTree = computed<VisualNode[]>(() => {
       children: outline.coreSellingPoints.map((sp, index) => ({
         id: `selling-point-${index}`,
         type: 'volume',
-        title: sp,
+        title: sp.name || `卖点${index + 1}`,
+        description: sp.description || '',
+        metadata: { priority: sp.priority || 1 },
       })),
+    });
+  }
+
+  // 6. 情绪目标
+  if (outline.emotionGoal) {
+    const emotion = outline.emotionGoal;
+    nodes.push({
+      id: 'emotion-goal',
+      type: 'volume',
+      title: '情绪目标',
+      description: emotion.primary || '',
+      metadata: {
+        arc: emotion.arc,
+        density: emotion.density,
+        highPoints: emotion.highPoints,
+        lowPoints: emotion.lowPoints,
+      },
+      children: [
+        {
+          id: 'emotion-primary',
+          type: 'volume',
+          title: `核心情绪：${emotion.primary || '未设定'}`,
+          description: `弧线类型：${emotion.arc || 'rising'}`,
+        },
+        ...(emotion.highPoints?.length ? [{
+          id: 'emotion-high-points',
+          type: 'volume',
+          title: `情绪高点章节：${emotion.highPoints.join(', ')}`,
+          description: '',
+        }] : []),
+        ...(emotion.lowPoints?.length ? [{
+          id: 'emotion-low-points',
+          type: 'volume',
+          title: `情绪低点章节：${emotion.lowPoints.join(', ')}`,
+          description: '',
+        }] : []),
+      ],
+    });
+  }
+
+  // 7. 爽点设计
+  if (outline.coolPointDesign) {
+    const coolPoint = outline.coolPointDesign;
+    nodes.push({
+      id: 'cool-point-design',
+      type: 'volume',
+      title: '爽点设计',
+      description: `类型：${(coolPoint.patterns || []).join('、')}`,
+      children: [
+        ...((coolPoint.patterns || []).map((pattern, index) => ({
+          id: `cool-pattern-${index}`,
+          type: 'volume',
+          title: `爽点类型：${pattern}`,
+          description: '',
+        }))),
+        ...(coolPoint.arranged || []).map((cp, index) => ({
+          id: `cool-arranged-${index}`,
+          type: 'volume',
+          title: cp.suggestedChapter ? `第${cp.suggestedChapter}章：${cp.type}` : cp.type,
+          description: cp.description,
+        })),
+      ],
+    });
+  }
+
+  // 8. 八条故事线
+  if (outline.storyLines) {
+    const sl = outline.storyLines;
+    nodes.push({
+      id: 'story-lines',
+      type: 'volume',
+      title: '八条故事线',
+      expanded: false,
+      children: [
+        ...(sl.map ? [{ id: 'sl-map', type: 'volume' as const, title: '地图线', description: sl.map }] : []),
+        ...(sl.faction ? [{ id: 'sl-faction', type: 'volume' as const, title: '阵营线', description: sl.faction }] : []),
+        ...(sl.character ? [{ id: 'sl-character', type: 'volume' as const, title: '人物线', description: sl.character }] : []),
+        ...(sl.goldenfinger ? [{ id: 'sl-goldenfinger', type: 'volume' as const, title: '金手指线', description: sl.goldenfinger }] : []),
+        ...(sl.worldRules ? [{ id: 'sl-worldRules', type: 'volume' as const, title: '世界观线', description: sl.worldRules }] : []),
+        ...(sl.conflict ? [{ id: 'sl-conflict', type: 'volume' as const, title: '矛盾线', description: sl.conflict }] : []),
+        ...(sl.collection ? [{ id: 'sl-collection', type: 'volume' as const, title: '收集线', description: sl.collection }] : []),
+        ...(sl.romance ? [{ id: 'sl-romance', type: 'volume' as const, title: '感情线', description: sl.romance }] : []),
+      ],
+    });
+  }
+
+  // 9. 矛盾设计
+  if (outline.conflictDesign) {
+    const cd = outline.conflictDesign;
+    nodes.push({
+      id: 'conflict-design',
+      type: 'volume',
+      title: '矛盾设计',
+      description: `冲突来源：${cd.source || '未设定'}`,
+      children: [
+        ...((cd.escalation || []).map((e, index) => ({
+          id: `cd-escalation-${index}`,
+          type: 'volume' as const,
+          title: `矛盾层级${index + 1}：${e}`,
+          description: '',
+        }))),
+        ...((cd.majorConflicts || []).map((c, index) => ({
+          id: `cd-conflict-${index}`,
+          type: 'volume' as const,
+          title: `主要冲突${index + 1}：${c}`,
+          description: '',
+        }))),
+      ],
     });
   }
 

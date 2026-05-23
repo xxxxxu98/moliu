@@ -218,6 +218,56 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
       involvedCharacters: ch.involvedCharacters || [],
     }));
 
+    // 处理情绪目标
+    const emotionGoal = outline.emotionGoal ? {
+      primary: outline.emotionGoal.primary || '',
+      secondary: outline.emotionGoal.secondary,
+      arc: outline.emotionGoal.arc || 'rising',
+      density: outline.emotionGoal.density,
+      highPoints: outline.emotionGoal.highPoints || [],
+      lowPoints: outline.emotionGoal.lowPoints || [],
+    } : undefined;
+
+    // 处理爽点设计
+    const coolPointDesign = outline.coolPointDesign ? {
+      patterns: outline.coolPointDesign.patterns || [],
+      arranged: (outline.coolPointDesign.arranged || []).map((cp) => ({
+        type: cp.type || '',
+        description: cp.description || '',
+        suggestedChapter: cp.suggestedChapter,
+      })),
+    } : undefined;
+
+    // 处理核心卖点
+    const coreSellingPoints = (outline.coreSellingPoints || []).map((cp) => ({
+      name: cp.name || '',
+      description: cp.description || '',
+      priority: cp.priority || 1,
+    }));
+
+    // 处理矛盾设计（简化版）
+    const conflictDesign = outline.conflictDesign ? {
+      source: outline.conflictDesign.source || '',
+      escalation: (outline.conflictDesign.escalation || []).map((e) =>
+        typeof e === 'string' ? e : e.description || ''
+      ),
+      majorConflicts: (outline.conflictDesign.majorConflicts || []).map((c) =>
+        typeof c === 'string' ? c : c.title || ''
+      ),
+    } : undefined;
+
+    // 处理八条故事线（简化版）
+    const storyLines = outline.storyLines ? {
+      map: outline.storyLines.map?.planned?.join(' → ') || '',
+      faction: outline.storyLines.faction?.planned?.join(' → ') || '',
+      character: outline.storyLines.character?.planned?.map(p => typeof p === 'string' ? p : p.role).join(' → ') || '',
+      goldenfinger: outline.storyLines.goldenfinger?.type || '',
+      worldRules: outline.storyLines.worldRules?.revealed?.join(' → ') || '',
+      conflict: outline.storyLines.conflict?.chains?.map(c => c.name).join(' → ') || '',
+      collection: outline.storyLines.collection?.target?.join(' → ') || '',
+      romance: outline.storyLines.romance?.currentStage || '',
+    } : undefined;
+
     return {
       id: outline.id || `outline-${index}-${Date.now()}`,
       title: outline.title || '未命名大纲',
@@ -230,6 +280,13 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
       characters,
       foreshadows,
       estimatedWordCount: outline.estimatedWordCount || 0,
+
+      // 新增增强字段
+      emotionGoal,
+      coolPointDesign,
+      coreSellingPoints,
+      conflictDesign,
+      storyLines,
     };
   }
 

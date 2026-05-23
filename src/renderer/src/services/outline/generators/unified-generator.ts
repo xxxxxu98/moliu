@@ -299,22 +299,96 @@ export class UnifiedOutlineGenerator {
    * 构建 JSON Mode 系统提示词
    */
   private buildJSONSystemPrompt(wordCountRange: string): string {
-    return `你是一位专业的小说创作顾问。根据用户的创意种子，生成简洁的故事大纲。
+    return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
 
-生成3个不同风格的大纲，每个大纲包含：
-- 标题：一个吸引人的故事标题
-- 题材标签：1-2个题材
-- 简介：60-80字核心冲突和主题
-- 世界观（精简）：地点1-2个，规则1条，势力1个
-- 角色：2-3个，每个20-40字
-- 四幕结构：每幕40-60字
-- 章节大纲：5-8章，每章一句话概括
-- 伏笔：1-2个
+请生成3个不同风格的大纲，每个大纲必须包含以下所有字段：
+
+{
+  "outlines": [
+    {
+      "title": "故事标题",
+      "synopsis": "60-80字简介",
+      "genres": ["题材标签"],
+      "estimatedWordCount": 500000,
+      
+      "emotionGoal": {
+        "primary": "核心情绪",
+        "secondary": "次要情绪",
+        "arc": "rising/falling/wave/mixed",
+        "density": 3000,
+        "highPoints": [5, 20, 50],
+        "lowPoints": [10, 30]
+      },
+      
+      "worldSetting": {
+        "type": "世界类型",
+        "locations": [{ "name": "地点", "description": "描述", "level": "city" }],
+        "factions": [{ "name": "势力", "description": "描述", "allies": [], "enemies": [] }],
+        "rules": [{ "name": "规则", "description": "描述", "category": "cultivation" }]
+      },
+      
+      "characters": [
+        {
+          "name": "角色名",
+          "role": "protagonist/antagonist/mentor/supporting",
+          "description": "描述",
+          "personality": ["性格标签"],
+          "goldenFinger": "金手指",
+          "strengths": ["优势"],
+          "weaknesses": ["短板"],
+          "relationships": [{ "targetName": "角色", "type": "friend/enemy/mentor", "description": "关系" }]
+        }
+      ],
+      
+      "structure": {
+        "act1": "第一幕（建置，约20%）",
+        "act2a": "第二幕A（对抗上，约25%）",
+        "act2b": "第二幕B（对抗下，约25%）",
+        "act3": "第三幕（结局，约30%）"
+      },
+      
+      "coolPointDesign": {
+        "patterns": ["打脸爽", "装逼爽", "身份揭秘", "实力碾压"],
+        "arranged": [{ "type": "类型", "description": "描述", "suggestedChapter": 5 }]
+      },
+      
+      "coreSellingPoints": [
+        { "name": "卖点名称", "description": "描述", "priority": 1 }
+      ],
+      
+      "conflictDesign": {
+        "source": "冲突来源",
+        "escalation": ["一级矛盾", "二级矛盾", "三级矛盾", "四级矛盾"],
+        "majorConflicts": ["冲突1", "冲突2"]
+      },
+      
+      "storyLines": {
+        "map": "地图线规划",
+        "faction": "阵营线规划",
+        "character": "人物线规划",
+        "goldenfinger": "金手指线规划",
+        "worldRules": "世界观线规划",
+        "conflict": "矛盾线规划",
+        "collection": "收集线规划",
+        "romance": "感情线规划"
+      },
+      
+      "foreshadows": [
+        { "hint": "伏笔内容", "type": "item/dialogue/event/mystery", "suggestedChapter": 10 }
+      ],
+      
+      "chapters": [
+        { "title": "章节标题", "summary": "摘要", "keyEvents": ["事件"], "involvedCharacters": ["角色"] }
+      ]
+    }
+  ]
+}
 
 【要求】
 - 只输出纯JSON对象，不要任何其他内容
 - JSON格式：{"outlines":[...]}
-- 确保JSON语法完全正确`;
+- 确保JSON语法完全正确
+- 所有大纲都要完整填写以上所有字段`;
 
   }
 

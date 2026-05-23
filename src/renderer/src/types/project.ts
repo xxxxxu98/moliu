@@ -22,6 +22,57 @@ export interface Project {
   conflictDesign?: ConflictDesign;   // 矛盾设计
   coolPointDesign?: CoolPointDesign; // 爽点设计
   storyLines?: StoryLines;          // 八条故事线
+  coreSellingPoints?: CoreSellingPoint[];  // 核心卖点
+  metadata?: ProjectMetadata;         // 项目元数据
+}
+
+// 项目元数据
+export interface ProjectMetadata {
+  // 情绪目标
+  emotionGoal?: {
+    primary: string;
+    secondary?: string;
+    arc?: string;
+    density?: number;
+    highPoints?: number[];
+    lowPoints?: number[];
+  };
+  // 爽点设计
+  coolPointDesign?: {
+    patterns: string[];
+    arranged: Array<{
+      type: string;
+      description: string;
+      suggestedChapter?: number;
+    }>;
+  };
+  // 核心卖点
+  coreSellingPoints?: CoreSellingPoint[];
+  // 矛盾设计
+  conflictDesign?: {
+    source: string;
+    escalation: string[];
+    majorConflicts: string[];
+  };
+  // 八条故事线
+  storyLines?: {
+    map: string;
+    faction: string;
+    character: string;
+    goldenfinger: string;
+    worldRules: string;
+    conflict: string;
+    collection: string;
+    romance: string;
+  };
+}
+
+// 核心卖点
+export interface CoreSellingPoint {
+  id: string;
+  name: string;
+  description: string;
+  priority: number;
 }
 
 // 题材标签

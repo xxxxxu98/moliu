@@ -401,6 +401,56 @@ export class OutlinePostProcessor {
       foreshadows: this.normalizeForeshadows(raw.foreshadows || raw.hints || []),
       worldSetting: raw.worldSetting || raw.world || undefined,
       estimatedWordCount: raw.estimatedWordCount || raw.wordCount || undefined,
+      
+      // 新增：情绪目标
+      emotionGoal: raw.emotionGoal ? {
+        primary: raw.emotionGoal.primary || '',
+        secondary: raw.emotionGoal.secondary,
+        arc: raw.emotionGoal.arc || 'rising',
+        density: raw.emotionGoal.density,
+        highPoints: this.normalizeArray(raw.emotionGoal.highPoints || []),
+        lowPoints: this.normalizeArray(raw.emotionGoal.lowPoints || []),
+      } : undefined,
+      
+      // 新增：爽点设计
+      coolPointDesign: raw.coolPointDesign ? {
+        patterns: this.normalizeArray(raw.coolPointDesign.patterns || []),
+        arranged: (raw.coolPointDesign.arranged || []).map((cp: any) => ({
+          type: cp.type || '',
+          description: cp.description || '',
+          suggestedChapter: cp.suggestedChapter,
+        })),
+      } : undefined,
+      
+      // 新增：核心卖点
+      coreSellingPoints: (raw.coreSellingPoints || []).map((cp: any) => ({
+        name: typeof cp === 'string' ? cp : (cp.name || ''),
+        description: typeof cp === 'string' ? '' : (cp.description || ''),
+        priority: typeof cp === 'string' ? 1 : (cp.priority || 1),
+      })),
+      
+      // 新增：矛盾设计
+      conflictDesign: raw.conflictDesign ? {
+        source: raw.conflictDesign.source || '',
+        escalation: this.normalizeArray(raw.conflictDesign.escalation || []).map((e: any) => 
+          typeof e === 'string' ? e : (e.description || e.name || '')
+        ),
+        majorConflicts: this.normalizeArray(raw.conflictDesign.majorConflicts || []).map((c: any) =>
+          typeof c === 'string' ? c : (c.title || c.description || '')
+        ),
+      } : undefined,
+      
+      // 新增：八条故事线
+      storyLines: raw.storyLines ? {
+        map: raw.storyLines.map || '',
+        faction: raw.storyLines.faction || '',
+        character: raw.storyLines.character || '',
+        goldenfinger: raw.storyLines.goldenfinger || '',
+        worldRules: raw.storyLines.worldRules || '',
+        conflict: raw.storyLines.conflict || '',
+        collection: raw.storyLines.collection || '',
+        romance: raw.storyLines.romance || '',
+      } : undefined,
     };
   }
 

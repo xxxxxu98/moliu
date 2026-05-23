@@ -247,6 +247,16 @@ function handleCreate() {
                   >{{ outline.characters?.length ||
                   0 }}{{ t("quickStart.characters") }}</span
                 >
+                <!-- 增强字段标签 -->
+                <span v-if="outline.emotionGoal?.primary" class="px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">
+                  {{ outline.emotionGoal.primary }}
+                </span>
+                <span v-if="outline.coolPointDesign?.patterns?.length" class="px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">
+                  {{ outline.coolPointDesign.patterns.slice(0, 2).join('、') }}
+                </span>
+                <span v-if="outline.conflictDesign?.source" class="px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                  {{ outline.conflictDesign.source }}
+                </span>
               </div>
             </div>
           </div>
