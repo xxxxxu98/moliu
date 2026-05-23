@@ -39,6 +39,7 @@ export enum ErrorCode {
   // 审查系统错误 (REV_xxx)
   REVIEW_FAILED = 'REV_001',
   REVIEW_TIMEOUT = 'REV_002',
+  REVIEW_BLOCKED = 'REV_003',
 
   // 写作任务错误 (WRITE_xxx)
   WRITE_TASK_FAILED = 'WRITE_001',
@@ -187,6 +188,7 @@ export class AppError extends Error {
 
       [ErrorCode.REVIEW_FAILED]: '章节审查失败',
       [ErrorCode.REVIEW_TIMEOUT]: '审查超时',
+      [ErrorCode.REVIEW_BLOCKED]: '审查未通过，存在阻断性问题',
 
       [ErrorCode.WRITE_TASK_FAILED]: '写作任务执行失败',
       [ErrorCode.WRITE_TASK_CANCELLED]: '写作任务已取消',
