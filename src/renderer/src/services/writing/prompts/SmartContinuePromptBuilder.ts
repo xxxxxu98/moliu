@@ -1,14 +1,12 @@
 /**
- * 写作提示词模板 - 增强版
- * 基于 webnovel-writer 分场景模板系统
- * 
- * 三种场景模板：
- * 1. 第一章模板 (first_chapter)
- * 2. 有大纲章节模板 (with_outline)  
- * 3. 普通章节模板 (normal_chapter)
+ * 写作提示词构建器
+ * 基于场景模板生成写作提示词
  */
 
-import type { TaskBook, ChapterHookType } from '@/services/writing/orchestrator/types';
+import type {
+  TaskBook,
+  ChapterHookType,
+} from '@/services/writing/orchestrator/types';
 import type { ReaderSignals } from '@/services/writing/memory/types';
 
 // ============================================================
@@ -18,25 +16,18 @@ import type { ReaderSignals } from '@/services/writing/memory/types';
 export type SceneTemplate = 'first_chapter' | 'with_outline' | 'normal_chapter';
 
 export interface PromptTemplateContext {
-  /** 场景模板类型 */
   template: SceneTemplate;
-  /** 章节号 (1-based) */
   chapterNumber: number;
-  /** 章节标题 */
   chapterTitle: string;
-  /** 任务书 */
   taskBook?: TaskBook;
-  /** 追读力信号 */
   readerSignals?: ReaderSignals;
-  /** 目标字数 */
   targetWordCount: number;
-  /** 写作风格 */
-  writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient';
-  /** 前章内容 */
+  writingStyle?: WritingStyle;
   previousChapterEnding?: string;
-  /** 前章摘要 */
   previousChapterSummary?: string;
 }
+
+export type WritingStyle = 'concise' | 'elegant' | 'humorous' | 'ancient';
 
 export interface PromptTemplates {
   systemPrompt: string;
@@ -44,7 +35,7 @@ export interface PromptTemplates {
 }
 
 // ============================================================
-// 核心写作原则（来自 oh-story）
+// 常量
 // ============================================================
 
 const WRITING_PRINCIPLES = `
@@ -56,10 +47,6 @@ const WRITING_PRINCIPLES = `
 6. **动作代替心理** - 别写"他很紧张"，写"他手心全是汗"
 7. **少用形容词** - 少说"温暖的阳光"，说"阳光晒得人懒洋洋的"
 `;
-
-// ============================================================
-// Anti-AI 提醒
-// ============================================================
 
 const ANTI_AI_REMINDERS = `
 【Anti-AI 提醒】⚠️ 强制执行 ⚠️
@@ -87,10 +74,6 @@ const ANTI_AI_REMINDERS = `
    - ❌ 他表示这个问题很难解决。（转述代替对话）
 `;
 
-// ============================================================
-// 章尾钩子模板
-// ============================================================
-
 const CHAPTER_END_HOOK_TEMPLATES: Record<ChapterHookType, string> = {
   sudden_reveal: '突然揭示 - 抛出改变全局的信息',
   urgent_crisis: '紧急危机 - 下章必须回应的紧迫威胁',
@@ -108,59 +91,88 @@ const CHAPTER_END_HOOK_TEMPLATES: Record<ChapterHookType, string> = {
 };
 
 // ============================================================
-// 模板生成器
+// 提示词构建器
 // ============================================================
 
 export class SmartContinuePromptBuilder {
-  
-  /**
-   * 构建提示词
-   */
   static build(context: PromptTemplateContext): PromptTemplates {
-    const { template, chapterNumber, chapterTitle, taskBook, readerSignals, targetWordCount, writingStyle, previousChapterEnding } = context;
-    
-    // 根据模板类型生成不同的指令
+    const { template } = context;
+
     let modeInstruction: string;
     switch (template) {
       case 'first_chapter':
-        modeInstruction = this.buildFirstChapterInstruction(targetWordCount);
+        modeInstruction = this.buildFirstChapterInstruction(context.targetWordCount);
         break;
       case 'with_outline':
-        modeInstruction = this.buildWithOutlineInstruction(taskBook, targetWordCount);
+        modeInstruction = this.buildWithOutlineInstruction(context.taskBook, context.targetWordCount);
         break;
       default:
-        modeInstruction = this.buildNormalChapterInstruction(targetWordCount);
+        modeInstruction = this.buildNormalChapterInstruction(context.targetWordCount);
     }
-    
-    // 构建系统提示词
-    const systemPrompt = this.buildSystemPrompt(
+
+    const systemPrompt = this.buildSystemPrompt(context);
+    const userPrompt = this.buildUserPrompt(context, modeInstruction);
+
+    return { systemPrompt, userPrompt };
+  }
+
+  static buildFirstChapter(
+    chapterTitle: string,
+    worldSchema?: string,
+    targetWordCount = 3000
+  ): PromptTemplates {
+    return this.build({
+      template: 'first_chapter',
+      chapterNumber: 1,
+      chapterTitle,
+      targetWordCount,
+    });
+  }
+
+  static buildWithOutline(
+    chapterNumber: number,
+    chapterTitle: string,
+    outline: string,
+    taskBook: TaskBook,
+    previousChapterEnding: string,
+    targetWordCount = 3000
+  ): PromptTemplates {
+    return this.build({
+      template: 'with_outline',
       chapterNumber,
       chapterTitle,
       taskBook,
-      readerSignals,
-      writingStyle
-    );
-    
-    // 构建用户提示词
-    const userPrompt = this.buildUserPrompt(context, modeInstruction);
-    
-    return { systemPrompt, userPrompt };
+      previousChapterEnding,
+      targetWordCount,
+    });
   }
-  
-  /**
-   * 构建系统提示词
-   */
-  private static buildSystemPrompt(
+
+  static buildNormalChapter(
     chapterNumber: number,
     chapterTitle: string,
-    taskBook: TaskBook | undefined,
-    readerSignals: ReaderSignals | undefined,
-    writingStyle?: string
-  ): string {
-    // 从追读力信号获取写作建议
+    previousChapterEnding: string,
+    previousChapterSummary: string,
+    targetWordCount = 3000
+  ): PromptTemplates {
+    return this.build({
+      template: 'normal_chapter',
+      chapterNumber,
+      chapterTitle,
+      previousChapterEnding,
+      previousChapterSummary,
+      targetWordCount,
+    });
+  }
+
+  // ============================================================
+  // 内部方法
+  // ============================================================
+
+  private static buildSystemPrompt(context: PromptTemplateContext): string {
+    const { chapterNumber, chapterTitle, taskBook, readerSignals } = context;
     const signals = readerSignals?.getSignals?.() || readerSignals;
     const writingGuidance = signals?.recentTrends?.slice(-3) || [];
-    
+
     return `# 小说续写任务
 
 你是专业网文作家，擅长写吸引人的网络小说。你的任务是续写第${chapterNumber}章。
@@ -171,8 +183,8 @@ ${WRITING_PRINCIPLES}
 ${taskBook ? this.buildTaskBookSection(taskBook) : ''}
 
 ## 追读力建议
-${writingGuidance.length > 0 
-  ? writingGuidance.map((g: any) => `- ${g}`).join('\n')
+${writingGuidance.length > 0
+  ? writingGuidance.map((g: unknown) => `- ${g}`)
   : '保持稳定的更新节奏和情节推进'}
 
 ## Anti-AI 提醒 ⚠️
@@ -184,19 +196,16 @@ ${ANTI_AI_REMINDERS}
 **第二行起**：续写正文
 对话必须用中文引号「"内容"」`;
   }
-  
-  /**
-   * 构建任务书章节
-   */
+
   private static buildTaskBookSection(taskBook: TaskBook): string {
     const { opening, story, characters, writingGuidance, ending, antiAIReminders } = taskBook;
-    
+
     return `
 ## 本章信息
-**书名**: ${opening.bookTitle}
-**章节**: 第 ${opening.chapterNumber} 章
-**标题**: ${opening.chapterTitle}
-**一句话目标**: ${opening.oneLineGoal}
+|**书名**: ${opening.bookTitle}
+|**章节**: 第 ${opening.chapterNumber} 章
+|**标题**: ${opening.chapterTitle}
+|**一句话目标**: ${opening.oneLineGoal}
 
 ## 上章结尾（必须衔接）
 ${story.previousChapterEnding || story.previousSummary?.slice(-500) || '（无前章）'}
@@ -220,7 +229,7 @@ ${story.mustCover?.map((m: string) => `- ${m}`).join('\n') || '（无特定要�
 ${story.forbiddenZones?.map((f: string) => `- ${f}`).join('\n') || '（无禁区）'}
 
 ## 人物设定
-${characters?.map((c: any) => `### ${c.name}（${c.role}）
+${characters?.map((c) => `### ${c.name}（${c.role}）
 - 当前状态: ${c.state}
 - 驱动力: ${c.motivation}
 - 本章作用: ${c.chapterRole}
@@ -253,10 +262,7 @@ ${writingGuidance.pacingStrategy || 'normal'}
 ${antiAIReminders?.map((r: string) => `- ${r}`).join('\n') || '见下方 Anti-AI 提醒'}
 `;
   }
-  
-  /**
-   * 第一章指令
-   */
+
   private static buildFirstChapterInstruction(targetWordCount: number): string {
     return `
 这是小说的第一章，需要特别注意：
@@ -284,15 +290,12 @@ ${antiAIReminders?.map((r: string) => `- ${r}`).join('\n') || '见下方 Anti-AI
 ### 结尾要求【必须使用章尾钩子】
 → 绝对不能在结尾写总结、说教或情感升华`;
   }
-  
-  /**
-   * 有大纲章节指令
-   */
+
   private static buildWithOutlineInstruction(taskBook: TaskBook | undefined, targetWordCount: number): string {
     if (!taskBook) {
       return this.buildNormalChapterInstruction(targetWordCount);
     }
-    
+
     return `
 根据本章大纲完成任务：
 
@@ -307,10 +310,7 @@ ${taskBook.story?.goal || taskBook.opening?.oneLineGoal || '按大纲续写'}
 
 ### 结尾要求【必须使用章尾钩子】`;
   }
-  
-  /**
-   * 普通章节指令
-   */
+
   private static buildNormalChapterInstruction(targetWordCount: number): string {
     return `
 ### 衔接要求
@@ -329,13 +329,17 @@ ${taskBook.story?.goal || taskBook.opening?.oneLineGoal || '按大纲续写'}
 5. 两难抉择 - 被迫在两个坏选项中选一个
 → 绝对不能在结尾写总结、说教或情感升华`;
   }
-  
-  /**
-   * 构建用户提示词
-   */
+
   private static buildUserPrompt(context: PromptTemplateContext, modeInstruction: string): string {
-    const { chapterNumber, chapterTitle, taskBook, previousChapterEnding, previousChapterSummary, targetWordCount } = context;
-    
+    const {
+      chapterNumber,
+      chapterTitle,
+      taskBook,
+      previousChapterEnding,
+      previousChapterSummary,
+      targetWordCount,
+    } = context;
+
     let prompt = `# 当前任务
 请续写第${chapterNumber}章「${chapterTitle}」
 
@@ -343,42 +347,42 @@ ${modeInstruction}
 
 ### 篇幅要求【强制】
 续写内容约 ${targetWordCount} 字，允许±15%的偏差`;
-    
+
     if (previousChapterEnding) {
       prompt += `
 
 ### 前章结尾（必须衔接）
 ${previousChapterEnding}`;
     }
-    
+
     if (previousChapterSummary) {
       prompt += `
 
 ### 前章摘要
 ${previousChapterSummary}`;
     }
-    
+
     if (taskBook?.story?.mustCover?.length) {
       prompt += `
 
 ### 必须覆盖的情节节点
 ${taskBook.story.mustCover.map((n: string, i: number) => `${i + 1}. ${n}`).join('\n')}`;
     }
-    
+
     if (taskBook?.story?.forbiddenZones?.length) {
       prompt += `
 
 ### 禁区（禁止出现）
 ${taskBook.story.forbiddenZones.map((f: string) => `- ${f}`).join('\n')}`;
     }
-    
+
     if (taskBook?.characters?.length) {
       prompt += `
 
 ### 本章主要角色
-${taskBook.characters.map((c: any) => `- ${c.name}（${c.role}）：${c.chapterRole}`).join('\n')}`;
+${taskBook.characters.map((c: { name: string; role: string; chapterRole: string }) => `- ${c.name}（${c.role}）：${c.chapterRole}`).join('\n')}`;
     }
-    
+
     if (taskBook?.ending) {
       prompt += `
 
@@ -386,115 +390,42 @@ ${taskBook.characters.map((c: any) => `- ${c.name}（${c.role}）：${c.chapterR
 ${taskBook.ending.target}
 留一个未完问题让读者想翻下一章：${taskBook.ending.unfinishedQuestions?.[0] || '本章结束时主角面临什么困境/选择/危机？'}`;
     }
-    
+
     prompt += `
 
 请直接输出续写内容。`;
 
     return prompt;
   }
-  
-  // ============================================================
-  // 便捷方法
-  // ============================================================
-  
-  /**
-   * 构建第一章提示词
-   */
-  static buildFirstChapter(
-    chapterTitle: string,
-    worldSchema?: string,
-    targetWordCount: number = 3000
-  ): PromptTemplates {
-    return this.build({
-      template: 'first_chapter',
-      chapterNumber: 1,
-      chapterTitle,
-      targetWordCount,
-    });
-  }
-  
-  /**
-   * 构建有大纲章节提示词
-   */
-  static buildWithOutline(
-    chapterNumber: number,
-    chapterTitle: string,
-    outline: string,
-    taskBook: TaskBook,
-    previousChapterEnding: string,
-    targetWordCount: number = 3000
-  ): PromptTemplates {
-    return this.build({
-      template: 'with_outline',
-      chapterNumber,
-      chapterTitle,
-      taskBook,
-      previousChapterEnding,
-      targetWordCount,
-    });
-  }
-  
-  /**
-   * 构建普通章节提示词
-   */
-  static buildNormalChapter(
-    chapterNumber: number,
-    chapterTitle: string,
-    previousChapterEnding: string,
-    previousChapterSummary: string,
-    targetWordCount: number = 3000
-  ): PromptTemplates {
-    return this.build({
-      template: 'normal_chapter',
-      chapterNumber,
-      chapterTitle,
-      previousChapterEnding,
-      previousChapterSummary,
-      targetWordCount,
-    });
-  }
 }
 
 // ============================================================
-// 导出
+// 别名和类型导出
 // ============================================================
 
 export { SmartContinuePromptBuilder as PromptBuilder };
 export type { PromptTemplateContext, SceneTemplate, PromptTemplates };
 
 // ============================================================
-// Composable 导出
+// Composable
 // ============================================================
 
 export function usePromptBuilder() {
   return {
-    /**
-     * 构建提示词
-     */
     build: (context: PromptTemplateContext) => SmartContinuePromptBuilder.build(context),
-    
-    /**
-     * 构建第一章提示词
-     */
+
     buildFirstChapter: (title: string, worldSchema?: string, wordCount?: number) =>
       SmartContinuePromptBuilder.buildFirstChapter(title, worldSchema, wordCount),
-    
-    /**
-     * 构建有大纲章节提示词
-     */
+
     buildWithOutline: (
       chapterNumber: number,
       title: string,
       outline: string,
-      taskBook: import('./orchestrator/types').TaskBook,
+      taskBook: TaskBook,
       prevEnding: string,
       wordCount?: number
     ) => SmartContinuePromptBuilder.buildWithOutline(chapterNumber, title, outline, taskBook, prevEnding, wordCount),
-    
-    /**
-     * 构建普通章节提示词
-     */
+
     buildNormalChapter: (
       chapterNumber: number,
       title: string,

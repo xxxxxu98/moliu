@@ -1,6 +1,6 @@
 /**
- * 写作服务导出
- * 整合所有写作相关的服务和模块
+ * 写作服务导出模块
+ * 统一导出所有写作相关的服务和类型
  */
 
 // ============================================================
@@ -77,7 +77,7 @@ export { DataExtractor, useDataExtractor } from './extraction/DataExtractor';
 // 去AI味
 // ============================================================
 
-export { AntiAIEnhancedService, useAntiAIEnhanced } from './anti-ai-enhanced';
+export { AntiAIService, useAntiAI } from './anti-ai-enhanced';
 
 // ============================================================
 // Prompt 构建器
@@ -90,4 +90,3 @@ export { SmartContinuePromptBuilder, PromptBuilder } from './prompts/SmartContin
 // ============================================================
 
 export { WritingMonitor, getWritingMonitor, useWritingMonitor } from './monitor/WritingMonitor';
-export * from './monitor/WritingMonitor';

@@ -12,6 +12,10 @@ import type { ReviewIssue, ReviewSeverity, ReviewCategory } from '@/types/writin
 import type { Project, Chapter } from '@/types/project';
 import { ReviewService, type ReviewContext, type ReviewOptions } from './review-service';
 import type { SixDimensionReview } from '@/types/writing-task';
+import {
+  performSpecialChecks,
+  type SpecialCheckResult,
+} from './special-checks.service';
 
 export interface BlockingReviewResult {
   /** 是否通过审查 */
@@ -64,7 +68,7 @@ export class BlockingReviewService {
 
   /**
    * 执行带 blocking 闸门的审查
-   * 
+   *
    * @returns 完整的审查结果，包含是否阻断的信息
    */
   async reviewWithBlocking(): Promise<BlockingReviewResult> {
@@ -73,6 +77,47 @@ export class BlockingReviewService {
 
     // 分析结果
     return this.analyzeBlockingResult(detail);
+  }
+
+  /**
+   * 执行带专项检查的增强审查（oh-story 规范）
+   * 
+   * 集成章尾钩子、爽点密度、Show Don't Tell 等专项检查
+   */
+  async reviewWithSpecialChecks(chapterNumber: number): Promise<{
+    blockingResult: BlockingReviewResult;
+    specialResult: SpecialCheckResult;
+  }> {
+    // 1. 执行六维审查
+    const detail = await this.reviewService.review();
+    const blockingResult = this.analyzeBlockingResult(detail);
+
+    // 2. 执行专项检查（oh-story 规范）
+    const content = this.context.chapter?.content || '';
+    const specialResult = performSpecialChecks(content, chapterNumber);
+
+    // 3. 合并问题
+    const allIssues = [...blockingResult.issues, ...specialResult.allIssues];
+
+    // 4. 重新分析合并后的问题
+    const mergedBlockingCount = allIssues.filter(i => i.blocking).length;
+    const mergedHighPriorityCount = allIssues.filter(
+      i => i.severity === 'high' || i.severity === 'critical'
+    ).length;
+
+    // 5. 返回增强结果
+    return {
+      blockingResult: {
+        ...blockingResult,
+        issues: allIssues,
+        totalIssues: allIssues.length,
+        blockingCount: mergedBlockingCount,
+        highPriorityCount: mergedHighPriorityCount,
+        passed: mergedBlockingCount === 0,
+        hasBlocking: mergedBlockingCount > 0,
+      },
+      specialResult,
+    };
   }
 
   /**
@@ -90,6 +135,10 @@ export class BlockingReviewService {
       logic: { total: 0, blocking: 0 },
       ai_flavor: { total: 0, blocking: 0 },
       pacing: { total: 0, blocking: 0 },
+      // 新增维度
+      chapter_ending: { total: 0, blocking: 0 },
+      excitement: { total: 0, blocking: 0 },
+      show_dont_tell: { total: 0, blocking: 0 },
       other: { total: 0, blocking: 0 },
     };
 
@@ -403,4 +452,21 @@ export function getBlockingIssuesToFix(
   maxCount?: number
 ): ReviewIssue[] {
   return BlockingReviewService.getBlockingIssues(result, maxCount);
+}
+
+/**
+ * 执行带专项检查的增强审查（oh-story 规范）
+ * 
+ * 便捷函数
+ */
+export async function enhancedReview(
+  context: ReviewContext,
+  chapterNumber: number,
+  options?: ReviewOptions
+): Promise<{
+  blockingResult: BlockingReviewResult;
+  specialResult: SpecialCheckResult;
+}> {
+  const service = new BlockingReviewService(context, options);
+  return await service.reviewWithSpecialChecks(chapterNumber);
 }

@@ -155,22 +155,30 @@ export interface StrandDistribution {
 export type ReviewSeverity = 'critical' | 'high' | 'medium' | 'low';
 
 /**
- * 审查问题分类
+ * 审查问题分类 - 8+3 维
+ * 基础6维 + AI味 + 节奏 + 新增3维（章尾、爽点、表达）
  */
 export type ReviewCategory =
   | 'setting'        // 设定一致性
   | 'timeline'       // 时间线
-  | 'continuity'     // 叙事连贯
+  | 'continuity'      // 叙事连贯
   | 'character'       // 角色一致性
   | 'logic'          // 逻辑
   | 'ai_flavor'      // AI味
   | 'pacing'         // 节奏
+  // 新增维度
+  | 'chapter_ending'  // 章尾质量（oh-story）
+  | 'excitement'     // 爽点密度（oh-story）
+  | 'show_dont_tell' // Show Don't Tell（oh-story）
   | 'other';         // 其他
 
 /**
- * 审查问题
+ * 审查问题 - 增强版
+ * 对齐 webnovel-writer 的审查 Schema
  */
 export interface ReviewIssue {
+  /** 唯一标识 */
+  id: string;
   /** 严重程度 */
   severity: ReviewSeverity;
   /** 问题分类 */
@@ -185,7 +193,95 @@ export interface ReviewIssue {
   fixHint: string;
   /** 是否阻断（critical 或确认阻断时为 true）*/
   blocking: boolean;
+  /** 是否可选节点 */
+  optional?: boolean;
+  /** 元数据 */
+  meta?: {
+    /** 章节号 */
+    chapter?: number;
+    /** 段落位置 */
+    paragraph?: number;
+    /** 行号 */
+    line?: number;
+    /** AI模式类型 */
+    aiPatternType?: string;
+  };
 }
+
+/**
+ * 审查维度评分
+ */
+export interface ReviewDimensionScore {
+  /** 维度名称 */
+  dimension: ReviewCategory;
+  /** 评分 0-100 */
+  score: number;
+  /** 权重 */
+  weight: number;
+  /** 是否通过 */
+  passed: boolean;
+  /** 问题列表 */
+  issues: ReviewIssue[];
+}
+
+/**
+ * 增强版审查结果
+ */
+export interface EnhancedReviewResult {
+  /** 是否通过 */
+  passed: boolean;
+  /** 阻断数量 */
+  blockingCount: number;
+  /** 总问题数 */
+  totalIssues: number;
+  /** 问题列表 */
+  issues: ReviewIssue[];
+  /** 维度评分 */
+  dimensionScores: Record<ReviewCategory, number>;
+  /** 阻断问题列表 */
+  blockingIssues: ReviewIssue[];
+  /** 按分类统计 */
+  categoryStats: Record<ReviewCategory, {
+    total: number;
+    blocking: number;
+  }>;
+  /** 摘要 */
+  summary: string;
+}
+
+/**
+ * 维度中文名称映射
+ */
+export const DIMENSION_NAMES: Record<ReviewCategory, string> = {
+  setting: '设定一致性',
+  timeline: '时间线',
+  continuity: '叙事连贯',
+  character: '角色一致性',
+  logic: '逻辑',
+  ai_flavor: 'AI味',
+  pacing: '节奏',
+  chapter_ending: '章尾质量',
+  excitement: '爽点密度',
+  show_dont_tell: '表达方式',
+  other: '其他',
+};
+
+/**
+ * 维度权重配置
+ */
+export const DIMENSION_WEIGHTS: Record<ReviewCategory, number> = {
+  setting: 0.15,
+  timeline: 0.10,
+  continuity: 0.15,
+  character: 0.15,
+  logic: 0.15,
+  ai_flavor: 0.08,
+  pacing: 0.07,
+  chapter_ending: 0.05,
+  excitement: 0.05,
+  show_dont_tell: 0.05,
+  other: 0,
+};
 
 /**
  * 审查结果
