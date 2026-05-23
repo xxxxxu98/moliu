@@ -631,7 +631,7 @@ function getSeverityClass(severity: string): string {
       <button
         v-for="tab in tabOptions"
         :key="tab.key"
-        class="flex-1 py-3 flex items-center justify-center gap-1 text-xs font-medium transition-colors relative"
+        class="flex-1 py-3 flex flex-col items-center gap-1 text-xs transition-colors relative"
         :class="[
           effectiveSelectedMode === tab.key
             ? 'text-indigo-600 dark:text-indigo-400'
@@ -639,8 +639,8 @@ function getSeverityClass(severity: string): string {
         ]"
         @click="handleTabChange(tab.key)"
       >
-        <component :is="tab.icon" class="w-4 h-4" />
-        {{ tab.label }}
+        <component :is="tab.icon" class="w-5 h-5" />
+        <span>{{ tab.label }}</span>
         <div
           v-if="effectiveSelectedMode === tab.key"
           class="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"
