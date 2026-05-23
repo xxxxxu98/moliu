@@ -21,6 +21,17 @@ export interface MasterOutlineOptions {
   platform?: string;
   tone?: string[];
   template?: ExtendedGenreTemplate;
+  wordCountRange?: string; // 字数范围（五步法使用）
+}
+
+/**
+ * 五步大纲法提示词选项
+ */
+export interface FiveStepPromptOptions {
+  seed: string;
+  genre?: string;
+  template?: ExtendedGenreTemplate;
+  wordCountRange?: string;
 }
 
 /**
@@ -32,7 +43,7 @@ export function buildMasterOutlinePrompt(options: MasterOutlineOptions): {
 } {
   const { seed, genre, targetWordCount, platform, tone, template } = options;
 
-  const system = buildSystemPrompt(template);
+  const system = buildSystemPrompt(template, targetWordCount);
   const user = buildUserPrompt({ seed, genre, targetWordCount, platform, tone });
 
   return { system, user };
@@ -41,10 +52,21 @@ export function buildMasterOutlinePrompt(options: MasterOutlineOptions): {
 /**
  * 构建系统提示词
  */
-function buildSystemPrompt(template?: ExtendedGenreTemplate): string {
+function buildSystemPrompt(template?: ExtendedGenreTemplate, targetWordCount?: string): string {
   const genreSection = template ? buildGenreSection(template) : '';
 
+  // 解析字数范围
+  const wordCountNum = parseWordCount(targetWordCount);
+  const chaptersPerVolume = Math.ceil(wordCountNum / 150000);
+  const totalChapters = Math.ceil(wordCountNum / 3000);
+
   return `你是一位专业的小说创作顾问，擅长长篇网文创作。
+
+【字数要求】
+${targetWordCount ? `目标字数：${targetWordCount}（约${wordCountNum.toLocaleString()}字）` : '目标字数：50万-100万字（约75万字）'}
+建议卷数：${chaptersPerVolume}卷
+建议章节数：${totalChapters}章
+每卷字数：约${Math.round(wordCountNum / chaptersPerVolume / 10000)}万字
 
 ${buildCorePrinciplesPrompt()}
 
@@ -492,3 +514,22 @@ ${buildConflictEscalationPrompt()}
 - 形式要多样化`,
   },
 };
+
+/**
+ * 解析字数范围为数字
+ */
+function parseWordCount(wordCountRange?: string): number {
+  if (!wordCountRange) return 500000;
+  // 匹配 "50万-100万字" 或 "50-100万字" 等格式
+  const match = wordCountRange.match(/(\d+(?:\.\d+)?)\s*万/);
+  if (match) {
+    const wan = parseFloat(match[1]);
+    // 如果有范围，取中间值
+    if (wordCountRange.includes('-')) {
+      return Math.round(wan * 5000); // 取范围中间值，估算为万字的0.5倍
+    }
+    return Math.round(wan * 10000);
+  }
+  // 默认返回50万字
+  return 500000;
+}

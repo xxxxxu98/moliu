@@ -303,7 +303,18 @@ export class UnifiedOutlineGenerator {
    * 构建 Markdown 格式系统提示词（优先使用）
    */
   private buildMarkdownSystemPrompt(wordCountRange: string): string {
+    // 解析字数范围
+    const wordCountNum = this.parseWordCount(wordCountRange);
+    const chaptersPerVolume = Math.ceil(wordCountNum / 150000); // 每卷约15万字
+    const totalChapters = Math.ceil(wordCountNum / 3000); // 每章约3000字
+
     return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
+
+【字数要求】
+预估字数：${wordCountRange}（约${wordCountNum.toLocaleString()}字）
+建议卷数：${chaptersPerVolume}卷
+建议章节数：${totalChapters}章
+每卷字数：约${Math.round(wordCountNum / chaptersPerVolume / 10000)}万字
 
 请生成3个不同风格的大纲，每个大纲必须包含以下所有内容：
 
@@ -470,8 +481,30 @@ export class UnifiedOutlineGenerator {
 - 使用 Markdown 格式输出
 - 每个大纲使用二级标题（## 大纲X）
 - 确保所有字段都有具体内容
-- 所有大纲都要完整填写以上所有模块`;
+- 所有大纲都要完整填写以上所有模块
+- **字数规划必须符合目标字数范围**
+- 卷数和章节数要与目标字数匹配
+- 每卷约${Math.round(wordCountNum / chaptersPerVolume / 10000)}万字
+- 前30章（前约10万字）必须包含：钩子、人设、爽点、悬念`;
 
+  }
+
+  /**
+   * 解析字数范围为数字
+   */
+  private parseWordCount(wordCountRange: string): number {
+    // 匹配 "50万-100万字" 或 "50-100万字" 等格式
+    const match = wordCountRange.match(/(\d+(?:\.\d+)?)\s*万/);
+    if (match) {
+      const wan = parseFloat(match[1]);
+      // 如果有范围，取中间值
+      if (wordCountRange.includes('-')) {
+        return Math.round(wan * 5000); // 取范围中间值，估算为万字的0.5倍
+      }
+      return Math.round(wan * 10000);
+    }
+    // 默认返回50万字
+    return 500000;
   }
 
   /**
@@ -543,7 +576,17 @@ export class UnifiedOutlineGenerator {
    * 旧版 JSON 系统提示词（仅用于降级）
    */
   private buildJSONSystemPrompt(wordCountRange: string): string {
+    // 解析字数范围
+    const wordCountNum = this.parseWordCount(wordCountRange);
+    const chaptersPerVolume = Math.ceil(wordCountNum / 150000);
+    const totalChapters = Math.ceil(wordCountNum / 3000);
+
     return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
+
+【字数要求】
+预估字数：${wordCountRange}（约${wordCountNum.toLocaleString()}字）
+建议卷数：${chaptersPerVolume}卷
+建议章节数：${totalChapters}章
 
 请生成3个不同风格的大纲，每个大纲必须包含以下所有字段：
 
@@ -572,7 +615,11 @@ export class UnifiedOutlineGenerator {
 - 只输出纯JSON对象，不要任何其他内容
 - JSON格式：{"outlines":[...]}
 - 确保JSON语法完全正确
-- 所有大纲都要完整填写以上所有字段`;
+- 所有大纲都要完整填写以上所有字段
+- **字数规划必须符合目标字数范围**
+- 卷数和章节数要与目标字数匹配
+- 每卷约${Math.round(wordCountNum / chaptersPerVolume / 10000)}万字
+- 前30章（前约10万字）必须包含：钩子、人设、爽点、悬念`;
   }
 
   /**

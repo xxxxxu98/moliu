@@ -40,7 +40,7 @@ export * from './techniques';
 export * from './validators/outline-validator';
 
 // Re-export types (仅保留不在函数导出中的类型)
-export type { MasterOutlineOptions } from './master/master-outline-prompt';
+export type { MasterOutlineOptions, FiveStepPromptOptions } from './master/master-outline-prompt';
 export type { VolumeBeatPromptOptions } from './volume/volume-beat-prompt';
 export type { TimelinePromptOptions } from './volume/volume-timeline-prompt';
 export type { VolumeOutlineOptions, VolumeBeatOptions, VolumeTimelineOptions } from './volume/volume-outline-prompt';

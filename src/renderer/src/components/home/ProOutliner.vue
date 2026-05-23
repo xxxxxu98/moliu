@@ -74,6 +74,20 @@ const {
   reset: resetOutlineState,
 } = useOutlineGenerator();
 
+// ============================================================
+// 字数范围状态
+// ============================================================
+const wordCountRange = ref('50万-100万字');
+
+// 字数范围选项
+const wordCountOptions = [
+  { label: '10万-30万字', value: '10万-30万字' },
+  { label: '30万-50万字', value: '30万-50万字' },
+  { label: '50万-100万字', value: '50万-100万字' },
+  { label: '100万-200万字', value: '100万-200万字' },
+  { label: '200万字以上', value: '200万字以上' },
+];
+
 // 激活的 Tab
 const activeTab = ref<'five-step' | 'volume' | 'timeline'>('five-step');
 
@@ -347,6 +361,7 @@ async function generateFiveStepOutline() {
       seed: stepData.value.emotionGoal + '\n' + stepData.value.setting + '\n' + stepData.value.protagonist,
       genre: volumeData.value.genre,
       template: undefined,
+      wordCountRange: wordCountRange.value,
     };
 
     const { system, user } = buildMasterOutlinePrompt(promptOptions);
@@ -355,6 +370,7 @@ async function generateFiveStepOutline() {
     // 调用 AI 生成（使用现有的生成器）
     const result = await generateOutlines(fiveStepPrompt.value, {
       temperature: 0.7,
+      wordCountRange: wordCountRange.value,
     });
 
     if (result && result.length > 0) {
@@ -659,6 +675,28 @@ function resetTimeline() {
             </NButton>
           </div>
         </div>
+      </div>
+
+      <!-- 字数范围选择器 -->
+      <div class="p-3 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium text-violet-700 dark:text-violet-400">目标字数</span>
+          </div>
+          <div class="flex-1">
+            <select
+              v-model="wordCountRange"
+              class="w-full px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-gray-800 border border-violet-200 dark:border-violet-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+            >
+              <option v-for="opt in wordCountOptions" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <p class="text-xs text-violet-600 dark:text-violet-400 mt-2">
+          字数范围将影响大纲的章节规划、爽点数量和情绪高点设置
+        </p>
       </div>
 
       <!-- 全部完成 -->

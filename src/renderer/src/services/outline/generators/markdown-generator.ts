@@ -155,6 +155,11 @@ export class MarkdownOutlineGenerator {
    * 构建系统提示词
    */
   private buildSystemPrompt(wordCountRange: string): string {
+    // 解析字数范围
+    const wordCountNum = this.parseWordCount(wordCountRange);
+    const totalChapters = Math.ceil(wordCountNum / 3000);
+    const chaptersPerVolume = Math.ceil(wordCountNum / 150000);
+
     return `你是一位专业的网文小说创作顾问，精通网络小说的写作技巧与读者心理。
 
 ## 【核心信念】网文写作是工程，不是灵感
@@ -170,6 +175,12 @@ export class MarkdownOutlineGenerator {
 - 大纲告诉你方向，但具体走哪条路可以灵活调整
 - 没有大纲的长篇100%会崩，大纲太细的长篇会失去弹性
 - 目标是「粗到能看见全局，细到能坐下就写」
+
+## 【字数要求】
+目标字数：${wordCountRange}（约${wordCountNum.toLocaleString()}字）
+建议总章节数：${totalChapters}章
+建议卷数：${chaptersPerVolume}卷
+每卷字数：约${Math.round(wordCountNum / chaptersPerVolume / 10000)}万字
 
 ## 【必须参考】网文写作核心技法
 
@@ -224,9 +235,11 @@ export class MarkdownOutlineGenerator {
 ## 【重要】章节大纲设计原则
 
 ### 章节数量参考（按字数范围）
-- 30万字以下：15-20章
-- 50万-100万字：60-80章
-- 100万字以上：120-200章
+- **30万字以下**：${Math.ceil(300000 / 3000)}-${Math.ceil(300000 / 2000)}章
+- **50万-100万字**：${Math.ceil(500000 / 3000)}-${Math.ceil(1000000 / 3000)}章
+- **100万字以上**：${Math.ceil(1000000 / 3000)}-${Math.ceil(2000000 / 3000)}章
+
+### 当前目标章节数：${totalChapters}章
 
 ### 每章大纲必含要素
 1. **核心事件**：本章要解决什么问题
@@ -380,5 +393,23 @@ ${wordCountRange}
     }
 
     return headers;
+  }
+
+  /**
+   * 解析字数范围为数字
+   */
+  private parseWordCount(wordCountRange: string): number {
+    // 匹配 "50万-100万字" 或 "50-100万字" 等格式
+    const match = wordCountRange.match(/(\d+(?:\.\d+)?)\s*万/);
+    if (match) {
+      const wan = parseFloat(match[1]);
+      // 如果有范围，取中间值
+      if (wordCountRange.includes('-')) {
+        return Math.round(wan * 5000); // 取范围中间值，估算为万字的0.5倍
+      }
+      return Math.round(wan * 10000);
+    }
+    // 默认返回50万字
+    return 500000;
   }
 }

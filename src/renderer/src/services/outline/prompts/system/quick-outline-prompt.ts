@@ -308,13 +308,29 @@ export function buildFiveStepPrompt(params: {
   userInput: string;
   previousSteps?: Record<number, any>;
   genre?: string;
+  wordCountRange?: string;
 }): { system: string; user: string } {
-  const { step, userInput, previousSteps = {}, genre } = params;
+  const { step, userInput, previousSteps = {}, genre, wordCountRange } = params;
+
+  // 解析字数范围
+  const wordCountNum = parseWordCount(wordCountRange);
+  const totalChapters = Math.ceil(wordCountNum / 3000);
+  const chaptersPerVolume = Math.ceil(wordCountNum / 150000);
+
+  // 动态生成情绪密度建议（基于字数）
+  const emotionDensity = 3000; // 固定值，但可以根据字数调整
+  const highPointChapters = generateHighPoints(totalChapters);
+  const lowPointChapters = generateLowPoints(totalChapters);
 
   const stepPrompts: Record<number, { title: string; system: string; user: string }> = {
     1: {
       title: '确定情绪目标',
       system: `你是一位专业的小说创作顾问。现在需要帮助用户确定故事的情绪目标。
+
+【字数背景】
+目标字数：${wordCountRange || '50万-100万字'}（约${wordCountNum.toLocaleString()}字）
+预计总章节数：${totalChapters}章
+情绪波动间隔：每${emotionDensity}字
 
 【任务】
 分析用户的创意种子，确定故事要传达的核心情绪。
@@ -324,8 +340,8 @@ ${buildCorePrinciplesPrompt()}
 【需要输出的内容】
 1. 核心情绪：主要让读者感受到什么？（热血/甜蜜/虐心/紧张/悬疑/治愈等）
 2. 情绪弧线：情绪如何发展？（从低到高/波动起伏/M形/N形等）
-3. 情绪密度：多久需要有一个情绪波动？（建议每3000字）
-4. 情绪高点：计划在哪几个章节设置情绪高峰？
+3. 情绪密度：多久需要有一个情绪波动？（建议每${emotionDensity}字）
+4. 情绪高点：计划在哪几个章节设置情绪高峰？${wordCountNum > 500000 ? `（建议设置${Math.ceil(totalChapters * 0.1)}-${Math.ceil(totalChapters * 0.2)}个）` : ''}
 
 【输出格式】
 请以 Markdown 格式输出，使用清晰的标题结构：
@@ -334,9 +350,9 @@ ${buildCorePrinciplesPrompt()}
 
 - **核心情绪**：热血/甜蜜/虐心/紧张/悬疑等
 - **情绪弧线**：rising/falling/wave/mixed
-- **情绪密度**：3000
-- **情绪高点**：5, 20, 50
-- **情绪低点**：10, 30
+- **情绪密度**：${emotionDensity}
+- **情绪高点**：${highPointChapters}
+- **情绪低点**：${lowPointChapters}
 
 请用 Markdown 格式输出情绪目标规划。`,
       user: `用户的创意种子：
@@ -350,6 +366,11 @@ ${userInput}
       title: '设计核心设定',
       system: `你是一位专业的小说创作顾问。现在需要帮助用户设计故事的世界观和核心设定。
 
+【字数背景】
+目标字数：${wordCountRange || '50万-100万字'}（约${wordCountNum.toLocaleString()}字）
+预计总章节数：${totalChapters}章
+建议卷数：${chaptersPerVolume}卷
+
 【任务】
 根据已有信息，设计故事的世界观体系。
 
@@ -358,7 +379,7 @@ ${userInput}
 2. 核心规则：力量体系/社会规则/特殊设定
 3. 世界矛盾：这个世界的核心冲突是什么？
 4. 金手指设计：主角的独特优势
-5. 升级体系：实力如何递进？
+5. 升级体系：实力如何递进？（建议${Math.ceil(wordCountNum / 100000)}个主要阶段）
 
 【参考已有信息】
 ${JSON.stringify(previousSteps, null, 2)}
@@ -447,6 +468,11 @@ ${buildCorePrinciplesPrompt()}
       title: '设计故事结构',
       system: `你是一位专业的小说创作顾问。现在需要帮助用户设计故事的整体结构。
 
+【字数背景】
+目标字数：${wordCountRange || '50万-100万字'}（约${wordCountNum.toLocaleString()}字）
+预计总章节数：${totalChapters}章
+建议卷数：${chaptersPerVolume}卷
+
 【任务】
 规划故事的整体框架和关键节点。
 
@@ -454,7 +480,14 @@ ${buildEightStrandsPrompt()}
 
 ${buildConflictEscalationPrompt()}
 
-3. 关键转折点：列出3-5个重大转折
+【关键节点规划】
+1. 建置阶段（约第1-${Math.ceil(totalChapters * 0.2)}章）：建立世界、主角、核心冲突
+2. 催化剂（第${Math.ceil(totalChapters * 0.2)}章左右）：触发主角行动的关键事件
+3. 中点（约第${Math.ceil(totalChapters * 0.5)}章）：重大转折或揭示
+4. 反派逼近（第${Math.ceil(totalChapters * 0.7)}章左右）：最大危机
+5. 结局（第${Math.ceil(totalChapters * 0.9)}-${totalChapters}章）：高潮与收尾
+
+3. 关键转折点：列出${Math.min(5, Math.ceil(totalChapters * 0.05))}个重大转折
 
 【注意事项】
 - 开篇前3000字决定读者去留
@@ -521,6 +554,13 @@ ${buildConflictEscalationPrompt()}
       title: '设计爽点安排',
       system: `你是一位专业的小说创作顾问。现在需要帮助用户规划故事的爽点。
 
+【字数背景】
+目标字数：${wordCountRange || '50万-100万字'}（约${wordCountNum.toLocaleString()}字）
+预计总章节数：${totalChapters}章
+微爽点数量：约${Math.ceil(wordCountNum / COOL_POINT_DENSITY.micro)}个
+小爽点数量：约${Math.ceil(wordCountNum / COOL_POINT_DENSITY.small)}个
+大爽点数量：约${Math.ceil(wordCountNum / COOL_POINT_DENSITY.big)}个
+
 【任务】
 设计让读者过瘾的精彩场景。
 
@@ -536,11 +576,11 @@ ${buildCorePrinciplesPrompt()}
    - 复仇成功
 
 2. 爽点节奏：
-   - 每章至少1个微爽点（每${COOL_POINT_DENSITY.micro}字）
-   - 每3章1个小爽点（每${COOL_POINT_DENSITY.small}字）
-   - 每7章1个大爽点（每${COOL_POINT_DENSITY.big}字）
+   - 微爽点：约${Math.ceil(wordCountNum / COOL_POINT_DENSITY.micro)}个（每${COOL_POINT_DENSITY.micro}字1个）
+   - 小爽点：约${Math.ceil(wordCountNum / COOL_POINT_DENSITY.small)}个（每${COOL_POINT_DENSITY.small}字1个）
+   - 大爽点：约${Math.ceil(wordCountNum / COOL_POINT_DENSITY.big)}个（每${COOL_POINT_DENSITY.big}字1个）
 
-3. 核心高潮：计划2-3个大高潮场景
+3. 核心高潮：计划${Math.min(5, Math.ceil(totalChapters * 0.05))}个大高潮场景（分布在关键转折点）
 
 4. 铺垫设计：每个大爽点需要什么铺垫？
 
@@ -548,6 +588,7 @@ ${buildCorePrinciplesPrompt()}
 - 爽点要提前铺垫
 - 爽点要有递进，越来越大
 - 形式要多样化
+- 长篇作品需要周期性大爽点保持读者兴趣
 
 【输出格式】
 请以 Markdown 格式输出，使用清晰的标题结构：
@@ -588,6 +629,53 @@ ${buildCorePrinciplesPrompt()}
     system: stepData.system,
     user: stepData.user,
   };
+}
+
+/**
+ * 解析字数范围为数字
+ */
+function parseWordCount(wordCountRange?: string): number {
+  if (!wordCountRange) return 500000;
+  // 匹配 "50万-100万字" 或 "50-100万字" 等格式
+  const match = wordCountRange.match(/(\d+(?:\.\d+)?)\s*万/);
+  if (match) {
+    const wan = parseFloat(match[1]);
+    // 如果有范围，取中间值
+    if (wordCountRange.includes('-')) {
+      return Math.round(wan * 5000); // 取范围中间值，估算为万字的0.5倍
+    }
+    return Math.round(wan * 10000);
+  }
+  // 默认返回50万字
+  return 500000;
+}
+
+/**
+ * 根据总章节数生成情绪高点建议
+ */
+function generateHighPoints(totalChapters: number): string {
+  const highPoints = [];
+  const ratios = [0.05, 0.15, 0.3, 0.5, 0.7, 0.85, 0.95];
+  for (const ratio of ratios) {
+    const chapter = Math.max(1, Math.ceil(totalChapters * ratio));
+    highPoints.push(chapter);
+    if (highPoints.length >= 5) break;
+  }
+  return highPoints.join(', ');
+}
+
+/**
+ * 根据总章节数生成情绪低点建议
+ */
+function generateLowPoints(totalChapters: number): string {
+  const lowPoints = [];
+  const ratios = [0.1, 0.25, 0.4, 0.6, 0.8];
+  for (const ratio of ratios) {
+    const chapter = Math.max(1, Math.ceil(totalChapters * ratio));
+    lowPoints.push(chapter);
+    if (lowPoints.length >= 4) break;
+  }
+  return lowPoints.join(', ');
 }
 
 /**
