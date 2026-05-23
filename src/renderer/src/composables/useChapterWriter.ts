@@ -343,9 +343,78 @@ export function useChapterWriter(): UseChapterWriterReturn {
     return fullTextParts.join('\n\n==========\n\n');
   }
 
+  /**
+   * 从 PlotOutline 中提取章节大纲
+   * 支持按 chapterId 或按 orderIndex 查找
+   */
   function extractChapterOutlineFromPlot(plotOutline: any[], chapterId: string): string {
-    const chapter = plotOutline?.find((p: any) => p.chapterId === chapterId);
-    return chapter?.description || '';
+    // 首先尝试按 chapterId 查找
+    let chapter = plotOutline?.find((p: any) => p.chapterId === chapterId);
+    
+    // 如果没找到，尝试按 id 查找
+    if (!chapter) {
+      chapter = plotOutline?.find((p: any) => p.id === chapterId);
+    }
+    
+    if (!chapter) {
+      return '';
+    }
+    
+    // 构建包含结构化节点的完整大纲
+    const parts: string[] = [];
+    
+    // 基础大纲描述
+    if (chapter.description) {
+      parts.push(chapter.description);
+    }
+    
+    // 结构化节点
+    if (chapter.CBN) {
+      parts.push(`【章节起点 CBN】${chapter.CBN}`);
+    }
+    if (chapter.CPNs?.length > 0) {
+      parts.push(`【推进节点 CPNs】\n  ${chapter.CPNs.map((cpn: string, i: number) => `${i + 1}. ${cpn}`).join('\n  ')}`);
+    }
+    if (chapter.CEN) {
+      parts.push(`【章节终点 CEN】${chapter.CEN}`);
+    }
+    if (chapter.mustCover?.length > 0) {
+      parts.push(`【必须覆盖】${chapter.mustCover.join('、')}`);
+    }
+    if (chapter.forbiddenZones?.length > 0) {
+      parts.push(`【禁区】${chapter.forbiddenZones.join('、')}`);
+    }
+    
+    return parts.join('\n');
+  }
+  
+  /**
+   * 提取章节结构化节点（新增）
+   */
+  function extractChapterStructureNodes(plotOutline: any[], chapterId: string): {
+    CBN?: string;
+    CPNs?: string[];
+    CEN?: string;
+    mustCover?: string[];
+    forbiddenZones?: string[];
+  } | null {
+    let chapter = plotOutline?.find((p: any) => p.chapterId === chapterId);
+    
+    if (!chapter) {
+      chapter = plotOutline?.find((p: any) => p.id === chapterId);
+    }
+    
+    if (!chapter) {
+      return null;
+    }
+    
+    return {
+      CBN: chapter.CBN,
+      CPNs: chapter.CPNs,
+      CEN: chapter.CEN,
+      mustCover: chapter.mustCover,
+      forbiddenZones: chapter.forbiddenZones,
+    };
   }
 
   function buildFullOutlineString(): string | undefined {
@@ -366,11 +435,34 @@ export function useChapterWriter(): UseChapterWriterReturn {
       const chapterNum = index + 1;
       const title = node.title || `第${chapterNum}章`;
       const description = node.description || '（暂无大纲）';
-      const keyEvents = node.keyEvents?.length > 0 
-        ? `\n关键事件：${node.keyEvents.join('、')}` 
+      const keyEvents = node.keyEvents?.length > 0
+        ? `\n关键事件：${node.keyEvents.join('、')}`
         : '';
-      
-      return `【第${chapterNum}章】${title}\n${description}${keyEvents}`;
+
+      // ========== 构建结构化节点（增强大纲）==========
+      const structuredNodes: string[] = [];
+
+      if (node.CBN) {
+        structuredNodes.push(`【章节起点 CBN】${node.CBN}`);
+      }
+      if (node.CPNs?.length > 0) {
+        structuredNodes.push(`【推进节点 CPNs】\n  ${node.CPNs.map((cpn: string, i: number) => `${i + 1}. ${cpn}`).join('\n  ')}`);
+      }
+      if (node.CEN) {
+        structuredNodes.push(`【章节终点 CEN】${node.CEN}`);
+      }
+      if (node.mustCover?.length > 0) {
+        structuredNodes.push(`【必须覆盖】${node.mustCover.join('、')}`);
+      }
+      if (node.forbiddenZones?.length > 0) {
+        structuredNodes.push(`【禁区】${node.forbiddenZones.join('、')}`);
+      }
+
+      const structuredSection = structuredNodes.length > 0
+        ? `\n${structuredNodes.join('\n')}`
+        : '';
+
+      return `【第${chapterNum}章】${title}\n${description}${keyEvents}${structuredSection}`;
     });
 
     return outlineParts.join('\n\n');

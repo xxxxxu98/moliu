@@ -419,20 +419,29 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
 
   /**
    * 应用生成的章节大纲到项目
+   * 
+   * 修复：保存完整的结构化节点数据（CBN, CPNs, CEN, mustCover, forbiddenZones 等）
    */
   async function applyOutlines(chapters: GeneratedChapter[]): Promise<boolean> {
     try {
-      // 更新项目的大纲
+      // 更新项目的大纲 - 保存完整结构化节点
       const plotOutline: PlotNode[] = chapters.map((chapter, index) => ({
         id: `plot-chapter-${index}-${Date.now()}`,
         title: chapter.title,
         description: chapter.outline,
         type: 'chapter' as const,
         orderIndex: index,
+        // 原有字段
         keyEvents: chapter.keyEvents,
         relatedCharacters: chapter.involvedCharacters || [],
-        // 扩展字段：存储结构化节点
-        purpose: chapter.CBN ? `CBN: ${chapter.CBN}` : undefined,
+        // ========== 结构化节点（完整保存）==========
+        CBN: chapter.CBN,
+        CPNs: chapter.CPNs,
+        CEN: chapter.CEN,
+        mustCover: chapter.mustCover,
+        forbiddenZones: chapter.forbiddenZones,
+        timeSpan: chapter.timeSpan,
+        purpose: chapter.CBN ? `CBN: ${chapter.CBN}\nCEN: ${chapter.CEN || '待定'}` : undefined,
       }));
 
       projectStore.plotOutline = plotOutline;

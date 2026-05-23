@@ -234,6 +234,29 @@ export interface Foreshadow {
   suggestedResolutionChapter?: number;
 }
 
+// ============================================
+// 章节结构化节点（参考 webnovel-writer 的 CBN/CPNs/CEN 模式）
+// ============================================
+
+/**
+ * 章节结构化节点
+ * 用于确保章节间逻辑承接，在续写时充分利用
+ */
+export interface ChapterStructureNodes {
+  /** 章节起点 (CBN) - 章节开始时的情境 */
+  CBN?: string;
+  /** 推进节点 (CPNs) - 2-4个核心情节推进 */
+  CPNs?: string[];
+  /** 章节终点 (CEN) - 章节结束时的状态 */
+  CEN?: string;
+  /** 必须覆盖节点 */
+  mustCover?: string[];
+  /** 本章禁区 */
+  forbiddenZones?: string[];
+  /** 章节时长 */
+  timeSpan?: string;
+}
+
 // 剧情节点 - 支持幕、子情节、章节级大纲
 export interface PlotNode {
   id: string;
@@ -247,6 +270,30 @@ export interface PlotNode {
   keyEvents?: string[]; // 关键事件列表
   purpose?: string; // 本节点的目的/主题
   relatedCharacters?: string[]; // 涉及的角色名称列表
+
+  // ========== 结构化节点（章节续写核心数据）==========
+  /** 章节起点 (CBN) - 章节开始时的情境 */
+  CBN?: string;
+  /** 推进节点 (CPNs) - 2-4个核心情节推进 */
+  CPNs?: string[];
+  /** 章节终点 (CEN) - 章节结束时的状态 */
+  CEN?: string;
+  /** 必须覆盖节点（≤4个）*/
+  mustCover?: string[];
+  /** 本章禁区（≤5条）*/
+  forbiddenZones?: string[];
+  /** 章节时长 */
+  timeSpan?: string;
+  /** 章节类型（参考 writing-task.ts）*/
+  chapterType?: 'world_intro' | 'character_intro' | 'plot_setup' | 'conflict' | 'climax' | 'resolution' | 'transitional' | 'ending' | 'normal';
+  /** 章节钩子类型 */
+  hookType?: 'sudden_reveal' | 'urgent_crisis' | 'unfinished_action' | 'identity_reveal' | 'tough_choice' | 'mysterious_item' | 'countdown' | 'promise_threat' | 'strange_disappear' | 'hidden_meaning' | 'imagery' | 'echo' | 'blank';
+  /** 节奏策略 */
+  pacingStrategy?: 'build_up' | 'confront' | 'release' | 'normal';
+  /** 是否为高潮章节 */
+  isClimax?: boolean;
+  /** 预期爽点数 */
+  expectedCoolPoints?: number;
 }
 
 export type PlotNodeType = 'act' | 'subplot' | 'chapter' | 'foreshadow';
