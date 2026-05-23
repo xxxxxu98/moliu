@@ -8,7 +8,6 @@
  * - 支持 Commit 机制的数据提取
  */
 
-import { ref } from 'vue';
 import type { 
   ExtractedEvent, 
   StateDelta, 
@@ -17,7 +16,6 @@ import type {
   ExtractionResult,
 } from '@/services/writing/orchestrator/types';
 import type { Chapter } from '@/types/project';
-import type { EventType } from '@/types/writing-task';
 
 // ============================================================
 // 类型定义
@@ -434,5 +432,8 @@ export function useDataExtractor(config?: Partial<DataExtractorConfig>) {
     
     extractScenes: (content: string) => 
       extractor.extract({ content } as Chapter, 0).then(r => r.scenes),
+    
+    updateConfig: (config: Partial<DataExtractorConfig>) => 
+      extractor.updateConfig(config),
   };
 }

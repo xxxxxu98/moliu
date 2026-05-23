@@ -30,6 +30,7 @@ export * from './contract/types';
 
 export { MemoryOrchestrator, useMemoryOrchestrator } from './memory/MemoryOrchestrator';
 export { useReaderSignals, createReaderSignalsManager } from './memory/ReaderSignals';
+export { ReaderSignalsTaskBookIntegrator } from './memory/ReaderSignalsTaskBookIntegrator';
 export * from './memory/types';
 
 // ============================================================
@@ -37,6 +38,7 @@ export * from './memory/types';
 // ============================================================
 
 export { ReviewAgent, useReviewAgent } from './review/ReviewAgent';
+export { EnhancedReviewAgent, useEnhancedReviewAgent } from './review/EnhancedReviewAgent';
 export * from './review/types';
 
 // ============================================================
@@ -64,6 +66,24 @@ export { GitBackupManager, useGitBackupManager } from './backup/GitBackupManager
 // ============================================================
 
 export { TaskBookBuilder } from './taskbook/TaskBookBuilder';
+
+// ============================================================
+// 数据提取
+// ============================================================
+
+export { DataExtractor, useDataExtractor } from './extraction/DataExtractor';
+
+// ============================================================
+// 去AI味
+// ============================================================
+
+export { AntiAIEnhancedService, useAntiAIEnhanced } from './anti-ai-enhanced';
+
+// ============================================================
+// Prompt 构建器
+// ============================================================
+
+export { SmartContinuePromptBuilder, PromptBuilder } from './prompts/SmartContinuePromptBuilder';
 
 // ============================================================
 // 监控

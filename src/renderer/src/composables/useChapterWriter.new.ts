@@ -1,154 +1,163 @@
 /**
- * 单章写作 Composable - Pipeline 版本
- * 
- * 基于 webnovel-writer 架构重构
- * 使用 WritingPipeline 进行六步流程管理
+ * 单章写作 Composable
+ * 管理单章节写作流程和流水线
  */
 
-import { ref, computed, readonly, watch } from 'vue';
+import { ref, shallowRef, readonly } from 'vue';
+import type { Ref } from 'vue';
 import { useProjectStore } from '@/stores/project.store';
-import { useSettingsStore } from '@/stores/settings.store';
 import { useActiveAIProvider } from './useActiveAIProvider';
 import { WritingPipeline } from '@/services/writing/orchestrator/WritingPipeline';
 import { useWritingContext } from './useWritingContext';
-import type { PipelineConfig, PipelineResult, PipelineEvent, WritingStep, PipelineStatus } from '@/services/writing/orchestrator/types';
+import type {
+  PipelineConfig,
+  PipelineEvent,
+  WritingStep,
+  PipelineStatus,
+} from '@/services/writing/orchestrator/types';
 import type { WritingContext } from './useWritingContext';
 
-// ============================================
-// 接口定义
-// ============================================
+// ============================================================
+// 类型定义
+// ============================================================
 
 export interface UseChapterWriterOptions {
-  /** 流水线配置 */
   pipelineConfig?: Partial<PipelineConfig>;
-  /** 是否启用流式输出 */
   enableStreaming?: boolean;
-  /** 目标字数 */
   targetWordCount?: number;
-  /** 写作风格 */
-  writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient';
+  writingStyle?: WritingStyle;
 }
+
+export type WritingStyle = 'concise' | 'elegant' | 'humorous' | 'ancient';
 
 export interface UseChapterWriterReturn {
   // 状态
-  isGenerating: ReturnType<typeof readonly<typeof isGenerating>>;
-  progress: ReturnType<typeof readonly<typeof progress>>;
-  error: ReturnType<typeof readonly<typeof error>>;
-  generatedContent: ReturnType<typeof readonly<typeof generatedContent>>;
+  isGenerating: Readonly<Ref<boolean>>;
+  progress: Readonly<Ref<number>>;
+  error: Readonly<Ref<string | null>>;
+  generatedContent: Readonly<Ref<string>>;
 
   // 流水线状态
-  currentStep: ReturnType<typeof readonly<typeof currentStep>>;
-  pipelineStatus: ReturnType<typeof readonly<typeof pipelineStatus>>;
-  stepResults: ReturnType<typeof readonly<typeof stepResults>>;
-  
+  currentStep: Readonly<Ref<WritingStep | null>>;
+  pipelineStatus: Readonly<Ref<PipelineStatus>>;
+  stepResults: Readonly<Ref<StepResult[]>>;
+
   // 审查状态
-  blockingIssues: ReturnType<typeof readonly<typeof blockingIssues>>;
-  reviewResult: ReturnType<typeof readonly<typeof reviewResult>>;
+  blockingIssues: Readonly<Ref<ReviewIssue[]>>;
+  reviewResult: Readonly<Ref<ReviewResultType | null>>;
 
   // 方法
-  writeChapter: (options?: {
-    targetWordCount?: number;
-    additionalInstructions?: string;
-    writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient';
-  }) => Promise<string | null>;
+  writeChapter: (options?: ChapterWriteOptions) => Promise<string | null>;
   stopWriting: () => void;
   applyGeneratedContent: () => Promise<boolean>;
   copyToClipboard: () => void;
   reset: () => void;
-  
+
   // 流水线控制
   retryCurrentStep: () => Promise<void>;
   skipBlockingIssues: () => void;
-  
+
   // 事件订阅
   onPipelineEvent: (callback: (event: PipelineEvent) => void) => () => void;
 }
 
-// ============================================
-// 内部状态
-// ============================================
+export interface ChapterWriteOptions {
+  targetWordCount?: number;
+  additionalInstructions?: string;
+  writingStyle?: WritingStyle;
+}
 
-const isGenerating = ref(false);
-const progress = ref(0);
-const error = ref<string | null>(null);
-const generatedContent = ref('');
+export interface StepResult {
+  step: WritingStep;
+  data?: unknown;
+}
 
-// 流水线状态
-const pipelineStatus = ref<PipelineStatus>('idle');
-const currentStep = ref<WritingStep | null>(null);
-const stepResults = ref<any[]>([]);
+export interface ReviewIssue {
+  type: string;
+  severity: string;
+  description: string;
+}
 
-// 审查状态
-const blockingIssues = ref<any[]>([]);
-const reviewResult = ref<any | null>(null);
+export interface ReviewResultType {
+  blockingIssues: ReviewIssue[];
+}
 
-// Pipeline 实例
-let pipeline: WritingPipeline | null = null;
-
-// 当前上下文
-let currentContext: WritingContext | null = null;
-
-// ============================================
+// ============================================================
 // Composable 实现
-// ============================================
+// ============================================================
 
 export function useChapterWriter(options: UseChapterWriterOptions = {}): UseChapterWriterReturn {
   const projectStore = useProjectStore();
-  const settingsStore = useSettingsStore();
   const { requireAIService } = useActiveAIProvider();
   const writingContext = useWritingContext();
 
+  // 响应式状态
+  const isGenerating = ref(false);
+  const progress = ref(0);
+  const error = ref<string | null>(null);
+  const generatedContent = ref('');
+  const pipelineStatus = ref<PipelineStatus>('idle');
+  const currentStep = ref<WritingStep | null>(null);
+  const stepResults = ref<StepResult[]>([]);
+  const blockingIssues = ref<ReviewIssue[]>([]);
+  const reviewResult = ref<ReviewResultType | null>(null);
+
+  // 实例状态
+  const pipelineRef = shallowRef<WritingPipeline | null>(null);
+  const currentContextRef = shallowRef<WritingContext | null>(null);
+
   // 初始化 Pipeline
-  if (!pipeline) {
-    pipeline = new WritingPipeline(options.pipelineConfig);
-    
-    // 订阅 Pipeline 事件
-    pipeline.addEventListener(handlePipelineEvent);
+  function getPipeline(): WritingPipeline {
+    if (!pipelineRef.value) {
+      pipelineRef.value = new WritingPipeline(options.pipelineConfig);
+      pipelineRef.value.addEventListener(handlePipelineEvent);
+    }
+    return pipelineRef.value;
   }
 
   // ============================================================
   // 事件处理
   // ============================================================
-  
+
   function handlePipelineEvent(event: PipelineEvent): void {
     switch (event.type) {
       case 'step_start':
-        currentStep.value = event.step || null;
+        currentStep.value = event.step ?? null;
         progress.value = calculateStepProgress(event.step);
         break;
-        
+
       case 'step_complete':
-        stepResults.value.push(event.data);
+        stepResults.value.push({
+          step: event.step!,
+          data: event.data,
+        });
         progress.value = calculateStepProgress(event.step);
-        
-        // 检查审查结果
+
         if (event.step === 'review' && event.data?.reviewResult) {
           reviewResult.value = event.data.reviewResult;
           blockingIssues.value = event.data.reviewResult.blockingIssues || [];
         }
-        
-        // 检查起草结果
+
         if (event.step === 'draft' && event.data?.content) {
           generatedContent.value = event.data.content;
         }
         break;
-        
+
       case 'step_error':
         error.value = event.error || '步骤执行失败';
         break;
-        
+
       case 'pipeline_complete':
         isGenerating.value = false;
         pipelineStatus.value = 'completed';
         progress.value = 100;
-        
-        // 从步骤结果中提取最终内容
-        const draftStep = stepResults.value.find((s: any) => s.step === 'draft');
+
+        const draftStep = stepResults.value.find((s) => s.step === 'draft');
         if (draftStep?.data?.content) {
           generatedContent.value = draftStep.data.content;
         }
         break;
-        
+
       case 'pipeline_error':
         isGenerating.value = false;
         pipelineStatus.value = 'failed';
@@ -156,13 +165,10 @@ export function useChapterWriter(options: UseChapterWriterOptions = {}): UseChap
         break;
     }
   }
-  
-  /**
-   * 计算步骤进度
-   */
+
   function calculateStepProgress(step: WritingStep | null | undefined): number {
     if (!step) return 0;
-    
+
     const stepMap: Record<WritingStep, number> = {
       'task_book': 15,
       'draft': 40,
@@ -171,22 +177,15 @@ export function useChapterWriter(options: UseChapterWriterOptions = {}): UseChap
       'commit': 95,
       'backup': 100,
     };
-    
-    return stepMap[step] || 0;
+
+    return stepMap[step] ?? 0;
   }
 
   // ============================================================
   // 核心方法
   // ============================================================
-  
-  /**
-   * 写入章节
-   */
-  async function writeChapter(chapterOptions?: {
-    targetWordCount?: number;
-    additionalInstructions?: string;
-    writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient';
-  }): Promise<string | null> {
+
+  async function writeChapter(chapterOptions?: ChapterWriteOptions): Promise<string | null> {
     const targetWordCount = chapterOptions?.targetWordCount || options.targetWordCount || 3000;
     const writingStyle = chapterOptions?.writingStyle || options.writingStyle || 'concise';
 
@@ -195,44 +194,37 @@ export function useChapterWriter(options: UseChapterWriterOptions = {}): UseChap
       return null;
     }
 
-    // 构建上下文
-    currentContext = writingContext.buildContext({
+    const context = writingContext.buildContext({
       targetWordCount,
       writingStyle,
       includePreviousChapter: true,
     });
 
-    if (!currentContext) {
+    if (!context) {
       error.value = '无法构建写作上下文';
       return null;
     }
 
-    // 重置状态
     reset();
 
-    // 更新配置
-    if (pipeline) {
-      pipeline.updateConfig({
-        enableTaskBook: true,
-        enableReview: true,
-        enablePolish: true,
-        enableCommit: true,
-        enableBackup: true,
-        maxRetries: 3,
-      });
-    }
+    const pipeline = getPipeline();
+    pipeline.updateConfig({
+      enableTaskBook: true,
+      enableReview: true,
+      enablePolish: true,
+      enableCommit: true,
+      enableBackup: true,
+      maxRetries: 3,
+    });
 
     try {
       isGenerating.value = true;
       pipelineStatus.value = 'running';
       error.value = null;
 
-      // 构建 Pipeline 上下文
-      const pipelineContext = buildPipelineContext(currentContext, chapterOptions);
-
-      // 执行流水线
-      const result = await pipeline!.execute(
-        currentContext.chapterIndex + 1, // Pipeline 使用 1-based 章节号
+      const pipelineContext = buildPipelineContext(context, chapterOptions);
+      const result = await pipeline.execute(
+        context.chapterIndex + 1,
         pipelineContext
       );
 
@@ -246,7 +238,6 @@ export function useChapterWriter(options: UseChapterWriterOptions = {}): UseChap
       }
 
       return result.finalContent || null;
-
     } catch (err) {
       error.value = err instanceof Error ? err.message : '生成失败';
       return null;
@@ -257,20 +248,14 @@ export function useChapterWriter(options: UseChapterWriterOptions = {}): UseChap
     }
   }
 
-  /**
-   * 停止写作
-   */
   function stopWriting(): void {
-    if (pipeline) {
-      pipeline.stop();
+    if (pipelineRef.value) {
+      pipelineRef.value.stop();
     }
     isGenerating.value = false;
     pipelineStatus.value = 'idle';
   }
 
-  /**
-   * 应用生成的内容到章节
-   */
   async function applyGeneratedContent(): Promise<boolean> {
     if (!generatedContent.value) {
       error.value = '没有可应用的内容';
@@ -287,11 +272,10 @@ export function useChapterWriter(options: UseChapterWriterOptions = {}): UseChap
       const separator = currentContent.length > 0 && !currentContent.endsWith('\n') ? '\n\n' : '';
       const newContent = currentContent + separator + generatedContent.value;
 
-      // 提取标题（如果有）
       const titleMatch = generatedContent.value.match(/^第[一二三四五六七八九十百千万\d]+章\s*(.+)/);
       const extractedTitle = titleMatch ? titleMatch[1] : null;
 
-      const updateData: Record<string, any> = {
+      const updateData: Record<string, unknown> = {
         content: newContent,
         wordCount: newContent.length,
       };
@@ -301,31 +285,24 @@ export function useChapterWriter(options: UseChapterWriterOptions = {}): UseChap
       }
 
       await projectStore.updateChapter(projectStore.currentChapterId, updateData);
-
-      // 更新记忆
       await updateMemoryAfterApply();
 
-      // 清空生成内容
       generatedContent.value = '';
-      
       return true;
-
     } catch (err) {
       error.value = err instanceof Error ? err.message : '保存失败';
       return false;
     }
   }
 
-  /**
-   * 更新记忆
-   */
   async function updateMemoryAfterApply(): Promise<void> {
-    if (!currentContext) return;
+    const context = currentContextRef.value;
+    if (!context) return;
 
     try {
       const memoryOrchestrator = writingContext.memoryOrchestrator;
       await memoryOrchestrator.updateFromChapter(
-        currentContext.chapterIndex,
+        context.chapterIndex,
         generatedContent.value || ''
       );
     } catch (err) {
@@ -333,18 +310,12 @@ export function useChapterWriter(options: UseChapterWriterOptions = {}): UseChap
     }
   }
 
-  /**
-   * 复制到剪贴板
-   */
   function copyToClipboard(): void {
     if (generatedContent.value) {
       navigator.clipboard.writeText(generatedContent.value);
     }
   }
 
-  /**
-   * 重置状态
-   */
   function reset(): void {
     isGenerating.value = false;
     progress.value = 0;
@@ -357,57 +328,39 @@ export function useChapterWriter(options: UseChapterWriterOptions = {}): UseChap
     reviewResult.value = null;
   }
 
-  /**
-   * 重试当前步骤
-   */
   async function retryCurrentStep(): Promise<void> {
     if (blockingIssues.value.length > 0 || reviewResult.value) {
       blockingIssues.value = [];
       reviewResult.value = null;
     }
-    
-    // 重新执行
+
     await writeChapter();
   }
 
-  /**
-   * 跳过阻断问题
-   */
   function skipBlockingIssues(): void {
     console.warn('[useChapterWriter] 用户选择跳过阻断问题');
     blockingIssues.value = [];
     reviewResult.value = null;
   }
 
-  /**
-   * 订阅 Pipeline 事件
-   */
   function onPipelineEvent(callback: (event: PipelineEvent) => void): () => void {
-    if (pipeline) {
-      pipeline.addEventListener(callback);
-      return () => pipeline?.removeEventListener(callback);
-    }
-    return () => {};
+    const pipeline = getPipeline();
+    pipeline.addEventListener(callback);
+    return () => pipeline.removeEventListener(callback);
   }
 
   // ============================================================
   // 私有方法
   // ============================================================
-  
-  /**
-   * 构建 Pipeline 上下文
-   */
+
   function buildPipelineContext(
     context: WritingContext,
-    options?: {
-      additionalInstructions?: string;
-    }
-  ): any {
+    chapterOptions?: ChapterWriteOptions
+  ): Record<string, unknown> {
+    currentContextRef.value = context;
+
     return {
-      // 项目信息
       project: context.project,
-      
-      // 章节信息
       chapter: {
         id: context.chapterId,
         index: context.chapterIndex,
@@ -416,59 +369,34 @@ export function useChapterWriter(options: UseChapterWriterOptions = {}): UseChap
         type: context.chapterType,
         existingContent: context.existingContent,
       },
-      
-      // 前章信息
       previousChapter: context.previousChapter,
-      
-      // 记忆包
       memoryPack: context.memoryPack,
-      
-      // 追读力信号
       readerSignals: context.readerSignals,
-      
-      // 合同
       contract: context.contract,
-      
-      // 角色
       characters: context.characters,
-      
-      // 伏笔
       activeForeshadows: context.activeForeshadows,
-      
-      // 大纲
       fullOutline: context.fullOutline,
-      
-      // 写作参数
       writingStyle: context.writingStyle,
       targetWordCount: context.targetWordCount,
-      additionalInstructions: options?.additionalInstructions,
-      
-      // AI Provider
+      additionalInstructions: chapterOptions?.additionalInstructions,
       aiProvider: requireAIService(),
     };
   }
 
   // ============================================================
-  // 返回接口
+  // 返回
   // ============================================================
 
   return {
-    // 状态
     isGenerating: readonly(isGenerating),
     progress: readonly(progress),
     error: readonly(error),
     generatedContent: readonly(generatedContent),
-
-    // 流水线状态
     currentStep: readonly(currentStep),
     pipelineStatus: readonly(pipelineStatus),
     stepResults: readonly(stepResults),
-    
-    // 审查状态
     blockingIssues: readonly(blockingIssues),
     reviewResult: readonly(reviewResult),
-
-    // 方法
     writeChapter,
     stopWriting,
     applyGeneratedContent,
@@ -476,14 +404,6 @@ export function useChapterWriter(options: UseChapterWriterOptions = {}): UseChap
     reset,
     retryCurrentStep,
     skipBlockingIssues,
-    
-    // 事件
     onPipelineEvent,
   };
 }
-
-// ============================================================
-// 向后兼容：保留原 useChapterWriter 的核心逻辑
-// ============================================================
-
-export { useChapterWriter as createChapterWriter };

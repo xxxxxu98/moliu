@@ -869,3 +869,6 @@ export class EnhancedReviewAgent {
 
 export { EnhancedReviewAgent };
 export type { EnhancedReviewConfig, ReviewCheckpoint };
+
+// Composable 导出
+export { useEnhancedReviewAgent };

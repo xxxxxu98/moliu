@@ -578,14 +578,23 @@ export class AntiAIEnhancedService {
 // Composable 导出
 // ============================================================
 
+/**
+ * 去AI味 Composable
+ */
 export function useAntiAIEnhanced(config?: Partial<AntiAIEnhancedConfig>) {
   const service = new AntiAIEnhancedService(config);
   
   return {
     service,
     
+    /**
+     * 检测并修复AI味
+     */
     fix: (content: string) => service.fix(content),
     
+    /**
+     * 检测AI味
+     */
     detect: async (content: string) => {
       const result = await service.fix(content);
       return {
@@ -598,11 +607,20 @@ export function useAntiAIEnhanced(config?: Partial<AntiAIEnhancedConfig>) {
       };
     },
     
-    // 便捷方法：单层检测
+    /**
+     * 检测指定层
+     */
     checkLayer: (content: string, layer: number) => {
       const result = service.fix(content);
       const layerKey = `layer${layer}_${['', '', 'highRisk', 'sentence', 'dialogue', 'paragraph', 'punctuation', 'rewrite'][layer]}`;
-      return (result.layerStats as any)[layerKey] || 0;
+      return (result.layerStats as Record<string, number>)[layerKey] || 0;
+    },
+
+    /**
+     * 更新配置
+     */
+    updateConfig: (config: Partial<AntiAIEnhancedConfig>) => {
+      service.updateConfig(config);
     },
   };
 }

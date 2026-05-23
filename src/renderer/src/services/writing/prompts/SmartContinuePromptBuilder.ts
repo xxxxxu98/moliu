@@ -462,3 +462,45 @@ ${taskBook.ending.target}
 
 export { SmartContinuePromptBuilder as PromptBuilder };
 export type { PromptTemplateContext, SceneTemplate, PromptTemplates };
+
+// ============================================================
+// Composable 导出
+// ============================================================
+
+export function usePromptBuilder() {
+  return {
+    /**
+     * 构建提示词
+     */
+    build: (context: PromptTemplateContext) => SmartContinuePromptBuilder.build(context),
+    
+    /**
+     * 构建第一章提示词
+     */
+    buildFirstChapter: (title: string, worldSchema?: string, wordCount?: number) =>
+      SmartContinuePromptBuilder.buildFirstChapter(title, worldSchema, wordCount),
+    
+    /**
+     * 构建有大纲章节提示词
+     */
+    buildWithOutline: (
+      chapterNumber: number,
+      title: string,
+      outline: string,
+      taskBook: import('./orchestrator/types').TaskBook,
+      prevEnding: string,
+      wordCount?: number
+    ) => SmartContinuePromptBuilder.buildWithOutline(chapterNumber, title, outline, taskBook, prevEnding, wordCount),
+    
+    /**
+     * 构建普通章节提示词
+     */
+    buildNormalChapter: (
+      chapterNumber: number,
+      title: string,
+      prevEnding: string,
+      prevSummary: string,
+      wordCount?: number
+    ) => SmartContinuePromptBuilder.buildNormalChapter(chapterNumber, title, prevEnding, prevSummary, wordCount),
+  };
+}

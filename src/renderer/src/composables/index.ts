@@ -1,10 +1,50 @@
 /**
  * Composable 导出模块
- * 导出所有新的 composables
+ * 统一导出所有 composables 和相关类型
  */
 
 // ============================================================
-// Composable 导出
+// 核心 Composable 导出
+// ============================================================
+
+// 章节写作器
+export { useChapterWriter } from './new/useChapterWriter';
+export type {
+  WritingTask,
+  WritingResult,
+  WritingOptions,
+} from './new/useChapterWriter';
+
+// 批量写作器
+export { useBatchWriter } from './new/useBatchWriter';
+export type {
+  UseBatchWriterOptions,
+  UseBatchWriterReturn,
+  BatchConfig,
+} from './new/useBatchWriter';
+
+// 写作编排器
+export { useWritingOrchestrator } from './new/useWritingOrchestrator';
+export type {
+  WritingSession,
+  WritingError,
+  OrchestratorConfig,
+} from './new/useWritingOrchestrator';
+
+// 上下文管理器
+export { useContextManager } from './new/useContextManager';
+export type {
+  ContextPhase,
+  ContextConfig,
+  WritingContext,
+  CharacterStateSummary,
+  ForeshadowSummary,
+  ContextSegment,
+  UseContractManagerReturn,
+} from './new/useContextManager';
+
+// ============================================================
+// 辅助 Composable 导出
 // ============================================================
 
 // 合同管理器
@@ -27,34 +67,6 @@ export type {
 // 追读力评估
 export { useInspirationEvaluation } from './new/useInspirationEvaluation';
 export type { UserSelection } from './new/useInspirationEvaluation';
-
-// 写作编排器
-export { useWritingOrchestrator } from './new/useWritingOrchestrator';
-export type {
-  WritingSession,
-  WritingError,
-  OrchestratorConfig,
-} from './new/useWritingOrchestrator';
-
-// 上下文管理器
-export { useContextManager } from './new/useContextManager';
-export type {
-  ContextPhase,
-  ContextConfig,
-  WritingContext,
-  CharacterStateSummary,
-  ForeshadowSummary,
-  ContextSegment,
-  UseContractManagerReturn,
-} from './new/useContextManager';
-
-// 章节写作器
-export { useChapterWriter } from './new/useChapterWriter';
-export type {
-  WritingTask,
-  WritingResult,
-  WritingOptions,
-} from './new/useChapterWriter';
 
 // 质量检查器
 export { useQualityChecker } from './new/useQualityChecker';
@@ -103,7 +115,7 @@ export type {
 } from './new/useAntiAI';
 
 // ============================================================
-// 组合式 Hook（用于快速初始化整个系统）
+// 写作系统工厂函数
 // ============================================================
 
 import { useContractManager } from './new/useContractManager';
@@ -113,9 +125,9 @@ import { useWritingOrchestrator } from './new/useWritingOrchestrator';
 
 /**
  * 创建完整的写作系统
+ * 整合所有子系统到一个统一接口
  */
 export function createWritingSystem(projectId: string) {
-  // 初始化各个模块
   const contractManager = useContractManager({ projectId });
   const memorySystem = useMemorySystem({ projectId });
   const contextManager = useContextManager({ projectId, contractManager });
@@ -127,7 +139,6 @@ export function createWritingSystem(projectId: string) {
     contextManager,
     orchestrator,
 
-    // 快捷方法
     async startWriting(startChapter: number, endChapter: number) {
       await orchestrator.startSession(startChapter, endChapter);
     },

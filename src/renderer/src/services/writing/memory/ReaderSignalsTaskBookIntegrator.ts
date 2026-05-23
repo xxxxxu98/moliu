@@ -8,7 +8,11 @@
  */
 
 import type { ReaderSignals } from './types';
-import type { TaskBook, TaskBookWritingGuidance, ChapterHookType } from '../orchestrator/types';
+import type { 
+  TaskBookWritingGuidance, 
+  ChapterHookType,
+  TaskBook 
+} from '../orchestrator/types';
 
 // ============================================================
 // 类型定义

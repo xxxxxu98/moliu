@@ -59,10 +59,27 @@ export class MemoryOrchestrator {
     working: 9,
     episodic: 6,
   };
+
+  // 当前预算
+  private currentBudget: MemoryBudget = { ...this.DEFAULT_BUDGET };
   
   // ============================================================
   // 核心 API
   // ============================================================
+  
+  /**
+   * 更新记忆预算
+   */
+  updateBudget(budget: Partial<MemoryBudget>): void {
+    this.currentBudget = { ...this.currentBudget, ...budget };
+  }
+  
+  /**
+   * 重置记忆预算
+   */
+  resetBudget(): void {
+    this.currentBudget = { ...this.DEFAULT_BUDGET };
+  }
   
   /**
    * 构建记忆包
@@ -87,7 +104,7 @@ export class MemoryOrchestrator {
     const filtered = this.filterRelevant(semantic, chapter, outline);
     
     // 6. 应用记忆预算
-    const budget = this.allocateLimits(this.DEFAULT_BUDGET, taskType);
+    const budget = this.allocateLimits(this.currentBudget, taskType);
     const allocated = this.applyBudget(filtered, budget);
     
     // 7. 获取近期变化
@@ -292,7 +309,7 @@ export class MemoryOrchestrator {
   private async buildEpisodicMemory(
     chapter: number
   ): Promise<EpisodicMemoryItem[]> {
-    const episodic: EpisodicMemoryItem[]> = [];
+    const episodic: EpisodicMemoryItem[] = [];
     const limit = 10;
     
     // 获取近期状态变化
@@ -399,7 +416,11 @@ export class MemoryOrchestrator {
     if (taskType === 'review') {
       return { semantic: 10, working: 15, episodic: 5 };
     }
-    return budget;
+    // 使用当前预算配置
+    if (taskType === 'custom' && budget !== this.DEFAULT_BUDGET) {
+      return budget;
+    }
+    return this.currentBudget;
   }
   
   private applyBudget(
@@ -605,5 +626,10 @@ export function useMemoryOrchestrator() {
     query: (query: MemoryQuery) => orchestrator.query(query),
     getConflicts: () => orchestrator.getConflicts(),
     getActiveConstraints: () => orchestrator.getActiveConstraints(),
+    
+    // 更新配置
+    updateConfig: (config: Partial<MemoryBudget>) => {
+      orchestrator.updateBudget(config);
+    },
   };
 }

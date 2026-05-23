@@ -10,15 +10,12 @@
  * - GitBackupManager (备份管理)
  */
 
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import type {
   PipelineConfig,
   PipelineResult,
   PipelineEvent,
   WritingStep,
-  PipelineStatus,
-  MemoryPack,
-  ReaderSignals,
 } from './orchestrator/types';
 import { DEFAULT_PIPELINE_CONFIG, PipelineStatus as Status, WritingStep as Step } from './orchestrator/types';
 import { WritingPipeline } from './orchestrator/WritingPipeline';
@@ -29,29 +26,20 @@ import { GitBackupManager } from './backup/GitBackupManager';
 import { useProjectStore } from '@/stores/project.store';
 
 // ============================================================
-// 写作会话状态
+// 类型定义
 // ============================================================
 
-export interface WritingSession {
-  id: string;
-  startTime: string;
-  endTime?: string;
-  status: 'idle' | 'running' | 'paused' | 'completed' | 'failed';
-  currentChapter: number;
-  startChapter: number;
-  endChapter: number;
-  completedChapters: number[];
-  failedChapters: number[];
-  config: PipelineConfig;
+export interface OrchestratorEvent {
+  type: 'session_start' | 'session_pause' | 'session_resume' | 'session_complete' | 'session_error' |
+        'chapter_start' | 'chapter_complete' | 'chapter_error' |
+        'step_start' | 'step_complete' | 'step_error';
+  data?: Record<string, unknown>;
+  error?: string;
+  chapter?: number;
+  step?: WritingStep;
 }
 
-export interface WritingError {
-  chapter: number;
-  step: WritingStep;
-  error: string;
-  timestamp: string;
-  recoverable: boolean;
-}
+export type OrchestratorListener = (event: OrchestratorEvent) => void;
 
 // ============================================================
 // 写作编排器
@@ -69,9 +57,9 @@ export class WritingOrchestrator {
   private backupManager: GitBackupManager;
   
   // 状态
-  private session = ref<WritingSession | null>(null);
-  private errors = ref<WritingError[]>([]);
-  private progress = ref({
+  private sessionRef = ref<SessionState | null>(null);
+  private errorsRef = ref<ErrorRecord[]>([]);
+  private progressRef = ref({
     currentChapter: 0,
     totalChapters: 0,
     completedChapters: 0,
@@ -80,13 +68,41 @@ export class WritingOrchestrator {
     estimatedTimeRemaining: 0,
   });
   
+  // 监听器
+  private listeners: Set<OrchestratorListener> = new Set();
+  
   // 配置
   private config: PipelineConfig;
   
   // 事件回调
   private onChapterComplete?: (chapter: number, result: PipelineResult) => void;
-  private onSessionComplete?: (session: WritingSession) => void;
-  private onError?: (error: WritingError) => void;
+  private onSessionComplete?: (session: SessionState) => void;
+  private onError?: (error: ErrorRecord) => void;
+  
+  // ============================================================
+  // 会话状态接口
+  // ============================================================
+  
+  interface SessionState {
+    id: string;
+    startTime: string;
+    endTime?: string;
+    status: 'idle' | 'running' | 'paused' | 'completed' | 'failed';
+    currentChapter: number;
+    startChapter: number;
+    endChapter: number;
+    completedChapters: number[];
+    failedChapters: number[];
+    config: PipelineConfig;
+  }
+  
+  interface ErrorRecord {
+    chapter: number;
+    step: WritingStep;
+    error: string;
+    timestamp: string;
+    recoverable: boolean;
+  }
   
   constructor(config?: Partial<PipelineConfig>) {
     this.config = { ...DEFAULT_PIPELINE_CONFIG, ...config };
@@ -103,6 +119,37 @@ export class WritingOrchestrator {
   }
   
   // ============================================================
+  // 事件监听
+  // ============================================================
+  
+  /**
+   * 添加事件监听器
+   */
+  addEventListener(listener: OrchestratorListener): void {
+    this.listeners.add(listener);
+  }
+  
+  /**
+   * 移除事件监听器
+   */
+  removeEventListener(listener: OrchestratorListener): void {
+    this.listeners.delete(listener);
+  }
+  
+  /**
+   * 触发事件
+   */
+  private emit(event: OrchestratorEvent): void {
+    this.listeners.forEach(listener => {
+      try {
+        listener(event);
+      } catch (err) {
+        console.error('[WritingOrchestrator] 事件监听器错误:', err);
+      }
+    });
+  }
+  
+  // ============================================================
   // 公开 API
   // ============================================================
   
@@ -113,7 +160,7 @@ export class WritingOrchestrator {
     startChapter: number,
     endChapter: number,
     config?: Partial<PipelineConfig>
-  ): Promise<WritingSession> {
+  ): Promise<SessionState> {
     // 验证项目
     const project = this.projectStore.currentProject;
     if (!project) {
@@ -126,7 +173,7 @@ export class WritingOrchestrator {
     }
     
     // 创建会话
-    const session: WritingSession = {
+    const session: SessionState = {
       id: `session_${Date.now()}`,
       startTime: new Date().toISOString(),
       status: 'running',
@@ -138,15 +185,18 @@ export class WritingOrchestrator {
       config: { ...this.config, ...config },
     };
     
-    this.session.value = session;
-    this.progress.value = {
+    this.sessionRef.value = session;
+    this.progressRef.value = {
       currentChapter: startChapter,
       totalChapters: endChapter - startChapter + 1,
       completedChapters: 0,
       failedChapters: 0,
       currentStep: null,
-      estimatedTimeRemaining: (endChapter - startChapter + 1) * 5 * 60 * 1000, // 假设每章5分钟
+      estimatedTimeRemaining: (endChapter - startChapter + 1) * 5 * 60 * 1000,
     };
+    
+    // 触发事件
+    this.emit({ type: 'session_start', data: { startChapter, endChapter, targetChapters: session.config } });
     
     // 初始化子系统
     await this.initializeSubsystems();
@@ -158,17 +208,22 @@ export class WritingOrchestrator {
       session.status = 'completed';
       session.endTime = new Date().toISOString();
       
+      this.emit({ type: 'session_complete' });
+      
     } catch (error) {
       session.status = 'failed';
       session.endTime = new Date().toISOString();
       
-      this.errors.value.push({
-        chapter: this.progress.value.currentChapter,
-        step: this.progress.value.currentStep!,
+      const errorRecord: ErrorRecord = {
+        chapter: this.progressRef.value.currentChapter,
+        step: this.progressRef.value.currentStep!,
         error: String(error),
         timestamp: new Date().toISOString(),
         recoverable: false,
-      });
+      };
+      
+      this.errorsRef.value.push(errorRecord);
+      this.emit({ type: 'session_error', error: String(error) });
     }
     
     // 回调
@@ -184,9 +239,10 @@ export class WritingOrchestrator {
    */
   pause(): void {
     this.pipeline.pause();
-    if (this.session.value) {
-      this.session.value.status = 'paused';
+    if (this.sessionRef.value) {
+      this.sessionRef.value.status = 'paused';
     }
+    this.emit({ type: 'session_pause' });
   }
   
   /**
@@ -194,9 +250,10 @@ export class WritingOrchestrator {
    */
   resume(): void {
     this.pipeline.resume();
-    if (this.session.value) {
-      this.session.value.status = 'running';
+    if (this.sessionRef.value) {
+      this.sessionRef.value.status = 'running';
     }
+    this.emit({ type: 'session_resume' });
   }
   
   /**
@@ -204,19 +261,20 @@ export class WritingOrchestrator {
    */
   stop(): void {
     this.pipeline.stop();
-    if (this.session.value) {
-      this.session.value.status = 'failed';
-      this.session.value.endTime = new Date().toISOString();
+    if (this.sessionRef.value) {
+      this.sessionRef.value.status = 'failed';
+      this.sessionRef.value.endTime = new Date().toISOString();
     }
+    this.emit({ type: 'session_error', error: '用户停止写作' });
   }
   
   /**
    * 跳过当前章节
    */
   skipCurrentChapter(): void {
-    if (this.session.value) {
-      this.session.value.failedChapters.push(this.progress.value.currentChapter);
-      this.progress.value.failedChapters++;
+    if (this.sessionRef.value) {
+      this.sessionRef.value.failedChapters.push(this.progressRef.value.currentChapter);
+      this.progressRef.value.failedChapters++;
     }
   }
   
@@ -224,7 +282,7 @@ export class WritingOrchestrator {
    * 重试当前章节
    */
   async retryCurrentChapter(): Promise<void> {
-    const chapter = this.progress.value.currentChapter;
+    const chapter = this.progressRef.value.currentChapter;
     await this.executeSingleChapter(chapter);
   }
   
@@ -233,12 +291,20 @@ export class WritingOrchestrator {
    */
   setCallbacks(callbacks: {
     onChapterComplete?: (chapter: number, result: PipelineResult) => void;
-    onSessionComplete?: (session: WritingSession) => void;
-    onError?: (error: WritingError) => void;
+    onSessionComplete?: (session: SessionState) => void;
+    onError?: (error: ErrorRecord) => void;
   }): void {
     this.onChapterComplete = callbacks.onChapterComplete;
     this.onSessionComplete = callbacks.onSessionComplete;
     this.onError = callbacks.onError;
+  }
+  
+  /**
+   * 更新配置
+   */
+  updateConfig(config: Partial<PipelineConfig>): void {
+    this.config = { ...this.config, ...config };
+    this.pipeline.updateConfig(config);
   }
   
   // ============================================================
@@ -246,26 +312,26 @@ export class WritingOrchestrator {
   // ============================================================
   
   get sessionState() {
-    return this.session;
+    return this.sessionRef;
   }
   
   get errorList() {
-    return this.errors;
+    return this.errorsRef;
   }
   
   get progressState() {
-    return this.progress;
+    return this.progressRef;
   }
   
   get isRunning() {
     return computed(() => 
-      this.session.value?.status === 'running'
+      this.sessionRef.value?.status === 'running'
     );
   }
   
   get isPaused() {
     return computed(() => 
-      this.session.value?.status === 'paused'
+      this.sessionRef.value?.status === 'paused'
     );
   }
   
@@ -280,19 +346,13 @@ export class WritingOrchestrator {
     // 1. 加载合同
     await this.contractManager.loadMasterContract();
     
-    // 2. 初始化记忆系统
-    // (MemoryOrchestrator 已在构造函数中初始化)
-    
-    // 3. 初始化追读力信号
-    // (已在 useReaderSignals 中初始化)
-    
     console.log('[WritingOrchestrator] 子系统初始化完成');
   }
   
   /**
    * 执行批量写作循环
    */
-  private async executeBatchWriteLoop(session: WritingSession): Promise<void> {
+  private async executeBatchWriteLoop(session: SessionState): Promise<void> {
     for (
       let chapter = session.startChapter;
       chapter <= session.endChapter;
@@ -312,7 +372,9 @@ export class WritingOrchestrator {
       }
       
       session.currentChapter = chapter;
-      this.progress.value.currentChapter = chapter;
+      this.progressRef.value.currentChapter = chapter;
+      
+      this.emit({ type: 'chapter_start', chapter, data: { chapterIndex: chapter } });
       
       try {
         // 执行单章写作
@@ -320,7 +382,9 @@ export class WritingOrchestrator {
         
         // 记录完成
         session.completedChapters.push(chapter);
-        this.progress.value.completedChapters++;
+        this.progressRef.value.completedChapters++;
+        
+        this.emit({ type: 'chapter_complete', chapter });
         
         // 回调
         if (this.onChapterComplete) {
@@ -330,17 +394,19 @@ export class WritingOrchestrator {
       } catch (error) {
         // 记录失败
         session.failedChapters.push(chapter);
-        this.progress.value.failedChapters++;
+        this.progressRef.value.failedChapters++;
         
-        const writingError: WritingError = {
+        const writingError: ErrorRecord = {
           chapter,
-          step: this.progress.value.currentStep!,
+          step: this.progressRef.value.currentStep!,
           error: String(error),
           timestamp: new Date().toISOString(),
           recoverable: true,
         };
         
-        this.errors.value.push(writingError);
+        this.errorsRef.value.push(writingError);
+        
+        this.emit({ type: 'chapter_error', chapter, error: String(error) });
         
         // 回调
         if (this.onError) {
@@ -349,10 +415,8 @@ export class WritingOrchestrator {
         
         // 根据配置决定是否继续
         if (!this.config.enableCommit) {
-          // 非必须提交模式，继续下一章
           console.warn(`[WritingOrchestrator] 第${chapter}章失败，继续下一章`);
         } else {
-          // 必须提交模式，检查是否可恢复
           if (!writingError.recoverable) {
             throw error;
           }
@@ -392,7 +456,7 @@ export class WritingOrchestrator {
   /**
    * 构建章节上下文
    */
-  private async buildChapterContext(chapter: number): Promise<any> {
+  private async buildChapterContext(chapter: number): Promise<Record<string, unknown>> {
     const project = this.projectStore.currentProject;
     
     // 1. 获取记忆包
@@ -406,7 +470,7 @@ export class WritingOrchestrator {
     
     // 4. 获取前章内容
     const previousChapter = chapter > 1
-      ? project?.chapters?.find((c: any) => c.orderIndex + 1 === chapter - 1)
+      ? project?.chapters?.find((c) => c.orderIndex + 1 === chapter - 1)
       : null;
     
     // 5. 获取前章摘要
@@ -435,23 +499,24 @@ export class WritingOrchestrator {
     this.pipeline.addEventListener((event: PipelineEvent) => {
       switch (event.type) {
         case 'step_start':
-          this.progress.value.currentStep = event.step!;
+          this.progressRef.value.currentStep = event.step!;
+          this.emit({ type: 'step_start', step: event.step });
           break;
           
         case 'step_complete':
-          console.log(`[Pipeline] 步骤完成: ${event.step}`);
+          this.emit({ type: 'step_complete', step: event.step, data: event.data });
           break;
           
         case 'step_error':
-          console.error(`[Pipeline] 步骤错误: ${event.step}`, event.error);
+          this.emit({ type: 'step_error', step: event.step, error: event.error });
           break;
           
         case 'pipeline_complete':
-          console.log(`[Pipeline] 章节完成: ${event.chapterNumber}`);
+          this.emit({ type: 'step_complete', data: { chapterNumber: event.chapterNumber } });
           break;
           
         case 'pipeline_error':
-          console.error(`[Pipeline] 章节错误: ${event.chapterNumber}`, event.error);
+          this.emit({ type: 'step_error', error: event.error });
           break;
       }
     });
@@ -461,12 +526,11 @@ export class WritingOrchestrator {
    * 更新预估剩余时间
    */
   private updateEstimatedTime(): void {
-    const completed = this.progress.value.completedChapters;
-    const total = this.progress.value.totalChapters;
-    const remaining = total - completed - this.progress.value.failedChapters;
+    const completed = this.progressRef.value.completedChapters;
+    const total = this.progressRef.value.totalChapters;
+    const remaining = total - completed - this.progressRef.value.failedChapters;
     
-    // 假设平均每章5分钟
-    this.progress.value.estimatedTimeRemaining = remaining * 5 * 60 * 1000;
+    this.progressRef.value.estimatedTimeRemaining = remaining * 5 * 60 * 1000;
   }
   
   /**
@@ -503,5 +567,10 @@ export function useWritingOrchestrator() {
     skipCurrentChapter: () => orchestrator.skipCurrentChapter(),
     retryCurrentChapter: () => orchestrator.retryCurrentChapter(),
     setCallbacks: (callbacks) => orchestrator.setCallbacks(callbacks),
+    updateConfig: (config) => orchestrator.updateConfig(config),
+    
+    // 事件订阅
+    addEventListener: (listener: OrchestratorListener) => orchestrator.addEventListener(listener),
+    removeEventListener: (listener: OrchestratorListener) => orchestrator.removeEventListener(listener),
   };
 }
