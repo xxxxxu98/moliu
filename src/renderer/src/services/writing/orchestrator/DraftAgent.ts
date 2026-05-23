@@ -6,11 +6,13 @@
  * - 根据任务书构建 Prompt
  * - 调用 AI 生成正文
  * - 融合网文写作技法（章尾钩子、震惊写法、爽点节奏等）
+ * - 支持审查反馈注入，实现智能重试
  */
 
 import { useActiveAIProvider } from '@/composables/useActiveAIProvider';
 import type { TaskBook, ChapterHookType } from './types';
 import { CHAPTER_END_HOOKS, CHAPTER_START_HOOKS } from '@/config/writing-knowledge';
+import type { RevisionHints } from '../review/RevisionHintBuilder';
 
 // ============================================================
 // 核心写作原则（来自 oh-story）
@@ -80,14 +82,29 @@ export class DraftAgent {
   private aiProvider = useActiveAIProvider();
   
   /**
-   * 起草正文
+   * 起草正文（基础版）
    */
   async draft(
     taskBook: TaskBook,
     context: any
   ): Promise<{ content: string; wordCount: number }> {
-    const systemPrompt = this.buildSystemPrompt(taskBook);
-    const userPrompt = this.buildUserPrompt(taskBook, context);
+    return this.draftWithHints(taskBook, context);
+  }
+
+  /**
+   * 起草正文（支持审查反馈版）
+   * 
+   * @param taskBook 任务书
+   * @param context 上下文
+   * @param revisionHints 审查反馈提示（可选）
+   */
+  async draftWithHints(
+    taskBook: TaskBook,
+    context: any,
+    revisionHints?: RevisionHints
+  ): Promise<{ content: string; wordCount: number }> {
+    const systemPrompt = this.buildSystemPrompt(taskBook, context, revisionHints);
+    const userPrompt = this.buildUserPrompt(taskBook, context, revisionHints);
     
     // 调用 AI
     const result = await this.callAI(systemPrompt, userPrompt);
@@ -100,14 +117,21 @@ export class DraftAgent {
   }
   
   /**
-   * 构建系统 Prompt
+   * 构建系统 Prompt（支持审查反馈）
    */
-  private buildSystemPrompt(taskBook: TaskBook): string {
+  private buildSystemPrompt(
+    taskBook: TaskBook,
+    context: any,
+    revisionHints?: RevisionHints
+  ): string {
     const { opening, story, characters, writingGuidance, ending, antiAIReminders } = taskBook;
     
-    return `# 小说续写任务
+    // 如果有审查反馈，生成反馈补充
+    const revisionSupplement = this.buildRevisionSupplement(revisionHints);
+    
+    let prompt = `# 小说续写任务
 
-你是专业网文作家，擅长写吸引人的网络小说。你的任务是续写第${opening.chapterNumber}章。
+你是专业网文作家，擅长写吸引人的网络小说。你的任务是续写第${opening.chapterNumber}章。`;
 
 ## 核心原则
 ${WRITING_PRINCIPLES}
@@ -204,16 +228,92 @@ ${ANTI_AI_REMINDERS}
 - 对话必须用中文引号「"内容"」
 - 禁止在正文中添加任何前缀说明
 - 字数要求：${context.targetWordCount || 3000} 字左右
-- **避免错别字**：检查"的/地/得"、"在/再"、"那/哪"等常见错误`;
+- **避免错别字**：检查"的/地/得"、"在/再"、"那/哪"等常见错误
+${revisionSupplement}`;
+  }
+
+  /**
+   * 构建审查反馈补充
+   */
+  private buildRevisionSupplement(revisionHints?: RevisionHints): string {
+    if (!revisionHints || revisionHints.issues.length === 0) {
+      return '';
+    }
+
+    const parts: string[] = [];
+
+    // 警告标题
+    parts.push(`\n\n## ⚠️ 上次审查未通过，请务必修复以下问题\n`);
+
+    // 优先级问题
+    if (revisionHints.topPriority.length > 0) {
+      parts.push(`### 🔴 必须修复（优先级最高）`);
+      revisionHints.topPriority.forEach((issue, i) => {
+        parts.push(`${i + 1}. ${issue}`);
+      });
+      parts.push('');
+    }
+
+    // 必须修复
+    if (revisionHints.mustFix.length > 0) {
+      parts.push(`### ✅ 本次必须覆盖`);
+      revisionHints.mustFix.forEach((item, i) => {
+        parts.push(`${i + 1}. ${item}`);
+      });
+      parts.push('');
+    }
+
+    // 必须避免
+    if (revisionHints.mustAvoid.length > 0) {
+      parts.push(`### 🚫 本次必须避免`);
+      revisionHints.mustAvoid.forEach((item, i) => {
+        parts.push(`${i + 1}. ${item}`);
+      });
+      parts.push('');
+    }
+
+    // 修改建议
+    if (revisionHints.suggestions.length > 0) {
+      parts.push(`### 💡 修改建议`);
+      revisionHints.suggestions.forEach((suggestion, i) => {
+        parts.push(`${i + 1}. ${suggestion}`);
+      });
+      parts.push('');
+    }
+
+    // 重点区域
+    if (revisionHints.focusAreas.length > 0) {
+      parts.push(`### 🎯 重点关注区域`);
+      revisionHints.focusAreas.forEach((area) => {
+        parts.push(`- **${area.location}**: ${area.reason}`);
+      });
+      parts.push('');
+    }
+
+    // 重写说明
+    if (revisionHints.shouldRewrite && revisionHints.rewriteReason) {
+      parts.push(`### 📝 重要说明\n`);
+      parts.push(`上次输出存在以下严重问题，需要重新起草：\n`);
+      parts.push(`${revisionHints.rewriteReason}\n`);
+    }
+
+    parts.push(`---\n`);
+    parts.push(`请根据以上反馈，重新撰写本章内容，确保所有问题得到修复。`);
+
+    return parts.join('\n');
   }
   
   /**
-   * 构建用户 Prompt
+   * 构建用户 Prompt（支持审查反馈）
    */
-  private buildUserPrompt(taskBook: TaskBook, context: any): string {
+  private buildUserPrompt(
+    taskBook: TaskBook,
+    context: any,
+    revisionHints?: RevisionHints
+  ): string {
     const { story, ending } = taskBook;
-    
-    return `请续写第${story.previousSummary.includes('第') ? story.previousSummary.match(/第(\d+)章/)?.[1] || taskBook.opening.chapterNumber : taskBook.opening.chapterNumber}章。
+
+    let prompt = `请续写第${story.previousSummary.includes('第') ? story.previousSummary.match(/第(\d+)章/)?.[1] || taskBook.opening.chapterNumber : taskBook.opening.chapterNumber}章。
 
 【本章章纲】
 ${story.goal}
@@ -226,9 +326,20 @@ ${story.crossChapterClues.map(c => `- ${c}`).join('\n')}
 
 【本章结尾设计】
 ${ending.target}
-留一个未完问题让读者想翻下一章：${ending.unfinishedQuestions[0] || '本章结束时主角面临什么困境/选择/危机？'}
+留一个未完问题让读者想翻下一章：${ending.unfinishedQuestions[0] || '本章结束时主角面临什么困境/选择/危机？'}`;
 
-请直接输出续写内容。`;
+    // 如果有审查反馈，添加额外说明
+    if (revisionHints && revisionHints.issues.length > 0) {
+      prompt += `\n\n【审查反馈】\n`;
+      prompt += `上次审查发现 ${revisionHints.issues.length} 个问题，请特别注意：\n`;
+      revisionHints.topPriority.slice(0, 3).forEach((issue, i) => {
+        prompt += `${i + 1}. ${issue}\n`;
+      });
+    }
+
+    prompt += `\n请直接输出续写内容。`;
+
+    return prompt;
   }
   
   /**

@@ -37,6 +37,10 @@ export interface PipelineConfig {
   enableBackup: boolean;
   maxRetries: number;
   qualityThreshold: number;
+  /** 是否启用智能重试 */
+  enableSmartRetry: boolean;
+  /** 是否启用降级通过 */
+  enableDegradedPass: boolean;
 }
 
 export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
@@ -48,7 +52,54 @@ export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
   enableBackup: true,
   maxRetries: 3,
   qualityThreshold: 70,
+  enableSmartRetry: true,
+  enableDegradedPass: true,
 };
+
+// ============================================================
+// 退出条件配置
+// ============================================================
+
+export interface ExitCondition {
+  /** 最大重试次数 */
+  maxRetries: number;
+  /** 最低分数阈值 */
+  minScore: number;
+  /** 时间限制（毫秒） */
+  timeLimit: number;
+  /** 允许 AI 味问题降级通过 */
+  allowAIFlavorDegradedPass: boolean;
+  /** 允许中等严重度问题降级通过 */
+  allowMediumDegradedPass: boolean;
+  /** 阻断问题数量上限 */
+  maxBlockingIssues: number;
+}
+
+export const DEFAULT_EXIT_CONDITION: ExitCondition = {
+  maxRetries: 3,
+  minScore: 70,
+  timeLimit: 5 * 60 * 1000,  // 5 分钟
+  allowAIFlavorDegradedPass: true,
+  allowMediumDegradedPass: false,
+  maxBlockingIssues: 2,
+};
+
+// ============================================================
+// 审查历史记录
+// ============================================================
+
+export interface ReviewHistoryItem {
+  /** 审查次数 */
+  attempt: number;
+  /** 审查时间 */
+  timestamp: string;
+  /** 审查结果 */
+  result: ReviewResult;
+  /** 是否通过 */
+  passed: boolean;
+  /** 消耗时间 */
+  duration: number;
+}
 
 // ============================================================
 // 流水线步骤结果
