@@ -483,6 +483,7 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
                   </div>
                 </button>
               </div>
+            </div>
 
             <!-- Blocking 闸门配置 -->
             <div class="flex items-center justify-between gap-2">

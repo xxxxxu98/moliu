@@ -28,9 +28,11 @@ import {
   Sparkle,
   Shield,
   ShieldAlert,
+  ShieldCheck,
   CheckCircle,
   FileText,
   TrendingUp,
+  SkipForward,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useProjectStore } from "@/stores/project.store";

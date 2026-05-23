@@ -91,7 +91,7 @@ export class ChapterCommitService {
     // 判定提交状态
     const status = this.determineStatus(forceAccept);
 
-    this.commitResultResult = {
+    this.commitResult = {
       chapterId: this.chapter.id,
       chapterNumber: this.chapterIndex + 1,
       status,
