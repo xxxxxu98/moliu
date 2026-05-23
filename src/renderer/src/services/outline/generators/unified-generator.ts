@@ -311,7 +311,7 @@ export class UnifiedOutlineGenerator {
     return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
 
 【字数要求】
-预估字数：${wordCountRange}（约${wordCountNum.toLocaleString()}字）
+预估字数：${wordCountRange}
 建议卷数：${chaptersPerVolume}卷
 建议章节数：${totalChapters}章
 每卷字数：约${Math.round(wordCountNum / chaptersPerVolume / 10000)}万字
@@ -584,7 +584,7 @@ export class UnifiedOutlineGenerator {
     return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
 
 【字数要求】
-预估字数：${wordCountRange}（约${wordCountNum.toLocaleString()}字）
+预估字数：${wordCountRange}
 建议卷数：${chaptersPerVolume}卷
 建议章节数：${totalChapters}章
 
@@ -637,10 +637,12 @@ export class UnifiedOutlineGenerator {
       const provider = activeProvider.value;
 
       if (provider) {
+        // 优先使用用户配置的 baseUrl，如果没有则使用 provider 的默认 URL
+        const baseUrl = provider.baseUrl || this.getDefaultBaseUrl(provider.provider);
         return {
           provider: provider.provider,
           apiKey: provider.apiKey || '',
-          baseUrl: provider.baseUrl || '',
+          baseUrl,
           model: provider.modelName || '',
         };
       }
@@ -656,10 +658,11 @@ export class UnifiedOutlineGenerator {
         );
 
         if (matchedProvider) {
+          const baseUrl = matchedProvider.baseUrl || this.getDefaultBaseUrl(matchedProvider.provider);
           return {
             provider: matchedProvider.provider,
             apiKey: matchedProvider.apiKey || '',
-            baseUrl: matchedProvider.baseUrl || '',
+            baseUrl,
             model: modelName || matchedProvider.modelName || '',
           };
         }
@@ -668,10 +671,11 @@ export class UnifiedOutlineGenerator {
       // 最后一个兜底：找第一个启用的
       const firstEnabled = settingsStore.aiProviders.find((p) => p.enabled && p.apiKey);
       if (firstEnabled) {
+        const baseUrl = firstEnabled.baseUrl || this.getDefaultBaseUrl(firstEnabled.provider);
         return {
           provider: firstEnabled.provider,
           apiKey: firstEnabled.apiKey || '',
-          baseUrl: firstEnabled.baseUrl || '',
+          baseUrl,
           model: firstEnabled.modelName || '',
         };
       }
@@ -679,13 +683,40 @@ export class UnifiedOutlineGenerator {
       console.warn('[UnifiedOutlineGenerator] Failed to get AI config:', e);
     }
 
-    // 返回默认配置
+    // 返回默认配置（OpenAI）
     return {
       provider: 'openai' as ProviderType,
       apiKey: '',
-      baseUrl: '',
-      model: '',
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-4o',
     };
+  }
+
+  /**
+   * 获取 provider 的默认 base URL
+   */
+  private getDefaultBaseUrl(provider: ProviderType): string {
+    const defaultUrls: Partial<Record<ProviderType, string>> = {
+      openai: 'https://api.openai.com/v1',
+      anthropic: 'https://api.anthropic.com',
+      gemini: 'https://generativelanguage.googleapis.com/v1beta',
+      moonshot: 'https://api.moonshot.cn/v1',
+      deepseek: 'https://api.deepseek.com/v1',
+      ollama: 'http://localhost:11434',
+      groq: 'https://api.groq.com/openai/v1',
+      qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      mistral: 'https://api.mistral.ai/v1',
+      cohere: 'https://api.cohere.ai/v1',
+      nvidia: 'https://integrate.api.nvidia.com/v1',
+      perplexity: 'https://api.perplexity.ai',
+      together: 'https://api.together.xyz/v1',
+      cerebras: 'https://api.cerebras.ai/v1',
+      azure: '',
+      grok: 'https://api.x.ai/v1',
+      fireworks: 'https://api.fireworks.ai/v1',
+      zhipu: 'https://open.bigmodel.cn/api/paas/v4',
+    };
+    return defaultUrls[provider] || '';
   }
 
   /**

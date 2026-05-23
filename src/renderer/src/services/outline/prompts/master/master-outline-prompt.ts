@@ -63,7 +63,7 @@ function buildSystemPrompt(template?: ExtendedGenreTemplate, targetWordCount?: s
   return `你是一位专业的小说创作顾问，擅长长篇网文创作。
 
 【字数要求】
-${targetWordCount ? `目标字数：${targetWordCount}（约${wordCountNum.toLocaleString()}字）` : '目标字数：50万-100万字（约75万字）'}
+${targetWordCount ? `目标字数：${targetWordCount}` : '目标字数：50万-100万字'}
 建议卷数：${chaptersPerVolume}卷
 建议章节数：${totalChapters}章
 每卷字数：约${Math.round(wordCountNum / chaptersPerVolume / 10000)}万字

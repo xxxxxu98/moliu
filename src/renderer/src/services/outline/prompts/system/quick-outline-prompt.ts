@@ -328,7 +328,7 @@ export function buildFiveStepPrompt(params: {
       system: `你是一位专业的小说创作顾问。现在需要帮助用户确定故事的情绪目标。
 
 【字数背景】
-目标字数：${wordCountRange || '50万-100万字'}（约${wordCountNum.toLocaleString()}字）
+目标字数：${wordCountRange || '50万-100万字'}
 预计总章节数：${totalChapters}章
 情绪波动间隔：每${emotionDensity}字
 
@@ -367,7 +367,7 @@ ${userInput}
       system: `你是一位专业的小说创作顾问。现在需要帮助用户设计故事的世界观和核心设定。
 
 【字数背景】
-目标字数：${wordCountRange || '50万-100万字'}（约${wordCountNum.toLocaleString()}字）
+目标字数：${wordCountRange || '50万-100万字'}
 预计总章节数：${totalChapters}章
 建议卷数：${chaptersPerVolume}卷
 
@@ -469,7 +469,7 @@ ${buildCorePrinciplesPrompt()}
       system: `你是一位专业的小说创作顾问。现在需要帮助用户设计故事的整体结构。
 
 【字数背景】
-目标字数：${wordCountRange || '50万-100万字'}（约${wordCountNum.toLocaleString()}字）
+目标字数：${wordCountRange || '50万-100万字'}
 预计总章节数：${totalChapters}章
 建议卷数：${chaptersPerVolume}卷
 
@@ -555,7 +555,7 @@ ${buildConflictEscalationPrompt()}
       system: `你是一位专业的小说创作顾问。现在需要帮助用户规划故事的爽点。
 
 【字数背景】
-目标字数：${wordCountRange || '50万-100万字'}（约${wordCountNum.toLocaleString()}字）
+目标字数：${wordCountRange || '50万-100万字'}
 预计总章节数：${totalChapters}章
 微爽点数量：约${Math.ceil(wordCountNum / COOL_POINT_DENSITY.micro)}个
 小爽点数量：约${Math.ceil(wordCountNum / COOL_POINT_DENSITY.small)}个

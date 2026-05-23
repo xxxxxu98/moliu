@@ -1,92 +1,24 @@
 /**
- * 写作服务导出模块
- * 统一导出所有写作相关的服务和类型
+ * Writing Services 导出
  */
 
-// ============================================================
-// 核心编排器
-// ============================================================
+// Emotion Wave
+export * from './emotion-wave';
 
-export { WritingPipeline } from './orchestrator/WritingPipeline';
-export { WritingOrchestrator, useWritingOrchestrator } from './orchestrator/WritingOrchestrator';
-export { DraftAgent } from './orchestrator/DraftAgent';
+// Projection System
+export * from './projection';
 
-// ============================================================
-// 类型
-// ============================================================
+// Genre Formulas
+export * from './genre-formulas';
 
-export * from './orchestrator/types';
+// Retention Predictor
+export { RetentionPredictor, getRetentionPredictor, createRetentionPredictor } from './RetentionPredictor';
 
-// ============================================================
-// 合同系统
-// ============================================================
+// Batch Writing Manager
+export { BatchWritingManager, useBatchWriting } from './BatchWritingManager';
 
-export { ContractManager, useContractManager } from './contract/ContractManager';
-export * from './contract/types';
+// Stream Output Service
+export { StreamOutputService, useStreamOutput } from './StreamOutputService';
 
-// ============================================================
-// 记忆系统
-// ============================================================
-
-export { MemoryOrchestrator, useMemoryOrchestrator } from './memory/MemoryOrchestrator';
-export { useReaderSignals, createReaderSignalsManager } from './memory/ReaderSignals';
-export { ReaderSignalsTaskBookIntegrator } from './memory/ReaderSignalsTaskBookIntegrator';
-export * from './memory/types';
-
-// ============================================================
-// 审查系统
-// ============================================================
-
-export { ReviewAgent, useReviewAgent } from './review/ReviewAgent';
-export { EnhancedReviewAgent, useEnhancedReviewAgent } from './review/EnhancedReviewAgent';
-export * from './review/types';
-
-// ============================================================
-// 润色系统
-// ============================================================
-
-export { PolishAgent, usePolishAgent } from './polish/PolishAgent';
-export * from './polish/types';
-
-// ============================================================
-// 提交系统
-// ============================================================
-
-export { ChapterCommitManager, useChapterCommitManager } from './commit/ChapterCommitManager';
-export * from './commit/types';
-
-// ============================================================
-// 备份系统
-// ============================================================
-
-export { GitBackupManager, useGitBackupManager } from './backup/GitBackupManager';
-
-// ============================================================
-// 任务书
-// ============================================================
-
-export { TaskBookBuilder } from './taskbook/TaskBookBuilder';
-
-// ============================================================
-// 数据提取
-// ============================================================
-
-export { DataExtractor, useDataExtractor } from './extraction/DataExtractor';
-
-// ============================================================
-// 去AI味
-// ============================================================
-
-export { AntiAIService, useAntiAI } from './anti-ai-enhanced';
-
-// ============================================================
-// Prompt 构建器
-// ============================================================
-
-export { SmartContinuePromptBuilder, PromptBuilder } from './prompts/SmartContinuePromptBuilder';
-
-// ============================================================
-// 监控
-// ============================================================
-
-export { WritingMonitor, getWritingMonitor, useWritingMonitor } from './monitor/WritingMonitor';
+// Enhanced Foreshadow Tracker
+export { EnhancedForeshadowTracker, getForeshadowTracker, createForeshadowTracker } from './EnhancedForeshadowTracker';

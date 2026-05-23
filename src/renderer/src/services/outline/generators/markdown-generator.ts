@@ -8,6 +8,37 @@ import { AIClient, type Message } from 'multi-ai-sdk';
 import { getSDKProvider, type ProviderType } from '@/config/ai-providers';
 
 /**
+ * Provider 默认 URL
+ */
+const DEFAULT_BASE_URLS: Partial<Record<ProviderType, string>> = {
+  openai: 'https://api.openai.com/v1',
+  anthropic: 'https://api.anthropic.com',
+  gemini: 'https://generativelanguage.googleapis.com/v1beta',
+  moonshot: 'https://api.moonshot.cn/v1',
+  deepseek: 'https://api.deepseek.com/v1',
+  ollama: 'http://localhost:11434',
+  groq: 'https://api.groq.com/openai/v1',
+  qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  mistral: 'https://api.mistral.ai/v1',
+  cohere: 'https://api.cohere.ai/v1',
+  nvidia: 'https://integrate.api.nvidia.com/v1',
+  perplexity: 'https://api.perplexity.ai',
+  together: 'https://api.together.xyz/v1',
+  cerebras: 'https://api.cerebras.ai/v1',
+  azure: '',
+  grok: 'https://api.x.ai/v1',
+  fireworks: 'https://api.fireworks.ai/v1',
+  zhipu: 'https://open.bigmodel.cn/api/paas/v4',
+};
+
+/**
+ * 获取 provider 的默认 base URL
+ */
+function getDefaultBaseUrl(provider: ProviderType): string {
+  return DEFAULT_BASE_URLS[provider] || '';
+}
+
+/**
  * 生成选项
  */
 export interface MarkdownGenerateOptions {
@@ -36,7 +67,8 @@ export class MarkdownOutlineGenerator {
     this.provider = provider;
     this.model = model || '';
     this.apiKey = apiKey;
-    this.baseUrl = baseUrl || '';
+    // 如果 baseUrl 为空，使用 provider 的默认 URL
+    this.baseUrl = baseUrl?.trim() || getDefaultBaseUrl(provider);
     this.initClient();
   }
 
@@ -177,7 +209,7 @@ export class MarkdownOutlineGenerator {
 - 目标是「粗到能看见全局，细到能坐下就写」
 
 ## 【字数要求】
-目标字数：${wordCountRange}（约${wordCountNum.toLocaleString()}字）
+目标字数：${wordCountRange}
 建议总章节数：${totalChapters}章
 建议卷数：${chaptersPerVolume}卷
 每卷字数：约${Math.round(wordCountNum / chaptersPerVolume / 10000)}万字
