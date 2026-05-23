@@ -49,6 +49,222 @@ export class StorylineManager {
     this.fiveLevelStoryline = this.initializeFiveLevelStoryline();
   }
 
+  // ============================================
+  // Phase 3: 五级主线完整性检查
+  // 参考 oh-story-claudecode 的高潮倒推法
+  // ============================================
+
+  /**
+   * 检查第1级主线（竹身）是否完成
+   * 核心目标是否达成
+   */
+  checkLevel1Complete(currentChapterIndex: number): { 
+    completed: boolean; 
+    detail: string;
+    progress: number;
+  } {
+    const endingNodes = this.plotOutline.filter(
+      n => n.chapterType === 'ending' || n.chapterType === 'resolution'
+    );
+    
+    if (endingNodes.length === 0) {
+      const plannedCount = this.project.metadata?.plannedChapterCount || 100;
+      const progress = currentChapterIndex / plannedCount;
+      return {
+        completed: progress >= 0.95,
+        detail: progress >= 0.95 ? '核心目标已达成' : `核心目标进度 ${Math.round(progress * 100)}%`,
+        progress: Math.round(progress * 100),
+      };
+    }
+
+    const latestEnding = Math.max(...endingNodes.map(n => n.chapterRange?.[0] || 0));
+    
+    return {
+      completed: currentChapterIndex >= latestEnding,
+      detail: currentChapterIndex >= latestEnding ? '核心目标已达成' : `等待结局节点（第${latestEnding}章）`,
+      progress: Math.round((currentChapterIndex / latestEnding) * 100),
+    };
+  }
+
+  /**
+   * 检查第2级主线（竹节）是否完成
+   */
+  checkLevel2Complete(currentChapterIndex: number): {
+    completed: boolean;
+    detail: string;
+    progress: number;
+    completedVolumes: string[];
+    pendingVolumes: string[];
+  } {
+    const volumes = this.fiveLevelStoryline.level2;
+    const completedVolumes: string[] = [];
+    const pendingVolumes: string[] = [];
+
+    for (const volume of volumes) {
+      if (currentChapterIndex >= volume.chapterRange[1]) {
+        completedVolumes.push(volume.name);
+      } else {
+        pendingVolumes.push(volume.name);
+      }
+    }
+
+    const progress = volumes.length > 0
+      ? Math.round((completedVolumes.length / volumes.length) * 100)
+      : 100;
+
+    return {
+      completed: pendingVolumes.length === 0,
+      detail: pendingVolumes.length === 0 ? '所有卷已完成' : `待完成卷：${pendingVolumes.join(', ')}`,
+      progress,
+      completedVolumes,
+      pendingVolumes,
+    };
+  }
+
+  /**
+   * 检查第3级主线（竹色）是否完成
+   */
+  checkLevel3Complete(currentChapterIndex: number): {
+    completed: boolean;
+    detail: string;
+    progress: number;
+    pendingPayoffs: Array<{ segment: string; payoff: string }>;
+  } {
+    const segments = this.fiveLevelStoryline.level3;
+    const pendingPayoffs: Array<{ segment: string; payoff: string }> = [];
+    
+    for (const segment of segments) {
+      if (segment.payoff && currentChapterIndex >= segment.chapterRange[1]) {
+        const hasPayoff = this.checkPayoffExists(segment.payoff);
+        if (!hasPayoff) {
+          pendingPayoffs.push({ segment: segment.name, payoff: segment.payoff });
+        }
+      }
+    }
+
+    const progress = segments.length > 0
+      ? Math.round(((segments.length - pendingPayoffs.length) / segments.length) * 100)
+      : 100;
+
+    return {
+      completed: pendingPayoffs.length === 0,
+      detail: pendingPayoffs.length === 0 ? '所有桥段铺垫已回收' : `${pendingPayoffs.length}个铺垫待回收`,
+      progress,
+      pendingPayoffs,
+    };
+  }
+
+  private checkPayoffExists(payoffHint: string): boolean {
+    const memories = this.project.chapterMemories || [];
+    return memories.some(m =>
+      m.revealedForeshadows.some(f => f.includes(payoffHint.slice(0, 10)))
+    );
+  }
+
+  /**
+   * 检查所有五级主线是否完成
+   */
+  checkAllLevelsComplete(currentChapterIndex: number): {
+    canEnd: boolean;
+    levelResults: {
+      level1: { completed: boolean; detail: string; progress: number };
+      level2: { completed: boolean; detail: string; progress: number };
+      level3: { completed: boolean; detail: string; progress: number };
+    };
+    overallProgress: number;
+    suggestions: string[];
+  } {
+    const level1 = this.checkLevel1Complete(currentChapterIndex);
+    const level2 = this.checkLevel2Complete(currentChapterIndex);
+    const level3 = this.checkLevel3Complete(currentChapterIndex);
+
+    const levelResults = { level1, level2, level3 };
+
+    const overallProgress = Math.round(
+      (level1.progress * 0.4 + level2.progress * 0.35 + level3.progress * 0.25)
+    );
+
+    const suggestions: string[] = [];
+    if (!level1.completed) {
+      suggestions.push(`📌 核心目标尚未达成`);
+    }
+    if (!level2.completed) {
+      suggestions.push(`📖 待完成卷：${level2.pendingVolumes.join(', ')}`);
+    }
+    if (!level3.completed) {
+      suggestions.push(`🎭 ${level3.pendingPayoffs.length}个铺垫待回收`);
+    }
+    if (overallProgress >= 95) {
+      suggestions.push('✅ 可以开始写结局章');
+    }
+
+    return {
+      canEnd: level1.completed && level2.completed && overallProgress >= 90,
+      levelResults,
+      overallProgress,
+      suggestions,
+    };
+  }
+
+  /**
+   * 高潮倒推法
+   */
+  reverseTrackFromClimax(climaxChapter: number): {
+    climaxReached: boolean;
+    pendingNodes: Array<{ chapter: number; name: string; type: string }>;
+    recommendation: string;
+  } {
+    const currentChapter = this.chapters.length;
+    
+    if (currentChapter < climaxChapter) {
+      return {
+        climaxReached: false,
+        pendingNodes: this.getPendingNodesBefore(climaxChapter),
+        recommendation: `距高潮还有${climaxChapter - currentChapter}章，建议加快节奏`,
+      };
+    }
+
+    const afterClimax = this.getPendingNodesAfter(climaxChapter);
+    
+    return {
+      climaxReached: true,
+      pendingNodes: afterClimax,
+      recommendation: afterClimax.length === 0
+        ? '✅ 高潮已完成，可以开始结局'
+        : `⚠️ 高潮后还有${afterClimax.length}个节点待完成`,
+    };
+  }
+
+  private getPendingNodesBefore(targetChapter: number): Array<{ chapter: number; name: string; type: string }> {
+    const pending: Array<{ chapter: number; name: string; type: string }> = [];
+    const currentChapter = this.chapters.length;
+
+    for (const node of this.plotOutline) {
+      const range = node.chapterRange;
+      if (!range) continue;
+      if (range[0] > currentChapter && range[0] < targetChapter) {
+        pending.push({ chapter: range[0], name: node.title, type: node.chapterType || 'unknown' });
+      }
+    }
+
+    return pending.sort((a, b) => a.chapter - b.chapter);
+  }
+
+  private getPendingNodesAfter(climaxChapter: number): Array<{ chapter: number; name: string; type: string }> {
+    const pending: Array<{ chapter: number; name: string; type: string }> = [];
+    const currentChapter = this.chapters.length;
+
+    for (const node of this.plotOutline) {
+      const range = node.chapterRange;
+      if (!range) continue;
+      if (range[0] > climaxChapter && range[0] > currentChapter) {
+        pending.push({ chapter: range[0], name: node.title, type: node.chapterType || 'unknown' });
+      }
+    }
+
+    return pending.sort((a, b) => a.chapter - b.chapter);
+  }
+
   /**
    * 初始化五级主线
    */

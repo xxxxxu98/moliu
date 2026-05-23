@@ -278,6 +278,213 @@ export interface StorylineProgressReport {
 }
 
 // ============================================
+// 完结触发器与完整性验证类型
+// 参考 oh-story-claudecode 的高潮倒推法
+// ============================================
+
+/**
+ * 完结触发器
+ * 定义故事可以完结的明确条件
+ */
+export interface EndingTrigger {
+  /** 所有伏笔已揭示 */
+  allForeshadowsResolved: boolean;
+  /** 所有核心冲突已解决 */
+  allConflictsResolved: boolean;
+  /** 所有故事线已收束 */
+  allStorylinesConverged: boolean;
+  /** 高潮已完成 */
+  climaxCompleted: boolean;
+  /** 情感弧线完整 */
+  emotionalArcComplete: boolean;
+  /** 主角目标已达成 */
+  protagonistGoalAchieved: boolean;
+  /** 章节数达到计划 */
+  chapterCountReached: boolean;
+}
+
+/**
+ * 完结触发器检查项
+ */
+export interface EndingTriggerCheckItem {
+  /** 检查项名称 */
+  name: string;
+  /** 检查项描述 */
+  description: string;
+  /** 是否通过 */
+  passed: boolean;
+  /** 详细说明 */
+  detail: string;
+  /** 相关章节 */
+  relatedChapters?: number[];
+  /** 优先级 */
+  priority: 'critical' | 'high' | 'medium' | 'low';
+}
+
+/**
+ * 完结完整性验证报告
+ */
+export interface EndingIntegrityReport {
+  /** 是否可以完结 */
+  canEnd: boolean;
+  /** 完结触发器状态 */
+  trigger: EndingTrigger;
+  /** 各项检查结果 */
+  checkItems: EndingTriggerCheckItem[];
+  /** 未解决的伏笔列表 */
+  unresolvedForeshadows: UnresolvedForeshadow[];
+  /** 未解决的冲突列表 */
+  unresolvedConflicts: string[];
+  /** 未收束的故事线列表 */
+  unconvergedStorylines: StorylineConvergence[];
+  /** 情感弧线状态 */
+  emotionalArcStatus: EmotionalArcStatus;
+  /** 缺少的章节数（如果需要更多章节才能完结）*/
+  missingChapters: number;
+  /** 完结建议 */
+  suggestions: string[];
+  /** 完整性评分 0-100 */
+  integrityScore: number;
+}
+
+/**
+ * 故事线收束状态
+ */
+export interface StorylineConvergence {
+  /** 故事线类型 */
+  type: StorylineType;
+  /** 故事线名称 */
+  name: string;
+  /** 是否已收束 */
+  converged: boolean;
+  /** 完成度 */
+  completion: number;
+  /** 收束章节 */
+  convergenceChapter?: number;
+  /** 未完成的原因 */
+  reason?: string;
+}
+
+// ============================================
+// 情绪弧线追踪类型
+// 参考 oh-story-claudecode 的情绪五折线设计
+// ============================================
+
+/**
+ * 情绪弧线类型
+ */
+export type EmotionalArcType = 
+  | 'rising'           // 上升型：从低到高
+  | 'falling'         // 下降型：从高到低
+  | 'wave'           // 波浪型：起伏交替
+  | 'mixed'          // 混合型：多种情绪交织
+  | 'climax'         // 高潮型：持续紧张后爆发
+  | 'plateau';      // 高原型：平稳后下降
+
+/**
+ * 情绪弧线阶段
+ */
+export interface EmotionalArcStage {
+  /** 阶段名称 */
+  name: string;
+  /** 阶段类型 */
+  type: 'setup' | 'rising' | 'climax' | 'falling' | 'resolution';
+  /** 起始章节 */
+  startChapter: number;
+  /** 结束章节 */
+  endChapter: number;
+  /** 情绪强度 0-10 */
+  intensity: number;
+  /** 主要情绪 */
+  primaryEmotions: string[];
+  /** 是否为高潮阶段 */
+  isClimax: boolean;
+  /** 描述 */
+  description: string;
+}
+
+/**
+ * 情绪峰值
+ */
+export interface EmotionalPeak {
+  /** 章节号 */
+  chapter: number;
+  /** 峰值强度 0-10 */
+  intensity: number;
+  /** 峰值类型 */
+  type: 'climax' | 'subclimax' | 'twist';
+  /** 描述 */
+  description: string;
+}
+
+/**
+ * 情绪弧线状态
+ */
+export interface EmotionalArcStatus {
+  /** 弧线类型 */
+  arcType: EmotionalArcType;
+  /** 目标弧线类型 */
+  targetArcType: EmotionalArcType;
+  /** 是否完整 */
+  isComplete: boolean;
+  /** 当前阶段 */
+  currentStage: EmotionalArcStage | null;
+  /** 阶段列表 */
+  stages: EmotionalArcStage[];
+  /** 情绪峰值列表 */
+  peaks: EmotionalPeak[];
+  /** 完成度百分比 */
+  completion: number;
+  /** 预估剩余峰值数 */
+  remainingPeaks: number;
+  /** 是否符合预期 */
+  matchesExpectation: boolean;
+  /** 问题描述（如果不匹配）*/
+  issue?: string;
+}
+
+/**
+ * 章节情绪分析
+ */
+export interface ChapterEmotionalAnalysis {
+  /** 章节号 */
+  chapter: number;
+  /** 主要情绪 */
+  primaryEmotion: string;
+  /** 次要情绪 */
+  secondaryEmotions: string[];
+  /** 情绪强度 0-10 */
+  intensity: number;
+  /** 悬念强度 0-10 */
+  tensionLevel: number;
+  /** 情绪转折点 */
+  turnPoints: number[];
+  /** 情感词频统计 */
+  emotionWordFrequency: Record<string, number>;
+  /** 与上一章的情绪差值 */
+  emotionDelta: number;
+  /** 分析置信度 */
+  confidence: number;
+}
+
+/**
+ * 情绪五折线结构
+ * 参考 oh-story-claudecode 的情绪设计
+ */
+export interface EmotionalFiveFold {
+  /** 第一折：铺垫 */
+  fold1: { chapters: [number, number]; intensity: number; emotion: string };
+  /** 第二折：上升 */
+  fold2: { chapters: [number, number]; intensity: number; emotion: string };
+  /** 第三折：高潮 */
+  fold3: { chapters: [number, number]; intensity: number; emotion: string };
+  /** 第四折：下落 */
+  fold4: { chapters: [number, number]; intensity: number; emotion: string };
+  /** 第五折：收束 */
+  fold5: { chapters: [number, number]; intensity: number; emotion: string };
+}
+
+// ============================================
 // 章节进度追踪类型
 // ============================================
 
