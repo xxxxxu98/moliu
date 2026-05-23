@@ -30,6 +30,7 @@ import {
   ShieldAlert,
   CheckCircle,
   FileText,
+  TrendingUp,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useProjectStore } from "@/stores/project.store";
@@ -38,7 +39,8 @@ import { useAIService } from "@/services/ai/useAIService";
 import { useChapterWriter } from "@/composables/useChapterWriter";
 import { DeAIService } from "@/services/writing/de-ai-service";
 import BatchWritingPanel from "./BatchWritingPanel.vue";
-import type { AISuggestion } from "@/services/ai/types";
+import ProgressPerceptionPanel from "./ProgressPerceptionPanel.vue";
+import type { AISuggestion } from "@/services/ai/base.service";
 
 const { t } = useI18n();
 const projectStore = useProjectStore();
@@ -81,7 +83,7 @@ const {
 
 // UI State
 const selectedMode = ref<
-  "continue" | "suggestions" | "memory" | "batch" | "deai"
+  "continue" | "suggestions" | "memory" | "batch" | "deai" | "progress"
 >("continue");
 const selectedSubMode = ref<"smartContinue" | "polish">("smartContinue");
 const customPrompt = ref("");
@@ -96,9 +98,9 @@ const deAIResult = ref<{
   issues: Array<{
     type: string;
     severity: string;
-    position: string;
+    position: { start: number; end: number };
     original: string;
-    suggestion: string;
+    suggestion?: string;
   }>;
   suggestions: string[];
 } | null>(null);
@@ -166,6 +168,11 @@ const tabOptions = computed(() => [
     icon: Sparkles,
   },
   {
+    key: "progress" as const,
+    label: "进度感知",
+    icon: TrendingUp,
+  },
+  {
     key: "deai" as const,
     label: "去AI味",
     icon: Sparkle,
@@ -198,7 +205,7 @@ watch(() => projectStore.currentChapterId, () => {
 
 // 切换标签页
 function handleTabChange(
-  tabKey: "continue" | "suggestions" | "memory" | "batch" | "deai",
+  tabKey: "continue" | "suggestions" | "memory" | "batch" | "deai" | "progress",
 ) {
   if (
     !hasProvider.value &&
@@ -329,9 +336,12 @@ async function handleReAnalyze() {
 }
 
 function handleSuggestionApply(suggestion: AISuggestion) {
-  if (suggestion.position?.suggestion) {
+  if (suggestion.suggestion) {
     // 暂时只复制建议内容
-    navigator.clipboard.writeText(suggestion.position.suggestion);
+    navigator.clipboard.writeText(suggestion.suggestion);
+    message.success("建议已复制到剪贴板");
+  } else if (suggestion.description) {
+    navigator.clipboard.writeText(suggestion.description);
     message.success("建议已复制到剪贴板");
   }
 }
@@ -1034,20 +1044,20 @@ function getSeverityClass(severity: string): string {
                 {{ suggestion.description }}
               </p>
               <div
-                v-if="suggestion.position?.suggestion"
+                v-if="suggestion.suggestion"
                 class="mt-2 p-2 rounded bg-white/50 dark:bg-gray-800/50"
               >
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
                   修改建议：
                 </p>
                 <p class="text-sm text-indigo-600 dark:text-indigo-400">
-                  {{ suggestion.position.suggestion }}
+                  {{ suggestion.suggestion }}
                 </p>
               </div>
             </div>
             <button
               class="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow flex-shrink-0"
-              :title="suggestion.position?.suggestion ? '应用建议' : '复制建议'"
+              :title="suggestion.suggestion ? '应用建议' : '复制建议'"
               @click="handleSuggestionApply(suggestion)"
             >
               <Wand2 class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
@@ -1245,6 +1255,9 @@ function getSeverityClass(severity: string): string {
 
       <!-- Batch Writing Panel -->
       <BatchWritingPanel v-show="effectiveSelectedMode === 'batch'" />
+
+      <!-- Progress Perception Panel -->
+      <ProgressPerceptionPanel v-show="effectiveSelectedMode === 'progress'" />
 
       <!-- DeAI Tab (去AI味) -->
       <div v-show="effectiveSelectedMode === 'deai'" class="space-y-4">

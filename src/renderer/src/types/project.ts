@@ -65,6 +65,18 @@ export interface ProjectMetadata {
     collection: string;
     romance: string;
   };
+  
+  // ========== 完结感知增强字段 ==========
+  /** 计划总章节数 */
+  plannedChapterCount?: number;
+  /** 计划总字数 */
+  plannedWordCount?: number;
+  /** 高潮章节索引 */
+  climaxChapterIndex?: number;
+  /** 结局章节索引 */
+  endingChapterIndex?: number;
+  /** 大纲完成度百分比 0-100 */
+  outlineProgress?: number;
 }
 
 // 核心卖点
@@ -371,6 +383,38 @@ export interface ChapterMemory {
   
   /** 创建时间 */
   createdAt: string;
+
+  // ========== 完结感知增强字段 ==========
+  
+  /** 情节阶段判定 */
+  plotPhase?: {
+    /** 阶段类型 */
+    phase: 'setup' | 'rising' | 'climax' | 'falling' | 'resolution';
+    /** 紧张度/冲突强度 0-10 */
+    intensity: number;
+    /** 悬念强度 0-10 */
+    tension: number;
+  };
+  
+  /** 伏笔完成状态 */
+  foreshadowProgress?: {
+    /** 总埋伏笔数 */
+    totalBuried: number;
+    /** 已揭示数 */
+    totalRevealed: number;
+    /** 完成率 0-100 */
+    resolutionRate: number;
+  };
+  
+  /** 章节贡献度 */
+  contribution?: {
+    /** 推进了多少剧情线 */
+    plotProgress: number;
+    /** 解决了哪些冲突 */
+    resolvedConflicts: string[];
+    /** 产生了哪些新冲突 */
+    newConflicts: string[];
+  };
 }
 
 /**

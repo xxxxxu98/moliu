@@ -13,6 +13,8 @@ import type { WritingTaskBook, CharacterConstraint, StyleGuidance, ChapterStruct
 import type { WritingStyle } from '@/types/writing';
 import { ContextManager } from './context-manager';
 import { getMemoryManager } from './memory-manager';
+import { createEndingPerceptionEngine, generateWritingStrategyAdjustment } from './ending-perception-engine';
+import type { EndingPhase, EndingReadiness, UnresolvedForeshadow } from '@/types/ending-perception';
 
 // 写作铁律常量
 const WRITING_IRON_LAWS = {
@@ -52,6 +54,8 @@ export interface TaskBookBuildOptions {
   recentChapterCount?: number;
   /** 是否启用追读力数据 */
   includeReaderSignals?: boolean;
+  /** 是否包含完结感知调整 */
+  includeEndingPerception?: boolean;
 }
 
 /**
@@ -64,6 +68,8 @@ export class WritingTaskBuilder {
   private chapterOutline?: string;
   private writingStyle: WritingStyle;
   private targetWordCount: number;
+  private endingPerception?: EndingReadiness;
+  private includeEndingPerception: boolean = true;
 
   constructor(options: TaskBookBuildOptions) {
     this.contextManager = new ContextManager();
@@ -72,6 +78,7 @@ export class WritingTaskBuilder {
     this.chapterOutline = options.chapterOutline;
     this.writingStyle = options.writingStyle;
     this.targetWordCount = options.targetWordCount;
+    this.includeEndingPerception = options.includeEndingPerception ?? true;
   }
 
   /**
@@ -82,6 +89,7 @@ export class WritingTaskBuilder {
    * B: 按需深查（配角细节/特定规则/时间跨度）
    * C: 补充（追读力/伏笔）
    * D: 组装五段任务书
+   * E: 完结感知调整（可选）
    */
   async buildTaskBook(): Promise<WritingTaskBook> {
     // 1. 加载基础包
@@ -94,12 +102,196 @@ export class WritingTaskBuilder {
     const supplementData = await this.loadSupplementData(deepContext);
 
     // 4. 组装任务书
-    const taskBook = this.assembleTaskBook(baseContext, deepContext, supplementData);
+    let taskBook = this.assembleTaskBook(baseContext, deepContext, supplementData);
 
     // 5. 验证任务书
     this.validateTaskBook(taskBook);
 
+    // 6. 完结感知调整（可选）
+    if (this.includeEndingPerception) {
+      taskBook = await this.adjustTaskBookForEndingPhase(taskBook);
+    }
+
     return taskBook;
+  }
+
+  /**
+   * 根据完结阶段调整任务书
+   * 
+   * 这是完结感知系统的核心集成点：
+   * - 分析当前故事的完结准备度
+   * - 根据阶段调整节奏、冲突密度、伏笔处理等
+   * - 确保临近完结时，AI 的写作策略会发生相应变化
+   */
+  private async adjustTaskBookForEndingPhase(taskBook: WritingTaskBook): Promise<WritingTaskBook> {
+    // 创建完结感知引擎
+    const engine = createEndingPerceptionEngine(
+      this.project,
+      this.chapterIndex,
+      this.project.chapterMemories || [],
+      this.project.foreshadows || [],
+      this.project.plotOutline || []
+    );
+
+    // 分析完结准备度
+    const endingReadiness = engine.analyzeEndingReadiness();
+    this.endingPerception = endingReadiness;
+
+    // 生成写作策略调整
+    const strategy = generateWritingStrategyAdjustment(
+      endingReadiness.isInEndingPhase,
+      endingReadiness.climaxApproaching
+    );
+
+    // 更新章节类型
+    if (endingReadiness.climaxApproaching) {
+      taskBook.chapterType = 'climax';
+    } else if (endingReadiness.isInEndingPhase === 'ending' || endingReadiness.isInEndingPhase === 'conclusion') {
+      taskBook.chapterType = 'resolution';
+    }
+
+    // 更新节奏策略
+    taskBook.styleGuidance.pacingStrategy = strategy.pacingStrategy;
+
+    // 添加完结感知约束
+    const endingConstraints = this.generateEndingConstraints(endingReadiness, strategy);
+    taskBook.crossChapterConstraints = [
+      ...(taskBook.crossChapterConstraints || []),
+      ...endingConstraints
+    ];
+
+    // 添加伏笔处理指引
+    if (endingReadiness.unresolvedForeshadows.length > 0) {
+      taskBook.ragClues = [
+        ...(taskBook.ragClues || []),
+        ...this.generateForeshadowGuidance(endingReadiness.unresolvedForeshadows)
+      ];
+    }
+
+    // 添加未完感指引
+    taskBook.openQuestion = this.generateOpenQuestionGuidance(endingReadiness);
+
+    return taskBook;
+  }
+
+  /**
+   * 生成完结约束
+   */
+  private generateEndingConstraints(
+    endingReadiness: EndingReadiness,
+    strategy: any
+  ): string[] {
+    const constraints: string[] = [];
+
+    // 添加阶段指引
+    constraints.push(`📊 当前完结进度：${endingReadiness.overallProgress}%`);
+    
+    if (endingReadiness.isInEndingPhase !== 'normal') {
+      constraints.push(`📍 当前阶段：${endingReadiness.phaseName}`);
+    }
+
+    // 添加剩余章节提示
+    if (endingReadiness.remainingChapters <= 10) {
+      constraints.push(`⚠️ 剩余章节较少（${endingReadiness.remainingChapters}章），注意加快节奏`);
+    }
+
+    // 添加伏笔提示
+    if (endingReadiness.unresolvedForeshadows.length > 0) {
+      const critical = endingReadiness.unresolvedForeshadows.filter(f => f.urgency === 'critical');
+      if (critical.length > 0) {
+        constraints.push(`🚨 有${critical.length}个紧急伏笔需处理`);
+      }
+    }
+
+    // 添加高潮提示
+    if (endingReadiness.climaxApproaching) {
+      constraints.push('🎯 高潮即将到来，增加冲突密度');
+    }
+
+    // 冲突密度指引
+    if (strategy.conflictDensity === 'high') {
+      constraints.push('💥 高冲突密度：增加对抗、矛盾、压力');
+    } else if (strategy.conflictDensity === 'low') {
+      constraints.push('📖 低冲突密度：注重情感收束和情节完结');
+    }
+
+    return constraints;
+  }
+
+  /**
+   * 生成伏笔处理指引
+   */
+  private generateForeshadowGuidance(unresolved: UnresolvedForeshadow[]): string[] {
+    const guidance: string[] = [];
+
+    // 紧急伏笔
+    const critical = unresolved.filter(f => f.urgency === 'critical');
+    if (critical.length > 0) {
+      guidance.push(`🚨 紧急伏笔：${critical[0].hint.slice(0, 30)}...（必须在本章揭示）`);
+    }
+
+    // 高优先伏笔
+    const high = unresolved.filter(f => f.urgency === 'high');
+    if (high.length > 0) {
+      guidance.push(`📌 高优先伏笔：${high[0].hint.slice(0, 30)}...（建议本章揭示）`);
+    }
+
+    return guidance;
+  }
+
+  /**
+   * 生成开放性问题指引
+   */
+  private generateOpenQuestionGuidance(endingReadiness: EndingReadiness): string {
+    // 如果接近完结，调整开放性问题的写法
+    if (endingReadiness.isInEndingPhase === 'conclusion') {
+      return '完结章的悬念应与全书核心问题呼应，为读者留下回味空间';
+    }
+
+    if (endingReadiness.isInEndingPhase === 'ending') {
+      return '结局阶段的悬念应服务于主线收束，为最终结局做铺垫';
+    }
+
+    // 正常情况
+    return endingReadiness.unresolvedForeshadows.length > 0
+      ? `伏笔"${endingReadiness.unresolvedForeshadows[0].hint.slice(0, 20)}..."将被如何揭示？`
+      : '留下悬念，引发读者期待下一章';
+  }
+
+  /**
+   * 获取当前完结感知
+   */
+  getCurrentEndingPerception(): EndingReadiness | undefined {
+    return this.endingPerception;
+  }
+
+  /**
+   * 判断章节节点类型
+   * 
+   * 根据完结感知确定当前章节的重要性和类型
+   */
+  determineChapterNodeType(): 'opening' | 'development' | 'climax' | 'resolution' | 'ending' {
+    if (!this.endingPerception) {
+      // 未进行完结感知，使用默认逻辑
+      const plannedCount = this.project.metadata?.plannedChapterCount || 100;
+      const progress = this.chapterIndex / plannedCount;
+
+      if (progress < 0.1) return 'opening';
+      if (this.project.plotOutline.find(n => n.chapterRange && 
+        this.chapterIndex >= n.chapterRange[0] && this.chapterIndex <= n.chapterRange[1] && n.isClimax)) {
+        return 'climax';
+      }
+      if (progress >= 0.9) return 'ending';
+      return 'development';
+    }
+
+    // 使用完结感知结果
+    const { isInEndingPhase, climaxApproaching } = this.endingPerception;
+
+    if (isInEndingPhase === 'conclusion') return 'ending';
+    if (isInEndingPhase === 'ending') return 'resolution';
+    if (isInEndingPhase === 'pre_ending' || climaxApproaching) return 'climax';
+    return 'development';
   }
 
   /**
@@ -321,6 +513,9 @@ export class WritingTaskBuilder {
     // 构建阻力
     const obstacles = this.buildObstacles(chapterStructure, activeRules);
 
+    // 构建章节节点类型
+    const nodeType = this.determineChapterNodeType();
+
     return {
       // 1. 开篇委托
       bookTitle: this.project.name,
@@ -352,11 +547,26 @@ export class WritingTaskBuilder {
       hookHint: urgentForeshadows[0]?.hint,
 
       // 元数据
-      chapterType: chapterStructure.chapterType,
+      chapterType: this.mapNodeTypeToChapterType(nodeType),
       timeAnchor: deepContext.chapterStructure.cbn.split('→')[0],
       countdownStatus: undefined,
       strandDistribution: { quest: 60, fire: 20, constellation: 20 }
     };
+  }
+
+  /**
+   * 映射节点类型到章节类型
+   */
+  private mapNodeTypeToChapterType(nodeType: string): string {
+    switch (nodeType) {
+      case 'climax':
+        return 'climax';
+      case 'resolution':
+      case 'ending':
+        return 'resolution';
+      default:
+        return 'normal';
+    }
   }
 
   /**
@@ -721,6 +931,33 @@ export class WritingTaskBuilder {
     }
     if (taskBook.forbiddenZones.length > 0) {
       sections.push(`\n**本章禁区**：\n${taskBook.forbiddenZones.map(f => `- ${f}`).join('\n')}`);
+    }
+
+    // 2.5 完结感知信息
+    if (this.endingPerception) {
+      sections.push('\n## 📊 完结感知');
+      sections.push(`**当前阶段**：${this.endingPerception.phaseName}`);
+      sections.push(`**整体进度**：${this.endingPerception.overallProgress}%`);
+      sections.push(`**大纲进度**：${this.endingPerception.outlineProgress}%`);
+      sections.push(`**章节进度**：${this.endingPerception.chapterProgress}%`);
+      sections.push(`**伏笔完成率**：${this.endingPerception.foreshadowCompletionRate}%`);
+      sections.push(`**剩余章节**：约 ${this.endingPerception.remainingChapters} 章`);
+      
+      if (this.endingPerception.climaxApproaching) {
+        sections.push('\n⚠️ **高潮临近**：增加冲突密度，准备大场面');
+      }
+      
+      if (this.endingPerception.unresolvedForeshadows.length > 0) {
+        sections.push('\n### 待处理伏笔');
+        for (const fs of this.endingPerception.unresolvedForeshadows.slice(0, 3)) {
+          const urgencyIcon = fs.urgency === 'critical' ? '🚨' : 
+                            fs.urgency === 'high' ? '📌' : '📝';
+          sections.push(`- ${urgencyIcon} ${fs.hint.slice(0, 40)}... (${fs.urgency})`);
+        }
+      }
+      
+      sections.push('\n### 完结建议');
+      sections.push(`> ${this.endingPerception.recommendation}`);
     }
 
     // 3. 这章的人物
