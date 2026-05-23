@@ -1,6 +1,10 @@
 /**
- * 批量写作 Composable
- * 简化的连续续写逻辑 - 从第一个空章节开始，自动连续写
+ * 批量写作 Composable - 增强版
+ * 
+ * 核心改进：
+ * 1. TaskBook 作为核心前置步骤（不再是可选）
+ * 2. 引入 blocking 闸门机制
+ * 3. 流水线式管理：起草 → 审查 → 润色 → 提交
  */
 
 import { ref, computed, type Ref, type ComputedRef } from 'vue';
@@ -21,13 +25,25 @@ import {
   createTaskBookBuilder,
   type WritingTaskBuilder
 } from '@/services/writing/writing-task-builder';
-import { reviewChapter } from '@/services/review/review-service';
+import {
+  blockingReview,
+  canProceedToPolish,
+  getBlockingIssuesToFix,
+  BlockingReviewService,
+  WritingPipelineManager,
+  type BlockingReviewResult,
+  type WritingPipelineStage
+} from '@/services/review/blocking-review.service';
 import { createChapterCommit, extractChapterFacts } from '@/services/writing/chapter-commit';
 import { createForeshadowTracker, analyzeForeshadows } from '@/services/writing/foreshadow-tracker';
 import type { WritingTaskBook } from '@/types/writing-task';
 import { WritingError, ErrorCode, getErrorMessage } from '@/types/errors';
 
 export type WritingTarget = 'specific' | 'finish';
+
+// ============================================
+// 接口定义
+// ============================================
 
 export interface UseBatchWriterReturn {
   // 状态
@@ -36,6 +52,11 @@ export interface UseBatchWriterReturn {
   currentChapterIndex: Ref<number>;
   currentChapterTitle: Ref<string>;
   error: Ref<string | null>;
+
+  // 流水线状态
+  pipelineStatus: Ref<WritingPipelineStage[]>;
+  currentPipelineStep: Ref<string>;
+  blockingIssues: Ref<any[]>;
 
   // 统计
   totalChapters: ComputedRef<number>;
@@ -51,9 +72,10 @@ export interface UseBatchWriterReturn {
     writingStyle: 'concise' | 'elegant' | 'humorous' | 'ancient';
     temperature: number;
     deAIEnabled: boolean;
-    useTaskBook: boolean;
+    useTaskBook: boolean;  // 强制为 true
     useReview: boolean;
     useCommit: boolean;
+    requireBlockingPass: boolean;  // 新增：是否要求 blocking 通过
   }>;
 
   // 方法
@@ -63,6 +85,10 @@ export interface UseBatchWriterReturn {
   stopWriting: () => void;
   getNextChapterIndex: () => number;
   getTotalChapters: () => number;
+  
+  // 流水线控制
+  retryCurrentStep: () => Promise<void>;
+  skipBlockingIssues: () => void;
 }
 
 // 批量写作配置
@@ -70,14 +96,15 @@ export interface BatchConfig {
   wordsPerChapter: number;
   writingStyle: 'concise' | 'elegant' | 'humorous' | 'ancient';
   temperature?: number;
-  deAIEnabled?: boolean; // 是否启用去 AI 味处理
-  useTaskBook?: boolean; // 是否启用任务书机制
-  useReview?: boolean; // 是否启用六维审查
-  useCommit?: boolean; // 是否启用 Commit 机制
+  deAIEnabled?: boolean;
+  useTaskBook?: boolean;  // 强制为 true
+  useReview?: boolean;
+  useCommit?: boolean;
+  requireBlockingPass?: boolean;  // 是否要求 blocking 通过
 }
 
 // ============================================
-// 内部状态类型
+// 内部状态
 // ============================================
 
 interface InternalWritingState {
@@ -85,15 +112,14 @@ interface InternalWritingState {
   shouldPause: boolean;
   abortController: AbortController | null;
   targetChapterCount: number;
+  pipeline: WritingPipelineManager;
+  currentReviewResult: BlockingReviewResult | null;
 }
 
 // ============================================
-// 公共逻辑提取
+// 公共逻辑
 // ============================================
 
-/**
- * 构建角色信息列表
- */
 function buildCharactersInfo(project: any, maxCount: number = 5): any[] {
   return (project?.characters || []).slice(0, maxCount).map((char: any) => ({
     id: char.id,
@@ -110,9 +136,6 @@ function buildCharactersInfo(project: any, maxCount: number = 5): any[] {
   }));
 }
 
-/**
- * 构建活跃伏笔列表
- */
 function buildActiveForeshadows(project: any, maxCount: number = 5): any[] {
   return (project?.foreshadows || [])
     .filter((f: any) => f.status !== 'resolved')
@@ -125,53 +148,11 @@ function buildActiveForeshadows(project: any, maxCount: number = 5): any[] {
     }));
 }
 
-/**
- * 从大纲中提取章节概要
- */
 function extractChapterOutlineFromPlot(plotOutline: any[], chapterId: string): string {
   const chapter = plotOutline?.find((p: any) => p.chapterId === chapterId);
   return chapter?.description || '';
 }
 
-/**
- * 从章节大纲中提取章节类型
- */
-function extractChapterTypeFromOutline(outline: string, orderIndex: number): string {
-  if (!outline) return orderIndex === 0 ? 'world_intro' : 'normal';
-
-  const lowerOutline = outline.toLowerCase();
-
-  if (
-    lowerOutline.includes('高潮') ||
-    lowerOutline.includes('决战') ||
-    lowerOutline.includes('对决') ||
-    lowerOutline.includes('爆发')
-  ) {
-    return 'climax';
-  }
-  if (
-    lowerOutline.includes('解决') ||
-    lowerOutline.includes('结束') ||
-    lowerOutline.includes('落幕') ||
-    lowerOutline.includes('结局')
-  ) {
-    return 'resolution';
-  }
-  if (
-    lowerOutline.includes('终章') ||
-    lowerOutline.includes('尾声') ||
-    lowerOutline.includes('最终') ||
-    lowerOutline.includes('完结')
-  ) {
-    return 'ending';
-  }
-
-  return 'normal';
-}
-
-/**
- * 构建完整大纲字符串
- */
 function buildFullOutlineString(projectStore: any): string | undefined {
   const plotOutline = projectStore.plotOutline;
   if (!plotOutline || plotOutline.length === 0) return undefined;
@@ -187,21 +168,13 @@ function buildFullOutlineString(projectStore: any): string | undefined {
       const chapterNum = index + 1;
       const title = node.title || `第${chapterNum}章`;
       const description = node.description || '（暂无大纲）';
-      const keyEvents =
-        node.keyEvents?.length > 0 ? `\n关键事件：${node.keyEvents.join('、')}` : '';
+      const keyEvents = node.keyEvents?.length > 0 ? `\n关键事件：${node.keyEvents.join('、')}` : '';
       return `【第${chapterNum}章】${title}\n${description}${keyEvents}`;
     })
     .join('\n\n');
 }
 
-/**
- * 构建近期章节完整原文
- */
-function buildRecentChaptersFullText(
-  projectStore: any,
-  currentIndex: number,
-  recentChapterCount: number
-): string {
+function buildRecentChaptersFullText(projectStore: any, currentIndex: number, recentChapterCount: number): string {
   const chapters = projectStore.sortedChapters;
   const recentChapters = chapters
     .filter((c: any, i: number) => i < currentIndex && i >= Math.max(0, currentIndex - recentChapterCount))
@@ -209,17 +182,13 @@ function buildRecentChaptersFullText(
 
   if (recentChapters.length === 0) return '';
 
-  const fullTextParts = recentChapters.map((c: any) => {
-    return `【第${c.orderIndex + 1}章 · ${c.title}】
-
-${c.content || '（本章暂无内容）'}`;
-  });
-
-  return fullTextParts.join('\n\n==========\n\n');
+  return recentChapters.map((c: any) => {
+    return `【第${c.orderIndex + 1}章 · ${c.title}】\n\n${c.content || '（本章暂无内容）'}`;
+  }).join('\n\n==========\n\n');
 }
 
 /**
- * 生成写作任务书
+ * 生成写作任务书（核心前置步骤）
  */
 async function generateTaskBook(
   project: any,
@@ -238,6 +207,7 @@ async function generateTaskBook(
     });
 
     const taskBook = await builder.buildTaskBook();
+    console.log(`[批量写作] 第${chapterIndex + 1}章任务书已生成:`, taskBook.CBN);
     return taskBook;
   } catch (err) {
     console.error('[批量写作] 生成任务书失败:', err);
@@ -246,33 +216,87 @@ async function generateTaskBook(
 }
 
 /**
- * 执行六维审查
+ * 构建增强版 Prompt（包含任务书内容）
  */
-async function performReview(
+function buildEnhancedOutline(taskBook: WritingTaskBook, baseOutline: string): string {
+  const taskBookSection = `
+=== 写作任务书 ===
+【CBN】${taskBook.CBN}
+【CPNs】${taskBook.CPNs.join(' / ')}
+【CEN】${taskBook.CEN}
+【必须覆盖】${taskBook.mustCover.join(' / ')}
+【禁区】${taskBook.forbiddenZones.join(' / ')}
+【风格指引】${taskBook.styleGuidance.pacingStrategy}
+【结尾感觉】${taskBook.endingSensation}
+【开放问题】${taskBook.openQuestion}
+=== 任务书结束 ===
+
+`;
+
+  return taskBookSection + baseOutline;
+}
+
+/**
+ * 执行六维审查（带 blocking 闸门）
+ */
+async function performBlockingReview(
   project: any,
   chapter: any,
   chapterIndex: number,
   previousChapter: any
-): Promise<boolean> {
-  try {
-    const result = await reviewChapter({
-      project,
-      chapter,
-      chapterIndex,
-      previousChapter,
-    });
+): Promise<BlockingReviewResult> {
+  const context = {
+    project,
+    chapter,
+    chapterIndex,
+    previousChapter,
+    previousSummary: previousChapter?.content 
+      ? new ContextManager().extractPreviousChapterSummary(previousChapter.content, 300)
+      : undefined,
+  };
 
-    const hasBlocking = result.overall.blockingCount > 0;
+  const result = await blockingReview(context);
+  
+  console.log(`[批量写作] 第${chapterIndex + 1}章审查结果:`, {
+    passed: result.passed,
+    blockingCount: result.blockingCount,
+    totalIssues: result.totalIssues,
+    summary: result.summary,
+  });
 
-    if (hasBlocking) {
-      console.warn('[批量写作] 审查发现阻断问题:', result.overall.summary);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error('[批量写作] 审查失败:', err);
-    return true; // 审查失败不影响写作流程
+  return result;
+}
+
+/**
+ * 执行润色（必须在 blocking 通过后）
+ */
+async function performPolish(content: string, deAIEnabled: boolean): Promise<{
+  fixedContent: string;
+  title: string | null;
+  fixedCount: number;
+}> {
+  if (!deAIEnabled) {
+    const result = DeAIService.extractAndValidateTitle(content);
+    return {
+      fixedContent: result.content,
+      title: result.title,
+      fixedCount: 0,
+    };
   }
+
+  // 使用三遍法去AI味
+  const result = await DeAIService.fix(content);
+  
+  console.log('[批量写作] 去AI味结果:', {
+    fixedCount: result.fixedCount,
+    threePassStats: result.threePassStats,
+  });
+
+  return {
+    fixedContent: result.content,
+    title: result.title || null,
+    fixedCount: result.fixedCount,
+  };
 }
 
 /**
@@ -284,10 +308,7 @@ async function performCommit(
   chapterIndex: number
 ): Promise<boolean> {
   try {
-    // 1. 提取事实
     const extraction = await extractChapterFacts(chapter, chapterIndex);
-
-    // 2. 创建 Commit
     const commit = await createChapterCommit(
       { project, chapter, chapterIndex },
       {
@@ -306,18 +327,7 @@ async function performCommit(
 }
 
 /**
- * 提取并追踪伏笔
- */
-async function trackForeshadows(content: string, chapterIndex: number): Promise<void> {
-  try {
-    analyzeForeshadows(content, chapterIndex + 1);
-  } catch (err) {
-    console.error('[批量写作] 伏笔追踪失败:', err);
-  }
-}
-
-/**
- * 提取章节记忆
+ * 提取情节记忆
  */
 async function extractMemoryAfterApply(
   projectStore: any,
@@ -355,62 +365,17 @@ async function extractMemoryAfterApply(
   }
 }
 
-/**
- * 提取前情摘要
- */
 async function extractPreviousChapterSummary(
   contextManager: ContextManager,
   content: string,
   maxLength: number = 300
 ): Promise<{ summary: string; ending: string }> {
   if (!content) return { summary: '', ending: '' };
-
   const summary = contextManager.extractPreviousChapterSummary(content, maxLength);
   const ending = contextManager.extractChapterEnding(content);
-
   return { summary, ending };
 }
 
-/**
- * 去 AI 味并提取标题
- */
-async function processDeAIAndTitle(
-  content: string,
-  deAIEnabled: boolean
-): Promise<{ fixedContent: string; title: string | null; fixedCount: number }> {
-  if (!content) {
-    return { fixedContent: '', title: null, fixedCount: 0 };
-  }
-
-  let fixedContent = content;
-  let fixedCount = 0;
-  let title: string | null = null;
-
-  if (deAIEnabled) {
-    const deAIResult = await DeAIService.fix(fixedContent);
-    if (deAIResult.fixedCount > 0) {
-      fixedContent = deAIResult.content;
-      fixedCount = deAIResult.fixedCount;
-    }
-    
-    // 【修复】直接使用 fix() 返回的 title，因为 fix() 内部已经提取了标题
-    if (deAIResult.title) {
-      title = deAIResult.title;
-    }
-  } else {
-    // 不去AI味时，直接提取标题
-    const titleValidation = DeAIService.extractAndValidateTitle(fixedContent);
-    if (titleValidation.titleValid) {
-      title = titleValidation.title;
-    }
-  }
-
-  return { fixedContent, title, fixedCount };
-}
-
-/**
- * 保存章节内容
- */
 async function saveChapterContent(
   projectStore: any,
   chapter: any,
@@ -431,27 +396,6 @@ async function saveChapterContent(
   await projectStore.updateChapter(chapter.id, updateData);
 }
 
-/**
- * 构建增强版 Prompt（包含任务书内容）
- */
-function buildEnhancedOutline(taskBook: WritingTaskBook, baseOutline: string): string {
-  const taskBookSection = `
-=== 写作任务书 ===
-【CBN】${taskBook.CBN}
-【CPNs】${taskBook.CPNs.join(' / ')}
-【CEN】${taskBook.CEN}
-【必须覆盖】${taskBook.mustCover.join(' / ')}
-【禁区】${taskBook.forbiddenZones.join(' / ')}
-【风格指引】${taskBook.styleGuidance.pacingStrategy}
-【结尾感觉】${taskBook.endingSensation}
-【开放问题】${taskBook.openQuestion}
-=== 任务书结束 ===
-
-`;
-
-  return taskBookSection + baseOutline;
-}
-
 // ============================================
 // 主 Composable
 // ============================================
@@ -461,20 +405,27 @@ export function useBatchWriter(): UseBatchWriterReturn {
   const settingsStore = useSettingsStore();
   const { requireAIService } = useActiveAIProvider();
 
-  // ========== 内部状态（每个实例独立） ==========
+  // 内部状态
   const internalState: InternalWritingState = {
     shouldStop: false,
     shouldPause: false,
     abortController: null,
     targetChapterCount: 10,
+    pipeline: new WritingPipelineManager(),
+    currentReviewResult: null,
   };
 
-  // ========== 响应式状态 ==========
+  // 响应式状态
   const isWriting = ref(false);
   const isPaused = ref(false);
   const currentChapterIndex = ref(-1);
   const currentChapterTitle = ref('');
   const error = ref<string | null>(null);
+
+  // 流水线状态
+  const pipelineStatus = ref<WritingPipelineStage[]>([]);
+  const currentPipelineStep = ref('idle');
+  const blockingIssues = ref<any[]>([]);
 
   // 写作目标
   const target = ref<WritingTarget>('specific');
@@ -492,51 +443,32 @@ export function useBatchWriter(): UseBatchWriterReturn {
     writingStyle: 'concise' as 'concise' | 'elegant' | 'humorous' | 'ancient',
     temperature: 0.5,
     deAIEnabled: true,
-    useTaskBook: false,
-    useReview: false,
-    useCommit: false,
+    useTaskBook: true,      // 强制为 true
+    useReview: true,        // 默认启用审查
+    useCommit: true,
+    requireBlockingPass: true,  // 默认要求 blocking 通过
   });
 
   // 上下文管理器
   const contextManager = new ContextManager();
 
-  // ========== 计算属性 ==========
-
-  /**
-   * 获取总章节数
-   */
+  // 计算属性
   const totalChapters = computed(() => projectStore.sortedChapters.length);
-
-  /**
-   * 获取已写字数
-   */
   const writtenWordCount = computed(() => {
     return projectStore.sortedChapters.reduce((total: number, chapter: any) => {
       return total + (chapter.wordCount || 0);
     }, 0);
   });
-
-  /**
-   * 获取已写章节数（内容非空的章节）
-   */
   const writtenChapters = computed(() => {
     return projectStore.sortedChapters.filter(
       (c: any) => c.content && c.content.trim().length > 0
     ).length;
   });
-
-  /**
-   * 获取剩余章节数
-   */
   const remainingChapters = computed(() => {
     return totalChapters.value - writtenChapters.value;
   });
 
-  // ========== 内部方法 ==========
-
-  /**
-   * 获取下一个待写章节的索引
-   */
+  // 内部方法
   function getNextChapterIndex(): number {
     const chapters = projectStore.sortedChapters;
     for (let i = 0; i < chapters.length; i++) {
@@ -547,16 +479,10 @@ export function useBatchWriter(): UseBatchWriterReturn {
     return -1;
   }
 
-  /**
-   * 获取总章节数
-   */
   function getTotalChapters(): number {
     return projectStore.sortedChapters.length;
   }
 
-  /**
-   * 创建新章节
-   */
   async function createNewChapter(): Promise<number> {
     const project = projectStore.currentProject;
     if (!project) return -1;
@@ -582,7 +508,9 @@ export function useBatchWriter(): UseBatchWriterReturn {
   }
 
   /**
-   * 执行单章写作（核心逻辑提取）
+   * 执行单章写作（核心逻辑）
+   * 
+   * 流水线：TaskBook(前置) → 起草 → 审查(Blocking闸门) → 润色 → 提交
    */
   async function executeChapterWriting(
     chapterIndex: number,
@@ -593,6 +521,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
       deAIEnabled: boolean;
       writingStyle: string;
       wordsPerChapter: number;
+      requireBlockingPass: boolean;
     }
   ): Promise<boolean> {
     const client = requireAIService();
@@ -613,13 +542,13 @@ export function useBatchWriter(): UseBatchWriterReturn {
     currentChapterTitle.value = chapter.title;
 
     const project = projectStore.currentProject!;
-    const chapterOutline =
-      chapter.plotSummary || extractChapterOutlineFromPlot(projectStore.plotOutline, chapter.id);
+    const chapterOutline = chapter.plotSummary || extractChapterOutlineFromPlot(projectStore.plotOutline, chapter.id);
     const recentChapterCount = projectStore.memoryConfig?.shortTermChapterCount || 5;
 
-    // ========== 步骤 1: 生成写作任务书 ==========
+    // ========== 步骤 1: 生成写作任务书（核心前置） ==========
     let taskBook: WritingTaskBook | null = null;
     if (options.useTaskBook) {
+      currentPipelineStep.value = '生成任务书';
       taskBook = await generateTaskBook(
         project,
         chapterIndex,
@@ -627,6 +556,10 @@ export function useBatchWriter(): UseBatchWriterReturn {
         options.writingStyle,
         options.wordsPerChapter
       );
+
+      if (!taskBook) {
+        throw new WritingError('任务书生成失败', ErrorCode.TASK_BOOK_FAILED);
+      }
     }
 
     // ========== 步骤 2: 构建上下文 ==========
@@ -640,13 +573,14 @@ export function useBatchWriter(): UseBatchWriterReturn {
     const fullOutline = buildFullOutlineString(projectStore);
     const recentFullText = buildRecentChaptersFullText(projectStore, chapterIndex, recentChapterCount);
 
-    // 构建增强版大纲
+    // 构建增强版大纲（包含任务书）
     let enhancedOutline = chapterOutline || '';
     if (taskBook) {
       enhancedOutline = buildEnhancedOutline(taskBook, enhancedOutline);
     }
 
-    // ========== 步骤 3: 调用 AI 写作 ==========
+    // ========== 步骤 3: AI 起草 ==========
+    currentPipelineStep.value = 'AI起草';
     let generatedContent = '';
 
     try {
@@ -673,7 +607,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
         writingStyle: options.writingStyle,
       };
 
-      // 根据设置选择流式或非流式
       if (settingsStore.streamOutput && (client as any).continueWritingStream) {
         generatedContent = await new Promise<string>((resolve, reject) => {
           let content = '';
@@ -706,49 +639,87 @@ export function useBatchWriter(): UseBatchWriterReturn {
         }
       }
     } catch (err) {
-      const errorMessage = getErrorMessage(err, 'AI 写作失败');
-      console.error('[批量写作] AI 写作失败:', err);
-      const cause = err instanceof Error ? err : new Error(String(err));
-      throw new WritingError(errorMessage, ErrorCode.AI_GENERATION_FAILED, { cause } as any);
+      const errorMessage = getErrorMessage(err, 'AI 起草失败');
+      throw new WritingError(errorMessage, ErrorCode.AI_GENERATION_FAILED);
     }
 
-    // ========== 步骤 4: 去 AI 味处理 ==========
-    if (generatedContent) {
-      const { fixedContent, title, fixedCount } = await processDeAIAndTitle(
-        generatedContent,
-        options.deAIEnabled
+    // ========== 步骤 4: 审查（Blocking 闸门） ==========
+    if (options.useReview) {
+      currentPipelineStep.value = '审查（Blocking闸门）';
+
+      const reviewResult = await performBlockingReview(
+        project,
+        { ...chapter, content: generatedContent },
+        chapterIndex,
+        prevChapter
       );
-      generatedContent = fixedContent;
 
-      // ========== 步骤 5: 保存章节内容 ==========
-      await saveChapterContent(projectStore, chapter, generatedContent, title);
+      internalState.currentReviewResult = reviewResult;
+      blockingIssues.value = getBlockingIssuesToFix(reviewResult, 10);
 
-      // ========== 步骤 6: 六维审查（可选） ==========
-      if (options.useReview) {
-        await performReview(
-          project,
-          { ...chapter, content: generatedContent },
-          chapterIndex,
-          prevChapter
+      // Blocking 闸门检查
+      if (options.requireBlockingPass && !canProceedToPolish(reviewResult)) {
+        console.warn('[批量写作] 审查未通过，blocking 问题:', reviewResult.blockingCount);
+
+        // 抛出错误让上层处理
+        throw new WritingError(
+          `审查未通过：${reviewResult.blockingCount}个阻断问题，需要修复后重试`,
+          ErrorCode.REVIEW_BLOCKED
         );
       }
-
-      // ========== 步骤 7: 提取记忆 ==========
-      await extractMemoryAfterApply(projectStore, chapter, chapterIndex + 1);
-
-      // ========== 步骤 8: Commit 提交（可选） ==========
-      if (options.useCommit) {
-        await performCommit(project, { ...chapter, content: generatedContent }, chapterIndex);
-      }
-
-      // ========== 步骤 9: 伏笔追踪 ==========
-      await trackForeshadows(generatedContent, chapterIndex);
-
-      progress.value.writtenChapters++;
-      progress.value.writtenWords += generatedContent.length;
     }
 
+    // ========== 步骤 5: 润色（必须在 blocking 通过后） ==========
+    currentPipelineStep.value = '润色（去AI味）';
+    const { fixedContent, title, fixedCount } = await performPolish(generatedContent, options.deAIEnabled);
+    generatedContent = fixedContent;
+
+    // ========== 步骤 6: 保存章节 ==========
+    currentPipelineStep.value = '保存';
+    await saveChapterContent(projectStore, chapter, generatedContent, title);
+
+    // ========== 步骤 7: Commit 提交（可选） ==========
+    if (options.useCommit) {
+      currentPipelineStep.value = '提交';
+      await performCommit(project, { ...chapter, content: generatedContent }, chapterIndex);
+    }
+
+    // ========== 步骤 8: 提取记忆 ==========
+    currentPipelineStep.value = '提取记忆';
+    await extractMemoryAfterApply(projectStore, chapter, chapterIndex + 1);
+
+    // ========== 步骤 9: 伏笔追踪 ==========
+    await analyzeForeshadows(generatedContent, chapterIndex);
+
+    progress.value.writtenChapters++;
+    progress.value.writtenWords += generatedContent.length;
+
+    // 重置流水线状态
+    internalState.pipeline.reset();
+    internalState.currentReviewResult = null;
+    blockingIssues.value = [];
+    currentPipelineStep.value = 'idle';
+
     return true;
+  }
+
+  /**
+   * 重试当前步骤
+   */
+  async function retryCurrentStep(): Promise<void> {
+    if (internalState.currentReviewResult) {
+      blockingIssues.value = [];
+      internalState.currentReviewResult = null;
+    }
+  }
+
+  /**
+   * 跳过 blocking 问题（强制继续）
+   */
+  function skipBlockingIssues(): void {
+    console.warn('[批量写作] 用户选择跳过 blocking 问题');
+    blockingIssues.value = [];
+    internalState.pipeline.advance();
   }
 
   /**
@@ -775,9 +746,10 @@ export function useBatchWriter(): UseBatchWriterReturn {
       config.value.writingStyle = batchConfig.writingStyle;
       config.value.temperature = batchConfig.temperature ?? 0.5;
       config.value.deAIEnabled = batchConfig.deAIEnabled ?? true;
-      config.value.useTaskBook = batchConfig.useTaskBook ?? false;
-      config.value.useReview = batchConfig.useReview ?? false;
-      config.value.useCommit = batchConfig.useCommit ?? false;
+      config.value.useTaskBook = true;  // 强制为 true
+      config.value.useReview = batchConfig.useReview ?? true;
+      config.value.useCommit = batchConfig.useCommit ?? true;
+      config.value.requireBlockingPass = batchConfig.requireBlockingPass ?? true;
     }
 
     // 设置目标
@@ -793,6 +765,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
     isPaused.value = false;
     internalState.shouldStop = false;
     internalState.shouldPause = false;
+    internalState.pipeline.reset();
     error.value = null;
 
     try {
@@ -826,7 +799,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
         }
 
         try {
-          // 统一调用核心写作逻辑
           await executeChapterWriting(currentIndex, {
             useTaskBook: config.value.useTaskBook,
             useReview: config.value.useReview,
@@ -834,11 +806,18 @@ export function useBatchWriter(): UseBatchWriterReturn {
             deAIEnabled: config.value.deAIEnabled,
             writingStyle: config.value.writingStyle,
             wordsPerChapter: config.value.wordsPerChapter,
+            requireBlockingPass: config.value.requireBlockingPass,
           });
           writtenCount++;
         } catch (err) {
-          console.error('[批量写作] 章节写作失败:', err);
-          // 单章失败，继续下一章
+          // 处理 blocking 错误
+          if (err instanceof WritingError && err.code === ErrorCode.REVIEW_BLOCKED) {
+            console.warn('[批量写作] 章节因审查阻断而跳过');
+            // 可以选择继续写下一章或停止
+            // 目前策略：继续下一章
+          } else {
+            console.error('[批量写作] 章节写作失败:', err);
+          }
         }
 
         // 找下一个空章节
@@ -850,28 +829,21 @@ export function useBatchWriter(): UseBatchWriterReturn {
       currentChapterIndex.value = -1;
       currentChapterTitle.value = '';
       internalState.abortController = null;
+      currentPipelineStep.value = 'idle';
+      pipelineStatus.value = internalState.pipeline.getStatus().stages;
     }
   }
 
-  /**
-   * 暂停写作
-   */
   function pauseWriting(): void {
     internalState.shouldPause = true;
     isPaused.value = true;
   }
 
-  /**
-   * 继续写作
-   */
   function resumeWriting(): void {
     internalState.shouldPause = false;
     isPaused.value = false;
   }
 
-  /**
-   * 停止写作
-   */
   function stopWriting(): void {
     internalState.shouldStop = true;
     internalState.shouldPause = false;
@@ -890,6 +862,9 @@ export function useBatchWriter(): UseBatchWriterReturn {
     currentChapterIndex,
     currentChapterTitle,
     error,
+    pipelineStatus,
+    currentPipelineStep,
+    blockingIssues,
     totalChapters,
     writtenChapters,
     remainingChapters,
@@ -903,5 +878,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
     stopWriting,
     getNextChapterIndex,
     getTotalChapters,
+    retryCurrentStep,
+    skipBlockingIssues,
   };
 }

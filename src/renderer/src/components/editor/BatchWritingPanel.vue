@@ -1,7 +1,11 @@
 <script setup lang="ts">
 /**
- * 批量写作面板 - 简化版
- * 从第一个空章节开始，自动连续续写
+ * 批量写作面板 - 增强版
+ * 
+ * 核心改进：
+ * 1. 显示流水线状态（TaskBook → 起草 → 审查 → 润色 → 提交）
+ * 2. 显示 Blocking 闸门状态
+ * 3. 显示阻塞问题列表
  */
 import { ref, computed, watch } from "vue";
 import {
@@ -11,6 +15,10 @@ import {
   useMessage,
   NRadioGroup,
   NRadio,
+  NTag,
+  NCollapse,
+  NCollapseItem,
+  NAlert,
 } from "naive-ui";
 import {
   Play,
@@ -23,12 +31,14 @@ import {
   AlertCircle,
   Settings,
   Type,
+  ChevronRight,
+  FileText,
+  Sparkles,
+  RefreshCw,
+  Shield,
+  ShieldAlert,
+  CheckCircle,
 } from "lucide-vue-next";
-import {
-  NSelect,
-  NCollapse,
-  NCollapseItem,
-} from "naive-ui";
 import { useI18n } from "vue-i18n";
 import { useBatchWriter } from "@/composables/useBatchWriter";
 import { useProjectStore } from "@/stores/project.store";
@@ -54,6 +64,9 @@ const {
   pauseWriting,
   resumeWriting,
   stopWriting,
+  pipelineStatus,
+  currentPipelineStep,
+  blockingIssues,
 } = batchWriter;
 
 const startBatchWriting: UseBatchWriterReturn['startBatchWriting'] = batchWriter.startBatchWriting;
@@ -68,7 +81,34 @@ const writingMode = ref<'specific' | 'finish'>('specific');
 const batchConfig = ref({
   wordsPerChapter: 2000,
   writingStyle: 'humorous' as 'concise' | 'elegant' | 'humorous' | 'ancient',
+  useTaskBook: true,        // 强制为 true
+  useReview: true,
+  requireBlockingPass: true,
 });
+
+// 流水线步骤图标映射
+const stepIcons = {
+  idle: CheckCircle,
+  '生成任务书': FileText,
+  'AI起草': Zap,
+  '审查（Blocking闸门）': Shield,
+  '润色（去AI味）': Sparkles,
+  '保存': Check,
+  '提交': CheckCircle,
+  '提取记忆': BookOpen,
+};
+
+// 流水线步骤颜色
+const stepColors = {
+  idle: 'text-gray-400',
+  '生成任务书': 'text-blue-500',
+  'AI起草': 'text-indigo-500',
+  '审查（Blocking闸门）': 'text-purple-500',
+  '润色（去AI味）': 'text-amber-500',
+  '保存': 'text-emerald-500',
+  '提交': 'text-emerald-500',
+  '提取记忆': 'text-gray-500',
+};
 
 // 下一章编号
 const nextChapterNumber = computed(() => writtenChapters.value + 1);
@@ -77,7 +117,7 @@ const nextChapterNumber = computed(() => writtenChapters.value + 1);
 const estimatedTime = computed(() => {
   let chapters = writingMode.value === 'specific' ? targetCount.value : 10;
   if (chapters === 0) return '';
-  const avgSecondsPerChapter = 45;
+  const avgSecondsPerChapter = 60; // 考虑到 TaskBook + 审查，时间更长
   const seconds = chapters * avgSecondsPerChapter;
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -92,14 +132,46 @@ const progressPercentage = computed(() => {
   return Math.round((writtenChapters.value / totalChapters.value) * 100);
 });
 
+// 是否有阻塞问题
+const hasBlockingIssues = computed(() => blockingIssues.value.length > 0);
+
+// 流水线步骤列表
+const pipelineSteps = computed(() => [
+  { name: '任务书', key: 'taskbook', status: getStepStatus('生成任务书') },
+  { name: '起草', key: 'draft', status: getStepStatus('AI起草') },
+  { name: '审查', key: 'review', status: getStepStatus('审查（Blocking闸门）') },
+  { name: '润色', key: 'polish', status: getStepStatus('润色（去AI味）') },
+  { name: '提交', key: 'commit', status: getStepStatus('提交') },
+]);
+
+function getStepStatus(stepName: string): 'pending' | 'active' | 'completed' | 'blocked' {
+  const current = currentPipelineStep.value;
+  
+  if (current === 'idle') return 'pending';
+  
+  const order = ['生成任务书', 'AI起草', '审查（Blocking闸门）', '润色（去AI味）', '保存', '提交', '提取记忆'];
+  const currentIndex = order.indexOf(current);
+  const stepIndex = order.indexOf(stepName);
+  
+  if (currentIndex === stepIndex) return 'active';
+  if (currentIndex > stepIndex) return 'completed';
+  return 'pending';
+}
+
 // 开始写作
 async function handleStart() {
   if (writingMode.value === 'specific') {
     target.value = 'specific';
-    await startBatchWriting(targetCount.value, batchConfig.value);
+    await startBatchWriting(targetCount.value, {
+      ...batchConfig.value,
+      useTaskBook: true,  // 强制
+    });
   } else {
     target.value = 'finish';
-    await startBatchWriting(undefined, batchConfig.value);
+    await startBatchWriting(undefined, {
+      ...batchConfig.value,
+      useTaskBook: true,  // 强制
+    });
   }
 }
 
@@ -111,6 +183,19 @@ function handlePauseResume() {
   } else {
     pauseWriting();
     message.info('已暂停');
+  }
+}
+
+// 获取问题严重度标签类型
+function getSeverityType(severity: string): 'error' | 'warning' | 'info' {
+  switch (severity) {
+    case 'critical':
+    case 'high':
+      return 'error';
+    case 'medium':
+      return 'warning';
+    default:
+      return 'info';
   }
 }
 </script>
@@ -126,6 +211,66 @@ function handlePauseResume() {
         <h3 class="font-semibold text-gray-900 dark:text-white">批量写作</h3>
         <p class="text-xs text-gray-500 dark:text-gray-400">自动连续续写空章节</p>
       </div>
+    </div>
+
+    <!-- 流水线状态 -->
+    <div v-if="isWriting" class="mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-gray-600 dark:text-gray-400">写作流水线</span>
+        <span 
+          class="text-xs font-medium"
+          :class="stepColors[currentPipelineStep] || 'text-gray-500'"
+        >
+          {{ currentPipelineStep }}
+        </span>
+      </div>
+      <div class="flex items-center gap-1">
+        <template v-for="(step, index) in pipelineSteps" :key="step.key">
+          <div 
+            class="flex-1 h-1 rounded-full transition-all"
+            :class="{
+              'bg-indigo-500': step.status === 'completed' || step.status === 'active',
+              'bg-gray-200 dark:bg-gray-700': step.status === 'pending',
+              'bg-red-500': step.status === 'blocked',
+            }"
+          />
+        </template>
+      </div>
+      <div class="flex justify-between mt-1">
+        <span 
+          v-for="step in pipelineSteps" 
+          :key="step.key"
+          class="text-[10px]"
+          :class="step.status === 'active' ? 'text-indigo-500 font-medium' : 'text-gray-400'"
+        >
+          {{ step.name }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Blocking 闸门警告 -->
+    <div v-if="hasBlockingIssues" class="mb-4">
+      <NAlert type="error" :title="`${blockingIssues.length} 个阻断问题`" size="small">
+        <div class="space-y-2 max-h-32 overflow-y-auto">
+          <div 
+            v-for="(issue, index) in blockingIssues" 
+            :key="index"
+            class="text-xs"
+          >
+            <span class="font-medium">{{ issue.category }}:</span>
+            {{ issue.description }}
+          </div>
+        </div>
+        <div class="mt-2 flex gap-2">
+          <NButton size="tiny" @click="batchWriter.retryCurrentStep">
+            <template #icon><RefreshCw class="w-3 h-3" /></template>
+            重试
+          </NButton>
+          <NButton size="tiny" quaternary @click="batchWriter.skipBlockingIssues">
+            跳过
+          </NButton>
+        </div>
+      </NAlert>
     </div>
 
     <!-- 进度卡片 -->
@@ -171,7 +316,7 @@ function handlePauseResume() {
       <div class="flex items-center gap-2">
         <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
         <span class="text-sm font-medium text-amber-700 dark:text-amber-400">
-          {{ isPaused ? '已暂停' : '正在写入' }}：第 {{ writtenChapters + 1 }} 章
+          {{ isPaused ? '已暂停' : '正在写入' }}：{{ currentChapterTitle }}
         </span>
       </div>
     </div>
@@ -200,7 +345,7 @@ function handlePauseResume() {
           <span class="text-sm text-gray-600 dark:text-gray-400">章</span>
         </div>
         <div class="mt-2 text-xs text-gray-400">
-          从第 {{ nextChapterNumber }} 章开始 · 当前 {{ totalChapters }} 章（写完自动创建新章节）
+          从第 {{ nextChapterNumber }} 章开始 · 当前 {{ totalChapters }} 章
         </div>
       </div>
 
@@ -208,9 +353,6 @@ function handlePauseResume() {
       <div v-else class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
         <div class="text-sm text-gray-600 dark:text-gray-400">
           从第 {{ nextChapterNumber }} 章开始，写完现有章节后自动创建新章节
-        </div>
-        <div class="mt-1 text-xs text-gray-400">
-          直到标记为"完结"为止
         </div>
       </div>
 
@@ -254,6 +396,25 @@ function handlePauseResume() {
                 size="small"
                 class="w-32"
               />
+            </div>
+
+            <!-- Blocking 闸门配置 -->
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <Shield class="w-4 h-4 text-purple-500" />
+                <span class="text-sm text-gray-700 dark:text-gray-300 text-nowrap">Blocking闸门</span>
+              </div>
+              <NTag :type="batchConfig.requireBlockingPass ? 'error' : 'default'" size="small">
+                {{ batchConfig.requireBlockingPass ? '必须通过' : '可跳过' }}
+              </NTag>
+            </div>
+
+            <!-- TaskBook 强制提示 -->
+            <div class="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50">
+              <div class="flex items-center gap-2 text-xs text-indigo-600 dark:text-indigo-400">
+                <FileText class="w-3 h-3" />
+                <span>写作任务书（TaskBook）已作为核心前置步骤</span>
+              </div>
             </div>
           </div>
         </NCollapseItem>

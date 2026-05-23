@@ -26,6 +26,10 @@ import {
   Pause,
   Square,
   Sparkle,
+  Shield,
+  ShieldAlert,
+  CheckCircle,
+  FileText,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useProjectStore } from "@/stores/project.store";
@@ -127,10 +131,15 @@ const {
   progress: oneClickProgress,
   error: oneClickError,
   generatedContent: oneClickGeneratedContent,
+  currentStep,
+  blockingIssues,
+  reviewResult,
   writeChapter,
   applyGeneratedContent,
   copyToClipboard: copyOneClickContent,
   reset: resetChapterWriter,
+  retryCurrentStep,
+  skipBlockingIssues,
 } = useChapterWriter();
 
 // Computed
@@ -515,14 +524,65 @@ function getDeAILevelColor(level: string): string {
   return colors[level] || colors.mild;
 }
 
-function getSeverityColorForDeAI(severity: string): string {
-  const colors: Record<string, string> = {
-    high: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    medium:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    low: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  };
-  return colors[severity] || colors.medium;
+// 流水线步骤配置
+const pipelineSteps = [
+  { name: '任务书', key: 'taskbook' },
+  { name: '起草', key: 'draft' },
+  { name: '审查', key: 'review' },
+  { name: '润色', key: 'polish' },
+  { name: '保存', key: 'save' },
+];
+
+// 流水线步骤颜色
+const stepColors: Record<string, string> = {
+  idle: 'text-gray-400',
+  taskbook: 'text-blue-500',
+  draft: 'text-indigo-500',
+  review: 'text-purple-500',
+  polish: 'text-amber-500',
+  save: 'text-emerald-500',
+};
+
+// 获取步骤状态
+function getStepStatus(stepName: string): 'pending' | 'active' | 'completed' {
+  const current = currentStep.value;
+  if (current === 'idle') return 'pending';
+
+  const order = ['taskbook', 'draft', 'review', 'polish', 'save'];
+  const currentIndex = order.indexOf(current);
+  const stepIndex = order.indexOf(stepName);
+
+  if (currentIndex === stepIndex) return 'active';
+  if (currentIndex > stepIndex) return 'completed';
+  return 'pending';
+}
+
+// 是否有阻塞问题
+const hasBlockingIssues = computed(() => blockingIssues.value.length > 0);
+
+// 获取问题严重度
+function getSeverityType(severity: string): 'error' | 'warning' | 'info' {
+  switch (severity) {
+    case 'critical':
+    case 'high':
+      return 'error';
+    case 'medium':
+      return 'warning';
+    default:
+      return 'info';
+  }
+}
+
+function getSeverityClass(severity: string): string {
+  switch (severity) {
+    case 'critical':
+    case 'high':
+      return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+    case 'medium':
+      return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+    default:
+      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+  }
 }
 </script>
 
@@ -591,6 +651,64 @@ function getSeverityColorForDeAI(severity: string): string {
               <span class="font-semibold text-sm text-gray-900 dark:text-white"
                 >一键续写</span
               >
+            </div>
+            <!-- TaskBook 标识 -->
+            <div class="flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
+              <FileText class="w-3 h-3 text-indigo-500" />
+              <span class="text-xs text-indigo-600 dark:text-indigo-400">TaskBook</span>
+            </div>
+          </div>
+
+          <!-- 流水线状态 -->
+          <div v-if="isOneClickGenerating || oneClickGeneratedContent" class="mb-3 p-2 rounded-lg bg-white/50 dark:bg-gray-800/50">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs text-gray-500 dark:text-gray-400">流水线</span>
+              <span
+                class="text-xs font-medium"
+                :class="stepColors[currentStep] || 'text-gray-500'"
+              >
+                {{ currentStep === 'idle' ? '就绪' : currentStep }}
+              </span>
+            </div>
+            <div class="flex items-center gap-1">
+              <template v-for="(step, index) in pipelineSteps" :key="step.key">
+                <div
+                  class="flex-1 h-1 rounded-full transition-all"
+                  :class="{
+                    'bg-indigo-500': getStepStatus(step.key) === 'completed' || getStepStatus(step.key) === 'active',
+                    'bg-gray-200 dark:bg-gray-700': getStepStatus(step.key) === 'pending',
+                  }"
+                />
+              </template>
+            </div>
+          </div>
+
+          <!-- Blocking 闸门警告 -->
+          <div v-if="hasBlockingIssues" class="mb-3 p-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <div class="flex items-center gap-2 mb-2">
+              <ShieldAlert class="w-4 h-4 text-red-500" />
+              <span class="text-xs font-medium text-red-600 dark:text-red-400">
+                {{ blockingIssues.length }} 个阻断问题
+              </span>
+            </div>
+            <div class="space-y-1 max-h-24 overflow-y-auto">
+              <div
+                v-for="(issue, index) in blockingIssues"
+                :key="index"
+                class="text-xs"
+              >
+                <span class="font-medium text-red-500">[{{ issue.category }}]</span>
+                {{ issue.description }}
+              </div>
+            </div>
+            <div class="mt-2 flex gap-2">
+              <NButton size="tiny" @click="retryCurrentStep">
+                <template #icon><RefreshCw class="w-3 h-3" /></template>
+                重试
+              </NButton>
+              <NButton size="tiny" quaternary @click="skipBlockingIssues">
+                跳过
+              </NButton>
             </div>
           </div>
 
@@ -1290,7 +1408,7 @@ function getSeverityColorForDeAI(severity: string): string {
               <div class="flex items-center gap-2 mb-1">
                 <span
                   class="text-xs px-1.5 py-0.5 rounded"
-                  :class="getSeverityColorForDeAI(issue.severity)"
+                  :class="getSeverityClass(issue.severity)"
                 >
                   {{
                     issue.severity === "high"

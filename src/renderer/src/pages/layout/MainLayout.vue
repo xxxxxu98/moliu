@@ -627,17 +627,6 @@ async function handleApplyRecommendedTitle() {
                 ></div>
               </button>
             </div>
-            <button
-              class="px-2 py-2 flex items-center justify-center transition-colors"
-              :class="[
-                showSecondaryTabs
-                  ? 'text-indigo-500'
-                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300',
-              ]"
-              @click="showSecondaryTabs = !showSecondaryTabs"
-            >
-              <ChevronsUpDown class="w-4 h-4" />
-            </button>
           </div>
         </div>
 
