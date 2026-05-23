@@ -320,6 +320,62 @@ export interface PlotPhaseInfo {
   recommendedStrategy: string;
 }
 
+/**
+ * 生成情节阶段信息
+ * 根据章节进度确定当前所处情节阶段
+ */
+export function generatePlotPhaseInfo(chapterIndex: number, totalChapters: number): PlotPhaseInfo {
+  const progress = totalChapters > 0 ? chapterIndex / totalChapters : 0;
+  const phaseConfig: Record<PlotPhase, { phaseName: string; description: string; recommendedStrategy: string }> = {
+    setup: {
+      phaseName: '开篇铺垫',
+      description: '建立世界观、主角背景和故事基础',
+      recommendedStrategy: '快速引入冲突，吸引读者注意力，为后续发展埋下伏笔',
+    },
+    rising: {
+      phaseName: '矛盾升级',
+      description: '冲突逐步升级，主角面临挑战',
+      recommendedStrategy: '逐步增加张力，引入新角色和支线，保持节奏紧凑',
+    },
+    climax: {
+      phaseName: '高潮迭起',
+      description: '核心冲突爆发，故事达到最紧张时刻',
+      recommendedStrategy: '集中爆发核心冲突，给主角最大考验，揭示关键真相',
+    },
+    falling: {
+      phaseName: '余波荡漾',
+      description: '高潮后的缓冲，收拾残局',
+      recommendedStrategy: '处理高潮后果，逐步解决次要冲突，为结局做铺垫',
+    },
+    resolution: {
+      phaseName: '圆满收束',
+      description: '所有线索收拢，结局呈现',
+      recommendedStrategy: '回收伏笔，解决剩余冲突，给读者情感满足',
+    },
+  };
+
+  let phase: PlotPhase;
+  if (progress < 0.2) {
+    phase = 'setup';
+  } else if (progress < 0.5) {
+    phase = 'rising';
+  } else if (progress < 0.7) {
+    phase = 'climax';
+  } else if (progress < 0.85) {
+    phase = 'falling';
+  } else {
+    phase = 'resolution';
+  }
+
+  const config = phaseConfig[phase];
+  return {
+    phase,
+    phaseName: config.phaseName,
+    description: config.description,
+    recommendedStrategy: config.recommendedStrategy,
+  };
+}
+
 // ============================================
 // 完结指引类型
 // ============================================

@@ -24,8 +24,7 @@ import { useProjectStore } from '@/stores/project.store';
 import { createEndingPerceptionEngine } from '@/services/writing/ending-perception-engine';
 import { createForeshadowTracker, ForeshadowTracker } from '@/services/writing/enhanced-foreshadow-tracker';
 import { createStorylineManager } from '@/services/writing/storyline-manager';
-import type { EndingReadiness, UnresolvedForeshadow } from '@/types/ending-perception';
-import type { PlotPhaseInfo } from '@/types/ending-perception';
+import type { EndingReadiness, UnresolvedForeshadow, PlotPhaseInfo, PlotPhase } from '@/types/ending-perception';
 import { generatePlotPhaseInfo } from '@/types/ending-perception';
 
 const projectStore = useProjectStore();
