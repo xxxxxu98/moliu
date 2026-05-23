@@ -1,14 +1,73 @@
 /**
- * AI 写作服务导出
+ * 写作服务导出
+ * 整合所有写作相关的服务和模块
  */
 
-export * from './prompt-builder';
-export * from './context-manager';
-export * from './writing-orchestrator';
-export * from './extract-plot-memory';
-export * from './memory-file-service';
-export * from './memory-manager';
-export * from './de-ai-service';
-export * from './writing-task-builder';
-export * from './chapter-commit';
-export * from './foreshadow-tracker';
+// ============================================================
+// 核心编排器
+// ============================================================
+
+export { WritingPipeline } from './orchestrator/WritingPipeline';
+export { WritingOrchestrator, useWritingOrchestrator } from './orchestrator/WritingOrchestrator';
+export { DraftAgent } from './orchestrator/DraftAgent';
+
+// ============================================================
+// 类型
+// ============================================================
+
+export * from './orchestrator/types';
+
+// ============================================================
+// 合同系统
+// ============================================================
+
+export { ContractManager, useContractManager } from './contract/ContractManager';
+export * from './contract/types';
+
+// ============================================================
+// 记忆系统
+// ============================================================
+
+export { MemoryOrchestrator, useMemoryOrchestrator } from './memory/MemoryOrchestrator';
+export { useReaderSignals, createReaderSignalsManager } from './memory/ReaderSignals';
+export * from './memory/types';
+
+// ============================================================
+// 审查系统
+// ============================================================
+
+export { ReviewAgent, useReviewAgent } from './review/ReviewAgent';
+export * from './review/types';
+
+// ============================================================
+// 润色系统
+// ============================================================
+
+export { PolishAgent, usePolishAgent } from './polish/PolishAgent';
+export * from './polish/types';
+
+// ============================================================
+// 提交系统
+// ============================================================
+
+export { ChapterCommitManager, useChapterCommitManager } from './commit/ChapterCommitManager';
+export * from './commit/types';
+
+// ============================================================
+// 备份系统
+// ============================================================
+
+export { GitBackupManager, useGitBackupManager } from './backup/GitBackupManager';
+
+// ============================================================
+// 任务书
+// ============================================================
+
+export { TaskBookBuilder } from './taskbook/TaskBookBuilder';
+
+// ============================================================
+// 监控
+// ============================================================
+
+export { WritingMonitor, getWritingMonitor, useWritingMonitor } from './monitor/WritingMonitor';
+export * from './monitor/WritingMonitor';
