@@ -21,6 +21,7 @@ import {
   NCollapseItem,
   NAlert,
   NTooltip,
+  NProgress as NProgressType,
 } from "naive-ui";
 import {
   Play,
@@ -42,11 +43,13 @@ import {
   CheckCircle,
   Gauge,
   ChevronDown,
+  Flag,
+  TrendingUp,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useBatchWriter } from "@/composables/useBatchWriter";
 import { useProjectStore } from "@/stores/project.store";
-import type { UseBatchWriterReturn } from "@/composables/useBatchWriter";
+import type { UseBatchWriterReturn, EndingCheckResult } from "@/composables/useBatchWriter";
 import type { ReviewStrictness } from "@/services/review/blocking-review.service";
 
 const { t } = useI18n();
@@ -78,6 +81,9 @@ const {
   reviewAttempts,
   strictnessHistory,
   lowerStrictness,
+  // 写到完结相关
+  endingStatus,
+  isReadyToEnd,
 } = batchWriter;
 
 const startBatchWriting: UseBatchWriterReturn['startBatchWriting'] = batchWriter.startBatchWriting;
@@ -134,7 +140,7 @@ const nextChapterNumber = computed(() => writtenChapters.value + 1);
 
 // 预估时间
 const estimatedTime = computed(() => {
-  let chapters = writingMode.value === 'specific' ? targetCount.value : 10;
+  let chapters = writingMode.value === 'specific' ? targetCount.value : (endingStatus.value?.remainingChapters || 10);
   if (chapters === 0) return '';
   const avgSecondsPerChapter = 60; // 考虑到 TaskBook + 审查，时间更长
   const seconds = chapters * avgSecondsPerChapter;
@@ -145,6 +151,43 @@ const estimatedTime = computed(() => {
   return `约 ${seconds} 秒`;
 });
 
+// 计划章节数
+const plannedChapterCount = computed(() => {
+  return projectStore.currentProject?.metadata?.plannedChapterCount || 
+    (projectStore.plotOutline?.length > 0 ? projectStore.plotOutline.length : 100);
+});
+
+// 完结进度信息
+const endingProgressInfo = computed(() => {
+  if (!endingStatus.value) return null;
+  const status = endingStatus.value;
+  return {
+    chapterProgress: status.chapterProgress,
+    outlineProgress: status.outlineProgress,
+    foreshadowCompletion: status.foreshadowCompletion,
+    remainingChapters: status.remainingChapters,
+    unresolvedForeshadows: status.unresolvedForeshadows,
+    phaseName: status.phaseName,
+    isReady: status.isReady,
+    isInEndingPhase: status.isInEndingPhase,
+    // 增强字段
+    foreshadowUrgencyScore: status.foreshadowUrgencyScore,
+    criticalForeshadows: status.criticalForeshadows || [],
+    outlineNodesComplete: status.outlineNodesComplete,
+    outlineNodesTotal: status.outlineNodesTotal,
+    volumeProgress: status.volumeProgress,
+  };
+});
+
+// 阶段颜色
+function getPhaseColor(phaseName: string): string {
+  if (phaseName.includes('完结') || phaseName.includes('结局')) return 'text-emerald-500';
+  if (phaseName.includes('高潮')) return 'text-red-500';
+  if (phaseName.includes('下落')) return 'text-amber-500';
+  if (phaseName.includes('上升')) return 'text-blue-500';
+  return 'text-gray-500';
+}
+
 // 当前进度百分比
 const progressPercentage = computed(() => {
   if (totalChapters.value === 0) return 0;
@@ -153,9 +196,6 @@ const progressPercentage = computed(() => {
 
 // 是否有阻塞问题
 const hasBlockingIssues = computed(() => blockingIssues.value.length > 0);
-
-// 是否达到最大跳过限制
-const reachedMaxSkips = computed(() => consecutiveSkips.value >= batchConfig.value.maxConsecutiveSkips);
 
 // 流水线步骤列表
 const pipelineSteps = computed(() => [
@@ -277,7 +317,7 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
           </div>
           <span 
             class="text-xs font-medium"
-            :class="stepColors[currentPipelineStep] || 'text-gray-500'"
+            :class="stepColors[currentPipelineStep as keyof typeof stepColors] || 'text-gray-500'"
           >
             {{ currentPipelineStep }}
           </span>
@@ -405,9 +445,116 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
       </div>
 
       <!-- 写到完结 -->
-      <div v-else class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+      <div v-else class="space-y-3">
         <div class="text-sm text-gray-600 dark:text-gray-400">
-          从第 {{ nextChapterNumber }} 章开始，写完现有章节后自动创建新章节
+          基于情节完整性自动判断完结时机，写完大纲章节后智能创建新章节直到故事完结
+        </div>
+        
+        <!-- 计划信息 -->
+        <div class="flex items-center gap-2 p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50">
+          <Flag class="w-4 h-4 text-indigo-500" />
+          <span class="text-xs text-indigo-600 dark:text-indigo-400">
+            计划章节: {{ plannedChapterCount }} 章
+          </span>
+        </div>
+        
+        <!-- 完结进度预览 -->
+        <div v-if="endingProgressInfo" class="p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800/50">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400">完结准备度</span>
+            <span class="text-xs font-medium" :class="endingProgressInfo.isInEndingPhase ? 'text-emerald-500' : 'text-gray-500'">
+              {{ endingProgressInfo.phaseName }}
+            </span>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-gray-500">章节进度</span>
+              <span class="font-medium" :class="getPhaseColor(endingProgressInfo.phaseName)">
+                {{ endingProgressInfo.chapterProgress }}%
+              </span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-gray-500">大纲进度</span>
+              <span class="font-medium" :class="getPhaseColor(endingProgressInfo.phaseName)">
+                {{ endingProgressInfo.outlineProgress }}%
+              </span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-gray-500">伏笔完成</span>
+              <span class="font-medium" :class="endingProgressInfo.foreshadowCompletion >= 80 ? 'text-emerald-500' : 'text-amber-500'">
+                {{ endingProgressInfo.foreshadowCompletion }}%
+              </span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-gray-500">剩余章节</span>
+              <span class="font-medium text-gray-700 dark:text-gray-300">
+                ~{{ endingProgressInfo.remainingChapters }} 章
+              </span>
+            </div>
+          </div>
+          
+          <!-- 未解决伏笔提示 -->
+          <div v-if="endingProgressInfo.unresolvedForeshadows > 0" class="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-700">
+            <div class="flex items-center justify-between mb-1">
+              <div class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                <AlertCircle class="w-3 h-3" />
+                <span>{{ endingProgressInfo.unresolvedForeshadows }} 个伏笔待揭示</span>
+              </div>
+              <span v-if="endingProgressInfo.foreshadowUrgencyScore > 0" 
+                    class="text-xs font-medium"
+                    :class="endingProgressInfo.foreshadowUrgencyScore >= 75 ? 'text-red-500' : endingProgressInfo.foreshadowUrgencyScore >= 50 ? 'text-amber-500' : 'text-blue-500'">
+                紧急度: {{ endingProgressInfo.foreshadowUrgencyScore }}
+              </span>
+            </div>
+            
+            <!-- 紧急伏笔列表 -->
+            <div v-if="endingProgressInfo.criticalForeshadows?.length > 0" class="mt-2 space-y-1">
+              <div v-for="(fs, idx) in endingProgressInfo.criticalForeshadows.slice(0, 3)" :key="idx"
+                   class="flex items-center justify-between text-xs px-2 py-1 rounded bg-amber-50 dark:bg-amber-900/20">
+                <span class="truncate flex-1 text-gray-600 dark:text-gray-400">{{ fs.hint || '未命名伏笔' }}</span>
+                <span class="ml-2 px-1.5 py-0.5 rounded text-xs font-medium"
+                      :class="{
+                        'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400': fs.urgency === 'critical',
+                        'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400': fs.urgency === 'high',
+                        'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400': fs.urgency === 'medium',
+                        'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400': fs.urgency === 'low'
+                      }">
+                  {{ fs.urgency === 'critical' ? '紧急' : fs.urgency === 'high' ? '重要' : fs.urgency === 'medium' ? '中等' : '一般' }}
+                </span>
+              </div>
+              <div v-if="endingProgressInfo.criticalForeshadows.length > 3" class="text-xs text-gray-500 text-center">
+                还有 {{ endingProgressInfo.criticalForeshadows.length - 3 }} 个伏笔...
+              </div>
+            </div>
+          </div>
+          
+          <!-- 大纲节点进度 -->
+          <div v-if="endingProgressInfo.outlineNodesTotal > 0" class="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-700">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-gray-500">大纲节点</span>
+              <span class="font-medium text-gray-700 dark:text-gray-300">
+                {{ endingProgressInfo.outlineNodesComplete }}/{{ endingProgressInfo.outlineNodesTotal }}
+              </span>
+            </div>
+          </div>
+          
+          <!-- 卷级进度 -->
+          <div v-if="endingProgressInfo.volumeProgress" class="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-700">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-gray-500">当前卷</span>
+              <span class="font-medium text-gray-700 dark:text-gray-300">
+                第{{ endingProgressInfo.volumeProgress.currentVolume }}/{{ endingProgressInfo.volumeProgress.totalVolumes }}卷 
+                ({{ endingProgressInfo.volumeProgress.chaptersWritten }}/{{ endingProgressInfo.volumeProgress.chaptersInVolume }}章)
+              </span>
+            </div>
+          </div>
+          
+          <!-- 准备好完结提示 -->
+          <div v-if="endingProgressInfo.isReady" class="mt-2 flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+            <CheckCircle class="w-3 h-3" />
+            <span>已准备好完结</span>
+          </div>
         </div>
       </div>
 

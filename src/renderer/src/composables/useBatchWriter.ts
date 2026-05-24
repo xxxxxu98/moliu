@@ -16,7 +16,7 @@
  */
 
 import { ref, computed, type Ref, type ComputedRef } from 'vue';
-import type { Volume } from '@/types/project';
+import type { Volume, ChapterMemory } from '@/types/project';
 import { useProjectStore } from '@/stores/project.store';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useActiveAIProvider } from './useActiveAIProvider';
@@ -47,6 +47,7 @@ import { createChapterCommit, extractChapterFacts } from '@/services/writing/cha
 import { createForeshadowTracker, analyzeForeshadows } from '@/services/writing/foreshadow-tracker';
 import type { WritingTaskBook } from '@/types/writing-task';
 import { WritingError, ErrorCode, getErrorMessage } from '@/types/errors';
+import { createEndingPerceptionEngine } from '@/services/writing/ending-perception-engine';
 
 export type WritingTarget = 'specific' | 'finish';
 
@@ -75,8 +76,6 @@ function getStrictnessLabel(strictness: ReviewStrictness): string {
     default: return strictness;
   }
 }
-
-export type WritingTarget = 'specific' | 'finish';
 
 // ============================================
 // 接口定义
@@ -108,6 +107,10 @@ export interface UseBatchWriterReturn {
   reviewAttempts: Ref<number>;                       // 当前章节审查尝试次数
   strictnessHistory: Ref<Array<{chapter: number; strictness: ReviewStrictness; passed: boolean}>>;
 
+  // 写到完结状态
+  endingStatus: Ref<EndingCheckResult | null>;      // 完结判断结果
+  isReadyToEnd: Ref<boolean>;                        // 是否准备好完结
+
   // 配置
   target: Ref<WritingTarget>;
   config: Ref<{
@@ -130,6 +133,53 @@ export interface UseBatchWriterReturn {
   stopWriting: () => void;
   getNextChapterIndex: () => number;
   getTotalChapters: () => number;
+  checkEndingReadiness: (project: any, chapterIndex: number, memories: ChapterMemory[]) => EndingCheckResult;
+  retryCurrentStep: () => Promise<void>;
+  skipBlockingIssues: () => void;
+  lowerStrictness: () => void;
+}
+
+// 完结检查结果
+export interface EndingCheckResult {
+  isReady: boolean;                    // 是否准备好完结
+  chapterProgress: number;             // 章节进度百分比
+  outlineProgress: number;             // 大纲进度百分比
+  foreshadowCompletion: number;        // 伏笔完成率
+  remainingChapters: number;           // 预估剩余章节
+  unresolvedForeshadows: number;       // 未解决伏笔数
+  
+  // 增强字段
+  foreshadowUrgencyScore: number;    // 伏笔紧急度评分 (0-100)
+  criticalForeshadows: ForeshadowUrgencyItem[];  // 紧急伏笔列表
+  outlineNodesComplete: number;         // 已完成大纲节点数
+  outlineNodesTotal: number;          // 总大纲节点数
+  volumeProgress?: VolumeProgress;     // 卷级进度（如果有）
+  
+  isInEndingPhase: boolean;           // 是否已进入完结阶段
+  phaseName: string;                 // 当前阶段名称
+  canCreateNewChapter: boolean;       // 是否可以创建新章节
+  stopReason?: string;               // 停止原因（如果是 'ending' 模式）
+}
+
+// 伏笔紧急度项
+export interface ForeshadowUrgencyItem {
+  hint: string;                       // 伏笔提示
+  urgency: 'critical' | 'high' | 'medium' | 'low';  // 紧急度
+  urgencyScore: number;               // 紧急度评分 (0-100)
+  plantedChapter: number;             // 埋设章节
+  suggestedResolutionChapter?: number; // 建议揭示章节
+  overdueChapters: number;           // 超期章节数
+}
+
+// 卷级进度
+export interface VolumeProgress {
+  currentVolume: number;
+  totalVolumes: number;
+  volumeProgress: number;             // 当前卷进度百分比
+  chaptersInVolume: number;           // 当前卷章节数
+  chaptersWritten: number;            // 当前卷已写章节数
+  volumeStatus: 'setup' | 'development' | 'climax' | 'resolution' | 'complete';
+  nextVolumeReady: boolean;          // 下一卷是否准备好开启
 }
 
 // 批量写作配置
@@ -499,6 +549,219 @@ async function saveChapterContent(
   await projectStore.updateChapter(chapter.id, updateData);
 }
 
+/**
+ * 内联计算伏笔紧急度
+ * 不依赖 EndingPerceptionEngine 的私有方法
+ */
+function calculateInlineUrgency(
+  foreshadow: any,
+  currentChapterIndex: number
+): 'critical' | 'high' | 'medium' | 'low' {
+  const planted = foreshadow.createdChapter || 0;
+  const expected = foreshadow.suggestedResolutionChapter;
+  const plannedCount = 100;
+
+  // 如果有期望揭示章节
+  if (expected) {
+    const remaining = expected - currentChapterIndex;
+    if (remaining <= 0) return 'critical';
+    if (remaining <= 3) return 'high';
+    if (remaining <= 5) return 'medium';
+    return 'low';
+  }
+
+  // 按总进度推算
+  const plantedProgress = planted / plannedCount;
+  const currentProgress = currentChapterIndex / plannedCount;
+
+  if (plantedProgress > 0.8 && currentProgress > 0.9) return 'critical';
+  if (plantedProgress > 0.6 && currentProgress > 0.75) return 'high';
+  if (plantedProgress > 0.4 && currentProgress > 0.5) return 'medium';
+  return 'low';
+}
+
+/**
+ * 计算伏笔紧急度评分
+ * 参考 webnovel-writer 的公式：紧急度 = (已过章节 / 目标回收章节) × 层级权重
+ */
+function calculateForeshadowUrgencyScore(
+  createdChapter: number,
+  suggestedResolutionChapter: number | undefined,
+  currentChapterIndex: number,
+  urgency: 'critical' | 'high' | 'medium' | 'low'
+): number {
+  const plannedCount = 100; // 默认计划章节数
+  const elapsed = currentChapterIndex - createdChapter;
+  
+  // 基础紧急度
+  let score = 0;
+  const urgencyWeight = { critical: 100, high: 75, medium: 50, low: 25 };
+  
+  // 如果有目标章节，计算超期程度
+  if (suggestedResolutionChapter) {
+    const targetElapsed = suggestedResolutionChapter - createdChapter;
+    if (currentChapterIndex > suggestedResolutionChapter) {
+      // 超期
+      const overdue = currentChapterIndex - suggestedResolutionChapter;
+      score = Math.min(100, 50 + overdue * 10);
+    } else {
+      // 未超期
+      const remaining = suggestedResolutionChapter - currentChapterIndex;
+      score = Math.min(urgencyWeight[urgency], 100 - remaining * 5);
+    }
+  } else {
+    // 按进度推算
+    const progress = currentChapterIndex / plannedCount;
+    if (progress > 0.9) {
+      score = urgencyWeight.critical;
+    } else if (progress > 0.75) {
+      score = urgencyWeight.high;
+    } else if (progress > 0.5) {
+      score = urgencyWeight.medium;
+    } else {
+      score = urgencyWeight.low;
+    }
+  }
+  
+  return Math.round(score);
+}
+
+/**
+ * 检查是否准备好完结
+ * 基于情节完整性、大纲进度、伏笔完成度等判断
+ */
+function checkEndingReadiness(
+  project: any,
+  currentChapterIndex: number,
+  memories: ChapterMemory[]
+): EndingCheckResult {
+  const plannedChapterCount = project?.metadata?.plannedChapterCount || 
+    (project?.plotOutline?.length > 0 ? project.plotOutline.length : 100);
+  
+  // 创建完结感知引擎
+  const engine = createEndingPerceptionEngine(
+    project,
+    currentChapterIndex,
+    memories,
+    project?.foreshadows || [],
+    project?.plotOutline || []
+  );
+
+  // 获取完结准备度分析
+  const readiness = engine.analyzeEndingReadiness();
+  
+  // 计算章节进度
+  const chapterProgress = Math.round((currentChapterIndex / plannedChapterCount) * 100);
+  
+  // ========== 增强：计算伏笔紧急度评分 ==========
+  const foreshadows = project?.foreshadows || [];
+  const unresolvedForeshadows = foreshadows.filter((f: any) => 
+    f.status !== 'resolved' && f.status !== 'abandoned'
+  );
+  
+  // 计算每个伏笔的紧急度
+  const criticalForeshadows: ForeshadowUrgencyItem[] = unresolvedForeshadows.map((f: any) => {
+    // 计算伏笔紧急度（内联计算，不依赖私有方法）
+    const urgency = calculateInlineUrgency(f, currentChapterIndex);
+    const urgencyWeight = { critical: 100, high: 75, medium: 50, low: 25 };
+    
+    return {
+      hint: f.hint || '',
+      urgency,
+      urgencyScore: calculateForeshadowUrgencyScore(
+        f.createdChapter || 0,
+        f.suggestedResolutionChapter,
+        currentChapterIndex,
+        urgency
+      ),
+      plantedChapter: f.createdChapter || 0,
+      suggestedResolutionChapter: f.suggestedResolutionChapter,
+      overdueChapters: f.suggestedResolutionChapter 
+        ? Math.max(0, currentChapterIndex - f.suggestedResolutionChapter)
+        : 0,
+    };
+  }).sort((a: ForeshadowUrgencyItem, b: ForeshadowUrgencyItem) => b.urgencyScore - a.urgencyScore);
+  
+  // 计算平均伏笔紧急度评分
+  const foreshadowUrgencyScore = criticalForeshadows.length > 0
+    ? Math.round(criticalForeshadows.reduce((sum: number, f: ForeshadowUrgencyItem) => sum + f.urgencyScore, 0) / criticalForeshadows.length)
+    : 0;
+  
+  // ========== 增强：大纲节点完成度 ==========
+  const plotOutline = project?.plotOutline || [];
+  const chapterNodes = plotOutline.filter((n: any) => n.type === 'chapter' || n.chapterType);
+  const outlineNodesTotal = chapterNodes.length;
+  
+  // 计算已完成的大纲节点（章节范围在当前章节之前的）
+  const outlineNodesComplete = chapterNodes.filter((n: any) => {
+    if (n.chapterRange) {
+      return n.chapterRange[1] <= currentChapterIndex;
+    }
+    return n.orderIndex <= currentChapterIndex;
+  }).length;
+  
+  // ========== 增强：卷级进度 ==========
+  const volumes = project?.volumes || [];
+  const currentVolume = volumes.find((v: any, idx: number) => {
+    const startChapter = volumes.slice(0, idx).reduce((sum: number, prev: any) => sum + (prev.chapterCount || 10), 0) + 1;
+    const endChapter = startChapter + (v.chapterCount || 10) - 1;
+    return currentChapterIndex >= startChapter && currentChapterIndex <= endChapter;
+  });
+  
+  let volumeProgress: VolumeProgress | undefined;
+  if (volumes.length > 0) {
+    const volumeIndex = currentVolume ? volumes.indexOf(currentVolume) : -1;
+    const chaptersInVolume = currentVolume?.chapterCount || 10;
+    const chaptersWritten = currentVolume && volumeIndex >= 0 
+      ? Math.max(0, currentChapterIndex - (volumes.slice(0, volumeIndex).reduce((sum: number, v: any) => sum + (v.chapterCount || 10), 0)))
+      : 0;
+    
+    volumeProgress = {
+      currentVolume: volumeIndex + 1,
+      totalVolumes: volumes.length,
+      volumeProgress: Math.round((chaptersWritten / chaptersInVolume) * 100),
+      chaptersInVolume,
+      chaptersWritten,
+      volumeStatus: chaptersWritten >= chaptersInVolume ? 'complete' : 'development',
+      nextVolumeReady: chaptersWritten >= chaptersInVolume && volumeIndex < volumes.length - 1,
+    };
+  }
+  
+  // 判断是否可以创建新章节
+  // 条件：1. 章节数未达到计划 2. 未处于收束阶段之后
+  const canCreateNewChapter = 
+    currentChapterIndex < plannedChapterCount * 1.1 && 
+    readiness.overallProgress < 95;
+
+  // 判断是否准备好完结
+  // 核心条件：高潮完成 + 目标达成 + 章节进度 >= 90%
+  const isReady = 
+    readiness.climaxApproaching === false && // 高潮已过（不是即将到来）
+    readiness.overallProgress >= 90 &&
+    (readiness.isInEndingPhase === 'ending' || readiness.isInEndingPhase === 'conclusion' || 
+     readiness.isInEndingPhase === 'pre_ending');
+
+  return {
+    isReady,
+    chapterProgress,
+    outlineProgress: readiness.outlineProgress,
+    foreshadowCompletion: readiness.foreshadowCompletionRate,
+    remainingChapters: readiness.remainingChapters,
+    unresolvedForeshadows: unresolvedForeshadows.length,
+    
+    // 增强字段
+    foreshadowUrgencyScore,
+    criticalForeshadows,
+    outlineNodesComplete,
+    outlineNodesTotal,
+    volumeProgress,
+    
+    isInEndingPhase: readiness.isInEndingPhase !== 'normal',
+    phaseName: readiness.phaseName,
+    canCreateNewChapter,
+  };
+}
+
 // ============================================
 // 主 Composable
 // ============================================
@@ -549,6 +812,10 @@ export function useBatchWriter(): UseBatchWriterReturn {
   const initialStrictness = ref<ReviewStrictness>('normal');
   const reviewAttempts = ref(0);
   const strictnessHistory = ref<Array<{chapter: number; strictness: ReviewStrictness; passed: boolean}>>([]);
+
+  // 写到完结状态
+  const endingStatus = ref<EndingCheckResult | null>(null);
+  const isReadyToEnd = ref(false);
 
   // 写作配置
   const config = ref({
@@ -685,7 +952,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
       );
 
       if (!taskBook) {
-        throw new WritingError('任务书生成失败', ErrorCode.TASK_BOOK_FAILED);
+        throw new WritingError('任务书生成失败', ErrorCode.WRITE_TASK_FAILED);
       }
     }
 
@@ -948,6 +1215,12 @@ export function useBatchWriter(): UseBatchWriterReturn {
     internalState.currentChapter = 0;
     error.value = null;
     strictnessHistory.value = [];
+    endingStatus.value = null;
+    isReadyToEnd.value = false;
+
+    // 获取计划章节数
+    const plannedChapterCount = project.metadata?.plannedChapterCount || 
+      (project.plotOutline?.length > 0 ? project.plotOutline.length : 100);
 
     try {
       let currentIndex = getNextChapterIndex();
@@ -967,7 +1240,45 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
         if (internalState.shouldStop) break;
 
-        // 检查是否达到目标
+        // ========== 完结判断（写到完结模式） ==========
+        if (target.value === 'finish') {
+          // 检查完结准备度
+          const memories = projectStore.chapterMemories || [];
+          const endingCheck = checkEndingReadiness(project, writtenCount, memories);
+          endingStatus.value = endingCheck;
+          isReadyToEnd.value = endingCheck.isReady;
+
+          console.log('[批量写作] 完结检查:', {
+            章节进度: `${endingCheck.chapterProgress}%`,
+            大纲进度: `${endingCheck.outlineProgress}%`,
+            伏笔完成: `${endingCheck.foreshadowCompletion}%`,
+            剩余章节: endingCheck.remainingChapters,
+            阶段: endingCheck.phaseName,
+            准备好完结: endingCheck.isReady,
+          });
+
+          // 检查是否应该停止（写到完结模式）
+          if (!endingCheck.canCreateNewChapter) {
+            if (endingCheck.isReady) {
+              console.log('[批量写作] 已达到完结条件，停止写作');
+              error.value = '已到达完结阶段，故事已完成！';
+              break;
+            } else if (currentIndex < 0) {
+              // 没有更多大纲章节，且未准备好完结
+              console.log('[批量写作] 没有更多大纲章节，但尚未准备好完结');
+              error.value = `没有更多大纲章节。剩余 ${endingCheck.unresolvedForeshadows} 个伏笔未解决，${endingCheck.remainingChapters} 章后可能完结`;
+              break;
+            }
+          }
+
+          // 如果已完成大纲章节但还可以创建新章节，继续创建
+          if (currentIndex >= plannedChapterCount && !endingCheck.isReady) {
+            console.log('[批量写作] 已超出计划章节数，询问是否继续...');
+            // 可以继续创建章节，但需要明确告知用户
+          }
+        }
+
+        // 检查是否达到指定数量目标
         if (target.value === 'specific' && writtenCount >= chaptersToWrite) {
           console.log(`[批量写作] 已完成目标: ${writtenCount} 章`);
           break;
@@ -975,6 +1286,20 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
         // 如果没有空章节，创建新的
         if (currentIndex < 0) {
+          // 写到完结模式：检查是否可以创建新章节
+          if (target.value === 'finish') {
+            const checkResult = endingStatus.value;
+            if (checkResult && !checkResult.canCreateNewChapter) {
+              if (checkResult.isReady) {
+                console.log('[批量写作] 已准备好完结，不再创建新章节');
+                break;
+              } else {
+                console.log('[批量写作] 未准备好完结，但已超出计划章节数');
+                // 仍然允许创建最后一章用于完结
+              }
+            }
+          }
+          
           currentIndex = await createNewChapter();
           if (currentIndex < 0) {
             break;
@@ -994,9 +1319,23 @@ export function useBatchWriter(): UseBatchWriterReturn {
           
           if (success) {
             writtenCount++;
+            
+            // 写到完结模式：每写完一章后重新检查完结条件
+            if (target.value === 'finish') {
+              const updatedMemories = projectStore.chapterMemories || [];
+              const updatedCheck = checkEndingReadiness(project, writtenCount, updatedMemories);
+              endingStatus.value = updatedCheck;
+              isReadyToEnd.value = updatedCheck.isReady;
+
+              // 如果准备好完结且没有更多空章节，提示用户
+              if (updatedCheck.isReady && getNextChapterIndex() < 0) {
+                console.log('[批量写作] 已准备好完结，且所有章节已完成');
+                // 可以继续创建完结章
+              }
+            }
           }
         } catch (err) {
-          if (err instanceof WritingError && err.code === ErrorCode.TASK_BOOK_FAILED) {
+          if (err instanceof WritingError && err.code === ErrorCode.WRITE_TASK_FAILED) {
             console.error('[批量写作] 任务书生成失败，跳过章节');
           } else {
             console.error('[批量写作] 章节写作失败:', err);
@@ -1011,7 +1350,12 @@ export function useBatchWriter(): UseBatchWriterReturn {
       console.log('[批量写作] 完成统计:', {
         写入: writtenCount,
         总字数: progress.value.writtenWords,
-        审查历史: strictnessHistory.value.length
+        审查历史: strictnessHistory.value.length,
+        完结状态: endingStatus.value ? {
+          准备完结: endingStatus.value.isReady,
+          阶段: endingStatus.value.phaseName,
+          剩余章节: endingStatus.value.remainingChapters,
+        } : null,
       });
     } finally {
       isWriting.value = false;
@@ -1076,5 +1420,9 @@ export function useBatchWriter(): UseBatchWriterReturn {
     reviewAttempts,
     strictnessHistory,
     lowerStrictness,
+    // 写到完结状态
+    endingStatus,
+    isReadyToEnd,
+    checkEndingReadiness,
   };
 }
