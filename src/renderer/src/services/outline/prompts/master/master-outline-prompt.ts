@@ -58,7 +58,7 @@ function buildSystemPrompt(template?: ExtendedGenreTemplate, targetWordCount?: s
   // 解析字数范围
   const wordCountNum = parseWordCount(targetWordCount);
   const chaptersPerVolume = Math.ceil(wordCountNum / 150000);
-  const totalChapters = Math.ceil(wordCountNum / 3000);
+  const totalChapters = Math.ceil(wordCountNum / 2000);
 
   return `你是一位专业的小说创作顾问，擅长长篇网文创作。
 

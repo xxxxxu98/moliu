@@ -306,7 +306,7 @@ export class UnifiedOutlineGenerator {
     // 解析字数范围
     const wordCountNum = this.parseWordCount(wordCountRange);
     const chaptersPerVolume = Math.ceil(wordCountNum / 150000); // 每卷约15万字
-    const totalChapters = Math.ceil(wordCountNum / 3000); // 每章约3000字
+    const totalChapters = Math.ceil(wordCountNum / 2000); // 每章约2000字
 
     return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
 
@@ -579,7 +579,7 @@ export class UnifiedOutlineGenerator {
     // 解析字数范围
     const wordCountNum = this.parseWordCount(wordCountRange);
     const chaptersPerVolume = Math.ceil(wordCountNum / 150000);
-    const totalChapters = Math.ceil(wordCountNum / 3000);
+    const totalChapters = Math.ceil(wordCountNum / 2000);
 
     return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
 

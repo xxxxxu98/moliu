@@ -40,10 +40,10 @@ export function buildBeatTablePrompt(params: {
 【字数分配建议】
 目标字数：${wordCountTarget}
 建议分配：
-- 开卷承诺：10%（约${Math.round(wordCountTarget * 0.1 / 3000)}章）
-- 催化+危机链：50%（约${Math.round(wordCountTarget * 0.5 / 3000)}章）
-- 中段反转+最低谷：15%（约${Math.round(wordCountTarget * 0.15 / 3000)}章）
-- 高潮+解决：25%（约${Math.round(wordCountTarget * 0.25 / 3000)}章）
+- 开卷承诺：10%（约${Math.round(wordCountTarget * 0.1 / 2000)}章）
+- 催化+危机链：50%（约${Math.round(wordCountTarget * 0.5 / 2000)}章）
+- 中段反转+最低谷：15%（约${Math.round(wordCountTarget * 0.15 / 2000)}章）
+- 高潮+解决：25%（约${Math.round(wordCountTarget * 0.25 / 2000)}章）
 
 【格式要求】
 请以 Markdown 格式输出，包含：

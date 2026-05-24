@@ -256,7 +256,7 @@ export function calculateEmotionAnchors(
     return [];
   }
   
-  const chapterCount = Math.ceil(totalWordCount / 3000);
+  const chapterCount = Math.ceil(totalWordCount / 2000);
   const anchors: EmotionAnchor[] = [];
   
   // 根据曲线类型确定锚点分布

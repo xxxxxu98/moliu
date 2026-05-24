@@ -189,7 +189,7 @@ export class MarkdownOutlineGenerator {
   private buildSystemPrompt(wordCountRange: string): string {
     // 解析字数范围
     const wordCountNum = this.parseWordCount(wordCountRange);
-    const totalChapters = Math.ceil(wordCountNum / 3000);
+    const totalChapters = Math.ceil(wordCountNum / 2000);
     const chaptersPerVolume = Math.ceil(wordCountNum / 150000);
 
     return `你是一位专业的网文小说创作顾问，精通网络小说的写作技巧与读者心理。
@@ -267,9 +267,9 @@ export class MarkdownOutlineGenerator {
 ## 【重要】章节大纲设计原则
 
 ### 章节数量参考（按字数范围）
-- **30万字以下**：${Math.ceil(300000 / 3000)}-${Math.ceil(300000 / 2000)}章
-- **50万-100万字**：${Math.ceil(500000 / 3000)}-${Math.ceil(1000000 / 3000)}章
-- **100万字以上**：${Math.ceil(1000000 / 3000)}-${Math.ceil(2000000 / 3000)}章
+- **30万字以下**：${Math.ceil(300000 / 2000)}-${Math.ceil(300000 / 1500)}章
+- **50万-100万字**：${Math.ceil(500000 / 2000)}-${Math.ceil(1000000 / 2000)}章
+- **100万字以上**：${Math.ceil(1000000 / 2000)}-${Math.ceil(2000000 / 2000)}章
 
 ### 当前目标章节数：${totalChapters}章
 

@@ -314,7 +314,7 @@ export function buildFiveStepPrompt(params: {
 
   // 解析字数范围
   const wordCountNum = parseWordCount(wordCountRange);
-  const totalChapters = Math.ceil(wordCountNum / 3000);
+  const totalChapters = Math.ceil(wordCountNum / 2000);
   const chaptersPerVolume = Math.ceil(wordCountNum / 150000);
 
   // 动态生成情绪密度建议（基于字数）

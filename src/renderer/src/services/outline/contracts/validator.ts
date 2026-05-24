@@ -220,7 +220,7 @@ export class EnhancedContractValidator {
   private validateForeshadowTracking(contract: StoryContract): ValidationResult {
     const violations: Violation[] = [];
     const warnings: Warning[] = [];
-    const estimatedChapters = Math.ceil(contract.basic.targetWordCount / 3000);
+    const estimatedChapters = Math.ceil(contract.basic.targetWordCount / 2000);
     
     for (const fs of contract.foreshadowTable) {
       if (fs.status === 'fulfilled' && fs.payoffChapter > estimatedChapters) {
