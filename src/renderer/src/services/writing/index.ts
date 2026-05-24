@@ -45,3 +45,54 @@ export {
   buildAndExportTaskBook,
   type TaskBookBuildOptions,
 } from './services/writing/writing-task-builder';
+
+// ============================================================
+// v2.0 写作系统
+// ============================================================
+
+// 预检服务
+export {
+  PreflightService,
+  usePreflightService,
+} from './services/writing/preflight/PreflightService';
+
+// 投影写入器
+export {
+  ProjectionOrchestrator,
+  useProjectionOrchestrator,
+  type ProjectionWriters,
+  type StateWriter,
+  type IndexWriter,
+  type SummaryWriter,
+  type MemoryWriter,
+  type VectorWriter,
+} from './services/writing/commit/ProjectionWriters';
+
+// 反模式注册表
+export {
+  AntiPatternsRegistryService,
+  useAntiPatternsRegistry,
+} from './services/writing/anti-patterns/AntiPatternsRegistry';
+
+// 六门禁润色管道
+export {
+  SixGatePolishPipeline,
+  useSixGatePolishPipeline,
+} from './services/writing/polish/SixGatePolishPipeline';
+
+// 章节提交管理器 v2
+export {
+  useChapterCommitManagerV2,
+  type CommitInput,
+  type CommitResult,
+} from './services/writing/commit/ChapterCommitManagerV2';
+
+// 写作编排器 v2
+export {
+  useWritingOrchestratorV2,
+  type WritingOrchestratorOptions,
+  type WritingOrchestratorState,
+} from './services/writing/WritingOrchestratorV2';
+
+// 类型定义
+export * from './types/writing-v2';
