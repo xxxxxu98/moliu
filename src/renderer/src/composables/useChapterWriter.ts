@@ -47,6 +47,12 @@ export interface UseChapterWriterReturn {
   blockingIssues: typeof blockingIssues;
   reviewResult: typeof reviewResult;
 
+  // 字数相关状态
+  actualWordCount: typeof actualWordCount;
+  targetWordCount: typeof targetWordCount;
+  isSupplementing: typeof isSupplementing;
+  supplementRound: typeof supplementRound;
+
   // 方法
   writeChapter: (options?: {
     targetWordCount?: number;
@@ -58,11 +64,15 @@ export interface UseChapterWriterReturn {
   applyGeneratedContent: () => Promise<boolean>;
   copyToClipboard: () => void;
   reset: () => void;
-  
+
   // 流水线控制
   retryCurrentStep: () => void;
   skipBlockingIssues: () => void;
   forceProceedToPolish: () => void;
+
+  // 补充续写
+  supplementContinue: (options?: { additionalWords?: number }) => Promise<string | null>;
+  checkAndSupplement: () => Promise<{ needsSupplement: boolean; currentWords: number; targetWords: number }>;
 }
 
 // ============================================
@@ -75,16 +85,36 @@ const error = ref<string | null>(null);
 const generatedContent = ref('');
 
 // 流水线状态
-const currentStep = ref<'idle' | 'taskbook' | 'draft' | 'review' | 'polish' | 'save'>('idle');
+const currentStep = ref<'idle' | 'taskbook' | 'draft' | 'supplement' | 'review' | 'polish' | 'save'>('idle');
 const blockingIssues = ref<any[]>([]);
 const reviewResult = ref<BlockingReviewResult | null>(null);
 
 // 当前任务书
 let currentTaskBook: WritingTaskBook | null = null;
 
+// 字数统计状态
+const actualWordCount = ref(0);
+const targetWordCount = ref(0);
+const isSupplementing = ref(false);
+const supplementRound = ref(0);
+
 // ============================================
 // 工具函数
 // ============================================
+
+/**
+ * 统计中文字符和英文单词数量
+ */
+function countWords(text: string): number {
+  if (!text) return 0;
+  // 去除标题和标记
+  let cleaned = text.replace(/^#.*$/gm, '');
+  cleaned = cleaned.replace(/【.*?】/g, '');
+  cleaned = cleaned.replace(/\n/g, '');
+  const chineseChars = (cleaned.match(/[\u4e00-\u9fa5]/g) || []).length;
+  const englishWords = (cleaned.match(/[a-zA-Z]+/g) || []).length;
+  return chineseChars + englishWords;
+}
 
 function extractChapterTypeFromOutline(outline: string, orderIndex: number): ChapterType {
   if (!outline) {
@@ -479,9 +509,14 @@ export function useChapterWriter(): UseChapterWriterReturn {
     additionalInstructions?: string;
     writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient';
   }): Promise<string | null> {
-    const targetWordCount = options?.targetWordCount || 3000;
+    const requestedTarget = options?.targetWordCount || 3000;
     const additionalInstructions = options?.additionalInstructions;
     const writingStyle = options?.writingStyle || 'concise';
+
+    // 设置目标字数
+    targetWordCount.value = requestedTarget;
+    actualWordCount.value = 0;
+    supplementRound.value = 0;
 
     if (isGenerating.value) {
       error.value = '正在生成中，请稍候';
@@ -519,7 +554,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
         currentIndex,
         context.chapter.outline || undefined,
         writingStyle,
-        targetWordCount
+        requestedTarget
       );
 
       if (!currentTaskBook) {
@@ -558,12 +593,12 @@ export function useChapterWriter(): UseChapterWriterReturn {
               writingStyle: writingStyle,
             },
             'smartContinue',
-            targetWordCount,
+            requestedTarget,
             (chunk: string) => {
               currentGeneratedContent += chunk;
               generatedContent.value = currentGeneratedContent;
               progress.value = Math.min(
-                Math.floor((currentGeneratedContent.length / (targetWordCount * 1.5)) * 100),
+                Math.floor((currentGeneratedContent.length / (requestedTarget * 1.5)) * 100),
                 98
               );
             },
@@ -599,7 +634,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
             writingStyle: writingStyle,
           },
           'smartContinue',
-          targetWordCount
+          requestedTarget
         );
 
         if (result?.content) {
@@ -607,6 +642,19 @@ export function useChapterWriter(): UseChapterWriterReturn {
           generatedContent.value = result.content;
           progress.value = 100;
         }
+      }
+
+      // 更新实际字数
+      actualWordCount.value = countWords(currentGeneratedContent);
+
+      // 检查字数是否达标
+      const checkResult = checkWordCount(currentGeneratedContent, requestedTarget);
+      console.log(`[智能续写] 字数检查: ${checkResult.currentWords}/${checkResult.targetWords} (${checkResult.percentage.toFixed(1)}%)`);
+
+      // 如果字数不足且还有补充机会，尝试补充
+      if (checkResult.needsSupplement && supplementRound.value < MAX_SUPPLEMENT_ROUNDS) {
+        console.log(`[智能续写] 字数不足，需要补充 ${checkResult.shortfall} 字`);
+        await supplementContinue({ additionalWords: checkResult.shortfall });
       }
 
       return currentGeneratedContent;
@@ -642,6 +690,241 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
 `;
     return taskBookSection + baseOutline;
+  }
+
+  // ============================================
+  // 字数检查与补充续写
+  // ============================================
+
+  const MIN_WORD_THRESHOLD = 0.85;  // 最低字数阈值（85%）
+  const MAX_WORD_THRESHOLD = 1.15;   // 最高字数阈值（115%）
+  const MAX_SUPPLEMENT_ROUNDS = 3;  // 最多补充轮次
+
+  /**
+   * 检查字数是否达标
+   */
+  function checkWordCount(content: string, target: number): {
+    needsSupplement: boolean;
+    currentWords: number;
+    targetWords: number;
+    shortfall: number;
+    percentage: number;
+  } {
+    const currentWords = countWords(content);
+    const minRequired = Math.floor(target * MIN_WORD_THRESHOLD);
+    const percentage = target > 0 ? (currentWords / target) * 100 : 0;
+
+    return {
+      needsSupplement: currentWords < minRequired,
+      currentWords,
+      targetWords: target,
+      shortfall: Math.max(0, minRequired - currentWords),
+      percentage,
+    };
+  }
+
+  /**
+   * 检查并返回是否需要补充
+   */
+  async function checkAndSupplement(): Promise<{
+    needsSupplement: boolean;
+    currentWords: number;
+    targetWords: number;
+  }> {
+    const content = currentGeneratedContent || generatedContent.value;
+    const target = targetWordCount.value || 3000;
+    const checkResult = checkWordCount(content, target);
+    actualWordCount.value = checkResult.currentWords;
+
+    return {
+      needsSupplement: checkResult.needsSupplement,
+      currentWords: checkResult.currentWords,
+      targetWords: checkResult.targetWords,
+    };
+  }
+
+  /**
+   * 补充续写（字数不足时调用）
+   */
+  async function supplementContinue(options?: {
+    additionalWords?: number;
+  }): Promise<string | null> {
+    const additionalWords = options?.additionalWords || targetWordCount.value * 0.3;
+    const maxSupplement = Math.ceil(targetWordCount.value * MAX_WORD_THRESHOLD) - countWords(currentGeneratedContent);
+
+    if (maxSupplement <= 0) {
+      console.log('[智能续写] 字数已达标，无需补充');
+      return currentGeneratedContent;
+    }
+
+    if (supplementRound.value >= MAX_SUPPLEMENT_ROUNDS) {
+      console.warn('[智能续写] 已达最大补充轮次');
+      return currentGeneratedContent;
+    }
+
+    if (isGenerating.value || isSupplementing.value) {
+      error.value = '当前正在生成中，请稍候';
+      return null;
+    }
+
+    supplementRound.value++;
+    isSupplementing.value = true;
+    isGenerating.value = true;
+
+    try {
+      const client = getAIClient();
+      const project = projectStore.currentProject!;
+      const currentChapter = projectStore.currentChapter!;
+      const currentIndex = projectStore.sortedChapters.findIndex(c => c.id === currentChapter.id);
+      const prevChapter = currentIndex > 0 ? projectStore.sortedChapters[currentIndex - 1] : null;
+
+      const context = buildContext();
+      if (!context) {
+        throw new Error('构建上下文失败');
+      }
+
+      // 构建补充续写指令
+      const supplementInstruction = buildSupplementPrompt(
+        currentGeneratedContent,
+        additionalWords,
+        Math.min(additionalWords, maxSupplement),
+        context
+      );
+
+      console.log(`[智能续写] 补充续写第 ${supplementRound.value} 轮，目标补充 ${Math.min(additionalWords, maxSupplement)} 字`);
+
+      // 设置当前步骤
+      currentStep.value = 'supplement';
+
+      // 调用 AI 补充续写
+      let newContent = '';
+      if (settingsStore.streamOutput && (client as any).continueWritingStream) {
+        await new Promise<void>((resolve, reject) => {
+          (client as any).continueWritingStream(
+            {
+              project,
+              currentChapterId: context.chapter.id,
+              currentChapterIndex: context.chapter.orderIndex,
+              currentChapterTitle: context.chapter.title,
+              currentChapterContent: currentGeneratedContent,
+              currentChapterOutline: context.chapter.outline || undefined,
+              fullOutline: buildFullOutlineString(),
+              adjacentChaptersSummary: context.previousChapter ? {
+                previousChapterTitle: context.previousChapter.title,
+                previousChapterSummary: context.previousChapter.summary,
+                nextChapterTitle: undefined,
+                nextChapterSummary: undefined,
+              } : undefined,
+              recentChaptersFullText: context.memoryData.shortTermFullText,
+              charactersInScene: context.characters,
+              relatedForeshadows: context.foreshadows,
+              writingStyle: 'concise',
+              supplementInstruction,
+            },
+            'supplement',
+            Math.ceil(Math.min(additionalWords, maxSupplement)),
+            (chunk: string) => {
+              newContent += chunk;
+            },
+            () => {
+              resolve();
+            },
+            (errMsg: string) => {
+              reject(new Error(errMsg));
+            },
+            abortController?.signal
+          );
+        });
+      } else {
+        const result = await (client as any).continueWriting(
+          {
+            project,
+            currentChapterId: context.chapter.id,
+            currentChapterIndex: context.chapter.orderIndex,
+            currentChapterTitle: context.chapter.title,
+            currentChapterContent: currentGeneratedContent,
+            currentChapterOutline: context.chapter.outline || undefined,
+            fullOutline: buildFullOutlineString(),
+            adjacentChaptersSummary: context.previousChapter ? {
+              previousChapterTitle: context.previousChapter.title,
+              previousChapterSummary: context.previousChapter.summary,
+              nextChapterTitle: undefined,
+              nextChapterSummary: undefined,
+            } : undefined,
+            recentChaptersFullText: context.memoryData.shortTermFullText,
+            charactersInScene: context.characters,
+            relatedForeshadows: context.foreshadows,
+            writingStyle: 'concise',
+            supplementInstruction,
+          },
+          'supplement',
+          Math.ceil(Math.min(additionalWords, maxSupplement))
+        );
+
+        if (result?.content) {
+          newContent = result.content;
+        }
+      }
+
+      if (newContent) {
+        // 将补充内容追加到现有内容
+        const separator = !currentGeneratedContent.endsWith('\n') ? '\n\n' : '';
+        currentGeneratedContent = currentGeneratedContent + separator + newContent;
+        generatedContent.value = currentGeneratedContent;
+        actualWordCount.value = countWords(currentGeneratedContent);
+
+        console.log(`[智能续写] 补充完成，当前字数: ${actualWordCount.value}/${targetWordCount.value}`);
+      }
+
+      return currentGeneratedContent;
+
+    } catch (err) {
+      if (err instanceof Error && err.message === 'Generation stopped by user') {
+        error.value = null;
+      } else {
+        error.value = err instanceof Error ? err.message : '补充续写失败';
+      }
+      return null;
+    } finally {
+      isGenerating.value = false;
+      isSupplementing.value = false;
+    }
+  }
+
+  /**
+   * 构建补充续写的提示词
+   */
+  function buildSupplementPrompt(
+    existingContent: string,
+    requestedWords: number,
+    actualWords: number,
+    context: ChapterWritingContext
+  ): string {
+    const currentWords = countWords(existingContent);
+    const endingSnippet = existingContent.slice(-500) || '（无）';
+
+    return `【补充续写指令】
+
+## 当前状态
+- 已有字数：约 ${currentWords} 字
+- 目标字数：约 ${targetWordCount.value} 字
+- 本次补充：约 ${actualWords} 字
+- 补充轮次：第 ${supplementRound.value}/${MAX_SUPPLEMENT_ROUNDS} 轮
+
+## 补充要求
+1. **自然衔接**：从原文结尾处继续，不要重复已有内容
+2. **保持风格**：与原文保持一致的文风、语气和叙事节奏
+3. **内容充实**：补充的内容要有实质性情节推进，不要凑字数
+4. **衔接自然**：补充内容与原文之间过渡要自然，不突兀
+
+## 原文结尾（请从这里继续）
+${endingSnippet}
+
+## 章节上下文
+- 章节标题：${context.chapter.title}
+- 章节大纲：${context.chapter.outline || '（无）'}
+
+请直接输出补充内容，不要添加任何前缀说明。`;
   }
 
   /**
@@ -843,6 +1126,11 @@ export function useChapterWriter(): UseChapterWriterReturn {
     currentTaskBook = null;
     currentStrictness = 'normal';
     forceProceed = false;
+    // 重置字数相关状态
+    actualWordCount.value = 0;
+    targetWordCount.value = 0;
+    isSupplementing.value = false;
+    supplementRound.value = 0;
     if (abortController) {
       abortController.abort();
       abortController = null;
@@ -882,6 +1170,10 @@ export function useChapterWriter(): UseChapterWriterReturn {
     currentStep,
     blockingIssues,
     reviewResult,
+    actualWordCount,
+    targetWordCount,
+    isSupplementing,
+    supplementRound,
     writeChapter,
     stopWriting,
     buildContext,
@@ -891,5 +1183,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
     retryCurrentStep,
     skipBlockingIssues,
     forceProceedToPolish,
+    supplementContinue,
+    checkAndSupplement,
   };
 }

@@ -138,12 +138,18 @@ const {
   currentStep,
   blockingIssues,
   reviewResult,
+  actualWordCount,
+  targetWordCount,
+  isSupplementing,
+  supplementRound,
   writeChapter,
   applyGeneratedContent,
   copyToClipboard: copyOneClickContent,
   reset: resetChapterWriter,
   retryCurrentStep,
   skipBlockingIssues,
+  supplementContinue,
+  checkAndSupplement,
 } = useChapterWriter();
 
 // Computed
@@ -445,6 +451,18 @@ function handleCopyOneClickContent() {
   message.success("已复制到剪贴板");
 }
 
+async function handleSupplementContinue() {
+  if (isSupplementing.value) return;
+
+  try {
+    await supplementContinue();
+    message.info("补充续写完成");
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    message.error(errorMessage || "补充续写失败");
+  }
+}
+
 function handleStopOneClickWrite() {
   // 实际停止生成
   resetChapterWriter();
@@ -540,6 +558,7 @@ function getDeAILevelColor(level: string): string {
 const pipelineSteps = [
   { name: '任务书', key: 'taskbook' },
   { name: '起草', key: 'draft' },
+  { name: '补充', key: 'supplement' },
   { name: '审查', key: 'review' },
   { name: '润色', key: 'polish' },
   { name: '保存', key: 'save' },
@@ -550,6 +569,7 @@ const stepColors: Record<string, string> = {
   idle: 'text-gray-400',
   taskbook: 'text-blue-500',
   draft: 'text-indigo-500',
+  supplement: 'text-cyan-500',
   review: 'text-purple-500',
   polish: 'text-amber-500',
   save: 'text-emerald-500',
@@ -797,6 +817,40 @@ function getSeverityClass(severity: string): string {
             v-if="!isOneClickGenerating && oneClickGeneratedContent"
             class="mt-3 space-y-2"
           >
+            <!-- 字数统计显示 -->
+            <div class="p-3 rounded-lg bg-gradient-to-r from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/50">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-500 dark:text-gray-400">字数统计</span>
+                <span
+                  class="text-xs font-medium"
+                  :class="actualWordCount >= targetWordCount ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'"
+                >
+                  {{ actualWordCount }} / {{ targetWordCount }} 字
+                  <template v-if="actualWordCount < targetWordCount">
+                    ({{ ((actualWordCount / targetWordCount) * 100).toFixed(0) }}%)
+                  </template>
+                  <template v-else>
+                    (达标)
+                  </template>
+                </span>
+              </div>
+              <!-- 字数进度条 -->
+              <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  class="h-full transition-all duration-300 rounded-full"
+                  :class="actualWordCount >= targetWordCount ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' : 'bg-gradient-to-r from-amber-400 to-amber-500'"
+                  :style="{ width: `${Math.min(100, (actualWordCount / targetWordCount) * 100)}%` }"
+                ></div>
+              </div>
+              <!-- 补充轮次提示 -->
+              <div v-if="supplementRound > 0" class="mt-1.5 flex items-center gap-1">
+                <RefreshCw class="w-3 h-3 text-indigo-500" />
+                <span class="text-xs text-indigo-600 dark:text-indigo-400">
+                  已补充 {{ supplementRound }} 轮
+                </span>
+              </div>
+            </div>
+
             <div class="p-3 rounded-lg bg-white/50 dark:bg-gray-800/50">
               <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
                 生成结果
@@ -823,6 +877,15 @@ function getSeverityClass(severity: string): string {
                 复制
               </button>
             </div>
+            <!-- 补充续写按钮 -->
+            <button
+              v-if="actualWordCount < targetWordCount"
+              class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-sm font-medium hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
+              @click="handleSupplementContinue"
+            >
+              <Zap class="w-4 h-4" />
+              补充续写 ({{ Math.ceil(targetWordCount - actualWordCount) }}字不足)
+            </button>
           </div>
 
           <!-- 错误提示 -->
