@@ -333,7 +333,6 @@ export class UnifiedAIService {
     ];
 
     const response = await this.client.chat(messages, {
-      maxTokens: this.maxTokens,
       temperature: this.generationConfig.temperature,
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
@@ -403,7 +402,6 @@ export class UnifiedAIService {
     ];
 
     const response = await this.client.chat(messages, {
-      maxTokens: this.maxTokens,
       temperature: this.generationConfig.temperature,
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
@@ -462,7 +460,6 @@ export class UnifiedAIService {
 
     try {
       const response = await this.client.chat(messages, {
-        maxTokens: 2048,
         temperature: this.generationConfig.temperature,
         topP: this.generationConfig.topP,
         frequencyPenalty: this.generationConfig.frequencyPenalty,
@@ -544,7 +541,6 @@ export class UnifiedAIService {
 
     try {
       const response = await this.client.chat(messages, {
-        maxTokens: 512,
         temperature: this.generationConfig.temperature,
         topP: this.generationConfig.topP,
         frequencyPenalty: this.generationConfig.frequencyPenalty,
@@ -634,7 +630,6 @@ export class UnifiedAIService {
     ];
 
     const response = await this.client.chat(messages, {
-      maxTokens: 1024,
       temperature: this.generationConfig.temperature,
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
@@ -672,7 +667,6 @@ export class UnifiedAIService {
     ];
 
     const response = await this.client.chat(messages, {
-      maxTokens: 2048,
       temperature: this.generationConfig.temperature,
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
@@ -711,7 +705,6 @@ export class UnifiedAIService {
     ];
 
     const response = await this.client.chat(messages, {
-      maxTokens: 512,
       temperature: this.generationConfig.temperature,
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
@@ -747,7 +740,6 @@ export class UnifiedAIService {
     ];
 
     const response = await this.client.chat(messages, {
-      maxTokens: 512,
       temperature: this.generationConfig.temperature,
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
@@ -777,7 +769,6 @@ export class UnifiedAIService {
 
     try {
       const stream = this.client.stream(messages, {
-        maxTokens: this.maxTokens,
         temperature: this.generationConfig.temperature,
         topP: this.generationConfig.topP,
         frequencyPenalty: this.generationConfig.frequencyPenalty,
