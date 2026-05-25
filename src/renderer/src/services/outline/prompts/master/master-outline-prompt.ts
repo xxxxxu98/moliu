@@ -520,16 +520,21 @@ ${buildConflictEscalationPrompt()}
  */
 function parseWordCount(wordCountRange?: string): number {
   if (!wordCountRange) return 500000;
-  // 匹配 "50万-100万字" 或 "50-100万字" 等格式
-  const match = wordCountRange.match(/(\d+(?:\.\d+)?)\s*万/);
-  if (match) {
-    const wan = parseFloat(match[1]);
-    // 如果有范围，取中间值
-    if (wordCountRange.includes('-')) {
-      return Math.round(wan * 5000); // 取范围中间值，估算为万字的0.5倍
-    }
+
+  // 匹配两个数字（支持 "50万-100万字" 或 "50-100万字" 等格式）
+  const rangeMatch = wordCountRange.match(/(\d+(?:\.\d+)?)\s*万\s*[-~]\s*(\d+(?:\.\d+)?)\s*万/);
+  if (rangeMatch) {
+    const minWan = parseFloat(rangeMatch[1]);
+    const maxWan = parseFloat(rangeMatch[2]);
+    return Math.round(((minWan + maxWan) / 2) * 10000);
+  }
+
+  // 匹配单个数字（如 "80万字"）
+  const singleMatch = wordCountRange.match(/(\d+(?:\.\d+)?)\s*万/);
+  if (singleMatch) {
+    const wan = parseFloat(singleMatch[1]);
     return Math.round(wan * 10000);
   }
-  // 默认返回50万字
+
   return 500000;
 }
