@@ -1032,26 +1032,21 @@ ${endingSnippet}
         return false;
       }
 
-      // ========== 步骤 4: 润色（三遍法去AI味） ==========
+      // ========== 步骤 4: 润色 - 暂时禁用去AI味 ==========
       currentStep.value = 'polish';
       let processedContent = currentGeneratedContent;
       let extractedTitle: string | null | undefined;
 
-      const deAIResult = await DeAIService.fix(processedContent);
-      console.log('[智能续写] 去AI味结果:', {
-        fixedCount: deAIResult.fixedCount,
-        threePassStats: deAIResult.threePassStats,
-      });
+      // 添加调试日志
+      console.log('[智能续写] 处理前内容长度:', processedContent.length);
+      console.log('[智能续写] 处理前内容预览:', processedContent);
 
-      if (deAIResult.fixedCount > 0) {
-        processedContent = deAIResult.content;
-      }
+      // 【暂时禁用去AI味】2026-05-24 临时禁用
+      console.log('[智能续写] 去AI味已禁用（临时）');
 
-      extractedTitle = deAIResult.title || null;
-      if (!extractedTitle) {
-        const titleValidation = DeAIService.extractAndValidateTitle(deAIResult.content);
-        extractedTitle = titleValidation.title;
-      }
+      // 从原始内容中提取标题
+      const titleValidation = DeAIService.extractAndValidateTitle(processedContent);
+      extractedTitle = titleValidation.title;
 
       // ========== 步骤 5: 保存 ==========
       currentStep.value = 'save';

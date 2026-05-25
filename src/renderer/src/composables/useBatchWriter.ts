@@ -422,12 +422,24 @@ async function performBlockingReview(
 
 /**
  * 执行润色（必须在 blocking 通过后）
+ * 【暂时禁用去AI味】2026-05-24 临时禁用，等问题排查完毕后再启用
  */
 async function performPolish(content: string, deAIEnabled: boolean): Promise<{
   fixedContent: string;
   title: string | null;
   fixedCount: number;
 }> {
+  // 【暂时禁用去AI味】直接返回原始内容
+  console.log('[批量写作] 去AI味已禁用（临时），使用原始内容');
+  const result = DeAIService.extractAndValidateTitle(content);
+  return {
+    fixedContent: result.content,
+    title: result.title,
+    fixedCount: 0,
+  };
+
+  // 以下是原来的去AI味逻辑，暂时注释掉
+  /*
   if (!deAIEnabled) {
     const result = DeAIService.extractAndValidateTitle(content);
     return {
@@ -450,6 +462,7 @@ async function performPolish(content: string, deAIEnabled: boolean): Promise<{
     title: result.title || null,
     fixedCount: result.fixedCount,
   };
+  */
 }
 
 /**

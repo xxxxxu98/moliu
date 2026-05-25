@@ -46,6 +46,8 @@ export interface Settings {
   fontSize: number;
   lineHeight: number;
   defaultModel: string;
+  /** 是否启用去AI味润色，默认为 true */
+  enableDeAI: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -59,6 +61,7 @@ const defaultSettings: Settings = {
   fontSize: 16,
   lineHeight: 1.8,
   defaultModel: 'openai-gpt-4o',
+  enableDeAI: true,
 };
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -73,6 +76,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const fontSize = ref(defaultSettings.fontSize);
   const lineHeight = ref(defaultSettings.lineHeight);
   const defaultModel = ref(defaultSettings.defaultModel);
+  const enableDeAI = ref(defaultSettings.enableDeAI);
   const aiProviders = ref<AIProvider[]>([]);
   const isInitialized = ref(false);
 
@@ -99,6 +103,7 @@ export const useSettingsStore = defineStore('settings', () => {
       fontSize.value = settings.fontSize || defaultSettings.fontSize;
       lineHeight.value = settings.lineHeight || defaultSettings.lineHeight;
       defaultModel.value = settings.defaultModel || defaultSettings.defaultModel;
+      enableDeAI.value = settings.enableDeAI ?? defaultSettings.enableDeAI;
       }
 
       // Load AI providers
@@ -129,6 +134,7 @@ export const useSettingsStore = defineStore('settings', () => {
       fontSize: fontSize.value,
       lineHeight: lineHeight.value,
       defaultModel: defaultModel.value,
+      enableDeAI: enableDeAI.value,
     };
 
     try {
@@ -199,6 +205,11 @@ export const useSettingsStore = defineStore('settings', () => {
 
   function setDefaultModel(modelId: string) {
     defaultModel.value = modelId;
+    saveAllSettings();
+  }
+
+  function setEnableDeAI(value: boolean) {
+    enableDeAI.value = value;
     saveAllSettings();
   }
 
@@ -321,6 +332,7 @@ export const useSettingsStore = defineStore('settings', () => {
     fontSize,
     lineHeight,
     defaultModel,
+    enableDeAI,
     aiProviders,
     isInitialized,
     // Actions
@@ -335,6 +347,7 @@ export const useSettingsStore = defineStore('settings', () => {
     setFontSize,
     setLineHeight,
     setDefaultModel,
+    setEnableDeAI,
     addAIProvider,
     updateAIProvider,
     removeAIProvider,

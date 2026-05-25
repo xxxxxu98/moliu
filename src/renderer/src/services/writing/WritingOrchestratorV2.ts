@@ -405,7 +405,7 @@ export function useWritingOrchestratorV2() {
   }
 
   // ============================================================
-  // Step 4: 润色
+  // Step 4: 润色 - 暂时禁用去AI味
   // ============================================================
 
   async function step4_Polish(): Promise<void> {
@@ -414,17 +414,11 @@ export function useWritingOrchestratorV2() {
 
     console.log('[OrchestratorV2] Step 4: 润色');
 
-    // 1. 六门禁润色
-    const pipeline = new SixGatePolishPipeline();
-    const pipelineResult = pipeline.execute(reviewedContent.value);
-    
-    let polished = pipelineResult.content;
+    // 【暂时禁用去AI味】
+    // 2026-05-24 临时禁用，等问题排查完毕后再启用
+    console.log('[OrchestratorV2] 去AI味已禁用（临时），使用原始内容');
 
-    // 2. 去AI味服务
-    const deAIResult = await DeAIService.fix(polished);
-    polished = deAIResult.content;
-
-    polishedContent.value = polished;
+    polishedContent.value = reviewedContent.value;
     progress.value = 85;
   }
 
