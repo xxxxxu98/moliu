@@ -7,7 +7,17 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
 import { visit, type SKIP } from 'unist-util-visit';
-import type { Node, Parent, Heading, List, ListItem, Paragraph, Text, Table, TableRow } from 'mdast';
+import type {
+  Node,
+  Parent,
+  Heading,
+  List,
+  ListItem,
+  Paragraph,
+  Text,
+  Table,
+  TableRow,
+} from 'mdast';
 import type { Root } from 'mdast';
 import type {
   Outline,
@@ -37,6 +47,33 @@ export interface ParseResult {
   worldSetting?: WorldSetting;
   estimatedWordCount?: number;
   coreSellingPoints?: string[];
+  emotionGoal?: {
+    primary: string;
+    secondary?: string;
+    arc?: string;
+    density?: number;
+    highPoints?: number[];
+    lowPoints?: number[];
+  };
+  coolPointDesign?: {
+    patterns: string[];
+    arranged: Array<{ type: string; description: string; suggestedChapter?: number }>;
+  };
+  storyLines?: {
+    map: string;
+    faction: string;
+    character: string;
+    goldenfinger: string;
+    worldRules: string;
+    conflict: string;
+    collection: string;
+    romance: string;
+  };
+  conflictDesign?: {
+    source: string;
+    escalation: string[];
+    majorConflicts: string[];
+  };
 }
 
 /**
@@ -92,15 +129,39 @@ export class RemarkParser {
       genres: [],
       chapters: [],
       characters: [],
-      structure: { act1: '', act2a: '', act2b: '', act3: '' },
+      structure: {
+        act1: { title: '第一幕：建置', content: '', wordCountRatio: 0.2 },
+        act2a: { title: '第二幕A：对抗（上）', content: '', wordCountRatio: 0.25 },
+        act2b: { title: '第二幕B：对抗（下）', content: '', wordCountRatio: 0.25 },
+        act3: { title: '第三幕：结局', content: '', wordCountRatio: 0.3 },
+      },
       foreshadows: [],
     };
 
     // 3. 遍历 AST 提取内容
-    this.extractContent(ast as Root, result);
+    try {
+      this.extractContent(ast as Root, result);
+    } catch (err) {
+      // 静默处理解析错误
+    }
 
     // 4. 清理并返回
     return this.cleanResult(result);
+  }
+
+  /**
+   * 将纯文本结构转换为 Schema 期望的 Act 结构
+   */
+  private buildAct(
+    text: string,
+    defaultTitle: string,
+    defaultRatio: number
+  ): { title: string; content: string; wordCountRatio: number } {
+    return {
+      title: defaultTitle,
+      content: text.substring(0, 200),
+      wordCountRatio: defaultRatio,
+    };
   }
 
   /**
@@ -126,7 +187,30 @@ export class RemarkParser {
     let inForeshadowSection = false;
     let foreshadowPhase: 'early' | 'mid' | 'late' | null = null;
 
+    // 八条故事线状态
+    let currentStoryLine: keyof Extract<Structure, any> | null = null;
+
+    // 情绪目标状态
+    let emotionField:
+      | 'primary'
+      | 'secondary'
+      | 'arc'
+      | 'density'
+      | 'highPoints'
+      | 'lowPoints'
+      | null = null;
+
+    // 矛盾设计状态
+    let conflictField: 'source' | 'escalation' | 'majorConflicts' | null = null;
+
     visit(node, (node: MDElement, index) => {
+      // 调试：记录前 20 个节点
+      if ((node as any)._debugCount === undefined) {
+        (node as any)._debugCount = 0;
+      }
+      const debugNode = node as any;
+      debugNode._debugCount++;
+
       // 标题处理
       if (node.type === 'heading') {
         const heading = node as Heading;
@@ -157,16 +241,27 @@ export class RemarkParser {
           inStructureSection = false;
           inForeshadowSection = false;
           foreshadowPhase = null;
+          return;
         }
 
         // H2: 主要区块
         if (level === 2) {
           // 重置标题待定状态
           titlePending = false;
+          // 重置各子状态
+          inChapterDetail = false;
+          currentChapterDetail = null;
+          currentStoryLine = null;
+          emotionField = null;
+          conflictField = null;
 
-          // 识别区块类型
-          if (normalizedText.includes('简介') || normalizedText.includes('概述')) {
-            currentSection = 'synopsis';
+          // 识别区块类型（支持多种标题别名）
+          if (
+            normalizedText.includes('基本信息') ||
+            normalizedText.includes('简介') ||
+            normalizedText.includes('概述')
+          ) {
+            currentSection = 'basicInfo';
             inWorldSection = false;
             inForeshadowSection = false;
           } else if (normalizedText.includes('题材') || normalizedText.includes('标签')) {
@@ -203,6 +298,25 @@ export class RemarkParser {
             currentSection = 'coreSellingPoints';
             inWorldSection = false;
             inForeshadowSection = false;
+          } else if (
+            normalizedText.includes('情绪目标') ||
+            (normalizedText.includes('情绪') && !normalizedText.includes('爽点'))
+          ) {
+            currentSection = 'emotionGoal';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('爽点类型') || normalizedText.includes('爽点安排')) {
+            currentSection = 'coolPointDesign';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('八条故事线') || normalizedText.includes('故事线')) {
+            currentSection = 'storyLines';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('矛盾设计') || normalizedText.includes('冲突设计')) {
+            currentSection = 'conflictDesign';
+            inWorldSection = false;
+            inForeshadowSection = false;
           } else if (normalizedText.includes('早期伏笔')) {
             currentSection = 'foreshadows';
             inForeshadowSection = true;
@@ -218,8 +332,25 @@ export class RemarkParser {
             inForeshadowSection = true;
             foreshadowPhase = 'late';
             inWorldSection = false;
+          } else if (normalizedText.includes('子情节')) {
+            currentSection = 'subplots';
+            inWorldSection = false;
+            inForeshadowSection = false;
           } else {
             currentSection = 'other';
+          }
+
+          // 识别八条故事线子区块
+          if (currentSection === 'storyLines') {
+            if (normalizedText.includes('地图线')) currentStoryLine = 'map' as any;
+            else if (normalizedText.includes('阵营线')) currentStoryLine = 'faction' as any;
+            else if (normalizedText.includes('人物线')) currentStoryLine = 'character' as any;
+            else if (normalizedText.includes('金手指线')) currentStoryLine = 'goldenfinger' as any;
+            else if (normalizedText.includes('世界观线')) currentStoryLine = 'worldRules' as any;
+            else if (normalizedText.includes('矛盾线')) currentStoryLine = 'conflict' as any;
+            else if (normalizedText.includes('收集线')) currentStoryLine = 'collection' as any;
+            else if (normalizedText.includes('感情线') || normalizedText.includes('浪漫线'))
+              currentStoryLine = 'romance' as any;
           }
 
           // 识别章节
@@ -251,9 +382,15 @@ export class RemarkParser {
           if (inStructureSection) {
             if (normalizedText.includes('第一幕') || normalizedText.includes('建置')) {
               structureField = 'act1';
-            } else if (normalizedText.includes('第二幕a') || normalizedText.includes('对抗（上）')) {
+            } else if (
+              normalizedText.includes('第二幕a') ||
+              normalizedText.includes('对抗（上）')
+            ) {
               structureField = 'act2a';
-            } else if (normalizedText.includes('第二幕b') || normalizedText.includes('对抗（下）')) {
+            } else if (
+              normalizedText.includes('第二幕b') ||
+              normalizedText.includes('对抗（下）')
+            ) {
               structureField = 'act2b';
             } else if (normalizedText.includes('第三幕') || normalizedText.includes('结局')) {
               structureField = 'act3';
@@ -278,8 +415,177 @@ export class RemarkParser {
           return;
         }
 
-        // H3: 子区块
+        // H3: 也作为主要区块处理（兼容 AI 使用 H3 格式的情况）
         if (level === 3) {
+          // 重置章节详情状态
+          inChapterDetail = false;
+          currentChapterDetail = null;
+          currentStoryLine = null;
+          emotionField = null;
+          conflictField = null;
+
+          // 识别区块类型
+          if (
+            normalizedText.includes('基本信息') ||
+            normalizedText.includes('简介') ||
+            normalizedText.includes('概述')
+          ) {
+            currentSection = 'basicInfo';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('题材') || normalizedText.includes('标签')) {
+            currentSection = 'genres';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('世界观') || normalizedText.includes('设定')) {
+            currentSection = 'worldSetting';
+            inWorldSection = true;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('四幕') || normalizedText.includes('结构')) {
+            currentSection = 'structure';
+            inStructureSection = true;
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('章节') || normalizedText.includes('大纲')) {
+            currentSection = 'chapters';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('角色') || normalizedText.includes('人物')) {
+            currentSection = 'characters';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('伏笔')) {
+            currentSection = 'foreshadows';
+            inWorldSection = false;
+            inForeshadowSection = true;
+            foreshadowPhase = null;
+          } else if (normalizedText.includes('字数') || normalizedText.includes('预估')) {
+            currentSection = 'wordCount';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('核心卖点') || normalizedText.includes('爽点设计')) {
+            currentSection = 'coreSellingPoints';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (
+            normalizedText.includes('情绪目标') ||
+            (normalizedText.includes('情绪') && !normalizedText.includes('爽点'))
+          ) {
+            currentSection = 'emotionGoal';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('爽点类型') || normalizedText.includes('爽点安排')) {
+            currentSection = 'coolPointDesign';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('八条故事线') || normalizedText.includes('故事线')) {
+            currentSection = 'storyLines';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('矛盾设计') || normalizedText.includes('冲突设计')) {
+            currentSection = 'conflictDesign';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('早期伏笔')) {
+            currentSection = 'foreshadows';
+            inForeshadowSection = true;
+            foreshadowPhase = 'early';
+            inWorldSection = false;
+          } else if (normalizedText.includes('中期伏笔')) {
+            currentSection = 'foreshadows';
+            inForeshadowSection = true;
+            foreshadowPhase = 'mid';
+            inWorldSection = false;
+          } else if (normalizedText.includes('长期伏笔') || normalizedText.includes('全篇伏笔')) {
+            currentSection = 'foreshadows';
+            inForeshadowSection = true;
+            foreshadowPhase = 'late';
+            inWorldSection = false;
+          } else if (normalizedText.includes('子情节')) {
+            currentSection = 'subplots';
+            inWorldSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('地点')) {
+            // H3 层级的地点子区块
+            worldSectionType = 'locations';
+            inWorldSection = true;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('势力')) {
+            // H3 层级的势力子区块
+            worldSectionType = 'factions';
+            inWorldSection = true;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('规则') || normalizedText.includes('力量')) {
+            // H3 层级的规则子区块
+            worldSectionType = 'rules';
+            inWorldSection = true;
+            inForeshadowSection = false;
+          } else {
+            currentSection = 'other';
+          }
+
+          // 识别八条故事线子区块
+          if (currentSection === 'storyLines') {
+            if (normalizedText.includes('地图线')) currentStoryLine = 'map' as any;
+            else if (normalizedText.includes('阵营线')) currentStoryLine = 'faction' as any;
+            else if (normalizedText.includes('人物线')) currentStoryLine = 'character' as any;
+            else if (normalizedText.includes('金手指线')) currentStoryLine = 'goldenfinger' as any;
+            else if (normalizedText.includes('世界观线')) currentStoryLine = 'worldRules' as any;
+            else if (normalizedText.includes('矛盾线')) currentStoryLine = 'conflict' as any;
+            else if (normalizedText.includes('收集线')) currentStoryLine = 'collection' as any;
+            else if (normalizedText.includes('感情线') || normalizedText.includes('浪漫线'))
+              currentStoryLine = 'romance' as any;
+          }
+
+          // 识别章节
+          if (currentSection === 'chapters') {
+            const chapterMatch = text.match(/第\s*(\d+)\s*章[：:]\s*(.+)/);
+            if (chapterMatch) {
+              if (currentChapter) {
+                result.chapters.push(currentChapter);
+              }
+              currentChapter = {
+                number: parseInt(chapterMatch[1]),
+                title: `第${chapterMatch[1]}章：${chapterMatch[2].trim()}`,
+                summary: '',
+                objectives: [],
+                coolPoints: [],
+                foreshadows: [],
+                strand: 'quest',
+                status: 'outline',
+                keyEvents: [],
+                involvedCharacters: [],
+              };
+              inChapterDetail = false;
+            }
+          }
+
+          // 识别四幕结构子区块
+          if (inStructureSection) {
+            if (normalizedText.includes('第一幕') || normalizedText.includes('建置')) {
+              structureField = 'act1';
+            } else if (
+              normalizedText.includes('第二幕a') ||
+              normalizedText.includes('对抗（上）')
+            ) {
+              structureField = 'act2a';
+            } else if (
+              normalizedText.includes('第二幕b') ||
+              normalizedText.includes('对抗（下）')
+            ) {
+              structureField = 'act2b';
+            } else if (normalizedText.includes('第三幕') || normalizedText.includes('结局')) {
+              structureField = 'act3';
+            } else {
+              structureField = null;
+            }
+          }
+
+          return;
+        }
+
+        // H4: 子区块处理（章节详情、角色详情、世界观子区块等）
+        if (level === 4) {
           // 章节详情
           if (currentSection === 'chapters' && currentChapter) {
             if (normalizedText.includes('核心事件') || normalizedText.includes('核心冲突')) {
@@ -288,7 +594,11 @@ export class RemarkParser {
             } else if (normalizedText.includes('爽点') || normalizedText.includes('爽点安排')) {
               inChapterDetail = true;
               currentChapterDetail = 'coolPoint';
-            } else if (normalizedText.includes('钩子') || normalizedText.includes('章尾钩子') || normalizedText.includes('悬念')) {
+            } else if (
+              normalizedText.includes('钩子') ||
+              normalizedText.includes('章尾钩子') ||
+              normalizedText.includes('悬念')
+            ) {
               inChapterDetail = true;
               currentChapterDetail = 'hook';
             } else {
@@ -301,19 +611,32 @@ export class RemarkParser {
           if (currentSection === 'characters') {
             currentCharacter = {
               name: text.replace(/^#+\s*/, '').trim(),
-              role: '角色',
-              description: '',
+              role: 'supporting' as const,
+              identity: '',
               personality: [],
-              abilities: [],
-              relationships: [],
+              strengths: [],
+              weaknesses: [],
+              goals: [],
+              currentDilemma: '',
             };
+          }
+
+          // 世界观子区块（H4 层级的地点、势力、规则）
+          if (inWorldSection && !worldSectionType) {
+            if (normalizedText.includes('地点')) {
+              worldSectionType = 'locations';
+            } else if (normalizedText.includes('势力')) {
+              worldSectionType = 'factions';
+            } else if (normalizedText.includes('规则') || normalizedText.includes('力量')) {
+              worldSectionType = 'rules';
+            }
           }
         }
       }
 
       // 段落处理
       if (node.type === 'paragraph') {
-        const parent = node.parent;
+        const parent = (node as any).parent;
         // 跳过列表项内的段落
         if (parent?.type === 'listItem') {
           return;
@@ -346,7 +669,23 @@ export class RemarkParser {
           }
           case 'structure':
             if (structureField && text.trim()) {
-              result.structure[structureField] = text.trim().substring(0, 100);
+              const ratios: Record<keyof Structure, number> = {
+                act1: 0.2,
+                act2a: 0.25,
+                act2b: 0.25,
+                act3: 0.3,
+              };
+              const titles: Record<keyof Structure, string> = {
+                act1: '第一幕：建置',
+                act2a: '第二幕A：对抗（上）',
+                act2b: '第二幕B：对抗（下）',
+                act3: '第三幕：结局',
+              };
+              result.structure[structureField] = this.buildAct(
+                text.trim(),
+                titles[structureField],
+                ratios[structureField]
+              );
             }
             break;
           case 'foreshadows':
@@ -365,6 +704,55 @@ export class RemarkParser {
             }
             if (text.trim()) {
               result.coreSellingPoints.push(text.trim());
+            }
+            break;
+          case 'emotionGoal':
+            if (!result.emotionGoal) {
+              result.emotionGoal = {
+                primary: '',
+                arc: 'rising',
+                density: 3000,
+                highPoints: [],
+                lowPoints: [],
+              };
+            }
+            // 尝试从段落中解析情绪字段
+            this.parseEmotionFromText(result, text);
+            break;
+          case 'coolPointDesign':
+            if (!result.coolPointDesign) {
+              result.coolPointDesign = { patterns: [], arranged: [] };
+            }
+            // 爽点段落添加到 arranged
+            if (text.trim()) {
+              result.coolPointDesign.arranged.push({ type: 'paragraph', description: text.trim() });
+            }
+            break;
+          case 'conflictDesign':
+            if (!result.conflictDesign) {
+              result.conflictDesign = { source: '', escalation: [], majorConflicts: [] };
+            }
+            this.parseConflictFromText(result, text);
+            break;
+          case 'storyLines':
+            if (!result.storyLines) {
+              result.storyLines = {
+                map: '',
+                faction: '',
+                character: '',
+                goldenfinger: '',
+                worldRules: '',
+                conflict: '',
+                collection: '',
+                romance: '',
+              };
+            }
+            if (currentStoryLine && text.trim()) {
+              (result.storyLines as any)[currentStoryLine] = (
+                (result.storyLines as any)[currentStoryLine] +
+                ' ' +
+                text.trim()
+              ).trim();
             }
             break;
           case 'chapters':
@@ -387,17 +775,17 @@ export class RemarkParser {
         }
 
         // 当前角色的描述
-        if (currentCharacter && !currentCharacter.description) {
-          currentCharacter.description = text;
+        if (currentCharacter && !currentCharacter.identity) {
+          currentCharacter.identity = text;
         }
       }
 
       // 列表处理
       if (node.type === 'list') {
         const list = node as List;
+        const items = this.extractListItems(list);
 
         // 处理标题待定状态下的第一个列表项
-        // 例如：# 标题 后面直接跟列表
         if (titlePending && !result.title) {
           const pendingItems = this.extractListItems(list);
           if (pendingItems.length > 0) {
@@ -406,9 +794,44 @@ export class RemarkParser {
           }
         }
 
-        const items = this.extractListItems(list);
-
         switch (currentSection) {
+          case 'basicInfo':
+            // 处理 "- **字段名**：值" 格式
+            for (const item of items) {
+              if (!item.trim()) continue;
+              const fieldMatch = item.match(/\*\*([^*]+)\*\*[：:]\s*(.+)/);
+              if (fieldMatch) {
+                const fieldName = fieldMatch[1].trim();
+                const fieldValue = fieldMatch[2].trim();
+                switch (fieldName) {
+                  case '标题':
+                  case '书名':
+                    result.title = fieldValue;
+                    break;
+                  case '题材标签':
+                  case '题材':
+                  case '标签':
+                    const genres = fieldValue
+                      .split(/[、，,]/)
+                      .map(g => g.trim())
+                      .filter(Boolean);
+                    result.genres.push(...genres);
+                    break;
+                  case '预估字数':
+                  case '字数':
+                  case '目标字数':
+                    const numMatch = fieldValue.match(/(\d+)/);
+                    if (numMatch) result.estimatedWordCount = parseInt(numMatch[1]);
+                    break;
+                  case '一句话简介':
+                  case '简介':
+                  case '一句话概括':
+                    result.synopsis = fieldValue;
+                    break;
+                }
+              }
+            }
+            break;
           case 'genres':
             result.genres.push(...items.filter(Boolean));
             break;
@@ -430,6 +853,120 @@ export class RemarkParser {
             }
             result.coreSellingPoints.push(...items.filter(Boolean));
             break;
+          case 'emotionGoal':
+            if (!result.emotionGoal) {
+              result.emotionGoal = {
+                primary: '',
+                arc: 'rising',
+                density: 3000,
+                highPoints: [],
+                lowPoints: [],
+              };
+            }
+            for (const item of items) {
+              const coreMatch = item.match(/核心情绪[：:]\s*(.+)/);
+              if (coreMatch) {
+                result.emotionGoal.primary = coreMatch[1].trim();
+                continue;
+              }
+              const arcMatch = item.match(/情绪弧线[：:]\s*(.+)/);
+              if (arcMatch) {
+                result.emotionGoal.arc = arcMatch[1].trim();
+                continue;
+              }
+              const densityMatch = item.match(/情绪密度[：:]\s*(\d+)/);
+              if (densityMatch) {
+                result.emotionGoal.density = parseInt(densityMatch[1]);
+                continue;
+              }
+              const highMatch = item.match(/情绪高点[：:]\s*([\d,，\s]+)/);
+              if (highMatch) {
+                result.emotionGoal.highPoints = highMatch[1]
+                  .split(/[,\s，]+/)
+                  .filter(Boolean)
+                  .map(Number);
+                continue;
+              }
+              const lowMatch = item.match(/情绪低点[：:]\s*([\d,，\s]+)/);
+              if (lowMatch) {
+                result.emotionGoal.lowPoints = lowMatch[1]
+                  .split(/[,\s，]+/)
+                  .filter(Boolean)
+                  .map(Number);
+              }
+            }
+            break;
+          case 'coolPointDesign':
+            if (!result.coolPointDesign) {
+              result.coolPointDesign = { patterns: [], arranged: [] };
+            }
+            for (const item of items) {
+              if (item.includes('类型')) {
+                const patterns = item
+                  .replace(/^[^-：:]+[：:]\s*/, '')
+                  .split(/[、，,]/)
+                  .filter(Boolean);
+                result.coolPointDesign.patterns.push(...patterns);
+              } else {
+                const chapterMatch = item.match(/第\s*(\d+)\s*章/);
+                result.coolPointDesign.arranged.push({
+                  type: item.substring(0, 20),
+                  description: item,
+                  suggestedChapter: chapterMatch ? parseInt(chapterMatch[1]) : undefined,
+                });
+              }
+            }
+            break;
+          case 'conflictDesign':
+            if (!result.conflictDesign) {
+              result.conflictDesign = { source: '', escalation: [], majorConflicts: [] };
+            }
+            for (const item of items) {
+              const sourceMatch = item.match(/冲突来源[：:]\s*(.+)/);
+              if (sourceMatch) {
+                result.conflictDesign.source = sourceMatch[1].trim();
+                continue;
+              }
+              const escalationMatch = item.match(/矛盾递进[：:](.+)/);
+              if (escalationMatch) {
+                result.conflictDesign.escalation = escalationMatch[1]
+                  .split(/[、，,]+/)
+                  .map(s => s.trim())
+                  .filter(Boolean);
+                continue;
+              }
+              const conflictMatch = item.match(/主要冲突[：:]\s*(.+)/);
+              if (conflictMatch) {
+                result.conflictDesign.majorConflicts = conflictMatch[1]
+                  .split(/[、，,]+/)
+                  .map(s => s.trim())
+                  .filter(Boolean);
+              }
+            }
+            break;
+          case 'storyLines':
+            if (!result.storyLines) {
+              result.storyLines = {
+                map: '',
+                faction: '',
+                character: '',
+                goldenfinger: '',
+                worldRules: '',
+                conflict: '',
+                collection: '',
+                romance: '',
+              };
+            }
+            for (const item of items) {
+              if (currentStoryLine && item.trim()) {
+                (result.storyLines as any)[currentStoryLine] = (
+                  (result.storyLines as any)[currentStoryLine] +
+                  ' ' +
+                  item.trim()
+                ).trim();
+              }
+            }
+            break;
         }
 
         // 世界观列表
@@ -446,17 +983,17 @@ export class RemarkParser {
               result.worldSetting.locations.push({
                 name: name.trim(),
                 description: description || '',
-              });
+              } as any);
             } else if (worldSectionType === 'factions') {
               result.worldSetting.factions.push({
                 name: name.trim(),
                 description: description || '',
-              });
+              } as any);
             } else if (worldSectionType === 'rules') {
               result.worldSetting.rules.push({
                 name: name.trim(),
                 description: description || '',
-              });
+              } as any);
             }
           }
         }
@@ -490,9 +1027,34 @@ export class RemarkParser {
     }
 
     // 保存最后的角色
-    if (currentCharacter?.name) {
+    if (currentCharacter && (currentCharacter as any).name) {
       result.characters.push(currentCharacter as Character);
     }
+  }
+
+  /**
+   * 获取节点预览文本（调试用）
+   */
+  private getNodePreview(node: MDElement): string {
+    if (node.type === 'heading') {
+      const heading = node as Heading;
+      const text = this.extractHeadingText(heading);
+      return text.substring(0, 60);
+    }
+    if (node.type === 'paragraph') {
+      const para = node as Paragraph;
+      const text = this.extractText(para);
+      return text.substring(0, 60);
+    }
+    if (node.type === 'list') {
+      const list = node as List;
+      return `list(${list.children.length} items)`;
+    }
+    if (node.type === 'table') {
+      const table = node as Table;
+      return `table(${table.children.length} rows)`;
+    }
+    return node.type;
   }
 
   /**
@@ -500,12 +1062,12 @@ export class RemarkParser {
    */
   private extractHeadingText(heading: Heading): string {
     return heading.children
-      .map((child) => {
+      .map(child => {
         if (child.type === 'text') {
           return (child as Text).value;
         }
         if (child.type === 'inlineCode') {
-          return (child as Text).value;
+          return (child as any).value;
         }
         return '';
       })
@@ -517,12 +1079,30 @@ export class RemarkParser {
    */
   private extractText(node: Paragraph): string {
     return node.children
-      .map((child) => {
+      .map(child => {
         if (child.type === 'text') {
           return (child as Text).value;
         }
         if (child.type === 'inlineCode') {
-          return (child as Text).value;
+          return (child as any).value;
+        }
+        return '';
+      })
+      .join('');
+  }
+
+  /**
+   * 提取表格单元格文本
+   */
+  private extractTableCellText(cell: any): string {
+    if (!cell.children) return '';
+    return cell.children
+      .map((child: any) => {
+        if (child.type === 'text') {
+          return child.value || '';
+        }
+        if (child.type === 'inlineCode') {
+          return child.value || '';
         }
         return '';
       })
@@ -562,19 +1142,15 @@ export class RemarkParser {
   /**
    * 提取表格内容
    */
-  private extractTableContent(
-    table: Table,
-    result: ParseResult,
-    section: string
-  ): void {
+  private extractTableContent(table: Table, result: ParseResult, section: string): void {
     const rows = table.children as TableRow[];
     if (rows.length < 2) return;
 
     // 提取表头
     const headerRow = rows[0];
-    const headers = headerRow.children.map((cell) => {
+    const headers = headerRow.children.map(cell => {
       if (cell.type === 'tableCell') {
-        return this.extractText(cell as Paragraph).trim();
+        return this.extractTableCellText(cell as any).trim();
       }
       return '';
     });
@@ -582,9 +1158,9 @@ export class RemarkParser {
     // 提取数据行
     for (let i = 1; i < rows.length; i++) {
       const dataRow = rows[i];
-      const values = dataRow.children.map((cell) => {
+      const values = dataRow.children.map(cell => {
         if (cell.type === 'tableCell') {
-          return this.extractText(cell as Paragraph).trim();
+          return this.extractTableCellText(cell as any).trim();
         }
         return '';
       });
@@ -597,10 +1173,265 @@ export class RemarkParser {
       // 根据区块类型处理
       if (section === 'characters' && result.characters.length > 0) {
         const lastChar = result.characters[result.characters.length - 1];
-        if (lastChar && !lastChar.description) {
-          lastChar.description = Object.values(rowData).join('；');
+        if (lastChar && !lastChar.identity) {
+          lastChar.identity = Object.values(rowData).join('；');
         }
       }
+
+      // 世界设定 - 地点表格
+      if (
+        (section === 'worldSetting' || section === 'worldLocation') &&
+        this.isLocationsTable(headers)
+      ) {
+        if (!result.worldSetting) {
+          result.worldSetting = { locations: [], factions: [], rules: [] };
+        }
+        const locationName = rowData['地点名称'] || rowData['名称'] || rowData['地点'] || '';
+        const description = rowData['描述'] || rowData['说明'] || '';
+        const level = rowData['等级'] || rowData['层级'] || '';
+        if (locationName) {
+          result.worldSetting.locations.push({
+            name: locationName,
+            description: description,
+            level: level || undefined,
+          } as any);
+        }
+      }
+
+      // 世界设定 - 势力表格
+      if (
+        (section === 'worldSetting' || section === 'worldFaction') &&
+        this.isFactionsTable(headers)
+      ) {
+        if (!result.worldSetting) {
+          result.worldSetting = { locations: [], factions: [], rules: [] };
+        }
+        const factionName = rowData['势力名称'] || rowData['名称'] || rowData['势力'] || '';
+        const description = rowData['描述'] || rowData['说明'] || '';
+        const allies = rowData['盟友'] || '';
+        const enemies = rowData['敌人'] || '';
+        if (factionName) {
+          result.worldSetting.factions.push({
+            name: factionName,
+            description: description,
+            allies: allies.split(/[、，,]/).filter(Boolean),
+            enemies: enemies.split(/[、，,]/).filter(Boolean),
+          } as any);
+        }
+      }
+
+      // 世界设定 - 规则表格
+      if ((section === 'worldSetting' || section === 'worldRule') && this.isRulesTable(headers)) {
+        if (!result.worldSetting) {
+          result.worldSetting = { locations: [], factions: [], rules: [] };
+        }
+        const ruleName = rowData['规则名称'] || rowData['名称'] || rowData['规则'] || '';
+        const description = rowData['描述'] || rowData['说明'] || '';
+        const category = rowData['类别'] || '';
+        if (ruleName) {
+          result.worldSetting.rules.push({
+            name: ruleName,
+            description: description,
+            category: category || undefined,
+          } as any);
+        }
+      }
+
+      // 章节概览表格
+      if (section === 'chapters' && this.isChaptersTable(headers)) {
+        const chapterTitle = rowData['标题'] || rowData['章节标题'] || rowData['章节'] || '';
+        const chapterNum = rowData['章节'] || '';
+        const summary = rowData['摘要'] || rowData['简介'] || rowData['概要'] || '';
+        const keyEvents = rowData['关键事件'] || rowData['事件'] || '';
+        const characters = rowData['涉及角色'] || rowData['角色'] || '';
+
+        if (chapterTitle || chapterNum) {
+          const num = chapterNum
+            ? parseInt(chapterNum.replace(/第|章/g, ''))
+            : result.chapters.length + 1;
+          result.chapters.push({
+            number: num,
+            title: chapterTitle || `第${num}章`,
+            summary: summary,
+            objectives: [],
+            coolPoints: [],
+            foreshadows: [],
+            strand: 'quest',
+            status: 'outline',
+            keyEvents: keyEvents ? [keyEvents] : [],
+            involvedCharacters: characters ? characters.split(/[、，,]/).filter(Boolean) : [],
+          });
+        }
+      }
+
+      // 伏笔表格
+      if (section === 'foreshadows' && this.isForeshadowTable(headers)) {
+        const hint = rowData['内容'] || rowData['伏笔'] || rowData['描述'] || '';
+        const type = rowData['类型'] || '';
+        const suggestedChapter = rowData['建议章节'] || rowData['章节'] || '';
+        if (hint) {
+          result.foreshadows.push({
+            hint: hint,
+            type: this.normalizeForeshadowType(type),
+            suggestedChapter: suggestedChapter ? parseInt(suggestedChapter) : undefined,
+            status: 'active',
+          });
+        }
+      }
+
+      // 爽点安排表格
+      if (section === 'coolPointDesign' && this.isCoolPointTable(headers)) {
+        if (!result.coolPointDesign) {
+          result.coolPointDesign = { patterns: [], arranged: [] };
+        }
+        const chapter = rowData['章节'] || '';
+        const type = rowData['类型'] || '';
+        const description = rowData['描述'] || '';
+        result.coolPointDesign.arranged.push({
+          type: type,
+          description: description,
+          suggestedChapter: chapter ? parseInt(chapter) : undefined,
+        });
+      }
+    }
+  }
+
+  /**
+   * 判断是否为地点表格
+   */
+  private isLocationsTable(headers: string[]): boolean {
+    const normalized = headers.map(h => h.toLowerCase());
+    return normalized.some(h => h.includes('地点')) || normalized.some(h => h.includes('location'));
+  }
+
+  /**
+   * 判断是否为势力表格
+   */
+  private isFactionsTable(headers: string[]): boolean {
+    const normalized = headers.map(h => h.toLowerCase());
+    return normalized.some(h => h.includes('势力')) || normalized.some(h => h.includes('faction'));
+  }
+
+  /**
+   * 判断是否为规则表格
+   */
+  private isRulesTable(headers: string[]): boolean {
+    const normalized = headers.map(h => h.toLowerCase());
+    return normalized.some(h => h.includes('规则')) || normalized.some(h => h.includes('rule'));
+  }
+
+  /**
+   * 判断是否为章节表格
+   */
+  private isChaptersTable(headers: string[]): boolean {
+    const normalized = headers.map(h => h.toLowerCase());
+    return normalized.some(h => h.includes('章节')) || normalized.some(h => h.includes('chapter'));
+  }
+
+  /**
+   * 判断是否为伏笔表格
+   */
+  private isForeshadowTable(headers: string[]): boolean {
+    const normalized = headers.map(h => h.toLowerCase());
+    return (
+      normalized.some(h => h.includes('伏笔')) || normalized.some(h => h.includes('foreshadow'))
+    );
+  }
+
+  /**
+   * 判断是否为爽点表格
+   */
+  private isCoolPointTable(headers: string[]): boolean {
+    const normalized = headers.map(h => h.toLowerCase());
+    return normalized.some(h => h.includes('爽点')) || normalized.some(h => h.includes('cool'));
+  }
+
+  /**
+   * 规范化伏笔类型
+   */
+  private normalizeForeshadowType(type: string): 'item' | 'dialogue' | 'event' | 'mystery' {
+    const t = type.toLowerCase();
+    if (t.includes('道具') || t.includes('item')) return 'item';
+    if (t.includes('对话') || t.includes('dialogue')) return 'dialogue';
+    if (t.includes('事件') || t.includes('event')) return 'event';
+    return 'mystery';
+  }
+
+  /**
+   * 从文本解析情绪目标字段
+   */
+  private parseEmotionFromText(result: ParseResult, text: string): void {
+    if (!result.emotionGoal) return;
+    // 核心情绪
+    const coreMatch = text.match(/核心情绪[：:]\s*(.+)/);
+    if (coreMatch) {
+      result.emotionGoal.primary = coreMatch[1].trim();
+      return;
+    }
+    // 次要情绪
+    const secMatch = text.match(/次要情绪[：:]\s*(.+)/);
+    if (secMatch) {
+      result.emotionGoal.secondary = secMatch[1].trim();
+      return;
+    }
+    // 情绪弧线
+    const arcMatch = text.match(/情绪弧线[：:]\s*(.+)/);
+    if (arcMatch) {
+      result.emotionGoal.arc = arcMatch[1].trim();
+      return;
+    }
+    // 情绪密度
+    const densityMatch = text.match(/情绪密度[：:]\s*(\d+)/);
+    if (densityMatch) {
+      result.emotionGoal.density = parseInt(densityMatch[1]);
+      return;
+    }
+    // 情绪高点
+    const highMatch = text.match(/情绪高点[：:]\s*([\d,，\s]+)/);
+    if (highMatch) {
+      result.emotionGoal.highPoints = highMatch[1]
+        .split(/[,\s，]+/)
+        .filter(Boolean)
+        .map(Number);
+      return;
+    }
+    // 情绪低点
+    const lowMatch = text.match(/情绪低点[：:]\s*([\d,，\s]+)/);
+    if (lowMatch) {
+      result.emotionGoal.lowPoints = lowMatch[1]
+        .split(/[,\s，]+/)
+        .filter(Boolean)
+        .map(Number);
+    }
+  }
+
+  /**
+   * 从文本解析矛盾设计字段
+   */
+  private parseConflictFromText(result: ParseResult, text: string): void {
+    if (!result.conflictDesign) return;
+    // 冲突来源
+    const sourceMatch = text.match(/冲突来源[：:]\s*(.+)/);
+    if (sourceMatch) {
+      result.conflictDesign.source = sourceMatch[1].trim();
+      return;
+    }
+    // 矛盾递进（数字列表）
+    const escalationMatch = text.match(/矛盾递进[：:]([\s\S]+)/);
+    if (escalationMatch) {
+      result.conflictDesign.escalation = escalationMatch[1]
+        .split(/[、，,\n]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+      return;
+    }
+    // 主要冲突
+    const conflictMatch = text.match(/主要冲突[：:]\s*([\s\S]+)/);
+    if (conflictMatch) {
+      result.conflictDesign.majorConflicts = conflictMatch[1]
+        .split(/[、，,\n]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
     }
   }
 
@@ -611,13 +1442,18 @@ export class RemarkParser {
     return {
       title: result.title || '未命名大纲',
       synopsis: result.synopsis || '',
-      genres: result.genres.filter((g) => g.trim()),
-      chapters: result.chapters.filter((ch) => ch.title),
-      characters: result.characters.filter((c) => c.name || c.role),
+      genres: result.genres.filter(g => g.trim()),
+      chapters: result.chapters.filter(ch => ch.title),
+      characters: result.characters.filter(c => c.name || c.role),
       structure: result.structure,
       foreshadows: result.foreshadows,
       worldSetting: result.worldSetting,
       estimatedWordCount: result.estimatedWordCount,
+      coreSellingPoints: result.coreSellingPoints,
+      emotionGoal: result.emotionGoal,
+      coolPointDesign: result.coolPointDesign,
+      storyLines: result.storyLines,
+      conflictDesign: result.conflictDesign,
     };
   }
 }

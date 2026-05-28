@@ -3,7 +3,12 @@
  * Orchestrates Markdown parsing, validation, and normalization
  */
 
-import { OutlineSchema, type Outline, type Chapter, type Character } from '../schemas/outline.schema';
+import {
+  OutlineSchema,
+  type Outline,
+  type Chapter,
+  type Character,
+} from '../schemas/outline.schema';
 import { remarkParser, type ParseResult } from '../parser/remark-parser';
 import { markdownExtractor } from '../parser/markdown-extractor';
 
@@ -38,7 +43,9 @@ export class OutlinePostProcessor {
     if (this.remarkEnabled) {
       try {
         const parseResult = remarkParser.parse(markdown);
-        const { valid, outlines, validationWarnings } = this.validateAndNormalizeFromParse(parseResult);
+
+        const { valid, outlines, validationWarnings } =
+          this.validateAndNormalizeFromParse(parseResult);
         warnings.push(...validationWarnings);
 
         if (valid && outlines.length > 0) {
@@ -61,7 +68,9 @@ export class OutlinePostProcessor {
     if (this.regexEnabled) {
       try {
         const extracted = markdownExtractor.extract(markdown);
-        const { valid, outlines, validationWarnings } = this.validateAndNormalizeFromExtracted(extracted);
+
+        const { valid, outlines, validationWarnings } =
+          this.validateAndNormalizeFromExtracted(extracted);
         warnings.push(...validationWarnings);
 
         if (valid && outlines.length > 0) {
@@ -82,7 +91,7 @@ export class OutlinePostProcessor {
 
     // 3. 尝试从原始 Markdown 中提取 JSON
     const jsonResult = this.extractJsonFromMarkdown(markdown);
-    if (jsonResult.success) {
+    if (jsonResult.success && jsonResult.json) {
       return this.processJSON(jsonResult.json);
     }
 
@@ -107,7 +116,7 @@ export class OutlinePostProcessor {
 
     try {
       // 清理 JSON 字符串
-      const cleaned = this.cleanJsonString(jsonString);
+      const cleaned = this.cleanJsonString(jsonString || '');
       const parsed = JSON.parse(cleaned);
 
       // 处理单个对象或数组
@@ -156,12 +165,73 @@ export class OutlinePostProcessor {
       title: parseResult.title,
       synopsis: parseResult.synopsis,
       genres: parseResult.genres,
-      chapters: parseResult.chapters,
-      characters: parseResult.characters,
+      // 转换 ChapterEnhanced[] -> Chapter[]，确保 number 字段
+      chapters: (parseResult.chapters || []).map(ch => ({
+        id: ch.id,
+        number: ch.number,
+        title: ch.title,
+        summary: ch.summary || '',
+        objectives: ch.objectives || [],
+        coolPoints: ch.coolPoints || [],
+        foreshadows: ch.foreshadows || [],
+        strand: ch.strand || 'quest',
+        timeAnchor: ch.timeAnchor,
+        status: ch.status || 'outline',
+        keyEvents: ch.keyEvents || [],
+        involvedCharacters: ch.involvedCharacters || [],
+        coreEvent: ch.coreEvent,
+        hook: ch.hook,
+      })),
+      // 转换角色，确保 identity 字段（schema required）
+      characters: (parseResult.characters || []).map(c => ({
+        name: c.name || '未知角色',
+        role: (c.role as any) || 'supporting',
+        identity: (c as any).identity || '',
+        personality: c.personality || [],
+        goldenFinger: (c as any).goldenFinger,
+        strengths: (c as any).strengths || [],
+        weaknesses: (c as any).weaknesses || [],
+        goals: (c as any).goals || [],
+        currentDilemma: (c as any).currentDilemma || '',
+        appearance: (c as any).appearance,
+        speechStyle: (c as any).speechStyle,
+        relationships: this.normalizeRelationships((c as any).relationships || []),
+      })),
       structure: parseResult.structure,
-      foreshadows: parseResult.foreshadows,
-      worldSetting: parseResult.worldSetting,
+      foreshadows: (parseResult.foreshadows || []).map(f => ({
+        id: f.id,
+        hint: f.hint,
+        type: f.type,
+        suggestedChapter: f.suggestedChapter,
+        status: f.status || 'active',
+        phase: f.phase,
+      })),
+      // 规范化 worldSetting（确保 category 字段有效）
+      worldSetting: this.normalizeWorldSetting(parseResult.worldSetting),
       estimatedWordCount: parseResult.estimatedWordCount,
+      coreSellingPoints: parseResult.coreSellingPoints,
+      // 规范化情绪目标
+      emotionGoal: this.normalizeEmotionGoal(parseResult.emotionGoal),
+      // 确保 coolPointDesign 有 density 字段
+      coolPointDesign: parseResult.coolPointDesign
+        ? {
+            density: (parseResult.coolPointDesign as any).density || {
+              micro: 3000,
+              small: 9000,
+              big: 21000,
+            },
+            patterns: parseResult.coolPointDesign.patterns || [],
+            arranged: (parseResult.coolPointDesign.arranged || []).map((cp: any) => ({
+              chapter: cp.suggestedChapter || 0,
+              type: cp.type || '',
+              description: cp.description || '',
+            })),
+          }
+        : undefined,
+      // 规范化八条故事线（字符串 -> 对象）
+      storyLines: this.normalizeStoryLines(parseResult.storyLines),
+      // 规范化矛盾设计
+      conflictDesign: this.normalizeConflictDesign(parseResult.conflictDesign),
     };
 
     // 智能补全标题：如果标题为空或无效，尝试从其他字段提取
@@ -199,7 +269,12 @@ export class OutlinePostProcessor {
    */
   private smartExtractTitle(outline: Partial<Outline>, parseResult: ParseResult): Partial<Outline> {
     // 如果标题有效，直接返回
-    if (outline.title && outline.title.trim() && outline.title !== '标题' && outline.title.length > 1) {
+    if (
+      outline.title &&
+      outline.title.trim() &&
+      outline.title !== '标题' &&
+      outline.title.length > 1
+    ) {
       return outline;
     }
 
@@ -227,8 +302,8 @@ export class OutlinePostProcessor {
 
     // 3. 从角色名中提取（如果有主角）
     if (parseResult.characters && parseResult.characters.length > 0) {
-      const protagonist = parseResult.characters.find(c =>
-        c.role?.includes('主角') || c.role?.includes('主')
+      const protagonist = parseResult.characters.find(
+        c => c.role?.includes('主角') || c.role?.includes('主')
       );
       if (protagonist?.name && protagonist.name.length > 1) {
         candidates.push(`${protagonist.name}的传奇`); // 组合一个标题
@@ -248,7 +323,9 @@ export class OutlinePostProcessor {
   /**
    * 从正则提取结果验证和规范化
    */
-  private validateAndNormalizeFromExtracted(extracted: ReturnType<typeof markdownExtractor.extract>): {
+  private validateAndNormalizeFromExtracted(
+    extracted: ReturnType<typeof markdownExtractor.extract>
+  ): {
     valid: boolean;
     outlines: Outline[];
     validationWarnings: string[];
@@ -259,14 +336,67 @@ export class OutlinePostProcessor {
       title: extracted.title,
       synopsis: extracted.synopsis,
       genres: extracted.genres,
-      chapters: extracted.chapters,
-      characters: extracted.characters,
+      chapters: (extracted.chapters || []).map(ch => ({
+        number: (ch as any).number || 0,
+        title: ch.title || '未命名章节',
+        summary: ch.summary || '',
+        objectives: [],
+        coolPoints: ch.coolPoints || [],
+        foreshadows: [],
+        strand: 'quest' as const,
+        status: 'outline' as const,
+        keyEvents: ch.keyEvents || [],
+        involvedCharacters: ch.involvedCharacters || [],
+        coreEvent: ch.coreEvent,
+        hook: ch.hook,
+      })),
+      characters: (extracted.characters || []).map(c => ({
+        name: c.name || '未知角色',
+        role: (c.role as any) || 'supporting',
+        identity: c.description || '',
+        description: c.description || '',
+        personality: c.personality || [],
+        goldenFinger: undefined,
+        strengths: [],
+        weaknesses: [],
+        goals: [],
+        currentDilemma: '',
+        appearance: undefined,
+        speechStyle: undefined,
+        relationships: [],
+      })),
       structure: extracted.structure,
-      foreshadows: extracted.foreshadows as any,
-      worldSetting: extracted.worldSetting,
+      foreshadows: (extracted.foreshadows || []).map(f => ({
+        hint: f.hint,
+        type: (f.type as any) || 'mystery',
+        suggestedChapter: undefined,
+        status: 'active' as const,
+        phase: f.phase,
+      })),
+      worldSetting: this.normalizeWorldSetting(extracted.worldSetting),
       estimatedWordCount: extracted.estimatedWordCount,
-      // 新增：支持核心卖点
-      coreSellingPoints: extracted.coreSellingPoints,
+      coreSellingPoints: extracted.coreSellingPoints?.map(sp =>
+        typeof sp === 'string' ? sp : (sp as any).name || ''
+      ),
+      emotionGoal: this.normalizeEmotionGoal(extracted.emotionGoal),
+      // 确保 coolPointDesign 有 density 字段
+      coolPointDesign: extracted.coolPointDesign
+        ? {
+            density: (extracted.coolPointDesign as any).density || {
+              micro: 3000,
+              small: 9000,
+              big: 21000,
+            },
+            patterns: extracted.coolPointDesign.patterns || [],
+            arranged: (extracted.coolPointDesign.arranged || []).map((cp: any) => ({
+              chapter: cp.suggestedChapter || 0,
+              type: cp.type || '',
+              description: cp.description || '',
+            })),
+          }
+        : undefined,
+      storyLines: this.normalizeStoryLines(extracted.storyLines),
+      conflictDesign: this.normalizeConflictDesign(extracted.conflictDesign),
     };
 
     // 智能补全标题
@@ -296,9 +426,17 @@ export class OutlinePostProcessor {
   /**
    * 从提取结果智能提取标题
    */
-  private smartExtractTitleFromExtracted(outline: Partial<Outline>, extracted: ReturnType<typeof markdownExtractor.extract>): Partial<Outline> {
+  private smartExtractTitleFromExtracted(
+    outline: Partial<Outline>,
+    extracted: ReturnType<typeof markdownExtractor.extract>
+  ): Partial<Outline> {
     // 如果标题有效，直接返回
-    if (outline.title && outline.title.trim() && outline.title !== '标题' && outline.title.length > 1) {
+    if (
+      outline.title &&
+      outline.title.trim() &&
+      outline.title !== '标题' &&
+      outline.title.length > 1
+    ) {
       return outline;
     }
 
@@ -325,8 +463,8 @@ export class OutlinePostProcessor {
 
     // 3. 从角色名中提取
     if (extracted.characters && extracted.characters.length > 0) {
-      const protagonist = extracted.characters.find(c =>
-        c.role?.includes('主角') || c.role?.includes('主')
+      const protagonist = extracted.characters.find(
+        c => c.role?.includes('主角') || c.role?.includes('主')
       );
       if (protagonist?.name && protagonist.name.length > 1) {
         candidates.push(`${protagonist.name}的传奇`);
@@ -383,7 +521,7 @@ export class OutlinePostProcessor {
    * 规范化原始大纲数据
    */
   private normalizeRawOutlines(data: any[]): Partial<Outline>[] {
-    return data.map((item) => this.normalizeRawOutline(item));
+    return data.map(item => this.normalizeRawOutline(item));
   }
 
   /**
@@ -397,77 +535,75 @@ export class OutlinePostProcessor {
       genres: this.normalizeArray(raw.genres || raw.tags || []),
       chapters: this.normalizeChapters(raw.chapters || raw.sections || []),
       characters: this.normalizeCharacters(raw.characters || raw.roles || []),
-      structure: raw.structure || undefined,
+      structure: this.normalizeStructure(raw.structure),
       foreshadows: this.normalizeForeshadows(raw.foreshadows || raw.hints || []),
-      worldSetting: raw.worldSetting || raw.world || undefined,
+      worldSetting: this.normalizeWorldSetting(raw.worldSetting || raw.world),
       estimatedWordCount: raw.estimatedWordCount || raw.wordCount || undefined,
-      
+
       // 新增：情绪目标
-      emotionGoal: raw.emotionGoal ? {
-        primary: raw.emotionGoal.primary || '',
-        secondary: raw.emotionGoal.secondary,
-        arc: raw.emotionGoal.arc || 'rising',
-        density: raw.emotionGoal.density,
-        highPoints: this.normalizeArray(raw.emotionGoal.highPoints || []),
-        lowPoints: this.normalizeArray(raw.emotionGoal.lowPoints || []),
-      } : undefined,
-      
+      emotionGoal: raw.emotionGoal
+        ? this.normalizeEmotionGoal({
+            primary: raw.emotionGoal.primary || '',
+            secondary: raw.emotionGoal.secondary,
+            arc: raw.emotionGoal.arc || 'rising',
+            density: raw.emotionGoal.density,
+            highPoints: this.normalizeArray(raw.emotionGoal.highPoints || []),
+            lowPoints: this.normalizeArray(raw.emotionGoal.lowPoints || []),
+          })
+        : undefined,
+
       // 新增：爽点设计
-      coolPointDesign: raw.coolPointDesign ? {
-        patterns: this.normalizeArray(raw.coolPointDesign.patterns || []),
-        arranged: (raw.coolPointDesign.arranged || []).map((cp: any) => ({
-          type: cp.type || '',
-          description: cp.description || '',
-          suggestedChapter: cp.suggestedChapter,
-        })),
-      } : undefined,
-      
+      coolPointDesign: raw.coolPointDesign
+        ? {
+            density: { micro: 3000, small: 9000, big: 21000 },
+            patterns: this.normalizeArray(raw.coolPointDesign.patterns || []),
+            arranged: (raw.coolPointDesign.arranged || []).map((cp: any) => ({
+              chapter: cp.chapter || cp.suggestedChapter || 0,
+              type: cp.type || '',
+              description: cp.description || '',
+            })),
+          }
+        : undefined,
+
       // 新增：核心卖点
       coreSellingPoints: (raw.coreSellingPoints || []).map((cp: any) => ({
-        name: typeof cp === 'string' ? cp : (cp.name || ''),
-        description: typeof cp === 'string' ? '' : (cp.description || ''),
-        priority: typeof cp === 'string' ? 1 : (cp.priority || 1),
+        name: typeof cp === 'string' ? cp : cp.name || '',
+        description: typeof cp === 'string' ? '' : cp.description || '',
+        priority: typeof cp === 'string' ? 1 : cp.priority || 1,
       })),
-      
+
       // 新增：矛盾设计
-      conflictDesign: raw.conflictDesign ? {
-        source: raw.conflictDesign.source || '',
-        escalation: this.normalizeArray(raw.conflictDesign.escalation || []).map((e: any) => 
-          typeof e === 'string' ? e : (e.description || e.name || '')
-        ),
-        majorConflicts: this.normalizeArray(raw.conflictDesign.majorConflicts || []).map((c: any) =>
-          typeof c === 'string' ? c : (c.title || c.description || '')
-        ),
-      } : undefined,
-      
+      conflictDesign: raw.conflictDesign
+        ? this.normalizeConflictDesign({
+            source: raw.conflictDesign.source || '资源/利益',
+            escalation: this.normalizeArray(raw.conflictDesign.escalation || []),
+            majorConflicts: this.normalizeArray(raw.conflictDesign.majorConflicts || []),
+          })
+        : undefined,
+
       // 新增：八条故事线
-      storyLines: raw.storyLines ? {
-        map: raw.storyLines.map || '',
-        faction: raw.storyLines.faction || '',
-        character: raw.storyLines.character || '',
-        goldenfinger: raw.storyLines.goldenfinger || '',
-        worldRules: raw.storyLines.worldRules || '',
-        conflict: raw.storyLines.conflict || '',
-        collection: raw.storyLines.collection || '',
-        romance: raw.storyLines.romance || '',
-      } : undefined,
-    };
+      storyLines: raw.storyLines ? this.normalizeStoryLines(raw.storyLines) : undefined,
+    } as Partial<Outline>;
   }
 
   /**
    * 规范化章节列表
    */
   private normalizeChapters(chapters: any[]): Chapter[] {
-    return chapters.map((ch) => ({
+    return chapters.map((ch, idx) => ({
+      number: ch.number ?? idx + 1,
       title: ch.title || ch.name || '未命名章节',
       summary: ch.summary || ch.description || ch.content || '',
-      keyEvents: this.normalizeArray(ch.keyEvents || ch.events || []),
-      involvedCharacters: this.normalizeArray(ch.involvedCharacters || ch.characters || []),
-      // 新增：支持章节核心元素
-      coreEvent: ch.coreEvent || undefined,
-      hook: ch.hook || undefined,
+      objectives: this.normalizeArray(ch.objectives || []),
       coolPoints: this.normalizeArray(ch.coolPoints || []),
       foreshadows: this.normalizeArray(ch.foreshadows || []),
+      strand: ch.strand || 'quest',
+      timeAnchor: ch.timeAnchor || undefined,
+      status: ch.status || 'outline',
+      keyEvents: this.normalizeArray(ch.keyEvents || ch.events || []),
+      involvedCharacters: this.normalizeArray(ch.involvedCharacters || ch.characters || []),
+      coreEvent: ch.coreEvent || undefined,
+      hook: ch.hook || undefined,
     }));
   }
 
@@ -475,23 +611,46 @@ export class OutlinePostProcessor {
    * 规范化角色列表
    */
   private normalizeCharacters(characters: any[]): Character[] {
-    return characters.map((char) => ({
+    return characters.map(char => ({
       name: char.name || '未知角色',
-      role: char.role || char.type || '角色',
+      role: char.role || char.type || 'supporting',
+      identity: char.identity || char.description || char.desc || '',
       description: char.description || char.desc || '',
       personality: this.normalizeArray(char.personality || char.traits || []),
       appearance: char.appearance || undefined,
       abilities: this.normalizeArray(char.abilities || char.skills || []),
       background: char.background || undefined,
-      relationships: this.normalizeArray(char.relationships || []),
+      relationships: this.normalizeRelationships(char.relationships || []),
+      goldenFinger: char.goldenFinger || char.golden_finger || undefined,
+      strengths: this.normalizeArray(char.strengths || []),
+      weaknesses: this.normalizeArray(char.weaknesses || []),
+      goals: this.normalizeArray(char.goals || []),
+      currentDilemma: char.currentDilemma || '',
+      speechStyle: char.speechStyle || undefined,
     }));
+  }
+
+  /**
+   * 规范化角色关系
+   */
+  private normalizeRelationships(relationships: any[]): any[] {
+    return relationships.map((r: any) => {
+      if (typeof r === 'string') {
+        return { targetName: r, type: 'neutral', description: '' };
+      }
+      return {
+        targetName: r.targetName || r.name || '',
+        type: r.type || 'neutral',
+        description: r.description || '',
+      };
+    });
   }
 
   /**
    * 规范化伏笔列表
    */
   private normalizeForeshadows(foreshadows: any[]): any[] {
-    return foreshadows.map((fs) => ({
+    return foreshadows.map(fs => ({
       hint: fs.hint || fs.content || fs.description || String(fs),
       type: fs.type || 'event',
       suggestedChapter: fs.suggestedChapter || fs.chapter || undefined,
@@ -505,7 +664,48 @@ export class OutlinePostProcessor {
    */
   private normalizeArray(arr: any): string[] {
     if (!Array.isArray(arr)) return [];
-    return arr.map((item) => (typeof item === 'string' ? item : String(item))).filter(Boolean);
+    return arr.map(item => (typeof item === 'string' ? item : String(item))).filter(Boolean);
+  }
+
+  /**
+   * 规范化结构（处理 JSON 中纯字符串的情况）
+   */
+  private normalizeStructure(structure: any): Outline['structure'] {
+    if (!structure) {
+      return {
+        act1: { title: '第一幕：建置', content: '', wordCountRatio: 0.2 },
+        act2a: { title: '第二幕A：对抗（上）', content: '', wordCountRatio: 0.25 },
+        act2b: { title: '第二幕B：对抗（下）', content: '', wordCountRatio: 0.25 },
+        act3: { title: '第三幕：结局', content: '', wordCountRatio: 0.3 },
+      };
+    }
+    // 如果已经是正确格式
+    if (structure.act1?.content !== undefined) {
+      return structure;
+    }
+    // 处理纯字符串格式
+    return {
+      act1: {
+        title: '第一幕：建置',
+        content: typeof structure.act1 === 'string' ? structure.act1 : '',
+        wordCountRatio: 0.2,
+      },
+      act2a: {
+        title: '第二幕A：对抗（上）',
+        content: typeof structure.act2a === 'string' ? structure.act2a : '',
+        wordCountRatio: 0.25,
+      },
+      act2b: {
+        title: '第二幕B：对抗（下）',
+        content: typeof structure.act2b === 'string' ? structure.act2b : '',
+        wordCountRatio: 0.25,
+      },
+      act3: {
+        title: '第三幕：结局',
+        content: typeof structure.act3 === 'string' ? structure.act3 : '',
+        wordCountRatio: 0.3,
+      },
+    };
   }
 
   /**
@@ -519,10 +719,21 @@ export class OutlinePostProcessor {
       genres: outline.genres || [],
       chapters: outline.chapters || [],
       characters: outline.characters || [],
-      structure: outline.structure || { act1: '', act2a: '', act2b: '', act3: '' },
+      structure: outline.structure || {
+        act1: { title: '第一幕：建置', content: '', wordCountRatio: 0.2 },
+        act2a: { title: '第二幕A：对抗（上）', content: '', wordCountRatio: 0.25 },
+        act2b: { title: '第二幕B：对抗（下）', content: '', wordCountRatio: 0.25 },
+        act3: { title: '第三幕：结局', content: '', wordCountRatio: 0.3 },
+      },
       foreshadows: outline.foreshadows || [],
-      worldSetting: outline.worldSetting || undefined,
+      subplots: outline.subplots || [],
+      worldSetting: outline.worldSetting,
       estimatedWordCount: outline.estimatedWordCount || 300000,
+      coreSellingPoints: outline.coreSellingPoints || [],
+      emotionGoal: outline.emotionGoal,
+      coolPointDesign: outline.coolPointDesign,
+      storyLines: outline.storyLines,
+      conflictDesign: outline.conflictDesign,
     };
   }
 
@@ -602,6 +813,135 @@ export class OutlinePostProcessor {
     }
 
     return { success: false };
+  }
+
+  /**
+   * 规范化世界设定中的 category 字段
+   */
+  private normalizeWorldSetting(worldSetting: any): any {
+    if (!worldSetting) return undefined;
+
+    const validCategories = ['cultivation', 'magic', 'social', 'physics', 'custom'] as const;
+    const categoryMap: Record<string, (typeof validCategories)[number]> = {
+      修炼: 'cultivation',
+      魔法: 'magic',
+      社会: 'social',
+      科技: 'physics',
+      水系: 'custom',
+      建筑: 'custom',
+      生存: 'custom',
+      系统: 'custom',
+    };
+
+    const normalized = { ...worldSetting };
+
+    if (normalized.rules) {
+      normalized.rules = normalized.rules.map((rule: any) => {
+        if (rule.category && !validCategories.includes(rule.category)) {
+          const mapped = categoryMap[rule.category] || 'custom';
+          return { ...rule, category: mapped };
+        }
+        return rule;
+      });
+    }
+
+    return normalized;
+  }
+
+  /**
+   * 规范化八条故事线（字符串 -> 对象格式）
+   */
+  private normalizeStoryLines(storyLines: any): any {
+    if (!storyLines) return undefined;
+
+    // 如果已经是正确格式，直接返回
+    if (storyLines.map?.planned !== undefined) {
+      return storyLines;
+    }
+
+    // 字符串格式转换为对象格式
+    const defaultStoryLines: any = {
+      map: { planned: [], introduced: [], current: '', chaptersPerLocation: 50 },
+      faction: { planned: [], introduced: [], currentLevel: 1, escalationChapters: [] },
+      character: { planned: [], introduced: [], keyRelationships: [] },
+      goldenfinger: { type: '', currentStage: 1, upgrades: [] },
+      worldRules: { revealed: [], pending: [], nextReveal: undefined },
+      conflict: { chains: [], activeConflict: '' },
+      collection: { target: [], progress: [] },
+      romance: { currentStage: 'cold', progression: [] },
+    };
+
+    // 如果是字符串，转换为 planned 数组
+    if (typeof storyLines.map === 'string') {
+      defaultStoryLines.map.planned = storyLines.map ? [storyLines.map] : [];
+    }
+    if (typeof storyLines.faction === 'string') {
+      defaultStoryLines.faction.planned = storyLines.faction ? [storyLines.faction] : [];
+    }
+    if (typeof storyLines.character === 'string') {
+      defaultStoryLines.character.planned = storyLines.character ? [storyLines.character] : [];
+    }
+    if (typeof storyLines.goldenfinger === 'string') {
+      defaultStoryLines.goldenfinger.type = storyLines.goldenfinger || '';
+    }
+    if (typeof storyLines.worldRules === 'string') {
+      defaultStoryLines.worldRules.revealed = storyLines.worldRules ? [storyLines.worldRules] : [];
+    }
+    if (typeof storyLines.conflict === 'string') {
+      defaultStoryLines.conflict.activeConflict = storyLines.conflict || '';
+    }
+    if (typeof storyLines.collection === 'string') {
+      defaultStoryLines.collection.target = storyLines.collection ? [storyLines.collection] : [];
+    }
+    if (typeof storyLines.romance === 'string') {
+      defaultStoryLines.romance.currentStage = storyLines.romance || 'cold';
+    }
+
+    return defaultStoryLines;
+  }
+
+  /**
+   * 规范化矛盾设计
+   */
+  private normalizeConflictDesign(conflictDesign: any): any {
+    if (!conflictDesign) return undefined;
+
+    const validSources = [
+      '资源/利益',
+      '阵营/种族',
+      '超凡途径',
+      '信仰/宗教',
+      '派系之争',
+      '理念/三观',
+    ] as const;
+
+    // 如果 source 不在有效值列表中，设置为默认值
+    if (conflictDesign.source && !validSources.includes(conflictDesign.source)) {
+      return {
+        ...conflictDesign,
+        source: '资源/利益',
+      };
+    }
+
+    return conflictDesign;
+  }
+
+  /**
+   * 规范化情绪目标
+   */
+  private normalizeEmotionGoal(emotionGoal: any): any {
+    if (!emotionGoal) return undefined;
+
+    const validArcs = ['rising', 'falling', 'wave', 'mixed'];
+
+    if (emotionGoal.arc && !validArcs.includes(emotionGoal.arc)) {
+      return {
+        ...emotionGoal,
+        arc: 'rising',
+      };
+    }
+
+    return emotionGoal;
   }
 
   /**

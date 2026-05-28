@@ -8,7 +8,15 @@ import { z } from 'zod';
 // ====== 题材标签 ======
 
 export const GenreTagSchema = z.enum([
-  '玄幻', '仙侠', '都市', '言情', '悬疑', '科幻', '历史', '游戏', '轻小说'
+  '玄幻',
+  '仙侠',
+  '都市',
+  '言情',
+  '悬疑',
+  '科幻',
+  '历史',
+  '游戏',
+  '轻小说',
 ]);
 export type GenreTag = z.infer<typeof GenreTagSchema>;
 
@@ -21,7 +29,19 @@ export const IdSchema = z.string().describe('唯一标识');
 
 export const RelationshipSchema = z.object({
   targetName: z.string().describe('关联的角色名称'),
-  type: z.enum(['friend', 'enemy', 'family', 'lover', 'rival', 'mentor', 'student', 'alliance', 'neutral']).describe('关系类型'),
+  type: z
+    .enum([
+      'friend',
+      'enemy',
+      'family',
+      'lover',
+      'rival',
+      'mentor',
+      'student',
+      'alliance',
+      'neutral',
+    ])
+    .describe('关系类型'),
   description: z.string().optional().describe('关系描述'),
 });
 export type Relationship = z.infer<typeof RelationshipSchema>;
@@ -76,7 +96,10 @@ export const WorldRuleSchema = z.object({
   id: IdSchema.optional().describe('规则ID'),
   name: z.string().describe('规则名称'),
   description: z.string().optional().describe('规则描述'),
-  category: z.enum(['cultivation', 'magic', 'social', 'physics', 'custom']).optional().describe('规则类别'),
+  category: z
+    .enum(['cultivation', 'magic', 'social', 'physics', 'custom'])
+    .optional()
+    .describe('规则类别'),
   relatedRuleNames: z.array(z.string()).optional().default([]).describe('关联规则名称'),
 });
 export type WorldRule = z.infer<typeof WorldRuleSchema>;
@@ -102,10 +125,10 @@ const ActSchema = z.object({
 });
 
 export const StructureSchema = z.object({
-  act1: ActSchema.extend({ chapters: z.number(), wordCountRatio: z.number().default(0.2) }).describe('第一幕'),
-  act2a: ActSchema.extend({ chapters: z.number(), wordCountRatio: z.number().default(0.25) }).describe('第二幕A'),
-  act2b: ActSchema.extend({ chapters: z.number(), wordCountRatio: z.number().default(0.25) }).describe('第二幕B'),
-  act3: ActSchema.extend({ chapters: z.number(), wordCountRatio: z.number().default(0.3) }).describe('第三幕'),
+  act1: ActSchema.describe('第一幕'),
+  act2a: ActSchema.describe('第二幕A'),
+  act2b: ActSchema.describe('第二幕B'),
+  act3: ActSchema.describe('第三幕'),
 });
 export type Structure = z.infer<typeof StructureSchema>;
 
@@ -118,7 +141,10 @@ export const ForeshadowSchema = z.object({
   suggestedChapter: z.number().optional().describe('建议揭晓章节'),
   status: z.enum(['active', 'fulfilled', 'abandoned']).default('active').describe('状态'),
   // 新增：伏笔分期
-  phase: z.enum(['early', 'mid', 'late']).optional().describe('伏笔分期：早期(1-10章)、中期(11-30章)、长期(30章后或全篇)'),
+  phase: z
+    .enum(['early', 'mid', 'late'])
+    .optional()
+    .describe('伏笔分期：早期(1-10章)、中期(11-30章)、长期(30章后或全篇)'),
 });
 export type Foreshadow = z.infer<typeof ForeshadowSchema>;
 
@@ -185,16 +211,28 @@ const FactionLineSchema = z.object({
 });
 
 const CharacterLineSchema = z.object({
-  planned: z.array(z.object({ id: z.string(), role: z.string() })).default([]).describe('规划角色'),
+  planned: z
+    .array(z.object({ id: z.string(), role: z.string() }))
+    .default([])
+    .describe('规划角色'),
   introduced: z.array(z.string()).default([]).describe('已引入'),
-  keyRelationships: z.array(z.object({ from: z.string(), to: z.string(), type: z.string() })).default([]).describe('关键关系'),
+  keyRelationships: z
+    .array(z.object({ from: z.string(), to: z.string(), type: z.string() }))
+    .default([])
+    .describe('关键关系'),
 });
 
 const GoldenFingerLineSchema = z.object({
   type: z.string().describe('金手指类型'),
   currentStage: z.number().default(1).describe('当前阶段'),
-  upgrades: z.array(z.object({ chapter: z.number(), description: z.string() })).default([]).describe('升级节点'),
-  nextUpgrade: z.object({ chapter: z.number(), description: z.string() }).optional().describe('下次升级'),
+  upgrades: z
+    .array(z.object({ chapter: z.number(), description: z.string() }))
+    .default([])
+    .describe('升级节点'),
+  nextUpgrade: z
+    .object({ chapter: z.number(), description: z.string() })
+    .optional()
+    .describe('下次升级'),
 });
 
 const WorldRulesLineSchema = z.object({
@@ -204,32 +242,47 @@ const WorldRulesLineSchema = z.object({
 });
 
 const ConflictLineSchema = z.object({
-  chains: z.array(z.object({
-    level: z.number().min(1).max(4),
-    name: z.string(),
-    description: z.string(),
-    chapters: z.array(z.number()),
-    status: z.enum(['pending', 'active', 'resolved']).default('pending'),
-  })).default([]).describe('冲突链'),
+  chains: z
+    .array(
+      z.object({
+        level: z.number().min(1).max(4),
+        name: z.string(),
+        description: z.string(),
+        chapters: z.array(z.number()),
+        status: z.enum(['pending', 'active', 'resolved']).default('pending'),
+      })
+    )
+    .default([])
+    .describe('冲突链'),
   activeConflict: z.string().optional().describe('当前冲突'),
 });
 
 const CollectionLineSchema = z.object({
   target: z.array(z.string()).default([]).describe('收集目标'),
-  progress: z.array(z.object({
-    item: z.string(),
-    acquired: z.boolean().default(false),
-    chapter: z.number().optional(),
-  })).default([]).describe('收集进度'),
+  progress: z
+    .array(
+      z.object({
+        item: z.string(),
+        acquired: z.boolean().default(false),
+        chapter: z.number().optional(),
+      })
+    )
+    .default([])
+    .describe('收集进度'),
 });
 
 const RomanceLineSchema = z.object({
   currentStage: z.enum(['cold', 'warm', 'hot', 'climax']).default('cold').describe('当前阶段'),
-  progression: z.array(z.object({
-    chapter: z.number(),
-    stage: z.enum(['cold', 'warm', 'hot', 'climax']),
-    description: z.string(),
-  })).default([]).describe('感情进展'),
+  progression: z
+    .array(
+      z.object({
+        chapter: z.number(),
+        stage: z.enum(['cold', 'warm', 'hot', 'climax']),
+        description: z.string(),
+      })
+    )
+    .default([])
+    .describe('感情进展'),
 });
 
 export const StoryLinesSchema = z.object({
@@ -264,10 +317,10 @@ const MajorConflictSchema = z.object({
 });
 
 export const ConflictDesignSchema = z.object({
-  source: z.enum([
-    '资源/利益', '阵营/种族', '超凡途径',
-    '信仰/宗教', '派系之争', '理念/三观'
-  ]).default('资源/利益').describe('冲突来源'),
+  source: z
+    .enum(['资源/利益', '阵营/种族', '超凡途径', '信仰/宗教', '派系之争', '理念/三观'])
+    .default('资源/利益')
+    .describe('冲突来源'),
   escalation: z.array(ConflictLevelSchema).default([]).describe('矛盾递进'),
   majorConflicts: z.array(MajorConflictSchema).default([]).describe('主要冲突'),
 });
@@ -284,11 +337,16 @@ const CoolPointDensitySchema = z.object({
 export const CoolPointDesignSchema = z.object({
   density: CoolPointDensitySchema,
   patterns: z.array(z.string()).default([]).describe('爽点类型'),
-  arranged: z.array(z.object({
-    chapter: z.number(),
-    type: z.string(),
-    description: z.string(),
-  })).default([]).describe('已安排爽点'),
+  arranged: z
+    .array(
+      z.object({
+        chapter: z.number(),
+        type: z.string(),
+        description: z.string(),
+      })
+    )
+    .default([])
+    .describe('已安排爽点'),
 });
 export type CoolPointDesign = z.infer<typeof CoolPointDesignSchema>;
 
@@ -300,44 +358,44 @@ export const OutlineSchema = z.object({
   title: z.string().describe('故事标题'),
   synopsis: z.string().describe('故事简介 60-80字'),
   genres: z.array(z.string()).optional().default([]).describe('题材标签'),
-  
+
   // 核心设定
   worldSetting: WorldSettingSchema.optional().describe('世界观设定'),
   characters: z.array(CharacterSchema).optional().default([]).describe('角色列表'),
   structure: StructureSchema.optional().describe('四幕结构'),
-  
+
   // 章节
   chapters: z.array(ChapterSchema).optional().default([]).describe('章节大纲'),
-  
+
   // 伏笔和子情节
   foreshadows: z.array(ForeshadowSchema).optional().default([]).describe('伏笔'),
   subplots: z.array(SubplotSchema).optional().default([]).describe('子情节'),
-  
+
   // ====== 新增增强字段 ======
-  
+
   // 核心卖点
   coreSellingPoints: z.array(z.string()).optional().default([]).describe('核心卖点'),
-  
+
   // 情绪目标
   emotionGoal: EmotionGoalSchema.optional().describe('情绪目标'),
-  
+
   // 八条故事线
   storyLines: StoryLinesSchema.optional().describe('八条故事线'),
-  
+
   // 矛盾设计
   conflictDesign: ConflictDesignSchema.optional().describe('矛盾设计'),
-  
+
   // 爽点设计
   coolPointDesign: CoolPointDesignSchema.optional().describe('爽点设计'),
-  
+
   // ====== 元数据 ======
   estimatedWordCount: z.number().optional().default(300000).describe('预估字数'),
   targetWordCount: z.number().optional().describe('目标字数'),
   wordCountRange: z.string().optional().describe('字数区间'),
-  
+
   // 卷信息
   volumes: z.number().optional().default(1).describe('卷数'),
-  
+
   // 契约信息
   contractId: z.string().optional().describe('关联契约ID'),
 });

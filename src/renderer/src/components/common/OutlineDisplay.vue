@@ -3,11 +3,11 @@
  * 大纲列表展示组件
  * 封装大纲生成进度、列表展示、选中状态等通用 UI 逻辑
  */
-import { computed, ref } from "vue";
-import { ArrowRight, BookOpen, RefreshCw, Eye, LayoutGrid } from "lucide-vue-next";
-import { NTooltip } from "naive-ui";
-import { useI18n } from "vue-i18n";
-import type { GeneratedOutline } from "@/types/inspiration";
+import { computed, ref } from 'vue';
+import { ArrowRight, BookOpen, RefreshCw, Eye, LayoutGrid } from 'lucide-vue-next';
+import { NTooltip } from 'naive-ui';
+import { useI18n } from 'vue-i18n';
+import type { GeneratedOutline } from '@/types/inspiration';
 import OutlineVisualizer from './OutlineVisualizer.vue';
 
 const { t } = useI18n();
@@ -34,18 +34,18 @@ interface Props {
 }
 
 interface Emits {
-  (e: "select", outline: GeneratedOutline): void;
-  (e: "regenerate"): void;
-  (e: "create"): void;
+  (e: 'select', outline: GeneratedOutline): void;
+  (e: 'regenerate'): void;
+  (e: 'create'): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  progress: "",
+  progress: '',
   error: null,
   disableRegenerate: false,
   showWordCount: true,
   showStreamingPreview: true,
-  customClass: "",
+  customClass: '',
 });
 
 const emit = defineEmits<Emits>();
@@ -69,12 +69,12 @@ const showStreaming = computed(
     props.isGenerating &&
     props.showStreamingPreview &&
     props.outlines.length === 0 &&
-    props.progress,
+    props.progress
 );
 
 /** 是否显示加载状态（无大纲、无进度消息时） */
 const showLoading = computed(
-  () => props.isGenerating && props.outlines.length === 0 && !props.progress,
+  () => props.isGenerating && props.outlines.length === 0 && !props.progress
 );
 
 /** 是否显示错误 */
@@ -82,10 +82,7 @@ const showError = computed(() => props.error && !props.isGenerating);
 
 /** 是否显示空状态 */
 const showEmpty = computed(
-  () =>
-    !props.isGenerating &&
-    !props.error &&
-    props.outlines.length === 0,
+  () => !props.isGenerating && !props.error && props.outlines.length === 0
 );
 
 /**
@@ -99,15 +96,15 @@ function formatWordCount(count: number): string {
 }
 
 function handleSelectOutline(outline: GeneratedOutline) {
-  emit("select", outline);
+  emit('select', outline);
 }
 
 function handleRegenerate() {
-  emit("regenerate");
+  emit('regenerate');
 }
 
 function handleCreate() {
-  emit("create");
+  emit('create');
 }
 </script>
 
@@ -121,18 +118,21 @@ function handleCreate() {
         <BookOpen class="w-6 h-6 text-white" />
       </div>
       <p class="text-sm text-gray-600 dark:text-gray-400">
-        {{ progress || t("quickStart.generating") }}
+        {{ progress || t('quickStart.generating') }}
       </p>
     </div>
 
     <!-- 流式预览（有进度消息时） -->
-    <div v-if="showStreaming" class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+    <div
+      v-if="showStreaming"
+      class="p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
+    >
       <div class="flex items-center gap-2 mb-2">
         <div
           class="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"
         ></div>
         <span class="text-xs text-gray-500 dark:text-gray-400">
-          {{ t("quickStart.generating") }}
+          {{ t('quickStart.generating') }}
         </span>
       </div>
       <div class="text-xs text-gray-400 dark:text-gray-500 whitespace-pre-wrap">
@@ -155,14 +155,12 @@ function handleCreate() {
       <!-- 列表头部 -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <div
-            class="w-1 h-4 rounded-full bg-gradient-to-b from-purple-500 to-indigo-500"
-          ></div>
+          <div class="w-1 h-4 rounded-full bg-gradient-to-b from-purple-500 to-indigo-500"></div>
           <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {{ t("quickStart.preparedOutlines") }}
+            {{ t('quickStart.preparedOutlines') }}
           </h4>
           <span class="text-xs text-gray-400 dark:text-gray-500"
-            >({{ outlines.length }}{{ t("quickStart.plans") }})</span
+            >({{ outlines.length }}{{ t('quickStart.plans') }})</span
           >
         </div>
         <NTooltip trigger="hover">
@@ -201,12 +199,7 @@ function handleCreate() {
               v-if="selectedOutline?.id === outline.id"
               class="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0"
             >
-              <svg
-                class="w-3 h-3 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
@@ -217,17 +210,13 @@ function handleCreate() {
             </div>
             <div class="flex-1 min-w-0">
               <!-- 标题 -->
-              <h5
-                class="font-medium text-sm text-gray-900 dark:text-white truncate"
-              >
+              <h5 class="font-medium text-sm text-gray-900 dark:text-white truncate">
                 {{ outline.title }}
               </h5>
               <!-- 简介（悬停显示完整内容） -->
               <NTooltip trigger="hover">
                 <template #trigger>
-                  <p
-                    class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1 cursor-help"
-                  >
+                  <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1 cursor-help">
                     {{ outline.synopsis }}
                   </p>
                 </template>
@@ -240,21 +229,29 @@ function handleCreate() {
               <!-- 元信息 -->
               <div
                 v-if="showWordCount && outline.estimatedWordCount"
-                class="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500"
+                class="flex items-center flex-wrap gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500"
               >
-                <span>{{ formatWordCount(outline.estimatedWordCount) }}</span>
-                <span
-                  >{{ outline.characters?.length ||
-                  0 }}{{ t("quickStart.characters") }}</span
+                <span class="flex-none">{{ formatWordCount(outline.estimatedWordCount) }}</span>
+                <span class="flex-none"
+                  >{{ outline.characters?.length || 0 }}{{ t('quickStart.characters') }}</span
                 >
                 <!-- 增强字段标签 -->
-                <span v-if="outline.emotionGoal?.primary" class="px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">
+                <span
+                  v-if="outline.emotionGoal?.primary"
+                  class="flex-none px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400"
+                >
                   {{ outline.emotionGoal.primary }}
                 </span>
-                <span v-if="outline.coolPointDesign?.patterns?.length" class="px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">
+                <span
+                  v-if="outline.coolPointDesign?.patterns?.length"
+                  class="flex-none px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
+                >
                   {{ outline.coolPointDesign.patterns.slice(0, 2).join('、') }}
                 </span>
-                <span v-if="outline.conflictDesign?.source" class="px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                <span
+                  v-if="outline.conflictDesign?.source"
+                  class="flex-none px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                >
                   {{ outline.conflictDesign.source }}
                 </span>
               </div>
@@ -264,23 +261,30 @@ function handleCreate() {
       </div>
 
       <!-- 可视化视图切换按钮 -->
-      <div v-if="selectedOutline && hasVisualizationData" class="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+      <div
+        v-if="selectedOutline && hasVisualizationData"
+        class="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700"
+      >
         <span class="text-xs text-gray-500 dark:text-gray-400">视图模式</span>
         <div class="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
           <button
             class="px-2 py-1 rounded text-xs transition-colors"
-            :class="!showVisualization 
-              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' 
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+            :class="
+              !showVisualization
+                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            "
             @click="showVisualization = false"
           >
             列表
           </button>
           <button
             class="px-2 py-1 rounded text-xs transition-colors"
-            :class="showVisualization 
-              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' 
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+            :class="
+              showVisualization
+                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            "
             @click="showVisualization = true"
           >
             可视化
@@ -289,7 +293,10 @@ function handleCreate() {
       </div>
 
       <!-- 可视化视图 -->
-      <div v-if="showVisualization && selectedOutline" class="mt-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto">
+      <div
+        v-if="showVisualization && selectedOutline"
+        class="mt-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto"
+      >
         <OutlineVisualizer :outline="selectedOutline" />
       </div>
 
@@ -300,9 +307,7 @@ function handleCreate() {
         :disabled="isGenerating"
         @click="handleCreate"
       >
-        <span v-if="!isGenerating">{{
-          t("quickStart.createFromOutline")
-        }}</span>
+        <span v-if="!isGenerating">{{ t('quickStart.createFromOutline') }}</span>
         <span
           v-else
           class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
@@ -315,7 +320,7 @@ function handleCreate() {
     <div v-if="showEmpty" class="text-center py-4">
       <BookOpen class="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
       <p class="text-xs text-gray-400 dark:text-gray-500">
-        {{ t("quickStart.emptyDesc") }}
+        {{ t('quickStart.emptyDesc') }}
       </p>
     </div>
   </div>

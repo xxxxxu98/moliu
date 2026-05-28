@@ -33,14 +33,14 @@ export interface GenerationResult {
   rawMarkdown?: string;
 }
 
-  /**
-   * 统一大纲生成器
-   * 实现多层级降级策略：
-   * 1. Markdown 生成 -> Remark AST 解析
-   * 2. Markdown 生成 -> 正则提取
-   * 3. JSON Mode 生成 -> JSON 解析（兜底）
-   * 4. 传统模式
-   */
+/**
+ * 统一大纲生成器
+ * 实现多层级降级策略：
+ * 1. Markdown 生成 -> Remark AST 解析
+ * 2. Markdown 生成 -> 正则提取
+ * 3. JSON Mode 生成 -> JSON 解析（兜底）
+ * 4. 传统模式
+ */
 export class UnifiedOutlineGenerator {
   private markdownGenerator: MarkdownOutlineGenerator | null = null;
   private defaultOptions: GenerateOptions = {
@@ -61,7 +61,7 @@ export class UnifiedOutlineGenerator {
   async generate(
     prompt: string,
     options?: GenerateOptions,
-    onProgress?: (message: string) => void,
+    onProgress?: (message: string) => void
   ): Promise<GenerationResult> {
     const opts = { ...this.defaultOptions, ...options };
     let attempts = 0;
@@ -125,7 +125,7 @@ export class UnifiedOutlineGenerator {
   private async generateWithFallback(
     prompt: string,
     options: GenerateOptions,
-    onProgress?: (message: string) => void,
+    onProgress?: (message: string) => void
   ): Promise<GenerationResult> {
     // 1. 初始化生成器
     if (!this.markdownGenerator) {
@@ -134,7 +134,7 @@ export class UnifiedOutlineGenerator {
         config.provider,
         config.apiKey,
         config.baseUrl,
-        config.model,
+        config.model
       );
     }
 
@@ -187,7 +187,7 @@ export class UnifiedOutlineGenerator {
    */
   private async callMarkdownMode(
     prompt: string,
-    options: GenerateOptions,
+    options: GenerateOptions
   ): Promise<GenerationResult> {
     const config = this.getAIConfig();
 
@@ -203,7 +203,7 @@ export class UnifiedOutlineGenerator {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(config.apiKey ? { 'Authorization': `Bearer ${config.apiKey}` } : {}),
+          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
         },
         body: JSON.stringify({
           model: config.model || undefined,
@@ -250,10 +250,7 @@ export class UnifiedOutlineGenerator {
   /**
    * 传统模式（直接使用 UnifiedAIService）
    */
-  private async tryLegacyMode(
-    prompt: string,
-    options: GenerateOptions,
-  ): Promise<GenerationResult> {
+  private async tryLegacyMode(prompt: string, options: GenerateOptions): Promise<GenerationResult> {
     try {
       const config = this.getAIConfig();
       const { UnifiedAIService } = await import('@/services/ai/unified.service');
@@ -262,13 +259,17 @@ export class UnifiedOutlineGenerator {
         config.provider,
         config.apiKey,
         config.baseUrl,
-        config.model,
+        config.model
       );
 
-      const result = await service.generateOutline(prompt, {
-        temperature: options.temperature,
-        topP: options.topP,
-      }, options.wordCountRange);
+      const result = await service.generateOutline(
+        prompt,
+        {
+          temperature: options.temperature,
+          topP: options.topP,
+        },
+        options.wordCountRange
+      );
 
       if (result && result.outlines) {
         return {
@@ -486,7 +487,6 @@ export class UnifiedOutlineGenerator {
 - 卷数和章节数要与目标字数匹配
 - 每卷约${Math.round(wordCountNum / chaptersPerVolume / 10000)}万字
 - 前30章（前约10万字）必须包含：钩子、人设、爽点、悬念`;
-
   }
 
   /**
@@ -516,7 +516,7 @@ export class UnifiedOutlineGenerator {
    */
   private async callJSONModeFallback(
     prompt: string,
-    options: GenerateOptions,
+    options: GenerateOptions
   ): Promise<GenerationResult> {
     const config = this.getAIConfig();
 
@@ -532,7 +532,7 @@ export class UnifiedOutlineGenerator {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(config.apiKey ? { 'Authorization': `Bearer ${config.apiKey}` } : {}),
+          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
         },
         body: JSON.stringify({
           model: config.model || undefined,
@@ -658,11 +658,12 @@ export class UnifiedOutlineGenerator {
       if (defaultModelId) {
         const [providerId, modelName] = defaultModelId.split(':');
         const matchedProvider = settingsStore.aiProviders.find(
-          (p) => p.id === providerId && p.enabled && p.apiKey,
+          p => p.id === providerId && p.enabled && p.apiKey
         );
 
         if (matchedProvider) {
-          const baseUrl = matchedProvider.baseUrl || this.getDefaultBaseUrl(matchedProvider.provider);
+          const baseUrl =
+            matchedProvider.baseUrl || this.getDefaultBaseUrl(matchedProvider.provider);
           return {
             provider: matchedProvider.provider,
             apiKey: matchedProvider.apiKey || '',
@@ -673,7 +674,7 @@ export class UnifiedOutlineGenerator {
       }
 
       // 最后一个兜底：找第一个启用的
-      const firstEnabled = settingsStore.aiProviders.find((p) => p.enabled && p.apiKey);
+      const firstEnabled = settingsStore.aiProviders.find(p => p.enabled && p.apiKey);
       if (firstEnabled) {
         const baseUrl = firstEnabled.baseUrl || this.getDefaultBaseUrl(firstEnabled.provider);
         return {
@@ -683,8 +684,8 @@ export class UnifiedOutlineGenerator {
           model: firstEnabled.modelName || '',
         };
       }
-    } catch (e) {
-      console.warn('[UnifiedOutlineGenerator] Failed to get AI config:', e);
+    } catch {
+      // 使用默认配置
     }
 
     // 返回默认配置（OpenAI）
@@ -726,11 +727,7 @@ export class UnifiedOutlineGenerator {
   /**
    * 更新配置
    */
-  updateConfig(
-    apiKey: string,
-    baseUrl?: string,
-    model?: string,
-  ) {
+  updateConfig(apiKey: string, baseUrl?: string, model?: string) {
     if (this.markdownGenerator) {
       this.markdownGenerator.updateConfig(apiKey, baseUrl, model);
     }
