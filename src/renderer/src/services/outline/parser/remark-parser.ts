@@ -1145,6 +1145,7 @@ export class RemarkParser {
                     break;
                   case '描述':
                     currentCharacter.identity = fieldValue;
+                    currentCharacter.description = fieldValue;
                     break;
                 }
                 continue;
@@ -1739,11 +1740,12 @@ export class RemarkParser {
   /**
    * 创建新角色对象
    */
-  private createNewCharacter(name: string, role: string = 'supporting', identity: string = ''): Character {
+  private createNewCharacter(name: string, role: string = 'supporting', description: string = ''): Character {
     return {
       name,
       role: this.normalizeCharacterRole(role),
-      identity,
+      description,
+      identity: description,
       personality: [],
       strengths: [],
       weaknesses: [],

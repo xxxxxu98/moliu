@@ -187,6 +187,7 @@ export class OutlinePostProcessor {
         name: c.name || '未知角色',
         role: (c.role as any) || 'supporting',
         identity: (c as any).identity || '',
+        description: (c as any).description || (c as any).identity || '',
         personality: c.personality || [],
         goldenFinger: (c as any).goldenFinger,
         strengths: (c as any).strengths || [],
