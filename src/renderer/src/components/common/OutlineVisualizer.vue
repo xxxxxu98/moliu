@@ -476,7 +476,7 @@ function getStatusColor(status?: string): string {
               :is="getNodeIcon(node.type)"
               class="w-5 h-5 text-violet-500 flex-shrink-0"
             />
-            <span class="font-medium text-gray-900 dark:text-white">{{ node.title }}</span>
+            <span class="font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ node.title }}</span>
             <span v-if="node.description" class="text-sm text-gray-500 dark:text-gray-400 truncate">
               {{ node.description }}
             </span>
