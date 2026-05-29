@@ -163,7 +163,7 @@ defineExpose({
     <!-- 进度感知内容 -->
     <NScrollbar v-else class="flex-1 p-3 space-y-4">
       <!-- 项目概览 -->
-      <div class="p-3 rounded-lg bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/50">
+      <div class="mb-3 p-3 rounded-lg bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/50">
         <div class="flex items-center gap-2 mb-2">
           <BookOpen class="w-4 h-4 text-indigo-500" />
           <span class="font-semibold text-sm text-gray-900 dark:text-white">{{ projectName }}</span>

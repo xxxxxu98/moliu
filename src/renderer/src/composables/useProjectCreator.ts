@@ -319,42 +319,188 @@ export function useProjectCreator(): UseProjectCreatorReturn {
   /**
    * 从大纲构建项目元数据
    * 包含情绪目标、爽点设计、核心卖点等增强信息
+   * 数据格式需要符合 types/project.ts 中的接口定义
    */
   function buildProjectMetadata(outline: GeneratedOutline) {
     return {
-      // 情绪目标
+      // 情绪目标 - 格式正确
       emotionGoal: outline.emotionGoal ? {
         primary: outline.emotionGoal.primary,
         secondary: outline.emotionGoal.secondary,
-        arc: outline.emotionGoal.arc,
-        density: outline.emotionGoal.density,
+        arc: outline.emotionGoal.arc as 'rising' | 'falling' | 'wave' | 'mixed' || 'rising',
+        density: outline.emotionGoal.density || 3000,
         highPoints: outline.emotionGoal.highPoints || [],
         lowPoints: outline.emotionGoal.lowPoints || [],
       } : undefined,
-      // 爽点设计
+      // 爽点设计 - 需要转换 patterns 和 arranged 格式
       coolPointDesign: outline.coolPointDesign ? {
-        patterns: outline.coolPointDesign.patterns || [],
-        arranged: outline.coolPointDesign.arranged || [],
+        id: `coolpoint-${Date.now()}`,
+        patterns: (outline.coolPointDesign.patterns || []).map(p => normalizeCoolPointPattern(p)),
+        arranged: (outline.coolPointDesign.arranged || []).map((cp, i) => ({
+          id: `arrangement-${Date.now()}-${i}`,
+          chapter: cp.suggestedChapter || 1,
+          type: normalizeCoolPointPattern(cp.type || ''),
+          description: cp.description || '',
+        })),
+        density: {
+          micro: 3000,
+          small: 9000,
+          big: 21000,
+        },
       } : undefined,
-      // 核心卖点
-      coreSellingPoints: outline.coreSellingPoints || [],
-      // 矛盾设计
+      // 核心卖点 - 需要转换格式
+      coreSellingPoints: (outline.coreSellingPoints || []).map((cp, i) => ({
+        id: `selling-point-${Date.now()}-${i}`,
+        name: typeof cp === 'string' ? cp : (cp as any).name || '',
+        description: typeof cp === 'string' ? '' : (cp as any).description || '',
+        priority: typeof cp === 'string' ? 1 : (cp as any).priority || 1,
+      })),
+      // 矛盾设计 - 需要转换 source 和 escalation 格式
       conflictDesign: outline.conflictDesign ? {
-        source: outline.conflictDesign.source,
-        escalation: outline.conflictDesign.escalation || [],
-        majorConflicts: outline.conflictDesign.majorConflicts || [],
+        id: `conflict-${Date.now()}`,
+        source: normalizeConflictSource(outline.conflictDesign.source),
+        escalation: normalizeConflictEscalation(outline.conflictDesign.escalation || []),
+        majorConflicts: normalizeMajorConflicts(outline.conflictDesign.majorConflicts || []),
       } : undefined,
-      // 八条故事线
-      storyLines: outline.storyLines ? {
-        map: outline.storyLines.map,
-        faction: outline.storyLines.faction,
-        character: outline.storyLines.character,
-        goldenfinger: outline.storyLines.goldenfinger,
-        worldRules: outline.storyLines.worldRules,
-        conflict: outline.storyLines.conflict,
-        collection: outline.storyLines.collection,
-        romance: outline.storyLines.romance,
-      } : undefined,
+      // 八条故事线 - 需要转换为完整格式
+      storyLines: outline.storyLines ? normalizeStoryLines(outline.storyLines) : undefined,
+    };
+  }
+
+  /**
+   * 规范化爽点类型
+   */
+  function normalizeCoolPointPattern(pattern: string): 'face-slapping' | 'show-off' | 'identity-reveal' | 'growth' | 'rescue' | 'treasure' | 'breakthrough' | 'romance' | 'revenge' | 'mystery-reveal' | 'comedy' | 'justice' {
+    const patternMap: Record<string, typeof pattern> = {
+      '打脸': 'face-slapping',
+      '打脸爽': 'face-slapping',
+      'face-slapping': 'face-slapping',
+      '装逼': 'show-off',
+      '装逼爽': 'show-off',
+      'show-off': 'show-off',
+      '身份揭秘': 'identity-reveal',
+      'identity-reveal': 'identity-reveal',
+      '成长': 'growth',
+      'growth': 'growth',
+      'rescue': 'rescue',
+      'treasure': 'treasure',
+      '突破': 'breakthrough',
+      'breakthrough': 'breakthrough',
+      '恋爱': 'romance',
+      'romance': 'romance',
+      '复仇': 'revenge',
+      'revenge': 'revenge',
+      'mystery-reveal': 'mystery-reveal',
+      '搞笑': 'comedy',
+      'comedy': 'comedy',
+      'justice': 'justice',
+    };
+    return patternMap[pattern] || 'face-slapping';
+  }
+
+  /**
+   * 规范化冲突来源
+   */
+  function normalizeConflictSource(source: string): 'resource' | 'faction' | 'path' | 'faith' | 'factionFight' | 'ideology' {
+    const sourceMap: Record<string, typeof source> = {
+      '资源': 'resource',
+      '资源/利益': 'resource',
+      '利益': 'resource',
+      'resource': 'resource',
+      '阵营': 'faction',
+      '阵营/种族': 'faction',
+      '种族': 'faction',
+      'faction': 'faction',
+      'path': 'path',
+      '信仰': 'faith',
+      'faith': 'faith',
+      '派系': 'factionFight',
+      '派系之争': 'factionFight',
+      'factionFight': 'factionFight',
+      '理念': 'ideology',
+      '理念/三观': 'ideology',
+      'ideology': 'ideology',
+    };
+    return sourceMap[source] || 'resource';
+  }
+
+  /**
+   * 规范化矛盾递进
+   */
+  function normalizeConflictEscalation(escalation: string[]) {
+    return escalation.map((e, i) => ({
+      level: i + 1,
+      name: e,
+      description: e,
+      examples: [],
+    }));
+  }
+
+  /**
+   * 规范化主要冲突
+   */
+  function normalizeMajorConflicts(majorConflicts: string[]) {
+    return majorConflicts.map((c, i) => ({
+      id: `major-conflict-${Date.now()}-${i}`,
+      title: c,
+      type: 'B' as const,
+      status: 'pending' as const,
+      chapters: [],
+      stakes: c,
+      resolution: '',
+    }));
+  }
+
+  /**
+   * 规范化故事线
+   * 将大纲简化的字符串格式转换为完整的 StoryLines 格式
+   */
+  function normalizeStoryLines(storyLines: any) {
+    const parseLocations = (str: string) => {
+      if (!str) return [];
+      return str.split(/[,，、→\->]+/).map(s => s.trim()).filter(Boolean);
+    };
+
+    return {
+      id: `storylines-${Date.now()}`,
+      map: {
+        planned: parseLocations(storyLines.map),
+        introduced: [],
+        current: parseLocations(storyLines.map)[0] || '',
+        chaptersPerLocation: 50,
+      },
+      faction: {
+        planned: parseLocations(storyLines.faction),
+        introduced: [],
+        currentLevel: 1,
+        escalationChapters: [],
+      },
+      character: {
+        planned: parseLocations(storyLines.character),
+        introduced: [],
+        keyRelationships: [],
+      },
+      goldenfinger: {
+        type: storyLines.goldenfinger || '',
+        currentStage: 1,
+        upgrades: [],
+      },
+      worldRules: {
+        revealed: parseLocations(storyLines.worldRules),
+        pending: [],
+      },
+      conflict: {
+        chains: parseLocations(storyLines.conflict),
+        activeConflict: parseLocations(storyLines.conflict)[0] || '',
+      },
+      collection: {
+        target: parseLocations(storyLines.collection),
+        progress: [],
+      },
+      romance: {
+        currentStage: 'cold' as const,
+        progression: [],
+      },
     };
   }
 
@@ -391,17 +537,15 @@ export function useProjectCreator(): UseProjectCreatorReturn {
       });
 
       if (newProject) {
-        // 保存增强数据到项目元数据
-        if (metadata.emotionGoal || metadata.coreSellingPoints?.length || metadata.conflictDesign) {
+        // 保存增强数据到项目顶层字段（不是 metadata）
+        if (metadata.emotionGoal || metadata.coreSellingPoints?.length || metadata.conflictDesign || metadata.storyLines) {
           await projectStore.updateProjectInfo(newProject.id, {
-            metadata: {
-              emotionGoal: metadata.emotionGoal,
-              coolPointDesign: metadata.coolPointDesign,
-              coreSellingPoints: metadata.coreSellingPoints,
-              conflictDesign: metadata.conflictDesign,
-              storyLines: metadata.storyLines,
-            },
-          } as any);
+            emotionGoal: metadata.emotionGoal,
+            coolPointDesign: metadata.coolPointDesign,
+            coreSellingPoints: metadata.coreSellingPoints,
+            conflictDesign: metadata.conflictDesign,
+            storyLines: metadata.storyLines,
+          });
         }
 
         // 导航到项目编辑器

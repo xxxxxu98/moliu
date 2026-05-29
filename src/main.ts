@@ -45,6 +45,7 @@ interface Project {
   description: string;
   genre: string[];
   wordCount: number;
+  targetWordCount?: number;
   status: 'planning' | 'writing' | 'paused' | 'completed';
   volumes: Volume[];
   chapters: Chapter[];
@@ -52,8 +53,72 @@ interface Project {
   worldSchema: WorldSchema;
   foreshadows: any[];
   plotOutline: any[];
+  chapterMemories?: any[];
   createdAt: string;
   updatedAt: string;
+
+  // ====== 大纲增强系统 ======
+  emotionGoal?: EmotionGoal;
+  conflictDesign?: ConflictDesign;
+  coolPointDesign?: CoolPointDesign;
+  storyLines?: StoryLines;
+  coreSellingPoints?: CoreSellingPoint[];
+  metadata?: ProjectMetadata;
+}
+
+interface EmotionGoal {
+  primary: string;
+  secondary?: string;
+  arc?: 'rising' | 'falling' | 'wave' | 'mixed';
+  density?: number;
+  highPoints?: number[];
+  lowPoints?: number[];
+}
+
+interface ConflictDesign {
+  source: string;
+  escalation: string[];
+  majorConflicts: string[];
+}
+
+interface CoolPointDesign {
+  patterns: string[];
+  arranged: Array<{
+    type: string;
+    description: string;
+    suggestedChapter?: number;
+  }>;
+}
+
+interface StoryLines {
+  map: string;
+  faction: string;
+  character: string;
+  goldenfinger: string;
+  worldRules: string;
+  conflict: string;
+  collection: string;
+  romance: string;
+}
+
+interface CoreSellingPoint {
+  id: string;
+  name: string;
+  description: string;
+  priority: number;
+}
+
+interface ProjectMetadata {
+  emotionGoal?: EmotionGoal;
+  coolPointDesign?: CoolPointDesign;
+  coreSellingPoints?: CoreSellingPoint[];
+  conflictDesign?: ConflictDesign;
+  storyLines?: StoryLines;
+  plannedChapterCount?: number;
+  plannedWordCount?: number;
+  climaxChapterIndex?: number;
+  endingChapterIndex?: number;
+  outlineProgress?: number;
 }
 
 interface Volume {
