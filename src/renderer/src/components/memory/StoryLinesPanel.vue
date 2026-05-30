@@ -322,13 +322,13 @@ const progressStats = computed(() => {
 <template>
   <div class="space-y-4">
     <!-- 头部 -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+    <div class="flex items-center justify-between p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
           <Layers class="w-4 h-4 text-white" />
         </div>
         <div>
-          <h3 class="font-semibold text-gray-900 dark:text-white">八条故事线</h3>
+          <h3 class="font-semibold text-sm text-gray-900 dark:text-white">八条故事线</h3>
           <p class="text-xs text-gray-500 dark:text-gray-400">管理故事的核心发展线</p>
         </div>
       </div>
@@ -369,31 +369,40 @@ const progressStats = computed(() => {
     <div v-if="projectStore.storyLines && !isEditing" class="space-y-3">
       <!-- 进度概览 -->
       <div v-if="progressStats" class="grid grid-cols-3 gap-3">
-        <div class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-          <div class="text-sm font-medium text-blue-700 dark:text-blue-400 mb-1">地图线</div>
+        <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+          <div class="flex items-center gap-2 mb-2">
+            <Map class="w-4 h-4 text-blue-500" />
+            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">地图线</span>
+          </div>
           <div class="flex items-center gap-2">
-            <div class="flex-1 h-2 bg-blue-200 dark:bg-blue-800 rounded-full overflow-hidden">
+            <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div class="h-full bg-blue-500" :style="{ width: `${progressStats.map.progress}%` }" />
             </div>
-            <span class="text-xs text-blue-600 dark:text-blue-400">{{ progressStats.map.introduced }}/{{ progressStats.map.total }}</span>
+            <span class="text-xs text-gray-500">{{ progressStats.map.introduced }}/{{ progressStats.map.total }}</span>
           </div>
         </div>
-        <div class="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
-          <div class="text-sm font-medium text-purple-700 dark:text-purple-400 mb-1">阵营线</div>
+        <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+          <div class="flex items-center gap-2 mb-2">
+            <Layers class="w-4 h-4 text-purple-500" />
+            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">阵营线</span>
+          </div>
           <div class="flex items-center gap-2">
-            <div class="flex-1 h-2 bg-purple-200 dark:bg-purple-800 rounded-full overflow-hidden">
+            <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div class="h-full bg-purple-500" :style="{ width: `${progressStats.faction.progress}%` }" />
             </div>
-            <span class="text-xs text-purple-600 dark:text-purple-400">{{ progressStats.faction.introduced }}/{{ progressStats.faction.total }}</span>
+            <span class="text-xs text-gray-500">{{ progressStats.faction.introduced }}/{{ progressStats.faction.total }}</span>
           </div>
         </div>
-        <div class="p-3 rounded-lg bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800">
-          <div class="text-sm font-medium text-pink-700 dark:text-pink-400 mb-1">收集线</div>
+        <div class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+          <div class="flex items-center gap-2 mb-2">
+            <Package class="w-4 h-4 text-pink-500" />
+            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">收集线</span>
+          </div>
           <div class="flex items-center gap-2">
-            <div class="flex-1 h-2 bg-pink-200 dark:bg-pink-800 rounded-full overflow-hidden">
+            <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div class="h-full bg-pink-500" :style="{ width: `${progressStats.collection.progress}%` }" />
             </div>
-            <span class="text-xs text-pink-600 dark:text-pink-400">{{ progressStats.collection.acquired }}/{{ progressStats.collection.total }}</span>
+            <span class="text-xs text-gray-500">{{ progressStats.collection.acquired }}/{{ progressStats.collection.total }}</span>
           </div>
         </div>
       </div>
@@ -604,41 +613,41 @@ const progressStats = computed(() => {
     </div>
 
     <!-- 编辑模式 -->
-    <div v-if="isEditing && editingLines" class="space-y-4">
-      <NCard size="small" :bordered="false" class="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20">
+    <div v-if="isEditing && editingLines" class="space-y-3">
+      <NCard size="small" :bordered="false" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <!-- 地图线编辑 -->
-        <div class="mb-6">
+        <div class="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
           <div class="flex items-center gap-2 mb-3">
-            <Map class="w-4 h-4" :style="{ color: '#3b82f6' }" />
-            <span class="font-medium">地图线</span>
+            <Map class="w-4 h-4 text-blue-500" />
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">地图线</span>
           </div>
           <div class="space-y-3">
             <div>
-              <label class="block text-xs text-gray-500 mb-1">规划地点</label>
+              <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">规划地点</label>
               <div class="flex flex-wrap gap-1 mb-2">
                 <NTag v-for="(loc, index) in editingLines.map.planned" :key="loc" size="small" closable @close="removeMapPlanned(index)">{{ loc }}</NTag>
               </div>
               <div class="flex gap-2">
-                <NInput size="small" placeholder="添加地点" @keyup.enter="(e: any) => addMapPlanned(e.target.value) && (e.target.value = '')" />
-                <NButton size="small" @click="(e: any) => addMapPlanned(e.target.previousElementSibling.value)">添加</NButton>
+                <NInput size="small" placeholder="添加地点" />
+                <NButton size="small">添加</NButton>
               </div>
             </div>
             <div>
-              <label class="block text-xs text-gray-500 mb-1">当前地点</label>
+              <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">当前地点</label>
               <NInput v-model:value="editingLines.map.current" size="small" placeholder="当前所在地点" />
             </div>
           </div>
         </div>
 
         <!-- 阵营线编辑 -->
-        <div class="mb-6">
+        <div class="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
           <div class="flex items-center gap-2 mb-3">
-            <Layers class="w-4 h-4" :style="{ color: '#8b5cf6' }" />
-            <span class="font-medium">阵营线</span>
+            <Layers class="w-4 h-4 text-purple-500" />
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">阵营线</span>
           </div>
           <div class="space-y-3">
             <div>
-              <label class="block text-xs text-gray-500 mb-1">规划势力</label>
+              <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">规划势力</label>
               <div class="flex flex-wrap gap-1 mb-2">
                 <NTag v-for="(fac, index) in editingLines.faction.planned" :key="fac" size="small" closable @close="removeFactionPlanned(index)">{{ fac }}</NTag>
               </div>
@@ -654,13 +663,13 @@ const progressStats = computed(() => {
         <div>
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
-              <Heart class="w-4 h-4" :style="{ color: '#f43f5e' }" />
-              <span class="font-medium">感情线</span>
+              <Heart class="w-4 h-4 text-pink-500" />
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">感情线</span>
             </div>
             <NButton size="tiny" @click="openRomanceDialog">编辑进展</NButton>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-500">当前阶段：</span>
+            <span class="text-xs text-gray-500">当前阶段：</span>
             <NTag :color="{ color: getRomanceStageColor(editingLines.romance.currentStage), textColor: '#fff' }">
               {{ getRomanceStageLabel(editingLines.romance.currentStage) }}
             </NTag>
@@ -669,14 +678,14 @@ const progressStats = computed(() => {
       </NCard>
 
       <!-- 操作按钮 -->
-      <div class="flex justify-end gap-2">
-        <NButton @click="cancelEdit">
+      <div class="flex justify-end gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+        <NButton size="small" @click="cancelEdit">
           <template #icon>
             <X class="w-4 h-4" />
           </template>
           取消
         </NButton>
-        <NButton type="primary" @click="saveLines">
+        <NButton type="primary" size="small" @click="saveLines">
           <template #icon>
             <Save class="w-4 h-4" />
           </template>

@@ -283,13 +283,13 @@ function getStatusColor(status: ConflictStatus): string {
 <template>
   <div class="space-y-4">
     <!-- 头部 -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center">
+    <div class="flex items-center justify-between p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center shadow-sm">
           <Swords class="w-4 h-4 text-white" />
         </div>
         <div>
-          <h3 class="font-semibold text-gray-900 dark:text-white">矛盾设计</h3>
+          <h3 class="font-semibold text-sm text-gray-900 dark:text-white">矛盾设计</h3>
           <p class="text-xs text-gray-500 dark:text-gray-400">规划故事的核心冲突</p>
         </div>
       </div>
@@ -327,12 +327,12 @@ function getStatusColor(status: ConflictStatus): string {
     </NEmpty>
 
     <!-- 查看模式 -->
-    <div v-if="projectStore.conflictDesign && !isEditing" class="space-y-4">
+    <div v-if="projectStore.conflictDesign && !isEditing" class="space-y-3">
       <!-- 冲突来源 -->
-      <div class="p-4 rounded-xl bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border border-red-200 dark:border-red-800">
+      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="flex items-center gap-2 mb-3">
           <AlertTriangle class="w-4 h-4 text-red-500" />
-          <span class="text-sm font-medium text-red-700 dark:text-red-400">冲突来源</span>
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">冲突来源</span>
         </div>
         <NTag
           size="large"
@@ -346,10 +346,10 @@ function getStatusColor(status: ConflictStatus): string {
       </div>
 
       <!-- 矛盾递进 -->
-      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
-            <TrendingUp class="w-4 h-4 text-blue-500" />
+            <TrendingUp class="w-4 h-4 text-indigo-500" />
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">矛盾递进</span>
             <NTag size="small">{{ projectStore.conflictDesign.escalation.length }}级</NTag>
           </div>
@@ -366,7 +366,7 @@ function getStatusColor(status: ConflictStatus): string {
               <NTag :color="{ color: getStatusColor('active'), textColor: '#fff' }" size="small">
                 Lv.{{ level.level }}
               </NTag>
-              <span class="font-medium text-gray-900 dark:text-white">{{ level.name }}</span>
+              <span class="font-medium text-sm text-gray-900 dark:text-white">{{ level.name }}</span>
             </div>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{{ level.description }}</p>
             <div v-if="level.examples.length > 0" class="flex flex-wrap gap-1">
@@ -378,10 +378,10 @@ function getStatusColor(status: ConflictStatus): string {
       </div>
 
       <!-- 主要冲突 -->
-      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
-            <Target class="w-4 h-4 text-orange-500" />
+            <Target class="w-4 h-4 text-indigo-500" />
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">主要冲突</span>
             <NTag size="small">{{ projectStore.conflictDesign.majorConflicts.length }}个</NTag>
           </div>
@@ -400,7 +400,7 @@ function getStatusColor(status: ConflictStatus): string {
               >
                 {{ CONFLICT_INTENSITY_LABELS[conflict.type].label }}
               </NTag>
-              <span class="font-medium text-gray-900 dark:text-white">{{ conflict.title }}</span>
+              <span class="font-medium text-sm text-gray-900 dark:text-white">{{ conflict.title }}</span>
               <NTag 
                 size="tiny" 
                 :color="{ color: getStatusColor(conflict.status), textColor: '#fff' }"
@@ -423,25 +423,26 @@ function getStatusColor(status: ConflictStatus): string {
     </div>
 
     <!-- 编辑模式 -->
-    <div v-if="isEditing && editingDesign" class="space-y-4">
-      <NCard size="small" :bordered="false" class="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20">
+    <div v-if="isEditing && editingDesign" class="space-y-3">
+      <NCard size="small" :bordered="false" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="space-y-4">
           <!-- 冲突来源 -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
               冲突来源
             </label>
             <NSelect
               v-model:value="editingDesign.source"
               :options="sourceOptions"
               placeholder="选择冲突来源"
+              size="small"
             />
           </div>
 
           <!-- 矛盾递进 -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                 矛盾递进
               </label>
               <NButton size="tiny" @click="openLevelDialog()">
@@ -454,7 +455,7 @@ function getStatusColor(status: ConflictStatus): string {
               <div 
                 v-for="level in editingDesign.escalation"
                 :key="level.level"
-                class="p-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-between"
+                class="p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 flex items-center justify-between"
               >
                 <div class="flex items-center gap-2">
                   <NTag size="small">Lv.{{ level.level }}</NTag>
@@ -475,7 +476,7 @@ function getStatusColor(status: ConflictStatus): string {
           <!-- 主要冲突 -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                 主要冲突
               </label>
               <NButton size="tiny" @click="openConflictDialog()">
@@ -488,7 +489,7 @@ function getStatusColor(status: ConflictStatus): string {
               <div 
                 v-for="conflict in editingDesign.majorConflicts"
                 :key="conflict.id"
-                class="p-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-between"
+                class="p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 flex items-center justify-between"
               >
                 <div class="flex items-center gap-2">
                   <NTag size="small" :color="{ color: CONFLICT_INTENSITY_LABELS[conflict.type].color, textColor: '#fff' }">
@@ -511,14 +512,14 @@ function getStatusColor(status: ConflictStatus): string {
       </NCard>
 
       <!-- 操作按钮 -->
-      <div class="flex justify-end gap-2">
-        <NButton @click="cancelEdit">
+      <div class="flex justify-end gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+        <NButton size="small" @click="cancelEdit">
           <template #icon>
             <X class="w-4 h-4" />
           </template>
           取消
         </NButton>
-        <NButton type="primary" @click="saveDesign">
+        <NButton type="primary" size="small" @click="saveDesign">
           <template #icon>
             <Save class="w-4 h-4" />
           </template>

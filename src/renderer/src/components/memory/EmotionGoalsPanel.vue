@@ -201,13 +201,13 @@ const densitySuggestion = computed(() => {
 <template>
   <div class="space-y-4">
     <!-- 头部 -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
+    <div class="flex items-center justify-between p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
           <Heart class="w-4 h-4 text-white" />
         </div>
         <div>
-          <h3 class="font-semibold text-gray-900 dark:text-white">情绪目标</h3>
+          <h3 class="font-semibold text-sm text-gray-900 dark:text-white">情绪目标</h3>
           <p class="text-xs text-gray-500 dark:text-gray-400">规划故事的核心情绪体验</p>
         </div>
       </div>
@@ -245,15 +245,15 @@ const densitySuggestion = computed(() => {
     </NEmpty>
 
     <!-- 查看模式 -->
-    <div v-if="projectStore.emotionGoal && !isEditing" class="space-y-4">
+    <div v-if="projectStore.emotionGoal && !isEditing" class="space-y-3">
       <!-- 核心情绪 -->
-      <div class="p-4 rounded-xl bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 border border-pink-200 dark:border-pink-800">
+      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="flex items-center gap-2 mb-3">
-          <Target class="w-4 h-4 text-pink-500" />
-          <span class="text-sm font-medium text-pink-700 dark:text-pink-400">核心情绪</span>
+          <Target class="w-4 h-4 text-indigo-500" />
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">核心情绪</span>
         </div>
         <div class="flex items-center gap-3">
-          <NTag size="large" type="error" round>
+          <NTag size="large" type="primary" round>
             {{ projectStore.emotionGoal.primary }}
           </NTag>
           <span v-if="projectStore.emotionGoal.secondary" class="text-gray-400">/</span>
@@ -264,9 +264,9 @@ const densitySuggestion = computed(() => {
       </div>
 
       <!-- 情绪弧线 -->
-      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="flex items-center gap-2 mb-3">
-          <TrendingUp class="w-4 h-4 text-blue-500" />
+          <TrendingUp class="w-4 h-4 text-indigo-500" />
           <span class="text-sm font-medium text-gray-700 dark:text-gray-300">情绪弧线</span>
           <NTag size="small" :color="{ color: getArcColor(projectStore.emotionGoal.arc), textColor: '#fff' }">
             {{ EMOTION_ARC_LABELS[projectStore.emotionGoal.arc].label }}
@@ -274,7 +274,7 @@ const densitySuggestion = computed(() => {
         </div>
         
         <!-- 简单弧线图 -->
-        <div class="h-24 flex items-end gap-1 px-2">
+        <div class="h-20 flex items-end gap-px px-2">
           <div 
             v-for="(point, index) in arcChartData" 
             :key="index"
@@ -297,7 +297,7 @@ const densitySuggestion = computed(() => {
       </div>
 
       <!-- 情绪密度 -->
-      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="flex items-center gap-2 mb-3">
           <Zap class="w-4 h-4 text-amber-500" />
           <span class="text-sm font-medium text-gray-700 dark:text-gray-300">情绪密度</span>
@@ -314,8 +314,8 @@ const densitySuggestion = computed(() => {
       </div>
 
       <!-- 情绪高点 -->
-      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center gap-2 mb-3">
+      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="flex items-center gap-2 mb-2">
           <TrendingUp class="w-4 h-4 text-red-500" />
           <span class="text-sm font-medium text-gray-700 dark:text-gray-300">情绪高点章节</span>
           <NTag size="small" type="error">{{ projectStore.emotionGoal.highPoints.length }}个</NTag>
@@ -337,8 +337,8 @@ const densitySuggestion = computed(() => {
       </div>
 
       <!-- 情绪低点 -->
-      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center gap-2 mb-3">
+      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="flex items-center gap-2 mb-2">
           <TrendingUp class="w-4 h-4 text-blue-500" style="transform: rotate(180deg)" />
           <span class="text-sm font-medium text-gray-700 dark:text-gray-300">情绪低点章节</span>
           <NTag size="small" type="info">{{ projectStore.emotionGoal.lowPoints.length }}个</NTag>
@@ -361,12 +361,12 @@ const densitySuggestion = computed(() => {
     </div>
 
     <!-- 编辑模式 -->
-    <div v-if="isEditing && editingGoal" class="space-y-4">
-      <NCard size="small" :bordered="false" class="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20">
+    <div v-if="isEditing && editingGoal" class="space-y-3">
+      <NCard size="small" :bordered="false" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="space-y-4">
           <!-- 核心情绪 -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
               核心情绪 *
             </label>
             <NSelect
@@ -374,12 +374,13 @@ const densitySuggestion = computed(() => {
               :options="emotionOptions"
               placeholder="选择核心情绪"
               filterable
+              size="small"
             />
           </div>
 
           <!-- 次要情绪 -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
               次要情绪
             </label>
             <NSelect
@@ -388,33 +389,36 @@ const densitySuggestion = computed(() => {
               placeholder="选择次要情绪（可选）"
               filterable
               clearable
+              size="small"
             />
           </div>
 
           <!-- 情绪弧线 -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
               情绪弧线
             </label>
             <NSelect
               v-model:value="editingGoal.arc"
               :options="arcOptions"
               placeholder="选择情绪弧线类型"
+              size="small"
             />
           </div>
 
           <!-- 情绪密度 -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
               情绪波动间隔（字数）
             </label>
             <NInput
               v-model:value="editingGoal.density"
               type="number"
               placeholder="每多少字一个情绪波动"
+              size="small"
             >
               <template #suffix>
-                <span class="text-gray-400">字</span>
+                <span class="text-gray-400 text-xs">字</span>
               </template>
             </NInput>
             <p class="text-xs text-gray-400 mt-1">
@@ -424,7 +428,7 @@ const densitySuggestion = computed(() => {
 
           <!-- 情绪高点 -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
               情绪高点章节
             </label>
             <div class="flex flex-wrap gap-2 mb-2">
@@ -443,15 +447,16 @@ const densitySuggestion = computed(() => {
                 v-model:value="newHighPoint"
                 type="number"
                 placeholder="输入章节号"
+                size="small"
                 @keyup.enter="addHighPoint"
               />
-              <NButton @click="addHighPoint">添加</NButton>
+              <NButton size="small" @click="addHighPoint">添加</NButton>
             </div>
           </div>
 
           <!-- 情绪低点 -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
               情绪低点章节
             </label>
             <div class="flex flex-wrap gap-2 mb-2">
@@ -470,23 +475,24 @@ const densitySuggestion = computed(() => {
                 v-model:value="newLowPoint"
                 type="number"
                 placeholder="输入章节号"
+                size="small"
                 @keyup.enter="addLowPoint"
               />
-              <NButton @click="addLowPoint">添加</NButton>
+              <NButton size="small" @click="addLowPoint">添加</NButton>
             </div>
           </div>
         </div>
       </NCard>
 
       <!-- 操作按钮 -->
-      <div class="flex justify-end gap-2">
-        <NButton @click="cancelEdit">
+      <div class="flex justify-end gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+        <NButton size="small" @click="cancelEdit">
           <template #icon>
             <X class="w-4 h-4" />
           </template>
           取消
         </NButton>
-        <NButton type="primary" @click="saveGoal">
+        <NButton type="primary" size="small" @click="saveGoal">
           <template #icon>
             <Save class="w-4 h-4" />
           </template>

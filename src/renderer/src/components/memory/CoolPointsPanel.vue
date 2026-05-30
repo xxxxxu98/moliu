@@ -197,16 +197,23 @@ const groupedByType = computed(() => {
 const chapterDistribution = computed(() => {
   if (!projectStore.coolPointDesign) return [];
   
-  const chapters = projectStore.coolPointDesign.arranged.map(a => a.chapter);
-  if (chapters.length === 0) return [];
+  const arranged = projectStore.coolPointDesign.arranged;
+  if (arranged.length === 0) return [];
   
-  const maxChapter = Math.max(...chapters);
-  const distribution: { chapter: number; count: number }[] = [];
-  
-  for (let i = 1; i <= Math.min(maxChapter, 50); i++) {
-    const count = chapters.filter(ch => ch === i).length;
-    distribution.push({ chapter: i, count });
+  // 按章节号分组统计
+  const chapterMap = new Map<number, number>();
+  for (const item of arranged) {
+    chapterMap.set(item.chapter, (chapterMap.get(item.chapter) || 0) + 1);
   }
+  
+  // 只返回有数据的章节
+  const distribution: { chapter: number; count: number }[] = [];
+  chapterMap.forEach((count, chapter) => {
+    distribution.push({ chapter, count });
+  });
+  
+  // 按章节号排序
+  distribution.sort((a, b) => a.chapter - b.chapter);
   
   return distribution;
 });
@@ -234,13 +241,13 @@ function getPatternColor(pattern: CoolPointPattern): string {
 <template>
   <div class="space-y-4">
     <!-- 头部 -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+    <div class="flex items-center justify-between p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-sm">
           <Zap class="w-4 h-4 text-white" />
         </div>
         <div>
-          <h3 class="font-semibold text-gray-900 dark:text-white">爽点设计</h3>
+          <h3 class="font-semibold text-sm text-gray-900 dark:text-white">爽点设计</h3>
           <p class="text-xs text-gray-500 dark:text-gray-400">规划故事的精彩爽点</p>
         </div>
       </div>
@@ -278,12 +285,12 @@ function getPatternColor(pattern: CoolPointPattern): string {
     </NEmpty>
 
     <!-- 查看模式 -->
-    <div v-if="projectStore.coolPointDesign && !isEditing" class="space-y-4">
+    <div v-if="projectStore.coolPointDesign && !isEditing" class="space-y-3">
       <!-- 爽点类型 -->
-      <div class="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800">
+      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="flex items-center gap-2 mb-3">
           <Star class="w-4 h-4 text-amber-500" />
-          <span class="text-sm font-medium text-amber-700 dark:text-amber-400">爽点类型</span>
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">爽点类型</span>
           <NTag size="small" type="warning">{{ projectStore.coolPointDesign.patterns.length }}种</NTag>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -303,52 +310,52 @@ function getPatternColor(pattern: CoolPointPattern): string {
       </div>
 
       <!-- 爽点密度 -->
-      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="flex items-center gap-2 mb-3">
-          <Target class="w-4 h-4 text-orange-500" />
+          <Target class="w-4 h-4 text-indigo-500" />
           <span class="text-sm font-medium text-gray-700 dark:text-gray-300">爽点密度</span>
         </div>
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-3 gap-3">
           <div class="text-center p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
-            <div class="text-2xl font-bold text-red-600 dark:text-red-400">
+            <div class="text-xl font-bold text-red-600 dark:text-red-400">
               {{ projectStore.coolPointDesign.density.micro.toLocaleString() }}
             </div>
-            <div class="text-xs text-gray-500">微爽点间隔</div>
+            <div class="text-xs text-gray-500">微爽点</div>
           </div>
           <div class="text-center p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20">
-            <div class="text-2xl font-bold text-amber-600 dark:text-amber-400">
+            <div class="text-xl font-bold text-amber-600 dark:text-amber-400">
               {{ projectStore.coolPointDesign.density.small.toLocaleString() }}
             </div>
-            <div class="text-xs text-gray-500">小爽点间隔</div>
+            <div class="text-xs text-gray-500">小爽点</div>
           </div>
           <div class="text-center p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
-            <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+            <div class="text-xl font-bold text-green-600 dark:text-green-400">
               {{ projectStore.coolPointDesign.density.big.toLocaleString() }}
             </div>
-            <div class="text-xs text-gray-500">大爽点间隔</div>
+            <div class="text-xs text-gray-500">大爽点</div>
           </div>
         </div>
       </div>
 
       <!-- 章节分布 -->
-      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="flex items-center gap-2 mb-3">
-          <Calendar class="w-4 h-4 text-blue-500" />
+          <Calendar class="w-4 h-4 text-indigo-500" />
           <span class="text-sm font-medium text-gray-700 dark:text-gray-300">章节爽点分布</span>
         </div>
         
-        <div v-if="chapterDistribution.length > 0" class="h-20 flex items-end gap-px">
+        <div v-if="chapterDistribution.length > 0" class="h-16 flex items-end gap-1">
           <div 
             v-for="item in chapterDistribution" 
             :key="item.chapter"
-            class="flex-1 bg-blue-200 dark:bg-blue-800 rounded-t transition-all hover:bg-blue-400 dark:hover:bg-blue-600"
-            :style="{ height: `${Math.max(10, item.count * 20)}%` }"
+            class="flex-1 min-w-0 bg-indigo-200 dark:bg-indigo-800 rounded-t transition-all hover:bg-indigo-400 dark:hover:bg-indigo-600"
+            :style="{ height: `${Math.max(15, Math.min(100, item.count * 40))}%` }"
             :title="`第${item.chapter}章: ${item.count}个爽点`"
           />
         </div>
-        <div class="flex justify-between mt-1 px-1 text-xs text-gray-400">
-          <span>第1章</span>
-          <span>第{{ chapterDistribution.length }}章</span>
+        <div v-if="chapterDistribution.length > 0" class="flex justify-between mt-1 px-1 text-xs text-gray-400">
+          <span>第{{ chapterDistribution[0]?.chapter }}章</span>
+          <span>第{{ chapterDistribution[chapterDistribution.length - 1]?.chapter }}章</span>
         </div>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
           共 {{ projectStore.coolPointDesign.arranged.length }} 个已安排爽点
@@ -356,7 +363,7 @@ function getPatternColor(pattern: CoolPointPattern): string {
       </div>
 
       <!-- 爽点列表 -->
-      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+      <div class="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
             <Zap class="w-4 h-4 text-amber-500" />
@@ -365,7 +372,7 @@ function getPatternColor(pattern: CoolPointPattern): string {
           </div>
         </div>
         
-        <div v-if="projectStore.coolPointDesign.arranged.length > 0" class="space-y-2 max-h-60 overflow-y-auto">
+        <div v-if="projectStore.coolPointDesign.arranged.length > 0" class="space-y-2 max-h-48 overflow-y-auto">
           <div 
             v-for="arrangement in projectStore.coolPointDesign.arranged"
             :key="arrangement.id"
@@ -379,7 +386,7 @@ function getPatternColor(pattern: CoolPointPattern): string {
             </NTag>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span class="text-lg">{{ COOL_POINT_PATTERN_LABELS[arrangement.type].emoji }}</span>
+                <span class="text-base">{{ COOL_POINT_PATTERN_LABELS[arrangement.type].emoji }}</span>
                 <span class="text-sm font-medium text-gray-900 dark:text-white">
                   {{ COOL_POINT_PATTERN_LABELS[arrangement.type].label }}
                 </span>
@@ -395,12 +402,12 @@ function getPatternColor(pattern: CoolPointPattern): string {
     </div>
 
     <!-- 编辑模式 -->
-    <div v-if="isEditing && editingDesign" class="space-y-4">
-      <NCard size="small" :bordered="false" class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
+    <div v-if="isEditing && editingDesign" class="space-y-3">
+      <NCard size="small" :bordered="false" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <div class="space-y-4">
           <!-- 爽点类型 -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
               爽点类型（可多选）
             </label>
             <div class="flex flex-wrap gap-2">
@@ -419,29 +426,29 @@ function getPatternColor(pattern: CoolPointPattern): string {
 
           <!-- 爽点密度 -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">
               爽点密度设置
             </label>
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-3 gap-3">
               <div>
-                <label class="block text-xs text-gray-500 mb-1">微爽点间隔</label>
-                <NInput v-model:value="densityForm.micro" type="number" placeholder="3000">
+                <label class="block text-xs text-gray-500 mb-1">微爽点</label>
+                <NInput v-model:value="densityForm.micro" type="number" placeholder="3000" size="small">
                   <template #suffix>
                     <span class="text-xs text-gray-400">字</span>
                   </template>
                 </NInput>
               </div>
               <div>
-                <label class="block text-xs text-gray-500 mb-1">小爽点间隔</label>
-                <NInput v-model:value="densityForm.small" type="number" placeholder="9000">
+                <label class="block text-xs text-gray-500 mb-1">小爽点</label>
+                <NInput v-model:value="densityForm.small" type="number" placeholder="9000" size="small">
                   <template #suffix>
                     <span class="text-xs text-gray-400">字</span>
                   </template>
                 </NInput>
               </div>
               <div>
-                <label class="block text-xs text-gray-500 mb-1">大爽点间隔</label>
-                <NInput v-model:value="densityForm.big" type="number" placeholder="21000">
+                <label class="block text-xs text-gray-500 mb-1">大爽点</label>
+                <NInput v-model:value="densityForm.big" type="number" placeholder="21000" size="small">
                   <template #suffix>
                     <span class="text-xs text-gray-400">字</span>
                   </template>
@@ -456,20 +463,20 @@ function getPatternColor(pattern: CoolPointPattern): string {
           <!-- 爽点安排 -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                 已安排爽点
               </label>
               <NButton size="tiny" @click="openArrangementDialog()">
                 <Plus class="w-3 h-3" />
-                添加爽点
+                添加
               </NButton>
             </div>
             
-            <div v-if="editingDesign.arranged.length > 0" class="space-y-2 max-h-40 overflow-y-auto">
+            <div v-if="editingDesign.arranged.length > 0" class="space-y-2 max-h-32 overflow-y-auto">
               <div 
                 v-for="arrangement in editingDesign.arranged"
                 :key="arrangement.id"
-                class="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600"
+                class="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600"
               >
                 <div class="flex items-center gap-2">
                   <NTag 
@@ -499,14 +506,14 @@ function getPatternColor(pattern: CoolPointPattern): string {
       </NCard>
 
       <!-- 操作按钮 -->
-      <div class="flex justify-end gap-2">
-        <NButton @click="cancelEdit">
+      <div class="flex justify-end gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+        <NButton size="small" @click="cancelEdit">
           <template #icon>
             <X class="w-4 h-4" />
           </template>
           取消
         </NButton>
-        <NButton type="primary" @click="saveDesign">
+        <NButton type="primary" size="small" @click="saveDesign">
           <template #icon>
             <Save class="w-4 h-4" />
           </template>
