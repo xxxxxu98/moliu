@@ -51,7 +51,7 @@ const editingDesign = ref<ConflictDesign | null>(null);
 const showLevelDialog = ref(false);
 const editingLevel = ref<ConflictLevel | null>(null);
 const levelForm = ref({
-  level: 1,
+  level: '1',
   name: '',
   description: '',
   examples: [] as string[],
@@ -117,7 +117,7 @@ function openLevelDialog(level?: ConflictLevel) {
   if (level) {
     editingLevel.value = level;
     levelForm.value = {
-      level: level.level,
+      level: String(level.level),
       name: level.name,
       description: level.description,
       examples: [...level.examples],
@@ -126,7 +126,7 @@ function openLevelDialog(level?: ConflictLevel) {
     editingLevel.value = null;
     const nextLevel = editingDesign.value ? editingDesign.value.escalation.length + 1 : 1;
     levelForm.value = {
-      level: Math.min(nextLevel, 4),
+      level: String(Math.min(nextLevel, 4)),
       name: '',
       description: '',
       examples: [],
@@ -140,7 +140,7 @@ function saveLevel() {
   if (!editingDesign.value) return;
   
   const levelData: ConflictLevel = {
-    level: levelForm.value.level,
+    level: Number(levelForm.value.level),
     name: levelForm.value.name,
     description: levelForm.value.description,
     examples: levelForm.value.examples,
