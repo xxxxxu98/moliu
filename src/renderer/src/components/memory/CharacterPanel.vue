@@ -262,7 +262,7 @@ function getRelationTypeColor(type: string): string {
               <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
                   <span class="font-medium text-[var(--moliu-text-primary)]">{{ char.name }}</span>
-                  <NTag v-if="char.role" size="tiny" type="info">{{ char.role }}</NTag>
+                  <NTag v-if="char.role" size="tiny" type="info">{{ t(`character.roles.${char.role}`) || char.role }}</NTag>
                 </div>
                 <div class="flex items-center gap-1">
                   <NButton quaternary circle size="small" @click.stop="openEditCharacterDialog(char)">
