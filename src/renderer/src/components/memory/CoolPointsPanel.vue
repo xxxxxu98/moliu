@@ -179,6 +179,12 @@ function deleteArrangement(id: string) {
   }
 }
 
+// 获取去重后的爽点类型列表（防止数据异常导致重复渲染）
+const uniquePatterns = computed(() => {
+  if (!projectStore.coolPointDesign?.patterns) return [];
+  return [...new Set(projectStore.coolPointDesign.patterns)];
+});
+
 // 按类型分组统计
 const groupedByType = computed(() => {
   if (!projectStore.coolPointDesign) return {};
@@ -295,7 +301,7 @@ function getPatternColor(pattern: CoolPointPattern): string {
         </div>
         <div class="flex flex-wrap gap-2">
           <NTag
-            v-for="pattern in projectStore.coolPointDesign.patterns"
+            v-for="pattern in uniquePatterns"
             :key="pattern"
             :color="{ color: getPatternColor(pattern), textColor: '#fff' }"
             size="large"
@@ -303,7 +309,7 @@ function getPatternColor(pattern: CoolPointPattern): string {
             {{ COOL_POINT_PATTERN_LABELS[pattern].emoji }}
             {{ COOL_POINT_PATTERN_LABELS[pattern].label }}
           </NTag>
-          <span v-if="projectStore.coolPointDesign.patterns.length === 0" class="text-sm text-gray-400">
+          <span v-if="uniquePatterns.length === 0" class="text-sm text-gray-400">
             暂无设置
           </span>
         </div>

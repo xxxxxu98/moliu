@@ -35,33 +35,42 @@ export function useProjectCreator(): UseProjectCreatorReturn {
     let plotIndex = 0;
     const structure = outline.structure;
 
+    // 辅助函数：提取幕内容
+    // structure.act1 可能是字符串，也可能是对象 { title, content, wordCountRatio }
+    const extractActContent = (act: any): string => {
+      if (!act) return '';
+      if (typeof act === 'string') return act;
+      if (typeof act === 'object' && act.content) return act.content;
+      return String(act);
+    };
+
     // 添加四幕结构
     plotOutline.push(
       {
         id: `plot-${Date.now()}-${plotIndex++}`,
         title: "第一幕",
-        description: structure?.act1 || "",
+        description: extractActContent(structure?.act1),
         type: "act",
         orderIndex: 0,
       },
       {
         id: `plot-${Date.now()}-${plotIndex++}`,
         title: "第二幕上",
-        description: structure?.act2a || "",
+        description: extractActContent(structure?.act2a),
         type: "act",
         orderIndex: 1,
       },
       {
         id: `plot-${Date.now()}-${plotIndex++}`,
         title: "第二幕下",
-        description: structure?.act2b || "",
+        description: extractActContent(structure?.act2b),
         type: "act",
         orderIndex: 2,
       },
       {
         id: `plot-${Date.now()}-${plotIndex++}`,
         title: "第三幕",
-        description: structure?.act3 || "",
+        description: extractActContent(structure?.act3),
         type: "act",
         orderIndex: 3,
       },
