@@ -149,7 +149,25 @@ console.log('【14. 矛盾设计测试】');
 if (result.conflictDesign) {
   console.log(`  冲突来源: ${result.conflictDesign.source}`);
   console.log(`  矛盾递进数: ${result.conflictDesign.escalation?.length || 0}`);
-  console.log(`  ${result.conflictDesign.source?.includes('资源') || result.conflictDesign.source?.includes('利益') ? '✅ 矛盾设计通过' : '❌ 矛盾设计失败'}\n`);
+  if (result.conflictDesign.escalation?.length) {
+    console.log(`  矛盾递进列表:`);
+    result.conflictDesign.escalation.forEach((e, i) => {
+      console.log(`    ${i + 1}. ${typeof e === 'string' ? e : (e as any).name || e}`);
+    });
+  }
+  console.log(`  主要冲突数: ${result.conflictDesign.majorConflicts?.length || 0}`);
+  if (result.conflictDesign.majorConflicts?.length) {
+    console.log(`  主要冲突列表:`);
+    result.conflictDesign.majorConflicts.forEach((c, i) => {
+      console.log(`    ${i + 1}. ${typeof c === 'string' ? c : (c as any).title || c}`);
+    });
+  }
+  const sourceOk = result.conflictDesign.source?.includes('资源') || result.conflictDesign.source?.includes('利益') || result.conflictDesign.source?.includes('阵营');
+  const escalationOk = (result.conflictDesign.escalation?.length || 0) >= 3;
+  const majorConflictsOk = (result.conflictDesign.majorConflicts?.length || 0) >= 2;
+  console.log(`  ${sourceOk ? '✅ 冲突来源通过' : '❌ 冲突来源失败'}`);
+  console.log(`  ${escalationOk ? '✅ 矛盾递进通过' : '❌ 矛盾递进失败'}`);
+  console.log(`  ${majorConflictsOk ? '✅ 主要冲突通过' : '❌ 主要冲突失败'}\n`);
 } else {
   console.log('  ❌ 缺少矛盾设计\n');
 }

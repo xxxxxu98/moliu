@@ -138,6 +138,9 @@ export class MarkdownExtractor {
     // 章节详情状态
     let inChapterDetail = false;
     let currentChapterDetail: 'coreEvent' | 'coolPoint' | 'hook' | null = null;
+    
+    // 冲突设计子区块状态
+    let conflictDesignSubSection: 'source' | 'escalation' | 'majorConflicts' | null = null;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -276,6 +279,7 @@ export class MarkdownExtractor {
             currentSection = 'conflictDesign';
             inWorldSection = false;
             inForeshadowSection = false;
+            conflictDesignSubSection = null;
           } else if (normalized.includes('早期伏笔')) {
             currentSection = 'foreshadows';
             inForeshadowSection = true;
@@ -323,6 +327,18 @@ export class MarkdownExtractor {
             currentSection = 'storyLine-worldRules';
             inWorldSection = false;
             inForeshadowSection = false;
+          } else if (level === 3 && (normalized.includes('冲突来源') || normalized.includes('矛盾递进') || normalized.includes('主要冲突'))) {
+            // H3 标题作为冲突设计的子区块处理
+            if (currentSection !== 'conflictDesign') {
+              currentSection = 'conflictDesign';
+            }
+            if (normalized.includes('冲突来源')) {
+              conflictDesignSubSection = 'source';
+            } else if (normalized.includes('矛盾递进')) {
+              conflictDesignSubSection = 'escalation';
+            } else if (normalized.includes('主要冲突')) {
+              conflictDesignSubSection = 'majorConflicts';
+            }
           } else {
             currentSection = 'other';
           }
@@ -415,9 +431,18 @@ export class MarkdownExtractor {
         }
       }
 
-      // 列表项处理
-      if (line.startsWith('-') || line.startsWith('*')) {
-        const item = line.substring(1).trim();
+      // 列表项处理（支持无序列表和编号列表）
+      const isBulletList = line.startsWith('-') || line.startsWith('*');
+      const numberedMatch = line.match(/^(\d+)[.、)]\s*(.+)/);
+      
+      if (isBulletList || numberedMatch) {
+        // 提取列表内容
+        const item = isBulletList 
+          ? line.substring(1).trim() 
+          : (numberedMatch ? numberedMatch[2].trim() : '');
+        
+        // 获取编号（如果有）
+        const itemNumber = numberedMatch ? parseInt(numberedMatch[1]) : null;
 
         // 处理标题待定状态下的列表项
         if (titlePending && !result.title) {
@@ -678,19 +703,42 @@ export class MarkdownExtractor {
             if (!result.conflictDesign) {
               result.conflictDesign = { source: '', escalation: [], majorConflicts: [] };
             }
-            if (item.includes('冲突来源') || item.includes('source')) {
+            
+            // 根据子区块类型和列表类型处理
+            if (conflictDesignSubSection === 'source' || item.includes('冲突来源')) {
               const match = item.match(/[：:]\s*(.+)/);
-              if (match) result.conflictDesign.source = match[1].trim();
-            } else if (item.includes('矛盾递进') || item.includes('escalation')) {
+              if (match) {
+                result.conflictDesign.source = match[1].trim();
+              } else if (item.trim() && !item.includes('冲突来源')) {
+                result.conflictDesign.source = item.trim();
+              }
+            } else if (conflictDesignSubSection === 'escalation' && numberedMatch) {
+              // 编号列表在 escalation 子区块，添加到 escalation
               const match = item.match(/[：:]\s*(.+)/);
               if (match) {
                 result.conflictDesign.escalation = match[1].split(/[、，,]/).filter(Boolean);
+              } else if (item.trim()) {
+                result.conflictDesign.escalation.push(item.trim());
               }
-            } else if (item.includes('主要冲突') || item.includes('major')) {
+            } else if (conflictDesignSubSection === 'majorConflicts' || isBulletList) {
+              // 无序列表或 majorConflicts 子区块，添加到 majorConflicts
               const match = item.match(/[：:]\s*(.+)/);
               if (match) {
-                result.conflictDesign.majorConflicts = match[1].split(/[、，,]/).filter(Boolean);
+                result.conflictDesign.majorConflicts.push(match[1].trim());
+              } else if (item.trim()) {
+                result.conflictDesign.majorConflicts.push(item.trim());
               }
+            } else if (numberedMatch) {
+              // 其他编号列表（没有明确子区块）添加到 escalation
+              const match = item.match(/[：:]\s*(.+)/);
+              if (match) {
+                result.conflictDesign.escalation = match[1].split(/[、，,]/).filter(Boolean);
+              } else if (item.trim()) {
+                result.conflictDesign.escalation.push(item.trim());
+              }
+            } else if (item.trim()) {
+              // 其他情况添加到主要冲突
+              result.conflictDesign.majorConflicts.push(item.trim());
             }
             break;
 

@@ -433,7 +433,7 @@ export class RemarkParser {
           inChapterDetail = false;
           currentChapterDetail = null;
           emotionField = null;
-          conflictField = null;
+          // 不要重置 conflictField，让它在冲突设计子区块中保持
           // 注意：保留 currentStoryLine，因为 H3 可能是八条故事线的子区块
           // 只有当不是八条故事线的子区块时才重置
           // 如果当前已经是 storyLines 区块，且当前 H3 不是八条故事线标题，则重置 currentStoryLine
@@ -1069,6 +1069,21 @@ export class RemarkParser {
               const conflictNumMatch = item.match(/^\d+[.、]\s*(?:冲突[：:])?\s*(.+)/);
               if (conflictNumMatch && conflictField === 'majorConflicts') {
                 result.conflictDesign.majorConflicts.push(conflictNumMatch[1].trim());
+                continue;
+              }
+              // 如果 conflictField 未设置但列表项是 "xxx vs yyy" 格式，也添加到 majorConflicts
+              if (!conflictField && conflictNumMatch) {
+                result.conflictDesign.majorConflicts.push(conflictNumMatch[1].trim());
+                continue;
+              }
+              // 如果 conflictField 未设置且列表项不以数字开头，添加到 majorConflicts
+              if (!conflictField && !/^\d+/.test(item.trim())) {
+                result.conflictDesign.majorConflicts.push(item.trim());
+                continue;
+              }
+              // 如果 conflictField 是 majorConflicts，直接添加（兜底）
+              if (conflictField === 'majorConflicts') {
+                result.conflictDesign.majorConflicts.push(item.trim());
                 continue;
               }
               // 支持加粗格式 **主要冲突**：值

@@ -379,11 +379,11 @@ async function handleDeletePlot(id: string) {
             class="rounded-lg bg-[var(--moliu-bg-primary)] border border-blue-200 dark:border-blue-800 p-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group"
             @click="toggleExpand(plot.id)"
           >
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <NTag size="tiny" :style="{ backgroundColor: getPlotTypeColor(plot.type) + '20', color: getPlotTypeColor(plot.type) }">
                 {{ plot.title }}
               </NTag>
-              <span v-if="plot.keyEvents?.length" class="text-xs text-[var(--moliu-text-secondary)]">
+              <span v-if="plot.keyEvents?.length" class="text-xs text-[var(--moliu-text-secondary)] whitespace-nowrap">
                 {{ plot.keyEvents.length }}个关键事件
               </span>
               <div class="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100">
