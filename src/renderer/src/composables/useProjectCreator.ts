@@ -465,27 +465,126 @@ export function useProjectCreator(): UseProjectCreatorReturn {
    * 将大纲简化的字符串格式转换为完整的 StoryLines 格式
    */
   function normalizeStoryLines(storyLines: any) {
-    const parseLocations = (str: string) => {
+    /**
+     * 规范化分隔符并分割字符串
+     * 将各种分隔符（中文逗号、顿号、箭头、英文逗号）统一处理
+     */
+    const parseListString = (str: string | string[]): string[] => {
       if (!str) return [];
-      return str.split(/[,，、→\->]+/).map(s => s.trim()).filter(Boolean);
+      if (Array.isArray(str)) return str.filter(Boolean);
+      const s = String(str).trim();
+      if (!s) return [];
+
+      // 统一分隔符：把 → 和 -> 替换成统一符号，然后用统一符号分割
+      // 注意：不能在正则的字符类中使用 →\-> 的写法（会导致解析错误）
+      const normalized = s
+        .replace(/→/g, '|||')
+        .replace(/->/g, '|||');
+      return normalized
+        .split(/[,，、|||]+/)
+        .map(part => part.trim())
+        .filter(Boolean);
+    };
+
+    /**
+     * 解析人物线
+     * 支持格式：
+     * - "老鱼（1-10）→ 铁锚加入（5）→ 珊瑚加入（30）"
+     * - "林深、老鱼、泡泡"
+     * - { id: "老鱼", role: "mentor" }
+     */
+    const parseCharacters = (chars: any): { id: string; role: string }[] => {
+      if (!chars) return [];
+      // 已经是对象数组
+      if (Array.isArray(chars) && chars.length > 0 && typeof chars[0] === 'object') {
+        return chars.map((c: any) => ({
+          id: c.id || c.name || String(c),
+          role: c.role || c.type || '',
+        }));
+      }
+      // 字符串格式解析
+      const parts = parseListString(chars);
+      return parts.map(part => {
+        // 匹配中文或英文括号：名称（描述）或 名称(desc)
+        const match = part.match(/^(.+?)[（(](.+?)[）)]$/);
+        if (match) {
+          const name = match[1].trim();
+          const desc = match[2].trim();
+          // 如果描述是纯数字或数字范围（章节范围），只取名称，不显示为角色描述
+          // 例如 "老鱼（1-10）" -> { id: '老鱼', role: '' }
+          return { id: name, role: /^[\d]+(-[\d]+)*$/.test(desc) ? '' : desc };
+        }
+        // 纯名称
+        return { id: part, role: '' };
+      });
+    };
+
+    /**
+     * 解析冲突链
+     */
+    const parseConflictChains = (chains: any): { level: number; name: string; description: string; chapters: number[]; status: 'pending' | 'active' | 'resolved' }[] => {
+      if (!chains) return [];
+      // 已经是对象数组
+      if (Array.isArray(chains) && chains.length > 0 && typeof chains[0] === 'object') {
+        return chains.map((c: any, i: number) => ({
+          level: c.level || i + 1,
+          name: c.name || String(c),
+          description: c.description || '',
+          chapters: Array.isArray(c.chapters) ? c.chapters : [],
+          status: (c.status as 'pending' | 'active' | 'resolved') || 'pending',
+        }));
+      }
+      // 字符串格式解析
+      const parts = parseListString(chains);
+      return parts.map((part, i) => {
+        // 匹配 "名称（章节）" 格式，提取冲突名称
+        const match = part.match(/^(.+?)[（(](.+?)[）)]$/);
+        let name = part;
+        let chapters: number[] = [];
+
+        if (match) {
+          name = match[1].trim();
+          const desc = match[2].trim();
+          // 尝试解析章节范围，如 "1-20" 或 "1-200"
+          const rangeMatch = desc.match(/^(\d+)-(\d+)$/);
+          if (rangeMatch) {
+            // 提取起始章节作为参考
+            chapters = [parseInt(rangeMatch[1], 10)];
+          } else {
+            // 尝试解析单个数字
+            const num = parseInt(desc, 10);
+            if (!isNaN(num)) {
+              chapters = [num];
+            }
+          }
+        }
+
+        return {
+          level: i + 1,
+          name,
+          description: name,
+          chapters,
+          status: 'pending' as const,
+        };
+      });
     };
 
     return {
       id: `storylines-${Date.now()}`,
       map: {
-        planned: parseLocations(storyLines.map),
+        planned: parseListString(storyLines.map),
         introduced: [],
-        current: parseLocations(storyLines.map)[0] || '',
+        current: parseListString(storyLines.map)[0] || '',
         chaptersPerLocation: 50,
       },
       faction: {
-        planned: parseLocations(storyLines.faction),
+        planned: parseListString(storyLines.faction),
         introduced: [],
         currentLevel: 1,
         escalationChapters: [],
       },
       character: {
-        planned: parseLocations(storyLines.character),
+        planned: parseCharacters(storyLines.character),
         introduced: [],
         keyRelationships: [],
       },
@@ -495,15 +594,15 @@ export function useProjectCreator(): UseProjectCreatorReturn {
         upgrades: [],
       },
       worldRules: {
-        revealed: parseLocations(storyLines.worldRules),
+        revealed: parseListString(storyLines.worldRules),
         pending: [],
       },
       conflict: {
-        chains: parseLocations(storyLines.conflict),
-        activeConflict: parseLocations(storyLines.conflict)[0] || '',
+        chains: parseConflictChains(storyLines.conflict),
+        activeConflict: parseListString(storyLines.conflict)[0] || '',
       },
       collection: {
-        target: parseLocations(storyLines.collection),
+        target: parseListString(storyLines.collection),
         progress: [],
       },
       romance: {

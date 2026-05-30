@@ -421,13 +421,13 @@ const progressStats = computed(() => {
             <div>
               <div class="text-xs text-gray-500 mb-2">规划地点 ({{ projectStore.storyLines.map.planned.length }})</div>
               <div class="flex flex-wrap gap-1">
-                <NTag v-for="loc in projectStore.storyLines.map.planned" :key="loc" size="small" type="info">{{ loc }}</NTag>
+                <NTag v-for="(loc, index) in projectStore.storyLines.map.planned" :key="`map-planned-${index}`" size="small" type="info">{{ loc }}</NTag>
               </div>
             </div>
             <div>
               <div class="text-xs text-gray-500 mb-2">已引入 ({{ projectStore.storyLines.map.introduced.length }})</div>
               <div class="flex flex-wrap gap-1">
-                <NTag v-for="loc in projectStore.storyLines.map.introduced" :key="loc" size="small" type="success">{{ loc }}</NTag>
+                <NTag v-for="(loc, index) in projectStore.storyLines.map.introduced" :key="`map-intro-${index}`" size="small" type="success">{{ loc }}</NTag>
               </div>
             </div>
             <div v-if="projectStore.storyLines.map.current" class="text-sm">
@@ -449,13 +449,13 @@ const progressStats = computed(() => {
             <div>
               <div class="text-xs text-gray-500 mb-2">规划势力 ({{ projectStore.storyLines.faction.planned.length }})</div>
               <div class="flex flex-wrap gap-1">
-                <NTag v-for="fac in projectStore.storyLines.faction.planned" :key="fac" size="small" type="info">{{ fac }}</NTag>
+                <NTag v-for="(fac, index) in projectStore.storyLines.faction.planned" :key="`faction-planned-${index}`" size="small" type="info">{{ fac }}</NTag>
               </div>
             </div>
             <div>
               <div class="text-xs text-gray-500 mb-2">已引入 ({{ projectStore.storyLines.faction.introduced.length }})</div>
               <div class="flex flex-wrap gap-1">
-                <NTag v-for="fac in projectStore.storyLines.faction.introduced" :key="fac" size="small" type="success">{{ fac }}</NTag>
+                <NTag v-for="(fac, index) in projectStore.storyLines.faction.introduced" :key="`faction-intro-${index}`" size="small" type="success">{{ fac }}</NTag>
               </div>
             </div>
           </div>
@@ -481,7 +481,7 @@ const progressStats = computed(() => {
             <div>
               <div class="text-xs text-gray-500 mb-2">已引入 ({{ projectStore.storyLines.character.introduced.length }})</div>
               <div class="flex flex-wrap gap-1">
-                <NTag v-for="name in projectStore.storyLines.character.introduced" :key="name" size="small" type="success">{{ name }}</NTag>
+                <NTag v-for="(name, index) in projectStore.storyLines.character.introduced" :key="`char-intro-${index}`" size="small" type="success">{{ name }}</NTag>
               </div>
             </div>
           </div>
@@ -503,7 +503,7 @@ const progressStats = computed(() => {
             <div>
               <div class="text-xs text-gray-500 mb-2">升级节点 ({{ projectStore.storyLines.goldenfinger.upgrades.length }})</div>
               <div class="space-y-1">
-                <div v-for="upgrade in projectStore.storyLines.goldenfinger.upgrades" :key="upgrade.chapter" class="flex items-center gap-2 text-sm">
+                <div v-for="(upgrade, index) in projectStore.storyLines.goldenfinger.upgrades" :key="`goldenfinger-upgrade-${index}`" class="flex items-center gap-2 text-sm">
                   <NTag size="tiny" type="warning">第{{ upgrade.chapter }}章</NTag>
                   <span>{{ upgrade.description }}</span>
                 </div>
@@ -524,13 +524,13 @@ const progressStats = computed(() => {
             <div>
               <div class="text-xs text-gray-500 mb-2">已揭示规则 ({{ projectStore.storyLines.worldRules.revealed.length }})</div>
               <div class="flex flex-wrap gap-1">
-                <NTag v-for="rule in projectStore.storyLines.worldRules.revealed" :key="rule" size="small" type="success">{{ rule }}</NTag>
+                <NTag v-for="(rule, index) in projectStore.storyLines.worldRules.revealed" :key="`world-rules-revealed-${index}`" size="small" type="success">{{ rule }}</NTag>
               </div>
             </div>
             <div>
               <div class="text-xs text-gray-500 mb-2">待揭示规则 ({{ projectStore.storyLines.worldRules.pending.length }})</div>
               <div class="flex flex-wrap gap-1">
-                <NTag v-for="rule in projectStore.storyLines.worldRules.pending" :key="rule" size="small" type="default">{{ rule }}</NTag>
+                <NTag v-for="(rule, index) in projectStore.storyLines.worldRules.pending" :key="`world-rules-pending-${index}`" size="small" type="default">{{ rule }}</NTag>
               </div>
             </div>
           </div>
@@ -545,7 +545,7 @@ const progressStats = computed(() => {
             </div>
           </template>
           <div class="space-y-2">
-            <div v-for="chain in projectStore.storyLines.conflict.chains" :key="chain.name" class="p-2 rounded bg-gray-50 dark:bg-gray-800">
+            <div v-for="(chain, index) in projectStore.storyLines.conflict.chains" :key="`conflict-chain-${index}`" class="p-2 rounded bg-gray-50 dark:bg-gray-800">
               <div class="flex items-center gap-2 mb-1">
                 <NTag size="tiny" :type="chain.status === 'resolved' ? 'success' : chain.status === 'active' ? 'warning' : 'default'">
                   Lv.{{ chain.level }}
@@ -569,7 +569,7 @@ const progressStats = computed(() => {
             </div>
           </template>
           <div class="space-y-3">
-            <div v-for="item in projectStore.storyLines.collection.target" :key="item" class="flex items-center justify-between p-2 rounded bg-gray-50 dark:bg-gray-800">
+            <div v-for="(item, index) in projectStore.storyLines.collection.target" :key="`collection-target-${index}`" class="flex items-center justify-between p-2 rounded bg-gray-50 dark:bg-gray-800">
               <span class="text-sm">{{ item }}</span>
               <NTag :type="projectStore.storyLines.collection.progress.find(p => p.item === item)?.acquired ? 'success' : 'default'" size="small">
                 {{ projectStore.storyLines.collection.progress.find(p => p.item === item)?.acquired ? '已获得' : '未获得' }}
@@ -594,7 +594,7 @@ const progressStats = computed(() => {
           </template>
           <div class="space-y-3">
             <div v-if="projectStore.storyLines.romance.progression.length > 0" class="space-y-2">
-              <div v-for="prog in projectStore.storyLines.romance.progression" :key="prog.chapter" class="p-2 rounded bg-pink-50 dark:bg-pink-900/20">
+              <div v-for="(prog, index) in projectStore.storyLines.romance.progression" :key="`romance-prog-${index}`" class="p-2 rounded bg-pink-50 dark:bg-pink-900/20">
                 <div class="flex items-center gap-2 mb-1">
                   <NTag size="tiny" :color="{ color: getRomanceStageColor(prog.stage), textColor: '#fff' }">
                     第{{ prog.chapter }}章
@@ -625,7 +625,7 @@ const progressStats = computed(() => {
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">规划地点</label>
               <div class="flex flex-wrap gap-1 mb-2">
-                <NTag v-for="(loc, index) in editingLines.map.planned" :key="loc" size="small" closable @close="removeMapPlanned(index)">{{ loc }}</NTag>
+                <NTag v-for="(loc, index) in editingLines.map.planned" :key="`edit-map-${index}`" size="small" closable @close="removeMapPlanned(index)">{{ loc }}</NTag>
               </div>
               <div class="flex gap-2">
                 <NInput size="small" placeholder="添加地点" />
@@ -649,7 +649,7 @@ const progressStats = computed(() => {
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">规划势力</label>
               <div class="flex flex-wrap gap-1 mb-2">
-                <NTag v-for="(fac, index) in editingLines.faction.planned" :key="fac" size="small" closable @close="removeFactionPlanned(index)">{{ fac }}</NTag>
+                <NTag v-for="(fac, index) in editingLines.faction.planned" :key="`edit-faction-${index}`" size="small" closable @close="removeFactionPlanned(index)">{{ fac }}</NTag>
               </div>
               <div class="flex gap-2">
                 <NInput size="small" placeholder="添加势力" />

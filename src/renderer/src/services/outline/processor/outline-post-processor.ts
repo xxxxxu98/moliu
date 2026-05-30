@@ -872,27 +872,87 @@ export class OutlinePostProcessor {
       romance: { currentStage: 'cold', progression: [] },
     };
 
-    // 如果是字符串，转换为 planned 数组
+    // 辅助函数：分割字符串列表
+    const parseListString = (str: string): string[] => {
+      if (!str) return [];
+      const normalized = str.replace(/→/g, '|||').replace(/->/g, '|||');
+      return normalized.split(/[,，、|||]+/).map(s => s.trim()).filter(Boolean);
+    };
+
+    // 辅助函数：解析冲突链
+    const parseConflictChains = (conflictStr: string): any[] => {
+      if (!conflictStr) return [];
+      const parts = parseListString(conflictStr);
+      return parts.map((part, i) => {
+        // 匹配 "名称（章节）" 格式
+        const match = part.match(/^(.+?)[（(](.+?)[）)]$/);
+        let name = part;
+        let chapters: number[] = [];
+
+        if (match) {
+          name = match[1].trim();
+          const desc = match[2].trim();
+          const rangeMatch = desc.match(/^(\d+)-(\d+)$/);
+          if (rangeMatch) {
+            chapters = [parseInt(rangeMatch[1], 10)];
+          } else {
+            const num = parseInt(desc, 10);
+            if (!isNaN(num)) chapters = [num];
+          }
+        }
+
+        return {
+          level: i + 1,
+          name,
+          description: name,
+          chapters,
+          status: 'pending' as const,
+        };
+      });
+    };
+
+    // 辅助函数：解析人物线
+    const parseCharacterPlanned = (charStr: string): any[] => {
+      if (!charStr) return [];
+      const parts = parseListString(charStr);
+      return parts.map(part => {
+        const match = part.match(/^(.+?)[（(](.+?)[）)]$/);
+        if (match) {
+          const name = match[1].trim();
+          const desc = match[2].trim();
+          return { id: name, role: /^\d[\d-]*$/.test(desc) ? '' : desc };
+        }
+        return { id: part, role: '' };
+      });
+    };
+
+    // 转换各字段
     if (typeof storyLines.map === 'string') {
-      defaultStoryLines.map.planned = storyLines.map ? [storyLines.map] : [];
+      const parts = parseListString(storyLines.map);
+      defaultStoryLines.map.planned = parts;
+      defaultStoryLines.map.current = parts[0] || '';
     }
     if (typeof storyLines.faction === 'string') {
-      defaultStoryLines.faction.planned = storyLines.faction ? [storyLines.faction] : [];
+      defaultStoryLines.faction.planned = parseListString(storyLines.faction);
     }
     if (typeof storyLines.character === 'string') {
-      defaultStoryLines.character.planned = storyLines.character ? [storyLines.character] : [];
+      defaultStoryLines.character.planned = parseCharacterPlanned(storyLines.character);
     }
     if (typeof storyLines.goldenfinger === 'string') {
       defaultStoryLines.goldenfinger.type = storyLines.goldenfinger || '';
     }
     if (typeof storyLines.worldRules === 'string') {
-      defaultStoryLines.worldRules.revealed = storyLines.worldRules ? [storyLines.worldRules] : [];
+      defaultStoryLines.worldRules.revealed = parseListString(storyLines.worldRules);
     }
     if (typeof storyLines.conflict === 'string') {
-      defaultStoryLines.conflict.activeConflict = storyLines.conflict || '';
+      // 解析冲突链
+      defaultStoryLines.conflict.chains = parseConflictChains(storyLines.conflict);
+      // 设置当前活跃冲突为首个
+      const chains = defaultStoryLines.conflict.chains;
+      defaultStoryLines.conflict.activeConflict = chains.length > 0 ? chains[0].name : '';
     }
     if (typeof storyLines.collection === 'string') {
-      defaultStoryLines.collection.target = storyLines.collection ? [storyLines.collection] : [];
+      defaultStoryLines.collection.target = parseListString(storyLines.collection);
     }
     if (typeof storyLines.romance === 'string') {
       defaultStoryLines.romance.currentStage = storyLines.romance || 'cold';
