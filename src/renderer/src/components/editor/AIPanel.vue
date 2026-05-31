@@ -949,7 +949,7 @@ function getSeverityClass(severity: string): string {
               </div>
             </div>
             <!-- 报告摘要 -->
-            <div v-if="latestReport" class="text-xs space-y-1">
+            <div v-if="latestReport?.overview" class="text-xs space-y-1">
               <div class="flex items-center gap-2">
                 <span class="text-gray-500">总分：</span>
                 <span class="font-medium" :class="latestReport.overview.overallScore >= 70 ? 'text-emerald-600' : 'text-amber-600'">

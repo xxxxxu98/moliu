@@ -1,6 +1,6 @@
 /**
  * 单章写作 Composable - 增强版
- * 
+ *
  * 核心改进：
  * 1. TaskBook 作为核心前置步骤（不再是可选）
  * 2. Blocking 闸门机制
@@ -21,19 +21,24 @@ import {
   buildFullOutlineText,
   buildEnhancedDesignPrompt,
 } from '@/services/writing/OutlineContextBuilder';
-import { extractChapterMemory, buildCharacterStateTable, buildPlotProgressTable, safeExtractChapterMemory } from '@/services/writing/extract-plot-memory';
+import {
+  extractChapterMemory,
+  buildCharacterStateTable,
+  buildPlotProgressTable,
+  safeExtractChapterMemory,
+} from '@/services/writing/extract-plot-memory';
 import { initializeMemoryManager, getMemoryManager } from '@/services/writing/memory-manager';
 import { DeAIService } from '@/services/writing/de-ai-service';
 import {
   createTaskBookBuilder,
-  type WritingTaskBuilder
+  type WritingTaskBuilder,
 } from '@/services/writing/writing-task-builder';
 import {
   blockingReview,
   canProceedToPolish,
   getBlockingIssuesToFix,
   BlockingReviewService,
-  type BlockingReviewResult
+  type BlockingReviewResult,
 } from '@/services/review/blocking-review.service';
 import type { ChapterMemory, Chapter } from '@/types/project';
 import type { WritingTaskBook } from '@/types/writing-task';
@@ -92,7 +97,11 @@ export interface UseChapterWriterReturn {
 
   // 补充续写
   supplementContinue: (options?: { additionalWords?: number }) => Promise<string | null>;
-  checkAndSupplement: () => Promise<{ needsSupplement: boolean; currentWords: number; targetWords: number }>;
+  checkAndSupplement: () => Promise<{
+    needsSupplement: boolean;
+    currentWords: number;
+    targetWords: number;
+  }>;
 
   // 报告导出
   exportReport: (format: 'json' | 'markdown') => string | null;
@@ -100,7 +109,9 @@ export interface UseChapterWriterReturn {
 
   // 失败恢复
   getFailures: () => FailureState[];
-  attemptRecovery: (failureId: string) => Promise<{ strategy: RecoveryStrategy | null; action: string }>;
+  attemptRecovery: (
+    failureId: string
+  ) => Promise<{ strategy: RecoveryStrategy | null; action: string }>;
   clearFailures: () => void;
 }
 
@@ -114,7 +125,9 @@ const error = ref<string | null>(null);
 const generatedContent = ref('');
 
 // 流水线状态
-const currentStep = ref<'idle' | 'taskbook' | 'draft' | 'supplement' | 'review' | 'polish' | 'save'>('idle');
+const currentStep = ref<
+  'idle' | 'taskbook' | 'draft' | 'supplement' | 'review' | 'polish' | 'save'
+>('idle');
 const blockingIssues = ref<any[]>([]);
 const reviewResult = ref<BlockingReviewResult | null>(null);
 
@@ -149,11 +162,9 @@ const {
   clearChapterFailures,
 } = useFailureRecovery({
   onUserDecision: async (failure: FailureState) => {
-    console.log('[ChapterWriter] 需要用户决策:', failure.step, failure.error);
     return null;
   },
   onRecovery: async (failure: FailureState, strategy: RecoveryStrategy) => {
-    console.log('[ChapterWriter] 执行恢复策略:', strategy, 'for', failure.step);
     return true;
   },
 });
@@ -186,41 +197,71 @@ function extractChapterTypeFromOutline(outline: string, orderIndex: number): Cha
 
   const lowerOutline = outline.toLowerCase();
 
-  if (lowerOutline.includes('世界观') || lowerOutline.includes('背景') || 
-      lowerOutline.includes('设定') || lowerOutline.includes('大陆') ||
-      lowerOutline.includes('世界') || lowerOutline.includes('历史')) {
+  if (
+    lowerOutline.includes('世界观') ||
+    lowerOutline.includes('背景') ||
+    lowerOutline.includes('设定') ||
+    lowerOutline.includes('大陆') ||
+    lowerOutline.includes('世界') ||
+    lowerOutline.includes('历史')
+  ) {
     return 'world_intro';
   }
 
-  if (lowerOutline.includes('登场') || lowerOutline.includes('出场') ||
-      lowerOutline.includes('初遇') || lowerOutline.includes('相遇') ||
-      lowerOutline.includes('介绍') || lowerOutline.includes('主角')) {
+  if (
+    lowerOutline.includes('登场') ||
+    lowerOutline.includes('出场') ||
+    lowerOutline.includes('初遇') ||
+    lowerOutline.includes('相遇') ||
+    lowerOutline.includes('介绍') ||
+    lowerOutline.includes('主角')
+  ) {
     return 'character_intro';
   }
 
-  if (lowerOutline.includes('开端') || lowerOutline.includes('开始') ||
-      lowerOutline.includes('序幕') || lowerOutline.includes('引入')) {
+  if (
+    lowerOutline.includes('开端') ||
+    lowerOutline.includes('开始') ||
+    lowerOutline.includes('序幕') ||
+    lowerOutline.includes('引入')
+  ) {
     return 'plot_setup';
   }
 
-  if (lowerOutline.includes('高潮') || lowerOutline.includes('决战') ||
-      lowerOutline.includes('对决') || lowerOutline.includes('爆发')) {
+  if (
+    lowerOutline.includes('高潮') ||
+    lowerOutline.includes('决战') ||
+    lowerOutline.includes('对决') ||
+    lowerOutline.includes('爆发')
+  ) {
     return 'climax';
   }
 
-  if (lowerOutline.includes('解决') || lowerOutline.includes('结束') ||
-      lowerOutline.includes('落幕') || lowerOutline.includes('结局') ||
-      lowerOutline.includes('收尾')) {
+  if (
+    lowerOutline.includes('解决') ||
+    lowerOutline.includes('结束') ||
+    lowerOutline.includes('落幕') ||
+    lowerOutline.includes('结局') ||
+    lowerOutline.includes('收尾')
+  ) {
     return 'resolution';
   }
 
-  if (lowerOutline.includes('过渡') || lowerOutline.includes('间章') ||
-      lowerOutline.includes('日常') || lowerOutline.includes('休息')) {
+  if (
+    lowerOutline.includes('过渡') ||
+    lowerOutline.includes('间章') ||
+    lowerOutline.includes('日常') ||
+    lowerOutline.includes('休息')
+  ) {
     return 'transitional';
   }
 
-  if (lowerOutline.includes('终章') || lowerOutline.includes('尾声') ||
-      lowerOutline.includes('最终') || lowerOutline.includes('完结')) {
+  if (
+    lowerOutline.includes('终章') ||
+    lowerOutline.includes('尾声') ||
+    lowerOutline.includes('最终') ||
+    lowerOutline.includes('完结')
+  ) {
     return 'ending';
   }
 
@@ -251,7 +292,6 @@ async function generateTaskBook(
     });
 
     const taskBook = await builder.buildTaskBook();
-    console.log('[智能续写] 任务书已生成:', taskBook.CBN);
     return taskBook;
   } catch (err) {
     console.error('[智能续写] 生成任务书失败:', err);
@@ -260,7 +300,7 @@ async function generateTaskBook(
       currentChapterId || 'unknown',
       chapterIndex + 1,
       'taskbook',
-      err instanceof Error ? err.message : '任务书生成失败',
+      err instanceof Error ? err.message : '任务书生成失败'
     );
     return null;
   }
@@ -281,19 +321,12 @@ async function performBlockingReview(
     chapter,
     chapterIndex,
     previousChapter,
-    previousSummary: previousChapter?.content 
+    previousSummary: previousChapter?.content
       ? new ContextManager().extractPreviousChapterSummary(previousChapter.content, 300)
       : undefined,
   };
 
   const result = await blockingReview(context, undefined, strictness);
-  
-  console.log('[智能续写] 审查结果:', {
-    passed: result.passed,
-    blockingCount: result.blockingCount,
-    totalIssues: result.totalIssues,
-    strictness,
-  });
 
   return result;
 }
@@ -310,7 +343,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
   let currentGeneratedContent = '';
   let abortController: AbortController | null = null;
-  
+
   // 当前章节信息
   let currentChapterId = '';
   let currentChapterNumber = 0;
@@ -323,7 +356,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
         projectStore.currentProject.name,
         true
       );
-      console.log('[ChapterWriter] 记忆管理器已初始化');
     }
   }
 
@@ -334,7 +366,10 @@ export function useChapterWriter(): UseChapterWriterReturn {
   /**
    * 构建章节写作上下文
    */
-  function buildContext(additionalInstructions?: string, writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient'): ChapterWritingContext | null {
+  function buildContext(
+    additionalInstructions?: string,
+    writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient'
+  ): ChapterWritingContext | null {
     const project = projectStore.currentProject;
     const currentChapter = projectStore.currentChapter;
 
@@ -352,30 +387,36 @@ export function useChapterWriter(): UseChapterWriterReturn {
     }
 
     // 使用统一的 OutlineContextBuilder
-    const chapterCtx = extractChapterContext(projectStore.plotOutline, currentChapter.id, currentChapter.title);
+    const chapterCtx = extractChapterContext(
+      projectStore.plotOutline,
+      currentChapter.id,
+      currentChapter.title
+    );
     const currentChapterOutline = chapterCtx
       ? buildChapterOutlineText(chapterCtx, true)
-      : (currentChapter.plotSummary || '');
+      : currentChapter.plotSummary || '';
 
     // 如果没有大纲上下文中的 chapterType，回退到原有推导逻辑
-    const chapterType = chapterCtx?.chapterType
-      || extractChapterTypeFromOutline(currentChapterOutline, currentIndex);
+    const chapterType =
+      chapterCtx?.chapterType || extractChapterTypeFromOutline(currentChapterOutline, currentIndex);
 
-    const characters: ChapterWritingContext['characters'] = (project.characters || []).map(char => ({
-      id: char.id,
-      name: char.name,
-      role: char.role || '角色',
-      description: char.description || '',
-      personality: char.profile?.personality || [],
-      appearance: char.profile?.appearance,
-      speakingStyle: undefined,
-      currentStatus: undefined,
-      relationships: (char.profile?.relationships || []).map(r => ({
-        targetName: r.targetName,
-        type: r.type,
-        description: r.description || '',
-      })),
-    }));
+    const characters: ChapterWritingContext['characters'] = (project.characters || []).map(
+      char => ({
+        id: char.id,
+        name: char.name,
+        role: char.role || '角色',
+        description: char.description || '',
+        personality: char.profile?.personality || [],
+        appearance: char.profile?.appearance,
+        speakingStyle: undefined,
+        currentStatus: undefined,
+        relationships: (char.profile?.relationships || []).map(r => ({
+          targetName: r.targetName,
+          type: r.type,
+          description: r.description || '',
+        })),
+      })
+    );
 
     const activeForeshadows: ChapterWritingContext['foreshadows'] = (project.foreshadows || [])
       .filter(f => f.status !== 'resolved')
@@ -394,7 +435,11 @@ export function useChapterWriter(): UseChapterWriterReturn {
       projectTitle: project.name,
       projectSynopsis: project.description || '',
       projectGenre: project.genre.map(g => g.name),
-      currentChapter: chapterCtx || { title: currentChapter.title, description: currentChapterOutline, orderIndex: currentIndex },
+      currentChapter: chapterCtx || {
+        title: currentChapter.title,
+        description: currentChapterOutline,
+        orderIndex: currentIndex,
+      },
       currentChapterOutline,
       fullOutline: buildFullOutlineText(projectStore.plotOutline),
       emotionGoal: project.emotionGoal,
@@ -413,21 +458,23 @@ export function useChapterWriter(): UseChapterWriterReturn {
     return {
       projectTitle: project.name,
       projectSynopsis: project.description || '',
-      worldSetting: project.worldSchema ? {
-        locations: (project.worldSchema.locations || []).map(l => ({
-          name: l.name,
-          description: l.description || '',
-          level: l.level || 'other',
-        })),
-        rules: (project.worldSchema.rules || []).map(r => ({
-          name: r.name,
-          description: r.description || '',
-        })),
-        factions: (project.worldSchema.factions || []).map(f => ({
-          name: f.name,
-          description: f.description || '',
-        })),
-      } : undefined,
+      worldSetting: project.worldSchema
+        ? {
+            locations: (project.worldSchema.locations || []).map(l => ({
+              name: l.name,
+              description: l.description || '',
+              level: l.level || 'other',
+            })),
+            rules: (project.worldSchema.rules || []).map(r => ({
+              name: r.name,
+              description: r.description || '',
+            })),
+            factions: (project.worldSchema.factions || []).map(f => ({
+              name: f.name,
+              description: f.description || '',
+            })),
+          }
+        : undefined,
       chapter: {
         id: currentChapter.id,
         title: currentChapter.title,
@@ -436,11 +483,13 @@ export function useChapterWriter(): UseChapterWriterReturn {
         existingContent: currentChapter.content || '',
         chapterType: chapterType,
       },
-      previousChapter: prevChapter ? {
-        title: prevChapter.title,
-        summary: previousSummary,
-        ending: contextManager.extractChapterEnding(prevChapter.content || ''),
-      } : undefined,
+      previousChapter: prevChapter
+        ? {
+            title: prevChapter.title,
+            summary: previousSummary,
+            ending: contextManager.extractChapterEnding(prevChapter.content || ''),
+          }
+        : undefined,
       characters,
       charactersInScene: (project.characters || []).map(c => c.id),
       foreshadows: activeForeshadows,
@@ -482,30 +531,32 @@ export function useChapterWriter(): UseChapterWriterReturn {
   function extractChapterOutlineFromPlot(plotOutline: any[], chapterId: string): string {
     // 首先尝试按 chapterId 查找
     let chapter = plotOutline?.find((p: any) => p.chapterId === chapterId);
-    
+
     // 如果没找到，尝试按 id 查找
     if (!chapter) {
       chapter = plotOutline?.find((p: any) => p.id === chapterId);
     }
-    
+
     if (!chapter) {
       return '';
     }
-    
+
     // 构建包含结构化节点的完整大纲
     const parts: string[] = [];
-    
+
     // 基础大纲描述
     if (chapter.description) {
       parts.push(chapter.description);
     }
-    
+
     // 结构化节点
     if (chapter.CBN) {
       parts.push(`【章节起点 CBN】${chapter.CBN}`);
     }
     if (chapter.CPNs?.length > 0) {
-      parts.push(`【推进节点 CPNs】\n  ${chapter.CPNs.map((cpn: string, i: number) => `${i + 1}. ${cpn}`).join('\n  ')}`);
+      parts.push(
+        `【推进节点 CPNs】\n  ${chapter.CPNs.map((cpn: string, i: number) => `${i + 1}. ${cpn}`).join('\n  ')}`
+      );
     }
     if (chapter.CEN) {
       parts.push(`【章节终点 CEN】${chapter.CEN}`);
@@ -516,14 +567,17 @@ export function useChapterWriter(): UseChapterWriterReturn {
     if (chapter.forbiddenZones?.length > 0) {
       parts.push(`【禁区】${chapter.forbiddenZones.join('、')}`);
     }
-    
+
     return parts.join('\n');
   }
-  
+
   /**
    * 提取章节结构化节点（新增）
    */
-  function extractChapterStructureNodes(plotOutline: any[], chapterId: string): {
+  function extractChapterStructureNodes(
+    plotOutline: any[],
+    chapterId: string
+  ): {
     CBN?: string;
     CPNs?: string[];
     CEN?: string;
@@ -531,15 +585,15 @@ export function useChapterWriter(): UseChapterWriterReturn {
     forbiddenZones?: string[];
   } | null {
     let chapter = plotOutline?.find((p: any) => p.chapterId === chapterId);
-    
+
     if (!chapter) {
       chapter = plotOutline?.find((p: any) => p.id === chapterId);
     }
-    
+
     if (!chapter) {
       return null;
     }
-    
+
     return {
       CBN: chapter.CBN,
       CPNs: chapter.CPNs,
@@ -567,9 +621,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
       const chapterNum = index + 1;
       const title = node.title || `第${chapterNum}章`;
       const description = node.description || '（暂无大纲）';
-      const keyEvents = node.keyEvents?.length > 0
-        ? `\n关键事件：${node.keyEvents.join('、')}`
-        : '';
+      const keyEvents =
+        node.keyEvents?.length > 0 ? `\n关键事件：${node.keyEvents.join('、')}` : '';
 
       // ========== 构建结构化节点（增强大纲）==========
       const structuredNodes: string[] = [];
@@ -578,7 +631,9 @@ export function useChapterWriter(): UseChapterWriterReturn {
         structuredNodes.push(`【章节起点 CBN】${node.CBN}`);
       }
       if (node.CPNs?.length > 0) {
-        structuredNodes.push(`【推进节点 CPNs】\n  ${node.CPNs.map((cpn: string, i: number) => `${i + 1}. ${cpn}`).join('\n  ')}`);
+        structuredNodes.push(
+          `【推进节点 CPNs】\n  ${node.CPNs.map((cpn: string, i: number) => `${i + 1}. ${cpn}`).join('\n  ')}`
+        );
       }
       if (node.CEN) {
         structuredNodes.push(`【章节终点 CEN】${node.CEN}`);
@@ -590,9 +645,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
         structuredNodes.push(`【禁区】${node.forbiddenZones.join('、')}`);
       }
 
-      const structuredSection = structuredNodes.length > 0
-        ? `\n${structuredNodes.join('\n')}`
-        : '';
+      const structuredSection = structuredNodes.length > 0 ? `\n${structuredNodes.join('\n')}` : '';
 
       return `【第${chapterNum}章】${title}\n${description}${keyEvents}${structuredSection}`;
     });
@@ -645,17 +698,17 @@ export function useChapterWriter(): UseChapterWriterReturn {
       const project = projectStore.currentProject!;
       const currentChapter = projectStore.currentChapter!;
       const currentIndex = context.chapter.orderIndex;
-      
+
       // 记录章节信息
       currentChapterId = currentChapter.id;
       currentChapterNumber = currentIndex + 1;
-      
+
       // 注册起草失败恢复
       const draftFailureId = registerFailure(
         currentChapterId,
         currentChapterNumber,
         'draft',
-        '开始起草',
+        '开始起草'
       ).id;
 
       // ========== 步骤 1: 生成写作任务书（核心前置） ==========
@@ -683,12 +736,20 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
       if (settingsStore.streamOutput && (client as any).continueWritingStream) {
         // 使用 OutlineContextBuilder 提取当前章节上下文
-        const chapterCtx = extractChapterContext(projectStore.plotOutline, context.chapter.id, context.chapter.title);
+        const chapterCtx = extractChapterContext(
+          projectStore.plotOutline,
+          context.chapter.id,
+          context.chapter.title
+        );
         const enhancedPrompt = buildEnhancedDesignPrompt({
           projectTitle: project.name,
           projectSynopsis: project.description || '',
           projectGenre: project.genre.map(g => g.name),
-          currentChapter: chapterCtx || { title: context.chapter.title, description: enhancedOutline || '', orderIndex: context.chapter.orderIndex },
+          currentChapter: chapterCtx || {
+            title: context.chapter.title,
+            description: enhancedOutline || '',
+            orderIndex: context.chapter.orderIndex,
+          },
           currentChapterOutline: enhancedOutline || '',
           fullOutline: buildFullOutlineString(),
           emotionGoal: project.emotionGoal,
@@ -709,26 +770,30 @@ export function useChapterWriter(): UseChapterWriterReturn {
               currentChapterContent: context.chapter.existingContent || '',
               currentChapterOutline: enhancedOutline || undefined,
               fullOutline: buildFullOutlineString(),
-              adjacentChaptersSummary: context.previousChapter ? {
-                previousChapterTitle: context.previousChapter.title,
-                previousChapterSummary: context.previousChapter.summary,
-                nextChapterTitle: undefined,
-                nextChapterSummary: undefined,
-              } : undefined,
+              adjacentChaptersSummary: context.previousChapter
+                ? {
+                    previousChapterTitle: context.previousChapter.title,
+                    previousChapterSummary: context.previousChapter.summary,
+                    nextChapterTitle: undefined,
+                    nextChapterSummary: undefined,
+                  }
+                : undefined,
               recentChaptersFullText: context.memoryData.shortTermFullText,
               charactersInScene: context.characters,
               relatedForeshadows: context.foreshadows,
               writingStyle: writingStyle,
               // 新增：章节结构化策略
-              currentChapterOutlineContext: chapterCtx ? {
-                chapterType: chapterCtx.chapterType,
-                hookType: chapterCtx.hookType,
-                pacingStrategy: chapterCtx.pacingStrategy,
-                timeSpan: chapterCtx.timeSpan,
-                keyEvents: chapterCtx.keyEvents,
-                isClimax: chapterCtx.isClimax,
-                expectedCoolPoints: chapterCtx.expectedCoolPoints,
-              } : undefined,
+              currentChapterOutlineContext: chapterCtx
+                ? {
+                    chapterType: chapterCtx.chapterType,
+                    hookType: chapterCtx.hookType,
+                    pacingStrategy: chapterCtx.pacingStrategy,
+                    timeSpan: chapterCtx.timeSpan,
+                    keyEvents: chapterCtx.keyEvents,
+                    isClimax: chapterCtx.isClimax,
+                    expectedCoolPoints: chapterCtx.expectedCoolPoints,
+                  }
+                : undefined,
               // 新增：增强设计段落
               enhancedDesignPrompt: enhancedPrompt,
             },
@@ -749,17 +814,25 @@ export function useChapterWriter(): UseChapterWriterReturn {
             (errMsg: string) => {
               reject(new Error(errMsg));
             },
-            abortController?.signal,
+            abortController?.signal
           );
         });
       } else {
         // 使用 OutlineContextBuilder 提取当前章节上下文
-        const chapterCtx = extractChapterContext(projectStore.plotOutline, context.chapter.id, context.chapter.title);
+        const chapterCtx = extractChapterContext(
+          projectStore.plotOutline,
+          context.chapter.id,
+          context.chapter.title
+        );
         const enhancedPrompt = buildEnhancedDesignPrompt({
           projectTitle: project.name,
           projectSynopsis: project.description || '',
           projectGenre: project.genre.map(g => g.name),
-          currentChapter: chapterCtx || { title: context.chapter.title, description: enhancedOutline || '', orderIndex: context.chapter.orderIndex },
+          currentChapter: chapterCtx || {
+            title: context.chapter.title,
+            description: enhancedOutline || '',
+            orderIndex: context.chapter.orderIndex,
+          },
           currentChapterOutline: enhancedOutline || '',
           fullOutline: buildFullOutlineString(),
           emotionGoal: project.emotionGoal,
@@ -779,26 +852,30 @@ export function useChapterWriter(): UseChapterWriterReturn {
             currentChapterContent: context.chapter.existingContent || '',
             currentChapterOutline: enhancedOutline || undefined,
             fullOutline: buildFullOutlineString(),
-            adjacentChaptersSummary: context.previousChapter ? {
-              previousChapterTitle: context.previousChapter.title,
-              previousChapterSummary: context.previousChapter.summary,
-              nextChapterTitle: undefined,
-              nextChapterSummary: undefined,
-            } : undefined,
+            adjacentChaptersSummary: context.previousChapter
+              ? {
+                  previousChapterTitle: context.previousChapter.title,
+                  previousChapterSummary: context.previousChapter.summary,
+                  nextChapterTitle: undefined,
+                  nextChapterSummary: undefined,
+                }
+              : undefined,
             recentChaptersFullText: context.memoryData.shortTermFullText,
             charactersInScene: context.characters,
             relatedForeshadows: context.foreshadows,
             writingStyle: writingStyle,
             // 新增：章节结构化策略
-            currentChapterOutlineContext: chapterCtx ? {
-              chapterType: chapterCtx.chapterType,
-              hookType: chapterCtx.hookType,
-              pacingStrategy: chapterCtx.pacingStrategy,
-              timeSpan: chapterCtx.timeSpan,
-              keyEvents: chapterCtx.keyEvents,
-              isClimax: chapterCtx.isClimax,
-              expectedCoolPoints: chapterCtx.expectedCoolPoints,
-            } : undefined,
+            currentChapterOutlineContext: chapterCtx
+              ? {
+                  chapterType: chapterCtx.chapterType,
+                  hookType: chapterCtx.hookType,
+                  pacingStrategy: chapterCtx.pacingStrategy,
+                  timeSpan: chapterCtx.timeSpan,
+                  keyEvents: chapterCtx.keyEvents,
+                  isClimax: chapterCtx.isClimax,
+                  expectedCoolPoints: chapterCtx.expectedCoolPoints,
+                }
+              : undefined,
             // 新增：增强设计段落
             enhancedDesignPrompt: enhancedPrompt,
           },
@@ -818,25 +895,22 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
       // 检查字数是否达标
       const checkResult = checkWordCount(currentGeneratedContent, requestedTarget);
-      console.log(`[智能续写] 字数检查: ${checkResult.currentWords}/${checkResult.targetWords} (${checkResult.percentage.toFixed(1)}%)`);
 
       // 如果字数不足且还有补充机会，尝试补充
       if (checkResult.needsSupplement && supplementRound.value < MAX_SUPPLEMENT_ROUNDS) {
-        console.log(`[智能续写] 字数不足，需要补充 ${checkResult.shortfall} 字`);
         await supplementContinue({ additionalWords: checkResult.shortfall });
       }
 
       return currentGeneratedContent;
-
     } catch (err) {
       // 记录失败
       recoveryManager.registerFailure(
         currentChapterId,
         currentChapterNumber,
         currentStep.value as PipelineStep,
-        err instanceof Error ? err.message : '未知错误',
+        err instanceof Error ? err.message : '未知错误'
       );
-      
+
       if (err instanceof Error && err.message === 'Generation stopped by user') {
         error.value = null;
       } else {
@@ -873,14 +947,17 @@ export function useChapterWriter(): UseChapterWriterReturn {
   // 字数检查与补充续写
   // ============================================
 
-  const MIN_WORD_THRESHOLD = 0.85;  // 最低字数阈值（85%）
-  const MAX_WORD_THRESHOLD = 1.15;   // 最高字数阈值（115%）
-  const MAX_SUPPLEMENT_ROUNDS = 3;  // 最多补充轮次
+  const MIN_WORD_THRESHOLD = 0.85; // 最低字数阈值（85%）
+  const MAX_WORD_THRESHOLD = 1.15; // 最高字数阈值（115%）
+  const MAX_SUPPLEMENT_ROUNDS = 3; // 最多补充轮次
 
   /**
    * 检查字数是否达标
    */
-  function checkWordCount(content: string, target: number): {
+  function checkWordCount(
+    content: string,
+    target: number
+  ): {
     needsSupplement: boolean;
     currentWords: number;
     targetWords: number;
@@ -927,15 +1004,14 @@ export function useChapterWriter(): UseChapterWriterReturn {
     additionalWords?: number;
   }): Promise<string | null> {
     const additionalWords = options?.additionalWords || targetWordCount.value * 0.3;
-    const maxSupplement = Math.ceil(targetWordCount.value * MAX_WORD_THRESHOLD) - countWords(currentGeneratedContent);
+    const maxSupplement =
+      Math.ceil(targetWordCount.value * MAX_WORD_THRESHOLD) - countWords(currentGeneratedContent);
 
     if (maxSupplement <= 0) {
-      console.log('[智能续写] 字数已达标，无需补充');
       return currentGeneratedContent;
     }
 
     if (supplementRound.value >= MAX_SUPPLEMENT_ROUNDS) {
-      console.warn('[智能续写] 已达最大补充轮次');
       return currentGeneratedContent;
     }
 
@@ -968,8 +1044,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
         context
       );
 
-      console.log(`[智能续写] 补充续写第 ${supplementRound.value} 轮，目标补充 ${Math.min(additionalWords, maxSupplement)} 字`);
-
       // 设置当前步骤
       currentStep.value = 'supplement';
 
@@ -986,12 +1060,14 @@ export function useChapterWriter(): UseChapterWriterReturn {
               currentChapterContent: currentGeneratedContent,
               currentChapterOutline: context.chapter.outline || undefined,
               fullOutline: buildFullOutlineString(),
-              adjacentChaptersSummary: context.previousChapter ? {
-                previousChapterTitle: context.previousChapter.title,
-                previousChapterSummary: context.previousChapter.summary,
-                nextChapterTitle: undefined,
-                nextChapterSummary: undefined,
-              } : undefined,
+              adjacentChaptersSummary: context.previousChapter
+                ? {
+                    previousChapterTitle: context.previousChapter.title,
+                    previousChapterSummary: context.previousChapter.summary,
+                    nextChapterTitle: undefined,
+                    nextChapterSummary: undefined,
+                  }
+                : undefined,
               recentChaptersFullText: context.memoryData.shortTermFullText,
               charactersInScene: context.characters,
               relatedForeshadows: context.foreshadows,
@@ -1022,12 +1098,14 @@ export function useChapterWriter(): UseChapterWriterReturn {
             currentChapterContent: currentGeneratedContent,
             currentChapterOutline: context.chapter.outline || undefined,
             fullOutline: buildFullOutlineString(),
-            adjacentChaptersSummary: context.previousChapter ? {
-              previousChapterTitle: context.previousChapter.title,
-              previousChapterSummary: context.previousChapter.summary,
-              nextChapterTitle: undefined,
-              nextChapterSummary: undefined,
-            } : undefined,
+            adjacentChaptersSummary: context.previousChapter
+              ? {
+                  previousChapterTitle: context.previousChapter.title,
+                  previousChapterSummary: context.previousChapter.summary,
+                  nextChapterTitle: undefined,
+                  nextChapterSummary: undefined,
+                }
+              : undefined,
             recentChaptersFullText: context.memoryData.shortTermFullText,
             charactersInScene: context.characters,
             relatedForeshadows: context.foreshadows,
@@ -1049,12 +1127,9 @@ export function useChapterWriter(): UseChapterWriterReturn {
         currentGeneratedContent = currentGeneratedContent + separator + newContent;
         generatedContent.value = currentGeneratedContent;
         actualWordCount.value = countWords(currentGeneratedContent);
-
-        console.log(`[智能续写] 补充完成，当前字数: ${actualWordCount.value}/${targetWordCount.value}`);
       }
 
       return currentGeneratedContent;
-
     } catch (err) {
       if (err instanceof Error && err.message === 'Generation stopped by user') {
         error.value = null;
@@ -1115,9 +1190,11 @@ ${endingSnippet}
 
   // 审查严格度
   let currentStrictness: 'relaxed' | 'normal' | 'strict' = 'normal';
-  let forceProceed = false;  // 强制继续标志
+  let forceProceed = false; // 强制继续标志
 
-  function getLowerStrictness(strictness: 'relaxed' | 'normal' | 'strict'): 'relaxed' | 'normal' | 'strict' | null {
+  function getLowerStrictness(
+    strictness: 'relaxed' | 'normal' | 'strict'
+  ): 'relaxed' | 'normal' | 'strict' | null {
     const levels: Array<'relaxed' | 'normal' | 'strict'> = ['strict', 'normal', 'relaxed'];
     const currentIndex = levels.indexOf(strictness);
     if (currentIndex < levels.length - 1) {
@@ -1128,10 +1205,14 @@ ${endingSnippet}
 
   function getStrictnessLabel(strictness: 'relaxed' | 'normal' | 'strict'): string {
     switch (strictness) {
-      case 'strict': return '严格';
-      case 'normal': return '正常';
-      case 'relaxed': return '宽松';
-      default: return strictness;
+      case 'strict':
+        return '严格';
+      case 'normal':
+        return '正常';
+      case 'relaxed':
+        return '宽松';
+      default:
+        return strictness;
     }
   }
 
@@ -1159,7 +1240,7 @@ ${endingSnippet}
 
       // ========== 步骤 3: 审查（自适应 Blocking 闸门） ==========
       currentStep.value = 'review';
-      
+
       // 初始化审查严格度
       currentStrictness = 'normal';
       forceProceed = false;
@@ -1171,7 +1252,6 @@ ${endingSnippet}
       // 自适应审查循环：失败时降低严格度
       while (!reviewPassed && attempts < maxAttempts) {
         attempts++;
-        console.log(`[智能续写] 审查尝试 ${attempts}/${maxAttempts}，严格度: ${getStrictnessLabel(currentStrictness)}`);
 
         lastReviewResult = await performBlockingReview(
           project,
@@ -1186,14 +1266,12 @@ ${endingSnippet}
         // 检查是否通过
         if (canProceedToPolish(lastReviewResult)) {
           reviewPassed = true;
-          console.log(`[智能续写] 审查通过（${getStrictnessLabel(currentStrictness)}模式）`);
           break;
         }
 
         // 未通过，尝试降低严格度
         const lowerStrictness = getLowerStrictness(currentStrictness);
         if (lowerStrictness) {
-          console.log(`[智能续写] 审查未通过，降低严格度: ${getStrictnessLabel(currentStrictness)} → ${getStrictnessLabel(lowerStrictness)}`);
           currentStrictness = lowerStrictness;
         } else {
           // 已到最低严格度
@@ -1206,7 +1284,7 @@ ${endingSnippet}
       if (!reviewPassed && !forceProceed && lastReviewResult) {
         console.warn('[智能续写] 审查未通过，blocking 问题:', lastReviewResult.blockingCount);
         error.value = `审查未通过：${lastReviewResult.blockingCount}个阻断问题（已达最低严格度，可选择跳过）`;
-        
+
         // 生成结构化报告
         if (currentChapterId) {
           latestReport.value = generateReport(
@@ -1218,11 +1296,11 @@ ${endingSnippet}
             { strictness: currentStrictness, passThreshold: 70 }
           );
         }
-        
+
         return false;
       }
-      
-      // 审查通过，生成结构化报告
+
+      // 审查通过或强制继续时，生成结构化报告
       if (currentChapterId && lastReviewResult) {
         latestReport.value = generateReport(
           currentChapterId,
@@ -1232,7 +1310,6 @@ ${endingSnippet}
           {} as any,
           { strictness: currentStrictness, passThreshold: 70 }
         );
-        console.log('[智能续写] 已生成结构化审查报告');
       }
 
       // ========== 步骤 4: 润色 - 暂时禁用去AI味 ==========
@@ -1240,16 +1317,10 @@ ${endingSnippet}
       let processedContent = currentGeneratedContent;
       let extractedTitle: string | null | undefined;
 
-      // 添加调试日志
-      console.log('[智能续写] 处理前内容长度:', processedContent.length);
-      console.log('[智能续写] 处理前内容预览:', processedContent);
-
-      // 【暂时禁用去AI味】2026-05-24 临时禁用
-      console.log('[智能续写] 去AI味已禁用（临时）');
-
-      // 从原始内容中提取标题
+      // 从原始内容中提取标题，并用剔除标题后的干净正文替换 processedContent
       const titleValidation = DeAIService.extractAndValidateTitle(processedContent);
       extractedTitle = titleValidation.title;
+      processedContent = titleValidation.content;
 
       // ========== 步骤 5: 保存 ==========
       currentStep.value = 'save';
@@ -1305,7 +1376,6 @@ ${endingSnippet}
         projectStore.addChapterMemory(memory);
         const manager = getMemoryManager();
         await manager.saveMemory(memory);
-        console.log('[记忆系统] 已提取章节记忆:', chapter.title, memory.corePlot.slice(0, 50) + '...');
       }
     } catch (err) {
       console.error('[记忆系统] 提取记忆失败:', err);
@@ -1368,7 +1438,7 @@ ${endingSnippet}
       console.warn('[ChapterWriter] 没有可导出的报告');
       return null;
     }
-    
+
     if (format === 'json') {
       return exportToJSON(latestReport.value);
     } else {

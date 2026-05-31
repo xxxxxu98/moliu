@@ -211,7 +211,25 @@ export class ReportGenerator {
     const passThreshold = options?.passThreshold ?? DEFAULT_PASS_THRESHOLD;
     const duration = options?.duration ?? 0;
 
-    // 转换问题
+    let overallScore: number;
+    let overallBlockingCount: number;
+
+    if ('overall' in reviewResult && reviewResult.overall) {
+      // 是 SixDimensionReview 或标准 ReviewResult
+      const o = reviewResult.overall as any;
+      overallScore = typeof o.score === 'number' ? o.score : 0;
+      overallBlockingCount = typeof o.blockingCount === 'number' ? o.blockingCount : 0;
+    } else if ('passed' in reviewResult) {
+      // 是 BlockingReviewResult（扁平结构，无 overall）
+      const br = reviewResult as any;
+      overallScore = 0; // BlockingReviewResult 没有 score
+      overallBlockingCount = typeof br.blockingCount === 'number' ? br.blockingCount : 0;
+    } else {
+      overallScore = 0;
+      overallBlockingCount = 0;
+    }
+
+    // 转换问题（优先使用 BlockingReviewResult.issues，否则使用 dimensions 中的问题）
     const issues = this.convertIssues(reviewResult, dimensions);
     
     // 分离阻断和非阻断问题
@@ -228,9 +246,9 @@ export class ReportGenerator {
     const reviewAttempt: ReviewAttempt = {
       timestamp: new Date().toISOString(),
       strictness: options?.strictness ?? 'normal',
-      score: reviewResult.overall.score,
-      verdict: this.determineVerdict(reviewResult, passThreshold),
-      blockingCount: reviewResult.overall.blockingCount,
+      score: overallScore,
+      verdict: this.determineVerdict(overallBlockingCount, overallScore, passThreshold),
+      blockingCount: overallBlockingCount,
     };
 
     // 构建报告
@@ -248,8 +266,8 @@ export class ReportGenerator {
         totalIssues: issues.length,
         blockingCount: blockingIssues.length,
         nonBlockingCount: nonBlockingIssues.length,
-        overallScore: reviewResult.overall.score,
-        verdict: this.determineVerdict(reviewResult, passThreshold),
+        overallScore: overallScore,
+        verdict: this.determineVerdict(overallBlockingCount, overallScore, passThreshold),
         passThreshold,
       },
       blockingIssues,
@@ -529,13 +547,14 @@ export class ReportGenerator {
    * 判断审查结论
    */
   private determineVerdict(
-    reviewResult: ReviewResult,
+    blockingCount: number,
+    score: number,
     passThreshold: number
   ): 'accepted' | 'needs_revision' | 'rejected' {
-    if (reviewResult.overall.blockingCount > 0) {
+    if (blockingCount > 0) {
       return 'rejected';
     }
-    if (reviewResult.overall.score >= passThreshold) {
+    if (score >= passThreshold) {
       return 'accepted';
     }
     return 'needs_revision';
