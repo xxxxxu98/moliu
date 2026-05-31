@@ -96,7 +96,7 @@ const writingMode = ref<'specific' | 'finish'>('specific');
 
 // 批量写作配置
 const batchConfig = ref({
-  wordsPerChapter: 2000,
+  wordsPerChapter: 2500,
   writingStyle: 'humorous' as 'concise' | 'elegant' | 'humorous' | 'ancient',
   useTaskBook: true,
   useReview: true,
@@ -571,10 +571,11 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
               <NSelect
                 v-model:value="batchConfig.wordsPerChapter"
                 :options="[
-                  { label: '2000字', value: 2000 },
-                  { label: '3000字', value: 3000 },
-                  { label: '4000字', value: 4000 },
-                  { label: '5000字', value: 5000 },
+                  { label: '2500字', value: 2500 },
+                  { label: '3500字', value: 3500 },
+                  { label: '5500字', value: 5500 },
+                  { label: '7500字', value: 7500 },
+                  { label: '10000字', value: 10000 },
                 ]"
                 size="small"
                 class="w-28"

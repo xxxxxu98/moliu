@@ -774,6 +774,99 @@ export const useProjectStore = defineStore('project', () => {
     await saveCurrentProject();
   }
 
+  // ============================================
+  // 强行完结操作
+  // ============================================
+
+  /**
+   * 强行完结项目
+   * 跳过所有完结条件检查，直接将项目状态设为 completed
+   * 会生成完结报告，包含被跳过的伏笔和冲突
+   */
+  async function forceEndProject(): Promise<{
+    success: boolean;
+    skippedForeshadows: number;
+    skippedConflicts: number;
+    totalChapters: number;
+    totalWordCount: number;
+  } | null> {
+    if (!currentProject.value) return null;
+
+    // 统计被跳过的伏笔和冲突
+    const skippedForeshadows = foreshadows.value.filter(
+      f => f.status !== 'resolved' && f.status !== 'abandoned'
+    ).length;
+
+    const skippedConflicts = conflictDesign.value?.majorConflicts?.filter(
+      c => c.status === 'pending' || c.status === 'active'
+    ).length || 0;
+
+    const totalChapters = chapters.value.length;
+    const totalWordCount = chapters.value.reduce((sum, ch) => sum + (ch.wordCount || 0), 0);
+
+    // 更新项目状态
+    currentProject.value.status = 'completed';
+
+    // 设置完结元数据
+    if (!currentProject.value.metadata) {
+      currentProject.value.metadata = {};
+    }
+    currentProject.value.metadata.endedAt = new Date().toISOString();
+    currentProject.value.metadata.endedChapters = totalChapters;
+    currentProject.value.metadata.endedWords = totalWordCount;
+    currentProject.value.metadata.forceEnded = true;
+    currentProject.value.metadata.skippedForeshadows = skippedForeshadows;
+    currentProject.value.metadata.skippedConflicts = skippedConflicts;
+
+    await saveCurrentProject();
+
+    return {
+      success: true,
+      skippedForeshadows,
+      skippedConflicts,
+      totalChapters,
+      totalWordCount,
+    };
+  }
+
+  /**
+   * 取消完结，恢复写作状态
+   * 仅当项目状态为 completed 且 forceEnded 为 true 时可用
+   */
+  async function cancelForceEnd(): Promise<boolean> {
+    if (!currentProject.value) return false;
+    if (currentProject.value.status !== 'completed') return false;
+    if (!currentProject.value.metadata?.forceEnded) return false;
+
+    currentProject.value.status = 'writing';
+    if (currentProject.value.metadata) {
+      currentProject.value.metadata.endedAt = undefined;
+      currentProject.value.metadata.endedChapters = undefined;
+      currentProject.value.metadata.endedWords = undefined;
+      currentProject.value.metadata.forceEnded = false;
+      currentProject.value.metadata.skippedForeshadows = undefined;
+      currentProject.value.metadata.skippedConflicts = undefined;
+    }
+
+    await saveCurrentProject();
+    return true;
+  }
+
+  /**
+   * 判断项目是否已被强行完结
+   */
+  const isForceEnded = computed(() => {
+    return currentProject.value?.status === 'completed' &&
+      currentProject.value?.metadata?.forceEnded === true;
+  });
+
+  /**
+   * 判断项目是否已完结（自然或强行）
+   */
+  const isProjectCompleted = computed(() => {
+    return currentProject.value?.status === 'completed';
+  });
+
   return {
     currentProject,
     projects,
@@ -865,5 +958,10 @@ export const useProjectStore = defineStore('project', () => {
     deleteCoolPointDesign,
     updateStoryLines,
     deleteStoryLines,
+    // 强行完结
+    forceEndProject,
+    cancelForceEnd,
+    isForceEnded,
+    isProjectCompleted,
   };
 });

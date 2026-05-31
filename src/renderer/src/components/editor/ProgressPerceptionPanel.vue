@@ -4,12 +4,12 @@
  * 显示故事进度、完结感知、伏笔状态等信息
  */
 import { ref, computed, watch, onMounted } from 'vue';
-import { NProgress, NTag, NScrollbar } from 'naive-ui';
-import { 
-  TrendingUp, 
-  Target, 
-  Layers, 
-  AlertTriangle, 
+import { NProgress, NTag, NScrollbar, useMessage, NButton } from 'naive-ui';
+import {
+  TrendingUp,
+  Target,
+  Layers,
+  AlertTriangle,
   CheckCircle2,
   Clock,
   BookOpen,
@@ -19,8 +19,10 @@ import {
   Users,
   Heart,
   Zap,
+  Flag,
 } from 'lucide-vue-next';
 import { useProjectStore } from '@/stores/project.store';
+import ForceEndDialog from './ForceEndDialog.vue';
 import { createEndingPerceptionEngine } from '@/services/writing/ending-perception-engine';
 import { createForeshadowTracker, ForeshadowTracker } from '@/services/writing/enhanced-foreshadow-tracker';
 import { createStorylineManager } from '@/services/writing/storyline-manager';
@@ -28,6 +30,11 @@ import type { EndingReadiness, UnresolvedForeshadow, PlotPhaseInfo, PlotPhase } 
 import { generatePlotPhaseInfo } from '@/types/ending-perception';
 
 const projectStore = useProjectStore();
+const message = useMessage();
+
+// 强行完结相关状态
+const showForceEndDialog = ref(false);
+const isForceEnding = ref(false);
 
 // 状态
 const endingReadiness = ref<EndingReadiness | null>(null);
@@ -49,6 +56,21 @@ const totalChapters = computed(() => {
 });
 
 const projectName = computed(() => projectStore.project?.name || '未命名项目');
+
+// 强行完结相关计算属性
+const isProjectEnded = computed(() => projectStore.isProjectCompleted);
+const isProjectForceEnded = computed(() => projectStore.isForceEnded);
+const unresolvedForeshadowCount = computed(() => {
+  return (projectStore.foreshadows || []).filter(
+    f => f.status !== 'resolved' && f.status !== 'abandoned'
+  ).length;
+});
+const unresolvedConflictCount = computed(() => {
+  return (projectStore.conflictDesign?.majorConflicts || []).filter(
+    c => c.status === 'pending' || c.status === 'active'
+  ).length;
+});
+const currentChapters = computed(() => projectStore.chapters.length);
 
 // 加载数据
 async function loadPerceptionData() {
@@ -145,6 +167,43 @@ function refresh() {
   loadPerceptionData();
 }
 
+// 强行完结处理
+function handleForceEnd() {
+  showForceEndDialog.value = true;
+}
+
+async function handleForceEndConfirm() {
+  if (isForceEnding.value) return;
+  isForceEnding.value = true;
+
+  try {
+    const result = await projectStore.forceEndProject();
+    if (result?.success) {
+      message.success(
+        `小说已完结！共 ${result.totalChapters} 章，约 ${result.totalWordCount.toLocaleString()} 字`
+      );
+    }
+  } catch (error) {
+    console.error('[ProgressPanel] Force end failed:', error);
+    message.error('完结失败，请重试');
+  } finally {
+    isForceEnding.value = false;
+    showForceEndDialog.value = false;
+  }
+}
+
+async function handleCancelForceEnd() {
+  try {
+    const success = await projectStore.cancelForceEnd();
+    if (success) {
+      message.success('已取消完结，恢复写作状态');
+    }
+  } catch (error) {
+    console.error('[ProgressPanel] Cancel force end failed:', error);
+    message.error('取消失败，请重试');
+  }
+}
+
 // 暴露方法
 defineExpose({
   refresh,
@@ -174,7 +233,7 @@ defineExpose({
       </div>
 
       <!-- 整体进度 -->
-      <div class="p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+      <div class="mb-3 p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
             <TrendingUp class="w-4 h-4 text-indigo-500" />
@@ -400,6 +459,68 @@ defineExpose({
         </div>
       </div>
 
+      <!-- 强行完结区域 -->
+      <div class="p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-2 mb-3">
+          <Flag class="w-4 h-4 text-amber-500" />
+          <span class="font-medium text-sm">完结管理</span>
+        </div>
+
+        <!-- 已完结状态 -->
+        <div v-if="isProjectEnded" class="space-y-3">
+          <div class="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+            <div class="flex items-center gap-2 mb-1">
+              <CheckCircle2 class="w-4 h-4 text-emerald-500" />
+              <span class="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                {{ isProjectForceEnded ? '已强行完结' : '已完成' }}
+              </span>
+            </div>
+            <div v-if="projectStore.project?.metadata" class="text-xs text-emerald-600 dark:text-emerald-500 space-y-0.5">
+              <div v-if="projectStore.project.metadata.endedChapters">
+                {{ projectStore.project.metadata.endedChapters }} 章
+              </div>
+              <div v-if="projectStore.project.metadata.skippedForeshadows">
+                跳过 {{ projectStore.project.metadata.skippedForeshadows }} 个伏笔
+              </div>
+              <div v-if="projectStore.project.metadata.endedAt">
+                {{ new Date(projectStore.project.metadata.endedAt).toLocaleDateString() }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 取消完结按钮 -->
+          <button
+            v-if="isProjectForceEnded"
+            class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-medium hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+            @click="handleCancelForceEnd"
+          >
+            <Sparkles class="w-4 h-4" />
+            取消完结，恢复写作
+          </button>
+        </div>
+
+        <!-- 未完结状态 - 显示强行完结按钮 -->
+        <div v-else class="space-y-2">
+          <!-- 未解决项提示 -->
+          <div v-if="unresolvedForeshadowCount > 0 || unresolvedConflictCount > 0" class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <AlertTriangle class="w-3 h-3 text-amber-500" />
+            <span>仍有 {{ unresolvedForeshadowCount }} 个伏笔和 {{ unresolvedConflictCount }} 个冲突未解决</span>
+          </div>
+
+          <!-- 强行完结按钮 -->
+          <button
+            class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+            @click="handleForceEnd"
+          >
+            <Flag class="w-4 h-4" />
+            强行完结
+          </button>
+          <p class="text-xs text-center text-gray-400 dark:text-gray-500">
+            跳过所有完结条件，直接完结
+          </p>
+        </div>
+      </div>
+
       <!-- 刷新按钮 -->
       <div class="flex justify-center pt-2">
         <button
@@ -410,6 +531,19 @@ defineExpose({
         </button>
       </div>
     </NScrollbar>
+
+    <!-- 强行完结确认对话框 -->
+    <ForceEndDialog
+      :show="showForceEndDialog"
+      :project-name="projectName"
+      :current-chapter="currentChapterIndex"
+      :total-chapters="currentChapters"
+      :unresolved-foreshadows="unresolvedForeshadowCount"
+      :unresolved-conflicts="unresolvedConflictCount"
+      @update:show="(val) => showForceEndDialog = val"
+      @confirm="handleForceEndConfirm"
+      @cancel="showForceEndDialog = false"
+    />
   </div>
 </template>
 
