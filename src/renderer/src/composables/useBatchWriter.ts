@@ -7,6 +7,8 @@
  * 3. 流水线式管理：起草 → 审查 → 润色 → 提交
  * 4. 自适应审查严格度 - 审查失败时逐步降低严格度，直到通过
  * 5. 自动化程度高 - 无需人工干预，避免死循环
+ * 6. 结构化报告生成
+ * 7. 失败恢复机制
  * 
  * 审查策略：
  * - 每章从目标严格度开始（如 normal）
@@ -48,6 +50,17 @@ import { createForeshadowTracker, analyzeForeshadows } from '@/services/writing/
 import type { WritingTaskBook } from '@/types/writing-task';
 import { WritingError, ErrorCode, getErrorMessage } from '@/types/errors';
 import { createEndingPerceptionEngine } from '@/services/writing/ending-perception-engine';
+import {
+  useReportGenerator,
+  type StructuredReviewReport,
+} from '@/services/writing/review/report-generator';
+import {
+  useFailureRecovery,
+  type PipelineStep,
+  type FailureState,
+  type RecoveryStrategy,
+  type RecoveryEvent,
+} from '@/services/writing/failure-recovery';
 
 export type WritingTarget = 'specific' | 'finish';
 
@@ -111,6 +124,9 @@ export interface UseBatchWriterReturn {
   endingStatus: Ref<EndingCheckResult | null>;      // 完结判断结果
   isReadyToEnd: Ref<boolean>;                        // 是否准备好完结
 
+  // 报告相关
+  latestReports: Ref<Map<number, StructuredReviewReport>>;  // 每章的报告
+
   // 配置
   target: Ref<WritingTarget>;
   config: Ref<{
@@ -137,6 +153,16 @@ export interface UseBatchWriterReturn {
   retryCurrentStep: () => Promise<void>;
   skipBlockingIssues: () => void;
   lowerStrictness: () => void;
+
+  // 报告导出
+  exportReport: (chapterNumber: number, format: 'json' | 'markdown') => string | null;
+  getReport: (chapterNumber: number) => StructuredReviewReport | null;
+  getAllReports: () => StructuredReviewReport[];
+
+  // 失败恢复
+  getFailures: (chapterId?: string) => FailureState[];
+  getRecoveryHistory: (limit?: number) => RecoveryEvent[];
+  clearFailures: () => void;
 }
 
 // 完结检查结果
@@ -846,6 +872,37 @@ export function useBatchWriter(): UseBatchWriterReturn {
   // 上下文管理器
   const contextManager = new ContextManager();
 
+  // 报告生成器
+  const {
+    generator: reportGenerator,
+    generate: generateReport,
+    exportToJSON,
+    exportToMarkdown,
+    getHistory,
+    getLatestReport,
+  } = useReportGenerator();
+
+  // 报告存储
+  const latestReports = ref<Map<number, StructuredReviewReport>>(new Map());
+
+  // 失败恢复管理器
+  const {
+    manager: recoveryManager,
+    registerFailure,
+    getChapterFailures,
+    getEventHistory: getRecoveryEventHistory,
+    clearChapterFailures,
+  } = useFailureRecovery({
+    onUserDecision: async (failure: FailureState) => {
+      console.log('[BatchWriter] 需要用户决策:', failure.step, failure.error);
+      return null;
+    },
+    onRecovery: async (failure: FailureState, strategy: RecoveryStrategy) => {
+      console.log('[BatchWriter] 执行恢复策略:', strategy, 'for', failure.step);
+      return true;
+    },
+  });
+
   // 计算属性
   const totalChapters = computed(() => projectStore.sortedChapters.length);
   const writtenWordCount = computed(() => {
@@ -1047,6 +1104,12 @@ export function useBatchWriter(): UseBatchWriterReturn {
       }
     } catch (err) {
       const errorMessage = getErrorMessage(err, 'AI 起草失败');
+      recoveryManager.registerFailure(
+        chapter.id,
+        chapterIndex + 1,
+        'draft' as PipelineStep,
+        errorMessage,
+      );
       throw new WritingError(errorMessage, ErrorCode.AI_GENERATION_FAILED);
     }
 
@@ -1085,6 +1148,20 @@ export function useBatchWriter(): UseBatchWriterReturn {
         if (canProceedToPolish(lastReviewResult)) {
           reviewPassed = true;
           console.log(`[批量写作] 第${chapterIndex + 1}章审查通过 [${getStrictnessLabel(currentReviewStrictness)}]`);
+          
+          // 生成结构化报告
+          const chapter = chapters[chapterIndex];
+          const report = generateReport(
+            chapter.id,
+            chapterIndex + 1,
+            chapter.title,
+            lastReviewResult as any,
+            {} as any,
+            { strictness: currentReviewStrictness, passThreshold: 70 }
+          );
+          latestReports.value.set(chapterIndex + 1, report);
+          console.log('[批量写作] 已生成第' + (chapterIndex + 1) + '章的结构化审查报告');
+          
           break;
         }
 
@@ -1403,6 +1480,62 @@ export function useBatchWriter(): UseBatchWriterReturn {
     }
   }
 
+  /**
+   * 导出报告
+   */
+  function exportReport(chapterNumber: number, format: 'json' | 'markdown'): string | null {
+    const report = latestReports.value.get(chapterNumber);
+    if (!report) {
+      console.warn('[BatchWriter] 没有第' + chapterNumber + '章的报告');
+      return null;
+    }
+    
+    if (format === 'json') {
+      return exportToJSON(report);
+    } else {
+      return exportToMarkdown(report);
+    }
+  }
+
+  /**
+   * 获取指定章节报告
+   */
+  function getReport(chapterNumber: number): StructuredReviewReport | null {
+    return latestReports.value.get(chapterNumber) || null;
+  }
+
+  /**
+   * 获取所有报告
+   */
+  function getAllReports(): StructuredReviewReport[] {
+    return Array.from(latestReports.value.values());
+  }
+
+  /**
+   * 获取失败列表
+   */
+  function getFailures(chapterId?: string): FailureState[] {
+    if (chapterId) {
+      return getChapterFailures(chapterId);
+    }
+    return getChapterFailures();
+  }
+
+  /**
+   * 获取恢复事件历史
+   */
+  function getRecoveryHistory(limit?: number): RecoveryEvent[] {
+    return getRecoveryEventHistory(undefined, limit);
+  }
+
+  /**
+   * 清除失败记录
+   */
+  function clearFailures(): void {
+    recoveryManager.clearAll();
+    latestReports.value.clear();
+  }
+
   return {
     isWriting,
     isPaused,
@@ -1419,6 +1552,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
     progress,
     target,
     config,
+    latestReports,
     startBatchWriting,
     pauseWriting,
     resumeWriting,
@@ -1437,5 +1571,12 @@ export function useBatchWriter(): UseBatchWriterReturn {
     endingStatus,
     isReadyToEnd,
     checkEndingReadiness,
+    // 报告和失败恢复
+    exportReport,
+    getReport,
+    getAllReports,
+    getFailures,
+    getRecoveryHistory,
+    clearFailures,
   };
 }

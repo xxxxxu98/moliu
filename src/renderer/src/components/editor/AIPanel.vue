@@ -33,6 +33,9 @@ import {
   FileText,
   TrendingUp,
   SkipForward,
+  Download,
+  FileJson,
+  File,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useProjectStore } from "@/stores/project.store";
@@ -119,14 +122,16 @@ const writingStyleOptions = [
 ];
 
 // 一键续写相关
-const selectedWordCount = ref<number>(2000);
+const selectedWordCount = ref<number>(2500);
 const showWordCountDropdown = ref(false);
 
 const wordCountOptions = [
   { label: "续写 1000 字", value: 1000 },
-  { label: "续写 2000 字", value: 2000 },
-  { label: "续写 3000 字", value: 3000 },
-  { label: "续写 5000 字", value: 5000 },
+  { label: "续写 2500 字", value: 2500 },
+  { label: "续写 3500 字", value: 3500 },
+  { label: "续写 5500 字", value: 5500 },
+  { label: "续写 7500 字", value: 7500 },
+  { label: "续写 10000 字", value: 10000 },
 ];
 
 // 使用单章写作 composable
@@ -142,6 +147,7 @@ const {
   targetWordCount,
   isSupplementing,
   supplementRound,
+  latestReport,
   writeChapter,
   applyGeneratedContent,
   copyToClipboard: copyOneClickContent,
@@ -150,6 +156,8 @@ const {
   skipBlockingIssues,
   supplementContinue,
   checkAndSupplement,
+  exportReport: exportChapterReport,
+  getReport,
 } = useChapterWriter();
 
 // Computed
@@ -450,6 +458,33 @@ function handleCopyOneClickContent() {
   copyOneClickContent();
   message.success("已复制到剪贴板");
 }
+
+function handleExportReport(format: 'json' | 'markdown') {
+  const report = getReport();
+  if (!report) {
+    message.warning("暂无审查报告");
+    return;
+  }
+  
+  const content = exportChapterReport(format);
+  if (!content) {
+    message.warning("导出失败");
+    return;
+  }
+  
+  // 下载文件
+  const blob = new Blob([content], { type: format === 'json' ? 'application/json' : 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `审查报告_第${report.meta.chapterNumber}章_${new Date().toISOString().slice(0, 10)}.${format === 'json' ? 'json' : 'md'}`;
+  a.click();
+  URL.revokeObjectURL(url);
+  message.success(`报告已导出为 ${format === 'json' ? 'JSON' : 'Markdown'} 格式`);
+}
+
+// 是否有报告可导出
+const hasReport = computed(() => !!latestReport.value || !!reviewResult.value);
 
 async function handleSupplementContinue() {
   if (isSupplementing.value) return;
@@ -896,6 +931,39 @@ function getSeverityClass(severity: string): string {
             <p class="text-xs text-red-600 dark:text-red-400">
               {{ oneClickError }}
             </p>
+          </div>
+
+          <!-- 报告导出按钮 -->
+          <div v-if="hasReport && !isOneClickGenerating" class="mt-3 p-2 rounded-lg bg-gradient-to-r from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/50">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-gray-500 dark:text-gray-400">审查报告</span>
+              <div class="flex gap-1">
+                <NButton size="tiny" @click="handleExportReport('markdown')">
+                  <template #icon><File class="w-3 h-3" /></template>
+                  MD
+                </NButton>
+                <NButton size="tiny" @click="handleExportReport('json')">
+                  <template #icon><FileJson class="w-3 h-3" /></template>
+                  JSON
+                </NButton>
+              </div>
+            </div>
+            <!-- 报告摘要 -->
+            <div v-if="latestReport" class="text-xs space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="text-gray-500">总分：</span>
+                <span class="font-medium" :class="latestReport.overview.overallScore >= 70 ? 'text-emerald-600' : 'text-amber-600'">
+                  {{ latestReport.overview.overallScore }}
+                </span>
+                <NTag size="tiny" :type="latestReport.overview.verdict === 'accepted' ? 'success' : latestReport.overview.verdict === 'needs_revision' ? 'warning' : 'error'">
+                  {{ latestReport.overview.verdict === 'accepted' ? '通过' : latestReport.overview.verdict === 'needs_revision' ? '需修改' : '拒绝' }}
+                </NTag>
+              </div>
+              <div class="flex items-center gap-2 text-gray-500">
+                <span>问题：{{ latestReport.overview.totalIssues }}</span>
+                <span v-if="latestReport.overview.blockingCount > 0" class="text-red-500">阻断：{{ latestReport.overview.blockingCount }}</span>
+              </div>
+            </div>
           </div>
         </div>
 

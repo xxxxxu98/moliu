@@ -4,7 +4,8 @@
  * 核心改进：
  * 1. TaskBook 作为核心前置步骤（不再是可选）
  * 2. Blocking 闸门机制
- * 3. 三遍法去AI味
+ * 3. 结构化报告生成
+ * 4. 失败恢复机制
  */
 
 import { ref, computed, readonly } from 'vue';
@@ -30,6 +31,16 @@ import {
 } from '@/services/review/blocking-review.service';
 import type { ChapterMemory, Chapter } from '@/types/project';
 import type { WritingTaskBook } from '@/types/writing-task';
+import {
+  useReportGenerator,
+  type StructuredReviewReport,
+} from '@/services/writing/review/report-generator';
+import {
+  useFailureRecovery,
+  type PipelineStep,
+  type FailureState,
+  type RecoveryStrategy,
+} from '@/services/writing/failure-recovery';
 
 // ============================================
 // 接口定义
@@ -53,6 +64,9 @@ export interface UseChapterWriterReturn {
   isSupplementing: typeof isSupplementing;
   supplementRound: typeof supplementRound;
 
+  // 报告相关
+  latestReport: typeof latestReport;
+
   // 方法
   writeChapter: (options?: {
     targetWordCount?: number;
@@ -73,6 +87,15 @@ export interface UseChapterWriterReturn {
   // 补充续写
   supplementContinue: (options?: { additionalWords?: number }) => Promise<string | null>;
   checkAndSupplement: () => Promise<{ needsSupplement: boolean; currentWords: number; targetWords: number }>;
+
+  // 报告导出
+  exportReport: (format: 'json' | 'markdown') => string | null;
+  getReport: () => StructuredReviewReport | null;
+
+  // 失败恢复
+  getFailures: () => FailureState[];
+  attemptRecovery: (failureId: string) => Promise<{ strategy: RecoveryStrategy | null; action: string }>;
+  clearFailures: () => void;
 }
 
 // ============================================
@@ -97,6 +120,37 @@ const actualWordCount = ref(0);
 const targetWordCount = ref(0);
 const isSupplementing = ref(false);
 const supplementRound = ref(0);
+
+// 报告状态
+const latestReport = ref<StructuredReviewReport | null>(null);
+
+// 初始化报告生成器
+const {
+  generator: reportGenerator,
+  generate: generateReport,
+  exportToJSON,
+  exportToMarkdown,
+  getHistory,
+  getLatestReport,
+} = useReportGenerator();
+
+// 初始化失败恢复
+const {
+  manager: recoveryManager,
+  registerFailure,
+  attemptRecovery: attemptRecoveryAction,
+  getChapterFailures,
+  clearChapterFailures,
+} = useFailureRecovery({
+  onUserDecision: async (failure: FailureState) => {
+    console.log('[ChapterWriter] 需要用户决策:', failure.step, failure.error);
+    return null;
+  },
+  onRecovery: async (failure: FailureState, strategy: RecoveryStrategy) => {
+    console.log('[ChapterWriter] 执行恢复策略:', strategy, 'for', failure.step);
+    return true;
+  },
+});
 
 // ============================================
 // 工具函数
@@ -195,6 +249,13 @@ async function generateTaskBook(
     return taskBook;
   } catch (err) {
     console.error('[智能续写] 生成任务书失败:', err);
+    // 注册任务书生成失败
+    recoveryManager.registerFailure(
+      currentChapterId || 'unknown',
+      chapterIndex + 1,
+      'taskbook',
+      err instanceof Error ? err.message : '任务书生成失败',
+    );
     return null;
   }
 }
@@ -243,6 +304,10 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
   let currentGeneratedContent = '';
   let abortController: AbortController | null = null;
+  
+  // 当前章节信息
+  let currentChapterId = '';
+  let currentChapterNumber = 0;
 
   // 初始化记忆管理器
   function initMemoryManager() {
@@ -546,6 +611,18 @@ export function useChapterWriter(): UseChapterWriterReturn {
       const project = projectStore.currentProject!;
       const currentChapter = projectStore.currentChapter!;
       const currentIndex = context.chapter.orderIndex;
+      
+      // 记录章节信息
+      currentChapterId = currentChapter.id;
+      currentChapterNumber = currentIndex + 1;
+      
+      // 注册起草失败恢复
+      const draftFailureId = registerFailure(
+        currentChapterId,
+        currentChapterNumber,
+        'draft',
+        '开始起草',
+      ).id;
 
       // ========== 步骤 1: 生成写作任务书（核心前置） ==========
       currentStep.value = 'taskbook';
@@ -660,6 +737,14 @@ export function useChapterWriter(): UseChapterWriterReturn {
       return currentGeneratedContent;
 
     } catch (err) {
+      // 记录失败
+      recoveryManager.registerFailure(
+        currentChapterId,
+        currentChapterNumber,
+        currentStep.value as PipelineStep,
+        err instanceof Error ? err.message : '未知错误',
+      );
+      
       if (err instanceof Error && err.message === 'Generation stopped by user') {
         error.value = null;
       } else {
@@ -1029,7 +1114,33 @@ ${endingSnippet}
       if (!reviewPassed && !forceProceed && lastReviewResult) {
         console.warn('[智能续写] 审查未通过，blocking 问题:', lastReviewResult.blockingCount);
         error.value = `审查未通过：${lastReviewResult.blockingCount}个阻断问题（已达最低严格度，可选择跳过）`;
+        
+        // 生成结构化报告
+        if (currentChapterId) {
+          latestReport.value = generateReport(
+            currentChapterId,
+            currentChapterNumber,
+            currentChapter.title,
+            lastReviewResult as any,
+            {} as any,
+            { strictness: currentStrictness, passThreshold: 70 }
+          );
+        }
+        
         return false;
+      }
+      
+      // 审查通过，生成结构化报告
+      if (currentChapterId && lastReviewResult) {
+        latestReport.value = generateReport(
+          currentChapterId,
+          currentChapterNumber,
+          currentChapter.title,
+          lastReviewResult as any,
+          {} as any,
+          { strictness: currentStrictness, passThreshold: 70 }
+        );
+        console.log('[智能续写] 已生成结构化审查报告');
       }
 
       // ========== 步骤 4: 润色 - 暂时禁用去AI味 ==========
@@ -1157,6 +1268,55 @@ ${endingSnippet}
     forceProceed = true;
   }
 
+  /**
+   * 导出报告
+   */
+  function exportReport(format: 'json' | 'markdown'): string | null {
+    if (!latestReport.value) {
+      console.warn('[ChapterWriter] 没有可导出的报告');
+      return null;
+    }
+    
+    if (format === 'json') {
+      return exportToJSON(latestReport.value);
+    } else {
+      return exportToMarkdown(latestReport.value);
+    }
+  }
+
+  /**
+   * 获取当前报告
+   */
+  function getReport(): StructuredReviewReport | null {
+    return latestReport.value;
+  }
+
+  /**
+   * 获取失败列表
+   */
+  function getFailures(): FailureState[] {
+    return currentChapterId ? getChapterFailures(currentChapterId) : [];
+  }
+
+  /**
+   * 尝试恢复失败
+   */
+  async function attemptRecovery(failureId: string): Promise<{
+    strategy: RecoveryStrategy | null;
+    action: string;
+  }> {
+    return attemptRecoveryAction(failureId);
+  }
+
+  /**
+   * 清除失败记录
+   */
+  function clearFailures(): void {
+    if (currentChapterId) {
+      clearChapterFailures(currentChapterId);
+    }
+  }
+
   return {
     isGenerating,
     progress,
@@ -1169,6 +1329,7 @@ ${endingSnippet}
     targetWordCount,
     isSupplementing,
     supplementRound,
+    latestReport,
     writeChapter,
     stopWriting,
     buildContext,
@@ -1180,5 +1341,10 @@ ${endingSnippet}
     forceProceedToPolish,
     supplementContinue,
     checkAndSupplement,
+    exportReport,
+    getReport,
+    getFailures,
+    attemptRecovery,
+    clearFailures,
   };
 }
