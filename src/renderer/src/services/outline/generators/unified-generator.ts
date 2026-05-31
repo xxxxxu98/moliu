@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Unified Outline Generator
  * Main entry point with multi-layered fallback strategy
  */
@@ -342,7 +342,7 @@ export class UnifiedOutlineGenerator {
 
 - **核心情绪**：热血/甜蜜/紧张等
 - **次要情绪**：次要情绪
-- **情绪弧线**：rising/falling/wave/mixed
+- **情绪弧线**：上升/下降/波动/混合
 - **情绪密度**：3000
 - **情绪高点**：5, 20, 50
 - **情绪低点**：10, 30
@@ -355,7 +355,7 @@ export class UnifiedOutlineGenerator {
 
 | 地点名称 | 描述 | 等级 |
 |----------|------|------|
-| 地点1 | 描述 | city/district/special |
+| 地点1 | 描述 | 新手村/主城/禁地 |
 
 ### 主要势力
 
@@ -367,21 +367,21 @@ export class UnifiedOutlineGenerator {
 
 | 规则名称 | 描述 | 类别 |
 |----------|------|------|
-| 规则1 | 描述 | cultivation/magic/social |
+| 规则1 | 描述 | 修炼/魔法/社会 |
 
 ## 角色设定
 
 ### 主角
 
 - **姓名**：角色名
-- **角色类型**：protagonist
+- **角色类型**：主角
 - **描述**：角色描述
 - **性格标签**：性格标签1、性格标签2
 - **金手指**：金手指（如有）
 - **优势**：优势1
 - **短板**：短板1
 - **人际关系**：
-  - 关联角色（friend/enemy/mentor）：关系描述
+  - 关联角色（朋友/敌人/导师）：关系描述
 
 ### 其他角色
 
@@ -479,7 +479,7 @@ export class UnifiedOutlineGenerator {
 
 | 内容 | 类型 | 建议章节 |
 |------|------|----------|
-| 伏笔内容 | item/dialogue/event/mystery | 10 |
+| 伏笔内容 | 悬念/对话/事件/物品 | 10 |
 
 ## 章节概览
 
@@ -616,15 +616,15 @@ export class UnifiedOutlineGenerator {
       "synopsis": "60-80字简介",
       "genres": ["题材标签"],
       "estimatedWordCount": 500000,
-      "emotionGoal": { "primary": "核心情绪", "secondary": "次要情绪", "arc": "rising/falling/wave/mixed", "density": 3000, "highPoints": [5, 20, 50], "lowPoints": [10, 30] },
-      "worldSetting": { "type": "世界类型", "locations": [{ "name": "地点", "description": "描述", "level": "city" }], "factions": [{ "name": "势力", "description": "描述" }], "rules": [{ "name": "规则", "description": "描述" }] },
-      "characters": [{ "name": "角色名", "role": "protagonist", "description": "描述", "personality": ["性格标签"], "goldenFinger": "金手指", "strengths": ["优势"], "weaknesses": ["短板"] }],
-      "structure": { "act1": "第一幕", "act2a": "第二幕A", "act2b": "第二幕B", "act3": "第三幕" },
+      "emotionGoal": { "primary": "核心情绪", "secondary": "次要情绪", "arc": "上升/下降/波动/混合", "density": 3000, "highPoints": [5, 20, 50], "lowPoints": [10, 30] },
+      "worldSetting": { "type": "世界类型", "locations": [{ "name": "地点", "description": "描述", "level": "新手村" }], "factions": [{ "name": "势力", "description": "描述" }], "rules": [{ "name": "规则", "description": "描述" }] },
+      "characters": [{ "name": "角色名", "role": "主角", "description": "描述", "personality": ["性格标签"], "goldenFinger": "金手指", "strengths": ["优势"], "weaknesses": ["短板"] }],
+      "structure": { "第一幕": "第一幕", "第二幕A": "第二幕A", "第二幕B": "第二幕B", "第三幕": "第三幕" },
       "coolPointDesign": { "patterns": ["打脸爽", "装逼爽"], "arranged": [{ "type": "类型", "description": "描述", "suggestedChapter": 5 }] },
       "coreSellingPoints": [{ "name": "卖点", "description": "描述", "priority": 1 }],
       "conflictDesign": { "source": "冲突来源", "escalation": ["一级", "二级", "三级", "四级"], "majorConflicts": ["冲突1"] },
       "storyLines": { "map": "地图线", "faction": "阵营线", "character": "人物线", "goldenfinger": "金手指线", "worldRules": "世界观线", "conflict": "矛盾线", "collection": "收集线", "romance": "感情线" },
-      "foreshadows": [{ "hint": "伏笔", "type": "mystery", "suggestedChapter": 10 }],
+      "foreshadows": [{ "hint": "伏笔", "type": "悬念", "suggestedChapter": 10 }],
       "chapters": [{ "title": "章节标题", "summary": "摘要", "keyEvents": ["事件"], "involvedCharacters": ["角色"] }]
     }
   ]

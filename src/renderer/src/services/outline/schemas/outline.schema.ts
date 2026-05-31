@@ -31,15 +31,15 @@ export const RelationshipSchema = z.object({
   targetName: z.string().describe('关联的角色名称'),
   type: z
     .enum([
-      'friend',
-      'enemy',
-      'family',
-      'lover',
-      'rival',
-      'mentor',
-      'student',
-      'alliance',
-      'neutral',
+      '朋友',
+      '敌人',
+      '家人',
+      '恋人',
+      '竞争对手',
+      '导师',
+      '学生',
+      '盟友',
+      '中立',
     ])
     .describe('关系类型'),
   description: z.string().optional().describe('关系描述'),
@@ -51,7 +51,7 @@ export type Relationship = z.infer<typeof RelationshipSchema>;
 export const CharacterSchema = z.object({
   id: IdSchema.optional().describe('角色ID'),
   name: z.string().describe('角色姓名'),
-  role: z.enum(['protagonist', 'antagonist', 'mentor', 'supporting', 'minor']).describe('角色定位'),
+  role: z.enum(['主角', '女主', '导师', '反派', '配角']).describe('角色定位'),
   identity: z.string().describe('身份背景'),
   personality: z.array(z.string()).optional().default([]).describe('性格标签'),
   goldenFinger: z.string().optional().describe('金手指/独特优势'),

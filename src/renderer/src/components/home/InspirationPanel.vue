@@ -404,7 +404,7 @@ function buildPrompt(): string {
       "emotionGoal": {
         "primary": "核心情绪",
         "secondary": "次要情绪",
-        "arc": "rising/falling/wave/mixed",
+        "arc": "上升/下降/波动/混合",
         "density": 3000,
         "highPoints": [5, 20, 50],
         "lowPoints": [10, 30]
@@ -412,21 +412,21 @@ function buildPrompt(): string {
       
       "worldSetting": {
         "type": "世界类型",
-        "locations": [{ "name": "地点", "description": "描述", "level": "city" }],
+        "locations": [{ "name": "地点", "description": "描述", "level": "新手村" }],
         "factions": [{ "name": "势力", "description": "描述", "allies": [], "enemies": [] }],
-        "rules": [{ "name": "规则", "description": "描述", "category": "cultivation" }]
+        "rules": [{ "name": "规则", "description": "描述", "category": "修炼" }]
       },
       
       "characters": [
         {
           "name": "角色名",
-          "role": "protagonist/antagonist/mentor/supporting",
+          "role": "主角/反派/导师/配角",
           "description": "描述",
           "personality": ["性格"],
           "goldenFinger": "金手指",
           "strengths": ["优势"],
           "weaknesses": ["短板"],
-          "relationships": [{ "targetName": "角色", "type": "friend/enemy/mentor", "description": "关系" }]
+          "relationships": [{ "targetName": "角色", "type": "朋友/敌人/导师", "description": "关系" }]
         }
       ],
       
@@ -464,7 +464,7 @@ function buildPrompt(): string {
       },
       
       "foreshadows": [
-        { "hint": "伏笔内容", "type": "item/dialogue/event/mystery", "suggestedChapter": 10 }
+        { "hint": "伏笔内容", "type": "悬念/对话/事件/物品", "suggestedChapter": 10 }
       ],
       
       "chapters": [

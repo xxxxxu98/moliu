@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n';
 import { useProjectStore } from '@/stores/project.store';
 import type { Character, Relationship, RelationshipType } from '@/types/project';
 import { RELATIONSHIP_TYPE_LABELS } from '@/types/project';
+import { characterRoles } from '@/config/character-roles';
 
 const { t } = useI18n();
 const projectStore = useProjectStore();
@@ -42,11 +43,49 @@ const relationshipForm = ref({
 });
 const editingRelationshipIndex = ref<number | null>(null);
 
-// Relationship type options
-const relationshipTypeOptions = Object.entries(RELATIONSHIP_TYPE_LABELS).map(([value, data]) => ({
+// Relationship type options - value 存储中文
+const relationshipTypeOptions = Object.entries(RELATIONSHIP_TYPE_LABELS).map(([, data]) => ({
   label: data.label,
-  value,
+  value: data.label,
 }));
+
+// Character role options - value 存储中文
+const characterRoleOptions = Object.entries(characterRoles).map(([label, data]) => ({
+  label,
+  value: label,
+}));
+
+// Helper: 根据英文 key 获取中文 label（用于编辑回显和显示）
+function getRoleLabelByKey(key: string): string {
+  const entry = Object.entries(characterRoles).find(([, d]) => d.key === key);
+  return entry ? entry[0] : key;
+}
+
+// Helper: 获取角色显示文本（兼容中文和英文 key）
+function getRoleDisplayText(role: string | undefined): string {
+  if (!role) return '';
+  // 如果在 characterRoles 中找到（可能是中文 key），直接返回
+  if (role in characterRoles) return role;
+  // 否则尝试作为英文 key 转换
+  return getRoleLabelByKey(role);
+}
+
+// Helper: 根据英文 key 获取关系类型中文 label
+function getRelationTypeLabelByKey(key: string): string {
+  return RELATIONSHIP_TYPE_LABELS[key as keyof typeof RELATIONSHIP_TYPE_LABELS]?.label || key;
+}
+
+// Helper: 获取关系类型显示文本（兼容中文和英文 key）
+function getRelationTypeDisplayText(type: string | undefined): string {
+  if (!type) return '';
+  // 如果直接是中文，返回
+  const lowerType = type.toLowerCase();
+  for (const [key, data] of Object.entries(RELATIONSHIP_TYPE_LABELS)) {
+    if (data.label === type) return type;
+    if (key.toLowerCase() === lowerType) return data.label;
+  }
+  return type;
+}
 
 // Other characters for selection
 const otherCharacters = computed(() => {
@@ -88,9 +127,11 @@ function openCreateCharacterDialog() {
 function openEditCharacterDialog(character: Character) {
   characterDialogMode.value = 'edit';
   editingCharacter.value = character;
+  // 角色定位：如果存储的是英文 key，转换为中文 label 显示
+  const roleLabel = character.role ? getRoleLabelByKey(character.role) : '';
   characterForm.value = {
     name: character.name,
-    role: character.role || '',
+    role: roleLabel,
     description: character.description || '',
     personality: character.profile?.personality || [],
     appearance: character.profile?.appearance || '',
@@ -216,10 +257,20 @@ async function handleDeleteCharacter(character: Character) {
 }
 
 function getRelationTypeLabel(type: string): string {
+  // 先尝试直接匹配中文
+  for (const [key, data] of Object.entries(RELATIONSHIP_TYPE_LABELS)) {
+    if (data.label === type) return data.label;
+  }
+  // 再尝试匹配英文 key
   return RELATIONSHIP_TYPE_LABELS[type as RelationshipType]?.label || type;
 }
 
 function getRelationTypeColor(type: string): string {
+  // 先尝试直接匹配中文
+  for (const [key, data] of Object.entries(RELATIONSHIP_TYPE_LABELS)) {
+    if (data.label === type) return data.color;
+  }
+  // 再尝试匹配英文 key
   return RELATIONSHIP_TYPE_LABELS[type as RelationshipType]?.color || '#6b7280';
 }
 </script>
@@ -262,7 +313,7 @@ function getRelationTypeColor(type: string): string {
               <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
                   <span class="font-medium text-[var(--moliu-text-primary)]">{{ char.name }}</span>
-                  <NTag v-if="char.role" size="tiny" type="info">{{ t(`character.roles.${char.role}`) || char.role }}</NTag>
+                  <NTag v-if="char.role" size="tiny" type="info">{{ getRoleDisplayText(char.role) }}</NTag>
                 </div>
                 <div class="flex items-center gap-1">
                   <NButton quaternary circle size="small" @click.stop="openEditCharacterDialog(char)">
@@ -419,7 +470,7 @@ function getRelationTypeColor(type: string): string {
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">角色定位</label>
           <NInput
             v-model:value="characterForm.role"
-            placeholder="如：主角、反派、导师等"
+            placeholder="输入角色定位，如：主角、导师、反派等"
           />
         </div>
         <div>

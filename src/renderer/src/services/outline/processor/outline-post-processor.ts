@@ -185,7 +185,7 @@ export class OutlinePostProcessor {
       // 转换角色，确保 identity 字段（schema required）
       characters: (parseResult.characters || []).map(c => ({
         name: c.name || '未知角色',
-        role: (c.role as any) || 'supporting',
+        role: this.normalizeCharacterRole(c.role || '配角'),
         identity: (c as any).identity || '',
         description: (c as any).description || (c as any).identity || '',
         personality: c.personality || [],
@@ -202,7 +202,7 @@ export class OutlinePostProcessor {
       foreshadows: (parseResult.foreshadows || []).map(f => ({
         id: f.id,
         hint: f.hint,
-        type: f.type,
+        type: this.normalizeForeshadowType(f.type || 'event'),
         suggestedChapter: f.suggestedChapter,
         status: f.status || 'active',
         phase: f.phase,
@@ -353,7 +353,7 @@ export class OutlinePostProcessor {
       })),
       characters: (extracted.characters || []).map(c => ({
         name: c.name || '未知角色',
-        role: (c.role as any) || 'supporting',
+        role: this.normalizeCharacterRole(c.role || '配角'),
         identity: c.description || '',
         description: c.description || '',
         personality: c.personality || [],
@@ -369,7 +369,7 @@ export class OutlinePostProcessor {
       structure: extracted.structure,
       foreshadows: (extracted.foreshadows || []).map(f => ({
         hint: f.hint,
-        type: (f.type as any) || 'mystery',
+        type: this.normalizeForeshadowType(f.type || 'mystery'),
         suggestedChapter: undefined,
         status: 'active' as const,
         phase: f.phase,
@@ -614,7 +614,7 @@ export class OutlinePostProcessor {
   private normalizeCharacters(characters: any[]): Character[] {
     return characters.map(char => ({
       name: char.name || '未知角色',
-      role: char.role || char.type || 'supporting',
+      role: this.normalizeCharacterRole(char.role || char.type || 'supporting'),
       identity: char.identity || char.description || char.desc || '',
       description: char.description || char.desc || '',
       personality: this.normalizeArray(char.personality || char.traits || []),
@@ -629,6 +629,33 @@ export class OutlinePostProcessor {
       currentDilemma: char.currentDilemma || '',
       speechStyle: char.speechStyle || undefined,
     }));
+  }
+
+  /**
+   * 规范化角色类型
+   * 返回中文枚举值，与 CharacterSchema 中的 z.enum(['主角', '女主', '导师', '反派', '配角']) 匹配
+   */
+  private normalizeCharacterRole(role: string): '主角' | '女主' | '导师' | '反派' | '配角' {
+    if (!role) return '配角';
+    const r = role.toLowerCase();
+
+    // 女主/女一（网文特色，女性主角）
+    if (r.includes('女主') || r.includes('女一')) return '女主';
+
+    // 主角/男主/男一（主角）
+    if (r.includes('主角') || r.includes('protagonist') || r.includes('hero') || r.includes('男主') || r.includes('男一')) return '主角';
+
+    // 反派/敌人
+    if (r.includes('反派') || r.includes('antagonist') || r.includes('敌人') || r.includes('villain') || r.includes('boss')) return '反派';
+
+    // 导师/师父/师尊
+    if (r.includes('导师') || r.includes('mentor') || r.includes('师父') || r.includes('师尊') || r.includes('师傅')) return '导师';
+
+    // 配角/次要角色/小角色/龙套/伙伴/宠物/坐骑/灵兽（都归为配角）
+    if (r.includes('配角') || r.includes('supporting') || r.includes('secondary') || r.includes('minor') || r.includes('小角色') || r.includes('龙套') || r.includes('伙伴') || r.includes('宠物') || r.includes('坐骑') || r.includes('灵兽') || r.includes('comrade') || r.includes('companion') || r.includes('pet')) return '配角';
+
+    // 默认返回配角
+    return '配角';
   }
 
   /**
@@ -653,11 +680,23 @@ export class OutlinePostProcessor {
   private normalizeForeshadows(foreshadows: any[]): any[] {
     return foreshadows.map(fs => ({
       hint: fs.hint || fs.content || fs.description || String(fs),
-      type: fs.type || 'event',
+      type: this.normalizeForeshadowType(fs.type || 'event'),
       suggestedChapter: fs.suggestedChapter || fs.chapter || undefined,
-      // 新增：支持伏笔分期
       phase: fs.phase || undefined,
     }));
+  }
+
+  /**
+   * 规范化伏笔类型
+   */
+  private normalizeForeshadowType(type: string): 'item' | 'dialogue' | 'event' | 'mystery' {
+    if (!type) return 'mystery';
+    const t = type.toLowerCase();
+    if (t.includes('道具') || t.includes('物品') || t.includes('item')) return 'item';
+    if (t.includes('对话') || t.includes('dialogue')) return 'dialogue';
+    if (t.includes('事件') || t.includes('event')) return 'event';
+    // 悬念/mystery 作为默认值
+    return 'mystery';
   }
 
   /**
@@ -822,27 +861,44 @@ export class OutlinePostProcessor {
   private normalizeWorldSetting(worldSetting: any): any {
     if (!worldSetting) return undefined;
 
-    const validCategories = ['cultivation', 'magic', 'social', 'physics', 'custom'] as const;
-    const categoryMap: Record<string, (typeof validCategories)[number]> = {
+    const validCategories = ['cultivation', 'magic', 'social', 'physics', 'custom', '修炼', '魔法', '社会', '科技', 'custom'] as const;
+    const categoryMap: Record<string, string> = {
       修炼: 'cultivation',
       魔法: 'magic',
       社会: 'social',
       科技: 'physics',
-      水系: 'custom',
-      建筑: 'custom',
-      生存: 'custom',
-      系统: 'custom',
+      custom: 'custom',
+      新手村: 'city',
+      主城: 'district',
+      禁地: 'special',
     };
 
     const normalized = { ...worldSetting };
 
     if (normalized.rules) {
       normalized.rules = normalized.rules.map((rule: any) => {
-        if (rule.category && !validCategories.includes(rule.category)) {
-          const mapped = categoryMap[rule.category] || 'custom';
-          return { ...rule, category: mapped };
+        if (rule.category) {
+          const normalizedCategory = categoryMap[rule.category] || rule.category;
+          // 如果不是有效值，设置为 custom
+          if (!['cultivation', 'magic', 'social', 'physics', 'custom'].includes(normalizedCategory)) {
+            return { ...rule, category: 'custom' };
+          }
+          return { ...rule, category: normalizedCategory };
         }
         return rule;
+      });
+    }
+
+    if (normalized.locations) {
+      normalized.locations = normalized.locations.map((loc: any) => {
+        if (loc.level) {
+          const normalizedLevel = categoryMap[loc.level] || loc.level;
+          if (!['world', 'continent', 'country', 'city', 'district', 'special'].includes(normalizedLevel)) {
+            return { ...loc, level: 'city' };
+          }
+          return { ...loc, level: normalizedLevel };
+        }
+        return loc;
       });
     }
 
@@ -993,12 +1049,29 @@ export class OutlinePostProcessor {
   private normalizeEmotionGoal(emotionGoal: any): any {
     if (!emotionGoal) return undefined;
 
-    const validArcs = ['rising', 'falling', 'wave', 'mixed'];
+    const validArcs = ['rising', 'falling', 'wave', 'mixed', '上升', '下降', '波动', '混合'];
+    const arcMap: Record<string, string> = {
+      上升: 'rising',
+      下降: 'falling',
+      波动: 'wave',
+      混合: 'mixed',
+      rising: 'rising',
+      falling: 'falling',
+      wave: 'wave',
+      mixed: 'mixed',
+    };
 
-    if (emotionGoal.arc && !validArcs.includes(emotionGoal.arc)) {
+    if (emotionGoal.arc) {
+      const normalizedArc = arcMap[emotionGoal.arc] || emotionGoal.arc;
+      if (!validArcs.includes(normalizedArc)) {
+        return {
+          ...emotionGoal,
+          arc: 'rising',
+        };
+      }
       return {
         ...emotionGoal,
-        arc: 'rising',
+        arc: normalizedArc,
       };
     }
 

@@ -710,9 +710,20 @@ export class RemarkParser {
           if (currentSection === 'characters') {
             // 如果是加粗格式的字段（如 **姓名**：），不创建新角色，等待列表处理
             if (!text.startsWith('**') && !normalizedText.includes('姓名') && !normalizedText.includes('描述')) {
+              const rawName = text.replace(/^#+\s*/, '').trim();
+              // 尝试提取角色名和角色类型
+              const charMatch = rawName.match(/^(.+?)[（(]([^）)]+)[）)]$/);
+              let charName = rawName;
+              let charRole = '配角';
+
+              if (charMatch) {
+                charName = charMatch[1].trim();
+                charRole = this.normalizeCharacterRole(charMatch[2].trim());
+              }
+
               currentCharacter = {
-                name: text.replace(/^#+\s*/, '').trim(),
-                role: 'supporting' as const,
+                name: charName,
+                role: charRole,
                 identity: '',
                 personality: [],
                 strengths: [],
@@ -1197,7 +1208,7 @@ export class RemarkParser {
                   result.characters.push({ ...currentCharacter });
                 }
 
-                currentCharacter = this.createNewCharacter(charName, 'supporting', charDesc);
+                currentCharacter = this.createNewCharacter(charName, '配角', charDesc);
               }
             }
             break;
@@ -1653,10 +1664,12 @@ export class RemarkParser {
    * 规范化伏笔类型
    */
   private normalizeForeshadowType(type: string): 'item' | 'dialogue' | 'event' | 'mystery' {
+    if (!type) return 'mystery';
     const t = type.toLowerCase();
-    if (t.includes('道具') || t.includes('item')) return 'item';
+    if (t.includes('道具') || t.includes('物品') || t.includes('item')) return 'item';
     if (t.includes('对话') || t.includes('dialogue')) return 'dialogue';
     if (t.includes('事件') || t.includes('event')) return 'event';
+    // 悬念/mystery 放在最后，作为默认值
     return 'mystery';
   }
 
@@ -1740,22 +1753,35 @@ export class RemarkParser {
 
   /**
    * 规范化角色类型
+   * 返回中文枚举值，与 CharacterSchema 中的 z.enum(['主角', '女主', '导师', '反派', '配角']) 匹配
    */
-  private normalizeCharacterRole(role: string): 'protagonist' | 'antagonist' | 'mentor' | 'supporting' | 'minor' {
+  private normalizeCharacterRole(role: string): '主角' | '女主' | '导师' | '反派' | '配角' {
+    if (!role) return '配角';
     const r = role.toLowerCase();
-    if (r.includes('主角') || r.includes('protagonist')) return 'protagonist';
-    if (r.includes('反派') || r.includes('antagonist') || r.includes('敌人')) return 'antagonist';
-    if (r.includes('导师') || r.includes('mentor')) return 'mentor';
-    if (r.includes('女主') || r.includes('男主') || r.includes('love')) return 'protagonist';
-    if (r.includes('配角') || r.includes('supporting')) return 'supporting';
-    if (r.includes('minor')) return 'minor';
-    return 'supporting';
+
+    // 女主/女一（网文特色，女性主角）
+    if (r.includes('女主') || r.includes('女一')) return '女主';
+
+    // 主角/男主/男一（主角）
+    if (r.includes('主角') || r.includes('protagonist') || r.includes('hero') || r.includes('男主') || r.includes('男一')) return '主角';
+
+    // 反派/敌人
+    if (r.includes('反派') || r.includes('antagonist') || r.includes('敌人') || r.includes('villain') || r.includes('boss')) return '反派';
+
+    // 导师/师父/师尊
+    if (r.includes('导师') || r.includes('mentor') || r.includes('师父') || r.includes('师尊') || r.includes('师傅')) return '导师';
+
+    // 配角/次要角色/小角色/龙套/伙伴/宠物/坐骑/灵兽（都归为配角）
+    if (r.includes('配角') || r.includes('supporting') || r.includes('secondary') || r.includes('minor') || r.includes('小角色') || r.includes('龙套') || r.includes('伙伴') || r.includes('宠物') || r.includes('坐骑') || r.includes('灵兽') || r.includes('comrade') || r.includes('companion') || r.includes('pet')) return '配角';
+
+    // 默认返回配角
+    return '配角';
   }
 
   /**
    * 创建新角色对象
    */
-  private createNewCharacter(name: string, role: string = 'supporting', description: string = ''): Character {
+  private createNewCharacter(name: string, role: string = '配角', description: string = ''): Character {
     return {
       name,
       role: this.normalizeCharacterRole(role),

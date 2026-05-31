@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Prompt System - Quick Outline Prompt (v2)
  * 快速大纲提示词 - 基于 oh-story 和 webnovel-writer 方法论重构
  */
@@ -123,7 +123,7 @@ ${buildConflictEscalationPrompt()}
 
 | 地点名称 | 描述 | 等级 |
 |----------|------|------|
-| 地点1 | 描述 | city/district/special |
+| 地点1 | 描述 | 新手村/主城/禁地 |
 
 #### 主要势力
 
@@ -135,21 +135,21 @@ ${buildConflictEscalationPrompt()}
 
 | 规则名称 | 描述 | 类别 |
 |----------|------|------|
-| 规则1 | 描述 | cultivation/magic/social |
+| 规则1 | 描述 | 修炼/魔法/社会 |
 
 ### 角色设定
 
 #### 主角
 
 - **姓名**：角色名
-- **角色类型**：protagonist/antagonist/mentor/supporting
+- **角色类型**：主角/女主/导师/反派/配角
 - **描述**：角色描述
 - **性格标签**：性格标签1、性格标签2
 - **金手指**：金手指（如有）
 - **优势**：优势1
 - **短板**：短板1
 - **人际关系**：
-  - 关联角色（friend/enemy/mentor/lover）：关系描述
+  - 关联角色（朋友/敌人/导师/恋人）：关系描述
 
 ### 三幕结构
 
