@@ -1,7 +1,7 @@
 /**
  * Chapter Commit 服务
  * 参考 webnovel-writer 的 Commit 机制设计
- * 
+ *
  * 核心流程：
  * 1. Data Agent 提取 artifacts（fulfillment/disambiguation/extraction）
  * 2. chapter-commit 提交 accepted/rejected
@@ -74,7 +74,7 @@ export class ChapterCommitService {
 
   /**
    * 执行提交
-   * 
+   *
    * 自动判定：
    * - blocking_count > 0 → rejected
    * - missed_nodes 非空 → rejected
@@ -170,7 +170,6 @@ export class ChapterCommitService {
 
       // 更新 commit 时间
       this.commitResult.updatedAt = new Date().toISOString();
-
     } catch (error) {
       result.success = false;
       result.error = error instanceof Error ? error.message : '投影失败';
@@ -230,9 +229,6 @@ export class ChapterCommitService {
         dominantStrand,
         createdAt: new Date().toISOString(),
       };
-
-      // 保存摘要（这里简化处理，实际需要保存到文件或数据库）
-      console.log('[ChapterCommit] 生成摘要:', summary);
 
       return 'done';
     } catch (error) {
@@ -406,18 +402,18 @@ export class DataExtractionService {
   private extractScenes(content: string): SceneChunk[] {
     const scenes: SceneChunk[] = [];
     const paragraphs = content.split(/\n\n+/);
-    
+
     let currentScene: Partial<SceneChunk> = {};
     let sceneIndex = 0;
     let lineNumber = 1;
 
     for (const para of paragraphs) {
       const paraLines = para.split('\n').length;
-      
+
       // 检测场景切换（地点变化）
       const locationPattern = /(在|来到|到了|进入|来到)(.+?)[，。]/;
       const locationMatch = para.match(locationPattern);
-      
+
       if (locationMatch && paraLines > 5) {
         // 保存上一个场景
         if (currentScene.summary) {
@@ -497,8 +493,12 @@ export class DataExtractionService {
       }
 
       // 关系变化
-      if (sentence.includes('结拜') || sentence.includes('结仇') || 
-          sentence.includes('成为') || sentence.includes('反目')) {
+      if (
+        sentence.includes('结拜') ||
+        sentence.includes('结仇') ||
+        sentence.includes('成为') ||
+        sentence.includes('反目')
+      ) {
         events.push({
           eventType: 'relationship_changed',
           subject: this.extractSubject(sentence),
@@ -508,8 +508,12 @@ export class DataExtractionService {
       }
 
       // 物品获得
-      if (sentence.includes('获得') || sentence.includes('得到') ||
-          sentence.includes('获得') || sentence.includes('得到')) {
+      if (
+        sentence.includes('获得') ||
+        sentence.includes('得到') ||
+        sentence.includes('获得') ||
+        sentence.includes('得到')
+      ) {
         events.push({
           eventType: 'artifact_obtained',
           subject: this.extractSubject(sentence),
@@ -543,9 +547,7 @@ export class DataExtractionService {
     const deltas: StateDelta[] = [];
 
     // 境界变化检测
-    const realmPatterns = [
-      /(练气|筑基|金丹|元婴|化神|渡劫|大乘|真仙)/g,
-    ];
+    const realmPatterns = [/(练气|筑基|金丹|元婴|化神|渡劫|大乘|真仙)/g];
 
     for (const pattern of realmPatterns) {
       const matches = content.match(pattern);
@@ -585,7 +587,7 @@ export class DataExtractionService {
   private generateSummary(content: string, scenes: SceneChunk[]): string {
     // 取第一段作为摘要基础
     const firstParagraph = content.split(/\n\n/)[0] || '';
-    
+
     // 结合场景信息
     const sceneSummary = scenes
       .slice(0, 3)
@@ -621,10 +623,7 @@ export class DataExtractionService {
    * 提取句子主语
    */
   private extractSubject(sentence: string): string {
-    const patterns = [
-      /([A-Z\u4e00-\u9fa5]{2,4})(?:的|将|把|被|在)/,
-      /^([A-Z\u4e00-\u9fa5]{2,4})/,
-    ];
+    const patterns = [/([A-Z\u4e00-\u9fa5]{2,4})(?:的|将|把|被|在)/, /^([A-Z\u4e00-\u9fa5]{2,4})/];
 
     for (const pattern of patterns) {
       const match = sentence.match(pattern);

@@ -1,6 +1,6 @@
 /**
  * 批量写作 Composable - 增强版
- * 
+ *
  * 核心改进：
  * 1. TaskBook 作为核心前置步骤
  * 2. 引入 blocking 闸门机制
@@ -9,7 +9,7 @@
  * 5. 自动化程度高 - 无需人工干预，避免死循环
  * 6. 结构化报告生成
  * 7. 失败恢复机制
- * 
+ *
  * 审查策略：
  * - 每章从目标严格度开始（如 normal）
  * - 审查失败时，逐步降低严格度（normal → relaxed）
@@ -26,7 +26,7 @@ import {
   extractChapterMemory,
   buildCharacterStateTable,
   buildPlotProgressTable,
-  safeExtractChapterMemory
+  safeExtractChapterMemory,
 } from '@/services/writing/extract-plot-memory';
 import {
   extractChapterContext,
@@ -39,7 +39,7 @@ import { ContextManager } from '@/services/writing/context-manager';
 import { DeAIService } from '@/services/writing/de-ai-service';
 import {
   createTaskBookBuilder,
-  type WritingTaskBuilder
+  type WritingTaskBuilder,
 } from '@/services/writing/writing-task-builder';
 import {
   blockingReview,
@@ -49,7 +49,7 @@ import {
   WritingPipelineManager,
   type BlockingReviewResult,
   type WritingPipelineStage,
-  type ReviewStrictness
+  type ReviewStrictness,
 } from '@/services/review/blocking-review.service';
 import { createChapterCommit, extractChapterFacts } from '@/services/writing/chapter-commit';
 import { createForeshadowTracker, analyzeForeshadows } from '@/services/writing/foreshadow-tracker';
@@ -89,10 +89,14 @@ function getLowerStrictness(current: ReviewStrictness): ReviewStrictness | null 
 /** 获取严格度显示名称 */
 function getStrictnessLabel(strictness: ReviewStrictness): string {
   switch (strictness) {
-    case 'strict': return '严格';
-    case 'normal': return '正常';
-    case 'relaxed': return '宽松';
-    default: return strictness;
+    case 'strict':
+      return '严格';
+    case 'normal':
+      return '正常';
+    case 'relaxed':
+      return '宽松';
+    default:
+      return strictness;
   }
 }
 
@@ -121,17 +125,17 @@ export interface UseBatchWriterReturn {
   progress: Ref<{ writtenChapters: number; writtenWords: number; targetChapters: number }>;
 
   // 自适应审查状态
-  currentStrictness: Ref<ReviewStrictness>;          // 当前使用的严格度
-  initialStrictness: Ref<ReviewStrictness>;           // 初始目标严格度
-  reviewAttempts: Ref<number>;                       // 当前章节审查尝试次数
-  strictnessHistory: Ref<Array<{chapter: number; strictness: ReviewStrictness; passed: boolean}>>;
+  currentStrictness: Ref<ReviewStrictness>; // 当前使用的严格度
+  initialStrictness: Ref<ReviewStrictness>; // 初始目标严格度
+  reviewAttempts: Ref<number>; // 当前章节审查尝试次数
+  strictnessHistory: Ref<Array<{ chapter: number; strictness: ReviewStrictness; passed: boolean }>>;
 
   // 写到完结状态
-  endingStatus: Ref<EndingCheckResult | null>;      // 完结判断结果
-  isReadyToEnd: Ref<boolean>;                        // 是否准备好完结
+  endingStatus: Ref<EndingCheckResult | null>; // 完结判断结果
+  isReadyToEnd: Ref<boolean>; // 是否准备好完结
 
   // 报告相关
-  latestReports: Ref<Map<number, StructuredReviewReport>>;  // 每章的报告
+  latestReports: Ref<Map<number, StructuredReviewReport>>; // 每章的报告
 
   // 配置
   target: Ref<WritingTarget>;
@@ -145,7 +149,7 @@ export interface UseBatchWriterReturn {
     useCommit: boolean;
     requireBlockingPass: boolean;
     // 审查配置
-    initialStrictness: ReviewStrictness;           // 初始严格度
+    initialStrictness: ReviewStrictness; // 初始严格度
   }>;
 
   // 方法
@@ -155,7 +159,11 @@ export interface UseBatchWriterReturn {
   stopWriting: () => void;
   getNextChapterIndex: () => number;
   getTotalChapters: () => number;
-  checkEndingReadiness: (project: any, chapterIndex: number, memories: ChapterMemory[]) => EndingCheckResult;
+  checkEndingReadiness: (
+    project: any,
+    chapterIndex: number,
+    memories: ChapterMemory[]
+  ) => EndingCheckResult;
   retryCurrentStep: () => Promise<void>;
   skipBlockingIssues: () => void;
   lowerStrictness: () => void;
@@ -173,45 +181,45 @@ export interface UseBatchWriterReturn {
 
 // 完结检查结果
 export interface EndingCheckResult {
-  isReady: boolean;                    // 是否准备好完结
-  chapterProgress: number;             // 章节进度百分比
-  outlineProgress: number;             // 大纲进度百分比
-  foreshadowCompletion: number;        // 伏笔完成率
-  remainingChapters: number;           // 预估剩余章节
-  unresolvedForeshadows: number;       // 未解决伏笔数
-  
+  isReady: boolean; // 是否准备好完结
+  chapterProgress: number; // 章节进度百分比
+  outlineProgress: number; // 大纲进度百分比
+  foreshadowCompletion: number; // 伏笔完成率
+  remainingChapters: number; // 预估剩余章节
+  unresolvedForeshadows: number; // 未解决伏笔数
+
   // 增强字段
-  foreshadowUrgencyScore: number;    // 伏笔紧急度评分 (0-100)
-  criticalForeshadows: ForeshadowUrgencyItem[];  // 紧急伏笔列表
-  outlineNodesComplete: number;         // 已完成大纲节点数
-  outlineNodesTotal: number;          // 总大纲节点数
-  volumeProgress?: VolumeProgress;     // 卷级进度（如果有）
-  
-  isInEndingPhase: boolean;           // 是否已进入完结阶段
-  phaseName: string;                 // 当前阶段名称
-  canCreateNewChapter: boolean;       // 是否可以创建新章节
-  stopReason?: string;               // 停止原因（如果是 'ending' 模式）
+  foreshadowUrgencyScore: number; // 伏笔紧急度评分 (0-100)
+  criticalForeshadows: ForeshadowUrgencyItem[]; // 紧急伏笔列表
+  outlineNodesComplete: number; // 已完成大纲节点数
+  outlineNodesTotal: number; // 总大纲节点数
+  volumeProgress?: VolumeProgress; // 卷级进度（如果有）
+
+  isInEndingPhase: boolean; // 是否已进入完结阶段
+  phaseName: string; // 当前阶段名称
+  canCreateNewChapter: boolean; // 是否可以创建新章节
+  stopReason?: string; // 停止原因（如果是 'ending' 模式）
 }
 
 // 伏笔紧急度项
 export interface ForeshadowUrgencyItem {
-  hint: string;                       // 伏笔提示
-  urgency: 'critical' | 'high' | 'medium' | 'low';  // 紧急度
-  urgencyScore: number;               // 紧急度评分 (0-100)
-  plantedChapter: number;             // 埋设章节
+  hint: string; // 伏笔提示
+  urgency: 'critical' | 'high' | 'medium' | 'low'; // 紧急度
+  urgencyScore: number; // 紧急度评分 (0-100)
+  plantedChapter: number; // 埋设章节
   suggestedResolutionChapter?: number; // 建议揭示章节
-  overdueChapters: number;           // 超期章节数
+  overdueChapters: number; // 超期章节数
 }
 
 // 卷级进度
 export interface VolumeProgress {
   currentVolume: number;
   totalVolumes: number;
-  volumeProgress: number;             // 当前卷进度百分比
-  chaptersInVolume: number;           // 当前卷章节数
-  chaptersWritten: number;            // 当前卷已写章节数
+  volumeProgress: number; // 当前卷进度百分比
+  chaptersInVolume: number; // 当前卷章节数
+  chaptersWritten: number; // 当前卷已写章节数
   volumeStatus: 'setup' | 'development' | 'climax' | 'resolution' | 'complete';
-  nextVolumeReady: boolean;          // 下一卷是否准备好开启
+  nextVolumeReady: boolean; // 下一卷是否准备好开启
 }
 
 // 批量写作配置
@@ -224,7 +232,7 @@ export interface BatchConfig {
   useReview?: boolean;
   useCommit?: boolean;
   requireBlockingPass?: boolean;
-  initialStrictness?: ReviewStrictness;  // 初始审查严格度
+  initialStrictness?: ReviewStrictness; // 初始审查严格度
 }
 
 // ============================================
@@ -239,9 +247,9 @@ interface InternalWritingState {
   pipeline: WritingPipelineManager;
   currentReviewResult: BlockingReviewResult | null;
   // 自适应审查相关状态
-  currentStrictness: ReviewStrictness;           // 当前使用的严格度
-  reviewAttempts: number;                       // 当前章节审查尝试次数
-  currentChapter: number;                       // 当前处理的章节索引
+  currentStrictness: ReviewStrictness; // 当前使用的严格度
+  reviewAttempts: number; // 当前章节审查尝试次数
+  currentChapter: number; // 当前处理的章节索引
 }
 
 // ============================================
@@ -279,28 +287,30 @@ function buildActiveForeshadows(project: any, maxCount: number = 5): any[] {
 function extractChapterOutlineFromPlot(plotOutline: any[], chapterId: string): string {
   // 首先尝试按 chapterId 查找
   let chapter = plotOutline?.find((p: any) => p.chapterId === chapterId);
-  
+
   // 如果没找到，尝试按 id 查找
   if (!chapter) {
     chapter = plotOutline?.find((p: any) => p.id === chapterId);
   }
-  
+
   if (!chapter) {
     return '';
   }
-  
+
   // 构建包含结构化节点的完整大纲
   const parts: string[] = [];
-  
+
   if (chapter.description) {
     parts.push(chapter.description);
   }
-  
+
   if (chapter.CBN) {
     parts.push(`【章节起点 CBN】${chapter.CBN}`);
   }
   if (chapter.CPNs?.length > 0) {
-    parts.push(`【推进节点 CPNs】\n  ${chapter.CPNs.map((cpn: string, i: number) => `${i + 1}. ${cpn}`).join('\n  ')}`);
+    parts.push(
+      `【推进节点 CPNs】\n  ${chapter.CPNs.map((cpn: string, i: number) => `${i + 1}. ${cpn}`).join('\n  ')}`
+    );
   }
   if (chapter.CEN) {
     parts.push(`【章节终点 CEN】${chapter.CEN}`);
@@ -311,7 +321,7 @@ function extractChapterOutlineFromPlot(plotOutline: any[], chapterId: string): s
   if (chapter.forbiddenZones?.length > 0) {
     parts.push(`【禁区】${chapter.forbiddenZones.join('、')}`);
   }
-  
+
   return parts.join('\n');
 }
 
@@ -330,7 +340,8 @@ function buildFullOutlineString(projectStore: any): string | undefined {
       const chapterNum = index + 1;
       const title = node.title || `第${chapterNum}章`;
       const description = node.description || '（暂无大纲）';
-      const keyEvents = node.keyEvents?.length > 0 ? `\n关键事件：${node.keyEvents.join('、')}` : '';
+      const keyEvents =
+        node.keyEvents?.length > 0 ? `\n关键事件：${node.keyEvents.join('、')}` : '';
 
       // ========== 构建结构化节点（增强大纲）==========
       const structuredNodes: string[] = [];
@@ -339,7 +350,9 @@ function buildFullOutlineString(projectStore: any): string | undefined {
         structuredNodes.push(`【章节起点 CBN】${node.CBN}`);
       }
       if (node.CPNs?.length > 0) {
-        structuredNodes.push(`【推进节点 CPNs】\n  ${node.CPNs.map((cpn: string, i: number) => `${i + 1}. ${cpn}`).join('\n  ')}`);
+        structuredNodes.push(
+          `【推进节点 CPNs】\n  ${node.CPNs.map((cpn: string, i: number) => `${i + 1}. ${cpn}`).join('\n  ')}`
+        );
       }
       if (node.CEN) {
         structuredNodes.push(`【章节终点 CEN】${node.CEN}`);
@@ -358,17 +371,25 @@ function buildFullOutlineString(projectStore: any): string | undefined {
     .join('\n\n');
 }
 
-function buildRecentChaptersFullText(projectStore: any, currentIndex: number, recentChapterCount: number): string {
+function buildRecentChaptersFullText(
+  projectStore: any,
+  currentIndex: number,
+  recentChapterCount: number
+): string {
   const chapters = projectStore.sortedChapters;
   const recentChapters = chapters
-    .filter((c: any, i: number) => i < currentIndex && i >= Math.max(0, currentIndex - recentChapterCount))
+    .filter(
+      (c: any, i: number) => i < currentIndex && i >= Math.max(0, currentIndex - recentChapterCount)
+    )
     .sort((a: any, b: any) => a.orderIndex - b.orderIndex);
 
   if (recentChapters.length === 0) return '';
 
-  return recentChapters.map((c: any) => {
-    return `【第${c.orderIndex + 1}章 · ${c.title}】\n\n${c.content || '（本章暂无内容）'}`;
-  }).join('\n\n==========\n\n');
+  return recentChapters
+    .map((c: any) => {
+      return `【第${c.orderIndex + 1}章 · ${c.title}】\n\n${c.content || '（本章暂无内容）'}`;
+    })
+    .join('\n\n==========\n\n');
 }
 
 /**
@@ -391,7 +412,6 @@ async function generateTaskBook(
     });
 
     const taskBook = await builder.buildTaskBook();
-    console.log(`[批量写作] 第${chapterIndex + 1}章任务书已生成:`, taskBook.CBN);
     return taskBook;
   } catch (err) {
     console.error('[批量写作] 生成任务书失败:', err);
@@ -442,13 +462,6 @@ async function performBlockingReview(
 
   const result = await blockingReview(context, undefined, strictness);
 
-  console.log(`[批量写作] 第${chapterIndex + 1}章审查 [${getStrictnessLabel(strictness)}]:`, {
-    passed: result.passed,
-    blockingCount: result.blockingCount,
-    totalIssues: result.totalIssues,
-    summary: result.summary,
-  });
-
   return result;
 }
 
@@ -456,13 +469,15 @@ async function performBlockingReview(
  * 执行润色（必须在 blocking 通过后）
  * 【暂时禁用去AI味】2026-05-24 临时禁用，等问题排查完毕后再启用
  */
-async function performPolish(content: string, deAIEnabled: boolean): Promise<{
+async function performPolish(
+  content: string,
+  deAIEnabled: boolean
+): Promise<{
   fixedContent: string;
   title: string | null;
   fixedCount: number;
 }> {
   // 【暂时禁用去AI味】直接返回原始内容
-  console.log('[批量写作] 去AI味已禁用（临时），使用原始内容');
   const result = DeAIService.extractAndValidateTitle(content);
   return {
     fixedContent: result.content,
@@ -500,11 +515,7 @@ async function performPolish(content: string, deAIEnabled: boolean): Promise<{
 /**
  * 执行 Commit 提交
  */
-async function performCommit(
-  project: any,
-  chapter: any,
-  chapterIndex: number
-): Promise<boolean> {
+async function performCommit(project: any, chapter: any, chapterIndex: number): Promise<boolean> {
   try {
     const extraction = await extractChapterFacts(chapter, chapterIndex);
     const commit = await createChapterCommit(
@@ -541,7 +552,7 @@ async function extractMemoryAfterApply(
       );
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     const memory = await safeExtractChapterMemory(
       { ...chapter, content: chapter.content || '' },
@@ -637,11 +648,11 @@ function calculateForeshadowUrgencyScore(
 ): number {
   const plannedCount = 100; // 默认计划章节数
   const elapsed = currentChapterIndex - createdChapter;
-  
+
   // 基础紧急度
   let score = 0;
   const urgencyWeight = { critical: 100, high: 75, medium: 50, low: 25 };
-  
+
   // 如果有目标章节，计算超期程度
   if (suggestedResolutionChapter) {
     const targetElapsed = suggestedResolutionChapter - createdChapter;
@@ -667,7 +678,7 @@ function calculateForeshadowUrgencyScore(
       score = urgencyWeight.low;
     }
   }
-  
+
   return Math.round(score);
 }
 
@@ -680,9 +691,10 @@ function checkEndingReadiness(
   currentChapterIndex: number,
   memories: ChapterMemory[]
 ): EndingCheckResult {
-  const plannedChapterCount = project?.metadata?.plannedChapterCount || 
+  const plannedChapterCount =
+    project?.metadata?.plannedChapterCount ||
     (project?.plotOutline?.length > 0 ? project.plotOutline.length : 100);
-  
+
   // 创建完结感知引擎
   const engine = createEndingPerceptionEngine(
     project,
@@ -694,49 +706,57 @@ function checkEndingReadiness(
 
   // 获取完结准备度分析
   const readiness = engine.analyzeEndingReadiness();
-  
+
   // 计算章节进度
   const chapterProgress = Math.round((currentChapterIndex / plannedChapterCount) * 100);
-  
+
   // ========== 增强：计算伏笔紧急度评分 ==========
   const foreshadows = project?.foreshadows || [];
-  const unresolvedForeshadows = foreshadows.filter((f: any) => 
-    f.status !== 'resolved' && f.status !== 'abandoned'
+  const unresolvedForeshadows = foreshadows.filter(
+    (f: any) => f.status !== 'resolved' && f.status !== 'abandoned'
   );
-  
+
   // 计算每个伏笔的紧急度
-  const criticalForeshadows: ForeshadowUrgencyItem[] = unresolvedForeshadows.map((f: any) => {
-    // 计算伏笔紧急度（内联计算，不依赖私有方法）
-    const urgency = calculateInlineUrgency(f, currentChapterIndex);
-    const urgencyWeight = { critical: 100, high: 75, medium: 50, low: 25 };
-    
-    return {
-      hint: f.hint || '',
-      urgency,
-      urgencyScore: calculateForeshadowUrgencyScore(
-        f.createdChapter || 0,
-        f.suggestedResolutionChapter,
-        currentChapterIndex,
-        urgency
-      ),
-      plantedChapter: f.createdChapter || 0,
-      suggestedResolutionChapter: f.suggestedResolutionChapter,
-      overdueChapters: f.suggestedResolutionChapter 
-        ? Math.max(0, currentChapterIndex - f.suggestedResolutionChapter)
-        : 0,
-    };
-  }).sort((a: ForeshadowUrgencyItem, b: ForeshadowUrgencyItem) => b.urgencyScore - a.urgencyScore);
-  
+  const criticalForeshadows: ForeshadowUrgencyItem[] = unresolvedForeshadows
+    .map((f: any) => {
+      // 计算伏笔紧急度（内联计算，不依赖私有方法）
+      const urgency = calculateInlineUrgency(f, currentChapterIndex);
+      const urgencyWeight = { critical: 100, high: 75, medium: 50, low: 25 };
+
+      return {
+        hint: f.hint || '',
+        urgency,
+        urgencyScore: calculateForeshadowUrgencyScore(
+          f.createdChapter || 0,
+          f.suggestedResolutionChapter,
+          currentChapterIndex,
+          urgency
+        ),
+        plantedChapter: f.createdChapter || 0,
+        suggestedResolutionChapter: f.suggestedResolutionChapter,
+        overdueChapters: f.suggestedResolutionChapter
+          ? Math.max(0, currentChapterIndex - f.suggestedResolutionChapter)
+          : 0,
+      };
+    })
+    .sort((a: ForeshadowUrgencyItem, b: ForeshadowUrgencyItem) => b.urgencyScore - a.urgencyScore);
+
   // 计算平均伏笔紧急度评分
-  const foreshadowUrgencyScore = criticalForeshadows.length > 0
-    ? Math.round(criticalForeshadows.reduce((sum: number, f: ForeshadowUrgencyItem) => sum + f.urgencyScore, 0) / criticalForeshadows.length)
-    : 0;
-  
+  const foreshadowUrgencyScore =
+    criticalForeshadows.length > 0
+      ? Math.round(
+          criticalForeshadows.reduce(
+            (sum: number, f: ForeshadowUrgencyItem) => sum + f.urgencyScore,
+            0
+          ) / criticalForeshadows.length
+        )
+      : 0;
+
   // ========== 增强：大纲节点完成度 ==========
   const plotOutline = project?.plotOutline || [];
   const chapterNodes = plotOutline.filter((n: any) => n.type === 'chapter' || n.chapterType);
   const outlineNodesTotal = chapterNodes.length;
-  
+
   // 计算已完成的大纲节点（章节范围在当前章节之前的）
   const outlineNodesComplete = chapterNodes.filter((n: any) => {
     if (n.chapterRange) {
@@ -744,23 +764,32 @@ function checkEndingReadiness(
     }
     return n.orderIndex <= currentChapterIndex;
   }).length;
-  
+
   // ========== 增强：卷级进度 ==========
   const volumes = project?.volumes || [];
   const currentVolume = volumes.find((v: any, idx: number) => {
-    const startChapter = volumes.slice(0, idx).reduce((sum: number, prev: any) => sum + (prev.chapterCount || 10), 0) + 1;
+    const startChapter =
+      volumes.slice(0, idx).reduce((sum: number, prev: any) => sum + (prev.chapterCount || 10), 0) +
+      1;
     const endChapter = startChapter + (v.chapterCount || 10) - 1;
     return currentChapterIndex >= startChapter && currentChapterIndex <= endChapter;
   });
-  
+
   let volumeProgress: VolumeProgress | undefined;
   if (volumes.length > 0) {
     const volumeIndex = currentVolume ? volumes.indexOf(currentVolume) : -1;
     const chaptersInVolume = currentVolume?.chapterCount || 10;
-    const chaptersWritten = currentVolume && volumeIndex >= 0 
-      ? Math.max(0, currentChapterIndex - (volumes.slice(0, volumeIndex).reduce((sum: number, v: any) => sum + (v.chapterCount || 10), 0)))
-      : 0;
-    
+    const chaptersWritten =
+      currentVolume && volumeIndex >= 0
+        ? Math.max(
+            0,
+            currentChapterIndex -
+              volumes
+                .slice(0, volumeIndex)
+                .reduce((sum: number, v: any) => sum + (v.chapterCount || 10), 0)
+          )
+        : 0;
+
     volumeProgress = {
       currentVolume: volumeIndex + 1,
       totalVolumes: volumes.length,
@@ -771,20 +800,20 @@ function checkEndingReadiness(
       nextVolumeReady: chaptersWritten >= chaptersInVolume && volumeIndex < volumes.length - 1,
     };
   }
-  
+
   // 判断是否可以创建新章节
   // 条件：1. 章节数未达到计划 2. 未处于收束阶段之后
-  const canCreateNewChapter = 
-    currentChapterIndex < plannedChapterCount * 1.1 && 
-    readiness.overallProgress < 95;
+  const canCreateNewChapter =
+    currentChapterIndex < plannedChapterCount * 1.1 && readiness.overallProgress < 95;
 
   // 判断是否准备好完结
   // 核心条件：高潮完成 + 目标达成 + 章节进度 >= 90%
-  const isReady = 
+  const isReady =
     readiness.climaxApproaching === false && // 高潮已过（不是即将到来）
     readiness.overallProgress >= 90 &&
-    (readiness.isInEndingPhase === 'ending' || readiness.isInEndingPhase === 'conclusion' || 
-     readiness.isInEndingPhase === 'pre_ending');
+    (readiness.isInEndingPhase === 'ending' ||
+      readiness.isInEndingPhase === 'conclusion' ||
+      readiness.isInEndingPhase === 'pre_ending');
 
   return {
     isReady,
@@ -793,14 +822,14 @@ function checkEndingReadiness(
     foreshadowCompletion: readiness.foreshadowCompletionRate,
     remainingChapters: readiness.remainingChapters,
     unresolvedForeshadows: unresolvedForeshadows.length,
-    
+
     // 增强字段
     foreshadowUrgencyScore,
     criticalForeshadows,
     outlineNodesComplete,
     outlineNodesTotal,
     volumeProgress,
-    
+
     isInEndingPhase: readiness.isInEndingPhase !== 'normal',
     phaseName: readiness.phaseName,
     canCreateNewChapter,
@@ -856,7 +885,9 @@ export function useBatchWriter(): UseBatchWriterReturn {
   const currentStrictness = ref<ReviewStrictness>('normal');
   const initialStrictness = ref<ReviewStrictness>('normal');
   const reviewAttempts = ref(0);
-  const strictnessHistory = ref<Array<{chapter: number; strictness: ReviewStrictness; passed: boolean}>>([]);
+  const strictnessHistory = ref<
+    Array<{ chapter: number; strictness: ReviewStrictness; passed: boolean }>
+  >([]);
 
   // 写到完结状态
   const endingStatus = ref<EndingCheckResult | null>(null);
@@ -900,11 +931,9 @@ export function useBatchWriter(): UseBatchWriterReturn {
     clearChapterFailures,
   } = useFailureRecovery({
     onUserDecision: async (failure: FailureState) => {
-      console.log('[BatchWriter] 需要用户决策:', failure.step, failure.error);
       return null;
     },
     onRecovery: async (failure: FailureState, strategy: RecoveryStrategy) => {
-      console.log('[BatchWriter] 执行恢复策略:', strategy, 'for', failure.step);
       return true;
     },
   });
@@ -917,9 +946,8 @@ export function useBatchWriter(): UseBatchWriterReturn {
     }, 0);
   });
   const writtenChapters = computed(() => {
-    return projectStore.sortedChapters.filter(
-      (c: any) => c.content && c.content.trim().length > 0
-    ).length;
+    return projectStore.sortedChapters.filter((c: any) => c.content && c.content.trim().length > 0)
+      .length;
   });
   const remainingChapters = computed(() => {
     return totalChapters.value - writtenChapters.value;
@@ -966,9 +994,9 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
   /**
    * 执行单章写作（核心逻辑）
-   * 
+   *
    * 流水线：TaskBook(前置) → 起草 → 审查(Blocking闸门) → 润色 → 提交
-   * 
+   *
    * 审查策略：
    * - 从当前严格度开始审查
    * - 失败时降低严格度（normal → relaxed）
@@ -986,279 +1014,298 @@ export function useBatchWriter(): UseBatchWriterReturn {
       requireBlockingPass: boolean;
     }
   ): Promise<boolean> {
-    const client = requireAIService();
-    const chapters = projectStore.sortedChapters;
+    try {
+      const client = requireAIService();
+      const chapters = projectStore.sortedChapters;
 
-    if (chapterIndex >= chapters.length) {
-      return false;
-    }
+      if (chapterIndex >= chapters.length) {
+        return false;
+      }
 
-    const chapter = chapters[chapterIndex];
+      const chapter = chapters[chapterIndex];
 
-    // 跳过已有内容的章节
-    if (chapter.content && chapter.content.trim().length > 0) {
-      return true;
-    }
+      // 跳过已有内容的章节
+      if (chapter.content && chapter.content.trim().length > 0) {
+        return true;
+      }
 
-    currentChapterIndex.value = chapterIndex;
-    currentChapterTitle.value = chapter.title;
+      currentChapterIndex.value = chapterIndex;
+      currentChapterTitle.value = chapter.title;
 
-    const project = projectStore.currentProject!;
-    const recentChapterCount = projectStore.memoryConfig?.shortTermChapterCount || 5;
+      const project = projectStore.currentProject!;
+      const recentChapterCount = projectStore.memoryConfig?.shortTermChapterCount || 5;
 
-    // 初始化本章审查状态
-    internalState.reviewAttempts = 0;
-    internalState.currentChapter = chapterIndex;
-    
-    // 获取当前使用的严格度（从初始严格度开始）
-    let currentReviewStrictness = internalState.currentStrictness;
+      // 初始化本章审查状态
+      internalState.reviewAttempts = 0;
+      internalState.currentChapter = chapterIndex;
 
-    // ========== 步骤 1: 生成写作任务书（核心前置） ==========
-    let taskBook: WritingTaskBook | null = null;
-    if (options.useTaskBook) {
-      currentPipelineStep.value = '生成任务书';
-      
-      taskBook = await generateTaskBook(
-        project,
+      // 获取当前使用的严格度（从初始严格度开始）
+      let currentReviewStrictness = internalState.currentStrictness;
+
+      // ========== 步骤 1: 构建上下文（必须在 TaskBook 之前，因为 TaskBook 依赖它） ==========
+      const prevChapter = chapterIndex > 0 ? chapters[chapterIndex - 1] : null;
+      const { summary: previousSummary, ending: previousChapterEnding } = prevChapter?.content
+        ? await extractPreviousChapterSummary(contextManager, prevChapter.content, 300)
+        : { summary: '', ending: '' };
+
+      const characters = buildCharactersInfo(project);
+      const activeForeshadows = buildActiveForeshadows(project);
+      const fullOutline = buildFullOutlineString(projectStore);
+      const recentFullText = buildRecentChaptersFullText(
+        projectStore,
         chapterIndex,
-        currentChapterOutlineText,
-        options.writingStyle,
-        options.wordsPerChapter
+        recentChapterCount
       );
 
-      if (!taskBook) {
-        throw new WritingError('任务书生成失败', ErrorCode.WRITE_TASK_FAILED);
-      }
-    }
+      // 使用统一的 OutlineContextBuilder
+      const chapterCtx = extractChapterContext(projectStore.plotOutline, chapter.id, chapter.title);
+      const currentChapterOutlineText = chapterCtx
+        ? buildChapterOutlineText(chapterCtx, true)
+        : chapter.plotSummary || '';
+      const enhancedPrompt = buildEnhancedDesignPrompt({
+        projectTitle: project.name,
+        projectSynopsis: project.description || '',
+        projectGenre: project.genre.map((g: any) => g.name),
+        currentChapter: chapterCtx || {
+          title: chapter.title,
+          description: chapter.plotSummary || '',
+          orderIndex: chapterIndex,
+        },
+        currentChapterOutline: currentChapterOutlineText,
+        fullOutline: buildFullOutlineText(projectStore.plotOutline),
+        emotionGoal: project.emotionGoal,
+        conflictDesign: project.conflictDesign,
+        coolPointDesign: project.coolPointDesign,
+        storyLines: project.storyLines,
+        coreSellingPoints: project.coreSellingPoints,
+        writingStyle: options.writingStyle as any,
+      });
 
-    // ========== 步骤 2: 构建上下文 ==========
-    const prevChapter = chapterIndex > 0 ? chapters[chapterIndex - 1] : null;
-    const { summary: previousSummary, ending: previousChapterEnding } = prevChapter?.content
-      ? await extractPreviousChapterSummary(contextManager, prevChapter.content, 300)
-      : { summary: '', ending: '' };
+      // ========== 步骤 2: 生成写作任务书（核心前置） ==========
+      let taskBook: WritingTaskBook | null = null;
+      if (options.useTaskBook) {
+        currentPipelineStep.value = '生成任务书';
 
-    const characters = buildCharactersInfo(project);
-    const activeForeshadows = buildActiveForeshadows(project);
-    const fullOutline = buildFullOutlineString(projectStore);
-    const recentFullText = buildRecentChaptersFullText(projectStore, chapterIndex, recentChapterCount);
-
-    // 使用统一的 OutlineContextBuilder
-    const chapterCtx = extractChapterContext(projectStore.plotOutline, chapter.id, chapter.title);
-    const currentChapterOutlineText = chapterCtx
-      ? buildChapterOutlineText(chapterCtx, true)
-      : (chapter.plotSummary || '');
-    const enhancedPrompt = buildEnhancedDesignPrompt({
-      projectTitle: project.name,
-      projectSynopsis: project.description || '',
-      projectGenre: project.genre.map((g: any) => g.name),
-      currentChapter: chapterCtx || { title: chapter.title, description: chapter.plotSummary || '', orderIndex: chapterIndex },
-      currentChapterOutline: currentChapterOutlineText,
-      fullOutline: buildFullOutlineText(projectStore.plotOutline),
-      emotionGoal: project.emotionGoal,
-      conflictDesign: project.conflictDesign,
-      coolPointDesign: project.coolPointDesign,
-      storyLines: project.storyLines,
-      coreSellingPoints: project.coreSellingPoints,
-      writingStyle: options.writingStyle as any,
-    });
-
-    // 构建增强版大纲（包含任务书）
-    let enhancedOutline = currentChapterOutlineText || '';
-    if (taskBook) {
-      enhancedOutline = buildEnhancedOutline(taskBook, enhancedOutline);
-    }
-
-    // ========== 步骤 3: AI 起草 ==========
-    currentPipelineStep.value = 'AI起草';
-    let generatedContent = '';
-
-    try {
-      const aiParams = {
-        project,
-        currentChapterId: chapter.id,
-        currentChapterIndex: chapterIndex,
-        currentChapterTitle: chapter.title,
-        currentChapterContent: '',
-        currentChapterOutline: enhancedOutline || currentChapterOutlineText || undefined,
-        fullOutline,
-        adjacentChaptersSummary: prevChapter
-          ? {
-              previousChapterTitle: prevChapter.title,
-              previousChapterSummary: previousSummary,
-              previousChapterEnding: previousChapterEnding,
-              nextChapterTitle: undefined,
-              nextChapterSummary: undefined,
-            }
-          : undefined,
-        recentChaptersFullText: recentFullText,
-        charactersInScene: characters,
-        relatedForeshadows: activeForeshadows,
-        writingStyle: options.writingStyle,
-        // 新增：章节结构化策略
-        currentChapterOutlineContext: chapterCtx ? {
-          chapterType: chapterCtx.chapterType,
-          hookType: chapterCtx.hookType,
-          pacingStrategy: chapterCtx.pacingStrategy,
-          timeSpan: chapterCtx.timeSpan,
-          keyEvents: chapterCtx.keyEvents,
-          isClimax: chapterCtx.isClimax,
-          expectedCoolPoints: chapterCtx.expectedCoolPoints,
-        } : undefined,
-        // 新增：增强设计段落
-        enhancedDesignPrompt: enhancedPrompt,
-      };
-
-      if (settingsStore.streamOutput && (client as any).continueWritingStream) {
-        generatedContent = await new Promise<string>((resolve, reject) => {
-          let content = '';
-          internalState.abortController = new AbortController();
-
-          (client as any).continueWritingStream(
-            aiParams,
-            'smartContinue',
-            options.wordsPerChapter,
-            (chunk: string) => {
-              content += chunk;
-            },
-            async () => {
-              resolve(content);
-            },
-            (errMsg: string) => {
-              reject(new WritingError(errMsg, ErrorCode.AI_STREAM_FAILED));
-            },
-            internalState.abortController?.signal
-          );
-        });
-      } else {
-        const result = await (client as any).continueWriting(
-          aiParams,
-          'smartContinue',
+        taskBook = await generateTaskBook(
+          project,
+          chapterIndex,
+          currentChapterOutlineText,
+          options.writingStyle,
           options.wordsPerChapter
         );
-        if (result?.content) {
-          generatedContent = result.content;
+
+        if (!taskBook) {
+          console.error(`[executeChapterWriting] 任务书生成返回 null，章节 ${chapterIndex + 1}`);
+          throw new WritingError('任务书生成失败', ErrorCode.WRITE_TASK_FAILED);
         }
       }
-    } catch (err) {
-      const errorMessage = getErrorMessage(err, 'AI 起草失败');
-      recoveryManager.registerFailure(
-        chapter.id,
-        chapterIndex + 1,
-        'draft' as PipelineStep,
-        errorMessage,
-      );
-      throw new WritingError(errorMessage, ErrorCode.AI_GENERATION_FAILED);
-    }
 
-    // ========== 步骤 4: 审查（带自适应严格度） ==========
-    if (options.useReview) {
-      currentPipelineStep.value = '审查（Blocking闸门）';
+      // 构建增强版大纲（包含任务书）
+      let enhancedOutline = currentChapterOutlineText || '';
+      if (taskBook) {
+        enhancedOutline = buildEnhancedOutline(taskBook, enhancedOutline);
+      }
 
-      // 自适应审查循环：失败时降低严格度
-      let reviewPassed = false;
-      let lastReviewResult: BlockingReviewResult | null = null;
-      
-      while (!reviewPassed) {
-        internalState.reviewAttempts++;
-        
-        console.log(`[批量写作] 第${chapterIndex + 1}章审查 [${getStrictnessLabel(currentReviewStrictness)}] (第${internalState.reviewAttempts}次尝试)`);
-        
-        lastReviewResult = await performBlockingReview(
+      // ========== 步骤 3: AI 起草 ==========
+      currentPipelineStep.value = 'AI起草';
+      let generatedContent = '';
+
+      try {
+        const aiParams = {
           project,
-          { ...chapter, content: generatedContent },
-          chapterIndex,
-          prevChapter,
-          currentReviewStrictness
-        );
+          currentChapterId: chapter.id,
+          currentChapterIndex: chapterIndex,
+          currentChapterTitle: chapter.title,
+          currentChapterContent: '',
+          currentChapterOutline: enhancedOutline || currentChapterOutlineText || undefined,
+          fullOutline,
+          adjacentChaptersSummary: prevChapter
+            ? {
+                previousChapterTitle: prevChapter.title,
+                previousChapterSummary: previousSummary,
+                previousChapterEnding: previousChapterEnding,
+                nextChapterTitle: undefined,
+                nextChapterSummary: undefined,
+              }
+            : undefined,
+          recentChaptersFullText: recentFullText,
+          charactersInScene: characters,
+          relatedForeshadows: activeForeshadows,
+          writingStyle: options.writingStyle,
+          // 新增：章节结构化策略
+          currentChapterOutlineContext: chapterCtx
+            ? {
+                chapterType: chapterCtx.chapterType,
+                hookType: chapterCtx.hookType,
+                pacingStrategy: chapterCtx.pacingStrategy,
+                timeSpan: chapterCtx.timeSpan,
+                keyEvents: chapterCtx.keyEvents,
+                isClimax: chapterCtx.isClimax,
+                expectedCoolPoints: chapterCtx.expectedCoolPoints,
+              }
+            : undefined,
+          // 新增：增强设计段落
+          enhancedDesignPrompt: enhancedPrompt,
+        };
 
-        blockingIssues.value = getBlockingIssuesToFix(lastReviewResult, 10);
-        currentStrictness.value = currentReviewStrictness;
-        
-        // 记录审查历史
-        strictnessHistory.value.push({
-          chapter: chapterIndex,
-          strictness: currentReviewStrictness,
-          passed: lastReviewResult.passed
-        });
+        if (settingsStore.streamOutput && (client as any).continueWritingStream) {
+          generatedContent = await new Promise<string>((resolve, reject) => {
+            let content = '';
+            internalState.abortController = new AbortController();
 
-        // 检查是否通过
-        if (canProceedToPolish(lastReviewResult)) {
-          reviewPassed = true;
-          console.log(`[批量写作] 第${chapterIndex + 1}章审查通过 [${getStrictnessLabel(currentReviewStrictness)}]`);
-          
-          // 生成结构化报告
-          const chapter = chapters[chapterIndex];
-          const report = generateReport(
-            chapter.id,
-            chapterIndex + 1,
-            chapter.title,
-            lastReviewResult as any,
-            {} as any,
-            { strictness: currentReviewStrictness, passThreshold: 70 }
-          );
-          latestReports.value.set(chapterIndex + 1, report);
-          console.log('[批量写作] 已生成第' + (chapterIndex + 1) + '章的结构化审查报告');
-          
-          break;
-        }
-
-        // 未通过，尝试降低严格度
-        const lowerStrictness = getLowerStrictness(currentReviewStrictness);
-        
-        if (lowerStrictness) {
-          console.log(`[批量写作] 审查未通过，降低严格度: ${getStrictnessLabel(currentReviewStrictness)} → ${getStrictnessLabel(lowerStrictness)}`);
-          currentReviewStrictness = lowerStrictness;
-          // 继续循环，用更宽松的严格度重新审查
+            (client as any).continueWritingStream(
+              aiParams,
+              'smartContinue',
+              options.wordsPerChapter,
+              (chunk: string) => {
+                content += chunk;
+              },
+              async () => {
+                resolve(content);
+              },
+              (errMsg: string) => {
+                reject(new WritingError(errMsg, ErrorCode.AI_STREAM_FAILED));
+              },
+              internalState.abortController?.signal
+            );
+          });
         } else {
-          // 已经是最宽松的严格度，仍然未通过
-          console.warn(`[批量写作] 第${chapterIndex + 1}章在最低严格度下仍未通过，将继续（润色会处理部分问题）`);
-          
-          // 记录警告但仍然继续（润色阶段会处理）
-          error.value = `第${chapterIndex + 1}章审查未通过，但继续进行润色`;
-          
-          // 重置严格度为初始值，为下一章做准备
-          currentReviewStrictness = internalState.currentStrictness;
-          break;
+          const result = await (client as any).continueWriting(
+            aiParams,
+            'smartContinue',
+            options.wordsPerChapter
+          );
+          if (result?.content) {
+            generatedContent = result.content;
+          }
+        }
+      } catch (err) {
+        const errorMessage = getErrorMessage(err, 'AI 起草失败');
+        recoveryManager.registerFailure(
+          chapter.id,
+          chapterIndex + 1,
+          'draft' as PipelineStep,
+          errorMessage
+        );
+        throw new WritingError(errorMessage, ErrorCode.AI_GENERATION_FAILED);
+      }
+
+      // ========== 步骤 4: 审查（带自适应严格度） ==========
+      if (options.useReview) {
+        currentPipelineStep.value = '审查（Blocking闸门）';
+
+        // 自适应审查循环：失败时降低严格度
+        let reviewPassed = false;
+        let lastReviewResult: BlockingReviewResult | null = null;
+
+        while (!reviewPassed) {
+          internalState.reviewAttempts++;
+
+          lastReviewResult = await performBlockingReview(
+            project,
+            { ...chapter, content: generatedContent },
+            chapterIndex,
+            prevChapter,
+            currentReviewStrictness
+          );
+
+          blockingIssues.value = getBlockingIssuesToFix(lastReviewResult, 10);
+          currentStrictness.value = currentReviewStrictness;
+
+          // 记录审查历史
+          strictnessHistory.value.push({
+            chapter: chapterIndex,
+            strictness: currentReviewStrictness,
+            passed: lastReviewResult.passed,
+          });
+
+          // 检查是否通过
+          if (canProceedToPolish(lastReviewResult)) {
+            reviewPassed = true;
+
+            // 生成结构化报告
+            const chapter = chapters[chapterIndex];
+            const report = generateReport(
+              chapter.id,
+              chapterIndex + 1,
+              chapter.title,
+              lastReviewResult as any,
+              {} as any,
+              { strictness: currentReviewStrictness, passThreshold: 70 }
+            );
+            latestReports.value.set(chapterIndex + 1, report);
+
+            break;
+          }
+
+          // 未通过，尝试降低严格度
+          const lowerStrictness = getLowerStrictness(currentReviewStrictness);
+
+          if (lowerStrictness) {
+            currentReviewStrictness = lowerStrictness;
+            // 继续循环，用更宽松的严格度重新审查
+          } else {
+            // 已经是最宽松的严格度，仍然未通过
+            console.warn(
+              `[批量写作] 第${chapterIndex + 1}章在最低严格度下仍未通过，将继续（润色会处理部分问题）`
+            );
+
+            // 记录警告但仍然继续（润色阶段会处理）
+            error.value = `第${chapterIndex + 1}章审查未通过，但继续进行润色`;
+
+            // 重置严格度为初始值，为下一章做准备
+            currentReviewStrictness = internalState.currentStrictness;
+            break;
+          }
         }
       }
+
+      // ========== 步骤 5: 润色（去AI味） ==========
+      currentPipelineStep.value = '润色（去AI味）';
+      const { fixedContent, title } = await performPolish(generatedContent, options.deAIEnabled);
+      generatedContent = fixedContent;
+
+      // ========== 步骤 6: 保存章节 ==========
+      currentPipelineStep.value = '保存';
+      await saveChapterContent(projectStore, chapter, generatedContent, title);
+
+      // ========== 步骤 7: Commit 提交（可选） ==========
+      if (options.useCommit) {
+        currentPipelineStep.value = '提交';
+        await performCommit(project, { ...chapter, content: generatedContent }, chapterIndex);
+      }
+
+      // ========== 步骤 8: 提取记忆 ==========
+      currentPipelineStep.value = '提取记忆';
+      await extractMemoryAfterApply(projectStore, chapter, chapterIndex + 1);
+
+      // ========== 步骤 9: 伏笔追踪 ==========
+      await analyzeForeshadows(generatedContent, chapterIndex);
+
+      progress.value.writtenChapters++;
+      progress.value.writtenWords += generatedContent.length;
+
+      // 重置当前章节的严格度，为下一章做准备
+      internalState.currentStrictness = config.value.initialStrictness;
+      currentStrictness.value = config.value.initialStrictness;
+
+      // 重置流水线状态
+      internalState.pipeline.reset();
+      internalState.currentReviewResult = null;
+      blockingIssues.value = [];
+      currentPipelineStep.value = 'idle';
+
+      return true;
+    } catch (err) {
+      // 顶层兜底捕获：记录完整错误并重新抛出
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const errStack = err instanceof Error ? err.stack : '';
+      console.error(
+        `[executeChapterWriting] ❌ 章节 ${chapterIndex + 1} 顶层异常: ${errMsg}`,
+        errStack
+      );
+      throw err;
     }
-
-    // ========== 步骤 5: 润色（去AI味） ==========
-    currentPipelineStep.value = '润色（去AI味）';
-    const { fixedContent, title } = await performPolish(generatedContent, options.deAIEnabled);
-    generatedContent = fixedContent;
-
-    // ========== 步骤 6: 保存章节 ==========
-    currentPipelineStep.value = '保存';
-    await saveChapterContent(projectStore, chapter, generatedContent, title);
-
-    // ========== 步骤 7: Commit 提交（可选） ==========
-    if (options.useCommit) {
-      currentPipelineStep.value = '提交';
-      await performCommit(project, { ...chapter, content: generatedContent }, chapterIndex);
-    }
-
-    // ========== 步骤 8: 提取记忆 ==========
-    currentPipelineStep.value = '提取记忆';
-    await extractMemoryAfterApply(projectStore, chapter, chapterIndex + 1);
-
-    // ========== 步骤 9: 伏笔追踪 ==========
-    await analyzeForeshadows(generatedContent, chapterIndex);
-
-    progress.value.writtenChapters++;
-    progress.value.writtenWords += generatedContent.length;
-
-    // 重置当前章节的严格度，为下一章做准备
-    internalState.currentStrictness = config.value.initialStrictness;
-    currentStrictness.value = config.value.initialStrictness;
-
-    // 重置流水线状态
-    internalState.pipeline.reset();
-    internalState.currentReviewResult = null;
-    blockingIssues.value = [];
-    currentPipelineStep.value = 'idle';
-
-    return true;
   }
 
   /**
@@ -1279,7 +1326,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
     blockingIssues.value = [];
     internalState.pipeline.advance();
   }
-  
+
   /**
    * 手动降低审查严格度
    */
@@ -1288,7 +1335,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
     if (lower) {
       internalState.currentStrictness = lower;
       currentStrictness.value = lower;
-      console.log(`[批量写作] 手动降低严格度: ${getStrictnessLabel(lower)}`);
     }
   }
 
@@ -1346,23 +1392,39 @@ export function useBatchWriter(): UseBatchWriterReturn {
     isReadyToEnd.value = false;
 
     // 获取计划章节数
-    const plannedChapterCount = project.metadata?.plannedChapterCount || 
+    const plannedChapterCount =
+      project.metadata?.plannedChapterCount ||
       (project.plotOutline?.length > 0 ? project.plotOutline.length : 100);
 
     try {
       let currentIndex = getNextChapterIndex();
       let writtenCount = 0;
+      const skippedChapterIds = new Set<string>(); // 已失败跳过的章节ID，防止重复
 
+      let loopIter = 0;
       while (currentIndex >= 0 || writtenCount < chaptersToWrite) {
+        loopIter++;
+        if (loopIter > 200) {
+          console.error(
+            '[批量写作] 检测到可能的死循环，已写=' +
+              writtenCount +
+              ' 目标=' +
+              chaptersToWrite +
+              ' 当前=' +
+              currentIndex
+          );
+          error.value = '检测到异常：循环次数超过200次，请检查日志中的错误信息';
+          break;
+        }
+
         // 检查停止
         if (internalState.shouldStop) {
-          console.log('[批量写作] 用户停止写作');
           break;
         }
 
         // 检查暂停
         while (internalState.shouldPause && !internalState.shouldStop) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
 
         if (internalState.shouldStop) break;
@@ -1375,24 +1437,13 @@ export function useBatchWriter(): UseBatchWriterReturn {
           endingStatus.value = endingCheck;
           isReadyToEnd.value = endingCheck.isReady;
 
-          console.log('[批量写作] 完结检查:', {
-            章节进度: `${endingCheck.chapterProgress}%`,
-            大纲进度: `${endingCheck.outlineProgress}%`,
-            伏笔完成: `${endingCheck.foreshadowCompletion}%`,
-            剩余章节: endingCheck.remainingChapters,
-            阶段: endingCheck.phaseName,
-            准备好完结: endingCheck.isReady,
-          });
-
           // 检查是否应该停止（写到完结模式）
           if (!endingCheck.canCreateNewChapter) {
             if (endingCheck.isReady) {
-              console.log('[批量写作] 已达到完结条件，停止写作');
               error.value = '已到达完结阶段，故事已完成！';
               break;
             } else if (currentIndex < 0) {
               // 没有更多大纲章节，且未准备好完结
-              console.log('[批量写作] 没有更多大纲章节，但尚未准备好完结');
               error.value = `没有更多大纲章节。剩余 ${endingCheck.unresolvedForeshadows} 个伏笔未解决，${endingCheck.remainingChapters} 章后可能完结`;
               break;
             }
@@ -1400,14 +1451,12 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
           // 如果已完成大纲章节但还可以创建新章节，继续创建
           if (currentIndex >= plannedChapterCount && !endingCheck.isReady) {
-            console.log('[批量写作] 已超出计划章节数，询问是否继续...');
             // 可以继续创建章节，但需要明确告知用户
           }
         }
 
         // 检查是否达到指定数量目标
         if (target.value === 'specific' && writtenCount >= chaptersToWrite) {
-          console.log(`[批量写作] 已完成目标: ${writtenCount} 章`);
           break;
         }
 
@@ -1418,15 +1467,13 @@ export function useBatchWriter(): UseBatchWriterReturn {
             const checkResult = endingStatus.value;
             if (checkResult && !checkResult.canCreateNewChapter) {
               if (checkResult.isReady) {
-                console.log('[批量写作] 已准备好完结，不再创建新章节');
                 break;
               } else {
-                console.log('[批量写作] 未准备好完结，但已超出计划章节数');
                 // 仍然允许创建最后一章用于完结
               }
             }
           }
-          
+
           currentIndex = await createNewChapter();
           if (currentIndex < 0) {
             break;
@@ -1443,47 +1490,65 @@ export function useBatchWriter(): UseBatchWriterReturn {
             wordsPerChapter: config.value.wordsPerChapter,
             requireBlockingPass: config.value.requireBlockingPass,
           });
-          
+
           if (success) {
             writtenCount++;
-            
-            // 写到完结模式：每写完一章后重新检查完结条件
-            if (target.value === 'finish') {
-              const updatedMemories = projectStore.chapterMemories || [];
-              const updatedCheck = checkEndingReadiness(project, writtenCount, updatedMemories);
-              endingStatus.value = updatedCheck;
-              isReadyToEnd.value = updatedCheck.isReady;
-
-              // 如果准备好完结且没有更多空章节，提示用户
-              if (updatedCheck.isReady && getNextChapterIndex() < 0) {
-                console.log('[批量写作] 已准备好完结，且所有章节已完成');
-                // 可以继续创建完结章
-              }
-            }
           }
         } catch (err) {
-          if (err instanceof WritingError && err.code === ErrorCode.WRITE_TASK_FAILED) {
-            console.error('[批量写作] 任务书生成失败，跳过章节');
-          } else {
-            console.error('[批量写作] 章节写作失败:', err);
+          // 记录详细错误信息
+          const errMsg = err instanceof Error ? err.message : String(err);
+          const errStack = err instanceof Error ? err.stack : '';
+          console.error(`[批量写作] ❌ 第${currentIndex + 1}章写作失败: ${errMsg}`, {
+            error: errMsg,
+            stack: errStack,
+            writtenCount,
+            currentIndex,
+            chaptersToWrite,
+          });
+
+          // 标记该章节为"写作失败"，避免无限循环重试同一章节
+          const chapters = projectStore.sortedChapters;
+          const failedChapter = chapters[currentIndex];
+          if (failedChapter) {
+            console.warn(
+              `[批量写作] 跳过失败的章节: ${failedChapter.title} (id=${failedChapter.id})`
+            );
+            skippedChapterIds.add(failedChapter.id);
+            // 给章节写入占位内容，防止下次 getNextChapterIndex 再次选中它
+            await projectStore.updateChapter(failedChapter.id, {
+              content: `[⚠️ AI写作失败，内容待手动补充]\n\n错误信息: ${errMsg}`,
+              wordCount: 0,
+            });
+          }
+
+          // 写到完结模式：每写完一章（成功或失败）后重新检查完结条件
+          if (target.value === 'finish') {
+            const updatedMemories = projectStore.chapterMemories || [];
+            const updatedCheck = checkEndingReadiness(project, writtenCount, updatedMemories);
+            endingStatus.value = updatedCheck;
+            isReadyToEnd.value = updatedCheck.isReady;
+
+            if (updatedCheck.isReady && getNextChapterIndex() < 0) {
+            }
           }
         }
 
         // 找下一个空章节
         currentIndex = getNextChapterIndex();
+
+        // 跳过已失败的章节，防止占位内容写入失败后仍被重复选中
+        if (currentIndex >= 0) {
+          const chapters = projectStore.sortedChapters;
+          while (currentIndex >= 0 && skippedChapterIds.has(chapters[currentIndex].id)) {
+            console.warn(`[批量写作] 跳过已失败的章节: ${chapters[currentIndex].title}`);
+            currentIndex++;
+            if (currentIndex >= chapters.length) {
+              currentIndex = -1;
+              break;
+            }
+          }
+        }
       }
-      
-      // 输出统计
-      console.log('[批量写作] 完成统计:', {
-        写入: writtenCount,
-        总字数: progress.value.writtenWords,
-        审查历史: strictnessHistory.value.length,
-        完结状态: endingStatus.value ? {
-          准备完结: endingStatus.value.isReady,
-          阶段: endingStatus.value.phaseName,
-          剩余章节: endingStatus.value.remainingChapters,
-        } : null,
-      });
     } finally {
       isWriting.value = false;
       isPaused.value = false;
@@ -1526,7 +1591,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
       console.warn('[BatchWriter] 没有第' + chapterNumber + '章的报告');
       return null;
     }
-    
+
     if (format === 'json') {
       return exportToJSON(report);
     } else {
@@ -1555,7 +1620,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
     if (chapterId) {
       return getChapterFailures(chapterId);
     }
-    return getChapterFailures();
+    return []; // 无 chapterId 时返回空
   }
 
   /**

@@ -127,7 +127,8 @@ export function parseMemoryFromMarkdown(markdown: string, chapterId: string): Ch
           const propMatch = line.match(/- \*\*(\w+)\*\*:\s*(.+)/);
           if (propMatch) {
             const [, prop, value] = propMatch;
-            if (prop === '类型') currentChar.stateType = value.trim() as CharacterStateChange['stateType'];
+            if (prop === '类型')
+              currentChar.stateType = value.trim() as CharacterStateChange['stateType'];
             if (prop === '状态') currentChar.state = value.trim();
             if (prop === '详情') currentChar.detail = value.trim();
           }
@@ -160,7 +161,10 @@ export function parseMemoryFromMarkdown(markdown: string, chapterId: string): Ch
 
     // 验证必填字段
     if (!result.chapterId || !result.chapterTitle || result.corePlot === undefined) {
-      console.warn('[MemoryFileService] 解析失败：缺少必填字段', { chapterId, hasTitle: !!result.chapterTitle });
+      console.warn('[MemoryFileService] 解析失败：缺少必填字段', {
+        chapterId,
+        hasTitle: !!result.chapterTitle,
+      });
       return null;
     }
 
@@ -205,15 +209,11 @@ export function memoryToMarkdown(memory: ChapterMemory): string {
     '',
     '## 关键事件',
     '',
-    ...(memory.keyEvents.length > 0
-      ? memory.keyEvents.map(e => `- ${e}`)
-      : ['- （无）']),
+    ...(memory.keyEvents.length > 0 ? memory.keyEvents.map(e => `- ${e}`) : ['- （无）']),
     '',
     '## 场景/地点',
     '',
-    ...(memory.locations.length > 0
-      ? memory.locations.map(l => `- ${l}`)
-      : ['- （无）']),
+    ...(memory.locations.length > 0 ? memory.locations.map(l => `- ${l}`) : ['- （无）']),
     '',
   ];
 
@@ -303,7 +303,6 @@ export class MemoryFileService {
       memoryCache.set(memory.chapterId, memory);
       fileCache.set(memory.chapterId, markdown);
 
-      console.log(`[MemoryFileService] 已保存记忆: ${filename}`);
       return true;
     } catch (error) {
       console.error('[MemoryFileService] 保存记忆失败:', error);
@@ -314,7 +313,11 @@ export class MemoryFileService {
   /**
    * 从文件系统加载章节记忆
    */
-  async loadMemory(chapterId: string, chapterIndex?: number, chapterTitle?: string): Promise<ChapterMemory | null> {
+  async loadMemory(
+    chapterId: string,
+    chapterIndex?: number,
+    chapterTitle?: string
+  ): Promise<ChapterMemory | null> {
     // 先检查内存缓存
     if (memoryCache.has(chapterId)) {
       return memoryCache.get(chapterId)!;
@@ -334,10 +337,10 @@ export class MemoryFileService {
       const filePath = `${this.basePath}/${filename}`;
 
       // 通过 IPC 调用主进程读取文件
-      const content = await window.electronAPI.loadMemoryFile({
+      const content = (await window.electronAPI.loadMemoryFile({
         projectId: this.projectId,
         filePath,
-      }) as string | null;
+      })) as string | null;
 
       if (!content) return null;
 
@@ -362,10 +365,10 @@ export class MemoryFileService {
    */
   async listMemoryFiles(): Promise<string[]> {
     try {
-      const files = await window.electronAPI.listMemoryFiles({
+      const files = (await window.electronAPI.listMemoryFiles({
         projectId: this.projectId,
         basePath: this.basePath,
-      }) as string[];
+      })) as string[];
 
       return files.filter(f => f.endsWith('.md')).sort();
     } catch (error) {
@@ -408,10 +411,10 @@ export class MemoryFileService {
             // 尝试加载
             try {
               const filePath = `${this.basePath}/${filename}`;
-              const content = await window.electronAPI.loadMemoryFile({
+              const content = (await window.electronAPI.loadMemoryFile({
                 projectId: this.projectId,
                 filePath,
-              }) as string | null;
+              })) as string | null;
 
               if (content) {
                 const memory = parseMemoryFromMarkdown(content, chapterIdMatch[1]);
@@ -493,7 +496,10 @@ export async function safeExtractChapterMemory(
   memoryService: MemoryFileService,
   chapter: { id: string; title: string; content: string },
   chapterIndex: number,
-  extractionFn: (chapter: { id: string; title: string; content: string }, chapterIndex: number) => Promise<ChapterMemory>
+  extractionFn: (
+    chapter: { id: string; title: string; content: string },
+    chapterIndex: number
+  ) => Promise<ChapterMemory>
 ): Promise<ChapterMemory | null> {
   try {
     // 执行提取
@@ -512,7 +518,6 @@ export async function safeExtractChapterMemory(
     // 尝试从文件系统恢复
     const cached = await memoryService.loadMemory(chapter.id, chapterIndex, chapter.title);
     if (cached) {
-      console.log('[MemoryFileService] 从文件系统恢复记忆成功');
       return cached;
     }
 
