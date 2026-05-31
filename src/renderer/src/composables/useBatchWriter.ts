@@ -28,6 +28,12 @@ import {
   buildPlotProgressTable,
   safeExtractChapterMemory
 } from '@/services/writing/extract-plot-memory';
+import {
+  extractChapterContext,
+  buildChapterOutlineText,
+  buildFullOutlineText,
+  buildEnhancedDesignPrompt,
+} from '@/services/writing/OutlineContextBuilder';
 import { initializeMemoryManager, getMemoryManager } from '@/services/writing/memory-manager';
 import { ContextManager } from '@/services/writing/context-manager';
 import { DeAIService } from '@/services/writing/de-ai-service';
@@ -998,7 +1004,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
     currentChapterTitle.value = chapter.title;
 
     const project = projectStore.currentProject!;
-    const chapterOutline = chapter.plotSummary || extractChapterOutlineFromPlot(projectStore.plotOutline, chapter.id);
     const recentChapterCount = projectStore.memoryConfig?.shortTermChapterCount || 5;
 
     // 初始化本章审查状态
@@ -1016,7 +1021,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
       taskBook = await generateTaskBook(
         project,
         chapterIndex,
-        chapterOutline,
+        currentChapterOutlineText,
         options.writingStyle,
         options.wordsPerChapter
       );
@@ -1037,8 +1042,28 @@ export function useBatchWriter(): UseBatchWriterReturn {
     const fullOutline = buildFullOutlineString(projectStore);
     const recentFullText = buildRecentChaptersFullText(projectStore, chapterIndex, recentChapterCount);
 
+    // 使用统一的 OutlineContextBuilder
+    const chapterCtx = extractChapterContext(projectStore.plotOutline, chapter.id, chapter.title);
+    const currentChapterOutlineText = chapterCtx
+      ? buildChapterOutlineText(chapterCtx, true)
+      : (chapter.plotSummary || '');
+    const enhancedPrompt = buildEnhancedDesignPrompt({
+      projectTitle: project.name,
+      projectSynopsis: project.description || '',
+      projectGenre: project.genre.map((g: any) => g.name),
+      currentChapter: chapterCtx || { title: chapter.title, description: chapter.plotSummary || '', orderIndex: chapterIndex },
+      currentChapterOutline: currentChapterOutlineText,
+      fullOutline: buildFullOutlineText(projectStore.plotOutline),
+      emotionGoal: project.emotionGoal,
+      conflictDesign: project.conflictDesign,
+      coolPointDesign: project.coolPointDesign,
+      storyLines: project.storyLines,
+      coreSellingPoints: project.coreSellingPoints,
+      writingStyle: options.writingStyle as any,
+    });
+
     // 构建增强版大纲（包含任务书）
-    let enhancedOutline = chapterOutline || '';
+    let enhancedOutline = currentChapterOutlineText || '';
     if (taskBook) {
       enhancedOutline = buildEnhancedOutline(taskBook, enhancedOutline);
     }
@@ -1054,7 +1079,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
         currentChapterIndex: chapterIndex,
         currentChapterTitle: chapter.title,
         currentChapterContent: '',
-        currentChapterOutline: enhancedOutline || undefined,
+        currentChapterOutline: enhancedOutline || currentChapterOutlineText || undefined,
         fullOutline,
         adjacentChaptersSummary: prevChapter
           ? {
@@ -1069,6 +1094,18 @@ export function useBatchWriter(): UseBatchWriterReturn {
         charactersInScene: characters,
         relatedForeshadows: activeForeshadows,
         writingStyle: options.writingStyle,
+        // 新增：章节结构化策略
+        currentChapterOutlineContext: chapterCtx ? {
+          chapterType: chapterCtx.chapterType,
+          hookType: chapterCtx.hookType,
+          pacingStrategy: chapterCtx.pacingStrategy,
+          timeSpan: chapterCtx.timeSpan,
+          keyEvents: chapterCtx.keyEvents,
+          isClimax: chapterCtx.isClimax,
+          expectedCoolPoints: chapterCtx.expectedCoolPoints,
+        } : undefined,
+        // 新增：增强设计段落
+        enhancedDesignPrompt: enhancedPrompt,
       };
 
       if (settingsStore.streamOutput && (client as any).continueWritingStream) {

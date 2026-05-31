@@ -34,6 +34,20 @@ export interface ProjectContext {
   relatedForeshadows?: Foreshadow[];
   /** 用户的自定义提示词 */
   customPrompt?: string;
+  /** 写作风格（新增） */
+  writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient';
+  /** 当前章节的结构化策略字段（新增） */
+  currentChapterOutlineContext?: {
+    chapterType?: string;
+    hookType?: string;
+    pacingStrategy?: string;
+    timeSpan?: string;
+    keyEvents?: string[];
+    isClimax?: boolean;
+    expectedCoolPoints?: number;
+  };
+  /** 增强设计 prompt 段落文本（新增，由 OutlineContextBuilder 生成） */
+  enhancedDesignPrompt?: string;
 }
 
 /**
@@ -764,6 +778,37 @@ ${currentChapterContent || '(当前章节为空，请根据本章大纲创作)'}
 ${customPrompt}`;
     }
 
+    // ===== 新增：章节写作策略（基于 chapterType）=====
+    if (context.currentChapterOutlineContext?.chapterType) {
+      const strategy = this._getChapterTypeStrategy(context.currentChapterOutlineContext.chapterType);
+      userPrompt += `\n\n${strategy}`;
+    }
+
+    // ===== 新增：高潮章节特殊提示 =====
+    if (context.currentChapterOutlineContext?.isClimax) {
+      userPrompt += `\n\n【高潮章节特殊要求】
+本章为高潮章节！需要：
+- 最强的冲突对抗，所有矛盾在此爆发
+- 最密集的情绪爆发，情感张力拉到最大
+- 最震撼的逆转或揭示，信息量要足够大
+- 最快的节奏，所有描写都要服务于张力
+- 章尾钩子要足够强，悬念要让人欲罢不能
+请将以上要素发挥到极致。`;
+    }
+
+    // ===== 新增：增强设计段落（情绪/矛盾/爽点/故事线/卖点）=====
+    if (context.enhancedDesignPrompt) {
+      userPrompt += `\n\n${context.enhancedDesignPrompt}`;
+    }
+
+    // ===== 新增：写作风格强化 =====
+    if (context.writingStyle) {
+      const stylePrompt = this._getWritingStylePrompt(context.writingStyle);
+      if (stylePrompt) {
+        userPrompt += `\n\n${stylePrompt}`;
+      }
+    }
+
     // 章节标题变量，用于输出格式说明
     const titlePlaceholder = currentChapterTitle || '未命名';
 
@@ -1304,6 +1349,100 @@ ${descriptionType === 'appearance' ? '外貌描写' :
         return `- ${f.hint}（${statusMap[f.status] || f.status}）`;
       })
       .join('\n');
+  }
+
+  /**
+   * 获取章节类型对应的写作策略
+   */
+  private static _getChapterTypeStrategy(chapterType?: string): string {
+    const strategies: Record<string, string> = {
+      world_intro: `【章节策略：世界观/背景介绍】
+本章需要详细介绍故事发生的世界背景、时代设定，社会结构等。
+通过人物视角和具体事件自然带出世界观信息，避免大段说明文。
+开篇要点：谁、在哪、有什么、因为什么，要做什么（黄金五章公式）。`,
+
+      character_intro: `【章节策略：人物登场/介绍】
+本章重点介绍角色登场。
+通过具体场景展现角色（登场方式、与环境的互动）。
+外貌描写简洁有力，性格通过言行举止展现。
+建立读者对角色的第一印象。`,
+
+      plot_setup: `【章节策略：情节铺陈/故事开端】
+建立故事框架：开篇引人 → 主角处境 → 埋下伏笔 → 冲突种子 → 目标建立。
+开头危机五词法则：用五个以内的词讲清楚事件，让读者一眼看懂。`,
+
+      conflict: `【章节策略：冲突展开】
+逐步推进冲突规模和激烈程度。
+为主角设置更多障碍和困难。
+节奏加快，在关键处设置悬念。
+冲突必须升级：言语冲突 → 行动冲突 → 激烈对抗 → 决定胜负。`,
+
+      climax: `【章节策略：高潮】
+这是故事最激烈的部分。
+快节奏短句为主，动作+对话+情绪密集交织。
+震惊三层结构：点震惊 → 网震惊 → 深度震惊。
+逼格塑造：歇斯底里解决 → 不爽；风轻云淡一指灭杀 → 爽。`,
+
+      resolution: `【章节策略：冲突解决】
+矛盾化解，核心问题得到解决。
+情感收尾，角色情感得到释放或升华。
+结局逻辑自洽，符合前面铺垫。
+收获盘点：当场收获 + 额外收获。`,
+
+      transitional: `【章节策略：过渡章节】
+节奏放缓，情节缓冲期。
+伏笔铺垫，为后续情节做准备。
+维持期待感：当前目标完成前，提前铺设下一目标线索。`,
+
+      ending: `【章节策略：结尾/收束】
+收束线索，将之前埋设的伏笔和线索收拢。
+情感落幕，给主要情感线一个交代。
+不要所有伏笔都回收，保持自然感。
+避免突然说教/总结人生感悟。`,
+
+      normal: `【章节策略：普通章节】
+正常推进情节，展现角色成长。
+推进人物关系发展。
+保持合理叙事节奏，每章至少1个微爽点。
+每章结尾必须设置钩子。`,
+    };
+
+    return strategies[chapterType || 'normal'] || strategies.normal;
+  }
+
+  /**
+   * 获取写作风格强化 prompt
+   */
+  private static _getWritingStylePrompt(
+    style?: 'concise' | 'elegant' | 'humorous' | 'ancient',
+  ): string {
+    const prompts: Record<string, string> = {
+      concise: `## 【风格强化：简洁有力】
+- 惜字如金，每句话都要有信息量
+- 短句为主，避免冗长描写
+- 对话利落，像真人说话
+- 动作代替心理描写`,
+
+      elegant: `## 【风格强化：文笔华丽】
+- 辞藻优美，意境深远
+- 描写细腻，注重感官细节
+- 善用修辞，文字有画面感
+- 节奏舒缓但不拖沓`,
+
+      humorous: `## 【风格强化：幽默风趣】
+- 轻松诙谐，妙语连珠
+- 吐槽和反转是核心武器
+- 角色对话要有趣味
+- 紧张场景中穿插幽默缓解气氛`,
+
+      ancient: `## 【风格强化：古风典雅】
+- 用词典雅，韵味悠长
+- 善用四字词和对仗
+- 人物对话半文半白
+- 意境描写多于直白叙述`,
+    };
+
+    return prompts[style || ''] || '';
   }
 }
 
