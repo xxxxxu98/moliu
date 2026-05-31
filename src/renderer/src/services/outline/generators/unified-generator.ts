@@ -142,11 +142,6 @@ export class UnifiedOutlineGenerator {
     onProgress?.('正在生成大纲...');
     const markdown = await this.markdownGenerator.generate(prompt, options, onProgress);
 
-    // 打印原始 Markdown（调试用）
-    console.log('[UnifiedOutlineGenerator] ===== Fallback 模式原始输出 =====');
-    console.log(markdown);
-    console.log('======================================================');
-
     // 3. 后处理（Remark AST 解析 -> 正则提取 -> JSON 提取）
     onProgress?.('正在解析大纲...');
     const postResult = outlinePostProcessor.process(markdown);
@@ -228,11 +223,6 @@ export class UnifiedOutlineGenerator {
       if (!content) {
         throw new Error('API 未返回内容');
       }
-
-      // 打印原始 Markdown（调试用）
-      console.log('[UnifiedOutlineGenerator] ===== Markdown 模式原始输出 =====');
-      console.log(content);
-      console.log('======================================================');
 
       // 使用后处理器解析 Markdown
       const result = outlinePostProcessor.process(content);
@@ -563,11 +553,6 @@ export class UnifiedOutlineGenerator {
       if (!content) {
         throw new Error('API 未返回内容');
       }
-
-      // 打印原始 JSON（调试用）
-      console.log('[UnifiedOutlineGenerator] ===== JSON Mode 原始输出 =====');
-      console.log(content);
-      console.log('======================================================');
 
       // 解析 JSON
       const result = outlinePostProcessor.processJSON(content);
