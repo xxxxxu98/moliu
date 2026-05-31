@@ -42,6 +42,10 @@ function formatDateForFilename(date: Date): string {
  */
 export function parseMemoryFromMarkdown(markdown: string, chapterId: string): ChapterMemory | null {
   try {
+    // ===== 调试日志 =====
+    console.log(`[MemoryFileService] [DEBUG] 开始解析 chapterId=${chapterId}`);
+    console.log(`[MemoryFileService] [DEBUG] Markdown 内容前 200 字符:\n${markdown.slice(0, 200)}`);
+
     // 提取各字段
     const result: Partial<ChapterMemory> = {
       chapterId,
@@ -51,18 +55,34 @@ export function parseMemoryFromMarkdown(markdown: string, chapterId: string): Ch
     const titleMatch = markdown.match(/^#\s*(.+)$/m);
     if (titleMatch) {
       result.chapterTitle = titleMatch[1].trim();
+      console.log(`[MemoryFileService] [DEBUG] ✓ 解析标题: "${result.chapterTitle}"`);
+    } else {
+      console.warn(`[MemoryFileService] [DEBUG] ✗ 未找到标题 (^# ...) 匹配`);
     }
 
     // 解析章节序号
     const indexMatch = markdown.match(/\*\*章节序号\*\*:\s*(\d+)/);
     if (indexMatch) {
       result.chapterIndex = parseInt(indexMatch[1], 10);
+      console.log(`[MemoryFileService] [DEBUG] ✓ 解析序号: ${result.chapterIndex}`);
+    } else {
+      console.warn(`[MemoryFileService] [DEBUG] ✗ 未找到章节序号匹配 (\\*\\*章节序号\\*\\*...)`);
     }
 
     // 解析核心情节
     const corePlotMatch = markdown.match(/\*\*核心情节\*\*:\s*\n([^#]+?)(?=\n##|\n###|$)/s);
     if (corePlotMatch) {
       result.corePlot = corePlotMatch[1].trim();
+      console.log(`[MemoryFileService] [DEBUG] ✓ 解析核心情节: "${result.corePlot?.slice(0, 100)}..."`);
+    } else {
+      // 尝试兼容 ## 核心情节 格式
+      const altCorePlotMatch = markdown.match(/## 核心情节\n\n?([\s\S]*?)(?=\n## |\n### |$)/);
+      if (altCorePlotMatch) {
+        result.corePlot = altCorePlotMatch[1].trim();
+        console.log(`[MemoryFileService] [DEBUG] ✓ [兼容] 解析核心情节(## 格式): "${result.corePlot?.slice(0, 100)}..."`);
+      } else {
+        console.warn(`[MemoryFileService] [DEBUG] ✗ 未找到核心情节匹配 (\\*\\*核心情节\\*\\*: 或 ## 核心情节)`);
+      }
     }
 
     // 解析关键事件
@@ -74,6 +94,9 @@ export function parseMemoryFromMarkdown(markdown: string, chapterId: string): Ch
         .map(line => line.replace(/^-\s*/, '').trim())
         .filter(Boolean);
       result.keyEvents = events;
+      console.log(`[MemoryFileService] [DEBUG] ✓ 解析关键事件: ${events.length} 条`);
+    } else {
+      console.warn(`[MemoryFileService] [DEBUG] ✗ 未找到关键事件匹配`);
     }
 
     // 解析场景/地点
@@ -85,36 +108,44 @@ export function parseMemoryFromMarkdown(markdown: string, chapterId: string): Ch
         .map(line => line.replace(/^-\s*/, '').trim())
         .filter(Boolean);
       result.locations = locations;
+      console.log(`[MemoryFileService] [DEBUG] ✓ 解析场景: ${locations.length} 条`);
+    } else {
+      console.warn(`[MemoryFileService] [DEBUG] ✗ 未找到场景/地点匹配`);
     }
 
     // 解析时间线
     const timelineMatch = markdown.match(/\*\*时间线标记\*\*:\s*([^\n]+)/);
     if (timelineMatch) {
       result.timelineMark = timelineMatch[1].trim();
+      console.log(`[MemoryFileService] [DEBUG] ✓ 解析时间线: ${result.timelineMark}`);
     }
 
     // 解析情感基调
     const emotionMatch = markdown.match(/\*\*情感基调\*\*:\s*([^\n]+)/);
     if (emotionMatch) {
       result.emotionalTone = emotionMatch[1].trim();
+      console.log(`[MemoryFileService] [DEBUG] ✓ 解析情感基调: ${result.emotionalTone}`);
     }
 
     // 解析章节字数
     const wordCountMatch = markdown.match(/\*\*章节字数\*\*:\s*(\d+)/);
     if (wordCountMatch) {
       result.wordCount = parseInt(wordCountMatch[1], 10);
+      console.log(`[MemoryFileService] [DEBUG] ✓ 解析章节字数: ${result.wordCount}`);
     }
 
     // 解析创建时间
     const createdAtMatch = markdown.match(/\*\*创建时间\*\*:\s*([^\n]+)/);
     if (createdAtMatch) {
       result.createdAt = createdAtMatch[1].trim();
+      console.log(`[MemoryFileService] [DEBUG] ✓ 解析创建时间: ${result.createdAt}`);
     }
 
     // 解析角色状态变化
     const characterChanges: CharacterStateChange[] = [];
     const characterSectionMatch = markdown.match(/## 角色状态变化\n([\s\S]*?)(?=##|$)/);
     if (characterSectionMatch) {
+      console.log(`[MemoryFileService] [DEBUG] ✓ 找到角色状态变化段落`);
       const lines = characterSectionMatch[1].split('\n');
       let currentChar: Partial<CharacterStateChange> = {};
       for (const line of lines) {
@@ -148,6 +179,7 @@ export function parseMemoryFromMarkdown(markdown: string, chapterId: string): Ch
         .filter(line => line.trim().startsWith('-'))
         .map(line => line.replace(/^-\s*/, '').trim())
         .filter(Boolean);
+      console.log(`[MemoryFileService] [DEBUG] ✓ 解析已揭示伏笔: ${result.revealedForeshadows.length} 条`);
     }
 
     const newForeshadowsMatch = markdown.match(/## 新埋伏笔\n([\s\S]*?)(?=##|$)/);
@@ -157,13 +189,18 @@ export function parseMemoryFromMarkdown(markdown: string, chapterId: string): Ch
         .filter(line => line.trim().startsWith('-'))
         .map(line => line.replace(/^-\s*/, '').trim())
         .filter(Boolean);
+      console.log(`[MemoryFileService] [DEBUG] ✓ 解析新埋伏笔: ${result.newForeshadows.length} 条`);
     }
 
     // 验证必填字段
     if (!result.chapterId || !result.chapterTitle || result.corePlot === undefined) {
-      console.warn('[MemoryFileService] 解析失败：缺少必填字段', {
+      console.warn('[MemoryFileService] [DEBUG] 验证失败：缺少必填字段', {
         chapterId,
+        hasChapterId: !!result.chapterId,
         hasTitle: !!result.chapterTitle,
+        titleValue: result.chapterTitle,
+        corePlotValue: result.corePlot,
+        corePlotUndefined: result.corePlot === undefined,
       });
       return null;
     }
@@ -178,6 +215,7 @@ export function parseMemoryFromMarkdown(markdown: string, chapterId: string): Ch
     result.wordCount = result.wordCount || 0;
     result.createdAt = result.createdAt || new Date().toISOString();
 
+    console.log(`[MemoryFileService] [DEBUG] 解析成功! title="${result.chapterTitle}", corePlot="${(result.corePlot || '').slice(0, 80)}..."`);
     return result as ChapterMemory;
   } catch (error) {
     console.error('[MemoryFileService] 解析 Markdown 失败:', error);
@@ -189,6 +227,10 @@ export function parseMemoryFromMarkdown(markdown: string, chapterId: string): Ch
  * 将记忆转换为 Markdown 格式
  */
 export function memoryToMarkdown(memory: ChapterMemory): string {
+  // ===== 调试日志 =====
+  console.log(`[MemoryFileService] [DEBUG] memoryToMarkdown 开始, chapterId=${memory.chapterId}, title="${memory.chapterTitle}"`);
+  console.log(`[MemoryFileService] [DEBUG] corePlot 内容前 100: "${(memory.corePlot || '').slice(0, 100)}"`);
+
   const lines: string[] = [
     `# ${memory.chapterTitle}`,
     '',
@@ -246,7 +288,9 @@ export function memoryToMarkdown(memory: ChapterMemory): string {
     lines.push('- （无）');
   }
 
-  return lines.join('\n');
+  const result = lines.join('\n');
+  console.log(`[MemoryFileService] [DEBUG] memoryToMarkdown 输出前 300 字符:\n${result.slice(0, 300)}`);
+  return result;
 }
 
 /**
@@ -289,8 +333,11 @@ export class MemoryFileService {
         memory.chapterIndex,
         memory.chapterTitle
       );
+      console.log(`[MemoryFileService] [DEBUG] saveMemory 文件名=${filename}, chapterId=${memory.chapterId}`);
+
       const markdown = memoryToMarkdown(memory);
       const filePath = `${this.basePath}/${filename}`;
+      console.log(`[MemoryFileService] [DEBUG] saveMemory 路径=${filePath}`);
 
       // 通过 IPC 调用主进程保存文件
       await window.electronAPI.saveMemoryFile({
@@ -302,6 +349,7 @@ export class MemoryFileService {
       // 更新缓存
       memoryCache.set(memory.chapterId, memory);
       fileCache.set(memory.chapterId, markdown);
+      console.log(`[MemoryFileService] [DEBUG] saveMemory 完成, 已更新缓存`);
 
       return true;
     } catch (error) {
@@ -318,8 +366,11 @@ export class MemoryFileService {
     chapterIndex?: number,
     chapterTitle?: string
   ): Promise<ChapterMemory | null> {
+    console.log(`[MemoryFileService] [DEBUG] loadMemory chapterId=${chapterId}, index=${chapterIndex}, title="${chapterTitle}"`);
+
     // 先检查内存缓存
     if (memoryCache.has(chapterId)) {
+      console.log(`[MemoryFileService] [DEBUG] loadMemory 命中内存缓存`);
       return memoryCache.get(chapterId)!;
     }
 
@@ -330,11 +381,16 @@ export class MemoryFileService {
       } else {
         // 需要先查找文件
         const files = await this.listMemoryFiles();
+        console.log(`[MemoryFileService] [DEBUG] loadMemory 查找文件, 已有文件列表:`, files);
         filename = files.find(f => f.includes(chapterId)) || files[0];
-        if (!filename) return null;
+        if (!filename) {
+          console.warn(`[MemoryFileService] [DEBUG] loadMemory 未找到匹配文件`);
+          return null;
+        }
       }
 
       const filePath = `${this.basePath}/${filename}`;
+      console.log(`[MemoryFileService] [DEBUG] loadMemory 读取文件路径=${filePath}`);
 
       // 通过 IPC 调用主进程读取文件
       const content = (await window.electronAPI.loadMemoryFile({
@@ -342,7 +398,12 @@ export class MemoryFileService {
         filePath,
       })) as string | null;
 
-      if (!content) return null;
+      if (!content) {
+        console.warn(`[MemoryFileService] [DEBUG] loadMemory 文件内容为空`);
+        return null;
+      }
+
+      console.log(`[MemoryFileService] [DEBUG] loadMemory 文件内容前 300 字符:\n${content.slice(0, 300)}`);
 
       // 更新文件缓存
       fileCache.set(chapterId, content);
@@ -350,7 +411,10 @@ export class MemoryFileService {
       // 解析 Markdown
       const memory = parseMemoryFromMarkdown(content, chapterId);
       if (memory) {
+        console.log(`[MemoryFileService] [DEBUG] loadMemory 解析成功, title="${memory.chapterTitle}", corePlot="${(memory.corePlot || '').slice(0, 50)}..."`);
         memoryCache.set(chapterId, memory);
+      } else {
+        console.warn(`[MemoryFileService] [DEBUG] loadMemory 解析失败`);
       }
 
       return memory;
@@ -397,7 +461,9 @@ export class MemoryFileService {
    * 加载指定范围的章节记忆
    */
   async loadMemoriesInRange(startIndex: number, count: number): Promise<ChapterMemory[]> {
+    console.log(`[MemoryFileService] [DEBUG] loadMemoriesInRange startIndex=${startIndex}, count=${count}`);
     const files = await this.listMemoryFiles();
+    console.log(`[MemoryFileService] [DEBUG] loadMemoriesInRange 找到文件:`, files);
     const memories: ChapterMemory[] = [];
 
     for (const filename of files) {
@@ -408,6 +474,8 @@ export class MemoryFileService {
         if (index >= startIndex && index < startIndex + count) {
           const chapterIdMatch = filename.match(/chapter-\d+-(.+)\.md/);
           if (chapterIdMatch) {
+            const extractedChapterId = chapterIdMatch[1];
+            console.log(`[MemoryFileService] [DEBUG] loadMemoriesInRange 处理文件: ${filename}, extractedChapterId=${extractedChapterId}`);
             // 尝试加载
             try {
               const filePath = `${this.basePath}/${filename}`;
@@ -417,7 +485,8 @@ export class MemoryFileService {
               })) as string | null;
 
               if (content) {
-                const memory = parseMemoryFromMarkdown(content, chapterIdMatch[1]);
+                console.log(`[MemoryFileService] [DEBUG] loadMemoriesInRange 文件内容前 200:\n${content.slice(0, 200)}`);
+                const memory = parseMemoryFromMarkdown(content, extractedChapterId);
                 if (memory) {
                   memories.push(memory);
                 }
