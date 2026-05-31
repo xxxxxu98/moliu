@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   NLayout,
-  NLayoutContent,
   NScrollbar,
   NButton,
   NTag,
   useMessage,
-  NEmpty,
   NModal,
   NInput,
   NSelect,
@@ -37,7 +35,6 @@ import {
   Swords,
   Zap,
   Layers,
-  ChevronsUpDown,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useProjectStore } from "@/stores/project.store";
@@ -76,7 +73,7 @@ const activeSidePanel = ref<
   | "coolPoints"
   | "storyLines"
 >("chapters");
-const expandedVolumes = ref<Set<string>>(new Set(["v1"]));
+const expandedVolumes = ref<Set<string>>(new Set());
 const isLoadingProject = ref(false);
 const editorCoreRef = ref<InstanceType<typeof EditorCore> | null>(null);
 
@@ -326,13 +323,8 @@ function toggleSynopsisEditMode() {
   if (synopsisEditMode.value) {
     // Save changes
     synopsisContent.value = tempSynopsis.value;
-    // Update project description
+    // Update project description - use updateProjectInfo which handles both local and backend
     if (currentProject.value) {
-      // Update local state immediately
-      projectStore.updateProject(currentProject.value.id, {
-        description: tempSynopsis.value,
-      });
-      // Persist to backend
       projectStore.updateProjectInfo(currentProject.value.id, {
         description: tempSynopsis.value,
       });
@@ -388,35 +380,35 @@ function getStatusConfig(status: string) {
 // AI Title Recommendation
 async function handleRecommendTitles(chapterId: string, event: Event) {
   event.stopPropagation();
-  
+
   const chapter = projectStore.chapters.find(c => c.id === chapterId);
   if (!chapter) return;
-  
+
   titleRecommendChapterId.value = chapterId;
   recommendedTitles.value = [];
   selectedTitle.value = null;
   isGeneratingTitle.value = true;
   showTitleRecommendDialog.value = true;
-  
-  await generateTitles();
+
+  try {
+    await generateTitles();
+  } catch (error) {
+    message.error("生成标题失败，请重试");
+  }
 }
 
 async function generateTitles() {
   const chapterId = titleRecommendChapterId.value;
   if (!chapterId || !activeAIService.value) return;
-  
+
   const chapter = projectStore.chapters.find(c => c.id === chapterId);
   if (!chapter) return;
-  
+
   const allChapters = projectStore.sortedChapters;
   const chapterIndex = allChapters.findIndex(c => c.id === chapterId);
   const prevChapter = chapterIndex > 0 ? allChapters[chapterIndex - 1] : null;
   const nextChapter = chapterIndex < allChapters.length - 1 ? allChapters[chapterIndex + 1] : null;
-  
-  isGeneratingTitle.value = true;
-  recommendedTitles.value = [];
-  selectedTitle.value = null;
-  
+
   try {
     const titlesResult = await activeAIService.value.generateChapterTitle(
       chapter.title,
@@ -428,7 +420,7 @@ async function generateTitles() {
         chapterNumber: chapterIndex + 1,
       }
     );
-    
+
     // titlesResult is a string with multiple titles separated by "、"
     // Parse it into an array and add chapter number
     const chapterPrefix = `第${chapterIndex + 1}章 `;
@@ -436,13 +428,11 @@ async function generateTitles() {
       .split(/[、，,]/)
       .map((t: string) => chapterPrefix + t.trim())
       .filter((t: string) => t.length >= 4 && t.length <= 15);
-    
+
     if (titles.length > 0) {
       recommendedTitles.value = titles;
       selectedTitle.value = titles[0];
     }
-  } catch (error) {
-    message.error("生成标题失败，请重试");
   } finally {
     isGeneratingTitle.value = false;
   }
