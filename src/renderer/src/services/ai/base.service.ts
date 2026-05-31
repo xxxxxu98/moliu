@@ -796,6 +796,52 @@ ${customPrompt}`;
 请将以上要素发挥到极致。`;
     }
 
+    // ===== 新增：章节时长提醒（timeSpan）=====
+    if (context.currentChapterOutlineContext?.timeSpan) {
+      userPrompt += `\n\n【章节时长提醒】
+本章故事发生的时间跨度：${context.currentChapterOutlineContext.timeSpan}
+请注意时间流逝的合理性，避免时间线矛盾。`;
+    }
+
+    // ===== 新增：关键事件列表（keyEvents）=====
+    if (context.currentChapterOutlineContext?.keyEvents?.length) {
+      const events = context.currentChapterOutlineContext.keyEvents;
+      userPrompt += `\n\n【本章必须包含的关键事件】
+本章需要依次/重点包含以下事件：
+${events.map((e, i) => `${i + 1}. ${e}`).join('\n')}
+请确保这些事件在章节中得到充分展现。`;
+    }
+
+    // ===== 新增：章尾钩子类型（hookType）=====
+    if (context.currentChapterOutlineContext?.hookType) {
+      const hookDescriptions: Record<string, string> = {
+        sudden_reveal: '突然揭示：抛出改变全局的信息，如真相揭露、身份曝光等',
+        urgent_crisis: '紧急危机：下章必须回应的紧迫威胁，如倒计时、危险逼近',
+        unfinished_action: '未完成动作：动作被新变量打断，留下悬念',
+        identity_reveal: '身份反转：某人不是我们认为的那个人',
+        tough_choice: '两难抉择：被迫在两个坏选项中选一个',
+        mysterious_item: '神秘物品：重要但含义未知的物件出现',
+        countdown: '倒计时：时间不够用的紧迫感',
+        promise_threat: '承诺/威胁：有人宣布了行动意图',
+        strange_disappear: '离奇消失：不可能的消失，留下谜团',
+        hidden_meaning: '隐藏含义：表面正常，实际暗藏信息',
+        imagery: '意象留白：反复出现的意象在章尾发生变化',
+        echo: '首尾呼应：章尾句子呼应开头',
+        blank: '悬念留白：故意不揭示发生了什么',
+      };
+      const hookDesc = hookDescriptions[context.currentChapterOutlineContext.hookType] || context.currentChapterOutlineContext.hookType;
+      userPrompt += `\n\n【本章章尾钩子类型】
+建议本章结尾使用「${hookDesc}」类型的钩子，吸引读者继续阅读下一章。`;
+    }
+
+    // ===== 新增：预期爽点数（expectedCoolPoints）=====
+    if (context.currentChapterOutlineContext?.expectedCoolPoints !== undefined && context.currentChapterOutlineContext.expectedCoolPoints > 0) {
+      userPrompt += `\n\n【本章爽点要求】
+本章建议安排至少 ${context.currentChapterOutlineContext.expectedCoolPoints} 个情绪爽点。
+爽点包括但不限于：打脸、装逼、身份揭秘、成长突破、英雄救美、寻宝获宝、境界突破、甜蜜恋爱、复仇快感等。
+请在情节推进中穿插爽点，保持读者的阅读快感。`;
+    }
+
     // ===== 新增：增强设计段落（情绪/矛盾/爽点/故事线/卖点）=====
     if (context.enhancedDesignPrompt) {
       userPrompt += `\n\n${context.enhancedDesignPrompt}`;

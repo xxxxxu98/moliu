@@ -3,6 +3,12 @@ import { useSettingsStore } from '@/stores/settings.store';
 import { useProjectStore } from '@/stores/project.store';
 import { useActiveAIProvider } from '@/composables/useActiveAIProvider';
 import type { ProjectContext, AIWriteResult, AISuggestion, AIWriteMode } from './factory';
+import {
+  extractChapterContext,
+  buildChapterOutlineText,
+  buildFullOutlineText,
+  buildEnhancedDesignPrompt,
+} from '@/services/writing/OutlineContextBuilder';
 
 /**
  * AI 服务 Composable
@@ -98,12 +104,37 @@ ${c.content || '（本章暂无内容）'}`;
       return Math.abs(f.createdChapter - chapterNum) <= 3;
     });
 
+    // 提取章节大纲上下文（包含 hookType、timeSpan、keyEvents、expectedCoolPoints）
+    const chapterCtx = extractChapterContext(
+      projectStore.plotOutline || [],
+      currentChapter.id,
+      currentChapter.title
+    );
+    const currentChapterOutlineText = chapterCtx
+      ? buildChapterOutlineText(chapterCtx, true)
+      : (currentChapter.plotSummary || '');
+    const enhancedPrompt = buildEnhancedDesignPrompt({
+      projectTitle: project.name,
+      projectSynopsis: project.description || '',
+      projectGenre: project.genre.map(g => g.name),
+      currentChapter: chapterCtx || { title: currentChapter.title, description: currentChapterOutlineText, orderIndex: currentChapterIndex },
+      currentChapterOutline: currentChapterOutlineText,
+      fullOutline: buildFullOutlineText(projectStore.plotOutline || []),
+      emotionGoal: project.emotionGoal,
+      conflictDesign: project.conflictDesign,
+      coolPointDesign: project.coolPointDesign,
+      storyLines: project.storyLines,
+      coreSellingPoints: project.coreSellingPoints,
+    });
+
     return {
       project,
       currentChapterId: currentChapter.id,
       currentChapterIndex,
       currentChapterTitle: currentChapter.title,
       currentChapterContent: currentChapter.content || '',
+      currentChapterOutline: currentChapterOutlineText,
+      fullOutline: buildFullOutlineText(projectStore.plotOutline || []),
       adjacentChaptersSummary: {
         previousChapterTitle: prevChapter?.title,
         previousChapterSummary: prevChapter?.content?.slice(0, 200) + '...',
@@ -114,6 +145,17 @@ ${c.content || '（本章暂无内容）'}`;
       charactersInScene: project.characters || [],
       relatedForeshadows,
       customPrompt,
+      // 章节结构化策略字段（包含 hookType、timeSpan、keyEvents、expectedCoolPoints）
+      currentChapterOutlineContext: chapterCtx ? {
+        chapterType: chapterCtx.chapterType,
+        hookType: chapterCtx.hookType,
+        pacingStrategy: chapterCtx.pacingStrategy,
+        timeSpan: chapterCtx.timeSpan,
+        keyEvents: chapterCtx.keyEvents,
+        isClimax: chapterCtx.isClimax,
+        expectedCoolPoints: chapterCtx.expectedCoolPoints,
+      } : undefined,
+      enhancedDesignPrompt: enhancedPrompt,
     };
   }
 
