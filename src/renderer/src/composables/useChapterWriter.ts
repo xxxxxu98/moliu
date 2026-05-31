@@ -1049,6 +1049,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
       // 调用 AI 补充续写
       let newContent = '';
+      // 只传原文结尾（约 1000 字），避免超过上下文窗口
+      const endingSnippet = currentGeneratedContent.slice(-1000) || '';
       if (settingsStore.streamOutput && (client as any).continueWritingStream) {
         await new Promise<void>((resolve, reject) => {
           (client as any).continueWritingStream(
@@ -1057,7 +1059,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
               currentChapterId: context.chapter.id,
               currentChapterIndex: context.chapter.orderIndex,
               currentChapterTitle: context.chapter.title,
-              currentChapterContent: currentGeneratedContent,
+              currentChapterContent: endingSnippet,
               currentChapterOutline: context.chapter.outline || undefined,
               fullOutline: buildFullOutlineString(),
               adjacentChaptersSummary: context.previousChapter
@@ -1072,7 +1074,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
               charactersInScene: context.characters,
               relatedForeshadows: context.foreshadows,
               writingStyle: 'concise',
-              supplementInstruction,
             },
             'supplement',
             Math.ceil(Math.min(additionalWords, maxSupplement)),
@@ -1095,7 +1096,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
             currentChapterId: context.chapter.id,
             currentChapterIndex: context.chapter.orderIndex,
             currentChapterTitle: context.chapter.title,
-            currentChapterContent: currentGeneratedContent,
+            currentChapterContent: endingSnippet,
             currentChapterOutline: context.chapter.outline || undefined,
             fullOutline: buildFullOutlineString(),
             adjacentChaptersSummary: context.previousChapter
@@ -1110,7 +1111,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
             charactersInScene: context.characters,
             relatedForeshadows: context.foreshadows,
             writingStyle: 'concise',
-            supplementInstruction,
           },
           'supplement',
           Math.ceil(Math.min(additionalWords, maxSupplement))
@@ -1190,7 +1190,7 @@ ${endingSnippet}
 
   // 审查严格度
   let currentStrictness: 'relaxed' | 'normal' | 'strict' = 'normal';
-  let forceProceed = false; // 强制继续标志
+  let skipReview = false; // 强制跳过审查标志（用户点击"强制继续"后设为 true，保留到下次应用完成）
 
   function getLowerStrictness(
     strictness: 'relaxed' | 'normal' | 'strict'
@@ -1238,69 +1238,67 @@ ${endingSnippet}
       );
       const prevChapter = currentIndex > 0 ? projectStore.sortedChapters[currentIndex - 1] : null;
 
-      // ========== 步骤 3: 审查（自适应 Blocking 闸门） ==========
-      currentStep.value = 'review';
-
-      // 初始化审查严格度
-      currentStrictness = 'normal';
-      forceProceed = false;
-      let reviewPassed = false;
+      // 审查结果（用于生成报告）
       let lastReviewResult: BlockingReviewResult | null = null;
-      let attempts = 0;
-      const maxAttempts = 3;
 
-      // 自适应审查循环：失败时降低严格度
-      while (!reviewPassed && attempts < maxAttempts) {
-        attempts++;
+      // ========== 步骤 3: 审查（跳过逻辑） ==========
+      if (skipReview) {
+        // 用户已点击"强制继续"，跳过审查直接进入保存
+        currentStep.value = 'save';
+      } else {
+        // 正常审查流程
+        currentStep.value = 'review';
+        currentStrictness = 'normal';
+        let reviewPassed = false;
+        let attempts = 0;
+        const maxAttempts = 3;
 
-        lastReviewResult = await performBlockingReview(
-          project,
-          { ...currentChapter, content: currentGeneratedContent },
-          currentIndex,
-          prevChapter,
-          currentStrictness
-        );
-        reviewResult.value = lastReviewResult;
-        blockingIssues.value = getBlockingIssuesToFix(lastReviewResult, 10);
+        while (!reviewPassed && attempts < maxAttempts) {
+          attempts++;
 
-        // 检查是否通过
-        if (canProceedToPolish(lastReviewResult)) {
-          reviewPassed = true;
-          break;
-        }
-
-        // 未通过，尝试降低严格度
-        const lowerStrictness = getLowerStrictness(currentStrictness);
-        if (lowerStrictness) {
-          currentStrictness = lowerStrictness;
-        } else {
-          // 已到最低严格度
-          console.warn(`[智能续写] 已达最低严格度，审查仍未通过`);
-          break;
-        }
-      }
-
-      // 如果仍未通过且未强制继续，显示错误
-      if (!reviewPassed && !forceProceed && lastReviewResult) {
-        console.warn('[智能续写] 审查未通过，blocking 问题:', lastReviewResult.blockingCount);
-        error.value = `审查未通过：${lastReviewResult.blockingCount}个阻断问题（已达最低严格度，可选择跳过）`;
-
-        // 生成结构化报告
-        if (currentChapterId) {
-          latestReport.value = generateReport(
-            currentChapterId,
-            currentChapterNumber,
-            currentChapter.title,
-            lastReviewResult as any,
-            {} as any,
-            { strictness: currentStrictness, passThreshold: 70 }
+          lastReviewResult = await performBlockingReview(
+            project,
+            { ...currentChapter, content: currentGeneratedContent },
+            currentIndex,
+            prevChapter,
+            currentStrictness
           );
+          reviewResult.value = lastReviewResult;
+          blockingIssues.value = getBlockingIssuesToFix(lastReviewResult, 10);
+
+          if (canProceedToPolish(lastReviewResult)) {
+            reviewPassed = true;
+            break;
+          }
+
+          const lowerStrictness = getLowerStrictness(currentStrictness);
+          if (lowerStrictness) {
+            currentStrictness = lowerStrictness;
+          } else {
+            console.warn(`[DEBUG applyGeneratedContent] ⚠️ 已达最低严格度，审查仍未通过`);
+            break;
+          }
         }
 
-        return false;
+        // 未通过且未跳过审查，显示错误
+        if (!reviewPassed && !skipReview && lastReviewResult) {
+          console.warn('[DEBUG applyGeneratedContent] ❌ 退出: 审查未通过且未跳过');
+          error.value = `审查未通过：${lastReviewResult.blockingCount}个阻断问题（已达最低严格度，可选择跳过）`;
+          if (currentChapterId) {
+            latestReport.value = generateReport(
+              currentChapterId,
+              currentChapterNumber,
+              currentChapter.title,
+              lastReviewResult as any,
+              {} as any,
+              { strictness: currentStrictness, passThreshold: 70 }
+            );
+          }
+          return false;
+        }
       }
 
-      // 审查通过或强制继续时，生成结构化报告
+      // 生成报告（无论通过审查还是跳过审查）
       if (currentChapterId && lastReviewResult) {
         latestReport.value = generateReport(
           currentChapterId,
@@ -1312,12 +1310,11 @@ ${endingSnippet}
         );
       }
 
-      // ========== 步骤 4: 润色 - 暂时禁用去AI味 ==========
+      // ========== 步骤 4: 润色（去AI味） ==========
       currentStep.value = 'polish';
       let processedContent = currentGeneratedContent;
       let extractedTitle: string | null | undefined;
 
-      // 从原始内容中提取标题，并用剔除标题后的干净正文替换 processedContent
       const titleValidation = DeAIService.extractAndValidateTitle(processedContent);
       extractedTitle = titleValidation.title;
       processedContent = titleValidation.content;
@@ -1342,7 +1339,8 @@ ${endingSnippet}
       // 提取情节记忆
       extractMemoryAfterApply(projectStore.currentChapter!, currentIndex + 1);
 
-      // 重置状态
+      // ✅ 成功后：重置状态
+      skipReview = false;
       currentGeneratedContent = '';
       generatedContent.value = '';
       progress.value = 0;
@@ -1352,6 +1350,7 @@ ${endingSnippet}
 
       return true;
     } catch (err) {
+      console.error('[DEBUG applyGeneratedContent] ❌ 抛出异常:', err);
       error.value = err instanceof Error ? err.message : '保存失败';
       return false;
     }
@@ -1393,7 +1392,7 @@ ${endingSnippet}
     reviewResult.value = null;
     currentTaskBook = null;
     currentStrictness = 'normal';
-    forceProceed = false;
+    skipReview = false;
     // 重置字数相关状态
     actualWordCount.value = 0;
     targetWordCount.value = 0;
@@ -1422,12 +1421,12 @@ ${endingSnippet}
     console.warn('[智能续写] 用户选择跳过 blocking 问题，强制继续');
     blockingIssues.value = [];
     reviewResult.value = null;
-    forceProceed = true;
+    skipReview = true;
   }
 
   function forceProceedToPolish(): void {
     console.warn('[智能续写] 用户强制继续进行润色');
-    forceProceed = true;
+    skipReview = true;
   }
 
   /**

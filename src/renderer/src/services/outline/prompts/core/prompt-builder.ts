@@ -600,7 +600,7 @@ ${buildCoreWritingPrinciplesPrompt()}
    */
   static buildContinuePrompt(
     context: PromptContext,
-    mode: 'smartContinue' | 'polish',
+    mode: 'smartContinue' | 'polish' | 'supplement',
     targetWordCount: number = 3000
   ): { systemPrompt: string; userPrompt: string } {
     const {
@@ -619,7 +619,9 @@ ${buildCoreWritingPrinciplesPrompt()}
     const chapterNumber = currentChapterIndex !== undefined ? currentChapterIndex + 1 : undefined;
 
     let modeInstruction: string;
-    if (mode === 'smartContinue') {
+    if (mode === 'supplement') {
+      modeInstruction = this.buildSupplementInstruction(targetWordCount);
+    } else if (mode === 'smartContinue') {
       if (currentChapterOutline) {
         modeInstruction = this.buildOutlineBasedInstruction(currentChapterOutline, targetWordCount);
       } else if (isFirstChapter) {
@@ -787,6 +789,31 @@ ${buildExpectationManagementPrompt()}
 ${buildChapterHooksPrompt()}
 
 绝对不能在结尾写总结、说教或情感升华。`;
+  }
+
+  /**
+   * 构建补充续写指令
+   * 当正文章节字数不足时，从结尾处自然衔接补充
+   */
+  private static buildSupplementInstruction(targetWordCount: number): string {
+    return `请从原文结尾处自然衔接，续写补充内容。当前正文章节字数不足，需要你继续扩展。
+
+### 补充原则【必须遵守】
+1. **只续结尾**：从原文最后一段、最后一个场景的末尾继续，不要重复任何已有内容
+2. **情节推进**：补充的内容必须有实质性情节推进，不能原地描写或凑字数
+3. **风格一致**：严格保持与前文相同的文风、语气、叙事节奏
+4. **节奏连贯**：不要突然切换场景或时间线，除非原文中有明确暗示
+5. **钩子设置**：在补充内容结尾设置一个悬念钩子（未完成动作/突发转折/悬念问题），吸引读者继续阅读
+
+### 禁止事项
+- ❌ 不要重写或复述已有的情节
+- ❌ 不要重新描述已出现的人物外貌、性格
+- ❌ 不要在结尾进行总结、说教或情感升华
+- ❌ 不要出现 "这就是成长""这就是人生" 等说教性结尾
+
+${buildChapterHooksPrompt()}
+
+绝对不能在结尾写总结、说教或情感升华。必须停在未完成的动作、突发转折或悬念问题上。`;
   }
 
   /**
