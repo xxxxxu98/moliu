@@ -1,14 +1,14 @@
 <script setup lang="ts">
 /**
  * 批量写作面板 - 增强版
- * 
+ *
  * 核心改进：
  * 1. 显示流水线状态（TaskBook → 起草 → 审查 → 润色 → 提交）
  * 2. 显示 Blocking 闸门状态
  * 3. 自适应审查严格度 - 失败时逐步降低
  * 4. 自动化程度高 - 无需人工干预
  */
-import { ref, computed } from "vue";
+import { ref, computed } from 'vue';
 import {
   NButton,
   NProgress,
@@ -22,7 +22,7 @@ import {
   NAlert,
   NTooltip,
   NProgress as NProgressType,
-} from "naive-ui";
+} from 'naive-ui';
 import {
   Play,
   Pause,
@@ -45,12 +45,17 @@ import {
   ChevronDown,
   Flag,
   TrendingUp,
-} from "lucide-vue-next";
-import { useI18n } from "vue-i18n";
-import { useBatchWriter } from "@/composables/useBatchWriter";
-import { useProjectStore } from "@/stores/project.store";
-import type { UseBatchWriterReturn, EndingCheckResult } from "@/composables/useBatchWriter";
-import type { ReviewStrictness } from "@/services/review/blocking-review.service";
+} from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
+import { useBatchWriter } from '@/composables/useBatchWriter';
+import { useProjectStore } from '@/stores/project.store';
+import type { UseBatchWriterReturn, EndingCheckResult } from '@/composables/useBatchWriter';
+import type { ReviewStrictness } from '@/services/review/blocking-review.service';
+import {
+  wordCountOptions,
+  writingStyleOptions,
+  DEFAULT_WORD_COUNT,
+} from '@/utils/common';
 
 const { t } = useI18n();
 const message = useMessage();
@@ -96,7 +101,7 @@ const writingMode = ref<'specific' | 'finish'>('specific');
 
 // 批量写作配置
 const batchConfig = ref({
-  wordsPerChapter: 2500,
+  wordsPerChapter: DEFAULT_WORD_COUNT,
   writingStyle: 'humorous' as 'concise' | 'elegant' | 'humorous' | 'ancient',
   useTaskBook: true,
   useReview: true,
@@ -107,25 +112,25 @@ const batchConfig = ref({
 // 流水线步骤图标映射
 const stepIcons = {
   idle: CheckCircle,
-  '生成任务书': FileText,
-  'AI起草': Zap,
+  生成任务书: FileText,
+  AI起草: Zap,
   '审查（Blocking闸门）': Shield,
   '润色（去AI味）': Sparkles,
-  '保存': Check,
-  '提交': CheckCircle,
-  '提取记忆': BookOpen,
+  保存: Check,
+  提交: CheckCircle,
+  提取记忆: BookOpen,
 };
 
 // 流水线步骤颜色
 const stepColors = {
   idle: 'text-gray-400',
-  '生成任务书': 'text-blue-500',
-  'AI起草': 'text-indigo-500',
+  生成任务书: 'text-blue-500',
+  AI起草: 'text-indigo-500',
   '审查（Blocking闸门）': 'text-purple-500',
   '润色（去AI味）': 'text-amber-500',
-  '保存': 'text-emerald-500',
-  '提交': 'text-emerald-500',
-  '提取记忆': 'text-gray-500',
+  保存: 'text-emerald-500',
+  提交: 'text-emerald-500',
+  提取记忆: 'text-gray-500',
 };
 
 // 审查严格度选项
@@ -140,7 +145,10 @@ const nextChapterNumber = computed(() => writtenChapters.value + 1);
 
 // 预估时间
 const estimatedTime = computed(() => {
-  let chapters = writingMode.value === 'specific' ? targetCount.value : (endingStatus.value?.remainingChapters || 10);
+  let chapters =
+    writingMode.value === 'specific'
+      ? targetCount.value
+      : endingStatus.value?.remainingChapters || 10;
   if (chapters === 0) return '';
   const avgSecondsPerChapter = 60; // 考虑到 TaskBook + 审查，时间更长
   const seconds = chapters * avgSecondsPerChapter;
@@ -153,8 +161,10 @@ const estimatedTime = computed(() => {
 
 // 计划章节数
 const plannedChapterCount = computed(() => {
-  return projectStore.currentProject?.metadata?.plannedChapterCount || 
-    (projectStore.plotOutline?.length > 0 ? projectStore.plotOutline.length : 100);
+  return (
+    projectStore.currentProject?.metadata?.plannedChapterCount ||
+    (projectStore.plotOutline?.length > 0 ? projectStore.plotOutline.length : 100)
+  );
 });
 
 // 完结进度信息
@@ -208,13 +218,21 @@ const pipelineSteps = computed(() => [
 
 function getStepStatus(stepName: string): 'pending' | 'active' | 'completed' | 'blocked' {
   const current = currentPipelineStep.value;
-  
+
   if (current === 'idle') return 'pending';
-  
-  const order = ['生成任务书', 'AI起草', '审查（Blocking闸门）', '润色（去AI味）', '保存', '提交', '提取记忆'];
+
+  const order = [
+    '生成任务书',
+    'AI起草',
+    '审查（Blocking闸门）',
+    '润色（去AI味）',
+    '保存',
+    '提交',
+    '提取记忆',
+  ];
   const currentIndex = order.indexOf(current);
   const stepIndex = order.indexOf(stepName);
-  
+
   if (currentIndex === stepIndex) return 'active';
   if (currentIndex > stepIndex) return 'completed';
   return 'pending';
@@ -226,13 +244,13 @@ async function handleStart() {
     target.value = 'specific';
     await startBatchWriting(targetCount.value, {
       ...batchConfig.value,
-      useTaskBook: true,  // 强制
+      useTaskBook: true, // 强制
     });
   } else {
     target.value = 'finish';
     await startBatchWriting(undefined, {
       ...batchConfig.value,
-      useTaskBook: true,  // 强制
+      useTaskBook: true, // 强制
     });
   }
 }
@@ -264,30 +282,42 @@ function getSeverityType(severity: string): 'error' | 'warning' | 'info' {
 // 获取严格度显示标签
 function getStrictnessLabel(strictness: ReviewStrictness): string {
   switch (strictness) {
-    case 'strict': return '严格';
-    case 'normal': return '正常';
-    case 'relaxed': return '宽松';
-    default: return strictness;
+    case 'strict':
+      return '严格';
+    case 'normal':
+      return '正常';
+    case 'relaxed':
+      return '宽松';
+    default:
+      return strictness;
   }
 }
 
 // 获取严格度颜色
 function getStrictnessColor(strictness: ReviewStrictness): string {
   switch (strictness) {
-    case 'strict': return 'text-red-500';
-    case 'normal': return 'text-purple-500';
-    case 'relaxed': return 'text-emerald-500';
-    default: return 'text-gray-500';
+    case 'strict':
+      return 'text-red-500';
+    case 'normal':
+      return 'text-purple-500';
+    case 'relaxed':
+      return 'text-emerald-500';
+    default:
+      return 'text-gray-500';
   }
 }
 
 // 获取严格度背景色
 function getStrictnessBg(strictness: ReviewStrictness): string {
   switch (strictness) {
-    case 'strict': return 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400';
-    case 'normal': return 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400';
-    case 'relaxed': return 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400';
-    default: return 'bg-gray-100 text-gray-600';
+    case 'strict':
+      return 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400';
+    case 'normal':
+      return 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400';
+    case 'relaxed':
+      return 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400';
+    default:
+      return 'bg-gray-100 text-gray-600';
   }
 }
 </script>
@@ -296,7 +326,9 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
   <div class="flex flex-col h-full">
     <!-- 标题 -->
     <div class="flex items-center gap-3 mb-6">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+      <div
+        class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center"
+      >
         <Zap class="w-5 h-5 text-white" />
       </div>
       <div>
@@ -311,11 +343,14 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
         <span class="text-xs font-medium text-gray-600 dark:text-gray-400">写作流水线</span>
         <div class="flex items-center gap-2">
           <!-- 审查严格度指示器 -->
-          <div class="flex items-center gap-1 px-2 py-1 rounded-full" :class="getStrictnessBg(currentStrictness)">
+          <div
+            class="flex items-center gap-1 px-2 py-1 rounded-full"
+            :class="getStrictnessBg(currentStrictness)"
+          >
             <Shield class="w-3 h-3" />
             <span class="text-xs font-medium">{{ getStrictnessLabel(currentStrictness) }}</span>
           </div>
-          <span 
+          <span
             class="text-xs font-medium"
             :class="stepColors[currentPipelineStep as keyof typeof stepColors] || 'text-gray-500'"
           >
@@ -325,7 +360,7 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
       </div>
       <div class="flex items-center gap-1">
         <template v-for="(step, index) in pipelineSteps" :key="step.key">
-          <div 
+          <div
             class="flex-1 h-1 rounded-full transition-all"
             :class="{
               'bg-indigo-500': step.status === 'completed' || step.status === 'active',
@@ -336,8 +371,8 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
         </template>
       </div>
       <div class="flex justify-between mt-1">
-        <span 
-          v-for="step in pipelineSteps" 
+        <span
+          v-for="step in pipelineSteps"
           :key="step.key"
           class="text-[10px]"
           :class="step.status === 'active' ? 'text-indigo-500 font-medium' : 'text-gray-400'"
@@ -369,7 +404,9 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
     </div>
 
     <!-- 进度卡片 -->
-    <div class="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/50 mb-6">
+    <div
+      class="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/50 mb-6"
+    >
       <!-- 进度条 -->
       <div class="mb-4">
         <div class="flex items-center justify-between mb-2">
@@ -396,18 +433,25 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
           <div class="text-xs text-gray-500">已写</div>
         </div>
         <div class="text-center p-2 rounded-lg bg-white/60 dark:bg-gray-800/60">
-          <div class="text-lg font-bold text-amber-600 dark:text-amber-400">{{ remainingChapters }}</div>
+          <div class="text-lg font-bold text-amber-600 dark:text-amber-400">
+            {{ remainingChapters }}
+          </div>
           <div class="text-xs text-gray-500">待写</div>
         </div>
         <div class="text-center p-2 rounded-lg bg-white/60 dark:bg-gray-800/60">
-          <div class="text-lg font-bold text-indigo-600 dark:text-indigo-400">{{ writtenWordCount.toLocaleString() }}</div>
+          <div class="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+            {{ writtenWordCount.toLocaleString() }}
+          </div>
           <div class="text-xs text-gray-500">字数</div>
         </div>
       </div>
     </div>
 
     <!-- 当前状态 -->
-    <div v-if="isWriting" class="mb-6 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50">
+    <div
+      v-if="isWriting"
+      class="mb-6 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50"
+    >
       <div class="flex items-center gap-2">
         <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
         <span class="text-sm font-medium text-amber-700 dark:text-amber-400">
@@ -430,13 +474,7 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
       <div v-if="writingMode === 'specific'" class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
         <div class="flex items-center gap-3">
           <span class="text-sm text-gray-600 dark:text-gray-400">连续写</span>
-          <NInputNumber
-            v-model:value="targetCount"
-            :min="1"
-            :max="100"
-            size="small"
-            class="w-24"
-          />
+          <NInputNumber v-model:value="targetCount" :min="1" :max="100" size="small" class="w-24" />
           <span class="text-sm text-gray-600 dark:text-gray-400">章</span>
         </div>
         <div class="mt-2 text-xs text-gray-400">
@@ -449,24 +487,34 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
         <div class="text-sm text-gray-600 dark:text-gray-400">
           基于情节完整性自动判断完结时机，写完大纲章节后智能创建新章节直到故事完结
         </div>
-        
+
         <!-- 计划信息 -->
-        <div class="flex items-center gap-2 p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50">
+        <div
+          class="flex items-center gap-2 p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50"
+        >
           <Flag class="w-4 h-4 text-indigo-500" />
           <span class="text-xs text-indigo-600 dark:text-indigo-400">
             计划章节: {{ plannedChapterCount }} 章
           </span>
         </div>
-        
+
         <!-- 完结进度预览 -->
-        <div v-if="endingProgressInfo" class="p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800/50">
+        <div
+          v-if="endingProgressInfo"
+          class="p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800/50"
+        >
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400">完结准备度</span>
-            <span class="text-xs font-medium" :class="endingProgressInfo.isInEndingPhase ? 'text-emerald-500' : 'text-gray-500'">
+            <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400"
+              >完结准备度</span
+            >
+            <span
+              class="text-xs font-medium"
+              :class="endingProgressInfo.isInEndingPhase ? 'text-emerald-500' : 'text-gray-500'"
+            >
               {{ endingProgressInfo.phaseName }}
             </span>
           </div>
-          
+
           <div class="grid grid-cols-2 gap-2 text-xs">
             <div class="flex items-center justify-between">
               <span class="text-gray-500">章节进度</span>
@@ -482,7 +530,14 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
             </div>
             <div class="flex items-center justify-between">
               <span class="text-gray-500">伏笔完成</span>
-              <span class="font-medium" :class="endingProgressInfo.foreshadowCompletion >= 80 ? 'text-emerald-500' : 'text-amber-500'">
+              <span
+                class="font-medium"
+                :class="
+                  endingProgressInfo.foreshadowCompletion >= 80
+                    ? 'text-emerald-500'
+                    : 'text-amber-500'
+                "
+              >
                 {{ endingProgressInfo.foreshadowCompletion }}%
               </span>
             </div>
@@ -493,65 +548,112 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
               </span>
             </div>
           </div>
-          
+
           <!-- 未解决伏笔提示 -->
-          <div v-if="endingProgressInfo.unresolvedForeshadows > 0" class="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-700">
+          <div
+            v-if="endingProgressInfo.unresolvedForeshadows > 0"
+            class="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-700"
+          >
             <div class="flex items-center justify-between mb-1">
               <div class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
                 <AlertCircle class="w-3 h-3" />
                 <span>{{ endingProgressInfo.unresolvedForeshadows }} 个伏笔待揭示</span>
               </div>
-              <span v-if="endingProgressInfo.foreshadowUrgencyScore > 0" 
-                    class="text-xs font-medium"
-                    :class="endingProgressInfo.foreshadowUrgencyScore >= 75 ? 'text-red-500' : endingProgressInfo.foreshadowUrgencyScore >= 50 ? 'text-amber-500' : 'text-blue-500'">
+              <span
+                v-if="endingProgressInfo.foreshadowUrgencyScore > 0"
+                class="text-xs font-medium"
+                :class="
+                  endingProgressInfo.foreshadowUrgencyScore >= 75
+                    ? 'text-red-500'
+                    : endingProgressInfo.foreshadowUrgencyScore >= 50
+                      ? 'text-amber-500'
+                      : 'text-blue-500'
+                "
+              >
                 紧急度: {{ endingProgressInfo.foreshadowUrgencyScore }}
               </span>
             </div>
-            
+
             <!-- 紧急伏笔列表 -->
             <div v-if="endingProgressInfo.criticalForeshadows?.length > 0" class="mt-2 space-y-1">
-              <div v-for="(fs, idx) in endingProgressInfo.criticalForeshadows.slice(0, 3)" :key="idx"
-                   class="flex items-center justify-between text-xs px-2 py-1 rounded bg-amber-50 dark:bg-amber-900/20">
-                <span class="truncate flex-1 text-gray-600 dark:text-gray-400">{{ fs.hint || '未命名伏笔' }}</span>
-                <span class="ml-2 px-1.5 py-0.5 rounded text-xs font-medium"
-                      :class="{
-                        'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400': fs.urgency === 'critical',
-                        'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400': fs.urgency === 'high',
-                        'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400': fs.urgency === 'medium',
-                        'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400': fs.urgency === 'low'
-                      }">
-                  {{ fs.urgency === 'critical' ? '紧急' : fs.urgency === 'high' ? '重要' : fs.urgency === 'medium' ? '中等' : '一般' }}
+              <div
+                v-for="(fs, idx) in endingProgressInfo.criticalForeshadows.slice(0, 3)"
+                :key="idx"
+                class="flex items-center justify-between text-xs px-2 py-1 rounded bg-amber-50 dark:bg-amber-900/20"
+              >
+                <span class="truncate flex-1 text-gray-600 dark:text-gray-400">{{
+                  fs.hint || '未命名伏笔'
+                }}</span>
+                <span
+                  class="ml-2 px-1.5 py-0.5 rounded text-xs font-medium"
+                  :class="{
+                    'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400':
+                      fs.urgency === 'critical',
+                    'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400':
+                      fs.urgency === 'high',
+                    'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400':
+                      fs.urgency === 'medium',
+                    'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400':
+                      fs.urgency === 'low',
+                  }"
+                >
+                  {{
+                    fs.urgency === 'critical'
+                      ? '紧急'
+                      : fs.urgency === 'high'
+                        ? '重要'
+                        : fs.urgency === 'medium'
+                          ? '中等'
+                          : '一般'
+                  }}
                 </span>
               </div>
-              <div v-if="endingProgressInfo.criticalForeshadows.length > 3" class="text-xs text-gray-500 text-center">
+              <div
+                v-if="endingProgressInfo.criticalForeshadows.length > 3"
+                class="text-xs text-gray-500 text-center"
+              >
                 还有 {{ endingProgressInfo.criticalForeshadows.length - 3 }} 个伏笔...
               </div>
             </div>
           </div>
-          
+
           <!-- 大纲节点进度 -->
-          <div v-if="endingProgressInfo.outlineNodesTotal > 0" class="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-700">
+          <div
+            v-if="endingProgressInfo.outlineNodesTotal > 0"
+            class="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-700"
+          >
             <div class="flex items-center justify-between text-xs">
               <span class="text-gray-500">大纲节点</span>
               <span class="font-medium text-gray-700 dark:text-gray-300">
-                {{ endingProgressInfo.outlineNodesComplete }}/{{ endingProgressInfo.outlineNodesTotal }}
+                {{ endingProgressInfo.outlineNodesComplete }}/{{
+                  endingProgressInfo.outlineNodesTotal
+                }}
               </span>
             </div>
           </div>
-          
+
           <!-- 卷级进度 -->
-          <div v-if="endingProgressInfo.volumeProgress" class="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-700">
+          <div
+            v-if="endingProgressInfo.volumeProgress"
+            class="mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-700"
+          >
             <div class="flex items-center justify-between text-xs">
               <span class="text-gray-500">当前卷</span>
               <span class="font-medium text-gray-700 dark:text-gray-300">
-                第{{ endingProgressInfo.volumeProgress.currentVolume }}/{{ endingProgressInfo.volumeProgress.totalVolumes }}卷 
-                ({{ endingProgressInfo.volumeProgress.chaptersWritten }}/{{ endingProgressInfo.volumeProgress.chaptersInVolume }}章)
+                第{{ endingProgressInfo.volumeProgress.currentVolume }}/{{
+                  endingProgressInfo.volumeProgress.totalVolumes
+                }}卷 ({{ endingProgressInfo.volumeProgress.chaptersWritten }}/{{
+                  endingProgressInfo.volumeProgress.chaptersInVolume
+                }}章)
               </span>
             </div>
           </div>
-          
+
           <!-- 准备好完结提示 -->
-          <div v-if="endingProgressInfo.isReady" class="mt-2 flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+          <div
+            v-if="endingProgressInfo.isReady"
+            class="mt-2 flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400"
+          >
             <CheckCircle class="w-3 h-3" />
             <span>已准备好完结</span>
           </div>
@@ -570,13 +672,7 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
               </div>
               <NSelect
                 v-model:value="batchConfig.wordsPerChapter"
-                :options="[
-                  { label: '2500字', value: 2500 },
-                  { label: '3500字', value: 3500 },
-                  { label: '5500字', value: 5500 },
-                  { label: '7500字', value: 7500 },
-                  { label: '10000字', value: 10000 },
-                ]"
+                :options="wordCountOptions"
                 size="small"
                 class="w-28"
               />
@@ -607,9 +703,7 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
                 <Gauge class="w-4 h-4 text-purple-500" />
                 <span class="text-sm text-gray-700 dark:text-gray-300">初始审查严格度</span>
               </div>
-              <div class="text-xs text-gray-400 mb-2">
-                失败时会自动降低严格度，下一章重置
-              </div>
+              <div class="text-xs text-gray-400 mb-2">失败时会自动降低严格度，下一章重置</div>
               <div class="grid grid-cols-3 gap-2">
                 <button
                   v-for="option in strictnessOptions"
@@ -618,12 +712,27 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
                   :class="[
                     batchConfig.initialStrictness === option.value
                       ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600',
                   ]"
                   @click="batchConfig.initialStrictness = option.value as ReviewStrictness"
                 >
-                  <component :is="option.icon" class="w-4 h-4 mx-auto mb-1" :class="batchConfig.initialStrictness === option.value ? 'text-purple-500' : 'text-gray-400'" />
-                  <div class="text-xs font-medium" :class="batchConfig.initialStrictness === option.value ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-400'">
+                  <component
+                    :is="option.icon"
+                    class="w-4 h-4 mx-auto mb-1"
+                    :class="
+                      batchConfig.initialStrictness === option.value
+                        ? 'text-purple-500'
+                        : 'text-gray-400'
+                    "
+                  />
+                  <div
+                    class="text-xs font-medium"
+                    :class="
+                      batchConfig.initialStrictness === option.value
+                        ? 'text-purple-600 dark:text-purple-400'
+                        : 'text-gray-600 dark:text-gray-400'
+                    "
+                  >
                     {{ option.label }}
                   </div>
                   <div class="text-[10px] text-gray-400 mt-1">
@@ -637,7 +746,9 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-2">
                 <Shield class="w-4 h-4 text-purple-500" />
-                <span class="text-sm text-gray-700 dark:text-gray-300 text-nowrap">Blocking闸门</span>
+                <span class="text-sm text-gray-700 dark:text-gray-300 text-nowrap"
+                  >Blocking闸门</span
+                >
               </div>
               <NTag :type="batchConfig.requireBlockingPass ? 'error' : 'default'" size="small">
                 {{ batchConfig.requireBlockingPass ? '必须通过' : '可跳过' }}
@@ -645,8 +756,12 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
             </div>
 
             <!-- 自适应审查说明 -->
-            <div class="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50">
-              <div class="flex items-center gap-2 text-xs text-indigo-600 dark:text-indigo-400 mb-1">
+            <div
+              class="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50"
+            >
+              <div
+                class="flex items-center gap-2 text-xs text-indigo-600 dark:text-indigo-400 mb-1"
+              >
                 <FileText class="w-3 h-3" />
                 <span>自适应审查策略</span>
               </div>
@@ -663,23 +778,14 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
 
     <!-- 控制按钮 -->
     <div class="flex gap-2 mb-6">
-      <NButton
-        v-if="!isWriting"
-        type="primary"
-        class="flex-1"
-        @click="handleStart"
-      >
+      <NButton v-if="!isWriting" type="primary" class="flex-1" @click="handleStart">
         <template #icon>
           <Play class="w-4 h-4" />
         </template>
         {{ writingMode === 'finish' ? '开始写作（写到完结）' : '开始写作' }}
       </NButton>
 
-      <NButton
-        v-if="isWriting"
-        type="warning"
-        @click="handlePauseResume"
-      >
+      <NButton v-if="isWriting" type="warning" @click="handlePauseResume">
         <template #icon>
           <Pause v-if="!isPaused" class="w-4 h-4" />
           <Play v-else class="w-4 h-4" />
@@ -687,11 +793,7 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
         {{ isPaused ? '继续' : '暂停' }}
       </NButton>
 
-      <NButton
-        v-if="isWriting"
-        type="error"
-        @click="stopWriting"
-      >
+      <NButton v-if="isWriting" type="error" @click="stopWriting">
         <template #icon>
           <Square class="w-4 h-4" />
         </template>
@@ -733,10 +835,7 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
               v-else-if="index === writtenChapters"
               class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"
             />
-            <span
-              v-else
-              class="text-xs text-gray-400"
-            >
+            <span v-else class="text-xs text-gray-400">
               {{ index + 1 }}
             </span>
           </div>
@@ -749,9 +848,7 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
           </div>
 
           <!-- 字数 -->
-          <div class="text-xs text-gray-400">
-            {{ chapter.wordCount || 0 }} 字
-          </div>
+          <div class="text-xs text-gray-400">{{ chapter.wordCount || 0 }} 字</div>
         </div>
 
         <!-- 空状态 -->
@@ -763,7 +860,10 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
     </div>
 
     <!-- 错误提示 -->
-    <div v-if="error" class="mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50">
+    <div
+      v-if="error"
+      class="mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50"
+    >
       <div class="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
         <AlertCircle class="w-4 h-4 flex-shrink-0" />
         <span>{{ error }}</span>
