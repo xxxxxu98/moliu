@@ -4,7 +4,7 @@
  * 封装大纲生成进度、列表展示、选中状态等通用 UI 逻辑
  */
 import { computed, ref } from 'vue';
-import { ArrowRight, BookOpen, RefreshCw, Eye, LayoutGrid } from 'lucide-vue-next';
+import { ArrowRight, BookOpen, RefreshCw } from 'lucide-vue-next';
 import { NTooltip } from 'naive-ui';
 import { useI18n } from 'vue-i18n';
 import type { GeneratedOutline } from '@/types/inspiration';
@@ -29,6 +29,8 @@ interface Props {
   showWordCount?: boolean;
   /** 是否显示流式预览（生成过程中实时显示进度） */
   showStreamingPreview?: boolean;
+  /** 空状态说明 */
+  emptyDescription?: string;
   /** 自定义类名 */
   customClass?: string;
 }
@@ -45,6 +47,7 @@ const props = withDefaults(defineProps<Props>(), {
   disableRegenerate: false,
   showWordCount: true,
   showStreamingPreview: true,
+  emptyDescription: '',
   customClass: '',
 });
 
@@ -93,6 +96,14 @@ function formatWordCount(count: number): string {
     return `${(count / 10000).toFixed(0)}万字`;
   }
   return `${count}字`;
+}
+
+function formatTagText(value: string, maxLength = 18): string {
+  if (!value) {
+    return '';
+  }
+
+  return value.length > maxLength ? `${value.slice(0, maxLength)}…` : value;
 }
 
 function handleSelectOutline(outline: GeneratedOutline) {
@@ -244,15 +255,17 @@ function handleCreate() {
                 </span>
                 <span
                   v-if="outline.coolPointDesign?.patterns?.length"
-                  class="min-w-0 whitespace-normal break-words px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
+                  class="min-w-0 max-w-full rounded bg-orange-100 px-1.5 py-0.5 text-orange-600 whitespace-normal break-words dark:bg-orange-900/30 dark:text-orange-400"
+                  :title="outline.coolPointDesign.patterns.join('、')"
                 >
-                  {{ outline.coolPointDesign.patterns.slice(0, 2).join('、') }}
+                  {{ formatTagText(outline.coolPointDesign.patterns.slice(0, 2).join('、')) }}
                 </span>
                 <span
                   v-if="outline.conflictDesign?.source"
-                  class="min-w-0 whitespace-normal break-words px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                  class="min-w-0 max-w-full rounded bg-red-100 px-1.5 py-0.5 text-red-600 whitespace-normal break-words dark:bg-red-900/30 dark:text-red-400"
+                  :title="outline.conflictDesign.source"
                 >
-                  {{ outline.conflictDesign.source }}
+                  {{ formatTagText(outline.conflictDesign.source) }}
                 </span>
               </div>
             </div>
@@ -320,7 +333,7 @@ function handleCreate() {
     <div v-if="showEmpty" class="text-center py-4">
       <BookOpen class="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
       <p class="text-xs text-gray-400 dark:text-gray-500">
-        {{ t('quickStart.emptyDesc') }}
+        {{ emptyDescription || t('quickStart.emptyDesc') }}
       </p>
     </div>
   </div>

@@ -3,8 +3,7 @@
  * QuickStart v2 - 新三步创作法组件
  * Moliu v2.0 - 基于三步创作法的快速开始组件
  */
-import { ref, computed, watch, onMounted } from "vue";
-import type { Component } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from "vue";
 import {
   Sparkles,
   Check,
@@ -20,9 +19,7 @@ import {
   X,
   Star,
   Rocket,
-  AlertTriangle,
   Layers3,
-  ArrowRight,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useMessage } from "naive-ui";
@@ -37,6 +34,7 @@ import { useProjectCreator } from "@/composables/useProjectCreator";
 import OutlineDisplay from "@/components/common/OutlineDisplay.vue";
 import WordCountSelector from "@/components/common/WordCountSelector.vue";
 import StepWizard from "./new/StepWizard.vue";
+import DirectionPicker from "./DirectionPicker.vue";
 import { mapExecutableOutlineToGeneratedOutline } from '@/services/outline/adapters/executable-outline-adapter';
 import type { HookType, CoolPointType } from "@/types/evaluation";
 
@@ -123,6 +121,7 @@ const savedDraft = ref<{
 } | null>(null);
 
 const showDraftMenu = ref(false);
+const previewSectionRef = ref<HTMLElement | null>(null);
 
 // ============================================================
 // Computed
@@ -218,12 +217,16 @@ const canExpandDirection = computed(
   () => !!selectedDirection.value && !isProcessing.value,
 );
 
-const previewOutline = computed<GeneratedOutline | null>(() => {
-  if (selectedOutline.value) return selectedOutline.value;
+const previewGeneratedOutline = computed<GeneratedOutline | null>(() => {
   if (expandedOutline.value) {
     return mapExecutableOutlineToGeneratedOutline(expandedOutline.value);
   }
   return null;
+});
+
+const previewOutline = computed<GeneratedOutline | null>(() => {
+  if (selectedOutline.value) return selectedOutline.value;
+  return previewGeneratedOutline.value;
 });
 
 // ============================================================
@@ -391,6 +394,8 @@ function selectTemplate(template: WritingTemplate) {
 
 function switchTab(tab: ActiveTab) {
   activeTab.value = tab;
+  resetOutlineState();
+  resetProjectState();
   generatedDirections.value = [];
   selectedDirection.value = null;
   expandedOutline.value = null;
@@ -410,8 +415,18 @@ async function handleWizardComplete(data: WizardData) {
 }
 
 function handleWizardBack() {
+  wizardCompleted.value = false;
+  wizardData.value = null;
   showWizard.value = false;
-  activeTab.value = "templates";
+  switchTab("templates");
+}
+
+async function scrollToPreviewSection() {
+  await nextTick();
+  previewSectionRef.value?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  });
 }
 
 async function handleGenerateOutlines() {
@@ -459,13 +474,13 @@ async function handleExpandDirection() {
   });
 
   if (expandedOutline.value) {
-    selectedOutline.value = mapExecutableOutlineToGeneratedOutline(expandedOutline.value);
+    selectedOutline.value = previewGeneratedOutline.value;
+    await scrollToPreviewSection();
   }
 }
 
 async function handleCreateProject() {
-  const outlineToCreate = selectedOutline.value
-    ?? (expandedOutline.value ? mapExecutableOutlineToGeneratedOutline(expandedOutline.value) : null);
+  const outlineToCreate = selectedOutline.value ?? previewGeneratedOutline.value;
 
   if (!outlineToCreate) return;
   await doCreateProject(outlineToCreate);
@@ -485,11 +500,23 @@ function saveDraft() {
 
 function loadDraft() {
   if (savedDraft.value) {
+    resetOutlineState();
+    resetProjectState();
+    generatedDirections.value = [];
+    selectedDirection.value = null;
+    expandedOutline.value = null;
+    selectedOutline.value = null;
+    wizardCompleted.value = false;
+    wizardData.value = null;
+    showWizard.value = false;
+
     prompt.value = savedDraft.value.prompt;
     if (savedDraft.value.templateId) {
       selectedTemplate.value =
         writingTemplates.find((t) => t.id === savedDraft.value?.templateId) ||
         null;
+    } else {
+      selectedTemplate.value = null;
     }
     activeTab.value = savedDraft.value.templateId ? "templates" : "custom";
   }
@@ -500,6 +527,12 @@ function clearDraft() {
   localStorage.removeItem("quickStartDraft");
   savedDraft.value = null;
 }
+
+watch(previewOutline, async (nextOutline, previousOutline) => {
+  if (nextOutline && nextOutline.id !== previousOutline?.id) {
+    await scrollToPreviewSection();
+  }
+});
 
 // ============================================================
 // Lifecycle
@@ -5094,125 +5127,40 @@ function clearTemplateSearch() {
       />
 
       <div
-        v-if="generatedDirections.length > 0 || isProcessing"
+        v-if="generatedDirections.length > 0 || isProcessing || (wizardCompleted && !!combinedError)"
         class="space-y-4"
       >
-        <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 p-4">
-          <div class="flex items-center justify-between mb-3 gap-3">
-            <div>
-              <h4 class="text-sm font-semibold text-gray-900 dark:text-white">创作方向卡</h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400">先选一个最值得展开的主方案，再进入项目创建。</p>
-            </div>
-            <NButton
-              size="small"
-              secondary
-              :disabled="isProcessing"
-              @click="handleGenerateOutlines"
-            >
-              换一批方向
-            </NButton>
-          </div>
-
-          <div v-if="isProcessing && generatedDirections.length === 0" class="rounded-xl bg-gray-50 dark:bg-gray-800/60 px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-            {{ generationProgress || '正在生成创作方向...' }}
-          </div>
-
-          <div v-else class="space-y-3">
-            <button
-              v-for="card in directionCards"
-              :key="card.id"
-              type="button"
-              class="w-full rounded-2xl border p-4 text-left transition-all duration-200"
-              :class="selectedDirection?.id === card.direction.id
-                ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/20 shadow-sm'
-                : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 bg-white dark:bg-gray-800/60'"
-              @click="selectDirection(card.direction)"
-            >
-              <div class="flex items-start gap-3">
-                <div :class="`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${card.accent} text-white`">
-                  <component :is="card.icon as Component" class="h-5 w-5" />
-                </div>
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-start justify-between gap-3 mb-2">
-                    <div>
-                      <div class="text-sm font-semibold text-gray-900 dark:text-white">
-                        {{ card.direction.title }}
-                      </div>
-                      <p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
-                        {{ card.direction.oneLiner }}
-                      </p>
-                    </div>
-                    <div class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                      {{ card.direction.recommendationScore }}分
-                    </div>
-                  </div>
-
-                  <p class="text-xs leading-5 text-gray-600 dark:text-gray-300">
-                    {{ card.direction.premise }}
-                  </p>
-
-                  <div class="mt-3 grid gap-2 md:grid-cols-2">
-                    <div>
-                      <div class="text-[11px] font-medium uppercase tracking-wide text-gray-400">成长路径</div>
-                      <div class="mt-1 text-xs text-gray-600 dark:text-gray-300">{{ card.direction.protagonistArc }}</div>
-                    </div>
-                    <div>
-                      <div class="text-[11px] font-medium uppercase tracking-wide text-gray-400">核心冲突</div>
-                      <div class="mt-1 text-xs text-gray-600 dark:text-gray-300">{{ card.direction.coreConflict }}</div>
-                    </div>
-                  </div>
-
-                  <div class="mt-3 flex flex-wrap gap-2">
-                    <span
-                      v-for="tag in card.direction.coolPointStyle"
-                      :key="`${card.id}-${tag}`"
-                      class="rounded-full bg-orange-50 px-2.5 py-1 text-xs text-orange-600 dark:bg-orange-900/20 dark:text-orange-300"
-                    >
-                      {{ tag }}
-                    </span>
-                  </div>
-
-                  <div v-if="card.direction.riskNotes.length > 0" class="mt-3 flex items-start gap-2 rounded-xl bg-amber-50/70 px-3 py-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
-                    <AlertTriangle class="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
-                    <span>{{ card.direction.riskNotes.join('；') }}</span>
-                  </div>
-                </div>
-              </div>
-            </button>
-          </div>
-
-          <div class="mt-4 flex flex-wrap items-center gap-3">
-            <NButton
-              type="primary"
-              :disabled="!canExpandDirection"
-              :loading="isProcessing && !!selectedDirection"
-              @click="handleExpandDirection"
-            >
-              <template #icon>
-                <ArrowRight class="h-4 w-4" />
-              </template>
-              展开主方案
-            </NButton>
-            <span v-if="selectedDirection" class="text-xs text-gray-500 dark:text-gray-400">
-              当前已选择：{{ selectedDirection.title }}
-            </span>
-          </div>
-        </div>
-
-        <OutlineDisplay
-          v-if="previewOutline"
-          :outlines="[previewOutline]"
-          :selected-outline="previewOutline"
-          :is-generating="!!isProcessing && !expandedOutline"
+        <DirectionPicker
+          title="创作方向卡"
+          description="先选一个最值得展开的主方案，再进入项目创建。"
+          :cards="directionCards"
+          :selected-direction="selectedDirection"
+          :is-processing="!!isProcessing"
           :progress="generationProgress || ''"
-          :error="combinedError"
-          :show-word-count="true"
-          :show-streaming-preview="true"
-          :disable-regenerate="isProcessing"
-          @select="selectOutline"
+          :error="null"
+          :can-expand="canExpandDirection"
           @regenerate="handleGenerateOutlines"
-          @create="handleCreateProject"
+          @select="selectDirection"
+          @expand="handleExpandDirection"
         />
+
+        <div ref="previewSectionRef">
+          <OutlineDisplay
+            v-if="previewOutline"
+            :outlines="[previewOutline]"
+            :selected-outline="previewOutline"
+            :is-generating="!!isProcessing && !expandedOutline"
+            :progress="generationProgress || ''"
+            :error="combinedError"
+            :show-word-count="true"
+            :show-streaming-preview="true"
+            :empty-description="'请先选择一个创作方向并展开主方案，随后即可在这里预览大纲。'"
+            :disable-regenerate="isProcessing"
+            @select="selectOutline"
+            @regenerate="handleGenerateOutlines"
+            @create="handleCreateProject"
+          />
+        </div>
       </div>
     </div>
 
@@ -5453,70 +5401,38 @@ function clearTemplateSearch() {
 
     <!-- Outline Display - 非 Wizard Tab 时显示 -->
     <template v-if="activeTab !== 'wizard'">
-      <div
-        v-if="generatedDirections.length > 0"
-        class="space-y-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/70 p-4"
-      >
-        <div class="flex items-center justify-between gap-3">
-          <div>
-            <h4 class="text-sm font-semibold text-gray-900 dark:text-white">候选方向</h4>
-            <p class="text-xs text-gray-500 dark:text-gray-400">选择一个方向后展开主方案，再创建项目。</p>
-          </div>
-          <NButton size="small" secondary :disabled="isProcessing" @click="handleGenerateOutlines">
-            换一批方向
-          </NButton>
-        </div>
-
-        <div class="space-y-3">
-          <button
-            v-for="card in directionCards"
-            :key="`secondary-${card.id}`"
-            type="button"
-            class="w-full rounded-2xl border p-4 text-left transition-all duration-200"
-            :class="selectedDirection?.id === card.direction.id
-              ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/20 shadow-sm'
-              : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 bg-white dark:bg-gray-800/60'"
-            @click="selectDirection(card.direction)"
-          >
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ card.direction.title }}</div>
-                <p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">{{ card.direction.oneLiner }}</p>
-              </div>
-              <div class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">
-                {{ card.direction.recommendationScore }}分
-              </div>
-            </div>
-            <div class="mt-3 text-xs text-gray-600 dark:text-gray-300">{{ card.direction.recommendedReason }}</div>
-          </button>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-3">
-          <NButton type="primary" :disabled="!canExpandDirection" :loading="isProcessing" @click="handleExpandDirection">
-            <template #icon>
-              <ArrowRight class="h-4 w-4" />
-            </template>
-            展开主方案
-          </NButton>
-          <span v-if="selectedDirection" class="text-xs text-gray-500 dark:text-gray-400">
-            已选择：{{ selectedDirection.title }}
-          </span>
-        </div>
-      </div>
-
-      <OutlineDisplay
-        v-if="previewOutline"
-        :outlines="[previewOutline]"
-        :selected-outline="previewOutline"
-        :is-generating="!!isProcessing && !expandedOutline"
+      <DirectionPicker
+        v-if="generatedDirections.length > 0 || (activeTab === 'custom' && (isProcessing || !!combinedError))"
+        title="候选方向"
+        description="选择一个方向后展开主方案，再创建项目。"
+        :cards="directionCards"
+        :selected-direction="selectedDirection"
+        :is-processing="!!isProcessing"
         :progress="generationProgress || ''"
         :error="combinedError"
-        :show-word-count="true"
-        :show-streaming-preview="true"
-        @select="selectOutline"
+        :can-expand="canExpandDirection"
+        compact
         @regenerate="handleGenerateOutlines"
-        @create="handleCreateProject"
+        @select="selectDirection"
+        @expand="handleExpandDirection"
       />
+
+      <div ref="previewSectionRef">
+        <OutlineDisplay
+          v-if="previewOutline"
+          :outlines="[previewOutline]"
+          :selected-outline="previewOutline"
+          :is-generating="!!isProcessing && !expandedOutline"
+          :progress="generationProgress || ''"
+          :error="combinedError"
+          :show-word-count="true"
+        :show-streaming-preview="true"
+        :empty-description="'请先选择一个创作方向并展开主方案，随后即可在这里预览大纲。'"
+        @select="selectOutline"
+          @regenerate="handleGenerateOutlines"
+          @create="handleCreateProject"
+        />
+      </div>
     </template>
   </div>
 </template>

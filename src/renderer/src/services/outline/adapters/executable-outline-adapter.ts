@@ -10,7 +10,15 @@ import type {
   GeneratedOutline,
   GeneratedStoryLines,
   GeneratedSubplot,
+  GeneratedWorldSetting,
 } from '@/types/inspiration';
+
+function toEstimatedWordCount(outline: ExecutableOutline): number {
+  const chapterBlockCount = Math.max(outline.startupPack30.chapterBlocks.length, 1);
+  const volumeCount = Math.max(outline.volumePlan.length, 1);
+
+  return Math.max(150000, chapterBlockCount * 50000, volumeCount * 180000);
+}
 
 function toSynopsis(outline: ExecutableOutline): string {
   const pieces = [
@@ -22,8 +30,56 @@ function toSynopsis(outline: ExecutableOutline): string {
   return pieces.join(' ');
 }
 
+function toWorldSetting(outline: ExecutableOutline): GeneratedWorldSetting | undefined {
+  const locations = outline.volumePlan.map((volume, index) => ({
+    name: volume.title,
+    description: [volume.objective, volume.coreConflict, volume.climax].filter(Boolean).join('；'),
+    level: index === 0 ? 'world' : 'region',
+    parentName: index === 0 ? undefined : outline.volumePlan[index - 1]?.title,
+  }));
+
+  const factions = outline.keyCharacters.map((character) => ({
+    name: character.name,
+    description: [character.functionInStory, character.keyNeed].filter(Boolean).join('；'),
+    parentName: character.role === 'support' ? '主角阵营' : undefined,
+    allies: character.role === 'antagonist' ? [] : ['主角阵营'],
+    enemies: character.role === 'antagonist' ? ['主角阵营'] : [],
+  }));
+
+  const rules = [
+    {
+      name: '核心驱动',
+      description: outline.storyEngine.coreConflict,
+      category: 'custom',
+      relatedRuleNames: ['成长目标'],
+    },
+    {
+      name: '成长目标',
+      description: outline.storyEngine.protagonistGoalLongTerm || outline.storyEngine.protagonistGoalShortTerm,
+      category: 'custom',
+      relatedRuleNames: ['核心驱动'],
+    },
+    ...outline.positioning.styleKeywords.map((keyword) => ({
+      name: keyword,
+      description: `${keyword}风格下的故事规则与读者预期`,
+      category: 'custom',
+      relatedRuleNames: ['核心驱动'],
+    })),
+  ].filter((rule) => rule.description);
+
+  if (locations.length === 0 && factions.length === 0 && rules.length === 0) {
+    return undefined;
+  }
+
+  return {
+    locations,
+    factions,
+    rules,
+  };
+}
+
 function toCharacters(outline: ExecutableOutline): GeneratedCharacter[] {
-  return outline.keyCharacters.map((character) => ({
+  const characters = outline.keyCharacters.map((character) => ({
     name: character.name,
     role: character.role,
     description: character.functionInStory,
@@ -39,26 +95,65 @@ function toCharacters(outline: ExecutableOutline): GeneratedCharacter[] {
       }]
       : [],
   }));
+
+  const hasProtagonist = characters.some((character) => character.role === 'protagonist');
+  if (hasProtagonist) {
+    return characters;
+  }
+
+  return [{
+    name: '主角',
+    role: 'protagonist',
+    description: outline.storyEngine.protagonistStart || outline.oneLiner,
+    personality: [],
+    appearance: '',
+    abilities: [],
+    background: outline.storyEngine.protagonistGoalShortTerm,
+    relationships: [],
+  }, ...characters];
 }
 
 function toSubplots(outline: ExecutableOutline): GeneratedSubplot[] {
-  return outline.volumePlan.map((volume) => ({
-    title: volume.title,
-    description: [volume.objective, volume.coreConflict, volume.climax, volume.reversal]
-      .filter(Boolean)
-      .join('；'),
-    relatedCharacters: volume.keyCharacters,
-    chapterRange: undefined,
-    purpose: volume.endingHook || volume.protagonistGrowth,
-  }));
+  const approxVolumeSpan = Math.max(Math.round(toEstimatedWordCount(outline) / Math.max(outline.volumePlan.length, 1) / 2000), 1);
+
+  return outline.volumePlan.map((volume, index) => {
+    const startChapter = index * approxVolumeSpan + 1;
+    const endChapter = startChapter + approxVolumeSpan - 1;
+
+    return {
+      title: volume.title,
+      description: [volume.objective, volume.coreConflict, volume.climax, volume.reversal]
+        .filter(Boolean)
+        .join('；'),
+      relatedCharacters: volume.keyCharacters,
+      chapterRange: [startChapter, endChapter],
+      purpose: volume.endingHook || volume.protagonistGrowth,
+    };
+  });
 }
 
 function toChapters(outline: ExecutableOutline): GeneratedChapter[] {
+  if (outline.chapterBlueprints?.length) {
+    return outline.chapterBlueprints.map((chapter) => ({
+      title: chapter.title,
+      number: chapter.orderIndex,
+      summary: chapter.summary,
+      keyEvents: chapter.mustCover,
+      involvedCharacters: chapter.involvedCharacters ?? [],
+      coreEvent: chapter.CEN,
+      coolPoints: chapter.coolPointType ? [chapter.coolPointType] : [],
+      hook: chapter.hookType,
+    }));
+  }
+
   return outline.startupPack30.chapterBlocks.map((block, index) => ({
     title: `${block.range}推进计划`,
+    number: index + 1,
     summary: [block.objective, block.readerExpectation].filter(Boolean).join('；'),
     keyEvents: block.mustEvents,
     involvedCharacters: outline.keyCharacters.map((character) => character.name).slice(0, 3),
+    coolPoints: block.coolPoints,
+    hook: block.hookRequirement,
   }));
 }
 
@@ -141,7 +236,12 @@ export function mapExecutableOutlineToGeneratedOutline(outline: ExecutableOutlin
     id: `executable-${Date.now()}`,
     title: outline.title,
     synopsis: toSynopsis(outline),
-    genres: outline.positioning.styleKeywords,
+    genres: Array.from(new Set([
+      ...outline.positioning.styleKeywords,
+      ...outline.positioning.targetReaders,
+      ...outline.positioning.coreEmotions,
+    ].filter(Boolean))),
+    worldSetting: toWorldSetting(outline),
     structure: {
       act1: outline.volumePlan[0]?.objective ?? outline.startupPack30.openingHook,
       act2a: outline.volumePlan[0]?.coreConflict ?? '',
@@ -152,7 +252,7 @@ export function mapExecutableOutlineToGeneratedOutline(outline: ExecutableOutlin
     chapters: toChapters(outline),
     characters: toCharacters(outline),
     foreshadows: toForeshadows(outline),
-    estimatedWordCount: 500000,
+    estimatedWordCount: toEstimatedWordCount(outline),
     emotionGoal: toEmotionGoal(outline),
     coolPointDesign: toCoolPointDesign(outline),
     coreSellingPoints: toCoreSellingPoints(outline),

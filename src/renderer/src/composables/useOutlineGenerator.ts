@@ -143,6 +143,11 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
       rawMarkdown.value = result.rawText ?? '';
       warnings.value = result.warnings ?? [];
       strategy.value = result.strategy ?? '';
+
+      if (result.directions.length === 0) {
+        error.value = result.warnings?.[0] ?? '未能生成可用方向，请重试';
+      }
+
       return result.directions;
     } catch (err) {
       console.error('[useOutlineGenerator] Direction generation error:', err);
@@ -179,6 +184,11 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
       rawMarkdown.value = result.rawText ?? '';
       warnings.value = result.warnings ?? [];
       strategy.value = result.strategy ?? '';
+
+      if (!result.outline) {
+        error.value = result.warnings?.[0] ?? '主方案展开失败，请重试';
+      }
+
       return result.outline;
     } catch (err) {
       console.error('[useOutlineGenerator] Expand direction error:', err);
