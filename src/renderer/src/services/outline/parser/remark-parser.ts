@@ -27,6 +27,11 @@ import type {
   WorldSetting,
   Foreshadow,
 } from '../schemas/outline.schema';
+import {
+  normalizeCharacterName,
+  normalizeCharacterRole,
+  normalizeForeshadowType,
+} from '../utils';
 
 /**
  * Markdown AST 节点类型
@@ -122,6 +127,13 @@ export class RemarkParser {
     // 1. 解析为 AST
     const ast = this.processor.parse(markdown);
 
+    console.debug('[RemarkParser] parse start', {
+      markdownLength: markdown.length,
+      preview: markdown.slice(0, 300),
+      astType: ast.type,
+      childCount: (ast as Root).children?.length || 0,
+    });
+
     // 2. 初始化结果
     const result: ParseResult = {
       title: '',
@@ -142,11 +154,44 @@ export class RemarkParser {
     try {
       this.extractContent(ast as Root, result);
     } catch (err) {
-      // 静默处理解析错误
+      console.warn('[RemarkParser] extractContent error', err);
     }
 
+    console.debug('[RemarkParser] parse raw result', {
+      title: result.title,
+      synopsisLength: result.synopsis.length,
+      genres: result.genres,
+      chapters: result.chapters.length,
+      characters: result.characters.length,
+      foreshadows: result.foreshadows.length,
+      firstCharacter: result.characters[0],
+      firstForeshadow: result.foreshadows[0],
+      coolPointDesign: result.coolPointDesign,
+      storyLines: result.storyLines,
+    });
+    console.debug('[RemarkParser] parse raw field snapshot', {
+      title: result.title,
+      worldSetting: result.worldSetting,
+      emotionGoal: result.emotionGoal,
+      structureKeys: result.structure ? Object.keys(result.structure as Record<string, unknown>) : [],
+      conflictDesign: result.conflictDesign,
+      coolPointDesignKeys: result.coolPointDesign ? Object.keys(result.coolPointDesign as Record<string, unknown>) : [],
+      storyLineKeys: result.storyLines ? Object.keys(result.storyLines as Record<string, unknown>) : [],
+    });
+
     // 4. 清理并返回
-    return this.cleanResult(result);
+    const cleaned = this.cleanResult(result);
+    console.debug('[RemarkParser] parse cleaned result', {
+      title: cleaned.title,
+      synopsisLength: cleaned.synopsis.length,
+      genres: cleaned.genres,
+      chapters: cleaned.chapters.length,
+      characters: cleaned.characters.length,
+      foreshadows: cleaned.foreshadows.length,
+      firstCharacter: cleaned.characters[0],
+      firstForeshadow: cleaned.foreshadows[0],
+    });
+    return cleaned;
   }
 
   /**
@@ -173,6 +218,7 @@ export class RemarkParser {
     let currentChapter: ChapterEnhanced | null = null;
     let currentCharacter: Partial<Character> | null = null;
     let inWorldSection = false;
+    let inCharacterSection = false;
     let worldSectionType: 'locations' | 'factions' | 'rules' | null = null;
     let inStructureSection = false;
     let structureField: keyof Structure | null = null;
@@ -182,6 +228,9 @@ export class RemarkParser {
     // 章节详情状态
     let inChapterDetail = false;
     let currentChapterDetail: 'coreEvent' | 'coolPoint' | 'hook' | null = null;
+
+    // 角色分组标题（例如：主角 / 其他角色 / 配角 / 反派 / 导师）
+    let currentCharacterGroup: string = '';
 
     // 伏笔分期状态
     let inForeshadowSection = false;
@@ -207,6 +256,19 @@ export class RemarkParser {
     let coolPointDesignField: 'patterns' | 'arranged' | null = null;
 
     visit(node, (node: MDElement, index) => {
+      if (index !== undefined && index < 80) {
+        console.debug('[RemarkParser] visit node', {
+          index,
+          type: node.type,
+          preview: this.getNodePreview(node),
+          currentSection,
+          inChapterDetail,
+          currentChapterDetail,
+          currentStoryLine,
+          foreshadowPhase,
+        });
+      }
+
       // 标题处理
       if (node.type === 'heading') {
         const heading = node as Heading;
@@ -427,18 +489,30 @@ export class RemarkParser {
           // 注意：不在这里 return，让 H3 处理逻辑也能执行
         }
 
-        // H3: 也作为主要区块处理（兼容 AI 使用 H3 格式的情况）
-        if (level === 3) {
+        // H3 及更深层级：也作为主要区块处理（兼容 AI 使用 H3/H4/H5 格式的情况）
+        if (level >= 3) {
           // 重置章节详情状态
           inChapterDetail = false;
           currentChapterDetail = null;
           emotionField = null;
           // 不要重置 conflictField，让它在冲突设计子区块中保持
           // 注意：保留 currentStoryLine，因为 H3 可能是八条故事线的子区块
-          // 只有当不是八条故事线的子区块时才重置
-          // 如果当前已经是 storyLines 区块，且当前 H3 不是八条故事线标题，则重置 currentStoryLine
           if (!normalizedText.includes('故事线') && !normalizedText.includes('线')) {
             currentStoryLine = null;
+          }
+
+          // H3 常用于结构化子标题；如果是角色设定内的子标题，优先切到角色区块
+          const isCharacterHeading =
+            normalizedText.includes('主角') ||
+            normalizedText.includes('配角') ||
+            normalizedText.includes('其他角色') ||
+            normalizedText.includes('人物') ||
+            normalizedText.includes('角色');
+          if (isCharacterHeading) {
+            currentSection = 'characters';
+            inWorldSection = false;
+            inForeshadowSection = false;
+            return;
           }
 
           // 如果当前 H3 是八条故事线的子区块标题（如 "### 地图线"），初始化 result.storyLines
@@ -489,19 +563,28 @@ export class RemarkParser {
           ) {
             currentSection = 'basicInfo';
             inWorldSection = false;
+            inCharacterSection = false;
             inForeshadowSection = false;
           } else if (normalizedText.includes('题材') || normalizedText.includes('标签')) {
             currentSection = 'genres';
             inWorldSection = false;
+            inCharacterSection = false;
             inForeshadowSection = false;
           } else if (normalizedText.includes('世界观') || normalizedText.includes('设定')) {
             currentSection = 'worldSetting';
             inWorldSection = true;
+            inCharacterSection = false;
+            inForeshadowSection = false;
+          } else if (normalizedText.includes('角色设定')) {
+            currentSection = 'characters';
+            inCharacterSection = true;
+            inWorldSection = false;
             inForeshadowSection = false;
           } else if (normalizedText.includes('四幕') || normalizedText.includes('结构')) {
             currentSection = 'structure';
             inStructureSection = true;
             inWorldSection = false;
+            inCharacterSection = false;
             inForeshadowSection = false;
           } else if (
             normalizedText.includes('章节') ||
@@ -509,16 +592,21 @@ export class RemarkParser {
           ) {
             currentSection = 'chapters';
             inWorldSection = false;
+            inCharacterSection = false;
             inForeshadowSection = false;
           } else if (
             normalizedText.includes('角色') ||
             normalizedText.includes('人物') ||
             normalizedText.includes('主角') ||
             normalizedText.includes('配角') ||
-            normalizedText.includes('其他角色')
+            normalizedText.includes('其他角色') ||
+            normalizedText === '主角' ||
+            normalizedText === '配角' ||
+            normalizedText === '其他角色'
           ) {
             currentSection = 'characters';
             inWorldSection = false;
+            inCharacterSection = true;
             inForeshadowSection = false;
           } else if (normalizedText.includes('伏笔')) {
             currentSection = 'foreshadows';
@@ -644,6 +732,11 @@ export class RemarkParser {
                 keyEvents: [],
                 involvedCharacters: [],
               };
+              console.debug('[RemarkParser] chapter matched', {
+                number: currentChapter.number,
+                title: currentChapter.title,
+                section: currentSection,
+              });
               inChapterDetail = false;
             }
           }
@@ -708,17 +801,22 @@ export class RemarkParser {
 
           // 角色详情 - 但要跳过加粗格式的字段（如 **姓名**：林深）
           if (currentSection === 'characters') {
+            const groupName = normalizedText.trim();
+            if (groupName === '主角' || groupName === '其他角色' || groupName === '配角' || groupName === '反派' || groupName === '导师' || groupName === '女主') {
+              currentCharacterGroup = groupName;
+            }
+
             // 如果是加粗格式的字段（如 **姓名**：），不创建新角色，等待列表处理
             if (!text.startsWith('**') && !normalizedText.includes('姓名') && !normalizedText.includes('描述')) {
               const rawName = text.replace(/^#+\s*/, '').trim();
               // 尝试提取角色名和角色类型
               const charMatch = rawName.match(/^(.+?)[（(]([^）)]+)[）)]$/);
               let charName = rawName;
-              let charRole = '配角';
+              let charRole = currentCharacterGroup || '配角';
 
               if (charMatch) {
                 charName = charMatch[1].trim();
-                charRole = this.normalizeCharacterRole(charMatch[2].trim());
+                charRole = normalizeCharacterRole(charMatch[2].trim());
               }
 
               currentCharacter = {
@@ -731,6 +829,11 @@ export class RemarkParser {
                 goals: [],
                 currentDilemma: '',
               };
+              console.debug('[RemarkParser] character context created', {
+                group: currentCharacterGroup,
+                name: charName,
+                role: charRole,
+              });
             }
           }
 
@@ -773,10 +876,21 @@ export class RemarkParser {
             }
             break;
           case 'wordCount': {
-            const wordMatch = text.match(/(\d+)\s*[-~至]\s*(\d+)\s*万?字/);
-            if (wordMatch) {
-              const avg = (parseInt(wordMatch[1]) + parseInt(wordMatch[2])) / 2;
+            const normalized = text
+              .replace(/[，,]/g, ',')
+              .replace(/\s+/g, ' ')
+              .trim();
+
+            const rangeMatch = normalized.match(/(\d+(?:\.\d+)?)\s*[-~至]\s*(\d+(?:\.\d+)?)\s*万?字?/);
+            if (rangeMatch) {
+              const avg = (parseFloat(rangeMatch[1]) + parseFloat(rangeMatch[2])) / 2;
               result.estimatedWordCount = avg * 10000;
+              break;
+            }
+
+            const plainMatch = normalized.match(/(\d{5,8})(?:\s*字)?/);
+            if (plainMatch) {
+              result.estimatedWordCount = parseInt(plainMatch[1]);
             }
             break;
           }
@@ -1135,8 +1249,12 @@ export class RemarkParser {
             for (const item of items) {
               if (!item.trim()) continue;
 
-              // 跳过角色区块的子标题（如 "主角"、"其他角色"）
-              if (item.includes('主角') || item.includes('其他角色') || item.includes('配角')) {
+              // 跳过角色区块的子标题（如单独的“主角”“其他角色”）
+              // 但不要误跳过字段内容里的“主角/配角”字样，例如 **角色类型**：主角
+              if (
+                !item.includes('**') &&
+                (item.trim() === '主角' || item.trim() === '其他角色' || item.trim() === '配角')
+              ) {
                 continue;
               }
 
@@ -1156,6 +1274,12 @@ export class RemarkParser {
                   currentCharacter = this.createNewCharacter('');
                 }
 
+                console.debug('[RemarkParser] character field parsed', {
+                  fieldName,
+                  fieldValue,
+                  currentCharacter,
+                });
+
                 switch (fieldName) {
                   case '姓名':
                     // 如果当前角色已有姓名，先保存再创建新的
@@ -1167,7 +1291,7 @@ export class RemarkParser {
                     }
                     break;
                   case '角色类型':
-                    currentCharacter.role = this.normalizeCharacterRole(fieldValue);
+                    currentCharacter.role = normalizeCharacterRole(fieldValue);
                     break;
                   case '描述':
                     currentCharacter.identity = fieldValue;
@@ -1180,7 +1304,7 @@ export class RemarkParser {
               // 格式2: `角色名（role）：描述` 或 `角色名：描述`
               const simpleMatch = item.match(/^(.+?)[（(]([^）)]+)[）)][：:]\s*(.+)/);
               if (simpleMatch) {
-                const charName = simpleMatch[1].trim();
+                const charName = this.cleanCharacterName(simpleMatch[1]);
                 const charRole = simpleMatch[2].trim();
                 const charDesc = simpleMatch[3].trim();
 
@@ -1196,7 +1320,7 @@ export class RemarkParser {
               // 格式3: `角色名：描述`（无括号）
               const colonMatch = item.match(/^([^：:：]+)[：:]\s*(.+)/);
               if (colonMatch && !item.includes('**')) {
-                const charName = colonMatch[1].trim();
+                const charName = this.cleanCharacterName(colonMatch[1]);
                 const charDesc = colonMatch[2].trim();
 
                 // 跳过标题类内容
@@ -1663,15 +1787,6 @@ export class RemarkParser {
   /**
    * 规范化伏笔类型
    */
-  private normalizeForeshadowType(type: string): 'item' | 'dialogue' | 'event' | 'mystery' {
-    if (!type) return 'mystery';
-    const t = type.toLowerCase();
-    if (t.includes('道具') || t.includes('物品') || t.includes('item')) return 'item';
-    if (t.includes('对话') || t.includes('dialogue')) return 'dialogue';
-    if (t.includes('事件') || t.includes('event')) return 'event';
-    // 悬念/mystery 放在最后，作为默认值
-    return 'mystery';
-  }
 
   /**
    * 从文本解析情绪目标字段
@@ -1755,35 +1870,14 @@ export class RemarkParser {
    * 规范化角色类型
    * 返回中文枚举值，与 CharacterSchema 中的 z.enum(['主角', '女主', '导师', '反派', '配角']) 匹配
    */
-  private normalizeCharacterRole(role: string): '主角' | '女主' | '导师' | '反派' | '配角' {
-    if (!role) return '配角';
-    const r = role.toLowerCase();
-
-    // 女主/女一（网文特色，女性主角）
-    if (r.includes('女主') || r.includes('女一')) return '女主';
-
-    // 主角/男主/男一（主角）
-    if (r.includes('主角') || r.includes('protagonist') || r.includes('hero') || r.includes('男主') || r.includes('男一')) return '主角';
-
-    // 反派/敌人
-    if (r.includes('反派') || r.includes('antagonist') || r.includes('敌人') || r.includes('villain') || r.includes('boss')) return '反派';
-
-    // 导师/师父/师尊
-    if (r.includes('导师') || r.includes('mentor') || r.includes('师父') || r.includes('师尊') || r.includes('师傅')) return '导师';
-
-    // 配角/次要角色/小角色/龙套/伙伴/宠物/坐骑/灵兽（都归为配角）
-    if (r.includes('配角') || r.includes('supporting') || r.includes('secondary') || r.includes('minor') || r.includes('小角色') || r.includes('龙套') || r.includes('伙伴') || r.includes('宠物') || r.includes('坐骑') || r.includes('灵兽') || r.includes('comrade') || r.includes('companion') || r.includes('pet')) return '配角';
-
-    // 默认返回配角
-    return '配角';
-  }
 
   /**
    * 创建新角色对象
    */
   private createNewCharacter(name: string, role: string = '配角', description: string = ''): Character {
+    const cleanName = this.cleanCharacterName(name);
     return {
-      name,
+      name: cleanName,
       role: this.normalizeCharacterRole(role),
       description,
       identity: description,
@@ -1800,12 +1894,37 @@ export class RemarkParser {
    * 清理结果
    */
   private cleanResult(result: ParseResult): ParseResult {
+    const narrativeCharacters = this.extractCharactersFromNarrativeFields(result);
+    const rawCharacters = [...result.characters, ...narrativeCharacters].filter(c => c.name || c.role);
+    console.debug('[RemarkParser] cleanResult characters before dedupe', {
+      rawCount: rawCharacters.length,
+      narrativeCount: narrativeCharacters.length,
+      sample: rawCharacters.slice(0, 10).map(c => ({
+        name: c.name,
+        role: c.role,
+        identity: c.identity,
+        description: c.description,
+      })),
+    });
+
+    const characters = this.deduplicateCharacters(rawCharacters);
+
+    console.debug('[RemarkParser] cleanResult characters after dedupe', {
+      dedupedCount: characters.length,
+      sample: characters.slice(0, 10).map(c => ({
+        name: c.name,
+        role: c.role,
+        identity: c.identity,
+        description: c.description,
+      })),
+    });
+
     return {
       title: result.title || '未命名大纲',
       synopsis: result.synopsis || '',
       genres: result.genres.filter(g => g.trim()),
       chapters: result.chapters.filter(ch => ch.title),
-      characters: result.characters.filter(c => c.name || c.role),
+      characters,
       structure: result.structure,
       foreshadows: result.foreshadows,
       worldSetting: result.worldSetting,
@@ -1816,6 +1935,186 @@ export class RemarkParser {
       storyLines: result.storyLines,
       conflictDesign: result.conflictDesign,
     };
+  }
+
+  /**
+   * 去重角色，按姓名+角色类型聚合，并尽量合并信息
+   */
+  private extractCharactersFromNarrativeFields(result: ParseResult): Partial<Character>[] {
+    const sources: Array<{ section: keyof ParseResult; roleHint?: string }> = [
+      { section: 'storyLines' },
+      { section: 'conflictDesign' },
+    ];
+
+    const narrativeCharacters: Partial<Character>[] = [];
+    const seen = new Set<string>();
+
+    const pushCharacter = (name: string, roleHint: string, description: string) => {
+      const cleanName = this.cleanCharacterName(name);
+      if (!cleanName) return;
+      const key = `${cleanName}__${roleHint}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      narrativeCharacters.push({
+        name: cleanName,
+        role: this.normalizeCharacterRole(roleHint),
+        identity: description,
+        description,
+      });
+    };
+
+    const parseNamedRelations = (text?: string) => {
+      if (!text) return;
+      const parts = text.split(/[→、,/]/).map(s => s.trim()).filter(Boolean);
+      for (const part of parts) {
+        const match = part.match(/^(.+?)[（(]([^）)]+)[）)]$/);
+        if (match) {
+          pushCharacter(match[1], match[2], part);
+          continue;
+        }
+        const colonMatch = part.match(/^(.+?)[：:](.*)$/);
+        if (colonMatch && !colonMatch[2].includes('→')) {
+          pushCharacter(colonMatch[1], '配角', part);
+        }
+      }
+    };
+
+    for (const source of sources) {
+      const value = result[source.section] as any;
+      if (!value) continue;
+
+      if (source.section === 'storyLines') {
+        parseNamedRelations(value.character);
+      } else if (source.section === 'conflictDesign') {
+        for (const major of value.majorConflicts || []) {
+          parseNamedRelations(major);
+        }
+        for (const esc of value.escalation || []) {
+          parseNamedRelations(esc);
+        }
+        parseNamedRelations(value.source);
+      }
+    }
+
+    return narrativeCharacters;
+  }
+
+  private deduplicateCharacters(characters: Character[]): Character[] {
+    const map = new Map<string, Character>();
+
+    for (const char of characters) {
+      const name = this.cleanCharacterName(char.name || '');
+      const role = this.normalizeCharacterRole(char.role || '配角');
+      const key = `${name}__${role}`;
+      const existing = map.get(key);
+
+      console.debug('[RemarkParser] dedupe character candidate', {
+        rawName: char.name,
+        name,
+        role,
+        key,
+        hasExisting: !!existing,
+        identity: char.identity,
+        description: char.description,
+      });
+
+      if (!existing) {
+        map.set(key, {
+          ...char,
+          name,
+          role,
+          personality: this.uniqueStrings(char.personality || []),
+          strengths: this.uniqueStrings(char.strengths || []),
+          weaknesses: this.uniqueStrings(char.weaknesses || []),
+          goals: this.uniqueStrings(char.goals || []),
+          relationships: this.normalizeRelationships(char.relationships || []),
+        });
+        continue;
+      }
+
+      const merged = {
+        ...existing,
+        identity: this.pickLonger(existing.identity, char.identity),
+        description: this.pickLonger(existing.description, char.description),
+        appearance: existing.appearance || char.appearance,
+        background: existing.background || char.background,
+        speechStyle: existing.speechStyle || char.speechStyle,
+        goldenFinger: existing.goldenFinger || char.goldenFinger,
+        currentDilemma: this.pickLonger(existing.currentDilemma, char.currentDilemma),
+        personality: this.uniqueStrings([...(existing.personality || []), ...(char.personality || [])]),
+        strengths: this.uniqueStrings([...(existing.strengths || []), ...(char.strengths || [])]),
+        weaknesses: this.uniqueStrings([...(existing.weaknesses || []), ...(char.weaknesses || [])]),
+        goals: this.uniqueStrings([...(existing.goals || []), ...(char.goals || [])]),
+        relationships: this.mergeRelationships(existing.relationships || [], char.relationships || []),
+      };
+
+      console.debug('[RemarkParser] dedupe character merged', {
+        key,
+        before: {
+          identity: existing.identity,
+          description: existing.description,
+          relationships: existing.relationships?.length || 0,
+        },
+        incoming: {
+          identity: char.identity,
+          description: char.description,
+          relationships: char.relationships?.length || 0,
+        },
+        after: {
+          identity: merged.identity,
+          description: merged.description,
+          relationships: merged.relationships?.length || 0,
+        },
+      });
+
+      map.set(key, merged);
+    }
+
+    return Array.from(map.values());
+  }
+
+  private cleanCharacterName(name: string): string {
+    return normalizeCharacterName(name);
+  }
+
+  private uniqueStrings(values: any[]): string[] {
+    return Array.from(new Set((values || []).map(v => String(v).trim()).filter(Boolean)));
+  }
+
+  private normalizeRelationships(relationships: any[]): any[] {
+    return (relationships || []).map((r: any) => {
+      if (typeof r === 'string') {
+        return { targetName: r, type: 'neutral', description: '' };
+      }
+      return {
+        targetName: r.targetName || r.name || '',
+        type: r.type || 'neutral',
+        description: r.description || '',
+      };
+    });
+  }
+
+  private pickLonger(a?: string, b?: string): string {
+    const aa = (a || '').trim();
+    const bb = (b || '').trim();
+    if (!aa) return bb;
+    if (!bb) return aa;
+    return bb.length > aa.length ? bb : aa;
+  }
+
+  private mergeRelationships(existing: any[], incoming: any[]): any[] {
+    const merged = [...existing, ...incoming].map((r: any) => ({
+      targetName: r.targetName || r.name || '',
+      type: r.type || 'neutral',
+      description: r.description || '',
+    }));
+    const seen = new Set<string>();
+    return merged.filter(r => {
+      const key = `${r.targetName}__${r.type}__${r.description}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 }
 

@@ -3,6 +3,44 @@
  */
 
 /**
+ * 规范化角色名
+ */
+export function normalizeCharacterName(name: string): string {
+  return String(name || '')
+    .trim()
+    .replace(/^\*\*(.*?)\*\*$/, '$1')
+    .replace(/^['"“”‘’《【(（\[]+|['"“”‘’》】)）\]]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * 规范化角色类型
+ */
+export function normalizeCharacterRole(role: string): '主角' | '女主' | '导师' | '反派' | '配角' {
+  if (!role) return '配角';
+  const r = role.toLowerCase();
+  if (r.includes('女主') || r.includes('女一')) return '女主';
+  if (r.includes('主角') || r.includes('protagonist') || r.includes('hero') || r.includes('男主') || r.includes('男一')) return '主角';
+  if (r.includes('反派') || r.includes('antagonist') || r.includes('敌人') || r.includes('villain') || r.includes('boss')) return '反派';
+  if (r.includes('导师') || r.includes('mentor') || r.includes('师父') || r.includes('师尊') || r.includes('师傅')) return '导师';
+  if (r.includes('配角') || r.includes('supporting') || r.includes('secondary') || r.includes('minor') || r.includes('小角色') || r.includes('龙套') || r.includes('伙伴') || r.includes('宠物') || r.includes('坐骑') || r.includes('灵兽') || r.includes('comrade') || r.includes('companion') || r.includes('pet')) return '配角';
+  return '配角';
+}
+
+/**
+ * 规范化伏笔类型
+ */
+export function normalizeForeshadowType(type: string): 'item' | 'dialogue' | 'event' | 'mystery' {
+  if (!type) return 'mystery';
+  const t = type.toLowerCase();
+  if (t.includes('道具') || t.includes('物品') || t.includes('item')) return 'item';
+  if (t.includes('对话') || t.includes('dialogue')) return 'dialogue';
+  if (t.includes('事件') || t.includes('event')) return 'event';
+  return 'mystery';
+}
+
+/**
  * 从原始响应中提取纯文本内容
  * 某些 SDK 可能返回原始 SSE 行而不是纯文本，需要统一处理
  */

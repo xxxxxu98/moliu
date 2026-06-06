@@ -11,6 +11,11 @@ import {
 } from '../schemas/outline.schema';
 import { remarkParser, type ParseResult } from '../parser/remark-parser';
 import { markdownExtractor } from '../parser/markdown-extractor';
+import {
+  normalizeCharacterName as normalizeOutlineCharacterName,
+  normalizeCharacterRole as normalizeOutlineCharacterRole,
+  normalizeForeshadowType as normalizeOutlineForeshadowType,
+} from '../utils';
 
 /**
  * 后处理结果
@@ -33,20 +38,164 @@ export class OutlinePostProcessor {
   private regexEnabled = true;
 
   /**
+   * 将包含多个大纲的 Markdown 拆分为独立块
+   */
+  private splitMarkdownIntoOutlineBlocks(markdown: string): Array<{ content: string; title?: string }> {
+    const normalized = markdown.replace(/\r\n/g, '\n');
+    const lines = normalized.split('\n');
+    const blocks: Array<{ content: string; title?: string }> = [];
+    let current: string[] = [];
+    let currentTitle: string | undefined;
+    let started = false;
+
+    const outlineStartPatterns = [
+      // 常见：# 大纲1：xxx / ## 方案二 / ### 故事大纲3
+      /^\s*#+\s*(?:大纲|方案|故事方案|故事大纲)\s*(?:[0-9]+|[一二三四五六七八九十百千]+)?\s*[：:]?.*$/,
+      // 常见：# 第1套大纲 / # 第三版方案 / ## 第2稿故事大纲
+      /^\s*#+\s*第\s*(?:[0-9]+|[一二三四五六七八九十百千]+)\s*(?:套|版|稿|轮)?\s*(?:大纲|方案|故事大纲|故事方案)\s*[：:]?.*$/,
+      // 常见：# 一、大纲 / ## 二、方案 / ### 三、故事
+      /^\s*#+\s*(?:[0-9]+|[一二三四五六七八九十百千]+)\s*[、.．]\s*.*(?:大纲|方案|故事|设定).*$/,
+      // 常见：# 方案A / # 大纲-B / # 故事方案C
+      /^\s*#+\s*(?:大纲|方案|故事方案|故事大纲)\s*[-_—]?[A-Za-z]+\s*[：:]?.*$/,
+      // 更泛化：# 第一套 / # 第二版 / # 方案甲 / ## 第三轮（依赖后续上下文标题语义）
+      /^\s*#+\s*(?:第\s*)?(?:[0-9]+|[一二三四五六七八九十百千]+|[甲乙丙丁戊己庚辛壬癸])\s*(?:套|版|稿|轮)?(?:\s*[：:].*)?$/,
+    ];
+
+    const isOutlineStart = (line: string) => outlineStartPatterns.some(pattern => pattern.test(line));
+
+    const extractTitle = (line: string) => line.replace(/^\s*#+\s*/, '').trim();
+
+    const pushCurrent = () => {
+      const content = current.join('\n').trim();
+      if (started && content) {
+        blocks.push({ content, title: currentTitle });
+      }
+      current = [];
+      currentTitle = undefined;
+    };
+
+    for (const line of lines) {
+      if (isOutlineStart(line)) {
+        started = true;
+        if (current.length > 0) pushCurrent();
+        currentTitle = extractTitle(line);
+        console.debug('[OutlinePostProcessor] outline block start', {
+          title: currentTitle,
+          linePreview: line.slice(0, 120),
+          lineIndex: blocks.length + current.length,
+        });
+        current.push(line);
+        continue;
+      }
+
+      if (!started) continue;
+      current.push(line);
+    }
+
+    pushCurrent();
+
+    return blocks.length > 0 ? blocks : [{ content: markdown }];
+  }
+
+  /**
    * 处理 Markdown 文本
    */
   process(markdown: string): PostProcessResult {
+    const blocks = this.splitMarkdownIntoOutlineBlocks(markdown);
+    console.debug('[OutlinePostProcessor] process start', {
+      markdownLength: markdown.length,
+      outlineBlocks: blocks.length,
+      remarkEnabled: this.remarkEnabled,
+      regexEnabled: this.regexEnabled,
+      blockTitles: blocks.map(block => block.title || 'unknown').slice(0, 10),
+      preview: markdown.slice(0, 300),
+    });
+
+    const aggregateWarnings: string[] = [];
+    const aggregateErrors: string[] = [];
+    const outlines: Outline[] = [];
+    let strategy: PostProcessResult['strategy'] = 'remark';
+
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      console.debug('[OutlinePostProcessor] process block', {
+        blockIndex: i,
+        blockCount: blocks.length,
+        title: block.title,
+        contentLength: block.content.length,
+        preview: block.content.slice(0, 220),
+      });
+      const result = this.processSingleMarkdown(block.content, i, blocks.length);
+      aggregateWarnings.push(...result.warnings);
+      aggregateErrors.push(...result.errors);
+      strategy = result.strategy;
+      outlines.push(...result.outlines);
+      console.debug('[OutlinePostProcessor] block finished', {
+        blockIndex: i,
+        success: result.success,
+        strategy: result.strategy,
+        outlineCount: result.outlines.length,
+        warnings: result.warnings,
+        errors: result.errors,
+      });
+    }
+
+    if (outlines.length > 0) {
+      return {
+        success: true,
+        outlines,
+        warnings: aggregateWarnings,
+        errors: [],
+        strategy,
+        rawMarkdown: markdown,
+      };
+    }
+
+    aggregateErrors.push('无法从 Markdown 中提取有效大纲数据');
+    return {
+      success: false,
+      outlines: [],
+      warnings: aggregateWarnings,
+      errors: aggregateErrors,
+      strategy: 'regex',
+      rawMarkdown: markdown,
+    };
+  }
+
+  private processSingleMarkdown(markdown: string, blockIndex: number, blockCount: number): PostProcessResult {
     const warnings: string[] = [];
     const errors: string[] = [];
+    const blockPrefix = blockCount > 1 ? `[block ${blockIndex + 1}/${blockCount}] ` : '';
 
-    // 1. 尝试 Remark AST 解析
     if (this.remarkEnabled) {
       try {
         const parseResult = remarkParser.parse(markdown);
+        console.debug('[OutlinePostProcessor] remark parse result', {
+          blockIndex,
+          blockCount,
+          title: parseResult.title,
+          synopsisLength: parseResult.synopsis?.length || 0,
+          genres: parseResult.genres,
+          chapters: parseResult.chapters?.length || 0,
+          characters: parseResult.characters?.length || 0,
+          foreshadows: parseResult.foreshadows?.length || 0,
+          firstChapter: parseResult.chapters?.[0],
+          firstCharacter: parseResult.characters?.[0],
+          firstForeshadow: parseResult.foreshadows?.[0],
+        });
+        console.debug('[OutlinePostProcessor] remark parse raw snapshot', {
+          blockIndex,
+          title: parseResult.title,
+          structureKeys: parseResult.structure ? Object.keys(parseResult.structure as Record<string, unknown>) : [],
+          worldSetting: parseResult.worldSetting,
+          emotionGoal: parseResult.emotionGoal,
+          coolPointDesign: parseResult.coolPointDesign,
+          conflictDesign: parseResult.conflictDesign,
+          storyLineKeys: parseResult.storyLines ? Object.keys(parseResult.storyLines as Record<string, unknown>) : [],
+        });
 
-        const { valid, outlines, validationWarnings } =
-          this.validateAndNormalizeFromParse(parseResult);
-        warnings.push(...validationWarnings);
+        const { valid, outlines, validationWarnings } = this.validateAndNormalizeFromParse(parseResult);
+        warnings.push(...validationWarnings.map(w => `${blockPrefix}${w}`));
 
         if (valid && outlines.length > 0) {
           return {
@@ -58,20 +207,33 @@ export class OutlinePostProcessor {
           };
         }
 
-        warnings.push('Remark 解析结果验证失败，尝试正则提取...');
+        warnings.push(`${blockPrefix}Remark 解析结果验证失败，尝试正则提取...`);
       } catch (e) {
-        warnings.push(`Remark 解析出错: ${e instanceof Error ? e.message : String(e)}`);
+        const msg = `${blockPrefix}Remark 解析出错: ${e instanceof Error ? e.message : String(e)}`;
+        console.warn('[OutlinePostProcessor]', msg, e);
+        warnings.push(msg);
       }
     }
 
-    // 2. 尝试正则提取
     if (this.regexEnabled) {
       try {
         const extracted = markdownExtractor.extract(markdown);
+        console.debug('[OutlinePostProcessor] regex extract result', {
+          blockIndex,
+          blockCount,
+          title: extracted.title,
+          synopsisLength: extracted.synopsis?.length || 0,
+          genres: extracted.genres,
+          chapters: extracted.chapters?.length || 0,
+          characters: extracted.characters?.length || 0,
+          foreshadows: extracted.foreshadows?.length || 0,
+          firstChapter: extracted.chapters?.[0],
+          firstCharacter: extracted.characters?.[0],
+          firstForeshadow: extracted.foreshadows?.[0],
+        });
 
-        const { valid, outlines, validationWarnings } =
-          this.validateAndNormalizeFromExtracted(extracted);
-        warnings.push(...validationWarnings);
+        const { valid, outlines, validationWarnings } = this.validateAndNormalizeFromExtracted(extracted);
+        warnings.push(...validationWarnings.map(w => `${blockPrefix}${w}`));
 
         if (valid && outlines.length > 0) {
           return {
@@ -83,20 +245,20 @@ export class OutlinePostProcessor {
           };
         }
 
-        warnings.push('正则提取结果验证失败...');
+        warnings.push(`${blockPrefix}正则提取结果验证失败...`);
       } catch (e) {
-        warnings.push(`正则提取出错: ${e instanceof Error ? e.message : String(e)}`);
+        const msg = `${blockPrefix}正则提取出错: ${e instanceof Error ? e.message : String(e)}`;
+        console.warn('[OutlinePostProcessor]', msg, e);
+        warnings.push(msg);
       }
     }
 
-    // 3. 尝试从原始 Markdown 中提取 JSON
     const jsonResult = this.extractJsonFromMarkdown(markdown);
     if (jsonResult.success && jsonResult.json) {
       return this.processJSON(jsonResult.json);
     }
 
-    // 4. 所有方法都失败
-    errors.push('无法从 Markdown 中提取有效大纲数据');
+    errors.push(`${blockPrefix}无法从 Markdown 中提取有效大纲数据`);
     return {
       success: false,
       outlines: [],
@@ -183,26 +345,29 @@ export class OutlinePostProcessor {
         hook: ch.hook,
       })),
       // 转换角色，确保 identity 字段（schema required）
-      characters: (parseResult.characters || []).map(c => ({
-        name: c.name || '未知角色',
-        role: this.normalizeCharacterRole(c.role || '配角'),
-        identity: (c as any).identity || '',
-        description: (c as any).description || (c as any).identity || '',
-        personality: c.personality || [],
-        goldenFinger: (c as any).goldenFinger,
-        strengths: (c as any).strengths || [],
-        weaknesses: (c as any).weaknesses || [],
-        goals: (c as any).goals || [],
-        currentDilemma: (c as any).currentDilemma || '',
-        appearance: (c as any).appearance,
-        speechStyle: (c as any).speechStyle,
-        relationships: this.normalizeRelationships((c as any).relationships || []),
-      })),
+      characters: this.augmentCharactersFromStoryLines(
+        (parseResult.characters || []).map(c => ({
+          name: c.name || '未知角色',
+          role: normalizeOutlineCharacterRole(c.role || '配角'),
+          identity: (c as any).identity || '',
+          description: (c as any).description || (c as any).identity || '',
+          personality: c.personality || [],
+          goldenFinger: (c as any).goldenFinger,
+          strengths: (c as any).strengths || [],
+          weaknesses: (c as any).weaknesses || [],
+          goals: (c as any).goals || [],
+          currentDilemma: (c as any).currentDilemma || '',
+          appearance: (c as any).appearance,
+          speechStyle: (c as any).speechStyle,
+          relationships: this.normalizeRelationships((c as any).relationships || []),
+        })),
+        parseResult.storyLines,
+      ),
       structure: parseResult.structure,
       foreshadows: (parseResult.foreshadows || []).map(f => ({
         id: f.id,
         hint: f.hint,
-        type: this.normalizeForeshadowType(f.type || 'event'),
+        type: normalizeOutlineForeshadowType(f.type || 'event'),
         suggestedChapter: f.suggestedChapter,
         status: f.status || 'active',
         phase: f.phase,
@@ -234,6 +399,19 @@ export class OutlinePostProcessor {
       // 规范化矛盾设计
       conflictDesign: this.normalizeConflictDesign(parseResult.conflictDesign),
     };
+
+    console.debug('[OutlinePostProcessor] parse normalized raw', {
+      title: outline.title,
+      characters: outline.characters?.length || 0,
+      chapters: outline.chapters?.length || 0,
+      foreshadows: outline.foreshadows?.length || 0,
+      firstCharacter: outline.characters?.[0],
+      firstForeshadow: outline.foreshadows?.[0],
+      coolPointDesign: outline.coolPointDesign,
+      storyLines: outline.storyLines,
+    });
+    this.logCharacterCoverage(outline.characters || [], 'remark');
+    this.logChapterAlignment(outline.chapters || [], outline.foreshadows || [], 'remark');
 
     // 智能补全标题：如果标题为空或无效，尝试从其他字段提取
     outline = this.smartExtractTitle(outline, parseResult);
@@ -353,7 +531,7 @@ export class OutlinePostProcessor {
       })),
       characters: (extracted.characters || []).map(c => ({
         name: c.name || '未知角色',
-        role: this.normalizeCharacterRole(c.role || '配角'),
+        role: normalizeOutlineCharacterRole(c.role || '配角'),
         identity: c.description || '',
         description: c.description || '',
         personality: c.personality || [],
@@ -369,7 +547,7 @@ export class OutlinePostProcessor {
       structure: extracted.structure,
       foreshadows: (extracted.foreshadows || []).map(f => ({
         hint: f.hint,
-        type: this.normalizeForeshadowType(f.type || 'mystery'),
+        type: normalizeOutlineForeshadowType(f.type || 'mystery'),
         suggestedChapter: undefined,
         status: 'active' as const,
         phase: f.phase,
@@ -399,6 +577,19 @@ export class OutlinePostProcessor {
       storyLines: this.normalizeStoryLines(extracted.storyLines),
       conflictDesign: this.normalizeConflictDesign(extracted.conflictDesign),
     };
+
+    console.debug('[OutlinePostProcessor] extracted normalized raw', {
+      title: outline.title,
+      characters: outline.characters?.length || 0,
+      chapters: outline.chapters?.length || 0,
+      foreshadows: outline.foreshadows?.length || 0,
+      firstCharacter: outline.characters?.[0],
+      firstForeshadow: outline.foreshadows?.[0],
+      coolPointDesign: outline.coolPointDesign,
+      storyLines: outline.storyLines,
+    });
+    this.logCharacterCoverage(outline.characters || [], 'regex');
+    this.logChapterAlignment(outline.chapters || [], outline.foreshadows || [], 'regex');
 
     // 智能补全标题
     outline = this.smartExtractTitleFromExtracted(outline, extracted);
@@ -608,13 +799,42 @@ export class OutlinePostProcessor {
     }));
   }
 
+  private logChapterAlignment(chapters: any[], foreshadows: any[], source: string): void {
+    const chapterNumbers = chapters.map((ch, idx) => ch.number ?? idx + 1);
+    const foreshadowChapters = foreshadows.map((f: any) => f.suggestedChapter ?? f.chapter ?? null);
+    console.debug('[OutlinePostProcessor] chapter alignment', {
+      source,
+      chapterNumbers,
+      foreshadowChapters,
+      chapterCount: chapters.length,
+      foreshadowCount: foreshadows.length,
+      firstChapters: chapters.slice(0, 5),
+      firstForeshadows: foreshadows.slice(0, 5),
+    });
+  }
+
+  private logCharacterCoverage(characters: any[], source: string): void {
+    const roleCounts = characters.reduce((acc: Record<string, number>, char: any) => {
+      const role = char?.role || 'undefined';
+      acc[role] = (acc[role] || 0) + 1;
+      return acc;
+    }, {});
+
+    console.debug('[OutlinePostProcessor] character coverage', {
+      source,
+      characterCount: characters.length,
+      roleCounts,
+      sampleCharacters: characters.slice(0, 5),
+    });
+  }
+
   /**
    * 规范化角色列表
    */
   private normalizeCharacters(characters: any[]): Character[] {
     return characters.map(char => ({
-      name: char.name || '未知角色',
-      role: this.normalizeCharacterRole(char.role || char.type || 'supporting'),
+      name: normalizeOutlineCharacterName(char.name || '未知角色'),
+      role: normalizeOutlineCharacterRole(char.role || char.type || 'supporting'),
       identity: char.identity || char.description || char.desc || '',
       description: char.description || char.desc || '',
       personality: this.normalizeArray(char.personality || char.traits || []),
@@ -631,32 +851,6 @@ export class OutlinePostProcessor {
     }));
   }
 
-  /**
-   * 规范化角色类型
-   * 返回中文枚举值，与 CharacterSchema 中的 z.enum(['主角', '女主', '导师', '反派', '配角']) 匹配
-   */
-  private normalizeCharacterRole(role: string): '主角' | '女主' | '导师' | '反派' | '配角' {
-    if (!role) return '配角';
-    const r = role.toLowerCase();
-
-    // 女主/女一（网文特色，女性主角）
-    if (r.includes('女主') || r.includes('女一')) return '女主';
-
-    // 主角/男主/男一（主角）
-    if (r.includes('主角') || r.includes('protagonist') || r.includes('hero') || r.includes('男主') || r.includes('男一')) return '主角';
-
-    // 反派/敌人
-    if (r.includes('反派') || r.includes('antagonist') || r.includes('敌人') || r.includes('villain') || r.includes('boss')) return '反派';
-
-    // 导师/师父/师尊
-    if (r.includes('导师') || r.includes('mentor') || r.includes('师父') || r.includes('师尊') || r.includes('师傅')) return '导师';
-
-    // 配角/次要角色/小角色/龙套/伙伴/宠物/坐骑/灵兽（都归为配角）
-    if (r.includes('配角') || r.includes('supporting') || r.includes('secondary') || r.includes('minor') || r.includes('小角色') || r.includes('龙套') || r.includes('伙伴') || r.includes('宠物') || r.includes('坐骑') || r.includes('灵兽') || r.includes('comrade') || r.includes('companion') || r.includes('pet')) return '配角';
-
-    // 默认返回配角
-    return '配角';
-  }
 
   /**
    * 规范化角色关系
@@ -675,12 +869,12 @@ export class OutlinePostProcessor {
   }
 
   /**
-   * 规范化伏笔列表
+   * 规范化角色名
    */
   private normalizeForeshadows(foreshadows: any[]): any[] {
     return foreshadows.map(fs => ({
       hint: fs.hint || fs.content || fs.description || String(fs),
-      type: this.normalizeForeshadowType(fs.type || 'event'),
+      type: normalizeOutlineForeshadowType(fs.type || 'event'),
       suggestedChapter: fs.suggestedChapter || fs.chapter || undefined,
       phase: fs.phase || undefined,
     }));
@@ -903,6 +1097,83 @@ export class OutlinePostProcessor {
     }
 
     return normalized;
+  }
+
+  /**
+   * 从故事线补充角色，尽量把重要人物纳入角色列表
+   */
+  private augmentCharactersFromStoryLines(characters: Character[], storyLines: any): Character[] {
+    if (!storyLines) return characters;
+
+    const existingMap = new Map(
+      characters.map(c => [normalizeOutlineCharacterName(c.name), c])
+    );
+
+    const addCandidate = (name: string, role: string, description = '') => {
+      const cleanName = normalizeOutlineCharacterName(name);
+      if (!cleanName || cleanName === '未知角色') return;
+      const key = cleanName;
+      if (existingMap.has(key)) return;
+
+      const char: Character = {
+        name: cleanName,
+        role: normalizeOutlineCharacterRole(role || '配角'),
+        identity: description || '',
+        description: description || '',
+        personality: [],
+        strengths: [],
+        weaknesses: [],
+        goals: [],
+        currentDilemma: '',
+        relationships: [],
+      };
+      existingMap.set(key, char);
+      characters.push(char);
+    };
+
+    const extractNames = (text: string) => {
+      if (!text) return [] as Array<{ name: string; role: string }>;
+      const parts = text.split(/[→,，、/｜|]+/).map(s => s.trim()).filter(Boolean);
+      return parts
+        .map(part => {
+          const match = part.match(/^(.+?)[（(]([^）)]+)[）)]$/);
+          if (match) return { name: match[1].trim(), role: match[2].trim() };
+          return { name: part, role: '配角' };
+        })
+        .filter(item => item.name.length > 1 && !/^(孤身|学生|普通世界|市井生活|古玩街|苏氏集团|地下赌石场|国际拍卖会)$/.test(item.name));
+    };
+
+    const storyCharacter = (storyLines.character as any)?.planned || [];
+    for (const item of storyCharacter) {
+      if (typeof item === 'string') {
+        addCandidate(item, '配角');
+      } else {
+        addCandidate(item.id || item.name || '', item.role || '配角');
+      }
+    }
+
+    const chainTexts = [
+      storyLines.map?.planned,
+      storyLines.faction?.planned,
+      storyLines.worldRules?.revealed,
+      storyLines.conflict?.chains?.map((c: any) => c.name),
+      storyLines.collection?.target,
+      storyLines.romance?.progression,
+    ];
+
+    for (const value of chainTexts) {
+      for (const item of value || []) {
+        if (typeof item === 'string') {
+          for (const candidate of extractNames(item)) {
+            addCandidate(candidate.name, candidate.role || '配角');
+          }
+        } else if (item?.name) {
+          addCandidate(item.name, item.role || '配角');
+        }
+      }
+    }
+
+    return Array.from(existingMap.values());
   }
 
   /**
