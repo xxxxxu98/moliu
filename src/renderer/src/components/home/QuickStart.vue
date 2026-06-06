@@ -6,24 +6,16 @@
 import { ref, computed, watch, onMounted, nextTick } from "vue";
 import {
   Sparkles,
-  Check,
   Wand2,
-  BookOpen,
-  Save,
-  RotateCcw,
   ChevronDown,
   Heart,
   Zap,
-  Search,
-  TrendingUp,
-  X,
-  Star,
   Rocket,
   Layers3,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useMessage } from "naive-ui";
-import { NButton, NInput } from "naive-ui";
+import { NButton } from "naive-ui";
 import { useSettingsStore } from "@/stores/settings.store";
 import { DEFAULT_WORD_COUNT_RANGE } from "@/services/ai/unified.service";
 import type { GeneratedOutline } from "@/types/inspiration";
@@ -31,10 +23,13 @@ import type { OutlineDirection } from "@/services/outline/types/direction";
 import type { ExecutableOutline } from "@/services/outline/types/executable-outline";
 import { useOutlineGenerator } from "@/composables/useOutlineGenerator";
 import { useProjectCreator } from "@/composables/useProjectCreator";
-import OutlineDisplay from "@/components/common/OutlineDisplay.vue";
-import WordCountSelector from "@/components/common/WordCountSelector.vue";
 import StepWizard from "./new/StepWizard.vue";
-import DirectionPicker from "./DirectionPicker.vue";
+import DirectionResultPanel from "./DirectionResultPanel.vue";
+import TemplateMarketList from "./TemplateMarketList.vue";
+import TemplateDetailCard from "./TemplateDetailCard.vue";
+import CustomPromptPanel from "./CustomPromptPanel.vue";
+import QuickStartTopBar from "./QuickStartTopBar.vue";
+import QuickStartActionBar from "./QuickStartActionBar.vue";
 import { mapExecutableOutlineToGeneratedOutline } from '@/services/outline/adapters/executable-outline-adapter';
 import type { HookType, CoolPointType } from "@/types/evaluation";
 
@@ -5035,87 +5030,17 @@ function clearTemplateSearch() {
 
 <template>
   <div class="space-y-4">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-3">
-        <div
-          class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center"
-        >
-          <Wand2 class="w-4 h-4 text-white" />
-        </div>
-        <div>
-          <h3 class="font-semibold text-gray-900 dark:text-white">
-            {{ t("quickStart.title") }}
-          </h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400">
-            {{ t("quickStart.description") }}
-          </p>
-        </div>
-      </div>
-      <div class="relative">
-        <NButton
-          v-if="savedDraft"
-          quaternary
-          circle
-          @click="showDraftMenu = !showDraftMenu"
-        >
-          <template #icon>
-            <BookOpen class="w-4 h-4 text-amber-500" />
-          </template>
-        </NButton>
-        <div
-          v-if="showDraftMenu"
-          class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10"
-        >
-          <NButton
-            quaternary
-            block
-            @click="loadDraft"
-          >
-            <template #icon>
-              <BookOpen class="w-4 h-4" />
-            </template>
-            加载草稿
-          </NButton>
-          <NButton
-            quaternary
-            block
-            @click="clearDraft"
-          >
-            <template #icon>
-              <RotateCcw class="w-4 h-4" />
-            </template>
-            清除草稿
-          </NButton>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab Switcher -->
-    <div class="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
-      <button
-        class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-        :class="activeTab === 'wizard' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
-        @click="switchTab('wizard')"
-      >
-        <Sparkles class="w-4 h-4" />
-        三步法
-      </button>
-      <button
-        class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-        :class="activeTab === 'templates' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
-        @click="switchTab('templates')"
-      >
-        {{ t("quickStart.templateMarket") }}
-      </button>
-      <button
-        class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-        :class="activeTab === 'custom' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
-        @click="switchTab('custom')"
-      >
-        {{ t("quickStart.customInput") }}
-      </button>
-    </div>
+    <QuickStartTopBar
+      :title="t('quickStart.title')"
+      :description="t('quickStart.description')"
+      :active-tab="activeTab"
+      :saved-draft="savedDraft"
+      :show-draft-menu="showDraftMenu"
+      @toggle-draft-menu="showDraftMenu = !showDraftMenu"
+      @load-draft="loadDraft"
+      @clear-draft="clearDraft"
+      @switch-tab="switchTab"
+    />
 
     <!-- Wizard Tab -->
     <div v-if="activeTab === 'wizard' && showWizard" class="space-y-4">
@@ -5126,310 +5051,97 @@ function clearTemplateSearch() {
         @back="handleWizardBack"
       />
 
-      <div
-        v-if="generatedDirections.length > 0 || isProcessing || (wizardCompleted && !!combinedError)"
-        class="space-y-4"
-      >
-        <DirectionPicker
+      <div ref="previewSectionRef">
+        <DirectionResultPanel
+          :show="generatedDirections.length > 0 || isProcessing || (wizardCompleted && !!combinedError)"
           title="创作方向卡"
           description="先选一个最值得展开的主方案，再进入项目创建。"
           :cards="directionCards"
           :selected-direction="selectedDirection"
           :is-processing="!!isProcessing"
           :progress="generationProgress || ''"
-          :error="null"
+          :error="combinedError"
           :can-expand="canExpandDirection"
+          :preview-outline="previewOutline"
+          :expanded-outline="expandedOutline"
+          :empty-description="'请先选择一个创作方向并展开主方案，随后即可在这里预览大纲。'"
+          :disable-regenerate="isProcessing"
           @regenerate="handleGenerateOutlines"
-          @select="selectDirection"
+          @select-direction="selectDirection"
           @expand="handleExpandDirection"
+          @select-outline="selectOutline"
+          @create="handleCreateProject"
         />
-
-        <div ref="previewSectionRef">
-          <OutlineDisplay
-            v-if="previewOutline"
-            :outlines="[previewOutline]"
-            :selected-outline="previewOutline"
-            :is-generating="!!isProcessing && !expandedOutline"
-            :progress="generationProgress || ''"
-            :error="combinedError"
-            :show-word-count="true"
-            :show-streaming-preview="true"
-            :empty-description="'请先选择一个创作方向并展开主方案，随后即可在这里预览大纲。'"
-            :disable-regenerate="isProcessing"
-            @select="selectOutline"
-            @regenerate="handleGenerateOutlines"
-            @create="handleCreateProject"
-          />
-        </div>
       </div>
     </div>
 
     <!-- Templates Tab -->
     <div v-else-if="activeTab === 'templates'" class="space-y-3">
-      <!-- Search Bar -->
-      <div class="relative">
-        <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          v-model="templateSearchQuery"
-          type="text"
-          placeholder="搜索模板..."
-          class="w-full pl-10 pr-8 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500"
-        />
-        <button
-          v-if="templateSearchQuery"
-          class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-          @click="clearTemplateSearch"
-        >
-          <X class="w-4 h-4 text-gray-400" />
-        </button>
-      </div>
+      <TemplateMarketList
+        :search-query="templateSearchQuery"
+        :selected-category="templateSelectedCategory"
+        :categories="templateCategories"
+        :templates="filteredTemplates"
+        :selected-template-id="selectedTemplate?.id ?? null"
+        @update:search-query="templateSearchQuery = $event"
+        @select-category="selectTemplateCategory"
+        @clear-search="clearTemplateSearch"
+        @select-template="selectTemplate"
+      />
 
-      <!-- Categories - 全部展示，不滚动 -->
-      <div class="flex flex-wrap gap-2">
-        <button
-          class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors"
-          :class="templateSelectedCategory === null
-            ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
-            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
-          @click="selectTemplateCategory(null)"
-        >
-          全部
-        </button>
-        <button
-          v-for="cat in templateCategories"
-          :key="cat"
-          class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors"
-          :class="templateSelectedCategory === cat
-            ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
-            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
-          @click="selectTemplateCategory(cat)"
-        >
-          {{ cat }}
-        </button>
-      </div>
-
-      <!-- Template Results Count -->
-      <div class="text-xs text-gray-400 dark:text-gray-500">
-        共 {{ filteredTemplates.length }} 个模板
-      </div>
-
-      <!-- Templates Grid -->
-      <div class="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-1">
-        <div
-          v-for="template in filteredTemplates"
-          :key="template.id"
-          class="p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer relative"
-          :class="selectedTemplate?.id === template.id
-            ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20'
-            : 'border-gray-100 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-800'"
-          @click="selectTemplate(template)"
-        >
-          <!-- Badge -->
-          <div class="absolute top-2 right-2 flex gap-1">
-            <span v-if="template.isHot" class="px-1.5 py-0.5 rounded text-xs bg-orange-500 text-white">
-              热
-            </span>
-            <span v-if="template.isNew" class="px-1.5 py-0.5 rounded text-xs bg-green-500 text-white">
-              新
-            </span>
-          </div>
-
-          <!-- Header: Icon + Title -->
-          <div class="flex items-center gap-3">
-            <div
-              class="w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center text-2xl flex-shrink-0"
-              :class="`bg-gradient-to-br ${template.gradient}`"
-            >
-              {{ template.icon }}
-            </div>
-            <div class="flex-1 min-w-0">
-              <h4 class="font-semibold text-gray-900 dark:text-white">{{ template.name }}</h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400">{{ template.category }}</p>
-            </div>
-          </div>
-
-          <!-- Description - 不截断完整显示 -->
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-3 leading-relaxed">
-            {{ template.description }}
-          </p>
-
-          <!-- Footer: Tags + Usage -->
-          <div class="flex items-center justify-between">
-            <div class="flex flex-wrap gap-1.5">
-              <span
-                v-for="tag in template.tags.slice(0, 4)"
-                :key="tag"
-                class="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-              >
-                {{ tag }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Empty State -->
-        <div v-if="filteredTemplates.length === 0" class="text-center py-8">
-          <Search class="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-            未找到匹配的模板
-          </p>
-          <button
-            class="mt-2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-            @click="clearTemplateSearch"
-          >
-            清除搜索
-          </button>
-        </div>
-      </div>
-
-      <!-- Template Detail -->
-      <div
-        v-if="selectedTemplate"
-        class="rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 overflow-hidden"
-      >
-        <!-- Header -->
-        <div class="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
-          <div class="flex items-center gap-2">
-            <span class="text-lg">{{ selectedTemplate.icon }}</span>
-            <span class="font-medium text-sm text-gray-900 dark:text-white">{{ selectedTemplate.name }}</span>
-          </div>
-          <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-            <span>模板详情</span>
-          </div>
-        </div>
-        <!-- Prompt Content - Scrollable with max height -->
-        <div class="p-3 max-h-48 overflow-y-auto">
-          <div
-            class="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap"
-          >
-            {{ selectedTemplate.prompt }}
-          </div>
-        </div>
-        <!-- Footer with Stats and Actions -->
-        <div class="px-3 py-2 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="text-xs text-gray-500 dark:text-gray-400">
-              {{ selectedTemplate.prompt.length }} 字符
-            </span>
-            <span class="text-xs text-gray-400 dark:text-gray-500">
-              {{ selectedTemplate.tags?.length || 0 }} 个标签
-            </span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="flex items-center gap-1">
-              <Star class="w-3.5 h-3.5 text-amber-500" />
-              <span class="text-xs text-gray-600 dark:text-gray-400">{{ selectedTemplate.rating }}</span>
-            </div>
-            <NButton
-              size="tiny"
-              quaternary
-              @click="handleOpenProOutliner"
-            >
-              <template #icon>
-                <TrendingUp class="w-3.5 h-3.5" />
-              </template>
-              导入专业大纲
-            </NButton>
-          </div>
-        </div>
-      </div>
+      <TemplateDetailCard
+        :template="selectedTemplate"
+        @open-pro-outliner="handleOpenProOutliner"
+      />
     </div>
 
     <!-- Custom Input Tab -->
     <div v-else-if="activeTab === 'custom'" class="space-y-3">
-      <NInput
-        v-model:value="prompt"
-        type="textarea"
+      <CustomPromptPanel
+        :prompt="prompt"
         :placeholder="t('quickStart.placeholder')"
-        :autosize="{ minRows: 4, maxRows: 8 }"
-        show-count
-        :status="isPromptTooLong ? 'error' : prompt.trim().length >= MIN_PROMPT_LENGTH ? 'success' : undefined"
+        :min-prompt-length="MIN_PROMPT_LENGTH"
+        :max-prompt-length="MAX_PROMPT_LENGTH"
+        :is-prompt-too-long="isPromptTooLong"
+        :input-status="inputStatus"
+        @update:prompt="prompt = $event"
+        @save-draft="saveDraft"
       />
-      <div class="flex items-center justify-between mt-1.5">
-        <div v-if="inputStatus?.type === 'insufficient'" class="flex items-center gap-1 text-xs text-amber-500">
-          <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-          {{ inputStatus.message }}
-        </div>
-        <div v-else-if="inputStatus?.type === 'good'" class="flex items-center gap-1 text-xs text-green-500">
-          <Check class="w-3 h-3" />
-          {{ inputStatus.message }}
-        </div>
-        <div v-else></div>
-        <div class="flex items-center gap-2">
-          <span class="text-xs transition-colors" :class="isPromptTooLong ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'">
-            {{ prompt.length }} / {{ MAX_PROMPT_LENGTH }}
-          </span>
-          <NButton
-            v-if="prompt.trim()"
-            quaternary
-            size="small"
-            @click="saveDraft"
-          >
-            <template #icon>
-              <Save class="w-3.5 h-3.5" />
-            </template>
-          </NButton>
-        </div>
-      </div>
     </div>
 
-    <!-- Word Count Range Selector -->
-    <div v-if="activeTab !== 'wizard'" class="flex items-center justify-between px-1">
-      <WordCountSelector
-        v-model="selectedWordCountRange"
-        :disabled="isProcessing"
-      />
-      <span class="text-xs text-gray-400 dark:text-gray-500">字数范围</span>
-    </div>
-
-    <!-- Generate Button -->
-    <div v-if="activeTab !== 'wizard'" class="relative">
-      <NButton
-        class="w-full"
-        type="primary"
-        size="large"
-        :disabled="!canGenerate || isProcessing"
-        :loading="isProcessing"
-        @click="handleGenerateOutlines"
-      >
-        <template #icon>
-          <Sparkles v-if="!isProcessing" class="w-4 h-4" />
-        </template>
-        {{ isProcessing ? t("quickStart.generating") : t("quickStart.generate") }}
-      </NButton>
-    </div>
+    <QuickStartActionBar
+      :show="activeTab !== 'wizard'"
+      :word-count-range="selectedWordCountRange"
+      :disabled="!!isProcessing"
+      :can-generate="!!canGenerate"
+      :is-processing="!!isProcessing"
+      :generate-label="t('quickStart.generate')"
+      :generating-label="t('quickStart.generating')"
+      @update:word-count-range="selectedWordCountRange = $event"
+      @generate="handleGenerateOutlines"
+    />
 
     <!-- Outline Display - 非 Wizard Tab 时显示 -->
     <template v-if="activeTab !== 'wizard'">
-      <DirectionPicker
-        v-if="generatedDirections.length > 0 || (activeTab === 'custom' && (isProcessing || !!combinedError))"
-        title="候选方向"
-        description="选择一个方向后展开主方案，再创建项目。"
-        :cards="directionCards"
-        :selected-direction="selectedDirection"
-        :is-processing="!!isProcessing"
-        :progress="generationProgress || ''"
-        :error="combinedError"
-        :can-expand="canExpandDirection"
-        compact
-        @regenerate="handleGenerateOutlines"
-        @select="selectDirection"
-        @expand="handleExpandDirection"
-      />
-
       <div ref="previewSectionRef">
-        <OutlineDisplay
-          v-if="previewOutline"
-          :outlines="[previewOutline]"
-          :selected-outline="previewOutline"
-          :is-generating="!!isProcessing && !expandedOutline"
+        <DirectionResultPanel
+          :show="generatedDirections.length > 0 || (activeTab === 'custom' && (isProcessing || !!combinedError))"
+          title="候选方向"
+          description="选择一个方向后展开主方案，再创建项目。"
+          :cards="directionCards"
+          :selected-direction="selectedDirection"
+          :is-processing="!!isProcessing"
           :progress="generationProgress || ''"
           :error="combinedError"
-          :show-word-count="true"
-        :show-streaming-preview="true"
-        :empty-description="'请先选择一个创作方向并展开主方案，随后即可在这里预览大纲。'"
-        @select="selectOutline"
+          :can-expand="canExpandDirection"
+          compact
+          :preview-outline="previewOutline"
+          :expanded-outline="expandedOutline"
+          :empty-description="'请先选择一个创作方向并展开主方案，随后即可在这里预览大纲。'"
           @regenerate="handleGenerateOutlines"
+          @select-direction="selectDirection"
+          @expand="handleExpandDirection"
+          @select-outline="selectOutline"
           @create="handleCreateProject"
         />
       </div>
