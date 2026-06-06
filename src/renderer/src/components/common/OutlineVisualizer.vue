@@ -92,6 +92,14 @@ const phaseNames: Record<string, string> = {
   late: '长期伏笔',
 };
 
+const characterRoleNames: Record<string, string> = {
+  protagonist: '主角',
+  ally: '盟友',
+  antagonist: '反派',
+  mentor: '导师',
+  support: '配角',
+};
+
 /**
  * 转换为可视化树
  */
@@ -556,7 +564,7 @@ function getStatusColor(status?: string): string {
                   <Users class="w-4 h-4 text-blue-500" />
                   <span class="font-medium text-gray-800 dark:text-gray-200">{{ child.title }}</span>
                   <NTag v-if="child.metadata?.role" size="tiny" type="info">
-                    {{ child.metadata.role }}
+                    {{ characterRoleNames[child.metadata.role] ?? child.metadata.role }}
                   </NTag>
                 </div>
                 <p v-if="child.description" class="pl-6 mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">

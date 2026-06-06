@@ -98,14 +98,6 @@ function formatWordCount(count: number): string {
   return `${count}字`;
 }
 
-function formatTagText(value: string, maxLength = 18): string {
-  if (!value) {
-    return '';
-  }
-
-  return value.length > maxLength ? `${value.slice(0, maxLength)}…` : value;
-}
-
 function handleSelectOutline(outline: GeneratedOutline) {
   emit('select', outline);
 }
@@ -258,14 +250,14 @@ function handleCreate() {
                   class="min-w-0 max-w-full rounded bg-orange-100 px-1.5 py-0.5 text-orange-600 whitespace-normal break-words dark:bg-orange-900/30 dark:text-orange-400"
                   :title="outline.coolPointDesign.patterns.join('、')"
                 >
-                  {{ formatTagText(outline.coolPointDesign.patterns.slice(0, 2).join('、')) }}
+                  {{ outline.coolPointDesign.patterns.join('、') }}
                 </span>
                 <span
                   v-if="outline.conflictDesign?.source"
                   class="min-w-0 max-w-full rounded bg-red-100 px-1.5 py-0.5 text-red-600 whitespace-normal break-words dark:bg-red-900/30 dark:text-red-400"
                   :title="outline.conflictDesign.source"
                 >
-                  {{ formatTagText(outline.conflictDesign.source) }}
+                  {{ outline.conflictDesign.source }}
                 </span>
               </div>
             </div>
