@@ -244,13 +244,13 @@ function handleCreate() {
                 </span>
                 <span
                   v-if="outline.coolPointDesign?.patterns?.length"
-                  class="flex-none px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
+                  class="min-w-0 whitespace-normal break-words px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
                 >
                   {{ outline.coolPointDesign.patterns.slice(0, 2).join('、') }}
                 </span>
                 <span
                   v-if="outline.conflictDesign?.source"
-                  class="flex-none px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                  class="min-w-0 whitespace-normal break-words px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
                 >
                   {{ outline.conflictDesign.source }}
                 </span>

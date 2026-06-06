@@ -10,6 +10,12 @@ import type { ProviderType } from '@/config/ai-providers';
 import { useActiveAIProvider } from '@/composables/useActiveAIProvider';
 import { useSettingsStore } from '@/stores/settings.store';
 import { robustJsonParse } from '@/utils/json-parser';
+import type { DirectionGenerationResult, OutlineDirection } from '../types/direction';
+import type { ExpandedOutlineResult } from '../types/executable-outline';
+import { buildDirectionPrompt } from '../prompts/system/direction-prompt';
+import { buildExpandDirectionPrompt } from '../prompts/system/expand-direction-prompt';
+import { parseDirections } from '../parser/direction-parser';
+import { parseExpandedOutline } from '../parser/expanded-outline-parser';
 
 /**
  * 生成选项
@@ -61,7 +67,7 @@ export class UnifiedOutlineGenerator {
   async generate(
     prompt: string,
     options?: GenerateOptions,
-    onProgress?: (message: string) => void
+    onProgress?: (message: string) => void,
   ): Promise<GenerationResult> {
     const opts = { ...this.defaultOptions, ...options };
     let attempts = 0;
@@ -71,30 +77,25 @@ export class UnifiedOutlineGenerator {
       attempts++;
 
       try {
-        // 优先使用 Markdown 模式生成
         const result = await this.callMarkdownMode(prompt, opts);
 
         if (result.success) {
           return result;
         }
 
-        // 如果 Markdown 模式失败，尝试降级策略
-        onProgress?.(`Markdown 解析失败，尝试其他解析策略...`);
+        onProgress?.('Markdown 解析失败，尝试其他解析策略...');
 
-        // 尝试 Remark AST 解析
         const remarkResult = await this.generateWithFallback(prompt, opts, onProgress);
         if (remarkResult.success) {
           return remarkResult;
         }
 
-        // 最后尝试 JSON Mode 作为兜底
-        onProgress?.(`尝试 JSON Mode 作为兜底...`);
+        onProgress?.('尝试 JSON Mode 作为兜底...');
         const jsonResult = await this.callJSONModeFallback(prompt, opts);
         if (jsonResult.success) {
           return jsonResult;
         }
 
-        // 再次尝试 Markdown（带不同参数）
         if (attempts < maxAttempts) {
           onProgress?.(`重试生成... (${attempts}/${maxAttempts})`);
           opts.temperature = (opts.temperature || 0.7) + 0.1;
@@ -115,34 +116,75 @@ export class UnifiedOutlineGenerator {
       }
     }
 
-    // 最后尝试传统方式
     return this.tryLegacyMode(prompt, opts);
   }
 
-  /**
-   * 使用 Markdown 生成 + 多层解析
-   */
+  async generateDirections(
+    prompt: string,
+    options?: GenerateOptions,
+    onProgress?: (message: string) => void,
+  ): Promise<DirectionGenerationResult> {
+    const opts = { ...this.defaultOptions, ...options };
+    const builtPrompt = buildDirectionPrompt({
+      seed: prompt,
+      wordCountRange: opts.wordCountRange || '50万-100万字',
+    });
+
+    onProgress?.('正在生成创作方向...');
+    const rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts);
+    const directions = parseDirections(rawText);
+
+    return {
+      directions,
+      rawText,
+      strategy: directions.length > 0 ? 'structured-text' : 'fallback',
+      warnings: directions.length > 0 ? [] : ['未能完整解析 3 个方向，建议调整提示词后重试'],
+    };
+  }
+
+  async expandDirection(
+    prompt: string,
+    direction: OutlineDirection,
+    options?: GenerateOptions,
+    onProgress?: (message: string) => void,
+  ): Promise<ExpandedOutlineResult> {
+    const opts = { ...this.defaultOptions, ...options };
+    const builtPrompt = buildExpandDirectionPrompt({
+      seed: prompt,
+      direction,
+      wordCountRange: opts.wordCountRange || '50万-100万字',
+    });
+
+    onProgress?.('正在展开主方案...');
+    const rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts);
+    const outline = parseExpandedOutline(rawText);
+
+    return {
+      outline,
+      rawText,
+      strategy: outline ? 'structured-text' : 'fallback',
+      warnings: outline ? [] : ['未能完整解析主方案，建议重新生成或微调方向描述'],
+    };
+  }
+
   private async generateWithFallback(
     prompt: string,
     options: GenerateOptions,
-    onProgress?: (message: string) => void
+    onProgress?: (message: string) => void,
   ): Promise<GenerationResult> {
-    // 1. 初始化生成器
     if (!this.markdownGenerator) {
       const config = this.getAIConfig();
       this.markdownGenerator = new MarkdownOutlineGenerator(
         config.provider,
         config.apiKey,
         config.baseUrl,
-        config.model
+        config.model,
       );
     }
 
-    // 2. 生成 Markdown
     onProgress?.('正在生成大纲...');
     const markdown = await this.markdownGenerator.generate(prompt, options, onProgress);
 
-    // 3. 后处理（Remark AST 解析 -> 正则提取 -> JSON 提取）
     onProgress?.('正在解析大纲...');
     const postResult = outlinePostProcessor.process(markdown);
 
@@ -152,12 +194,11 @@ export class UnifiedOutlineGenerator {
         outlines: postResult.outlines,
         warnings: postResult.warnings,
         errors: postResult.errors,
-        strategy: postResult.strategy as any,
+        strategy: postResult.strategy as GenerationResult['strategy'],
         rawMarkdown: markdown,
       };
     }
 
-    // 4. 提取 JSON 作为最后兜底
     onProgress?.('尝试提取 JSON 数据...');
     const jsonResult = outlinePostProcessor.processJSON(markdown);
 
@@ -182,12 +223,9 @@ export class UnifiedOutlineGenerator {
     };
   }
 
-  /**
-   * Markdown 模式生成（优先使用）
-   */
   private async callMarkdownMode(
     prompt: string,
-    options: GenerateOptions
+    options: GenerateOptions,
   ): Promise<GenerationResult> {
     const config = this.getAIConfig();
 
@@ -198,33 +236,13 @@ export class UnifiedOutlineGenerator {
     ];
 
     try {
-      // 使用 fetch 直接调用 API
-      const response = await fetch(config.baseUrl + '/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
-        },
-        body: JSON.stringify({
-          model: config.model || undefined,
-          messages,
-          temperature: options.temperature || 0.7,
-          top_p: options.topP || 0.9,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API 请求失败: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await this.requestChatCompletion(messages, options);
       const content = data.choices?.[0]?.message?.content;
 
       if (!content) {
         throw new Error('API 未返回内容');
       }
 
-      // 使用后处理器解析 Markdown
       const result = outlinePostProcessor.process(content);
 
       return {
@@ -247,9 +265,6 @@ export class UnifiedOutlineGenerator {
     }
   }
 
-  /**
-   * 传统模式（直接使用 UnifiedAIService）
-   */
   private async tryLegacyMode(prompt: string, options: GenerateOptions): Promise<GenerationResult> {
     try {
       const config = this.getAIConfig();
@@ -259,7 +274,7 @@ export class UnifiedOutlineGenerator {
         config.provider,
         config.apiKey,
         config.baseUrl,
-        config.model
+        config.model,
       );
 
       const result = await service.generateOutline(
@@ -268,7 +283,7 @@ export class UnifiedOutlineGenerator {
           temperature: options.temperature,
           topP: options.topP,
         },
-        options.wordCountRange
+        options.wordCountRange,
       );
 
       if (result && result.outlines) {
@@ -300,14 +315,57 @@ export class UnifiedOutlineGenerator {
     }
   }
 
-  /**
-   * 构建 Markdown 格式系统提示词（优先使用）
-   */
+  private async callStructuredTextMode(
+    systemPrompt: string,
+    userPrompt: string,
+    options: GenerateOptions,
+  ): Promise<string> {
+    const data = await this.requestChatCompletion(
+      [
+        { role: 'system' as const, content: systemPrompt },
+        { role: 'user' as const, content: userPrompt },
+      ],
+      options,
+    );
+
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error('API 未返回内容');
+    }
+
+    return content;
+  }
+
+  private async requestChatCompletion(
+    messages: Array<{ role: 'system' | 'user'; content: string }>,
+    options: GenerateOptions,
+  ): Promise<any> {
+    const config = this.getAIConfig();
+    const response = await fetch(config.baseUrl + '/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+      },
+      body: JSON.stringify({
+        model: config.model || undefined,
+        messages,
+        temperature: options.temperature || 0.7,
+        top_p: options.topP || 0.9,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API 请求失败: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
   private buildMarkdownSystemPrompt(wordCountRange: string): string {
-    // 解析字数范围
     const wordCountNum = this.parseWordCount(wordCountRange);
-    const chaptersPerVolume = Math.ceil(wordCountNum / 150000); // 每卷约15万字
-    const totalChapters = Math.ceil(wordCountNum / 2000); // 每章约2000字
+    const chaptersPerVolume = Math.ceil(wordCountNum / 150000);
+    const totalChapters = Math.ceil(wordCountNum / 2000);
 
     return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
 
@@ -359,210 +417,82 @@ export class UnifiedOutlineGenerator {
 |----------|------|------|
 | 规则1 | 描述 | 修炼/魔法/社会 |
 
-## 角色设定
+## 四幕结构
+- **第一幕**：
+- **第二幕上**：
+- **第二幕下**：
+- **第三幕**：
+
+## 角色
 
 ### 主角
+- **姓名**：
+- **定位**：
+- **描述**：
 
-- **姓名**：角色名
-- **角色类型**：主角
-- **描述**：角色描述
-- **性格标签**：性格标签1、性格标签2
-- **金手指**：金手指（如有）
-- **优势**：优势1
-- **短板**：短板1
-- **人际关系**：
-  - 关联角色（朋友/敌人/导师）：关系描述
+### 配角
+- **姓名**：
+- **定位**：
+- **描述**：
 
-### 其他角色
+## 子情节
+- **标题**：
+- **描述**：
+- **作用**：
 
-- 角色名（角色类型）：描述
+## 章节规划
+- **章节标题**：
+- **摘要**：
+- **关键事件**：
 
-## 三幕结构
-
-### 第一幕（建置，约20%）
-
-第一幕描述
-
-### 第二幕A（对抗上半，约25%）
-
-第二幕A描述
-
-### 第二幕B（对抗下半，约25%）
-
-第二幕B描述
-
-### 第三幕（结局，约30%）
-
-第三幕描述
-
-## 爽点设计
-
-### 爽点类型
-
-打脸爽、装逼爽、身份揭秘、实力碾压
-
-### 爽点安排
-
-| 章节 | 类型 | 描述 |
-|------|------|------|
-| 5 | micro | 爽点描述 |
-| 10 | small | 爽点描述 |
-| 30 | big | 爽点描述 |
-
-## 核心卖点
-
-| 名称 | 描述 | 优先级 |
-|------|------|--------|
-| 卖点名称 | 卖点描述 | 1 |
-
-## 矛盾设计
-
-- **冲突来源**：资源/利益、阵营/种族等
-
-### 矛盾递进
-
-1. 一级矛盾
-2. 二级矛盾
-3. 三级矛盾
-4. 四级矛盾
-
-### 主要冲突
-
-- 主要冲突1
-- 主要冲突2
-
-## 八条故事线
-
-### 地图线
-
-地图线规划（地点递进）
-
-### 阵营线
-
-阵营线规划（势力发展）
-
-### 人物线
-
-人物线规划（角色登场）
-
-### 金手指线
-
-金手指线规划（能力升级）
-
-### 世界观线
-
-世界观线规划（设定揭示）
-
-### 矛盾线
-
-矛盾线规划（冲突递进）
-
-### 收集线
-
-收集线规划（材料收集）
-
-### 感情线
-
-感情线规划（感情发展）
-
-## 伏笔规划
-
-| 内容 | 类型 | 建议章节 |
-|------|------|----------|
-| 伏笔内容 | 悬念/对话/事件/物品 | 10 |
-
-## 章节概览
-
-| 章节 | 标题 | 摘要 | 关键事件 | 涉及角色 |
-|------|------|------|----------|----------|
-| 1 | 章节标题 | 章节摘要 | 关键事件1 | 角色1 |
-| 2 | 章节标题 | 章节摘要 | 关键事件2 | 角色2 |
-
-【要求】
-- 使用 Markdown 格式输出
-- 每个大纲使用二级标题（## 大纲X）
-- 确保所有字段都有具体内容
-- 所有大纲都要完整填写以上所有模块
-- **字数规划必须符合目标字数范围**
-- 卷数和章节数要与目标字数匹配
-- 每卷约${Math.round(wordCountNum / chaptersPerVolume / 10000)}万字
-- 前30章（前约10万字）必须包含：钩子、人设、爽点、悬念`;
+## 伏笔
+- **伏笔**：
+- **类型**：
+- **回收章节**：
+`;
   }
 
-  /**
-   * 解析字数范围为数字
-   */
-  private parseWordCount(wordCountRange: string): number {
-    // 匹配两个数字（支持 "50万-100万字" 或 "50-100万字" 等格式）
-    const rangeMatch = wordCountRange.match(/(\d+(?:\.\d+)?)\s*万\s*[-~]\s*(\d+(?:\.\d+)?)\s*万/);
-    if (rangeMatch) {
-      const minWan = parseFloat(rangeMatch[1]);
-      const maxWan = parseFloat(rangeMatch[2]);
-      return Math.round(((minWan + maxWan) / 2) * 10000);
-    }
-
-    // 匹配单个数字（如 "80万字"）
-    const singleMatch = wordCountRange.match(/(\d+(?:\.\d+)?)\s*万/);
-    if (singleMatch) {
-      const wan = parseFloat(singleMatch[1]);
-      return Math.round(wan * 10000);
-    }
-
-    return 500000;
-  }
-
-  /**
-   * JSON Mode 降级方法（兜底用）
-   */
   private async callJSONModeFallback(
     prompt: string,
-    options: GenerateOptions
+    options: GenerateOptions,
   ): Promise<GenerationResult> {
-    const config = this.getAIConfig();
-
-    const systemPrompt = this.buildJSONSystemPrompt(options.wordCountRange || '50万-100万字');
-    const messages = [
-      { role: 'system' as const, content: systemPrompt },
-      { role: 'user' as const, content: `用户的创意种子：${prompt}` },
-    ];
-
     try {
-      // 使用 fetch 直接调用 API
-      const response = await fetch(config.baseUrl + '/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
-        },
-        body: JSON.stringify({
-          model: config.model || undefined,
-          messages,
-          temperature: options.temperature || 0.7,
-          top_p: options.topP || 0.9,
-          response_format: { type: 'json_object' },
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API 请求失败: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const config = this.getAIConfig();
+      const systemPrompt = this.buildJSONSystemPrompt(options.wordCountRange || '50万-100万字');
+      const data = await this.requestChatCompletion(
+        [
+          { role: 'system' as const, content: systemPrompt },
+          { role: 'user' as const, content: prompt },
+        ],
+        options,
+      );
       const content = data.choices?.[0]?.message?.content;
 
       if (!content) {
-        throw new Error('API 未返回内容');
+        throw new Error('API 未返回 JSON 内容');
       }
 
-      // 解析 JSON
-      const result = outlinePostProcessor.processJSON(content);
+      const parsed = robustJsonParse(content);
+      const outlines = Array.isArray(parsed?.outlines) ? parsed.outlines as Outline[] : [];
+
+      if (outlines.length === 0) {
+        return {
+          success: false,
+          outlines: [],
+          warnings: [],
+          errors: ['JSON 兜底未生成有效 outlines'],
+          strategy: 'json-mode',
+          rawMarkdown: content,
+        };
+      }
 
       return {
-        success: result.success,
-        outlines: result.outlines,
-        warnings: result.warnings,
-        errors: result.errors,
+        success: true,
+        outlines,
+        warnings: ['使用 JSON Mode 兜底成功'],
+        errors: [],
         strategy: 'json-mode',
+        rawMarkdown: content,
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -570,176 +500,61 @@ export class UnifiedOutlineGenerator {
         success: false,
         outlines: [],
         warnings: [],
-        errors: [`JSON Mode 降级失败: ${errorMsg}`],
+        errors: [`JSON 兜底失败: ${errorMsg}`],
         strategy: 'json-mode',
       };
     }
   }
 
-  /**
-   * 旧版 JSON 系统提示词（仅用于降级）
-   */
   private buildJSONSystemPrompt(wordCountRange: string): string {
-    // 解析字数范围
-    const wordCountNum = this.parseWordCount(wordCountRange);
-    const chaptersPerVolume = Math.ceil(wordCountNum / 150000);
-    const totalChapters = Math.ceil(wordCountNum / 2000);
-
-    return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
-
-【字数要求】
-预估字数：${wordCountRange}
-建议卷数：${chaptersPerVolume}卷
-建议章节数：${totalChapters}章
-
-请生成3个不同风格的大纲，每个大纲必须包含以下所有字段：
-
-{
-  "outlines": [
-    {
-      "title": "故事标题",
-      "synopsis": "60-80字简介",
-      "genres": ["题材标签"],
-      "estimatedWordCount": 500000,
-      "emotionGoal": { "primary": "核心情绪", "secondary": "次要情绪", "arc": "上升/下降/波动/混合", "density": 3000, "highPoints": [5, 20, 50], "lowPoints": [10, 30] },
-      "worldSetting": { "type": "世界类型", "locations": [{ "name": "地点", "description": "描述", "level": "新手村" }], "factions": [{ "name": "势力", "description": "描述" }], "rules": [{ "name": "规则", "description": "描述" }] },
-      "characters": [{ "name": "角色名", "role": "主角", "description": "描述", "personality": ["性格标签"], "goldenFinger": "金手指", "strengths": ["优势"], "weaknesses": ["短板"] }],
-      "structure": { "第一幕": "第一幕", "第二幕A": "第二幕A", "第二幕B": "第二幕B", "第三幕": "第三幕" },
-      "coolPointDesign": { "patterns": ["打脸爽", "装逼爽"], "arranged": [{ "type": "类型", "description": "描述", "suggestedChapter": 5 }] },
-      "coreSellingPoints": [{ "name": "卖点", "description": "描述", "priority": 1 }],
-      "conflictDesign": { "source": "冲突来源", "escalation": ["一级", "二级", "三级", "四级"], "majorConflicts": ["冲突1"] },
-      "storyLines": { "map": "地图线", "faction": "阵营线", "character": "人物线", "goldenfinger": "金手指线", "worldRules": "世界观线", "conflict": "矛盾线", "collection": "收集线", "romance": "感情线" },
-      "foreshadows": [{ "hint": "伏笔", "type": "悬念", "suggestedChapter": 10 }],
-      "chapters": [{ "title": "章节标题", "summary": "摘要", "keyEvents": ["事件"], "involvedCharacters": ["角色"] }]
-    }
-  ]
-}
-
-【要求】
-- 只输出纯JSON对象，不要任何其他内容
-- JSON格式：{"outlines":[...]}
-- 确保JSON语法完全正确
-- 所有大纲都要完整填写以上所有字段
-- **字数规划必须符合目标字数范围**
-- 卷数和章节数要与目标字数匹配
-- 每卷约${Math.round(wordCountNum / chaptersPerVolume / 10000)}万字
-- 前30章（前约10万字）必须包含：钩子、人设、爽点、悬念`;
+    return `你是一位专业的小说创作顾问。请根据用户创意种子，输出 JSON 格式的大纲数据。预估字数范围：${wordCountRange}。JSON 顶层必须包含 outlines 数组。`;
   }
 
-  /**
-   * 获取 AI 配置
-   */
+  private parseWordCount(wordCountRange: string): number {
+    const numbers = wordCountRange.match(/\d+/g)?.map((value) => Number.parseInt(value, 10)) ?? [];
+    if (numbers.length === 0) {
+      return 500000;
+    }
+
+    const max = Math.max(...numbers);
+    return wordCountRange.includes('万') ? max * 10000 : max;
+  }
+
   private getAIConfig(): {
     provider: ProviderType;
     apiKey: string;
     baseUrl: string;
-    model: string;
+    model?: string;
   } {
-    try {
-      // 使用 useActiveAIProvider 获取当前配置
-      const { activeProvider } = useActiveAIProvider();
-      const provider = activeProvider.value;
+    const settingsStore = useSettingsStore();
+    const providers = settingsStore.aiProviders;
+    const defaultModelId = settingsStore.defaultModel;
 
-      if (provider) {
-        // 优先使用用户配置的 baseUrl，如果没有则使用 provider 的默认 URL
-        const baseUrl = provider.baseUrl || this.getDefaultBaseUrl(provider.provider);
-        return {
-          provider: provider.provider,
-          apiKey: provider.apiKey || '',
-          baseUrl,
-          model: provider.modelName || '',
-        };
-      }
+    let providerConfig = null;
 
-      // 如果没有活跃的 provider，尝试从设置获取
-      const settingsStore = useSettingsStore();
-      const defaultModelId = settingsStore.defaultModel;
-
-      if (defaultModelId) {
-        const [providerId, modelName] = defaultModelId.split(':');
-        const matchedProvider = settingsStore.aiProviders.find(
-          p => p.id === providerId && p.enabled && p.apiKey
-        );
-
-        if (matchedProvider) {
-          const baseUrl =
-            matchedProvider.baseUrl || this.getDefaultBaseUrl(matchedProvider.provider);
-          return {
-            provider: matchedProvider.provider,
-            apiKey: matchedProvider.apiKey || '',
-            baseUrl,
-            model: modelName || matchedProvider.modelName || '',
-          };
-        }
-      }
-
-      // 最后一个兜底：找第一个启用的
-      const firstEnabled = settingsStore.aiProviders.find(p => p.enabled && p.apiKey);
-      if (firstEnabled) {
-        const baseUrl = firstEnabled.baseUrl || this.getDefaultBaseUrl(firstEnabled.provider);
-        return {
-          provider: firstEnabled.provider,
-          apiKey: firstEnabled.apiKey || '',
-          baseUrl,
-          model: firstEnabled.modelName || '',
-        };
-      }
-    } catch {
-      // 使用默认配置
+    if (defaultModelId) {
+      const [providerId, modelName] = defaultModelId.split(':');
+      providerConfig = providers.find((item) =>
+        item.id === providerId
+        && item.modelName === modelName
+        && item.enabled
+        && item.apiKey,
+      ) ?? null;
     }
 
-    // 返回默认配置（OpenAI）
+    if (!providerConfig) {
+      providerConfig = providers.find((item) => item.enabled && item.apiKey) ?? null;
+    }
+
+    if (!providerConfig) {
+      throw new Error('未找到当前激活的 AI 提供商配置');
+    }
+
     return {
-      provider: 'openai' as ProviderType,
-      apiKey: '',
-      baseUrl: 'https://api.openai.com/v1',
-      model: 'gpt-4o',
+      provider: providerConfig.provider as ProviderType,
+      apiKey: providerConfig.apiKey,
+      baseUrl: providerConfig.baseUrl || '',
+      model: providerConfig.modelName,
     };
   }
-
-  /**
-   * 获取 provider 的默认 base URL
-   */
-  private getDefaultBaseUrl(provider: ProviderType): string {
-    const defaultUrls: Partial<Record<ProviderType, string>> = {
-      openai: 'https://api.openai.com/v1',
-      anthropic: 'https://api.anthropic.com',
-      gemini: 'https://generativelanguage.googleapis.com/v1beta',
-      moonshot: 'https://api.moonshot.cn/v1',
-      deepseek: 'https://api.deepseek.com/v1',
-      ollama: 'http://localhost:11434',
-      groq: 'https://api.groq.com/openai/v1',
-      qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-      mistral: 'https://api.mistral.ai/v1',
-      cohere: 'https://api.cohere.ai/v1',
-      nvidia: 'https://integrate.api.nvidia.com/v1',
-      perplexity: 'https://api.perplexity.ai',
-      together: 'https://api.together.xyz/v1',
-      cerebras: 'https://api.cerebras.ai/v1',
-      azure: '',
-      grok: 'https://api.x.ai/v1',
-      fireworks: 'https://api.fireworks.ai/v1',
-      zhipu: 'https://open.bigmodel.cn/api/paas/v4',
-    };
-    return defaultUrls[provider] || '';
-  }
-
-  /**
-   * 更新配置
-   */
-  updateConfig(apiKey: string, baseUrl?: string, model?: string) {
-    if (this.markdownGenerator) {
-      this.markdownGenerator.updateConfig(apiKey, baseUrl, model);
-    }
-  }
-}
-
-// 导出单例（延迟初始化）
-let instance: UnifiedOutlineGenerator | null = null;
-
-export function getUnifiedOutlineGenerator(): UnifiedOutlineGenerator {
-  if (!instance) {
-    instance = new UnifiedOutlineGenerator();
-  }
-  return instance;
 }

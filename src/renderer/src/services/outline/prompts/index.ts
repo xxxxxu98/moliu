@@ -5,6 +5,8 @@
 
 // Core principles
 export * from './system/core-principles';
+export * from './system/direction-prompt';
+export * from './system/expand-direction-prompt';
 
 // Unified Prompt Builder (新增)
 export * as UnifiedPromptBuilder from './core/prompt-builder';

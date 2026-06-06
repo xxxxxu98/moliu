@@ -1,7 +1,13 @@
 import { ref, computed } from 'vue';
-import { UnifiedOutlineGenerator, type GenerateOptions, type GenerationResult } from '@/services/outline/generators/unified-generator';
+import {
+  UnifiedOutlineGenerator,
+  type GenerateOptions,
+  type GenerationResult,
+} from '@/services/outline/generators/unified-generator';
 import type { Outline } from '@/services/outline/schemas/outline.schema';
 import type { GeneratedOutline } from '@/types/inspiration';
+import type { OutlineDirection } from '@/services/outline/types/direction';
+import type { ExecutableOutline } from '@/services/outline/types/executable-outline';
 
 /**
  * 生成选项
@@ -34,11 +40,19 @@ export interface UseOutlineGeneratorReturn {
   /** 生成的大纲列表 */
   outlines: ReturnType<typeof ref<GeneratedOutline[]>>;
   /** 是否生成成功 */
-  isSuccess: ReturnType<typeof ref<boolean>>;
+  isSuccess: ReturnType<typeof computed<boolean>>;
   /** 原始 Markdown（用于调试） */
   rawMarkdown: ReturnType<typeof ref<string>>;
   /** 生成大纲方法 */
   generateOutlines: (prompt: string, options?: UseOutlineGeneratorOptions) => Promise<GeneratedOutline[]>;
+  /** 生成方向卡 */
+  generateDirections: (prompt: string, options?: UseOutlineGeneratorOptions) => Promise<OutlineDirection[]>;
+  /** 展开方向为可执行方案 */
+  expandDirection: (
+    prompt: string,
+    direction: OutlineDirection,
+    options?: UseOutlineGeneratorOptions,
+  ) => Promise<ExecutableOutline | null>;
   /** 重置状态 */
   reset: () => void;
 }
@@ -56,12 +70,8 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
   const outlines = ref<GeneratedOutline[]>([]);
   const rawMarkdown = ref<string>('');
 
-  // 生成器实例
   let generator: UnifiedOutlineGenerator | null = null;
 
-  /**
-   * 获取生成器实例
-   */
   function getGenerator(): UnifiedOutlineGenerator {
     if (!generator) {
       generator = new UnifiedOutlineGenerator();
@@ -69,17 +79,19 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     return generator;
   }
 
-  /**
-   * 生成大纲
-   * @param prompt 生成大纲的提示词
-   * @param options 可选配置
-   * @returns 生成的大纲列表
-   */
+  function buildGenerateOptions(options?: UseOutlineGeneratorOptions): GenerateOptions {
+    return {
+      temperature: options?.temperature ?? 0.7,
+      topP: options?.topP ?? 0.9,
+      wordCountRange: options?.wordCountRange ?? '50万-100万字',
+      maxRetries: options?.maxRetries ?? 2,
+    };
+  }
+
   async function generateOutlines(
     prompt: string,
     options?: UseOutlineGeneratorOptions,
   ): Promise<GeneratedOutline[]> {
-    // 重置状态
     isGenerating.value = true;
     error.value = null;
     progress.value = '准备生成...';
@@ -89,26 +101,14 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     rawMarkdown.value = '';
 
     try {
-      const generator = getGenerator();
-
-      // 构建生成选项
-      const generateOptions: GenerateOptions = {
-        temperature: options?.temperature ?? 0.7,
-        topP: options?.topP ?? 0.9,
-        wordCountRange: options?.wordCountRange ?? '50万-100万字',
-        maxRetries: options?.maxRetries ?? 2,
-      };
-
-      // 执行生成
-      const result = await generator.generate(
+      const result = await getGenerator().generate(
         prompt,
-        generateOptions,
+        buildGenerateOptions(options),
         (msg) => {
           progress.value = msg;
         },
       );
 
-      // 处理结果
       return handleGenerationResult(result);
     } catch (err) {
       console.error('[useOutlineGenerator] Outline generation error:', err);
@@ -120,17 +120,82 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     }
   }
 
-  /**
-   * 处理生成结果
-   */
+  async function generateDirections(
+    prompt: string,
+    options?: UseOutlineGeneratorOptions,
+  ): Promise<OutlineDirection[]> {
+    isGenerating.value = true;
+    error.value = null;
+    progress.value = '正在生成创作方向...';
+    warnings.value = [];
+    strategy.value = '';
+    rawMarkdown.value = '';
+
+    try {
+      const result = await getGenerator().generateDirections(
+        prompt,
+        buildGenerateOptions(options),
+        (msg) => {
+          progress.value = msg;
+        },
+      );
+
+      rawMarkdown.value = result.rawText ?? '';
+      warnings.value = result.warnings ?? [];
+      strategy.value = result.strategy ?? '';
+      return result.directions;
+    } catch (err) {
+      console.error('[useOutlineGenerator] Direction generation error:', err);
+      error.value = String(err);
+      return [];
+    } finally {
+      isGenerating.value = false;
+      progress.value = '';
+    }
+  }
+
+  async function expandDirection(
+    prompt: string,
+    direction: OutlineDirection,
+    options?: UseOutlineGeneratorOptions,
+  ): Promise<ExecutableOutline | null> {
+    isGenerating.value = true;
+    error.value = null;
+    progress.value = '正在展开主方案...';
+    warnings.value = [];
+    strategy.value = '';
+    rawMarkdown.value = '';
+
+    try {
+      const result = await getGenerator().expandDirection(
+        prompt,
+        direction,
+        buildGenerateOptions(options),
+        (msg) => {
+          progress.value = msg;
+        },
+      );
+
+      rawMarkdown.value = result.rawText ?? '';
+      warnings.value = result.warnings ?? [];
+      strategy.value = result.strategy ?? '';
+      return result.outline;
+    } catch (err) {
+      console.error('[useOutlineGenerator] Expand direction error:', err);
+      error.value = String(err);
+      return null;
+    } finally {
+      isGenerating.value = false;
+      progress.value = '';
+    }
+  }
+
   function handleGenerationResult(result: GenerationResult): GeneratedOutline[] {
-    // 更新状态
     warnings.value = result.warnings;
     strategy.value = result.strategy;
     rawMarkdown.value = result.rawMarkdown || '';
 
     if (result.success && result.outlines.length > 0) {
-      // 转换为 GeneratedOutline 格式
       const generatedOutlines = result.outlines.map((outline, index) =>
         convertToGeneratedOutline(outline, index),
       );
@@ -139,7 +204,6 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
       return generatedOutlines;
     }
 
-    // 生成失败
     if (result.errors.length > 0) {
       error.value = result.errors.join('; ');
     } else {
@@ -149,11 +213,7 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     return [];
   }
 
-  /**
-   * 将 Outline 转换为 GeneratedOutline
-   */
   function convertToGeneratedOutline(outline: Outline, index: number): GeneratedOutline {
-    // 处理角色信息
     const characters = (outline.characters || []).map((c) => ({
       name: c.name || '',
       role: c.role || '',
@@ -169,14 +229,12 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
       })),
     }));
 
-    // 处理伏笔信息
     const foreshadows = (outline.foreshadows || []).map((f) => ({
       hint: f.hint || '',
       type: f.type || 'event',
       suggestedChapter: f.suggestedChapter,
     }));
 
-    // 处理世界观设定
     const worldSetting = outline.worldSetting
       ? {
           locations: (outline.worldSetting.locations || []).map((l) => ({
@@ -201,7 +259,6 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
         }
       : undefined;
 
-    // 处理子情节
     const subplots = (outline.subplots || []).map((s) => ({
       title: s.title || '',
       description: s.description || '',
@@ -210,7 +267,6 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
       purpose: s.purpose || '',
     }));
 
-    // 处理章节
     const chapters = (outline.chapters || []).map((ch) => ({
       title: ch.title || '',
       summary: ch.summary || '',
@@ -218,55 +274,61 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
       involvedCharacters: ch.involvedCharacters || [],
     }));
 
-    // 处理情绪目标
-    const emotionGoal = outline.emotionGoal ? {
-      primary: outline.emotionGoal.primary || '',
-      secondary: outline.emotionGoal.secondary,
-      arc: outline.emotionGoal.arc || 'rising',
-      density: outline.emotionGoal.density,
-      highPoints: outline.emotionGoal.highPoints || [],
-      lowPoints: outline.emotionGoal.lowPoints || [],
-    } : undefined;
+    const emotionGoal = outline.emotionGoal
+      ? {
+          primary: outline.emotionGoal.primary || '',
+          secondary: outline.emotionGoal.secondary,
+          arc: outline.emotionGoal.arc || 'rising',
+          density: outline.emotionGoal.density,
+          highPoints: outline.emotionGoal.highPoints || [],
+          lowPoints: outline.emotionGoal.lowPoints || [],
+        }
+      : undefined;
 
-    // 处理爽点设计
-    const coolPointDesign = outline.coolPointDesign ? {
-      patterns: outline.coolPointDesign.patterns || [],
-      arranged: (outline.coolPointDesign.arranged || []).map((cp) => ({
-        type: cp.type || '',
-        description: cp.description || '',
-        suggestedChapter: cp.suggestedChapter,
-      })),
-    } : undefined;
+    const coolPointDesign = outline.coolPointDesign
+      ? {
+          patterns: outline.coolPointDesign.patterns || [],
+          arranged: (outline.coolPointDesign.arranged || []).map((cp) => ({
+            type: cp.type || '',
+            description: cp.description || '',
+            suggestedChapter: cp.suggestedChapter,
+          })),
+        }
+      : undefined;
 
-    // 处理核心卖点
     const coreSellingPoints = (outline.coreSellingPoints || []).map((cp) => ({
       name: cp.name || '',
       description: cp.description || '',
       priority: cp.priority || 1,
     }));
 
-    // 处理矛盾设计（简化版）
-    const conflictDesign = outline.conflictDesign ? {
-      source: outline.conflictDesign.source || '',
-      escalation: (outline.conflictDesign.escalation || []).map((e) =>
-        typeof e === 'string' ? e : e.description || ''
-      ),
-      majorConflicts: (outline.conflictDesign.majorConflicts || []).map((c) =>
-        typeof c === 'string' ? c : c.title || ''
-      ),
-    } : undefined;
+    const conflictDesign = outline.conflictDesign
+      ? {
+          source: outline.conflictDesign.source || '',
+          escalation: (outline.conflictDesign.escalation || []).map((e) =>
+            typeof e === 'string' ? e : e.description || '',
+          ),
+          majorConflicts: (outline.conflictDesign.majorConflicts || []).map((c) =>
+            typeof c === 'string' ? c : c.title || '',
+          ),
+        }
+      : undefined;
 
-    // 处理八条故事线（简化版）
-    const storyLines = outline.storyLines ? {
-      map: outline.storyLines.map?.planned?.join(' → ') || '',
-      faction: outline.storyLines.faction?.planned?.join(' → ') || '',
-      character: outline.storyLines.character?.planned?.map(p => typeof p === 'string' ? p : p.role).join(' → ') || '',
-      goldenfinger: outline.storyLines.goldenfinger?.type || '',
-      worldRules: outline.storyLines.worldRules?.revealed?.join(' → ') || '',
-      conflict: outline.storyLines.conflict?.chains?.map(c => c.name).join(' → ') || '',
-      collection: outline.storyLines.collection?.target?.join(' → ') || '',
-      romance: outline.storyLines.romance?.currentStage || '',
-    } : undefined;
+    const storyLines = outline.storyLines
+      ? {
+          map: outline.storyLines.map?.planned?.join(' → ') || '',
+          faction: outline.storyLines.faction?.planned?.join(' → ') || '',
+          character:
+            outline.storyLines.character?.planned
+              ?.map((p) => (typeof p === 'string' ? p : p.role))
+              .join(' → ') || '',
+          goldenfinger: outline.storyLines.goldenfinger?.type || '',
+          worldRules: outline.storyLines.worldRules?.revealed?.join(' → ') || '',
+          conflict: outline.storyLines.conflict?.chains?.map((c) => c.name).join(' → ') || '',
+          collection: outline.storyLines.collection?.target?.join(' → ') || '',
+          romance: outline.storyLines.romance?.currentStage || '',
+        }
+      : undefined;
 
     return {
       id: outline.id || `outline-${index}-${Date.now()}`,
@@ -280,8 +342,6 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
       characters,
       foreshadows,
       estimatedWordCount: outline.estimatedWordCount || 0,
-
-      // 新增增强字段
       emotionGoal,
       coolPointDesign,
       coreSellingPoints,
@@ -290,9 +350,6 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     };
   }
 
-  /**
-   * 重置状态
-   */
   function reset() {
     isGenerating.value = false;
     error.value = null;
@@ -303,7 +360,6 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     rawMarkdown.value = '';
   }
 
-  // 计算属性
   const isSuccess = computed(() => outlines.value.length > 0 && !error.value);
 
   return {
@@ -316,6 +372,8 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     isSuccess,
     rawMarkdown,
     generateOutlines,
+    generateDirections,
+    expandDirection,
     reset,
   };
 }
