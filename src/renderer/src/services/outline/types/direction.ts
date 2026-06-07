@@ -10,6 +10,7 @@ export interface OutlineDirection {
   riskNotes: string[];
   recommendationScore: number;
   recommendedReason: string;
+  longformCapacityNote?: string;
 }
 
 export interface DirectionGenerationResult {

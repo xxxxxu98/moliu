@@ -1,4 +1,4 @@
-import type { BuiltPrompt } from './shared';
+import type { BuiltPrompt } from '@/services/outline/prompts/system/shared';
 
 export interface DirectionPromptOptions {
   seed: string;
@@ -9,10 +9,11 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 
 你的目标不是直接写完整大纲，而是做“方向筛选与推荐”。请优先考虑以下标准：
 1. 是否具备清晰卖点，能一句话说清“为什么值得看”
-2. 是否具备长篇承载力，能稳定支撑百万字左右的冲突升级或关系推进
+2. 是否具备长篇承载力，能稳定支撑百万字左右的冲突升级、地图扩张、势力更替或关系推进
 3. 是否适合网文连载，前30章容易做出钩子、爽点、人设记忆点和追读动力
 4. 三个方向必须有明显差异，不要只是同一故事的小改写
 5. 输出应强调“可写性”和“读者吸引力”，而不是空泛设定堆砌
+6. 每个方向都必须具备“章节规模意识”：要能匹配目标字数区间对应的总章节规模，不能像中篇故事那样在前30章内耗尽主线
 
 请严格遵守以下输出规则：
 - 只输出 3 个方向方案
@@ -32,6 +33,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 爽点风格
 - 目标情绪
 - 风险提示
+- 长篇承载力
 - 推荐理由
 - 推荐分
 
@@ -46,6 +48,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 爽点风格：
 - 目标情绪：
 - 风险提示：
+- 长篇承载力：
 - 推荐理由：
 - 推荐分：
 
@@ -58,6 +61,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 爽点风格：
 - 目标情绪：
 - 风险提示：
+- 长篇承载力：
 - 推荐理由：
 - 推荐分：
 
@@ -70,23 +74,60 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 爽点风格：
 - 目标情绪：
 - 风险提示：
+- 长篇承载力：
 - 推荐理由：
 - 推荐分：
 
 额外要求：
 - “爽点风格”“目标情绪”“风险提示”请用顿号或分号列出 2-4 个短语，不要写成长段
+- “长篇承载力”请用 1-2 句话说明这个方向为什么能支撑目标章节规模，并明确点出“前30章之后还有哪些升级空间/关系空间/地图空间/悬念空间”
 - “推荐分”使用 0-100 的整数
 - 三个方案中必须有一个方案的“推荐分”最高，并且推荐理由最完整
-- 所有方案都要避免空泛词汇，必须具体到题材驱动、人物处境、冲突机制或读者体验
+- 所有方案都要避免空泛词汇，必须具体到题材驱动、人物处境、冲突机制、章节推进方式或读者体验
 - 如果创意信息不足，请优先保证结构完整，再给出合理但简洁的内容。宁可短而完整，也不要长而失控。`;
 
+function parseWordCount(wordCountRange: string): number {
+  const normalized = wordCountRange.replace(/[,，\s]/g, '');
+  const rangeMatch = normalized.match(/(\d+(?:\.\d+)?)万?[-~至到](\d+(?:\.\d+)?)万?(?:字)?/);
+  if (rangeMatch) {
+    const min = Number(rangeMatch[1]);
+    const max = Number(rangeMatch[2]);
+    if (Number.isFinite(min) && Number.isFinite(max)) {
+      return Math.round(((min + max) / 2) * 10000);
+    }
+  }
+
+  const singleMatch = normalized.match(/(\d+(?:\.\d+)?)万(?:字)?/);
+  if (singleMatch) {
+    const value = Number(singleMatch[1]);
+    if (Number.isFinite(value)) {
+      return Math.round(value * 10000);
+    }
+  }
+
+  return 500000;
+}
+
 export function buildDirectionPrompt(options: DirectionPromptOptions): BuiltPrompt {
+  const targetWordCount = parseWordCount(options.wordCountRange);
+  const estimatedChapterCount = Math.max(60, Math.ceil(targetWordCount / 2500));
+  const suggestedVolumeCount = Math.max(3, Math.ceil(targetWordCount / 180000));
+  const estimatedChaptersPerVolume = Math.max(20, Math.round(estimatedChapterCount / suggestedVolumeCount));
+  const startupPhaseRatio = `${Math.round((30 / estimatedChapterCount) * 100)}%`;
+
   return {
     system: SYSTEM_PROMPT,
     user: `请基于以下创意种子，生成 3 个适合继续展开成长篇网文的方向方案卡。
 
 【目标字数区间】
 ${options.wordCountRange}
+
+【章节规模参考】
+- 目标总字数约：${targetWordCount}字
+- 按平均每章约2500字估算：约${estimatedChapterCount}章
+- 建议卷数：约${suggestedVolumeCount}卷
+- 每卷预计：约${estimatedChaptersPerVolume}章
+- 前30章约占全书：${startupPhaseRatio}
 
 【创意种子】
 ${options.seed}
@@ -95,6 +136,7 @@ ${options.seed}
 1. 三个方向要明显不同，不能只是换名字或换表述
 2. 优先考虑网文读者的追读动力、爽点密度和长线可写性
 3. 如果原始创意比较模糊，请主动补足能支撑长篇的冲突与成长路径
-4. 不要直接输出完整大纲，只输出方向方案卡`,
+4. 不要直接输出完整大纲，只输出方向方案卡
+5. 每个方向都必须体现“章节规模意识”：前30章只能完成开局承诺、建立第一轮冲突闭环，并为后续长线升级留下足够空间`,
   };
 }

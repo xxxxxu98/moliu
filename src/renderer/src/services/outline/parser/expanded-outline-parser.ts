@@ -3,6 +3,7 @@ import type {
   ExecutableOutline,
   StartupChapterBlock,
   VolumePlan,
+  StoryScalePlan,
 } from '../types/executable-outline';
 import {
   extractFieldValue,
@@ -43,6 +44,23 @@ function parseStartupBlock(block: string, range: string): StartupChapterBlock {
   };
 }
 
+function parseStoryScalePlan(section: string): StoryScalePlan {
+  const estimatedChapterCount = Number(extractFieldValue(section, '预计总章节数')?.match(/\d+/)?.[0] ?? '0');
+  const averageWordsPerChapter = Number(extractFieldValue(section, '章节平均字数')?.match(/\d+/)?.[0] ?? '2500');
+  const suggestedVolumeCount = Number(extractFieldValue(section, '建议卷数')?.match(/\d+/)?.[0] ?? '3');
+  const estimatedChaptersPerVolume = Number(extractFieldValue(section, '每卷预计章节数')?.match(/\d+/)?.[0] ?? '0');
+
+  return {
+    targetWordCount: extractFieldValue(section, '目标字数') ?? '',
+    estimatedChapterCount,
+    averageWordsPerChapter,
+    suggestedVolumeCount,
+    estimatedChaptersPerVolume,
+    startupPhaseRatio: extractFieldValue(section, '前30章占比') ?? '',
+    longformProgressionNote: extractFieldValue(section, '长线推进说明') ?? '',
+  };
+}
+
 function mapRole(value: string): CharacterPlan['role'] {
   if (value.includes('主角')) return 'protagonist';
   if (value.includes('盟友')) return 'ally';
@@ -78,6 +96,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
   const text = normalizeGeneratedText(raw);
   const sections = splitNamedSections(text, [
     '故事定位',
+    '故事规模规划',
     '核心驱动',
     '卷纲',
     '前30章启动包',
@@ -85,6 +104,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
   ]);
 
   const positioningSection = sections['故事定位'];
+  const scaleSection = sections['故事规模规划'];
   const storyEngineSection = sections['核心驱动'];
   const volumeSection = sections['卷纲'];
   const startupSection = sections['前30章启动包'];
@@ -133,6 +153,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
       sellingPoints: extractMultiValueField(positioningSection, '卖点标签'),
       styleKeywords: extractMultiValueField(positioningSection, '风格关键词'),
     },
+    storyScale: parseStoryScalePlan(scaleSection),
     storyEngine: {
       protagonistName,
       protagonistStart: extractFieldValue(storyEngineSection, '主角初始状态') ?? '',

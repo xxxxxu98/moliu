@@ -163,6 +163,19 @@ export interface GeneratedStoryLines {
 }
 
 /**
+ * 故事规模规划
+ */
+export interface GeneratedStoryScale {
+  targetWordCount: string;
+  estimatedChapterCount: number;
+  averageWordsPerChapter: number;
+  suggestedVolumeCount: number;
+  estimatedChaptersPerVolume: number;
+  startupPhaseRatio: string;
+  longformProgressionNote: string;
+}
+
+/**
  * 完整的大纲输出
  */
 export interface GeneratedOutline {
@@ -190,7 +203,9 @@ export interface GeneratedOutline {
   foreshadows: GeneratedForeshadow[];
   // 预估字数
   estimatedWordCount: number;
-  
+  // 故事规模规划
+  storyScale?: GeneratedStoryScale;
+
   // ====== 新增增强字段 ======
   // 情绪目标
   emotionGoal?: GeneratedEmotionGoal;
@@ -202,7 +217,7 @@ export interface GeneratedOutline {
   conflictDesign?: GeneratedConflictDesign;
   // 八条故事线（简化版）
   storyLines?: GeneratedStoryLines;
-  
+
   // ====== 元数据 ======
   /** 卷数（兼容 OutlineSchema） */
   volumes?: number;

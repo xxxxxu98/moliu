@@ -21,6 +21,8 @@ export interface UseOutlineGeneratorOptions {
   topP?: number;
   /** 最大重试次数 */
   maxRetries?: number;
+  /** 长篇承载力增强说明 */
+  enhancementBrief?: string;
 }
 
 /**

@@ -17,6 +17,7 @@ function parseDirectionBlock(block: string, index: number): OutlineDirection | n
   const targetEmotions = extractMultiValueField(block, '目标情绪');
   const riskNotes = extractMultiValueField(block, '风险提示');
   const recommendedReason = extractFieldValue(block, '推荐理由') ?? '';
+  const longformCapacityNote = extractFieldValue(block, '长篇承载力') ?? '';
   const recommendationScore = safeParseScore(extractFieldValue(block, '推荐分'), 80 - index * 5);
 
   const meaningfulFieldCount = [title, oneLiner, premise, coreConflict].filter(Boolean).length;
@@ -36,6 +37,7 @@ function parseDirectionBlock(block: string, index: number): OutlineDirection | n
     riskNotes,
     recommendationScore,
     recommendedReason,
+    longformCapacityNote,
   };
 }
 

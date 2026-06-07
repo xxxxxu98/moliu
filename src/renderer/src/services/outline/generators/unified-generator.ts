@@ -145,7 +145,7 @@ export class UnifiedOutlineGenerator {
   async expandDirection(
     prompt: string,
     direction: OutlineDirection,
-    options?: GenerateOptions,
+    options?: GenerateOptions & { enhancementBrief?: string },
     onProgress?: (message: string) => void,
   ): Promise<ExpandedOutlineResult> {
     const opts = { ...this.defaultOptions, ...options };
@@ -153,6 +153,7 @@ export class UnifiedOutlineGenerator {
       seed: prompt,
       direction,
       wordCountRange: opts.wordCountRange || '50万-100万字',
+      enhancementBrief: opts.enhancementBrief,
     });
 
     onProgress?.('正在展开主方案...');

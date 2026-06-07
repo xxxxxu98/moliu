@@ -6,11 +6,38 @@ import type { ExecutableOutline } from '@/services/outline/types/executable-outl
 import DirectionPicker from './DirectionPicker.vue';
 import OutlineDisplay from '@/components/common/OutlineDisplay.vue';
 
+interface DirectionScaleHint {
+  targetWordCountLabel: string;
+  estimatedChapterCount: number;
+  suggestedVolumeCount: number;
+  estimatedChaptersPerVolume: number;
+  startupPhaseRatio: string;
+  longformCapacityScore: number;
+  longformCapacityLabel: string;
+  longformCapacityTone: 'strong' | 'medium' | 'cautious';
+  improvementSuggestions: string[];
+  enhancementBrief: string;
+}
+
 interface DirectionCardViewModel {
   id: string;
   icon: Component;
   accent: string;
   direction: OutlineDirection;
+  scaleHint?: DirectionScaleHint;
+}
+
+interface DirectionScaleHint {
+  targetWordCountLabel: string;
+  estimatedChapterCount: number;
+  suggestedVolumeCount: number;
+  estimatedChaptersPerVolume: number;
+  startupPhaseRatio: string;
+  longformCapacityScore: number;
+  longformCapacityLabel: string;
+  longformCapacityTone: 'strong' | 'medium' | 'cautious';
+  improvementSuggestions: string[];
+  enhancementBrief: string;
 }
 
 interface Props {
@@ -28,12 +55,14 @@ interface Props {
   expandedOutline: ExecutableOutline | null;
   emptyDescription?: string;
   disableRegenerate?: boolean;
+  enhancingDirectionId?: string | null;
 }
 
 interface Emits {
   (e: 'regenerate'): void;
   (e: 'select-direction', direction: OutlineDirection): void;
   (e: 'expand'): void;
+  (e: 'enhance-direction', payload: { direction: OutlineDirection; enhancementBrief: string }): void;
   (e: 'select-outline', outline: GeneratedOutline): void;
   (e: 'create'): void;
 }
@@ -61,9 +90,11 @@ const emit = defineEmits<Emits>();
       :error="compact ? error : null"
       :can-expand="canExpand"
       :compact="compact"
+      :enhancing-direction-id="enhancingDirectionId"
       @regenerate="emit('regenerate')"
       @select="emit('select-direction', $event)"
       @expand="emit('expand')"
+      @enhance="emit('enhance-direction', $event)"
     />
 
     <div>

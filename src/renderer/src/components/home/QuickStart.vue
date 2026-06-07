@@ -37,6 +37,19 @@ import type { HookType, CoolPointType } from "@/types/evaluation";
 // Types
 // ============================================================
 
+interface DirectionScaleHint {
+  targetWordCountLabel: string;
+  estimatedChapterCount: number;
+  suggestedVolumeCount: number;
+  estimatedChaptersPerVolume: number;
+  startupPhaseRatio: string;
+  longformCapacityScore: number;
+  longformCapacityLabel: string;
+  longformCapacityTone: 'strong' | 'medium' | 'cautious';
+  improvementSuggestions: string[];
+  enhancementBrief: string;
+}
+
 interface WizardData {
   emotionGenre: {
     emotionGoals: string[];
@@ -117,6 +130,7 @@ const savedDraft = ref<{
 
 const showDraftMenu = ref(false);
 const previewSectionRef = ref<HTMLElement | null>(null);
+const enhanceTargetDirectionId = ref<string | null>(null);
 
 // ============================================================
 // Computed
@@ -193,19 +207,126 @@ const isPromptTooLong = computed(
   () => activeTab.value === "custom" && prompt.value.trim().length > MAX_PROMPT_LENGTH,
 );
 
+const AVG_WORDS_PER_CHAPTER = 2500;
+const DEFAULT_TARGET_WORD_COUNT = 500000;
+
+function parseWordCountRange(rangeText?: string): number {
+  if (!rangeText) return DEFAULT_TARGET_WORD_COUNT;
+
+  const normalized = rangeText.replace(/[,，\s]/g, '');
+  const rangeMatch = normalized.match(/(\d+(?:\.\d+)?)万?[-~至到](\d+(?:\.\d+)?)万?(?:字)?/);
+  if (rangeMatch) {
+    const min = Number(rangeMatch[1]);
+    const max = Number(rangeMatch[2]);
+    if (Number.isFinite(min) && Number.isFinite(max)) {
+      return Math.round(((min + max) / 2) * 10000);
+    }
+  }
+
+  const singleMatch = normalized.match(/(\d+(?:\.\d+)?)万(?:字)?/);
+  if (singleMatch) {
+    const value = Number(singleMatch[1]);
+    if (Number.isFinite(value)) {
+      return Math.round(value * 10000);
+    }
+  }
+
+  return DEFAULT_TARGET_WORD_COUNT;
+}
+
+function buildDirectionScaleHint(wordCountRange: string, direction: OutlineDirection) {
+  const targetWordCount = parseWordCountRange(wordCountRange);
+  const estimatedChapterCount = Math.max(60, Math.ceil(targetWordCount / AVG_WORDS_PER_CHAPTER));
+  const suggestedVolumeCount = Math.max(3, Math.ceil(targetWordCount / 180000));
+  const estimatedChaptersPerVolume = Math.max(20, Math.round(estimatedChapterCount / suggestedVolumeCount));
+  const startupPhaseRatio = `${Math.round((30 / estimatedChapterCount) * 100)}%`;
+
+  let longformCapacityScore = Math.min(100, Math.max(60, direction.recommendationScore));
+  const longformText = [
+    direction.longformCapacityNote,
+    direction.protagonistArc,
+    direction.coreConflict,
+    direction.recommendedReason,
+  ].filter(Boolean).join(' ');
+
+  if (/(升级|成长|地图|势力|多阶段|长线|递进|悬念|扩张|更大主线)/.test(longformText)) {
+    longformCapacityScore += 8;
+  }
+  if (/(单线|重复|容易后劲不足|设定单薄|节奏失控|中后期乏力)/.test(longformText)) {
+    longformCapacityScore -= 10;
+  }
+  longformCapacityScore = Math.max(50, Math.min(98, longformCapacityScore));
+
+  const longformCapacityTone: DirectionScaleHint['longformCapacityTone'] = longformCapacityScore >= 88
+    ? 'strong'
+    : longformCapacityScore >= 76
+      ? 'medium'
+      : 'cautious';
+
+  const longformCapacityLabel = longformCapacityTone === 'strong'
+    ? '长篇承载力强'
+    : longformCapacityTone === 'medium'
+      ? '长篇承载力稳'
+      : '长篇承载力待加强';
+
+  const improvementSuggestions: string[] = [];
+  if (longformCapacityTone === 'cautious') {
+    if (!/(地图|地域|副本|疆域|远行|扩张)/.test(longformText)) {
+      improvementSuggestions.push('补一条地图扩张线，避免故事长期困在单场景');
+    }
+    if (!/(势力|宗门|组织|阵营|朝堂|资本|家族)/.test(longformText)) {
+      improvementSuggestions.push('增加反派梯度或势力博弈，让中后期冲突持续升级');
+    }
+    if (!/(关系|羁绊|爱恨|师徒|搭档|团队|背叛)/.test(longformText)) {
+      improvementSuggestions.push('补强人物关系变量，为30章后持续制造新张力');
+    }
+    if (!/(秘密|真相|谜团|身份|悬念|伏笔)/.test(longformText)) {
+      improvementSuggestions.push('埋入长期悬念或身份真相，给后续章节稳定钩子');
+    }
+  }
+
+  const enhancementBrief = improvementSuggestions.length
+    ? `请在保持当前方向核心卖点不变的前提下，重点补强以下长篇能力缺口：${improvementSuggestions.join('；')}。同时确保前30章只完成开局承诺与第一轮冲突闭环，把更大的地图、势力、关系和悬念递进留到30章之后。`
+    : '请在保持当前方向核心卖点不变的前提下，进一步放大长线升级空间、势力博弈层次、人物关系变量和长期悬念，让它更适合百万字持续推进。';
+
+  return {
+    targetWordCountLabel: wordCountRange,
+    estimatedChapterCount,
+    suggestedVolumeCount,
+    estimatedChaptersPerVolume,
+    startupPhaseRatio,
+    longformCapacityScore,
+    longformCapacityLabel,
+    longformCapacityTone,
+    improvementSuggestions: improvementSuggestions.slice(0, 3),
+    enhancementBrief,
+  };
+}
+
 const isDirectionMode = computed(() => activeTab.value === 'wizard' || activeTab.value === 'custom');
 
 const directionCards = computed(() => {
-  return generatedDirections.value.map((direction, index) => ({
-    id: direction.id,
-    icon: [Rocket, Layers3, Wand2][index] ?? Sparkles,
-    accent: [
-      'from-indigo-500 to-violet-600',
-      'from-fuchsia-500 to-pink-600',
-      'from-amber-500 to-orange-600',
-    ][index] ?? 'from-slate-500 to-slate-600',
-    direction,
-  }));
+  return generatedDirections.value
+    .map((direction, index) => ({
+      id: direction.id,
+      originalIndex: index,
+      icon: [Rocket, Layers3, Wand2][index] ?? Sparkles,
+      accent: [
+        'from-indigo-500 to-violet-600',
+        'from-fuchsia-500 to-pink-600',
+        'from-amber-500 to-orange-600',
+      ][index] ?? 'from-slate-500 to-slate-600',
+      direction,
+      scaleHint: buildDirectionScaleHint(selectedWordCountRange.value, direction),
+    }))
+    .sort((a, b) => {
+      const scoreDelta = b.scaleHint.longformCapacityScore - a.scaleHint.longformCapacityScore;
+      if (scoreDelta !== 0) return scoreDelta;
+      const recommendationDelta = b.direction.recommendationScore - a.direction.recommendationScore;
+      if (recommendationDelta !== 0) return recommendationDelta;
+      return a.originalIndex - b.originalIndex;
+    })
+    .map(({ originalIndex: _originalIndex, ...card }) => card);
 });
 
 const canExpandDirection = computed(
@@ -214,7 +335,9 @@ const canExpandDirection = computed(
 
 const previewGeneratedOutline = computed<GeneratedOutline | null>(() => {
   if (expandedOutline.value) {
-    return mapExecutableOutlineToGeneratedOutline(expandedOutline.value);
+    return mapExecutableOutlineToGeneratedOutline(expandedOutline.value, {
+      targetWordCountRange: selectedWordCountRange.value,
+    });
   }
   return null;
 });
@@ -457,21 +580,36 @@ function selectOutline(outline: GeneratedOutline) {
 
 function selectDirection(direction: OutlineDirection) {
   selectedDirection.value = direction;
+  enhanceTargetDirectionId.value = null;
   expandedOutline.value = null;
   selectedOutline.value = null;
 }
 
-async function handleExpandDirection() {
+async function handleExpandDirection(options?: { enhancementBrief?: string; directionId?: string }) {
   if (!selectedDirection.value) return;
+
+  const isEnhancing = !!options?.enhancementBrief;
+  enhanceTargetDirectionId.value = isEnhancing ? (options?.directionId ?? selectedDirection.value.id) : null;
 
   expandedOutline.value = await expandDirection(promptPreview.value, selectedDirection.value, {
     wordCountRange: selectedWordCountRange.value,
+    enhancementBrief: options?.enhancementBrief,
   });
+
+  enhanceTargetDirectionId.value = null;
 
   if (expandedOutline.value) {
     selectedOutline.value = previewGeneratedOutline.value;
     await scrollToPreviewSection();
   }
+}
+
+async function handleEnhanceDirection(direction: OutlineDirection, enhancementBrief: string) {
+  selectDirection(direction);
+  await handleExpandDirection({
+    enhancementBrief,
+    directionId: direction.id,
+  });
 }
 
 async function handleCreateProject() {
@@ -5066,9 +5204,11 @@ function clearTemplateSearch() {
           :expanded-outline="expandedOutline"
           :empty-description="'请先选择一个创作方向并展开主方案，随后即可在这里预览大纲。'"
           :disable-regenerate="isProcessing"
+          :enhancing-direction-id="enhanceTargetDirectionId"
           @regenerate="handleGenerateOutlines"
           @select-direction="selectDirection"
           @expand="handleExpandDirection"
+          @enhance-direction="({ direction, enhancementBrief }) => handleEnhanceDirection(direction, enhancementBrief)"
           @select-outline="selectOutline"
           @create="handleCreateProject"
         />

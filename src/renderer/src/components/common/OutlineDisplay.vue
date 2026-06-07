@@ -98,6 +98,11 @@ function formatWordCount(count: number): string {
   return `${count}字`;
 }
 
+function formatChapterCount(count?: number): string {
+  if (!count) return '—';
+  return `${count}章`;
+}
+
 function handleSelectOutline(outline: GeneratedOutline) {
   emit('select', outline);
 }
@@ -235,6 +240,12 @@ function handleCreate() {
                 class="flex items-center flex-wrap gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500"
               >
                 <span class="flex-none">{{ formatWordCount(outline.estimatedWordCount) }}</span>
+                <span v-if="outline.storyScale?.estimatedChapterCount" class="flex-none">
+                  {{ formatChapterCount(outline.storyScale.estimatedChapterCount) }}
+                </span>
+                <span v-if="outline.storyScale?.suggestedVolumeCount" class="flex-none">
+                  {{ outline.storyScale.suggestedVolumeCount }}卷
+                </span>
                 <span class="flex-none"
                   >{{ outline.characters?.length || 0 }}{{ t('quickStart.characters') }}</span
                 >

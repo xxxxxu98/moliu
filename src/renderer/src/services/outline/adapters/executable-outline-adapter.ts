@@ -9,11 +9,79 @@ import type {
   GeneratedForeshadow,
   GeneratedOutline,
   GeneratedStoryLines,
+  GeneratedStoryScale,
   GeneratedSubplot,
   GeneratedWorldSetting,
 } from '@/types/inspiration';
 
-function toEstimatedWordCount(outline: ExecutableOutline): number {
+function parseWordCountRange(rangeText?: string): number | null {
+  if (!rangeText) return null;
+
+  const normalized = rangeText.replace(/[,，\s]/g, '');
+  const rangeMatch = normalized.match(/(\d+(?:\.\d+)?)万?[-~至到](\d+(?:\.\d+)?)万?(?:字)?/);
+  if (rangeMatch) {
+    const min = Number(rangeMatch[1]);
+    const max = Number(rangeMatch[2]);
+    if (Number.isFinite(min) && Number.isFinite(max)) {
+      return Math.round(((min + max) / 2) * 10000);
+    }
+  }
+
+  const singleMatch = normalized.match(/(\d+(?:\.\d+)?)万(?:字)?/);
+  if (singleMatch) {
+    const value = Number(singleMatch[1]);
+    if (Number.isFinite(value)) {
+      return Math.round(value * 10000);
+    }
+  }
+
+  const plainNumberMatch = normalized.match(/(\d{5,7})/);
+  if (plainNumberMatch) {
+    const value = Number(plainNumberMatch[1]);
+    if (Number.isFinite(value)) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function resolveTargetWordCount(
+  outline: ExecutableOutline,
+  preferredRange?: string,
+): number | null {
+  const preferred = parseWordCountRange(preferredRange);
+  if (preferred) {
+    return preferred;
+  }
+
+  const candidates = [
+    outline.storyEngine.protagonistGoalLongTerm,
+    outline.storyEngine.protagonistGoalShortTerm,
+    outline.startupPack30.promiseToReader,
+    outline.premise,
+    outline.oneLiner,
+    ...outline.positioning.targetReaders,
+    ...outline.positioning.sellingPoints,
+    ...outline.positioning.styleKeywords,
+  ];
+
+  for (const candidate of candidates) {
+    const parsed = parseWordCountRange(candidate);
+    if (parsed) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function toEstimatedWordCount(outline: ExecutableOutline, preferredRange?: string): number {
+  const targetWordCount = resolveTargetWordCount(outline, preferredRange);
+  if (targetWordCount) {
+    return targetWordCount;
+  }
+
   const chapterBlockCount = Math.max(outline.startupPack30.chapterBlocks.length, 1);
   const volumeCount = Math.max(outline.volumePlan.length, 1);
 
@@ -291,6 +359,26 @@ function toConflictDesign(outline: ExecutableOutline): GeneratedConflictDesign |
   };
 }
 
+function toStoryScale(outline: ExecutableOutline, preferredRange?: string): GeneratedStoryScale | undefined {
+  const estimatedWordCount = toEstimatedWordCount(outline, preferredRange);
+  const fallbackChapterCount = Math.max(1, Math.ceil(estimatedWordCount / 2500));
+  const volumeCount = outline.storyScale.suggestedVolumeCount || outline.volumePlan.length || Math.max(1, Math.ceil(estimatedWordCount / 180000));
+  const chaptersPerVolume = outline.storyScale.estimatedChaptersPerVolume || Math.max(1, Math.round(fallbackChapterCount / volumeCount));
+
+  const targetWordCount = outline.storyScale.targetWordCount || preferredRange || `${Math.round(estimatedWordCount / 10000)}万字`;
+  const startupRatio = outline.storyScale.startupPhaseRatio || `${Math.round((30 / fallbackChapterCount) * 100)}%`;
+
+  return {
+    targetWordCount,
+    estimatedChapterCount: outline.storyScale.estimatedChapterCount || fallbackChapterCount,
+    averageWordsPerChapter: outline.storyScale.averageWordsPerChapter || 2500,
+    suggestedVolumeCount: volumeCount,
+    estimatedChaptersPerVolume: chaptersPerVolume,
+    startupPhaseRatio: startupRatio,
+    longformProgressionNote: outline.storyScale.longformProgressionNote || '',
+  };
+}
+
 function toStoryLines(outline: ExecutableOutline): GeneratedStoryLines {
   return {
     map: outline.volumePlan.map((volume) => volume.title).join(' → '),
@@ -304,7 +392,10 @@ function toStoryLines(outline: ExecutableOutline): GeneratedStoryLines {
   };
 }
 
-export function mapExecutableOutlineToGeneratedOutline(outline: ExecutableOutline): GeneratedOutline {
+export function mapExecutableOutlineToGeneratedOutline(
+  outline: ExecutableOutline,
+  options?: { targetWordCountRange?: string },
+): GeneratedOutline {
   return {
     id: `executable-${Date.now()}`,
     title: outline.title,
@@ -325,7 +416,8 @@ export function mapExecutableOutlineToGeneratedOutline(outline: ExecutableOutlin
     chapters: toChapters(outline),
     characters: toCharacters(outline),
     foreshadows: toForeshadows(outline),
-    estimatedWordCount: toEstimatedWordCount(outline),
+    estimatedWordCount: toEstimatedWordCount(outline, options?.targetWordCountRange),
+    storyScale: toStoryScale(outline, options?.targetWordCountRange),
     emotionGoal: toEmotionGoal(outline),
     coolPointDesign: toCoolPointDesign(outline),
     coreSellingPoints: toCoreSellingPoints(outline),

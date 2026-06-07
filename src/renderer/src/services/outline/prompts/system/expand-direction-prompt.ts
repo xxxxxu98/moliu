@@ -1,10 +1,46 @@
 import type { OutlineDirection } from '../../types/direction';
 import type { BuiltPrompt } from './shared';
 
+const AVG_WORDS_PER_CHAPTER = 2500;
+
 export interface ExpandDirectionPromptOptions {
   seed: string;
   direction: OutlineDirection;
   wordCountRange: string;
+  enhancementBrief?: string;
+}
+
+function parseWordCount(wordCountRange: string): number {
+  const normalized = wordCountRange.replace(/[,，\s]/g, '');
+  const rangeMatch = normalized.match(/(\d+(?:\.\d+)?)万?[-~至到](\d+(?:\.\d+)?)万?(?:字)?/);
+  if (rangeMatch) {
+    const minWan = parseFloat(rangeMatch[1]);
+    const maxWan = parseFloat(rangeMatch[2]);
+    return Math.round(((minWan + maxWan) / 2) * 10000);
+  }
+
+  const singleMatch = normalized.match(/(\d+(?:\.\d+)?)万(?:字)?/);
+  if (singleMatch) {
+    return Math.round(parseFloat(singleMatch[1]) * 10000);
+  }
+
+  return 500000;
+}
+
+function buildScaleGuidance(wordCountRange: string) {
+  const targetWordCount = parseWordCount(wordCountRange);
+  const targetChapterCount = Math.max(60, Math.ceil(targetWordCount / AVG_WORDS_PER_CHAPTER));
+  const suggestedVolumeCount = Math.max(3, Math.ceil(targetWordCount / 180000));
+  const chaptersPerVolume = Math.max(20, Math.round(targetChapterCount / suggestedVolumeCount));
+
+  return {
+    targetWordCount,
+    targetChapterCount,
+    suggestedVolumeCount,
+    chaptersPerVolume,
+    averageWordsPerChapter: AVG_WORDS_PER_CHAPTER,
+    startupRatio: Number((30 / targetChapterCount).toFixed(3)),
+  };
 }
 
 const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事架构师。现在用户已经从多个方向中选定了一个最值得展开的方向，你的任务是把它扩展成“可执行型长篇方案”。
@@ -17,6 +53,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 3. 所有模块都要服务“后续可继续写”，而不是只服务展示
 4. 尽量少写空泛设定，多写冲突、目标、代价、升级、钩子
 5. 不要生成完整章节目录，不要展开成100章梗概
+6. 必须严格匹配目标字数区间对应的总章节规模，按“平均每章约2500字”估算总章节数，避免前30章就消耗完主线
 
 请严格使用以下固定结构输出，并且字段名保持一致。
 
@@ -39,6 +76,15 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 核心冲突：
 - 冲突升级链：
 - 失败代价：
+
+## 故事规模规划
+- 目标字数：
+- 预计总章节数：
+- 章节平均字数：
+- 建议卷数：
+- 每卷预计章节数：
+- 前30章占比：
+- 长线推进说明：
 
 ## 卷纲
 ### 第1卷
@@ -162,10 +208,13 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - “必出事件”“必出爽点”“必留钩子”尽量具体，不要空泛
 - “节奏要求”只用“快”或“中快”
 - 总体上更像一个可执行的故事工程方案，而不是抒情式长文
-- 如果原始方向信息不足，请主动补足能支撑长篇网文连载的目标链、冲突链和卷级递进结构，但不要脱离已选方向的核心卖点。`;
+- 如果原始方向信息不足，请主动补足能支撑长篇网文连载的目标链、冲突链和卷级递进结构，但不要脱离已选方向的核心卖点。
+- “故事规模规划”必须与目标字数区间一致；“预计总章节数”要按平均每章约2500字估算，误差尽量控制在±10%以内
+- “前30章占比”必须体现为总章节数的前期启动比例，并在“长线推进说明”中解释为什么30章后仍有足够篇幅推进主线升级、地图扩展或人物关系递进。`;
 
 export function buildExpandDirectionPrompt(options: ExpandDirectionPromptOptions): BuiltPrompt {
   const { direction, seed, wordCountRange } = options;
+  const scale = buildScaleGuidance(wordCountRange);
 
   return {
     system: SYSTEM_PROMPT,
@@ -173,6 +222,14 @@ export function buildExpandDirectionPrompt(options: ExpandDirectionPromptOptions
 
 【目标字数区间】
 ${wordCountRange}
+
+【规模换算参考】
+- 按平均每章约${scale.averageWordsPerChapter}字估算
+- 目标总字数约${scale.targetWordCount}字
+- 预计总章节数约${scale.targetChapterCount}章
+- 建议卷数约${scale.suggestedVolumeCount}卷
+- 每卷预计约${scale.chaptersPerVolume}章
+- 前30章约占全书${Math.round(scale.startupRatio * 100)}%
 
 【原始创意种子】
 ${seed}
@@ -186,13 +243,19 @@ premise：${direction.premise}
 爽点风格：${direction.coolPointStyle.join('；')}
 目标情绪：${direction.targetEmotions.join('；')}
 风险提示：${direction.riskNotes.join('；')}
+长篇承载力：${direction.longformCapacityNote || '未提供'}
 推荐理由：${direction.recommendedReason}
 
-要求：
+${options.enhancementBrief ? `【本次增强目标】
+${options.enhancementBrief}
+
+` : ''}要求：
 1. 优先增强长篇承载力和网文追读动力
 2. 把前30章设计成明确可执行的启动包
 3. 三卷规划要彼此递进，不能重复
 4. 尽量具体，不要空泛设定
-5. 输出必须严格遵守指定结构`,
+5. 输出必须严格遵守指定结构
+6. 章节规模必须与目标字数区间匹配，前30章只能完成“开局承诺 + 第一轮冲突闭环 + 更大主线入口”，不能提前耗尽整本书的核心悬念与升级空间
+7. 如果提供了“本次增强目标”，必须优先落实这些增强项，重点补强地图扩张线、势力博弈线、人物关系变量、长期悬念中的缺口，但不能偏离当前方向核心卖点`,
   };
 }

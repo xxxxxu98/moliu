@@ -4,11 +4,25 @@ import { AlertTriangle, ArrowRight } from 'lucide-vue-next';
 import { NButton } from 'naive-ui';
 import type { OutlineDirection } from '@/services/outline/types/direction';
 
+interface DirectionScaleHint {
+  targetWordCountLabel: string;
+  estimatedChapterCount: number;
+  suggestedVolumeCount: number;
+  estimatedChaptersPerVolume: number;
+  startupPhaseRatio: string;
+  longformCapacityScore: number;
+  longformCapacityLabel: string;
+  longformCapacityTone: 'strong' | 'medium' | 'cautious';
+  improvementSuggestions: string[];
+  enhancementBrief: string;
+}
+
 interface DirectionCardViewModel {
   id: string;
   icon: Component;
   accent: string;
   direction: OutlineDirection;
+  scaleHint?: DirectionScaleHint;
 }
 
 interface Props {
@@ -21,12 +35,14 @@ interface Props {
   error?: string | null;
   canExpand: boolean;
   compact?: boolean;
+  enhancingDirectionId?: string | null;
 }
 
 interface Emits {
   (e: 'regenerate'): void;
   (e: 'select', direction: OutlineDirection): void;
   (e: 'expand'): void;
+  (e: 'enhance', payload: { direction: OutlineDirection; enhancementBrief: string }): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -35,6 +51,7 @@ const props = withDefaults(defineProps<Props>(), {
   progress: '',
   error: null,
   compact: false,
+  enhancingDirectionId: null,
 });
 
 const emit = defineEmits<Emits>();
@@ -49,6 +66,10 @@ function handleSelect(direction: OutlineDirection) {
 
 function handleExpand() {
   emit('expand');
+}
+
+function handleEnhance(direction: OutlineDirection, enhancementBrief: string) {
+  emit('enhance', { direction, enhancementBrief });
 }
 </script>
 
@@ -137,6 +158,57 @@ function handleExpand() {
                 </div>
               </div>
 
+              <div class="mt-3 flex flex-wrap items-center gap-2">
+                <span
+                  v-if="card.scaleHint"
+                  class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+                  :class="card.scaleHint.longformCapacityTone === 'strong'
+                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
+                    : card.scaleHint.longformCapacityTone === 'medium'
+                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
+                      : 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300'"
+                >
+                  {{ card.scaleHint.longformCapacityLabel }} · {{ card.scaleHint.longformCapacityScore }}分
+                </span>
+                <span
+                  v-if="card.direction.longformCapacityNote"
+                  class="text-xs text-gray-500 dark:text-gray-400"
+                >
+                  {{ card.direction.longformCapacityNote }}
+                </span>
+              </div>
+
+              <div class="mt-3 grid gap-2 text-xs md:grid-cols-2 xl:grid-cols-4">
+                <div
+                  v-if="card.scaleHint"
+                  class="rounded-xl bg-slate-50 px-3 py-2 text-slate-600 dark:bg-gray-900/40 dark:text-slate-300"
+                >
+                  <div class="text-[11px] uppercase tracking-wide text-slate-400">目标规模</div>
+                  <div class="mt-1 font-medium">{{ card.scaleHint.targetWordCountLabel }}</div>
+                </div>
+                <div
+                  v-if="card.scaleHint"
+                  class="rounded-xl bg-slate-50 px-3 py-2 text-slate-600 dark:bg-gray-900/40 dark:text-slate-300"
+                >
+                  <div class="text-[11px] uppercase tracking-wide text-slate-400">预计章节</div>
+                  <div class="mt-1 font-medium">{{ card.scaleHint.estimatedChapterCount }}章</div>
+                </div>
+                <div
+                  v-if="card.scaleHint"
+                  class="rounded-xl bg-slate-50 px-3 py-2 text-slate-600 dark:bg-gray-900/40 dark:text-slate-300"
+                >
+                  <div class="text-[11px] uppercase tracking-wide text-slate-400">建议卷数</div>
+                  <div class="mt-1 font-medium">{{ card.scaleHint.suggestedVolumeCount }}卷 / 每卷约{{ card.scaleHint.estimatedChaptersPerVolume }}章</div>
+                </div>
+                <div
+                  v-if="card.scaleHint"
+                  class="rounded-xl bg-slate-50 px-3 py-2 text-slate-600 dark:bg-gray-900/40 dark:text-slate-300"
+                >
+                  <div class="text-[11px] uppercase tracking-wide text-slate-400">前30章占比</div>
+                  <div class="mt-1 font-medium">{{ card.scaleHint.startupPhaseRatio }}</div>
+                </div>
+              </div>
+
               <div class="mt-3 flex flex-wrap gap-2">
                 <span
                   v-for="tag in card.direction.coolPointStyle"
@@ -145,6 +217,37 @@ function handleExpand() {
                 >
                   {{ tag }}
                 </span>
+              </div>
+
+              <div
+                v-if="card.scaleHint"
+                class="mt-3 flex flex-wrap items-center gap-2"
+              >
+                <NButton
+                  size="tiny"
+                  tertiary
+                  type="warning"
+                  :loading="enhancingDirectionId === card.direction.id"
+                  @click.stop="handleEnhance(card.direction, card.scaleHint.enhancementBrief)"
+                >
+                  增强此方向的长篇承载力
+                </NButton>
+              </div>
+
+              <div
+                v-if="card.scaleHint?.improvementSuggestions.length"
+                class="mt-3 rounded-xl border border-amber-200/80 bg-amber-50/70 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200"
+              >
+                <div class="font-medium">优化建议</div>
+                <ul class="mt-1 space-y-1">
+                  <li
+                    v-for="suggestion in card.scaleHint.improvementSuggestions"
+                    :key="suggestion"
+                    class="leading-5"
+                  >
+                    · {{ suggestion }}
+                  </li>
+                </ul>
               </div>
 
               <div

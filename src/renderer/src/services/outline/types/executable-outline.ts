@@ -5,6 +5,16 @@ export interface StoryPositioning {
   styleKeywords: string[];
 }
 
+export interface StoryScalePlan {
+  targetWordCount: string;
+  estimatedChapterCount: number;
+  averageWordsPerChapter: number;
+  suggestedVolumeCount: number;
+  estimatedChaptersPerVolume: number;
+  startupPhaseRatio: string;
+  longformProgressionNote: string;
+}
+
 export interface StoryEngine {
   protagonistName: string;
   protagonistStart: string;
@@ -74,6 +84,7 @@ export interface ExecutableOutline {
   oneLiner: string;
   premise: string;
   positioning: StoryPositioning;
+  storyScale: StoryScalePlan;
   storyEngine: StoryEngine;
   volumePlan: VolumePlan[];
   startupPack30: StartupPack30;

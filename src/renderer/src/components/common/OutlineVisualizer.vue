@@ -20,8 +20,8 @@ import {
   Target,
   Layers,
 } from 'lucide-vue-next';
-import { NCollapse, NCollapseItem, NTag, NCard, NEmpty, NButton } from 'naive-ui';
-import type { GeneratedOutline, GeneratedChapter, GeneratedCharacter, GeneratedForeshadow } from '@/types/inspiration';
+import { NEmpty, NTag } from 'naive-ui';
+import type { GeneratedCharacter, GeneratedChapter, GeneratedForeshadow, GeneratedOutline } from '@/types/inspiration';
 
 /**
  * 可视化节点
@@ -128,8 +128,8 @@ const visualTree = computed<VisualNode[]>(() => {
     ['act1', 'act2a', 'act2b', 'act3'].forEach(actKey => {
       const act = outline.structure[actKey as keyof typeof outline.structure];
       if (act) {
-        const actTitle = typeof act === 'string' ? act : act.title || actNames[actKey];
-        const actContent = typeof act === 'string' ? '' : act.content || '';
+        const actTitle = typeof act === 'string' ? act : actNames[actKey];
+        const actContent = '';
 
         structureNode.children!.push({
           id: `structure-${actKey}`,
@@ -214,7 +214,7 @@ const visualTree = computed<VisualNode[]>(() => {
     };
 
     // 按分期分组
-    const phaseGroups: Record<string, Foreshadow[]> = {
+    const phaseGroups: Record<string, GeneratedForeshadow[]> = {
       early: [],
       mid: [],
       late: [],
@@ -222,7 +222,8 @@ const visualTree = computed<VisualNode[]>(() => {
     };
 
     outline.foreshadows.forEach(fs => {
-      const phase = fs.phase || 'undefined';
+      const suggestedChapter = fs.suggestedChapter || 0;
+      const phase = suggestedChapter > 60 ? 'late' : suggestedChapter > 30 ? 'mid' : suggestedChapter > 0 ? 'early' : 'undefined';
       if (!phaseGroups[phase]) {
         phaseGroups[phase] = [];
       }
@@ -241,10 +242,10 @@ const visualTree = computed<VisualNode[]>(() => {
             type: 'foreshadow',
             title: fs.hint.substring(0, 30) + (fs.hint.length > 30 ? '...' : ''),
             description: fs.hint,
-            status: fs.status as any || 'active',
+            status: 'active',
             metadata: {
               type: fs.type,
-              phase: fs.phase,
+              phase,
               suggestedChapter: fs.suggestedChapter,
             },
           })),
@@ -268,7 +269,7 @@ const visualTree = computed<VisualNode[]>(() => {
         id: `character-${index}`,
         type: 'character',
         title: char.name,
-        description: char.description || char.identity || '',
+        description: char.description || '',
         metadata: {
           role: char.role,
           personality: char.personality,
@@ -312,19 +313,19 @@ const visualTree = computed<VisualNode[]>(() => {
       children: [
         {
           id: 'emotion-primary',
-          type: 'volume',
+          type: 'volume' as const,
           title: `核心情绪：${emotion.primary || '未设定'}`,
           description: `弧线类型：${emotionArcNames[emotion.arc] ?? emotion.arc ?? '上升型'}`,
         },
         ...(emotion.highPoints?.length ? [{
           id: 'emotion-high-points',
-          type: 'volume',
+          type: 'volume' as const,
           title: `情绪高点章节：${emotion.highPoints.join('、')}`,
           description: '',
         }] : []),
         ...(emotion.lowPoints?.length ? [{
           id: 'emotion-low-points',
-          type: 'volume',
+          type: 'volume' as const,
           title: `情绪低点章节：${emotion.lowPoints.join('、')}`,
           description: '',
         }] : []),
@@ -343,13 +344,13 @@ const visualTree = computed<VisualNode[]>(() => {
       children: [
         ...((coolPoint.patterns || []).map((pattern, index) => ({
           id: `cool-pattern-${index}`,
-          type: 'volume',
+          type: 'volume' as const,
           title: `爽点类型：${pattern}`,
           description: '',
         }))),
         ...(coolPoint.arranged || []).map((cp, index) => ({
           id: `cool-arranged-${index}`,
-          type: 'volume',
+          type: 'volume' as const,
           title: cp.suggestedChapter ? `第${cp.suggestedChapter}章：${cp.type}` : cp.type,
           description: cp.description,
         })),
@@ -465,9 +466,41 @@ function getStatusColor(status?: string): string {
         <NTag v-if="outline.estimatedWordCount" size="small" type="warning">
           {{ Math.round(outline.estimatedWordCount / 10000) }}万字
         </NTag>
-        <NTag v-if="outline.chapters?.length" size="small" type="success">
+        <NTag v-if="outline.storyScale?.estimatedChapterCount" size="small" type="success">
+          {{ outline.storyScale.estimatedChapterCount }}章
+        </NTag>
+        <NTag v-if="outline.storyScale?.suggestedVolumeCount" size="small" type="info">
+          {{ outline.storyScale.suggestedVolumeCount }}卷
+        </NTag>
+        <NTag v-if="outline.storyScale?.startupPhaseRatio" size="small" type="default">
+          前30章占比 {{ outline.storyScale.startupPhaseRatio }}
+        </NTag>
+        <NTag v-else-if="outline.chapters?.length" size="small" type="success">
           {{ outline.chapters.length }}章
         </NTag>
+      </div>
+      <div
+        v-if="outline.storyScale"
+        class="mt-3 grid gap-2 rounded-lg bg-white/70 px-3 py-3 text-xs text-violet-800 dark:bg-gray-800/60 dark:text-violet-200 md:grid-cols-2"
+      >
+        <div>
+          <div class="font-medium text-violet-900 dark:text-violet-100">规模规划</div>
+          <div class="mt-1 text-violet-700 dark:text-violet-300">
+            目标字数：{{ outline.storyScale.targetWordCount || '未标注' }}
+          </div>
+          <div class="text-violet-700 dark:text-violet-300">
+            平均每章：{{ outline.storyScale.averageWordsPerChapter || 2500 }}字
+          </div>
+          <div class="text-violet-700 dark:text-violet-300">
+            每卷预计：{{ outline.storyScale.estimatedChaptersPerVolume || '—' }}章
+          </div>
+        </div>
+        <div v-if="outline.storyScale.longformProgressionNote">
+          <div class="font-medium text-violet-900 dark:text-violet-100">长线推进说明</div>
+          <p class="mt-1 leading-5 text-violet-700 dark:text-violet-300">
+            {{ outline.storyScale.longformProgressionNote }}
+          </p>
+        </div>
       </div>
     </div>
 
