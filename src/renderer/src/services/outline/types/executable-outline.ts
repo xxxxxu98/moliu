@@ -5,6 +5,84 @@ export interface StoryPositioning {
   styleKeywords: string[];
 }
 
+export interface StoryActPlan {
+  name: 'act1' | 'act2a' | 'act2b' | 'act3';
+  label: string;
+  objective: string;
+  keyTurn: string;
+  endingState: string;
+}
+
+export interface WorldLocationPlan {
+  name: string;
+  level: 'world' | 'continent' | 'country' | 'city' | 'district' | 'special';
+  functionInStory: string;
+  parentName?: string;
+  relatedConflict?: string;
+}
+
+export interface WorldFactionPlan {
+  name: string;
+  positioning: string;
+  objective: string;
+  allies: string[];
+  enemies: string[];
+  relationToProtagonist: string;
+  parentName?: string;
+}
+
+export interface WorldRulePlan {
+  name: string;
+  category: 'cultivation' | 'magic' | 'social' | 'physics' | 'custom';
+  content: string;
+  limitation?: string;
+  relatedRules: string[];
+}
+
+export interface SubplotPlan {
+  title: string;
+  functionInStory: string;
+  relatedCharacters: string[];
+  startChapter: number | null;
+  endChapter: number | null;
+  relationToMainPlot: string;
+}
+
+export interface StoryLinePlan {
+  map: string;
+  faction: string;
+  character: string;
+  goldenfinger: string;
+  worldRules: string;
+  conflict: string;
+  collection: string;
+  romance: string;
+}
+
+export interface EmotionBeatPlan {
+  primary: string;
+  secondary?: string;
+  arc: 'rising' | 'falling' | 'wave' | 'mixed';
+  highPoints: number[];
+  lowPoints: number[];
+  density?: number;
+}
+
+export interface CoolPointBeatPlan {
+  type: string;
+  description: string;
+  suggestedChapter: number | null;
+  relatedBlock?: string;
+}
+
+export interface SellingPointPlan {
+  name: string;
+  description: string;
+  category: 'setting' | 'character' | 'conflict' | 'emotion' | 'hook' | 'coolpoint';
+  priority: number;
+  payoffStage?: string;
+}
+
 export interface StoryScalePlan {
   targetWordCount: string;
   estimatedChapterCount: number;
@@ -119,8 +197,19 @@ export interface ExecutableOutline {
   positioning: StoryPositioning;
   storyScale: StoryScalePlan;
   storyEngine: StoryEngine;
+  acts?: StoryActPlan[];
   volumePlan: VolumePlan[];
   startupPack30: StartupPack30;
+  worldBuilding?: {
+    locations: WorldLocationPlan[];
+    factions: WorldFactionPlan[];
+    rules: WorldRulePlan[];
+  };
+  subplots?: SubplotPlan[];
+  storyLines?: StoryLinePlan;
+  emotionPlan?: EmotionBeatPlan;
+  coolPointPlan?: CoolPointBeatPlan[];
+  sellingPointPlan?: SellingPointPlan[];
   keyCharacters: CharacterPlan[];
   foreshadowPlan: ForeshadowPlan[];
   chapterBlueprints?: ChapterBlueprint[];

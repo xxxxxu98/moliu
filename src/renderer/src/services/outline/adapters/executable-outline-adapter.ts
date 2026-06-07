@@ -99,6 +99,34 @@ function toSynopsis(outline: ExecutableOutline): string {
 }
 
 function toWorldSetting(outline: ExecutableOutline): GeneratedWorldSetting | undefined {
+  if (outline.worldBuilding) {
+    const locations = outline.worldBuilding.locations.map((location) => ({
+      name: location.name,
+      description: [location.functionInStory, location.relatedConflict].filter(Boolean).join('；'),
+      level: location.level,
+      parentName: location.parentName,
+    }));
+
+    const factions = outline.worldBuilding.factions.map((faction) => ({
+      name: faction.name,
+      description: [faction.positioning, faction.objective, faction.relationToProtagonist].filter(Boolean).join('；'),
+      parentName: faction.parentName,
+      allies: faction.allies,
+      enemies: faction.enemies,
+    }));
+
+    const rules = outline.worldBuilding.rules.map((rule) => ({
+      name: rule.name,
+      description: [rule.content, rule.limitation].filter(Boolean).join('；'),
+      category: rule.category,
+      relatedRuleNames: rule.relatedRules,
+    }));
+
+    if (locations.length > 0 || factions.length > 0 || rules.length > 0) {
+      return { locations, factions, rules };
+    }
+  }
+
   const locations = outline.volumePlan.map((volume, index) => ({
     name: volume.title,
     description: [volume.objective, volume.coreConflict, volume.climax].filter(Boolean).join('；'),
@@ -249,6 +277,18 @@ function extractProtagonistName(outline: ExecutableOutline): string {
 }
 
 function toSubplots(outline: ExecutableOutline): GeneratedSubplot[] {
+  if (outline.subplots && outline.subplots.length > 0) {
+    return outline.subplots.map((subplot) => ({
+      title: subplot.title,
+      description: [subplot.functionInStory, subplot.relationToMainPlot].filter(Boolean).join('；'),
+      relatedCharacters: subplot.relatedCharacters,
+      chapterRange: subplot.startChapter && subplot.endChapter
+        ? [subplot.startChapter, subplot.endChapter]
+        : undefined,
+      purpose: subplot.relationToMainPlot || subplot.functionInStory,
+    }));
+  }
+
   const approxVolumeSpan = Math.max(Math.round(toEstimatedWordCount(outline) / Math.max(outline.volumePlan.length, 1) / 2000), 1);
 
   return outline.volumePlan.map((volume, index) => {
@@ -327,11 +367,21 @@ function toForeshadows(outline: ExecutableOutline): GeneratedForeshadow[] {
 }
 
 function toEmotionGoal(outline: ExecutableOutline): GeneratedEmotionGoal | undefined {
+  if (outline.emotionPlan?.primary) {
+    return {
+      primary: outline.emotionPlan.primary,
+      secondary: outline.emotionPlan.secondary,
+      arc: outline.emotionPlan.arc,
+      density: outline.emotionPlan.density,
+      highPoints: outline.emotionPlan.highPoints,
+      lowPoints: outline.emotionPlan.lowPoints,
+    };
+  }
+
   if (outline.positioning.coreEmotions.length === 0) {
     return undefined;
   }
 
-  // 从冲突升级链推导弧线类型：上升链 → rising，下降链 → falling，波浪 → wave
   const escalationPath = outline.storyEngine.escalationPath || [];
   let arc: GeneratedEmotionGoal['arc'] = 'rising';
   if (escalationPath.length >= 2) {
@@ -363,6 +413,17 @@ function toEmotionGoal(outline: ExecutableOutline): GeneratedEmotionGoal | undef
 }
 
 function toCoolPointDesign(outline: ExecutableOutline): GeneratedCoolPointDesign | undefined {
+  if (outline.coolPointPlan && outline.coolPointPlan.length > 0) {
+    return {
+      patterns: Array.from(new Set(outline.coolPointPlan.map((item) => item.type).filter(Boolean))),
+      arranged: outline.coolPointPlan.map((item, index) => ({
+        type: item.type || `爽点${index + 1}`,
+        description: [item.description, item.relatedBlock].filter(Boolean).join('｜') || item.type || `爽点${index + 1}`,
+        suggestedChapter: item.suggestedChapter ?? undefined,
+      })),
+    };
+  }
+
   const patterns = Array.from(new Set(outline.startupPack30.chapterBlocks.flatMap((block) => block.coolPoints)));
   if (patterns.length === 0) {
     return undefined;
@@ -379,6 +440,14 @@ function toCoolPointDesign(outline: ExecutableOutline): GeneratedCoolPointDesign
 }
 
 function toCoreSellingPoints(outline: ExecutableOutline): GeneratedCoreSellingPoint[] {
+  if (outline.sellingPointPlan && outline.sellingPointPlan.length > 0) {
+    return outline.sellingPointPlan.map((point, index) => ({
+      name: point.name,
+      description: [point.description, point.payoffStage].filter(Boolean).join('；') || point.name,
+      priority: Number.isFinite(point.priority) ? point.priority : Math.max(1, 5 - index),
+    }));
+  }
+
   return outline.positioning.sellingPoints.map((point, index) => ({
     name: point,
     description: outline.oneLiner || outline.premise,
@@ -419,6 +488,19 @@ function toStoryScale(outline: ExecutableOutline, preferredRange?: string): Gene
 }
 
 function toStoryLines(outline: ExecutableOutline): GeneratedStoryLines {
+  if (outline.storyLines) {
+    return {
+      map: outline.storyLines.map,
+      faction: outline.storyLines.faction,
+      character: outline.storyLines.character,
+      goldenfinger: outline.storyLines.goldenfinger,
+      worldRules: outline.storyLines.worldRules,
+      conflict: outline.storyLines.conflict,
+      collection: outline.storyLines.collection,
+      romance: outline.storyLines.romance,
+    };
+  }
+
   return {
     map: outline.volumePlan.map((volume) => volume.title).join(' → '),
     faction: outline.keyCharacters.filter((character) => character.role === 'antagonist').map((character) => character.name).join(' → '),
@@ -449,10 +531,30 @@ export function mapExecutableOutlineToGeneratedOutline(
     ].filter(Boolean))),
     worldSetting: toWorldSetting(outline),
     structure: {
-      act1: outline.volumePlan[0]?.objective ?? outline.startupPack30.openingHook,
-      act2a: outline.volumePlan[0]?.coreConflict ?? '',
-      act2b: outline.volumePlan[1]?.coreConflict ?? outline.storyEngine.coreConflict,
-      act3: outline.volumePlan[2]?.climax ?? outline.volumePlan.at(-1)?.climax ?? '',
+      act1: outline.acts?.find((act) => act.name === 'act1')
+        ? [
+          outline.acts.find((act) => act.name === 'act1')?.objective,
+          outline.acts.find((act) => act.name === 'act1')?.keyTurn,
+        ].filter(Boolean).join('；')
+        : outline.volumePlan[0]?.objective ?? outline.startupPack30.openingHook,
+      act2a: outline.acts?.find((act) => act.name === 'act2a')
+        ? [
+          outline.acts.find((act) => act.name === 'act2a')?.objective,
+          outline.acts.find((act) => act.name === 'act2a')?.keyTurn,
+        ].filter(Boolean).join('；')
+        : outline.volumePlan[0]?.coreConflict ?? '',
+      act2b: outline.acts?.find((act) => act.name === 'act2b')
+        ? [
+          outline.acts.find((act) => act.name === 'act2b')?.objective,
+          outline.acts.find((act) => act.name === 'act2b')?.keyTurn,
+        ].filter(Boolean).join('；')
+        : outline.volumePlan[1]?.coreConflict ?? outline.storyEngine.coreConflict,
+      act3: outline.acts?.find((act) => act.name === 'act3')
+        ? [
+          outline.acts.find((act) => act.name === 'act3')?.objective,
+          outline.acts.find((act) => act.name === 'act3')?.endingState,
+        ].filter(Boolean).join('；')
+        : outline.volumePlan[2]?.climax ?? outline.volumePlan.at(-1)?.climax ?? '',
     },
     subplots: toSubplots(outline),
     chapters: toChapters(outline),

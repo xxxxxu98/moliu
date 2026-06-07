@@ -1,11 +1,20 @@
 import type {
   CharacterPlan,
   CharacterRelationshipPlan,
+  CoolPointBeatPlan,
+  EmotionBeatPlan,
   ExecutableOutline,
   ForeshadowPlan,
+  SellingPointPlan,
   StartupChapterBlock,
-  VolumePlan,
+  StoryActPlan,
+  StoryLinePlan,
   StoryScalePlan,
+  SubplotPlan,
+  VolumePlan,
+  WorldFactionPlan,
+  WorldLocationPlan,
+  WorldRulePlan,
 } from '../types/executable-outline';
 import {
   extractFieldValue,
@@ -14,6 +23,17 @@ import {
   splitByHeading,
   splitNamedSections,
 } from './utils';
+
+const ACT_HEADING_TO_NAME: Record<string, StoryActPlan['name']> = {
+  '第一幕（建置）': 'act1',
+  '第二幕A（对抗）': 'act2a',
+  '第二幕B（至暗）': 'act2b',
+  '第三幕（结局）': 'act3',
+};
+
+const LOCATION_LEVELS: WorldLocationPlan['level'][] = ['world', 'continent', 'country', 'city', 'district', 'special'];
+const RULE_CATEGORIES: WorldRulePlan['category'][] = ['cultivation', 'magic', 'social', 'physics', 'custom'];
+const EMOTION_ARCS: EmotionBeatPlan['arc'][] = ['rising', 'falling', 'wave', 'mixed'];
 
 interface HeadingBlock {
   heading: string;
@@ -143,6 +163,168 @@ function parseForeshadowBlock(block: string, index: number): ForeshadowPlan {
   };
 }
 
+function parseActsSection(section: string): StoryActPlan[] {
+  const blocks = splitByHeading(section, /^###\s+.+$/gm);
+
+  return blocks
+    .map((block) => {
+      const label = block.heading.replace(/^###\s*/, '').trim();
+      const name = ACT_HEADING_TO_NAME[label];
+      if (!name) return null;
+
+      const act = {
+        name,
+        label,
+        objective: extractFieldValue(block.body, '幕目标') ?? '',
+        keyTurn: extractFieldValue(block.body, '关键转折') ?? '',
+        endingState: extractFieldValue(block.body, '幕结束状态') ?? '',
+      } satisfies StoryActPlan;
+
+      return act.objective || act.keyTurn || act.endingState ? act : null;
+    })
+    .filter((item): item is StoryActPlan => item !== null);
+}
+
+function normalizeLocationLevel(value: string): WorldLocationPlan['level'] {
+  const normalized = value.trim().toLowerCase();
+  return LOCATION_LEVELS.find((level) => level === normalized) ?? 'special';
+}
+
+function normalizeRuleCategory(value: string): WorldRulePlan['category'] {
+  const normalized = value.trim().toLowerCase();
+  return RULE_CATEGORIES.find((category) => category === normalized) ?? 'custom';
+}
+
+function parseWorldBuildingSection(section: string): ExecutableOutline['worldBuilding'] | undefined {
+  if (!section.trim()) return undefined;
+
+  const segments = splitNamedSections(section, ['核心地点', '关键势力', '世界规则']);
+
+  const locationBlocks = splitByHeading(segments['核心地点'], /^####\s+.+$/gm);
+  const locations = locationBlocks
+    .map((block) => ({
+      name: extractFieldValue(block.body, '名称') ?? block.heading.replace(/^####\s*/, '').trim(),
+      level: normalizeLocationLevel(extractFieldValue(block.body, '层级') ?? ''),
+      functionInStory: extractFieldValue(block.body, '剧情功能') ?? '',
+      parentName: extractFieldValue(block.body, '上级地点') ?? undefined,
+      relatedConflict: extractFieldValue(block.body, '关联冲突') ?? undefined,
+    }))
+    .filter((item) => item.name && item.functionInStory);
+
+  const factionBlocks = splitByHeading(segments['关键势力'], /^####\s+.+$/gm);
+  const factions = factionBlocks
+    .map((block) => ({
+      name: extractFieldValue(block.body, '名称') ?? block.heading.replace(/^####\s*/, '').trim(),
+      positioning: extractFieldValue(block.body, '势力定位') ?? '',
+      objective: extractFieldValue(block.body, '核心目标') ?? '',
+      allies: extractMultiValueField(block.body, '盟友'),
+      enemies: extractMultiValueField(block.body, '敌对'),
+      relationToProtagonist: extractFieldValue(block.body, '与主角关系') ?? '',
+      parentName: extractFieldValue(block.body, '上级势力') ?? undefined,
+    }))
+    .filter((item) => item.name && (item.positioning || item.objective || item.relationToProtagonist));
+
+  const ruleBlocks = splitByHeading(segments['世界规则'], /^####\s+.+$/gm);
+  const rules = ruleBlocks
+    .map((block) => ({
+      name: extractFieldValue(block.body, '名称') ?? block.heading.replace(/^####\s*/, '').trim(),
+      category: normalizeRuleCategory(extractFieldValue(block.body, '类别') ?? ''),
+      content: extractFieldValue(block.body, '规则内容') ?? '',
+      limitation: extractFieldValue(block.body, '限制/代价') ?? undefined,
+      relatedRules: extractMultiValueField(block.body, '关联规则'),
+    }))
+    .filter((item) => item.name && item.content);
+
+  if (locations.length === 0 && factions.length === 0 && rules.length === 0) {
+    return undefined;
+  }
+
+  return { locations, factions, rules };
+}
+
+function parseSubplotsSection(section: string): SubplotPlan[] {
+  const blocks = splitByHeading(section, /^###\s+支线\d+/gm);
+  return blocks.map((block) => ({
+    title: extractFieldValue(block.body, '标题') ?? block.heading.replace(/^###\s*/, '').trim(),
+    functionInStory: extractFieldValue(block.body, '功能') ?? '',
+    relatedCharacters: extractMultiValueField(block.body, '关联角色'),
+    startChapter: parseChapterNumber(extractFieldValue(block.body, '起始章节')),
+    endChapter: parseChapterNumber(extractFieldValue(block.body, '收束章节')),
+    relationToMainPlot: extractFieldValue(block.body, '与主线关系') ?? '',
+  })).filter((item) => item.title && (item.functionInStory || item.relationToMainPlot));
+}
+
+function parseStoryLinesSection(section: string): StoryLinePlan | undefined {
+  if (!section.trim()) return undefined;
+
+  const storyLines = {
+    map: extractFieldValue(section, '地图线') ?? '',
+    faction: extractFieldValue(section, '阵营线') ?? '',
+    character: extractFieldValue(section, '人物线') ?? '',
+    goldenfinger: extractFieldValue(section, '金手指线') ?? '',
+    worldRules: extractFieldValue(section, '世界规则线') ?? '',
+    conflict: extractFieldValue(section, '矛盾线') ?? '',
+    collection: extractFieldValue(section, '收集线') ?? '',
+    romance: extractFieldValue(section, '感情线') ?? '',
+  } satisfies StoryLinePlan;
+
+  return Object.values(storyLines).some(Boolean) ? storyLines : undefined;
+}
+
+function parseEmotionArc(value: string): EmotionBeatPlan['arc'] {
+  const normalized = value.trim().toLowerCase();
+  return EMOTION_ARCS.find((arc) => arc === normalized) ?? 'mixed';
+}
+
+function parseNumberList(value: string | null): number[] {
+  if (!value) return [];
+  return Array.from(new Set((value.match(/\d+/g) ?? []).map(Number))).filter((num) => Number.isFinite(num));
+}
+
+function parseEmotionAndCoolPointSection(section: string): Pick<ExecutableOutline, 'emotionPlan' | 'coolPointPlan'> {
+  const emotionPlan = section.trim() ? {
+    primary: extractFieldValue(section, '核心情绪') ?? '',
+    secondary: extractFieldValue(section, '次级情绪') ?? undefined,
+    arc: parseEmotionArc(extractFieldValue(section, '情绪弧线') ?? ''),
+    highPoints: parseNumberList(extractFieldValue(section, '情绪高点章节')),
+    lowPoints: parseNumberList(extractFieldValue(section, '情绪低点章节')),
+    density: parseChapterNumber(extractFieldValue(section, '情绪密度建议')) ?? undefined,
+  } satisfies EmotionBeatPlan : undefined;
+
+  const coolPointSection = splitNamedSections(section, ['爽点安排'])['爽点安排'] || section;
+  const coolPointBlocks = splitByHeading(coolPointSection, /^####\s+爽点\d+/gm);
+  const coolPointPlan = coolPointBlocks.map((block) => ({
+    type: extractFieldValue(block.body, '类型') ?? '',
+    description: extractFieldValue(block.body, '描述') ?? '',
+    suggestedChapter: parseChapterNumber(extractFieldValue(block.body, '建议章节')),
+    relatedBlock: extractFieldValue(block.body, '所属区间') ?? undefined,
+  })).filter((item) => item.type || item.description) as CoolPointBeatPlan[];
+
+  return {
+    emotionPlan: emotionPlan && emotionPlan.primary ? emotionPlan : undefined,
+    coolPointPlan: coolPointPlan.length > 0 ? coolPointPlan : undefined,
+  };
+}
+
+function parseSellingPointSection(section: string): SellingPointPlan[] {
+  const blocks = splitByHeading(section, /^###\s+卖点\d+/gm);
+  return blocks.map((block, index) => ({
+    name: extractFieldValue(block.body, '名称') ?? `卖点${index + 1}`,
+    description: extractFieldValue(block.body, '描述') ?? '',
+    category: (() => {
+      const raw = extractFieldValue(block.body, '分类') ?? '';
+      if (raw.includes('设定')) return 'setting';
+      if (raw.includes('角色')) return 'character';
+      if (raw.includes('冲突')) return 'conflict';
+      if (raw.includes('情绪')) return 'emotion';
+      if (raw.includes('钩子')) return 'hook';
+      return 'coolpoint';
+    })(),
+    priority: Number(extractFieldValue(block.body, '优先级')?.match(/\d+/)?.[0] ?? Math.max(1, 5 - index)),
+    payoffStage: extractFieldValue(block.body, '主要兑现阶段') ?? undefined,
+  })).filter((item) => item.name && item.description);
+}
+
 function splitLevel4Blocks(section: string): HeadingBlock[] {
   return splitByHeading(section, /^####\s+.+$/gm);
 }
@@ -222,20 +404,32 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
   const text = normalizeGeneratedText(raw);
   const sections = splitNamedSections(text, [
     '故事定位',
+    '卖点承载规划',
     '故事规模规划',
     '核心驱动',
+    '四幕结构',
     '卷纲',
+    '世界与势力规划',
     '前30章启动包',
+    '主要支线',
+    '故事线规划',
+    '情绪与爽点节奏',
     '关键角色规划',
     '关键角色',
     '伏笔规划',
   ]);
 
   const positioningSection = sections['故事定位'];
+  const sellingPointSection = sections['卖点承载规划'];
   const scaleSection = sections['故事规模规划'];
   const storyEngineSection = sections['核心驱动'];
+  const actsSection = sections['四幕结构'];
   const volumeSection = sections['卷纲'];
+  const worldBuildingSection = sections['世界与势力规划'];
   const startupSection = sections['前30章启动包'];
+  const subplotsSection = sections['主要支线'];
+  const storyLinesSection = sections['故事线规划'];
+  const emotionSection = sections['情绪与爽点节奏'];
   const characterSection = sections['关键角色规划'] || sections['关键角色'];
   const foreshadowSection = sections['伏笔规划'];
 
@@ -276,6 +470,13 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
     return foreshadow.hint && array.findIndex((item) => item.hint === foreshadow.hint) === index;
   });
 
+  const acts = parseActsSection(actsSection);
+  const worldBuilding = parseWorldBuildingSection(worldBuildingSection);
+  const subplots = parseSubplotsSection(subplotsSection);
+  const storyLines = parseStoryLinesSection(storyLinesSection);
+  const { emotionPlan, coolPointPlan } = parseEmotionAndCoolPointSection(emotionSection);
+  const sellingPointPlan = parseSellingPointSection(sellingPointSection);
+
   const outline: ExecutableOutline = {
     title: extractFieldValue(positioningSection, '标题') ?? '未命名方案',
     oneLiner: extractFieldValue(positioningSection, '一句话卖点') ?? '',
@@ -296,6 +497,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
       escalationPath: extractMultiValueField(storyEngineSection, '冲突升级链'),
       failureCost: extractFieldValue(storyEngineSection, '失败代价') ?? '',
     },
+    acts: acts.length > 0 ? acts : undefined,
     volumePlan,
     startupPack30: {
       openingHook: extractFieldValue(startupSection, '开篇钩子') ?? '',
@@ -305,6 +507,12 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
       firstConflictCycle: extractFieldValue(startupSection, '第一轮冲突闭环') ?? '',
       chapterBlocks,
     },
+    worldBuilding,
+    subplots: subplots.length > 0 ? subplots : undefined,
+    storyLines,
+    emotionPlan,
+    coolPointPlan,
+    sellingPointPlan: sellingPointPlan.length > 0 ? sellingPointPlan : undefined,
     keyCharacters: dedupedKeyCharacters,
     foreshadowPlan: dedupedForeshadowPlan,
   };

@@ -25,6 +25,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   BarChart3,
+  Route,
 } from 'lucide-vue-next';
 import { NEmpty, NTag } from 'naive-ui';
 import type { GeneratedCharacter, GeneratedChapter, GeneratedForeshadow, GeneratedOutline } from '@/types/inspiration';
@@ -43,6 +44,34 @@ interface VisualNode {
   metadata?: Record<string, any>;
   expanded?: boolean;
 }
+
+interface WorldSettingSummaryCard {
+  title: string;
+  count: number;
+  icon: typeof MapPin;
+  badgeType: 'info' | 'success' | 'warning';
+}
+
+const WORLD_SETTING_CARDS: WorldSettingSummaryCard[] = [
+  {
+    title: '核心地点',
+    count: 0,
+    icon: MapPin,
+    badgeType: 'info',
+  },
+  {
+    title: '关键势力',
+    count: 0,
+    icon: Flag,
+    badgeType: 'success',
+  },
+  {
+    title: '世界规则',
+    count: 0,
+    icon: ShieldAlert,
+    badgeType: 'warning',
+  },
+];
 
 const props = defineProps<{
   /** 大纲数据 */
@@ -326,6 +355,58 @@ const outlineCharacters = computed(() => props.outline.characters ?? []);
 const outlineForeshadows = computed(() => props.outline.foreshadows ?? []);
 const protagonistName = computed(() => outlineCharacters.value.find((character) => character.role === 'protagonist')?.name ?? '主角');
 
+const worldSettingCards = computed<WorldSettingSummaryCard[]>(() => {
+  const worldSetting = props.outline.worldSetting;
+  if (!worldSetting) return [];
+
+  const counts = {
+    '核心地点': worldSetting.locations?.length ?? 0,
+    '关键势力': worldSetting.factions?.length ?? 0,
+    '世界规则': worldSetting.rules?.length ?? 0,
+  };
+
+  return WORLD_SETTING_CARDS
+    .map((card) => ({
+      ...card,
+      count: counts[card.title as keyof typeof counts] ?? 0,
+    }))
+    .filter((card) => card.count > 0);
+});
+
+const emotionSummary = computed(() => {
+  const emotion = props.outline.emotionGoal;
+  if (!emotion) return null;
+
+  return {
+    primary: emotion.primary || '未设定',
+    secondary: emotion.secondary,
+    arc: emotionArcNames[emotion.arc] ?? emotion.arc ?? '混合型',
+    highPointsLabel: emotion.highPoints?.length ? emotion.highPoints.join('、') : '未标注',
+    lowPointsLabel: emotion.lowPoints?.length ? emotion.lowPoints.join('、') : '未标注',
+    densityLabel: emotion.density ? `约每${emotion.density}字波动一次` : '未标注',
+  };
+});
+
+const storyLineEntries = computed(() => {
+  const storyLines = props.outline.storyLines;
+  if (!storyLines) return [];
+
+  return [
+    { key: 'map', label: '地图线', value: storyLines.map, icon: MapPin },
+    { key: 'faction', label: '阵营线', value: storyLines.faction, icon: Flag },
+    { key: 'character', label: '人物线', value: storyLines.character, icon: Users },
+    { key: 'goldenfinger', label: '金手指线', value: storyLines.goldenfinger, icon: Sparkles },
+    { key: 'worldRules', label: '世界规则线', value: storyLines.worldRules, icon: ShieldAlert },
+    { key: 'conflict', label: '矛盾线', value: storyLines.conflict, icon: AlertTriangle },
+    { key: 'collection', label: '收集线', value: storyLines.collection, icon: Target },
+    { key: 'romance', label: '感情线', value: storyLines.romance, icon: Link2 },
+  ].filter((entry) => entry.value)
+    .map((entry) => ({
+      ...entry,
+      icon: entry.icon ?? Route,
+    }));
+});
+
 /**
  * 转换为可视化树
  */
@@ -362,7 +443,87 @@ const visualTree = computed<VisualNode[]>(() => {
     nodes.push(structureNode);
   }
 
-  // 2. 章节概览
+  // 2. 世界与势力
+  if (outline.worldSetting && (
+    outline.worldSetting.locations?.length ||
+    outline.worldSetting.factions?.length ||
+    outline.worldSetting.rules?.length
+  )) {
+    const worldNode: VisualNode = {
+      id: 'world-setting',
+      type: 'world',
+      title: '世界与势力',
+      description: [
+        outline.worldSetting.locations?.length ? `${outline.worldSetting.locations.length}个地点` : '',
+        outline.worldSetting.factions?.length ? `${outline.worldSetting.factions.length}个势力` : '',
+        outline.worldSetting.rules?.length ? `${outline.worldSetting.rules.length}条规则` : '',
+      ].filter(Boolean).join(' · '),
+      expanded: false,
+      children: [],
+    };
+
+    if (outline.worldSetting.locations?.length) {
+      worldNode.children!.push({
+        id: 'world-setting-locations',
+        type: 'world',
+        title: '核心地点',
+        description: `${outline.worldSetting.locations.length}个地点`,
+        children: outline.worldSetting.locations.map((location, index) => ({
+          id: `world-location-${index}`,
+          type: 'world',
+          title: location.name,
+          description: location.description || '',
+          metadata: {
+            level: location.level,
+            parentName: location.parentName,
+          },
+        })),
+      });
+    }
+
+    if (outline.worldSetting.factions?.length) {
+      worldNode.children!.push({
+        id: 'world-setting-factions',
+        type: 'world',
+        title: '关键势力',
+        description: `${outline.worldSetting.factions.length}个势力`,
+        children: outline.worldSetting.factions.map((faction, index) => ({
+          id: `world-faction-${index}`,
+          type: 'world',
+          title: faction.name,
+          description: faction.description || '',
+          metadata: {
+            allies: faction.allies,
+            enemies: faction.enemies,
+            parentName: faction.parentName,
+          },
+        })),
+      });
+    }
+
+    if (outline.worldSetting.rules?.length) {
+      worldNode.children!.push({
+        id: 'world-setting-rules',
+        type: 'world',
+        title: '世界规则',
+        description: `${outline.worldSetting.rules.length}条规则`,
+        children: outline.worldSetting.rules.map((rule, index) => ({
+          id: `world-rule-${index}`,
+          type: 'world',
+          title: rule.name,
+          description: rule.description || '',
+          metadata: {
+            category: rule.category,
+            relatedRuleNames: rule.relatedRuleNames,
+          },
+        })),
+      });
+    }
+
+    nodes.push(worldNode);
+  }
+
+  // 3. 章节概览
   if (outline.chapters && outline.chapters.length > 0) {
     const chaptersNode: VisualNode = {
       id: 'chapters',
@@ -714,20 +875,152 @@ function getStatusColor(status?: string): string {
         <div>
           <div class="font-medium text-violet-900 dark:text-violet-100">规模规划</div>
           <div class="mt-1 text-violet-700 dark:text-violet-300">
-            目标字数：{{ outline.storyScale.targetWordCount || '未标注' }}
+            目标字数：{{ outline.storyScale?.targetWordCount || '未标注' }}
           </div>
           <div class="text-violet-700 dark:text-violet-300">
-            平均每章：{{ outline.storyScale.averageWordsPerChapter || 2500 }}字
+            平均每章：{{ outline.storyScale?.averageWordsPerChapter || 2500 }}字
           </div>
           <div class="text-violet-700 dark:text-violet-300">
-            每卷预计：{{ outline.storyScale.estimatedChaptersPerVolume || '—' }}章
+            每卷预计：{{ outline.storyScale?.estimatedChaptersPerVolume || '—' }}章
           </div>
         </div>
-        <div v-if="outline.storyScale.longformProgressionNote">
+        <div v-if="outline.storyScale?.longformProgressionNote">
           <div class="font-medium text-violet-900 dark:text-violet-100">长线推进说明</div>
           <p class="mt-1 leading-5 text-violet-700 dark:text-violet-300">
-            {{ outline.storyScale.longformProgressionNote }}
+            {{ outline.storyScale?.longformProgressionNote }}
           </p>
+        </div>
+      </div>
+
+      <div
+        v-if="emotionSummary || storyLineEntries.length"
+        class="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]"
+      >
+        <div
+          v-if="emotionSummary"
+          class="rounded-xl border border-rose-200 bg-white/80 p-4 dark:border-rose-800 dark:bg-gray-800/60"
+        >
+          <div class="flex items-center gap-2 text-sm font-semibold text-rose-900 dark:text-rose-100">
+            <Sparkles class="h-4 w-4 text-rose-500" />
+            <span>情绪节奏</span>
+          </div>
+          <div class="mt-3 space-y-2 text-xs text-rose-800 dark:text-rose-200">
+            <div class="flex items-center justify-between gap-3">
+              <span>核心情绪</span>
+              <span class="font-medium text-right">{{ emotionSummary.primary }}</span>
+            </div>
+            <div v-if="emotionSummary.secondary" class="flex items-center justify-between gap-3">
+              <span>次级情绪</span>
+              <span class="font-medium text-right">{{ emotionSummary.secondary }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span>弧线类型</span>
+              <span class="font-medium text-right">{{ emotionSummary.arc }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span>情绪高点</span>
+              <span class="font-medium text-right">{{ emotionSummary.highPointsLabel }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span>情绪低点</span>
+              <span class="font-medium text-right">{{ emotionSummary.lowPointsLabel }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span>节奏密度</span>
+              <span class="font-medium text-right">{{ emotionSummary.densityLabel }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-if="storyLineEntries.length"
+          class="rounded-xl border border-sky-200 bg-white/80 p-4 dark:border-sky-800 dark:bg-gray-800/60"
+        >
+          <div class="flex items-center gap-2 text-sm font-semibold text-sky-900 dark:text-sky-100">
+            <GitBranch class="h-4 w-4 text-sky-500" />
+            <span>故事线概览</span>
+          </div>
+          <div class="mt-3 grid gap-2 sm:grid-cols-2">
+            <div
+              v-for="entry in storyLineEntries"
+              :key="entry.key"
+              class="rounded-lg border border-sky-100 bg-sky-50/70 px-3 py-3 dark:border-sky-900/60 dark:bg-sky-950/20"
+            >
+              <div class="flex items-center gap-2 text-xs font-medium text-sky-900 dark:text-sky-100">
+                <component :is="entry.icon" class="h-3.5 w-3.5 text-sky-500" />
+                <span>{{ entry.label }}</span>
+              </div>
+              <p class="mt-2 text-xs leading-5 text-sky-800 dark:text-sky-200">
+                {{ entry.value }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="emotionSummary || storyLineEntries.length"
+        class="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]"
+      >
+        <div
+          v-if="emotionSummary"
+          class="rounded-xl border border-rose-200 bg-white/80 p-4 dark:border-rose-800 dark:bg-gray-800/60"
+        >
+          <div class="flex items-center gap-2 text-sm font-semibold text-rose-900 dark:text-rose-100">
+            <Sparkles class="h-4 w-4 text-rose-500" />
+            <span>情绪节奏</span>
+          </div>
+          <div class="mt-3 space-y-2 text-xs text-rose-800 dark:text-rose-200">
+            <div class="flex items-center justify-between gap-3">
+              <span>核心情绪</span>
+              <span class="font-medium text-right">{{ emotionSummary.primary }}</span>
+            </div>
+            <div v-if="emotionSummary.secondary" class="flex items-center justify-between gap-3">
+              <span>次级情绪</span>
+              <span class="font-medium text-right">{{ emotionSummary.secondary }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span>弧线类型</span>
+              <span class="font-medium text-right">{{ emotionSummary.arc }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span>情绪高点</span>
+              <span class="font-medium text-right">{{ emotionSummary.highPointsLabel }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span>情绪低点</span>
+              <span class="font-medium text-right">{{ emotionSummary.lowPointsLabel }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span>节奏密度</span>
+              <span class="font-medium text-right">{{ emotionSummary.densityLabel }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-if="storyLineEntries.length"
+          class="rounded-xl border border-sky-200 bg-white/80 p-4 dark:border-sky-800 dark:bg-gray-800/60"
+        >
+          <div class="flex items-center gap-2 text-sm font-semibold text-sky-900 dark:text-sky-100">
+            <GitBranch class="h-4 w-4 text-sky-500" />
+            <span>故事线概览</span>
+          </div>
+          <div class="mt-3 grid gap-2 sm:grid-cols-2">
+            <div
+              v-for="entry in storyLineEntries"
+              :key="entry.key"
+              class="rounded-lg border border-sky-100 bg-sky-50/70 px-3 py-3 dark:border-sky-900/60 dark:bg-sky-950/20"
+            >
+              <div class="flex items-center gap-2 text-xs font-medium text-sky-900 dark:text-sky-100">
+                <component :is="entry.icon" class="h-3.5 w-3.5 text-sky-500" />
+                <span>{{ entry.label }}</span>
+              </div>
+              <p class="mt-2 text-xs leading-5 text-sky-800 dark:text-sky-200">
+                {{ entry.value }}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
