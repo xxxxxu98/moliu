@@ -6,6 +6,7 @@ export interface StoryPositioning {
 }
 
 export interface StoryEngine {
+  protagonistName: string;
   protagonistStart: string;
   protagonistGoalLongTerm: string;
   protagonistGoalShortTerm: string;

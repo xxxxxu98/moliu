@@ -100,6 +100,14 @@ const characterRoleNames: Record<string, string> = {
   support: '配角',
 };
 
+// 情绪弧线中文映射
+const emotionArcNames: Record<string, string> = {
+  rising: '上升型',
+  falling: '下降型',
+  wave: '波浪型',
+  mixed: '混合型',
+};
+
 /**
  * 转换为可视化树
  */
@@ -306,18 +314,18 @@ const visualTree = computed<VisualNode[]>(() => {
           id: 'emotion-primary',
           type: 'volume',
           title: `核心情绪：${emotion.primary || '未设定'}`,
-          description: `弧线类型：${emotion.arc || 'rising'}`,
+          description: `弧线类型：${emotionArcNames[emotion.arc] ?? emotion.arc ?? '上升型'}`,
         },
         ...(emotion.highPoints?.length ? [{
           id: 'emotion-high-points',
           type: 'volume',
-          title: `情绪高点章节：${emotion.highPoints.join(', ')}`,
+          title: `情绪高点章节：${emotion.highPoints.join('、')}`,
           description: '',
         }] : []),
         ...(emotion.lowPoints?.length ? [{
           id: 'emotion-low-points',
           type: 'volume',
-          title: `情绪低点章节：${emotion.lowPoints.join(', ')}`,
+          title: `情绪低点章节：${emotion.lowPoints.join('、')}`,
           description: '',
         }] : []),
       ],

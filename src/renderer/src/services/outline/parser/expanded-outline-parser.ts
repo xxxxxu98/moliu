@@ -51,12 +51,16 @@ function mapRole(value: string): CharacterPlan['role'] {
   return 'support';
 }
 
-function parseCharacterBlock(block: string): CharacterPlan {
+function parseCharacterBlock(block: string, protagonistName?: string): CharacterPlan {
   const roleRaw = extractFieldValue(block, '角色定位') ?? '配角';
+  const name = extractFieldValue(block, '姓名') ?? '未命名角色';
+  const normalizedRole = protagonistName && name === protagonistName
+    ? 'protagonist'
+    : mapRole(roleRaw);
 
   return {
-    name: extractFieldValue(block, '姓名') ?? '未命名角色',
-    role: mapRole(roleRaw),
+    name,
+    role: normalizedRole,
     functionInStory: extractFieldValue(block, '剧情功能') ?? '',
     keyNeed: extractFieldValue(block, '核心需求') ?? '',
     tensionWithProtagonist: extractFieldValue(block, '与主角张力') ?? '',
@@ -89,6 +93,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
   const volumeBlocks = splitByHeading(volumeSection, /^###\s*第(?:[一二三四五六七八九十]+|\d+)卷/gm);
   const startupBlocks = splitByHeading(startupSection, /^###\s*\d+\s*-\s*\d+章/gm);
   const characterBlocks = splitByHeading(characterSection, /^###\s*角色\s*\d+/gm);
+  const protagonistName = extractFieldValue(storyEngineSection, '主角姓名') ?? '';
 
   const volumePlan = volumeBlocks.length > 0
     ? volumeBlocks
@@ -112,10 +117,10 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
     }];
 
   const keyCharacters = characterBlocks.length > 0
-    ? characterBlocks.map((block) => parseCharacterBlock(block.body))
+    ? characterBlocks.map((block) => parseCharacterBlock(block.body, protagonistName))
     : (() => {
       const name = extractFieldValue(characterSection, '姓名');
-      return name ? [parseCharacterBlock(characterSection)] : [];
+      return name ? [parseCharacterBlock(characterSection, protagonistName)] : [];
     })();
 
   const outline: ExecutableOutline = {
@@ -129,6 +134,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
       styleKeywords: extractMultiValueField(positioningSection, '风格关键词'),
     },
     storyEngine: {
+      protagonistName,
       protagonistStart: extractFieldValue(storyEngineSection, '主角初始状态') ?? '',
       protagonistGoalLongTerm: extractFieldValue(storyEngineSection, '主角长期目标') ?? '',
       protagonistGoalShortTerm: extractFieldValue(storyEngineSection, '主角短期目标') ?? '',

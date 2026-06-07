@@ -101,8 +101,11 @@ function toCharacters(outline: ExecutableOutline): GeneratedCharacter[] {
     return characters;
   }
 
+  // 没有明确的主角时，尝试从各字段提取真实名字
+  const extractedName = extractProtagonistName(outline);
+
   return [{
-    name: '主角',
+    name: extractedName,
     role: 'protagonist',
     description: outline.storyEngine.protagonistStart || outline.oneLiner,
     personality: [],
@@ -111,6 +114,55 @@ function toCharacters(outline: ExecutableOutline): GeneratedCharacter[] {
     background: outline.storyEngine.protagonistGoalShortTerm,
     relationships: [],
   }, ...characters];
+}
+
+function extractProtagonistName(outline: ExecutableOutline): string {
+  if (outline.storyEngine.protagonistName?.trim()) {
+    return outline.storyEngine.protagonistName.trim();
+  }
+
+  // 1. 尝试从 startupPack30 的开篇钩子里提取名字（最常见格式：主角名叫xxx）
+  const openingHook = outline.startupPack30.openingHook;
+  const openingPatterns = [
+    /主角(?:名叫|叫|是|为)?([\u4e00-\u9fa5]{2,4})/,
+    /(?:少年|少女|青年|女孩|男孩)?([\u4e00-\u9fa5]{2,4})(?:原本是|出身于|生于|本是|是)/,
+    /^"?([\u4e00-\u9fa5]{2,4})"?[是为叫称当]/,
+  ];
+  for (const pattern of openingPatterns) {
+    const match = openingHook?.match(pattern);
+    if (match?.[1] && match[1].length >= 2) {
+      return match[1];
+    }
+  }
+
+  // 2. 尝试从主角初始状态里提取
+  const protagonistStart = outline.storyEngine.protagonistStart;
+  const startPatterns = [
+    /主角(?:名叫|叫|是|为)?([\u4e00-\u9fa5]{2,4})/,
+    /(?:少年|少女|青年|女孩|男孩)?([\u4e00-\u9fa5]{2,4})(?:原本是|出身于|生于|本是|是)/,
+    /^"?([\u4e00-\u9fa5]{2,4})"?[是为叫]/,
+  ];
+  for (const pattern of startPatterns) {
+    const match = protagonistStart?.match(pattern);
+    if (match?.[1] && match[1].length >= 2) {
+      return match[1];
+    }
+  }
+
+  // 3. 尝试从角色列表中找已标记为主角的角色
+  const protagonistCharacter = outline.keyCharacters.find((character) => character.role === 'protagonist');
+  if (protagonistCharacter?.name && protagonistCharacter.name !== '未命名角色') {
+    return protagonistCharacter.name;
+  }
+
+  // 4. 尝试从角色列表第一个人的名字
+  const firstChar = outline.keyCharacters[0];
+  if (firstChar?.name && firstChar.name.length >= 2 && firstChar.name.length <= 6) {
+    return firstChar.name;
+  }
+
+  // 兜底：默认叫"主角"
+  return '主角';
 }
 
 function toSubplots(outline: ExecutableOutline): GeneratedSubplot[] {
@@ -172,10 +224,31 @@ function toEmotionGoal(outline: ExecutableOutline): GeneratedEmotionGoal | undef
     return undefined;
   }
 
+  // 从冲突升级链推导弧线类型：上升链 → rising，下降链 → falling，波浪 → wave
+  const escalationPath = outline.storyEngine.escalationPath || [];
+  let arc: GeneratedEmotionGoal['arc'] = 'rising';
+  if (escalationPath.length >= 2) {
+    const first = escalationPath[0];
+    const last = escalationPath[escalationPath.length - 1];
+    if (first.includes('低谷') || first.includes('困境') || first.includes('灭') || first.includes('败')) {
+      arc = 'rising';
+    } else if (last.includes('低谷') || last.includes('困境') || last.includes('灭') || last.includes('败')) {
+      arc = 'falling';
+    } else if (
+      escalationPath.some(e => e.includes('起伏')) ||
+      escalationPath.some(e => e.includes('波动')) ||
+      (escalationPath.filter(e => e.includes('高潮')).length >= 2)
+    ) {
+      arc = 'wave';
+    } else {
+      arc = 'mixed';
+    }
+  }
+
   return {
     primary: outline.positioning.coreEmotions[0],
     secondary: outline.positioning.coreEmotions[1],
-    arc: 'rising',
+    arc,
     density: 3000,
     highPoints: [5, 15, 30],
     lowPoints: [],
