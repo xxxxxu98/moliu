@@ -19,9 +19,16 @@ import {
   Sparkles,
   Target,
   Layers,
+  Link2,
+  ShieldAlert,
+  GitBranch,
+  AlertTriangle,
+  CheckCircle2,
+  BarChart3,
 } from 'lucide-vue-next';
 import { NEmpty, NTag } from 'naive-ui';
 import type { GeneratedCharacter, GeneratedChapter, GeneratedForeshadow, GeneratedOutline } from '@/types/inspiration';
+import { RELATIONSHIP_TYPE_LABELS } from '@/types/project';
 
 /**
  * 可视化节点
@@ -100,6 +107,45 @@ const characterRoleNames: Record<string, string> = {
   support: '配角',
 };
 
+function getRelationshipTypeDisplayText(type?: string): string {
+  if (!type) return '';
+
+  const normalizedType = type.trim().toLowerCase();
+  const projectLabel = RELATIONSHIP_TYPE_LABELS[normalizedType as keyof typeof RELATIONSHIP_TYPE_LABELS]?.label;
+  if (projectLabel) {
+    return projectLabel;
+  }
+
+  const outlineRelationshipNames: Record<string, string> = {
+    ally: '盟友',
+    enemy: '敌对',
+    mentor: '导师',
+    family: '家人',
+    lover: '情感',
+    rival: '竞争',
+    use: '利用',
+    unknown: '复杂关系',
+  };
+
+  if (outlineRelationshipNames[normalizedType]) {
+    return outlineRelationshipNames[normalizedType];
+  }
+
+  if (normalizedType.includes('ally') || normalizedType.includes('alliance')) return '盟友';
+  if (normalizedType.includes('enemy')) return '敌对';
+  if (normalizedType.includes('mentor')) return '导师';
+  if (normalizedType.includes('family')) return '家人';
+  if (normalizedType.includes('lover') || normalizedType.includes('love') || normalizedType.includes('romance')) return '情感';
+  if (normalizedType.includes('rival') || normalizedType.includes('compet')) return '竞争';
+  if (normalizedType.includes('use') || normalizedType.includes('control') || normalizedType.includes('manip')) return '利用';
+  if (normalizedType.includes('friend')) return '朋友';
+  if (normalizedType.includes('student')) return '弟子';
+  if (normalizedType.includes('neutral')) return '中立';
+  if (normalizedType.includes('unknown')) return '复杂关系';
+
+  return type;
+}
+
 // 情绪弧线中文映射
 const emotionArcNames: Record<string, string> = {
   rising: '上升型',
@@ -107,6 +153,178 @@ const emotionArcNames: Record<string, string> = {
   wave: '波浪型',
   mixed: '混合型',
 };
+
+const foreshadowTypeNames: Record<string, string> = {
+  item: '物件伏笔',
+  dialogue: '对话伏笔',
+  event: '事件伏笔',
+  mystery: '谜团伏笔',
+  character: '角色伏笔',
+  ability: '能力伏笔',
+  identity: '身份伏笔',
+  relationship: '关系伏笔',
+  'world-rule': '规则伏笔',
+};
+
+const foreshadowImportanceNames: Record<string, string> = {
+  main: '主线',
+  subplot: '支线',
+  emotion: '情感',
+};
+
+function getForeshadowPhase(foreshadow: GeneratedForeshadow): string {
+  const setupChapter = foreshadow.setupChapter ?? 0;
+  const payoffChapter = foreshadow.payoffChapter ?? foreshadow.suggestedChapter ?? 0;
+  const referenceChapter = Math.max(setupChapter, payoffChapter);
+
+  if (referenceChapter > 60) return 'late';
+  if (referenceChapter > 30) return 'mid';
+  if (referenceChapter > 0) return 'early';
+  return 'undefined';
+}
+
+function getForeshadowTimelineLabel(foreshadow: GeneratedForeshadow): string {
+  const setup = foreshadow.setupChapter ? `埋设第${foreshadow.setupChapter}章` : '埋设待定';
+  const payoff = foreshadow.payoffChapter
+    ? `回收第${foreshadow.payoffChapter}章`
+    : foreshadow.suggestedChapter
+      ? `回收约第${foreshadow.suggestedChapter}章`
+      : '回收待定';
+  return `${setup} · ${payoff}`;
+}
+
+function getCharacterRelationshipCount(character: GeneratedCharacter): number {
+  return character.relationships?.length ?? 0;
+}
+
+interface DensityMetric {
+  key: string;
+  label: string;
+  value: number;
+  recommended: number;
+  status: 'good' | 'warning';
+  helper: string;
+}
+
+function normalizeRelationshipPair(source: string, target: string): string {
+  return [source.trim(), target.trim()].sort((a, b) => a.localeCompare(b)).join('::');
+}
+
+function getForeshadowTier(foreshadow: GeneratedForeshadow): 'short' | 'mid' | 'long' | 'endgame' {
+  const setupChapter = foreshadow.setupChapter ?? 0;
+  const payoffChapter = foreshadow.payoffChapter ?? foreshadow.suggestedChapter ?? 0;
+
+  if (payoffChapter >= 90 || setupChapter >= 60) return 'endgame';
+  if (payoffChapter >= 50 || setupChapter >= 20) return 'long';
+  if (payoffChapter >= 30 || setupChapter >= 10) return 'mid';
+  return 'short';
+}
+
+const densityDiagnostics = computed(() => {
+  const characters = outlineCharacters.value;
+  const foreshadows = outlineForeshadows.value;
+
+  const nonProtagonistRelationPairs = new Set(
+    characters.flatMap((character) =>
+      (character.relationships ?? [])
+        .filter((relationship) => relationship.targetName && relationship.targetName !== character.name)
+        .filter((relationship) => character.role !== 'protagonist' && relationship.targetName !== protagonistName.value)
+        .map((relationship) => normalizeRelationshipPair(character.name, relationship.targetName))
+    )
+  );
+
+  const foreshadowTypes = new Set(foreshadows.map((foreshadow) => foreshadow.type).filter(Boolean));
+  const foreshadowTierCounts = foreshadows.reduce<Record<'short' | 'mid' | 'long' | 'endgame', number>>((acc, foreshadow) => {
+    acc[getForeshadowTier(foreshadow)] += 1;
+    return acc;
+  }, {
+    short: 0,
+    mid: 0,
+    long: 0,
+    endgame: 0,
+  });
+
+  const metrics: DensityMetric[] = [
+    {
+      key: 'characters',
+      label: '关键角色数',
+      value: characters.length,
+      recommended: 10,
+      status: characters.length >= 10 ? 'good' : 'warning',
+      helper: '长篇建议至少 10 个关键角色，含常驻、接棒、势力代表。',
+    },
+    {
+      key: 'relationship-links',
+      label: '非主角关系链',
+      value: nonProtagonistRelationPairs.size,
+      recommended: 3,
+      status: nonProtagonistRelationPairs.size >= 3 ? 'good' : 'warning',
+      helper: '至少 3 组非主角之间的关系或利益冲突，避免所有人只围着主角转。',
+    },
+    {
+      key: 'foreshadows',
+      label: '伏笔总数',
+      value: foreshadows.length,
+      recommended: 10,
+      status: foreshadows.length >= 10 ? 'good' : 'warning',
+      helper: '长篇建议至少 10 条伏笔，覆盖前中后期与终局。',
+    },
+    {
+      key: 'foreshadow-types',
+      label: '伏笔类型覆盖',
+      value: foreshadowTypes.size,
+      recommended: 5,
+      status: foreshadowTypes.size >= 5 ? 'good' : 'warning',
+      helper: '建议至少覆盖 5 类伏笔，避免谜团同质化。',
+    },
+    {
+      key: 'short-foreshadows',
+      label: '短伏笔',
+      value: foreshadowTierCounts.short,
+      recommended: 3,
+      status: foreshadowTierCounts.short >= 3 ? 'good' : 'warning',
+      helper: '前 30 章建议至少 3 条短伏笔，提升追读动力。',
+    },
+    {
+      key: 'mid-foreshadows',
+      label: '中伏笔',
+      value: foreshadowTierCounts.mid,
+      recommended: 3,
+      status: foreshadowTierCounts.mid >= 3 ? 'good' : 'warning',
+      helper: '中期建议至少 3 条中伏笔，支撑第二卷推进。',
+    },
+    {
+      key: 'long-foreshadows',
+      label: '长伏笔',
+      value: foreshadowTierCounts.long,
+      recommended: 2,
+      status: foreshadowTierCounts.long >= 2 ? 'good' : 'warning',
+      helper: '后期建议至少 2 条长伏笔，服务大高潮。',
+    },
+    {
+      key: 'endgame-foreshadows',
+      label: '终局伏笔',
+      value: foreshadowTierCounts.endgame,
+      recommended: 2,
+      status: foreshadowTierCounts.endgame >= 2 ? 'good' : 'warning',
+      helper: '建议至少 2 条终局伏笔，支撑结局反转与收束。',
+    },
+  ];
+
+  const warningCount = metrics.filter((metric) => metric.status === 'warning').length;
+
+  return {
+    metrics,
+    warningCount,
+    score: metrics.length - warningCount,
+    total: metrics.length,
+    foreshadowTierCounts,
+  };
+});
+
+const outlineCharacters = computed(() => props.outline.characters ?? []);
+const outlineForeshadows = computed(() => props.outline.foreshadows ?? []);
+const protagonistName = computed(() => outlineCharacters.value.find((character) => character.role === 'protagonist')?.name ?? '主角');
 
 /**
  * 转换为可视化树
@@ -222,8 +440,7 @@ const visualTree = computed<VisualNode[]>(() => {
     };
 
     outline.foreshadows.forEach(fs => {
-      const suggestedChapter = fs.suggestedChapter || 0;
-      const phase = suggestedChapter > 60 ? 'late' : suggestedChapter > 30 ? 'mid' : suggestedChapter > 0 ? 'early' : 'undefined';
+      const phase = getForeshadowPhase(fs);
       if (!phaseGroups[phase]) {
         phaseGroups[phase] = [];
       }
@@ -241,12 +458,19 @@ const visualTree = computed<VisualNode[]>(() => {
             id: `foreshadow-${phase}-${index}`,
             type: 'foreshadow',
             title: fs.hint.substring(0, 30) + (fs.hint.length > 30 ? '...' : ''),
-            description: fs.hint,
+            description: getForeshadowTimelineLabel(fs),
             status: 'active',
             metadata: {
               type: fs.type,
               phase,
               suggestedChapter: fs.suggestedChapter,
+              setupChapter: fs.setupChapter,
+              payoffChapter: fs.payoffChapter,
+              payoffValue: fs.payoffValue,
+              carrierCharacter: fs.carrierCharacter,
+              linkedConflict: fs.linkedConflict,
+              importance: fs.importance,
+              hint: fs.hint,
             },
           })),
         };
@@ -273,6 +497,10 @@ const visualTree = computed<VisualNode[]>(() => {
         metadata: {
           role: char.role,
           personality: char.personality,
+          background: char.background,
+          abilities: char.abilities,
+          relationships: char.relationships,
+          relationshipCount: getCharacterRelationshipCount(char),
         },
       })),
     };
@@ -504,6 +732,85 @@ function getStatusColor(status?: string): string {
       </div>
     </div>
 
+    <div class="mb-4 rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 via-orange-50 to-white p-4 shadow-sm dark:border-amber-800 dark:from-amber-900/20 dark:via-orange-900/10 dark:to-gray-900">
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-col gap-3 rounded-xl border border-white/70 bg-white/75 p-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/55">
+          <div class="flex items-start gap-3">
+            <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200">
+              <BarChart3 class="h-4 w-4" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-col gap-2">
+                <div>
+                  <h4 class="text-sm font-semibold text-amber-950 dark:text-amber-100">长篇密度质检</h4>
+                  <p class="mt-1 text-xs leading-5 text-amber-700 dark:text-amber-300">
+                    快速检查角色盘、关系网和伏笔层级是否达到长篇小说推荐密度。
+                  </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <NTag :type="densityDiagnostics.warningCount === 0 ? 'success' : 'warning'" size="small" round>
+                    通过 {{ densityDiagnostics.score }}/{{ densityDiagnostics.total }}
+                  </NTag>
+                  <NTag v-if="densityDiagnostics.warningCount === 0" type="success" size="small" round>
+                    结构达标
+                  </NTag>
+                  <NTag v-else type="warning" size="small" round>
+                    {{ densityDiagnostics.warningCount }} 项待加强
+                  </NTag>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div
+            v-for="metric in densityDiagnostics.metrics"
+            :key="metric.key"
+            class="rounded-xl border px-4 py-4 shadow-sm transition-colors"
+            :class="metric.status === 'good'
+              ? 'border-emerald-200 bg-white/90 dark:border-emerald-800 dark:bg-gray-800/65'
+              : 'border-amber-300 bg-amber-50/90 dark:border-amber-700 dark:bg-amber-950/35'"
+          >
+            <div class="flex items-start gap-3">
+              <div
+                class="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg"
+                :class="metric.status === 'good'
+                  ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300'
+                  : 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300'"
+              >
+                <component
+                  :is="metric.status === 'good' ? CheckCircle2 : AlertTriangle"
+                  class="h-4 w-4"
+                />
+              </div>
+              <div class="min-w-0 flex-1 space-y-2">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div class="min-w-0">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ metric.label }}</div>
+                    <p class="mt-1 text-xs leading-5 text-gray-600 dark:text-gray-300">
+                      {{ metric.helper }}
+                    </p>
+                  </div>
+                  <div class="flex shrink-0 items-baseline gap-2 sm:pl-4">
+                    <span class="text-2xl font-semibold leading-none text-gray-900 dark:text-white">{{ metric.value }}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">/ 建议 {{ metric.recommended }}</span>
+                  </div>
+                </div>
+                <div class="h-2 overflow-hidden rounded-full bg-gray-200/80 dark:bg-gray-700/80">
+                  <div
+                    class="h-full rounded-full transition-all"
+                    :class="metric.status === 'good' ? 'bg-emerald-500' : 'bg-amber-500'"
+                    :style="{ width: `${Math.min((metric.value / Math.max(metric.recommended, 1)) * 100, 100)}%` }"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 可视化树 -->
     <div class="space-y-2">
       <template v-for="node in visualTree" :key="node.id">
@@ -580,37 +887,102 @@ function getStatusColor(status?: string): string {
               <!-- 子节点：伏笔 -->
               <div
                 v-else-if="child.type === 'foreshadow'"
-                class="pl-6 p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                @click="emit('selectForeshadow', outline.foreshadows?.find(f => child.title.includes(f.hint.substring(0, 20)))!)"
+                class="pl-6 p-3 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                @click="emit('selectForeshadow', outline.foreshadows?.find(f => child.metadata?.hint === f.hint)!)"
               >
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <Zap class="w-4 h-4 text-amber-500" />
                   <span class="font-medium text-gray-800 dark:text-gray-200">{{ child.title }}</span>
                   <NTag v-if="child.metadata?.phase" size="tiny" type="warning">
                     {{ phaseNames[child.metadata.phase] }}
                   </NTag>
+                  <NTag v-if="child.metadata?.importance" size="tiny" :type="child.metadata.importance === 'main' ? 'error' : child.metadata.importance === 'emotion' ? 'success' : 'default'">
+                    {{ foreshadowImportanceNames[child.metadata.importance] ?? child.metadata.importance }}
+                  </NTag>
+                  <NTag v-if="child.metadata?.type" size="tiny" type="info">
+                    {{ foreshadowTypeNames[child.metadata.type] ?? child.metadata.type }}
+                  </NTag>
                 </div>
                 <p class="pl-6 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {{ child.description }}
+                  {{ child.metadata?.hint || child.description }}
                 </p>
+                <div class="pl-6 mt-2 flex flex-wrap gap-2 text-[11px] text-amber-700 dark:text-amber-200">
+                  <span v-if="child.metadata?.setupChapter" class="rounded-full bg-amber-100 px-2 py-0.5 dark:bg-amber-900/40">
+                    埋设第{{ child.metadata.setupChapter }}章
+                  </span>
+                  <span v-if="child.metadata?.payoffChapter || child.metadata?.suggestedChapter" class="rounded-full bg-orange-100 px-2 py-0.5 dark:bg-orange-900/40">
+                    回收第{{ child.metadata.payoffChapter || child.metadata.suggestedChapter }}章
+                  </span>
+                  <span v-if="child.metadata?.carrierCharacter" class="rounded-full bg-yellow-100 px-2 py-0.5 dark:bg-yellow-900/40">
+                    载体：{{ child.metadata.carrierCharacter }}
+                  </span>
+                </div>
+                <div v-if="child.metadata?.linkedConflict || child.metadata?.payoffValue" class="pl-6 mt-2 space-y-1 text-xs text-gray-600 dark:text-gray-300">
+                  <p v-if="child.metadata?.linkedConflict" class="flex items-start gap-1">
+                    <ShieldAlert class="mt-0.5 h-3 w-3 text-red-400" />
+                    <span>关联冲突：{{ child.metadata.linkedConflict }}</span>
+                  </p>
+                  <p v-if="child.metadata?.payoffValue" class="flex items-start gap-1">
+                    <Sparkles class="mt-0.5 h-3 w-3 text-orange-400" />
+                    <span>回收收益：{{ child.metadata.payoffValue }}</span>
+                  </p>
+                </div>
               </div>
 
               <!-- 子节点：角色 -->
               <div
                 v-else-if="child.type === 'character'"
-                class="pl-6 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                class="pl-6 p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                 @click="emit('selectCharacter', outline.characters?.find(c => c.name === child.title)!)"
               >
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <Users class="w-4 h-4 text-blue-500" />
                   <span class="font-medium text-gray-800 dark:text-gray-200">{{ child.title }}</span>
                   <NTag v-if="child.metadata?.role" size="tiny" type="info">
                     {{ characterRoleNames[child.metadata.role] ?? child.metadata.role }}
                   </NTag>
+                  <NTag v-if="child.metadata?.relationshipCount" size="tiny" type="success">
+                    {{ child.metadata.relationshipCount }}条关系
+                  </NTag>
                 </div>
                 <p v-if="child.description" class="pl-6 mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                   {{ child.description }}
                 </p>
+                <div v-if="child.metadata?.abilities?.length || child.metadata?.personality?.length" class="pl-6 mt-2 flex flex-wrap gap-2">
+                  <NTag
+                    v-for="trait in (child.metadata?.personality || []).slice(0, 3)"
+                    :key="`${child.id}-trait-${trait}`"
+                    size="tiny"
+                    type="default"
+                  >
+                    {{ trait }}
+                  </NTag>
+                  <NTag
+                    v-for="ability in (child.metadata?.abilities || []).slice(0, 2)"
+                    :key="`${child.id}-ability-${ability}`"
+                    size="tiny"
+                    type="warning"
+                  >
+                    资源：{{ ability }}
+                  </NTag>
+                </div>
+                <p v-if="child.metadata?.background" class="pl-6 mt-2 text-xs text-gray-600 dark:text-gray-300">
+                  {{ child.metadata.background }}
+                </p>
+                <div v-if="child.metadata?.relationships?.length" class="pl-6 mt-2 space-y-1">
+                  <div
+                    v-for="relationship in child.metadata.relationships.slice(0, 4)"
+                    :key="`${child.id}-rel-${relationship.targetName}-${relationship.type}`"
+                    class="flex items-start gap-2 text-xs text-blue-700 dark:text-blue-200"
+                  >
+                    <Link2 class="mt-0.5 h-3 w-3 text-blue-400" />
+                    <span>
+                      {{ relationship.targetName }}
+                      <span class="text-gray-500 dark:text-gray-400">· {{ getRelationshipTypeDisplayText(relationship.type) }}</span>
+                      <span v-if="relationship.description">：{{ relationship.description }}</span>
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <!-- 子节点：其他（结构/幕） -->
@@ -644,6 +1016,7 @@ function getStatusColor(status?: string): string {
 <style scoped>
 .line-clamp-2 {
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;

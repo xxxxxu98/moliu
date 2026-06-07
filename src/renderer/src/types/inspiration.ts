@@ -75,6 +75,7 @@ export interface GeneratedRelationship {
   targetName: string;      // 关联的角色名称
   type: string;           // 关系类型：friend/enemy/family/lover/rival/mentor/student/alliance/neutral
   description?: string;    // 关系描述
+  stage?: string;          // 关系所处阶段/变化节点
 }
 
 /**
@@ -228,8 +229,14 @@ export interface GeneratedOutline {
  */
 export interface GeneratedForeshadow {
   hint: string;           // 伏笔内容
-  type?: 'item' | 'dialogue' | 'event' | 'mystery' | 'character' | 'ability';  // 伏笔类型
+  type?: 'item' | 'dialogue' | 'event' | 'mystery' | 'character' | 'ability' | 'identity' | 'relationship' | 'world-rule';  // 伏笔类型
   suggestedChapter?: number; // 建议揭晓的章节
+  setupChapter?: number;     // 建议埋设章节
+  payoffChapter?: number;    // 建议回收章节
+  payoffValue?: string;      // 回收收益
+  carrierCharacter?: string; // 伏笔载体角色
+  linkedConflict?: string;   // 关联冲突
+  importance?: 'main' | 'subplot' | 'emotion';
 }
 
 export interface InspirationPack {

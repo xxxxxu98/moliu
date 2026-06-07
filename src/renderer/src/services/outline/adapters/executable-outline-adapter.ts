@@ -147,39 +147,54 @@ function toWorldSetting(outline: ExecutableOutline): GeneratedWorldSetting | und
 }
 
 function toCharacters(outline: ExecutableOutline): GeneratedCharacter[] {
-  const characters = outline.keyCharacters.map((character) => ({
-    name: character.name,
-    role: character.role,
-    description: character.functionInStory,
-    personality: [],
-    appearance: '',
-    abilities: [],
-    background: character.keyNeed,
-    relationships: character.tensionWithProtagonist
-      ? [{
-        targetName: '主角',
-        type: character.role === 'antagonist' ? 'enemy' : 'ally',
-        description: character.tensionWithProtagonist,
-      }]
-      : [],
-  }));
+  const protagonistName = extractProtagonistName(outline);
+
+  const characters = outline.keyCharacters.map((character) => {
+    const relationships = [
+      ...(character.tensionWithProtagonist
+        ? [{
+          targetName: protagonistName,
+          type: character.role === 'antagonist' ? 'enemy' : 'ally',
+          description: character.tensionWithProtagonist,
+        }]
+        : []),
+      ...character.relationshipChanges.map((relationship) => ({
+        targetName: relationship.targetName,
+        type: relationship.relationType,
+        description: relationship.dynamic,
+        stage: relationship.dynamic,
+      })),
+    ].filter((relationship, index, array) => {
+      return relationship.targetName
+        && !(relationship.targetName === character.name)
+        && array.findIndex((item) => item.targetName === relationship.targetName && item.type === relationship.type) === index;
+    });
+
+    return {
+      name: character.name,
+      role: character.role,
+      description: [character.functionInStory, character.publicGoal, character.hiddenNeed].filter(Boolean).join('；'),
+      personality: [character.arcStart, character.arcMid, character.arcEnd].filter(Boolean),
+      appearance: '',
+      abilities: character.resources,
+      background: [character.keyNeed, character.fearOrWound, character.secret].filter(Boolean).join('；'),
+      relationships,
+    };
+  });
 
   const hasProtagonist = characters.some((character) => character.role === 'protagonist');
   if (hasProtagonist) {
     return characters;
   }
 
-  // 没有明确的主角时，尝试从各字段提取真实名字
-  const extractedName = extractProtagonistName(outline);
-
   return [{
-    name: extractedName,
+    name: protagonistName,
     role: 'protagonist',
     description: outline.storyEngine.protagonistStart || outline.oneLiner,
     personality: [],
     appearance: '',
     abilities: [],
-    background: outline.storyEngine.protagonistGoalShortTerm,
+    background: [outline.storyEngine.protagonistGoalShortTerm, outline.storyEngine.protagonistGoalLongTerm].filter(Boolean).join('；'),
     relationships: [],
   }, ...characters];
 }
@@ -239,10 +254,15 @@ function toSubplots(outline: ExecutableOutline): GeneratedSubplot[] {
   return outline.volumePlan.map((volume, index) => {
     const startChapter = index * approxVolumeSpan + 1;
     const endChapter = startChapter + approxVolumeSpan - 1;
+    const foreshadowSummary = [
+      ...volume.setupForeshadows.map((item) => `埋设：${item}`),
+      ...volume.payoffForeshadows.map((item) => `回收：${item}`),
+      ...volume.relationshipShifts.map((item) => `关系变化：${item}`),
+    ].join('；');
 
     return {
       title: volume.title,
-      description: [volume.objective, volume.coreConflict, volume.climax, volume.reversal]
+      description: [volume.objective, volume.coreConflict, volume.climax, volume.reversal, foreshadowSummary]
         .filter(Boolean)
         .join('；'),
       relatedCharacters: volume.keyCharacters,
@@ -278,12 +298,31 @@ function toChapters(outline: ExecutableOutline): GeneratedChapter[] {
 }
 
 function toForeshadows(outline: ExecutableOutline): GeneratedForeshadow[] {
+  if (outline.foreshadowPlan.length > 0) {
+    return outline.foreshadowPlan.map((foreshadow) => ({
+      hint: foreshadow.hint,
+      type: foreshadow.type,
+      suggestedChapter: foreshadow.payoffChapter ?? undefined,
+      setupChapter: foreshadow.setupChapter ?? undefined,
+      payoffChapter: foreshadow.payoffChapter ?? undefined,
+      payoffValue: foreshadow.payoffValue,
+      carrierCharacter: foreshadow.carrierCharacter || undefined,
+      linkedConflict: foreshadow.linkedConflict || undefined,
+      importance: foreshadow.importance,
+    }));
+  }
+
   return outline.volumePlan
     .filter((volume) => volume.endingHook)
     .map((volume, index) => ({
       hint: volume.endingHook,
-      type: 'mystery',
+      type: 'mystery' as const,
       suggestedChapter: (index + 1) * 30,
+      setupChapter: Math.max(1, index * 30 + 10),
+      payoffChapter: (index + 1) * 30,
+      payoffValue: volume.reversal || volume.protagonistGrowth,
+      linkedConflict: volume.coreConflict,
+      importance: index === outline.volumePlan.length - 1 ? 'main' as const : 'subplot' as const,
     }));
 }
 
@@ -383,7 +422,10 @@ function toStoryLines(outline: ExecutableOutline): GeneratedStoryLines {
   return {
     map: outline.volumePlan.map((volume) => volume.title).join(' → '),
     faction: outline.keyCharacters.filter((character) => character.role === 'antagonist').map((character) => character.name).join(' → '),
-    character: outline.keyCharacters.map((character) => `${character.name}(${character.role})`).join(' → '),
+    character: outline.keyCharacters.map((character) => {
+      const relationTags = character.relationshipChanges.map((item) => `${item.targetName}:${item.relationType}`).join('/');
+      return relationTags ? `${character.name}(${character.role}|${relationTags})` : `${character.name}(${character.role})`;
+    }).join(' → '),
     goldenfinger: outline.storyEngine.protagonistGoalShortTerm,
     worldRules: outline.positioning.styleKeywords.join(' → '),
     conflict: outline.storyEngine.escalationPath.join(' → '),

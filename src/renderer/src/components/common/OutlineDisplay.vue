@@ -59,6 +59,22 @@ const hasOutlines = computed(() => props.outlines.length > 0);
 /** 是否显示可视化视图 */
 const showVisualization = ref(false);
 
+const enrichedCharacterCount = computed(() => {
+  return props.outlines.filter((outline) =>
+    (outline.characters ?? []).some((character) =>
+      (character.relationships?.length ?? 0) > 0 || (character.abilities?.length ?? 0) > 0,
+    ),
+  ).length;
+});
+
+const enrichedForeshadowCount = computed(() => {
+  return props.outlines.filter((outline) =>
+    (outline.foreshadows ?? []).some((foreshadow) =>
+      !!foreshadow.setupChapter || !!foreshadow.payoffChapter || !!foreshadow.payoffValue,
+    ),
+  ).length;
+});
+
 /** 是否有可视化数据 */
 const hasVisualizationData = computed(() => {
   if (!props.selectedOutline) return false;
@@ -249,6 +265,31 @@ function handleCreate() {
                 <span class="flex-none"
                   >{{ outline.characters?.length || 0 }}{{ t('quickStart.characters') }}</span
                 >
+                <span
+                  v-if="outline.foreshadows?.length"
+                  class="flex-none px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
+                  :title="`伏笔 ${outline.foreshadows.length} 条`"
+                >
+                  {{ outline.foreshadows.length }}条伏笔
+                </span>
+                <span
+                  v-if="outline.foreshadows?.some(foreshadow => foreshadow.setupChapter || foreshadow.payoffChapter)"
+                  class="flex-none px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300"
+                >
+                  含埋设/回收节奏
+                </span>
+                <span
+                  v-if="outline.characters?.some(character => (character.relationships?.length || 0) > 0)"
+                  class="flex-none px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300"
+                >
+                  角色关系网
+                </span>
+                <span
+                  v-if="outline.characters?.some(character => (character.abilities?.length || 0) > 0)"
+                  class="flex-none px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                >
+                  角色资源已补全
+                </span>
                 <!-- 增强字段标签 -->
                 <span
                   v-if="outline.emotionGoal?.primary"
@@ -281,7 +322,13 @@ function handleCreate() {
         v-if="selectedOutline && hasVisualizationData"
         class="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700"
       >
-        <span class="text-xs text-gray-500 dark:text-gray-400">视图模式</span>
+        <div class="flex flex-col gap-1">
+          <span class="text-xs text-gray-500 dark:text-gray-400">视图模式</span>
+          <div class="flex flex-wrap gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+            <span v-if="enrichedForeshadowCount">支持伏笔生命周期展示</span>
+            <span v-if="enrichedCharacterCount">支持角色关系与资源展示</span>
+          </div>
+        </div>
         <div class="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
           <button
             class="px-2 py-1 rounded text-xs transition-colors"

@@ -7,6 +7,7 @@ import { MarkdownOutlineGenerator } from './markdown-generator';
 import { outlinePostProcessor } from '../processor/outline-post-processor';
 import type { Outline } from '../schemas/outline.schema';
 import type { ProviderType } from '@/config/ai-providers';
+import { getBaseUrl } from '@/config/ai-providers';
 import { useActiveAIProvider } from '@/composables/useActiveAIProvider';
 import { useSettingsStore, type AIDefaultModelSelection } from '@/stores/settings.store';
 import { robustJsonParse } from '@/utils/json-parser';
@@ -359,7 +360,108 @@ export class UnifiedOutlineGenerator {
     options: GenerateOptions,
   ): Promise<any> {
     const config = this.getAIConfig();
-    const response = await fetch(config.baseUrl + '/chat/completions', {
+    const provider = config.provider;
+    const resolvedBaseUrl = config.baseUrl.replace(/\/$/, '');
+
+    if (provider === 'gemini') {
+      const model = config.model || 'gemini-2.0-flash';
+      const response = await fetch(`${resolvedBaseUrl}/models/${model}:generateContent?key=${config.apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: messages
+            .filter((message) => message.role === 'user')
+            .map((message) => ({
+              role: 'user',
+              parts: [{ text: message.content }],
+            })),
+          systemInstruction: {
+            parts: [{
+              text: messages
+                .filter((message) => message.role === 'system')
+                .map((message) => message.content)
+                .join('\n\n'),
+            }],
+          },
+          generationConfig: {
+            temperature: options.temperature || 0.7,
+            topP: options.topP || 0.9,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Gemini API 请求失败: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts
+        ?.map((part: { text?: string }) => part.text || '')
+        .join('') || '';
+
+      return {
+        choices: [
+          {
+            message: {
+              content: text,
+            },
+          },
+        ],
+      };
+    }
+
+    if (provider === 'anthropic') {
+      const systemPrompt = messages
+        .filter((message) => message.role === 'system')
+        .map((message) => message.content)
+        .join('\n\n');
+      const userContent = messages
+        .filter((message) => message.role === 'user')
+        .map((message) => ({ type: 'text', text: message.content }));
+
+      const response = await fetch(`${resolvedBaseUrl}/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: config.model || 'claude-3-5-sonnet-20241022',
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userContent }],
+          temperature: options.temperature || 0.7,
+          top_p: options.topP || 0.9,
+          max_tokens: 8192,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Anthropic API 请求失败: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const text = data.content
+        ?.filter((part: { type?: string }) => part.type === 'text')
+        .map((part: { text?: string }) => part.text || '')
+        .join('') || '';
+
+      return {
+        choices: [
+          {
+            message: {
+              content: text,
+            },
+          },
+        ],
+      };
+    }
+
+    const endpoint = `${resolvedBaseUrl}/chat/completions`;
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -567,7 +669,7 @@ export class UnifiedOutlineGenerator {
     return {
       provider: providerConfig.provider as ProviderType,
       apiKey: providerConfig.apiKey,
-      baseUrl: providerConfig.baseUrl || '',
+      baseUrl: providerConfig.baseUrl || getBaseUrl(providerConfig.provider as ProviderType),
       model: providerConfig.modelName,
     };
   }

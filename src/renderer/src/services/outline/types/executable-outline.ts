@@ -35,6 +35,9 @@ export interface VolumePlan {
   endingHook: string;
   protagonistGrowth: string;
   keyCharacters: string[];
+  setupForeshadows: string[];
+  payoffForeshadows: string[];
+  relationshipShifts: string[];
 }
 
 export interface StartupChapterBlock {
@@ -56,6 +59,12 @@ export interface StartupPack30 {
   chapterBlocks: StartupChapterBlock[];
 }
 
+export interface CharacterRelationshipPlan {
+  targetName: string;
+  relationType: 'ally' | 'enemy' | 'mentor' | 'family' | 'lover' | 'rival' | 'use' | 'unknown';
+  dynamic: string;
+}
+
 export interface CharacterPlan {
   name: string;
   role: 'protagonist' | 'ally' | 'antagonist' | 'mentor' | 'support';
@@ -63,6 +72,30 @@ export interface CharacterPlan {
   keyNeed: string;
   tensionWithProtagonist: string;
   revealTiming: string;
+  publicGoal: string;
+  hiddenNeed: string;
+  fearOrWound: string;
+  secret: string;
+  turningPoint: string;
+  arcStart: string;
+  arcMid: string;
+  arcEnd: string;
+  resources: string[];
+  relationshipChanges: CharacterRelationshipPlan[];
+}
+
+export interface ForeshadowPlan {
+  id: string;
+  hint: string;
+  type: 'item' | 'dialogue' | 'event' | 'mystery' | 'character' | 'ability' | 'identity' | 'relationship' | 'world-rule';
+  importance: 'main' | 'subplot' | 'emotion';
+  setupPhase: string;
+  payoffPhase: string;
+  setupChapter: number | null;
+  payoffChapter: number | null;
+  carrierCharacter: string;
+  linkedConflict: string;
+  payoffValue: string;
 }
 
 export interface ChapterBlueprint {
@@ -89,6 +122,7 @@ export interface ExecutableOutline {
   volumePlan: VolumePlan[];
   startupPack30: StartupPack30;
   keyCharacters: CharacterPlan[];
+  foreshadowPlan: ForeshadowPlan[];
   chapterBlueprints?: ChapterBlueprint[];
 }
 
