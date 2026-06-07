@@ -319,7 +319,10 @@ export const PLOT_NODE_TYPE_LABELS: Record<PlotNodeType, string> = {
 
 export interface ModelConfig {
   defaultProvider: string;
-  defaultModel?: string;
+  defaultModel?: {
+    providerId: string;
+    modelName: string;
+  } | null;
   providers: ProviderConfig[];
 }
 

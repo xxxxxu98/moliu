@@ -28,7 +28,7 @@ import {
   ChevronRight,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
-import { useSettingsStore, type AIProvider } from "@/stores/settings.store";
+import { useSettingsStore, type AIProvider, type AIDefaultModelSelection } from "@/stores/settings.store";
 import {
   providerNameMap,
   defaultProviders,
@@ -118,13 +118,17 @@ const defaultGenerationConfig = {
   presencePenalty: 0,
 };
 
-const availableModels = computed(() => {
-  const models: Array<{
-    id: string;
-    name: string;
-    provider: string;
-    providerName: string;
-  }> = [];
+interface AvailableModelOption {
+  id: string;
+  providerId: string;
+  modelName: string;
+  name: string;
+  provider: string;
+  providerName: string;
+}
+
+const availableModels = computed<AvailableModelOption[]>(() => {
+  const models: AvailableModelOption[] = [];
 
   settingsStore.aiProviders
     .filter((p) => p.enabled && p.apiKey)
@@ -132,6 +136,8 @@ const availableModels = computed(() => {
       if (provider.modelName) {
         models.push({
           id: `${provider.id}:${provider.modelName}`,
+          providerId: provider.id,
+          modelName: provider.modelName,
           name: provider.modelName,
           provider: provider.provider,
           providerName:
@@ -145,17 +151,19 @@ const availableModels = computed(() => {
 
 // Effective default model - validates and falls back gracefully
 const effectiveDefaultModel = computed(() => {
-  const defaultModelId = settingsStore.defaultModel;
+  const defaultSelection = settingsStore.defaultModel;
   
   // If no default set, use first available model
-  if (!defaultModelId && availableModels.value.length > 0) {
+  if (!defaultSelection && availableModels.value.length > 0) {
     return availableModels.value[0].id;
   }
   
   // Validate current default model exists
-  const exists = availableModels.value.some(m => m.id === defaultModelId);
-  if (exists) {
-    return defaultModelId;
+  const exists = availableModels.value.some(
+    m => m.providerId === defaultSelection?.providerId && m.modelName === defaultSelection?.modelName,
+  );
+  if (exists && defaultSelection) {
+    return `${defaultSelection.providerId}:${defaultSelection.modelName}`;
   }
   
   // Fallback to first available model if current default is invalid
@@ -422,10 +430,12 @@ function toggleProvider(provider: AIProvider) {
 }
 
 function handleDefaultModelChange(modelId: string) {
-  // Validate model exists before setting
-  const modelExists = availableModels.value.some(m => m.id === modelId);
-  if (modelExists) {
-    settingsStore.setDefaultModel(modelId);
+  const selectedModel = availableModels.value.find(m => m.id === modelId);
+  if (selectedModel) {
+    settingsStore.setDefaultModel({
+      providerId: selectedModel.providerId,
+      modelName: selectedModel.modelName,
+    });
   }
 }
 

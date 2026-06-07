@@ -8,7 +8,7 @@ import { outlinePostProcessor } from '../processor/outline-post-processor';
 import type { Outline } from '../schemas/outline.schema';
 import type { ProviderType } from '@/config/ai-providers';
 import { useActiveAIProvider } from '@/composables/useActiveAIProvider';
-import { useSettingsStore } from '@/stores/settings.store';
+import { useSettingsStore, type AIDefaultModelSelection } from '@/stores/settings.store';
 import { robustJsonParse } from '@/utils/json-parser';
 import type { DirectionGenerationResult, OutlineDirection } from '../types/direction';
 import type { ExpandedOutlineResult } from '../types/executable-outline';
@@ -16,6 +16,23 @@ import { buildDirectionPrompt } from '../prompts/system/direction-prompt';
 import { buildExpandDirectionPrompt } from '../prompts/system/expand-direction-prompt';
 import { parseDirections } from '../parser/direction-parser';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
+
+function matchesDefaultModelSelection(
+  provider: {
+    id: string;
+    modelName: string;
+    enabled: boolean;
+    apiKey: string;
+  },
+  selection: AIDefaultModelSelection | null,
+): boolean {
+  if (!selection) return false;
+
+  return provider.id === selection.providerId
+    && provider.modelName === selection.modelName
+    && provider.enabled
+    && !!provider.apiKey;
+}
 
 /**
  * 生成选项
@@ -529,17 +546,13 @@ export class UnifiedOutlineGenerator {
   } {
     const settingsStore = useSettingsStore();
     const providers = settingsStore.aiProviders;
-    const defaultModelId = settingsStore.defaultModel;
+    const defaultModelSelection = settingsStore.defaultModel;
 
     let providerConfig = null;
 
-    if (defaultModelId) {
-      const [providerId, modelName] = defaultModelId.split(':');
+    if (defaultModelSelection) {
       providerConfig = providers.find((item) =>
-        item.id === providerId
-        && item.modelName === modelName
-        && item.enabled
-        && item.apiKey,
+        matchesDefaultModelSelection(item, defaultModelSelection),
       ) ?? null;
     }
 

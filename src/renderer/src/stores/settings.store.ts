@@ -35,6 +35,11 @@ export interface AIProvider {
   isTesting?: boolean;
 }
 
+export interface AIDefaultModelSelection {
+  providerId: string;
+  modelName: string;
+}
+
 export interface Settings {
   theme: ThemeMode;
   accentColor: string;
@@ -45,7 +50,7 @@ export interface Settings {
   streamOutput: boolean;
   fontSize: number;
   lineHeight: number;
-  defaultModel: string;
+  defaultModel: AIDefaultModelSelection | null;
   /** 是否启用去AI味润色，默认为 true */
   enableDeAI: boolean;
 }
@@ -60,9 +65,37 @@ const defaultSettings: Settings = {
   streamOutput: true,
   fontSize: 16,
   lineHeight: 1.8,
-  defaultModel: 'openai-gpt-4o',
+  defaultModel: null,
   enableDeAI: true,
 };
+
+function normalizeDefaultModelSelection(
+  value: Settings['defaultModel'] | string | null | undefined,
+): AIDefaultModelSelection | null {
+  if (!value) return null;
+
+  if (typeof value === 'string') {
+    const separatorIndex = value.indexOf(':');
+    if (separatorIndex === -1) {
+      return null;
+    }
+
+    const providerId = value.slice(0, separatorIndex);
+    const modelName = value.slice(separatorIndex + 1);
+
+    if (!providerId || !modelName) {
+      return null;
+    }
+
+    return { providerId, modelName };
+  }
+
+  if (!value.providerId || !value.modelName) {
+    return null;
+  }
+
+  return value;
+}
 
 export const useSettingsStore = defineStore('settings', () => {
   // State - Initialize with defaults
@@ -75,7 +108,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const streamOutput = ref(defaultSettings.streamOutput);
   const fontSize = ref(defaultSettings.fontSize);
   const lineHeight = ref(defaultSettings.lineHeight);
-  const defaultModel = ref(defaultSettings.defaultModel);
+  const defaultModel = ref<AIDefaultModelSelection | null>(defaultSettings.defaultModel);
   const enableDeAI = ref(defaultSettings.enableDeAI);
   const aiProviders = ref<AIProvider[]>([]);
   const isInitialized = ref(false);
@@ -102,7 +135,13 @@ export const useSettingsStore = defineStore('settings', () => {
       streamOutput.value = settings.streamOutput ?? defaultSettings.streamOutput;
       fontSize.value = settings.fontSize || defaultSettings.fontSize;
       lineHeight.value = settings.lineHeight || defaultSettings.lineHeight;
-      defaultModel.value = settings.defaultModel || defaultSettings.defaultModel;
+      const normalizedDefaultModel = normalizeDefaultModelSelection(settings.defaultModel);
+      defaultModel.value = normalizedDefaultModel
+        ? {
+            providerId: normalizedDefaultModel.providerId,
+            modelName: normalizedDefaultModel.modelName,
+          }
+        : defaultSettings.defaultModel;
       enableDeAI.value = settings.enableDeAI ?? defaultSettings.enableDeAI;
       }
 
@@ -133,12 +172,18 @@ export const useSettingsStore = defineStore('settings', () => {
       streamOutput: streamOutput.value,
       fontSize: fontSize.value,
       lineHeight: lineHeight.value,
-      defaultModel: defaultModel.value,
+      defaultModel: defaultModel.value
+        ? {
+            providerId: defaultModel.value.providerId,
+            modelName: defaultModel.value.modelName,
+          }
+        : null,
       enableDeAI: enableDeAI.value,
     };
 
     try {
-      await window.electronAPI.saveSettings(settings);
+      const plainSettings = JSON.parse(JSON.stringify(settings)) as Settings;
+      await window.electronAPI.saveSettings(plainSettings);
     } catch (error) {
       console.error('Failed to save settings:', error);
     }
@@ -203,8 +248,13 @@ export const useSettingsStore = defineStore('settings', () => {
     saveAllSettings();
   }
 
-  function setDefaultModel(modelId: string) {
-    defaultModel.value = modelId;
+function setDefaultModel(selection: AIDefaultModelSelection | null) {
+    defaultModel.value = selection
+      ? {
+          providerId: selection.providerId,
+          modelName: selection.modelName,
+        }
+      : null;
     saveAllSettings();
   }
 

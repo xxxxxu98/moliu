@@ -4,9 +4,21 @@
  */
 
 import { computed } from 'vue';
-import { useSettingsStore, type AIProvider } from '@/stores/settings.store';
+import { useSettingsStore, type AIProvider, type AIDefaultModelSelection } from '@/stores/settings.store';
 import { AIServiceFactory } from '@/services/ai/factory';
 import type { UnifiedAIService } from '@/services/ai/factory';
+
+function matchesDefaultModelSelection(
+  provider: AIProvider,
+  selection: AIDefaultModelSelection | null,
+): boolean {
+  if (!selection) return false;
+
+  return provider.id === selection.providerId
+    && provider.modelName === selection.modelName
+    && provider.enabled
+    && !!provider.apiKey;
+}
 
 /**
  * 统一的 AI Provider 获取 Hook
@@ -21,16 +33,12 @@ export function useActiveAIProvider() {
    */
   const activeProvider = computed<AIProvider | null>(() => {
     const providers = settingsStore.aiProviders;
-    const defaultModelId = settingsStore.defaultModel;
+    const defaultModelSelection = settingsStore.defaultModel;
 
     // 优先查找与 defaultModel 匹配的厂商
-    if (defaultModelId) {
-      const [providerId, modelName] = defaultModelId.split(':');
-      const matched = providers.find(p =>
-        p.id === providerId &&
-        p.modelName === modelName &&
-        p.enabled &&
-        p.apiKey
+    if (defaultModelSelection) {
+      const matched = providers.find((provider) =>
+        matchesDefaultModelSelection(provider, defaultModelSelection),
       );
       if (matched) return matched;
     }
