@@ -894,7 +894,7 @@ function getStatusColor(status?: string): string {
 
       <div
         v-if="emotionSummary || storyLineEntries.length"
-        class="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]"
+        class="mt-3 grid gap-3 lg:grid-cols-1"
       >
         <div
           v-if="emotionSummary"
@@ -960,7 +960,7 @@ function getStatusColor(status?: string): string {
 
       <div
         v-if="emotionSummary || storyLineEntries.length"
-        class="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]"
+        class="mt-3 grid gap-3 lg:grid-cols-1"
       >
         <div
           v-if="emotionSummary"
