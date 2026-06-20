@@ -3,6 +3,12 @@
 > 本规范旨在统一代码风格、提高代码质量、确保团队协作效率。
 > 所有团队成员在开发过程中必须遵循本规范。
 
+> 📌 **唯一权威源（SSOT）**：本文件是项目开发规范的唯一权威来源。
+> 以下入口文件均指向本文件，**修改规范时请直接编辑本文件**，入口文件无需改动：
+> - 根目录 `CLAUDE.md`（Claude Code / Codex / ZCode）
+> - 根目录 `.cursorrules`（Cursor）
+> - `.github/copilot-instructions.md`（GitHub Copilot）
+
 ## 目录
 
 - [1. 项目概述](#1-项目概述)
