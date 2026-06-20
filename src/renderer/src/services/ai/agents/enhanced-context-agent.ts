@@ -151,19 +151,23 @@ export class EnhancedContextAgent {
    */
   private buildChapterContract(project: Project, chapterNumber: number): ChapterContract | null {
     const plotOutline = project.plotOutline || [];
-    
-    // 尝试从 plotOutline 找到匹配的章节
-    let plotNode = plotOutline.find(
-      (p: any) => p.chapterNumber === chapterNumber || p.orderIndex === chapterNumber - 1
-    );
 
-    // 如果没找到，使用章节标题匹配
-    if (!plotNode && project.plotOutline) {
-      const chapters = this.projectStore.sortedChapters;
-      const chapter = chapters.find((c) => c.orderIndex === chapterNumber - 1);
-      if (chapter) {
-        plotNode = project.plotOutline.find((p: any) => p.chapterId === chapter.id);
-      }
+    // 查找匹配的章节型 plot 节点。优先级：
+    //   1. 节点 chapterId 显式绑定到对应真实 Chapter
+    //   2. 位置兜底：第 N 个 chapter 型节点 = 第 N 章（首页大纲路径主要走这条）
+    // 此前用 `p.orderIndex === chapterNumber - 1` 兜底，但 chapter 节点的 orderIndex 会被
+    // 前面的 act/subplot 节点污染，导致长篇几乎永远查不到。
+    let plotNode: any;
+    const chapters = this.projectStore.sortedChapters;
+    const realChapter = chapters.find((c) => c.orderIndex === chapterNumber - 1);
+    if (realChapter) {
+      plotNode = plotOutline.find((p: any) => p.chapterId === realChapter.id);
+    }
+    if (!plotNode) {
+      const chapterNodes = plotOutline
+        .filter((p: any) => p.type === 'chapter')
+        .sort((a: any, b: any) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+      plotNode = chapterNodes[chapterNumber - 1];
     }
 
     if (!plotNode) {

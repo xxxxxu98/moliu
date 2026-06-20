@@ -103,6 +103,43 @@ export interface GeneratedChapter {
   coolPoints?: string[];   // 爽点
   hook?: string;          // 章尾钩子
   strand?: 'quest' | 'fire' | 'constellation'; // 故事线
+
+  // ========== 结构化节点（与 PlotNode 对齐） ==========
+  CBN?: string;            // 章节起点
+  CPNs?: string[];         // 推进节点
+  CEN?: string;            // 章节终点
+  mustCover?: string[];    // 必须覆盖节点
+  forbiddenZones?: string[]; // 本章禁区
+  timeSpan?: string;       // 章节时长
+
+  // ========== 写作策略（与 PlotNode 对齐） ==========
+  chapterType?: string;             // 章节类型
+  hookType?: string;                // 章尾钩子类型
+  pacingStrategy?: string;          // 节奏策略
+  isClimax?: boolean;               // 是否高潮章
+  expectedCoolPoints?: number;      // 预期爽点数
+}
+
+/**
+ * 前 30 章启动包（与 ExecutableOutline.StartupPack30 对齐）
+ */
+export interface GeneratedStartupChapterBlock {
+  range: string;          // 章节区间，如 "1-5"
+  objective: string;      // 本区间目标
+  mustEvents: string[];   // 必出事件
+  coolPoints: string[];   // 必出爽点
+  hookRequirement: string; // 必留钩子
+  pacing: 'fast' | 'medium'; // 节奏
+  readerExpectation: string; // 读者期待
+}
+
+export interface GeneratedStartupPack {
+  openingHook: string;              // 开篇钩子
+  promiseToReader: string;          // 对读者的承诺
+  protagonistFirstImpression: string; // 主角第一印象
+  firstMajorCoolPoint: string;      // 首个大爽点
+  firstConflictCycle: string;       // 首个冲突循环
+  chapterBlocks: GeneratedStartupChapterBlock[];
 }
 
 /**
@@ -206,6 +243,9 @@ export interface GeneratedOutline {
   estimatedWordCount: number;
   // 故事规模规划
   storyScale?: GeneratedStoryScale;
+
+  // 前 30 章启动包（来源于首页 expandDirection）
+  startupPack30?: GeneratedStartupPack;
 
   // ====== 新增增强字段 ======
   // 情绪目标

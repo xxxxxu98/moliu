@@ -9,6 +9,7 @@ import { useActiveAIProvider } from './useActiveAIProvider';
 import { MemoryOrchestrator } from '@/services/writing/memory/MemoryOrchestrator';
 import { ContractManager } from '@/services/writing/contract/ContractManager';
 import { useReaderSignals } from '@/services/writing/memory/ReaderSignals';
+import { extractChapterContext } from '@/services/writing/OutlineContextBuilder';
 import type { MemoryPack } from '@/services/writing/memory/types';
 import type { ReaderSignals as ReaderSignalsType } from '@/services/writing/memory/types';
 import type { ChapterContract } from '@/services/writing/contract/types';
@@ -143,7 +144,7 @@ export function useWritingContext() {
       chapterId: chapter.id,
       chapterIndex,
       chapterTitle: chapter.title,
-      chapterOutline: chapter.plotSummary || extractOutlineFromPlot(project.plotOutline, chapterId),
+      chapterOutline: chapter.plotSummary || extractOutlineFromPlot(project.plotOutline, chapterId, chapterIndex),
       chapterType: determineChapterType(chapter.plotSummary, chapterIndex),
       existingContent: chapter.content || '',
 
@@ -263,10 +264,12 @@ export function useWritingContext() {
     return content.slice(-200);
   }
 
-  function extractOutlineFromPlot(plotOutline: unknown, chapterId: string): string {
+  function extractOutlineFromPlot(plotOutline: unknown, chapterId: string, chapterIndex: number): string {
     if (!plotOutline || !Array.isArray(plotOutline)) return '';
-    const chapter = plotOutline.find((p: { chapterId?: string }) => p.chapterId === chapterId);
-    return chapter?.description || chapter?.plotSummary || '';
+    // 复用 OutlineContextBuilder 的查找逻辑（含位置兜底：第 N 个 chapter 型节点 = 第 N 章），
+    // 修复此前 plot 节点没有 chapterId 字段、find 恒为空导致大纲永远读不到的 bug。
+    const ctx = extractChapterContext(plotOutline as any, chapterId, undefined, chapterIndex);
+    return ctx?.description || '';
   }
 
   function determineChapterType(outline: string | undefined, index: number): ChapterType {
@@ -274,15 +277,14 @@ export function useWritingContext() {
       return index === 0 ? 'world_intro' : 'normal';
     }
 
-    const lowerOutline = outline.toLowerCase();
-
-    if (lowerOutline.includes('世界观') || lowerOutline.includes('背景')) return 'world_intro';
-    if (lowerOutline.includes('登场') || lowerOutline.includes('出场')) return 'character_intro';
-    if (lowerOutline.includes('开端') || lowerOutline.includes('开始')) return 'plot_setup';
-    if (lowerOutline.includes('高潮') || lowerOutline.includes('决战')) return 'climax';
-    if (lowerOutline.includes('解决') || lowerOutline.includes('结束')) return 'resolution';
-    if (lowerOutline.includes('过渡') || lowerOutline.includes('间章')) return 'transitional';
-    if (lowerOutline.includes('终章') || lowerOutline.includes('尾声')) return 'ending';
+    // 注：原代码对中文 outline 调用 toLowerCase() 是 no-op，已去掉
+    if (outline.includes('世界观') || outline.includes('背景')) return 'world_intro';
+    if (outline.includes('登场') || outline.includes('出场')) return 'character_intro';
+    if (outline.includes('开端') || outline.includes('开始')) return 'plot_setup';
+    if (outline.includes('高潮') || outline.includes('决战')) return 'climax';
+    if (outline.includes('解决') || outline.includes('结束')) return 'resolution';
+    if (outline.includes('过渡') || outline.includes('间章')) return 'transitional';
+    if (outline.includes('终章') || outline.includes('尾声')) return 'ending';
 
     return 'normal';
   }

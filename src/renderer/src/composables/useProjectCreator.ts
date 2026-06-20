@@ -92,7 +92,7 @@ export function useProjectCreator(): UseProjectCreatorReturn {
       });
     }
 
-    // 添加章节级大纲
+    // 添加章节级大纲（完整保存结构化节点和写作策略字段，供续写消费）
     if (outline.chapters && outline.chapters.length > 0) {
       outline.chapters.forEach((chapter) => {
         plotOutline.push({
@@ -100,9 +100,26 @@ export function useProjectCreator(): UseProjectCreatorReturn {
           title: chapter.title,
           description: chapter.summary,
           type: "chapter" as const,
-          keyEvents: chapter.keyEvents,
+          keyEvents: Array.isArray(chapter.keyEvents) ? chapter.keyEvents : undefined,
           relatedCharacters: Array.isArray(chapter.involvedCharacters) ? chapter.involvedCharacters : undefined,
           orderIndex: plotOutline.length,
+          // ========== 结构化节点 ==========
+          CBN: chapter.CBN,
+          CPNs: chapter.CPNs,
+          CEN: chapter.CEN ?? chapter.coreEvent,
+          mustCover: chapter.mustCover,
+          forbiddenZones: chapter.forbiddenZones,
+          timeSpan: chapter.timeSpan,
+          // ========== 写作策略 ==========
+          chapterType: chapter.chapterType as any,
+          hookType: chapter.hookType as any,
+          pacingStrategy: chapter.pacingStrategy as any,
+          isClimax: chapter.isClimax,
+          expectedCoolPoints: chapter.expectedCoolPoints,
+          // purpose：把 CBN/CEN 摘要给 UI 展示用
+          purpose: chapter.CBN
+            ? `CBN: ${chapter.CBN}\nCEN: ${chapter.CEN || chapter.coreEvent || '待定'}`
+            : undefined,
         });
       });
     }
@@ -151,8 +168,15 @@ export function useProjectCreator(): UseProjectCreatorReturn {
         hint: f.hint,
         type: (f.type || "mystery") as "item" | "dialogue" | "event" | "mystery",
         status: "buried" as const,
-        createdChapter: 1,
-        suggestedResolutionChapter: f.suggestedChapter,
+        createdChapter: f.setupChapter ?? 1,
+        suggestedResolutionChapter: f.suggestedChapter ?? f.payoffChapter,
+        // 富伏笔字段（来自首页大纲 foreshadowPlan）
+        payoffValue: f.payoffValue,
+        carrierCharacter: f.carrierCharacter,
+        linkedConflict: f.linkedConflict,
+        importance: f.importance,
+        setupChapter: f.setupChapter,
+        payoffChapter: f.payoffChapter,
       }),
     );
   }
@@ -373,6 +397,38 @@ export function useProjectCreator(): UseProjectCreatorReturn {
       } : undefined,
       // 八条故事线 - 需要转换为完整格式
       storyLines: outline.storyLines ? normalizeStoryLines(outline.storyLines) : undefined,
+
+      // ========== 首页大纲扩展字段 ==========
+      // 前 30 章启动包（直接透传，供续写消费 buildEnhancedDesignPrompt）
+      startupPack: outline.startupPack30 ? {
+        openingHook: outline.startupPack30.openingHook || '',
+        promiseToReader: outline.startupPack30.promiseToReader || '',
+        protagonistFirstImpression: outline.startupPack30.protagonistFirstImpression || '',
+        firstMajorCoolPoint: outline.startupPack30.firstMajorCoolPoint || '',
+        firstConflictCycle: outline.startupPack30.firstConflictCycle || '',
+        chapterBlocks: (outline.startupPack30.chapterBlocks || []).map(b => ({
+          range: b.range,
+          objective: b.objective,
+          mustEvents: b.mustEvents || [],
+          coolPoints: b.coolPoints || [],
+          hookRequirement: b.hookRequirement,
+          pacing: b.pacing,
+          readerExpectation: b.readerExpectation,
+        })),
+      } : undefined,
+      // 故事规模规划（独立存到 metadata.storyScale）
+      storyScale: outline.storyScale ? {
+        averageWordsPerChapter: outline.storyScale.averageWordsPerChapter,
+        suggestedVolumeCount: outline.storyScale.suggestedVolumeCount,
+        estimatedChaptersPerVolume: outline.storyScale.estimatedChaptersPerVolume,
+        startupPhaseRatio: outline.storyScale.startupPhaseRatio,
+        longformProgressionNote: outline.storyScale.longformProgressionNote,
+      } : undefined,
+      // 完结感知：计划总章节数 + 计划总字数
+      plannedChapterCount: outline.storyScale?.estimatedChapterCount
+        ? Math.max(1, outline.storyScale.estimatedChapterCount)
+        : undefined,
+      plannedWordCount: outline.estimatedWordCount || undefined,
     };
   }
 
@@ -646,20 +702,44 @@ export function useProjectCreator(): UseProjectCreatorReturn {
 
       if (newProject) {
         // 保存增强数据到项目顶层字段（不是 metadata）
-        if (metadata.emotionGoal || metadata.coreSellingPoints?.length || metadata.conflictDesign || metadata.storyLines) {
+        // 注意：条件必须覆盖所有可能的增强字段，否则单一字段场景会被跳过（原 bug：漏掉 coolPointDesign）
+        const hasEnhancement =
+          metadata.emotionGoal
+          || metadata.coolPointDesign
+          || (metadata.coreSellingPoints && metadata.coreSellingPoints.length > 0)
+          || metadata.conflictDesign
+          || metadata.storyLines
+          || metadata.startupPack
+          || metadata.storyScale
+          || metadata.plannedChapterCount
+          || metadata.plannedWordCount;
+
+        if (hasEnhancement) {
+          // 注意：main.ts 的 project:update 是浅合并，metadata 会被整体覆盖，
+          // 因此这里需要把 newProject 已有的 metadata 合并起来传
+          const existingMetadata = (newProject.metadata || {}) as Record<string, unknown>;
+          const newMetadata: Record<string, unknown> = {};
+          if (metadata.startupPack) newMetadata.startupPack = metadata.startupPack;
+          if (metadata.storyScale) newMetadata.storyScale = metadata.storyScale;
+          if (metadata.plannedChapterCount !== undefined) newMetadata.plannedChapterCount = metadata.plannedChapterCount;
+          if (metadata.plannedWordCount !== undefined) newMetadata.plannedWordCount = metadata.plannedWordCount;
+
           await projectStore.updateProjectInfo(newProject.id, {
             emotionGoal: metadata.emotionGoal,
             coolPointDesign: metadata.coolPointDesign,
             coreSellingPoints: metadata.coreSellingPoints,
             conflictDesign: metadata.conflictDesign,
             storyLines: metadata.storyLines,
+            metadata: Object.keys(newMetadata).length > 0
+              ? { ...existingMetadata, ...newMetadata }
+              : existingMetadata,
           });
         }
 
         // 导航到项目编辑器
         router.push(`/project/${newProject.id}`);
         // 完善项目数据（填充角色关系等）
-        projectStore.finalizeProjectCreation(newProject.id);
+        await projectStore.finalizeProjectCreation(newProject.id);
         return newProject.id;
       }
 

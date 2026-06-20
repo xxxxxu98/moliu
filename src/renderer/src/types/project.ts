@@ -77,6 +77,39 @@ export interface ProjectMetadata {
   endingChapterIndex?: number;
   /** 大纲完成度百分比 0-100 */
   outlineProgress?: number;
+
+  // ========== 首页大纲扩展字段 ==========
+  /** 前 30 章启动包（来源于首页 expandDirection，供续写消费） */
+  startupPack?: ProjectStartupPack;
+  /** 故事规模规划（来源于首页 expandDirection） */
+  storyScale?: ProjectStoryScale;
+}
+
+/** 项目级启动包（与 GeneratedStartupPack 对齐，独立定义以解耦） */
+export interface ProjectStartupPack {
+  openingHook: string;
+  promiseToReader: string;
+  protagonistFirstImpression: string;
+  firstMajorCoolPoint: string;
+  firstConflictCycle: string;
+  chapterBlocks: Array<{
+    range: string;
+    objective: string;
+    mustEvents: string[];
+    coolPoints: string[];
+    hookRequirement: string;
+    pacing: 'fast' | 'medium';
+    readerExpectation: string;
+  }>;
+}
+
+/** 项目级故事规模（与 GeneratedStoryScale 对齐，独立定义以解耦） */
+export interface ProjectStoryScale {
+  averageWordsPerChapter?: number;
+  suggestedVolumeCount?: number;
+  estimatedChaptersPerVolume?: number;
+  startupPhaseRatio?: string;
+  longformProgressionNote?: string;
 }
 
 // 核心卖点
@@ -244,6 +277,19 @@ export interface Foreshadow {
   status: 'buried' | 'hinted' | 'foreshadowed' | 'resolved';
   createdChapter: number;
   suggestedResolutionChapter?: number;
+  // ========== 富伏笔字段（来自首页大纲 foreshadowPlan）==========
+  /** 回收收益（伏笔回收时给读者带来的价值/震撼） */
+  payoffValue?: string;
+  /** 伏笔载体角色（承担该伏笔的角色） */
+  carrierCharacter?: string;
+  /** 关联冲突（与哪条主/支线冲突绑定） */
+  linkedConflict?: string;
+  /** 重要度：main 主线 / subplot 支线 / emotion 情感 */
+  importance?: 'main' | 'subplot' | 'emotion';
+  /** 计划埋设章节 */
+  setupChapter?: number;
+  /** 计划回收章节 */
+  payoffChapter?: number;
 }
 
 // ============================================
@@ -277,7 +323,18 @@ export interface PlotNode {
   type: PlotNodeType;
   chapterRange?: [number, number]; // 涉及章节范围
   parentId?: string; // 父节点（如：子情节属于某个幕）
+  /**
+   * 节点排序索引。
+   * 注意：对 type === 'chapter' 的节点，**这是全书章节序号**（从 0 起，与 act/subplot 节点独立计数），
+   * 用于位置兜底匹配真实 Chapter。其他类型节点仍按全节点列表顺序排。
+   */
   orderIndex: number;
+  /**
+   * 显式关联的章节 ID（type === 'chapter' 节点专用）。
+   * 首页大纲生成阶段尚无真实 Chapter，此时留空，由 extractChapterContext 走位置兜底；
+   * 用户后续在编辑器把章节与大纲节点显式绑定后写入此字段。
+   */
+  chapterId?: string;
   // 章节级大纲/子情节专用
   keyEvents?: string[]; // 关键事件列表
   purpose?: string; // 本节点的目的/主题

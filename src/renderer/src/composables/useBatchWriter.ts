@@ -31,7 +31,7 @@ import {
 import {
   extractChapterContext,
   buildChapterOutlineText,
-  buildFullOutlineText,
+  buildWindowedOutlineText,
   buildEnhancedDesignPrompt,
 } from '@/services/writing/OutlineContextBuilder';
 import { initializeMemoryManager, getMemoryManager } from '@/services/writing/memory-manager';
@@ -975,15 +975,21 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
       const characters = buildCharactersInfo(project);
       const activeForeshadows = buildActiveForeshadows(project);
-      const fullOutline = buildFullOutlineText(projectStore.plotOutline);
+      // 窗口化大纲：当前章 ± 5 章给细纲，其余只给标题（替代全量灌入，省 token）
+      const fullOutline = buildWindowedOutlineText(projectStore.plotOutline, chapterIndex, 5);
       const recentFullText = buildRecentChaptersFullText(
         projectStore,
         chapterIndex,
         recentChapterCount
       );
 
-      // 使用统一的 OutlineContextBuilder
-      const chapterCtx = extractChapterContext(projectStore.plotOutline, chapter.id, chapter.title);
+      // 使用统一的 OutlineContextBuilder（传入 chapterIndex 启用位置兜底）
+      const chapterCtx = extractChapterContext(
+        projectStore.plotOutline,
+        chapter.id,
+        chapter.title,
+        chapterIndex
+      );
       const currentChapterOutlineText = chapterCtx
         ? buildChapterOutlineText(chapterCtx, true)
         : chapter.plotSummary || '';
@@ -1002,6 +1008,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
         coolPointDesign: project.coolPointDesign,
         storyLines: project.storyLines,
         coreSellingPoints: project.coreSellingPoints,
+        startupPack: project.metadata?.startupPack,
         writingStyle: options.writingStyle as any,
       });
 

@@ -168,7 +168,7 @@ export interface GeneratedChapter {
   keyEvents: string[];
   foreshadows: string[];
   chapterType?: string;
-  
+
   // ========== 新增：结构化节点 ==========
   /** 章节起点 (CBN) */
   CBN?: string;
@@ -184,6 +184,16 @@ export interface GeneratedChapter {
   timeSpan?: string;
   /** 涉及角色 */
   involvedCharacters?: string[];
+
+  // ========== 写作策略（与 PlotNode 对齐）==========
+  /** 章尾钩子类型 */
+  hookType?: string;
+  /** 节奏策略 */
+  pacingStrategy?: string;
+  /** 是否为高潮章节 */
+  isClimax?: boolean;
+  /** 预期爽点数 */
+  expectedCoolPoints?: number;
 }
 
 export interface UseChapterOutlineGeneratorReturn {
@@ -348,6 +358,11 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
             forbiddenZones: Array.isArray(c.forbiddenZones) ? c.forbiddenZones : undefined,
             timeSpan: c.timeSpan || undefined,
             involvedCharacters: Array.isArray(c.involvedCharacters) ? c.involvedCharacters : undefined,
+            // 写作策略（部分 AI 会输出这些字段，没有则保持 undefined）
+            hookType: c.hookType || c.endingHook?.type || undefined,
+            pacingStrategy: c.pacingStrategy || c.writingRequirements?.pace || undefined,
+            isClimax: typeof c.isClimax === 'boolean' ? c.isClimax : undefined,
+            expectedCoolPoints: typeof c.expectedCoolPoints === 'number' ? c.expectedCoolPoints : undefined,
           }));
         }
       }
@@ -441,6 +456,12 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
         mustCover: chapter.mustCover,
         forbiddenZones: chapter.forbiddenZones,
         timeSpan: chapter.timeSpan,
+        // ========== 写作策略（完整保存，续写端会读这些字段）==========
+        chapterType: chapter.chapterType as PlotNode['chapterType'],
+        hookType: chapter.hookType as PlotNode['hookType'],
+        pacingStrategy: chapter.pacingStrategy as PlotNode['pacingStrategy'],
+        isClimax: chapter.isClimax,
+        expectedCoolPoints: chapter.expectedCoolPoints,
         purpose: chapter.CBN ? `CBN: ${chapter.CBN}\nCEN: ${chapter.CEN || '待定'}` : undefined,
       }));
 

@@ -312,6 +312,186 @@ function toSubplots(outline: ExecutableOutline): GeneratedSubplot[] {
   });
 }
 
+/**
+ * 解析章节区间为起止章号
+ * 支持 "1-5"、"1~5"、"1至5" 等；失败时回退到序号推导
+ */
+function parseChapterRange(range: string, fallbackStart: number): { start: number; count: number } {
+  const normalized = range.replace(/[,，\s]/g, '');
+  const match = normalized.match(/(\d+)[\-~至到](\d+)/);
+  if (match) {
+    const start = Number(match[1]);
+    const end = Number(match[2]);
+    if (Number.isFinite(start) && Number.isFinite(end) && end >= start) {
+      return { start, count: end - start + 1 };
+    }
+  }
+  // 单章号（如 "第3章"）
+  const single = normalized.match(/(\d+)/);
+  if (single) {
+    return { start: Number(single[1]), count: 1 };
+  }
+  return { start: fallbackStart, count: 5 };
+}
+
+/**
+ * 从钩子描述里推断 hookType
+ */
+const HOOK_TYPE_KEYWORDS: Array<{ type: string; keywords: string[] }> = [
+  { type: 'sudden_reveal', keywords: ['揭示', '揭晓', '真相', '曝光', '揭示'] },
+  { type: 'urgent_crisis', keywords: ['危机', '危险', '紧迫', '逼近', '威胁', '倒计时'] },
+  { type: 'unfinished_action', keywords: ['未完', '中断', '被打断', '未结束', '戛然'] },
+  { type: 'identity_reveal', keywords: ['身份', '原来', '其实', '不是', '真正'] },
+  { type: 'tough_choice', keywords: ['抉择', '两难', '选择', '取舍'] },
+  { type: 'mysterious_item', keywords: ['神秘', '物件', '出现', '物品'] },
+  { type: 'countdown', keywords: ['倒计时', '时间不多', '限时'] },
+  { type: 'promise_threat', keywords: ['承诺', '威胁', '宣告', '放话'] },
+  { type: 'strange_disappear', keywords: ['消失', '失踪', '不见'] },
+  { type: 'hidden_meaning', keywords: ['暗藏', '隐含', '另有深意', '意味深长'] },
+  { type: 'echo', keywords: ['呼应', '回响', '首尾'] },
+  { type: 'blank', keywords: ['悬念', '留白', '疑问', '谜', '留待'] },
+  { type: 'imagery', keywords: ['意象', '画面', '光影'] },
+];
+
+function inferHookType(hook?: string): string | undefined {
+  if (!hook) return undefined;
+  for (const { type, keywords } of HOOK_TYPE_KEYWORDS) {
+    if (keywords.some((kw) => hook.includes(kw))) return type;
+  }
+  return undefined;
+}
+
+/**
+ * 推断章节类型
+ */
+function inferChapterType(
+  chapterNo: number,
+  totalChapters: number,
+  isLastBlock: boolean,
+  coolPoints: string[],
+): string {
+  // 整体最后 1 章倾向收束
+  if (isLastBlock && chapterNo === totalChapters) {
+    const coolText = coolPoints.join('');
+    if (coolText.includes('结局') || coolText.includes('收尾') || coolText.includes('落幕')) {
+      return 'ending';
+    }
+  }
+  // 高潮类
+  const coolText = coolPoints.join('');
+  if (coolText.includes('高潮') || coolText.includes('决战') || coolText.includes('巅峰')) {
+    return 'climax';
+  }
+  // 第 1 章
+  if (chapterNo === 1) return 'world_intro';
+  // 第 2 章
+  if (chapterNo === 2) return 'character_intro';
+  // 第 3 章
+  if (chapterNo === 3) return 'plot_setup';
+  // 区间末章
+  if (chapterNo === totalChapters && (coolText.includes('解决') || coolText.includes('收'))) {
+    return 'resolution';
+  }
+  return 'normal';
+}
+
+/**
+ * 把 startupPack30 的"5 章一组"区间块拆成单章 GeneratedChapter
+ *
+ * 由于 AI 当前不生成 chapterBlueprints（受 prompt 约束），单章结构化节点（CBN/CPNs/CEN 等）
+ * 由这里的拆分算法保守派生，让续写端的字段消费不至于全部失效。
+ */
+function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChapter[] {
+  const blocks = outline.startupPack30.chapterBlocks;
+  const involvedCharacters = outline.keyCharacters.map((character) => character.name).slice(0, 3);
+  const chapters: GeneratedChapter[] = [];
+
+  let globalChapterNo = 0;
+
+  blocks.forEach((block, blockIndex) => {
+    const isLastBlock = blockIndex === blocks.length - 1;
+    const { start, count } = parseChapterRange(block.range, globalChapterNo + 1);
+    const blockSize = Math.max(1, count);
+
+    // 在区间内均分 mustEvents（每章 1-2 个，按顺序循环）
+    const mustEvents = block.mustEvents.length > 0 ? block.mustEvents : ['推进本区间主线'];
+    const coolPoints = block.coolPoints;
+    const pacingStrategy = block.pacing === 'fast' ? 'release' : 'confront';
+
+    for (let i = 0; i < blockSize; i++) {
+      globalChapterNo += 1;
+      const chapterNo = start + i;
+
+      // 均分关键事件
+      const eventStart = Math.floor((i * mustEvents.length) / blockSize);
+      const eventEnd = Math.floor(((i + 1) * mustEvents.length) / blockSize);
+      const keyEvents = mustEvents.slice(eventStart, Math.max(eventEnd, eventStart + 1));
+
+      // CBN：首章用开篇钩子；否则用前章 CEN 的简化版（区间内承接）
+      const isFirstChapterOverall = globalChapterNo === 1;
+      const isBlockFirstChapter = i === 0;
+      const CBN = isFirstChapterOverall
+        ? outline.startupPack30.openingHook || block.objective
+        : isBlockFirstChapter
+          ? `承接前段：${block.objective}`
+          : `承接上章，继续推进${block.objective ? `：${block.objective}` : ''}`;
+
+      // CEN：用本区间必留钩子
+      const CEN = block.hookRequirement || `完成本区间第 ${i + 1}/${blockSize} 段推进`;
+
+      // CPNs：派生 1-3 个推进节点
+      const CPNs = keyEvents.length > 0
+        ? keyEvents.slice(0, 3)
+        : [`推进 ${block.objective || '主线'}`];
+
+      // mustCover：本章承接的关键事件
+      const mustCover = keyEvents.length > 0 ? keyEvents : undefined;
+
+      // chapterType
+      const chapterType = inferChapterType(chapterNo, blockSize, isLastBlock, coolPoints);
+
+      // hookType
+      const hookType = inferHookType(block.hookRequirement);
+
+      // isClimax
+      const isClimax = chapterType === 'climax' || chapterType === 'ending';
+
+      // expectedCoolPoints
+      const expectedCoolPoints = Math.max(1, Math.round((coolPoints.length || 1) / blockSize));
+
+      const title = `第${chapterNo}章`;
+      const summary = [block.objective, block.readerExpectation ? `读者期待：${block.readerExpectation}` : '']
+        .filter(Boolean).join('；');
+      const description = summary || block.objective;
+
+      chapters.push({
+        number: chapterNo,
+        title,
+        summary: description,
+        status: 'outline',
+        keyEvents,
+        involvedCharacters,
+        coreEvent: CEN,
+        coolPoints: coolPoints.slice(0, 2),
+        hook: block.hookRequirement,
+        // 结构化节点
+        CBN,
+        CPNs,
+        CEN,
+        mustCover,
+        // 写作策略
+        chapterType,
+        hookType,
+        pacingStrategy,
+        isClimax,
+        expectedCoolPoints,
+      });
+    }
+  });
+
+  return chapters;
+}
+
 function toChapters(outline: ExecutableOutline): GeneratedChapter[] {
   if (outline.chapterBlueprints?.length) {
     return outline.chapterBlueprints.map((chapter) => ({
@@ -323,18 +503,19 @@ function toChapters(outline: ExecutableOutline): GeneratedChapter[] {
       coreEvent: chapter.CEN,
       coolPoints: chapter.coolPointType ? [chapter.coolPointType] : [],
       hook: chapter.hookType,
+      // 结构化节点
+      CBN: chapter.CBN,
+      CPNs: chapter.CPNs,
+      CEN: chapter.CEN,
+      mustCover: chapter.mustCover,
+      forbiddenZones: chapter.forbiddenZones,
+      chapterType: undefined,
+      hookType: chapter.hookType,
     }));
   }
 
-  return outline.startupPack30.chapterBlocks.map((block, index) => ({
-    title: `${block.range}推进计划`,
-    number: index + 1,
-    summary: [block.objective, block.readerExpectation].filter(Boolean).join('；'),
-    keyEvents: block.mustEvents,
-    involvedCharacters: outline.keyCharacters.map((character) => character.name).slice(0, 3),
-    coolPoints: block.coolPoints,
-    hook: block.hookRequirement,
-  }));
+  // 当前 AI 不生成 chapterBlueprints，走拆分 startupPack30 的路径
+  return splitStartupBlocksToChapters(outline);
 }
 
 function toForeshadows(outline: ExecutableOutline): GeneratedForeshadow[] {
@@ -562,6 +743,8 @@ export function mapExecutableOutlineToGeneratedOutline(
     foreshadows: toForeshadows(outline),
     estimatedWordCount: toEstimatedWordCount(outline, options?.targetWordCountRange),
     storyScale: toStoryScale(outline, options?.targetWordCountRange),
+    // 透传前 30 章启动包，供 useProjectCreator 落库到 metadata
+    startupPack30: outline.startupPack30,
     emotionGoal: toEmotionGoal(outline),
     coolPointDesign: toCoolPointDesign(outline),
     coreSellingPoints: toCoreSellingPoints(outline),

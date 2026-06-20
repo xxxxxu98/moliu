@@ -604,6 +604,13 @@ export const useProjectStore = defineStore('project', () => {
         }
         if (currentProject.value?.id === id) {
           currentProject.value = result;
+          // 同步独立 ref，避免续写端读 currentProject.emotionGoal 等时拿到旧值/空值
+          // （loadProject 之外唯一更新这些字段的地方，原本只更新 currentProject 不更新 ref）
+          if (updates.emotionGoal !== undefined) emotionGoal.value = result.emotionGoal ?? null;
+          if (updates.conflictDesign !== undefined) conflictDesign.value = result.conflictDesign ?? null;
+          if (updates.coolPointDesign !== undefined) coolPointDesign.value = result.coolPointDesign ?? null;
+          if (updates.storyLines !== undefined) storyLines.value = result.storyLines ?? null;
+          if (updates.metadata !== undefined) currentProject.value.metadata = result.metadata;
         }
         return result;
       }

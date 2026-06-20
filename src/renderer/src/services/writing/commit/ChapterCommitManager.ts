@@ -189,11 +189,15 @@ export class ChapterCommitManager {
     extraction: ExtractionResult
   ): Promise<FulfillmentResult> {
     // 获取章节合同
+    // 修复：原代码用 p.chapterNumber === chapterNumber（PlotNode 没有该字段）和 chapter.plotSummary（PlotNode 也没有），
+    // 导致 find 永远返回 undefined，plannedNodes 永远为空，完成度评估完全失效。
+    // 正确做法：用 orderIndex（章号-1）+ type='chapter' 查找，并从 PlotNode 的结构化字段提取计划节点。
     const project = this.projectStore.currentProject;
+    const expectedOrderIndex = chapterNumber - 1;
     const chapter = project?.plotOutline?.find(
-      (p: any) => p.chapterNumber === chapterNumber
+      (p) => p.orderIndex === expectedOrderIndex && p.type === 'chapter'
     );
-    
+
     if (!chapter) {
       return {
         plannedNodes: [],
@@ -202,27 +206,36 @@ export class ChapterCommitManager {
         extraNodes: [],
       };
     }
-    
-    // 从章纲提取计划节点
-    const planSummary = chapter.plotSummary || '';
-    const plannedNodes = planSummary.split(/[。\n]/).filter(n => n.trim().length > 5);
-    
+
+    // 从章纲的结构化字段提取计划节点（CBN / CPNs / CEN / mustCover / keyEvents）
+    const plannedNodes: string[] = [];
+    if (chapter.CBN) plannedNodes.push(chapter.CBN);
+    if (Array.isArray(chapter.CPNs)) plannedNodes.push(...chapter.CPNs);
+    if (chapter.CEN) plannedNodes.push(chapter.CEN);
+    if (Array.isArray(chapter.mustCover)) plannedNodes.push(...chapter.mustCover);
+    if (Array.isArray(chapter.keyEvents)) plannedNodes.push(...chapter.keyEvents);
+    // 兜底：如果结构化字段全空，回退到 description
+    if (plannedNodes.length === 0 && chapter.description) {
+      const sentences = chapter.description.split(/[。\n]/).map(s => s.trim()).filter(s => s.length > 5);
+      plannedNodes.push(...sentences);
+    }
+
     // 从提取结果中检查覆盖
     const summaryLower = extraction.summaryText.toLowerCase();
     const coveredNodes: string[] = [];
     const missedNodes: string[] = [];
-    
+
     for (const node of plannedNodes) {
       const nodeKeywords = node.split(/[，。、]/).filter(w => w.length >= 2);
       const found = nodeKeywords.some(k => summaryLower.includes(k.toLowerCase()));
-      
+
       if (found) {
         coveredNodes.push(node);
       } else {
         missedNodes.push(node);
       }
     }
-    
+
     return {
       plannedNodes,
       coveredNodes,

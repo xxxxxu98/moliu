@@ -6,7 +6,7 @@ import type { ProjectContext, AIWriteResult, AISuggestion, AIWriteMode } from '.
 import {
   extractChapterContext,
   buildChapterOutlineText,
-  buildFullOutlineText,
+  buildWindowedOutlineText,
   buildEnhancedDesignPrompt,
 } from '@/services/writing/OutlineContextBuilder';
 
@@ -105,10 +105,12 @@ ${c.content || '（本章暂无内容）'}`;
     });
 
     // 提取章节大纲上下文（包含 hookType、timeSpan、keyEvents、expectedCoolPoints）
+    // 传入 currentChapterIndex 启用位置兜底：第 N 个 chapter 型 plot 节点 = 第 N 章
     const chapterCtx = extractChapterContext(
       projectStore.plotOutline || [],
       currentChapter.id,
-      currentChapter.title
+      currentChapter.title,
+      currentChapterIndex
     );
     const currentChapterOutlineText = chapterCtx
       ? buildChapterOutlineText(chapterCtx, true)
@@ -124,6 +126,7 @@ ${c.content || '（本章暂无内容）'}`;
       coolPointDesign: project.coolPointDesign,
       storyLines: project.storyLines,
       coreSellingPoints: project.coreSellingPoints,
+      startupPack: project.metadata?.startupPack,
     });
 
     return {
@@ -133,7 +136,8 @@ ${c.content || '（本章暂无内容）'}`;
       currentChapterTitle: currentChapter.title,
       currentChapterContent: currentChapter.content || '',
       currentChapterOutline: currentChapterOutlineText,
-      fullOutline: buildFullOutlineText(projectStore.plotOutline || []),
+      // 窗口化大纲：当前章 ± 5 章给细纲，其余只给标题（替代全量灌入，省 token）
+      fullOutline: buildWindowedOutlineText(projectStore.plotOutline || [], currentChapterIndex, 5),
       adjacentChaptersSummary: {
         previousChapterTitle: prevChapter?.title,
         previousChapterSummary: prevChapter?.content?.slice(0, 200) + '...',

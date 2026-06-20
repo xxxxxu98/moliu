@@ -17,7 +17,7 @@ import { ContextManager } from '@/services/writing/context-manager';
 import {
   extractChapterContext,
   buildChapterOutlineText,
-  buildFullOutlineText,
+  buildWindowedOutlineText,
   buildEnhancedDesignPrompt,
 } from '@/services/writing/OutlineContextBuilder';
 import {
@@ -196,72 +196,71 @@ function extractChapterTypeFromOutline(outline: string, orderIndex: number): Cha
     return 'normal';
   }
 
-  const lowerOutline = outline.toLowerCase();
-
+  // 注：原代码对中文 outline 调用 toLowerCase() 是 no-op，已去掉
   if (
-    lowerOutline.includes('世界观') ||
-    lowerOutline.includes('背景') ||
-    lowerOutline.includes('设定') ||
-    lowerOutline.includes('大陆') ||
-    lowerOutline.includes('世界') ||
-    lowerOutline.includes('历史')
+    outline.includes('世界观') ||
+    outline.includes('背景') ||
+    outline.includes('设定') ||
+    outline.includes('大陆') ||
+    outline.includes('世界') ||
+    outline.includes('历史')
   ) {
     return 'world_intro';
   }
 
   if (
-    lowerOutline.includes('登场') ||
-    lowerOutline.includes('出场') ||
-    lowerOutline.includes('初遇') ||
-    lowerOutline.includes('相遇') ||
-    lowerOutline.includes('介绍') ||
-    lowerOutline.includes('主角')
+    outline.includes('登场') ||
+    outline.includes('出场') ||
+    outline.includes('初遇') ||
+    outline.includes('相遇') ||
+    outline.includes('介绍') ||
+    outline.includes('主角')
   ) {
     return 'character_intro';
   }
 
   if (
-    lowerOutline.includes('开端') ||
-    lowerOutline.includes('开始') ||
-    lowerOutline.includes('序幕') ||
-    lowerOutline.includes('引入')
+    outline.includes('开端') ||
+    outline.includes('开始') ||
+    outline.includes('序幕') ||
+    outline.includes('引入')
   ) {
     return 'plot_setup';
   }
 
   if (
-    lowerOutline.includes('高潮') ||
-    lowerOutline.includes('决战') ||
-    lowerOutline.includes('对决') ||
-    lowerOutline.includes('爆发')
+    outline.includes('高潮') ||
+    outline.includes('决战') ||
+    outline.includes('对决') ||
+    outline.includes('爆发')
   ) {
     return 'climax';
   }
 
   if (
-    lowerOutline.includes('解决') ||
-    lowerOutline.includes('结束') ||
-    lowerOutline.includes('落幕') ||
-    lowerOutline.includes('结局') ||
-    lowerOutline.includes('收尾')
+    outline.includes('解决') ||
+    outline.includes('结束') ||
+    outline.includes('落幕') ||
+    outline.includes('结局') ||
+    outline.includes('收尾')
   ) {
     return 'resolution';
   }
 
   if (
-    lowerOutline.includes('过渡') ||
-    lowerOutline.includes('间章') ||
-    lowerOutline.includes('日常') ||
-    lowerOutline.includes('休息')
+    outline.includes('过渡') ||
+    outline.includes('间章') ||
+    outline.includes('日常') ||
+    outline.includes('休息')
   ) {
     return 'transitional';
   }
 
   if (
-    lowerOutline.includes('终章') ||
-    lowerOutline.includes('尾声') ||
-    lowerOutline.includes('最终') ||
-    lowerOutline.includes('完结')
+    outline.includes('终章') ||
+    outline.includes('尾声') ||
+    outline.includes('最终') ||
+    outline.includes('完结')
   ) {
     return 'ending';
   }
@@ -388,10 +387,12 @@ export function useChapterWriter(): UseChapterWriterReturn {
     }
 
     // 使用统一的 OutlineContextBuilder
+    // 传入 chapterOrderIndex 启用位置兜底：第 N 个 chapter 型 plot 节点 = 第 N 章
     const chapterCtx = extractChapterContext(
       projectStore.plotOutline,
       currentChapter.id,
-      currentChapter.title
+      currentChapter.title,
+      currentIndex,
     );
     const currentChapterOutline = chapterCtx
       ? buildChapterOutlineText(chapterCtx, true)
@@ -430,30 +431,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
     const recentChapterCount = projectStore.memoryConfig?.shortTermChapterCount || 5;
     const shortTermFullText = buildRecentChaptersFullText(currentIndex, recentChapterCount);
-
-    // 构建增强设计 prompt
-    const enhancedPrompt = buildEnhancedDesignPrompt({
-      projectTitle: project.name,
-      projectSynopsis: project.description || '',
-      projectGenre: project.genre.map(g => g.name),
-      currentChapter: chapterCtx || {
-        title: currentChapter.title,
-        description: currentChapterOutline,
-        orderIndex: currentIndex,
-      },
-      currentChapterOutline,
-      emotionGoal: project.emotionGoal,
-      conflictDesign: project.conflictDesign,
-      coolPointDesign: project.coolPointDesign,
-      storyLines: project.storyLines,
-      coreSellingPoints: project.coreSellingPoints,
-      writingStyle: writingStyle as any,
-      memoryData: {
-        shortTermFullText,
-        characterStateTable: buildCharacterStateTable(projectStore.chapterMemories),
-        plotProgressTable: buildPlotProgressTable(projectStore.chapterMemories),
-      },
-    });
 
     return {
       projectTitle: project.name,
@@ -529,6 +506,52 @@ export function useChapterWriter(): UseChapterWriterReturn {
     });
 
     return fullTextParts.join('\n\n==========\n\n');
+  }
+
+  /**
+   * 集中构建写前 prompt 载荷（chapterCtx / enhancedPrompt / fullOutline）
+   *
+   * 此前主写、补充续写各分支都重复算一遍这些字段（每次约 30+ 行），既冗余又有遗漏风险。
+   * 这里统一收口，配合 B1（fullOutline 窗口化）一起降低 token 消耗。
+   */
+  function buildWritingPromptParts(
+    context: ChapterWritingContext,
+    writingStyle: 'concise' | 'elegant' | 'humorous' | 'ancient',
+  ) {
+    const project = projectStore.currentProject!;
+    const orderIndex = context.chapter.orderIndex;
+
+    // chapterCtx：用位置兜底（首页大纲无 chapterId 绑定时靠第 N 个 chapter 节点对齐）
+    const chapterCtx = extractChapterContext(
+      projectStore.plotOutline,
+      context.chapter.id,
+      context.chapter.title,
+      orderIndex,
+    );
+
+    const enhancedPrompt = buildEnhancedDesignPrompt({
+      projectTitle: project.name,
+      projectSynopsis: project.description || '',
+      projectGenre: project.genre.map(g => g.name),
+      currentChapter: chapterCtx || {
+        title: context.chapter.title,
+        description: context.chapter.outline || '',
+        orderIndex,
+      },
+      currentChapterOutline: context.chapter.outline || '',
+      emotionGoal: project.emotionGoal,
+      conflictDesign: project.conflictDesign,
+      coolPointDesign: project.coolPointDesign,
+      storyLines: project.storyLines,
+      coreSellingPoints: project.coreSellingPoints,
+      startupPack: project.metadata?.startupPack,
+      writingStyle: writingStyle as any,
+    });
+
+    // 窗口化：当前章 ± 5 章给完整细纲，其它只给标题，大幅省 token 且聚焦当前章
+    const fullOutline = buildWindowedOutlineText(projectStore.plotOutline, orderIndex, 5);
+
+    return { chapterCtx, enhancedPrompt, fullOutline };
   }
 
   /**
@@ -613,29 +636,9 @@ export function useChapterWriter(): UseChapterWriterReturn {
       currentStep.value = 'draft';
 
       if (settingsStore.streamOutput && (client as any).continueWritingStream) {
-        // 使用 OutlineContextBuilder 提取当前章节上下文
-        const chapterCtx = extractChapterContext(
-          projectStore.plotOutline,
-          context.chapter.id,
-          context.chapter.title
-        );
-        const enhancedPrompt = buildEnhancedDesignPrompt({
-          projectTitle: project.name,
-          projectSynopsis: project.description || '',
-          projectGenre: project.genre.map(g => g.name),
-          currentChapter: chapterCtx || {
-            title: context.chapter.title,
-            description: enhancedOutline || '',
-            orderIndex: context.chapter.orderIndex,
-          },
-          currentChapterOutline: enhancedOutline || '',
-          emotionGoal: project.emotionGoal,
-          conflictDesign: project.conflictDesign,
-          coolPointDesign: project.coolPointDesign,
-          storyLines: project.storyLines,
-          coreSellingPoints: project.coreSellingPoints,
-          writingStyle: writingStyle as any,
-        });
+        // 集中构建：chapterCtx + enhancedPrompt + 窗口化 fullOutline（一次构建，避免重复算）
+        const { chapterCtx, enhancedPrompt, fullOutline } =
+          buildWritingPromptParts(context, writingStyle);
 
         await new Promise<void>((resolve, reject) => {
           (client as any).continueWritingStream(
@@ -646,7 +649,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
               currentChapterTitle: context.chapter.title,
               currentChapterContent: context.chapter.existingContent || '',
               currentChapterOutline: enhancedOutline || undefined,
-              fullOutline: buildFullOutlineText(projectStore.plotOutline),
+              fullOutline,
               customPrompt: additionalInstructions || undefined,
               adjacentChaptersSummary: context.previousChapter
                 ? {
@@ -661,7 +664,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
               charactersInScene: context.characters,
               relatedForeshadows: context.foreshadows,
               writingStyle: writingStyle,
-              // 新增：章节结构化策略
+              // 章节结构化策略（来自大纲节点的 chapterCtx，包含 chapterType/hookType/pacingStrategy 等）
               currentChapterOutlineContext: chapterCtx
                 ? {
                     chapterType: chapterCtx.chapterType,
@@ -673,7 +676,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
                     expectedCoolPoints: chapterCtx.expectedCoolPoints,
                   }
                 : undefined,
-              // 新增：增强设计段落
+              // 增强设计段落
               enhancedDesignPrompt: enhancedPrompt,
             },
             'smartContinue',
@@ -697,29 +700,9 @@ export function useChapterWriter(): UseChapterWriterReturn {
           );
         });
       } else {
-        // 使用 OutlineContextBuilder 提取当前章节上下文
-        const chapterCtx = extractChapterContext(
-          projectStore.plotOutline,
-          context.chapter.id,
-          context.chapter.title
-        );
-        const enhancedPrompt = buildEnhancedDesignPrompt({
-          projectTitle: project.name,
-          projectSynopsis: project.description || '',
-          projectGenre: project.genre.map(g => g.name),
-          currentChapter: chapterCtx || {
-            title: context.chapter.title,
-            description: enhancedOutline || '',
-            orderIndex: context.chapter.orderIndex,
-          },
-          currentChapterOutline: enhancedOutline || '',
-          emotionGoal: project.emotionGoal,
-          conflictDesign: project.conflictDesign,
-          coolPointDesign: project.coolPointDesign,
-          storyLines: project.storyLines,
-          coreSellingPoints: project.coreSellingPoints,
-          writingStyle: writingStyle as any,
-        });
+        // 集中构建（同上）
+        const { chapterCtx, enhancedPrompt, fullOutline } =
+          buildWritingPromptParts(context, writingStyle);
 
         const result = await (client as any).continueWriting(
           {
@@ -729,7 +712,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
             currentChapterTitle: context.chapter.title,
             currentChapterContent: context.chapter.existingContent || '',
             currentChapterOutline: enhancedOutline || undefined,
-            fullOutline: buildFullOutlineText(projectStore.plotOutline),
+            fullOutline,
             customPrompt: additionalInstructions || undefined,
             adjacentChaptersSummary: context.previousChapter
               ? {
@@ -744,7 +727,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
             charactersInScene: context.characters,
             relatedForeshadows: context.foreshadows,
             writingStyle: writingStyle,
-            // 新增：章节结构化策略
             currentChapterOutlineContext: chapterCtx
               ? {
                   chapterType: chapterCtx.chapterType,
@@ -756,7 +738,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
                   expectedCoolPoints: chapterCtx.expectedCoolPoints,
                 }
               : undefined,
-            // 新增：增强设计段落
             enhancedDesignPrompt: enhancedPrompt,
           },
           'smartContinue',
@@ -808,15 +789,15 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
   /**
    * 构建增强版大纲（包含任务书）
+   *
+   * 注意（B2 收敛）：CBN/CPNs/CEN/mustCover/forbiddenZones 已经通过
+   * currentChapterOutlineContext（来自大纲节点的 chapterCtx）单独、结构化地传给 AI，
+   * 这里不再重复拼进文本——否则同一个 CBN 出现两次（任务书版 + 大纲版）反而会让模型困惑。
+   * 这里只保留大纲节点里**没有**的执行约束：风格指引 / 结尾感觉 / 开放问题。
    */
   function buildEnhancedOutline(taskBook: WritingTaskBook, baseOutline: string): string {
     const taskBookSection = `
-=== 写作任务书 ===
-【CBN】${taskBook.CBN}
-【CPNs】${taskBook.CPNs.join(' / ')}
-【CEN】${taskBook.CEN}
-【必须覆盖】${taskBook.mustCover.join(' / ')}
-【禁区】${taskBook.forbiddenZones.join(' / ')}
+=== 写作任务书（执行约束）===
 【风格指引】${taskBook.styleGuidance.pacingStrategy}
 【结尾感觉】${taskBook.endingSensation}
 【开放问题】${taskBook.openQuestion}
@@ -937,29 +918,12 @@ export function useChapterWriter(): UseChapterWriterReturn {
       // 只传原文结尾（约 1000 字），避免超过上下文窗口
       const endingSnippet = currentGeneratedContent.slice(-1000) || '';
 
-      // 复用主流程的上下文构建（保持补充内容与原章节计划方向一致）
-      const supplementChapterCtx = extractChapterContext(
-        projectStore.plotOutline,
-        context.chapter.id,
-        context.chapter.title
-      );
-      const supplementEnhancedPrompt = buildEnhancedDesignPrompt({
-        projectTitle: project.name,
-        projectSynopsis: project.description || '',
-        projectGenre: project.genre.map(g => g.name),
-        currentChapter: supplementChapterCtx || {
-          title: context.chapter.title,
-          description: context.chapter.outline || '',
-          orderIndex: context.chapter.orderIndex,
-        },
-        currentChapterOutline: context.chapter.outline || '',
-        emotionGoal: project.emotionGoal,
-        conflictDesign: project.conflictDesign,
-        coolPointDesign: project.coolPointDesign,
-        storyLines: project.storyLines,
-        coreSellingPoints: project.coreSellingPoints,
-        writingStyle: supplementStyle as any,
-      });
+      // 复用主流程的上下文构建（集中载荷，与主写分支保持一致）
+      const {
+        chapterCtx: supplementChapterCtx,
+        enhancedPrompt: supplementEnhancedPrompt,
+        fullOutline: supplementFullOutline,
+      } = buildWritingPromptParts(context, supplementStyle);
 
       if (settingsStore.streamOutput && (client as any).continueWritingStream) {
         await new Promise<void>((resolve, reject) => {
@@ -971,7 +935,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
               currentChapterTitle: context.chapter.title,
               currentChapterContent: endingSnippet,
               currentChapterOutline: context.chapter.outline || undefined,
-              fullOutline: buildFullOutlineText(projectStore.plotOutline),
+              fullOutline: supplementFullOutline,
               customPrompt: supplementInstruction,
               adjacentChaptersSummary: context.previousChapter
                 ? {
@@ -1022,7 +986,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
             currentChapterTitle: context.chapter.title,
             currentChapterContent: endingSnippet,
             currentChapterOutline: context.chapter.outline || undefined,
-            fullOutline: buildFullOutlineText(projectStore.plotOutline),
+            fullOutline: supplementFullOutline,
             customPrompt: supplementInstruction,
             adjacentChaptersSummary: context.previousChapter
               ? {

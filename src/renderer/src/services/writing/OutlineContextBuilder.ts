@@ -13,6 +13,7 @@ import type {
   CoolPointDesign,
   StoryLines,
   CoreSellingPoint,
+  ProjectStartupPack,
 } from '@/types/project';
 
 // ============================================
@@ -57,6 +58,8 @@ export interface EnhancedProjectContext {
   coolPointDesign?: CoolPointDesign;
   storyLines?: StoryLines;
   coreSellingPoints?: CoreSellingPoint[];
+  /** 前 30 章启动包（首页大纲产出） */
+  startupPack?: ProjectStartupPack;
 
   // 写作配置
   writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient';
@@ -134,15 +137,47 @@ const COOL_POINT_LABELS: Record<string, string> = {
 // ============================================
 
 /**
+ * 取出所有"章节型" plot 节点，按章节序号升序排列。
+ *
+ * 注意：首页大纲 buildPlotOutline 在 act/subplot 节点之后才追加 chapter 节点，
+ * 且 chapter 节点的 orderIndex 是按全节点列表长度累加的（会被前面的 act/subplot 污染），
+ * 因此这里不能直接按 orderIndex 排序——要先过滤到 chapter 型，再用 orderIndex 比较相对顺序。
+ */
+export function getChapterPlotNodes(plotOutline: PlotNode[]): PlotNode[] {
+  return plotOutline
+    .filter((p) => p.type === 'chapter')
+    .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+}
+
+/**
  * 从 PlotOutline 中提取指定章节的完整大纲上下文
+ *
+ * 查找优先级（任一命中即返回）：
+ * 1. plot 节点的 `chapterId` 显式等于传入 chapterId（用户在编辑器里绑定过的）
+ * 2. plot 节点的 `id` 等于传入 chapterId（buildFullOutlineText 内部走这条：传入的就是 plot 节点 id）
+ * 3. 位置兜底：在 chapter 型节点序列里按 `chapterOrderIndex` 取第 N 个
+ *    —— 首页大纲路径下没有真实 Chapter，只能靠"第 N 个 chapter 节点 = 第 N 章"对齐
+ *
+ * @param plotOutline  全部 plot 节点
+ * @param chapterId    当前章节 ID（或 buildFullOutlineText 调用时的 plot 节点 id）
+ * @param chapterTitle 章节标题（仅用于回退展示）
+ * @param chapterOrderIndex 章节在全书中的 0-based 序号，用于位置兜底；不传则禁用兜底
  */
 export function extractChapterContext(
   plotOutline: PlotNode[],
   chapterId: string,
   chapterTitle?: string,
+  chapterOrderIndex?: number,
 ): ChapterOutlineContext | null {
+  // 1. 显式 chapterId 绑定
   let node = plotOutline.find((p) => p.chapterId === chapterId);
+  // 2. plot 节点 id 直接命中（buildFullOutlineText 场景）
   if (!node) node = plotOutline.find((p) => p.id === chapterId);
+  // 3. 位置兜底：第 N 个 chapter 型节点对应第 N 章
+  if (!node && chapterOrderIndex !== undefined && chapterOrderIndex >= 0) {
+    const chapterNodes = getChapterPlotNodes(plotOutline);
+    node = chapterNodes[chapterOrderIndex];
+  }
   if (!node) return null;
 
   return {
@@ -223,11 +258,12 @@ export function buildChapterOutlineText(
 
 /**
  * 构建完整大纲文本（所有章节，供 AI 参考）
+ *
+ * 注意：长篇下全书大纲每写一章都全量灌入会大量浪费 token 并稀释对当前章的聚焦。
+ * 续写场景应优先使用 {@link buildWindowedOutlineText}；本函数保留给"展示/导出全书大纲"等少数场景。
  */
 export function buildFullOutlineText(plotOutline: PlotNode[]): string {
-  const chapters = plotOutline
-    .filter((p) => p.type === 'chapter')
-    .sort((a, b) => a.orderIndex - b.orderIndex);
+  const chapters = getChapterPlotNodes(plotOutline);
 
   if (chapters.length === 0) return '';
 
@@ -241,6 +277,53 @@ export function buildFullOutlineText(plotOutline: PlotNode[]): string {
       return `【第${num}章】${title}${isClimax}\n${outlineText}`;
     })
     .join('\n\n');
+}
+
+/**
+ * 窗口化的大纲文本：只保留当前章 ± windowSize 章的细纲，其它章节仅给标题。
+ *
+ * 长篇续写时替代 {@link buildFullOutlineText} 注入 prompt：
+ * - 当前章前后 N 章给完整 CBN/CPNs/CEN，让模型能看清上下承接
+ * - 其它章节只列一行标题，模型仍知道全书骨架，但不会被远端章节细节稀释注意力
+ * - 大幅降低 token 消耗（200 章时窗口=5 大约从全量降到 ~5%）
+ *
+ * @param plotOutline     全部 plot 节点
+ * @param chapterOrderIndex 当前章节的 0-based 序号
+ * @param windowSize      当前章前后各保留多少章细纲，默认 5
+ */
+export function buildWindowedOutlineText(
+  plotOutline: PlotNode[],
+  chapterOrderIndex: number,
+  windowSize: number = 5,
+): string {
+  const chapters = getChapterPlotNodes(plotOutline);
+  if (chapters.length === 0) return '';
+
+  const current = chapterOrderIndex;
+  const lo = Math.max(0, current - windowSize);
+  const hi = Math.min(chapters.length - 1, current + windowSize);
+
+  const lines: string[] = [];
+  if (lo > 0) {
+    lines.push(`……（省略前 ${lo} 章）……\n`);
+  }
+  chapters.forEach((node, i) => {
+    const num = i + 1;
+    const title = node.title || `第${num}章`;
+    const isClimax = node.isClimax ? ' ⭐高潮' : '';
+    if (i >= lo && i <= hi) {
+      const ctx = extractChapterContext(plotOutline, node.id, title);
+      const outlineText = ctx ? buildChapterOutlineText(ctx, true) : (node.description || '（暂无大纲）');
+      const marker = i === current ? '【当前章】' : '';
+      lines.push(`【第${num}章】${marker}${title}${isClimax}\n${outlineText}`);
+    } else {
+      lines.push(`【第${num}章】${title}${isClimax}`);
+    }
+  });
+  if (hi < chapters.length - 1) {
+    lines.push(`\n……（省略后 ${chapters.length - 1 - hi} 章）……`);
+  }
+  return lines.join('\n\n');
 }
 
 // ============================================
@@ -376,6 +459,21 @@ ${cp.arranged?.length ? `- 已安排爽点：\n${cp.arranged.map((a) => `  · �
     sections.push(`## 【核心卖点】
 ${ctx.coreSellingPoints.map((p) => `- ${p.name}：${p.description}`).join('\n')}
 请确保章节内容体现和强化这些核心卖点。`);
+  }
+
+  // 开篇承诺（前 30 章启动包）—— 主要在续写前 30 章时生效
+  // 仅当前章节属于启动区间（orderIndex + 1 <= 30）时才注入，避免长篇后期冗余
+  const currentChapterNo = (ctx.currentChapter.orderIndex ?? 0) + 1;
+  if (ctx.startupPack && currentChapterNo <= 30) {
+    const sp = ctx.startupPack;
+    sections.push(`## 【开篇承诺与前 30 章启动包】
+- 开篇钩子：${sp.openingHook || '（暂无）'}
+- 对读者的承诺：${sp.promiseToReader || '（暂无）'}
+- 主角第一印象：${sp.protagonistFirstImpression || '（暂无）'}
+- 首个大爽点：${sp.firstMajorCoolPoint || '（暂无）'}
+- 首个冲突循环：${sp.firstConflictCycle || '（暂无）'}
+${sp.chapterBlocks?.length ? sp.chapterBlocks.map((b) => `- 第${b.range}章：${b.objective}（节奏：${b.pacing === 'fast' ? '快' : '中'}；读者期待：${b.readerExpectation || '无'}）`).join('\n') : ''}
+当前是第 ${currentChapterNo} 章，请严格落实启动包对应的承诺与节奏。开篇 30 章是黄金留存窗口，必须强力推进主角处境、立人设、埋冲突、铺爽点。`);
   }
 
   return sections.join('\n\n');
