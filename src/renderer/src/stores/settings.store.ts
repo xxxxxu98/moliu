@@ -4,6 +4,7 @@ import type { GlobalThemeOverrides } from 'naive-ui';
 import { setLocale, type LocaleType } from '@/i18n';
 import { defaultProviders, providerNameMap, type ProviderType } from '@/config/ai-providers';
 import { UnifiedAIService } from '@/services/ai/unified.service';
+import { extractErrorMessage } from '@/utils/error-message';
 
 export type ThemeMode = 'light' | 'dark';
 
@@ -344,7 +345,7 @@ function setDefaultModel(selection: AIDefaultModelSelection | null) {
       }
       
       provider.isValid = false;
-      const errorMessage = error instanceof Error ? error.message : 'Connection test failed';
+      const errorMessage = extractErrorMessage(error, 'Connection test failed');
       return { 
         success: false, 
         error: errorMessage,
@@ -364,7 +365,7 @@ function setDefaultModel(selection: AIDefaultModelSelection | null) {
     if (msg.includes('network') || msg.includes('fetch') || msg.includes('connection')) {
       return 'NETWORK_ERROR';
     }
-    if (msg.includes('rate') || msg.includes('429')) {
+    if (msg.includes('rate') || msg.includes('429') || msg.includes('limit') || msg.includes('限额') || msg.includes('上限')) {
       return 'RATE_LIMITED';
     }
     return 'UNKNOWN';

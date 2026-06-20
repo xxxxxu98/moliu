@@ -18,7 +18,13 @@ function parseDirectionBlock(block: string, index: number): OutlineDirection | n
   const riskNotes = extractMultiValueField(block, '风险提示');
   const recommendedReason = extractFieldValue(block, '推荐理由') ?? '';
   const longformCapacityNote = extractFieldValue(block, '长篇承载力') ?? '';
-  const recommendationScore = safeParseScore(extractFieldValue(block, '推荐分'), 80 - index * 5);
+
+  // 推荐分：仅在模型真的给出数字时采用。
+  // 旧实现回落到 `80 - index * 5` 伪造分数，会让"未给出评分"的方向被当作高推荐分，
+  // 进而影响 QuickStart 的排序与"长篇承载力"提示。这里用 0 + null 语义区分"未给分"。
+  const scoreRaw = extractFieldValue(block, '推荐分');
+  const hasScore = scoreRaw !== null && /\d/.test(scoreRaw);
+  const recommendationScore = hasScore ? safeParseScore(scoreRaw, 0) : 0;
 
   const meaningfulFieldCount = [title, oneLiner, premise, coreConflict].filter(Boolean).length;
   if (meaningfulFieldCount < 2) {

@@ -3,6 +3,77 @@
  */
 
 /**
+ * 字数规模换算的统一常量
+ * 之前散落在 direction-prompt / expand-direction-prompt /
+ * unified-generator / QuickStart 中，且取值不一致（每章 2000 vs 2500、每卷 15 万 vs 18 万），
+ * 这里集中为单一来源。
+ */
+export const AVG_WORDS_PER_CHAPTER = 2500;
+export const WORDS_PER_VOLUME = 180_000;
+export const DEFAULT_TARGET_WORD_COUNT = 500_000;
+
+export interface WordCountBreakdown {
+  /** 目标总字数（区间取平均） */
+  targetWordCount: number;
+  /** 估算总章节数 */
+  estimatedChapterCount: number;
+  /** 建议卷数 */
+  suggestedVolumeCount: number;
+  /** 每卷预计章节数 */
+  estimatedChaptersPerVolume: number;
+  /** 前 30 章占比（百分比字符串，如 "5%"） */
+  startupPhaseRatio: string;
+}
+
+/**
+ * 解析字数区间字符串为目标字数（取区间平均）。
+ * 支持 "50万-100万字"、"50-100万"、"80万字"、"200万字以上" 等格式。
+ */
+export function parseWordCountRange(wordCountRange?: string): number {
+  if (!wordCountRange) return DEFAULT_TARGET_WORD_COUNT;
+
+  const normalized = wordCountRange.replace(/[,，\s]/g, '');
+
+  const rangeMatch = normalized.match(/(\d+(?:\.\d+)?)万?[-~至到](\d+(?:\.\d+)?)万?(?:字)?/);
+  if (rangeMatch) {
+    const min = Number(rangeMatch[1]);
+    const max = Number(rangeMatch[2]);
+    if (Number.isFinite(min) && Number.isFinite(max)) {
+      return Math.round(((min + max) / 2) * 10000);
+    }
+  }
+
+  const singleMatch = normalized.match(/(\d+(?:\.\d+)?)万(?:字)?/);
+  if (singleMatch) {
+    const value = Number(singleMatch[1]);
+    if (Number.isFinite(value)) {
+      return Math.round(value * 10000);
+    }
+  }
+
+  return DEFAULT_TARGET_WORD_COUNT;
+}
+
+/**
+ * 根据字数区间一次性算出所有规模换算结果，供 prompt 与 UI 共用。
+ */
+export function buildWordCountBreakdown(wordCountRange?: string): WordCountBreakdown {
+  const targetWordCount = parseWordCountRange(wordCountRange);
+  const estimatedChapterCount = Math.max(60, Math.ceil(targetWordCount / AVG_WORDS_PER_CHAPTER));
+  const suggestedVolumeCount = Math.max(3, Math.ceil(targetWordCount / WORDS_PER_VOLUME));
+  const estimatedChaptersPerVolume = Math.max(20, Math.round(estimatedChapterCount / suggestedVolumeCount));
+  const startupPhaseRatio = `${Math.round((30 / estimatedChapterCount) * 100)}%`;
+
+  return {
+    targetWordCount,
+    estimatedChapterCount,
+    suggestedVolumeCount,
+    estimatedChaptersPerVolume,
+    startupPhaseRatio,
+  };
+}
+
+/**
  * 规范化角色名
  */
 export function normalizeCharacterName(name: string): string {

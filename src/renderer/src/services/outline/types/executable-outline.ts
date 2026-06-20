@@ -220,4 +220,9 @@ export interface ExpandedOutlineResult {
   rawText?: string;
   strategy?: 'structured-text' | 'json' | 'fallback';
   warnings?: string[];
+  /**
+   * 是否严重残缺（角色 / 伏笔被截断）。为 true 时上层会触发重试，
+   * 但若重试耗尽仍会连同最后一次结果返回，由 UI 提示用户手动重新生成。
+   */
+  severelyTruncated?: boolean;
 }

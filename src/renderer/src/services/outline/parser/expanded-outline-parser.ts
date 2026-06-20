@@ -385,11 +385,32 @@ function parseCharacterBlock(block: string, protagonistName?: string): Character
     fearOrWound: extractFieldValue(block, '核心创伤') ?? '',
     secret: extractFieldValue(block, '角色秘密') ?? '',
     turningPoint: extractFieldValue(block, '角色转折点') ?? '',
+    // 角色弧线支持两种写法：合并的单行 "起→中→终"（推荐，节省输出长度），
+    // 或旧的三段式（角色弧线起点/中段/终点）。
+    ...parseArcFields(block),
+    resources: extractMultiValueField(block, '角色资源'),
+    relationshipChanges: parseRelationshipChanges(extractMultiValueField(block, '关系变化')),
+  };
+}
+
+/**
+ * 角色弧线解析：优先读合并的"角色弧线"字段（按 → / -> / ; 分三段），
+ * 回退到旧的三段式字段，保持向后兼容。
+ */
+function parseArcFields(block: string): Pick<CharacterPlan, 'arcStart' | 'arcMid' | 'arcEnd'> {
+  const merged = extractFieldValue(block, '角色弧线');
+  if (merged) {
+    const parts = merged.split(/→|->|；|;|，/).map((s) => s.trim()).filter(Boolean);
+    return {
+      arcStart: parts[0] ?? '',
+      arcMid: parts[1] ?? '',
+      arcEnd: parts[2] ?? '',
+    };
+  }
+  return {
     arcStart: extractFieldValue(block, '角色弧线起点') ?? '',
     arcMid: extractFieldValue(block, '角色弧线中段') ?? '',
     arcEnd: extractFieldValue(block, '角色弧线终点') ?? '',
-    resources: extractMultiValueField(block, '角色资源'),
-    relationshipChanges: parseRelationshipChanges(extractMultiValueField(block, '关系变化')),
   };
 }
 

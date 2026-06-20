@@ -27,19 +27,6 @@ interface DirectionCardViewModel {
   scaleHint?: DirectionScaleHint;
 }
 
-interface DirectionScaleHint {
-  targetWordCountLabel: string;
-  estimatedChapterCount: number;
-  suggestedVolumeCount: number;
-  estimatedChaptersPerVolume: number;
-  startupPhaseRatio: string;
-  longformCapacityScore: number;
-  longformCapacityLabel: string;
-  longformCapacityTone: 'strong' | 'medium' | 'cautious';
-  improvementSuggestions: string[];
-  enhancementBrief: string;
-}
-
 interface Props {
   show: boolean;
   title: string;

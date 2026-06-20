@@ -46,7 +46,6 @@ export type { MasterOutlineOptions, FiveStepPromptOptions } from './master/maste
 export type { VolumeBeatPromptOptions } from './volume/volume-beat-prompt';
 export type { TimelinePromptOptions } from './volume/volume-timeline-prompt';
 export type { VolumeOutlineOptions, VolumeBeatOptions, VolumeTimelineOptions } from './volume/volume-outline-prompt';
-export type { QuickOutlinePromptOptions } from './system/quick-outline-prompt';
 export type {
   OpeningTechnique,
   EndingTechnique,

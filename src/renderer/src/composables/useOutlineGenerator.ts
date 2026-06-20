@@ -74,6 +74,36 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
 
   let generator: UnifiedOutlineGenerator | null = null;
 
+  // 竞态保护：每次发起生成都递增 id，异步请求返回时比对 id，
+  // 若不匹配说明期间用户已发起新请求 / 切换 tab / 重置，旧结果丢弃。
+  // 否则会出现"旧请求晚到覆盖新状态"的竞态（generateOutlines / generateDirections /
+  // expandDirection 共用同一组响应式状态，且底层 fetch 无法 abort）。
+  let generationId = 0;
+  // 当前在飞请求的 AbortController。发起新请求或 reset 时 abort 旧请求，
+  // 避免竞态场景下并发多个付费请求，并让旧请求尽早结束。
+  let currentAbort: AbortController | null = null;
+
+  function abortInFlight(): void {
+    if (currentAbort) {
+      currentAbort.abort();
+      currentAbort = null;
+    }
+  }
+
+  function createSignal(): AbortSignal {
+    abortInFlight();
+    const controller = new AbortController();
+    currentAbort = controller;
+    return controller.signal;
+  }
+
+  /** 底层 fetch 被 abort 时抛 AbortError，不应当作"生成失败"展示给用户。 */
+  function isAbortError(error: unknown): boolean {
+    if (error instanceof DOMException && error.name === 'AbortError') return true;
+    if (error instanceof Error && error.name === 'AbortError') return true;
+    return false;
+  }
+
   function getGenerator(): UnifiedOutlineGenerator {
     if (!generator) {
       generator = new UnifiedOutlineGenerator();
@@ -81,12 +111,16 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     return generator;
   }
 
-  function buildGenerateOptions(options?: UseOutlineGeneratorOptions): GenerateOptions {
+  function buildGenerateOptions(
+    options?: UseOutlineGeneratorOptions,
+    signal?: AbortSignal,
+  ): GenerateOptions {
     return {
       temperature: options?.temperature ?? 0.7,
       topP: options?.topP ?? 0.9,
       wordCountRange: options?.wordCountRange ?? '50万-100万字',
       maxRetries: options?.maxRetries ?? 2,
+      ...(signal ? { signal } : {}),
     };
   }
 
@@ -94,6 +128,8 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     prompt: string,
     options?: UseOutlineGeneratorOptions,
   ): Promise<GeneratedOutline[]> {
+    const currentId = ++generationId;
+    const signal = createSignal();
     isGenerating.value = true;
     error.value = null;
     progress.value = '准备生成...';
@@ -105,20 +141,34 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     try {
       const result = await getGenerator().generate(
         prompt,
-        buildGenerateOptions(options),
+        buildGenerateOptions(options, signal),
         (msg) => {
-          progress.value = msg;
+          // 仅当仍是本次请求时才更新进度，避免旧请求覆盖新进度文案
+          if (currentId === generationId) {
+            progress.value = msg;
+          }
         },
       );
 
+      // 旧请求晚到：丢弃结果，不写状态
+      if (currentId !== generationId) {
+        return [];
+      }
+
       return handleGenerationResult(result);
     } catch (err) {
+      // 主动取消视为正常结束（竞态 / reset），不写入错误。
+      if (isAbortError(err)) return [];
+      if (currentId !== generationId) return [];
       console.error('[useOutlineGenerator] Outline generation error:', err);
       error.value = String(err);
       return [];
     } finally {
-      isGenerating.value = false;
-      progress.value = '';
+      if (currentId === generationId) {
+        isGenerating.value = false;
+        progress.value = '';
+        currentAbort = null;
+      }
     }
   }
 
@@ -126,6 +176,8 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     prompt: string,
     options?: UseOutlineGeneratorOptions,
   ): Promise<OutlineDirection[]> {
+    const currentId = ++generationId;
+    const signal = createSignal();
     isGenerating.value = true;
     error.value = null;
     progress.value = '正在生成创作方向...';
@@ -136,11 +188,17 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     try {
       const result = await getGenerator().generateDirections(
         prompt,
-        buildGenerateOptions(options),
+        buildGenerateOptions(options, signal),
         (msg) => {
-          progress.value = msg;
+          if (currentId === generationId) {
+            progress.value = msg;
+          }
         },
       );
+
+      if (currentId !== generationId) {
+        return [];
+      }
 
       rawMarkdown.value = result.rawText ?? '';
       warnings.value = result.warnings ?? [];
@@ -152,12 +210,17 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
 
       return result.directions;
     } catch (err) {
+      if (isAbortError(err)) return [];
+      if (currentId !== generationId) return [];
       console.error('[useOutlineGenerator] Direction generation error:', err);
       error.value = String(err);
       return [];
     } finally {
-      isGenerating.value = false;
-      progress.value = '';
+      if (currentId === generationId) {
+        isGenerating.value = false;
+        progress.value = '';
+        currentAbort = null;
+      }
     }
   }
 
@@ -166,6 +229,8 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     direction: OutlineDirection,
     options?: UseOutlineGeneratorOptions,
   ): Promise<ExecutableOutline | null> {
+    const currentId = ++generationId;
+    const signal = createSignal();
     isGenerating.value = true;
     error.value = null;
     progress.value = '正在展开主方案...';
@@ -177,11 +242,17 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
       const result = await getGenerator().expandDirection(
         prompt,
         direction,
-        buildGenerateOptions(options),
+        { ...buildGenerateOptions(options, signal), enhancementBrief: options?.enhancementBrief },
         (msg) => {
-          progress.value = msg;
+          if (currentId === generationId) {
+            progress.value = msg;
+          }
         },
       );
+
+      if (currentId !== generationId) {
+        return null;
+      }
 
       rawMarkdown.value = result.rawText ?? '';
       warnings.value = result.warnings ?? [];
@@ -193,12 +264,17 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
 
       return result.outline;
     } catch (err) {
+      if (isAbortError(err)) return null;
+      if (currentId !== generationId) return null;
       console.error('[useOutlineGenerator] Expand direction error:', err);
       error.value = String(err);
       return null;
     } finally {
-      isGenerating.value = false;
-      progress.value = '';
+      if (currentId === generationId) {
+        isGenerating.value = false;
+        progress.value = '';
+        currentAbort = null;
+      }
     }
   }
 
@@ -363,6 +439,9 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
   }
 
   function reset() {
+    // 让任何在飞的请求结果作废，并主动取消底层 fetch，避免并发计费
+    abortInFlight();
+    generationId++;
     isGenerating.value = false;
     error.value = null;
     progress.value = '';

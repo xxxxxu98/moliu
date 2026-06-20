@@ -56,7 +56,22 @@ export function extractFieldValue(block: string, fieldName: string): string | nu
     return null;
   }
 
-  return compactLines(match[1]);
+  // 模型常把"主角成长路径""推荐理由""长线推进说明"等长字段写成多行。
+  // 旧实现只取匹配行 match[1] 的内容，续行被静默丢弃。这里从匹配行之后开始，
+  // 合并后续无字段前缀的行（即不包含“字段：”结构的行），直到遇到下一个字段或空行。
+  const matchIndex = match.index ?? 0;
+  const afterFirstLine = block.slice(matchIndex + match[0].length);
+  const continuationLines: string[] = [];
+  const fieldStartPattern = /^(?:-\s*)?[^\s：:][^：:]{0,20}\s*[：:]/;
+  for (const rawLine of afterFirstLine.split('\n')) {
+    const line = rawLine.trim();
+    if (line === '') break;
+    if (fieldStartPattern.test(line)) break;
+    // 列表续行（- 子项）也算同一字段的延伸
+    continuationLines.push(line.replace(/^-\s*/, ''));
+  }
+
+  return compactLines([match[1], ...continuationLines].join('\n'));
 }
 
 export function extractMultiValueField(block: string, fieldName: string): string[] {

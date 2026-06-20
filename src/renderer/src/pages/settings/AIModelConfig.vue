@@ -34,6 +34,7 @@ import {
   defaultProviders,
   type ProviderType,
 } from "@/config/ai-providers";
+import { extractErrorMessage } from "@/utils/error-message";
 
 // Test connection timeout in milliseconds
 const TEST_TIMEOUT_MS = 30000;
@@ -373,11 +374,12 @@ async function testConnection(provider: AIProvider) {
         }),
       );
     } else {
-      const errorKey = getErrorMessageKey(result.errorCode);
+      const errorMessage = result.error ||
+        t(`settings.aiProviders.messages.${getErrorMessageKey(result.errorCode)}`);
       message.error(
         t("settings.aiProviders.messages.testFailed", {
           name: provider.name,
-        }) + ": " + t(`settings.aiProviders.messages.${errorKey}`)
+        }) + ": " + errorMessage
       );
     }
   } catch (error) {
@@ -386,7 +388,7 @@ async function testConnection(provider: AIProvider) {
     if (error instanceof Error && error.name === 'AbortError') {
       message.warning(t("settings.aiProviders.messages.testTimeout"));
     } else {
-      const errorMessage = error instanceof Error ? error.message : 'Test failed';
+      const errorMessage = extractErrorMessage(error, 'Test failed');
       message.error(
         t("settings.aiProviders.messages.testFailed", {
           name: provider.name,

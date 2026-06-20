@@ -1,4 +1,5 @@
 import type { BuiltPrompt } from '@/services/outline/prompts/system/shared';
+import { buildWordCountBreakdown } from '@/services/outline/utils';
 
 export interface DirectionPromptOptions {
   seed: string;
@@ -22,7 +23,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 禁止输出额外前言、后记、解释、免责声明
 - 禁止展开为完整世界观、完整角色百科、完整章节目录
 - 每个字段尽量简洁清晰，适合后续程序解析
-- 每个方向方案控制在 220-350 字内，重点突出差异，不要展开成长篇说明
+- 每个方向方案控制在 400-600 字内，重点突出差异，不要展开成长篇说明
 
 每个方向方案必须包含以下字段，且字段名必须完全一致：
 - 标题
@@ -86,34 +87,8 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 所有方案都要避免空泛词汇，必须具体到题材驱动、人物处境、冲突机制、章节推进方式或读者体验
 - 如果创意信息不足，请优先保证结构完整，再给出合理但简洁的内容。宁可短而完整，也不要长而失控。`;
 
-function parseWordCount(wordCountRange: string): number {
-  const normalized = wordCountRange.replace(/[,，\s]/g, '');
-  const rangeMatch = normalized.match(/(\d+(?:\.\d+)?)万?[-~至到](\d+(?:\.\d+)?)万?(?:字)?/);
-  if (rangeMatch) {
-    const min = Number(rangeMatch[1]);
-    const max = Number(rangeMatch[2]);
-    if (Number.isFinite(min) && Number.isFinite(max)) {
-      return Math.round(((min + max) / 2) * 10000);
-    }
-  }
-
-  const singleMatch = normalized.match(/(\d+(?:\.\d+)?)万(?:字)?/);
-  if (singleMatch) {
-    const value = Number(singleMatch[1]);
-    if (Number.isFinite(value)) {
-      return Math.round(value * 10000);
-    }
-  }
-
-  return 500000;
-}
-
 export function buildDirectionPrompt(options: DirectionPromptOptions): BuiltPrompt {
-  const targetWordCount = parseWordCount(options.wordCountRange);
-  const estimatedChapterCount = Math.max(60, Math.ceil(targetWordCount / 2500));
-  const suggestedVolumeCount = Math.max(3, Math.ceil(targetWordCount / 180000));
-  const estimatedChaptersPerVolume = Math.max(20, Math.round(estimatedChapterCount / suggestedVolumeCount));
-  const startupPhaseRatio = `${Math.round((30 / estimatedChapterCount) * 100)}%`;
+  const breakdown = buildWordCountBreakdown(options.wordCountRange);
 
   return {
     system: SYSTEM_PROMPT,
@@ -123,11 +98,11 @@ export function buildDirectionPrompt(options: DirectionPromptOptions): BuiltProm
 ${options.wordCountRange}
 
 【章节规模参考】
-- 目标总字数约：${targetWordCount}字
-- 按平均每章约2500字估算：约${estimatedChapterCount}章
-- 建议卷数：约${suggestedVolumeCount}卷
-- 每卷预计：约${estimatedChaptersPerVolume}章
-- 前30章约占全书：${startupPhaseRatio}
+- 目标总字数约：${breakdown.targetWordCount}字
+- 按平均每章约2500字估算：约${breakdown.estimatedChapterCount}章
+- 建议卷数：约${breakdown.suggestedVolumeCount}卷
+- 每卷预计：约${breakdown.estimatedChaptersPerVolume}章
+- 前30章约占全书：${breakdown.startupPhaseRatio}
 
 【创意种子】
 ${options.seed}

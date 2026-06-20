@@ -80,6 +80,10 @@ const {
 const panelState = ref<PanelState>("selecting");
 const creationTab = ref<CreationTab>("quick");
 
+// 独立的"标签/元素洗牌中"状态：以前复用了 useOutlineGenerator 的 isGenerating，
+// 会让"换一批 / 随机灵感"误触发大纲生成中的骨架屏和进度条。
+const isShuffling = ref(false);
+
 // Analysis modal
 const showAnalysisModal = ref(false);
 const isAnalyzing = ref(false);
@@ -322,17 +326,17 @@ function applyQuickScenario(scenario: QuickScenario) {
 }
 
 async function refreshTags() {
-  isGenerating.value = true;
+  isShuffling.value = true;
   await new Promise((resolve) => setTimeout(resolve, timing.mockApi.quick));
   shuffledGenreTags.value = shuffleArray(configGenreTags);
   inspirationStore.reset();
   panelState.value = "selecting";
   tagDisplayMode.value = "all";
-  isGenerating.value = false;
+  isShuffling.value = false;
 }
 
 async function randomPick() {
-  isGenerating.value = true;
+  isShuffling.value = true;
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   shuffledGenreTags.value = shuffleArray(configGenreTags);
@@ -355,7 +359,7 @@ async function randomPick() {
 
   tagDisplayMode.value = "collapsed";
   elementDisplayMode.value = "collapsed";
-  isGenerating.value = false;
+  isShuffling.value = false;
 }
 
 function clearSelection() {
@@ -379,102 +383,21 @@ function buildPrompt(): string {
     .map((id) => settingElements.find((e) => e.id === id)?.name)
     .filter(Boolean);
 
-  return `请根据以下设定，生成3个结构完整的小说大纲。请以JSON格式输出。
+  // 注意：这里只输出"创意种子"，不再指定输出格式（JSON/Markdown）。
+  // 输出格式由 UnifiedOutlineGenerator 的系统提示词统一负责（Markdown）。
+  // 旧实现里同时塞了"输出 JSON"的指令和"八线并行"等方法论，会和系统提示词
+  // （要求 Markdown、采用三线交织）正面冲突，导致模型漂移、字段解析失败。
+  const audience = audienceTypes.find((a) => a.id === selectedAudience.value)?.name ?? "大众";
 
-## 【基础设定】
-类型标签：${tags.join("、")}
-设定元素：${elements.join("、")}
+  return `【受众定位】${audience}
 
-## 【核心原则】
-1. 高潮优先：先确定最大高潮场景
-2. 冲突升级：确保升级链条清晰
-3. 八线并行：地图、阵营、人物、金手指、世界观、矛盾、收集、感情
+【题材标签】${tags.join("、") || "未指定"}
 
-## 【输出格式】
-请以JSON格式输出3个大纲：
+【设定元素】${elements.join("、") || "未指定"}
 
-{
-  "outlines": [
-    {
-      "title": "故事标题",
-      "synopsis": "60-80字简介",
-      "genres": ["题材标签"],
-      "estimatedWordCount": 500000,
-      
-      "emotionGoal": {
-        "primary": "核心情绪",
-        "secondary": "次要情绪",
-        "arc": "上升/下降/波动/混合",
-        "density": 3000,
-        "highPoints": [5, 20, 50],
-        "lowPoints": [10, 30]
-      },
-      
-      "worldSetting": {
-        "type": "世界类型",
-        "locations": [{ "name": "地点", "description": "描述", "level": "新手村" }],
-        "factions": [{ "name": "势力", "description": "描述", "allies": [], "enemies": [] }],
-        "rules": [{ "name": "规则", "description": "描述", "category": "修炼" }]
-      },
-      
-      "characters": [
-        {
-          "name": "角色名",
-          "role": "主角/反派/导师/配角",
-          "description": "描述",
-          "personality": ["性格"],
-          "goldenFinger": "金手指",
-          "strengths": ["优势"],
-          "weaknesses": ["短板"],
-          "relationships": [{ "targetName": "角色", "type": "朋友/敌人/导师", "description": "关系" }]
-        }
-      ],
-      
-      "structure": {
-        "act1": "第一幕（建置，约20%）",
-        "act2a": "第二幕A（对抗上，约25%）",
-        "act2b": "第二幕B（对抗下，约25%）",
-        "act3": "第三幕（结局，约30%）"
-      },
-      
-      "coolPointDesign": {
-        "patterns": ["打脸爽", "装逼爽", "身份揭秘", "实力碾压"],
-        "arranged": [{ "type": "类型", "description": "描述", "suggestedChapter": 5 }]
-      },
-      
-      "coreSellingPoints": [
-        { "name": "卖点", "description": "描述", "priority": 1 }
-      ],
-      
-      "conflictDesign": {
-        "source": "冲突来源",
-        "escalation": ["一级", "二级", "三级", "四级"],
-        "majorConflicts": ["冲突1", "冲突2"]
-      },
-      
-      "storyLines": {
-        "map": "地图线规划",
-        "faction": "阵营线规划",
-        "character": "人物线规划",
-        "goldenfinger": "金手指线规划",
-        "worldRules": "世界观线规划",
-        "conflict": "矛盾线规划",
-        "collection": "收集线规划",
-        "romance": "感情线规划"
-      },
-      
-      "foreshadows": [
-        { "hint": "伏笔内容", "type": "悬念/对话/事件/物品", "suggestedChapter": 10 }
-      ],
-      
-      "chapters": [
-        { "title": "标题", "summary": "摘要", "keyEvents": ["事件"], "involvedCharacters": ["角色"] }
-      ]
-    }
-  ]
-}
+【字数目标】${selectedWordCountRange.value}
 
-请生成3个不同风格、独特卖点的大纲，所有字段都要完整填写。`;
+请基于以上受众、题材、设定元素和字数目标，生成多个结构完整、卖点清晰、风格各异的网文大纲创意。每个大纲都要有独特的主卖点，避免同质化；优先考虑前 30 章的追读动力和长篇连载承载力。`;
 }
 
 async function handleGenerateOutlines() {
@@ -778,7 +701,7 @@ const settingElements = configSettingElements;
           <button
             class="flex items-center gap-1 px-2 py-1 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-lg transition-colors"
             @click="randomPick"
-            :disabled="isGenerating"
+            :disabled="isShuffling || isGenerating"
           >
             <Zap class="w-3 h-3" />
             {{ t("inspiration.randomPick") }}

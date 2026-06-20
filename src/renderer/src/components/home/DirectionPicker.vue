@@ -138,7 +138,7 @@ function handleEnhance(direction: OutlineDirection, enhancementBrief: string) {
                     {{ card.direction.oneLiner }}
                   </p>
                 </div>
-                <div class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                <div class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300 text-nowrap">
                   {{ card.direction.recommendationScore }}分
                 </div>
               </div>
@@ -178,7 +178,7 @@ function handleEnhance(direction: OutlineDirection, enhancementBrief: string) {
                 </span>
               </div>
 
-              <div class="mt-3 grid gap-2 text-xs md:grid-cols-2 xl:grid-cols-4">
+              <div class="mt-3 grid gap-2 text-xs md:grid-cols-2 xl:grid-cols-2">
                 <div
                   v-if="card.scaleHint"
                   class="rounded-xl bg-slate-50 px-3 py-2 text-slate-600 dark:bg-gray-900/40 dark:text-slate-300"

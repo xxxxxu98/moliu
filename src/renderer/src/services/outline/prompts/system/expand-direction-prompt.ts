@@ -1,7 +1,10 @@
 import type { OutlineDirection } from '../../types/direction';
 import type { BuiltPrompt } from './shared';
-
-const AVG_WORDS_PER_CHAPTER = 2500;
+import {
+  AVG_WORDS_PER_CHAPTER,
+  buildWordCountBreakdown,
+  type WordCountBreakdown,
+} from '@/services/outline/utils';
 
 export interface ExpandDirectionPromptOptions {
   seed: string;
@@ -10,36 +13,15 @@ export interface ExpandDirectionPromptOptions {
   enhancementBrief?: string;
 }
 
-function parseWordCount(wordCountRange: string): number {
-  const normalized = wordCountRange.replace(/[,，\s]/g, '');
-  const rangeMatch = normalized.match(/(\d+(?:\.\d+)?)万?[-~至到](\d+(?:\.\d+)?)万?(?:字)?/);
-  if (rangeMatch) {
-    const minWan = parseFloat(rangeMatch[1]);
-    const maxWan = parseFloat(rangeMatch[2]);
-    return Math.round(((minWan + maxWan) / 2) * 10000);
-  }
-
-  const singleMatch = normalized.match(/(\d+(?:\.\d+)?)万(?:字)?/);
-  if (singleMatch) {
-    return Math.round(parseFloat(singleMatch[1]) * 10000);
-  }
-
-  return 500000;
-}
-
-function buildScaleGuidance(wordCountRange: string) {
-  const targetWordCount = parseWordCount(wordCountRange);
-  const targetChapterCount = Math.max(60, Math.ceil(targetWordCount / AVG_WORDS_PER_CHAPTER));
-  const suggestedVolumeCount = Math.max(3, Math.ceil(targetWordCount / 180000));
-  const chaptersPerVolume = Math.max(20, Math.round(targetChapterCount / suggestedVolumeCount));
-
+function buildScaleGuidance(wordCountRange: string): WordCountBreakdown & {
+  averageWordsPerChapter: number;
+  startupRatio: number;
+} {
+  const breakdown = buildWordCountBreakdown(wordCountRange);
   return {
-    targetWordCount,
-    targetChapterCount,
-    suggestedVolumeCount,
-    chaptersPerVolume,
+    ...breakdown,
     averageWordsPerChapter: AVG_WORDS_PER_CHAPTER,
-    startupRatio: Number((30 / targetChapterCount).toFixed(3)),
+    startupRatio: Number((30 / breakdown.estimatedChapterCount).toFixed(3)),
   };
 }
 
@@ -375,9 +357,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 核心创伤：
 - 角色秘密：
 - 角色转折点：
-- 角色弧线起点：
-- 角色弧线中段：
-- 角色弧线终点：
+- 角色弧线：（起 → 中 → 终，用 → 连接三段，如：被退婚 → 觉醒传承 → 反杀大反派）
 - 角色资源：
 - 关系变化：
 
@@ -393,9 +373,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 核心创伤：
 - 角色秘密：
 - 角色转折点：
-- 角色弧线起点：
-- 角色弧线中段：
-- 角色弧线终点：
+- 角色弧线：（起 → 中 → 终，用 → 连接三段，如：被退婚 → 觉醒传承 → 反杀大反派）
 - 角色资源：
 - 关系变化：
 
@@ -411,9 +389,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 核心创伤：
 - 角色秘密：
 - 角色转折点：
-- 角色弧线起点：
-- 角色弧线中段：
-- 角色弧线终点：
+- 角色弧线：（起 → 中 → 终，用 → 连接三段，如：被退婚 → 觉醒传承 → 反杀大反派）
 - 角色资源：
 - 关系变化：
 
@@ -429,9 +405,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 核心创伤：
 - 角色秘密：
 - 角色转折点：
-- 角色弧线起点：
-- 角色弧线中段：
-- 角色弧线终点：
+- 角色弧线：（起 → 中 → 终，用 → 连接三段，如：被退婚 → 觉醒传承 → 反杀大反派）
 - 角色资源：
 - 关系变化：
 
@@ -448,9 +422,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 核心创伤：
 - 角色秘密：
 - 角色转折点：
-- 角色弧线起点：
-- 角色弧线中段：
-- 角色弧线终点：
+- 角色弧线：（起 → 中 → 终，用 → 连接三段，如：被退婚 → 觉醒传承 → 反杀大反派）
 - 角色资源：
 - 关系变化：
 
@@ -466,9 +438,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 核心创伤：
 - 角色秘密：
 - 角色转折点：
-- 角色弧线起点：
-- 角色弧线中段：
-- 角色弧线终点：
+- 角色弧线：（起 → 中 → 终，用 → 连接三段，如：被退婚 → 觉醒传承 → 反杀大反派）
 - 角色资源：
 - 关系变化：
 
@@ -485,9 +455,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 核心创伤：
 - 角色秘密：
 - 角色转折点：
-- 角色弧线起点：
-- 角色弧线中段：
-- 角色弧线终点：
+- 角色弧线：（起 → 中 → 终，用 → 连接三段，如：被退婚 → 觉醒传承 → 反杀大反派）
 - 角色资源：
 - 关系变化：
 
@@ -503,9 +471,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 核心创伤：
 - 角色秘密：
 - 角色转折点：
-- 角色弧线起点：
-- 角色弧线中段：
-- 角色弧线终点：
+- 角色弧线：（起 → 中 → 终，用 → 连接三段，如：被退婚 → 觉醒传承 → 反杀大反派）
 - 角色资源：
 - 关系变化：
 
@@ -522,9 +488,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 核心创伤：
 - 角色秘密：
 - 角色转折点：
-- 角色弧线起点：
-- 角色弧线中段：
-- 角色弧线终点：
+- 角色弧线：（起 → 中 → 终，用 → 连接三段，如：被退婚 → 觉醒传承 → 反杀大反派）
 - 角色资源：
 - 关系变化：
 
@@ -540,9 +504,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 核心创伤：
 - 角色秘密：
 - 角色转折点：
-- 角色弧线起点：
-- 角色弧线中段：
-- 角色弧线终点：
+- 角色弧线：（起 → 中 → 终，用 → 连接三段，如：被退婚 → 觉醒传承 → 反杀大反派）
 - 角色资源：
 - 关系变化：
 
@@ -684,7 +646,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - “重要级别”限定为：主线 / 支线 / 情感
 - 每条伏笔都要明确“埋设章节”和“回收章节”，并保证至少覆盖短伏笔、中伏笔、长伏笔各 1 条
 - “关键角色规划”必须按分层模板完整输出，不得跳层，不得把所有角色都塞进同一层
-- 至少输出 8 个关键角色，且必须覆盖：常驻核心角色 4 个、中前期重要角色 2 个、中后期接棒角色 2 个、势力/阵营代表角色 2 个；若同一角色兼任多个功能，也必须额外补足新的独立角色，不得用同名角色重复顶格
+- 至少输出 10 个关键角色，且必须覆盖：常驻核心角色 4 个、中前期重要角色 2 个、中后期接棒角色 2 个、势力/阵营代表角色 2 个；若同一角色兼任多个功能，也必须额外补足新的独立角色，不得用同名角色重复顶格
 - 至少形成 3 组以上非主角之间的关系链或利益冲突链，并在“关系变化”中明确写出谁与谁如何变化
 - “伏笔规划”必须按分级模板完整输出，至少包含：3 条短伏笔、3 条中伏笔、2 条长伏笔、2 条终局伏笔
 - 至少覆盖：身份、关系、规则、能力、事件、物件、角色、对话八类中的至少五类，且不能全部属于同一重要级别
@@ -720,9 +682,9 @@ ${wordCountRange}
 【规模换算参考】
 - 按平均每章约${scale.averageWordsPerChapter}字估算
 - 目标总字数约${scale.targetWordCount}字
-- 预计总章节数约${scale.targetChapterCount}章
+- 预计总章节数约${scale.estimatedChapterCount}章
 - 建议卷数约${scale.suggestedVolumeCount}卷
-- 每卷预计约${scale.chaptersPerVolume}章
+- 每卷预计约${scale.estimatedChaptersPerVolume}章
 - 前30章约占全书${Math.round(scale.startupRatio * 100)}%
 
 【原始创意种子】
@@ -751,7 +713,7 @@ ${options.enhancementBrief}
 5. 输出必须严格遵守指定结构
 6. 章节规模必须与目标字数区间匹配，前30章只能完成“开局承诺 + 第一轮冲突闭环 + 更大主线入口”，不能提前耗尽整本书的核心悬念与升级空间
 7. 如果提供了“本次增强目标”，必须优先落实这些增强项，重点补强地图扩张线、势力博弈线、人物关系变量、长期悬念中的缺口，但不能偏离当前方向核心卖点
-8. 默认按长篇商业网文规格补足角色和伏笔密度：至少 10 个关键角色、至少 10 条伏笔，且要分布在前期、中期、后期多个阶段，不得只集中在开篇或结尾
+8. 默认按长篇商业网文规格补足角色和伏笔密度：关键角色至少覆盖"常驻核心 4 + 中前期 2 + 中后期 2 + 势力代表 2"共 10 个槽位，伏笔至少 10 条（短 3 + 中 3 + 长 2 + 终局 2），分布在前期、中期、后期多个阶段，不得只集中在开篇或结尾
 9. 角色分布不能只围绕主角单点展开，至少要形成 3 组以上非主角之间的关系链或利益冲突链
 10. 伏笔不能全是同类谜团，至少要同时存在“主线大伏笔 + 人物关系伏笔 + 世界/规则伏笔 + 卷级事件伏笔”四层结构
 11. 输出时优先保证“角色层级完整”和“伏笔层级完整”，数量不足时宁可补足新的独立角色与独立伏笔，也不要用泛泛概括替代`,

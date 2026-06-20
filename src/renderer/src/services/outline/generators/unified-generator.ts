@@ -3,14 +3,14 @@
  * Main entry point with multi-layered fallback strategy
  */
 
-import { MarkdownOutlineGenerator } from './markdown-generator';
 import { outlinePostProcessor } from '../processor/outline-post-processor';
 import type { Outline } from '../schemas/outline.schema';
 import type { ProviderType } from '@/config/ai-providers';
 import { getBaseUrl } from '@/config/ai-providers';
 import { useActiveAIProvider } from '@/composables/useActiveAIProvider';
 import { useSettingsStore, type AIDefaultModelSelection } from '@/stores/settings.store';
-import { robustJsonParse } from '@/utils/json-parser';
+import { buildWordCountBreakdown } from '../utils';
+import { buildWebnovelCraftPrompt } from '../prompts/system/core-principles';
 import type { DirectionGenerationResult, OutlineDirection } from '../types/direction';
 import type { ExpandedOutlineResult } from '../types/executable-outline';
 import { buildDirectionPrompt } from '../prompts/system/direction-prompt';
@@ -36,6 +36,53 @@ function matchesDefaultModelSelection(
 }
 
 /**
+ * 读取失败响应体，构造带上下文的错误。
+ * 之前只抛 `xxx API 请求失败: ${status}`，401/400/429 等只能看到状态码，
+ * 无法定位是 key 失效、参数错误还是限流。这里读取响应文本并截断拼接进错误信息，
+ * 便于用户和排查。AbortError 不走此路径（fetch 会直接 reject）。
+ */
+async function buildHttpError(response: Response, prefix: string): Promise<Error> {
+  let detail = '';
+  try {
+    const text = await response.text();
+    detail = text ? text.slice(0, 500) : '';
+  } catch {
+    detail = '';
+  }
+  const message = detail
+    ? `${prefix}: ${response.status} ${detail}`
+    : `${prefix}: ${response.status}`;
+  return new Error(message);
+}
+
+/**
+ * 判断异常是否由 AbortController 触发。
+ * fetch 被 abort 时抛出的 DOMException name 为 'AbortError'；
+ * 上层在竞态场景下主动 abort 旧请求，这类异常不应被当作"生成失败"提示。
+ */
+function isAbortError(error: unknown): boolean {
+  if (error instanceof DOMException && error.name === 'AbortError') return true;
+  if (error instanceof Error && error.name === 'AbortError') return true;
+  return false;
+}
+
+/**
+ * 根据模型名估算单次响应 max_tokens 上限。
+ * 之前写死 32000，对 Claude 3.5 Sonnet（8192）/ 3 Haiku（4096）等会直接 400；
+ * 这里按模型族收敛到一个安全值，避免平台间行为不一致导致 expand-direction 截断或报错。
+ */
+function resolveMaxTokens(model?: string): number {
+  const m = (model || '').toLowerCase();
+  // Claude 4 系 / 3.7 Sonnet 支持更高输出，但保守取 16000 已足够 expand-direction 且更稳。
+  if (m.includes('claude-4') || m.includes('sonnet-4') || m.includes('opus-4') || m.includes('claude-3-7') || m.includes('claude-3.7')) return 16000;
+  // Claude 3.5 Sonnet 单次输出上限 8192。
+  if (m.includes('claude-3-5') || m.includes('claude-3.5') || m.includes('sonnet')) return 8192;
+  // Claude 3 Opus / Haiku 及未知 Claude 模型保守取 4096。
+  if (m.includes('claude')) return 4096;
+  return 8000;
+}
+
+/**
  * 生成选项
  */
 export interface GenerateOptions {
@@ -43,6 +90,10 @@ export interface GenerateOptions {
   topP?: number;
   wordCountRange?: string;
   maxRetries?: number;
+  /** 一次生成的大纲数量，默认 3 */
+  count?: number;
+  /** 可选 AbortSignal：用于在发起新请求 / 重置时取消旧的在飞请求，避免竞态与多余计费。 */
+  signal?: AbortSignal;
 }
 
 /**
@@ -66,7 +117,6 @@ export interface GenerationResult {
  * 4. 传统模式
  */
 export class UnifiedOutlineGenerator {
-  private markdownGenerator: MarkdownOutlineGenerator | null = null;
   private defaultOptions: GenerateOptions = {
     temperature: 0.7,
     topP: 0.9,
@@ -81,6 +131,12 @@ export class UnifiedOutlineGenerator {
 
   /**
    * 生成大纲
+   *
+   * 一次 API 调用得到的 markdown 会依次尝试：remark 解析 → 正则兜底 → JSON 兜底，
+   * 三种策略共享同一次模型输出，避免每轮重试都重新打 API（旧实现每轮会发起
+   * 最多 3 次 fetch，且首次成功后的 rawMarkdown 被直接丢弃）。
+   * 仅当三种策略都失败、且还有重试机会时才重新请求模型；重试时降温而不是
+   * 升温（升温会让模型更偏离模板，反而降低解析成功率）。
    */
   async generate(
     prompt: string,
@@ -88,144 +144,119 @@ export class UnifiedOutlineGenerator {
     onProgress?: (message: string) => void,
   ): Promise<GenerationResult> {
     const opts = { ...this.defaultOptions, ...options };
-    let attempts = 0;
-    const maxAttempts = opts.maxRetries || 2;
+    const maxAttempts = Math.max(1, opts.maxRetries || 2);
+    let lastResult: GenerationResult | null = null;
 
-    while (attempts < maxAttempts) {
-      attempts++;
-
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const result = await this.callMarkdownMode(prompt, opts);
+        onProgress?.(attempt === 1 ? '正在生成大纲...' : `重试生成... (${attempt}/${maxAttempts})`);
+
+        // 单次模型调用，markdown 先后喂给 remark / 正则 / JSON 三条解析链
+        const markdown = await this.callMarkdownRaw(prompt, opts);
+        const result = this.parseMarkdownWithFallbacks(markdown, opts, onProgress);
+        lastResult = result;
 
         if (result.success) {
           return result;
         }
 
-        onProgress?.('Markdown 解析失败，尝试其他解析策略...');
-
-        const remarkResult = await this.generateWithFallback(prompt, opts, onProgress);
-        if (remarkResult.success) {
-          return remarkResult;
-        }
-
-        onProgress?.('尝试 JSON Mode 作为兜底...');
-        const jsonResult = await this.callJSONModeFallback(prompt, opts);
-        if (jsonResult.success) {
-          return jsonResult;
-        }
-
-        if (attempts < maxAttempts) {
-          onProgress?.(`重试生成... (${attempts}/${maxAttempts})`);
-          opts.temperature = (opts.temperature || 0.7) + 0.1;
+        if (attempt < maxAttempts) {
+          // 解析失败通常是因为模型偏离格式：降温 + 收敛，而不是升温
+          opts.temperature = Math.max(0.2, (opts.temperature ?? 0.7) - 0.1);
         }
       } catch (error) {
+        // 主动取消（竞态 / 重置）直接向上抛，由调用方按 currentId 判定丢弃，
+        // 不再走 legacy 兜底，避免取消后还多打一次 API。
+        if (isAbortError(error)) {
+          throw error;
+        }
         const errorMsg = error instanceof Error ? error.message : String(error);
         onProgress?.(`生成出错: ${errorMsg}`);
+        lastResult = {
+          success: false,
+          outlines: [],
+          warnings: [],
+          errors: [`生成失败: ${errorMsg}`],
+          strategy: 'markdown-remark',
+        };
 
-        if (attempts >= maxAttempts) {
-          return {
-            success: false,
-            outlines: [],
-            warnings: [],
-            errors: [`生成失败: ${errorMsg}`],
-            strategy: 'legacy',
-          };
+        if (attempt >= maxAttempts) {
+          break;
         }
       }
     }
 
-    return this.tryLegacyMode(prompt, opts);
-  }
-
-  async generateDirections(
-    prompt: string,
-    options?: GenerateOptions,
-    onProgress?: (message: string) => void,
-  ): Promise<DirectionGenerationResult> {
-    const opts = { ...this.defaultOptions, ...options };
-    const builtPrompt = buildDirectionPrompt({
-      seed: prompt,
-      wordCountRange: opts.wordCountRange || '50万-100万字',
-    });
-
-    onProgress?.('正在生成创作方向...');
-    const rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts);
-    const directions = parseDirections(rawText);
-
-    return {
-      directions,
-      rawText,
-      strategy: directions.length > 0 ? 'structured-text' : 'fallback',
-      warnings: directions.length > 0 ? [] : ['未能完整解析 3 个方向，建议调整提示词后重试'],
-    };
-  }
-
-  async expandDirection(
-    prompt: string,
-    direction: OutlineDirection,
-    options?: GenerateOptions & { enhancementBrief?: string },
-    onProgress?: (message: string) => void,
-  ): Promise<ExpandedOutlineResult> {
-    const opts = { ...this.defaultOptions, ...options };
-    const builtPrompt = buildExpandDirectionPrompt({
-      seed: prompt,
-      direction,
-      wordCountRange: opts.wordCountRange || '50万-100万字',
-      enhancementBrief: opts.enhancementBrief,
-    });
-
-    onProgress?.('正在展开主方案...');
-    const rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts);
-    const outline = parseExpandedOutline(rawText);
-
-    return {
-      outline,
-      rawText,
-      strategy: outline ? 'structured-text' : 'fallback',
-      warnings: outline ? [] : ['未能完整解析主方案，建议重新生成或微调方向描述'],
-    };
-  }
-
-  private async generateWithFallback(
-    prompt: string,
-    options: GenerateOptions,
-    onProgress?: (message: string) => void,
-  ): Promise<GenerationResult> {
-    if (!this.markdownGenerator) {
-      const config = this.getAIConfig();
-      this.markdownGenerator = new MarkdownOutlineGenerator(
-        config.provider,
-        config.apiKey,
-        config.baseUrl,
-        config.model,
-      );
+    // 最后再尝试一次 legacy 兜底
+    const legacy = await this.tryLegacyMode(prompt, opts);
+    if (legacy.success) {
+      return legacy;
     }
 
-    onProgress?.('正在生成大纲...');
-    const markdown = await this.markdownGenerator.generate(prompt, options, onProgress);
+    return (
+      lastResult ?? {
+        success: false,
+        outlines: [],
+        warnings: [],
+        errors: ['生成失败'],
+        strategy: 'legacy',
+      }
+    );
+  }
 
-    onProgress?.('正在解析大纲...');
-    const postResult = outlinePostProcessor.process(markdown);
+  /**
+   * 单次调用模型，仅返回原始 markdown 文本。
+   */
+  private async callMarkdownRaw(
+    prompt: string,
+    options: GenerateOptions,
+  ): Promise<string> {
+    const systemPrompt = this.buildMarkdownSystemPrompt(
+      options.wordCountRange || '50万-100万字',
+      options.count ?? 3,
+    );
+    const messages = [
+      { role: 'system' as const, content: systemPrompt },
+      { role: 'user' as const, content: `用户的创意种子：${prompt}` },
+    ];
 
-    if (postResult.success) {
+    const data = await this.requestChatCompletion(messages, options);
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error('API 未返回内容');
+    }
+    return content;
+  }
+
+  /**
+   * 把同一份 markdown 依次喂给 remark / 正则 / JSON 三条解析链，
+   * 任一成功即返回。这是在“单次模型调用”前提下尽量榨干结果的兜底链。
+   */
+  private parseMarkdownWithFallbacks(
+    markdown: string,
+    options: GenerateOptions,
+    onProgress?: (message: string) => void,
+  ): GenerationResult {
+    // 1. remark AST 解析
+    const remarkResult = outlinePostProcessor.process(markdown);
+    if (remarkResult.success) {
       return {
         success: true,
-        outlines: postResult.outlines,
-        warnings: postResult.warnings,
-        errors: postResult.errors,
-        strategy: postResult.strategy as GenerationResult['strategy'],
+        outlines: remarkResult.outlines,
+        warnings: remarkResult.warnings,
+        errors: remarkResult.errors,
+        strategy: remarkResult.strategy as GenerationResult['strategy'],
         rawMarkdown: markdown,
       };
     }
 
-    onProgress?.('尝试提取 JSON 数据...');
+    // 2. 从同一份文本中尝试正则提取（process 内部已经做过一次，这里走 JSON 兜底）
+    onProgress?.('Markdown 解析失败，尝试 JSON 兜底...');
     const jsonResult = outlinePostProcessor.processJSON(markdown);
-
     if (jsonResult.success) {
       return {
         success: true,
         outlines: jsonResult.outlines,
-        warnings: [...postResult.warnings, ...jsonResult.warnings],
+        warnings: [...remarkResult.warnings, ...jsonResult.warnings],
         errors: jsonResult.errors,
         strategy: 'json-mode',
         rawMarkdown: markdown,
@@ -235,53 +266,139 @@ export class UnifiedOutlineGenerator {
     return {
       success: false,
       outlines: [],
-      warnings: postResult.warnings,
-      errors: postResult.errors,
+      warnings: remarkResult.warnings,
+      errors: remarkResult.errors,
       strategy: 'markdown-regex',
       rawMarkdown: markdown,
     };
   }
 
-  private async callMarkdownMode(
+  async generateDirections(
     prompt: string,
-    options: GenerateOptions,
-  ): Promise<GenerationResult> {
-    const config = this.getAIConfig();
+    options?: GenerateOptions,
+    onProgress?: (message: string) => void,
+  ): Promise<DirectionGenerationResult> {
+    return this.runWithRetry<DirectionGenerationResult>(
+      async (attempt, temperature) => {
+        const opts = { ...this.defaultOptions, ...options, ...(temperature !== undefined ? { temperature } : {}) };
+        const builtPrompt = buildDirectionPrompt({
+          seed: prompt,
+          wordCountRange: opts.wordCountRange || '50万-100万字',
+        });
 
-    const systemPrompt = this.buildMarkdownSystemPrompt(options.wordCountRange || '50万-100万字');
-    const messages = [
-      { role: 'system' as const, content: systemPrompt },
-      { role: 'user' as const, content: `用户的创意种子：${prompt}` },
-    ];
+        onProgress?.(attempt === 1 ? '正在生成创作方向...' : `重新生成创作方向... (${attempt})`);
 
-    try {
-      const data = await this.requestChatCompletion(messages, options);
-      const content = data.choices?.[0]?.message?.content;
+        const rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts);
+        const directions = parseDirections(rawText);
 
-      if (!content) {
-        throw new Error('API 未返回内容');
+        return {
+          directions,
+          rawText,
+          strategy: directions.length > 0 ? 'structured-text' : 'fallback',
+          warnings:
+            directions.length > 0 ? [] : ['未能完整解析 3 个方向，建议调整提示词后重试'],
+        };
+      },
+      (result) => result.directions.length > 0,
+      options?.maxRetries ?? 2,
+      onProgress,
+    );
+  }
+
+  async expandDirection(
+    prompt: string,
+    direction: OutlineDirection,
+    options?: GenerateOptions & { enhancementBrief?: string },
+    onProgress?: (message: string) => void,
+  ): Promise<ExpandedOutlineResult> {
+    return this.runWithRetry<ExpandedOutlineResult>(
+      async (attempt, temperature) => {
+        const opts = { ...this.defaultOptions, ...options, ...(temperature !== undefined ? { temperature } : {}) };
+        const builtPrompt = buildExpandDirectionPrompt({
+          seed: prompt,
+          direction,
+          wordCountRange: opts.wordCountRange || '50万-100万字',
+          enhancementBrief: opts.enhancementBrief,
+        });
+
+        onProgress?.(attempt === 1 ? '正在展开主方案...' : `重新展开主方案... (${attempt})`);
+
+        const rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts);
+        const outline = parseExpandedOutline(rawText);
+
+        // 角色 / 伏笔位于模板末尾，最易被截断；这里检测"看似成功实则残缺"的情况。
+        // 严重残缺（角色 < 4 或伏笔 < 3）时通过 isSuccess=false 触发重试（降温收敛），
+        // 避免一次截断就把残缺方案固化；重试耗尽后仍返回最后一次结果 + warning，
+        // 由 UI 提示用户手动重新生成。
+        const warnings: string[] = [];
+        let severelyTruncated = false;
+        if (outline) {
+          if (outline.keyCharacters.length < 4) {
+            severelyTruncated = true;
+            warnings.push(`关键角色仅解析到 ${outline.keyCharacters.length} 个（建议至少 4 个），可能被输出截断，可尝试重新生成`);
+          }
+          if (outline.foreshadowPlan.length < 3) {
+            severelyTruncated = true;
+            warnings.push(`伏笔仅解析到 ${outline.foreshadowPlan.length} 条（建议至少 3 条），可能被输出截断，可尝试重新生成`);
+          }
+        }
+
+        return {
+          outline,
+          rawText,
+          strategy: outline ? 'structured-text' : 'fallback',
+          severelyTruncated,
+          warnings: outline ? warnings : ['未能完整解析主方案，建议重新生成或微调方向描述'],
+        };
+      },
+      (result) => result.outline !== null && !result.severelyTruncated,
+      options?.maxRetries ?? 2,
+      onProgress,
+    );
+  }
+
+  /**
+   * 通用重试包装：success 判定由 isSuccess 回调决定，
+   * 解析类失败重试时降温收敛。仅对真正的运行时异常（API 报错等）才重试。
+   *
+   * 降温温度通过 run 的第二个参数注入（旧实现算出 coolingTemp 后被 `void` 丢弃，
+   * run 闭包仍持有原始 options，温度从未真正改变）。
+   */
+  private async runWithRetry<T>(
+    run: (attempt: number, temperature?: number) => Promise<T>,
+    isSuccess: (result: T) => boolean,
+    maxAttempts: number,
+    onProgress?: (message: string) => void,
+  ): Promise<T> {
+    const total = Math.max(1, maxAttempts);
+    let lastResult: T | null = null;
+    // 第 2 次及以后重试使用的降温温度；首次请求为 undefined，沿用调用方原始温度。
+    let coolingTemp: number | undefined;
+
+    for (let attempt = 1; attempt <= total; attempt++) {
+      try {
+        lastResult = await run(attempt, coolingTemp);
+        if (isSuccess(lastResult)) {
+          return lastResult;
+        }
+        if (attempt < total) {
+          coolingTemp = Math.max(0.2, (this.defaultOptions.temperature ?? 0.7) - 0.1 * attempt);
+          onProgress?.(`结果不完整，重试中... (${attempt}/${total})`);
+        }
+      } catch (error) {
+        // 主动取消（竞态 / 重置）不重试，直接向上抛，由调用方按 currentId 判定丢弃。
+        if (isAbortError(error)) {
+          throw error;
+        }
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        onProgress?.(`生成出错: ${errorMsg}`);
+        if (attempt >= total) {
+          throw error;
+        }
       }
-
-      const result = outlinePostProcessor.process(content);
-
-      return {
-        success: result.success,
-        outlines: result.outlines,
-        warnings: result.warnings,
-        errors: result.errors,
-        strategy: 'markdown-remark',
-        rawMarkdown: content,
-      };
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      return {
-        success: false,
-        outlines: [],
-        warnings: [],
-        errors: [`Markdown 模式失败: ${errorMsg}`],
-        strategy: 'markdown-remark',
-      };
     }
+
+    return lastResult as T;
   }
 
   private async tryLegacyMode(prompt: string, options: GenerateOptions): Promise<GenerationResult> {
@@ -362,6 +479,7 @@ export class UnifiedOutlineGenerator {
     const config = this.getAIConfig();
     const provider = config.provider;
     const resolvedBaseUrl = config.baseUrl.replace(/\/$/, '');
+    const signal = options.signal;
 
     if (provider === 'gemini') {
       const model = config.model || 'gemini-2.0-flash';
@@ -390,10 +508,11 @@ export class UnifiedOutlineGenerator {
             topP: options.topP || 0.9,
           },
         }),
+        ...(signal ? { signal } : {}),
       });
 
       if (!response.ok) {
-        throw new Error(`Gemini API 请求失败: ${response.status}`);
+        throw await buildHttpError(response, 'Gemini API 请求失败');
       }
 
       const data = await response.json();
@@ -420,6 +539,7 @@ export class UnifiedOutlineGenerator {
       const userContent = messages
         .filter((message) => message.role === 'user')
         .map((message) => ({ type: 'text', text: message.content }));
+      const model = config.model || 'claude-3-5-sonnet-20241022';
 
       const response = await fetch(`${resolvedBaseUrl}/v1/messages`, {
         method: 'POST',
@@ -430,17 +550,20 @@ export class UnifiedOutlineGenerator {
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: config.model || 'claude-3-5-sonnet-20241022',
+          model,
           system: systemPrompt,
           messages: [{ role: 'user', content: userContent }],
           temperature: options.temperature || 0.7,
           top_p: options.topP || 0.9,
-          max_tokens: 8192,
+          // expand-direction 模板输出量大，按模型族取单次响应上限，避免写死 32000
+          // 对 Claude 3.5 Sonnet(8192)/3 Haiku(4096) 等 400；同时不低于该模型真实上限。
+          max_tokens: resolveMaxTokens(model),
         }),
+        ...(signal ? { signal } : {}),
       });
 
       if (!response.ok) {
-        throw new Error(`Anthropic API 请求失败: ${response.status}`);
+        throw await buildHttpError(response, 'Anthropic API 请求失败');
       }
 
       const data = await response.json();
@@ -472,30 +595,34 @@ export class UnifiedOutlineGenerator {
         messages,
         temperature: options.temperature || 0.7,
         top_p: options.topP || 0.9,
+        max_tokens: resolveMaxTokens(config.model),
       }),
+      ...(signal ? { signal } : {}),
     });
 
     if (!response.ok) {
-      throw new Error(`API 请求失败: ${response.status}`);
+      throw await buildHttpError(response, 'API 请求失败');
     }
 
     return response.json();
   }
 
-  private buildMarkdownSystemPrompt(wordCountRange: string): string {
-    const wordCountNum = this.parseWordCount(wordCountRange);
-    const chaptersPerVolume = Math.ceil(wordCountNum / 150000);
-    const totalChapters = Math.ceil(wordCountNum / 2000);
+  private buildMarkdownSystemPrompt(wordCountRange: string, count: number = 3): string {
+    const breakdown = buildWordCountBreakdown(wordCountRange);
+    const { targetWordCount, estimatedChapterCount, suggestedVolumeCount } = breakdown;
+    const wordsPerVolume = Math.round(targetWordCount / suggestedVolumeCount / 10000);
 
     return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
 
+${buildWebnovelCraftPrompt()}
+
 【字数要求】
 预估字数：${wordCountRange}
-建议卷数：${chaptersPerVolume}卷
-建议章节数：${totalChapters}章
-每卷字数：约${Math.round(wordCountNum / chaptersPerVolume / 10000)}万字
+建议卷数：${suggestedVolumeCount}卷
+建议章节数：${estimatedChapterCount}章
+每卷字数：约${wordsPerVolume}万字
 
-请生成3个不同风格的大纲，每个大纲必须包含以下所有内容：
+请生成${count}个不同风格的大纲，每个大纲必须包含以下所有内容：
 
 # 大纲1
 
@@ -561,69 +688,21 @@ export class UnifiedOutlineGenerator {
 - **作用**：
 
 ## 章节规划
-- **章节标题**：
-- **摘要**：
-- **关键事件**：
+- **规划原则**：不要列出全书 ${estimatedChapterCount} 章；只输出前30章启动包和后续卷级概览，避免长篇大纲被章节目录挤占。
+- **前30章启动包**：按 1-5 / 6-10 / 11-15 / 16-20 / 21-25 / 26-30 六个区间输出，每区间写目标、关键事件、爽点、钩子。
+- **后续章节概览**：按卷输出，每卷写章节范围、卷目标、核心冲突、高潮、卷尾钩子。
+- **规模校验**：总章节规模约 ${estimatedChapterCount} 章，前30章只完成开局承诺和第一轮冲突闭环。
 
 ## 伏笔
 - **伏笔**：
 - **类型**：
 - **回收章节**：
-`;
-  }
 
-  private async callJSONModeFallback(
-    prompt: string,
-    options: GenerateOptions,
-  ): Promise<GenerationResult> {
-    try {
-      const config = this.getAIConfig();
-      const systemPrompt = this.buildJSONSystemPrompt(options.wordCountRange || '50万-100万字');
-      const data = await this.requestChatCompletion(
-        [
-          { role: 'system' as const, content: systemPrompt },
-          { role: 'user' as const, content: prompt },
-        ],
-        options,
-      );
-      const content = data.choices?.[0]?.message?.content;
-
-      if (!content) {
-        throw new Error('API 未返回 JSON 内容');
-      }
-
-      const parsed = robustJsonParse(content);
-      const outlines = Array.isArray(parsed?.outlines) ? parsed.outlines as Outline[] : [];
-
-      if (outlines.length === 0) {
-        return {
-          success: false,
-          outlines: [],
-          warnings: [],
-          errors: ['JSON 兜底未生成有效 outlines'],
-          strategy: 'json-mode',
-          rawMarkdown: content,
-        };
-      }
-
-      return {
-        success: true,
-        outlines,
-        warnings: ['使用 JSON Mode 兜底成功'],
-        errors: [],
-        strategy: 'json-mode',
-        rawMarkdown: content,
-      };
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      return {
-        success: false,
-        outlines: [],
-        warnings: [],
-        errors: [`JSON 兜底失败: ${errorMsg}`],
-        strategy: 'json-mode',
-      };
-    }
+## 反 AI 腔要求（大纲层就要避免）
+- 卖点/冲突要具体到事件、角色、代价，禁止空泛口号（"命运的齿轮""成长的代价""热血征途"）
+- 角色动机要可执行（"想夺回家族商路控制权"），不要写成价值观（"追求正义"）
+- 章节标题口语化，禁止文绉绉的四字词堆叠（"龙啸九天""风云际会"）
+- 爽点/伏笔必须配触发场景与代价，不能只列类型名词`;
   }
 
   private buildJSONSystemPrompt(wordCountRange: string): string {
@@ -631,13 +710,7 @@ export class UnifiedOutlineGenerator {
   }
 
   private parseWordCount(wordCountRange: string): number {
-    const numbers = wordCountRange.match(/\d+/g)?.map((value) => Number.parseInt(value, 10)) ?? [];
-    if (numbers.length === 0) {
-      return 500000;
-    }
-
-    const max = Math.max(...numbers);
-    return wordCountRange.includes('万') ? max * 10000 : max;
+    return buildWordCountBreakdown(wordCountRange).targetWordCount;
   }
 
   private getAIConfig(): {

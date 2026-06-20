@@ -106,17 +106,3 @@ export * from './analytics';
 export {
   readingPowerAnalyzer,
 } from './analytics';
-
-// ====== Legacy Exports (保留旧版 API) ======
-// 保留旧版 API 以保持向后兼容
-export {
-  QuickOutlineGenerator,
-  VolumeGenerator,
-  ChapterGenerator,
-} from './generator/legacy';
-export type {
-  QuickGenerateOptions,
-  VolumeGenerateOptions,
-  ChapterGenerateOptions,
-  BatchChapterGenerateOptions,
-} from './generator/legacy';

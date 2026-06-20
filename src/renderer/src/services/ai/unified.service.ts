@@ -20,6 +20,7 @@ import {
   parseJsonWithRetry,
   type ParseResult,
 } from "@/utils/json-parser";
+import { extractErrorMessage } from "@/utils/error-message";
 
 /**
  * 从原始响应中提取纯文本内容
@@ -300,8 +301,7 @@ export class UnifiedAIService {
       }
       return {
         success: false,
-        error:
-          error instanceof Error ? error.message : "Connection test failed",
+        error: extractErrorMessage(error, "Connection test failed"),
       };
     }
   }

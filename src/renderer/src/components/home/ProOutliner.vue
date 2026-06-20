@@ -132,50 +132,39 @@ const progress = ref<FiveStepProgress>({
   step5Complete: false,
 });
 
+// 导入模板的元数据上下文。
+// 旧实现把这些元数据直接写进 stepData 的各步骤字段（emotionGoal/setting/...），
+// 再用 length>=10 判定步骤完成 —— 结果占位文案让进度条假绿，且这些"模板参考"
+// 文案会被拼成创意种子送进 prompt，污染模型输入。这里改为单独存储，仅作为
+// 生成时的参考附在用户真实输入之后，不参与完成度判定。
+const templateContext = ref<{
+  name: string;
+  description: string;
+  coreFormula?: string;
+  requiredElements?: string[];
+  category?: string;
+  rhythmAdvice?: string;
+  structureTemplate?: string;
+} | null>(null);
+
 // Handle imported template from QuickStart
 watch(
   () => props.importedTemplate,
   (template) => {
     if (template) {
-      // Extract information from the template and populate the fields
-      const prompt = template.prompt;
-
-      // Try to extract core formula from prompt
-      const coreFormulaMatch = prompt.match(/## 【核心公式】\s*\n([\s\S]*?)(?=## 【)/);
-      if (coreFormulaMatch) {
-        stepData.value.emotionGoal = `基于模板「${template.name}」的大纲创作。\n核心方向：${template.coreFormula || '根据模板特点进行创作'}`;
-      }
-
-      // Extract required elements
-      if (template.requiredElements && template.requiredElements.length > 0) {
-        stepData.value.setting = `类型：${template.category}\n核心元素：${template.requiredElements.join('、')}`;
-      }
-
-      // Set structure hint
-      if (template.rhythmAdvice) {
-        stepData.value.structure = `节奏建议：${template.rhythmAdvice}`;
-      }
-
-      // Set pleasure points hint
-      if (template.structureTemplate) {
-        stepData.value.pleasurePoints = `结构模板：${template.structureTemplate}`;
-      }
-
-      // If template has detailed prompt, use it as reference
-      if (prompt.length > 100) {
-        stepData.value.protagonist = `模板参考：${template.description}`;
-      }
-
-      // 手动更新进度状态，确保生成按钮显示
-      progress.value = {
-        step1Complete: stepData.value.emotionGoal.length >= 10,
-        step2Complete: stepData.value.setting.length >= 10,
-        step3Complete: stepData.value.protagonist.length >= 10,
-        step4Complete: stepData.value.structure.length >= 10,
-        step5Complete: stepData.value.pleasurePoints.length >= 10,
+      templateContext.value = {
+        name: template.name,
+        description: template.description,
+        coreFormula: template.coreFormula,
+        requiredElements: template.requiredElements,
+        category: template.category,
+        rhythmAdvice: template.rhythmAdvice,
+        structureTemplate: template.structureTemplate,
       };
 
-      message.success(`已导入模板「${template.name}」到专业大纲`);
+      message.success(`已导入模板「${template.name}」，请在下方填写你的创作方向后生成`);
+    } else {
+      templateContext.value = null;
     }
   },
   { immediate: true }
@@ -356,9 +345,15 @@ async function generateFiveStepOutline() {
       conflictDesign: conflictDesign.value,
     };
 
-    // 构建提示词
+    // 构建提示词：种子以用户真实输入为主，模板元数据作为"参考方向"附在后面，
+    // 明确区分两者，避免占位文案被当成用户的创意意图。
+    const userSeed = stepData.value.emotionGoal + '\n' + stepData.value.setting + '\n' + stepData.value.protagonist;
+    const templateRef = templateContext.value
+      ? `\n\n【参考模板（仅作方向参考，以用户上述意图为准）】\n模板：${templateContext.value.name}\n描述：${templateContext.value.description}${templateContext.value.coreFormula ? `\n核心公式：${templateContext.value.coreFormula}` : ''}${templateContext.value.requiredElements?.length ? `\n核心元素：${templateContext.value.requiredElements.join('、')}` : ''}${templateContext.value.rhythmAdvice ? `\n节奏建议：${templateContext.value.rhythmAdvice}` : ''}`
+      : '';
+
     const promptOptions: FiveStepPromptOptions = {
-      seed: stepData.value.emotionGoal + '\n' + stepData.value.setting + '\n' + stepData.value.protagonist,
+      seed: userSeed + templateRef,
       genre: volumeData.value.genre,
       template: undefined,
       wordCountRange: wordCountRange.value,
