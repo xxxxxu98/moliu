@@ -338,7 +338,7 @@ function parseChapterRange(range: string, fallbackStart: number): { start: numbe
  * 从钩子描述里推断 hookType
  */
 const HOOK_TYPE_KEYWORDS: Array<{ type: string; keywords: string[] }> = [
-  { type: 'sudden_reveal', keywords: ['揭示', '揭晓', '真相', '曝光', '揭示'] },
+  { type: 'sudden_reveal', keywords: ['揭示', '揭晓', '真相', '曝光'] },
   { type: 'urgent_crisis', keywords: ['危机', '危险', '紧迫', '逼近', '威胁', '倒计时'] },
   { type: 'unfinished_action', keywords: ['未完', '中断', '被打断', '未结束', '戛然'] },
   { type: 'identity_reveal', keywords: ['身份', '原来', '其实', '不是', '真正'] },
@@ -363,33 +363,42 @@ function inferHookType(hook?: string): string | undefined {
 
 /**
  * 推断章节类型
+ *
+ * 说明（Bug 2 修复）：原实现把“区块大小”当作 totalChapters 传入，
+ * 但 chapterNo 是绝对章号（如最后一块的 26），`chapterNo === totalChapters`(=5)
+ * 永远不成立，导致 ending / resolution 判定对所有非首块失效。
+ * 这里把“是否全书最后一章 / 是否所在区间块最后 1 章”拆成两个显式布尔，
+ * 避免章号与区间大小混在一起比较。
+ *
+ * @param chapterNo           绝对章号（1-based），仅用于前 3 章建置类型
+ * @param isLastChapter       是否全书最后一章
+ * @param isBlockLastChapter  是否所在启动块的最后 1 章
+ * @param coolPoints          本块爽点文案，用于关键词识别
  */
 function inferChapterType(
   chapterNo: number,
-  totalChapters: number,
-  isLastBlock: boolean,
+  isLastChapter: boolean,
+  isBlockLastChapter: boolean,
   coolPoints: string[],
 ): string {
-  // 整体最后 1 章倾向收束
-  if (isLastBlock && chapterNo === totalChapters) {
-    const coolText = coolPoints.join('');
+  const coolText = coolPoints.join('');
+
+  // 全书最后一章 → 收束
+  if (isLastChapter) {
     if (coolText.includes('结局') || coolText.includes('收尾') || coolText.includes('落幕')) {
       return 'ending';
     }
   }
   // 高潮类
-  const coolText = coolPoints.join('');
   if (coolText.includes('高潮') || coolText.includes('决战') || coolText.includes('巅峰')) {
     return 'climax';
   }
-  // 第 1 章
+  // 第 1-3 章：开篇建置（网文惯例）
   if (chapterNo === 1) return 'world_intro';
-  // 第 2 章
   if (chapterNo === 2) return 'character_intro';
-  // 第 3 章
   if (chapterNo === 3) return 'plot_setup';
-  // 区间末章
-  if (chapterNo === totalChapters && (coolText.includes('解决') || coolText.includes('收'))) {
+  // 区间末章且为解决类
+  if (isBlockLastChapter && (coolText.includes('解决') || coolText.includes('收'))) {
     return 'resolution';
   }
   return 'normal';
@@ -407,10 +416,14 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
   const chapters: GeneratedChapter[] = [];
 
   let globalChapterNo = 0;
+  // 上一章的 CEN，用于本章 CBN 承接（跨块保留，使第 6 章能承接第 5 章结尾）
+  let prevChapterCEN: string | undefined;
 
   blocks.forEach((block, blockIndex) => {
     const isLastBlock = blockIndex === blocks.length - 1;
-    const { start, count } = parseChapterRange(block.range, globalChapterNo + 1);
+    // 解析区间只为拿到块内章节数（count），章号一律用 globalChapterNo 累加。
+    // start 在 AI 输出不连续区间时会跳号，不能作为绝对章号使用。
+    const { count } = parseChapterRange(block.range, globalChapterNo + 1);
     const blockSize = Math.max(1, count);
 
     // 在区间内均分 mustEvents（每章 1-2 个，按顺序循环）
@@ -420,24 +433,43 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
 
     for (let i = 0; i < blockSize; i++) {
       globalChapterNo += 1;
-      const chapterNo = start + i;
+      // 章号必须用 globalChapterNo（按生成顺序累加的绝对章号）。
+      // 此前用 `start + i`（start 来自 parseChapterRange(block.range)）：
+      // 当 AI 输出的区间不连续（如 1-5 / 11-15）时，第二块的第一章 chapterNo
+      // 会从 11 起跳，标题变成"第 11 章"但它其实是全书第 6 章；
+      // 更糟的是 inferChapterType 用 chapterNo 判定前 3 章建置类型，
+      // 跳号会让 world_intro/character_intro/plot_setup 全部错位。
+      const chapterNo = globalChapterNo;
+      const isBlockLastChapter = i === blockSize - 1;
+      const isLastChapter = isLastBlock && isBlockLastChapter;
 
       // 均分关键事件
       const eventStart = Math.floor((i * mustEvents.length) / blockSize);
       const eventEnd = Math.floor(((i + 1) * mustEvents.length) / blockSize);
       const keyEvents = mustEvents.slice(eventStart, Math.max(eventEnd, eventStart + 1));
 
-      // CBN：首章用开篇钩子；否则用前章 CEN 的简化版（区间内承接）
       const isFirstChapterOverall = globalChapterNo === 1;
-      const isBlockFirstChapter = i === 0;
+
+      // CBN（Bug 1/Q1 修复）：首章用开篇钩子；非首章承接上一章的 CEN，
+      // 形成 CBN→CEN→CBN 连锁，避免“承接上章，继续推进：{objective}”这类
+      // 对模型零信息量的占位文案被当成硬约束注入。
       const CBN = isFirstChapterOverall
         ? outline.startupPack30.openingHook || block.objective
-        : isBlockFirstChapter
-          ? `承接前段：${block.objective}`
-          : `承接上章，继续推进${block.objective ? `：${block.objective}` : ''}`;
+        : prevChapterCEN
+          ? `承接上章结尾：${prevChapterCEN}`
+          : `承接前段：${block.objective}`;
 
-      // CEN：用本区间必留钩子
-      const CEN = block.hookRequirement || `完成本区间第 ${i + 1}/${blockSize} 段推进`;
+      // CEN（Bug 1 修复）：块末章用本块必留钩子（真正的章尾钩子）；
+      // 非末章用本章推进到的节点（最后一个关键事件）。
+      // 原实现块内 5 章共用同一个 block.hookRequirement，导致结尾高度重复。
+      const CEN = isBlockLastChapter
+        ? block.hookRequirement || `完成本区间第 ${i + 1}/${blockSize} 段推进，转向下一区间`
+        : keyEvents.length > 0
+          ? `推进至：${keyEvents[keyEvents.length - 1]}`
+          : `完成本区间第 ${i + 1}/${blockSize} 段推进`;
+
+      // 记录本章 CEN 供下一章 CBN 承接
+      prevChapterCEN = CEN;
 
       // CPNs：派生 1-3 个推进节点
       const CPNs = keyEvents.length > 0
@@ -447,8 +479,8 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
       // mustCover：本章承接的关键事件
       const mustCover = keyEvents.length > 0 ? keyEvents : undefined;
 
-      // chapterType
-      const chapterType = inferChapterType(chapterNo, blockSize, isLastBlock, coolPoints);
+      // chapterType（Bug 2 修复：改用显式布尔而非 chapterNo===totalChapters）
+      const chapterType = inferChapterType(chapterNo, isLastChapter, isBlockLastChapter, coolPoints);
 
       // hookType
       const hookType = inferHookType(block.hookRequirement);
@@ -479,6 +511,8 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
         CPNs,
         CEN,
         mustCover,
+        // 禁区（Bug 5 修复）：块级禁区全块共用，透传到 plotOutline 供续写消费
+        forbiddenZones: block.forbiddenZones,
         // 写作策略
         chapterType,
         hookType,
@@ -494,24 +528,41 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
 
 function toChapters(outline: ExecutableOutline): GeneratedChapter[] {
   if (outline.chapterBlueprints?.length) {
-    return outline.chapterBlueprints.map((chapter) => ({
-      title: chapter.title,
-      number: chapter.orderIndex,
-      summary: chapter.summary,
-      keyEvents: chapter.mustCover,
-      involvedCharacters: chapter.involvedCharacters ?? [],
-      coreEvent: chapter.CEN,
-      coolPoints: chapter.coolPointType ? [chapter.coolPointType] : [],
-      hook: chapter.hookType,
-      // 结构化节点
-      CBN: chapter.CBN,
-      CPNs: chapter.CPNs,
-      CEN: chapter.CEN,
-      mustCover: chapter.mustCover,
-      forbiddenZones: chapter.forbiddenZones,
-      chapterType: undefined,
-      hookType: chapter.hookType,
-    }));
+    const blueprints = outline.chapterBlueprints;
+    return blueprints.map((chapter, index) => {
+      const coolPoints = chapter.coolPointType ? [chapter.coolPointType] : [];
+      // ChapterBlueprint 当前不带 chapterType 字段，这里像 splitStartupBlocksToChapters 一样
+      // 用 inferChapterType 派生，避免该分支产出后所有章节 chapterType 丢失、续写端退回关键词猜测。
+      const isLastChapter = index === blueprints.length - 1;
+      const chapterType = inferChapterType(
+        chapter.orderIndex,
+        isLastChapter,
+        isLastChapter, // blueprints 为逐章蓝图，无块概念，区间末章等同全书末章
+        coolPoints,
+      );
+      const isClimax = chapterType === 'climax' || chapterType === 'ending';
+      return {
+        title: chapter.title,
+        number: chapter.orderIndex,
+        summary: chapter.summary,
+        keyEvents: chapter.mustCover,
+        involvedCharacters: chapter.involvedCharacters ?? [],
+        coreEvent: chapter.CEN,
+        coolPoints,
+        hook: chapter.hookType,
+        // 结构化节点
+        CBN: chapter.CBN,
+        CPNs: chapter.CPNs,
+        CEN: chapter.CEN,
+        mustCover: chapter.mustCover,
+        forbiddenZones: chapter.forbiddenZones,
+        // 写作策略
+        chapterType,
+        hookType: chapter.hookType,
+        isClimax,
+        expectedCoolPoints: chapter.coolPointType ? 1 : undefined,
+      };
+    });
   }
 
   // 当前 AI 不生成 chapterBlueprints，走拆分 startupPack30 的路径

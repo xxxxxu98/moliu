@@ -71,6 +71,7 @@ function parseStartupBlock(block: string, range: string): StartupChapterBlock {
     hookRequirement: extractFieldValue(block, '必留钩子') ?? '',
     pacing: pacingRaw.includes('快') && !pacingRaw.includes('中') ? 'fast' : 'medium',
     readerExpectation: extractFieldValue(block, '读者期待') ?? '',
+    forbiddenZones: extractMultiValueField(block, '本块禁区'),
   };
 }
 
@@ -477,6 +478,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
       hookRequirement: '',
       pacing: 'medium' as const,
       readerExpectation: '',
+      forbiddenZones: [],
     }];
 
   const keyCharacters = parseCharacterSection(characterSection, protagonistName);

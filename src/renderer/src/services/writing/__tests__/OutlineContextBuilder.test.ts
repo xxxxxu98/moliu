@@ -184,17 +184,19 @@ describe('OutlineContextBuilder - P1 B1 窗口化', () => {
     expect(cbnCount).toBe(30);
   });
 
-  it('buildWindowedOutlineText: 当前章 ± 5 章有细纲，其余只有标题', () => {
+  it('buildWindowedOutlineText: 当前章 ± 5 章有细纲，其余只有标题（当前章细纲由外层注入）', () => {
     const plot = makeManyChapters(30);
     const win = buildWindowedOutlineText(plot, 15, 5);
 
-    // 当前章 15（0-based），窗口是 10..20
-    // CBN 只应出现在第 11..21 章共 11 个
+    // 当前章 15（0-based），窗口是 10..20。
+    // 当前章细纲由调用方（useChapterWriter.buildWritingPromptParts）单独注入，窗口内不再展开，
+    // 因此 CBN 只应出现在窗口内除当前章外的 10 章上（10..14 + 16..20）。
     const cbnCount = (win.match(/章节起点 CBN/g) || []).length;
-    expect(cbnCount).toBe(11);
+    expect(cbnCount).toBe(10);
 
-    // 当前章标记
+    // 当前章标记（保留，便于模型定位），且指向"详见本章大纲"
     expect(win).toContain('【当前章】');
+    expect(win).toContain('（详见上方「本章大纲」）');
 
     // 前后省略提示
     expect(win).toContain('省略前');
@@ -237,5 +239,113 @@ describe('OutlineContextBuilder - P1 B1 窗口化', () => {
   it('buildWindowedOutlineText: 空大纲返回空串', () => {
     expect(buildWindowedOutlineText([], 0, 5)).toBe('');
     expect(buildFullOutlineText([])).toBe('');
+  });
+});
+
+describe('OutlineContextBuilder - orderIndex 去污染（启动包窗口修复）', () => {
+  it('extractChapterContext: orderIndex 用位置序号而非节点原始 orderIndex（被 act 污染的场景）', () => {
+    const plot = makePlotOutline(); // 4 个 act + 3 个 chapter，chapter.orderIndex 从 4 开始
+    // 命中第 1 个 chapter 节点（plot-ch-1），其 node.orderIndex=4，但位置序号应为 0
+    const ctx = extractChapterContext(plot, 'plot-ch-1', '第1章');
+    expect(ctx).not.toBeNull();
+    // 关键断言：ctx.orderIndex 必须是 0（章节序号），不是 4（被污染的节点序号）。
+    // 若透传 node.orderIndex，buildEnhancedDesignPrompt 的 `orderIndex+1 <= 30` 启动包判断会提前失效。
+    expect(ctx!.orderIndex).toBe(0);
+
+    const ctx2 = extractChapterContext(plot, 'plot-ch-3', '第3章');
+    expect(ctx2!.orderIndex).toBe(2); // 不是 6
+  });
+
+  it('buildEnhancedDesignPrompt: 启动包在 polluted-orderIndex 场景下仍正确注入（前 30 章）', async () => {
+    // 直接验证最终效果：30 个 chapter 节点但 orderIndex 被前置 act 污染到 4..33，
+    // 第 1 章（位置 0）必须仍命中 startupPack 注入条件。
+    const { buildEnhancedDesignPrompt } = await import('@/services/writing/OutlineContextBuilder');
+    const plot = makePlotOutline();
+    const ctx = extractChapterContext(plot, 'plot-ch-1', '第1章')!;
+    const prompt = buildEnhancedDesignPrompt({
+      projectTitle: '测试',
+      projectSynopsis: '',
+      projectGenre: [],
+      currentChapter: ctx,
+      currentChapterOutline: ctx.description,
+      startupPack: {
+        openingHook: '钩子',
+        promiseToReader: '承诺',
+        protagonistFirstImpression: '',
+        firstMajorCoolPoint: '',
+        firstConflictCycle: '',
+        chapterBlocks: [],
+      },
+    });
+    // ctx.orderIndex=0 → currentChapterNo=1 → 应注入启动包段落
+    expect(prompt).toContain('开篇承诺与前 30 章启动包');
+    expect(prompt).toContain('当前是第 1 章');
+  });
+});
+
+describe('OutlineContextBuilder - Bug 3/4 故事线渲染修复', () => {
+  it('Bug 3: 人物线输出角色名（id）而非 role', async () => {
+    const { buildEnhancedDesignPrompt } = await import('@/services/writing/OutlineContextBuilder');
+    const ctx = extractChapterContext(makePlotOutline(), 'plot-ch-1', '第1章')!;
+    const prompt = buildEnhancedDesignPrompt({
+      projectTitle: '测试',
+      projectSynopsis: '',
+      projectGenre: [],
+      currentChapter: ctx,
+      currentChapterOutline: '',
+      storyLines: {
+        // normalizeStoryLines 的真实形状：planned 为 [{id, role}]
+        character: {
+          planned: [
+            { id: '萧炎', role: '主角' },
+            { id: '药老', role: '导师' },
+          ],
+          introduced: [],
+          keyRelationships: [],
+        },
+      } as any,
+    });
+    expect(prompt).toContain('萧炎');
+    expect(prompt).toContain('药老');
+    // 不应把 role 当成名字输出
+    expect(prompt).not.toMatch(/人物线：主角、导师/);
+  });
+
+  it('Bug 4: 收集线从 collection.target 读取（progress 恒为空）', async () => {
+    const { buildEnhancedDesignPrompt } = await import('@/services/writing/OutlineContextBuilder');
+    const ctx = extractChapterContext(makePlotOutline(), 'plot-ch-1', '第1章')!;
+    const prompt = buildEnhancedDesignPrompt({
+      projectTitle: '测试',
+      projectSynopsis: '',
+      projectGenre: [],
+      currentChapter: ctx,
+      currentChapterOutline: '',
+      storyLines: {
+        collection: {
+          target: ['异火', '灵印', '法宝'],
+          progress: [], // normalizeStoryLines 落库后恒为空
+        },
+      } as any,
+    });
+    expect(prompt).toContain('异火');
+    expect(prompt).toContain('法宝');
+    expect(prompt).not.toMatch(/收集线：（暂无）/);
+  });
+});
+
+describe('OutlineContextBuilder - R4 窗口化越界 clamp', () => {
+  it('chapterOrderIndex 超出节点数时 clamp 到最后一章，仍标记当前章', () => {
+    const plot = makePlotOutline(); // 3 个 chapter 节点（0..2）
+    // 模拟用户手动加章，真实章序号 10 远超大纲节点数
+    const win = buildWindowedOutlineText(plot, 10, 5);
+    expect(win).toContain('【当前章】');
+    // 当前章 clamp 到第 3 章（最后一章），不应崩溃或全空
+    expect(win).toContain('【第3章】');
+  });
+
+  it('chapterOrderIndex 为负数时 clamp 到第 0 章', () => {
+    const plot = makePlotOutline();
+    const win = buildWindowedOutlineText(plot, -5, 5);
+    expect(win).toContain('【当前章】');
   });
 });

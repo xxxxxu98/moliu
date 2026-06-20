@@ -40,20 +40,18 @@ import {
   type OutlineStep,
   isAllStepsComplete,
   getProgressPercentage,
-  type OutlineFramework,
 } from '@/data/five-step-outline';
 import {
-  buildMasterOutlinePrompt,
   buildVolumeBeatPrompt,
   buildTimelinePrompt,
-  type FiveStepPromptOptions,
   type VolumeBeatPromptOptions,
   type TimelinePromptOptions,
 } from '@/services/outline/prompts';
-import type { StoryContract } from '@/services/outline/contracts';
-import OutlineDisplay from '@/components/common/OutlineDisplay.vue';
 import type { GeneratedOutline } from '@/types/inspiration';
 import { useOutlineGenerator } from '@/composables/useOutlineGenerator';
+import { useProjectCreator } from '@/composables/useProjectCreator';
+import { mapExecutableOutlineToGeneratedOutline } from '@/services/outline/adapters/executable-outline-adapter';
+import type { OutlineDirection } from '@/services/outline/types/direction';
 import type { WritingTemplate } from './QuickStart.vue';
 
 const props = defineProps<{
@@ -65,14 +63,21 @@ const message = useMessage();
 const projectStore = useProjectStore();
 const settingsStore = useSettingsStore();
 
+// 只解构实际用到的：expandDirection（生成）、generationError（错误展示）。
+// 其余状态（isGenerating/progress/reset）原本从未在模板或 script 中被引用，留着会触发 noUnusedLocals。
 const {
-  isGenerating,
   error: generationError,
-  progress: generationProgress,
-  outlines: generatedOutlines,
-  generateOutlines,
-  reset: resetOutlineState,
+  expandDirection,
 } = useOutlineGenerator();
+
+// 项目创建：五步法生成的大纲此前只存到本地 fiveStepResult，没有任何"应用到项目"出口，
+// OutlineDisplay 也没渲染，等于生成了无处可用。这里接上 useProjectCreator，与
+// InspirationPanel / QuickStart 走同一条 createProject 路径。
+const {
+  isCreating,
+  error: projectCreateError,
+  createProject: doCreateProject,
+} = useProjectCreator();
 
 // ============================================================
 // 字数范围状态
@@ -232,9 +237,11 @@ const storyLineField = (id: string) => {
 };
 
 // 五步大纲法数据
-const fiveStepData = ref<Partial<OutlineFramework>>({});
+// 注意：fiveStepData 此前是构造 OutlineFramework 喂给 buildMasterOutlinePrompt 的中间结构，
+// 现在五步法已切换到 expandDirection 路径（与 QuickStart 一致），不再需要它。
+// fiveStepResult 类型修正为 GeneratedOutline（此前是 StoryContract 与实际赋值不匹配）。
 const fiveStepPrompt = ref('');
-const fiveStepResult = ref<StoryContract | null>(null);
+const fiveStepResult = ref<GeneratedOutline | null>(null);
 const isGeneratingFiveStep = ref(false);
 
 // ============================================================
@@ -306,6 +313,17 @@ function nextStep() {
 // ============================================================
 // 五步大纲法生成
 // ============================================================
+//
+// 关键修复：此前调用 generateOutlines（默认 count=3 走多候选 Markdown 解析），
+// 产出的 GeneratedOutline.chapters 只有 title/summary/keyEvents，完全没有
+// CBN/CPNs/CEN/chapterType/hookType 等结构化字段——续写端精心做的位置兜底、
+// 窗口化、策略注入在前 30 章一概拿不到数据。
+// 现在切换到与 QuickStart 一致的 expandDirection 路径：
+//   1. 把 5 步真实输入（含此前被丢弃的第 4/5 步）拼成 seed
+//   2. 从 seed 合成一个 OutlineDirection（跳过"方向卡"那步 AI 调用，
+//      直接用用户输入构造，省一次 API 调用）
+//   3. expandDirection(seed, syntheticDirection) → ExecutableOutline
+//   4. mapExecutableOutlineToGeneratedOutline → 带 CBN/CPNs/CEN 的 GeneratedOutline
 async function generateFiveStepOutline() {
   if (!allComplete.value) {
     message.warning('请先完成所有步骤');
@@ -313,69 +331,116 @@ async function generateFiveStepOutline() {
   }
 
   isGeneratingFiveStep.value = true;
+  fiveStepResult.value = null;
 
   try {
-    // 构建五步大纲数据
-    fiveStepData.value = {
-      emotionGoal: stepData.value.emotionGoal,
-      coreSetting: {
-        world: stepData.value.setting,
-        rules: [],
-        uniqueFeature: '',
-      },
-      protagonist: {
-        name: '',
-        personality: '',
-        strengths: '',
-        weaknesses: '',
-        growthArc: '',
-      },
-      structure: {
-        opening: '',
-        conflicts: [],
-        turningPoints: [],
-        climax: stepData.value.pleasurePoints,
-        resolution: '',
-      },
-      pleasurePoints: {
-        scenes: [stepData.value.pleasurePoints],
-        frequency: '',
-      },
-      storyLines: storyLines.value,
-      conflictDesign: conflictDesign.value,
+    // 1. seed 必须包含全部 5 步用户输入。
+    //    此前只拼了 emotionGoal/setting/protagonist 三步，第 4 步（结构）和第 5 步（爽点）
+    //    被 UI 强制要求填满后直接丢弃，自相矛盾。现在全部纳入，并附上八条故事线/矛盾设计
+    //    （用户在"高级"里填的）和模板元数据（仅作方向参考）。
+    const seedParts: string[] = [
+      `【情绪目标】\n${stepData.value.emotionGoal}`,
+      `【世界观/背景设定】\n${stepData.value.setting}`,
+      `【主角设定】\n${stepData.value.protagonist}`,
+      `【故事结构】\n${stepData.value.structure}`,
+      `【爽点/高潮设计】\n${stepData.value.pleasurePoints}`,
+    ];
+
+    const filledStoryLines = Object.entries(storyLines.value)
+      .filter(([, v]) => v && v.trim())
+      .map(([k, v]) => `- ${k}：${v}`);
+    if (filledStoryLines.length > 0) {
+      seedParts.push(`【八条故事线（用户补充）】\n${filledStoryLines.join('\n')}`);
+    }
+
+    if (conflictDesign.value.source || conflictDesign.value.majorConflicts.length > 0) {
+      seedParts.push(`【矛盾设计（用户补充）】\n来源：${conflictDesign.value.source || '（未指定）'}\n主要冲突：${conflictDesign.value.majorConflicts.join('、') || '（未指定）'}`);
+    }
+
+    if (templateContext.value) {
+      const tc = templateContext.value;
+      const tcParts = [`模板：${tc.name}`, `描述：${tc.description}`];
+      if (tc.coreFormula) tcParts.push(`核心公式：${tc.coreFormula}`);
+      if (tc.requiredElements?.length) tcParts.push(`核心元素：${tc.requiredElements.join('、')}`);
+      if (tc.rhythmAdvice) tcParts.push(`节奏建议：${tc.rhythmAdvice}`);
+      if (tc.structureTemplate) tcParts.push(`结构模板：${tc.structureTemplate}`);
+      seedParts.push(`【参考模板（仅作方向参考，以用户上述意图为准）】\n${tcParts.join('\n')}`);
+    }
+
+    if (volumeData.value.genre) {
+      seedParts.push(`【题材】${volumeData.value.genre}`);
+    }
+
+    const seed = seedParts.join('\n\n');
+
+    // 2. 合成 OutlineDirection：把 5 步输入映射到方向卡的 11 个字段。
+    //    不调用 generateDirections（省一次 API + 不暴露方向卡 UI），直接用用户意图构造。
+    const direction: OutlineDirection = {
+      id: `fivestep-${Date.now()}`,
+      title: stepData.value.emotionGoal.slice(0, 20) || '五步法大纲',
+      oneLiner: stepData.value.emotionGoal,
+      premise: stepData.value.setting,
+      protagonistArc: stepData.value.protagonist,
+      coreConflict: conflictDesign.value.source
+        || (conflictDesign.value.majorConflicts[0] as string | undefined)
+        || '见用户输入',
+      coolPointStyle: stepData.value.pleasurePoints
+        ? stepData.value.pleasurePoints.split(/[，,。；;\n]/).map((s) => s.trim()).filter(Boolean)
+        : [],
+      targetEmotions: stepData.value.emotionGoal
+        ? stepData.value.emotionGoal.split(/[，,。；;\n]/).map((s) => s.trim()).filter(Boolean).slice(0, 3)
+        : [],
+      riskNotes: [],
+      recommendationScore: 100, // 用户自选，不参与排序
+      recommendedReason: '用户通过五步大纲法手工设定',
+      longformCapacityNote: stepData.value.structure || undefined,
     };
 
-    // 构建提示词：种子以用户真实输入为主，模板元数据作为"参考方向"附在后面，
-    // 明确区分两者，避免占位文案被当成用户的创意意图。
-    const userSeed = stepData.value.emotionGoal + '\n' + stepData.value.setting + '\n' + stepData.value.protagonist;
-    const templateRef = templateContext.value
-      ? `\n\n【参考模板（仅作方向参考，以用户上述意图为准）】\n模板：${templateContext.value.name}\n描述：${templateContext.value.description}${templateContext.value.coreFormula ? `\n核心公式：${templateContext.value.coreFormula}` : ''}${templateContext.value.requiredElements?.length ? `\n核心元素：${templateContext.value.requiredElements.join('、')}` : ''}${templateContext.value.rhythmAdvice ? `\n节奏建议：${templateContext.value.rhythmAdvice}` : ''}`
-      : '';
+    // 展示用的合成 prompt（仅供 UI 复制/调试，不再参与生成）
+    fiveStepPrompt.value = `【合成种子】\n${seed}\n\n【合成方向卡】\n${JSON.stringify(direction, null, 2)}`;
 
-    const promptOptions: FiveStepPromptOptions = {
-      seed: userSeed + templateRef,
-      genre: volumeData.value.genre,
-      template: undefined,
+    // 3. 调用 expandDirection（与 QuickStart 同一路径）
+    const executable = await expandDirection(seed, direction, {
       wordCountRange: wordCountRange.value,
-    };
-
-    const { system, user } = buildMasterOutlinePrompt(promptOptions);
-    fiveStepPrompt.value = system + '\n\n---\n\n' + user;
-
-    // 调用 AI 生成（使用现有的生成器）
-    const result = await generateOutlines(fiveStepPrompt.value, {
       temperature: 0.7,
-      wordCountRange: wordCountRange.value,
     });
 
-    if (result && result.length > 0) {
-      fiveStepResult.value = result[0] as any;
-      message.success('大纲生成成功');
+    // 4. 转 GeneratedOutline（带 CBN/CPNs/CEN/chapterType 等结构化字段）
+    if (executable) {
+      fiveStepResult.value = mapExecutableOutlineToGeneratedOutline(executable, {
+        targetWordCountRange: wordCountRange.value,
+      });
+      message.success('大纲生成成功，可点击下方"创建项目"应用');
+    } else {
+      message.error(generationError.value || '大纲生成失败，请重试');
     }
   } catch (error) {
     message.error('生成失败: ' + (error as Error).message);
   } finally {
     isGeneratingFiveStep.value = false;
+  }
+}
+
+// ============================================================
+// 应用五步法大纲到项目
+// ============================================================
+async function applyFiveStepOutline() {
+  if (!fiveStepResult.value) {
+    message.warning('请先生成大纲');
+    return;
+  }
+
+  try {
+    // 类型已是 GeneratedOutline，无需强转（此前是 as GeneratedOutline，
+    // 但 fiveStepResult 声明为 StoryContract，运行时其实是 GeneratedOutline，纯靠 any 凑合）。
+    const projectId = await doCreateProject(fiveStepResult.value);
+    if (projectId) {
+      message.success('项目创建成功，正在跳转…');
+    } else {
+      message.error(projectCreateError.value || '项目创建失败');
+    }
+  } catch (error) {
+    message.error('创建项目失败: ' + (error as Error).message);
   }
 }
 
@@ -706,6 +771,21 @@ function resetTimeline() {
         <NButton type="success" class="mt-3 w-full" :loading="isGeneratingFiveStep" @click="generateFiveStepOutline">
           <Sparkles class="w-4 h-4 mr-2" />
           生成大纲
+        </NButton>
+      </div>
+
+      <!-- 创建项目出口：生成成功后把大纲落地为新项目（与 InspirationPanel/QuickStart 同路径） -->
+      <div v-if="fiveStepResult" class="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800">
+        <div class="flex items-center gap-3">
+          <Check class="w-6 h-6 text-blue-500" />
+          <div class="flex-1 mb-1">
+            <h4 class="font-medium text-blue-700 dark:text-blue-400">大纲已就绪</h4>
+            <p class="text-xs text-blue-600 dark:text-blue-500">点击下方按钮，把这份大纲应用为新项目并进入编辑器</p>
+          </div>
+        </div>
+        <NButton type="primary" class="mt-3 w-full" :loading="isCreating" @click="applyFiveStepOutline">
+          <ArrowRight class="w-4 h-4 mr-2" />
+          创建项目
         </NButton>
       </div>
 

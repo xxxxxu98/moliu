@@ -630,14 +630,14 @@ export class PromptBuilder {
     let modeInstruction: string;
     if (mode === 'smartContinue') {
       // 基于大纲的续写指令
+      // 注意：大纲正文已统一在下方 userPrompt 的「本章大纲」段落注入一次，
+      // 这里只引用「上方本章大纲」，避免同一份 CBN/CPNs/CEN 在 prompt 里出现两次
+      // （此前既嵌进 modeInstruction 又追加到 userPrompt，token 浪费且模型会困惑以哪份为准）。
       if (currentChapterOutline) {
-        modeInstruction = `请续写以下故事内容。根据本章大纲完成任务：
-
-### 本章任务（来自大纲）【必须完成】
-${currentChapterOutline}
+        modeInstruction = `请续写以下故事内容。根据上方「本章大纲」完成任务：
 
 ### 任务执行原则
-1. **严格按照大纲**：本章的所有内容都必须围绕上述大纲展开
+1. **严格按照大纲**：本章的所有内容都必须围绕上方本章大纲展开
 2. **完成大纲后再结束**：即使字数达到要求，如果大纲任务未完成，应继续完成
 3. **自然衔接**：如果已有内容，要从结尾处自然衔接
 4. **动态调整**：如果大纲任务简单可提前完成，可适当扩展细节；如果复杂，字数可适当超出
@@ -825,8 +825,12 @@ ${customPrompt}`;
       userPrompt += `\n\n${strategy}`;
     }
 
-    // ===== 新增：高潮章节特殊提示 =====
-    if (context.currentChapterOutlineContext?.isClimax) {
+    // ===== 高潮章节特殊提示 =====
+    // 注意（R2 修复）：chapterType=climax 时上方 _getChapterTypeStrategy 已注入
+    // “这是故事最激烈的部分”等同义内容，此处仅对 isClimax=true 但 chapterType
+    // 不是 climax 的章节（如 ending 被标记 isClimax）补充，避免同义内容双重注入。
+    if (context.currentChapterOutlineContext?.isClimax
+        && context.currentChapterOutlineContext?.chapterType !== 'climax') {
       userPrompt += `\n\n【高潮章节特殊要求】
 本章为高潮章节！需要：
 - 最强的冲突对抗，所有矛盾在此爆发

@@ -126,6 +126,8 @@ export interface StartupChapterBlock {
   hookRequirement: string;
   pacing: 'fast' | 'medium';
   readerExpectation: string;
+  /** 本块禁区（1-3 条），约束正文不提前摊牌/泄露关键信息，透传到章节级 forbiddenZones */
+  forbiddenZones?: string[];
 }
 
 export interface StartupPack30 {

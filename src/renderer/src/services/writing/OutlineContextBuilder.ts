@@ -169,21 +169,48 @@ export function extractChapterContext(
   chapterTitle?: string,
   chapterOrderIndex?: number,
 ): ChapterOutlineContext | null {
+  // 章节型节点序列（按 orderIndex 升序）。同时用于位置兜底和 positional orderIndex 计算。
+  const chapterNodes = getChapterPlotNodes(plotOutline);
+
   // 1. 显式 chapterId 绑定
   let node = plotOutline.find((p) => p.chapterId === chapterId);
   // 2. plot 节点 id 直接命中（buildFullOutlineText 场景）
   if (!node) node = plotOutline.find((p) => p.id === chapterId);
   // 3. 位置兜底：第 N 个 chapter 型节点对应第 N 章
   if (!node && chapterOrderIndex !== undefined && chapterOrderIndex >= 0) {
-    const chapterNodes = getChapterPlotNodes(plotOutline);
     node = chapterNodes[chapterOrderIndex];
   }
   if (!node) return null;
 
+  // orderIndex 用「在 chapter 型节点序列中的位置」，而非节点原始 orderIndex。
+  // 首页大纲落地时 chapter 节点的 orderIndex 会被前面的 act/subplot 污染（不是 0-based 章节序号），
+  // 直接透传会导致 buildEnhancedDesignPrompt 的「前 30 章启动包」窗口判断错位（提前若干章丢弃启动包）。
+  const positionalIndex = chapterNodes.findIndex((n) => n.id === node.id);
+
+  return plotNodeToContext(
+    node,
+    chapterTitle,
+    positionalIndex >= 0 ? positionalIndex : (node.orderIndex ?? 0),
+  );
+}
+
+/**
+ * 把 PlotNode 直接映射成 ChapterOutlineContext。
+ *
+ * 抽出来供 extractChapterContext / buildFullOutlineText / buildWindowedOutlineText 共用，
+ * 避免后两者为了拿 ctx 再回头调 extractChapterContext（内部 find 会造成 O(N²)）。
+ *
+ * @param overrideOrderIndex 显式 orderIndex（通常是位置序号），不传则用 node.orderIndex
+ */
+function plotNodeToContext(
+  node: PlotNode,
+  fallbackTitle?: string,
+  overrideOrderIndex?: number,
+): ChapterOutlineContext {
   return {
-    title: node.title || chapterTitle || '未命名',
+    title: node.title || fallbackTitle || '未命名',
     description: node.description || '',
-    orderIndex: node.orderIndex ?? 0,
+    orderIndex: overrideOrderIndex ?? node.orderIndex ?? 0,
 
     CBN: node.CBN,
     CPNs: node.CPNs,
@@ -271,8 +298,9 @@ export function buildFullOutlineText(plotOutline: PlotNode[]): string {
     .map((node, i) => {
       const num = i + 1;
       const title = node.title || `第${num}章`;
-      const ctx = extractChapterContext(plotOutline, node.id, title);
-      const outlineText = ctx ? buildChapterOutlineText(ctx, true) : (node.description || '（暂无大纲）');
+      // 直接由 node 构造 ctx，不再回头调 extractChapterContext（避免每章一次 find 造成 O(N²)）。
+      const ctx = plotNodeToContext(node, title, i);
+      const outlineText = buildChapterOutlineText(ctx, true);
       const isClimax = node.isClimax ? ' ⭐高潮' : '';
       return `【第${num}章】${title}${isClimax}\n${outlineText}`;
     })
@@ -299,7 +327,11 @@ export function buildWindowedOutlineText(
   const chapters = getChapterPlotNodes(plotOutline);
   if (chapters.length === 0) return '';
 
-  const current = chapterOrderIndex;
+  // 越界 clamp（R4 修复）：真实章节数可能多于大纲节点数（用户手动加章），
+  // 此时传入的 chapterOrderIndex 会落在 chapters.length 之外，
+  // 导致 `i === current` 永不命中、当前章无细纲、所有章节只剩标题行。
+  // 这里把 current 钳到 [0, length-1]，保证总有 1 章被标“当前章”。
+  const current = Math.min(Math.max(0, chapterOrderIndex), chapters.length - 1);
   const lo = Math.max(0, current - windowSize);
   const hi = Math.min(chapters.length - 1, current + windowSize);
 
@@ -311,11 +343,14 @@ export function buildWindowedOutlineText(
     const num = i + 1;
     const title = node.title || `第${num}章`;
     const isClimax = node.isClimax ? ' ⭐高潮' : '';
-    if (i >= lo && i <= hi) {
-      const ctx = extractChapterContext(plotOutline, node.id, title);
-      const outlineText = ctx ? buildChapterOutlineText(ctx, true) : (node.description || '（暂无大纲）');
-      const marker = i === current ? '【当前章】' : '';
-      lines.push(`【第${num}章】${marker}${title}${isClimax}\n${outlineText}`);
+    if (i === current) {
+      // 当前章细纲已由调用方（useChapterWriter.buildWritingPromptParts）通过 currentChapterOutline
+      // 单独注入到 prompt，这里只给标题占位，避免同一章的 CBN/CPNs/CEN 在 prompt 里重复出现。
+      lines.push(`【第${num}章】【当前章】${title}${isClimax}（详见上方「本章大纲」）`);
+    } else if (i >= lo && i <= hi) {
+      const ctx = plotNodeToContext(node, title, i);
+      const outlineText = buildChapterOutlineText(ctx, true);
+      lines.push(`【第${num}章】${title}${isClimax}\n${outlineText}`);
     } else {
       lines.push(`【第${num}章】${title}${isClimax}`);
     }
@@ -324,69 +359,6 @@ export function buildWindowedOutlineText(
     lines.push(`\n……（省略后 ${chapters.length - 1 - hi} 章）……`);
   }
   return lines.join('\n\n');
-}
-
-// ============================================
-// 章节写作策略
-// ============================================
-
-/**
- * 获取章节类型对应的写作策略 prompt 片段
- */
-export function getChapterTypeStrategy(chapterType?: string): string {
-  const strategies: Record<string, string> = {
-    world_intro: `【章节策略：世界观/背景介绍】
-本章需要详细介绍故事发生的世界背景、时代设定、社会结构等。
-通过人物视角和具体事件自然带出世界观信息，避免大段说明文。
-开篇要点：谁、在哪、有什么、因为什么、要做什么（黄金五章公式）。`,
-
-    character_intro: `【章节策略：人物登场/介绍】
-本章重点介绍角色登场。
-通过具体场景展现角色（登场方式、与环境的互动）。
-外貌描写简洁有力，性格通过言行举止展现。
-建立读者对角色的第一印象。`,
-
-    plot_setup: `【章节策略：情节铺陈/故事开端】
-建立故事框架：开篇引人 → 主角处境 → 埋下伏笔 → 冲突种子 → 目标建立。
-开头危机五词法则：用五个以内的词讲清楚事件，让读者一眼看懂。`,
-
-    conflict: `【章节策略：冲突展开】
-逐步推进冲突规模和激烈程度。
-为主角设置更多障碍和困难。
-节奏加快，在关键处设置悬念。
-冲突必须升级：言语冲突 → 行动冲突 → 激烈对抗 → 决定胜负。`,
-
-    climax: `【章节策略：高潮】
-这是故事最激烈的部分。
-快节奏短句为主，动作+对话+情绪密集交织。
-震惊三层结构：点震惊 → 网震惊 → 深度震惊。
-逼格塑造：歇斯底里解决 → 不爽；风轻云淡一指灭杀 → 爽。`,
-
-    resolution: `【章节策略：冲突解决】
-矛盾化解，核心问题得到解决。
-情感收尾，角色情感得到释放或升华。
-结局逻辑自洽，符合前面铺垫。
-收获盘点：当场收获 + 额外收获。`,
-
-    transitional: `【章节策略：过渡章节】
-节奏放缓，情节缓冲期。
-伏笔铺垫，为后续情节做准备。
-维持期待感：当前目标完成前，提前铺设下一目标线索。`,
-
-    ending: `【章节策略：结尾/收束】
-收束线索，将之前埋设的伏笔和线索收拢。
-情感落幕，给主要情感线一个交代。
-不要所有伏笔都回收，保持自然感。
-避免突然说教/总结人生感悟。`,
-
-    normal: `【章节策略：普通章节】
-正常推进情节，展现角色成长。
-推进人物关系发展。
-保持合理叙事节奏，每章至少1个微爽点。
-每章结尾必须设置钩子。`,
-  };
-
-  return strategies[chapterType || 'normal'] || strategies.normal;
 }
 
 // ============================================
@@ -443,14 +415,33 @@ ${cp.arranged?.length ? `- 已安排爽点：\n${cp.arranged.map((a) => `  · �
       hot: '热恋期',
       climax: '高潮期',
     };
+    // 人物线（Bug 3 修复）：planned 形如 [{id, role}]，id 才是角色名。
+    // 原实现取 p.role，导致输出“主角、盟友、反派”而非真名，人物线信息全部丢失。
+    const characterLine = sl.character?.planned
+      ?.map((p: any) => p.id || p.name || p.role)
+      .filter(Boolean)
+      .join('、') || '（暂无）';
+    // 收集线（Bug 4 修复）：normalizeStoryLines 把收集目标放在 collection.target，
+    // progress 恒为 []，原实现读取 progress 导致收集线永远显示“（暂无）”。
+    const acquiredCollectibles = (sl.collection?.progress || [])
+      .filter((p: any) => p.acquired)
+      .map((p: any) => p.item)
+      .filter(Boolean);
+    const collectionTarget = Array.isArray(sl.collection?.target)
+      ? sl.collection.target.join('、')
+      : (sl.collection?.target as string | undefined);
+    const collectionLine = acquiredCollectibles.length > 0
+      ? `已获：${acquiredCollectibles.join('、')}`
+      : collectionTarget || '';
+
     sections.push(`## 【八条故事线】
 - 地图线：${sl.map?.current || '（暂无）'} ${sl.map?.planned?.length ? `（规划：${sl.map.planned.join('→')}）` : ''}
 - 阵营线：${sl.faction?.planned?.join('、') || '（暂无）'}
-- 人物线：${sl.character?.planned?.map((p: any) => p.role).join('、') || '（暂无）'}
+- 人物线：${characterLine}
 - 金手指线：${sl.goldenfinger?.type || '（暂无）'} - 当前阶段：${sl.goldenfinger?.currentStage || 0}
 - 世界观线：${sl.worldRules?.revealed?.join('、') || '（暂无）'} 待揭示：${sl.worldRules?.pending?.join('、') || '无'}
 - 矛盾线：${sl.conflict?.activeConflict || '（暂无）'}
-- 收集线：${sl.collection?.progress?.filter((p) => p.acquired).map((p) => p.item).join('、') || '（暂无）'}
+- 收集线：${collectionLine || '（暂无）'}
 - 感情线：${sl.romance?.currentStage ? romanceLabels[sl.romance.currentStage] || sl.romance.currentStage : '（暂无）'}
 请确保章节内容推进相关故事线的发展。`);
   }
@@ -477,51 +468,4 @@ ${sp.chapterBlocks?.length ? sp.chapterBlocks.map((b) => `- 第${b.range}章：$
   }
 
   return sections.join('\n\n');
-}
-
-/**
- * 获取写作风格强化 prompt 片段
- */
-export function getWritingStylePrompt(style?: 'concise' | 'elegant' | 'humorous' | 'ancient'): string {
-  const prompts: Record<string, string> = {
-    concise: `## 【风格强化：简洁有力】
-- 惜字如金，每句话都要有信息量
-- 短句为主，避免冗长描写
-- 对话利落，像真人说话
-- 动作代替心理描写`,
-
-    elegant: `## 【风格强化：文笔华丽】
-- 辞藻优美，意境深远
-- 描写细腻，注重感官细节
-- 善用修辞，文字有画面感
-- 节奏舒缓但不拖沓`,
-
-    humorous: `## 【风格强化：幽默风趣】
-- 轻松诙谐，妙语连珠
-- 吐槽和反转是核心武器
-- 角色对话要有趣味
-- 紧张场景中穿插幽默缓解气氛`,
-
-    ancient: `## 【风格强化：古风典雅】
-- 用词典雅，韵味悠长
-- 善用四字词和对仗
-- 人物对话半文半白
-- 意境描写多于直白叙述`,
-  };
-
-  return prompts[style || ''] || '';
-}
-
-/**
- * 构建完整的高潮章节特殊 prompt
- */
-export function getClimaxStrategy(): string {
-  return `【高潮章节特殊要求】
-本章为高潮章节！需要：
-- 最强的冲突对抗，所有矛盾在此爆发
-- 最密集的情绪爆发，情感张力拉到最大
-- 最震撼的逆转或揭示，信息量要足够大
-- 最快的节奏，所有描写都要服务于张力
-- 章尾钩子要足够强，悬念要让人欲罢不能
-请将以上要素发挥到极致。`;
 }

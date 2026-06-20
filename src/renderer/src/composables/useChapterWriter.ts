@@ -116,65 +116,22 @@ export interface UseChapterWriterReturn {
 
 // ============================================
 // 内部状态
+//
+// 说明（Bug 5 修复）：此前 isGenerating / progress / currentStep / currentTaskBook /
+// reportGenerator / recoveryManager 等全部定义在模块顶层，导致：
+// 1) 不同组件 / 不同章节调用 useChapterWriter() 会共享同一份响应式状态（A 的 reset 清掉 B）；
+// 2) currentChapterId / currentChapterNumber 跨章节残留，且在 generateTaskBook 里被引用，
+//    若该函数在 writeChapter 之前被调用（或被并发调用）会触发 ReferenceError。
+// 全部移入工厂函数内部，每次调用都得到独立状态，符合 Vue composable 的预期语义。
+// 当前唯一消费者是 AIPanel.vue（单写手实例），改动行为兼容。
 // ============================================
 
-const isGenerating = ref(false);
-const progress = ref(0);
-const error = ref<string | null>(null);
-const generatedContent = ref('');
+// 字数阈值常量（不依赖响应式状态，保留在模块级）
+const MIN_WORD_THRESHOLD = 0.85; // 最低字数阈值（85%）
+const MAX_WORD_THRESHOLD = 1.15; // 最高字数阈值（115%）
+const MAX_SUPPLEMENT_ROUNDS = 3; // 最多补充轮次
 
-// 流水线状态
-const currentStep = ref<
-  'idle' | 'taskbook' | 'draft' | 'supplement' | 'review' | 'polish' | 'save'
->('idle');
-const blockingIssues = ref<any[]>([]);
-const reviewResult = ref<BlockingReviewResult | null>(null);
-
-// 当前任务书
-let currentTaskBook: WritingTaskBook | null = null;
-
-// 字数统计状态
-const actualWordCount = ref(0);
-const targetWordCount = ref(0);
-const isSupplementing = ref(false);
-const supplementRound = ref(0);
-
-// 报告状态
-const latestReport = ref<StructuredReviewReport | null>(null);
-
-// 初始化报告生成器
-const {
-  generator: reportGenerator,
-  generate: generateReport,
-  exportToJSON,
-  exportToMarkdown,
-  getHistory,
-  getLatestReport,
-} = useReportGenerator();
-
-// 初始化失败恢复
-const {
-  manager: recoveryManager,
-  registerFailure,
-  attemptRecovery: attemptRecoveryAction,
-  getChapterFailures,
-  clearChapterFailures,
-} = useFailureRecovery({
-  onUserDecision: async (failure: FailureState) => {
-    return null;
-  },
-  onRecovery: async (failure: FailureState, strategy: RecoveryStrategy) => {
-    return true;
-  },
-});
-
-// ============================================
-// 工具函数
-// ============================================
-
-/**
- * 统计中文字符和英文单词数量
- */
+// 统计中文字符和英文单词数量（纯函数，模块级共享）
 function countWords(text: string): number {
   if (!text) return 0;
   // 去除 markdown 标题、章节标题和标记
@@ -273,41 +230,7 @@ function extractChapterTypeFromOutline(outline: string, orderIndex: number): Cha
 }
 
 /**
- * 生成写作任务书（核心前置步骤）
- */
-async function generateTaskBook(
-  project: any,
-  chapterIndex: number,
-  chapterOutline: string | undefined,
-  writingStyle: string,
-  targetWordCount: number
-): Promise<WritingTaskBook | null> {
-  try {
-    const builder = createTaskBookBuilder({
-      project,
-      chapterIndex,
-      chapterOutline,
-      writingStyle: writingStyle as any,
-      targetWordCount,
-    });
-
-    const taskBook = await builder.buildTaskBook();
-    return taskBook;
-  } catch (err) {
-    console.error('[智能续写] 生成任务书失败:', err);
-    // 注册任务书生成失败
-    recoveryManager.registerFailure(
-      currentChapterId || 'unknown',
-      chapterIndex + 1,
-      'taskbook',
-      err instanceof Error ? err.message : '任务书生成失败'
-    );
-    return null;
-  }
-}
-
-/**
- * 执行审查（带 Blocking 闸门）
+ * 执行审查（带 Blocking 闸门）。纯依赖入参，无需工厂内状态，放模块级。
  */
 async function performBlockingReview(
   project: any,
@@ -341,12 +264,65 @@ export function useChapterWriter(): UseChapterWriterReturn {
   const { requireAIService } = useActiveAIProvider();
   const contextManager = new ContextManager();
 
+  // ====== 响应式状态（每次调用独立） ======
+  const isGenerating = ref(false);
+  const progress = ref(0);
+  const error = ref<string | null>(null);
+  const generatedContent = ref('');
+
+  const currentStep = ref<
+    'idle' | 'taskbook' | 'draft' | 'supplement' | 'review' | 'polish' | 'save'
+  >('idle');
+  const blockingIssues = ref<any[]>([]);
+  const reviewResult = ref<BlockingReviewResult | null>(null);
+
+  // 字数统计状态
+  const actualWordCount = ref(0);
+  const targetWordCount = ref(0);
+  const isSupplementing = ref(false);
+  const supplementRound = ref(0);
+
+  // 报告状态
+  const latestReport = ref<StructuredReviewReport | null>(null);
+
+  // ====== 非响应式状态（闭包内） ======
+  let currentTaskBook: WritingTaskBook | null = null;
   let currentGeneratedContent = '';
   let abortController: AbortController | null = null;
 
   // 当前章节信息
   let currentChapterId = '';
   let currentChapterNumber = 0;
+
+  // 审查严格度
+  let currentStrictness: 'relaxed' | 'normal' | 'strict' = 'normal';
+  // 强制跳过审查标志（用户点击"强制继续"后设为 true，保留到下次应用完成）
+  let skipReview = false;
+
+  // ====== 子系统（每次调用独立初始化） ======
+  const {
+    generator: reportGenerator,
+    generate: generateReport,
+    exportToJSON,
+    exportToMarkdown,
+    getHistory,
+    getLatestReport,
+  } = useReportGenerator();
+
+  const {
+    manager: recoveryManager,
+    registerFailure,
+    attemptRecovery: attemptRecoveryAction,
+    getChapterFailures,
+    clearChapterFailures,
+  } = useFailureRecovery({
+    onUserDecision: async (failure: FailureState) => {
+      return null;
+    },
+    onRecovery: async (failure: FailureState, strategy: RecoveryStrategy) => {
+      return true;
+    },
+  });
 
   // 初始化记忆管理器
   function initMemoryManager() {
@@ -395,7 +371,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
       currentIndex,
     );
     const currentChapterOutline = chapterCtx
-      ? buildChapterOutlineText(chapterCtx, true)
+      ? buildChapterOutlineText(chapterCtx, false)
       : currentChapter.plotSummary || '';
 
     // 如果没有大纲上下文中的 chapterType，回退到原有推导逻辑
@@ -915,8 +891,10 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
       // 调用 AI 补充续写
       let newContent = '';
-      // 只传原文结尾（约 1000 字），避免超过上下文窗口
-      const endingSnippet = currentGeneratedContent.slice(-1000) || '';
+      // 衔接上下文（原文结尾片段）统一由 customPrompt（buildSupplementPrompt 内已拼入
+      // existingContent.slice(-500)）承载。此前同时塞进 currentChapterContent 会造成结尾片段
+      // 双重注入（一份 1000 字、一份 500 字），且触发 base.service 的「从结尾继续」逻辑与
+      // customPrompt 的「请从这里继续」语义打架。这里留空，base.service 会回退到「根据本章大纲创作」。
 
       // 复用主流程的上下文构建（集中载荷，与主写分支保持一致）
       const {
@@ -933,8 +911,12 @@ export function useChapterWriter(): UseChapterWriterReturn {
               currentChapterId: context.chapter.id,
               currentChapterIndex: context.chapter.orderIndex,
               currentChapterTitle: context.chapter.title,
-              currentChapterContent: endingSnippet,
-              currentChapterOutline: context.chapter.outline || undefined,
+              currentChapterContent: '',
+              // 注意：补充续写必须清空 currentChapterOutline。
+              // 否则 base.service 会走"基于大纲完成任务 / 完成大纲后再结束"分支，
+              // 与 customPrompt（supplementInstruction）的"从结尾续写补字"语义冲突，
+              // 模型可能整章重写而非续写。清空后走"普通章节续写"分支，纯按结尾衔接。
+              currentChapterOutline: undefined,
               fullOutline: supplementFullOutline,
               customPrompt: supplementInstruction,
               adjacentChaptersSummary: context.previousChapter
@@ -984,8 +966,9 @@ export function useChapterWriter(): UseChapterWriterReturn {
             currentChapterId: context.chapter.id,
             currentChapterIndex: context.chapter.orderIndex,
             currentChapterTitle: context.chapter.title,
-            currentChapterContent: endingSnippet,
-            currentChapterOutline: context.chapter.outline || undefined,
+            currentChapterContent: '',
+            // 同 stream 分支：补充续写清空大纲，避免与续写指令语义冲突。
+            currentChapterOutline: undefined,
             fullOutline: supplementFullOutline,
             customPrompt: supplementInstruction,
             adjacentChaptersSummary: context.previousChapter
@@ -1089,10 +1072,6 @@ ${endingSnippet}
       abortController.abort();
     }
   }
-
-  // 审查严格度
-  let currentStrictness: 'relaxed' | 'normal' | 'strict' = 'normal';
-  let skipReview = false; // 强制跳过审查标志（用户点击"强制继续"后设为 true，保留到下次应用完成）
 
   function getLowerStrictness(
     strictness: 'relaxed' | 'normal' | 'strict'
@@ -1243,7 +1222,9 @@ ${endingSnippet}
 
       const updateData: Record<string, any> = {
         content: newContent,
-        wordCount: newContent.length,
+        // 修复：此前用 newContent.length（字符长度），与字数判断逻辑 countWords
+        // （中文字符+英文单词，且会剥掉标题/标记）口径不一致，导致 UI 显示和补写阈值判断错位。
+        wordCount: countWords(newContent),
       };
 
       if (extractedTitle && projectStore.currentChapter) {
