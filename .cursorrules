@@ -8,8 +8,9 @@
 1. **完整阅读开发规范**：`docs/development-guidelines.md` —— 项目唯一开发规范
 2. **遵循项目规范**：严格遵守该文档中定义的所有规范
 3. **检查相关技能**：查看 `.agents/skills/` 目录下的技能文件
-4. **参考已有实现**：动手前先在 `src/` 中搜索相似功能复用
-5. **始终用中文回答**
+4. **编写网文功能前**：查阅 `docs/reference-projects.md`，参考 `reference/` 下的开源 AI 网文项目（webnovel-writer、oh-story），借鉴架构思路与提示词
+5. **参考已有实现**：动手前先在 `src/` 中搜索相似功能复用
+6. **始终用中文回答**
 
 ## 🚫 红线规则（违反即驳回）
 
@@ -38,5 +39,6 @@
 
 ## 📚 完整规范
 
-详细规则、示例、目录结构、测试规范等全部以
-**`docs/development-guidelines.md`** 为准（唯一权威源，SSOT）。
+- 详细规则、示例、目录结构、测试规范等全部以
+  **`docs/development-guidelines.md`** 为准（唯一权威源，SSOT）。
+- 参考项目功能映射：**`docs/reference-projects.md`**（编写网文功能前必看，`reference/` 下开源 AI 网文项目）。

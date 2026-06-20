@@ -9,8 +9,9 @@
 
 1. **完整阅读** [`docs/development-guidelines.md`](docs/development-guidelines.md) —— 项目唯一开发规范
 2. **检查相关技能**：查看 `.agents/skills/` 目录下的技能文件（如 `vue-best-practices`、`electron`、`frontend-design` 等）
-3. **参考已有实现**：动手前先在 `src/` 中搜索相似功能，复用既有模式
-4. **始终用中文回答**
+3. **编写网文功能前**：查阅 [`docs/reference-projects.md`](docs/reference-projects.md)，参考 `reference/` 下的开源 AI 网文项目（webnovel-writer、oh-story），借鉴架构思路与提示词
+4. **参考已有实现**：动手前先在 `src/` 中搜索相似功能，复用既有模式
+5. **始终用中文回答**
 
 > 说明：本文件只摘录"红线规则"以确保关键约束在上下文截断时也不丢失。
 > 详细规则、示例、目录结构、命名约定等**全部以 `docs/development-guidelines.md` 为准**。
@@ -112,6 +113,7 @@ endOfLine: lf   bracketSpacing: true
 ## 📚 相关文档
 
 - 完整开发规范：[`docs/development-guidelines.md`](docs/development-guidelines.md) **← 唯一权威源**
+- **参考项目：[`docs/reference-projects.md`](docs/reference-projects.md)** ← 编写网文功能前必看（`reference/` 下的开源 AI 网文项目功能映射）
 - 产品需求：[`docs/prd.md`](docs/prd.md)
 - AI 写作系统设计：[`docs/ai-writing-system-design.md`](docs/ai-writing-system-design.md)
 - 技能集成说明：[`docs/skills-integration.md`](docs/skills-integration.md)
