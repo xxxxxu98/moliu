@@ -86,6 +86,9 @@ const {
   reviewAttempts,
   strictnessHistory,
   lowerStrictness,
+  // 失败重试相关
+  currentRetryCount,
+  maxRetries,
   // 写到完结相关
   endingStatus,
   isReadyToEnd,
@@ -107,6 +110,7 @@ const batchConfig = ref({
   useReview: true,
   requireBlockingPass: true,
   initialStrictness: 'normal' as ReviewStrictness,
+  maxRetries: 3,
 });
 
 // 流水线步骤图标映射
@@ -245,12 +249,14 @@ async function handleStart() {
     await startBatchWriting(targetCount.value, {
       ...batchConfig.value,
       useTaskBook: true, // 强制
+      maxRetries: batchConfig.value.maxRetries,
     });
   } else {
     target.value = 'finish';
     await startBatchWriting(undefined, {
       ...batchConfig.value,
       useTaskBook: true, // 强制
+      maxRetries: batchConfig.value.maxRetries,
     });
   }
 }
@@ -392,6 +398,18 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
         <div class="flex items-center gap-2">
           <RefreshCw class="w-3 h-3 text-blue-500 animate-spin" />
           <span class="text-xs">审查未通过，正在降低严格度继续...</span>
+        </div>
+      </NAlert>
+    </div>
+
+    <!-- 失败重试提示 -->
+    <div v-if="isWriting && currentRetryCount > 0" class="mb-4">
+      <NAlert type="warning" size="small" :show-icon="false">
+        <div class="flex items-center gap-2">
+          <RefreshCw class="w-3 h-3 text-amber-500 animate-spin" />
+          <span class="text-xs">
+            正在重试 {{ currentChapterTitle }}（第 {{ currentRetryCount }}/{{ maxRetries }} 次）...
+          </span>
         </div>
       </NAlert>
     </div>
@@ -753,6 +771,27 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
               <NTag :type="batchConfig.requireBlockingPass ? 'error' : 'default'" size="small">
                 {{ batchConfig.requireBlockingPass ? '必须通过' : '可跳过' }}
               </NTag>
+            </div>
+
+            <!-- 失败重试次数 -->
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <RefreshCw class="w-4 h-4 text-amber-500" />
+                <span class="text-sm text-gray-700 dark:text-gray-300 text-nowrap">失败重试</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <NInputNumber
+                  v-model:value="batchConfig.maxRetries"
+                  :min="1"
+                  :max="5"
+                  size="small"
+                  class="w-24"
+                />
+                <span class="text-xs text-gray-400">次</span>
+              </div>
+            </div>
+            <div class="text-xs text-gray-400 -mt-2">
+              单章失败时指数退避重试（2s/4s/8s…），耗尽后停止批量，章节保持空白以支持断点续写
             </div>
 
             <!-- 自适应审查说明 -->
