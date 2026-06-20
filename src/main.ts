@@ -193,6 +193,12 @@ const createWindow = () => {
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
+      // 关闭同源策略(CORS)，使渲染进程可以直接调用第三方 AI 服务商
+      // （如 deepseek/anthropic/gemini 等）而不报跨域错误。
+      // 这样所有 AI 请求仍由渲染进程发起，可在 DevTools 的 Network 面板中完整查看。
+      // 注意：仅在受信任的本地应用环境中使用；若分发应用请评估安全风险。
+      webSecurity: false,
+      allowRunningInsecureContent: false,
     },
   });
 
