@@ -392,9 +392,17 @@ function buildRecentChaptersFullText(
 
   if (recentChapters.length === 0) return '';
 
+  const contextManager = new ContextManager();
   return recentChapters
     .map((c: any) => {
-      return `【第${c.orderIndex + 1}章 · ${c.title}】\n\n${c.content || '（本章暂无内容）'}`;
+      const content = c.content || '';
+      if (!content) {
+        return `【第${c.orderIndex + 1}章 · ${c.title}】\n\n（本章暂无内容）`;
+      }
+      // 压缩为「摘要 + 结尾」，避免整章原文灌入 prompt 浪费 token（首尾已足够承载文风）
+      const summary = contextManager.extractPreviousChapterSummary(content, 300);
+      const ending = content.length > 500 ? content.slice(-500) : content;
+      return `【第${c.orderIndex + 1}章 · ${c.title}】\n[摘要] ${summary}\n……\n[结尾] ${ending}`;
     })
     .join('\n\n==========\n\n');
 }
@@ -474,7 +482,11 @@ async function performBlockingReview(
 
 /**
  * 执行润色（必须在 blocking 通过后）
- * 【暂时禁用去AI味】2026-05-24 临时禁用，等问题排查完毕后再启用
+ *
+ * 【设计说明】原 DeAIService.fix() 基于正则替换/删句，有误删正文风险，
+ * 已于 2026-05-24 禁用自动改写。当前策略：
+ * - 正文不改写（保持稳定，由系统提示词的"去AI味门控路由"在生成阶段预防）
+ * - 仅做标题提取 + 可观测检测日志（不改内容），为后续决策提供数据
  */
 async function performPolish(
   content: string,
@@ -484,39 +496,27 @@ async function performPolish(
   title: string | null;
   fixedCount: number;
 }> {
-  // 【暂时禁用去AI味】直接返回原始内容
   const result = DeAIService.extractAndValidateTitle(content);
+
+  // 可观测检测：启用去AI味时记录检测到的问题（纯检测，不改写正文）
+  if (deAIEnabled) {
+    try {
+      const detection = await DeAIService.detect(content);
+      if (detection.issues.length > 0) {
+        console.log(
+          `[批量写作] 去AI味检测：发现 ${detection.issues.length} 处问题，AI味等级=${detection.level}（已由提示词门控预防，正文未改写）`
+        );
+      }
+    } catch (err) {
+      console.warn('[批量写作] 去AI味检测失败（不影响写作流程）:', err);
+    }
+  }
+
   return {
     fixedContent: result.content,
     title: result.title,
     fixedCount: 0,
   };
-
-  // 以下是原来的去AI味逻辑，暂时注释掉
-  /*
-  if (!deAIEnabled) {
-    const result = DeAIService.extractAndValidateTitle(content);
-    return {
-      fixedContent: result.content,
-      title: result.title,
-      fixedCount: 0,
-    };
-  }
-
-  // 使用三遍法去AI味
-  const result = await DeAIService.fix(content);
-  
-  console.log('[批量写作] 去AI味结果:', {
-    fixedCount: result.fixedCount,
-    threePassStats: result.threePassStats,
-  });
-
-  return {
-    fixedContent: result.content,
-    title: result.title || null,
-    fixedCount: result.fixedCount,
-  };
-  */
 }
 
 /**

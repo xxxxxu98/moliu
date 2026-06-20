@@ -518,7 +518,14 @@ export function useChapterWriter(): UseChapterWriterReturn {
     }
 
     const fullTextParts = recentChapters.map(c => {
-      return `【第${c.orderIndex + 1}章 · ${c.title}】\n\n${c.content || '（本章暂无内容）'}`;
+      const content = c.content || '';
+      if (!content) {
+        return `【第${c.orderIndex + 1}章 · ${c.title}】\n\n（本章暂无内容）`;
+      }
+      // 压缩为「摘要 + 结尾」，避免整章原文灌入 prompt 浪费 token（首尾已足够承载文风）
+      const summary = contextManager.extractPreviousChapterSummary(content, 300);
+      const ending = content.length > 500 ? content.slice(-500) : content;
+      return `【第${c.orderIndex + 1}章 · ${c.title}】\n[摘要] ${summary}\n……\n[结尾] ${ending}`;
     });
 
     return fullTextParts.join('\n\n==========\n\n');
@@ -770,10 +777,12 @@ export function useChapterWriter(): UseChapterWriterReturn {
               currentChapterContent: context.chapter.existingContent || '',
               currentChapterOutline: enhancedOutline || undefined,
               fullOutline: buildFullOutlineString(),
+              customPrompt: additionalInstructions || undefined,
               adjacentChaptersSummary: context.previousChapter
                 ? {
                     previousChapterTitle: context.previousChapter.title,
                     previousChapterSummary: context.previousChapter.summary,
+                    previousChapterEnding: context.previousChapter.ending,
                     nextChapterTitle: undefined,
                     nextChapterSummary: undefined,
                   }
@@ -852,10 +861,12 @@ export function useChapterWriter(): UseChapterWriterReturn {
             currentChapterContent: context.chapter.existingContent || '',
             currentChapterOutline: enhancedOutline || undefined,
             fullOutline: buildFullOutlineString(),
+            customPrompt: additionalInstructions || undefined,
             adjacentChaptersSummary: context.previousChapter
               ? {
                   previousChapterTitle: context.previousChapter.title,
                   previousChapterSummary: context.previousChapter.summary,
+                  previousChapterEnding: context.previousChapter.ending,
                   nextChapterTitle: undefined,
                   nextChapterSummary: undefined,
                 }
@@ -898,7 +909,10 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
       // 如果字数不足且还有补充机会，尝试补充
       if (checkResult.needsSupplement && supplementRound.value < MAX_SUPPLEMENT_ROUNDS) {
-        await supplementContinue({ additionalWords: checkResult.shortfall });
+        await supplementContinue({
+          additionalWords: checkResult.shortfall,
+          writingStyle: writingStyle as 'concise' | 'elegant' | 'humorous' | 'ancient',
+        });
       }
 
       return currentGeneratedContent;
@@ -1002,7 +1016,9 @@ export function useChapterWriter(): UseChapterWriterReturn {
    */
   async function supplementContinue(options?: {
     additionalWords?: number;
+    writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient';
   }): Promise<string | null> {
+    const supplementStyle = options?.writingStyle || 'concise';
     const additionalWords = options?.additionalWords || targetWordCount.value * 0.3;
     const maxSupplement =
       Math.ceil(targetWordCount.value * MAX_WORD_THRESHOLD) - countWords(currentGeneratedContent);
@@ -1051,6 +1067,32 @@ export function useChapterWriter(): UseChapterWriterReturn {
       let newContent = '';
       // 只传原文结尾（约 1000 字），避免超过上下文窗口
       const endingSnippet = currentGeneratedContent.slice(-1000) || '';
+
+      // 复用主流程的上下文构建（保持补充内容与原章节计划方向一致）
+      const supplementChapterCtx = extractChapterContext(
+        projectStore.plotOutline,
+        context.chapter.id,
+        context.chapter.title
+      );
+      const supplementEnhancedPrompt = buildEnhancedDesignPrompt({
+        projectTitle: project.name,
+        projectSynopsis: project.description || '',
+        projectGenre: project.genre.map(g => g.name),
+        currentChapter: supplementChapterCtx || {
+          title: context.chapter.title,
+          description: context.chapter.outline || '',
+          orderIndex: context.chapter.orderIndex,
+        },
+        currentChapterOutline: context.chapter.outline || '',
+        fullOutline: buildFullOutlineString(),
+        emotionGoal: project.emotionGoal,
+        conflictDesign: project.conflictDesign,
+        coolPointDesign: project.coolPointDesign,
+        storyLines: project.storyLines,
+        coreSellingPoints: project.coreSellingPoints,
+        writingStyle: supplementStyle as any,
+      });
+
       if (settingsStore.streamOutput && (client as any).continueWritingStream) {
         await new Promise<void>((resolve, reject) => {
           (client as any).continueWritingStream(
@@ -1066,6 +1108,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
                 ? {
                     previousChapterTitle: context.previousChapter.title,
                     previousChapterSummary: context.previousChapter.summary,
+                    previousChapterEnding: context.previousChapter.ending,
                     nextChapterTitle: undefined,
                     nextChapterSummary: undefined,
                   }
@@ -1073,9 +1116,21 @@ export function useChapterWriter(): UseChapterWriterReturn {
               recentChaptersFullText: context.memoryData.shortTermFullText,
               charactersInScene: context.characters,
               relatedForeshadows: context.foreshadows,
-              writingStyle: 'concise',
+              writingStyle: supplementStyle,
+              currentChapterOutlineContext: supplementChapterCtx
+                ? {
+                    chapterType: supplementChapterCtx.chapterType,
+                    hookType: supplementChapterCtx.hookType,
+                    pacingStrategy: supplementChapterCtx.pacingStrategy,
+                    timeSpan: supplementChapterCtx.timeSpan,
+                    keyEvents: supplementChapterCtx.keyEvents,
+                    isClimax: supplementChapterCtx.isClimax,
+                    expectedCoolPoints: supplementChapterCtx.expectedCoolPoints,
+                  }
+                : undefined,
+              enhancedDesignPrompt: supplementEnhancedPrompt,
             },
-            'supplement',
+            'smartContinue',
             Math.ceil(Math.min(additionalWords, maxSupplement)),
             (chunk: string) => {
               newContent += chunk;
@@ -1103,6 +1158,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
               ? {
                   previousChapterTitle: context.previousChapter.title,
                   previousChapterSummary: context.previousChapter.summary,
+                  previousChapterEnding: context.previousChapter.ending,
                   nextChapterTitle: undefined,
                   nextChapterSummary: undefined,
                 }
@@ -1110,9 +1166,21 @@ export function useChapterWriter(): UseChapterWriterReturn {
             recentChaptersFullText: context.memoryData.shortTermFullText,
             charactersInScene: context.characters,
             relatedForeshadows: context.foreshadows,
-            writingStyle: 'concise',
+            writingStyle: supplementStyle,
+            currentChapterOutlineContext: supplementChapterCtx
+              ? {
+                  chapterType: supplementChapterCtx.chapterType,
+                  hookType: supplementChapterCtx.hookType,
+                  pacingStrategy: supplementChapterCtx.pacingStrategy,
+                  timeSpan: supplementChapterCtx.timeSpan,
+                  keyEvents: supplementChapterCtx.keyEvents,
+                  isClimax: supplementChapterCtx.isClimax,
+                  expectedCoolPoints: supplementChapterCtx.expectedCoolPoints,
+                }
+              : undefined,
+            enhancedDesignPrompt: supplementEnhancedPrompt,
           },
-          'supplement',
+          'smartContinue',
           Math.ceil(Math.min(additionalWords, maxSupplement))
         );
 
@@ -1311,6 +1379,8 @@ ${endingSnippet}
       }
 
       // ========== 步骤 4: 润色（去AI味） ==========
+      // 正文不改写（保持稳定，由系统提示词的"去AI味门控路由"在生成阶段预防）
+      // 仅做标题提取 + 可观测检测日志（不改内容），为后续决策提供数据
       currentStep.value = 'polish';
       let processedContent = currentGeneratedContent;
       let extractedTitle: string | null | undefined;
@@ -1318,6 +1388,18 @@ ${endingSnippet}
       const titleValidation = DeAIService.extractAndValidateTitle(processedContent);
       extractedTitle = titleValidation.title;
       processedContent = titleValidation.content;
+
+      // 可观测检测：记录检测到的问题（纯检测，不改写正文）
+      try {
+        const detection = await DeAIService.detect(processedContent);
+        if (detection.issues.length > 0) {
+          console.log(
+            `[智能续写] 去AI味检测：发现 ${detection.issues.length} 处问题，AI味等级=${detection.level}（已由提示词门控预防，正文未改写）`
+          );
+        }
+      } catch (err) {
+        console.warn('[智能续写] 去AI味检测失败（不影响写作流程）:', err);
+      }
 
       // ========== 步骤 5: 保存 ==========
       currentStep.value = 'save';

@@ -23,6 +23,8 @@ export interface ProjectContext {
   adjacentChaptersSummary?: {
     previousChapterTitle?: string;
     previousChapterSummary?: string;
+    /** 前一章结尾原文（衔接锚点，比摘要更精确） */
+    previousChapterEnding?: string;
     nextChapterTitle?: string;
     nextChapterSummary?: string;
   };
@@ -384,6 +386,14 @@ export class PromptBuilder {
 - 停在突然发生的环境变化上
 - 停在悬念上（谁说的？谁来了？接下来会发生什么？）
 
+## 【强制】章尾钩子五禁忌【最重要】
+**留钩子不等于乱留，以下五种"假钩子"会让读者出戏甚至弃书：**
+1. **假悬念**：用读者早就知道的信息制造"悬念"，读者完全不意外 → 悬念必须建立在信息差上
+2. **机械降神**：危机靠外部突兀力量（天降救兵、巧合）解决，主角没付出代价 → 破局必须由主角主动促成
+3. **过度留白**：关键信息完全不交代，读者摸不着头脑 → 留悬念≠留糊涂，要让读者"猜得到方向"
+4. **低风险钩**：钩子的威胁感/紧迫感不足，读者无牵挂 → 钩子要让主角"必须立刻回应"
+5. **同类型连用**：连续多章用同一种钩子（如连着三章都"突然揭示"）→ 轮换钩子类型，避免审美疲劳
+
 ## 【强制】对话口语化【最重要】
 **网文对话要像真人说话，允许不完美。**
 
@@ -455,9 +465,15 @@ export class PromptBuilder {
 - 正确示例："你疯了吗？"他说。
 - 正确示例："我没听错吧，"她冷笑一声，"你居然敢来？"
 
-## 【强制】去AI味三遍法【系统化去AI】
+## 【强制】去AI味门控路由【系统化去AI】
+**先自检本段 AI 味程度，再决定执行几遍，而不是每段都走完整三遍：**
 
-### Pass 1：去泛化（Strip Generic）
+### 自检定级（每写完一个自然段对照一次）
+- **轻度（偶发）**：仅出现 1-2 处副词/连接词，无情绪贴标签、无升华句 → 只做 Pass 1
+- **中度（明显）**：有情绪贴标签、心理直述、书面化连用，但无段落级升华 → 做 Pass 1 + Pass 2
+- **重度（典型AI味）**：出现升华总结句、连续排比、大段说明、角色语气雷同 → 完整三遍全做
+
+### Pass 1：去泛化（Strip Generic）【轻度及以上必做】
 - 抽象情绪总结句 → 删或替换为具体动作
 - 假深度句 → 删
 - 意义膨胀 → 缩小到具体影响
@@ -467,13 +483,13 @@ export class PromptBuilder {
 - 所有角色说话一样"高级" → 区分语气
 → **这一遍去掉80%的AI味**
 
-### Pass 2：去书面化（Cut Professional Diction）
+### Pass 2：去书面化（Cut Professional Diction）【中度及以上必做】
 - 分析性用词（"机制""结构""逻辑"出现在小说中）→ 换成日常表达
 - 抽象名词滥用 → 直接说事
 - 体制内用语（"进一步""深入""推进""落实"）→ 删
 - 专业术语堆砌 → 只保留必要的，用白话解释
 
-### Pass 3：回人味（Restore Human Presence）
+### Pass 3：回人味（Restore Human Presence）【重度必做】
 - 具体的感官细节（气味，温度、触感）
 - 角色说话方式的区分（不同人不同语气）
 - 节奏变化（长短句交错）
@@ -578,20 +594,28 @@ export class PromptBuilder {
   ): { systemPrompt: string; userPrompt: string } {
     const { project, currentChapterContent, customPrompt, adjacentChaptersSummary, currentChapterIndex, currentChapterTitle, currentChapterOutline, fullOutline, recentChaptersFullText } = context;
 
-    // 构建角色信息
-    const charactersInfo = this.buildCharactersInfo(project.characters);
+    // 构建角色信息（优先用调用方过滤后的场景角色，fallback 到全量角色）
+    const charactersInfo = this.buildCharactersInfo(
+      (context.charactersInScene as any[]) || project.characters
+    );
 
     // 构建世界观信息
     const worldInfo = this.buildWorldInfo(project.worldSchema);
 
-    // 构建伏笔信息
-    const foreshadowInfo = this.buildForeshadowInfo(project.foreshadows);
+    // 构建伏笔信息（优先用调用方过滤后的相关伏笔，fallback 到全量伏笔）
+    const foreshadowInfo = this.buildForeshadowInfo(
+      (context.relatedForeshadows as any[]) || project.foreshadows
+    );
 
     // 构建上下文摘要
     let contextSummary = '';
     if (adjacentChaptersSummary) {
       if (adjacentChaptersSummary.previousChapterTitle && adjacentChaptersSummary.previousChapterSummary) {
         contextSummary += `## 前章回顾\n上一章「${adjacentChaptersSummary.previousChapterTitle}」：\n${adjacentChaptersSummary.previousChapterSummary}\n\n`;
+      }
+      // 前章结尾原文：衔接锚点，必须从这里自然续写
+      if (adjacentChaptersSummary.previousChapterEnding) {
+        contextSummary += `## 前章结尾（必须从此处自然衔接，不得重复）\n${adjacentChaptersSummary.previousChapterEnding}\n\n`;
       }
       if (adjacentChaptersSummary.nextChapterTitle && adjacentChaptersSummary.nextChapterSummary) {
         contextSummary += `## 下章预告\n下一章「${adjacentChaptersSummary.nextChapterTitle}」：\n${adjacentChaptersSummary.nextChapterSummary}\n\n`;
@@ -619,20 +643,15 @@ ${currentChapterOutline}
 4. **动态调整**：如果大纲任务简单可提前完成，可适当扩展细节；如果复杂，字数可适当超出
 
 ### 内容要求
-1. **篇幅控制**：续写内容约 ${targetWordCount} 字，允许±15%的偏差
+1. **篇幅控制**：续写内容约 ${targetWordCount} 字（精确阈值见下方篇幅要求）
 2. **元素丰富**：包含对话（必须用"引号）、动作、心理描写、环境描写等多种元素
 3. **节奏把控**：合理安排情节发展
 4. **【重要】对话比例**：对话应占30%-50%，纯叙述太干巴巴
 
-### 结尾要求
+### 结尾要求【必须使用章尾钩子】
 1. 完成大纲任务后再考虑结尾
-2. 设置适当的悬念或转折，吸引读者继续阅读
-3. 自然过渡，为下一段情节做好铺垫
-
-### 结尾要求
-1. 完成大纲任务后再考虑结尾
-2. 设置适当的悬念或转折，吸引读者继续阅读
-3. 自然过渡，为下一段情节做好铺垫`;
+2. 使用系统提示词中的"章尾钩子13式"之一设置悬念或转折，吸引读者继续阅读
+→ 绝对不能在结尾写总结、说教或情感升华`;
       } else if (isFirstChapter) {
         // 没有大纲但有第一章特殊要求
         modeInstruction = `请续写以下故事内容。这是小说的第一章，需要特别注意：
@@ -667,7 +686,7 @@ ${currentChapterOutline}
 3. **风格建立**：确定整部作品的文风基调
 
 ### 内容要求
-1. **篇幅控制【重要】**：续写内容必须控制在 ${targetWordCount} 字左右，允许±10%的偏差
+1. **篇幅控制【重要】**：续写内容约 ${targetWordCount} 字（精确阈值见下方篇幅要求）
 2. **元素丰富**：包含对话（必须用"引号）、动作、心理描写、环境描写等多种元素
 3. **节奏把控**：合理安排情节发展，参考系统提示词中的情绪波浪线节奏
 4. **【重要】对话比例**：对话应占30%-50%，纯叙述太干巴巴
@@ -777,7 +796,7 @@ ${fullOutline}`;
 
     // 添加近期章节完整原文（保持风格一致性）【重要】
     if (recentChaptersFullText) {
-      userPrompt += `\n\n## 【重要】近期章节完整原文（请仔细阅读，确保续写风格与前文一致）
+      userPrompt += `\n\n## 【重要】近期章节摘要与结尾（请据此把握文风与叙事节奏，确保续写风格与前文一致）
 ==========
 ${recentChaptersFullText}
 ==========`;
@@ -1339,7 +1358,7 @@ ${descriptionType === 'appearance' ? '外貌描写' :
     return { systemPrompt, userPrompt };
   }
 
-  private static buildCharactersInfo(characters: Character[]): string {
+  private static buildCharactersInfo(characters: any[]): string {
     if (!characters || characters.length === 0) {
       return '（暂无角色设定）';
     }
@@ -1348,14 +1367,22 @@ ${descriptionType === 'appearance' ? '外貌描写' :
       .slice(0, 10) // 限制角色数量
       .map(c => {
         let info = `【${c.name}】`;
-        if (c.profile.personality && c.profile.personality.length > 0) {
-          info += `性格特点：${c.profile.personality.join('、')}`;
+        // 兼容两种形状：原始 Character（带 profile）和扁平映射对象（personality 直接挂顶层）
+        const personality = c.profile?.personality ?? c.personality;
+        const background = c.profile?.background ?? c.background;
+        const appearance = c.profile?.appearance ?? c.appearance;
+        const role = c.profile?.role ?? c.role;
+        if (personality && personality.length > 0) {
+          info += `性格特点：${personality.join('、')}`;
         }
-        if (c.profile.background) {
-          info += ` | 背景：${c.profile.background}`;
+        if (background) {
+          info += ` | 背景：${background}`;
         }
-        if (c.profile.appearance) {
-          info += ` | 外貌：${c.profile.appearance}`;
+        if (appearance) {
+          info += ` | 外貌：${appearance}`;
+        }
+        if (role) {
+          info += ` | 身份：${role}`;
         }
         return info;
       })
@@ -1400,7 +1427,7 @@ ${descriptionType === 'appearance' ? '外貌描写' :
     return info || '（暂无详细世界观设定）';
   }
 
-  private static buildForeshadowInfo(foreshadows: Foreshadow[]): string {
+  private static buildForeshadowInfo(foreshadows: any[]): string {
     if (!foreshadows || foreshadows.length === 0) {
       return '（暂无伏笔设定）';
     }
