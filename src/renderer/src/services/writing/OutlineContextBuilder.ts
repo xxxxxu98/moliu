@@ -51,8 +51,6 @@ export interface EnhancedProjectContext {
   currentChapter: ChapterOutlineContext;
   currentChapterOutline: string;
 
-  fullOutline: string;
-
   // 增强设计
   emotionGoal?: EmotionGoal;
   conflictDesign?: ConflictDesign;

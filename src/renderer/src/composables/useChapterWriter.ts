@@ -13,7 +13,6 @@ import { useProjectStore } from '@/stores/project.store';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useActiveAIProvider } from './useActiveAIProvider';
 import type { WritingStyle, ChapterWritingContext, ChapterType } from '@/types/writing';
-import { PromptBuilder } from '@/services/writing/prompt-builder';
 import { ContextManager } from '@/services/writing/context-manager';
 import {
   extractChapterContext,
@@ -178,8 +177,10 @@ const {
  */
 function countWords(text: string): number {
   if (!text) return 0;
-  // 去除标题和标记
+  // 去除 markdown 标题、章节标题和标记
   let cleaned = text.replace(/^#.*$/gm, '');
+  // 去除「第X章 标题」格式的章节标题（避免被计入正文字数，影响补写阈值判断）
+  cleaned = cleaned.replace(/^第[0-9零一二三四五六七八九十百千万]+章.*$/gm, '');
   cleaned = cleaned.replace(/【.*?】/g, '');
   cleaned = cleaned.replace(/\n/g, '');
   const chineseChars = (cleaned.match(/[\u4e00-\u9fa5]/g) || []).length;
@@ -441,7 +442,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
         orderIndex: currentIndex,
       },
       currentChapterOutline,
-      fullOutline: buildFullOutlineText(projectStore.plotOutline),
       emotionGoal: project.emotionGoal,
       conflictDesign: project.conflictDesign,
       coolPointDesign: project.coolPointDesign,
@@ -529,135 +529,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
     });
 
     return fullTextParts.join('\n\n==========\n\n');
-  }
-
-  /**
-   * 从 PlotOutline 中提取章节大纲
-   * 支持按 chapterId 或按 orderIndex 查找
-   */
-  function extractChapterOutlineFromPlot(plotOutline: any[], chapterId: string): string {
-    // 首先尝试按 chapterId 查找
-    let chapter = plotOutline?.find((p: any) => p.chapterId === chapterId);
-
-    // 如果没找到，尝试按 id 查找
-    if (!chapter) {
-      chapter = plotOutline?.find((p: any) => p.id === chapterId);
-    }
-
-    if (!chapter) {
-      return '';
-    }
-
-    // 构建包含结构化节点的完整大纲
-    const parts: string[] = [];
-
-    // 基础大纲描述
-    if (chapter.description) {
-      parts.push(chapter.description);
-    }
-
-    // 结构化节点
-    if (chapter.CBN) {
-      parts.push(`【章节起点 CBN】${chapter.CBN}`);
-    }
-    if (chapter.CPNs?.length > 0) {
-      parts.push(
-        `【推进节点 CPNs】\n  ${chapter.CPNs.map((cpn: string, i: number) => `${i + 1}. ${cpn}`).join('\n  ')}`
-      );
-    }
-    if (chapter.CEN) {
-      parts.push(`【章节终点 CEN】${chapter.CEN}`);
-    }
-    if (chapter.mustCover?.length > 0) {
-      parts.push(`【必须覆盖】${chapter.mustCover.join('、')}`);
-    }
-    if (chapter.forbiddenZones?.length > 0) {
-      parts.push(`【禁区】${chapter.forbiddenZones.join('、')}`);
-    }
-
-    return parts.join('\n');
-  }
-
-  /**
-   * 提取章节结构化节点（新增）
-   */
-  function extractChapterStructureNodes(
-    plotOutline: any[],
-    chapterId: string
-  ): {
-    CBN?: string;
-    CPNs?: string[];
-    CEN?: string;
-    mustCover?: string[];
-    forbiddenZones?: string[];
-  } | null {
-    let chapter = plotOutline?.find((p: any) => p.chapterId === chapterId);
-
-    if (!chapter) {
-      chapter = plotOutline?.find((p: any) => p.id === chapterId);
-    }
-
-    if (!chapter) {
-      return null;
-    }
-
-    return {
-      CBN: chapter.CBN,
-      CPNs: chapter.CPNs,
-      CEN: chapter.CEN,
-      mustCover: chapter.mustCover,
-      forbiddenZones: chapter.forbiddenZones,
-    };
-  }
-
-  function buildFullOutlineString(): string | undefined {
-    const plotOutline = projectStore.plotOutline;
-    if (!plotOutline || plotOutline.length === 0) {
-      return undefined;
-    }
-
-    const chapterNodes = plotOutline
-      .filter((p: any) => p.type === 'chapter')
-      .sort((a: any, b: any) => a.orderIndex - b.orderIndex);
-
-    if (chapterNodes.length === 0) {
-      return undefined;
-    }
-
-    const outlineParts = chapterNodes.map((node: any, index: number) => {
-      const chapterNum = index + 1;
-      const title = node.title || `第${chapterNum}章`;
-      const description = node.description || '（暂无大纲）';
-      const keyEvents =
-        node.keyEvents?.length > 0 ? `\n关键事件：${node.keyEvents.join('、')}` : '';
-
-      // ========== 构建结构化节点（增强大纲）==========
-      const structuredNodes: string[] = [];
-
-      if (node.CBN) {
-        structuredNodes.push(`【章节起点 CBN】${node.CBN}`);
-      }
-      if (node.CPNs?.length > 0) {
-        structuredNodes.push(
-          `【推进节点 CPNs】\n  ${node.CPNs.map((cpn: string, i: number) => `${i + 1}. ${cpn}`).join('\n  ')}`
-        );
-      }
-      if (node.CEN) {
-        structuredNodes.push(`【章节终点 CEN】${node.CEN}`);
-      }
-      if (node.mustCover?.length > 0) {
-        structuredNodes.push(`【必须覆盖】${node.mustCover.join('、')}`);
-      }
-      if (node.forbiddenZones?.length > 0) {
-        structuredNodes.push(`【禁区】${node.forbiddenZones.join('、')}`);
-      }
-
-      const structuredSection = structuredNodes.length > 0 ? `\n${structuredNodes.join('\n')}` : '';
-
-      return `【第${chapterNum}章】${title}\n${description}${keyEvents}${structuredSection}`;
-    });
-
-    return outlineParts.join('\n\n');
   }
 
   /**
@@ -758,7 +629,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
             orderIndex: context.chapter.orderIndex,
           },
           currentChapterOutline: enhancedOutline || '',
-          fullOutline: buildFullOutlineString(),
           emotionGoal: project.emotionGoal,
           conflictDesign: project.conflictDesign,
           coolPointDesign: project.coolPointDesign,
@@ -776,7 +646,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
               currentChapterTitle: context.chapter.title,
               currentChapterContent: context.chapter.existingContent || '',
               currentChapterOutline: enhancedOutline || undefined,
-              fullOutline: buildFullOutlineString(),
+              fullOutline: buildFullOutlineText(projectStore.plotOutline),
               customPrompt: additionalInstructions || undefined,
               adjacentChaptersSummary: context.previousChapter
                 ? {
@@ -843,7 +713,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
             orderIndex: context.chapter.orderIndex,
           },
           currentChapterOutline: enhancedOutline || '',
-          fullOutline: buildFullOutlineString(),
           emotionGoal: project.emotionGoal,
           conflictDesign: project.conflictDesign,
           coolPointDesign: project.coolPointDesign,
@@ -860,7 +729,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
             currentChapterTitle: context.chapter.title,
             currentChapterContent: context.chapter.existingContent || '',
             currentChapterOutline: enhancedOutline || undefined,
-            fullOutline: buildFullOutlineString(),
+            fullOutline: buildFullOutlineText(projectStore.plotOutline),
             customPrompt: additionalInstructions || undefined,
             adjacentChaptersSummary: context.previousChapter
               ? {
@@ -1084,7 +953,6 @@ export function useChapterWriter(): UseChapterWriterReturn {
           orderIndex: context.chapter.orderIndex,
         },
         currentChapterOutline: context.chapter.outline || '',
-        fullOutline: buildFullOutlineString(),
         emotionGoal: project.emotionGoal,
         conflictDesign: project.conflictDesign,
         coolPointDesign: project.coolPointDesign,
@@ -1103,7 +971,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
               currentChapterTitle: context.chapter.title,
               currentChapterContent: endingSnippet,
               currentChapterOutline: context.chapter.outline || undefined,
-              fullOutline: buildFullOutlineString(),
+              fullOutline: buildFullOutlineText(projectStore.plotOutline),
+              customPrompt: supplementInstruction,
               adjacentChaptersSummary: context.previousChapter
                 ? {
                     previousChapterTitle: context.previousChapter.title,
@@ -1153,7 +1022,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
             currentChapterTitle: context.chapter.title,
             currentChapterContent: endingSnippet,
             currentChapterOutline: context.chapter.outline || undefined,
-            fullOutline: buildFullOutlineString(),
+            fullOutline: buildFullOutlineText(projectStore.plotOutline),
+            customPrompt: supplementInstruction,
             adjacentChaptersSummary: context.previousChapter
               ? {
                   previousChapterTitle: context.previousChapter.title,

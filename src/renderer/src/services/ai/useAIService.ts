@@ -119,7 +119,6 @@ ${c.content || '（本章暂无内容）'}`;
       projectGenre: project.genre.map(g => g.name),
       currentChapter: chapterCtx || { title: currentChapter.title, description: currentChapterOutlineText, orderIndex: currentChapterIndex },
       currentChapterOutline: currentChapterOutlineText,
-      fullOutline: buildFullOutlineText(projectStore.plotOutline || []),
       emotionGoal: project.emotionGoal,
       conflictDesign: project.conflictDesign,
       coolPointDesign: project.coolPointDesign,
