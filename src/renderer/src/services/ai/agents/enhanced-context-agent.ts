@@ -8,7 +8,7 @@
  */
 
 import { useProjectStore } from '@/stores/project.store';
-import { useMemoryOrchestrator } from '../memory/MemoryOrchestrator';
+import { useMemoryOrchestrator } from '../../writing/memory/MemoryOrchestrator';
 import type {
   WritingTaskBook,
   ChapterContract,

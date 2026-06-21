@@ -6,12 +6,20 @@
  * 2. Blocking 闸门机制
  * 3. 结构化报告生成
  * 4. 失败恢复机制
+ *
+ * v2.1 改造（状态驱动架构）：
+ * - writeChapter 委托给 useWritingOrchestratorV2()，
+ *   内部已走 L1-L7 完整闭环（状态/门禁/提交/checkpoint）。
+ * - 本 composable 只保留：UI 状态映射、辅助方法（applyGeneratedContent/copyToClipboard/supplementContinue/checkAndSupplement 等）、
+ *   进度报告导出、useFailureRecovery 老失败恢复系统（保留为兼容层）。
+ * - 不再直接调 AI client，所有 LLM 调用走 V2 编排器。
  */
 
 import { ref, computed, readonly } from 'vue';
 import { useProjectStore } from '@/stores/project.store';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useActiveAIProvider } from './useActiveAIProvider';
+import { useWritingOrchestratorV2 } from '@/services/writing/WritingOrchestratorV2';
 import type { WritingStyle, ChapterWritingContext, ChapterType } from '@/types/writing';
 import { ContextManager } from '@/services/writing/context-manager';
 import {
@@ -275,6 +283,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
   >('idle');
   const blockingIssues = ref<any[]>([]);
   const reviewResult = ref<BlockingReviewResult | null>(null);
+  const polishedContent = ref('');  // v2.1: 同步 V2 的润色产出
+  const commitResult = ref<any>(null);  // v2.1: 同步 V2 的提交结果
 
   // 字数统计状态
   const actualWordCount = ref(0);
@@ -531,7 +541,17 @@ export function useChapterWriter(): UseChapterWriterReturn {
   }
 
   /**
-   * 写入章节（增强版）
+   * 写入章节（v2.1 委托给 StateDriven 编排器）
+   *
+   * 老版本（行 540-772 已被替换）：
+   *   1. 调 generateTaskBook 生成 TaskBook
+   *   2. 调 client.continueWriting/Stream 写散文
+   *   3. 内嵌补充续写逻辑
+   *
+   * 新版本：直接调 useWritingOrchestratorV2().run()，
+   *   内部走 L1(状态) → L2(检索) → L3(拼prompt+CHANGES) → L4(写+重试) →
+   *   L5(门禁) → L6(事务提交) → L7(checkpoint) 完整闭环。
+   *   useChapterWriter 只做 UI 状态映射 + 异常转换 + 补充续写 fallback。
    */
   async function writeChapter(options?: {
     targetWordCount?: number;
@@ -552,8 +572,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
       return null;
     }
 
-    const context = buildContext(additionalInstructions, writingStyle);
-    if (!context) {
+    if (!projectStore.currentProject || !projectStore.currentChapter) {
+      error.value = '项目或章节未加载';
       return null;
     }
 
@@ -571,169 +591,51 @@ export function useChapterWriter(): UseChapterWriterReturn {
     abortController = new AbortController();
 
     try {
-      const client = getAIClient();
-      const project = projectStore.currentProject!;
-      const currentChapter = projectStore.currentChapter!;
-      const currentIndex = context.chapter.orderIndex;
+      const project = projectStore.currentProject;
+      const currentChapter = projectStore.currentChapter;
 
       // 记录章节信息
       currentChapterId = currentChapter.id;
-      currentChapterNumber = currentIndex + 1;
+      currentChapterNumber = currentChapter.orderIndex + 1;
 
-      // 注册起草失败恢复
-      const draftFailureId = registerFailure(
-        currentChapterId,
-        currentChapterNumber,
-        'draft',
-        '开始起草'
-      ).id;
-
-      // ========== 步骤 1: 生成写作任务书（核心前置） ==========
-      currentStep.value = 'taskbook';
-      currentTaskBook = await generateTaskBook(
-        project,
-        currentIndex,
-        context.chapter.outline || undefined,
-        writingStyle,
-        requestedTarget
-      );
-
-      if (!currentTaskBook) {
-        throw new Error('任务书生成失败');
-      }
-
-      // 构建增强版大纲
-      let enhancedOutline = context.chapter.outline || '';
-      if (currentTaskBook) {
-        enhancedOutline = buildEnhancedOutline(currentTaskBook, enhancedOutline);
-      }
-
-      // ========== 步骤 2: AI 起草 ==========
+      // 调 V2 编排器（其内部已调 StateDriven）
+      const v2 = useWritingOrchestratorV2();
       currentStep.value = 'draft';
 
-      if (settingsStore.streamOutput && (client as any).continueWritingStream) {
-        // 集中构建：chapterCtx + enhancedPrompt + 窗口化 fullOutline（一次构建，避免重复算）
-        const { chapterCtx, enhancedPrompt, fullOutline } =
-          buildWritingPromptParts(context, writingStyle);
+      const success = await v2.run({
+        targetWordCount: requestedTarget,
+        writingStyle: writingStyle as any,
+      });
 
-        await new Promise<void>((resolve, reject) => {
-          (client as any).continueWritingStream(
-            {
-              project,
-              currentChapterId: context.chapter.id,
-              currentChapterIndex: context.chapter.orderIndex,
-              currentChapterTitle: context.chapter.title,
-              currentChapterContent: context.chapter.existingContent || '',
-              currentChapterOutline: enhancedOutline || undefined,
-              fullOutline,
-              customPrompt: additionalInstructions || undefined,
-              adjacentChaptersSummary: context.previousChapter
-                ? {
-                    previousChapterTitle: context.previousChapter.title,
-                    previousChapterSummary: context.previousChapter.summary,
-                    previousChapterEnding: context.previousChapter.ending,
-                    nextChapterTitle: undefined,
-                    nextChapterSummary: undefined,
-                  }
-                : undefined,
-              recentChaptersFullText: context.memoryData.shortTermFullText,
-              charactersInScene: context.characters,
-              relatedForeshadows: context.foreshadows,
-              writingStyle: writingStyle,
-              // 章节结构化策略（来自大纲节点的 chapterCtx，包含 chapterType/hookType/pacingStrategy 等）
-              currentChapterOutlineContext: chapterCtx
-                ? {
-                    chapterType: chapterCtx.chapterType,
-                    hookType: chapterCtx.hookType,
-                    pacingStrategy: chapterCtx.pacingStrategy,
-                    timeSpan: chapterCtx.timeSpan,
-                    keyEvents: chapterCtx.keyEvents,
-                    isClimax: chapterCtx.isClimax,
-                    expectedCoolPoints: chapterCtx.expectedCoolPoints,
-                  }
-                : undefined,
-              // 增强设计段落
-              enhancedDesignPrompt: enhancedPrompt,
-            },
-            'smartContinue',
-            requestedTarget,
-            (chunk: string) => {
-              currentGeneratedContent += chunk;
-              generatedContent.value = currentGeneratedContent;
-              progress.value = Math.min(
-                Math.floor((currentGeneratedContent.length / (requestedTarget * 1.5)) * 100),
-                98
-              );
-            },
-            () => {
-              progress.value = 100;
-              resolve();
-            },
-            (errMsg: string) => {
-              reject(new Error(errMsg));
-            },
-            abortController?.signal
+      // 同步 V2 状态到 useChapterWriter
+      generatedContent.value = v2.generatedContent.value;
+      currentGeneratedContent = v2.generatedContent.value;
+      reviewedContent.value = v2.reviewedContent.value;
+      polishedContent.value = v2.polishedContent.value;
+      actualWordCount.value = v2.actualWordCount.value;
+      reviewResult.value = v2.reviewResult.value as any;
+      commitResult.value = v2.commitResult.value as any;
+      currentTaskBook = (v2 as any).taskBook?.value ?? null;
+      currentStep.value = v2.currentStep.value as any;
+      progress.value = 100;
+
+      if (!success) {
+        // V2 失败（如门禁未通过）→ 透传错误
+        if (v2.error.value && v2.error.value !== 'Generation stopped by user') {
+          error.value = v2.error.value;
+          // 写入失败记录（保留老失败恢复兼容）
+          recoveryManager.registerFailure(
+            currentChapterId,
+            currentChapterNumber,
+            'review',
+            v2.error.value,
           );
-        });
-      } else {
-        // 集中构建（同上）
-        const { chapterCtx, enhancedPrompt, fullOutline } =
-          buildWritingPromptParts(context, writingStyle);
-
-        const result = await (client as any).continueWriting(
-          {
-            project,
-            currentChapterId: context.chapter.id,
-            currentChapterIndex: context.chapter.orderIndex,
-            currentChapterTitle: context.chapter.title,
-            currentChapterContent: context.chapter.existingContent || '',
-            currentChapterOutline: enhancedOutline || undefined,
-            fullOutline,
-            customPrompt: additionalInstructions || undefined,
-            adjacentChaptersSummary: context.previousChapter
-              ? {
-                  previousChapterTitle: context.previousChapter.title,
-                  previousChapterSummary: context.previousChapter.summary,
-                  previousChapterEnding: context.previousChapter.ending,
-                  nextChapterTitle: undefined,
-                  nextChapterSummary: undefined,
-                }
-              : undefined,
-            recentChaptersFullText: context.memoryData.shortTermFullText,
-            charactersInScene: context.characters,
-            relatedForeshadows: context.foreshadows,
-            writingStyle: writingStyle,
-            currentChapterOutlineContext: chapterCtx
-              ? {
-                  chapterType: chapterCtx.chapterType,
-                  hookType: chapterCtx.hookType,
-                  pacingStrategy: chapterCtx.pacingStrategy,
-                  timeSpan: chapterCtx.timeSpan,
-                  keyEvents: chapterCtx.keyEvents,
-                  isClimax: chapterCtx.isClimax,
-                  expectedCoolPoints: chapterCtx.expectedCoolPoints,
-                }
-              : undefined,
-            enhancedDesignPrompt: enhancedPrompt,
-          },
-          'smartContinue',
-          requestedTarget
-        );
-
-        if (result?.content) {
-          currentGeneratedContent = result.content;
-          generatedContent.value = result.content;
-          progress.value = 100;
         }
+        return null;
       }
 
-      // 更新实际字数
-      actualWordCount.value = countWords(currentGeneratedContent);
-
-      // 检查字数是否达标
+      // 字数补充（如有需要）
       const checkResult = checkWordCount(currentGeneratedContent, requestedTarget);
-
-      // 如果字数不足且还有补充机会，尝试补充
       if (checkResult.needsSupplement && supplementRound.value < MAX_SUPPLEMENT_ROUNDS) {
         await supplementContinue({
           additionalWords: checkResult.shortfall,
@@ -743,13 +645,15 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
       return currentGeneratedContent;
     } catch (err) {
-      // 记录失败
-      recoveryManager.registerFailure(
-        currentChapterId,
-        currentChapterNumber,
-        currentStep.value as PipelineStep,
-        err instanceof Error ? err.message : '未知错误'
-      );
+      // 失败兜底：记录到老失败恢复系统（向后兼容）
+      if (currentChapterId) {
+        recoveryManager.registerFailure(
+          currentChapterId,
+          currentChapterNumber,
+          currentStep.value as PipelineStep,
+          err instanceof Error ? err.message : '未知错误',
+        );
+      }
 
       if (err instanceof Error && err.message === 'Generation stopped by user') {
         error.value = null;

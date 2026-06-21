@@ -6,9 +6,14 @@
  * 2. 实现自动恢复策略
  * 3. 支持用户决策点
  * 4. 失败历史追踪
+ *
+ * v2.1 改造：集成 L7 CheckpointManager
+ *   - 失败超过最大重试时，提供"从最近 checkpoint 恢复"的能力
+ *   - 章节级（post_commit）checkpoint + 阶段级（per-step）失败恢复双轨并行
  */
 
 import { ref, computed, type Ref } from 'vue';
+import { CheckpointManager, type RecoveryResult } from '@/services/recovery';
 
 // ============================================================
 // 类型定义
@@ -420,6 +425,52 @@ export class FailureRecoveryManager {
     return {
       canProceed: blocking.length === 0,
       blockingFailures: blocking,
+    };
+  }
+
+  /**
+  // ============================================================
+  // v2.1: L7 Checkpoint 集成
+  // ============================================================
+
+  /**
+   * 记录一章提交后的 checkpoint（桥接到 L7 CheckpointManager）。
+   * 由 ChapterCommitManagerV2 或 V2 编排器在 commit 成功后调用。
+   */
+  recordCheckpoint(
+    projectId: string,
+    chapter: number,
+    stateExport: unknown,
+    success: boolean,
+  ): void {
+    const cp = new CheckpointManager(projectId);
+    cp.save({
+      projectId,
+      chapter,
+      type: 'post_commit',
+      stateExport,
+      commitResult: { success, chapter },
+    });
+  }
+
+  /**
+   * 在所有自动恢复策略都失败时，让用户选择"从最近 checkpoint 恢复"。
+   * 这是兜底：跨章节的恢复（per-chapter 失败重试救不了的场景）。
+   *
+   * 返回：最近成功 commit 的检查点；无则 null。调用方负责：
+   *   1. stateStore.import(checkpoint.stateExport)
+   *   2. 提示用户从第 (checkpoint.chapter + 1) 章继续
+   */
+  recoverFromCheckpoint(projectId: string): {
+    checkpoint: any;
+    resumeChapter: number;
+  } | null {
+    const cp = new CheckpointManager(projectId);
+    const latest = cp.getRecoveryPoint();
+    if (!latest) return null;
+    return {
+      checkpoint: latest,
+      resumeChapter: latest.chapter + 1,
     };
   }
 

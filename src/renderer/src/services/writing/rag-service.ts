@@ -3,10 +3,16 @@
  * 参考 webnovel-writer 的设计
  * - 向量检索：使用语义相似度检索相关记忆
  * - 上下文增强：为AI生成提供相关背景信息
+ *
+ * v2.1 增强：可选接入 HybridRetriever（向量+实体图+BM25 三路混合）。
+ *   - setHybridRetriever() 注入混合检索器（由 StateDrivenWritingOrchestrator 内部管理）
+ *   - searchHybrid() 走三路 + RRF 重排，召回质量显著高于纯向量
+ *   - 未注入时回退到原 retrieveContext（向后兼容）
  */
 
 import { getMemoryManager } from './memory-manager';
 import type { ChapterMemory } from '@/types/project';
+import type { HybridRetriever, RetrievedFragment } from '@/services/retrieval';
 
 // ============================================
 // 向量嵌入接口
@@ -146,6 +152,22 @@ export class RAGService {
   private vectorStore: IVectorStoreService | null = null;
   private embeddingService: IEmbeddingService | null = null;
   private isInitialized = false;
+  // v2.1: 可选混合检索器
+  private hybridRetriever: HybridRetriever | null = null;
+
+  /**
+   * v2.1: 注入混合检索器
+   */
+  setHybridRetriever(retriever: HybridRetriever | null): void {
+    this.hybridRetriever = retriever;
+  }
+
+  /**
+   * v2.1: 是否启用了混合检索
+   */
+  isHybridEnabled(): boolean {
+    return this.hybridRetriever !== null;
+  }
 
   /**
    * 初始化 RAG 服务
@@ -382,6 +404,41 @@ export class RAGService {
       dialogue: '对话信息',
     };
     return names[type] || type;
+  }
+
+  /**
+   * v2.1: 混合检索（向量 + 实体图 + BM25 + RRF 重排）
+   *
+   * 替代 retrieveContext 的更高质量版本。
+   * 若未注入 hybridRetriever，回退到原 retrieveContext。
+   */
+  async searchHybrid(
+    query: string,
+    options?: {
+      topK?: number;
+      currentChapter?: number;
+      entities?: string[];
+    }
+  ): Promise<RetrievedFragment[]> {
+    if (this.hybridRetriever) {
+      return await this.hybridRetriever.retrieve(
+        {
+          query,
+          entities: options?.entities,
+          currentChapter: options?.currentChapter ?? 9999,
+        },
+        { topK: options?.topK ?? 8 },
+      );
+    }
+    // 降级：调用老 retrieveContext 并把 VectorEntry[] 转成 RetrievedFragment
+    const ctx = await this.retrieveContext(query, { topK: options?.topK });
+    return ctx.relevantVectors.map(r => ({
+      chunkId: r.entry.id,
+      chapter: r.entry.chapterIndex,
+      text: r.entry.text,
+      score: r.score,
+      scores: { vector: r.score },
+    }));
   }
 
   /**

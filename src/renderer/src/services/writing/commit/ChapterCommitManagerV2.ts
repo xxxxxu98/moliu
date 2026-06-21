@@ -14,6 +14,11 @@
 import { useProjectStore } from '@/stores/project.store';
 import { useEnhancedDataAgent, EnhancedDataAgent } from '@/services/ai/agents/enhanced-data-agent';
 import { useProjectionOrchestrator, ProjectionOrchestrator } from './ProjectionWriters';
+import {
+  createStateStore,
+  createChangesApplier,
+  extractChanges,
+} from '@/services/state';
 import type {
   ChapterCommit,
   ReviewerOutput,
@@ -127,7 +132,19 @@ class ChapterCommitManagerV2 {
         projectionStatus,
       };
 
-      // 8. 更新章节状态
+      // 8. 同步到 L1 状态库（v2.1 集成）
+      //    老路径：dataAgent 正则提取 → 投影写多处存储（断片、易丢）
+      //    新路径：CHANGES 协议 + StateSnapshotStore（结构化、单一真相）
+      //    双轨并行：dataAgent 仍跑（向后兼容），CHANGES 同步作为权威增量
+      const stateSyncResult = await this.syncToStateStore(chapterNumber, content);
+      if (stateSyncResult.applied > 0) {
+        console.log('[ChapterCommitManagerV2] L1 状态同步：', {
+          applied: stateSyncResult.applied,
+          errors: stateSyncResult.errors.length,
+        });
+      }
+
+      // 9. 更新章节状态
       if (status === 'accepted') {
         await this.updateChapterStatus(chapterNumber, 'committed');
       }
@@ -149,6 +166,49 @@ class ChapterCommitManagerV2 {
         success: false,
         error: error instanceof Error ? error.message : '提交失败',
       };
+    }
+  }
+
+  /**
+   * v2.1: 同步章节内容到 L1 状态库
+   *
+   * 优先提取 AI 在正文末尾的 CHANGES 协议载荷（结构化、权威），
+   * 找不到则跳过（不强制，保证向后兼容）。
+   *
+   * 同步策略：
+   * 1. 提取 CHANGES payload
+   * 2. 用 ChangesApplier 增量更新 StateSnapshotStore
+   * 3. 记录 applied/skipped 数量，用于日志
+   */
+  private async syncToStateStore(
+    chapterNumber: number,
+    content: string,
+  ): Promise<{ applied: number; errors: string[] }> {
+    try {
+      // 1. 提取 CHANGES
+      const { changes } = extractChanges(content);
+      if (!changes || changes.changes.length === 0) {
+        return { applied: 0, errors: [] };  // 老路径无 CHANGES 时静默跳过
+      }
+
+      // 2. 初始化/获取状态存储（按 projectId 隔离）
+      const projectId = this.projectStore.currentProject?.id || 'default';
+      const store = createStateStore(projectId);
+      const applier = createChangesApplier(store);
+
+      // 3. 应用 CHANGES（lenient 模式 — 失败单条不影响整体）
+      const result = applier.apply(changes, {
+        strictness: 'lenient',
+        allowAutoCreateEntities: true,
+      });
+
+      return {
+        applied: result.appliedCount,
+        errors: result.errors,
+      };
+    } catch (err) {
+      console.warn('[ChapterCommitManagerV2] L1 状态同步失败（不影响提交）:', err);
+      return { applied: 0, errors: [err instanceof Error ? err.message : String(err)] };
     }
   }
 
