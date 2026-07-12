@@ -177,15 +177,8 @@ export function useWritingOrchestratorV2() {
     const gitBackup: GitBackupClient = {
       async backup(chapter, content, title) {
         try {
-          const project = projectStore.currentProject;
-          if (!project) return;
           const mgr = new GitBackupManager();
-          await mgr.backupChapter({
-            projectRoot: project.id,
-            chapterNumber: chapter,
-            chapterTitle: title,
-            content,
-          });
+          await mgr.backup(chapter, content, title);
         } catch (err) {
           console.warn('[V2→Orchestrator] Git 备份失败（不影响提交）:', err);
         }
