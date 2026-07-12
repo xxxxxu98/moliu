@@ -8,7 +8,8 @@
  *     3. 实体图倒排更新（L2）
  *     4. Git 备份（复用 GitBackupManager）
  *     5. 持久化章节正文
- *   COMMIT (任一步失败回滚)
+ *     6. 提取并保存章节记忆（best-effort，失败不回滚）
+ *   COMMIT (任一关键步骤失败回滚；记忆步骤除外)
  *
  * 保证"状态永远和正文一致"——不会出现正文写了角色升级、状态库没变的脏数据。
  */
@@ -19,6 +20,7 @@ import type { StateSnapshotStore } from '../state/StateSnapshotStore';
 import type { ChangesPayload, StateSnapshot } from '../state/types';
 import type { HybridRetriever } from '../retrieval/HybridRetriever';
 import type { GatePipelineResult } from '../gates/types';
+import type { ChapterMemory } from '@/types/project';
 
 // ============================================================
 // 提交步骤结果
@@ -68,6 +70,22 @@ export interface ChapterPersistenceClient {
 }
 
 // ============================================================
+// 章节记忆客户端接口（注入式，best-effort）
+// ============================================================
+// 提取并保存章节记忆（ChapterMemory）。失败不影响提交事务的成功与否。
+
+export interface MemoryClient {
+  /**
+   * 提取并保存章节记忆。
+   * @param chapterId 章节持久化 ID
+   * @param chapterNumber 章节序号（1-based）
+   * @param prose 章节正文（已通过门禁）
+   * @returns 提取出的记忆，或 null
+   */
+  extractAndSave(chapterId: string, chapterNumber: number, prose: string): Promise<ChapterMemory | null>;
+}
+
+// ============================================================
 // 提交事务
 // ============================================================
 
@@ -88,6 +106,8 @@ export interface CommitTransactionOptions {
   skipGitBackup?: boolean;
   /** 是否跳过 RAG 索引（首次/重试场景） */
   skipRagIndex?: boolean;
+  /** 是否跳过记忆提取（默认 false） */
+  skipMemory?: boolean;
 }
 
 export class CommitTransaction {
@@ -97,6 +117,7 @@ export class CommitTransaction {
     private readonly retriever: HybridRetriever | null,
     private readonly gitBackup: GitBackupClient | null,
     private readonly persistence: ChapterPersistenceClient | null,
+    private readonly memoryClient: MemoryClient | null = null,
   ) {}
 
   /**
@@ -189,6 +210,25 @@ export class CommitTransaction {
         }
       }
 
+      // Step 5: 章节记忆提取（best-effort）
+      // 关键设计：记忆失败不影响提交事务的成功与否——章节正文已安全落库，
+      // 记忆缺失只会影响后续章节的上下文质量，不应导致整章回滚。
+      if (!options.skipMemory && this.memoryClient && options.chapterId) {
+        const step5 = await this.runStep('memory_extract', async () => {
+          const memory = await this.memoryClient!.extractAndSave(
+            options.chapterId!,
+            options.chapter,
+            options.prose,
+          );
+          return { hasMemory: !!memory };
+        });
+        // 即使失败也继续：best-effort 语义
+        steps.push(step5);
+        if (!step5.success) {
+          console.warn('[CommitTransaction] Step5 记忆提取失败（best-effort，不影响提交）:', step5.error);
+        }
+      }
+
       result.success = true;
       result.totalDurationMs = Date.now() - startTime;
       return result;
@@ -263,9 +303,10 @@ export function createCommitTransaction(
   retriever?: HybridRetriever | null,
   gitBackup?: GitBackupClient | null,
   persistence?: ChapterPersistenceClient | null,
+  memoryClient?: MemoryClient | null,
 ): CommitTransaction {
   const applier = new ChangesApplier(stateStore);
-  return new CommitTransaction(stateStore, applier, retriever ?? null, gitBackup ?? null, persistence ?? null);
+  return new CommitTransaction(stateStore, applier, retriever ?? null, gitBackup ?? null, persistence ?? null, memoryClient ?? null);
 }
 
 // ============================================================

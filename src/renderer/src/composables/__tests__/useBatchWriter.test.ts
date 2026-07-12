@@ -35,6 +35,7 @@ vi.mock('@/stores/settings.store', () => ({
 vi.mock('@/composables/useActiveAIProvider', () => ({
   useActiveAIProvider: () => ({
     requireAIService: mockRequireAIService,
+    currentModel: { value: 'gpt-4o' },
   }),
 }));
 
@@ -101,6 +102,25 @@ vi.mock('@/services/writing/chapter-commit', () => ({
 vi.mock('@/services/writing/foreshadow-tracker', () => ({
   createForeshadowTracker: vi.fn(),
   analyzeForeshadows: vi.fn().mockReturnValue([]),
+}));
+
+// v3.1：useBatchWriter 现在通过 ChapterWritingPipeline 执行单章写作
+// mock 管道，默认返回成功结果；具体用例可在 beforeEach 里覆盖
+const mockPipelineExecute = vi.fn().mockResolvedValue({
+  success: true,
+  prose: '生成的正文内容',
+  title: null,
+  taskBook: null,
+  gateResult: { passed: true, allIssues: [], blockingCount: 0, highCount: 0 },
+  attempts: 1,
+  forceAccepted: false,
+});
+
+vi.mock('@/services/writing/ChapterWritingPipeline', () => ({
+  useChapterWritingPipeline: () => ({
+    execute: mockPipelineExecute,
+    getOrchestrator: () => ({}),
+  }),
 }));
 
 describe('useBatchWriter', () => {
@@ -338,9 +358,8 @@ describe('BatchConfig 类型与失败重试', () => {
 
   it('失败时立即停止且不新建空章节（核心 bug 修复）', async () => {
     setupProjectWithEmptyChapters(1);
-    mockRequireAIService.mockImplementation(() => {
-      throw new Error('AI service unavailable');
-    });
+    // v3.1：管道执行失败
+    mockPipelineExecute.mockRejectedValueOnce(new Error('AI service unavailable'));
 
     const { useBatchWriter } = await import('@/composables/useBatchWriter');
     const writer = useBatchWriter();
@@ -358,15 +377,14 @@ describe('BatchConfig 类型与失败重试', () => {
     expect(writer.error.value).toContain('失败');
     // 【关键】没有新建任何空章节
     expect(mockProjectStore.createChapter).not.toHaveBeenCalled();
-    // 【关键】没有写入占位内容到失败章节
+    // 【关键】没有写入占位内容到失败章节（管道内部提交，失败时不写）
     expect(mockProjectStore.updateChapter).not.toHaveBeenCalled();
   });
 
   it('失败时按 maxRetries 重试本章，重试耗尽后停止', async () => {
     setupProjectWithEmptyChapters(1);
-    mockRequireAIService.mockImplementation(() => {
-      throw new Error('AI service unavailable');
-    });
+    // v3.1：管道执行每次都失败
+    mockPipelineExecute.mockRejectedValue(new Error('AI service unavailable'));
 
     const { useBatchWriter } = await import('@/composables/useBatchWriter');
     const writer = useBatchWriter();
@@ -378,8 +396,8 @@ describe('BatchConfig 类型与失败重试', () => {
       useReview: false,
     });
 
-    // 重试了 2 次（每次都调用 requireAIService）
-    expect(mockRequireAIService).toHaveBeenCalledTimes(2);
+    // 重试了 2 次（每次都调 pipeline.execute）
+    expect(mockPipelineExecute).toHaveBeenCalledTimes(2);
     // 批量写作已停止
     expect(writer.isWriting.value).toBe(false);
     expect(writer.error.value).toContain('连续 2 次失败');
@@ -391,15 +409,27 @@ describe('BatchConfig 类型与失败重试', () => {
 
   it('失败重试成功后继续写下一章', async () => {
     setupProjectWithEmptyChapters(2);
-    // 第 1 章第 1 次失败、第 2 次成功；第 2 章一次成功
-    let aiCallCount = 0;
-    mockRequireAIService.mockImplementation(() => {
-      aiCallCount++;
-      if (aiCallCount === 1) {
-        throw new Error('transient error');
-      }
-      return { continueWriting: () => Promise.resolve({ content: '生成的章节内容' }) };
-    });
+    // v3.1：第 1 章第 1 次 pipeline 失败、第 2 次成功；第 2 章一次成功
+    mockPipelineExecute
+      .mockRejectedValueOnce(new Error('transient error'))
+      .mockResolvedValueOnce({
+        success: true,
+        prose: '第1章内容',
+        title: null,
+        taskBook: null,
+        gateResult: { passed: true, allIssues: [], blockingCount: 0, highCount: 0 },
+        attempts: 2,
+        forceAccepted: false,
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        prose: '第2章内容',
+        title: null,
+        taskBook: null,
+        gateResult: { passed: true, allIssues: [], blockingCount: 0, highCount: 0 },
+        attempts: 1,
+        forceAccepted: false,
+      });
 
     const { useBatchWriter } = await import('@/composables/useBatchWriter');
     const writer = useBatchWriter();
@@ -411,8 +441,10 @@ describe('BatchConfig 类型与失败重试', () => {
       useReview: false,
     });
 
-    // 两章都成功写入（updateChapter 被调用 2 次）
-    expect(mockProjectStore.updateChapter).toHaveBeenCalledTimes(2);
-    expect(writer.writtenChapters.value).toBe(2);
+    // 两章都成功（pipeline.execute 被调用 3 次：第1章2次 + 第2章1次）
+    expect(mockPipelineExecute).toHaveBeenCalledTimes(3);
+    // v3.1：writtenChapters 依赖 store 中 chapter.content，而管道是 mock 的不写 store；
+    // 改为验证 progress.writtenChapters（批量层自己维护的计数）
+    expect(writer.progress.value.writtenChapters).toBe(2);
   }, 15000);
 });

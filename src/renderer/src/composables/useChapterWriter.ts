@@ -36,6 +36,7 @@ import {
 } from '@/services/writing/extract-plot-memory';
 import { initializeMemoryManager, getMemoryManager } from '@/services/writing/memory-manager';
 import { DeAIService } from '@/services/writing/de-ai-service';
+import { countWords } from '@/services/writing/utils';
 import {
   createTaskBookBuilder,
   type WritingTaskBuilder,
@@ -138,20 +139,6 @@ export interface UseChapterWriterReturn {
 const MIN_WORD_THRESHOLD = 0.85; // 最低字数阈值（85%）
 const MAX_WORD_THRESHOLD = 1.15; // 最高字数阈值（115%）
 const MAX_SUPPLEMENT_ROUNDS = 3; // 最多补充轮次
-
-// 统计中文字符和英文单词数量（纯函数，模块级共享）
-function countWords(text: string): number {
-  if (!text) return 0;
-  // 去除 markdown 标题、章节标题和标记
-  let cleaned = text.replace(/^#.*$/gm, '');
-  // 去除「第X章 标题」格式的章节标题（避免被计入正文字数，影响补写阈值判断）
-  cleaned = cleaned.replace(/^第[0-9零一二三四五六七八九十百千万]+章.*$/gm, '');
-  cleaned = cleaned.replace(/【.*?】/g, '');
-  cleaned = cleaned.replace(/\n/g, '');
-  const chineseChars = (cleaned.match(/[\u4e00-\u9fa5]/g) || []).length;
-  const englishWords = (cleaned.match(/[a-zA-Z]+/g) || []).length;
-  return chineseChars + englishWords;
-}
 
 function extractChapterTypeFromOutline(outline: string, orderIndex: number): ChapterType {
   if (!outline) {
@@ -283,6 +270,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
   >('idle');
   const blockingIssues = ref<any[]>([]);
   const reviewResult = ref<BlockingReviewResult | null>(null);
+  const reviewedContent = ref('');  // v2.1: 同步 V2 的审查产出
   const polishedContent = ref('');  // v2.1: 同步 V2 的润色产出
   const commitResult = ref<any>(null);  // v2.1: 同步 V2 的提交结果
 
@@ -690,10 +678,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
   // ============================================
   // 字数检查与补充续写
   // ============================================
-
-  const MIN_WORD_THRESHOLD = 0.85; // 最低字数阈值（85%）
-  const MAX_WORD_THRESHOLD = 1.15; // 最高字数阈值（115%）
-  const MAX_SUPPLEMENT_ROUNDS = 3; // 最多补充轮次
+  // 注：MIN_WORD_THRESHOLD / MAX_WORD_THRESHOLD / MAX_SUPPLEMENT_ROUNDS
+  // 已定义在模块级（见文件顶部），此处复用，不再重复声明（避免遮蔽）。
 
   /**
    * 检查字数是否达标

@@ -137,11 +137,11 @@ const stepColors = {
   提取记忆: 'text-gray-500',
 };
 
-// 审查严格度选项
+// 审查严格度选项（v3.1：影响门禁问题的严重度阈值与兜底放行门槛）
 const strictnessOptions = [
-  { label: '宽松', value: 'relaxed', desc: 'AI味等问题自动通过', icon: ShieldCheck },
-  { label: '正常', value: 'normal', desc: '中等严格，平衡质量与效率', icon: Shield },
-  { label: '严格', value: 'strict', desc: '所有问题都会阻断', icon: ShieldAlert },
+  { label: '宽松', value: 'relaxed', desc: '门禁宽松，更易兜底放行', icon: ShieldCheck },
+  { label: '正常', value: 'normal', desc: '门禁适中，平衡质量与效率', icon: Shield },
+  { label: '严格', value: 'strict', desc: '门禁严格，问题多时多重写', icon: ShieldAlert },
 ];
 
 // 下一章编号
@@ -348,10 +348,11 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs font-medium text-gray-600 dark:text-gray-400">写作流水线</span>
         <div class="flex items-center gap-2">
-          <!-- 审查严格度指示器 -->
+          <!-- 门禁状态指示器（v3.1：反映 G1-G7 门禁结果） -->
           <div
             class="flex items-center gap-1 px-2 py-1 rounded-full"
             :class="getStrictnessBg(currentStrictness)"
+            :title="currentStrictness === 'relaxed' ? '上一章门禁未通过，已兜底放行' : '门禁已通过'"
           >
             <Shield class="w-3 h-3" />
             <span class="text-xs font-medium">{{ getStrictnessLabel(currentStrictness) }}</span>
@@ -715,13 +716,13 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
               />
             </div>
 
-            <!-- 审查严格度 -->
+            <!-- 审查严格度（v3.1：门禁兜底放行模式） -->
             <div class="space-y-2">
               <div class="flex items-center gap-2">
                 <Gauge class="w-4 h-4 text-purple-500" />
-                <span class="text-sm text-gray-700 dark:text-gray-300">初始审查严格度</span>
+                <span class="text-sm text-gray-700 dark:text-gray-300">门禁严格度</span>
               </div>
-              <div class="text-xs text-gray-400 mb-2">失败时会自动降低严格度，下一章重置</div>
+              <div class="text-xs text-gray-400 mb-2">G1-G7 门禁审查；全失败时用最佳草稿兜底放行，不卡死批量</div>
               <div class="grid grid-cols-3 gap-2">
                 <button
                   v-for="option in strictnessOptions"

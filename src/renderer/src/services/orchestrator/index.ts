@@ -29,7 +29,7 @@ export {
 } from '../commit/CommitTransaction';
 export type {
   CommitStepResult, CommitTransactionResult, CommitTransactionOptions,
-  GitBackupClient, ChapterPersistenceClient,
+  GitBackupClient, ChapterPersistenceClient, MemoryClient,
 } from '../commit/CommitTransaction';
 export {
   CheckpointManager, SessionStateManager, recoverFromCrash,

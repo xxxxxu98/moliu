@@ -26,6 +26,10 @@ import { useProjectionOrchestrator, ProjectionOrchestrator } from './commit/Proj
 import { useAntiPatternsRegistry, AntiPatternsRegistryService } from './anti-patterns/AntiPatternsRegistry';
 import { useChapterCommitManagerV2, ChapterCommitManagerV2 } from './commit/ChapterCommitManagerV2';
 import { DeAIService } from './de-ai-service';
+import { countWords } from './utils';
+import { safeExtractChapterMemory } from './extract-plot-memory';
+import { initializeMemoryManager, getMemoryManager } from './memory-manager';
+import { ChapterWritingPipeline } from './ChapterWritingPipeline';
 
 import type {
   WritingTaskBook,
@@ -51,6 +55,7 @@ import {
   type DrafterClient,
   type GitBackupClient,
   type ChapterPersistenceClient,
+  type MemoryClient,
   type WriteChapterResult,
   setGate7LLMClient,
 } from '@/services/orchestrator';
@@ -186,22 +191,89 @@ export function useWritingOrchestratorV2() {
     };
 
     // 章节持久化适配器：写入 projectStore
+    // 说明：
+    // - 用 chapterId 从 sortedChapters 查找章节（不依赖 currentChapter，支持批量场景
+    //   下 currentChapter 已切走的提交）。
+    // - DeAIService 提取并清洗标题（去 markdown/章节标题前缀），与单章 applyGeneratedContent
+    //   口径一致；title 仅在提取成功时写入，避免覆盖手动标题。
+    // - 字数用统一口径 countWords（中文字符+英文单词，剥离标题/标记），保证 UI 显示
+    //   与补写阈值判断一致。
     const persistence: ChapterPersistenceClient = {
       async save(chapterId, content) {
-        const ch = projectStore.currentChapter;
+        const chapters = projectStore.sortedChapters;
+        const ch = chapters.find(c => c.id === chapterId) ?? projectStore.currentChapter;
         const oldContent = ch?.content ?? '';
-        await projectStore.updateChapter(chapterId, {
-          content: oldContent + (oldContent && !oldContent.endsWith('\n') ? '\n\n' : '') + content,
+
+        // 标题提取 + 正文清洗
+        const { title: extractedTitle, content: cleanedContent } =
+          DeAIService.extractAndValidateTitle(content);
+
+        // 拼接已有内容（保留追加语义）
+        const separator = oldContent && !oldContent.endsWith('\n') ? '\n\n' : '';
+        const newContent = oldContent + separator + cleanedContent;
+
+        const updateData: Record<string, any> = {
+          content: newContent,
+          wordCount: countWords(newContent),
+          isGenerated: true,
+          generatedAt: new Date().toISOString(),
           status: 'published',
-        });
+        };
+        if (extractedTitle) {
+          updateData.title = extractedTitle;
+        }
+
+        await projectStore.updateChapter(chapterId, updateData);
         return { oldContent };
+      },
+    };
+
+    // 章节记忆适配器：提取并保存 ChapterMemory（best-effort）
+    // 说明：
+    // - 用 chapterId 从 sortedChapters 查章节（已含 persistence 写入的最新 content）。
+    // - 复用 safeExtractChapterMemory（与 useBatchWriter/useChapterWriter 一致），含
+    //   AI 增强 + 文件备份 + 失败兜底。
+    // - 提取成功后写入 projectStore + memoryManager 持久化。
+    const memoryClient: MemoryClient = {
+      async extractAndSave(chapterId, chapterNumber, prose) {
+        const project = projectStore.currentProject;
+        if (!project) return null;
+
+        initializeMemoryManager(project.id, project.name, true);
+
+        // 从 store 查最新章节（persistence 已写入 content）
+        const ch = projectStore.sortedChapters.find(c => c.id === chapterId);
+        const chapterForMemory = ch
+          ? { ...ch, content: ch.content || prose }
+          : { id: chapterId, title: `第${chapterNumber}章`, content: prose, orderIndex: chapterNumber - 1 } as any;
+
+        const memory = await safeExtractChapterMemory(
+          chapterForMemory,
+          chapterNumber,
+          {
+            enableAIEnhancement: true,
+            enableFileBackup: true,
+            fallbackToPrevious: true,
+          }
+        );
+
+        if (memory) {
+          projectStore.addChapterMemory(memory);
+          try {
+            const manager = getMemoryManager();
+            await manager.saveMemory(memory);
+          } catch (err) {
+            console.warn('[V2→Orchestrator] memoryManager.saveMemory 失败（不影响提交）:', err);
+          }
+        }
+        return memory;
       },
     };
 
     // 默认模型：复用 useActiveAIProvider 的 currentModel
     const defaultModel = currentModel.value || 'gpt-4o';
 
-    const orch = new StateDrivenWritingOrchestrator(drafter, gitBackup, persistence, {
+    const orch = new StateDrivenWritingOrchestrator(drafter, gitBackup, persistence, memoryClient, {
       defaultModel,
       maxRetries: 3,
       enableSemanticGate: false,  // G7 LLM 审查默认关闭（需要外部注入客户端）
@@ -214,11 +286,27 @@ export function useWritingOrchestratorV2() {
   }
 
   // ============================================================
+  // 共享单章写作管道（v3.1 集成）
+  // ============================================================
+  // 把单章执行逻辑委托给 ChapterWritingPipeline，消除 V2 内联的 step0-step5 编排。
+  // 关键：直接注入上面建好的 stateDrivenOrchestrator（已含 persistence/memoryClient 适配器），
+  // 管道复用该实例，不再重复创建。
+  // V2 只保留 UI 状态映射。
+
+  const pipeline = new ChapterWritingPipeline({
+    orchestrator: stateDrivenOrchestrator,
+  });
+
+  // ============================================================
   // 核心方法
   // ============================================================
 
   /**
-   * 执行完整写作流程
+   * 执行完整写作流程（v3.1 委托给 ChapterWritingPipeline）
+   *
+   * 老版本（step0-step5 内联编排）已由共享管道取代：
+   *   预检 → 任务书 → StateDriven.writeChapter(L1-L7) → 结果归一化
+   * V2 这里只做：UI 状态映射 + 把 ChapterWriteOutput 同步到响应式 refs。
    */
   async function run(options: WritingOrchestratorOptions = {}): Promise<boolean> {
     const {
@@ -233,33 +321,89 @@ export function useWritingOrchestratorV2() {
     targetWordCount.value = requestedTarget;
 
     try {
-      // Step 0: 预检
-      await step0_Preflight();
-      if (error.value) return false;
-
-      // Step 1: 上下文 Agent - 生成任务书
-      await step1_GenerateTaskBook(writingStyle);
-      if (error.value) return false;
-
-      // Step 2: AI 起草
-      await step2_Draft(requestedTarget, writingStyle);
-      if (error.value) return false;
-
-      // Step 3: 审查 Agent
-      const reviewPass = await step3_Review();
-      if (!reviewPass && mode !== 'polish') {
-        // 有 blocking 问题时不继续，但允许用户强制继续
-        console.warn('[OrchestratorV2] 审查未通过');
+      const project = projectStore.currentProject;
+      const currentChapter = projectStore.currentChapter;
+      if (!project || !currentChapter) {
+        error.value = '没有选择项目或章节';
+        return false;
       }
 
-      // Step 4: 润色
-      await step4_Polish();
-      if (error.value) return false;
+      currentStep.value = 'preflight';
+      progress.value = 5;
 
-      // Step 5: 提交
-      await step5_Commit();
-      if (error.value) return false;
+      // 委托共享管道执行单章写作
+      const result = await pipeline.execute({
+        project,
+        chapter: currentChapter,
+        targetWordCount: requestedTarget,
+        writingStyle: writingStyle as any,
+        useTaskBook: true,
+        enablePreflight: true,
+      });
 
+      progress.value = 100;
+
+      // 映射管道输出到 V2 响应式状态
+      taskBook.value = result.taskBook;
+      generatedContent.value = result.prose;
+      reviewedContent.value = result.prose;
+      polishedContent.value = result.prose;
+      actualWordCount.value = countWords(result.prose);
+
+      // 把门禁结果翻译为 V2 旧 ReviewerOutput 格式（保持 UI 兼容）
+      if (result.gateResult) {
+        const gate = result.gateResult;
+        const blocking = !gate.passed;
+        reviewResult.value = {
+          blocking,
+          overallAssessment: blocking ? 'failed' : 'passed',
+          blockingIssues: gate.allIssues
+            .filter(i => i.severity === 'critical' || i.severity === 'high')
+            .map(i => ({
+              location: i.location,
+              type: 'consistency' as const,
+              severity: i.severity === 'critical' ? 'high' : (i.severity as any),
+              description: i.description,
+              evidence: i.evidence || '',
+              suggestion: i.suggestion || '',
+            })),
+          suggestions: gate.allIssues
+            .filter(i => i.severity !== 'critical' && i.severity !== 'high')
+            .map(i => ({
+              location: i.location,
+              type: 'consistency' as const,
+              severity: i.severity as any,
+              description: i.description,
+              evidence: i.evidence || '',
+              suggestion: i.suggestion || '',
+            })),
+          antiPatternIssues: [],
+          logicChainValid: !blocking,
+          consistency: blocking ? 50 : 90,
+          completeness: blocking ? 50 : 90,
+          writingQuality: blocking ? 50 : 90,
+          contract: {} as any,
+          contractAlignment: !blocking ? 100 : 50,
+          reviewSummary: `L1-L7 门禁：${gate.passed ? '通过' : '未通过'}（${gate.blockingCount} critical / ${gate.highCount} high）${result.forceAccepted ? ' · 兜底放行' : ''}`,
+        } as any;
+      }
+
+      // 提交结果同步
+      commitResult.value = result.success
+        ? ({
+            chapterNumber: currentChapter.orderIndex + 1,
+            status: 'accepted',
+            reviewFeedback: '',
+            committedAt: new Date().toISOString(),
+          } as any)
+        : null;
+
+      if (!result.success) {
+        error.value = result.error || '写作失败';
+        return false;
+      }
+
+      currentStep.value = 'idle';
       return true;
     } catch (err) {
       error.value = err instanceof Error ? err.message : '执行失败';

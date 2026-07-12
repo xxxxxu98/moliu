@@ -31,7 +31,7 @@ import { ConsistencyGatePipeline } from '../gates/ConsistencyGatePipeline';
 import type { GatePipelineResult, GateContext } from '../gates/types';
 
 import { CommitTransaction } from '../commit/CommitTransaction';
-import type { GitBackupClient, ChapterPersistenceClient, CommitTransactionResult } from '../commit/CommitTransaction';
+import type { GitBackupClient, ChapterPersistenceClient, MemoryClient, CommitTransactionResult } from '../commit/CommitTransaction';
 
 import { CheckpointManager, SessionStateManager, recoverFromCrash } from '../recovery/RecoveryManager';
 import type { RecoveryResult } from '../recovery/RecoveryManager';
@@ -143,6 +143,8 @@ export class StateDrivenWritingOrchestrator {
     private readonly gitBackup: GitBackupClient | null = null,
     /** 章节持久化客户端（可选） */
     private readonly persistence: ChapterPersistenceClient | null = null,
+    /** 章节记忆客户端（可选，best-effort） */
+    private readonly memoryClient: MemoryClient | null = null,
     config: Partial<StateDrivenOrchestratorConfig> = {},
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -322,7 +324,7 @@ export class StateDrivenWritingOrchestrator {
       // ============ L6: 提交事务 ============
       const applier = createChangesApplier(this.stateStore);
       const tx = new CommitTransaction(
-        this.stateStore, applier, this.retriever, this.gitBackup, this.persistence,
+        this.stateStore, applier, this.retriever, this.gitBackup, this.persistence, this.memoryClient,
       );
       const commitResult = await tx.commit({
         chapter: chapterNo,

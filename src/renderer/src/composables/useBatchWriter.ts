@@ -1,20 +1,21 @@
 /**
- * 批量写作 Composable - 增强版
+ * 批量写作 Composable - 增强版（v3.1）
  *
- * 核心改进：
- * 1. TaskBook 作为核心前置步骤
- * 2. 引入 blocking 闸门机制
- * 3. 流水线式管理：起草 → 审查 → 润色 → 提交
- * 4. 自适应审查严格度 - 审查失败时逐步降低严格度，直到通过
- * 5. 自动化程度高 - 无需人工干预，避免死循环
- * 6. 结构化报告生成
- * 7. 失败恢复机制
+ * 单章执行已委托给 ChapterWritingPipeline（与智能续写共用同一条流水线），
+ * 本 composable 只保留批量特有的控制逻辑：
+ * 1. 循环控制（暂停/恢复/停止响应）
+ * 2. 指数退避重试（单章失败重试本章，耗尽则停止整个批量）
+ * 3. 完结判断（checkEndingReadiness，"写到完结"模式）
+ * 4. 进度统计（writtenChapters / writtenWords）
+ * 5. 创建新章节（无空章节时自动 createNewChapter）
  *
- * 审查策略：
- * - 每章从目标严格度开始（如 normal）
- * - 审查失败时，逐步降低严格度（normal → relaxed）
- * - 章节完成后，下一章重置为初始严格度
- * - 这样既保证质量，又避免无限循环
+ * 审查范式（v3.1 转变）：
+ * - 老版本：strict→normal→relaxed 自适应降级重审
+ * - 新版本：StateDriven G1-G7 门禁 + 兜底放行（重写取最佳，全失败用 bestAttempt 提交）
+ * - 详见 executeChapterWriting 的 forceAccepted 处理
+ *
+ * 副作用（记忆提取/标题/元数据）已下沉到 persistence/memoryClient 适配器，
+ * 单章与批量双受益。
  */
 
 import { ref, computed, type Ref, type ComputedRef } from 'vue';
@@ -22,44 +23,22 @@ import type { Volume, ChapterMemory } from '@/types/project';
 import { useProjectStore } from '@/stores/project.store';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useActiveAIProvider } from './useActiveAIProvider';
-import {
-  extractChapterMemory,
-  buildCharacterStateTable,
-  buildPlotProgressTable,
-  safeExtractChapterMemory,
-} from '@/services/writing/extract-plot-memory';
-import {
-  extractChapterContext,
-  buildChapterOutlineText,
-  buildWindowedOutlineText,
-  buildEnhancedDesignPrompt,
-} from '@/services/writing/OutlineContextBuilder';
-import { initializeMemoryManager, getMemoryManager } from '@/services/writing/memory-manager';
 import { ContextManager } from '@/services/writing/context-manager';
-import { DeAIService } from '@/services/writing/de-ai-service';
 import {
-  createTaskBookBuilder,
-  type WritingTaskBuilder,
-} from '@/services/writing/writing-task-builder';
-import {
-  blockingReview,
-  canProceedToPolish,
-  getBlockingIssuesToFix,
-  BlockingReviewService,
   WritingPipelineManager,
   type BlockingReviewResult,
   type WritingPipelineStage,
   type ReviewStrictness,
 } from '@/services/review/blocking-review.service';
-import { createChapterCommit, extractChapterFacts } from '@/services/writing/chapter-commit';
-import { createForeshadowTracker, analyzeForeshadows } from '@/services/writing/foreshadow-tracker';
-import type { WritingTaskBook } from '@/types/writing-task';
-import { WritingError, ErrorCode, getErrorMessage } from '@/types/errors';
+import { WritingError, ErrorCode } from '@/types/errors';
 import { createEndingPerceptionEngine } from '@/services/writing/ending-perception-engine';
 import {
   useReportGenerator,
   type StructuredReviewReport,
 } from '@/services/writing/review/report-generator';
+import {
+  useChapterWritingPipeline,
+} from '@/services/writing/ChapterWritingPipeline';
 import {
   useFailureRecovery,
   type PipelineStep,
@@ -262,268 +241,12 @@ interface InternalWritingState {
 // ============================================
 // 公共逻辑
 // ============================================
-
-function buildCharactersInfo(project: any, maxCount: number = 5): any[] {
-  return (project?.characters || []).slice(0, maxCount).map((char: any) => ({
-    id: char.id,
-    name: char.name,
-    role: char.role || '角色',
-    description: char.description || '',
-    personality: char.profile?.personality || [],
-    appearance: char.profile?.appearance,
-    relationships: (char.profile?.relationships || []).map((r: any) => ({
-      targetName: r.targetName,
-      type: r.type,
-      description: r.description || '',
-    })),
-  }));
-}
-
-function buildActiveForeshadows(project: any, maxCount: number = 5): any[] {
-  return (project?.foreshadows || [])
-    .filter((f: any) => f.status !== 'resolved')
-    .slice(0, maxCount)
-    .map((f: any) => ({
-      id: f.id,
-      hint: f.hint,
-      status: f.status,
-      suggestedChapter: f.suggestedResolutionChapter,
-    }));
-}
-
-function buildRecentChaptersFullText(
-  projectStore: any,
-  currentIndex: number,
-  recentChapterCount: number
-): string {
-  const chapters = projectStore.sortedChapters;
-  const recentChapters = chapters
-    .filter(
-      (c: any, i: number) => i < currentIndex && i >= Math.max(0, currentIndex - recentChapterCount)
-    )
-    .sort((a: any, b: any) => a.orderIndex - b.orderIndex);
-
-  if (recentChapters.length === 0) return '';
-
-  const contextManager = new ContextManager();
-  return recentChapters
-    .map((c: any) => {
-      const content = c.content || '';
-      if (!content) {
-        return `【第${c.orderIndex + 1}章 · ${c.title}】\n\n（本章暂无内容）`;
-      }
-      // 压缩为「摘要 + 结尾」，避免整章原文灌入 prompt 浪费 token（首尾已足够承载文风）
-      const summary = contextManager.extractPreviousChapterSummary(content, 300);
-      const ending = content.length > 500 ? content.slice(-500) : content;
-      return `【第${c.orderIndex + 1}章 · ${c.title}】\n[摘要] ${summary}\n……\n[结尾] ${ending}`;
-    })
-    .join('\n\n==========\n\n');
-}
-
-/**
- * 生成写作任务书（核心前置步骤）
- */
-async function generateTaskBook(
-  project: any,
-  chapterIndex: number,
-  chapterOutline: string | undefined,
-  writingStyle: string,
-  targetWordCount: number
-): Promise<WritingTaskBook | null> {
-  try {
-    const builder = createTaskBookBuilder({
-      project,
-      chapterIndex,
-      chapterOutline,
-      writingStyle: writingStyle as any,
-      targetWordCount,
-    });
-
-    const taskBook = await builder.buildTaskBook();
-    return taskBook;
-  } catch (err) {
-    console.error('[批量写作] 生成任务书失败:', err);
-    return null;
-  }
-}
-
-/**
- * 构建增强版 Prompt（包含任务书内容）
- */
-function buildEnhancedOutline(taskBook: WritingTaskBook, baseOutline: string): string {
-  const taskBookSection = `
-=== 写作任务书 ===
-【CBN】${taskBook.CBN}
-【CPNs】${taskBook.CPNs.join(' / ')}
-【CEN】${taskBook.CEN}
-【必须覆盖】${taskBook.mustCover.join(' / ')}
-【禁区】${taskBook.forbiddenZones.join(' / ')}
-【风格指引】${taskBook.styleGuidance.pacingStrategy}
-【结尾感觉】${taskBook.endingSensation}
-【开放问题】${taskBook.openQuestion}
-=== 任务书结束 ===
-
-`;
-
-  return taskBookSection + baseOutline;
-}
-
-/**
- * 执行六维审查（带 blocking 闸门）
- */
-async function performBlockingReview(
-  project: any,
-  chapter: any,
-  chapterIndex: number,
-  previousChapter: any,
-  strictness: ReviewStrictness = 'normal'
-): Promise<BlockingReviewResult> {
-  const context = {
-    project,
-    chapter,
-    chapterIndex,
-    previousChapter,
-    previousSummary: previousChapter?.content
-      ? new ContextManager().extractPreviousChapterSummary(previousChapter.content, 300)
-      : undefined,
-  };
-
-  const result = await blockingReview(context, undefined, strictness);
-
-  return result;
-}
-
-/**
- * 执行润色（必须在 blocking 通过后）
- *
- * 【设计说明】原 DeAIService.fix() 基于正则替换/删句，有误删正文风险，
- * 已于 2026-05-24 禁用自动改写。当前策略：
- * - 正文不改写（保持稳定，由系统提示词的"去AI味门控路由"在生成阶段预防）
- * - 仅做标题提取 + 可观测检测日志（不改内容），为后续决策提供数据
- */
-async function performPolish(
-  content: string,
-  deAIEnabled: boolean
-): Promise<{
-  fixedContent: string;
-  title: string | null;
-  fixedCount: number;
-}> {
-  const result = DeAIService.extractAndValidateTitle(content);
-
-  // 可观测检测：启用去AI味时记录检测到的问题（纯检测，不改写正文）
-  if (deAIEnabled) {
-    try {
-      const detection = await DeAIService.detect(content);
-      if (detection.issues.length > 0) {
-        console.log(
-          `[批量写作] 去AI味检测：发现 ${detection.issues.length} 处问题，AI味等级=${detection.level}（已由提示词门控预防，正文未改写）`
-        );
-      }
-    } catch (err) {
-      console.warn('[批量写作] 去AI味检测失败（不影响写作流程）:', err);
-    }
-  }
-
-  return {
-    fixedContent: result.content,
-    title: result.title,
-    fixedCount: 0,
-  };
-}
-
-/**
- * 执行 Commit 提交
- */
-async function performCommit(project: any, chapter: any, chapterIndex: number): Promise<boolean> {
-  try {
-    const extraction = await extractChapterFacts(chapter, chapterIndex);
-    const commit = await createChapterCommit(
-      { project, chapter, chapterIndex },
-      {
-        fulfillment: { coveredNodes: [], missedNodes: [] },
-        disambiguation: [],
-        extraction,
-      },
-      { autoProject: true }
-    );
-
-    return commit.status === 'accepted';
-  } catch (err) {
-    console.error('[批量写作] Commit 失败:', err);
-    return true; // Commit 失败不影响写作流程
-  }
-}
-
-/**
- * 提取情节记忆
- */
-async function extractMemoryAfterApply(
-  projectStore: any,
-  chapter: any,
-  chapterIndex: number
-): Promise<void> {
-  try {
-    if (projectStore.currentProject) {
-      initializeMemoryManager(
-        projectStore.currentProject.id,
-        projectStore.currentProject.name,
-        true
-      );
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const memory = await safeExtractChapterMemory(
-      { ...chapter, content: chapter.content || '' },
-      chapterIndex,
-      {
-        enableAIEnhancement: true,
-        enableFileBackup: true,
-        fallbackToPrevious: true,
-      }
-    );
-
-    if (memory) {
-      projectStore.addChapterMemory(memory);
-      const manager = getMemoryManager();
-      await manager.saveMemory(memory);
-    }
-  } catch (err) {
-    console.error('[批量写作] 提取记忆失败:', err);
-  }
-}
-
-async function extractPreviousChapterSummary(
-  contextManager: ContextManager,
-  content: string,
-  maxLength: number = 300
-): Promise<{ summary: string; ending: string }> {
-  if (!content) return { summary: '', ending: '' };
-  const summary = contextManager.extractPreviousChapterSummary(content, maxLength);
-  const ending = contextManager.extractChapterEnding(content);
-  return { summary, ending };
-}
-
-async function saveChapterContent(
-  projectStore: any,
-  chapter: any,
-  content: string,
-  title: string | null
-): Promise<void> {
-  const updateData: Record<string, any> = {
-    content,
-    wordCount: content.length,
-    isGenerated: true,
-    generatedAt: new Date().toISOString(),
-  };
-
-  if (title) {
-    updateData.title = title;
-  }
-
-  await projectStore.updateChapter(chapter.id, updateData);
-}
+// 注：原 buildCharactersInfo / buildActiveForeshadows / buildRecentChaptersFullText /
+// generateTaskBook / buildEnhancedOutline / performBlockingReview / performPolish /
+// performCommit / extractMemoryAfterApply / saveChapterContent 等内联辅助函数，
+// 已于 v3.1 随 executeChapterWriting 委托 ChapterWritingPipeline 一并移除——
+// 单章上下文构建/任务书/起草/门禁/润色/提交/记忆提取均由共享管道 + 下沉的
+// persistence/memoryClient 适配器统一处理。
 
 /**
  * 内联计算伏笔紧急度
@@ -765,6 +488,12 @@ export function useBatchWriter(): UseBatchWriterReturn {
   const settingsStore = useSettingsStore();
   const { requireAIService } = useActiveAIProvider();
 
+  // 共享单章写作管道（v3.1 集成）
+  // 管道内部创建 StateDriven + persistence/memoryClient 适配器，
+  // 与智能续写（V2）共用同一条单章流水线。
+  // 批量层只保留：循环控制、重试、完结判断、进度统计。
+  const pipeline = useChapterWritingPipeline();
+
   // 内部状态
   const internalState: InternalWritingState = {
     shouldStop: false,
@@ -918,14 +647,19 @@ export function useBatchWriter(): UseBatchWriterReturn {
   }
 
   /**
-   * 执行单章写作（核心逻辑）
+   * 执行单章写作（核心逻辑）—— v3.1 委托给共享管道
    *
-   * 流水线：TaskBook(前置) → 起草 → 审查(Blocking闸门) → 润色 → 提交
+   * 老版本（内联 9 步流水线：TaskBook→起草→blockingReview→润色→保存→Commit→记忆→伏笔）
+   * 已由 ChapterWritingPipeline + 下沉的 persistence/memoryClient 适配器统一取代。
    *
-   * 审查策略：
-   * - 从当前严格度开始审查
-   * - 失败时降低严格度（normal → relaxed）
-   * - 通过后进入润色阶段
+   * 审查范式转变：
+   * - 老版本：strict→normal→relaxed 自适应降级重审（同一份草稿换严格度）
+   * - 新版本：StateDriven G1-G7 门禁 + 兜底放行（重写取最佳，全失败则用 bestAttempt 提交）
+   *
+   * 本函数只做：
+   * 1. 调管道执行单章
+   * 2. 映射管道输出到批量 UI 状态（pipelineStep/progress/blockingIssues/reports）
+   * 3. 进度统计
    */
   async function executeChapterWriting(
     chapterIndex: number,
@@ -940,7 +674,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
     }
   ): Promise<boolean> {
     try {
-      const client = requireAIService();
       const chapters = projectStore.sortedChapters;
 
       if (chapterIndex >= chapters.length) {
@@ -958,267 +691,79 @@ export function useBatchWriter(): UseBatchWriterReturn {
       currentChapterTitle.value = chapter.title;
 
       const project = projectStore.currentProject!;
-      const recentChapterCount = projectStore.memoryConfig?.shortTermChapterCount || 5;
-
-      // 初始化本章审查状态
-      internalState.reviewAttempts = 0;
-      internalState.currentChapter = chapterIndex;
-
-      // 获取当前使用的严格度（从初始严格度开始）
-      let currentReviewStrictness = internalState.currentStrictness;
-
-      // ========== 步骤 1: 构建上下文（必须在 TaskBook 之前，因为 TaskBook 依赖它） ==========
       const prevChapter = chapterIndex > 0 ? chapters[chapterIndex - 1] : null;
-      const { summary: previousSummary, ending: previousChapterEnding } = prevChapter?.content
-        ? await extractPreviousChapterSummary(contextManager, prevChapter.content, 300)
-        : { summary: '', ending: '' };
 
-      const characters = buildCharactersInfo(project);
-      const activeForeshadows = buildActiveForeshadows(project);
-      // 窗口化大纲：当前章 ± 5 章给细纲，其余只给标题（替代全量灌入，省 token）
-      const fullOutline = buildWindowedOutlineText(projectStore.plotOutline, chapterIndex, 5);
-      const recentFullText = buildRecentChaptersFullText(
-        projectStore,
-        chapterIndex,
-        recentChapterCount
-      );
+      // 前章衔接（供管道构建上下文）
+      const previousChapter = prevChapter?.content
+        ? {
+            title: prevChapter.title,
+            summary: contextManager.extractPreviousChapterSummary(prevChapter.content, 300),
+            ending: contextManager.extractChapterEnding(prevChapter.content),
+          }
+        : undefined;
 
-      // 使用统一的 OutlineContextBuilder（传入 chapterIndex 启用位置兜底）
-      const chapterCtx = extractChapterContext(
-        projectStore.plotOutline,
-        chapter.id,
-        chapter.title,
-        chapterIndex
-      );
-      const currentChapterOutlineText = chapterCtx
-        ? buildChapterOutlineText(chapterCtx, true)
-        : chapter.plotSummary || '';
-      const enhancedPrompt = buildEnhancedDesignPrompt({
-        projectTitle: project.name,
-        projectSynopsis: project.description || '',
-        projectGenre: project.genre.map((g: any) => g.name),
-        currentChapter: chapterCtx || {
-          title: chapter.title,
-          description: chapter.plotSummary || '',
-          orderIndex: chapterIndex,
-        },
-        currentChapterOutline: currentChapterOutlineText,
-        emotionGoal: project.emotionGoal,
-        conflictDesign: project.conflictDesign,
-        coolPointDesign: project.coolPointDesign,
-        storyLines: project.storyLines,
-        coreSellingPoints: project.coreSellingPoints,
-        startupPack: project.metadata?.startupPack,
+      currentPipelineStep.value = '写作中';
+
+      // 委托共享管道执行单章
+      const result = await pipeline.execute({
+        project,
+        chapter,
+        targetWordCount: options.wordsPerChapter,
         writingStyle: options.writingStyle as any,
+        useTaskBook: options.useTaskBook,
+        enablePreflight: false, // 批量场景跳过预检以加速
+        previousChapter,
       });
 
-      // ========== 步骤 2: 生成写作任务书（核心前置） ==========
-      let taskBook: WritingTaskBook | null = null;
-      if (options.useTaskBook) {
-        currentPipelineStep.value = '生成任务书';
+      // 映射管道输出到批量 UI 状态
+      if (result.gateResult) {
+        // 门禁问题映射到 blockingIssues（兼容 BatchWritingPanel UI）
+        blockingIssues.value = result.gateResult.allIssues
+          .filter(i => i.severity === 'critical' || i.severity === 'high')
+          .slice(0, 10)
+          .map(i => ({
+            severity: i.severity,
+            location: i.location,
+            description: i.description,
+            evidence: i.evidence || '',
+            suggestion: i.suggestion || '',
+          }));
 
-        taskBook = await generateTaskBook(
-          project,
-          chapterIndex,
-          currentChapterOutlineText,
-          options.writingStyle,
-          options.wordsPerChapter
-        );
-
-        if (!taskBook) {
-          console.error(`[executeChapterWriting] 任务书生成返回 null，章节 ${chapterIndex + 1}`);
-          throw new WritingError('任务书生成失败', ErrorCode.WRITE_TASK_FAILED);
-        }
+        // 记录门禁历史（兼容 strictnessHistory UI 字段）
+        strictnessHistory.value.push({
+          chapter: chapterIndex,
+          strictness: result.gateResult.passed ? 'normal' : 'relaxed',
+          passed: result.gateResult.passed,
+        });
+      } else {
+        blockingIssues.value = [];
       }
 
-      // 构建增强版大纲（包含任务书）
-      let enhancedOutline = currentChapterOutlineText || '';
-      if (taskBook) {
-        enhancedOutline = buildEnhancedOutline(taskBook, enhancedOutline);
-      }
-
-      // ========== 步骤 3: AI 起草 ==========
-      currentPipelineStep.value = 'AI起草';
-      let generatedContent = '';
-
-      try {
-        const aiParams = {
-          project,
-          currentChapterId: chapter.id,
-          currentChapterIndex: chapterIndex,
-          currentChapterTitle: chapter.title,
-          currentChapterContent: '',
-          currentChapterOutline: enhancedOutline || currentChapterOutlineText || undefined,
-          fullOutline,
-          adjacentChaptersSummary: prevChapter
-            ? {
-                previousChapterTitle: prevChapter.title,
-                previousChapterSummary: previousSummary,
-                previousChapterEnding: previousChapterEnding,
-                nextChapterTitle: undefined,
-                nextChapterSummary: undefined,
-              }
-            : undefined,
-          recentChaptersFullText: recentFullText,
-          charactersInScene: characters,
-          relatedForeshadows: activeForeshadows,
-          writingStyle: options.writingStyle,
-          // 新增：章节结构化策略
-          currentChapterOutlineContext: chapterCtx
-            ? {
-                chapterType: chapterCtx.chapterType,
-                hookType: chapterCtx.hookType,
-                pacingStrategy: chapterCtx.pacingStrategy,
-                timeSpan: chapterCtx.timeSpan,
-                keyEvents: chapterCtx.keyEvents,
-                isClimax: chapterCtx.isClimax,
-                expectedCoolPoints: chapterCtx.expectedCoolPoints,
-              }
-            : undefined,
-          // 新增：增强设计段落
-          enhancedDesignPrompt: enhancedPrompt,
-        };
-
-        if (settingsStore.streamOutput && (client as any).continueWritingStream) {
-          generatedContent = await new Promise<string>((resolve, reject) => {
-            let content = '';
-            internalState.abortController = new AbortController();
-
-            (client as any).continueWritingStream(
-              aiParams,
-              'smartContinue',
-              options.wordsPerChapter,
-              (chunk: string) => {
-                content += chunk;
-              },
-              async () => {
-                resolve(content);
-              },
-              (errMsg: string) => {
-                reject(new WritingError(errMsg, ErrorCode.AI_STREAM_FAILED));
-              },
-              internalState.abortController?.signal
-            );
-          });
-        } else {
-          const result = await (client as any).continueWriting(
-            aiParams,
-            'smartContinue',
-            options.wordsPerChapter
-          );
-          if (result?.content) {
-            generatedContent = result.content;
-          }
-        }
-      } catch (err) {
-        const errorMessage = getErrorMessage(err, 'AI 起草失败');
+      if (!result.success) {
+        // 失败：记录恢复项，抛出让上层重试
         recoveryManager.registerFailure(
           chapter.id,
           chapterIndex + 1,
           'draft' as PipelineStep,
-          errorMessage
+          result.error || '写作失败'
         );
-        throw new WritingError(errorMessage, ErrorCode.AI_GENERATION_FAILED);
+        throw new WritingError(
+          result.error || '写作失败',
+          ErrorCode.AI_GENERATION_FAILED
+        );
       }
 
-      // ========== 步骤 4: 审查（带自适应严格度） ==========
-      if (options.useReview) {
-        currentPipelineStep.value = '审查（Blocking闸门）';
-
-        // 自适应审查循环：失败时降低严格度
-        let reviewPassed = false;
-        let lastReviewResult: BlockingReviewResult | null = null;
-
-        while (!reviewPassed) {
-          internalState.reviewAttempts++;
-
-          lastReviewResult = await performBlockingReview(
-            project,
-            { ...chapter, content: generatedContent },
-            chapterIndex,
-            prevChapter,
-            currentReviewStrictness
-          );
-
-          blockingIssues.value = getBlockingIssuesToFix(lastReviewResult, 10);
-          currentStrictness.value = currentReviewStrictness;
-
-          // 记录审查历史
-          strictnessHistory.value.push({
-            chapter: chapterIndex,
-            strictness: currentReviewStrictness,
-            passed: lastReviewResult.passed,
-          });
-
-          // 检查是否通过
-          if (canProceedToPolish(lastReviewResult)) {
-            reviewPassed = true;
-
-            // 生成结构化报告
-            const chapter = chapters[chapterIndex];
-            const report = generateReport(
-              chapter.id,
-              chapterIndex + 1,
-              chapter.title,
-              lastReviewResult as any,
-              {} as any,
-              { strictness: currentReviewStrictness, passThreshold: 70 }
-            );
-            latestReports.value.set(chapterIndex + 1, report);
-
-            break;
-          }
-
-          // 未通过，尝试降低严格度
-          const lowerStrictness = getLowerStrictness(currentReviewStrictness);
-
-          if (lowerStrictness) {
-            currentReviewStrictness = lowerStrictness;
-            // 继续循环，用更宽松的严格度重新审查
-          } else {
-            // 已经是最宽松的严格度，仍然未通过
-            console.warn(
-              `[批量写作] 第${chapterIndex + 1}章在最低严格度下仍未通过，将继续（润色会处理部分问题）`
-            );
-
-            // 记录警告但仍然继续（润色阶段会处理）
-            error.value = `第${chapterIndex + 1}章审查未通过，但继续进行润色`;
-
-            // 重置严格度为初始值，为下一章做准备
-            currentReviewStrictness = internalState.currentStrictness;
-            break;
-          }
-        }
+      // 兜底放行警告（门禁未过但已提交）
+      if (result.forceAccepted) {
+        console.warn(
+          `[批量写作] 第${chapterIndex + 1}章门禁未通过，已兜底放行（attempts=${result.attempts}）`
+        );
+        error.value = `第${chapterIndex + 1}章门禁未通过，已用最佳草稿兜底放行`;
       }
 
-      // ========== 步骤 5: 润色（去AI味） ==========
-      currentPipelineStep.value = '润色（去AI味）';
-      const { fixedContent, title } = await performPolish(generatedContent, options.deAIEnabled);
-      generatedContent = fixedContent;
-
-      // ========== 步骤 6: 保存章节 ==========
-      currentPipelineStep.value = '保存';
-      await saveChapterContent(projectStore, chapter, generatedContent, title);
-
-      // ========== 步骤 7: Commit 提交（可选） ==========
-      if (options.useCommit) {
-        currentPipelineStep.value = '提交';
-        await performCommit(project, { ...chapter, content: generatedContent }, chapterIndex);
-      }
-
-      // ========== 步骤 8: 提取记忆 ==========
-      currentPipelineStep.value = '提取记忆';
-      await extractMemoryAfterApply(projectStore, chapter, chapterIndex + 1);
-
-      // ========== 步骤 9: 伏笔追踪 ==========
-      await analyzeForeshadows(generatedContent, chapterIndex);
-
+      // 进度统计
       progress.value.writtenChapters++;
-      progress.value.writtenWords += generatedContent.length;
-
-      // 重置当前章节的严格度，为下一章做准备
-      internalState.currentStrictness = config.value.initialStrictness;
-      currentStrictness.value = config.value.initialStrictness;
+      progress.value.writtenWords += result.prose.length;
 
       // 重置流水线状态
       internalState.pipeline.reset();
