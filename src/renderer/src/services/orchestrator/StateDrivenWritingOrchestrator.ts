@@ -385,8 +385,8 @@ export class StateDrivenWritingOrchestrator {
     const { onProgress, onError, ...writeOptions } = options;
 
     // 启动会话
-    const startChapter = chapters[0]?.orderIndex + 1 ?? 1;
-    const endChapter = chapters[chapters.length - 1]?.orderIndex + 1 ?? startChapter;
+    const startChapter = (chapters[0]?.orderIndex ?? 0) + 1;
+    const endChapter = (chapters[chapters.length - 1]?.orderIndex ?? startChapter - 1) + 1;
     this.sessionManager?.start(project.id, startChapter, endChapter);
 
     for (let i = 0; i < chapters.length; i++) {
