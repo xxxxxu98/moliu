@@ -307,6 +307,41 @@ export class UnifiedAIService {
   }
 
   /**
+   * 简单文本补全（开题刷新、记忆提取等内部任务）
+   */
+  async complete(
+    prompt: string,
+    options?: {
+      temperature?: number;
+      maxTokens?: number;
+      system?: string;
+    },
+  ): Promise<string> {
+    if (!this.client) {
+      throw new Error("Client not initialized");
+    }
+
+    const messages = options?.system
+      ? [
+          { role: "system" as const, content: options.system },
+          { role: "user" as const, content: prompt },
+        ]
+      : [{ role: "user" as const, content: prompt }];
+
+    const response = await this.client.chat(messages, {
+      temperature: options?.temperature ?? this.generationConfig.temperature,
+      topP: this.generationConfig.topP,
+      frequencyPenalty: this.generationConfig.frequencyPenalty,
+      presencePenalty: this.generationConfig.presencePenalty,
+      ...(options?.maxTokens !== undefined ? { maxTokens: options.maxTokens } : {}),
+    } as any);
+
+    const content =
+      typeof response === "string" ? response : JSON.stringify(response);
+    return extractPureText(content);
+  }
+
+  /**
    * Continue writing content
    * @param context 项目上下文
    * @param mode 续写模式

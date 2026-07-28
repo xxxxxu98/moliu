@@ -16,8 +16,12 @@
     "subtitle": "Let AI be your creative partner",
     "description": "A million-word novel creation tool with a three-layer memory system that solves AI forgetting problems, keeping your story coherent",
     "newProject": "New Project",
+    "tabs": {
+      "bookshelf": "Bookshelf",
+      "discovery": "Topic Discovery"
+    },
     "creationPaths": {
-      "title": "Start Creating",
+      "title": "Topic Discovery",
       "guided": "Guided Creation",
       "guidedDesc": "Describe your story idea, AI generates the outline for you",
       "inspiration": "Inspiration",
@@ -26,9 +30,38 @@
       "professionalDesc": "Five-Step Outline · Volume Beat · Volume Timeline"
     },
     "stats": {
+      "title": "Writing Stats",
       "totalWords": "Total Words",
       "totalProjects": "Projects"
     }
+  },
+  "topicDiscovery": {
+    "title": "Topic Discovery",
+    "description": "Refresh with AI to find genres and story seeds, then open a project",
+    "tabs": {
+      "seeds": "Story Seeds",
+      "radar": "Genre Radar",
+      "prompt": "One-liner"
+    },
+    "refreshSeeds": "Refresh",
+    "refreshRadar": "Refresh trends",
+    "refreshDirections": "New directions",
+    "clearLocks": "Clear locks",
+    "fallbackHint": "offline data",
+    "seedHint": "Click a seed to generate directions",
+    "emptySeedsTitle": "No story seeds yet",
+    "emptySeedsDesc": "Click Refresh to fetch AI seeds; the latest batch will be saved",
+    "emptyRadarTitle": "No genre insights yet",
+    "emptyRadarDesc": "Click Refresh trends to fetch insights; the latest batch will be saved",
+    "radarHint": "Click a genre to lock it and refresh seeds",
+    "promptPlaceholder": "Describe your story idea in a sentence or two…",
+    "promptTooShort": "Please write a bit more (at least 8 characters)",
+    "generateDirections": "Generate directions",
+    "directionFailed": "Failed to generate directions. Try again or check AI settings.",
+    "insightApplied": "Locked “{name}” and refreshing seeds",
+    "directionTitle": "Direction cards",
+    "directionDesc": "Pick the strongest direction, then create a project.",
+    "directionEmpty": "Expand a direction to preview the outline."
   },
   "projectList": {
     "myCreations": "My Creations",

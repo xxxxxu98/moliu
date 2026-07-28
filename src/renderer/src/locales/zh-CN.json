@@ -16,8 +16,12 @@
     "subtitle": "让 AI 成为你的创作伙伴",
     "description": "百万字级长篇小说创作神器，三层记忆系统解决 AI 遗忘问题，让故事连贯如一",
     "newProject": "新建项目",
+    "tabs": {
+      "bookshelf": "书架",
+      "discovery": "开题中心"
+    },
     "creationPaths": {
-      "title": "开始创作",
+      "title": "开题中心",
       "guided": "有方向创作",
       "guidedDesc": "描述你的故事想法，AI 为你生成大纲",
       "inspiration": "灵感探索",
@@ -26,9 +30,38 @@
       "professionalDesc": "五步大纲法 · 卷节拍表 · 卷时间线"
     },
     "stats": {
+      "title": "创作统计",
       "totalWords": "总字数",
       "totalProjects": "项目数"
     }
+  },
+  "topicDiscovery": {
+    "title": "开题中心",
+    "description": "AI 刷新找题材与点子，选中后生成方向并开题",
+    "tabs": {
+      "seeds": "灵感种子",
+      "radar": "题材雷达",
+      "prompt": "一句话开题"
+    },
+    "refreshSeeds": "换一批",
+    "refreshRadar": "刷新风向",
+    "refreshDirections": "换方向",
+    "clearLocks": "清除锁定",
+    "fallbackHint": "离线数据",
+    "seedHint": "点击种子即可生成创作方向",
+    "emptySeedsTitle": "暂无灵感种子",
+    "emptySeedsDesc": "点击「换一批」获取 AI 开题点子，之后会自动保存",
+    "emptyRadarTitle": "暂无题材风向",
+    "emptyRadarDesc": "点击「刷新风向」获取题材洞察，之后会自动保存",
+    "radarHint": "点击题材会锁定并刷新对应灵感种子",
+    "promptPlaceholder": "用一两句话描述你的故事想法，例如：修仙世界里资质平庸的少年获得上古传承后逆袭……",
+    "promptTooShort": "请再多写一点想法（至少 8 个字）",
+    "generateDirections": "生成创作方向",
+    "directionFailed": "未能生成方向，请换个描述或检查 AI 配置",
+    "insightApplied": "已锁定「{name}」，正在刷新灵感种子",
+    "directionTitle": "创作方向卡",
+    "directionDesc": "先选一个最值得展开的主方案，再创建项目。",
+    "directionEmpty": "请先选择方向并展开主方案，随后即可预览大纲。"
   },
   "projectList": {
     "myCreations": "我的创作",

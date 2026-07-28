@@ -371,6 +371,7 @@ ${c.content || '（本章暂无内容）'}`;
     options?: {
       temperature?: number;
       maxTokens?: number;
+      system?: string;
     }
   ): Promise<string> {
     if (!hasProvider.value) {
