@@ -12,26 +12,33 @@ import {
   refreshStorySeeds,
 } from '@/services/inspiration/topic-discovery.service';
 import type {
+  FavoriteSeed,
   GenreInsightCard,
+  InsightSeedContext,
   RefreshGenreInsightsOptions,
   RefreshStorySeedsOptions,
   SeedPlayStyle,
   StorySeedCard,
+  ToggleFavoriteResult,
   TopicAudience,
   TopicDiceRoll,
   TopicDiscoverySource,
   TopicDiscoveryTab,
+  TopicLength,
+  TopicPlatform,
 } from '@/types/topic-discovery';
 
-export type { TopicDiscoveryTab };
+export type { TopicDiscoveryTab, FavoriteSeed };
 
 /** 会产生灵感种子的玩法 */
 export type SeedPlayTab = 'seeds' | 'mix' | 'dice' | 'twist';
 
 const MAX_HISTORY = 40;
+const MAX_FAVORITES = 50;
 const SEEDS_STORAGE_KEY = 'moliu:topic-discovery:seeds';
 const SEED_BUCKETS_STORAGE_KEY = 'moliu:topic-discovery:seed-buckets';
 const INSIGHTS_STORAGE_KEY = 'moliu:topic-discovery:insights';
+const FAVORITES_STORAGE_KEY = 'moliu:topic-discovery:favorites';
 
 const SEED_PLAY_TABS: SeedPlayTab[] = ['seeds', 'mix', 'dice', 'twist'];
 
@@ -61,6 +68,8 @@ interface PersistedSeedBucketsState {
   buckets: Partial<Record<SeedPlayTab, PersistedSeedBucket>>;
   lockedGenre: string | null;
   lockedAudience: TopicAudience | null;
+  lockedPlatform: TopicPlatform | null;
+  lockedLength: TopicLength | null;
   savedAt: string;
 }
 
@@ -72,6 +81,8 @@ interface LegacyPersistedSeedsState {
   seedTitleHistory: string[];
   lockedGenre: string | null;
   lockedAudience: TopicAudience | null;
+  lockedPlatform?: TopicPlatform | null;
+  lockedLength?: TopicLength | null;
   savedAt: string;
 }
 
@@ -80,6 +91,11 @@ interface PersistedInsightsState {
   source: TopicDiscoverySource | null;
   warning: string | null;
   insightNameHistory: string[];
+  savedAt: string;
+}
+
+interface PersistedFavoritesState {
+  items: FavoriteSeed[];
   savedAt: string;
 }
 
@@ -94,6 +110,11 @@ function createEmptyBucket(): SeedBucketState {
 
 function isSeedPlayTab(tab: TopicDiscoveryTab): tab is SeedPlayTab {
   return (SEED_PLAY_TABS as string[]).includes(tab);
+}
+
+/** 收藏去重键：换一批后 id 会变，用标题+题材识别 */
+export function favoriteSeedKey(seed: StorySeedCard): string {
+  return `${seed.title.trim().toLowerCase()}::${seed.genre.trim().toLowerCase()}`;
 }
 
 function readJson<T>(key: string): T | null {
@@ -142,9 +163,16 @@ export function useTopicDiscovery() {
 
   const lockedGenre = ref<string | null>(null);
   const lockedAudience = ref<TopicAudience | null>(null);
+  /** null = 不限，提示词侧按 general 处理 */
+  const lockedPlatform = ref<TopicPlatform | null>(null);
+  /** null = 默认长篇 */
+  const lockedLength = ref<TopicLength | null>(null);
   const selectedInsightId = ref<string | null>(null);
+  /** 点雷达洞察后保留完整约束，供后续换一批种子继续下传 */
+  const activeInsightContext = ref<InsightSeedContext | null>(null);
 
   const insightNameHistory = ref<string[]>([]);
+  const favorites = ref<FavoriteSeed[]>([]);
 
   let insightsMeta: Pick<PersistedInsightsState, 'source' | 'warning'> = {
     source: null,
@@ -175,6 +203,8 @@ export function useTopicDiscovery() {
 
   const hasSeeds = computed(() => seeds.value.length > 0);
   const hasInsights = computed(() => insights.value.length > 0);
+  const hasFavorites = computed(() => favorites.value.length > 0);
+  const favoriteCount = computed(() => favorites.value.length);
 
   const isRefreshingCurrent = computed((): boolean => {
     if (!isRefreshing.value || !refreshingTarget.value) return false;
@@ -222,6 +252,8 @@ export function useTopicDiscovery() {
       buckets,
       lockedGenre: lockedGenre.value,
       lockedAudience: lockedAudience.value,
+      lockedPlatform: lockedPlatform.value,
+      lockedLength: lockedLength.value,
       savedAt: new Date().toISOString(),
     } satisfies PersistedSeedBucketsState);
 
@@ -241,6 +273,13 @@ export function useTopicDiscovery() {
     } satisfies PersistedInsightsState);
   }
 
+  function persistFavoritesSnapshot(): void {
+    writeJson(FAVORITES_STORAGE_KEY, {
+      items: favorites.value,
+      savedAt: new Date().toISOString(),
+    } satisfies PersistedFavoritesState);
+  }
+
   function hydrateBucket(key: SeedPlayTab, data: PersistedSeedBucket | undefined): void {
     if (!data || !Array.isArray(data.items)) return;
     seedBuckets[key].items = data.items;
@@ -258,6 +297,8 @@ export function useTopicDiscovery() {
       }
       lockedGenre.value = modern.lockedGenre ?? null;
       lockedAudience.value = modern.lockedAudience ?? null;
+      lockedPlatform.value = modern.lockedPlatform ?? null;
+      lockedLength.value = modern.lockedLength ?? null;
       applyTabMeta(activeTab.value);
       return SEED_PLAY_TABS.some(key => seedBuckets[key].items.length > 0);
     }
@@ -274,9 +315,55 @@ export function useTopicDiscovery() {
     seedBuckets.seeds.titleHistory = legacy.seedTitleHistory ?? [];
     lockedGenre.value = legacy.lockedGenre;
     lockedAudience.value = legacy.lockedAudience;
+    lockedPlatform.value = legacy.lockedPlatform ?? null;
+    lockedLength.value = legacy.lockedLength ?? null;
     persistSeedBucketsSnapshot();
     applyTabMeta(activeTab.value);
     return true;
+  }
+
+  function buildInsightContext(insight: GenreInsightCard): InsightSeedContext {
+    return {
+      name: insight.name,
+      audience: insight.audience,
+      opportunity: insight.opportunity,
+      reason: insight.reason,
+      hotTags: [...insight.hotTags],
+      riskLevel: insight.riskLevel,
+      riskNote: insight.riskNote,
+      lifecycle: insight.lifecycle,
+      platform: insight.platform,
+      length: insight.length,
+      entryDifficulty: insight.entryDifficulty,
+      namePatterns: insight.namePatterns ? [...insight.namePatterns] : undefined,
+    };
+  }
+
+  function applyGlobalFilters(options: RefreshStorySeedsOptions): RefreshStorySeedsOptions {
+    const next: RefreshStorySeedsOptions = { ...options };
+
+    if (!next.platform && lockedPlatform.value) {
+      next.platform = lockedPlatform.value;
+    }
+    if (!next.length && lockedLength.value) {
+      next.length = lockedLength.value;
+    }
+
+    next.lockedSlots = {
+      ...next.lockedSlots,
+      ...(lockedPlatform.value ? { platform: lockedPlatform.value } : {}),
+      ...(lockedLength.value ? { length: lockedLength.value } : {}),
+    };
+
+    if (
+      !next.insightContext &&
+      activeInsightContext.value &&
+      (!next.genre || next.genre === activeInsightContext.value.name)
+    ) {
+      next.insightContext = activeInsightContext.value;
+    }
+
+    return next;
   }
 
   /** 从本地恢复上一批题材洞察；无缓存时返回 false */
@@ -293,6 +380,68 @@ export function useTopicDiscovery() {
       applyTabMeta('radar');
     }
     return true;
+  }
+
+  /** 从本地恢复收藏；无缓存时返回 false */
+  function loadPersistedFavorites(): boolean {
+    const cached = readJson<PersistedFavoritesState>(FAVORITES_STORAGE_KEY);
+    if (!cached || !Array.isArray(cached.items)) {
+      return false;
+    }
+    favorites.value = cached.items
+      .filter(item => item?.seed?.title && item?.seed?.oneLiner)
+      .slice(0, MAX_FAVORITES);
+    return favorites.value.length > 0;
+  }
+
+  function isFavorite(seed: StorySeedCard): boolean {
+    const key = favoriteSeedKey(seed);
+    return favorites.value.some(item => favoriteSeedKey(item.seed) === key);
+  }
+
+  function toggleFavorite(
+    seed: StorySeedCard,
+    fromTab: TopicDiscoveryTab = activeTab.value,
+  ): ToggleFavoriteResult {
+    const key = favoriteSeedKey(seed);
+    const index = favorites.value.findIndex(item => favoriteSeedKey(item.seed) === key);
+
+    if (index >= 0) {
+      favorites.value = favorites.value.filter((_, i) => i !== index);
+      persistFavoritesSnapshot();
+      return { ok: true, action: 'removed' };
+    }
+
+    if (favorites.value.length >= MAX_FAVORITES) {
+      return {
+        ok: false,
+        action: 'limit',
+        reason: `收藏已达上限（${MAX_FAVORITES}），请先取消部分收藏`,
+      };
+    }
+
+    const entry: FavoriteSeed = {
+      seed: { ...seed },
+      fromTab,
+      savedAt: new Date().toISOString(),
+    };
+    favorites.value = [entry, ...favorites.value];
+    persistFavoritesSnapshot();
+    return { ok: true, action: 'added' };
+  }
+
+  function removeFavorite(seed: StorySeedCard): boolean {
+    const key = favoriteSeedKey(seed);
+    const before = favorites.value.length;
+    favorites.value = favorites.value.filter(item => favoriteSeedKey(item.seed) !== key);
+    if (favorites.value.length === before) return false;
+    persistFavoritesSnapshot();
+    return true;
+  }
+
+  function clearFavorites(): void {
+    favorites.value = [];
+    removeKey(FAVORITES_STORAGE_KEY);
   }
 
   function pushHistory(list: string[], values: string[]): string[] {
@@ -330,19 +479,23 @@ export function useTopicDiscovery() {
       warning.value = null;
     }
 
-    const options: RefreshStorySeedsOptions = {
+    const options: RefreshStorySeedsOptions = applyGlobalFilters({
       count: 4,
       excludeTitles: bucket.titleHistory,
       audience: lockedAudience.value ?? undefined,
       ...extra,
       playStyle,
-    };
+    });
 
     if (ignoreLockedGenre) {
-      // 混搭/骰子以自身约束为准，不套用雷达锁定题材
+      // 混搭/骰子以自身约束为准，不套用雷达锁定题材；但仍保留受众/平台/篇幅
       options.lockedSlots = {
         ...(lockedAudience.value ? { audience: lockedAudience.value } : {}),
+        ...(lockedPlatform.value ? { platform: lockedPlatform.value } : {}),
+        ...(lockedLength.value ? { length: lockedLength.value } : {}),
       };
+      // 混搭/骰子不继承雷达洞察上下文，避免干扰用户组合
+      delete options.insightContext;
       if (extra?.genre) {
         options.genre = extra.genre;
       } else {
@@ -353,6 +506,8 @@ export function useTopicDiscovery() {
       options.lockedSlots = {
         ...(lockedGenre.value ? { genre: lockedGenre.value } : {}),
         ...(lockedAudience.value ? { audience: lockedAudience.value } : {}),
+        ...(lockedPlatform.value ? { platform: lockedPlatform.value } : {}),
+        ...(lockedLength.value ? { length: lockedLength.value } : {}),
         ...extra?.lockedSlots,
       };
     }
@@ -416,6 +571,8 @@ export function useTopicDiscovery() {
       count: 4,
       excludeNames: insightNameHistory.value,
       audience: lockedAudience.value ?? undefined,
+      platform: lockedPlatform.value ?? undefined,
+      length: lockedLength.value ?? undefined,
       ...extra,
     };
 
@@ -473,6 +630,14 @@ export function useTopicDiscovery() {
     selectedInsightId.value = insight.id;
     lockedGenre.value = insight.name;
     lockedAudience.value = insight.audience;
+    if (insight.platform) {
+      lockedPlatform.value = insight.platform;
+    }
+    if (insight.length) {
+      lockedLength.value = insight.length;
+    }
+    activeInsightContext.value = buildInsightContext(insight);
+    persistSeedBucketsSnapshot();
   }
 
   async function adoptInsightAndRefreshSeeds(insight: GenreInsightCard): Promise<StorySeedCard[]> {
@@ -509,16 +674,35 @@ export function useTopicDiscovery() {
 
   function setLockedGenre(genre: string | null): void {
     lockedGenre.value = genre;
+    if (!genre) {
+      activeInsightContext.value = null;
+      selectedInsightId.value = null;
+    }
+    persistSeedBucketsSnapshot();
   }
 
   function setLockedAudience(audience: TopicAudience | null): void {
     lockedAudience.value = audience;
+    persistSeedBucketsSnapshot();
+  }
+
+  function setLockedPlatform(platform: TopicPlatform | null): void {
+    lockedPlatform.value = platform;
+    persistSeedBucketsSnapshot();
+  }
+
+  function setLockedLength(length: TopicLength | null): void {
+    lockedLength.value = length;
+    persistSeedBucketsSnapshot();
   }
 
   function clearLocks(): void {
     lockedGenre.value = null;
     lockedAudience.value = null;
+    lockedPlatform.value = null;
+    lockedLength.value = null;
     selectedInsightId.value = null;
+    activeInsightContext.value = null;
     persistSeedBucketsSnapshot();
   }
 
@@ -529,6 +713,14 @@ export function useTopicDiscovery() {
 
   function getSeedsForTab(tab: SeedPlayTab): StorySeedCard[] {
     return seedBuckets[tab].items;
+  }
+
+  /** 软取消种子/雷达刷新：忽略在飞结果，保留已有列表 */
+  function cancelRefresh(): void {
+    if (!isRefreshing.value) return;
+    refreshId += 1;
+    isRefreshing.value = false;
+    refreshingTarget.value = null;
   }
 
   function reset(): void {
@@ -544,13 +736,17 @@ export function useTopicDiscovery() {
     insights.value = [];
     lockedGenre.value = null;
     lockedAudience.value = null;
+    lockedPlatform.value = null;
+    lockedLength.value = null;
     selectedInsightId.value = null;
+    activeInsightContext.value = null;
     insightNameHistory.value = [];
     insightsMeta = { source: null, warning: null };
     activeTab.value = 'seeds';
     removeKey(SEEDS_STORAGE_KEY);
     removeKey(SEED_BUCKETS_STORAGE_KEY);
     removeKey(INSIGHTS_STORAGE_KEY);
+    // 收藏是跨会话资产，reset 会话不清理；需 clearFavorites 显式清空
   }
 
   return {
@@ -564,12 +760,18 @@ export function useTopicDiscovery() {
     seeds,
     seedBuckets,
     insights,
+    favorites,
     lockedGenre,
     lockedAudience,
+    lockedPlatform,
+    lockedLength,
     selectedInsightId,
     selectedInsight,
+    activeInsightContext,
     hasSeeds,
     hasInsights,
+    hasFavorites,
+    favoriteCount,
     seedTitleHistory,
     insightNameHistory,
     refresh,
@@ -580,14 +782,23 @@ export function useTopicDiscovery() {
     refreshFromDice,
     loadPersistedSeeds,
     loadPersistedInsights,
+    loadPersistedFavorites,
     selectInsight,
     adoptInsightAndRefreshSeeds,
     setLockedGenre,
     setLockedAudience,
+    setLockedPlatform,
+    setLockedLength,
     clearLocks,
+    isFavorite,
+    toggleFavorite,
+    removeFavorite,
+    clearFavorites,
     switchTab,
     getSeedsForTab,
+    cancelRefresh,
     reset,
     buildPromptFromSeed,
+    maxFavorites: MAX_FAVORITES,
   };
 }

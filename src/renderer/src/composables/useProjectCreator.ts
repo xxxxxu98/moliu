@@ -3,6 +3,12 @@ import { useRouter } from "vue-router";
 import { useProjectStore } from "@/stores/project.store";
 import type { GeneratedOutline } from "@/types/inspiration";
 import type { PlotNode } from "@/types/project";
+import type { TopicDiscoveryProjectSeed } from "@/types/topic-discovery";
+
+export interface CreateProjectOptions {
+  /** 开题中心写入的题材合同种子 */
+  topicDiscoverySeed?: TopicDiscoveryProjectSeed;
+}
 
 export interface UseProjectCreatorReturn {
   /** 是否正在创建 */
@@ -10,7 +16,10 @@ export interface UseProjectCreatorReturn {
   /** 错误信息 */
   error: ReturnType<typeof ref<string | null>>;
   /** 创建项目方法 */
-  createProject: (outline: GeneratedOutline) => Promise<string | null>;
+  createProject: (
+    outline: GeneratedOutline,
+    options?: CreateProjectOptions,
+  ) => Promise<string | null>;
   /** 重置状态 */
   reset: () => void;
 }
@@ -671,9 +680,13 @@ export function useProjectCreator(): UseProjectCreatorReturn {
   /**
    * 创建项目
    * @param outline 选定的大纲
+   * @param options 可选：开题中心合同种子等
    * @returns 创建成功返回项目ID，否则返回 null
    */
-  async function createProject(outline: GeneratedOutline): Promise<string | null> {
+  async function createProject(
+    outline: GeneratedOutline,
+    options: CreateProjectOptions = {},
+  ): Promise<string | null> {
     isCreating.value = true;
     error.value = null;
 
@@ -688,6 +701,9 @@ export function useProjectCreator(): UseProjectCreatorReturn {
       const worldSchema = buildWorldSchema(outlineData);
       const genreTags = buildGenreTags(outlineData);
       const metadata = buildProjectMetadata(outlineData);
+      const topicDiscoverySeed = options.topicDiscoverySeed
+        ? (JSON.parse(JSON.stringify(options.topicDiscoverySeed)) as TopicDiscoveryProjectSeed)
+        : undefined;
 
       const newProject = await projectStore.createProject({
         name: outlineData.title,
@@ -712,7 +728,8 @@ export function useProjectCreator(): UseProjectCreatorReturn {
           || metadata.startupPack
           || metadata.storyScale
           || metadata.plannedChapterCount
-          || metadata.plannedWordCount;
+          || metadata.plannedWordCount
+          || topicDiscoverySeed;
 
         if (hasEnhancement) {
           // 注意：main.ts 的 project:update 是浅合并，metadata 会被整体覆盖，
@@ -723,6 +740,7 @@ export function useProjectCreator(): UseProjectCreatorReturn {
           if (metadata.storyScale) newMetadata.storyScale = metadata.storyScale;
           if (metadata.plannedChapterCount !== undefined) newMetadata.plannedChapterCount = metadata.plannedChapterCount;
           if (metadata.plannedWordCount !== undefined) newMetadata.plannedWordCount = metadata.plannedWordCount;
+          if (topicDiscoverySeed) newMetadata.topicDiscoverySeed = topicDiscoverySeed;
 
           await projectStore.updateProjectInfo(newProject.id, {
             emotionGoal: metadata.emotionGoal,

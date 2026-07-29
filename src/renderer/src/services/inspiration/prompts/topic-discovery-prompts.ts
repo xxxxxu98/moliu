@@ -3,16 +3,59 @@
  */
 
 import type {
+  InsightSeedContext,
   RefreshGenreInsightsOptions,
   RefreshStorySeedsOptions,
   SeedPlayStyle,
   TopicAudience,
+  TopicLength,
+  TopicPlatform,
 } from '@/types/topic-discovery';
+import { formatGenreSeedHint } from '../genre-seed-context';
 
-const AUDIENCE_LABEL: Record<TopicAudience, string> = {
+export const AUDIENCE_LABEL: Record<TopicAudience, string> = {
   general: '大众向',
   male: '男生向',
   female: '女生向',
+};
+
+export const PLATFORM_LABEL: Record<TopicPlatform, string> = {
+  general: '不限平台',
+  qidian: '起点中文网',
+  fanqie: '番茄小说',
+  jinjiang: '晋江文学城',
+  qimao: '七猫',
+  zhihu: '知乎盐言',
+};
+
+export const LENGTH_LABEL: Record<TopicLength, string> = {
+  long: '长篇连载',
+  short: '短篇完结',
+};
+
+export const ENTRY_DIFFICULTY_LABEL: Record<'low' | 'medium' | 'high', string> = {
+  low: '易上手',
+  medium: '中等门槛',
+  high: '高门槛',
+};
+
+/** 平台调性：对齐 oh-story 扫榜「平台特性」思路 */
+export const PLATFORM_GUIDE: Record<TopicPlatform, string> = {
+  general: '不限定单一平台，兼顾主流网文可读性与差异化卖点。',
+  qidian:
+    '起点调性：付费追读强，重视长线升级、世界观厚度与章末钩子；适合可持续连载的冲突引擎。',
+  fanqie:
+    '番茄调性：前三章定生死，节奏快、爽点密、设定直观；开篇立刻抛冲突与第一次小兑现。',
+  jinjiang:
+    '晋江调性：情感质感与人物关系优先，人设要立得住；甜虐节奏清晰，忌空洞堆设定。',
+  qimao: '七猫调性：强情节、强反转、结局导向明确；语言直白好读，下沉市场共鸣优先。',
+  zhihu: '盐言调性：短篇情绪过山车，反转与共鸣并重；适合 15–30 分钟完读的强情绪核。',
+};
+
+export const LENGTH_GUIDE: Record<TopicLength, string> = {
+  long: '篇幅：长篇连载。要有可持续升级/卷结构、追读钩子与中长期冲突；避免写死成一次性短篇。',
+  short:
+    '篇幅：短篇完结。聚焦 15–30 分钟完读的情绪弧与反转，冲突密度高，尽快兑现核心期待。',
 };
 
 const PLAY_STYLE_GUIDE: Record<SeedPlayStyle, string> = {
@@ -25,18 +68,63 @@ const PLAY_STYLE_GUIDE: Record<SeedPlayStyle, string> = {
   mix: '风格：元素混搭开题。必须融合用户选定的题材与设定元素，强调碰撞感与化学反应，避免只贴标签不写冲突。',
 };
 
+function resolvePlatform(options: {
+  platform?: TopicPlatform;
+  lockedSlots?: { platform?: TopicPlatform };
+}): TopicPlatform {
+  return options.lockedSlots?.platform || options.platform || 'general';
+}
+
+function resolveLength(options: {
+  length?: TopicLength;
+  lockedSlots?: { length?: TopicLength };
+}): TopicLength {
+  return options.lockedSlots?.length || options.length || 'long';
+}
+
+function formatInsightContext(ctx: InsightSeedContext): string[] {
+  const lines = [
+    `雷达洞察约束 —— 题材：${ctx.name}`,
+    `为何关注：${ctx.reason}`,
+    `开题切入：${ctx.opportunity}`,
+    `生命周期：${ctx.lifecycle}；风险：${ctx.riskLevel}`,
+  ];
+  if (ctx.entryDifficulty) {
+    lines.push(`上手难度：${ENTRY_DIFFICULTY_LABEL[ctx.entryDifficulty]}`);
+  }
+  if (ctx.hotTags.length > 0) {
+    lines.push(`热标签（须尽量吃进故事核）：${ctx.hotTags.join('、')}`);
+  }
+  if (ctx.namePatterns && ctx.namePatterns.length > 0) {
+    lines.push(`书名/卖点模式参考：${ctx.namePatterns.join('；')}`);
+  }
+  if (ctx.riskNote) {
+    lines.push(`风险提示：${ctx.riskNote}`);
+  }
+  lines.push('种子的 oneLiner / hook / coolPoint 必须体现上述切入建议与热标签，勿只贴题材名。');
+  return lines;
+}
+
 export function buildStorySeedsSystemPrompt(playStyle: SeedPlayStyle = 'standard'): string {
+  const twistField =
+    playStyle === 'twist'
+      ? ',"brokenTrope":"破的是什么套路"'
+      : '';
+
   return `你是资深网文开题顾问。根据约束生成互不相同、可立即开写的「灵感种子」。
 只输出 JSON，不要 markdown 代码块，不要解释。
 
 JSON 格式：
-{"seeds":[{"title":"书名感标题","oneLiner":"一句话故事核（含人物+冲突+钩子）","genre":"题材","hook":"开篇钩子","coolPoint":"核心爽点","audience":"general|male|female","riskNote":"可选风险提示"}]}
+{"seeds":[{"title":"书名感标题","oneLiner":"一句话故事核（含人物+冲突+钩子）","genre":"题材","hook":"开篇钩子","coolPoint":"核心爽点","sellPoint":"读者核心期待一句话","mechanism":"金手指或核心机制一句话","audience":"general|male|female","platform":"qidian|fanqie|jinjiang|qimao|zhihu|general","length":"long|short","riskNote":"可选风险提示"${twistField}}]}
 
 要求：
 - 每条 oneLiner 40-80 字，具体可写，避免空泛鸡汤
+- sellPoint / mechanism 各 10-30 字，务实可执行
 - 同批种子题材或冲突角度必须明显不同
 - 不要抄袭知名作品书名与核心设定
 - audience 只能是 general / male / female
+- platform / length 必须与用户约束一致（若用户已锁定）
+- 若提供了题材 Profile 约束，hook / coolPoint 须贴合其偏好钩子与爽点
 - ${PLAY_STYLE_GUIDE[playStyle]}`;
 }
 
@@ -45,23 +133,37 @@ export function buildStorySeedsUserPrompt(options: RefreshStorySeedsOptions): st
   const playStyle = options.playStyle ?? 'standard';
   const genre = options.lockedSlots?.genre || options.genre;
   const audience = options.lockedSlots?.audience || options.audience;
+  const platform = resolvePlatform(options);
+  const length = resolveLength(options);
   const exclude = options.excludeTitles?.filter(Boolean) ?? [];
   const mixTags = options.mixTags?.filter(Boolean) ?? [];
   const mixElements = options.mixElements?.filter(Boolean) ?? [];
   const dice = options.diceRoll;
+  const insight = options.insightContext;
+  const genreHint = options.genreSeedHint;
 
   const lines: string[] = [
     `请生成 ${count} 个网文灵感种子。`,
     `当前日期：${new Date().toISOString().slice(0, 10)}`,
     `玩法：${playStyle}`,
     PLAY_STYLE_GUIDE[playStyle],
+    `目标平台：${PLATFORM_LABEL[platform]}（platform 字段填 ${platform}）`,
+    PLATFORM_GUIDE[platform],
+    LENGTH_GUIDE[length],
+    `篇幅字段 length 填 ${length}`,
   ];
 
   if (genre) {
     lines.push(`锁定题材：${genre}`);
   }
+  if (genreHint) {
+    lines.push(...formatGenreSeedHint(genreHint));
+  }
   if (audience) {
     lines.push(`目标受众：${AUDIENCE_LABEL[audience]}（audience 字段填 ${audience}）`);
+  }
+  if (insight) {
+    lines.push(...formatInsightContext(insight));
   }
   if (mixTags.length > 0) {
     lines.push(`混搭题材标签：${mixTags.join('、')}`);
@@ -80,7 +182,9 @@ export function buildStorySeedsUserPrompt(options: RefreshStorySeedsOptions): st
   }
 
   if (playStyle === 'twist') {
-    lines.push('每条种子请显式写出「破的是什么套路」与「新的期待点」。');
+    lines.push(
+      '每条种子必须填写 brokenTrope（破的是什么套路），并在 sellPoint 写清新的期待点。',
+    );
   }
 
   lines.push('请给出新的、有市场辨识度的开题点子。');
@@ -88,27 +192,37 @@ export function buildStorySeedsUserPrompt(options: RefreshStorySeedsOptions): st
 }
 
 export function buildGenreInsightsSystemPrompt(): string {
-  return `你是网文市场风向顾问。结合中文网文常见平台（起点/番茄/晋江/七猫等）经验，生成互不相同的「题材洞察卡」。
+  return `你是网文市场风向顾问，按「扫榜报告」结构输出题材洞察（参考起点/番茄/晋江等平台经验）。
 只输出 JSON，不要 markdown 代码块，不要解释。
+重要：分析基于行业经验与内置趋势方法论，非实时榜单抓取；请给出可开题的模式判断，而非虚构具体排行名次。
 
 JSON 格式：
-{"insights":[{"name":"题材名","lifecycle":"emerging|rising|peak|declining|saturated","audience":"general|male|female","reason":"为何值得关注","opportunity":"开题切入建议","hotTags":["标签1","标签2"],"riskLevel":"low|medium|high","riskNote":"可选风险"}]}
+{"insights":[{"name":"题材名","lifecycle":"emerging|rising|peak|declining|saturated","audience":"general|male|female","platform":"qidian|fanqie|jinjiang|qimao|zhihu|general","platformBias":["qidian","fanqie"],"length":"long|short","entryDifficulty":"low|medium|high","reason":"为何值得关注（热度/模式）","opportunity":"开题切入建议","hotTags":["标签1","标签2"],"namePatterns":["书名或卖点模式"],"riskLevel":"low|medium|high","riskNote":"可选风险"}]}
 
-要求：
-- reason / opportunity 各 30-60 字，务实可执行
-- hotTags 2-4 个
+要求（对齐扫榜五维）：
+1. 题材热度与生命周期：lifecycle 必须准确，reason 说明热度依据（模式反复出现，勿编造具体排名）
+2. 新信号 vs 经典动态：同批需覆盖上升/萌芽与高峰/饱和中的至少两类
+3. 开题切入：opportunity 30-60 字，务实可执行
+4. 平台适配与上手难度：platformBias 1-3 个；entryDifficulty 综合「好不好写 + 红海程度」
+5. 风险与红海：riskLevel / riskNote 说清同质化或政策/审美风险
+- hotTags 2-4 个；namePatterns 1-2 条（命名或卖点句式）
 - 同批题材不要重复
-- 可包含蓝海与红海题材，但须说清风险`;
+- platform / length 尽量贴合用户筛选`;
 }
 
 export function buildGenreInsightsUserPrompt(options: RefreshGenreInsightsOptions): string {
   const count = options.count ?? 4;
   const audience = options.audience;
+  const platform = options.platform || 'general';
+  const length = options.length || 'long';
   const exclude = options.excludeNames?.filter(Boolean) ?? [];
 
   const lines: string[] = [
-    `请生成 ${count} 个题材洞察卡。`,
+    `请生成 ${count} 个题材洞察卡（扫榜报告式）。`,
     `当前日期：${new Date().toISOString().slice(0, 10)}`,
+    `目标平台：${PLATFORM_LABEL[platform]}（${PLATFORM_GUIDE[platform]}）`,
+    LENGTH_GUIDE[length],
+    '输出时覆盖：热度与生命周期、新题材信号或经典题材动态、切入建议、平台适配与上手难度、风险说明。',
   ];
 
   if (audience) {
@@ -118,6 +232,7 @@ export function buildGenreInsightsUserPrompt(options: RefreshGenreInsightsOption
     lines.push(`不要重复以下题材名：${exclude.join('、')}`);
   }
 
-  lines.push('覆盖上升期、高峰期与蓝海机会，给出可开题的切入点。');
+  lines.push('覆盖上升期、高峰期与蓝海机会；可行性优先于盲目追热。');
+  lines.push('再次提醒：非实时榜单，请基于模式与经验判断。');
   return lines.join('\n');
 }

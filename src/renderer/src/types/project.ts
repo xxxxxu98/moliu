@@ -1,3 +1,5 @@
+import type { TopicDiscoveryProjectSeed } from './topic-discovery';
+
 export interface Project {
   id: string;
   name: string;
@@ -83,6 +85,10 @@ export interface ProjectMetadata {
   startupPack?: ProjectStartupPack;
   /** 故事规模规划（来源于首页 expandDirection） */
   storyScale?: ProjectStoryScale;
+
+  // ========== 开题中心 ==========
+  /** 从开题中心创建时写入的题材合同种子 */
+  topicDiscoverySeed?: TopicDiscoveryProjectSeed;
 }
 
 /** 项目级启动包（与 GeneratedStartupPack 对齐，独立定义以解耦） */

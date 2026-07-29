@@ -52,6 +52,7 @@ interface Emits {
   (e: 'enhance-direction', payload: { direction: OutlineDirection; enhancementBrief: string }): void;
   (e: 'select-outline', outline: GeneratedOutline): void;
   (e: 'create'): void;
+  (e: 'cancel'): void;
 }
 
 withDefaults(defineProps<Props>(), {
@@ -82,6 +83,7 @@ const emit = defineEmits<Emits>();
       @select="emit('select-direction', $event)"
       @expand="emit('expand')"
       @enhance="emit('enhance-direction', $event)"
+      @cancel="emit('cancel')"
     />
 
     <div>

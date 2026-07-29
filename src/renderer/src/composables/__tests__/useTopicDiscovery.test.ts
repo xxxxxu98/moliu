@@ -179,6 +179,50 @@ describe('useTopicDiscovery', () => {
     expect(discovery.seeds.value[0]?.title).toBe('最新一批');
   });
 
+  it('cancelRefresh ignores in-flight result and keeps previous seeds', async () => {
+    const { refreshStorySeeds } = await import('@/services/inspiration/topic-discovery.service');
+    let resolveSlow: (value: unknown) => void = () => undefined;
+
+    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const discovery = useTopicDiscovery();
+    await discovery.refreshSeeds();
+    const keptTitle = discovery.seeds.value[0]?.title;
+    expect(keptTitle).toBeTruthy();
+
+    vi.mocked(refreshStorySeeds).mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveSlow = resolve as (value: unknown) => void;
+        }) as ReturnType<typeof refreshStorySeeds>,
+    );
+
+    const pending = discovery.refreshSeeds();
+    expect(discovery.isRefreshing.value).toBe(true);
+
+    discovery.cancelRefresh();
+    expect(discovery.isRefreshing.value).toBe(false);
+    expect(discovery.seeds.value[0]?.title).toBe(keptTitle);
+
+    resolveSlow({
+      items: [
+        {
+          id: 'should-ignore',
+          title: '应被忽略',
+          oneLiner: 'x',
+          genre: '都市',
+          hook: 'h',
+          coolPoint: 'c',
+          audience: 'general',
+        },
+      ],
+      source: 'ai',
+      generatedAt: new Date().toISOString(),
+    });
+    await pending;
+
+    expect(discovery.seeds.value[0]?.title).toBe(keptTitle);
+  });
+
   it('isolates seed data across play modes', async () => {
     const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
 
@@ -238,6 +282,77 @@ describe('useTopicDiscovery', () => {
     expect(diceCall?.diceRoll?.twist).toBe('系统坏掉了');
   });
 
+  it('passes platform/length locks into seed and radar refresh', async () => {
+    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const { refreshStorySeeds, refreshGenreInsights } = await import(
+      '@/services/inspiration/topic-discovery.service'
+    );
+
+    const discovery = useTopicDiscovery();
+    discovery.setLockedPlatform('fanqie');
+    discovery.setLockedLength('short');
+
+    await discovery.refreshSeeds();
+    const seedCall = vi.mocked(refreshStorySeeds).mock.calls.at(-1)?.[0];
+    expect(seedCall?.platform).toBe('fanqie');
+    expect(seedCall?.length).toBe('short');
+    expect(seedCall?.lockedSlots?.platform).toBe('fanqie');
+    expect(seedCall?.lockedSlots?.length).toBe('short');
+
+    await discovery.refreshInsights();
+    const radarCall = vi.mocked(refreshGenreInsights).mock.calls.at(-1)?.[0];
+    expect(radarCall?.platform).toBe('fanqie');
+    expect(radarCall?.length).toBe('short');
+  });
+
+  it('adopts insight with full context and keeps it on next seed refresh', async () => {
+    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const { refreshStorySeeds, refreshGenreInsights } = await import(
+      '@/services/inspiration/topic-discovery.service'
+    );
+
+    vi.mocked(refreshGenreInsights).mockResolvedValueOnce({
+      items: [
+        {
+          id: 'i-radar',
+          name: '规则怪谈',
+          lifecycle: 'rising',
+          audience: 'general',
+          reason: '传播强',
+          opportunity: '用职场规则做生存副本',
+          hotTags: ['规则', '职场'],
+          riskLevel: 'medium',
+          platform: 'fanqie',
+          length: 'short',
+        },
+      ],
+      source: 'ai',
+      generatedAt: new Date().toISOString(),
+    });
+
+    const discovery = useTopicDiscovery();
+    await discovery.refreshInsights();
+    const insight = discovery.insights.value[0];
+    expect(insight).toBeTruthy();
+
+    await discovery.adoptInsightAndRefreshSeeds(insight!);
+    const adoptCall = vi.mocked(refreshStorySeeds).mock.calls.at(-1)?.[0];
+    expect(adoptCall?.genre).toBe('规则怪谈');
+    expect(adoptCall?.insightContext?.opportunity).toContain('职场规则');
+    expect(adoptCall?.insightContext?.hotTags).toEqual(['规则', '职场']);
+    expect(discovery.lockedPlatform.value).toBe('fanqie');
+    expect(discovery.lockedLength.value).toBe('short');
+    expect(discovery.activeInsightContext.value?.name).toBe('规则怪谈');
+
+    await discovery.refreshSeeds();
+    const nextCall = vi.mocked(refreshStorySeeds).mock.calls.at(-1)?.[0];
+    expect(nextCall?.insightContext?.opportunity).toContain('职场规则');
+
+    discovery.clearLocks();
+    expect(discovery.activeInsightContext.value).toBeNull();
+    expect(discovery.lockedPlatform.value).toBeNull();
+  });
+
   it('persists buckets separately and migrates legacy single-bucket cache', async () => {
     const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
 
@@ -271,5 +386,82 @@ describe('useTopicDiscovery', () => {
 
     discovery.switchTab('mix');
     expect(discovery.seeds.value).toEqual([]);
+  });
+
+  it('favorites persist across refresh and play-mode switches', async () => {
+    const { useTopicDiscovery, favoriteSeedKey } = await import(
+      '@/composables/useTopicDiscovery'
+    );
+
+    const discovery = useTopicDiscovery();
+    await discovery.refreshSeeds();
+    const seed = discovery.seeds.value[0]!;
+
+    const added = discovery.toggleFavorite(seed, 'seeds');
+    expect(added).toEqual({ ok: true, action: 'added' });
+    expect(discovery.isFavorite(seed)).toBe(true);
+    expect(discovery.favoriteCount.value).toBe(1);
+
+    await discovery.refreshSeeds();
+    // 同标题同题材仍视为已收藏（即使 id 变了）
+    const sameKeySeed = discovery.seeds.value.find(
+      s => favoriteSeedKey(s) === favoriteSeedKey(seed),
+    );
+    if (sameKeySeed) {
+      expect(discovery.isFavorite(sameKeySeed)).toBe(true);
+    }
+
+    discovery.switchTab('mix');
+    expect(discovery.favorites.value).toHaveLength(1);
+
+    const second = useTopicDiscovery();
+    expect(second.loadPersistedFavorites()).toBe(true);
+    expect(second.favorites.value[0]?.seed.title).toBe(seed.title);
+
+    const removed = second.toggleFavorite(second.favorites.value[0]!.seed);
+    expect(removed).toEqual({ ok: true, action: 'removed' });
+    expect(second.favoriteCount.value).toBe(0);
+  });
+
+  it('enforces favorites limit', async () => {
+    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const discovery = useTopicDiscovery();
+
+    for (let i = 0; i < discovery.maxFavorites; i += 1) {
+      const result = discovery.toggleFavorite(
+        {
+          id: `id-${i}`,
+          title: `标题${i}`,
+          oneLiner: `line-${i}`,
+          genre: '都市',
+          hook: 'h',
+          coolPoint: 'c',
+          audience: 'general',
+        },
+        'seeds',
+      );
+      expect(result.ok).toBe(true);
+    }
+
+    const overflow = discovery.toggleFavorite(
+      {
+        id: 'overflow',
+        title: '溢出种子',
+        oneLiner: 'overflow',
+        genre: '玄幻',
+        hook: 'h',
+        coolPoint: 'c',
+        audience: 'general',
+      },
+      'seeds',
+    );
+    expect(overflow.ok).toBe(false);
+    if (!overflow.ok) {
+      expect(overflow.action).toBe('limit');
+    }
+    expect(discovery.favoriteCount.value).toBe(discovery.maxFavorites);
+
+    discovery.clearFavorites();
+    expect(discovery.favoriteCount.value).toBe(0);
   });
 });

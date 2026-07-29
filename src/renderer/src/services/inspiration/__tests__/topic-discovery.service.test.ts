@@ -2,16 +2,25 @@
  * @vitest-environment happy-dom
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   parseStorySeeds,
   parseGenreInsights,
   buildFallbackStorySeeds,
   buildFallbackGenreInsights,
   buildPromptFromSeed,
+  insightToSeedConstraints,
   refreshStorySeeds,
+  inferEntryDifficulty,
+  mapPlatformBiasList,
+  buildTopicDiscoveryProjectSeed,
 } from '@/services/inspiration/topic-discovery.service';
-import type { StorySeedCard } from '@/types/topic-discovery';
+import {
+  buildStorySeedsUserPrompt,
+  buildGenreInsightsUserPrompt,
+  buildGenreInsightsSystemPrompt,
+} from '@/services/inspiration/prompts/topic-discovery-prompts';
+import type { GenreInsightCard, StorySeedCard } from '@/types/topic-discovery';
 
 vi.mock('@/stores/settings.store', () => ({
   useSettingsStore: () => ({
@@ -32,6 +41,8 @@ describe('topic-discovery.service', () => {
             hook: '开篇退婚羞辱',
             coolPoint: '当众打脸',
             audience: 'male',
+            platform: 'qidian',
+            length: 'long',
           },
         ],
       });
@@ -41,6 +52,27 @@ describe('topic-discovery.service', () => {
       expect(seeds[0].title).toBe('凡骨登仙');
       expect(seeds[0].audience).toBe('male');
       expect(seeds[0].genre).toBe('修仙');
+      expect(seeds[0].platform).toBe('qidian');
+      expect(seeds[0].length).toBe('long');
+    });
+
+    it('applies platform/length defaults when AI omits them', () => {
+      const raw = JSON.stringify({
+        seeds: [
+          {
+            title: '都市回响',
+            oneLiner: '重生回到高考前夜的程序员，必须在七天内阻止公司被做空。',
+            genre: '都市',
+            hook: '倒计时',
+            coolPoint: '信息差',
+            audience: 'general',
+          },
+        ],
+      });
+
+      const seeds = parseStorySeeds(raw, 1, { platform: 'fanqie', length: 'short' });
+      expect(seeds[0].platform).toBe('fanqie');
+      expect(seeds[0].length).toBe('short');
     });
 
     it('parses markdown-wrapped JSON', () => {
@@ -70,6 +102,11 @@ describe('topic-discovery.service', () => {
             opportunity: '用直播规则做持续冲突引擎',
             hotTags: ['直播', '脑洞'],
             riskLevel: 'medium',
+            platform: 'fanqie',
+            length: 'short',
+            platformBias: ['fanqie', 'qimao'],
+            entryDifficulty: 'low',
+            namePatterns: ['直播间规则怪谈式书名'],
           },
         ],
       });
@@ -79,6 +116,29 @@ describe('topic-discovery.service', () => {
       expect(insights[0].name).toBe('脑洞直播');
       expect(insights[0].lifecycle).toBe('rising');
       expect(insights[0].hotTags).toContain('直播');
+      expect(insights[0].platform).toBe('fanqie');
+      expect(insights[0].length).toBe('short');
+      expect(insights[0].platformBias).toEqual(['fanqie', 'qimao']);
+      expect(insights[0].entryDifficulty).toBe('low');
+      expect(insights[0].namePatterns?.[0]).toContain('直播间');
+    });
+
+    it('infers entryDifficulty when omitted', () => {
+      const raw = JSON.stringify({
+        insights: [
+          {
+            name: '饱和题材',
+            lifecycle: 'saturated',
+            audience: 'male',
+            reason: '同质化严重',
+            opportunity: '换皮难出头，建议观望',
+            hotTags: ['系统'],
+            riskLevel: 'high',
+          },
+        ],
+      });
+      const insights = parseGenreInsights(raw);
+      expect(insights[0].entryDifficulty).toBe('high');
     });
   });
 
@@ -89,25 +149,64 @@ describe('topic-discovery.service', () => {
 
       const second = buildFallbackStorySeeds({
         count: 3,
-        excludeTitles: first.map((s) => s.title),
+        excludeTitles: first.map(s => s.title),
         genre: '都市',
       });
       expect(second.length).toBe(3);
-      const overlap = second.filter((s) => first.some((f) => f.title === s.title));
-      // exclude may not remove all if pool wraps, but titles should prefer new ones
-      expect(second.every((s) => s.oneLiner.length > 0)).toBe(true);
+      const overlap = second.filter(s => first.some(f => f.title === s.title));
+      expect(second.every(s => s.oneLiner.length > 0)).toBe(true);
       expect(overlap.length).toBeLessThanOrEqual(3);
     });
 
+    it('applies platform and short length in fallback seeds', () => {
+      const seeds = buildFallbackStorySeeds({
+        count: 2,
+        platform: 'fanqie',
+        length: 'short',
+        genre: '都市',
+      });
+      expect(seeds).toHaveLength(2);
+      expect(seeds.every(s => s.platform === 'fanqie')).toBe(true);
+      expect(seeds.every(s => s.length === 'short')).toBe(true);
+      expect(seeds[0].oneLiner).toMatch(/完结|反转/);
+    });
+
+    it('eats insightContext into fallback seeds', () => {
+      const seeds = buildFallbackStorySeeds({
+        count: 1,
+        insightContext: {
+          name: '规则怪谈',
+          audience: 'general',
+          opportunity: '用职场规则做生存副本',
+          reason: '短视频传播强',
+          hotTags: ['规则', '职场'],
+          riskLevel: 'medium',
+          lifecycle: 'rising',
+        },
+      });
+      expect(seeds[0].genre).toBe('规则怪谈');
+      expect(seeds[0].oneLiner).toMatch(/职场规则|规则|职场/);
+    });
+
     it('builds local genre insights', () => {
-      const insights = buildFallbackGenreInsights({ count: 4, audience: 'female' });
+      const insights = buildFallbackGenreInsights({
+        count: 4,
+        audience: 'female',
+        platform: 'jinjiang',
+        length: 'long',
+      });
       expect(insights).toHaveLength(4);
-      expect(insights.every((i) => i.audience === 'female')).toBe(true);
+      expect(insights.every(i => i.audience === 'female')).toBe(true);
+      expect(insights.every(i => i.length === 'long')).toBe(true);
+      expect(insights.every(i => !!i.platform)).toBe(true);
+      expect(insights.every(i => !!i.entryDifficulty)).toBe(true);
+      expect(insights.every(i => (i.namePatterns?.length ?? 0) > 0)).toBe(true);
+      expect(insights.every(i => (i.platformBias?.length ?? 0) >= 0)).toBe(true);
     });
   });
 
   describe('buildPromptFromSeed', () => {
-    it('includes core seed fields', () => {
+    it('includes core seed fields and platform/length', () => {
       const seed: StorySeedCard = {
         id: '1',
         title: '测试',
@@ -116,11 +215,127 @@ describe('topic-discovery.service', () => {
         hook: '钩子',
         coolPoint: '爽点',
         audience: 'general',
+        platform: 'qidian',
+        length: 'long',
+        sellPoint: '读者期待装逼打脸',
+        mechanism: '血脉觉醒',
       };
       const prompt = buildPromptFromSeed(seed);
       expect(prompt).toContain('测试');
       expect(prompt).toContain('玄幻');
       expect(prompt).toContain('钩子');
+      expect(prompt).toContain('起点');
+      expect(prompt).toContain('长篇');
+      expect(prompt).toContain('核心卖点');
+      expect(prompt).toContain('血脉觉醒');
+    });
+
+    it('uses short-form direction hint for short seeds', () => {
+      const seed: StorySeedCard = {
+        id: '2',
+        title: '短篇',
+        oneLiner: '一句话',
+        genre: '言情',
+        hook: '钩子',
+        coolPoint: '爽点',
+        audience: 'female',
+        length: 'short',
+      };
+      expect(buildPromptFromSeed(seed)).toContain('短篇完结');
+    });
+  });
+
+  describe('insightToSeedConstraints', () => {
+    it('passes full radar context', () => {
+      const insight: GenreInsightCard = {
+        id: 'i1',
+        name: '脑洞直播',
+        lifecycle: 'rising',
+        audience: 'general',
+        reason: '短视频时代读者偏好强设定',
+        opportunity: '用直播规则做持续冲突引擎',
+        hotTags: ['直播', '脑洞'],
+        riskLevel: 'medium',
+        riskNote: '同质化快',
+        platform: 'fanqie',
+        length: 'short',
+        entryDifficulty: 'low',
+        namePatterns: ['规则怪谈式书名'],
+      };
+
+      const constraints = insightToSeedConstraints(insight);
+      expect(constraints.genre).toBe('脑洞直播');
+      expect(constraints.platform).toBe('fanqie');
+      expect(constraints.length).toBe('short');
+      expect(constraints.insightContext?.opportunity).toContain('直播规则');
+      expect(constraints.insightContext?.hotTags).toEqual(['直播', '脑洞']);
+      expect(constraints.lockedSlots?.genre).toBe('脑洞直播');
+      expect(constraints.insightContext?.entryDifficulty).toBe('low');
+      expect(constraints.insightContext?.namePatterns?.[0]).toContain('规则');
+    });
+  });
+
+  describe('prompt builders', () => {
+    it('injects platform, length and insight context into seed user prompt', () => {
+      const prompt = buildStorySeedsUserPrompt({
+        count: 2,
+        platform: 'fanqie',
+        length: 'short',
+        insightContext: {
+          name: '规则怪谈',
+          audience: 'general',
+          opportunity: '用职场规则做生存副本',
+          reason: '传播强',
+          hotTags: ['规则', '职场'],
+          riskLevel: 'medium',
+          lifecycle: 'rising',
+        },
+      });
+      expect(prompt).toContain('番茄');
+      expect(prompt).toContain('短篇完结');
+      expect(prompt).toContain('用职场规则做生存副本');
+      expect(prompt).toContain('规则、职场');
+    });
+
+    it('injects genre profile hint into seed user prompt', () => {
+      const prompt = buildStorySeedsUserPrompt({
+        count: 2,
+        genre: '修仙',
+        genreSeedHint: {
+          profileId: 'xianxia',
+          name: '修仙',
+          preferredHooks: ['神秘钩子', '冲突钩子'],
+          preferredCoolPoints: ['境界突破', '打脸'],
+          typicalOpening: '资质检测：开场资质检测引发冲突',
+          commonRisks: ['战力崩塌（严格遵循战力表）'],
+        },
+      });
+      expect(prompt).toContain('题材专属约束');
+      expect(prompt).toContain('神秘钩子');
+      expect(prompt).toContain('境界突破');
+      expect(prompt).toContain('战力崩塌');
+    });
+
+    it('injects platform and length into radar user prompt', () => {
+      const prompt = buildGenreInsightsUserPrompt({
+        count: 3,
+        platform: 'jinjiang',
+        length: 'long',
+        audience: 'female',
+      });
+      expect(prompt).toContain('晋江');
+      expect(prompt).toContain('长篇连载');
+      expect(prompt).toContain('女生向');
+      expect(prompt).toContain('扫榜报告');
+      expect(prompt).toContain('非实时榜单');
+    });
+
+    it('radar system prompt asks for scan-report fields', () => {
+      const prompt = buildGenreInsightsSystemPrompt();
+      expect(prompt).toContain('entryDifficulty');
+      expect(prompt).toContain('platformBias');
+      expect(prompt).toContain('namePatterns');
+      expect(prompt).toContain('非实时榜单');
     });
   });
 
@@ -164,13 +379,8 @@ describe('topic-discovery.service', () => {
         }),
       );
 
-      // Force AI path by mocking has provider via chat-only: refresh still checks providers.
-      // When no provider, it won't call chat. So call parse path indirectly via chat injection
-      // only works if hasActiveProvider is true. Skip provider gate by calling parse in unit above.
-      // Here we verify fallback still works and chat is not required.
       const batch = await refreshStorySeeds({ excludeTitles: ['旧标题'] }, chat);
       expect(batch.items.length).toBe(4);
-      // without provider, chat should not be called
       expect(chat).not.toHaveBeenCalled();
     });
   });
@@ -195,6 +405,64 @@ describe('topic-discovery.service', () => {
       });
       expect(seeds).toHaveLength(2);
       expect(seeds[0].hook).toContain('倒计时危机');
+    });
+
+    it('attaches profile-driven fields when genre is locked', () => {
+      const seeds = buildFallbackStorySeeds({
+        count: 1,
+        genre: '修仙',
+      });
+      expect(seeds[0].genreProfileId).toBe('xianxia');
+      expect(seeds[0].sellPoint).toBeTruthy();
+      expect(seeds[0].mechanism).toBeTruthy();
+    });
+
+    it('fills brokenTrope for twist style', () => {
+      const seeds = buildFallbackStorySeeds({
+        count: 1,
+        playStyle: 'twist',
+        genre: '都市',
+      });
+      expect(seeds[0].brokenTrope).toBeTruthy();
+    });
+  });
+
+  describe('buildTopicDiscoveryProjectSeed', () => {
+    it('captures seed fields and resolves genreProfileId', () => {
+      const seed: StorySeedCard = {
+        id: 'seed-1',
+        title: '凡骨登仙',
+        oneLiner: '一句话故事核',
+        genre: '修仙',
+        hook: '开篇冲突',
+        coolPoint: '打脸',
+        audience: 'male',
+        platform: 'qidian',
+        length: 'long',
+        sellPoint: '资质翻盘',
+        mechanism: '上古传承',
+      };
+      const projectSeed = buildTopicDiscoveryProjectSeed(seed, 'seeds');
+      expect(projectSeed.seedId).toBe('seed-1');
+      expect(projectSeed.genre).toBe('修仙');
+      expect(projectSeed.platform).toBe('qidian');
+      expect(projectSeed.sellPoint).toBe('资质翻盘');
+      expect(projectSeed.mechanism).toBe('上古传承');
+      expect(projectSeed.genreProfileId).toBe('xianxia');
+      expect(projectSeed.sourceTab).toBe('seeds');
+      expect(projectSeed.capturedAt).toBeTruthy();
+    });
+  });
+
+  describe('scan helpers', () => {
+    it('maps Chinese platform bias list', () => {
+      expect(mapPlatformBiasList(['起点', '番茄', '飞卢'])).toEqual(['qidian', 'fanqie']);
+    });
+
+    it('infers entry difficulty from lifecycle and risk', () => {
+      expect(inferEntryDifficulty('saturated', 'high')).toBe('high');
+      expect(inferEntryDifficulty('rising', 'low')).toBe('low');
+      expect(inferEntryDifficulty('peak', 'medium')).toBe('medium');
     });
   });
 });

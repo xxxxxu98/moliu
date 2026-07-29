@@ -55,6 +55,10 @@ export interface UseOutlineGeneratorReturn {
     direction: OutlineDirection,
     options?: UseOutlineGeneratorOptions,
   ) => Promise<ExecutableOutline | null>;
+  /** 取消当前在飞的生成请求 */
+  cancel: () => void;
+  /** 最近一次结束是否由用户取消（供 UI 区分空结果与主动取消） */
+  wasCancelled: ReturnType<typeof ref<boolean>>;
   /** 重置状态 */
   reset: () => void;
 }
@@ -71,6 +75,7 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
   const strategy = ref<string>('');
   const outlines = ref<GeneratedOutline[]>([]);
   const rawMarkdown = ref<string>('');
+  const wasCancelled = ref(false);
 
   let generator: UnifiedOutlineGenerator | null = null;
 
@@ -131,6 +136,7 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     const currentId = ++generationId;
     const signal = createSignal();
     isGenerating.value = true;
+    wasCancelled.value = false;
     error.value = null;
     progress.value = '准备生成...';
     warnings.value = [];
@@ -179,6 +185,7 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     const currentId = ++generationId;
     const signal = createSignal();
     isGenerating.value = true;
+    wasCancelled.value = false;
     error.value = null;
     progress.value = '正在生成创作方向...';
     warnings.value = [];
@@ -232,6 +239,7 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     const currentId = ++generationId;
     const signal = createSignal();
     isGenerating.value = true;
+    wasCancelled.value = false;
     error.value = null;
     progress.value = '正在展开主方案...';
     warnings.value = [];
@@ -443,12 +451,25 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     abortInFlight();
     generationId++;
     isGenerating.value = false;
+    wasCancelled.value = false;
     error.value = null;
     progress.value = '';
     warnings.value = [];
     strategy.value = '';
     outlines.value = [];
     rawMarkdown.value = '';
+  }
+
+  /** 仅取消当前生成，保留已有结果（方向卡/大纲） */
+  function cancel(): void {
+    if (!isGenerating.value && !currentAbort) return;
+    abortInFlight();
+    generationId++;
+    isGenerating.value = false;
+    progress.value = '';
+    wasCancelled.value = true;
+    // 主动取消不记为错误，由 UI 用 toast 提示
+    error.value = null;
   }
 
   const isSuccess = computed(() => outlines.value.length > 0 && !error.value);
@@ -465,6 +486,8 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     generateOutlines,
     generateDirections,
     expandDirection,
+    cancel,
+    wasCancelled,
     reset,
   };
 }

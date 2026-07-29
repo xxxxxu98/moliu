@@ -3,7 +3,7 @@
  * 开题中心：灵感种子 / 题材雷达 / 元素混搭 / 命运骰子 / 反套路 / 一句话开题
  * AI「换一批」驱动找灵感；每个玩法独立保存方向卡会话
  */
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMessage } from 'naive-ui';
 import {
@@ -20,6 +20,8 @@ import {
   Dices,
   Shuffle,
   Puzzle,
+  Bookmark,
+  BookmarkCheck,
 } from 'lucide-vue-next';
 import { useTopicDiscovery } from '@/composables/useTopicDiscovery';
 import type { TopicDiscoveryTab } from '@/types/topic-discovery';
@@ -37,7 +39,15 @@ import type {
   StorySeedCard,
   TopicAudience,
   TopicDiceRoll,
+  TopicLength,
+  TopicPlatform,
 } from '@/types/topic-discovery';
+import {
+  ENTRY_DIFFICULTY_LABEL,
+  LENGTH_LABEL,
+  PLATFORM_LABEL,
+} from '@/services/inspiration/prompts/topic-discovery-prompts';
+import { buildTopicDiscoveryProjectSeed } from '@/services/inspiration/topic-discovery.service';
 import WordCountSelector from '@/components/common/WordCountSelector.vue';
 import DirectionResultPanel from '@/components/home/DirectionResultPanel.vue';
 
@@ -49,6 +59,10 @@ interface DirectionSession {
   selectedOutline: GeneratedOutline | null;
   enhanceTargetDirectionId: string | null;
   selectedSeedId: string | null;
+  /** 开书时写入 metadata 的种子快照 */
+  selectedSeedSnapshot: StorySeedCard | null;
+  /** 种子来源玩法 */
+  seedSourceTab: TopicDiscoveryTab | null;
 }
 
 interface PlayModeOption {
@@ -109,6 +123,8 @@ function createEmptySession(): DirectionSession {
     selectedOutline: null,
     enhanceTargetDirectionId: null,
     selectedSeedId: null,
+    selectedSeedSnapshot: null,
+    seedSourceTab: null,
   };
 }
 
@@ -127,19 +143,32 @@ const {
   source,
   seeds,
   insights,
+  favorites,
+  favoriteCount,
+  maxFavorites,
   lockedGenre,
   lockedAudience,
+  lockedPlatform,
+  lockedLength,
   selectedInsightId,
+  activeInsightContext,
   refresh,
   refreshFromMix,
   refreshFromDice,
   loadPersistedSeeds,
   loadPersistedInsights,
+  loadPersistedFavorites,
   adoptInsightAndRefreshSeeds,
   setLockedAudience,
+  setLockedPlatform,
+  setLockedLength,
   clearLocks,
+  isFavorite,
+  toggleFavorite,
+  clearFavorites,
   switchTab,
   buildPromptFromSeed,
+  cancelRefresh,
 } = useTopicDiscovery();
 
 const {
@@ -148,7 +177,8 @@ const {
   progress: generationProgress,
   generateDirections,
   expandDirection,
-  reset: resetOutlineState,
+  cancel: cancelGeneration,
+  wasCancelled,
 } = useOutlineGenerator();
 
 const {
@@ -160,6 +190,7 @@ const {
 
 const selectedWordCountRange = ref(DEFAULT_WORD_COUNT_RANGE);
 const freePrompt = ref('');
+const showFavorites = ref(false);
 
 const selectedMixTags = ref<string[]>([]);
 const selectedMixElements = ref<string[]>([]);
@@ -194,6 +225,30 @@ const audienceOptions: { id: TopicAudience; label: string }[] = [
   { id: 'male', label: '男生' },
   { id: 'female', label: '女生' },
 ];
+
+/** 筛选条用短标签，完整名称见 PLATFORM_LABEL */
+const platformOptions: { id: TopicPlatform; label: string }[] = [
+  { id: 'general', label: '不限平台' },
+  { id: 'qidian', label: '起点' },
+  { id: 'fanqie', label: '番茄' },
+  { id: 'jinjiang', label: '晋江' },
+  { id: 'qimao', label: '七猫' },
+  { id: 'zhihu', label: '盐言' },
+];
+
+const lengthOptions: { id: TopicLength; label: string }[] = [
+  { id: 'long', label: LENGTH_LABEL.long },
+  { id: 'short', label: LENGTH_LABEL.short },
+];
+
+const hasActiveFilters = computed(
+  () =>
+    !!lockedGenre.value ||
+    !!lockedAudience.value ||
+    !!lockedPlatform.value ||
+    !!lockedLength.value ||
+    !!activeInsightContext.value,
+);
 
 /** 混搭面板只展示一部分热门标签，避免刷屏 */
 const mixGenreOptions = computed(() => genreTags.slice(0, 24));
@@ -263,6 +318,15 @@ const riskLabel: Record<string, string> = {
   low: '低风险',
   medium: '中风险',
   high: '高风险',
+};
+
+const shortPlatformLabel: Record<string, string> = {
+  general: '不限',
+  qidian: '起点',
+  fanqie: '番茄',
+  jinjiang: '晋江',
+  qimao: '七猫',
+  zhihu: '盐言',
 };
 
 function buildDirectionScaleHint(wordCountRange: string, direction: OutlineDirection) {
@@ -357,7 +421,40 @@ const canSubmitPrompt = computed((): boolean => {
 onMounted(() => {
   loadPersistedSeeds();
   loadPersistedInsights();
+  loadPersistedFavorites();
+  window.addEventListener('keydown', handleGlobalKeydown);
 });
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown);
+});
+
+function handleGlobalKeydown(event: KeyboardEvent): void {
+  if (event.key !== 'Escape') return;
+  if (isGenerating.value) {
+    event.preventDefault();
+    handleCancelGeneration();
+    return;
+  }
+  if (isRefreshing.value) {
+    event.preventDefault();
+    handleCancelRefresh();
+  }
+}
+
+function handleCancelGeneration(): void {
+  if (!isGenerating.value) return;
+  cancelGeneration();
+  const session = directionSessions[pipelineTab.value ?? activeTab.value];
+  session.enhanceTargetDirectionId = null;
+  message.info(t('topicDiscovery.generationCancelled'));
+}
+
+function handleCancelRefresh(): void {
+  if (!isRefreshing.value) return;
+  cancelRefresh();
+  message.info(t('topicDiscovery.refreshCancelled'));
+}
 
 function modeAccentClass(mode: PlayModeOption, active: boolean): string {
   if (!active) {
@@ -381,11 +478,7 @@ async function handleRefresh(): Promise<void> {
   if (isRefreshing.value || isProcessing.value || isDiceRolling.value) return;
 
   if (activeTab.value === 'prompt') {
-    if (!canSubmitPrompt.value) {
-      message.warning(t('topicDiscovery.promptTooShort'));
-      return;
-    }
-    await generateFromPrompt(freePrompt.value.trim(), 'prompt');
+    await handleFreePromptGenerate();
     return;
   }
 
@@ -423,31 +516,70 @@ async function generateFromPrompt(
   pipelineTab.value = tab;
 
   session.prompt = prompt;
-  session.directions = [];
-  session.selectedDirection = null;
-  session.expandedOutline = null;
-  session.selectedOutline = null;
+  // 成功前保留旧方向卡，取消/失败时不把列表清空
   session.enhanceTargetDirectionId = null;
-  resetOutlineState();
   resetProjectState();
 
-  session.directions = await generateDirections(prompt, {
+  const directions = await generateDirections(prompt, {
     wordCountRange: selectedWordCountRange.value,
   });
-  session.selectedDirection = session.directions[0] ?? null;
 
-  if (session.directions.length === 0 && !generationError.value) {
-    message.error(t('topicDiscovery.directionFailed'));
+  if (wasCancelled.value) {
+    return;
+  }
+  // 被更新的请求取代：静默退出，由新请求写结果
+  if (directions.length === 0 && isGenerating.value) {
+    return;
+  }
+
+  if (directions.length === 0) {
+    message.error(generationError.value || t('topicDiscovery.directionFailed'));
+    return;
+  }
+
+  session.directions = directions;
+  session.selectedDirection = directions[0] ?? null;
+  session.expandedOutline = null;
+  session.selectedOutline = null;
+}
+
+async function adoptSeed(seed: StorySeedCard, fromTab?: TopicDiscoveryTab): Promise<void> {
+  if (isProcessing.value) return;
+  // 从收藏开题时落到当前玩法会话；若在雷达/一句话则落到灵感种子
+  const tab: TopicDiscoveryTab =
+    activeTab.value === 'radar' || activeTab.value === 'prompt' ? 'seeds' : activeTab.value;
+  if (showFavorites.value && (activeTab.value === 'radar' || activeTab.value === 'prompt')) {
+    switchTab('seeds');
+  }
+  const session = directionSessions[tab];
+  session.selectedSeedId = seed.id;
+  session.selectedSeedSnapshot = { ...seed };
+  session.seedSourceTab = fromTab ?? activeTab.value;
+  const prompt = buildPromptFromSeed(seed);
+  await generateFromPrompt(prompt, tab);
+}
+
+function handleToggleFavorite(seed: StorySeedCard, fromTab?: TopicDiscoveryTab): void {
+  const result = toggleFavorite(seed, fromTab ?? activeTab.value);
+  if (!result.ok) {
+    message.warning(result.reason);
+    return;
+  }
+  if (result.action === 'added') {
+    message.success(t('topicDiscovery.favoriteAdded'));
+  } else {
+    message.info(t('topicDiscovery.favoriteRemoved'));
   }
 }
 
-async function adoptSeed(seed: StorySeedCard): Promise<void> {
-  if (isProcessing.value) return;
-  const tab = activeTab.value;
-  if (tab === 'radar' || tab === 'prompt') return;
-  directionSessions[tab].selectedSeedId = seed.id;
-  const prompt = buildPromptFromSeed(seed);
-  await generateFromPrompt(prompt, tab);
+function handleClearFavorites(): void {
+  if (favoriteCount.value === 0) return;
+  clearFavorites();
+  message.info(t('topicDiscovery.favoritesCleared'));
+}
+
+function toggleFavoritesPanel(): void {
+  showFavorites.value = !showFavorites.value;
 }
 
 async function handleAdoptInsight(insight: GenreInsightCard): Promise<void> {
@@ -478,18 +610,25 @@ async function handleExpandDirection(options?: {
     ? (options?.directionId ?? session.selectedDirection.id)
     : null;
 
-  session.expandedOutline = await expandDirection(session.prompt, session.selectedDirection, {
+  const outline = await expandDirection(session.prompt, session.selectedDirection, {
     wordCountRange: selectedWordCountRange.value,
     enhancementBrief: options?.enhancementBrief,
   });
 
   session.enhanceTargetDirectionId = null;
 
-  if (session.expandedOutline) {
-    session.selectedOutline = mapExecutableOutlineToGeneratedOutline(session.expandedOutline, {
-      targetWordCountRange: selectedWordCountRange.value,
-    });
+  if (wasCancelled.value) {
+    return;
   }
+  if (!outline) {
+    if (isGenerating.value) return;
+    return;
+  }
+
+  session.expandedOutline = outline;
+  session.selectedOutline = mapExecutableOutlineToGeneratedOutline(outline, {
+    targetWordCountRange: selectedWordCountRange.value,
+  });
 }
 
 async function handleEnhanceDirection(
@@ -503,6 +642,17 @@ async function handleEnhanceDirection(
   });
 }
 
+async function handleFreePromptGenerate(): Promise<void> {
+  if (!canSubmitPrompt.value) {
+    message.warning(t('topicDiscovery.promptTooShort'));
+    return;
+  }
+  directionSessions.prompt.selectedSeedId = null;
+  directionSessions.prompt.selectedSeedSnapshot = null;
+  directionSessions.prompt.seedSourceTab = null;
+  await generateFromPrompt(freePrompt.value.trim(), 'prompt');
+}
+
 async function handleCreateProject(): Promise<void> {
   const session = directionSessions[activeTab.value];
   const outlineToCreate =
@@ -514,7 +664,15 @@ async function handleCreateProject(): Promise<void> {
       : null);
   if (!outlineToCreate) return;
   pipelineTab.value = activeTab.value;
-  await doCreateProject(outlineToCreate);
+
+  const topicDiscoverySeed = session.selectedSeedSnapshot
+    ? buildTopicDiscoveryProjectSeed(
+        session.selectedSeedSnapshot,
+        session.seedSourceTab ?? activeTab.value,
+      )
+    : undefined;
+
+  await doCreateProject(outlineToCreate, { topicDiscoverySeed });
 }
 
 function toggleAudienceLock(audience: TopicAudience): void {
@@ -522,6 +680,22 @@ function toggleAudienceLock(audience: TopicAudience): void {
     setLockedAudience(null);
   } else {
     setLockedAudience(audience);
+  }
+}
+
+function togglePlatformLock(platform: TopicPlatform): void {
+  if (lockedPlatform.value === platform) {
+    setLockedPlatform(null);
+  } else {
+    setLockedPlatform(platform);
+  }
+}
+
+function toggleLengthLock(length: TopicLength): void {
+  if (lockedLength.value === length) {
+    setLockedLength(null);
+  } else {
+    setLockedLength(length);
   }
 }
 
@@ -609,23 +783,123 @@ async function rollDice(): Promise<void> {
           </p>
         </div>
       </div>
-      <button
-        type="button"
-        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-base font-medium transition-colors flex-shrink-0"
-        :class="
-          isRefreshing || isProcessing || isDiceRolling
-            ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-            : 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/50'
-        "
-        :disabled="isRefreshing || isProcessing || isDiceRolling"
-        @click="handleRefresh"
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+          :class="
+            showFavorites
+              ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-700/50'
+              : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+          "
+          @click="toggleFavoritesPanel"
+        >
+          <BookmarkCheck v-if="favoriteCount > 0" class="w-4 h-4" />
+          <Bookmark v-else class="w-4 h-4" />
+          {{ t('topicDiscovery.favorites') }}
+          <span
+            v-if="favoriteCount > 0"
+            class="min-w-[1.25rem] h-5 px-1 rounded-full bg-amber-500 text-white text-xs inline-flex items-center justify-center"
+          >
+            {{ favoriteCount }}
+          </span>
+        </button>
+        <button
+          v-if="isGenerating"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-base font-medium transition-colors bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+          @click="handleCancelGeneration"
+        >
+          {{ t('topicDiscovery.cancelGeneration') }}
+        </button>
+        <button
+          v-else-if="isRefreshing"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-base font-medium transition-colors bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+          @click="handleCancelRefresh"
+        >
+          {{ t('topicDiscovery.cancelRefresh') }}
+        </button>
+        <button
+          v-else
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-base font-medium transition-colors"
+          :class="
+            isDiceRolling
+              ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+              : 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/50'
+          "
+          :disabled="isDiceRolling || isProcessing"
+          @click="handleRefresh"
+        >
+          <RefreshCw
+            class="w-4 h-4"
+            :class="{ 'animate-spin': isDiceRolling }"
+          />
+          {{ refreshButtonLabel }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Favorites panel -->
+    <div
+      v-if="showFavorites"
+      class="w-full rounded-xl border border-amber-200/80 dark:border-amber-800/50 bg-amber-50/40 dark:bg-amber-950/20 p-4 space-y-3"
+    >
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <h4 class="text-base font-semibold text-gray-900 dark:text-white">
+            {{ t('topicDiscovery.favoritesTitle') }}
+          </h4>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            {{ t('topicDiscovery.favoritesDesc', { max: maxFavorites }) }}
+          </p>
+        </div>
+        <button
+          v-if="favoriteCount > 0"
+          type="button"
+          class="text-sm text-gray-500 hover:text-rose-600 dark:hover:text-rose-400"
+          @click="handleClearFavorites"
+        >
+          {{ t('topicDiscovery.clearFavorites') }}
+        </button>
+      </div>
+
+      <div
+        v-if="favoriteCount === 0"
+        class="rounded-lg border border-dashed border-amber-200 dark:border-amber-800 px-4 py-6 text-center text-sm text-gray-500"
       >
-        <RefreshCw
-          class="w-4 h-4"
-          :class="{ 'animate-spin': isRefreshing || isProcessing }"
-        />
-        {{ refreshButtonLabel }}
-      </button>
+        {{ t('topicDiscovery.emptyFavorites') }}
+      </div>
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
+        <div
+          v-for="item in favorites"
+          :key="`fav-${item.seed.id}-${item.savedAt}`"
+          class="relative w-full text-left p-4 rounded-xl border-2 border-amber-200 dark:border-amber-800/60 bg-white dark:bg-gray-800/50 hover:border-amber-400 transition-all cursor-pointer"
+          @click="adoptSeed(item.seed, item.fromTab)"
+        >
+          <button
+            type="button"
+            class="absolute top-2.5 right-2.5 p-1.5 rounded-md text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+            :title="t('topicDiscovery.unfavorite')"
+            @click.stop="handleToggleFavorite(item.seed, item.fromTab)"
+          >
+            <BookmarkCheck class="w-4 h-4" />
+          </button>
+          <div class="pr-8 mb-1.5">
+            <h4 class="font-semibold text-base text-gray-900 dark:text-white">
+              {{ item.seed.title }}
+            </h4>
+            <p class="text-xs text-gray-400 mt-0.5">
+              {{ t(`topicDiscovery.tabs.${item.fromTab}`) }} · {{ item.seed.genre }}
+            </p>
+          </div>
+          <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-3">
+            {{ item.seed.oneLiner }}
+          </p>
+        </div>
+      </div>
+      <p class="text-sm text-center text-gray-400">{{ t('topicDiscovery.favoritesHint') }}</p>
     </div>
 
     <!-- Play modes：多样玩法 -->
@@ -666,8 +940,42 @@ async function rollDice(): Promise<void> {
           {{ opt.label }}
         </button>
       </div>
+      <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 hidden sm:block" />
+      <div class="flex items-center gap-1 flex-wrap">
+        <button
+          v-for="opt in platformOptions"
+          :key="opt.id"
+          type="button"
+          class="px-2.5 py-1.5 rounded-md text-sm border transition-colors"
+          :class="
+            lockedPlatform === opt.id
+              ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300'
+              : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:border-cyan-300'
+          "
+          @click="togglePlatformLock(opt.id)"
+        >
+          {{ opt.label }}
+        </button>
+      </div>
+      <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 hidden sm:block" />
+      <div class="flex items-center gap-1">
+        <button
+          v-for="opt in lengthOptions"
+          :key="opt.id"
+          type="button"
+          class="px-2.5 py-1.5 rounded-md text-sm border transition-colors"
+          :class="
+            lockedLength === opt.id
+              ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
+              : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:border-violet-300'
+          "
+          @click="toggleLengthLock(opt.id)"
+        >
+          {{ opt.label }}
+        </button>
+      </div>
       <button
-        v-if="lockedGenre || lockedAudience"
+        v-if="hasActiveFilters"
         type="button"
         class="inline-flex items-center gap-1 px-2.5 py-1.5 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
         @click="clearLocks"
@@ -681,6 +989,14 @@ async function rollDice(): Promise<void> {
       >
         <Lock class="w-3.5 h-3.5" />
         {{ lockedGenre }}
+      </div>
+      <div
+        v-if="activeInsightContext"
+        class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-sm bg-amber-50/80 dark:bg-amber-900/10 text-amber-600 dark:text-amber-400 max-w-[280px] truncate"
+        :title="activeInsightContext.opportunity"
+      >
+        {{ t('topicDiscovery.insightContextHint') }}
+        · {{ activeInsightContext.hotTags.slice(0, 2).join(' / ') || activeInsightContext.name }}
       </div>
       <div class="ml-auto min-w-[160px]">
         <WordCountSelector v-model="selectedWordCountRange" :disabled="isProcessing" />
@@ -854,20 +1170,35 @@ async function rollDice(): Promise<void> {
         v-else-if="seeds.length > 0"
         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full"
       >
-        <button
+        <div
           v-for="seed in seeds"
           :key="`${activeTab}-${seed.id}`"
-          type="button"
-          class="w-full text-left p-4 rounded-xl border-2 transition-all h-full"
+          class="relative w-full text-left p-4 rounded-xl border-2 transition-all h-full cursor-pointer"
           :class="
             currentSession.selectedSeedId === seed.id
               ? 'border-teal-500 bg-teal-50/50 dark:bg-teal-900/20'
               : 'border-gray-200 dark:border-gray-700 hover:border-teal-300 bg-white dark:bg-gray-800/50'
           "
-          :disabled="isProcessing"
-          @click="adoptSeed(seed)"
+          :aria-disabled="isProcessing"
+          @click="!isProcessing && adoptSeed(seed)"
         >
-          <div class="flex items-start justify-between gap-2 mb-1.5">
+          <button
+            type="button"
+            class="absolute top-2.5 right-2.5 p-1.5 rounded-md transition-colors z-10"
+            :class="
+              isFavorite(seed)
+                ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/40 hover:bg-amber-100'
+                : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30'
+            "
+            :title="
+              isFavorite(seed) ? t('topicDiscovery.unfavorite') : t('topicDiscovery.favorite')
+            "
+            @click.stop="handleToggleFavorite(seed)"
+          >
+            <BookmarkCheck v-if="isFavorite(seed)" class="w-4 h-4" />
+            <Bookmark v-else class="w-4 h-4" />
+          </button>
+          <div class="flex items-start justify-between gap-2 mb-1.5 pr-8">
             <h4 class="font-semibold text-base text-gray-900 dark:text-white">{{ seed.title }}</h4>
             <span
               class="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 flex-shrink-0"
@@ -880,6 +1211,18 @@ async function rollDice(): Promise<void> {
           </p>
           <div class="flex flex-wrap gap-1.5 text-xs text-gray-500">
             <span
+              v-if="seed.platform"
+              class="px-1.5 py-0.5 rounded bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300"
+            >
+              {{ PLATFORM_LABEL[seed.platform] }}
+            </span>
+            <span
+              v-if="seed.length"
+              class="px-1.5 py-0.5 rounded bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300"
+            >
+              {{ LENGTH_LABEL[seed.length] }}
+            </span>
+            <span
               class="px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300"
             >
               钩子：{{ seed.hook }}
@@ -889,8 +1232,26 @@ async function rollDice(): Promise<void> {
             >
               爽点：{{ seed.coolPoint }}
             </span>
+            <span
+              v-if="seed.sellPoint"
+              class="px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+            >
+              卖点：{{ seed.sellPoint }}
+            </span>
+            <span
+              v-if="seed.mechanism"
+              class="px-1.5 py-0.5 rounded bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300"
+            >
+              机制：{{ seed.mechanism }}
+            </span>
+            <span
+              v-if="seed.brokenTrope"
+              class="px-1.5 py-0.5 rounded bg-fuchsia-50 dark:bg-fuchsia-900/30 text-fuchsia-700 dark:text-fuchsia-300"
+            >
+              破梗：{{ seed.brokenTrope }}
+            </span>
           </div>
-        </button>
+        </div>
       </div>
       <p v-if="seeds.length > 0" class="text-sm text-center text-gray-400">
         {{ t('topicDiscovery.seedHint') }}
@@ -943,11 +1304,24 @@ async function rollDice(): Promise<void> {
         >
           <div class="flex items-center justify-between gap-2 mb-1.5">
             <h4 class="font-semibold text-base text-gray-900 dark:text-white">{{ insight.name }}</h4>
-            <div class="flex items-center gap-1 flex-shrink-0">
+            <div class="flex items-center gap-1 flex-shrink-0 flex-wrap justify-end">
               <span
                 class="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500"
               >
                 {{ lifecycleLabel[insight.lifecycle] || insight.lifecycle }}
+              </span>
+              <span
+                v-if="insight.entryDifficulty"
+                class="text-xs px-1.5 py-0.5 rounded"
+                :class="
+                  insight.entryDifficulty === 'low'
+                    ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                    : insight.entryDifficulty === 'high'
+                      ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'
+                      : 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                "
+              >
+                {{ ENTRY_DIFFICULTY_LABEL[insight.entryDifficulty] }}
               </span>
               <span
                 class="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500"
@@ -958,7 +1332,26 @@ async function rollDice(): Promise<void> {
           </div>
           <p class="text-sm text-gray-600 dark:text-gray-300 mb-1.5">{{ insight.reason }}</p>
           <p class="text-sm text-teal-700 dark:text-teal-300">{{ insight.opportunity }}</p>
+          <p
+            v-if="insight.namePatterns?.length"
+            class="text-xs text-gray-500 dark:text-gray-400 mt-1.5"
+          >
+            {{ t('topicDiscovery.namePatternLabel') }}：{{ insight.namePatterns.join(' · ') }}
+          </p>
           <div class="flex flex-wrap gap-1.5 mt-2.5">
+            <span
+              v-for="p in insight.platformBias?.length ? insight.platformBias : insight.platform ? [insight.platform] : []"
+              :key="`${insight.id}-${p}`"
+              class="px-1.5 py-0.5 text-xs rounded bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300"
+            >
+              {{ shortPlatformLabel[p] || PLATFORM_LABEL[p] || p }}
+            </span>
+            <span
+              v-if="insight.length"
+              class="px-1.5 py-0.5 text-xs rounded bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300"
+            >
+              {{ LENGTH_LABEL[insight.length] }}
+            </span>
             <span
               v-for="tag in insight.hotTags"
               :key="tag"
@@ -969,7 +1362,10 @@ async function rollDice(): Promise<void> {
           </div>
         </button>
       </div>
-      <p class="text-sm text-center text-gray-400">{{ t('topicDiscovery.radarHint') }}</p>
+      <p class="text-sm text-center text-gray-400">
+        {{ t('topicDiscovery.radarHint') }}
+        · {{ t('topicDiscovery.radarDisclaimer') }}
+      </p>
     </div>
 
     <!-- Prompt tab -->
@@ -985,7 +1381,7 @@ async function rollDice(): Promise<void> {
         type="button"
         class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-base font-medium text-white bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
         :disabled="!canSubmitPrompt"
-        @click="generateFromPrompt(freePrompt.trim())"
+        @click="handleFreePromptGenerate"
       >
         <Wand2 class="w-5 h-5" />
         {{ t('topicDiscovery.generateDirections') }}
@@ -1016,6 +1412,7 @@ async function rollDice(): Promise<void> {
       "
       @select-outline="handleSelectOutline"
       @create="handleCreateProject"
+      @cancel="handleCancelGeneration"
     />
   </div>
 </template>

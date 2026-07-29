@@ -43,6 +43,7 @@ interface Emits {
   (e: 'select', direction: OutlineDirection): void;
   (e: 'expand'): void;
   (e: 'enhance', payload: { direction: OutlineDirection; enhancementBrief: string }): void;
+  (e: 'cancel'): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -61,6 +62,7 @@ function handleRegenerate() {
 }
 
 function handleSelect(direction: OutlineDirection) {
+  if (props.isProcessing) return;
   emit('select', direction);
 }
 
@@ -70,6 +72,10 @@ function handleExpand() {
 
 function handleEnhance(direction: OutlineDirection, enhancementBrief: string) {
   emit('enhance', { direction, enhancementBrief });
+}
+
+function handleCancel() {
+  emit('cancel');
 }
 </script>
 
@@ -85,11 +91,22 @@ function handleEnhance(direction: OutlineDirection, enhancementBrief: string) {
       </NButton>
     </div>
 
+    <!-- 生成中：始终显示进度 + 取消（有旧卡时也不吞掉） -->
     <div
-      v-if="isProcessing && cards.length === 0"
-      class="rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-500 dark:bg-gray-800/60 dark:text-gray-400"
+      v-if="isProcessing"
+      class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-teal-200/80 bg-teal-50/80 px-4 py-3 dark:border-teal-800/50 dark:bg-teal-950/30"
     >
-      {{ progress || '正在生成创作方向...' }}
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-medium text-teal-800 dark:text-teal-200">
+          {{ progress || '正在生成…' }}
+        </p>
+        <p class="mt-0.5 text-xs text-teal-600/80 dark:text-teal-400/80">
+          可随时取消，已生成的结果会保留
+        </p>
+      </div>
+      <NButton size="small" secondary type="warning" @click="handleCancel">
+        取消生成
+      </NButton>
     </div>
 
     <div
@@ -99,12 +116,17 @@ function handleEnhance(direction: OutlineDirection, enhancementBrief: string) {
       {{ error }}
     </div>
 
-    <div v-else class="space-y-3">
+    <div
+      v-if="cards.length > 0"
+      class="space-y-3"
+      :class="{ 'opacity-60 pointer-events-none': isProcessing }"
+    >
       <button
         v-for="card in cards"
         :key="card.id"
         type="button"
         class="w-full rounded-2xl border-[2px] p-4 text-left transition-all duration-200"
+        :disabled="isProcessing"
         :class="selectedDirection?.id === card.direction.id
           ? 'border-indigo-500 bg-indigo-50/60 shadow-sm dark:bg-indigo-900/20'
           : 'border-gray-200 bg-white hover:border-indigo-300 dark:border-gray-700 dark:bg-gray-800/60 dark:hover:border-indigo-600'"
@@ -263,9 +285,20 @@ function handleEnhance(direction: OutlineDirection, enhancementBrief: string) {
       </button>
     </div>
 
+    <div
+      v-else-if="!isProcessing && !error"
+      class="rounded-xl border border-dashed border-gray-200 dark:border-gray-700 px-4 py-6 text-center text-sm text-gray-400"
+    >
+      点击上方种子或输入想法后，将在这里生成创作方向
+    </div>
+
     <div class="flex flex-wrap items-center gap-3">
-      <NButton type="primary" :disabled="!canExpand" :loading="isProcessing && !!selectedDirection" @click="handleExpand">
-        <template #icon>
+      <NButton
+        type="primary"
+        :disabled="!canExpand || isProcessing"
+        :loading="isProcessing && !!selectedDirection"
+        @click="handleExpand"
+      >        <template #icon>
           <ArrowRight class="h-4 w-4" />
         </template>
         展开主方案
