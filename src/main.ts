@@ -185,6 +185,18 @@ if (started) {
 
 let storyRuntimeRegistration: StoryRuntimeHandlerRegistration | undefined;
 
+/**
+ * Story Runtime IPC 必须与其它 ipcMain.handle 一样在模块加载时注册。
+ * 若只挂在 app.on('ready')，Forge/Vite 热更新主进程后 ready 不会再次触发，
+ * 会出现「No handler registered for 'story-runtime:bootstrap'」。
+ */
+function ensureStoryRuntimeHandlers(): void {
+  storyRuntimeRegistration?.dispose();
+  storyRuntimeRegistration = registerStoryRuntimeHandlers(app.getPath('userData'));
+}
+
+ensureStoryRuntimeHandlers();
+
 const createWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -693,7 +705,10 @@ ipcMain.handle('memory:file:delete', async (_event, data: { projectId: string; f
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 app.on('ready', () => {
-  storyRuntimeRegistration = registerStoryRuntimeHandlers(app.getPath('userData'));
+  // 防御兜底：若启动极早阶段注册失败/被清掉，ready 时再挂一次
+  if (!storyRuntimeRegistration) {
+    ensureStoryRuntimeHandlers();
+  }
   createWindow();
 });
 

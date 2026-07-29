@@ -454,7 +454,11 @@ export class ChapterWritingPipeline {
         async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
           const service = requireAIService();
           const raw = await service.complete(request.prompt, {
-            system: `${request.system}\n只输出符合 ${request.schemaName} 的 JSON，不要 Markdown。`,
+            system: [
+              request.system,
+              `schemaName=${request.schemaName}`,
+              '只输出合法 JSON 对象，不要 Markdown 代码块，不要前后解释文字。',
+            ].join('\n'),
             temperature: request.purpose === 'scene-draft' ? 0.65 : 0.2,
           });
           const parsed = ChapterWritingPipeline.parseStructuredJson(raw);
