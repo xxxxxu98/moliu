@@ -169,9 +169,32 @@ describe('topic-discovery.service', () => {
       // only works if hasActiveProvider is true. Skip provider gate by calling parse in unit above.
       // Here we verify fallback still works and chat is not required.
       const batch = await refreshStorySeeds({ excludeTitles: ['旧标题'] }, chat);
-      expect(batch.items.length).toBe(3);
+      expect(batch.items.length).toBe(4);
       // without provider, chat should not be called
       expect(chat).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('playStyle fallbacks and prompts', () => {
+    it('builds mix fallback seeds with collision hint', () => {
+      const seeds = buildFallbackStorySeeds({
+        count: 2,
+        playStyle: 'mix',
+        mixTags: ['修仙'],
+        mixElements: ['系统流'],
+      });
+      expect(seeds).toHaveLength(2);
+      expect(seeds[0].oneLiner).toMatch(/修仙|系统流/);
+    });
+
+    it('builds dice fallback seeds from roll faces', () => {
+      const seeds = buildFallbackStorySeeds({
+        count: 2,
+        playStyle: 'dice',
+        diceRoll: { genre: '末世', hook: '倒计时危机', twist: '系统坏掉了' },
+      });
+      expect(seeds).toHaveLength(2);
+      expect(seeds[0].hook).toContain('倒计时危机');
     });
   });
 });

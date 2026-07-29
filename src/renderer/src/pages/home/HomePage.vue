@@ -135,10 +135,10 @@ function switchTab(tab: HomeTab): void {
         <ProjectList @create-project="openCreateDialog" />
       </div>
 
-      <!-- Topic Discovery -->
-      <div v-show="activeTab === 'discovery'" class="max-w-7xl mx-auto px-6 py-8 w-full">
+      <!-- Topic Discovery：内容区撑满可用宽度 -->
+      <div v-show="activeTab === 'discovery'" class="w-full px-4 md:px-6 lg:px-8 py-6">
         <div
-          class="bg-white dark:bg-gray-800 rounded-2xl p-5 md:p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+          class="w-full bg-white dark:bg-gray-800 rounded-2xl p-5 md:p-6 lg:p-8 shadow-sm border border-gray-200 dark:border-gray-700"
         >
           <TopicDiscoveryPanel />
         </div>

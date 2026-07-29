@@ -4,6 +4,18 @@
 
 export type TopicAudience = 'general' | 'male' | 'female';
 
+/** 开题玩法 Tab */
+export type TopicDiscoveryTab =
+  | 'seeds'
+  | 'radar'
+  | 'mix'
+  | 'dice'
+  | 'twist'
+  | 'prompt';
+
+/** 种子生成玩法风格（影响提示词） */
+export type SeedPlayStyle = 'standard' | 'twist' | 'dice' | 'mix';
+
 export type GenreLifecycleHint =
   | 'emerging'
   | 'rising'
@@ -38,6 +50,13 @@ export interface GenreInsightCard {
   riskNote?: string;
 }
 
+/** 命运骰子一次掷出的三面 */
+export interface TopicDiceRoll {
+  genre: string;
+  hook: string;
+  twist: string;
+}
+
 export interface RefreshStorySeedsOptions {
   count?: number;
   genre?: string;
@@ -48,6 +67,14 @@ export interface RefreshStorySeedsOptions {
   };
   excludeTitles?: string[];
   temperature?: number;
+  /** 玩法风格：标准 / 反套路 / 骰子 / 混搭 */
+  playStyle?: SeedPlayStyle;
+  /** 元素混搭：题材标签名 */
+  mixTags?: string[];
+  /** 元素混搭：设定元素名 */
+  mixElements?: string[];
+  /** 命运骰子结果 */
+  diceRoll?: TopicDiceRoll;
 }
 
 export interface RefreshGenreInsightsOptions {

@@ -25,7 +25,7 @@ import type {
   TopicDiscoveryBatch,
 } from '@/types/topic-discovery';
 
-const DEFAULT_SEED_COUNT = 3;
+const DEFAULT_SEED_COUNT = 4;
 const DEFAULT_INSIGHT_COUNT = 4;
 const DEFAULT_TEMPERATURE = 0.9;
 
@@ -155,33 +155,63 @@ export function parseGenreInsights(
   return insights;
 }
 
+const TWIST_SUFFIXES = ['破局', '反向', '翻盘', '代价', '错位'] as const;
+const STANDARD_SUFFIXES = ['逆袭', '觉醒', '重生', '破局', '登顶'] as const;
+
 /** 本地降级：从静态数据拼装灵感种子 */
 export function buildFallbackStorySeeds(
   options: RefreshStorySeedsOptions = {},
 ): StorySeedCard[] {
   const count = options.count ?? DEFAULT_SEED_COUNT;
   const exclude = new Set((options.excludeTitles ?? []).map((t) => t.toLowerCase()));
-  const lockedGenre = options.lockedSlots?.genre || options.genre;
+  const playStyle = options.playStyle ?? 'standard';
+  const lockedGenre =
+    options.lockedSlots?.genre ||
+    options.genre ||
+    options.diceRoll?.genre ||
+    options.mixTags?.[0];
   const lockedAudience = options.lockedSlots?.audience || options.audience || 'general';
+  const mixHint =
+    [...(options.mixTags ?? []), ...(options.mixElements ?? [])].filter(Boolean).join('×') ||
+    '';
+  const dice = options.diceRoll;
 
   const preferred = lockedGenre
     ? genreTags.filter((tag) => tag.name === lockedGenre || tag.name.includes(lockedGenre))
     : genreTags;
   const pool = shuffle(preferred.length > 0 ? preferred : genreTags);
+  const suffixes = playStyle === 'twist' ? TWIST_SUFFIXES : STANDARD_SUFFIXES;
 
   const seeds: StorySeedCard[] = [];
   for (const tag of pool) {
-    const title = `${tag.name}·${['逆袭', '觉醒', '重生', '破局', '登顶'][seeds.length % 5]}`;
+    const title = `${tag.name}·${suffixes[seeds.length % suffixes.length]}`;
     if (exclude.has(title.toLowerCase())) continue;
 
-    const oneLiner = `在${tag.name}世界里，主角凭借${tag.description || '独特机遇'}撕开困境，从被低估走向掌控全局。`;
+    let oneLiner = `在${tag.name}世界里，主角凭借${tag.description || '独特机遇'}撕开困境，从被低估走向掌控全局。`;
+    let hook = `开篇即陷入${tag.name}核心冲突，立刻给出反差与悬念`;
+    let coolPoint = '身份/能力反转带来的打脸兑现';
+
+    if (playStyle === 'twist') {
+      oneLiner = `看似经典的${tag.name}开局，却在读者期待打脸时突然翻盘：主角必须用「不按套路」的方式赢得第一次胜利。`;
+      hook = '先诱导套路期待，再在关键节点反向兑现';
+      coolPoint = '破梗后的新期待被持续放大';
+    } else if (playStyle === 'mix' && mixHint) {
+      oneLiner = `把「${mixHint}」硬核碰撞：主角在${tag.name}背景下被迫同时消化互相冲突的设定，靠第一次漂亮翻盘站稳脚跟。`;
+      hook = `开篇三章同时抛出混搭冲突：${mixHint}`;
+      coolPoint = '混搭元素化学反应带来的独特爽感';
+    } else if (playStyle === 'dice' && dice) {
+      oneLiner = `【${dice.genre}】世界里，以「${dice.hook}」开篇，并植入「${dice.twist}」：主角必须在第一次危机中兑现差异化优势。`;
+      hook = dice.hook;
+      coolPoint = `${dice.twist}带来的持续爽点`;
+    }
+
     seeds.push({
       id: createId('seed-fb'),
       title,
       oneLiner,
       genre: lockedGenre || tag.name,
-      hook: `开篇即陷入${tag.name}核心冲突，立刻给出反差与悬念`,
-      coolPoint: '身份/能力反转带来的打脸兑现',
+      hook,
+      coolPoint,
       audience: lockedAudience,
       riskNote: '离线降级灵感，建议配置 AI 后刷新获得更多样点子',
     });
@@ -192,10 +222,13 @@ export function buildFallbackStorySeeds(
     seeds.push({
       id: createId('seed-fb'),
       title: `开题火花 ${seeds.length + 1}`,
-      oneLiner: '普通人意外卷入超常事件，必须在有限时间内完成第一次漂亮翻盘。',
-      genre: lockedGenre || '都市',
-      hook: '开篇三章给足危机与第一次小兑现',
-      coolPoint: '信息差打脸',
+      oneLiner:
+        dice != null
+          ? `【${dice.genre}】以「${dice.hook}」开场，意外设定「${dice.twist}」改写命运。`
+          : '普通人意外卷入超常事件，必须在有限时间内完成第一次漂亮翻盘。',
+      genre: lockedGenre || dice?.genre || '都市',
+      hook: dice?.hook || '开篇三章给足危机与第一次小兑现',
+      coolPoint: dice?.twist || '信息差打脸',
       audience: lockedAudience,
       riskNote: '离线降级灵感',
     });
@@ -306,8 +339,9 @@ export async function refreshStorySeeds(
   }
 
   try {
+    const playStyle = options.playStyle ?? 'standard';
     const raw = await chatFn(
-      buildStorySeedsSystemPrompt(),
+      buildStorySeedsSystemPrompt(playStyle),
       buildStorySeedsUserPrompt(options),
       temperature,
     );

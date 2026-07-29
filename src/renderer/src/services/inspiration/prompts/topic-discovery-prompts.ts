@@ -5,6 +5,7 @@
 import type {
   RefreshGenreInsightsOptions,
   RefreshStorySeedsOptions,
+  SeedPlayStyle,
   TopicAudience,
 } from '@/types/topic-discovery';
 
@@ -14,7 +15,17 @@ const AUDIENCE_LABEL: Record<TopicAudience, string> = {
   female: '女生向',
 };
 
-export function buildStorySeedsSystemPrompt(): string {
+const PLAY_STYLE_GUIDE: Record<SeedPlayStyle, string> = {
+  standard:
+    '风格：标准开题。冲突清晰、爽点明确、可立即开写，适合主流连载节奏。',
+  twist:
+    '风格：反套路开题。刻意打破常见网文套路（退婚打脸、无脑金手指、无代价系统等），用合理反转制造新鲜感，但仍要有强钩子与可持续爽点。',
+  dice:
+    '风格：命运骰子开题。必须把用户掷出的题材、开篇手法、意外设定三要素全部吃进故事核，组合要大胆但自洽。',
+  mix: '风格：元素混搭开题。必须融合用户选定的题材与设定元素，强调碰撞感与化学反应，避免只贴标签不写冲突。',
+};
+
+export function buildStorySeedsSystemPrompt(playStyle: SeedPlayStyle = 'standard'): string {
   return `你是资深网文开题顾问。根据约束生成互不相同、可立即开写的「灵感种子」。
 只输出 JSON，不要 markdown 代码块，不要解释。
 
@@ -25,18 +36,25 @@ JSON 格式：
 - 每条 oneLiner 40-80 字，具体可写，避免空泛鸡汤
 - 同批种子题材或冲突角度必须明显不同
 - 不要抄袭知名作品书名与核心设定
-- audience 只能是 general / male / female`;
+- audience 只能是 general / male / female
+- ${PLAY_STYLE_GUIDE[playStyle]}`;
 }
 
 export function buildStorySeedsUserPrompt(options: RefreshStorySeedsOptions): string {
-  const count = options.count ?? 3;
+  const count = options.count ?? 4;
+  const playStyle = options.playStyle ?? 'standard';
   const genre = options.lockedSlots?.genre || options.genre;
   const audience = options.lockedSlots?.audience || options.audience;
   const exclude = options.excludeTitles?.filter(Boolean) ?? [];
+  const mixTags = options.mixTags?.filter(Boolean) ?? [];
+  const mixElements = options.mixElements?.filter(Boolean) ?? [];
+  const dice = options.diceRoll;
 
   const lines: string[] = [
     `请生成 ${count} 个网文灵感种子。`,
     `当前日期：${new Date().toISOString().slice(0, 10)}`,
+    `玩法：${playStyle}`,
+    PLAY_STYLE_GUIDE[playStyle],
   ];
 
   if (genre) {
@@ -45,8 +63,24 @@ export function buildStorySeedsUserPrompt(options: RefreshStorySeedsOptions): st
   if (audience) {
     lines.push(`目标受众：${AUDIENCE_LABEL[audience]}（audience 字段填 ${audience}）`);
   }
+  if (mixTags.length > 0) {
+    lines.push(`混搭题材标签：${mixTags.join('、')}`);
+  }
+  if (mixElements.length > 0) {
+    lines.push(`混搭设定元素：${mixElements.join('、')}`);
+  }
+  if (dice) {
+    lines.push(
+      `命运骰子结果 —— 题材面：${dice.genre}；开篇手法面：${dice.hook}；意外设定面：${dice.twist}`,
+    );
+    lines.push('三面结果都必须在 oneLiner / hook / coolPoint 中有所体现。');
+  }
   if (exclude.length > 0) {
     lines.push(`禁止重复或近似以下已出现过的标题/点子：${exclude.join('、')}`);
+  }
+
+  if (playStyle === 'twist') {
+    lines.push('每条种子请显式写出「破的是什么套路」与「新的期待点」。');
   }
 
   lines.push('请给出新的、有市场辨识度的开题点子。');
