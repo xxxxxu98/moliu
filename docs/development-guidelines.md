@@ -1198,7 +1198,15 @@ app.commandLine.appendSwitch('disable-features', 'CrossSiteDocumentBlockingAlway
 const legacyLib: any = require('legacy-lib')
 ```
 
-### B. 相关资源
+### B. 项目文档
+
+| 文档 | 说明 |
+|------|------|
+| [README.md](./README.md) | 文档索引与快速开始 |
+| [reference-projects.md](./reference-projects.md) | 参考开源网文项目映射 |
+| [prd.md](./prd.md) | 产品需求 |
+
+### C. 外部资源
 
 - [Vue 3 官方文档](https://vuejs.org/)
 - [TypeScript 官方文档](https://www.typescriptlang.org/)
@@ -1208,6 +1216,6 @@ const legacyLib: any = require('legacy-lib')
 
 ---
 
-> **版本**: v1.0.0
-> **最后更新**: 2026-05-21
+> **版本**: v1.1.0
+> **最后更新**: 2026-07-29
 > **维护者**: 墨流开发团队

@@ -112,9 +112,8 @@ endOfLine: lf   bracketSpacing: true
 
 ## 📚 相关文档
 
-- 完整开发规范：[`docs/development-guidelines.md`](docs/development-guidelines.md) **← 唯一权威源**
-- **参考项目：[`docs/reference-projects.md`](docs/reference-projects.md)** ← 编写网文功能前必看（`reference/` 下的开源 AI 网文项目功能映射）
+完整清单见 [`docs/README.md`](docs/README.md)。
+
+- 开发规范：[`docs/development-guidelines.md`](docs/development-guidelines.md) **← 唯一权威源**
+- 参考项目：[`docs/reference-projects.md`](docs/reference-projects.md) ← 编写网文功能前必看
 - 产品需求：[`docs/prd.md`](docs/prd.md)
-- AI 写作系统设计：[`docs/ai-writing-system-design.md`](docs/ai-writing-system-design.md)
-- 技能集成说明：[`docs/skills-integration.md`](docs/skills-integration.md)
-- 优化方案：[`docs/optimization/`](docs/optimization/)

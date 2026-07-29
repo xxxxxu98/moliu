@@ -1,10 +1,8 @@
----
-
 # 墨流AI写作助手 (InkFlow AI Writer)
 
 ## 产品需求文档 (PRD) v1.0
 
----
+> 产品定位与功能愿景。实现细节与编码规范以 [`development-guidelines.md`](./development-guidelines.md) 为准；文档索引见 [`README.md`](./README.md)。
 
 ## 一、产品概述
 

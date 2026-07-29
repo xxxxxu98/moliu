@@ -112,4 +112,4 @@
 ---
 
 > **维护**：新增参考项目时，请将仓库放入 `reference/`，并在本文件补充"功能映射表"。
-> 墨流自研代码始终遵循 [`docs/development-guidelines.md`](development-guidelines.md)。
+> 墨流自研代码始终遵循 [`development-guidelines.md`](./development-guidelines.md)。文档索引见 [`README.md`](./README.md)。

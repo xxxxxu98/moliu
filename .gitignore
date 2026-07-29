@@ -90,3 +90,11 @@ typings/
 
 # Electron-Forge
 out/
+
+# Electron / Chromium 临时用户数据（本地调试产生）
+.qa14*/
+
+# 本地 QA / 调试产物（勿入库）
+.artifacts/
+test.md
+*.console.log
