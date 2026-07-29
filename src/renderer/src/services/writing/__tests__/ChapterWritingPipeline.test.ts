@@ -66,6 +66,26 @@ vi.mock('@/services/writing/backup/GitBackupManager', () => ({
   GitBackupManager: vi.fn().mockImplementation(() => ({ backup: vi.fn() })),
 }));
 
+vi.mock('../chapterPersistenceAdapters', () => ({
+  createChapterPersistenceClient: () => ({
+    save: vi.fn().mockResolvedValue({ oldContent: '' }),
+  }),
+  createChapterMemoryClient: () => ({
+    extractAndSave: vi.fn().mockResolvedValue(null),
+  }),
+}));
+
+vi.mock('../supplement', async () => {
+  const actual = await vi.importActual<typeof import('../supplement')>('../supplement');
+  return {
+    ...actual,
+    runSupplementRounds: vi.fn().mockImplementation(async ({ prose }: { prose: string }) => ({
+      prose,
+      rounds: 0,
+    })),
+  };
+});
+
 // ====== 测试数据工厂 ======
 function makeProject(): Project {
   return {
@@ -145,6 +165,7 @@ describe('ChapterWritingPipeline', () => {
       expect(result.prose).toBe('生成的正文');
       expect(result.attempts).toBe(1);
       expect(result.forceAccepted).toBe(false); // 门禁通过
+      expect(result.supplementRounds).toBe(0);
       expect(mockWriteChapter).toHaveBeenCalledTimes(1);
       expect(mockInitialize).toHaveBeenCalledTimes(1);
     });
@@ -265,6 +286,46 @@ describe('ChapterWritingPipeline', () => {
       });
 
       expect(mockPreflight).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('补写开关', () => {
+    it('enableSupplement=true 时调用 runSupplementRounds', async () => {
+      const { runSupplementRounds } = await import('../supplement');
+      const mockSupplement = vi.mocked(runSupplementRounds);
+      mockSupplement.mockResolvedValueOnce({
+        prose: '生成的正文' + '补写内容'.repeat(50),
+        rounds: 1,
+      });
+
+      const result = await pipeline.execute({
+        project: makeProject(),
+        chapter: makeChapter(0),
+        targetWordCount: 2000,
+        writingStyle: 'concise',
+        enableSupplement: true,
+      });
+
+      expect(mockSupplement).toHaveBeenCalledTimes(1);
+      expect(result.supplementRounds).toBe(1);
+      expect(result.prose).toContain('补写内容');
+    });
+
+    it('enableSupplement=false 时不补写', async () => {
+      const { runSupplementRounds } = await import('../supplement');
+      const mockSupplement = vi.mocked(runSupplementRounds);
+      mockSupplement.mockClear();
+
+      const result = await pipeline.execute({
+        project: makeProject(),
+        chapter: makeChapter(0),
+        targetWordCount: 2000,
+        writingStyle: 'concise',
+        enableSupplement: false,
+      });
+
+      expect(mockSupplement).not.toHaveBeenCalled();
+      expect(result.supplementRounds).toBe(0);
     });
   });
 

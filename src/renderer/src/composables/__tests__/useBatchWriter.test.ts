@@ -114,6 +114,7 @@ const mockPipelineExecute = vi.fn().mockResolvedValue({
   gateResult: { passed: true, allIssues: [], blockingCount: 0, highCount: 0 },
   attempts: 1,
   forceAccepted: false,
+  supplementRounds: 0,
 });
 
 vi.mock('@/services/writing/ChapterWritingPipeline', () => ({

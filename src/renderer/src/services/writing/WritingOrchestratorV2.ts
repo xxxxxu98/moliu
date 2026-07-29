@@ -25,11 +25,13 @@ import { useSixGatePolishPipeline, SixGatePolishPipeline } from './polish/SixGat
 import { useProjectionOrchestrator, ProjectionOrchestrator } from './commit/ProjectionWriters';
 import { useAntiPatternsRegistry, AntiPatternsRegistryService } from './anti-patterns/AntiPatternsRegistry';
 import { useChapterCommitManagerV2, ChapterCommitManagerV2 } from './commit/ChapterCommitManagerV2';
-import { DeAIService } from './de-ai-service';
 import { countWords } from './utils';
-import { safeExtractChapterMemory } from './extract-plot-memory';
-import { initializeMemoryManager, getMemoryManager } from './memory-manager';
 import { ChapterWritingPipeline } from './ChapterWritingPipeline';
+import {
+  createChapterPersistenceClient,
+  createChapterMemoryClient,
+} from './chapterPersistenceAdapters';
+import { SMART_CONTINUE_PRESET } from './chapterWritePresets';
 
 import type {
   WritingTaskBook,
@@ -138,9 +140,17 @@ export function useWritingOrchestratorV2() {
   // 关键：useChapterWriter 调 run() 时只调一次 run()，不直接 init/reset 编排器。
   // 因此编排器是 per-instance 缓存，跨 run() 复用状态。
 
-  const stateDrivenOrchestrator: StateDrivenWritingOrchestrator = createStateDrivenOrchestrator();
+  const sharedPersistence = createChapterPersistenceClient();
+  const sharedMemoryClient = createChapterMemoryClient();
+  const stateDrivenOrchestrator: StateDrivenWritingOrchestrator = createStateDrivenOrchestrator(
+    sharedPersistence,
+    sharedMemoryClient
+  );
 
-  function createStateDrivenOrchestrator(): StateDrivenWritingOrchestrator {
+  function createStateDrivenOrchestrator(
+    persistence: ChapterPersistenceClient,
+    memoryClient: MemoryClient
+  ): StateDrivenWritingOrchestrator {
     // AI 客户端适配器：包装 useActiveAIProvider 的 UnifiedAIService
     // 关键：StateDriven 内部 L3 已拼好完整 prompt（含 CHANGES 协议），这里只需把 prompt
     // 传给 AI 即可。最简单做法：调 service.continueWriting（带 ProjectContext）。
@@ -190,86 +200,6 @@ export function useWritingOrchestratorV2() {
       },
     };
 
-    // 章节持久化适配器：写入 projectStore
-    // 说明：
-    // - 用 chapterId 从 sortedChapters 查找章节（不依赖 currentChapter，支持批量场景
-    //   下 currentChapter 已切走的提交）。
-    // - DeAIService 提取并清洗标题（去 markdown/章节标题前缀），与单章 applyGeneratedContent
-    //   口径一致；title 仅在提取成功时写入，避免覆盖手动标题。
-    // - 字数用统一口径 countWords（中文字符+英文单词，剥离标题/标记），保证 UI 显示
-    //   与补写阈值判断一致。
-    const persistence: ChapterPersistenceClient = {
-      async save(chapterId, content) {
-        const chapters = projectStore.sortedChapters;
-        const ch = chapters.find(c => c.id === chapterId) ?? projectStore.currentChapter;
-        const oldContent = ch?.content ?? '';
-
-        // 标题提取 + 正文清洗
-        const { title: extractedTitle, content: cleanedContent } =
-          DeAIService.extractAndValidateTitle(content);
-
-        // 拼接已有内容（保留追加语义）
-        const separator = oldContent && !oldContent.endsWith('\n') ? '\n\n' : '';
-        const newContent = oldContent + separator + cleanedContent;
-
-        const updateData: Record<string, any> = {
-          content: newContent,
-          wordCount: countWords(newContent),
-          isGenerated: true,
-          generatedAt: new Date().toISOString(),
-          status: 'published',
-        };
-        if (extractedTitle) {
-          updateData.title = extractedTitle;
-        }
-
-        await projectStore.updateChapter(chapterId, updateData);
-        return { oldContent };
-      },
-    };
-
-    // 章节记忆适配器：提取并保存 ChapterMemory（best-effort）
-    // 说明：
-    // - 用 chapterId 从 sortedChapters 查章节（已含 persistence 写入的最新 content）。
-    // - 复用 safeExtractChapterMemory（与 useBatchWriter/useChapterWriter 一致），含
-    //   AI 增强 + 文件备份 + 失败兜底。
-    // - 提取成功后写入 projectStore + memoryManager 持久化。
-    const memoryClient: MemoryClient = {
-      async extractAndSave(chapterId, chapterNumber, prose) {
-        const project = projectStore.currentProject;
-        if (!project) return null;
-
-        initializeMemoryManager(project.id, project.name, true);
-
-        // 从 store 查最新章节（persistence 已写入 content）
-        const ch = projectStore.sortedChapters.find(c => c.id === chapterId);
-        const chapterForMemory = ch
-          ? { ...ch, content: ch.content || prose }
-          : { id: chapterId, title: `第${chapterNumber}章`, content: prose, orderIndex: chapterNumber - 1 } as any;
-
-        const memory = await safeExtractChapterMemory(
-          chapterForMemory,
-          chapterNumber,
-          {
-            enableAIEnhancement: true,
-            enableFileBackup: true,
-            fallbackToPrevious: true,
-          }
-        );
-
-        if (memory) {
-          projectStore.addChapterMemory(memory);
-          try {
-            const manager = getMemoryManager();
-            await manager.saveMemory(memory);
-          } catch (err) {
-            console.warn('[V2→Orchestrator] memoryManager.saveMemory 失败（不影响提交）:', err);
-          }
-        }
-        return memory;
-      },
-    };
-
     // 默认模型：复用 useActiveAIProvider 的 currentModel
     const defaultModel = currentModel.value || 'gpt-4o';
 
@@ -293,8 +223,10 @@ export function useWritingOrchestratorV2() {
   // 管道复用该实例，不再重复创建。
   // V2 只保留 UI 状态映射。
 
+  // 与 orchestrator 共用同一 persistence，补写增量与主写落库同适配器
   const pipeline = new ChapterWritingPipeline({
     orchestrator: stateDrivenOrchestrator,
+    persistence: sharedPersistence,
   });
 
   // ============================================================
@@ -331,14 +263,13 @@ export function useWritingOrchestratorV2() {
       currentStep.value = 'preflight';
       progress.value = 5;
 
-      // 委托共享管道执行单章写作
+      // 委托共享管道执行单章写作（使用智能续写预设）
       const result = await pipeline.execute({
         project,
         chapter: currentChapter,
         targetWordCount: requestedTarget,
         writingStyle: writingStyle as any,
-        useTaskBook: true,
-        enablePreflight: true,
+        ...SMART_CONTINUE_PRESET,
       });
 
       progress.value = 100;

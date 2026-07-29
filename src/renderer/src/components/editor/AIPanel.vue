@@ -971,15 +971,21 @@ function getSeverityClass(severity: string): string {
           </div>
         </div>
 
-        <!-- 分隔线 -->
+        <!-- 分隔线：简易模式（不走 ChapterWritingPipeline） -->
         <div class="relative">
           <div class="absolute inset-0 flex items-center">
             <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
           </div>
           <div class="relative flex justify-center text-xs uppercase">
-            <span class="px-2 bg-gray-50 dark:bg-gray-900 text-gray-500">自定义续写</span>
+            <span class="px-2 bg-gray-50 dark:bg-gray-900 text-gray-500">{{
+              t('editor.customContinueSection')
+            }}</span>
           </div>
         </div>
+
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed -mt-1">
+          {{ t('editor.customContinueHint') }}
+        </p>
 
         <!-- Provider Info -->
         <div
@@ -1002,10 +1008,10 @@ function getSeverityClass(severity: string): string {
             @click="selectedSubMode = 'smartContinue'"
           >
             <div class="font-semibold text-sm text-gray-900 dark:text-white mb-1">
-              {{ t('editor.smartContinue') }}
+              {{ t('editor.simpleContinue') }}
             </div>
             <div class="text-xs text-gray-500 dark:text-gray-400">
-              {{ t('editor.smartContinueDesc') }}
+              {{ t('editor.simpleContinueDesc') }}
             </div>
           </button>
           <button

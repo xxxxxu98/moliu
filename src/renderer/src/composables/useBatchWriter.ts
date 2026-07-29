@@ -2,6 +2,7 @@
  * 批量写作 Composable - 增强版（v3.1）
  *
  * 单章执行已委托给 ChapterWritingPipeline（与智能续写共用同一条流水线），
+ * 选项通过 BATCH_CONTINUE_PRESET 统一（跳过预检、开启任务书与自动补字）。
  * 本 composable 只保留批量特有的控制逻辑：
  * 1. 循环控制（暂停/恢复/停止响应）
  * 2. 指数退避重试（单章失败重试本章，耗尽则停止整个批量）
@@ -39,6 +40,10 @@ import {
 import {
   useChapterWritingPipeline,
 } from '@/services/writing/ChapterWritingPipeline';
+import {
+  BATCH_CONTINUE_PRESET,
+  resolveChapterWriteOptions,
+} from '@/services/writing/chapterWritePresets';
 import {
   useFailureRecovery,
   type PipelineStep,
@@ -704,16 +709,24 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
       currentPipelineStep.value = '写作中';
 
-      // 委托共享管道执行单章
+      // 委托共享管道执行单章（批量预设：跳过预检，开启补字）
+      const writeOptions = resolveChapterWriteOptions(BATCH_CONTINUE_PRESET, {
+        useTaskBook: options.useTaskBook,
+      });
       const result = await pipeline.execute({
         project,
         chapter,
         targetWordCount: options.wordsPerChapter,
         writingStyle: options.writingStyle as any,
-        useTaskBook: options.useTaskBook,
-        enablePreflight: false, // 批量场景跳过预检以加速
+        ...writeOptions,
         previousChapter,
       });
+
+      if (result.supplementRounds > 0) {
+        console.log(
+          `[批量写作] 第${chapterIndex + 1}章自动补写 ${result.supplementRounds} 轮`
+        );
+      }
 
       // 映射管道输出到批量 UI 状态
       if (result.gateResult) {

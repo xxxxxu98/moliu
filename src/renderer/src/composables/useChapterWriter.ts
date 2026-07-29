@@ -38,6 +38,12 @@ import { initializeMemoryManager, getMemoryManager } from '@/services/writing/me
 import { DeAIService } from '@/services/writing/de-ai-service';
 import { countWords } from '@/services/writing/utils';
 import {
+  MAX_WORD_THRESHOLD,
+  MAX_SUPPLEMENT_ROUNDS,
+  checkWordCount as sharedCheckWordCount,
+  buildSupplementPrompt as sharedBuildSupplementPrompt,
+} from '@/services/writing/supplement';
+import {
   createTaskBookBuilder,
   type WritingTaskBuilder,
 } from '@/services/writing/writing-task-builder';
@@ -135,10 +141,8 @@ export interface UseChapterWriterReturn {
 // 当前唯一消费者是 AIPanel.vue（单写手实例），改动行为兼容。
 // ============================================
 
-// 字数阈值常量（不依赖响应式状态，保留在模块级）
-const MIN_WORD_THRESHOLD = 0.85; // 最低字数阈值（85%）
-const MAX_WORD_THRESHOLD = 1.15; // 最高字数阈值（115%）
-const MAX_SUPPLEMENT_ROUNDS = 3; // 最多补充轮次
+// 字数阈值常量：统一从 supplement.ts 导入（与管道 / 批量共用）
+// MAX_WORD_THRESHOLD / MAX_SUPPLEMENT_ROUNDS
 
 function extractChapterTypeFromOutline(outline: string, orderIndex: number): ChapterType {
   if (!outline) {
@@ -622,14 +626,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
         return null;
       }
 
-      // 字数补充（如有需要）
-      const checkResult = checkWordCount(currentGeneratedContent, requestedTarget);
-      if (checkResult.needsSupplement && supplementRound.value < MAX_SUPPLEMENT_ROUNDS) {
-        await supplementContinue({
-          additionalWords: checkResult.shortfall,
-          writingStyle: writingStyle as 'concise' | 'elegant' | 'humorous' | 'ancient',
-        });
-      }
+      // 补写已由 ChapterWritingPipeline（SMART_CONTINUE_PRESET.enableSupplement）统一处理，
+      // 此处不再二次调用 supplementContinue，避免重复补写。
 
       return currentGeneratedContent;
     } catch (err) {
@@ -678,8 +676,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
   // ============================================
   // 字数检查与补充续写
   // ============================================
-  // 注：MIN_WORD_THRESHOLD / MAX_WORD_THRESHOLD / MAX_SUPPLEMENT_ROUNDS
-  // 已定义在模块级（见文件顶部），此处复用，不再重复声明（避免遮蔽）。
+  // 阈值与 checkWordCount / buildSupplementPrompt 已下沉到 services/writing/supplement.ts，
+  // 与 ChapterWritingPipeline 共用。此处保留手动补写入口（AIPanel「补充续写」按钮）。
 
   /**
    * 检查字数是否达标
@@ -694,17 +692,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
     shortfall: number;
     percentage: number;
   } {
-    const currentWords = countWords(content);
-    const minRequired = Math.floor(target * MIN_WORD_THRESHOLD);
-    const percentage = target > 0 ? (currentWords / target) * 100 : 0;
-
-    return {
-      needsSupplement: currentWords < minRequired,
-      currentWords,
-      targetWords: target,
-      shortfall: Math.max(0, minRequired - currentWords),
-      percentage,
-    };
+    return sharedCheckWordCount(content, target);
   }
 
   /**
@@ -927,31 +915,15 @@ export function useChapterWriter(): UseChapterWriterReturn {
     actualWords: number,
     context: ChapterWritingContext
   ): string {
-    const currentWords = countWords(existingContent);
-    const endingSnippet = existingContent.slice(-500) || '（无）';
-
-    return `【补充续写指令】
-
-## 当前状态
-- 已有字数：约 ${currentWords} 字
-- 目标字数：约 ${targetWordCount.value} 字
-- 本次补充：约 ${actualWords} 字
-- 补充轮次：第 ${supplementRound.value}/${MAX_SUPPLEMENT_ROUNDS} 轮
-
-## 补充要求
-1. **自然衔接**：从原文结尾处继续，不要重复已有内容
-2. **保持风格**：与原文保持一致的文风、语气和叙事节奏
-3. **内容充实**：补充的内容要有实质性情节推进，不要凑字数
-4. **衔接自然**：补充内容与原文之间过渡要自然，不突兀
-
-## 原文结尾（请从这里继续）
-${endingSnippet}
-
-## 章节上下文
-- 章节标题：${context.chapter.title}
-- 章节大纲：${context.chapter.outline || '（无）'}
-
-请直接输出补充内容，不要添加任何前缀说明。`;
+    return sharedBuildSupplementPrompt({
+      existingContent,
+      targetWordCount: targetWordCount.value,
+      additionalWords: actualWords,
+      round: supplementRound.value,
+      maxRounds: MAX_SUPPLEMENT_ROUNDS,
+      chapterTitle: context.chapter.title,
+      chapterOutline: context.chapter.outline || '',
+    });
   }
 
   /**
@@ -1105,23 +1077,38 @@ ${endingSnippet}
       }
 
       // ========== 步骤 5: 保存 ==========
+      // 管道（ChapterWritingPipeline）在 L6 已落库；若正文已包含生成内容则跳过追加，避免重复写入。
       currentStep.value = 'save';
       const currentContent = projectStore.currentChapter?.content || '';
-      const separator = currentContent.length > 0 && !currentContent.endsWith('\n') ? '\n\n' : '';
-      const newContent = currentContent + separator + processedContent;
+      const alreadyPersistedByPipeline =
+        currentContent.length > 0 &&
+        (currentContent === processedContent ||
+          currentContent.endsWith(processedContent) ||
+          (processedContent.length > 80 &&
+            currentContent.includes(processedContent.slice(0, 80))));
 
-      const updateData: Record<string, any> = {
-        content: newContent,
-        // 修复：此前用 newContent.length（字符长度），与字数判断逻辑 countWords
-        // （中文字符+英文单词，且会剥掉标题/标记）口径不一致，导致 UI 显示和补写阈值判断错位。
-        wordCount: countWords(newContent),
-      };
+      if (!alreadyPersistedByPipeline) {
+        const separator = currentContent.length > 0 && !currentContent.endsWith('\n') ? '\n\n' : '';
+        const newContent = currentContent + separator + processedContent;
 
-      if (extractedTitle && projectStore.currentChapter) {
-        updateData.title = extractedTitle;
+        const updateData: Record<string, unknown> = {
+          content: newContent,
+          wordCount: countWords(newContent),
+        };
+
+        if (extractedTitle && projectStore.currentChapter) {
+          updateData.title = extractedTitle;
+        }
+
+        await projectStore.updateChapter(projectStore.currentChapterId!, updateData);
+      } else if (extractedTitle && projectStore.currentChapter) {
+        // 正文已落库，仅同步标题（若管道未提取到）
+        if (!projectStore.currentChapter.title || projectStore.currentChapter.title.startsWith('第')) {
+          await projectStore.updateChapter(projectStore.currentChapterId!, {
+            title: extractedTitle,
+          });
+        }
       }
-
-      await projectStore.updateChapter(projectStore.currentChapterId!, updateData);
 
       // 提取情节记忆
       extractMemoryAfterApply(projectStore.currentChapter!, currentIndex + 1);
