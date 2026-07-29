@@ -1,0 +1,430 @@
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+export type ContractKind = 'master' | 'volume' | 'chapter' | 'review';
+export type CommitStatus = 'accepted' | 'rejected';
+export type ValidationSeverity = 'blocking' | 'warning';
+export type ContinuityDomain =
+  | 'entity'
+  | 'knowledge'
+  | 'inventory'
+  | 'timeline'
+  | 'causality'
+  | 'fulfillment'
+  | 'evidence';
+
+export interface SourceTrace {
+  source: string;
+  sourceId?: string;
+  chapter?: number;
+}
+
+export interface StoryEntity {
+  id: string;
+  kind: 'character' | 'location' | 'faction' | 'item' | 'rule' | 'foreshadow';
+  name: string;
+  aliases: string[];
+  attributes: Record<string, JsonValue>;
+  knownBy: string[];
+  sourceTrace: SourceTrace[];
+}
+
+export interface StoryEvent {
+  id: string;
+  chapter: number;
+  sceneId: string;
+  type: string;
+  summary: string;
+  participants: string[];
+  locationId?: string;
+  causes: string[];
+  effects: string[];
+  evidence: string[];
+  timestamp?: string;
+  provisional?: boolean;
+}
+
+export interface SceneChunk {
+  id: string;
+  chapterId: string;
+  chapterIndex: number;
+  order: number;
+  title: string;
+  text: string;
+  summary?: string;
+  participants: string[];
+  locations: string[];
+  sourceTrace: SourceTrace[];
+}
+
+export interface StoryState {
+  chapter: number;
+  entities: Record<string, StoryEntity>;
+  events: StoryEvent[];
+  inventory: Record<string, Record<string, number>>;
+  knowledge: Record<string, string[]>;
+  timeline: string[];
+  openForeshadows: string[];
+  fulfilledNodes: string[];
+}
+
+export interface StateDelta {
+  operation: 'set' | 'add' | 'remove' | 'increment';
+  path: string;
+  value?: JsonValue;
+  evidence: string;
+}
+
+export interface ProvisionalStateOverlay {
+  baseChapter: number;
+  deltas: StateDelta[];
+  events: StoryEvent[];
+}
+
+export interface StoryBootstrapData {
+  schemaVersion: 'story-runtime/v1';
+  project: {
+    id: string;
+    title: string;
+    description: string;
+    genres: string[];
+  };
+  entities: StoryEntity[];
+  rules: StoryEntity[];
+  foreshadows: StoryEntity[];
+  outlineNodes: LegacyOutlineNode[];
+  chapterMemories: LegacyChapterMemory[];
+  sceneChunks: SceneChunk[];
+  initialState: StoryState;
+}
+
+export interface LegacyCharacter {
+  id: string;
+  name: string;
+  role?: string;
+  description?: string;
+  profile?: Record<string, unknown>;
+}
+
+export interface LegacyRule {
+  id: string;
+  name: string;
+  description: string;
+  locked?: boolean;
+  category?: string;
+}
+
+export interface LegacyLocation {
+  id: string;
+  name: string;
+  description?: string;
+  parentId?: string;
+  level?: string;
+}
+
+export interface LegacyFaction {
+  id: string;
+  name: string;
+  description?: string;
+  parentId?: string;
+  relation?: unknown;
+}
+
+export interface LegacyForeshadow {
+  id: string;
+  hint: string;
+  status: string;
+  type?: string;
+  createdChapter?: number;
+  suggestedResolutionChapter?: number;
+}
+
+export interface LegacyOutlineNode {
+  id: string;
+  title: string;
+  description?: string;
+  chapterRange?: [number, number];
+  chapterId?: string;
+  keyEvents?: string[];
+  CBN?: string;
+  CPNs?: string[];
+  CEN?: string;
+  mustCover?: string[];
+  forbiddenZones?: string[];
+}
+
+export interface LegacyChapterMemory {
+  chapterId: string;
+  chapterTitle: string;
+  chapterIndex: number;
+  corePlot: string;
+  keyEvents: string[];
+  locations: string[];
+  timelineMark?: string;
+  revealedForeshadows: string[];
+  newForeshadows: string[];
+}
+
+export interface LegacyChapter {
+  id: string;
+  title: string;
+  content: string;
+  orderIndex: number;
+  plotSummary?: string;
+}
+
+export interface LegacyProjectInput {
+  id: string;
+  name: string;
+  description?: string;
+  genre?: Array<{ id?: string; name: string }>;
+  characters?: LegacyCharacter[];
+  worldSchema?: {
+    rules?: LegacyRule[];
+    locations?: LegacyLocation[];
+    factions?: LegacyFaction[];
+  };
+  foreshadows?: LegacyForeshadow[];
+  plotOutline?: LegacyOutlineNode[];
+  chapterMemories?: LegacyChapterMemory[];
+  chapters?: LegacyChapter[];
+}
+
+export interface ContractMeta {
+  schemaVersion: 'story-runtime/v1';
+  kind: ContractKind;
+  id: string;
+  projectId: string;
+  sourceTrace: SourceTrace[];
+}
+
+export interface MasterContract {
+  meta: ContractMeta & { kind: 'master' };
+  premise: string;
+  genres: string[];
+  immutableRules: string[];
+  characterTruths: Record<string, string[]>;
+  style: string[];
+  forbidden: string[];
+}
+
+export interface VolumeContract {
+  meta: ContractMeta & { kind: 'volume' };
+  volumeNumber: number;
+  title: string;
+  objective: string;
+  conflict: string;
+  pacing: string[];
+  requiredPayoffs: string[];
+  forbidden: string[];
+}
+
+export interface ChapterContract {
+  meta: ContractMeta & { kind: 'chapter' };
+  chapterNumber: number;
+  title: string;
+  goal: string;
+  CBN: string;
+  CPNs: string[];
+  CEN: string;
+  mustCover: string[];
+  forbidden: string[];
+  timeAnchor?: string;
+}
+
+export interface ReviewContract {
+  meta: ContractMeta & { kind: 'review' };
+  blockingDomains: ContinuityDomain[];
+  requiredEvidence: boolean;
+  maxWarnings: number;
+  mustCheck: string[];
+}
+
+export interface ContractPack {
+  master: MasterContract;
+  volume: VolumeContract;
+  chapter: ChapterContract;
+  review: ReviewContract;
+}
+
+export interface CandidateEvent {
+  id: string;
+  summary: string;
+  participants: string[];
+  locationId?: string;
+  prerequisites: string[];
+  effects: string[];
+}
+
+export interface SceneBeat {
+  id: string;
+  kind: 'CBN' | 'CPN' | 'CEN';
+  order: number;
+  summary: string;
+  dependsOn: string[];
+  candidateEvents: CandidateEvent[];
+}
+
+export interface CandidatePrecheck {
+  candidateId: string;
+  accepted: boolean;
+  reasons: string[];
+}
+
+export interface ScenePlan {
+  chapterNumber: number;
+  beats: SceneBeat[];
+  prechecks: CandidatePrecheck[];
+}
+
+export type ContextBlockKind =
+  | 'locked-contracts'
+  | 'current-state'
+  | 'recent-scenes'
+  | 'retrieval'
+  | 'style';
+
+export interface ContextBlock {
+  kind: ContextBlockKind;
+  content: string;
+  critical: boolean;
+  tokenEstimate: number;
+}
+
+export interface ContextPack {
+  blocks: ContextBlock[];
+  totalTokenEstimate: number;
+  omitted: ContextBlockKind[];
+}
+
+export interface ContextPackInput {
+  contracts: ContractPack;
+  state: StoryState;
+  overlay?: ProvisionalStateOverlay;
+  recentScenes: SceneChunk[];
+  retrievedScenes: SceneChunk[];
+  styleGuidance: string[];
+  maxTokens: number;
+}
+
+export interface StructuredAIRequest<T> {
+  purpose: 'scene-plan' | 'scene-draft' | 'chapter-review' | 'fact-extraction';
+  system: string;
+  prompt: string;
+  schemaName: string;
+  parse: (value: unknown) => T;
+}
+
+export interface StructuredAI {
+  generate<T>(request: StructuredAIRequest<T>): Promise<unknown>;
+}
+
+export interface SceneDraft {
+  sceneId: string;
+  beatId: string;
+  paragraphs: string[];
+  candidateEvents: CandidateEvent[];
+}
+
+export interface ExtractedFacts {
+  events: StoryEvent[];
+  deltas: StateDelta[];
+  evidence: string[];
+}
+
+export interface FactExtractor {
+  extract(input: {
+    projectId: string;
+    chapterNumber: number;
+    sceneDrafts: SceneDraft[];
+    state: StoryState;
+    overlay?: ProvisionalStateOverlay;
+  }): Promise<ExtractedFacts>;
+}
+
+export interface ContinuityIssue {
+  id: string;
+  domain: ContinuityDomain;
+  severity: ValidationSeverity;
+  message: string;
+  evidence: string[];
+  sceneId?: string;
+}
+
+export interface ContinuityReport {
+  accepted: boolean;
+  issues: ContinuityIssue[];
+  checkedDomains: ContinuityDomain[];
+}
+
+export interface ChapterCommit {
+  id: string;
+  projectId: string;
+  chapterNumber: number;
+  status: CommitStatus;
+  /** accepted 事务应用 overlay 时使用的不可变基线。 */
+  baseState: StoryState;
+  contractPack: ContractPack;
+  sceneDrafts: SceneDraft[];
+  extractedFacts: ExtractedFacts;
+  validation: ContinuityReport;
+  overlay: ProvisionalStateOverlay;
+  reasons: string[];
+}
+
+export interface ChapterCommitReceipt {
+  commitId: string;
+  revision: number;
+  acceptedAt: string;
+}
+
+export interface StoryRuntimeIPC {
+  bootstrap(data: StoryBootstrapData): Promise<unknown>;
+  loadState(projectId: string): Promise<unknown>;
+  searchScenes(input: { projectId: string; query: string; limit: number }): Promise<unknown>;
+  commitChapter(commit: ChapterCommit): Promise<unknown>;
+  applyPatch(patch: StoryPatch): Promise<unknown>;
+}
+
+export interface ScenePatch {
+  kind: 'scene';
+  projectId: string;
+  chapterNumber: number;
+  sceneId: string;
+  expectedRevision: number;
+  replacement: SceneDraft;
+  reason: string;
+}
+
+export interface ParagraphPatch {
+  kind: 'paragraph';
+  projectId: string;
+  chapterNumber: number;
+  sceneId: string;
+  paragraphIndex: number;
+  expectedRevision: number;
+  replacement: string;
+  reason: string;
+}
+
+export type StoryPatch = ScenePatch | ParagraphPatch;
+
+export interface LongFormWriteInput {
+  projectId: string;
+  contracts: ContractPack;
+  state: StoryState;
+  overlay?: ProvisionalStateOverlay;
+  recentScenes: SceneChunk[];
+  retrievedScenes: SceneChunk[];
+  styleGuidance: string[];
+  maxContextTokens: number;
+}
+
+export interface LongFormWriteResult {
+  plan: ScenePlan;
+  context: ContextPack;
+  drafts: SceneDraft[];
+  facts: ExtractedFacts;
+  report: ContinuityReport;
+  commit: ChapterCommit;
+  receipt?: ChapterCommitReceipt;
+}

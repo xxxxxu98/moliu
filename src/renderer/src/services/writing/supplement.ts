@@ -109,11 +109,22 @@ export interface RunSupplementRoundsParams {
    * @param fullProse 追加后的全文
    */
   onRound?: (round: number, delta: string, fullProse: string) => void | Promise<void>;
+  /**
+   * 每轮持久化前校验追加后的完整正文。
+   * 返回错误文本即拒绝本轮，且不会调用 onRound。
+   */
+  validateRound?: (
+    round: number,
+    delta: string,
+    fullProse: string
+  ) => string | null | Promise<string | null>;
 }
 
 export interface RunSupplementRoundsResult {
   prose: string;
   rounds: number;
+  /** 补写生成、校验或持久化失败时的明确原因。 */
+  error?: string;
 }
 
 /**
@@ -144,12 +155,12 @@ export async function runSupplementRounds(
       maxSupplement
     );
 
-    rounds += 1;
+    const round = rounds + 1;
     const prompt = buildSupplementPrompt({
       existingContent: prose,
       targetWordCount: params.targetWordCount,
       additionalWords,
-      round: rounds,
+      round,
       maxRounds,
       chapterTitle: params.chapterTitle,
       chapterOutline: params.chapterOutline,
@@ -162,11 +173,28 @@ export async function runSupplementRounds(
       }
 
       const separator = prose && !prose.endsWith('\n') ? '\n\n' : '';
-      prose = prose + separator + delta;
-      await params.onRound?.(rounds, delta, prose);
+      const candidateProse = prose + separator + delta;
+      const validationError = await params.validateRound?.(round, delta, candidateProse);
+      if (validationError) {
+        return {
+          prose,
+          rounds,
+          error: `第 ${round} 轮补写校验失败：${validationError}`,
+        };
+      }
+
+      // 持久化成功后才把候选正文纳入返回值，避免内存结果与落库内容分叉。
+      await params.onRound?.(round, delta, candidateProse);
+      prose = candidateProse;
+      rounds = round;
     } catch (err) {
-      console.warn(`[Supplement] 第 ${rounds} 轮补写失败，停止补写:`, err);
-      break;
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(`[Supplement] 第 ${round} 轮补写失败，停止补写:`, err);
+      return {
+        prose,
+        rounds,
+        error: `第 ${round} 轮补写失败：${message}`,
+      };
     }
   }
 

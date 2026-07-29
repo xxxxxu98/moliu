@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { StoryRuntimeAPI } from './main/services/story-runtime';
 
 export interface ElectronAPI {
+  storyRuntime: StoryRuntimeAPI;
+
   // Project
   getProject: (id: string) => Promise<unknown>;
   listProjects: () => Promise<unknown>;
@@ -68,6 +71,18 @@ export interface ElectronAPI {
 }
 
 const api: ElectronAPI = {
+  storyRuntime: {
+    bootstrap: input => ipcRenderer.invoke('story-runtime:bootstrap', input),
+    upsert: input => ipcRenderer.invoke('story-runtime:upsert', input),
+    query: input => ipcRenderer.invoke('story-runtime:query', input),
+    commitAccepted: input =>
+      ipcRenderer.invoke('story-runtime:commit-accepted', input),
+    readOutbox: input => ipcRenderer.invoke('story-runtime:outbox-read', input),
+    completeOutbox: input =>
+      ipcRenderer.invoke('story-runtime:outbox-complete', input),
+    health: projectId => ipcRenderer.invoke('story-runtime:health', projectId),
+  },
+
   // Project
   getProject: (id: string) => ipcRenderer.invoke('project:get', id),
   listProjects: () => ipcRenderer.invoke('project:list'),

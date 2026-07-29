@@ -382,6 +382,37 @@ describe('BatchConfig 类型与失败重试', () => {
     expect(mockProjectStore.updateChapter).not.toHaveBeenCalled();
   });
 
+  it('forceAccepted 或门禁失败不得计为批量成功', async () => {
+    setupProjectWithEmptyChapters(1);
+    mockPipelineExecute.mockResolvedValueOnce({
+      success: true,
+      prose: '未通过门禁的正文',
+      title: null,
+      taskBook: null,
+      gateResult: {
+        passed: false,
+        allIssues: [{ severity: 'critical', description: '状态冲突' }],
+        blockingCount: 1,
+        highCount: 0,
+      },
+      attempts: 3,
+      forceAccepted: true,
+      supplementRounds: 0,
+    });
+
+    const { useBatchWriter } = await import('@/composables/useBatchWriter');
+    const writer = useBatchWriter();
+    await writer.startBatchWriting(1, {
+      wordsPerChapter: 2000,
+      writingStyle: 'concise',
+      maxRetries: 1,
+    });
+
+    expect(writer.progress.value.writtenChapters).toBe(0);
+    expect(writer.error.value).toContain('严格门禁未通过');
+    expect(mockProjectStore.updateChapter).not.toHaveBeenCalled();
+  });
+
   it('失败时按 maxRetries 重试本章，重试耗尽后停止', async () => {
     setupProjectWithEmptyChapters(1);
     // v3.1：管道执行每次都失败

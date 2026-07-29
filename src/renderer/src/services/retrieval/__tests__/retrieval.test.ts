@@ -250,6 +250,30 @@ describe('HybridRetriever', () => {
     expect(results[0].score).toBeLessThanOrEqual(1);
   });
 
+  it('按章 upsert/remove 不保留重写前的脏索引', async () => {
+    await retriever.upsertChapter(1, '林动修炼旧功法 xyzold。', ['林动']);
+    const originalSize = retriever.size();
+
+    await retriever.upsertChapter(1, '林动改练新剑法 xyznew。', ['林动']);
+
+    expect(retriever.size()).toBe(originalSize);
+    const staleResults = await retriever.retrieve({
+      query: 'xyzold',
+      currentChapter: 2,
+    });
+    expect(staleResults).toEqual([]);
+
+    const currentResults = await retriever.retrieve({
+      query: 'xyznew',
+      currentChapter: 2,
+    });
+    expect(currentResults).toHaveLength(1);
+    expect(currentResults[0].text).toContain('新剑法');
+
+    expect(await retriever.removeChapter(1)).toBe(originalSize);
+    expect(retriever.size()).toBe(0);
+  });
+
   it('clear 清空', async () => {
     await retriever.indexChapter(1, '林动', ['林动']);
     expect(retriever.size()).toBe(1);

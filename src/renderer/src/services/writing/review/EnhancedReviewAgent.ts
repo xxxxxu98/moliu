@@ -49,7 +49,7 @@ const DEFAULT_CONFIG: EnhancedReviewConfig = {
 export class EnhancedReviewAgent {
   private readonly _config: Required<EnhancedReviewConfig>;
   private readonly _antiAI: AntiAIService;
-  private readonly _reviewHistory = ref<ReviewCheckpoint[]>([];
+  private readonly _reviewHistory = ref<ReviewCheckpoint[]>([]);
 
   // 延迟初始化的依赖
   private _contractManagerGetter?: () => { loadChapterContract: (chapter: number) => Promise<ChapterContract | null> };
@@ -565,7 +565,7 @@ export class EnhancedReviewAgent {
       { pattern: /[？?!。].{0,50}$/s, weight: 0.3 },
       { pattern: /突然|蓦然|赫然/g, weight: 0.2 },
       { pattern: /["""][^"""]+["""]/g, weight: 0.2 },
-      { pattern: /[他她]/{2,}/g, weight: 0.15 },
+      { pattern: /[他她]{2,}/g, weight: 0.15 },
       { pattern: /【[^】]+】/g, weight: 0.15 },
     ];
 

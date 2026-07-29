@@ -8,7 +8,7 @@
  *   0. Preflight 预检（可选，见 chapterWritePresets）
  *   1. contextAgent 生成任务书（TaskBook）
  *   2. StateDriven.writeChapter()（L1-L7 闭环）
- *      内部已含：起草 + 门禁重试 + 兜底放行 + 事务提交 + 记忆提取
+ *      内部已含：起草 + 严格门禁重试 + 事务提交 + 记忆提取
  *   3. 字数不足时补充续写（可选，enableSupplement）
  *   4. 结果归一化 → ChapterWriteOutput
  *
@@ -17,7 +17,7 @@
  *   preflightService + contextAgent）。
  * - 默认创建 persistence/memoryClient（与 V2 同口径），批量不再因 null 跳过落库。
  * - 内部持有 StateDrivenWritingOrchestrator 实例（跨章节复用状态快照/检索器/检查点）。
- * - 输出 forceAccepted 标记：区分"门禁通过提交"与"门禁未过但兜底放行提交"。
+ * - 严格门禁未通过时绝不提交；forceAccepted 仅保留为兼容字段且恒为 false。
  */
 
 import { useProjectStore } from '@/stores/project.store';
@@ -38,9 +38,23 @@ import {
   createChapterMemoryClient,
 } from './chapterPersistenceAdapters';
 import { runSupplementRounds } from './supplement';
-import type { GatePipelineResult } from '@/services/gates/types';
+import type { GateContext, GateIssue, GatePipelineResult } from '@/services/gates/types';
 import type { WritingTaskBook } from '@/types/writing-v2';
 import type { Project, Chapter } from '@/types/project';
+import type {
+  ContinuityDomain,
+  ContinuityReport,
+  StructuredAI,
+  StructuredAIRequest,
+} from '@/types/story-runtime';
+import {
+  AIFactExtractor,
+  ContractPackBuilder,
+  GroundedRetriever,
+  LegacyProjectMigrator,
+  LongFormWritingEngine,
+  StoryRuntimeClient,
+} from '@/services/story-runtime';
 
 // ============================================================
 // 类型定义
@@ -94,7 +108,7 @@ export interface ChapterWriteOutput {
   gateResult: GatePipelineResult | null;
   /** 起草尝试次数 */
   attempts: number;
-  /** 是否兜底放行（门禁未过但已用最佳草稿提交） */
+  /** 兼容字段；严格门禁下恒为 false */
   forceAccepted: boolean;
   /** 实际执行的补写轮次（未开启或无需补写时为 0） */
   supplementRounds: number;
@@ -111,6 +125,7 @@ export class ChapterWritingPipeline {
   private readonly preflightService: ReturnType<typeof usePreflightService>;
   private readonly contextAgent: ReturnType<typeof useEnhancedContextAgent>;
   private readonly persistence: ChapterPersistenceClient | null;
+  private readonly memoryClient: MemoryClient | null;
 
   constructor(deps?: {
     drafter?: DrafterClient;
@@ -175,6 +190,7 @@ export class ChapterWritingPipeline {
     const memoryClient =
       deps?.memoryClient !== undefined ? deps.memoryClient : createChapterMemoryClient();
     this.persistence = persistence;
+    this.memoryClient = memoryClient;
 
     // 优先使用注入的 orchestrator（V2 复用自己已配置好适配器的实例）；
     // 否则用上面的适配器创建新实例。
@@ -246,6 +262,10 @@ export class ChapterWritingPipeline {
       }
     }
 
+    if (this.hasStoryRuntime()) {
+      return this.executeLongFormRuntime(input, taskBook);
+    }
+
     // ====== Step 2: 任务书 → StateDriven options 转换 ======
     const currentChapterOutline = chapter.outline || chapter.plotSummary || '';
     const writingRules = taskBook ? this.buildWritingRules(taskBook) : undefined;
@@ -276,7 +296,7 @@ export class ChapterWritingPipeline {
       }
     );
 
-    if (!result.success) {
+    if (!result.success || !result.gateResult?.passed) {
       return {
         success: false,
         prose: result.prose || '',
@@ -286,7 +306,7 @@ export class ChapterWritingPipeline {
         attempts: result.attempts,
         forceAccepted: false,
         supplementRounds: 0,
-        error: result.error,
+        error: result.error || '严格门禁未通过，章节未提交',
       };
     }
 
@@ -300,15 +320,27 @@ export class ChapterWritingPipeline {
         chapter,
         prose,
         targetWordCount,
-        writingStyle
+        writingStyle,
+        blueprint,
       );
       prose = supplementResult.prose;
       supplementRounds = supplementResult.rounds;
+      if (supplementResult.error) {
+        return {
+          success: false,
+          prose,
+          title: this.readBackTitle(chapter.id),
+          taskBook,
+          gateResult: result.gateResult,
+          attempts: result.attempts,
+          forceAccepted: false,
+          supplementRounds,
+          error: supplementResult.error,
+        };
+      }
     }
 
     // ====== Step 6: 结果归一化 ======
-    const forceAccepted = !!result.gateResult && !result.gateResult.passed;
-
     return {
       success: true,
       prose,
@@ -316,7 +348,7 @@ export class ChapterWritingPipeline {
       taskBook,
       gateResult: result.gateResult,
       attempts: result.attempts,
-      forceAccepted,
+      forceAccepted: false,
       supplementRounds,
       error: result.error,
     };
@@ -326,6 +358,230 @@ export class ChapterWritingPipeline {
   // 辅助方法
   // ============================================================
 
+  private hasStoryRuntime(): boolean {
+    return (
+      typeof window !== 'undefined' &&
+      Boolean(window.electronAPI?.storyRuntime?.bootstrap)
+    );
+  }
+
+  /**
+   * 新长篇主链：迁移/幂等 bootstrap → 合同 → 场景 DAG → 独立事实提取
+   * → 严格连续性校验 → SQLite accepted commit。
+   */
+  private async executeLongFormRuntime(
+    input: ChapterWriteInput,
+    taskBook: WritingTaskBook | null
+  ): Promise<ChapterWriteOutput> {
+    const { requireAIService } = useActiveAIProvider();
+    const migrator = new LegacyProjectMigrator();
+    const bootstrap = migrator.migrate(
+      input.project as unknown as Parameters<LegacyProjectMigrator['migrate']>[0]
+    );
+    const runtime = new StoryRuntimeClient();
+
+    try {
+      await runtime.bootstrap(bootstrap);
+      const state = await runtime.loadState(input.project.id);
+      const chapterNumber = input.chapter.orderIndex + 1;
+      if (state.chapter >= chapterNumber && input.chapter.content.trim()) {
+        throw new Error(`第 ${chapterNumber} 章已有 accepted 状态，请使用章节重写流程`);
+      }
+
+      const volume = input.project.volumes.find(item => item.id === input.chapter.volumeId);
+      const volumePlan = input.project.metadata?.volumePlans?.find(
+        item => item.volumeIndex === (volume?.orderIndex ?? 0)
+      );
+      const outlineNode = {
+        id: input.chapter.id,
+        title: input.chapter.title,
+        description: input.chapter.outline || input.chapter.plotSummary || '',
+        chapterId: input.chapter.id,
+        keyEvents: taskBook?.mustCover ?? [],
+        CBN: taskBook?.CBN,
+        CPNs: taskBook?.CPNs,
+        CEN: taskBook?.CEN,
+        mustCover: taskBook?.mustCover,
+        forbiddenZones: taskBook?.forbiddenZones,
+      };
+      const contracts = new ContractPackBuilder().build({
+        bootstrap,
+        volume: {
+          number: (volume?.orderIndex ?? 0) + 1,
+          id: volume?.id,
+          title: volume?.name ?? '正文卷',
+          objective: volumePlan?.objective ?? volume?.summary ?? input.project.description,
+          conflict: volumePlan?.coreConflict ?? input.project.conflictDesign?.source ?? '',
+          requiredPayoffs: volumePlan?.payoffForeshadows ?? [],
+          forbidden: taskBook?.forbiddenZones ?? [],
+        },
+        chapter: {
+          number: chapterNumber,
+          id: input.chapter.id,
+          title: input.chapter.title,
+          goal: input.chapter.outline || input.chapter.plotSummary || input.chapter.title,
+          outlineNode,
+        },
+        style: [
+          input.writingStyle,
+          `目标约 ${input.targetWordCount} 字，按场景分配篇幅`,
+          ...(taskBook?.styleGuidance?.reasoning ?? []),
+          input.userInstructions ?? '',
+        ],
+        forbidden: taskBook?.forbiddenZones ?? [],
+      });
+      const query =
+        taskBook?.CPNs.join(' ') ||
+        input.chapter.outline ||
+        input.chapter.plotSummary ||
+        input.chapter.title;
+      const entityIds = [...bootstrap.entities, ...bootstrap.rules, ...bootstrap.foreshadows]
+        .filter(entity => query.includes(entity.name) || entity.aliases.some(alias => query.includes(alias)))
+        .map(entity => entity.id);
+      const retrievedScenes = await new GroundedRetriever(
+        window.electronAPI.storyRuntime
+      ).retrieve({
+        projectId: input.project.id,
+        query,
+        entityIds,
+        currentChapter: chapterNumber,
+        topK: 8,
+      });
+      const recentScenes = bootstrap.sceneChunks
+        .filter(scene => scene.chapterIndex < chapterNumber)
+        .slice(-4);
+      const ai: StructuredAI = {
+        async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
+          const service = requireAIService();
+          const raw = await service.complete(request.prompt, {
+            system: `${request.system}\n只输出符合 ${request.schemaName} 的 JSON，不要 Markdown。`,
+            maxTokens: request.purpose === 'scene-draft' ? 4000 : 2500,
+            temperature: request.purpose === 'scene-draft' ? 0.65 : 0.2,
+          });
+          const parsed = ChapterWritingPipeline.parseStructuredJson(raw);
+          return request.parse(parsed);
+        },
+      };
+      const engine = new LongFormWritingEngine({
+        ai,
+        factExtractor: new AIFactExtractor(ai),
+        commitPort: runtime,
+      });
+      const result = await engine.write({
+        projectId: input.project.id,
+        contracts,
+        state,
+        recentScenes,
+        retrievedScenes,
+        styleGuidance: contracts.master.style,
+        maxContextTokens: 24_000,
+      });
+      const prose = result.drafts
+        .flatMap(scene => scene.paragraphs)
+        .join('\n\n');
+      const gateResult = this.toGateResult(result.report);
+
+      if (result.commit.status !== 'accepted' || !result.receipt) {
+        return {
+          success: false,
+          prose,
+          title: null,
+          taskBook,
+          gateResult,
+          attempts: 1,
+          forceAccepted: false,
+          supplementRounds: 0,
+          error: result.commit.reasons.join('；') || '严格连续性门禁未通过',
+        };
+      }
+
+      // electron-store 仅作为 UI 投影；canonical commit 已由 SQLite 原子写入。
+      try {
+        if (this.persistence?.replace) {
+          await this.persistence.replace(input.chapter.id, prose);
+        }
+        await this.memoryClient?.extractAndSave(input.chapter.id, chapterNumber, prose);
+      } catch (error) {
+        console.warn('[Pipeline] accepted commit 的 UI 投影失败，可由 outbox 重放:', error);
+      }
+      return {
+        success: true,
+        prose,
+        title: this.readBackTitle(input.chapter.id),
+        taskBook,
+        gateResult,
+        attempts: 1,
+        forceAccepted: false,
+        supplementRounds: 0,
+      };
+    } catch (error) {
+      return {
+        ...this.fail(error instanceof Error ? error.message : '长篇运行时执行失败'),
+        taskBook,
+      };
+    }
+  }
+
+  private static parseStructuredJson(raw: string): unknown {
+    const trimmed = raw.trim().replace(/^```(?:json)?\s*/iu, '').replace(/\s*```$/u, '');
+    try {
+      return JSON.parse(trimmed) as unknown;
+    } catch {
+      const start = Math.min(
+        ...[trimmed.indexOf('{'), trimmed.indexOf('[')].filter(index => index >= 0)
+      );
+      const end = Math.max(trimmed.lastIndexOf('}'), trimmed.lastIndexOf(']'));
+      if (!Number.isFinite(start) || start < 0 || end <= start) {
+        throw new Error('AI 未返回可解析的结构化 JSON');
+      }
+      return JSON.parse(trimmed.slice(start, end + 1)) as unknown;
+    }
+  }
+
+  private toGateResult(report: ContinuityReport): GatePipelineResult {
+    const category = (domain: ContinuityDomain): GateIssue['category'] => {
+      if (domain === 'entity') return 'entity';
+      if (domain === 'fulfillment') return 'blueprint';
+      if (domain === 'evidence') return 'protocol';
+      if (domain === 'causality') return 'semantic';
+      return 'consistency';
+    };
+    const allIssues: GateIssue[] = report.issues.map(issue => ({
+      category: category(issue.domain),
+      severity: issue.severity === 'blocking' ? 'critical' : 'medium',
+      location: issue.sceneId ?? '章节',
+      description: issue.message,
+      evidence: issue.evidence.join('；'),
+      autoFixable: false,
+    }));
+    const blockingCount = allIssues.filter(issue => issue.severity === 'critical').length;
+    const passed = report.accepted && blockingCount === 0;
+    return {
+      passed,
+      hasBlocking: blockingCount > 0,
+      blockingCount,
+      highCount: 0,
+      totalIssues: allIssues.length,
+      gates: [
+        {
+          gateId: 'G7',
+          gateName: 'Story Runtime 连续性门禁',
+          passed,
+          issues: allIssues,
+          durationMs: 0,
+        },
+      ],
+      allIssues,
+      decision: {
+        shouldBlock: !passed,
+        reason: passed ? '全部连续性约束通过' : '存在阻断级连续性问题',
+        canAutoFix: false,
+        nextAction: passed ? 'accept' : 'manual_review',
+      },
+      totalDurationMs: 0,
+    };
+  }
+
   /**
    * 字数不足时循环补写；增量通过 persistence 追加落库（与主写同口径）。
    */
@@ -334,8 +590,9 @@ export class ChapterWritingPipeline {
     chapter: Chapter,
     prose: string,
     targetWordCount: number,
-    writingStyle: WritingStyle
-  ): Promise<{ prose: string; rounds: number }> {
+    writingStyle: WritingStyle,
+    blueprint?: GateContext['blueprint'],
+  ): Promise<{ prose: string; rounds: number; error?: string }> {
     const { requireAIService } = useActiveAIProvider();
 
     return runSupplementRounds({
@@ -366,13 +623,24 @@ export class ChapterWritingPipeline {
           return result?.content ?? result?.text ?? (typeof result === 'string' ? result : '');
         },
       },
+      validateRound: async (_round, _delta, fullProse) => {
+        const validation = await this.orchestrator.validateSupplement(
+          fullProse,
+          chapter,
+          blueprint,
+        );
+        const crashedGate = validation.gates.find(gate => gate.error);
+        if (crashedGate) {
+          return `${crashedGate.gateId} ${crashedGate.gateName}执行异常：${crashedGate.error}`;
+        }
+        return validation.passed ? null : validation.decision.reason;
+      },
       onRound: async (_round, delta) => {
-        if (this.persistence && delta) {
-          try {
-            await this.persistence.save(chapter.id, delta);
-          } catch (err) {
-            console.warn('[Pipeline] 补写增量落库失败（正文已在内存中保留）:', err);
-          }
+        if (!this.persistence) {
+          throw new Error('未配置章节持久化，无法安全保存补写内容');
+        }
+        if (delta) {
+          await this.persistence.save(chapter.id, delta);
         }
       },
     });
@@ -390,7 +658,7 @@ export class ChapterWritingPipeline {
 【CEN】${book.CEN}
 【必须覆盖】${book.mustCover.join(' / ')}
 【禁区】${book.forbiddenZones.join(' / ')}
-【风格指引】${book.styleGuidance?.reasoning?.join(' / ') || book.styleGuidance?.pacingStrategy || ''}
+【风格指引】${book.styleGuidance?.reasoning?.join(' / ') || ''}
 【结尾感觉】${book.hardConstraints?.chapterEndOpenQuestion || '留下悬念'}
 【开放问题】${book.hardConstraints?.chapterEndOpenQuestion || '留下悬念'}
 === 任务书结束 ===

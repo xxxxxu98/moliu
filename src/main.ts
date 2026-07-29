@@ -6,6 +6,10 @@ import Store from 'electron-store';
 import { testConnection } from './main/services/ai-client';
 import { generateOutlineStream } from './main/services/ai-providers';
 import { encryptApiKey, decryptApiKey, isEncrypted } from './main/crypto';
+import {
+  registerStoryRuntimeHandlers,
+  type StoryRuntimeHandlerRegistration,
+} from './main/ipc/story-runtime-handlers';
 
 // Remove default application menu for cleaner UI
 Menu.setApplicationMenu(null);
@@ -178,6 +182,8 @@ interface Foreshadow {
 if (started) {
   app.quit();
 }
+
+let storyRuntimeRegistration: StoryRuntimeHandlerRegistration | undefined;
 
 const createWindow = () => {
   // Create the browser window.
@@ -687,7 +693,15 @@ ipcMain.handle('memory:file:delete', async (_event, data: { projectId: string; f
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
-app.on('ready', createWindow);
+app.on('ready', () => {
+  storyRuntimeRegistration = registerStoryRuntimeHandlers(app.getPath('userData'));
+  createWindow();
+});
+
+app.on('before-quit', () => {
+  storyRuntimeRegistration?.dispose();
+  storyRuntimeRegistration = undefined;
+});
 
 // Quit when all windows are closed, except on macOS.
 app.on('window-all-closed', () => {

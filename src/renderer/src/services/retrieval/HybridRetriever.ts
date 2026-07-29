@@ -84,6 +84,8 @@ export class HybridRetriever {
 
   /** 切片缓存：chunkId → chunk */
   private readonly chunkStore: Map<string, SceneChunk> = new Map();
+  /** 章节 → 切片 ID，用于整章替换和删除。 */
+  private readonly chapterChunkIds: Map<number, Set<string>> = new Map();
 
   private vectorStore: IVectorStoreService | null = null;
   private embeddingService: IEmbeddingService | null = null;
@@ -109,10 +111,24 @@ export class HybridRetriever {
     content: string,
     knownEntities: string[] = [],
   ): Promise<SceneChunk[]> {
+    return this.upsertChapter(chapter, content, knownEntities);
+  }
+
+  /**
+   * 插入或替换一章正文。
+   * 重写章节时先精确删除旧切片，再写入新切片，保证三路索引口径一致。
+   */
+  async upsertChapter(
+    chapter: number,
+    content: string,
+    knownEntities: string[] = [],
+  ): Promise<SceneChunk[]> {
+    await this.removeChapter(chapter);
     if (!content || !content.trim()) return [];
 
     // 1. 切片
     const chunks = this.chunker.chunk(chapter, content, DEFAULT_OPTIONS.chunkOptions);
+    this.chapterChunkIds.set(chapter, new Set(chunks.map(chunk => chunk.id)));
 
     // 2. 存入 chunk store
     for (const chunk of chunks) {
@@ -154,6 +170,34 @@ export class HybridRetriever {
     }
 
     return chunks;
+  }
+
+  /** 精确删除一章在 BM25、实体图和向量库中的全部索引。 */
+  async removeChapter(chapter: number): Promise<number> {
+    const chunkIds = this.chapterChunkIds.get(chapter)
+      ?? new Set(
+        Array.from(this.chunkStore.values())
+          .filter(chunk => chunk.chapter === chapter)
+          .map(chunk => chunk.id),
+      );
+
+    for (const chunkId of chunkIds) {
+      this.chunkStore.delete(chunkId);
+      this.bm25.remove(chunkId);
+      this.entityGraph.removeChunk(chunkId);
+
+      if (this.vectorStore) {
+        try {
+          await this.vectorStore.deleteEntry(chunkId);
+        } catch (err) {
+          // 本地索引已移除；残留向量因 chunkStore 无对应项不会进入最终结果。
+          console.warn(`[HybridRetriever] 删除向量切片 ${chunkId} 失败:`, err);
+        }
+      }
+    }
+
+    this.chapterChunkIds.delete(chapter);
+    return chunkIds.size;
   }
 
   /** 注册别名表（从状态快照）。 */
@@ -208,8 +252,14 @@ export class HybridRetriever {
   /** 清空所有索引。 */
   clear(): void {
     this.chunkStore.clear();
+    this.chapterChunkIds.clear();
     this.bm25.clear();
     this.entityGraph.clear();
+    if (this.vectorStore) {
+      void this.vectorStore.clear().catch(err => {
+        console.warn('[HybridRetriever] 清空向量索引失败:', err);
+      });
+    }
   }
 
   /** 已索引切片数。 */

@@ -65,8 +65,10 @@ export interface GitBackupClient {
 // ============================================================
 
 export interface ChapterPersistenceClient {
-  /** 保存章节正文。返回旧内容（用于回滚）。 */
+  /** 追加章节正文。返回旧内容（仅用于增量写入）。 */
   save(chapterId: string, content: string): Promise<{ oldContent: string }>;
+  /** 精确替换章节正文；主提交与回滚必须优先使用。 */
+  replace?(chapterId: string, content: string): Promise<{ oldContent: string }>;
 }
 
 // ============================================================
@@ -160,13 +162,12 @@ export class CommitTransaction {
         const step2 = await this.runStep('rag_index', async () => {
           // 从快照提取已知实体名供实体图索引
           const knownEntities = this.extractKnownEntities();
-          const chunks = await this.retriever!.indexChapter(
+          const chunks = await this.retriever!.upsertChapter(
             options.chapter, options.prose, knownEntities,
           );
-          // 注册回滚：清掉这章的索引（简化实现，完整实现需要精确删除）
+          // 若后续关键步骤失败，至少移除本次新索引，避免失败正文进入检索结果。
           rollback.push(async () => {
-            // 注意：retriever.clear 是全清，生产环境应按章节清
-            // 这里记录但不执行破坏性回滚
+            await this.retriever!.removeChapter(options.chapter);
           });
           return { chunkCount: chunks.length };
         });
@@ -196,10 +197,13 @@ export class CommitTransaction {
       // Step 4: 章节持久化
       if (this.persistence && options.chapterId) {
         const step4 = await this.runStep('persistence', async () => {
-          const saveResult = await this.persistence!.save(options.chapterId!, options.prose);
+          if (!this.persistence!.replace) {
+            throw new Error('章节持久化适配器缺少 replace，拒绝执行非事务性主提交');
+          }
+          const saveResult = await this.persistence!.replace(options.chapterId!, options.prose);
           // 注册回滚：恢复旧内容
           rollback.push(async () => {
-            await this.persistence!.save(options.chapterId!, saveResult.oldContent);
+            await this.persistence!.replace!(options.chapterId!, saveResult.oldContent);
           });
           return saveResult;
         });
@@ -326,7 +330,7 @@ export class IndexSyncWriter {
     durationMs: number;
   }> {
     const start = Date.now();
-    const chunks = await this.retriever.indexChapter(chapter, content, knownEntities);
+    const chunks = await this.retriever.upsertChapter(chapter, content, knownEntities);
     return { chunkCount: chunks.length, durationMs: Date.now() - start };
   }
 

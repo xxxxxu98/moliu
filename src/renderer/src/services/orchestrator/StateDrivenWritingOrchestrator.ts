@@ -13,9 +13,8 @@
  * - 可观测：每步产出结构化日志，便于 debug
  */
 
-import { createStateStore, type StateSnapshotStore } from '../state/StateSnapshotStore';
+import type { StateSnapshotStore } from '../state/StateSnapshotStore';
 import { createChangesApplier } from '../state/ChangesApplier';
-import { extractChanges } from '../state/ChangesProtocol';
 import { initializeStateFromProject } from '../state/SnapshotBuilder';
 import type { ChangesPayload, StateSnapshot } from '../state/types';
 
@@ -24,7 +23,7 @@ import type { RetrievedFragment } from '../context/ContextAssembler';
 
 import { HybridRetriever } from '../retrieval/HybridRetriever';
 
-import { DrafterRetryLoop, ModelRouter, ChangesPromptInjector } from '../generation/DrafterRetryLoop';
+import { DrafterRetryLoop, ModelRouter } from '../generation/DrafterRetryLoop';
 import type { DrafterClient } from '../generation/DrafterRetryLoop';
 
 import { ConsistencyGatePipeline } from '../gates/ConsistencyGatePipeline';
@@ -131,6 +130,9 @@ export class StateDrivenWritingOrchestrator {
   // 子系统（延迟初始化）
   private stateStore: StateSnapshotStore | null = null;
   private retriever: HybridRetriever | null = null;
+  private initializedProjectId: string | null = null;
+  private initializingProjectId: string | null = null;
+  private initializationPromise: Promise<{ snapshot: StateSnapshot; warnings: string[] }> | null = null;
 
   // 检查点/会话
   private checkpointManager: CheckpointManager | null = null;
@@ -184,8 +186,38 @@ export class StateDrivenWritingOrchestrator {
     snapshot: StateSnapshot;
     warnings: string[];
   }> {
+    if (
+      this.initializedProjectId === project.id
+      && this.stateStore
+      && this.retriever
+    ) {
+      return { snapshot: this.stateStore.getSnapshot(), warnings: [] };
+    }
+
+    if (this.initializingProjectId === project.id && this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    this.initializingProjectId = project.id;
+    const initialization = this.initializeProject(project);
+    this.initializationPromise = initialization;
+
+    try {
+      return await initialization;
+    } finally {
+      if (this.initializationPromise === initialization) {
+        this.initializationPromise = null;
+        this.initializingProjectId = null;
+      }
+    }
+  }
+
+  private async initializeProject(project: Project): Promise<{
+    snapshot: StateSnapshot;
+    warnings: string[];
+  }> {
     const { store, stats, warnings } = initializeStateFromProject(project, {
-      backfillChapters: false,  // 默认不回填，按需开启
+      backfillChapters: false,
     });
     this.stateStore = store;
     this.retriever = new HybridRetriever();
@@ -193,7 +225,13 @@ export class StateDrivenWritingOrchestrator {
     this.checkpointManager = new CheckpointManager(project.id);
     this.sessionManager = new SessionStateManager(project.id);
 
-    this.emit({ type: 'state_loaded', message: `初始化完成：${stats.characters} 角色 / ${stats.foreshadows} 伏笔` });
+    await this.indexExistingChapters(project);
+    this.initializedProjectId = project.id;
+
+    this.emit({
+      type: 'state_loaded',
+      message: `初始化完成：${stats.characters} 角色 / ${stats.foreshadows} 伏笔`,
+    });
     return { snapshot: store.getSnapshot(), warnings };
   }
 
@@ -204,12 +242,16 @@ export class StateDrivenWritingOrchestrator {
     if (!this.retriever || !this.stateStore) return;
     const knownEntities = this.extractKnownEntities();
     const chapters = (project.chapters ?? [])
-      .filter(c => c.content && c.content.trim().length > 100)
+      .filter(c => c.content && c.content.trim().length > 0)
       .sort((a, b) => a.orderIndex - b.orderIndex);
 
     for (let i = 0; i < chapters.length; i++) {
       try {
-        await this.retriever.indexChapter(chapters[i].orderIndex + 1, chapters[i].content, knownEntities);
+        await this.retriever.upsertChapter(
+          chapters[i].orderIndex + 1,
+          chapters[i].content,
+          knownEntities,
+        );
       } catch (e) {
         console.warn(`[Orchestrator] 第 ${chapters[i].orderIndex + 1} 章索引失败:`, e);
       }
@@ -320,6 +362,23 @@ export class StateDrivenWritingOrchestrator {
       const prose = loopResult.bestAttempt.prose;
       const changes = loopResult.bestAttempt.changes ?? { version: '1.0', chapter: chapterNo, changes: [] };
       const gateResult = loopResult.bestAttempt.gateResult ?? null;
+
+      if (!loopResult.success || !gateResult?.passed) {
+        const reason = gateResult?.decision.reason
+          ?? (loopResult.stopReason === 'error' ? '起草或门禁执行异常' : '所有起草尝试均未通过严格门禁');
+        return {
+          success: false,
+          chapter: chapterNo,
+          prose,
+          changes,
+          gateResult,
+          commitResult: null,
+          snapshot: this.stateStore.getSnapshot(),
+          attempts: loopResult.attempts.length,
+          error: `严格门禁失败，未提交：${reason}`,
+          totalDurationMs: Date.now() - startTime,
+        };
+      }
 
       // ============ L6: 提交事务 ============
       const applier = createChangesApplier(this.stateStore);
@@ -454,6 +513,30 @@ export class StateDrivenWritingOrchestrator {
   /** 获取状态存储（用于手动操作）。 */
   getStateStore(): StateSnapshotStore | null {
     return this.stateStore;
+  }
+
+  /**
+   * 对自动补写后的完整正文执行轻量确定性校验。
+   * 补写没有独立 CHANGES，最低安全边界为 G1-G6 中可基于全文判定的一致性与蓝图规则。
+   */
+  async validateSupplement(
+    prose: string,
+    chapter: Chapter,
+    blueprint?: GateContext['blueprint'],
+  ): Promise<GatePipelineResult> {
+    if (!this.stateStore) {
+      throw new Error('编排器未初始化，无法校验补写内容');
+    }
+
+    const chapterNo = chapter.orderIndex + 1;
+    return this.gatePipeline.runDeterministicOnly({
+      chapter: chapterNo,
+      prose,
+      changes: { version: '1.0', chapter: chapterNo, changes: [] },
+      snapshot: this.stateStore.getSnapshot(),
+      blueprint,
+      title: chapter.title,
+    });
   }
 
   // ============================================================

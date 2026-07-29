@@ -11,7 +11,7 @@
  * 5. 崩溃恢复能找到正确续写点
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { StateDrivenWritingOrchestrator } from '../StateDrivenWritingOrchestrator';
 import { CHANGES_DELIMITER } from '../../state/types';
 import type { Project, Chapter, Character } from '@/types/project';
@@ -121,6 +121,24 @@ describe('StateDrivenWritingOrchestrator', () => {
     expect(warnings).toBeDefined();
   });
 
+  it('initialize 同项目幂等并只索引一次已有正文', async () => {
+    const project = makeProject();
+    project.chapters = [{
+      ...makeChapter(0),
+      content: '林动在青云宗修炼已有正文。',
+      wordCount: 13,
+    }];
+
+    await orchestrator.initialize(project);
+    const firstRetriever = orchestrator.getRetriever();
+    const firstSize = firstRetriever?.size();
+    await orchestrator.initialize(project);
+
+    expect(orchestrator.getRetriever()).toBe(firstRetriever);
+    expect(orchestrator.getRetriever()?.size()).toBe(firstSize);
+    expect(firstSize).toBeGreaterThan(0);
+  });
+
   it('writeChapter 走完完整闭环', async () => {
     const project = makeProject();
     const chapter = makeChapter(0, '第1章 初次修炼');
@@ -193,11 +211,58 @@ describe('StateDrivenWritingOrchestrator', () => {
     expect(result2.snapshot?.chapter).toBe(2);
   });
 
-  it('门禁拦截矛盾状态', async () => {
+  it('连续 3 章每章重复 initialize 仍保留快照和检索器', async () => {
     const project = makeProject();
-    await orchestrator.initialize(project);
+    const levels = ['练气一层', '练气二层', '练气三层'];
+    let draftIndex = 0;
+    const drafter = {
+      async draft() {
+        const index = draftIndex++;
+        const prose = `林动继续修炼，明确突破到${levels[index]}。`;
+        return `${prose}\n\n${CHANGES_DELIMITER}\n${JSON.stringify({
+          version: '1.0',
+          chapter: index + 1,
+          changes: [{
+            type: 'character_state',
+            entity: { id: 'char_001', name: '林动', type: 'character' },
+            field: 'powerLevel',
+            old: index === 0 ? '' : levels[index - 1],
+            new: levels[index],
+            evidence: `突破到${levels[index]}`,
+          }],
+        })}`;
+      },
+    };
+    const continuousOrchestrator = new StateDrivenWritingOrchestrator(
+      drafter,
+      null,
+      null,
+      null,
+      { enableSemanticGate: false, enableGitBackup: false },
+    );
 
-    // 这个 drafter 声称 old=元婴（实际快照里是空），会触发 G3 critical
+    await continuousOrchestrator.initialize(project);
+    const retrieverIdentity = continuousOrchestrator.getRetriever();
+    for (let index = 0; index < 3; index++) {
+      await continuousOrchestrator.initialize(project);
+      expect(continuousOrchestrator.getRetriever()).toBe(retrieverIdentity);
+
+      const result = await continuousOrchestrator.writeChapter(
+        project,
+        makeChapter(index),
+        2000,
+      );
+      expect(result.success).toBe(true);
+    }
+
+    expect(continuousOrchestrator.getSnapshot()?.characters.char_001.powerLevel).toBe('练气三层');
+    expect(continuousOrchestrator.getStateStore()?.getVersions()).toEqual([1, 2, 3]);
+    expect(continuousOrchestrator.getRetriever()?.size()).toBeGreaterThanOrEqual(3);
+  });
+
+  it('门禁失败零污染且保留正文与门禁结果', async () => {
+    const project = makeProject();
+    const save = vi.fn().mockResolvedValue({ oldContent: '' });
     const badDrafter = makeMockDrafter('林动从元婴期突破到化神期。', {
       version: '1.0', chapter: 1,
       changes: [{
@@ -208,18 +273,29 @@ describe('StateDrivenWritingOrchestrator', () => {
         new: '化神期',
       }],
     });
-    (orchestrator as any).drafter = badDrafter;
+    const strictOrchestrator = new StateDrivenWritingOrchestrator(
+      badDrafter,
+      null,
+      { save },
+      null,
+      { enableSemanticGate: false, enableGitBackup: false, maxRetries: 2 },
+    );
+    await strictOrchestrator.initialize(project);
+    const beforeSnapshot = strictOrchestrator.getSnapshot();
 
-    const result = await orchestrator.writeChapter(project, makeChapter(0), 2000, {
+    const result = await strictOrchestrator.writeChapter(project, makeChapter(0), 2000, {
       currentChapterOutline: '林动突破',
     });
 
-    // G3 应该拦截（多次重试都失败，最终用 bestAttempt 但 commit 仍可能成功）
-    // 关键验证：门禁结果记录了冲突
-    expect(result.attempts).toBeGreaterThan(0);
-    // 即使最终提交，状态 old 校验失败的那条会被 lenient 跳过
-    // 关键是门禁过程被执行了
-    expect(result.gateResult).not.toBeNull();
+    expect(result.success).toBe(false);
+    expect(result.prose).toContain('元婴期');
+    expect(result.gateResult?.passed).toBe(false);
+    expect(result.commitResult).toBeNull();
+    expect(result.error).toContain('严格门禁失败');
+    expect(save).not.toHaveBeenCalled();
+    expect(strictOrchestrator.getRetriever()?.size()).toBe(0);
+    expect(strictOrchestrator.getStateStore()?.getVersions()).toEqual([]);
+    expect(strictOrchestrator.getSnapshot()).toEqual(beforeSnapshot);
   });
 
   it('崩溃恢复', async () => {

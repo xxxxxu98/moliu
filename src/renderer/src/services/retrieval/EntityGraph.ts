@@ -75,6 +75,7 @@ export class EntityGraph {
    * @param knownEntities 已知实体名列表（从快照/别名表）
    */
   indexChunk(chunkId: string, chapter: number, text: string, knownEntities: string[] = []): void {
+    this.removeChunk(chunkId);
     this.chunkTexts.set(chunkId, { chapter, text });
 
     // 统计每个已知实体在切片中的出现次数
@@ -87,6 +88,22 @@ export class EntityGraph {
         this.entityIndex.set(resolved, occurrences);
       }
     }
+  }
+
+  /** 删除一个切片及其所有实体倒排记录。 */
+  removeChunk(chunkId: string): boolean {
+    const existed = this.chunkTexts.delete(chunkId);
+
+    for (const [entity, occurrences] of this.entityIndex) {
+      const remaining = occurrences.filter(occurrence => occurrence.chunkId !== chunkId);
+      if (remaining.length > 0) {
+        this.entityIndex.set(entity, remaining);
+      } else {
+        this.entityIndex.delete(entity);
+      }
+    }
+
+    return existed;
   }
 
   /**

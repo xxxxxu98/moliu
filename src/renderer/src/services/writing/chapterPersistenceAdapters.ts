@@ -20,32 +20,34 @@ import { initializeMemoryManager, getMemoryManager } from './memory-manager';
 export function createChapterPersistenceClient(): ChapterPersistenceClient {
   const projectStore = useProjectStore();
 
+  async function persist(
+    chapterId: string,
+    content: string,
+    mode: 'append' | 'replace'
+  ): Promise<{ oldContent: string }> {
+    const chapters = projectStore.sortedChapters;
+    const ch = chapters.find(c => c.id === chapterId) ?? projectStore.currentChapter;
+    const oldContent = ch?.content ?? '';
+
+    const { title: extractedTitle, content: cleanedContent } =
+      DeAIService.extractAndValidateTitle(content);
+    const separator = oldContent && !oldContent.endsWith('\n') ? '\n\n' : '';
+    const newContent = mode === 'replace' ? cleanedContent : oldContent + separator + cleanedContent;
+    const updateData: Record<string, unknown> = {
+      content: newContent,
+      wordCount: countWords(newContent),
+      isGenerated: true,
+      generatedAt: new Date().toISOString(),
+      status: 'published',
+    };
+    if (extractedTitle) updateData.title = extractedTitle;
+    await projectStore.updateChapter(chapterId, updateData);
+    return { oldContent };
+  }
+
   return {
-    async save(chapterId, content) {
-      const chapters = projectStore.sortedChapters;
-      const ch = chapters.find(c => c.id === chapterId) ?? projectStore.currentChapter;
-      const oldContent = ch?.content ?? '';
-
-      const { title: extractedTitle, content: cleanedContent } =
-        DeAIService.extractAndValidateTitle(content);
-
-      const separator = oldContent && !oldContent.endsWith('\n') ? '\n\n' : '';
-      const newContent = oldContent + separator + cleanedContent;
-
-      const updateData: Record<string, unknown> = {
-        content: newContent,
-        wordCount: countWords(newContent),
-        isGenerated: true,
-        generatedAt: new Date().toISOString(),
-        status: 'published',
-      };
-      if (extractedTitle) {
-        updateData.title = extractedTitle;
-      }
-
-      await projectStore.updateChapter(chapterId, updateData);
-      return { oldContent };
-    },
+    save: (chapterId, content) => persist(chapterId, content, 'append'),
+    replace: (chapterId, content) => persist(chapterId, content, 'replace'),
   };
 }
 

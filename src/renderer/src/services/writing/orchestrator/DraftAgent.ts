@@ -131,7 +131,7 @@ export class DraftAgent {
     
     let prompt = `# 小说续写任务
 
-你是专业网文作家，擅长写吸引人的网络小说。你的任务是续写第${opening.chapterNumber}章。`;
+你是专业网文作家，擅长写吸引人的网络小说。你的任务是续写第${opening.chapterNumber}章。
 
 ## 核心原则
 ${WRITING_PRINCIPLES}

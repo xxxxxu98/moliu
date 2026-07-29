@@ -144,6 +144,8 @@ describe('DrafterRetryLoop', () => {
     expect(result.success).toBe(false);
     expect(result.stopReason).toBe('max_attempts');
     expect(result.bestAttempt).not.toBeNull();
+    expect(result.bestAttempt?.prose).toBe('正文2');
+    expect(result.bestAttempt?.gateResult?.passed).toBe(false);
     // 第二次（blockingCount=1）分数应高于第一次（blockingCount=2）
     expect(result.bestAttempt?.attempt).toBe(2);
   });

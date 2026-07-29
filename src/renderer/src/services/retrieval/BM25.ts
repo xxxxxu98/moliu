@@ -32,6 +32,8 @@ export class BM25Index {
 
   /** 添加文档。 */
   add(doc: BM25Document): void {
+    // 相同 ID 代表同一切片的重建，先移除旧统计，避免重写后词频重复累加。
+    this.remove(doc.id);
     this.documents.push(doc);
     const tokens = doc.tokens ?? this.tokenize(doc.text);
     this.docTokens.set(doc.id, tokens);
@@ -50,6 +52,28 @@ export class BM25Index {
   /** 批量添加。 */
   addAll(docs: BM25Document[]): void {
     for (const d of docs) this.add(d);
+  }
+
+  /** 按 ID 删除文档及其统计。 */
+  remove(id: string): boolean {
+    const index = this.documents.findIndex(doc => doc.id === id);
+    if (index < 0) return false;
+
+    const tokens = this.docTokens.get(id) ?? [];
+    for (const token of new Set(tokens)) {
+      const nextFrequency = (this.docFreq.get(token) ?? 0) - 1;
+      if (nextFrequency > 0) {
+        this.docFreq.set(token, nextFrequency);
+      } else {
+        this.docFreq.delete(token);
+      }
+    }
+
+    this.documents.splice(index, 1);
+    this.docTokens.delete(id);
+    this.docLengths.delete(id);
+    this.recomputeAvgLength();
+    return true;
   }
 
   /** 搜索。 */

@@ -15,10 +15,12 @@ import type { Project, Chapter } from '@/types/project';
 // ====== Mock orchestrator（管道的核心委托对象） ======
 const mockInitialize = vi.fn().mockResolvedValue({ snapshot: {}, warnings: [] });
 const mockWriteChapter = vi.fn();
+const mockValidateSupplement = vi.fn();
 
 function MockStateDrivenOrchestrator(this: any) {
   this.initialize = mockInitialize;
   this.writeChapter = mockWriteChapter;
+  this.validateSupplement = mockValidateSupplement;
   this.addListener = vi.fn();
   this.removeListener = vi.fn();
 }
@@ -66,9 +68,10 @@ vi.mock('@/services/writing/backup/GitBackupManager', () => ({
   GitBackupManager: vi.fn().mockImplementation(() => ({ backup: vi.fn() })),
 }));
 
+const mockPersistenceSave = vi.fn().mockResolvedValue({ oldContent: '' });
 vi.mock('../chapterPersistenceAdapters', () => ({
   createChapterPersistenceClient: () => ({
-    save: vi.fn().mockResolvedValue({ oldContent: '' }),
+    save: mockPersistenceSave,
   }),
   createChapterMemoryClient: () => ({
     extractAndSave: vi.fn().mockResolvedValue(null),
@@ -94,6 +97,7 @@ function makeProject(): Project {
     description: '',
     genre: [],
     wordCount: 0,
+    status: 'writing',
     volumes: [],
     chapters: [],
     characters: [],
@@ -149,6 +153,22 @@ describe('ChapterWritingPipeline', () => {
       attempts: 1,
       totalDurationMs: 100,
     });
+    mockValidateSupplement.mockResolvedValue({
+      passed: true,
+      hasBlocking: false,
+      blockingCount: 0,
+      highCount: 0,
+      totalIssues: 0,
+      gates: [],
+      allIssues: [],
+      decision: {
+        shouldBlock: false,
+        reason: '通过',
+        canAutoFix: false,
+        nextAction: 'accept',
+      },
+      totalDurationMs: 1,
+    });
     pipeline = new ChapterWritingPipeline();
   });
 
@@ -190,8 +210,8 @@ describe('ChapterWritingPipeline', () => {
     });
   });
 
-  describe('forceAccepted（兜底放行）', () => {
-    it('门禁未过但 success=true 时 forceAccepted 应为 true', async () => {
+  describe('严格门禁', () => {
+    it('即使上游错误标记 success=true，门禁未过仍返回失败', async () => {
       mockWriteChapter.mockResolvedValueOnce({
         success: true,
         chapter: 1,
@@ -216,9 +236,10 @@ describe('ChapterWritingPipeline', () => {
         writingStyle: 'concise',
       });
 
-      expect(result.success).toBe(true);
-      expect(result.forceAccepted).toBe(true); // 门禁未过但已提交
+      expect(result.success).toBe(false);
+      expect(result.forceAccepted).toBe(false);
       expect(result.gateResult?.passed).toBe(false);
+      expect(result.error).toContain('严格门禁');
     });
   });
 
@@ -326,6 +347,53 @@ describe('ChapterWritingPipeline', () => {
 
       expect(mockSupplement).not.toHaveBeenCalled();
       expect(result.supplementRounds).toBe(0);
+    });
+
+    it('补写校验失败时明确失败且不持久化增量', async () => {
+      const { runSupplementRounds } = await import('../supplement');
+      const mockSupplement = vi.mocked(runSupplementRounds);
+      mockValidateSupplement.mockResolvedValueOnce({
+        passed: false,
+        hasBlocking: true,
+        blockingCount: 1,
+        highCount: 0,
+        totalIssues: 1,
+        gates: [],
+        allIssues: [],
+        decision: {
+          shouldBlock: true,
+          reason: '补写违反蓝图',
+          canAutoFix: false,
+          nextAction: 'rewrite',
+        },
+        totalDurationMs: 1,
+      });
+      mockSupplement.mockImplementationOnce(async params => {
+        const delta = '包含禁区的补写';
+        const fullProse = `${params.prose}\n\n${delta}`;
+        const validationError = await params.validateRound?.(1, delta, fullProse);
+        if (validationError) {
+          return {
+            prose: params.prose,
+            rounds: 0,
+            error: `第 1 轮补写校验失败：${validationError}`,
+          };
+        }
+        await params.onRound?.(1, delta, fullProse);
+        return { prose: fullProse, rounds: 1 };
+      });
+
+      const result = await pipeline.execute({
+        project: makeProject(),
+        chapter: makeChapter(0),
+        targetWordCount: 2000,
+        writingStyle: 'concise',
+        enableSupplement: true,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('补写校验失败');
+      expect(mockPersistenceSave).not.toHaveBeenCalled();
     });
   });
 

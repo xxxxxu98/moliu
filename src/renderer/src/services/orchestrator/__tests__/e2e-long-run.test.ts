@@ -13,7 +13,12 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { StateDrivenWritingOrchestrator } from '../StateDrivenWritingOrchestrator';
-import type { DrafterClient, GitBackupClient, ChapterPersistenceClient, WriteChapterResult } from '../StateDrivenWritingOrchestrator';
+import type {
+  DrafterClient,
+  GitBackupClient,
+  ChapterPersistenceClient,
+  WriteChapterResult,
+} from '../index';
 import type { Project, Chapter, Character } from '@/types/project';
 import { CHANGES_DELIMITER } from '../../state/types';
 
@@ -37,6 +42,7 @@ function makeProject(numChapters = 0): Project {
     description: '',
     genre: [{ id: 'xianxia', name: '仙侠' }],
     wordCount: 0,
+    status: 'writing',
     volumes: [],
     chapters: [],
     characters: [character],
@@ -125,6 +131,11 @@ function makePersistenceRecorder() {
       stored.set(chapterId, next);
       return { oldContent: old };
     },
+    async replace(chapterId, content) {
+      const oldContent = stored.get(chapterId) ?? '';
+      stored.set(chapterId, content);
+      return { oldContent };
+    },
   };
   return { client, stored, getCount: () => stored.size, getAll: () => new Map(stored) };
 }
@@ -150,7 +161,7 @@ describe('E2E 端到端集成', () => {
     const { client: git, getCount: gitCount } = makeGitBackupRecorder();
     const { client: persist, stored } = makePersistenceRecorder();
 
-    const orch = new StateDrivenWritingOrchestrator(drafter, git, persist, {
+    const orch = new StateDrivenWritingOrchestrator(drafter, git, persist, null, {
       enableSemanticGate: false,
       enableGitBackup: true,
     });
@@ -281,6 +292,7 @@ describe('E2E 端到端集成', () => {
     const git: GitBackupClient = { async backup() { /* mock */ } };
     const persist: ChapterPersistenceClient = {
       async save() { return { oldContent: '' }; },
+      async replace() { return { oldContent: '' }; },
     };
 
     const orch = new StateDrivenWritingOrchestrator(drafter, git, persist);

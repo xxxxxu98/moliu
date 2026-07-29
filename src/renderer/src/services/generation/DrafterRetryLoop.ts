@@ -6,7 +6,7 @@
  *   2. 提取散文 + CHANGES
  *   3. （可选）调 L5 门禁审查
  *   4. 通过 → 返回；失败 → 构建反馈 prompt → 重试（最多 maxAttempts）
- *   5. 全失败 → 返回分数最高的尝试
+ *   5. 全失败 → 返回失败，并保留分数最高的尝试供诊断（不得提交）
  *
  * 这是"概率生成"和"确定性门禁"的衔接点。
  */
@@ -64,11 +64,11 @@ export interface DraftAttempt {
 }
 
 export interface RetryLoopResult {
-  /** 是否成功（门禁通过或达到次数上限取最佳） */
+  /** 是否成功（仅门禁通过时为 true） */
   success: boolean;
   /** 所有尝试记录 */
   attempts: DraftAttempt[];
-  /** 最终采用的尝试（分数最高或通过的那次） */
+  /** 通过的尝试，或失败时仅供诊断的最佳尝试 */
   bestAttempt: DraftAttempt | null;
   /** 总耗时 ms */
   totalDurationMs: number;

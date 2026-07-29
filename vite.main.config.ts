@@ -28,4 +28,10 @@ function copyResources() {
 // https://vitejs.dev/config
 export default defineConfig({
   plugins: [copyResources()],
+  build: {
+    rollupOptions: {
+      // 原生模块必须由 Electron Forge 按目标 ABI 打包，不能被 Vite 内联。
+      external: ['better-sqlite3'],
+    },
+  },
 });

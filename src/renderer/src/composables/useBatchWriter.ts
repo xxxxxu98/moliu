@@ -12,8 +12,7 @@
  *
  * 审查范式（v3.1 转变）：
  * - 老版本：strict→normal→relaxed 自适应降级重审
- * - 新版本：StateDriven G1-G7 门禁 + 兜底放行（重写取最佳，全失败用 bestAttempt 提交）
- * - 详见 executeChapterWriting 的 forceAccepted 处理
+ * - 新版本：StateDriven G1-G7 严格门禁；失败稿保留供诊断，但绝不提交
  *
  * 副作用（记忆提取/标题/元数据）已下沉到 persistence/memoryClient 适配器，
  * 单章与批量双受益。
@@ -659,7 +658,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
    *
    * 审查范式转变：
    * - 老版本：strict→normal→relaxed 自适应降级重审（同一份草稿换严格度）
-   * - 新版本：StateDriven G1-G7 门禁 + 兜底放行（重写取最佳，全失败则用 bestAttempt 提交）
+   * - 新版本：StateDriven G1-G7 严格门禁（重写取最佳供诊断，全失败则停止）
    *
    * 本函数只做：
    * 1. 调管道执行单章
@@ -752,26 +751,22 @@ export function useBatchWriter(): UseBatchWriterReturn {
         blockingIssues.value = [];
       }
 
-      if (!result.success) {
+      if (!result.success || result.forceAccepted || result.gateResult?.passed === false) {
         // 失败：记录恢复项，抛出让上层重试
+        const failureMessage = result.error
+          || (result.forceAccepted || result.gateResult?.passed === false
+            ? '严格门禁未通过，章节未提交'
+            : '写作失败');
         recoveryManager.registerFailure(
           chapter.id,
           chapterIndex + 1,
           'draft' as PipelineStep,
-          result.error || '写作失败'
+          failureMessage
         );
         throw new WritingError(
-          result.error || '写作失败',
+          failureMessage,
           ErrorCode.AI_GENERATION_FAILED
         );
-      }
-
-      // 兜底放行警告（门禁未过但已提交）
-      if (result.forceAccepted) {
-        console.warn(
-          `[批量写作] 第${chapterIndex + 1}章门禁未通过，已兜底放行（attempts=${result.attempts}）`
-        );
-        error.value = `第${chapterIndex + 1}章门禁未通过，已用最佳草稿兜底放行`;
       }
 
       // 进度统计

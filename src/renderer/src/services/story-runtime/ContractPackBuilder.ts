@@ -1,0 +1,152 @@
+import type {
+  ChapterContract,
+  ContractPack,
+  LegacyOutlineNode,
+  MasterContract,
+  ReviewContract,
+  SourceTrace,
+  StoryBootstrapData,
+  VolumeContract,
+} from '@/types/story-runtime';
+
+export interface ContractPackBuildInput {
+  bootstrap: StoryBootstrapData;
+  volume: {
+    number: number;
+    id?: string;
+    title: string;
+    objective: string;
+    conflict: string;
+    pacing?: string[];
+    requiredPayoffs?: string[];
+    forbidden?: string[];
+  };
+  chapter: {
+    number: number;
+    id?: string;
+    title: string;
+    goal?: string;
+    outlineNode?: LegacyOutlineNode;
+    timeAnchor?: string;
+  };
+  style?: string[];
+  forbidden?: string[];
+  review?: {
+    requiredEvidence?: boolean;
+    maxWarnings?: number;
+    mustCheck?: string[];
+  };
+}
+
+function trace(source: string, sourceId?: string, chapter?: number): SourceTrace[] {
+  return [{ source, sourceId, chapter }];
+}
+
+function unique(values: string[]): string[] {
+  return [...new Set(values.map(value => value.trim()).filter(Boolean))];
+}
+
+export class ContractPackBuilder {
+  build(input: ContractPackBuildInput): ContractPack {
+    const { bootstrap, volume, chapter } = input;
+    const node = chapter.outlineNode;
+    const immutableRules = bootstrap.rules
+      .filter(rule => rule.attributes.locked === true)
+      .map(rule => `${rule.name}：${String(rule.attributes.description ?? '')}`);
+    const characterTruths = Object.fromEntries(
+      bootstrap.entities
+        .filter(entity => entity.kind === 'character')
+        .map(entity => [
+          entity.id,
+          unique([
+            String(entity.attributes.role ?? ''),
+            String(entity.attributes.description ?? ''),
+          ]),
+        ])
+    );
+
+    const master: MasterContract = {
+      meta: {
+        schemaVersion: 'story-runtime/v1',
+        kind: 'master',
+        id: `${bootstrap.project.id}:master`,
+        projectId: bootstrap.project.id,
+        sourceTrace: trace('legacy-project', bootstrap.project.id),
+      },
+      premise: bootstrap.project.description,
+      genres: bootstrap.project.genres,
+      immutableRules,
+      characterTruths,
+      style: unique(input.style ?? []),
+      forbidden: unique(input.forbidden ?? []),
+    };
+
+    const volumeContract: VolumeContract = {
+      meta: {
+        schemaVersion: 'story-runtime/v1',
+        kind: 'volume',
+        id: volume.id ?? `${bootstrap.project.id}:volume:${volume.number}`,
+        projectId: bootstrap.project.id,
+        sourceTrace: trace('volume-plan', volume.id),
+      },
+      volumeNumber: volume.number,
+      title: volume.title,
+      objective: volume.objective,
+      conflict: volume.conflict,
+      pacing: unique(volume.pacing ?? []),
+      requiredPayoffs: unique(volume.requiredPayoffs ?? []),
+      forbidden: unique([...(input.forbidden ?? []), ...(volume.forbidden ?? [])]),
+    };
+
+    const chapterContract: ChapterContract = {
+      meta: {
+        schemaVersion: 'story-runtime/v1',
+        kind: 'chapter',
+        id: chapter.id ?? `${bootstrap.project.id}:chapter:${chapter.number}`,
+        projectId: bootstrap.project.id,
+        sourceTrace: trace('outline-node', node?.id, chapter.number),
+      },
+      chapterNumber: chapter.number,
+      title: chapter.title,
+      goal: chapter.goal ?? node?.description ?? node?.title ?? chapter.title,
+      CBN: node?.CBN ?? `承接第 ${Math.max(0, chapter.number - 1)} 章终态`,
+      CPNs: unique(node?.CPNs ?? node?.keyEvents ?? []),
+      CEN: node?.CEN ?? `完成“${chapter.goal ?? node?.title ?? chapter.title}”`,
+      mustCover: unique(node?.mustCover ?? node?.keyEvents ?? []),
+      forbidden: unique([
+        ...master.forbidden,
+        ...volumeContract.forbidden,
+        ...(node?.forbiddenZones ?? []),
+      ]),
+      timeAnchor: chapter.timeAnchor,
+    };
+
+    const reviewContract: ReviewContract = {
+      meta: {
+        schemaVersion: 'story-runtime/v1',
+        kind: 'review',
+        id: `${chapterContract.meta.id}:review`,
+        projectId: bootstrap.project.id,
+        sourceTrace: trace('chapter-contract', chapterContract.meta.id, chapter.number),
+      },
+      blockingDomains: [
+        'entity',
+        'knowledge',
+        'inventory',
+        'timeline',
+        'causality',
+        'fulfillment',
+        'evidence',
+      ],
+      requiredEvidence: input.review?.requiredEvidence ?? true,
+      maxWarnings: input.review?.maxWarnings ?? 3,
+      mustCheck: unique([
+        ...chapterContract.mustCover,
+        ...immutableRules,
+        ...(input.review?.mustCheck ?? []),
+      ]),
+    };
+
+    return { master, volume: volumeContract, chapter: chapterContract, review: reviewContract };
+  }
+}

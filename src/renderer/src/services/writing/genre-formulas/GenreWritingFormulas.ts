@@ -799,7 +799,7 @@ export function getGenreWritingPrompt(
   // 节奏指导
   parts.push('### 节奏指导');
   parts.push(`张力释放：${formula.pacingGuidance.tensionRelease}`);
-  parts.push(`悬念频率：${formula.pacingGuidance.cliffhangerFrequency === 1 ? '每章' : `每${formula.pacingGuidance.cliffhangerFrequency}章'}`);
+  parts.push(`悬念频率：${formula.pacingGuidance.cliffhangerFrequency === 1 ? '每章' : `每${formula.pacingGuidance.cliffhangerFrequency}章`}`);
   parts.push(`动作/对话比例：${formula.pacingGuidance.actionDialogueBalance}\n`);
 
   // 前章衔接
