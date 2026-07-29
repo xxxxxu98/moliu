@@ -68,22 +68,6 @@ function isAbortError(error: unknown): boolean {
 }
 
 /**
- * 根据模型名估算单次响应 max_tokens 上限。
- * 之前写死 32000，对 Claude 3.5 Sonnet（8192）/ 3 Haiku（4096）等会直接 400；
- * 这里按模型族收敛到一个安全值，避免平台间行为不一致导致 expand-direction 截断或报错。
- */
-function resolveMaxTokens(model?: string): number {
-  const m = (model || '').toLowerCase();
-  // Claude 4 系 / 3.7 Sonnet 支持更高输出，但保守取 16000 已足够 expand-direction 且更稳。
-  if (m.includes('claude-4') || m.includes('sonnet-4') || m.includes('opus-4') || m.includes('claude-3-7') || m.includes('claude-3.7')) return 16000;
-  // Claude 3.5 Sonnet 单次输出上限 8192。
-  if (m.includes('claude-3-5') || m.includes('claude-3.5') || m.includes('sonnet')) return 8192;
-  // Claude 3 Opus / Haiku 及未知 Claude 模型保守取 4096。
-  if (m.includes('claude')) return 4096;
-  return 8000;
-}
-
-/**
  * 生成选项
  */
 export interface GenerateOptions {
@@ -556,9 +540,6 @@ export class UnifiedOutlineGenerator {
           messages: [{ role: 'user', content: userContent }],
           temperature: options.temperature || 0.7,
           top_p: options.topP || 0.9,
-          // expand-direction 模板输出量大，按模型族取单次响应上限，避免写死 32000
-          // 对 Claude 3.5 Sonnet(8192)/3 Haiku(4096) 等 400；同时不低于该模型真实上限。
-          max_tokens: resolveMaxTokens(model),
         }),
         ...(signal ? { signal } : {}),
       });
@@ -596,7 +577,6 @@ export class UnifiedOutlineGenerator {
         messages,
         temperature: options.temperature || 0.7,
         top_p: options.topP || 0.9,
-        max_tokens: resolveMaxTokens(config.model),
       }),
       ...(signal ? { signal } : {}),
     });

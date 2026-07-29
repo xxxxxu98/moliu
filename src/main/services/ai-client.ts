@@ -187,7 +187,6 @@ async function testConnectionWithFetch(
       body: JSON.stringify({
         model: model,
         messages: [{ role: 'user', content: 'Hi' }],
-        max_tokens: 5,
       }),
       signal: controller.signal,
     });
@@ -295,7 +294,7 @@ export async function testConnection(
 
     await client.chat(
       [{ role: 'user', content: 'Hi' }],
-      { model: targetModel, maxTokens: 5 }
+      { model: targetModel }
     );
 
     return {
@@ -356,7 +355,6 @@ export async function chatWithStream(
   const stream = client.stream(allMessages, {
     model: options.model,
     temperature: options.temperature,
-    maxTokens: options.maxTokens,
     topP: options.topP,
   });
 
@@ -404,7 +402,6 @@ export async function chat(
   return await client.chat(allMessages, {
     model: options.model,
     temperature: options.temperature,
-    maxTokens: options.maxTokens,
     topP: options.topP,
   });
 }
@@ -429,7 +426,6 @@ export async function chatJSON<T>(
     {
       model: options.model,
       temperature: options.temperature,
-      maxTokens: options.maxTokens,
       topP: options.topP,
     }
   );

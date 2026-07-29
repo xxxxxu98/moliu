@@ -29,7 +29,6 @@ export interface ElectronAPI {
       apiKey: string;
       baseUrl?: string;
       model?: string;
-      maxTokens?: number;
       temperature?: number;
       topP?: number;
     };

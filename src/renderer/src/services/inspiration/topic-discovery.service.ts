@@ -587,7 +587,7 @@ async function defaultChat(
     providerConfig.apiKey,
     providerConfig.baseUrl || getBaseUrl(providerConfig.provider as ProviderType),
     providerConfig.modelName,
-    2500,
+    undefined,
     {
       temperature,
       topP: 0.95,
@@ -599,7 +599,6 @@ async function defaultChat(
   return service.complete(user, {
     system,
     temperature,
-    maxTokens: 2500,
     signal,
   });
 }

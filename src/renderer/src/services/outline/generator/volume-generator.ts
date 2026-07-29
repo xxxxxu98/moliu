@@ -128,7 +128,6 @@ export class VolumeOutlineGenerator {
           system: beatPrompt.system,
           user: beatPrompt.user,
           temperature: 0.7,
-          maxTokens: 8192,
         });
         
         onProgress?.('parsing_beats', 0.3, '解析节拍表...');
@@ -158,7 +157,6 @@ export class VolumeOutlineGenerator {
           system: timelinePrompt.system,
           user: timelinePrompt.user,
           temperature: 0.5,
-          maxTokens: 4096,
         });
         
         onProgress?.('parsing_timeline', 0.6, '解析时间线...');

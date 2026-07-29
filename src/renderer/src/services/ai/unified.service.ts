@@ -151,7 +151,6 @@ export class UnifiedAIService {
   private client: AIClient | null = null;
   private provider: ProviderType;
   private model: string;
-  private maxTokens: number | undefined;
   private generationConfig: {
     temperature: number;
     topP: number;
@@ -166,7 +165,7 @@ export class UnifiedAIService {
     apiKey: string,
     baseUrl?: string,
     model?: string,
-    maxTokens?: number,
+    _maxTokens?: number,
     generationConfig?: {
       temperature: number;
       topP: number;
@@ -176,7 +175,6 @@ export class UnifiedAIService {
   ) {
     this.provider = provider;
     this.model = model || "";
-    this.maxTokens = maxTokens;
     this.generationConfig = generationConfig || {
       temperature: 0.5,
       topP: 0.9,
@@ -202,23 +200,17 @@ export class UnifiedAIService {
     }
     this._baseUrl = resolvedBaseUrl;
 
-    // Create client with explicit provider
+    // Create client with explicit provider — 禁止向 SDK/请求写入 maxTokens
     const config: {
       provider: ProviderName;
       apiKey?: string;
       baseUrl?: string;
       model?: string;
-      maxTokens?: number;
       contextWindowSafe?: boolean;
     } = {
       provider: sdkProvider,
       contextWindowSafe: true,
     };
-
-    // Only set maxTokens if explicitly provided
-    if (this.maxTokens !== undefined) {
-      config.maxTokens = this.maxTokens;
-    }
 
     // Set API key (not needed for ollama)
     if (sdkProvider !== "ollama" && apiKey) {
@@ -245,7 +237,7 @@ export class UnifiedAIService {
     apiKey: string,
     baseUrl?: string,
     model?: string,
-    maxTokens?: number,
+    _maxTokens?: number,
     generationConfig?: {
       temperature: number;
       topP: number;
@@ -254,7 +246,6 @@ export class UnifiedAIService {
     },
   ) {
     this.model = model || this.model;
-    this.maxTokens = maxTokens;
     if (generationConfig) {
       this.generationConfig = generationConfig;
     }
@@ -289,8 +280,8 @@ export class UnifiedAIService {
           signal.addEventListener("abort", abortHandler, { once: true });
         }
 
-        // Execute the chat call
-        this.client!.chat([{ role: "user", content: "Hi" }], { maxTokens: 5 })
+        // Execute the chat call — 禁止传 maxTokens
+        this.client!.chat([{ role: "user", content: "Hi" }], {})
           .then(() => {
             // Clean up abort listener
             if (signal) {
@@ -326,7 +317,6 @@ export class UnifiedAIService {
     prompt: string,
     options?: {
       temperature?: number;
-      maxTokens?: number;
       system?: string;
       signal?: AbortSignal;
     },
@@ -352,7 +342,6 @@ export class UnifiedAIService {
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
       presencePenalty: this.generationConfig.presencePenalty,
-      ...(options?.maxTokens !== undefined ? { maxTokens: options.maxTokens } : {}),
     };
 
     // multi-ai-sdk 的 chat() 不透传 AbortSignal；stream().cancel() 才会 abort fetch
@@ -900,7 +889,6 @@ export class UnifiedAIService {
     onComplete: (result: any) => void,
     onError: (error: string) => void,
     config?: {
-      maxTokens?: number;
       temperature?: number;
       topP?: number;
     },
@@ -911,7 +899,6 @@ export class UnifiedAIService {
       return;
     }
 
-    const maxTokens = config?.maxTokens;
     const temperature = config?.temperature ?? 0.5;
     const topP = config?.topP ?? 0.9;
 
@@ -927,7 +914,7 @@ export class UnifiedAIService {
 
     this.generateOutlineStreamInternal(
       messages,
-      { maxTokens: maxTokens ? maxTokens : undefined, temperature, topP },
+      { temperature, topP },
       onChunk,
       onDone,
       onComplete,
@@ -945,7 +932,6 @@ export class UnifiedAIService {
   async generateOutline(
     prompt: string,
     config?: {
-      maxTokens?: number;
       temperature?: number;
       topP?: number;
     },
@@ -955,7 +941,6 @@ export class UnifiedAIService {
       throw new Error("Client not initialized");
     }
 
-    const maxTokens = config?.maxTokens;
     const temperature = config?.temperature ?? 0.5;
     const topP = config?.topP ?? 0.9;
 
@@ -971,7 +956,6 @@ export class UnifiedAIService {
 
     try {
       const response = await this.client.chat(messages, {
-        maxTokens,
         temperature,
         topP,
       } as any);
@@ -1081,7 +1065,6 @@ export class UnifiedAIService {
   private async generateOutlineStreamInternal(
     messages: Message[],
     options: {
-      maxTokens: number | undefined;
       temperature: number;
       topP: number;
     },
@@ -1099,7 +1082,6 @@ export class UnifiedAIService {
 
     try {
       const stream = this.client.stream(messages, {
-        maxTokens: options.maxTokens,
         temperature: options.temperature,
         topP: options.topP,
       });

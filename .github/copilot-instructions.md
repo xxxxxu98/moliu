@@ -19,6 +19,7 @@
 - 禁止在渲染进程直接调用 Node.js API → 经 preload `contextBridge` 暴露
 - 禁止 `v-html` 渲染用户输入
 - 禁止硬编码 API 密钥 → 用 `src/main/crypto.ts` 加密存储
+- 禁止向 AI 请求添加 `max_tokens` / `maxTokens` → 永远不要限制输出 token 上限
 
 ## 🎯 技术栈
 

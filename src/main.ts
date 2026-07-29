@@ -346,7 +346,6 @@ ipcMain.handle('ai:generate-outline', async (event, { prompt, provider, config }
     apiKey: string;
     baseUrl?: string;
     model?: string;
-    maxTokens?: number;
     temperature?: number;
     topP?: number;
   };

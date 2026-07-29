@@ -33,7 +33,6 @@ export interface AIConfig {
 export const DEFAULT_AI_CONFIG = {
   temperature: 0.7,
   topP: 0.9,
-  maxTokens: 8192,
   contextWindowSafe: true,
 } as const;
 

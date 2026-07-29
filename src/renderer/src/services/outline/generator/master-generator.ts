@@ -99,7 +99,6 @@ export class MasterOutlineGenerator {
         system,
         user,
         temperature: 0.7,
-        maxTokens: 4000,
       });
       
       // Phase 3: 解析

@@ -23,6 +23,9 @@
 - [7. 状态管理规范](#7-状态管理规范)
 - [8. IPC 通信规范](#8-ipc-通信规范)
 - [9. 服务层规范](#9-服务层规范)
+  - [9.1 服务结构](#91-服务结构)
+  - [9.2 错误处理](#92-错误处理)
+  - [9.3 AI 请求：禁止 max_tokens / maxTokens](#93-ai-请求禁止-max_tokens--maxtokens)
 - [10. 测试规范](#10-测试规范)
 - [11. 文档要求](#11-文档要求)
 - [12. 样式规范](#12-样式规范)
@@ -875,6 +878,25 @@ export async function fetchChapter(id: string): Promise<Chapter> {
   }
 }
 ```
+
+### 9.3 AI 请求：禁止 `max_tokens` / `maxTokens`
+
+**红线**：向任何 AI Provider 发请求时，**永远不要**在请求体、SDK options 或 client 配置中添加 `max_tokens` / `maxTokens`。
+
+```typescript
+// ❌ 错误 — 限制输出长度，易导致大纲/长文被截断
+await client.chat(messages, { maxTokens: 8000 })
+body: JSON.stringify({ model, messages, max_tokens: 4096 })
+
+// ✅ 正确 — 不传输出上限，交由模型/平台默认行为
+await client.chat(messages, { temperature: 0.7, topP: 0.9 })
+body: JSON.stringify({ model, messages, temperature: 0.7, top_p: 0.9 })
+```
+
+说明：
+- 上下文预算、本地截断（如 `ContextPackBuilder.maxTokens`、`truncateToTokens`）属于**输入侧**控制，与本规则无关，可以保留。
+- 设置页若仍有「最大 Token」字段，也不得再写入实际 API 请求。
+- 目标字数请通过提示词约束，不要用 `max_tokens` 代替。
 
 ---
 

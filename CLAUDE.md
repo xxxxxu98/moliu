@@ -26,6 +26,7 @@
 - ❌ **禁止在渲染进程直接调用 Node.js API**：必须经 preload `contextBridge` 暴露
 - ❌ **禁止 `v-html` 渲染用户输入**（XSS 风险）
 - ❌ **禁止硬编码 API 密钥**：必须用 `src/main/crypto.ts` 加密存储
+- ❌ **禁止向 AI 请求添加 `max_tokens` / `maxTokens`**：永远不要在请求体或 SDK options 中限制输出上限
 - ❌ **禁止提交** `node_modules/` `.vite/` `out/` `dist/` `.env` 及敏感信息
 
 ---

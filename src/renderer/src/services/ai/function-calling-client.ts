@@ -26,7 +26,6 @@ export interface FunctionCallingConfig {
   apiKey: string;
   baseUrl?: string;
   model?: string;
-  maxTokens?: number;
   temperature?: number;
 }
 
@@ -50,14 +49,14 @@ export class FunctionCallingClient {
   constructor(config: FunctionCallingConfig) {
     this.config = config;
     
-    // 创建 fallback 服务用于 JSON 模式（不传递 maxTokens，使用默认值）
+    // 创建 fallback 服务用于 JSON 模式
     if (config.apiKey) {
       this.fallbackService = new UnifiedAIService(
         config.provider,
         config.apiKey,
         config.baseUrl,
         config.model,
-        undefined, // 不设置 maxTokens
+        undefined,
         { temperature: config.temperature ?? 0.5, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0 }
       );
     }

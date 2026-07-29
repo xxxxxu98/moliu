@@ -25,13 +25,11 @@ import type { Character, WorldSchema, PlotNode } from '@/types/project';
 interface AIWritingClient {
   generateContent(prompt: string, options?: {
     temperature?: number;
-    maxTokens?: number;
     onChunk?: (chunk: string) => void;
   }): Promise<string>;
   
   generateContentStream(prompt: string, options?: {
     temperature?: number;
-    maxTokens?: number;
     onChunk: (chunk: string) => void;
     onComplete: () => void;
     onError: (error: string) => void;
@@ -288,7 +286,6 @@ export function useWritingOrchestrator(): WritingOrchestratorReturn {
 
             aiClient!.generateContentStream!(prompt, {
               temperature: currentConfig!.temperature,
-              maxTokens: currentConfig!.maxTokensPerChapter,
               onChunk: (chunk) => {
                 generatedContent += chunk;
                 task.generatedContent = generatedContent;
@@ -319,7 +316,6 @@ export function useWritingOrchestrator(): WritingOrchestratorReturn {
           // 非流式生成
           generatedContent = await aiClient!.generateContent(prompt, {
             temperature: currentConfig!.temperature,
-            maxTokens: currentConfig!.maxTokensPerChapter,
           });
 
           task.generatedContent = generatedContent;
@@ -479,7 +475,6 @@ export function useWritingOrchestrator(): WritingOrchestratorReturn {
       await new Promise<void>((resolve, reject) => {
         client.generateContentStream(prompt, {
           temperature: config.temperature,
-          maxTokens: config.maxTokensPerChapter,
           onChunk: (chunk) => {
             content += chunk;
             onProgress?.(Math.min(
@@ -497,7 +492,6 @@ export function useWritingOrchestrator(): WritingOrchestratorReturn {
     } else {
       content = await client.generateContent(prompt, {
         temperature: config.temperature,
-        maxTokens: config.maxTokensPerChapter,
       });
       onProgress?.(100);
     }
@@ -602,7 +596,6 @@ export function useSingleChapterWriter() {
         await new Promise<void>((resolve, reject) => {
           client.generateContentStream(prompt, {
             temperature: 0.5,
-            maxTokens: Math.ceil(targetWordCount * 1.5),
             onChunk: (chunk) => {
               content += chunk;
               content = chunk;
@@ -625,7 +618,6 @@ export function useSingleChapterWriter() {
       } else {
         content = await client.generateContent(prompt, {
           temperature: 0.5,
-          maxTokens: Math.ceil(targetWordCount * 1.5),
         });
         progress.value = 100;
         onProgress?.(100);

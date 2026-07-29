@@ -149,7 +149,6 @@ export type NodeRole = 'start' | 'progress' | 'end';
 export interface GenerationOptions {
   temperature?: number;
   topP?: number;
-  maxTokens?: number;
   wordCountRange?: string;
   maxRetries?: number;
   genre?: string;

@@ -455,7 +455,6 @@ export class ChapterWritingPipeline {
           const service = requireAIService();
           const raw = await service.complete(request.prompt, {
             system: `${request.system}\n只输出符合 ${request.schemaName} 的 JSON，不要 Markdown。`,
-            maxTokens: request.purpose === 'scene-draft' ? 4000 : 2500,
             temperature: request.purpose === 'scene-draft' ? 0.65 : 0.2,
           });
           const parsed = ChapterWritingPipeline.parseStructuredJson(raw);

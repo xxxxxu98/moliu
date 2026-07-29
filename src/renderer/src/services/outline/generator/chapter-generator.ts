@@ -118,7 +118,6 @@ export class ChapterOutlineGenerator {
           system,
           user,
           temperature: 0.7,
-          maxTokens: 4096,
         });
         
         // 4. 解析结果

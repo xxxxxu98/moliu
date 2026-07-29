@@ -570,12 +570,12 @@ async function enhanceWithAI(
       // 情感分析
       aiService.complete(
         `这是一段小说章节的片段：\n${chapter.content.slice(0, 500)}...\n\n请用1-2个词描述这段文字的情感基调（如：紧张、温馨、压抑、悬疑）。只回答词语，不要其他内容。`,
-        { temperature: 0.3, maxTokens: 50 }
+        { temperature: 0.3 }
       ),
       // 主题分析
       aiService.complete(
         `这是一段小说章节的片段：\n${chapter.content.slice(0, 800)}...\n\n用一句话概括本章发生的主要事件（不超过50字）。只回答这句话，不要其他内容。`,
-        { temperature: 0.3, maxTokens: 100 }
+        { temperature: 0.3 }
       ),
     ]);
 
