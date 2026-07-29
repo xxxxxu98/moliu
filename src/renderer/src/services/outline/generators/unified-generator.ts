@@ -17,6 +17,7 @@ import { buildDirectionPrompt } from '../prompts/system/direction-prompt';
 import { buildExpandDirectionPrompt } from '../prompts/system/expand-direction-prompt';
 import { parseDirections } from '../parser/direction-parser';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
+import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 
 function matchesDefaultModelSelection(
   provider: {
@@ -211,7 +212,7 @@ export class UnifiedOutlineGenerator {
     options: GenerateOptions,
   ): Promise<string> {
     const systemPrompt = this.buildMarkdownSystemPrompt(
-      options.wordCountRange || '50万-100万字',
+      options.wordCountRange || DEFAULT_WORD_COUNT_RANGE,
       options.count ?? 3,
     );
     const messages = [
@@ -283,7 +284,7 @@ export class UnifiedOutlineGenerator {
         const opts = { ...this.defaultOptions, ...options, ...(temperature !== undefined ? { temperature } : {}) };
         const builtPrompt = buildDirectionPrompt({
           seed: prompt,
-          wordCountRange: opts.wordCountRange || '50万-100万字',
+          wordCountRange: opts.wordCountRange || DEFAULT_WORD_COUNT_RANGE,
         });
 
         onProgress?.(attempt === 1 ? '正在生成创作方向...' : `重新生成创作方向... (${attempt})`);
@@ -317,7 +318,7 @@ export class UnifiedOutlineGenerator {
         const builtPrompt = buildExpandDirectionPrompt({
           seed: prompt,
           direction,
-          wordCountRange: opts.wordCountRange || '50万-100万字',
+          wordCountRange: opts.wordCountRange || DEFAULT_WORD_COUNT_RANGE,
           enhancementBrief: opts.enhancementBrief,
         });
 

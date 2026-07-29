@@ -97,7 +97,7 @@
     "diceRoll": "Roll dice",
     "diceRolling": "Fate spinning…",
     "diceNeedRoll": "Roll the dice first",
-    "diceHint": "Happy with the roll? Generate seeds from it above",
+    "diceHint": "Roll below to preview, or tap “Open from dice” above — it will roll automatically if needed",
     "promptPlaceholder": "Describe your story idea in a sentence or two…",
     "promptTooShort": "Please write a bit more (at least 8 characters)",
     "generateDirections": "Generate directions",

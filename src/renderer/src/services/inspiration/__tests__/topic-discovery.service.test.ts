@@ -2,7 +2,7 @@
  * @vitest-environment happy-dom
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   parseStorySeeds,
   parseGenreInsights,
@@ -22,14 +22,36 @@ import {
 } from '@/services/inspiration/prompts/topic-discovery-prompts';
 import type { GenreInsightCard, StorySeedCard } from '@/types/topic-discovery';
 
+const settingsState: {
+  aiProviders: Array<{
+    id: string;
+    provider: string;
+    modelName: string;
+    enabled: boolean;
+    apiKey: string;
+    baseUrl?: string;
+  }>;
+  defaultModel: { providerId: string; modelName: string } | null;
+} = {
+  aiProviders: [],
+  defaultModel: null,
+};
+
 vi.mock('@/stores/settings.store', () => ({
-  useSettingsStore: () => ({
-    aiProviders: [],
-    defaultModel: null,
-  }),
+  useSettingsStore: () => settingsState,
+}));
+
+vi.mock('@/services/ai/factory', () => ({
+  AIServiceFactory: {
+    createService: vi.fn(),
+  },
 }));
 
 describe('topic-discovery.service', () => {
+  beforeEach(() => {
+    settingsState.aiProviders = [];
+    settingsState.defaultModel = null;
+  });
   describe('parseStorySeeds', () => {
     it('parses valid JSON seeds', () => {
       const raw = JSON.stringify({
@@ -382,6 +404,32 @@ describe('topic-discovery.service', () => {
       const batch = await refreshStorySeeds({ excludeTitles: ['旧标题'] }, chat);
       expect(batch.items.length).toBe(4);
       expect(chat).not.toHaveBeenCalled();
+    });
+
+    it('rethrows AbortError instead of falling back to local pool', async () => {
+      settingsState.aiProviders = [
+        {
+          id: 'p1',
+          provider: 'openai',
+          modelName: 'gpt-4o',
+          enabled: true,
+          apiKey: 'test-key',
+        },
+      ];
+      settingsState.defaultModel = { providerId: 'p1', modelName: 'gpt-4o' };
+
+      const chat = vi.fn(async (_system: string, _user: string, _temp: number, signal?: AbortSignal) => {
+        expect(signal).toBeDefined();
+        const err = new Error('Aborted');
+        err.name = 'AbortError';
+        throw err;
+      });
+
+      const controller = new AbortController();
+      await expect(
+        refreshStorySeeds({ count: 2, signal: controller.signal }, chat),
+      ).rejects.toMatchObject({ name: 'AbortError' });
+      expect(chat).toHaveBeenCalled();
     });
   });
 

@@ -97,7 +97,7 @@
     "diceRoll": "掷骰子",
     "diceRolling": "命运旋转中…",
     "diceNeedRoll": "请先掷一次骰子",
-    "diceHint": "满意这组结果后，点上方「用骰子开题」生成种子",
+    "diceHint": "可先点右侧「掷骰子」预览组合；也可直接点上方「用骰子开题」（未掷过会自动掷一次）",
     "promptPlaceholder": "用一两句话描述你的故事想法，例如：修仙世界里资质平庸的少年获得上古传承后逆袭……",
     "promptTooShort": "请再多写一点想法（至少 8 个字）",
     "generateDirections": "生成创作方向",

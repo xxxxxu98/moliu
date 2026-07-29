@@ -180,6 +180,28 @@ export function useTopicDiscovery() {
   };
 
   let refreshId = 0;
+  /** 当前在飞刷新的 AbortController；新请求 / 取消时 abort 以中断 HTTP */
+  let currentAbort: AbortController | null = null;
+
+  function abortInFlight(): void {
+    if (currentAbort) {
+      currentAbort.abort();
+      currentAbort = null;
+    }
+  }
+
+  function createSignal(): AbortSignal {
+    abortInFlight();
+    const controller = new AbortController();
+    currentAbort = controller;
+    return controller.signal;
+  }
+
+  function isAbortError(error: unknown): boolean {
+    if (error instanceof DOMException && error.name === 'AbortError') return true;
+    if (error instanceof Error && error.name === 'AbortError') return true;
+    return false;
+  }
 
   const activeSeedTab = computed((): SeedPlayTab | null => {
     return isSeedPlayTab(activeTab.value) ? activeTab.value : null;
@@ -467,6 +489,7 @@ export function useTopicDiscovery() {
     extra?: RefreshStorySeedsOptions,
   ): Promise<StorySeedCard[]> {
     const currentId = ++refreshId;
+    const signal = createSignal();
     const bucket = seedBuckets[tab];
     const playStyle = extra?.playStyle ?? TAB_TO_STYLE[tab];
     const ignoreLockedGenre = playStyle === 'mix' || playStyle === 'dice';
@@ -485,6 +508,7 @@ export function useTopicDiscovery() {
       audience: lockedAudience.value ?? undefined,
       ...extra,
       playStyle,
+      signal,
     });
 
     if (ignoreLockedGenre) {
@@ -534,6 +558,9 @@ export function useTopicDiscovery() {
       persistSeedBucketsSnapshot();
       return batch.items;
     } catch (err) {
+      if (isAbortError(err)) {
+        return [];
+      }
       if (currentId !== refreshId) {
         return [];
       }
@@ -543,6 +570,7 @@ export function useTopicDiscovery() {
       if (currentId === refreshId) {
         isRefreshing.value = false;
         refreshingTarget.value = null;
+        currentAbort = null;
       }
     }
   }
@@ -562,6 +590,7 @@ export function useTopicDiscovery() {
     extra?: RefreshGenreInsightsOptions,
   ): Promise<GenreInsightCard[]> {
     const currentId = ++refreshId;
+    const signal = createSignal();
     isRefreshing.value = true;
     refreshingTarget.value = 'radar';
     error.value = null;
@@ -574,6 +603,7 @@ export function useTopicDiscovery() {
       platform: lockedPlatform.value ?? undefined,
       length: lockedLength.value ?? undefined,
       ...extra,
+      signal,
     };
 
     try {
@@ -592,6 +622,9 @@ export function useTopicDiscovery() {
       persistInsightsSnapshot();
       return batch.items;
     } catch (err) {
+      if (isAbortError(err)) {
+        return [];
+      }
       if (currentId !== refreshId) {
         return [];
       }
@@ -601,6 +634,7 @@ export function useTopicDiscovery() {
       if (currentId === refreshId) {
         isRefreshing.value = false;
         refreshingTarget.value = null;
+        currentAbort = null;
       }
     }
   }
@@ -715,15 +749,17 @@ export function useTopicDiscovery() {
     return seedBuckets[tab].items;
   }
 
-  /** 软取消种子/雷达刷新：忽略在飞结果，保留已有列表 */
+  /** 取消种子/雷达刷新：abort 在飞 HTTP，忽略结果，保留已有列表 */
   function cancelRefresh(): void {
-    if (!isRefreshing.value) return;
+    if (!isRefreshing.value && !currentAbort) return;
+    abortInFlight();
     refreshId += 1;
     isRefreshing.value = false;
     refreshingTarget.value = null;
   }
 
   function reset(): void {
+    abortInFlight();
     refreshId += 1;
     isRefreshing.value = false;
     refreshingTarget.value = null;

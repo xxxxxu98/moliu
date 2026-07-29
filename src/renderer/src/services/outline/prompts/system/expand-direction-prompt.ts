@@ -25,6 +25,26 @@ function buildScaleGuidance(wordCountRange: string): WordCountBreakdown & {
   };
 }
 
+const VOLUME_FIELDS = `- 卷标题：
+- 卷目标：
+- 卷冲突：
+- 卷高潮：
+- 卷反转：
+- 卷尾钩子：
+- 主角成长：
+- 关键角色：
+- 埋设伏笔：
+- 回收伏笔：
+- 关系变化：`;
+
+/** 按目标规模动态生成卷纲模板（百万/千万字可达数十卷，不再写死 3 卷） */
+export function buildVolumePlanSection(volumeCount: number): string {
+  const count = Math.max(3, Math.min(48, Math.round(volumeCount) || 3));
+  return Array.from({ length: count }, (_, index) => {
+    return `### 第${index + 1}卷\n${VOLUME_FIELDS}`;
+  }).join('\n\n');
+}
+
 const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事架构师。现在用户已经从多个方向中选定了一个最值得展开的方向，你的任务是把它扩展成“可执行型长篇方案”。
 
 注意：你的目标不是写成文学赏析稿，也不是写百科设定，而是产出一份适合继续拆卷纲、拆前30章、拆章节蓝图的工程化方案。
@@ -90,44 +110,7 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 幕结束状态：
 
 ## 卷纲
-### 第1卷
-- 卷标题：
-- 卷目标：
-- 卷冲突：
-- 卷高潮：
-- 卷反转：
-- 卷尾钩子：
-- 主角成长：
-- 关键角色：
-- 埋设伏笔：
-- 回收伏笔：
-- 关系变化：
-
-### 第2卷
-- 卷标题：
-- 卷目标：
-- 卷冲突：
-- 卷高潮：
-- 卷反转：
-- 卷尾钩子：
-- 主角成长：
-- 关键角色：
-- 埋设伏笔：
-- 回收伏笔：
-- 关系变化：
-
-### 第3卷
-- 卷标题：
-- 卷目标：
-- 卷冲突：
-- 卷高潮：
-- 卷反转：
-- 卷尾钩子：
-- 主角成长：
-- 关键角色：
-- 埋设伏笔：
-- 回收伏笔：
-- 关系变化：
+{{VOLUME_PLAN_SECTION}}
 
 ## 世界与势力规划
 ### 核心地点
@@ -673,14 +656,17 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - “本块禁区”每个 5 章区间块给出 1-3 条该区间明确禁止发生的事（如“不能揭示主角真实身份”“不可让配角提前替主角兑现爽点”），用于约束正文不提前摊牌或泄露关键悬念；可用顿号分隔
 - 如果原始方向信息不足，请主动补足能支撑长篇网文连载的目标链、冲突链和卷级递进结构，但不要脱离已选方向的核心卖点。
 - “故事规模规划”必须与目标字数区间一致；“预计总章节数”要按平均每章约2500字估算，误差尽量控制在±10%以内
+- “建议卷数”必须与卷纲实际输出卷数一致，并与目标字数区间匹配
 - “前30章占比”必须体现为总章节数的前期启动比例，并在“长线推进说明”中解释为什么30章后仍有足够篇幅推进主线升级、地图扩展或人物关系递进。`;
 
 export function buildExpandDirectionPrompt(options: ExpandDirectionPromptOptions): BuiltPrompt {
   const { direction, seed, wordCountRange } = options;
   const scale = buildScaleGuidance(wordCountRange);
+  const volumePlanSection = buildVolumePlanSection(scale.suggestedVolumeCount);
+  const system = SYSTEM_PROMPT.replace('{{VOLUME_PLAN_SECTION}}', volumePlanSection);
 
   return {
-    system: SYSTEM_PROMPT,
+    system,
     user: `请将下面这个已选中的创作方向，展开为可执行型长篇方案。
 
 【目标字数区间】
@@ -715,7 +701,7 @@ ${options.enhancementBrief}
 ` : ''}要求：
 1. 优先增强长篇承载力和网文追读动力
 2. 把前30章设计成明确可执行的启动包
-3. 三卷规划要彼此递进，不能重复
+3. ${scale.suggestedVolumeCount}卷规划要彼此递进，不能重复，卷数须与建议卷数一致
 4. 尽量具体，不要空泛设定
 5. 输出必须严格遵守指定结构
 6. 章节规模必须与目标字数区间匹配，前30章只能完成“开局承诺 + 第一轮冲突闭环 + 更大主线入口”，不能提前耗尽整本书的核心悬念与升级空间

@@ -64,10 +64,49 @@ function extractPureText(rawContent: string): string {
   return rawContent;
 }
 
+export const DEFAULT_WORD_COUNT_RANGE = "300万-500万字";
+
+export const WORD_COUNT_OPTIONS = [
+  { label: "短篇 (1-3万字)", value: "1万-3万字", min: 10000, max: 30000 },
+  { label: "中短篇 (3-10万字)", value: "3万-10万字", min: 30000, max: 100000 },
+  { label: "中篇 (10-30万字)", value: "10万-30万字", min: 100000, max: 300000 },
+  { label: "长篇 (30-80万字)", value: "30万-80万字", min: 300000, max: 800000 },
+  {
+    label: "长篇巨著 (80-150万字)",
+    value: "80万-150万字",
+    min: 800000,
+    max: 1500000,
+  },
+  {
+    label: "超长篇 (150-300万字)",
+    value: "150万-300万字",
+    min: 1500000,
+    max: 3000000,
+  },
+  {
+    label: "史诗级 (300-500万字)",
+    value: "300万-500万字",
+    min: 3000000,
+    max: 5000000,
+  },
+  {
+    label: "超史诗 (500-800万字)",
+    value: "500万-800万字",
+    min: 5000000,
+    max: 8000000,
+  },
+  {
+    label: "传说级 (800万字以上)",
+    value: "800万字以上",
+    min: 8000000,
+    max: 15000000,
+  },
+];
+
 // Outline generation system prompt - optimized for reliable JSON parsing
-// @param wordCountRange - 用户选择的字数范围，如 "50万-100万字"
+// @param wordCountRange - 用户选择的字数范围，如 "300万-500万字"
 function buildOutlineSystemPrompt(
-  wordCountRange: string = "50万-100万字",
+  wordCountRange: string = DEFAULT_WORD_COUNT_RANGE,
 ): string {
   return `你是一位专业的小说创作顾问。根据用户的创意种子，生成简洁的故事大纲。
 
@@ -96,33 +135,6 @@ JSON示例：
 {"outlines":[{"title":"标题","genres":["仙侠"],"synopsis":"60-80字简介","worldSetting":{"locations":[{"name":"地点","description":"15-30字","level":"city"}],"factions":[{"name":"势力","description":"20字"}],"rules":[{"name":"规则","description":"20字","category":"custom"}]},"structure":{"act1":"第一幕40-60字","act2a":"第二幕上40-60字","act2b":"第二幕下40-60字","act3":"第三幕40-60字"},"subplots":[],"chapters":[{"title":"第一章","summary":"一句话概括"}],"characters":[{"name":"角色","role":"主角","description":"20-40字","personality":[],"appearance":"","abilities":[],"background":"","relationships":[]}],"foreshadows":[{"hint":"一句话伏笔","type":"mystery","suggestedChapter":1}],"estimatedWordCount":0}]}
 `;
 }
-
-export const DEFAULT_WORD_COUNT_RANGE = "80万-150万字";
-
-export const WORD_COUNT_OPTIONS = [
-  { label: "短篇 (1-3万字)", value: "1万-3万字", min: 10000, max: 30000 },
-  { label: "中短篇 (3-10万字)", value: "3万-10万字", min: 30000, max: 100000 },
-  { label: "中篇 (10-30万字)", value: "10万-30万字", min: 100000, max: 300000 },
-  { label: "长篇 (30-80万字)", value: "30万-80万字", min: 300000, max: 800000 },
-  {
-    label: "长篇巨著 (80-150万字)",
-    value: "80万-150万字",
-    min: 800000,
-    max: 1500000,
-  },
-  {
-    label: "超长篇 (150-300万字)",
-    value: "150万-300万字",
-    min: 1500000,
-    max: 3000000,
-  },
-  {
-    label: "史诗级 (300万字以上)",
-    value: "300万字以上",
-    min: 3000000,
-    max: 10000000,
-  },
-];
 
 export interface AIGenerationConfig {
   temperature: number;
@@ -308,6 +320,7 @@ export class UnifiedAIService {
 
   /**
    * 简单文本补全（开题刷新、记忆提取等内部任务）
+   * 传入 signal 时走 stream + cancel，以真正中断底层 HTTP（SDK chat 不支持 abort）
    */
   async complete(
     prompt: string,
@@ -315,10 +328,16 @@ export class UnifiedAIService {
       temperature?: number;
       maxTokens?: number;
       system?: string;
+      signal?: AbortSignal;
     },
   ): Promise<string> {
     if (!this.client) {
       throw new Error("Client not initialized");
+    }
+
+    const signal = options?.signal;
+    if (signal?.aborted) {
+      throw new DOMException("Aborted", "AbortError");
     }
 
     const messages = options?.system
@@ -328,13 +347,49 @@ export class UnifiedAIService {
         ]
       : [{ role: "user" as const, content: prompt }];
 
-    const response = await this.client.chat(messages, {
+    const chatOpts = {
       temperature: options?.temperature ?? this.generationConfig.temperature,
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
       presencePenalty: this.generationConfig.presencePenalty,
       ...(options?.maxTokens !== undefined ? { maxTokens: options.maxTokens } : {}),
-    } as any);
+    };
+
+    // multi-ai-sdk 的 chat() 不透传 AbortSignal；stream().cancel() 才会 abort fetch
+    if (signal) {
+      const stream = this.client.stream(messages, chatOpts as any);
+      const onAbort = (): void => {
+        stream.cancel();
+      };
+      signal.addEventListener("abort", onAbort, { once: true });
+      try {
+        let content = "";
+        for await (const chunk of stream) {
+          if (signal.aborted) {
+            throw new DOMException("Aborted", "AbortError");
+          }
+          if (chunk.content) {
+            content += chunk.content;
+          }
+        }
+        return extractPureText(content);
+      } catch (error) {
+        if (signal.aborted) {
+          throw new DOMException("Aborted", "AbortError");
+        }
+        if (error instanceof DOMException && error.name === "AbortError") {
+          throw error;
+        }
+        if (error instanceof Error && error.name === "AbortError") {
+          throw error;
+        }
+        throw error;
+      } finally {
+        signal.removeEventListener("abort", onAbort);
+      }
+    }
+
+    const response = await this.client.chat(messages, chatOpts as any);
 
     const content =
       typeof response === "string" ? response : JSON.stringify(response);
@@ -885,7 +940,7 @@ export class UnifiedAIService {
    * Returns the complete result after AI finishes generating
    * @param prompt - 用户的创意种子
    * @param config - 生成配置
-   * @param wordCountRange - 字数范围，可选，默认为 "50万-100万字"
+   * @param wordCountRange - 字数范围，可选，默认为 "300万-500万字"
    */
   async generateOutline(
     prompt: string,

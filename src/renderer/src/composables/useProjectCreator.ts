@@ -2,8 +2,15 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useProjectStore } from "@/stores/project.store";
 import type { GeneratedOutline } from "@/types/inspiration";
-import type { PlotNode } from "@/types/project";
+import type { PlotNode, Volume } from "@/types/project";
 import type { TopicDiscoveryProjectSeed } from "@/types/topic-discovery";
+import {
+  buildCharactersFromOutline,
+  buildStartupPackFromOutline,
+  buildStoryScaleFromOutline,
+  buildVolumePlansMetadata,
+  buildVolumesFromOutline,
+} from "./projectCreatorBuilders";
 
 export interface CreateProjectOptions {
   /** 开题中心写入的题材合同种子 */
@@ -138,33 +145,18 @@ export function useProjectCreator(): UseProjectCreatorReturn {
 
   /**
    * 从大纲构建角色信息
-   * 支持结构化关系
+   * 支持结构化关系与开书人设字段透传
    */
   function buildCharacters(outline: GeneratedOutline) {
-    return (Array.isArray(outline.characters) ? outline.characters : []).map(
-      (c, i) => ({
-        id: `char-${Date.now()}-${i}`,
-        name: c.name,
-        role: c.role,
-        description: c.description,
-        profile: {
-          personality: Array.isArray(c.personality) ? c.personality : [],
-          appearance: c.appearance || "",
-          background: c.background || c.description || "",
-          abilities: Array.isArray(c.abilities) ? c.abilities : [],
-          relationships: Array.isArray(c.relationships)
-            ? c.relationships.map((r: any) => ({
-                characterId: "",
-                targetName: r.targetName || "",
-                type: (r.type || "neutral") as any,
-                description: r.description || "",
-              }))
-            : [],
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }),
-    );
+    return buildCharactersFromOutline(outline);
+  }
+
+  /**
+   * 从大纲构建卷实体
+   * 优先使用结构化 volumePlans；否则按 storyScale.suggestedVolumeCount / volumes 占位
+   */
+  function buildVolumes(outline: GeneratedOutline): Volume[] {
+    return buildVolumesFromOutline(outline);
   }
 
   /**
@@ -409,30 +401,11 @@ export function useProjectCreator(): UseProjectCreatorReturn {
 
       // ========== 首页大纲扩展字段 ==========
       // 前 30 章启动包（直接透传，供续写消费 buildEnhancedDesignPrompt）
-      startupPack: outline.startupPack30 ? {
-        openingHook: outline.startupPack30.openingHook || '',
-        promiseToReader: outline.startupPack30.promiseToReader || '',
-        protagonistFirstImpression: outline.startupPack30.protagonistFirstImpression || '',
-        firstMajorCoolPoint: outline.startupPack30.firstMajorCoolPoint || '',
-        firstConflictCycle: outline.startupPack30.firstConflictCycle || '',
-        chapterBlocks: (outline.startupPack30.chapterBlocks || []).map(b => ({
-          range: b.range,
-          objective: b.objective,
-          mustEvents: b.mustEvents || [],
-          coolPoints: b.coolPoints || [],
-          hookRequirement: b.hookRequirement,
-          pacing: b.pacing,
-          readerExpectation: b.readerExpectation,
-        })),
-      } : undefined,
+      startupPack: buildStartupPackFromOutline(outline),
       // 故事规模规划（独立存到 metadata.storyScale）
-      storyScale: outline.storyScale ? {
-        averageWordsPerChapter: outline.storyScale.averageWordsPerChapter,
-        suggestedVolumeCount: outline.storyScale.suggestedVolumeCount,
-        estimatedChaptersPerVolume: outline.storyScale.estimatedChaptersPerVolume,
-        startupPhaseRatio: outline.storyScale.startupPhaseRatio,
-        longformProgressionNote: outline.storyScale.longformProgressionNote,
-      } : undefined,
+      storyScale: buildStoryScaleFromOutline(outline),
+      // 结构化卷纲（与 volumes 实体互补，保留冲突/伏笔等完整字段）
+      volumePlans: buildVolumePlansMetadata(outline),
       // 完结感知：计划总章节数 + 计划总字数
       plannedChapterCount: outline.storyScale?.estimatedChapterCount
         ? Math.max(1, outline.storyScale.estimatedChapterCount)
@@ -700,6 +673,7 @@ export function useProjectCreator(): UseProjectCreatorReturn {
       const foreshadows = buildForeshadows(outlineData);
       const worldSchema = buildWorldSchema(outlineData);
       const genreTags = buildGenreTags(outlineData);
+      const volumes = buildVolumes(outlineData);
       const metadata = buildProjectMetadata(outlineData);
       const topicDiscoverySeed = options.topicDiscoverySeed
         ? (JSON.parse(JSON.stringify(options.topicDiscoverySeed)) as TopicDiscoveryProjectSeed)
@@ -709,6 +683,7 @@ export function useProjectCreator(): UseProjectCreatorReturn {
         name: outlineData.title,
         description: outlineData.synopsis,
         genre: genreTags,
+        volumes,
         plotOutline,
         characters,
         foreshadows,
@@ -727,6 +702,7 @@ export function useProjectCreator(): UseProjectCreatorReturn {
           || metadata.storyLines
           || metadata.startupPack
           || metadata.storyScale
+          || (metadata.volumePlans && metadata.volumePlans.length > 0)
           || metadata.plannedChapterCount
           || metadata.plannedWordCount
           || topicDiscoverySeed;
@@ -738,6 +714,7 @@ export function useProjectCreator(): UseProjectCreatorReturn {
           const newMetadata: Record<string, unknown> = {};
           if (metadata.startupPack) newMetadata.startupPack = metadata.startupPack;
           if (metadata.storyScale) newMetadata.storyScale = metadata.storyScale;
+          if (metadata.volumePlans) newMetadata.volumePlans = metadata.volumePlans;
           if (metadata.plannedChapterCount !== undefined) newMetadata.plannedChapterCount = metadata.plannedChapterCount;
           if (metadata.plannedWordCount !== undefined) newMetadata.plannedWordCount = metadata.plannedWordCount;
           if (topicDiscoverySeed) newMetadata.topicDiscoverySeed = topicDiscoverySeed;

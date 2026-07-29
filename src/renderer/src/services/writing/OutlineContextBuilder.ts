@@ -463,7 +463,12 @@ ${ctx.coreSellingPoints.map((p) => `- ${p.name}：${p.description}`).join('\n')}
 - 主角第一印象：${sp.protagonistFirstImpression || '（暂无）'}
 - 首个大爽点：${sp.firstMajorCoolPoint || '（暂无）'}
 - 首个冲突循环：${sp.firstConflictCycle || '（暂无）'}
-${sp.chapterBlocks?.length ? sp.chapterBlocks.map((b) => `- 第${b.range}章：${b.objective}（节奏：${b.pacing === 'fast' ? '快' : '中'}；读者期待：${b.readerExpectation || '无'}）`).join('\n') : ''}
+${sp.chapterBlocks?.length ? sp.chapterBlocks.map((b) => {
+      const zoneText = b.forbiddenZones?.length
+        ? `；禁区：${b.forbiddenZones.join('、')}`
+        : '';
+      return `- 第${b.range}章：${b.objective}（节奏：${b.pacing === 'fast' ? '快' : '中'}；读者期待：${b.readerExpectation || '无'}${zoneText}）`;
+    }).join('\n') : ''}
 当前是第 ${currentChapterNo} 章，请严格落实启动包对应的承诺与节奏。开篇 30 章是黄金留存窗口，必须强力推进主角处境、立人设、埋冲突、铺爽点。`);
   }
 

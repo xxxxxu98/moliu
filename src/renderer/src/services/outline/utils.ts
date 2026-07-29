@@ -10,7 +10,7 @@
  */
 export const AVG_WORDS_PER_CHAPTER = 2500;
 export const WORDS_PER_VOLUME = 180_000;
-export const DEFAULT_TARGET_WORD_COUNT = 500_000;
+export const DEFAULT_TARGET_WORD_COUNT = 4_000_000;
 
 export interface WordCountBreakdown {
   /** 目标总字数（区间取平均） */
@@ -40,6 +40,15 @@ export function parseWordCountRange(wordCountRange?: string): number {
     const max = Number(rangeMatch[2]);
     if (Number.isFinite(min) && Number.isFinite(max)) {
       return Math.round(((min + max) / 2) * 10000);
+    }
+  }
+
+  const aboveMatch = normalized.match(/(\d+(?:\.\d+)?)万(?:字)?以上/);
+  if (aboveMatch) {
+    const value = Number(aboveMatch[1]);
+    if (Number.isFinite(value)) {
+      // 「以上」取下限的 1.25 倍作为规划中位估计
+      return Math.round(value * 10000 * 1.25);
     }
   }
 

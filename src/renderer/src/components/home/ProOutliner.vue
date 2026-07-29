@@ -53,6 +53,10 @@ import { useProjectCreator } from '@/composables/useProjectCreator';
 import { mapExecutableOutlineToGeneratedOutline } from '@/services/outline/adapters/executable-outline-adapter';
 import type { OutlineDirection } from '@/services/outline/types/direction';
 import type { WritingTemplate } from './QuickStart.vue';
+import {
+  DEFAULT_WORD_COUNT_RANGE,
+  WORD_COUNT_OPTIONS,
+} from '@/services/ai/unified.service';
 
 const props = defineProps<{
   importedTemplate?: WritingTemplate | null;
@@ -82,16 +86,13 @@ const {
 // ============================================================
 // 字数范围状态
 // ============================================================
-const wordCountRange = ref('50万-100万字');
+const wordCountRange = ref(DEFAULT_WORD_COUNT_RANGE);
 
-// 字数范围选项
-const wordCountOptions = [
-  { label: '10万-30万字', value: '10万-30万字' },
-  { label: '30万-50万字', value: '30万-50万字' },
-  { label: '50万-100万字', value: '50万-100万字' },
-  { label: '100万-200万字', value: '100万-200万字' },
-  { label: '200万字以上', value: '200万字以上' },
-];
+// 与全局 WordCountSelector 共用同一份选项，避免专业大纲页字数档位脱节
+const wordCountOptions = WORD_COUNT_OPTIONS.map((option) => ({
+  label: option.label,
+  value: option.value,
+}));
 
 // 激活的 Tab
 const activeTab = ref<'five-step' | 'volume' | 'timeline'>('five-step');

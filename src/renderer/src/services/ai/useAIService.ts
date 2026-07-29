@@ -372,6 +372,7 @@ ${c.content || '（本章暂无内容）'}`;
       temperature?: number;
       maxTokens?: number;
       system?: string;
+      signal?: AbortSignal;
     }
   ): Promise<string> {
     if (!hasProvider.value) {

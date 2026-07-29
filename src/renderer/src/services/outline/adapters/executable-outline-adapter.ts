@@ -11,6 +11,7 @@ import type {
   GeneratedStoryLines,
   GeneratedStoryScale,
   GeneratedSubplot,
+  GeneratedVolumePlan,
   GeneratedWorldSetting,
 } from '@/types/inspiration';
 
@@ -207,6 +208,15 @@ function toCharacters(outline: ExecutableOutline): GeneratedCharacter[] {
       abilities: character.resources,
       background: [character.keyNeed, character.fearOrWound, character.secret].filter(Boolean).join('；'),
       relationships,
+      keyNeed: character.keyNeed || undefined,
+      publicGoal: character.publicGoal || undefined,
+      hiddenNeed: character.hiddenNeed || undefined,
+      fearOrWound: character.fearOrWound || undefined,
+      secret: character.secret || undefined,
+      turningPoint: character.turningPoint || undefined,
+      arcStart: character.arcStart || undefined,
+      arcMid: character.arcMid || undefined,
+      arcEnd: character.arcEnd || undefined,
     };
   });
 
@@ -224,6 +234,8 @@ function toCharacters(outline: ExecutableOutline): GeneratedCharacter[] {
     abilities: [],
     background: [outline.storyEngine.protagonistGoalShortTerm, outline.storyEngine.protagonistGoalLongTerm].filter(Boolean).join('；'),
     relationships: [],
+    publicGoal: outline.storyEngine.protagonistGoalShortTerm || undefined,
+    keyNeed: outline.storyEngine.protagonistGoalLongTerm || undefined,
   }, ...characters];
 }
 
@@ -748,6 +760,23 @@ function toStoryLines(outline: ExecutableOutline): GeneratedStoryLines {
   };
 }
 
+function toVolumePlans(outline: ExecutableOutline): GeneratedVolumePlan[] {
+  return outline.volumePlan.map((volume, index) => ({
+    volumeIndex: volume.volumeIndex || index + 1,
+    title: volume.title,
+    objective: volume.objective,
+    coreConflict: volume.coreConflict,
+    climax: volume.climax,
+    reversal: volume.reversal,
+    endingHook: volume.endingHook,
+    protagonistGrowth: volume.protagonistGrowth,
+    keyCharacters: volume.keyCharacters || [],
+    setupForeshadows: volume.setupForeshadows || [],
+    payoffForeshadows: volume.payoffForeshadows || [],
+    relationshipShifts: volume.relationshipShifts || [],
+  }));
+}
+
 export function mapExecutableOutlineToGeneratedOutline(
   outline: ExecutableOutline,
   options?: { targetWordCountRange?: string },
@@ -802,5 +831,6 @@ export function mapExecutableOutlineToGeneratedOutline(
     conflictDesign: toConflictDesign(outline),
     storyLines: toStoryLines(outline),
     volumes: outline.volumePlan.length,
+    volumePlans: toVolumePlans(outline),
   };
 }

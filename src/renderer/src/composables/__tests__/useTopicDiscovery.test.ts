@@ -125,14 +125,16 @@ describe('useTopicDiscovery', () => {
     expect(refreshGenreInsights).toHaveBeenCalledTimes(1);
   });
 
-  it('ignores stale refresh results (race)', async () => {
+  it('ignores stale refresh results (race) and aborts previous signal', async () => {
     const { refreshStorySeeds } = await import('@/services/inspiration/topic-discovery.service');
+    let firstSignal: AbortSignal | undefined;
     let resolveFirst: (value: unknown) => void = () => undefined;
 
     vi.mocked(refreshStorySeeds)
       .mockImplementationOnce(
-        () =>
+        (options: { signal?: AbortSignal }) =>
           new Promise(resolve => {
+            firstSignal = options.signal;
             resolveFirst = resolve as (value: unknown) => void;
           }) as ReturnType<typeof refreshStorySeeds>,
       )
@@ -158,6 +160,8 @@ describe('useTopicDiscovery', () => {
     const firstPromise = discovery.refreshSeeds();
     const secondPromise = discovery.refreshSeeds();
 
+    expect(firstSignal?.aborted).toBe(true);
+
     await secondPromise;
     resolveFirst({
       items: [
@@ -179,9 +183,9 @@ describe('useTopicDiscovery', () => {
     expect(discovery.seeds.value[0]?.title).toBe('最新一批');
   });
 
-  it('cancelRefresh ignores in-flight result and keeps previous seeds', async () => {
+  it('cancelRefresh aborts in-flight request and keeps previous seeds', async () => {
     const { refreshStorySeeds } = await import('@/services/inspiration/topic-discovery.service');
-    let resolveSlow: (value: unknown) => void = () => undefined;
+    let aborted = false;
 
     const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
     const discovery = useTopicDiscovery();
@@ -190,9 +194,14 @@ describe('useTopicDiscovery', () => {
     expect(keptTitle).toBeTruthy();
 
     vi.mocked(refreshStorySeeds).mockImplementationOnce(
-      () =>
-        new Promise(resolve => {
-          resolveSlow = resolve as (value: unknown) => void;
+      (options: { signal?: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          options.signal?.addEventListener('abort', () => {
+            aborted = true;
+            const err = new Error('Aborted');
+            err.name = 'AbortError';
+            reject(err);
+          });
         }) as ReturnType<typeof refreshStorySeeds>,
     );
 
@@ -201,26 +210,13 @@ describe('useTopicDiscovery', () => {
 
     discovery.cancelRefresh();
     expect(discovery.isRefreshing.value).toBe(false);
+    expect(aborted).toBe(true);
     expect(discovery.seeds.value[0]?.title).toBe(keptTitle);
 
-    resolveSlow({
-      items: [
-        {
-          id: 'should-ignore',
-          title: '应被忽略',
-          oneLiner: 'x',
-          genre: '都市',
-          hook: 'h',
-          coolPoint: 'c',
-          audience: 'general',
-        },
-      ],
-      source: 'ai',
-      generatedAt: new Date().toISOString(),
-    });
     await pending;
 
     expect(discovery.seeds.value[0]?.title).toBe(keptTitle);
+    expect(discovery.error.value).toBeNull();
   });
 
   it('isolates seed data across play modes', async () => {

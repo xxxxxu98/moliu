@@ -85,6 +85,21 @@ export interface ProjectMetadata {
   startupPack?: ProjectStartupPack;
   /** 故事规模规划（来源于首页 expandDirection） */
   storyScale?: ProjectStoryScale;
+  /** 结构化卷纲（创建 volumes 实体后仍保留完整卷级冲突/伏笔规划） */
+  volumePlans?: Array<{
+    volumeIndex: number;
+    title: string;
+    objective: string;
+    coreConflict: string;
+    climax: string;
+    reversal: string;
+    endingHook: string;
+    protagonistGrowth: string;
+    keyCharacters: string[];
+    setupForeshadows: string[];
+    payoffForeshadows: string[];
+    relationshipShifts: string[];
+  }>;
 
   // ========== 开题中心 ==========
   /** 从开题中心创建时写入的题材合同种子 */
@@ -106,11 +121,17 @@ export interface ProjectStartupPack {
     hookRequirement: string;
     pacing: 'fast' | 'medium';
     readerExpectation: string;
+    /** 本块禁区，约束正文不提前摊牌/泄露关键信息 */
+    forbiddenZones?: string[];
   }>;
 }
 
 /** 项目级故事规模（与 GeneratedStoryScale 对齐，独立定义以解耦） */
 export interface ProjectStoryScale {
+  /** 目标字数文案，如 "80万-150万字" / "100万字" */
+  targetWordCount?: string;
+  /** 预计总章节数 */
+  estimatedChapterCount?: number;
   averageWordsPerChapter?: number;
   suggestedVolumeCount?: number;
   estimatedChaptersPerVolume?: number;
@@ -190,6 +211,16 @@ export interface CharacterProfile {
   background?: string;
   abilities?: string[];
   relationships?: Relationship[];
+  /** 开书大纲透传的结构化人设（可选） */
+  keyNeed?: string;
+  publicGoal?: string;
+  hiddenNeed?: string;
+  fearOrWound?: string;
+  secret?: string;
+  turningPoint?: string;
+  arcStart?: string;
+  arcMid?: string;
+  arcEnd?: string;
 }
 
 // 结构化角色关系

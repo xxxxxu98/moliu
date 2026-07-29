@@ -48,7 +48,18 @@ const PLATFORM_VALUES: TopicPlatform[] = [
   'general',
 ];
 
-type ChatFn = (system: string, user: string, temperature: number) => Promise<string>;
+type ChatFn = (
+  system: string,
+  user: string,
+  temperature: number,
+  signal?: AbortSignal,
+) => Promise<string>;
+
+function isAbortError(error: unknown): boolean {
+  if (error instanceof DOMException && error.name === 'AbortError') return true;
+  if (error instanceof Error && error.name === 'AbortError') return true;
+  return false;
+}
 
 function createId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -545,7 +556,12 @@ function hasActiveProvider(): boolean {
   return providers.some(p => p.enabled && !!p.apiKey);
 }
 
-async function defaultChat(system: string, user: string, temperature: number): Promise<string> {
+async function defaultChat(
+  system: string,
+  user: string,
+  temperature: number,
+  signal?: AbortSignal,
+): Promise<string> {
   const settingsStore = useSettingsStore();
   const providers = settingsStore.aiProviders;
   const defaultModel = settingsStore.defaultModel;
@@ -584,6 +600,7 @@ async function defaultChat(system: string, user: string, temperature: number): P
     system,
     temperature,
     maxTokens: 2500,
+    signal,
   });
 }
 
@@ -616,6 +633,7 @@ export async function refreshStorySeeds(
       buildStorySeedsSystemPrompt(playStyle),
       buildStorySeedsUserPrompt(enrichedOptions),
       temperature,
+      options.signal,
     );
     const items = applySeedDefaults(parseStorySeeds(raw, count, defaults), {
       ...defaults,
@@ -631,6 +649,10 @@ export async function refreshStorySeeds(
     }
     return { items, source: 'ai', generatedAt };
   } catch (err) {
+    // 主动取消：向上抛出，避免被当成失败而降级本地池
+    if (isAbortError(err) || options.signal?.aborted) {
+      throw err instanceof Error ? err : new DOMException('Aborted', 'AbortError');
+    }
     const message = err instanceof Error ? err.message : String(err);
     return {
       items: buildFallbackStorySeeds(enrichedOptions),
@@ -667,6 +689,7 @@ export async function refreshGenreInsights(
       buildGenreInsightsSystemPrompt(),
       buildGenreInsightsUserPrompt(options),
       temperature,
+      options.signal,
     );
     const items = parseGenreInsights(raw, count, defaults).map(item => ({
       ...item,
@@ -683,6 +706,9 @@ export async function refreshGenreInsights(
     }
     return { items, source: 'ai', generatedAt };
   } catch (err) {
+    if (isAbortError(err) || options.signal?.aborted) {
+      throw err instanceof Error ? err : new DOMException('Aborted', 'AbortError');
+    }
     const message = err instanceof Error ? err.message : String(err);
     return {
       items: buildFallbackGenreInsights(options),

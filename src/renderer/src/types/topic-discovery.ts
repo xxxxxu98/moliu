@@ -148,6 +148,8 @@ export interface RefreshStorySeedsOptions {
   insightContext?: InsightSeedContext;
   /** 题材 Profile 注入（可由服务层自动解析） */
   genreSeedHint?: GenreSeedHint;
+  /** 取消在飞 HTTP 请求 */
+  signal?: AbortSignal;
 }
 
 export interface RefreshGenreInsightsOptions {
@@ -157,6 +159,8 @@ export interface RefreshGenreInsightsOptions {
   length?: TopicLength;
   excludeNames?: string[];
   temperature?: number;
+  /** 取消在飞 HTTP 请求 */
+  signal?: AbortSignal;
 }
 
 export type TopicDiscoverySource = 'ai' | 'fallback';

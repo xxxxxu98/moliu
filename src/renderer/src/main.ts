@@ -4,8 +4,8 @@ import App from "./App.vue";
 import router from "./router";
 import i18n, { setLocale } from "./i18n";
 import { useSettingsStore } from "@/stores/settings.store";
-import "virtual:uno.css";
 import "@unocss/reset/tailwind.css";
+import "virtual:uno.css";
 import "./styles/global.css";
 // 通用字体
 import "vfonts/Lato.css";

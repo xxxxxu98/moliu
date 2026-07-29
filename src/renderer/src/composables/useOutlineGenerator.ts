@@ -8,6 +8,7 @@ import type { Outline } from '@/services/outline/schemas/outline.schema';
 import type { GeneratedOutline } from '@/types/inspiration';
 import type { OutlineDirection } from '@/services/outline/types/direction';
 import type { ExecutableOutline } from '@/services/outline/types/executable-outline';
+import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 
 /**
  * 生成选项
@@ -123,7 +124,7 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     return {
       temperature: options?.temperature ?? 0.7,
       topP: options?.topP ?? 0.9,
-      wordCountRange: options?.wordCountRange ?? '50万-100万字',
+      wordCountRange: options?.wordCountRange ?? DEFAULT_WORD_COUNT_RANGE,
       maxRetries: options?.maxRetries ?? 2,
       ...(signal ? { signal } : {}),
     };

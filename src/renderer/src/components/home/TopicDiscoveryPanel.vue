@@ -285,10 +285,6 @@ const canMixGenerate = computed(
     !isProcessing.value,
 );
 
-const canDiceGenerate = computed(
-  () => !!diceRoll.value && !isRefreshing.value && !isProcessing.value && !isDiceRolling.value,
-);
-
 const refreshButtonLabel = computed(() => {
   switch (activeTab.value) {
     case 'prompt':
@@ -495,13 +491,12 @@ async function handleRefresh(): Promise<void> {
   }
 
   if (activeTab.value === 'dice') {
-    if (!canDiceGenerate.value) {
-      message.warning(t('topicDiscovery.diceNeedRoll'));
-      return;
+    // 未掷过时自动先掷一次，避免用户点上方「用骰子开题」被拦
+    if (!diceRoll.value) {
+      await rollDice();
     }
-    if (diceRoll.value) {
-      await refreshFromDice(diceRoll.value);
-    }
+    if (!diceRoll.value || isRefreshing.value || isProcessing.value) return;
+    await refreshFromDice(diceRoll.value);
     return;
   }
 
@@ -1077,8 +1072,8 @@ async function rollDice(): Promise<void> {
       v-if="activeTab === 'dice'"
       class="w-full rounded-xl border border-rose-200/70 dark:border-rose-800/50 bg-rose-50/40 dark:bg-rose-950/20 p-4 space-y-4"
     >
-      <div class="flex items-start justify-between gap-3">
-        <div>
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div class="min-w-0 flex-1">
           <h4 class="text-base font-semibold text-gray-900 dark:text-white">
             {{ t('topicDiscovery.diceTitle') }}
           </h4>
@@ -1088,7 +1083,7 @@ async function rollDice(): Promise<void> {
         </div>
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 disabled:opacity-50"
+          class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold shrink-0 border border-rose-600/30 shadow-sm bg-rose-500 text-white hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="isDiceRolling || isRefreshing || isProcessing"
           @click="rollDice"
         >

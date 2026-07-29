@@ -69,6 +69,16 @@ export interface GeneratedCharacter {
   background?: string;    // 背景故事
   // 结构化关系
   relationships?: GeneratedRelationship[];
+  /** 开书大纲透传的结构化人设 */
+  keyNeed?: string;
+  publicGoal?: string;
+  hiddenNeed?: string;
+  fearOrWound?: string;
+  secret?: string;
+  turningPoint?: string;
+  arcStart?: string;
+  arcMid?: string;
+  arcEnd?: string;
 }
 
 export interface GeneratedRelationship {
@@ -131,6 +141,26 @@ export interface GeneratedStartupChapterBlock {
   hookRequirement: string; // 必留钩子
   pacing: 'fast' | 'medium'; // 节奏
   readerExpectation: string; // 读者期待
+  /** 本块禁区（1-3 条） */
+  forbiddenZones?: string[];
+}
+
+/**
+ * 卷纲（来自 ExecutableOutline.volumePlan）
+ */
+export interface GeneratedVolumePlan {
+  volumeIndex: number;
+  title: string;
+  objective: string;
+  coreConflict: string;
+  climax: string;
+  reversal: string;
+  endingHook: string;
+  protagonistGrowth: string;
+  keyCharacters: string[];
+  setupForeshadows: string[];
+  payoffForeshadows: string[];
+  relationshipShifts: string[];
 }
 
 export interface GeneratedStartupPack {
@@ -262,6 +292,8 @@ export interface GeneratedOutline {
   // ====== 元数据 ======
   /** 卷数（兼容 OutlineSchema） */
   volumes?: number;
+  /** 结构化卷纲（应用创建项目时建成 volumes 实体） */
+  volumePlans?: GeneratedVolumePlan[];
 }
 
 /**
