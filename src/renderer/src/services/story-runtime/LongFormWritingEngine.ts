@@ -5,6 +5,7 @@ import type {
   StructuredAI,
 } from '@/types/story-runtime';
 
+import { canonicalizeExtractedFacts } from './FactCanonicalizer';
 import {
   ChapterCommitService,
   type ChapterCommitPort,
@@ -54,19 +55,25 @@ export class LongFormWritingEngine {
       maxTokens: input.maxContextTokens,
     });
     const drafts = await this.draftEngine.draft(plan, context);
-    const facts = await this.dependencies.factExtractor.extract({
+    const rawFacts = await this.dependencies.factExtractor.extract({
       projectId: input.projectId,
       chapterNumber: input.contracts.chapter.chapterNumber,
       sceneDrafts: drafts,
       state: input.state,
       overlay: input.overlay,
     });
+    // 提取层输出 ≠ 校验契约输入：必须先 canonicalize 再 validate
+    const canonical = canonicalizeExtractedFacts({
+      facts: rawFacts,
+      state: input.state,
+      drafts,
+      overlay: input.overlay,
+    });
     const report = this.validator.validate({
       contracts: input.contracts,
-      state: input.state,
-      overlay: input.overlay,
+      state: canonical.stateForValidation,
       drafts,
-      facts,
+      facts: canonical.facts,
     });
     const { commit, receipt } = await this.commitService.commit({
       projectId: input.projectId,
@@ -74,9 +81,9 @@ export class LongFormWritingEngine {
       previousOverlay: input.overlay,
       contracts: input.contracts,
       drafts,
-      facts,
+      facts: canonical.facts,
       report,
     });
-    return { plan, context, drafts, facts, report, commit, receipt };
+    return { plan, context, drafts, facts: canonical.facts, report, commit, receipt };
   }
 }

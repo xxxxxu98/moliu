@@ -2,6 +2,7 @@ export * from './ChapterCommitService';
 export * from './ContextPackBuilder';
 export * from './ContinuityValidator';
 export * from './ContractPackBuilder';
+export * from './FactCanonicalizer';
 export * from './FactExtractor';
 export * from './GroundedRetriever';
 export * from './LegacyProjectMigrator';

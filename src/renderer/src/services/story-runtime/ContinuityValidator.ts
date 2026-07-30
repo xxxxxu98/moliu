@@ -25,13 +25,35 @@ function chapterText(drafts: SceneDraft[]): string {
 }
 
 function fulfilled(node: string, text: string, facts: ExtractedFacts): boolean {
+  if (!node.trim()) return true;
   if (text.includes(node)) return true;
-  return facts.events.some(
-    event =>
-      event.summary.includes(node) ||
-      event.effects.some(effect => effect.includes(node)) ||
-      event.evidence.some(evidence => evidence.includes(node))
-  );
+  if (
+    facts.events.some(
+      event =>
+        event.summary.includes(node) ||
+        event.effects.some(effect => effect.includes(node)) ||
+        event.evidence.some(evidence => evidence.includes(node))
+    )
+  ) {
+    return true;
+  }
+
+  // 工程化履约：长句 mustCover 拆成可检查的关键片语（引号内容、2+ 字中文/词段）
+  const quoted = [...node.matchAll(/[“"‘']([^”"'’]+)[”"'’]/gu)].map(match => match[1].trim());
+  const segments = node
+    .split(/[，,。；;：:\s]/u)
+    .map(part => part.trim())
+    .filter(part => part.length >= 2);
+  const tokens = [...new Set([...quoted, ...segments])].filter(token => token.length >= 2);
+  if (tokens.length === 0) return false;
+
+  const haystack = [
+    text,
+    ...facts.events.flatMap(event => [event.summary, ...event.effects, ...event.evidence]),
+  ].join('\n');
+  const hitCount = tokens.filter(token => haystack.includes(token)).length;
+  // 要求覆盖大部分关键片语，避免整句一字不差才能过
+  return hitCount >= Math.ceil(tokens.length * 0.7);
 }
 
 function parseInventoryPath(path: string): { owner: string; item: string } | undefined {
