@@ -1,9 +1,9 @@
 /**
  * L5 门禁层 - 一致性门禁流水线
  *
- * 串联 G1-G7，按"短路"策略执行：
+ * 串联 G1-G8，按"短路"策略执行：
  *   - G1 协议解析失败 → 直接终止，不浪费后续门禁计算
- *   - G1-G6 确定性门禁全部跑完
+ *   - G1-G6 / G8 确定性门禁全部跑完
  *   - G7 LLM 门禁（可选，需注入客户端）
  *
  * 智能决策：根据问题类型和严重度决定 accept / auto_fix / rewrite / reject
@@ -18,6 +18,7 @@ import {
   Gate6Entity,
 } from './deterministic-gates';
 import { Gate7Semantic } from './Gate7Semantic';
+import { Gate8Typesetting } from './Gate8Typesetting';
 import type {
   Gate,
   GateConfig,
@@ -47,6 +48,7 @@ export class ConsistencyGatePipeline {
       new Gate4Description(),
       new Gate5Blueprint(),
       new Gate6Entity(),
+      new Gate8Typesetting(),
       new Gate7Semantic(),
     ];
   }
@@ -114,7 +116,7 @@ export class ConsistencyGatePipeline {
   }
 
   /**
-   * 只执行确定性门禁（G1-G6），跳过 G7。
+   * 只执行确定性门禁（G1-G6 / G8），跳过 G7。
    * 用于：快速预检、LLM 不可用时的降级。
    */
   async runDeterministicOnly(ctx: GateContext): Promise<GatePipelineResult> {
@@ -170,7 +172,7 @@ export class ConsistencyGatePipeline {
    * - 有 critical 协议/蓝图问题 → rewrite
    * - 只有可自动修复问题（AI 味、段落）→ auto_fix
    * - 只有 low/info → accept
-   * - 有 high 但无 critical → manual_review
+   * - 有 high 但无 critical → manual_review / rewrite（排版 high → rewrite）
    */
   private makeDecision(
     issues: GateIssue[],
@@ -202,6 +204,19 @@ export class ConsistencyGatePipeline {
       return {
         shouldBlock: true,
         reason: `${hardCritical.length} 个硬约束 critical 问题：${hardCritical.slice(0, 2).map(i => i.description).join('；')}`,
+        canAutoFix: false,
+        nextAction: 'rewrite',
+      };
+    }
+
+    // 排版密度 high → 重写（确定性拆段后仍过密）
+    const typesettingHigh = issues.filter(
+      i => i.category === 'typesetting' && i.severity === 'high'
+    );
+    if (typesettingHigh.length > 0) {
+      return {
+        shouldBlock: true,
+        reason: `段落过密：${typesettingHigh[0].description}`,
         canAutoFix: false,
         nextAction: 'rewrite',
       };

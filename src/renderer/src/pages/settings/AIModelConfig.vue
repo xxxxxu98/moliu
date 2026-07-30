@@ -11,6 +11,7 @@ import {
   NFormItem,
   NPopconfirm,
   useMessage,
+  useNotification,
 } from "naive-ui";
 import {
   Plus,
@@ -20,6 +21,7 @@ import {
   X,
   Key,
   Edit2,
+  Copy,
   Shield,
   Zap,
   AlertCircle,
@@ -44,6 +46,7 @@ let activeTestController: AbortController | null = null;
 
 const { t } = useI18n();
 const message = useMessage();
+const notification = useNotification();
 const settingsStore = useSettingsStore();
 
 const showAddModal = ref(false);
@@ -337,6 +340,28 @@ function saveProvider() {
 function deleteProvider(id: string) {
   settingsStore.removeAIProvider(id);
   message.success(t("settings.aiProviders.messages.deleteSuccess"));
+}
+
+function duplicateProvider(provider: AIProvider) {
+  try {
+    const copied = settingsStore.duplicateAIProvider(
+      provider.id,
+      t("settings.aiProviders.copySuffix"),
+    );
+    if (!copied) {
+      message.error(t("settings.aiProviders.messages.copyFailed"));
+      return;
+    }
+    notification.success({
+      title: t("settings.aiProviders.messages.copySuccessTitle"),
+      content: t("settings.aiProviders.messages.copySuccess", {
+        name: copied.name,
+      }),
+      duration: 3000,
+    });
+  } catch {
+    message.error(t("settings.aiProviders.messages.copyFailed"));
+  }
 }
 
 async function testConnection(provider: AIProvider) {
@@ -741,6 +766,13 @@ onMounted(() => {
               >
                 <Edit2 class="w-3 h-3" />
                 {{ t("settings.common.edit") }}
+              </button>
+              <button
+                class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-xs font-medium hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors"
+                @click="duplicateProvider(provider)"
+              >
+                <Copy class="w-3 h-3" />
+                {{ t("settings.common.copy") }}
               </button>
               <NPopconfirm @positive-click="deleteProvider(provider.id)">
                 <template #trigger>

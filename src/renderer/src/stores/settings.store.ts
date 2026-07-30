@@ -290,6 +290,37 @@ function setDefaultModel(selection: AIDefaultModelSelection | null) {
     }
   }
 
+  /**
+   * 复制已有模型配置，生成新 ID，显示名称追加标识后缀（冲突时递增编号）
+   */
+  function duplicateAIProvider(id: string, nameSuffix: string): AIProvider | null {
+    const source = aiProviders.value.find(p => p.id === id);
+    if (!source) return null;
+
+    const existingNames = new Set(aiProviders.value.map(p => p.name));
+    let newName = `${source.name}${nameSuffix}`;
+    if (existingNames.has(newName)) {
+      let counter = 2;
+      while (existingNames.has(`${source.name}${nameSuffix} ${counter}`)) {
+        counter += 1;
+      }
+      newName = `${source.name}${nameSuffix} ${counter}`;
+    }
+
+    const newProvider: AIProvider = {
+      ...source,
+      id: `provider-${Date.now()}`,
+      name: newName,
+      generationConfig: source.generationConfig
+        ? { ...source.generationConfig }
+        : undefined,
+      isTesting: false,
+    };
+    aiProviders.value.push(newProvider);
+    saveAIProviders();
+    return newProvider;
+  }
+
   // Reset all testing states - useful for cleanup on page mount
   function resetTestingStates() {
     let hasChanges = false;
@@ -402,6 +433,7 @@ function setDefaultModel(selection: AIDefaultModelSelection | null) {
     addAIProvider,
     updateAIProvider,
     removeAIProvider,
+    duplicateAIProvider,
     resetTestingStates,
     testAIProvider,
   };

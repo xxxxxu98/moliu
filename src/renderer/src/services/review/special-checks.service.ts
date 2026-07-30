@@ -7,6 +7,7 @@
  */
 
 import type { ReviewIssue, ReviewCategory } from '@/types/writing-task';
+import { MAX_PARAGRAPH_CHARS } from '@/services/writing/typesetting';
 
 // ============================================
 // 自动修复服务
@@ -698,8 +699,8 @@ export function checkPacing(content: string, chapterNumber: number): PacingResul
     const length = para.length;
     totalLength += length;
 
-    // 超过 100 字为长段落
-    if (length > 100) {
+    // 超过舒适段长视为偏长
+    if (length > MAX_PARAGRAPH_CHARS) {
       longParagraphCount++;
 
       if (longParagraphCount > 5) {
@@ -710,7 +711,7 @@ export function checkPacing(content: string, chapterNumber: number): PacingResul
           location: `第${chapterNumber}章第${i + 1}段`,
           description: `段落过长（${length}字）`,
           evidence: para.slice(0, 30) + '...',
-          fixHint: '拆分长段落，每段不超过 3 句话',
+          fixHint: `拆分长段落，单段约 3～5 句、不超过约 ${MAX_PARAGRAPH_CHARS} 字`,
           blocking: false,
         });
       }

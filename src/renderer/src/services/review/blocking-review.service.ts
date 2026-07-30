@@ -31,13 +31,16 @@ const NON_BLOCKING_ISSUE_TYPES: Record<string, boolean> = {
   'chapter_ending': true,
 };
 
-/** 严重问题类型 - 总是阻断 */
-const ALWAYS_BLOCKING_TYPES: Record<string, boolean> = {
-  'character_consistency': true,
-  'logic_gap': true,
-  'setting_conflict': true,
-  'timeline_error': true,
-  'continuity': true,
+/**
+ * 严重问题类型 - 命中且判定应阻断时，忽略严格度阈值强制阻断
+ * 键必须与 ReviewCategory 对齐（旧版 character_consistency 等从未匹配真实分类）
+ */
+const ALWAYS_BLOCKING_TYPES: Partial<Record<ReviewCategory, boolean>> = {
+  character: true,
+  logic: true,
+  setting: true,
+  timeline: true,
+  continuity: true,
 };
 
 /** 问题严重度到阻断的映射 */
@@ -170,26 +173,18 @@ export class BlockingReviewService {
     const content = this.context.chapter?.content || '';
     const specialResult = performSpecialChecks(content, chapterNumber);
 
-    // 3. 合并问题
+    // 3. 合并问题后整表重算（含 decision），避免 blockingCount=0 但旧 decision 仍阻断
     const allIssues = [...blockingResult.issues, ...specialResult.allIssues];
-
-    // 4. 重新分析合并后的问题
-    const mergedBlockingCount = allIssues.filter(i => i.blocking).length;
-    const mergedHighPriorityCount = allIssues.filter(
-      i => i.severity === 'high' || i.severity === 'critical'
-    ).length;
-
-    // 5. 返回增强结果
-    return {
-      blockingResult: {
-        ...blockingResult,
+    const mergedBlockingResult = this.analyzeBlockingResult({
+      ...detail,
+      overall: {
+        ...detail.overall,
         issues: allIssues,
-        totalIssues: allIssues.length,
-        blockingCount: mergedBlockingCount,
-        highPriorityCount: mergedHighPriorityCount,
-        passed: mergedBlockingCount === 0,
-        hasBlocking: mergedBlockingCount > 0,
       },
+    });
+
+    return {
+      blockingResult: mergedBlockingResult,
       specialResult,
     };
   }
@@ -246,8 +241,8 @@ export class BlockingReviewService {
         autoFixableCount++;
       }
 
-      // 统计必须阻断的问题
-      if (ALWAYS_BLOCKING_TYPES[category]) {
+      // 仅统计「严重类别且实际应阻断」的项，避免低/中严重度却强制 shouldBlock
+      if (ALWAYS_BLOCKING_TYPES[category] && shouldBlock) {
         alwaysBlockCount++;
       }
     }
@@ -294,11 +289,18 @@ export class BlockingReviewService {
    * 判断单个问题是否应该阻断
    */
   private shouldBlockIssue(issue: ReviewIssue): boolean {
-    const category = issue.category as string;
+    const category = issue.category;
     
-    // 如果是总是阻断的类型，直接返回 issue.blocking
+    // 严重类别：按严格度抬门槛，critical 即使漏标 blocking 也阻断
     if (ALWAYS_BLOCKING_TYPES[category]) {
-      return issue.blocking;
+      if (this.strictness === 'relaxed') {
+        return issue.severity === 'critical';
+      }
+      return (
+        issue.blocking ||
+        issue.severity === 'critical' ||
+        issue.severity === 'high'
+      );
     }
 
     // 如果是不应该阻断的类型，根据严格度判断
@@ -655,7 +657,10 @@ export async function blockingReview(
  * 快速检查 blocking 状态
  */
 export function canProceedToPolish(result: BlockingReviewResult): boolean {
-  // 如果有 decision 信息，使用智能决策
+  // 防御：decision 与 blockingCount 不一致时以 blockingCount 为准（历史口径漂移）
+  if (result.decision?.shouldBlock && result.blockingCount === 0) {
+    return true;
+  }
   if (result.decision) {
     return !result.decision.shouldBlock;
   }

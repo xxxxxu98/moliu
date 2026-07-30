@@ -38,6 +38,11 @@ import {
   createChapterMemoryClient,
 } from './chapterPersistenceAdapters';
 import { runSupplementRounds } from './supplement';
+import {
+  TYPESETTING_HARD_RULES,
+  buildWritingRulesWithTypesetting,
+  normalizeWebnovelParagraphs,
+} from './typesetting';
 import type { GateContext, GateIssue, GatePipelineResult } from '@/services/gates/types';
 import type { WritingTaskBook } from '@/types/writing-v2';
 import type { Project, Chapter } from '@/types/project';
@@ -53,8 +58,10 @@ import {
   GroundedRetriever,
   LegacyProjectMigrator,
   LongFormWritingEngine,
+  sanitizeStructuredProseLeakage,
   StoryRuntimeClient,
 } from '@/services/story-runtime';
+import { robustJsonParse } from '@/utils/json-parser';
 
 // ============================================================
 // 类型定义
@@ -268,7 +275,8 @@ export class ChapterWritingPipeline {
 
     // ====== Step 2: 任务书 → StateDriven options 转换 ======
     const currentChapterOutline = chapter.outline || chapter.plotSummary || '';
-    const writingRules = taskBook ? this.buildWritingRules(taskBook) : undefined;
+    // 始终注入排版硬约束；有任务书时追加任务书段落
+    const writingRules = this.buildWritingRules(taskBook);
     const blueprint = taskBook
       ? {
           mustCover: taskBook.mustCover,
@@ -340,10 +348,10 @@ export class ChapterWritingPipeline {
       }
     }
 
-    // ====== Step 6: 结果归一化 ======
+    // ====== Step 6: 结果归一化（剥离结构化泄漏 → 轻量排版，不改写叙述） ======
     return {
       success: true,
-      prose,
+      prose: normalizeWebnovelParagraphs(sanitizeStructuredProseLeakage(prose)),
       title: this.readBackTitle(chapter.id),
       taskBook,
       gateResult: result.gateResult,
@@ -425,6 +433,7 @@ export class ChapterWritingPipeline {
         style: [
           input.writingStyle,
           `目标约 ${input.targetWordCount} 字，按场景分配篇幅`,
+          TYPESETTING_HARD_RULES,
           ...(taskBook?.styleGuidance?.reasoning ?? []),
           input.userInstructions ?? '',
         ],
@@ -479,9 +488,12 @@ export class ChapterWritingPipeline {
         styleGuidance: contracts.master.style,
         maxContextTokens: 24_000,
       });
-      const prose = result.drafts
-        .flatMap(scene => scene.paragraphs)
-        .join('\n\n');
+      // coerce 已清洗段落；出口再兜底一次，保证落库/回显不含 schema 残留
+      const prose = normalizeWebnovelParagraphs(
+        sanitizeStructuredProseLeakage(
+          result.drafts.flatMap(scene => scene.paragraphs).join('\n\n')
+        )
+      );
       const gateResult = this.toGateResult(result.report);
 
       if (result.commit.status !== 'accepted' || !result.receipt) {
@@ -527,18 +539,18 @@ export class ChapterWritingPipeline {
 
   private static parseStructuredJson(raw: string): unknown {
     const trimmed = raw.trim().replace(/^```(?:json)?\s*/iu, '').replace(/\s*```$/u, '');
-    try {
-      return JSON.parse(trimmed) as unknown;
-    } catch {
-      const start = Math.min(
-        ...[trimmed.indexOf('{'), trimmed.indexOf('[')].filter(index => index >= 0)
-      );
-      const end = Math.max(trimmed.lastIndexOf('}'), trimmed.lastIndexOf(']'));
-      if (!Number.isFinite(start) || start < 0 || end <= start) {
-        throw new Error('AI 未返回可解析的结构化 JSON');
-      }
-      return JSON.parse(trimmed.slice(start, end + 1)) as unknown;
+    const parsed = robustJsonParse(trimmed, { expectedType: 'object', enableCompletion: true });
+    if (parsed.success && parsed.data !== undefined) {
+      return parsed.data;
     }
+    const asArray = robustJsonParse(trimmed, { expectedType: 'array', enableCompletion: true });
+    if (asArray.success && asArray.data !== undefined) {
+      return asArray.data;
+    }
+    const detail = parsed.warnings?.slice(-2).join('；') || asArray.warnings?.slice(-2).join('；');
+    throw new Error(
+      detail ? `AI 返回的结构化 JSON 无法解析：${detail}` : 'AI 未返回可解析的结构化 JSON'
+    );
   }
 
   private toGateResult(report: ContinuityReport): GatePipelineResult {
@@ -651,10 +663,13 @@ export class ChapterWritingPipeline {
 
   /**
    * 把任务书转换为写作规则文本（注入 prompt）。
-   * 与 WritingOrchestratorV2.buildEnhancedOutline 口径一致。
+   * 始终含排版硬约束；有任务书时追加。
    */
-  private buildWritingRules(book: WritingTaskBook): string {
-    return `
+  private buildWritingRules(book: WritingTaskBook | null): string {
+    if (!book) {
+      return buildWritingRulesWithTypesetting(null);
+    }
+    const taskBookSection = `
 === 写作任务书 ===
 【CBN】${book.CBN}
 【CPNs】${book.CPNs.join(' / ')}
@@ -666,6 +681,7 @@ export class ChapterWritingPipeline {
 【开放问题】${book.hardConstraints?.chapterEndOpenQuestion || '留下悬念'}
 === 任务书结束 ===
 `;
+    return buildWritingRulesWithTypesetting(taskBookSection);
   }
 
   /**

@@ -125,9 +125,13 @@ describe('patch 模型', () => {
 });
 
 class FakeAI implements StructuredAI {
+  callCount = 0;
+
   async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
+    this.callCount += 1;
     const payload = JSON.parse(request.prompt) as {
       beat: { id: string; summary: string };
+      chapterBeats?: Array<{ kind: string; summary: string }>;
       allowedCandidateEvents: Array<{
         id: string;
         summary: string;
@@ -136,10 +140,12 @@ class FakeAI implements StructuredAI {
         effects: string[];
       }>;
     };
+    const arc =
+      payload.chapterBeats?.map(beat => beat.summary).join('→') ?? payload.beat.summary;
     return {
       sceneId: `${payload.beat.id}:scene`,
       beatId: payload.beat.id,
-      paragraphs: [`林夜经历了${payload.beat.summary}。`],
+      paragraphs: [`林夜经历了${arc}。`],
       candidateEvents: payload.allowedCandidateEvents,
     };
   }
@@ -153,7 +159,7 @@ describe('LongFormWritingEngine', () => {
           {
             id: 'event-1',
             chapter: input.chapterNumber,
-            sceneId: input.sceneDrafts[1].sceneId,
+            sceneId: input.sceneDrafts[0].sceneId,
             type: 'checkpoint',
             summary: '守卫盘查',
             participants: ['hero'],
@@ -172,8 +178,9 @@ describe('LongFormWritingEngine', () => {
       acceptedAt: '2026-01-02T00:00:00.000Z',
     };
     const commitChapter = vi.fn(async () => receipt);
+    const ai = new FakeAI();
     const engine = new LongFormWritingEngine({
-      ai: new FakeAI(),
+      ai,
       factExtractor: facts,
       commitPort: { commitChapter },
     });
@@ -189,7 +196,9 @@ describe('LongFormWritingEngine', () => {
     });
 
     expect(result.plan.beats).toHaveLength(3);
-    expect(result.drafts).toHaveLength(3);
+    // 规划仍保留多 beat；正文改为单次整章起草
+    expect(result.drafts).toHaveLength(1);
+    expect(ai.callCount).toBe(1);
     expect(result.report.accepted).toBe(true);
     expect(result.commit.status).toBe('accepted');
     expect(result.receipt).toEqual(receipt);

@@ -14,6 +14,7 @@
 import { ChangesPromptInjector } from './ChangesPromptInjector';
 import { ModelRouter } from './ModelRouter';
 import { extractChanges } from '../state/ChangesProtocol';
+import { normalizeWebnovelParagraphs } from '../writing/typesetting';
 import type { ChangesPayload } from '../state/types';
 import type { GatePipelineResult } from '../gates/types';
 
@@ -136,12 +137,12 @@ export class DrafterRetryLoop {
         return this.finalize(attempts, bestAttempt ?? failedAttempt, startTime, 'error');
       }
 
-      // 提取散文 + CHANGES
+      // 提取散文 + CHANGES，并做手机排版确定性拆段（零成本兜底）
       const extracted = extractChanges(rawOutput);
       const draftAttempt: DraftAttempt = {
         attempt,
         rawOutput,
-        prose: extracted.prose,
+        prose: normalizeWebnovelParagraphs(extracted.prose),
         changes: extracted.changes,
         durationMs: Date.now() - draftStart,
       };
@@ -221,7 +222,8 @@ ${feedbackLines}
 请重新生成，确保：
 1. 不再出现上述问题
 2. CHANGES 协议载荷与正文严格对应
-3. 所有 evidence 字段必须直接引用正文原文`;
+3. 所有 evidence 字段必须直接引用正文原文
+4. 段落疏密适中：每段约 3～5 句、180～280 字；优先合并过碎短段；对话换人换行`;
   }
 
   private finalize(

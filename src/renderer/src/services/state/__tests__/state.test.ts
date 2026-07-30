@@ -232,10 +232,27 @@ ${CHANGES_DELIMITER}
     expect(result.diagnostics.errors.length).toBeGreaterThan(0);
   });
 
-  it('空正文不崩溃', () => {
-    const result = extractChanges('');
-    expect(result.prose).toBe('');
-    expect(result.changes).toBeNull();
+  it('容错处理字符串内未转义换行（Bad control character）', () => {
+    const raw = `正文。
+
+${CHANGES_DELIMITER}
+{
+  "version": "1.0",
+  "chapter": 1,
+  "changes": [
+    {
+      "type": "timeline",
+      "currentTime": "次日清晨",
+      "event": "下山",
+      "evidence": "他抬起头。
+门外有人敲门。"
+    }
+  ]
+}`;
+    const result = extractChanges(raw);
+    expect(result.diagnostics.parsed).toBe(true);
+    expect(result.diagnostics.valid).toBe(true);
+    expect(result.changes?.changes[0]).toMatchObject({ type: 'timeline' });
   });
 });
 

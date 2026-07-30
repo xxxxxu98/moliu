@@ -207,6 +207,7 @@ describe('ChapterWritingPipeline', () => {
       expect(options.blueprint).toBeDefined();
       expect(options.blueprint.mustCover).toEqual(['必须覆盖']);
       expect(options.writingRules).toContain('写作任务书');
+      expect(options.writingRules).toContain('手机网文排版');
     });
   });
 
@@ -256,7 +257,9 @@ describe('ChapterWritingPipeline', () => {
       expect(mockGenerateTaskBook).not.toHaveBeenCalled();
       const options = mockWriteChapter.mock.calls[0][3];
       expect(options.blueprint).toBeUndefined();
-      expect(options.writingRules).toBeUndefined();
+      // 无任务书时仍注入排版硬约束
+      expect(options.writingRules).toContain('手机网文排版');
+      expect(options.writingRules).not.toContain('写作任务书');
     });
 
     it('任务书生成失败时降级为无任务书（不中断）', async () => {

@@ -35,57 +35,94 @@ export function robustJsonParse<T = any>(
     .replace(/^(以下是|以下是JSON|以下是结果|返回|JSON结果|result|response|这是|下面)[:：]?\s*/i, '')
     .trim();
 
+  const matchesExpectedType = (data: unknown): boolean => {
+    if (expectedType === 'array') return Array.isArray(data);
+    return data !== null && typeof data === 'object' && !Array.isArray(data);
+  };
+
+  const tryParse = (candidate: string, label?: string): T | undefined => {
+    try {
+      const data = JSON.parse(candidate) as T;
+      if (!matchesExpectedType(data)) {
+        if (label) {
+          warnings.push(`${label}: parsed but not ${expectedType}`);
+        }
+        return undefined;
+      }
+      return data;
+    } catch (e) {
+      if (label) {
+        warnings.push(`${label}: ${(e as Error).message}`);
+      }
+      return undefined;
+    }
+  };
+
   // Strategy 1: Try direct parse
-  try {
-    const data = JSON.parse(content);
-    return { success: true, data: data as T, warnings };
-  } catch {
-    // Direct parse failed
+  {
+    const data = tryParse(content);
+    if (data !== undefined) {
+      return { success: true, data, warnings };
+    }
+  }
+
+  // Strategy 1b: 先转义字符串内控制字符 / 修常见问题再解析
+  // （AI 在 evidence 等字段里塞真实换行时，直解析必挂）
+  {
+    const preFixed = fixCommonIssues(content, warnings);
+    const data = tryParse(preFixed, 'pre-fix');
+    if (data !== undefined) {
+      warnings.push('Parsed after control-char / common-issue fix');
+      return { success: true, data, warnings };
+    }
   }
 
   // Strategy 2: Extract from markdown code blocks
   const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (codeBlockMatch) {
     const extracted = codeBlockMatch[1].trim();
-    try {
-      const data = JSON.parse(extracted);
-      return { success: true, data: data as T, warnings };
-    } catch {
-      // Try fixing the extracted content
-      const fixed = fixCommonIssues(extracted, warnings);
-      try {
-        const data = JSON.parse(fixed);
-        warnings.push('Fixed JSON from markdown code block');
-        return { success: true, data: data as T, warnings };
-      } catch (e) {
-        warnings.push(`Markdown extraction failed: ${(e as Error).message}`);
-      }
+    const direct = tryParse(extracted);
+    if (direct !== undefined) {
+      return { success: true, data: direct, warnings };
+    }
+    const fixed = fixCommonIssues(extracted, warnings);
+    const data = tryParse(fixed, 'Markdown extraction failed');
+    if (data !== undefined) {
+      warnings.push('Fixed JSON from markdown code block');
+      return { success: true, data, warnings };
     }
   }
 
   // Strategy 3: Find JSON using bracket matching
   const jsonStr = findJsonByBrackets(content, expectedType);
   if (jsonStr) {
-    // Try parsing the extracted JSON
     const fixed = fixCommonIssues(jsonStr, warnings);
-    try {
-      const data = JSON.parse(fixed);
+    const data = tryParse(fixed, 'Bracket extraction parse failed');
+    if (data !== undefined) {
       warnings.push('Extracted JSON using bracket matching');
-      return { success: true, data: data as T, warnings };
-    } catch (e) {
-      warnings.push(`Bracket extraction parse failed: ${(e as Error).message}`);
+      return { success: true, data, warnings };
     }
 
     // Try completing incomplete JSON
     if (options?.enableCompletion) {
       const completed = completeJson(fixed);
-      try {
-        const data = JSON.parse(completed);
+      const completedData = tryParse(completed);
+      if (completedData !== undefined) {
         warnings.push('JSON was completed from partial content');
-        return { success: true, data: data as T, warnings };
-      } catch {
-        // Completion failed
+        return { success: true, data: completedData, warnings };
       }
+    }
+
+    // jsonrepair on bracket-extracted slice
+    try {
+      const repaired = jsonrepair(fixed);
+      const repairedData = tryParse(repaired);
+      if (repairedData !== undefined) {
+        warnings.push('Used jsonrepair on bracket-extracted JSON');
+        return { success: true, data: repairedData, warnings };
+      }
+    } catch (e) {
+      warnings.push(`jsonrepair(bracket) failed: ${(e as Error).message}`);
     }
   }
 
@@ -98,42 +135,53 @@ export function robustJsonParse<T = any>(
   }
 
   // Strategy 5: Aggressive cleanup
-  const aggressive = aggressiveCleanup(content);
-  try {
-    const data = JSON.parse(aggressive);
-    warnings.push('Used aggressive JSON cleanup');
-    return { success: true, data: data as T, warnings };
-  } catch {
-    // Aggressive cleanup failed
+  {
+    const aggressive = aggressiveCleanup(content);
+    const data = tryParse(aggressive);
+    if (data !== undefined) {
+      warnings.push('Used aggressive JSON cleanup');
+      return { success: true, data, warnings };
+    }
   }
 
   // Strategy 6: Try to extract and parse any JSON-like content
   const anyJsonMatch = content.match(/\{[\s\S]*\}/);
   if (anyJsonMatch) {
     const fixed = fixCommonIssues(anyJsonMatch[0], warnings);
-    try {
-      const data = JSON.parse(fixed);
+    const data = tryParse(fixed);
+    if (data !== undefined) {
       warnings.push('Extracted JSON using regex fallback');
-      return { success: true, data: data as T, warnings };
-    } catch {
-      // Regex fallback failed
+      return { success: true, data, warnings };
     }
   }
 
-  // Strategy 7: Use jsonrepair for final recovery attempt
-  try {
-    const repaired = jsonRepair(content);
-    const data = JSON.parse(repaired);
-    warnings.push('Used jsonrepair to fix malformed JSON');
-    return { success: true, data: data as T, warnings };
-  } catch (e) {
-    warnings.push(`jsonrepair failed: ${(e as Error).message}`);
+  // Strategy 7: Use jsonrepair for final recovery（注意：包导出为 jsonrepair，不是 jsonRepair）
+  const repairCandidates = [
+    content,
+    fixCommonIssues(content, warnings),
+    jsonStr ? fixCommonIssues(jsonStr, warnings) : '',
+  ].filter(Boolean);
+
+  for (const candidate of repairCandidates) {
+    try {
+      const repaired = jsonrepair(candidate);
+      const data = tryParse(repaired);
+      if (data !== undefined) {
+        warnings.push('Used jsonrepair to fix malformed JSON');
+        return { success: true, data, warnings };
+      }
+    } catch (e) {
+      warnings.push(`jsonrepair failed: ${(e as Error).message}`);
+    }
   }
 
   // All strategies failed
+  const hint = warnings.slice(-3).join(' | ');
   return {
     success: false,
-    error: 'Failed to parse JSON after all strategies',
+    error: hint
+      ? `无法解析 AI 返回的 JSON（${hint}）`
+      : '无法解析 AI 返回的 JSON',
     warnings,
   };
 }
@@ -238,9 +286,11 @@ function fixCommonIssues(jsonStr: string, warnings: string[]): string {
 }
 
 /**
- * Fix unescaped newlines within strings
+ * Fix unescaped control characters within JSON strings.
+ * AI 常在 evidence 等字段里塞入真实换行/制表符，导致 JSON.parse 报
+ * "Bad control character in string literal"。
  */
-function fixUnescapedNewlines(str: string): string {
+export function fixUnescapedControlCharsInJsonStrings(str: string): string {
   let result = '';
   let inString = false;
   let escaped = false;
@@ -266,23 +316,36 @@ function fixUnescapedNewlines(str: string): string {
       continue;
     }
 
-    if (inString && (char === '\n' || char === '\r')) {
-      // Escape the newline
-      if (char === '\r' && str[i + 1] === '\n') {
-        result += '\\r\\n';
-        i++;
-      } else if (char === '\n') {
-        result += '\\n';
-      } else {
-        result += '\\r';
+    if (inString) {
+      const code = char.charCodeAt(0);
+      if (code < 0x20) {
+        if (char === '\r' && str[i + 1] === '\n') {
+          result += '\\r\\n';
+          i++;
+        } else if (char === '\n') {
+          result += '\\n';
+        } else if (char === '\r') {
+          result += '\\r';
+        } else if (char === '\t') {
+          result += '\\t';
+        } else {
+          result += `\\u${code.toString(16).padStart(4, '0')}`;
+        }
+        continue;
       }
-      continue;
     }
 
     result += char;
   }
 
   return result;
+}
+
+/**
+ * Fix unescaped newlines within strings（兼容旧名）
+ */
+function fixUnescapedNewlines(str: string): string {
+  return fixUnescapedControlCharsInJsonStrings(str);
 }
 
 /**

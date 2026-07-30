@@ -21,6 +21,7 @@ import {
   ALL_CHANGE_TYPES,
 } from './types';
 import type { z } from 'zod';
+import { robustJsonParse, fixUnescapedControlCharsInJsonStrings } from '@/utils/json-parser';
 
 // ============================================================
 // 正文提取：从 AI 输出里分离"散文"和"CHANGES"
@@ -93,14 +94,23 @@ export function extractChanges(rawOutput: string): ExtractResult {
     return { prose, changes: null, diagnostics };
   }
 
-  // 3. 解析 JSON（带容错修复）
+  // 3. 解析 JSON（带容错：控制字符转义 + jsonrepair）
   let parsed: unknown;
-  try {
-    parsed = JSON.parse(repairJson(jsonText));
+  const robust = robustJsonParse(jsonText, { expectedType: 'object', enableCompletion: true });
+  if (robust.success && robust.data !== undefined) {
+    parsed = robust.data;
     diagnostics.parsed = true;
-  } catch (err) {
-    diagnostics.errors.push(`JSON 解析失败: ${err instanceof Error ? err.message : String(err)}`);
-    return { prose, changes: null, diagnostics };
+  } else {
+    try {
+      parsed = JSON.parse(repairJson(jsonText));
+      diagnostics.parsed = true;
+    } catch (err) {
+      // CHANGES 解析失败不阻断正文：散文仍可用，门禁可按空变更处理
+      diagnostics.errors.push(
+        `CHANGES JSON 解析失败（已保留正文）: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return { prose, changes: null, diagnostics };
+    }
   }
 
   // 4. Zod 校验，失败时尝试逐条修复
@@ -157,16 +167,19 @@ function extractJsonBlock(text: string): string | null {
  * - 尾随逗号
  * - 单引号 → 双引号
  * - 中文标点引号
+ * - 字符串内未转义的换行/制表符等控制字符（排版强化后更常见）
  */
 function repairJson(text: string): string {
   let fixed = text;
   // 中文引号 → 英文引号
-  fixed = fixed.replace(/[""]/g, '"').replace(/['']/g, "'");
+  fixed = fixed.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'");
   // 单引号字符串 → 双引号（简单场景）
   fixed = fixed.replace(/'([^']*)'(\s*:)/g, '"$1"$2');
   fixed = fixed.replace(/:\s*'([^']*)'/g, ': "$1"');
   // 尾随逗号
   fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
+  // 字符串内裸控制字符 → 合法转义
+  fixed = fixUnescapedControlCharsInJsonStrings(fixed);
   return fixed;
 }
 

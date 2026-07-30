@@ -37,6 +37,7 @@ import {
 import { initializeMemoryManager, getMemoryManager } from '@/services/writing/memory-manager';
 import { DeAIService } from '@/services/writing/de-ai-service';
 import { countWords } from '@/services/writing/utils';
+import { sanitizeStructuredProseLeakage } from '@/services/story-runtime/stripDraftLeakage';
 import {
   MAX_WORD_THRESHOLD,
   MAX_SUPPLEMENT_ROUNDS,
@@ -1025,8 +1026,14 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
         // 未通过且未跳过审查，显示错误
         if (!reviewPassed && !skipReview && lastReviewResult) {
-          console.warn('[DEBUG applyGeneratedContent] ❌ 退出: 审查未通过且未跳过');
-          error.value = `审查未通过：${lastReviewResult.blockingCount}个阻断问题（已达最低严格度，可选择跳过）`;
+          console.warn('[DEBUG applyGeneratedContent] ❌ 退出: 审查未通过且未跳过', {
+            blockingCount: lastReviewResult.blockingCount,
+            decision: lastReviewResult.decision,
+          });
+          const decisionHint = lastReviewResult.decision?.reason
+            ? `：${lastReviewResult.decision.reason}`
+            : `：${lastReviewResult.blockingCount}个阻断问题`;
+          error.value = `审查未通过${decisionHint}（已达最低严格度，可选择跳过）`;
           if (currentChapterId) {
             latestReport.value = generateReport(
               currentChapterId,
@@ -1054,15 +1061,14 @@ export function useChapterWriter(): UseChapterWriterReturn {
       }
 
       // ========== 步骤 4: 润色（去AI味） ==========
-      // 正文不改写（保持稳定，由系统提示词的"去AI味门控路由"在生成阶段预防）
-      // 仅做标题提取 + 可观测检测日志（不改内容），为后续决策提供数据
+      // 正文不改写叙述（去AI味仅检测）；仅剥离结构化 JSON 骨架泄漏，保证编辑器回显干净
       currentStep.value = 'polish';
-      let processedContent = currentGeneratedContent;
+      let processedContent = sanitizeStructuredProseLeakage(currentGeneratedContent);
       let extractedTitle: string | null | undefined;
 
       const titleValidation = DeAIService.extractAndValidateTitle(processedContent);
       extractedTitle = titleValidation.title;
-      processedContent = titleValidation.content;
+      processedContent = sanitizeStructuredProseLeakage(titleValidation.content);
 
       // 可观测检测：记录检测到的问题（纯检测，不改写正文）
       try {
@@ -1080,16 +1086,22 @@ export function useChapterWriter(): UseChapterWriterReturn {
       // 管道（ChapterWritingPipeline）在 L6 已落库；若正文已包含生成内容则跳过追加，避免重复写入。
       currentStep.value = 'save';
       const currentContent = projectStore.currentChapter?.content || '';
+      const cleanedPersisted = sanitizeStructuredProseLeakage(currentContent);
       const alreadyPersistedByPipeline =
         currentContent.length > 0 &&
         (currentContent === processedContent ||
+          cleanedPersisted === processedContent ||
+          currentContent === currentGeneratedContent ||
           currentContent.endsWith(processedContent) ||
+          currentContent.endsWith(currentGeneratedContent) ||
           (processedContent.length > 80 &&
             currentContent.includes(processedContent.slice(0, 80))));
 
       if (!alreadyPersistedByPipeline) {
         const separator = currentContent.length > 0 && !currentContent.endsWith('\n') ? '\n\n' : '';
-        const newContent = currentContent + separator + processedContent;
+        const newContent = sanitizeStructuredProseLeakage(
+          currentContent + separator + processedContent
+        );
 
         const updateData: Record<string, unknown> = {
           content: newContent,
@@ -1101,12 +1113,22 @@ export function useChapterWriter(): UseChapterWriterReturn {
         }
 
         await projectStore.updateChapter(projectStore.currentChapterId!, updateData);
-      } else if (extractedTitle && projectStore.currentChapter) {
-        // 正文已落库，仅同步标题（若管道未提取到）
-        if (!projectStore.currentChapter.title || projectStore.currentChapter.title.startsWith('第')) {
-          await projectStore.updateChapter(projectStore.currentChapterId!, {
-            title: extractedTitle,
-          });
+      } else {
+        // 管道已落库：若仍含 schema 泄漏则原地修正；标题按需同步
+        const updateData: Record<string, unknown> = {};
+        if (cleanedPersisted !== currentContent) {
+          updateData.content = cleanedPersisted;
+          updateData.wordCount = countWords(cleanedPersisted);
+        }
+        if (
+          extractedTitle &&
+          projectStore.currentChapter &&
+          (!projectStore.currentChapter.title || projectStore.currentChapter.title.startsWith('第'))
+        ) {
+          updateData.title = extractedTitle;
+        }
+        if (Object.keys(updateData).length > 0) {
+          await projectStore.updateChapter(projectStore.currentChapterId!, updateData);
         }
       }
 

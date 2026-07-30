@@ -6,6 +6,7 @@
  */
 
 import { countWords } from './utils';
+import { normalizeWebnovelParagraphs } from './typesetting';
 
 /** 最低字数阈值（目标字数的 85%） */
 export const MIN_WORD_THRESHOLD = 0.85;
@@ -79,6 +80,7 @@ export function buildSupplementPrompt(params: BuildSupplementPromptParams): stri
 2. **保持风格**：与原文保持一致的文风、语气和叙事节奏
 3. **内容充实**：补充的内容要有实质性情节推进，不要凑字数
 4. **衔接自然**：补充内容与原文之间过渡要自然，不突兀
+5. **分段适中**：每段约 3～5 句、180～280 字；段间空行；忌一句一段与超长大段
 
 ## 原文结尾（请从这里继续）
 ${endingSnippet}
@@ -173,7 +175,7 @@ export async function runSupplementRounds(
       }
 
       const separator = prose && !prose.endsWith('\n') ? '\n\n' : '';
-      const candidateProse = prose + separator + delta;
+      const candidateProse = normalizeWebnovelParagraphs(prose + separator + delta);
       const validationError = await params.validateRound?.(round, delta, candidateProse);
       if (validationError) {
         return {
@@ -198,5 +200,5 @@ export async function runSupplementRounds(
     }
   }
 
-  return { prose, rounds };
+  return { prose: normalizeWebnovelParagraphs(prose), rounds };
 }

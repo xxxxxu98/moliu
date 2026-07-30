@@ -14,6 +14,7 @@ import type {
 import type { ChapterContract } from '@/services/writing/contract/types';
 import { AntiAIService } from '../anti-ai-enhanced';
 import type { AntiAIResult } from '../anti-ai-enhanced';
+import { MAX_PARAGRAPH_CHARS, isLongParagraph } from '../typesetting';
 
 // ============================================================
 // 类型定义
@@ -348,7 +349,7 @@ export class EnhancedReviewAgent {
     let score = 75;
 
     const paragraphs = content.split(/\n\s*\n/);
-    const longParagraphs = paragraphs.filter((p) => p.length > 300);
+    const longParagraphs = paragraphs.filter((p) => isLongParagraph(p));
 
     if (longParagraphs.length > paragraphs.length * 0.3) {
       warnings.push({
@@ -356,7 +357,7 @@ export class EnhancedReviewAgent {
         severity: 'warning',
         location: '全文',
         description: `长段落占比过高（${Math.round((longParagraphs.length / paragraphs.length) * 100)}%）`,
-        suggestion: '建议拆分长段落，增加可读性',
+        suggestion: `单段尽量不超过约 ${MAX_PARAGRAPH_CHARS} 字；只拆真正偏长的段，忌一句一段`,
       });
       score -= 10;
     }

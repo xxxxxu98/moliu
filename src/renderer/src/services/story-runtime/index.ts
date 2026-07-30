@@ -13,3 +13,4 @@ export * from './SceneDraftEngine';
 export * from './schemas';
 export * from './stateOverlay';
 export * from './StoryRuntimeClient';
+export * from './stripDraftLeakage';

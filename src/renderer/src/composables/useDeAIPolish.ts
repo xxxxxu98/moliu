@@ -4,6 +4,7 @@
  */
 
 import type { FiveDimensionEvaluation } from '@/types/inspiration';
+import { MAX_PARAGRAPH_CHARS, isLongParagraph } from '@/services/writing/typesetting';
 
 /**
  * AI味检测结果
@@ -199,14 +200,14 @@ export function 检测AI味(text: string): AI味检测报告 {
     }
   }
   
-  // 计算节奏问题（段落太长、太均匀）
+  // 计算节奏问题（段落太长、太均匀）——与 typesetting 舒适段长对齐
   const paragraphs = text.split(/\n\n+/);
-  const longParagraphs = paragraphs.filter(p => p.length > 300);
+  const longParagraphs = paragraphs.filter(p => isLongParagraph(p));
   if (longParagraphs.length > paragraphs.length * 0.5) {
     issues.push({
       type: '节奏',
       original: '段落过于均匀冗长',
-      suggestion: '拆分长段落，增加变化',
+      suggestion: `拆分超过约 ${MAX_PARAGRAPH_CHARS} 字的段，保持适中分段`,
       reason: 'AI写的段落通常过于均匀',
     });
     score += 15;

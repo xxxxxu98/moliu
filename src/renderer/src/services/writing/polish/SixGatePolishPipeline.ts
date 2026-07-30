@@ -16,6 +16,7 @@ import type {
   PolishResult,
   PolishFix,
 } from '@/types/writing-v2';
+import { normalizeWebnovelParagraphs } from '../typesetting';
 
 // 默认配置
 const DEFAULT_CONFIG: PolishConfig = {
@@ -531,7 +532,7 @@ export class SixGatePolishPipeline {
    * 清理多余空白
    */
   private cleanupWhitespace(content: string): string {
-    let result = content;
+    let result = normalizeWebnovelParagraphs(content);
 
     // 删除连续空行
     result = result.replace(/\n{3,}/g, '\n\n');

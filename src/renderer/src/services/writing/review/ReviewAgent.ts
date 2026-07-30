@@ -19,6 +19,7 @@ import type {
 } from './types';
 import { useContractManager } from '../contract/ContractManager';
 import type { ChapterContract } from '../contract/types';
+import { MAX_PARAGRAPH_CHARS, isLongParagraph } from '../typesetting';
 
 export class ReviewAgent {
   private contractManager = useContractManager();
@@ -306,9 +307,9 @@ export class ReviewAgent {
     const warnings: ReviewIssue[] = [];
     let score = 80;
     
-    // 检查段落长度
+    // 检查段落长度（与 typesetting 舒适段长对齐）
     const paragraphs = content.split('\n\n').filter(p => p.trim());
-    const longParagraphs = paragraphs.filter(p => p.length > 300);
+    const longParagraphs = paragraphs.filter(p => isLongParagraph(p));
     
     if (longParagraphs.length > paragraphs.length * 0.3) {
       warnings.push({
@@ -316,7 +317,7 @@ export class ReviewAgent {
         severity: 'warning',
         location: '全文',
         description: `长段落过多(${longParagraphs.length}/${paragraphs.length})`,
-        suggestion: '长段落不超过30%，适当拆分',
+        suggestion: `单段尽量不超过约 ${MAX_PARAGRAPH_CHARS} 字，适当拆分真正偏长的段`,
       });
       score -= 10;
     }

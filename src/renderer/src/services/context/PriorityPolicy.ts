@@ -85,7 +85,7 @@ export const DEFAULT_PRIORITY_POLICY: BlockPriorityConfig[] = [
     priority: 3,
     budgetRatio: 0.15,
     position: 'tail',
-    minTokens: 300,
+    minTokens: 500,
   },
   {
     type: 'enhanced_design',

@@ -23,6 +23,9 @@ export {
   Gate6Entity,
 } from './deterministic-gates';
 
+// G8 排版密度
+export { Gate8Typesetting } from './Gate8Typesetting';
+
 // G7 LLM 门禁
 export { Gate7Semantic, setGate7LLMClient } from './Gate7Semantic';
 export type { Gate7LLMClient } from './Gate7Semantic';

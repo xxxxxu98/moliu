@@ -32,6 +32,7 @@ import {
   createChapterMemoryClient,
 } from './chapterPersistenceAdapters';
 import { SMART_CONTINUE_PRESET } from './chapterWritePresets';
+import { buildWritingRulesWithTypesetting } from './typesetting';
 
 import type {
   WritingTaskBook,
@@ -473,10 +474,10 @@ export function useWritingOrchestratorV2() {
     const project = projectStore.currentProject!;
     const currentChapter = projectStore.currentChapter!;
 
-    // 把 TaskBook 转换成 StateDriven 的 outline 选项
+    // 把 TaskBook 转换成 StateDriven 的 outline 选项（不含排版规则，避免污染大纲块）
     let currentChapterOutline = currentChapter.outline || currentChapter.plotSummary || '';
     if (taskBook.value) {
-      currentChapterOutline = buildEnhancedOutline(taskBook.value) || currentChapterOutline;
+      currentChapterOutline = formatTaskBookSection(taskBook.value) || currentChapterOutline;
     }
 
     // 蓝图（传给 G5 校验）
@@ -517,7 +518,7 @@ export function useWritingOrchestratorV2() {
         currentChapterOutline,
         blueprint,
         previousChapter,
-        writingRules: taskBook.value ? buildEnhancedOutline(taskBook.value) : undefined,
+        writingRules: buildEnhancedOutline(taskBook.value),
         userInstructions: undefined,
       });
 
@@ -736,7 +737,7 @@ export function useWritingOrchestratorV2() {
   // 辅助方法
   // ============================================================
 
-  function buildEnhancedOutline(book: WritingTaskBook): string {
+  function formatTaskBookSection(book: WritingTaskBook): string {
     return `
 === 写作任务书 ===
 【CBN】${book.CBN}
@@ -748,8 +749,11 @@ export function useWritingOrchestratorV2() {
 【结尾感觉】${book.hardConstraints.chapterEndOpenQuestion || '留下悬念'}
 【开放问题】${book.hardConstraints.chapterEndOpenQuestion || '留下悬念'}
 === 任务书结束 ===
-
 `;
+  }
+
+  function buildEnhancedOutline(book: WritingTaskBook | null): string {
+    return buildWritingRulesWithTypesetting(book ? formatTaskBookSection(book) : null);
   }
 
   function countWords(text: string): number {

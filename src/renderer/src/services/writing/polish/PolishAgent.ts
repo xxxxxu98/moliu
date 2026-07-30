@@ -10,6 +10,7 @@
 
 import type { PolishResult, AntiAIResult, PolishChange } from './types';
 import type { TaskBook } from '../orchestrator/types';
+import { MAX_PARAGRAPH_CHARS, isLongParagraph } from '../typesetting';
 
 export class PolishAgent {
   /**
@@ -451,13 +452,13 @@ export class PolishAgent {
       score -= 10;
     }
     
-    // 5. 检查段落长度
+    // 5. 检查段落长度（与 typesetting 舒适段长对齐）
     const paragraphs = content.split('\n\n').filter(p => p.trim());
-    const longParagraphs = paragraphs.filter(p => p.length > 400);
+    const longParagraphs = paragraphs.filter(p => isLongParagraph(p));
     
     if (longParagraphs.length > paragraphs.length * 0.3) {
       issues.push(`长段落过多：${longParagraphs.length}/${paragraphs.length}`);
-      suggestions.push('建议拆分长段落');
+      suggestions.push(`建议拆分超过约 ${MAX_PARAGRAPH_CHARS} 字的段，保持 3～5 句一段`);
       score -= 8;
     }
     
