@@ -13,6 +13,8 @@
  * - 可观测：每步产出结构化日志，便于 debug
  */
 
+import type { ChapterJudge } from '@/types/story-runtime';
+
 import type { StateSnapshotStore } from '../state/StateSnapshotStore';
 import { createChangesApplier } from '../state/ChangesApplier';
 import { initializeStateFromProject } from '../state/SnapshotBuilder';
@@ -48,8 +50,10 @@ export interface StateDrivenOrchestratorConfig {
   maxRetries: number;
   /** 是否启用 L2 检索 */
   enableRetrieval: boolean;
-  /** 是否启用 G7 LLM 门禁 */
+  /** 是否启用语义门禁（ChapterJudge / 旧 G7） */
   enableSemanticGate: boolean;
+  /** 统一语义审查器；与 enableSemanticGate 同时开启时 G5/G7 共用一次请求 */
+  chapterJudge?: ChapterJudge;
   /** 是否启用 Git 备份 */
   enableGitBackup: boolean;
   /** 检索 Top-K */
@@ -153,6 +157,7 @@ export class StateDrivenWritingOrchestrator {
     this.router = new ModelRouter(this.config.defaultModel);
     this.gatePipeline = new ConsistencyGatePipeline({
       enableSemanticGate: this.config.enableSemanticGate,
+      chapterJudge: this.config.chapterJudge,
     });
   }
 
@@ -295,6 +300,8 @@ export class StateDrivenWritingOrchestrator {
         requiredCharacters?: string[];
         cen?: string;
       };
+      /** 用户停止时 abort，中断在飞 AI 请求 */
+      signal?: AbortSignal;
     } = {},
   ): Promise<WriteChapterResult> {
     const startTime = Date.now();
@@ -302,6 +309,10 @@ export class StateDrivenWritingOrchestrator {
 
     if (!this.stateStore) {
       return this.fail(chapterNo, '编排器未初始化，请先调用 initialize()', startTime);
+    }
+
+    if (options.signal?.aborted) {
+      return this.fail(chapterNo, 'Generation stopped by user', startTime);
     }
 
     try {
@@ -318,6 +329,10 @@ export class StateDrivenWritingOrchestrator {
         } catch (e) {
           console.warn('[Orchestrator] L2 检索失败，降级为无检索:', e);
         }
+      }
+
+      if (options.signal?.aborted) {
+        return this.fail(chapterNo, 'Generation stopped by user', startTime);
       }
 
       // ============ L3: 组装 prompt ============
@@ -338,6 +353,9 @@ export class StateDrivenWritingOrchestrator {
       // ============ L4: 起草 + 重试循环 ============
       const retryLoop = new DrafterRetryLoop(this.drafter, this.router);
       const gateRunner = async (prose: string, changes: ChangesPayload | null): Promise<GatePipelineResult> => {
+        if (options.signal?.aborted) {
+          throw new DOMException('Aborted', 'AbortError');
+        }
         const ctx: GateContext = {
           chapter: chapterNo,
           prose,
@@ -353,6 +371,7 @@ export class StateDrivenWritingOrchestrator {
 
       const loopResult = await retryLoop.run(assemblyResult.prompt, gateRunner, {
         maxAttempts: this.config.maxRetries,
+        signal: options.signal,
       });
 
       if (!loopResult.bestAttempt) {
@@ -420,6 +439,13 @@ export class StateDrivenWritingOrchestrator {
         error: commitResult.success ? undefined : commitResult.error,
       };
     } catch (err) {
+      if (
+        options.signal?.aborted ||
+        (err instanceof DOMException && err.name === 'AbortError') ||
+        (err instanceof Error && err.name === 'AbortError')
+      ) {
+        return this.fail(chapterNo, 'Generation stopped by user', startTime);
+      }
       return this.fail(chapterNo, err instanceof Error ? err.message : String(err), startTime);
     }
   }

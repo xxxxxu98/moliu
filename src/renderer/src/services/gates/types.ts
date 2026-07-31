@@ -7,6 +7,8 @@
  *   G7 是 LLM-as-judge 语义审查（1 次模型调用）
  */
 
+import type { ChapterJudge, ChapterJudgeResult } from '@/types/story-runtime';
+
 // ============================================================
 // 门禁严重度
 // ============================================================
@@ -122,10 +124,15 @@ export interface GateConfig {
   maxMissingBlueprintRoles: number;
   /** 短章节阈值（字数低于此值则 G5 警告） */
   minChapterWords: number;
-  /** 是否启用 G7 LLM 语义审查 */
+  /** 是否启用语义审查（G7 / 统一 ChapterJudge） */
   enableSemanticGate: boolean;
   /** 是否允许 AI 味问题降级通过（soft 走自动修复） */
   allowAIFlavorDegradedPass: boolean;
+  /**
+   * 统一语义审查器。注入后流水线至多调用 1 次，
+   * 结果供 G5（履约/禁区）与 G7（连贯性）共用，避免双请求。
+   */
+  chapterJudge?: ChapterJudge;
 }
 
 export const DEFAULT_GATE_CONFIG: GateConfig = {
@@ -162,6 +169,8 @@ export interface GateContext {
   };
   /** 章节标题 */
   title?: string;
+  /** 流水线预跑的统一审查结果（至多一次 AI） */
+  chapterJudgeResult?: ChapterJudgeResult;
 }
 
 // ============================================================

@@ -23,7 +23,8 @@ function makeCandidate(beatId: string, summary: string): CandidateEvent {
     summary,
     participants: [],
     prerequisites: [],
-    effects: [summary],
+    // 不再把 summary 原样塞进 effects，避免与 beats/合同重复三份
+    effects: [],
   };
 }
 

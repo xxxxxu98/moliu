@@ -30,5 +30,13 @@ export { Gate8Typesetting } from './Gate8Typesetting';
 export { Gate7Semantic, setGate7LLMClient } from './Gate7Semantic';
 export type { Gate7LLMClient } from './Gate7Semantic';
 
+// 统一语义审查桥接
+export {
+  ensureChapterJudgeResult,
+  mapChapterJudgeIssuesToGateIssues,
+  collectPendingMustCover,
+  collectSemanticForbidden,
+} from './chapterJudgeBridge';
+
 // 流水线
 export { ConsistencyGatePipeline, sortIssuesBySeverity } from './ConsistencyGatePipeline';

@@ -89,6 +89,8 @@ export interface UseChapterWriterReturn {
   targetWordCount: typeof targetWordCount;
   isSupplementing: typeof isSupplementing;
   supplementRound: typeof supplementRound;
+  /** 管道已把正文写入章节（或用户已点应用）时为 true，用于禁用重复「应用」 */
+  isAppliedToChapter: typeof isAppliedToChapter;
 
   // 报告相关
   latestReport: typeof latestReport;
@@ -284,6 +286,8 @@ export function useChapterWriter(): UseChapterWriterReturn {
   const targetWordCount = ref(0);
   const isSupplementing = ref(false);
   const supplementRound = ref(0);
+  /** 管道已落库或用户已应用，禁止重复点「应用」追加/覆盖 */
+  const isAppliedToChapter = ref(false);
 
   // 报告状态
   const latestReport = ref<StructuredReviewReport | null>(null);
@@ -559,6 +563,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
     targetWordCount.value = requestedTarget;
     actualWordCount.value = 0;
     supplementRound.value = 0;
+    isAppliedToChapter.value = false;
 
     if (isGenerating.value) {
       error.value = '正在生成中，请稍候';
@@ -629,6 +634,12 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
       // 补写已由 ChapterWritingPipeline（SMART_CONTINUE_PRESET.enableSupplement）统一处理，
       // 此处不再二次调用 supplementContinue，避免重复补写。
+
+      // 当前管道（StateDriven / LongForm）成功后都会 replace 到章节；直接标记已写入，
+      // 避免标题清洗导致字符串不完全相等时仍可重复「应用」。
+      if (currentGeneratedContent.trim() && (projectStore.currentChapter?.content || '').trim()) {
+        isAppliedToChapter.value = true;
+      }
 
       return currentGeneratedContent;
     } catch (err) {
@@ -928,12 +939,14 @@ export function useChapterWriter(): UseChapterWriterReturn {
   }
 
   /**
-   * 停止写作
+   * 停止写作（真正 abort 在飞 HTTP）
    */
   function stopWriting(): void {
     if (abortController) {
       abortController.abort();
     }
+    // V2 使用模块级 AbortController，任意实例 stop() 均可中断当前 run
+    useWritingOrchestratorV2().stop();
   }
 
   function getLowerStrictness(
@@ -972,6 +985,15 @@ export function useChapterWriter(): UseChapterWriterReturn {
     if (!projectStore.currentChapterId) {
       error.value = '请先选择一个章节';
       return false;
+    }
+
+    // 管道已写入章节：只做状态清理，禁止再次追加导致正文翻倍
+    if (isAppliedToChapter.value) {
+      currentGeneratedContent = '';
+      generatedContent.value = '';
+      progress.value = 0;
+      currentStep.value = 'idle';
+      return true;
     }
 
     try {
@@ -1137,6 +1159,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
 
       // ✅ 成功后：重置状态
       skipReview = false;
+      isAppliedToChapter.value = true;
       currentGeneratedContent = '';
       generatedContent.value = '';
       progress.value = 0;
@@ -1194,6 +1217,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
     targetWordCount.value = 0;
     isSupplementing.value = false;
     supplementRound.value = 0;
+    isAppliedToChapter.value = false;
     if (abortController) {
       abortController.abort();
       abortController = null;
@@ -1286,6 +1310,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
     targetWordCount,
     isSupplementing,
     supplementRound,
+    isAppliedToChapter,
     latestReport,
     writeChapter,
     stopWriting,

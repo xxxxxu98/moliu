@@ -19,6 +19,7 @@ import {
 } from './deterministic-gates';
 import { Gate7Semantic } from './Gate7Semantic';
 import { Gate8Typesetting } from './Gate8Typesetting';
+import { ensureChapterJudgeResult } from './chapterJudgeBridge';
 import type {
   Gate,
   GateConfig,
@@ -73,6 +74,20 @@ export class ConsistencyGatePipeline {
   async run(ctx: GateContext): Promise<GatePipelineResult> {
     const start = Date.now();
     const results: GateResult[] = [];
+
+    // 统一语义审查：G5/G7 共用，至多 1 次 AI
+    try {
+      const judgeResult = await ensureChapterJudgeResult(
+        ctx,
+        this.config.chapterJudge,
+        this.config.enableSemanticGate
+      );
+      if (judgeResult) {
+        ctx.chapterJudgeResult = judgeResult;
+      }
+    } catch (err) {
+      console.warn('[GatePipeline] ChapterJudge 预跑失败，回退关键词/旧 G7:', err);
+    }
 
     for (const gate of this.gates) {
       // G1 短路：协议门禁失败（有任何 critical/high 问题）时，CHANGES 不可信，

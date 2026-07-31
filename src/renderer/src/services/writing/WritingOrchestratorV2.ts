@@ -60,9 +60,11 @@ import {
   type ChapterPersistenceClient,
   type MemoryClient,
   type WriteChapterResult,
-  setGate7LLMClient,
 } from '@/services/orchestrator';
 import { GitBackupManager } from '@/services/writing/backup/GitBackupManager';
+import { AIChapterJudge } from '@/services/story-runtime';
+import type { StructuredAI, StructuredAIRequest } from '@/types/story-runtime';
+import { robustJsonParse } from '@/utils/json-parser';
 
 // ============================================================
 // 接口定义
@@ -115,6 +117,9 @@ const reviewResult = ref<ReviewerOutput | null>(null);
 const actualWordCount = ref(0);
 const targetWordCount = ref(3000);
 
+/** 模块级 AbortController：任意 useWritingOrchestratorV2().stop() 都能中断当前 run */
+let sharedAbortController: AbortController | null = null;
+
 // ============================================================
 // 主编排器
 // ============================================================
@@ -130,8 +135,6 @@ export function useWritingOrchestratorV2() {
   const reviewerAgent = useEnhancedReviewerAgent();
   const dataAgent = useEnhancedDataAgent();
   const antiPatternsRegistry = useAntiPatternsRegistry();
-
-  let abortController: AbortController | null = null;
 
   // ============================================================
   // 状态驱动编排器（v2.1 集成）
@@ -164,6 +167,9 @@ export function useWritingOrchestratorV2() {
         if (!project || !currentChapter) {
           throw new Error('项目或章节未加载');
         }
+        if (params.signal?.aborted) {
+          throw new DOMException('Aborted', 'AbortError');
+        }
 
         // 构造 ProjectContext（service.continueWriting 期望的输入）
         const context: any = {
@@ -178,11 +184,12 @@ export function useWritingOrchestratorV2() {
           writingStyle: 'concise',
         };
 
-        // 调 service.continueWriting
+        // 调 service.continueWriting（传入 signal 以真正中断 HTTP）
         const result = await (client as any).continueWriting(
           context,
           'smartContinue',
           params.maxTokens || 3000,
+          params.signal,
         );
         // 兼容返回结构
         return result?.content ?? result?.text ?? (typeof result === 'string' ? result : '');
@@ -201,13 +208,38 @@ export function useWritingOrchestratorV2() {
       },
     };
 
-    // 默认模型：复用 useActiveAIProvider 的 currentModel
     const defaultModel = currentModel.value || 'gpt-4o';
+
+    const structuredAI: StructuredAI = {
+      async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
+        const signal = sharedAbortController?.signal;
+        if (signal?.aborted) {
+          throw new DOMException('Aborted', 'AbortError');
+        }
+        const service = requireAIService();
+        const raw = await service.complete(request.prompt, {
+          system: [
+            request.system,
+            `schemaName=${request.schemaName}`,
+            '只输出合法 JSON 对象，不要 Markdown 代码块，不要前后解释文字。',
+          ].join('\n'),
+          temperature: 0.2,
+          signal,
+        });
+        const trimmed = String(raw).trim().replace(/^```(?:json)?\s*/iu, '').replace(/\s*```$/u, '');
+        const parsed = robustJsonParse(trimmed, { expectedType: 'object', enableCompletion: true });
+        if (!parsed.success || parsed.data === undefined) {
+          throw new Error('AI 未返回可解析的结构化 JSON');
+        }
+        return request.parse(parsed.data);
+      },
+    };
 
     const orch = new StateDrivenWritingOrchestrator(drafter, gitBackup, persistence, memoryClient, {
       defaultModel,
       maxRetries: 3,
-      enableSemanticGate: false,  // G7 LLM 审查默认关闭（需要外部注入客户端）
+      enableSemanticGate: true,
+      chapterJudge: new AIChapterJudge(structuredAI),
       enableGitBackup: true,
       enableRetrieval: true,
       retrievalTopK: 8,
@@ -253,6 +285,11 @@ export function useWritingOrchestratorV2() {
     isRunning.value = true;
     targetWordCount.value = requestedTarget;
 
+    // 新建 AbortController；stop() 可从任意实例中断
+    sharedAbortController?.abort();
+    sharedAbortController = new AbortController();
+    const signal = sharedAbortController.signal;
+
     try {
       const project = projectStore.currentProject;
       const currentChapter = projectStore.currentChapter;
@@ -271,7 +308,13 @@ export function useWritingOrchestratorV2() {
         targetWordCount: requestedTarget,
         writingStyle: writingStyle as any,
         ...SMART_CONTINUE_PRESET,
+        signal,
       });
+
+      if (signal.aborted || result.error === 'Generation stopped by user') {
+        error.value = 'Generation stopped by user';
+        return false;
+      }
 
       progress.value = 100;
 
@@ -338,20 +381,32 @@ export function useWritingOrchestratorV2() {
       currentStep.value = 'idle';
       return true;
     } catch (err) {
+      if (
+        sharedAbortController?.signal.aborted ||
+        (err instanceof DOMException && err.name === 'AbortError') ||
+        (err instanceof Error && err.name === 'AbortError') ||
+        (err instanceof Error && err.message === 'Generation stopped by user')
+      ) {
+        error.value = 'Generation stopped by user';
+        return false;
+      }
       error.value = err instanceof Error ? err.message : '执行失败';
       return false;
     } finally {
       isRunning.value = false;
+      if (sharedAbortController?.signal === signal) {
+        sharedAbortController = null;
+      }
     }
   }
 
   /**
-   * 停止执行
+   * 停止执行（真正 abort 在飞 HTTP）
    */
   function stop(): void {
-    if (abortController) {
-      abortController.abort();
-      abortController = null;
+    if (sharedAbortController) {
+      sharedAbortController.abort();
+      sharedAbortController = null;
     }
     isRunning.value = false;
     currentStep.value = 'idle';

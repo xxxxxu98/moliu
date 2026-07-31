@@ -377,12 +377,33 @@ export class Gate5Blueprint implements Gate {
       };
     }
 
-    // 1. mustCover 必须在正文出现
+    // 1. mustCover：有统一审查结果时用语义履约；否则回退关键词
     if (blueprint.mustCover) {
+      const fulfillmentByNode = new Map(
+        (ctx.chapterJudgeResult?.fulfillment ?? []).map(item => [item.node, item])
+      );
       for (const must of blueprint.mustCover) {
+        const lexicalOrKeyword =
+          prose.includes(must) || extractKeywords(must).some(k => prose.includes(k));
+        if (lexicalOrKeyword) continue;
+
+        const judged = fulfillmentByNode.get(must);
+        if (judged) {
+          if (!judged.fulfilled) {
+            issues.push(makeIssue('blueprint', 'critical',
+              '全文',
+              `未覆盖必须内容：${must}${judged.reason ? `（${judged.reason}）` : ''}`,
+              {
+                evidence: judged.evidence[0],
+                suggestion: '在正文中显式体现此内容',
+              }));
+          }
+          continue;
+        }
+
+        // 无统一审查结果：关键词回退
         const keywords = extractKeywords(must);
-        const hit = keywords.some(k => prose.includes(k));
-        if (!hit && keywords.length > 0) {
+        if (keywords.length > 0) {
           issues.push(makeIssue('blueprint', 'critical',
             '全文',
             `未覆盖必须内容：${must}`,
@@ -391,14 +412,28 @@ export class Gate5Blueprint implements Gate {
       }
     }
 
-    // 2. forbiddenZones 必须不出现
+    // 2. forbiddenZones：字面命中 + 统一审查语义触发
     if (blueprint.forbiddenZones) {
+      const forbiddenByZone = new Map(
+        (ctx.chapterJudgeResult?.forbidden ?? []).map(item => [item.zone, item])
+      );
       for (const forbidden of blueprint.forbiddenZones) {
         if (prose.includes(forbidden)) {
           issues.push(makeIssue('blueprint', 'critical',
             '全文',
             `包含禁止内容：${forbidden}`,
             { suggestion: '删除或改写此内容', autoFixable: true }));
+          continue;
+        }
+        const judged = forbiddenByZone.get(forbidden);
+        if (judged?.violated) {
+          issues.push(makeIssue('blueprint', 'critical',
+            '全文',
+            `包含禁止内容：${forbidden}${judged.reason ? `（${judged.reason}）` : ''}`,
+            {
+              evidence: judged.evidence[0],
+              suggestion: '删除或改写此内容',
+            }));
         }
       }
     }

@@ -2,7 +2,9 @@ import { z } from 'zod';
 
 import type {
   ChapterCommitReceipt,
+  ChapterJudgeResult,
   ExtractedFacts,
+  FulfillmentCheckResult,
   JsonValue,
   SceneDraft,
   StoryBootstrapData,
@@ -89,6 +91,45 @@ export const extractedFactsSchema: z.ZodType<ExtractedFacts> = z.object({
   events: z.array(storyEventSchema),
   deltas: z.array(stateDeltaSchema),
   evidence: z.array(z.string()),
+});
+
+const fulfillmentNodeJudgmentSchema = z.object({
+  node: z.string().min(1),
+  fulfilled: z.boolean(),
+  evidence: z.array(z.string()),
+  reason: z.string(),
+});
+
+export const fulfillmentCheckResultSchema: z.ZodType<FulfillmentCheckResult> = z.object({
+  results: z.array(fulfillmentNodeJudgmentSchema),
+});
+
+export const chapterJudgeResultSchema: z.ZodType<ChapterJudgeResult> = z.object({
+  fulfillment: z.array(fulfillmentNodeJudgmentSchema),
+  forbidden: z.array(
+    z.object({
+      zone: z.string().min(1),
+      violated: z.boolean(),
+      evidence: z.array(z.string()),
+      reason: z.string(),
+    })
+  ),
+  issues: z.array(
+    z.object({
+      type: z.enum([
+        'fact_conflict',
+        'logic_gap',
+        'ooc',
+        'timeline',
+        'power',
+        'foreshadow',
+      ]),
+      severity: z.enum(['critical', 'high', 'medium', 'low']),
+      location: z.string(),
+      description: z.string(),
+      evidence: z.array(z.string()),
+    })
+  ),
 });
 
 const sceneChunkSchema = z.object({

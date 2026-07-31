@@ -20,6 +20,7 @@ import type {
   GateConfig,
 } from './types';
 import { formatChangesPayload } from '../state/ChangesProtocol';
+import { mapChapterJudgeIssuesToGateIssues } from './chapterJudgeBridge';
 
 // ============================================================
 // LLM 客户端接口（注入式，解耦具体 AI 服务）
@@ -54,7 +55,7 @@ export class Gate7Semantic implements Gate {
   async run(ctx: GateContext, config: GateConfig): Promise<GateResult> {
     const start = Date.now();
 
-    // 未启用或未注入客户端 → 跳过（视为通过）
+    // 未启用 → 跳过
     if (!config.enableSemanticGate) {
       return {
         gateId: this.id,
@@ -65,13 +66,28 @@ export class Gate7Semantic implements Gate {
         stats: { skipped: 'disabled' },
       };
     }
+
+    // 流水线已预跑 ChapterJudge：复用结果，不再二次请求
+    if (ctx.chapterJudgeResult) {
+      const issues = mapChapterJudgeIssuesToGateIssues(ctx.chapterJudgeResult);
+      return {
+        gateId: this.id,
+        gateName: this.name,
+        passed: !issues.some(i => i.severity === 'critical' || i.severity === 'high'),
+        issues,
+        durationMs: Date.now() - start,
+        stats: { issueCount: issues.length, source: 'chapter-judge' },
+      };
+    }
+
+    // 兼容旧路径：独立 Gate7LLMClient
     if (!_llmClient) {
       return {
         gateId: this.id,
         gateName: this.name,
         passed: true,
         issues: [makeIssue('semantic', 'low', 'G7',
-          '未注入 LLM 客户端，G7 语义审查跳过（调用 setGate7LLMClient 启用）')],
+          '未注入 LLM 客户端且无 ChapterJudge 结果，G7 语义审查跳过')],
         durationMs: Date.now() - start,
         stats: { skipped: 'no_client' },
       };
@@ -88,7 +104,7 @@ export class Gate7Semantic implements Gate {
         passed: !issues.some(i => i.severity === 'critical' || i.severity === 'high'),
         issues,
         durationMs: Date.now() - start,
-        stats: { issueCount: issues.length },
+        stats: { issueCount: issues.length, source: 'legacy-g7' },
       };
     } catch (err) {
       // G7 失败降级为 warning，不阻断流程

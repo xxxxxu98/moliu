@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { ContextBudgetError, ContextPackBuilder } from '../ContextPackBuilder';
+import {
+  compactStateForDraft,
+  ContextBudgetError,
+  ContextPackBuilder,
+  stripStateForChapterRewrite,
+} from '../ContextPackBuilder';
 import { ContractPackBuilder } from '../ContractPackBuilder';
 import { SceneBeatPlanner } from '../SceneBeatPlanner';
 import { makeBootstrap, makeContracts, makeState } from './testFixtures';
@@ -144,5 +149,86 @@ describe('ContextPackBuilder', () => {
         maxTokens: 1,
       })
     ).toThrow(ContextBudgetError);
+  });
+
+  it('合同已含 style 时不再重复塞 style 块，且压缩 current-state', () => {
+    const contracts = makeContracts();
+    const pack = new ContextPackBuilder().build({
+      contracts,
+      state: makeState(),
+      recentScenes: [],
+      retrievedScenes: [],
+      styleGuidance: contracts.master.style,
+      maxTokens: 10_000,
+    });
+
+    expect(pack.blocks.map(block => block.kind)).toEqual([
+      'locked-contracts',
+      'current-state',
+      'recent-scenes',
+      'retrieval',
+    ]);
+    const contractsPayload = JSON.parse(
+      pack.blocks.find(block => block.kind === 'locked-contracts')!.content
+    ) as { master: { style: string[] } };
+    expect(contractsPayload.master.style.length).toBeGreaterThan(0);
+
+    const statePayload = JSON.parse(
+      pack.blocks.find(block => block.kind === 'current-state')!.content
+    ) as { events: unknown[]; entities: Record<string, unknown> };
+    expect(Array.isArray(statePayload.events)).toBe(true);
+    expect(statePayload.entities).toBeTruthy();
+  });
+
+  it('compactStateForDraft 不灌入本章及之后事件', () => {
+    const contracts = makeContracts();
+    const state = makeState();
+    state.events.push({
+      id: 'evt-ch2',
+      chapter: 2,
+      type: 'checkpoint',
+      summary: '本章旧事件不应进 compact 的近期列表作为历史',
+      participants: ['hero'],
+      causes: [],
+      effects: [],
+      evidence: [],
+    });
+    const compact = compactStateForDraft(state, contracts) as {
+      events: Array<{ chapter: number }>;
+    };
+    expect(compact.events.every(event => event.chapter < contracts.chapter.chapterNumber)).toBe(
+      true
+    );
+  });
+});
+
+describe('stripStateForChapterRewrite', () => {
+  it('剥离本章及之后事件与 intro 实体', () => {
+    const state = makeState();
+    state.chapter = 2;
+    state.entities['char:intro:ghost'] = {
+      id: 'char:intro:ghost',
+      kind: 'character',
+      name: '鬼影',
+      aliases: [],
+      attributes: {},
+      knownBy: [],
+      sourceTrace: [],
+    };
+    state.events.push({
+      id: 'evt-2',
+      chapter: 2,
+      type: 'reveal',
+      summary: '旧第二章事件',
+      participants: ['char:intro:ghost'],
+      causes: [],
+      effects: [],
+      evidence: [],
+    });
+
+    const stripped = stripStateForChapterRewrite(state, 2);
+    expect(stripped.events.every(event => event.chapter < 2)).toBe(true);
+    expect(stripped.entities['char:intro:ghost']).toBeUndefined();
+    expect(stripped.chapter).toBeLessThan(2);
   });
 });

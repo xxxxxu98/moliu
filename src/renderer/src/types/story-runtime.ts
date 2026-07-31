@@ -307,11 +307,88 @@ export interface ContextPackInput {
 }
 
 export interface StructuredAIRequest<T> {
-  purpose: 'scene-plan' | 'scene-draft' | 'chapter-review' | 'fact-extraction';
+  purpose:
+    | 'scene-plan'
+    | 'scene-draft'
+    | 'chapter-review'
+    | 'fact-extraction'
+    | 'fulfillment-check'
+    | 'chapter-judge';
   system: string;
   prompt: string;
   schemaName: string;
   parse: (value: unknown) => T;
+}
+
+/** 单个 mustCover 节点的 AI 语义履约判定 */
+export interface FulfillmentNodeJudgment {
+  node: string;
+  fulfilled: boolean;
+  evidence: string[];
+  reason: string;
+}
+
+export interface FulfillmentCheckResult {
+  results: FulfillmentNodeJudgment[];
+}
+
+/** @deprecated 请使用 ChapterJudge；保留作薄适配 */
+export interface FulfillmentJudge {
+  judge(input: {
+    mustCover: string[];
+    chapterText: string;
+    facts: ExtractedFacts;
+  }): Promise<FulfillmentCheckResult>;
+}
+
+export interface ForbiddenZoneJudgment {
+  zone: string;
+  violated: boolean;
+  evidence: string[];
+  reason: string;
+}
+
+export type ChapterJudgeIssueType =
+  | 'fact_conflict'
+  | 'logic_gap'
+  | 'ooc'
+  | 'timeline'
+  | 'power'
+  | 'foreshadow';
+
+export interface ChapterJudgeIssue {
+  type: ChapterJudgeIssueType;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  location: string;
+  description: string;
+  evidence: string[];
+}
+
+/** 统一语义审查包：履约 + 禁区 + 连贯性（一次 AI 请求） */
+export interface ChapterJudgeResult {
+  fulfillment: FulfillmentNodeJudgment[];
+  forbidden: ForbiddenZoneJudgment[];
+  issues: ChapterJudgeIssue[];
+}
+
+export interface ChapterJudgeStateDigest {
+  entities?: Array<{ id: string; name: string; kind: string }>;
+  knowledge?: Record<string, string[]>;
+  openForeshadows?: string[];
+}
+
+export interface ChapterJudgeInput {
+  mustCover: string[];
+  forbiddenZones: string[];
+  chapterText: string;
+  facts?: ExtractedFacts;
+  stateDigest?: ChapterJudgeStateDigest;
+  /** 是否审查事实/逻辑/OOC/时间线/战力/伏笔（默认 true） */
+  checkDeepSemantic?: boolean;
+}
+
+export interface ChapterJudge {
+  judge(input: ChapterJudgeInput): Promise<ChapterJudgeResult>;
 }
 
 export interface StructuredAI {
@@ -417,6 +494,8 @@ export interface LongFormWriteInput {
   retrievedScenes: SceneChunk[];
   styleGuidance: string[];
   maxContextTokens: number;
+  /** 目标字数；场景起草与提交前补字会尽量逼近该值 */
+  targetWordCount?: number;
 }
 
 export interface LongFormWriteResult {

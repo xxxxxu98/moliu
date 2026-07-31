@@ -135,7 +135,7 @@ describe('SceneDraftEngine.draft', () => {
           summary: '推进',
           participants: [],
           prerequisites: [],
-          effects: ['推进'],
+          effects: [],
         },
       ],
     };
@@ -151,7 +151,7 @@ describe('SceneDraftEngine.draft', () => {
           summary: '章末钩子',
           participants: [],
           prerequisites: [],
-          effects: ['章末钩子'],
+          effects: [],
         },
       ],
     };
@@ -169,9 +169,33 @@ describe('SceneDraftEngine.draft', () => {
     const drafts = await engine.draft(plan, context);
 
     expect(generate).toHaveBeenCalledTimes(1);
+    const prompt = JSON.parse((generate.mock.calls[0][0] as { prompt: string }).prompt) as {
+      primaryBeatId: string;
+      allowedCandidateEventIds: string[];
+      beat?: unknown;
+      allowedCandidateEvents?: unknown;
+      writingRules: { mustCoverInOrder?: unknown };
+    };
+    expect(prompt.primaryBeatId).toBe('chapter-1:CBN');
+    expect(prompt.allowedCandidateEventIds.length).toBeGreaterThan(0);
+    expect(prompt.beat).toBeUndefined();
+    expect(prompt.allowedCandidateEvents).toBeUndefined();
+    expect(prompt.writingRules.mustCoverInOrder).toBeUndefined();
     expect(drafts).toHaveLength(1);
     expect(drafts[0].beatId).toBe('chapter-1:CBN');
     expect(drafts[0].paragraphs).toEqual(['开篇。', '推进。', '章末钩子。']);
+  });
+
+  it('candidateEvents 支持仅 id 列表', () => {
+    const draft = coerceSceneDraft(
+      {
+        paragraphs: ['正文'],
+        candidateEvents: [allowed[0].id],
+      },
+      beat,
+      allowed
+    );
+    expect(draft.candidateEvents).toEqual(allowed);
   });
 });
 

@@ -7,7 +7,7 @@
  * 这是 M1 里程碑"防幻觉能力质变"的验收依据。
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   ConsistencyGatePipeline,
   Gate1Protocol,
@@ -414,6 +414,76 @@ describe('Gate7Semantic', () => {
     const result = await gate.run(ctx, { enableSemanticGate: true } as any);
     expect(result.passed).toBe(true);
     expect(result.error).toBeDefined();
+  });
+
+  it('已有 chapterJudgeResult 时复用结果且不调旧 LLM 客户端', async () => {
+    const review = vi.fn(async () => '{"issues":[]}');
+    setGate7LLMClient({ review });
+    const ctx = makeContext({
+      chapterJudgeResult: {
+        fulfillment: [],
+        forbidden: [],
+        issues: [
+          {
+            type: 'ooc',
+            severity: 'high',
+            location: '对话',
+            description: '人设崩坏',
+            evidence: ['……'],
+          },
+        ],
+      },
+    });
+    const result = await gate.run(ctx, { enableSemanticGate: true } as any);
+    expect(review).not.toHaveBeenCalled();
+    expect(result.stats?.source).toBe('chapter-judge');
+    expect(result.passed).toBe(false);
+    expect(result.issues.some(i => i.description.includes('人设崩坏'))).toBe(true);
+  });
+});
+
+describe('ConsistencyGatePipeline + ChapterJudge 去重', () => {
+  it('预跑 ChapterJudge 仅一次，G5 与 G7 共用结果', async () => {
+    const judge = {
+      judge: vi.fn(async () => ({
+        fulfillment: [
+          {
+            node: '与师父对话',
+            fulfilled: true,
+            evidence: ['他向玄清请教'],
+            reason: '语义兑现',
+          },
+        ],
+        forbidden: [],
+        issues: [
+          {
+            type: 'timeline',
+            severity: 'medium',
+            location: '结尾',
+            description: '时间跨度含糊',
+            evidence: [],
+          },
+        ],
+      })),
+    };
+    const pipeline = new ConsistencyGatePipeline({
+      enableSemanticGate: true,
+      chapterJudge: judge,
+    });
+    const ctx = makeContext({
+      prose: '他向玄清请教功法，随后离去。'.repeat(80),
+      blueprint: { mustCover: ['与师父对话'], forbiddenZones: [] },
+      changes: {
+        version: '1.0',
+        chapter: 1,
+        changes: [],
+      },
+    });
+    const result = await pipeline.run(ctx);
+    expect(judge.judge).toHaveBeenCalledOnce();
+    const g7 = result.gates.find(g => g.gateId === 'G7');
+    expect(g7?.stats?.source).toBe('chapter-judge');
+    expect(g7?.issues.some(i => i.description.includes('时间跨度'))).toBe(true);
   });
 });
 

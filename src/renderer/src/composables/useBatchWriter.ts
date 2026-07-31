@@ -719,6 +719,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
         writingStyle: options.writingStyle as any,
         ...writeOptions,
         previousChapter,
+        signal: internalState.abortController?.signal,
       });
 
       if (result.supplementRounds > 0) {
@@ -871,6 +872,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
     internalState.currentStrictness = config.value.initialStrictness;
     internalState.reviewAttempts = 0;
     internalState.currentChapter = 0;
+    internalState.abortController = new AbortController();
     maxRetries.value = config.value.maxRetries;
     currentRetryCount.value = 0;
     error.value = null;

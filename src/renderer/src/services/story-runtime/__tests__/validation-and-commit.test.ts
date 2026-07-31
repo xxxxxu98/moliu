@@ -42,8 +42,8 @@ function makeFacts(): ExtractedFacts {
 }
 
 describe('ContinuityValidator', () => {
-  it('覆盖实体、知识、物品、时间因果、履约和证据域并接受合法事实', () => {
-    const report = new ContinuityValidator().validate({
+  it('覆盖实体、知识、物品、时间因果、履约和证据域并接受合法事实', async () => {
+    const report = await new ContinuityValidator().validate({
       contracts: makeContracts(),
       state: makeState(),
       drafts: [makeDraft()],
@@ -63,7 +63,7 @@ describe('ContinuityValidator', () => {
     ]);
   });
 
-  it('阻断未知实体、物品负数、缺失因果与无证据事件', () => {
+  it('阻断未知实体、物品负数、缺失因果与无证据事件', async () => {
     const facts = makeFacts();
     facts.events[0] = {
       ...facts.events[0],
@@ -77,7 +77,7 @@ describe('ContinuityValidator', () => {
       value: -2,
       evidence: '剑已遗失',
     });
-    const report = new ContinuityValidator().validate({
+    const report = await new ContinuityValidator().validate({
       contracts: makeContracts(),
       state: makeState(),
       drafts: [makeDraft()],
@@ -88,6 +88,110 @@ describe('ContinuityValidator', () => {
     expect(new Set(report.issues.map(issue => issue.domain))).toEqual(
       new Set(['entity', 'causality', 'inventory', 'evidence'])
     );
+  });
+
+  it('字面未命中时交给统一 ChapterJudge，同义改写可判通过', async () => {
+    const judge = {
+      judge: vi.fn(async () => ({
+        fulfillment: [
+          {
+            node: '当众指出凶手是县令公子',
+            fulfilled: true,
+            evidence: ['他当众揭穿真凶竟是县令的儿子'],
+            reason: '语义已兑现指认真凶',
+          },
+        ],
+        forbidden: [],
+        issues: [],
+      })),
+    };
+    const contracts = makeContracts();
+    contracts.chapter.mustCover = ['当众指出凶手是县令公子'];
+    contracts.chapter.forbidden = [];
+    const report = await new ContinuityValidator({
+      chapterJudge: judge,
+      enableDeepSemantic: false,
+    }).validate({
+      contracts,
+      state: makeState(),
+      drafts: [
+        {
+          sceneId: 'scene-1',
+          beatId: 'beat-1',
+          paragraphs: ['堂上死寂。他当众揭穿真凶竟是县令的儿子，四座哗然。'],
+          candidateEvents: [],
+        },
+      ],
+      facts: { events: [], deltas: [], evidence: [] },
+    });
+
+    expect(judge.judge).toHaveBeenCalledOnce();
+    expect(report.accepted).toBe(true);
+    expect(report.issues.filter(issue => issue.domain === 'fulfillment')).toEqual([]);
+  });
+
+  it('ChapterJudge 一次返回未履约与语义问题时均写入报告', async () => {
+    const contracts = makeContracts();
+    contracts.chapter.mustCover = ['当众指出凶手是县令公子'];
+    contracts.chapter.forbidden = [];
+    const report = await new ContinuityValidator({
+      chapterJudge: {
+        judge: async () => ({
+          fulfillment: [
+            {
+              node: '当众指出凶手是县令公子',
+              fulfilled: false,
+              evidence: [],
+              reason: '正文仅写验尸，未当众指认凶手',
+            },
+          ],
+          forbidden: [],
+          issues: [
+            {
+              type: 'logic_gap',
+              severity: 'high',
+              location: '中段',
+              description: '前后说法矛盾',
+              evidence: ['……'],
+            },
+          ],
+        }),
+      },
+      enableDeepSemantic: true,
+    }).validate({
+      contracts,
+      state: makeState(),
+      drafts: [
+        {
+          sceneId: 'scene-1',
+          beatId: 'beat-1',
+          paragraphs: ['魔宗偏殿里，众人围着尸身验看伤口。'],
+          candidateEvents: [],
+        },
+      ],
+      facts: { events: [], deltas: [], evidence: [] },
+    });
+
+    expect(report.accepted).toBe(false);
+    expect(report.issues.some(issue => issue.message.includes('未当众指认凶手'))).toBe(true);
+    expect(report.issues.some(issue => issue.message.includes('logic_gap'))).toBe(true);
+  });
+
+  it('字面履约已通过且关闭深度语义时不调用 ChapterJudge', async () => {
+    const judge = { judge: vi.fn(async () => ({ fulfillment: [], forbidden: [], issues: [] })) };
+    const contracts = makeContracts();
+    contracts.chapter.forbidden = [];
+    const report = await new ContinuityValidator({
+      chapterJudge: judge,
+      enableDeepSemantic: false,
+    }).validate({
+      contracts,
+      state: makeState(),
+      drafts: [makeDraft()],
+      facts: makeFacts(),
+    });
+    expect(judge.judge).not.toHaveBeenCalled();
+    expect(report.accepted).toBe(true);
   });
 });
 

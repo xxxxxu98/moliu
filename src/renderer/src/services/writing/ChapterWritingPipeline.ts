@@ -53,6 +53,7 @@ import type {
   StructuredAIRequest,
 } from '@/types/story-runtime';
 import {
+  AIChapterJudge,
   AIFactExtractor,
   ContractPackBuilder,
   GroundedRetriever,
@@ -60,8 +61,44 @@ import {
   LongFormWritingEngine,
   sanitizeStructuredProseLeakage,
   StoryRuntimeClient,
+  stripStateForChapterRewrite,
 } from '@/services/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
+
+function createStructuredAIFromActiveProvider(signal?: AbortSignal): StructuredAI {
+  return {
+    async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
+      if (signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
+      }
+      const { requireAIService } = useActiveAIProvider();
+      const service = requireAIService();
+      const raw = await service.complete(request.prompt, {
+        system: [
+          request.system,
+          `schemaName=${request.schemaName}`,
+          '只输出合法 JSON 对象，不要 Markdown 代码块，不要前后解释文字。',
+        ].join('\n'),
+        temperature: request.purpose === 'scene-draft' ? 0.65 : 0.2,
+        signal,
+      });
+      const parsed = ChapterWritingPipeline.parseStructuredJson(raw);
+      return request.parse(parsed);
+    },
+  };
+}
+
+function isAbortError(error: unknown): boolean {
+  if (error instanceof DOMException && error.name === 'AbortError') return true;
+  if (error instanceof Error && error.name === 'AbortError') return true;
+  return false;
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new DOMException('Aborted', 'AbortError');
+  }
+}
 
 // ============================================================
 // 类型定义
@@ -99,6 +136,8 @@ export interface ChapterWriteInput {
   windowedOutline?: string;
   /** 前章衔接信息（可选） */
   previousChapter?: { title: string; summary: string; ending: string };
+  /** 用户停止时 abort，中断在飞 AI 请求 */
+  signal?: AbortSignal;
 }
 
 /** 管道输出 */
@@ -156,6 +195,9 @@ export class ChapterWritingPipeline {
         if (!project || !currentChapter) {
           throw new Error('项目或章节未加载');
         }
+        if (params.signal?.aborted) {
+          throw new DOMException('Aborted', 'AbortError');
+        }
         const context: Record<string, unknown> = {
           projectId: project.id,
           currentChapterId: currentChapter.id,
@@ -170,7 +212,8 @@ export class ChapterWritingPipeline {
         const result = await (client as any).continueWriting(
           context,
           'smartContinue',
-          params.maxTokens || 3000
+          params.maxTokens || 3000,
+          params.signal,
         );
         return result?.content ?? result?.text ?? (typeof result === 'string' ? result : '');
       },
@@ -206,7 +249,9 @@ export class ChapterWritingPipeline {
       new StateDrivenWritingOrchestrator(drafter, gitBackup, persistence, memoryClient, {
         defaultModel: currentModel.value || 'gpt-4o',
         maxRetries: 3,
-        enableSemanticGate: false, // G7 LLM 审查默认关闭
+        // 降级链：统一 ChapterJudge，G5/G7 共用至多 1 次语义审查
+        enableSemanticGate: true,
+        chapterJudge: new AIChapterJudge(createStructuredAIFromActiveProvider()),
         enableGitBackup: true,
         enableRetrieval: true,
         retrievalTopK: 8,
@@ -236,130 +281,149 @@ export class ChapterWritingPipeline {
       userInstructions,
       windowedOutline,
       previousChapter,
+      signal,
     } = input;
 
-    // ====== Step 0: 预检（可选） ======
-    if (enablePreflight) {
-      const result = await this.preflightService.preflight();
-      if (!result.valid) {
-        return this.fail(`预检失败: ${result.errors.join(', ')}`);
-      }
-    }
+    try {
+      throwIfAborted(signal);
 
-    // ====== Step 1: 生成任务书 ======
-    let taskBook: WritingTaskBook | null = null;
-    if (useTaskBook) {
-      const ctx = await this.preflightService.getCurrentChapterContext();
-      const previousChapterEnding = previousChapter?.ending || ctx?.previousChapterEnding || '';
-      const recentChaptersFullText = ctx?.recentChaptersFullText || '';
-
-      const tbResult = await this.contextAgent.generateTaskBook({
-        chapterNumber: chapter.orderIndex + 1,
-        previousChapterEnding,
-        recentChaptersFullText,
-        targetWordCount,
-        writingStyle: writingStyle as any,
-      });
-
-      if (tbResult.success && tbResult.taskBook) {
-        taskBook = tbResult.taskBook;
-      } else {
-        // 任务书失败不中断，降级为无任务书写作
-        console.warn('[Pipeline] 任务书生成失败，降级为无任务书:', tbResult.error);
-      }
-    }
-
-    if (this.hasStoryRuntime()) {
-      return this.executeLongFormRuntime(input, taskBook);
-    }
-
-    // ====== Step 2: 任务书 → StateDriven options 转换 ======
-    const currentChapterOutline = chapter.outline || chapter.plotSummary || '';
-    // 始终注入排版硬约束；有任务书时追加任务书段落
-    const writingRules = this.buildWritingRules(taskBook);
-    const blueprint = taskBook
-      ? {
-          mustCover: taskBook.mustCover,
-          forbiddenZones: taskBook.forbiddenZones,
-          requiredCharacters: taskBook.CPNs,
-          cen: taskBook.CEN,
+      // ====== Step 0: 预检（可选） ======
+      if (enablePreflight) {
+        const result = await this.preflightService.preflight();
+        if (!result.valid) {
+          return this.fail(`预检失败: ${result.errors.join(', ')}`);
         }
-      : undefined;
-
-    // ====== Step 3: 初始化 orchestrator（幂等） ======
-    await this.orchestrator.initialize(project);
-
-    // ====== Step 4: 执行写作（L1-L7 闭环） ======
-    const result: WriteChapterResult = await this.orchestrator.writeChapter(
-      project,
-      chapter,
-      targetWordCount,
-      {
-        currentChapterOutline,
-        windowedOutline,
-        writingRules,
-        blueprint,
-        previousChapter,
-        userInstructions,
       }
-    );
 
-    if (!result.success || !result.gateResult?.passed) {
-      return {
-        success: false,
-        prose: result.prose || '',
-        title: this.readBackTitle(chapter.id),
-        taskBook,
-        gateResult: result.gateResult,
-        attempts: result.attempts,
-        forceAccepted: false,
-        supplementRounds: 0,
-        error: result.error || '严格门禁未通过，章节未提交',
-      };
-    }
+      throwIfAborted(signal);
 
-    // ====== Step 5: 字数不足时补写（可选） ======
-    let prose = result.prose;
-    let supplementRounds = 0;
+      // ====== Step 1: 生成任务书 ======
+      let taskBook: WritingTaskBook | null = null;
+      if (useTaskBook) {
+        const ctx = await this.preflightService.getCurrentChapterContext();
+        const previousChapterEnding = previousChapter?.ending || ctx?.previousChapterEnding || '';
+        const recentChaptersFullText = ctx?.recentChaptersFullText || '';
 
-    if (enableSupplement && prose) {
-      const supplementResult = await this.runSupplementIfNeeded(
+        const tbResult = await this.contextAgent.generateTaskBook({
+          chapterNumber: chapter.orderIndex + 1,
+          previousChapterEnding,
+          recentChaptersFullText,
+          targetWordCount,
+          writingStyle: writingStyle as any,
+        });
+
+        if (tbResult.success && tbResult.taskBook) {
+          taskBook = tbResult.taskBook;
+        } else {
+          // 任务书失败不中断，降级为无任务书写作
+          console.warn('[Pipeline] 任务书生成失败，降级为无任务书:', tbResult.error);
+        }
+      }
+
+      throwIfAborted(signal);
+
+      if (this.hasStoryRuntime()) {
+        return this.executeLongFormRuntime(input, taskBook);
+      }
+
+      // ====== Step 2: 任务书 → StateDriven options 转换 ======
+      const currentChapterOutline = chapter.outline || chapter.plotSummary || '';
+      // 始终注入排版硬约束；有任务书时追加任务书段落
+      const writingRules = this.buildWritingRules(taskBook);
+      const blueprint = taskBook
+        ? {
+            mustCover: taskBook.mustCover,
+            forbiddenZones: taskBook.forbiddenZones,
+            requiredCharacters: taskBook.CPNs,
+            cen: taskBook.CEN,
+          }
+        : undefined;
+
+      // ====== Step 3: 初始化 orchestrator（幂等） ======
+      await this.orchestrator.initialize(project);
+
+      throwIfAborted(signal);
+
+      // ====== Step 4: 执行写作（L1-L7 闭环） ======
+      const result: WriteChapterResult = await this.orchestrator.writeChapter(
         project,
         chapter,
-        prose,
         targetWordCount,
-        writingStyle,
-        blueprint,
+        {
+          currentChapterOutline,
+          windowedOutline,
+          writingRules,
+          blueprint,
+          previousChapter,
+          userInstructions,
+          signal,
+        }
       );
-      prose = supplementResult.prose;
-      supplementRounds = supplementResult.rounds;
-      if (supplementResult.error) {
+
+      if (!result.success || !result.gateResult?.passed) {
         return {
           success: false,
-          prose,
+          prose: result.prose || '',
           title: this.readBackTitle(chapter.id),
           taskBook,
           gateResult: result.gateResult,
           attempts: result.attempts,
           forceAccepted: false,
-          supplementRounds,
-          error: supplementResult.error,
+          supplementRounds: 0,
+          error: result.error || '严格门禁未通过，章节未提交',
         };
       }
-    }
 
-    // ====== Step 6: 结果归一化（剥离结构化泄漏 → 轻量排版，不改写叙述） ======
-    return {
-      success: true,
-      prose: normalizeWebnovelParagraphs(sanitizeStructuredProseLeakage(prose)),
-      title: this.readBackTitle(chapter.id),
-      taskBook,
-      gateResult: result.gateResult,
-      attempts: result.attempts,
-      forceAccepted: false,
-      supplementRounds,
-      error: result.error,
-    };
+      // ====== Step 5: 字数不足时补写（可选） ======
+      let prose = result.prose;
+      let supplementRounds = 0;
+
+      if (enableSupplement && prose) {
+        throwIfAborted(signal);
+        const supplementResult = await this.runSupplementIfNeeded(
+          project,
+          chapter,
+          prose,
+          targetWordCount,
+          writingStyle,
+          blueprint,
+          signal,
+        );
+        prose = supplementResult.prose;
+        supplementRounds = supplementResult.rounds;
+        if (supplementResult.error) {
+          return {
+            success: false,
+            prose,
+            title: this.readBackTitle(chapter.id),
+            taskBook,
+            gateResult: result.gateResult,
+            attempts: result.attempts,
+            forceAccepted: false,
+            supplementRounds,
+            error: supplementResult.error,
+          };
+        }
+      }
+
+      // ====== Step 6: 结果归一化（剥离结构化泄漏 → 轻量排版，不改写叙述） ======
+      return {
+        success: true,
+        prose: normalizeWebnovelParagraphs(sanitizeStructuredProseLeakage(prose)),
+        title: this.readBackTitle(chapter.id),
+        taskBook,
+        gateResult: result.gateResult,
+        attempts: result.attempts,
+        forceAccepted: false,
+        supplementRounds,
+        error: result.error,
+      };
+    } catch (err) {
+      if (isAbortError(err) || signal?.aborted) {
+        return this.fail('Generation stopped by user');
+      }
+      throw err;
+    }
   }
 
   // ============================================================
@@ -381,7 +445,6 @@ export class ChapterWritingPipeline {
     input: ChapterWriteInput,
     taskBook: WritingTaskBook | null
   ): Promise<ChapterWriteOutput> {
-    const { requireAIService } = useActiveAIProvider();
     const migrator = new LegacyProjectMigrator();
     const bootstrap = migrator.migrate(
       input.project as unknown as Parameters<LegacyProjectMigrator['migrate']>[0]
@@ -390,9 +453,14 @@ export class ChapterWritingPipeline {
 
     try {
       await runtime.bootstrap(bootstrap);
-      const state = await runtime.loadState(input.project.id);
+      const loadedState = await runtime.loadState(input.project.id);
       const chapterNumber = input.chapter.orderIndex + 1;
-      if (state.chapter >= chapterNumber && input.chapter.content.trim()) {
+      const isEmptyRewrite = !input.chapter.content.trim();
+      // 清空正文后重写：剥离本章及之后的旧 accepted 事件，避免 stale runtime 污染起草 prompt
+      const state = isEmptyRewrite
+        ? stripStateForChapterRewrite(loadedState, chapterNumber)
+        : loadedState;
+      if (state.chapter >= chapterNumber && !isEmptyRewrite) {
         throw new Error(`第 ${chapterNumber} 章已有 accepted 状态，请使用章节重写流程`);
       }
 
@@ -459,26 +527,13 @@ export class ChapterWritingPipeline {
       const recentScenes = bootstrap.sceneChunks
         .filter(scene => scene.chapterIndex < chapterNumber)
         .slice(-4);
-      const ai: StructuredAI = {
-        async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
-          const service = requireAIService();
-          const raw = await service.complete(request.prompt, {
-            system: [
-              request.system,
-              `schemaName=${request.schemaName}`,
-              '只输出合法 JSON 对象，不要 Markdown 代码块，不要前后解释文字。',
-            ].join('\n'),
-            temperature: request.purpose === 'scene-draft' ? 0.65 : 0.2,
-          });
-          const parsed = ChapterWritingPipeline.parseStructuredJson(raw);
-          return request.parse(parsed);
-        },
-      };
+      const ai: StructuredAI = createStructuredAIFromActiveProvider(input.signal);
       const engine = new LongFormWritingEngine({
         ai,
         factExtractor: new AIFactExtractor(ai),
         commitPort: runtime,
       });
+      throwIfAborted(input.signal);
       const result = await engine.write({
         projectId: input.project.id,
         contracts,
@@ -487,6 +542,7 @@ export class ChapterWritingPipeline {
         retrievedScenes,
         styleGuidance: contracts.master.style,
         maxContextTokens: 24_000,
+        targetWordCount: input.targetWordCount,
       });
       // coerce 已清洗段落；出口再兜底一次，保证落库/回显不含 schema 残留
       const prose = normalizeWebnovelParagraphs(
@@ -511,6 +567,7 @@ export class ChapterWritingPipeline {
       }
 
       // electron-store 仅作为 UI 投影；canonical commit 已由 SQLite 原子写入。
+      // 字数补齐已在 LongFormWritingEngine 提交前完成。
       try {
         if (this.persistence?.replace) {
           await this.persistence.replace(input.chapter.id, prose);
@@ -530,6 +587,12 @@ export class ChapterWritingPipeline {
         supplementRounds: 0,
       };
     } catch (error) {
+      if (isAbortError(error) || input.signal?.aborted) {
+        return {
+          ...this.fail('Generation stopped by user'),
+          taskBook,
+        };
+      }
       return {
         ...this.fail(error instanceof Error ? error.message : '长篇运行时执行失败'),
         taskBook,
@@ -607,6 +670,7 @@ export class ChapterWritingPipeline {
     targetWordCount: number,
     writingStyle: WritingStyle,
     blueprint?: GateContext['blueprint'],
+    signal?: AbortSignal,
   ): Promise<{ prose: string; rounds: number; error?: string }> {
     const { requireAIService } = useActiveAIProvider();
 
@@ -615,8 +679,10 @@ export class ChapterWritingPipeline {
       targetWordCount,
       chapterTitle: chapter.title,
       chapterOutline: chapter.outline || chapter.plotSummary || '',
+      signal,
       drafter: {
         async draft(prompt, maxTokens) {
+          throwIfAborted(signal);
           const client = requireAIService();
           // 补写必须清空 currentChapterOutline，避免走「按大纲整章重写」分支
           const context: Record<string, unknown> = {
@@ -633,12 +699,14 @@ export class ChapterWritingPipeline {
           const result = await (client as any).continueWriting(
             context,
             'smartContinue',
-            maxTokens
+            maxTokens,
+            signal,
           );
           return result?.content ?? result?.text ?? (typeof result === 'string' ? result : '');
         },
       },
       validateRound: async (_round, _delta, fullProse) => {
+        throwIfAborted(signal);
         const validation = await this.orchestrator.validateSupplement(
           fullProse,
           chapter,

@@ -262,7 +262,51 @@ export class StoryRuntimeClient {
         },
       ];
     });
+
+    // 必须先投影 entities：canonicalize 会引入 char:intro:*，events/temporal_facts 有 FK 引用
+    const entityRows = Object.values(canonicalState.entities).map(entity => ({
+      id: entity.id,
+      type: entity.kind,
+      canonical_name: entity.name,
+      description:
+        typeof entity.attributes.description === 'string' ? entity.attributes.description : '',
+      payload_json: toJsonValue(entity),
+      last_chapter: commit.chapterNumber,
+    }));
+    const aliasRows = Object.values(canonicalState.entities).flatMap(entity =>
+      entity.aliases.map(alias => ({
+        alias,
+        entity_id: entity.id,
+        normalized_alias: alias.trim().toLocaleLowerCase(),
+      }))
+    );
+
+    // 同事务写入的本章事件 ID；因果边引用的历史事件也要一并投影，避免 FK 失败
+    const chapterEventIds = new Set(commit.extractedFacts.events.map(event => event.id));
+    const knownEventIds = new Set([
+      ...canonicalState.events.map(event => event.id),
+      ...chapterEventIds,
+    ]);
+    const referencedCauseIds = new Set(
+      commit.extractedFacts.events.flatMap(event =>
+        event.causes.filter(causeId => knownEventIds.has(causeId) && !chapterEventIds.has(causeId))
+      )
+    );
+    const historicalCauseEvents = canonicalState.events
+      .filter(event => referencedCauseIds.has(event.id))
+      .map(event => ({
+        id: event.id,
+        chapter: event.chapter,
+        event_type: event.type,
+        subject_id: event.participants.find(id => Boolean(canonicalState.entities[id])) ?? null,
+        summary: event.summary,
+        payload_json: toJsonValue(event),
+        occurred_at: event.timestamp ?? new Date().toISOString(),
+      }));
+
     const projections = {
+      entities: entityRows,
+      aliases: aliasRows,
       drafts: [
         {
           id: `${commit.id}:draft`,
@@ -274,18 +318,21 @@ export class StoryRuntimeClient {
           metadata_json: toJsonValue({ validation: commit.validation }),
         },
       ],
-      events: commit.extractedFacts.events.map(event => ({
-        id: event.id,
-        chapter: commit.chapterNumber,
-        event_type: event.type,
-        subject_id: event.participants.find(id => Boolean(canonicalState.entities[id])) ?? null,
-        summary: event.summary,
-        payload_json: toJsonValue(event),
-        occurred_at: event.timestamp ?? new Date().toISOString(),
-      })),
+      events: [
+        ...historicalCauseEvents,
+        ...commit.extractedFacts.events.map(event => ({
+          id: event.id,
+          chapter: commit.chapterNumber,
+          event_type: event.type,
+          subject_id: event.participants.find(id => Boolean(canonicalState.entities[id])) ?? null,
+          summary: event.summary,
+          payload_json: toJsonValue(event),
+          occurred_at: event.timestamp ?? new Date().toISOString(),
+        })),
+      ],
       event_edges: commit.extractedFacts.events.flatMap(event =>
         event.causes
-          .filter(causeId => canonicalState.events.some(existing => existing.id === causeId))
+          .filter(causeId => knownEventIds.has(causeId))
           .map(causeId => ({
             from_event_id: causeId,
             to_event_id: event.id,

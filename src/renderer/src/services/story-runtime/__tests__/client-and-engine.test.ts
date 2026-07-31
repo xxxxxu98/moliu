@@ -99,6 +99,95 @@ describe('StoryRuntimeClient', () => {
     ).rejects.toThrow('禁止发送到 IPC');
     expect(commitAccepted).not.toHaveBeenCalled();
   });
+
+  it('accepted commit 会投影 entities（含 intro 角色），避免 events.subject_id 外键失败', async () => {
+    const commitAccepted = vi.fn(makeIPC().commitAccepted);
+    const client = new StoryRuntimeClient(makeIPC({ commitAccepted }));
+    const introId = 'char:intro:陈渡-abcd1234';
+    const baseState = makeState();
+
+    await client.commitChapter({
+      id: 'project-1:chapter:1:commit:test',
+      projectId: 'project-1',
+      chapterNumber: 1,
+      status: 'accepted',
+      baseState,
+      contractPack: makeContracts(),
+      sceneDrafts: [
+        {
+          sceneId: 'scene-1',
+          beatId: 'chapter-1:CBN',
+          paragraphs: ['陈渡看见标注。'],
+          candidateEvents: [],
+        },
+      ],
+      extractedFacts: {
+        events: [
+          {
+            id: 'evt-1',
+            chapter: 1,
+            sceneId: 'scene-1',
+            type: 'reveal',
+            summary: '陈渡看见标注',
+            participants: [introId],
+            causes: [],
+            effects: [],
+            evidence: ['陈渡看见标注'],
+          },
+        ],
+        deltas: [
+          {
+            operation: 'set',
+            path: `entities.${introId}`,
+            value: {
+              id: introId,
+              kind: 'character',
+              name: '陈渡',
+              aliases: [],
+              attributes: { introducedInChapter: true },
+              knownBy: [introId],
+              sourceTrace: [],
+            },
+            evidence: '正文引入角色：陈渡',
+          },
+        ],
+        evidence: ['陈渡看见标注'],
+      },
+      validation: { accepted: true, issues: [], checkedDomains: [] },
+      overlay: {
+        baseChapter: 1,
+        deltas: [
+          {
+            operation: 'set',
+            path: `entities.${introId}`,
+            value: {
+              id: introId,
+              kind: 'character',
+              name: '陈渡',
+              aliases: [],
+              attributes: { introducedInChapter: true },
+              knownBy: [introId],
+              sourceTrace: [],
+            },
+            evidence: '正文引入角色：陈渡',
+          },
+        ],
+        events: [],
+      },
+      reasons: [],
+    });
+
+    expect(commitAccepted).toHaveBeenCalledOnce();
+    const input = commitAccepted.mock.calls[0][0] as {
+      projections: {
+        entities: Array<{ id: string; canonical_name: string }>;
+        events: Array<{ subject_id: string | null }>;
+      };
+    };
+    expect(input.projections.entities.some(entity => entity.id === introId)).toBe(true);
+    expect(input.projections.entities.some(entity => entity.id === 'hero')).toBe(true);
+    expect(input.projections.events[0]?.subject_id).toBe(introId);
+  });
 });
 
 describe('patch 模型', () => {
@@ -126,13 +215,46 @@ describe('patch 模型', () => {
 
 class FakeAI implements StructuredAI {
   callCount = 0;
+  chapterJudgeCalls = 0;
 
   async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
     this.callCount += 1;
+    if (request.purpose === 'chapter-judge' || request.purpose === 'fulfillment-check') {
+      this.chapterJudgeCalls += 1;
+      const payload = JSON.parse(request.prompt) as {
+        mustCover?: string[];
+        forbiddenZones?: string[];
+      };
+      return {
+        fulfillment: (payload.mustCover ?? []).map(node => ({
+          node,
+          fulfilled: true,
+          evidence: ['语义履约'],
+          reason: '测试放行',
+        })),
+        forbidden: (payload.forbiddenZones ?? []).map(zone => ({
+          zone,
+          violated: false,
+          evidence: [],
+          reason: '未触发',
+        })),
+        issues: [],
+        // 兼容旧 fulfillment-check
+        results: (payload.mustCover ?? []).map(node => ({
+          node,
+          fulfilled: true,
+          evidence: ['语义履约'],
+          reason: '测试放行',
+        })),
+      };
+    }
     const payload = JSON.parse(request.prompt) as {
-      beat: { id: string; summary: string };
+      primaryBeatId?: string;
+      beat?: { id: string; summary: string };
       chapterBeats?: Array<{ kind: string; summary: string }>;
-      allowedCandidateEvents: Array<{
+      allowedCandidateEventIds?: string[];
+      candidateSummaries?: Record<string, string>;
+      allowedCandidateEvents?: Array<{
         id: string;
         summary: string;
         participants: string[];
@@ -140,13 +262,25 @@ class FakeAI implements StructuredAI {
         effects: string[];
       }>;
     };
+    const beatId = payload.primaryBeatId ?? payload.beat?.id ?? 'unknown';
     const arc =
-      payload.chapterBeats?.map(beat => beat.summary).join('→') ?? payload.beat.summary;
+      payload.chapterBeats?.map(beat => beat.summary).join('→') ??
+      payload.beat?.summary ??
+      '推进';
+    const candidateEvents =
+      payload.allowedCandidateEvents ??
+      (payload.allowedCandidateEventIds ?? []).map(id => ({
+        id,
+        summary: payload.candidateSummaries?.[id] ?? id,
+        participants: [] as string[],
+        prerequisites: [] as string[],
+        effects: [] as string[],
+      }));
     return {
-      sceneId: `${payload.beat.id}:scene`,
-      beatId: payload.beat.id,
+      sceneId: `${beatId}:scene`,
+      beatId,
       paragraphs: [`林夜经历了${arc}。`],
-      candidateEvents: payload.allowedCandidateEvents,
+      candidateEvents,
     };
   }
 }
@@ -198,7 +332,9 @@ describe('LongFormWritingEngine', () => {
     expect(result.plan.beats).toHaveLength(3);
     // 规划仍保留多 beat；正文改为单次整章起草
     expect(result.drafts).toHaveLength(1);
-    expect(ai.callCount).toBe(1);
+    // 起草 1 次 + 默认深度语义 chapter-judge 1 次
+    expect(ai.callCount).toBe(2);
+    expect(ai.chapterJudgeCalls).toBe(1);
     expect(result.report.accepted).toBe(true);
     expect(result.commit.status).toBe('accepted');
     expect(result.receipt).toEqual(receipt);

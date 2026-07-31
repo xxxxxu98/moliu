@@ -1,13 +1,16 @@
 import type {
-  ChapterContract,
+  ChapterJudge,
+  ChapterJudgeIssueType,
   ContinuityDomain,
   ContinuityIssue,
   ContinuityReport,
   ContractPack,
   ExtractedFacts,
+  FulfillmentJudge,
   ProvisionalStateOverlay,
   SceneDraft,
   StoryState,
+  ValidationSeverity,
 } from '@/types/story-runtime';
 
 import { applyProvisionalOverlay } from './stateOverlay';
@@ -20,11 +23,27 @@ export interface ContinuityValidationInput {
   facts: ExtractedFacts;
 }
 
+export interface ContinuityValidatorOptions {
+  /** 统一语义审查（履约+禁区+连贯），至多 1 次 AI */
+  chapterJudge?: ChapterJudge;
+  /**
+   * @deprecated 仅履约子集；若同时提供 chapterJudge 则忽略本项
+   */
+  fulfillmentJudge?: FulfillmentJudge;
+  /**
+   * 是否在字面履约已通过时仍做深度语义审查（默认 true；有 chapterJudge 时生效）
+   */
+  enableDeepSemantic?: boolean;
+}
+
 function chapterText(drafts: SceneDraft[]): string {
   return drafts.flatMap(draft => draft.paragraphs).join('\n');
 }
 
-function fulfilled(node: string, text: string, facts: ExtractedFacts): boolean {
+/**
+ * 字面快路径：整句命中或片语覆盖 ≥70% 即视为履约，避免无谓 AI 调用。
+ */
+export function fulfilledLexically(node: string, text: string, facts: ExtractedFacts): boolean {
   if (!node.trim()) return true;
   if (text.includes(node)) return true;
   if (
@@ -38,7 +57,6 @@ function fulfilled(node: string, text: string, facts: ExtractedFacts): boolean {
     return true;
   }
 
-  // 工程化履约：长句 mustCover 拆成可检查的关键片语（引号内容、2+ 字中文/词段）
   const quoted = [...node.matchAll(/[“"‘']([^”"'’]+)[”"'’]/gu)].map(match => match[1].trim());
   const segments = node
     .split(/[，,。；;：:\s]/u)
@@ -52,7 +70,6 @@ function fulfilled(node: string, text: string, facts: ExtractedFacts): boolean {
     ...facts.events.flatMap(event => [event.summary, ...event.effects, ...event.evidence]),
   ].join('\n');
   const hitCount = tokens.filter(token => haystack.includes(token)).length;
-  // 要求覆盖大部分关键片语，避免整句一字不差才能过
   return hitCount >= Math.ceil(tokens.length * 0.7);
 }
 
@@ -61,8 +78,28 @@ function parseInventoryPath(path: string): { owner: string; item: string } | und
   return root === 'inventory' && owner && item ? { owner, item } : undefined;
 }
 
+function mapJudgeIssueDomain(type: ChapterJudgeIssueType): ContinuityDomain {
+  switch (type) {
+    case 'fact_conflict':
+    case 'power':
+      return 'entity';
+    case 'logic_gap':
+      return 'causality';
+    case 'timeline':
+      return 'timeline';
+    case 'ooc':
+      return 'knowledge';
+    case 'foreshadow':
+      return 'fulfillment';
+    default:
+      return 'fulfillment';
+  }
+}
+
 export class ContinuityValidator {
-  validate(input: ContinuityValidationInput): ContinuityReport {
+  constructor(private readonly options: ContinuityValidatorOptions = {}) {}
+
+  async validate(input: ContinuityValidationInput): Promise<ContinuityReport> {
     const state = applyProvisionalOverlay(input.state, input.overlay);
     const issues: ContinuityIssue[] = [];
     const checkedDomains: ContinuityDomain[] = [
@@ -79,13 +116,16 @@ export class ContinuityValidator {
       domain: ContinuityDomain,
       message: string,
       evidence: string[] = [],
-      sceneId?: string
+      sceneId?: string,
+      severityOverride?: ValidationSeverity
     ): void => {
       issueIndex += 1;
       issues.push({
         id: `${domain}-${issueIndex}`,
         domain,
-        severity: input.contracts.review.blockingDomains.includes(domain) ? 'blocking' : 'warning',
+        severity:
+          severityOverride ??
+          (input.contracts.review.blockingDomains.includes(domain) ? 'blocking' : 'warning'),
         message,
         evidence,
         sceneId,
@@ -151,8 +191,9 @@ export class ContinuityValidator {
       }
     }
 
-    this.validateFulfillment(
-      input.contracts.chapter,
+    await this.validateSemanticGates(
+      input.contracts,
+      state,
       chapterText(input.drafts),
       input.facts,
       addIssue
@@ -168,25 +209,139 @@ export class ContinuityValidator {
     };
   }
 
-  private validateFulfillment(
-    contract: ChapterContract,
+  private async validateSemanticGates(
+    contracts: ContractPack,
+    state: StoryState,
     text: string,
     facts: ExtractedFacts,
     addIssue: (
       domain: ContinuityDomain,
       message: string,
       evidence?: string[],
-      sceneId?: string
+      sceneId?: string,
+      severityOverride?: ValidationSeverity
     ) => void
-  ): void {
-    for (const node of contract.mustCover) {
-      if (!fulfilled(node, text, facts)) {
-        addIssue('fulfillment', `未履约节点：${node}`);
-      }
+  ): Promise<void> {
+    const contract = contracts.chapter;
+    const pendingNodes = contract.mustCover.filter(
+      node => !fulfilledLexically(node, text, facts)
+    );
+    const literalForbiddenHits = contract.forbidden.filter(
+      zone => zone && text.includes(zone)
+    );
+    for (const forbidden of literalForbiddenHits) {
+      addIssue('fulfillment', `触发本章禁区：${forbidden}`, [forbidden]);
     }
-    for (const forbidden of contract.forbidden) {
-      if (forbidden && text.includes(forbidden)) {
-        addIssue('fulfillment', `触发本章禁区：${forbidden}`, [forbidden]);
+    const semanticForbidden = contract.forbidden.filter(
+      zone => zone && !text.includes(zone)
+    );
+
+    const enableDeepSemantic = this.options.enableDeepSemantic !== false;
+    const chapterJudge = this.options.chapterJudge;
+
+    const shouldCallChapterJudge =
+      Boolean(chapterJudge) &&
+      (pendingNodes.length > 0 ||
+        semanticForbidden.length > 0 ||
+        enableDeepSemantic);
+
+    if (chapterJudge && shouldCallChapterJudge) {
+      try {
+        const judgment = await chapterJudge.judge({
+          mustCover: pendingNodes,
+          forbiddenZones: semanticForbidden,
+          chapterText: text,
+          facts,
+          checkDeepSemantic: enableDeepSemantic,
+          stateDigest: {
+            entities: Object.values(state.entities).slice(0, 20).map(entity => ({
+              id: entity.id,
+              name: entity.name,
+              kind: entity.kind,
+            })),
+            knowledge: state.knowledge,
+            openForeshadows: state.openForeshadows.slice(0, 20),
+          },
+        });
+
+        for (const item of judgment.fulfillment) {
+          if (!item.fulfilled) {
+            const suffix = item.reason.trim() ? `（${item.reason.trim()}）` : '';
+            addIssue('fulfillment', `未履约节点：${item.node}${suffix}`, item.evidence);
+          }
+        }
+        for (const item of judgment.forbidden) {
+          if (item.violated) {
+            const suffix = item.reason.trim() ? `（${item.reason.trim()}）` : '';
+            addIssue('fulfillment', `触发本章禁区：${item.zone}${suffix}`, item.evidence);
+          }
+        }
+        for (const item of judgment.issues) {
+          const domain = mapJudgeIssueDomain(item.type);
+          const severity: ValidationSeverity =
+            item.severity === 'critical' || item.severity === 'high'
+              ? contracts.review.blockingDomains.includes(domain)
+                ? 'blocking'
+                : 'warning'
+              : 'warning';
+          addIssue(
+            domain,
+            `语义问题[${item.type}] ${item.location}: ${item.description}`,
+            item.evidence,
+            undefined,
+            severity
+          );
+        }
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        for (const node of pendingNodes) {
+          addIssue(
+            'fulfillment',
+            `未履约节点：${node}（语义审查失败：${detail}）`
+          );
+        }
+        if (pendingNodes.length === 0 && enableDeepSemantic) {
+          addIssue(
+            'fulfillment',
+            `语义审查失败：${detail}`,
+            [],
+            undefined,
+            'warning'
+          );
+        }
+      }
+      return;
+    }
+
+    // 无 chapterJudge：旧履约适配或纯字面
+    if (pendingNodes.length > 0) {
+      const legacy = this.options.fulfillmentJudge;
+      if (legacy) {
+        try {
+          const judgment = await legacy.judge({
+            mustCover: pendingNodes,
+            chapterText: text,
+            facts,
+          });
+          for (const item of judgment.results) {
+            if (!item.fulfilled) {
+              const suffix = item.reason.trim() ? `（${item.reason.trim()}）` : '';
+              addIssue('fulfillment', `未履约节点：${item.node}${suffix}`, item.evidence);
+            }
+          }
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          for (const node of pendingNodes) {
+            addIssue(
+              'fulfillment',
+              `未履约节点：${node}（语义履约判定失败：${detail}）`
+            );
+          }
+        }
+      } else {
+        for (const node of pendingNodes) {
+          addIssue('fulfillment', `未履约节点：${node}`);
+        }
       }
     }
   }

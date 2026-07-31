@@ -390,14 +390,20 @@ export class UnifiedAIService {
    * @param context 项目上下文
    * @param mode 续写模式
    * @param targetWordCount 目标字数（默认3000）
+   * @param signal 传入时走 stream + cancel，以真正中断底层 HTTP（SDK chat 不支持 abort）
    */
   async continueWriting(
     context: ProjectContext,
     mode: "smartContinue" | "polish",
     targetWordCount: number = 3000,
+    signal?: AbortSignal,
   ): Promise<AIWriteResult> {
     if (!this.client) {
       throw new Error("Client not initialized");
+    }
+
+    if (signal?.aborted) {
+      throw new DOMException("Aborted", "AbortError");
     }
 
     const { systemPrompt, userPrompt } = PromptBuilder.buildContinuePrompt(
@@ -411,12 +417,48 @@ export class UnifiedAIService {
       { role: "user" as const, content: userPrompt },
     ];
 
-    const response = await this.client.chat(messages, {
+    const chatOpts = {
       temperature: this.generationConfig.temperature,
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
       presencePenalty: this.generationConfig.presencePenalty,
-    } as any);
+    };
+
+    // multi-ai-sdk 的 chat() 不透传 AbortSignal；stream().cancel() 才会 abort fetch
+    if (signal) {
+      const stream = this.client.stream(messages, chatOpts as any);
+      const onAbort = (): void => {
+        stream.cancel();
+      };
+      signal.addEventListener("abort", onAbort, { once: true });
+      try {
+        let content = "";
+        for await (const chunk of stream) {
+          if (signal.aborted) {
+            throw new DOMException("Aborted", "AbortError");
+          }
+          if (chunk.content) {
+            content += chunk.content;
+          }
+        }
+        return { content };
+      } catch (error) {
+        if (signal.aborted) {
+          throw new DOMException("Aborted", "AbortError");
+        }
+        if (error instanceof DOMException && error.name === "AbortError") {
+          throw error;
+        }
+        if (error instanceof Error && error.name === "AbortError") {
+          throw error;
+        }
+        throw error;
+      } finally {
+        signal.removeEventListener("abort", onAbort);
+      }
+    }
+
+    const response = await this.client.chat(messages, chatOpts as any);
 
     return {
       content:
@@ -852,24 +894,44 @@ export class UnifiedAIService {
         topP: this.generationConfig.topP,
         frequencyPenalty: this.generationConfig.frequencyPenalty,
         presencePenalty: this.generationConfig.presencePenalty,
-        signal, // 传递 AbortSignal
       } as any);
 
-      for await (const chunk of stream) {
-        // 检查是否已中止
-        if (signal?.aborted) {
+      // SDK 未必透传 signal；主动 cancel 才能中断底层 HTTP
+      const onAbort = (): void => {
+        stream.cancel();
+      };
+      if (signal) {
+        if (signal.aborted) {
+          stream.cancel();
           onError("Generation stopped by user");
           return;
         }
-        if (chunk.content) {
-          onChunk(chunk.content);
-        }
+        signal.addEventListener("abort", onAbort, { once: true });
       }
 
-      onComplete();
+      try {
+        for await (const chunk of stream) {
+          if (signal?.aborted) {
+            onError("Generation stopped by user");
+            return;
+          }
+          if (chunk.content) {
+            onChunk(chunk.content);
+          }
+        }
+        onComplete();
+      } finally {
+        if (signal) {
+          signal.removeEventListener("abort", onAbort);
+        }
+      }
     } catch (error) {
       // 如果是 AbortError，说明是用户主动停止，不算错误
-      if (error instanceof DOMException && error.name === "AbortError") {
+      if (
+        signal?.aborted ||
+        (error instanceof DOMException && error.name === "AbortError") ||
+        (error instanceof Error && error.name === "AbortError")
+      ) {
         onError("Generation stopped by user");
         return;
       }

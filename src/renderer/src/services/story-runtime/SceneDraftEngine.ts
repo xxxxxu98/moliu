@@ -64,8 +64,12 @@ function pickCandidateEvents(
   const allowedById = new Map(allowed.map(item => [item.id, item]));
   const selected: CandidateEvent[] = [];
   for (const item of payload.candidateEvents) {
-    if (!isRecord(item)) continue;
-    const id = typeof item.id === 'string' ? item.id : '';
+    const id =
+      typeof item === 'string'
+        ? item
+        : isRecord(item) && typeof item.id === 'string'
+          ? item.id
+          : '';
     const matched = allowedById.get(id);
     if (matched) {
       selected.push(matched);
@@ -117,7 +121,11 @@ function collectAllowedCandidates(plan: ScenePlan, blockedIds: Set<string>): Can
 export class SceneDraftEngine {
   constructor(private readonly ai: StructuredAI) {}
 
-  async draft(plan: ScenePlan, context: ContextPack): Promise<SceneDraft[]> {
+  async draft(
+    plan: ScenePlan,
+    context: ContextPack,
+    options?: { targetWordCount?: number }
+  ): Promise<SceneDraft[]> {
     if (plan.beats.length === 0) {
       throw new Error(`章节 ${plan.chapterNumber} 缺少可写场景 beat`);
     }
@@ -134,6 +142,15 @@ export class SceneDraftEngine {
       order: beat.order,
       summary: beat.summary,
     }));
+    const targetWordCount = options?.targetWordCount;
+    const wordCountRules =
+      typeof targetWordCount === 'number' && targetWordCount > 0
+        ? [
+            `- 本章目标约 ${targetWordCount} 字（按中文字符口径），paragraphs 合计不得明显低于目标的 85%`,
+            `- 通过充实情节推进、对话与细节达到字数，禁止无意义注水与重复开场`,
+          ]
+        : [];
+    const candidateIds = candidates.map(item => item.id);
 
     const raw = await this.ai.generate<SceneDraft>({
       purpose: 'scene-draft',
@@ -142,7 +159,7 @@ export class SceneDraftEngine {
         '你是长篇小说整章写作引擎。严格服从合同、状态和章节大纲节点，不得采用预检失败的候选事件。',
         '只输出一个 JSON 对象，不要 Markdown 代码块，不要解释。',
         'JSON 字段必须为：',
-        `{"sceneId":"${expectedSceneId}","beatId":"${primaryBeat.id}","paragraphs":["段落1","段落2"],"candidateEvents":[...]}`,
+        `{"sceneId":"${expectedSceneId}","beatId":"${primaryBeat.id}","paragraphs":["段落1","段落2"],"candidateEvents":[{"id":"..."}]}`,
         `- sceneId 必须等于 "${expectedSceneId}"`,
         `- beatId 必须等于 "${primaryBeat.id}"`,
         '- paragraphs 至少 1 段，写可直接入库的小说正文（中文）',
@@ -150,26 +167,30 @@ export class SceneDraftEngine {
         '- 【禁止】中途重新开场、重复穿越/醒来、重写已发生剧情、把同一事件换措辞再写一遍',
         '- 【禁止】把章节拆成互不衔接的几段独立短文；段落之间必须文气连贯',
         '- paragraphs 数组元素只能是小说正文，禁止写入 sceneId/beatId/candidateEvents 等字段名，禁止写入 ] } : 等 JSON 骨架',
-        '- candidateEvents 只能从 allowedCandidateEvents 中原样挑选，禁止新增 id',
+        '- candidateEvents 只填 id 列表（从 allowedCandidateEventIds 中选），禁止重复粘贴 summary',
+        ...wordCountRules,
       ].join('\n'),
       prompt: JSON.stringify({
         chapterNumber: plan.chapterNumber,
         chapterBeats,
-        primaryBeat,
-        // 兼容旧 FakeAI / 调试：保留 beat 指向主 beat
-        beat: primaryBeat,
-        allowedCandidateEvents: candidates,
+        primaryBeatId: primaryBeat.id,
+        allowedCandidateEventIds: candidateIds,
+        // 候选事件只给 id→一句 summary，避免与 beats/合同重复灌长文
+        candidateSummaries: Object.fromEntries(
+          candidates.map(item => [item.id, item.summary])
+        ),
         context,
+        targetWordCount: targetWordCount ?? null,
         writingRules: {
           mode: 'single-shot-chapter',
-          mustCoverInOrder: chapterBeats.map(beat => `${beat.kind}: ${beat.summary}`),
           forbidPlotRestart: true,
+          targetWordCount: targetWordCount ?? null,
         },
         requiredOutput: {
           sceneId: expectedSceneId,
           beatId: primaryBeat.id,
           paragraphs: ['正文段落...'],
-          candidateEvents: candidates,
+          candidateEvents: candidateIds.map(id => ({ id })),
         },
       }),
       parse: value =>

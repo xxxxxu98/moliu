@@ -104,6 +104,8 @@ export interface RunSupplementRoundsParams {
   chapterTitle: string;
   chapterOutline?: string;
   maxRounds?: number;
+  /** 用户停止时 abort，中断补写循环与在飞请求 */
+  signal?: AbortSignal;
   /**
    * 每轮补写成功后的回调。
    * @param round 当前轮次（从 1 开始）
@@ -141,6 +143,14 @@ export async function runSupplementRounds(
   let rounds = 0;
 
   while (rounds < maxRounds) {
+    if (params.signal?.aborted) {
+      return {
+        prose,
+        rounds,
+        error: 'Generation stopped by user',
+      };
+    }
+
     const check = checkWordCount(prose, params.targetWordCount);
     if (!check.needsSupplement) {
       break;
@@ -190,6 +200,17 @@ export async function runSupplementRounds(
       prose = candidateProse;
       rounds = round;
     } catch (err) {
+      if (
+        params.signal?.aborted ||
+        (err instanceof DOMException && err.name === 'AbortError') ||
+        (err instanceof Error && err.name === 'AbortError')
+      ) {
+        return {
+          prose,
+          rounds,
+          error: 'Generation stopped by user',
+        };
+      }
       const message = err instanceof Error ? err.message : String(err);
       console.warn(`[Supplement] 第 ${round} 轮补写失败，停止补写:`, err);
       return {

@@ -36,8 +36,11 @@ export {
 // ============================================================
 
 export interface DrafterClient {
-  /** 执行一次起草。 */
-  draft(prompt: string, params: { temperature: number; maxTokens: number }): Promise<string>;
+  /** 执行一次起草。params.signal 用于真正中断底层 HTTP。 */
+  draft(
+    prompt: string,
+    params: { temperature: number; maxTokens: number; signal?: AbortSignal },
+  ): Promise<string>;
 }
 
 export interface RetryLoopOptions {
@@ -47,6 +50,14 @@ export interface RetryLoopOptions {
   timeLimitMs?: number;
   /** 是否在重试时附带门禁反馈 */
   includeGateFeedback?: boolean;
+  /** 用户停止时 abort，中断在飞起草请求 */
+  signal?: AbortSignal;
+}
+
+function isAbortError(error: unknown): boolean {
+  if (error instanceof DOMException && error.name === 'AbortError') return true;
+  if (error instanceof Error && error.name === 'AbortError') return true;
+  return false;
 }
 
 export interface DraftAttempt {
@@ -112,6 +123,10 @@ export class DrafterRetryLoop {
     let bestScore = -1;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      if (options.signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
+      }
+
       if (Date.now() - startTime > timeLimitMs) {
         return this.finalize(attempts, bestAttempt, startTime, 'time_limit');
       }
@@ -124,8 +139,16 @@ export class DrafterRetryLoop {
       const drafterParams = this.router.getParams('drafter');
       let rawOutput: string;
       try {
-        rawOutput = await this.drafter.draft(injected.prompt, drafterParams);
+        rawOutput = await this.drafter.draft(injected.prompt, {
+          ...drafterParams,
+          signal: options.signal,
+        });
       } catch (err) {
+        if (isAbortError(err) || options.signal?.aborted) {
+          throw err instanceof DOMException
+            ? err
+            : new DOMException('Aborted', 'AbortError');
+        }
         const failedAttempt: DraftAttempt = {
           attempt,
           rawOutput: '',

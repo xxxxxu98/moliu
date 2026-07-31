@@ -45,7 +45,7 @@ describe('FactCanonicalizer', () => {
     expect(result.introductionDeltas).toEqual([]);
   });
 
-  it('正文新角色可引入，自然语言因果边丢弃而非当成缺前件', () => {
+  it('正文新角色可引入，自然语言因果边丢弃而非当成缺前件', async () => {
     const prose =
       '陈渡看见周远身上标注，张宏盛在旁冷笑。周远被执行死刑的传闻让全场一静。';
     const facts: ExtractedFacts = {
@@ -85,7 +85,7 @@ describe('FactCanonicalizer', () => {
     const contracts = makeContracts();
     contracts.chapter.chapterNumber = 1;
     contracts.chapter.mustCover = ['陈渡看见周远身上“冤罪-10000点”标注'];
-    const report = new ContinuityValidator().validate({
+    const report = await new ContinuityValidator().validate({
       contracts,
       state: result.stateForValidation,
       drafts: [makeDraft(prose)],

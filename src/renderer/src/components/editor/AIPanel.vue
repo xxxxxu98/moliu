@@ -139,11 +139,13 @@ const {
   targetWordCount,
   isSupplementing,
   supplementRound,
+  isAppliedToChapter,
   latestReport,
   writeChapter,
   applyGeneratedContent,
   copyToClipboard: copyOneClickContent,
   reset: resetChapterWriter,
+  stopWriting: stopChapterWriter,
   retryCurrentStep,
   skipBlockingIssues,
   supplementContinue,
@@ -429,7 +431,11 @@ async function handleOneClickWrite() {
       writingStyle: selectedWritingStyle.value,
     });
     if (result) {
-      message.success('生成完成，请查看生成内容');
+      if (isAppliedToChapter.value) {
+        message.success('生成完成，正文已写入当前章节');
+      } else {
+        message.success('生成完成，请查看生成内容后点击应用');
+      }
     }
   } catch (err) {
     message.error(err instanceof Error ? err.message : '生成失败');
@@ -437,6 +443,10 @@ async function handleOneClickWrite() {
 }
 
 async function handleApplyOneClickContent() {
+  if (isAppliedToChapter.value) {
+    message.info('正文已写入章节，无需再次应用');
+    return;
+  }
   const success = await applyGeneratedContent();
   if (success) {
     message.success('已应用到章节');
@@ -490,7 +500,8 @@ async function handleSupplementContinue() {
 }
 
 function handleStopOneClickWrite() {
-  // 实际停止生成
+  // 真正 abort 在飞 HTTP（stream.cancel），再重置 UI 状态
+  stopChapterWriter();
   resetChapterWriter();
   message.info('已停止生成');
 }
@@ -877,11 +888,17 @@ function getSeverityClass(severity: string): string {
             </div>
             <div class="grid grid-cols-2 gap-2">
               <button
-                class="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm font-medium hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors"
+                class="flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                :class="
+                  isAppliedToChapter
+                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                    : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
+                "
+                :disabled="isAppliedToChapter"
                 @click="handleApplyOneClickContent"
               >
                 <Check class="w-4 h-4" />
-                应用
+                {{ isAppliedToChapter ? '已写入章节' : '应用' }}
               </button>
               <button
                 class="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
