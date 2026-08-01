@@ -40,6 +40,126 @@ export function checkWordCount(content: string, target: number): WordCountCheck 
   };
 }
 
+export interface WordCountBoundsCheck {
+  currentWords: number;
+  targetWords: number;
+  minWords: number;
+  maxWords: number;
+  status: 'ok' | 'short' | 'over';
+  percentage: number;
+}
+
+/**
+ * 检查正文是否落在目标字数的硬性区间 [85%, 115%]。
+ */
+export function checkWordCountBounds(content: string, target: number): WordCountBoundsCheck {
+  const currentWords = countWords(content);
+  const minWords = Math.floor(target * MIN_WORD_THRESHOLD);
+  const maxWords = Math.ceil(target * MAX_WORD_THRESHOLD);
+  const percentage = target > 0 ? (currentWords / target) * 100 : 0;
+  let status: WordCountBoundsCheck['status'] = 'ok';
+  if (target > 0 && currentWords < minWords) status = 'short';
+  else if (target > 0 && currentWords > maxWords) status = 'over';
+  return { currentWords, targetWords: target, minWords, maxWords, status, percentage };
+}
+
+export interface BuildCondensePromptParams {
+  existingContent: string;
+  targetWordCount: number;
+  minWords: number;
+  maxWords: number;
+  chapterTitle: string;
+  chapterOutline?: string;
+}
+
+/**
+ * 构建超长压缩改写提示词（保留情节，压到目标区间）。
+ */
+export function buildCondensePrompt(params: BuildCondensePromptParams): string {
+  const currentWords = countWords(params.existingContent);
+  return `【压缩改写指令】
+
+## 当前状态
+- 已有字数：约 ${currentWords} 字（已超上限）
+- 目标字数：约 ${params.targetWordCount} 字
+- 硬性区间：${params.minWords}–${params.maxWords} 字
+
+## 压缩要求
+1. **必须整章重写为更紧凑版本**，输出完整正文（不是增量）
+2. **保留全部关键情节与章末钩子**，不得删掉冲突兑现与结尾悬念
+3. **删冗余**：重复描写、同义反复、无推进注水优先删
+4. **禁止另起炉灶**：人物关系、已发生事件、证据细节不得改写跑偏
+5. **分段适中**：每段约 3～5 句；忌超长大段
+
+## 章节上下文
+- 章节标题：${params.chapterTitle}
+- 章节大纲：${params.chapterOutline || '（无）'}
+
+## 原文（请压缩）
+${params.existingContent}
+
+请输出压缩后的完整章节正文。`;
+}
+
+/**
+ * 超长硬裁：保留开头 + 结尾（章末钩子），按句边界压到 maxWords 以内。
+ * 仅作 AI 压缩失败后的兜底，保证提交字数不炸上限。
+ */
+export function clampProseToMaxWords(prose: string, maxWords: number): string {
+  const text = prose.trim();
+  if (!text || maxWords <= 0 || countWords(text) <= maxWords) {
+    return text;
+  }
+
+  const sentences = text.match(/[^。！？!?…]+[。！？!?…]?/gu);
+  if (!sentences || sentences.length === 0) {
+    return text;
+  }
+
+  const tailBudget = Math.max(1, Math.floor(maxWords * 0.3));
+  const headBudget = Math.max(1, maxWords - tailBudget);
+
+  const tail: string[] = [];
+  let tailWords = 0;
+  for (let i = sentences.length - 1; i >= 0; i -= 1) {
+    const piece = sentences[i];
+    const words = countWords(piece);
+    if (tail.length > 0 && tailWords + words > tailBudget) {
+      break;
+    }
+    tail.unshift(piece);
+    tailWords += words;
+  }
+
+  const tailStart = sentences.length - tail.length;
+  const head: string[] = [];
+  let headWords = 0;
+  for (let i = 0; i < tailStart; i += 1) {
+    const piece = sentences[i];
+    const words = countWords(piece);
+    if (head.length > 0 && headWords + words > headBudget) {
+      break;
+    }
+    head.push(piece);
+    headWords += words;
+  }
+
+  const merged = `${head.join('')}${tail.join('')}`.trim();
+  if (!merged || countWords(merged) === 0) {
+    // 极端短句场景：退化为按句从头累计
+    const fallback: string[] = [];
+    let used = 0;
+    for (const piece of sentences) {
+      const words = countWords(piece);
+      if (fallback.length > 0 && used + words > maxWords) break;
+      fallback.push(piece);
+      used += words;
+    }
+    return fallback.join('').trim() || text;
+  }
+  return merged;
+}
+
 export interface BuildSupplementPromptParams {
   existingContent: string;
   targetWordCount: number;
@@ -48,6 +168,41 @@ export interface BuildSupplementPromptParams {
   maxRounds?: number;
   chapterTitle: string;
   chapterOutline?: string;
+}
+
+const DEFAULT_ENDING_SNIPPET_CHARS = 500;
+
+/**
+ * 截取原文结尾供补充续写锚定：优先段落边界，其次句末标点，避免从半句起读。
+ */
+export function sliceEndingSnippet(
+  content: string,
+  maxChars: number = DEFAULT_ENDING_SNIPPET_CHARS
+): string {
+  const text = content.trim();
+  if (!text) return '（无）';
+  if (text.length <= maxChars) return text;
+
+  const raw = text.slice(-maxChars);
+  const paragraphBreak = raw.search(/\n\s*\n/u);
+  if (paragraphBreak >= 0 && paragraphBreak < raw.length - 20) {
+    const fromParagraph = raw.slice(paragraphBreak).replace(/^\s+/, '');
+    if (fromParagraph.length >= 40) return fromParagraph;
+  }
+
+  const sentenceMatch = raw.match(/[。！？…」』》”.!?]/u);
+  if (sentenceMatch && typeof sentenceMatch.index === 'number') {
+    const fromSentence = raw.slice(sentenceMatch.index + sentenceMatch[0].length).trimStart();
+    if (fromSentence.length >= 40) return fromSentence;
+  }
+
+  const lineBreak = raw.indexOf('\n');
+  if (lineBreak >= 0 && lineBreak < raw.length - 20) {
+    const fromLine = raw.slice(lineBreak + 1).trimStart();
+    if (fromLine.length >= 40) return fromLine;
+  }
+
+  return raw;
 }
 
 /**
@@ -65,7 +220,7 @@ export function buildSupplementPrompt(params: BuildSupplementPromptParams): stri
   } = params;
 
   const currentWords = countWords(existingContent);
-  const endingSnippet = existingContent.slice(-500) || '（无）';
+  const endingSnippet = sliceEndingSnippet(existingContent);
 
   return `【补充续写指令】
 

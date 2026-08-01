@@ -186,6 +186,15 @@ function maskApiKey(key: string): string {
   );
 }
 
+async function copyProviderId(providerId: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(providerId);
+    message.success("已复制配置 ID");
+  } catch {
+    message.error("复制失败，请手动选择 ID");
+  }
+}
+
 function formatTokens(tokens: number | undefined): string {
   if (!tokens) return t("settings.aiProviders.notSet");
   if (tokens >= 1000000) {
@@ -699,6 +708,21 @@ onMounted(() => {
                       provider.baseUrl || t("settings.common.defaultEndpoint")
                     }}
                   </p>
+                  <div class="flex items-center gap-1 mt-0.5 max-w-[200px]">
+                    <span class="text-[10px] text-gray-400 dark:text-gray-500 shrink-0">ID</span>
+                    <code
+                      class="text-[10px] font-mono text-gray-500 dark:text-gray-400 truncate"
+                      :title="provider.id"
+                    >{{ provider.id }}</code>
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center w-5 h-5 rounded text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors shrink-0"
+                      title="复制配置 ID"
+                      @click.stop="copyProviderId(provider.id)"
+                    >
+                      <Copy class="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -808,6 +832,24 @@ onMounted(() => {
         label-width="120"
         class="space-y-4"
       >
+        <NFormItem
+          v-if="editingProvider.id"
+          label="配置 ID"
+        >
+          <div class="flex items-center gap-2 w-full">
+            <NInput
+              :value="editingProvider.id"
+              readonly
+              class="font-mono text-xs"
+            />
+            <NButton size="small" @click="copyProviderId(editingProvider.id)">
+              <template #icon>
+                <Copy class="w-3.5 h-3.5" />
+              </template>
+              复制
+            </NButton>
+          </div>
+        </NFormItem>
         <NFormItem :label="t('settings.common.displayName')">
           <NInput
             v-model:value="editingProvider.name"

@@ -186,6 +186,42 @@ describe('SceneDraftEngine.draft', () => {
     expect(drafts[0].paragraphs).toEqual(['开篇。', '推进。', '章末钩子。']);
   });
 
+  it('字数规则同时声明上下限，并写入 writingRules', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。', '推进。', '章末钩子。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 1,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context, { targetWordCount: 3000 });
+
+    const request = generate.mock.calls[0][0] as { system: string; prompt: string };
+    expect(request.system).toContain('2550–3450');
+    expect(request.system).toContain('85%–115%');
+    expect(request.system).toContain('高于 3450');
+    const prompt = JSON.parse(request.prompt) as {
+      writingRules: {
+        minWordCount: number | null;
+        maxWordCount: number | null;
+        targetWordCount: number | null;
+      };
+    };
+    expect(prompt.writingRules).toEqual({
+      mode: 'single-shot-chapter',
+      forbidPlotRestart: true,
+      targetWordCount: 3000,
+      minWordCount: 2550,
+      maxWordCount: 3450,
+    });
+  });
+
   it('candidateEvents 支持仅 id 列表', () => {
     const draft = coerceSceneDraft(
       {

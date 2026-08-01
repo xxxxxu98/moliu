@@ -9,6 +9,8 @@ import type {
   VolumeContract,
 } from '@/types/story-runtime';
 
+import { normalizeChapterBlueprint } from './chapterBlueprintNormalize';
+
 export interface ContractPackBuildInput {
   bootstrap: StoryBootstrapData;
   volume: {
@@ -59,6 +61,7 @@ export class ContractPackBuilder {
         .map(entity => [
           entity.id,
           unique([
+            entity.name,
             String(entity.attributes.role ?? ''),
             String(entity.attributes.description ?? ''),
           ]),
@@ -98,6 +101,20 @@ export class ContractPackBuilder {
       forbidden: unique([...(input.forbidden ?? []), ...(volume.forbidden ?? [])]),
     };
 
+    const normalized = normalizeChapterBlueprint(
+      {
+        title: chapter.title,
+        goal: chapter.goal ?? node?.description ?? node?.title ?? chapter.title,
+        CBN: node?.CBN ?? `承接第 ${Math.max(0, chapter.number - 1)} 章终态`,
+        CPNs: node?.CPNs ?? node?.keyEvents,
+        CEN: node?.CEN,
+        mustCover: node?.mustCover ?? node?.keyEvents,
+        keyEvents: node?.keyEvents,
+        description: node?.description,
+      },
+      chapter.number
+    );
+
     const chapterContract: ChapterContract = {
       meta: {
         schemaVersion: 'story-runtime/v1',
@@ -108,11 +125,11 @@ export class ContractPackBuilder {
       },
       chapterNumber: chapter.number,
       title: chapter.title,
-      goal: chapter.goal ?? node?.description ?? node?.title ?? chapter.title,
-      CBN: node?.CBN ?? `承接第 ${Math.max(0, chapter.number - 1)} 章终态`,
-      CPNs: unique(node?.CPNs ?? node?.keyEvents ?? []),
-      CEN: node?.CEN ?? `完成“${chapter.goal ?? node?.title ?? chapter.title}”`,
-      mustCover: unique(node?.mustCover ?? node?.keyEvents ?? []),
+      goal: normalized.goal,
+      CBN: normalized.CBN,
+      CPNs: normalized.CPNs,
+      CEN: normalized.CEN,
+      mustCover: normalized.mustCover,
       forbidden: unique([
         ...master.forbidden,
         ...volumeContract.forbidden,

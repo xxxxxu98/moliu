@@ -496,6 +496,11 @@ export interface LongFormWriteInput {
   maxContextTokens: number;
   /** 目标字数；场景起草与提交前补字会尽量逼近该值 */
   targetWordCount?: number;
+  /**
+   * 审核未通过后的最大重写次数（不含初稿）。
+   * 默认 2：最多 初稿 + 2 次重写；用尽后仍失败则 rejected。
+   */
+  maxRewriteRounds?: number;
 }
 
 export interface LongFormWriteResult {
@@ -506,4 +511,6 @@ export interface LongFormWriteResult {
   report: ContinuityReport;
   commit: ChapterCommit;
   receipt?: ChapterCommitReceipt;
+  /** 实际发生的重写次数（0 = 初稿即通过） */
+  rewriteRounds: number;
 }

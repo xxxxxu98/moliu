@@ -38,6 +38,9 @@ vi.mock('@/services/writing/WritingOrchestratorV2', () => ({
 }));
 
 // ====== Mock stores / composables ======
+const mockChapter = { id: 'ch1', title: '第1章', orderIndex: 0, content: '' };
+const mockUpdateChapter = vi.fn();
+
 vi.mock('@/stores/project.store', () => ({
   useProjectStore: () => ({
     currentProject: {
@@ -50,16 +53,16 @@ vi.mock('@/stores/project.store', () => ({
       worldSchema: undefined,
       metadata: {},
       plotOutline: [],
-      sortedChapters: [{ id: 'ch1', title: '第1章', orderIndex: 0, content: '' }],
+      sortedChapters: [mockChapter],
       memoryConfig: { shortTermChapterCount: 5 },
       chapterMemories: [],
     },
-    currentChapter: { id: 'ch1', title: '第1章', orderIndex: 0, content: '' },
+    currentChapter: mockChapter,
     currentChapterId: 'ch1',
-    sortedChapters: [{ id: 'ch1', title: '第1章', orderIndex: 0, content: '' }],
+    sortedChapters: [mockChapter],
     sortedVolumes: [{ id: 'v1', name: '第一卷', orderIndex: 0 }],
     plotOutline: [],
-    updateChapter: vi.fn(),
+    updateChapter: mockUpdateChapter,
     addChapterMemory: vi.fn(),
   }),
 }));
@@ -146,6 +149,7 @@ vi.mock('@/services/writing/failure-recovery', () => ({
 describe('useChapterWriter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockChapter.content = '';
     // 重置 mock V2 状态
     mockV2State.generatedContent.value = '';
     mockV2State.reviewedContent.value = '';
@@ -213,6 +217,37 @@ describe('useChapterWriter', () => {
 
       expect(result).toBeNull();
       expect(writer.error.value).toBe('门禁未通过');
+    }, 10000);
+  });
+
+  describe('自动写入与应用门闩', () => {
+    it('管道成功且章节已有正文时标记 isAppliedToChapter，二次 apply 早退', async () => {
+      mockV2Run.mockImplementation(async () => {
+        const prose = '生成的正文内容';
+        mockV2State.generatedContent.value = prose;
+        mockV2State.reviewedContent.value = prose;
+        mockV2State.polishedContent.value = prose;
+        mockV2State.actualWordCount.value = 100;
+        mockV2State.currentStep.value = 'idle';
+        mockV2State.progress.value = 100;
+        // 模拟 Pipeline persistence.replace 已写入章节
+        mockChapter.content = prose;
+        return true;
+      });
+
+      const { useChapterWriter } = await import('@/composables/useChapterWriter');
+      const writer = useChapterWriter();
+      const result = await writer.writeChapter({ targetWordCount: 3000 });
+
+      expect(result).toBe('生成的正文内容');
+      expect(writer.isAppliedToChapter.value).toBe(true);
+
+      mockUpdateChapter.mockClear();
+      const applied = await writer.applyGeneratedContent();
+      expect(applied).toBe(true);
+      // 已写入：禁止再次 updateChapter 导致正文翻倍
+      expect(mockUpdateChapter).not.toHaveBeenCalled();
+      expect(writer.isAppliedToChapter.value).toBe(true);
     }, 10000);
   });
 

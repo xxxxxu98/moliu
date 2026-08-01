@@ -96,5 +96,7 @@ out/
 
 # 本地 QA / 调试产物（勿入库）
 .artifacts/
+temp/ai-traces/
+temp/continue-write.real.config.json
 test.md
 *.console.log

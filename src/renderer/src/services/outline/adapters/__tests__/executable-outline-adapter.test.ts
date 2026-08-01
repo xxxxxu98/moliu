@@ -117,10 +117,13 @@ describe('splitStartupBlocksToChapters - Bug 1 CEN 不再全块重复', () => {
     const chapters = result.chapters;
     expect(chapters.length).toBe(10);
 
-    // 块 1（1-5章）：第 1-4 章是非末章，CEN 应为“推进至：...”而非“药老现身”
+    // 块 1（1-5章）：第 1-4 章是非末章，CEN 不得等于块钩子「药老现身」
     const block1NonLast = chapters.slice(0, 4);
-    block1NonLast.forEach((ch) => {
+    block1NonLast.forEach(ch => {
       expect(ch.CEN).not.toBe('药老现身');
+      // 单事件章禁止塌成「推进至：=唯一 CPN」，也禁止元指令钩子
+      expect(ch.CEN).not.toMatch(/^推进至[：:]/u);
+      expect(ch.CEN).not.toContain('情节不得原地重复开场');
     });
 
     // 块 1 末章（第 5 章）：CEN 应为本块必留钩子

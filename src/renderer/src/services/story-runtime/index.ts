@@ -1,6 +1,7 @@
 export * from './AIChapterJudge';
 export * from './AIFulfillmentJudge';
 export * from './ChapterCommitService';
+export * from './chapterBlueprintNormalize';
 export * from './ContextPackBuilder';
 export * from './ContinuityValidator';
 export * from './ContractPackBuilder';
@@ -10,6 +11,8 @@ export * from './GroundedRetriever';
 export * from './LegacyProjectMigrator';
 export * from './LongFormWritingEngine';
 export * from './patches';
+export * from './promptInvariants';
+export * from './RecordingStructuredAI';
 export * from './SceneBeatPlanner';
 export * from './SceneDraftEngine';
 export * from './schemas';

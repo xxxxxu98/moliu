@@ -13,6 +13,10 @@
     "lint": "eslint --ext .ts,.vue .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:continue-write": "vitest run src/renderer/src/services/writing/__tests__/continueWrite.harness.test.ts src/renderer/src/services/story-runtime/__tests__/chapterBlueprintNormalize.test.ts src/renderer/src/composables/__tests__/useChapterWriter.test.ts",
+    "smoke:continue-write": "node scripts/agent-continue-write-smoke.mjs",
+    "smoke:continue-write:real": "node scripts/agent-continue-write-real.mjs",
+    "smoke:continue-write:real:multi": "node scripts/agent-continue-write-real-multi.mjs",
     "coverage": "vitest run --coverage"
   },
   "keywords": [],

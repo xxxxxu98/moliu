@@ -335,9 +335,237 @@ describe('LongFormWritingEngine', () => {
     // 起草 1 次 + 默认深度语义 chapter-judge 1 次
     expect(ai.callCount).toBe(2);
     expect(ai.chapterJudgeCalls).toBe(1);
+    expect(result.rewriteRounds).toBe(0);
     expect(result.report.accepted).toBe(true);
     expect(result.commit.status).toBe('accepted');
     expect(result.receipt).toEqual(receipt);
     expect(commitChapter).toHaveBeenCalledOnce();
   });
+
+  it('审核失败后带 revision hints 重写，修复后 accepted', async () => {
+    const facts: FactExtractor = {
+      extract: async input => ({
+        events: [
+          {
+            id: 'event-1',
+            chapter: input.chapterNumber,
+            sceneId: input.sceneDrafts[0].sceneId,
+            type: 'checkpoint',
+            summary: '守卫盘查',
+            participants: ['hero'],
+            causes: [],
+            effects: ['守卫盘查'],
+            evidence: input.sceneDrafts[0].paragraphs,
+          },
+        ],
+        deltas: [],
+        evidence: input.sceneDrafts[0].paragraphs,
+      }),
+    };
+    const ai = new RewriteAwareAI();
+    const engine = new LongFormWritingEngine({
+      ai,
+      factExtractor: facts,
+      commitPort: {
+        commitChapter: async () => ({
+          commitId: 'commit-rewrite',
+          revision: 1,
+          acceptedAt: '2026-01-02T00:00:00.000Z',
+        }),
+      },
+    });
+
+    const result = await engine.write({
+      projectId: 'project-1',
+      contracts: makeContracts(),
+      state: makeState(),
+      recentScenes: [],
+      retrievedScenes: [],
+      styleGuidance: ['克制'],
+      maxContextTokens: 10_000,
+      maxRewriteRounds: 2,
+    });
+
+    expect(ai.draftCalls).toBe(2);
+    expect(ai.sawRevisionHints).toBe(true);
+    expect(result.rewriteRounds).toBe(1);
+    expect(result.commit.status).toBe('accepted');
+    expect(result.drafts[0].paragraphs.join('')).not.toContain('御剑入城');
+  });
+
+  it('重写次数用尽后仍失败则 rejected 且不再继续', async () => {
+    const facts: FactExtractor = {
+      extract: async input => ({
+        events: [
+          {
+            id: 'event-1',
+            chapter: input.chapterNumber,
+            sceneId: input.sceneDrafts[0].sceneId,
+            type: 'checkpoint',
+            summary: '守卫盘查',
+            participants: ['hero'],
+            causes: [],
+            effects: ['守卫盘查'],
+            evidence: input.sceneDrafts[0].paragraphs,
+          },
+        ],
+        deltas: [],
+        evidence: input.sceneDrafts[0].paragraphs,
+      }),
+    };
+    const ai = new AlwaysForbiddenAI();
+    const saveRejectedDraft = vi.fn(async () => undefined);
+    const engine = new LongFormWritingEngine({
+      ai,
+      factExtractor: facts,
+      commitPort: {
+        commitChapter: async () => {
+          throw new Error('rejected 不应调用 commitChapter');
+        },
+        saveRejectedDraft,
+      },
+    });
+
+    const result = await engine.write({
+      projectId: 'project-1',
+      contracts: makeContracts(),
+      state: makeState(),
+      recentScenes: [],
+      retrievedScenes: [],
+      styleGuidance: ['克制'],
+      maxContextTokens: 10_000,
+      maxRewriteRounds: 2,
+    });
+
+    // 初稿 + 2 次重写
+    expect(ai.draftCalls).toBe(3);
+    expect(result.rewriteRounds).toBe(2);
+    expect(result.commit.status).toBe('rejected');
+    expect(saveRejectedDraft).toHaveBeenCalledOnce();
+  });
 });
+
+/** 首稿触发禁区字面命中，带 revision 后改写为合规正文 */
+class RewriteAwareAI implements StructuredAI {
+  draftCalls = 0;
+  sawRevisionHints = false;
+
+  async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
+    if (request.purpose === 'chapter-judge' || request.purpose === 'fulfillment-check') {
+      const payload = JSON.parse(request.prompt) as {
+        mustCover?: string[];
+        forbiddenZones?: string[];
+      };
+      return {
+        fulfillment: (payload.mustCover ?? []).map(node => ({
+          node,
+          fulfilled: true,
+          evidence: ['语义履约'],
+          reason: '测试放行',
+        })),
+        forbidden: (payload.forbiddenZones ?? []).map(zone => ({
+          zone,
+          violated: false,
+          evidence: [],
+          reason: '未触发',
+        })),
+        issues: [],
+        results: (payload.mustCover ?? []).map(node => ({
+          node,
+          fulfilled: true,
+          evidence: ['语义履约'],
+          reason: '测试放行',
+        })),
+      };
+    }
+
+    this.draftCalls += 1;
+    const payload = JSON.parse(request.prompt) as {
+      primaryBeatId?: string;
+      revisionFeedback?: { mustFix?: string[] } | null;
+      allowedCandidateEventIds?: string[];
+      candidateSummaries?: Record<string, string>;
+      chapterBeats?: Array<{ summary: string }>;
+    };
+    if (payload.revisionFeedback?.mustFix?.length) {
+      this.sawRevisionHints = true;
+    }
+    const beatId = payload.primaryBeatId ?? 'unknown';
+    const arc = payload.chapterBeats?.map(beat => beat.summary).join('→') ?? '推进';
+    const candidateEvents = (payload.allowedCandidateEventIds ?? []).map(id => ({
+      id,
+      summary: payload.candidateSummaries?.[id] ?? id,
+      participants: [] as string[],
+      prerequisites: [] as string[],
+      effects: [] as string[],
+    }));
+    const violates = !payload.revisionFeedback?.mustFix?.length;
+    return {
+      sceneId: `${beatId}:scene`,
+      beatId,
+      paragraphs: [
+        violates
+          ? `林夜经历了${arc}，竟敢御剑入城闯关。`
+          : `林夜经历了${arc}，步行通过城门。`,
+      ],
+      candidateEvents,
+    };
+  }
+}
+
+/** 始终输出禁区字面，用于验证重写上限 */
+class AlwaysForbiddenAI implements StructuredAI {
+  draftCalls = 0;
+
+  async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
+    if (request.purpose === 'chapter-judge' || request.purpose === 'fulfillment-check') {
+      const payload = JSON.parse(request.prompt) as {
+        mustCover?: string[];
+        forbiddenZones?: string[];
+      };
+      return {
+        fulfillment: (payload.mustCover ?? []).map(node => ({
+          node,
+          fulfilled: true,
+          evidence: ['语义履约'],
+          reason: '测试放行',
+        })),
+        forbidden: (payload.forbiddenZones ?? []).map(zone => ({
+          zone,
+          violated: false,
+          evidence: [],
+          reason: '字面路径已处理',
+        })),
+        issues: [],
+        results: (payload.mustCover ?? []).map(node => ({
+          node,
+          fulfilled: true,
+          evidence: ['语义履约'],
+          reason: '测试放行',
+        })),
+      };
+    }
+
+    this.draftCalls += 1;
+    const payload = JSON.parse(request.prompt) as {
+      primaryBeatId?: string;
+      allowedCandidateEventIds?: string[];
+      candidateSummaries?: Record<string, string>;
+      chapterBeats?: Array<{ summary: string }>;
+    };
+    const beatId = payload.primaryBeatId ?? 'unknown';
+    const arc = payload.chapterBeats?.map(beat => beat.summary).join('→') ?? '推进';
+    return {
+      sceneId: `${beatId}:scene`,
+      beatId,
+      paragraphs: [`林夜经历了${arc}，仍然御剑入城。`],
+      candidateEvents: (payload.allowedCandidateEventIds ?? []).map(id => ({
+        id,
+        summary: payload.candidateSummaries?.[id] ?? id,
+        participants: [],
+        prerequisites: [],
+        effects: [],
+      })),
+    };
+  }
+}

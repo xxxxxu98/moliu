@@ -43,14 +43,81 @@ function compactScenes(
   }));
 }
 
-/** 起草用合同：保留一份 style，压缩 characterTruths；不再另塞 style 块 */
-export function compactContractsForDraft(contracts: ContractPack): unknown {
+const MAX_DRAFT_CHARACTER_TRUTHS = 6;
+
+export interface DraftCharacterRef {
+  name: string;
+  aliases: string[];
+  role?: string;
+}
+
+/**
+ * 起草用角色真相：主角兜底 + 本章合同文本命中姓名，避免整卷人设灌进 prompt。
+ */
+export function selectCharacterTruthsForDraft(
+  contracts: ContractPack,
+  entityRefs?: Record<string, DraftCharacterRef>,
+  maxCharacters = MAX_DRAFT_CHARACTER_TRUTHS
+): Record<string, string[]> {
+  const focusText = [
+    contracts.chapter.CBN,
+    contracts.chapter.CEN,
+    contracts.chapter.goal,
+    ...contracts.chapter.CPNs,
+    ...contracts.chapter.mustCover,
+    contracts.volume.title,
+    contracts.volume.objective,
+    contracts.master.premise,
+  ].join('\n');
+
+  const scored = Object.entries(contracts.master.characterTruths).map(([id, truths]) => {
+    const ref = entityRefs?.[id];
+    const role =
+      ref?.role ||
+      truths.find(item =>
+        ['protagonist', 'antagonist', 'ally', 'mentor', 'support'].includes(item)
+      ) ||
+      '';
+    const isProtagonist =
+      role === 'protagonist' || truths.some(item => /\bprotagonist\b/u.test(item));
+    const shortLabels = truths.filter(item => item.length >= 2 && item.length <= 24);
+    const nameHit = Boolean(
+      (ref &&
+        (focusText.includes(ref.name) ||
+          ref.aliases.some(alias => alias.length > 0 && focusText.includes(alias)))) ||
+        shortLabels.some(label => focusText.includes(label))
+    );
+    let score = 0;
+    if (isProtagonist) score += 100;
+    if (nameHit) score += 50;
+    if (role === 'antagonist' && nameHit) score += 20;
+    return { id, truths, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const picked = scored.filter(item => item.score >= 50).slice(0, maxCharacters);
+  const finalList =
+    picked.length > 0
+      ? picked
+      : scored.filter(item => item.score >= 100).slice(0, 1).length > 0
+        ? scored.filter(item => item.score >= 100).slice(0, 1)
+        : scored.slice(0, 1);
+
   const characterTruths: Record<string, string[]> = {};
-  for (const [id, truths] of Object.entries(contracts.master.characterTruths)) {
-    characterTruths[id] = truths.slice(0, 2).map(item =>
-      item.length > 80 ? `${item.slice(0, 80)}…` : item
+  for (const item of finalList.slice(0, maxCharacters)) {
+    characterTruths[item.id] = item.truths.slice(0, 2).map(truth =>
+      truth.length > 80 ? `${truth.slice(0, 80)}…` : truth
     );
   }
+  return characterTruths;
+}
+
+/** 起草用合同：保留一份 style，压缩 characterTruths；不再另塞 style 块 */
+export function compactContractsForDraft(
+  contracts: ContractPack,
+  entityRefs?: Record<string, DraftCharacterRef>
+): unknown {
+  const characterTruths = selectCharacterTruthsForDraft(contracts, entityRefs);
   return {
     master: {
       premise:
@@ -207,8 +274,22 @@ export class ContextPackBuilder {
     const contractStyles = new Set(input.contracts.master.style.map(item => item.trim()));
     const uniqueStyle = styleGuidance.filter(item => !contractStyles.has(item.trim()));
 
+    const entityRefs: Record<string, DraftCharacterRef> = Object.fromEntries(
+      Object.values(state.entities)
+        .filter(entity => entity.kind === 'character')
+        .map(entity => [
+          entity.id,
+          {
+            name: entity.name,
+            aliases: entity.aliases,
+            role:
+              typeof entity.attributes.role === 'string' ? entity.attributes.role : undefined,
+          },
+        ])
+    );
+
     const candidates: ContextBlock[] = [
-      makeBlock('locked-contracts', compactContractsForDraft(input.contracts), true),
+      makeBlock('locked-contracts', compactContractsForDraft(input.contracts, entityRefs), true),
       makeBlock('current-state', compactStateForDraft(state, input.contracts), true),
       makeBlock('recent-scenes', compactScenes(input.recentScenes), false),
       makeBlock('retrieval', compactScenes(input.retrievedScenes), false),

@@ -659,6 +659,13 @@ export const useProjectStore = defineStore('project', () => {
     chapters.value = list;
   }
 
+  function setPlotOutline(list: PlotNode[]) {
+    plotOutline.value = list;
+    if (currentProject.value) {
+      currentProject.value.plotOutline = list;
+    }
+  }
+
   function setVolumes(list: Volume[]) {
     volumes.value = list;
   }
@@ -902,6 +909,7 @@ export const useProjectStore = defineStore('project', () => {
     addProject,
     updateProject,
     setChapters,
+    setPlotOutline,
     updateChapter,
     setVolumes,
     addVolume,

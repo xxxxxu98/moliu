@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "useAppDefaultProvider": true,
+  "providerId": "",
+  "apiKey": "",
+  "provider": "openai",
+  "model": "",
+  "baseUrl": "",
+  "projectId": "proj-1785392282915",
+  "projectName": "仵作提刑官",
+  "chapterNumber": 1,
+  "chapterCount": 1,
+  "emptyRewrite": true,
+  "targetWordCount": 3000,
+  "comment": "chapterNumber=起始章；chapterCount=连续章数（多章冒烟 npm run smoke:continue-write:real:multi 默认至少 3）。推荐填 providerId。"
+}

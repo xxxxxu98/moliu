@@ -7,6 +7,8 @@ import type {
   StructuredAI,
 } from '@/types/story-runtime';
 
+import { MAX_WORD_THRESHOLD, MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
+
 import { parseSchema, sceneDraftSchema } from './schemas';
 import { sanitizeSceneDraftParagraphs } from './stripDraftLeakage';
 
@@ -118,13 +120,21 @@ function collectAllowedCandidates(plan: ScenePlan, blockedIds: Set<string>): Can
  * 单次整章起草：把 CBN/CPNs/CEN 作为大纲节点一次写完，避免多 beat 拼接导致重复开场与文气断裂。
  * 规划层仍保留多 beat（门禁/履约用）；落库只产出一份连贯正文。
  */
+export interface SceneDraftOptions {
+  targetWordCount?: number;
+  /** 上一稿审核失败原因；存在时按重写任务整章重写 */
+  revisionHints?: string[];
+  /** 当前重写轮次（1 起）；仅用于 prompt 标注 */
+  rewriteRound?: number;
+}
+
 export class SceneDraftEngine {
   constructor(private readonly ai: StructuredAI) {}
 
   async draft(
     plan: ScenePlan,
     context: ContextPack,
-    options?: { targetWordCount?: number }
+    options?: SceneDraftOptions
   ): Promise<SceneDraft[]> {
     if (plan.beats.length === 0) {
       throw new Error(`章节 ${plan.chapterNumber} 缺少可写场景 beat`);
@@ -143,11 +153,35 @@ export class SceneDraftEngine {
       summary: beat.summary,
     }));
     const targetWordCount = options?.targetWordCount;
+    const revisionHints = (options?.revisionHints ?? [])
+      .map(hint => hint.trim())
+      .filter(Boolean)
+      .slice(0, 8);
+    const hasWordTarget = typeof targetWordCount === 'number' && targetWordCount > 0;
+    const minWordCount = hasWordTarget
+      ? Math.floor(targetWordCount * MIN_WORD_THRESHOLD)
+      : null;
+    const maxWordCount = hasWordTarget
+      ? Math.ceil(targetWordCount * MAX_WORD_THRESHOLD)
+      : null;
+    const minPct = Math.round(MIN_WORD_THRESHOLD * 100);
+    const maxPct = Math.round(MAX_WORD_THRESHOLD * 100);
     const wordCountRules =
-      typeof targetWordCount === 'number' && targetWordCount > 0
+      hasWordTarget && minWordCount !== null && maxWordCount !== null
         ? [
-            `- 本章目标约 ${targetWordCount} 字（按中文字符口径），paragraphs 合计不得明显低于目标的 85%`,
-            `- 通过充实情节推进、对话与细节达到字数，禁止无意义注水与重复开场`,
+            `- 本章目标 ${targetWordCount} 字（中文字符口径）；paragraphs 合计硬性区间 ${minWordCount}–${maxWordCount} 字（${minPct}%–${maxPct}%）`,
+            `- 低于 ${minWordCount} 或高于 ${maxWordCount} 都视为不合格草稿`,
+            `- 优先一次写够关键情节：用对话、动作、感官细节推进，同时用紧凑叙述控制篇幅`,
+            `- 禁止无意义注水、重复开场、把同一事件换措辞再写一遍；也禁止把一章写成远超目标的长文`,
+            `- 分段适中：每段约 3～5 句；忌超长大段堆砌`,
+          ]
+        : [];
+    const revisionRules =
+      revisionHints.length > 0
+        ? [
+            '【重写任务】上一稿未通过审核，必须整章重写并修复下列问题，禁止重复同样错误：',
+            ...revisionHints.map((hint, index) => `${index + 1}. ${hint}`),
+            '- 内心观察与公开结论、证物细节必须前后一致；禁区内容不得出现或等价泄露',
           ]
         : [];
     const candidateIds = candidates.map(item => item.id);
@@ -169,6 +203,7 @@ export class SceneDraftEngine {
         '- paragraphs 数组元素只能是小说正文，禁止写入 sceneId/beatId/candidateEvents 等字段名，禁止写入 ] } : 等 JSON 骨架',
         '- candidateEvents 只填 id 列表（从 allowedCandidateEventIds 中选），禁止重复粘贴 summary',
         ...wordCountRules,
+        ...revisionRules,
       ].join('\n'),
       prompt: JSON.stringify({
         chapterNumber: plan.chapterNumber,
@@ -185,7 +220,16 @@ export class SceneDraftEngine {
           mode: 'single-shot-chapter',
           forbidPlotRestart: true,
           targetWordCount: targetWordCount ?? null,
+          minWordCount,
+          maxWordCount,
         },
+        revisionFeedback:
+          revisionHints.length > 0
+            ? {
+                rewriteRound: options?.rewriteRound ?? 1,
+                mustFix: revisionHints,
+              }
+            : null,
         requiredOutput: {
           sceneId: expectedSceneId,
           beatId: primaryBeat.id,

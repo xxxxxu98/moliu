@@ -1,0 +1,119 @@
+{
+  "kind": "continue-write-real-summary",
+  "at": "2026-08-01T05:28:57.756Z",
+  "runId": "continue-write-real-proj-1785392282915-from-ch1-1785562046472",
+  "book": "仵作提刑官",
+  "chapterNumber": 1,
+  "provider": "openai",
+  "providerId": "provider-1781144969420",
+  "model": "deepseek-v4-flash[1m]",
+  "success": true,
+  "commitStatus": "accepted",
+  "commitReasons": [],
+  "commitId": "proj-1785392282915:chapter:1:commit:a605e926",
+  "receipt": {
+    "commitId": "proj-1785392282915:chapter:1:commit:a605e926",
+    "revision": 1,
+    "acceptedAt": "2026-08-01T05:28:57.751Z"
+  },
+  "reportAccepted": true,
+  "reportIssueCount": 0,
+  "checkedDomains": [
+    "entity",
+    "knowledge",
+    "inventory",
+    "timeline",
+    "causality",
+    "fulfillment",
+    "evidence"
+  ],
+  "prechecks": {
+    "total": 5,
+    "accepted": 5,
+    "blocked": 0,
+    "blockedCandidateIds": []
+  },
+  "wordCount": 2552,
+  "targetWordCount": 3000,
+  "wordTimeline": {
+    "draftWords": 1681,
+    "afterPadWords": 2552,
+    "finalWords": 2552,
+    "supplementAiRounds": 2,
+    "condenseAiRounds": 0
+  },
+  "rewriteRounds": 0,
+  "purposes": [
+    "scene-draft",
+    "scene-draft",
+    "scene-draft",
+    "fact-extraction",
+    "chapter-judge"
+  ],
+  "schemas": [
+    "SceneDraft",
+    "SupplementParagraphs",
+    "SupplementParagraphs",
+    "ExtractedFacts",
+    "ChapterJudgeResult"
+  ],
+  "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+  "steps": [
+    {
+      "seq": 1,
+      "purpose": "scene-draft",
+      "schemaName": "SceneDraft",
+      "ms": 22002,
+      "hasError": false
+    },
+    {
+      "seq": 2,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 10025,
+      "hasError": false
+    },
+    {
+      "seq": 3,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 8331,
+      "hasError": false
+    },
+    {
+      "seq": 4,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 34846,
+      "hasError": false
+    },
+    {
+      "seq": 5,
+      "purpose": "chapter-judge",
+      "schemaName": "ChapterJudgeResult",
+      "ms": 16000,
+      "hasError": false
+    }
+  ],
+  "stepCount": 5,
+  "totalAiMs": 91204,
+  "runtimeBackend": "memory",
+  "taskBook": {
+    "present": true,
+    "CBN": "现代法医宋辞穿越成贱籍仵作，正在验尸时当众指出死者系县令公子刘文韬所害，被刘文韬反诬入狱，必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
+    "CPNs": [
+      "穿越醒来正在验尸"
+    ],
+    "CEN": "推进至：穿越醒来正在验尸",
+    "mustCoverCount": 1,
+    "forbiddenZonesCount": 4
+  },
+  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-from-ch1-1785562046472.jsonl",
+  "stepsPath": "temp/continue-write.real.steps.txt",
+  "summaryPath": "temp/continue-write.real.summary.json",
+  "prosePreview": {
+    "head": "宋辞是被一股刺鼻的尸臭味呛醒的。他猛地睁开眼，发现自己正跪在一具女尸旁边，手里攥着一把锈迹斑斑的解剖刀。周围站着几个穿着皂衣的衙役，还有几个穿长衫的士绅模样的人，正捂着鼻子看热闹。他的脑子嗡地一下，像被人灌了一盆浆糊。\n\n不对，这不是他熟悉的法医解剖室，没有无影灯，没有不锈钢台面，甚至连手套都没有。他低头看了看自己的手",
+    "tail": "，但还是转身去送信了。宋辞重新坐回草堆上，闭上眼，默默计算着时间。他知道，刘守仁现在一定很纠结——一方面不想让儿子当众出丑，另一方面又怕自己真的掌握了什么铁证。而刘文韬，此刻应该正在焦躁不安中等待，他越是心虚，就越容易露出破绽。三天，他必须利用这三天，把刘文韬逼到绝路。\n\n他闭目凝神，将推演步骤一一过脑，确保万无一失。"
+  },
+  "note": "本文件已与当次跑次同步；权威摘要见 continue-write.real.summary.json"
+}

@@ -5,9 +5,14 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   checkWordCount,
+  checkWordCountBounds,
+  clampProseToMaxWords,
   buildSupplementPrompt,
+  buildCondensePrompt,
   runSupplementRounds,
+  sliceEndingSnippet,
   MIN_WORD_THRESHOLD,
+  MAX_WORD_THRESHOLD,
   MAX_SUPPLEMENT_ROUNDS,
 } from '../supplement';
 import {
@@ -15,6 +20,7 @@ import {
   BATCH_CONTINUE_PRESET,
   resolveChapterWriteOptions,
 } from '../chapterWritePresets';
+import { countWords } from '../utils';
 
 describe('checkWordCount', () => {
   it('字数不足时 needsSupplement=true', () => {
@@ -34,6 +40,51 @@ describe('checkWordCount', () => {
   });
 });
 
+describe('checkWordCountBounds', () => {
+  it('落在 85%–115% 为 ok', () => {
+    const target = 1000;
+    const content = '字'.repeat(Math.floor(target * 0.95));
+    expect(checkWordCountBounds(content, target).status).toBe('ok');
+  });
+
+  it('低于 85% 为 short，高于 115% 为 over', () => {
+    const target = 1000;
+    expect(checkWordCountBounds('字'.repeat(500), target).status).toBe('short');
+    expect(
+      checkWordCountBounds('字'.repeat(Math.ceil(target * MAX_WORD_THRESHOLD) + 1), target).status
+    ).toBe('over');
+  });
+});
+
+describe('clampProseToMaxWords', () => {
+  it('超长时按句保留开头与结尾', () => {
+    const head = '开场一句。冲突二句。推进三句。';
+    const middle = '注水描写。'.repeat(40);
+    const tail = '章末钩子出现。悬念落下。';
+    const prose = `${head}${middle}${tail}`;
+    const clamped = clampProseToMaxWords(prose, 40);
+    expect(countWords(clamped)).toBeLessThanOrEqual(40);
+    expect(clamped).toContain('开场一句');
+    expect(clamped).toContain('悬念落下');
+  });
+});
+
+describe('buildCondensePrompt', () => {
+  it('包含硬性区间与原文', () => {
+    const prompt = buildCondensePrompt({
+      existingContent: '原文很长'.repeat(10),
+      targetWordCount: 3000,
+      minWords: 2550,
+      maxWords: 3450,
+      chapterTitle: '第1章',
+      chapterOutline: '大纲',
+    });
+    expect(prompt).toContain('2550–3450');
+    expect(prompt).toContain('第1章');
+    expect(prompt).toContain('原文很长');
+  });
+});
+
 describe('buildSupplementPrompt', () => {
   it('包含轮次与结尾片段', () => {
     const prompt = buildSupplementPrompt({
@@ -50,6 +101,28 @@ describe('buildSupplementPrompt', () => {
     expect(prompt).toContain('结尾锚点ABC');
     expect(prompt).toContain('第1章');
     expect(prompt).toContain('大纲');
+  });
+
+  it('原文结尾按句边界截取，不从半句起', () => {
+    const prefix = `${'前文一句。'.repeat(30)}完整停顿。`;
+    const ending = '宋辞端起碗喝了一口，水很凉，但让他清醒了很多。他必须活下去。';
+    const content = prefix + ending;
+    const snippet = sliceEndingSnippet(content, 80);
+    expect(snippet.startsWith('，')).toBe(false);
+    expect(snippet.startsWith('水很凉')).toBe(false);
+    expect(snippet.includes('他必须活下去')).toBe(true);
+
+    const prompt = buildSupplementPrompt({
+      existingContent: `${'前段完整句。'.repeat(40)}下一拍从半截开始会坏。最终落到完整句。续写从这里开始。`,
+      targetWordCount: 3000,
+      additionalWords: 200,
+      round: 1,
+      chapterTitle: '第1章',
+    });
+    const endingBlock =
+      prompt.split('## 原文结尾（请从这里继续）\n')[1]?.split('\n\n## 章节上下文')[0] ?? '';
+    expect(endingBlock.startsWith('下，')).toBe(false);
+    expect(endingBlock.includes('续写从这里开始')).toBe(true);
   });
 });
 

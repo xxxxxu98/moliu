@@ -14,6 +14,10 @@ import type {
   GeneratedVolumePlan,
   GeneratedWorldSetting,
 } from '@/types/inspiration';
+import {
+  buildMidChapterCen,
+  enrichThinCpns,
+} from '@/services/story-runtime/chapterBlueprintNormalize';
 
 function parseWordCountRange(rangeText?: string): number | null {
   if (!rangeText) return null;
@@ -471,22 +475,19 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
           ? `承接上章结尾：${prevChapterCEN}`
           : `承接前段：${block.objective}`;
 
-      // CEN（Bug 1 修复）：块末章用本块必留钩子（真正的章尾钩子）；
-      // 非末章用本章推进到的节点（最后一个关键事件）。
-      // 原实现块内 5 章共用同一个 block.hookRequirement，导致结尾高度重复。
+      // CPNs：派生 1-3 个推进节点；单薄 keyEvent 时从 CBN 子句补齐
+      const CPNs = enrichThinCpns(
+        keyEvents.length > 0 ? keyEvents.slice(0, 3) : [`推进 ${block.objective || '主线'}`],
+        CBN
+      );
+
+      // CEN（Bug 1 修复）：块末章用本块必留钩子；非末章用具体情节后果，禁止元指令/塌缩。
       const CEN = isBlockLastChapter
         ? block.hookRequirement || `完成本区间第 ${i + 1}/${blockSize} 段推进，转向下一区间`
-        : keyEvents.length > 0
-          ? `推进至：${keyEvents[keyEvents.length - 1]}`
-          : `完成本区间第 ${i + 1}/${blockSize} 段推进`;
+        : buildMidChapterCen(keyEvents.length > 0 ? keyEvents : CPNs, CBN);
 
       // 记录本章 CEN 供下一章 CBN 承接
       prevChapterCEN = CEN;
-
-      // CPNs：派生 1-3 个推进节点
-      const CPNs = keyEvents.length > 0
-        ? keyEvents.slice(0, 3)
-        : [`推进 ${block.objective || '主线'}`];
 
       // mustCover：本章承接的关键事件
       const mustCover = keyEvents.length > 0 ? keyEvents : undefined;

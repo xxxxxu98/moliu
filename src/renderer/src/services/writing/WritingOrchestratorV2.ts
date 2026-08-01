@@ -26,12 +26,11 @@ import { useProjectionOrchestrator, ProjectionOrchestrator } from './commit/Proj
 import { useAntiPatternsRegistry, AntiPatternsRegistryService } from './anti-patterns/AntiPatternsRegistry';
 import { useChapterCommitManagerV2, ChapterCommitManagerV2 } from './commit/ChapterCommitManagerV2';
 import { countWords } from './utils';
-import { ChapterWritingPipeline } from './ChapterWritingPipeline';
 import {
   createChapterPersistenceClient,
   createChapterMemoryClient,
 } from './chapterPersistenceAdapters';
-import { SMART_CONTINUE_PRESET } from './chapterWritePresets';
+import { executeSmartContinue } from './smartContinue';
 import { buildWritingRulesWithTypesetting } from './typesetting';
 
 import type {
@@ -256,11 +255,12 @@ export function useWritingOrchestratorV2() {
   // 管道复用该实例，不再重复创建。
   // V2 只保留 UI 状态映射。
 
-  // 与 orchestrator 共用同一 persistence，补写增量与主写落库同适配器
-  const pipeline = new ChapterWritingPipeline({
+  // 单章执行走 SSOT executeSmartContinue（与冒烟同入口）。
+  const smartContinueDeps = {
     orchestrator: stateDrivenOrchestrator,
     persistence: sharedPersistence,
-  });
+    memoryClient: sharedMemoryClient,
+  };
 
   // ============================================================
   // 核心方法
@@ -301,15 +301,17 @@ export function useWritingOrchestratorV2() {
       currentStep.value = 'preflight';
       progress.value = 5;
 
-      // 委托共享管道执行单章写作（使用智能续写预设）
-      const result = await pipeline.execute({
-        project,
-        chapter: currentChapter,
-        targetWordCount: requestedTarget,
-        writingStyle: writingStyle as any,
-        ...SMART_CONTINUE_PRESET,
-        signal,
-      });
+      // 委托 SSOT 智能续写入口（与冒烟共用）
+      const result = await executeSmartContinue(
+        {
+          project,
+          chapter: currentChapter,
+          targetWordCount: requestedTarget,
+          writingStyle: writingStyle as any,
+          signal,
+        },
+        smartContinueDeps
+      );
 
       if (signal.aborted || result.error === 'Generation stopped by user') {
         error.value = 'Generation stopped by user';

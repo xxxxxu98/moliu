@@ -7,10 +7,13 @@
  * 流程：
  *   0. Preflight 预检（可选，见 chapterWritePresets）
  *   1. contextAgent 生成任务书（TaskBook）
- *   2. StateDriven.writeChapter()（L1-L7 闭环）
- *      内部已含：起草 + 严格门禁重试 + 事务提交 + 记忆提取
- *   3. 字数不足时补充续写（可选，enableSupplement）
+ *   2. 若 storyRuntime 可用（或 forceStoryRuntime）：LongFormWritingEngine 正式长篇路径
+ *      否则 StateDriven.writeChapter()（L1-L7 降级闭环）
+ *   3. 字数不足时补充续写（可选；长篇路径内已由 Engine 补字）
  *   4. 结果归一化 → ChapterWriteOutput
+ *
+ * 测试/冒烟：注入 forceStoryRuntime + structuredAI + storyRuntimeApi，
+ * 调用 execute(...SMART_CONTINUE_PRESET) 即可与正式智能续写同构。
  *
  * 设计要点：
  * - 无状态服务：依赖通过构造函数注入（drafter/gitBackup/persistence/memoryClient 适配器 +
@@ -49,6 +52,7 @@ import type { Project, Chapter } from '@/types/project';
 import type {
   ContinuityDomain,
   ContinuityReport,
+  LongFormWriteResult,
   StructuredAI,
   StructuredAIRequest,
 } from '@/types/story-runtime';
@@ -59,14 +63,16 @@ import {
   GroundedRetriever,
   LegacyProjectMigrator,
   LongFormWritingEngine,
+  RecordingStructuredAI,
   sanitizeStructuredProseLeakage,
+  shouldEnableAiTrace,
   StoryRuntimeClient,
   stripStateForChapterRewrite,
 } from '@/services/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 
 function createStructuredAIFromActiveProvider(signal?: AbortSignal): StructuredAI {
-  return {
+  const inner: StructuredAI = {
     async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
       if (signal?.aborted) {
         throw new DOMException('Aborted', 'AbortError');
@@ -86,6 +92,13 @@ function createStructuredAIFromActiveProvider(signal?: AbortSignal): StructuredA
       return request.parse(parsed);
     },
   };
+  if (shouldEnableAiTrace()) {
+    return new RecordingStructuredAI(inner, {
+      runId: `longform-${Date.now()}`,
+      persist: true,
+    });
+  }
+  return inner;
 }
 
 function isAbortError(error: unknown): boolean {
@@ -160,6 +173,49 @@ export interface ChapterWriteOutput {
   supplementRounds: number;
   /** 错误信息（失败时） */
   error?: string;
+  /** story-runtime 长篇路径下的引擎原始结果；旧 StateDriven 路径为 undefined */
+  longFormResult?: LongFormWriteResult;
+}
+
+type StoryRuntimeAPI = NonNullable<Window['electronAPI']['storyRuntime']>;
+
+export interface ChapterWritingPipelineDeps {
+  drafter?: DrafterClient;
+  gitBackup?: GitBackupClient | null;
+  persistence?: ChapterPersistenceClient | null;
+  memoryClient?: MemoryClient | null;
+  /** 注入外部已配置好的 orchestrator（跳过内部创建） */
+  orchestrator?: StateDrivenWritingOrchestrator;
+  /**
+   * 注入 StructuredAI。正式 App 不传，走 active provider；
+   * 测试/冒烟注入 FakeAI 或 RealAI（可包 RecordingStructuredAI）。
+   */
+  structuredAI?: StructuredAI;
+  /** 注入 StoryRuntimeClient（测试用内存 IPC 客户端） */
+  storyRuntimeClient?: StoryRuntimeClient;
+  /** 注入 storyRuntime IPC；与 GroundedRetriever / Client 共用 */
+  storyRuntimeApi?: StoryRuntimeAPI;
+  /**
+   * 强制走 LongFormWritingEngine 正式长篇路径。
+   * 测试环境无 window.electronAPI 时必须开启，与线上 hasStoryRuntime() 分支对齐。
+   */
+  forceStoryRuntime?: boolean;
+  preflightService?: {
+    preflight: () => Promise<{ valid: boolean; errors: string[]; warnings?: string[] }>;
+    getCurrentChapterContext: () => Promise<{
+      previousChapterEnding?: string;
+      recentChaptersFullText?: string;
+    } | null>;
+  };
+  contextAgent?: {
+    generateTaskBook: (input: {
+      chapterNumber: number;
+      previousChapterEnding: string;
+      recentChaptersFullText: string;
+      targetWordCount: number;
+      writingStyle: WritingStyle;
+    }) => Promise<{ success: boolean; taskBook?: WritingTaskBook | null; error?: string }>;
+  };
 }
 
 // ============================================================
@@ -167,20 +223,58 @@ export interface ChapterWriteOutput {
 // ============================================================
 
 export class ChapterWritingPipeline {
-  private readonly orchestrator: StateDrivenWritingOrchestrator;
-  private readonly preflightService: ReturnType<typeof usePreflightService>;
-  private readonly contextAgent: ReturnType<typeof useEnhancedContextAgent>;
+  private readonly orchestrator: StateDrivenWritingOrchestrator | null;
+  private readonly preflightService: NonNullable<ChapterWritingPipelineDeps['preflightService']>;
+  private readonly contextAgent: NonNullable<ChapterWritingPipelineDeps['contextAgent']>;
   private readonly persistence: ChapterPersistenceClient | null;
   private readonly memoryClient: MemoryClient | null;
+  private readonly structuredAI: StructuredAI | undefined;
+  private readonly storyRuntimeClient: StoryRuntimeClient | undefined;
+  private readonly storyRuntimeApi: StoryRuntimeAPI | undefined;
+  private readonly forceStoryRuntime: boolean;
 
-  constructor(deps?: {
-    drafter?: DrafterClient;
-    gitBackup?: GitBackupClient | null;
-    persistence?: ChapterPersistenceClient | null;
-    memoryClient?: MemoryClient | null;
-    /** 注入外部已配置好的 orchestrator（跳过内部创建） */
-    orchestrator?: StateDrivenWritingOrchestrator;
-  }) {
+  constructor(deps?: ChapterWritingPipelineDeps) {
+    this.structuredAI = deps?.structuredAI;
+    this.storyRuntimeClient = deps?.storyRuntimeClient;
+    this.storyRuntimeApi = deps?.storyRuntimeApi;
+    this.forceStoryRuntime = Boolean(deps?.forceStoryRuntime);
+
+    // forceStoryRuntime：测试/冒烟直连长篇正式路径，跳过 Pinia / active provider 初始化
+    if (this.forceStoryRuntime) {
+      this.persistence =
+        deps?.persistence !== undefined
+          ? deps.persistence
+          : {
+              save: async () => ({ oldContent: '' }),
+              replace: async () => ({ oldContent: '' }),
+            };
+      this.memoryClient =
+        deps?.memoryClient !== undefined
+          ? deps.memoryClient
+          : {
+              extractAndSave: async () => null,
+            };
+      this.orchestrator = deps?.orchestrator ?? null;
+      this.preflightService =
+        deps?.preflightService ??
+        ({
+          preflight: async () => ({ valid: true, errors: [], warnings: [] }),
+          getCurrentChapterContext: async () => ({
+            previousChapterEnding: '',
+            recentChaptersFullText: '',
+          }),
+        } satisfies NonNullable<ChapterWritingPipelineDeps['preflightService']>);
+      this.contextAgent =
+        deps?.contextAgent ??
+        ({
+          generateTaskBook: async () => ({
+            success: false,
+            error: 'forceStoryRuntime 未注入 contextAgent',
+          }),
+        } satisfies NonNullable<ChapterWritingPipelineDeps['contextAgent']>);
+      return;
+    }
+
     const projectStore = useProjectStore();
     const { requireAIService, currentModel } = useActiveAIProvider();
 
@@ -257,12 +351,15 @@ export class ChapterWritingPipeline {
         retrievalTopK: 8,
       });
 
-    this.preflightService = usePreflightService();
-    this.contextAgent = useEnhancedContextAgent();
+    this.preflightService = deps?.preflightService ?? usePreflightService();
+    this.contextAgent = deps?.contextAgent ?? useEnhancedContextAgent();
   }
 
   /** 暴露内部 orchestrator（供需要 initialize/indexExistingChapters 的场景使用） */
   getOrchestrator(): StateDrivenWritingOrchestrator {
+    if (!this.orchestrator) {
+      throw new Error('当前管道未配置 StateDriven orchestrator（forceStoryRuntime 模式）');
+    }
     return this.orchestrator;
   }
 
@@ -324,6 +421,10 @@ export class ChapterWritingPipeline {
 
       if (this.hasStoryRuntime()) {
         return this.executeLongFormRuntime(input, taskBook);
+      }
+
+      if (!this.orchestrator) {
+        return this.fail('storyRuntime 不可用，且未配置 StateDriven orchestrator');
       }
 
       // ====== Step 2: 任务书 → StateDriven options 转换 ======
@@ -431,10 +532,20 @@ export class ChapterWritingPipeline {
   // ============================================================
 
   private hasStoryRuntime(): boolean {
+    if (this.forceStoryRuntime) return true;
+    if (this.storyRuntimeClient || this.storyRuntimeApi) return true;
     return (
       typeof window !== 'undefined' &&
       Boolean(window.electronAPI?.storyRuntime?.bootstrap)
     );
+  }
+
+  private resolveStoryRuntimeApi(): StoryRuntimeAPI {
+    if (this.storyRuntimeApi) return this.storyRuntimeApi;
+    if (typeof window !== 'undefined' && window.electronAPI?.storyRuntime) {
+      return window.electronAPI.storyRuntime;
+    }
+    throw new Error('window.electronAPI.storyRuntime 未注册');
   }
 
   /**
@@ -449,7 +560,8 @@ export class ChapterWritingPipeline {
     const bootstrap = migrator.migrate(
       input.project as unknown as Parameters<LegacyProjectMigrator['migrate']>[0]
     );
-    const runtime = new StoryRuntimeClient();
+    const api = this.resolveStoryRuntimeApi();
+    const runtime = this.storyRuntimeClient ?? new StoryRuntimeClient(api);
 
     try {
       await runtime.bootstrap(bootstrap);
@@ -515,9 +627,7 @@ export class ChapterWritingPipeline {
       const entityIds = [...bootstrap.entities, ...bootstrap.rules, ...bootstrap.foreshadows]
         .filter(entity => query.includes(entity.name) || entity.aliases.some(alias => query.includes(alias)))
         .map(entity => entity.id);
-      const retrievedScenes = await new GroundedRetriever(
-        window.electronAPI.storyRuntime
-      ).retrieve({
+      const retrievedScenes = await new GroundedRetriever(api).retrieve({
         projectId: input.project.id,
         query,
         entityIds,
@@ -527,7 +637,8 @@ export class ChapterWritingPipeline {
       const recentScenes = bootstrap.sceneChunks
         .filter(scene => scene.chapterIndex < chapterNumber)
         .slice(-4);
-      const ai: StructuredAI = createStructuredAIFromActiveProvider(input.signal);
+      const ai: StructuredAI =
+        this.structuredAI ?? createStructuredAIFromActiveProvider(input.signal);
       const engine = new LongFormWritingEngine({
         ai,
         factExtractor: new AIFactExtractor(ai),
@@ -563,6 +674,7 @@ export class ChapterWritingPipeline {
           forceAccepted: false,
           supplementRounds: 0,
           error: result.commit.reasons.join('；') || '严格连续性门禁未通过',
+          longFormResult: result,
         };
       }
 
@@ -585,6 +697,7 @@ export class ChapterWritingPipeline {
         attempts: 1,
         forceAccepted: false,
         supplementRounds: 0,
+        longFormResult: result,
       };
     } catch (error) {
       if (isAbortError(error) || input.signal?.aborted) {
@@ -757,9 +870,14 @@ export class ChapterWritingPipeline {
    * persistence 适配器用 DeAIService.extractAndValidateTitle 提取标题后写入 chapter.title。
    */
   private readBackTitle(chapterId: string): string | null {
-    const projectStore = useProjectStore();
-    const ch = projectStore.sortedChapters.find(c => c.id === chapterId);
-    return ch?.title || null;
+    if (this.forceStoryRuntime) return null;
+    try {
+      const projectStore = useProjectStore();
+      const ch = projectStore.sortedChapters.find(c => c.id === chapterId);
+      return ch?.title || null;
+    } catch {
+      return null;
+    }
   }
 
   private fail(error: string): ChapterWriteOutput {

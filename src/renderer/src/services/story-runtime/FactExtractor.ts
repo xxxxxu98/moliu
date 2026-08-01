@@ -20,6 +20,20 @@ export interface FactExtractionInput {
   overlay?: ProvisionalStateOverlay;
 }
 
+/** 顶层 evidence 为空时，从 events/deltas 回填，避免结构化证据丢失 */
+export function ensureTopLevelEvidence(facts: ExtractedFacts): ExtractedFacts {
+  if (facts.evidence.length > 0) return facts;
+  const collected = [
+    ...facts.events.flatMap(event => event.evidence),
+    ...facts.deltas.map(delta => delta.evidence),
+  ]
+    .map(item => item.trim())
+    .filter(Boolean);
+  const unique = [...new Set(collected)];
+  if (unique.length === 0) return facts;
+  return { ...facts, evidence: unique.slice(0, 24) };
+}
+
 export class AIFactExtractor implements FactExtractor {
   constructor(private readonly ai: StructuredAI) {}
 
@@ -46,6 +60,7 @@ export class AIFactExtractor implements FactExtractor {
         '1) participants 优先使用 entityCatalog 中的 id；若只能给人名，也必须与正文一致',
         '2) causes 只能填 eventCatalog / 本章新建事件的 id，禁止写自然语言因果句',
         '3) 找不到合法 cause id 时，causes 填 []，不要编造',
+        '4) 顶层 evidence 必须汇总本章关键正文原句，不得为空（可与 events[].evidence 重复）',
         'JSON 字段必须为：',
         '{"events":[{"id":"string","chapter":0,"sceneId":"string","type":"string","summary":"string","participants":[],"causes":[],"effects":[],"evidence":["正文原句"]}],"deltas":[{"operation":"set|add|remove|increment","path":"string","value":{},"evidence":"正文原句"}],"evidence":["正文原句"]}',
       ].join('\n'),
@@ -56,8 +71,9 @@ export class AIFactExtractor implements FactExtractor {
         entityCatalog,
         eventCatalog,
       }),
-      parse: value => parseSchema(extractedFactsSchema, value, '事实提取结果'),
+      parse: value =>
+        ensureTopLevelEvidence(parseSchema(extractedFactsSchema, value, '事实提取结果')),
     });
-    return parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    return ensureTopLevelEvidence(parseSchema(extractedFactsSchema, raw, '事实提取结果'));
   }
 }
