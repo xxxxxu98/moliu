@@ -1,7 +1,7 @@
 {
   "kind": "continue-write-real-summary",
-  "at": "2026-08-01T07:40:08.741Z",
-  "runId": "continue-write-real-proj-1785392282915-batch-ch1-1785569302455",
+  "at": "2026-08-01T12:43:01.610Z",
+  "runId": "continue-write-real-proj-1785392282915-batch-ch1-1785587269505",
   "book": "仵作提刑官",
   "chapterNumber": 1,
   "provider": "openai",
@@ -10,14 +10,14 @@
   "success": true,
   "commitStatus": "accepted",
   "commitReasons": [],
-  "commitId": "proj-1785392282915:chapter:1:commit:46fc5e68",
+  "commitId": "proj-1785392282915:chapter:1:commit:2af9051b",
   "receipt": {
-    "commitId": "proj-1785392282915:chapter:1:commit:46fc5e68",
+    "commitId": "proj-1785392282915:chapter:1:commit:2af9051b",
     "revision": 1,
-    "acceptedAt": "2026-08-01T07:29:54.060Z"
+    "acceptedAt": "2026-08-01T12:30:26.225Z"
   },
   "reportAccepted": true,
-  "reportIssueCount": 0,
+  "reportIssueCount": 1,
   "checkedDomains": [
     "entity",
     "knowledge",
@@ -33,18 +33,17 @@
     "blocked": 0,
     "blockedCandidateIds": []
   },
-  "wordCount": 2809,
+  "wordCount": 2651,
   "targetWordCount": 3000,
   "wordTimeline": {
-    "draftWords": 2538,
-    "afterPadWords": 2809,
-    "finalWords": 2809,
-    "supplementAiRounds": 2,
+    "draftWords": 1911,
+    "afterPadWords": 2651,
+    "finalWords": 2651,
+    "supplementAiRounds": 1,
     "condenseAiRounds": 0
   },
   "rewriteRounds": 0,
   "purposes": [
-    "scene-draft",
     "scene-draft",
     "scene-draft",
     "fact-extraction",
@@ -53,67 +52,61 @@
   "schemas": [
     "SceneDraft",
     "SupplementParagraphs",
-    "SupplementParagraphs",
     "ExtractedFacts",
     "ChapterJudgeResult"
   ],
-  "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+  "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
   "steps": [
     {
       "seq": 1,
       "purpose": "scene-draft",
       "schemaName": "SceneDraft",
-      "ms": 30530,
+      "ms": 71224,
       "hasError": false
     },
     {
       "seq": 2,
       "purpose": "scene-draft",
       "schemaName": "SupplementParagraphs",
-      "ms": 3139,
+      "ms": 15339,
       "hasError": false
     },
     {
       "seq": 3,
-      "purpose": "scene-draft",
-      "schemaName": "SupplementParagraphs",
-      "ms": 11676,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 39996,
       "hasError": false
     },
     {
       "seq": 4,
-      "purpose": "fact-extraction",
-      "schemaName": "ExtractedFacts",
-      "ms": 26385,
-      "hasError": false
-    },
-    {
-      "seq": 5,
       "purpose": "chapter-judge",
       "schemaName": "ChapterJudgeResult",
-      "ms": 19811,
+      "ms": 30125,
       "hasError": false
     }
   ],
-  "stepCount": 5,
-  "totalAiMs": 91541,
+  "stepCount": 4,
+  "totalAiMs": 156684,
   "runtimeBackend": "memory",
   "taskBook": {
     "present": true,
     "CBN": "现代法医宋辞穿越成贱籍仵作，正在验尸时当众指出死者系县令公子刘文韬所害，被刘文韬反诬入狱，必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
     "CPNs": [
-      "穿越醒来正在验尸"
+      "穿越醒来正在验尸",
+      "现代法医宋辞穿越成贱籍仵作",
+      "正在验尸时当众指出死者系县令公子刘文韬所害"
     ],
-    "CEN": "推进至：穿越醒来正在验尸",
-    "mustCoverCount": 1,
+    "CEN": "必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
+    "mustCoverCount": 3,
     "forbiddenZonesCount": 4
   },
-  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch1-1785569302455.jsonl",
+  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch1-1785587269505.jsonl",
   "stepsPath": "temp/continue-write.real.ch1.steps.txt",
   "summaryPath": "temp/continue-write.real.ch1.summary.json",
   "prosePreview": {
-    "head": "宋辞睁开眼，眼前是一具冰冷的尸体。浓重的血腥味混着石灰和药草的气味直冲鼻腔，他手中的解剖刀还沾着暗红色的血，刀尖正悬在尸体的咽喉上方。脑袋里像被塞进了一团乱麻，无数陌生的记忆疯狂涌入——原主也叫宋辞，是清河县最下贱的仵作，今年十九岁，从小跟着师父验尸，师父死后便独自干这行。他记得自己明明在省厅法医室的解剖台前加班，怎么",
-    "tail": "回想起来，竟是破绽所在。\n\n他加快脚步，心里盘算着三天内要做的事：重新勘验伤口、比对凶器、寻找目击者。最关键的是，他需要找到证据证明死者伤口与刘文韬的刀不匹配，或者证明现场还有第二把凶器。他抬头看了看夜空，清河的星星很亮，就像他家乡的夜晚一样，但此刻他无暇欣赏，因为他知道，三天后如果不能拿出铁证，这颗星就再也看不到了。"
+    "head": "宋辞睁开眼睛的瞬间，一股浓烈的血腥味直冲鼻腔。他发现自己正跪在一具尸体旁，右手握着一把锋利的解剖刀，左手沾满暗红色的血。周围站着一圈人——衙役、师爷，还有几个穿着绸缎的富户，所有人都盯着他，目光里带着审视和轻蔑。他低头看了看自己身上破旧的麻布衣，又摸了摸腰间挂着的仵作腰牌，脑子里忽然涌进一大堆不属于他的记忆。他穿越了，",
+    "tail": "深度。他记得《折狱龟鉴》里记载，用醋喷洒在皮肤上，再用墨拓印，能显现细微的软组织损伤。但前提是尸体尚未腐败——如今正值深秋，停尸房阴冷，应该还能撑两日。他后悔刚才没让赵老三顺便带本《折狱龟鉴》进来，但转念一想，那书在卷宗房，赵老三未必敢动。他只能靠记忆和双手了。时间一分一秒过去，他攥紧拳头，指节发白，只盼天明快些到来。"
   },
   "note": "本文件已与当次跑次同步；权威摘要见 continue-write.real.ch1.summary.json"
 }

@@ -1,0 +1,148 @@
+{
+  "kind": "continue-write-real-summary",
+  "at": "2026-08-01T12:26:01.082Z",
+  "runId": "continue-write-real-proj-1785392282915-batch-ch5-1785586925961",
+  "book": "仵作提刑官",
+  "chapterNumber": 5,
+  "provider": "openai",
+  "providerId": "provider-1781144969420",
+  "model": "deepseek-v4-flash[1m]",
+  "success": true,
+  "commitStatus": "accepted",
+  "commitReasons": [],
+  "commitId": "proj-1785392282915:chapter:5:commit:d3f17632",
+  "receipt": {
+    "commitId": "proj-1785392282915:chapter:5:commit:d3f17632",
+    "revision": 5,
+    "acceptedAt": "2026-08-01T12:26:01.067Z"
+  },
+  "reportAccepted": true,
+  "reportIssueCount": 0,
+  "checkedDomains": [
+    "entity",
+    "knowledge",
+    "inventory",
+    "timeline",
+    "causality",
+    "fulfillment",
+    "evidence"
+  ],
+  "prechecks": {
+    "total": 5,
+    "accepted": 5,
+    "blocked": 0,
+    "blockedCandidateIds": []
+  },
+  "wordCount": 2653,
+  "targetWordCount": 3000,
+  "wordTimeline": {
+    "draftWords": 1136,
+    "afterPadWords": 2653,
+    "finalWords": 2653,
+    "supplementAiRounds": 2,
+    "condenseAiRounds": 0
+  },
+  "rewriteRounds": 1,
+  "purposes": [
+    "scene-draft",
+    "scene-draft",
+    "scene-draft",
+    "fact-extraction",
+    "chapter-judge",
+    "scene-draft",
+    "fact-extraction",
+    "chapter-judge"
+  ],
+  "schemas": [
+    "SceneDraft",
+    "SupplementParagraphs",
+    "SupplementParagraphs",
+    "ExtractedFacts",
+    "ChapterJudgeResult",
+    "SceneDraft",
+    "ExtractedFacts",
+    "ChapterJudgeResult"
+  ],
+  "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+  "steps": [
+    {
+      "seq": 1,
+      "purpose": "scene-draft",
+      "schemaName": "SceneDraft",
+      "ms": 38743,
+      "hasError": false
+    },
+    {
+      "seq": 2,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 12898,
+      "hasError": false
+    },
+    {
+      "seq": 3,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 23153,
+      "hasError": true
+    },
+    {
+      "seq": 4,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 26554,
+      "hasError": false
+    },
+    {
+      "seq": 5,
+      "purpose": "chapter-judge",
+      "schemaName": "ChapterJudgeResult",
+      "ms": 21562,
+      "hasError": false
+    },
+    {
+      "seq": 6,
+      "purpose": "scene-draft",
+      "schemaName": "SceneDraft",
+      "ms": 37861,
+      "hasError": false
+    },
+    {
+      "seq": 7,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 50191,
+      "hasError": false
+    },
+    {
+      "seq": 8,
+      "purpose": "chapter-judge",
+      "schemaName": "ChapterJudgeResult",
+      "ms": 24126,
+      "hasError": false
+    }
+  ],
+  "stepCount": 8,
+  "totalAiMs": 235088,
+  "runtimeBackend": "memory",
+  "taskBook": {
+    "present": true,
+    "CBN": "承接上章结尾：完成穿越设定，建立主角技术权威，制造生死危机，开启三日翻案倒计时，让读者对主角的技术能力和处境产生强烈代入感；读",
+    "CPNs": [
+      "开始用老鼠实验证明尸斑时间",
+      "完成穿越设定",
+      "建立主角技术权威"
+    ],
+    "CEN": "第5章结尾，主角用老鼠实验成功证明尸斑时间，同时发现秋月颈后的细针孔，意识到自己遗漏了这个关键细节，真正的凶手可能不止刘文韬一人",
+    "mustCoverCount": 2,
+    "forbiddenZonesCount": 4
+  },
+  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch5-1785586925961.jsonl",
+  "stepsPath": "temp/continue-write.real.ch5.steps.txt",
+  "summaryPath": "temp/continue-write.real.ch5.summary.json",
+  "prosePreview": {
+    "head": "辰时三刻，县衙大堂外早已挤满了人。知府大人端坐主位，刘守仁陪坐在侧，脸色铁青。刘文韬被押在堂下，双手戴着镣铐，眼神却依旧凶狠。宋辞被带上来时，后背的杖伤还在隐隐作痛，但他挺直腰板，目光扫过在场所有人。\n\n“宋辞，你说有新的证据，要在今日当堂演示。”知府刘正清放下茶杯，语气平淡，却带着不容置疑的威严，“本官给你一炷香的时",
+    "tail": "成全。”然后转身，走向停尸房。身后，刘守仁的怒吼声和百姓的议论声渐渐远去，但宋辞的脑子却异常清醒。他必须尽快找到真凶的线索，否则三天后，他还会回到死牢，而这一次，不会再有翻案的机会。\n\n他伸手摸了摸怀里的半截碎瓷片，那是他最后的武器。他抬头看了一眼天空，阳光刺眼，但他却看到了这场斗争的尽头——一个用科学对抗黑暗的尽头。"
+  },
+  "note": "本文件已与当次跑次同步；权威摘要见 continue-write.real.ch5.summary.json"
+}

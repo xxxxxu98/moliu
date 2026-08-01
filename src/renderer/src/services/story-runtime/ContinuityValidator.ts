@@ -14,6 +14,7 @@ import type {
 } from '@/types/story-runtime';
 
 import { applyProvisionalOverlay } from './stateOverlay';
+import { isForbiddenExemptForFulfillment } from './contractHealth';
 
 export interface ContinuityValidationInput {
   contracts: ContractPack;
@@ -272,6 +273,15 @@ export class ContinuityValidator {
         }
         for (const item of judgment.forbidden) {
           if (item.violated) {
+            if (
+              isForbiddenExemptForFulfillment(
+                item.zone,
+                contract.mustCover,
+                `${item.reason} ${item.evidence.join(' ')}`
+              )
+            ) {
+              continue;
+            }
             const suffix = item.reason.trim() ? `（${item.reason.trim()}）` : '';
             addIssue('fulfillment', `触发本章禁区：${item.zone}${suffix}`, item.evidence);
           }

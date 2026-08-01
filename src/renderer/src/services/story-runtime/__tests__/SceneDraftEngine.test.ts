@@ -53,6 +53,33 @@ describe('coerceSceneDraft', () => {
     });
   });
 
+  it('提取并清洗 chapterTitle（去第X章前缀）', () => {
+    const draft = coerceSceneDraft(
+      {
+        chapterTitle: '第1章 「验尸翻案」',
+        paragraphs: ['宋辞睁开眼。'],
+      },
+      beat,
+      allowed
+    );
+
+    expect(draft.chapterTitle).toBe('验尸翻案');
+    expect(draft.paragraphs).toEqual(['宋辞睁开眼。']);
+  });
+
+  it('支持中文别名「章节标题」', () => {
+    const draft = coerceSceneDraft(
+      {
+        章节标题: '被反诬入狱',
+        paragraphs: ['衙役围了上来。'],
+      },
+      beat,
+      allowed
+    );
+
+    expect(draft.chapterTitle).toBe('被反诬入狱');
+  });
+
   it('支持 data 包装层与 content 字段', () => {
     const draft = coerceSceneDraft(
       {
@@ -186,6 +213,47 @@ describe('SceneDraftEngine.draft', () => {
     expect(drafts[0].paragraphs).toEqual(['开篇。', '推进。', '章末钩子。']);
   });
 
+  it('system prompt 要求同轮输出口语风 chapterTitle', async () => {
+    const generate = vi.fn(async () => ({
+      chapterTitle: '这尸体不对劲',
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 1,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    const drafts = await engine.draft(plan, context);
+
+    const request = generate.mock.calls[0][0] as { system: string; prompt: string };
+    expect(request.system).toContain('chapterTitle');
+    expect(request.system).toContain('不要加「第X章」前缀');
+    expect(request.system).toContain('拜师学艺');
+    expect(request.system).toContain('公堂指凶');
+    expect(request.system).toContain('别端着');
+    expect(request.system).toContain('本章范围');
+    expect(request.system).toContain('章末约束');
+    const prompt = JSON.parse(request.prompt) as {
+      titleHints: { vibe: string; length: { prefer: string } };
+      requiredOutput: { chapterTitle: string };
+      writingRules: {
+        scopeThisChapterOnly?: boolean;
+        endOnCEN?: boolean;
+      };
+    };
+    expect(prompt.titleHints.vibe).toContain('口语');
+    expect(prompt.titleHints.length.prefer).toContain('6-16');
+    expect(prompt.requiredOutput.chapterTitle).toContain('这尸体怎么验都不对劲');
+    expect(prompt.writingRules.scopeThisChapterOnly).toBe(true);
+    expect(prompt.writingRules.endOnCEN).toBe(true);
+    expect(drafts[0].chapterTitle).toBe('这尸体不对劲');
+  });
+
   it('字数规则同时声明上下限，并写入 writingRules', async () => {
     const generate = vi.fn(async () => ({
       paragraphs: ['开篇。', '推进。', '章末钩子。'],
@@ -216,6 +284,9 @@ describe('SceneDraftEngine.draft', () => {
     expect(prompt.writingRules).toEqual({
       mode: 'single-shot-chapter',
       forbidPlotRestart: true,
+      scopeThisChapterOnly: true,
+      endOnCEN: true,
+      forbidFutureChapterPayoffs: true,
       targetWordCount: 3000,
       minWordCount: 2550,
       maxWordCount: 3450,

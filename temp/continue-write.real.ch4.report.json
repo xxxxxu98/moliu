@@ -1,0 +1,148 @@
+{
+  "kind": "continue-write-real-summary",
+  "at": "2026-08-01T12:26:01.080Z",
+  "runId": "continue-write-real-proj-1785392282915-batch-ch4-1785586486301",
+  "book": "仵作提刑官",
+  "chapterNumber": 4,
+  "provider": "openai",
+  "providerId": "provider-1781144969420",
+  "model": "deepseek-v4-flash[1m]",
+  "success": true,
+  "commitStatus": "accepted",
+  "commitReasons": [],
+  "commitId": "proj-1785392282915:chapter:4:commit:17cbbd56",
+  "receipt": {
+    "commitId": "proj-1785392282915:chapter:4:commit:17cbbd56",
+    "revision": 4,
+    "acceptedAt": "2026-08-01T12:22:05.955Z"
+  },
+  "reportAccepted": true,
+  "reportIssueCount": 0,
+  "checkedDomains": [
+    "entity",
+    "knowledge",
+    "inventory",
+    "timeline",
+    "causality",
+    "fulfillment",
+    "evidence"
+  ],
+  "prechecks": {
+    "total": 5,
+    "accepted": 5,
+    "blocked": 0,
+    "blockedCandidateIds": []
+  },
+  "wordCount": 2648,
+  "targetWordCount": 3000,
+  "wordTimeline": {
+    "draftWords": 2246,
+    "afterPadWords": 2648,
+    "finalWords": 2648,
+    "supplementAiRounds": 2,
+    "condenseAiRounds": 0
+  },
+  "rewriteRounds": 1,
+  "purposes": [
+    "scene-draft",
+    "scene-draft",
+    "fact-extraction",
+    "chapter-judge",
+    "scene-draft",
+    "scene-draft",
+    "fact-extraction",
+    "chapter-judge"
+  ],
+  "schemas": [
+    "SceneDraft",
+    "SupplementParagraphs",
+    "ExtractedFacts",
+    "ChapterJudgeResult",
+    "SceneDraft",
+    "SupplementParagraphs",
+    "ExtractedFacts",
+    "ChapterJudgeResult"
+  ],
+  "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+  "steps": [
+    {
+      "seq": 1,
+      "purpose": "scene-draft",
+      "schemaName": "SceneDraft",
+      "ms": 252939,
+      "hasError": false
+    },
+    {
+      "seq": 2,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 13458,
+      "hasError": false
+    },
+    {
+      "seq": 3,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 50559,
+      "hasError": false
+    },
+    {
+      "seq": 4,
+      "purpose": "chapter-judge",
+      "schemaName": "ChapterJudgeResult",
+      "ms": 13306,
+      "hasError": false
+    },
+    {
+      "seq": 5,
+      "purpose": "scene-draft",
+      "schemaName": "SceneDraft",
+      "ms": 28960,
+      "hasError": false
+    },
+    {
+      "seq": 6,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 16169,
+      "hasError": false
+    },
+    {
+      "seq": 7,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 36318,
+      "hasError": false
+    },
+    {
+      "seq": 8,
+      "purpose": "chapter-judge",
+      "schemaName": "ChapterJudgeResult",
+      "ms": 27920,
+      "hasError": false
+    }
+  ],
+  "stepCount": 8,
+  "totalAiMs": 439629,
+  "runtimeBackend": "memory",
+  "taskBook": {
+    "present": true,
+    "CBN": "承接上章结尾：完成穿越设定，建立主角技术权威，制造生死危机，开启三日翻案倒计时，让读者对主角的技术能力和处境产生强烈代入感；读",
+    "CPNs": [
+      "狱中用现代法医学知识分析尸检漏洞",
+      "完成穿越设定",
+      "建立主角技术权威"
+    ],
+    "CEN": "完成穿越设定，建立主角技术权威，制造生死危机，开启三日翻案倒计时，让读者对主角的技术能力和处境产生强烈代入感；读者期待：建立“技术流爽文”预期，",
+    "mustCoverCount": 2,
+    "forbiddenZonesCount": 4
+  },
+  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch4-1785586486301.jsonl",
+  "stepsPath": "temp/continue-write.real.ch4.steps.txt",
+  "summaryPath": "temp/continue-write.real.ch4.summary.json",
+  "prosePreview": {
+    "head": "铁门哐当关上，宋辞靠在潮湿的墙壁上，呼吸还没喘匀。刚才在公堂上，他明明用解剖证据把刘文韬钉死了，刘守仁却硬是判了他杖责二十、革职逐出清河县。二十棍打得他后背火辣辣的疼，但更疼的是心里那股不甘。他握紧拳头，指甲掐进掌心——三天，他只有三天时间，必须把证据送到知府衙门，否则刘文韬缓过劲来，第一个要杀的就是他。\n\n隔壁牢房的",
+    "tail": "刀用。他借着微弱的月光，将瓷片在裤腿上反复摩擦，直到边缘光滑如刃。然后他闭上眼睛，在脑海中一遍遍模拟解剖步骤：先切开皮肤，分离皮下组织，找到静脉，再沿血管走向寻找针孔……每一个动作都精准到毫米。他能感觉到，前世的肌肉记忆正一点点苏醒，手指开始微微颤抖，不是恐惧，而是兴奋。一个法医，只有在面对尸体时，才能找到真正的自己。"
+  },
+  "note": "本文件已与当次跑次同步；权威摘要见 continue-write.real.ch4.summary.json"
+}

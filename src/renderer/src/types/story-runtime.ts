@@ -400,6 +400,11 @@ export interface SceneDraft {
   beatId: string;
   paragraphs: string[];
   candidateEvents: CandidateEvent[];
+  /**
+   * 本章吸引人的短标题（不含「第X章」前缀）。
+   * 整章单次起草时由模型顺带生成；补字/压缩轮次可缺省。
+   */
+  chapterTitle?: string;
 }
 
 export interface ExtractedFacts {

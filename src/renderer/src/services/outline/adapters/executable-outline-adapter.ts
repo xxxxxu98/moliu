@@ -15,6 +15,7 @@ import type {
   GeneratedWorldSetting,
 } from '@/types/inspiration';
 import {
+  buildChainedCbn,
   buildMidChapterCen,
   enrichThinCpns,
 } from '@/services/story-runtime/chapterBlueprintNormalize';
@@ -472,7 +473,7 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
       const CBN = isFirstChapterOverall
         ? outline.startupPack30.openingHook || block.objective
         : prevChapterCEN
-          ? `承接上章结尾：${prevChapterCEN}`
+          ? buildChainedCbn(prevChapterCEN, block.objective)
           : `承接前段：${block.objective}`;
 
       // CPNs：派生 1-3 个推进节点；单薄 keyEvent 时从 CBN 子句补齐

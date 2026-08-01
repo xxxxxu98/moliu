@@ -85,6 +85,8 @@ export const sceneDraftSchema: z.ZodType<SceneDraft> = z.object({
   beatId: z.string().min(1),
   paragraphs: z.array(z.string().min(1)).min(1),
   candidateEvents: z.array(candidateEventSchema),
+  /** 章节标题（口语钩子句，可至约 22 字）；可选，兼容旧稿未返回该字段 */
+  chapterTitle: z.string().min(1).max(48).optional(),
 });
 
 export const extractedFactsSchema: z.ZodType<ExtractedFacts> = z.object({

@@ -9,6 +9,11 @@
 
 import { useProjectStore } from '@/stores/project.store';
 import { useMemoryOrchestrator } from '../../writing/memory/MemoryOrchestrator';
+import {
+  detectMustCoverForbiddenConflicts,
+  softenConflictingForbidden,
+} from '@/services/story-runtime/contractHealth';
+import { normalizeChapterBlueprint } from '@/services/story-runtime/chapterBlueprintNormalize';
 import type {
   WritingTaskBook,
   ChapterContract,
@@ -76,7 +81,8 @@ export class EnhancedContextAgent {
       );
 
       // 6. 组装任务书
-      const taskBook: WritingTaskBook = {
+      const previousChapterCen = this.resolvePreviousChapterCen(project, input.chapterNumber);
+      const rawTaskBook: WritingTaskBook = {
         hardConstraints,
         CBN: chapterContract?.directive?.CBN || this.generateDefaultCBN(context),
         CPNs: chapterContract?.directive?.CPNs || this.generateDefaultCPNs(context),
@@ -86,6 +92,12 @@ export class EnhancedContextAgent {
         styleGuidance,
         dynamicContext,
       };
+      const taskBook = this.sanitizeTaskBook(
+        rawTaskBook,
+        input.chapterNumber,
+        input.previousChapterEnding,
+        previousChapterCen
+      );
 
       console.log('[ContextAgent] 任务书生成成功:', {
         chapter: input.chapterNumber,
@@ -102,6 +114,65 @@ export class EnhancedContextAgent {
         error: error instanceof Error ? error.message : '生成失败',
       };
     }
+  }
+
+  /**
+   * 读取上一章 CEN（优先作跨章 CBN tip，避免正文碎片污染）
+   */
+  private resolvePreviousChapterCen(project: Project, chapterNumber: number): string {
+    if (chapterNumber <= 1) return '';
+    const prev = this.buildChapterContract(project, chapterNumber - 1);
+    return (prev?.directive?.CEN || '').trim();
+  }
+
+  /**
+   * 任务书出口清洗：完整蓝图规范化 + mustCover×禁区冲突软化
+   */
+  private sanitizeTaskBook(
+    taskBook: WritingTaskBook,
+    chapterNumber: number,
+    previousChapterEnding?: string,
+    previousChapterCen?: string
+  ): WritingTaskBook {
+    const normalized = normalizeChapterBlueprint(
+      {
+        title: taskBook.hardConstraints.goal || `第${chapterNumber}章`,
+        goal: taskBook.hardConstraints.goal,
+        CBN: taskBook.CBN,
+        CPNs: taskBook.CPNs,
+        CEN: taskBook.CEN,
+        mustCover: taskBook.mustCover,
+      },
+      chapterNumber,
+      {
+        previousEnding: previousChapterEnding,
+        previousCen: previousChapterCen,
+      }
+    );
+    const conflicts = detectMustCoverForbiddenConflicts(
+      normalized.mustCover,
+      taskBook.forbiddenZones
+    );
+    const { forbidden } = softenConflictingForbidden(taskBook.forbiddenZones, conflicts);
+    if (conflicts.length > 0) {
+      console.info(
+        `[ContextAgent] mustCover×禁区冲突 ${conflicts.length} 处，已软化禁区`
+      );
+    }
+    return {
+      ...taskBook,
+      CBN: normalized.CBN,
+      CPNs: normalized.CPNs,
+      CEN: normalized.CEN,
+      mustCover: normalized.mustCover,
+      forbiddenZones: forbidden,
+      hardConstraints: {
+        ...taskBook.hardConstraints,
+        goal: normalized.goal || taskBook.hardConstraints.goal,
+        chapterEndOpenQuestion:
+          normalized.CEN || taskBook.hardConstraints.chapterEndOpenQuestion,
+      },
+    };
   }
 
   /**

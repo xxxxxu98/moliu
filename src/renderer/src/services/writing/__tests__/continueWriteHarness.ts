@@ -29,6 +29,8 @@ import {
   BATCH_CONTINUE_PRESET,
   type ChapterWriteOptionFlags,
 } from '@/services/writing/chapterWritePresets';
+import { countWords } from '@/services/writing/utils';
+import { MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
 import { createChapterPersistenceClient } from '@/services/writing/chapterPersistenceAdapters';
 import { ContextManager } from '@/services/writing/context-manager';
 import { executeSmartContinue } from '@/services/writing/smartContinue';
@@ -154,6 +156,37 @@ export function makeMalformedChapter1Contracts() {
 export class ContinueWriteFakeAI implements StructuredAI {
   callCount = 0;
 
+  private ensureMinWords(paragraphs: string[], minWords: number): string[] {
+    const joined = paragraphs.join('\n\n');
+    const current = countWords(joined);
+    if (current >= minWords) return paragraphs;
+    const unit =
+      '验尸刀锋与公堂压迫交替推进，他不敢漏掉任何一处尸斑、索沟与证人神色。';
+    const need = minWords - current + 40;
+    const pad = unit.repeat(Math.max(1, Math.ceil(need / countWords(unit))));
+    return [...paragraphs, pad];
+  }
+
+  private resolveTargetFromPrompt(prompt: string): number {
+    try {
+      const payload = JSON.parse(prompt) as {
+        targetWordCount?: number | null;
+        writingRules?: { targetWordCount?: number | null; minWordCount?: number | null };
+      };
+      const target =
+        payload.targetWordCount ??
+        payload.writingRules?.targetWordCount ??
+        payload.writingRules?.minWordCount ??
+        null;
+      if (typeof target === 'number' && target > 0) return target;
+    } catch {
+      // 补充续写是纯文本 prompt
+    }
+    const match = prompt.match(/目标字数：约\s*(\d+)\s*字/u);
+    if (match) return Number(match[1]);
+    return 3000;
+  }
+
   async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
     this.callCount += 1;
     if (request.purpose === 'chapter-judge' || request.purpose === 'fulfillment-check') {
@@ -203,16 +236,34 @@ export class ContinueWriteFakeAI implements StructuredAI {
       };
     }
 
+    const target = this.resolveTargetFromPrompt(request.prompt);
+    const minWords = Math.floor(target * MIN_WORD_THRESHOLD);
+
     if (
       request.schemaName === 'SupplementParagraphs' ||
       request.prompt.trimStart().startsWith('【补充续写指令】')
     ) {
       return {
-        paragraphs: [
-          '堂下窃窃私语渐渐散开，宋辞没有抬头，只把尸斑走向、瞳孔反应与索沟深浅一一记在心里。',
-          '他知道三天期限像刀子架在脖子上，可越是如此，越要把第一刀验得干净——只要铁证落板，刘文韬再怎么翻脸也没用。',
-          '验尸刀落下的一瞬，他忽然想起现代解剖台边的冷白灯光，唇角却没有笑：这具身子不是他的，但这门手艺还在。',
-        ],
+        paragraphs: this.ensureMinWords(
+          [
+            '堂下窃窃私语渐渐散开，宋辞没有抬头，只把尸斑走向、瞳孔反应与索沟深浅一一记在心里。',
+            '他知道三天期限像刀子架在脖子上，可越是如此，越要把第一刀验得干净——只要铁证落板，刘文韬再怎么翻脸也没用。',
+            '验尸刀落下的一瞬，他忽然想起现代解剖台边的冷白灯光，唇角却没有笑：这具身子不是他的，但这门手艺还在。',
+          ],
+          Math.max(200, Math.ceil(minWords * 0.35))
+        ),
+      };
+    }
+
+    if (request.schemaName === 'CondenseParagraphs') {
+      return {
+        paragraphs: this.ensureMinWords(
+          [
+            '宋辞压住眩晕，把尸斑与索沟对完，当众点出刘文韬。',
+            '刘守仁变脸，三日处斩的刀落下来，章末悬在铁证与性命之间。',
+          ],
+          minWords
+        ),
       };
     }
 
@@ -231,12 +282,16 @@ export class ContinueWriteFakeAI implements StructuredAI {
     return {
       sceneId: `${beatId}:scene`,
       beatId,
-      paragraphs: [
-        `宋辞猛地睁开眼，鼻腔里全是硝石灰与血腥气。${arc}。${filler}${filler}`,
-        `他压住眩晕，按住尸身腕侧，指腹下的尸斑分布与「自缢」说辞根本对不上。${filler}${filler}`,
-        `堂下哄闹声起，刘文韬脸色铁青。宋辞知道：这一指，要么翻案，要么处斩。${filler}${filler}`,
-        `三日内若拿不出铁证，刀就落在他自己脖子上——可死人不会说谎，说谎的只会是活人。${filler}`,
-      ],
+      chapterTitle: '刚穿越就被诬下狱',
+      paragraphs: this.ensureMinWords(
+        [
+          `宋辞猛地睁开眼，鼻腔里全是硝石灰与血腥气。${arc}。${filler}${filler}`,
+          `他压住眩晕，按住尸身腕侧，指腹下的尸斑分布与「自缢」说辞根本对不上。${filler}${filler}`,
+          `堂下哄闹声起，刘文韬脸色铁青。宋辞知道：这一指，要么翻案，要么处斩。${filler}${filler}`,
+          `三日内若拿不出铁证，刀就落在他自己脖子上——可死人不会说谎，说谎的只会是活人。${filler}`,
+        ],
+        minWords
+      ),
       candidateEvents: ids.map(id => ({
         id,
         summary: payload.candidateSummaries?.[id] ?? id,

@@ -7,8 +7,10 @@ import {
   checkWordCount,
   checkWordCountBounds,
   clampProseToMaxWords,
+  chooseProseAfterCondense,
   buildSupplementPrompt,
   buildCondensePrompt,
+  buildWordCountShortfallIssue,
   runSupplementRounds,
   sliceEndingSnippet,
   MIN_WORD_THRESHOLD,
@@ -69,6 +71,56 @@ describe('clampProseToMaxWords', () => {
   });
 });
 
+describe('chooseProseAfterCondense', () => {
+  it('压缩落在区间时采用压缩稿', () => {
+    const target = 100;
+    const original = '原。'.repeat(80);
+    const condensed = '压。'.repeat(95);
+    const result = chooseProseAfterCondense({
+      originalProse: original,
+      condensedProse: condensed,
+      target,
+    });
+    expect(result.strategy).toBe('condensed');
+    expect(result.prose).toBe(condensed);
+  });
+
+  it('压缩过短时回退原文硬裁（复现 ch3：5000→800）', () => {
+    const target = 3000;
+    // 构造明确超上限的原文（>3450）与过短压缩稿（<<2550）
+    const original = `${'开场冲突推进细节描写一句。'.repeat(400)}${'章末钩子落下悬念。'.repeat(40)}`;
+    const condensed = '梗概一句。'.repeat(40);
+    expect(checkWordCountBounds(original, target).status).toBe('over');
+    expect(checkWordCountBounds(condensed, target).status).toBe('short');
+
+    const result = chooseProseAfterCondense({
+      originalProse: original,
+      condensedProse: condensed,
+      target,
+    });
+    expect(result.strategy).toBe('original-clamp');
+    expect(result.bounds.status).not.toBe('short');
+    expect(result.bounds.currentWords).toBeLessThanOrEqual(result.bounds.maxWords);
+    expect(result.prose).toContain('开场冲突推进');
+    expect(result.prose).toContain('章末钩子落下');
+  });
+});
+
+describe('buildWordCountShortfallIssue', () => {
+  it('字数不足时返回 blocking issue', () => {
+    const issue = buildWordCountShortfallIssue('太短了', 3000);
+    expect(issue).not.toBeNull();
+    expect(issue?.severity).toBe('blocking');
+    expect(issue?.domain).toBe('fulfillment');
+    expect(issue?.message).toContain('字数严重不足');
+  });
+
+  it('字数达标时返回 null', () => {
+    const content = '字'.repeat(2600);
+    expect(buildWordCountShortfallIssue(content, 3000)).toBeNull();
+  });
+});
+
 describe('buildCondensePrompt', () => {
   it('包含硬性区间与原文', () => {
     const prompt = buildCondensePrompt({
@@ -80,6 +132,7 @@ describe('buildCondensePrompt', () => {
       chapterOutline: '大纲',
     });
     expect(prompt).toContain('2550–3450');
+    expect(prompt).toContain('严禁压到低于 2550');
     expect(prompt).toContain('第1章');
     expect(prompt).toContain('原文很长');
   });
@@ -95,12 +148,16 @@ describe('buildSupplementPrompt', () => {
       maxRounds: 3,
       chapterTitle: '第1章',
       chapterOutline: '大纲',
+      pendingBeats: ['当众指凶', '章末落入三日处斩倒计时'],
     });
 
     expect(prompt).toContain('第 2/3 轮');
     expect(prompt).toContain('结尾锚点ABC');
     expect(prompt).toContain('第1章');
     expect(prompt).toContain('大纲');
+    expect(prompt).toContain('必须推进的未完成节点');
+    expect(prompt).toContain('当众指凶');
+    expect(prompt).toContain('禁止纯夜色');
   });
 
   it('原文结尾按句边界截取，不从半句起', () => {

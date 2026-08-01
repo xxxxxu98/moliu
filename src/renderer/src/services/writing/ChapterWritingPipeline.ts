@@ -40,6 +40,10 @@ import {
   createChapterPersistenceClient,
   createChapterMemoryClient,
 } from './chapterPersistenceAdapters';
+import {
+  isPlaceholderChapterTitle,
+  prependTitleLineForPersist,
+} from './chapterTitle';
 import { runSupplementRounds } from './supplement';
 import {
   TYPESETTING_HARD_RULES,
@@ -662,12 +666,18 @@ export class ChapterWritingPipeline {
         )
       );
       const gateResult = this.toGateResult(result.report);
+      const generatedShortTitle =
+        result.drafts.map(d => d.chapterTitle?.trim()).find(Boolean) ?? null;
+      const shouldApplyGeneratedTitle =
+        Boolean(generatedShortTitle) && isPlaceholderChapterTitle(input.chapter.title);
 
       if (result.commit.status !== 'accepted' || !result.receipt) {
         return {
           success: false,
           prose,
-          title: null,
+          title: shouldApplyGeneratedTitle
+            ? `第${chapterNumber}章 ${generatedShortTitle}`
+            : this.readBackTitle(input.chapter.id),
           taskBook,
           gateResult,
           attempts: 1,
@@ -680,9 +690,14 @@ export class ChapterWritingPipeline {
 
       // electron-store 仅作为 UI 投影；canonical commit 已由 SQLite 原子写入。
       // 字数补齐已在 LongFormWritingEngine 提交前完成。
+      // 占位标题时把「第N章 短标题」拼到正文头，经 persistence 提取落库（正文不含标题行）。
       try {
         if (this.persistence?.replace) {
-          await this.persistence.replace(input.chapter.id, prose);
+          const contentForPersist =
+            shouldApplyGeneratedTitle && generatedShortTitle
+              ? prependTitleLineForPersist(chapterNumber, generatedShortTitle, prose)
+              : prose;
+          await this.persistence.replace(input.chapter.id, contentForPersist);
         }
         await this.memoryClient?.extractAndSave(input.chapter.id, chapterNumber, prose);
       } catch (error) {
@@ -691,7 +706,11 @@ export class ChapterWritingPipeline {
       return {
         success: true,
         prose,
-        title: this.readBackTitle(input.chapter.id),
+        title:
+          this.readBackTitle(input.chapter.id) ??
+          (shouldApplyGeneratedTitle && generatedShortTitle
+            ? `第${chapterNumber}章 ${generatedShortTitle}`
+            : null),
         taskBook,
         gateResult,
         attempts: 1,

@@ -171,6 +171,53 @@ describe.skipIf(!isRealMultiEnabled())('continueWrite REAL AI · 多章批量续
         mode: 'batch',
       });
 
+      // 失败章也落盘，便于排查（断言放在持久化之后）
+      const chapterSummaries = multi.chapters
+        .filter(item => item.output.longFormResult)
+        .map(item => {
+          const longForm = item.output.longFormResult!;
+          return persistContinueWriteRealRun({
+            book: projectLocal.name,
+            chapterNumber: item.chapterNumber,
+            provider: cfg.provider,
+            providerId: cfg.providerId,
+            model: cfg.model,
+            success: item.output.success,
+            prose: item.output.prose,
+            targetWordCount: cfg.targetWordCount,
+            longForm,
+            recording: item.recording,
+            taskBook: item.taskBook,
+            runtimeBackend: multi.runtimeBackend,
+            fileStem: `continue-write.real.ch${item.chapterNumber}`,
+          }).summary;
+        });
+
+      if (chapterSummaries.length > 0) {
+        const { summary, summaryPath, stepsPath } = persistContinueWriteRealMultiRun({
+          book: projectLocal.name,
+          fromChapter,
+          chapterCount,
+          provider: cfg.provider,
+          providerId: cfg.providerId,
+          model: cfg.model,
+          runtimeBackend: multi.runtimeBackend,
+          chapterSummaries,
+          mode: multi.mode,
+        });
+        // eslint-disable-next-line no-console
+        console.log(formatMultiSummaryConsole(summary));
+        for (const item of chapterSummaries) {
+          // eslint-disable-next-line no-console
+          console.log(formatSummaryConsole(item));
+        }
+        // eslint-disable-next-line no-console
+        console.log(
+          `[REAL_AI_MULTI] mode=${multi.mode} summary=${summaryPath} steps=${stepsPath} ` +
+            `chapters=${chapterSummaries.map(item => `ch${item.chapterNumber}:${item.wordCount}w`).join(',')}`
+        );
+      }
+
       expect(multi.mode).toBe('batch');
       expect(multi.chapters.length).toBe(chapterCount);
       expect(multi.chapters.every(item => item.mode === 'batch')).toBe(true);
@@ -180,49 +227,6 @@ describe.skipIf(!isRealMultiEnabled())('continueWrite REAL AI · 多章批量续
         expect(item.output.longFormResult).toBeTruthy();
         expect(item.output.longFormResult!.commit.status).toBe('accepted');
       }
-
-      const chapterSummaries = multi.chapters.map(item => {
-        const longForm = item.output.longFormResult!;
-        return persistContinueWriteRealRun({
-          book: projectLocal.name,
-          chapterNumber: item.chapterNumber,
-          provider: cfg.provider,
-          providerId: cfg.providerId,
-          model: cfg.model,
-          success: item.output.success,
-          prose: item.output.prose,
-          targetWordCount: cfg.targetWordCount,
-          longForm,
-          recording: item.recording,
-          taskBook: item.taskBook,
-          runtimeBackend: multi.runtimeBackend,
-          fileStem: `continue-write.real.ch${item.chapterNumber}`,
-        }).summary;
-      });
-
-      const { summary, summaryPath, stepsPath } = persistContinueWriteRealMultiRun({
-        book: projectLocal.name,
-        fromChapter,
-        chapterCount,
-        provider: cfg.provider,
-        providerId: cfg.providerId,
-        model: cfg.model,
-        runtimeBackend: multi.runtimeBackend,
-        chapterSummaries,
-        mode: multi.mode,
-      });
-
-      // eslint-disable-next-line no-console
-      console.log(formatMultiSummaryConsole(summary));
-      for (const item of chapterSummaries) {
-        // eslint-disable-next-line no-console
-        console.log(formatSummaryConsole(item));
-      }
-      // eslint-disable-next-line no-console
-      console.log(
-        `[REAL_AI_MULTI] mode=${multi.mode} summary=${summaryPath} steps=${stepsPath} ` +
-          `chapters=${chapterSummaries.map(item => `ch${item.chapterNumber}:${item.wordCount}w`).join(',')}`
-      );
     },
     1_800_000
   );

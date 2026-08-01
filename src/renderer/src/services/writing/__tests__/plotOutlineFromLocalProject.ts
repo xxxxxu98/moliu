@@ -3,8 +3,10 @@
  */
 import type { PlotNode } from '@/types/project';
 import {
+  buildChainedCbn,
   buildMidChapterCen,
   enrichThinCpns,
+  normalizeChapterBlueprint,
 } from '@/services/story-runtime/chapterBlueprintNormalize';
 
 import type { LocalMoliuProject } from './loadLocalMoliuProject';
@@ -13,6 +15,37 @@ function parseBlockRange(range: string): { start: number; end: number } | null {
   const match = range.match(/(\d+)\s*[-~～至到]\s*(\d+)/u);
   if (!match) return null;
   return { start: Number(match[1]), end: Number(match[2]) };
+}
+
+function normalizePlotChapterNode(
+  node: PlotNode,
+  chapterNumber: number,
+  chapterId?: string,
+  options?: { previousCen?: string }
+): PlotNode {
+  const normalized = normalizeChapterBlueprint(
+    {
+      title: node.title,
+      goal: node.description || node.title,
+      CBN: node.CBN,
+      CPNs: node.CPNs,
+      CEN: node.CEN,
+      mustCover: node.mustCover,
+      keyEvents: node.keyEvents,
+      description: node.description,
+    },
+    chapterNumber,
+    { previousCen: options?.previousCen }
+  );
+  return {
+    ...node,
+    ...(chapterId ? { chapterId } : {}),
+    CBN: normalized.CBN,
+    CPNs: normalized.CPNs,
+    CEN: normalized.CEN,
+    mustCover: normalized.mustCover,
+    purpose: `CBN: ${normalized.CBN}\nCEN: ${normalized.CEN}`,
+  };
 }
 
 /**
@@ -28,6 +61,7 @@ export function ensurePlotOutlineForLocalProject(project: LocalMoliuProject): Pl
   );
   const existingChapters = existing.filter(node => node.type === 'chapter');
   if (existingChapters.length > 0) {
+    let prevCen = '';
     return existing.map(node => {
       if (node.type !== 'chapter') return node;
       const matched =
@@ -36,7 +70,12 @@ export function ensurePlotOutlineForLocalProject(project: LocalMoliuProject): Pl
           : undefined) ?? chapters[node.orderIndex] ?? chapters.find(
           (_ch, idx) => idx === existingChapters.indexOf(node)
         );
-      return matched ? { ...node, chapterId: matched.id } : node;
+      const chapterNumber = (matched?.orderIndex ?? node.orderIndex ?? 0) + 1;
+      const normalized = normalizePlotChapterNode(node, chapterNumber, matched?.id, {
+        previousCen: prevCen || undefined,
+      });
+      prevCen = normalized.CEN;
+      return normalized;
     });
   }
 
@@ -49,19 +88,25 @@ export function ensurePlotOutlineForLocalProject(project: LocalMoliuProject): Pl
   let plotIndex = 0;
 
   if (blocks.length === 0) {
-    return chapters.map((chapter, index) => ({
-      id: `plot-ch-${chapter.id}`,
-      title: chapter.title,
-      description: chapter.outline || chapter.plotSummary || chapter.title,
-      type: 'chapter' as const,
-      orderIndex: index,
-      chapterId: chapter.id,
-      CBN: chapter.outline || openingHook,
-      CPNs: ['推进本章主线'],
-      CEN: buildMidChapterCen(['推进本章主线'], chapter.outline || openingHook),
-      mustCover: ['推进本章主线'],
-      forbiddenZones: [],
-    }));
+    return chapters.map((chapter, index) =>
+      normalizePlotChapterNode(
+        {
+          id: `plot-ch-${chapter.id}`,
+          title: chapter.title,
+          description: chapter.outline || chapter.plotSummary || chapter.title,
+          type: 'chapter' as const,
+          orderIndex: index,
+          chapterId: chapter.id,
+          CBN: chapter.outline || openingHook,
+          CPNs: ['推进本章主线'],
+          CEN: buildMidChapterCen(['推进本章主线'], chapter.outline || openingHook),
+          mustCover: ['推进本章主线'],
+          forbiddenZones: [],
+        },
+        index + 1,
+        chapter.id
+      )
+    );
   }
 
   for (const block of blocks) {
@@ -84,7 +129,7 @@ export function ensurePlotOutlineForLocalProject(project: LocalMoliuProject): Pl
       const CBN = isFirstChapterOverall
         ? openingHook
         : prevChapterCEN
-          ? `承接上章结尾：${prevChapterCEN}`
+          ? buildChainedCbn(prevChapterCEN, block.objective)
           : `承接前段：${block.objective}`;
       const CPNs = enrichThinCpns(
         keyEvents.length > 0 ? keyEvents.slice(0, 3) : [`推进 ${block.objective}`],
@@ -93,23 +138,28 @@ export function ensurePlotOutlineForLocalProject(project: LocalMoliuProject): Pl
       const CEN = isBlockLastChapter
         ? block.hookRequirement || `完成本区间第 ${i + 1}/${blockSize} 段推进`
         : buildMidChapterCen(keyEvents.length > 0 ? keyEvents : CPNs, CBN);
-      prevChapterCEN = CEN;
 
-      nodes.push({
-        id: `plot-${Date.now()}-${plotIndex++}`,
-        title: chapter.title,
-        description: block.objective || chapter.outline || chapter.title,
-        type: 'chapter',
-        orderIndex: chapter.orderIndex,
-        chapterId: chapter.id,
-        keyEvents,
-        CBN,
-        CPNs,
-        CEN,
-        mustCover: keyEvents.length > 0 ? keyEvents : ['推进本章主线'],
-        forbiddenZones: block.forbiddenZones ?? [],
-        purpose: `CBN: ${CBN}\nCEN: ${CEN}`,
-      });
+      const node = normalizePlotChapterNode(
+        {
+          id: `plot-${Date.now()}-${plotIndex++}`,
+          title: chapter.title,
+          description: block.objective || chapter.outline || chapter.title,
+          type: 'chapter',
+          orderIndex: chapter.orderIndex,
+          chapterId: chapter.id,
+          keyEvents,
+          CBN,
+          CPNs,
+          CEN,
+          mustCover: keyEvents.length > 0 ? keyEvents : ['推进本章主线'],
+          forbiddenZones: block.forbiddenZones ?? [],
+          purpose: `CBN: ${CBN}\nCEN: ${CEN}`,
+        },
+        globalChapterNo,
+        chapter.id
+      );
+      prevChapterCEN = node.CEN;
+      nodes.push(node);
     }
   }
 

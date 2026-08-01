@@ -7,6 +7,7 @@ import type {
   StructuredAI,
 } from '@/types/story-runtime';
 
+import { CHAPTER_TITLE_PROMPT_RULES, normalizeGeneratedChapterTitle } from '@/services/writing/chapterTitle';
 import { MAX_WORD_THRESHOLD, MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
 
 import { parseSchema, sceneDraftSchema } from './schemas';
@@ -80,6 +81,16 @@ function pickCandidateEvents(
   return selected.length > 0 ? selected : allowed;
 }
 
+function extractChapterTitle(payload: unknown): string | undefined {
+  if (!isRecord(payload)) return undefined;
+  const raw =
+    payload.chapterTitle ??
+    payload.title ??
+    payload['章节标题'] ??
+    payload['标题'];
+  return normalizeGeneratedChapterTitle(raw) ?? undefined;
+}
+
 /**
  * 用已知 beat / 候选事件补齐 AI 常漏的结构字段，再交给 zod 校验。
  * 模型经常只返回正文或中文字段名，导致 sceneId/beatId 等为 undefined。
@@ -97,11 +108,13 @@ export function coerceSceneDraft(
     throw new Error(`场景 ${beat.id} 未返回可用正文段落`);
   }
 
+  const chapterTitle = extractChapterTitle(payload);
   return {
     sceneId: `${beat.id}:scene`,
     beatId: beat.id,
     paragraphs,
     candidateEvents: pickCandidateEvents(payload, allowedCandidateEvents),
+    ...(chapterTitle ? { chapterTitle } : {}),
   };
 }
 
@@ -181,7 +194,7 @@ export class SceneDraftEngine {
         ? [
             '【重写任务】上一稿未通过审核，必须整章重写并修复下列问题，禁止重复同样错误：',
             ...revisionHints.map((hint, index) => `${index + 1}. ${hint}`),
-            '- 内心观察与公开结论、证物细节必须前后一致；禁区内容不得出现或等价泄露',
+            '- 内心观察与公开结论、证物细节必须前后一致；禁区内容不得出现或等价泄露（本章 mustCover 履约所需的指认/证据展示除外）',
           ]
         : [];
     const candidateIds = candidates.map(item => item.id);
@@ -193,11 +206,15 @@ export class SceneDraftEngine {
         '你是长篇小说整章写作引擎。严格服从合同、状态和章节大纲节点，不得采用预检失败的候选事件。',
         '只输出一个 JSON 对象，不要 Markdown 代码块，不要解释。',
         'JSON 字段必须为：',
-        `{"sceneId":"${expectedSceneId}","beatId":"${primaryBeat.id}","paragraphs":["段落1","段落2"],"candidateEvents":[{"id":"..."}]}`,
+        `{"sceneId":"${expectedSceneId}","beatId":"${primaryBeat.id}","chapterTitle":"短标题","paragraphs":["段落1","段落2"],"candidateEvents":[{"id":"..."}]}`,
         `- sceneId 必须等于 "${expectedSceneId}"`,
         `- beatId 必须等于 "${primaryBeat.id}"`,
+        ...CHAPTER_TITLE_PROMPT_RULES,
         '- paragraphs 至少 1 段，写可直接入库的小说正文（中文）',
         '- 必须一次写完全章：按 chapterBeats 顺序覆盖 CBN→CPNs→CEN，情节只向前推进',
+        '- 【本章范围】只兑现本章 CBN/CPNs/CEN；禁止提前写后续章高光（如后章才该发生的当堂对线、翻案完结、新实验高潮）',
+        '- 【章末约束】最后一段必须落在 CEN 的后果/悬念上，停笔；不要再开新线或无因由再次入狱/失忆重来',
+        '- 【状态衔接】开场必须承接上下文中的上章终态（在狱/在逃/证据清单），禁止无视终态重复穿越醒来',
         '- 【禁止】中途重新开场、重复穿越/醒来、重写已发生剧情、把同一事件换措辞再写一遍',
         '- 【禁止】把章节拆成互不衔接的几段独立短文；段落之间必须文气连贯',
         '- paragraphs 数组元素只能是小说正文，禁止写入 sceneId/beatId/candidateEvents 等字段名，禁止写入 ] } : 等 JSON 骨架',
@@ -219,9 +236,38 @@ export class SceneDraftEngine {
         writingRules: {
           mode: 'single-shot-chapter',
           forbidPlotRestart: true,
+          scopeThisChapterOnly: true,
+          endOnCEN: true,
+          forbidFutureChapterPayoffs: true,
           targetWordCount: targetWordCount ?? null,
           minWordCount,
           maxWordCount,
+        },
+        titleHints: {
+          vibe: '口语网文目录风，信息量够、别公文/案情通报',
+          length: {
+            min: 2,
+            max: 22,
+            prefer: '6-16字，宁可稍长也不要四字电报',
+          },
+          prefer: [
+            '打脸',
+            '翻车',
+            '反转',
+            '第一次',
+            '秘密',
+            '麻烦',
+            '悬念半截话',
+            '人物+事件',
+            '反差钩子',
+          ],
+          avoid: ['四字成语堆砌', '公文味短句', '过于严肃的案情概括', '连续章节同款硬四字'],
+          examples: [
+            '这尸体怎么验都不对劲',
+            '刚穿越就被诬下狱',
+            '县令公子当场翻车',
+            '今晚睡不着了',
+          ],
         },
         revisionFeedback:
           revisionHints.length > 0
@@ -233,6 +279,7 @@ export class SceneDraftEngine {
         requiredOutput: {
           sceneId: expectedSceneId,
           beatId: primaryBeat.id,
+          chapterTitle: '口语标题（6-16字优先，如：这尸体怎么验都不对劲）',
           paragraphs: ['正文段落...'],
           candidateEvents: candidateIds.map(id => ({ id })),
         },

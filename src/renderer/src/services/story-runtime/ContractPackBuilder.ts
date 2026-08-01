@@ -10,6 +10,7 @@ import type {
 } from '@/types/story-runtime';
 
 import { normalizeChapterBlueprint } from './chapterBlueprintNormalize';
+import { healChapterContract } from './contractHealth';
 
 export interface ContractPackBuildInput {
   bootstrap: StoryBootstrapData;
@@ -138,13 +139,22 @@ export class ContractPackBuilder {
       timeAnchor: chapter.timeAnchor,
     };
 
+    // mustCover×禁区冲突软化 + 畸形 CBN 再清洗（无 state 时不做已兑现去重）
+    const { chapter: healedChapter, report: healthReport } = healChapterContract(chapterContract);
+    if (healthReport.notes.length > 0) {
+      console.info(
+        `[ContractPackBuilder] ch${chapter.number} 合同健康度:`,
+        healthReport.notes.join('；')
+      );
+    }
+
     const reviewContract: ReviewContract = {
       meta: {
         schemaVersion: 'story-runtime/v1',
         kind: 'review',
-        id: `${chapterContract.meta.id}:review`,
+        id: `${healedChapter.meta.id}:review`,
         projectId: bootstrap.project.id,
-        sourceTrace: trace('chapter-contract', chapterContract.meta.id, chapter.number),
+        sourceTrace: trace('chapter-contract', healedChapter.meta.id, chapter.number),
       },
       blockingDomains: [
         'entity',
@@ -158,12 +168,17 @@ export class ContractPackBuilder {
       requiredEvidence: input.review?.requiredEvidence ?? true,
       maxWarnings: input.review?.maxWarnings ?? 3,
       mustCheck: unique([
-        ...chapterContract.mustCover,
+        ...healedChapter.mustCover,
         ...immutableRules,
         ...(input.review?.mustCheck ?? []),
       ]),
     };
 
-    return { master, volume: volumeContract, chapter: chapterContract, review: reviewContract };
+    return {
+      master,
+      volume: volumeContract,
+      chapter: healedChapter,
+      review: reviewContract,
+    };
   }
 }

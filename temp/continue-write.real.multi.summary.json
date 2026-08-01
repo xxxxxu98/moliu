@@ -1,23 +1,23 @@
 {
   "kind": "continue-write-real-multi-summary",
-  "at": "2026-08-01T07:40:08.755Z",
+  "at": "2026-08-01T12:43:01.617Z",
   "book": "仵作提刑官",
   "fromChapter": 1,
-  "chapterCount": 3,
+  "chapterCount": 5,
   "mode": "batch",
-  "success": true,
-  "completedChapters": 3,
+  "success": false,
+  "completedChapters": 2,
   "runtimeBackend": "memory",
   "provider": "openai",
   "providerId": "provider-1781144969420",
   "model": "deepseek-v4-flash[1m]",
-  "totalAiMs": 706077,
-  "totalWords": 8017,
+  "totalAiMs": 808520,
+  "totalWords": 5577,
   "chapters": [
     {
       "kind": "continue-write-real-summary",
-      "at": "2026-08-01T07:40:08.741Z",
-      "runId": "continue-write-real-proj-1785392282915-batch-ch1-1785569302455",
+      "at": "2026-08-01T12:43:01.610Z",
+      "runId": "continue-write-real-proj-1785392282915-batch-ch1-1785587269505",
       "book": "仵作提刑官",
       "chapterNumber": 1,
       "provider": "openai",
@@ -26,14 +26,14 @@
       "success": true,
       "commitStatus": "accepted",
       "commitReasons": [],
-      "commitId": "proj-1785392282915:chapter:1:commit:46fc5e68",
+      "commitId": "proj-1785392282915:chapter:1:commit:2af9051b",
       "receipt": {
-        "commitId": "proj-1785392282915:chapter:1:commit:46fc5e68",
+        "commitId": "proj-1785392282915:chapter:1:commit:2af9051b",
         "revision": 1,
-        "acceptedAt": "2026-08-01T07:29:54.060Z"
+        "acceptedAt": "2026-08-01T12:30:26.225Z"
       },
       "reportAccepted": true,
-      "reportIssueCount": 0,
+      "reportIssueCount": 1,
       "checkedDomains": [
         "entity",
         "knowledge",
@@ -49,18 +49,17 @@
         "blocked": 0,
         "blockedCandidateIds": []
       },
-      "wordCount": 2809,
+      "wordCount": 2651,
       "targetWordCount": 3000,
       "wordTimeline": {
-        "draftWords": 2538,
-        "afterPadWords": 2809,
-        "finalWords": 2809,
-        "supplementAiRounds": 2,
+        "draftWords": 1911,
+        "afterPadWords": 2651,
+        "finalWords": 2651,
+        "supplementAiRounds": 1,
         "condenseAiRounds": 0
       },
       "rewriteRounds": 0,
       "purposes": [
-        "scene-draft",
         "scene-draft",
         "scene-draft",
         "fact-extraction",
@@ -69,73 +68,67 @@
       "schemas": [
         "SceneDraft",
         "SupplementParagraphs",
-        "SupplementParagraphs",
         "ExtractedFacts",
         "ChapterJudgeResult"
       ],
-      "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+      "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
       "steps": [
         {
           "seq": 1,
           "purpose": "scene-draft",
           "schemaName": "SceneDraft",
-          "ms": 30530,
+          "ms": 71224,
           "hasError": false
         },
         {
           "seq": 2,
           "purpose": "scene-draft",
           "schemaName": "SupplementParagraphs",
-          "ms": 3139,
+          "ms": 15339,
           "hasError": false
         },
         {
           "seq": 3,
-          "purpose": "scene-draft",
-          "schemaName": "SupplementParagraphs",
-          "ms": 11676,
+          "purpose": "fact-extraction",
+          "schemaName": "ExtractedFacts",
+          "ms": 39996,
           "hasError": false
         },
         {
           "seq": 4,
-          "purpose": "fact-extraction",
-          "schemaName": "ExtractedFacts",
-          "ms": 26385,
-          "hasError": false
-        },
-        {
-          "seq": 5,
           "purpose": "chapter-judge",
           "schemaName": "ChapterJudgeResult",
-          "ms": 19811,
+          "ms": 30125,
           "hasError": false
         }
       ],
-      "stepCount": 5,
-      "totalAiMs": 91541,
+      "stepCount": 4,
+      "totalAiMs": 156684,
       "runtimeBackend": "memory",
       "taskBook": {
         "present": true,
         "CBN": "现代法医宋辞穿越成贱籍仵作，正在验尸时当众指出死者系县令公子刘文韬所害，被刘文韬反诬入狱，必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
         "CPNs": [
-          "穿越醒来正在验尸"
+          "穿越醒来正在验尸",
+          "现代法医宋辞穿越成贱籍仵作",
+          "正在验尸时当众指出死者系县令公子刘文韬所害"
         ],
-        "CEN": "推进至：穿越醒来正在验尸",
-        "mustCoverCount": 1,
+        "CEN": "必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
+        "mustCoverCount": 3,
         "forbiddenZonesCount": 4
       },
-      "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch1-1785569302455.jsonl",
+      "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch1-1785587269505.jsonl",
       "stepsPath": "temp/continue-write.real.ch1.steps.txt",
       "summaryPath": "temp/continue-write.real.ch1.summary.json",
       "prosePreview": {
-        "head": "宋辞睁开眼，眼前是一具冰冷的尸体。浓重的血腥味混着石灰和药草的气味直冲鼻腔，他手中的解剖刀还沾着暗红色的血，刀尖正悬在尸体的咽喉上方。脑袋里像被塞进了一团乱麻，无数陌生的记忆疯狂涌入——原主也叫宋辞，是清河县最下贱的仵作，今年十九岁，从小跟着师父验尸，师父死后便独自干这行。他记得自己明明在省厅法医室的解剖台前加班，怎么",
-        "tail": "回想起来，竟是破绽所在。\n\n他加快脚步，心里盘算着三天内要做的事：重新勘验伤口、比对凶器、寻找目击者。最关键的是，他需要找到证据证明死者伤口与刘文韬的刀不匹配，或者证明现场还有第二把凶器。他抬头看了看夜空，清河的星星很亮，就像他家乡的夜晚一样，但此刻他无暇欣赏，因为他知道，三天后如果不能拿出铁证，这颗星就再也看不到了。"
+        "head": "宋辞睁开眼睛的瞬间，一股浓烈的血腥味直冲鼻腔。他发现自己正跪在一具尸体旁，右手握着一把锋利的解剖刀，左手沾满暗红色的血。周围站着一圈人——衙役、师爷，还有几个穿着绸缎的富户，所有人都盯着他，目光里带着审视和轻蔑。他低头看了看自己身上破旧的麻布衣，又摸了摸腰间挂着的仵作腰牌，脑子里忽然涌进一大堆不属于他的记忆。他穿越了，",
+        "tail": "深度。他记得《折狱龟鉴》里记载，用醋喷洒在皮肤上，再用墨拓印，能显现细微的软组织损伤。但前提是尸体尚未腐败——如今正值深秋，停尸房阴冷，应该还能撑两日。他后悔刚才没让赵老三顺便带本《折狱龟鉴》进来，但转念一想，那书在卷宗房，赵老三未必敢动。他只能靠记忆和双手了。时间一分一秒过去，他攥紧拳头，指节发白，只盼天明快些到来。"
       }
     },
     {
       "kind": "continue-write-real-summary",
-      "at": "2026-08-01T07:40:08.746Z",
-      "runId": "continue-write-real-proj-1785392282915-batch-ch2-1785569394086",
+      "at": "2026-08-01T12:43:01.613Z",
+      "runId": "continue-write-real-proj-1785392282915-batch-ch2-1785587426239",
       "book": "仵作提刑官",
       "chapterNumber": 2,
       "provider": "openai",
@@ -144,138 +137,11 @@
       "success": true,
       "commitStatus": "accepted",
       "commitReasons": [],
-      "commitId": "proj-1785392282915:chapter:2:commit:4c7b07b1",
+      "commitId": "proj-1785392282915:chapter:2:commit:b4887a0b",
       "receipt": {
-        "commitId": "proj-1785392282915:chapter:2:commit:4c7b07b1",
+        "commitId": "proj-1785392282915:chapter:2:commit:b4887a0b",
         "revision": 2,
-        "acceptedAt": "2026-08-01T07:31:59.168Z"
-      },
-      "reportAccepted": true,
-      "reportIssueCount": 0,
-      "checkedDomains": [
-        "entity",
-        "knowledge",
-        "inventory",
-        "timeline",
-        "causality",
-        "fulfillment",
-        "evidence"
-      ],
-      "prechecks": {
-        "total": 3,
-        "accepted": 3,
-        "blocked": 0,
-        "blockedCandidateIds": []
-      },
-      "wordCount": 2550,
-      "targetWordCount": 3000,
-      "wordTimeline": {
-        "draftWords": 1683,
-        "afterPadWords": 2550,
-        "finalWords": 2550,
-        "supplementAiRounds": 3,
-        "condenseAiRounds": 0
-      },
-      "rewriteRounds": 0,
-      "purposes": [
-        "scene-draft",
-        "scene-draft",
-        "scene-draft",
-        "scene-draft",
-        "fact-extraction",
-        "chapter-judge"
-      ],
-      "schemas": [
-        "SceneDraft",
-        "SupplementParagraphs",
-        "SupplementParagraphs",
-        "SupplementParagraphs",
-        "ExtractedFacts",
-        "ChapterJudgeResult"
-      ],
-      "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
-      "steps": [
-        {
-          "seq": 1,
-          "purpose": "scene-draft",
-          "schemaName": "SceneDraft",
-          "ms": 28559,
-          "hasError": false
-        },
-        {
-          "seq": 2,
-          "purpose": "scene-draft",
-          "schemaName": "SupplementParagraphs",
-          "ms": 10693,
-          "hasError": false
-        },
-        {
-          "seq": 3,
-          "purpose": "scene-draft",
-          "schemaName": "SupplementParagraphs",
-          "ms": 2129,
-          "hasError": false
-        },
-        {
-          "seq": 4,
-          "purpose": "scene-draft",
-          "schemaName": "SupplementParagraphs",
-          "ms": 5463,
-          "hasError": false
-        },
-        {
-          "seq": 5,
-          "purpose": "fact-extraction",
-          "schemaName": "ExtractedFacts",
-          "ms": 61985,
-          "hasError": false
-        },
-        {
-          "seq": 6,
-          "purpose": "chapter-judge",
-          "schemaName": "ChapterJudgeResult",
-          "ms": 16202,
-          "hasError": false
-        }
-      ],
-      "stepCount": 6,
-      "totalAiMs": 125031,
-      "runtimeBackend": "memory",
-      "taskBook": {
-        "present": true,
-        "CBN": "承接上章结尾：推进至：穿越醒来正在验尸",
-        "CPNs": [
-          "当众指出凶手是县令公子"
-        ],
-        "CEN": "推进至：当众指出凶手是县令公子",
-        "mustCoverCount": 1,
-        "forbiddenZonesCount": 4
-      },
-      "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch2-1785569394086.jsonl",
-      "stepsPath": "temp/continue-write.real.ch2.steps.txt",
-      "summaryPath": "temp/continue-write.real.ch2.summary.json",
-      "prosePreview": {
-        "head": "义庄的门吱呀一声推开，月光照在停尸台上，秋月的尸体静静躺着，白布下的轮廓模糊而沉重。宋辞点燃油灯，将解剖刀在火苗上烤了烤，深吸一口气。他必须在天亮之前完成一次完整的尸检，把每一个细节都刻进脑子里。他掀开白布，尸体已经出现了明显的尸斑，呈暗紫红色，分布在背部和臀部——这符合仰卧姿势的死后变化。他用手按压，尸斑褪色后缓慢恢",
-        "tail": "破口。他闭上眼睛，开始默念明天要说的每一句话，每一个细节，直到天边泛白。死牢外面传来梆子声，五更天了。他听到狱卒的脚步由远及近，铁门锁链哗啦作响，是该押送他上刑场的时候了。\n\n宋辞深吸一口气，站起身，整理了一下囚服上的稻草。铁门打开，两名狱卒架起他，拖向刑场。晨光刺眼，他的目光扫过人群，寻找着师爷的身影。\n\n师爷点头。"
-      }
-    },
-    {
-      "kind": "continue-write-real-summary",
-      "at": "2026-08-01T07:40:08.751Z",
-      "runId": "continue-write-real-proj-1785392282915-batch-ch3-1785569519177",
-      "book": "仵作提刑官",
-      "chapterNumber": 3,
-      "provider": "openai",
-      "providerId": "provider-1781144969420",
-      "model": "deepseek-v4-flash[1m]",
-      "success": true,
-      "commitStatus": "accepted",
-      "commitReasons": [],
-      "commitId": "proj-1785392282915:chapter:3:commit:8a04eb8a",
-      "receipt": {
-        "commitId": "proj-1785392282915:chapter:3:commit:8a04eb8a",
-        "revision": 3,
-        "acceptedAt": "2026-08-01T07:40:08.719Z"
+        "acceptedAt": "2026-08-01T12:41:18.106Z"
       },
       "reportAccepted": true,
       "reportIssueCount": 0,
@@ -294,24 +160,21 @@
         "blocked": 0,
         "blockedCandidateIds": []
       },
-      "wordCount": 2658,
+      "wordCount": 2926,
       "targetWordCount": 3000,
       "wordTimeline": {
-        "draftWords": 1842,
-        "afterPadWords": 2658,
-        "finalWords": 2658,
-        "supplementAiRounds": 6,
-        "condenseAiRounds": 0
+        "draftWords": 2106,
+        "afterPadWords": 2926,
+        "finalWords": 2926,
+        "supplementAiRounds": 2,
+        "condenseAiRounds": 1
       },
       "rewriteRounds": 2,
       "purposes": [
         "scene-draft",
         "scene-draft",
-        "scene-draft",
         "fact-extraction",
         "chapter-judge",
-        "scene-draft",
-        "scene-draft",
         "scene-draft",
         "scene-draft",
         "fact-extraction",
@@ -324,147 +187,125 @@
       "schemas": [
         "SceneDraft",
         "SupplementParagraphs",
-        "SupplementParagraphs",
         "ExtractedFacts",
         "ChapterJudgeResult",
         "SceneDraft",
         "SupplementParagraphs",
-        "SupplementParagraphs",
-        "SupplementParagraphs",
         "ExtractedFacts",
         "ChapterJudgeResult",
         "SceneDraft",
-        "SupplementParagraphs",
+        "CondenseParagraphs",
         "ExtractedFacts",
         "ChapterJudgeResult"
       ],
-      "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+      "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:CondenseParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
       "steps": [
         {
           "seq": 1,
           "purpose": "scene-draft",
           "schemaName": "SceneDraft",
-          "ms": 38619,
+          "ms": 40215,
           "hasError": false
         },
         {
           "seq": 2,
           "purpose": "scene-draft",
           "schemaName": "SupplementParagraphs",
-          "ms": 7219,
+          "ms": 14253,
           "hasError": false
         },
         {
           "seq": 3,
-          "purpose": "scene-draft",
-          "schemaName": "SupplementParagraphs",
-          "ms": 4283,
+          "purpose": "fact-extraction",
+          "schemaName": "ExtractedFacts",
+          "ms": 82800,
           "hasError": false
         },
         {
           "seq": 4,
-          "purpose": "fact-extraction",
-          "schemaName": "ExtractedFacts",
-          "ms": 194053,
+          "purpose": "chapter-judge",
+          "schemaName": "ChapterJudgeResult",
+          "ms": 36950,
           "hasError": false
         },
         {
           "seq": 5,
-          "purpose": "chapter-judge",
-          "schemaName": "ChapterJudgeResult",
-          "ms": 29726,
+          "purpose": "scene-draft",
+          "schemaName": "SceneDraft",
+          "ms": 23500,
           "hasError": false
         },
         {
           "seq": 6,
           "purpose": "scene-draft",
-          "schemaName": "SceneDraft",
-          "ms": 26241,
-          "hasError": false
+          "schemaName": "SupplementParagraphs",
+          "ms": 16800,
+          "hasError": true
         },
         {
           "seq": 7,
-          "purpose": "scene-draft",
-          "schemaName": "SupplementParagraphs",
-          "ms": 10359,
+          "purpose": "fact-extraction",
+          "schemaName": "ExtractedFacts",
+          "ms": 28900,
           "hasError": false
         },
         {
           "seq": 8,
-          "purpose": "scene-draft",
-          "schemaName": "SupplementParagraphs",
-          "ms": 8374,
+          "purpose": "chapter-judge",
+          "schemaName": "ChapterJudgeResult",
+          "ms": 11903,
           "hasError": false
         },
         {
           "seq": 9,
           "purpose": "scene-draft",
-          "schemaName": "SupplementParagraphs",
-          "ms": 4493,
+          "schemaName": "SceneDraft",
+          "ms": 55210,
           "hasError": false
         },
         {
           "seq": 10,
-          "purpose": "fact-extraction",
-          "schemaName": "ExtractedFacts",
-          "ms": 48264,
+          "purpose": "scene-draft",
+          "schemaName": "CondenseParagraphs",
+          "ms": 29732,
           "hasError": false
         },
         {
           "seq": 11,
-          "purpose": "chapter-judge",
-          "schemaName": "ChapterJudgeResult",
-          "ms": 37852,
+          "purpose": "fact-extraction",
+          "schemaName": "ExtractedFacts",
+          "ms": 128907,
           "hasError": false
         },
         {
           "seq": 12,
-          "purpose": "scene-draft",
-          "schemaName": "SceneDraft",
-          "ms": 30212,
-          "hasError": false
-        },
-        {
-          "seq": 13,
-          "purpose": "scene-draft",
-          "schemaName": "SupplementParagraphs",
-          "ms": 8939,
-          "hasError": false
-        },
-        {
-          "seq": 14,
-          "purpose": "fact-extraction",
-          "schemaName": "ExtractedFacts",
-          "ms": 18875,
-          "hasError": false
-        },
-        {
-          "seq": 15,
           "purpose": "chapter-judge",
           "schemaName": "ChapterJudgeResult",
-          "ms": 21996,
+          "ms": 182666,
           "hasError": false
         }
       ],
-      "stepCount": 15,
-      "totalAiMs": 489505,
+      "stepCount": 12,
+      "totalAiMs": 651836,
       "runtimeBackend": "memory",
       "taskBook": {
         "present": true,
-        "CBN": "承接上章结尾：推进至：当众指出凶手是县令公子",
+        "CBN": "承接上章结尾：必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
         "CPNs": [
-          "被反诬入狱"
+          "当众指出凶手是县令公子",
+          "必须在三天内用尸检铁证翻案自证清白",
+          "否则将被处斩"
         ],
-        "CEN": "推进至：被反诬入狱",
-        "mustCoverCount": 1,
+        "CEN": "必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
+        "mustCoverCount": 3,
         "forbiddenZonesCount": 4
       },
-      "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch3-1785569519177.jsonl",
-      "stepsPath": "temp/continue-write.real.ch3.steps.txt",
-      "summaryPath": "temp/continue-write.real.ch3.summary.json",
+      "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch2-1785587426239.jsonl",
+      "stepsPath": "temp/continue-write.real.ch2.steps.txt",
+      "summaryPath": "temp/continue-write.real.ch2.summary.json",
       "prosePreview": {
-        "head": "刑场上日光惨白，木桩周围站满了围观的百姓。宋辞被五花大绑押到刑台中央，身后是刽子手扛着鬼头刀。刘守仁坐在监斩台上，面无表情，身旁站着刘文韬，嘴角挂着若有若无的笑意。\n\n“时辰到——”师爷拉长声音喊道。刽子手上前一步，抬起刀。宋辞猛地抬起头，嘶吼道：“慢着！我有话要说！秋月之死，凶手另有其人！”\n\n人群骚动起来。刘守仁脸",
-        "tail": "一时糊涂……秋月说要告发我强占民女，我一时失手……求大人饶命！”宋辞冷冷看着，心中却无半分快意。他想起秋月临死前那绝望的眼神，只觉一阵悲凉。特使宣判：“刘文韬杀人罪成立，打入死牢，择日处斩。刘守仁教子不严，革职查办。宋辞无罪释放，官复原职。”宋辞走出公堂，阳光刺眼，他深深吸了口气，知道这场官司虽然赢了，却只是冰山一角。"
+        "head": "天还没亮透，牢房里的晦暗被高窗透进的光线撕开。宋辞靠在冰冷的墙壁上，一夜未合眼，脑子里反复模拟着验尸步骤。外面传来急促的脚步声，是赵老三。宋辞凑到牢门前：\"三哥，怎么样了？\"赵老三压低声音道：\"信送到了，特使说会尽快过问。但坏消息是，昨晚县令刘守仁封了停尸房，钥匙自己收着，还加派人手，说要连夜处理掉尸体。\"宋辞心头一紧",
+        "tail": "始。沈炼处理完案子后，走到他面前低声说：\"你是个有本事的人，本官需要你。三日后，你到府城找我，有更重要的事要你做。\"宋辞一愣，还没来得及回答，沈炼已转身离去。三天期限，还剩两天，但宋辞知道，他已赢得活下来的机会，也赢得了新的挑战。他站在公堂上，看着晨曦照进大门，心中暗暗发誓：从今以后，他要让尸体说话，让真相不再被掩埋。"
       }
     }
   ],

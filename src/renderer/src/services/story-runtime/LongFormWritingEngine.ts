@@ -17,6 +17,7 @@ import {
 } from './ChapterCommitService';
 import { ContextPackBuilder } from './ContextPackBuilder';
 import { ContinuityValidator } from './ContinuityValidator';
+import { enrichRevisionHint, healChapterContract } from './contractHealth';
 import { SceneBeatPlanner } from './SceneBeatPlanner';
 import { SceneDraftEngine } from './SceneDraftEngine';
 import { sanitizeSceneDraftParagraphs } from './stripDraftLeakage';
@@ -25,11 +26,15 @@ import {
   MAX_WORD_THRESHOLD,
   buildCondensePrompt,
   buildSupplementPrompt,
+  buildWordCountShortfallIssue,
   checkWordCount,
   checkWordCountBounds,
-  clampProseToMaxWords,
+  chooseProseAfterCondense,
 } from '@/services/writing/supplement';
 import { countWords } from '@/services/writing/utils';
+
+/** 字数归一外层循环：补字 ↔ 压缩，防止压缩过度后不回补 */
+const MAX_WORD_NORMALIZE_CYCLES = 2;
 
 /** 审核失败后的默认最大重写次数（不含初稿） */
 export const DEFAULT_MAX_REWRITE_ROUNDS = 2;
@@ -63,9 +68,8 @@ export function buildRevisionHintsFromReport(report: ContinuityReport): string[]
       const evidence = issue.evidence
         .map(item => item.trim())
         .filter(Boolean)
-        .slice(0, 2)
-        .join(' / ');
-      return evidence ? `${issue.message}（证据：${evidence}）` : issue.message;
+        .slice(0, 2);
+      return enrichRevisionHint(issue.message, evidence);
     })
     .filter(Boolean);
 }
@@ -102,13 +106,41 @@ export class LongFormWritingEngine {
       0,
       input.maxRewriteRounds ?? DEFAULT_MAX_REWRITE_ROUNDS
     );
+
+    // 写作前再按已兑现事件去重 mustCover/CPN，并二次软化禁区
+    const { chapter: healedChapter, report: healthReport } = healChapterContract(
+      input.contracts.chapter,
+      { state: input.state }
+    );
+    if (healthReport.notes.length > 0) {
+      console.info(
+        `[LongFormWritingEngine] ch${healedChapter.chapterNumber} 合同健康度:`,
+        healthReport.notes.join('；')
+      );
+    }
+    const contracts = {
+      ...input.contracts,
+      chapter: healedChapter,
+      review: {
+        ...input.contracts.review,
+        mustCheck: [
+          ...new Set([
+            ...healedChapter.mustCover,
+            ...input.contracts.review.mustCheck.filter(
+              item => !healthReport.prunedMustCover.includes(item)
+            ),
+          ]),
+        ],
+      },
+    };
+
     const plan = this.planner.plan({
-      chapter: input.contracts.chapter,
+      chapter: contracts.chapter,
       state: input.state,
       overlay: input.overlay,
     });
     const context = this.contextBuilder.build({
-      contracts: input.contracts,
+      contracts,
       state: input.state,
       overlay: input.overlay,
       recentScenes: input.recentScenes,
@@ -116,6 +148,8 @@ export class LongFormWritingEngine {
       styleGuidance: input.styleGuidance,
       maxTokens: input.maxContextTokens,
     });
+
+    const writeInput: LongFormWriteInput = { ...input, contracts };
 
     let drafts: SceneDraft[] = [];
     let facts: ExtractedFacts = { events: [], deltas: [], evidence: [] };
@@ -129,16 +163,16 @@ export class LongFormWritingEngine {
 
     while (true) {
       drafts = await this.draftEngine.draft(plan, context, {
-        targetWordCount: input.targetWordCount,
+        targetWordCount: writeInput.targetWordCount,
         revisionHints,
         rewriteRound: revisionHints ? Math.max(1, rewriteRounds) : undefined,
       });
       // 提交前进补字：避免 SQLite accepted 后仍只有 ~900 字
-      drafts = await this.padDraftsToTarget(drafts, input);
+      drafts = await this.padDraftsToTarget(drafts, writeInput);
 
       const rawFacts = await this.dependencies.factExtractor.extract({
         projectId: input.projectId,
-        chapterNumber: input.contracts.chapter.chapterNumber,
+        chapterNumber: contracts.chapter.chapterNumber,
         sceneDrafts: drafts,
         state: input.state,
         overlay: input.overlay,
@@ -152,11 +186,27 @@ export class LongFormWritingEngine {
       });
       facts = canonical.facts;
       report = await this.validator.validate({
-        contracts: input.contracts,
+        contracts,
         state: canonical.stateForValidation,
         drafts,
         facts: canonical.facts,
       });
+
+      // 字数下限未达标也视为 blocking，驱动重写；用尽轮次后则拒收提交
+      const target = writeInput.targetWordCount ?? 0;
+      const shortfall = buildWordCountShortfallIssue(draftsProse(drafts), target);
+      if (shortfall) {
+        report = {
+          accepted: false,
+          issues: [
+            ...report.issues.filter(issue => !issue.id.startsWith('word-count-short:')),
+            shortfall,
+          ],
+          checkedDomains: report.checkedDomains.includes('fulfillment')
+            ? report.checkedDomains
+            : [...report.checkedDomains, 'fulfillment'],
+        };
+      }
 
       if (!shouldRewrite(report) || rewriteRounds >= maxRewriteRounds) {
         break;
@@ -179,7 +229,7 @@ export class LongFormWritingEngine {
       projectId: input.projectId,
       state: input.state,
       previousOverlay: input.overlay,
-      contracts: input.contracts,
+      contracts,
       drafts,
       facts,
       report,
@@ -197,7 +247,8 @@ export class LongFormWritingEngine {
   }
 
   /**
-   * 字数归一：不足则补段，超出则压缩（AI）+ 硬裁兜底，确保落在 [85%, 115%]。
+   * 字数归一：不足则补段，超出则压缩（AI）+ 硬裁兜底。
+   * 压缩若压得过短会回退原文硬裁，并再补一轮，避免「超长→压缩塌方→直接提交」。
    */
   private async padDraftsToTarget(
     drafts: SceneDraft[],
@@ -208,6 +259,43 @@ export class LongFormWritingEngine {
       return drafts;
     }
 
+    let nextDrafts = drafts.map(draft => ({
+      ...draft,
+      paragraphs: [...draft.paragraphs],
+    }));
+
+    for (let cycle = 0; cycle < MAX_WORD_NORMALIZE_CYCLES; cycle += 1) {
+      nextDrafts = await this.supplementDraftsWhileShort(nextDrafts, input);
+      const bounds = checkWordCountBounds(draftsProse(nextDrafts), target);
+      if (bounds.status === 'ok') {
+        return nextDrafts;
+      }
+      if (bounds.status === 'over') {
+        nextDrafts = await this.trimDraftsIfOverTarget(nextDrafts, input);
+        const after = checkWordCountBounds(draftsProse(nextDrafts), target);
+        if (after.status === 'ok') {
+          return nextDrafts;
+        }
+        if (after.status === 'short') {
+          console.warn(
+            `[LongFormWritingEngine] 压缩/硬裁后字数不足（${after.currentWords}/${after.minWords}），开始回补`
+          );
+          continue;
+        }
+        return nextDrafts;
+      }
+      // 补字后仍 short：跳出外层循环，交由 word-count blocking 驱动重写/拒收
+      break;
+    }
+
+    return nextDrafts;
+  }
+
+  private async supplementDraftsWhileShort(
+    drafts: SceneDraft[],
+    input: LongFormWriteInput
+  ): Promise<SceneDraft[]> {
+    const target = input.targetWordCount ?? 0;
     const nextDrafts = drafts.map(draft => ({
       ...draft,
       paragraphs: [...draft.paragraphs],
@@ -242,6 +330,11 @@ export class LongFormWritingEngine {
           input.contracts.chapter.goal ||
           input.contracts.chapter.CBN ||
           input.contracts.chapter.CEN,
+        pendingBeats: [
+          ...input.contracts.chapter.CPNs,
+          ...input.contracts.chapter.mustCover,
+          input.contracts.chapter.CEN,
+        ],
       });
 
       try {
@@ -281,7 +374,6 @@ export class LongFormWritingEngine {
         prose = draftsProse(nextDrafts);
         rounds = round;
         if (countWords(prose) <= check.currentWords) {
-          // 无实质增量则停止，避免空转
           break;
         }
       } catch (error) {
@@ -290,11 +382,11 @@ export class LongFormWritingEngine {
       }
     }
 
-    return this.trimDraftsIfOverTarget(nextDrafts, input);
+    return nextDrafts;
   }
 
   /**
-   * 超上限时先 AI 压缩一轮；仍超则硬裁到 maxWords，保住开头与章末。
+   * 超上限时先 AI 压缩一轮；压过短则回退原文硬裁；仍超则硬裁到 maxWords。
    */
   private async trimDraftsIfOverTarget(
     drafts: SceneDraft[],
@@ -309,8 +401,8 @@ export class LongFormWritingEngine {
       ...draft,
       paragraphs: [...draft.paragraphs],
     }));
-    let prose = draftsProse(nextDrafts);
-    let bounds = checkWordCountBounds(prose, target);
+    const originalProse = draftsProse(nextDrafts);
+    let bounds = checkWordCountBounds(originalProse, target);
     if (bounds.status !== 'over') {
       return nextDrafts;
     }
@@ -320,6 +412,7 @@ export class LongFormWritingEngine {
       input.contracts.chapter.CBN ||
       input.contracts.chapter.CEN;
 
+    let condensedProse: string | null = null;
     try {
       const condensedParagraphs = await this.dependencies.ai.generate<string[]>({
         purpose: 'scene-draft',
@@ -327,10 +420,11 @@ export class LongFormWritingEngine {
         system: [
           '你是网文压缩改写引擎。只输出一个 JSON 对象：{"paragraphs":["段落1","段落2"]}',
           `当前约 ${bounds.currentWords} 字，必须压缩到 ${bounds.minWords}–${bounds.maxWords} 字（目标 ${target}）。`,
-          '保留全部关键情节与章末钩子，删除注水与重复；不要输出 Markdown 代码块或解释。',
+          `严禁压到低于 ${bounds.minWords} 字；删注水即可，不要压成剧情梗概。`,
+          '保留全部关键情节与章末钩子；不要输出 Markdown 代码块或解释。',
         ].join('\n'),
         prompt: buildCondensePrompt({
-          existingContent: prose,
+          existingContent: originalProse,
           targetWordCount: target,
           minWords: bounds.minWords,
           maxWords: bounds.maxWords,
@@ -358,37 +452,39 @@ export class LongFormWritingEngine {
       });
 
       if (condensedParagraphs.length > 0) {
-        nextDrafts[0] = {
-          ...nextDrafts[0],
-          paragraphs: condensedParagraphs,
-        };
-        // 整章压缩后只保留一份草稿
-        nextDrafts.splice(1);
-        prose = draftsProse(nextDrafts);
-        bounds = checkWordCountBounds(prose, target);
+        condensedProse = condensedParagraphs.join('\n\n');
       }
     } catch (error) {
       console.warn('[LongFormWritingEngine] 超长压缩失败，将硬裁到上限:', error);
     }
 
-    if (bounds.status === 'over') {
-      const clamped = clampProseToMaxWords(prose, bounds.maxWords);
-      const paragraphs = sanitizeSceneDraftParagraphs(
-        clamped
-          .split(/\n{2,}/u)
-          .map(part => part.trim())
-          .filter(Boolean)
+    const chosen = chooseProseAfterCondense({
+      originalProse,
+      condensedProse: condensedProse ?? originalProse,
+      target,
+    });
+
+    if (chosen.strategy === 'original-clamp') {
+      console.warn(
+        `[LongFormWritingEngine] 压缩过度（→${checkWordCountBounds(condensedProse ?? '', target).currentWords}），回退原文硬裁到 ${bounds.maxWords}`
       );
-      nextDrafts[0] = {
-        ...nextDrafts[0],
-        paragraphs: paragraphs.length > 0 ? paragraphs : [clamped],
-      };
-      nextDrafts.splice(1);
+    } else if (chosen.strategy === 'condensed-clamp') {
       console.info(
-        `[LongFormWritingEngine] 字数超上限，硬裁 ${bounds.currentWords} → ${countWords(draftsProse(nextDrafts))}（上限 ${bounds.maxWords}）`
+        `[LongFormWritingEngine] 压缩后仍超上限，硬裁至 ${bounds.maxWords}`
       );
     }
 
+    const paragraphs = sanitizeSceneDraftParagraphs(
+      chosen.prose
+        .split(/\n{2,}/u)
+        .map(part => part.trim())
+        .filter(Boolean)
+    );
+    nextDrafts[0] = {
+      ...nextDrafts[0],
+      paragraphs: paragraphs.length > 0 ? paragraphs : [chosen.prose],
+    };
+    nextDrafts.splice(1);
     return nextDrafts;
   }
 }

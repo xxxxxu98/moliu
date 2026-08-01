@@ -1,79 +1,56 @@
 ========== MULTI RUN META ==========
-at=2026-08-01T07:40:08.755Z
-book=仵作提刑官 from=1 count=3 mode=batch
-success=true completed=3/3
+at=2026-08-01T12:43:01.617Z
+book=仵作提刑官 from=1 count=5 mode=batch
+success=false completed=2/5
 runtimeBackend=memory model=deepseek-v4-flash[1m]
-totalWords=8017 totalAiMs=706077
-chapters=ch1:accepted:2809w → ch2:accepted:2550w → ch3:accepted:2658w
+totalWords=5577 totalAiMs=808520
+chapters=ch1:accepted:2651w → ch2:accepted:2926w
 ========== END MULTI RUN META ==========
 
 
 ########## CHAPTER 1 ##########
 ========== RUN META ==========
-at=2026-08-01T07:40:08.741Z
-runId=continue-write-real-proj-1785392282915-batch-ch1-1785569302455
+at=2026-08-01T12:43:01.610Z
+runId=continue-write-real-proj-1785392282915-batch-ch1-1785587269505
 book=仵作提刑官 chapter=1
 provider=openai providerId=provider-1781144969420 model=deepseek-v4-flash[1m]
 runtimeBackend=memory
 success=true commit=accepted rewrite=0
-receipt=proj-1785392282915:chapter:1:commit:46fc5e68@rev1 reportAccepted=true reportIssues=0
+receipt=proj-1785392282915:chapter:1:commit:2af9051b@rev1 reportAccepted=true reportIssues=1
 prechecks=5/5 blocked=0
-words=2809/3000 timeline=2538→pad2809→final2809 suppAi=2 condAi=0
-taskBook=yes mustCover=1 forbidden=4
-steps=5 totalAiMs=91541
-schemaFlow=scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult
-purposes=scene-draft → scene-draft → scene-draft → fact-extraction → chapter-judge
-trace=temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch1-1785569302455.jsonl
+words=2651/3000 timeline=1911→pad2651→final2651 suppAi=1 condAi=0
+taskBook=yes mustCover=3 forbidden=4
+steps=4 totalAiMs=156684
+schemaFlow=scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult
+purposes=scene-draft → scene-draft → fact-extraction → chapter-judge
+trace=temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch1-1785587269505.jsonl
 summary=temp/continue-write.real.ch1.summary.json
 ========== END RUN META ==========
-schemaFlow=scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult
-trace=temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch1-1785569302455.jsonl
-prose.head=宋辞睁开眼，眼前是一具冰冷的尸体。浓重的血腥味混着石灰和药草的气味直冲鼻腔，他手中的解剖刀还沾着暗红色的血，刀尖正悬在尸体的咽喉上方。脑袋里像被塞进了一团乱麻，无数陌生的记忆疯狂涌入——原主也叫宋辞，是清河县最下贱的仵作，今年十九岁，从小跟着师父验尸，师父死后便独自干这行。他记得自己明明在省厅法医室的解剖台前加班，怎么
-prose.tail=回想起来，竟是破绽所在。\n\n他加快脚步，心里盘算着三天内要做的事：重新勘验伤口、比对凶器、寻找目击者。最关键的是，他需要找到证据证明死者伤口与刘文韬的刀不匹配，或者证明现场还有第二把凶器。他抬头看了看夜空，清河的星星很亮，就像他家乡的夜晚一样，但此刻他无暇欣赏，因为他知道，三天后如果不能拿出铁证，这颗星就再也看不到了。
+schemaFlow=scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult
+trace=temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch1-1785587269505.jsonl
+prose.head=宋辞睁开眼睛的瞬间，一股浓烈的血腥味直冲鼻腔。他发现自己正跪在一具尸体旁，右手握着一把锋利的解剖刀，左手沾满暗红色的血。周围站着一圈人——衙役、师爷，还有几个穿着绸缎的富户，所有人都盯着他，目光里带着审视和轻蔑。他低头看了看自己身上破旧的麻布衣，又摸了摸腰间挂着的仵作腰牌，脑子里忽然涌进一大堆不属于他的记忆。他穿越了，
+prose.tail=深度。他记得《折狱龟鉴》里记载，用醋喷洒在皮肤上，再用墨拓印，能显现细微的软组织损伤。但前提是尸体尚未腐败——如今正值深秋，停尸房阴冷，应该还能撑两日。他后悔刚才没让赵老三顺便带本《折狱龟鉴》进来，但转念一想，那书在卷宗房，赵老三未必敢动。他只能靠记忆和双手了。时间一分一秒过去，他攥紧拳头，指节发白，只盼天明快些到来。
 
 ########## CHAPTER 2 ##########
 ========== RUN META ==========
-at=2026-08-01T07:40:08.746Z
-runId=continue-write-real-proj-1785392282915-batch-ch2-1785569394086
+at=2026-08-01T12:43:01.613Z
+runId=continue-write-real-proj-1785392282915-batch-ch2-1785587426239
 book=仵作提刑官 chapter=2
 provider=openai providerId=provider-1781144969420 model=deepseek-v4-flash[1m]
 runtimeBackend=memory
-success=true commit=accepted rewrite=0
-receipt=proj-1785392282915:chapter:2:commit:4c7b07b1@rev2 reportAccepted=true reportIssues=0
-prechecks=3/3 blocked=0
-words=2550/3000 timeline=1683→pad2550→final2550 suppAi=3 condAi=0
-taskBook=yes mustCover=1 forbidden=4
-steps=6 totalAiMs=125031
-schemaFlow=scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult
-purposes=scene-draft → scene-draft → scene-draft → scene-draft → fact-extraction → chapter-judge
-trace=temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch2-1785569394086.jsonl
+success=true commit=accepted rewrite=2
+receipt=proj-1785392282915:chapter:2:commit:b4887a0b@rev2 reportAccepted=true reportIssues=0
+prechecks=4/4 blocked=0
+words=2926/3000 timeline=2106→pad2926→final2926 suppAi=2 condAi=1
+taskBook=yes mustCover=3 forbidden=4
+steps=12 totalAiMs=651836
+schemaFlow=scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:CondenseParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult
+purposes=scene-draft → scene-draft → fact-extraction → chapter-judge → scene-draft → scene-draft → fact-extraction → chapter-judge → scene-draft → scene-draft → fact-extraction → chapter-judge
+trace=temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch2-1785587426239.jsonl
 summary=temp/continue-write.real.ch2.summary.json
 ========== END RUN META ==========
-schemaFlow=scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult
-trace=temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch2-1785569394086.jsonl
-prose.head=义庄的门吱呀一声推开，月光照在停尸台上，秋月的尸体静静躺着，白布下的轮廓模糊而沉重。宋辞点燃油灯，将解剖刀在火苗上烤了烤，深吸一口气。他必须在天亮之前完成一次完整的尸检，把每一个细节都刻进脑子里。他掀开白布，尸体已经出现了明显的尸斑，呈暗紫红色，分布在背部和臀部——这符合仰卧姿势的死后变化。他用手按压，尸斑褪色后缓慢恢
-prose.tail=破口。他闭上眼睛，开始默念明天要说的每一句话，每一个细节，直到天边泛白。死牢外面传来梆子声，五更天了。他听到狱卒的脚步由远及近，铁门锁链哗啦作响，是该押送他上刑场的时候了。\n\n宋辞深吸一口气，站起身，整理了一下囚服上的稻草。铁门打开，两名狱卒架起他，拖向刑场。晨光刺眼，他的目光扫过人群，寻找着师爷的身影。\n\n师爷点头。
-
-########## CHAPTER 3 ##########
-========== RUN META ==========
-at=2026-08-01T07:40:08.751Z
-runId=continue-write-real-proj-1785392282915-batch-ch3-1785569519177
-book=仵作提刑官 chapter=3
-provider=openai providerId=provider-1781144969420 model=deepseek-v4-flash[1m]
-runtimeBackend=memory
-success=true commit=accepted rewrite=2
-receipt=proj-1785392282915:chapter:3:commit:8a04eb8a@rev3 reportAccepted=true reportIssues=0
-prechecks=4/4 blocked=0
-words=2658/3000 timeline=1842→pad2658→final2658 suppAi=6 condAi=0
-taskBook=yes mustCover=1 forbidden=4
-steps=15 totalAiMs=489505
-schemaFlow=scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult
-purposes=scene-draft → scene-draft → scene-draft → fact-extraction → chapter-judge → scene-draft → scene-draft → scene-draft → scene-draft → fact-extraction → chapter-judge → scene-draft → scene-draft → fact-extraction → chapter-judge
-trace=temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch3-1785569519177.jsonl
-summary=temp/continue-write.real.ch3.summary.json
-========== END RUN META ==========
-schemaFlow=scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult
-trace=temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch3-1785569519177.jsonl
-prose.head=刑场上日光惨白，木桩周围站满了围观的百姓。宋辞被五花大绑押到刑台中央，身后是刽子手扛着鬼头刀。刘守仁坐在监斩台上，面无表情，身旁站着刘文韬，嘴角挂着若有若无的笑意。\n\n“时辰到——”师爷拉长声音喊道。刽子手上前一步，抬起刀。宋辞猛地抬起头，嘶吼道：“慢着！我有话要说！秋月之死，凶手另有其人！”\n\n人群骚动起来。刘守仁脸
-prose.tail=一时糊涂……秋月说要告发我强占民女，我一时失手……求大人饶命！”宋辞冷冷看着，心中却无半分快意。他想起秋月临死前那绝望的眼神，只觉一阵悲凉。特使宣判：“刘文韬杀人罪成立，打入死牢，择日处斩。刘守仁教子不严，革职查办。宋辞无罪释放，官复原职。”宋辞走出公堂，阳光刺眼，他深深吸了口气，知道这场官司虽然赢了，却只是冰山一角。
+schemaFlow=scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:CondenseParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult
+trace=temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch2-1785587426239.jsonl
+prose.head=天还没亮透，牢房里的晦暗被高窗透进的光线撕开。宋辞靠在冰冷的墙壁上，一夜未合眼，脑子里反复模拟着验尸步骤。外面传来急促的脚步声，是赵老三。宋辞凑到牢门前："三哥，怎么样了？"赵老三压低声音道："信送到了，特使说会尽快过问。但坏消息是，昨晚县令刘守仁封了停尸房，钥匙自己收着，还加派人手，说要连夜处理掉尸体。"宋辞心头一紧
+prose.tail=始。沈炼处理完案子后，走到他面前低声说："你是个有本事的人，本官需要你。三日后，你到府城找我，有更重要的事要你做。"宋辞一愣，还没来得及回答，沈炼已转身离去。三天期限，还剩两天，但宋辞知道，他已赢得活下来的机会，也赢得了新的挑战。他站在公堂上，看着晨曦照进大门，心中暗暗发誓：从今以后，他要让尸体说话，让真相不再被掩埋。
 

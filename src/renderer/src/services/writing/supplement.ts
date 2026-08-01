@@ -86,10 +86,11 @@ export function buildCondensePrompt(params: BuildCondensePromptParams): string {
 
 ## 压缩要求
 1. **必须整章重写为更紧凑版本**，输出完整正文（不是增量）
-2. **保留全部关键情节与章末钩子**，不得删掉冲突兑现与结尾悬念
-3. **删冗余**：重复描写、同义反复、无推进注水优先删
-4. **禁止另起炉灶**：人物关系、已发生事件、证据细节不得改写跑偏
-5. **分段适中**：每段约 3～5 句；忌超长大段
+2. **硬性字数**：压缩后必须落在 ${params.minWords}–${params.maxWords} 字；**严禁压到低于 ${params.minWords} 字**
+3. **保留全部关键情节与章末钩子**，不得删掉冲突兑现与结尾悬念
+4. **删冗余**：重复描写、同义反复、无推进注水优先删；不要把整章删成梗概
+5. **禁止另起炉灶**：人物关系、已发生事件、证据细节不得改写跑偏
+6. **分段适中**：每段约 3～5 句；忌超长大段
 
 ## 章节上下文
 - 章节标题：${params.chapterTitle}
@@ -160,6 +161,80 @@ export function clampProseToMaxWords(prose: string, maxWords: number): string {
   return merged;
 }
 
+export type CondenseRecoveryStrategy = 'condensed' | 'original-clamp' | 'condensed-clamp';
+
+export interface ChooseProseAfterCondenseResult {
+  prose: string;
+  strategy: CondenseRecoveryStrategy;
+  bounds: WordCountBoundsCheck;
+}
+
+/**
+ * AI 压缩后的字数决策：
+ * - 落在区间 → 用压缩稿
+ * - 压得太短 → 丢弃压缩稿，对原文硬裁到 max（避免 5000→800 塌方）
+ * - 仍超长 → 对压缩稿（或原文）硬裁到 max
+ */
+export function chooseProseAfterCondense(params: {
+  originalProse: string;
+  condensedProse: string;
+  target: number;
+}): ChooseProseAfterCondenseResult {
+  const condensedBounds = checkWordCountBounds(params.condensedProse, params.target);
+  if (condensedBounds.status === 'ok') {
+    return {
+      prose: params.condensedProse,
+      strategy: 'condensed',
+      bounds: condensedBounds,
+    };
+  }
+
+  if (condensedBounds.status === 'short') {
+    const recovered = clampProseToMaxWords(params.originalProse, condensedBounds.maxWords);
+    return {
+      prose: recovered,
+      strategy: 'original-clamp',
+      bounds: checkWordCountBounds(recovered, params.target),
+    };
+  }
+
+  const clamped = clampProseToMaxWords(params.condensedProse, condensedBounds.maxWords);
+  return {
+    prose: clamped,
+    strategy: 'condensed-clamp',
+    bounds: checkWordCountBounds(clamped, params.target),
+  };
+}
+
+/**
+ * 字数仍低于下限时，注入 blocking 问题，驱动重写循环 / 拒收提交。
+ */
+export function buildWordCountShortfallIssue(
+  prose: string,
+  target: number
+): {
+  id: string;
+  domain: 'fulfillment';
+  severity: 'blocking';
+  message: string;
+  evidence: string[];
+} | null {
+  if (target <= 0) return null;
+  const bounds = checkWordCountBounds(prose, target);
+  if (bounds.status !== 'short') return null;
+  return {
+    id: `word-count-short:${bounds.currentWords}/${bounds.minWords}`,
+    domain: 'fulfillment',
+    severity: 'blocking',
+    message: `字数严重不足：当前约 ${bounds.currentWords} 字，至少需 ${bounds.minWords} 字（目标 ${target}）。请扩写关键情节、对话与感官细节，禁止注水凑字，也禁止再压成梗概。`,
+    evidence: [
+      `currentWords=${bounds.currentWords}`,
+      `minWords=${bounds.minWords}`,
+      `targetWords=${target}`,
+    ],
+  };
+}
+
 export interface BuildSupplementPromptParams {
   existingContent: string;
   targetWordCount: number;
@@ -168,6 +243,8 @@ export interface BuildSupplementPromptParams {
   maxRounds?: number;
   chapterTitle: string;
   chapterOutline?: string;
+  /** 尚未写满的履约节点 / 章末钩子，补字必须朝它们推进 */
+  pendingBeats?: string[];
 }
 
 const DEFAULT_ENDING_SNIPPET_CHARS = 500;
@@ -217,10 +294,18 @@ export function buildSupplementPrompt(params: BuildSupplementPromptParams): stri
     maxRounds = MAX_SUPPLEMENT_ROUNDS,
     chapterTitle,
     chapterOutline,
+    pendingBeats = [],
   } = params;
 
   const currentWords = countWords(existingContent);
   const endingSnippet = sliceEndingSnippet(existingContent);
+  const beats = pendingBeats.map(item => item.trim()).filter(Boolean).slice(0, 6);
+  const beatSection =
+    beats.length > 0
+      ? `\n## 必须推进的未完成节点（优先写场面，禁止只提一句）\n${beats
+          .map((item, index) => `${index + 1}. ${item}`)
+          .join('\n')}\n`
+      : '';
 
   return `【补充续写指令】
 
@@ -233,10 +318,11 @@ export function buildSupplementPrompt(params: BuildSupplementPromptParams): stri
 ## 补充要求
 1. **自然衔接**：从原文结尾处继续，不要重复已有内容
 2. **保持风格**：与原文保持一致的文风、语气和叙事节奏
-3. **内容充实**：补充的内容要有实质性情节推进，不要凑字数
-4. **衔接自然**：补充内容与原文之间过渡要自然，不突兀
-5. **分段适中**：每段约 3～5 句、180～280 字；段间空行；忌一句一段与超长大段
-
+3. **内容充实**：用对话、动作、取证、对峙推进未完成节点；禁止纯夜色/回忆/心理独白注水
+4. **禁止复读**：不要再次穿越醒来、不要无因由再次入狱、不要把已写过的公堂戏换皮重写
+5. **衔接自然**：补充内容与原文之间过渡要自然，不突兀
+6. **分段适中**：每段约 3～5 句、180～280 字；段间空行；忌一句一段与超长大段
+${beatSection}
 ## 原文结尾（请从这里继续）
 ${endingSnippet}
 
