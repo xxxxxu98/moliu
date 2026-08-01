@@ -1,0 +1,119 @@
+{
+  "kind": "continue-write-real-summary",
+  "at": "2026-08-01T07:40:08.741Z",
+  "runId": "continue-write-real-proj-1785392282915-batch-ch1-1785569302455",
+  "book": "仵作提刑官",
+  "chapterNumber": 1,
+  "provider": "openai",
+  "providerId": "provider-1781144969420",
+  "model": "deepseek-v4-flash[1m]",
+  "success": true,
+  "commitStatus": "accepted",
+  "commitReasons": [],
+  "commitId": "proj-1785392282915:chapter:1:commit:46fc5e68",
+  "receipt": {
+    "commitId": "proj-1785392282915:chapter:1:commit:46fc5e68",
+    "revision": 1,
+    "acceptedAt": "2026-08-01T07:29:54.060Z"
+  },
+  "reportAccepted": true,
+  "reportIssueCount": 0,
+  "checkedDomains": [
+    "entity",
+    "knowledge",
+    "inventory",
+    "timeline",
+    "causality",
+    "fulfillment",
+    "evidence"
+  ],
+  "prechecks": {
+    "total": 5,
+    "accepted": 5,
+    "blocked": 0,
+    "blockedCandidateIds": []
+  },
+  "wordCount": 2809,
+  "targetWordCount": 3000,
+  "wordTimeline": {
+    "draftWords": 2538,
+    "afterPadWords": 2809,
+    "finalWords": 2809,
+    "supplementAiRounds": 2,
+    "condenseAiRounds": 0
+  },
+  "rewriteRounds": 0,
+  "purposes": [
+    "scene-draft",
+    "scene-draft",
+    "scene-draft",
+    "fact-extraction",
+    "chapter-judge"
+  ],
+  "schemas": [
+    "SceneDraft",
+    "SupplementParagraphs",
+    "SupplementParagraphs",
+    "ExtractedFacts",
+    "ChapterJudgeResult"
+  ],
+  "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+  "steps": [
+    {
+      "seq": 1,
+      "purpose": "scene-draft",
+      "schemaName": "SceneDraft",
+      "ms": 30530,
+      "hasError": false
+    },
+    {
+      "seq": 2,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 3139,
+      "hasError": false
+    },
+    {
+      "seq": 3,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 11676,
+      "hasError": false
+    },
+    {
+      "seq": 4,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 26385,
+      "hasError": false
+    },
+    {
+      "seq": 5,
+      "purpose": "chapter-judge",
+      "schemaName": "ChapterJudgeResult",
+      "ms": 19811,
+      "hasError": false
+    }
+  ],
+  "stepCount": 5,
+  "totalAiMs": 91541,
+  "runtimeBackend": "memory",
+  "taskBook": {
+    "present": true,
+    "CBN": "现代法医宋辞穿越成贱籍仵作，正在验尸时当众指出死者系县令公子刘文韬所害，被刘文韬反诬入狱，必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
+    "CPNs": [
+      "穿越醒来正在验尸"
+    ],
+    "CEN": "推进至：穿越醒来正在验尸",
+    "mustCoverCount": 1,
+    "forbiddenZonesCount": 4
+  },
+  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch1-1785569302455.jsonl",
+  "stepsPath": "temp/continue-write.real.ch1.steps.txt",
+  "summaryPath": "temp/continue-write.real.ch1.summary.json",
+  "prosePreview": {
+    "head": "宋辞睁开眼，眼前是一具冰冷的尸体。浓重的血腥味混着石灰和药草的气味直冲鼻腔，他手中的解剖刀还沾着暗红色的血，刀尖正悬在尸体的咽喉上方。脑袋里像被塞进了一团乱麻，无数陌生的记忆疯狂涌入——原主也叫宋辞，是清河县最下贱的仵作，今年十九岁，从小跟着师父验尸，师父死后便独自干这行。他记得自己明明在省厅法医室的解剖台前加班，怎么",
+    "tail": "回想起来，竟是破绽所在。\n\n他加快脚步，心里盘算着三天内要做的事：重新勘验伤口、比对凶器、寻找目击者。最关键的是，他需要找到证据证明死者伤口与刘文韬的刀不匹配，或者证明现场还有第二把凶器。他抬头看了看夜空，清河的星星很亮，就像他家乡的夜晚一样，但此刻他无暇欣赏，因为他知道，三天后如果不能拿出铁证，这颗星就再也看不到了。"
+  },
+  "note": "本文件已与当次跑次同步；权威摘要见 continue-write.real.ch1.summary.json"
+}

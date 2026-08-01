@@ -1,0 +1,127 @@
+{
+  "kind": "continue-write-real-summary",
+  "at": "2026-08-01T07:40:08.746Z",
+  "runId": "continue-write-real-proj-1785392282915-batch-ch2-1785569394086",
+  "book": "仵作提刑官",
+  "chapterNumber": 2,
+  "provider": "openai",
+  "providerId": "provider-1781144969420",
+  "model": "deepseek-v4-flash[1m]",
+  "success": true,
+  "commitStatus": "accepted",
+  "commitReasons": [],
+  "commitId": "proj-1785392282915:chapter:2:commit:4c7b07b1",
+  "receipt": {
+    "commitId": "proj-1785392282915:chapter:2:commit:4c7b07b1",
+    "revision": 2,
+    "acceptedAt": "2026-08-01T07:31:59.168Z"
+  },
+  "reportAccepted": true,
+  "reportIssueCount": 0,
+  "checkedDomains": [
+    "entity",
+    "knowledge",
+    "inventory",
+    "timeline",
+    "causality",
+    "fulfillment",
+    "evidence"
+  ],
+  "prechecks": {
+    "total": 3,
+    "accepted": 3,
+    "blocked": 0,
+    "blockedCandidateIds": []
+  },
+  "wordCount": 2550,
+  "targetWordCount": 3000,
+  "wordTimeline": {
+    "draftWords": 1683,
+    "afterPadWords": 2550,
+    "finalWords": 2550,
+    "supplementAiRounds": 3,
+    "condenseAiRounds": 0
+  },
+  "rewriteRounds": 0,
+  "purposes": [
+    "scene-draft",
+    "scene-draft",
+    "scene-draft",
+    "scene-draft",
+    "fact-extraction",
+    "chapter-judge"
+  ],
+  "schemas": [
+    "SceneDraft",
+    "SupplementParagraphs",
+    "SupplementParagraphs",
+    "SupplementParagraphs",
+    "ExtractedFacts",
+    "ChapterJudgeResult"
+  ],
+  "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+  "steps": [
+    {
+      "seq": 1,
+      "purpose": "scene-draft",
+      "schemaName": "SceneDraft",
+      "ms": 28559,
+      "hasError": false
+    },
+    {
+      "seq": 2,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 10693,
+      "hasError": false
+    },
+    {
+      "seq": 3,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 2129,
+      "hasError": false
+    },
+    {
+      "seq": 4,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 5463,
+      "hasError": false
+    },
+    {
+      "seq": 5,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 61985,
+      "hasError": false
+    },
+    {
+      "seq": 6,
+      "purpose": "chapter-judge",
+      "schemaName": "ChapterJudgeResult",
+      "ms": 16202,
+      "hasError": false
+    }
+  ],
+  "stepCount": 6,
+  "totalAiMs": 125031,
+  "runtimeBackend": "memory",
+  "taskBook": {
+    "present": true,
+    "CBN": "承接上章结尾：推进至：穿越醒来正在验尸",
+    "CPNs": [
+      "当众指出凶手是县令公子"
+    ],
+    "CEN": "推进至：当众指出凶手是县令公子",
+    "mustCoverCount": 1,
+    "forbiddenZonesCount": 4
+  },
+  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch2-1785569394086.jsonl",
+  "stepsPath": "temp/continue-write.real.ch2.steps.txt",
+  "summaryPath": "temp/continue-write.real.ch2.summary.json",
+  "prosePreview": {
+    "head": "义庄的门吱呀一声推开，月光照在停尸台上，秋月的尸体静静躺着，白布下的轮廓模糊而沉重。宋辞点燃油灯，将解剖刀在火苗上烤了烤，深吸一口气。他必须在天亮之前完成一次完整的尸检，把每一个细节都刻进脑子里。他掀开白布，尸体已经出现了明显的尸斑，呈暗紫红色，分布在背部和臀部——这符合仰卧姿势的死后变化。他用手按压，尸斑褪色后缓慢恢",
+    "tail": "破口。他闭上眼睛，开始默念明天要说的每一句话，每一个细节，直到天边泛白。死牢外面传来梆子声，五更天了。他听到狱卒的脚步由远及近，铁门锁链哗啦作响，是该押送他上刑场的时候了。\n\n宋辞深吸一口气，站起身，整理了一下囚服上的稻草。铁门打开，两名狱卒架起他，拖向刑场。晨光刺眼，他的目光扫过人群，寻找着师爷的身影。\n\n师爷点头。"
+  }
+}

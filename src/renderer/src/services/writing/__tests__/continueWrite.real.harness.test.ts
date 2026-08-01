@@ -33,6 +33,7 @@ import {
 } from './continueWriteRealSummary';
 import {
   clearAllChapterContents,
+  ensureLocalChapterSlots,
   loadLocalMoliuProject,
 } from './loadLocalMoliuProject';
 import { createRealStructuredAI, isRealAiEnabled } from './realStructuredAI';
@@ -134,14 +135,22 @@ describe.skipIf(!isRealMultiEnabled())('continueWrite REAL AI · 多章批量续
       const cfg = resolveContinueWriteRealConfig();
       const fromChapter = cfg.chapterNumber > 0 ? cfg.chapterNumber : 1;
       const chapterCount = Math.max(3, cfg.chapterCount);
+      const neededSlots = fromChapter + chapterCount - 1;
       const loaded = loadLocalMoliuProject({
         projectId: cfg.projectId,
         projectName: cfg.projectName,
       });
-      const available = (loaded.chapters ?? []).length;
-      expect(available).toBeGreaterThanOrEqual(fromChapter + chapterCount - 1);
+      const outlineChapterCount = (loaded.plotOutline ?? []).filter(
+        node => node && typeof node === 'object' && (node as { type?: string }).type === 'chapter'
+      ).length;
+      expect(Math.max((loaded.chapters ?? []).length, outlineChapterCount)).toBeGreaterThanOrEqual(
+        neededSlots
+      );
 
-      const projectLocal = clearAllChapterContents(loaded);
+      const projectLocal = clearAllChapterContents(
+        ensureLocalChapterSlots(loaded, neededSlots)
+      );
+      expect((projectLocal.chapters ?? []).length).toBeGreaterThanOrEqual(neededSlots);
       const ai = createRealStructuredAI({
         provider: cfg.provider,
         apiKey: cfg.apiKey,

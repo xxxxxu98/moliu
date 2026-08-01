@@ -84,6 +84,61 @@ export function clearAllChapterContents(project: LocalMoliuProject): LocalMoliuP
   return { ...project, chapters };
 }
 
+/**
+ * 按 plotOutline chapter 节点（或 minCount）补齐空章节槽。
+ * 仅内存扩展，不写回 moliu-projects.json；供多章续写冒烟使用。
+ */
+export function ensureLocalChapterSlots(
+  project: LocalMoliuProject,
+  minCount: number
+): LocalMoliuProject {
+  const needed = Math.max(1, Math.floor(minCount));
+  const existing = [...(project.chapters ?? [])].sort(
+    (a, b) => a.orderIndex - b.orderIndex
+  );
+  if (existing.length >= needed) {
+    return { ...project, chapters: existing };
+  }
+
+  const chapterNodes = (project.plotOutline ?? [])
+    .filter(node => node && typeof node === 'object' && (node as { type?: string }).type === 'chapter')
+    .sort(
+      (a, b) =>
+        Number((a as { orderIndex?: number }).orderIndex ?? 0) -
+        Number((b as { orderIndex?: number }).orderIndex ?? 0)
+    ) as Array<{
+    title?: string;
+    description?: string;
+    CBN?: string;
+    orderIndex?: number;
+  }>;
+
+  const volumes = [...(project.volumes ?? [])].sort(
+    (a, b) => a.orderIndex - b.orderIndex
+  );
+  const fallbackVolumeId = existing[0]?.volumeId || volumes[0]?.id || `vol-harness-${Date.now()}`;
+  const chapters = [...existing];
+
+  for (let index = existing.length; index < needed; index += 1) {
+    const node = chapterNodes[index];
+    const volumeId =
+      volumes.length > 0
+        ? volumes[Math.min(Math.floor(index / 5), volumes.length - 1)]?.id || fallbackVolumeId
+        : fallbackVolumeId;
+    chapters.push({
+      id: `chapter-harness-${project.id}-${index + 1}`,
+      volumeId,
+      title: node?.title || `第${index + 1}章`,
+      content: '',
+      orderIndex: index,
+      outline: node?.CBN || node?.description || undefined,
+      plotSummary: node?.description || node?.CBN || undefined,
+    });
+  }
+
+  return { ...project, chapters };
+}
+
 export function loadLocalMoliuProject(options: {
   projectId?: string;
   projectName?: string;
