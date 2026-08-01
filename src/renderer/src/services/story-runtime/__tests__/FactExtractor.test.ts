@@ -16,7 +16,7 @@ describe('ensureTopLevelEvidence', () => {
           participants: [],
           causes: [],
           effects: [],
-          evidence: ['宋辞睁开眼'],
+          evidence: ['主角睁开眼'],
         },
       ],
       deltas: [
@@ -31,7 +31,7 @@ describe('ensureTopLevelEvidence', () => {
     };
 
     const filled = ensureTopLevelEvidence(facts);
-    expect(filled.evidence).toEqual(['宋辞睁开眼', '把他打入死牢']);
+    expect(filled.evidence).toEqual(['主角睁开眼', '把他打入死牢']);
   });
 
   it('顶层已有证据时不覆盖', () => {

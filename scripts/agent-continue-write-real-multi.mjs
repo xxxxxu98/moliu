@@ -7,6 +7,8 @@
  * 配置：temp/continue-write.real.config.json
  * - chapterNumber：起始章（默认 1）
  * - chapterCount：连续章数（默认至少 3；也可用 MOLIU_CHAPTER_COUNT）
+ *
+ * 跑完自动清理更早的轨迹（默认保留最近 3 次）。
  */
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, readdirSync, statSync } from 'node:fs';
@@ -48,6 +50,17 @@ const result = spawnSync(
   ],
   { stdio: 'inherit', shell: true, env: process.env }
 );
+
+const cleanup = spawnSync('node', ['scripts/cleanup-continue-write-artifacts.mjs'], {
+  stdio: 'inherit',
+  shell: true,
+  env: process.env,
+});
+if ((cleanup.status ?? 1) !== 0) {
+  console.warn(
+    '[smoke:continue-write:real:multi] 产物清理未完全成功，可手动 npm run cleanup:continue-write-artifacts'
+  );
+}
 
 const traceDir = join(process.cwd(), 'temp', 'ai-traces');
 if (existsSync(traceDir)) {

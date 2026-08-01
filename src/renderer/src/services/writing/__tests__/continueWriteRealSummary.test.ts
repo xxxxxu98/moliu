@@ -73,7 +73,7 @@ function makeTaskBook(): WritingTaskBook {
     CPNs: ['指出真凶', '反诬入狱'],
     CEN: '三日内翻案',
     mustCover: ['穿越醒来正在验尸'],
-    forbiddenZones: ['不能揭示盐铁走私网的全貌'],
+    forbiddenZones: ['不能揭示幕后势力网的全貌'],
     styleGuidance: {
       reasoning: [],
       antiPatterns: [],

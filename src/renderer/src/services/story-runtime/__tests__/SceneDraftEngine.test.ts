@@ -57,14 +57,14 @@ describe('coerceSceneDraft', () => {
     const draft = coerceSceneDraft(
       {
         chapterTitle: '第1章 「验尸翻案」',
-        paragraphs: ['宋辞睁开眼。'],
+        paragraphs: ['主角睁开眼。'],
       },
       beat,
       allowed
     );
 
     expect(draft.chapterTitle).toBe('验尸翻案');
-    expect(draft.paragraphs).toEqual(['宋辞睁开眼。']);
+    expect(draft.paragraphs).toEqual(['主角睁开眼。']);
   });
 
   it('支持中文别名「章节标题」', () => {

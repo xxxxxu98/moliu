@@ -11,7 +11,7 @@ const TEMPLATE_HOOK_PATTERN =
   /之后立刻陷入不可逆危机|倒计时或反噬压到眼前|本章冲突兑现后压力升级|之后压力升级，留下立刻可接的悬念|已发生，直接后果落地并带出新的压迫|留下悬念，吸引读者继续阅读/u;
 /** 大纲/企划口吻（读者期待、代入感等），不可当情节节点 */
 const READER_META_PATTERN =
-  /读者期待|让读者对|强烈代入感|爽文预期|建立[「「"'].*预期|完成穿越设定|建立主角技术权威|制造生死危机，开启/u;
+  /读者期待|让读者对|强烈代入感|爽文预期|建立[「「"'].{0,16}预期|完成(?:开篇|穿越)设定|建立主角(?:技术)?权威|制造生死危机/u;
 const INHERITED_CBN_PREFIX = /^承接上[章段]结尾[：:]\s*/u;
 const WEAK_CONTINUE_CBN_PREFIX = /^承接上章危机后继续推进[：:]\s*/u;
 const OPENING_CBN_PREFIX =
@@ -49,6 +49,11 @@ function unique(values: string[]): string[] {
 
 export function stripAdvancePrefix(cen: string): string {
   return cen.replace(ADVANCE_PREFIX, '').trim();
+}
+
+/** 去掉承接/开场前缀，得到可履约的情节正文 */
+export function stripOpeningCbnPrefix(text: string): string {
+  return (text ?? '').replace(OPENING_CBN_PREFIX, '').trim();
 }
 
 export function isAdvancePrefixedCen(cen: string): boolean {
@@ -555,17 +560,18 @@ export function normalizeChapterBlueprint(
     });
   }
 
-  let mustCover = unique(input.mustCover ?? input.keyEvents ?? CPNs).filter(item =>
-    isUsablePlotNode(item)
-  );
-  // mustCover 若仅有一条薄节点、而 CBN 明显更丰富，则把 CBN 纳入履约检查
+  let mustCover = unique(input.mustCover ?? input.keyEvents ?? CPNs)
+    .map(item => item.replace(OPENING_CBN_PREFIX, '').trim())
+    .filter(item => isUsablePlotNode(item));
+  // mustCover 若仅有一条薄节点、而 CBN 情节体明显更丰富，则纳入履约（不要带「承接上章结尾」前缀）
+  const cbnBody = CBN.replace(OPENING_CBN_PREFIX, '').trim();
   if (
     mustCover.length === 1 &&
-    CBN !== mustCover[0] &&
-    CBN.length > mustCover[0].length + 8 &&
-    isUsablePlotNode(CBN)
+    cbnBody !== mustCover[0] &&
+    cbnBody.length > mustCover[0].length + 8 &&
+    isUsablePlotNode(cbnBody)
   ) {
-    mustCover = unique([mustCover[0], CBN]);
+    mustCover = unique([mustCover[0], cbnBody]);
   }
   // 有效 CEN 纳入 mustCover，避免章末钩子只写进合同却不验收
   if (CEN && !isHollowChapterHook(CEN, CPNs) && !mustCover.includes(CEN)) {

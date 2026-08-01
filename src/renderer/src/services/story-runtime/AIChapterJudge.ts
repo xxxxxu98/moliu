@@ -61,7 +61,7 @@ export class AIChapterJudge implements ChapterJudge {
         '- 判断 forbiddenZones 是否被语义触发（不要求字面相同）',
         '- 字面未出现但情节等价泄露/违规 → violated=true',
         '- 【履约豁免】若某禁区与 mustCover 冲突（例如 mustCover=当众指出凶手，禁区=不能提前展示全部真相），则为履约所必需的指认/举证/证据展示不算违禁',
-        '- 豁免仅限 mustCover 所需的阶段性揭示；提前完结翻案、幕后全貌、长线身份/盐铁网络等仍算违禁',
+        '- 豁免仅限 mustCover 所需的阶段性揭示；提前完结翻案、幕后全貌、长线身份等仍算违禁',
         '- forbidden 必须覆盖输入的每一个 zone，zone 原样回传',
         '',
         '## 3) 深度语义（issues，若 checkDeepSemantic=true）',

@@ -15,6 +15,7 @@ import type {
 
 import { applyProvisionalOverlay } from './stateOverlay';
 import { isForbiddenExemptForFulfillment } from './contractHealth';
+import { stripOpeningCbnPrefix } from './chapterBlueprintNormalize';
 
 export interface ContinuityValidationInput {
   contracts: ContractPack;
@@ -45,21 +46,22 @@ function chapterText(drafts: SceneDraft[]): string {
  * 字面快路径：整句命中或片语覆盖 ≥70% 即视为履约，避免无谓 AI 调用。
  */
 export function fulfilledLexically(node: string, text: string, facts: ExtractedFacts): boolean {
-  if (!node.trim()) return true;
-  if (text.includes(node)) return true;
+  const normalized = stripOpeningCbnPrefix(node) || node.trim();
+  if (!normalized) return true;
+  if (text.includes(normalized) || text.includes(node.trim())) return true;
   if (
     facts.events.some(
       event =>
-        event.summary.includes(node) ||
-        event.effects.some(effect => effect.includes(node)) ||
-        event.evidence.some(evidence => evidence.includes(node))
+        event.summary.includes(normalized) ||
+        event.effects.some(effect => effect.includes(normalized)) ||
+        event.evidence.some(evidence => evidence.includes(normalized))
     )
   ) {
     return true;
   }
 
-  const quoted = [...node.matchAll(/[“"‘']([^”"'’]+)[”"'’]/gu)].map(match => match[1].trim());
-  const segments = node
+  const quoted = [...normalized.matchAll(/[“"‘']([^”"'’]+)[”"'’]/gu)].map(match => match[1].trim());
+  const segments = normalized
     .split(/[，,。；;：:\s]/u)
     .map(part => part.trim())
     .filter(part => part.length >= 2);
@@ -304,20 +306,26 @@ export class ContinuityValidator {
         }
       } catch (error) {
         const detail = error instanceof Error ? error.message : String(error);
-        for (const node of pendingNodes) {
-          addIssue(
-            'fulfillment',
-            `未履约节点：${node}（语义审查失败：${detail}）`
+        const isTransientNetwork =
+          /socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|fetch\(\)|Too Many Requests|429|network|TLS|disconnected/iu.test(
+            detail
           );
-        }
-        if (pendingNodes.length === 0 && enableDeepSemantic) {
+        if (isTransientNetwork) {
+          // 瞬时网络失败：只记一条 warning，避免 N 个 pending 节点把 warning 顶破上限
           addIssue(
             'fulfillment',
-            `语义审查失败：${detail}`,
-            [],
+            `语义审查暂时不可用（${detail}）；已回退字面履约，pending=${pendingNodes.length}`,
+            pendingNodes.slice(0, 3),
             undefined,
             'warning'
           );
+        } else {
+          for (const node of pendingNodes) {
+            addIssue('fulfillment', `未履约节点：${node}（语义审查失败：${detail}）`);
+          }
+          if (pendingNodes.length === 0 && enableDeepSemantic) {
+            addIssue('fulfillment', `语义审查失败：${detail}`, [], undefined, 'warning');
+          }
         }
       }
       return;

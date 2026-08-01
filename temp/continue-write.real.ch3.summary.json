@@ -1,7 +1,7 @@
 {
   "kind": "continue-write-real-summary",
-  "at": "2026-08-01T12:26:01.077Z",
-  "runId": "continue-write-real-proj-1785392282915-batch-ch3-1785586377097",
+  "at": "2026-08-01T14:18:35.970Z",
+  "runId": "continue-write-real-proj-1785392282915-batch-ch3-1785592929985",
   "book": "仵作提刑官",
   "chapterNumber": 3,
   "provider": "openai",
@@ -10,11 +10,11 @@
   "success": true,
   "commitStatus": "accepted",
   "commitReasons": [],
-  "commitId": "proj-1785392282915:chapter:3:commit:451da8b4",
+  "commitId": "proj-1785392282915:chapter:3:commit:c57e8603",
   "receipt": {
-    "commitId": "proj-1785392282915:chapter:3:commit:451da8b4",
+    "commitId": "proj-1785392282915:chapter:3:commit:c57e8603",
     "revision": 3,
-    "acceptedAt": "2026-08-01T12:14:46.295Z"
+    "acceptedAt": "2026-08-01T14:10:06.401Z"
   },
   "reportAccepted": true,
   "reportIssueCount": 0,
@@ -28,75 +28,129 @@
     "evidence"
   ],
   "prechecks": {
-    "total": 5,
-    "accepted": 5,
+    "total": 3,
+    "accepted": 3,
     "blocked": 0,
     "blockedCandidateIds": []
   },
-  "wordCount": 3300,
+  "wordCount": 2605,
   "targetWordCount": 3000,
   "wordTimeline": {
-    "draftWords": 3300,
-    "afterPadWords": 3300,
-    "finalWords": 3300,
-    "supplementAiRounds": 0,
+    "draftWords": 1694,
+    "afterPadWords": 2605,
+    "finalWords": 2605,
+    "supplementAiRounds": 3,
     "condenseAiRounds": 0
   },
-  "rewriteRounds": 0,
+  "rewriteRounds": 1,
   "purposes": [
+    "scene-draft",
+    "scene-draft",
+    "fact-extraction",
+    "chapter-judge",
+    "scene-draft",
+    "scene-draft",
     "scene-draft",
     "fact-extraction",
     "chapter-judge"
   ],
   "schemas": [
     "SceneDraft",
+    "SupplementParagraphs",
+    "ExtractedFacts",
+    "ChapterJudgeResult",
+    "SceneDraft",
+    "SupplementParagraphs",
+    "SupplementParagraphs",
     "ExtractedFacts",
     "ChapterJudgeResult"
   ],
-  "schemaFlow": "scene-draft:SceneDraft → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+  "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
   "steps": [
     {
       "seq": 1,
       "purpose": "scene-draft",
       "schemaName": "SceneDraft",
-      "ms": 49248,
+      "ms": 229131,
       "hasError": false
     },
     {
       "seq": 2,
-      "purpose": "fact-extraction",
-      "schemaName": "ExtractedFacts",
-      "ms": 28358,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 16013,
       "hasError": false
     },
     {
       "seq": 3,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 51564,
+      "hasError": false
+    },
+    {
+      "seq": 4,
       "purpose": "chapter-judge",
       "schemaName": "ChapterJudgeResult",
-      "ms": 31576,
+      "ms": 29435,
+      "hasError": false
+    },
+    {
+      "seq": 5,
+      "purpose": "scene-draft",
+      "schemaName": "SceneDraft",
+      "ms": 44464,
+      "hasError": false
+    },
+    {
+      "seq": 6,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 5676,
+      "hasError": false
+    },
+    {
+      "seq": 7,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 5347,
+      "hasError": false
+    },
+    {
+      "seq": 8,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 58098,
+      "hasError": false
+    },
+    {
+      "seq": 9,
+      "purpose": "chapter-judge",
+      "schemaName": "ChapterJudgeResult",
+      "ms": 36667,
       "hasError": false
     }
   ],
-  "stepCount": 3,
-  "totalAiMs": 109182,
+  "stepCount": 9,
+  "totalAiMs": 476395,
   "runtimeBackend": "memory",
   "taskBook": {
     "present": true,
-    "CBN": "承接上章结尾：完成穿越设定，建立主角技术权威，制造生死危机，开启三日翻案倒计时，让读者对主角的技术能力和处境产生强烈代入感；读",
+    "CBN": "承接上章结尾：必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
     "CPNs": [
       "被反诬入狱",
-      "完成穿越设定",
-      "建立主角技术权威"
+      "必须在三天内用尸检铁证翻案自证清白",
+      "否则将被处斩"
     ],
-    "CEN": "完成穿越设定，建立主角技术权威，制造生死危机，开启三日翻案倒计时，让读者对主角的技术能力和处境产生强烈代入感；读者期待：建立“技术流爽文”预期，",
+    "CEN": "必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
     "mustCoverCount": 2,
     "forbiddenZonesCount": 4
   },
-  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch3-1785586377097.jsonl",
+  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch3-1785592929985.jsonl",
   "stepsPath": "temp/continue-write.real.ch3.steps.txt",
   "summaryPath": "temp/continue-write.real.ch3.summary.json",
   "prosePreview": {
-    "head": "“证据确凿，刘公子就是凶手！”宋辞高举试管，深蓝色的液体在阳光下透亮，百姓们纷纷惊呼。刘文韬瘫倒在地，浑身发抖，嘴里喃喃着“不可能”。宋辞转向高台，正要开口请县令宣判，却见刘守仁脸色铁青，猛地一拍惊堂木。\n\n“大胆宋辞！你一个贱籍仵作，竟敢在公堂上施用妖法，蛊惑人心，污蔑本官之子！”刘守仁站起身，指着宋辞，“来人，把这",
-    "tail": "，他必须用更硬的证据，彻底扳倒刘守仁。\n\n他回到牢房，老囚犯隔着栅栏问他：“小子，你赢了？怎么还回来？”宋辞苦笑：“赢了官司，输了饭碗。刘守仁要赶我走。”老囚犯摇头：“那刘文韬肯定还会报复，你出狱那天，就是你的死期。”宋辞咬牙：“所以我必须在他动手之前，把证据送到知府那里。”他抬头看着窗外的月光，三天期限，才刚刚开始。"
+    "head": "马车在官道上狂奔了一夜，宋辞的胳膊被缰绳勒得生疼，但不敢停。身后清河县的方向始终没有追兵的火把，这让他稍微松了口气，但心里清楚，刘守仁不会善罢甘休。天亮时分，前方终于出现了一座高大的城墙，城门上挂着“州府”两个大字。他跳下马车，三步并作两步冲到鸣冤鼓前，抓起鼓槌猛敲。\n\n鼓声震天，引得路人纷纷驻足。几个衙役从衙门里跑出",
+    "tail": "头应允，命仵作配合。宋辞匆匆赶往停尸房，他知道，这或许是他翻案的最后机会。\n\n宋辞走进停尸房，仵作已等候多时。他掀开白布，仔细检查秋月前胸的烧灼伤，又用铁尺比划，发现伤口边缘与铁尺弧度完全吻合，但更深处的皮下组织竟有另一道平行勒痕——那是麻绳的印记。他猛然抬头：这铁尺不过是掩饰，真正的凶器是麻绳，而麻绳常见于刘家马厩。"
   }
 }

@@ -97,6 +97,7 @@ function createStoryRuntimeForHarness(): {
 
 /**
  * 与线上坏蓝图同构：CEN=推进至：+唯一 CPN，goal=第1章，空章重写需剥离旧事件。
+ * 夹具使用通用主角/反派，不绑定具体书名。
  */
 export function makeMalformedChapter1Contracts() {
   const bootstrap = makeBootstrap();
@@ -113,24 +114,23 @@ export function makeMalformedChapter1Contracts() {
   }
   bootstrap.entities[0] = {
     ...bootstrap.entities[0],
-    name: '宋辞',
+    name: '主角',
     attributes: {
       ...bootstrap.entities[0].attributes,
       role: 'protagonist',
-      description: '现代法医穿越成贱籍仵作',
+      description: '意外卷入命案的调查者',
     },
   };
-  bootstrap.project.description =
-    '现代法医宋辞穿越成贱籍仵作，开局因验尸揭露县令之子真凶，反被诬入狱。';
+  bootstrap.project.description = '主角在现场发现关键线索，当众指认真凶后反被诬陷入狱。';
 
   return new ContractPackBuilder().build({
     bootstrap,
     volume: {
       number: 1,
-      title: '清河翻案',
-      objective: '主角穿越后三天内完成尸检翻案',
+      title: '限期翻案',
+      objective: '主角须在三天内用铁证翻案自证清白',
       conflict: 'resource',
-      forbidden: ['不能揭示盐铁走私网的全貌'],
+      forbidden: ['不能揭示幕后势力网的全貌'],
     },
     chapter: {
       number: 1,
@@ -140,15 +140,15 @@ export function makeMalformedChapter1Contracts() {
         id: 'ch1',
         title: '第1章',
         description: '第1章',
-        CBN: '现代法医宋辞穿越成贱籍仵作，正在验尸时当众指出死者系县令公子刘文韬所害，被刘文韬反诬入狱，必须在三天内用尸检铁证翻案自证清白，否则将被处斩',
-        CPNs: ['穿越醒来正在验尸'],
-        CEN: '推进至：穿越醒来正在验尸',
-        mustCover: ['穿越醒来正在验尸'],
-        forbiddenZones: ['不能揭示盐铁走私网的全貌'],
+        CBN: '主角在现场发现关键线索，当众指认真凶后反被诬陷入狱，必须在三天内用铁证翻案自证清白，否则将被处斩',
+        CPNs: ['主角在现场发现关键线索'],
+        CEN: '推进至：主角在现场发现关键线索',
+        mustCover: ['主角在现场发现关键线索'],
+        forbiddenZones: ['不能揭示幕后势力网的全貌'],
       },
     },
     style: ['冷峻写实', '目标约 3000 字，按场景分配篇幅'],
-    forbidden: ['不能揭示盐铁走私网的全貌'],
+    forbidden: ['不能揭示幕后势力网的全貌'],
   });
 }
 
@@ -161,7 +161,7 @@ export class ContinueWriteFakeAI implements StructuredAI {
     const current = countWords(joined);
     if (current >= minWords) return paragraphs;
     const unit =
-      '验尸刀锋与公堂压迫交替推进，他不敢漏掉任何一处尸斑、索沟与证人神色。';
+      '现场取证与公堂压迫交替推进，他不敢漏掉任何一处痕迹、证词与证人神色。';
     const need = minWords - current + 40;
     const pad = unit.repeat(Math.max(1, Math.ceil(need / countWords(unit))));
     return [...paragraphs, pad];
@@ -224,15 +224,15 @@ export class ContinueWriteFakeAI implements StructuredAI {
             chapter: 1,
             sceneId: 'chapter-1:CBN:scene',
             type: 'checkpoint',
-            summary: '穿越醒来正在验尸',
+            summary: '主角在现场发现关键线索',
             participants: ['hero'],
             causes: [],
-            effects: ['穿越醒来正在验尸'],
-            evidence: ['宋辞睁开眼，验尸台就在面前。'],
+            effects: ['主角在现场发现关键线索'],
+            evidence: ['主角睁开眼，证物台就在面前。'],
           },
         ],
         deltas: [],
-        evidence: ['宋辞睁开眼，验尸台就在面前。'],
+        evidence: ['主角睁开眼，证物台就在面前。'],
       };
     }
 
@@ -246,9 +246,9 @@ export class ContinueWriteFakeAI implements StructuredAI {
       return {
         paragraphs: this.ensureMinWords(
           [
-            '堂下窃窃私语渐渐散开，宋辞没有抬头，只把尸斑走向、瞳孔反应与索沟深浅一一记在心里。',
-            '他知道三天期限像刀子架在脖子上，可越是如此，越要把第一刀验得干净——只要铁证落板，刘文韬再怎么翻脸也没用。',
-            '验尸刀落下的一瞬，他忽然想起现代解剖台边的冷白灯光，唇角却没有笑：这具身子不是他的，但这门手艺还在。',
+            '堂下窃窃私语渐渐散开，主角没有抬头，只把关键痕迹与证人神色一一记在心里。',
+            '他知道三天期限像刀子架在脖子上，可越是如此，越要把第一轮取证做干净——只要铁证落板，反派甲再怎么翻脸也没用。',
+            '取证推进的一瞬，他忽然想起旧日训练台边的冷白灯光，唇角却没有笑：这局面不是他选的，但这门手艺还在。',
           ],
           Math.max(200, Math.ceil(minWords * 0.35))
         ),
@@ -259,8 +259,8 @@ export class ContinueWriteFakeAI implements StructuredAI {
       return {
         paragraphs: this.ensureMinWords(
           [
-            '宋辞压住眩晕，把尸斑与索沟对完，当众点出刘文韬。',
-            '刘守仁变脸，三日处斩的刀落下来，章末悬在铁证与性命之间。',
+            '主角压住眩晕，把关键证据对完，当众点出反派甲。',
+            '权势者变脸，三日处斩的刀落下来，章末悬在铁证与性命之间。',
           ],
           minWords
         ),
@@ -275,19 +275,19 @@ export class ContinueWriteFakeAI implements StructuredAI {
     };
     const beatId = payload.primaryBeatId ?? 'chapter-1:CBN';
     const arc =
-      payload.chapterBeats?.map(beat => beat.summary).join('→') ?? '穿越醒来正在验尸';
+      payload.chapterBeats?.map(beat => beat.summary).join('→') ?? '主角在现场发现关键线索';
     const ids = payload.allowedCandidateEventIds ?? [];
     const filler =
-      '他指腹沿着尸斑边缘缓缓推移，脑海中把胃内容物消化程度、现场血点溅射方向与「自缢」说辞逐条对撞，越对越冷。';
+      '他指腹沿着痕迹边缘缓缓推移，脑海中把现场细节与对方说辞逐条对撞，越对越冷。';
     return {
       sceneId: `${beatId}:scene`,
       beatId,
-      chapterTitle: '刚穿越就被诬下狱',
+      chapterTitle: '刚入局就被诬下狱',
       paragraphs: this.ensureMinWords(
         [
-          `宋辞猛地睁开眼，鼻腔里全是硝石灰与血腥气。${arc}。${filler}${filler}`,
-          `他压住眩晕，按住尸身腕侧，指腹下的尸斑分布与「自缢」说辞根本对不上。${filler}${filler}`,
-          `堂下哄闹声起，刘文韬脸色铁青。宋辞知道：这一指，要么翻案，要么处斩。${filler}${filler}`,
+          `主角猛地睁开眼，鼻腔里全是尘土与血腥气。${arc}。${filler}${filler}`,
+          `他压住眩晕，按住关键物证，指腹下的痕迹分布与对方说辞根本对不上。${filler}${filler}`,
+          `堂下哄闹声起，反派甲脸色铁青。主角知道：这一指，要么翻案，要么处斩。${filler}${filler}`,
           `三日内若拿不出铁证，刀就落在他自己脖子上——可死人不会说谎，说谎的只会是活人。${filler}`,
         ],
         minWords
@@ -485,9 +485,9 @@ export function toPipelineProject(local: LocalMoliuProject): Project {
 }
 
 const SYNTHETIC_CHAPTER_ARCS = [
-  '现代法医宋辞穿越成贱籍仵作，正在验尸时当众指出死者系县令公子刘文韬所害，被刘文韬反诬入狱，必须在三天内用尸检铁证翻案自证清白，否则将被处斩',
-  '狱中三日，宋辞凭尸检细节逼迫县衙公开复验，当堂用尸斑与勒痕证明秋月系他杀，刘文韬第一次当众失态',
-  '复验过堂后宋辞暂脱死罪，却被卷入州府十一起旧案卷宗，沈炼暗线初现，盐铁走私的阴影压过来',
+  '主角在现场发现关键线索，当众指认真凶后反被诬陷入狱，必须在三天内用铁证翻案自证清白，否则将被处斩',
+  '狱中三日，主角凭证据细节逼迫公堂公开复验，当堂证明死者系他杀，反派甲第一次当众失态',
+  '复验过堂后主角暂脱死罪，却被卷入更多旧案卷宗，幕后势力的阴影压过来',
 ] as const;
 
 export function makeSyntheticHarnessProject(options?: { chapterCount?: number }): {
@@ -529,19 +529,19 @@ export function makeSyntheticHarnessProject(options?: { chapterCount?: number })
       CBN: arc,
       CPNs:
         index === 0
-          ? ['穿越醒来正在验尸', '现代法医宋辞穿越成贱籍仵作', '正在验尸时当众指出死者系县令公子刘文韬所害']
+          ? ['主角在现场发现关键线索', '当众指认真凶', '被反诬入狱']
           : [`第${index + 1}章推进节点`],
       CEN:
         index === 0
-          ? '被刘文韬反诬入狱，必须在三天内用尸检铁证翻案自证清白'
+          ? '被反诬入狱，必须在三天内用铁证翻案自证清白'
           : `第${index + 1}章收束`,
       mustCover: [arc],
-      forbiddenZones: ['不能揭示盐铁走私网的全貌'],
+      forbiddenZones: ['不能揭示幕后势力网的全貌'],
     };
   });
   const project: Project = {
     id: 'project-harness-1',
-    name: '仵作提刑官-harness',
+    name: '通用续写-harness',
     description: cbn,
     genre: [],
     wordCount: 0,
@@ -549,9 +549,9 @@ export function makeSyntheticHarnessProject(options?: { chapterCount?: number })
     volumes: [
       {
         id: 'vol-harness-1',
-        name: '清河翻案',
+        name: '限期翻案',
         orderIndex: 0,
-        summary: '主角穿越后三天内完成尸检翻案',
+        summary: '主角须在三天内用铁证翻案自证清白',
         createdAt: now,
         updatedAt: now,
       },
@@ -560,9 +560,9 @@ export function makeSyntheticHarnessProject(options?: { chapterCount?: number })
     characters: [
       {
         id: 'hero',
-        name: '宋辞',
+        name: '主角',
         role: 'protagonist',
-        description: '现代法医穿越成贱籍仵作',
+        description: '意外卷入命案的调查者',
         profile: {},
         createdAt: now,
         updatedAt: now,
@@ -588,8 +588,8 @@ export function makeSyntheticHarnessProject(options?: { chapterCount?: number })
       volumePlans: [
         {
           volumeIndex: 0,
-          title: '清河翻案',
-          objective: '主角穿越后三天内完成尸检翻案',
+          title: '限期翻案',
+          objective: '主角须在三天内用铁证翻案自证清白',
           coreConflict: 'resource',
         },
       ],

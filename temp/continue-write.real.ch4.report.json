@@ -1,7 +1,7 @@
 {
   "kind": "continue-write-real-summary",
-  "at": "2026-08-01T12:26:01.080Z",
-  "runId": "continue-write-real-proj-1785392282915-batch-ch4-1785586486301",
+  "at": "2026-08-01T14:18:35.972Z",
+  "runId": "continue-write-real-proj-1785392282915-batch-ch4-1785593406407",
   "book": "仵作提刑官",
   "chapterNumber": 4,
   "provider": "openai",
@@ -10,11 +10,11 @@
   "success": true,
   "commitStatus": "accepted",
   "commitReasons": [],
-  "commitId": "proj-1785392282915:chapter:4:commit:17cbbd56",
+  "commitId": "proj-1785392282915:chapter:4:commit:3ec22b6a",
   "receipt": {
-    "commitId": "proj-1785392282915:chapter:4:commit:17cbbd56",
+    "commitId": "proj-1785392282915:chapter:4:commit:3ec22b6a",
     "revision": 4,
-    "acceptedAt": "2026-08-01T12:22:05.955Z"
+    "acceptedAt": "2026-08-01T14:14:39.916Z"
   },
   "reportAccepted": true,
   "reportIssueCount": 0,
@@ -28,17 +28,17 @@
     "evidence"
   ],
   "prechecks": {
-    "total": 5,
-    "accepted": 5,
+    "total": 3,
+    "accepted": 3,
     "blocked": 0,
     "blockedCandidateIds": []
   },
-  "wordCount": 2648,
+  "wordCount": 2629,
   "targetWordCount": 3000,
   "wordTimeline": {
-    "draftWords": 2246,
-    "afterPadWords": 2648,
-    "finalWords": 2648,
+    "draftWords": 1925,
+    "afterPadWords": 2629,
+    "finalWords": 2629,
     "supplementAiRounds": 2,
     "condenseAiRounds": 0
   },
@@ -69,80 +69,78 @@
       "seq": 1,
       "purpose": "scene-draft",
       "schemaName": "SceneDraft",
-      "ms": 252939,
+      "ms": 38779,
       "hasError": false
     },
     {
       "seq": 2,
       "purpose": "scene-draft",
       "schemaName": "SupplementParagraphs",
-      "ms": 13458,
+      "ms": 20344,
       "hasError": false
     },
     {
       "seq": 3,
       "purpose": "fact-extraction",
       "schemaName": "ExtractedFacts",
-      "ms": 50559,
+      "ms": 52400,
       "hasError": false
     },
     {
       "seq": 4,
       "purpose": "chapter-judge",
       "schemaName": "ChapterJudgeResult",
-      "ms": 13306,
+      "ms": 26188,
       "hasError": false
     },
     {
       "seq": 5,
       "purpose": "scene-draft",
       "schemaName": "SceneDraft",
-      "ms": 28960,
+      "ms": 40890,
       "hasError": false
     },
     {
       "seq": 6,
       "purpose": "scene-draft",
       "schemaName": "SupplementParagraphs",
-      "ms": 16169,
+      "ms": 5529,
       "hasError": false
     },
     {
       "seq": 7,
       "purpose": "fact-extraction",
       "schemaName": "ExtractedFacts",
-      "ms": 36318,
+      "ms": 72888,
       "hasError": false
     },
     {
       "seq": 8,
       "purpose": "chapter-judge",
       "schemaName": "ChapterJudgeResult",
-      "ms": 27920,
+      "ms": 16472,
       "hasError": false
     }
   ],
   "stepCount": 8,
-  "totalAiMs": 439629,
+  "totalAiMs": 273490,
   "runtimeBackend": "memory",
   "taskBook": {
     "present": true,
-    "CBN": "承接上章结尾：完成穿越设定，建立主角技术权威，制造生死危机，开启三日翻案倒计时，让读者对主角的技术能力和处境产生强烈代入感；读",
+    "CBN": "承接上章结尾：必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
     "CPNs": [
-      "狱中用现代法医学知识分析尸检漏洞",
-      "完成穿越设定",
-      "建立主角技术权威"
+      "狱中用现代法医学知识分析尸检漏洞"
     ],
-    "CEN": "完成穿越设定，建立主角技术权威，制造生死危机，开启三日翻案倒计时，让读者对主角的技术能力和处境产生强烈代入感；读者期待：建立“技术流爽文”预期，",
+    "CEN": "否则将被处斩",
     "mustCoverCount": 2,
     "forbiddenZonesCount": 4
   },
-  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch4-1785586486301.jsonl",
+  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch4-1785593406407.jsonl",
   "stepsPath": "temp/continue-write.real.ch4.steps.txt",
   "summaryPath": "temp/continue-write.real.ch4.summary.json",
   "prosePreview": {
-    "head": "铁门哐当关上，宋辞靠在潮湿的墙壁上，呼吸还没喘匀。刚才在公堂上，他明明用解剖证据把刘文韬钉死了，刘守仁却硬是判了他杖责二十、革职逐出清河县。二十棍打得他后背火辣辣的疼，但更疼的是心里那股不甘。他握紧拳头，指甲掐进掌心——三天，他只有三天时间，必须把证据送到知府衙门，否则刘文韬缓过劲来，第一个要杀的就是他。\n\n隔壁牢房的",
-    "tail": "刀用。他借着微弱的月光，将瓷片在裤腿上反复摩擦，直到边缘光滑如刃。然后他闭上眼睛，在脑海中一遍遍模拟解剖步骤：先切开皮肤，分离皮下组织，找到静脉，再沿血管走向寻找针孔……每一个动作都精准到毫米。他能感觉到，前世的肌肉记忆正一点点苏醒，手指开始微微颤抖，不是恐惧，而是兴奋。一个法医，只有在面对尸体时，才能找到真正的自己。"
+    "head": "宋辞被两个衙役从停尸房押出来时，天色已经暗了。他手里还攥着那根银针，针尖上沾着从死者胃内容物里提取的毒物样本——苦杏仁味，又是氰化物。王特使站在廊下，脸色铁青，手里拿着那封从刘守仁书房搜出的信。\n\n“宋仵作，你新发现的麻绳勒痕，本官也看到了。”王特使的声音低沉，“但麻绳到处都有，你不能证明就是刘家马厩的。刘守仁父子虽然",
+    "tail": "，决定明日向王特使申请重新勘验尸体。\n\n但时间紧迫，三个月内若抓不到人，自己仍难逃一死。他必须在狱中整理出完整的证据链，让王特使能据此定罪。他翻出随身藏的炭笔，在破布上写下几点：绳结位置、勒痕宽度、死者指甲缝残留物、现场血迹分布。这些细节足以推翻原判，关键是让王特使相信这些现代技术。他决心用这些分析为自己争取更多时间。"
   },
   "note": "本文件已与当次跑次同步；权威摘要见 continue-write.real.ch4.summary.json"
 }

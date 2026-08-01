@@ -162,7 +162,7 @@ describe('buildSupplementPrompt', () => {
 
   it('原文结尾按句边界截取，不从半句起', () => {
     const prefix = `${'前文一句。'.repeat(30)}完整停顿。`;
-    const ending = '宋辞端起碗喝了一口，水很凉，但让他清醒了很多。他必须活下去。';
+    const ending = '主角端起碗喝了一口，水很凉，但让他清醒了很多。他必须活下去。';
     const content = prefix + ending;
     const snippet = sliceEndingSnippet(content, 80);
     expect(snippet.startsWith('，')).toBe(false);

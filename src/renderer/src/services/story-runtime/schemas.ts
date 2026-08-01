@@ -22,6 +22,36 @@ const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
   ])
 );
 
+/**
+ * AI 常把 participants 写成 {id,name} 对象；统一压成非空字符串 id/名。
+ */
+export function coerceIdString(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed || undefined;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+    for (const key of ['id', 'name', 'entityId', 'characterId']) {
+      const candidate = record[key];
+      if (typeof candidate === 'string' && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+  }
+  return undefined;
+}
+
+const idStringArraySchema = z.preprocess((value: unknown) => {
+  if (!Array.isArray(value)) return value;
+  return value
+    .map(item => coerceIdString(item))
+    .filter((item): item is string => typeof item === 'string' && item.length > 0);
+}, z.array(z.string()));
+
 const sourceTraceSchema = z.object({
   source: z.string().min(1),
   sourceId: z.string().optional(),
@@ -44,9 +74,9 @@ export const storyEventSchema = z.object({
   sceneId: z.string().min(1),
   type: z.string().min(1),
   summary: z.string().min(1),
-  participants: z.array(z.string()),
+  participants: idStringArraySchema,
   locationId: z.string().optional(),
-  causes: z.array(z.string()),
+  causes: idStringArraySchema,
   effects: z.array(z.string()),
   evidence: z.array(z.string()),
   timestamp: z.string().optional(),
@@ -74,9 +104,9 @@ export const storyStateSchema: z.ZodType<StoryState> = z.object({
 const candidateEventSchema = z.object({
   id: z.string().min(1),
   summary: z.string().min(1),
-  participants: z.array(z.string()),
+  participants: idStringArraySchema,
   locationId: z.string().optional(),
-  prerequisites: z.array(z.string()),
+  prerequisites: idStringArraySchema,
   effects: z.array(z.string()),
 });
 

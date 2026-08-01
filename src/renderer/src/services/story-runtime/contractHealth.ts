@@ -4,11 +4,27 @@
 
 import type { ChapterContract, ExtractedFacts, StoryState } from '@/types/story-runtime';
 
-import { sanitizeInheritedCbn } from './chapterBlueprintNormalize';
+import { sanitizeInheritedCbn, stripOpeningCbnPrefix } from './chapterBlueprintNormalize';
 
 export { buildChainedCbn, sanitizeInheritedCbn } from './chapterBlueprintNormalize';
 
 /** 轻量字面/片语命中（避免与 ContinuityValidator 循环依赖） */
+const CONCEPT_ALIASES: Record<string, string[]> = {
+  入狱: ['入狱', '死牢', '大牢', '监牢', '收监', '关押', '下狱', '打入'],
+  反诬: ['反诬', '诬陷', '栽赃', '被诬'],
+  翻案: ['翻案', '翻供', '洗脱', '自证清白'],
+  处斩: ['处斩', '问斩', '斩首', '处死', '三日后问斩'],
+  验尸: ['验尸', '尸检', '勘验'],
+};
+
+function haystackHasToken(haystack: string, token: string): boolean {
+  if (!token) return false;
+  if (haystack.includes(token)) return true;
+  const aliases = CONCEPT_ALIASES[token];
+  if (aliases) return aliases.some(alias => haystack.includes(alias));
+  return false;
+}
+
 function nodeLikelyFulfilled(node: string, haystack: string, facts: ExtractedFacts): boolean {
   const text = node.trim();
   if (!text) return true;
@@ -32,9 +48,14 @@ function nodeLikelyFulfilled(node: string, haystack: string, facts: ExtractedFac
     .split(/[，,。；;：:\s]/u)
     .map(part => part.trim())
     .filter(part => part.length >= 2 && part.length <= 16 && part !== text);
-  const tokens = [...new Set([...segments, ...softTokens])].filter(token => token.length >= 2);
+  let tokens = [...new Set([...segments, ...softTokens])].filter(token => token.length >= 2);
+  // 单长词（如「反诬入狱」）拆成首尾两截，避免要求全文连写命中
+  if (tokens.length === 1 && tokens[0].length >= 4) {
+    const only = tokens[0];
+    tokens = [only.slice(0, 2), only.slice(-2)].filter(token => token.length >= 2);
+  }
   if (tokens.length === 0) return false;
-  const hitCount = tokens.filter(token => haystack.includes(token)).length;
+  const hitCount = tokens.filter(token => haystackHasToken(haystack, token)).length;
   if (tokens.length === 1) return hitCount === 1;
   return hitCount >= Math.ceil(tokens.length * 0.5);
 }
@@ -175,10 +196,11 @@ export function pruneFulfilledNodes(
   const kept: string[] = [];
   const pruned: string[] = [];
   for (const node of unique(nodes)) {
-    if (nodeLikelyFulfilled(node, haystack, facts)) {
+    const body = stripOpeningCbnPrefix(node) || node;
+    if (nodeLikelyFulfilled(body, haystack, facts) || nodeLikelyFulfilled(node, haystack, facts)) {
       pruned.push(node);
     } else {
-      kept.push(node);
+      kept.push(body === node ? node : body);
     }
   }
   // 不可把 mustCover 裁成空——至少保留一条推进目标
@@ -202,8 +224,14 @@ export function healChapterContract(
     fallback: chapter.goal || chapter.title,
   });
 
-  const mustPrune = pruneFulfilledNodes(chapter.mustCover, options);
-  const cpnPrune = pruneFulfilledNodes(chapter.CPNs, options);
+  const mustPrune = pruneFulfilledNodes(
+    chapter.mustCover.map(item => stripOpeningCbnPrefix(item) || item),
+    options
+  );
+  const cpnPrune = pruneFulfilledNodes(
+    chapter.CPNs.map(item => stripOpeningCbnPrefix(item) || item),
+    options
+  );
   // CPN 裁空时回退到 mustCover / goal
   const nextCpns =
     cpnPrune.kept.length > 0
@@ -273,7 +301,7 @@ export function enrichRevisionHint(message: string, evidence: string[] = []): st
     return (
       `${base}\n` +
       `【注意】若本章 mustCover 要求当众指认/举证，允许必要证据与点名；\n` +
-      `【禁止】提前完结翻案、幕后全貌、盐铁网络或长线身份揭晓。`
+      `【禁止】提前完结翻案、幕后全貌或长线身份揭晓。`
     );
   }
   if (/未履约节点/u.test(base)) {
@@ -292,7 +320,7 @@ export function isForbiddenExemptForFulfillment(
   if (conflicts.length === 0) return false;
   // 软化后的禁区或明确写了「允许必要指认」时，若 reason 只谈指认/证据，则豁免
   if (/允许必要指认|以履约为准|mustCover/u.test(zone)) {
-    if (/指认|指出|凶手|证据|验尸|公堂/u.test(reason) && !/翻案完结|盐铁|沈炼|幕后全貌/u.test(reason)) {
+    if (/指认|指出|凶手|证据|验尸|公堂/u.test(reason) && !/翻案完结|幕后全貌|长线身份/u.test(reason)) {
       return true;
     }
   }

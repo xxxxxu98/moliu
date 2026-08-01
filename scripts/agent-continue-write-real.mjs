@@ -9,6 +9,8 @@
  * - temp/continue-write.real.summary.json
  * - temp/continue-write.real.steps.txt
  * - temp/ai-traces/continue-write-real-*.jsonl
+ *
+ * 跑完自动清理更早的轨迹（默认保留最近 3 次）。
  */
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, readdirSync, statSync } from 'node:fs';
@@ -45,6 +47,15 @@ const result = spawnSync(
   ],
   { stdio: 'inherit', shell: true, env: process.env }
 );
+
+const cleanup = spawnSync('node', ['scripts/cleanup-continue-write-artifacts.mjs'], {
+  stdio: 'inherit',
+  shell: true,
+  env: process.env,
+});
+if ((cleanup.status ?? 1) !== 0) {
+  console.warn('[smoke:continue-write:real] 产物清理未完全成功，可手动 npm run cleanup:continue-write-artifacts');
+}
 
 const traceDir = join(process.cwd(), 'temp', 'ai-traces');
 if (existsSync(traceDir)) {

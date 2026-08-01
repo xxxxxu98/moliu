@@ -12,15 +12,16 @@ import {
   pruneFulfilledNodes,
   softenConflictingForbidden,
 } from '../contractHealth';
+import { GENERIC_PLOT } from './genericPlotFixtures';
 import { makeContracts, makeState } from './testFixtures';
 
 describe('contractHealth', () => {
   it('检测 mustCover×禁区揭示冲突并软化', () => {
-    const mustCover = ['当众指出凶手是县令公子'];
+    const mustCover = [GENERIC_PLOT.accuseBeat];
     const forbidden = [
-      '不能揭示盐铁走私网的全貌',
-      '不能让主角提前获得外界帮助',
-      '不能提前展示秋月案的全部真相',
+      GENERIC_PLOT.forbiddenFactionFull,
+      GENERIC_PLOT.forbiddenOutsideHelp,
+      GENERIC_PLOT.forbiddenRevealFull,
     ];
     const conflicts = detectMustCoverForbiddenConflicts(mustCover, forbidden);
     expect(conflicts.some(item => item.kind === 'reveal')).toBe(true);
@@ -32,46 +33,58 @@ describe('contractHealth', () => {
     );
     expect(changed.length).toBeGreaterThan(0);
     expect(softened.some(zone => zone.includes('允许必要指认'))).toBe(true);
-    expect(softened.some(zone => zone.includes('盐铁'))).toBe(true);
+    expect(softened.some(zone => zone.includes('幕后势力'))).toBe(true);
   });
 
   it('清洗套娃 CBN：承接上章结尾：推进至：…', () => {
-    const result = sanitizeInheritedCbn('承接上章结尾：推进至：穿越醒来正在验尸', {
-      cpns: ['当众指出凶手是县令公子'],
+    const result = sanitizeInheritedCbn(`承接上章结尾：推进至：${GENERIC_PLOT.openingBeat}`, {
+      cpns: [GENERIC_PLOT.accuseBeat],
     });
     expect(result.changed).toBe(true);
     expect(result.cbn).not.toMatch(/推进至[：:]/u);
-    expect(result.cbn).toContain('当众指出凶手是县令公子');
+    expect(result.cbn).toContain(GENERIC_PLOT.accuseBeat);
   });
 
   it('buildChainedCbn 剥离推进至前缀', () => {
-    expect(buildChainedCbn('推进至：穿越醒来正在验尸', '清河翻案')).toBe(
-      '承接上章结尾：穿越醒来正在验尸'
+    expect(buildChainedCbn(`推进至：${GENERIC_PLOT.openingBeat}`, GENERIC_PLOT.volumeObjective)).toBe(
+      `承接上章结尾：${GENERIC_PLOT.openingBeat}`
     );
-    expect(buildChainedCbn('', '清河翻案')).toBe('承接前段：清河翻案');
+    expect(buildChainedCbn('', GENERIC_PLOT.volumeObjective)).toBe(
+      `承接前段：${GENERIC_PLOT.volumeObjective}`
+    );
   });
 
   it('按上章事件去重 mustCover', () => {
     const { kept, pruned } = pruneFulfilledNodes(
-      ['当众指出凶手是县令公子', '被反诬入狱'],
+      [GENERIC_PLOT.accuseBeat, GENERIC_PLOT.framedBeat, GENERIC_PLOT.altNextBeat],
       {
-        priorEventSummaries: [
-          '宋辞当众指出凶手是刘文韬，刘文韬反诬宋辞，命家丁将其拿下并送入大牢',
-        ],
+        priorEventSummaries: [GENERIC_PLOT.priorEventSummary],
       }
     );
-    expect(pruned).toContain('当众指出凶手是县令公子');
-    expect(kept).toContain('被反诬入狱');
+    expect(pruned).toContain(GENERIC_PLOT.accuseBeat);
+    expect(pruned).toContain(GENERIC_PLOT.framedBeat);
+    expect(kept).toContain(GENERIC_PLOT.altNextBeat);
+  });
+
+  it('软匹配去重：反诬+死牢 可裁掉「被反诬入狱」', () => {
+    const { kept, pruned } = pruneFulfilledNodes(
+      [GENERIC_PLOT.framedBeat, GENERIC_PLOT.nextBeat],
+      {
+        priorEventSummaries: [GENERIC_PLOT.priorEventSummaryJail],
+      }
+    );
+    expect(pruned).toContain(GENERIC_PLOT.framedBeat);
+    expect(kept).toContain(GENERIC_PLOT.nextBeat);
   });
 
   it('healChapterContract 综合清洗', () => {
     const contracts = makeContracts();
-    contracts.chapter.CBN = '承接上章结尾：推进至：穿越醒来正在验尸';
-    contracts.chapter.CPNs = ['当众指出凶手是县令公子'];
-    contracts.chapter.mustCover = ['当众指出凶手是县令公子'];
+    contracts.chapter.CBN = `承接上章结尾：推进至：${GENERIC_PLOT.openingBeat}`;
+    contracts.chapter.CPNs = [GENERIC_PLOT.accuseBeat];
+    contracts.chapter.mustCover = [GENERIC_PLOT.accuseBeat];
     contracts.chapter.forbidden = [
-      '不能提前展示秋月案的全部真相',
-      '不能让主角提前获得外界帮助',
+      GENERIC_PLOT.forbiddenRevealFull,
+      GENERIC_PLOT.forbiddenOutsideHelp,
     ];
 
     const state = makeState();
@@ -81,7 +94,7 @@ describe('contractHealth', () => {
         chapter: 1,
         sceneId: 'chapter-1:scene',
         type: '指控冲突',
-        summary: '宋辞当众指出凶手是刘文韬，刘文韬反诬宋辞，命家丁将其拿下并送入大牢',
+        summary: GENERIC_PLOT.priorEventSummary,
         participants: [],
         causes: [],
         effects: [],
@@ -98,7 +111,7 @@ describe('contractHealth', () => {
   });
 
   it('enrichRevisionHint 给出负例与正向替代', () => {
-    const hint = enrichRevisionHint('触发本章禁区：不能让主角提前获得外界帮助', [
+    const hint = enrichRevisionHint(`触发本章禁区：${GENERIC_PLOT.forbiddenOutsideHelp}`, [
       '黑衣人递进干粮和金疮药',
     ]);
     expect(hint).toContain('【禁止】');
@@ -108,9 +121,9 @@ describe('contractHealth', () => {
   it('履约豁免：指认类禁区触发可放过', () => {
     expect(
       isForbiddenExemptForFulfillment(
-        '不能提前展示秋月案的全部真相（本章为履约「当众指出凶手是县令公子」允许必要指认与证据展示；禁止提前完结翻案）',
-        ['当众指出凶手是县令公子'],
-        '通过验尸证据当众指出刘文韬是凶手'
+        `${GENERIC_PLOT.forbiddenRevealFull}（本章为履约「${GENERIC_PLOT.accuseBeat}」允许必要指认与证据展示；禁止提前完结翻案）`,
+        [GENERIC_PLOT.accuseBeat],
+        '通过现场证据当众指认反派是凶手'
       )
     ).toBe(true);
   });

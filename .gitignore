@@ -98,5 +98,12 @@ out/
 .artifacts/
 temp/ai-traces/
 temp/continue-write.real.config.json
+temp/continue-write.real*.summary.json
+temp/continue-write.real*.steps.txt
+temp/continue-write.real*.report.json
+temp/continue-write.real.ch*.summary.json
+temp/continue-write.real.ch*.steps.txt
+temp/continue-write.real.ch*.report.json
+temp/continue-write.real.multi.*
 test.md
 *.console.log

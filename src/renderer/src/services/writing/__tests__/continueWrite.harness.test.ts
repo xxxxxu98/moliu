@@ -20,7 +20,8 @@ describe('continueWrite harness', () => {
   it('走 executeSmartContinue 正式路径：录制 AI 并满足卫生断言', async () => {
     const { recording, output, appliedOnce } = await runContinueWriteHarness({
       runId: 'continue-write-harness',
-      persistTrace: true,
+      // 单元测试只断言内存轨迹，避免 temp/ai-traces 无限堆积
+      persistTrace: false,
     });
 
     expect(output.success).toBe(true);
