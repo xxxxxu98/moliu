@@ -1,23 +1,21 @@
 {
   "kind": "continue-write-real-summary",
-  "at": "2026-08-01T14:18:35.968Z",
-  "runId": "continue-write-real-proj-1785392282915-batch-ch2-1785592595409",
+  "at": "2026-08-02T06:31:43.168Z",
+  "runId": "continue-write-real-proj-1785392282915-batch-ch2-1785651979559",
   "book": "仵作提刑官",
   "chapterNumber": 2,
   "provider": "openai",
   "providerId": "provider-1781144969420",
   "model": "deepseek-v4-flash[1m]",
-  "success": true,
-  "commitStatus": "accepted",
-  "commitReasons": [],
-  "commitId": "proj-1785392282915:chapter:2:commit:acf1b73d",
-  "receipt": {
-    "commitId": "proj-1785392282915:chapter:2:commit:acf1b73d",
-    "revision": 2,
-    "acceptedAt": "2026-08-01T14:02:09.978Z"
-  },
-  "reportAccepted": true,
-  "reportIssueCount": 0,
+  "success": false,
+  "commitStatus": "rejected",
+  "commitReasons": [
+    "未履约节点：必须在三天内用尸检铁证翻案自证清白，否则将被处斩（本章展示了尸检铁证（石灰结晶）并当众自证清白，但翻案尚未完成——县令未当堂判决释放，仍处于被指控状态，且三天期限尚未结束，未能彻底翻案自证清白。）"
+  ],
+  "commitId": "proj-1785392282915:chapter:2:commit:c134db7b",
+  "receipt": null,
+  "reportAccepted": false,
+  "reportIssueCount": 1,
   "checkedDomains": [
     "entity",
     "knowledge",
@@ -33,17 +31,25 @@
     "blocked": 0,
     "blockedCandidateIds": []
   },
-  "wordCount": 3024,
+  "wordCount": 2579,
   "targetWordCount": 3000,
   "wordTimeline": {
-    "draftWords": 3867,
-    "afterPadWords": 3024,
-    "finalWords": 3024,
-    "supplementAiRounds": 0,
-    "condenseAiRounds": 1
+    "draftWords": 3345,
+    "afterPadWords": 2579,
+    "finalWords": 2579,
+    "supplementAiRounds": 3,
+    "condenseAiRounds": 0
   },
-  "rewriteRounds": 0,
+  "rewriteRounds": 2,
   "purposes": [
+    "scene-draft",
+    "fact-extraction",
+    "chapter-judge",
+    "scene-draft",
+    "scene-draft",
+    "fact-extraction",
+    "chapter-judge",
+    "scene-draft",
     "scene-draft",
     "scene-draft",
     "fact-extraction",
@@ -51,43 +57,107 @@
   ],
   "schemas": [
     "SceneDraft",
-    "CondenseParagraphs",
+    "ExtractedFacts",
+    "ChapterJudgeResult",
+    "SceneDraft",
+    "SupplementParagraphs",
+    "ExtractedFacts",
+    "ChapterJudgeResult",
+    "SceneDraft",
+    "SupplementParagraphs",
+    "SupplementParagraphs",
     "ExtractedFacts",
     "ChapterJudgeResult"
   ],
-  "schemaFlow": "scene-draft:SceneDraft → scene-draft:CondenseParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+  "schemaFlow": "scene-draft:SceneDraft → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
   "steps": [
     {
       "seq": 1,
       "purpose": "scene-draft",
       "schemaName": "SceneDraft",
-      "ms": 219014,
+      "ms": 42086,
       "hasError": false
     },
     {
       "seq": 2,
-      "purpose": "scene-draft",
-      "schemaName": "CondenseParagraphs",
-      "ms": 27141,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 29504,
       "hasError": false
     },
     {
       "seq": 3,
-      "purpose": "fact-extraction",
-      "schemaName": "ExtractedFacts",
-      "ms": 56603,
+      "purpose": "chapter-judge",
+      "schemaName": "ChapterJudgeResult",
+      "ms": 27671,
       "hasError": false
     },
     {
       "seq": 4,
+      "purpose": "scene-draft",
+      "schemaName": "SceneDraft",
+      "ms": 33835,
+      "hasError": false
+    },
+    {
+      "seq": 5,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 11874,
+      "hasError": true
+    },
+    {
+      "seq": 6,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 37616,
+      "hasError": false
+    },
+    {
+      "seq": 7,
       "purpose": "chapter-judge",
       "schemaName": "ChapterJudgeResult",
-      "ms": 31790,
+      "ms": 23877,
+      "hasError": false
+    },
+    {
+      "seq": 8,
+      "purpose": "scene-draft",
+      "schemaName": "SceneDraft",
+      "ms": 22957,
+      "hasError": false
+    },
+    {
+      "seq": 9,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 8026,
+      "hasError": false
+    },
+    {
+      "seq": 10,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 8113,
+      "hasError": false
+    },
+    {
+      "seq": 11,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 59005,
+      "hasError": false
+    },
+    {
+      "seq": 12,
+      "purpose": "chapter-judge",
+      "schemaName": "ChapterJudgeResult",
+      "ms": 18980,
       "hasError": false
     }
   ],
-  "stepCount": 4,
-  "totalAiMs": 334548,
+  "stepCount": 12,
+  "totalAiMs": 323544,
   "runtimeBackend": "memory",
   "taskBook": {
     "present": true,
@@ -101,12 +171,12 @@
     "mustCoverCount": 2,
     "forbiddenZonesCount": 4
   },
-  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch2-1785592595409.jsonl",
+  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch2-1785651979559.jsonl",
   "stepsPath": "temp/continue-write.real.ch2.steps.txt",
   "summaryPath": "temp/continue-write.real.ch2.summary.json",
   "prosePreview": {
-    "head": "牢门“哐当”关上，宋辞靠在潮湿的墙上，闭眼回想验尸细节：左手腕勒痕、喉结下淤青、舌根白色粉末、右肩烙铁烫伤，单独看不够致命，但组合起来足以让任何刑官看出破绽。可刘守仁是刘文韬的亲爹，根本没打算给他翻案机会，三天期限只是缓兵之计。他睁开眼，盯着角落的老鼠，心里却想着那白色粉末——苦杏仁味，是氰化物，但古代没有提纯毒药，最",
-    "tail": "，刘守仁肯定会派人追捕。他猛抽马鞭，马车加速前进，终于赶在城门开启的第一时间冲了出去。出了城，他松了口气，心头却更加沉重——三天期限只剩两天，他必须尽快赶到州府找到知府特使，否则就算逃出清河，也难逃一死。晨光熹微中，宋辞驾着马车在官道上飞驰，车后卷起一路尘土。他握紧缰绳，目光坚定：翻案，还秋月一个公道，也还自己一条命。"
+    "head": "牢房里没有窗户，只有门缝里透进来一线昏黄的光。宋辞趴在发霉的草堆上，背上的伤火辣辣地疼，二十板子打得皮开肉绽，每动一下都牵扯着伤口。他咬着牙翻了个身，仰面躺着，盯着头顶蛛网密布的房梁。空气里弥漫着潮湿的霉味和淡淡的血腥，偶尔有老鼠从脚边窜过，带起一阵窸窣声。\n\n他伸手摸了摸怀里，那把解剖刀还在。刀刃贴着胸口，冰凉而坚硬",
+    "tail": "若大人不信，可命仵作当堂重新验尸，且看颈部勒痕处是否有特殊结晶。\"县令皱眉，示意仵作上前。仵作仔细检查后，脸色大变：\"大人，死者颈骨表面确实有一层白色坚硬外壳，与普通勒痕不同，应是外力作用后形成的特殊结构！\"宋辞趁热打铁：\"大人，草民已证明自己并非凶手。若真是草民所杀，何必多此一举留下证据？请大人明察，还草民清白！\"】"
   },
   "note": "本文件已与当次跑次同步；权威摘要见 continue-write.real.ch2.summary.json"
 }

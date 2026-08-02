@@ -69,6 +69,30 @@ export function isTemplateHookCen(text: string): boolean {
   return TEMPLATE_HOOK_PATTERN.test((text ?? '').trim());
 }
 
+/** 时限/限期等跨章标记（支持中文数字：「三天内」「三日后」；「倒计时」是章末钩子常用词，不能算） */
+const CROSS_CHAPTER_DEADLINE_RE = /[0-9一二三四五六七八九十百零两]+\s*[天日周月年内]/u;
+const CROSS_CHAPTER_DEADLINE_WORD_RE = /限期|截止/u;
+/** 威胁后果标记（须与限期目标组合才判跨章，单独成句是章末钩子） */
+const CROSS_CHAPTER_THREAT_RE = /否则(?:将|就|便会)?(?:被|遭)?/u;
+
+/**
+ * 跨章目标检测：带时限（三天内/七日内/限期）或「限期+威胁后果」的长目标
+ * （如「必须在三天内翻案，否则将被处斩」）。这类节点单章无法完整兑现，
+ * 不应作为 mustCover 硬性履约，否则与「禁止提前完结翻案」类禁区自相矛盾，
+ * 导致 AI 怎么写都过不了履约审核。
+ * 注意：不按子句数量判定——「收集证词，锁定真凶，公堂对峙」这类 3 子句节点
+ * 是单章可兑现的（且与生成 prompt 的「场景链合并为一条」约束一致），不能误伤。
+ */
+export function isCrossChapterGoal(node: string): boolean {
+  const text = (node ?? '').trim();
+  if (!text) return false;
+  if (CROSS_CHAPTER_DEADLINE_RE.test(text)) return true;
+  if (CROSS_CHAPTER_DEADLINE_WORD_RE.test(text)) return true;
+  // 带威胁后果的限期目标（必须在…翻案，否则将被处斩）；短威胁钩子（否则将被处斩）不算
+  if (CROSS_CHAPTER_THREAT_RE.test(text) && text.length >= 12) return true;
+  return false;
+}
+
 export function isReaderMetaText(text: string): boolean {
   return READER_META_PATTERN.test((text ?? '').trim());
 }
@@ -569,12 +593,19 @@ export function normalizeChapterBlueprint(
     mustCover.length === 1 &&
     cbnBody !== mustCover[0] &&
     cbnBody.length > mustCover[0].length + 8 &&
-    isUsablePlotNode(cbnBody)
+    isUsablePlotNode(cbnBody) &&
+    !isCrossChapterGoal(cbnBody)
   ) {
     mustCover = unique([mustCover[0], cbnBody]);
   }
-  // 有效 CEN 纳入 mustCover，避免章末钩子只写进合同却不验收
-  if (CEN && !isHollowChapterHook(CEN, CPNs) && !mustCover.includes(CEN)) {
+  // 有效 CEN 纳入 mustCover，避免章末钩子只写进合同却不验收（跨章目标除外：
+  // 「三天内翻案，否则将被处斩」这类目标单章无法完整兑现，纳入即死锁）
+  if (
+    CEN &&
+    !isHollowChapterHook(CEN, CPNs) &&
+    !isCrossChapterGoal(CEN) &&
+    !mustCover.includes(CEN)
+  ) {
     mustCover = unique([...mustCover, CEN]);
   }
 

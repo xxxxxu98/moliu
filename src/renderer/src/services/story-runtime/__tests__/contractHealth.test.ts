@@ -126,5 +126,21 @@ describe('contractHealth', () => {
         '通过现场证据当众指认反派是凶手'
       )
     ).toBe(true);
+    // reveal 型软化：帮助类 reason 不放行（帮越狱≠指认举证）
+    expect(
+      isForbiddenExemptForFulfillment(
+        `${GENERIC_PLOT.forbiddenRevealFull}（本章为履约「${GENERIC_PLOT.accuseBeat}」允许必要指认与证据展示；禁止提前完结翻案）`,
+        [GENERIC_PLOT.accuseBeat],
+        '师爷放火开锁帮助主角越狱'
+      )
+    ).toBe(false);
+    // help 型软化：指认/证据类 reason 不放行，仅「获得帮助」类 reason 豁免
+    const helpZone = `不能让主角提前获得外界帮助（本章 mustCover「${GENERIC_PLOT.accuseBeat}」所需帮助除外；禁止无剧情依据的神秘人开挂援助）`;
+    expect(
+      isForbiddenExemptForFulfillment(helpZone, [GENERIC_PLOT.accuseBeat], '通过现场证据当众指认反派是凶手')
+    ).toBe(false);
+    expect(
+      isForbiddenExemptForFulfillment(helpZone, [GENERIC_PLOT.accuseBeat], 'mustCover 要求主角获得狱卒帮助')
+    ).toBe(true);
   });
 });

@@ -302,6 +302,9 @@ export class LongFormWritingEngine {
     }));
     let prose = draftsProse(nextDrafts);
     let rounds = 0;
+    // 同一轮补字连续失败计数（AI 偶发返回非 JSON 时重试，避免直接放弃导致字数不足）
+    let consecutiveFailures = 0;
+    const MAX_SUPPLEMENT_ATTEMPTS = 3;
 
     while (rounds < MAX_SUPPLEMENT_ROUNDS) {
       const check = checkWordCount(prose, target);
@@ -373,12 +376,23 @@ export class LongFormWritingEngine {
         nextDrafts[nextDrafts.length - 1].paragraphs.push(...deltaParagraphs);
         prose = draftsProse(nextDrafts);
         rounds = round;
+        consecutiveFailures = 0;
         if (countWords(prose) <= check.currentWords) {
           break;
         }
       } catch (error) {
-        console.warn(`[LongFormWritingEngine] 第 ${round} 轮补字失败，停止补字:`, error);
-        break;
+        consecutiveFailures += 1;
+        if (consecutiveFailures >= MAX_SUPPLEMENT_ATTEMPTS) {
+          console.warn(
+            `[LongFormWritingEngine] 第 ${round} 轮补字连续失败 ${consecutiveFailures} 次，停止补字:`,
+            error
+          );
+          break;
+        }
+        console.warn(
+          `[LongFormWritingEngine] 第 ${round} 轮补字失败（${consecutiveFailures}/${MAX_SUPPLEMENT_ATTEMPTS} 次尝试），重试:`,
+          error
+        );
       }
     }
 

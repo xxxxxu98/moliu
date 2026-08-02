@@ -1,0 +1,66 @@
+{
+  "at": "2026-08-02T07:59:29.963Z",
+  "provider": "openai",
+  "model": "deepseek-v4-flash[1m]",
+  "wordCountRange": "30万-60万",
+  "modules": [
+    {
+      "module": "seeds",
+      "chapters": 30,
+      "openingHookLength": 19,
+      "qualityIssues": [],
+      "aiMs": 133933,
+      "seedTitle": "我靠给妖王做心理咨询成了天道",
+      "directionTitle": "兽心诊疗师"
+    },
+    {
+      "module": "radar",
+      "chapters": 30,
+      "openingHookLength": 37,
+      "qualityIssues": [],
+      "aiMs": 137146,
+      "seedTitle": "赛博道长：我用代码写符箓",
+      "directionTitle": "赛博道长：我写代码重修宗门"
+    },
+    {
+      "module": "mix",
+      "chapters": 30,
+      "openingHookLength": 48,
+      "qualityIssues": [
+        "开篇钩子过长（48 字 > 45）：直播时，老陈手指刚触到青铜剑刃，突然脸色发白——他闻到了腐败…"
+      ],
+      "aiMs": 158240,
+      "seedTitle": "退休法医在古玩城直播鉴宝",
+      "directionTitle": "古玩疑云录"
+    },
+    {
+      "module": "dice",
+      "chapters": 30,
+      "openingHookLength": 29,
+      "qualityIssues": [
+        "[21-25章] 必出事件括号未配对：利用现代化学知识（如硝石…",
+        "[21-25章] 必出事件括号未配对：强酸制造“僵尸”烟雾）配合江湖术士装神弄鬼。3.唐棠与府城知…"
+      ],
+      "aiMs": 255729,
+      "seedTitle": "骷髅解剖师",
+      "directionTitle": "大宋验尸官"
+    },
+    {
+      "module": "twist",
+      "chapters": 30,
+      "openingHookLength": 17,
+      "qualityIssues": [],
+      "aiMs": 138834,
+      "seedTitle": "全国考生都在求我别交卷",
+      "directionTitle": "时间赎罪者"
+    },
+    {
+      "module": "prompt",
+      "chapters": 30,
+      "openingHookLength": 25,
+      "qualityIssues": [],
+      "aiMs": 170816,
+      "directionTitle": "我靠科学打假，全网鬼王跪求闭嘴"
+    }
+  ]
+}

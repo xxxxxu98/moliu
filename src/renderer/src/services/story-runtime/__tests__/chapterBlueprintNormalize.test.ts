@@ -5,6 +5,7 @@ import {
   distillEndingTip,
   enrichThinCpns,
   extractCbnConsequence,
+  isCrossChapterGoal,
   isHollowChapterHook,
   isMetaInstructionCen,
   isProseDebrisTip,
@@ -33,9 +34,27 @@ describe('chapterBlueprintNormalize', () => {
     expect(isHollowChapterHook(normalized.CEN, normalized.CPNs)).toBe(false);
     expect(normalized.CEN).toMatch(/处斩|翻案|入狱|危机|后果|施压|压迫/);
     expect(normalized.goal).not.toBe('第1章');
+    // CEN 是短威胁钩子（否则将被处斩），非跨章目标，应纳入 mustCover 验收；
+    // 跨章目标（三天内翻案）的拦截由 isCrossChapterGoal 独立用例覆盖
+    expect(isCrossChapterGoal(normalized.CEN)).toBe(false);
     expect(normalized.mustCover).toContain(normalized.CEN);
     expect(normalized.CPNs.length).toBeGreaterThan(1);
     expect(normalized.CPNs[0]).toBe(GENERIC_PLOT.openingBeat);
+  });
+
+  it('isCrossChapterGoal 识别限期/威胁组合目标，放过单句钩子与多子句单章节点', () => {
+    expect(isCrossChapterGoal('必须在三天内用铁证翻案自证清白，否则将被处斩')).toBe(true);
+    expect(isCrossChapterGoal('承接上章结尾：必须在三天内用铁证翻案自证清白')).toBe(true);
+    expect(isCrossChapterGoal('限期翻案，否则将被处斩')).toBe(true);
+    expect(isCrossChapterGoal('否则将被处斩')).toBe(false);
+    expect(isCrossChapterGoal('当众指认真凶后反被诬陷入狱，三日后处斩')).toBe(true);
+    expect(isCrossChapterGoal('主角在现场发现关键线索')).toBe(false);
+    expect(isCrossChapterGoal('狱中梳理证据漏洞')).toBe(false);
+    expect(isCrossChapterGoal('当众指认真凶后对手反手施压，倒计时与证据链同时收紧')).toBe(false);
+    // 多子句但单章可兑现的节点不得误伤（与生成 prompt「场景链合并为一条」约束一致）
+    expect(isCrossChapterGoal('收集证词，锁定真凶，公堂对峙')).toBe(false);
+    expect(isCrossChapterGoal('翻出证物，当众指认，反被下狱')).toBe(false);
+    expect(isCrossChapterGoal('醒来验尸，当众指认，却被诬入狱')).toBe(false);
   });
 
   it('多节点也不再输出推进至：末节点', () => {

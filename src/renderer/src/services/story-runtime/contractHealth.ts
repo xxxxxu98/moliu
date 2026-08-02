@@ -4,7 +4,11 @@
 
 import type { ChapterContract, ExtractedFacts, StoryState } from '@/types/story-runtime';
 
-import { sanitizeInheritedCbn, stripOpeningCbnPrefix } from './chapterBlueprintNormalize';
+import {
+  isCrossChapterGoal,
+  sanitizeInheritedCbn,
+  stripOpeningCbnPrefix,
+} from './chapterBlueprintNormalize';
 
 export { buildChainedCbn, sanitizeInheritedCbn } from './chapterBlueprintNormalize';
 
@@ -65,6 +69,8 @@ const REVEAL_ZONE_RE =
 const HELP_ZONE_RE = /外界帮助|提前获得.?帮助|外援|神秘人.*(帮助|援助)/u;
 const REVEAL_MUST_RE = /指出|指认|揭穿|当众|铁证|凶手|验尸|真相|公堂|对质|举证/u;
 const HELP_MUST_RE = /获得.*(帮助|援助|外援)|救援|神秘人/u;
+/** 已软化过的禁区标记（幂等：避免多级清洗时在已软化文本上重复追加） */
+const SOFTENED_ZONE_RE = /本章为履约「|以履约为准|所需帮助除外/u;
 
 export interface ContractConflict {
   mustCover: string;
@@ -113,6 +119,8 @@ export function detectMustCoverForbiddenConflicts(
 ): ContractConflict[] {
   const conflicts: ContractConflict[] = [];
   for (const zone of unique(forbidden)) {
+    // 已软化过的禁区不再二次处理，避免多级清洗重复追加豁免文本
+    if (SOFTENED_ZONE_RE.test(zone)) continue;
     for (const node of unique(mustCover)) {
       if (REVEAL_ZONE_RE.test(zone) && (REVEAL_MUST_RE.test(node) || shareKeyTokens(zone, node))) {
         conflicts.push({ mustCover: node, forbidden: zone, kind: 'reveal' });
@@ -203,10 +211,14 @@ export function pruneFulfilledNodes(
       kept.push(body === node ? node : body);
     }
   }
-  // 不可把 mustCover 裁成空——至少保留一条推进目标
+  // 不可把 mustCover 裁成空——至少保留一条推进目标；优先保留非跨章节点
   if (kept.length === 0 && unique(nodes).length > 0) {
-    const last = unique(nodes)[unique(nodes).length - 1];
-    return { kept: [last], pruned: unique(nodes).filter(item => item !== last) };
+    const all = unique(nodes);
+    const nonCross = all.filter(
+      item => !isCrossChapterGoal(stripOpeningCbnPrefix(item) || item)
+    );
+    const pick = nonCross.length > 0 ? nonCross[nonCross.length - 1] : all[all.length - 1];
+    return { kept: [pick], pruned: all.filter(item => item !== pick) };
   }
   return { kept, pruned };
 }
@@ -240,8 +252,21 @@ export function healChapterContract(
         ? mustPrune.kept.slice(0, 2)
         : unique([chapter.goal, chapter.title]).slice(0, 1);
 
-  const nextMustCover =
+  let nextMustCover =
     mustPrune.kept.length > 0 ? mustPrune.kept : unique([nextCpns[0], chapter.goal]).slice(0, 2);
+  // 防跨章目标独占 mustCover：若全部节点都是跨章目标（时限/否则将等），
+  // 从 CPNs 优先补一条非跨章推进节点，避免单章履约审核对跨章目标死锁
+  if (
+    nextMustCover.length > 0 &&
+    nextMustCover.every(item => isCrossChapterGoal(stripOpeningCbnPrefix(item) || item))
+  ) {
+    const fallback = nextCpns.find(
+      item => !isCrossChapterGoal(stripOpeningCbnPrefix(item) || item)
+    );
+    if (fallback) {
+      nextMustCover = unique([fallback, ...nextMustCover]).slice(0, 2);
+    }
+  }
 
   const conflicts = detectMustCoverForbiddenConflicts(nextMustCover, chapter.forbidden);
   const { forbidden, softened } = softenConflictingForbidden(chapter.forbidden, conflicts);
@@ -316,6 +341,22 @@ export function isForbiddenExemptForFulfillment(
   mustCover: string[],
   reason: string
 ): boolean {
+  // 已软化的禁区视为已豁免过：按软化类型匹配对应语义的 reason，不再走 detect（幂等）
+  if (SOFTENED_ZONE_RE.test(zone)) {
+    if (/允许必要指认/u.test(zone)) {
+      // reveal 型软化：指认/举证类 reason 豁免
+      return (
+        /指认|指出|凶手|证据|验尸|公堂/u.test(reason) &&
+        !/翻案完结|幕后全貌|长线身份/u.test(reason)
+      );
+    }
+    if (/所需帮助除外/u.test(zone)) {
+      // help 型软化：仅「获得帮助/救援」类 reason 豁免，指认/证据词不放行
+      return /获得.*(帮助|援助|外援)|求援|救出|递(?:药|信|物)|送(?:物|药)/u.test(reason);
+    }
+    // 其余软化（以履约为准等）：仅履约诉求本身豁免
+    return /履约|mustCover/u.test(reason);
+  }
   const conflicts = detectMustCoverForbiddenConflicts(mustCover, [zone]);
   if (conflicts.length === 0) return false;
   // 软化后的禁区或明确写了「允许必要指认」时，若 reason 只谈指认/证据，则豁免
