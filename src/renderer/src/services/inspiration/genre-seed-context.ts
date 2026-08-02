@@ -94,11 +94,11 @@ export function formatGenreSeedHint(hint: GenreSeedHint): string[] {
     `偏好核心爽点：${hint.preferredCoolPoints.join('、')}`,
   ];
   if (hint.typicalOpening) {
-    lines.push(`典型开篇模式参考：${hint.typicalOpening}`);
+    lines.push(`典型开篇模式参考（仅作读者预期锚点，可遵循也可反其道而行）：${hint.typicalOpening}`);
   }
   if (hint.commonRisks.length > 0) {
-    lines.push(`常见雷区（请避开）：${hint.commonRisks.join('；')}`);
+    lines.push(`读者预期锚点（可反其道而行制造新鲜感）：${hint.commonRisks.join('；')}`);
   }
-  lines.push('hook / coolPoint 应贴合上述偏好，但不要生硬堆砌标签。');
+  lines.push('hook / coolPoint 应贴合上述偏好，但不要生硬堆砌标签；在读者预期之上做反转更佳。');
   return lines;
 }

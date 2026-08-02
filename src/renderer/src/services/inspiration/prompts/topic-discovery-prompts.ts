@@ -12,6 +12,7 @@ import type {
   TopicPlatform,
 } from '@/types/topic-discovery';
 import { formatGenreSeedHint } from '../genre-seed-context';
+import { formatTitlePatterns } from './title-craft';
 
 export const AUDIENCE_LABEL: Record<TopicAudience, string> = {
   general: '大众向',
@@ -125,6 +126,10 @@ JSON 格式：
 - audience 只能是 general / male / female
 - platform / length 必须与用户约束一致（若用户已锁定）
 - 若提供了题材 Profile 约束，hook / coolPoint 须贴合其偏好钩子与爽点
+- 高概念硬要求：每条种子的 oneLiner 必须包含至少一个「反常识设定」或「新鲜元素组合」；禁止输出近五年已写烂的经典开局套路（废柴逆袭、退婚打脸、无代价系统流、龙傲天横扫、赘婿装逼等）
+- 书名要求：title 必须采用以下「脑洞书名句式」之一（也可自创同级别冲击力的句式），禁止「题材名·逆袭/觉醒/重生」式命名：
+${formatTitlePatterns()}
+- oneLiner 自带画面感：人物处境 + 具体冲突 + 一个意外转折
 - ${PLAY_STYLE_GUIDE[playStyle]}`;
 }
 

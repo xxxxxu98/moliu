@@ -4,10 +4,10 @@
 
 import { robustJsonParse } from '@/utils/json-parser';
 import { genreTrends } from '@/data/market-trends';
-import { genreTags } from '@/data/inspirations';
 import { useSettingsStore } from '@/stores/settings.store';
 import { AIServiceFactory } from '@/services/ai/factory';
 import { getBaseUrl, type ProviderType } from '@/config/ai-providers';
+import { buildCreativeSeeds } from './engines/local-engine';
 import {
   buildGenreInsightsSystemPrompt,
   buildGenreInsightsUserPrompt,
@@ -352,16 +352,15 @@ export function parseGenreInsights(
   return insights;
 }
 
-const TWIST_SUFFIXES = ['破局', '反向', '翻盘', '代价', '错位'] as const;
-const STANDARD_SUFFIXES = ['逆袭', '觉醒', '重生', '破局', '登顶'] as const;
-
-/** 本地降级：从静态数据拼装灵感种子 */
+/**
+ * 本地降级：委托组合式创意引擎（local-engine）生成脑洞种子。
+ * 行为契约见 engines/local-engine.ts（count/exclude/平台篇幅/洞察/骰子/混搭/反套路）。
+ */
 export function buildFallbackStorySeeds(
   options: RefreshStorySeedsOptions = {},
 ): StorySeedCard[] {
-  const count = options.count ?? DEFAULT_SEED_COUNT;
-  const exclude = new Set((options.excludeTitles ?? []).map(t => t.toLowerCase()));
-  const playStyle = options.playStyle ?? 'standard';
+  const { platform, length } = resolveSeedDefaults(options);
+  const genreHint = resolveGenreSeedHint(options);
   const lockedGenre =
     options.lockedSlots?.genre ||
     options.genre ||
@@ -373,124 +372,21 @@ export function buildFallbackStorySeeds(
     options.audience ||
     options.insightContext?.audience ||
     'general';
-  const { platform, length } = resolveSeedDefaults(options);
-  const mixHint =
-    [...(options.mixTags ?? []), ...(options.mixElements ?? [])].filter(Boolean).join('×') ||
-    '';
-  const dice = options.diceRoll;
-  const insight = options.insightContext;
-  const hotTagHint = insight?.hotTags?.slice(0, 2).join('×') || '';
-  const genreHint = resolveGenreSeedHint(options);
 
-  const preferred = lockedGenre
-    ? genreTags.filter(tag => tag.name === lockedGenre || tag.name.includes(lockedGenre))
-    : genreTags;
-  const pool = shuffle(preferred.length > 0 ? preferred : genreTags);
-  const suffixes = playStyle === 'twist' ? TWIST_SUFFIXES : STANDARD_SUFFIXES;
-
-  const seeds: StorySeedCard[] = [];
-  for (const tag of pool) {
-    const title = `${tag.name}·${suffixes[seeds.length % suffixes.length]}`;
-    if (exclude.has(title.toLowerCase())) continue;
-
-    let oneLiner = `在${tag.name}世界里，主角凭借${tag.description || '独特机遇'}撕开困境，从被低估走向掌控全局。`;
-    let hook = `开篇即陷入${tag.name}核心冲突，立刻给出反差与悬念`;
-    let coolPoint = '身份/能力反转带来的打脸兑现';
-    let sellPoint: string | undefined = '读者想看被低估后的第一次漂亮翻盘';
-    let mechanism: string | undefined = tag.description || '独特金手指改写命运';
-    let brokenTrope: string | undefined;
-
-    if (genreHint) {
-      hook = `以「${genreHint.preferredHooks[0] || '冲突钩子'}」开篇，迅速抛出${tag.name}核心矛盾`;
-      coolPoint = genreHint.preferredCoolPoints[0] || coolPoint;
-      sellPoint = `兑现${genreHint.preferredCoolPoints.slice(0, 2).join('/')}期待`;
-      if (genreHint.typicalOpening) {
-        mechanism = genreHint.typicalOpening;
-      }
-    }
-
-    if (insight?.opportunity) {
-      oneLiner = `围绕「${insight.opportunity}」：在${tag.name}背景下，主角用${hotTagHint || tag.description || '差异化设定'}撕开困局，兑现第一次反转。`;
-      hook = insight.opportunity.slice(0, 40);
-      coolPoint = hotTagHint || coolPoint;
-      sellPoint = insight.opportunity;
-    }
-
-    if (playStyle === 'twist') {
-      oneLiner = `看似经典的${tag.name}开局，却在读者期待打脸时突然翻盘：主角必须用「不按套路」的方式赢得第一次胜利。`;
-      hook = '先诱导套路期待，再在关键节点反向兑现';
-      coolPoint = '破梗后的新期待被持续放大';
-      brokenTrope = '无脑打脸/无代价金手指';
-      sellPoint = '破梗后建立新的可持续期待';
-    } else if (playStyle === 'mix' && mixHint) {
-      oneLiner = `把「${mixHint}」硬核碰撞：主角在${tag.name}背景下被迫同时消化互相冲突的设定，靠第一次漂亮翻盘站稳脚跟。`;
-      hook = `开篇三章同时抛出混搭冲突：${mixHint}`;
-      coolPoint = '混搭元素化学反应带来的独特爽感';
-      mechanism = mixHint;
-    } else if (playStyle === 'dice' && dice) {
-      oneLiner = `【${dice.genre}】世界里，以「${dice.hook}」开篇，并植入「${dice.twist}」：主角必须在第一次危机中兑现差异化优势。`;
-      hook = dice.hook;
-      coolPoint = `${dice.twist}带来的持续爽点`;
-      mechanism = dice.twist;
-    }
-
-    if (length === 'short') {
-      oneLiner = `${oneLiner.replace(/。$/, '')}；故事在一次强反转后收束完结。`;
-      hook = `开篇即抛核心情绪冲突：${hook}`;
-    }
-
-    seeds.push({
-      id: createId('seed-fb'),
-      title,
-      oneLiner,
-      genre: lockedGenre || tag.name,
-      hook,
-      coolPoint,
-      audience: lockedAudience,
-      platform,
-      length,
-      riskNote:
-        insight?.riskNote ||
-        genreHint?.commonRisks[0] ||
-        '离线降级灵感，建议配置 AI 后刷新获得更多样点子',
-      sellPoint,
-      mechanism,
-      brokenTrope,
-      genreProfileId: genreHint?.profileId,
-    });
-    if (seeds.length >= count) break;
-  }
-
-  while (seeds.length < count) {
-    seeds.push({
-      id: createId('seed-fb'),
-      title: `开题火花 ${seeds.length + 1}`,
-      oneLiner:
-        dice != null
-          ? `【${dice.genre}】以「${dice.hook}」开场，意外设定「${dice.twist}」改写命运。`
-          : insight?.opportunity
-            ? `切入「${insight.opportunity}」，用有限篇幅完成第一次漂亮翻盘。`
-            : '普通人意外卷入超常事件，必须在有限时间内完成第一次漂亮翻盘。',
-      genre: lockedGenre || dice?.genre || insight?.name || '都市',
-      hook: dice?.hook || insight?.opportunity?.slice(0, 40) || '开篇三章给足危机与第一次小兑现',
-      coolPoint: dice?.twist || hotTagHint || genreHint?.preferredCoolPoints[0] || '信息差打脸',
-      audience: lockedAudience,
-      platform,
-      length,
-      riskNote: '离线降级灵感',
-      sellPoint: insight?.opportunity || sellPointFallback(genreHint),
-      mechanism: dice?.twist || genreHint?.typicalOpening,
-      brokenTrope: playStyle === 'twist' ? '经典套路无代价兑现' : undefined,
-      genreProfileId: genreHint?.profileId,
-    });
-  }
-
-  return seeds;
-}
-
-function sellPointFallback(hint: GenreSeedHint | null): string {
-  if (!hint) return '被低估后的第一次反转兑现';
-  return `兑现${hint.preferredCoolPoints.slice(0, 2).join('/')}期待`;
+  return buildCreativeSeeds({
+    count: options.count ?? DEFAULT_SEED_COUNT,
+    playStyle: options.playStyle ?? 'standard',
+    genre: lockedGenre,
+    audience: lockedAudience,
+    platform,
+    length,
+    diceRoll: options.diceRoll,
+    mixTags: options.mixTags,
+    mixElements: options.mixElements,
+    insight: options.insightContext,
+    genreHint,
+    exclude: new Set((options.excludeTitles ?? []).map(t => t.toLowerCase())),
+  });
 }
 
 /** 本地降级：从 market-trends 拼装题材洞察 */

@@ -35,6 +35,6 @@ describe('genre-seed-context', () => {
     const lines = formatGenreSeedHint(hint!);
     expect(lines.join('\n')).toContain('题材专属约束');
     expect(lines.join('\n')).toContain('偏好开篇钩子');
-    expect(lines.join('\n')).toContain('常见雷区');
+    expect(lines.join('\n')).toContain('读者预期锚点');
   });
 });

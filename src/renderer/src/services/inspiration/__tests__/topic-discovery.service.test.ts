@@ -473,6 +473,26 @@ describe('topic-discovery.service', () => {
       });
       expect(seeds[0].brokenTrope).toBeTruthy();
     });
+
+    it('twist style keeps anti-trope oneLiner when insight is locked', () => {
+      const seeds = buildFallbackStorySeeds({
+        count: 1,
+        playStyle: 'twist',
+        insightContext: {
+          name: '规则怪谈',
+          audience: 'general',
+          opportunity: '用职场规则做生存副本',
+          reason: '传播强',
+          hotTags: ['规则', '职场'],
+          riskLevel: 'medium',
+          lifecycle: 'rising',
+        },
+      });
+      expect(seeds[0].genre).toBe('规则怪谈');
+      // 反套路特征保留（修复前 insight 分支后置会覆盖掉 twist 文案）
+      expect(seeds[0].oneLiner).toMatch(/不按剧本|反套路|看似经典/);
+      expect(seeds[0].brokenTrope).toBeTruthy();
+    });
   });
 
   describe('buildTopicDiscoveryProjectSeed', () => {

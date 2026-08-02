@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import ProjectList from '@/components/home/ProjectList.vue';
-import TopicDiscoveryPanel from '@/components/home/TopicDiscoveryPanel.vue';
+import TopicDiscoveryBoard from '@/components/home/discovery/TopicDiscoveryBoard.vue';
 import CreateProjectDialog from '@/components/home/CreateProjectDialog.vue';
 import { BarChart3, BookOpen, Compass } from 'lucide-vue-next';
 import { useProjectStore } from '@/stores/project.store';
@@ -140,7 +140,7 @@ function switchTab(tab: HomeTab): void {
         <div
           class="w-full bg-white dark:bg-gray-800 rounded-2xl p-5 md:p-6 lg:p-8 shadow-sm border border-gray-200 dark:border-gray-700"
         >
-          <TopicDiscoveryPanel />
+          <TopicDiscoveryBoard />
         </div>
       </div>
     </div>

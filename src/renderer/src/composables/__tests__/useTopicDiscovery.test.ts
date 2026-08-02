@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
 
 vi.mock('@/services/inspiration/topic-discovery.service', async () => {
   const actual = await vi.importActual<
@@ -76,17 +77,19 @@ describe('useTopicDiscovery', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    // 每次新建 Pinia，避免 store 单例状态在测试间串扰
+    setActivePinia(createPinia());
   });
 
   it('refreshes seeds and accumulates exclude history', async () => {
-    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
     const { refreshStorySeeds } = await import('@/services/inspiration/topic-discovery.service');
 
     const discovery = useTopicDiscovery();
     await discovery.refreshSeeds();
 
-    expect(discovery.seeds.value).toHaveLength(4);
-    expect(discovery.seedTitleHistory.value.length).toBeGreaterThanOrEqual(4);
+    expect(discovery.seeds).toHaveLength(4);
+    expect(discovery.seedTitleHistory.length).toBeGreaterThanOrEqual(4);
 
     await discovery.refreshSeeds();
     expect(refreshStorySeeds).toHaveBeenCalledTimes(2);
@@ -96,32 +99,32 @@ describe('useTopicDiscovery', () => {
   });
 
   it('persists seeds and restores without refetch', async () => {
-    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
     const { refreshStorySeeds } = await import('@/services/inspiration/topic-discovery.service');
 
     const first = useTopicDiscovery();
     await first.refreshSeeds();
     expect(refreshStorySeeds).toHaveBeenCalledTimes(1);
-    const savedTitles = first.seeds.value.map(s => s.title);
+    const savedTitles = first.seeds.map(s => s.title);
 
     const second = useTopicDiscovery();
     expect(second.loadPersistedSeeds()).toBe(true);
-    expect(second.seeds.value.map(s => s.title)).toEqual(savedTitles);
+    expect(second.seeds.map(s => s.title)).toEqual(savedTitles);
     expect(refreshStorySeeds).toHaveBeenCalledTimes(1);
   });
 
   it('persists insights and restores without refetch', async () => {
-    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
     const { refreshGenreInsights } = await import('@/services/inspiration/topic-discovery.service');
 
     const first = useTopicDiscovery();
     await first.refreshInsights();
     expect(refreshGenreInsights).toHaveBeenCalledTimes(1);
-    const savedNames = first.insights.value.map(i => i.name);
+    const savedNames = first.insights.map(i => i.name);
 
     const second = useTopicDiscovery();
     expect(second.loadPersistedInsights()).toBe(true);
-    expect(second.insights.value.map(i => i.name)).toEqual(savedNames);
+    expect(second.insights.map(i => i.name)).toEqual(savedNames);
     expect(refreshGenreInsights).toHaveBeenCalledTimes(1);
   });
 
@@ -154,7 +157,7 @@ describe('useTopicDiscovery', () => {
         generatedAt: new Date().toISOString(),
       }));
 
-    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
     const discovery = useTopicDiscovery();
 
     const firstPromise = discovery.refreshSeeds();
@@ -180,17 +183,17 @@ describe('useTopicDiscovery', () => {
     });
     await firstPromise;
 
-    expect(discovery.seeds.value[0]?.title).toBe('最新一批');
+    expect(discovery.seeds[0]?.title).toBe('最新一批');
   });
 
   it('cancelRefresh aborts in-flight request and keeps previous seeds', async () => {
     const { refreshStorySeeds } = await import('@/services/inspiration/topic-discovery.service');
     let aborted = false;
 
-    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
     const discovery = useTopicDiscovery();
     await discovery.refreshSeeds();
-    const keptTitle = discovery.seeds.value[0]?.title;
+    const keptTitle = discovery.seeds[0]?.title;
     expect(keptTitle).toBeTruthy();
 
     vi.mocked(refreshStorySeeds).mockImplementationOnce(
@@ -206,52 +209,52 @@ describe('useTopicDiscovery', () => {
     );
 
     const pending = discovery.refreshSeeds();
-    expect(discovery.isRefreshing.value).toBe(true);
+    expect(discovery.isRefreshing).toBe(true);
 
     discovery.cancelRefresh();
-    expect(discovery.isRefreshing.value).toBe(false);
+    expect(discovery.isRefreshing).toBe(false);
     expect(aborted).toBe(true);
-    expect(discovery.seeds.value[0]?.title).toBe(keptTitle);
+    expect(discovery.seeds[0]?.title).toBe(keptTitle);
 
     await pending;
 
-    expect(discovery.seeds.value[0]?.title).toBe(keptTitle);
-    expect(discovery.error.value).toBeNull();
+    expect(discovery.seeds[0]?.title).toBe(keptTitle);
+    expect(discovery.error).toBeNull();
   });
 
   it('isolates seed data across play modes', async () => {
-    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
 
     const discovery = useTopicDiscovery();
     await discovery.refreshSeeds();
-    const seedTitles = discovery.seeds.value.map(s => s.title);
+    const seedTitles = discovery.seeds.map(s => s.title);
     expect(seedTitles.length).toBe(4);
 
     discovery.switchTab('mix');
-    expect(discovery.seeds.value).toEqual([]);
+    expect(discovery.seeds).toEqual([]);
 
     await discovery.refreshFromMix({ tags: ['修仙'], elements: ['系统流'] });
-    const mixTitles = discovery.seeds.value.map(s => s.title);
+    const mixTitles = discovery.seeds.map(s => s.title);
     expect(mixTitles.length).toBe(4);
     expect(mixTitles).not.toEqual(seedTitles);
 
     discovery.switchTab('seeds');
-    expect(discovery.seeds.value.map(s => s.title)).toEqual(seedTitles);
+    expect(discovery.seeds.map(s => s.title)).toEqual(seedTitles);
 
     discovery.switchTab('dice');
-    expect(discovery.seeds.value).toEqual([]);
+    expect(discovery.seeds).toEqual([]);
 
     discovery.switchTab('twist');
-    expect(discovery.seeds.value).toEqual([]);
+    expect(discovery.seeds).toEqual([]);
     await discovery.refresh('twist');
-    expect(discovery.seeds.value.length).toBe(4);
+    expect(discovery.seeds.length).toBe(4);
 
     discovery.switchTab('seeds');
-    expect(discovery.seeds.value.map(s => s.title)).toEqual(seedTitles);
+    expect(discovery.seeds.map(s => s.title)).toEqual(seedTitles);
   });
 
   it('mix/dice do not inherit locked genre from radar', async () => {
-    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
     const { refreshStorySeeds } = await import('@/services/inspiration/topic-discovery.service');
 
     const discovery = useTopicDiscovery();
@@ -279,7 +282,7 @@ describe('useTopicDiscovery', () => {
   });
 
   it('passes platform/length locks into seed and radar refresh', async () => {
-    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
     const { refreshStorySeeds, refreshGenreInsights } = await import(
       '@/services/inspiration/topic-discovery.service'
     );
@@ -302,7 +305,7 @@ describe('useTopicDiscovery', () => {
   });
 
   it('adopts insight with full context and keeps it on next seed refresh', async () => {
-    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
     const { refreshStorySeeds, refreshGenreInsights } = await import(
       '@/services/inspiration/topic-discovery.service'
     );
@@ -328,7 +331,7 @@ describe('useTopicDiscovery', () => {
 
     const discovery = useTopicDiscovery();
     await discovery.refreshInsights();
-    const insight = discovery.insights.value[0];
+    const insight = discovery.insights[0];
     expect(insight).toBeTruthy();
 
     await discovery.adoptInsightAndRefreshSeeds(insight!);
@@ -336,21 +339,21 @@ describe('useTopicDiscovery', () => {
     expect(adoptCall?.genre).toBe('规则怪谈');
     expect(adoptCall?.insightContext?.opportunity).toContain('职场规则');
     expect(adoptCall?.insightContext?.hotTags).toEqual(['规则', '职场']);
-    expect(discovery.lockedPlatform.value).toBe('fanqie');
-    expect(discovery.lockedLength.value).toBe('short');
-    expect(discovery.activeInsightContext.value?.name).toBe('规则怪谈');
+    expect(discovery.lockedPlatform).toBe('fanqie');
+    expect(discovery.lockedLength).toBe('short');
+    expect(discovery.activeInsightContext?.name).toBe('规则怪谈');
 
     await discovery.refreshSeeds();
     const nextCall = vi.mocked(refreshStorySeeds).mock.calls.at(-1)?.[0];
     expect(nextCall?.insightContext?.opportunity).toContain('职场规则');
 
     discovery.clearLocks();
-    expect(discovery.activeInsightContext.value).toBeNull();
-    expect(discovery.lockedPlatform.value).toBeNull();
+    expect(discovery.activeInsightContext).toBeNull();
+    expect(discovery.lockedPlatform).toBeNull();
   });
 
   it('persists buckets separately and migrates legacy single-bucket cache', async () => {
-    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
 
     // legacy key
     localStorage.setItem(
@@ -378,29 +381,29 @@ describe('useTopicDiscovery', () => {
 
     const discovery = useTopicDiscovery();
     expect(discovery.loadPersistedSeeds()).toBe(true);
-    expect(discovery.seeds.value[0]?.title).toBe('旧种子');
+    expect(discovery.seeds[0]?.title).toBe('旧种子');
 
     discovery.switchTab('mix');
-    expect(discovery.seeds.value).toEqual([]);
+    expect(discovery.seeds).toEqual([]);
   });
 
   it('favorites persist across refresh and play-mode switches', async () => {
-    const { useTopicDiscovery, favoriteSeedKey } = await import(
-      '@/composables/useTopicDiscovery'
+    const { useTopicDiscoveryStore: useTopicDiscovery, favoriteSeedKey } = await import(
+      '@/stores/topicDiscovery.store'
     );
 
     const discovery = useTopicDiscovery();
     await discovery.refreshSeeds();
-    const seed = discovery.seeds.value[0]!;
+    const seed = discovery.seeds[0]!;
 
     const added = discovery.toggleFavorite(seed, 'seeds');
     expect(added).toEqual({ ok: true, action: 'added' });
     expect(discovery.isFavorite(seed)).toBe(true);
-    expect(discovery.favoriteCount.value).toBe(1);
+    expect(discovery.favoriteCount).toBe(1);
 
     await discovery.refreshSeeds();
     // 同标题同题材仍视为已收藏（即使 id 变了）
-    const sameKeySeed = discovery.seeds.value.find(
+    const sameKeySeed = discovery.seeds.find(
       s => favoriteSeedKey(s) === favoriteSeedKey(seed),
     );
     if (sameKeySeed) {
@@ -408,19 +411,19 @@ describe('useTopicDiscovery', () => {
     }
 
     discovery.switchTab('mix');
-    expect(discovery.favorites.value).toHaveLength(1);
+    expect(discovery.favorites).toHaveLength(1);
 
     const second = useTopicDiscovery();
     expect(second.loadPersistedFavorites()).toBe(true);
-    expect(second.favorites.value[0]?.seed.title).toBe(seed.title);
+    expect(second.favorites[0]?.seed.title).toBe(seed.title);
 
-    const removed = second.toggleFavorite(second.favorites.value[0]!.seed);
+    const removed = second.toggleFavorite(second.favorites[0]!.seed);
     expect(removed).toEqual({ ok: true, action: 'removed' });
-    expect(second.favoriteCount.value).toBe(0);
+    expect(second.favoriteCount).toBe(0);
   });
 
   it('enforces favorites limit', async () => {
-    const { useTopicDiscovery } = await import('@/composables/useTopicDiscovery');
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
     const discovery = useTopicDiscovery();
 
     for (let i = 0; i < discovery.maxFavorites; i += 1) {
@@ -455,9 +458,118 @@ describe('useTopicDiscovery', () => {
     if (!overflow.ok) {
       expect(overflow.action).toBe('limit');
     }
-    expect(discovery.favoriteCount.value).toBe(discovery.maxFavorites);
+    expect(discovery.favoriteCount).toBe(discovery.maxFavorites);
 
     discovery.clearFavorites();
-    expect(discovery.favoriteCount.value).toBe(0);
+    expect(discovery.favoriteCount).toBe(0);
+  });
+
+  it('radar source/warning not polluted by seed refresh meta', async () => {
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import(
+      '@/stores/topicDiscovery.store'
+    );
+    const discovery = useTopicDiscovery();
+
+    // 刷新种子（mock 返回 source: ai）
+    await discovery.refreshSeeds();
+    expect(discovery.source).toBe('ai');
+
+    // 切到 radar：不应显示种子分桶的 source（修复前 persistSnapshot 会污染 insightsMeta）
+    discovery.switchTab('radar');
+    expect(discovery.source).toBeNull();
+
+    // 刷新洞察后 radar meta 生效，且跨 tab 往返后保持
+    await discovery.refreshInsights();
+    expect(discovery.source).toBe('ai');
+    discovery.switchTab('seeds');
+    discovery.switchTab('radar');
+    expect(discovery.source).toBe('ai');
+  });
+
+  it('sanitizes malformed persisted data without crashing', async () => {
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import(
+      '@/stores/topicDiscovery.store'
+    );
+
+    // 写入畸形 v2 数据：数字 title、非字符串 history、非法洞察、数字 title 收藏
+    localStorage.setItem(
+      'moliu:topic-discovery:v2',
+      JSON.stringify({
+        version: 2,
+        buckets: {
+          seeds: {
+            items: [
+              { id: 'ok', title: '合法种子', oneLiner: 'line', genre: '都市', hook: 'h', coolPoint: 'c', audience: 'general' },
+              { id: 'bad', title: 123, oneLiner: 'x' },
+              null,
+            ],
+            source: 'fallback',
+            warning: 'w',
+            titleHistory: ['合法', 42, null],
+          },
+        },
+        insights: [
+          { name: '合法洞察', lifecycle: 'rising', audience: 'general', reason: 'r', opportunity: 'o', hotTags: 42, riskLevel: 'low', namePatterns: '不是数组' },
+          { name: 42 },
+        ],
+        favorites: [
+          { seed: { id: 'f1', title: '合法收藏', oneLiner: 'l', genre: '都市', hook: 'h', coolPoint: 'c', audience: 'general' }, fromTab: 'seeds', savedAt: 't' },
+          { seed: { title: 99, oneLiner: 'x' }, fromTab: 'seeds', savedAt: 't' },
+          { seed: { title: '无题材', oneLiner: 'x' }, fromTab: 'seeds', savedAt: 't' },
+        ],
+        lockedGenre: null,
+        lockedAudience: null,
+        lockedPlatform: null,
+        lockedLength: null,
+        insightNameHistory: [1, 'ok'],
+        insightsSource: null,
+        insightsWarning: null,
+        savedAt: 't',
+      }),
+    );
+
+    const discovery = useTopicDiscovery();
+    expect(discovery.loadPersistedSeeds()).toBe(true);
+    expect(discovery.seeds).toHaveLength(1);
+    expect(discovery.seeds[0]?.title).toBe('合法种子');
+    expect(discovery.seedTitleHistory).toEqual(['合法']);
+
+    expect(discovery.loadPersistedInsights()).toBe(true);
+    expect(discovery.insights).toHaveLength(1);
+    expect(discovery.insights[0]?.name).toBe('合法洞察');
+    expect(discovery.insights[0]?.namePatterns).toBeUndefined();
+    expect(discovery.insights[0]?.hotTags).toEqual([]);
+
+    expect(discovery.loadPersistedFavorites()).toBe(true);
+    expect(discovery.favorites).toHaveLength(1);
+    expect(discovery.favorites[0]?.seed.title).toBe('合法收藏');
+  });
+
+  it('sanitizes malformed v1 legacy single-bucket data', async () => {
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import(
+      '@/stores/topicDiscovery.store'
+    );
+
+    localStorage.setItem(
+      'moliu:topic-discovery:seeds',
+      JSON.stringify({
+        seeds: [
+          { id: 'ok', title: '合法', oneLiner: 'l', genre: '都市', hook: 'h', coolPoint: 'c', audience: 'general' },
+          { title: 5, oneLiner: 'x' },
+        ],
+        source: 'fallback',
+        warning: 'w',
+        seedTitleHistory: ['合法', 7],
+        lockedGenre: null,
+        lockedAudience: null,
+        savedAt: 't',
+      }),
+    );
+
+    const discovery = useTopicDiscovery();
+    expect(discovery.loadPersistedSeeds()).toBe(true);
+    expect(discovery.seeds).toHaveLength(1);
+    expect(discovery.seeds[0]?.title).toBe('合法');
+    expect(discovery.seedTitleHistory).toEqual(['合法']);
   });
 });

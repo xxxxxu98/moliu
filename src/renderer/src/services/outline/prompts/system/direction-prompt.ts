@@ -85,7 +85,8 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - “推荐分”使用 0-100 的整数
 - 三个方案中必须有一个方案的“推荐分”最高，并且推荐理由最完整
 - 所有方案都要避免空泛词汇，必须具体到题材驱动、人物处境、冲突机制、章节推进方式或读者体验
-- 如果创意信息不足，请优先保证结构完整，再给出合理但简洁的内容。宁可短而完整，也不要长而失控。`;
+- 如果创意信息不足，请优先保证结构完整，再给出合理但简洁的内容。宁可短而完整，也不要长而失控。
+- 脑洞保留硬要求：每个方向的“标题”与“premise”必须保留创意种子中的反常识设定/新鲜元素组合，禁止将其洗回平庸套路；脑洞与可写性并重，宁可让设定更野，也不要退回经典开局`;
 
 export function buildDirectionPrompt(options: DirectionPromptOptions): BuiltPrompt {
   const breakdown = buildWordCountBreakdown(options.wordCountRange);
