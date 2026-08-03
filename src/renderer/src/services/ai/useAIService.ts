@@ -373,6 +373,8 @@ ${c.content || '（本章暂无内容）'}`;
       maxTokens?: number;
       system?: string;
       signal?: AbortSignal;
+      /** 结构化输出场景：按 provider 能力启用 JSON 强制 */
+      jsonMode?: boolean;
     }
   ): Promise<string> {
     if (!hasProvider.value) {

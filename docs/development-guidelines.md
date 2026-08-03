@@ -970,10 +970,14 @@ describe('useCounter', () => {
 ### 10.4 测试命令
 
 ```bash
-npm run test          # 运行所有测试
-npm run test:watch    # 监听模式
-npm run test:coverage # 生成覆盖率报告
-npm run test:unit     # 仅运行单元测试
+npm run test                           # 运行所有测试
+npm run test:watch                     # 监听模式
+npm run test:continue-write            # 续写链路定向回归（harness + 蓝本归一化 + useChapterWriter）
+npm run smoke:continue-write:real      # 真实 AI 单章续写冒烟
+npm run smoke:continue-write:real:multi  # 真实 AI 多章批量续写冒烟（与批量写作同路径）
+npm run smoke:topic-discovery:real     # 开题中心真实 AI 冒烟（seeds/radar/mix/dice/twist/prompt）
+npm run smoke:storyflow:real           # storyflow 闭环真实 AI 冒烟（大纲生成 → 应用 → 批量续写）
+npm run cleanup:continue-write-artifacts # 清理续写冒烟产物
 ```
 
 ---

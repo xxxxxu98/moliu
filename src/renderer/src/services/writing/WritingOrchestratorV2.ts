@@ -224,6 +224,7 @@ export function useWritingOrchestratorV2() {
           ].join('\n'),
           temperature: 0.2,
           signal,
+          jsonMode: true,
         });
         const trimmed = String(raw).trim().replace(/^```(?:json)?\s*/iu, '').replace(/\s*```$/u, '');
         const parsed = robustJsonParse(trimmed, { expectedType: 'object', enableCompletion: true });

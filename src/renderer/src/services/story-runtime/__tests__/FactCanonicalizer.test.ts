@@ -95,4 +95,89 @@ describe('FactCanonicalizer', () => {
     expect(report.issues.filter(issue => issue.domain === 'entity')).toEqual([]);
     expect(report.issues.filter(issue => issue.domain === 'causality')).toEqual([]);
   });
+
+  it('通用主角称呼（hero）归一化到主角实体，不产生未知实体', () => {
+    // 真实项目：主角 id 是 char-xxx 而非 hero（实体表无 hero 这个 id）
+    const state = makeState();
+    delete state.entities.hero;
+    state.entities['char-protagonist'] = {
+      id: 'char-protagonist',
+      kind: 'character',
+      name: '林夜',
+      aliases: [],
+      attributes: { role: 'protagonist' },
+      knownBy: ['char-protagonist'],
+      sourceTrace: [],
+    };
+
+    const facts: ExtractedFacts = {
+      events: [
+        {
+          id: 'evt-1',
+          chapter: 1,
+          sceneId: 'scene-1',
+          type: 'arrival',
+          summary: 'hero 到达城门',
+          participants: ['hero'],
+          causes: [],
+          effects: [],
+          evidence: ['主角来到城门'],
+        },
+      ],
+      deltas: [],
+      evidence: ['主角来到城门'],
+    };
+
+    const result = canonicalizeExtractedFacts({
+      facts,
+      state,
+      drafts: [makeDraft('主角来到城门，守卫盘查。')],
+    });
+
+    // hero（不在实体表、不在正文中）兜底归一化到主角实体，且不引入新实体
+    expect(result.facts.events[0].participants).toEqual(['char-protagonist']);
+    expect(result.introductionDeltas).toEqual([]);
+  });
+
+  it('“主角”称呼即使出现在正文中也归一化到主角实体，不引入僵尸实体', () => {
+    // 模型最常用“主角”占位，正文几乎必然含该词——必须归一化而非引入新实体
+    const state = makeState();
+    delete state.entities.hero;
+    state.entities['char-protagonist'] = {
+      id: 'char-protagonist',
+      kind: 'character',
+      name: '林夜',
+      aliases: [],
+      attributes: { role: 'protagonist' },
+      knownBy: ['char-protagonist'],
+      sourceTrace: [],
+    };
+
+    const facts: ExtractedFacts = {
+      events: [
+        {
+          id: 'evt-1',
+          chapter: 1,
+          sceneId: 'scene-1',
+          type: 'arrival',
+          summary: '主角到达城门',
+          participants: ['主角'],
+          causes: [],
+          effects: [],
+          evidence: ['主角来到城门'],
+        },
+      ],
+      deltas: [],
+      evidence: ['主角来到城门'],
+    };
+
+    const result = canonicalizeExtractedFacts({
+      facts,
+      state,
+      drafts: [makeDraft('主角来到城门，守卫盘查。')],
+    });
+
+    expect(result.facts.events[0].participants).toEqual(['char-protagonist']);
+    expect(result.introductionDeltas).toEqual([]);
+  });
 });

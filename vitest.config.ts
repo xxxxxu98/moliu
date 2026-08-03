@@ -11,16 +11,6 @@ export default defineConfig({
     exclude: [
       'src/**/prompt-builder.ts',
     ],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: [
-        'src/**/prompt-builder.ts',
-        'src/**/__tests__/**',
-        'src/**/*.test.ts',
-        'src/**/*.spec.ts',
-      ],
-    },
   },
   resolve: {
     alias: {

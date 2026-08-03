@@ -91,6 +91,8 @@ function createStructuredAIFromActiveProvider(signal?: AbortSignal): StructuredA
         ].join('\n'),
         temperature: request.purpose === 'scene-draft' ? 0.65 : 0.2,
         signal,
+        // 结构化输出：按 provider 能力启用 JSON 强制（不支持的 provider 自动降级）
+        jsonMode: true,
       });
       const parsed = ChapterWritingPipeline.parseStructuredJson(raw);
       return request.parse(parsed);

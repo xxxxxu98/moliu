@@ -319,6 +319,8 @@ export class UnifiedAIService {
       temperature?: number;
       system?: string;
       signal?: AbortSignal;
+      /** 结构化输出场景：按 provider 能力启用 JSON 强制（OpenAI 系/Ollama 走 response_format，Gemini 走 responseMimeType；不支持的 provider 自动降级为软约束） */
+      jsonMode?: boolean;
     },
   ): Promise<string> {
     if (!this.client) {
@@ -342,6 +344,11 @@ export class UnifiedAIService {
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
       presencePenalty: this.generationConfig.presencePenalty,
+      // multi-ai-sdk：OpenAI 兼容（含 Ollama /v1 端点）透传为 response_format，
+      // Gemini 转为 responseMimeType=application/json，Anthropic 等白名单构造自动忽略（安全降级）
+      ...(options?.jsonMode
+        ? { responseFormat: { type: "json_object" as const } }
+        : {}),
     };
 
     // multi-ai-sdk 的 chat() 不透传 AbortSignal；stream().cancel() 才会 abort fetch
@@ -397,6 +404,8 @@ export class UnifiedAIService {
     mode: "smartContinue" | "polish",
     targetWordCount: number = 3000,
     signal?: AbortSignal,
+    /** 结构化输出场景：按 provider 能力启用 JSON 强制（默认关闭，正文续写不受影响） */
+    jsonMode?: boolean,
   ): Promise<AIWriteResult> {
     if (!this.client) {
       throw new Error("Client not initialized");
@@ -422,6 +431,9 @@ export class UnifiedAIService {
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
       presencePenalty: this.generationConfig.presencePenalty,
+      ...(jsonMode
+        ? { responseFormat: { type: "json_object" as const } }
+        : {}),
     };
 
     // multi-ai-sdk 的 chat() 不透传 AbortSignal；stream().cancel() 才会 abort fetch
@@ -585,6 +597,8 @@ export class UnifiedAIService {
         topP: this.generationConfig.topP,
         frequencyPenalty: this.generationConfig.frequencyPenalty,
         presencePenalty: this.generationConfig.presencePenalty,
+        // 结构化输出：按 provider 能力启用 JSON 强制
+        responseFormat: { type: "json_object" as const },
       } as any);
 
       const rawContent = extractPureText(
@@ -666,6 +680,8 @@ export class UnifiedAIService {
         topP: this.generationConfig.topP,
         frequencyPenalty: this.generationConfig.frequencyPenalty,
         presencePenalty: this.generationConfig.presencePenalty,
+        // 结构化输出：按 provider 能力启用 JSON 强制
+        responseFormat: { type: "json_object" as const },
       } as any);
 
       const rawContent = extractPureText(
@@ -1020,6 +1036,8 @@ export class UnifiedAIService {
       const response = await this.client.chat(messages, {
         temperature,
         topP,
+        // 结构化输出：按 provider 能力启用 JSON 强制
+        responseFormat: { type: "json_object" as const },
       } as any);
 
       const rawContent = extractPureText(
@@ -1068,6 +1086,32 @@ export class UnifiedAIService {
       );
       return null;
     } catch (error) {
+      // 部分自建 OpenAI 兼容网关不认识 response_format 会返回 4xx：
+      // 自动降级为不带 JSON 强制重试一次（官方 OpenAI/Gemini/Ollama 适配器不受影响）
+      const status = (error as { status?: number })?.status;
+      if (status && status >= 400 && status < 500) {
+        console.warn(
+          `[UnifiedAIService] generateOutline response_format 被网关拒绝（${status}），降级重试`,
+        );
+        try {
+          const retry = await this.client.chat(messages, {
+            temperature,
+            topP,
+          } as any);
+          const retryRaw = extractPureText(
+            typeof retry === "string" ? retry : JSON.stringify(retry),
+          );
+          const retryResult = robustJsonParse<{ outlines: any[] }>(retryRaw, {
+            expectedType: "object",
+            enableCompletion: true,
+          });
+          if (retryResult.success && Array.isArray(retryResult.data?.outlines)) {
+            return retryResult.data;
+          }
+        } catch {
+          // 降级重试也失败则走原错误路径
+        }
+      }
       console.error("[UnifiedAIService] Outline generation error:", error);
       throw error;
     }
@@ -1146,6 +1190,8 @@ export class UnifiedAIService {
       const stream = this.client.stream(messages, {
         temperature: options.temperature,
         topP: options.topP,
+        // 结构化输出：按 provider 能力启用 JSON 强制
+        responseFormat: { type: "json_object" as const },
       });
 
       for await (const chunk of stream) {

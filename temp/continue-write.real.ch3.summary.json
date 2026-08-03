@@ -1,7 +1,7 @@
 {
   "kind": "continue-write-real-summary",
-  "at": "2026-08-03T06:06:51.766Z",
-  "runId": "continue-write-real-proj-1785725027572-batch-ch3-1785737039674",
+  "at": "2026-08-03T13:34:56.035Z",
+  "runId": "continue-write-real-proj-1785725027572-batch-ch3-1785763948400",
   "book": "《所有厉鬼都在躲我》",
   "chapterNumber": 3,
   "provider": "openai",
@@ -10,14 +10,14 @@
   "success": true,
   "commitStatus": "accepted",
   "commitReasons": [],
-  "commitId": "proj-1785725027572:chapter:3:commit:01a09cf3",
+  "commitId": "proj-1785725027572:chapter:3:commit:c63246f0",
   "receipt": {
-    "commitId": "proj-1785725027572:chapter:3:commit:01a09cf3",
+    "commitId": "proj-1785725027572:chapter:3:commit:c63246f0",
     "revision": 3,
-    "acceptedAt": "2026-08-03T06:06:51.751Z"
+    "acceptedAt": "2026-08-03T13:34:56.019Z"
   },
   "reportAccepted": true,
-  "reportIssueCount": 1,
+  "reportIssueCount": 0,
   "checkedDomains": [
     "entity",
     "knowledge",
@@ -33,79 +33,70 @@
     "blocked": 0,
     "blockedCandidateIds": []
   },
-  "wordCount": 2661,
+  "wordCount": 2719,
   "targetWordCount": 3000,
   "wordTimeline": {
-    "draftWords": 2270,
-    "afterPadWords": 2661,
-    "finalWords": 2661,
-    "supplementAiRounds": 1,
+    "draftWords": 2719,
+    "afterPadWords": 2719,
+    "finalWords": 2719,
+    "supplementAiRounds": 0,
     "condenseAiRounds": 0
   },
   "rewriteRounds": 0,
   "purposes": [
-    "scene-draft",
     "scene-draft",
     "fact-extraction",
     "chapter-judge"
   ],
   "schemas": [
     "SceneDraft",
-    "SupplementParagraphs",
     "ExtractedFacts",
     "ChapterJudgeResult"
   ],
-  "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+  "schemaFlow": "scene-draft:SceneDraft → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
   "steps": [
     {
       "seq": 1,
       "purpose": "scene-draft",
       "schemaName": "SceneDraft",
-      "ms": 49816,
+      "ms": 49641,
       "hasError": false
     },
     {
       "seq": 2,
-      "purpose": "scene-draft",
-      "schemaName": "SupplementParagraphs",
-      "ms": 9540,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 74571,
       "hasError": false
     },
     {
       "seq": 3,
-      "purpose": "fact-extraction",
-      "schemaName": "ExtractedFacts",
-      "ms": 96574,
-      "hasError": false
-    },
-    {
-      "seq": 4,
       "purpose": "chapter-judge",
       "schemaName": "ChapterJudgeResult",
-      "ms": 16132,
+      "ms": 23393,
       "hasError": false
     }
   ],
-  "stepCount": 4,
-  "totalAiMs": 172062,
+  "stepCount": 3,
+  "totalAiMs": 147605,
   "runtimeBackend": "memory",
   "taskBook": {
     "present": true,
-    "CBN": "承接上章结尾：顾无咎在教室醒来后对手反手施压，倒计时与证据链同时收紧",
+    "CBN": "顾无咎在教室醒来后对手反手施压，倒计时与证据链同时收紧",
     "CPNs": [
       "发现全班同学全部死亡",
       "顾无咎在教室醒来后对手反手施压",
       "倒计时与证据链同时收紧"
     ],
     "CEN": "完成校园鬼域的开篇勾子与主角绑定位",
-    "mustCoverCount": 3,
-    "forbiddenZonesCount": 3
+    "mustCoverCount": 4,
+    "forbiddenZonesCount": 2
   },
-  "tracePath": "temp/ai-traces/continue-write-real-proj-1785725027572-batch-ch3-1785737039674.jsonl",
+  "tracePath": "temp/ai-traces/continue-write-real-proj-1785725027572-batch-ch3-1785763948400.jsonl",
   "stepsPath": "temp/continue-write.real.ch3.steps.txt",
   "summaryPath": "temp/continue-write.real.ch3.summary.json",
   "prosePreview": {
-    "head": "顾无咎再次睁开眼睛，后脑勺钝痛，像被人狠狠敲了一棍。他躺在教室的地板上，头顶日光灯管惨白，同学们东倒西歪地躺了一地，都还在昏迷中。他翻身而起，动作快得像弹簧，右手已经摸到口袋里的手机——屏幕亮着，倒计时显示29:58，正在一秒一秒地跳动。他记得自己逃出窗外后，被两个黑衣人用电击棒击晕，然后失去了意识。现在又回到这里，说",
-    "tail": "另一个是模糊的女性轮廓。照片背面用红笔写着：“找到她，否则你永远出不去。”他猛地回头，黑衣人已经消失，只留下座位上一张带血的纸条。班长陈晓惊恐地站起来：“顾无咎，你到底在干什么？那个座位一直是空的！”顾无咎攥紧照片，倒计时数字跳动到“47:58:40”，他明白，这个鬼域已经把所有人卷入了，而他的每一步，都在加速倒计时。"
+    "head": "顾无咎的手指刚触到日记本的封面，指尖就传来一阵灼烧感，像被烙铁烫了一下。他本能地缩回手，但日记本已经在他手里，封面泛着暗红色的光，隐约能看到一个模糊的掌印——是他自己的掌印，沾着洗不掉的血。老陈站在走廊尽头，手里的匕首还在滴血，嘴角挂着诡异的笑：“翻开吧，翻开了你就知道了。”\n\n顾无咎咬了咬牙，翻开第一页。纸张发黄发脆",
+    "tail": "也暗淡下去，但他知道，这只是暂时的。他体内的鬼已经苏醒了一部分，而整个校园，就是他的囚笼。他必须在天亮之前，找到第二个阵眼，否则他会彻底变成非人的存在。他加快脚步，朝楼梯口走去，身后传来若有若无的脚步声，像是有人在跟着他，又像是他自己的脚步声在墙壁上反弹。他没有回头，因为他知道，回头看到的，可能是一张和他一模一样的脸。"
   }
 }

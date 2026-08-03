@@ -307,7 +307,10 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
           currentChapterOutline: prompt,
         },
         'smartContinue',
-        4000
+        4000,
+        undefined,
+        // 章节目录期望 JSON（{"chapters":[]}）：按 provider 能力启用 JSON 强制
+        true
       );
 
       if (!result?.content) {

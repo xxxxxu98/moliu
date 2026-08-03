@@ -96,7 +96,7 @@ src/
 ## 🧪 测试
 
 - 测试文件：`__tests__/` 目录下，`*.test.ts` / `*.spec.ts`
-- 命令：`npm run test` / `test:watch` / `coverage`
+- 命令：`npm run test` / `test:watch`
 - 覆盖率：Services 80% / Composables 70% / Utils 90% / 全局 60%
 
 ---

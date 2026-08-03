@@ -1,7 +1,7 @@
 {
   "kind": "continue-write-real-summary",
-  "at": "2026-08-03T06:06:51.760Z",
-  "runId": "continue-write-real-proj-1785725027572-batch-ch1-1785736406328",
+  "at": "2026-08-03T13:34:56.029Z",
+  "runId": "continue-write-real-proj-1785725027572-batch-ch1-1785763498668",
   "book": "《所有厉鬼都在躲我》",
   "chapterNumber": 1,
   "provider": "openai",
@@ -10,11 +10,11 @@
   "success": true,
   "commitStatus": "accepted",
   "commitReasons": [],
-  "commitId": "proj-1785725027572:chapter:1:commit:9d15b96d",
+  "commitId": "proj-1785725027572:chapter:1:commit:b4654cab",
   "receipt": {
-    "commitId": "proj-1785725027572:chapter:1:commit:9d15b96d",
+    "commitId": "proj-1785725027572:chapter:1:commit:b4654cab",
     "revision": 1,
-    "acceptedAt": "2026-08-03T05:55:34.477Z"
+    "acceptedAt": "2026-08-03T13:29:24.995Z"
   },
   "reportAccepted": true,
   "reportIssueCount": 0,
@@ -33,19 +33,22 @@
     "blocked": 0,
     "blockedCandidateIds": []
   },
-  "wordCount": 2610,
+  "wordCount": 2656,
   "targetWordCount": 3000,
   "wordTimeline": {
-    "draftWords": 897,
-    "afterPadWords": 2610,
-    "finalWords": 2610,
+    "draftWords": 1541,
+    "afterPadWords": 2656,
+    "finalWords": 2656,
     "supplementAiRounds": 3,
     "condenseAiRounds": 0
   },
-  "rewriteRounds": 0,
+  "rewriteRounds": 1,
   "purposes": [
     "scene-draft",
     "scene-draft",
+    "scene-draft",
+    "fact-extraction",
+    "chapter-judge",
     "scene-draft",
     "scene-draft",
     "fact-extraction",
@@ -55,57 +58,81 @@
     "SceneDraft",
     "SupplementParagraphs",
     "SupplementParagraphs",
+    "ExtractedFacts",
+    "ChapterJudgeResult",
+    "SceneDraft",
     "SupplementParagraphs",
     "ExtractedFacts",
     "ChapterJudgeResult"
   ],
-  "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+  "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
   "steps": [
     {
       "seq": 1,
       "purpose": "scene-draft",
       "schemaName": "SceneDraft",
-      "ms": 29905,
+      "ms": 33261,
       "hasError": false
     },
     {
       "seq": 2,
       "purpose": "scene-draft",
       "schemaName": "SupplementParagraphs",
-      "ms": 19826,
-      "hasError": true
+      "ms": 13796,
+      "hasError": false
     },
     {
       "seq": 3,
       "purpose": "scene-draft",
       "schemaName": "SupplementParagraphs",
-      "ms": 16295,
+      "ms": 15784,
       "hasError": false
     },
     {
       "seq": 4,
-      "purpose": "scene-draft",
-      "schemaName": "SupplementParagraphs",
-      "ms": 4495,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 38056,
       "hasError": false
     },
     {
       "seq": 5,
-      "purpose": "fact-extraction",
-      "schemaName": "ExtractedFacts",
-      "ms": 41949,
+      "purpose": "chapter-judge",
+      "schemaName": "ChapterJudgeResult",
+      "ms": 25710,
       "hasError": false
     },
     {
       "seq": 6,
+      "purpose": "scene-draft",
+      "schemaName": "SceneDraft",
+      "ms": 48543,
+      "hasError": false
+    },
+    {
+      "seq": 7,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 4754,
+      "hasError": false
+    },
+    {
+      "seq": 8,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 62961,
+      "hasError": false
+    },
+    {
+      "seq": 9,
       "purpose": "chapter-judge",
       "schemaName": "ChapterJudgeResult",
-      "ms": 15636,
+      "ms": 23420,
       "hasError": false
     }
   ],
-  "stepCount": 6,
-  "totalAiMs": 128106,
+  "stepCount": 9,
+  "totalAiMs": 266285,
   "runtimeBackend": "memory",
   "taskBook": {
     "present": true,
@@ -116,15 +143,15 @@
       "只有他还活着"
     ],
     "CEN": "完成校园鬼域的开篇勾子与主角绑定位",
-    "mustCoverCount": 3,
+    "mustCoverCount": 4,
     "forbiddenZonesCount": 3
   },
-  "tracePath": "temp/ai-traces/continue-write-real-proj-1785725027572-batch-ch1-1785736406328.jsonl",
+  "tracePath": "temp/ai-traces/continue-write-real-proj-1785725027572-batch-ch1-1785763498668.jsonl",
   "stepsPath": "temp/continue-write.real.ch1.steps.txt",
   "summaryPath": "temp/continue-write.real.ch1.summary.json",
   "prosePreview": {
-    "head": "顾无咎是被一阵刺鼻的血腥味呛醒的。他睁开眼睛，后脑勺钝痛，像被人抡了一棍子。天花板上的日光灯管还在亮，但光线惨白，照得整个教室像停尸房。\n\n他撑着地面坐起来，手掌按到一滩黏糊糊的东西。低头一看，是血。暗红色的，已经半凝固。他猛地缩回手，这时候才注意到周围的情况——课桌椅东倒西歪，地上横七竖八躺着人，全是他班上的同学。有",
-    "tail": "无咎跌入洞中，眼前一片漆黑，阴风扑面而来。他伸手摸索，触到湿冷的墙壁，耳畔是沉闷的呼吸声——不是自己的。他猛地回头，却见洞口已被封死，只有微弱的光从缝隙透入。他心中一惊，难道自己被困在了这里？就在这时，前方传来一阵若有若无的哭声，像从地狱深处传来。顾无咎握紧拳头，循声走去，脚下踩到什么东西，低头一看，是一截苍白的手指。"
+    "head": "顾无咎是被一股腥甜的铁锈味呛醒的。他趴在课桌上，半边脸压着冰凉的桌面，后脑勺像被人用钝器砸过，闷痛从太阳穴一路扩散到脖颈。他费力地撑起眼皮，视野里首先映入的是自己课桌上摊开的笔记本，上面沾着暗红色的斑点。\n\n他猛地坐直身体。教室里的景象让他瞬间清醒——十几张课桌东倒西歪，地上躺着七八个人，姿势扭曲，脸上蒙着灰败的色泽。",
+    "tail": "能力，就会离某种可怕的后果更近一步。但眼下，他别无选择。\n\n“跟紧我，闭眼。”他低声命令，同时深吸一口气，推开门的瞬间，黑雾如潮水般涌来。他硬着头皮往前迈步，那些厉鬼竟然真的再一次让开了一条路。两个女生紧紧抓住他的衣角，瑟瑟发抖。他感觉自己的心脏几乎要跳出胸腔，而口袋里的羊皮纸微微发烫，像是在警告他——代价已经开始了。"
   },
   "note": "本文件已与当次跑次同步；权威摘要见 continue-write.real.ch1.summary.json"
 }

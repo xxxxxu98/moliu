@@ -1,0 +1,23 @@
+{
+  "book": "权宦之谋",
+  "mode": "storyflow-closed-loop",
+  "chapters": 30,
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "words": 1947,
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "words": 1927,
+      "error": null
+    }
+  ],
+  "runtimeBackend": "memory",
+  "provider": "openai",
+  "model": "deepseek-v4-flash[1m]",
+  "totalMs": 304600
+}

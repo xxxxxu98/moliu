@@ -10,6 +10,22 @@ import type {
 
 import { applyProvisionalOverlay } from './stateOverlay';
 
+/**
+ * 通用主角称呼：模型在事实抽取时常用占位称呼指代主角
+ * （hero / protagonist / 主角 / 男主 / 女主 等），归一化到项目主角实体。
+ * 注意：成员必须已过 normalizeLabel（小写、去空格/标点），如 the hero → thehero。
+ */
+const PROTAGONIST_ALIASES = new Set([
+  'hero',
+  'protagonist',
+  'thehero',
+  'theprotagonist',
+  'maincharacter',
+  '主角',
+  '男主',
+  '女主',
+]);
+
 export interface FactCanonicalizeInput {
   facts: ExtractedFacts;
   state: StoryState;
@@ -102,10 +118,23 @@ export function canonicalizeExtractedFacts(input: FactCanonicalizeInput): FactCa
   const introduced = new Map<string, StoryEntity>();
   const droppedCauses: Array<{ eventId: string; cause: string }> = [];
 
+  // 通用主角称呼兜底：模型常把主角写成 hero/protagonist/主角 等占位称呼，
+  // 与项目角色表（attributes.role=protagonist）做归一化，避免“未知实体”误判
+  const protagonist = Object.values(baseState.entities).find(
+    entity => entity.attributes.role === 'protagonist',
+  );
+
   const resolveParticipant = (ref: string): string => {
     const key = normalizeLabel(ref);
     const existing = lookup.get(key);
     if (existing) return existing;
+
+    // 通用主角称呼 → 主角实体（hero/protagonist/主角/男主/女主）。
+    // 优先于正文引入分支：模型最常用“主角”占位，正文几乎必然含该词，
+    // 若不提前归一化会把“主角”当成新角色引入（char:intro:主角 僵尸实体）
+    if (protagonist && PROTAGONIST_ALIASES.has(key)) {
+      return protagonist.id;
+    }
 
     // 仅当正文确实出现该称呼时，才允许引入新角色实体
     if (ref.trim() && text.includes(ref.trim())) {
@@ -127,6 +156,7 @@ export function canonicalizeExtractedFacts(input: FactCanonicalizeInput): FactCa
       }
       return lookup.get(key) ?? introId;
     }
+
     return ref;
   };
 

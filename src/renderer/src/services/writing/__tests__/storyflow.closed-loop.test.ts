@@ -1,0 +1,99 @@
+/**
+ * Storyflow 闭环测试（真实 AI）：开题中心大纲生成 → 应用 → 批量续写
+ *
+ *   npm run smoke:storyflow:real
+ *
+ * 与真实环境完全对齐：
+ * 1. 大纲生成：UnifiedOutlineGenerator.generateDirections → expandDirection
+ *    （开题中心 TopicDiscoveryBoard prompt 玩法同路径，真实 AI fetch）
+ * 2. 应用大纲：mapExecutableOutlineToGeneratedOutline → useProjectCreator.createProject
+ *    （真实执行 buildPlotOutline/buildCharacters/buildVolumes 等构建链）
+ * 3. 建章：useChapterOutlineGenerator.createChapters（结构化节点 CBN/CPNs/CEN 落库）
+ * 4. 批量续写：runContinueWriteChapters（BATCH_CONTINUE_PRESET，与 useBatchWriter 同路径）
+ *
+ * 仅真实模式：未设置 REAL_AI=1 时整个 describe 跳过（不做 mock 替代）。
+ * AI 配置复用 temp/continue-write.real.config.json（resolveContinueWriteRealConfig）。
+ */
+
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+import { describe, expect, it, vi } from 'vitest';
+
+import { isRealAiEnabled } from './realStructuredAI';
+import { runStoryflowClosedLoop } from './storyflowClosedLoopHarness';
+
+// useProjectCreator 依赖 useRouter（仅导航副作用），测试环境注入桩
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
+const SUMMARY_PATH = join(process.cwd(), 'temp', 'storyflow.closed-loop.summary.json');
+
+describe.runIf(isRealAiEnabled())(
+  'storyflow 闭环（真实 AI）：大纲生成 → 应用 → 批量续写',
+  () => {
+    it(
+      '开题中心生成大纲并应用，对生成的网文批量续写全部 accepted',
+      async () => {
+        const startedAt = Date.now();
+        const result = await runStoryflowClosedLoop({
+          prompt: '一个现代社畜穿越到古代朝堂，凭借现代知识在官场步步高升，卷入皇权之争',
+          wordCountRange: '30万-60万',
+          chapterCount: 5,
+          targetWordCount: 2000,
+        });
+        const totalMs = Date.now() - startedAt;
+
+        // ---------- ① 大纲生成断言 ----------
+        expect(result.generatedOutline.title).toBeTruthy();
+        expect(result.generatedOutline.chapters.length).toBeGreaterThanOrEqual(2);
+        expect(result.executableOutline.startupPack30.openingHook).toBeTruthy();
+        // 开篇钩子不过长（质量门槛，与 topic-discovery real 冒烟一致）
+        expect(result.executableOutline.startupPack30.openingHook.length).toBeLessThanOrEqual(45);
+
+        // ---------- ② 应用大纲断言 ----------
+        // plotOutline 含 act/subplot 等非章节节点，章节节点数应与大纲章节数一致
+        const chapterNodes = result.project.plotOutline.filter(n => n.type === 'chapter');
+        expect(chapterNodes.length).toBe(result.generatedOutline.chapters.length);
+        expect(result.project.characters.length).toBeGreaterThan(0);
+        expect(result.project.volumes.length).toBeGreaterThan(0);
+        // 结构化节点透传：plotOutline 首章带 CBN
+        expect(chapterNodes[0].CBN).toBeTruthy();
+        // 建章数量 = 大纲章节数
+        expect(result.createdChapterIds.length).toBe(result.generatedOutline.chapters.length);
+
+        // ---------- ③ 批量续写断言 ----------
+        // 5 章覆盖开篇多章：跨章合同去重（mustCover/CPN 兑现）、状态衔接、章节连续性
+        expect(result.chapterRunResults.length).toBeGreaterThanOrEqual(5);
+        const failed = result.chapterRunResults.filter(r => !r.output.success);
+        expect(failed).toEqual([]);
+        for (const chapter of result.chapterRunResults) {
+          // prose 为最终正文（含补写增量）
+          expect(chapter.output.prose.length).toBeGreaterThan(300);
+        }
+
+        // ---------- 汇总落盘（供 smoke 脚本展示） ----------
+        const summary = {
+          book: result.project.name,
+          mode: 'storyflow-closed-loop',
+          chapters: result.generatedOutline.chapters.length,
+          batch: result.chapterRunResults.map((r, i) => ({
+            ch: i + 1,
+            accepted: r.output.success,
+            words: r.output.prose.length,
+            error: r.output.error ?? null,
+          })),
+          runtimeBackend: result.runtimeBackend,
+          provider: result.cfg.provider,
+          model: result.cfg.model,
+          totalMs,
+        };
+        writeFileSync(SUMMARY_PATH, JSON.stringify(summary, null, 2));
+        console.log(`[storyflow:real] summary=${SUMMARY_PATH}`);
+        console.log(`[storyflow:real] ${JSON.stringify(summary)}`);
+      },
+      30 * 60 * 1000, // 真实 AI 全链路 5 章，超时 30 分钟
+    );
+  },
+);

@@ -16,12 +16,11 @@ export type {
 } from './new/useChapterWriter';
 
 // 批量写作器
-export { useBatchWriter } from './new/useBatchWriter';
+export { useBatchWriter } from './useBatchWriter';
 export type {
-  UseBatchWriterOptions,
   UseBatchWriterReturn,
   BatchConfig,
-} from './new/useBatchWriter';
+} from './useBatchWriter';
 
 // 写作编排器
 export { useWritingOrchestrator } from './new/useWritingOrchestrator';

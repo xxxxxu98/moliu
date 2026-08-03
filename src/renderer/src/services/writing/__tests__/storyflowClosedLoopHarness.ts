@@ -1,0 +1,209 @@
+/**
+ * Storyflow 闭环 harness：开题中心大纲生成 → 应用大纲 → 批量续写
+ *
+ * 与真实环境完全对齐（真实 AI 请求）：
+ * 1. 大纲生成：UnifiedOutlineGenerator.generateDirections → expandDirection
+ *    （与开题中心 TopicDiscoveryBoard 的 prompt 玩法同路径，真实 fetch AI）
+ * 2. 应用大纲：mapExecutableOutlineToGeneratedOutline → useProjectCreator.createProject
+ *    （真实执行 buildPlotOutline/buildCharacters/buildVolumes 等全部纯函数）
+ * 3. 建章：useChapterOutlineGenerator.createChapters（真实执行，含结构化节点落库）
+ * 4. 批量续写：runContinueWriteChapters（mode:'batch' = BATCH_CONTINUE_PRESET，
+ *    与 useBatchWriter / 批量 UI 同路径，指数退避重试 + 门禁）
+ *
+ * 测试环境桩（仅替换环境副作用，业务代码全部真实）：
+ * - window.electronAPI：内存实现（模拟主进程 moliu-projects.json 存储）
+ * - vue-router：由测试文件 vi.mock（useProjectCreator 依赖 useRouter）
+ */
+
+import { createPinia, setActivePinia } from 'pinia';
+
+import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
+import { mapExecutableOutlineToGeneratedOutline } from '@/services/outline/adapters/executable-outline-adapter';
+import type { ExecutableOutline } from '@/services/outline/types/executable-outline';
+import type { OutlineDirection } from '@/services/outline/types/direction';
+import type { GeneratedOutline } from '@/types/inspiration';
+import type { Project } from '@/types/project';
+import type { ProviderType } from '@/config/ai-providers';
+import { useProjectCreator } from '@/composables/useProjectCreator';
+import { useChapterOutlineGenerator } from '@/composables/useChapterOutlineGenerator';
+import { useSettingsStore } from '@/stores/settings.store';
+import { useProjectStore } from '@/stores/project.store';
+import {
+  resolveContinueWriteRealConfig,
+  type ResolvedRealAiConfig,
+} from './continueWriteRealConfig';
+import {
+  runContinueWriteChapters,
+  type ContinueWriteChapterRunResult,
+  type HarnessRuntimeBackend,
+} from './continueWriteHarness';
+
+export interface StoryflowClosedLoopOptions {
+  /** 开题提示（默认：一个可写 30 万字长篇的起点） */
+  prompt?: string;
+  wordCountRange?: string;
+  /** 批量续写章数（默认 5，覆盖开篇多章以精准测试跨章合同去重/状态衔接） */
+  chapterCount?: number;
+  /** 每章目标字数（真实 AI 冒烟建议 1500-2500） */
+  targetWordCount?: number;
+  runIdPrefix?: string;
+}
+
+export interface StoryflowClosedLoopResult {
+  cfg: ResolvedRealAiConfig;
+  direction: OutlineDirection;
+  executableOutline: ExecutableOutline;
+  generatedOutline: GeneratedOutline;
+  project: Project;
+  chapterRunResults: ContinueWriteChapterRunResult[];
+  runtimeBackend: HarnessRuntimeBackend;
+  /** 建章后、续写前的章节 ID（大纲应用产物） */
+  createdChapterIds: string[];
+}
+
+/** 内存版 electronAPI：模拟主进程项目存储（createProject/updateProject/getProject/saveProject） */
+function installMemoryElectronAPI(): Map<string, Project> {
+  const store = new Map<string, Project>();
+  const api = {
+    listProjects: async (): Promise<Project[]> => Array.from(store.values()),
+    getProject: async (id: string): Promise<Project | null> => store.get(id) ?? null,
+    createProject: async (data: Project): Promise<Project> => {
+      store.set(data.id, data);
+      return data;
+    },
+    updateProject: async (
+      id: string,
+      updates: Partial<Project>,
+    ): Promise<Project | null> => {
+      const current = store.get(id);
+      if (!current) return null;
+      const merged: Project = {
+        ...current,
+        ...updates,
+        metadata: { ...(current.metadata ?? {}), ...(updates.metadata ?? {}) },
+      };
+      store.set(id, merged);
+      return merged;
+    },
+    saveProject: async (project: Project): Promise<void> => {
+      store.set(project.id, project);
+    },
+    deleteProject: async (): Promise<void> => {},
+  };
+  (window as unknown as { electronAPI: unknown }).electronAPI = api;
+  return store;
+}
+
+/** 注入真实 AI 配置到 settingsStore（UnifiedOutlineGenerator.getAIConfig 依赖它） */
+function injectSettingsStore(cfg: ResolvedRealAiConfig): void {
+  const pinia = createPinia();
+  setActivePinia(pinia);
+  const settings = useSettingsStore();
+  settings.aiProviders = [
+    {
+      id: cfg.providerId ?? 'storyflow-provider',
+      name: 'storyflow-real-ai',
+      provider: cfg.provider as ProviderType,
+      apiKey: cfg.apiKey,
+      baseUrl: cfg.baseUrl,
+      modelName: cfg.model ?? '',
+      enabled: true,
+    },
+  ];
+  settings.defaultModel = {
+    providerId: cfg.providerId ?? 'storyflow-provider',
+    modelName: cfg.model ?? '',
+  };
+}
+
+/**
+ * 闭环：大纲生成 → 应用 → 建章 → 批量续写（全部真实代码 + 真实 AI）
+ */
+export async function runStoryflowClosedLoop(
+  options: StoryflowClosedLoopOptions = {},
+): Promise<StoryflowClosedLoopResult> {
+  const prompt = options.prompt ?? '一个现代社畜穿越到古代朝堂，凭借现代知识在官场步步高升，卷入皇权之争';
+  const wordCountRange = options.wordCountRange ?? '30万-60万';
+  const chapterCount = options.chapterCount ?? 5;
+  const targetWordCount = options.targetWordCount ?? 2000;
+  const runIdPrefix = options.runIdPrefix ?? 'storyflow';
+
+  // ---------- 0. 配置与测试环境桩 ----------
+  const cfg = resolveContinueWriteRealConfig();
+  injectSettingsStore(cfg);
+  installMemoryElectronAPI();
+
+  // ---------- 1. 开题中心大纲生成（真实 AI fetch，与 TopicDiscoveryBoard prompt 玩法同路径） ----------
+  const generator = new UnifiedOutlineGenerator();
+  const dirResult = await generator.generateDirections(prompt, { wordCountRange });
+  if (!dirResult.directions || dirResult.directions.length === 0) {
+    throw new Error(
+      `storyflow 闭环失败：大纲方向生成为空（generateDirections 未返回任何方向，${dirResult.warnings?.[0] ?? ''}）`,
+    );
+  }
+  const direction = dirResult.directions[0];
+
+  const expandedResult = await generator.expandDirection(prompt, direction, { wordCountRange });
+  const expanded = expandedResult.outline;
+  if (!expanded) {
+    throw new Error(
+      `storyflow 闭环失败：大纲展开为空（expandDirection 返回 null，${expandedResult.warnings?.[0] ?? ''}）`,
+    );
+  }
+  const executableOutline = expanded;
+
+  const generatedOutline = mapExecutableOutlineToGeneratedOutline(executableOutline);
+  if (generatedOutline.chapters.length < 2) {
+    throw new Error(
+      `storyflow 闭环失败：大纲章节过少（${generatedOutline.chapters.length} < 2），无法支撑批量续写`,
+    );
+  }
+
+  // ---------- 2. 应用大纲（真实 useProjectCreator.createProject 链路） ----------
+  const projectCreator = useProjectCreator();
+  const projectId = await projectCreator.createProject(generatedOutline, {});
+  if (!projectId) {
+    throw new Error(`storyflow 闭环失败：应用大纲失败（createProject 返回 null，${projectCreator.error.value}）`);
+  }
+
+  // ---------- 3. 建章（真实 useChapterOutlineGenerator.createChapters 链路） ----------
+  const chapterOutlineGenerator = useChapterOutlineGenerator();
+  const createdChapterIds = await chapterOutlineGenerator.createChapters(
+    generatedOutline.chapters,
+  );
+  if (createdChapterIds.length !== generatedOutline.chapters.length) {
+    throw new Error(
+      `storyflow 闭环失败：建章数量不符（期望 ${generatedOutline.chapters.length}，实际 ${createdChapterIds.length}）`,
+    );
+  }
+
+  const projectStore = useProjectStore();
+  const rawProject = projectStore.currentProject;
+  if (!rawProject) {
+    throw new Error('storyflow 闭环失败：currentProject 为空');
+  }
+  // 深拷贝去 Vue 响应式代理（与 useProjectCreator 内做法一致）
+  const project = JSON.parse(JSON.stringify(rawProject)) as Project;
+
+  // ---------- 4. 批量续写（真实 BATCH_CONTINUE 路径，与 useBatchWriter 对齐） ----------
+  const result = await runContinueWriteChapters({
+    project,
+    fromChapter: 1,
+    chapterCount,
+    targetWordCount,
+    persistTrace: true,
+    runIdPrefix,
+    mode: 'batch',
+  });
+
+  return {
+    cfg,
+    direction,
+    executableOutline,
+    generatedOutline,
+    project: result.project,
+    chapterRunResults: result.chapters,
+    runtimeBackend: result.runtimeBackend,
+    createdChapterIds,
+  };
+}

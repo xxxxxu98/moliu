@@ -123,6 +123,7 @@ export function createRealStructuredAI(
             ].join('\n'),
             temperature: request.purpose === 'scene-draft' ? 0.65 : 0.2,
             signal,
+            jsonMode: true,
           });
           const parsed = parseStructuredJson(raw);
           return request.parse(parsed);

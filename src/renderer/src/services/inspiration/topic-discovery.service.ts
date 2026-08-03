@@ -496,6 +496,8 @@ async function defaultChat(
     system,
     temperature,
     signal,
+    // 种子/雷达玩法均要求 JSON：按 provider 能力启用 JSON 强制
+    jsonMode: true,
   });
 }
 
