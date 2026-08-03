@@ -145,22 +145,36 @@ export function loadLocalMoliuProject(options: {
 }): LocalMoliuProject {
   const storePath = projectsStorePath();
   if (!fs.existsSync(storePath)) {
-    throw new Error(`未找到本地项目库：${storePath}`);
+    throw new Error(`未找到本地项目库：${path.basename(storePath)}`);
   }
   const raw = JSON.parse(fs.readFileSync(storePath, 'utf8')) as {
     projects?: LocalMoliuProject[];
   };
   const projects = raw.projects ?? [];
-  const project =
-    (options.projectId
-      ? projects.find(item => item.id === options.projectId)
-      : undefined) ??
-    (options.projectName
+  // 安全策略：显式指定 projectId/projectName 时未命中必须报错，
+  // 禁止静默兜底 projects[0]（避免冒烟清空/外发错误项目的内容）
+  const project = options.projectId
+    ? projects.find(item => item.id === options.projectId)
+    : options.projectName
       ? projects.find(item => item.name === options.projectName)
-      : undefined) ??
-    projects[0];
+      : undefined;
   if (!project) {
-    throw new Error('本地没有可用项目');
+    const wanted = options.projectId
+      ? `projectId=${options.projectId}`
+      : options.projectName
+        ? `projectName=${options.projectName}`
+        : '（未指定 projectId/projectName）';
+    throw new Error(
+      `本地项目库（${path.basename(storePath)}）中未找到 ${wanted}。` +
+        '请检查 temp/continue-write.real.config.json 的 projectId/projectName 是否与 App 项目一致。'
+    );
+  }
+  // id 命中后若同时指定了 name，必须与库中一致（防止 id 误填其他项目时静默错配）
+  if (options.projectId && options.projectName && project.name !== options.projectName) {
+    throw new Error(
+      `项目 id 命中但名称不一致：projectId=${options.projectId} 对应「${project.name}」，` +
+        `而 projectName 配置为「${options.projectName}」。请检查 temp/continue-write.real.config.json。`
+    );
   }
   return project;
 }

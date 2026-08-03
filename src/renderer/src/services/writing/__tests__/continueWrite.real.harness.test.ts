@@ -61,6 +61,13 @@ describe.skipIf(!isRealAiEnabled())('continueWrite REAL AI · Pipeline 正式路
         projectId: cfg.projectId,
         projectName: cfg.projectName,
       });
+      // 项目必须精确命中配置指定项（未命中会 throw，防止清错/外发错误项目）
+      if (cfg.projectId) {
+        expect(loaded.id).toBe(cfg.projectId);
+      }
+      if (cfg.projectName) {
+        expect(loaded.name).toBe(cfg.projectName);
+      }
       const project = clearAllChapterContents(loaded);
       const cleared = (project.chapters ?? []).every(ch => !(ch.content || '').trim());
       expect(cleared).toBe(true);
@@ -140,6 +147,13 @@ describe.skipIf(!isRealMultiEnabled())('continueWrite REAL AI · 多章批量续
         projectId: cfg.projectId,
         projectName: cfg.projectName,
       });
+      // 项目必须精确命中配置指定项（未命中会 throw，防止清错/外发错误项目）
+      if (cfg.projectId) {
+        expect(loaded.id).toBe(cfg.projectId);
+      }
+      if (cfg.projectName) {
+        expect(loaded.name).toBe(cfg.projectName);
+      }
       const outlineChapterCount = (loaded.plotOutline ?? []).filter(
         node => node && typeof node === 'object' && (node as { type?: string }).type === 'chapter'
       ).length;

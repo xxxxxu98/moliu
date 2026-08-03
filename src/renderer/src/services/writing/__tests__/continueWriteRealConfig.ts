@@ -199,7 +199,7 @@ export function loadContinueWriteRealConfigFile(): {
 export function resolveContinueWriteRealConfig(): ResolvedRealAiConfig {
   const { config, configPath } = loadContinueWriteRealConfigFile();
   if (config.enabled === false) {
-    throw new Error(`配置已禁用（enabled=false）：${configPath}`);
+    throw new Error(`配置已禁用（enabled=false）：${path.basename(configPath)}`);
   }
 
   const providerId = (
@@ -248,7 +248,7 @@ export function resolveContinueWriteRealConfig(): ResolvedRealAiConfig {
 
   if (!apiKey) {
     throw new Error(
-      `缺少 apiKey。请在 ${configPath} 填写 providerId（推荐）或 apiKey，或设 useAppDefaultProvider=true。`
+      `缺少 apiKey。请在 ${path.basename(configPath)} 填写 providerId（推荐）或 apiKey，或设 useAppDefaultProvider=true。`
     );
   }
   if (!PROVIDER_SET.has(provider)) {
@@ -276,8 +276,8 @@ export function resolveContinueWriteRealConfig(): ResolvedRealAiConfig {
     apiKey,
     model,
     baseUrl,
-    projectId: (config.projectId || 'proj-1785392282915').trim(),
-    projectName: config.projectName,
+    projectId: (config.projectId || '').trim(),
+    projectName: (config.projectName || '').trim(),
     chapterNumber: config.chapterNumber && config.chapterNumber > 0 ? config.chapterNumber : 1,
     chapterCount,
     emptyRewrite: config.emptyRewrite !== false,
