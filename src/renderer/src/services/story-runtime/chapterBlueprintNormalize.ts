@@ -299,7 +299,7 @@ export function sanitizeInheritedCbn(
   if (!original) {
     const tip = pickContinuationTip(options);
     return tip
-      ? { cbn: `开场承接：${tip}`, changed: true }
+      ? { cbn: tip, changed: true }
       : { cbn: options?.fallback ?? '', changed: false };
   }
 
@@ -351,58 +351,33 @@ export function sanitizeInheritedCbn(
   if (changed && bodyUnusable) {
     const tip = pickContinuationTip({ ...options, cpns });
     if (tip) {
-      const prevCenBody = stripAdvancePrefix((options?.previousCen ?? '').trim()).replace(
-        OPENING_CBN_PREFIX,
-        ''
-      );
-      const distilled = distillEndingTip(options?.previousEnding ?? '');
-      const fromPrev =
-        (!!prevCenBody && (tip === prevCenBody || prevCenBody.startsWith(tip) || tip.startsWith(prevCenBody.slice(0, 12)))) ||
-        (!!distilled && tip === distilled);
-      return {
-        cbn: `${fromPrev ? '承接上章结尾' : '开场承接'}：${tip}`,
-        changed: true,
-      };
+      return { cbn: tip, changed: true };
     }
     if (cpns[0]) {
-      return { cbn: `开场承接：${cpns[0]}`, changed: true };
+      return { cbn: cpns[0], changed: true };
     }
   }
 
   if (hadOpeningPrefix && isProseDebrisTip(body)) {
     const tip = pickContinuationTip({ ...options, cpns });
     if (tip) {
-      return { cbn: `承接上章结尾：${tip}`, changed: true };
+      return { cbn: tip, changed: true };
     }
   }
 
   if (changed && body.length >= 6 && !isProseDebrisTip(body)) {
-    return { cbn: `承接上章结尾：${body}`, changed: true };
+    return { cbn: body, changed: true };
   }
   return { cbn: original, changed: false };
 }
 
-/**
- * 大纲连锁：上一章 CEN → 下一章 CBN，避免套娃「承接：推进至」。
+/*
+ * 原 buildChainedCbn（上章 CEN → 下章 CBN 连锁）已删除：
+ * 它把上章章末复述包装成「承接上章结尾：{CEN截尾}」模板，
+ * 被当作下章履约硬约束后引发 CBN→CEN→CBN 循环污染，
+ * 且把本章新事件挤出 CBN/CPNs/mustCover。
+ * 逐章 CBN 改由 executable-outline-adapter 从本章关键事件派生。
  */
-export function buildChainedCbn(prevCen: string, fallbackObjective: string): string {
-  const cleaned = stripAdvancePrefix((prevCen ?? '').trim());
-  // 短但可执行的章末（如「药老现身」）应继续连锁；仅拒绝真正的模板/元指令空壳
-  const rejectPrev =
-    !cleaned ||
-    cleaned.length < 4 ||
-    isMetaInstructionCen(cleaned) ||
-    isTemplateHookCen(cleaned) ||
-    (isHollowChapterHook(cleaned) && cleaned.length >= 6);
-  if (rejectPrev) {
-    const tip = fallbackObjective || '主线推进';
-    if (!(prevCen ?? '').trim()) {
-      return `承接前段：${tip}`;
-    }
-    return `开场承接：${tip}`;
-  }
-  return `承接上章结尾：${cleaned}`;
-}
 
 /** 将长句按中文标点拆成情节子句（过滤流程话术） */
 export function splitPlotClauses(text: string): string[] {

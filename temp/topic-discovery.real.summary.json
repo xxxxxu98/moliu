@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-02T07:59:29.963Z",
+  "at": "2026-08-03T09:12:13.283Z",
   "provider": "openai",
   "model": "deepseek-v4-flash[1m]",
   "wordCountRange": "30万-60万",
@@ -7,60 +7,58 @@
     {
       "module": "seeds",
       "chapters": 30,
-      "openingHookLength": 19,
+      "openingHookLength": 24,
       "qualityIssues": [],
-      "aiMs": 133933,
-      "seedTitle": "我靠给妖王做心理咨询成了天道",
-      "directionTitle": "兽心诊疗师"
+      "aiMs": 323001,
+      "seedTitle": "我靠卖煎饼果子成了星际领主",
+      "directionTitle": "星际煎饼王：从街边摊到美食军火商"
     },
     {
       "module": "radar",
       "chapters": 30,
-      "openingHookLength": 37,
+      "openingHookLength": 32,
       "qualityIssues": [],
-      "aiMs": 137146,
-      "seedTitle": "赛博道长：我用代码写符箓",
-      "directionTitle": "赛博道长：我写代码重修宗门"
+      "aiMs": 407311,
+      "seedTitle": "我修改了公司的第1条规则",
+      "directionTitle": "规则篡改者"
     },
     {
       "module": "mix",
       "chapters": 30,
-      "openingHookLength": 48,
+      "openingHookLength": 33,
       "qualityIssues": [
-        "开篇钩子过长（48 字 > 45）：直播时，老陈手指刚触到青铜剑刃，突然脸色发白——他闻到了腐败…"
+        "[21-25章] 必出事件括号未配对：恐慌中他通过回溯玉佛照片（无血文物…",
+        "[21-25章] 必出事件括号未配对：无法回溯）…"
       ],
-      "aiMs": 158240,
-      "seedTitle": "退休法医在古玩城直播鉴宝",
-      "directionTitle": "古玩疑云录"
+      "aiMs": 373295,
+      "seedTitle": "直播鉴宝，我专盯凶器",
+      "directionTitle": "凶器猎手：直播鉴凶三十年"
     },
     {
       "module": "dice",
       "chapters": 30,
-      "openingHookLength": 29,
-      "qualityIssues": [
-        "[21-25章] 必出事件括号未配对：利用现代化学知识（如硝石…",
-        "[21-25章] 必出事件括号未配对：强酸制造“僵尸”烟雾）配合江湖术士装神弄鬼。3.唐棠与府城知…"
-      ],
-      "aiMs": 255729,
-      "seedTitle": "骷髅解剖师",
-      "directionTitle": "大宋验尸官"
+      "openingHookLength": 19,
+      "qualityIssues": [],
+      "aiMs": 324584,
+      "seedTitle": "仵作直播：解剖百鬼不算啥",
+      "directionTitle": "仵作直播：我在南宋解剖百鬼"
     },
     {
       "module": "twist",
       "chapters": 30,
-      "openingHookLength": 17,
+      "openingHookLength": 36,
       "qualityIssues": [],
-      "aiMs": 138834,
-      "seedTitle": "全国考生都在求我别交卷",
-      "directionTitle": "时间赎罪者"
+      "aiMs": 282548,
+      "seedTitle": "修仙大佬在互联网大厂996",
+      "directionTitle": "我在大厂修仙996"
     },
     {
       "module": "prompt",
       "chapters": 30,
-      "openingHookLength": 25,
+      "openingHookLength": 14,
       "qualityIssues": [],
-      "aiMs": 170816,
-      "directionTitle": "我靠科学打假，全网鬼王跪求闭嘴"
+      "aiMs": 311993,
+      "directionTitle": "科学降妖人"
     }
   ]
 }

@@ -10,7 +10,7 @@ import {
   stripOpeningCbnPrefix,
 } from './chapterBlueprintNormalize';
 
-export { buildChainedCbn, sanitizeInheritedCbn } from './chapterBlueprintNormalize';
+export { sanitizeInheritedCbn } from './chapterBlueprintNormalize';
 
 /** 轻量字面/片语命中（避免与 ContinuityValidator 循环依赖） */
 const CONCEPT_ALIASES: Record<string, string[]> = {

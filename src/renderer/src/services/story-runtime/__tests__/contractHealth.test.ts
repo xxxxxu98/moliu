@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  buildChainedCbn,
   sanitizeInheritedCbn,
 } from '../chapterBlueprintNormalize';
 import {
@@ -45,13 +44,13 @@ describe('contractHealth', () => {
     expect(result.cbn).toContain(GENERIC_PLOT.accuseBeat);
   });
 
-  it('buildChainedCbn 剥离推进至前缀', () => {
-    expect(buildChainedCbn(`推进至：${GENERIC_PLOT.openingBeat}`, GENERIC_PLOT.volumeObjective)).toBe(
-      `承接上章结尾：${GENERIC_PLOT.openingBeat}`
-    );
-    expect(buildChainedCbn('', GENERIC_PLOT.volumeObjective)).toBe(
-      `承接前段：${GENERIC_PLOT.volumeObjective}`
-    );
+  it('清洗后 CBN 不再保留「承接上章结尾/开场承接」前缀', () => {
+    const result = sanitizeInheritedCbn(`承接上章结尾：${GENERIC_PLOT.openingBeat}`, {
+      cpns: [GENERIC_PLOT.accuseBeat],
+    });
+    expect(result.changed).toBe(true);
+    expect(result.cbn).not.toMatch(/^(承接上章结尾|开场承接|承接前段|承接前章结尾继续)[：:]/u);
+    expect(result.cbn).toContain(GENERIC_PLOT.openingBeat);
   });
 
   it('按上章事件去重 mustCover', () => {

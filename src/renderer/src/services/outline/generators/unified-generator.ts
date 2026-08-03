@@ -17,6 +17,7 @@ import { buildDirectionPrompt } from '../prompts/system/direction-prompt';
 import { buildExpandDirectionPrompt } from '../prompts/system/expand-direction-prompt';
 import { parseDirections } from '../parser/direction-parser';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
+import { reviewAndFixOutline } from './outline-reviewer';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 
 function matchesDefaultModelSelection(
@@ -309,7 +310,7 @@ export class UnifiedOutlineGenerator {
         onProgress?.(attempt === 1 ? '正在展开主方案...' : `重新展开主方案... (${attempt})`);
 
         const rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts);
-        const outline = parseExpandedOutline(rawText);
+        let outline = parseExpandedOutline(rawText);
 
         // 角色 / 伏笔位于模板末尾，最易被截断；这里检测"看似成功实则残缺"的情况。
         // 严重残缺（角色 < 4 或伏笔 < 3）时通过 isSuccess=false 触发重试（降温收敛），
@@ -328,9 +329,34 @@ export class UnifiedOutlineGenerator {
           }
         }
 
+        // 方案 A：初稿内容质检不通过时，发起一次"审查+修正"二次请求（低温稳定重出）。
+        // 修正稿解析失败 / 质量未提升 / 请求异常时回退初稿，绝不阻塞主流程。
+        let appliedFixRawText: string | undefined;
+        if (outline && !severelyTruncated) {
+          onProgress?.('正在审查并修正大纲内容...');
+          const fix = await reviewAndFixOutline({
+            initialRawText: rawText,
+            direction,
+            options: opts,
+            callStructuredTextMode: (system, user, callOpts) =>
+              this.callStructuredTextMode(system, user, callOpts),
+          });
+          if (fix.applied) {
+            const fixedOutline = parseExpandedOutline(fix.rawText);
+            if (fixedOutline) {
+              outline = fixedOutline;
+              appliedFixRawText = fix.rawText;
+            }
+          }
+          if (fix.warnings.length > 0) {
+            warnings.push(...fix.warnings);
+          }
+        }
+
         return {
           outline,
-          rawText,
+          // applied 时同步采用修正稿文本，避免 outline 与 rawText 错配
+          rawText: appliedFixRawText ?? rawText,
           strategy: outline ? 'structured-text' : 'fallback',
           severelyTruncated,
           warnings: outline ? warnings : ['未能完整解析主方案，建议重新生成或微调方向描述'],

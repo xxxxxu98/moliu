@@ -13,7 +13,14 @@ import {
   detectMustCoverForbiddenConflicts,
   softenConflictingForbidden,
 } from '@/services/story-runtime/contractHealth';
-import { normalizeChapterBlueprint } from '@/services/story-runtime/chapterBlueprintNormalize';
+import {
+  isCrossChapterGoal,
+  isReaderMetaText,
+  isTemplateHookCen,
+  normalizeChapterBlueprint,
+  splitPlotClauses,
+  stripReaderMeta,
+} from '@/services/story-runtime/chapterBlueprintNormalize';
 import type {
   WritingTaskBook,
   ChapterContract,
@@ -87,8 +94,18 @@ export class EnhancedContextAgent {
         CBN: chapterContract?.directive?.CBN || this.generateDefaultCBN(context),
         CPNs: chapterContract?.directive?.CPNs || this.generateDefaultCPNs(context),
         CEN: chapterContract?.directive?.CEN || this.generateDefaultCEN(context),
-        mustCover: chapterContract?.directive?.mustCoverNodes || [],
-        forbiddenZones: chapterContract?.directive?.forbiddenZones || [],
+        // P2 卖点传导：把卷计划里可单章兑现的高光（如「厉鬼群自动让开一条路」）
+        // 补进 mustCover，让正文有机会写到书名承诺的核心爽点，而不是只复述上章。
+        // 候选与禁区冲突时跳过该候选（不软化作者禁区）。
+        mustCover: enrichMustCoverWithVolumeSellingPoints(
+          chapterContract?.directive?.mustCoverNodes || [],
+          volumePlanSellingPointCandidates(this.resolveVolumePlan(project, input.chapterNumber)),
+          chapterContract?.directive?.forbiddenZones || []
+        ),
+        forbiddenZones: normalizeForbiddenZonesByChapter(
+          chapterContract?.directive?.forbiddenZones || [],
+          input.chapterNumber
+        ),
         styleGuidance,
         dynamicContext,
       };
@@ -114,6 +131,22 @@ export class EnhancedContextAgent {
         error: error instanceof Error ? error.message : '生成失败',
       };
     }
+  }
+
+  /**
+   * 解析当前章所属卷的卷计划（metadata.volumePlans，与 ContractPackBuilder 同源）。
+   * volumePlans.volumeIndex 为 1 基，sortedVolumes.orderIndex 为 0 基，匹配时 +1。
+   */
+  private resolveVolumePlan(
+    project: Project,
+    chapterNumber: number
+  ): VolumePlanLike | undefined {
+    const chapters = this.projectStore.sortedChapters;
+    const chapter = chapters.find(c => c.orderIndex === chapterNumber - 1);
+    if (!chapter) return undefined;
+    const volumes = this.projectStore.sortedVolumes;
+    const volumeIndex = volumes.find(v => v.id === chapter.volumeId)?.orderIndex ?? 0;
+    return matchVolumePlanByIndex(project.metadata?.volumePlans, volumeIndex);
   }
 
   /**
@@ -568,3 +601,101 @@ export function useEnhancedContextAgent(): EnhancedContextAgent {
 }
 
 export default EnhancedContextAgent;
+
+// ============================================================
+// 纯函数导出（供单测与复用）
+// ============================================================
+
+/** 卷计划的最小字段视图（与 project.metadata.volumePlans 同源） */
+export interface VolumePlanLike {
+  volumeIndex: number;
+  objective?: string;
+  coreConflict?: string;
+  climax?: string;
+  payoffForeshadows?: string[];
+}
+
+/**
+ * 禁区按章归一化：引用「第N章」的禁区，其全部目标章号都已小于当前章时视为过期，予以过滤。
+ * 例：大纲把「不能让沈青梧在第1章就出现」复制到全部 30 章，
+ * 写第 3 章时该限制早已过去——原样透传会让正文让沈青梧出场就被判触禁。
+ * 语义处理：
+ * - 单点/区间（「第1章就出现」「第1章到第3章」）：任一目标章号 ≥ 当前章则保留
+ *   （「第1章到第3章」写第 2 章时 3 未过，仍应受限）；
+ * - 开放下限（「第5章以后/之后/起」）：章号 ≤ 当前章则保留（写第 6 章时第 5 章起的限制仍有效）。
+ * 无章号引用的禁区（如「不能解释厉鬼绕行原因」）恒保留。
+ */
+export function normalizeForbiddenZonesByChapter(
+  zones: string[],
+  chapterNumber: number
+): string[] {
+  return (zones ?? []).filter(zone => {
+    const numbers = [...zone.matchAll(/第\s*(\d+)\s*章/gu)]
+      .map(match => Number(match[1]))
+      .filter(Number.isFinite);
+    if (numbers.length === 0) return true;
+    const isOpenEnded = /(?:从\s*)?第\s*\d+\s*章\s*(?:起|开始)|以后|之后/gu.test(zone);
+    if (isOpenEnded) return numbers.some(number => number <= chapterNumber);
+    return numbers.some(number => number >= chapterNumber);
+  });
+}
+
+/**
+ * 按 0 基卷索引匹配卷计划：volumePlans.volumeIndex 为 1 基，故匹配 volumeIndex + 1。
+ */
+export function matchVolumePlanByIndex(
+  plans: VolumePlanLike[] | undefined,
+  volumeIndex: number
+): VolumePlanLike | undefined {
+  return plans?.find(plan => plan.volumeIndex === volumeIndex + 1);
+}
+
+/**
+ * 从卷计划收集卖点候选（卷高光 > 卷目标 > 核心冲突 > 必付伏笔），去空。
+ */
+export function volumePlanSellingPointCandidates(
+  plan: VolumePlanLike | undefined
+): string[] {
+  if (!plan) return [];
+  return [plan.climax, plan.objective, plan.coreConflict, ...(plan.payoffForeshadows ?? [])]
+    .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    .map(item => item.trim());
+}
+
+/**
+ * P2 卖点传导：把卷计划里「可单章兑现」的高光场景补入 mustCover（最多 1 条）。
+ * 过滤规则：
+ * - 按中文标点拆子句，只取 8–40 字；
+ * - 排除跨章目标（限期/威胁组合，纳入即死锁）、模板钩子、读者元文本；
+ * - 与既有 mustCover 重叠的跳过。
+ * 这样正文有机会写到书名承诺的核心爽点（如「厉鬼群自动让开一条路」），
+ * 而不是只复述上章结尾。
+ */
+export function enrichMustCoverWithVolumeSellingPoints(
+  mustCover: string[],
+  sellingPointCandidates: string[],
+  forbiddenZones: string[] = []
+): string[] {
+  if (!sellingPointCandidates || sellingPointCandidates.length === 0) {
+    return mustCover;
+  }
+  for (const candidate of sellingPointCandidates) {
+    const clauses = splitPlotClauses(stripReaderMeta(candidate));
+    for (const clause of clauses) {
+      if (clause.length < 8 || clause.length > 40) continue;
+      if (isCrossChapterGoal(clause)) continue;
+      if (isTemplateHookCen(clause)) continue;
+      if (isReaderMetaText(clause)) continue;
+      if (mustCover.some(item => item.includes(clause) || clause.includes(item))) continue;
+      // 与禁区冲突则跳过该候选，避免借 mustCover 新增硬约束后被软化
+      if (
+        forbiddenZones.length > 0 &&
+        detectMustCoverForbiddenConflicts([clause], forbiddenZones).length > 0
+      ) {
+        continue;
+      }
+      return [...mustCover, clause];
+    }
+  }
+  return mustCover;
+}

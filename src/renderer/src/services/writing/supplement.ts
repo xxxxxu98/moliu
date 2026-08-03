@@ -245,6 +245,13 @@ export interface BuildSupplementPromptParams {
   chapterOutline?: string;
   /** 尚未写满的履约节点 / 章末钩子，补字必须朝它们推进 */
   pendingBeats?: string[];
+  /**
+   * 输出格式：'json' 表示调用方要求 AI 只返回 JSON 数组（如 LongFormWritingEngine 补字路径，
+   * system 已要求 {"paragraphs":[...]}）；'plain' 表示直接输出正文（runSupplementRounds 纯文本路径）。
+   * 默认 'plain'。区分二者避免“只输出 JSON”与“直接输出补充内容”两条指令互相矛盾
+   * （曾导致 AI 输出纯散文、解析失败重试）。
+   */
+  outputFormat?: 'json' | 'plain';
 }
 
 const DEFAULT_ENDING_SNIPPET_CHARS = 500;
@@ -295,6 +302,7 @@ export function buildSupplementPrompt(params: BuildSupplementPromptParams): stri
     chapterTitle,
     chapterOutline,
     pendingBeats = [],
+    outputFormat = 'plain',
   } = params;
 
   const currentWords = countWords(existingContent);
@@ -330,7 +338,11 @@ ${endingSnippet}
 - 章节标题：${chapterTitle}
 - 章节大纲：${chapterOutline || '（无）'}
 
-请直接输出补充内容，不要添加任何前缀说明。`;
+${
+  outputFormat === 'json'
+    ? '只输出一个 JSON 对象：{"paragraphs":["段落1","段落2"]}（与 system 要求一致）。不要输出 Markdown 代码块，不要任何前后解释文字。'
+    : '请直接输出补充内容正文，不要添加任何前缀说明，不要输出 Markdown 代码块。'
+}`;
 }
 
 /** 补写起草回调：只负责按 prompt 生成一段增量正文 */

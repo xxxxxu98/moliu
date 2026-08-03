@@ -155,6 +155,8 @@ async function runModule(
   generator: UnifiedOutlineGenerator
 ): Promise<ModuleResult> {
   const startedAt = Date.now();
+  // eslint-disable-next-line no-console
+  console.log(`[REAL_AI_TOPIC] module=${module} 开始...`);
   const result: ModuleResult = {
     module,
     chapters: 0,
@@ -192,6 +194,10 @@ async function runModule(
     result.error = err instanceof Error ? err.message : String(err);
   }
   result.aiMs = Date.now() - startedAt;
+  // eslint-disable-next-line no-console
+  console.log(
+    `[REAL_AI_TOPIC] module=${module} 完成 aiMs=${result.aiMs} issues=${result.qualityIssues.length} error=${result.error ?? '-'}`
+  );
   return result;
 }
 
@@ -290,6 +296,6 @@ describe.skipIf(!isRealAiEnabled())('开题中心 REAL AI · 六模块真实链�
         expect(item.qualityIssues, `[${item.module}] 大纲质量检查`).toEqual([]);
       }
     },
-    1_500_000
+    3_000_000
   );
 });

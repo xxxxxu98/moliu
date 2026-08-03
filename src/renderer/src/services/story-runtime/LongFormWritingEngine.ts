@@ -338,6 +338,7 @@ export class LongFormWritingEngine {
           ...input.contracts.chapter.mustCover,
           input.contracts.chapter.CEN,
         ],
+        outputFormat: 'json',
       });
 
       try {

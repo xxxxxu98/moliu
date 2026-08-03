@@ -139,26 +139,26 @@ describe('splitStartupBlocksToChapters - Bug 1 CEN 不再全块重复', () => {
   });
 });
 
-describe('splitStartupBlocksToChapters - Q1 CBN 承接上一章 CEN', () => {
+describe('splitStartupBlocksToChapters - CBN 用本章关键事件（不再承接上章 CEN）', () => {
   it('第 1 章 CBN 用开篇钩子', () => {
     const result = mapExecutableOutlineToGeneratedOutline(makeOutline());
     expect(result.chapters[0].CBN).toBe('萧炎从悬崖坠落');
   });
 
-  it('第 2 章 CBN 承接第 1 章 CEN（含“承接上章结尾”）', () => {
+  it('第 2 章 CBN 用本章关键事件（不含“承接上章结尾”模板）', () => {
     const result = mapExecutableOutlineToGeneratedOutline(makeOutline());
-    const ch1CEN = result.chapters[0].CEN;
     const ch2CBN = result.chapters[1].CBN;
-    expect(ch2CBN).toContain('承接上章结尾');
-    expect(ch2CBN).toContain(ch1CEN);
+    expect(ch2CBN).not.toContain('承接上章结尾');
+    // 块 1 mustEvents=['觉醒异火','初次炼丹','击败萧宁']，5 章均分后第 2 章取第一个
+    expect(ch2CBN).toBe('觉醒异火');
   });
 
-  it('跨块承接：第 6 章 CBN 承接第 5 章 CEN', () => {
+  it('跨块：第 6 章 CBN 用本章关键事件（不跨块承接上章 CEN）', () => {
     const result = mapExecutableOutlineToGeneratedOutline(makeOutline());
-    const ch5CEN = result.chapters[4].CEN; // “药老现身”
     const ch6CBN = result.chapters[5].CBN;
-    expect(ch6CBN).toContain('承接上章结尾');
-    expect(ch6CBN).toContain(ch5CEN);
+    expect(ch6CBN).not.toContain('承接上章结尾');
+    // 块 2 mustEvents=['进入外院','挑战排名','击败强者']，第 6 章取第一个
+    expect(ch6CBN).toBe('进入外院');
   });
 });
 

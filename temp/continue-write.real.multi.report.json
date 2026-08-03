@@ -1,24 +1,24 @@
 {
   "kind": "continue-write-real-multi-summary",
-  "at": "2026-08-02T06:31:43.179Z",
-  "book": "仵作提刑官",
+  "at": "2026-08-03T06:06:51.768Z",
+  "book": "《所有厉鬼都在躲我》",
   "fromChapter": 1,
   "chapterCount": 3,
   "mode": "batch",
-  "success": false,
-  "completedChapters": 2,
+  "success": true,
+  "completedChapters": 3,
   "runtimeBackend": "memory",
   "provider": "openai",
   "providerId": "provider-1781144969420",
   "model": "deepseek-v4-flash[1m]",
-  "totalAiMs": 406782,
-  "totalWords": 5308,
+  "totalAiMs": 450950,
+  "totalWords": 7912,
   "chapters": [
     {
       "kind": "continue-write-real-summary",
-      "at": "2026-08-02T06:31:43.163Z",
-      "runId": "continue-write-real-proj-1785392282915-batch-ch1-1785651896252",
-      "book": "仵作提刑官",
+      "at": "2026-08-03T06:06:51.760Z",
+      "runId": "continue-write-real-proj-1785725027572-batch-ch1-1785736406328",
+      "book": "《所有厉鬼都在躲我》",
       "chapterNumber": 1,
       "provider": "openai",
       "providerId": "provider-1781144969420",
@@ -26,11 +26,11 @@
       "success": true,
       "commitStatus": "accepted",
       "commitReasons": [],
-      "commitId": "proj-1785392282915:chapter:1:commit:779e2552",
+      "commitId": "proj-1785725027572:chapter:1:commit:9d15b96d",
       "receipt": {
-        "commitId": "proj-1785392282915:chapter:1:commit:779e2552",
+        "commitId": "proj-1785725027572:chapter:1:commit:9d15b96d",
         "revision": 1,
-        "acceptedAt": "2026-08-02T06:26:19.541Z"
+        "acceptedAt": "2026-08-03T05:55:34.477Z"
       },
       "reportAccepted": true,
       "reportIssueCount": 0,
@@ -49,90 +49,228 @@
         "blocked": 0,
         "blockedCandidateIds": []
       },
-      "wordCount": 2729,
+      "wordCount": 2610,
       "targetWordCount": 3000,
       "wordTimeline": {
-        "draftWords": 2729,
-        "afterPadWords": 2729,
-        "finalWords": 2729,
-        "supplementAiRounds": 0,
+        "draftWords": 897,
+        "afterPadWords": 2610,
+        "finalWords": 2610,
+        "supplementAiRounds": 3,
         "condenseAiRounds": 0
       },
       "rewriteRounds": 0,
       "purposes": [
+        "scene-draft",
+        "scene-draft",
+        "scene-draft",
         "scene-draft",
         "fact-extraction",
         "chapter-judge"
       ],
       "schemas": [
         "SceneDraft",
+        "SupplementParagraphs",
+        "SupplementParagraphs",
+        "SupplementParagraphs",
         "ExtractedFacts",
         "ChapterJudgeResult"
       ],
-      "schemaFlow": "scene-draft:SceneDraft → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+      "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
       "steps": [
         {
           "seq": 1,
           "purpose": "scene-draft",
           "schemaName": "SceneDraft",
-          "ms": 30229,
+          "ms": 29905,
           "hasError": false
         },
         {
           "seq": 2,
-          "purpose": "fact-extraction",
-          "schemaName": "ExtractedFacts",
-          "ms": 20441,
-          "hasError": false
+          "purpose": "scene-draft",
+          "schemaName": "SupplementParagraphs",
+          "ms": 19826,
+          "hasError": true
         },
         {
           "seq": 3,
+          "purpose": "scene-draft",
+          "schemaName": "SupplementParagraphs",
+          "ms": 16295,
+          "hasError": false
+        },
+        {
+          "seq": 4,
+          "purpose": "scene-draft",
+          "schemaName": "SupplementParagraphs",
+          "ms": 4495,
+          "hasError": false
+        },
+        {
+          "seq": 5,
+          "purpose": "fact-extraction",
+          "schemaName": "ExtractedFacts",
+          "ms": 41949,
+          "hasError": false
+        },
+        {
+          "seq": 6,
           "purpose": "chapter-judge",
           "schemaName": "ChapterJudgeResult",
-          "ms": 32568,
+          "ms": 15636,
           "hasError": false
         }
       ],
-      "stepCount": 3,
-      "totalAiMs": 83238,
+      "stepCount": 6,
+      "totalAiMs": 128106,
       "runtimeBackend": "memory",
       "taskBook": {
         "present": true,
-        "CBN": "现代法医宋辞穿越成贱籍仵作，正在验尸时当众指出死者系县令公子刘文韬所害，被刘文韬反诬入狱，必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
+        "CBN": "顾无咎在教室醒来，满地尸体，只有他还活着。",
         "CPNs": [
-          "穿越醒来正在验尸",
-          "现代法医宋辞穿越成贱籍仵作",
-          "正在验尸时当众指出死者系县令公子刘文韬所害"
+          "顾无咎在教室醒来",
+          "满地尸体",
+          "只有他还活着"
         ],
-        "CEN": "必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
+        "CEN": "完成校园鬼域的开篇勾子与主角绑定位",
         "mustCoverCount": 3,
-        "forbiddenZonesCount": 4
+        "forbiddenZonesCount": 3
       },
-      "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch1-1785651896252.jsonl",
+      "tracePath": "temp/ai-traces/continue-write-real-proj-1785725027572-batch-ch1-1785736406328.jsonl",
       "stepsPath": "temp/continue-write.real.ch1.steps.txt",
       "summaryPath": "temp/continue-write.real.ch1.summary.json",
       "prosePreview": {
-        "head": "宋辞是被一阵恶臭熏醒的。\n\n他睁开眼，眼前是一具肿胀发青的女尸，颈间勒着一条麻绳，舌头微微外伸。他手里正握着一把生锈的解剖刀，刀刃上沾着暗红色的血迹。周围站着几个穿皂衣的衙役，一个师爷模样的老头正拿袖子捂着鼻子，不耐烦地催他：“宋仵作，愣着干什么？赶紧验啊，县太爷还等着结案呢。”\n\n宋辞脑子里嗡的一声。上一秒他还在市局",
-        "tail": "知道的是，宋辞在牢里已经想到了这一层。他低声自语：“尸体……他们一定会毁尸灭迹。我必须赶在他们之前，让尸体上的证据变得不可销毁。”\n\n他摸了摸怀里那把解剖刀，嘴角露出一丝苦笑。穿越第一天，就给自己惹上了杀身之祸。但这条路，他选定了，就不会回头。\n\n死人是唯一的证词，而他，是唯一的翻译官。\n\n三天期限，从此刻开始倒计时。"
+        "head": "顾无咎是被一阵刺鼻的血腥味呛醒的。他睁开眼睛，后脑勺钝痛，像被人抡了一棍子。天花板上的日光灯管还在亮，但光线惨白，照得整个教室像停尸房。\n\n他撑着地面坐起来，手掌按到一滩黏糊糊的东西。低头一看，是血。暗红色的，已经半凝固。他猛地缩回手，这时候才注意到周围的情况——课桌椅东倒西歪，地上横七竖八躺着人，全是他班上的同学。有",
+        "tail": "无咎跌入洞中，眼前一片漆黑，阴风扑面而来。他伸手摸索，触到湿冷的墙壁，耳畔是沉闷的呼吸声——不是自己的。他猛地回头，却见洞口已被封死，只有微弱的光从缝隙透入。他心中一惊，难道自己被困在了这里？就在这时，前方传来一阵若有若无的哭声，像从地狱深处传来。顾无咎握紧拳头，循声走去，脚下踩到什么东西，低头一看，是一截苍白的手指。"
       }
     },
     {
       "kind": "continue-write-real-summary",
-      "at": "2026-08-02T06:31:43.168Z",
-      "runId": "continue-write-real-proj-1785392282915-batch-ch2-1785651979559",
-      "book": "仵作提刑官",
+      "at": "2026-08-03T06:06:51.763Z",
+      "runId": "continue-write-real-proj-1785725027572-batch-ch2-1785736534532",
+      "book": "《所有厉鬼都在躲我》",
       "chapterNumber": 2,
       "provider": "openai",
       "providerId": "provider-1781144969420",
       "model": "deepseek-v4-flash[1m]",
-      "success": false,
-      "commitStatus": "rejected",
-      "commitReasons": [
-        "未履约节点：必须在三天内用尸检铁证翻案自证清白，否则将被处斩（本章展示了尸检铁证（石灰结晶）并当众自证清白，但翻案尚未完成——县令未当堂判决释放，仍处于被指控状态，且三天期限尚未结束，未能彻底翻案自证清白。）"
+      "success": true,
+      "commitStatus": "accepted",
+      "commitReasons": [],
+      "commitId": "proj-1785725027572:chapter:2:commit:5d4fd566",
+      "receipt": {
+        "commitId": "proj-1785725027572:chapter:2:commit:5d4fd566",
+        "revision": 2,
+        "acceptedAt": "2026-08-03T05:58:05.332Z"
+      },
+      "reportAccepted": true,
+      "reportIssueCount": 0,
+      "checkedDomains": [
+        "entity",
+        "knowledge",
+        "inventory",
+        "timeline",
+        "causality",
+        "fulfillment",
+        "evidence"
       ],
-      "commitId": "proj-1785392282915:chapter:2:commit:c134db7b",
-      "receipt": null,
-      "reportAccepted": false,
+      "prechecks": {
+        "total": 3,
+        "accepted": 3,
+        "blocked": 0,
+        "blockedCandidateIds": []
+      },
+      "wordCount": 2641,
+      "targetWordCount": 3000,
+      "wordTimeline": {
+        "draftWords": 2148,
+        "afterPadWords": 2641,
+        "finalWords": 2641,
+        "supplementAiRounds": 1,
+        "condenseAiRounds": 0
+      },
+      "rewriteRounds": 0,
+      "purposes": [
+        "scene-draft",
+        "scene-draft",
+        "fact-extraction",
+        "chapter-judge"
+      ],
+      "schemas": [
+        "SceneDraft",
+        "SupplementParagraphs",
+        "ExtractedFacts",
+        "ChapterJudgeResult"
+      ],
+      "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+      "steps": [
+        {
+          "seq": 1,
+          "purpose": "scene-draft",
+          "schemaName": "SceneDraft",
+          "ms": 55179,
+          "hasError": false
+        },
+        {
+          "seq": 2,
+          "purpose": "scene-draft",
+          "schemaName": "SupplementParagraphs",
+          "ms": 7799,
+          "hasError": false
+        },
+        {
+          "seq": 3,
+          "purpose": "fact-extraction",
+          "schemaName": "ExtractedFacts",
+          "ms": 67403,
+          "hasError": false
+        },
+        {
+          "seq": 4,
+          "purpose": "chapter-judge",
+          "schemaName": "ChapterJudgeResult",
+          "ms": 20401,
+          "hasError": false
+        }
+      ],
+      "stepCount": 4,
+      "totalAiMs": 150782,
+      "runtimeBackend": "memory",
+      "taskBook": {
+        "present": true,
+        "CBN": "承接上章结尾：只有他还活着",
+        "CPNs": [
+          "顾无咎在教室醒来"
+        ],
+        "CEN": "顾无咎在教室醒来后对手反手施压，倒计时与证据链同时收紧",
+        "mustCoverCount": 2,
+        "forbiddenZonesCount": 3
+      },
+      "tracePath": "temp/ai-traces/continue-write-real-proj-1785725027572-batch-ch2-1785736534532.jsonl",
+      "stepsPath": "temp/continue-write.real.ch2.steps.txt",
+      "summaryPath": "temp/continue-write.real.ch2.summary.json",
+      "prosePreview": {
+        "head": "顾无咎是被一阵刺骨的寒意冻醒的。他猛地睁开眼睛，映入眼帘的还是那间熟悉的教室——日光灯管惨白，桌椅东倒西歪，地上横七竖八躺着人。但这次，所有人都安静地躺着，没有抽搐，没有呼吸，像真正的尸体。他坐起来，后脑勺钝痛，手掌按到一滩半凝固的血。他低头看自己的手——满手是血，暗红色的，已经干涸，但怎么搓都搓不掉，像长在皮肤上。他",
+        "tail": "势滚出窗外，落到一楼花坛里。他能感觉到背后黑衣人的怒吼，以及倒计时的急促跳动——29:02，29:01。他顾不上疼痛，爬起来就跑，脑中只有一个念头：必须在倒计时结束前，找到证据链的源头，否则一切都会归零。然而，当他跑出几步，却发现前方街道上，另外两个穿着同样黑色西装的人正朝他走来，手里拿着对讲机，显然已经布下天罗地网。"
+      }
+    },
+    {
+      "kind": "continue-write-real-summary",
+      "at": "2026-08-03T06:06:51.766Z",
+      "runId": "continue-write-real-proj-1785725027572-batch-ch3-1785737039674",
+      "book": "《所有厉鬼都在躲我》",
+      "chapterNumber": 3,
+      "provider": "openai",
+      "providerId": "provider-1781144969420",
+      "model": "deepseek-v4-flash[1m]",
+      "success": true,
+      "commitStatus": "accepted",
+      "commitReasons": [],
+      "commitId": "proj-1785725027572:chapter:3:commit:01a09cf3",
+      "receipt": {
+        "commitId": "proj-1785725027572:chapter:3:commit:01a09cf3",
+        "revision": 3,
+        "acceptedAt": "2026-08-03T06:06:51.751Z"
+      },
+      "reportAccepted": true,
       "reportIssueCount": 1,
       "checkedDomains": [
         "entity",
@@ -149,25 +287,17 @@
         "blocked": 0,
         "blockedCandidateIds": []
       },
-      "wordCount": 2579,
+      "wordCount": 2661,
       "targetWordCount": 3000,
       "wordTimeline": {
-        "draftWords": 3345,
-        "afterPadWords": 2579,
-        "finalWords": 2579,
-        "supplementAiRounds": 3,
+        "draftWords": 2270,
+        "afterPadWords": 2661,
+        "finalWords": 2661,
+        "supplementAiRounds": 1,
         "condenseAiRounds": 0
       },
-      "rewriteRounds": 2,
+      "rewriteRounds": 0,
       "purposes": [
-        "scene-draft",
-        "fact-extraction",
-        "chapter-judge",
-        "scene-draft",
-        "scene-draft",
-        "fact-extraction",
-        "chapter-judge",
-        "scene-draft",
         "scene-draft",
         "scene-draft",
         "fact-extraction",
@@ -175,126 +305,62 @@
       ],
       "schemas": [
         "SceneDraft",
-        "ExtractedFacts",
-        "ChapterJudgeResult",
-        "SceneDraft",
-        "SupplementParagraphs",
-        "ExtractedFacts",
-        "ChapterJudgeResult",
-        "SceneDraft",
-        "SupplementParagraphs",
         "SupplementParagraphs",
         "ExtractedFacts",
         "ChapterJudgeResult"
       ],
-      "schemaFlow": "scene-draft:SceneDraft → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult → scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+      "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
       "steps": [
         {
           "seq": 1,
           "purpose": "scene-draft",
           "schemaName": "SceneDraft",
-          "ms": 42086,
+          "ms": 49816,
           "hasError": false
         },
         {
           "seq": 2,
-          "purpose": "fact-extraction",
-          "schemaName": "ExtractedFacts",
-          "ms": 29504,
+          "purpose": "scene-draft",
+          "schemaName": "SupplementParagraphs",
+          "ms": 9540,
           "hasError": false
         },
         {
           "seq": 3,
-          "purpose": "chapter-judge",
-          "schemaName": "ChapterJudgeResult",
-          "ms": 27671,
+          "purpose": "fact-extraction",
+          "schemaName": "ExtractedFacts",
+          "ms": 96574,
           "hasError": false
         },
         {
           "seq": 4,
-          "purpose": "scene-draft",
-          "schemaName": "SceneDraft",
-          "ms": 33835,
-          "hasError": false
-        },
-        {
-          "seq": 5,
-          "purpose": "scene-draft",
-          "schemaName": "SupplementParagraphs",
-          "ms": 11874,
-          "hasError": true
-        },
-        {
-          "seq": 6,
-          "purpose": "fact-extraction",
-          "schemaName": "ExtractedFacts",
-          "ms": 37616,
-          "hasError": false
-        },
-        {
-          "seq": 7,
           "purpose": "chapter-judge",
           "schemaName": "ChapterJudgeResult",
-          "ms": 23877,
-          "hasError": false
-        },
-        {
-          "seq": 8,
-          "purpose": "scene-draft",
-          "schemaName": "SceneDraft",
-          "ms": 22957,
-          "hasError": false
-        },
-        {
-          "seq": 9,
-          "purpose": "scene-draft",
-          "schemaName": "SupplementParagraphs",
-          "ms": 8026,
-          "hasError": false
-        },
-        {
-          "seq": 10,
-          "purpose": "scene-draft",
-          "schemaName": "SupplementParagraphs",
-          "ms": 8113,
-          "hasError": false
-        },
-        {
-          "seq": 11,
-          "purpose": "fact-extraction",
-          "schemaName": "ExtractedFacts",
-          "ms": 59005,
-          "hasError": false
-        },
-        {
-          "seq": 12,
-          "purpose": "chapter-judge",
-          "schemaName": "ChapterJudgeResult",
-          "ms": 18980,
+          "ms": 16132,
           "hasError": false
         }
       ],
-      "stepCount": 12,
-      "totalAiMs": 323544,
+      "stepCount": 4,
+      "totalAiMs": 172062,
       "runtimeBackend": "memory",
       "taskBook": {
         "present": true,
-        "CBN": "承接上章结尾：必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
+        "CBN": "承接上章结尾：顾无咎在教室醒来后对手反手施压，倒计时与证据链同时收紧",
         "CPNs": [
-          "当众指出凶手是县令公子",
-          "必须在三天内用尸检铁证翻案自证清白",
-          "否则将被处斩"
+          "发现全班同学全部死亡",
+          "顾无咎在教室醒来后对手反手施压",
+          "倒计时与证据链同时收紧"
         ],
-        "CEN": "必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
-        "mustCoverCount": 2,
-        "forbiddenZonesCount": 4
+        "CEN": "完成校园鬼域的开篇勾子与主角绑定位",
+        "mustCoverCount": 3,
+        "forbiddenZonesCount": 3
       },
-      "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch2-1785651979559.jsonl",
-      "stepsPath": "temp/continue-write.real.ch2.steps.txt",
-      "summaryPath": "temp/continue-write.real.ch2.summary.json",
+      "tracePath": "temp/ai-traces/continue-write-real-proj-1785725027572-batch-ch3-1785737039674.jsonl",
+      "stepsPath": "temp/continue-write.real.ch3.steps.txt",
+      "summaryPath": "temp/continue-write.real.ch3.summary.json",
       "prosePreview": {
-        "head": "牢房里没有窗户，只有门缝里透进来一线昏黄的光。宋辞趴在发霉的草堆上，背上的伤火辣辣地疼，二十板子打得皮开肉绽，每动一下都牵扯着伤口。他咬着牙翻了个身，仰面躺着，盯着头顶蛛网密布的房梁。空气里弥漫着潮湿的霉味和淡淡的血腥，偶尔有老鼠从脚边窜过，带起一阵窸窣声。\n\n他伸手摸了摸怀里，那把解剖刀还在。刀刃贴着胸口，冰凉而坚硬",
-        "tail": "若大人不信，可命仵作当堂重新验尸，且看颈部勒痕处是否有特殊结晶。\"县令皱眉，示意仵作上前。仵作仔细检查后，脸色大变：\"大人，死者颈骨表面确实有一层白色坚硬外壳，与普通勒痕不同，应是外力作用后形成的特殊结构！\"宋辞趁热打铁：\"大人，草民已证明自己并非凶手。若真是草民所杀，何必多此一举留下证据？请大人明察，还草民清白！\"】"
+        "head": "顾无咎再次睁开眼睛，后脑勺钝痛，像被人狠狠敲了一棍。他躺在教室的地板上，头顶日光灯管惨白，同学们东倒西歪地躺了一地，都还在昏迷中。他翻身而起，动作快得像弹簧，右手已经摸到口袋里的手机——屏幕亮着，倒计时显示29:58，正在一秒一秒地跳动。他记得自己逃出窗外后，被两个黑衣人用电击棒击晕，然后失去了意识。现在又回到这里，说",
+        "tail": "另一个是模糊的女性轮廓。照片背面用红笔写着：“找到她，否则你永远出不去。”他猛地回头，黑衣人已经消失，只留下座位上一张带血的纸条。班长陈晓惊恐地站起来：“顾无咎，你到底在干什么？那个座位一直是空的！”顾无咎攥紧照片，倒计时数字跳动到“47:58:40”，他明白，这个鬼域已经把所有人卷入了，而他的每一步，都在加速倒计时。"
       }
     }
   ],

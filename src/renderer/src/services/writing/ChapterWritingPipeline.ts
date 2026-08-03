@@ -743,8 +743,15 @@ export class ChapterWritingPipeline {
       return asArray.data;
     }
     const detail = parsed.warnings?.slice(-2).join('；') || asArray.warnings?.slice(-2).join('；');
+    // 附上 AI 原始返回片段，便于定位补字等场景的模型输出（trace 记录 error.message）。
+    // 剥离控制字符，避免模型输出中的换行/转义注入日志或 UI。
+    const rawSnippet = `\n--- AI 原始返回（前 300 字）---\n${trimmed
+      .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/gu, '')
+      .slice(0, 300)}`;
     throw new Error(
-      detail ? `AI 返回的结构化 JSON 无法解析：${detail}` : 'AI 未返回可解析的结构化 JSON'
+      (detail
+        ? `AI 返回的结构化 JSON 无法解析：${detail}`
+        : 'AI 未返回可解析的结构化 JSON') + rawSnippet
     );
   }
 

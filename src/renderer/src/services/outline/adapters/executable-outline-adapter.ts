@@ -15,7 +15,6 @@ import type {
   GeneratedWorldSetting,
 } from '@/types/inspiration';
 import {
-  buildChainedCbn,
   buildMidChapterCen,
   enrichThinCpns,
 } from '@/services/story-runtime/chapterBlueprintNormalize';
@@ -433,8 +432,6 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
   const chapters: GeneratedChapter[] = [];
 
   let globalChapterNo = 0;
-  // 上一章的 CEN，用于本章 CBN 承接（跨块保留，使第 6 章能承接第 5 章结尾）
-  let prevChapterCEN: string | undefined;
 
   blocks.forEach((block, blockIndex) => {
     const isLastBlock = blockIndex === blocks.length - 1;
@@ -467,14 +464,15 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
 
       const isFirstChapterOverall = globalChapterNo === 1;
 
-      // CBN（Bug 1/Q1 修复）：首章用开篇钩子；非首章承接上一章的 CEN，
-      // 形成 CBN→CEN→CBN 连锁，避免“承接上章，继续推进：{objective}”这类
-      // 对模型零信息量的占位文案被当成硬约束注入。
+      // CBN：首章用开篇钩子；非首章用本章关键事件（推进句），
+      // 不再承接上一章 CEN——原「CBN→CEN→CBN 连锁」会把上章章末复述
+      // 当成下章履约目标，形成「承接上章结尾：{上章CEN截尾}」模板循环污染，
+      // 且 CBN/CPNs/mustCover 全被上章内容占位、本章新事件无处落地。
       const CBN = isFirstChapterOverall
         ? outline.startupPack30.openingHook || block.objective
-        : prevChapterCEN
-          ? buildChainedCbn(prevChapterCEN, block.objective)
-          : `承接前段：${block.objective}`;
+        : keyEvents.length > 0
+          ? keyEvents.join('，')
+          : block.objective;
 
       // CPNs：派生 1-3 个推进节点；单薄 keyEvent 时从 CBN 子句补齐
       const CPNs = enrichThinCpns(
@@ -482,13 +480,10 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
         CBN
       );
 
-      // CEN（Bug 1 修复）：块末章用本块必留钩子；非末章用具体情节后果，禁止元指令/塌缩。
+      // CEN（Bug 1 修复）：块末章用本块必留钩子；非末章用本章关键事件的具体后果
       const CEN = isBlockLastChapter
         ? block.hookRequirement || `完成本区间第 ${i + 1}/${blockSize} 段推进，转向下一区间`
         : buildMidChapterCen(keyEvents.length > 0 ? keyEvents : CPNs, CBN);
-
-      // 记录本章 CEN 供下一章 CBN 承接
-      prevChapterCEN = CEN;
 
       // mustCover：本章承接的关键事件
       const mustCover = keyEvents.length > 0 ? keyEvents : undefined;

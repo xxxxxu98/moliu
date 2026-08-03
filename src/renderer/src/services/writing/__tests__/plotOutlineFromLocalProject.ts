@@ -3,7 +3,6 @@
  */
 import type { PlotNode } from '@/types/project';
 import {
-  buildChainedCbn,
   buildMidChapterCen,
   enrichThinCpns,
   normalizeChapterBlueprint,
@@ -84,7 +83,6 @@ export function ensurePlotOutlineForLocalProject(project: LocalMoliuProject): Pl
   const openingHook = pack?.openingHook || project.description || '开篇';
   const nodes: PlotNode[] = [];
   let globalChapterNo = 0;
-  let prevChapterCEN: string | undefined;
   let plotIndex = 0;
 
   if (blocks.length === 0) {
@@ -128,9 +126,9 @@ export function ensurePlotOutlineForLocalProject(project: LocalMoliuProject): Pl
 
       const CBN = isFirstChapterOverall
         ? openingHook
-        : prevChapterCEN
-          ? buildChainedCbn(prevChapterCEN, block.objective)
-          : `承接前段：${block.objective}`;
+        : keyEvents.length > 0
+          ? keyEvents.join('，')
+          : block.objective;
       const CPNs = enrichThinCpns(
         keyEvents.length > 0 ? keyEvents.slice(0, 3) : [`推进 ${block.objective}`],
         CBN
@@ -158,7 +156,6 @@ export function ensurePlotOutlineForLocalProject(project: LocalMoliuProject): Pl
         globalChapterNo,
         chapter.id
       );
-      prevChapterCEN = node.CEN;
       nodes.push(node);
     }
   }

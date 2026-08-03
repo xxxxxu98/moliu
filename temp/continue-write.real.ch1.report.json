@@ -1,8 +1,8 @@
 {
   "kind": "continue-write-real-summary",
-  "at": "2026-08-02T06:31:43.163Z",
-  "runId": "continue-write-real-proj-1785392282915-batch-ch1-1785651896252",
-  "book": "仵作提刑官",
+  "at": "2026-08-03T06:06:51.760Z",
+  "runId": "continue-write-real-proj-1785725027572-batch-ch1-1785736406328",
+  "book": "《所有厉鬼都在躲我》",
   "chapterNumber": 1,
   "provider": "openai",
   "providerId": "provider-1781144969420",
@@ -10,11 +10,11 @@
   "success": true,
   "commitStatus": "accepted",
   "commitReasons": [],
-  "commitId": "proj-1785392282915:chapter:1:commit:779e2552",
+  "commitId": "proj-1785725027572:chapter:1:commit:9d15b96d",
   "receipt": {
-    "commitId": "proj-1785392282915:chapter:1:commit:779e2552",
+    "commitId": "proj-1785725027572:chapter:1:commit:9d15b96d",
     "revision": 1,
-    "acceptedAt": "2026-08-02T06:26:19.541Z"
+    "acceptedAt": "2026-08-03T05:55:34.477Z"
   },
   "reportAccepted": true,
   "reportIssueCount": 0,
@@ -33,71 +33,98 @@
     "blocked": 0,
     "blockedCandidateIds": []
   },
-  "wordCount": 2729,
+  "wordCount": 2610,
   "targetWordCount": 3000,
   "wordTimeline": {
-    "draftWords": 2729,
-    "afterPadWords": 2729,
-    "finalWords": 2729,
-    "supplementAiRounds": 0,
+    "draftWords": 897,
+    "afterPadWords": 2610,
+    "finalWords": 2610,
+    "supplementAiRounds": 3,
     "condenseAiRounds": 0
   },
   "rewriteRounds": 0,
   "purposes": [
+    "scene-draft",
+    "scene-draft",
+    "scene-draft",
     "scene-draft",
     "fact-extraction",
     "chapter-judge"
   ],
   "schemas": [
     "SceneDraft",
+    "SupplementParagraphs",
+    "SupplementParagraphs",
+    "SupplementParagraphs",
     "ExtractedFacts",
     "ChapterJudgeResult"
   ],
-  "schemaFlow": "scene-draft:SceneDraft → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
+  "schemaFlow": "scene-draft:SceneDraft → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → scene-draft:SupplementParagraphs → fact-extraction:ExtractedFacts → chapter-judge:ChapterJudgeResult",
   "steps": [
     {
       "seq": 1,
       "purpose": "scene-draft",
       "schemaName": "SceneDraft",
-      "ms": 30229,
+      "ms": 29905,
       "hasError": false
     },
     {
       "seq": 2,
-      "purpose": "fact-extraction",
-      "schemaName": "ExtractedFacts",
-      "ms": 20441,
-      "hasError": false
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 19826,
+      "hasError": true
     },
     {
       "seq": 3,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 16295,
+      "hasError": false
+    },
+    {
+      "seq": 4,
+      "purpose": "scene-draft",
+      "schemaName": "SupplementParagraphs",
+      "ms": 4495,
+      "hasError": false
+    },
+    {
+      "seq": 5,
+      "purpose": "fact-extraction",
+      "schemaName": "ExtractedFacts",
+      "ms": 41949,
+      "hasError": false
+    },
+    {
+      "seq": 6,
       "purpose": "chapter-judge",
       "schemaName": "ChapterJudgeResult",
-      "ms": 32568,
+      "ms": 15636,
       "hasError": false
     }
   ],
-  "stepCount": 3,
-  "totalAiMs": 83238,
+  "stepCount": 6,
+  "totalAiMs": 128106,
   "runtimeBackend": "memory",
   "taskBook": {
     "present": true,
-    "CBN": "现代法医宋辞穿越成贱籍仵作，正在验尸时当众指出死者系县令公子刘文韬所害，被刘文韬反诬入狱，必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
+    "CBN": "顾无咎在教室醒来，满地尸体，只有他还活着。",
     "CPNs": [
-      "穿越醒来正在验尸",
-      "现代法医宋辞穿越成贱籍仵作",
-      "正在验尸时当众指出死者系县令公子刘文韬所害"
+      "顾无咎在教室醒来",
+      "满地尸体",
+      "只有他还活着"
     ],
-    "CEN": "必须在三天内用尸检铁证翻案自证清白，否则将被处斩",
+    "CEN": "完成校园鬼域的开篇勾子与主角绑定位",
     "mustCoverCount": 3,
-    "forbiddenZonesCount": 4
+    "forbiddenZonesCount": 3
   },
-  "tracePath": "temp/ai-traces/continue-write-real-proj-1785392282915-batch-ch1-1785651896252.jsonl",
+  "tracePath": "temp/ai-traces/continue-write-real-proj-1785725027572-batch-ch1-1785736406328.jsonl",
   "stepsPath": "temp/continue-write.real.ch1.steps.txt",
   "summaryPath": "temp/continue-write.real.ch1.summary.json",
   "prosePreview": {
-    "head": "宋辞是被一阵恶臭熏醒的。\n\n他睁开眼，眼前是一具肿胀发青的女尸，颈间勒着一条麻绳，舌头微微外伸。他手里正握着一把生锈的解剖刀，刀刃上沾着暗红色的血迹。周围站着几个穿皂衣的衙役，一个师爷模样的老头正拿袖子捂着鼻子，不耐烦地催他：“宋仵作，愣着干什么？赶紧验啊，县太爷还等着结案呢。”\n\n宋辞脑子里嗡的一声。上一秒他还在市局",
-    "tail": "知道的是，宋辞在牢里已经想到了这一层。他低声自语：“尸体……他们一定会毁尸灭迹。我必须赶在他们之前，让尸体上的证据变得不可销毁。”\n\n他摸了摸怀里那把解剖刀，嘴角露出一丝苦笑。穿越第一天，就给自己惹上了杀身之祸。但这条路，他选定了，就不会回头。\n\n死人是唯一的证词，而他，是唯一的翻译官。\n\n三天期限，从此刻开始倒计时。"
+    "head": "顾无咎是被一阵刺鼻的血腥味呛醒的。他睁开眼睛，后脑勺钝痛，像被人抡了一棍子。天花板上的日光灯管还在亮，但光线惨白，照得整个教室像停尸房。\n\n他撑着地面坐起来，手掌按到一滩黏糊糊的东西。低头一看，是血。暗红色的，已经半凝固。他猛地缩回手，这时候才注意到周围的情况——课桌椅东倒西歪，地上横七竖八躺着人，全是他班上的同学。有",
+    "tail": "无咎跌入洞中，眼前一片漆黑，阴风扑面而来。他伸手摸索，触到湿冷的墙壁，耳畔是沉闷的呼吸声——不是自己的。他猛地回头，却见洞口已被封死，只有微弱的光从缝隙透入。他心中一惊，难道自己被困在了这里？就在这时，前方传来一阵若有若无的哭声，像从地狱深处传来。顾无咎握紧拳头，循声走去，脚下踩到什么东西，低头一看，是一截苍白的手指。"
   },
   "note": "本文件已与当次跑次同步；权威摘要见 continue-write.real.ch1.summary.json"
 }

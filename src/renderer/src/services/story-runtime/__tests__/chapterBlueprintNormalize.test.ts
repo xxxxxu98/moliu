@@ -148,7 +148,8 @@ describe('chapterBlueprintNormalize', () => {
       2
     );
 
-    expect(normalized.CBN).toBe(`开场承接：${GENERIC_PLOT.accuseBeat}`);
+    // CBN 清洗后不再保留「开场承接：」模板前缀（去前缀独立事件句）
+    expect(normalized.CBN).toBe(GENERIC_PLOT.accuseBeat);
     expect(normalized.CBN).not.toContain('本章只推进到可落地');
     expect(normalized.CPNs.every(item => !item.includes('本章只推进到可落地'))).toBe(true);
     expect(normalized.CEN).not.toContain('本章只推进到可落地');
