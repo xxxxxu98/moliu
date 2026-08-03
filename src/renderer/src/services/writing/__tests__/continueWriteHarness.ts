@@ -1,3 +1,23 @@
+/**
+ * 续写 harness：与真实 App 路径对齐（useBatchWriter / WritingOrchestratorV2）
+ *
+ * 对齐点（batch 多章，与 useBatchWriter.startBatchWriting 同语义）：
+ * - 单章执行：ChapterWritingPipeline.execute + BATCH_CONTINUE_PRESET
+ *   （useTaskBook=true / enablePreflight=false / enableSupplement=true）
+ * - 正式长篇路径：forceStoryRuntime=true ↔ App hasStoryRuntime()=true → LongFormWritingEngine
+ * - 前章衔接：ContextManager 提取 previousChapter（title/summary/ending）
+ * - 持久化：createChapterPersistenceClient（落 Pinia store）
+ * - 失败策略：单章最多 maxRetries=3 次，2^attempt 秒指数退避，耗尽停止整个批量
+ * - 写作风格：batch 默认 'humorous'（App 批量 UI 默认值）
+ * - 停止信号：signal 透传 pipeline.execute（对齐 abortController.signal）
+ * - 记忆提取：enableMemoryExtract=true 时启用 createChapterMemoryClient
+ *
+ * 残留差异（有意，冒烟环境约束）：
+ * - 循环控制不复刻：真实从第一个空章节开始 / 跳过已有内容 / 无空章节自动建章 /
+ *   完结判断 / 暂停恢复 —— 均为 UI 交互面；冒烟以「清空全部章节 + ensureLocalChapterSlots 预补槽」等价替代
+ * - 每章重新 hydrate Pinia 并新建 pipeline 实例；LongForm 路径无跨章状态，行为等价
+ * - AI 来自 temp 配置文件而非 active provider，且包 RecordingStructuredAI 录制轨迹
+ */
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -23,7 +43,10 @@ import {
   assertPurposeSequence,
 } from '@/services/story-runtime/promptInvariants';
 import { makeBootstrap } from '@/services/story-runtime/__tests__/testFixtures';
-import type { ChapterWriteOutput } from '@/services/writing/ChapterWritingPipeline';
+import type {
+  ChapterWriteOutput,
+  WritingStyle,
+} from '@/services/writing/ChapterWritingPipeline';
 import { ChapterWritingPipeline } from '@/services/writing/ChapterWritingPipeline';
 import {
   BATCH_CONTINUE_PRESET,
@@ -31,7 +54,10 @@ import {
 } from '@/services/writing/chapterWritePresets';
 import { countWords } from '@/services/writing/utils';
 import { MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
-import { createChapterPersistenceClient } from '@/services/writing/chapterPersistenceAdapters';
+import {
+  createChapterMemoryClient,
+  createChapterPersistenceClient,
+} from '@/services/writing/chapterPersistenceAdapters';
 import { ContextManager } from '@/services/writing/context-manager';
 import { executeSmartContinue } from '@/services/writing/smartContinue';
 import { useProjectStore } from '@/stores/project.store';
@@ -636,6 +662,18 @@ export interface ContinueWriteSession {
     provider?: string;
     /** 默认 smart；多章正式路径传 batch */
     mode?: ContinueWriteMode;
+    /**
+     * 写作风格。batch 默认 'humorous'（与 App 批量 UI 默认一致），
+     * smart 默认 'concise'（历史行为）。
+     */
+    writingStyle?: WritingStyle;
+    /** 用户停止信号（对齐 useBatchWriter 的 abortController.signal） */
+    signal?: AbortSignal;
+    /**
+     * 启用与 App 相同的记忆提取（createChapterMemoryClient）。
+     * 默认 false；vitest 环境无 electronAPI 时文件保存与 AI 增强自动降级。
+     */
+    enableMemoryExtract?: boolean;
   }): Promise<ContinueWriteChapterRunResult>;
   dispose(): void;
 }
@@ -734,8 +772,15 @@ export function openContinueWriteSession(options: {
       );
       await runtime.bootstrap(bootstrap);
 
-      // 与正式 App 同 persistence（落 Pinia）；记忆提取在冒烟中关闭，避免额外未录制 AI 调用
+      // 与正式 App 同 persistence（落 Pinia）。记忆提取默认关闭（避免额外未录制 AI 调用）；
+      // enableMemoryExtract=true 时启用与 App 相同的 createChapterMemoryClient（best-effort：
+      // vitest 无 window.electronAPI 时文件保存与 AI 增强自动降级，不会落盘真实记忆文件）
       const persistence = createChapterPersistenceClient();
+      const memoryClient = chapterOptions.enableMemoryExtract
+        ? createChapterMemoryClient()
+        : {
+            extractAndSave: async () => null,
+          };
       const pipelineDeps = {
         forceStoryRuntime: true as const,
         structuredAI: recording,
@@ -744,13 +789,13 @@ export function openContinueWriteSession(options: {
         preflightService,
         contextAgent,
         persistence,
-        memoryClient: {
-          extractAndSave: async () => null,
-        },
+        memoryClient,
       };
 
       const targetWordCount = chapterOptions.targetWordCount ?? 3000;
-      const writingStyle = 'concise' as const;
+      // 与真实 App 对齐：batch 默认 'humorous'（批量 UI 默认），smart 保持 'concise'
+      const writingStyle: WritingStyle =
+        chapterOptions.writingStyle ?? (mode === 'batch' ? 'humorous' : 'concise');
       let output: ChapterWriteOutput;
 
       if (mode === 'smart') {
@@ -761,6 +806,7 @@ export function openContinueWriteSession(options: {
             chapter,
             targetWordCount,
             writingStyle,
+            signal: chapterOptions.signal,
           },
           pipelineDeps
         );
@@ -778,6 +824,7 @@ export function openContinueWriteSession(options: {
           writingStyle,
           ...batchFlags,
           previousChapter: buildBatchPreviousChapter(previous),
+          signal: chapterOptions.signal,
         });
       }
 
@@ -867,6 +914,17 @@ export async function runContinueWriteChapters(options: {
   provider?: string;
   /** 默认 batch，与 useBatchWriter 对齐 */
   mode?: ContinueWriteMode;
+  /**
+   * 单章失败最大尝试次数（默认 3，与 useBatchWriter config.maxRetries 默认一致）。
+   * 失败按 2^attempt 秒指数退避后重试本章，耗尽则停止整个批量（对齐 startBatchWriting）。
+   */
+  maxRetries?: number;
+  /** 写作风格；batch 默认 'humorous'（App 批量 UI 默认），smart 默认 'concise' */
+  writingStyle?: WritingStyle;
+  /** 用户停止信号（对齐 useBatchWriter 的 abortController.signal） */
+  signal?: AbortSignal;
+  /** 启用与 App 相同的记忆提取（createChapterMemoryClient）；默认 false */
+  enableMemoryExtract?: boolean;
 }): Promise<{
   runtimeBackend: HarnessRuntimeBackend;
   project: Project;
@@ -876,23 +934,55 @@ export async function runContinueWriteChapters(options: {
   const fromChapter = Math.max(1, options.fromChapter);
   const chapterCount = Math.max(1, options.chapterCount);
   const mode: ContinueWriteMode = options.mode ?? 'batch';
+  const maxRetries = Math.max(1, options.maxRetries ?? 3);
   const session = openContinueWriteSession({ project: options.project });
   const chapters: ContinueWriteChapterRunResult[] = [];
   try {
     for (let offset = 0; offset < chapterCount; offset += 1) {
       const chapterNumber = fromChapter + offset;
-      const result = await session.runChapter({
-        chapterNumber,
-        targetWordCount: options.targetWordCount,
-        ai: options.ai,
-        runId: `${options.runIdPrefix ?? `continue-write-${mode}`}-ch${chapterNumber}-${Date.now()}`,
-        persistTrace: options.persistTrace,
-        model: options.model,
-        provider: options.provider,
-        mode,
-      });
-      chapters.push(result);
-      if (!result.output.success) {
+      // 对齐 useBatchWriter.startBatchWriting：单章失败指数退避重试，耗尽则停止整个批量
+      let finalResult: ContinueWriteChapterRunResult | null = null;
+      let lastError = '';
+      for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
+        if (options.signal?.aborted) break;
+        try {
+          finalResult = await session.runChapter({
+            chapterNumber,
+            targetWordCount: options.targetWordCount,
+            ai: options.ai,
+            runId: `${options.runIdPrefix ?? `continue-write-${mode}`}-ch${chapterNumber}-${Date.now()}`,
+            persistTrace: options.persistTrace,
+            model: options.model,
+            provider: options.provider,
+            mode,
+            writingStyle: options.writingStyle,
+            signal: options.signal,
+            enableMemoryExtract: options.enableMemoryExtract,
+          });
+          lastError = finalResult.output.error ?? '';
+        } catch (error) {
+          lastError = error instanceof Error ? error.message : String(error);
+          finalResult = null;
+        }
+        if (finalResult?.output.success) break;
+        if (attempt < maxRetries) {
+          const waitSeconds = 2 ** attempt; // 2s, 4s, 8s...（与 useBatchWriter 一致）
+          // eslint-disable-next-line no-console
+          console.warn(
+            `[runContinueWriteChapters] 第${chapterNumber}章失败（第 ${attempt}/${maxRetries} 次），${waitSeconds}s 后重试：${lastError}`
+          );
+          await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
+        }
+      }
+      // 最后一次尝试的结果（成功或失败）都保留，便于诊断
+      if (finalResult) chapters.push(finalResult);
+      if (!finalResult || !finalResult.output.success) {
+        if (lastError) {
+          // eslint-disable-next-line no-console
+          console.error(
+            `[runContinueWriteChapters] 第${chapterNumber}章连续 ${maxRetries} 次失败，停止批量：${lastError}`
+          );
+        }
         break;
       }
     }

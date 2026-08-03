@@ -169,6 +169,9 @@ describe.skipIf(!isRealMultiEnabled())('continueWrite REAL AI · 多章批量续
         model: cfg.model,
         provider: cfg.provider,
         mode: 'batch',
+        // 与真实批量对齐：失败重试（默认 3 次 + 指数退避）、App 默认写作风格、
+        // 启用真实记忆提取（best-effort，vitest 环境无 electronAPI 时自动降级）
+        enableMemoryExtract: true,
       });
 
       // 失败章也落盘，便于排查（断言放在持久化之后）

@@ -14,4 +14,4 @@ export const writingStyleOptions = [
   { label: '古风古韵', value: 'ancient' },
 ] as const;
 
-export const DEFAULT_WORD_COUNT = 2000;
+export const DEFAULT_WORD_COUNT = 3000;
