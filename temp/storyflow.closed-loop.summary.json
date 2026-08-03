@@ -1,16 +1,34 @@
 {
-  "book": "权宦之谋",
+  "book": "大夏经济顾问",
   "mode": "storyflow-closed-loop",
   "chapters": 30,
   "batch": [
     {
       "ch": 1,
       "accepted": true,
-      "words": 1947,
+      "words": 1951,
       "error": null
     },
     {
       "ch": 2,
+      "accepted": true,
+      "words": 1923,
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "words": 1926,
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "words": 1948,
+      "error": null
+    },
+    {
+      "ch": 5,
       "accepted": true,
       "words": 1927,
       "error": null
@@ -19,5 +37,5 @@
   "runtimeBackend": "memory",
   "provider": "openai",
   "model": "deepseek-v4-flash[1m]",
-  "totalMs": 304600
+  "totalMs": 240917
 }
