@@ -20,7 +20,8 @@ export type OutlineQualityIssueKind =
   | 'duplicated-forbidden'
   | 'missing-selling-point'
   | 'broken-range'
-  | 'unbalanced-paren';
+  | 'unbalanced-paren'
+  | 'opening-hook';
 
 export interface OutlineQualityIssue {
   kind: OutlineQualityIssueKind;
@@ -58,6 +59,19 @@ export function parseChapterRange(range: string): { start: number; end: number }
 export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualityIssue[] {
   const issues: OutlineQualityIssue[] = [];
   if (!outline) return issues;
+
+  // 0. 开篇钩子：为空或超过 45 字（阈值/文案与 topicDiscovery real harness 的
+  //    collectQualityIssues 一致；差异：此处先 trim 再判空/判长，纯空白串与
+  //    首尾空格会按更严格口径处理——reporter 更严、更合理，harness 不 trim）
+  const openingHook = (outline.startupPack30?.openingHook ?? '').trim();
+  if (!openingHook) {
+    issues.push({ kind: 'opening-hook', detail: '开篇钩子为空' });
+  } else if (openingHook.length > 45) {
+    issues.push({
+      kind: 'opening-hook',
+      detail: `开篇钩子过长（${openingHook.length} 字 > 45）：${openingHook.slice(0, 30)}…`,
+    });
+  }
 
   const blocks = outline.startupPack30?.chapterBlocks ?? [];
 

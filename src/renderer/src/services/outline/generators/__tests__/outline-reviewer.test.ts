@@ -175,6 +175,49 @@ describe('inspectOutlineQuality', () => {
     );
   });
 
+  it('开篇钩子为空或超过 45 字命中 opening-hook', () => {
+    const outline = makeDirtyOutline();
+    outline.startupPack30.openingHook = '钩'.repeat(50);
+    expect(
+      inspectOutlineQuality(outline).some(issue => issue.kind === 'opening-hook')
+    ).toBe(true);
+
+    outline.startupPack30.openingHook = '';
+    expect(
+      inspectOutlineQuality(outline).some(issue => issue.kind === 'opening-hook')
+    ).toBe(true);
+
+    // 纯空白串（reporter 先 trim，按“为空”更严格口径命中）
+    outline.startupPack30.openingHook = '   ';
+    expect(
+      inspectOutlineQuality(outline).some(issue => issue.kind === 'opening-hook')
+    ).toBe(true);
+  });
+
+  it('开篇钩子合规不误报', () => {
+    const outline = makeDirtyOutline();
+    outline.startupPack30.openingHook = '主角在教室醒来';
+    expect(inspectOutlineQuality(outline).some(issue => issue.kind === 'opening-hook')).toBe(false);
+  });
+
+  it('开篇钩子 45 字边界：45 不报、46 报', () => {
+    const outline = makeDirtyOutline();
+    outline.startupPack30.openingHook = '钩'.repeat(45);
+    expect(inspectOutlineQuality(outline).some(issue => issue.kind === 'opening-hook')).toBe(false);
+
+    outline.startupPack30.openingHook = '钩'.repeat(46);
+    expect(inspectOutlineQuality(outline).some(issue => issue.kind === 'opening-hook')).toBe(true);
+  });
+
+  it('startupPack30 缺失不崩溃', () => {
+    const outline = makeDirtyOutline();
+    outline.startupPack30 = undefined as never;
+    // 不抛异常；开篇钩子按“为空”报（可选链兜底），其余规则照常运行
+    const issues = inspectOutlineQuality(outline);
+    expect(Array.isArray(issues)).toBe(true);
+    expect(issues.some(issue => issue.kind === 'opening-hook')).toBe(true);
+  });
+
   it('干净大纲零问题', () => {
     expect(inspectOutlineQuality(makeCleanOutline())).toEqual([]);
   });

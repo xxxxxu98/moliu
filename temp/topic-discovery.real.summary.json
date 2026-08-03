@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-03T09:12:13.283Z",
+  "at": "2026-08-03T11:51:05.489Z",
   "provider": "openai",
   "model": "deepseek-v4-flash[1m]",
   "wordCountRange": "30万-60万",
@@ -7,58 +7,55 @@
     {
       "module": "seeds",
       "chapters": 30,
-      "openingHookLength": 24,
+      "openingHookLength": 19,
       "qualityIssues": [],
-      "aiMs": 323001,
-      "seedTitle": "我靠卖煎饼果子成了星际领主",
-      "directionTitle": "星际煎饼王：从街边摊到美食军火商"
+      "aiMs": 263071,
+      "seedTitle": "《修真BUG修复师》",
+      "directionTitle": "修真BUG修复师之漏洞猎手"
     },
     {
       "module": "radar",
       "chapters": 30,
-      "openingHookLength": 32,
+      "openingHookLength": 22,
       "qualityIssues": [],
-      "aiMs": 407311,
-      "seedTitle": "我修改了公司的第1条规则",
-      "directionTitle": "规则篡改者"
+      "aiMs": 290849,
+      "seedTitle": "我的AI是废物回收站",
+      "directionTitle": "AI废品站：捡漏异能王"
     },
     {
       "module": "mix",
       "chapters": 30,
-      "openingHookLength": 33,
-      "qualityIssues": [
-        "[21-25章] 必出事件括号未配对：恐慌中他通过回溯玉佛照片（无血文物…",
-        "[21-25章] 必出事件括号未配对：无法回溯）…"
-      ],
-      "aiMs": 373295,
-      "seedTitle": "直播鉴宝，我专盯凶器",
-      "directionTitle": "凶器猎手：直播鉴凶三十年"
+      "openingHookLength": 19,
+      "qualityIssues": [],
+      "aiMs": 303250,
+      "seedTitle": "《直播鉴宝：我一眼看出你是凶手》",
+      "directionTitle": "直播鉴宝：系统让我当神探"
     },
     {
       "module": "dice",
       "chapters": 30,
-      "openingHookLength": 19,
+      "openingHookLength": 18,
       "qualityIssues": [],
-      "aiMs": 324584,
-      "seedTitle": "仵作直播：解剖百鬼不算啥",
-      "directionTitle": "仵作直播：我在南宋解剖百鬼"
+      "aiMs": 294404,
+      "seedTitle": "《仵作今天也想下班》",
+      "directionTitle": "致命预言"
     },
     {
       "module": "twist",
       "chapters": 30,
-      "openingHookLength": 36,
+      "openingHookLength": 23,
       "qualityIssues": [],
-      "aiMs": 282548,
-      "seedTitle": "修仙大佬在互联网大厂996",
-      "directionTitle": "我在大厂修仙996"
+      "aiMs": 316929,
+      "seedTitle": "我的系统是负债累累版",
+      "directionTitle": "我的系统是黑心高利贷"
     },
     {
       "module": "prompt",
       "chapters": 30,
-      "openingHookLength": 14,
+      "openingHookLength": 25,
       "qualityIssues": [],
-      "aiMs": 311993,
-      "directionTitle": "科学降妖人"
+      "aiMs": 292825,
+      "directionTitle": "科学除妖局"
     }
   ]
 }
