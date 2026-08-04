@@ -122,8 +122,11 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     signal?: AbortSignal,
   ): GenerateOptions {
     return {
-      temperature: options?.temperature ?? 0.7,
-      topP: options?.topP ?? 0.9,
+      // 不在此处填充 temperature/topP 默认值：未显式指定时保持 undefined，
+      // 由 UnifiedOutlineGenerator 按「显式 options > 厂商 generationConfig > 硬编码默认」解析，
+      // 否则硬编码默认值会遮蔽用户在设置页配置的厂商生成参数。
+      temperature: options?.temperature,
+      topP: options?.topP,
       wordCountRange: options?.wordCountRange ?? DEFAULT_WORD_COUNT_RANGE,
       maxRetries: options?.maxRetries ?? 2,
       ...(signal ? { signal } : {}),

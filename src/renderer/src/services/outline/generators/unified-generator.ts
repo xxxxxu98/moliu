@@ -8,7 +8,11 @@ import type { Outline } from '../schemas/outline.schema';
 import type { ProviderType } from '@/config/ai-providers';
 import { getBaseUrl } from '@/config/ai-providers';
 import { useActiveAIProvider } from '@/composables/useActiveAIProvider';
-import { useSettingsStore, type AIDefaultModelSelection } from '@/stores/settings.store';
+import {
+  useSettingsStore,
+  type AIDefaultModelSelection,
+  type AIGenerationConfig,
+} from '@/stores/settings.store';
 import { buildWordCountBreakdown } from '../utils';
 import { buildWebnovelCraftPrompt } from '../prompts/system/core-principles';
 import type { DirectionGenerationResult, OutlineDirection } from '../types/direction';
@@ -103,9 +107,12 @@ export interface GenerationResult {
  * 4. 传统模式
  */
 export class UnifiedOutlineGenerator {
+  /**
+   * 默认选项不含 temperature/topP：两者均交给请求层按
+   * 「显式 options > 厂商 generationConfig > 硬编码默认」解析，
+   * 否则这里的默认值会永远遮蔽厂商配置（?? 链取不到厂商值）。
+   */
   private defaultOptions: GenerateOptions = {
-    temperature: 0.7,
-    topP: 0.9,
     maxRetries: 2,
   };
 
@@ -147,8 +154,11 @@ export class UnifiedOutlineGenerator {
         }
 
         if (attempt < maxAttempts) {
-          // 解析失败通常是因为模型偏离格式：降温 + 收敛，而不是升温
-          opts.temperature = Math.max(0.2, (opts.temperature ?? 0.7) - 0.1);
+          // 解析失败通常是因为模型偏离格式：降温 + 收敛，而不是升温。
+          // 降温基准必须是“本次实际生效温度”（显式 options > 厂商 generationConfig > 0.7），
+          // 否则厂商配置为低温度（如 0.2）时，重试会从 0.7 基准“升温”到 0.6 并覆盖厂商配置。
+          // resolveTemperature 已按「显式 options > 厂商 generationConfig > 0.7」解析生效值
+          opts.temperature = Math.max(0.2, this.resolveTemperature(opts) - 0.1);
         }
       } catch (error) {
         // 主动取消（竞态 / 重置）直接向上抛，由调用方按 currentId 判定丢弃，
@@ -288,6 +298,8 @@ export class UnifiedOutlineGenerator {
       (result) => result.directions.length > 0,
       options?.maxRetries ?? 2,
       onProgress,
+      // 冷却基准 = 本次生效温度，避免厂商低温度配置被 0.7 基准“升温”
+      options?.temperature ?? this.getAIConfig().generationConfig?.temperature ?? 0.7,
     );
   }
 
@@ -365,6 +377,8 @@ export class UnifiedOutlineGenerator {
       (result) => result.outline !== null && !result.severelyTruncated,
       options?.maxRetries ?? 2,
       onProgress,
+      // 冷却基准 = 本次生效温度，避免厂商低温度配置被 0.7 基准“升温”
+      options?.temperature ?? this.getAIConfig().generationConfig?.temperature ?? 0.7,
     );
   }
 
@@ -380,6 +394,8 @@ export class UnifiedOutlineGenerator {
     isSuccess: (result: T) => boolean,
     maxAttempts: number,
     onProgress?: (message: string) => void,
+    /** 重试降温的基准温度：应为本次请求生效温度（显式 options > 厂商 generationConfig > 0.7） */
+    baseTemperature?: number,
   ): Promise<T> {
     const total = Math.max(1, maxAttempts);
     let lastResult: T | null = null;
@@ -393,7 +409,7 @@ export class UnifiedOutlineGenerator {
           return lastResult;
         }
         if (attempt < total) {
-          coolingTemp = Math.max(0.2, (this.defaultOptions.temperature ?? 0.7) - 0.1 * attempt);
+          coolingTemp = Math.max(0.2, (baseTemperature ?? 0.7) - 0.1 * attempt);
           onProgress?.(`结果不完整，重试中... (${attempt}/${total})`);
         }
       } catch (error) {
@@ -422,6 +438,9 @@ export class UnifiedOutlineGenerator {
         config.apiKey,
         config.baseUrl,
         config.model,
+        undefined,
+        // 透传厂商 generationConfig：legacy 兜底同样遵循「显式 options > 厂商配置 > 默认」
+        config.generationConfig,
       );
 
       const result = await service.generateOutline(
@@ -515,8 +534,8 @@ export class UnifiedOutlineGenerator {
             }],
           },
           generationConfig: {
-            temperature: options.temperature || 0.7,
-            topP: options.topP || 0.9,
+            temperature: options.temperature ?? config.generationConfig?.temperature ?? 0.7,
+            topP: options.topP ?? config.generationConfig?.topP ?? 0.9,
           },
         }),
         ...(signal ? { signal } : {}),
@@ -564,8 +583,8 @@ export class UnifiedOutlineGenerator {
           model,
           system: systemPrompt,
           messages: [{ role: 'user', content: userContent }],
-          temperature: options.temperature || 0.7,
-          top_p: options.topP || 0.9,
+          temperature: options.temperature ?? config.generationConfig?.temperature ?? 0.7,
+          top_p: options.topP ?? config.generationConfig?.topP ?? 0.9,
         }),
         ...(signal ? { signal } : {}),
       });
@@ -601,8 +620,8 @@ export class UnifiedOutlineGenerator {
       body: JSON.stringify({
         model: config.model || undefined,
         messages,
-        temperature: options.temperature || 0.7,
-        top_p: options.topP || 0.9,
+        temperature: options.temperature ?? config.generationConfig?.temperature ?? 0.7,
+        top_p: options.topP ?? config.generationConfig?.topP ?? 0.9,
       }),
       ...(signal ? { signal } : {}),
     });
@@ -722,11 +741,24 @@ ${buildWebnovelCraftPrompt()}
     return buildWordCountBreakdown(wordCountRange).targetWordCount;
   }
 
+  /**
+   * 解析本次请求的生效温度：显式 options > 厂商 generationConfig > 硬编码默认 0.7。
+   * 供重试降温等场景作为“降温基准”，避免硬编码 0.7 基准遮蔽低温度厂商配置。
+   */
+  private resolveTemperature(options?: GenerateOptions): number {
+    if (options?.temperature !== undefined) {
+      return options.temperature;
+    }
+    return this.getAIConfig().generationConfig?.temperature ?? 0.7;
+  }
+
   private getAIConfig(): {
     provider: ProviderType;
     apiKey: string;
     baseUrl: string;
     model?: string;
+    /** 厂商级生成参数（设置页「生成参数」），请求未显式指定时作为默认值 */
+    generationConfig?: AIGenerationConfig;
   } {
     const settingsStore = useSettingsStore();
     const providers = settingsStore.aiProviders;
@@ -753,6 +785,7 @@ ${buildWebnovelCraftPrompt()}
       apiKey: providerConfig.apiKey,
       baseUrl: providerConfig.baseUrl || getBaseUrl(providerConfig.provider as ProviderType),
       model: providerConfig.modelName,
+      generationConfig: providerConfig.generationConfig,
     };
   }
 }
