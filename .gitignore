@@ -105,5 +105,8 @@ temp/continue-write.real.ch*.summary.json
 temp/continue-write.real.ch*.steps.txt
 temp/continue-write.real.ch*.report.json
 temp/continue-write.real.multi.*
+# storyflow 闭环冒烟产物（真实 AI 大纲/正文，含未发布创作内容，不入库）
+temp/storyflow.closed-loop.*
+temp/storyflow.closed-loop.prose/
 test.md
 *.console.log

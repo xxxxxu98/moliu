@@ -436,6 +436,15 @@ export async function runSupplementRounds(
       if (!delta) {
         break;
       }
+      // 输出护栏（与 LongFormWritingEngine 补充轮一致）：单轮补充输出异常膨胀
+      // （如模型把 JSON 骨架当正文）时丢弃该轮，避免垃圾正文入库。
+      const maxDeltaChars = Math.max(6000, Math.ceil(params.targetWordCount * 3));
+      if (delta.length > maxDeltaChars) {
+        console.warn(
+          `[Supplement] 第 ${round} 轮补充输出异常膨胀（${delta.length} 字符 > ${maxDeltaChars}），丢弃该轮`
+        );
+        break;
+      }
 
       const separator = prose && !prose.endsWith('\n') ? '\n\n' : '';
       const candidateProse = normalizeWebnovelParagraphs(prose + separator + delta);

@@ -443,11 +443,119 @@ describe('LongFormWritingEngine', () => {
     expect(result.commit.status).toBe('rejected');
     expect(saveRejectedDraft).toHaveBeenCalledOnce();
   });
+
+  it('补充轮输出异常膨胀（混入 JSON 骨架）时丢弃该轮，正文不包含垃圾（Bug 7 护栏）', async () => {
+    const facts: FactExtractor = {
+      extract: async input => ({
+        events: [
+          {
+            id: 'event-1',
+            chapter: input.chapterNumber,
+            sceneId: input.sceneDrafts[0].sceneId,
+            type: 'checkpoint',
+            summary: '守卫盘查',
+            participants: ['hero'],
+            causes: [],
+            effects: ['守卫盘查'],
+            evidence: input.sceneDrafts[0].paragraphs,
+          },
+        ],
+        deltas: [],
+        evidence: input.sceneDrafts[0].paragraphs,
+      }),
+    };
+    const ai = new BloatSupplementAI();
+    const engine = new LongFormWritingEngine({
+      ai,
+      factExtractor: facts,
+      commitPort: {
+        commitChapter: async () => ({
+          commitId: 'commit-bloat',
+          revision: 1,
+          acceptedAt: '2026-01-02T00:00:00.000Z',
+        }),
+      },
+    });
+
+    const result = await engine.write({
+      projectId: 'project-1',
+      contracts: makeContracts(),
+      state: makeState(),
+      recentScenes: [],
+      retrievedScenes: [],
+      styleGuidance: ['克制'],
+      maxContextTokens: 10_000,
+      maxRewriteRounds: 2,
+      targetWordCount: 3000,
+    });
+
+    const finalProse = result.drafts[0].paragraphs.join('');
+    // 补充垃圾（JSON 骨架）被护栏丢弃：最终正文不含垃圾且未膨胀
+    expect(finalProse).not.toContain('paragraphs');
+    expect(finalProse.length).toBeLessThan(20_000);
+    expect(ai.bloatedSupplementRounds).toBeGreaterThan(0);
+  });
 });
 
-/** 首稿触发禁区字面命中，带 revision 后改写为合规正文 */
-class RewriteAwareAI implements StructuredAI {
+/** 补充轮返回超大垃圾文本（JSON 骨架），用于验证 Bug 7 输出护栏 */
+class BloatSupplementAI implements StructuredAI {
   draftCalls = 0;
+  bloatedSupplementRounds = 0;
+
+  async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
+    if (request.purpose === 'chapter-judge' || request.purpose === 'fulfillment-check') {
+      const payload = JSON.parse(request.prompt) as {
+        mustCover?: string[];
+        forbiddenZones?: string[];
+      };
+      return {
+        fulfillment: (payload.mustCover ?? []).map(node => ({
+          node,
+          fulfilled: true,
+          evidence: ['语义履约'],
+          reason: '测试放行',
+        })),
+        forbidden: (payload.forbiddenZones ?? []).map(zone => ({
+          zone,
+          violated: false,
+          evidence: [],
+          reason: '未触发',
+        })),
+        issues: [],
+        results: (payload.mustCover ?? []).map(node => ({
+          node,
+          fulfilled: true,
+          evidence: ['语义履约'],
+          reason: '测试放行',
+        })),
+      };
+    }
+    if (request.schemaName === 'SupplementParagraphs') {
+      this.bloatedSupplementRounds += 1;
+      // 混入 JSON 骨架的巨型输出（模拟实测 32 万字符异常）
+      return {
+        paragraphs: Array.from({ length: 20 }, () =>
+          '{paragraphs}```json{垃圾文本'.repeat(500)
+        ),
+      };
+    }
+    this.draftCalls += 1;
+    // 第 1 次 draft 极短（触发补字），重写轮给足字数
+    const short = this.draftCalls === 1;
+    return {
+      sceneId: 'chapter-1:CBN:scene',
+      beatId: 'chapter-1:CBN',
+      chapterTitle: '测试章',
+      paragraphs: short
+        ? ['这是第一版草稿。']
+        : Array.from({ length: 120 }, () => '这是完整版正文段落，内容充实，情节推进正常。'),
+      candidateEvents: [],
+    };
+  }
+}
+
+/** 首稿触发禁区字面命中，带 revision 后改写为合规正文 */
+class RewriteAwareAI implements StructuredAI {  draftCalls = 0;
   sawRevisionHints = false;
 
   async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {

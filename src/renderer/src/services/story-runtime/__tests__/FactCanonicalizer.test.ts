@@ -96,6 +96,106 @@ describe('FactCanonicalizer', () => {
     expect(report.issues.filter(issue => issue.domain === 'causality')).toEqual([]);
   });
 
+  it('inventory delta 的字符串 value 被归一/丢弃（Bug 9：证据类字符串不污染契约）', () => {
+    const facts: ExtractedFacts = {
+      events: [],
+      deltas: [
+        {
+          operation: 'set',
+          path: 'inventory.hero.证据',
+          value: '一封染血的供词',
+          evidence: '主角搜到证据',
+        },
+        {
+          operation: 'set',
+          path: 'inventory.hero.银两',
+          value: '3',
+          evidence: '清点银两',
+        },
+        {
+          operation: 'set',
+          path: 'inventory.hero.兵刃',
+          value: 1,
+          evidence: '检视兵刃',
+        },
+      ],
+      evidence: [],
+    };
+
+    const result = canonicalizeExtractedFacts({
+      facts,
+      state: makeState(),
+      drafts: [makeDraft('主角搜到一封染血的供词。')],
+    });
+
+    const inventoryDeltas = result.facts.deltas.filter(delta =>
+      delta.path.startsWith('inventory.')
+    );
+    // 字符串"证据"被丢弃；数字字符串"3"转 number；数字原样保留
+    expect(inventoryDeltas).toHaveLength(2);
+    expect(inventoryDeltas.some(delta => delta.path.includes('证据'))).toBe(false);
+    const silver = inventoryDeltas.find(delta => delta.path.includes('银两'));
+    expect(silver?.value).toBe(3);
+  });
+
+  it('inventory 严格数字校验：空串/十六进制/科学计数被丢弃（security_review 低危项）', () => {
+    const facts: ExtractedFacts = {
+      events: [],
+      deltas: [
+        {
+          operation: 'set',
+          path: 'inventory.hero.空串',
+          value: '',
+          evidence: '空串',
+        },
+        {
+          operation: 'set',
+          path: 'inventory.hero.十六进制',
+          value: '0x10',
+          evidence: '十六进制',
+        },
+        {
+          operation: 'set',
+          path: 'inventory.hero.科学计数',
+          value: '1e3',
+          evidence: '科学计数',
+        },
+        {
+          operation: 'set',
+          path: 'inventory.hero.小数',
+          value: '3.5',
+          evidence: '小数',
+        },
+        {
+          operation: 'set',
+          path: 'inventory.hero.布尔',
+          value: true,
+          evidence: '布尔',
+        },
+        {
+          operation: 'set',
+          path: 'inventory.hero.对象',
+          value: { 描述: '一把剑' },
+          evidence: '对象',
+        },
+      ],
+      evidence: [],
+    };
+
+    const result = canonicalizeExtractedFacts({
+      facts,
+      state: makeState(),
+      drafts: [makeDraft('主角清点物品。')],
+    });
+
+    const inventoryDeltas = result.facts.deltas.filter(delta =>
+      delta.path.startsWith('inventory.')
+    );
+    expect(inventoryDeltas).toHaveLength(1);
+    expect(inventoryDeltas[0].path).toContain('小数');
+    expect(inventoryDeltas[0].value).toBe(3.5);
+  });
+
   it('通用主角称呼（hero）归一化到主角实体，不产生未知实体', () => {
     // 真实项目：主角 id 是 char-xxx 而非 hero（实体表无 hero 这个 id）
     const state = makeState();

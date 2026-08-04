@@ -153,12 +153,70 @@ describe('splitStartupBlocksToChapters - CBN 用本章关键事件（不再承�
     expect(ch2CBN).toBe('觉醒异火');
   });
 
-  it('跨块：第 6 章 CBN 用本章关键事件（不跨块承接上章 CEN）', () => {
+  it('跨块：第 6 章 CBN 用差异化推进句（块首章无独立事件时不重复块内事件）', () => {
     const result = mapExecutableOutlineToGeneratedOutline(makeOutline());
     const ch6CBN = result.chapters[5].CBN;
     expect(ch6CBN).not.toContain('承接上章结尾');
-    // 块 2 mustEvents=['进入外院','挑战排名','击败强者']，第 6 章取第一个
-    expect(ch6CBN).toBe('进入外院');
+    // 块 2 mustEvents=['进入外院','挑战排名','击败强者'] 3 事件 5 章，
+    // 互斥分配后第 6 章（块内第 1 章）无事件，用带序号推进句兜底（Bug 6 修复）
+    expect(ch6CBN).toContain('本区间第 1/5 段推进');
+    // 块 2 首个事件落在第 7 章，不再与第 6 章重复
+    expect(result.chapters?.[6].CBN).toBe('进入外院');
+  });
+
+  it('块内相邻章 CBN 互不相同（事件互斥分配，Bug 6 修复）', () => {
+    const result = mapExecutableOutlineToGeneratedOutline(makeOutline());
+    const chapters = result.chapters ?? [];
+    const cbns = chapters.map(ch => ch.CBN);
+    // 修复前：3 事件 5 章强制每章至少 1 个 → ch2/ch3 同取 mustEvents[0]，CBN 重复
+    expect(new Set(cbns).size).toBe(cbns.length);
+  });
+
+  it('mustCover 互斥：同一事件只进一章，空章不设 mustCover（Bug 6 修复）', () => {
+    const result = mapExecutableOutlineToGeneratedOutline(makeOutline());
+    const block1 = (result.chapters ?? []).slice(0, 5);
+    // 块 1 三个事件按序落到 ch2/ch4/ch5，ch1/ch3 为空章
+    expect(block1[1].mustCover).toEqual(['觉醒异火']);
+    expect(block1[3].mustCover).toEqual(['初次炼丹']);
+    expect(block1[4].mustCover).toEqual(['击败萧宁']);
+    expect(block1[0].mustCover).toBeUndefined();
+    expect(block1[2].mustCover).toBeUndefined();
+    // 全块 mustCover 摊开后无重复事件
+    const flat = block1.flatMap(ch => ch.mustCover ?? []);
+    expect(new Set(flat).size).toBe(flat.length);
+  });
+
+  it('模板句事件（「X后对手反手施压，倒计时与证据链同时收紧」）被过滤，不再进 CBN/mustCover', () => {
+    const outline = makeOutline({
+      startupPack30: {
+        ...makeOutline().startupPack30,
+        chapterBlocks: [
+          {
+            range: '1-5章',
+            objective: '验尸破案',
+            mustEvents: [
+              '苏瑾穿越醒来发现自己正在验尸',
+              '苏瑾穿越醒来发现自己正在验尸后对手反手施压，倒计时与证据链同时收紧',
+              '苏瑾在朝会上用数据报告怼翻御史',
+            ],
+            coolPoints: ['当众打脸'],
+            hookRequirement: '银针藏不住',
+            pacing: 'fast',
+            readerExpectation: '爽',
+            forbiddenZones: [],
+          },
+        ],
+      },
+    });
+    const result = mapExecutableOutlineToGeneratedOutline(outline);
+    const chapters = result.chapters ?? [];
+    const allCbn = chapters.map(ch => ch.CBN).join('|');
+    const allMustCover = chapters.flatMap(ch => ch.mustCover ?? []).join('|');
+    expect(allCbn).not.toContain('倒计时与证据链同时收紧');
+    expect(allMustCover).not.toContain('倒计时与证据链同时收紧');
+    // 有效事件仍按序分配（2 事件 5 章，均分边界落在 ch3/ch5）：'验尸'→ch3、'怼翻御史'→ch5
+    expect(chapters[2].CBN).toContain('验尸');
+    expect(chapters[4].CBN).toContain('怼翻御史');
   });
 });
 

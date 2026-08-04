@@ -1,5 +1,6 @@
 import type {
   ExtractedFacts,
+  JsonValue,
   ProvisionalStateOverlay,
   SceneDraft,
   StateDelta,
@@ -190,20 +191,39 @@ export function canonicalizeExtractedFacts(input: FactCanonicalizeInput): FactCa
     };
   });
 
-  const deltas = input.facts.deltas.map(delta => {
-    const inventoryMatch = delta.path.match(/^inventory\.([^.]+)\.(.+)$/u);
-    if (!inventoryMatch) return delta;
-    const owner = resolveParticipant(inventoryMatch[1]);
-    return {
-      ...delta,
-      path: `inventory.${owner}.${inventoryMatch[2]}`,
-    };
-  });
+  const deltas = input.facts.deltas
+    .map(delta => {
+      const inventoryMatch = delta.path.match(/^inventory\.([^.]+)\.(.+)$/u);
+      if (!inventoryMatch) return delta;
+      const owner = resolveParticipant(inventoryMatch[1]);
+      // 防御（Bug 9 修复）：inventory 契约要求 value 为数量（number），
+      // 模型偶发把「证据」等字符串写入 → StoryRuntime schema 校验失败导致整章崩溃；
+      // 仅接受严格数字字符串（空串/十六进制/科学计数/带单位均丢弃），其余非数字 value 直接丢弃。
+      if (typeof delta.value === 'string') {
+        const trimmed = delta.value.trim();
+        // 仅接受 ASCII 十进制数字（u 模式下 \d 会匹配 Unicode 数字如 ٠-٩，Number() 不识别会得 NaN）
+        if (trimmed === '' || !/^[+-]?[0-9]+(\.[0-9]+)?$/u.test(trimmed)) return null;
+        const numeric = Number(trimmed);
+        if (!Number.isFinite(numeric)) return null;
+        return {
+          ...delta,
+          path: `inventory.${owner}.${inventoryMatch[2]}`,
+          value: numeric,
+        };
+      }
+      // 非字符串且非数字的 value（boolean/object/null 等）不满足 z.number() 契约，直接丢弃
+      if (typeof delta.value !== 'number' || !Number.isFinite(delta.value)) return null;
+      return {
+        ...delta,
+        path: `inventory.${owner}.${inventoryMatch[2]}`,
+      };
+    })
+    .filter((delta): delta is StateDelta => delta !== null);
 
   const introductionDeltas: StateDelta[] = [...introduced.values()].map(entity => ({
     operation: 'set' as const,
     path: `entities.${entity.id}`,
-    value: entity,
+    value: entity as unknown as JsonValue,
     evidence: `正文引入角色：${entity.name}`,
   }));
 

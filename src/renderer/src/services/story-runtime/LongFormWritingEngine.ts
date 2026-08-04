@@ -30,6 +30,7 @@ import {
   checkWordCount,
   checkWordCountBounds,
   chooseProseAfterCondense,
+  clampProseToMaxWords,
 } from '@/services/writing/supplement';
 import { countWords } from '@/services/writing/utils';
 
@@ -342,7 +343,7 @@ export class LongFormWritingEngine {
       });
 
       try {
-        const deltaParagraphs = await this.dependencies.ai.generate<string[]>({
+        const deltaParagraphs = (await this.dependencies.ai.generate<string[]>({
           purpose: 'scene-draft',
           schemaName: 'SupplementParagraphs',
           system: [
@@ -369,9 +370,20 @@ export class LongFormWritingEngine {
             }
             return paragraphs;
           },
-        });
+        })) as string[];
 
         if (!deltaParagraphs.length) {
+          break;
+        }
+        // 输出护栏（Bug 7 修复）：单轮补充输出异常膨胀（模型把 JSON 骨架当正文，
+        // 实测一轮返回 32 万字符）时丢弃本轮并停止补字，避免垃圾正文入库、
+        // 以及后续压缩把巨型文本塞进 prompt 造成的 token 爆炸。
+        const deltaChars = deltaParagraphs.reduce((sum, paragraph) => sum + paragraph.length, 0);
+        const maxDeltaChars = Math.max(6000, Math.ceil(target * 3));
+        if (deltaChars > maxDeltaChars) {
+          console.warn(
+            `[LongFormWritingEngine] 补充输出异常膨胀（${deltaChars} 字符 > ${maxDeltaChars}），丢弃本轮并停止补字`
+          );
           break;
         }
         nextDrafts[nextDrafts.length - 1].paragraphs.push(...deltaParagraphs);
@@ -422,6 +434,28 @@ export class LongFormWritingEngine {
       return nextDrafts;
     }
 
+    // 输出护栏（Bug 7 修复）：正文异常膨胀（如补充轮混入 JSON 骨架，实测 36 万字符）时，
+    // 不再把巨型文本发给 AI 压缩（prompt token 爆炸），直接硬裁到上限。
+    const hardClampChars = Math.max(12000, target * 8);
+    if (originalProse.length > hardClampChars) {
+      console.warn(
+        `[LongFormWritingEngine] 正文异常膨胀（${originalProse.length} 字符 > ${hardClampChars}），跳过 AI 压缩直接硬裁`
+      );
+      const clamped = clampProseToMaxWords(originalProse, bounds.maxWords);
+      const clampedParagraphs = sanitizeSceneDraftParagraphs(
+        clamped
+          .split(/\n{2,}/u)
+          .map(part => part.trim())
+          .filter(Boolean)
+      );
+      nextDrafts[0] = {
+        ...nextDrafts[0],
+        paragraphs: clampedParagraphs.length > 0 ? clampedParagraphs : [clamped],
+      };
+      nextDrafts.splice(1);
+      return nextDrafts;
+    }
+
     const outline =
       input.contracts.chapter.goal ||
       input.contracts.chapter.CBN ||
@@ -429,7 +463,7 @@ export class LongFormWritingEngine {
 
     let condensedProse: string | null = null;
     try {
-      const condensedParagraphs = await this.dependencies.ai.generate<string[]>({
+      const condensedParagraphs = (await this.dependencies.ai.generate<string[]>({
         purpose: 'scene-draft',
         schemaName: 'CondenseParagraphs',
         system: [
@@ -464,7 +498,7 @@ export class LongFormWritingEngine {
           }
           return paragraphs;
         },
-      });
+      })) as string[];
 
       if (condensedParagraphs.length > 0) {
         condensedProse = condensedParagraphs.join('\n\n');

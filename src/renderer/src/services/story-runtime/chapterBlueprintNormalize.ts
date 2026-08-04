@@ -8,7 +8,7 @@ const META_CEN_PATTERN =
   /情节不得原地重复开场|抛出下一拍冲突|章末钩子[：:].*完成「|本章只推进到可落地|本章兑现下一拍|抛出下一拍未解问题|章末落在其直接后果|不可逆危机，章末落在/u;
 /** 模板空壳章钩：只有压迫话术、没有具体情节 */
 const TEMPLATE_HOOK_PATTERN =
-  /之后立刻陷入不可逆危机|倒计时或反噬压到眼前|本章冲突兑现后压力升级|之后压力升级，留下立刻可接的悬念|已发生，直接后果落地并带出新的压迫|留下悬念，吸引读者继续阅读/u;
+  /之后立刻陷入不可逆危机|倒计时或反噬压到眼前|本章冲突兑现后压力升级|之后压力升级，留下立刻可接的悬念|已发生，直接后果落地并带出新的压迫|留下悬念，吸引读者继续阅读|后对手反手施压，倒计时与证据链同时收紧|对手反手施压[，,]倒计时与证据链同时收紧|倒计时与证据链同时收紧/u;
 /** 大纲/企划口吻（读者期待、代入感等），不可当情节节点 */
 const READER_META_PATTERN =
   /读者期待|让读者对|强烈代入感|爽文预期|建立[「「"'].{0,16}预期|完成(?:开篇|穿越)设定|建立主角(?:技术)?权威|制造生死危机/u;
@@ -497,14 +497,36 @@ export function buildMidChapterCen(
   const last = events[events.length - 1];
   if (!last) {
     if (body.length >= 8 && isUsablePlotNode(body) && !isHollowChapterHook(body)) {
-      return `${body}后对手反手施压，倒计时与证据链同时收紧`;
+      return fallbackCenFor(body);
     }
     return '本章冲突兑现后局势恶化，压迫升级并逼出下一步行动';
   }
   if (events.length === 1) {
-    return `${last}后对手反手施压，倒计时与证据链同时收紧`;
+    return fallbackCenFor(last);
   }
   return `${last}已发生，直接后果落地并逼出新的压迫`;
+}
+
+/**
+ * 兜底 CEN 生成（去模板化）：按前缀文本哈希轮换后果短语，
+ * 避免全书反复出现「X后对手反手施压，倒计时与证据链同时收紧」同款模板句。
+ * 同一事件确定性收敛到同一短语（跨章一致），不同事件得到不同短语（避免重复感）。
+ */
+const FALLBACK_CEN_PHRASES = [
+  '后对手反手施压，局势随之收紧',
+  '，紧接着对方反扑，危机进一步升级',
+  '后事态急转直下，新的压迫接踵而至',
+  '，随之引来反噬，倒计时逼近眼前',
+  '后冲突升级，背后势力开始出手',
+];
+
+function fallbackCenFor(prefix: string): string {
+  let hash = 0;
+  for (let i = 0; i < prefix.length; i += 1) {
+    hash = (hash * 31 + prefix.charCodeAt(i)) >>> 0;
+  }
+  const phrase = FALLBACK_CEN_PHRASES[hash % FALLBACK_CEN_PHRASES.length];
+  return `${prefix}${phrase}`;
 }
 
 export function normalizeChapterBlueprint(

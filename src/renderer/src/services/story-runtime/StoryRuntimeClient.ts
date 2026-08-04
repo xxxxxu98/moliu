@@ -87,7 +87,9 @@ export class StoryRuntimeClient {
           type: entity.kind,
           canonical_name: entity.name,
           description:
-            typeof entity.attributes.description === 'string' ? entity.attributes.description : '',
+            typeof (entity.attributes ?? {}).description === 'string'
+              ? entity.attributes!.description
+              : '',
           payload_json: toJsonValue(entity),
         })),
         aliases: allEntities.flatMap(entity =>
@@ -264,17 +266,21 @@ export class StoryRuntimeClient {
     });
 
     // 必须先投影 entities：canonicalize 会引入 char:intro:*，events/temporal_facts 有 FK 引用
-    const entityRows = Object.values(canonicalState.entities).map(entity => ({
-      id: entity.id,
-      type: entity.kind,
-      canonical_name: entity.name,
-      description:
-        typeof entity.attributes.description === 'string' ? entity.attributes.description : '',
-      payload_json: toJsonValue(entity),
-      last_chapter: commit.chapterNumber,
-    }));
+    const entityRows = Object.values(canonicalState.entities).map(entity => {
+      // 防御：实体 attributes 可能缺失（如 delta 引入的实体仅含 id/name/kind）
+      const attributes = entity.attributes ?? {};
+      return {
+        id: entity.id,
+        type: entity.kind,
+        canonical_name: entity.name,
+        description:
+          typeof attributes.description === 'string' ? attributes.description : '',
+        payload_json: toJsonValue(entity),
+        last_chapter: commit.chapterNumber,
+      };
+    });
     const aliasRows = Object.values(canonicalState.entities).flatMap(entity =>
-      entity.aliases.map(alias => ({
+      (entity.aliases ?? []).map(alias => ({
         alias,
         entity_id: entity.id,
         normalized_alias: alias.trim().toLocaleLowerCase(),

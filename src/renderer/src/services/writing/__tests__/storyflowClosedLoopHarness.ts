@@ -17,6 +17,9 @@
 
 import { createPinia, setActivePinia } from 'pinia';
 
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
 import { mapExecutableOutlineToGeneratedOutline } from '@/services/outline/adapters/executable-outline-adapter';
 import type { ExecutableOutline } from '@/services/outline/types/executable-outline';
@@ -37,6 +40,10 @@ import {
   type ContinueWriteChapterRunResult,
   type HarnessRuntimeBackend,
 } from './continueWriteHarness';
+import {
+  createRealStructuredAI,
+  isRealAiEnabled,
+} from './realStructuredAI';
 
 export interface StoryflowClosedLoopOptions {
   /** 开题提示（默认：一个可写 30 万字长篇的起点） */
@@ -153,9 +160,10 @@ export async function runStoryflowClosedLoop(
   const executableOutline = expanded;
 
   const generatedOutline = mapExecutableOutlineToGeneratedOutline(executableOutline);
-  if (generatedOutline.chapters.length < 2) {
+  const outlineChapters = generatedOutline.chapters;
+  if (!outlineChapters || outlineChapters.length < 2) {
     throw new Error(
-      `storyflow 闭环失败：大纲章节过少（${generatedOutline.chapters.length} < 2），无法支撑批量续写`,
+      `storyflow 闭环失败：大纲章节过少（${outlineChapters?.length ?? 0} < 2），无法支撑批量续写`,
     );
   }
 
@@ -168,12 +176,13 @@ export async function runStoryflowClosedLoop(
 
   // ---------- 3. 建章（真实 useChapterOutlineGenerator.createChapters 链路） ----------
   const chapterOutlineGenerator = useChapterOutlineGenerator();
+  // 类型断言：inspiration.GeneratedChapter 与 composable 自有类型字段略有差异（outline 等运行时兜底为空串）
   const createdChapterIds = await chapterOutlineGenerator.createChapters(
-    generatedOutline.chapters,
+    outlineChapters as unknown as Parameters<typeof chapterOutlineGenerator.createChapters>[0],
   );
-  if (createdChapterIds.length !== generatedOutline.chapters.length) {
+  if (createdChapterIds.length !== outlineChapters.length) {
     throw new Error(
-      `storyflow 闭环失败：建章数量不符（期望 ${generatedOutline.chapters.length}，实际 ${createdChapterIds.length}）`,
+      `storyflow 闭环失败：建章数量不符（期望 ${outlineChapters.length}，实际 ${createdChapterIds.length}）`,
     );
   }
 
@@ -185,7 +194,48 @@ export async function runStoryflowClosedLoop(
   // 深拷贝去 Vue 响应式代理（与 useProjectCreator 内做法一致）
   const project = JSON.parse(JSON.stringify(rawProject)) as Project;
 
+  // 建章后立即落盘大纲产物：真实 AI 续写阶段耗时长、可能超时，提前留存大纲数据供质量评估
+  writeFileSync(
+    join(process.cwd(), 'temp', 'storyflow.closed-loop.outline.json'),
+    JSON.stringify(
+      {
+        title: generatedOutline.title,
+        genres: generatedOutline.genres,
+        synopsis: generatedOutline.synopsis,
+        openingHook: executableOutline.startupPack30.openingHook,
+        volumes: project.volumes.map(v => ({
+          name: v.name,
+          summary: v.summary,
+        })),
+        characters: project.characters.map(c => ({
+          name: c.name,
+          role: c.role,
+        })),
+        chapters: outlineChapters.map(ch => ({
+          title: ch.title,
+          CBN: ch.CBN,
+          CPNs: ch.CPNs,
+          CEN: ch.CEN,
+          mustCover: ch.mustCover,
+          forbiddenZones: ch.forbiddenZones,
+        })),
+      },
+      null,
+      2
+    ),
+    'utf8'
+  );
+
   // ---------- 4. 批量续写（真实 BATCH_CONTINUE 路径，与 useBatchWriter 对齐） ----------
+  // 真实模式注入真实 StructuredAI（此前缺省导致内部回落 ContinueWriteFakeAI，冒烟失真）
+  const ai = isRealAiEnabled()
+    ? createRealStructuredAI({
+        provider: cfg.provider,
+        apiKey: cfg.apiKey,
+        model: cfg.model,
+        baseUrl: cfg.baseUrl,
+      })
+    : undefined;
   const result = await runContinueWriteChapters({
     project,
     fromChapter: 1,
@@ -194,6 +244,7 @@ export async function runStoryflowClosedLoop(
     persistTrace: true,
     runIdPrefix,
     mode: 'batch',
+    ai,
   });
 
   return {

@@ -159,14 +159,16 @@ export function compactContractsForDraft(
 }
 
 function compactEntity(entity: StoryEntity): Record<string, unknown> {
+  // 防御：实体 attributes 可能缺失（如 delta 引入的实体仅含 id/name/kind）
+  const attributes = entity.attributes ?? {};
   const description =
-    typeof entity.attributes.description === 'string' ? entity.attributes.description : '';
-  const role = typeof entity.attributes.role === 'string' ? entity.attributes.role : undefined;
+    typeof attributes.description === 'string' ? attributes.description : '';
+  const role = typeof attributes.role === 'string' ? attributes.role : undefined;
   return {
     id: entity.id,
     kind: entity.kind,
     name: entity.name,
-    aliases: entity.aliases.slice(0, 4),
+    aliases: (entity.aliases ?? []).slice(0, 4),
     role,
     description: description.length > 120 ? `${description.slice(0, 120)}…` : description,
   };
@@ -206,7 +208,7 @@ export function compactStateForDraft(state: StoryState, contracts: ContractPack)
   }
   // 主角兜底：role=protagonist
   for (const [id, entity] of Object.entries(state.entities)) {
-    if (entity.attributes.role === 'protagonist') {
+    if ((entity.attributes ?? {}).role === 'protagonist') {
       relatedIds.add(id);
     }
   }
@@ -277,15 +279,18 @@ export class ContextPackBuilder {
     const entityRefs: Record<string, DraftCharacterRef> = Object.fromEntries(
       Object.values(state.entities)
         .filter(entity => entity.kind === 'character')
-        .map(entity => [
-          entity.id,
-          {
-            name: entity.name,
-            aliases: entity.aliases,
-            role:
-              typeof entity.attributes.role === 'string' ? entity.attributes.role : undefined,
-          },
-        ])
+        .map(entity => {
+          // 防御：实体 attributes 可能缺失（如 delta 引入的实体仅含 id/name/kind）
+          const attributes = entity.attributes ?? {};
+          return [
+            entity.id,
+            {
+              name: entity.name,
+              aliases: entity.aliases ?? [],
+              role: typeof attributes.role === 'string' ? attributes.role : undefined,
+            },
+          ];
+        })
     );
 
     const candidates: ContextBlock[] = [

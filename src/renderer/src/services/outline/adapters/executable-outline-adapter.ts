@@ -17,6 +17,8 @@ import type {
 import {
   buildMidChapterCen,
   enrichThinCpns,
+  isMetaInstructionCen,
+  isTemplateHookCen,
 } from '@/services/story-runtime/chapterBlueprintNormalize';
 
 function parseWordCountRange(rangeText?: string): number | null {
@@ -421,6 +423,29 @@ function inferChapterType(
 }
 
 /**
+ * 空事件章的差异化推进句（Bug 6 修复）
+ *
+ * 无独立事件分配到本章时，生成带块内序号 + 轮换爽点的推进句，
+ * 保证同块各章文案互不相同（此前回退 block.objective 导致块内多章同款 CBN）。
+ * coolPoint 从第 i-1 个开始轮换，避免与首章开篇钩子抢戏。
+ */
+function buildAdvanceCbn(
+  block: ExecutableOutline['startupPack30']['chapterBlocks'][number],
+  i: number,
+  blockSize: number,
+): string {
+  const step = i + 1;
+  const coolPoints = block.coolPoints ?? [];
+  const cool =
+    coolPoints.length > 0 ? coolPoints[(i - 1 + coolPoints.length) % coolPoints.length] : '';
+  const objectiveBrief = (block.objective || '主线').trim().slice(0, 24);
+  if (cool && cool.trim().length >= 4) {
+    return `${cool.trim()}（本区间第 ${step}/${blockSize} 段推进）`;
+  }
+  return `本区间第 ${step}/${blockSize} 段推进：${objectiveBrief}`;
+}
+
+/**
  * 把 startupPack30 的"5 章一组"区间块拆成单章 GeneratedChapter
  *
  * 由于 AI 当前不生成 chapterBlueprints（受 prompt 约束），单章结构化节点（CBN/CPNs/CEN 等）
@@ -440,8 +465,18 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
     const { count } = parseChapterRange(block.range, globalChapterNo + 1);
     const blockSize = Math.max(1, count);
 
-    // 在区间内均分 mustEvents（每章 1-2 个，按顺序循环）
-    const mustEvents = block.mustEvents.length > 0 ? block.mustEvents : ['推进本区间主线'];
+    // 在区间内均分 mustEvents（每章 1-2 个，按顺序循环）。
+    // 修复（Bug 6）：分配前剔除模板句/元指令句（如「X后对手反手施压，倒计时与证据链同时收紧」），
+    // 避免模板文本被当作事件分给各章、污染 CBN/CEN/mustCover；
+    // 全部被剔除时回退原始首条（仍由 isTemplateHookCen 类判定在续写端兜底）。
+    const rawEvents = block.mustEvents.length > 0 ? block.mustEvents : ['推进本区间主线'];
+    const usableEvents = rawEvents.filter(
+      event =>
+        !isTemplateHookCen(event) &&
+        !isMetaInstructionCen(event) &&
+        event.trim().length >= 4
+    );
+    const mustEvents = usableEvents.length > 0 ? usableEvents : rawEvents.slice(0, 1);
     const coolPoints = block.coolPoints;
     const pacingStrategy = block.pacing === 'fast' ? 'release' : 'confront';
 
@@ -457,26 +492,36 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
       const isBlockLastChapter = i === blockSize - 1;
       const isLastChapter = isLastBlock && isBlockLastChapter;
 
-      // 均分关键事件
+      // 事件分配（Bug 6 修复）：按均分边界切分，但【不强制每章至少 1 个】——
+      // 事件数少于章数时，允许空章出现，由差异化推进句兜底。
+      // 此前 `Math.max(eventEnd, eventStart + 1)` 会强制每章至少 1 个事件，
+      // 当块内事件数 < 章数时同一事件被 slice 进多章，导致：
+      //   - 相邻多章 CBN/CPNs/mustCover 完全重复（实测 ch2/ch3 同 CBN）
+      //   - 本属后章的节点提前压入前章 mustCover，前章反复被履约审核驳回重写
+      //   - 后章真正需要该节点时，合同已被标记「上章已兑现」而跳过（去重误伤）
       const eventStart = Math.floor((i * mustEvents.length) / blockSize);
       const eventEnd = Math.floor(((i + 1) * mustEvents.length) / blockSize);
-      const keyEvents = mustEvents.slice(eventStart, Math.max(eventEnd, eventStart + 1));
+      const keyEvents = mustEvents.slice(eventStart, eventEnd);
 
       const isFirstChapterOverall = globalChapterNo === 1;
+
+      // 空章兜底：差异化推进句（带块内序号 + 轮换爽点），保证同块各章文案互不相同，
+      // 不再回退到全块同款 block.objective（此前无事件章 CBN=block.objective，块内重复）
+      const fallbackCbn = buildAdvanceCbn(block, i, blockSize);
 
       // CBN：首章用开篇钩子；非首章用本章关键事件（推进句），
       // 不再承接上一章 CEN——原「CBN→CEN→CBN 连锁」会把上章章末复述
       // 当成下章履约目标，形成「承接上章结尾：{上章CEN截尾}」模板循环污染，
       // 且 CBN/CPNs/mustCover 全被上章内容占位、本章新事件无处落地。
       const CBN = isFirstChapterOverall
-        ? outline.startupPack30.openingHook || block.objective
+        ? outline.startupPack30.openingHook || fallbackCbn
         : keyEvents.length > 0
           ? keyEvents.join('，')
-          : block.objective;
+          : fallbackCbn;
 
-      // CPNs：派生 1-3 个推进节点；单薄 keyEvent 时从 CBN 子句补齐
+      // CPNs：派生 1-3 个推进节点；空章从推进句拆分，单薄 keyEvent 时从 CBN 子句补齐
       const CPNs = enrichThinCpns(
-        keyEvents.length > 0 ? keyEvents.slice(0, 3) : [`推进 ${block.objective || '主线'}`],
+        keyEvents.length > 0 ? keyEvents.slice(0, 3) : [fallbackCbn],
         CBN
       );
 
@@ -485,7 +530,8 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
         ? block.hookRequirement || `完成本区间第 ${i + 1}/${blockSize} 段推进，转向下一区间`
         : buildMidChapterCen(keyEvents.length > 0 ? keyEvents : CPNs, CBN);
 
-      // mustCover：本章承接的关键事件
+      // mustCover：仅本章分到的事件（互斥分配后不含后章节点）；空章不设硬性履约，
+      // 由续写端从 CBN/CPNs 组装履约目标（ContextAgent 会补 mustCover）
       const mustCover = keyEvents.length > 0 ? keyEvents : undefined;
 
       // chapterType（Bug 2 修复：改用显式布尔而非 chapterNo===totalChapters）
