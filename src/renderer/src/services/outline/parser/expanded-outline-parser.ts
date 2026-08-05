@@ -5,6 +5,7 @@ import type {
   EmotionBeatPlan,
   ExecutableOutline,
   ForeshadowPlan,
+  GoldenFingerPlan,
   SellingPointPlan,
   StartupChapterBlock,
   StoryActPlan,
@@ -272,6 +273,28 @@ function parseStoryLinesSection(section: string): StoryLinePlan | undefined {
   return Object.values(storyLines).some(Boolean) ? storyLines : undefined;
 }
 
+/** 解析金手指设定模块（独立顶层，区别于八线的"金手指线"单行文案） */
+function parseGoldenFingerSection(section: string): GoldenFingerPlan | undefined {
+  if (!section.trim()) return undefined;
+  const type = extractFieldValue(section, '金手指类型') ?? extractFieldValue(section, '类型') ?? '';
+  if (!type) return undefined; // 类型为空视为未产出该模块
+
+  const trigger = extractFieldValue(section, '触发场景') ?? '';
+  const upgradePath = extractMultiValueField(section, '升级路径');
+  const limitation = extractFieldValue(section, '使用限制') ?? '';
+  const cost = extractFieldValue(section, '使用代价') ?? '';
+  const firstRevealChapter = parseChapterNumber(extractFieldValue(section, '首次兑现章节'));
+
+  return {
+    type,
+    trigger,
+    upgradePath,
+    limitation,
+    cost,
+    firstRevealChapter,
+  };
+}
+
 function parseEmotionArc(value: string): EmotionBeatPlan['arc'] {
   const normalized = value.trim().toLowerCase();
   return EMOTION_ARCS.find((arc) => arc === normalized) ?? 'mixed';
@@ -299,6 +322,11 @@ function parseEmotionAndCoolPointSection(section: string): Pick<ExecutableOutlin
     description: extractFieldValue(block.body, '描述') ?? '',
     suggestedChapter: parseChapterNumber(extractFieldValue(block.body, '建议章节')),
     relatedBlock: extractFieldValue(block.body, '所属区间') ?? undefined,
+    // 爽点闭环结构（P1-1，向后兼容：旧模板无这些字段时为 undefined）
+    trigger: extractFieldValue(block.body, '触发场景') ?? undefined,
+    buildup: extractFieldValue(block.body, '铺垫') ?? undefined,
+    payoff: extractFieldValue(block.body, '兑现') ?? undefined,
+    cost: extractFieldValue(block.body, '代价') ?? undefined,
   })).filter((item) => item.type || item.description) as CoolPointBeatPlan[];
 
   return {
@@ -436,6 +464,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
     '主要支线',
     '故事线规划',
     '情绪与爽点节奏',
+    '金手指设定',
     '关键角色规划',
     '关键角色',
     '伏笔规划',
@@ -452,6 +481,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
   const subplotsSection = sections['主要支线'];
   const storyLinesSection = sections['故事线规划'];
   const emotionSection = sections['情绪与爽点节奏'];
+  const goldenfingerSection = sections['金手指设定'];
   const characterSection = sections['关键角色规划'] || sections['关键角色'];
   const foreshadowSection = sections['伏笔规划'];
 
@@ -499,6 +529,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
   const storyLines = parseStoryLinesSection(storyLinesSection);
   const { emotionPlan, coolPointPlan } = parseEmotionAndCoolPointSection(emotionSection);
   const sellingPointPlan = parseSellingPointSection(sellingPointSection);
+  const goldenfingerPlan = parseGoldenFingerSection(goldenfingerSection);
 
   const outline: ExecutableOutline = {
     title: extractFieldValue(positioningSection, '标题') ?? '未命名方案',
@@ -536,6 +567,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
     emotionPlan,
     coolPointPlan,
     sellingPointPlan: sellingPointPlan.length > 0 ? sellingPointPlan : undefined,
+    goldenfingerPlan,
     keyCharacters: dedupedKeyCharacters,
     foreshadowPlan: dedupedForeshadowPlan,
   };

@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { Bookmark, BookmarkCheck, RefreshCw } from 'lucide-vue-next';
-import { LENGTH_LABEL, PLATFORM_LABEL } from '@/services/inspiration/prompts/topic-discovery-prompts';
+import {
+  LENGTH_LABEL,
+  PLATFORM_LABEL,
+} from '@/services/inspiration/prompts/topic-discovery-prompts';
 import type { StorySeedCard, TopicDiscoverySource } from '@/types/topic-discovery';
 
 /** 种子卡数据：附收藏标记（Board 组装时注入） */
@@ -63,7 +66,10 @@ const { t } = useI18n();
     </div>
 
     <!-- seed cards -->
-    <div v-else-if="seeds.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
+    <div
+      v-else-if="seeds.length > 0"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full"
+    >
       <div
         v-for="seed in seeds"
         :key="`${selectedSeedId}-${seed.id}`"
@@ -90,9 +96,14 @@ const { t } = useI18n();
           <BookmarkCheck v-if="seed._favorite" class="w-4 h-4" />
           <Bookmark v-else class="w-4 h-4" />
         </button>
-        <div class="flex items-start justify-between gap-2 mb-1.5 pr-8">
-          <h4 class="font-semibold text-base text-gray-900 dark:text-white">{{ seed.title }}</h4>
-          <div class="flex items-center gap-1.5 flex-shrink-0">
+        <div class="mb-1.5 pr-8">
+          <h4
+            class="font-semibold text-base text-gray-900 dark:text-white leading-snug line-clamp-2"
+            :title="seed.title"
+          >
+            {{ seed.title }}
+          </h4>
+          <div class="flex items-center gap-1.5 flex-wrap mt-1.5">
             <span
               v-if="source === 'fallback'"
               class="text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
@@ -106,13 +117,14 @@ const { t } = useI18n();
               {{ t('topicDiscovery.sourceAI') }}
             </span>
             <span
-              class="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500"
+              class="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 max-w-full truncate"
+              :title="seed.genre"
             >
               {{ seed.genre }}
             </span>
           </div>
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-2.5">
+        <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-2.5 line-clamp-3">
           {{ seed.oneLiner }}
         </p>
         <div class="flex flex-wrap gap-1.5 text-xs text-gray-500">

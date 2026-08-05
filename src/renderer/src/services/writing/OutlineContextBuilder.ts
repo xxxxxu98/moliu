@@ -13,6 +13,7 @@ import type {
   CoolPointDesign,
   StoryLines,
   CoreSellingPoint,
+  GoldenFingerDesign,
   ProjectStartupPack,
 } from '@/types/project';
 
@@ -57,9 +58,18 @@ export interface EnhancedProjectContext {
   conflictDesign?: ConflictDesign;
   coolPointDesign?: CoolPointDesign;
   storyLines?: StoryLines;
+  /** 金手指设定（爽点引擎，优先于 storyLines.goldenfinger 简版） */
+  goldenfingerDesign?: GoldenFingerDesign;
   coreSellingPoints?: CoreSellingPoint[];
   /** 前 30 章启动包（首页大纲产出） */
   startupPack?: ProjectStartupPack;
+  /** 故事规模规划（P2-4：接通 startupPhaseRatio 消费，让续写端感知开篇占比） */
+  storyScale?: {
+    startupPhaseRatio?: string;
+    longformProgressionNote?: string;
+    estimatedChapterCount?: number;
+    targetWordCount?: string;
+  };
 
   // 写作配置
   writingStyle?: 'concise' | 'elegant' | 'humorous' | 'ancient';
@@ -395,16 +405,37 @@ ${cd.majorConflicts?.length ? `- 主要冲突：\n${cd.majorConflicts.map((c) =>
 请在章节中推进或揭示相关矛盾冲突。`);
   }
 
+  if (ctx.goldenfingerDesign) {
+    const gf = ctx.goldenfingerDesign;
+    const upgrade = gf.upgradePath?.length
+      ? gf.upgradePath.map((stage, i) => `${i + 1}阶：${stage}`).join(' → ')
+      : '暂无';
+    sections.push(`## 【金手指设定】（爽点引擎，本章写作核心驱动力）
+- 金手指类型：${gf.type}
+- 触发场景：${gf.trigger || '暂无'}
+- 升级路径：${upgrade}
+${gf.limitation ? `- 使用限制：${gf.limitation}\n` : ''}${gf.cost ? `- 使用代价：${gf.cost}\n` : ''}${gf.firstRevealChapter ? `- 首次兑现章节：第${gf.firstRevealChapter}章\n` : ''}请在写作中体现金手指的爽感兑现，注意限制与代价的平衡，避免无脑碾压。`);
+  }
+
   if (ctx.coolPointDesign) {
     const cp = ctx.coolPointDesign;
     const patterns = cp.patterns
       ?.map((p) => COOL_POINT_LABELS[p] || p)
       .join('、') || '';
+    const arrangedText = cp.arranged?.length
+      ? cp.arranged.map((a) => {
+          const loopParts = [a.trigger, a.buildup, a.payoff, a.cost].filter(Boolean);
+          const loop = loopParts.length > 0
+            ? `（触发：${a.trigger ?? '-'} → 铺垫：${a.buildup ?? '-'} → 兑现：${a.payoff ?? '-'}${a.cost ? ` → 代价：${a.cost}` : ''}）`
+            : '';
+          return `  · 第${a.chapter}章：${COOL_POINT_LABELS[a.type] || a.type} - ${a.description}${loop}`;
+        }).join('\n')
+      : '';
     sections.push(`## 【爽点设计】
 - 爽点类型：${patterns || '暂无'}
 - 爽点密度：微爽每 ${cp.density?.micro} 字 / 小爽每 ${cp.density?.small} 字 / 大爽每 ${cp.density?.big} 字
-${cp.arranged?.length ? `- 已安排爽点：\n${cp.arranged.map((a) => `  · 第${a.chapter}章：${COOL_POINT_LABELS[a.type] || a.type} - ${a.description}`).join('\n')}` : ''}
-请在章节中安排适当的爽点节奏。`);
+${arrangedText ? `- 已安排爽点（每个都是完整兑现闭环）：\n${arrangedText}` : ''}
+请在章节中安排适当的爽点节奏，按"铺垫→兑现→代价"的闭环写，禁止只列爽点类型而不写兑现画面。`);
   }
 
   if (ctx.storyLines) {
@@ -457,12 +488,17 @@ ${ctx.coreSellingPoints.map((p) => `- ${p.name}：${p.description}`).join('\n')}
   const currentChapterNo = (ctx.currentChapter.orderIndex ?? 0) + 1;
   if (ctx.startupPack && currentChapterNo <= 30) {
     const sp = ctx.startupPack;
+    // P2-4：注入开篇占比与长线推进说明，让模型感知当前节奏定位
+    const scaleHint = ctx.storyScale
+      ? `- 开篇占比：${ctx.storyScale.startupPhaseRatio || '约5-10%'}${ctx.storyScale.longformProgressionNote ? `；长线说明：${ctx.storyScale.longformProgressionNote}` : ''}`
+      : '';
     sections.push(`## 【开篇承诺与前 30 章启动包】
 - 开篇钩子：${sp.openingHook || '（暂无）'}
 - 对读者的承诺：${sp.promiseToReader || '（暂无）'}
 - 主角第一印象：${sp.protagonistFirstImpression || '（暂无）'}
 - 首个大爽点：${sp.firstMajorCoolPoint || '（暂无）'}
 - 首个冲突循环：${sp.firstConflictCycle || '（暂无）'}
+${scaleHint}
 ${sp.chapterBlocks?.length ? sp.chapterBlocks.map((b) => {
       const zoneText = b.forbiddenZones?.length
         ? `；禁区：${b.forbiddenZones.join('、')}`

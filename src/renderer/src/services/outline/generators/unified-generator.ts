@@ -13,6 +13,7 @@ import {
   isTransientError,
   backoffDelayMs,
 } from '@/utils/ai-error-classify';
+import { createOutlineTracer, type OutlineTracer, type OutlineTracePurpose } from '../utils/outline-trace';
 import {
   useSettingsStore,
   type AIDefaultModelSelection,
@@ -108,8 +109,17 @@ export interface GenerateOptions {
   maxRetries?: number;
   /** 一次生成的大纲数量，默认 3 */
   count?: number;
-  /** 可选 AbortSignal：用于在发起新请求 / 重置时取消旧的在飞请求，避免竞态与多余计费。 */
+  /** 可选 AbortSignal：用于在发起新请求 / 重置时取消旧的在飞请求，避免竞势与多余计费。 */
   signal?: AbortSignal;
+  /**
+   * trace 配置（P1-2）：传入 runId 即启用，所有 AI 请求/响应/耗时落盘到 temp/ai-traces/{runId}.jsonl。
+   * 失败时不影响主流程。生产环境默认不传（不写盘），测试/冒烟显式传入。
+   */
+  trace?: {
+    runId: string;
+    model?: string;
+    provider?: string;
+  };
 }
 
 /**
@@ -142,10 +152,33 @@ export class UnifiedOutlineGenerator {
     maxRetries: 2,
   };
 
+  /** tracer 缓存：按 runId 复用，避免每次请求都新建（同一个生成会话共享一个 trace 文件） */
+  private tracerCache = new Map<string, OutlineTracer>();
+
   constructor(options?: GenerateOptions) {
     if (options) {
       this.defaultOptions = { ...this.defaultOptions, ...options };
     }
+  }
+
+  /** 从 options.trace 解析或复用 tracer；未配置时返回 undefined（不写 trace） */
+  private getTracer(options: GenerateOptions): OutlineTracer | undefined {
+    const traceCfg = options.trace ?? this.defaultOptions.trace;
+    if (!traceCfg?.runId) return undefined;
+    const cached = this.tracerCache.get(traceCfg.runId);
+    if (cached) return cached;
+    const tracer = createOutlineTracer({
+      runId: traceCfg.runId,
+      model: traceCfg.model,
+      provider: traceCfg.provider,
+    });
+    this.tracerCache.set(traceCfg.runId, tracer);
+    return tracer;
+  }
+
+  /** 测试/冒烟用：等待所有 trace 落盘完成 */
+  async flushTrace(): Promise<void> {
+    await Promise.all([...this.tracerCache.values()].map(t => t.flush()));
   }
 
   /**
@@ -317,7 +350,7 @@ export class UnifiedOutlineGenerator {
 
         onProgress?.(attempt === 1 ? '正在生成创作方向...' : `重新生成创作方向... (${attempt})`);
 
-        const rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts);
+        const rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts, 'outline-direction');
         const directions = parseDirections(rawText);
 
         return {
@@ -354,7 +387,7 @@ export class UnifiedOutlineGenerator {
 
         onProgress?.(attempt === 1 ? '正在展开主方案...' : `重新展开主方案... (${attempt})`);
 
-        const rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts);
+        const rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts, 'outline-expand');
         let outline = parseExpandedOutline(rawText);
 
         // 角色 / 伏笔位于模板末尾，最易被截断；这里检测"看似成功实则残缺"的情况。
@@ -384,7 +417,7 @@ export class UnifiedOutlineGenerator {
             direction,
             options: opts,
             callStructuredTextMode: (system, user, callOpts) =>
-              this.callStructuredTextMode(system, user, callOpts),
+              this.callStructuredTextMode(system, user, callOpts, 'outline-review'),
           });
           if (fix.applied) {
             const fixedOutline = parseExpandedOutline(fix.rawText);
@@ -528,6 +561,7 @@ export class UnifiedOutlineGenerator {
     systemPrompt: string,
     userPrompt: string,
     options: GenerateOptions,
+    purpose: OutlineTracePurpose = 'outline-markdown',
   ): Promise<string> {
     const data = await this.requestChatCompletion(
       [
@@ -535,6 +569,7 @@ export class UnifiedOutlineGenerator {
         { role: 'user' as const, content: userPrompt },
       ],
       options,
+      purpose,
     );
 
     const content = data.choices?.[0]?.message?.content;
@@ -548,11 +583,52 @@ export class UnifiedOutlineGenerator {
   private async requestChatCompletion(
     messages: Array<{ role: 'system' | 'user'; content: string }>,
     options: GenerateOptions,
+    purpose: OutlineTracePurpose = 'outline-markdown',
   ): Promise<any> {
     const config = this.getAIConfig();
     const provider = config.provider;
     const resolvedBaseUrl = config.baseUrl.replace(/\/$/, '');
     const signal = options.signal;
+    const tracer = this.getTracer(options);
+    const startedAt = tracer ? Date.now() : 0;
+    const systemText = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
+    const userText = messages.filter(m => m.role === 'user').map(m => m.content).join('\n\n');
+
+    try {
+      const result = await this.doRequestChatCompletion(messages, options, config, provider, resolvedBaseUrl, signal);
+      if (tracer) {
+        const content = result?.choices?.[0]?.message?.content ?? '';
+        tracer.record({
+          purpose,
+          system: systemText,
+          prompt: userText,
+          response: typeof content === 'string' ? content : String(content ?? ''),
+          ms: Date.now() - startedAt,
+        });
+      }
+      return result;
+    } catch (error) {
+      if (tracer) {
+        tracer.record({
+          purpose,
+          system: systemText,
+          prompt: userText,
+          error: error instanceof Error ? error.message : String(error),
+          ms: Date.now() - startedAt,
+        });
+      }
+      throw error;
+    }
+  }
+
+  private async doRequestChatCompletion(
+    messages: Array<{ role: 'system' | 'user'; content: string }>,
+    options: GenerateOptions,
+    config: { provider: ProviderType; apiKey: string; baseUrl: string; model?: string; generationConfig?: AIGenerationConfig },
+    provider: ProviderType,
+    resolvedBaseUrl: string,
+    signal: AbortSignal | undefined,
+  ): Promise<any> {
 
     if (provider === 'gemini') {
       const model = config.model || 'gemini-2.0-flash';

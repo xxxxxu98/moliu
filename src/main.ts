@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import started from 'electron-squirrel-startup';
 import Store from 'electron-store';
 import { testConnection } from './main/services/ai-client';
-import { generateOutlineStream } from './main/services/ai-providers';
 import { encryptApiKey, decryptApiKey, isEncrypted } from './main/crypto';
 import {
   registerStoryRuntimeHandlers,
@@ -118,17 +117,28 @@ interface ProjectMetadata {
   coreSellingPoints?: CoreSellingPoint[];
   conflictDesign?: ConflictDesign;
   storyLines?: StoryLines;
+  /** 金手指设定（P0-2 新增，与渲染进程 GoldenFingerDesign 对齐） */
+  goldenfingerDesign?: Record<string, unknown>;
   plannedChapterCount?: number;
   plannedWordCount?: number;
   climaxChapterIndex?: number;
   endingChapterIndex?: number;
   outlineProgress?: number;
+  /** 前30章启动包（渲染进程 ProjectStartupPack，IPC 透传用宽松类型） */
+  startupPack?: Record<string, unknown>;
+  /** 故事规模规划（渲染进程 StoryScalePlan） */
+  storyScale?: Record<string, unknown>;
+  /** 结构化卷纲（渲染进程 VolumePlan[]） */
+  volumePlans?: unknown[];
+  /** 开题中心种子（topic-discovery 落库） */
+  topicDiscoverySeed?: Record<string, unknown>;
 }
 
 interface Volume {
   id: string;
   name: string;
   orderIndex: number;
+  summary?: string;
 }
 
 interface Chapter {
@@ -348,25 +358,6 @@ ipcMain.handle('project:delete', (_event, id: string) => {
   const filtered = projects.filter(p => p.id !== id);
   projectStore.set('projects', filtered);
   return { success: true };
-});
-
-// IPC Handler for AI Outline Generation (Streaming)
-ipcMain.handle('ai:generate-outline', async (event, { prompt, provider, config }: {
-  prompt: string;
-  provider: string;
-  config: {
-    apiKey: string;
-    baseUrl?: string;
-    model?: string;
-    temperature?: number;
-    topP?: number;
-  };
-}) => {
-  try {
-    await generateOutlineStream(event, prompt, provider, config);
-  } catch (error) {
-    event.sender.send('ai:outline-error', { error: String(error) });
-  }
 });
 
 // IPC Handlers for Chapters

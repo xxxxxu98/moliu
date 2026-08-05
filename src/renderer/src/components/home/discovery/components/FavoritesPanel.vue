@@ -18,7 +18,9 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <div class="w-full rounded-xl border border-amber-200/80 dark:border-amber-800/50 bg-amber-50/40 dark:bg-amber-950/20 p-4 space-y-3">
+  <div
+    class="w-full rounded-xl border border-amber-200/80 dark:border-amber-800/50 bg-amber-50/40 dark:bg-amber-950/20 p-4 space-y-3"
+  >
     <div class="flex items-center justify-between gap-2">
       <div>
         <h4 class="text-base font-semibold text-gray-900 dark:text-white">
@@ -60,7 +62,10 @@ const { t } = useI18n();
           <BookmarkCheck class="w-4 h-4" />
         </button>
         <div class="pr-8 mb-1.5">
-          <h4 class="font-semibold text-base text-gray-900 dark:text-white">
+          <h4
+            class="font-semibold text-base text-gray-900 dark:text-white leading-snug line-clamp-2"
+            :title="item.seed.title"
+          >
             {{ item.seed.title }}
           </h4>
           <p class="text-xs text-gray-400 mt-0.5">

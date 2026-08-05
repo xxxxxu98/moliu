@@ -375,6 +375,11 @@ export function useProjectCreator(): UseProjectCreatorReturn {
           chapter: cp.suggestedChapter || 1,
           type: normalizeCoolPointPattern(cp.type || ''),
           description: cp.description || '',
+          // 爽点闭环结构透传（P1-1，向后兼容）
+          ...(cp.trigger ? { trigger: cp.trigger } : {}),
+          ...(cp.buildup ? { buildup: cp.buildup } : {}),
+          ...(cp.payoff ? { payoff: cp.payoff } : {}),
+          ...(cp.cost ? { cost: cp.cost } : {}),
         })),
         density: {
           micro: 3000,
@@ -398,6 +403,18 @@ export function useProjectCreator(): UseProjectCreatorReturn {
       } : undefined,
       // 八条故事线 - 需要转换为完整格式
       storyLines: outline.storyLines ? normalizeStoryLines(outline.storyLines) : undefined,
+      // 金手指设定（爽点引擎；缺失时仍为 undefined，续写端会从八线 goldenfinger 兜底）
+      goldenfingerDesign: outline.goldenfingerDesign
+        ? {
+            id: `goldenfinger-${Date.now()}`,
+            type: outline.goldenfingerDesign.type,
+            trigger: outline.goldenfingerDesign.trigger,
+            upgradePath: outline.goldenfingerDesign.upgradePath ?? [],
+            limitation: outline.goldenfingerDesign.limitation ?? '',
+            cost: outline.goldenfingerDesign.cost ?? '',
+            firstRevealChapter: outline.goldenfingerDesign.firstRevealChapter,
+          }
+        : undefined,
 
       // ========== 首页大纲扩展字段 ==========
       // 前 30 章启动包（直接透传，供续写消费 buildEnhancedDesignPrompt）
@@ -700,6 +717,7 @@ export function useProjectCreator(): UseProjectCreatorReturn {
           || (metadata.coreSellingPoints && metadata.coreSellingPoints.length > 0)
           || metadata.conflictDesign
           || metadata.storyLines
+          || metadata.goldenfingerDesign
           || metadata.startupPack
           || metadata.storyScale
           || (metadata.volumePlans && metadata.volumePlans.length > 0)
@@ -725,6 +743,7 @@ export function useProjectCreator(): UseProjectCreatorReturn {
             coreSellingPoints: metadata.coreSellingPoints,
             conflictDesign: metadata.conflictDesign,
             storyLines: metadata.storyLines,
+            goldenfingerDesign: metadata.goldenfingerDesign,
             metadata: Object.keys(newMetadata).length > 0
               ? { ...existingMetadata, ...newMetadata }
               : existingMetadata,

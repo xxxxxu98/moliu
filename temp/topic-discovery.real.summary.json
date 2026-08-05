@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-05T06:38:07.374Z",
+  "at": "2026-08-05T12:51:11.000Z",
   "provider": "openai",
   "providerId": "provider-1781144969420",
   "model": "deepseek-v4-flash[1m]",
@@ -9,65 +9,82 @@
     {
       "module": "seeds",
       "chapters": 30,
-      "openingHookLength": 22,
+      "openingHookLength": 38,
       "hardIssues": [],
-      "softIssues": [],
-      "expandWarnings": [
-        "修正稿质量未提升（1→1 处问题），回退初稿"
+      "softIssues": [
+        "开篇钩子过长（38 字 > 35）：联邦舰队围剿地球时，我淡定地从垃圾堆里掏出一块能量晶石，当场…"
       ],
-      "reviewerStatus": "reverted-no-improve",
-      "aiMs": 307563,
+      "expandWarnings": [
+        "大纲审查修正失败，回退初稿：Failed to execute \"fetch()\" on \"Window\" with URL \"https://ark.cn-beijing.volces.com/api/coding/v3/chat/completions\": con"
+      ],
+      "reviewerStatus": "failed",
+      "aiMs": 225747,
       "rateLimitedCount": 0,
-      "seedTitle": "退休魔王在星际开废品站",
-      "directionTitle": "退休魔王在星际开废品站"
+      "seedTitle": "我靠收废品成了星际首富",
+      "directionTitle": "地球废品回收站"
     },
     {
       "module": "radar",
       "chapters": 30,
-      "openingHookLength": 33,
+      "openingHookLength": 30,
       "hardIssues": [],
       "softIssues": [],
       "expandWarnings": [
-        "大纲审查修正失败，回退初稿：Failed to execute \"fetch()\" on \"Window\" with URL \"https://ark.cn-beijing.volces.com/api/coding/v3/chat/completions\": soc"
+        "修正稿质量未提升（1→1 处问题），回退初稿"
       ],
-      "reviewerStatus": "failed",
-      "aiMs": 280106,
+      "reviewerStatus": "reverted-no-improve",
+      "aiMs": 375929,
       "rateLimitedCount": 0,
-      "seedTitle": "当我的加班时长成了异能经验条",
-      "directionTitle": "加班成神：内卷反杀局"
+      "seedTitle": "当我的功法需要提交代码审查",
+      "directionTitle": "规则系修仙：我的功法管理手册"
     },
     {
       "module": "mix",
       "chapters": 30,
-      "openingHookLength": 19,
+      "openingHookLength": 32,
       "hardIssues": [],
       "softIssues": [],
       "expandWarnings": [
-        "修正稿质量未提升（1→1 处问题），回退初稿"
+        "大纲审查修正完成：修复 1 处问题"
       ],
-      "reviewerStatus": "reverted-no-improve",
-      "aiMs": 481602,
+      "reviewerStatus": "applied",
+      "aiMs": 400368,
       "rateLimitedCount": 0,
-      "seedTitle": "直播鉴宝：我看到了死亡现场",
-      "directionTitle": "直播鉴宝：命锁边"
+      "seedTitle": "所有鉴宝文物都在向我求救",
+      "directionTitle": "文物说：请为我复仇"
     },
     {
       "module": "dice",
       "chapters": 30,
-      "openingHookLength": 28,
+      "openingHookLength": 24,
       "hardIssues": [],
       "softIssues": [],
       "expandWarnings": [
-        "修正稿质量未提升（1→1 处问题），回退初稿"
+        "大纲审查修正失败，回退初稿：API 请求失败: 429 {\"error\":{\"code\":\"ServerOverloaded\",\"message\":\"The service is currently unable to handle additional reques"
       ],
-      "reviewerStatus": "reverted-no-improve",
-      "aiMs": 474584,
+      "reviewerStatus": "failed",
+      "aiMs": 351025,
       "rateLimitedCount": 0,
-      "seedTitle": "解剖鬼魂的仵作",
-      "directionTitle": "阴间档案·法医仵作"
+      "seedTitle": "我在古代当仵作，尸体天天给我打电话",
+      "directionTitle": "尸语者：大宋神探"
     },
     {
       "module": "twist",
+      "chapters": 30,
+      "openingHookLength": 27,
+      "hardIssues": [],
+      "softIssues": [],
+      "expandWarnings": [
+        "大纲审查修正完成：修复 2 处问题"
+      ],
+      "reviewerStatus": "applied",
+      "aiMs": 357141,
+      "rateLimitedCount": 0,
+      "seedTitle": "《我的系统是破产清算版》",
+      "directionTitle": "我的系统是破产清算版：对赌协议"
+    },
+    {
+      "module": "prompt",
       "chapters": 30,
       "openingHookLength": 22,
       "hardIssues": [],
@@ -76,33 +93,13 @@
         "修正稿质量未提升（1→1 处问题），回退初稿"
       ],
       "reviewerStatus": "reverted-no-improve",
-      "aiMs": 518783,
+      "aiMs": 393023,
       "rateLimitedCount": 0,
-      "seedTitle": "我的系统是故障版",
-      "directionTitle": "赛博修理工：我的系统是BUG"
-    },
-    {
-      "module": "prompt",
-      "chapters": 30,
-      "openingHookLength": 7,
-      "hardIssues": [],
-      "softIssues": [
-        "[1-5章] 必出事件过长（68 字 > 40）：第1章林牧在直播中用科学拆穿“神婆给小鬼治病”骗局。第3章林…",
-        "[16-20章] 必出事件过长（63 字 > 40）：第16章林牧用科学手段配合降妖道具彻底消灭真妖“影”。第18…",
-        "[21-25章] 必出事件过长（63 字 > 40）：第21章林牧与新搭档赵一凡调查第一个案件。第23章发现人妖混…",
-        "[26-30章] 必出事件过长（42 字 > 40）：第26章林牧与赵一凡合作调查人妖混血组织。第28章林牧在直播…"
-      ],
-      "expandWarnings": [
-        "大纲审查修正失败，回退初稿：API 请求失败: 429 {\"error\":{\"code\":\"ServerOverloaded\",\"message\":\"The service is currently unable to handle additional reques"
-      ],
-      "reviewerStatus": "failed",
-      "aiMs": 352878,
-      "rateLimitedCount": 0,
-      "directionTitle": "降妖人很忙"
+      "directionTitle": "降妖打假局：科学镇魂"
     }
   ],
   "hardFailCount": 0,
-  "softIssueCount": 4,
+  "softIssueCount": 1,
   "totalRateLimited": 0,
-  "totalAiMs": 2415516
+  "totalAiMs": 2103233
 }

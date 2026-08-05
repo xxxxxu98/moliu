@@ -492,12 +492,39 @@ async function defaultChat(
     },
   );
 
-  return service.complete(user, {
+  // 开题中心统一走非流式：complete() 不传 signal → 走 chat() 一次性读取整包，
+  // 避免 stream 拼接导致的 JSON 截断，降低解析失败概率；SDK chat() 自带重试兜底瞬态错误。
+  const chatPromise = service.complete(user, {
     system,
     temperature,
-    signal,
     // 种子/雷达玩法均要求 JSON：按 provider 能力启用 JSON 强制
     jsonMode: true,
+  });
+
+  // multi-ai-sdk 的 chat() 无法真正中断底层 fetch（不透传 signal）。
+  // 这里用 Promise.race 提供「软中断」：取消时调用方立即收到 AbortError，
+  // 底层请求会在后台跑完，由 store 的 refreshId 竞态护栏丢弃结果。
+  if (!signal) {
+    return chatPromise;
+  }
+  if (signal.aborted) {
+    throw new DOMException('Aborted', 'AbortError');
+  }
+  return new Promise<string>((resolve, reject) => {
+    const onAbort = (): void => {
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+    chatPromise.then(
+      result => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(result);
+      },
+      error => {
+        signal.removeEventListener('abort', onAbort);
+        reject(error);
+      },
+    );
   });
 }
 

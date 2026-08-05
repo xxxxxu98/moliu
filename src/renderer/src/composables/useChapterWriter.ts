@@ -526,8 +526,10 @@ export function useChapterWriter(): UseChapterWriterReturn {
       conflictDesign: project.conflictDesign,
       coolPointDesign: project.coolPointDesign,
       storyLines: project.storyLines,
+      goldenfingerDesign: project.goldenfingerDesign,
       coreSellingPoints: project.coreSellingPoints,
       startupPack: project.metadata?.startupPack,
+      storyScale: project.metadata?.storyScale,
       writingStyle: writingStyle as any,
     });
 

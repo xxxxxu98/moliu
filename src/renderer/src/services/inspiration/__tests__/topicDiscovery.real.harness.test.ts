@@ -271,10 +271,14 @@ async function runModule(
     const prompt = seed ? buildPromptFromSeed(seed) : promptText;
     result.seedTitle = seed?.title;
 
+    // 每个模块独立 trace 文件，含时间戳避免覆盖
+    const traceRunId = `outline-topic-${module}-${Date.now()}`;
+
     const genResult = await generator.generateDirections(prompt, {
       count: 1,
       wordCountRange: WORD_COUNT_RANGE,
       maxRetries: 2,
+      trace: { runId: traceRunId, model: cfg.model, provider: cfg.provider },
     });
     expect(genResult.directions.length, `[${module}] 方向生成失败`).toBeGreaterThan(0);
     const direction = genResult.directions[0];
@@ -283,6 +287,7 @@ async function runModule(
     const expanded = await generator.expandDirection(prompt, direction, {
       wordCountRange: WORD_COUNT_RANGE,
       maxRetries: 2,
+      trace: { runId: traceRunId, model: cfg.model, provider: cfg.provider },
     });
     expect(expanded.outline, `[${module}] 扩展大纲失败`).not.toBeNull();
     const outline = expanded.outline!;
@@ -321,7 +326,9 @@ const generator = new UnifiedOutlineGenerator({ temperature: 0.7, topP: 0.9, max
 const moduleResults: ModuleResult[] = [];
 
 describe.skipIf(!isRealAiEnabled())('开题中心 REAL AI · 六模块真实链路', () => {
-  afterAll(() => {
+  afterAll(async () => {
+    // 等待所有 trace 落盘完成（P1-2：失败排查用）
+    await generator.flushTrace();
     // 汇总落盘（无论成功失败都保留，便于排查）
     const summary = {
       at: new Date().toISOString(),

@@ -125,8 +125,10 @@ ${c.content || '（本章暂无内容）'}`;
       conflictDesign: project.conflictDesign,
       coolPointDesign: project.coolPointDesign,
       storyLines: project.storyLines,
+      goldenfingerDesign: project.goldenfingerDesign,
       coreSellingPoints: project.coreSellingPoints,
       startupPack: project.metadata?.startupPack,
+      storyScale: project.metadata?.storyScale,
     });
 
     return {

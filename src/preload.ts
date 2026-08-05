@@ -22,17 +22,6 @@ export interface ElectronAPI {
   generateText: (params: unknown) => Promise<unknown>;
   checkConsistency: (text: string) => Promise<unknown>;
   testAIConnection: (provider: string, config: { apiKey: string; baseUrl?: string; model?: string }) => Promise<{ success: boolean; error?: string; errorCode?: string; models?: string[]; responseTime?: number }>;
-  generateOutline: (params: {
-    prompt: string;
-    provider: string;
-    config: {
-      apiKey: string;
-      baseUrl?: string;
-      model?: string;
-      temperature?: number;
-      topP?: number;
-    };
-  }) => Promise<void>;
 
   // Memory - Characters
   updateCharacter: (data: { projectId: string; character: unknown }) => Promise<{ success: boolean; error?: string }>;
@@ -63,10 +52,6 @@ export interface ElectronAPI {
   onAIStream: (callback: (chunk: string) => void) => () => void;
   onProjectUpdate: (callback: (data: unknown) => void) => () => void;
   onGenerationProgress: (callback: (progress: number) => void) => () => void;
-  onOutlineChunk: (callback: (data: { content: string; fullContent: string }) => void) => () => void;
-  onOutlineDone: (callback: () => void) => () => void;
-  onOutlineComplete: (callback: (data: { result: any }) => void) => () => void;
-  onOutlineError: (callback: (data: { error: string }) => void) => () => void;
 }
 
 const api: ElectronAPI = {
@@ -103,7 +88,6 @@ const api: ElectronAPI = {
   checkConsistency: (text: string) => ipcRenderer.invoke('ai:check', text),
   testAIConnection: (provider: string, config: unknown) =>
     ipcRenderer.invoke('ai:test', provider, config),
-  generateOutline: (params) => ipcRenderer.invoke('ai:generate-outline', params),
 
   // Memory - Characters
   updateCharacter: (data: { projectId: string; character: unknown }) =>
@@ -157,31 +141,6 @@ const api: ElectronAPI = {
       callback(progress);
     ipcRenderer.on('generation:progress', handler);
     return () => ipcRenderer.removeListener('generation:progress', handler);
-  },
-
-  // Outline generation streaming events
-  onOutlineChunk: (callback: (data: { content: string; fullContent: string }) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, data: { content: string; fullContent: string }) => callback(data);
-    ipcRenderer.on('ai:outline-chunk', handler);
-    return () => ipcRenderer.removeListener('ai:outline-chunk', handler);
-  },
-
-  onOutlineDone: (callback: () => void) => {
-    const handler = () => callback();
-    ipcRenderer.on('ai:outline-done', handler);
-    return () => ipcRenderer.removeListener('ai:outline-done', handler);
-  },
-
-  onOutlineComplete: (callback: (data: { result: any }) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, data: { result: any }) => callback(data);
-    ipcRenderer.on('ai:outline-complete', handler);
-    return () => ipcRenderer.removeListener('ai:outline-complete', handler);
-  },
-
-  onOutlineError: (callback: (data: { error: string }) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, data: { error: string }) => callback(data);
-    ipcRenderer.on('ai:outline-error', handler);
-    return () => ipcRenderer.removeListener('ai:outline-error', handler);
   },
 };
 

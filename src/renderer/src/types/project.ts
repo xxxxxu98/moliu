@@ -25,6 +25,7 @@ export interface Project {
   conflictDesign?: ConflictDesign;   // 矛盾设计
   coolPointDesign?: CoolPointDesign; // 爽点设计
   storyLines?: StoryLines;          // 八条故事线
+  goldenfingerDesign?: GoldenFingerDesign; // 金手指设定（爽点引擎）
   coreSellingPoints?: CoreSellingPoint[];  // 核心卖点
   metadata?: ProjectMetadata;         // 项目元数据
 }
@@ -634,6 +635,19 @@ export interface CoolPointDensity {
   big: number;     // 大爽点间隔(字)
 }
 
+/**
+ * 金手指设定（爽点引擎，区别于 StoryLines 内的 GoldenFingerLine 简版）
+ */
+export interface GoldenFingerDesign {
+  id: string;
+  type: string;                  // 金手指是什么
+  trigger: string;               // 触发场景（觉醒方式）
+  upgradePath: string[];         // 升级路径（初阶→进阶→终极）
+  limitation: string;            // 使用限制
+  cost: string;                  // 使用代价
+  firstRevealChapter?: number;   // 首次兑现章节（建议 1-3）
+}
+
 export type CoolPointPattern = 
   | 'face-slapping'     // 打脸
   | 'show-off'          // 装逼
@@ -668,6 +682,11 @@ export interface CoolPointArrangement {
   chapter: number;      // 章节
   type: CoolPointPattern;
   description: string;   // 描述
+  /** 爽点闭环结构（P1-1 新增，向后兼容） */
+  trigger?: string;      // 触发场景
+  buildup?: string;      // 铺垫（轻视/压制）
+  payoff?: string;       // 兑现（爆发画面）
+  cost?: string;         // 代价
 }
 
 /**

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import {
   NButton,
   NInput,
@@ -12,13 +12,11 @@ import {
   NPopconfirm,
   useMessage,
   useNotification,
-} from "naive-ui";
+} from 'naive-ui';
 import {
   Plus,
   Trash2,
   TestTube,
-  Check,
-  X,
   Key,
   Edit2,
   Copy,
@@ -28,15 +26,14 @@ import {
   Cpu,
   ChevronDown,
   ChevronRight,
-} from "lucide-vue-next";
-import { useI18n } from "vue-i18n";
-import { useSettingsStore, type AIProvider, type AIDefaultModelSelection } from "@/stores/settings.store";
+} from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
 import {
-  providerNameMap,
-  defaultProviders,
-  type ProviderType,
-} from "@/config/ai-providers";
-import { extractErrorMessage } from "@/utils/error-message";
+  useSettingsStore,
+  type AIProvider,
+} from '@/stores/settings.store';
+import { providerNameMap, defaultProviders } from '@/config/ai-providers';
+import { extractErrorMessage } from '@/utils/error-message';
 
 // Test connection timeout in milliseconds
 const TEST_TIMEOUT_MS = 30000;
@@ -53,65 +50,65 @@ const showAddModal = ref(false);
 const editingProvider = ref<AIProvider | null>(null);
 const showAdvancedSettings = ref(false);
 
-const providerOptions = defaultProviders.map((p) => ({
+const providerOptions = defaultProviders.map(p => ({
   label: providerNameMap[p.provider],
   value: p.provider,
 }));
 
 // Token options based on common AI model context limits
 const tokenOptions = [
-  { label: "不限制 (默认)", value: undefined },
-  { label: "4K", value: 4096 },
-  { label: "8K", value: 8192 },
-  { label: "16K", value: 16384 },
-  { label: "32K", value: 32768 },
-  { label: "64K", value: 65536 },
-  { label: "128K", value: 131072 },
-  { label: "192K", value: 196608 },
-  { label: "200K", value: 200000 },
-  { label: "256K", value: 262144 },
-  { label: "512K", value: 524288 },
-  { label: "1M", value: 1048576 },
-  { label: "2M", value: 2097152 },
+  { label: '不限制 (默认)', value: undefined },
+  { label: '4K', value: 4096 },
+  { label: '8K', value: 8192 },
+  { label: '16K', value: 16384 },
+  { label: '32K', value: 32768 },
+  { label: '64K', value: 65536 },
+  { label: '128K', value: 131072 },
+  { label: '192K', value: 196608 },
+  { label: '200K', value: 200000 },
+  { label: '256K', value: 262144 },
+  { label: '512K', value: 524288 },
+  { label: '1M', value: 1048576 },
+  { label: '2M', value: 2097152 },
 ];
 
 // Temperature presets for creative writing (range: 0.1-1.2)
 const temperatureOptions = [
-  { label: "0.1 (精确)", value: 0.1 },
-  { label: "0.3", value: 0.3 },
-  { label: "0.5 (平衡)", value: 0.5 },
-  { label: "0.7 (创意)", value: 0.7 },
-  { label: "0.9", value: 0.9 },
-  { label: "1.0", value: 1.0 },
-  { label: "1.2 (激进)", value: 1.2 },
+  { label: '0.1 (精确)', value: 0.1 },
+  { label: '0.3', value: 0.3 },
+  { label: '0.5 (平衡)', value: 0.5 },
+  { label: '0.7 (创意)', value: 0.7 },
+  { label: '0.9', value: 0.9 },
+  { label: '1.0', value: 1.0 },
+  { label: '1.2 (激进)', value: 1.2 },
 ];
 
 // Top P presets
 const topPOptions = [
-  { label: "0.5", value: 0.5 },
-  { label: "0.7", value: 0.7 },
-  { label: "0.8", value: 0.8 },
-  { label: "0.9 (默认)", value: 0.9 },
-  { label: "1.0", value: 1.0 },
+  { label: '0.5', value: 0.5 },
+  { label: '0.7', value: 0.7 },
+  { label: '0.8', value: 0.8 },
+  { label: '0.9 (默认)', value: 0.9 },
+  { label: '1.0', value: 1.0 },
 ];
 
 // Frequency penalty presets
 const frequencyPenaltyOptions = [
-  { label: "-1.0 (高重复)", value: -1.0 },
-  { label: "-0.5", value: -0.5 },
-  { label: "0.0 (默认)", value: 0 },
-  { label: "0.5", value: 0.5 },
-  { label: "1.0 (低重复)", value: 1.0 },
-  { label: "2.0 (极低重复)", value: 2.0 },
+  { label: '-1.0 (高重复)', value: -1.0 },
+  { label: '-0.5', value: -0.5 },
+  { label: '0.0 (默认)', value: 0 },
+  { label: '0.5', value: 0.5 },
+  { label: '1.0 (低重复)', value: 1.0 },
+  { label: '2.0 (极低重复)', value: 2.0 },
 ];
 
 // Presence penalty presets
 const presencePenaltyOptions = [
-  { label: "-1.0", value: -1.0 },
-  { label: "0.0 (默认)", value: 0 },
-  { label: "0.5", value: 0.5 },
-  { label: "1.0", value: 1.0 },
-  { label: "2.0 (多话题)", value: 2.0 },
+  { label: '-1.0', value: -1.0 },
+  { label: '0.0 (默认)', value: 0 },
+  { label: '0.5', value: 0.5 },
+  { label: '1.0', value: 1.0 },
+  { label: '2.0 (多话题)', value: 2.0 },
 ];
 
 // Default generation config
@@ -126,7 +123,8 @@ interface AvailableModelOption {
   id: string;
   providerId: string;
   modelName: string;
-  name: string;
+  /** 厂商配置的显示名称 */
+  displayName: string;
   provider: string;
   providerName: string;
 }
@@ -135,17 +133,16 @@ const availableModels = computed<AvailableModelOption[]>(() => {
   const models: AvailableModelOption[] = [];
 
   settingsStore.aiProviders
-    .filter((p) => p.enabled && p.apiKey)
-    .forEach((provider) => {
+    .filter(p => p.enabled && p.apiKey)
+    .forEach(provider => {
       if (provider.modelName) {
         models.push({
           id: `${provider.id}:${provider.modelName}`,
           providerId: provider.id,
           modelName: provider.modelName,
-          name: provider.modelName,
+          displayName: provider.name?.trim() || provider.modelName,
           provider: provider.provider,
-          providerName:
-            providerNameMap[provider.provider] || provider.provider,
+          providerName: providerNameMap[provider.provider] || provider.provider,
         });
       }
     });
@@ -156,47 +153,46 @@ const availableModels = computed<AvailableModelOption[]>(() => {
 // Effective default model - validates and falls back gracefully
 const effectiveDefaultModel = computed(() => {
   const defaultSelection = settingsStore.defaultModel;
-  
+
   // If no default set, use first available model
   if (!defaultSelection && availableModels.value.length > 0) {
     return availableModels.value[0].id;
   }
-  
+
   // Validate current default model exists
   const exists = availableModels.value.some(
-    m => m.providerId === defaultSelection?.providerId && m.modelName === defaultSelection?.modelName,
+    m =>
+      m.providerId === defaultSelection?.providerId && m.modelName === defaultSelection?.modelName
   );
   if (exists && defaultSelection) {
     return `${defaultSelection.providerId}:${defaultSelection.modelName}`;
   }
-  
+
   // Fallback to first available model if current default is invalid
   if (availableModels.value.length > 0) {
     return availableModels.value[0].id;
   }
-  
+
   return null;
 });
 
 function maskApiKey(key: string): string {
-  if (!key) return t("settings.aiProviders.notSet");
-  if (key.length <= 8) return "*".repeat(key.length);
-  return (
-    key.slice(0, 4) + "*".repeat(Math.min(key.length - 8, 12)) + key.slice(-4)
-  );
+  if (!key) return t('settings.aiProviders.notSet');
+  if (key.length <= 8) return '*'.repeat(key.length);
+  return key.slice(0, 4) + '*'.repeat(Math.min(key.length - 8, 12)) + key.slice(-4);
 }
 
 async function copyProviderId(providerId: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(providerId);
-    message.success("已复制配置 ID");
+    message.success('已复制配置 ID');
   } catch {
-    message.error("复制失败，请手动选择 ID");
+    message.error('复制失败，请手动选择 ID');
   }
 }
 
 function formatTokens(tokens: number | undefined): string {
-  if (!tokens) return t("settings.aiProviders.notSet");
+  if (!tokens) return t('settings.aiProviders.notSet');
   if (tokens >= 1000000) {
     return `${Math.round(tokens / 1000000)}M`;
   }
@@ -207,56 +203,56 @@ function formatTokens(tokens: number | undefined): string {
 }
 
 function getProviderIcon(provider: string) {
-  return "AI";
+  return 'AI';
 }
 
 // Validation functions
 function validateApiKey(apiKey: string, provider: string): string | null {
   if (!apiKey || !apiKey.trim()) {
-    return t("settings.aiProviders.messages.enterApiKey");
+    return t('settings.aiProviders.messages.enterApiKey');
   }
-  
+
   // Ollama doesn't require API key
   if (provider === 'ollama') {
     return null;
   }
-  
+
   const trimmedKey = apiKey.trim();
-  
+
   // Minimum length check
   if (trimmedKey.length < 10) {
-    return t("settings.aiProviders.messages.apiKeyTooShort");
+    return t('settings.aiProviders.messages.apiKeyTooShort');
   }
-  
+
   // Provider-specific prefix validation
   switch (provider) {
     case 'openai':
       if (!trimmedKey.startsWith('sk-')) {
-        return t("settings.aiProviders.messages.openaiKeyFormat");
+        return t('settings.aiProviders.messages.openaiKeyFormat');
       }
       break;
     case 'anthropic':
       if (!trimmedKey.startsWith('sk-ant-')) {
-        return t("settings.aiProviders.messages.anthropicKeyFormat");
+        return t('settings.aiProviders.messages.anthropicKeyFormat');
       }
       break;
     case 'google':
       if (trimmedKey.length !== 39 || !/^[A-Za-z0-9_-]+$/.test(trimmedKey)) {
-        return t("settings.aiProviders.messages.googleKeyFormat");
+        return t('settings.aiProviders.messages.googleKeyFormat');
       }
       break;
     case 'deepseek':
       if (!trimmedKey.startsWith('sk-')) {
-        return t("settings.aiProviders.messages.deepseekKeyFormat");
+        return t('settings.aiProviders.messages.deepseekKeyFormat');
       }
       break;
     case 'moonshot':
       if (!trimmedKey.startsWith('sk-')) {
-        return t("settings.aiProviders.messages.moonshotKeyFormat");
+        return t('settings.aiProviders.messages.moonshotKeyFormat');
       }
       break;
   }
-  
+
   return null;
 }
 
@@ -264,15 +260,15 @@ function validateBaseUrl(baseUrl: string | undefined): string | null {
   if (!baseUrl || !baseUrl.trim()) {
     return null; // Optional field
   }
-  
+
   try {
     const url = new URL(baseUrl.trim());
     if (!['http:', 'https:'].includes(url.protocol)) {
-      return t("settings.aiProviders.messages.invalidUrlProtocol");
+      return t('settings.aiProviders.messages.invalidUrlProtocol');
     }
     return null;
   } catch {
-    return t("settings.aiProviders.messages.invalidUrlFormat");
+    return t('settings.aiProviders.messages.invalidUrlFormat');
   }
 }
 
@@ -284,27 +280,27 @@ const formErrors = ref<{
 
 function validateForm(): boolean {
   if (!editingProvider.value) return false;
-  
+
   const errors: typeof formErrors.value = {};
-  
+
   // Validate Base URL
   const baseUrlError = validateBaseUrl(editingProvider.value.baseUrl);
   if (baseUrlError) {
     errors.baseUrl = baseUrlError;
   }
-  
+
   formErrors.value = errors;
   return Object.keys(errors).length === 0;
 }
 
 function openAddModal() {
   editingProvider.value = {
-    id: "",
-    name: "",
-    provider: "openai",
-    apiKey: "",
+    id: '',
+    name: '',
+    provider: 'openai',
+    apiKey: '',
     enabled: true,
-    modelName: "",
+    modelName: '',
     maxTokens: undefined,
     generationConfig: { ...defaultGenerationConfig },
   };
@@ -320,65 +316,59 @@ function openEditModal(provider: AIProvider) {
 
 function saveProvider() {
   if (!editingProvider.value) return;
-  
+
   // Validate form before saving
   if (!validateForm()) {
-    message.warning(t("settings.aiProviders.messages.validationFailed"));
+    message.warning(t('settings.aiProviders.messages.validationFailed'));
     return;
   }
-  
+
   // Additional required field checks
   if (!editingProvider.value.name.trim()) {
-    message.warning(t("settings.aiProviders.messages.enterDisplayName"));
+    message.warning(t('settings.aiProviders.messages.enterDisplayName'));
     return;
   }
-  
+
   if (editingProvider.value.id) {
-    settingsStore.updateAIProvider(
-      editingProvider.value.id,
-      editingProvider.value,
-    );
-    message.success(t("settings.aiProviders.messages.saveSuccess"));
+    settingsStore.updateAIProvider(editingProvider.value.id, editingProvider.value);
+    message.success(t('settings.aiProviders.messages.saveSuccess'));
   } else {
     settingsStore.addAIProvider(editingProvider.value);
-    message.success(t("settings.aiProviders.messages.addSuccess"));
+    message.success(t('settings.aiProviders.messages.addSuccess'));
   }
   showAddModal.value = false;
 }
 
 function deleteProvider(id: string) {
   settingsStore.removeAIProvider(id);
-  message.success(t("settings.aiProviders.messages.deleteSuccess"));
+  message.success(t('settings.aiProviders.messages.deleteSuccess'));
 }
 
 function duplicateProvider(provider: AIProvider) {
   try {
     const copied = settingsStore.duplicateAIProvider(
       provider.id,
-      t("settings.aiProviders.copySuffix"),
+      t('settings.aiProviders.copySuffix')
     );
     if (!copied) {
-      message.error(t("settings.aiProviders.messages.copyFailed"));
+      message.error(t('settings.aiProviders.messages.copyFailed'));
       return;
     }
     notification.success({
-      title: t("settings.aiProviders.messages.copySuccessTitle"),
-      content: t("settings.aiProviders.messages.copySuccess", {
+      title: t('settings.aiProviders.messages.copySuccessTitle'),
+      content: t('settings.aiProviders.messages.copySuccess', {
         name: copied.name,
       }),
       duration: 3000,
     });
   } catch {
-    message.error(t("settings.aiProviders.messages.copyFailed"));
+    message.error(t('settings.aiProviders.messages.copyFailed'));
   }
 }
 
 async function testConnection(provider: AIProvider) {
-  if (
-    !provider.apiKey ||
-    provider.apiKey === t("settings.aiProviders.notSet")
-  ) {
-    message.warning(t("settings.aiProviders.messages.testWarning"));
+  if (!provider.apiKey || provider.apiKey === t('settings.aiProviders.notSet')) {
+    message.warning(t('settings.aiProviders.messages.testWarning'));
     return;
   }
 
@@ -389,7 +379,7 @@ async function testConnection(provider: AIProvider) {
   activeTestController = new AbortController();
 
   provider.isTesting = true;
-  
+
   // Timeout handler
   const timeoutId = setTimeout(() => {
     activeTestController?.abort();
@@ -402,31 +392,35 @@ async function testConnection(provider: AIProvider) {
 
     if (result.success) {
       message.success(
-        t("settings.aiProviders.messages.testSuccess", {
+        t('settings.aiProviders.messages.testSuccess', {
           name: provider.name,
-          models: result.models ? `${result.models.length} 个` : "",
-        }),
+          models: result.models ? `${result.models.length} 个` : '',
+        })
       );
     } else {
-      const errorMessage = result.error ||
-        t(`settings.aiProviders.messages.${getErrorMessageKey(result.errorCode)}`);
+      const errorMessage =
+        result.error || t(`settings.aiProviders.messages.${getErrorMessageKey(result.errorCode)}`);
       message.error(
-        t("settings.aiProviders.messages.testFailed", {
+        t('settings.aiProviders.messages.testFailed', {
           name: provider.name,
-        }) + ": " + errorMessage
+        }) +
+          ': ' +
+          errorMessage
       );
     }
   } catch (error) {
     clearTimeout(timeoutId);
     // Check if it was aborted
     if (error instanceof Error && error.name === 'AbortError') {
-      message.warning(t("settings.aiProviders.messages.testTimeout"));
+      message.warning(t('settings.aiProviders.messages.testTimeout'));
     } else {
       const errorMessage = extractErrorMessage(error, 'Test failed');
       message.error(
-        t("settings.aiProviders.messages.testFailed", {
+        t('settings.aiProviders.messages.testFailed', {
           name: provider.name,
-        }) + ": " + errorMessage
+        }) +
+          ': ' +
+          errorMessage
       );
     }
   } finally {
@@ -494,7 +488,7 @@ onMounted(() => {
   const hasStuckProviders = settingsStore.resetTestingStates();
   if (hasStuckProviders) {
     console.warn('[AIModelConfig] Found stuck testing states on mount, resetting...');
-    message.warning(t("settings.aiProviders.messages.stuckStateReset"));
+    message.warning(t('settings.aiProviders.messages.stuckStateReset'));
   }
 });
 </script>
@@ -517,10 +511,10 @@ onMounted(() => {
           </div>
           <div>
             <h4 class="font-semibold text-green-900 dark:text-green-300 mb-1">
-              {{ t("settings.aiProviders.securityTitle") }}
+              {{ t('settings.aiProviders.securityTitle') }}
             </h4>
             <p class="text-sm text-green-700 dark:text-green-400">
-              {{ t("settings.aiProviders.securityDesc") }}
+              {{ t('settings.aiProviders.securityDesc') }}
             </p>
           </div>
         </div>
@@ -543,10 +537,10 @@ onMounted(() => {
           </div>
           <div>
             <h3 class="font-semibold text-gray-900 dark:text-white text-sm">
-              {{ t("settings.aiProviders.defaultModel") }}
+              {{ t('settings.aiProviders.defaultModel') }}
             </h3>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              {{ t("settings.aiProviders.defaultModelDesc") }}
+              {{ t('settings.aiProviders.defaultModelDesc') }}
             </p>
           </div>
         </div>
@@ -558,10 +552,10 @@ onMounted(() => {
         >
           <AlertCircle class="w-8 h-8 text-gray-400 mb-2" />
           <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">
-            {{ t("settings.aiProviders.noModelsAvailable") }}
+            {{ t('settings.aiProviders.noModelsAvailable') }}
           </p>
           <p class="text-xs text-gray-400 dark:text-gray-500">
-            {{ t("settings.aiProviders.noModelsHint") }}
+            {{ t('settings.aiProviders.noModelsHint') }}
           </p>
         </div>
 
@@ -578,21 +572,25 @@ onMounted(() => {
             ]"
             @click="handleDefaultModelChange(model.id)"
           >
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-1 min-w-0">
               <div class="flex items-start justify-between gap-1">
-                <span class="text-xs font-semibold text-gray-900 dark:text-white line-clamp-1">{{
-                  model.name
-                }}</span>
+                <span
+                  class="text-xs font-semibold text-gray-900 dark:text-white line-clamp-1"
+                  :title="model.displayName"
+                  >{{ model.displayName }}</span
+                >
                 <span
                   v-if="model.id === effectiveDefaultModel"
                   class="px-1.5 py-0.5 text-[10px] bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-full whitespace-nowrap"
                 >
-                  {{ t("settings.aiProviders.defaultModelOption") }}
+                  {{ t('settings.aiProviders.defaultModelOption') }}
                 </span>
               </div>
-              <span class="text-[10px] text-gray-500 dark:text-gray-400">{{
-                model.providerName
-              }}</span>
+              <span
+                class="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate"
+                :title="model.modelName"
+                >{{ model.modelName }}</span
+              >
             </div>
           </button>
         </div>
@@ -604,10 +602,10 @@ onMounted(() => {
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-base font-semibold text-gray-900 dark:text-white">
-            {{ t("settings.aiProviders.title") }}
+            {{ t('settings.aiProviders.title') }}
           </h3>
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            {{ t("settings.aiProviders.titleDesc") }}
+            {{ t('settings.aiProviders.titleDesc') }}
           </p>
         </div>
         <button
@@ -615,7 +613,7 @@ onMounted(() => {
           @click="openAddModal"
         >
           <Plus class="w-3.5 h-3.5" />
-          {{ t("settings.aiProviders.addProvider") }}
+          {{ t('settings.aiProviders.addProvider') }}
         </button>
       </div>
 
@@ -633,19 +631,17 @@ onMounted(() => {
             <Cpu class="w-8 h-8 text-indigo-500 dark:text-indigo-400" />
           </div>
           <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            {{ t("settings.aiProviders.emptyTitle") }}
+            {{ t('settings.aiProviders.emptyTitle') }}
           </h4>
-          <p
-            class="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto"
-          >
-            {{ t("settings.aiProviders.emptyDesc") }}
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
+            {{ t('settings.aiProviders.emptyDesc') }}
           </p>
           <button
             class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
             @click="openAddModal"
           >
             <Plus class="w-4 h-4" />
-            {{ t("settings.aiProviders.addFirstProvider") }}
+            {{ t('settings.aiProviders.addFirstProvider') }}
           </button>
         </div>
       </div>
@@ -683,37 +679,28 @@ onMounted(() => {
                 </div>
                 <div class="min-w-0">
                   <div class="flex items-center gap-2">
-                    <h4 class="font-medium text-gray-900 dark:text-white text-sm truncate max-w-[120px]">
+                    <h4
+                      class="font-medium text-gray-900 dark:text-white text-sm truncate max-w-[120px]"
+                    >
                       {{ provider.name }}
                     </h4>
-                    <NTag
-                      v-if="provider.isValid === true"
-                      type="success"
-                      size="tiny"
-                      round
-                    >
-                      {{ t("settings.common.verified") }}
+                    <NTag v-if="provider.isValid === true" type="success" size="tiny" round>
+                      {{ t('settings.common.verified') }}
                     </NTag>
-                    <NTag
-                      v-if="provider.isValid === false"
-                      type="error"
-                      size="tiny"
-                      round
-                    >
-                      {{ t("settings.common.failed") }}
+                    <NTag v-if="provider.isValid === false" type="error" size="tiny" round>
+                      {{ t('settings.common.failed') }}
                     </NTag>
                   </div>
                   <p class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[180px]">
-                    {{
-                      provider.baseUrl || t("settings.common.defaultEndpoint")
-                    }}
+                    {{ provider.baseUrl || t('settings.common.defaultEndpoint') }}
                   </p>
                   <div class="flex items-center gap-1 mt-0.5 max-w-[200px]">
                     <span class="text-[10px] text-gray-400 dark:text-gray-500 shrink-0">ID</span>
                     <code
                       class="text-[10px] font-mono text-gray-500 dark:text-gray-400 truncate"
                       :title="provider.id"
-                    >{{ provider.id }}</code>
+                      >{{ provider.id }}</code
+                    >
                     <button
                       type="button"
                       class="inline-flex items-center justify-center w-5 h-5 rounded text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors shrink-0"
@@ -727,17 +714,14 @@ onMounted(() => {
               </div>
 
               <div class="flex items-center gap-2 flex-shrink-0">
-                <NSwitch
-                  :value="provider.enabled"
-                  @update:value="() => toggleProvider(provider)"
-                />
+                <NSwitch :value="provider.enabled" @update:value="() => toggleProvider(provider)" />
               </div>
             </div>
 
             <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
               <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                 <div class="text-gray-400 dark:text-gray-500 mb-0.5 text-[10px]">
-                  {{ t("settings.common.apiKey") }}
+                  {{ t('settings.common.apiKey') }}
                 </div>
                 <div class="font-mono text-gray-700 dark:text-gray-300 truncate">
                   {{ maskApiKey(provider.apiKey) }}
@@ -745,15 +729,15 @@ onMounted(() => {
               </div>
               <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                 <div class="text-gray-400 dark:text-gray-500 mb-0.5 text-[10px]">
-                  {{ t("settings.aiProviders.modelName") }}
+                  {{ t('settings.aiProviders.modelName') }}
                 </div>
                 <div class="text-gray-700 dark:text-gray-300 truncate">
-                  {{ provider.modelName || t("settings.aiProviders.notConfigured") }}
+                  {{ provider.modelName || t('settings.aiProviders.notConfigured') }}
                 </div>
               </div>
               <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                 <div class="text-gray-400 dark:text-gray-500 mb-0.5 text-[10px]">
-                  {{ t("settings.aiProviders.maxTokens") }}
+                  {{ t('settings.aiProviders.maxTokens') }}
                 </div>
                 <div class="text-gray-700 dark:text-gray-300">
                   {{ formatTokens(provider.maxTokens) }}
@@ -761,7 +745,7 @@ onMounted(() => {
               </div>
               <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                 <div class="text-gray-400 dark:text-gray-500 mb-0.5 text-[10px]">
-                  {{ t("settings.aiProviders.temperature") }}
+                  {{ t('settings.aiProviders.temperature') }}
                 </div>
                 <div class="text-gray-700 dark:text-gray-300">
                   {{ provider.generationConfig?.temperature ?? 0.5 }}
@@ -778,25 +762,21 @@ onMounted(() => {
                 @click="testConnection(provider)"
               >
                 <TestTube class="w-3 h-3" />
-                {{
-                  provider.isTesting
-                    ? t("settings.common.testing")
-                    : t("settings.common.test")
-                }}
+                {{ provider.isTesting ? t('settings.common.testing') : t('settings.common.test') }}
               </button>
               <button
                 class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 @click="openEditModal(provider)"
               >
                 <Edit2 class="w-3 h-3" />
-                {{ t("settings.common.edit") }}
+                {{ t('settings.common.edit') }}
               </button>
               <button
                 class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-xs font-medium hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors"
                 @click="duplicateProvider(provider)"
               >
                 <Copy class="w-3 h-3" />
-                {{ t("settings.common.copy") }}
+                {{ t('settings.common.copy') }}
               </button>
               <NPopconfirm @positive-click="deleteProvider(provider.id)">
                 <template #trigger>
@@ -804,10 +784,10 @@ onMounted(() => {
                     class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-medium hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
                   >
                     <Trash2 class="w-3 h-3" />
-                    {{ t("settings.common.delete") }}
+                    {{ t('settings.common.delete') }}
                   </button>
                 </template>
-                {{ t("settings.aiProviders.confirmDelete") }}
+                {{ t('settings.aiProviders.confirmDelete') }}
               </NPopconfirm>
             </div>
           </div>
@@ -826,22 +806,10 @@ onMounted(() => {
       "
       class="max-w-md"
     >
-      <NForm
-        v-if="editingProvider"
-        label-placement="left"
-        label-width="120"
-        class="space-y-4"
-      >
-        <NFormItem
-          v-if="editingProvider.id"
-          label="配置 ID"
-        >
+      <NForm v-if="editingProvider" label-placement="left" label-width="120" class="space-y-4">
+        <NFormItem v-if="editingProvider.id" label="配置 ID">
           <div class="flex items-center gap-2 w-full">
-            <NInput
-              :value="editingProvider.id"
-              readonly
-              class="font-mono text-xs"
-            />
+            <NInput :value="editingProvider.id" readonly class="font-mono text-xs" />
             <NButton size="small" @click="copyProviderId(editingProvider.id)">
               <template #icon>
                 <Copy class="w-3.5 h-3.5" />
@@ -851,22 +819,20 @@ onMounted(() => {
           </div>
         </NFormItem>
         <NFormItem :label="t('settings.common.displayName')">
-          <NInput
-            v-model:value="editingProvider.name"
-            :placeholder="'e.g. OpenAI'"
-          />
+          <NInput v-model:value="editingProvider.name" :placeholder="'e.g. OpenAI'" />
         </NFormItem>
         <NFormItem :label="t('settings.common.providerType')">
-          <NSelect
-            v-model:value="editingProvider.provider"
-            :options="providerOptions"
-          />
+          <NSelect v-model:value="editingProvider.provider" :options="providerOptions" />
         </NFormItem>
         <NFormItem :label="t('settings.common.apiKey')">
           <NInput
             v-model:value="editingProvider.apiKey"
             type="password"
-            :placeholder="editingProvider.provider === 'ollama' ? t('settings.aiProviders.messages.ollamaNoKey') : t('settings.aiProviders.messages.enterApiKey')"
+            :placeholder="
+              editingProvider.provider === 'ollama'
+                ? t('settings.aiProviders.messages.ollamaNoKey')
+                : t('settings.aiProviders.messages.enterApiKey')
+            "
             show-password-on="click"
           >
             <template #prefix>
@@ -897,19 +863,20 @@ onMounted(() => {
             class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
             @click="showAdvancedSettings = !showAdvancedSettings"
           >
-            <component
-              :is="showAdvancedSettings ? ChevronDown : ChevronRight"
-              class="w-4 h-4"
-            />
-            {{ t("settings.aiProviders.advancedSettings") }}
+            <component :is="showAdvancedSettings ? ChevronDown : ChevronRight" class="w-4 h-4" />
+            {{ t('settings.aiProviders.advancedSettings') }}
             <span class="text-xs text-gray-400 dark:text-gray-500">
-              ({{ t("settings.aiProviders.optional") }})
+              ({{ t('settings.aiProviders.optional') }})
             </span>
           </button>
 
           <!-- Advanced Settings Panel -->
           <div v-show="showAdvancedSettings" class="mt-4 space-y-4 pl-2">
-            <NFormItem :label="t('settings.common.customEndpoint')" :validation-status="formErrors.baseUrl ? 'error' : undefined" :feedback="formErrors.baseUrl">
+            <NFormItem
+              :label="t('settings.common.customEndpoint')"
+              :validation-status="formErrors.baseUrl ? 'error' : undefined"
+              :feedback="formErrors.baseUrl"
+            >
               <NInput
                 v-model:value="editingProvider.baseUrl"
                 :placeholder="t('settings.aiProviders.endpointPlaceholder')"
@@ -956,13 +923,13 @@ onMounted(() => {
             class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             @click="showAddModal = false"
           >
-            {{ t("settings.common.cancel") }}
+            {{ t('settings.common.cancel') }}
           </button>
           <button
             class="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium shadow-lg hover:shadow-xl transition-all"
             @click="saveProvider"
           >
-            {{ t("settings.common.save") }}
+            {{ t('settings.common.save') }}
           </button>
         </div>
       </template>

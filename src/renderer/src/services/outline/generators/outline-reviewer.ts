@@ -21,7 +21,8 @@ export type OutlineQualityIssueKind =
   | 'missing-selling-point'
   | 'broken-range'
   | 'unbalanced-paren'
-  | 'opening-hook';
+  | 'opening-hook'
+  | 'goldenfinger-late-reveal';
 
 export interface OutlineQualityIssue {
   kind: OutlineQualityIssueKind;
@@ -212,6 +213,19 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
         detail: `第 ${i} 块区间 ${blocks[i - 1]?.range} 与第 ${i + 1} 块区间 ${blocks[i]?.range} 断档（${prev.end + 1}–${curr.start - 1} 章缺失）`,
       });
       break;
+    }
+  }
+
+  // 6. 金手指首次兑现过晚（P2-2：黄金三章纪律）。
+  //    金手指首次兑现应落在 1-3 章（绑定开篇爽点），超过 5 章视为错过黄金窗口。
+  //    reviewer 触发后会提示模型把兑现前移；缺省（无 goldenfingerPlan）不报，避免误伤非玄幻品类。
+  const gf = outline.goldenfingerPlan;
+  if (gf?.type && gf.firstRevealChapter !== null && gf.firstRevealChapter !== undefined) {
+    if (gf.firstRevealChapter > 5) {
+      issues.push({
+        kind: 'goldenfinger-late-reveal',
+        detail: `金手指首次兑现章节为第${gf.firstRevealChapter}章（>5），错过黄金三章窗口，建议前移到 1-3 章绑定开篇爽点`,
+      });
     }
   }
 

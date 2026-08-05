@@ -59,6 +59,28 @@ export interface StoryLinePlan {
   romance: string;
 }
 
+/**
+ * 金手指设定模块（独立顶层模块，与八线中的 goldenfinger 字段区分）。
+ *
+ * 八线的 goldenfinger 是单段文案概述；这里是结构化的爽点引擎设定，
+ * 含升级路径 / 限制 / 代价 / 首次兑现章节，是玄幻/系统/重生品类的签约命门。
+ * 续写端优先消费本模块；八线 goldenfinger 仅在缺省时兜底。
+ */
+export interface GoldenFingerPlan {
+  /** 金手指是什么（一句话定义） */
+  type: string;
+  /** 触发场景（主角如何获得/觉醒） */
+  trigger: string;
+  /** 升级路径（初阶→进阶→终极，分阶段） */
+  upgradePath: string[];
+  /** 使用限制（触发条件 / 冷却 / 消耗） */
+  limitation: string;
+  /** 使用代价（反噬 / 暴露风险 / 道德代价） */
+  cost: string;
+  /** 首次兑现章节（建议 1-3 章，绑定黄金三章） */
+  firstRevealChapter: number | null;
+}
+
 export interface EmotionBeatPlan {
   primary: string;
   secondary?: string;
@@ -73,6 +95,11 @@ export interface CoolPointBeatPlan {
   description: string;
   suggestedChapter: number | null;
   relatedBlock?: string;
+  /** 爽点闭环结构（P1-1 新增，向后兼容：旧数据无这些字段时仍可工作） */
+  trigger?: string;       // 触发场景（谁、什么处境下触发）
+  buildup?: string;       // 铺垫（轻视/压制/困境，为兑现积蓄落差）
+  payoff?: string;        // 兑现（爽点爆发的具体画面）
+  cost?: string;          // 代价（兑现付出的代价，避免无脑碾压）
 }
 
 export interface SellingPointPlan {
@@ -212,6 +239,7 @@ export interface ExecutableOutline {
   emotionPlan?: EmotionBeatPlan;
   coolPointPlan?: CoolPointBeatPlan[];
   sellingPointPlan?: SellingPointPlan[];
+  goldenfingerPlan?: GoldenFingerPlan;
   keyCharacters: CharacterPlan[];
   foreshadowPlan: ForeshadowPlan[];
   chapterBlueprints?: ChapterBlueprint[];

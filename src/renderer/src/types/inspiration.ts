@@ -191,6 +191,11 @@ export interface GeneratedCoolPoint {
   type: string;              // 爽点类型：打脸爽/装逼爽/身份揭秘等
   description: string;        // 爽点描述
   suggestedChapter?: number;  // 建议章节
+  /** 爽点闭环结构（P1-1 新增，向后兼容） */
+  trigger?: string;          // 触发场景
+  buildup?: string;          // 铺垫（轻视/压制）
+  payoff?: string;           // 兑现（爆发画面）
+  cost?: string;             // 代价
 }
 
 export interface GeneratedCoolPointDesign {
@@ -214,6 +219,18 @@ export interface GeneratedConflictDesign {
   source: string;             // 冲突来源
   escalation: string[];      // 矛盾递进描述
   majorConflicts: string[];   // 主要冲突列表
+}
+
+/**
+ * 金手指设定（结构化爽点引擎，区别于八线中的 goldenfinger 文案字段）
+ */
+export interface GeneratedGoldenFinger {
+  type: string;               // 金手指是什么
+  trigger: string;            // 触发场景（觉醒方式）
+  upgradePath: string[];      // 升级路径（初阶→进阶→终极）
+  limitation: string;         // 使用限制
+  cost: string;               // 使用代价
+  firstRevealChapter?: number; // 首次兑现章节（建议 1-3）
 }
 
 /**
@@ -288,6 +305,8 @@ export interface GeneratedOutline {
   conflictDesign?: GeneratedConflictDesign;
   // 八条故事线（简化版）
   storyLines?: GeneratedStoryLines;
+  // 金手指设定（结构化爽点引擎）
+  goldenfingerDesign?: GeneratedGoldenFinger;
 
   // ====== 元数据 ======
   /** 卷数（兼容 OutlineSchema） */

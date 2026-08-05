@@ -8,10 +8,6 @@ import {
   createClient,
   type AIClientOptions,
   type ProviderName,
-  type Message,
-  type CompletionOptions,
-  type StreamChunk,
-  type AbortableStream,
   AIError,
 } from 'multi-ai-sdk';
 
@@ -329,104 +325,4 @@ export async function testConnection(
       responseTime: Date.now() - startTime,
     };
   }
-}
-
-// 流式生成回调类型
-export type StreamCallback = (chunk: StreamChunk) => void;
-
-/**
- * 带流式输出的聊天
- */
-export async function chatWithStream(
-  provider: SDKProviderName,
-  apiKey: string,
-  messages: Message[],
-  options: CompletionOptions & { baseUrl?: string; systemPrompt?: string },
-  onChunk: StreamCallback,
-  signal?: AbortSignal
-): Promise<string> {
-  const client = createAIClient(provider, apiKey, { baseUrl: options.baseUrl });
-
-  // 如果有系统提示，添加到消息开头
-  const allMessages = options.systemPrompt
-    ? [{ role: 'system' as const, content: options.systemPrompt }, ...messages]
-    : messages;
-
-  const stream = client.stream(allMessages, {
-    model: options.model,
-    temperature: options.temperature,
-    topP: options.topP,
-  });
-
-  let fullContent = '';
-
-  try {
-    for await (const chunk of stream) {
-      if (signal?.aborted) {
-        stream.cancel();
-        break;
-      }
-      onChunk(chunk);
-      fullContent += chunk.content;
-      if (chunk.done) {
-        break;
-      }
-    }
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      stream.cancel();
-      throw error;
-    }
-    throw error;
-  }
-
-  return fullContent;
-}
-
-/**
- * 同步聊天（等待完整响应）
- */
-export async function chat(
-  provider: SDKProviderName,
-  apiKey: string,
-  messages: Message[],
-  options: CompletionOptions & { baseUrl?: string; systemPrompt?: string }
-): Promise<string> {
-  const client = createAIClient(provider, apiKey, { baseUrl: options.baseUrl });
-
-  // 如果有系统提示，添加到消息开头
-  const allMessages = options.systemPrompt
-    ? [{ role: 'system' as const, content: options.systemPrompt }, ...messages]
-    : messages;
-
-  return await client.chat(allMessages, {
-    model: options.model,
-    temperature: options.temperature,
-    topP: options.topP,
-  });
-}
-
-/**
- * JSON 响应（自动解析 JSON）
- */
-export async function chatJSON<T>(
-  provider: SDKProviderName,
-  apiKey: string,
-  messages: Message[],
-  options: CompletionOptions & { baseUrl?: string; systemPrompt?: string }
-): Promise<T> {
-  const client = createAIClient(provider, apiKey, { baseUrl: options.baseUrl });
-
-  const allMessages = options.systemPrompt
-    ? [{ role: 'system' as const, content: options.systemPrompt }, ...messages]
-    : messages;
-
-  return await client.askJSON<T>(
-    allMessages.map(m => `[${m.role}]: ${m.content}`).join('\n'),
-    {
-      model: options.model,
-      temperature: options.temperature,
-      topP: options.topP,
-    }
-  );
 }

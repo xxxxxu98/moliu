@@ -7,6 +7,7 @@ import type {
   GeneratedCoreSellingPoint,
   GeneratedEmotionGoal,
   GeneratedForeshadow,
+  GeneratedGoldenFinger,
   GeneratedOutline,
   GeneratedStoryLines,
   GeneratedStoryScale,
@@ -707,6 +708,11 @@ function toCoolPointDesign(outline: ExecutableOutline): GeneratedCoolPointDesign
         type: item.type || `爽点${index + 1}`,
         description: [item.description, item.relatedBlock].filter(Boolean).join('｜') || item.type || `爽点${index + 1}`,
         suggestedChapter: item.suggestedChapter ?? undefined,
+        // 爽点闭环结构透传（P1-1，向后兼容：缺失字段不输出）
+        trigger: item.trigger || undefined,
+        buildup: item.buildup || undefined,
+        payoff: item.payoff || undefined,
+        cost: item.cost || undefined,
       })),
     };
   }
@@ -751,6 +757,35 @@ function toConflictDesign(outline: ExecutableOutline): GeneratedConflictDesign |
     source: outline.storyEngine.coreConflict,
     escalation: outline.storyEngine.escalationPath,
     majorConflicts: outline.volumePlan.map((volume) => volume.coreConflict).filter(Boolean),
+  };
+}
+
+/**
+ * 金手指设定映射：优先透传结构化 goldenfingerPlan；
+ * 缺省时从八线 goldenfinger 文案 + storyEngine 兜底推导一个最小可用结构，
+ * 保证玄幻/系统品类即便模型没产出独立模块也有金手指信息进入续写。
+ */
+function toGoldenFinger(outline: ExecutableOutline): GeneratedGoldenFinger | undefined {
+  if (outline.goldenfingerPlan?.type) {
+    return {
+      type: outline.goldenfingerPlan.type,
+      trigger: outline.goldenfingerPlan.trigger,
+      upgradePath: outline.goldenfingerPlan.upgradePath,
+      limitation: outline.goldenfingerPlan.limitation,
+      cost: outline.goldenfingerPlan.cost,
+      firstRevealChapter: outline.goldenfingerPlan.firstRevealChapter ?? undefined,
+    };
+  }
+
+  // 兜底：八线 goldenfinger 文案 / 短期目标
+  const type = outline.storyLines?.goldenfinger?.trim() || outline.storyEngine.protagonistGoalShortTerm?.trim();
+  if (!type) return undefined;
+  return {
+    type,
+    trigger: outline.storyEngine.protagonistStart || '',
+    upgradePath: [],
+    limitation: '',
+    cost: outline.storyEngine.failureCost || '',
   };
 }
 
@@ -873,6 +908,7 @@ export function mapExecutableOutlineToGeneratedOutline(
     coreSellingPoints: toCoreSellingPoints(outline),
     conflictDesign: toConflictDesign(outline),
     storyLines: toStoryLines(outline),
+    goldenfingerDesign: toGoldenFinger(outline),
     volumes: outline.volumePlan.length,
     volumePlans: toVolumePlans(outline),
   };
