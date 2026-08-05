@@ -165,6 +165,7 @@ export const useProjectStore = defineStore('project', () => {
       status: 'draft',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      writeStatus: 'pending',
     };
     
     chapters.value.push(newChapter);

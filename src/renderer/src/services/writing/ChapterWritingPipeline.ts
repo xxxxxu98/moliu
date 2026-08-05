@@ -74,6 +74,7 @@ import {
   stripStateForChapterRewrite,
 } from '@/services/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
+import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
 
 function createStructuredAIFromActiveProvider(signal?: AbortSignal): StructuredAI {
   const inner: StructuredAI = {
@@ -179,6 +180,13 @@ export interface ChapterWriteOutput {
   supplementRounds: number;
   /** 错误信息（失败时） */
   error?: string;
+  /**
+   * 失败分类（参见 ai-error-classify.ts）。批量层据此决定是否重试整章：
+   * 瞬态（network/timeout/truncated/rate_limit/server）重试，持久（schema/review/auth/...）跳过。
+   */
+  errorKind?: ErrorKind;
+  /** 是否值得在批量层重试整章（瞬态错误为 true） */
+  retryable?: boolean;
   /** story-runtime 长篇路径下的引擎原始结果；旧 StateDriven 路径为 undefined */
   longFormResult?: LongFormWriteResult;
 }
@@ -468,6 +476,8 @@ export class ChapterWritingPipeline {
       );
 
       if (!result.success || !result.gateResult?.passed) {
+        const gateErrorMsg = result.error || '严格门禁未通过，章节未提交';
+        const gateClassified = classifyError(gateErrorMsg);
         return {
           success: false,
           prose: result.prose || '',
@@ -477,7 +487,9 @@ export class ChapterWritingPipeline {
           attempts: result.attempts,
           forceAccepted: false,
           supplementRounds: 0,
-          error: result.error || '严格门禁未通过，章节未提交',
+          error: gateErrorMsg,
+          errorKind: gateClassified.kind,
+          retryable: gateClassified.retryable,
         };
       }
 
@@ -499,6 +511,7 @@ export class ChapterWritingPipeline {
         prose = supplementResult.prose;
         supplementRounds = supplementResult.rounds;
         if (supplementResult.error) {
+          const supplementClassified = classifyError(supplementResult.error);
           return {
             success: false,
             prose,
@@ -509,6 +522,8 @@ export class ChapterWritingPipeline {
             forceAccepted: false,
             supplementRounds,
             error: supplementResult.error,
+            errorKind: supplementClassified.kind,
+            retryable: supplementClassified.retryable,
           };
         }
       }
@@ -527,7 +542,7 @@ export class ChapterWritingPipeline {
       };
     } catch (err) {
       if (isAbortError(err) || signal?.aborted) {
-        return this.fail('Generation stopped by user');
+        return this.fail('Generation stopped by user', { err, signal: signal ?? undefined });
       }
       throw err;
     }
@@ -674,6 +689,8 @@ export class ChapterWritingPipeline {
         Boolean(generatedShortTitle) && isPlaceholderChapterTitle(input.chapter.title);
 
       if (result.commit.status !== 'accepted' || !result.receipt) {
+        const commitErrorMsg = result.commit.reasons.join('；') || '严格连续性门禁未通过';
+        const commitClassified = classifyError(commitErrorMsg);
         return {
           success: false,
           prose,
@@ -685,7 +702,9 @@ export class ChapterWritingPipeline {
           attempts: 1,
           forceAccepted: false,
           supplementRounds: 0,
-          error: result.commit.reasons.join('；') || '严格连续性门禁未通过',
+          error: commitErrorMsg,
+          errorKind: commitClassified.kind,
+          retryable: commitClassified.retryable,
           longFormResult: result,
         };
       }
@@ -723,12 +742,12 @@ export class ChapterWritingPipeline {
     } catch (error) {
       if (isAbortError(error) || input.signal?.aborted) {
         return {
-          ...this.fail('Generation stopped by user'),
+          ...this.fail('Generation stopped by user', { err: error, signal: input.signal ?? undefined }),
           taskBook,
         };
       }
       return {
-        ...this.fail(error instanceof Error ? error.message : '长篇运行时执行失败'),
+        ...this.fail(error instanceof Error ? error.message : '长篇运行时执行失败', { err: error }),
         taskBook,
       };
     }
@@ -908,7 +927,15 @@ export class ChapterWritingPipeline {
     }
   }
 
-  private fail(error: string): ChapterWriteOutput {
+  /**
+   * 构造失败输出。可选传入原始 error / signal 以便正确识别 aborted（用户主动取消）。
+   * abort 场景下 message 常为"Generation stopped by user"，不含网络关键词，
+   * 需靠 signal.aborted 或原始 error 的 AbortError 类型才能正确归类。
+   */
+  private fail(error: string, cause?: { err?: unknown; signal?: AbortSignal }): ChapterWriteOutput {
+    const classified = cause
+      ? classifyError(cause.err ?? error, cause.signal)
+      : classifyError(error);
     return {
       success: false,
       prose: '',
@@ -919,6 +946,8 @@ export class ChapterWritingPipeline {
       forceAccepted: false,
       supplementRounds: 0,
       error,
+      errorKind: classified.kind,
+      retryable: classified.retryable,
     };
   }
 }

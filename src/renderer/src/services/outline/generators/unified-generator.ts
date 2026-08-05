@@ -9,6 +9,11 @@ import type { ProviderType } from '@/config/ai-providers';
 import { getBaseUrl } from '@/config/ai-providers';
 import { useActiveAIProvider } from '@/composables/useActiveAIProvider';
 import {
+  isAbortedError,
+  isTransientError,
+  backoffDelayMs,
+} from '@/utils/ai-error-classify';
+import {
   useSettingsStore,
   type AIDefaultModelSelection,
   type AIGenerationConfig,
@@ -70,6 +75,27 @@ function isAbortError(error: unknown): boolean {
   if (error instanceof DOMException && error.name === 'AbortError') return true;
   if (error instanceof Error && error.name === 'AbortError') return true;
   return false;
+}
+
+/**
+ * 可中断的 sleep。用于瞬态错误（429/网络抖动）的指数退避：
+ * 用户取消（signal.aborted）时立即抛 AbortError，不拖时间。
+ */
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) {
+    return Promise.reject(new DOMException('Aborted', 'AbortError'));
+  }
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = (): void => {
+      clearTimeout(timer);
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
 }
 
 /**
@@ -167,6 +193,13 @@ export class UnifiedOutlineGenerator {
           throw error;
         }
         const errorMsg = error instanceof Error ? error.message : String(error);
+        // 瞬态错误（429 / 网络抖动 / 5xx）按指数退避重试，不降温（同 runWithRetry 口径）
+        if (attempt < maxAttempts && isTransientError(error)) {
+          const delayMs = backoffDelayMs(attempt, 2000, 30_000);
+          onProgress?.(`请求被限流或网络抖动，${delayMs}ms 后重试 (${attempt}/${maxAttempts}): ${errorMsg}`);
+          await sleep(delayMs, opts.signal);
+          continue;
+        }
         onProgress?.(`生成出错: ${errorMsg}`);
         lastResult = {
           success: false,
@@ -418,6 +451,16 @@ export class UnifiedOutlineGenerator {
           throw error;
         }
         const errorMsg = error instanceof Error ? error.message : String(error);
+        // 瞬态错误（429 限流 / 网络抖动 / 5xx）按指数退避重试，不降温
+        // —— 降温对限流毫无意义，限流不是输出质量问题，反复立即重试只会再吃一个 429。
+        // 实测 ARK provider 6/6 模块全部触发 429，无退避时重试额度白白耗尽。
+        if (attempt < total && isTransientError(error)) {
+          const delayMs = backoffDelayMs(attempt, 2000, 30_000);
+          onProgress?.(`请求被限流或网络抖动，${delayMs}ms 后重试 (${attempt}/${total}): ${errorMsg}`);
+          await sleep(delayMs);
+          // 瞬态重试不降温：保持 coolingTemp 不变（首次为 undefined = 沿用原温度）
+          continue;
+        }
         onProgress?.(`生成出错: ${errorMsg}`);
         if (attempt >= total) {
           throw error;

@@ -232,3 +232,106 @@ describe('UnifiedAIService 内部 JSON 方法 - JSON 强制覆盖', () => {
     expect(optsWithout.responseFormat).toBeUndefined();
   });
 });
+
+describe('UnifiedAIService.complete - stream 路径瞬态错误内层重试', () => {
+  function stubStream(service: UnifiedAIService, impl: () => AsyncGenerator): void {
+    // 真实 SDK 的 stream 对象带 cancel()；mock 需补上以免 abort 时抛 TypeError
+    const wrapped = (): AsyncGenerator & { cancel: () => void } => {
+      const gen = impl();
+      return Object.assign(gen, { cancel: () => undefined });
+    };
+    (service as unknown as { client: unknown }).client = {
+      stream: vi.fn().mockImplementation(wrapped),
+    };
+  }
+
+  /** 构造一个成功吐出 content 的 async generator */
+  async function* successGen(content = '{"ok":true}'): AsyncGenerator {
+    yield { content, done: true };
+  }
+
+  it('瞬态网络错误重试后成功（stream 调用 2 次）', async () => {
+    const service = makeService('openai');
+    let calls = 0;
+    stubStream(service, async function* () {
+      calls++;
+      if (calls === 1) {
+        throw new TypeError('fetch failed');
+      }
+      yield* successGen();
+    });
+
+    const ctrl = new AbortController();
+    const result = await service.complete('返回 JSON', { signal: ctrl.signal });
+
+    expect(result).toContain('ok');
+    expect(calls).toBe(2); // 第 1 次失败 + 第 2 次成功
+  });
+
+  it('重试次数用尽后抛出最后一个错误', async () => {
+    const service = makeService('openai');
+    stubStream(service, async function* () {
+      throw new TypeError('fetch failed');
+    });
+
+    const ctrl = new AbortController();
+    await expect(
+      service.complete('返回 JSON', { signal: ctrl.signal })
+    ).rejects.toThrow('fetch failed');
+  });
+
+  it('持久错误（4xx）不重试，直接抛出', async () => {
+    const service = makeService('openai');
+    let calls = 0;
+    const providerErr = Object.assign(new Error('Bad Request'), {
+      name: 'AIError',
+      status: 400,
+    });
+    stubStream(service, async function* () {
+      calls++;
+      throw providerErr;
+    });
+
+    const ctrl = new AbortController();
+    await expect(
+      service.complete('返回 JSON', { signal: ctrl.signal })
+    ).rejects.toThrow('Bad Request');
+    expect(calls).toBe(1); // 持久错误，不重试
+  });
+
+  it('退避期间用户 abort 则立即抛出 AbortError，不再重试', async () => {
+    const service = makeService('openai');
+    let calls = 0;
+    stubStream(service, async function* () {
+      calls++;
+      throw new TypeError('fetch failed');
+    });
+
+    const ctrl = new AbortController();
+    // 在 stream 第一次失败进入退避后立即 abort
+    // （退避 1s，我们用 setTimeout 在 50ms 后 abort）
+    setTimeout(() => ctrl.abort(), 50);
+
+    await expect(
+      service.complete('返回 JSON', { signal: ctrl.signal })
+    ).rejects.toThrow();
+    expect(calls).toBe(1); // 第 1 次失败后进入退避，退避中被 abort，没再重试
+  });
+
+  it('signal 预先 abort 时不调用 stream', async () => {
+    const service = makeService('openai');
+    let calls = 0;
+    stubStream(service, async function* () {
+      calls++;
+      yield* successGen();
+    });
+
+    const ctrl = new AbortController();
+    ctrl.abort();
+
+    await expect(
+      service.complete('返回 JSON', { signal: ctrl.signal })
+    ).rejects.toThrow();
+    expect(calls).toBe(0);
+  });
+});

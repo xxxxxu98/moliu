@@ -33,12 +33,54 @@ import {
   clampProseToMaxWords,
 } from '@/services/writing/supplement';
 import { countWords } from '@/services/writing/utils';
+import {
+  classifyError,
+  backoffDelayMs,
+  type ClassifiedError,
+} from '@/utils/ai-error-classify';
 
 /** 字数归一外层循环：补字 ↔ 压缩，防止压缩过度后不回补 */
 const MAX_WORD_NORMALIZE_CYCLES = 2;
 
 /** 审核失败后的默认最大重写次数（不含初稿） */
 export const DEFAULT_MAX_REWRITE_ROUNDS = 2;
+
+/**
+ * 步骤级瞬态重试：把单步 AI 调用包一层，瞬态错误（网络/超时/截断/5xx/429）重试 maxRetries 次，
+ * 持久错误（schema/审核/4xx）立即抛出。重试仅针对单步，已生成的产物（如 draft）由调用方保留复用。
+ * 参考 supplement.ts 的 supplementDraftsWhileShort 重试模式。
+ */
+async function runStepWithTransientRetry<T>(
+  step: () => Promise<T>,
+  options: { label: string; maxRetries: number; signal?: AbortSignal }
+): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= options.maxRetries; attempt++) {
+    if (options.signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+    try {
+      return await step();
+    } catch (err) {
+      lastError = err;
+      // 用户取消立即抛
+      if (options.signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
+      }
+      const classified: ClassifiedError = classifyError(err, options.signal);
+      // 非瞬态（持久错误）：不重试，直接抛
+      if (!classified.transient || attempt >= options.maxRetries) {
+        throw err;
+      }
+      const delayMs = backoffDelayMs(attempt + 1, 2000, 10_000);
+      console.warn(
+        `[LongFormWritingEngine] ${options.label} 瞬态失败（${classified.kind}），${delayMs}ms 后重试 ${attempt + 1}/${options.maxRetries}`
+      );
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
 
 export interface LongFormWritingEngineDependencies {
   ai: StructuredAI;
@@ -163,35 +205,50 @@ export class LongFormWritingEngine {
     let revisionHints: string[] | undefined;
 
     while (true) {
-      drafts = await this.draftEngine.draft(plan, context, {
-        targetWordCount: writeInput.targetWordCount,
-        revisionHints,
-        rewriteRound: revisionHints ? Math.max(1, rewriteRounds) : undefined,
-      });
-      // 提交前进补字：避免 SQLite accepted 后仍只有 ~900 字
-      drafts = await this.padDraftsToTarget(drafts, writeInput);
+      // Step A：起草 + 补字。瞬态错误（网络/截断）步骤级重试，持久错误冒泡。
+      drafts = await runStepWithTransientRetry(
+        async () => {
+          const d = await this.draftEngine.draft(plan, context, {
+            targetWordCount: writeInput.targetWordCount,
+            revisionHints,
+            rewriteRound: revisionHints ? Math.max(1, rewriteRounds) : undefined,
+          });
+          // 提交前进补字：避免 SQLite accepted 后仍只有 ~900 字
+          return this.padDraftsToTarget(d, writeInput);
+        },
+        { label: 'draft+pad', maxRetries: 1 }
+      );
 
-      const rawFacts = await this.dependencies.factExtractor.extract({
-        projectId: input.projectId,
-        chapterNumber: contracts.chapter.chapterNumber,
-        sceneDrafts: drafts,
-        state: input.state,
-        overlay: input.overlay,
-      });
-      // 提取层输出 ≠ 校验契约输入：必须先 canonicalize 再 validate
-      const canonical = canonicalizeExtractedFacts({
-        facts: rawFacts,
-        state: input.state,
-        drafts,
-        overlay: input.overlay,
-      });
-      facts = canonical.facts;
-      report = await this.validator.validate({
-        contracts,
-        state: canonical.stateForValidation,
-        drafts,
-        facts: canonical.facts,
-      });
+      // Step B：事实提取 + 规范化 + 校验。瞬态错误步骤级重试，**保留 Step A 已生成的 drafts**
+      // （旧痛点：draft 已花钱生成，extract 网络抖一下就让整章作废重新起草）。
+      const validated = await runStepWithTransientRetry(
+        async () => {
+          const rawFacts = await this.dependencies.factExtractor.extract({
+            projectId: input.projectId,
+            chapterNumber: contracts.chapter.chapterNumber,
+            sceneDrafts: drafts,
+            state: input.state,
+            overlay: input.overlay,
+          });
+          // 提取层输出 ≠ 校验契约输入：必须先 canonicalize 再 validate
+          const canonical = canonicalizeExtractedFacts({
+            facts: rawFacts,
+            state: input.state,
+            drafts,
+            overlay: input.overlay,
+          });
+          const r = await this.validator.validate({
+            contracts,
+            state: canonical.stateForValidation,
+            drafts,
+            facts: canonical.facts,
+          });
+          return { facts: canonical.facts, report: r };
+        },
+        { label: 'extract+validate', maxRetries: 2 }
+      );
+      facts = validated.facts;
+      report = validated.report;
 
       // 字数下限未达标也视为 blocking，驱动重写；用尽轮次后则拒收提交
       const target = writeInput.targetWordCount ?? 0;

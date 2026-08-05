@@ -495,6 +495,98 @@ describe('LongFormWritingEngine', () => {
     expect(finalProse.length).toBeLessThan(20_000);
     expect(ai.bloatedSupplementRounds).toBeGreaterThan(0);
   });
+
+  it('事实提取瞬态失败时步骤级重试，draft 不重新生成', async () => {
+    // factExtractor 第 1 次抛网络错误（瞬态）、第 2 次成功
+    let extractCalls = 0;
+    const facts: FactExtractor = {
+      extract: async input => {
+        extractCalls += 1;
+        if (extractCalls === 1) {
+          throw new TypeError('fetch failed');
+        }
+        return {
+          events: [
+            {
+              id: 'event-1',
+              chapter: input.chapterNumber,
+              sceneId: input.sceneDrafts[0].sceneId,
+              type: 'checkpoint',
+              summary: '守卫盘查',
+              participants: ['hero'],
+              causes: [],
+              effects: ['守卫盘查'],
+              evidence: ['林夜经历了守卫盘查'],
+            },
+          ],
+          deltas: [],
+          evidence: ['林夜经历了守卫盘查'],
+        };
+      },
+    };
+    const receipt: ChapterCommitReceipt = {
+      commitId: 'commit-retry',
+      revision: 1,
+      acceptedAt: '2026-01-02T00:00:00.000Z',
+    };
+    const ai = new FakeAI();
+    const draftCallsBefore = ai.callCount; // 应为 0
+    const engine = new LongFormWritingEngine({
+      ai,
+      factExtractor: facts,
+      commitPort: { commitChapter: async () => receipt },
+    });
+
+    const result = await engine.write({
+      projectId: 'project-1',
+      contracts: makeContracts(),
+      state: makeState(),
+      recentScenes: [],
+      retrievedScenes: [],
+      styleGuidance: ['克制'],
+      maxContextTokens: 10_000,
+    });
+
+    // 事实提取重试了 2 次（第 1 次失败 + 第 2 次成功）
+    expect(extractCalls).toBe(2);
+    // 最终成功提交
+    expect(result.commit.status).toBe('accepted');
+    expect(result.receipt).toEqual(receipt);
+    // draft 步骤的 AI 调用没有因 extract 失败而翻倍：
+    // ai.callCount = draft(1) + chapter-judge(1) = 2，而非重试后变成 4
+    expect(ai.callCount).toBe(draftCallsBefore + 2);
+  });
+
+  it('事实提取持久错误不重试，直接抛出', async () => {
+    // schema 校验失败（持久）→ 不应触发步骤级重试
+    let extractCalls = 0;
+    const facts: FactExtractor = {
+      extract: async () => {
+        extractCalls += 1;
+        throw new Error('事实提取结果 结构校验失败: expected array, received undefined');
+      },
+    };
+    const ai = new FakeAI();
+    const engine = new LongFormWritingEngine({
+      ai,
+      factExtractor: facts,
+      commitPort: { commitChapter: async () => ({ commitId: 'x', revision: 1, acceptedAt: '' }) },
+    });
+
+    await expect(
+      engine.write({
+        projectId: 'project-1',
+        contracts: makeContracts(),
+        state: makeState(),
+        recentScenes: [],
+        retrievedScenes: [],
+        styleGuidance: ['克制'],
+        maxContextTokens: 10_000,
+      })
+    ).rejects.toThrow('结构校验失败');
+    // 持久错误只调用 1 次，不重试
+    expect(extractCalls).toBe(1);
+  });
 });
 
 /** 补充轮返回超大垃圾文本（JSON 骨架），用于验证 Bug 7 输出护栏 */

@@ -1,4 +1,5 @@
 import type { TopicDiscoveryProjectSeed } from './topic-discovery';
+import type { ErrorKind } from '../utils/ai-error-classify';
 
 export interface Project {
   id: string;
@@ -192,6 +193,15 @@ export interface Chapter {
   outline?: string; // 章节详细大纲
   isGenerated?: boolean; // 是否为 AI 生成
   generatedAt?: string; // AI 生成时间
+  // ====== 批量写作状态追踪（用于失败章节红标 + 断点续写跳过） ======
+  /** 批量写作生命周期状态 */
+  writeStatus?: 'pending' | 'writing' | 'success' | 'failed';
+  /** 最近一次失败原因（用于 UI tooltip） */
+  lastError?: string;
+  /** 最近一次失败分类（参见 ai-error-classify.ts） */
+  lastErrorKind?: ErrorKind;
+  /** 最近一次失败时间戳（ISO） */
+  lastErrorAt?: string;
 }
 
 export interface Character {

@@ -31,6 +31,12 @@ import {
   type ReviewStrictness,
 } from '@/services/review/blocking-review.service';
 import { WritingError, ErrorCode } from '@/types/errors';
+import {
+  classifyError,
+  backoffDelayMs,
+  type ErrorKind,
+  type ClassifiedError,
+} from '@/utils/ai-error-classify';
 import { createEndingPerceptionEngine } from '@/services/writing/ending-perception-engine';
 import {
   useReportGenerator,
@@ -83,9 +89,94 @@ function getStrictnessLabel(strictness: ReviewStrictness): string {
   }
 }
 
+/**
+ * 可中止的 sleep：退避期间若 signal abort 则立即 reject（AbortError），
+ * 避免用户点击"停止"后还要等满退避时间。
+ * signal 为空时退化为普通 setTimeout。
+ */
+function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
+  if (!signal) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+  if (signal.aborted) {
+    return Promise.reject(new DOMException('Aborted', 'AbortError'));
+  }
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = (): void => {
+      clearTimeout(timer);
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+/**
+ * 批量进度持久化（localStorage）。
+ *
+ * 批量写作结束（含失败跳过 / 用户停止 / 完结）后，把 batchSummary 落盘，
+ * 下次进入面板时若发现未确认的进度，可弹"上次批量到第 N 章、失败 M 章，是否重试失败章"。
+ * 不依赖 CheckpointManager（那套只服务 StateDriven 路径）。
+ */
+const BATCH_PROGRESS_KEY_PREFIX = 'moliu_batch_progress_';
+
+function batchProgressKey(projectId: string): string {
+  return `${BATCH_PROGRESS_KEY_PREFIX}${projectId}`;
+}
+
+function saveBatchProgress(projectId: string, summary: BatchSummary): void {
+  try {
+    localStorage.setItem(batchProgressKey(projectId), JSON.stringify(summary));
+  } catch {
+    // localStorage 不可用（隐私模式等）时静默降级
+  }
+}
+
+function loadBatchProgress(projectId: string): BatchSummary | null {
+  try {
+    const raw = localStorage.getItem(batchProgressKey(projectId));
+    if (!raw) return null;
+    return JSON.parse(raw) as BatchSummary;
+  } catch {
+    return null;
+  }
+}
+
+function clearBatchProgress(projectId: string): void {
+  try {
+    localStorage.removeItem(batchProgressKey(projectId));
+  } catch {
+    // ignore
+  }
+}
+
 // ============================================
 // 接口定义
 // ============================================
+
+/** 批量写作中跳过的失败章节记录（内存，批量结束时汇总用） */
+export interface FailedChapterRecord {
+  index: number;
+  id: string;
+  title: string;
+  error: string;
+  errorKind: ErrorKind;
+  attempts: number;
+}
+
+/** 批量写作结束时的汇总（供 UI 弹"完成 N 章 / 失败 M 章"） */
+export interface BatchSummary {
+  total: number;          // 本轮尝试章节数
+  written: number;        // 成功章节数
+  failed: FailedChapterRecord[]; // 跳过的失败章节
+  stopped: boolean;       // 是否因用户停止 / 死循环保护中断
+  startedAt: number;      // 开始时间戳
+  finishedAt: number;     // 结束时间戳
+  durationMs: number;     // 耗时
+}
 
 export interface UseBatchWriterReturn {
   // 状态
@@ -116,6 +207,14 @@ export interface UseBatchWriterReturn {
   // 失败重试状态
   maxRetries: Ref<number>; // 单章最大重试次数
   currentRetryCount: Ref<number>; // 当前章节重试次数（重试中显示 1/maxRetries，0 表示无重试）
+
+  // 批量失败章节 + 汇总（P0-2/P2-3）
+  failedChapters: Ref<FailedChapterRecord[]>; // 本轮跳过的失败章节
+  batchSummary: Ref<BatchSummary | null>; // 最近一次批量结束汇总
+  retryFailedChapters: (failedIds?: string[]) => Promise<void>; // 重试失败章节队列
+  // 批量进度持久化（P2-2）：跨会话恢复未完成的批量
+  resumableBatch: Ref<BatchSummary | null>; // localStorage 里未确认的上次进度
+  dismissResumableBatch: () => void; // 用户忽略后清除
 
   // 写到完结状态
   endingStatus: Ref<EndingCheckResult | null>; // 完结判断结果
@@ -519,6 +618,24 @@ export function useBatchWriter(): UseBatchWriterReturn {
   const currentChapterTitle = ref('');
   const error = ref<string | null>(null);
 
+  // 批量失败章节 + 汇总
+  const failedChapters = ref<FailedChapterRecord[]>([]);
+  const batchSummary = ref<BatchSummary | null>(null);
+  // 跨会话恢复：初始化时从 localStorage 读取上次未确认的批量进度
+  const resumableBatch = ref<BatchSummary | null>(null);
+  try {
+    const pid = projectStore.currentProject?.id;
+    if (pid) {
+      const saved = loadBatchProgress(pid);
+      // 只在有失败章节时提示恢复（全成功的批量无需恢复）
+      if (saved && saved.failed.length > 0) {
+        resumableBatch.value = saved;
+      }
+    }
+  } catch {
+    // ignore
+  }
+
   // 流水线状态
   const pipelineStatus = ref<WritingPipelineStage[]>([]);
   const currentPipelineStep = ref('idle');
@@ -557,11 +674,11 @@ export function useBatchWriter(): UseBatchWriterReturn {
     useCommit: true,
     requireBlockingPass: true,
     initialStrictness: 'normal' as ReviewStrictness,
-    maxRetries: 3,
+    maxRetries: 5,
   });
 
   // 失败重试状态
-  const maxRetries = ref(3);
+  const maxRetries = ref(5);
   const currentRetryCount = ref(0);
 
   // 上下文管理器
@@ -615,7 +732,11 @@ export function useBatchWriter(): UseBatchWriterReturn {
   function getNextChapterIndex(): number {
     const chapters = projectStore.sortedChapters;
     for (let i = 0; i < chapters.length; i++) {
-      if (!chapters[i].content || chapters[i].content.trim().length === 0) {
+      // 空章节且非"已知失败"（writeStatus==='failed'）：可写。
+      // 已知失败章跳过，避免原地反复重试同一个坏章；用户可通过"重试失败章节"入口显式清状态后再写。
+      const isEmpty =
+        !chapters[i].content || chapters[i].content.trim().length === 0;
+      if (isEmpty && chapters[i].writeStatus !== 'failed') {
         return i;
       }
     }
@@ -753,21 +874,39 @@ export function useBatchWriter(): UseBatchWriterReturn {
       }
 
       if (!result.success || result.forceAccepted || result.gateResult?.passed === false) {
-        // 失败：记录恢复项，抛出让上层重试
+        // 失败：记录恢复项，抛出让上层重试。
+        // 携带 errorKind/retryable，供批量层决定是否退避重试（瞬态）或直接跳过（持久）。
         const failureMessage = result.error
           || (result.forceAccepted || result.gateResult?.passed === false
             ? '严格门禁未通过，章节未提交'
             : '写作失败');
+        const failureKind: ErrorKind = result.errorKind ?? classifyError(failureMessage).kind;
+        const failureRetryable: boolean = result.retryable ?? classifyError(failureMessage).retryable;
         recoveryManager.registerFailure(
           chapter.id,
           chapterIndex + 1,
           'draft' as PipelineStep,
-          failureMessage
+          failureMessage,
+          undefined,
+          { errorKind: failureKind, retryable: failureRetryable }
         );
         throw new WritingError(
           failureMessage,
-          ErrorCode.AI_GENERATION_FAILED
+          ErrorCode.AI_GENERATION_FAILED,
+          { details: { errorKind: failureKind, retryable: failureRetryable } }
         );
+      }
+
+      // 成功：清章节失败标记
+      if (chapter.writeStatus === 'failed' || chapter.lastError || chapter.lastErrorKind) {
+        void projectStore.updateChapter(chapter.id, {
+          writeStatus: 'success',
+          lastError: undefined,
+          lastErrorKind: undefined,
+          lastErrorAt: undefined,
+        }).catch(() => {
+          // 状态字段写入失败不影响主流程
+        });
       }
 
       // 进度统计
@@ -852,7 +991,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
       config.value.useCommit = batchConfig.useCommit ?? true;
       config.value.requireBlockingPass = batchConfig.requireBlockingPass ?? true;
       config.value.initialStrictness = batchConfig.initialStrictness ?? 'normal';
-      config.value.maxRetries = batchConfig.maxRetries ?? 3;
+      config.value.maxRetries = batchConfig.maxRetries ?? 5;
     }
 
     // 设置目标
@@ -879,15 +1018,20 @@ export function useBatchWriter(): UseBatchWriterReturn {
     strictnessHistory.value = [];
     endingStatus.value = null;
     isReadyToEnd.value = false;
+    failedChapters.value = [];
+    batchSummary.value = null;
+    resumableBatch.value = null; // 开始新批量，清除上次恢复提示
 
     // 获取计划章节数
     const plannedChapterCount =
       project.metadata?.plannedChapterCount ||
       (project.plotOutline?.length > 0 ? project.plotOutline.length : 100);
 
+    const batchStartedAt = Date.now();
+    let writtenCount = 0; // 提到 try 外，finally 的 batchSummary 需要访问
+
     try {
       let currentIndex = getNextChapterIndex();
-      let writtenCount = 0;
 
       let loopIter = 0;
       while (currentIndex >= 0 || writtenCount < chaptersToWrite) {
@@ -968,20 +1112,26 @@ export function useBatchWriter(): UseBatchWriterReturn {
           }
         }
 
-        // ========== 单章写作（带重试 + 指数退避） ==========
-        // 失败重试本章，重试耗尽则停止整个批量写作，章节保持空白以支持断点续写
+        // ========== 单章写作（错误分级重试 + 失败跳过） ==========
+        // 瞬态错误（网络/超时/截断/5xx/429）：指数退避重试，耗尽才跳过。
+        // 持久错误（schema/审核/auth/4xx）：首次即跳过，不浪费重试预算。
+        // 用户停止（aborted）：立即停整批。
+        // 单章耗尽不再停整批，而是标记 Chapter.writeStatus='failed' 后跳过，继续下一章。
         const chapterMaxRetries = config.value.maxRetries;
         let chapterSuccess = false;
         let chapterLastErr = '';
+        let chapterLastErrorKind: ErrorKind = 'unknown';
+        let chapterAttempts = 0; // 实际消耗的重试次数
+        let chapterForceStop = false; // aborted 触发，需立即停整批
 
         for (let attempt = 1; attempt <= chapterMaxRetries; attempt++) {
           // 响应停止
-          if (internalState.shouldStop) break;
+          if (internalState.shouldStop) { chapterForceStop = true; break; }
           // 响应暂停（等待期间不消耗重试次数）
           while (internalState.shouldPause && !internalState.shouldStop) {
             await new Promise(r => setTimeout(r, 500));
           }
-          if (internalState.shouldStop) break;
+          if (internalState.shouldStop) { chapterForceStop = true; break; }
 
           currentRetryCount.value = attempt;
 
@@ -998,22 +1148,50 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
             if (success) {
               chapterSuccess = true;
+              chapterAttempts = attempt;
               writtenCount++;
               break;
             }
           } catch (err) {
+            chapterAttempts = attempt;
             chapterLastErr = err instanceof Error ? err.message : String(err);
+            // 优先用管道层透传的分类（details.errorKind），fallback 到 message 分类
+            const sig = internalState.abortController?.signal;
+            const detailsKind = (err as WritingError)?.details?.errorKind as ErrorKind | undefined;
+            const detailsRetryable = (err as WritingError)?.details?.retryable as boolean | undefined;
+            const classified: ClassifiedError = detailsKind !== undefined
+              ? { kind: detailsKind, retryable: detailsRetryable ?? false, transient: false, message: chapterLastErr }
+              : classifyError(err, sig);
+            chapterLastErrorKind = classified.kind;
             const errStack = err instanceof Error ? err.stack : '';
             console.error(
-              `[批量写作] ❌ 第${currentIndex + 1}章写作失败（第 ${attempt}/${chapterMaxRetries} 次）: ${chapterLastErr}`,
-              { error: chapterLastErr, stack: errStack, writtenCount, currentIndex, chaptersToWrite }
+              `[批量写作] ❌ 第${currentIndex + 1}章写作失败（第 ${attempt}/${chapterMaxRetries} 次, ${classified.kind}${classified.retryable ? '/可重试' : '/持久'}）: ${chapterLastErr}`,
+              { error: chapterLastErr, stack: errStack, writtenCount, currentIndex, chaptersToWrite, classified }
             );
 
-            // 还有重试机会：指数退避后重试本章
+            // aborted（用户主动停止）：立即停整批，不进任何重试
+            if (classified.kind === 'aborted') {
+              chapterForceStop = true;
+              error.value = `已停止批量写作`;
+              break;
+            }
+
+            // 持久错误：不退避、不重试，直接判定本章失败跳出 → 进下面的跳过逻辑
+            if (!classified.retryable) {
+              error.value = `第${currentIndex + 1}章失败（${classified.kind}，不可重试），跳过该章继续`;
+              break;
+            }
+
+            // 瞬态错误：仍有重试机会则指数退避（4/8/16/30s 封顶）
             if (attempt < chapterMaxRetries) {
-              const waitSeconds = 2 ** attempt; // 2s, 4s, 8s...
-              error.value = `第${currentIndex + 1}章写作失败（第 ${attempt}/${chapterMaxRetries} 次），${waitSeconds}s 后重试…`;
-              await new Promise(r => setTimeout(r, waitSeconds * 1000));
+              const waitMs = backoffDelayMs(attempt); // 默认 base=4000, max=30000
+              const waitSeconds = Math.round(waitMs / 1000);
+              error.value = `第${currentIndex + 1}章失败（第 ${attempt}/${chapterMaxRetries} 次，${classified.kind}），${waitSeconds}s 后重试…`;
+              // 退避期间响应 abort（避免退避中途用户停止还要等满）
+              await abortableSleep(waitMs, internalState.abortController?.signal).catch(() => {
+                chapterForceStop = true;
+              });
+              if (chapterForceStop) break;
             }
           }
         }
@@ -1021,11 +1199,35 @@ export function useBatchWriter(): UseBatchWriterReturn {
         // 重置重试计数（无重试时为 0）
         currentRetryCount.value = 0;
 
-        // 重试耗尽：停止整个批量写作，章节保持空白（不写占位内容）
-        if (!chapterSuccess) {
-          error.value = `第${currentIndex + 1}章连续 ${chapterMaxRetries} 次失败，已停止批量写作：${chapterLastErr}`;
+        // 用户主动停止：停整批
+        if (chapterForceStop) {
           internalState.shouldStop = true;
           break;
+        }
+
+        // 单章耗尽/持久失败：标记 Chapter.writeStatus='failed'，加入 failedChapters，跳过继续
+        if (!chapterSuccess) {
+          const failedChapter = projectStore.sortedChapters[currentIndex];
+          const failedId = failedChapter?.id ?? `unknown-${currentIndex}`;
+          const failedTitle = failedChapter?.title ?? `第${currentIndex + 1}章`;
+          failedChapters.value.push({
+            index: currentIndex,
+            id: failedId,
+            title: failedTitle,
+            error: chapterLastErr,
+            errorKind: chapterLastErrorKind,
+            attempts: chapterAttempts,
+          });
+          void projectStore.updateChapter(failedId, {
+            writeStatus: 'failed',
+            lastError: chapterLastErr,
+            lastErrorKind: chapterLastErrorKind,
+            lastErrorAt: new Date().toISOString(),
+          }).catch(() => {
+            // 状态字段写入失败不阻断批量
+          });
+          error.value = `第${currentIndex + 1}章跳过（${chapterLastErrorKind}）：${chapterLastErr}`;
+          // 注意：不再 shouldStop=true，继续下一章
         }
 
         // 写到完结模式：每写完一章后重新检查完结条件
@@ -1040,6 +1242,24 @@ export function useBatchWriter(): UseBatchWriterReturn {
         currentIndex = getNextChapterIndex();
       }
     } finally {
+      const batchFinishedAt = Date.now();
+      // 产出批量汇总供 UI 展示"成功 N 章 / 失败 M 章"
+      const summary: BatchSummary = {
+        total: writtenCount + failedChapters.value.length,
+        written: writtenCount,
+        failed: [...failedChapters.value],
+        stopped: internalState.shouldStop,
+        startedAt: batchStartedAt,
+        finishedAt: batchFinishedAt,
+        durationMs: batchFinishedAt - batchStartedAt,
+      };
+      batchSummary.value = summary;
+      // 落盘：有失败章节时存 localStorage 供下次会话恢复；全成功则清除旧进度
+      if (summary.failed.length > 0 && project.id) {
+        saveBatchProgress(project.id, summary);
+      } else if (project.id) {
+        clearBatchProgress(project.id);
+      }
       isWriting.value = false;
       isPaused.value = false;
       currentChapterIndex.value = -1;
@@ -1049,6 +1269,71 @@ export function useBatchWriter(): UseBatchWriterReturn {
       currentPipelineStep.value = 'idle';
       pipelineStatus.value = internalState.pipeline.getStatus().stages;
     }
+  }
+
+  /**
+   * 重试失败章节队列（P2-3）。
+   *
+   * 把指定（或全部 writeStatus==='failed'）章节的状态重置为 pending，
+   * 然后跑一轮只针对这些章的批量（复用 executeChapterWriting + 分级重试）。
+   * 不会触碰已成功或正常的空章节。
+   *
+   * @param failedIds 指定重试的章节 ID；不传则重试所有 writeStatus==='failed' 的章节
+   */
+  async function retryFailedChapters(failedIds?: string[]): Promise<void> {
+    if (isWriting.value) {
+      error.value = '批量写作进行中，无法重试失败章节';
+      return;
+    }
+    const project = projectStore.currentProject;
+    if (!project) {
+      error.value = '请先选择一个项目';
+      return;
+    }
+
+    // 选出目标失败章节，按 orderIndex 升序
+    const targets = projectStore.sortedChapters.filter(c =>
+      c.writeStatus === 'failed'
+      && (!failedIds || failedIds.includes(c.id))
+    );
+    if (targets.length === 0) {
+      error.value = '没有需要重试的失败章节';
+      return;
+    }
+
+    // 重置这些章节的失败标记，让 executeChapterWriting / getNextChapterIndex 能再次选中。
+    // updateChapter 是 async（会落盘），但这里需要等它完成后再启动批量，否则 getNextChapterIndex
+    // 可能读到旧的 writeStatus==='failed' 而跳过。
+    await Promise.all(targets.map(ch =>
+      projectStore.updateChapter(ch.id, {
+        writeStatus: 'pending',
+        lastError: undefined,
+        lastErrorKind: undefined,
+        lastErrorAt: undefined,
+      }).catch(() => {
+        // ignore
+      })
+    ));
+
+    // 复用 startBatchWriting 跑一轮：getNextChapterIndex 现在会选中刚重置的 pending 章
+    await startBatchWriting(undefined, {
+      wordsPerChapter: config.value.wordsPerChapter,
+      writingStyle: config.value.writingStyle,
+      temperature: config.value.temperature,
+      deAIEnabled: config.value.deAIEnabled,
+      useReview: config.value.useReview,
+      useCommit: config.value.useCommit,
+      requireBlockingPass: config.value.requireBlockingPass,
+      initialStrictness: config.value.initialStrictness,
+      maxRetries: config.value.maxRetries,
+    });
+  }
+
+  /** 用户忽略上次进度提示后，清除 localStorage 里的 resumableBatch */
+  function dismissResumableBatch(): void {
+    resumableBatch.value = null;
+    const pid = projectStore.currentProject?.id;
+    if (pid) clearBatchProgress(pid);
   }
 
   function pauseWriting(): void {
@@ -1163,6 +1448,12 @@ export function useBatchWriter(): UseBatchWriterReturn {
     // 失败重试状态
     maxRetries,
     currentRetryCount,
+    // 批量失败章节 + 汇总
+    failedChapters,
+    batchSummary,
+    retryFailedChapters,
+    resumableBatch,
+    dismissResumableBatch,
     // 写到完结状态
     endingStatus,
     isReadyToEnd,

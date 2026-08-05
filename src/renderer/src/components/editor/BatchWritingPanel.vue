@@ -89,6 +89,12 @@ const {
   // 失败重试相关
   currentRetryCount,
   maxRetries,
+  // 批量失败章节 + 汇总
+  failedChapters,
+  batchSummary,
+  retryFailedChapters,
+  resumableBatch,
+  dismissResumableBatch,
   // 写到完结相关
   endingStatus,
   isReadyToEnd,
@@ -110,7 +116,7 @@ const batchConfig = ref({
   useReview: true,
   requireBlockingPass: true,
   initialStrictness: 'normal' as ReviewStrictness,
-  maxRetries: 3,
+  maxRetries: 5,
 });
 
 // 流水线步骤图标映射
@@ -784,7 +790,7 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
                 <NInputNumber
                   v-model:value="batchConfig.maxRetries"
                   :min="1"
-                  :max="5"
+                  :max="8"
                   size="small"
                   class="w-24"
                 />
@@ -792,7 +798,7 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
               </div>
             </div>
             <div class="text-xs text-gray-400 -mt-2">
-              单章失败时指数退避重试（2s/4s/8s…），耗尽后停止批量，章节保持空白以支持断点续写
+              瞬态错误（网络/超时/截断）按指数退避重试（4s/8s/16s…），持久错误（校验/审核）直接跳过；单章耗尽不再停整批，而是跳过该章继续，失败章可单独重试
             </div>
 
             <!-- 自适应审查说明 -->
@@ -814,6 +820,25 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
           </div>
         </NCollapseItem>
       </NCollapse>
+    </div>
+
+    <!-- 上次批量未完成恢复提示（跨会话，来自 localStorage） -->
+    <div
+      v-if="resumableBatch && !isWriting"
+      class="mb-4 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50"
+    >
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-blue-700 dark:text-blue-400 text-sm">
+          <AlertCircle class="w-4 h-4 flex-shrink-0" />
+          <span>
+            上次批量未完成：成功 {{ resumableBatch.written }} 章，失败 {{ resumableBatch.failed.length }} 章
+          </span>
+        </div>
+        <div class="flex gap-2 flex-shrink-0">
+          <NButton size="small" type="primary" @click="retryFailedChapters()">重试失败章节</NButton>
+          <NButton size="small" @click="dismissResumableBatch">忽略</NButton>
+        </div>
+      </div>
     </div>
 
     <!-- 控制按钮 -->
@@ -860,16 +885,23 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
           :class="[
             chapter.content && chapter.content.trim().length > 0
               ? 'bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-200/50 dark:border-emerald-800/30'
-              : index === writtenChapters
-                ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600'
-                : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-200/50 dark:border-gray-700/30',
+              : chapter.writeStatus === 'failed'
+                ? 'bg-red-50/50 dark:bg-red-900/20 border-red-200/50 dark:border-red-800/30'
+                : index === writtenChapters
+                  ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600'
+                  : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-200/50 dark:border-gray-700/30',
           ]"
+          :title="chapter.writeStatus === 'failed' && chapter.lastError ? `失败（${chapter.lastErrorKind || 'unknown'}）：${chapter.lastError}` : undefined"
         >
           <!-- 状态图标 -->
           <div class="w-5 h-5 flex items-center justify-center flex-shrink-0">
             <Check
               v-if="chapter.content && chapter.content.trim().length > 0"
               class="w-4 h-4 text-emerald-500"
+            />
+            <AlertCircle
+              v-else-if="chapter.writeStatus === 'failed'"
+              class="w-4 h-4 text-red-500"
             />
             <div
               v-else-if="index === writtenChapters"
@@ -882,13 +914,24 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
 
           <!-- 章节信息 -->
           <div class="flex-1 min-w-0">
-            <div class="truncate text-gray-900 dark:text-white">
+            <div class="truncate" :class="chapter.writeStatus === 'failed' ? 'text-red-700 dark:text-red-400' : 'text-gray-900 dark:text-white'">
               {{ chapter.title }}
             </div>
           </div>
 
-          <!-- 字数 -->
-          <div class="text-xs text-gray-400">{{ chapter.wordCount || 0 }} 字</div>
+          <!-- 字数 / 失败重试按钮 -->
+          <div class="text-xs text-gray-400 flex items-center gap-2">
+            <span>{{ chapter.wordCount || 0 }} 字</span>
+            <NButton
+              v-if="chapter.writeStatus === 'failed' && !isWriting"
+              size="tiny"
+              type="error"
+              ghost
+              @click="retryFailedChapters([chapter.id])"
+            >
+              重试
+            </NButton>
+          </div>
         </div>
 
         <!-- 空状态 -->
@@ -907,6 +950,39 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
       <div class="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
         <AlertCircle class="w-4 h-4 flex-shrink-0" />
         <span>{{ error }}</span>
+      </div>
+    </div>
+
+    <!-- 批量完成汇总（失败章节 > 0 时展示） -->
+    <div
+      v-if="batchSummary && batchSummary.failed.length > 0"
+      class="mt-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50"
+    >
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-sm font-medium">
+          <CheckCircle class="w-4 h-4" />
+          <span>批量完成：成功 {{ batchSummary.written }} 章 / 失败 {{ batchSummary.failed.length }} 章</span>
+        </div>
+        <NButton
+          v-if="!isWriting && batchSummary.failed.length > 0"
+          size="small"
+          type="warning"
+          @click="retryFailedChapters()"
+        >
+          重试全部失败章节
+        </NButton>
+      </div>
+      <div class="space-y-1 max-h-40 overflow-y-auto">
+        <div
+          v-for="f in batchSummary.failed"
+          :key="f.id"
+          class="flex items-center gap-2 text-xs text-red-600 dark:text-red-400"
+        >
+          <AlertCircle class="w-3 h-3 flex-shrink-0" />
+          <span class="font-medium">{{ f.title }}</span>
+          <span class="text-gray-400">（{{ f.errorKind }}，{{ f.attempts }} 次）</span>
+          <span class="truncate text-gray-500 dark:text-gray-400">{{ f.error }}</span>
+        </div>
       </div>
     </div>
   </div>

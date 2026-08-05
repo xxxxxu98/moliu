@@ -187,14 +187,14 @@ describe('useBatchWriter', () => {
       expect(writer.config.value.useCommit).toBe(true);
       expect(writer.config.value.requireBlockingPass).toBe(true);
       expect(writer.config.value.initialStrictness).toBe('normal');
-      expect(writer.config.value.maxRetries).toBe(3);
+      expect(writer.config.value.maxRetries).toBe(5);
     });
 
     it('should expose retry state refs', async () => {
       const { useBatchWriter } = await import('@/composables/useBatchWriter');
       const writer = useBatchWriter();
 
-      expect(writer.maxRetries.value).toBe(3);
+      expect(writer.maxRetries.value).toBe(5);
       expect(writer.currentRetryCount.value).toBe(0);
     });
   });
@@ -357,9 +357,9 @@ describe('BatchConfig 类型与失败重试', () => {
     mockProjectStore.updateChapter.mockClear();
   }
 
-  it('失败时立即停止且不新建空章节（核心 bug 修复）', async () => {
+  it('持久失败时跳过该章且不新建空章节（核心 bug 修复）', async () => {
     setupProjectWithEmptyChapters(1);
-    // v3.1：管道执行失败
+    // 管道执行失败（'AI service unavailable' 归为 unknown/持久，首次即跳过）
     mockPipelineExecute.mockRejectedValueOnce(new Error('AI service unavailable'));
 
     const { useBatchWriter } = await import('@/composables/useBatchWriter');
@@ -372,14 +372,21 @@ describe('BatchConfig 类型与失败重试', () => {
       useReview: false,
     });
 
-    // 批量写作已停止
+    // 批量写作已结束（跳过失败章后无更多可写章节）
     expect(writer.isWriting.value).toBe(false);
-    // 错误信息已设置
-    expect(writer.error.value).toContain('失败');
-    // 【关键】没有新建任何空章节
-    expect(mockProjectStore.createChapter).not.toHaveBeenCalled();
-    // 【关键】没有写入占位内容到失败章节（管道内部提交，失败时不写）
-    expect(mockProjectStore.updateChapter).not.toHaveBeenCalled();
+    // 错误信息已设置（新行为：跳过而非停整批）
+    expect(writer.error.value).toContain('跳过');
+    // 失败章节被标记为 failed 状态（供 UI 红标 + 断点续写跳过）
+    expect(mockProjectStore.updateChapter).toHaveBeenCalledWith(
+      'c1',
+      expect.objectContaining({ writeStatus: 'failed', lastError: 'AI service unavailable' })
+    );
+    // 失败章节被收集到 failedChapters + batchSummary
+    expect(writer.failedChapters.value).toHaveLength(1);
+    expect(writer.failedChapters.value[0].errorKind).toBe('unknown');
+    expect(writer.batchSummary.value).not.toBeNull();
+    expect(writer.batchSummary.value?.written).toBe(0);
+    expect(writer.batchSummary.value?.failed).toHaveLength(1);
   });
 
   it('forceAccepted 或门禁失败不得计为批量成功', async () => {
@@ -410,13 +417,17 @@ describe('BatchConfig 类型与失败重试', () => {
 
     expect(writer.progress.value.writtenChapters).toBe(0);
     expect(writer.error.value).toContain('严格门禁未通过');
-    expect(mockProjectStore.updateChapter).not.toHaveBeenCalled();
+    // 门禁失败（review/持久）现在会标记章节为 failed，而非完全不调 updateChapter
+    expect(mockProjectStore.updateChapter).toHaveBeenCalledWith(
+      'c1',
+      expect.objectContaining({ writeStatus: 'failed', lastErrorKind: 'review' })
+    );
   });
 
-  it('失败时按 maxRetries 重试本章，重试耗尽后停止', async () => {
+  it('瞬态错误按 maxRetries 重试本章，重试耗尽后跳过', async () => {
     setupProjectWithEmptyChapters(1);
-    // v3.1：管道执行每次都失败
-    mockPipelineExecute.mockRejectedValue(new Error('AI service unavailable'));
+    // 管道每次都失败，且是瞬态网络错误（被分类为 network/retryable，会指数退避重试）
+    mockPipelineExecute.mockRejectedValue(new Error('network error: fetch failed'));
 
     const { useBatchWriter } = await import('@/composables/useBatchWriter');
     const writer = useBatchWriter();
@@ -428,22 +439,28 @@ describe('BatchConfig 类型与失败重试', () => {
       useReview: false,
     });
 
-    // 重试了 2 次（每次都调 pipeline.execute）
+    // 瞬态错误重试了 2 次（每次都调 pipeline.execute）
     expect(mockPipelineExecute).toHaveBeenCalledTimes(2);
-    // 批量写作已停止
+    // 批量写作已结束（跳过失败章后无更多可写章节）
     expect(writer.isWriting.value).toBe(false);
-    expect(writer.error.value).toContain('连续 2 次失败');
-    // 没有新建空章节
-    expect(mockProjectStore.createChapter).not.toHaveBeenCalled();
-    // 失败章节保持空白
-    expect(mockProjectStore.updateChapter).not.toHaveBeenCalled();
+    // 新行为：跳过而非"连续 N 次失败"
+    expect(writer.error.value).toContain('跳过');
+    expect(writer.failedChapters.value[0].errorKind).toBe('network');
+    // 失败章节被标记为 failed（writeStatus），正文保持空白
+    expect(mockProjectStore.updateChapter).toHaveBeenCalledWith(
+      'c1',
+      expect.objectContaining({ writeStatus: 'failed', lastErrorKind: 'network' })
+    );
+    // batchSummary 汇总
+    expect(writer.batchSummary.value?.failed).toHaveLength(1);
+    expect(writer.batchSummary.value?.failed[0].attempts).toBe(2);
   }, 15000);
 
   it('失败重试成功后继续写下一章', async () => {
     setupProjectWithEmptyChapters(2);
-    // v3.1：第 1 章第 1 次 pipeline 失败、第 2 次成功；第 2 章一次成功
+    // 第 1 章第 1 次 pipeline 瞬态失败、第 2 次成功；第 2 章一次成功
     mockPipelineExecute
-      .mockRejectedValueOnce(new Error('transient error'))
+      .mockRejectedValueOnce(new Error('network error: fetch failed'))
       .mockResolvedValueOnce({
         success: true,
         prose: '第1章内容',

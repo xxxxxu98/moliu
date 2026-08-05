@@ -175,7 +175,38 @@ describe('inspectOutlineQuality', () => {
     );
   });
 
-  it('开篇钩子为空或超过 45 字命中 opening-hook', () => {
+  it('括号跨事件拆分：单条未闭合但 block 合并配平，报跨事件拆分', () => {
+    // 复刻 REAL AI smoke twist 模块的真实 case：一个括号被拆到两条事件
+    const outline = makeDirtyOutline();
+    outline.startupPack30.chapterBlocks = [
+      makeBlock({
+        mustEvents: [
+          '陈默在古战场边缘发现时间循环的肉眼可见效果（场景重复',
+          '人物卡帧）',
+        ],
+      }),
+    ];
+    const issues = inspectOutlineQuality(outline).filter(i => i.kind === 'unbalanced-paren');
+    // 两条事件都未配对，各报一条
+    expect(issues.length).toBe(2);
+    // 文案含"跨事件拆分"，修正 prompt 据此给出针对性指令
+    expect(issues.every(i => i.detail.includes('跨事件拆分'))).toBe(true);
+  });
+
+  it('括号真漏：单条未闭合且 block 合并仍不配平，报未配对（非跨事件）', () => {
+    const outline = makeDirtyOutline();
+    outline.startupPack30.chapterBlocks = [
+      makeBlock({
+        mustEvents: ['发现效果（场景重复', '人物卡帧'],
+      }),
+    ];
+    const issues = inspectOutlineQuality(outline).filter(i => i.kind === 'unbalanced-paren');
+    expect(issues.length).toBe(1);
+    // 文案不含"跨事件拆分"（合并后开1闭0仍不配平）
+    expect(issues[0].detail.includes('跨事件拆分')).toBe(false);
+  });
+
+  it('开篇钩子为空或超过 35 字命中 opening-hook', () => {
     const outline = makeDirtyOutline();
     outline.startupPack30.openingHook = '钩'.repeat(50);
     expect(
@@ -200,12 +231,12 @@ describe('inspectOutlineQuality', () => {
     expect(inspectOutlineQuality(outline).some(issue => issue.kind === 'opening-hook')).toBe(false);
   });
 
-  it('开篇钩子 45 字边界：45 不报、46 报', () => {
+  it('开篇钩子 35 字边界：35 不报、36 报', () => {
     const outline = makeDirtyOutline();
-    outline.startupPack30.openingHook = '钩'.repeat(45);
+    outline.startupPack30.openingHook = '钩'.repeat(35);
     expect(inspectOutlineQuality(outline).some(issue => issue.kind === 'opening-hook')).toBe(false);
 
-    outline.startupPack30.openingHook = '钩'.repeat(46);
+    outline.startupPack30.openingHook = '钩'.repeat(36);
     expect(inspectOutlineQuality(outline).some(issue => issue.kind === 'opening-hook')).toBe(true);
   });
 

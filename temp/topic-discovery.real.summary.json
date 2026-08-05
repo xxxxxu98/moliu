@@ -1,61 +1,108 @@
 {
-  "at": "2026-08-03T11:51:05.489Z",
+  "at": "2026-08-05T06:38:07.374Z",
   "provider": "openai",
+  "providerId": "provider-1781144969420",
   "model": "deepseek-v4-flash[1m]",
+  "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3",
   "wordCountRange": "30万-60万",
   "modules": [
     {
       "module": "seeds",
       "chapters": 30,
-      "openingHookLength": 19,
-      "qualityIssues": [],
-      "aiMs": 263071,
-      "seedTitle": "《修真BUG修复师》",
-      "directionTitle": "修真BUG修复师之漏洞猎手"
+      "openingHookLength": 22,
+      "hardIssues": [],
+      "softIssues": [],
+      "expandWarnings": [
+        "修正稿质量未提升（1→1 处问题），回退初稿"
+      ],
+      "reviewerStatus": "reverted-no-improve",
+      "aiMs": 307563,
+      "rateLimitedCount": 0,
+      "seedTitle": "退休魔王在星际开废品站",
+      "directionTitle": "退休魔王在星际开废品站"
     },
     {
       "module": "radar",
       "chapters": 30,
-      "openingHookLength": 22,
-      "qualityIssues": [],
-      "aiMs": 290849,
-      "seedTitle": "我的AI是废物回收站",
-      "directionTitle": "AI废品站：捡漏异能王"
+      "openingHookLength": 33,
+      "hardIssues": [],
+      "softIssues": [],
+      "expandWarnings": [
+        "大纲审查修正失败，回退初稿：Failed to execute \"fetch()\" on \"Window\" with URL \"https://ark.cn-beijing.volces.com/api/coding/v3/chat/completions\": soc"
+      ],
+      "reviewerStatus": "failed",
+      "aiMs": 280106,
+      "rateLimitedCount": 0,
+      "seedTitle": "当我的加班时长成了异能经验条",
+      "directionTitle": "加班成神：内卷反杀局"
     },
     {
       "module": "mix",
       "chapters": 30,
       "openingHookLength": 19,
-      "qualityIssues": [],
-      "aiMs": 303250,
-      "seedTitle": "《直播鉴宝：我一眼看出你是凶手》",
-      "directionTitle": "直播鉴宝：系统让我当神探"
+      "hardIssues": [],
+      "softIssues": [],
+      "expandWarnings": [
+        "修正稿质量未提升（1→1 处问题），回退初稿"
+      ],
+      "reviewerStatus": "reverted-no-improve",
+      "aiMs": 481602,
+      "rateLimitedCount": 0,
+      "seedTitle": "直播鉴宝：我看到了死亡现场",
+      "directionTitle": "直播鉴宝：命锁边"
     },
     {
       "module": "dice",
       "chapters": 30,
-      "openingHookLength": 18,
-      "qualityIssues": [],
-      "aiMs": 294404,
-      "seedTitle": "《仵作今天也想下班》",
-      "directionTitle": "致命预言"
+      "openingHookLength": 28,
+      "hardIssues": [],
+      "softIssues": [],
+      "expandWarnings": [
+        "修正稿质量未提升（1→1 处问题），回退初稿"
+      ],
+      "reviewerStatus": "reverted-no-improve",
+      "aiMs": 474584,
+      "rateLimitedCount": 0,
+      "seedTitle": "解剖鬼魂的仵作",
+      "directionTitle": "阴间档案·法医仵作"
     },
     {
       "module": "twist",
       "chapters": 30,
-      "openingHookLength": 23,
-      "qualityIssues": [],
-      "aiMs": 316929,
-      "seedTitle": "我的系统是负债累累版",
-      "directionTitle": "我的系统是黑心高利贷"
+      "openingHookLength": 22,
+      "hardIssues": [],
+      "softIssues": [],
+      "expandWarnings": [
+        "修正稿质量未提升（1→1 处问题），回退初稿"
+      ],
+      "reviewerStatus": "reverted-no-improve",
+      "aiMs": 518783,
+      "rateLimitedCount": 0,
+      "seedTitle": "我的系统是故障版",
+      "directionTitle": "赛博修理工：我的系统是BUG"
     },
     {
       "module": "prompt",
       "chapters": 30,
-      "openingHookLength": 25,
-      "qualityIssues": [],
-      "aiMs": 292825,
-      "directionTitle": "科学除妖局"
+      "openingHookLength": 7,
+      "hardIssues": [],
+      "softIssues": [
+        "[1-5章] 必出事件过长（68 字 > 40）：第1章林牧在直播中用科学拆穿“神婆给小鬼治病”骗局。第3章林…",
+        "[16-20章] 必出事件过长（63 字 > 40）：第16章林牧用科学手段配合降妖道具彻底消灭真妖“影”。第18…",
+        "[21-25章] 必出事件过长（63 字 > 40）：第21章林牧与新搭档赵一凡调查第一个案件。第23章发现人妖混…",
+        "[26-30章] 必出事件过长（42 字 > 40）：第26章林牧与赵一凡合作调查人妖混血组织。第28章林牧在直播…"
+      ],
+      "expandWarnings": [
+        "大纲审查修正失败，回退初稿：API 请求失败: 429 {\"error\":{\"code\":\"ServerOverloaded\",\"message\":\"The service is currently unable to handle additional reques"
+      ],
+      "reviewerStatus": "failed",
+      "aiMs": 352878,
+      "rateLimitedCount": 0,
+      "directionTitle": "降妖人很忙"
     }
-  ]
+  ],
+  "hardFailCount": 0,
+  "softIssueCount": 4,
+  "totalRateLimited": 0,
+  "totalAiMs": 2415516
 }

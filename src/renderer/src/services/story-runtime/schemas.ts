@@ -119,11 +119,42 @@ export const sceneDraftSchema: z.ZodType<SceneDraft> = z.object({
   chapterTitle: z.string().min(1).max(48).optional(),
 });
 
-export const extractedFactsSchema: z.ZodType<ExtractedFacts> = z.object({
+/**
+ * 事实提取软校验：模型常少返回顶层 events/deltas/evidence 数组字段，
+ * 旧逻辑会因 `expected array, received undefined` 整章崩。
+ * 这里用 z.preprocess 把缺失/非数组的字段回填 []，照搬现有 idStringArraySchema 的兜底模式。
+ * 内层元素（storyEventSchema / stateDeltaSchema）仍严格校验，不掩盖真实结构问题。
+ */
+export function coerceExtractedFacts(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null) return value;
+  const obj = value as Record<string, unknown>;
+  const missing: string[] = [];
+  for (const key of ['events', 'deltas', 'evidence'] as const) {
+    if (!Array.isArray(obj[key])) {
+      if (obj[key] !== undefined) {
+        missing.push(`${key}:${typeof obj[key]}`);
+      }
+      obj[key] = [];
+    }
+  }
+  if (missing.length > 0) {
+    console.warn(
+      `[schemas] 事实提取顶层字段被软兜底为 []（模型返回退化）：${missing.join(', ')}`
+    );
+  }
+  return obj;
+}
+
+const extractedFactsStrictSchema = z.object({
   events: z.array(storyEventSchema),
   deltas: z.array(stateDeltaSchema),
   evidence: z.array(z.string()),
 });
+
+export const extractedFactsSchema: z.ZodType<ExtractedFacts> = z.preprocess(
+  coerceExtractedFacts,
+  extractedFactsStrictSchema
+);
 
 const fulfillmentNodeJudgmentSchema = z.object({
   node: z.string().min(1),

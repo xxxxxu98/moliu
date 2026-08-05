@@ -29,6 +29,13 @@ export interface OutlineQualityIssue {
   detail: string;
 }
 
+/**
+ * 开篇钩子长度上限（P1-1 统一阈值）。
+ * prompt 目标 30 字，这里给 5 字浮动空间作为"触发修正"阈值，
+ * 与 topicDiscovery real harness 的 soft issue 阈值一致。
+ */
+export const OPENING_HOOK_LIMIT = 35;
+
 /** 占位型必出事件：对模型零信息量，拆章后 CBN/CPNs/mustCover 全被占位 */
 const PLACEHOLDER_EVENT_RE =
   /^(推进|推动|展开|继续|完成).{0,6}(主线|剧情|情节|冲突|目标|当前|本区间)?$/u;
@@ -60,16 +67,17 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
   const issues: OutlineQualityIssue[] = [];
   if (!outline) return issues;
 
-  // 0. 开篇钩子：为空或超过 45 字（阈值/文案与 topicDiscovery real harness 的
-  //    collectQualityIssues 一致；差异：此处先 trim 再判空/判长，纯空白串与
-  //    首尾空格会按更严格口径处理——reporter 更严、更合理，harness 不 trim）
+  // 0. 开篇钩子：为空或超过 35 字。
+  //    阈值梯度（P1-1 统一）：prompt 目标 30 字 → reviewer 35 字触发修正 → harness 35 字记 soft issue。
+  //    35 字给模型 5 字浮动空间，避免 30 字过严导致 reviewer 频繁触发二次请求拖慢生成。
+  //    此处先 trim 再判空/判长（比 harness 更严：纯空白串与首尾空格按更严格口径处理）
   const openingHook = (outline.startupPack30?.openingHook ?? '').trim();
   if (!openingHook) {
     issues.push({ kind: 'opening-hook', detail: '开篇钩子为空' });
-  } else if (openingHook.length > 45) {
+  } else if (openingHook.length > OPENING_HOOK_LIMIT) {
     issues.push({
       kind: 'opening-hook',
-      detail: `开篇钩子过长（${openingHook.length} 字 > 45）：${openingHook.slice(0, 30)}…`,
+      detail: `开篇钩子过长（${openingHook.length} 字 > ${OPENING_HOOK_LIMIT}）：${openingHook.slice(0, 30)}…`,
     });
   }
 
@@ -77,9 +85,12 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
 
   // 1. 占位 / 超长 / 括号未配对 必出事件
   blocks.forEach((block, index) => {
-    (block.mustEvents ?? []).forEach(event => {
-      const text = (event ?? '').trim();
-      if (!text) return;
+    const events = (block.mustEvents ?? [])
+      .map(event => (event ?? '').trim())
+      .filter(Boolean);
+
+    // 1a. 占位 / 超长（逐条判定）
+    events.forEach(text => {
       if (PLACEHOLDER_EVENT_LITERALS.has(text) || PLACEHOLDER_EVENT_RE.test(text)) {
         issues.push({
           kind: 'placeholder-events',
@@ -93,18 +104,35 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
           detail: `第 ${index + 1} 块必出事件「${text.slice(0, 30)}…」超过 40 字，非单章可兑现事件`,
         });
       }
-      // 括号未配对（与 topicDiscovery real harness 的 collectQualityIssues 口径一致，
-      // 避免两套质检不一致导致修正环节漏掉同一问题）
-      const opens = (text.match(/（/gu) ?? []).length;
-      const closes = (text.match(/）/gu) ?? []).length;
-      if (opens !== closes) {
+    });
+
+    // 1b. 括号配对（block 级综合判定）。
+    // 先逐条统计开/闭括号定位未配对条目，再看整个 block 合并后是否配对，
+    // 区分两种高频错误（修正 prompt 据此给出针对性指令）：
+    //   - 跨事件拆分：单条未闭合，但 block 合并后配对（括号内容被切到下一条事件）
+    //   - 真漏括号：单条未闭合，block 合并后仍不配对
+    // 之前逐条单独报"开X/闭Y"，无法表达"跨事件拆分"这层语义，修正稿反复修不好。
+    const perEvent = events.map(text => ({
+      opens: (text.match(/（/gu) ?? []).length,
+      closes: (text.match(/）/gu) ?? []).length,
+      text,
+    }));
+    const unbalanced = perEvent.filter(s => s.opens !== s.closes);
+    if (unbalanced.length > 0) {
+      const totalOpens = perEvent.reduce((sum, s) => sum + s.opens, 0);
+      const totalCloses = perEvent.reduce((sum, s) => sum + s.closes, 0);
+      const isCrossEvent = totalOpens === totalCloses && totalOpens > 0;
+      const hint = isCrossEvent
+        ? `括号跨事件拆分（block 合并后 开${totalOpens}/闭${totalCloses} 配平，但单条未闭合，须把括号内容并入同一条或删除括号）`
+        : `括号未配对（block 合并后 开${totalOpens}/闭${totalCloses} 仍不匹配）`;
+      for (const s of unbalanced) {
         issues.push({
           kind: 'unbalanced-paren',
           blockIndex: index,
-          detail: `第 ${index + 1} 块必出事件「${text.slice(0, 30)}…」括号未配对（开 ${opens} / 闭 ${closes}）`,
+          detail: `第 ${index + 1} 块必出事件「${s.text.slice(0, 30)}…」${hint}（本条 开${s.opens}/闭${s.closes}）`,
         });
       }
-    });
+    }
   });
 
   // 2. 模板话术（承接上章结尾 / 推进至 等）泄漏进块级字段
@@ -226,7 +254,8 @@ export function buildOutlineReviewPrompt(params: {
 1. 逐条修复问题清单中列出的缺陷；
 2. 修复时保持原模板的固定结构（## 故事定位 / ## 核心驱动 / ## 故事规模规划 / ## 四幕结构 / ## 卖点承载规划 / ## 卷纲 / ## 前30章启动包 / ## 核心角色 / ## 伏笔规划 等小节及字段名一律不变），只修改具体内容；
 3. 不要重写整份方案、不要更换主角与核心卖点、不要增加新章节块；
-4. 【必出事件硬约束】每个区间的「必出事件」必须是单章可兑现的独立事件：同一场景链合并为一条；每条事件 8～30 字一句话写完，禁止换行、禁止括号注解；
+4. 【必出事件硬约束】每个区间的「必出事件」必须是单章可兑现的独立事件：同一场景链合并为一条；每条事件 8～30 字一句话写完，禁止换行；
+   【括号硬约束】禁止使用任何括号（中文（）或英文()），补充说明一律用逗号并入句中。若问题清单报"括号跨事件拆分"，说明初稿把一个括号拆到了两条事件里，修正时必须删除括号、把括号内容用逗号并入对应事件正文，确保修正后每条事件的开括号与闭括号各自配平；
 5. 【开篇钩子硬约束】开篇钩子 30 字以内的单场景动作钩子；
 6. 若问题清单为（无）或已全部修复，原样输出主方案即可。
 直接输出修正后的完整主方案 Markdown，不要任何前后解释文字。`;

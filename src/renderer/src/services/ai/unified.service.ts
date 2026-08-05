@@ -21,6 +21,7 @@ import {
   type ParseResult,
 } from "@/utils/json-parser";
 import { extractErrorMessage } from "@/utils/error-message";
+import { isTransientError } from "@/utils/ai-error-classify";
 
 /**
  * 从原始响应中提取纯文本内容
@@ -351,38 +352,80 @@ export class UnifiedAIService {
         : {}),
     };
 
-    // multi-ai-sdk 的 chat() 不透传 AbortSignal；stream().cancel() 才会 abort fetch
+    // multi-ai-sdk 的 chat() 不透传 AbortSignal；stream().cancel() 才会 abort fetch。
+    // stream 路径无 SDK 级重试（chat() 走 withRetryAndFallback，stream() 不走），
+    // 因此对瞬态错误（fetch 失败 / 5xx / 429 / 流中断）在此处补 1-2 次内部重试，
+    // 把瞬态错误挡在章节级重试之前，避免一次抖动就浪费整章重试预算。
     if (signal) {
-      const stream = this.client.stream(messages, chatOpts as any);
-      const onAbort = (): void => {
-        stream.cancel();
-      };
-      signal.addEventListener("abort", onAbort, { once: true });
-      try {
-        let content = "";
-        for await (const chunk of stream) {
-          if (signal.aborted) {
-            throw new DOMException("Aborted", "AbortError");
-          }
-          if (chunk.content) {
-            content += chunk.content;
-          }
-        }
-        return extractPureText(content);
-      } catch (error) {
+      const STREAM_MAX_RETRIES = 2;
+      let lastError: unknown;
+      for (let attempt = 0; attempt <= STREAM_MAX_RETRIES; attempt++) {
         if (signal.aborted) {
           throw new DOMException("Aborted", "AbortError");
         }
-        if (error instanceof DOMException && error.name === "AbortError") {
-          throw error;
+        const stream = this.client.stream(messages, chatOpts as any);
+        const onAbort = (): void => {
+          stream.cancel();
+        };
+        signal.addEventListener("abort", onAbort, { once: true });
+        try {
+          let content = "";
+          for await (const chunk of stream) {
+            if (signal.aborted) {
+              throw new DOMException("Aborted", "AbortError");
+            }
+            if (chunk.content) {
+              content += chunk.content;
+            }
+          }
+          return extractPureText(content);
+        } catch (error) {
+          // 用户主动取消：立即抛出，不重试
+          if (signal.aborted) {
+            throw new DOMException("Aborted", "AbortError");
+          }
+          if (error instanceof DOMException && error.name === "AbortError") {
+            throw error;
+          }
+          if (error instanceof Error && error.name === "AbortError") {
+            throw error;
+          }
+          lastError = error;
+          // 仅瞬态错误（网络/5xx/429/截断）才重试；持久错误（4xx/schema）直接抛
+          const transient = isTransientError(error, signal);
+          if (!transient || attempt >= STREAM_MAX_RETRIES) {
+            throw error;
+          }
+          // 指数退避 1s/2s，退避期间响应 abort
+          const delayMs = 1000 * 2 ** attempt;
+          console.warn(
+            `[unified.service] stream 瞬态失败，${delayMs}ms 后重试 ${attempt + 1}/${STREAM_MAX_RETRIES}: ${error instanceof Error ? error.message : String(error)}`
+          );
+          await new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(() => {
+              signal.removeEventListener("abort", onAbortSleep);
+              resolve();
+            }, delayMs);
+            const onAbortSleep = (): void => {
+              clearTimeout(timer);
+              reject(new DOMException("Aborted", "AbortError"));
+            };
+            if (signal.aborted) {
+              clearTimeout(timer);
+              reject(new DOMException("Aborted", "AbortError"));
+            } else {
+              signal.addEventListener("abort", onAbortSleep, { once: true });
+            }
+          }).catch((e: unknown) => {
+            // 退避期间被 abort：抛出 AbortError，不再重试
+            throw e instanceof Error ? e : new DOMException("Aborted", "AbortError");
+          });
+        } finally {
+          signal.removeEventListener("abort", onAbort);
         }
-        if (error instanceof Error && error.name === "AbortError") {
-          throw error;
-        }
-        throw error;
-      } finally {
-        signal.removeEventListener("abort", onAbort);
       }
+      // 理论上不可达（循环内必 return 或 throw）
+      throw lastError instanceof Error ? lastError : new Error("stream 重试耗尽");
     }
 
     const response = await this.client.chat(messages, chatOpts as any);
