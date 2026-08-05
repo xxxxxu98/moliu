@@ -38,11 +38,14 @@ export function splitByHeading(raw: string, headingPattern: RegExp): HeadingBloc
 
 export function splitNamedSections(raw: string, headings: string[]): Record<string, string> {
   const escapedHeadings = headings.map(escapeRegExp).join('|');
-  const pattern = new RegExp(`^##\\s*(${escapedHeadings})\\s*$`, 'gm');
+  // 兼容 H2 及更深层级：expand-direction-prompt 模板里子小节用 H3（### 核心地点 / ### 爽点安排），
+  // 此前固定按 `^## ` 匹配会把这些 H3 子小节整体漏掉（worldBuilding / coolPoint 静默丢失）。
+  // 传入的 headings 都是具体中文短语，跨层级撞名概率极低，放宽到 `#{2,}` 安全。
+  const pattern = new RegExp(`^#{2,}\\s*(${escapedHeadings})\\s*$`, 'gm');
   const blocks = splitByHeading(raw, pattern);
 
   return headings.reduce<Record<string, string>>((acc, heading) => {
-    const matched = blocks.find((block) => new RegExp(`^##\\s*${escapeRegExp(heading)}\\s*$`).test(block.heading));
+    const matched = blocks.find((block) => new RegExp(`^#{2,}\\s*${escapeRegExp(heading)}\\s*$`).test(block.heading));
     acc[heading] = matched?.body ?? '';
     return acc;
   }, {});

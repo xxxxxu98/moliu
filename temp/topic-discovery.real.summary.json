@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-05T12:51:11.000Z",
+  "at": "2026-08-05T15:41:08.654Z",
   "provider": "openai",
   "providerId": "provider-1781144969420",
   "model": "deepseek-v4-flash[1m]",
@@ -9,97 +9,97 @@
     {
       "module": "seeds",
       "chapters": 30,
-      "openingHookLength": 38,
-      "hardIssues": [],
-      "softIssues": [
-        "开篇钩子过长（38 字 > 35）：联邦舰队围剿地球时，我淡定地从垃圾堆里掏出一块能量晶石，当场…"
-      ],
-      "expandWarnings": [
-        "大纲审查修正失败，回退初稿：Failed to execute \"fetch()\" on \"Window\" with URL \"https://ark.cn-beijing.volces.com/api/coding/v3/chat/completions\": con"
-      ],
-      "reviewerStatus": "failed",
-      "aiMs": 225747,
-      "rateLimitedCount": 0,
-      "seedTitle": "我靠收废品成了星际首富",
-      "directionTitle": "地球废品回收站"
-    },
-    {
-      "module": "radar",
-      "chapters": 30,
-      "openingHookLength": 30,
+      "openingHookLength": 25,
       "hardIssues": [],
       "softIssues": [],
       "expandWarnings": [
         "修正稿质量未提升（1→1 处问题），回退初稿"
       ],
       "reviewerStatus": "reverted-no-improve",
-      "aiMs": 375929,
+      "aiMs": 342474,
       "rateLimitedCount": 0,
-      "seedTitle": "当我的功法需要提交代码审查",
-      "directionTitle": "规则系修仙：我的功法管理手册"
+      "seedTitle": "我靠卖烧饼赚了一万亿灵石",
+      "directionTitle": "烧烤摊主修仙记：我用美食垄断了整个修仙界"
+    },
+    {
+      "module": "radar",
+      "chapters": 30,
+      "openingHookLength": 23,
+      "hardIssues": [],
+      "softIssues": [],
+      "expandWarnings": [
+        "修正稿质量未提升（1→1 处问题），回退初稿"
+      ],
+      "reviewerStatus": "reverted-no-improve",
+      "aiMs": 330635,
+      "rateLimitedCount": 0,
+      "seedTitle": "我的基地长在丧尸王身上",
+      "directionTitle": "体内王朝：我以丧尸王为基建国"
     },
     {
       "module": "mix",
       "chapters": 30,
-      "openingHookLength": 32,
+      "openingHookLength": 28,
+      "hardIssues": [],
+      "softIssues": [],
+      "expandWarnings": [
+        "修正稿质量未提升（1→1 处问题），回退初稿"
+      ],
+      "reviewerStatus": "reverted-no-improve",
+      "aiMs": 249126,
+      "rateLimitedCount": 0,
+      "seedTitle": "当直播鉴宝变成解密凶案现场",
+      "directionTitle": "镜中人"
+    },
+    {
+      "module": "dice",
+      "chapters": 30,
+      "openingHookLength": 15,
+      "hardIssues": [],
+      "softIssues": [],
+      "expandWarnings": [
+        "修正稿质量未提升（1→1 处问题），回退初稿"
+      ],
+      "reviewerStatus": "reverted-no-improve",
+      "aiMs": 317664,
+      "rateLimitedCount": 0,
+      "seedTitle": "我的法医知识在古代被当成鬼术",
+      "directionTitle": "科学降妖，官方认证"
+    },
+    {
+      "module": "twist",
+      "chapters": 30,
+      "openingHookLength": 53,
+      "hardIssues": [],
+      "softIssues": [
+        "开篇钩子过长（53 字 > 35）：陈默刚穿越系统弹出“恭喜获得不死之身”，下一秒被车撞飞BUG…"
+      ],
+      "expandWarnings": [
+        "修正稿质量未提升（2→7 处问题），回退初稿"
+      ],
+      "reviewerStatus": "reverted-no-improve",
+      "aiMs": 433595,
+      "rateLimitedCount": 0,
+      "seedTitle": "我的系统是BUG成精版",
+      "directionTitle": "我用BUG社交圈"
+    },
+    {
+      "module": "prompt",
+      "chapters": 30,
+      "openingHookLength": 20,
       "hardIssues": [],
       "softIssues": [],
       "expandWarnings": [
         "大纲审查修正完成：修复 1 处问题"
       ],
       "reviewerStatus": "applied",
-      "aiMs": 400368,
+      "aiMs": 411953,
       "rateLimitedCount": 0,
-      "seedTitle": "所有鉴宝文物都在向我求救",
-      "directionTitle": "文物说：请为我复仇"
-    },
-    {
-      "module": "dice",
-      "chapters": 30,
-      "openingHookLength": 24,
-      "hardIssues": [],
-      "softIssues": [],
-      "expandWarnings": [
-        "大纲审查修正失败，回退初稿：API 请求失败: 429 {\"error\":{\"code\":\"ServerOverloaded\",\"message\":\"The service is currently unable to handle additional reques"
-      ],
-      "reviewerStatus": "failed",
-      "aiMs": 351025,
-      "rateLimitedCount": 0,
-      "seedTitle": "我在古代当仵作，尸体天天给我打电话",
-      "directionTitle": "尸语者：大宋神探"
-    },
-    {
-      "module": "twist",
-      "chapters": 30,
-      "openingHookLength": 27,
-      "hardIssues": [],
-      "softIssues": [],
-      "expandWarnings": [
-        "大纲审查修正完成：修复 2 处问题"
-      ],
-      "reviewerStatus": "applied",
-      "aiMs": 357141,
-      "rateLimitedCount": 0,
-      "seedTitle": "《我的系统是破产清算版》",
-      "directionTitle": "我的系统是破产清算版：对赌协议"
-    },
-    {
-      "module": "prompt",
-      "chapters": 30,
-      "openingHookLength": 22,
-      "hardIssues": [],
-      "softIssues": [],
-      "expandWarnings": [
-        "修正稿质量未提升（1→1 处问题），回退初稿"
-      ],
-      "reviewerStatus": "reverted-no-improve",
-      "aiMs": 393023,
-      "rateLimitedCount": 0,
-      "directionTitle": "降妖打假局：科学镇魂"
+      "directionTitle": "科学降妖局"
     }
   ],
   "hardFailCount": 0,
   "softIssueCount": 1,
   "totalRateLimited": 0,
-  "totalAiMs": 2103233
+  "totalAiMs": 2085447
 }
