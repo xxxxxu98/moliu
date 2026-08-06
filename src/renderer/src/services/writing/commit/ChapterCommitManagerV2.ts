@@ -19,6 +19,7 @@ import {
   createChangesApplier,
   extractChanges,
 } from '@/services/state';
+import { countWords } from '@/services/writing/utils';
 import type {
   ChapterCommit,
   ReviewerOutput,
@@ -105,7 +106,7 @@ class ChapterCommitManagerV2 {
         disambiguation,
         metadata: {
           title: `第${chapterNumber}章`,
-          wordCount: this.countWords(content),
+          wordCount: countWords(content),
           status: 'committed',
           coolPoints: 0,
           foreshadows: 0,
@@ -379,16 +380,6 @@ class ChapterCommitManagerV2 {
     const chapters = this.projectStore.sortedChapters;
     const chapter = chapters.find((c) => c.orderIndex === chapterNumber - 1);
     return chapter?.id || null;
-  }
-
-  /**
-   * 统计字数
-   */
-  private countWords(text: string): number {
-    if (!text) return 0;
-    const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
-    const englishWords = (text.match(/[a-zA-Z]+/g) || []).length;
-    return chineseChars + englishWords;
   }
 }
 

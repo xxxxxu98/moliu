@@ -182,7 +182,7 @@ export class SceneDraftEngine {
     const wordCountRules =
       hasWordTarget && minWordCount !== null && maxWordCount !== null
         ? [
-            `- 本章目标 ${targetWordCount} 字（中文字符口径）；paragraphs 合计硬性区间 ${minWordCount}–${maxWordCount} 字（${minPct}%–${maxPct}%）`,
+            `- 本章目标 ${targetWordCount} 字（与编辑器一致：全文长度口径）；paragraphs 合计硬性区间 ${minWordCount}–${maxWordCount} 字（${minPct}%–${maxPct}%）`,
             `- 低于 ${minWordCount} 或高于 ${maxWordCount} 都视为不合格草稿`,
             `- 优先一次写够关键情节：用对话、动作、感官细节推进，同时用紧凑叙述控制篇幅`,
             `- 禁止无意义注水、重复开场、把同一事件换措辞再写一遍；也禁止把一章写成远超目标的长文`,
@@ -217,6 +217,8 @@ export class SceneDraftEngine {
         '- 【状态衔接】开场必须承接上下文中的上章终态（在狱/在逃/证据清单），禁止无视终态重复穿越醒来',
         '- 【禁止】中途重新开场、重复穿越/醒来、重写已发生剧情、把同一事件换措辞再写一遍',
         '- 【禁止】把章节拆成互不衔接的几段独立短文；段落之间必须文气连贯',
+        '- 【禁止台词重复】同一句台词/同一句话在本章内不得重复出现（包括章末回扣开篇钩子句）；若需强调，必须变换措辞、场景或由不同人物说出',
+        '- 【禁止章末复读】章末段落不得把本章或上文已写过的句子原样再写一遍作为收尾；章末应是新的悬念/后果，而非复读',
         '- paragraphs 数组元素只能是小说正文，禁止写入 sceneId/beatId/candidateEvents 等字段名，禁止写入 ] } : 等 JSON 骨架',
         '- candidateEvents 只填 id 列表（从 allowedCandidateEventIds 中选），禁止重复粘贴 summary',
         ...wordCountRules,

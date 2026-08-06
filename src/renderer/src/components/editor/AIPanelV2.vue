@@ -242,6 +242,7 @@
 import { ref, computed, watch } from 'vue';
 import { useWritingOrchestratorV2 } from '@/services/writing';
 import { useProjectStore } from '@/stores/project.store';
+import { countWords } from '@/services/writing/utils';
 import { message } from 'ant-design-vue';
 import type { WritingTaskBook, ReviewerOutput, ChapterCommit } from '@/types/writing-v2';
 
@@ -386,13 +387,6 @@ function resetAll() {
   showTaskbook.value = true;
   showPreview.value = false;
   forceProceed.value = false;
-}
-
-function countWords(text: string): number {
-  if (!text) return 0;
-  const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
-  const englishWords = (text.match(/[a-zA-Z]+/g) || []).length;
-  return chineseChars + englishWords;
 }
 
 function getIssueTypeLabel(type: string): string {

@@ -34,7 +34,10 @@ export const useProjectStore = defineStore('project', () => {
 
   // Getters
   const totalWordCount = computed(() => {
-    return chapters.value.reduce((sum, ch) => sum + (ch.wordCount || 0), 0);
+    return chapters.value.reduce(
+      (sum, ch) => sum + (ch.content?.length ?? ch.wordCount ?? 0),
+      0
+    );
   });
 
   const currentChapter = computed(() => {
@@ -64,9 +67,17 @@ export const useProjectStore = defineStore('project', () => {
     try {
       const result = await window.electronAPI.listProjects() as Project[];
       projects.value = result || [];
-      // 自动计算每个项目的 wordCount（根据章节字数总和）
+      // 自动计算每个项目的 wordCount（与编辑器一致：content.length）
       projects.value.forEach(p => {
-        p.wordCount = (p.chapters || []).reduce((sum, ch) => sum + (ch.wordCount || 0), 0);
+        (p.chapters || []).forEach(ch => {
+          if (typeof ch.content === 'string') {
+            ch.wordCount = ch.content.length;
+          }
+        });
+        p.wordCount = (p.chapters || []).reduce(
+          (sum, ch) => sum + (ch.content?.length ?? ch.wordCount ?? 0),
+          0
+        );
       });
     } catch (error) {
       console.error('Failed to load projects:', error);
@@ -83,7 +94,10 @@ export const useProjectStore = defineStore('project', () => {
       if (result) {
         currentProject.value = result;
         volumes.value = result.volumes || [];
-        chapters.value = result.chapters || [];
+        chapters.value = (result.chapters || []).map(ch => ({
+          ...ch,
+          wordCount: typeof ch.content === 'string' ? ch.content.length : (ch.wordCount || 0),
+        }));
         characters.value = result.characters || [];
         worldSchema.value = result.worldSchema || { locations: [], rules: [], factions: [] };
         foreshadows.value = result.foreshadows || [];
@@ -113,8 +127,16 @@ export const useProjectStore = defineStore('project', () => {
   async function saveCurrentProject() {
     if (!currentProject.value) return;
     
-    // 同步更新项目总字数
-    const calculatedWordCount = chapters.value.reduce((sum, ch) => sum + (ch.wordCount || 0), 0);
+    // 同步章节字数与项目总字数（与编辑器一致：content.length）
+    chapters.value.forEach(ch => {
+      if (typeof ch.content === 'string') {
+        ch.wordCount = ch.content.length;
+      }
+    });
+    const calculatedWordCount = chapters.value.reduce(
+      (sum, ch) => sum + (ch.content?.length ?? ch.wordCount ?? 0),
+      0
+    );
     
     const projectToSave: Project = JSON.parse(JSON.stringify({
       ...currentProject.value,
@@ -177,14 +199,22 @@ export const useProjectStore = defineStore('project', () => {
   async function updateChapter(id: string, updates: Partial<Chapter>) {
     const index = chapters.value.findIndex(c => c.id === id);
     if (index !== -1) {
-      chapters.value[index] = {
+      const next: Chapter = {
         ...chapters.value[index],
         ...updates,
         updatedAt: new Date().toISOString(),
       };
+      // 与编辑器口径一致：有正文时以 content.length 为准
+      if (typeof next.content === 'string') {
+        next.wordCount = next.content.length;
+      }
+      chapters.value[index] = next;
       // 同步更新当前项目的总字数
       if (currentProject.value) {
-        currentProject.value.wordCount = chapters.value.reduce((sum, ch) => sum + (ch.wordCount || 0), 0);
+        currentProject.value.wordCount = chapters.value.reduce(
+          (sum, ch) => sum + (ch.content?.length ?? ch.wordCount ?? 0),
+          0
+        );
       }
       await saveCurrentProject();
     }
@@ -199,7 +229,10 @@ export const useProjectStore = defineStore('project', () => {
       }
       // 同步更新当前项目的总字数
       if (currentProject.value) {
-        currentProject.value.wordCount = chapters.value.reduce((sum, ch) => sum + (ch.wordCount || 0), 0);
+        currentProject.value.wordCount = chapters.value.reduce(
+          (sum, ch) => sum + (ch.content?.length ?? ch.wordCount ?? 0),
+          0
+        );
       }
       await saveCurrentProject();
     }
@@ -817,7 +850,10 @@ export const useProjectStore = defineStore('project', () => {
     ).length || 0;
 
     const totalChapters = chapters.value.length;
-    const totalWordCount = chapters.value.reduce((sum, ch) => sum + (ch.wordCount || 0), 0);
+    const totalWordCount = chapters.value.reduce(
+      (sum, ch) => sum + (ch.content?.length ?? ch.wordCount ?? 0),
+      0
+    );
 
     // 更新项目状态
     currentProject.value.status = 'completed';

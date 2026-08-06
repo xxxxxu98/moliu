@@ -74,8 +74,9 @@ describe('clampProseToMaxWords', () => {
 describe('chooseProseAfterCondense', () => {
   it('压缩落在区间时采用压缩稿', () => {
     const target = 100;
-    const original = '原。'.repeat(80);
-    const condensed = '压。'.repeat(95);
+    // 口径为全文 length：原文超上限，压缩稿落在 85%–115%
+    const original = '原。'.repeat(80); // 160
+    const condensed = '压。'.repeat(50); // 100
     const result = chooseProseAfterCondense({
       originalProse: original,
       condensedProse: condensed,

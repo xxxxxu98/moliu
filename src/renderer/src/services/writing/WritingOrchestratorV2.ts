@@ -814,13 +814,6 @@ export function useWritingOrchestratorV2() {
     return buildWritingRulesWithTypesetting(book ? formatTaskBookSection(book) : null);
   }
 
-  function countWords(text: string): number {
-    if (!text) return 0;
-    const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
-    const englishWords = (text.match(/[a-zA-Z]+/g) || []).length;
-    return chineseChars + englishWords;
-  }
-
   // ============================================================
   // 导出
   // ============================================================

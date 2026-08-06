@@ -665,10 +665,10 @@ onMounted(() => {
                 : 'border-gray-200 dark:border-gray-700 opacity-60',
             ]"
           >
-            <div class="flex items-start justify-between mb-3">
-              <div class="flex items-center gap-3">
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <div class="flex items-center gap-3 min-w-0 flex-1">
                 <div
-                  class="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white shadow text-sm"
+                  class="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white shadow text-sm shrink-0"
                   :class="[
                     provider.enabled
                       ? 'bg-gradient-to-br from-indigo-500 to-purple-600'
@@ -677,24 +677,17 @@ onMounted(() => {
                 >
                   {{ getProviderIcon(provider.provider) }}
                 </div>
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2">
-                    <h4
-                      class="font-medium text-gray-900 dark:text-white text-sm truncate max-w-[120px]"
-                    >
-                      {{ provider.name }}
-                    </h4>
-                    <NTag v-if="provider.isValid === true" type="success" size="tiny" round>
-                      {{ t('settings.common.verified') }}
-                    </NTag>
-                    <NTag v-if="provider.isValid === false" type="error" size="tiny" round>
-                      {{ t('settings.common.failed') }}
-                    </NTag>
-                  </div>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[180px]">
+                <div class="min-w-0 flex-1">
+                  <h4
+                    class="font-medium text-gray-900 dark:text-white text-sm truncate"
+                    :title="provider.name"
+                  >
+                    {{ provider.name }}
+                  </h4>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
                     {{ provider.baseUrl || t('settings.common.defaultEndpoint') }}
                   </p>
-                  <div class="flex items-center gap-1 mt-0.5 max-w-[200px]">
+                  <div class="flex items-center gap-1 mt-0.5">
                     <span class="text-[10px] text-gray-400 dark:text-gray-500 shrink-0">ID</span>
                     <code
                       class="text-[10px] font-mono text-gray-500 dark:text-gray-400 truncate"
@@ -713,8 +706,14 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="flex flex-col items-end gap-1.5 flex-shrink-0 pt-0.5">
                 <NSwitch :value="provider.enabled" @update:value="() => toggleProvider(provider)" />
+                <NTag v-if="provider.isValid === true" type="success" size="tiny" round>
+                  {{ t('settings.common.verified') }}
+                </NTag>
+                <NTag v-if="provider.isValid === false" type="error" size="tiny" round>
+                  {{ t('settings.common.failed') }}
+                </NTag>
               </div>
             </div>
 

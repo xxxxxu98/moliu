@@ -10,6 +10,7 @@ import type {
 } from '@/types/story-runtime';
 
 import { applyProvisionalOverlay } from './stateOverlay';
+import { extractInventoryNumeric } from './schemas';
 
 /**
  * 通用主角称呼：模型在事实抽取时常用占位称呼指代主角
@@ -191,34 +192,48 @@ export function canonicalizeExtractedFacts(input: FactCanonicalizeInput): FactCa
     };
   });
 
-  const deltas = input.facts.deltas
-    .map(delta => {
-      const inventoryMatch = delta.path.match(/^inventory\.([^.]+)\.(.+)$/u);
-      if (!inventoryMatch) return delta;
-      const owner = resolveParticipant(inventoryMatch[1]);
-      // 防御（Bug 9 修复）：inventory 契约要求 value 为数量（number），
-      // 模型偶发把「证据」等字符串写入 → StoryRuntime schema 校验失败导致整章崩溃；
-      // 仅接受严格数字字符串（空串/十六进制/科学计数/带单位均丢弃），其余非数字 value 直接丢弃。
-      if (typeof delta.value === 'string') {
-        const trimmed = delta.value.trim();
-        // 仅接受 ASCII 十进制数字（u 模式下 \d 会匹配 Unicode 数字如 ٠-٩，Number() 不识别会得 NaN）
-        if (trimmed === '' || !/^[+-]?[0-9]+(\.[0-9]+)?$/u.test(trimmed)) return null;
-        const numeric = Number(trimmed);
-        if (!Number.isFinite(numeric)) return null;
-        return {
+  const deltas = input.facts.deltas.flatMap<StateDelta>(delta => {
+    // inventory.<owner>.<item>：三段路径，叶子必须是数字（数量）
+    const itemMatch = delta.path.match(/^inventory\.([^.]+)\.(.+)$/u);
+    if (itemMatch) {
+      const owner = resolveParticipant(itemMatch[1]);
+      // 防御（Bug 9 修复 + 增强）：inventory 契约要求 value 为数量（number），
+      // 模型偶发把「证据」字符串或 {quantity,unit,note} 对象写入 → StoryRuntime schema 校验失败整章崩。
+      // 用 extractInventoryNumeric 统一归一化：数字/纯数字字符串/带 quantity 字段的对象都救回，其余丢弃。
+      const numeric = extractInventoryNumeric(delta.value);
+      if (numeric === undefined) return [];
+      return [
+        {
           ...delta,
-          path: `inventory.${owner}.${inventoryMatch[2]}`,
+          path: `inventory.${owner}.${itemMatch[2]}`,
           value: numeric,
-        };
+        },
+      ];
+    }
+    // inventory.<owner>：两段路径，模型把整个物品表当成对象 set 进来
+    // （如 {晶核:{unit:"颗",note:"灵力结晶"}, 银两:{quantity:5}}）。
+    // 展开为逐 item 的三段 set delta，逐叶子归一化，无效 item 丢弃。
+    const ownerMatch = delta.path.match(/^inventory\.([^.]+)$/u);
+    if (ownerMatch) {
+      const owner = resolveParticipant(ownerMatch[1]);
+      if (!delta.value || typeof delta.value !== 'object' || Array.isArray(delta.value)) {
+        return [];
       }
-      // 非字符串且非数字的 value（boolean/object/null 等）不满足 z.number() 契约，直接丢弃
-      if (typeof delta.value !== 'number' || !Number.isFinite(delta.value)) return null;
-      return {
-        ...delta,
-        path: `inventory.${owner}.${inventoryMatch[2]}`,
-      };
-    })
-    .filter((delta): delta is StateDelta => delta !== null);
+      const items = delta.value as Record<string, unknown>;
+      const expanded: StateDelta[] = [];
+      for (const itemKey of Object.keys(items)) {
+        const numeric = extractInventoryNumeric(items[itemKey]);
+        if (numeric === undefined) continue;
+        expanded.push({
+          ...delta,
+          path: `inventory.${owner}.${itemKey}`,
+          value: numeric,
+        });
+      }
+      return expanded;
+    }
+    return [delta];
+  });
 
   const introductionDeltas: StateDelta[] = [...introduced.values()].map(entity => ({
     operation: 'set' as const,

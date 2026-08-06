@@ -1,6 +1,70 @@
 import { describe, expect, it } from 'vitest';
 
-import { coerceIdString, extractedFactsSchema, parseSchema } from '../schemas';
+import { coerceIdString, extractedFactsSchema, parseSchema, storyStateSchema } from '../schemas';
+import { makeState } from './testFixtures';
+
+describe('extractedFactsSchema 顶层裸数组容错', () => {
+  it('模型返回裸数组（元素像 event）时分类包装为 {events, deltas, evidence}', () => {
+    const raw = [
+      {
+        id: 'chapter-2:event:1',
+        chapter: 2,
+        sceneId: 'chapter-2:CBN:scene',
+        type: 'conflict',
+        summary: '主角夺路而逃',
+        participants: ['char-hero'],
+        causes: [],
+        effects: ['逃脱'],
+        evidence: ['主角夺路而逃'],
+      },
+    ];
+
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.events).toHaveLength(1);
+    expect(parsed.events[0].summary).toBe('主角夺路而逃');
+    expect(parsed.deltas).toEqual([]);
+    expect(parsed.evidence).toEqual([]);
+  });
+
+  it('裸数组元素是 delta（含 operation/path）时归入 deltas', () => {
+    const raw = [
+      {
+        operation: 'set',
+        path: 'inventory.char-1.银两',
+        value: 5,
+        evidence: '清点银两',
+      },
+    ];
+
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.deltas).toHaveLength(1);
+    expect(parsed.deltas[0].path).toBe('inventory.char-1.银两');
+    expect(parsed.events).toEqual([]);
+  });
+
+  it('裸数组元素是字符串时归入 evidence', () => {
+    const raw = ['正文原句一', '正文原句二', '   '];
+
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.events).toEqual([]);
+    expect(parsed.deltas).toEqual([]);
+    expect(parsed.evidence).toEqual(['正文原句一', '正文原句二']);
+  });
+
+  it('混合裸数组按元素特征分流', () => {
+    const raw = [
+      { summary: '事件A', id: 'e1', chapter: 1, sceneId: 's1', type: 't', participants: [], causes: [], effects: [], evidence: [] },
+      { operation: 'set', path: 'inventory.hero.银两', value: 3, evidence: 'x' },
+      '一段正文证据',
+      { 无特征对象: true },
+    ];
+
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.events).toHaveLength(1);
+    expect(parsed.deltas).toHaveLength(1);
+    expect(parsed.evidence).toEqual(['一段正文证据']);
+  });
+});
 
 describe('extractedFactsSchema participants 容错', () => {
   it('coerceIdString 支持字符串与 {id,name} 对象', () => {
@@ -99,5 +163,82 @@ describe('extractedFactsSchema 顶层缺失字段软兜底', () => {
       evidence: [],
     };
     expect(() => parseSchema(extractedFactsSchema, raw, '事实提取结果')).toThrow();
+  });
+});
+
+describe('storyStateSchema inventory 叶子容错', () => {
+  function stateWith(inventory: unknown) {
+    const state = makeState();
+    // 覆盖 inventory 字段，绕过 TS 类型用 unknown 注入非法形态
+    return { ...state, inventory } as unknown as Parameters<typeof parseSchema>[1];
+  }
+
+  it('叶子为数字字符串时转为 number', () => {
+    const parsed = parseSchema(
+      storyStateSchema,
+      stateWith({ hero: { 银两: '5', 丹药: '3.5' } }),
+      'Story Runtime 状态'
+    );
+    expect(parsed.inventory.hero?.银两).toBe(5);
+    expect(parsed.inventory.hero?.丹药).toBe(3.5);
+  });
+
+  it('叶子为带 quantity 字段的对象时提取数字（救回 {quantity,unit}）', () => {
+    const parsed = parseSchema(
+      storyStateSchema,
+      stateWith({ hero: { 晶核: { quantity: 7, unit: '颗' } } }),
+      'Story Runtime 状态'
+    );
+    expect(parsed.inventory.hero?.晶核).toBe(7);
+  });
+
+  it('叶子为纯描述对象（无任何数字字段）时丢弃该 item', () => {
+    const parsed = parseSchema(
+      storyStateSchema,
+      stateWith({ hero: { 晶核: { unit: '颗', note: '灵力结晶' }, 银两: 5 } }),
+      'Story Runtime 状态'
+    );
+    expect(parsed.inventory.hero?.晶核).toBeUndefined();
+    expect(parsed.inventory.hero?.银两).toBe(5);
+  });
+
+  it('owner 下所有 item 都无效时整个 owner 被删除', () => {
+    const parsed = parseSchema(
+      storyStateSchema,
+      stateWith({ hero: { 晶核: { unit: '颗' } }, villain: { 银两: 5 } }),
+      'Story Runtime 状态'
+    );
+    expect(parsed.inventory.hero).toBeUndefined();
+    expect(parsed.inventory.villain?.银两).toBe(5);
+  });
+
+  it('owner 值不是对象（如 number/string）时丢弃整个 owner', () => {
+    const parsed = parseSchema(
+      storyStateSchema,
+      stateWith({ hero: '不该是字符串', villain: { 银两: 5 } }),
+      'Story Runtime 状态'
+    );
+    expect(parsed.inventory.hero).toBeUndefined();
+    expect(parsed.inventory.villain?.银两).toBe(5);
+  });
+
+  it('纯数字 inventory 不受影响（回归）', () => {
+    const parsed = parseSchema(
+      storyStateSchema,
+      stateWith({ hero: { 银两: 5, 丹药: 3 } }),
+      'Story Runtime 状态'
+    );
+    expect(parsed.inventory.hero).toEqual({ 银两: 5, 丹药: 3 });
+  });
+
+  it('已损坏的 inventory 不再导致 loadState 整体崩溃', () => {
+    // 复刻线上报错：inventory["晶核"] = {unit:"颗", note:"灵力结晶"} 全字符串
+    expect(() =>
+      parseSchema(
+        storyStateSchema,
+        stateWith({ hero: { 晶核: { unit: '颗', note: '灵力结晶' } } }),
+        'Story Runtime 状态'
+      )
+    ).not.toThrow();
   });
 });

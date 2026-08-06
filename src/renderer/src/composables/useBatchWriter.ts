@@ -1112,12 +1112,14 @@ export function useBatchWriter(): UseBatchWriterReturn {
           }
         }
 
-        // ========== 单章写作（错误分级重试 + 失败跳过） ==========
-        // 瞬态错误（网络/超时/截断/5xx/429）：指数退避重试，耗尽才跳过。
-        // 持久错误（schema/审核/auth/4xx）：首次即跳过，不浪费重试预算。
+        // ========== 单章写作（错误分级重试 + 失败即停） ==========
+        // 瞬态错误（网络/超时/截断/5xx/429）：指数退避重试 maxRetries 次。
+        // 持久错误（schema/审核/auth/4xx）：立即重试 persistentMaxRetries 次（模型带 revisionHints 换写法），不退避。
         // 用户停止（aborted）：立即停整批。
-        // 单章耗尽不再停整批，而是标记 Chapter.writeStatus='failed' 后跳过，继续下一章。
+        // 单章重试耗尽（无论持久还是瞬态）→ 标记 writeStatus='failed' 后结束整批（质量优先：宁可不写，也不继续产出有问题的章节）。
         const chapterMaxRetries = config.value.maxRetries;
+        const persistentMaxRetries = 3; // 持久错误重试上限（schema/审核/字数等不可恢复错误给模型换写法的机会）
+        let persistentAttempts = 0; // 持久错误累计次数
         let chapterSuccess = false;
         let chapterLastErr = '';
         let chapterLastErrorKind: ErrorKind = 'unknown';
@@ -1176,10 +1178,16 @@ export function useBatchWriter(): UseBatchWriterReturn {
               break;
             }
 
-            // 持久错误：不退避、不重试，直接判定本章失败跳出 → 进下面的跳过逻辑
+            // 持久错误（schema/审核/字数/auth/4xx）：给模型 persistentMaxRetries 次换写法机会，不退避（非网络问题）。
+            // 耗尽则跳出重试循环 → 进下面的"结束整批"逻辑。
             if (!classified.retryable) {
-              error.value = `第${currentIndex + 1}章失败（${classified.kind}，不可重试），跳过该章继续`;
-              break;
+              persistentAttempts += 1;
+              if (persistentAttempts >= persistentMaxRetries) {
+                error.value = `第${currentIndex + 1}章持久错误（${classified.kind}）连续 ${persistentMaxRetries} 次，结束批量写作`;
+                break;
+              }
+              error.value = `第${currentIndex + 1}章持久错误（${classified.kind}，第 ${persistentAttempts}/${persistentMaxRetries} 次），立即重试…`;
+              continue; // 不退避，直接下一轮（模型会带 revisionHints 重新起草）
             }
 
             // 瞬态错误：仍有重试机会则指数退避（4/8/16/30s 封顶）
@@ -1205,7 +1213,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
           break;
         }
 
-        // 单章耗尽/持久失败：标记 Chapter.writeStatus='failed'，加入 failedChapters，跳过继续
+        // 单章重试耗尽（持久/瞬态）：标记 writeStatus='failed'，结束整批（质量优先）
         if (!chapterSuccess) {
           const failedChapter = projectStore.sortedChapters[currentIndex];
           const failedId = failedChapter?.id ?? `unknown-${currentIndex}`;
@@ -1226,8 +1234,9 @@ export function useBatchWriter(): UseBatchWriterReturn {
           }).catch(() => {
             // 状态字段写入失败不阻断批量
           });
-          error.value = `第${currentIndex + 1}章跳过（${chapterLastErrorKind}）：${chapterLastErr}`;
-          // 注意：不再 shouldStop=true，继续下一章
+          error.value = `第${currentIndex + 1}章重试耗尽（${chapterLastErrorKind}），结束批量写作`;
+          internalState.shouldStop = true;
+          break; // 结束整批，不再继续下一章
         }
 
         // 写到完结模式：每写完一章后重新检查完结条件

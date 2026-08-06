@@ -958,30 +958,46 @@ function getStrictnessBg(strictness: ReviewStrictness): string {
       v-if="batchSummary && batchSummary.failed.length > 0"
       class="mt-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50"
     >
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-sm font-medium">
-          <CheckCircle class="w-4 h-4" />
-          <span>批量完成：成功 {{ batchSummary.written }} 章 / 失败 {{ batchSummary.failed.length }} 章</span>
+      <div class="flex flex-col gap-2 mb-2">
+        <div
+          class="flex items-start gap-2 text-amber-700 dark:text-amber-400 text-sm font-medium min-w-0"
+        >
+          <CheckCircle class="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <span class="leading-5 break-words">
+            批量完成：成功 {{ batchSummary.written }} 章 / 失败 {{ batchSummary.failed.length }} 章
+          </span>
         </div>
         <NButton
           v-if="!isWriting && batchSummary.failed.length > 0"
           size="small"
           type="warning"
+          class="self-start"
           @click="retryFailedChapters()"
         >
           重试全部失败章节
         </NButton>
       </div>
-      <div class="space-y-1 max-h-40 overflow-y-auto">
+      <div class="space-y-2 max-h-40 overflow-y-auto">
         <div
           v-for="f in batchSummary.failed"
           :key="f.id"
-          class="flex items-center gap-2 text-xs text-red-600 dark:text-red-400"
+          class="flex items-start gap-2 text-xs text-red-600 dark:text-red-400"
         >
-          <AlertCircle class="w-3 h-3 flex-shrink-0" />
-          <span class="font-medium">{{ f.title }}</span>
-          <span class="text-gray-400">（{{ f.errorKind }}，{{ f.attempts }} 次）</span>
-          <span class="truncate text-gray-500 dark:text-gray-400">{{ f.error }}</span>
+          <AlertCircle class="w-3 h-3 flex-shrink-0 mt-0.5" />
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span class="font-medium whitespace-nowrap">{{ f.title }}</span>
+              <span class="text-gray-400 whitespace-nowrap">
+                （{{ f.errorKind }}，{{ f.attempts }} 次）
+              </span>
+            </div>
+            <p
+              class="mt-0.5 text-gray-500 dark:text-gray-400 break-words line-clamp-3"
+              :title="f.error"
+            >
+              {{ f.error }}
+            </p>
+          </div>
         </div>
       </div>
     </div>

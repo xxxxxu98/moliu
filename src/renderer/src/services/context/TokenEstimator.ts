@@ -5,6 +5,8 @@
  * 与 prompt-builder.ts 的 estimateTokens 保持一致口径，但独立可测。
  */
 
+import { countWords as countWordsShared } from '@/services/writing/utils';
+
 // ============================================================
 // Token 估算
 // ============================================================
@@ -25,12 +27,9 @@ export function estimateTokens(text: string): number {
   );
 }
 
-/** 估算中英文混合文本的字数（与 useChapterWriter.countWords 口径一致）。 */
+/** 字数统计：与编辑器 / 写作管线统一，按字符串长度。 */
 export function countWords(text: string): number {
-  if (!text) return 0;
-  const chinese = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
-  const english = (text.match(/[a-zA-Z]+/g) || []).length;
-  return chinese + english;
+  return countWordsShared(text);
 }
 
 // ============================================================

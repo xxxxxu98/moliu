@@ -11,6 +11,7 @@
 
 import { defineStore } from "pinia";
 import { ref, computed, shallowRef } from "vue";
+import { countWords as countWordsShared } from "@/services/writing/utils";
 
 // ============================================================
 // Types (内联定义避免循环依赖)
@@ -152,12 +153,7 @@ export const useWritingStore = defineStore("writing-v2", () => {
   // ============================================================
 
   function countWords(text: string): number {
-    let cleaned = text.replace(/^#.*$/gm, '');
-    cleaned = cleaned.replace(/【.*?】/g, '');
-    cleaned = cleaned.replace(/\n/g, '');
-    const chineseChars = (cleaned.match(/[\u4e00-\u9fa5]/g) || []).length;
-    const englishWords = (cleaned.match(/[a-zA-Z]+/g) || []).length;
-    return chineseChars + englishWords;
+    return countWordsShared(text);
   }
 
   async function simulateWriting(task: WritingTask): Promise<WritingResult> {

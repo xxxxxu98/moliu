@@ -47,7 +47,7 @@ function handleMenuClick(key: string) {
 
     <!-- Scrollable Content -->
     <div class="flex-1 overflow-y-auto">
-      <div class="max-w-4xl mx-auto px-6 py-8">
+      <div class="max-w-6xl mx-auto px-6 py-8">
         <!-- Page Header -->
         <div class="text-center mb-10">
           <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 via-indigo-700 to-purple-600 dark:from-white dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent mb-3">

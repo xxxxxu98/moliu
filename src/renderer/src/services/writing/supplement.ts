@@ -14,6 +14,11 @@ export const MIN_WORD_THRESHOLD = 0.85;
 export const MAX_WORD_THRESHOLD = 1.15;
 /** 最多补充轮次 */
 export const MAX_SUPPLEMENT_ROUNDS = 3;
+/**
+ * 补字提前停阈值：正文达目标该比例且结尾已闭合时，不再补字。
+ * 与 MIN_WORD_THRESHOLD 对齐（85%），消除「补字停在 80% 但字数 blocking 判定要 85%」的灰区。
+ */
+export const SUPPLEMENT_STOP_THRESHOLD = MIN_WORD_THRESHOLD;
 
 export interface WordCountCheck {
   needsSupplement: boolean;

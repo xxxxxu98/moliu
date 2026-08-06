@@ -12,6 +12,8 @@
  * 4. 长度兜底：超过 maxChars 强制切
  */
 
+import { countWords } from '@/services/writing/utils';
+
 // ============================================================
 // 类型
 // ============================================================
@@ -195,8 +197,3 @@ export class SceneChunker {
 // 辅助
 // ============================================================
 
-function countWords(text: string): number {
-  const chinese = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
-  const english = (text.match(/[a-zA-Z]+/g) || []).length;
-  return chinese + english;
-}

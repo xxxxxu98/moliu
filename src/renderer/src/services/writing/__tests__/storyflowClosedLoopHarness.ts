@@ -199,8 +199,20 @@ export async function runStoryflowClosedLoop(
   if (!rawProject) {
     throw new Error('storyflow 闭环失败：currentProject 为空');
   }
-  // 深拷贝去 Vue 响应式代理（与 useProjectCreator 内做法一致）
-  const project = JSON.parse(JSON.stringify(rawProject)) as Project;
+  // 深拷贝去 Vue 响应式代理（与 useProjectCreator 内做法一致）。
+  // 注意：currentProject 是 loadProject 时的快照，createChapters 通过 chapters ref 新增的章节
+  // 不会自动同步回 currentProject.chapters（store 的 saveCurrentProject 只写 projects 列表，
+  // 不回写 currentProject）。这里用 store 的 chapters/volumes ref 覆盖，保证续写拿得到章节。
+  const project = JSON.parse(JSON.stringify({
+    ...rawProject,
+    chapters: projectStore.chapters,
+    volumes: projectStore.sortedVolumes,
+  })) as Project;
+  if (!project.chapters || project.chapters.length === 0) {
+    throw new Error(
+      `storyflow 闭环失败：建章后 project.chapters 仍为空（createChapters 未写入 store chapters ref）`,
+    );
+  }
 
   // 建章后立即落盘大纲产物：真实 AI 续写阶段耗时长、可能超时，提前留存大纲数据供质量评估
   writeFileSync(

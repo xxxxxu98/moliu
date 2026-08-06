@@ -444,6 +444,60 @@ describe('LongFormWritingEngine', () => {
     expect(saveRejectedDraft).toHaveBeenCalledOnce();
   });
 
+  it('正文严重短于目标字数（countWords 远低于 85%）但 chapter-judge 放行时，commit 前硬兜底强制 rejected', async () => {
+    // 复现真实冒烟 ch1 场景：drafts 仅百余字（countWords ~50），chapter-judge 无 issue 放行，
+    // 但 targetWordCount=2000 / min=1700。此前会因 issue 注入口径漂移被 accepted；
+    // 2A 兜底后应在 commit 前独立判定字数 short → 注入 blocking → rejected。
+    const facts: FactExtractor = {
+      extract: async input => ({
+        events: [
+          {
+            id: 'event-1',
+            chapter: input.chapterNumber,
+            sceneId: input.sceneDrafts[0].sceneId,
+            type: 'checkpoint',
+            summary: '守卫盘查',
+            participants: ['hero'],
+            causes: [],
+            effects: ['守卫盘查'],
+            evidence: input.sceneDrafts[0].paragraphs,
+          },
+        ],
+        deltas: [],
+        evidence: input.sceneDrafts[0].paragraphs,
+      }),
+    };
+    const ai = new FakeAI(); // 返回短正文 + chapter-judge 全 fulfilled 放行
+    const saveRejectedDraft = vi.fn(async () => undefined);
+    const engine = new LongFormWritingEngine({
+      ai,
+      factExtractor: facts,
+      commitPort: {
+        commitChapter: async () => {
+          throw new Error('短章不应 accepted');
+        },
+        saveRejectedDraft,
+      },
+    });
+
+    const result = await engine.write({
+      projectId: 'project-1',
+      contracts: makeContracts(),
+      state: makeState(),
+      recentScenes: [],
+      retrievedScenes: [],
+      styleGuidance: ['克制'],
+      maxContextTokens: 10_000,
+      targetWordCount: 2000, // min=1700，FakeAI 正文远不足
+    });
+
+    expect(result.commit.status).toBe('rejected');
+    expect(saveRejectedDraft).toHaveBeenCalledOnce();
+    // 字数兜底注入的 issue 应在 report 里
+    const wordIssues = result.report.issues.filter(i => i.id.startsWith('word-count-short:'));
+    expect(wordIssues.length).toBe(1);
+  });
+
   it('补充轮输出异常膨胀（混入 JSON 骨架）时丢弃该轮，正文不包含垃圾（Bug 7 护栏）', async () => {
     const facts: FactExtractor = {
       extract: async input => ({

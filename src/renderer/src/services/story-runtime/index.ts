@@ -12,6 +12,7 @@ export * from './LegacyProjectMigrator';
 export * from './LongFormWritingEngine';
 export * from './patches';
 export * from './promptInvariants';
+export * from './proseDedup';
 export * from './RecordingStructuredAI';
 export * from './SceneBeatPlanner';
 export * from './SceneDraftEngine';

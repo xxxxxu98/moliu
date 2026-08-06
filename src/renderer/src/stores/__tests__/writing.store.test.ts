@@ -242,7 +242,7 @@ describe('useWritingStore', () => {
   });
 
   describe('countWords utility', () => {
-    it('should count Chinese characters', () => {
+    it('should count by string length (editor口径)', () => {
       const store = useWritingStore();
 
       const count = store.countWords('这是一个测试句子');
@@ -250,28 +250,30 @@ describe('useWritingStore', () => {
       expect(count).toBe(8);
     });
 
-    it('should count English words', () => {
+    it('should include spaces and punctuation in length', () => {
       const store = useWritingStore();
 
       const count = store.countWords('This is a test');
 
-      expect(count).toBe(4);
+      expect(count).toBe('This is a test'.length);
     });
 
-    it('should count mixed content', () => {
+    it('should count mixed content by length', () => {
       const store = useWritingStore();
 
-      const count = store.countWords('Hello 你好 World 世界');
+      const text = 'Hello 你好 World 世界';
+      const count = store.countWords(text);
 
-      expect(count).toBe(6);
+      expect(count).toBe(text.length);
     });
 
-    it('should exclude headers and markers', () => {
+    it('should include headers and markers in length', () => {
       const store = useWritingStore();
 
-      const count = store.countWords('# 标题\n\n正文内容');
+      const text = '# 标题\n\n正文内容';
+      const count = store.countWords(text);
 
-      expect(count).toBe(4); // 只计算"正文内容"
+      expect(count).toBe(text.length);
     });
   });
 });

@@ -12,16 +12,10 @@
  *   G6 未知实体    新实体/龙套计数阈值
  */
 
-import type {
-  Gate,
-  GateContext,
-  GateResult,
-  GateIssue,
-  GateConfig,
-  GateCategory,
-} from './types';
+import type { Gate, GateContext, GateResult, GateIssue, GateConfig, GateCategory } from './types';
 import { DEFAULT_GATE_CONFIG } from './types';
 import type { Change, ChangesPayload, StateSnapshot, EntityRef } from '../state/types';
+import { countWords } from '@/services/writing/utils';
 
 /** config 兜底合并：门禁可被独立调用（测试），缺失字段用默认值。 */
 function withDefaults(config: Partial<GateConfig>): GateConfig {
@@ -31,13 +25,6 @@ function withDefaults(config: Partial<GateConfig>): GateConfig {
 // ============================================================
 // 工具
 // ============================================================
-
-function countWords(text: string): number {
-  if (!text) return 0;
-  const chinese = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
-  const english = (text.match(/[a-zA-Z]+/g) || []).length;
-  return chinese + english;
-}
 
 /** 收集 CHANGES 里出现的所有实体引用。 */
 function collectEntityRefs(changes: ChangesPayload): Array<{ ref: EntityRef; changeType: string }> {

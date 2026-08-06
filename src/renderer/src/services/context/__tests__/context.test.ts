@@ -76,8 +76,8 @@ describe('TokenEstimator', () => {
     expect(estimateTokens('')).toBe(0);
   });
 
-  it('countWords 中英文混合', () => {
-    expect(countWords('hello 世界')).toBe(1 + 2);
+  it('countWords 按字符串长度', () => {
+    expect(countWords('hello 世界')).toBe('hello 世界'.length);
   });
 
   it('getInputTokenBudget 已知模型', () => {

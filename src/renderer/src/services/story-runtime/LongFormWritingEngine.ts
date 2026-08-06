@@ -24,6 +24,7 @@ import { sanitizeSceneDraftParagraphs } from './stripDraftLeakage';
 import {
   MAX_SUPPLEMENT_ROUNDS,
   MAX_WORD_THRESHOLD,
+  SUPPLEMENT_STOP_THRESHOLD,
   buildCondensePrompt,
   buildSupplementPrompt,
   buildWordCountShortfallIssue,
@@ -283,6 +284,28 @@ export class LongFormWritingEngine {
       );
     }
 
+    // commit 前硬字数兜底：循环内已注入字数 blocking，但补字失败/重写轮次耗尽等路径
+    // 可能导致最终 drafts 仍 short（实测 ch1 重写后 countWords 1183 < min 1700 却被 accepted）。
+    // 此处独立判定，不再依赖 issue 注入是否命中，short 即强制注入 blocking，
+    // 让 ChapterCommitService.commit 走 rejected 分支（兑现「用尽轮次则拒收」的注释承诺）。
+    const finalTarget = writeInput.targetWordCount ?? 0;
+    const finalShortfall = buildWordCountShortfallIssue(draftsProse(drafts), finalTarget);
+    if (finalShortfall) {
+      console.warn(
+        `[LongFormWritingEngine] 字数兜底拦截：${finalShortfall.evidence.join(' ')}，拒收提交`
+      );
+      report = {
+        accepted: false,
+        issues: [
+          ...report.issues.filter(issue => !issue.id.startsWith('word-count-short:')),
+          finalShortfall,
+        ],
+        checkedDomains: report.checkedDomains.includes('fulfillment')
+          ? report.checkedDomains
+          : [...report.checkedDomains, 'fulfillment'],
+      };
+    }
+
     const { commit, receipt } = await this.commitService.commit({
       projectId: input.projectId,
       state: input.state,
@@ -424,10 +447,12 @@ export class LongFormWritingEngine {
         break;
       }
 
-      // 结尾闭合判断：正文已完整收尾（CEN 兑现 + 章末钩子落地）且字数达目标 80%+ 时，
+      // 结尾闭合判断：正文已完整收尾（CEN 兑现 + 章末钩子落地）且字数达 SUPPLEMENT_STOP_THRESHOLD（85%）时，
       // 不再补写，避免在自然章末后硬塞注水段（实测「陈默冷笑，他早已料到」类尾巴）。
+      // 阈值与 MIN_WORD_THRESHOLD 对齐：消除「补字停在 80% 但字数 blocking 判定要 85%」的灰区
+      // （此前补字停在 80% 会落入 1600-1700 字灰区，被 commit 放过形成短章）。
       // 判断器失败时返回 closed=false，降级为原按字数补写逻辑。
-      if (check.currentWords >= Math.floor(target * 0.8)) {
+      if (check.currentWords >= Math.floor(target * SUPPLEMENT_STOP_THRESHOLD)) {
         const closure = await this.judgeEndingClosure(
           prose,
           input.contracts.chapter.title,

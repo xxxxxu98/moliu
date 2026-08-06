@@ -46,6 +46,99 @@ export function coerceIdString(value: unknown): string | undefined {
   return undefined;
 }
 
+/**
+ * 纯数字字符串校验：仅接受 ASCII 十进制（u 模式下 \d 会匹配 Unicode 数字如 ٠-٩，
+ * Number() 不识别会得 NaN），空串/十六进制/科学计数/带单位一律不收。
+ * 与 FactCanonicalizer 的 inventory 契约保持一致。
+ */
+const NUMERIC_STRING_RE = /^[+-]?[0-9]+(\.[0-9]+)?$/u;
+
+/**
+ * 把 inventory 叶子值归一化为有限数字；无法识别为数量时返回 undefined。
+ *
+ * 覆盖模型常见偏差：
+ * - 数字 / 纯数字字符串 → 直接转 number
+ * - 对象（如 {quantity:5,unit:"颗"} 或 {unit:"颗",note:"灵力结晶"}）
+ *   → 按优先级查常见数量字段，取首个可转有限数字者；纯描述对象返回 undefined
+ * - boolean / null / 数组 / 非数字字符串 → undefined（交给调用方丢弃）
+ */
+export function extractInventoryNumeric(leaf: unknown): number | undefined {
+  if (typeof leaf === 'number') {
+    return Number.isFinite(leaf) ? leaf : undefined;
+  }
+  if (typeof leaf === 'string') {
+    const trimmed = leaf.trim();
+    if (trimmed === '' || !NUMERIC_STRING_RE.test(trimmed)) return undefined;
+    const numeric = Number(trimmed);
+    return Number.isFinite(numeric) ? numeric : undefined;
+  }
+  if (leaf && typeof leaf === 'object' && !Array.isArray(leaf)) {
+    const record = leaf as Record<string, unknown>;
+    for (const key of [
+      'quantity',
+      'count',
+      'amount',
+      'num',
+      'value',
+      'number',
+      '数量',
+      '数',
+      '个数',
+      '数目',
+    ]) {
+      const candidate = extractInventoryNumeric(record[key]);
+      if (candidate !== undefined) return candidate;
+    }
+    return undefined;
+  }
+  return undefined;
+}
+
+/**
+ * inventory Record 容错：模型偶发把物品写成 {unit,note} 对象或带单位字符串，
+ * 导致 storyStateSchema 的 `Record<string, Record<string, number>>` 校验失败、
+ * loadState 整章崩溃。这里在 schema 入口把每个叶子 coerce 为数字，无法识别则丢弃。
+ * 整个 owner 被清空时一并删除，避免遗留空对象。
+ */
+export function coerceInventoryRecord(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return value;
+  const owners = value as Record<string, unknown>;
+  const droppedItems: string[] = [];
+  for (const ownerKey of Object.keys(owners)) {
+    const ownerValue = owners[ownerKey];
+    if (!ownerValue || typeof ownerValue !== 'object' || Array.isArray(ownerValue)) {
+      // owner 不是对象（如 number/string）→ 不符合 inventory 契约，丢弃整个 owner
+      droppedItems.push(`${ownerKey}:<non-object>`);
+      delete owners[ownerKey];
+      continue;
+    }
+    const items = ownerValue as Record<string, unknown>;
+    for (const itemKey of Object.keys(items)) {
+      const numeric = extractInventoryNumeric(items[itemKey]);
+      if (numeric === undefined) {
+        droppedItems.push(`${ownerKey}.${itemKey}`);
+        delete items[itemKey];
+      } else {
+        items[itemKey] = numeric;
+      }
+    }
+    if (Object.keys(items).length === 0) {
+      delete owners[ownerKey];
+    }
+  }
+  if (droppedItems.length > 0) {
+    console.warn(
+      `[schemas] inventory 叶子被软归一化/丢弃（模型返回了非数量值）：${droppedItems.slice(0, 8).join(', ')}${droppedItems.length > 8 ? ` 等 ${droppedItems.length} 项` : ''}`
+    );
+  }
+  return owners;
+}
+
+const inventorySchema = z.preprocess(
+  coerceInventoryRecord,
+  z.record(z.string(), z.record(z.string(), z.number()))
+);
+
 const idStringArraySchema = z.preprocess((value: unknown) => {
   if (!Array.isArray(value)) return value;
   return value
@@ -95,7 +188,7 @@ export const storyStateSchema: z.ZodType<StoryState> = z.object({
   chapter: z.number().int().nonnegative(),
   entities: z.record(z.string(), storyEntitySchema),
   events: z.array(storyEventSchema),
-  inventory: z.record(z.string(), z.record(z.string(), z.number())),
+  inventory: inventorySchema,
   knowledge: z.record(z.string(), z.array(z.string())),
   timeline: z.array(z.string()),
   openForeshadows: z.array(z.string()),
@@ -127,6 +220,35 @@ export const sceneDraftSchema: z.ZodType<SceneDraft> = z.object({
  * 内层元素（storyEventSchema / stateDeltaSchema）仍严格校验，不掩盖真实结构问题。
  */
 export function coerceExtractedFacts(value: unknown): unknown {
+  // 模型偶发把整个事实提取结果输出成裸数组（[event, delta, ...] 或 [str, str]），
+  // 数组的 typeof === 'object' 会绕过下方的 null 检查，但 z.object 仍拒绝数组 → 整章崩。
+  // 这里按元素特征分类包装为 {events, deltas, evidence}。
+  if (Array.isArray(value)) {
+    const events: unknown[] = [];
+    const deltas: unknown[] = [];
+    const evidence: unknown[] = [];
+    for (const item of value) {
+      if (item && typeof item === 'object' && !Array.isArray(item)) {
+        const record = item as Record<string, unknown>;
+        if (typeof record.operation === 'string' || typeof record.path === 'string') {
+          deltas.push(item);
+        } else if (
+          typeof record.summary === 'string' ||
+          typeof record.id === 'string' ||
+          typeof record.sceneId === 'string'
+        ) {
+          events.push(item);
+        }
+        // 其它对象（无事件/delta 特征）忽略，避免污染
+      } else if (typeof item === 'string' && item.trim()) {
+        evidence.push(item.trim());
+      }
+    }
+    console.warn(
+      `[schemas] 事实提取顶层收到裸数组（${value.length} 项），已分类包装为 events/${events.length} deltas/${deltas.length} evidence/${evidence.length}`
+    );
+    return { events, deltas, evidence };
+  }
   if (typeof value !== 'object' || value === null) return value;
   const obj = value as Record<string, unknown>;
   const missing: string[] = [];

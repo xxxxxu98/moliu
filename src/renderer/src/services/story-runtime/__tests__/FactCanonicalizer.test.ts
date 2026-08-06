@@ -196,6 +196,107 @@ describe('FactCanonicalizer', () => {
     expect(inventoryDeltas[0].value).toBe(3.5);
   });
 
+  it('inventory.<owner>.<item> 三段路径 value 为对象时提取数字字段（救回 {quantity,...}）', () => {
+    const facts: ExtractedFacts = {
+      events: [],
+      deltas: [
+        {
+          operation: 'set',
+          path: 'inventory.hero.晶核',
+          // 报错日志里的真实形态：unit/note 是字符串，模型误把物品写成描述对象
+          value: { unit: '颗', note: '灵力结晶', quantity: 7 },
+          evidence: '主角获得晶核',
+        },
+        {
+          operation: 'set',
+          path: 'inventory.hero.银两',
+          value: { count: '12', extra: '忽略我' },
+          evidence: '清点银两',
+        },
+      ],
+      evidence: [],
+    };
+
+    const result = canonicalizeExtractedFacts({
+      facts,
+      state: makeState(),
+      drafts: [makeDraft('主角获得晶核。')],
+    });
+
+    const inventoryDeltas = result.facts.deltas.filter(delta =>
+      delta.path.startsWith('inventory.')
+    );
+    // 两个 item 的数字字段都被提取出来
+    expect(inventoryDeltas).toHaveLength(2);
+    const crystal = inventoryDeltas.find(delta => delta.path.endsWith('.晶核'));
+    expect(crystal?.value).toBe(7);
+    const silver = inventoryDeltas.find(delta => delta.path.endsWith('.银两'));
+    expect(silver?.value).toBe(12);
+  });
+
+  it('inventory.<owner> 两段路径 set 整个物品表对象时展开为逐 item delta', () => {
+    const facts: ExtractedFacts = {
+      events: [],
+      deltas: [
+        {
+          operation: 'set',
+          path: 'inventory.hero',
+          // 模型把整个背包当对象 set：晶核纯描述（丢弃）、银两带 quantity（提取）、丹药纯数字（保留）
+          value: {
+            晶核: { unit: '颗', note: '灵力结晶' },
+            银两: { quantity: 5, unit: '两' },
+            丹药: 3,
+            空串: '',
+          },
+          evidence: '主角清点背包',
+        },
+      ],
+      evidence: [],
+    };
+
+    const result = canonicalizeExtractedFacts({
+      facts,
+      state: makeState(),
+      drafts: [makeDraft('主角清点背包。')],
+    });
+
+    const inventoryDeltas = result.facts.deltas.filter(delta =>
+      delta.path.startsWith('inventory.')
+    );
+    // 晶核/空串被丢弃，银两/丹药保留
+    expect(inventoryDeltas).toHaveLength(2);
+    const silver = inventoryDeltas.find(delta => delta.path.endsWith('.银两'));
+    expect(silver?.value).toBe(5);
+    const pill = inventoryDeltas.find(delta => delta.path.endsWith('.丹药'));
+    expect(pill?.value).toBe(3);
+    expect(inventoryDeltas.some(delta => delta.path.endsWith('.晶核'))).toBe(false);
+    // 两段展开后路径都是规范的三段形式
+    expect(inventoryDeltas.every(delta => delta.path.split('.').length === 3)).toBe(true);
+  });
+
+  it('inventory.<owner> 两段路径 value 非对象时安全丢弃（不崩）', () => {
+    const facts: ExtractedFacts = {
+      events: [],
+      deltas: [
+        { operation: 'set', path: 'inventory.hero', value: '一段描述', evidence: 'x' },
+        { operation: 'set', path: 'inventory.hero', value: 42, evidence: 'y' },
+        { operation: 'set', path: 'inventory.hero', value: null, evidence: 'z' },
+      ],
+      evidence: [],
+    };
+
+    const result = canonicalizeExtractedFacts({
+      facts,
+      state: makeState(),
+      drafts: [makeDraft('主角。')],
+    });
+
+    const inventoryDeltas = result.facts.deltas.filter(delta =>
+      delta.path.startsWith('inventory.')
+    );
+    expect(inventoryDeltas).toEqual([]);
+  });
+
   it('通用主角称呼（hero）归一化到主角实体，不产生未知实体', () => {
     // 真实项目：主角 id 是 char-xxx 而非 hero（实体表无 hero 这个 id）
     const state = makeState();

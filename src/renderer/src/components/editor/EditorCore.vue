@@ -5,6 +5,7 @@ import { Save, Check, FileText, Bold, Italic, List, Heading1, Heading2, Undo, Re
 import { useI18n } from "vue-i18n";
 import { useProjectStore } from "@/stores/project.store";
 import { useSettingsStore } from "@/stores/settings.store";
+import { countWords } from "@/services/writing/utils";
 import DeAIPolishPanel from "@/components/editor/DeAIPolishPanel.vue";
 
 const { t } = useI18n();
@@ -39,13 +40,6 @@ function handleApplyPolished(polished: string) {
 }
 
 /**
- * 计算字数（直接用字符串长度）
- */
-function countChineseChars(text: string): number {
-  return text.length;
-}
-
-/**
  * 计算写作进度百分比
  */
 const writingProgress = computed(() => {
@@ -54,8 +48,9 @@ const writingProgress = computed(() => {
 });
 
 function updateCounts(text: string) {
-  charCount.value = text.length;
-  wordCount.value = countChineseChars(text);
+  const chars = countWords(text);
+  charCount.value = chars;
+  wordCount.value = chars;
 }
 
 function handleInput(event: Event) {
@@ -127,13 +122,12 @@ watch(
       if (lastSavedContent.value !== newContent) {
         content.value = newContent;
         lastSavedContent.value = newContent;
-        charCount.value = newContent.length;
         updateCounts(newContent);
         isSaved.value = true;
       }
     } else {
       content.value = "";
-      charCount.value = 0;
+      updateCounts("");
     }
   },
   { immediate: true },
@@ -148,7 +142,6 @@ watch(
         const newContent = chapter.content || "";
         content.value = newContent;
         lastSavedContent.value = newContent;
-        charCount.value = newContent.length;
         updateCounts(newContent);
         isSaved.value = true;
       }

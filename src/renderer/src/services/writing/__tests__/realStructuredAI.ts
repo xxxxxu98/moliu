@@ -31,61 +31,6 @@ function parseStructuredJson(raw: string): unknown {
   );
 }
 
-function isTransientAiError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error);
-  return (
-    /socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|fetch\(\)|Too Many Requests|429|server overload|unable to handle additional requests|TLS|disconnected|network/iu.test(
-      message
-    ) ||
-    // 超时护栏（Bug 8）产生的 AbortError 也按瞬态重试；
-    // 用户主动取消会在重试前的 sleep(signal) 处立即抛出，不会拖时间
-    (error instanceof DOMException && error.name === 'AbortError')
-  );
-}
-
-async function sleep(ms: number, signal?: AbortSignal): Promise<void> {
-  if (signal?.aborted) {
-    throw new DOMException('Aborted', 'AbortError');
-  }
-  await new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      signal?.removeEventListener('abort', onAbort);
-      resolve();
-    }, ms);
-    const onAbort = (): void => {
-      clearTimeout(timer);
-      reject(new DOMException('Aborted', 'AbortError'));
-    };
-    signal?.addEventListener('abort', onAbort, { once: true });
-  });
-}
-
-async function withTransientRetry<T>(
-  run: () => Promise<T>,
-  options?: { retries?: number; signal?: AbortSignal; label?: string }
-): Promise<T> {
-  const retries = Math.max(0, options?.retries ?? 3);
-  let lastError: unknown;
-  for (let attempt = 0; attempt <= retries; attempt += 1) {
-    try {
-      return await run();
-    } catch (error) {
-      lastError = error;
-      if (!isTransientAiError(error) || attempt >= retries) {
-        throw error;
-      }
-      const delayMs = Math.min(30_000, 2_000 * 2 ** attempt);
-      console.warn(
-        `[realStructuredAI] 瞬时失败，${delayMs}ms 后重试 ${attempt + 1}/${retries}` +
-          (options?.label ? ` (${options.label})` : '') +
-          `: ${error instanceof Error ? error.message : String(error)}`
-      );
-      await sleep(delayMs, options?.signal);
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error(String(lastError));
-}
-
 export type RealAiEnvConfig = Pick<
   ResolvedRealAiConfig,
   'provider' | 'apiKey' | 'model' | 'baseUrl'
@@ -113,44 +58,37 @@ export function createRealStructuredAI(
     config.model
   );
 
+  // 对齐 ChapterWritingPipeline.createStructuredAIFromActiveProvider：
+  // 直接调 service.complete，不包 withTransientRetry（真实 App 无此层）。
+  // 瞬态重试由 LongFormWritingEngine.runStepWithTransientRetry（步骤级）+
+  // 批量层错误分级重试兜住，与生产一致。
+  // 仅保留 120s 超时护栏作为环境保护（防 AI hang 死拖垮整个冒烟到 vitest 超时）。
   return {
     async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
-      return withTransientRetry(
-        async () => {
-          if (signal?.aborted) {
-            throw new DOMException('Aborted', 'AbortError');
-          }
-          // 请求超时护栏（Bug 8 修复）：此前 AI 请求无超时，实测 judge 请求
-          // hang 1h50m 无返回导致整条批量挂死直到测试超时。120s 超时按瞬态重试。
-          const timeoutController = new AbortController();
-          const timeoutTimer = setTimeout(() => timeoutController.abort(), 120_000);
-          const combined = signal
-            ? AbortSignal.any([signal, timeoutController.signal])
-            : timeoutController.signal;
-          try {
-            const raw = await service.complete(request.prompt, {
-              system: [
-                request.system,
-                `schemaName=${request.schemaName}`,
-                '只输出合法 JSON 对象，不要 Markdown 代码块，不要前后解释文字。',
-              ].join('\n'),
-              temperature: request.purpose === 'scene-draft' ? 0.65 : 0.2,
-              signal: combined,
-              jsonMode: true,
-            });
-            const parsed = parseStructuredJson(raw);
-            return request.parse(parsed);
-          } finally {
-            // 正常完成后立即清理超时定时器（避免 timer 残留至 120s）
-            clearTimeout(timeoutTimer);
-          }
-        },
-        {
-          retries: 3,
-          signal,
-          label: `${request.purpose}:${request.schemaName}`,
-        }
-      );
+      if (signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
+      }
+      const timeoutController = new AbortController();
+      const timeoutTimer = setTimeout(() => timeoutController.abort(), 120_000);
+      const combined = signal
+        ? AbortSignal.any([signal, timeoutController.signal])
+        : timeoutController.signal;
+      try {
+        const raw = await service.complete(request.prompt, {
+          system: [
+            request.system,
+            `schemaName=${request.schemaName}`,
+            '只输出合法 JSON 对象，不要 Markdown 代码块，不要前后解释文字。',
+          ].join('\n'),
+          temperature: request.purpose === 'scene-draft' ? 0.65 : 0.2,
+          signal: combined,
+          jsonMode: true,
+        });
+        const parsed = parseStructuredJson(raw);
+        return request.parse(parsed);
+      } finally {
+        clearTimeout(timeoutTimer);
+      }
     },
   };
 }

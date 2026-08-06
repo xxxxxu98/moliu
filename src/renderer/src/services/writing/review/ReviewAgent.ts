@@ -20,6 +20,7 @@ import type {
 import { useContractManager } from '../contract/ContractManager';
 import type { ChapterContract } from '../contract/types';
 import { MAX_PARAGRAPH_CHARS, isLongParagraph } from '../typesetting';
+import { countWords } from '@/services/writing/utils';
 
 export class ReviewAgent {
   private contractManager = useContractManager();
@@ -244,7 +245,7 @@ export class ReviewAgent {
     let score = 80;
     
     // 统计字数
-    const wordCount = this.countWords(content);
+    const wordCount = countWords(content);
     const expectedCoolPoints = Math.floor(wordCount / 3000);
     
     // 检查常见的爽点模式
@@ -550,12 +551,6 @@ export class ReviewAgent {
     const contentLower = content.toLowerCase();
     
     return keywords.some(k => contentLower.includes(k.toLowerCase()));
-  }
-  
-  private countWords(text: string): number {
-    const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
-    const englishWords = (text.match(/[a-zA-Z]+/g) || []).length;
-    return chineseChars + englishWords;
   }
   
   private generateSuggestions(dimensions: ReviewDimensions): ReviewSuggestion[] {

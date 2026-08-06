@@ -7,7 +7,11 @@
  * - 正式长篇路径：forceStoryRuntime=true ↔ App hasStoryRuntime()=true → LongFormWritingEngine
  * - 前章衔接：ContextManager 提取 previousChapter（title/summary/ending）
  * - 持久化：createChapterPersistenceClient（落 Pinia store）
- * - 失败策略：单章最多 maxRetries=3 次，2^attempt 秒指数退避，耗尽停止整个批量
+ * - 失败策略：错误分级重试（对齐 useBatchWriter.startBatchWriting）
+ *   · 瞬态错误（网络/超时/截断/5xx/429）：maxRetries=5 次，backoffDelayMs 退避（4/8/16/30/30s）
+ *   · 持久错误（schema/审核/字数/auth/4xx）：立即重试 3 次（不退避，模型带 revisionHints 换写法）
+ *   · 用户停止（aborted）：立即停整批
+ *   · 重试耗尽（无论持久/瞬态）：记录失败章后结束整批（质量优先，不再跳过继续）
  * - 写作风格：batch 默认 'humorous'（App 批量 UI 默认值）
  * - 停止信号：signal 透传 pipeline.execute（对齐 abortController.signal）
  * - 记忆提取：enableMemoryExtract=true 时启用 createChapterMemoryClient
@@ -32,7 +36,6 @@ import type { Chapter, Project } from '@/types/project';
 import type { WritingTaskBook } from '@/types/writing-v2';
 
 import { ContractPackBuilder } from '@/services/story-runtime/ContractPackBuilder';
-import { LegacyProjectMigrator } from '@/services/story-runtime/LegacyProjectMigrator';
 import { RecordingStructuredAI } from '@/services/story-runtime/RecordingStructuredAI';
 import { StoryRuntimeClient } from '@/services/story-runtime/StoryRuntimeClient';
 import {
@@ -54,6 +57,7 @@ import {
 } from '@/services/writing/chapterWritePresets';
 import { countWords } from '@/services/writing/utils';
 import { MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
+import { backoffDelayMs, classifyError, type ErrorKind } from '@/utils/ai-error-classify';
 import {
   createChapterMemoryClient,
   createChapterPersistenceClient,
@@ -771,20 +775,19 @@ export function openContinueWriteSession(options: {
               provider: chapterOptions.provider,
             });
 
-      const bootstrap = new LegacyProjectMigrator().migrate(
-        projectWithOutline as unknown as Parameters<LegacyProjectMigrator['migrate']>[0]
-      );
-      await runtime.bootstrap(bootstrap);
+      // 不在调用层 bootstrap：由 pipeline 内部 executeLongFormRuntime 单次完成
+      // （migrate 同一份 project），与生产 useBatchWriter 对齐。此前在此处多调一次
+      // runtime.bootstrap —— 因 StoryRuntimeClient 的 existing.total===0 守卫，commit
+      // 后种子被抑制、第二次为 no-op；属冗余且依赖外部守卫保安全，故移除。
 
-      // 与正式 App 同 persistence（落 Pinia）。记忆提取默认关闭（避免额外未录制 AI 调用）；
-      // enableMemoryExtract=true 时启用与 App 相同的 createChapterMemoryClient（best-effort：
-      // vitest 无 window.electronAPI 时文件保存与 AI 增强自动降级，不会落盘真实记忆文件）
+      // 与正式 App 同 persistence + memoryClient（落 Pinia + 记忆提取）。
+      // 对齐 useChapterWritingPipeline()：默认创建 createChapterMemoryClient（与 App 完全一致，
+      // 含 AI 增强伏笔/记忆召回链路）；enableMemoryExtract=false 时显式关闭（仅用于隔离测试）。
+      // safeExtractChapterMemory 在无 electronAPI 时自动降级（fallbackToPrevious），不会抛错。
       const persistence = createChapterPersistenceClient();
-      const memoryClient = chapterOptions.enableMemoryExtract
-        ? createChapterMemoryClient()
-        : {
-            extractAndSave: async () => null,
-          };
+      const memoryClient = chapterOptions.enableMemoryExtract === false
+        ? { extractAndSave: async () => null }
+        : createChapterMemoryClient();
       const pipelineDeps = {
         forceStoryRuntime: true as const,
         structuredAI: recording,
@@ -928,7 +931,7 @@ export async function runContinueWriteChapters(options: {
   writingStyle?: WritingStyle;
   /** 用户停止信号（对齐 useBatchWriter 的 abortController.signal） */
   signal?: AbortSignal;
-  /** 启用与 App 相同的记忆提取（createChapterMemoryClient）；默认 false */
+  /** 记忆提取（createChapterMemoryClient）；默认开启（对齐 App），传 false 显式关闭 */
   enableMemoryExtract?: boolean;
   /** 续写章节标题回写客户端，透传到 pipeline（harness 默认无） */
   plotOutlineClient?: {
@@ -943,7 +946,10 @@ export async function runContinueWriteChapters(options: {
   const fromChapter = Math.max(1, options.fromChapter);
   const chapterCount = Math.max(1, options.chapterCount);
   const mode: ContinueWriteMode = options.mode ?? 'batch';
-  const maxRetries = Math.max(1, options.maxRetries ?? 3);
+  // 对齐 useBatchWriter：瞬态错误默认 5 次重试
+  const maxRetries = Math.max(1, options.maxRetries ?? 5);
+  // 持久错误（schema/审核/字数/auth/4xx）重试上限：给模型换写法的机会，但不重试满 maxRetries
+  const persistentMaxRetries = 3;
   const session = openContinueWriteSession({
     project: options.project,
     plotOutlineClient: options.plotOutlineClient,
@@ -951,12 +957,16 @@ export async function runContinueWriteChapters(options: {
   const chapters: ContinueWriteChapterRunResult[] = [];
   try {
     for (let offset = 0; offset < chapterCount; offset += 1) {
+      if (options.signal?.aborted) break;
       const chapterNumber = fromChapter + offset;
-      // 对齐 useBatchWriter.startBatchWriting：单章失败指数退避重试，耗尽则停止整个批量
+      // 对齐 useBatchWriter：错误分级重试，耗尽即结束整批（质量优先：宁可不写也不继续产出有问题章节）
       let finalResult: ContinueWriteChapterRunResult | null = null;
       let lastError = '';
+      let lastErrorKind: ErrorKind = 'unknown';
+      let persistentAttempts = 0;
+      let aborted = false;
       for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
-        if (options.signal?.aborted) break;
+        if (options.signal?.aborted) { aborted = true; break; }
         try {
           finalResult = await session.runChapter({
             chapterNumber,
@@ -977,26 +987,79 @@ export async function runContinueWriteChapters(options: {
           finalResult = null;
         }
         if (finalResult?.output.success) break;
-        if (attempt < maxRetries) {
-          const waitSeconds = 2 ** attempt; // 2s, 4s, 8s...（与 useBatchWriter 一致）
+
+        // 错误分级（对齐 useBatchWriter:1162-1164）
+        const classified = classifyError(new Error(lastError), options.signal);
+        lastErrorKind = classified.kind;
+        // aborted（用户停止）：立即停整批
+        if (classified.kind === 'aborted') { aborted = true; break; }
+        // 持久错误（schema/审核/字数/auth/4xx）：不退避，立即重试，但上限 persistentMaxRetries
+        if (!classified.retryable) {
+          persistentAttempts += 1;
+          if (persistentAttempts >= persistentMaxRetries) {
+            // eslint-disable-next-line no-console
+            console.error(
+              `[runContinueWriteChapters] 第${chapterNumber}章持久错误（${classified.kind}）连续 ${persistentMaxRetries} 次，结束批量：${lastError}`
+            );
+            break;
+          }
           // eslint-disable-next-line no-console
           console.warn(
-            `[runContinueWriteChapters] 第${chapterNumber}章失败（第 ${attempt}/${maxRetries} 次），${waitSeconds}s 后重试：${lastError}`
+            `[runContinueWriteChapters] 第${chapterNumber}章持久错误（${classified.kind}，第 ${persistentAttempts}/${persistentMaxRetries} 次），立即重试：${lastError}`
           );
-          await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
+          continue; // 不退避
         }
-      }
-      // 最后一次尝试的结果（成功或失败）都保留，便于诊断
-      if (finalResult) chapters.push(finalResult);
-      if (!finalResult || !finalResult.output.success) {
-        if (lastError) {
+        // 瞬态错误（网络/超时/截断/5xx/429）：指数退避重试
+        if (attempt < maxRetries) {
+          const waitMs = backoffDelayMs(attempt); // 4/8/16/30/30s
           // eslint-disable-next-line no-console
-          console.error(
-            `[runContinueWriteChapters] 第${chapterNumber}章连续 ${maxRetries} 次失败，停止批量：${lastError}`
+          console.warn(
+            `[runContinueWriteChapters] 第${chapterNumber}章瞬态失败（第 ${attempt}/${maxRetries} 次，${classified.kind}），${Math.round(waitMs / 1000)}s 后重试：${lastError}`
           );
+          await new Promise(resolve => setTimeout(resolve, waitMs));
         }
-        break;
       }
+      // 用户停止：立即结束整批
+      if (aborted || options.signal?.aborted) break;
+      // 成功：保留结果，继续下一章
+      if (finalResult?.output.success) {
+        chapters.push(finalResult);
+        continue;
+      }
+      // 重试耗尽（持久/瞬态）：记录失败章信息后结束整批（质量优先，不再留白补章继续）
+      const failedChapter =
+        options.project.chapters.find(item => item.orderIndex + 1 === chapterNumber) ?? null;
+      if (failedChapter) {
+        const noopAi: StructuredAI = {
+          async generate() {
+            throw new Error('failed-chapter placeholder: no AI available');
+          },
+        };
+        chapters.push({
+          chapterNumber,
+          chapter: failedChapter,
+          recording: new RecordingStructuredAI(noopAi, {
+            runId: `${options.runIdPrefix ?? `continue-write-${mode}`}-ch${chapterNumber}-FAILED-${Date.now()}`,
+            persist: false,
+            model: options.model,
+            provider: options.provider,
+          }),
+          output: {
+            success: false,
+            prose: '',
+            title: failedChapter.title ?? `第${chapterNumber}章`,
+            taskBook: null,
+            gateResult: null,
+            attempts: maxRetries,
+            forceAccepted: false,
+            supplementRounds: 0,
+            error: lastError || `重试耗尽（${lastErrorKind}）`,
+          },
+          taskBook: null,
+          mode,
+        });
+      }
+      break; // 重试耗尽：结束整批，不再继续后续章（质量优先）
     }
     return {
       runtimeBackend: session.runtimeBackend,

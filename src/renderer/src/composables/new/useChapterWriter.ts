@@ -12,6 +12,7 @@ import { ref, shallowRef } from 'vue';
 import type { UseContextManagerReturn } from './useContextManager';
 import type { UseMemorySystemReturn } from './useMemorySystem';
 import type { ChapterContract } from '@/types/contract';
+import { countWords as countWordsShared } from '@/services/writing/utils';
 
 // ============================================================
 // 类型定义
@@ -485,19 +486,10 @@ export function useChapterWriter(options: {
   }
 
   /**
-   * 统计字数
+   * 统计字数（与编辑器 / 补写阈值统一口径）
    */
   function countWords(text: string): number {
-    // 去除标题和标记
-    let cleaned = text.replace(/^#.*$/gm, '');
-    cleaned = cleaned.replace(/【.*?】/g, '');
-    cleaned = cleaned.replace(/\n/g, '');
-    
-    // 中文字符 + 英文单词
-    const chineseChars = (cleaned.match(/[\u4e00-\u9fa5]/g) || []).length;
-    const englishWords = (cleaned.match(/[a-zA-Z]+/g) || []).length;
-    
-    return chineseChars + englishWords;
+    return countWordsShared(text);
   }
 
   // ============================================================

@@ -18,6 +18,7 @@ import type {
 } from '@/types/writing-v2';
 import { DeAIService } from '@/services/writing/de-ai-service';
 import type { DeAIDetectionResult } from '@/services/writing/de-ai-service';
+import { countWords } from '@/services/writing/utils';
 
 // 审查配置
 export interface ReviewerConfig {
@@ -769,18 +770,12 @@ export class EnhancedReviewerAgent {
     pace: { score: number }
   ): ReviewMetrics {
     return {
-      wordCount: this.countChineseWords(content),
+      wordCount: countWords(content),
       dialogueRatio: Math.round(this.calculateDialogueRatio(content) * 100) / 100,
       antiAIFix: antiAI.detection.issueStats?.bannedWords || 0,
       hookQuality: hook.score,
       coolPointDensity: this.estimateCoolPointDensity(content),
     };
-  }
-
-  private countChineseWords(text: string): number {
-    const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
-    const englishWords = (text.match(/[a-zA-Z]+/g) || []).length;
-    return chineseChars + englishWords;
   }
 
   private estimateCoolPointDensity(content: string): number {
@@ -797,7 +792,7 @@ export class EnhancedReviewerAgent {
       count += matches?.length || 0;
     }
 
-    const wordCount = this.countChineseWords(content);
+    const wordCount = countWords(content);
     return wordCount > 0 ? Math.round(wordCount / Math.max(count, 1)) : 0;
   }
 }

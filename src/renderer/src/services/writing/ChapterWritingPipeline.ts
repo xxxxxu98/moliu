@@ -48,7 +48,6 @@ import { runSupplementRounds } from './supplement';
 import {
   TYPESETTING_HARD_RULES,
   buildWritingRulesWithTypesetting,
-  normalizeWebnovelParagraphs,
 } from './typesetting';
 import type { GateContext, GateIssue, GatePipelineResult } from '@/services/gates/types';
 import type { WritingTaskBook } from '@/types/writing-v2';
@@ -64,6 +63,7 @@ import {
   AIChapterJudge,
   AIFactExtractor,
   ContractPackBuilder,
+  dedupProse,
   GroundedRetriever,
   LegacyProjectMigrator,
   LongFormWritingEngine,
@@ -554,10 +554,10 @@ export class ChapterWritingPipeline {
         }
       }
 
-      // ====== Step 6: 结果归一化（剥离结构化泄漏 → 轻量排版，不改写叙述） ======
+      // ====== Step 6: 结果归一化（剥离结构化泄漏 → 确定性去重 → 轻量排版，不改写叙述） ======
       return {
         success: true,
-        prose: normalizeWebnovelParagraphs(sanitizeStructuredProseLeakage(prose)),
+        prose: dedupProse(sanitizeStructuredProseLeakage(prose)),
         title: this.readBackTitle(chapter.id),
         taskBook,
         gateResult: result.gateResult,
@@ -702,8 +702,9 @@ export class ChapterWritingPipeline {
         maxContextTokens: 24_000,
         targetWordCount: input.targetWordCount,
       });
-      // coerce 已清洗段落；出口再兜底一次，保证落库/回显不含 schema 残留
-      const prose = normalizeWebnovelParagraphs(
+      // coerce 已清洗段落；出口兜底：剥 schema 残留 → 确定性去重（治章末台词重复）→ 排版归一化
+      // dedupProse 内部已含 normalizeWebnovelParagraphs，无需外层再调
+      const prose = dedupProse(
         sanitizeStructuredProseLeakage(
           result.drafts.flatMap(scene => scene.paragraphs).join('\n\n')
         )
