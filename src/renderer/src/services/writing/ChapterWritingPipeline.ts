@@ -75,6 +75,7 @@ import {
 } from '@/services/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
+import { stripStructuredNodeBlock } from '@/services/outline/parser/utils';
 
 function createStructuredAIFromActiveProvider(signal?: AbortSignal): StructuredAI {
   const inner: StructuredAI = {
@@ -627,10 +628,14 @@ export class ChapterWritingPipeline {
       const volumePlan = input.project.metadata?.volumePlans?.find(
         item => item.volumeIndex === (volume?.orderIndex ?? 0)
       );
+      // 剥离 outline 末尾的「--- 结构化节点 ---」块：建章时把 CBN/CPNs/CEN 拼进了 outline，
+      // 但结构化节点已通过 outlineNode 的独立字段传递，outline 里那份会让 goal/description
+      // 变成一大段结构化节点，污染 scene-draft 合同语义。
+      const cleanOutline = stripStructuredNodeBlock(input.chapter.outline || '');
       const outlineNode = {
         id: input.chapter.id,
         title: input.chapter.title,
-        description: input.chapter.outline || input.chapter.plotSummary || '',
+        description: cleanOutline || input.chapter.plotSummary || '',
         chapterId: input.chapter.id,
         keyEvents: taskBook?.mustCover ?? [],
         CBN: taskBook?.CBN,
@@ -654,7 +659,7 @@ export class ChapterWritingPipeline {
           number: chapterNumber,
           id: input.chapter.id,
           title: input.chapter.title,
-          goal: input.chapter.outline || input.chapter.plotSummary || input.chapter.title,
+          goal: cleanOutline || input.chapter.plotSummary || input.chapter.title,
           outlineNode,
         },
         style: [
@@ -668,7 +673,7 @@ export class ChapterWritingPipeline {
       });
       const query =
         taskBook?.CPNs.join(' ') ||
-        input.chapter.outline ||
+        cleanOutline ||
         input.chapter.plotSummary ||
         input.chapter.title;
       const entityIds = [...bootstrap.entities, ...bootstrap.rules, ...bootstrap.foreshadows]
@@ -723,7 +728,7 @@ export class ChapterWritingPipeline {
           prose,
           title: shouldApplyGeneratedTitle
             ? `第${chapterNumber}章 ${generatedShortTitle}`
-            : this.readBackTitle(input.chapter.id),
+            : this.readBackTitle(input.chapter.id) ?? input.chapter.title ?? null,
           taskBook,
           gateResult,
           attempts: 1,
@@ -764,7 +769,7 @@ export class ChapterWritingPipeline {
           this.readBackTitle(input.chapter.id) ??
           (shouldApplyGeneratedTitle && generatedShortTitle
             ? `第${chapterNumber}章 ${generatedShortTitle}`
-            : null),
+            : input.chapter.title ?? null),
         taskBook,
         gateResult,
         attempts: 1,

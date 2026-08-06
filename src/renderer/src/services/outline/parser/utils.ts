@@ -77,7 +77,57 @@ export function extractFieldValue(block: string, fieldName: string): string | nu
   return compactLines([match[1], ...continuationLines].join('\n'));
 }
 
+/**
+ * 从 block 中提取某字段下的「数字. 内容」编号列表项，保留多行结构。
+ *
+ * AI 常把 CPNs/mustCover 写成 `1. xxx\n2. yyy` 的编号列表。extractFieldValue 会经
+ * compactLines 把它们拍平成一行 `1. xxx 2. yyy`，导致后续按标点切分时编号 `2.`
+ * 串到前一项尾部（如 `["1. xxx", "正在验尸现场 2. 知府王德骂他..."]`）。
+ *
+ * 这里直接从原始 block 按行扫描，识别编号项并正确归并续行，避免拍平破坏边界。
+ * 仅当解析到 ≥2 个编号项时返回，否则返回空数组（交给 fallback）。
+ */
+function extractNumberedItems(block: string, fieldName: string): string[] {
+  const escaped = escapeRegExp(fieldName);
+  const fieldLineRe = new RegExp(`^(?:-\\s*)?${escaped}\\s*[：:]`, 'u');
+  const fieldStart = /^(?:-\s*)?[^\s：:][^：:]{0,20}\s*[：:]/;
+  const itemStart = /^\s*(\d+)[.、)]\s*(.+)$/;
+
+  const lines = block.split('\n');
+  const startIdx = lines.findIndex(line => fieldLineRe.test(line.trim()));
+  if (startIdx === -1) return [];
+
+  const items: string[] = [];
+  let currentItem: string | null = null;
+  for (let i = startIdx + 1; i < lines.length; i += 1) {
+    const line = lines[i].trim();
+    if (line === '' || line.startsWith('---')) break;
+    if (fieldStart.test(line)) break; // 遇到下一个字段，结束
+    const m = line.match(itemStart);
+    if (m) {
+      if (currentItem !== null) items.push(currentItem.trim());
+      currentItem = m[2];
+    } else if (currentItem !== null) {
+      // 编号项的续行（无编号前缀的行），归并到当前项
+      currentItem += ' ' + line;
+    }
+  }
+  if (currentItem !== null) items.push(currentItem.trim());
+  return items.filter(Boolean);
+}
+
 export function extractMultiValueField(block: string, fieldName: string): string[] {
+  // 优先：编号列表（AI 常用 1./2./3. 格式，compactLines 会破坏其边界）。
+  // 编号项已是独立单元，内部的自然语句逗号不再二次切分（如「知府骂他"废物"，连个案子都查清」
+  // 是一个完整的 CPN，不该按逗号拆开）。
+  const numbered = extractNumberedItems(block, fieldName);
+  if (numbered.length > 1) {
+    return numbered
+      .map(item => item.trim())
+      .filter(Boolean)
+      .filter((item, index, array) => array.indexOf(item) === index);
+  }
+
   const value = extractFieldValue(block, fieldName);
 
   if (!value) {
@@ -113,4 +163,20 @@ export function compactLines(block: string): string {
     .filter(Boolean)
     .join(' ')
     .trim();
+}
+
+/**
+ * 剥离 outline 末尾的「--- 结构化节点 ---」块（CBN/CPNs/CEN/mustCover/forbiddenZones）。
+ *
+ * useChapterOutlineGenerator.createChapters 建章时把结构化节点拼进了 chapter.outline
+ * 字段（便于 UI 展示完整信息）；但 ChapterWritingPipeline.executeLongFormRuntime
+ * 把 outline 当作 goal/description/query，导致 scene-draft prompt 的
+ * locked-contracts.chapter.goal 变成一大段结构化节点，污染写作合同语义。
+ *
+ * 结构化节点已通过 outlineNode 的 CBN/CPNs/CEN 等独立字段传递，outline 里那份是冗余。
+ * 此函数剥掉该块，只保留散文大纲。无标记则原样返回。
+ */
+export function stripStructuredNodeBlock(outline: string): string {
+  if (!outline) return '';
+  return outline.replace(/\n*---\s*结构化节点\s*---[\s\S]*$/u, '').trim();
 }

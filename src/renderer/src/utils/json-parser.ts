@@ -14,6 +14,34 @@ export interface ParseResult<T = any> {
 }
 
 /**
+ * 剥离推理/安全审查 meta 标签（deepseek-r1 的 <think>、deepseek 的 <ds_safety>、
+ * 通用 <reflection>/<reasoning>/<analysis> 等）。
+ *
+ * 这些标签是模型的 meta 输出，绝非合法 JSON 内容。若不先剥掉，jsonrepair 会把
+ * 标签后的思考链/残片当成合法字符串值吸收进 paragraphs[]，最终污染正文。
+ *
+ * 两类情况都处理：
+ * 1. 成对标签（含内容）：<think>...</think>
+ * 2. 未闭合/截断标签到结尾（模型被截断时常出现）：<ds_safety>...（无闭合）
+ */
+const META_TAG_NAMES = 'think|ds_safety|reflection|reasoning|analysis';
+const META_TAG_PAIRED_RE = new RegExp(
+  `<(${META_TAG_NAMES})>\\s*[\\s\\S]*?<\\/\\1>\\s*`,
+  'gi'
+);
+const META_TAG_UNCLOSED_RE = new RegExp(
+  `<(${META_TAG_NAMES})>[\\s\\S]*$`,
+  'gi'
+);
+function stripReasoningAndSafetyTags(input: string): string {
+  if (!input) return input;
+  return input
+    .replace(META_TAG_PAIRED_RE, '')
+    .replace(META_TAG_UNCLOSED_RE, '')
+    .trim();
+}
+
+/**
  * Main parsing function with multi-stage fallback
  */
 export function robustJsonParse<T = any>(
@@ -34,6 +62,10 @@ export function robustJsonParse<T = any>(
   content = content
     .replace(/^(以下是|以下是JSON|以下是结果|返回|JSON结果|result|response|这是|下面)[:：]?\s*/i, '')
     .trim();
+
+  // 剥离推理/安全审查 meta 标签（在 jsonrepair 之前，防止吸收污染）。
+  // 见 stripReasoningAndSafetyTags 注释。
+  content = stripReasoningAndSafetyTags(content);
 
   const matchesExpectedType = (data: unknown): boolean => {
     if (expectedType === 'array') return Array.isArray(data);
