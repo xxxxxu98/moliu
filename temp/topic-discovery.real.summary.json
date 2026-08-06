@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-05T15:41:08.654Z",
+  "at": "2026-08-05T16:48:11.134Z",
   "provider": "openai",
   "providerId": "provider-1781144969420",
   "model": "deepseek-v4-flash[1m]",
@@ -9,97 +9,67 @@
     {
       "module": "seeds",
       "chapters": 30,
-      "openingHookLength": 25,
+      "openingHookLength": 46,
       "hardIssues": [],
-      "softIssues": [],
-      "expandWarnings": [
-        "修正稿质量未提升（1→1 处问题），回退初稿"
+      "softIssues": [
+        "开篇钩子过长（46 字 > 35）：新手村村长递给陈默一张问卷，要求他填写综合素质、道德水准、颜…"
       ],
-      "reviewerStatus": "reverted-no-improve",
-      "aiMs": 342474,
+      "expandWarnings": [
+        "大纲审查修正失败，回退初稿：API 请求失败: 429 {\"error\":{\"code\":\"ServerOverloaded\",\"message\":\"The service is currently unable to handle additional reques"
+      ],
+      "reviewerStatus": "failed",
+      "aiMs": 322492,
       "rateLimitedCount": 0,
-      "seedTitle": "我靠卖烧饼赚了一万亿灵石",
-      "directionTitle": "烧烤摊主修仙记：我用美食垄断了整个修仙界"
+      "seedTitle": "我的签到系统只能签到我死对头",
+      "directionTitle": "我给NPC当老板"
     },
     {
       "module": "radar",
       "chapters": 30,
-      "openingHookLength": 23,
+      "openingHookLength": 17,
       "hardIssues": [],
       "softIssues": [],
       "expandWarnings": [
         "修正稿质量未提升（1→1 处问题），回退初稿"
       ],
       "reviewerStatus": "reverted-no-improve",
-      "aiMs": 330635,
+      "aiMs": 469511,
       "rateLimitedCount": 0,
-      "seedTitle": "我的基地长在丧尸王身上",
-      "directionTitle": "体内王朝：我以丧尸王为基建国"
+      "seedTitle": "规则：我写的恐怖小说成真了",
+      "directionTitle": "读者已死"
     },
     {
-      "module": "mix",
+      "module": "twist",
       "chapters": 30,
       "openingHookLength": 28,
       "hardIssues": [],
       "softIssues": [],
       "expandWarnings": [
-        "修正稿质量未提升（1→1 处问题），回退初稿"
+        "大纲审查修正失败，回退初稿：API 请求失败: 429 {\"error\":{\"code\":\"ServerOverloaded\",\"message\":\"The service is currently unable to handle additional reques"
       ],
-      "reviewerStatus": "reverted-no-improve",
-      "aiMs": 249126,
+      "reviewerStatus": "failed",
+      "aiMs": 299745,
       "rateLimitedCount": 0,
-      "seedTitle": "当直播鉴宝变成解密凶案现场",
-      "directionTitle": "镜中人"
-    },
-    {
-      "module": "dice",
-      "chapters": 30,
-      "openingHookLength": 15,
-      "hardIssues": [],
-      "softIssues": [],
-      "expandWarnings": [
-        "修正稿质量未提升（1→1 处问题），回退初稿"
-      ],
-      "reviewerStatus": "reverted-no-improve",
-      "aiMs": 317664,
-      "rateLimitedCount": 0,
-      "seedTitle": "我的法医知识在古代被当成鬼术",
-      "directionTitle": "科学降妖，官方认证"
-    },
-    {
-      "module": "twist",
-      "chapters": 30,
-      "openingHookLength": 53,
-      "hardIssues": [],
-      "softIssues": [
-        "开篇钩子过长（53 字 > 35）：陈默刚穿越系统弹出“恭喜获得不死之身”，下一秒被车撞飞BUG…"
-      ],
-      "expandWarnings": [
-        "修正稿质量未提升（2→7 处问题），回退初稿"
-      ],
-      "reviewerStatus": "reverted-no-improve",
-      "aiMs": 433595,
-      "rateLimitedCount": 0,
-      "seedTitle": "我的系统是BUG成精版",
-      "directionTitle": "我用BUG社交圈"
+      "seedTitle": "当我的系统每天要交保护费",
+      "directionTitle": "反诈税战：每天扣钱100，系统是我债主"
     },
     {
       "module": "prompt",
       "chapters": 30,
-      "openingHookLength": 20,
+      "openingHookLength": 11,
       "hardIssues": [],
       "softIssues": [],
       "expandWarnings": [
         "大纲审查修正完成：修复 1 处问题"
       ],
       "reviewerStatus": "applied",
-      "aiMs": 411953,
+      "aiMs": 426759,
       "rateLimitedCount": 0,
-      "directionTitle": "科学降妖局"
+      "directionTitle": "特勤打假人"
     }
   ],
   "hardFailCount": 0,
   "softIssueCount": 1,
   "totalRateLimited": 0,
-  "totalAiMs": 2085447
+  "totalAiMs": 1518507
 }
