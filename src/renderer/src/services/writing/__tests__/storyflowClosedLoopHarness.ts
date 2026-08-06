@@ -141,8 +141,13 @@ export async function runStoryflowClosedLoop(
   installMemoryElectronAPI();
 
   // ---------- 1. 开题中心大纲生成（真实 AI fetch，与 TopicDiscoveryBoard prompt 玩法同路径） ----------
+  // 传 trace.runId 让大纲阶段的 prompt/响应落盘 temp/ai-traces/，便于人工评估单章蓝图产出质量。
   const generator = new UnifiedOutlineGenerator();
-  const dirResult = await generator.generateDirections(prompt, { wordCountRange });
+  const outlineTraceRunId = `${runIdPrefix}-outline-${Date.now()}`;
+  const dirResult = await generator.generateDirections(prompt, {
+    wordCountRange,
+    trace: { runId: outlineTraceRunId, model: cfg.model, provider: cfg.provider },
+  });
   if (!dirResult.directions || dirResult.directions.length === 0) {
     throw new Error(
       `storyflow 闭环失败：大纲方向生成为空（generateDirections 未返回任何方向，${dirResult.warnings?.[0] ?? ''}）`,
@@ -150,7 +155,10 @@ export async function runStoryflowClosedLoop(
   }
   const direction = dirResult.directions[0];
 
-  const expandedResult = await generator.expandDirection(prompt, direction, { wordCountRange });
+  const expandedResult = await generator.expandDirection(prompt, direction, {
+    wordCountRange,
+    trace: { runId: outlineTraceRunId, model: cfg.model, provider: cfg.provider },
+  });
   const expanded = expandedResult.outline;
   if (!expanded) {
     throw new Error(
@@ -219,6 +227,10 @@ export async function runStoryflowClosedLoop(
           mustCover: ch.mustCover,
           forbiddenZones: ch.forbiddenZones,
         })),
+        // plotOutline 章节节点（建章后初始状态，续写后会被 chapterTitle 回写更新）
+        plotOutlineChapters: (project.plotOutline ?? [])
+          .filter(n => n.type === 'chapter')
+          .map(n => ({ orderIndex: n.orderIndex, title: n.title })),
       },
       null,
       2
@@ -236,6 +248,19 @@ export async function runStoryflowClosedLoop(
         baseUrl: cfg.baseUrl,
       })
     : undefined;
+  // 内存版 plotOutlineClient：续写 AI 产出的短标题回写到 project 副本的 plotOutline，
+  // 让最终 summary 能反映目录页真实标题（而非永远「第N章」）。
+  // forceStoryRuntime 模式下 pipeline 不走 store 默认实现，必须显式注入。
+  const plotOutlineClient = {
+    updateChapterTitle: async (orderIndex: number, title: string): Promise<void> => {
+      const node = project.plotOutline?.find(
+        n => n.type === 'chapter' && n.orderIndex === orderIndex,
+      );
+      if (node) {
+        node.title = title;
+      }
+    },
+  };
   const result = await runContinueWriteChapters({
     project,
     fromChapter: 1,
@@ -245,6 +270,7 @@ export async function runStoryflowClosedLoop(
     runIdPrefix,
     mode: 'batch',
     ai,
+    plotOutlineClient,
   });
 
   return {

@@ -395,6 +395,16 @@ export interface StructuredAI {
   generate<T>(request: StructuredAIRequest<T>): Promise<unknown>;
 }
 
+/**
+ * 章节结尾闭合判断结果：用于补写决策，避免正文已充分收尾时仍硬塞注水段。
+ */
+export interface EndingClosureResult {
+  /** 正文是否已闭合（CEN 已兑现 + 有明确章尾钩子/收束感） */
+  closed: boolean;
+  /** 判断理由（简短，供调试/日志） */
+  reason: string;
+}
+
 export interface SceneDraft {
   sceneId: string;
   beatId: string;

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type {
   ChapterCommitReceipt,
   ChapterJudgeResult,
+  EndingClosureResult,
   ExtractedFacts,
   FulfillmentCheckResult,
   JsonValue,
@@ -193,6 +194,11 @@ export const chapterJudgeResultSchema: z.ZodType<ChapterJudgeResult> = z.object(
       evidence: z.array(z.string()),
     })
   ),
+});
+
+export const endingClosureResultSchema: z.ZodType<EndingClosureResult> = z.object({
+  closed: z.boolean(),
+  reason: z.string(),
 });
 
 const sceneChunkSchema = z.object({

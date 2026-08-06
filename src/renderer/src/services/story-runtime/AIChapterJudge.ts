@@ -66,7 +66,7 @@ export class AIChapterJudge implements ChapterJudge {
         '- forbidden 必须覆盖输入的每一个 zone，zone 原样回传',
         '',
         '## 3) 深度语义（issues，若 checkDeepSemantic=true）',
-        '- fact_conflict：与状态摘要/事实冲突',
+        '- fact_conflict：与状态摘要/事实冲突。【跨章存在性矛盾必须报此类型且 severity=critical】典型：上章已死/已离开的角色本章复活或活动、上章已销毁/已赠出的物品本章再次出现、上章已揭穿的身份本章当作未知。判定的依据是状态摘要里的实体生死/位置/持有物，而非本章自述',
         '- logic_gap：自相矛盾或隐含逻辑漏洞；含：无视上章终态重复入狱/重复穿越、章末未落到指定钩子',
         '- ooc：人设明显崩坏',
         '- timeline：时间顺序不合理',

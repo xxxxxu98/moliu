@@ -193,6 +193,49 @@ describe('ContinuityValidator', () => {
     expect(judge.judge).not.toHaveBeenCalled();
     expect(report.accepted).toBe(true);
   });
+
+  it('fact_conflict 无条件 blocking：即使 domain 不在 blockingDomains 中也判 accepted=false（P2-B）', async () => {
+    const contracts = makeContracts();
+    contracts.chapter.mustCover = ['守卫盘查'];
+    contracts.chapter.forbidden = [];
+    // 故意把 entity（fact_conflict 映射的 domain）从 blockingDomains 移除，
+    // 验证 fact_conflict 仍无条件 blocking，不依赖 blockingDomains 配置
+    contracts.review.blockingDomains = ['causality', 'fulfillment', 'evidence'];
+
+    const report = await new ContinuityValidator({
+      chapterJudge: {
+        judge: async () => ({
+          fulfillment: [
+            { node: '守卫盘查', fulfilled: true, evidence: ['守卫盘查了林夜的路引'], reason: '已兑现' },
+          ],
+          forbidden: [],
+          issues: [
+            {
+              type: 'fact_conflict',
+              severity: 'medium', // 故意用 medium，证明与 severity 无关、只看 type
+              location: '末段',
+              description: '上章已死的王五本章再次活动',
+              evidence: ['王五笑道'],
+            },
+          ],
+        }),
+      },
+      enableDeepSemantic: true,
+    }).validate({
+      contracts,
+      state: makeState(),
+      drafts: [makeDraft()],
+      facts: makeFacts(),
+    });
+
+    // fact_conflict 一律 blocking → accepted=false，触发重写/拒收
+    expect(report.accepted).toBe(false);
+    expect(
+      report.issues.some(
+        issue => issue.severity === 'blocking' && issue.message.includes('fact_conflict'),
+      ),
+    ).toBe(true);
+  });
 });
 
 describe('ChapterCommitService', () => {

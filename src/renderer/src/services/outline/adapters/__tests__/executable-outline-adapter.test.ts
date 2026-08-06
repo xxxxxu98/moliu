@@ -357,3 +357,98 @@ describe('splitStartupBlocksToChapters - 章号不跳号（globalChapterNo 修�
     expect(result.chapters[2].chapterType).toBe('plot_setup');
   });
 });
+
+describe('toChapters chapterBlueprints 分支 - AI 单章蓝图', () => {
+  it('chapterBlueprints 非空时走 blueprint 分支，逐章产出 title/CBN/CEN/mustCover', () => {
+    const outline = makeOutline({
+      chapterBlueprints: [
+        {
+          orderIndex: 1,
+          title: '擦身擦到一半，皇帝来了',
+          summary: '穿越成小太监正在给总管擦身',
+          CBN: '一睁眼正在给老太监擦身',
+          CPNs: ['李德全找茬', '水温数据打脸'],
+          CEN: '皇帝突然驾到冷宫',
+          mustCover: ['李德全找茬', '水温数据打脸'],
+          forbiddenZones: ['不能揭示穿越原因'],
+          hookType: 'sudden_reveal',
+          hookText: '暗处目光已至',
+          coolPointType: '打脸',
+        },
+        {
+          orderIndex: 2,
+          title: '三天期限',
+          summary: '被刘公公给三天期限破账目案',
+          CBN: '被敲门惊醒接到命令',
+          CPNs: ['查账目残页', '发现数目对不上'],
+          CEN: '倒计时逼近眼前',
+          mustCover: ['查账目残页', '发现数目对不上'],
+          forbiddenZones: ['不能暴露冷宫密档'],
+          hookType: 'deadline',
+          coolPointType: '解谜',
+        },
+      ],
+    });
+    const result = mapExecutableOutlineToGeneratedOutline(outline);
+    // 走 blueprint 分支：章数 = chapterBlueprints.length（不再走 5章块拆分）
+    expect(result.chapters.length).toBe(2);
+    const [ch1, ch2] = result.chapters;
+    // title 来自 AI（非「第N章」占位）
+    expect(ch1.title).toBe('擦身擦到一半，皇帝来了');
+    expect(ch2.title).toBe('三天期限');
+    // 结构化节点完整透传
+    expect(ch1.CBN).toBe('一睁眼正在给老太监擦身');
+    expect(ch1.CEN).toBe('皇帝突然驾到冷宫');
+    expect(ch1.mustCover).toEqual(['李德全找茬', '水温数据打脸']);
+    // status / pacingStrategy 补齐（对齐 algorithm 路径）
+    expect(ch1.status).toBe('outline');
+    expect(ch1.pacingStrategy).toBe('confront');
+    // hook 优先 hookText（文案），而非把 hookType 枚举当文案
+    expect(ch1.hook).toBe('暗处目光已至');
+    // chapterType 仍由 inferChapterType 派生（首章 = world_intro）
+    expect(ch1.chapterType).toBe('world_intro');
+  });
+
+  it('chapterBlueprints 为空时回退 splitStartupBlocksToChapters', () => {
+    const outline = makeOutline({ chapterBlueprints: undefined });
+    const result = mapExecutableOutlineToGeneratedOutline(outline);
+    // 两个 5 章块 → 10 章
+    expect(result.chapters.length).toBe(10);
+    // 标题仍是「第N章」（algorithm 路径）
+    expect(result.chapters[0].title).toBe('第1章');
+  });
+});
+
+describe('splitStartupBlocksToChapters - 章号前缀清洗（P1-B）', () => {
+  it('block.objective/mustEvents 里的「第N章」前缀被清洗，不串入单章 CBN', () => {
+    const outline = makeOutline({
+      startupPack30: {
+        ...makeOutline().startupPack30,
+        chapterBlocks: [
+          {
+            range: '1-5章',
+            // objective 带「第2章」前缀（模拟 AI 误带）
+            objective: '第2章用锚定效应让上司考核失误',
+            mustEvents: ['第2章当众打脸王主簿', '正常事件e2'],
+            coolPoints: [],
+            hookRequirement: '',
+            pacing: 'fast',
+            readerExpectation: '',
+            forbiddenZones: [],
+          },
+        ],
+      },
+    });
+    const result = mapExecutableOutlineToGeneratedOutline(outline);
+    // 各章 CBN/summary 不应再以「第2章」开头
+    for (const ch of result.chapters) {
+      expect(ch.CBN).not.toMatch(/^第2章/);
+      expect(ch.summary ?? '').not.toMatch(/^第2章用锚定效应/);
+    }
+    // mustCover 透传的事件也清洗了
+    const allMustCover = result.chapters.flatMap(c => c.mustCover ?? []);
+    for (const ev of allMustCover) {
+      expect(ev).not.toMatch(/^第2章/);
+    }
+  });
+});

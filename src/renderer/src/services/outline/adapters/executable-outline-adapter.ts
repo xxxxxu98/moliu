@@ -430,6 +430,18 @@ function inferChapterType(
  * 保证同块各章文案互不相同（此前回退 block.objective 导致块内多章同款 CBN）。
  * coolPoint 从第 i-1 个开始轮换，避免与首章开篇钩子抢戏。
  */
+/**
+ * 清掉块级字段里被 AI 误带进来的「第N章」章号前缀。
+ *
+ * AI 在 5 章块的 objective/coolPoints/mustEvents 里有时会写「第2章用锚定效应...」，
+ * splitStartupBlocksToChapters 把它分给块内其它章当 CBN 时会带上错误的章号
+ * （实测 ch3 的 CBN 出现「第2章用锚定效应让上司王主簿考核失误」）。
+ * 这里统一清洗，保证单章 CBN 不携带他章章号。
+ */
+function stripChapterNumberPrefix(text: string): string {
+  return (text ?? '').replace(/^第\s*\d+\s*章[：:、\s]*/u, '').trim();
+}
+
 function buildAdvanceCbn(
   block: ExecutableOutline['startupPack30']['chapterBlocks'][number],
   i: number,
@@ -438,8 +450,8 @@ function buildAdvanceCbn(
   const step = i + 1;
   const coolPoints = block.coolPoints ?? [];
   const cool =
-    coolPoints.length > 0 ? coolPoints[(i - 1 + coolPoints.length) % coolPoints.length] : '';
-  const objectiveBrief = (block.objective || '主线').trim().slice(0, 24);
+    coolPoints.length > 0 ? stripChapterNumberPrefix(coolPoints[(i - 1 + coolPoints.length) % coolPoints.length]) : '';
+  const objectiveBrief = stripChapterNumberPrefix(block.objective || '主线').trim().slice(0, 24);
   if (cool && cool.trim().length >= 4) {
     return `${cool.trim()}（本区间第 ${step}/${blockSize} 段推进）`;
   }
@@ -470,7 +482,9 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
     // 修复（Bug 6）：分配前剔除模板句/元指令句（如「X后对手反手施压，倒计时与证据链同时收紧」），
     // 避免模板文本被当作事件分给各章、污染 CBN/CEN/mustCover；
     // 全部被剔除时回退原始首条（仍由 isTemplateHookCen 类判定在续写端兜底）。
-    const rawEvents = block.mustEvents.length > 0 ? block.mustEvents : ['推进本区间主线'];
+    // 修复：清洗 AI 误带的「第N章」章号前缀，避免块内它章章号串入单章 CBN/事件。
+    const rawEvents = (block.mustEvents.length > 0 ? block.mustEvents : ['推进本区间主线'])
+      .map(stripChapterNumberPrefix);
     const usableEvents = rawEvents.filter(
       event =>
         !isTemplateHookCen(event) &&
@@ -478,7 +492,8 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
         event.trim().length >= 4
     );
     const mustEvents = usableEvents.length > 0 ? usableEvents : rawEvents.slice(0, 1);
-    const coolPoints = block.coolPoints;
+    const coolPoints = block.coolPoints.map(stripChapterNumberPrefix);
+    const blockObjective = stripChapterNumberPrefix(block.objective);
     const pacingStrategy = block.pacing === 'fast' ? 'release' : 'confront';
 
     for (let i = 0; i < blockSize; i++) {
@@ -548,9 +563,9 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
       const expectedCoolPoints = Math.max(1, Math.round((coolPoints.length || 1) / blockSize));
 
       const title = `第${chapterNo}章`;
-      const summary = [block.objective, block.readerExpectation ? `读者期待：${block.readerExpectation}` : '']
+      const summary = [blockObjective, block.readerExpectation ? `读者期待：${block.readerExpectation}` : '']
         .filter(Boolean).join('；');
-      const description = summary || block.objective;
+      const description = summary || blockObjective;
 
       chapters.push({
         number: chapterNo,
@@ -600,12 +615,14 @@ function toChapters(outline: ExecutableOutline): GeneratedChapter[] {
       return {
         title: chapter.title,
         number: chapter.orderIndex,
+        status: 'outline' as const,
         summary: chapter.summary,
         keyEvents: chapter.mustCover,
         involvedCharacters: chapter.involvedCharacters ?? [],
         coreEvent: chapter.CEN,
         coolPoints,
-        hook: chapter.hookType,
+        // 章尾钩子文案优先 hookText；缺省时才退到 hookType 枚举（避免把枚举当文案）
+        hook: chapter.hookText ?? chapter.hookType,
         // 结构化节点
         CBN: chapter.CBN,
         CPNs: chapter.CPNs,
@@ -615,6 +632,7 @@ function toChapters(outline: ExecutableOutline): GeneratedChapter[] {
         // 写作策略
         chapterType,
         hookType: chapter.hookType,
+        pacingStrategy: chapter.pacingStrategy ?? 'confront',
         isClimax,
         expectedCoolPoints: chapter.coolPointType ? 1 : undefined,
       };

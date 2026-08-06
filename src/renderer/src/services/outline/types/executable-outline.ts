@@ -215,8 +215,12 @@ export interface ChapterBlueprint {
   mustCover: string[];
   forbiddenZones: string[];
   hookType: string;
+  /** 章尾钩子文案（给读者看的「话术感」短句），区别于 hookType（枚举） */
+  hookText?: string;
   coolPointType?: string;
   involvedCharacters?: string[];
+  /** 蓝图自带节奏策略（release/confront 等），未填时由下游兜底 */
+  pacingStrategy?: string;
 }
 
 export interface ExecutableOutline {

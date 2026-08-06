@@ -349,6 +349,60 @@ export class LongFormWritingEngine {
     return nextDrafts;
   }
 
+  /**
+   * 结尾闭合判断：正文是否已充分收尾（CEN 兑现 + 章尾钩子落地）。
+   * 用于补写决策——已闭合时即使字数略不足也不再硬塞注水段。
+   * 失败容错：AI 异常时返回 {closed:false}，降级为原按字数补写逻辑，不阻断主流程。
+   */
+  private async judgeEndingClosure(
+    prose: string,
+    chapterTitle: string,
+    CBN: string | undefined,
+    CEN: string | undefined,
+    mustCover: string[],
+  ): Promise<{ closed: boolean; reason: string }> {
+    try {
+      const result = await this.dependencies.ai.generate<{ closed: boolean; reason: string }>({
+        purpose: 'chapter-judge',
+        schemaName: 'EndingClosureResult',
+        system: [
+          '你是网文章节结尾审查员。判断当前正文是否已经形成完整、有收束感的章末，不需要再补写。',
+          '只输出一个 JSON 对象，不要 Markdown 代码块，不要解释。',
+          '判断标准（全部满足才算 closed=true）：',
+          '1. 本章核心冲突/事件（CEN 对应的章尾钩子）已在正文中有可见场面兑现或落到明确转折',
+          '2. 正文最后一段已给出章末该有的悬念/压迫/反转/收束，而非突兀中断或仍是中段叙述',
+          '3. 不存在明显未写完的半截场景（如对话停在对方开口前、追逐停在半路）',
+          '反例（closed=false）：正文停在一个动作中途、CEN 钩子完全没体现、结尾是无关日常闲笔',
+          'JSON 字段：{"closed":true,"reason":"CEN已兑现且章末留有悬念"}',
+        ].join('\n'),
+        prompt: JSON.stringify({
+          chapterTitle,
+          CBN: CBN ?? '',
+          CEN: CEN ?? '',
+          mustCover,
+          wordCount: prose.length,
+          proseTail: prose.slice(-600),
+        }),
+        parse: value => {
+          const record =
+            typeof value === 'object' && value !== null && !Array.isArray(value)
+              ? (value as Record<string, unknown>)
+              : {};
+          const closed = record.closed === true;
+          const reason =
+            typeof record.reason === 'string' && record.reason.trim()
+              ? record.reason.trim().slice(0, 80)
+              : (closed ? '已闭合' : '未闭合');
+          return { closed, reason };
+        },
+      });
+      return result;
+    } catch {
+      // 判断器失败时降级：不阻断补写，按原字数逻辑继续
+      return { closed: false, reason: '判断器失败，降级按字数补写' };
+    }
+  }
+
   private async supplementDraftsWhileShort(
     drafts: SceneDraft[],
     input: LongFormWriteInput
@@ -368,6 +422,22 @@ export class LongFormWritingEngine {
       const check = checkWordCount(prose, target);
       if (!check.needsSupplement) {
         break;
+      }
+
+      // 结尾闭合判断：正文已完整收尾（CEN 兑现 + 章末钩子落地）且字数达目标 80%+ 时，
+      // 不再补写，避免在自然章末后硬塞注水段（实测「陈默冷笑，他早已料到」类尾巴）。
+      // 判断器失败时返回 closed=false，降级为原按字数补写逻辑。
+      if (check.currentWords >= Math.floor(target * 0.8)) {
+        const closure = await this.judgeEndingClosure(
+          prose,
+          input.contracts.chapter.title,
+          input.contracts.chapter.CBN,
+          input.contracts.chapter.CEN,
+          input.contracts.chapter.mustCover,
+        );
+        if (closure.closed) {
+          break;
+        }
       }
 
       const maxSupplement = Math.ceil(target * MAX_WORD_THRESHOLD) - check.currentWords;

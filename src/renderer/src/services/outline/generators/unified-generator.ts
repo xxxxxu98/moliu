@@ -377,7 +377,11 @@ export class UnifiedOutlineGenerator {
   ): Promise<ExpandedOutlineResult> {
     return this.runWithRetry<ExpandedOutlineResult>(
       async (attempt, temperature) => {
-        const opts = { ...this.defaultOptions, ...options, ...(temperature !== undefined ? { temperature } : {}) };
+        const opts = {
+          ...this.defaultOptions,
+          ...options,
+          ...(temperature !== undefined ? { temperature } : {}),
+        };
         const builtPrompt = buildExpandDirectionPrompt({
           seed: prompt,
           direction,
@@ -404,6 +408,16 @@ export class UnifiedOutlineGenerator {
           if (outline.foreshadowPlan.length < 3) {
             severelyTruncated = true;
             warnings.push(`伏笔仅解析到 ${outline.foreshadowPlan.length} 条（建议至少 3 条），可能被输出截断，可尝试重新生成`);
+          }
+          // 单章蓝图完整性：30 章允许漏 2 章（< 28 视为残缺）。
+          // 残缺时丢弃 chapterBlueprints（让下游 toChapters 回退算法派生），避免用半截蓝图建章导致章节缺失；
+          // 不判 severelyTruncated，因为块级大纲仍可用、可正常建 30 章。
+          const blueprints = outline.chapterBlueprints;
+          if (blueprints && blueprints.length < 28) {
+            warnings.push(
+              `单章蓝图仅解析到 ${blueprints.length} 章（期望约 30 章），可能被输出截断；本次回退到块级算法派生单章节点。可尝试重新生成以获得逐章标题与节点。`,
+            );
+            outline = { ...outline, chapterBlueprints: undefined };
           }
         }
 

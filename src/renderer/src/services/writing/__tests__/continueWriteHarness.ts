@@ -697,6 +697,10 @@ function buildBatchPreviousChapter(
  */
 export function openContinueWriteSession(options: {
   project: Project;
+  /** 注入续写章节标题回写客户端（forceStoryRuntime 模式下默认无） */
+  plotOutlineClient?: {
+    updateChapterTitle(orderIndex: number, title: string): Promise<void>;
+  };
 }): ContinueWriteSession {
   let project: Project = {
     ...options.project,
@@ -790,6 +794,7 @@ export function openContinueWriteSession(options: {
         contextAgent,
         persistence,
         memoryClient,
+        plotOutlineClient: options.plotOutlineClient ?? null,
       };
 
       const targetWordCount = chapterOptions.targetWordCount ?? 3000;
@@ -925,6 +930,10 @@ export async function runContinueWriteChapters(options: {
   signal?: AbortSignal;
   /** 启用与 App 相同的记忆提取（createChapterMemoryClient）；默认 false */
   enableMemoryExtract?: boolean;
+  /** 续写章节标题回写客户端，透传到 pipeline（harness 默认无） */
+  plotOutlineClient?: {
+    updateChapterTitle(orderIndex: number, title: string): Promise<void>;
+  };
 }): Promise<{
   runtimeBackend: HarnessRuntimeBackend;
   project: Project;
@@ -935,7 +944,10 @@ export async function runContinueWriteChapters(options: {
   const chapterCount = Math.max(1, options.chapterCount);
   const mode: ContinueWriteMode = options.mode ?? 'batch';
   const maxRetries = Math.max(1, options.maxRetries ?? 3);
-  const session = openContinueWriteSession({ project: options.project });
+  const session = openContinueWriteSession({
+    project: options.project,
+    plotOutlineClient: options.plotOutlineClient,
+  });
   const chapters: ContinueWriteChapterRunResult[] = [];
   try {
     for (let offset = 0; offset < chapterCount; offset += 1) {

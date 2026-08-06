@@ -1,6 +1,7 @@
 import type {
   CharacterPlan,
   CharacterRelationshipPlan,
+  ChapterBlueprint,
   CoolPointBeatPlan,
   EmotionBeatPlan,
   ExecutableOutline,
@@ -74,6 +75,49 @@ function parseStartupBlock(block: string, range: string): StartupChapterBlock {
     readerExpectation: extractFieldValue(block, '读者期待') ?? '',
     forbiddenZones: extractMultiValueField(block, '本块禁区'),
   };
+}
+
+/**
+ * 解析「## 单章蓝图」段：逐章产出 ChapterBlueprint（title/CBN/CPNs/CEN/mustCover/禁区/钩子/爽点）。
+ *
+ * 容错策略与其它 parse*Section 一致：AI 漏写或写残时返回空数组（调用方据此回退到 splitStartupBlocksToChapters）。
+ * 标题来自 `### 第N章` 下的「标题」字段，而非 heading（heading 仅用于切块与 orderIndex 抽取）。
+ */
+function parseChapterBlueprintSection(section: string): ChapterBlueprint[] {
+  if (!section.trim()) return [];
+  // heading 形如 `### 第1章` / `### 第12章` / `### 1章`
+  const blocks = splitByHeading(section, /^###\s+第?\s*\d+\s*章?/gm);
+  return blocks
+    .map((block, index): ChapterBlueprint | null => {
+      // 从 heading 抽 orderIndex；抽不到则回退 index+1（保持稳定递增）
+      const headingMatch = block.heading.match(/\d+/);
+      const orderIndex = headingMatch ? Number(headingMatch[0]) : index + 1;
+      const title = (extractFieldValue(block.body, '标题') ?? '').trim();
+      const CBN = (extractFieldValue(block.body, 'CBN') ?? '').trim();
+      const CEN = (extractFieldValue(block.body, 'CEN') ?? '').trim();
+      // 标题与 CBN 至少有一个非空，否则视为 AI 写残的空块，丢弃
+      if (!title && !CBN) return null;
+      const CPNs = extractMultiValueField(block.body, 'CPNs');
+      const mustCover = extractMultiValueField(block.body, 'mustCover');
+      const forbiddenZones = extractMultiValueField(block.body, '禁区');
+      const hookText = extractFieldValue(block.body, '章尾钩子文案') ?? '';
+      const hookType = (extractFieldValue(block.body, '爽点类型') ?? '').trim();
+      const coolPointType = hookType || undefined;
+      return {
+        orderIndex,
+        title: title || CBN.slice(0, 16),
+        summary: CBN || title,
+        CBN,
+        CPNs: CPNs.length > 0 ? CPNs : (CBN ? [CBN] : []),
+        CEN,
+        mustCover: mustCover.length > 0 ? mustCover : (CBN ? [CBN] : []),
+        forbiddenZones,
+        hookType: hookType || 'reveal',
+        hookText: hookText || undefined,
+        coolPointType,
+      };
+    })
+    .filter((item): item is ChapterBlueprint => item !== null);
 }
 
 function parseStoryScalePlan(section: string): StoryScalePlan {
@@ -461,6 +505,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
     '卷纲',
     '世界与势力规划',
     '前30章启动包',
+    '单章蓝图',
     '主要支线',
     '故事线规划',
     '情绪与爽点节奏',
@@ -478,6 +523,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
   const volumeSection = sections['卷纲'];
   const worldBuildingSection = sections['世界与势力规划'];
   const startupSection = sections['前30章启动包'];
+  const chapterBlueprintSection = sections['单章蓝图'];
   const subplotsSection = sections['主要支线'];
   const storyLinesSection = sections['故事线规划'];
   const emotionSection = sections['情绪与爽点节奏'];
@@ -531,6 +577,10 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
   const sellingPointPlan = parseSellingPointSection(sellingPointSection);
   const goldenfingerPlan = parseGoldenFingerSection(goldenfingerSection);
 
+  // 单章蓝图（chapterBlueprints）：AI 逐章产出，非空时下游 toChapters 走 blueprint 分支，替代算法派生。
+  // 解析为空（AI 未产或写残）则保持 undefined，toChapters 自动回退 splitStartupBlocksToChapters。
+  const parsedChapterBlueprints = parseChapterBlueprintSection(chapterBlueprintSection);
+
   const outline: ExecutableOutline = {
     title: extractFieldValue(positioningSection, '标题') ?? '未命名方案',
     oneLiner: extractFieldValue(positioningSection, '一句话卖点') ?? '',
@@ -570,6 +620,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
     goldenfingerPlan,
     keyCharacters: dedupedKeyCharacters,
     foreshadowPlan: dedupedForeshadowPlan,
+    chapterBlueprints: parsedChapterBlueprints.length > 0 ? parsedChapterBlueprints : undefined,
   };
 
   return isValidExecutableOutline(outline) ? outline : null;

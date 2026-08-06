@@ -10,6 +10,14 @@ import {
 
 import type { LocalMoliuProject } from './loadLocalMoliuProject';
 
+/**
+ * 清掉块级字段里被 AI 误带的「第N章」章号前缀（与 executable-outline-adapter.stripChapterNumberPrefix 同源）。
+ * 避免 block.objective/mustEvents 里的「第2章...」串入其它章的 CBN。
+ */
+function stripChapterNumberPrefix(text: string): string {
+  return (text ?? '').replace(/^第\s*\d+\s*章[：:、\s]*/u, '').trim();
+}
+
 function parseBlockRange(range: string): { start: number; end: number } | null {
   const match = range.match(/(\d+)\s*[-~～至到]\s*(\d+)/u);
   if (!match) return null;
@@ -110,8 +118,9 @@ export function ensurePlotOutlineForLocalProject(project: LocalMoliuProject): Pl
   for (const block of blocks) {
     const range = parseBlockRange(block.range);
     const blockSize = range ? Math.max(1, range.end - range.start + 1) : 5;
-    const mustEvents =
-      block.mustEvents.length > 0 ? block.mustEvents : ['推进本区间主线'];
+    const blockObjective = stripChapterNumberPrefix(block.objective);
+    const mustEvents = (block.mustEvents.length > 0 ? block.mustEvents : ['推进本区间主线'])
+      .map(stripChapterNumberPrefix);
 
     for (let i = 0; i < blockSize; i += 1) {
       globalChapterNo += 1;
@@ -128,9 +137,9 @@ export function ensurePlotOutlineForLocalProject(project: LocalMoliuProject): Pl
         ? openingHook
         : keyEvents.length > 0
           ? keyEvents.join('，')
-          : block.objective;
+          : blockObjective;
       const CPNs = enrichThinCpns(
-        keyEvents.length > 0 ? keyEvents.slice(0, 3) : [`推进 ${block.objective}`],
+        keyEvents.length > 0 ? keyEvents.slice(0, 3) : [`推进 ${blockObjective}`],
         CBN
       );
       const CEN = isBlockLastChapter
@@ -141,7 +150,7 @@ export function ensurePlotOutlineForLocalProject(project: LocalMoliuProject): Pl
         {
           id: `plot-${Date.now()}-${plotIndex++}`,
           title: chapter.title,
-          description: block.objective || chapter.outline || chapter.title,
+          description: blockObjective || chapter.outline || chapter.title,
           type: 'chapter',
           orderIndex: chapter.orderIndex,
           chapterId: chapter.id,

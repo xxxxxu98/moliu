@@ -198,6 +198,15 @@ export interface ChapterWritingPipelineDeps {
   gitBackup?: GitBackupClient | null;
   persistence?: ChapterPersistenceClient | null;
   memoryClient?: MemoryClient | null;
+  /**
+   * 大纲章节节点标题回写客户端（可选）。
+   * 续写 AI 临时起的短标题，在 persistence 成功后回写到 plotOutline 中
+   * type==='chapter' 的对应节点（按 orderIndex 定位），让目录页不再永远是「第N章」。
+   * 未注入时降级跳过（不影响续写主流程）。
+   */
+  plotOutlineClient?: {
+    updateChapterTitle(orderIndex: number, title: string): Promise<void>;
+  } | null;
   /** 注入外部已配置好的 orchestrator（跳过内部创建） */
   orchestrator?: StateDrivenWritingOrchestrator;
   /**
@@ -242,6 +251,7 @@ export class ChapterWritingPipeline {
   private readonly contextAgent: NonNullable<ChapterWritingPipelineDeps['contextAgent']>;
   private readonly persistence: ChapterPersistenceClient | null;
   private readonly memoryClient: MemoryClient | null;
+  private readonly plotOutlineClient: { updateChapterTitle(orderIndex: number, title: string): Promise<void> } | null;
   private readonly structuredAI: StructuredAI | undefined;
   private readonly storyRuntimeClient: StoryRuntimeClient | undefined;
   private readonly storyRuntimeApi: StoryRuntimeAPI | undefined;
@@ -286,6 +296,7 @@ export class ChapterWritingPipeline {
             error: 'forceStoryRuntime 未注入 contextAgent',
           }),
         } satisfies NonNullable<ChapterWritingPipelineDeps['contextAgent']>);
+      this.plotOutlineClient = deps?.plotOutlineClient ?? null;
       return;
     }
 
@@ -367,6 +378,21 @@ export class ChapterWritingPipeline {
 
     this.preflightService = deps?.preflightService ?? usePreflightService();
     this.contextAgent = deps?.contextAgent ?? useEnhancedContextAgent();
+    // 默认 plotOutlineClient：按 orderIndex 定位 type==='chapter' 节点并回写标题。
+    // 调用方可注入 null 关闭、或注入自定义实现（harness 内存版）。
+    this.plotOutlineClient =
+      deps?.plotOutlineClient !== undefined
+        ? deps.plotOutlineClient
+        : {
+            updateChapterTitle: async (orderIndex, title) => {
+              const node = projectStore.plotOutline.find(
+                n => n.type === 'chapter' && n.orderIndex === orderIndex,
+              );
+              if (node) {
+                await projectStore.updatePlotNode(node.id, { title });
+              }
+            },
+          };
   }
 
   /** 暴露内部 orchestrator（供需要 initialize/indexExistingChapters 的场景使用） */
@@ -721,6 +747,12 @@ export class ChapterWritingPipeline {
           await this.persistence.replace(input.chapter.id, contentForPersist);
         }
         await this.memoryClient?.extractAndSave(input.chapter.id, chapterNumber, prose);
+        // 回写 plotOutline 章节节点标题：落库的 Chapter.title 已是短标题，
+        // 但 plotOutline 中 type==='chapter' 节点的 title 仍是创建时的占位（第N章）。
+        // 同步回写让目录页显示真实标题（仅占位时改，用户手改的标题不覆盖）。
+        if (shouldApplyGeneratedTitle && generatedShortTitle && this.plotOutlineClient) {
+          await this.plotOutlineClient.updateChapterTitle(chapterNumber - 1, generatedShortTitle);
+        }
       } catch (error) {
         console.warn('[Pipeline] accepted commit 的 UI 投影失败，可由 outbox 重放:', error);
       }

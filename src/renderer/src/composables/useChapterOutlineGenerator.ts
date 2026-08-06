@@ -442,33 +442,59 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
    */
   async function applyOutlines(chapters: GeneratedChapter[]): Promise<boolean> {
     try {
-      // 更新项目的大纲 - 保存完整结构化节点
-      const plotOutline: PlotNode[] = chapters.map((chapter, index) => ({
-        id: `plot-chapter-${index}-${Date.now()}`,
-        title: chapter.title,
-        description: chapter.outline,
-        type: 'chapter' as const,
-        orderIndex: index,
-        // 原有字段
-        keyEvents: chapter.keyEvents,
-        relatedCharacters: chapter.involvedCharacters || [],
-        // ========== 结构化节点（完整保存）==========
-        CBN: chapter.CBN,
-        CPNs: chapter.CPNs,
-        CEN: chapter.CEN,
-        mustCover: chapter.mustCover,
-        forbiddenZones: chapter.forbiddenZones,
-        timeSpan: chapter.timeSpan,
-        // ========== 写作策略（完整保存，续写端会读这些字段）==========
-        chapterType: chapter.chapterType as PlotNode['chapterType'],
-        hookType: chapter.hookType as PlotNode['hookType'],
-        pacingStrategy: chapter.pacingStrategy as PlotNode['pacingStrategy'],
-        isClimax: chapter.isClimax,
-        expectedCoolPoints: chapter.expectedCoolPoints,
-        purpose: chapter.CBN ? `CBN: ${chapter.CBN}\nCEN: ${chapter.CEN || '待定'}` : undefined,
-      }));
+      // 合并式更新：保留现有 plotOutline 中所有非 chapter 节点（act/subplot/foreshadow 等），
+      // 仅替换/更新 type==='chapter' 的节点。
+      // 历史实现是覆盖式赋值，会把 useProjectCreator 写入的 act/subplot 节点全清掉。
+      const existing = projectStore.plotOutline ?? [];
+      const nonChapterNodes = existing.filter(node => node.type !== 'chapter');
+      const existingChapterByOrder = new Map<number, PlotNode>();
+      for (const node of existing) {
+        if (node.type === 'chapter') {
+          existingChapterByOrder.set(node.orderIndex, node);
+        }
+      }
 
-      projectStore.plotOutline = plotOutline;
+      const chapterNodes: PlotNode[] = chapters.map((chapter, index) => {
+        const prev = existingChapterByOrder.get(index);
+        // 复用既有 id/chapterId/parentId（编辑器可能已绑定），仅更新大纲字段
+        const base = prev
+          ? {
+              id: prev.id,
+              chapterId: prev.chapterId,
+              parentId: prev.parentId,
+            }
+          : {
+              id: `plot-chapter-${index}-${Date.now()}`,
+              chapterId: undefined,
+              parentId: undefined,
+            };
+        return {
+          ...base,
+          title: chapter.title,
+          description: chapter.outline,
+          type: 'chapter' as const,
+          orderIndex: index,
+          // 原有字段
+          keyEvents: chapter.keyEvents,
+          relatedCharacters: chapter.involvedCharacters || [],
+          // ========== 结构化节点（完整保存）==========
+          CBN: chapter.CBN,
+          CPNs: chapter.CPNs,
+          CEN: chapter.CEN,
+          mustCover: chapter.mustCover,
+          forbiddenZones: chapter.forbiddenZones,
+          timeSpan: chapter.timeSpan,
+          // ========== 写作策略（完整保存，续写端会读这些字段）==========
+          chapterType: chapter.chapterType as PlotNode['chapterType'],
+          hookType: chapter.hookType as PlotNode['hookType'],
+          pacingStrategy: chapter.pacingStrategy as PlotNode['pacingStrategy'],
+          isClimax: chapter.isClimax,
+          expectedCoolPoints: chapter.expectedCoolPoints,
+          purpose: chapter.CBN ? `CBN: ${chapter.CBN}\nCEN: ${chapter.CEN || '待定'}` : undefined,
+        } as PlotNode;
+      });
+
+      projectStore.plotOutline = [...nonChapterNodes, ...chapterNodes];
       await projectStore.saveCurrentProject();
 
       return true;

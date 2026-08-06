@@ -503,3 +503,63 @@ describe('parseExpandedOutline · H3 子小节解析回归', () => {
     expect(outline!.goldenfingerPlan?.firstRevealChapter).toBe(3);
   });
 });
+
+describe('parseExpandedOutline · 单章蓝图（chapterBlueprints）解析', () => {
+  /** 在标准样例的「前30章启动包」后插入「单章蓝图」段 */
+  function buildSampleWithBlueprint(chapterBlockCount: number): string {
+    const base = buildSampleOutline();
+    const blueprintBlocks = Array.from({ length: chapterBlockCount }, (_, i) => {
+      const n = i + 1;
+      return `### 第${n}章
+- 标题：第${n}章的网文口语标题${n}
+- CBN：第${n}章开篇钩子画面
+- CPNs：第${n}章推进点A；第${n}章推进点B
+- CEN：第${n}章章尾钩子悬念
+- mustCover：第${n}章必出事件A；第${n}章必出事件B
+- 禁区：不能揭示第${n}章相关秘密
+- 章尾钩子文案：第${n}章钩子话术
+- 爽点类型：打脸`;
+    }).join('\n\n');
+    const blueprintSection = `## 单章蓝图\n${blueprintBlocks}`;
+    // 插到「## 主要支线」之前
+    return base.replace('## 主要支线', `${blueprintSection}\n\n## 主要支线`);
+  }
+
+  it('解析出 chapterBlueprints，逐章 title/CBN/CEN/mustCover/钩子文案 正确', () => {
+    const outline = parseExpandedOutline(buildSampleWithBlueprint(3));
+    expect(outline).not.toBeNull();
+    const bps = outline!.chapterBlueprints;
+    expect(bps, 'chapterBlueprints 应被解析').toBeDefined();
+    expect(bps!.length).toBe(3);
+    expect(bps![0].title).toBe('第1章的网文口语标题1');
+    expect(bps![0].CBN).toBe('第1章开篇钩子画面');
+    expect(bps![0].CEN).toBe('第1章章尾钩子悬念');
+    expect(bps![0].mustCover).toEqual(['第1章必出事件A', '第1章必出事件B']);
+    expect(bps![0].CPNs).toEqual(['第1章推进点A', '第1章推进点B']);
+    expect(bps![0].forbiddenZones).toEqual(['不能揭示第1章相关秘密']);
+    expect(bps![0].hookText).toBe('第1章钩子话术');
+    expect(bps![0].hookType).toBe('打脸');
+    expect(bps![0].orderIndex).toBe(1);
+    // 不破坏其它模块
+    expect(outline!.startupPack30.chapterBlocks.length).toBe(2);
+    expect(outline!.keyCharacters.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it('无单章蓝图段时 chapterBlueprints 为 undefined（向后兼容）', () => {
+    const outline = parseExpandedOutline(buildSampleOutline());
+    expect(outline).not.toBeNull();
+    expect(outline!.chapterBlueprints).toBeUndefined();
+  });
+
+  it('单章蓝图段存在但章节块为空（只有标题没字段）时返回空数组', () => {
+    const base = buildSampleOutline();
+    const withEmpty = base.replace(
+      '## 主要支线',
+      `## 单章蓝图\n### 第1章\n（无字段）\n\n## 主要支线`,
+    );
+    const outline = parseExpandedOutline(withEmpty);
+    expect(outline).not.toBeNull();
+    // 空块被丢弃 → 空数组 → 转 undefined
+    expect(outline!.chapterBlueprints).toBeUndefined();
+  });
+});

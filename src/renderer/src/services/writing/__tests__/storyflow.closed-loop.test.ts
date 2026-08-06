@@ -109,6 +109,11 @@ describe.runIf(isRealAiEnabled())(
             tail: r.output.prose.slice(-80),
             error: r.output.error ?? null,
           })),
+          // 续写后 plotOutline 章节标题（验证 chapterTitle 回写：应不再是「第N章」纯序号）
+          plotOutlineTitles: (result.project.plotOutline ?? [])
+            .filter(n => n.type === 'chapter')
+            .slice(0, 10)
+            .map(n => ({ orderIndex: n.orderIndex, title: n.title })),
           runtimeBackend: result.runtimeBackend,
           provider: result.cfg.provider,
           model: result.cfg.model,

@@ -50,4 +50,24 @@ describe('buildExpandDirectionPrompt', () => {
     expect(prompt.user).toMatch(/\d+卷规划要彼此递进/);
     expect(prompt.user).toContain('建议卷数约');
   });
+
+  it('包含「## 单章蓝图」段及 30 章逐章模板（P0-A）', () => {
+    const prompt = buildExpandDirectionPrompt({
+      seed: '测试种子',
+      direction: sampleDirection,
+      wordCountRange: '30万-60万字',
+    });
+    expect(prompt.system).toContain('## 单章蓝图');
+    // 30 章逐章占位（第1章 ~ 第30章）
+    expect(prompt.system).toContain('### 第1章');
+    expect(prompt.system).toContain('### 第30章');
+    // 每章必备字段
+    expect(prompt.system).toContain('- 标题：');
+    expect(prompt.system).toContain('- CBN：');
+    expect(prompt.system).toContain('- CEN：');
+    expect(prompt.system).toContain('- mustCover：');
+    // 第5条硬约束措辞调整：允许 30 章单章蓝图，禁止的是 100 章整本梗概
+    expect(prompt.system).toMatch(/禁止把章节展开成 100 章以上/);
+    expect(prompt.system).toMatch(/前 30 章的单章蓝图是必需输出/);
+  });
 });
