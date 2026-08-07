@@ -35,7 +35,8 @@ import { createPinia, setActivePinia } from 'pinia';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { AIServiceFactory } from '@/services/ai/factory';
-import type { ProviderType } from '@/config/ai-providers';
+import { type ProviderType, getBaseUrl } from '@/config/ai-providers';
+import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
 import { mapExecutableOutlineToGeneratedOutline } from '@/services/outline/adapters/executable-outline-adapter';
 import type { ExecutableOutline } from '@/services/outline/types/executable-outline';
@@ -50,7 +51,9 @@ import { useSettingsStore } from '@/stores/settings.store';
 import { resolveContinueWriteRealConfig } from '@/services/writing/__tests__/continueWriteRealConfig';
 import { isRealAiEnabled } from '@/services/writing/__tests__/realStructuredAI';
 
-const WORD_COUNT_RANGE = '30万-60万';
+/** 开题中心生产默认篇幅：与 TopicDiscoveryBoard.vue 的 selectedWordCountRange 初值对齐
+ *  （来源 DEFAULT_WORD_COUNT_RANGE），冒烟须跑与生产一致的篇幅规模。 */
+const WORD_COUNT_RANGE = DEFAULT_WORD_COUNT_RANGE;
 /** 单模块超时：与 realStructuredAI 单请求超时（30min）对齐，
  *  实测模块耗时 ~280-440s（含 429 退避），hung request 不会先撞测试超时 */
 const MODULE_TIMEOUT = 1_800_000;
@@ -86,21 +89,36 @@ type ChatFn = (
   signal?: AbortSignal
 ) => Promise<string>;
 
-/** 用 App 已存配置创建真实 AI chatFn（与 refreshStorySeeds 的 ChatFn 签名对齐） */
+/** 用 App 已存配置创建真实 AI chatFn（与 topic-discovery.service.ts 的 defaultChat 行为对齐） */
 function createRealChatFn(cfg: {
   provider: string;
   apiKey: string;
   baseUrl?: string;
   model?: string;
 }): ChatFn {
-  const service = AIServiceFactory.createService(
-    cfg.provider as ProviderType,
-    cfg.apiKey,
-    cfg.baseUrl,
-    cfg.model
-  );
   return async (system, user, temperature, signal) => {
-    const raw = await service.complete(user, { system, temperature, signal });
+    // 与 defaultChat 对齐：每次调用按当前 temperature 新建 service（genAIOptions 采样参数随
+    // temperature 注入），complete() 开启 jsonMode，避免流式拼接导致的 JSON 截断——
+    // 否则种子/雷达降级本地池的概率曲线会偏离生产，冒烟结论失去代表性。
+    const service = AIServiceFactory.createService(
+      cfg.provider as ProviderType,
+      cfg.apiKey,
+      cfg.baseUrl || getBaseUrl(cfg.provider as ProviderType),
+      cfg.model,
+      undefined,
+      {
+        temperature,
+        topP: 0.95,
+        frequencyPenalty: 0.2,
+        presencePenalty: 0.2,
+      }
+    );
+    const raw = await service.complete(user, {
+      system,
+      temperature,
+      signal,
+      jsonMode: true,
+    });
     return String(raw);
   };
 }
@@ -323,7 +341,10 @@ async function runModule(
 const cfg = resolveContinueWriteRealConfig();
 injectSettingsStore(cfg);
 const chatFn = createRealChatFn(cfg);
-const generator = new UnifiedOutlineGenerator({ temperature: 0.7, topP: 0.9, maxRetries: 2 });
+// 与开题中心生产路径对齐：useOutlineGenerator.getGenerator() 用 new UnifiedOutlineGenerator()
+// 不传采样参数（temperature/topP 由请求层解析兜底）。仅 ProOutliner 五步法显式传 0.7，
+// 开题中心（TopicDiscoveryBoard）不传——此处对齐开题中心形态。
+const generator = new UnifiedOutlineGenerator();
 const moduleResults: ModuleResult[] = [];
 
 describe.skipIf(!isRealAiEnabled())('开题中心 REAL AI · 六模块真实链路', () => {
