@@ -8,15 +8,18 @@
 import { countWords } from './utils';
 import { normalizeWebnovelParagraphs } from './typesetting';
 
-/** 最低字数阈值（目标字数的 85%） */
-export const MIN_WORD_THRESHOLD = 0.85;
+/** 最低字数阈值（目标字数的 80%）。
+ *  0.85 → 0.80：快模型（如 deepseek-v4-flash）系统性欠写，实测常落在 80-85%
+ *  区间被判 blocking 拒收，浪费整章重试预算。0.80（目标 2000→下限 1600）
+ *  仍属主流网文单章正常字数，显著降低误杀。 */
+export const MIN_WORD_THRESHOLD = 0.8;
 /** 最高字数阈值（目标字数的 115%，补写上限） */
 export const MAX_WORD_THRESHOLD = 1.15;
 /** 最多补充轮次 */
 export const MAX_SUPPLEMENT_ROUNDS = 3;
 /**
  * 补字提前停阈值：正文达目标该比例且结尾已闭合时，不再补字。
- * 与 MIN_WORD_THRESHOLD 对齐（85%），消除「补字停在 80% 但字数 blocking 判定要 85%」的灰区。
+ * 与 MIN_WORD_THRESHOLD 对齐，消除「补字停在更低比例但字数 blocking 判定要更高」的灰区。
  */
 export const SUPPLEMENT_STOP_THRESHOLD = MIN_WORD_THRESHOLD;
 
@@ -55,7 +58,7 @@ export interface WordCountBoundsCheck {
 }
 
 /**
- * 检查正文是否落在目标字数的硬性区间 [85%, 115%]。
+ * 检查正文是否落在目标字数的硬性区间 [MIN_WORD_THRESHOLD, MAX_WORD_THRESHOLD]。
  */
 export function checkWordCountBounds(content: string, target: number): WordCountBoundsCheck {
   const currentWords = countWords(content);

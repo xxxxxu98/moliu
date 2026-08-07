@@ -45,6 +45,7 @@ import {
   prependTitleLineForPersist,
 } from './chapterTitle';
 import { runSupplementRounds } from './supplement';
+import { AI_SINGLE_REQUEST_TIMEOUT_MS } from './chapterWritePresets';
 import {
   TYPESETTING_HARD_RULES,
   buildWritingRulesWithTypesetting,
@@ -85,19 +86,35 @@ function createStructuredAIFromActiveProvider(signal?: AbortSignal): StructuredA
       }
       const { requireAIService } = useActiveAIProvider();
       const service = requireAIService();
-      const raw = await service.complete(request.prompt, {
-        system: [
-          request.system,
-          `schemaName=${request.schemaName}`,
-          '只输出合法 JSON 对象，不要 Markdown 代码块，不要前后解释文字。',
-        ].join('\n'),
-        temperature: request.purpose === 'scene-draft' ? 0.65 : 0.2,
-        signal,
-        // 结构化输出：按 provider 能力启用 JSON 强制（不支持的 provider 自动降级）
-        jsonMode: true,
-      });
-      const parsed = ChapterWritingPipeline.parseStructuredJson(raw);
-      return request.parse(parsed);
+      // 请求级超时护栏：scene-draft 单章需生成 2000 字以上正文，慢模型单次请求
+      // 可达数分钟；不设护栏时依赖 SDK 默认超时（部分适配器仅 30s）会误杀长输出。
+      // 与冒烟测试路径（realStructuredAI）共用 AI_SINGLE_REQUEST_TIMEOUT_MS，
+      // 避免生产/测试行为不对称。classifyError 会把超时归为 timeout（瞬态、可重试）。
+      const timeoutController = new AbortController();
+      const timeoutTimer = setTimeout(
+        () => timeoutController.abort(),
+        AI_SINGLE_REQUEST_TIMEOUT_MS
+      );
+      const combined = signal
+        ? AbortSignal.any([signal, timeoutController.signal])
+        : timeoutController.signal;
+      try {
+        const raw = await service.complete(request.prompt, {
+          system: [
+            request.system,
+            `schemaName=${request.schemaName}`,
+            '只输出合法 JSON 对象，不要 Markdown 代码块，不要前后解释文字。',
+          ].join('\n'),
+          temperature: request.purpose === 'scene-draft' ? 0.65 : 0.2,
+          signal: combined,
+          // 结构化输出：按 provider 能力启用 JSON 强制（不支持的 provider 自动降级）
+          jsonMode: true,
+        });
+        const parsed = ChapterWritingPipeline.parseStructuredJson(raw);
+        return request.parse(parsed);
+      } finally {
+        clearTimeout(timeoutTimer);
+      }
     },
   };
   if (shouldEnableAiTrace()) {
@@ -159,6 +176,11 @@ export interface ChapterWriteInput {
   previousChapter?: { title: string; summary: string; ending: string };
   /** 用户停止时 abort，中断在飞 AI 请求 */
   signal?: AbortSignal;
+  /**
+   * 批量层重试传入的「上一轮失败教训」（透传到 LongFormWritingEngine.seedRevisionHints）。
+   * 让重试不是盲目重跑而是带反馈的定向重写，降低重试浪费。
+   */
+  seedRevisionHints?: string[];
 }
 
 /** 管道输出 */
@@ -706,6 +728,7 @@ export class ChapterWritingPipeline {
         styleGuidance: contracts.master.style,
         maxContextTokens: 24_000,
         targetWordCount: input.targetWordCount,
+        seedRevisionHints: input.seedRevisionHints,
       });
       // coerce 已清洗段落；出口兜底：剥 schema 残留 → 确定性去重（治章末台词重复）→ 排版归一化
       // dedupProse 内部已含 normalizeWebnovelParagraphs，无需外层再调

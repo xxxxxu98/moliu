@@ -516,6 +516,13 @@ export interface LongFormWriteInput {
    * 默认 2：最多 初稿 + 2 次重写；用尽后仍失败则 rejected。
    */
   maxRewriteRounds?: number;
+  /**
+   * 批量层重试时传入的「上一轮失败教训」种子。
+   * 起草前注入到 revisionHints，让重试不是盲目重跑而是带反馈的定向重写——
+   * 模型能据此规避上次的门禁问题（未履约节点 / fact_conflict / 禁区触发等）。
+   * 引擎内部重写循环仍会在此基础上追加新问题的 hints。
+   */
+  seedRevisionHints?: string[];
 }
 
 export interface LongFormWriteResult {

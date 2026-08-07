@@ -165,7 +165,10 @@ export class ContractPackBuilder {
         'fulfillment',
         'evidence',
       ],
-      requiredEvidence: input.review?.requiredEvidence ?? true,
+      // 默认 false：事实提取模型常返回事件但漏引证据原文，导致「事件缺证据」误杀——
+      // 即使正文完美、mustCover 全兑现也会被 blocking 拒收。fulfillment 仍由 mustCover
+      // 语义审查把关，fact_conflict 仍永远 blocking，质量底线不破，只是不再因证据格式不全误杀。
+      requiredEvidence: input.review?.requiredEvidence ?? false,
       maxWarnings: input.review?.maxWarnings ?? 3,
       mustCheck: unique([
         ...healedChapter.mustCover,

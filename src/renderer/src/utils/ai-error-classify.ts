@@ -56,10 +56,10 @@ export interface ClassifiedError {
 
 /**
  * 网络瞬时错误消息特征。
- * 覆盖：fetch 失败、连接重置/超时/拒绝、TLS、断流、429 文案等。
+ * 覆盖：fetch 失败、连接重置/超时/拒绝、TLS、断流、429 文案、空响应体等。
  */
 const TRANSIENT_NETWORK_RE =
-  /socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|ERR_CONNECTION_CLOSED|fetch\s*(\(\))?|failed to fetch|network|TLS|disconnected|connection\s+(closed|reset|aborted)|too many requests|429|server overload|unable to handle additional requests/iu;
+  /socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|ERR_CONNECTION_CLOSED|fetch\s*(\(\))?|failed to fetch|network|TLS|disconnected|connection\s+(closed|reset|aborted)|too many requests|429|server overload|unable to handle additional requests|response body is null|body is null/iu;
 
 /**
  * JSON 截断 / 解析失败特征。

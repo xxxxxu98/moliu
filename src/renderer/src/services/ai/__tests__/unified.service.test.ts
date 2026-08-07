@@ -66,16 +66,17 @@ describe('UnifiedAIService.complete - jsonMode 强制 JSON 输出', () => {
     expect(chatOpts.responseFormat).toBeUndefined();
   });
 
-  it('jsonMode=true 时 stream 分支（带 signal）同样携带 responseFormat', async () => {
+  it('jsonMode=true 时带 signal 的非流式 chat 同样携带 responseFormat', async () => {
     const service = makeService('openai');
     stubClient(service);
 
     const controller = new AbortController();
     await service.complete('返回 JSON', { jsonMode: true, signal: controller.signal });
 
-    expect(streamMock).toHaveBeenCalledTimes(1);
-    const [, streamOpts] = streamMock.mock.calls[0] as [unknown, Record<string, unknown>];
-    expect(streamOpts.responseFormat).toEqual({ type: 'json_object' });
+    // complete() 带 signal 现走非流式 chat()（非 stream），jsonMode 仍透传 responseFormat
+    expect(chatMock).toHaveBeenCalledTimes(1);
+    const [, chatOpts] = chatMock.mock.calls[0] as [unknown, Record<string, unknown>];
+    expect(chatOpts.responseFormat).toEqual({ type: 'json_object' });
   });
 
   it('jsonMode=false 显式传入时保持原行为（不携带 responseFormat）', async () => {
@@ -233,32 +234,23 @@ describe('UnifiedAIService 内部 JSON 方法 - JSON 强制覆盖', () => {
   });
 });
 
-describe('UnifiedAIService.complete - stream 路径瞬态错误内层重试', () => {
-  function stubStream(service: UnifiedAIService, impl: () => AsyncGenerator): void {
-    // 真实 SDK 的 stream 对象带 cancel()；mock 需补上以免 abort 时抛 TypeError
-    const wrapped = (): AsyncGenerator & { cancel: () => void } => {
-      const gen = impl();
-      return Object.assign(gen, { cancel: () => undefined });
-    };
+describe('UnifiedAIService.complete - chat 路径瞬态错误内层重试（非流式）', () => {
+  function stubChat(service: UnifiedAIService, impl: () => Promise<string>): void {
+    // complete() 现走非流式 chat()；mock chat 返回完整 content 字符串
     (service as unknown as { client: unknown }).client = {
-      stream: vi.fn().mockImplementation(wrapped),
+      chat: vi.fn().mockImplementation(impl),
     };
   }
 
-  /** 构造一个成功吐出 content 的 async generator */
-  async function* successGen(content = '{"ok":true}'): AsyncGenerator {
-    yield { content, done: true };
-  }
-
-  it('瞬态网络错误重试后成功（stream 调用 2 次）', async () => {
+  it('瞬态网络错误重试后成功（chat 调用 2 次）', async () => {
     const service = makeService('openai');
     let calls = 0;
-    stubStream(service, async function* () {
+    stubChat(service, async () => {
       calls++;
       if (calls === 1) {
         throw new TypeError('fetch failed');
       }
-      yield* successGen();
+      return '{"ok":true}';
     });
 
     const ctrl = new AbortController();
@@ -270,7 +262,7 @@ describe('UnifiedAIService.complete - stream 路径瞬态错误内层重试', ()
 
   it('重试次数用尽后抛出最后一个错误', async () => {
     const service = makeService('openai');
-    stubStream(service, async function* () {
+    stubChat(service, async () => {
       throw new TypeError('fetch failed');
     });
 
@@ -287,7 +279,7 @@ describe('UnifiedAIService.complete - stream 路径瞬态错误内层重试', ()
       name: 'AIError',
       status: 400,
     });
-    stubStream(service, async function* () {
+    stubChat(service, async () => {
       calls++;
       throw providerErr;
     });
@@ -302,13 +294,13 @@ describe('UnifiedAIService.complete - stream 路径瞬态错误内层重试', ()
   it('退避期间用户 abort 则立即抛出 AbortError，不再重试', async () => {
     const service = makeService('openai');
     let calls = 0;
-    stubStream(service, async function* () {
+    stubChat(service, async () => {
       calls++;
       throw new TypeError('fetch failed');
     });
 
     const ctrl = new AbortController();
-    // 在 stream 第一次失败进入退避后立即 abort
+    // 在 chat 第一次失败进入退避后立即 abort
     // （退避 1s，我们用 setTimeout 在 50ms 后 abort）
     setTimeout(() => ctrl.abort(), 50);
 
@@ -318,12 +310,12 @@ describe('UnifiedAIService.complete - stream 路径瞬态错误内层重试', ()
     expect(calls).toBe(1); // 第 1 次失败后进入退避，退避中被 abort，没再重试
   });
 
-  it('signal 预先 abort 时不调用 stream', async () => {
+  it('signal 预先 abort 时不调用 chat', async () => {
     const service = makeService('openai');
     let calls = 0;
-    stubStream(service, async function* () {
+    stubChat(service, async () => {
       calls++;
-      yield* successGen();
+      return '{"ok":true}';
     });
 
     const ctrl = new AbortController();
@@ -333,5 +325,24 @@ describe('UnifiedAIService.complete - stream 路径瞬态错误内层重试', ()
       service.complete('返回 JSON', { signal: ctrl.signal })
     ).rejects.toThrow();
     expect(calls).toBe(0);
+  });
+
+  it('chat 进行中 abort 通过 Promise.race 立即抛出 AbortError', async () => {
+    // chat() 不支持 signal；raceChatWithSignal 用 Promise.race 监听 abort
+    const service = makeService('openai');
+    let calls = 0;
+    stubChat(service, () => {
+      calls++;
+      // 模拟慢请求：永不 resolve（真实场景是底层 fetch 卡住）
+      return new Promise<string>(() => undefined);
+    });
+
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 50);
+
+    await expect(
+      service.complete('返回 JSON', { signal: ctrl.signal })
+    ).rejects.toThrow();
+    expect(calls).toBe(1); // chat 已发起（1 次），abort 后立即解除阻塞
   });
 });

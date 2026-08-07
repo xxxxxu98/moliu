@@ -44,3 +44,17 @@ export function resolveChapterWriteOptions(
     enableSupplement: overrides?.enableSupplement ?? preset.enableSupplement,
   };
 }
+
+/**
+ * 单次 AI / chat-completion 请求的超时上限（SSOT）。
+ *
+ * scene-draft 单章需生成 2000 字以上正文，慢模型（如 deepseek-v4-flash）单次请求
+ * 实测可达 3-5 分钟甚至更长。过短的超时会误杀正常长输出（曾因 120s 连续触发
+ * socket hang up 导致整批续写失败）。
+ *
+ * 生产路径（createStructuredAIFromActiveProvider）与冒烟测试路径（realStructuredAI）
+ * 必须共用此值，避免「测试能跑通、生产超时」的不对称。
+ *
+ * 注意：依赖此 AI 的 vitest 用例超时必须 ≥ 此值，否则 hung request 会先撞测试超时。
+ */
+export const AI_SINGLE_REQUEST_TIMEOUT_MS = 1_800_000; // 30 分钟

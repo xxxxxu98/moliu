@@ -678,6 +678,11 @@ export interface ContinueWriteSession {
      * 默认 false；vitest 环境无 electronAPI 时文件保存与 AI 增强自动降级。
      */
     enableMemoryExtract?: boolean;
+    /**
+     * 批量层重试传入的「上一轮失败教训」种子（透传到 pipeline.seedRevisionHints）。
+     * 让重试不是盲目重跑而是带反馈的定向重写。
+     */
+    seedRevisionHints?: string[];
   }): Promise<ContinueWriteChapterRunResult>;
   dispose(): void;
 }
@@ -833,6 +838,7 @@ export function openContinueWriteSession(options: {
           ...batchFlags,
           previousChapter: buildBatchPreviousChapter(previous),
           signal: chapterOptions.signal,
+          seedRevisionHints: chapterOptions.seedRevisionHints,
         });
       }
 
@@ -965,6 +971,9 @@ export async function runContinueWriteChapters(options: {
       let lastErrorKind: ErrorKind = 'unknown';
       let persistentAttempts = 0;
       let aborted = false;
+      // 上一轮失败的门禁反馈：重试时作为 seedRevisionHints 传入，让重试带教训而非盲目重跑。
+      // 仅 review/wordcount 类失败会产出 gateResult；网络/超时类失败 gateResult 为 null（无需 seed）。
+      let seedRevisionHints: string[] | undefined;
       for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
         if (options.signal?.aborted) { aborted = true; break; }
         try {
@@ -980,6 +989,7 @@ export async function runContinueWriteChapters(options: {
             writingStyle: options.writingStyle,
             signal: options.signal,
             enableMemoryExtract: options.enableMemoryExtract,
+            seedRevisionHints,
           });
           lastError = finalResult.output.error ?? '';
         } catch (error) {
@@ -987,6 +997,18 @@ export async function runContinueWriteChapters(options: {
           finalResult = null;
         }
         if (finalResult?.output.success) break;
+
+        // 从本轮失败的门禁结果提取 blocking 问题，作为下一轮重试的反馈种子
+        if (finalResult?.output.gateResult) {
+          const blocking = finalResult.output.gateResult.gates.flatMap(g => g.issues)
+            .filter(issue => issue.severity === 'critical')
+            .map(issue => issue.description)
+            .filter((desc): desc is string => Boolean(desc))
+            .slice(0, 5);
+          if (blocking.length > 0) {
+            seedRevisionHints = blocking;
+          }
+        }
 
         // 错误分级（对齐 useBatchWriter:1162-1164）
         const classified = classifyError(new Error(lastError), options.signal);

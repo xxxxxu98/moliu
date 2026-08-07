@@ -91,6 +91,15 @@ describe('classifyError', () => {
       const result = classifyError(new Error('socket hang up: ECONNRESET'));
       expect(result.kind).toBe('network');
     });
+
+    // multi-ai-sdk 适配器在响应体为空时抛 AIError("Response body is null")（无 status），
+    // 本质是网关/流式断连的瞬态症状，必须走重试而非误判为 unknown（持久、不可重试）。
+    it('Response body is null 归为 network（瞬态、可重试）', () => {
+      const result = classifyError(new Error('Response body is null'));
+      expect(result.kind).toBe('network');
+      expect(result.retryable).toBe(true);
+      expect(result.transient).toBe(true);
+    });
   });
 
   describe('HTTP 状态码分类（multi-ai-sdk AIError）', () => {
@@ -137,6 +146,18 @@ describe('classifyError', () => {
         new Error('AI 返回的结构化 JSON 无法解析：括号不匹配')
       );
       expect(result.kind).toBe('truncated');
+    });
+
+    // SceneDraftEngine.coerceSceneDraft 在模型未返回正文段落时抛此错（文案刻意含
+    // 「AI 未返回可解析的结构化 JSON」以命中 TRUNCATED_RE）。空段落多半是流式响应
+    // 中途断开 / 模型只返回标题的连带症状，应归类为 truncated 走重试，而非 unknown。
+    it('场景未返回可用正文段落 归为 truncated（瞬态、可重试）', () => {
+      const result = classifyError(
+        new Error('场景 chapter-1:CBN 未返回可用正文段落（AI 未返回可解析的结构化 JSON）')
+      );
+      expect(result.kind).toBe('truncated');
+      expect(result.retryable).toBe(true);
+      expect(result.transient).toBe(true);
     });
   });
 

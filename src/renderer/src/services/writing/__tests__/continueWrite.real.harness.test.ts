@@ -129,7 +129,8 @@ describe.skipIf(!isRealAiEnabled())('continueWrite REAL AI · Pipeline 正式路
       // eslint-disable-next-line no-console
       console.log(`[REAL_AI] prose.tail=\n${output.prose.slice(-300)}`);
     },
-    600_000
+    // 与 realStructuredAI 单请求超时（30min）对齐，hung request 不会先撞测试超时
+    1_800_000
   );
 });
 

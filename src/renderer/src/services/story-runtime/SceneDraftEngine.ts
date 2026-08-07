@@ -105,7 +105,12 @@ export function coerceSceneDraft(
   const paragraphs = sanitizeSceneDraftParagraphs(extractParagraphs(payload));
 
   if (paragraphs.length === 0) {
-    throw new Error(`场景 ${beat.id} 未返回可用正文段落`);
+    // 文案含「AI 未返回可解析的结构化 JSON」以匹配 ai-error-classify 的 TRUNCATED_RE，
+    // 归类为 truncated（瞬态、可重试）——空段落多半是流式响应中途断开/模型只返回标题的连带症状，
+    // 不应被误判为 unknown（持久、不可重试）而浪费整章重试预算。
+    throw new Error(
+      `场景 ${beat.id} 未返回可用正文段落（AI 未返回可解析的结构化 JSON）`
+    );
   }
 
   const chapterTitle = extractChapterTitle(payload);

@@ -203,7 +203,9 @@ export class LongFormWritingEngine {
       checkedDomains: [],
     };
     let rewriteRounds = 0;
-    let revisionHints: string[] | undefined;
+    // 批量层重试可能传入「上一轮失败教训」种子：初稿即带反馈，避免盲目重跑。
+    // 种子只影响首次起草；后续重写循环会用本轮 report 追加新 hints 覆盖。
+    let revisionHints: string[] | undefined = writeInput.seedRevisionHints;
 
     while (true) {
       // Step A：起草 + 补字。瞬态错误（网络/截断）步骤级重试，持久错误冒泡。
@@ -447,10 +449,9 @@ export class LongFormWritingEngine {
         break;
       }
 
-      // 结尾闭合判断：正文已完整收尾（CEN 兑现 + 章末钩子落地）且字数达 SUPPLEMENT_STOP_THRESHOLD（85%）时，
+      // 结尾闭合判断：正文已完整收尾（CEN 兑现 + 章末钩子落地）且字数达 SUPPLEMENT_STOP_THRESHOLD 时，
       // 不再补写，避免在自然章末后硬塞注水段（实测「陈默冷笑，他早已料到」类尾巴）。
-      // 阈值与 MIN_WORD_THRESHOLD 对齐：消除「补字停在 80% 但字数 blocking 判定要 85%」的灰区
-      // （此前补字停在 80% 会落入 1600-1700 字灰区，被 commit 放过形成短章）。
+      // 阈值与 MIN_WORD_THRESHOLD 对齐：消除「补字停在更低比例但字数 blocking 判定要更高」的灰区。
       // 判断器失败时返回 closed=false，降级为原按字数补写逻辑。
       if (check.currentWords >= Math.floor(target * SUPPLEMENT_STOP_THRESHOLD)) {
         const closure = await this.judgeEndingClosure(

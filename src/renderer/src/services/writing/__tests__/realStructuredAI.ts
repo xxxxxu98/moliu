@@ -1,5 +1,6 @@
 import type { ProviderType } from '@/config/ai-providers';
 import { AIServiceFactory } from '@/services/ai/factory';
+import { AI_SINGLE_REQUEST_TIMEOUT_MS } from '@/services/writing/chapterWritePresets';
 import type { StructuredAI, StructuredAIRequest } from '@/types/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 
@@ -62,14 +63,22 @@ export function createRealStructuredAI(
   // 直接调 service.complete，不包 withTransientRetry（真实 App 无此层）。
   // 瞬态重试由 LongFormWritingEngine.runStepWithTransientRetry（步骤级）+
   // 批量层错误分级重试兜住，与生产一致。
-  // 仅保留 120s 超时护栏作为环境保护（防 AI hang 死拖垮整个冒烟到 vitest 超时）。
+  // 超时护栏作为环境保护（防 AI hang 死拖垮整个冒烟到 vitest 超时）。
+  // scene-draft 单章需生成 2000 字以上正文，部分慢模型（如 deepseek-v4-flash）单次请求
+  // 实测可达 3-5 分钟甚至更长，过短的超时会误杀正常长输出（曾连续触发 socket hang up）。
+  // 与生产路径（createStructuredAIFromActiveProvider）共用 AI_SINGLE_REQUEST_TIMEOUT_MS，
+  // 避免「测试能跑通、生产超时」的不对称；瞬态失败仍由上层重试兜住。
+  // 注意：依赖此 AI 的 vitest 用例超时必须 ≥ 此值，否则 hung request 会先撞测试超时。
   return {
     async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
       if (signal?.aborted) {
         throw new DOMException('Aborted', 'AbortError');
       }
       const timeoutController = new AbortController();
-      const timeoutTimer = setTimeout(() => timeoutController.abort(), 120_000);
+      const timeoutTimer = setTimeout(
+        () => timeoutController.abort(),
+        AI_SINGLE_REQUEST_TIMEOUT_MS
+      );
       const combined = signal
         ? AbortSignal.any([signal, timeoutController.signal])
         : timeoutController.signal;

@@ -271,8 +271,9 @@ describe('SceneDraftEngine.draft', () => {
     await engine.draft(plan, context, { targetWordCount: 3000 });
 
     const request = generate.mock.calls[0][0] as { system: string; prompt: string };
-    expect(request.system).toContain('2550–3450');
-    expect(request.system).toContain('85%–115%');
+    // MIN_WORD_THRESHOLD=0.80：3000 → 下限 2400；MAX_WORD_THRESHOLD=1.15 → 上限 3450
+    expect(request.system).toContain('2400–3450');
+    expect(request.system).toContain('80%–115%');
     expect(request.system).toContain('高于 3450');
     const prompt = JSON.parse(request.prompt) as {
       writingRules: {
@@ -288,7 +289,7 @@ describe('SceneDraftEngine.draft', () => {
       endOnCEN: true,
       forbidFutureChapterPayoffs: true,
       targetWordCount: 3000,
-      minWordCount: 2550,
+      minWordCount: 2400, // MIN_WORD_THRESHOLD=0.80 × 3000
       maxWordCount: 3450,
     });
   });

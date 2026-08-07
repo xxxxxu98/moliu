@@ -51,8 +51,9 @@ import { resolveContinueWriteRealConfig } from '@/services/writing/__tests__/con
 import { isRealAiEnabled } from '@/services/writing/__tests__/realStructuredAI';
 
 const WORD_COUNT_RANGE = '30万-60万';
-/** 单模块超时：实测 ~280-440s（含 429 退避），留 2 倍余量 */
-const MODULE_TIMEOUT = 900_000;
+/** 单模块超时：与 realStructuredAI 单请求超时（30min）对齐，
+ *  实测模块耗时 ~280-440s（含 429 退避），hung request 不会先撞测试超时 */
+const MODULE_TIMEOUT = 1_800_000;
 
 /** 软问题阈值（P1-1 统一）：与 outline-reviewer.OPENING_HOOK_LIMIT 对齐 */
 const OPENING_HOOK_SOFT_LIMIT = 35;

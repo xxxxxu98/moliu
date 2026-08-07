@@ -100,7 +100,8 @@ export class EnhancedContextAgent {
         mustCover: enrichMustCoverWithVolumeSellingPoints(
           chapterContract?.directive?.mustCoverNodes || [],
           volumePlanSellingPointCandidates(this.resolveVolumePlan(project, input.chapterNumber)),
-          chapterContract?.directive?.forbiddenZones || []
+          chapterContract?.directive?.forbiddenZones || [],
+          input.chapterNumber
         ),
         forbiddenZones: normalizeForbiddenZonesByChapter(
           chapterContract?.directive?.forbiddenZones || [],
@@ -651,35 +652,73 @@ export function matchVolumePlanByIndex(
 }
 
 /**
- * 从卷计划收集卖点候选（卷高光 > 卷目标 > 核心冲突 > 必付伏笔），去空。
+ * 从卷计划收集卖点候选（卷目标 > 核心冲突 > 必付伏笔），去空。
+ *
+ * 刻意排除卷高潮 climax：climax 是本卷收尾的高光，往往落在中后期某具体章
+ * （AI 常写成「第59章，主角在朝会上当众拆穿旧党首领的贪污证据」）。
+ * 把它注入开篇章的 mustCover 会让履约审核判「未兑现」并强制整章重写，
+ * 迫使正文提前透支卷级高潮、打乱全卷节拍。卷目标 objective 与核心冲突
+ * 才是「可单章兑现」的推进型卖点，更贴合 P2 传导的设计意图。
  */
 export function volumePlanSellingPointCandidates(
   plan: VolumePlanLike | undefined
 ): string[] {
   if (!plan) return [];
-  return [plan.climax, plan.objective, plan.coreConflict, ...(plan.payoffForeshadows ?? [])]
+  return [plan.objective, plan.coreConflict, ...(plan.payoffForeshadows ?? [])]
     .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
     .map(item => item.trim());
+}
+
+/**
+ * 判断子句是否引用了远期章节。AI 在卷计划里常把高光写成「第59章，主角在朝会上
+ * 当众拆穿旧党首领的贪污证据」——这种带具体章号的卷级目标天然属于远期兑现点，
+ * 注入当前章 mustCover 会触发履约审核判「未兑现」并强制重写，迫使正文提前透支
+ * 后续高潮。给 isCrossChapterGoal 补一道章号引用识别（后者只认时限/威胁式跨章目标）。
+ *
+ * 判定：子句含「第N章」且 N 超过当前章 + horizon（默认 5，即本卷近 5 章视窗内的
+ * 章号引用仍可作为近期铺垫注入；超出视窗则属远期目标，跳过）。
+ */
+export function referencesFutureChapter(
+  clause: string,
+  chapterNumber: number,
+  horizon: number = 5
+): boolean {
+  if (!clause || chapterNumber <= 0) return false;
+  const numbers = [...clause.matchAll(/第\s*(\d+)\s*章/gu)]
+    .map(match => Number(match[1]))
+    .filter(Number.isFinite);
+  if (numbers.length === 0) return false;
+  const ceiling = chapterNumber + Math.max(0, horizon);
+  return numbers.some(number => number > ceiling);
 }
 
 /**
  * P2 卖点传导：把卷计划里「可单章兑现」的高光场景补入 mustCover（最多 1 条）。
  * 过滤规则：
  * - 按中文标点拆子句，只取 8–40 字；
- * - 排除跨章目标（限期/威胁组合，纳入即死锁）、模板钩子、读者元文本；
+ * - 排除跨章目标（限期/威胁组合、远期章号引用，纳入即死锁或提前透支）、模板钩子、读者元文本；
  * - 与既有 mustCover 重叠的跳过。
  * 这样正文有机会写到书名承诺的核心爽点（如「厉鬼群自动让开一条路」），
  * 而不是只复述上章结尾。
+ *
+ * chapterNumber 用于过滤远期章号引用（如「第59章…」对第1章而言是远期目标），
+ * 不传时退化为不过滤章号引用（保留向后兼容，但建议始终传入）。
  */
 export function enrichMustCoverWithVolumeSellingPoints(
   mustCover: string[],
   sellingPointCandidates: string[],
-  forbiddenZones: string[] = []
+  forbiddenZones: string[] = [],
+  chapterNumber?: number
 ): string[] {
   if (!sellingPointCandidates || sellingPointCandidates.length === 0) {
     return mustCover;
   }
   for (const candidate of sellingPointCandidates) {
+    // 远期章号引用（如卷级目标「第59章，主角在朝会上当众拆穿旧党首领的贪污证据」）
+    // 必须在拆子句之前判定：splitPlotClauses 按逗号切分后会把章号独立成片并因长度<4
+    // 被过滤掉，剩下不带章号的情节子句会绕过章号检查被注入，反而触发履约审核判
+    // 未兑现、强制重写透支后续高潮。整个候选一旦含远期章号引用即整体跳过。
+    if (chapterNumber && referencesFutureChapter(candidate, chapterNumber)) continue;
     const clauses = splitPlotClauses(stripReaderMeta(candidate));
     for (const clause of clauses) {
       if (clause.length < 8 || clause.length > 40) continue;

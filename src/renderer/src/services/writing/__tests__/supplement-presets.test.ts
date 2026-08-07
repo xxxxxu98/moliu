@@ -32,7 +32,7 @@ describe('checkWordCount', () => {
     expect(result.targetWords).toBe(1000);
   });
 
-  it('达到 85% 阈值时不需要补写', () => {
+  it('达到阈值时不需要补写', () => {
     const target = 100;
     const minRequired = Math.floor(target * MIN_WORD_THRESHOLD);
     const content = '字'.repeat(minRequired);
@@ -43,18 +43,29 @@ describe('checkWordCount', () => {
 });
 
 describe('checkWordCountBounds', () => {
-  it('落在 85%–115% 为 ok', () => {
+  it('落在 [MIN_WORD_THRESHOLD, MAX_WORD_THRESHOLD] 区间为 ok', () => {
     const target = 1000;
     const content = '字'.repeat(Math.floor(target * 0.95));
     expect(checkWordCountBounds(content, target).status).toBe('ok');
   });
 
-  it('低于 85% 为 short，高于 115% 为 over', () => {
+  it('低于阈值为 short，高于 115% 为 over', () => {
     const target = 1000;
     expect(checkWordCountBounds('字'.repeat(500), target).status).toBe('short');
     expect(
       checkWordCountBounds('字'.repeat(Math.ceil(target * MAX_WORD_THRESHOLD) + 1), target).status
     ).toBe('over');
+  });
+
+  // 回归：MIN_WORD_THRESHOLD=0.80 时，~81% 的正文（实测 ch1 1628/2000=81.4% 场景）
+  // 应判 ok 而非 short——此前 0.85 会把这类擦边章判 blocking 拒收，浪费整章重试预算。
+  it('MIN_WORD_THRESHOLD=0.80：~81% 正文判 ok（回归 ch1 1628/2000 场景）', () => {
+    expect(MIN_WORD_THRESHOLD).toBe(0.8);
+    const target = 2000;
+    // 1628 字 = 81.4%，应落在 [80%, 115%] 区间
+    expect(checkWordCountBounds('字'.repeat(1628), target).status).toBe('ok');
+    // 79% 仍应判 short（阈值没放得太松）
+    expect(checkWordCountBounds('字'.repeat(1580), target).status).toBe('short');
   });
 });
 

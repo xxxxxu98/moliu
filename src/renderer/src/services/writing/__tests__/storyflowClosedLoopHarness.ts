@@ -13,6 +13,10 @@
  * 测试环境桩（仅替换环境副作用，业务代码全部真实）：
  * - window.electronAPI：内存实现（模拟主进程 moliu-projects.json 存储）
  * - vue-router：由测试文件 vi.mock（useProjectCreator 依赖 useRouter）
+ *
+ * 覆盖范围：续写阶段固定 forceStoryRuntime=true → 仅覆盖 LongFormWritingEngine 正式长篇
+ * 分支。StateDriven orchestrator 分支在生产 Electron 中因 preload（src/preload.ts）无条件
+ * 注册 storyRuntime 而 hasStoryRuntime() 恒真、永不触发，属兜底死路径，故不纳入闭环冒烟。
  */
 
 import { createPinia, setActivePinia } from 'pinia';
