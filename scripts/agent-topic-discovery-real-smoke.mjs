@@ -19,11 +19,17 @@ process.env.REAL_AI = process.env.REAL_AI || '1';
 
 console.log('[smoke:topic-discovery:real] 六模块真实链路（seeds/radar/mix/dice/twist/prompt）');
 
-// ---------- 清理上一轮产物，避免新旧混淆 ----------
-// topic-discovery 产物：topic-discovery.real.summary.json；trace 按时间戳命名不冲突。
-cleanupSmokeArtifacts('smoke:topic-discovery:real', [
-  'topic-discovery.real.summary.json',
-]);
+// ---------- 清理上一轮产物与 trace，避免新旧混淆 ----------
+// 产物：temp/ 下 topic-discovery.* 的 summary 及带后缀的 .bak 孪生产物；
+// trace：temp/ai-traces/ 下 outline-topic-*（本轮冒烟自己的，不碰其它冒烟的）。
+cleanupSmokeArtifacts(
+  'smoke:topic-discovery:real',
+  [],
+  {
+    prefixes: ['topic-discovery.'],
+    tracePrefixes: ['outline-topic-'],
+  },
+);
 
 const result = spawnSync(
   'npm',

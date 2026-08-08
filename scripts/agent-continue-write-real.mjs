@@ -10,7 +10,7 @@
  * - temp/continue-write.real.steps.txt
  * - temp/ai-traces/continue-write-real-*.jsonl
  *
- * 跑完自动清理更早的轨迹（默认保留最近 3 次）。
+ * 跑前清本轮冒烟自己的全部产物与 trace（不保留历史，避免新旧混淆误判）。
  */
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, readdirSync, statSync } from 'node:fs';
@@ -36,11 +36,23 @@ if (!existsSync(configPath)) {
 
 console.log(`[smoke:continue-write:real] config=${configPath}`);
 
-// ---------- 清理上一轮产物，避免新旧混淆 ----------
-// 单章产物：continue-write.real.{summary,steps,report}.*；trace 按时间戳命名不冲突。
-cleanupSmokeArtifacts('smoke:continue-write:real', [], {
-  prefixes: ['continue-write.real.'],
-});
+// ---------- 清理上一轮产物与 trace，避免新旧混淆 ----------
+// 产物：temp/ 下 continue-write.real.* 的 summary/steps/report 及带后缀的 .bak；
+// trace：temp/ai-traces/ 下 continue-write-real-*/continue-write-harness*（本轮冒烟自己的，
+//   不碰 storyflow/topic 等其它冒烟的 trace）。
+// keepNames：配置文件与模板不能删（否则下次跑冒烟无配置可读）。
+cleanupSmokeArtifacts(
+  'smoke:continue-write:real',
+  [],
+  {
+    prefixes: ['continue-write.real.'],
+    tracePrefixes: ['continue-write-real-', 'continue-write-harness'],
+    keepNames: new Set([
+      'continue-write.real.config.json',
+      'continue-write.real.config.example.json',
+    ]),
+  },
+);
 
 const result = spawnSync(
   'npm',
@@ -55,15 +67,6 @@ const result = spawnSync(
   ],
   { stdio: 'inherit', shell: true, env: process.env }
 );
-
-const cleanup = spawnSync('node', ['scripts/cleanup-continue-write-artifacts.mjs'], {
-  stdio: 'inherit',
-  shell: true,
-  env: process.env,
-});
-if ((cleanup.status ?? 1) !== 0) {
-  console.warn('[smoke:continue-write:real] 产物清理未完全成功，可手动 npm run cleanup:continue-write-artifacts');
-}
 
 const traceDir = join(process.cwd(), 'temp', 'ai-traces');
 if (existsSync(traceDir)) {

@@ -13,6 +13,8 @@
  * 产物：
  * - temp/storyflow.closed-loop.summary.json
  * - temp/ai-traces/storyflow-*.jsonl
+ *
+ * 跑前清本轮冒烟自己的全部产物与 trace（不保留历史，避免新旧混淆误判）。
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, statSync } from 'node:fs';
@@ -24,11 +26,9 @@ process.env.REAL_AI = process.env.REAL_AI || '1';
 
 console.log('[smoke:storyflow:real] 真实 AI 闭环：大纲生成 → 应用 → 批量续写');
 
-// ---------- 清理上一轮产物，避免新旧混淆 ----------
-// 删除 storyflow.closed-loop.* 的 outline / summary / prose；
-// 同时按前缀兜底清理带后缀的孪生产物（.bak / .before-fix.*.bak / 带时间戳的备份目录）——
-// 此前只做精确名匹配，删不掉 prose.2026-08-07T02-30-19.bak 这类旧轮次残留目录，
-// 导致新旧章节混拼、误判「跨章断裂」。trace 文件按时间戳命名不冲突，保留供历史对比。
+// ---------- 清理上一轮产物与 trace，避免新旧混淆 ----------
+// 产物：temp/ 下 storyflow.closed-loop.* 的 outline/summary/prose 及带后缀的 .bak 孪生产物；
+// trace：temp/ai-traces/ 下 storyflow-*（本轮冒烟自己的，不碰 continue-write/topic 等）。
 cleanupSmokeArtifacts(
   'smoke:storyflow:real',
   [
@@ -36,7 +36,10 @@ cleanupSmokeArtifacts(
     'storyflow.closed-loop.summary.json',
     'storyflow.closed-loop.prose',
   ],
-  { prefixes: ['storyflow.closed-loop.'] },
+  {
+    prefixes: ['storyflow.closed-loop.'],
+    tracePrefixes: ['storyflow-'],
+  },
 );
 
 const result = spawnSync(

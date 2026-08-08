@@ -8,7 +8,7 @@
  * - chapterNumber：起始章（默认 1）
  * - chapterCount：连续章数（默认至少 3；也可用 MOLIU_CHAPTER_COUNT）
  *
- * 跑完自动清理更早的轨迹（默认保留最近 3 次）。
+ * 跑前清本轮冒烟自己的全部产物与 trace（不保留历史，避免新旧混淆误判）。
  */
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, readdirSync, statSync } from 'node:fs';
@@ -39,11 +39,21 @@ console.log(
   `[smoke:continue-write:real:multi] config=${configPath} chapterCount=${process.env.MOLIU_CHAPTER_COUNT}`
 );
 
-// ---------- 清理上一轮产物，避免新旧混淆 ----------
-// 多章产物：continue-write.real.{multi.,}{summary,steps,report}.*；trace 按时间戳命名不冲突。
-cleanupSmokeArtifacts('smoke:continue-write:real:multi', [], {
-  prefixes: ['continue-write.real.'],
-});
+// ---------- 清理上一轮产物与 trace，避免新旧混淆 ----------
+// 与单章脚本同策略：产物按前缀清（含 .bak），trace 跑前全清本轮冒烟自己的。
+// keepNames：配置文件与模板不能删。
+cleanupSmokeArtifacts(
+  'smoke:continue-write:real:multi',
+  [],
+  {
+    prefixes: ['continue-write.real.'],
+    tracePrefixes: ['continue-write-real-', 'continue-write-harness'],
+    keepNames: new Set([
+      'continue-write.real.config.json',
+      'continue-write.real.config.example.json',
+    ]),
+  },
+);
 
 const result = spawnSync(
   'npm',
@@ -58,17 +68,6 @@ const result = spawnSync(
   ],
   { stdio: 'inherit', shell: true, env: process.env }
 );
-
-const cleanup = spawnSync('node', ['scripts/cleanup-continue-write-artifacts.mjs'], {
-  stdio: 'inherit',
-  shell: true,
-  env: process.env,
-});
-if ((cleanup.status ?? 1) !== 0) {
-  console.warn(
-    '[smoke:continue-write:real:multi] 产物清理未完全成功，可手动 npm run cleanup:continue-write-artifacts'
-  );
-}
 
 const traceDir = join(process.cwd(), 'temp', 'ai-traces');
 if (existsSync(traceDir)) {
