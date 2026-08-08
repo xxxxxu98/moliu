@@ -19,7 +19,7 @@
  * 注册 storyRuntime 而 hasStoryRuntime() 恒真、永不触发，属兜底死路径，故不纳入闭环冒烟。
  */
 
-import { createPinia, setActivePinia } from 'pinia';
+import { createPinia, getActivePinia, setActivePinia } from 'pinia';
 
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -148,8 +148,14 @@ function installMemoryElectronAPI(): Map<string, Project> {
 
 /** 注入真实 AI 配置到 settingsStore（UnifiedOutlineGenerator.getAIConfig 依赖它） */
 function injectSettingsStore(cfg: ResolvedRealAiConfig): void {
-  const pinia = createPinia();
-  setActivePinia(pinia);
+  // 复用当前 active Pinia（每章 hydrate 后已 setActivePinia）；
+  // 仅在完全没有 active Pinia 时（如开题中心首次调用）才新建。
+  // 此前无条件 createPinia() 会把 hydrate 刚设好的 chapters store 冲掉，
+  // 导致 createChapterPersistenceClient 捕获空 store → syncProjectFromStore 清空 chapters →
+  // 第 2 章「缺少第 2 章」（chapters 闭包变量被同步成空数组）。
+  if (!getActivePinia()) {
+    setActivePinia(createPinia());
+  }
   const settings = useSettingsStore();
   settings.aiProviders = [
     {

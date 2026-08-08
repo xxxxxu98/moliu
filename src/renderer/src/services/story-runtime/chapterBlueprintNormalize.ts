@@ -74,6 +74,15 @@ const CROSS_CHAPTER_DEADLINE_RE = /[0-9一二三四五六七八九十百零两]+
 const CROSS_CHAPTER_DEADLINE_WORD_RE = /限期|截止/u;
 /** 威胁后果标记（须与限期目标组合才判跨章，单独成句是章末钩子） */
 const CROSS_CHAPTER_THREAT_RE = /否则(?:将|就|便会)?(?:被|遭)?/u;
+/**
+ * 流程完成式跨章目标：卷计划 objective 常写成「完成从X到Y的全流程/全过程」，
+ * 这类表述天然是跨章的（整卷主线），单章不可能完整兑现。注入 mustCover 后会触发
+ * 履约审核判「未兑现」并连环重写熔断。检测标志词：
+ * - 「全流程/全过程/整个流程/整个过程」+ 动词「完成/实现/走完/跑通」
+ * - 「从…到…的(全|整个)…」跨度式表述
+ */
+const CROSS_CHAPTER_PROCESS_RE = /(?:完成|实现|走完|跑通|推进).{0,8}(?:全流程|全过程|整个流程|整个过程)/u;
+const CROSS_CHAPTER_SPAN_RE = /从.{2,12}到.{2,12}的(?:全|整个)/u;
 
 /**
  * 跨章目标检测：带时限（三天内/七日内/限期）或「限期+威胁后果」的长目标
@@ -82,6 +91,10 @@ const CROSS_CHAPTER_THREAT_RE = /否则(?:将|就|便会)?(?:被|遭)?/u;
  * 导致 AI 怎么写都过不了履约审核。
  * 注意：不按子句数量判定——「收集证词，锁定真凶，公堂对峙」这类 3 子句节点
  * 是单章可兑现的（且与生成 prompt 的「场景链合并为一条」约束一致），不能误伤。
+ *
+ * 另识别流程完成式跨章目标（卷级 objective 常见）：
+ * 「完成从补亏空到税制改革的全流程」「实现从查账到定罪的全过程」——
+ * 这类是整卷主线，单章无法兑现，注入 mustCover 即死锁。
  */
 export function isCrossChapterGoal(node: string): boolean {
   const text = (node ?? '').trim();
@@ -90,6 +103,8 @@ export function isCrossChapterGoal(node: string): boolean {
   if (CROSS_CHAPTER_DEADLINE_WORD_RE.test(text)) return true;
   // 带威胁后果的限期目标（必须在…翻案，否则将被处斩）；短威胁钩子（否则将被处斩）不算
   if (CROSS_CHAPTER_THREAT_RE.test(text) && text.length >= 12) return true;
+  // 流程完成式跨章目标（卷级 objective 常见）
+  if (CROSS_CHAPTER_PROCESS_RE.test(text) || CROSS_CHAPTER_SPAN_RE.test(text)) return true;
   return false;
 }
 
@@ -395,6 +410,58 @@ function clausesOverlap(a: string, b: string): boolean {
 }
 
 /**
+ * 提取文本中的场景核心实体词（地点/物件/人物类名词片段），用于同义不同字的语义重叠判定。
+ * 如「库房」「军资」「银锭」「地砖」「掌柜」等承载情节核心的实体，过滤掉纯动词/抒情片段。
+ */
+const ENTITY_PATTERN =
+  /库房|地砖|银锭|军资|掌柜|银庄|账册|汇票|亏空|密账|库银|盐引|公堂|县衙|牢房|证据|供词|水印|暗记/gu;
+const ENTITY_RUN_RE = /[\u4e00-\u9fa5]{2,6}/gu;
+
+function extractSceneEntities(text: string): string[] {
+  const cleaned = (text ?? '').replace(/[^\u4e00-\u9fa5]/gu, '');
+  if (!cleaned) return [];
+  const entities = new Set<string>();
+  // 1. 内置核心实体词（高置信度）
+  (cleaned.match(ENTITY_PATTERN) ?? []).forEach((m: string) => entities.add(m));
+  // 2. 含实体字眼的连续中文片段（2-6字，覆盖词表外的实体）
+  (cleaned.match(ENTITY_RUN_RE) ?? []).forEach((frag: string) => {
+    if (frag.length >= 2 && /[银库房军资账票案印砖箱牢庄号掌柜司衙]/u.test(frag)) {
+      entities.add(frag);
+    }
+  });
+  return [...entities];
+}
+
+/**
+ * 判定 CEN 是否与已有 mustCover 语义重叠（同义不同字）。
+ * 判定层级（任一命中即视为重叠，跳过注入）：
+ * 1. 整句子串包含（clausesOverlap）
+ * 2. 子句级子串包含（CEN/mustCover 拆子句后任一对重叠）
+ * 3. 场景核心实体共享（如 CEN「…军资二字…库房…」与 mustCover「库房地下挖出军资银」
+ *    共享「库房」「军资」核心实体，描述同一场景）
+ */
+function cenOverlapsMustCover(cen: string, mustCover: string[]): boolean {
+  const cenText = (cen ?? '').trim();
+  if (!cenText || mustCover.length === 0) return false;
+  // 1. 整句精确/子串包含
+  if (mustCover.some(item => clausesOverlap(cenText, item))) return true;
+  // 2. 子句级重叠
+  const cenClauses = splitPlotClauses(cenText);
+  const coverClauses = mustCover.flatMap(item => splitPlotClauses(item));
+  if (cenClauses.some(cc => coverClauses.some(mc => clausesOverlap(cc, mc)))) {
+    return true;
+  }
+  // 3. 场景核心实体共享（治同义不同字：CEN 与 mustCover 描述同一场景但措辞不同）
+  const cenEntities = extractSceneEntities(cenText);
+  if (cenEntities.length === 0) return false;
+  return mustCover.some(item => {
+    const itemEntities = extractSceneEntities(item);
+    // 至少共享一个核心实体（子串级匹配，如「军资」∈「军资银」）才判重叠
+    return cenEntities.some(ce => itemEntities.some(ie => clausesOverlap(ce, ie)));
+  });
+}
+
+/**
  * 从丰富 CBN 中抽取后半段后果，作为具体章末情节（避免元指令钩子）。
  */
 export function extractCbnConsequence(cbn: string | undefined, events: string[]): string | undefined {
@@ -597,11 +664,14 @@ export function normalizeChapterBlueprint(
   }
   // 有效 CEN 纳入 mustCover，避免章末钩子只写进合同却不验收（跨章目标除外：
   // 「三天内翻案，否则将被处斩」这类目标单章无法完整兑现，纳入即死锁）
+  // 语义去重：CEN 与已有 mustCover 同义不同字时（如 CEN「许衡深夜带人挖开库房地砖…军资二字」
+  // vs mustCover「库房地下挖出军资银」）不重复纳入，避免同一事件被两次验收、
+  // 履约审核因措辞差异反复判「未兑现」连环重写熔断。
   if (
     CEN &&
     !isHollowChapterHook(CEN, CPNs) &&
     !isCrossChapterGoal(CEN) &&
-    !mustCover.includes(CEN)
+    !cenOverlapsMustCover(CEN, mustCover)
   ) {
     mustCover = unique([...mustCover, CEN]);
   }
