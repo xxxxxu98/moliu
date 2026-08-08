@@ -775,7 +775,14 @@ export class ChapterWritingPipeline {
               : prose;
           await this.persistence.replace(input.chapter.id, contentForPersist);
         }
-        await this.memoryClient?.extractAndSave(input.chapter.id, chapterNumber, prose);
+        // 记忆提取（情感分析 + 主题分析）改 fire-and-forget：其结果（chapterMemories）
+        // 不参与下一章起草的 state/ContextPack，纯展示用。去掉 await 避免每章阻塞等
+        // 2 个 AI 请求（真实环境每章省 1-3 分钟）。失败只 warn 不影响主流程。
+        void this.memoryClient
+          ?.extractAndSave(input.chapter.id, chapterNumber, prose)
+          .catch(err => {
+            console.warn('[Pipeline] 记忆提取异步失败（不影响续写）:', err);
+          });
         // 回写 plotOutline 章节节点标题：落库的 Chapter.title 已是短标题，
         // 但 plotOutline 中 type==='chapter' 节点的 title 仍是创建时的占位（第N章）。
         // 同步回写让目录页显示真实标题（仅占位时改，用户手改的标题不覆盖）。

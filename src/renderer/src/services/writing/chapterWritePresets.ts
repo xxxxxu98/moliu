@@ -56,5 +56,9 @@ export function resolveChapterWriteOptions(
  * 必须共用此值，避免「测试能跑通、生产超时」的不对称。
  *
  * 注意：依赖此 AI 的 vitest 用例超时必须 ≥ 此值，否则 hung request 会先撞测试超时。
+ *
+ * 历史值 30 分钟过宽：实测正常请求最长 ~190s，但挂死请求（如 fact-extraction 连接断开
+ * 不返回）要等满 30 分钟才被 abort，单次就吃掉整轮 1/3 时长。8 分钟覆盖正常长输出
+ * （3-5 分钟 ×1.6 余量），挂死时 8 分钟放弃重试，比 30 分钟省 22 分钟/次。
  */
-export const AI_SINGLE_REQUEST_TIMEOUT_MS = 1_800_000; // 30 分钟
+export const AI_SINGLE_REQUEST_TIMEOUT_MS = 480_000; // 8 分钟

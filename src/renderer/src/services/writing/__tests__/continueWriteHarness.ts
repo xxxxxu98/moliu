@@ -954,8 +954,10 @@ export async function runContinueWriteChapters(options: {
   const mode: ContinueWriteMode = options.mode ?? 'batch';
   // 对齐 useBatchWriter：瞬态错误默认 5 次重试
   const maxRetries = Math.max(1, options.maxRetries ?? 5);
-  // 持久错误（schema/审核/字数/auth/4xx）重试上限：给模型换写法的机会，但不重试满 maxRetries
-  const persistentMaxRetries = 3;
+  // 持久错误（schema/审核/字数/auth/4xx）重试上限：给模型换写法的机会，但不重试满 maxRetries。
+  // 从 3 降到 2：review 类错误（角色名冲突/情节未履约）重试意义有限——名字漂移等问题
+  // 重写后大概率复现，3 轮重试（27 次 AI 请求）的耗时成本不划算。白名单注入已从源头减少这类错误。
+  const persistentMaxRetries = 2;
   const session = openContinueWriteSession({
     project: options.project,
     plotOutlineClient: options.plotOutlineClient,
@@ -1021,7 +1023,8 @@ export async function runContinueWriteChapters(options: {
           if (persistentAttempts >= persistentMaxRetries) {
             // eslint-disable-next-line no-console
             console.error(
-              `[runContinueWriteChapters] 第${chapterNumber}章持久错误（${classified.kind}）连续 ${persistentMaxRetries} 次，结束批量：${lastError}`
+              `[runContinueWriteChapters] 第${chapterNumber}章持久错误（${classified.kind}）连续 ${persistentMaxRetries} 次，结束批量：${lastError}\n` +
+                `  提示：review 类错误（角色名冲突/情节未履约）重试意义有限，建议检查大纲角色设定或合同 mustCover 是否合理`
             );
             break;
           }

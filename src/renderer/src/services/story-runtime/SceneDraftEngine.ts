@@ -144,6 +144,12 @@ export interface SceneDraftOptions {
   revisionHints?: string[];
   /** 当前重写轮次（1 起）；仅用于 prompt 标注 */
   rewriteRound?: number;
+  /**
+   * 本章合法角色名白名单（来自完整 state.entities，未被 context 压缩筛选）。
+   * 注入 prompt 约束模型只用已登记角色名，从源头杜绝跨章名字漂移
+   * （如「陈砚」被写成「沈砚」→ fact_conflict → 连环重试）。
+   */
+  allowedCharacterNames?: string[];
 }
 
 export class SceneDraftEngine {
@@ -189,9 +195,23 @@ export class SceneDraftEngine {
         ? [
             `- 本章目标 ${targetWordCount} 字（与编辑器一致：全文长度口径）；paragraphs 合计硬性区间 ${minWordCount}–${maxWordCount} 字（${minPct}%–${maxPct}%）`,
             `- 低于 ${minWordCount} 或高于 ${maxWordCount} 都视为不合格草稿`,
-            `- 优先一次写够关键情节：用对话、动作、感官细节推进，同时用紧凑叙述控制篇幅`,
+            `- 【字数硬要求】这是整章 single-shot 起草，不会有后续补字机会，必须一次写够 ${minWordCount} 字。请充分展开对话、动作、感官细节与场景转换，把 ${targetWordCount} 字的篇幅写满`,
             `- 禁止无意义注水、重复开场、把同一事件换措辞再写一遍；也禁止把一章写成远超目标的长文`,
             `- 分段适中：每段约 3～5 句；忌超长大段堆砌`,
+          ]
+        : [];
+    // 角色名白名单：从完整角色库提取（未被 context 压缩筛选），约束模型只用已登记角色名，
+    // 从源头杜绝跨章名字漂移（如「陈砚」写成「沈砚」→ fact_conflict → 连环重试）。
+    // 仅当白名单有 2 个以上角色时注入（单角色无约束意义）。
+    const allowedCharacterNames = (options?.allowedCharacterNames ?? [])
+      .map(name => name.trim())
+      .filter(Boolean);
+    const characterNameRules =
+      allowedCharacterNames.length >= 2
+        ? [
+            `- 【角色名白名单】本章只能使用以下已登记角色名：${allowedCharacterNames.join('、')}`,
+            '- 禁止使用白名单外的角色名；如需新角色，用身份称呼（如「狱卒」「书吏」）与白名单内角色互动，不要另起具体姓名',
+            '- 特别注意：不要把已登记角色的名字写成形近字或近义字（如「陈默」不要写成「沈默」、「陈砚」不要写成「沈砚」）',
           ]
         : [];
     const revisionRules =
@@ -227,6 +247,7 @@ export class SceneDraftEngine {
         '- paragraphs 数组元素只能是小说正文，禁止写入 sceneId/beatId/candidateEvents 等字段名，禁止写入 ] } : 等 JSON 骨架',
         '- candidateEvents 只填 id 列表（从 allowedCandidateEventIds 中选），禁止重复粘贴 summary',
         ...wordCountRules,
+        ...characterNameRules,
         ...revisionRules,
       ].join('\n'),
       prompt: JSON.stringify({

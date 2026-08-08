@@ -6,6 +6,7 @@ import type {
   LongFormWriteInput,
   LongFormWriteResult,
   SceneDraft,
+  StoryEntity,
   StructuredAI,
 } from '@/types/story-runtime';
 
@@ -94,6 +95,27 @@ export interface LongFormWritingEngineDependencies {
 
 function draftsProse(drafts: SceneDraft[]): string {
   return drafts.flatMap(draft => draft.paragraphs).join('\n\n');
+}
+
+/**
+ * 从状态实体表提取角色名白名单（name + aliases），用于注入起草 prompt。
+ * 取完整角色库（未被 context 压缩筛选），覆盖面最广，从源头约束模型只用已登记名字。
+ */
+function extractCharacterNames(
+  entities: Record<string, StoryEntity> | undefined,
+): string[] {
+  if (!entities) return [];
+  const names: string[] = [];
+  for (const entity of Object.values(entities)) {
+    if (entity.kind !== 'character') continue;
+    const name = entity.name?.trim();
+    if (name) names.push(name);
+    for (const alias of entity.aliases ?? []) {
+      const trimmed = alias.trim();
+      if (trimmed && !names.includes(trimmed)) names.push(trimmed);
+    }
+  }
+  return names;
 }
 
 /**
@@ -215,6 +237,8 @@ export class LongFormWritingEngine {
             targetWordCount: writeInput.targetWordCount,
             revisionHints,
             rewriteRound: revisionHints ? Math.max(1, rewriteRounds) : undefined,
+            // 完整角色库（未被 context 压缩筛选），注入 prompt 白名单约束名字一致性
+            allowedCharacterNames: extractCharacterNames(input.state.entities),
           });
           // 提交前进补字：避免 SQLite accepted 后仍只有 ~900 字
           return this.padDraftsToTarget(d, writeInput);
@@ -451,8 +475,15 @@ export class LongFormWritingEngine {
 
       // 结尾闭合判断：正文已完整收尾（CEN 兑现 + 章末钩子落地）且字数达 SUPPLEMENT_STOP_THRESHOLD 时，
       // 不再补写，避免在自然章末后硬塞注水段（实测「陈默冷笑，他早已料到」类尾巴）。
-      // 阈值与 MIN_WORD_THRESHOLD 对齐：消除「补字停在更低比例但字数 blocking 判定要更高」的灰区。
+      //
+      // 优化：字数 ≥85% 目标时直接收尾（break），跳过 judgeEndingClosure 的 AI 调用——
+      // 首稿已写到 85% 说明模型基本写完，再花一次 AI 往返判断"结尾是否闭合"性价比低。
+      // 仅在 80%-85% 的窄灰区才调 closure 判断（此时字数擦边，需 AI 辅助决策）。
       // 判断器失败时返回 closed=false，降级为原按字数补写逻辑。
+      const fastCloseThreshold = Math.floor(target * 0.85);
+      if (check.currentWords >= fastCloseThreshold) {
+        break; // ≥85%：信任模型已写完，直接收尾
+      }
       if (check.currentWords >= Math.floor(target * SUPPLEMENT_STOP_THRESHOLD)) {
         const closure = await this.judgeEndingClosure(
           prose,
@@ -471,8 +502,10 @@ export class LongFormWritingEngine {
         break;
       }
 
+      // 单次补字量取 target 的 50%（原 30%）：target=3000 时一轮补 1500 字而非 900 字，
+      // 把「最多 3 轮补字」压缩到 1-2 轮，减少 scene-draft 往返。
       const additionalWords = Math.min(
-        check.shortfall || Math.ceil(target * 0.3),
+        check.shortfall || Math.ceil(target * 0.5),
         maxSupplement
       );
       const round = rounds + 1;
