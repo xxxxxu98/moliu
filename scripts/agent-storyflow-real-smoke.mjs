@@ -26,12 +26,18 @@ console.log('[smoke:storyflow:real] 真实 AI 闭环：大纲生成 → 应用 �
 
 // ---------- 清理上一轮产物，避免新旧混淆 ----------
 // 删除 storyflow.closed-loop.* 的 outline / summary / prose；
-// trace 文件按时间戳命名不冲突，保留供历史对比。
-cleanupSmokeArtifacts('smoke:storyflow:real', [
-  'storyflow.closed-loop.outline.json',
-  'storyflow.closed-loop.summary.json',
-  'storyflow.closed-loop.prose',
-]);
+// 同时按前缀兜底清理带后缀的孪生产物（.bak / .before-fix.*.bak / 带时间戳的备份目录）——
+// 此前只做精确名匹配，删不掉 prose.2026-08-07T02-30-19.bak 这类旧轮次残留目录，
+// 导致新旧章节混拼、误判「跨章断裂」。trace 文件按时间戳命名不冲突，保留供历史对比。
+cleanupSmokeArtifacts(
+  'smoke:storyflow:real',
+  [
+    'storyflow.closed-loop.outline.json',
+    'storyflow.closed-loop.summary.json',
+    'storyflow.closed-loop.prose',
+  ],
+  { prefixes: ['storyflow.closed-loop.'] },
+);
 
 const result = spawnSync(
   'npm',

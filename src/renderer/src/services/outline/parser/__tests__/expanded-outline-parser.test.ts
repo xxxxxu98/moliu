@@ -562,4 +562,54 @@ describe('parseExpandedOutline · 单章蓝图（chapterBlueprints）解析', ()
     // 空块被丢弃 → 空数组 → 转 undefined
     expect(outline!.chapterBlueprints).toBeUndefined();
   });
+
+  // ---------- 缺陷修复：section 标题带括号后缀不丢段 ----------
+  // AI 常写「## 单章蓝图（强制 30 章）」「## 逐章蓝图」等变体；旧实现的 splitNamedSections
+  // 要求标题严格全等（行尾只允许空白），这些变体整段 body 取空 → chapterBlueprints 为空 → 降级。
+  it('section 标题带括号后缀（## 单章蓝图（强制 30 章））仍能解析出 chapterBlueprints', () => {
+    const base = buildSampleOutline();
+    const blueprintBlocks = Array.from({ length: 3 }, (_, i) => {
+      const n = i + 1;
+      return `### 第${n}章
+- 标题：第${n}章标题
+- CBN：第${n}章开篇钩子
+- CPNs：第${n}章推进点A；第${n}章推进点B
+- CEN：第${n}章章尾钩子`;
+    }).join('\n\n');
+    // section 标题带括号说明
+    const withParen = base.replace(
+      '## 主要支线',
+      `## 单章蓝图（强制 30 章）\n${blueprintBlocks}\n\n## 主要支线`,
+    );
+    const outline = parseExpandedOutline(withParen);
+    expect(outline).not.toBeNull();
+    expect(outline!.chapterBlueprints, '带括号后缀的 section 不应丢段').toBeDefined();
+    expect(outline!.chapterBlueprints!.length).toBe(3);
+    expect(outline!.chapterBlueprints![0].CBN).toBe('第1章开篇钩子');
+  });
+
+  // ---------- 缺陷修复：章节 heading 层级/空格容错 ----------
+  // AI 偶用 `## 第1章`（2井号）/ `#### 第1章`（4井号）/ `###第1章`（无空格）；
+  // 旧切块正则 `^###\s+`（恰好3井号+强制空格）会漏掉这些块，累计 <28 章触发整体丢弃。
+  it('章节 heading 用 ## / #### / 无空格写法仍能逐块解析', () => {
+    const base = buildSampleOutline();
+    const blueprintBlocks = [
+      '## 第1章\n- 标题：两井号标题\n- CBN：两井号CBN',
+      '#### 第2章\n- 标题：四井号标题\n- CBN：四井号CBN',
+      '###第3章\n- 标题：无空格标题\n- CBN：无空格CBN',
+    ].join('\n\n');
+    const withVariants = base.replace(
+      '## 主要支线',
+      `## 单章蓝图\n${blueprintBlocks}\n\n## 主要支线`,
+    );
+    const outline = parseExpandedOutline(withVariants);
+    expect(outline).not.toBeNull();
+    expect(outline!.chapterBlueprints, '层级/空格变体不应漏块').toBeDefined();
+    expect(outline!.chapterBlueprints!.length).toBe(3);
+    expect(outline!.chapterBlueprints![0].CBN).toBe('两井号CBN');
+    expect(outline!.chapterBlueprints![1].CBN).toBe('四井号CBN');
+    expect(outline!.chapterBlueprints![2].CBN).toBe('无空格CBN');
+    // orderIndex 仍正确（从 heading 抽数字）
+    expect(outline!.chapterBlueprints![2].orderIndex).toBe(3);
+  });
 });

@@ -85,8 +85,12 @@ function parseStartupBlock(block: string, range: string): StartupChapterBlock {
  */
 function parseChapterBlueprintSection(section: string): ChapterBlueprint[] {
   if (!section.trim()) return [];
-  // heading 形如 `### 第1章` / `### 第12章` / `### 1章`
-  const blocks = splitByHeading(section, /^###\s+第?\s*\d+\s*章?/gm);
+  // heading 形如 `### 第1章` / `### 第12章` / `### 1章`。
+  // 容错层级与空格：AI 偶用 `## 第1章`（2井号）/ `#### 第1章`（4井号）/ `###第1章`（无空格），
+  // 旧正则 `^###\s+...`（恰好 3 井号 + 强制空格）会漏掉这些块；若累计漏到 <28 章，
+  // unified-generator 会整体丢弃 chapterBlueprints 降级到算法派生。
+  // 放宽为 `#{2,4}`（2~4 井号）+ `\s*`（零或多空格，兼容无空格写法）。
+  const blocks = splitByHeading(section, /^#{2,4}\s*第?\s*\d+\s*章?/gm);
   return blocks
     .map((block, index): ChapterBlueprint | null => {
       // 从 heading 抽 orderIndex；抽不到则回退 index+1（保持稳定递增）

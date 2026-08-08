@@ -83,4 +83,43 @@ describe('extractMultiValueField 编号列表解析', () => {
     const result = extractMultiValueField(block, 'mustCover');
     expect(result).toEqual(['A', 'B', 'C']);
   });
+
+  // ---------- 缺陷修复：单行内联编号切分 ----------
+  // AI 常把 CPNs/mustCover 写成同一行的内联编号：
+  //   `- CPNs：1. 陈默穿越，发现自己是大梁七品小吏 2. 陈默用现代法医思维 3. 陈默破案`
+  // 旧实现：extractNumberedItems 只认"编号独占一行"，对单行内联无能为力；
+  // fallback 标点切分按逗号拆，把序号「2.」「3.」粘到前半句尾部，产出碎片。
+  it('单行内联编号（1. xxx 2. yyy 3. zzz）正确切分，序号不串号', () => {
+    const block =
+      '- CPNs：1. 陈默穿越，发现自己是大梁七品小吏 2. 陈默用现代法医思维，发现尸体上的关键线索 3. 陈默破案，获得同僚认可';
+    const result = extractMultiValueField(block, 'CPNs');
+    expect(result).toHaveLength(3);
+    // 每项无序号前缀
+    expect(result[0]).toBe('陈默穿越，发现自己是大梁七品小吏');
+    expect(result[1]).toBe('陈默用现代法医思维，发现尸体上的关键线索');
+    expect(result[2]).toBe('陈默破案，获得同僚认可');
+    // 关键：序号不串号
+    expect(result.join(' ')).not.toMatch(/小吏\s*2\./);
+    expect(result.every(item => !/^\d+[.、)]/.test(item))).toBe(true);
+  });
+
+  it('单行内联编号对 mustCover 同样生效（共用 extractMultiValueField）', () => {
+    const block =
+      '- mustCover：1. 穿越醒来 2. 验尸场景 3. 初步破案 4. 衙门危机';
+    const result = extractMultiValueField(block, 'mustCover');
+    expect(result).toHaveLength(4);
+    expect(result[0]).toBe('穿越醒来');
+    expect(result[3]).toBe('衙门危机');
+  });
+
+  it('含数值的文本（500两银子、第5章、2026年）不被误切为编号项', () => {
+    // 这些场景数字紧贴汉字，不满足「标点/空白 + 数字 + 编号标点 + 空白」模式
+    const block = '- CPNs：主角发现500两银子账目对不上；第5章才揭示真相；时间定格在2026年';
+    const result = extractMultiValueField(block, 'CPNs');
+    // 无内联编号 → 走标点切分（分号），3 项
+    expect(result).toHaveLength(3);
+    expect(result[0]).toContain('500两银子');
+    expect(result[1]).toContain('第5章');
+    expect(result[2]).toContain('2026年');
+  });
 });

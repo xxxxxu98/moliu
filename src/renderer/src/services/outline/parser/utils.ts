@@ -41,11 +41,22 @@ export function splitNamedSections(raw: string, headings: string[]): Record<stri
   // 兼容 H2 及更深层级：expand-direction-prompt 模板里子小节用 H3（### 核心地点 / ### 爽点安排），
   // 此前固定按 `^## ` 匹配会把这些 H3 子小节整体漏掉（worldBuilding / coolPoint 静默丢失）。
   // 传入的 headings 都是具体中文短语，跨层级撞名概率极低，放宽到 `#{2,}` 安全。
-  const pattern = new RegExp(`^#{2,}\\s*(${escapedHeadings})\\s*$`, 'gm');
+  //
+  // 标题尾容忍括号说明：AI 常给 section 标题加后缀（如「## 单章蓝图（强制 30 章）」），
+  // 旧实现的 `\s*$`（行尾只允许空白）会让这些变体整段 body 取空，进而 chapterBlueprints
+  // 解析为空、降级到算法派生。这里允许标题后跟括号说明（中/英文/全角括号）。
+  //
+  // 注意：不做「heading 包含目标短语」的宽匹配——headings 列表里有子串关系
+  // （如「关键角色」是「关键角色规划」的子串），宽匹配会让 `#### 情感关键角色` 这种子标题
+  // 也被当成 section 边界，把角色 section 的 body 截断。这里要求目标短语就是标题主体
+  // （井号后即为目标短语，后面最多跟括号说明）。
+  const pattern = new RegExp(`^#{2,}\\s*(${escapedHeadings})(?:\\s*[（(【].*)?\\s*$`, 'gm');
   const blocks = splitByHeading(raw, pattern);
 
   return headings.reduce<Record<string, string>>((acc, heading) => {
-    const matched = blocks.find((block) => new RegExp(`^#{2,}\\s*${escapeRegExp(heading)}\\s*$`).test(block.heading));
+    const matched = blocks.find((block) =>
+      new RegExp(`^#{2,}\\s*${escapeRegExp(heading)}(?:\\s*[（(【].*)?\\s*$`).test(block.heading),
+    );
     acc[heading] = matched?.body ?? '';
     return acc;
   }, {});
@@ -116,6 +127,35 @@ function extractNumberedItems(block: string, fieldName: string): string[] {
   return items.filter(Boolean);
 }
 
+/**
+ * 从单行（已 compactLines 拍平）文本中按内联编号边界切分。
+ *
+ * AI 常把 CPNs/mustCover 写成同一行的内联编号：
+ *   `1. 陈默穿越，发现自己是大梁七品小吏 2. 陈默用现代法医思维 3. 陈默破案`
+ * extractNumberedItems 按行扫描，对此格式无能为力；标点切分会把序号粘到前半句尾部。
+ *
+ * 保守匹配策略：编号锚点 = 标点/空白/行首 + 1~2位数字 + `.、)` 之一 + 空白。
+ * 要求数字前有标点/空白边界，避免误伤「第5章」「500两银子」「2026年」等数值
+ * （这些场景数字紧贴汉字、不满足「标点/空白 + 数字 + 编号标点 + 空白」模式）。
+ *
+ * 命中 ≥2 项时返回去序号的结果；否则返回空数组（交回标点切分兜底）。
+ */
+function splitInlineNumberedItems(value: string): string[] {
+  // 编号锚点：行首或标点/空白后，1~2 位数字，紧跟 . 或 、 或 )，再跟空白。
+  // 用 split 保留分隔符（括号捕获），避免把编号前缀文字切丢。
+  const parts = value.split(/(?:^|[，,；;、\s])(\d{1,2})[.、)]\s/);
+  // split 带捕获组时，奇数下标是捕获的编号数字，偶数下标是编号后的正文。
+  // 第 0 个元素是首个编号锚点之前的前导文本（通常是空串或首项正文的一部分）。
+  const items: string[] = [];
+  for (let i = 1; i < parts.length; i += 2) {
+    const text = (parts[i + 1] ?? '').trim();
+    if (text) items.push(text);
+  }
+  return items
+    .filter(Boolean)
+    .filter((item, index, array) => array.indexOf(item) === index);
+}
+
 export function extractMultiValueField(block: string, fieldName: string): string[] {
   // 优先：编号列表（AI 常用 1./2./3. 格式，compactLines 会破坏其边界）。
   // 编号项已是独立单元，内部的自然语句逗号不再二次切分（如「知府骂他"废物"，连个案子都查清」
@@ -132,6 +172,16 @@ export function extractMultiValueField(block: string, fieldName: string): string
 
   if (!value) {
     return [];
+  }
+
+  // 次选：同一行内联编号（如「1. 陈默穿越，发现自己是大梁七品小吏 2. 陈默用现代法医思维 3. 陈默破案」）。
+  // compactLines 已把多行拍平成单行，extractNumberedItems（按行扫描）对此无能为力；
+  // 若直接走标点切分，逗号会把序号「2.」「3.」粘到前半句尾部，产出碎片
+  // （「正在验尸 2. 陈默用现代法医思维」）。这里先尝试按内联编号边界切分，命中则直接返回
+  // （编号项是完整语义单元，不再二次按标点切），未命中再退回标点切分。
+  const inlineNumbered = splitInlineNumberedItems(value);
+  if (inlineNumbered.length > 1) {
+    return inlineNumbered;
   }
 
   return value
