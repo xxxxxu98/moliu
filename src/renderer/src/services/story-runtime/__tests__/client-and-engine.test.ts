@@ -437,9 +437,12 @@ describe('LongFormWritingEngine', () => {
       maxRewriteRounds: 2,
     });
 
-    // 初稿 + 2 次重写
-    expect(ai.draftCalls).toBe(3);
-    expect(result.rewriteRounds).toBe(2);
+    // AlwaysForbiddenAI 每轮返回完全相同的正文（违反「御剑入城」禁区），
+    // ContinuityValidator 每轮产出相同的 blocking issue。
+    // 连环重写熔断在第 1 次重写后会检测到 issue 与上轮高度相似，提前停止重写
+    // （初稿 + 1 次重写即熔断，而非耗尽 maxRewriteRounds=2）。
+    expect(ai.draftCalls).toBe(2);
+    expect(result.rewriteRounds).toBe(1);
     expect(result.commit.status).toBe('rejected');
     expect(saveRejectedDraft).toHaveBeenCalledOnce();
   });

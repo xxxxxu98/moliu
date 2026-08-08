@@ -1,0 +1,59 @@
+=== OUTLINE ===
+1. DIR = 166050ms (2.77min)
+2. EXPAND = 352005ms (5.87min)
+3. REVIEW = 174646ms (2.91min)
+SUBTOTAL = 692701ms (11.55min)
+
+=== CH1 (4 steps) ===
+1. DRAFT = 21809ms (0.36min) FAIL
+2. DRAFT(rw1) = 163386ms (2.72min)
+3. FACT = 143374ms (2.39min)
+4. JUDGE = 35990ms (0.60min)
+SUBTOTAL = 364559ms (6.08min)
+
+=== CH2 (6 steps) ===
+1. DRAFT = 217086ms (3.62min)
+2. FACT = 30946ms (0.52min)
+3. JUDGE = 28193ms (0.47min)
+4. DRAFT(rw1) = 362510ms (6.04min)
+5. FACT = 25335ms (0.42min)
+6. JUDGE(rj1) = 253858ms (4.23min)
+SUBTOTAL = 917928ms (15.30min)
+
+=== CH3 (4 steps) ===
+1. DRAFT = 266166ms (4.44min)
+2. DRAFT(rw1) = 17316ms (0.29min)
+3. FACT = 56885ms (0.95min)
+4. JUDGE = 25538ms (0.43min)
+SUBTOTAL = 365905ms (6.10min)
+
+=== CH4 (3 steps) ===
+1. DRAFT = 140307ms (2.34min)
+2. FACT = 101503ms (1.69min)
+3. JUDGE = 62343ms (1.04min)
+SUBTOTAL = 304153ms (5.07min)
+
+=== CH5 (11 steps) ===
+1. DRAFT = 78920ms (1.32min)
+2. FACT = 93086ms (1.55min)
+3. JUDGE = 28045ms (0.47min)
+4. DRAFT(rw1) = 209274ms (3.49min)
+5. FACT = 102919ms (1.72min)
+6. JUDGE(rj1) = 6457ms (0.11min) FAIL
+7. DRAFT(rw2) = 47452ms (0.79min)
+8. DRAFT(rw3) = 19119ms (0.32min)
+9. DRAFT(rw4) = 23853ms (0.40min)
+10. FACT = 71158ms (1.19min)
+11. JUDGE(rj2) = 11602ms (0.19min)
+SUBTOTAL = 691885ms (11.53min)
+
+=== TOTALS ===
+outline = 692701ms (11.55min)
+chapters = 2644430ms (44.07min)
+ai_total = 3337131ms (55.62min)
+wall_total = 3342650ms (55.71min)
+local_overhead = 5519ms (0.09min)
+ai_calls = 31
+failures = 2
+max_step = 362510ms
+min_step = 6457ms

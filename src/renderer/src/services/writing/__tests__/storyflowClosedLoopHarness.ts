@@ -72,9 +72,11 @@ export interface StoryflowClosedLoopResult {
   createdChapterIds: string[];
 }
 
-/** 内存版 electronAPI：模拟主进程项目存储（createProject/updateProject/getProject/saveProject） */
+/** 内存版 electronAPI：模拟主进程项目存储 + 记忆文件存储 */
 function installMemoryElectronAPI(): Map<string, Project> {
   const store = new Map<string, Project>();
+  // 记忆文件存储：projectId -> (filePath -> content)，支持 save/load/list/delete 往返
+  const memoryStore = new Map<string, Map<string, string>>();
   const api = {
     listProjects: async (): Promise<Project[]> => Array.from(store.values()),
     getProject: async (id: string): Promise<Project | null> => store.get(id) ?? null,
@@ -100,6 +102,45 @@ function installMemoryElectronAPI(): Map<string, Project> {
       store.set(project.id, project);
     },
     deleteProject: async (): Promise<void> => {},
+    // 记忆文件 IPC（签名对齐 src/preload.ts:40-43 的真实 preload）
+    saveMemoryFile: async (data: {
+      projectId: string;
+      filePath: string;
+      content: string;
+    }): Promise<{ success: boolean; error?: string }> => {
+      let proj = memoryStore.get(data.projectId);
+      if (!proj) {
+        proj = new Map<string, string>();
+        memoryStore.set(data.projectId, proj);
+      }
+      proj.set(data.filePath, data.content);
+      return { success: true };
+    },
+    loadMemoryFile: async (data: {
+      projectId: string;
+      filePath: string;
+    }): Promise<string | null> =>
+      memoryStore.get(data.projectId)?.get(data.filePath) ?? null,
+    listMemoryFiles: async (data: {
+      projectId: string;
+      basePath: string;
+    }): Promise<string[]> => {
+      const proj = memoryStore.get(data.projectId);
+      if (!proj) return [];
+      const prefix = data.basePath.endsWith('/')
+        ? data.basePath
+        : data.basePath + '/';
+      return Array.from(proj.keys()).filter(
+        f => f.startsWith(prefix) || f.startsWith(data.basePath),
+      );
+    },
+    deleteMemoryFile: async (data: {
+      projectId: string;
+      filePath: string;
+    }): Promise<{ success: boolean; error?: string }> => {
+      memoryStore.get(data.projectId)?.delete(data.filePath);
+      return { success: true };
+    },
   };
   (window as unknown as { electronAPI: unknown }).electronAPI = api;
   return store;
@@ -287,6 +328,11 @@ export async function runStoryflowClosedLoop(
     mode: 'batch',
     ai,
     plotOutlineClient,
+    // 每章 hydrate 会重置 Pinia（setActivePinia(createPinia())），导致开头的
+    // injectSettingsStore(cfg) 注入的 AI 配置失活。此处通过回调在每章 hydrate 后重新注入，
+    // 让记忆提取（enhanceWithAI → useAIService → useSettingsStore）能读到 provider，
+    // 避免「请先配置 AI 服务」导致记忆 AI 增强静默失败。
+    onChapterHydrated: () => injectSettingsStore(cfg),
   });
 
   return {

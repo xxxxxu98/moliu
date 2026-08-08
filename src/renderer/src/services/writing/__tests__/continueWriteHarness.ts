@@ -683,6 +683,12 @@ export interface ContinueWriteSession {
      * 让重试不是盲目重跑而是带反馈的定向重写。
      */
     seedRevisionHints?: string[];
+    /**
+     * 每章 store hydrate 完成后的回调（batch 模式下 hydrateProjectStoreForSmartContinue
+     * 会重置 Pinia，导致 settingsStore 中的 AI 配置丢失）。调用方可在此重新注入
+     * AI 配置，让记忆提取等走 useAIService 的组件能读到 provider。
+     */
+    onChapterHydrated?: () => void;
   }): Promise<ContinueWriteChapterRunResult>;
   dispose(): void;
 }
@@ -766,6 +772,11 @@ export function openContinueWriteSession(options: {
         chapter,
         plotOutline,
       });
+
+      // hydrateProjectStoreForSmartContinue 内部会 setActivePinia(createPinia()) 重置 Pinia，
+      // 导致 harness 先前注入到 settingsStore 的 AI 配置失活。调用方可通过此回调重新注入，
+      // 让记忆提取（enhanceWithAI → useAIService）等走 settings 的组件能读到 provider。
+      chapterOptions.onChapterHydrated?.();
 
       const inner = chapterOptions.ai ?? new ContinueWriteFakeAI();
       const recording =
@@ -939,6 +950,11 @@ export async function runContinueWriteChapters(options: {
   signal?: AbortSignal;
   /** 记忆提取（createChapterMemoryClient）；默认开启（对齐 App），传 false 显式关闭 */
   enableMemoryExtract?: boolean;
+  /**
+   * 每章 store hydrate 后的回调（hydrate 会重置 Pinia）。透传到 session.runChapter，
+   * 供调用方重新注入 AI 配置，避免记忆提取等走 settings 的组件读不到 provider。
+   */
+  onChapterHydrated?: () => void;
   /** 续写章节标题回写客户端，透传到 pipeline（harness 默认无） */
   plotOutlineClient?: {
     updateChapterTitle(orderIndex: number, title: string): Promise<void>;
@@ -992,6 +1008,7 @@ export async function runContinueWriteChapters(options: {
             signal: options.signal,
             enableMemoryExtract: options.enableMemoryExtract,
             seedRevisionHints,
+            onChapterHydrated: options.onChapterHydrated,
           });
           lastError = finalResult.output.error ?? '';
         } catch (error) {
@@ -1015,6 +1032,14 @@ export async function runContinueWriteChapters(options: {
         // 错误分级（对齐 useBatchWriter:1162-1164）
         const classified = classifyError(new Error(lastError), options.signal);
         lastErrorKind = classified.kind;
+
+        // 截断/空响应（抛异常、无 gateResult）时注入固定引导种子，避免下一轮原样盲发。
+        // 这类失败 finalResult 为 null，上面 if(gateResult) 提不到反馈，需单独兜底。
+        if (classified.kind === 'truncated') {
+          seedRevisionHints = [
+            '上一轮 AI 返回了空内容或被截断的 JSON。请务必一次性输出完整的 JSON 对象，paragraphs 数组必须包含完整的正文段落，不要在中途停笔，不要返回空字符串。',
+          ];
+        }
         // aborted（用户停止）：立即停整批
         if (classified.kind === 'aborted') { aborted = true; break; }
         // 持久错误（schema/审核/字数/auth/4xx）：不退避，立即重试，但上限 persistentMaxRetries

@@ -40,6 +40,7 @@ import {
   backoffDelayMs,
   type ClassifiedError,
 } from '@/utils/ai-error-classify';
+import { normalizedSimilarity } from '@/utils/text-similarity';
 
 /** 字数归一外层循环：补字 ↔ 压缩，防止压缩过度后不回补 */
 const MAX_WORD_NORMALIZE_CYCLES = 2;
@@ -53,7 +54,7 @@ export const DEFAULT_MAX_REWRITE_ROUNDS = 2;
  * 参考 supplement.ts 的 supplementDraftsWhileShort 重试模式。
  */
 async function runStepWithTransientRetry<T>(
-  step: () => Promise<T>,
+  step: (attempt: number) => Promise<T>,
   options: { label: string; maxRetries: number; signal?: AbortSignal }
 ): Promise<T> {
   let lastError: unknown;
@@ -62,7 +63,7 @@ async function runStepWithTransientRetry<T>(
       throw new DOMException('Aborted', 'AbortError');
     }
     try {
-      return await step();
+      return await step(attempt);
     } catch (err) {
       lastError = err;
       // 用户取消立即抛
@@ -228,14 +229,26 @@ export class LongFormWritingEngine {
     // 批量层重试可能传入「上一轮失败教训」种子：初稿即带反馈，避免盲目重跑。
     // 种子只影响首次起草；后续重写循环会用本轮 report 追加新 hints 覆盖。
     let revisionHints: string[] | undefined = writeInput.seedRevisionHints;
+    // 连环重写熔断：记录上一轮 blocking issue，用于检测是否「卡在同一问题」。
+    // 字数类问题（word-count-short:*）每轮数值变化会干扰判定，比较时排除。
+    let prevBlockingIssues: ContinuityIssue[] = [];
 
     while (true) {
       // Step A：起草 + 补字。瞬态错误（网络/截断）步骤级重试，持久错误冒泡。
       drafts = await runStepWithTransientRetry(
-        async () => {
+        async (attempt: number) => {
+          // 截断/空响应重试时注入引导：让模型这次输出完整 JSON 与全章正文，而非原样盲发。
+          // attempt=0 是首次调用，不追加；attempt>=1 是瞬态重试，追加截断引导。
+          const draftHints =
+            attempt > 0
+              ? [
+                  ...(revisionHints ?? []),
+                  '上次输出被截断或返回了空内容。请务必一次性输出完整的 JSON 对象，paragraphs 数组必须包含完整的正文段落，不要中途停笔，不要返回空字符串。',
+                ]
+              : revisionHints;
           const d = await this.draftEngine.draft(plan, context, {
             targetWordCount: writeInput.targetWordCount,
-            revisionHints,
+            revisionHints: draftHints,
             rewriteRound: revisionHints ? Math.max(1, rewriteRounds) : undefined,
             // 完整角色库（未被 context 压缩筛选），注入 prompt 白名单约束名字一致性
             allowedCharacterNames: extractCharacterNames(input.state.entities),
@@ -249,7 +262,7 @@ export class LongFormWritingEngine {
       // Step B：事实提取 + 规范化 + 校验。瞬态错误步骤级重试，**保留 Step A 已生成的 drafts**
       // （旧痛点：draft 已花钱生成，extract 网络抖一下就让整章作废重新起草）。
       const validated = await runStepWithTransientRetry(
-        async () => {
+        async (_attempt: number) => {
           const rawFacts = await this.dependencies.factExtractor.extract({
             projectId: input.projectId,
             chapterNumber: contracts.chapter.chapterNumber,
@@ -296,6 +309,34 @@ export class LongFormWritingEngine {
       if (!shouldRewrite(report) || rewriteRounds >= maxRewriteRounds) {
         break;
       }
+
+      // 连环重写熔断：本轮 blocking issue 与上一轮高度相似 → 判定「卡在同一问题」，
+      // 停止重写（仍保持 report.accepted=false，走 rejected 分支，让批次层决定去留）。
+      // 字数类问题 id 含动态数字、每轮变化，会误判为「新问题」，比较前排除。
+      const currentBlocking = report.issues.filter(
+        issue =>
+          issue.severity === 'blocking' &&
+          !issue.id.startsWith('word-count-short:'),
+      );
+      if (
+        rewriteRounds > 0 &&
+        prevBlockingIssues.length > 0 &&
+        currentBlocking.length > 0
+      ) {
+        const stuckCount = currentBlocking.filter(cur =>
+          prevBlockingIssues.some(
+            prev => normalizedSimilarity(cur.message, prev.message) >= 0.7,
+          ),
+        ).length;
+        const stuckRatio = stuckCount / currentBlocking.length;
+        if (stuckRatio >= 0.5) {
+          console.warn(
+            `[LongFormWritingEngine] 连环重写熔断：本轮 ${stuckCount}/${currentBlocking.length} 个 blocking 问题与上轮高度相似（卡在同一问题），停止重写（仍 rejected 提交）`,
+          );
+          break;
+        }
+      }
+      prevBlockingIssues = currentBlocking;
 
       const hints = buildRevisionHintsFromReport(report);
       if (hints.length === 0) {
