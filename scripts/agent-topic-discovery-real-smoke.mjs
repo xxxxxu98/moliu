@@ -13,9 +13,17 @@ import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { cleanupSmokeArtifacts } from './cleanup-smoke-artifacts.mjs';
+
 process.env.REAL_AI = process.env.REAL_AI || '1';
 
 console.log('[smoke:topic-discovery:real] 六模块真实链路（seeds/radar/mix/dice/twist/prompt）');
+
+// ---------- 清理上一轮产物，避免新旧混淆 ----------
+// topic-discovery 产物：topic-discovery.real.summary.json；trace 按时间戳命名不冲突。
+cleanupSmokeArtifacts('smoke:topic-discovery:real', [
+  'topic-discovery.real.summary.json',
+]);
 
 const result = spawnSync(
   'npm',

@@ -45,7 +45,7 @@ describe.runIf(isRealAiEnabled())(
       async () => {
         const startedAt = Date.now();
         const chapterCount = envInt('MOLIU_CHAPTER_COUNT', 5);
-        const targetWordCount = envInt('MOLIU_TARGET_WORDS', 2000);
+        const targetWordCount = envInt('MOLIU_TARGET_WORDS', 3000);
         const result = await runStoryflowClosedLoop({
           prompt: '一个现代社畜穿越到古代朝堂，凭借现代知识在官场步步高升，卷入皇权之争',
           wordCountRange: '30万-60万',

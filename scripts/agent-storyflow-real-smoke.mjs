@@ -18,9 +18,20 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { cleanupSmokeArtifacts } from './cleanup-smoke-artifacts.mjs';
+
 process.env.REAL_AI = process.env.REAL_AI || '1';
 
 console.log('[smoke:storyflow:real] 真实 AI 闭环：大纲生成 → 应用 → 批量续写');
+
+// ---------- 清理上一轮产物，避免新旧混淆 ----------
+// 删除 storyflow.closed-loop.* 的 outline / summary / prose；
+// trace 文件按时间戳命名不冲突，保留供历史对比。
+cleanupSmokeArtifacts('smoke:storyflow:real', [
+  'storyflow.closed-loop.outline.json',
+  'storyflow.closed-loop.summary.json',
+  'storyflow.closed-loop.prose',
+]);
 
 const result = spawnSync(
   'npm',
