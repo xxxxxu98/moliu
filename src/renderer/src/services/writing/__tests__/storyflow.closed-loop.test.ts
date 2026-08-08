@@ -85,6 +85,17 @@ describe.runIf(isRealAiEnabled())(
         // ---------- 汇总落盘（供 smoke 脚本展示） ----------
         // 大纲数据已由 harness 在建章后提前落盘（避免续写超时丢失），此处仅落正文与 summary
         const outlineChapters = result.generatedOutline.chapters ?? [];
+
+        // runtimeBackend 校验：SQLite native ABI 与 Node 不一致时会降级内存 API，
+        // 此时状态持久化/查询/commit 语义与生产 SQLite 不一致，存储相关行为不具备真实代表性，需醒目告警。
+        const warnings: string[] = [];
+        if (result.runtimeBackend !== 'sqlite') {
+          warnings.push(
+            `runtimeBackend=${result.runtimeBackend}：StoryRuntime SQLite 不可用已降级内存 API，` +
+            `状态持久化/查询/commit 语义与生产 SQLite 不一致，结果中存储相关行为不具备真实代表性。`
+          );
+        }
+
         // 每章正文落盘，供人工/读者视角评估
         mkdirSync(PROSE_DIR, { recursive: true });
         result.chapterRunResults.forEach((r, i) => {
@@ -115,13 +126,19 @@ describe.runIf(isRealAiEnabled())(
             .slice(0, 10)
             .map(n => ({ orderIndex: n.orderIndex, title: n.title })),
           runtimeBackend: result.runtimeBackend,
+          runtimeBackendAuthentic: result.runtimeBackend === 'sqlite',
           provider: result.cfg.provider,
           model: result.cfg.model,
           totalMs,
+          warnings,
         };
         writeFileSync(SUMMARY_PATH, JSON.stringify(summary, null, 2));
         console.log(`[storyflow:real] summary=${SUMMARY_PATH}`);
         console.log(`[storyflow:real] ${JSON.stringify(summary)}`);
+        // 降级告警单独醒目打印，避免淹没在 summary 长文本里
+        for (const w of warnings) {
+          console.warn(`[storyflow:real] ⚠️ WARNING: ${w}`);
+        }
       },
       120 * 60 * 1000, // 真实 AI 全链路批量续写（默认 5 章；10 章真实 AI 实测约 70-110 分钟）
     );

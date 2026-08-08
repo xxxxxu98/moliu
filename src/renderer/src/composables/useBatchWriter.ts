@@ -339,6 +339,12 @@ interface InternalWritingState {
   currentStrictness: ReviewStrictness; // 当前使用的严格度
   reviewAttempts: number; // 当前章节审查尝试次数
   currentChapter: number; // 当前处理的章节索引
+  /**
+   * 当前章节重试的反馈种子：从上一轮失败门禁的 critical 问题提取，
+   * 透传到 pipeline.seedRevisionHints 让重试定向重写而非盲目重跑（与
+   * continueWriteHarness 对齐）。章节成功后清空，不跨章节沿用。
+   */
+  currentRevisionHints: string[] | undefined;
 }
 
 // ============================================
@@ -609,6 +615,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
     currentStrictness: 'normal',
     reviewAttempts: 0,
     currentChapter: 0,
+    currentRevisionHints: undefined,
   };
 
   // 响应式状态
@@ -841,6 +848,8 @@ export function useBatchWriter(): UseBatchWriterReturn {
         ...writeOptions,
         previousChapter,
         signal: internalState.abortController?.signal,
+        // 上一轮失败留下的门禁反馈种子：让重试带教训定向重写，而非盲目重跑（提升成功率）
+        seedRevisionHints: internalState.currentRevisionHints,
       });
 
       if (result.supplementRounds > 0) {
@@ -890,6 +899,21 @@ export function useBatchWriter(): UseBatchWriterReturn {
           undefined,
           { errorKind: failureKind, retryable: failureRetryable }
         );
+        // 提取门禁 critical 问题作为下一轮重试的反馈种子（对齐 continueWriteHarness seedRevisionHints）：
+        // 重试时透传到 pipeline.seedRevisionHints，让模型带着上一轮 blocking 问题定向重写，
+        // 而非盲目重跑同样的失败路径。仅 review/wordcount 类失败会产出 gateResult；
+        // 网络/超时类失败 gateResult 为 null，此时保留上一轮 hints（通常为 undefined，无需 seed）。
+        // 用 allIssues（扁平合并数组，与上面 blockingIssues 映射同字段）而非 gates.flatMap——
+        // 语义等价且对 mock/部分 gateResult 更健壮。
+        if (result.gateResult) {
+          const revisionHints = (result.gateResult.allIssues ?? [])
+            .filter(issue => issue.severity === 'critical')
+            .map(issue => issue.description)
+            .filter((desc): desc is string => Boolean(desc))
+            .slice(0, 5);
+          internalState.currentRevisionHints =
+            revisionHints.length > 0 ? revisionHints : undefined;
+        }
         throw new WritingError(
           failureMessage,
           ErrorCode.AI_GENERATION_FAILED,
@@ -908,6 +932,9 @@ export function useBatchWriter(): UseBatchWriterReturn {
           // 状态字段写入失败不影响主流程
         });
       }
+
+      // 成功：清空重试反馈种子（下一章从头开始，不沿用本章的失败教训）
+      internalState.currentRevisionHints = undefined;
 
       // 进度统计
       progress.value.writtenChapters++;
@@ -1011,6 +1038,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
     internalState.currentStrictness = config.value.initialStrictness;
     internalState.reviewAttempts = 0;
     internalState.currentChapter = 0;
+    internalState.currentRevisionHints = undefined;
     internalState.abortController = new AbortController();
     maxRetries.value = config.value.maxRetries;
     currentRetryCount.value = 0;
