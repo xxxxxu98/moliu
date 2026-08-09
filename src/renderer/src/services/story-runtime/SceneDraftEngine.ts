@@ -217,9 +217,15 @@ export class SceneDraftEngine {
     const revisionRules =
       revisionHints.length > 0
         ? [
-            '【重写任务】上一稿未通过审核，必须整章重写并修复下列问题，禁止重复同样错误：',
+            '【重写任务】上一稿未通过审核，必须修复下列问题，禁止重复同样错误：',
+            '- 【禁止压缩】原稿已写到的场面、对话、动作、感官细节必须保留，只能在其上叠加新内容以兑现未履约节点；禁止把既有情节压缩成梗概、禁止换更紧凑的措辞把已展开的场景重新缩写',
             ...revisionHints.map((hint, index) => `${index + 1}. ${hint}`),
             '- 内心观察与公开结论、证物细节必须前后一致；禁区内容不得出现或等价泄露（本章 mustCover 履约所需的指认/证据展示除外）',
+            ...(revisionHints.some(hint => hint.includes('字数严重不足'))
+              ? [
+                  '- 【字数】本次必须在原稿基础上扩写补足字数，禁止以重写为名压缩篇幅；若原稿已接近字数下限，任何压缩都会导致再次不达标',
+                ]
+              : []),
           ]
         : [];
     const candidateIds = candidates.map(item => item.id);

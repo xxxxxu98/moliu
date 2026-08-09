@@ -199,6 +199,24 @@ describe('buildSupplementPrompt', () => {
     expect(endingBlock.startsWith('下，')).toBe(false);
     expect(endingBlock.includes('续写从这里开始')).toBe(true);
   });
+
+  it('outputFormat=json 时输出 JSON 数组指令（LongFormWritingEngine 偏短补字路径依赖）', () => {
+    // 回归：LongFormWritingEngine.padDraftsIfUnderTarget 用 outputFormat:'json' 调用本函数，
+    // 依赖 prompt 末尾包含「只输出一个 JSON 对象：{"paragraphs":[...]}」指令，
+    // 与 system 的 JSON 要求一致，避免模型输出纯散文导致解析失败。
+    const prompt = buildSupplementPrompt({
+      existingContent: '前文内容'.repeat(20) + '结尾锚点',
+      targetWordCount: 3000,
+      additionalWords: 800,
+      round: 1,
+      maxRounds: 2,
+      chapterTitle: '第2章 连夜查账',
+      outputFormat: 'json',
+    });
+    expect(prompt).toContain('{"paragraphs"');
+    expect(prompt).toContain('只输出一个 JSON 对象');
+    expect(prompt).not.toContain('请直接输出补充内容正文');
+  });
 });
 
 describe('runSupplementRounds', () => {

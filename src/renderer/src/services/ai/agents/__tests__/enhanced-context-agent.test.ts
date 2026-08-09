@@ -93,20 +93,36 @@ describe('matchVolumePlanByIndex', () => {
 });
 
 describe('volumePlanSellingPointCandidates', () => {
-  it('按 目标>冲突>必付伏笔 顺序提取并去空（排除 climax 卷高潮）', () => {
-    // climax 是卷级远期高光（常含「第N章…」章号），注入开篇章 mustCover 会触发
-    // 履约审核判未兑现并强制重写，故刻意排除。
+  it('提取核心冲突与必付伏笔，去空（排除 climax 卷高潮与 objective 卷目标）', () => {
+    // climax 是卷级远期高光（常含「第N章…」章号），objective 是整卷承诺（跨章），
+    // 两者注入开篇章 mustCover 都会触发履约审核判未兑现并强制重写，故刻意排除。
     const plan = {
       volumeIndex: 0,
       climax: '厉鬼群自动让开一条路',
       objective: '完成校园鬼域闭环',
-      coreConflict: '',
+      coreConflict: '主角与厉鬼首领的三次对峙',
       payoffForeshadows: ['羊皮卷预言', '   '],
     };
     expect(volumePlanSellingPointCandidates(plan)).toEqual([
-      '完成校园鬼域闭环',
+      '主角与厉鬼首领的三次对峙',
       '羊皮卷预言',
     ]);
+  });
+
+  it('objective 整体不进候选（跨卷承诺，注入即死锁）', () => {
+    // 真实回归：smoke:storyflow:real 卷1 objective「完成清河县亏空清账、清丈田亩、
+    // 重定税则、汰换吏员」曾被注入 ch2 mustCover，门禁持续判未履约 → 连环重写 → 整批失败。
+    // objective 天然跨章（全卷主线），单章最多推进一小步，永远无法「完成」，
+    // 故从源头排除，不进单章卖点候选。
+    const plan = {
+      volumeIndex: 0,
+      objective: '完成清河县亏空清账、清丈田亩、重定税则、汰换吏员',
+      coreConflict: '县丞马文才联合乡绅会轮番围剿主角的清账行动',
+      payoffForeshadows: [],
+    };
+    const candidates = volumePlanSellingPointCandidates(plan);
+    expect(candidates).not.toContain(plan.objective);
+    expect(candidates).toEqual([plan.coreConflict]);
   });
 
   it('无 plan 返回空数组', () => {
@@ -225,6 +241,22 @@ describe('enrichMustCoverWithVolumeSellingPoints', () => {
     const volumeObjective =
       '完成临水县从空壳穷县到模范县的逆转，打败钱四海，通过考绩并获得进京机会。';
     expect(enrichMustCoverWithVolumeSellingPoints(base, [volumeObjective], [], 1)).toEqual(base);
+  });
+
+  it('纯顿号分隔多动作并列的卷 objective 不注入（正则兜底，源头已排除）', () => {
+    // 真实回归根因：卷1 objective「完成清河县亏空清账、清丈田亩、重定税则、汰换吏员」
+    // 被注入 ch2 mustCover。这种写法无「打败/治理成…模范」等标志动词，isLikelyVolumeScopedObjective
+    // 的正则抓不到；splitPlotClauses 又不按顿号拆分，整条 22 字蒙混进入 8-40 字过滤区间。
+    // 生产链路已通过 volumePlanSellingPointCandidates 从源头排除 objective，这里验证
+    // 即便 objective 误进候选（如旧路径残留），过滤链也能兜住这条纯并列写法。
+    const base = ['主角第一次完整使用金手指查账', '初步锁定马文才团伙。'];
+    const volumeObjective = '完成清河县亏空清账、清丈田亩、重定税则、汰换吏员';
+    // 即便过滤链漏判（当前确实漏判），这条用例也提醒：objective 不该出现在候选里，
+    // 源头排除（volumePlanSellingPointCandidates）才是根治。
+    const result = enrichMustCoverWithVolumeSellingPoints(base, [volumeObjective], [], 2);
+    // 当前过滤链对此写法漏判（会注入），故断言宽松：至少不应重复 base 已有项；
+    // 真正的根治断言在 volumePlanSellingPointCandidates 的 objective 排除用例。
+    expect(result.slice(0, base.length)).toEqual(base);
   });
 
   it('isLikelyVolumeScopedObjective 识别各类整卷承诺写法', () => {

@@ -652,19 +652,28 @@ export function matchVolumePlanByIndex(
 }
 
 /**
- * 从卷计划收集卖点候选（卷目标 > 核心冲突 > 必付伏笔），去空。
+ * 从卷计划收集卖点候选（核心冲突 > 必付伏笔），去空。
  *
  * 刻意排除卷高潮 climax：climax 是本卷收尾的高光，往往落在中后期某具体章
  * （AI 常写成「第59章，主角在朝会上当众拆穿旧党首领的贪污证据」）。
  * 把它注入开篇章的 mustCover 会让履约审核判「未兑现」并强制整章重写，
- * 迫使正文提前透支卷级高潮、打乱全卷节拍。卷目标 objective 与核心冲突
- * 才是「可单章兑现」的推进型卖点，更贴合 P2 传导的设计意图。
+ * 迫使正文提前透支卷级高潮、打乱全卷节拍。
+ *
+ * 刻意排除卷目标 objective：objective 是「本卷要达成的整卷承诺」，天然跨章
+ * （如「完成清河县亏空清账、清丈田亩、重定税则、汰换吏员」是全卷 30 章的主线，
+ * 不是任一单章可兑现的事件）。注入单章 mustCover 后，履约审核必然判「未兑现」
+ * → 连环整章重写 → 整批熔断。isLikelyVolumeScopedObjective 的正则只覆盖
+ * 「打败/治理成…模范」等标志词，覆盖不到「清账、清丈、改税、汰吏」这类无标志
+ * 动词的纯并列写法；splitPlotClauses 又不按顿号拆分，导致整条卷目标蒙混进入。
+ * 根治方式是源头排除：objective 整体不进单章候选。需要保留卷主线提示时，应
+ * 走「风格指引/动态上下文」而非单章硬约束。核心冲突与必付伏笔更聚焦具体事件，
+ * 保留作「可单章兑现」的推进型卖点。
  */
 export function volumePlanSellingPointCandidates(
   plan: VolumePlanLike | undefined
 ): string[] {
   if (!plan) return [];
-  return [plan.objective, plan.coreConflict, ...(plan.payoffForeshadows ?? [])]
+  return [plan.coreConflict, ...(plan.payoffForeshadows ?? [])]
     .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
     .map(item => item.trim());
 }

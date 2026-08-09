@@ -24,6 +24,7 @@ import { SceneDraftEngine } from './SceneDraftEngine';
 import { sanitizeSceneDraftParagraphs } from './stripDraftLeakage';
 import {
   buildCondensePrompt,
+  buildSupplementPrompt,
   buildWordCountShortfallIssue,
   checkWordCountBounds,
   chooseProseAfterCondense,
@@ -376,9 +377,11 @@ export class LongFormWritingEngine {
   }
 
   /**
-   * 字数归一：超长走 AI 整章压缩改写（文气统一）；偏短直接用初稿，不补字追加。
-   * 补字会在尾部拼接段落、割裂文气（对称于偏长的硬裁掐断），故统一移除：
-   * 字数不足交由重写循环（AI 整章重新生成）处理，重写后仍不达标则直接提交，保证正文质量。
+   * 字数归一：超长走 AI 整章压缩改写（文气统一）；偏短走 append-only 补字（在初稿末尾
+   * 续写增量，不重写既有段落，文气衔接优于整章重写压缩）。二者对称：
+   * - 超 long → 整章压缩（保留情节、压缩冗余）
+   * - 偏 short → 追加续写（保留既有正文、补足篇幅）
+   * 补字失败（网络/解析）时保留初稿不抛错，与超长压缩失败「回退原文」对称。
    */
   private async padDraftsToTarget(
     drafts: SceneDraft[],
@@ -394,11 +397,127 @@ export class LongFormWritingEngine {
       paragraphs: [...draft.paragraphs],
     }));
 
-    // 仅超长走 AI 压缩；偏短直接返回初稿（不补字、不编辑正文，优先质量）
     const bounds = checkWordCountBounds(draftsProse(nextDrafts), target);
     if (bounds.status === 'over') {
       return this.trimDraftsIfOverTarget(nextDrafts, input);
     }
+    if (bounds.status === 'short') {
+      return this.padDraftsIfUnderTarget(nextDrafts, input, bounds);
+    }
+    return nextDrafts;
+  }
+
+  /**
+   * 偏短时 AI append-only 补字：在原文末尾续写增量段落，不重写既有正文。
+   * 与 trimDraftsIfOverTarget（超长整章压缩）对称：偏长压、偏短补。
+   *
+   * 策略：
+   * - 用 buildSupplementPrompt（outputFormat:'json'，supplement.ts 注释明确为本路径准备）
+   *   构造续写提示词，锚定原文结尾片段，让 AI 从断点处自然接续。
+   * - 最多补至 maxWords（target × MAX_WORD_THRESHOLD）；单轮补字失败（网络/解析）保留初稿不抛错，
+   *   与超长压缩失败「回退原文」对称。
+   * - 最多 2 轮：快模型常系统性欠写 10-20%，一轮常补不足；两轮兜底。
+   *   每轮用追加后的正文重新算 shortfall，避免重复补超。
+   * - 输出护栏：单轮补字异常膨胀（模型把 JSON 骨架当正文）时丢弃该轮，避免垃圾正文入库。
+   *
+   * @param bounds 入口已算好的字数边界（status==='short'），避免重复计算
+   */
+  private async padDraftsIfUnderTarget(
+    drafts: SceneDraft[],
+    input: LongFormWriteInput,
+    bounds: ReturnType<typeof checkWordCountBounds>
+  ): Promise<SceneDraft[]> {
+    const target = input.targetWordCount ?? 0;
+    const maxPadRounds = 2;
+    const nextDrafts = drafts.map(draft => ({
+      ...draft,
+      paragraphs: [...draft.paragraphs],
+    }));
+    const outline =
+      input.contracts.chapter.goal ||
+      input.contracts.chapter.CBN ||
+      input.contracts.chapter.CEN;
+
+    let currentBounds = bounds;
+    for (let round = 1; round <= maxPadRounds; round += 1) {
+      if (currentBounds.status !== 'short') break;
+
+      const additionalWords = Math.max(
+        currentBounds.minWords - currentBounds.currentWords,
+        Math.ceil(target * 0.3),
+      );
+      const maxSupplement = currentBounds.maxWords - currentBounds.currentWords;
+      if (maxSupplement <= 0) break;
+
+      const currentProse = draftsProse(nextDrafts);
+      const prompt = buildSupplementPrompt({
+        existingContent: currentProse,
+        targetWordCount: target,
+        additionalWords: Math.min(additionalWords, maxSupplement),
+        round,
+        maxRounds: maxPadRounds,
+        chapterTitle: input.contracts.chapter.title,
+        chapterOutline: outline,
+        outputFormat: 'json',
+      });
+
+      let supplementParagraphs: string[];
+      try {
+        supplementParagraphs = (await this.dependencies.ai.generate<string[]>({
+          purpose: 'scene-draft',
+          schemaName: 'SupplementParagraphs',
+          system: [
+            '你是网文补字续写引擎。从原文结尾处自然续写，只输出一个 JSON 对象：{"paragraphs":["段落1","段落2"]}',
+            `当前约 ${currentBounds.currentWords} 字，需补足至 ${currentBounds.minWords}–${currentBounds.maxWords} 字（目标 ${target}）。`,
+            '只输出新增的续写段落，不要重复原文已有内容；段落之间文气连贯，禁止把已写过的场面换措辞重写。',
+            '不要输出 Markdown 代码块或任何解释文字。',
+          ].join('\n'),
+          prompt,
+          parse: value => {
+            const record =
+              typeof value === 'object' && value !== null && !Array.isArray(value)
+                ? (value as Record<string, unknown>)
+                : {};
+            const raw = record.paragraphs ?? record['段落'] ?? value;
+            const paragraphs = sanitizeSceneDraftParagraphs(
+              Array.isArray(raw)
+                ? raw.filter((item): item is string => typeof item === 'string')
+                : typeof raw === 'string'
+                  ? raw.split(/\n{2,}/u)
+                  : [],
+            );
+            if (paragraphs.length === 0) {
+              throw new Error('补字未返回可用段落');
+            }
+            return paragraphs;
+          },
+        })) as string[];
+      } catch (error) {
+        console.warn(
+          `[LongFormWritingEngine] 第 ${round} 轮补字失败，保留初稿（偏短但完整）:`,
+          error,
+        );
+        break;
+      }
+
+      const delta = supplementParagraphs.join('\n\n');
+      // 输出护栏：单轮补字异常膨胀（模型把 JSON 骨架当正文）时丢弃该轮。
+      const maxDeltaChars = Math.max(6000, Math.ceil(target * 3));
+      if (delta.length === 0 || delta.length > maxDeltaChars) {
+        console.warn(
+          `[LongFormWritingEngine] 第 ${round} 轮补字输出异常（${delta.length} 字符），丢弃该轮`,
+        );
+        break;
+      }
+
+      nextDrafts[0] = {
+        ...nextDrafts[0],
+        paragraphs: [...nextDrafts[0].paragraphs, ...supplementParagraphs],
+      };
+      currentBounds = checkWordCountBounds(draftsProse(nextDrafts), target);
+      if (currentBounds.status !== 'short') break;
+    }
+
     return nextDrafts;
   }
 

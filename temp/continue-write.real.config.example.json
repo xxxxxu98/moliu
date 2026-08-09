@@ -1,0 +1,13 @@
+{
+  "_README": "真实 AI 冒烟配置模板。复制为 continue-write.real.config.json 后按需修改。关键：providerId 留空（删除该字段）+ useAppDefaultProvider=true → 冒烟自动跟随 App 设置里当前选中的 defaultModel（用户在 App 换模型，冒烟跟着换，无需改本文件）。若想固定用某个 provider，再填 providerId（可从 App 设置页复制厂商配置 ID）。model/baseUrl/apiKey 全部留空，自动从 App 配置读取并解密 apiKey。",
+  "enabled": true,
+  "useAppDefaultProvider": true,
+  "providerId": "",
+  "apiKey": "",
+  "provider": "openai",
+  "model": "",
+  "baseUrl": "",
+  "chapterCount": 5,
+  "emptyRewrite": true,
+  "targetWordCount": 3000
+}
