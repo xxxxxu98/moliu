@@ -200,6 +200,48 @@ describe('ContextPackBuilder', () => {
       true
     );
   });
+
+  it('compactStateForDraft 注入相关角色的 knowledge/inventory 与关键 attributes', () => {
+    const contracts = makeContracts();
+    const state = makeState();
+    // hero 命中 CBN「林夜来到城门」→ 进 relatedIds；补一个生死类 attribute
+    state.entities.hero.attributes = {
+      status: '重伤未愈',
+      location: '城外',
+      description: '主角，身负血海深仇',
+      role: 'protagonist',
+    };
+    // 另一个未命中合同的角色，其 knowledge/inventory 不应被注入
+    state.entities['npc_bystander'] = {
+      id: 'npc_bystander',
+      kind: 'character',
+      name: '路人甲',
+      aliases: [],
+      attributes: {},
+      knownBy: [],
+      sourceTrace: [],
+    };
+    state.knowledge['npc_bystander'] = ['无关秘密'];
+    state.inventory['npc_bystander'] = { copper: 5 };
+
+    const compact = compactStateForDraft(state, contracts) as {
+      knowledge: Record<string, string[]>;
+      inventory: Record<string, Record<string, number>>;
+      entities: Record<string, { attributes?: Record<string, unknown> }>;
+    };
+
+    // hero（命中合同）的 knowledge/inventory 被注入
+    expect(compact.knowledge.hero).toContain('城门有埋伏');
+    expect(compact.inventory.hero).toEqual({ sword: 1 });
+    // 未命中合同的角色不灌入
+    expect(compact.knowledge.npc_bystander).toBeUndefined();
+    expect(compact.inventory.npc_bystander).toBeUndefined();
+    // hero 的关键 attributes（排除 description/role）被带出
+    expect(compact.entities.hero.attributes).toMatchObject({
+      status: '重伤未愈',
+      location: '城外',
+    });
+  });
 });
 
 describe('stripStateForChapterRewrite', () => {

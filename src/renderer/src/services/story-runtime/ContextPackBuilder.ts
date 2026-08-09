@@ -4,6 +4,7 @@ import type {
   ContextPack,
   ContextPackInput,
   ContractPack,
+  JsonValue,
   SceneChunk,
   StoryEntity,
   StoryEvent,
@@ -164,6 +165,9 @@ function compactEntity(entity: StoryEntity): Record<string, unknown> {
   const description =
     typeof attributes.description === 'string' ? attributes.description : '';
   const role = typeof attributes.role === 'string' ? attributes.role : undefined;
+  // 关键属性（生死/位置/状态等）原样带出，让起草模型对齐跨章状态，避免写出
+  // 与历史事实矛盾的台词（如「金属板？他什么时候发现过金属板？」）。
+  const extraAttrs = pickCompactAttributes(attributes, ['description', 'role']);
   return {
     id: entity.id,
     kind: entity.kind,
@@ -171,7 +175,30 @@ function compactEntity(entity: StoryEntity): Record<string, unknown> {
     aliases: (entity.aliases ?? []).slice(0, 4),
     role,
     description: description.length > 120 ? `${description.slice(0, 120)}…` : description,
+    attributes: extraAttrs,
   };
+}
+
+/**
+ * 从 attributes 里挑出排除指定 key 后的剩余属性（用于补全生死/位置/状态等关键信息）。
+ * 字符串超长截断到 80 字，避免 prompt 膨胀；非字符串原样保留（如数值/布尔）。
+ */
+function pickCompactAttributes(
+  attributes: Record<string, JsonValue>,
+  exclude: string[],
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(attributes)) {
+    if (exclude.includes(key)) {
+      continue;
+    }
+    if (typeof value === 'string') {
+      out[key] = value.length > 80 ? `${value.slice(0, 80)}…` : value;
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
 }
 
 function compactEvent(event: StoryEvent): Record<string, unknown> {
@@ -237,7 +264,44 @@ export function compactStateForDraft(state: StoryState, contracts: ContractPack)
     openForeshadows: state.openForeshadows.slice(0, 8),
     fulfilledNodes: state.fulfilledNodes.slice(-8),
     timeline: state.timeline.slice(-6),
+    // 补全相关角色的已知事实与持有物：StoryState 无持久 facts 字段，历史事实载体即
+    // knowledge/inventory/events（events 已注入）。让起草模型看到「谁掌握/持有什么」，
+    // 避免写出与历史事实矛盾的台词。用 relatedIds 过滤，避免全量灌入。
+    knowledge: pickRelatedKnowledge(state.knowledge, relatedIds),
+    inventory: pickRelatedInventory(state.inventory, relatedIds),
   };
+}
+
+/**
+ * 挑出与本章相关角色（relatedIds）的已知事实，每角色最多保留最近 8 条，避免全量灌入。
+ */
+function pickRelatedKnowledge(
+  knowledge: Record<string, string[]>,
+  relatedIds: Set<string>,
+): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const [id, facts] of Object.entries(knowledge)) {
+    if (relatedIds.has(id) && facts.length > 0) {
+      out[id] = facts.slice(-8);
+    }
+  }
+  return out;
+}
+
+/**
+ * 挑出与本章相关角色（relatedIds）的持有物，避免全量灌入。
+ */
+function pickRelatedInventory(
+  inventory: Record<string, Record<string, number>>,
+  relatedIds: Set<string>,
+): Record<string, Record<string, number>> {
+  const out: Record<string, Record<string, number>> = {};
+  for (const [ownerId, items] of Object.entries(inventory)) {
+    if (relatedIds.has(ownerId) && Object.keys(items).length > 0) {
+      out[ownerId] = { ...items };
+    }
+  }
+  return out;
 }
 
 /**

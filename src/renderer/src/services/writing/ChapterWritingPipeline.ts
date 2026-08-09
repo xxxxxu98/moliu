@@ -181,6 +181,11 @@ export interface ChapterWriteInput {
    * 让重试不是盲目重跑而是带反馈的定向重写，降低重试浪费。
    */
   seedRevisionHints?: string[];
+  /**
+   * 引擎内审核失败后的最大整章重写次数（不含初稿）。未传则用引擎默认值（当前 1）。
+   * 重要章节可显式调高（如关键转折章 2-3），日常章节保持默认以节省 token。
+   */
+  maxRewriteRounds?: number;
 }
 
 /** 管道输出 */
@@ -729,6 +734,7 @@ export class ChapterWritingPipeline {
         maxContextTokens: 24_000,
         targetWordCount: input.targetWordCount,
         seedRevisionHints: input.seedRevisionHints,
+        maxRewriteRounds: input.maxRewriteRounds,
       });
       // coerce 已清洗段落；出口兜底：剥 schema 残留 → 确定性去重（治章末台词重复）→ 排版归一化
       // dedupProse 内部已含 normalizeWebnovelParagraphs，无需外层再调

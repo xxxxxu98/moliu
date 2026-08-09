@@ -332,6 +332,25 @@ export function enrichRevisionHint(message: string, evidence: string[] = []): st
   if (/未履约节点/u.test(base)) {
     return `${base}\n【改为】正文必须情节兑现该节点，不可只在内心独白里带过。`;
   }
+  // 跨章事实冲突：补充「以状态摘要为准」的具体可执行指引，避免重写时重复同样错误。
+  // （fact_conflict 经 ContinuityValidator 强制 blocking，是重写的高频原因。）
+  if (/语义问题\[fact_conflict\]/u.test(base)) {
+    return (
+      `${base}\n` +
+      `【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：` +
+      `已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；` +
+      `已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。`
+    );
+  }
+  // 未知实体（兜底）：方法2 已将其降级为 warning，但批量层 seedRevisionHints 仍可能携带。
+  // 给出正向指引而非单纯复述报错，让模型知道该改用身份称呼还是修正笔误。
+  if (/引用了未知实体\s+\S+/u.test(base)) {
+    return (
+      `${base}\n` +
+      `【该名未在角色表登记】若为功能性临时配角，正文请改用身份称呼（如「那斥候」「一名伤兵」），` +
+      `不要让其以具名角色身份登场或被抽为事件参与者；若为已知角色的笔误/形近字，请用角色表中的正确名字。`
+    );
+  }
   return base;
 }
 

@@ -117,6 +117,24 @@ describe('contractHealth', () => {
     expect(hint).toContain('【改为】');
   });
 
+  it('enrichRevisionHint 为 fact_conflict 补充跨章状态对齐指引', () => {
+    const hint = enrichRevisionHint('语义问题[fact_conflict] 第3章第5段: 上章已死的王镖头本章再次活动', [
+      '王镖头扶着门框走进来',
+    ]);
+    expect(hint).toContain('【跨章状态以状态摘要为准】');
+    expect(hint).toContain('已死/已离开');
+    expect(hint).toContain('状态摘要');
+  });
+
+  it('enrichRevisionHint 为未知实体问题补充身份称呼/笔误修正指引', () => {
+    const hint = enrichRevisionHint('事件 chapter-2:event-5 引用了未知实体 火种营地斥候', [
+      '我是……火种营地的斥候',
+    ]);
+    expect(hint).toContain('【该名未在角色表登记】');
+    expect(hint).toContain('身份称呼');
+    expect(hint).toContain('正确名字');
+  });
+
   it('履约豁免：指认类禁区触发可放过', () => {
     expect(
       isForbiddenExemptForFulfillment(

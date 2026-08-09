@@ -36,7 +36,7 @@ import {
 import { normalizedSimilarity } from '@/utils/text-similarity';
 
 /** 审核失败后的默认最大重写次数（不含初稿） */
-export const DEFAULT_MAX_REWRITE_ROUNDS = 2;
+export const DEFAULT_MAX_REWRITE_ROUNDS = 1;
 
 /**
  * 步骤级瞬态重试：把单步 AI 调用包一层，瞬态错误（网络/超时/截断/5xx/429）重试 maxRetries 次，
@@ -318,7 +318,9 @@ export class LongFormWritingEngine {
           ),
         ).length;
         const stuckRatio = stuckCount / currentBlocking.length;
-        if (stuckRatio >= 0.5) {
+        // 阈值 0.4：当 40% 以上的 blocking 问题与上轮高度相似即认定「卡在同一问题」提前熔断，
+        // 避免措辞略变（相似度 <0.7）就烧满重写轮次。
+        if (stuckRatio >= 0.4) {
           console.warn(
             `[LongFormWritingEngine] 连环重写熔断：本轮 ${stuckCount}/${currentBlocking.length} 个 blocking 问题与上轮高度相似（卡在同一问题），停止重写（仍 rejected 提交）`,
           );

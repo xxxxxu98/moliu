@@ -372,8 +372,10 @@ export interface ChapterJudgeResult {
 }
 
 export interface ChapterJudgeStateDigest {
-  entities?: Array<{ id: string; name: string; kind: string }>;
+  entities?: Array<{ id: string; name: string; kind: string; attributes?: Record<string, unknown> }>;
   knowledge?: Record<string, string[]>;
+  /** 各角色持有物（ownerId → itemName → 数量），用于判定「上章已赠出/销毁的物品本章再次出现」类冲突 */
+  inventory?: Record<string, Record<string, number>>;
   openForeshadows?: string[];
 }
 

@@ -7,6 +7,7 @@ import type {
   ContractPack,
   ExtractedFacts,
   FulfillmentJudge,
+  JsonValue,
   ProvisionalStateOverlay,
   SceneDraft,
   StoryState,
@@ -81,6 +82,27 @@ function parseInventoryPath(path: string): { owner: string; item: string } | und
   return root === 'inventory' && owner && item ? { owner, item } : undefined;
 }
 
+/**
+ * 压缩实体 attributes 供判官 stateDigest 使用：字符串超长截断到 80 字，避免 prompt 膨胀；
+ * 非字符串原样保留。空 attributes 返回 undefined（不进 digest）。
+ */
+function compactAttributesForDigest(
+  attributes: Record<string, JsonValue> | undefined,
+): Record<string, unknown> | undefined {
+  if (!attributes || Object.keys(attributes).length === 0) {
+    return undefined;
+  }
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(attributes)) {
+    if (typeof value === 'string') {
+      out[key] = value.length > 80 ? `${value.slice(0, 80)}…` : value;
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
 function mapJudgeIssueDomain(type: ChapterJudgeIssueType): ContinuityDomain {
   switch (type) {
     case 'fact_conflict':
@@ -139,7 +161,15 @@ export class ContinuityValidator {
     for (const event of input.facts.events) {
       for (const participant of event.participants) {
         if (!state.entities[participant]) {
-          addIssue('entity', `事件 ${event.id} 引用了未知实体 ${participant}`, event.evidence, event.sceneId);
+          // 降级为 warning：未登记实体多为功能性临时配角（斥候/伤兵/路人）或抽取层的形近字，
+          // 重写几乎无法收敛（正文未必有错）。语义层连续性由 AIChapterJudge（fact_conflict 仍硬阻塞）兜底。
+          addIssue(
+            'entity',
+            `事件 ${event.id} 引用了未知实体 ${participant}`,
+            event.evidence,
+            event.sceneId,
+            'warning',
+          );
         }
       }
       for (const cause of event.causes) {
@@ -261,8 +291,13 @@ export class ContinuityValidator {
               id: entity.id,
               name: entity.name,
               kind: entity.kind,
+              // 补全 attributes（生死/位置/状态等）：AIChapterJudge 的 prompt 已声明
+              // 「依据状态摘要里的实体生死/位置/持有物判定 fact_conflict」，此前 stateDigest
+              // 只给 id/name/kind，判官缺判据 → 既会误报也会漏报。补上后弥合口径断层。
+              attributes: compactAttributesForDigest(entity.attributes),
             })),
             knowledge: state.knowledge,
+            inventory: state.inventory,
             openForeshadows: state.openForeshadows.slice(0, 20),
           },
         });
