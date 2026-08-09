@@ -447,10 +447,10 @@ describe('LongFormWritingEngine', () => {
     expect(saveRejectedDraft).toHaveBeenCalledOnce();
   });
 
-  it('正文严重短于目标字数（countWords 远低于 85%）但 chapter-judge 放行时，commit 前硬兜底强制 rejected', async () => {
-    // 复现真实冒烟 ch1 场景：drafts 仅百余字（countWords ~50），chapter-judge 无 issue 放行，
-    // 但 targetWordCount=2000 / min=1700。此前会因 issue 注入口径漂移被 accepted；
-    // 2A 兜底后应在 commit 前独立判定字数 short → 注入 blocking → rejected。
+  it('正文严重偏短、重写仍不达标时，直接 accepted 落库（不再拒收、不补字，保证正文质量）', async () => {
+    // FakeAI 每次 draft 都返回单段短正文（约 10 字），chapter-judge 全 fulfilled 放行。
+    // 字数 blocking 会驱动重写循环，但 FakeAI 重写仍短 → 用尽 maxRewriteRounds 后：
+    // 不再拒收、不再补字，尊重 AI 产出直接 accepted 落库（与偏长「压缩失败直接用」对称）。
     const facts: FactExtractor = {
       extract: async input => ({
         events: [
@@ -476,9 +476,11 @@ describe('LongFormWritingEngine', () => {
       ai,
       factExtractor: facts,
       commitPort: {
-        commitChapter: async () => {
-          throw new Error('短章不应 accepted');
-        },
+        commitChapter: async () => ({
+          commitId: 'commit-short',
+          revision: 1,
+          acceptedAt: '2026-01-02T00:00:00.000Z',
+        }),
         saveRejectedDraft,
       },
     });
@@ -491,17 +493,18 @@ describe('LongFormWritingEngine', () => {
       retrievedScenes: [],
       styleGuidance: ['克制'],
       maxContextTokens: 10_000,
-      targetWordCount: 2000, // min=1700，FakeAI 正文远不足
+      targetWordCount: 2000, // min=1600，FakeAI 正文远不足
     });
 
-    expect(result.commit.status).toBe('rejected');
-    expect(saveRejectedDraft).toHaveBeenCalledOnce();
-    // 字数兜底注入的 issue 应在 report 里
-    const wordIssues = result.report.issues.filter(i => i.id.startsWith('word-count-short:'));
-    expect(wordIssues.length).toBe(1);
+    // 偏短不再拒收：重写循环已给 AI 多次扩写机会，仍不达标则直接 accepted 落库
+    expect(result.commit.status).toBe('accepted');
+    expect(saveRejectedDraft).not.toHaveBeenCalled();
   });
 
-  it('补充轮输出异常膨胀（混入 JSON 骨架）时丢弃该轮，正文不包含垃圾（Bug 7 护栏）', async () => {
+  it('偏短走重写（AI 整章重新生成）达标，不触发尾部补字（保证文气统一）', async () => {
+    // BloatSupplementAI：第 1 次 draft 极短（触发字数 blocking → 重写），第 2 次给足字数（达标）。
+    // 补字已从 LongFormWritingEngine 移除：全程不应触发 SupplementParagraphs，
+    // 偏短靠重写循环（AI 整章重新生成，文气统一）解决，而非尾部追加补字。
     const facts: FactExtractor = {
       extract: async input => ({
         events: [
@@ -546,11 +549,13 @@ describe('LongFormWritingEngine', () => {
       targetWordCount: 3000,
     });
 
+    // 补字未触发：偏短靠重写解决
+    expect(ai.bloatedSupplementRounds).toBe(0);
+    expect(result.commit.status).toBe('accepted');
+    // 重写后的正文干净、达标
     const finalProse = result.drafts[0].paragraphs.join('');
-    // 补充垃圾（JSON 骨架）被护栏丢弃：最终正文不含垃圾且未膨胀
     expect(finalProse).not.toContain('paragraphs');
-    expect(finalProse.length).toBeLessThan(20_000);
-    expect(ai.bloatedSupplementRounds).toBeGreaterThan(0);
+    expect(ai.draftCalls).toBe(2); // 初稿 + 1 次重写达标
   });
 
   it('事实提取瞬态失败时步骤级重试，draft 不重新生成', async () => {

@@ -169,7 +169,7 @@ export function clampProseToMaxWords(prose: string, maxWords: number): string {
   return merged;
 }
 
-export type CondenseRecoveryStrategy = 'condensed' | 'original-clamp' | 'condensed-clamp';
+export type CondenseRecoveryStrategy = 'condensed' | 'original-kept' | 'condensed-kept';
 
 export interface ChooseProseAfterCondenseResult {
   prose: string;
@@ -178,10 +178,10 @@ export interface ChooseProseAfterCondenseResult {
 }
 
 /**
- * AI 压缩后的字数决策：
+ * AI 压缩后的字数决策（优先正文质量，不再硬裁）：
  * - 落在区间 → 用压缩稿
- * - 压得太短 → 丢弃压缩稿，对原文硬裁到 max（避免 5000→800 塌方）
- * - 仍超长 → 对压缩稿（或原文）硬裁到 max
+ * - 压得太短（塌方）→ 回退原文，不再硬裁（保留完整正文，宁可偏长也不掐断）
+ * - 仍超长 → 用压缩稿，不再硬裁（压缩稿已是流畅重写，硬裁会破坏文气）
  */
 export function chooseProseAfterCondense(params: {
   originalProse: string;
@@ -197,20 +197,22 @@ export function chooseProseAfterCondense(params: {
     };
   }
 
+  // AI 压缩塌方（如 5000→800）：压缩稿不可用，回退原文。
+  // 不再硬裁——硬裁会从中间掐断正文、破坏文气；宁可偏长也保留完整原文。
   if (condensedBounds.status === 'short') {
-    const recovered = clampProseToMaxWords(params.originalProse, condensedBounds.maxWords);
     return {
-      prose: recovered,
-      strategy: 'original-clamp',
-      bounds: checkWordCountBounds(recovered, params.target),
+      prose: params.originalProse,
+      strategy: 'original-kept',
+      bounds: checkWordCountBounds(params.originalProse, params.target),
     };
   }
 
-  const clamped = clampProseToMaxWords(params.condensedProse, condensedBounds.maxWords);
+  // AI 压缩完仍超上限：压缩稿已是模型完整重写的流畅版本，只是没压到目标区间。
+  // 硬裁会掐断正文、破坏文气，故直接采用压缩稿。
   return {
-    prose: clamped,
-    strategy: 'condensed-clamp',
-    bounds: checkWordCountBounds(clamped, params.target),
+    prose: params.condensedProse,
+    strategy: 'condensed-kept',
+    bounds: condensedBounds,
   };
 }
 

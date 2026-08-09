@@ -97,7 +97,7 @@ describe('chooseProseAfterCondense', () => {
     expect(result.prose).toBe(condensed);
   });
 
-  it('压缩过短时回退原文硬裁（复现 ch3：5000→800）', () => {
+  it('压缩过短时回退原文不再硬裁（复现 ch3：5000→800，保留完整原文）', () => {
     const target = 3000;
     // 构造明确超上限的原文（>3450）与过短压缩稿（<<2550）
     const original = `${'开场冲突推进细节描写一句。'.repeat(400)}${'章末钩子落下悬念。'.repeat(40)}`;
@@ -110,11 +110,32 @@ describe('chooseProseAfterCondense', () => {
       condensedProse: condensed,
       target,
     });
-    expect(result.strategy).toBe('original-clamp');
-    expect(result.bounds.status).not.toBe('short');
-    expect(result.bounds.currentWords).toBeLessThanOrEqual(result.bounds.maxWords);
+    // 回退原文、不再硬裁：strategy 标记为 original-kept，prose 即原文（完整保留，未掐断）
+    expect(result.strategy).toBe('original-kept');
+    expect(result.prose).toBe(original);
+    // 原文未被裁，仍超上限（宁可偏长也不破坏文气）
+    expect(result.bounds.status).toBe('over');
     expect(result.prose).toContain('开场冲突推进');
     expect(result.prose).toContain('章末钩子落下');
+  });
+
+  it('压缩完仍超上限时采用压缩稿不再硬裁', () => {
+    const target = 3000;
+    // 原文远超上限，压缩稿有所收敛但仍越界（>3450）
+    const original = `${'开场冲突推进细节描写一句。'.repeat(600)}${'章末钩子落下悬念。'.repeat(40)}`;
+    const condensed = `${'压缩后仍偏长细节描写一句。'.repeat(300)}章末钩子落下。`;
+    expect(checkWordCountBounds(original, target).status).toBe('over');
+    expect(checkWordCountBounds(condensed, target).status).toBe('over');
+
+    const result = chooseProseAfterCondense({
+      originalProse: original,
+      condensedProse: condensed,
+      target,
+    });
+    // 用压缩稿、不再硬裁：strategy 标记为 condensed-kept，prose 即压缩稿（完整保留，未掐断）
+    expect(result.strategy).toBe('condensed-kept');
+    expect(result.prose).toBe(condensed);
+    expect(result.bounds.status).toBe('over');
   });
 });
 
