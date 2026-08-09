@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   enrichMustCoverWithVolumeSellingPoints,
+  isLikelyVolumeScopedObjective,
   matchVolumePlanByIndex,
   normalizeForbiddenZonesByChapter,
   referencesFutureChapter,
@@ -213,5 +214,49 @@ describe('enrichMustCoverWithVolumeSellingPoints', () => {
     );
     // 「第3章完成考核汇总」8 字（含章号）刚过下限；拆出的子句若通过长度过滤即注入
     expect(result.length).toBeGreaterThanOrEqual(base.length);
+  });
+
+  it('卷级 objective 不注入（单章无法兑现，注入即死锁）', () => {
+    // 真实回归：smoke:storyflow:real 实测——卷1 objective「完成临水县从空壳穷县到
+    // 模范县的逆转，打败钱四海，通过考绩并获得进京机会。」被注入 ch1 mustCover，
+    // chapter-judge 持续判「未履约：完成逆转」，触发持久错误重试 3 次耗尽死循环。
+    // 这是整卷 30 章的主线承诺，单章最多只能推进一小步，永远无法「完成」。
+    const base = ['醒来并承认自己成了临水县新任知县', '身前是残破县衙和堆积旧账。'];
+    const volumeObjective =
+      '完成临水县从空壳穷县到模范县的逆转，打败钱四海，通过考绩并获得进京机会。';
+    expect(enrichMustCoverWithVolumeSellingPoints(base, [volumeObjective], [], 1)).toEqual(base);
+  });
+
+  it('isLikelyVolumeScopedObjective 识别各类整卷承诺写法', () => {
+    // 打败/击败卷级反派/集团
+    expect(isLikelyVolumeScopedObjective('打败钱四海并通过考绩')).toBe(true);
+    expect(isLikelyVolumeScopedObjective('击败清流党集团')).toBe(true);
+    expect(isLikelyVolumeScopedObjective('扳倒旧党势力')).toBe(true);
+    // 通过卷级考核/考绩/验收
+    expect(isLikelyVolumeScopedObjective('通过考绩并获得进京机会')).toBe(true);
+    expect(isLikelyVolumeScopedObjective('拿下考绩优等')).toBe(true);
+    expect(isLikelyVolumeScopedObjective('取得验收')).toBe(true);
+    // 治理成/打造成 + 模范/示范/标杆
+    expect(isLikelyVolumeScopedObjective('治理成模范县')).toBe(true);
+    expect(isLikelyVolumeScopedObjective('打造成行业标杆')).toBe(true);
+    // 获得晋升类
+    expect(isLikelyVolumeScopedObjective('获得进京机会')).toBe(true);
+    expect(isLikelyVolumeScopedObjective('取得晋升')).toBe(true);
+    // 平定/肃清大规模
+    expect(isLikelyVolumeScopedObjective('平定齐王叛乱')).toBe(true);
+    expect(isLikelyVolumeScopedObjective('肃清全境匪患')).toBe(true);
+  });
+
+  it('isLikelyVolumeScopedObjective 不误伤单章爽点与具体场景动作', () => {
+    // 单章 climax 场景（卷计划里 payoffForeshadows 可能是这种）
+    expect(isLikelyVolumeScopedObjective('厉鬼群自动让开一条路')).toBe(false);
+    expect(isLikelyVolumeScopedObjective('当众拆穿旧党首领的贪污证据')).toBe(false);
+    // 单章节奏点
+    expect(isLikelyVolumeScopedObjective('当堂翻案')).toBe(false);
+    expect(isLikelyVolumeScopedObjective('翻身打脸')).toBe(false);
+    expect(isLikelyVolumeScopedObjective('本章破局靠的是数据')).toBe(false);
+    expect(isLikelyVolumeScopedObjective('逆转劣势')).toBe(false);
+    // 伏笔回收场景
+    expect(isLikelyVolumeScopedObjective('羊皮卷预言应验')).toBe(false);
   });
 });

@@ -146,6 +146,48 @@ const idStringArraySchema = z.preprocess((value: unknown) => {
     .filter((item): item is string => typeof item === 'string' && item.length > 0);
 }, z.array(z.string()));
 
+/**
+ * 字符串数组容错：模型偶发把 evidence / effects 等字段写成嵌套数组
+ * （如 events[4].evidence[4] 是 array 而非 string），导致 z.array(z.string()) 校验失败、
+ * 整章 fact-extraction 崩溃。这里递归展平任意深度的嵌套，过滤空串与非字符串，
+ * 供 evidence / effects 等纯字符串数组字段复用。
+ *
+ * 输入形态容忍：
+ * - 字符串 → [string]
+ * - 数组（元素可为 string | string[] | Array<string|string[]>）→ 递归展平
+ * - 其它（number/boolean/null/undefined/对象）→ [] （对象不会被字符串化，避免污染）
+ */
+export function coerceStringArray(value: unknown): string[] {
+  if (value === null || value === undefined) return [];
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed ? [trimmed] : [];
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    // 纯数字/布尔偶发出现，转字符串保留信息（与 coerceIdString 的数字处理一致）
+    return [String(value)];
+  }
+  if (Array.isArray(value)) {
+    const flattened: string[] = [];
+    for (const item of value) {
+      const sub = coerceStringArray(item);
+      for (const s of sub) {
+        if (s && !flattened.includes(s)) {
+          flattened.push(s);
+        }
+      }
+    }
+    return flattened;
+  }
+  // 对象：不字符串化（[object Object] 无意义），直接丢弃
+  return [];
+}
+
+const stringArraySchema = z.preprocess(
+  (value: unknown) => coerceStringArray(value),
+  z.array(z.string()),
+);
+
 const sourceTraceSchema = z.object({
   source: z.string().min(1),
   sourceId: z.string().optional(),
@@ -171,8 +213,10 @@ export const storyEventSchema = z.object({
   participants: idStringArraySchema,
   locationId: z.string().optional(),
   causes: idStringArraySchema,
-  effects: z.array(z.string()),
-  evidence: z.array(z.string()),
+  // effects / evidence 用容错 schema：模型偶发返回嵌套数组（如 evidence[4] 是 array），
+  // 用 coerceStringArray 递归展平，避免整章 fact-extraction 崩溃。
+  effects: stringArraySchema,
+  evidence: stringArraySchema,
   timestamp: z.string().optional(),
   provisional: z.boolean().optional(),
 });
@@ -282,7 +326,7 @@ export const extractedFactsSchema: z.ZodType<ExtractedFacts> = z.preprocess(
 const fulfillmentNodeJudgmentSchema = z.object({
   node: z.string().min(1),
   fulfilled: z.boolean(),
-  evidence: z.array(z.string()),
+  evidence: stringArraySchema,
   reason: z.string(),
 });
 
@@ -296,7 +340,7 @@ export const chapterJudgeResultSchema: z.ZodType<ChapterJudgeResult> = z.object(
     z.object({
       zone: z.string().min(1),
       violated: z.boolean(),
-      evidence: z.array(z.string()),
+      evidence: stringArraySchema,
       reason: z.string(),
     })
   ),
@@ -313,7 +357,7 @@ export const chapterJudgeResultSchema: z.ZodType<ChapterJudgeResult> = z.object(
       severity: z.enum(['critical', 'high', 'medium', 'low']),
       location: z.string(),
       description: z.string(),
-      evidence: z.array(z.string()),
+      evidence: stringArraySchema,
     })
   ),
 });

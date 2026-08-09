@@ -57,6 +57,30 @@ describe('chapterBlueprintNormalize', () => {
     expect(isCrossChapterGoal('醒来验尸，当众指认，却被诬入狱')).toBe(false);
   });
 
+  it('isCrossChapterGoal 识别弧线终态式跨章目标（卷级 objective 常见）', () => {
+    // 卷级 objective 写法：完成/实现/达成 + 大跨度 + 终态动作词
+    // 这类是整卷主线，单章无法完整兑现，注入 mustCover 会触发死循环
+    expect(isCrossChapterGoal('完成临水县从空壳穷县到模范县的逆转')).toBe(true);
+    expect(isCrossChapterGoal('实现家族复兴')).toBe(true);
+    expect(isCrossChapterGoal('达成天下统一')).toBe(true);
+    expect(isCrossChapterGoal('做到全行业称霸')).toBe(true);
+    expect(isCrossChapterGoal('完成逆袭')).toBe(true);
+    expect(isCrossChapterGoal('实现从草根到权臣的崛起')).toBe(true);
+    expect(isCrossChapterGoal('完成蜕变')).toBe(true);
+
+    // 单章可兑现的节奏点：终态词单独出现（无「完成/实现」前缀）不算跨章目标，
+    // 避免误伤「本章破局」「当堂翻案」「翻身打脸」这类合法单章爽点
+    expect(isCrossChapterGoal('逆转劣势')).toBe(false);
+    expect(isCrossChapterGoal('翻身打脸')).toBe(false);
+    expect(isCrossChapterGoal('当堂翻案')).toBe(false);
+    expect(isCrossChapterGoal('本章破局靠的是数据')).toBe(false);
+    expect(isCrossChapterGoal('这次翻身靠的是数据')).toBe(false);
+    // 来自 smoke 实测的正常单章 mustCover 节点也不应误伤
+    expect(isCrossChapterGoal('醒来并承认自己成了临水县新任知县')).toBe(false);
+    expect(isCrossChapterGoal('身前是残破县衙和堆积旧账。')).toBe(false);
+    expect(isCrossChapterGoal('门外差役高喊钱老爷的拜帖到了。')).toBe(false);
+  });
+
   it('多节点也不再输出推进至：末节点', () => {
     const cen = buildMidChapterCen(
       [GENERIC_PLOT.accuseBeat, GENERIC_PLOT.framedBeat],

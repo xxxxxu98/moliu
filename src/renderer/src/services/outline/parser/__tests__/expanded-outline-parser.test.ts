@@ -612,4 +612,67 @@ describe('parseExpandedOutline · 单章蓝图（chapterBlueprints）解析', ()
     // orderIndex 仍正确（从 heading 抽数字）
     expect(outline!.chapterBlueprints![2].orderIndex).toBe(3);
   });
+
+  // ---------- mustCover 整卷目标剔除（缺陷修复） ----------
+  // 真实回归：smoke:storyflow:real 实测——AI 把卷级 objective「完成临水县从空壳穷县到模范县的逆转」
+  // 写进单章 mustCover，下游 chapter-judge 持续判未履约 → 持久错误重试耗尽 → 死循环。
+  // 解析期应剔除这类跨章目标，只保留单章可兑现的节点。
+  it('mustCover 含整卷/全书级跨章目标时被剔除（保留单章可兑现节点）', () => {
+    const base = buildSampleOutline();
+    const blueprintBlocks = `### 第1章
+- 标题：一睁眼官帽盖脸
+- CBN：沈知行醒来，乌纱帽盖在脸上
+- mustCover：醒来并承认自己成了临水县新任知县；完成临水县从空壳穷县到模范县的逆转；实现家族复兴
+- CEN：门外差役高喊钱老爷的拜帖到了`;
+    const withOverScoped = base.replace(
+      '## 主要支线',
+      `## 单章蓝图\n${blueprintBlocks}\n\n## 主要支线`,
+    );
+    const outline = parseExpandedOutline(withOverScoped);
+    expect(outline).not.toBeNull();
+    const ch1 = outline!.chapterBlueprints![0];
+    // 「醒来并承认…」是单章可兑现节点，保留
+    expect(ch1.mustCover).toContain('醒来并承认自己成了临水县新任知县');
+    // 整卷/全书级目标被剔除
+    expect(ch1.mustCover).not.toContain('完成临水县从空壳穷县到模范县的逆转');
+    expect(ch1.mustCover).not.toContain('实现家族复兴');
+  });
+
+  it('mustCover 全部是跨章目标时回退为 [CBN]（避免空 mustCover 让 chapter-judge 无节点可判）', () => {
+    const base = buildSampleOutline();
+    const blueprintBlocks = `### 第1章
+- 标题：开局
+- CBN：沈知行醒来乌纱帽盖脸
+- mustCover：完成临水县从空壳穷县到模范县的逆转；实现家族复兴
+- CEN：门外差役高喊钱老爷的拜帖到了`;
+    const withAllOverScoped = base.replace(
+      '## 主要支线',
+      `## 单章蓝图\n${blueprintBlocks}\n\n## 主要支线`,
+    );
+    const outline = parseExpandedOutline(withAllOverScoped);
+    expect(outline).not.toBeNull();
+    const ch1 = outline!.chapterBlueprints![0];
+    // 剔空后回退 [CBN]，与 parseChapterBlueprintSection 的兜底口径一致
+    expect(ch1.mustCover).toEqual(['沈知行醒来乌纱帽盖脸']);
+  });
+
+  it('mustCover 全是单章节点时原样保留（无误伤）', () => {
+    const base = buildSampleOutline();
+    const blueprintBlocks = `### 第1章
+- 标题：开局
+- CBN：沈知行醒来
+- mustCover：醒来验尸；当众指认；翻案打脸
+- CEN：门外差役高喊钱老爷的拜帖到了`;
+    const withNormal = base.replace(
+      '## 主要支线',
+      `## 单章蓝图\n${blueprintBlocks}\n\n## 主要支线`,
+    );
+    const outline = parseExpandedOutline(withNormal);
+    expect(outline).not.toBeNull();
+    expect(outline!.chapterBlueprints![0].mustCover).toEqual([
+      '醒来验尸',
+      '当众指认',
+      '翻案打脸',
+    ]);
+  });
 });

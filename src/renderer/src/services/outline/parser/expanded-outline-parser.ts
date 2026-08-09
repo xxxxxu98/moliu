@@ -25,6 +25,11 @@ import {
   splitByHeading,
   splitNamedSections,
 } from './utils';
+// 复用 story-runtime 的跨章目标检测：mustCover 含整卷/全书级目标（如「完成…逆转」）
+// 会触发续写履约审核判未兑现 → 死循环。解析期剔除，从源头阻断。
+// 注意：outline 模块与 story-runtime 模块的依赖方向——story-runtime 是更底层的运行时，
+// outline 是上层策划产出，这里单向引用底层纯函数无循环依赖风险。
+import { isCrossChapterGoal } from '@/services/story-runtime/chapterBlueprintNormalize';
 
 const ACT_HEADING_TO_NAME: Record<string, StoryActPlan['name']> = {
   '第一幕（建置）': 'act1',
@@ -122,6 +127,37 @@ function parseChapterBlueprintSection(section: string): ChapterBlueprint[] {
       };
     })
     .filter((item): item is ChapterBlueprint => item !== null);
+}
+
+/**
+ * 清洗单章蓝图的 mustCover：剔除整卷/全书级目标（如「完成临水县从空壳穷县到模范县的逆转」）。
+ *
+ * 真实回归：smoke:storyflow:real 实测——AI 偶发把卷级 objective 写进单章 mustCover，
+ * 下游 ContractPackBuilder 又把它透传给 chapter-judge 作为单章履约硬约束。
+ * 模型无论如何写都兑现不了整卷目标 → 持续判未履约 → 持久错误重试耗尽 → 死循环。
+ *
+ * 这里在解析期（AI 产出后、建章前）做一次硬剔除，从源头阻断。判定复用
+ * story-runtime 的 isCrossChapterGoal（已覆盖时限/威胁/流程式/弧线终态式跨章目标）。
+ *
+ * 注意：剔空 mustCover 时回退为 [CBN]，与 parseChapterBlueprintSection 的兜底口径一致，
+ * 避免下游因空 mustCover 再次判「未履约」（无节点可履约也是一种失败）。
+ */
+function sanitizeChapterBlueprintMustCover(blueprints: ChapterBlueprint[]): ChapterBlueprint[] {
+  if (blueprints.length === 0) return blueprints;
+  return blueprints.map(blueprint => {
+    if (!blueprint.mustCover || blueprint.mustCover.length === 0) return blueprint;
+    const filtered = blueprint.mustCover.filter(node => !isCrossChapterGoal(node));
+    if (filtered.length === blueprint.mustCover.length) return blueprint; // 无剔除，原样返回
+    // 记录剔除事件（便于排障；不抛错，不阻断主流程）
+    const dropped = blueprint.mustCover.filter(node => isCrossChapterGoal(node));
+    const droppedPreview = dropped.slice(0, 2).map(s => `「${s.slice(0, 30)}」`).join('、');
+    console.warn(
+      `[outline-parser] 第${blueprint.orderIndex}章 mustCover 剔除 ${dropped.length} 条整卷/全书级跨章目标（注入单章会触发履约死循环）：${droppedPreview}${dropped.length > 2 ? ` 等${dropped.length}条` : ''}`
+    );
+    // 剔空则回退 [CBN]，避免空 mustCover 让 chapter-judge 无节点可判
+    const safeMustCover = filtered.length > 0 ? filtered : (blueprint.CBN ? [blueprint.CBN] : []);
+    return { ...blueprint, mustCover: safeMustCover };
+  });
 }
 
 function parseStoryScalePlan(section: string): StoryScalePlan {
@@ -583,7 +619,10 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
 
   // 单章蓝图（chapterBlueprints）：AI 逐章产出，非空时下游 toChapters 走 blueprint 分支，替代算法派生。
   // 解析为空（AI 未产或写残）则保持 undefined，toChapters 自动回退 splitStartupBlocksToChapters。
-  const parsedChapterBlueprints = parseChapterBlueprintSection(chapterBlueprintSection);
+  const rawChapterBlueprints = parseChapterBlueprintSection(chapterBlueprintSection);
+  // 解析期清洗：剔除 mustCover 中的整卷/全书级跨章目标（注入单章会触发续写履约死循环）。
+  // 这是 #2a 防护层；reviewAndFixOutline 的 over-scoped-mustcover issue（#2b）是第二层。
+  const parsedChapterBlueprints = sanitizeChapterBlueprintMustCover(rawChapterBlueprints);
 
   const outline: ExecutableOutline = {
     title: extractFieldValue(positioningSection, '标题') ?? '未命名方案',

@@ -111,7 +111,17 @@ function createStructuredAIFromActiveProvider(signal?: AbortSignal): StructuredA
           jsonMode: true,
         });
         const parsed = ChapterWritingPipeline.parseStructuredJson(raw);
-        return request.parse(parsed);
+        const result = request.parse(parsed);
+        // 把模型原始文本挂在返回对象上供 RecordingStructuredAI 写入 trace.rawResponse。
+        // recorder 会读取后剥离该字段，下游消费方零感知；非对象返回值（如基本类型）忽略。
+        if (result && (typeof result === 'object' || typeof result === 'function')) {
+          try {
+            (result as Record<string, unknown>).__rawResponse = raw;
+          } catch {
+            /* 只读属性则忽略，不阻塞主流程 */
+          }
+        }
+        return result;
       } finally {
         clearTimeout(timeoutTimer);
       }

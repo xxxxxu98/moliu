@@ -8,7 +8,10 @@
  *
  * 质检规则与修正提示词共用同一份 issue 清单：规则先产出问题，prompt 要求按问题逐条修。
  */
-import { splitPlotClauses } from '@/services/story-runtime/chapterBlueprintNormalize';
+import {
+  isCrossChapterGoal,
+  splitPlotClauses,
+} from '@/services/story-runtime/chapterBlueprintNormalize';
 import type { GenerateOptions } from './unified-generator';
 import type { OutlineDirection } from '../types/direction';
 import type { ExecutableOutline } from '../types/executable-outline';
@@ -22,11 +25,14 @@ export type OutlineQualityIssueKind =
   | 'broken-range'
   | 'unbalanced-paren'
   | 'opening-hook'
-  | 'goldenfinger-late-reveal';
+  | 'goldenfinger-late-reveal'
+  | 'over-scoped-mustcover';
 
 export interface OutlineQualityIssue {
   kind: OutlineQualityIssueKind;
   blockIndex?: number;
+  /** 单章蓝图（chapterBlueprints）中的章号（1-based），与 blockIndex 区分 */
+  chapterOrder?: number;
   detail: string;
 }
 
@@ -229,6 +235,28 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
     }
   }
 
+  // 7. 单章蓝图 mustCover 含整卷/全书级跨章目标（防御纵深）。
+  //    真实回归：smoke:storyflow:real 实测——AI 把卷级 objective 写进单章 mustCover，
+  //    下游 chapter-judge 持续判未履约 → 持久错误重试耗尽 → 死循环。
+  //    解析期已有一道剔除（expanded-outline-parser.sanitizeChapterBlueprintMustCover），
+  //    这里是第二层：触发后会让 reviewer 发起二次请求重写蓝图，从 AI 产出层面纠正。
+  //    判定复用 story-runtime 的 isCrossChapterGoal（已覆盖时限/威胁/流程式/弧线终态式跨章目标）。
+  //    每章最多报 1 条（避免单章多条刷屏），整批最多报 3 条（避免修正 prompt 过长）。
+  const blueprints = outline.chapterBlueprints ?? [];
+  let overScopedReported = 0;
+  for (const blueprint of blueprints) {
+    if (overScopedReported >= 3) break;
+    const overScoped = (blueprint.mustCover ?? []).find(node => isCrossChapterGoal(node));
+    if (overScoped) {
+      issues.push({
+        kind: 'over-scoped-mustcover',
+        chapterOrder: blueprint.orderIndex,
+        detail: `第${blueprint.orderIndex}章 mustCover 含整卷/全书级跨章目标「${overScoped.slice(0, 30)}」，单章无法兑现会触发续写履约死循环，必须改为单章可兑现的具体事件（如把「完成…逆转」改为「主角首次用X手段解决Y具体问题」）`,
+      });
+      overScopedReported += 1;
+    }
+  }
+
   return issues;
 }
 
@@ -242,10 +270,15 @@ function stripMeta(text: string): string {
 function formatIssues(issues: OutlineQualityIssue[]): string {
   if (issues.length === 0) return '（无）';
   return issues
-    .map(
-      (issue, index) =>
-        `${index + 1}. [${issue.kind}]${issue.blockIndex !== undefined ? ` 第${issue.blockIndex + 1}块` : ''} ${issue.detail}`
-    )
+    .map((issue, index) => {
+      const loc =
+        issue.chapterOrder !== undefined
+          ? ` 第${issue.chapterOrder}章`
+          : issue.blockIndex !== undefined
+            ? ` 第${issue.blockIndex + 1}块`
+            : '';
+      return `${index + 1}. [${issue.kind}]${loc} ${issue.detail}`;
+    })
     .join('\n');
 }
 
@@ -271,7 +304,8 @@ export function buildOutlineReviewPrompt(params: {
 4. 【必出事件硬约束】每个区间的「必出事件」必须是单章可兑现的独立事件：同一场景链合并为一条；每条事件 8～30 字一句话写完，禁止换行；
    【括号硬约束】禁止使用任何括号（中文（）或英文()），补充说明一律用逗号并入句中。若问题清单报"括号跨事件拆分"，说明初稿把一个括号拆到了两条事件里，修正时必须删除括号、把括号内容用逗号并入对应事件正文，确保修正后每条事件的开括号与闭括号各自配平；
 5. 【开篇钩子硬约束】开篇钩子 30 字以内的单场景动作钩子；
-6. 若问题清单为（无）或已全部修复，原样输出主方案即可。
+6. 【单章 mustCover 硬约束】单章蓝图「## 单章蓝图」中每章的 mustCover 必须是单章可兑现的具体事件（一个场景、一次对决、一次破局），禁止写整卷或全书级目标（如「完成…逆转」「实现…复兴」「达成…统一」「打败…集团」「通过…考绩」等）。若问题清单报 over-scoped-mustcover，必须把目标拆成本章能完成的一个具体动作；
+7. 若问题清单为（无）或已全部修复，原样输出主方案即可。
 直接输出修正后的完整主方案 Markdown，不要任何前后解释文字。`;
 
   const user = `【方向卡】

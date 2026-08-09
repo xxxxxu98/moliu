@@ -693,10 +693,48 @@ export function referencesFutureChapter(
 }
 
 /**
+ * 卷级 objective 天然跨章：即使 isCrossChapterGoal 未命中（模型可能写成
+ * 「三个月把一个穷县治理成模范县」「打败钱四海，通过考绩并获得进京机会」这类
+ * 不带「完成/逆转」标志词但本质仍是整卷主线的表述），注入单章 mustCover 也会
+ * 触发履约审核判「未兑现」并连环重写熔断。
+ *
+ * 这里做一道更保守的二次校验：候选若含卷级跨度信号词
+ * （打败/击败 + 卷级反派名；获得/取得 + 卷级奖励；通过 + 考绩/考核/验收/述职；
+ *   治理成/打造成 + 模范/示范/标杆；获得 + 进京/晋升/封爵/升任；获得/拿下 + 全 + 名额/资源）
+ * 即视为卷级目标，整体跳过。宁可少注入一条卖点，也不污染单章合同。
+ *
+ * 注意：此函数只用于过滤来自卷计划 objective 的「整卷承诺」，不应误伤单章爽点
+ * （单章爽点一般是「当众打脸」「翻案」「破局」等具体场景动作）。
+ */
+const VOLUME_SCOPED_OBJECTIVE_RE =
+  /(?:打败|击败|扳倒|铲除|消灭|清除).{0,12}(?:党|派|集团|势力|反派|boss)/u;
+const VOLUME_SCOPED_REWARD_RE =
+  /(?:通过|拿下|取得|获得|完成).{0,8}(?:考绩|考核|验收|述职|复审|评定)/u;
+const VOLUME_SCOPED_TRANSFORM_RE =
+  /(?:治理成|打造成|建设成|做成|变成).{0,8}(?:模范|示范|标杆|样板|第一)/u;
+const VOLUME_SCOPED_PROMOTION_RE =
+  /(?:获得|取得|拿到|赢得).{0,8}(?:进京|晋升|封爵|升任|提拔|入阁|入朝)/u;
+const VOLUME_SCOPED_BULK_RE =
+  /(?:平定|肃清|统一|收复|荡平|剿灭).{0,8}(?:叛乱|边患|匪患|全国|全境|全境)/u;
+
+export function isLikelyVolumeScopedObjective(text: string): boolean {
+  const t = (text ?? '').trim();
+  if (!t) return false;
+  return (
+    VOLUME_SCOPED_OBJECTIVE_RE.test(t) ||
+    VOLUME_SCOPED_REWARD_RE.test(t) ||
+    VOLUME_SCOPED_TRANSFORM_RE.test(t) ||
+    VOLUME_SCOPED_PROMOTION_RE.test(t) ||
+    VOLUME_SCOPED_BULK_RE.test(t)
+  );
+}
+
+/**
  * P2 卖点传导：把卷计划里「可单章兑现」的高光场景补入 mustCover（最多 1 条）。
  * 过滤规则：
  * - 按中文标点拆子句，只取 8–40 字；
  * - 排除跨章目标（限期/威胁组合、远期章号引用，纳入即死锁或提前透支）、模板钩子、读者元文本；
+ * - 排除卷级 objective（打败卷级反派/通过卷级考核/治理成模范县等整卷承诺，单章无法兑现）；
  * - 与既有 mustCover 重叠的跳过。
  * 这样正文有机会写到书名承诺的核心爽点（如「厉鬼群自动让开一条路」），
  * 而不是只复述上章结尾。
@@ -719,12 +757,18 @@ export function enrichMustCoverWithVolumeSellingPoints(
     // 被过滤掉，剩下不带章号的情节子句会绕过章号检查被注入，反而触发履约审核判
     // 未兑现、强制重写透支后续高潮。整个候选一旦含远期章号引用即整体跳过。
     if (chapterNumber && referencesFutureChapter(candidate, chapterNumber)) continue;
+    // 卷级 objective 整体跳过：即使拆成子句后某一短句看似可单章兑现，
+    // 它仍属整卷承诺的一部分，注入会与卷级节拍冲突。isCrossChapterGoal 抓标志词，
+    // 这里再补一道结构化信号（打败卷级反派/通过卷级考核/治理成模范县等）双保险。
+    if (isLikelyVolumeScopedObjective(candidate)) continue;
     const clauses = splitPlotClauses(stripReaderMeta(candidate));
     for (const clause of clauses) {
       if (clause.length < 8 || clause.length > 40) continue;
       if (isCrossChapterGoal(clause)) continue;
       if (isTemplateHookCen(clause)) continue;
       if (isReaderMetaText(clause)) continue;
+      // 子句级卷级跨度信号再过滤一次（拆出来的子句也可能是整卷目标）
+      if (isLikelyVolumeScopedObjective(clause)) continue;
       if (mustCover.some(item => item.includes(clause) || clause.includes(item))) continue;
       // 与禁区冲突则跳过该候选，避免借 mustCover 新增硬约束后被软化
       if (

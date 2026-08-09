@@ -8,6 +8,13 @@ export interface AiTraceRecord {
   system: string;
   prompt: string;
   response?: unknown;
+  /**
+   * 模型返回的原始文本（未 parse 前）。response 已是 parse 后的对象/值，
+   * 排障时往往需要看原文（定位模型是否截断、JSON 结构偏差等）。
+   * 由调用方（ChapterWritingPipeline / realStructuredAI）把 raw 文本挂到
+   * 返回对象的 __rawResponse 字段传入；recorder 读取后从此处剥离，避免污染下游。
+   */
+  rawResponse?: string;
   error?: string;
   ms: number;
   at: string;
@@ -15,6 +22,16 @@ export interface AiTraceRecord {
   model?: string;
   provider?: string;
 }
+
+/**
+ * 内部约定字段名：StructuredAI 实现可把模型原始返回文本挂在返回对象上，
+ * RecordingStructuredAI 会读取并写入 trace 的 rawResponse，然后剥离该字段。
+ * 用 Symbol 太重（跨模块/序列化不一致），这里用一个明确带 __ 前缀的字符串约定，
+ * 仅在 trace 启用路径上出现，对正常 StructuredAI（无此字段）零影响。
+ */
+export const RAW_RESPONSE_KEY = '__rawResponse';
+
+type WithRawResponse = { [RAW_RESPONSE_KEY]?: unknown };
 
 export interface RecordingStructuredAIOptions {
   runId?: string;
@@ -70,6 +87,9 @@ export class RecordingStructuredAI implements StructuredAI {
     const started = Date.now();
     try {
       const response = await this.inner.generate(request);
+      // 调用方（ChapterWritingPipeline / realStructuredAI）可把模型原始文本挂在
+      // __rawResponse 字段上供排障。recorder 读取后从此处剥离，避免污染下游消费方。
+      const rawResponse = this.extractRawResponse(response);
       const record: AiTraceRecord = {
         seq,
         runId: this.runId,
@@ -78,6 +98,7 @@ export class RecordingStructuredAI implements StructuredAI {
         system: request.system,
         prompt: request.prompt,
         response,
+        rawResponse,
         ms: Date.now() - started,
         at: new Date().toISOString(),
         model: this.model,
@@ -104,6 +125,25 @@ export class RecordingStructuredAI implements StructuredAI {
       this.enqueuePersist(record);
       throw error;
     }
+  }
+
+  /**
+   * 从返回对象上剥离 __rawResponse 字段（若存在），返回原始文本。
+   * 仅在 response 是对象/数组元素为对象时才剥离；基本类型（string/number/null）忽略。
+   * 剥离后调用方拿到的 response 不再含此临时字段，下游消费方零感知。
+   */
+  private extractRawResponse(response: unknown): string | undefined {
+    if (!response || typeof response !== 'object') return undefined;
+    const holder = response as WithRawResponse;
+    const raw = holder[RAW_RESPONSE_KEY];
+    if (typeof raw !== 'string' || raw.length === 0) return undefined;
+    // 从原对象上删除，避免污染下游（JSON.stringify、zod schema 校验、状态投影等）
+    try {
+      delete holder[RAW_RESPONSE_KEY];
+    } catch {
+      /* 只读属性则忽略，不阻塞 trace */
+    }
+    return raw;
   }
 
   private enqueuePersist(record: AiTraceRecord): void {

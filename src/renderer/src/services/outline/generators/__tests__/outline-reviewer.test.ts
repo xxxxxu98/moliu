@@ -256,6 +256,70 @@ describe('inspectOutlineQuality', () => {
   it('空大纲不崩溃', () => {
     expect(inspectOutlineQuality(null as unknown as ExecutableOutline)).toEqual([]);
   });
+
+  // ---------- over-scoped-mustcover（缺陷修复） ----------
+  // 真实回归：smoke:storyflow:real 实测——AI 把卷级 objective「完成临水县从空壳穷县到模范县的逆转」
+  // 写进单章 mustCover，下游 chapter-judge 持续判未履约 → 持久错误重试耗尽 → 死循环。
+  it('chapterBlueprints 单章 mustCover 含整卷/全书级跨章目标命中 over-scoped-mustcover', () => {
+    const outline = makeCleanOutline();
+    outline.chapterBlueprints = [
+      {
+        orderIndex: 1,
+        title: '一睁眼官帽盖脸',
+        summary: 'CBN',
+        CBN: '沈知行醒来',
+        CPNs: ['醒来'],
+        CEN: '门外差役高喊',
+        mustCover: [
+          '醒来并承认自己成了临水县新任知县',
+          '完成临水县从空壳穷县到模范县的逆转', // 整卷目标，应命中
+        ],
+        forbiddenZones: [],
+        hookType: 'reveal',
+      },
+    ];
+    const issues = inspectOutlineQuality(outline);
+    const overScoped = issues.filter(i => i.kind === 'over-scoped-mustcover');
+    expect(overScoped.length).toBe(1);
+    expect(overScoped[0].chapterOrder).toBe(1);
+    expect(overScoped[0].detail).toContain('完成临水县从空壳穷县到模范县的逆转');
+  });
+
+  it('chapterBlueprints mustCover 全是单章节点时不误报 over-scoped-mustcover', () => {
+    const outline = makeCleanOutline();
+    outline.chapterBlueprints = [
+      {
+        orderIndex: 1,
+        title: '开局',
+        summary: 'CBN',
+        CBN: '沈知行醒来',
+        CPNs: ['醒来'],
+        CEN: '差役高喊',
+        mustCover: ['醒来验尸', '当众指认', '翻案打脸'], // 全是单章节奏点
+        forbiddenZones: [],
+        hookType: 'reveal',
+      },
+    ];
+    const issues = inspectOutlineQuality(outline);
+    expect(issues.some(i => i.kind === 'over-scoped-mustcover')).toBe(false);
+  });
+
+  it('多章命中 over-scoped-mustcover 时整批最多报 3 条（避免修正 prompt 过长）', () => {
+    const outline = makeCleanOutline();
+    outline.chapterBlueprints = Array.from({ length: 5 }, (_, i) => ({
+      orderIndex: i + 1,
+      title: `第${i + 1}章`,
+      summary: 'CBN',
+      CBN: 'CBN',
+      CPNs: [],
+      CEN: 'CEN',
+      mustCover: ['完成家族复兴'], // 每章都命中
+      forbiddenZones: [],
+      hookType: 'reveal',
+    }));
+    const issues = inspectOutlineQuality(outline);
+    expect(issues.filter(i => i.kind === 'over-scoped-mustcover').length).toBe(3);
+  });
 });
 
 describe('parseChapterRange', () => {

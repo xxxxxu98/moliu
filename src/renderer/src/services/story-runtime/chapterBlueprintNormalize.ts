@@ -85,6 +85,22 @@ const CROSS_CHAPTER_PROCESS_RE = /(?:完成|实现|走完|跑通|推进).{0,8}(?
 const CROSS_CHAPTER_SPAN_RE = /从.{2,12}到.{2,12}的(?:全|整个)/u;
 
 /**
+ * 弧线终态式跨章目标：卷计划 objective 另一种常见写法——「完成/实现 + 大跨度 + 终态动作」。
+ * 终态动作词（逆转/翻身/崛起/逆袭/翻盘/复兴/蜕变/破局/称霸/统一/登顶/封神/称帝/建国）
+ * 描述的是整卷（甚至全书）的最终格局，单章最多只能推进一小步，不可能「完成」。
+ * 必须同时满足「完成/实现/达成/做到 + 终态词」才判跨章——单独的「翻案」「破局」
+ * 在单章里完全可以是一个具体场景（如「当堂翻案」「这次破局靠的是数据」），不能误伤。
+ * 「逆转/翻身」单独出现同理：本章逆转一次劣势、本章翻身打脸，都是合法单章爽点。
+ */
+const CROSS_CHAPTER_ARC_TERMINAL_RE =
+  /逆转|翻身|崛起|逆袭|翻盘|复兴|蜕变|称霸|统一|登顶|封神|称帝|建国|崛起|大逆转|翻篇/u;
+const CROSS_CHAPTER_ARC_ACTION_RE = /完成|实现|达成|做到|走向|迈向|开启|完成/u;
+const CROSS_CHAPTER_ARC_RE = new RegExp(
+  `(?:${CROSS_CHAPTER_ARC_ACTION_RE.source}).{0,16}(?:${CROSS_CHAPTER_ARC_TERMINAL_RE.source})`,
+  'u',
+);
+
+/**
  * 跨章目标检测：带时限（三天内/七日内/限期）或「限期+威胁后果」的长目标
  * （如「必须在三天内翻案，否则将被处斩」）。这类节点单章无法完整兑现，
  * 不应作为 mustCover 硬性履约，否则与「禁止提前完结翻案」类禁区自相矛盾，
@@ -92,9 +108,10 @@ const CROSS_CHAPTER_SPAN_RE = /从.{2,12}到.{2,12}的(?:全|整个)/u;
  * 注意：不按子句数量判定——「收集证词，锁定真凶，公堂对峙」这类 3 子句节点
  * 是单章可兑现的（且与生成 prompt 的「场景链合并为一条」约束一致），不能误伤。
  *
- * 另识别流程完成式跨章目标（卷级 objective 常见）：
- * 「完成从补亏空到税制改革的全流程」「实现从查账到定罪的全过程」——
- * 这类是整卷主线，单章无法兑现，注入 mustCover 即死锁。
+ * 另识别两类卷级 objective 常见的跨章目标：
+ * 1. 流程完成式：「完成从补亏空到税制改革的全流程」「实现从查账到定罪的全过程」
+ * 2. 弧线终态式：「完成临水县从空壳穷县到模范县的逆转」「实现家族复兴」「达成称霸」
+ * 二者都是整卷主线，单章无法兑现，注入 mustCover 即死锁。
  */
 export function isCrossChapterGoal(node: string): boolean {
   const text = (node ?? '').trim();
@@ -105,6 +122,8 @@ export function isCrossChapterGoal(node: string): boolean {
   if (CROSS_CHAPTER_THREAT_RE.test(text) && text.length >= 12) return true;
   // 流程完成式跨章目标（卷级 objective 常见）
   if (CROSS_CHAPTER_PROCESS_RE.test(text) || CROSS_CHAPTER_SPAN_RE.test(text)) return true;
+  // 弧线终态式跨章目标（卷级 objective 常见，如「完成…逆转」「实现…复兴」）
+  if (CROSS_CHAPTER_ARC_RE.test(text)) return true;
   return false;
 }
 

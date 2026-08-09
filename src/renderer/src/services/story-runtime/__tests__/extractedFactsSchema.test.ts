@@ -166,6 +166,112 @@ describe('extractedFactsSchema 顶层缺失字段软兜底', () => {
   });
 });
 
+describe('extractedFactsSchema evidence 嵌套数组容错', () => {
+  it('event.evidence 含嵌套数组时递归展平，不再整章崩', () => {
+    // 真实回归：smoke:storyflow:real 实测——fact-extraction 偶发返回
+    // events[4].evidence[4] 为 array（而非 string），触发
+    // ✖ Invalid input: expected string, received array → 持久错误重试。
+    // 这里把 evidence 写成嵌套数组，coerceStringArray 应递归展平为 string[]。
+    const raw = {
+      events: [
+        {
+          id: 'e1',
+          chapter: 1,
+          sceneId: 's1',
+          type: 'conflict',
+          summary: '主角入狱',
+          participants: ['char-hero'],
+          causes: [],
+          effects: ['入狱'],
+          evidence: [
+            '正文原句一',
+            ['正文原句二', '正文原句三'], // 嵌套数组
+            '正文原句四',
+            [['深度嵌套原句']], // 双层嵌套
+          ],
+        },
+      ],
+      deltas: [],
+      evidence: [],
+    };
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.events[0].evidence).toEqual([
+      '正文原句一',
+      '正文原句二',
+      '正文原句三',
+      '正文原句四',
+      '深度嵌套原句',
+    ]);
+  });
+
+  it('event.evidence 为字符串（非数组）时容错为单元素数组', () => {
+    const raw = {
+      events: [
+        {
+          id: 'e1',
+          chapter: 1,
+          sceneId: 's1',
+          type: 'conflict',
+          summary: 'x',
+          participants: [],
+          causes: [],
+          effects: [],
+          evidence: '一段正文原句', // 模型偶发写成裸字符串
+        },
+      ],
+      deltas: [],
+      evidence: [],
+    };
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.events[0].evidence).toEqual(['一段正文原句']);
+  });
+
+  it('event.effects 含嵌套数组也展平（同型字段同样风险）', () => {
+    const raw = {
+      events: [
+        {
+          id: 'e1',
+          chapter: 1,
+          sceneId: 's1',
+          type: 'conflict',
+          summary: 'x',
+          participants: [],
+          causes: [],
+          effects: ['入狱', ['失忆', ['改名']]],
+          evidence: [],
+        },
+      ],
+      deltas: [],
+      evidence: [],
+    };
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.events[0].effects).toEqual(['入狱', '失忆', '改名']);
+  });
+
+  it('evidence 数组中的对象元素被丢弃（不字符串化为 [object Object]）', () => {
+    const raw = {
+      events: [
+        {
+          id: 'e1',
+          chapter: 1,
+          sceneId: 's1',
+          type: 'conflict',
+          summary: 'x',
+          participants: [],
+          causes: [],
+          effects: [],
+          evidence: ['有效原句', { bad: 'object' }, 42, null, ''],
+        },
+      ],
+      deltas: [],
+      evidence: [],
+    };
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    // 字符串保留、数字转字符串保留、对象/null/空串丢弃
+    expect(parsed.events[0].evidence).toEqual(['有效原句', '42']);
+  });
+});
+
 describe('storyStateSchema inventory 叶子容错', () => {
   function stateWith(inventory: unknown) {
     const state = makeState();
