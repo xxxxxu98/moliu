@@ -6,7 +6,6 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   checkWordCount,
   checkWordCountBounds,
-  clampProseToMaxWords,
   chooseProseAfterCondense,
   buildSupplementPrompt,
   buildCondensePrompt,
@@ -22,7 +21,6 @@ import {
   BATCH_CONTINUE_PRESET,
   resolveChapterWriteOptions,
 } from '../chapterWritePresets';
-import { countWords } from '../utils';
 
 describe('checkWordCount', () => {
   it('字数不足时 needsSupplement=true', () => {
@@ -66,19 +64,6 @@ describe('checkWordCountBounds', () => {
     expect(checkWordCountBounds('字'.repeat(1628), target).status).toBe('ok');
     // 79% 仍应判 short（阈值没放得太松）
     expect(checkWordCountBounds('字'.repeat(1580), target).status).toBe('short');
-  });
-});
-
-describe('clampProseToMaxWords', () => {
-  it('超长时按句保留开头与结尾', () => {
-    const head = '开场一句。冲突二句。推进三句。';
-    const middle = '注水描写。'.repeat(40);
-    const tail = '章末钩子出现。悬念落下。';
-    const prose = `${head}${middle}${tail}`;
-    const clamped = clampProseToMaxWords(prose, 40);
-    expect(countWords(clamped)).toBeLessThanOrEqual(40);
-    expect(clamped).toContain('开场一句');
-    expect(clamped).toContain('悬念落下');
   });
 });
 

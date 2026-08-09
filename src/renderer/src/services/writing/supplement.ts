@@ -110,65 +110,6 @@ ${params.existingContent}
 请输出压缩后的完整章节正文。`;
 }
 
-/**
- * 超长硬裁：保留开头 + 结尾（章末钩子），按句边界压到 maxWords 以内。
- * 仅作 AI 压缩失败后的兜底，保证提交字数不炸上限。
- */
-export function clampProseToMaxWords(prose: string, maxWords: number): string {
-  const text = prose.trim();
-  if (!text || maxWords <= 0 || countWords(text) <= maxWords) {
-    return text;
-  }
-
-  const sentences = text.match(/[^。！？!?…]+[。！？!?…]?/gu);
-  if (!sentences || sentences.length === 0) {
-    return text;
-  }
-
-  const tailBudget = Math.max(1, Math.floor(maxWords * 0.3));
-  const headBudget = Math.max(1, maxWords - tailBudget);
-
-  const tail: string[] = [];
-  let tailWords = 0;
-  for (let i = sentences.length - 1; i >= 0; i -= 1) {
-    const piece = sentences[i];
-    const words = countWords(piece);
-    if (tail.length > 0 && tailWords + words > tailBudget) {
-      break;
-    }
-    tail.unshift(piece);
-    tailWords += words;
-  }
-
-  const tailStart = sentences.length - tail.length;
-  const head: string[] = [];
-  let headWords = 0;
-  for (let i = 0; i < tailStart; i += 1) {
-    const piece = sentences[i];
-    const words = countWords(piece);
-    if (head.length > 0 && headWords + words > headBudget) {
-      break;
-    }
-    head.push(piece);
-    headWords += words;
-  }
-
-  const merged = `${head.join('')}${tail.join('')}`.trim();
-  if (!merged || countWords(merged) === 0) {
-    // 极端短句场景：退化为按句从头累计
-    const fallback: string[] = [];
-    let used = 0;
-    for (const piece of sentences) {
-      const words = countWords(piece);
-      if (fallback.length > 0 && used + words > maxWords) break;
-      fallback.push(piece);
-      used += words;
-    }
-    return fallback.join('').trim() || text;
-  }
-  return merged;
-}
-
 export type CondenseRecoveryStrategy = 'condensed' | 'original-kept' | 'condensed-kept';
 
 export interface ChooseProseAfterCondenseResult {

@@ -856,14 +856,8 @@ export function openContinueWriteSession(options: {
       await recording.flush();
       syncProjectFromStore();
 
-      // persistence 已落库；若 success 但 store 未写入，兜底同步正文
-      if (output.success && output.prose.trim()) {
-        const latest = project.chapters.find(item => item.id === chapter.id);
-        if (!(latest?.content || '').trim()) {
-          await persistence.replace(chapter.id, output.prose);
-          syncProjectFromStore();
-        }
-      }
+      // 持久化严格对齐生产：pipeline 内部已调一次 persistence.replace，失败只 warn 靠 outbox 重放。
+      // 不再加"success 但 store 未写入则补写"的兜底——那会掩盖生产落库静默失败的 bug。
 
       return {
         chapterNumber,
@@ -1017,9 +1011,11 @@ export async function runContinueWriteChapters(options: {
         }
         if (finalResult?.output.success) break;
 
-        // 从本轮失败的门禁结果提取 blocking 问题，作为下一轮重试的反馈种子
+        // 从本轮失败的门禁结果提取 blocking 问题，作为下一轮重试的反馈种子。
+        // 用 allIssues（扁平合并数组）而非 gates.flatMap——与生产 useBatchWriter 同写法，
+        // 语义等价且对 mock/部分 gateResult 更健壮。
         if (finalResult?.output.gateResult) {
-          const blocking = finalResult.output.gateResult.gates.flatMap(g => g.issues)
+          const blocking = (finalResult.output.gateResult.allIssues ?? [])
             .filter(issue => issue.severity === 'critical')
             .map(issue => issue.description)
             .filter((desc): desc is string => Boolean(desc))

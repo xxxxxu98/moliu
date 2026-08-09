@@ -27,7 +27,6 @@ import {
   buildWordCountShortfallIssue,
   checkWordCountBounds,
   chooseProseAfterCondense,
-  clampProseToMaxWords,
 } from '@/services/writing/supplement';
 import {
   classifyError,
@@ -423,25 +422,14 @@ export class LongFormWritingEngine {
       return nextDrafts;
     }
 
-    // 输出护栏（Bug 7 修复）：正文异常膨胀（如补充轮混入 JSON 骨架，实测 36 万字符）时，
-    // 不再把巨型文本发给 AI 压缩（prompt token 爆炸），直接硬裁到上限。
+    // 输出护栏：正文异常膨胀（AI 失控狂输出，实测可达数十万字符）时，
+    // 不再把巨型文本发给 AI 压缩（prompt token 爆炸），也不硬裁（掐断正文破坏文气），
+    // 直接保留原文落库（偏长但完整，与压缩失败「直接用」对称）。
     const hardClampChars = Math.max(12000, target * 8);
     if (originalProse.length > hardClampChars) {
       console.warn(
-        `[LongFormWritingEngine] 正文异常膨胀（${originalProse.length} 字符 > ${hardClampChars}），跳过 AI 压缩直接硬裁`
+        `[LongFormWritingEngine] 正文异常膨胀（${originalProse.length} 字符 > ${hardClampChars}），跳过 AI 压缩，保留原文（偏长但完整，不硬裁）`
       );
-      const clamped = clampProseToMaxWords(originalProse, bounds.maxWords);
-      const clampedParagraphs = sanitizeSceneDraftParagraphs(
-        clamped
-          .split(/\n{2,}/u)
-          .map(part => part.trim())
-          .filter(Boolean)
-      );
-      nextDrafts[0] = {
-        ...nextDrafts[0],
-        paragraphs: clampedParagraphs.length > 0 ? clampedParagraphs : [clamped],
-      };
-      nextDrafts.splice(1);
       return nextDrafts;
     }
 
