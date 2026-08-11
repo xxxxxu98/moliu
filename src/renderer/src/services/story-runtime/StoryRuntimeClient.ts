@@ -374,6 +374,13 @@ export class StoryRuntimeClient {
         }),
       })),
     };
+    const outbox = [
+      { projectionType: 'summary', payload: toJsonValue({ commitId: commit.id }) },
+      {
+        projectionType: 'memory',
+        payload: toJsonValue({ commitId: commit.id, extractedFacts: commit.extractedFacts }),
+      },
+    ] as const;
     const raw = await this.api.commitAccepted({
       projectId: commit.projectId,
       commit: {
@@ -384,16 +391,17 @@ export class StoryRuntimeClient {
         payload: toJsonValue(commit),
       },
       projections,
-      outbox: [
-        { projectionType: 'summary', payload: toJsonValue({ commitId: commit.id }) },
-        { projectionType: 'memory', payload: toJsonValue(commit.extractedFacts) },
-        { projectionType: 'embedding', payload: toJsonValue({ commitId: commit.id }) },
-      ],
+      // 只为已有真实消费者的投影创建任务。向量写入尚未实现，不能制造永久 pending。
+      outbox: [...outbox],
     });
     return {
       commitId: raw.commitId,
       revision: commit.chapterNumber,
       acceptedAt: new Date().toISOString(),
+      projectionOutbox: outbox.flatMap((item, index) => {
+        const id = raw.outboxIds[index];
+        return id === undefined ? [] : [{ id, projectionType: item.projectionType }];
+      }),
     };
   }
 

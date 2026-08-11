@@ -45,7 +45,7 @@ function makeEmptySnapshot(): StateSnapshot {
 }
 
 describe('normalizeWebnovelParagraphs（少动刀）', () => {
-  it('不主动拆超长单段，保留模型原文结构', () => {
+  it('不主动拆没有换行的超长单段，保留模型原文结构', () => {
     const dense =
       '他走到窗前看着夜色。心里想着刚才发生的一切。觉得这一切都像是一场梦。但他知道这不是梦。他得面对现实。门外传来脚步声。有人在敲门。';
     const result = normalizeWebnovelParagraphs(dense);
@@ -56,6 +56,13 @@ describe('normalizeWebnovelParagraphs（少动刀）', () => {
   it('保留模型已有空行分段', () => {
     const text = '他走到窗前。\n\n窗外很黑。';
     expect(normalizeWebnovelParagraphs(text)).toBe(text);
+  });
+
+  it('把模型单换行提升为标准空行，并清理受限标点', () => {
+    const text = '他看见四个字——“粮税私记”。\n“下官……下官冤枉。”';
+    expect(normalizeWebnovelParagraphs(text)).toBe(
+      '他看见四个字：“粮税私记”。\n\n“下官，下官冤枉。”'
+    );
   });
 
   it('不主动合并过碎叙述', () => {

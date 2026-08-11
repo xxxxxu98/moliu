@@ -25,10 +25,11 @@ import { sanitizeSceneDraftParagraphs } from './stripDraftLeakage';
 import {
   buildCondensePrompt,
   buildSupplementPrompt,
-  buildWordCountShortfallIssue,
+  buildWordCountBoundsIssue,
   checkWordCountBounds,
   chooseProseAfterCondense,
 } from '@/services/writing/supplement';
+import { buildTypesettingIssues } from '@/services/writing/typesetting';
 import {
   classifyError,
   backoffDelayMs,
@@ -280,15 +281,36 @@ export class LongFormWritingEngine {
       facts = validated.facts;
       report = validated.report;
 
-      // 字数下限未达标也视为 blocking，驱动重写；用尽轮次后则拒收提交
+      // 字数未落入目标区间也视为 blocking，驱动重写；用尽轮次后仍拒收提交。
       const target = writeInput.targetWordCount ?? 0;
-      const shortfall = buildWordCountShortfallIssue(draftsProse(drafts), target);
-      if (shortfall) {
+      const wordCountIssue = buildWordCountBoundsIssue(draftsProse(drafts), target);
+      const typesettingIssues = buildTypesettingIssues(draftsProse(drafts));
+      if (wordCountIssue) {
         report = {
           accepted: false,
           issues: [
-            ...report.issues.filter(issue => !issue.id.startsWith('word-count-short:')),
-            shortfall,
+            ...report.issues.filter(issue => !issue.id.startsWith('word-count-')),
+            wordCountIssue,
+          ],
+          checkedDomains: report.checkedDomains.includes('fulfillment')
+            ? report.checkedDomains
+            : [...report.checkedDomains, 'fulfillment'],
+        };
+      }
+      if (typesettingIssues.some(issue => issue.severity === 'high')) {
+        report = {
+          accepted: false,
+          issues: [
+            ...report.issues.filter(issue => !issue.id.startsWith('typesetting-density')),
+            ...typesettingIssues
+              .filter(issue => issue.severity === 'high')
+              .map((issue, index) => ({
+                id: index === 0 ? 'typesetting-density' : `typesetting-density-${index + 1}`,
+                domain: 'fulfillment' as const,
+                severity: 'blocking' as const,
+                message: `${issue.description}。${issue.suggestion}`,
+                evidence: issue.evidence ? [issue.evidence] : [],
+              })),
           ],
           checkedDomains: report.checkedDomains.includes('fulfillment')
             ? report.checkedDomains
@@ -306,7 +328,7 @@ export class LongFormWritingEngine {
       const currentBlocking = report.issues.filter(
         issue =>
           issue.severity === 'blocking' &&
-          !issue.id.startsWith('word-count-short:'),
+          !issue.id.startsWith('word-count-'),
       );
       if (
         rewriteRounds > 0 &&
@@ -342,18 +364,6 @@ export class LongFormWritingEngine {
         hints.slice(0, 3)
       );
     }
-
-    // 重写循环用尽后：字数不再拒收提交。移除 word-count-short blocking（字数不足已交由重写循环
-    // 尝试扩写，仍不达标则尊重 AI 产出），让章节按实际内容质量落库（其他 blocking 仍 rejected）。
-    // 偏短的代价是「章节偏短」而非拒收——与偏长「压缩失败直接用」对称，保证正文不被硬凑破坏。
-    const issuesWithoutWordCount = report.issues.filter(
-      issue => !issue.id.startsWith('word-count-short:')
-    );
-    report = {
-      accepted: !issuesWithoutWordCount.some(issue => issue.severity === 'blocking'),
-      issues: issuesWithoutWordCount,
-      checkedDomains: report.checkedDomains,
-    };
 
     const { commit, receipt } = await this.commitService.commit({
       projectId: input.projectId,

@@ -69,8 +69,12 @@ export function isTemplateHookCen(text: string): boolean {
   return TEMPLATE_HOOK_PATTERN.test((text ?? '').trim());
 }
 
-/** 时限/限期等跨章标记（支持中文数字：「三天内」「三日后」；「倒计时」是章末钩子常用词，不能算） */
-const CROSS_CHAPTER_DEADLINE_RE = /[0-9一二三四五六七八九十百零两]+\s*[天日周月年内]/u;
+/**
+ * 时限/限期等跨章标记（支持中文数字：「三天内」「三日后」「一年内」）。
+ * 年份回溯“发生在三年前”不是期限，不能因命中“三年”而误删有效单章取证节点。
+ */
+const CROSS_CHAPTER_DEADLINE_RE =
+  /[0-9一二三四五六七八九十百零两]+\s*(?:(?:个?月|天|日|周)(?:内|后)?|年(?:内|后))/u;
 const CROSS_CHAPTER_DEADLINE_WORD_RE = /限期|截止/u;
 /** 威胁后果标记（须与限期目标组合才判跨章，单独成句是章末钩子） */
 const CROSS_CHAPTER_THREAT_RE = /否则(?:将|就|便会)?(?:被|遭)?/u;

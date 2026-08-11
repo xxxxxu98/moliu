@@ -76,17 +76,19 @@ export function createChapterMemoryClient(): MemoryClient {
 
       const memory = await safeExtractChapterMemory(chapterForMemory as any, chapterNumber, {
         enableAIEnhancement: true,
-        enableFileBackup: true,
+        // 由下方统一执行并校验保存结果，避免提取层 best-effort 吞掉写盘失败。
+        enableFileBackup: false,
         fallbackToPrevious: true,
       });
 
       if (memory) {
         projectStore.addChapterMemory(memory);
-        try {
-          const manager = getMemoryManager();
-          await manager.saveMemory(memory);
-        } catch (err) {
-          console.warn('[PersistenceAdapters] memoryManager.saveMemory 失败（不影响提交）:', err);
+        // chapterMemories 是项目关键读模型，必须同步到主项目快照。
+        await projectStore.saveCurrentProject();
+        const manager = getMemoryManager();
+        const saved = await manager.saveMemory(memory);
+        if (!saved) {
+          throw new Error(`第 ${chapterNumber} 章记忆文件保存失败`);
         }
       }
       return memory;

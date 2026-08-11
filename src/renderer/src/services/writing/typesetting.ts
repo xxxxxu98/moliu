@@ -41,6 +41,7 @@ export const TYPESETTING_HARD_RULES = `## 【强制】手机网文排版【观�
 3. **段与段之间空一行**；禁止整章只有少数超长大段
 4. **换人就换行**：多人对话不要塞进同一段；单人短对话可与前后叙述同段
 5. **收引号必须跟在对话句末**，不要把 ” 单独甩到下一行/下一段
+6. **正文禁用省略号、破折号和双连字符**：不用省略号、破折号或双连字符硬造停顿，改用动作、逗号、句号或冒号
 
 ### 正例（推荐观感）
 他走到窗前，夜色很黑。刚才的事还在脑子里转，像一场没醒的梦。楼下隐约传来说话声，他没有去听。
@@ -288,9 +289,17 @@ export function mergeSparseParagraphs(paragraphs: string[]): string[] {
 export function normalizeWebnovelParagraphs(prose: string): string {
   if (!prose?.trim()) return prose ?? '';
 
-  const paragraphs = prose
+  const punctuationNormalized = prose
     .replace(/\r\n/g, '\n')
-    .split(/\n\s*\n/)
+    .replace(/—{2,}(?=[“"「『])/gu, '：')
+    .replace(/—+/gu, '，')
+    .replace(/--+/gu, '，')
+    .replace(/…{2,}(?=[”"」』])/gu, '。')
+    .replace(/…+/gu, '，');
+
+  const paragraphs = punctuationNormalized
+    // 模型响应没有编辑器软换行；单换行同样表示自然段，统一提升为标准空行。
+    .split(/\n+/u)
     .map(p => p.trim())
     .filter(Boolean);
 
@@ -339,7 +348,8 @@ export function analyzeParagraphDensity(prose: string): ParagraphDensityStats {
  * 假定 prose 已经过 normalize；若仍超标则要求重写。
  */
 export function buildTypesettingIssues(prose: string): ParagraphDensityIssue[] {
-  const stats = analyzeParagraphDensity(prose);
+  const normalized = normalizeWebnovelParagraphs(prose);
+  const stats = analyzeParagraphDensity(normalized);
   const issues: ParagraphDensityIssue[] = [];
 
   if (stats.paragraphCount === 0) return issues;
@@ -353,7 +363,7 @@ export function buildTypesettingIssues(prose: string): ParagraphDensityIssue[] {
       description: `段落过密：超长段 ${stats.extremeParagraphCount} 个，长段占比 ${Math.round(stats.longParagraphRatio * 100)}%，最长 ${stats.maxParagraphChars} 字`,
       suggestion:
         '请调整分段：每段约 3～5 句、180～280 字；优先合并过碎短段；对话换人换行；忌整章大段与一句一段',
-      evidence: prose
+      evidence: normalized
         .split(/\n\s*\n/)
         .find(p => countChineseAwareLength(p) > EXTREME_PARAGRAPH_CHARS)
         ?.slice(0, 80),

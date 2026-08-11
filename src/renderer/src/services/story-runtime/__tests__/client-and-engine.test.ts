@@ -41,7 +41,7 @@ function makeIPC(overrides: Partial<StoryRuntimeAPI> = {}): StoryRuntimeAPI {
     commitAccepted: async input => ({
       commitId: input.commit.id,
       created: true,
-      outboxIds: [1],
+      outboxIds: [1, 2],
     }),
     readOutbox: async () => [],
     completeOutbox: async () => ({ changed: true }),
@@ -106,7 +106,7 @@ describe('StoryRuntimeClient', () => {
     const introId = 'char:intro:陈渡-abcd1234';
     const baseState = makeState();
 
-    await client.commitChapter({
+    const receipt = await client.commitChapter({
       id: 'project-1:chapter:1:commit:test',
       projectId: 'project-1',
       chapterNumber: 1,
@@ -187,6 +187,15 @@ describe('StoryRuntimeClient', () => {
     expect(input.projections.entities.some(entity => entity.id === introId)).toBe(true);
     expect(input.projections.entities.some(entity => entity.id === 'hero')).toBe(true);
     expect(input.projections.events[0]?.subject_id).toBe(introId);
+    expect((commitAccepted.mock.calls[0][0] as { outbox: Array<{ projectionType: string }> }).outbox)
+      .toEqual([
+        expect.objectContaining({ projectionType: 'summary' }),
+        expect.objectContaining({ projectionType: 'memory' }),
+      ]);
+    expect(receipt.projectionOutbox).toEqual([
+      { id: 1, projectionType: 'summary' },
+      { id: 2, projectionType: 'memory' },
+    ]);
   });
 });
 
@@ -447,10 +456,9 @@ describe('LongFormWritingEngine', () => {
     expect(saveRejectedDraft).toHaveBeenCalledOnce();
   });
 
-  it('正文严重偏短、重写仍不达标时，直接 accepted 落库（不再拒收、不补字，保证正文质量）', async () => {
+  it('正文严重偏短、重写仍不达标时，保留 rejected 草稿且不得进入 accepted', async () => {
     // FakeAI 每次 draft 都返回单段短正文（约 10 字），chapter-judge 全 fulfilled 放行。
-    // 字数 blocking 会驱动重写循环，但 FakeAI 重写仍短 → 用尽 maxRewriteRounds 后：
-    // 不再拒收、不再补字，尊重 AI 产出直接 accepted 落库（与偏长「压缩失败直接用」对称）。
+    // 字数 blocking 会驱动重写循环，但 FakeAI 重写仍短 → 用尽 maxRewriteRounds 后拒收。
     const facts: FactExtractor = {
       extract: async input => ({
         events: [
@@ -496,15 +504,15 @@ describe('LongFormWritingEngine', () => {
       targetWordCount: 2000, // min=1600，FakeAI 正文远不足
     });
 
-    // 偏短不再拒收：重写循环已给 AI 多次扩写机会，仍不达标则直接 accepted 落库
-    expect(result.commit.status).toBe('accepted');
-    expect(saveRejectedDraft).not.toHaveBeenCalled();
+    expect(result.commit.status).toBe('rejected');
+    expect(result.report.accepted).toBe(false);
+    expect(result.report.issues.some(issue => issue.id.startsWith('word-count-short:'))).toBe(true);
+    expect(saveRejectedDraft).toHaveBeenCalledOnce();
   });
 
-  it('偏短走重写（AI 整章重新生成）达标，不触发尾部补字（保证文气统一）', async () => {
+  it('异常补字被丢弃后走整章重写，达标才 accepted', async () => {
     // BloatSupplementAI：第 1 次 draft 极短（触发字数 blocking → 重写），第 2 次给足字数（达标）。
-    // 补字已从 LongFormWritingEngine 移除：全程不应触发 SupplementParagraphs，
-    // 偏短靠重写循环（AI 整章重新生成，文气统一）解决，而非尾部追加补字。
+    // 补字返回异常膨胀内容，会被护栏丢弃；随后靠整章重写达标。
     const facts: FactExtractor = {
       extract: async input => ({
         events: [
@@ -549,8 +557,7 @@ describe('LongFormWritingEngine', () => {
       targetWordCount: 3000,
     });
 
-    // 补字未触发：偏短靠重写解决
-    expect(ai.bloatedSupplementRounds).toBe(0);
+    expect(ai.bloatedSupplementRounds).toBeGreaterThan(0);
     expect(result.commit.status).toBe('accepted');
     // 重写后的正文干净、达标
     const finalProse = result.drafts[0].paragraphs.join('');
@@ -687,11 +694,9 @@ class BloatSupplementAI implements StructuredAI {
     if (request.schemaName === 'SupplementParagraphs') {
       this.bloatedSupplementRounds += 1;
       // 混入 JSON 骨架的巨型输出（模拟实测 32 万字符异常）
-      return {
-        paragraphs: Array.from({ length: 20 }, () =>
-          '{paragraphs}```json{垃圾文本'.repeat(500)
-        ),
-      };
+      return Array.from({ length: 20 }, () =>
+        '{paragraphs}```json{垃圾文本'.repeat(500)
+      );
     }
     this.draftCalls += 1;
     // 第 1 次 draft 极短（触发补字），重写轮给足字数

@@ -428,3 +428,22 @@ describe('ChapterWritingPipeline', () => {
     });
   });
 });
+
+describe('ChapterWritingPipeline.parseStructuredJson', () => {
+  it('SupplementParagraphs 偶发返回裸正文时安全包装为追加段落', () => {
+    expect(
+      ChapterWritingPipeline.parseStructuredJson(
+        '他沿着账目继续追查。\n线索最终指向县衙档房。',
+        'SupplementParagraphs'
+      )
+    ).toEqual({
+      paragraphs: ['他沿着账目继续追查。', '线索最终指向县衙档房。'],
+    });
+  });
+
+  it('其他 schema 的非 JSON 仍严格拒绝', () => {
+    expect(() =>
+      ChapterWritingPipeline.parseStructuredJson('这不是合法 JSON 正文返回。', 'SceneDraft')
+    ).toThrow('结构化 JSON');
+  });
+});

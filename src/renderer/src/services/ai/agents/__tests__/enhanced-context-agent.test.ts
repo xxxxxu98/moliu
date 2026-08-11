@@ -15,6 +15,7 @@ import {
   matchVolumePlanByIndex,
   normalizeForbiddenZonesByChapter,
   referencesFutureChapter,
+  referencesVolumeStage,
   volumePlanSellingPointCandidates,
 } from '../enhanced-context-agent';
 
@@ -93,7 +94,7 @@ describe('matchVolumePlanByIndex', () => {
 });
 
 describe('volumePlanSellingPointCandidates', () => {
-  it('提取核心冲突与必付伏笔，去空（排除 climax 卷高潮与 objective 卷目标）', () => {
+  it('只提取必付伏笔，排除 coreConflict / climax / objective 等卷级约束', () => {
     // climax 是卷级远期高光（常含「第N章…」章号），objective 是整卷承诺（跨章），
     // 两者注入开篇章 mustCover 都会触发履约审核判未兑现并强制重写，故刻意排除。
     const plan = {
@@ -103,10 +104,7 @@ describe('volumePlanSellingPointCandidates', () => {
       coreConflict: '主角与厉鬼首领的三次对峙',
       payoffForeshadows: ['羊皮卷预言', '   '],
     };
-    expect(volumePlanSellingPointCandidates(plan)).toEqual([
-      '主角与厉鬼首领的三次对峙',
-      '羊皮卷预言',
-    ]);
+    expect(volumePlanSellingPointCandidates(plan)).toEqual(['羊皮卷预言']);
   });
 
   it('objective 整体不进候选（跨卷承诺，注入即死锁）', () => {
@@ -122,7 +120,24 @@ describe('volumePlanSellingPointCandidates', () => {
     };
     const candidates = volumePlanSellingPointCandidates(plan);
     expect(candidates).not.toContain(plan.objective);
-    expect(candidates).toEqual([plan.coreConflict]);
+    expect(candidates).toEqual([]);
+  });
+
+  it('真实回归：卷级“现代管理思维 vs 县衙旧势力”不得污染第1章 mustCover', () => {
+    const plan = {
+      volumeIndex: 1,
+      coreConflict: '现代管理思维 vs 县衙旧势力',
+      payoffForeshadows: [],
+    };
+    const base = ['完成穿越设定与身份交代', '公堂危机场景'];
+    expect(
+      enrichMustCoverWithVolumeSellingPoints(
+        base,
+        volumePlanSellingPointCandidates(plan),
+        ['不得让陈默提前展示现代知识'],
+        1
+      )
+    ).toEqual(base);
   });
 
   it('无 plan 返回空数组', () => {
@@ -165,6 +180,14 @@ describe('referencesFutureChapter', () => {
   });
 });
 
+describe('referencesVolumeStage', () => {
+  it('识别没有具体章号的卷末与后期回收点', () => {
+    expect(referencesVolumeStage('营缮司旧档中“前朝工部改制”的记载在第1卷末被沈青梧发现')).toBe(true);
+    expect(referencesVolumeStage('本卷中后期才揭开旧印来源')).toBe(true);
+    expect(referencesVolumeStage('沈青梧当场翻开去年修庙账册')).toBe(false);
+  });
+});
+
 describe('enrichMustCoverWithVolumeSellingPoints', () => {
   it('注入可单章兑现的短句（“厉鬼群自动让开一条路，全场死寂”→ 前子句）', () => {
     const result = enrichMustCoverWithVolumeSellingPoints(['顾无咎在教室醒来'], [
@@ -178,6 +201,17 @@ describe('enrichMustCoverWithVolumeSellingPoints', () => {
       '三天内翻案否则将被处斩',
     ]);
     expect(result).toEqual(['顾无咎在教室醒来']);
+  });
+
+  it('卷末才兑现的伏笔不注入开篇 mustCover', () => {
+    const base = ['确认穿越身份与处境', '展示营缮司的穷困潦倒'];
+    const result = enrichMustCoverWithVolumeSellingPoints(
+      base,
+      ['营缮司旧档中“前朝工部改制”的记载在第1卷末被沈青梧发现'],
+      [],
+      1,
+    );
+    expect(result).toEqual(base);
   });
 
   it('与既有 mustCover 重叠的候选跳过', () => {
@@ -268,6 +302,9 @@ describe('enrichMustCoverWithVolumeSellingPoints', () => {
     expect(isLikelyVolumeScopedObjective('通过考绩并获得进京机会')).toBe(true);
     expect(isLikelyVolumeScopedObjective('拿下考绩优等')).toBe(true);
     expect(isLikelyVolumeScopedObjective('取得验收')).toBe(true);
+    expect(
+      isLikelyVolumeScopedObjective('同僚排挤、上司打压、吏部尚书赵文渊的敌意、太子一系的警惕'),
+    ).toBe(true);
     // 治理成/打造成 + 模范/示范/标杆
     expect(isLikelyVolumeScopedObjective('治理成模范县')).toBe(true);
     expect(isLikelyVolumeScopedObjective('打造成行业标杆')).toBe(true);

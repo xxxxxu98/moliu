@@ -444,18 +444,22 @@ export class StoryRuntimeRepository {
       ? database
           .prepare(
             `UPDATE projection_outbox
-             SET status = 'completed', last_error = NULL, updated_at = CURRENT_TIMESTAMP
-             WHERE id = ? AND status = 'processing'`
+             SET status = 'completed',
+                 attempts = attempts + CASE WHEN status = 'processing' THEN 0 ELSE 1 END,
+                 last_error = NULL,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = ? AND status IN ('pending', 'processing', 'failed')`
           )
           .run(input.outboxId)
       : database
           .prepare(
             `UPDATE projection_outbox
              SET status = 'failed',
+                 attempts = attempts + CASE WHEN status = 'processing' THEN 0 ELSE 1 END,
                  last_error = ?,
                  available_at = datetime('now', '+30 seconds'),
                  updated_at = CURRENT_TIMESTAMP
-             WHERE id = ? AND status = 'processing'`
+             WHERE id = ? AND status IN ('pending', 'processing', 'failed')`
           )
           .run(input.error ?? '投影处理失败', input.outboxId);
     return { changed: result.changes === 1 };

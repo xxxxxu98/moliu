@@ -28,6 +28,8 @@ import { buildExpandDirectionPrompt } from '../prompts/system/expand-direction-p
 import { parseDirections } from '../parser/direction-parser';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
 import { reviewAndFixOutline } from './outline-reviewer';
+import { inspectOutlineCompleteness } from '../validation/outlineCompleteness';
+import { completeIncompleteOutline } from './outline-completer';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 
 function matchesDefaultModelSelection(
@@ -375,7 +377,7 @@ export class UnifiedOutlineGenerator {
     options?: GenerateOptions & { enhancementBrief?: string },
     onProgress?: (message: string) => void,
   ): Promise<ExpandedOutlineResult> {
-    return this.runWithRetry<ExpandedOutlineResult>(
+    const result = await this.runWithRetry<ExpandedOutlineResult>(
       async (attempt, temperature) => {
         const opts = {
           ...this.defaultOptions,
@@ -391,34 +393,40 @@ export class UnifiedOutlineGenerator {
 
         onProgress?.(attempt === 1 ? '正在展开主方案...' : `重新展开主方案... (${attempt})`);
 
-        const rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts, 'outline-expand');
+        let rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts, 'outline-expand');
         let outline = parseExpandedOutline(rawText);
 
-        // 角色 / 伏笔位于模板末尾，最易被截断；这里检测"看似成功实则残缺"的情况。
-        // 严重残缺（角色 < 4 或伏笔 < 3）时通过 isSuccess=false 触发重试（降温收敛），
-        // 避免一次截断就把残缺方案固化；重试耗尽后仍返回最后一次结果 + warning，
-        // 由 UI 提示用户手动重新生成。
+        // 角色、伏笔和逐章蓝图位于长模板后半段，最容易被截断。完整性门槛与
+        // prompt 的 30 章 / 10 角色 / 10 伏笔要求共用同一策略，任何硬缺口都触发重试。
         const warnings: string[] = [];
         let severelyTruncated = false;
+        let blockers: string[] = [];
         if (outline) {
-          if (outline.keyCharacters.length < 4) {
-            severelyTruncated = true;
-            warnings.push(`关键角色仅解析到 ${outline.keyCharacters.length} 个（建议至少 4 个），可能被输出截断，可尝试重新生成`);
+          let completeness = inspectOutlineCompleteness(outline);
+          if (!completeness.canApply) {
+            onProgress?.('主方案响应不完整，正在分段补全章节、角色与伏笔...');
+            try {
+              const completed = await completeIncompleteOutline({
+                rawText,
+                outline,
+                direction,
+                options: opts,
+                callStructuredTextMode: (system, user, callOptions) =>
+                  this.callStructuredTextMode(system, user, callOptions, 'outline-expand'),
+              });
+              rawText = completed.rawText;
+              outline = completed.outline;
+              warnings.push(...completed.warnings);
+              completeness = inspectOutlineCompleteness(outline);
+            } catch (error) {
+              if (isAbortError(error)) throw error;
+              const message = error instanceof Error ? error.message : String(error);
+              warnings.push(`分段补全失败：${message.slice(0, 160)}`);
+            }
           }
-          if (outline.foreshadowPlan.length < 3) {
-            severelyTruncated = true;
-            warnings.push(`伏笔仅解析到 ${outline.foreshadowPlan.length} 条（建议至少 3 条），可能被输出截断，可尝试重新生成`);
-          }
-          // 单章蓝图完整性：30 章允许漏 2 章（< 28 视为残缺）。
-          // 残缺时丢弃 chapterBlueprints（让下游 toChapters 回退算法派生），避免用半截蓝图建章导致章节缺失；
-          // 不判 severelyTruncated，因为块级大纲仍可用、可正常建 30 章。
-          const blueprints = outline.chapterBlueprints;
-          if (blueprints && blueprints.length < 28) {
-            warnings.push(
-              `单章蓝图仅解析到 ${blueprints.length} 章（期望约 30 章），可能被输出截断；本次回退到块级算法派生单章节点。可尝试重新生成以获得逐章标题与节点。`,
-            );
-            outline = { ...outline, chapterBlueprints: undefined };
-          }
+          severelyTruncated = !completeness.canApply;
+          blockers = completeness.blockers.map(blocker => blocker.message);
+          warnings.push(...blockers);
         }
 
         // 方案 A：初稿内容质检不通过时，发起一次"审查+修正"二次请求（低温稳定重出）。
@@ -438,11 +446,17 @@ export class UnifiedOutlineGenerator {
             if (fixedOutline) {
               outline = fixedOutline;
               appliedFixRawText = fix.rawText;
+              const fixedCompleteness = inspectOutlineCompleteness(fixedOutline);
+              severelyTruncated = !fixedCompleteness.canApply;
+              blockers = fixedCompleteness.blockers.map(blocker => blocker.message);
             }
           }
           if (fix.warnings.length > 0) {
             warnings.push(...fix.warnings);
           }
+        }
+        for (const blocker of blockers) {
+          if (!warnings.includes(blocker)) warnings.push(blocker);
         }
 
         return {
@@ -451,6 +465,8 @@ export class UnifiedOutlineGenerator {
           rawText: appliedFixRawText ?? rawText,
           strategy: outline ? 'structured-text' : 'fallback',
           severelyTruncated,
+          canApply: Boolean(outline) && !severelyTruncated,
+          blockers,
           warnings: outline ? warnings : ['未能完整解析主方案，建议重新生成或微调方向描述'],
         };
       },
@@ -460,6 +476,17 @@ export class UnifiedOutlineGenerator {
       // 冷却基准 = 本次生效温度，避免厂商低温度配置被 0.7 基准“升温”
       options?.temperature ?? this.getAIConfig().generationConfig?.temperature ?? 0.7,
     );
+
+    // fail-closed：残缺稿可留作诊断，但不得通过 outline 字段进入 UI 应用链路。
+    if (result.outline && result.severelyTruncated) {
+      return {
+        ...result,
+        partialOutline: result.outline,
+        outline: null,
+        canApply: false,
+      };
+    }
+    return { ...result, canApply: Boolean(result.outline) };
   }
 
   /**

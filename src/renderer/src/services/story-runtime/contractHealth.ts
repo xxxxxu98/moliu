@@ -315,6 +315,15 @@ export function healChapterContract(
 export function enrichRevisionHint(message: string, evidence: string[] = []): string {
   const base = evidence.length > 0 ? `${message}（证据：${evidence.slice(0, 2).join(' / ')}）` : message;
 
+  const absentCharacter = base.match(/触发本章禁区：不得让([^，,。；;（）()]+)出场/u)?.[1]?.trim();
+  if (absentCharacter) {
+    return (
+      `${base}\n` +
+      `【严格缺席】“${absentCharacter}不出场”也包括幕后声音、帘后说话、传音、书信署名和他人口述其即时反应；` +
+      `重写时删除该角色的一切台词与现场反应，只用环境、无名官员或已允许角色完成场景。`
+    );
+  }
+
   if (/外界帮助|黑衣人|干粮|金疮药|神秘人/u.test(base)) {
     return (
       `${base}\n` +

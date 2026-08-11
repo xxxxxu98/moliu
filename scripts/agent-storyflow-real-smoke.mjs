@@ -19,6 +19,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { createRequire } from 'node:module';
 
 import { cleanupSmokeArtifacts } from './cleanup-smoke-artifacts.mjs';
 
@@ -42,16 +43,22 @@ cleanupSmokeArtifacts(
   },
 );
 
+// better-sqlite3 由 electron-builder 按 Electron ABI 编译。普通系统 Node 跑 Vitest 会因
+// NODE_MODULE_VERSION 不同而假失败并降级内存；这里让 Electron 作为 Node 运行 Vitest，
+// 与生产桌面进程加载同一 native 模块，真实验证 SQLite。
+const require = createRequire(import.meta.url);
+const electronBinary = require('electron');
+const vitestRunner = join(process.cwd(), 'scripts', 'electron-vitest-runner.mjs');
 const result = spawnSync(
-  'npm',
+  electronBinary,
   [
-    'run',
-    'test',
-    '--',
-    '--run',
+    vitestRunner,
     'src/renderer/src/services/writing/__tests__/storyflow.closed-loop.test.ts',
   ],
-  { stdio: 'inherit', shell: true, env: process.env }
+  {
+    stdio: 'inherit',
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+  },
 );
 
 const summary = join(process.cwd(), 'temp', 'storyflow.closed-loop.summary.json');

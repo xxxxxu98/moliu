@@ -48,6 +48,9 @@ describe('chapterBlueprintNormalize', () => {
     expect(isCrossChapterGoal('限期翻案，否则将被处斩')).toBe(true);
     expect(isCrossChapterGoal('否则将被处斩')).toBe(false);
     expect(isCrossChapterGoal('当众指认真凶后反被诬陷入狱，三日后处斩')).toBe(true);
+    expect(isCrossChapterGoal('确认所有篡改集中在三年前')).toBe(false);
+    expect(isCrossChapterGoal('发现三年前史书被整页撕去')).toBe(false);
+    expect(isCrossChapterGoal('一年内查清漕运亏空')).toBe(true);
     expect(isCrossChapterGoal('主角在现场发现关键线索')).toBe(false);
     expect(isCrossChapterGoal('狱中梳理证据漏洞')).toBe(false);
     expect(isCrossChapterGoal('当众指认真凶后对手反手施压，倒计时与证据链同时收紧')).toBe(false);

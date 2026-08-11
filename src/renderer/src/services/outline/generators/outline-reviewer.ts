@@ -16,6 +16,7 @@ import type { GenerateOptions } from './unified-generator';
 import type { OutlineDirection } from '../types/direction';
 import type { ExecutableOutline } from '../types/executable-outline';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
+import { inspectOutlineCompleteness } from '../validation/outlineCompleteness';
 
 export type OutlineQualityIssueKind =
   | 'placeholder-events'
@@ -372,6 +373,20 @@ export async function reviewAndFixOutline(params: {
         rawText: initialRawText,
         applied: false,
         warnings: ['修正稿无法解析，回退初稿'],
+      };
+    }
+    const initialCompleteness = inspectOutlineCompleteness(initialOutline);
+    const fixedCompleteness = inspectOutlineCompleteness(fixedOutline);
+    if (
+      (initialCompleteness.canApply && !fixedCompleteness.canApply) ||
+      fixedCompleteness.blockers.length > initialCompleteness.blockers.length
+    ) {
+      return {
+        rawText: initialRawText,
+        applied: false,
+        warnings: [
+          `修正稿结构完整性退化（阻断项 ${initialCompleteness.blockers.length}→${fixedCompleteness.blockers.length}），回退初稿`,
+        ],
       };
     }
     const fixedIssues = inspectOutlineQuality(fixedOutline);

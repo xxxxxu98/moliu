@@ -43,6 +43,7 @@ import {
   runContinueWriteChapters,
   type ContinueWriteChapterRunResult,
   type HarnessRuntimeBackend,
+  type StoryRuntimeVerification,
 } from './continueWriteHarness';
 import {
   createRealStructuredAI,
@@ -68,8 +69,24 @@ export interface StoryflowClosedLoopResult {
   project: Project;
   chapterRunResults: ContinueWriteChapterRunResult[];
   runtimeBackend: HarnessRuntimeBackend;
+  runtimeVerification: StoryRuntimeVerification;
+  projectStorageVerification: ProjectStorageVerification;
   /** 建章后、续写前的章节 ID（大纲应用产物） */
   createdChapterIds: string[];
+}
+
+export interface ProjectStorageVerification {
+  chapterCount: number;
+  plotChapterCount: number;
+  linkedPlotChapterCount: number;
+  structuredPlotChapterCount: number;
+  characterCount: number;
+  foreshadowCount: number;
+  volumeCount: number;
+}
+
+function cloneProject(project: Project): Project {
+  return JSON.parse(JSON.stringify(project)) as Project;
 }
 
 /** 内存版 electronAPI：模拟主进程项目存储 + 记忆文件存储 */
@@ -78,11 +95,15 @@ function installMemoryElectronAPI(): Map<string, Project> {
   // 记忆文件存储：projectId -> (filePath -> content)，支持 save/load/list/delete 往返
   const memoryStore = new Map<string, Map<string, string>>();
   const api = {
-    listProjects: async (): Promise<Project[]> => Array.from(store.values()),
-    getProject: async (id: string): Promise<Project | null> => store.get(id) ?? null,
+    listProjects: async (): Promise<Project[]> => Array.from(store.values()).map(cloneProject),
+    getProject: async (id: string): Promise<Project | null> => {
+      const project = store.get(id);
+      return project ? cloneProject(project) : null;
+    },
     createProject: async (data: Project): Promise<Project> => {
-      store.set(data.id, data);
-      return data;
+      const snapshot = cloneProject(data);
+      store.set(data.id, snapshot);
+      return cloneProject(snapshot);
     },
     updateProject: async (
       id: string,
@@ -95,11 +116,12 @@ function installMemoryElectronAPI(): Map<string, Project> {
         ...updates,
         metadata: { ...(current.metadata ?? {}), ...(updates.metadata ?? {}) },
       };
-      store.set(id, merged);
-      return merged;
+      const snapshot = cloneProject(merged);
+      store.set(id, snapshot);
+      return cloneProject(snapshot);
     },
     saveProject: async (project: Project): Promise<void> => {
-      store.set(project.id, project);
+      store.set(project.id, cloneProject(project));
     },
     deleteProject: async (): Promise<void> => {},
     // 记忆文件 IPC（签名对齐 src/preload.ts:40-43 的真实 preload）
@@ -189,7 +211,7 @@ export async function runStoryflowClosedLoop(
   // ---------- 0. 配置与测试环境桩 ----------
   const cfg = resolveContinueWriteRealConfig();
   injectSettingsStore(cfg);
-  installMemoryElectronAPI();
+  const projectStorage = installMemoryElectronAPI();
 
   // ---------- 1. 开题中心大纲生成（真实 AI fetch，与 TopicDiscoveryBoard prompt 玩法同路径） ----------
   // 传 trace.runId 让大纲阶段的 prompt/响应落盘 temp/ai-traces/，便于人工评估单章蓝图产出质量。
@@ -212,8 +234,11 @@ export async function runStoryflowClosedLoop(
   });
   const expanded = expandedResult.outline;
   if (!expanded) {
+    const failureDetails = expandedResult.blockers?.length
+      ? expandedResult.blockers.join('；')
+      : expandedResult.warnings?.join('；') || '未提供失败详情';
     throw new Error(
-      `storyflow 闭环失败：大纲展开为空（expandDirection 返回 null，${expandedResult.warnings?.[0] ?? ''}）`,
+      `storyflow 闭环失败：大纲展开为空（expandDirection 返回 null，${failureDetails}）`,
     );
   }
   const executableOutline = expanded;
@@ -251,9 +276,7 @@ export async function runStoryflowClosedLoop(
     throw new Error('storyflow 闭环失败：currentProject 为空');
   }
   // 深拷贝去 Vue 响应式代理（与 useProjectCreator 内做法一致）。
-  // 注意：currentProject 是 loadProject 时的快照，createChapters 通过 chapters ref 新增的章节
-  // 不会自动同步回 currentProject.chapters（store 的 saveCurrentProject 只写 projects 列表，
-  // 不回写 currentProject）。这里用 store 的 chapters/volumes ref 覆盖，保证续写拿得到章节。
+  // 用独立 refs 覆盖一次，保证传给续写层的是保存成功后的完整项目快照。
   const project = JSON.parse(JSON.stringify({
     ...rawProject,
     chapters: projectStore.chapters,
@@ -264,6 +287,24 @@ export async function runStoryflowClosedLoop(
       `storyflow 闭环失败：建章后 project.chapters 仍为空（createChapters 未写入 store chapters ref）`,
     );
   }
+
+  // 从模拟主进程存储重新读取序列化快照，不能用 renderer 当前对象自证持久化成功。
+  const persistedProject = projectStorage.get(projectId);
+  if (!persistedProject) {
+    throw new Error('storyflow 闭环失败：建章后项目未写入主进程存储');
+  }
+  const persistedChapterNodes = persistedProject.plotOutline.filter(node => node.type === 'chapter');
+  const projectStorageVerification: ProjectStorageVerification = {
+    chapterCount: persistedProject.chapters.length,
+    plotChapterCount: persistedChapterNodes.length,
+    linkedPlotChapterCount: persistedChapterNodes.filter(node => Boolean(node.chapterId)).length,
+    structuredPlotChapterCount: persistedChapterNodes.filter(node =>
+      Boolean(node.CBN && node.CPNs?.length && node.CEN && node.mustCover?.length),
+    ).length,
+    characterCount: persistedProject.characters.length,
+    foreshadowCount: persistedProject.foreshadows.length,
+    volumeCount: persistedProject.volumes.length,
+  };
 
   // 建章后立即落盘大纲产物：真实 AI 续写阶段耗时长、可能超时，提前留存大纲数据供质量评估
   writeFileSync(
@@ -315,12 +356,18 @@ export async function runStoryflowClosedLoop(
   // 让最终 summary 能反映目录页真实标题（而非永远「第N章」）。
   // forceStoryRuntime 模式下 pipeline 不走 store 默认实现，必须显式注入。
   const plotOutlineClient = {
-    updateChapterTitle: async (orderIndex: number, title: string): Promise<void> => {
-      const node = project.plotOutline?.find(
-        n => n.type === 'chapter' && n.orderIndex === orderIndex,
-      );
+    updateChapterTitle: async (input: {
+      chapterId: string;
+      chapterNumber: number;
+      title: string;
+    }): Promise<void> => {
+      const chapterNodes = project.plotOutline?.filter(n => n.type === 'chapter') ?? [];
+      const node =
+        chapterNodes.find(n => n.chapterId === input.chapterId) ??
+        chapterNodes.find(n => n.orderIndex === input.chapterNumber - 1) ??
+        chapterNodes[input.chapterNumber - 1];
       if (node) {
-        node.title = title;
+        node.title = input.title;
       }
     },
   };
@@ -349,6 +396,8 @@ export async function runStoryflowClosedLoop(
     project: result.project,
     chapterRunResults: result.chapters,
     runtimeBackend: result.runtimeBackend,
+    runtimeVerification: result.runtimeVerification,
+    projectStorageVerification,
     createdChapterIds,
   };
 }

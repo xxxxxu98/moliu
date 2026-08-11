@@ -545,6 +545,20 @@ describe('parseExpandedOutline · 单章蓝图（chapterBlueprints）解析', ()
     expect(outline!.keyCharacters.length).toBeGreaterThanOrEqual(10);
   });
 
+  it('CPNs 被逗号拆成过多碎片时压回最多 3 个连续场景节点', () => {
+    const raw = buildSampleWithBlueprint(1).replace(
+      '- CPNs：第1章推进点A；第1章推进点B',
+      '- CPNs：醒来核对身份；查看堆积账本；被同僚催促；搬运旧账；发现暗记',
+    );
+    const outline = parseExpandedOutline(raw);
+
+    expect(outline!.chapterBlueprints![0].CPNs).toEqual([
+      '醒来核对身份',
+      '查看堆积账本',
+      '被同僚催促，搬运旧账，发现暗记',
+    ]);
+  });
+
   it('无单章蓝图段时 chapterBlueprints 为 undefined（向后兼容）', () => {
     const outline = parseExpandedOutline(buildSampleOutline());
     expect(outline).not.toBeNull();

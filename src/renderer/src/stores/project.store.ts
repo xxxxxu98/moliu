@@ -124,8 +124,8 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
-  async function saveCurrentProject() {
-    if (!currentProject.value) return;
+  async function saveCurrentProject(): Promise<Project | null> {
+    if (!currentProject.value) return null;
     
     // 同步章节字数与项目总字数（与编辑器一致：content.length）
     chapters.value.forEach(ch => {
@@ -155,6 +155,8 @@ export const useProjectStore = defineStore('project', () => {
     
     try {
       await window.electronAPI.saveProject(projectToSave);
+      // 保存成功后的规范化快照才是 renderer 唯一真源，避免 currentProject 与独立 refs 分叉。
+      currentProject.value = projectToSave;
       // Update local list
       const index = projects.value.findIndex(p => p.id === projectToSave.id);
       if (index >= 0) {
@@ -162,8 +164,10 @@ export const useProjectStore = defineStore('project', () => {
       } else {
         projects.value.unshift(projectToSave);
       }
+      return projectToSave;
     } catch (error) {
       console.error('Failed to save project:', error);
+      throw error;
     }
   }
 
@@ -557,7 +561,7 @@ export const useProjectStore = defineStore('project', () => {
    * 解析并填充角色关系中的 characterId
    * 在项目创建后调用，根据 targetName 填充对应的 characterId
    */
-  function resolveCharacterRelationships() {
+  async function resolveCharacterRelationships(): Promise<void> {
     if (!currentProject.value) return;
 
     // 建立角色名到ID的映射
@@ -585,7 +589,7 @@ export const useProjectStore = defineStore('project', () => {
     // 如果有更新，保存项目
     if (hasUpdates) {
       currentProject.value.characters = characters.value;
-      saveCurrentProject();
+      await saveCurrentProject();
     }
   }
 
@@ -595,7 +599,7 @@ export const useProjectStore = defineStore('project', () => {
    */
   async function finalizeProjectCreation(projectId: string) {
     await loadProject(projectId);
-    resolveCharacterRelationships();
+    await resolveCharacterRelationships();
   }
 
   async function createProject(projectData: Partial<Project>): Promise<Project | null> {
@@ -651,7 +655,7 @@ export const useProjectStore = defineStore('project', () => {
       return null;
     } catch (error) {
       console.error('Failed to update project:', error);
-      return null;
+      throw error;
     }
   }
 

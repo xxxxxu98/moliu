@@ -251,12 +251,18 @@ export interface ExecutableOutline {
 
 export interface ExpandedOutlineResult {
   outline: ExecutableOutline | null;
+  /** 重试耗尽后的残缺结果，仅供诊断/展示，禁止应用。 */
+  partialOutline?: ExecutableOutline;
   rawText?: string;
   strategy?: 'structured-text' | 'json' | 'fallback';
   warnings?: string[];
+  /** 是否通过生产级完整性门槛。 */
+  canApply?: boolean;
+  /** 阻断应用的结构化原因。 */
+  blockers?: string[];
   /**
    * 是否严重残缺（角色 / 伏笔被截断）。为 true 时上层会触发重试，
-   * 但若重试耗尽仍会连同最后一次结果返回，由 UI 提示用户手动重新生成。
+   * 重试耗尽后只会通过 partialOutline 返回诊断数据，outline 保持 null，禁止应用。
    */
   severelyTruncated?: boolean;
 }

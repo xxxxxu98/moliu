@@ -469,6 +469,14 @@ export interface ChapterCommitReceipt {
   commitId: string;
   revision: number;
   acceptedAt: string;
+  /**
+   * 本次 accepted commit 同事务创建的派生投影任务。
+   * 调用方完成对应投影后，必须用 id 精确确认，避免误领历史任务。
+   */
+  projectionOutbox?: Array<{
+    id: number;
+    projectionType: 'summary' | 'memory';
+  }>;
 }
 
 export interface StoryRuntimeIPC {

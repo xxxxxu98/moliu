@@ -45,7 +45,10 @@ import {
   prependTitleLineForPersist,
 } from './chapterTitle';
 import { runSupplementRounds } from './supplement';
-import { AI_SINGLE_REQUEST_TIMEOUT_MS } from './chapterWritePresets';
+import {
+  AI_AUXILIARY_REQUEST_TIMEOUT_MS,
+  AI_SINGLE_REQUEST_TIMEOUT_MS,
+} from './chapterWritePresets';
 import {
   TYPESETTING_HARD_RULES,
   buildWritingRulesWithTypesetting,
@@ -91,9 +94,12 @@ function createStructuredAIFromActiveProvider(signal?: AbortSignal): StructuredA
       // 与冒烟测试路径（realStructuredAI）共用 AI_SINGLE_REQUEST_TIMEOUT_MS，
       // 避免生产/测试行为不对称。classifyError 会把超时归为 timeout（瞬态、可重试）。
       const timeoutController = new AbortController();
+      const requestTimeoutMs = request.purpose === 'scene-draft'
+        ? AI_SINGLE_REQUEST_TIMEOUT_MS
+        : AI_AUXILIARY_REQUEST_TIMEOUT_MS;
       const timeoutTimer = setTimeout(
         () => timeoutController.abort(),
-        AI_SINGLE_REQUEST_TIMEOUT_MS
+        requestTimeoutMs,
       );
       const combined = signal
         ? AbortSignal.any([signal, timeoutController.signal])
@@ -110,7 +116,7 @@ function createStructuredAIFromActiveProvider(signal?: AbortSignal): StructuredA
           // 结构化输出：按 provider 能力启用 JSON 强制（不支持的 provider 自动降级）
           jsonMode: true,
         });
-        const parsed = ChapterWritingPipeline.parseStructuredJson(raw);
+        const parsed = ChapterWritingPipeline.parseStructuredJson(raw, request.schemaName);
         const result = request.parse(parsed);
         // 把模型原始文本挂在返回对象上供 RecordingStructuredAI 写入 trace.rawResponse。
         // recorder 会读取后剥离该字段，下游消费方零感知；非对象返回值（如基本类型）忽略。
@@ -243,7 +249,7 @@ export interface ChapterWritingPipelineDeps {
    * 未注入时降级跳过（不影响续写主流程）。
    */
   plotOutlineClient?: {
-    updateChapterTitle(orderIndex: number, title: string): Promise<void>;
+    updateChapterTitle(input: ChapterTitleUpdate): Promise<void>;
   } | null;
   /** 注入外部已配置好的 orchestrator（跳过内部创建） */
   orchestrator?: StateDrivenWritingOrchestrator;
@@ -279,6 +285,13 @@ export interface ChapterWritingPipelineDeps {
   };
 }
 
+export interface ChapterTitleUpdate {
+  chapterId: string;
+  /** 1 起的章节号，仅用于兼容尚未建立 chapterId 关联的旧项目。 */
+  chapterNumber: number;
+  title: string;
+}
+
 // ============================================================
 // 单章写作管道
 // ============================================================
@@ -289,7 +302,9 @@ export class ChapterWritingPipeline {
   private readonly contextAgent: NonNullable<ChapterWritingPipelineDeps['contextAgent']>;
   private readonly persistence: ChapterPersistenceClient | null;
   private readonly memoryClient: MemoryClient | null;
-  private readonly plotOutlineClient: { updateChapterTitle(orderIndex: number, title: string): Promise<void> } | null;
+  private readonly plotOutlineClient: {
+    updateChapterTitle(input: ChapterTitleUpdate): Promise<void>;
+  } | null;
   private readonly structuredAI: StructuredAI | undefined;
   private readonly storyRuntimeClient: StoryRuntimeClient | undefined;
   private readonly storyRuntimeApi: StoryRuntimeAPI | undefined;
@@ -416,16 +431,18 @@ export class ChapterWritingPipeline {
 
     this.preflightService = deps?.preflightService ?? usePreflightService();
     this.contextAgent = deps?.contextAgent ?? useEnhancedContextAgent();
-    // 默认 plotOutlineClient：按 orderIndex 定位 type==='chapter' 节点并回写标题。
+    // 默认 plotOutlineClient：优先按稳定 chapterId 定位，旧项目再按章节序号兼容。
     // 调用方可注入 null 关闭、或注入自定义实现（harness 内存版）。
     this.plotOutlineClient =
       deps?.plotOutlineClient !== undefined
         ? deps.plotOutlineClient
         : {
-            updateChapterTitle: async (orderIndex, title) => {
-              const node = projectStore.plotOutline.find(
-                n => n.type === 'chapter' && n.orderIndex === orderIndex,
-              );
+            updateChapterTitle: async ({ chapterId, chapterNumber, title }) => {
+              const chapterNodes = projectStore.plotOutline.filter(n => n.type === 'chapter');
+              const node =
+                chapterNodes.find(n => n.chapterId === chapterId) ??
+                chapterNodes.find(n => n.orderIndex === chapterNumber - 1) ??
+                chapterNodes[chapterNumber - 1];
               if (node) {
                 await projectStore.updatePlotNode(node.id, { title });
               }
@@ -783,6 +800,8 @@ export class ChapterWritingPipeline {
       // electron-store 仅作为 UI 投影；canonical commit 已由 SQLite 原子写入。
       // 字数补齐已在 LongFormWritingEngine 提交前完成。
       // 占位标题时把「第N章 短标题」拼到正文头，经 persistence 提取落库（正文不含标题行）。
+      let summaryProjectionError: unknown = null;
+      let memoryProjectionError: unknown = null;
       try {
         if (this.persistence?.replace) {
           const contentForPersist =
@@ -791,22 +810,50 @@ export class ChapterWritingPipeline {
               : prose;
           await this.persistence.replace(input.chapter.id, contentForPersist);
         }
-        // 记忆提取（情感分析 + 主题分析）改 fire-and-forget：其结果（chapterMemories）
-        // 不参与下一章起草的 state/ContextPack，纯展示用。去掉 await 避免每章阻塞等
-        // 2 个 AI 请求（真实环境每章省 1-3 分钟）。失败只 warn 不影响主流程。
-        void this.memoryClient
-          ?.extractAndSave(input.chapter.id, chapterNumber, prose)
-          .catch(err => {
-            console.warn('[Pipeline] 记忆提取异步失败（不影响续写）:', err);
-          });
         // 回写 plotOutline 章节节点标题：落库的 Chapter.title 已是短标题，
         // 但 plotOutline 中 type==='chapter' 节点的 title 仍是创建时的占位（第N章）。
         // 同步回写让目录页显示真实标题（仅占位时改，用户手改的标题不覆盖）。
         if (shouldApplyGeneratedTitle && generatedShortTitle && this.plotOutlineClient) {
-          await this.plotOutlineClient.updateChapterTitle(chapterNumber - 1, generatedShortTitle);
+          await this.plotOutlineClient.updateChapterTitle({
+            chapterId: input.chapter.id,
+            chapterNumber,
+            title: generatedShortTitle,
+          });
         }
       } catch (error) {
+        summaryProjectionError = error;
         console.warn('[Pipeline] accepted commit 的 UI 投影失败，可由 outbox 重放:', error);
+      }
+
+      // 记忆属于 accepted commit 的持久化投影，必须等待完成后再确认 outbox。
+      // 它不改变 canonical commit 的成功状态；失败会留在 outbox，供健康检查和后续重试发现。
+      try {
+        await this.memoryClient?.extractAndSave(input.chapter.id, chapterNumber, prose);
+      } catch (error) {
+        memoryProjectionError = error;
+        console.warn('[Pipeline] accepted commit 的记忆投影失败，可由 outbox 重放:', error);
+      }
+
+      for (const item of result.receipt.projectionOutbox ?? []) {
+        const projectionError =
+          item.projectionType === 'memory' ? memoryProjectionError : summaryProjectionError;
+        try {
+          await api.completeOutbox({
+            projectId: input.project.id,
+            outboxId: item.id,
+            success: projectionError === null,
+            ...(projectionError === null
+              ? {}
+              : {
+                  error:
+                    projectionError instanceof Error
+                      ? projectionError.message
+                      : String(projectionError),
+                }),
+          });
+        } catch (error) {
+          console.warn(`[Pipeline] outbox #${item.id} 确认失败:`, error);
+        }
       }
       return {
         success: true,
@@ -837,7 +884,7 @@ export class ChapterWritingPipeline {
     }
   }
 
-  private static parseStructuredJson(raw: string): unknown {
+  static parseStructuredJson(raw: string, schemaName?: string): unknown {
     const trimmed = raw.trim().replace(/^```(?:json)?\s*/iu, '').replace(/\s*```$/u, '');
     const parsed = robustJsonParse(trimmed, { expectedType: 'object', enableCompletion: true });
     if (parsed.success && parsed.data !== undefined) {
@@ -846,6 +893,19 @@ export class ChapterWritingPipeline {
     const asArray = robustJsonParse(trimmed, { expectedType: 'array', enableCompletion: true });
     if (asArray.success && asArray.data !== undefined) {
       return asArray.data;
+    }
+    if (
+      schemaName === 'SupplementParagraphs' &&
+      trimmed.length >= 20 &&
+      !/^[{[]/u.test(trimmed) &&
+      !/^```/u.test(trimmed)
+    ) {
+      return {
+        paragraphs: trimmed
+          .split(/\n+/u)
+          .map(item => item.trim())
+          .filter(Boolean),
+      };
     }
     const detail = parsed.warnings?.slice(-2).join('；') || asArray.warnings?.slice(-2).join('；');
     // 附上 AI 原始返回片段，便于定位补字等场景的模型输出（trace 记录 error.message）。
@@ -951,7 +1011,11 @@ export class ChapterWritingPipeline {
       },
       validateRound: async (_round, _delta, fullProse) => {
         throwIfAborted(signal);
-        const validation = await this.orchestrator.validateSupplement(
+        const orchestrator = this.orchestrator;
+        if (!orchestrator) {
+          return '续写校验器未初始化';
+        }
+        const validation = await orchestrator.validateSupplement(
           fullProse,
           chapter,
           blueprint,

@@ -62,3 +62,5 @@ export function resolveChapterWriteOptions(
  * （3-5 分钟 ×1.6 余量），挂死时 8 分钟放弃重试，比 30 分钟省 22 分钟/次。
  */
 export const AI_SINGLE_REQUEST_TIMEOUT_MS = 480_000; // 8 分钟
+/** 事实提取/审查通常几十秒完成；单次挂满 8 分钟会放大整批延迟。 */
+export const AI_AUXILIARY_REQUEST_TIMEOUT_MS = 180_000; // 3 分钟

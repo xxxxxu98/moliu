@@ -62,6 +62,9 @@ describe('continueWrite harness', () => {
     });
 
     expect(result.mode).toBe('batch');
+    if (process.versions.electron) {
+      expect(result.runtimeBackend).toBe('sqlite');
+    }
     expect(result.chapters).toHaveLength(2);
     expect(result.chapters.every(item => item.mode === 'batch')).toBe(true);
     expect(result.chapters.every(item => item.output.success)).toBe(true);

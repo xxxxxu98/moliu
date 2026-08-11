@@ -117,6 +117,15 @@ describe('contractHealth', () => {
     expect(hint).toContain('【改为】');
   });
 
+  it('enrichRevisionHint 将角色不出场细化为声音和帘后台词也禁止', () => {
+    const hint = enrichRevisionHint('触发本章禁区：不得让皇帝出场。', [
+      '帘子后面传来皇帝的声音',
+    ]);
+    expect(hint).toContain('【严格缺席】');
+    expect(hint).toContain('幕后声音');
+    expect(hint).toContain('删除该角色的一切台词');
+  });
+
   it('enrichRevisionHint 为 fact_conflict 补充跨章状态对齐指引', () => {
     const hint = enrichRevisionHint('语义问题[fact_conflict] 第3章第5段: 上章已死的王镖头本章再次活动', [
       '王镖头扶着门框走进来',

@@ -198,6 +198,30 @@ describe('StoryRuntimeRepository', () => {
     expect(repository.health('story').pendingOutbox).toBe(1);
   });
 
+  it('允许同步投影消费者按 commit 回执直接确认 pending outbox', () => {
+    repository.bootstrap({ projectId: 'direct-outbox' });
+    const committed = repository.commitAccepted({
+      projectId: 'direct-outbox',
+      commit: {
+        id: 'commit-direct',
+        chapter: 1,
+        idempotencyKey: 'direct-1',
+        payload: { chapter: 1 },
+      },
+      outbox: [{ projectionType: 'summary', payload: { chapter: 1 } }],
+    });
+
+    expect(repository.health('direct-outbox').pendingOutbox).toBe(1);
+    expect(
+      repository.completeOutbox({
+        projectId: 'direct-outbox',
+        outboxId: committed.outboxIds[0]!,
+        success: true,
+      })
+    ).toEqual({ changed: true });
+    expect(repository.health('direct-outbox').pendingOutbox).toBe(0);
+  });
+
   it('bootstrap 任一外键失败时回滚全部种子', () => {
     expect(() =>
       repository.bootstrap({

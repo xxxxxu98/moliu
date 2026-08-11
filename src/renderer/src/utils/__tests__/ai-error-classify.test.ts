@@ -205,6 +205,11 @@ describe('classifyError', () => {
       const result = classifyError(new Error('word-count-short:800/3000'));
       expect(result.kind).toBe('wordcount');
     });
+
+    it('字数超限和 word-count-over 归为 wordcount', () => {
+      expect(classifyError(new Error('字数严重超限：当前约 2824 字')).kind).toBe('wordcount');
+      expect(classifyError(new Error('word-count-over:2824/2300')).kind).toBe('wordcount');
+    });
   });
 
   describe('rate_limit（配额文案）', () => {

@@ -110,7 +110,7 @@ export function useProjectCreator(): UseProjectCreatorReturn {
 
     // 添加章节级大纲（完整保存结构化节点和写作策略字段，供续写消费）
     if (outline.chapters && outline.chapters.length > 0) {
-      outline.chapters.forEach((chapter) => {
+      outline.chapters.forEach((chapter, chapterIndex) => {
         plotOutline.push({
           id: `plot-${Date.now()}-${plotIndex++}`,
           title: chapter.title,
@@ -118,7 +118,8 @@ export function useProjectCreator(): UseProjectCreatorReturn {
           type: "chapter" as const,
           keyEvents: Array.isArray(chapter.keyEvents) ? chapter.keyEvents : undefined,
           relatedCharacters: Array.isArray(chapter.involvedCharacters) ? chapter.involvedCharacters : undefined,
-          orderIndex: plotOutline.length,
+          // chapter 节点使用独立的章节序号空间；幕/支线的展示序号不能污染续写定位。
+          orderIndex: chapterIndex,
           // ========== 结构化节点 ==========
           CBN: chapter.CBN,
           CPNs: chapter.CPNs,

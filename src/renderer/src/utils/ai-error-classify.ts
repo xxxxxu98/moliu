@@ -31,7 +31,7 @@ export type ErrorKind =
   | 'truncated'    // JSON 截断 / 解析失败
   | 'schema'       // "结构校验失败:" / zod 报错
   | 'review'       // "严格门禁未通过" / "严格连续性门禁未通过"
-  | 'wordcount'    // "字数严重不足" / "word-count-short:"
+  | 'wordcount'    // 正文字数低于下限或超过上限
   | 'rate_limit'   // HTTP 429
   | 'server'       // HTTP 5xx
   | 'auth'         // HTTP 401/403
@@ -75,8 +75,8 @@ const SCHEMA_RE = /结构校验失败|expected .+ received|invalid_enum_value|in
 /** 审核未通过特征 */
 const REVIEW_RE = /严格门禁未通过|严格连续性门禁未通过|门禁未通过|审查未通过|review blocked/iu;
 
-/** 字数不足特征（来自 supplement.ts:212-230 的 buildWordCountShortfallIssue） */
-const WORDCOUNT_RE = /字数严重不足|word-count-short|字数不足/iu;
+/** 字数边界特征（来自 supplement.ts 的 buildWordCountBoundsIssue） */
+const WORDCOUNT_RE = /字数严重不足|字数严重超限|word-count-(?:short|over)|字数不足|字数超限/iu;
 
 /** 超时特征（超时护栏自己抛的文案，非 AbortError 路径） */
 const TIMEOUT_RE = /timeout|超时|timed?\s*out/iu;

@@ -1,6 +1,9 @@
 import type { ProviderType } from '@/config/ai-providers';
 import { AIServiceFactory } from '@/services/ai/factory';
-import { AI_SINGLE_REQUEST_TIMEOUT_MS } from '@/services/writing/chapterWritePresets';
+import {
+  AI_AUXILIARY_REQUEST_TIMEOUT_MS,
+  AI_SINGLE_REQUEST_TIMEOUT_MS,
+} from '@/services/writing/chapterWritePresets';
 import type { StructuredAI, StructuredAIRequest } from '@/types/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 
@@ -9,7 +12,7 @@ import {
   type ResolvedRealAiConfig,
 } from './continueWriteRealConfig';
 
-function parseStructuredJson(raw: string): unknown {
+function parseStructuredJson(raw: string, schemaName?: string): unknown {
   const trimmed = raw.trim().replace(/^```(?:json)?\s*/iu, '').replace(/\s*```$/u, '');
   const parsed = robustJsonParse(trimmed, { expectedType: 'object', enableCompletion: true });
   if (parsed.success && parsed.data !== undefined) {
@@ -18,6 +21,19 @@ function parseStructuredJson(raw: string): unknown {
   const asArray = robustJsonParse(trimmed, { expectedType: 'array', enableCompletion: true });
   if (asArray.success && asArray.data !== undefined) {
     return asArray.data;
+  }
+  if (
+    schemaName === 'SupplementParagraphs' &&
+    trimmed.length >= 20 &&
+    !/^[{[]/u.test(trimmed) &&
+    !/^```/u.test(trimmed)
+  ) {
+    return {
+      paragraphs: trimmed
+        .split(/\n+/u)
+        .map(item => item.trim())
+        .filter(Boolean),
+    };
   }
   const detail = parsed.warnings?.slice(-2).join('；') || asArray.warnings?.slice(-2).join('；');
   // 附上 AI 原始返回片段，让 trace 能直接定位模型输出（此前只记录解析摘要，无法排查）。
@@ -75,9 +91,12 @@ export function createRealStructuredAI(
         throw new DOMException('Aborted', 'AbortError');
       }
       const timeoutController = new AbortController();
+      const requestTimeoutMs = request.purpose === 'scene-draft'
+        ? AI_SINGLE_REQUEST_TIMEOUT_MS
+        : AI_AUXILIARY_REQUEST_TIMEOUT_MS;
       const timeoutTimer = setTimeout(
         () => timeoutController.abort(),
-        AI_SINGLE_REQUEST_TIMEOUT_MS
+        requestTimeoutMs,
       );
       const combined = signal
         ? AbortSignal.any([signal, timeoutController.signal])
@@ -93,7 +112,7 @@ export function createRealStructuredAI(
           signal: combined,
           jsonMode: true,
         });
-        const parsed = parseStructuredJson(raw);
+        const parsed = parseStructuredJson(raw, request.schemaName);
         const result = request.parse(parsed);
         // 把模型原始文本挂在返回对象上供 RecordingStructuredAI 写入 trace.rawResponse。
         // recorder 会读取后剥离该字段，下游消费方零感知；非对象返回值（如基本类型）忽略。

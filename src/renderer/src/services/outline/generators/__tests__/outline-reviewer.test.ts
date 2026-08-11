@@ -135,6 +135,53 @@ function makeCleanOutline(): ExecutableOutline {
   return outline;
 }
 
+function makeStructurallyCompleteOutline(): ExecutableOutline {
+  const outline = makeDirtyOutline();
+  outline.chapterBlueprints = Array.from({ length: 30 }, (_, index) => ({
+    orderIndex: index + 1,
+    title: `账本暗线${index + 1}`,
+    summary: `推进第${index + 1}章冲突`,
+    CBN: `第${index + 1}章开场出现具体危机`,
+    CPNs: [`主角处理第${index + 1}章的具体阻碍`],
+    CEN: `新的证据指向第${index + 2}章危机`,
+    mustCover: [`查清第${index + 1}章的一处账目异常`],
+    forbiddenZones: ['不得提前揭示终局黑手'],
+    hookType: 'reveal',
+  }));
+  outline.keyCharacters = Array.from({ length: 10 }, (_, index) => ({
+    name: `角色${index + 1}`,
+    role: index === 0 ? 'protagonist' as const : 'support' as const,
+    functionInStory: '推动冲突',
+    keyNeed: '守住秘密',
+    tensionWithProtagonist: '利益冲突',
+    revealTiming: '前30章',
+    publicGoal: '查账',
+    hiddenNeed: '自保',
+    fearOrWound: '旧案',
+    secret: '掌握证据',
+    turningPoint: '选择站队',
+    arcStart: '观望',
+    arcMid: '合作',
+    arcEnd: '承担代价',
+    resources: ['人脉'],
+    relationshipChanges: [],
+  }));
+  outline.foreshadowPlan = Array.from({ length: 10 }, (_, index) => ({
+    id: `foreshadow-${index + 1}`,
+    hint: `第${index + 1}条账目暗记`,
+    type: 'item' as const,
+    importance: 'main' as const,
+    setupPhase: '开篇',
+    payoffPhase: '中期',
+    setupChapter: index + 1,
+    payoffChapter: index + 31,
+    carrierCharacter: '主角',
+    linkedConflict: '旧案',
+    payoffValue: '揭开真相',
+  }));
+  return outline;
+}
+
 const DIRECTION = { name: '测试方向', description: '测试' } as never;
 
 beforeEach(() => {
@@ -388,6 +435,21 @@ describe('reviewAndFixOutline', () => {
     expect(result.applied).toBe(false);
     expect(result.rawText).toBe('初稿');
     expect(result.warnings.join('')).toContain('未提升');
+  });
+
+  it('完整初稿的修正稿发生截断时，必须回退完整初稿', async () => {
+    parseExpandedOutlineMock
+      .mockReturnValueOnce(makeStructurallyCompleteOutline())
+      .mockReturnValueOnce(makeCleanOutline());
+    const result = await reviewAndFixOutline({
+      initialRawText: '完整但有内容问题的初稿',
+      direction: DIRECTION,
+      callStructuredTextMode: vi.fn().mockResolvedValue('被截断的修正稿'),
+    });
+
+    expect(result.applied).toBe(false);
+    expect(result.rawText).toBe('完整但有内容问题的初稿');
+    expect(result.warnings.join('')).toContain('结构完整性退化');
   });
 
   it('修正稿解析失败：回退初稿', async () => {

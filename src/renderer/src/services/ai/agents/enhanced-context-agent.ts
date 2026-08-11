@@ -94,15 +94,10 @@ export class EnhancedContextAgent {
         CBN: chapterContract?.directive?.CBN || this.generateDefaultCBN(context),
         CPNs: chapterContract?.directive?.CPNs || this.generateDefaultCPNs(context),
         CEN: chapterContract?.directive?.CEN || this.generateDefaultCEN(context),
-        // P2 卖点传导：把卷计划里可单章兑现的高光（如「厉鬼群自动让开一条路」）
-        // 补进 mustCover，让正文有机会写到书名承诺的核心爽点，而不是只复述上章。
-        // 候选与禁区冲突时跳过该候选（不软化作者禁区）。
-        mustCover: enrichMustCoverWithVolumeSellingPoints(
-          chapterContract?.directive?.mustCoverNodes || [],
-          volumePlanSellingPointCandidates(this.resolveVolumePlan(project, input.chapterNumber)),
-          chapterContract?.directive?.forbiddenZones || [],
-          input.chapterNumber
-        ),
+        // 单章硬合同只能来自逐章蓝图。卷级 payoffForeshadows 没有精确章号调度，
+        // 无条件注入会把“卷末真相/后期回收”塞进开篇，迫使正文提前透支主线。
+        // 卷卖点仍保留在动态上下文中作为软提示，不能进入 mustCover 强制验收。
+        mustCover: chapterContract?.directive?.mustCoverNodes || [],
         forbiddenZones: normalizeForbiddenZonesByChapter(
           chapterContract?.directive?.forbiddenZones || [],
           input.chapterNumber
@@ -132,22 +127,6 @@ export class EnhancedContextAgent {
         error: error instanceof Error ? error.message : '生成失败',
       };
     }
-  }
-
-  /**
-   * 解析当前章所属卷的卷计划（metadata.volumePlans，与 ContractPackBuilder 同源）。
-   * volumePlans.volumeIndex 为 1 基，sortedVolumes.orderIndex 为 0 基，匹配时 +1。
-   */
-  private resolveVolumePlan(
-    project: Project,
-    chapterNumber: number
-  ): VolumePlanLike | undefined {
-    const chapters = this.projectStore.sortedChapters;
-    const chapter = chapters.find(c => c.orderIndex === chapterNumber - 1);
-    if (!chapter) return undefined;
-    const volumes = this.projectStore.sortedVolumes;
-    const volumeIndex = volumes.find(v => v.id === chapter.volumeId)?.orderIndex ?? 0;
-    return matchVolumePlanByIndex(project.metadata?.volumePlans, volumeIndex);
   }
 
   /**
@@ -652,7 +631,7 @@ export function matchVolumePlanByIndex(
 }
 
 /**
- * 从卷计划收集卖点候选（核心冲突 > 必付伏笔），去空。
+ * 从卷计划收集可单章兑现的卖点候选（仅必付伏笔），去空。
  *
  * 刻意排除卷高潮 climax：climax 是本卷收尾的高光，往往落在中后期某具体章
  * （AI 常写成「第59章，主角在朝会上当众拆穿旧党首领的贪污证据」）。
@@ -666,14 +645,18 @@ export function matchVolumePlanByIndex(
  * 「打败/治理成…模范」等标志词，覆盖不到「清账、清丈、改税、汰吏」这类无标志
  * 动词的纯并列写法；splitPlotClauses 又不按顿号拆分，导致整条卷目标蒙混进入。
  * 根治方式是源头排除：objective 整体不进单章候选。需要保留卷主线提示时，应
- * 走「风格指引/动态上下文」而非单章硬约束。核心冲突与必付伏笔更聚焦具体事件，
- * 保留作「可单章兑现」的推进型卖点。
+ * 走「风格指引/动态上下文」而非单章硬约束。
+ *
+ * coreConflict 同样是卷级矛盾定义，不是单章事件。真实 smoke 曾把
+ * 「现代管理思维 vs 县衙旧势力」注入第 1 章 mustCover，同时本章禁区又要求
+ * 「不得提前展示现代知识」，导致合同自相矛盾和多轮无效重写。因此 coreConflict
+ * 也不得进入单章硬约束；只有经过后续过滤的 payoffForeshadows 可作为候选。
  */
 export function volumePlanSellingPointCandidates(
   plan: VolumePlanLike | undefined
 ): string[] {
   if (!plan) return [];
-  return [plan.coreConflict, ...(plan.payoffForeshadows ?? [])]
+  return [...(plan.payoffForeshadows ?? [])]
     .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
     .map(item => item.trim());
 }
@@ -701,6 +684,13 @@ export function referencesFutureChapter(
   return numbers.some(number => number > ceiling);
 }
 
+const VOLUME_STAGE_REFERENCE_RE =
+  /(?:第\s*[一二三四五六七八九十百千零〇两\d]+\s*卷|本卷|该卷)(?:开篇|初|前期|中段|中期|中后期|后期|末|末尾|收尾|结束)|(?:卷中|卷末|本卷末|中后期|后期|最终)(?:才|再|将|会|被)?/u;
+
+export function referencesVolumeStage(text: string): boolean {
+  return VOLUME_STAGE_REFERENCE_RE.test((text ?? '').trim());
+}
+
 /**
  * 卷级 objective 天然跨章：即使 isCrossChapterGoal 未命中（模型可能写成
  * 「三个月把一个穷县治理成模范县」「打败钱四海，通过考绩并获得进京机会」这类
@@ -725,6 +715,16 @@ const VOLUME_SCOPED_PROMOTION_RE =
   /(?:获得|取得|拿到|赢得).{0,8}(?:进京|晋升|封爵|升任|提拔|入阁|入朝)/u;
 const VOLUME_SCOPED_BULK_RE =
   /(?:平定|肃清|统一|收复|荡平|剿灭).{0,8}(?:叛乱|边患|匪患|全国|全境|全境)/u;
+/** 多方“敌意/警惕/打压”等并列状态是卷级关系图，不是单章可兑现事件。 */
+const ABSTRACT_CONFLICT_STATE_RE = /敌意|警惕|排挤|打压|压制|对立|掣肘|猜忌|戒备/u;
+
+function isAbstractMultiPartyConflictSummary(text: string): boolean {
+  const clauses = (text ?? '')
+    .split(/[、，,；;]/u)
+    .map(item => item.trim())
+    .filter(Boolean);
+  return clauses.length >= 3 && clauses.filter(item => ABSTRACT_CONFLICT_STATE_RE.test(item)).length >= 2;
+}
 
 export function isLikelyVolumeScopedObjective(text: string): boolean {
   const t = (text ?? '').trim();
@@ -734,7 +734,8 @@ export function isLikelyVolumeScopedObjective(text: string): boolean {
     VOLUME_SCOPED_REWARD_RE.test(t) ||
     VOLUME_SCOPED_TRANSFORM_RE.test(t) ||
     VOLUME_SCOPED_PROMOTION_RE.test(t) ||
-    VOLUME_SCOPED_BULK_RE.test(t)
+    VOLUME_SCOPED_BULK_RE.test(t) ||
+    isAbstractMultiPartyConflictSummary(t)
   );
 }
 
@@ -761,6 +762,9 @@ export function enrichMustCoverWithVolumeSellingPoints(
     return mustCover;
   }
   for (const candidate of sellingPointCandidates) {
+    // payoffForeshadows 经常写成“第1卷末才发现……”。它没有具体章号，不能由
+    // referencesFutureChapter 捕获，但同样属于远期回收点，绝不能注入当前章硬合同。
+    if (referencesVolumeStage(candidate)) continue;
     // 远期章号引用（如卷级目标「第59章，主角在朝会上当众拆穿旧党首领的贪污证据」）
     // 必须在拆子句之前判定：splitPlotClauses 按逗号切分后会把章号独立成片并因长度<4
     // 被过滤掉，剩下不带章号的情节子句会绕过章号检查被注入，反而触发履约审核判

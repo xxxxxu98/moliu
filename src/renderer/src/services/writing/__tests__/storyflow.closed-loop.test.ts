@@ -22,6 +22,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { isRealAiEnabled } from './realStructuredAI';
 import { runStoryflowClosedLoop } from './storyflowClosedLoopHarness';
+import { inspectOutlineCompleteness } from '@/services/outline/validation/outlineCompleteness';
+import { checkWordCountBounds } from '@/services/writing/supplement';
+import { isPlaceholderChapterTitle } from '@/services/writing/chapterTitle';
 
 // useProjectCreator 依赖 useRouter（仅导航副作用），测试环境注入桩
 vi.mock('vue-router', () => ({
@@ -56,7 +59,9 @@ describe.runIf(isRealAiEnabled())(
 
         // ---------- ① 大纲生成断言 ----------
         expect(result.generatedOutline.title).toBeTruthy();
-        expect((result.generatedOutline.chapters ?? []).length).toBeGreaterThanOrEqual(2);
+        const outlineCompleteness = inspectOutlineCompleteness(result.executableOutline);
+        expect(outlineCompleteness.blockers).toEqual([]);
+        expect((result.generatedOutline.chapters ?? []).length).toBe(30);
         expect(result.executableOutline.startupPack30.openingHook).toBeTruthy();
         // 开篇钩子不过长（质量门槛，与 topic-discovery real 冒烟一致）
         expect(result.executableOutline.startupPack30.openingHook.length).toBeLessThanOrEqual(45);
@@ -66,21 +71,51 @@ describe.runIf(isRealAiEnabled())(
         const chapterNodes = result.project.plotOutline.filter(n => n.type === 'chapter');
         expect(chapterNodes.length).toBe((result.generatedOutline.chapters ?? []).length);
         expect(result.project.characters.length).toBeGreaterThan(0);
+        expect(result.project.characters.length).toBeGreaterThanOrEqual(10);
+        expect(result.project.foreshadows.length).toBeGreaterThanOrEqual(10);
         expect(result.project.volumes.length).toBeGreaterThan(0);
         // 结构化节点透传：plotOutline 首章带 CBN
         expect(chapterNodes[0].CBN).toBeTruthy();
         // 建章数量 = 大纲章节数
         expect(result.createdChapterIds.length).toBe((result.generatedOutline.chapters ?? []).length);
+        expect(result.projectStorageVerification).toMatchObject({
+          chapterCount: 30,
+          plotChapterCount: 30,
+          linkedPlotChapterCount: 30,
+          structuredPlotChapterCount: 30,
+        });
+        expect(result.projectStorageVerification.characterCount).toBeGreaterThanOrEqual(10);
+        expect(result.projectStorageVerification.foreshadowCount).toBeGreaterThanOrEqual(10);
+        expect(result.projectStorageVerification.volumeCount).toBeGreaterThan(0);
 
         // ---------- ③ 批量续写断言 ----------
-        // 5 章覆盖开篇多章：跨章合同去重（mustCover/CPN 兑现）、状态衔接、章节连续性
-        expect(result.chapterRunResults.length).toBeGreaterThanOrEqual(5);
+        // 默认 5 章覆盖跨章合同；P0 快速回归可通过 MOLIU_CHAPTER_COUNT 缩到 1 章。
+        expect(result.chapterRunResults.length).toBe(chapterCount);
         const failed = result.chapterRunResults.filter(r => !r.output.success);
         expect(failed).toEqual([]);
         for (const chapter of result.chapterRunResults) {
           // prose 为最终正文（含补写增量）
           expect(chapter.output.prose.length).toBeGreaterThan(300);
+          expect(
+            checkWordCountBounds(chapter.output.prose, targetWordCount).status,
+          ).toBe('ok');
         }
+
+        // ---------- ④ 真实持久化断言 ----------
+        expect(result.runtimeBackend).toBe('sqlite');
+        expect(result.runtimeVerification.health.ok).toBe(true);
+        expect(result.runtimeVerification.health.pendingOutbox).toBe(0);
+        expect(result.runtimeVerification.acceptedDrafts).toBe(chapterCount);
+        expect(result.runtimeVerification.latestSnapshotChapter).toBe(chapterCount);
+        expect(result.runtimeVerification.sceneChunks).toBeGreaterThanOrEqual(chapterCount);
+        expect(result.runtimeVerification.events).toBeGreaterThan(0);
+
+        const persistedChapterTitles = (result.project.plotOutline ?? [])
+          .filter(node => node.type === 'chapter')
+          .slice(0, chapterCount)
+          .map(node => node.title);
+        expect(persistedChapterTitles).toHaveLength(chapterCount);
+        expect(persistedChapterTitles.every(title => !isPlaceholderChapterTitle(title))).toBe(true);
 
         // ---------- 汇总落盘（供 smoke 脚本展示） ----------
         // 大纲数据已由 harness 在建章后提前落盘（避免续写超时丢失），此处仅落正文与 summary
@@ -127,6 +162,8 @@ describe.runIf(isRealAiEnabled())(
             .map(n => ({ orderIndex: n.orderIndex, title: n.title })),
           runtimeBackend: result.runtimeBackend,
           runtimeBackendAuthentic: result.runtimeBackend === 'sqlite',
+          runtimeVerification: result.runtimeVerification,
+          projectStorageVerification: result.projectStorageVerification,
           provider: result.cfg.provider,
           model: result.cfg.model,
           totalMs,

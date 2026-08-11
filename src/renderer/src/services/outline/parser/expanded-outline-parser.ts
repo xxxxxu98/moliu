@@ -25,6 +25,22 @@ import {
   splitByHeading,
   splitNamedSections,
 } from './utils';
+
+function extractAliasedFieldValue(block: string, fieldNames: string[]): string | null {
+  for (const fieldName of fieldNames) {
+    const value = extractFieldValue(block, fieldName);
+    if (value?.trim()) return value;
+  }
+  return null;
+}
+
+function extractAliasedMultiValueField(block: string, fieldNames: string[]): string[] {
+  for (const fieldName of fieldNames) {
+    const values = extractMultiValueField(block, fieldName);
+    if (values.length > 0) return values;
+  }
+  return [];
+}
 // 复用 story-runtime 的跨章目标检测：mustCover 含整卷/全书级目标（如「完成…逆转」）
 // 会触发续写履约审核判未兑现 → 死循环。解析期剔除，从源头阻断。
 // 注意：outline 模块与 story-runtime 模块的依赖方向——story-runtime 是更底层的运行时，
@@ -88,7 +104,7 @@ function parseStartupBlock(block: string, range: string): StartupChapterBlock {
  * 容错策略与其它 parse*Section 一致：AI 漏写或写残时返回空数组（调用方据此回退到 splitStartupBlocksToChapters）。
  * 标题来自 `### 第N章` 下的「标题」字段，而非 heading（heading 仅用于切块与 orderIndex 抽取）。
  */
-function parseChapterBlueprintSection(section: string): ChapterBlueprint[] {
+export function parseChapterBlueprintSection(section: string): ChapterBlueprint[] {
   if (!section.trim()) return [];
   // heading 形如 `### 第1章` / `### 第12章` / `### 1章`。
   // 容错层级与空格：AI 偶用 `## 第1章`（2井号）/ `#### 第1章`（4井号）/ `###第1章`（无空格），
@@ -102,13 +118,22 @@ function parseChapterBlueprintSection(section: string): ChapterBlueprint[] {
       const headingMatch = block.heading.match(/\d+/);
       const orderIndex = headingMatch ? Number(headingMatch[0]) : index + 1;
       const title = (extractFieldValue(block.body, '标题') ?? '').trim();
-      const CBN = (extractFieldValue(block.body, 'CBN') ?? '').trim();
-      const CEN = (extractFieldValue(block.body, 'CEN') ?? '').trim();
+      const CBN = (
+        extractAliasedFieldValue(block.body, ['CBN', '章首钩子', '章首动作钩子']) ?? ''
+      ).trim();
+      const CEN = (extractAliasedFieldValue(block.body, ['CEN', '章尾钩子']) ?? '').trim();
       // 标题与 CBN 至少有一个非空，否则视为 AI 写残的空块，丢弃
       if (!title && !CBN) return null;
-      const CPNs = extractMultiValueField(block.body, 'CPNs');
-      const mustCover = extractMultiValueField(block.body, 'mustCover');
-      const forbiddenZones = extractMultiValueField(block.body, '禁区');
+      const CPNs = compactChapterNodes(
+        extractAliasedMultiValueField(block.body, ['CPNs', '推进节点'])
+      );
+      const mustCover = compactChapterNodes(
+        extractAliasedMultiValueField(block.body, ['mustCover', '必出事件'])
+      );
+      const forbiddenZones = extractAliasedMultiValueField(block.body, [
+        '禁区',
+        'forbiddenZones',
+      ]);
       const hookText = extractFieldValue(block.body, '章尾钩子文案') ?? '';
       const hookType = (extractFieldValue(block.body, '爽点类型') ?? '').trim();
       const coolPointType = hookType || undefined;
@@ -127,6 +152,18 @@ function parseChapterBlueprintSection(section: string): ChapterBlueprint[] {
       };
     })
     .filter((item): item is ChapterBlueprint => item !== null);
+}
+
+/**
+ * 模型偶尔用逗号把一个连续场景链拆成 4-8 个碎片；规划器逐项消费会把单章挤爆。
+ * 保留前两个节点，把其余碎片合并成第三个连续场景，既不丢信息也守住 1-3 个 CPN 的合同。
+ */
+function compactChapterNodes(values: string[], maxNodes: number = 3): string[] {
+  if (values.length <= maxNodes) return values;
+  return [
+    ...values.slice(0, maxNodes - 1),
+    values.slice(maxNodes - 1).join('，'),
+  ];
 }
 
 /**

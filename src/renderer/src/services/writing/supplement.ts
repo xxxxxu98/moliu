@@ -13,8 +13,12 @@ import { normalizeWebnovelParagraphs } from './typesetting';
  *  区间被判 blocking 拒收，浪费整章重试预算。0.80（目标 2000→下限 1600）
  *  仍属主流网文单章正常字数，显著降低误杀。 */
 export const MIN_WORD_THRESHOLD = 0.8;
-/** 最高字数阈值（目标字数的 115%，补写上限） */
-export const MAX_WORD_THRESHOLD = 1.15;
+/**
+ * 最高字数阈值（目标字数的 118%，补写上限）。
+ * 3000 字目标对应 3540 字；主流网文章节中 3500 字仍属正常波动，避免 3520 左右的
+ * 完整成稿仅因几十字擦边而耗尽整章重试。明显超长稿（4000+）仍会被拦截。
+ */
+export const MAX_WORD_THRESHOLD = 1.18;
 /** 最多补充轮次 */
 export const MAX_SUPPLEMENT_ROUNDS = 3;
 /**
@@ -181,6 +185,39 @@ export function buildWordCountShortfallIssue(
     evidence: [
       `currentWords=${bounds.currentWords}`,
       `minWords=${bounds.minWords}`,
+      `targetWords=${target}`,
+    ],
+  };
+}
+
+/**
+ * 正文落库前的统一字数硬门禁。短于下限和长于上限都会返回 blocking；
+ * 调用方可以保留 rejected 草稿用于诊断/人工处理，但不得标记为 accepted。
+ */
+export function buildWordCountBoundsIssue(
+  prose: string,
+  target: number
+): {
+  id: string;
+  domain: 'fulfillment';
+  severity: 'blocking';
+  message: string;
+  evidence: string[];
+} | null {
+  if (target <= 0) return null;
+  const bounds = checkWordCountBounds(prose, target);
+  if (bounds.status === 'ok') return null;
+  if (bounds.status === 'short') {
+    return buildWordCountShortfallIssue(prose, target);
+  }
+  return {
+    id: `word-count-over:${bounds.currentWords}/${bounds.maxWords}`,
+    domain: 'fulfillment',
+    severity: 'blocking',
+    message: `字数严重超限：当前约 ${bounds.currentWords} 字，最多允许 ${bounds.maxWords} 字（目标 ${target}）。请压缩重复解释、低效对话与无推进描写，同时保留关键情节和章尾钩子。`,
+    evidence: [
+      `currentWords=${bounds.currentWords}`,
+      `maxWords=${bounds.maxWords}`,
       `targetWords=${target}`,
     ],
   };

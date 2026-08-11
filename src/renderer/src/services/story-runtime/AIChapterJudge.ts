@@ -22,6 +22,13 @@ function emptyResult(): ChapterJudgeResult {
   return { fulfillment: [], forbidden: [], issues: [] };
 }
 
+function normalizeContractKey(value: string): string {
+  return value
+    .trim()
+    .replace(/[。！？!?；;，,：:\s]+$/gu, '')
+    .replace(/\s+/gu, '');
+}
+
 /**
  * 统一章节语义审查：履约 + 禁区 + 连贯性/人设，单次 AI 请求。
  */
@@ -102,10 +109,12 @@ export class AIChapterJudge implements ChapterJudge {
     checkDeepSemantic: boolean,
     parsed: ChapterJudgeResult
   ): ChapterJudgeResult {
-    const fulfillmentByNode = new Map(parsed.fulfillment.map(item => [item.node, item]));
+    const fulfillmentByNode = new Map(
+      parsed.fulfillment.map(item => [normalizeContractKey(item.node), item]),
+    );
     const fulfillment: FulfillmentNodeJudgment[] = mustCover.map(node => {
-      const hit = fulfillmentByNode.get(node);
-      if (hit) return hit;
+      const hit = fulfillmentByNode.get(normalizeContractKey(node));
+      if (hit) return { ...hit, node };
       return {
         node,
         fulfilled: false,
@@ -114,10 +123,12 @@ export class AIChapterJudge implements ChapterJudge {
       };
     });
 
-    const forbiddenByZone = new Map(parsed.forbidden.map(item => [item.zone, item]));
+    const forbiddenByZone = new Map(
+      parsed.forbidden.map(item => [normalizeContractKey(item.zone), item]),
+    );
     const forbidden: ForbiddenZoneJudgment[] = forbiddenZones.map(zone => {
-      const hit = forbiddenByZone.get(zone);
-      if (hit) return hit;
+      const hit = forbiddenByZone.get(normalizeContractKey(zone));
+      if (hit) return { ...hit, zone };
       return {
         zone,
         violated: false,

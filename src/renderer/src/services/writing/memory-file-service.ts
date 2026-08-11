@@ -316,11 +316,14 @@ export class MemoryFileService {
       const filePath = `${this.basePath}/${filename}`;
 
       // 通过 IPC 调用主进程保存文件
-      await window.electronAPI.saveMemoryFile({
+      const result = await window.electronAPI.saveMemoryFile({
         projectId: this.projectId,
         filePath,
         content: markdown,
       });
+      if (!result.success) {
+        throw new Error(result.error || '主进程未能保存记忆文件');
+      }
 
       // 更新缓存
       memoryCache.set(memory.chapterId, memory);

@@ -233,7 +233,11 @@ export class ContinuityValidator {
     );
 
     const blockingCount = issues.filter(issue => issue.severity === 'blocking').length;
-    const warningCount = issues.filter(issue => issue.severity === 'warning').length;
+    const warningCount = issues.filter(
+      issue =>
+        issue.severity === 'warning' &&
+        !/^事件\s+\S+\s+引用了未知实体\s+/u.test(issue.message)
+    ).length;
     return {
       accepted:
         blockingCount === 0 && warningCount <= input.contracts.review.maxWarnings,

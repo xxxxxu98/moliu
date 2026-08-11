@@ -237,6 +237,8 @@ describe('SceneDraftEngine.draft', () => {
     expect(request.system).toContain('公堂指凶');
     expect(request.system).toContain('别端着');
     expect(request.system).toContain('本章范围');
+    expect(request.system).toContain('禁区最高优先级');
+    expect(request.system).toContain('不得现身、说话、发声');
     expect(request.system).toContain('章末约束');
     const prompt = JSON.parse(request.prompt) as {
       titleHints: { vibe: string; length: { prefer: string } };
@@ -271,10 +273,10 @@ describe('SceneDraftEngine.draft', () => {
     await engine.draft(plan, context, { targetWordCount: 3000 });
 
     const request = generate.mock.calls[0][0] as { system: string; prompt: string };
-    // MIN_WORD_THRESHOLD=0.80：3000 → 下限 2400；MAX_WORD_THRESHOLD=1.15 → 上限 3450
-    expect(request.system).toContain('2400–3450');
-    expect(request.system).toContain('80%–115%');
-    expect(request.system).toContain('高于 3450');
+    // MIN_WORD_THRESHOLD=0.80：3000 → 下限 2400；MAX_WORD_THRESHOLD=1.18 → 上限 3540
+    expect(request.system).toContain('2400–3540');
+    expect(request.system).toContain('80%–118%');
+    expect(request.system).toContain('高于 3540');
     const prompt = JSON.parse(request.prompt) as {
       writingRules: {
         minWordCount: number | null;
@@ -290,7 +292,7 @@ describe('SceneDraftEngine.draft', () => {
       forbidFutureChapterPayoffs: true,
       targetWordCount: 3000,
       minWordCount: 2400, // MIN_WORD_THRESHOLD=0.80 × 3000
-      maxWordCount: 3450,
+      maxWordCount: 3540,
     });
   });
 

@@ -429,6 +429,14 @@ export const commitReceiptSchema: z.ZodType<ChapterCommitReceipt> = z.object({
   commitId: z.string().min(1),
   revision: z.number().int().positive(),
   acceptedAt: z.string().min(1),
+  projectionOutbox: z
+    .array(
+      z.object({
+        id: z.number().int().positive(),
+        projectionType: z.enum(['summary', 'memory']),
+      })
+    )
+    .optional(),
 });
 
 export function parseSchema<T>(schema: z.ZodType<T>, value: unknown, label: string): T {

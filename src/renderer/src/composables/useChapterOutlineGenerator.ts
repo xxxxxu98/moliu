@@ -494,7 +494,7 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
         } as PlotNode;
       });
 
-      projectStore.plotOutline = [...nonChapterNodes, ...chapterNodes];
+      projectStore.setPlotOutline([...nonChapterNodes, ...chapterNodes]);
       await projectStore.saveCurrentProject();
 
       return true;
@@ -534,7 +534,7 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
       }
 
       // 创建章节
-      for (const chapter of chapters) {
+      for (const [chapterIndex, chapter] of chapters.entries()) {
         const newChapter = await projectStore.createChapter(volumeId);
 
         if (newChapter) {
@@ -558,6 +558,14 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
             outline: extendedOutline,
             plotSummary: chapter.CBN ? `CBN: ${chapter.CBN}\nCEN: ${chapter.CEN}` : undefined,
           });
+          const chapterNode = projectStore.plotOutline.find(
+            node =>
+              node.type === 'chapter' &&
+              (node.orderIndex === chapter.orderIndex || node.orderIndex === chapterIndex),
+          );
+          if (chapterNode) {
+            await projectStore.updatePlotNode(chapterNode.id, { chapterId });
+          }
           createdChapterIds.push(chapterId);
         }
       }

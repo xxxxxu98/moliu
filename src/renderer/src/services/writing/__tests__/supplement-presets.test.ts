@@ -10,6 +10,7 @@ import {
   buildSupplementPrompt,
   buildCondensePrompt,
   buildWordCountShortfallIssue,
+  buildWordCountBoundsIssue,
   runSupplementRounds,
   sliceEndingSnippet,
   MIN_WORD_THRESHOLD,
@@ -47,7 +48,7 @@ describe('checkWordCountBounds', () => {
     expect(checkWordCountBounds(content, target).status).toBe('ok');
   });
 
-  it('低于阈值为 short，高于 115% 为 over', () => {
+  it('低于阈值为 short，高于 118% 为 over', () => {
     const target = 1000;
     expect(checkWordCountBounds('字'.repeat(500), target).status).toBe('short');
     expect(
@@ -60,7 +61,7 @@ describe('checkWordCountBounds', () => {
   it('MIN_WORD_THRESHOLD=0.80：~81% 正文判 ok（回归 ch1 1628/2000 场景）', () => {
     expect(MIN_WORD_THRESHOLD).toBe(0.8);
     const target = 2000;
-    // 1628 字 = 81.4%，应落在 [80%, 115%] 区间
+    // 1628 字 = 81.4%，应落在 [80%, 118%] 区间
     expect(checkWordCountBounds('字'.repeat(1628), target).status).toBe('ok');
     // 79% 仍应判 short（阈值没放得太松）
     expect(checkWordCountBounds('字'.repeat(1580), target).status).toBe('short');
@@ -70,7 +71,7 @@ describe('checkWordCountBounds', () => {
 describe('chooseProseAfterCondense', () => {
   it('压缩落在区间时采用压缩稿', () => {
     const target = 100;
-    // 口径为全文 length：原文超上限，压缩稿落在 85%–115%
+    // 口径为全文 length：原文超上限，压缩稿落在 80%–118%
     const original = '原。'.repeat(80); // 160
     const condensed = '压。'.repeat(50); // 100
     const result = chooseProseAfterCondense({
@@ -84,7 +85,7 @@ describe('chooseProseAfterCondense', () => {
 
   it('压缩过短时回退原文不再硬裁（复现 ch3：5000→800，保留完整原文）', () => {
     const target = 3000;
-    // 构造明确超上限的原文（>3450）与过短压缩稿（<<2550）
+    // 构造明确超上限的原文（>3540）与过短压缩稿（<<2400）
     const original = `${'开场冲突推进细节描写一句。'.repeat(400)}${'章末钩子落下悬念。'.repeat(40)}`;
     const condensed = '梗概一句。'.repeat(40);
     expect(checkWordCountBounds(original, target).status).toBe('over');
@@ -106,7 +107,7 @@ describe('chooseProseAfterCondense', () => {
 
   it('压缩完仍超上限时采用压缩稿不再硬裁', () => {
     const target = 3000;
-    // 原文远超上限，压缩稿有所收敛但仍越界（>3450）
+    // 原文远超上限，压缩稿有所收敛但仍越界（>3540）
     const original = `${'开场冲突推进细节描写一句。'.repeat(600)}${'章末钩子落下悬念。'.repeat(40)}`;
     const condensed = `${'压缩后仍偏长细节描写一句。'.repeat(300)}章末钩子落下。`;
     expect(checkWordCountBounds(original, target).status).toBe('over');
@@ -136,6 +137,17 @@ describe('buildWordCountShortfallIssue', () => {
   it('字数达标时返回 null', () => {
     const content = '字'.repeat(2600);
     expect(buildWordCountShortfallIssue(content, 3000)).toBeNull();
+  });
+});
+
+describe('buildWordCountBoundsIssue', () => {
+  it('超出上限时返回 blocking，区间内返回 null', () => {
+    const target = 3000;
+    const issue = buildWordCountBoundsIssue('字'.repeat(5000), target);
+
+    expect(issue?.severity).toBe('blocking');
+    expect(issue?.id).toMatch(/^word-count-over:/);
+    expect(buildWordCountBoundsIssue('字'.repeat(3000), target)).toBeNull();
   });
 });
 

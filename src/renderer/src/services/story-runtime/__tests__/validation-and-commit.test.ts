@@ -90,6 +90,28 @@ describe('ContinuityValidator', () => {
     );
   });
 
+  it('功能性临时身份被抽成未知实体时只告警，不单独阻断提交', async () => {
+    const facts = makeFacts();
+    facts.events[0] = {
+      ...facts.events[0],
+      participants: ['绿袍官员'],
+    };
+    const report = await new ContinuityValidator().validate({
+      contracts: makeContracts(),
+      state: makeState(),
+      drafts: [makeDraft()],
+      facts,
+    });
+
+    expect(report.accepted).toBe(true);
+    expect(report.issues).toEqual([
+      expect.objectContaining({
+        severity: 'warning',
+        message: expect.stringContaining('未知实体 绿袍官员'),
+      }),
+    ]);
+  });
+
   it('字面未命中时交给统一 ChapterJudge，同义改写可判通过', async () => {
     const judge = {
       judge: vi.fn(async () => ({

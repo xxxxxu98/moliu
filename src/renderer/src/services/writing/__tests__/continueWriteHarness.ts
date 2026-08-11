@@ -34,6 +34,7 @@ import type {
 } from '@/types/story-runtime';
 import type { Chapter, Project } from '@/types/project';
 import type { WritingTaskBook } from '@/types/writing-v2';
+import { createNodeStoryRuntimeApi } from '@main/services/story-runtime/nodeStoryRuntimeApi';
 
 import { ContractPackBuilder } from '@/services/story-runtime/ContractPackBuilder';
 import { RecordingStructuredAI } from '@/services/story-runtime/RecordingStructuredAI';
@@ -50,7 +51,10 @@ import type {
   ChapterWriteOutput,
   WritingStyle,
 } from '@/services/writing/ChapterWritingPipeline';
-import { ChapterWritingPipeline } from '@/services/writing/ChapterWritingPipeline';
+import {
+  ChapterWritingPipeline,
+  type ChapterTitleUpdate,
+} from '@/services/writing/ChapterWritingPipeline';
 import {
   BATCH_CONTINUE_PRESET,
   type ChapterWriteOptionFlags,
@@ -74,6 +78,15 @@ type StoryRuntimeAPI = NonNullable<Window['electronAPI']['storyRuntime']>;
 
 export type HarnessRuntimeBackend = 'sqlite' | 'memory';
 
+export interface StoryRuntimeVerification {
+  health: Awaited<ReturnType<StoryRuntimeAPI['health']>>;
+  acceptedDrafts: number;
+  canonicalSnapshots: number;
+  latestSnapshotChapter: number | null;
+  sceneChunks: number;
+  events: number;
+}
+
 function createStoryRuntimeForHarness(): {
   api: StoryRuntimeAPI;
   backend: HarnessRuntimeBackend;
@@ -82,17 +95,10 @@ function createStoryRuntimeForHarness(): {
 } {
   const userDataPath = fs.mkdtempSync(path.join(os.tmpdir(), 'moliu-cw-runtime-'));
   try {
-    // 与 App IPC 共用 StoryRuntimeRepository；Node ABI 与 Electron 预编译不一致时降级
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { createNodeStoryRuntimeApi } = require('@main/services/story-runtime/nodeStoryRuntimeApi') as {
-      createNodeStoryRuntimeApi: (p: string) => {
-        api: StoryRuntimeAPI;
-        dispose: () => void;
-      };
-    };
+    // 与 App IPC 共用 StoryRuntimeRepository；静态 import 交给 Vite 解析 @main 别名。
     const live = createNodeStoryRuntimeApi(userDataPath);
-    // 强制触发 native open，确认 ABI 可用
-    void live.api.bootstrap({ projectId: `__abi_probe_${Date.now()}` });
+    // 通过同步 repository 强制触发 native open；async API 的 rejection 无法被本 try/catch 捕获。
+    live.repository.health(`__abi_probe_${Date.now()}`);
     return {
       api: live.api,
       backend: 'sqlite',
@@ -193,8 +199,13 @@ export class ContinueWriteFakeAI implements StructuredAI {
     const unit =
       '现场取证与公堂压迫交替推进，他不敢漏掉任何一处痕迹、证词与证人神色。';
     const need = minWords - current + 40;
-    const pad = unit.repeat(Math.max(1, Math.ceil(need / countWords(unit))));
-    return [...paragraphs, pad];
+    const repeats = Math.max(1, Math.ceil(need / countWords(unit)));
+    const unitsPerParagraph = 5;
+    const padding = Array.from(
+      { length: Math.ceil(repeats / unitsPerParagraph) },
+      (_, index) => unit.repeat(Math.min(unitsPerParagraph, repeats - index * unitsPerParagraph))
+    );
+    return [...paragraphs, ...padding];
   }
 
   private resolveTargetFromPrompt(prompt: string): number {
@@ -656,6 +667,7 @@ export type ContinueWriteMode = 'smart' | 'batch';
 export interface ContinueWriteSession {
   readonly runtimeBackend: HarnessRuntimeBackend;
   getProject(): Project;
+  verifyRuntime(projectId: string): Promise<StoryRuntimeVerification>;
   runChapter(options: {
     chapterNumber: number;
     targetWordCount?: number;
@@ -714,7 +726,7 @@ export function openContinueWriteSession(options: {
   project: Project;
   /** 注入续写章节标题回写客户端（forceStoryRuntime 模式下默认无） */
   plotOutlineClient?: {
-    updateChapterTitle(orderIndex: number, title: string): Promise<void>;
+    updateChapterTitle(input: ChapterTitleUpdate): Promise<void>;
   };
 }): ContinueWriteSession {
   let project: Project = {
@@ -747,6 +759,35 @@ export function openContinueWriteSession(options: {
   return {
     runtimeBackend: runtimeHandle.backend,
     getProject: () => project,
+    async verifyRuntime(projectId: string): Promise<StoryRuntimeVerification> {
+      ensureAlive();
+      const [health, drafts, snapshots, sceneChunks, events] = await Promise.all([
+        runtimeHandle.api.health(projectId),
+        runtimeHandle.api.query({
+          projectId,
+          table: 'drafts',
+          filters: { status: 'accepted' },
+          limit: 1,
+        }),
+        runtimeHandle.api.query({
+          projectId,
+          table: 'snapshots',
+          filters: { snapshot_type: 'canonical' },
+          limit: 1,
+        }),
+        runtimeHandle.api.query({ projectId, table: 'scene_chunks', limit: 1 }),
+        runtimeHandle.api.query({ projectId, table: 'events', limit: 1 }),
+      ]);
+      const latestChapter = snapshots.rows[0]?.chapter;
+      return {
+        health,
+        acceptedDrafts: drafts.total,
+        canonicalSnapshots: snapshots.total,
+        latestSnapshotChapter: typeof latestChapter === 'number' ? latestChapter : null,
+        sceneChunks: sceneChunks.total,
+        events: events.total,
+      };
+    },
     dispose: () => {
       if (disposed) return;
       disposed = true;
@@ -951,10 +992,11 @@ export async function runContinueWriteChapters(options: {
   onChapterHydrated?: () => void;
   /** 续写章节标题回写客户端，透传到 pipeline（harness 默认无） */
   plotOutlineClient?: {
-    updateChapterTitle(orderIndex: number, title: string): Promise<void>;
+    updateChapterTitle(input: ChapterTitleUpdate): Promise<void>;
   };
 }): Promise<{
   runtimeBackend: HarnessRuntimeBackend;
+  runtimeVerification: StoryRuntimeVerification;
   project: Project;
   chapters: ContinueWriteChapterRunResult[];
   mode: ContinueWriteMode;
@@ -1107,8 +1149,10 @@ export async function runContinueWriteChapters(options: {
       }
       break; // 重试耗尽：结束整批，不再继续后续章（质量优先）
     }
+    const runtimeVerification = await session.verifyRuntime(options.project.id);
     return {
       runtimeBackend: session.runtimeBackend,
+      runtimeVerification,
       project: session.getProject(),
       chapters,
       mode,
