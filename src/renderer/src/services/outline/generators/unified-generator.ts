@@ -36,7 +36,7 @@ import { completeIncompleteOutline } from './outline-completer';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 
 /** 大纲主方案是长输出，但单次请求不能无限悬挂。 */
-export const OUTLINE_REQUEST_TIMEOUT_MS = 480_000;
+export const OUTLINE_REQUEST_TIMEOUT_MS = 900_000;
 
 function matchesDefaultModelSelection(
   provider: {
@@ -115,7 +115,7 @@ export interface GenerateOptions {
   topP?: number;
   wordCountRange?: string;
   maxRetries?: number;
-  /** 单次大纲 AI 请求超时；默认 8 分钟。 */
+  /** 单次大纲 AI 请求超时；默认 15 分钟。 */
   requestTimeoutMs?: number;
   /** 一次生成的大纲数量，默认 3 */
   count?: number;

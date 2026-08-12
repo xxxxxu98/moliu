@@ -62,5 +62,5 @@ export function resolveChapterWriteOptions(
  * 长输出偶发不够；现 15 分钟覆盖正常长输出并留余量，挂死时仍远早于 30 分钟放弃。
  */
 export const AI_SINGLE_REQUEST_TIMEOUT_MS = 900_000; // 15 分钟
-/** 事实提取/审查通常几十秒完成；单次挂满正文超时会放大整批延迟。 */
-export const AI_AUXILIARY_REQUEST_TIMEOUT_MS = 180_000; // 3 分钟
+/** 事实提取/审查与正文共用 15 分钟上限，避免慢模型误杀。 */
+export const AI_AUXILIARY_REQUEST_TIMEOUT_MS = 900_000; // 15 分钟
