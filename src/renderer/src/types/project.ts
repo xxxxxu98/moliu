@@ -32,6 +32,13 @@ export interface Project {
 
 // 项目元数据
 export interface ProjectMetadata {
+  /** 大纲定位维度；题材、文风、读者和情绪分开保存，避免 genre 语义污染 */
+  outlinePositioning?: {
+    genres: string[];
+    styleKeywords: string[];
+    targetReaders: string[];
+    coreEmotions: string[];
+  };
   // 情绪目标
   emotionGoal?: {
     primary: string;
@@ -232,6 +239,8 @@ export interface CharacterProfile {
   arcStart?: string;
   arcMid?: string;
   arcEnd?: string;
+  /** 大纲指定的首次/最佳揭示或出场时机 */
+  revealTiming?: string;
 }
 
 // 结构化角色关系

@@ -5,6 +5,8 @@ import type {
   SceneDraft,
   ScenePlan,
   StructuredAI,
+  RevisionPlan,
+  FutureRevealConstraint,
 } from '@/types/story-runtime';
 
 import { CHAPTER_TITLE_PROMPT_RULES, normalizeGeneratedChapterTitle } from '@/services/writing/chapterTitle';
@@ -140,8 +142,8 @@ function collectAllowedCandidates(plan: ScenePlan, blockedIds: Set<string>): Can
  */
 export interface SceneDraftOptions {
   targetWordCount?: number;
-  /** 上一稿审核失败原因；存在时按重写任务整章重写 */
-  revisionHints?: string[];
+  /** 上一稿审核失败后的类型化重写计划 */
+  revisionPlan?: RevisionPlan;
   /** 当前重写轮次（1 起）；仅用于 prompt 标注 */
   rewriteRound?: number;
   /**
@@ -149,7 +151,11 @@ export interface SceneDraftOptions {
    * 注入 prompt 约束模型只用已登记角色名，从源头杜绝跨章名字漂移
    * （如「陈砚」被写成「沈砚」→ fact_conflict → 连环重试）。
    */
-  allowedCharacterNames?: string[];
+  knownCharacterNames?: string[];
+  /** 本章可以实际现身、说话和行动的已登记角色 */
+  allowedAppearanceNames?: string[];
+  /** 未来章节才允许说破的事实 */
+  futureReveals?: FutureRevealConstraint[];
 }
 
 export class SceneDraftEngine {
@@ -177,7 +183,8 @@ export class SceneDraftEngine {
       summary: beat.summary,
     }));
     const targetWordCount = options?.targetWordCount;
-    const revisionHints = (options?.revisionHints ?? [])
+    const revisionPlan = options?.revisionPlan;
+    const revisionHints = (revisionPlan?.hints ?? [])
       .map(hint => hint.trim())
       .filter(Boolean)
       .slice(0, 8);
@@ -203,29 +210,56 @@ export class SceneDraftEngine {
     // 角色名白名单：从完整角色库提取（未被 context 压缩筛选），约束模型只用已登记角色名，
     // 从源头杜绝跨章名字漂移（如「陈砚」写成「沈砚」→ fact_conflict → 连环重试）。
     // 仅当白名单有 2 个以上角色时注入（单角色无约束意义）。
-    const allowedCharacterNames = (options?.allowedCharacterNames ?? [])
+    const knownCharacterNames = (options?.knownCharacterNames ?? [])
       .map(name => name.trim())
       .filter(Boolean);
     const characterNameRules =
-      allowedCharacterNames.length >= 2
+      knownCharacterNames.length >= 2
         ? [
-            `- 【角色名白名单】本章只能使用以下已登记角色名：${allowedCharacterNames.join('、')}`,
-            '- 禁止使用白名单外的角色名；如需新角色，用身份称呼（如「狱卒」「书吏」）与白名单内角色互动，不要另起具体姓名',
+            `- 【已登记角色名】需要写出具体姓名时，只能使用：${knownCharacterNames.join('、')}`,
+            '- 如需临时功能角色，用身份称呼（如「狱卒」「书吏」），不要另起具体姓名',
             '- 特别注意：不要把已登记角色的名字写成形近字或近义字（如「陈默」不要写成「沈默」、「陈砚」不要写成「沈砚」）',
           ]
         : [];
+    const allowedAppearanceNames = (options?.allowedAppearanceNames ?? [])
+      .map(name => name.trim())
+      .filter(Boolean);
+    const appearanceRules = allowedAppearanceNames.length > 0
+      ? [
+          `- 【本章出场名单】只有以下已登记角色可以现身、说话或实施行动：${allowedAppearanceNames.join('、')}`,
+          '- 其他已登记角色最多只能作为背景信息被提及，不得来到现场、发声、写信署名或被描述即时反应',
+        ]
+      : [];
+    const futureRevealRules = (options?.futureReveals ?? []).length > 0
+      ? [
+          '- 【未来揭示禁区】下列事实尚未到揭示章节，只能留下模糊线索，禁止明确点名或下结论：',
+          ...(options?.futureReveals ?? []).slice(0, 12).map(item =>
+            `  - 第${item.notBeforeChapter}章前不得揭示：${item.description}`
+          ),
+        ]
+      : [];
+    const modeRules: Record<RevisionPlan['mode'], string[]> = {
+      expand: [
+        '- 【扩写模式】保留原稿已经发生的情节与因果，在场景内部增加有效对话、动作、阻力和感官细节；不得用同义复述注水',
+        `- 扩写后正文必须落入 ${minWordCount ?? '约定下限'}–${maxWordCount ?? '约定上限'} 字`,
+      ],
+      compress: [
+        '- 【压缩模式】允许合并段落、删去重复解释并改写措辞；不得机械截断正文',
+        '- 必须保留全部 CBN/CPNs/CEN、关键证据、因果转折和章末钩子，不得压成剧情梗概',
+        `- 压缩后正文必须落入 ${minWordCount ?? '约定下限'}–${maxWordCount ?? '约定上限'} 字`,
+      ],
+      repair: [
+        '- 【修复模式】只针对问题清单重写相关场景；未涉及的情节、证据与因果关系保持稳定',
+        '- 可以替换或合并有问题的段落，但不得删除已履约的 CBN/CPNs/CEN',
+      ],
+    };
     const revisionRules =
-      revisionHints.length > 0
+      revisionHints.length > 0 && revisionPlan
         ? [
-            '【重写任务】上一稿未通过审核，必须修复下列问题，禁止重复同样错误：',
-            '- 【禁止压缩】原稿已写到的场面、对话、动作、感官细节必须保留，只能在其上叠加新内容以兑现未履约节点；禁止把既有情节压缩成梗概、禁止换更紧凑的措辞把已展开的场景重新缩写',
+            `【重写任务·${revisionPlan.mode}】上一稿未通过审核，必须修复下列问题，禁止重复同样错误：`,
+            ...modeRules[revisionPlan.mode],
             ...revisionHints.map((hint, index) => `${index + 1}. ${hint}`),
             '- 内心观察与公开结论、证物细节必须前后一致；禁区内容不得出现或等价泄露（本章 mustCover 履约所需的指认/证据展示除外）',
-            ...(revisionHints.some(hint => hint.includes('字数严重不足'))
-              ? [
-                  '- 【字数】本次必须在原稿基础上扩写补足字数，禁止以重写为名压缩篇幅；若原稿已接近字数下限，任何压缩都会导致再次不达标',
-                ]
-              : []),
           ]
         : [];
     const candidateIds = candidates.map(item => item.id);
@@ -251,10 +285,14 @@ export class SceneDraftEngine {
         '- 【禁止】把章节拆成互不衔接的几段独立短文；段落之间必须文气连贯',
         '- 【禁止台词重复】同一句台词/同一句话在本章内不得重复出现（包括章末回扣开篇钩子句）；若需强调，必须变换措辞、场景或由不同人物说出',
         '- 【禁止章末复读】章末段落不得把本章或上文已写过的句子原样再写一遍作为收尾；章末应是新的悬念/后果，而非复读',
+        '- 【对话格式】人物说出的完整台词必须使用成对中文引号“”；禁止出现只有收引号、没有开引号的裸台词',
+        '- 【文风去模板】避免连续使用“不是A，而是B”“像是/仿佛”解释情绪；优先用人物动作、选择和具体感官呈现',
         '- paragraphs 数组元素只能是小说正文，禁止写入 sceneId/beatId/candidateEvents 等字段名，禁止写入 ] } : 等 JSON 骨架',
         '- candidateEvents 只填 id 列表（从 allowedCandidateEventIds 中选），禁止重复粘贴 summary',
         ...wordCountRules,
         ...characterNameRules,
+        ...appearanceRules,
+        ...futureRevealRules,
         ...revisionRules,
       ].join('\n'),
       prompt: JSON.stringify({
@@ -277,6 +315,8 @@ export class SceneDraftEngine {
           targetWordCount: targetWordCount ?? null,
           minWordCount,
           maxWordCount,
+          allowedAppearanceNames,
+          futureReveals: options?.futureReveals ?? [],
         },
         titleHints: {
           vibe: '口语网文目录风，信息量够、别公文/案情通报',
@@ -305,10 +345,13 @@ export class SceneDraftEngine {
           ],
         },
         revisionFeedback:
-          revisionHints.length > 0
+          revisionHints.length > 0 && revisionPlan
             ? {
                 rewriteRound: options?.rewriteRound ?? 1,
+                mode: revisionPlan.mode,
                 mustFix: revisionHints,
+                minWords: revisionPlan.minWords ?? minWordCount,
+                maxWords: revisionPlan.maxWords ?? maxWordCount,
               }
             : null,
         requiredOutput: {

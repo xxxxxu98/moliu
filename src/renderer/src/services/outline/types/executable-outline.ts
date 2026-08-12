@@ -1,4 +1,6 @@
 export interface StoryPositioning {
+  /** 纯题材标签，如古言、悬疑、玄幻；不得混入读者或情绪描述 */
+  genreTags?: string[];
   targetReaders: string[];
   coreEmotions: string[];
   sellingPoints: string[];

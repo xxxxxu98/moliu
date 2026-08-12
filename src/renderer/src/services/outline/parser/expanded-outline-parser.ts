@@ -461,7 +461,7 @@ function parseSellingPointSection(section: string): SellingPointPlan[] {
   return blocks.map((block, index) => ({
     name: extractFieldValue(block.body, '名称') ?? `卖点${index + 1}`,
     description: extractFieldValue(block.body, '描述') ?? '',
-    category: (() => {
+    category: ((): SellingPointPlan['category'] => {
       const raw = extractFieldValue(block.body, '分类') ?? '';
       if (raw.includes('设定')) return 'setting';
       if (raw.includes('角色')) return 'character';
@@ -666,6 +666,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
     oneLiner: extractFieldValue(positioningSection, '一句话卖点') ?? '',
     premise: extractFieldValue(positioningSection, 'premise') ?? '',
     positioning: {
+      genreTags: extractMultiValueField(positioningSection, '题材标签'),
       targetReaders: extractMultiValueField(positioningSection, '目标读者'),
       coreEmotions: extractMultiValueField(positioningSection, '核心情绪'),
       sellingPoints: extractMultiValueField(positioningSection, '卖点标签'),

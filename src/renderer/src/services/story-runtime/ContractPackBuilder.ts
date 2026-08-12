@@ -31,6 +31,8 @@ export interface ContractPackBuildInput {
     goal?: string;
     outlineNode?: LegacyOutlineNode;
     timeAnchor?: string;
+    allowedCharacterNames?: string[];
+    futureReveals?: Array<{ description: string; notBeforeChapter: number }>;
   };
   style?: string[];
   forbidden?: string[];
@@ -137,6 +139,13 @@ export class ContractPackBuilder {
         ...(node?.forbiddenZones ?? []),
       ]),
       timeAnchor: chapter.timeAnchor,
+      allowedCharacterNames: unique(chapter.allowedCharacterNames ?? []),
+      futureReveals: (chapter.futureReveals ?? [])
+        .filter(item => item.description.trim() && item.notBeforeChapter > chapter.number)
+        .map(item => ({
+          description: item.description.trim(),
+          notBeforeChapter: item.notBeforeChapter,
+        })),
     };
 
     // mustCover×禁区冲突软化 + 畸形 CBN 再清洗（无 state 时不做已兑现去重）

@@ -31,6 +31,7 @@ export type ErrorKind =
   | 'truncated'    // JSON 截断 / 解析失败
   | 'schema'       // "结构校验失败:" / zod 报错
   | 'review'       // "严格门禁未通过" / "严格连续性门禁未通过"
+  | 'review_unavailable' // 审查服务异常；不得伪装成内容未履约，也不得整章重写
   | 'wordcount'    // 正文字数低于下限或超过上限
   | 'rate_limit'   // HTTP 429
   | 'server'       // HTTP 5xx
@@ -74,6 +75,8 @@ const SCHEMA_RE = /结构校验失败|expected .+ received|invalid_enum_value|in
 
 /** 审核未通过特征 */
 const REVIEW_RE = /严格门禁未通过|严格连续性门禁未通过|门禁未通过|审查未通过|review blocked/iu;
+
+const REVIEW_UNAVAILABLE_RE = /\[review-unavailable\]|语义审查不可用/iu;
 
 /** 字数边界特征（来自 supplement.ts 的 buildWordCountBoundsIssue） */
 const WORDCOUNT_RE = /字数严重不足|字数严重超限|word-count-(?:short|over)|字数不足|字数超限/iu;
@@ -171,6 +174,9 @@ function classifyHttpStatus(status: number): Omit<ClassifiedError, 'message'> | 
 
 /** 按 message 文案分类（项目内抛的普通 Error 走这条） */
 function classifyByMessage(message: string): Omit<ClassifiedError, 'message'> | null {
+  if (REVIEW_UNAVAILABLE_RE.test(message)) {
+    return { kind: 'review_unavailable', retryable: false, transient: false };
+  }
   if (SCHEMA_RE.test(message)) {
     return { kind: 'schema', retryable: false, transient: false };
   }

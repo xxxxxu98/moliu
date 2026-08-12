@@ -24,6 +24,12 @@ export const INTENTIONAL_BEAT_CHARS = 15;
 /** 超过此字数视为「超长段」（门禁 high） */
 export const EXTREME_PARAGRAPH_CHARS = 520;
 
+/** 单段超过该值已经明显影响手机阅读，直接进入高优先级门禁。 */
+export const HARD_MAX_PARAGRAPH_CHARS = 420;
+
+/** 连续一句一段达到该数量，视为模板化碎段。 */
+export const MAX_CONSECUTIVE_SHORT_PARAGRAPHS = 5;
+
 /** 超长段占比超过此值 → 门禁判定不通过 */
 export const LONG_PARAGRAPH_RATIO_THRESHOLD = 0.5;
 
@@ -351,11 +357,12 @@ export function buildTypesettingIssues(prose: string): ParagraphDensityIssue[] {
   const normalized = normalizeWebnovelParagraphs(prose);
   const stats = analyzeParagraphDensity(normalized);
   const issues: ParagraphDensityIssue[] = [];
+  const paragraphs = normalized.split(/\n\s*\n/u).map(part => part.trim()).filter(Boolean);
 
   if (stats.paragraphCount === 0) return issues;
 
   if (
-    stats.extremeParagraphCount > 0 ||
+    stats.maxParagraphChars > HARD_MAX_PARAGRAPH_CHARS ||
     stats.longParagraphRatio >= LONG_PARAGRAPH_RATIO_THRESHOLD
   ) {
     issues.push({
@@ -376,6 +383,37 @@ export function buildTypesettingIssues(prose: string): ParagraphDensityIssue[] {
       severity: 'medium',
       description: `段落偏长：长段 ${stats.longParagraphCount}/${stats.paragraphCount}，超过 ${MAX_SENTENCES_PER_PARAGRAPH} 句的段 ${stats.overSentenceParagraphCount}`,
       suggestion: '仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段',
+    });
+  }
+
+  const quotePairs = [
+    ['“', '”'],
+    ['「', '」'],
+    ['『', '』'],
+  ] as const;
+  const quoteDefect = quotePairs.find(([open, close]) =>
+    (normalized.split(open).length - 1) !== (normalized.split(close).length - 1)
+  );
+  if (quoteDefect) {
+    issues.push({
+      severity: 'high',
+      description: `对话引号未闭合：${quoteDefect[0]} 与 ${quoteDefect[1]} 数量不一致`,
+      suggestion: '逐段补齐对话开引号和收引号；换人说话必须换段',
+      evidence: paragraphs.find(paragraph => paragraph.includes(quoteDefect[0]) || paragraph.includes(quoteDefect[1]))?.slice(0, 80),
+    });
+  }
+
+  let currentShortRun = 0;
+  let longestShortRun = 0;
+  for (const paragraph of paragraphs) {
+    currentShortRun = countChineseAwareLength(paragraph) <= 40 ? currentShortRun + 1 : 0;
+    longestShortRun = Math.max(longestShortRun, currentShortRun);
+  }
+  if (longestShortRun >= MAX_CONSECUTIVE_SHORT_PARAGRAPHS) {
+    issues.push({
+      severity: 'high',
+      description: `连续碎段过多：最长连续 ${longestShortRun} 段不足 40 字`,
+      suggestion: '合并同一动作或同一视角下的短段，保留必要的单句重拍，避免通篇一句一段',
     });
   }
 

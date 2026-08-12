@@ -79,6 +79,8 @@ export interface GeneratedCharacter {
   arcStart?: string;
   arcMid?: string;
   arcEnd?: string;
+  /** 角色首次/最佳揭示或出场时机，需随项目持久化 */
+  revealTiming?: string;
 }
 
 export interface GeneratedRelationship {
@@ -269,6 +271,10 @@ export interface GeneratedOutline {
   synopsis: string;
   // 题材标签
   genres?: string[];
+  // 定位维度独立保存，禁止混入 genres
+  styleKeywords?: string[];
+  targetReaders?: string[];
+  coreEmotions?: string[];
   // 世界观设定
   worldSetting?: GeneratedWorldSetting;
   // 四幕结构

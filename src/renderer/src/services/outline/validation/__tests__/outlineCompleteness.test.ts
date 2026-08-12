@@ -88,6 +88,41 @@ describe('inspectOutlineCompleteness', () => {
     expect(result.blockers.map(blocker => blocker.kind)).toContain('opening-hook');
   });
 
+  it('标题、CBN、CEN 长度和 CPN 数量违反提示词契约时阻断应用', () => {
+    const outline = makeOutline();
+    outline.chapterBlueprints![0] = {
+      ...outline.chapterBlueprints![0],
+      title: '短题',
+      CBN: '太短',
+      CPNs: ['一', '二', '三', '四'],
+      CEN: '这个章尾钩子被故意写得非常非常非常非常非常长以触发硬门禁',
+    };
+
+    const result = inspectOutlineCompleteness(outline);
+
+    expect(result.canApply).toBe(false);
+    expect(result.blockers.map(blocker => blocker.kind)).toEqual(
+      expect.arrayContaining([
+        'invalid-title-length',
+        'invalid-hook-length',
+        'invalid-cpn-count',
+      ]),
+    );
+  });
+
+  it('章号重复或缺号时阻断应用', () => {
+    const outline = makeOutline();
+    outline.chapterBlueprints![1] = {
+      ...outline.chapterBlueprints![1],
+      orderIndex: 1,
+    };
+
+    const result = inspectOutlineCompleteness(outline);
+
+    expect(result.canApply).toBe(false);
+    expect(result.blockers.map(blocker => blocker.kind)).toContain('invalid-chapter-order');
+  });
+
   it('已羁押反派恢复权力行为、已结束期限重启时阻断应用', () => {
     const outline = makeOutline();
     outline.keyCharacters[1] = { ...outline.keyCharacters[1], name: '赵崇文' };

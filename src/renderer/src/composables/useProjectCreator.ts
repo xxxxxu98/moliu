@@ -358,8 +358,15 @@ export function useProjectCreator(): UseProjectCreatorReturn {
    */
   function buildProjectMetadata(outline: GeneratedOutline) {
     return {
+      outlinePositioning: {
+        genres: [...(outline.genres ?? [])],
+        styleKeywords: [...(outline.styleKeywords ?? [])],
+        targetReaders: [...(outline.targetReaders ?? [])],
+        coreEmotions: [...(outline.coreEmotions ?? [])],
+      },
       // 情绪目标 - 格式正确
       emotionGoal: outline.emotionGoal ? {
+        id: `emotion-${Date.now()}`,
         primary: outline.emotionGoal.primary,
         secondary: outline.emotionGoal.secondary,
         arc: outline.emotionGoal.arc as 'rising' | 'falling' | 'wave' | 'mixed' || 'rising',
@@ -436,7 +443,8 @@ export function useProjectCreator(): UseProjectCreatorReturn {
    * 规范化爽点类型
    */
   function normalizeCoolPointPattern(pattern: string): 'face-slapping' | 'show-off' | 'identity-reveal' | 'growth' | 'rescue' | 'treasure' | 'breakthrough' | 'romance' | 'revenge' | 'mystery-reveal' | 'comedy' | 'justice' {
-    const patternMap: Record<string, typeof pattern> = {
+    type NormalizedPattern = ReturnType<typeof normalizeCoolPointPattern>;
+    const patternMap: Record<string, NormalizedPattern> = {
       '打脸': 'face-slapping',
       '打脸爽': 'face-slapping',
       'face-slapping': 'face-slapping',
@@ -467,7 +475,8 @@ export function useProjectCreator(): UseProjectCreatorReturn {
    * 规范化冲突来源
    */
   function normalizeConflictSource(source: string): 'resource' | 'faction' | 'path' | 'faith' | 'factionFight' | 'ideology' {
-    const sourceMap: Record<string, typeof source> = {
+    type NormalizedSource = ReturnType<typeof normalizeConflictSource>;
+    const sourceMap: Record<string, NormalizedSource> = {
       '资源': 'resource',
       '资源/利益': 'resource',
       '利益': 'resource',
@@ -727,8 +736,8 @@ export function useProjectCreator(): UseProjectCreatorReturn {
           || topicDiscoverySeed;
 
         if (hasEnhancement) {
-          // 注意：main.ts 的 project:update 是浅合并，metadata 会被整体覆盖，
-          // 因此这里需要把 newProject 已有的 metadata 合并起来传
+          // renderer 保留完整 metadata 快照；主进程 project:update 也会执行一层合并，
+          // 双层保护避免旧版数据或并发局部更新丢失大纲定位、启动包和卷计划。
           const existingMetadata = (newProject.metadata || {}) as Record<string, unknown>;
           const newMetadata: Record<string, unknown> = {};
           if (metadata.startupPack) newMetadata.startupPack = metadata.startupPack;

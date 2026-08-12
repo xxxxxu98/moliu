@@ -290,6 +290,9 @@ export class ContinuityValidator {
           chapterText: text,
           facts,
           checkDeepSemantic: enableDeepSemantic,
+          chapterNumber: contract.chapterNumber,
+          allowedCharacterNames: contract.allowedCharacterNames,
+          futureReveals: contract.futureReveals,
           stateDigest: {
             entities: Object.values(state.entities).slice(0, 20).map(entity => ({
               id: entity.id,
@@ -349,28 +352,12 @@ export class ContinuityValidator {
           );
         }
       } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') throw error;
+        if (error instanceof Error && error.name === 'AbortError') throw error;
         const detail = error instanceof Error ? error.message : String(error);
-        const isTransientNetwork =
-          /socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|fetch\(\)|Too Many Requests|429|network|TLS|disconnected/iu.test(
-            detail
-          );
-        if (isTransientNetwork) {
-          // 瞬时网络失败：只记一条 warning，避免 N 个 pending 节点把 warning 顶破上限
-          addIssue(
-            'fulfillment',
-            `语义审查暂时不可用（${detail}）；已回退字面履约，pending=${pendingNodes.length}`,
-            pendingNodes.slice(0, 3),
-            undefined,
-            'warning'
-          );
-        } else {
-          for (const node of pendingNodes) {
-            addIssue('fulfillment', `未履约节点：${node}（语义审查失败：${detail}）`);
-          }
-          if (pendingNodes.length === 0 && enableDeepSemantic) {
-            addIssue('fulfillment', `语义审查失败：${detail}`, [], undefined, 'warning');
-          }
-        }
+        // 审查基础设施失败不是正文内容结论。向上抛后由 LongFormWritingEngine
+        // 只重试 validate 阶段，绝不能转换成“未履约”驱动整章重写。
+        throw new Error(`[review-unavailable] 语义审查不可用：${detail}`, { cause: error });
       }
       return;
     }

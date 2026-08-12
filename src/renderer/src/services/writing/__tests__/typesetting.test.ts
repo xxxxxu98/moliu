@@ -111,6 +111,23 @@ describe('analyzeParagraphDensity / buildTypesettingIssues', () => {
   });
 });
 
+describe('buildTypesettingIssues 生产硬门禁', () => {
+  it('单段超过 420 字时直接报告 high', () => {
+    const issues = buildTypesettingIssues(`${'长段内容。'.repeat(90)}\n\n正常收束。`);
+    expect(issues.some(issue => issue.severity === 'high' && issue.description.includes('段落过密'))).toBe(true);
+  });
+
+  it('中文对话引号未闭合时报告 high', () => {
+    const issues = buildTypesettingIssues('“你到底看见了什么？\n\n他没有回答，只把账本合上。');
+    expect(issues.some(issue => issue.severity === 'high' && issue.description.includes('引号未闭合'))).toBe(true);
+  });
+
+  it('连续五个碎段时报告 high', () => {
+    const issues = buildTypesettingIssues(['他抬头。', '门响了。', '风停了。', '灯灭了。', '脚步近了。'].join('\n\n'));
+    expect(issues.some(issue => issue.severity === 'high' && issue.description.includes('连续碎段'))).toBe(true);
+  });
+});
+
 describe('buildWritingRulesWithTypesetting', () => {
   it('始终包含排版硬约束且声明不自动拆段', () => {
     const rules = buildWritingRulesWithTypesetting(null);

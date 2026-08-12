@@ -11,7 +11,7 @@
  *    与 useBatchWriter / 批量 UI 同路径，指数退避重试 + 门禁）
  *
  * 测试环境桩（仅替换环境副作用，业务代码全部真实）：
- * - window.electronAPI：内存实现（模拟主进程 moliu-projects.json 存储）
+ * - window.electronAPI：文件实现（模拟主进程 moliu-projects.json，并执行冷读取）
  * - vue-router：由测试文件 vi.mock（useProjectCreator 依赖 useRouter）
  *
  * 覆盖范围：续写阶段固定 forceStoryRuntime=true → 仅覆盖 LongFormWritingEngine 正式长篇
@@ -21,7 +21,8 @@
 
 import { createPinia, getActivePinia, setActivePinia } from 'pinia';
 
-import { writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 
 import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
@@ -83,33 +84,54 @@ export interface ProjectStorageVerification {
   characterCount: number;
   foreshadowCount: number;
   volumeCount: number;
+  coldReloadVerified: boolean;
+  criticalDataHash: string;
+  completeCharacterProfileCount: number;
+  positioningPersisted: boolean;
 }
 
 function cloneProject(project: Project): Project {
   return JSON.parse(JSON.stringify(project)) as Project;
 }
 
-/** 内存版 electronAPI：模拟主进程项目存储 + 记忆文件存储 */
-function installMemoryElectronAPI(): Map<string, Project> {
-  const store = new Map<string, Project>();
+interface FileProjectStorage {
+  get(id: string): Project | undefined;
+  coldReload(id: string): Project | undefined;
+}
+
+/** 文件版 electronAPI：每次读写都经过 JSON 序列化，支持销毁 renderer 状态后的冷读取。 */
+function installFileElectronAPI(runId: string): FileProjectStorage {
+  const tempDir = join(process.cwd(), 'temp');
+  mkdirSync(tempDir, { recursive: true });
+  const storePath = join(tempDir, `${runId}.project-store.json`);
+  const readProjects = (): Project[] => {
+    if (!existsSync(storePath)) return [];
+    const payload = JSON.parse(readFileSync(storePath, 'utf8')) as { projects?: Project[] };
+    return payload.projects ?? [];
+  };
+  const writeProjects = (projects: Project[]): void => {
+    writeFileSync(storePath, JSON.stringify({ projects }, null, 2), 'utf8');
+  };
+  writeProjects([]);
   // 记忆文件存储：projectId -> (filePath -> content)，支持 save/load/list/delete 往返
   const memoryStore = new Map<string, Map<string, string>>();
   const api = {
-    listProjects: async (): Promise<Project[]> => Array.from(store.values()).map(cloneProject),
+    listProjects: async (): Promise<Project[]> => readProjects().map(cloneProject),
     getProject: async (id: string): Promise<Project | null> => {
-      const project = store.get(id);
+      const project = readProjects().find(item => item.id === id);
       return project ? cloneProject(project) : null;
     },
     createProject: async (data: Project): Promise<Project> => {
       const snapshot = cloneProject(data);
-      store.set(data.id, snapshot);
+      writeProjects([...readProjects().filter(item => item.id !== data.id), snapshot]);
       return cloneProject(snapshot);
     },
     updateProject: async (
       id: string,
       updates: Partial<Project>,
     ): Promise<Project | null> => {
-      const current = store.get(id);
+      const projects = readProjects();
+      const current = projects.find(item => item.id === id);
       if (!current) return null;
       const merged: Project = {
         ...current,
@@ -117,13 +139,20 @@ function installMemoryElectronAPI(): Map<string, Project> {
         metadata: { ...(current.metadata ?? {}), ...(updates.metadata ?? {}) },
       };
       const snapshot = cloneProject(merged);
-      store.set(id, snapshot);
+      writeProjects(projects.map(item => item.id === id ? snapshot : item));
       return cloneProject(snapshot);
     },
     saveProject: async (project: Project): Promise<void> => {
-      store.set(project.id, cloneProject(project));
+      const projects = readProjects();
+      const snapshot = cloneProject(project);
+      writeProjects([
+        ...projects.filter(item => item.id !== project.id),
+        snapshot,
+      ]);
     },
-    deleteProject: async (): Promise<void> => {},
+    deleteProject: async (id: string): Promise<void> => {
+      writeProjects(readProjects().filter(item => item.id !== id));
+    },
     // 记忆文件 IPC（签名对齐 src/preload.ts:40-43 的真实 preload）
     saveMemoryFile: async (data: {
       projectId: string;
@@ -165,7 +194,28 @@ function installMemoryElectronAPI(): Map<string, Project> {
     },
   };
   (window as unknown as { electronAPI: unknown }).electronAPI = api;
-  return store;
+  return {
+    get: id => readProjects().find(item => item.id === id),
+    // 新一轮 readFileSync + JSON.parse，不复用任何对象或 Map，模拟应用冷启动。
+    coldReload: id => readProjects().find(item => item.id === id),
+  };
+}
+
+function buildCriticalProjectHash(project: Project): string {
+  const chapterNodes = project.plotOutline
+    .filter(node => node.type === 'chapter')
+    .sort((a, b) => a.orderIndex - b.orderIndex);
+  const critical = {
+    id: project.id,
+    genre: project.genre,
+    metadata: project.metadata,
+    volumes: project.volumes,
+    characters: project.characters,
+    foreshadows: project.foreshadows,
+    chapters: project.chapters.map(chapter => ({ id: chapter.id, orderIndex: chapter.orderIndex })),
+    chapterNodes,
+  };
+  return createHash('sha256').update(JSON.stringify(critical)).digest('hex');
 }
 
 /** 注入真实 AI 配置到 settingsStore（UnifiedOutlineGenerator.getAIConfig 依赖它） */
@@ -211,7 +261,7 @@ export async function runStoryflowClosedLoop(
   // ---------- 0. 配置与测试环境桩 ----------
   const cfg = resolveContinueWriteRealConfig();
   injectSettingsStore(cfg);
-  const projectStorage = installMemoryElectronAPI();
+  const projectStorage = installFileElectronAPI(`${runIdPrefix}-${Date.now()}`);
 
   // ---------- 1. 开题中心大纲生成（真实 AI fetch，与 TopicDiscoveryBoard prompt 玩法同路径） ----------
   // 传 trace.runId 让大纲阶段的 prompt/响应落盘 temp/ai-traces/，便于人工评估单章蓝图产出质量。
@@ -226,7 +276,9 @@ export async function runStoryflowClosedLoop(
       `storyflow 闭环失败：大纲方向生成为空（generateDirections 未返回任何方向，${dirResult.warnings?.[0] ?? ''}）`,
     );
   }
-  const direction = dirResult.directions[0];
+  const direction = [...dirResult.directions].sort(
+    (a, b) => b.recommendationScore - a.recommendationScore,
+  )[0];
 
   const expandedResult = await generator.expandDirection(prompt, direction, {
     wordCountRange,
@@ -294,6 +346,15 @@ export async function runStoryflowClosedLoop(
     throw new Error('storyflow 闭环失败：建章后项目未写入主进程存储');
   }
   const persistedChapterNodes = persistedProject.plotOutline.filter(node => node.type === 'chapter');
+  const firstHash = buildCriticalProjectHash(persistedProject);
+  const coldReloadedProject = projectStorage.coldReload(projectId);
+  if (!coldReloadedProject) {
+    throw new Error('storyflow 闭环失败：冷启动后无法重新读取项目');
+  }
+  const coldHash = buildCriticalProjectHash(coldReloadedProject);
+  if (firstHash !== coldHash) {
+    throw new Error(`storyflow 闭环失败：冷启动前后关键数据哈希不一致（${firstHash} != ${coldHash}）`);
+  }
   const projectStorageVerification: ProjectStorageVerification = {
     chapterCount: persistedProject.chapters.length,
     plotChapterCount: persistedChapterNodes.length,
@@ -304,6 +365,16 @@ export async function runStoryflowClosedLoop(
     characterCount: persistedProject.characters.length,
     foreshadowCount: persistedProject.foreshadows.length,
     volumeCount: persistedProject.volumes.length,
+    coldReloadVerified: true,
+    criticalDataHash: coldHash,
+    completeCharacterProfileCount: persistedProject.characters.filter(character =>
+      Boolean(
+        character.profile &&
+        Array.isArray(character.profile.personality) &&
+        Array.isArray(character.profile.relationships),
+      ),
+    ).length,
+    positioningPersisted: Boolean(persistedProject.metadata?.outlinePositioning),
   };
 
   // 建章后立即落盘大纲产物：真实 AI 续写阶段耗时长、可能超时，提前留存大纲数据供质量评估

@@ -9,7 +9,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ChapterWritingPipeline } from '../ChapterWritingPipeline';
+import {
+  ChapterWritingPipeline,
+  resolveAllowedChapterCharacters,
+} from '../ChapterWritingPipeline';
 import type { Project, Chapter } from '@/types/project';
 
 // ====== Mock orchestrator（管道的核心委托对象） ======
@@ -123,6 +126,49 @@ function makeChapter(orderIndex = 0): Chapter {
     updatedAt: '',
   };
 }
+
+describe('resolveAllowedChapterCharacters', () => {
+  it('仅允许主角和本章明确提及人物，并阻止后期人物提前登场', () => {
+    const project = makeProject();
+    project.characters = [
+      {
+        id: 'hero',
+        name: '林夜',
+        role: '主角',
+        profile: { personality: [] },
+        createdAt: '',
+        updatedAt: '',
+      },
+      {
+        id: 'guard',
+        name: '周成',
+        role: '配角',
+        profile: { personality: [] },
+        createdAt: '',
+        updatedAt: '',
+      },
+      {
+        id: 'future',
+        name: '贺冲',
+        role: '反派',
+        profile: { personality: [], revealTiming: '第20章首次登场' },
+        createdAt: '',
+        updatedAt: '',
+      },
+    ];
+
+    const result = resolveAllowedChapterCharacters({
+      project,
+      chapterNumber: 2,
+      chapterText: '周成拦住林夜盘问，大纲误提了贺冲。',
+    });
+
+    expect(result.allowedNames).toEqual(['林夜', '周成']);
+    expect(result.futureReveals).toEqual([
+      expect.objectContaining({ notBeforeChapter: 20 }),
+    ]);
+  });
+});
 
 describe('ChapterWritingPipeline', () => {
   let pipeline: ChapterWritingPipeline;

@@ -9,6 +9,7 @@ import {
   registerStoryRuntimeHandlers,
   type StoryRuntimeHandlerRegistration,
 } from './main/ipc/story-runtime-handlers';
+import { mergeProjectUpdate } from './main/project-store-utils';
 
 // Remove default application menu for cleaner UI
 Menu.setApplicationMenu(null);
@@ -112,6 +113,12 @@ interface CoreSellingPoint {
 }
 
 interface ProjectMetadata {
+  outlinePositioning?: {
+    genres: string[];
+    styleKeywords: string[];
+    targetReaders: string[];
+    coreEmotions: string[];
+  };
   emotionGoal?: EmotionGoal;
   coolPointDesign?: CoolPointDesign;
   coreSellingPoints?: CoreSellingPoint[];
@@ -342,11 +349,7 @@ ipcMain.handle('project:update', (_event, id: string, updates: Partial<Project>)
   const projects = projectStore.get('projects') as Project[];
   const index = projects.findIndex(p => p.id === id);
   if (index >= 0) {
-    projects[index] = {
-      ...projects[index],
-      ...updates,
-      updatedAt: new Date().toISOString(),
-    };
+    projects[index] = mergeProjectUpdate(projects[index], updates, new Date().toISOString());
     projectStore.set('projects', projects);
     return projects[index];
   }

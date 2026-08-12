@@ -161,6 +161,7 @@ export function buildCharactersFromOutline(
       arcStart: c.arcStart,
       arcMid: c.arcMid,
       arcEnd: c.arcEnd,
+      revealTiming: c.revealTiming,
     },
     createdAt: new Date(stamp).toISOString(),
     updatedAt: new Date(stamp).toISOString(),
@@ -181,6 +182,12 @@ export function buildLongformPersistPayload(outline: GeneratedOutline) {
     characters: buildCharactersFromOutline(outline),
     targetWordCount: outline.estimatedWordCount,
     metadata: {
+      outlinePositioning: {
+        genres: [...(outline.genres ?? [])],
+        styleKeywords: [...(outline.styleKeywords ?? [])],
+        targetReaders: [...(outline.targetReaders ?? [])],
+        coreEmotions: [...(outline.coreEmotions ?? [])],
+      },
       startupPack,
       storyScale,
       volumePlans,

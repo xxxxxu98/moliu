@@ -79,6 +79,8 @@ export class AIChapterJudge implements ChapterJudge {
         '- timeline：时间顺序不合理',
         '- power：战力/能力不合理',
         '- foreshadow：伏笔错乱（提前爆/错收）',
+        '- 若 futureReveals 中某事实的 notBeforeChapter 大于当前 chapterNumber，正文却明确点名、确认身份或下结论，必须报 foreshadow 且 severity=critical',
+        '- 若 allowedCharacterNames 非空，名单外的已登记角色在现场说话、行动或即时反应，必须报 logic_gap 且 severity=critical；仅被回忆或背景提及不算出场',
         '- 只报真实问题，不挑文笔；critical 留给明显硬伤',
         '- 若无问题，issues 为 []',
         '',
@@ -95,6 +97,9 @@ export class AIChapterJudge implements ChapterJudge {
         chapterText: truncateText(input.chapterText, MAX_CHAPTER_CHARS),
         extractedFacts: factDigest,
         stateDigest: input.stateDigest ?? null,
+        chapterNumber: input.chapterNumber ?? null,
+        allowedCharacterNames: input.allowedCharacterNames ?? [],
+        futureReveals: input.futureReveals ?? [],
       }),
       parse: value => parseSchema(chapterJudgeResultSchema, value, '章节语义审查结果'),
     });

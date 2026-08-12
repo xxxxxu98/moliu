@@ -28,7 +28,7 @@ export class Gate8Typesetting implements Gate {
       autoFixable: issue.severity !== 'high',
     }));
 
-    const hasSerious = issues.some(i => i.severity === 'critical' || i.severity === 'high');
+    const hasSerious = issues.some(i => i.severity === 'high');
 
     return {
       gateId: this.id,

@@ -27,7 +27,8 @@ export type OutlineQualityIssueKind =
   | 'unbalanced-paren'
   | 'opening-hook'
   | 'goldenfinger-late-reveal'
-  | 'over-scoped-mustcover';
+  | 'over-scoped-mustcover'
+  | 'invalid-blueprint-format';
 
 export interface OutlineQualityIssue {
   kind: OutlineQualityIssueKind;
@@ -258,6 +259,29 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
     }
   }
 
+
+  // 8. 逐章蓝图格式契约。提示词要求必须由代码二次验证，不能把模型“尽量遵守”
+  // 当作可应用保证。每章合并为一条 issue，避免修正提示词膨胀。
+  for (const blueprint of blueprints) {
+    const defects: string[] = [];
+    const titleLength = blueprint.title.trim().length;
+    const cbnLength = blueprint.CBN.trim().length;
+    const cenLength = blueprint.CEN.trim().length;
+    if (titleLength < 6 || titleLength > 16) defects.push(`标题 ${titleLength} 字，应为 6～16 字`);
+    if (cbnLength < 8 || cbnLength > 25) defects.push(`CBN ${cbnLength} 字，应为 8～25 字`);
+    if (cenLength < 8 || cenLength > 25) defects.push(`CEN ${cenLength} 字，应为 8～25 字`);
+    if (blueprint.CPNs.length < 1 || blueprint.CPNs.length > 3) {
+      defects.push(`CPN ${blueprint.CPNs.length} 个，应为 1～3 个`);
+    }
+    if (defects.length > 0) {
+      issues.push({
+        kind: 'invalid-blueprint-format',
+        chapterOrder: blueprint.orderIndex,
+        detail: `第${blueprint.orderIndex}章格式不合格：${defects.join('；')}`,
+      });
+    }
+  }
+
   return issues;
 }
 
@@ -306,7 +330,8 @@ export function buildOutlineReviewPrompt(params: {
    【括号硬约束】禁止使用任何括号（中文（）或英文()），补充说明一律用逗号并入句中。若问题清单报"括号跨事件拆分"，说明初稿把一个括号拆到了两条事件里，修正时必须删除括号、把括号内容用逗号并入对应事件正文，确保修正后每条事件的开括号与闭括号各自配平；
 5. 【开篇钩子硬约束】开篇钩子 30 字以内的单场景动作钩子；
 6. 【单章 mustCover 硬约束】单章蓝图「## 单章蓝图」中每章的 mustCover 必须是单章可兑现的具体事件（一个场景、一次对决、一次破局），禁止写整卷或全书级目标（如「完成…逆转」「实现…复兴」「达成…统一」「打败…集团」「通过…考绩」等）。若问题清单报 over-scoped-mustcover，必须把目标拆成本章能完成的一个具体动作；
-7. 若问题清单为（无）或已全部修复，原样输出主方案即可。
+7. 【单章格式硬约束】标题必须 6～16 字；CBN、CEN 必须各 8～25 字；CPN 必须 1～3 个。若问题清单报 invalid-blueprint-format，只修改所列章节并逐项校验长度；
+8. 若问题清单为（无）或已全部修复，原样输出主方案即可。
 直接输出修正后的完整主方案 Markdown，不要任何前后解释文字。`;
 
   const user = `【方向卡】

@@ -10,6 +10,12 @@ export const OUTLINE_COMPLETENESS_POLICY = {
   startupChapterCount: 30,
   minimumKeyCharacters: 10,
   minimumForeshadows: 10,
+  titleMinChars: 6,
+  titleMaxChars: 16,
+  hookMinChars: 8,
+  hookMaxChars: 25,
+  minimumCpns: 1,
+  maximumCpns: 3,
 } as const;
 
 export type OutlineCompletenessBlockerKind =
@@ -18,6 +24,10 @@ export type OutlineCompletenessBlockerKind =
   | 'character-count'
   | 'foreshadow-count'
   | 'placeholder-title'
+  | 'invalid-title-length'
+  | 'invalid-hook-length'
+  | 'invalid-cpn-count'
+  | 'invalid-chapter-order'
   | 'incomplete-blueprint'
   | 'chronology-regression';
 
@@ -30,6 +40,20 @@ export interface OutlineCompletenessBlocker {
 export interface OutlineCompletenessReport {
   canApply: boolean;
   blockers: OutlineCompletenessBlocker[];
+}
+
+const STRUCTURAL_BLOCKER_KINDS = new Set<OutlineCompletenessBlockerKind>([
+  'opening-hook',
+  'chapter-count',
+  'character-count',
+  'foreshadow-count',
+  'placeholder-title',
+  'incomplete-blueprint',
+  'invalid-chapter-order',
+]);
+
+export function hasStructuralOutlineBlockers(report: OutlineCompletenessReport): boolean {
+  return report.blockers.some(blocker => STRUCTURAL_BLOCKER_KINDS.has(blocker.kind));
 }
 
 const PLACEHOLDER_TITLE_RE =
@@ -137,6 +161,7 @@ export function inspectOutlineCompleteness(
 ): OutlineCompletenessReport {
   const blockers: OutlineCompletenessBlocker[] = [];
   const blueprints = outline.chapterBlueprints ?? [];
+  const seenOrders = new Set<number>();
 
   if (!(outline.startupPack30?.openingHook ?? '').trim()) {
     blockers.push({
@@ -174,11 +199,61 @@ export function inspectOutlineCompleteness(
 
   for (const blueprint of blueprints) {
     const chapterNumber = blueprint.orderIndex;
+    if (
+      !Number.isInteger(chapterNumber) ||
+      chapterNumber < 1 ||
+      chapterNumber > OUTLINE_COMPLETENESS_POLICY.startupChapterCount ||
+      seenOrders.has(chapterNumber)
+    ) {
+      blockers.push({
+        kind: 'invalid-chapter-order',
+        chapterNumber,
+        message: `单章蓝图章号 ${chapterNumber} 非 1～${OUTLINE_COMPLETENESS_POLICY.startupChapterCount} 的唯一连续整数`,
+      });
+    }
+    seenOrders.add(chapterNumber);
     if (isPlaceholderTitle(blueprint.title)) {
       blockers.push({
         kind: 'placeholder-title',
         chapterNumber,
         message: `第${chapterNumber}章仍是占位标题，必须生成可辨识的情节标题`,
+      });
+    }
+
+    const titleLength = blueprint.title.trim().length;
+    if (
+      titleLength < OUTLINE_COMPLETENESS_POLICY.titleMinChars ||
+      titleLength > OUTLINE_COMPLETENESS_POLICY.titleMaxChars
+    ) {
+      blockers.push({
+        kind: 'invalid-title-length',
+        chapterNumber,
+        message: `第${chapterNumber}章标题长度 ${titleLength} 字，必须为 ${OUTLINE_COMPLETENESS_POLICY.titleMinChars}～${OUTLINE_COMPLETENESS_POLICY.titleMaxChars} 字`,
+      });
+    }
+
+    for (const [label, hook] of [['CBN', blueprint.CBN], ['CEN', blueprint.CEN]] as const) {
+      const length = hook.trim().length;
+      if (
+        length < OUTLINE_COMPLETENESS_POLICY.hookMinChars ||
+        length > OUTLINE_COMPLETENESS_POLICY.hookMaxChars
+      ) {
+        blockers.push({
+          kind: 'invalid-hook-length',
+          chapterNumber,
+          message: `第${chapterNumber}章 ${label} 长度 ${length} 字，必须为 ${OUTLINE_COMPLETENESS_POLICY.hookMinChars}～${OUTLINE_COMPLETENESS_POLICY.hookMaxChars} 字`,
+        });
+      }
+    }
+
+    if (
+      blueprint.CPNs.length < OUTLINE_COMPLETENESS_POLICY.minimumCpns ||
+      blueprint.CPNs.length > OUTLINE_COMPLETENESS_POLICY.maximumCpns
+    ) {
+      blockers.push({
+        kind: 'invalid-cpn-count',
+        chapterNumber,
+        message: `第${chapterNumber}章 CPN 数量为 ${blueprint.CPNs.length}，必须为 ${OUTLINE_COMPLETENESS_POLICY.minimumCpns}～${OUTLINE_COMPLETENESS_POLICY.maximumCpns} 个`,
       });
     }
 
@@ -192,6 +267,16 @@ export function inspectOutlineCompleteness(
         kind: 'incomplete-blueprint',
         chapterNumber,
         message: `第${chapterNumber}章缺少 CBN、CPNs、CEN 或 mustCover，不能用于续写`,
+      });
+    }
+  }
+
+  for (let chapterNumber = 1; chapterNumber <= OUTLINE_COMPLETENESS_POLICY.startupChapterCount; chapterNumber += 1) {
+    if (!seenOrders.has(chapterNumber)) {
+      blockers.push({
+        kind: 'invalid-chapter-order',
+        chapterNumber,
+        message: `单章蓝图缺少第${chapterNumber}章`,
       });
     }
   }

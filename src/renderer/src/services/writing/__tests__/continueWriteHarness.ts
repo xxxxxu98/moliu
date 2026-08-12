@@ -1080,6 +1080,8 @@ export async function runContinueWriteChapters(options: {
         }
         // aborted（用户停止）：立即停整批
         if (classified.kind === 'aborted') { aborted = true; break; }
+        // LongFormWritingEngine 已经只重试过审查阶段；不可用时不再整章重跑。
+        if (classified.kind === 'review_unavailable') break;
         // 持久错误（schema/审核/字数/auth/4xx）：不退避，立即重试，但上限 persistentMaxRetries
         if (!classified.retryable) {
           persistentAttempts += 1;

@@ -18,6 +18,7 @@ function makeOutline(overrides: Partial<ExecutableOutline> = {}): ExecutableOutl
     oneLiner: '一句话卖点',
     premise: '前提',
     positioning: {
+      genreTags: ['东方玄幻'],
       targetReaders: ['读者A'],
       coreEmotions: ['爽'],
       sellingPoints: ['卖点1'],
@@ -136,6 +137,29 @@ describe('splitStartupBlocksToChapters - Bug 1 CEN 不再全块重复', () => {
     // 块 1 末章（第5章）vs 块 2 末章（第10章）
     expect(result.chapters[4].CEN).toBe('药老现身');
     expect(result.chapters[9].CEN).toBe('内院名额揭晓');
+  });
+});
+
+describe('mapExecutableOutlineToGeneratedOutline - 定位字段不污染题材', () => {
+  it('题材、文风、读者和情绪分别映射', () => {
+    const result = mapExecutableOutlineToGeneratedOutline(makeOutline());
+
+    expect(result.genres).toEqual(['东方玄幻']);
+    expect(result.styleKeywords).toEqual(['玄幻']);
+    expect(result.targetReaders).toEqual(['读者A']);
+    expect(result.coreEmotions).toEqual(['爽']);
+  });
+
+  it('旧版大纲缺少题材标签时，只回收纯题材词', () => {
+    const outline = makeOutline();
+    outline.positioning.genreTags = [];
+    outline.positioning.styleKeywords = ['玄幻', '快节奏'];
+    outline.positioning.targetReaders = ['18-35岁男性'];
+    outline.positioning.coreEmotions = ['热血'];
+
+    const result = mapExecutableOutlineToGeneratedOutline(outline);
+
+    expect(result.genres).toEqual(['玄幻']);
   });
 });
 

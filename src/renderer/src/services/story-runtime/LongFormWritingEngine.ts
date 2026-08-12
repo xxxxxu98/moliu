@@ -5,6 +5,7 @@ import type {
   FactExtractor,
   LongFormWriteInput,
   LongFormWriteResult,
+  RevisionPlan,
   SceneDraft,
   StoryEntity,
   StructuredAI,
@@ -82,7 +83,7 @@ export interface LongFormWritingEngineDependencies {
   commitPort: ChapterCommitPort;
   planner?: SceneBeatPlanner;
   contextBuilder?: ContextPackBuilder;
-  validator?: ContinuityValidator;
+  validator?: Pick<ContinuityValidator, 'validate'>;
 }
 
 function draftsProse(drafts: SceneDraft[]): string {
@@ -132,6 +133,64 @@ export function buildRevisionHintsFromReport(report: ContinuityReport): string[]
     .filter(Boolean);
 }
 
+function extractAllowedAppearanceNames(
+  entities: Record<string, StoryEntity> | undefined,
+  requestedNames: string[] | undefined,
+): string[] {
+  if (!entities || !requestedNames?.length) return [];
+  const requested = new Set(requestedNames.map(name => name.trim()).filter(Boolean));
+  const allowed: string[] = [];
+  for (const entity of Object.values(entities)) {
+    if (entity.kind !== 'character') continue;
+    const names = [entity.name, ...(entity.aliases ?? [])].map(name => name.trim()).filter(Boolean);
+    if (!names.some(name => requested.has(name))) continue;
+    for (const name of names) {
+      if (!allowed.includes(name)) allowed.push(name);
+    }
+  }
+  return allowed;
+}
+
+export function buildRevisionPlanFromReport(
+  report: ContinuityReport,
+  targetWordCount?: number
+): RevisionPlan {
+  const hints = buildRevisionHintsFromReport(report);
+  const hasOverIssue = report.issues.some(issue => issue.id.startsWith('word-count-over'));
+  const hasShortIssue = report.issues.some(issue => issue.id.startsWith('word-count-short'));
+  const bounds = targetWordCount && targetWordCount > 0
+    ? checkWordCountBounds('', targetWordCount)
+    : null;
+
+  return {
+    mode: hasOverIssue ? 'compress' : hasShortIssue ? 'expand' : 'repair',
+    hints,
+    ...(bounds ? { minWords: bounds.minWords, maxWords: bounds.maxWords } : {}),
+  };
+}
+
+function buildSeedRevisionPlan(
+  hints: string[] | undefined,
+  targetWordCount?: number
+): RevisionPlan | undefined {
+  const normalized = (hints ?? []).map(hint => hint.trim()).filter(Boolean).slice(0, 8);
+  if (normalized.length === 0) return undefined;
+  const combined = normalized.join('\n');
+  const bounds = targetWordCount && targetWordCount > 0
+    ? checkWordCountBounds('', targetWordCount)
+    : null;
+  const mode: RevisionPlan['mode'] = /字数严重超限|word-count-over|超过上限/u.test(combined)
+    ? 'compress'
+    : /字数严重不足|word-count-short|低于下限/u.test(combined)
+      ? 'expand'
+      : 'repair';
+  return {
+    mode,
+    hints: normalized,
+    ...(bounds ? { minWords: bounds.minWords, maxWords: bounds.maxWords } : {}),
+  };
+}
+
 function shouldRewrite(report: ContinuityReport): boolean {
   if (report.accepted) return false;
   return report.issues.some(
@@ -143,7 +202,7 @@ export class LongFormWritingEngine {
   private readonly planner: SceneBeatPlanner;
   private readonly contextBuilder: ContextPackBuilder;
   private readonly draftEngine: SceneDraftEngine;
-  private readonly validator: ContinuityValidator;
+  private readonly validator: Pick<ContinuityValidator, 'validate'>;
   private readonly commitService: ChapterCommitService;
 
   constructor(private readonly dependencies: LongFormWritingEngineDependencies) {
@@ -219,7 +278,10 @@ export class LongFormWritingEngine {
     let rewriteRounds = 0;
     // 批量层重试可能传入「上一轮失败教训」种子：初稿即带反馈，避免盲目重跑。
     // 种子只影响首次起草；后续重写循环会用本轮 report 追加新 hints 覆盖。
-    let revisionHints: string[] | undefined = writeInput.seedRevisionHints;
+    let revisionPlan = buildSeedRevisionPlan(
+      writeInput.seedRevisionHints,
+      writeInput.targetWordCount
+    );
     // 连环重写熔断：记录上一轮 blocking issue，用于检测是否「卡在同一问题」。
     // 字数类问题（word-count-short:*）每轮数值变化会干扰判定，比较时排除。
     let prevBlockingIssues: ContinuityIssue[] = [];
@@ -230,19 +292,29 @@ export class LongFormWritingEngine {
         async (attempt: number) => {
           // 截断/空响应重试时注入引导：让模型这次输出完整 JSON 与全章正文，而非原样盲发。
           // attempt=0 是首次调用，不追加；attempt>=1 是瞬态重试，追加截断引导。
-          const draftHints =
+          const draftRevisionPlan =
             attempt > 0
-              ? [
-                  ...(revisionHints ?? []),
-                  '上次输出被截断或返回了空内容。请务必一次性输出完整的 JSON 对象，paragraphs 数组必须包含完整的正文段落，不要中途停笔，不要返回空字符串。',
-                ]
-              : revisionHints;
+              ? {
+                  mode: revisionPlan?.mode ?? 'repair',
+                  hints: [
+                    ...(revisionPlan?.hints ?? []),
+                    '上次输出被截断或返回了空内容。请务必一次性输出完整的 JSON 对象，paragraphs 数组必须包含完整的正文段落，不要中途停笔，不要返回空字符串。',
+                  ],
+                  ...(revisionPlan?.minWords ? { minWords: revisionPlan.minWords } : {}),
+                  ...(revisionPlan?.maxWords ? { maxWords: revisionPlan.maxWords } : {}),
+                } satisfies RevisionPlan
+              : revisionPlan;
           const d = await this.draftEngine.draft(plan, context, {
             targetWordCount: writeInput.targetWordCount,
-            revisionHints: draftHints,
-            rewriteRound: revisionHints ? Math.max(1, rewriteRounds) : undefined,
+            revisionPlan: draftRevisionPlan,
+            rewriteRound: draftRevisionPlan ? Math.max(1, rewriteRounds) : undefined,
             // 完整角色库（未被 context 压缩筛选），注入 prompt 白名单约束名字一致性
-            allowedCharacterNames: extractCharacterNames(input.state.entities),
+            knownCharacterNames: extractCharacterNames(input.state.entities),
+            allowedAppearanceNames: extractAllowedAppearanceNames(
+              input.state.entities,
+              contracts.chapter.allowedCharacterNames,
+            ),
+            futureReveals: contracts.chapter.futureReveals ?? [],
           });
           // 提交前进补字：避免 SQLite accepted 后仍只有 ~900 字
           return this.padDraftsToTarget(d, writeInput);
@@ -250,36 +322,49 @@ export class LongFormWritingEngine {
         { label: 'draft+pad', maxRetries: 1 }
       );
 
-      // Step B：事实提取 + 规范化 + 校验。瞬态错误步骤级重试，**保留 Step A 已生成的 drafts**
-      // （旧痛点：draft 已花钱生成，extract 网络抖一下就让整章作废重新起草）。
-      const validated = await runStepWithTransientRetry(
-        async (_attempt: number) => {
-          const rawFacts = await this.dependencies.factExtractor.extract({
+      // Step B：事实提取单独重试。审查失败时保留 drafts 和 facts，不重复付费提取。
+      const rawFacts = await runStepWithTransientRetry(
+        async (_attempt: number) =>
+          this.dependencies.factExtractor.extract({
             projectId: input.projectId,
             chapterNumber: contracts.chapter.chapterNumber,
             sceneDrafts: drafts,
             state: input.state,
             overlay: input.overlay,
-          });
-          // 提取层输出 ≠ 校验契约输入：必须先 canonicalize 再 validate
-          const canonical = canonicalizeExtractedFacts({
-            facts: rawFacts,
-            state: input.state,
-            drafts,
-            overlay: input.overlay,
-          });
-          const r = await this.validator.validate({
+          }),
+        { label: 'fact-extraction', maxRetries: 2 }
+      );
+      const canonical = canonicalizeExtractedFacts({
+        facts: rawFacts,
+        state: input.state,
+        drafts,
+        overlay: input.overlay,
+      });
+      facts = canonical.facts;
+
+      // Step C：只重试连续性/语义审查。耗尽后标记为 review_unavailable，
+      // 让批量层停止当前章，而不是重新起草整章。
+      try {
+        report = await runStepWithTransientRetry(
+          async (_attempt: number) => this.validator.validate({
             contracts,
             state: canonical.stateForValidation,
             drafts,
             facts: canonical.facts,
-          });
-          return { facts: canonical.facts, report: r };
-        },
-        { label: 'extract+validate', maxRetries: 2 }
-      );
-      facts = validated.facts;
-      report = validated.report;
+          }),
+          { label: 'semantic-review', maxRetries: 2 }
+        );
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') throw error;
+        if (error instanceof Error && error.name === 'AbortError') throw error;
+        const detail = error instanceof Error ? error.message : String(error);
+        throw new Error(
+          detail.includes('[review-unavailable]')
+            ? detail
+            : `[review-unavailable] 语义审查不可用：${detail}`,
+          { cause: error }
+        );
+      }
 
       // 字数未落入目标区间也视为 blocking，驱动重写；用尽轮次后仍拒收提交。
       const target = writeInput.targetWordCount ?? 0;
@@ -352,16 +437,16 @@ export class LongFormWritingEngine {
       }
       prevBlockingIssues = currentBlocking;
 
-      const hints = buildRevisionHintsFromReport(report);
-      if (hints.length === 0) {
+      const nextRevisionPlan = buildRevisionPlanFromReport(report, writeInput.targetWordCount);
+      if (nextRevisionPlan.hints.length === 0) {
         break;
       }
 
       rewriteRounds += 1;
-      revisionHints = hints;
+      revisionPlan = nextRevisionPlan;
       console.info(
-        `[LongFormWritingEngine] 审核未通过，开始第 ${rewriteRounds}/${maxRewriteRounds} 次重写`,
-        hints.slice(0, 3)
+        `[LongFormWritingEngine] 审核未通过，开始第 ${rewriteRounds}/${maxRewriteRounds} 次 ${revisionPlan.mode} 重写`,
+        revisionPlan.hints.slice(0, 3)
       );
     }
 
@@ -612,7 +697,7 @@ export class LongFormWritingEngine {
         condensedProse = condensedParagraphs.join('\n\n');
       }
     } catch (error) {
-      console.warn('[LongFormWritingEngine] 超长压缩失败，将硬裁到上限:', error);
+      console.warn('[LongFormWritingEngine] 超长压缩失败，保留完整原稿并交由字数门禁:', error);
     }
 
     const chosen = chooseProseAfterCondense({

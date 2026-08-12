@@ -28,9 +28,15 @@ import { buildExpandDirectionPrompt } from '../prompts/system/expand-direction-p
 import { parseDirections } from '../parser/direction-parser';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
 import { reviewAndFixOutline } from './outline-reviewer';
-import { inspectOutlineCompleteness } from '../validation/outlineCompleteness';
+import {
+  hasStructuralOutlineBlockers,
+  inspectOutlineCompleteness,
+} from '../validation/outlineCompleteness';
 import { completeIncompleteOutline } from './outline-completer';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
+
+/** 大纲主方案是长输出，但单次请求不能无限悬挂。 */
+export const OUTLINE_REQUEST_TIMEOUT_MS = 480_000;
 
 function matchesDefaultModelSelection(
   provider: {
@@ -109,6 +115,8 @@ export interface GenerateOptions {
   topP?: number;
   wordCountRange?: string;
   maxRetries?: number;
+  /** 单次大纲 AI 请求超时；默认 8 分钟。 */
+  requestTimeoutMs?: number;
   /** 一次生成的大纲数量，默认 3 */
   count?: number;
   /** 可选 AbortSignal：用于在发起新请求 / 重置时取消旧的在飞请求，避免竞势与多余计费。 */
@@ -403,7 +411,7 @@ export class UnifiedOutlineGenerator {
         let blockers: string[] = [];
         if (outline) {
           let completeness = inspectOutlineCompleteness(outline);
-          if (!completeness.canApply) {
+          if (hasStructuralOutlineBlockers(completeness)) {
             onProgress?.('主方案响应不完整，正在分段补全章节、角色与伏笔...');
             try {
               const completed = await completeIncompleteOutline({
@@ -424,13 +432,13 @@ export class UnifiedOutlineGenerator {
               warnings.push(`分段补全失败：${message.slice(0, 160)}`);
             }
           }
-          severelyTruncated = !completeness.canApply;
+          severelyTruncated = hasStructuralOutlineBlockers(completeness);
           blockers = completeness.blockers.map(blocker => blocker.message);
-          warnings.push(...blockers);
         }
 
         // 方案 A：初稿内容质检不通过时，发起一次"审查+修正"二次请求（低温稳定重出）。
-        // 修正稿解析失败 / 质量未提升 / 请求异常时回退初稿，绝不阻塞主流程。
+        // 修正稿解析失败 / 质量未提升 / 请求异常时回退初稿；
+        // 回退后仍会过最终硬门禁，不合格则禁止应用。
         let appliedFixRawText: string | undefined;
         if (outline && !severelyTruncated) {
           onProgress?.('正在审查并修正大纲内容...');
@@ -454,6 +462,10 @@ export class UnifiedOutlineGenerator {
           if (fix.warnings.length > 0) {
             warnings.push(...fix.warnings);
           }
+          // 修正请求失败或回退初稿时也必须重新执行最终硬门禁，格式不合格不得应用。
+          const finalCompleteness = inspectOutlineCompleteness(outline);
+          severelyTruncated = !finalCompleteness.canApply;
+          blockers = finalCompleteness.blockers.map(blocker => blocker.message);
         }
         for (const blocker of blockers) {
           if (!warnings.includes(blocker)) warnings.push(blocker);
@@ -630,13 +642,29 @@ export class UnifiedOutlineGenerator {
     const provider = config.provider;
     const resolvedBaseUrl = config.baseUrl.replace(/\/$/, '');
     const signal = options.signal;
+    const requestTimeoutMs = Math.max(
+      1,
+      options.requestTimeoutMs ?? this.defaultOptions.requestTimeoutMs ?? OUTLINE_REQUEST_TIMEOUT_MS,
+    );
+    const timeoutController = new AbortController();
+    const timeoutTimer = setTimeout(() => timeoutController.abort(), requestTimeoutMs);
+    const requestSignal = signal
+      ? AbortSignal.any([signal, timeoutController.signal])
+      : timeoutController.signal;
     const tracer = this.getTracer(options);
     const startedAt = tracer ? Date.now() : 0;
     const systemText = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
     const userText = messages.filter(m => m.role === 'user').map(m => m.content).join('\n\n');
 
     try {
-      const result = await this.doRequestChatCompletion(messages, options, config, provider, resolvedBaseUrl, signal);
+      const result = await this.doRequestChatCompletion(
+        messages,
+        options,
+        config,
+        provider,
+        resolvedBaseUrl,
+        requestSignal,
+      );
       if (tracer) {
         const content = result?.choices?.[0]?.message?.content ?? '';
         tracer.record({
@@ -649,16 +677,21 @@ export class UnifiedOutlineGenerator {
       }
       return result;
     } catch (error) {
+      const normalizedError = timeoutController.signal.aborted && !signal?.aborted
+        ? new Error(`[大纲请求超时] 单次 AI 请求超过 ${requestTimeoutMs}ms`)
+        : error;
       if (tracer) {
         tracer.record({
           purpose,
           system: systemText,
           prompt: userText,
-          error: error instanceof Error ? error.message : String(error),
+          error: normalizedError instanceof Error ? normalizedError.message : String(normalizedError),
           ms: Date.now() - startedAt,
         });
       }
-      throw error;
+      throw normalizedError;
+    } finally {
+      clearTimeout(timeoutTimer);
     }
   }
 

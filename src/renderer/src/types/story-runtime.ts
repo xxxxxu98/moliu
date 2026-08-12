@@ -229,6 +229,15 @@ export interface ChapterContract {
   mustCover: string[];
   forbidden: string[];
   timeAnchor?: string;
+  /** 本章允许实际出场/说话的已登记角色名；空数组表示沿用旧逻辑不限制 */
+  allowedCharacterNames?: string[];
+  /** 尚未到揭示章节的事实，正文只能铺垫，不得明确说破 */
+  futureReveals?: FutureRevealConstraint[];
+}
+
+export interface FutureRevealConstraint {
+  description: string;
+  notBeforeChapter: number;
 }
 
 export interface ReviewContract {
@@ -385,6 +394,9 @@ export interface ChapterJudgeInput {
   chapterText: string;
   facts?: ExtractedFacts;
   stateDigest?: ChapterJudgeStateDigest;
+  chapterNumber?: number;
+  allowedCharacterNames?: string[];
+  futureReveals?: FutureRevealConstraint[];
   /** 是否审查事实/逻辑/OOC/时间线/战力/伏笔（默认 true） */
   checkDeepSemantic?: boolean;
 }
@@ -477,6 +489,18 @@ export interface ChapterCommitReceipt {
     id: number;
     projectionType: 'summary' | 'memory';
   }>;
+}
+
+export type RevisionMode = 'expand' | 'compress' | 'repair';
+
+/**
+ * 正文重写计划。模式必须显式，避免“字数超限”与“禁止压缩”同时进入提示词。
+ */
+export interface RevisionPlan {
+  mode: RevisionMode;
+  hints: string[];
+  minWords?: number;
+  maxWords?: number;
 }
 
 export interface StoryRuntimeIPC {

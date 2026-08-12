@@ -180,6 +180,15 @@ describe('classifyError', () => {
   });
 
   describe('review（审核未通过）', () => {
+    it('审查服务不可用与“内容未通过”分类隔离', () => {
+      const result = classifyError(
+        new Error('[review-unavailable] 语义审查不可用：fetch failed'),
+      );
+      expect(result.kind).toBe('review_unavailable');
+      expect(result.retryable).toBe(false);
+      expect(result.transient).toBe(false);
+    });
+
     it('严格门禁未通过 归为 review', () => {
       const result = classifyError(new Error('严格门禁未通过，章节未提交'));
       expect(result.kind).toBe('review');

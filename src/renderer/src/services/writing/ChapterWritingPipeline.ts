@@ -292,6 +292,45 @@ export interface ChapterTitleUpdate {
   title: string;
 }
 
+function parseNotBeforeChapter(revealTiming: string | undefined): number | null {
+  if (!revealTiming) return null;
+  const exact = revealTiming.match(/第\s*(\d+)\s*章/u);
+  if (!exact) return null;
+  const value = Number(exact[1]);
+  return Number.isInteger(value) && value > 0 ? value : null;
+}
+
+/**
+ * 本章角色白名单只允许“主角 + 本章合同明确提及的人物”。不能把全量角色表直接
+ * 当白名单，否则后期人物可以在模型自由发挥时提前登场。
+ */
+export function resolveAllowedChapterCharacters(input: {
+  project: Project;
+  chapterNumber: number;
+  chapterText: string;
+}): { allowedNames: string[]; futureReveals: Array<{ description: string; notBeforeChapter: number }> } {
+  const allowedNames = new Set<string>();
+  const futureReveals: Array<{ description: string; notBeforeChapter: number }> = [];
+
+  for (const character of input.project.characters ?? []) {
+    const notBeforeChapter = parseNotBeforeChapter(character.profile?.revealTiming);
+    if (notBeforeChapter && notBeforeChapter > input.chapterNumber) {
+      futureReveals.push({
+        description: `角色“${character.name}”不得登场或被揭示（计划：${character.profile.revealTiming}）`,
+        notBeforeChapter,
+      });
+      continue;
+    }
+
+    const isProtagonist = /主角|protagonist|hero/iu.test(character.role ?? '');
+    if (isProtagonist || input.chapterText.includes(character.name)) {
+      allowedNames.add(character.name);
+    }
+  }
+
+  return { allowedNames: [...allowedNames], futureReveals };
+}
+
 // ============================================================
 // 单章写作管道
 // ============================================================
@@ -686,6 +725,21 @@ export class ChapterWritingPipeline {
       // 但结构化节点已通过 outlineNode 的独立字段传递，outline 里那份会让 goal/description
       // 变成一大段结构化节点，污染 scene-draft 合同语义。
       const cleanOutline = stripStructuredNodeBlock(input.chapter.outline || '');
+      const chapterContractText = [
+        cleanOutline,
+        input.chapter.plotSummary,
+        taskBook?.CBN,
+        ...(taskBook?.CPNs ?? []),
+        taskBook?.CEN,
+        ...(taskBook?.mustCover ?? []),
+      ]
+        .filter(Boolean)
+        .join('\n');
+      const characterConstraints = resolveAllowedChapterCharacters({
+        project: input.project,
+        chapterNumber,
+        chapterText: chapterContractText,
+      });
       const outlineNode = {
         id: input.chapter.id,
         title: input.chapter.title,
@@ -715,6 +769,18 @@ export class ChapterWritingPipeline {
           title: input.chapter.title,
           goal: cleanOutline || input.chapter.plotSummary || input.chapter.title,
           outlineNode,
+          allowedCharacterNames: characterConstraints.allowedNames,
+          futureReveals: [
+            ...characterConstraints.futureReveals,
+            ...(input.project.foreshadows ?? [])
+              .map(foreshadow => ({
+                // payoffChapter 是“回收时点”，不能拿来禁止伏笔在前文埋设；
+                // 只有 setupChapter 才表示该线索在此之前不应出现。
+                description: `伏笔尚未到埋设时点：${foreshadow.hint}`,
+                notBeforeChapter: foreshadow.setupChapter ?? 0,
+              }))
+              .filter(item => item.notBeforeChapter > chapterNumber),
+          ],
         },
         style: [
           input.writingStyle,

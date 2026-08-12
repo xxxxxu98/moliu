@@ -22,6 +22,28 @@ import {
   isTemplateHookCen,
 } from '@/services/story-runtime/chapterBlueprintNormalize';
 
+const LEGACY_PURE_GENRE_TAGS = new Set([
+  '玄幻', '东方玄幻', '奇幻', '仙侠', '武侠', '都市', '都市异能',
+  '古言', '古代言情', '现言', '现代言情', '悬疑', '刑侦', '推理',
+  '科幻', '末世', '历史', '军事', '游戏', '电竞', '校园', '职场',
+  '现实', '种田', '宫斗', '宅斗', '穿越', '重生', '系统', '无限流',
+]);
+
+function resolveGenreTags(outline: ExecutableOutline): string[] {
+  const explicit = (outline.positioning.genreTags ?? [])
+    .map(tag => tag.trim())
+    .filter(Boolean);
+  if (explicit.length > 0) return Array.from(new Set(explicit)).slice(0, 3);
+
+  // 兼容旧版大纲：只从文风字段中回收“精确命中”的题材词，
+  // 不再把读者、情绪或“快节奏”之类文风混入 genre。
+  return Array.from(new Set(
+    outline.positioning.styleKeywords
+      .map(tag => tag.trim())
+      .filter(tag => LEGACY_PURE_GENRE_TAGS.has(tag)),
+  )).slice(0, 3);
+}
+
 function parseWordCountRange(rangeText?: string): number | null {
   if (!rangeText) return null;
 
@@ -224,6 +246,7 @@ function toCharacters(outline: ExecutableOutline): GeneratedCharacter[] {
       arcStart: character.arcStart || undefined,
       arcMid: character.arcMid || undefined,
       arcEnd: character.arcEnd || undefined,
+      revealTiming: character.revealTiming || undefined,
     };
   });
 
@@ -881,11 +904,10 @@ export function mapExecutableOutlineToGeneratedOutline(
     id: `executable-${Date.now()}`,
     title: outline.title,
     synopsis: toSynopsis(outline),
-    genres: Array.from(new Set([
-      ...outline.positioning.styleKeywords,
-      ...outline.positioning.targetReaders,
-      ...outline.positioning.coreEmotions,
-    ].filter(Boolean))),
+    genres: resolveGenreTags(outline),
+    styleKeywords: [...outline.positioning.styleKeywords],
+    targetReaders: [...outline.positioning.targetReaders],
+    coreEmotions: [...outline.positioning.coreEmotions],
     worldSetting: toWorldSetting(outline),
     structure: {
       act1: outline.acts?.find((act) => act.name === 'act1')

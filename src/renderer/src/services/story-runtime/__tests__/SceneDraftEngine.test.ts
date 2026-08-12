@@ -293,7 +293,41 @@ describe('SceneDraftEngine.draft', () => {
       targetWordCount: 3000,
       minWordCount: 2400, // MIN_WORD_THRESHOLD=0.80 × 3000
       maxWordCount: 3540,
+      allowedAppearanceNames: [],
+      futureReveals: [],
     });
+  });
+
+  it('超长重写使用 compress 模式，不再注入禁止压缩', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['压缩后的正文。'],
+      candidateEvents: allowed,
+    }));
+    const engine = new SceneDraftEngine({ generate });
+    const plan: ScenePlan = {
+      chapterNumber: 1,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+
+    await engine.draft(
+      plan,
+      { blocks: [], totalTokenEstimate: 0, omitted: [] },
+      {
+        targetWordCount: 3000,
+        revisionPlan: {
+          mode: 'compress',
+          hints: ['字数严重超限：当前约 5000 字'],
+          minWords: 2400,
+          maxWords: 3540,
+        },
+      },
+    );
+
+    const request = generate.mock.calls[0][0] as { system: string; prompt: string };
+    expect(request.system).toContain('【压缩模式】');
+    expect(request.system).not.toContain('【禁止压缩】');
+    expect(JSON.parse(request.prompt).revisionFeedback.mode).toBe('compress');
   });
 
   it('candidateEvents 支持仅 id 列表', () => {

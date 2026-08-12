@@ -1206,6 +1206,13 @@ export function useBatchWriter(): UseBatchWriterReturn {
               break;
             }
 
+            // 审查基础设施已在章节引擎内部完成步骤级重试。再次整章重跑只会
+            // 重复生成正文和事实提取，因此直接停止当前批次，等待用户重试审查服务。
+            if (classified.kind === 'review_unavailable') {
+              error.value = `第${currentIndex + 1}章语义审查暂时不可用，已保留本轮生成结果，未重复起草`;
+              break;
+            }
+
             // 持久错误（schema/审核/字数/auth/4xx）：给模型 persistentMaxRetries 次换写法机会，不退避（非网络问题）。
             // 耗尽则跳出重试循环 → 进下面的"结束整批"逻辑。
             if (!classified.retryable) {

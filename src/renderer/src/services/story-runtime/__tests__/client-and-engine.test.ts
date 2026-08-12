@@ -656,6 +656,65 @@ describe('LongFormWritingEngine', () => {
     // 持久错误只调用 1 次，不重试
     expect(extractCalls).toBe(1);
   });
+
+  it('语义审查瞬态失败时只重试审查，不重复起草或事实提取', async () => {
+    vi.useFakeTimers();
+    try {
+      let extractCalls = 0;
+      const facts: FactExtractor = {
+        extract: async input => {
+          extractCalls += 1;
+          return {
+            events: [],
+            deltas: [],
+            evidence: input.sceneDrafts[0].paragraphs,
+          };
+        },
+      };
+      let reviewCalls = 0;
+      const validate = vi.fn(async () => {
+        reviewCalls += 1;
+        if (reviewCalls < 3) throw new TypeError('fetch failed');
+        return {
+          accepted: true,
+          issues: [],
+          checkedDomains: ['fulfillment' as const],
+        };
+      });
+      const ai = new FakeAI();
+      const engine = new LongFormWritingEngine({
+        ai,
+        factExtractor: facts,
+        validator: { validate },
+        commitPort: {
+          commitChapter: async () => ({
+            commitId: 'review-retry',
+            revision: 1,
+            acceptedAt: '2026-01-02T00:00:00.000Z',
+          }),
+        },
+      });
+
+      const pending = engine.write({
+        projectId: 'project-1',
+        contracts: makeContracts(),
+        state: makeState(),
+        recentScenes: [],
+        retrievedScenes: [],
+        styleGuidance: ['克制'],
+        maxContextTokens: 10_000,
+      });
+      await vi.runAllTimersAsync();
+      const result = await pending;
+
+      expect(reviewCalls).toBe(3);
+      expect(extractCalls).toBe(1);
+      expect(ai.callCount).toBe(1);
+      expect(result.commit.status).toBe('accepted');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 /** 补充轮返回超大垃圾文本（JSON 骨架），用于验证 Bug 7 输出护栏 */
@@ -707,7 +766,10 @@ class BloatSupplementAI implements StructuredAI {
       chapterTitle: '测试章',
       paragraphs: short
         ? ['这是第一版草稿。']
-        : Array.from({ length: 120 }, () => '这是完整版正文段落，内容充实，情节推进正常。'),
+        : Array.from(
+            { length: 24 },
+            () => '这是完整版正文段落，内容充实，情节推进正常。'.repeat(5),
+          ),
       candidateEvents: [],
     };
   }

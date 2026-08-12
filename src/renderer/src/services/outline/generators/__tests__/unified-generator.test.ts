@@ -179,4 +179,32 @@ describe('UnifiedOutlineGenerator 请求参数', () => {
     expect(body.generationConfig.temperature).toBe(0.3);
     expect(body.generationConfig.topP).toBe(0.7);
   });
+
+  it('长请求悬挂时按单次超时中断，不无限占用生成链路', async () => {
+    vi.useFakeTimers();
+    try {
+      injectSettings({ provider: 'openai' });
+      vi.stubGlobal('fetch', vi.fn((_url: string, init?: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          }, { once: true });
+        }),
+      ));
+      const generator = new UnifiedOutlineGenerator({
+        maxRetries: 1,
+        requestTimeoutMs: 25,
+      });
+
+      const pending = generator.generateDirections('创意种子', {
+        maxRetries: 1,
+        requestTimeoutMs: 25,
+      });
+      const assertion = expect(pending).rejects.toThrow('大纲请求超时');
+      await vi.advanceTimersByTimeAsync(25);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
