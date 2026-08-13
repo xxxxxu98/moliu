@@ -11,6 +11,7 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.vue .",
+    "pretest": "npm rebuild better-sqlite3 || exit 0",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:continue-write": "vitest run src/renderer/src/services/writing/__tests__/continueWrite.harness.test.ts src/renderer/src/services/story-runtime/__tests__/chapterBlueprintNormalize.test.ts src/renderer/src/composables/__tests__/useChapterWriter.test.ts",

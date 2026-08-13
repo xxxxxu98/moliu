@@ -6,24 +6,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ChapterCommitManagerV2, type CommitInput } from '../ChapterCommitManagerV2';
 import type { ReviewerOutput, ExtractionResult } from '@/types/writing-v2';
 
-// Mock dependencies
+// extract 需要在各用例间切换成败，故用 hoisted 持有可变实现
+const mocks = vi.hoisted(() => ({ extract: vi.fn() }));
+
 vi.mock('@/services/ai/agents/enhanced-data-agent', () => ({
-  useEnhancedDataAgent: vi.fn().mockReturnValue({
-    extract: vi.fn().mockResolvedValue({
-      success: true,
-      extraction: {
-        success: true,
-        events: [],
-        stateChanges: [],
-        entitiesAppeared: [],
-        scenes: [],
-        summaryText: '测试内容摘要',
-        coolPoints: [],
-      },
-      disambiguation: { pending: [], resolved: [] },
-      error: null,
-    }),
-  }),
+  useEnhancedDataAgent: () => ({ extract: mocks.extract }),
 }));
 
 vi.mock('@/services/writing/commit/ProjectionWriters', () => ({
@@ -72,7 +59,25 @@ describe('ChapterCommitManagerV2', () => {
     forbiddenZones: ['提前剧透宝物能力'],
   };
 
+  // 履约判定拿合同节点比对提取摘要，摘要须覆盖节点才谈得上 accepted
+  const coveringSummary =
+    '主角进入遗迹，发现机关，触发陷阱，主角获得一件宝物，成功获得宝物；宝物外观华丽，使用方法简单。';
+
   beforeEach(() => {
+    mocks.extract.mockReset();
+    mocks.extract.mockResolvedValue({
+      success: true,
+      extraction: {
+        acceptedEvents: [],
+        stateDeltas: [],
+        entityDeltas: [],
+        entitiesAppeared: [],
+        scenes: [],
+        summaryText: coveringSummary,
+      },
+      disambiguation: { pending: [], resolved: [] },
+      error: null,
+    });
     manager = new ChapterCommitManagerV2();
   });
 
@@ -202,15 +207,7 @@ describe('ChapterCommitManagerV2', () => {
 
   describe('错误处理', () => {
     it('应处理提取失败', async () => {
-      // 重置 mock 使其返回失败
-      vi.doMock('@/services/ai/agents/enhanced-data-agent', () => ({
-        useEnhancedDataAgent: vi.fn().mockReturnValue({
-          extract: vi.fn().mockResolvedValue({
-            success: false,
-            error: '提取失败',
-          }),
-        }),
-      }));
+      mocks.extract.mockResolvedValue({ success: false, error: '提取失败' });
 
       const input: CommitInput = {
         chapterNumber: 1,
@@ -225,11 +222,7 @@ describe('ChapterCommitManagerV2', () => {
     });
 
     it('应处理异常', async () => {
-      vi.doMock('@/services/ai/agents/enhanced-data-agent', () => ({
-        useEnhancedDataAgent: vi.fn().mockReturnValue({
-          extract: vi.fn().mockRejectedValue(new Error('系统错误')),
-        }),
-      }));
+      mocks.extract.mockRejectedValue(new Error('系统错误'));
 
       const input: CommitInput = {
         chapterNumber: 1,

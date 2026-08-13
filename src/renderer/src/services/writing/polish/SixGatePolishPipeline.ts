@@ -502,12 +502,12 @@ export class SixGatePolishPipeline {
     }
 
     // 3. 删除感慨式结尾
-    const emotionPatterns = [
-      /岁月如流水般悄然流逝.*?\n*/g,
-      /时光荏苒.*?\n*/g,
-      /光阴似箭.*?\n*/g,
-      /人生若只如初见.*?\n*/g,
-    ];
+    // 只锚定成语开头再吃到句末：Gate D 会在本门禁之前改写句中用词，
+    // 若按整句字面匹配会失配并留下「岁月如流水般悄然.」这类残句，比不处理更糟。
+    const emotionOpeners = ['岁月如流水', '时光荏苒', '光阴似箭', '人生若只如初见'];
+    const emotionPatterns = emotionOpeners.map(
+      opener => new RegExp(`${opener}[^。！？\\n]*[。！？.…]*\\n*`, 'g')
+    );
 
     for (const pattern of emotionPatterns) {
       if (pattern.test(result)) {

@@ -49,7 +49,7 @@ export interface CommitResult {
   error?: string;
 }
 
-class ChapterCommitManagerV2 {
+export class ChapterCommitManagerV2 {
   private projectStore = useProjectStore();
   private dataAgent: EnhancedDataAgent;
   private projectionOrchestrator: ProjectionOrchestrator;

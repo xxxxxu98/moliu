@@ -35,13 +35,19 @@ function createMockReviewResult(overrides: Partial<ReviewResult> = {}): ReviewRe
   };
 }
 
-function createMockReviewIssue(type: string, severity: 'critical' | 'warning' | 'info' = 'warning'): ReviewIssue {
+function createMockReviewIssue(
+  type: string,
+  severity: 'critical' | 'warning' | 'info' = 'warning',
+  evidence?: string
+): ReviewIssue {
   return {
     type,
     severity,
     location: '全文',
     description: `测试问题：${type}`,
     suggestion: `建议修复：${type}`,
+    // extractMustFix 只在带证据时产出「必须覆盖/必须衔接」，无证据的问题进不了 mustFix
+    ...(evidence ? { evidence } : {}),
   };
 }
 
@@ -348,9 +354,9 @@ describe('RevisionHintBuilder 集成测试', () => {
         },
       },
       blockingIssues: [
-        createMockReviewIssue('continuity_anchor', 'critical'),
+        createMockReviewIssue('continuity_anchor', 'critical', '上章结尾停在牢门被推开'),
         createMockReviewIssue('weak_chapter_end', 'high'),
-        createMockReviewIssue('missing_must_cover', 'critical'),
+        createMockReviewIssue('missing_must_cover', 'critical', '当堂核对账册'),
       ],
       warnings: [
         createMockReviewIssue('low_coolpoint_density', 'warning'),
@@ -378,7 +384,10 @@ describe('RevisionHintBuilder 集成测试', () => {
     // 生成提示词
     const supplement = builder.buildPromptSupplement(hints);
     expect(supplement.length).toBeGreaterThan(100);
-    expect(supplement).toContain('第 5 章');
+    // buildPromptSupplement 只接收 hints，产出里不含章号（build 的 chapterNumber 目前未被使用）
+    expect(supplement).toContain('上次审查未通过');
+    expect(supplement).toContain('必须覆盖: 当堂核对账册');
+    expect(supplement).toContain('必须衔接: 上章结尾停在牢门被推开');
   });
 
   it('应该正确处理纯 AI 味问题', () => {

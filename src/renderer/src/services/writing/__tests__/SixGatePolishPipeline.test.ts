@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { SixGatePolishPipeline } from '../SixGatePolishPipeline';
+import { SixGatePolishPipeline } from '../polish/SixGatePolishPipeline';
 
 describe('SixGatePolishPipeline', () => {
   const pipeline = new SixGatePolishPipeline();

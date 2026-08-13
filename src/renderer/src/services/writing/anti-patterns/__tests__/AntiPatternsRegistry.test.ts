@@ -8,9 +8,14 @@ import { AntiPatternsRegistryService } from '../AntiPatternsRegistry';
 describe('AntiPatternsRegistryService', () => {
   let registry: AntiPatternsRegistryService;
 
+  // 注册表按 projectId 持久化到 localStorage，用 Date.now() 命名会让同毫秒内的
+  // 用例共用存储键而互相串数据，改用自增序号并在每例前清空存储。
+  let projectSeq = 0;
+
   beforeEach(() => {
+    localStorage.clear();
     registry = new AntiPatternsRegistryService();
-    registry.initialize('test-project-' + Date.now());
+    registry.initialize(`test-project-${++projectSeq}`);
   });
 
   describe('基础功能', () => {
@@ -123,13 +128,14 @@ describe('AntiPatternsRegistryService', () => {
     });
 
     it('应导入注册表', () => {
-      const original = registry.export();
       registry.addFromReview('原始模式', 1, 'high');
-      
-      registry.import(original);
+      const original = registry.export();
+
       registry.clear();
+      expect(registry.getPatterns()).toHaveLength(0);
+
       const result = registry.import(original);
-      
+
       expect(result).toBe(true);
       const patterns = registry.getPatterns();
       expect(patterns.some(p => p.pattern === '原始模式')).toBe(true);
@@ -152,7 +158,8 @@ describe('AntiPatternsRegistryService', () => {
       
       expect(stats.total).toBe(4);
       expect(stats.bySeverity.high).toBe(2);
-      expect(stats.bySeverity.medium).toBe(1);
+      // addManual 固定按 medium 记，故中等严重度为「中频」+「手动模式」两条
+      expect(stats.bySeverity.medium).toBe(2);
       expect(stats.bySource.review).toBe(3);
       expect(stats.bySource.manual).toBe(1);
     });
