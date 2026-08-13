@@ -1,0 +1,3882 @@
+{
+  "projects": [
+    {
+      "id": "proj-1786550963954",
+      "name": "大魏第一合规官",
+      "description": "现代金牌审计穿越成替罪羊官员，专钻制度漏洞，用“合法”手段把贪官整得倾家荡产。 主角本是顶级合规审计，穿越成古代背锅侠。面对必死局面，他熟读《大明律》与各朝旧例，利用现代法律逻辑和取证手段，在规则允许的范围内通过钓鱼执法、合规陷阱和税务筹划，将对手连根拔起。 严密的逻辑陷阱 vs 庞大的利益同盟；法条主义的冰冷 vs 官场的贪婪与人性。",
+      "genre": [
+        {
+          "id": "genre-1786550963953-qcy6d9rgi",
+          "name": "历史",
+          "color": "#8b5cf6"
+        },
+        {
+          "id": "genre-1786550963953-95wdqoy5l",
+          "name": "权谋",
+          "color": "#8b5cf6"
+        },
+        {
+          "id": "genre-1786550963953-8hsapvnzf",
+          "name": "职场",
+          "color": "#8b5cf6"
+        }
+      ],
+      "wordCount": 0,
+      "status": "planning",
+      "volumes": [
+        {
+          "id": "vol-1786550963953-0",
+          "name": "户部黑账",
+          "orderIndex": 0,
+          "summary": "洗脱冤屈，反杀贪官刘德水，入职都察院。；沈度 vs 户部尚书刘德水（直属上司）、刑部官员（草菅人命）。；公堂之上利用律法条款反客为主，当堂指证刘德水做假账。；刘德水以为沈度求饶是服软，实则是引诱他露出更多马脚。；沈度入职都察院第一天，发现自己的办公桌上放着一封匿名恐吓信和半本烧焦的账册。；从阶下囚到六部官员，初步掌握官场生存法则，真知之眼升级至进阶前兆。"
+        },
+        {
+          "id": "vol-1786550963953-1",
+          "name": "京华烟云",
+          "orderIndex": 1,
+          "summary": "在都察院查办京官贪腐，卷入夺嫡漩涡，选择阵营。；沈度 vs 六部贪官集团、三皇子党羽。；查办漕运贪腐案，当街扣押三皇子的亲信商船。；三皇子试图收买沈度，被沈度用合规手段录音留证。；太子深夜密会沈度，展示了一份关于边关军费的绝密账本。；升任给事中，声名鹊起，被称为“铁面阎罗”。"
+        },
+        {
+          "id": "vol-1786550963953-2",
+          "name": "九重天阙",
+          "orderIndex": 2,
+          "summary": "查办军费案，对抗终极反派，确立新秩序。；沈度 vs 三皇子集团、甚至皇帝本人。；金殿对峙，用大魏律条约束皇帝的私欲。；皇帝并非糊涂，而是故意默许贪腐以平衡朝局，沈度需打破这个平衡。；沈度辞官归隐，江湖上流传着关于“大魏第一合规官”的传说。；升任左都御史，精神层面达到“无我”境界，真知之眼达到终极。"
+        }
+      ],
+      "chapters": [
+        {
+          "id": "chapter-1786550963964",
+          "volumeId": "vol-1786550963953-0",
+          "title": "醒来就要被砍头？",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 0,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:23.964Z",
+          "updatedAt": "2026-08-12T16:09:23.968Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】醒在刑部大堂，惊听判官喊秋后问斩。\n【CPNs】穿越成替罪羊小吏\n激活金手指发现供词笔迹有误\n试图喊冤被当堂驳回。\n【CEN】狱卒狞笑拖他回牢，低语今晚上路。\n【必须覆盖】确立死刑危机、激活金手指真知之眼。\n【禁区】不可直接武力越狱、不可此时就洗清冤屈。",
+          "plotSummary": "CBN: 醒在刑部大堂，惊听判官喊秋后问斩。\nCEN: 狱卒狞笑拖他回牢，低语今晚上路。"
+        },
+        {
+          "id": "chapter-1786550963975",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这牢饭里全是油水",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 1,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:23.975Z",
+          "updatedAt": "2026-08-12T16:09:23.979Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】盯着牢饭发霉，金眼却看穿狱卒鞋底藏银。\n【CPNs】利用金手指分析狱卒贪腐路径\n反向拿捏狱卒弱点\n要求狱卒传递消息。\n【CEN】狱卒脸色惨白跪地，问你想传给谁。\n【必须覆盖】掌控狱卒、确立复仇计划第一步。\n【禁区】不可离开牢房范围。",
+          "plotSummary": "CBN: 盯着牢饭发霉，金眼却看穿狱卒鞋底藏银。\nCEN: 狱卒脸色惨白跪地，问你想传给谁。"
+        },
+        {
+          "id": "chapter-1786550963987",
+          "volumeId": "vol-1786550963953-0",
+          "title": "给我找个会写字的",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 2,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:23.987Z",
+          "updatedAt": "2026-08-12T16:09:23.990Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】扔给狱卒半根发簪，让他转交巡狱御史。\n【CPNs】教狱卒如何合规规避风险\n狱卒半信半疑送信\n沈度静候回音。\n【CEN】狱卒跑回来说，御史没接，但看了。\n【必须覆盖】建立外部联络、制造复核契机。\n【禁区】不可直接见到柳如是。",
+          "plotSummary": "CBN: 扔给狱卒半根发簪，让他转交巡狱御史。\nCEN: 狱卒跑回来说，御史没接，但看了。"
+        },
+        {
+          "id": "chapter-1786550963996",
+          "volumeId": "vol-1786550963953-0",
+          "title": "刑部尚书急疯了",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 3,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:23.996Z",
+          "updatedAt": "2026-08-12T16:09:23.999Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】牢门被撞开，主官冲进来逼他画押认罪。\n【CPNs】主官威胁利诱\n沈度指出案卷漏洞拖延\n主官气急败坏离开。\n【CEN】主官阴狠下令，今晚提审做实死罪。\n【必须覆盖】与反派爪牙对峙、确立反派急于灭口。\n【禁区】不可此时直接反杀。",
+          "plotSummary": "CBN: 牢门被撞开，主官冲进来逼他画押认罪。\nCEN: 主官阴狠下令，今晚提审做实死罪。"
+        },
+        {
+          "id": "chapter-1786550964005",
+          "volumeId": "vol-1786550963953-0",
+          "title": "只有死人不会说话",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 4,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.005Z",
+          "updatedAt": "2026-08-12T16:09:24.008Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】狱卒送来断头饭，沈度笑着吃下并要纸笔。\n【CPNs】写下绝笔信逻辑推演\n利用规则要求最后见家属\n大牢门口突然喧哗。\n【CEN】一个清冷女声传来，这个案子我要复核。\n【必须覆盖】制造复核机会、引出柳如是登场。\n【禁区】不可确定柳如是立场。",
+          "plotSummary": "CBN: 狱卒送来断头饭，沈度笑着吃下并要纸笔。\nCEN: 一个清冷女声传来，这个案子我要复核。"
+        },
+        {
+          "id": "chapter-1786550964015",
+          "volumeId": "vol-1786550963953-0",
+          "title": "那个女御史好凶",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 5,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.015Z",
+          "updatedAt": "2026-08-12T16:09:24.018Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】柳如是拍案怒问，沈度却盯着她官服。\n【CPNs】柳如是质疑翻供动机\n沈度用逻辑漏洞反击\n两人达成利益交换。\n【CEN】柳如是收起供词，冷声说最好没骗我。\n【必须覆盖】柳如是发现疑点、沈度初步折服柳如是。\n【禁区】柳如是不能无脑倒贴。",
+          "plotSummary": "CBN: 柳如是拍案怒问，沈度却盯着她官服。\nCEN: 柳如是收起供词，冷声说最好没骗我。"
+        },
+        {
+          "id": "chapter-1786550964024",
+          "volumeId": "vol-1786550963953-0",
+          "title": "谁敢签这个字？",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 6,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.024Z",
+          "updatedAt": "2026-08-12T16:09:24.028Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】御史台内，沈度的诉状被扔在地上无人接。\n【CPNs】众御史避之不及\n沈度舌战群儒\n柳如是挺身而出但缺人手。\n【CEN】刘德水亲信闯入，当众撕碎了诉状。\n【必须覆盖】争取重审遇阻、展示反派势力。\n【禁区】不可直接成功。",
+          "plotSummary": "CBN: 御史台内，沈度的诉状被扔在地上无人接。\nCEN: 刘德水亲信闯入，当众撕碎了诉状。"
+        },
+        {
+          "id": "chapter-1786550964034",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这一招叫借刀杀人",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 7,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.034Z",
+          "updatedAt": "2026-08-12T16:09:24.037Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度捡起碎纸片，指着大殿匾额念律法。\n【CPNs】搬出先帝祖制\n利用政敌矛盾\n成功争取三司会审。\n【CEN】判官惊堂木落下，三日后复审。\n【必须覆盖】成功争取重审、展示专业知识。\n【禁区】不可直接洗清冤屈。",
+          "plotSummary": "CBN: 沈度捡起碎纸片，指着大殿匾额念律法。\nCEN: 判官惊堂木落下，三日后复审。"
+        },
+        {
+          "id": "chapter-1786550964044",
+          "volumeId": "vol-1786550963953-0",
+          "title": "户部大库的钥匙",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 8,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.044Z",
+          "updatedAt": "2026-08-12T16:09:24.048Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】柳如是扔给他一块腰牌，只有两个时辰。\n【CPNs】潜入户部档案库\n寻找原始凭证\n发现账本被动过手脚。\n【CEN】档案库深处传来响动，有人在销毁证据。\n【必须覆盖】获得查账机会、发现关键证据缺失。\n【禁区】不可被当场抓获。",
+          "plotSummary": "CBN: 柳如是扔给他一块腰牌，只有两个时辰。\nCEN: 档案库深处传来响动，有人在销毁证据。"
+        },
+        {
+          "id": "chapter-1786550964054",
+          "volumeId": "vol-1786550963953-0",
+          "title": "证人怎么死了？",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 9,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.054Z",
+          "updatedAt": "2026-08-12T16:09:24.058Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度刚拿到单据，门外突然传来噩耗。\n【CPNs】前往证人住处\n发现尸体还是热的\n现场伪装成畏罪自杀。\n【CEN】尸体手里紧紧攥着一枚刘德水私印。\n【必须覆盖】查账受阻、证人死亡。\n【禁区】不可查到幕后黑手是皇子。",
+          "plotSummary": "CBN: 沈度刚拿到单据，门外突然传来噩耗。\nCEN: 尸体手里紧紧攥着一枚刘德水私印。"
+        },
+        {
+          "id": "chapter-1786550964065",
+          "volumeId": "vol-1786550963953-0",
+          "title": "杀手的刀慢了一瞬",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 10,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.065Z",
+          "updatedAt": "2026-08-12T16:09:24.068Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】窗纸破了个洞，一道寒光直刺咽喉。\n【CPNs】侧身闪避利用证人尸体挡刀\n夺门而出逃往档案库\n利用夜色甩开追踪。\n【CEN】退守档案库大门，身后脚步声逼近。\n【必须覆盖】逃离现场、前往档案库。\n【禁区】不可杀死杀手。",
+          "plotSummary": "CBN: 窗纸破了个洞，一道寒光直刺咽喉。\nCEN: 退守档案库大门，身后脚步声逼近。"
+        },
+        {
+          "id": "chapter-1786550964074",
+          "volumeId": "vol-1786550963953-0",
+          "title": "擅闯者死，这是律法",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 11,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.074Z",
+          "updatedAt": "2026-08-12T16:09:24.078Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】退守档案库大门，身后脚步声逼近。\n【CPNs】沈度念诵档案库律法触动机关\n杀手被暗箭射杀\n搜身发现都察院腰牌。\n【CEN】看着腰牌上的名字，沈度瞳孔骤缩。\n【必须覆盖】利用机关反杀、发现都察院腰牌。\n【禁区】不可让主角武力值过高。",
+          "plotSummary": "CBN: 退守档案库大门，身后脚步声逼近。\nCEN: 看着腰牌上的名字，沈度瞳孔骤缩。"
+        },
+        {
+          "id": "chapter-1786550964084",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这账本是活的",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 12,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.084Z",
+          "updatedAt": "2026-08-12T16:09:24.087Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】把腰牌藏进靴筒，沈度面无表情回到牢房。\n【CPNs】结合私印和腰牌信息推演\n在墙上画出复杂的资金流向\n锁定核心账本位置。\n【CEN】真账本根本不在户部，在刘府的私账里。\n【必须覆盖】逻辑推导、锁定真账本。\n【禁区】不可直接拿到账本。",
+          "plotSummary": "CBN: 把腰牌藏进靴筒，沈度面无表情回到牢房。\nCEN: 真账本根本不在户部，在刘府的私账里。"
+        },
+        {
+          "id": "chapter-1786550964095",
+          "volumeId": "vol-1786550963953-0",
+          "title": "给他送个假的",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 13,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.095Z",
+          "updatedAt": "2026-08-12T16:09:24.098Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度撕下衣襟，写下半本假账目。\n【CPNs】通过狱卒将假账流放出去\n制造有人掌握证据的假象\n观察刘德水反应。\n【CEN】刘德水深夜调动亲卫，直奔城外别院。\n【必须覆盖】制定诱饵计划、引诱刘德水。\n【禁区】不可直接暴露主角身份。",
+          "plotSummary": "CBN: 沈度撕下衣襟，写下半本假账目。\nCEN: 刘德水深夜调动亲卫，直奔城外别院。"
+        },
+        {
+          "id": "chapter-1786550964104",
+          "volumeId": "vol-1786550963953-0",
+          "title": "他在销毁证据",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 14,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.104Z",
+          "updatedAt": "2026-08-12T16:09:24.108Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】柳如是按计划带队突袭别院。\n【CPNs】冲进别院发现正在烧账本\n抢出残页确认是真迹\n刘德水却在此刻出现阻拦。\n【CEN】刘德水手持圣旨，说这是朕特许的机密。\n【必须覆盖】突袭查证、遭遇刘德水阻拦。\n【禁区】不可直接抓捕刘德水。",
+          "plotSummary": "CBN: 柳如是按计划带队突袭别院。\nCEN: 刘德水手持圣旨，说这是朕特许的机密。"
+        },
+        {
+          "id": "chapter-1786550964114",
+          "volumeId": "vol-1786550963953-0",
+          "title": "圣旨也挡不住法",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 15,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.114Z",
+          "updatedAt": "2026-08-12T16:09:24.118Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度从柳如是身后走出，盯着圣旨发笑。\n【CPNs】指出圣旨日期的格式错误\n揭露圣旨也是伪造的\n刘德水脸色铁青无言以对。\n【CEN】虽查明伪造，但真账本已毁，证据链断裂。\n【必须覆盖】揭穿伪证、面临证据销毁的困境。\n【禁区】不可让主角此时拥有实权。",
+          "plotSummary": "CBN: 沈度从柳如是身后走出，盯着圣旨发笑。\nCEN: 虽查明伪造，但真账本已毁，证据链断裂。"
+        },
+        {
+          "id": "chapter-1786550964125",
+          "volumeId": "vol-1786550963953-0",
+          "title": "没有账本我也赢",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 16,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.125Z",
+          "updatedAt": "2026-08-12T16:09:24.129Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度捡起灰烬，说这就够了。\n【CPNs】通过纸张灰烬分析墨水成分\n推算出造纸作坊\n锁定另一份备份记录。\n【CEN】备份记录在漕运帮会的手里。\n【必须覆盖】寻找替代证据、锁定漕运帮会。\n【禁区】不可直接联系漕运帮会。",
+          "plotSummary": "CBN: 沈度捡起灰烬，说这就够了。\nCEN: 备份记录在漕运帮会的手里。"
+        },
+        {
+          "id": "chapter-1786550964135",
+          "volumeId": "vol-1786550963953-0",
+          "title": "漕运帮会也怕查",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 17,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.135Z",
+          "updatedAt": "2026-08-12T16:09:24.139Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度让柳如是以税务合规名义查封帮会。\n【CPNs】利用税法漏洞冻结帮会资产\n帮会为自保交出记录\n记录指向刘德水核心党羽。\n【CEN】记录显示，刘德水的妻弟是关键经手人。\n【必须覆盖】利用合规手段施压、获取关键证人线索。\n【禁区】不可动用武力。",
+          "plotSummary": "CBN: 沈度让柳如是以税务合规名义查封帮会。\nCEN: 记录显示，刘德水的妻弟是关键经手人。"
+        },
+        {
+          "id": "chapter-1786550964146",
+          "volumeId": "vol-1786550963953-0",
+          "title": "只要打断一条腿",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 18,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.146Z",
+          "updatedAt": "2026-08-12T16:09:24.149Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】抓捕刘德水妻弟的命令下达。\n【CPNs】沈度设计抓捕方案\n妻弟被捕前试图销毁文件\n沈度利用时间差截获文件。\n【CEN】文件里不仅有账目，还有都察院高官的名字。\n【必须覆盖】抓捕关键从犯、发现都察院涉案。\n【禁区】不可牵扯皇子。",
+          "plotSummary": "CBN: 抓捕刘德水妻弟的命令下达。\nCEN: 文件里不仅有账目，还有都察院高官的名字。"
+        },
+        {
+          "id": "chapter-1786550964156",
+          "volumeId": "vol-1786550963953-0",
+          "title": "谁才是真正的鬼",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 19,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.156Z",
+          "updatedAt": "2026-08-12T16:09:24.160Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度看着名单，对柳如是说有人要慌了。\n【CPNs】分析名单与腰牌主人的关系\n推测刘德水身边有内鬼\n决定将计就计。\n【CEN】刘德水收到消息，开始怀疑身边的师爷。\n【必须覆盖】推导出内鬼存在、制造刘德水内部矛盾。\n【禁区】不可明确指出内鬼是谁。",
+          "plotSummary": "CBN: 沈度看着名单，对柳如是说有人要慌了。\nCEN: 刘德水收到消息，开始怀疑身边的师爷。"
+        },
+        {
+          "id": "chapter-1786550964166",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这一审，就是生死局",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 20,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.166Z",
+          "updatedAt": "2026-08-12T16:09:24.170Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】惊堂木震碎茶杯，沈度抬头直视审判席。\n【CPNs】三司会审正式开始\n刘德水咄咄逼人欲定死罪\n沈度当庭指出证人死因疑点。\n【CEN】沈度将证人临死前紧握的私印扔在案上。\n【必须覆盖】三司会审开启、刘德水施压、呈交关键物证。\n【禁区】不可直接洗清冤屈。",
+          "plotSummary": "CBN: 惊堂木震碎茶杯，沈度抬头直视审判席。\nCEN: 沈度将证人临死前紧握的私印扔在案上。"
+        },
+        {
+          "id": "chapter-1786550964176",
+          "volumeId": "vol-1786550963953-0",
+          "title": "师爷，尚书大人信你吗",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 21,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.176Z",
+          "updatedAt": "2026-08-12T16:09:24.179Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】刘德水看到私印瞳孔放大，手微微颤抖。\n【CPNs】沈度利用心理暗示离间刘德水与师爷\n师爷神色慌张试图辩解\n刘德水眼中杀意浮现。\n【CEN】师爷突然大喊“尚书救我”并扑向刘德水。\n【必须覆盖】离间计生效、刘德水阵营内部出现裂痕。\n【禁区】不可让刘德水当场杀人。",
+          "plotSummary": "CBN: 刘德水看到私印瞳孔放大，手微微颤抖。\nCEN: 师爷突然大喊“尚书救我”并扑向刘德水。"
+        },
+        {
+          "id": "chapter-1786550964186",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这信里藏着你的人头",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 22,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.186Z",
+          "updatedAt": "2026-08-12T16:09:24.190Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】混乱中沈度甩出从妻弟处截获的信件。\n【CPNs】信件内容直指刘德水私吞公款\n沈度当众朗读信中关键条款\n刘德水恼羞成怒欲撕毁信件。\n【CEN】沈度高声喝止，称毁证者视为同谋。\n【必须覆盖】呈交核心账目证据、刘德水失态暴露。\n【禁区】不可牵扯出皇子势力。",
+          "plotSummary": "CBN: 混乱中沈度甩出从妻弟处截获的信件。\nCEN: 沈度高声喝止，称毁证者视为同谋。"
+        },
+        {
+          "id": "chapter-1786550964197",
+          "volumeId": "vol-1786550963953-0",
+          "title": "无罪，但德行有亏",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 23,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.197Z",
+          "updatedAt": "2026-08-12T16:09:24.200Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】判官捡起信件，脸色阴沉地看着刘德水。\n【CPNs】判官当庭宣判沈度无罪\n刘德水被剥去官服拖走\n判官话锋一转指责沈度手段阴险。\n【CEN】圣旨下，沈度贬职至都察院做杂役。\n【必须覆盖】案件胜诉、沈度洗脱冤屈、被贬职。\n【禁区】不可让主角直接升职。",
+          "plotSummary": "CBN: 判官捡起信件，脸色阴沉地看着刘德水。\nCEN: 圣旨下，沈度贬职至都察院做杂役。"
+        },
+        {
+          "id": "chapter-1786550964207",
+          "volumeId": "vol-1786550963953-0",
+          "title": "都察院的厕所归你管",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 24,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.207Z",
+          "updatedAt": "2026-08-12T16:09:24.211Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度提着包袱站在都察院门口，被守卫嘲笑。\n【CPNs】被分配去清理杂物和倒夜壶\n沈度默默观察都察院人员构成\n发现刻有名字的腰牌主人就在眼前。\n【CEN】那金牙百户走过来，一脚踢翻了沈度的水桶。\n【必须覆盖】入职都察院受辱、确认腰牌主人身份。\n【禁区】不可让主角此时反击金牙百户。",
+          "plotSummary": "CBN: 沈度提着包袱站在都察院门口，被守卫嘲笑。\nCEN: 那金牙百户走过来，一脚踢翻了沈度的水桶。"
+        },
+        {
+          "id": "chapter-1786550964217",
+          "volumeId": "vol-1786550963953-0",
+          "title": "垃圾堆里翻出大案子",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 25,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.217Z",
+          "updatedAt": "2026-08-12T16:09:24.221Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度在处理废纸堆时，敏锐发现一份发黄卷宗。\n【CPNs】卷宗是一桩多年未破的无头公案\n沈度利用金手指分析卷宗涂改痕迹\n推断出案子另有隐情。\n【CEN】沈度主动向主事请求接手此案，引来哄堂大笑。\n【必须覆盖】发现“无头案”、主动揽案被嘲讽。\n【禁区】不可此时就破案。",
+          "plotSummary": "CBN: 沈度在处理废纸堆时，敏锐发现一份发黄卷宗。\nCEN: 沈度主动向主事请求接手此案，引来哄堂大笑。"
+        },
+        {
+          "id": "chapter-1786550964228",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这尸体生前是个官",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 26,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.228Z",
+          "updatedAt": "2026-08-12T16:09:24.232Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度拿着卷宗来到停尸房，掀开白布。\n【CPNs】通过尸体的手指茧子和衣服磨损推断职业\n指出死者生前习惯与卷宗记录不符\n推翻原有验尸结论。\n【CEN】仵作脸色惨白，拔腿就要跑。\n【必须覆盖】展示法医审计能力、推翻旧案结论。\n【禁区】不可直接查明死者身份。",
+          "plotSummary": "CBN: 沈度拿着卷宗来到停尸房，掀开白布。\nCEN: 仵作脸色惨白，拔腿就要跑。"
+        },
+        {
+          "id": "chapter-1786550964239",
+          "volumeId": "vol-1786550963953-0",
+          "title": "三天查不清就滚蛋",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 27,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.239Z",
+          "updatedAt": "2026-08-12T16:09:24.243Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】主事为了赶走沈度，立下赌约。\n【CPNs】沈度接下赌约\n开始走访案发现场周边\n利用税务记录锁定嫌疑人活动范围。\n【CEN】在嫌疑人废弃的据点发现一枚独特的玉佩。\n【必须覆盖】立下赌约、找到关键物证玉佩。\n【禁区】不可让同事此时支持主角。",
+          "plotSummary": "CBN: 主事为了赶走沈度，立下赌约。\nCEN: 在嫌疑人废弃的据点发现一枚独特的玉佩。"
+        },
+        {
+          "id": "chapter-1786550964250",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这玉佩怎么有点眼熟",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 28,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.250Z",
+          "updatedAt": "2026-08-12T16:09:24.253Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度借着烛光细看玉佩，眉头紧锁。\n【CPNs】认出玉佩纹路属于某个特定家族\n回忆柳如是身上的配饰风格\n内心产生动摇但决定查到底。\n【CEN】玉佩底部的刻字，指向了柳家商行。\n【必须覆盖】锁定线索指向柳家、产生内心冲突。\n【禁区】不可破坏主角与柳如是的核心盟友关系。",
+          "plotSummary": "CBN: 沈度借着烛光细看玉佩，眉头紧锁。\nCEN: 玉佩底部的刻字，指向了柳家商行。"
+        },
+        {
+          "id": "chapter-1786550964260",
+          "volumeId": "vol-1786550963953-0",
+          "title": "案卷后面藏着半本账",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 29,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.260Z",
+          "updatedAt": "2026-08-12T16:09:24.264Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度拿着玉佩回到办公桌，发现桌上多了东西。\n【CPNs】发现桌上放着一封恐吓信和半本烧焦的账册\n账册内容与柳家有关\n意识到有人在暗中引导。\n【CEN】沈度抬头望向窗外，感觉有一双眼睛在盯着自己。\n【必须覆盖】发现烧焦账册、确认柳家涉案、接到恐吓。\n【禁区】不可直接揭穿暗中观察者。",
+          "plotSummary": "CBN: 沈度拿着玉佩回到办公桌，发现桌上多了东西。\nCEN: 沈度抬头望向窗外，感觉有一双眼睛在盯着自己。"
+        },
+        {
+          "id": "chapter-1786550964272",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这笔账怎么算到我头上",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 30,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.272Z",
+          "updatedAt": "2026-08-12T16:09:24.276Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度收起账本，假装没看见窗外人影，出门倒垃圾。\n【CPNs】沈度乔装打扮去柳家商行踩点\n发现商行账目虽然整洁但现金流异常\n与掌柜发生言语试探。\n【CEN】柳如是从暗处走出，冷冷质问他在查谁。\n【必须覆盖】乔装潜入柳家商行、发现资金异常、被柳如是抓现行。\n【禁区】不可让柳如是直接站在主角这边。",
+          "plotSummary": "CBN: 沈度收起账本，假装没看见窗外人影，出门倒垃圾。\nCEN: 柳如是从暗处走出，冷冷质问他在查谁。"
+        },
+        {
+          "id": "chapter-1786550964296",
+          "volumeId": "vol-1786550963953-0",
+          "title": "帮你洗白，信不信我",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 31,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.296Z",
+          "updatedAt": "2026-08-12T16:09:24.299Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】柳如是按住刀柄，眼神里满是失望。\n【CPNs】沈度展示烧焦账册与柳家商行的关联\n柳如是愤怒辩解这是家族自救\n沈度指出关键漏洞——有人在利用柳家洗钱。\n【CEN】柳如是将刀拔出半寸，问你要我怎么做。\n【必须覆盖】揭露柳家涉案真相、说服柳如是合作、平息冲突。\n【禁区】不可让柳如是毫无理由就相信。",
+          "plotSummary": "CBN: 柳如是按住刀柄，眼神里满是失望。\nCEN: 柳如是将刀拔出半寸，问你要我怎么做。"
+        },
+        {
+          "id": "chapter-1786550964306",
+          "volumeId": "vol-1786550963953-0",
+          "title": "柳家只是个提款机",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 32,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.306Z",
+          "updatedAt": "2026-08-12T16:09:24.310Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】柳如是收刀回鞘，带沈度直闯柳家书房。\n【CPNs】沈度利用合规审计手段查封柳家核心账目\n发现大量不明来源的银两过账\n柳父坦白这是被迫配合漕运帮会。\n【CEN】柳父颤抖着说，那个漕运帮会的老大姓王。\n【必须覆盖】查封柳家账目、确认柳家背锅、引出漕运帮会王姓大佬。\n【禁区】不可直接接触王姓大佬。",
+          "plotSummary": "CBN: 柳如是收刀回鞘，带沈度直闯柳家书房。\nCEN: 柳父颤抖着说，那个漕运帮会的老大姓王。"
+        },
+        {
+          "id": "chapter-1786550964317",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这里的规矩我说了算",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 33,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.317Z",
+          "updatedAt": "2026-08-12T16:09:24.320Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度合上账本，嘴角勾起一抹冷笑。\n【CPNs】沈度设计让柳家继续配合漕运帮会交易\n在交易地点埋伏\n利用税务检查的名义突击抓人。\n【CEN】被抓的管事大喊，是柳老爷让我干的！\n【必须覆盖】设计钓鱼执法、现场抓获直接责任人、柳家暂时脱险。\n【禁区】不可让漕运帮会主力出现。",
+          "plotSummary": "CBN: 沈度合上账本，嘴角勾起一抹冷笑。\nCEN: 被抓的管事大喊，是柳老爷让我干的！"
+        },
+        {
+          "id": "chapter-1786550964327",
+          "volumeId": "vol-1786550963953-0",
+          "title": "漕运帮会要你死",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 34,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.327Z",
+          "updatedAt": "2026-08-12T16:09:24.331Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度当众宣读律法，直接定罪管事。\n【CPNs】沈度利用逻辑陷阱切断柳父与管事的联系\n柳父安然无恙但心有余悸\n管事被带走前露出诡异笑容。\n【CEN】一把飞镖钉在沈度门柱上，上面带着血书。\n【必须覆盖】保全柳家、管事被抓、收到漕运帮会死亡威胁。\n【禁区】不可让柳家完全无事。",
+          "plotSummary": "CBN: 沈度当众宣读律法，直接定罪管事。\nCEN: 一把飞镖钉在沈度门柱上，上面带着血书。"
+        },
+        {
+          "id": "chapter-1786550964338",
+          "volumeId": "vol-1786550963953-0",
+          "title": "绣春刀出，谁敢挡我",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 35,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.338Z",
+          "updatedAt": "2026-08-12T16:09:24.341Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度走在回家路上，周围小巷突然涌出十几个大汉。\n【CPNs】杀手围攻沈度\n沈度利用地形和随身携带的石灰粉周旋\n体力不支即将被杀。\n【CEN】一道黑影从墙头跃下，手中绣春刀寒光凛冽。\n【必须覆盖】遭遇围攻、陷入绝境、王猛登场。\n【禁区】不可让主角武力反杀。",
+          "plotSummary": "CBN: 沈度走在回家路上，周围小巷突然涌出十几个大汉。\nCEN: 一道黑影从墙头跃下，手中绣春刀寒光凛冽。"
+        },
+        {
+          "id": "chapter-1786550964348",
+          "volumeId": "vol-1786550963953-0",
+          "title": "救命恩人要杀我",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 36,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.348Z",
+          "updatedAt": "2026-08-12T16:09:24.352Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】王猛手起刀落，三颗头颅滚落尘埃。\n【CPNs】王猛轻松解决剩余杀手\n沈度冷静观察王猛刀法\n沈度捡起杀手身上的令牌。\n【CEN】王猛把刀架在沈度脖子上，问账本在哪。\n【必须覆盖】王猛解决杀手、王猛对沈度产生怀疑、威胁。\n【禁区】不可让两人立刻推心置腹。",
+          "plotSummary": "CBN: 王猛手起刀落，三颗头颅滚落尘埃。\nCEN: 王猛把刀架在沈度脖子上，问账本在哪。"
+        },
+        {
+          "id": "chapter-1786550964359",
+          "volumeId": "vol-1786550963953-0",
+          "title": "咱们做个交易吧",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 37,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.359Z",
+          "updatedAt": "2026-08-12T16:09:24.362Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度面不改色，指着地上的尸体说账本在脑子里。\n【CPNs】沈度分析王猛身份（锦衣卫）\n沈度提出用账本换取王猛保护\n王猛权衡利弊收刀。\n【CEN】王猛冷笑一声，跟着我，别掉队。\n【必须覆盖】揭穿王猛身份、达成交易、确立保护关系。\n【禁区】不可让王猛完全坦白任务。",
+          "plotSummary": "CBN: 沈度面不改色，指着地上的尸体说账本在脑子里。\nCEN: 王猛冷笑一声，跟着我，别掉队。"
+        },
+        {
+          "id": "chapter-1786550964370",
+          "volumeId": "vol-1786550963953-0",
+          "title": "一张纸吓破苦胆",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 38,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.370Z",
+          "updatedAt": "2026-08-12T16:09:24.375Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度带着王猛回到都察院，开始写文书。\n【CPNs】沈度起草一份针对漕运帮会的税务稽查令\n利用王猛的锦衣卫身份背书\n文书送达漕运码头。\n【CEN】漕运帮会堂主看到文书，气得把桌子拍碎了。\n【必须覆盖】起草稽查令、借王猛势压人、激怒漕运帮会。\n【禁区】不可直接开战。",
+          "plotSummary": "CBN: 沈度带着王猛回到都察院，开始写文书。\nCEN: 漕运帮会堂主看到文书，气得把桌子拍碎了。"
+        },
+        {
+          "id": "chapter-1786550964381",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这本账谁都不敢看",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 39,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.381Z",
+          "updatedAt": "2026-08-12T16:09:24.385Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度带着衙役和王猛站在码头大门前。\n【CPNs】沈度宣读稽查令阻拦漕运帮会反抗\n王猛震慑武力反抗者\n搜查出大量违禁品和账册。\n【CEN】查封的账册中夹着半本烧焦的宫廷内务府账本。\n【必须覆盖】突袭码头、查封资产、发现宫廷账本。\n【禁区】不可让主角此时知道宫廷秘密核心。",
+          "plotSummary": "CBN: 沈度带着衙役和王猛站在码头大门前。\nCEN: 查封的账册中夹着半本烧焦的宫廷内务府账本。"
+        },
+        {
+          "id": "chapter-1786550964393",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这东西看一眼都要掉脑袋",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 40,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.393Z",
+          "updatedAt": "2026-08-12T16:09:24.396Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】王猛一把抢过账册，脸色瞬间惨白如纸。\n【CPNs】王猛认出内务府印信\n沈度坚持要把账本带走\n外面喊杀声逼近。\n【CEN】沈度把账本塞进王猛怀里，说这可是护身符。\n【必须覆盖】王猛认出印信、将烫手山芋转移给王猛。\n【禁区】不可让王猛此时就倒台。",
+          "plotSummary": "CBN: 王猛一把抢过账册，脸色瞬间惨白如纸。\nCEN: 沈度把账本塞进王猛怀里，说这可是护身符。"
+        },
+        {
+          "id": "chapter-1786550964404",
+          "volumeId": "vol-1786550963953-0",
+          "title": "你们的账，我全查封",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 41,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.404Z",
+          "updatedAt": "2026-08-12T16:09:24.407Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度拿着朱笔，在漕运图上画了一个大大的红叉。\n【CPNs】依据账本锁定帮会所有钱庄\n下达税务稽查文书\n王猛带队封锁各处路口。\n【CEN】钱庄管事狞笑，说这上面可是有三爷的名字。\n【必须覆盖】锁定帮会资产、下达查封命令。\n【禁区】不可让沈度直接对抗三皇子。",
+          "plotSummary": "CBN: 沈度拿着朱笔，在漕运图上画了一个大大的红叉。\nCEN: 钱庄管事狞笑，说这上面可是有三爷的名字。"
+        },
+        {
+          "id": "chapter-1786550964414",
+          "volumeId": "vol-1786550963953-0",
+          "title": "有背景也得交税",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 42,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.414Z",
+          "updatedAt": "2026-08-12T16:09:24.418Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】管事话音未落，沈度一巴掌拍在柜台上。\n【CPNs】沈度引用大魏律法反驳特权\n当众宣读偷税漏税罪状\n下令查封所有现银。\n【CEN】地窖被打开，里面的银子堆成了小山。\n【必须覆盖】利用律法压制特权、查封巨额银两。\n【禁区】不可让管事直接叫来军队。",
+          "plotSummary": "CBN: 管事话音未落，沈度一巴掌拍在柜台上。\nCEN: 地窖被打开，里面的银子堆成了小山。"
+        },
+        {
+          "id": "chapter-1786550964425",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这银子上有血腥味",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 43,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.425Z",
+          "updatedAt": "2026-08-12T16:09:24.429Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度随手拿起一锭银子，发现上面刻着暗记。\n【CPNs】辨认出是军饷专用的官银\n推断漕运帮会私吞军费\n王猛拔刀控制现场。\n【CEN】帮会首领带人赶到，手里拿着三皇子的令牌。\n【必须覆盖】发现军饷贪墨证据、帮会首领带人赶到。\n【禁区】不可让王猛直接杀死首领。",
+          "plotSummary": "CBN: 沈度随手拿起一锭银子，发现上面刻着暗记。\nCEN: 帮会首领带人赶到，手里拿着三皇子的令牌。"
+        },
+        {
+          "id": "chapter-1786550964437",
+          "volumeId": "vol-1786550963953-0",
+          "title": "令牌在律法面前是废铁",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 44,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.437Z",
+          "updatedAt": "2026-08-12T16:09:24.441Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】首领高举令牌，威胁沈度全家死绝。\n【CPNs】沈度指出令牌是伪造的\n王猛以伪造御物罪名拿下首领\n帮会全员束手就擒。\n【CEN】首领被捕前，悄悄吞下了一颗蜡丸。\n【必须覆盖】揭穿令牌伪造、彻底捣毁漕运帮会。\n【禁区】不可让蜡丸当场毒死首领。",
+          "plotSummary": "CBN: 首领高举令牌，威胁沈度全家死绝。\nCEN: 首领被捕前，悄悄吞下了一颗蜡丸。"
+        },
+        {
+          "id": "chapter-1786550964448",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这烫手山芋送给谁",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 45,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.448Z",
+          "updatedAt": "2026-08-12T16:09:24.456Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度看着那半本宫廷账本，冷汗浸透了后背。\n【CPNs】与王猛分析局势决定投靠\n伪造副本掩人耳目\n深夜潜入太子府邸。\n【CEN】太子府的暗卫长枪，直指沈度眉心。\n【必须覆盖】决定站队太子、潜入太子府。\n【禁区】不可直接见到太子。",
+          "plotSummary": "CBN: 沈度看着那半本宫廷账本，冷汗浸透了后背。\nCEN: 太子府的暗卫长枪，直指沈度眉心。"
+        },
+        {
+          "id": "chapter-1786550964464",
+          "volumeId": "vol-1786550963953-0",
+          "title": "太子爷，这局你赢了",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 46,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.464Z",
+          "updatedAt": "2026-08-12T16:09:24.468Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】太子把玩着玉扳指，根本没抬头看沈度。\n【CPNs】沈度呈上账本分析局势\n指出这是三皇子自毁的陷阱\n太子猛拍桌子叫好。\n【CEN】太子屏退左右，亲自为沈度倒了一杯茶。\n【必须覆盖】太子接纳情报、获得太子信任。\n【禁区】不可让太子完全信任沈度。",
+          "plotSummary": "CBN: 太子把玩着玉扳指，根本没抬头看沈度。\nCEN: 太子屏退左右，亲自为沈度倒了一杯茶。"
+        },
+        {
+          "id": "chapter-1786550964475",
+          "volumeId": "vol-1786550963953-0",
+          "title": "我要进都察院的核心",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 47,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.475Z",
+          "updatedAt": "2026-08-12T16:09:24.479Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】沈度婉拒赏金，提出要一个职位。\n【CPNs】太子询问沈度诉求\n沈度请求掌控都察院实权\n太子许诺明日上朝提携。\n【CEN】宫门落锁，沈度成了太子府的座上宾。\n【必须覆盖】提出升职诉求、获得承诺。\n【禁区】不可让主角此时就掌握大权。",
+          "plotSummary": "CBN: 沈度婉拒赏金，提出要一个职位。\nCEN: 宫门落锁，沈度成了太子府的座上宾。"
+        },
+        {
+          "id": "chapter-1786550964486",
+          "volumeId": "vol-1786550963953-0",
+          "title": "这一夜，京官无眠",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 48,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.486Z",
+          "updatedAt": "2026-08-12T16:09:24.490Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】次日清晨，沈度走出宫门发现气氛不对。\n【CPNs】发现同僚眼神躲闪\n听到三皇子昨夜大怒的消息\n意识到自己已被卷入漩涡中心。\n【CEN】宫门外的长街上，一辆马车静静停着。\n【必须覆盖】离开皇宫、感知局势变化。\n【禁区】不可真的被太后带走。",
+          "plotSummary": "CBN: 次日清晨，沈度走出宫门发现气氛不对。\nCEN: 宫门外的长街上，一辆马车静静停着。"
+        },
+        {
+          "id": "chapter-1786550964497",
+          "volumeId": "vol-1786550963953-0",
+          "title": "三爷请你喝杯茶",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 49,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-12T16:09:24.497Z",
+          "updatedAt": "2026-08-12T16:09:24.500Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】马车的车帘缓缓拉开，露出一张阴鸷的脸。\n【CPNs】三皇子露出阴鸷笑容\n邀请沈度上车叙旧\n沈度礼貌拒绝并暗自戒备。\n【CEN】车帘后伸出的手，做了一个请的手势。\n【必须覆盖】三皇子截道、提出邀请、威胁。\n【禁区】不可让主角直接上车。",
+          "plotSummary": "CBN: 马车的车帘缓缓拉开，露出一张阴鸷的脸。\nCEN: 车帘后伸出的手，做了一个请的手势。"
+        }
+      ],
+      "characters": [
+        {
+          "id": "char-1786550963952-0",
+          "name": "沈度",
+          "role": "protagonist",
+          "description": "推动剧情，解决案件，对抗反派。；活下来，升官，查案。；寻找穿越的意义，建立理想的秩序。",
+          "profile": {
+            "personality": [
+              "替罪羊小吏",
+              "合规专家",
+              "权谋家"
+            ],
+            "appearance": "",
+            "background": "生存 -> 公义 -> 法治。；前世因坚持原则被行业排挤，穿越即面临死刑。；穿越者的身份（仅少数人知道）。",
+            "abilities": [
+              "真知之眼",
+              "现代知识",
+              "太子信任",
+              "王猛忠诚。"
+            ],
+            "relationships": [
+              {
+                "characterId": "",
+                "targetName": "从孤家寡人到拥有一群生死之交。",
+                "type": "neutral",
+                "description": "从孤家寡人到拥有一群生死之交。"
+              }
+            ],
+            "keyNeed": "生存 -> 公义 -> 法治。",
+            "publicGoal": "活下来，升官，查案。",
+            "hiddenNeed": "寻找穿越的意义，建立理想的秩序。",
+            "fearOrWound": "前世因坚持原则被行业排挤，穿越即面临死刑。",
+            "secret": "穿越者的身份（仅少数人知道）。",
+            "turningPoint": "第50章决定介入夺嫡，第120章孤身对抗皇权。",
+            "arcStart": "替罪羊小吏",
+            "arcMid": "合规专家",
+            "arcEnd": "权谋家",
+            "revealTiming": "第1章"
+          },
+          "createdAt": "2026-08-12T16:09:23.952Z",
+          "updatedAt": "2026-08-12T16:09:23.952Z"
+        },
+        {
+          "id": "char-1786550963952-1",
+          "name": "柳如是",
+          "role": "ally",
+          "description": "提供情报，协助社交，情感寄托。；成为女首富。；摆脱被权贵玩物的命运。",
+          "profile": {
+            "personality": [
+              "落魄御史女",
+              "富商",
+              "幕后操盘手"
+            ],
+            "appearance": "",
+            "background": "家族生存，寻找依靠。；家族被贪官勒索，父亲郁郁而终。；暗地里经营着庞大的情报网。",
+            "abilities": [
+              "财富",
+              "情报网",
+              "人脉。"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786550963952-0",
+                "targetName": "沈度",
+                "type": "alliance",
+                "description": "理智与情感的碰撞，家族利益与律法的冲突。"
+              },
+              {
+                "characterId": "",
+                "targetName": "怀疑 -> 合作 -> 爱慕 -> 灵魂伴侣。",
+                "type": "lover",
+                "description": "怀疑 -> 合作 -> 爱慕 -> 灵魂伴侣。"
+              }
+            ],
+            "keyNeed": "家族生存，寻找依靠。",
+            "publicGoal": "成为女首富。",
+            "hiddenNeed": "摆脱被权贵玩物的命运。",
+            "fearOrWound": "家族被贪官勒索，父亲郁郁而终。",
+            "secret": "暗地里经营着庞大的情报网。",
+            "turningPoint": "第31章配合主角查办自家。",
+            "arcStart": "落魄御史女",
+            "arcMid": "富商",
+            "arcEnd": "幕后操盘手",
+            "revealTiming": "第7章"
+          },
+          "createdAt": "2026-08-12T16:09:23.952Z",
+          "updatedAt": "2026-08-12T16:09:23.952Z"
+        },
+        {
+          "id": "char-1786550963952-2",
+          "name": "刘德水",
+          "role": "antagonist",
+          "description": "制造开局危机，提供新手村经验包。；处死沈度。；掩盖账目漏洞。",
+          "profile": {
+            "personality": [
+              "嚣张上司",
+              "惊慌失措",
+              "狱中疯癫"
+            ],
+            "appearance": "",
+            "background": "挪用公款填补赌债，找替死鬼。；赌博成性，欠下巨额债务。；私通漕运帮会。",
+            "abilities": [
+              "户部权力",
+              "贪腐网络。"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786550963952-0",
+                "targetName": "沈度",
+                "type": "enemy",
+                "description": "生死攸关的直接对立。"
+              },
+              {
+                "characterId": "",
+                "targetName": "从上下级到死敌。",
+                "type": "enemy",
+                "description": "从上下级到死敌。"
+              }
+            ],
+            "keyNeed": "挪用公款填补赌债，找替死鬼。",
+            "publicGoal": "处死沈度。",
+            "hiddenNeed": "掩盖账目漏洞。",
+            "fearOrWound": "赌博成性，欠下巨额债务。",
+            "secret": "私通漕运帮会。",
+            "turningPoint": "第24章公堂对峙。",
+            "arcStart": "嚣张上司",
+            "arcMid": "惊慌失措",
+            "arcEnd": "狱中疯癫",
+            "revealTiming": "第1章（侧面描写）"
+          },
+          "createdAt": "2026-08-12T16:09:23.952Z",
+          "updatedAt": "2026-08-12T16:09:23.952Z"
+        },
+        {
+          "id": "char-1786550963952-3",
+          "name": "赵王（三皇子）",
+          "role": "antagonist",
+          "description": "提供中期主要阻力，代表腐朽的既得利益集团。；拉拢或除掉沈度。；掩盖军费贪墨的真相。",
+          "profile": {
+            "personality": [
+              "野心皇子",
+              "强力竞争者",
+              "谋逆罪人"
+            ],
+            "appearance": "",
+            "background": "夺嫡上位，敛财扩充势力。；母妃出身低微，备受冷落，极度渴望权力。；与外敌勾结。",
+            "abilities": [
+              "庞大的勋贵党羽",
+              "私兵",
+              "财富。"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786550963952-0",
+                "targetName": "沈度",
+                "type": "enemy",
+                "description": "理念之争，权谋之战。"
+              },
+              {
+                "characterId": "",
+                "targetName": "无视 -> 忌惮 -> 欲除之而后快。",
+                "type": "neutral",
+                "description": "无视 -> 忌惮 -> 欲除之而后快。"
+              }
+            ],
+            "keyNeed": "夺嫡上位，敛财扩充势力。",
+            "publicGoal": "拉拢或除掉沈度。",
+            "hiddenNeed": "掩盖军费贪墨的真相。",
+            "fearOrWound": "母妃出身低微，备受冷落，极度渴望权力。",
+            "secret": "与外敌勾结。",
+            "turningPoint": "第100章动用私兵追杀沈度。",
+            "arcStart": "野心皇子",
+            "arcMid": "强力竞争者",
+            "arcEnd": "谋逆罪人",
+            "revealTiming": "第50章（侧面）"
+          },
+          "createdAt": "2026-08-12T16:09:23.952Z",
+          "updatedAt": "2026-08-12T16:09:23.952Z"
+        },
+        {
+          "id": "char-1786550963952-4",
+          "name": "魏武帝（皇帝）",
+          "role": "antagonist",
+          "description": "最终BOSS，代表不受约束的最高权力。；利用沈度整顿吏治。；不希望任何一方独大，包括太子。",
+          "profile": {
+            "personality": [
+              "雄猜之主",
+              "孤家寡人",
+              "立下罪己诏的帝王"
+            ],
+            "appearance": "",
+            "background": "维持皇权稳固，平衡朝局。；早年夺嫡的残酷经历，导致不再信任任何人。；默许贪腐以制衡百官。",
+            "abilities": [
+              "至高无上的皇权。"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786550963952-0",
+                "targetName": "沈度",
+                "type": "enemy",
+                "description": "法大于权还是权大于法。"
+              },
+              {
+                "characterId": "",
+                "targetName": "利用 -> 欣赏 -> 恐惧 -> 妥协。",
+                "type": "neutral",
+                "description": "利用 -> 欣赏 -> 恐惧 -> 妥协。"
+              }
+            ],
+            "keyNeed": "维持皇权稳固，平衡朝局。",
+            "publicGoal": "利用沈度整顿吏治。",
+            "hiddenNeed": "不希望任何一方独大，包括太子。",
+            "fearOrWound": "早年夺嫡的残酷经历，导致不再信任任何人。",
+            "secret": "默许贪腐以制衡百官。",
+            "turningPoint": "第160章下密诏抓捕沈度。",
+            "arcStart": "雄猜之主",
+            "arcMid": "孤家寡人",
+            "arcEnd": "立下罪己诏的帝王",
+            "revealTiming": "第80章（首次正面出场）"
+          },
+          "createdAt": "2026-08-12T16:09:23.952Z",
+          "updatedAt": "2026-08-12T16:09:23.952Z"
+        },
+        {
+          "id": "char-1786550963952-5",
+          "name": "顾言",
+          "role": "mentor",
+          "description": "传授官场经验，提供政治庇护。；教导沈度为官之道。；通过沈度完成自己未竟的改革理想。",
+          "profile": {
+            "personality": [
+              "失意老臣",
+              "幕后推手",
+              "精神图腾"
+            ],
+            "appearance": "",
+            "background": "保护传承，寻找衣钵传人。；曾因直言进谏被贬，一生不得志。；前朝太子的老师。",
+            "abilities": [
+              "极高的政治声望",
+              "人脉。"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786550963952-0",
+                "targetName": "沈度",
+                "type": "alliance",
+                "description": "老练圆滑 vs 锋芒毕露。"
+              },
+              {
+                "characterId": "",
+                "targetName": "试探 -> 认可 -> 舍身相护。",
+                "type": "neutral",
+                "description": "试探 -> 认可 -> 舍身相护。"
+              }
+            ],
+            "keyNeed": "保护传承，寻找衣钵传人。",
+            "publicGoal": "教导沈度为官之道。",
+            "hiddenNeed": "通过沈度完成自己未竟的改革理想。",
+            "fearOrWound": "曾因直言进谏被贬，一生不得志。",
+            "secret": "前朝太子的老师。",
+            "turningPoint": "第130章为保护沈度而死。",
+            "arcStart": "失意老臣",
+            "arcMid": "幕后推手",
+            "arcEnd": "精神图腾",
+            "revealTiming": "第55章"
+          },
+          "createdAt": "2026-08-12T16:09:23.952Z",
+          "updatedAt": "2026-08-12T16:09:23.952Z"
+        },
+        {
+          "id": "char-1786550963952-6",
+          "name": "柳如是（已在核心盟友中定义，此处补充中前期弧线）",
+          "role": "support",
+          "description": "情感支撑，商业线辅助。；经商赚钱。；在乱世中寻找安全感。",
+          "profile": {
+            "personality": [
+              "落魄女",
+              "富豪",
+              "沈度的精神支柱"
+            ],
+            "appearance": "",
+            "background": "中前期为家族生存，中期为沈度安危。；无（已在上文描述）；无（已在上文描述）",
+            "abilities": [
+              "无（已在上文描述）"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786550963952-0",
+                "targetName": "沈度",
+                "type": "alliance",
+                "description": "理智与情感的平衡。"
+              },
+              {
+                "characterId": "",
+                "targetName": "从合作伙伴到生死相随。",
+                "type": "alliance",
+                "description": "从合作伙伴到生死相随。"
+              }
+            ],
+            "keyNeed": "中前期为家族生存，中期为沈度安危。",
+            "publicGoal": "经商赚钱。",
+            "hiddenNeed": "在乱世中寻找安全感。",
+            "fearOrWound": "无（已在上文描述）",
+            "secret": "无（已在上文描述）",
+            "turningPoint": "无（已在上文描述）",
+            "arcStart": "落魄女",
+            "arcMid": "富豪",
+            "arcEnd": "沈度的精神支柱",
+            "revealTiming": "第7章"
+          },
+          "createdAt": "2026-08-12T16:09:23.952Z",
+          "updatedAt": "2026-08-12T16:09:23.952Z"
+        },
+        {
+          "id": "char-1786550963952-7",
+          "name": "王猛",
+          "role": "ally",
+          "description": "武力担当，保护主角，执行抓捕。；升官发财。；洗清父亲冤屈。",
+          "profile": {
+            "personality": [
+              "锦衣卫打手",
+              "沈度的死忠",
+              "新任锦衣卫指挥使"
+            ],
+            "appearance": "",
+            "background": "查清父亲死因，为父报仇。；目睹父亲被冤杀。；锦衣卫暗桩。",
+            "abilities": [
+              "高强武艺",
+              "锦衣卫身份。"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786550963952-0",
+                "targetName": "沈度",
+                "type": "alliance",
+                "description": "武夫冲动 vs 文人算计。"
+              },
+              {
+                "characterId": "",
+                "targetName": "雇佣 -> 信任 -> 命运共同体。",
+                "type": "neutral",
+                "description": "雇佣 -> 信任 -> 命运共同体。"
+              }
+            ],
+            "keyNeed": "查清父亲死因，为父报仇。",
+            "publicGoal": "升官发财。",
+            "hiddenNeed": "洗清父亲冤屈。",
+            "fearOrWound": "目睹父亲被冤杀。",
+            "secret": "锦衣卫暗桩。",
+            "turningPoint": "第100章拒绝执行抓捕沈度的命令。",
+            "arcStart": "锦衣卫打手",
+            "arcMid": "沈度的死忠",
+            "arcEnd": "新任锦衣卫指挥使",
+            "revealTiming": "第36章"
+          },
+          "createdAt": "2026-08-12T16:09:23.952Z",
+          "updatedAt": "2026-08-12T16:09:23.952Z"
+        },
+        {
+          "id": "char-1786550963952-8",
+          "name": "魏太子",
+          "role": "support",
+          "description": "政治盟友，提供合法性支持。；整顿朝纲。；摆脱软弱的标签。",
+          "profile": {
+            "personality": [
+              "懦弱太子",
+              "被废庶人",
+              "明君"
+            ],
+            "appearance": "",
+            "background": "保住储君之位，顺利登基。；被父皇压制多年，极度缺乏自信。；身患隐疾。",
+            "abilities": [
+              "东宫势力",
+              "正统名分。"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786550963952-0",
+                "targetName": "沈度",
+                "type": "alliance",
+                "description": "利用与被利用，后转化为真正的君臣相得。"
+              },
+              {
+                "characterId": "",
+                "targetName": "试探 -> 依赖 -> 尊重 -> 敬畏。",
+                "type": "neutral",
+                "description": "试探 -> 依赖 -> 尊重 -> 敬畏。"
+              }
+            ],
+            "keyNeed": "保住储君之位，顺利登基。",
+            "publicGoal": "整顿朝纲。",
+            "hiddenNeed": "摆脱软弱的标签。",
+            "fearOrWound": "被父皇压制多年，极度缺乏自信。",
+            "secret": "身患隐疾。",
+            "turningPoint": "第110章被废，第115章被沈度救回并扶持复位。",
+            "arcStart": "懦弱太子",
+            "arcMid": "被废庶人",
+            "arcEnd": "明君",
+            "revealTiming": "第50章"
+          },
+          "createdAt": "2026-08-12T16:09:23.952Z",
+          "updatedAt": "2026-08-12T16:09:23.952Z"
+        },
+        {
+          "id": "char-1786550963952-9",
+          "name": "钱多多（户部侍郎）",
+          "role": "support",
+          "description": "财政专家，主角在经济领域的助手。；充实国库。；证明理财不只是敛财。",
+          "profile": {
+            "personality": [
+              "庸俗财迷",
+              "国士",
+              "殉道者"
+            ],
+            "appearance": "",
+            "background": "实现自己的理财理想。；曾因贪腐案被牵连，幸免于难。；暗中资助过反贼。",
+            "abilities": [
+              "理财能力",
+              "户部人脉。"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786550963952-0",
+                "targetName": "沈度",
+                "type": "alliance",
+                "description": "对金钱的不同理解。"
+              },
+              {
+                "characterId": "",
+                "targetName": "被怀疑 -> 被赏识 -> 并肩作战。",
+                "type": "neutral",
+                "description": "被怀疑 -> 被赏识 -> 并肩作战。"
+              }
+            ],
+            "keyNeed": "实现自己的理财理想。",
+            "publicGoal": "充实国库。",
+            "hiddenNeed": "证明理财不只是敛财。",
+            "fearOrWound": "曾因贪腐案被牵连，幸免于难。",
+            "secret": "暗中资助过反贼。",
+            "turningPoint": "第140章为保护国库资金与叛军同归于尽。",
+            "arcStart": "庸俗财迷",
+            "arcMid": "国士",
+            "arcEnd": "殉道者",
+            "revealTiming": "第60章"
+          },
+          "createdAt": "2026-08-12T16:09:23.952Z",
+          "updatedAt": "2026-08-12T16:09:23.952Z"
+        },
+        {
+          "id": "char-1786550963952-10",
+          "name": "陈公公（东厂提督）",
+          "role": "support",
+          "description": "皇帝的耳目，制造麻烦，后期倒戈。；监视百官。；寻找新的依靠（皇帝病重）。",
+          "profile": {
+            "personality": [
+              "忠犬",
+              "犹豫",
+              "背叛者"
+            ],
+            "appearance": "",
+            "background": "维护皇帝权威，自保。；身体残缺，心理扭曲。；掌握了皇帝的大量黑料。",
+            "abilities": [
+              "东厂番子",
+              "情报网。"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786550963952-0",
+                "targetName": "沈度",
+                "type": "alliance",
+                "description": "特务统治 vs 法治程序。"
+              },
+              {
+                "characterId": "",
+                "targetName": "敌视 -> 妥协 -> 交易。",
+                "type": "enemy",
+                "description": "敌视 -> 妥协 -> 交易。"
+              }
+            ],
+            "keyNeed": "维护皇帝权威，自保。",
+            "publicGoal": "监视百官。",
+            "hiddenNeed": "寻找新的依靠（皇帝病重）。",
+            "fearOrWound": "身体残缺，心理扭曲。",
+            "secret": "掌握了皇帝的大量黑料。",
+            "turningPoint": "第150章交出黑料，背刺皇帝。",
+            "arcStart": "忠犬",
+            "arcMid": "犹豫",
+            "arcEnd": "背叛者",
+            "revealTiming": "第70章"
+          },
+          "createdAt": "2026-08-12T16:09:23.952Z",
+          "updatedAt": "2026-08-12T16:09:23.952Z"
+        },
+        {
+          "id": "char-1786550963952-11",
+          "name": "林将军（边关守将）",
+          "role": "support",
+          "description": "军费案的关键证人，武力威慑。；索要军饷。；不参与党争。",
+          "profile": {
+            "personality": [
+              "怨将",
+              "忠将",
+              "护国柱石"
+            ],
+            "appearance": "",
+            "background": "兄弟们吃饱饭，打胜仗。；看着兄弟饿死冻死。；私自屯田养兵。",
+            "abilities": [
+              "边军",
+              "赫赫战功。"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786550963952-0",
+                "targetName": "沈度",
+                "type": "alliance",
+                "description": "现实无奈 vs 理想主义。"
+              },
+              {
+                "characterId": "",
+                "targetName": "抵触 -> 理解 -> 支持。",
+                "type": "neutral",
+                "description": "抵触 -> 理解 -> 支持。"
+              }
+            ],
+            "keyNeed": "兄弟们吃饱饭，打胜仗。",
+            "publicGoal": "索要军饷。",
+            "hiddenNeed": "不参与党争。",
+            "fearOrWound": "看着兄弟饿死冻死。",
+            "secret": "私自屯田养兵。",
+            "turningPoint": "第125章带兵勤王，清君侧。",
+            "arcStart": "怨将",
+            "arcMid": "忠将",
+            "arcEnd": "护国柱石",
+            "revealTiming": "第100章"
+          },
+          "createdAt": "2026-08-12T16:09:23.952Z",
+          "updatedAt": "2026-08-12T16:09:23.952Z"
+        }
+      ],
+      "worldSchema": {
+        "locations": [
+          {
+            "id": "loc-1786550963953-0",
+            "name": "大魏刑部大牢",
+            "description": "开局场景，主角在此获得金手指，完成第一次反击。；生死危机，律法与权力的初次碰撞。",
+            "level": "district",
+            "parentId": ""
+          },
+          {
+            "id": "loc-1786550963953-1",
+            "name": "户部衙门",
+            "description": "主角原职场，第一卷的核心战场，充满贪腐和陷阱。；职场倾轧，账目造假，利益输送。",
+            "level": "district",
+            "parentId": ""
+          },
+          {
+            "id": "loc-1786550963953-2",
+            "name": "都察院",
+            "description": "主角中期据点，拥有监察百官之权，是主角对抗权贵的武器。；派系斗争，弹劾与反弹劾，政治博弈。",
+            "level": "city",
+            "parentId": ""
+          }
+        ],
+        "rules": [
+          {
+            "id": "rule-1786550963953-0",
+            "name": "大魏律",
+            "description": "国家根本大法，条文繁杂，存在大量被忽视的细节条款。；执行难度大，权贵常逾越法律。",
+            "locked": false,
+            "category": "custom",
+            "relatedRuleIds": []
+          },
+          {
+            "id": "rule-1786550963953-1",
+            "name": "连坐制度",
+            "description": "一人犯罪，株连亲族邻里。；使得官场结党营私现象极其严重，互相包庇。",
+            "locked": false,
+            "category": "social",
+            "relatedRuleIds": []
+          },
+          {
+            "id": "rule-1786550963953-2",
+            "name": "引文制度",
+            "description": "官员办事必须有公文和批示，流程繁琐。；效率低下，但留下了大量书面证据。",
+            "locked": false,
+            "category": "social",
+            "relatedRuleIds": []
+          }
+        ],
+        "factions": [
+          {
+            "id": "faction-1786550963953-0",
+            "name": "清流党（太子系）",
+            "description": "维护法度，主张轻徭薄赋。；辅佐太子登基，整顿朝纲。；盟友，后期的政治靠山。",
+            "parentId": "",
+            "relation": {
+              "targetFactionId": "",
+              "targetFactionName": "都察院部分御史",
+              "type": "ally",
+              "description": ""
+            }
+          },
+          {
+            "id": "faction-1786550963953-1",
+            "name": "勋贵党（三皇子系）",
+            "description": "既得利益者，把持军政财权。；拥立三皇子，维持现状以便继续敛财。；死敌，主要的斗争对象。",
+            "parentId": "",
+            "relation": {
+              "targetFactionId": "",
+              "targetFactionName": "部分边将",
+              "type": "ally",
+              "description": ""
+            }
+          },
+          {
+            "id": "faction-1786550963953-2",
+            "name": "江湖商帮（漕运/盐商）",
+            "description": "经济基础，依附于权贵。；垄断经营，获取暴利。；工具/打击对象，主角通过整治商帮来打击背后的官员。",
+            "parentId": "",
+            "relation": {
+              "targetFactionId": "",
+              "targetFactionName": "贪官。",
+              "type": "ally",
+              "description": ""
+            }
+          }
+        ]
+      },
+      "foreshadows": [
+        {
+          "id": "foreshadow-1786550963953-0",
+          "hint": "案卷中有一页纸的墨迹与其他页不同。",
+          "type": "item",
+          "status": "buried",
+          "createdChapter": 2,
+          "suggestedResolutionChapter": 12,
+          "payoffValue": "找到刘德水做假账的直接证据。",
+          "carrierCharacter": "沈度",
+          "linkedConflict": "户部冤案",
+          "importance": "main",
+          "setupChapter": 2,
+          "payoffChapter": 12
+        },
+        {
+          "id": "foreshadow-1786550963953-1",
+          "hint": "狱卒提到最近牢里经常死“霉”烂死的犯人。",
+          "type": "dialogue",
+          "status": "buried",
+          "createdChapter": 3,
+          "suggestedResolutionChapter": 14,
+          "payoffValue": "识破对手想要在狱中暗杀主角的阴谋，提前防备。",
+          "carrierCharacter": "狱卒",
+          "linkedConflict": "主角生存危机",
+          "importance": "subplot",
+          "setupChapter": 3,
+          "payoffChapter": 14
+        },
+        {
+          "id": "foreshadow-1786550963953-2",
+          "hint": "柳如是腰间的玉佩刻着特殊的纹路。",
+          "type": "identity",
+          "status": "buried",
+          "createdChapter": 7,
+          "suggestedResolutionChapter": 28,
+          "payoffValue": "发现柳如是与前朝遗孤的关系，增加她被追杀的风险。",
+          "carrierCharacter": "柳如是",
+          "linkedConflict": "柳家身世",
+          "importance": "subplot",
+          "setupChapter": 7,
+          "payoffChapter": 28
+        },
+        {
+          "id": "foreshadow-1786550963953-3",
+          "hint": "刘德水临死前说“你也逃不掉”。",
+          "type": "dialogue",
+          "status": "buried",
+          "createdChapter": 25,
+          "suggestedResolutionChapter": 55,
+          "payoffValue": "引出三皇子是幕后黑手，开启第二卷主线。",
+          "carrierCharacter": "刘德水",
+          "linkedConflict": "更大的贪腐网络",
+          "importance": "main",
+          "setupChapter": 25,
+          "payoffChapter": 55
+        },
+        {
+          "id": "foreshadow-1786550963953-4",
+          "hint": "烧焦账册上出现“内务府”的字样。",
+          "type": "item",
+          "status": "buried",
+          "createdChapter": 45,
+          "suggestedResolutionChapter": 65,
+          "payoffValue": "发现贪腐网络已经伸入皇宫，案件性质升级。",
+          "carrierCharacter": "账册",
+          "linkedConflict": "宫廷贪腐",
+          "importance": "main",
+          "setupChapter": 45,
+          "payoffChapter": 65
+        },
+        {
+          "id": "foreshadow-1786550963953-5",
+          "hint": "王猛对沈度提到的“那个案子”讳莫如深。",
+          "type": "event",
+          "status": "buried",
+          "createdChapter": 38,
+          "suggestedResolutionChapter": 80,
+          "payoffValue": "揭开王猛父亲冤案的真相，推动主线进入军费调查阶段。",
+          "carrierCharacter": "王猛",
+          "linkedConflict": "军费案",
+          "importance": "subplot",
+          "setupChapter": 38,
+          "payoffChapter": 80
+        },
+        {
+          "id": "foreshadow-1786550963953-6",
+          "hint": "皇帝身体每况愈下，太医频繁出入宫廷。",
+          "type": "event",
+          "status": "buried",
+          "createdChapter": 48,
+          "suggestedResolutionChapter": 120,
+          "payoffValue": "皇帝病危引发夺嫡白热化，导致太子被废，主角陷入至暗时刻。",
+          "carrierCharacter": "皇帝",
+          "linkedConflict": "夺嫡之争",
+          "importance": "main",
+          "setupChapter": 48,
+          "payoffChapter": 120
+        },
+        {
+          "id": "foreshadow-1786550963953-7",
+          "hint": "大魏律中有一条关于“罪己诏”的古老条款从未被启用。",
+          "type": "world-rule",
+          "status": "buried",
+          "createdChapter": 60,
+          "suggestedResolutionChapter": 170,
+          "payoffValue": "主角利用这条古老条款，逼迫皇帝认错，达成最终目标。",
+          "carrierCharacter": "顾言",
+          "linkedConflict": "终极审判",
+          "importance": "main",
+          "setupChapter": 60,
+          "payoffChapter": 170
+        },
+        {
+          "id": "foreshadow-1786550963953-8",
+          "hint": "沈度穿越时随身携带的一支钢笔，竟能在大魏写出永不褪色的字迹。",
+          "type": "item",
+          "status": "buried",
+          "createdChapter": 1,
+          "suggestedResolutionChapter": 180,
+          "payoffValue": "钢笔记录了沈度在大魏的一生，成为他留给这个世界的最后纪念。",
+          "carrierCharacter": "沈度",
+          "linkedConflict": "无",
+          "importance": "emotion",
+          "setupChapter": 1,
+          "payoffChapter": 180
+        },
+        {
+          "id": "foreshadow-1786550963953-9",
+          "hint": "真知之眼的每一次剧烈头痛都伴随着一段模糊的记忆碎片。",
+          "type": "ability",
+          "status": "buried",
+          "createdChapter": 70,
+          "suggestedResolutionChapter": 175,
+          "payoffValue": "揭示穿越的真相是历史的修正，沈度的任务就是修正这个历史节点，完成后将回归或消散。",
+          "carrierCharacter": "沈度",
+          "linkedConflict": "穿越真相",
+          "importance": "main",
+          "setupChapter": 70,
+          "payoffChapter": 175
+        }
+      ],
+      "plotOutline": [
+        {
+          "id": "plot-1786550963952-0",
+          "title": "第一幕",
+          "description": "洗清死罪，反杀陷害者，入职监察机构。；在死刑复核期发现案卷漏洞，利用规则争取重审机会，借力打力扳倒上司。",
+          "type": "act",
+          "orderIndex": 0
+        },
+        {
+          "id": "plot-1786550963952-1",
+          "title": "第二幕上",
+          "description": "在都察院站稳脚跟，查办几桩大案积累声望，卷入夺嫡之争。；查案过程中发现皇子贪腐线索，面临站队抉择，选择依附势弱但守法的太子。",
+          "type": "act",
+          "orderIndex": 1
+        },
+        {
+          "id": "plot-1786550963952-2",
+          "title": "第二幕下",
+          "description": "对抗强大的反派势力，揭露军费贪墨案。；太子被废或蒙难，主角失去靠山且被追杀，必须孤身一人搜集证据。",
+          "type": "act",
+          "orderIndex": 2
+        },
+        {
+          "id": "plot-1786550963952-3",
+          "title": "第三幕",
+          "description": "审判终极贪腐，确立法度高于皇权的规则。；逼迫皇帝下罪己诏或立下铁券，建立长效机制，功成身退。",
+          "type": "act",
+          "orderIndex": 3
+        },
+        {
+          "id": "plot-1786550963952-4",
+          "title": "王猛的身世之谜",
+          "description": "提供武力支持，引出军费线索。；王猛的真实身份是前将军之子，其父因军费案被杀，这条支线最终汇入军费贪墨主线。",
+          "type": "subplot",
+          "chapterRange": [
+            36,
+            120
+          ],
+          "purpose": "王猛的真实身份是前将军之子，其父因军费案被杀，这条支线最终汇入军费贪墨主线。",
+          "relatedCharacters": [
+            "王猛",
+            "沈度"
+          ],
+          "orderIndex": 4
+        },
+        {
+          "id": "plot-1786550963952-5",
+          "title": "柳如是的家族救赎",
+          "description": "情感线，展现主角在律法之外的人性。；柳家的遭遇映射了商人在皇权下的无奈，主角对柳家的态度也是主角价值观的体现。",
+          "type": "subplot",
+          "chapterRange": [
+            7,
+            90
+          ],
+          "purpose": "柳家的遭遇映射了商人在皇权下的无奈，主角对柳家的态度也是主角价值观的体现。",
+          "relatedCharacters": [
+            "柳如是",
+            "沈度"
+          ],
+          "orderIndex": 5
+        },
+        {
+          "id": "plot-1786550963952-6",
+          "title": "烧焦账本的拼图",
+          "description": "贯穿全书的悬疑线，引出终极反派。；账本碎片拼凑出的真相指向皇帝，是最终决战的核心证据。",
+          "type": "subplot",
+          "chapterRange": [
+            45,
+            170
+          ],
+          "purpose": "账本碎片拼凑出的真相指向皇帝，是最终决战的核心证据。",
+          "relatedCharacters": [
+            "沈度",
+            "太监总管"
+          ],
+          "orderIndex": 6
+        },
+        {
+          "id": "plot-1786550963952-7",
+          "title": "醒来就要被砍头？",
+          "description": "醒在刑部大堂，惊听判官喊秋后问斩。",
+          "type": "chapter",
+          "keyEvents": [
+            "确立死刑危机",
+            "激活金手指真知之眼。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 0,
+          "CBN": "醒在刑部大堂，惊听判官喊秋后问斩。",
+          "CPNs": [
+            "穿越成替罪羊小吏",
+            "激活金手指发现供词笔迹有误",
+            "试图喊冤被当堂驳回。"
+          ],
+          "CEN": "狱卒狞笑拖他回牢，低语今晚上路。",
+          "mustCover": [
+            "确立死刑危机",
+            "激活金手指真知之眼。"
+          ],
+          "forbiddenZones": [
+            "不可直接武力越狱",
+            "不可此时就洗清冤屈。"
+          ],
+          "chapterType": "world_intro",
+          "hookType": "解谜/逆袭",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 醒在刑部大堂，惊听判官喊秋后问斩。\nCEN: 狱卒狞笑拖他回牢，低语今晚上路。",
+          "chapterId": "chapter-1786550963964"
+        },
+        {
+          "id": "plot-1786550963952-8",
+          "title": "这牢饭里全是油水",
+          "description": "盯着牢饭发霉，金眼却看穿狱卒鞋底藏银。",
+          "type": "chapter",
+          "keyEvents": [
+            "掌控狱卒",
+            "确立复仇计划第一步。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 1,
+          "CBN": "盯着牢饭发霉，金眼却看穿狱卒鞋底藏银。",
+          "CPNs": [
+            "利用金手指分析狱卒贪腐路径",
+            "反向拿捏狱卒弱点",
+            "要求狱卒传递消息。"
+          ],
+          "CEN": "狱卒脸色惨白跪地，问你想传给谁。",
+          "mustCover": [
+            "掌控狱卒",
+            "确立复仇计划第一步。"
+          ],
+          "forbiddenZones": [
+            "不可离开牢房范围。"
+          ],
+          "chapterType": "character_intro",
+          "hookType": "反收服/装逼",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 盯着牢饭发霉，金眼却看穿狱卒鞋底藏银。\nCEN: 狱卒脸色惨白跪地，问你想传给谁。",
+          "chapterId": "chapter-1786550963975"
+        },
+        {
+          "id": "plot-1786550963952-9",
+          "title": "给我找个会写字的",
+          "description": "扔给狱卒半根发簪，让他转交巡狱御史。",
+          "type": "chapter",
+          "keyEvents": [
+            "建立外部联络",
+            "制造复核契机。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 2,
+          "CBN": "扔给狱卒半根发簪，让他转交巡狱御史。",
+          "CPNs": [
+            "教狱卒如何合规规避风险",
+            "狱卒半信半疑送信",
+            "沈度静候回音。"
+          ],
+          "CEN": "狱卒跑回来说，御史没接，但看了。",
+          "mustCover": [
+            "建立外部联络",
+            "制造复核契机。"
+          ],
+          "forbiddenZones": [
+            "不可直接见到柳如是。"
+          ],
+          "chapterType": "plot_setup",
+          "hookType": "布局/操控",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 扔给狱卒半根发簪，让他转交巡狱御史。\nCEN: 狱卒跑回来说，御史没接，但看了。",
+          "chapterId": "chapter-1786550963987"
+        },
+        {
+          "id": "plot-1786550963952-10",
+          "title": "刑部尚书急疯了",
+          "description": "牢门被撞开，主官冲进来逼他画押认罪。",
+          "type": "chapter",
+          "keyEvents": [
+            "与反派爪牙对峙",
+            "确立反派急于灭口。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 3,
+          "CBN": "牢门被撞开，主官冲进来逼他画押认罪。",
+          "CPNs": [
+            "主官威胁利诱",
+            "沈度指出案卷漏洞拖延",
+            "主官气急败坏离开。"
+          ],
+          "CEN": "主官阴狠下令，今晚提审做实死罪。",
+          "mustCover": [
+            "与反派爪牙对峙",
+            "确立反派急于灭口。"
+          ],
+          "forbiddenZones": [
+            "不可此时直接反杀。"
+          ],
+          "chapterType": "normal",
+          "hookType": "心理博弈",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 牢门被撞开，主官冲进来逼他画押认罪。\nCEN: 主官阴狠下令，今晚提审做实死罪。",
+          "chapterId": "chapter-1786550963996"
+        },
+        {
+          "id": "plot-1786550963952-11",
+          "title": "只有死人不会说话",
+          "description": "狱卒送来断头饭，沈度笑着吃下并要纸笔。",
+          "type": "chapter",
+          "keyEvents": [
+            "制造复核机会",
+            "引出柳如是登场。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 4,
+          "CBN": "狱卒送来断头饭，沈度笑着吃下并要纸笔。",
+          "CPNs": [
+            "写下绝笔信逻辑推演",
+            "利用规则要求最后见家属",
+            "大牢门口突然喧哗。"
+          ],
+          "CEN": "一个清冷女声传来，这个案子我要复核。",
+          "mustCover": [
+            "制造复核机会",
+            "引出柳如是登场。"
+          ],
+          "forbiddenZones": [
+            "不可确定柳如是立场。"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/救命",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 狱卒送来断头饭，沈度笑着吃下并要纸笔。\nCEN: 一个清冷女声传来，这个案子我要复核。",
+          "chapterId": "chapter-1786550964005"
+        },
+        {
+          "id": "plot-1786550963952-12",
+          "title": "那个女御史好凶",
+          "description": "柳如是拍案怒问，沈度却盯着她官服。",
+          "type": "chapter",
+          "keyEvents": [
+            "柳如是发现疑点",
+            "沈度初步折服柳如是。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 5,
+          "CBN": "柳如是拍案怒问，沈度却盯着她官服。",
+          "CPNs": [
+            "柳如是质疑翻供动机",
+            "沈度用逻辑漏洞反击",
+            "两人达成利益交换。"
+          ],
+          "CEN": "柳如是收起供词，冷声说最好没骗我。",
+          "mustCover": [
+            "柳如是发现疑点",
+            "沈度初步折服柳如是。"
+          ],
+          "forbiddenZones": [
+            "柳如是不能无脑倒贴。"
+          ],
+          "chapterType": "normal",
+          "hookType": "逻辑征服",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 柳如是拍案怒问，沈度却盯着她官服。\nCEN: 柳如是收起供词，冷声说最好没骗我。",
+          "chapterId": "chapter-1786550964015"
+        },
+        {
+          "id": "plot-1786550963952-13",
+          "title": "谁敢签这个字？",
+          "description": "御史台内，沈度的诉状被扔在地上无人接。",
+          "type": "chapter",
+          "keyEvents": [
+            "争取重审遇阻",
+            "展示反派势力。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 6,
+          "CBN": "御史台内，沈度的诉状被扔在地上无人接。",
+          "CPNs": [
+            "众御史避之不及",
+            "沈度舌战群儒",
+            "柳如是挺身而出但缺人手。"
+          ],
+          "CEN": "刘德水亲信闯入，当众撕碎了诉状。",
+          "mustCover": [
+            "争取重审遇阻",
+            "展示反派势力。"
+          ],
+          "forbiddenZones": [
+            "不可直接成功。"
+          ],
+          "chapterType": "normal",
+          "hookType": "文戏武写",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 御史台内，沈度的诉状被扔在地上无人接。\nCEN: 刘德水亲信闯入，当众撕碎了诉状。",
+          "chapterId": "chapter-1786550964024"
+        },
+        {
+          "id": "plot-1786550963952-14",
+          "title": "这一招叫借刀杀人",
+          "description": "沈度捡起碎纸片，指着大殿匾额念律法。",
+          "type": "chapter",
+          "keyEvents": [
+            "成功争取重审",
+            "展示专业知识。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 7,
+          "CBN": "沈度捡起碎纸片，指着大殿匾额念律法。",
+          "CPNs": [
+            "搬出先帝祖制",
+            "利用政敌矛盾",
+            "成功争取三司会审。"
+          ],
+          "CEN": "判官惊堂木落下，三日后复审。",
+          "mustCover": [
+            "成功争取重审",
+            "展示专业知识。"
+          ],
+          "forbiddenZones": [
+            "不可直接洗清冤屈。"
+          ],
+          "chapterType": "normal",
+          "hookType": "智斗/借力",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度捡起碎纸片，指着大殿匾额念律法。\nCEN: 判官惊堂木落下，三日后复审。",
+          "chapterId": "chapter-1786550964034"
+        },
+        {
+          "id": "plot-1786550963952-15",
+          "title": "户部大库的钥匙",
+          "description": "柳如是扔给他一块腰牌，只有两个时辰。",
+          "type": "chapter",
+          "keyEvents": [
+            "获得查账机会",
+            "发现关键证据缺失。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 8,
+          "CBN": "柳如是扔给他一块腰牌，只有两个时辰。",
+          "CPNs": [
+            "潜入户部档案库",
+            "寻找原始凭证",
+            "发现账本被动过手脚。"
+          ],
+          "CEN": "档案库深处传来响动，有人在销毁证据。",
+          "mustCover": [
+            "获得查账机会",
+            "发现关键证据缺失。"
+          ],
+          "forbiddenZones": [
+            "不可被当场抓获。"
+          ],
+          "chapterType": "normal",
+          "hookType": "潜行/解谜",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 柳如是扔给他一块腰牌，只有两个时辰。\nCEN: 档案库深处传来响动，有人在销毁证据。",
+          "chapterId": "chapter-1786550964044"
+        },
+        {
+          "id": "plot-1786550963952-16",
+          "title": "证人怎么死了？",
+          "description": "沈度刚拿到单据，门外突然传来噩耗。",
+          "type": "chapter",
+          "keyEvents": [
+            "查账受阻",
+            "证人死亡。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 9,
+          "CBN": "沈度刚拿到单据，门外突然传来噩耗。",
+          "CPNs": [
+            "前往证人住处",
+            "发现尸体还是热的",
+            "现场伪装成畏罪自杀。"
+          ],
+          "CEN": "尸体手里紧紧攥着一枚刘德水私印。",
+          "mustCover": [
+            "查账受阻",
+            "证人死亡。"
+          ],
+          "forbiddenZones": [
+            "不可查到幕后黑手是皇子。"
+          ],
+          "chapterType": "normal",
+          "hookType": "悬疑/惊悚",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度刚拿到单据，门外突然传来噩耗。\nCEN: 尸体手里紧紧攥着一枚刘德水私印。",
+          "chapterId": "chapter-1786550964054"
+        },
+        {
+          "id": "plot-1786550963952-17",
+          "title": "杀手的刀慢了一瞬",
+          "description": "窗纸破了个洞，一道寒光直刺咽喉。",
+          "type": "chapter",
+          "keyEvents": [
+            "逃离现场",
+            "前往档案库。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 10,
+          "CBN": "窗纸破了个洞，一道寒光直刺咽喉。",
+          "CPNs": [
+            "侧身闪避利用证人尸体挡刀",
+            "夺门而出逃往档案库",
+            "利用夜色甩开追踪。"
+          ],
+          "CEN": "退守档案库大门，身后脚步声逼近。",
+          "mustCover": [
+            "逃离现场",
+            "前往档案库。"
+          ],
+          "forbiddenZones": [
+            "不可杀死杀手。"
+          ],
+          "chapterType": "normal",
+          "hookType": "逃亡/惊悚",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 窗纸破了个洞，一道寒光直刺咽喉。\nCEN: 退守档案库大门，身后脚步声逼近。",
+          "chapterId": "chapter-1786550964065"
+        },
+        {
+          "id": "plot-1786550963952-18",
+          "title": "擅闯者死，这是律法",
+          "description": "退守档案库大门，身后脚步声逼近。",
+          "type": "chapter",
+          "keyEvents": [
+            "利用机关反杀",
+            "发现都察院腰牌。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 11,
+          "CBN": "退守档案库大门，身后脚步声逼近。",
+          "CPNs": [
+            "沈度念诵档案库律法触动机关",
+            "杀手被暗箭射杀",
+            "搜身发现都察院腰牌。"
+          ],
+          "CEN": "看着腰牌上的名字，沈度瞳孔骤缩。",
+          "mustCover": [
+            "利用机关反杀",
+            "发现都察院腰牌。"
+          ],
+          "forbiddenZones": [
+            "不可让主角武力值过高。"
+          ],
+          "chapterType": "normal",
+          "hookType": "借刀杀人/反转",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 退守档案库大门，身后脚步声逼近。\nCEN: 看着腰牌上的名字，沈度瞳孔骤缩。",
+          "chapterId": "chapter-1786550964074"
+        },
+        {
+          "id": "plot-1786550963952-19",
+          "title": "这账本是活的",
+          "description": "把腰牌藏进靴筒，沈度面无表情回到牢房。",
+          "type": "chapter",
+          "keyEvents": [
+            "逻辑推导",
+            "锁定真账本。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 12,
+          "CBN": "把腰牌藏进靴筒，沈度面无表情回到牢房。",
+          "CPNs": [
+            "结合私印和腰牌信息推演",
+            "在墙上画出复杂的资金流向",
+            "锁定核心账本位置。"
+          ],
+          "CEN": "真账本根本不在户部，在刘府的私账里。",
+          "mustCover": [
+            "逻辑推导",
+            "锁定真账本。"
+          ],
+          "forbiddenZones": [
+            "不可直接拿到账本。"
+          ],
+          "chapterType": "normal",
+          "hookType": "解谜/智商碾压",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 把腰牌藏进靴筒，沈度面无表情回到牢房。\nCEN: 真账本根本不在户部，在刘府的私账里。",
+          "chapterId": "chapter-1786550964084"
+        },
+        {
+          "id": "plot-1786550963952-20",
+          "title": "给他送个假的",
+          "description": "沈度撕下衣襟，写下半本假账目。",
+          "type": "chapter",
+          "keyEvents": [
+            "制定诱饵计划",
+            "引诱刘德水。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 13,
+          "CBN": "沈度撕下衣襟，写下半本假账目。",
+          "CPNs": [
+            "通过狱卒将假账流放出去",
+            "制造有人掌握证据的假象",
+            "观察刘德水反应。"
+          ],
+          "CEN": "刘德水深夜调动亲卫，直奔城外别院。",
+          "mustCover": [
+            "制定诱饵计划",
+            "引诱刘德水。"
+          ],
+          "forbiddenZones": [
+            "不可直接暴露主角身份。"
+          ],
+          "chapterType": "normal",
+          "hookType": "布局/钓鱼执法",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度撕下衣襟，写下半本假账目。\nCEN: 刘德水深夜调动亲卫，直奔城外别院。",
+          "chapterId": "chapter-1786550964095"
+        },
+        {
+          "id": "plot-1786550963952-21",
+          "title": "他在销毁证据",
+          "description": "柳如是按计划带队突袭别院。",
+          "type": "chapter",
+          "keyEvents": [
+            "突袭查证",
+            "遭遇刘德水阻拦。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 14,
+          "CBN": "柳如是按计划带队突袭别院。",
+          "CPNs": [
+            "冲进别院发现正在烧账本",
+            "抢出残页确认是真迹",
+            "刘德水却在此刻出现阻拦。"
+          ],
+          "CEN": "刘德水手持圣旨，说这是朕特许的机密。",
+          "mustCover": [
+            "突袭查证",
+            "遭遇刘德水阻拦。"
+          ],
+          "forbiddenZones": [
+            "不可直接抓捕刘德水。"
+          ],
+          "chapterType": "normal",
+          "hookType": "冲突/对峙",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 柳如是按计划带队突袭别院。\nCEN: 刘德水手持圣旨，说这是朕特许的机密。",
+          "chapterId": "chapter-1786550964104"
+        },
+        {
+          "id": "plot-1786550963952-22",
+          "title": "圣旨也挡不住法",
+          "description": "沈度从柳如是身后走出，盯着圣旨发笑。",
+          "type": "chapter",
+          "keyEvents": [
+            "揭穿伪证",
+            "面临证据销毁的困境。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 15,
+          "CBN": "沈度从柳如是身后走出，盯着圣旨发笑。",
+          "CPNs": [
+            "指出圣旨日期的格式错误",
+            "揭露圣旨也是伪造的",
+            "刘德水脸色铁青无言以对。"
+          ],
+          "CEN": "虽查明伪造，但真账本已毁，证据链断裂。",
+          "mustCover": [
+            "揭穿伪证",
+            "面临证据销毁的困境。"
+          ],
+          "forbiddenZones": [
+            "不可让主角此时拥有实权。"
+          ],
+          "chapterType": "normal",
+          "hookType": "打脸/逻辑反杀",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度从柳如是身后走出，盯着圣旨发笑。\nCEN: 虽查明伪造，但真账本已毁，证据链断裂。",
+          "chapterId": "chapter-1786550964114"
+        },
+        {
+          "id": "plot-1786550963952-23",
+          "title": "没有账本我也赢",
+          "description": "沈度捡起灰烬，说这就够了。",
+          "type": "chapter",
+          "keyEvents": [
+            "寻找替代证据",
+            "锁定漕运帮会。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 16,
+          "CBN": "沈度捡起灰烬，说这就够了。",
+          "CPNs": [
+            "通过纸张灰烬分析墨水成分",
+            "推算出造纸作坊",
+            "锁定另一份备份记录。"
+          ],
+          "CEN": "备份记录在漕运帮会的手里。",
+          "mustCover": [
+            "寻找替代证据",
+            "锁定漕运帮会。"
+          ],
+          "forbiddenZones": [
+            "不可直接联系漕运帮会。"
+          ],
+          "chapterType": "normal",
+          "hookType": "解谜/推理",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度捡起灰烬，说这就够了。\nCEN: 备份记录在漕运帮会的手里。",
+          "chapterId": "chapter-1786550964125"
+        },
+        {
+          "id": "plot-1786550963952-24",
+          "title": "漕运帮会也怕查",
+          "description": "沈度让柳如是以税务合规名义查封帮会。",
+          "type": "chapter",
+          "keyEvents": [
+            "利用合规手段施压",
+            "获取关键证人线索。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 17,
+          "CBN": "沈度让柳如是以税务合规名义查封帮会。",
+          "CPNs": [
+            "利用税法漏洞冻结帮会资产",
+            "帮会为自保交出记录",
+            "记录指向刘德水核心党羽。"
+          ],
+          "CEN": "记录显示，刘德水的妻弟是关键经手人。",
+          "mustCover": [
+            "利用合规手段施压",
+            "获取关键证人线索。"
+          ],
+          "forbiddenZones": [
+            "不可动用武力。"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼/碾压",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度让柳如是以税务合规名义查封帮会。\nCEN: 记录显示，刘德水的妻弟是关键经手人。",
+          "chapterId": "chapter-1786550964135"
+        },
+        {
+          "id": "plot-1786550963952-25",
+          "title": "只要打断一条腿",
+          "description": "抓捕刘德水妻弟的命令下达。",
+          "type": "chapter",
+          "keyEvents": [
+            "抓捕关键从犯",
+            "发现都察院涉案。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 18,
+          "CBN": "抓捕刘德水妻弟的命令下达。",
+          "CPNs": [
+            "沈度设计抓捕方案",
+            "妻弟被捕前试图销毁文件",
+            "沈度利用时间差截获文件。"
+          ],
+          "CEN": "文件里不仅有账目，还有都察院高官的名字。",
+          "mustCover": [
+            "抓捕关键从犯",
+            "发现都察院涉案。"
+          ],
+          "forbiddenZones": [
+            "不可牵扯皇子。"
+          ],
+          "chapterType": "normal",
+          "hookType": "逆袭/收网",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 抓捕刘德水妻弟的命令下达。\nCEN: 文件里不仅有账目，还有都察院高官的名字。",
+          "chapterId": "chapter-1786550964146"
+        },
+        {
+          "id": "plot-1786550963952-26",
+          "title": "谁才是真正的鬼",
+          "description": "沈度看着名单，对柳如是说有人要慌了。",
+          "type": "chapter",
+          "keyEvents": [
+            "推导出内鬼存在",
+            "制造刘德水内部矛盾。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 19,
+          "CBN": "沈度看着名单，对柳如是说有人要慌了。",
+          "CPNs": [
+            "分析名单与腰牌主人的关系",
+            "推测刘德水身边有内鬼",
+            "决定将计就计。"
+          ],
+          "CEN": "刘德水收到消息，开始怀疑身边的师爷。",
+          "mustCover": [
+            "推导出内鬼存在",
+            "制造刘德水内部矛盾。"
+          ],
+          "forbiddenZones": [
+            "不可明确指出内鬼是谁。"
+          ],
+          "chapterType": "normal",
+          "hookType": "借刀杀人/离间",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度看着名单，对柳如是说有人要慌了。\nCEN: 刘德水收到消息，开始怀疑身边的师爷。",
+          "chapterId": "chapter-1786550964156"
+        },
+        {
+          "id": "plot-1786550963952-27",
+          "title": "这一审，就是生死局",
+          "description": "惊堂木震碎茶杯，沈度抬头直视审判席。",
+          "type": "chapter",
+          "keyEvents": [
+            "三司会审开启",
+            "刘德水施压",
+            "呈交关键物证。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 20,
+          "CBN": "惊堂木震碎茶杯，沈度抬头直视审判席。",
+          "CPNs": [
+            "三司会审正式开始",
+            "刘德水咄咄逼人欲定死罪",
+            "沈度当庭指出证人死因疑点。"
+          ],
+          "CEN": "沈度将证人临死前紧握的私印扔在案上。",
+          "mustCover": [
+            "三司会审开启",
+            "刘德水施压",
+            "呈交关键物证。"
+          ],
+          "forbiddenZones": [
+            "不可直接洗清冤屈。"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/对峙",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 惊堂木震碎茶杯，沈度抬头直视审判席。\nCEN: 沈度将证人临死前紧握的私印扔在案上。",
+          "chapterId": "chapter-1786550964166"
+        },
+        {
+          "id": "plot-1786550963952-28",
+          "title": "师爷，尚书大人信你吗",
+          "description": "刘德水看到私印瞳孔放大，手微微颤抖。",
+          "type": "chapter",
+          "keyEvents": [
+            "离间计生效",
+            "刘德水阵营内部出现裂痕。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 21,
+          "CBN": "刘德水看到私印瞳孔放大，手微微颤抖。",
+          "CPNs": [
+            "沈度利用心理暗示离间刘德水与师爷",
+            "师爷神色慌张试图辩解",
+            "刘德水眼中杀意浮现。"
+          ],
+          "CEN": "师爷突然大喊“尚书救我”并扑向刘德水。",
+          "mustCover": [
+            "离间计生效",
+            "刘德水阵营内部出现裂痕。"
+          ],
+          "forbiddenZones": [
+            "不可让刘德水当场杀人。"
+          ],
+          "chapterType": "normal",
+          "hookType": "借刀杀人/心理博弈",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 刘德水看到私印瞳孔放大，手微微颤抖。\nCEN: 师爷突然大喊“尚书救我”并扑向刘德水。",
+          "chapterId": "chapter-1786550964176"
+        },
+        {
+          "id": "plot-1786550963952-29",
+          "title": "这信里藏着你的人头",
+          "description": "混乱中沈度甩出从妻弟处截获的信件。",
+          "type": "chapter",
+          "keyEvents": [
+            "呈交核心账目证据",
+            "刘德水失态暴露。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 22,
+          "CBN": "混乱中沈度甩出从妻弟处截获的信件。",
+          "CPNs": [
+            "信件内容直指刘德水私吞公款",
+            "沈度当众朗读信中关键条款",
+            "刘德水恼羞成怒欲撕毁信件。"
+          ],
+          "CEN": "沈度高声喝止，称毁证者视为同谋。",
+          "mustCover": [
+            "呈交核心账目证据",
+            "刘德水失态暴露。"
+          ],
+          "forbiddenZones": [
+            "不可牵扯出皇子势力。"
+          ],
+          "chapterType": "normal",
+          "hookType": "打脸/碾压",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 混乱中沈度甩出从妻弟处截获的信件。\nCEN: 沈度高声喝止，称毁证者视为同谋。",
+          "chapterId": "chapter-1786550964186"
+        },
+        {
+          "id": "plot-1786550963952-30",
+          "title": "无罪，但德行有亏",
+          "description": "判官捡起信件，脸色阴沉地看着刘德水。",
+          "type": "chapter",
+          "keyEvents": [
+            "案件胜诉",
+            "沈度洗脱冤屈",
+            "被贬职。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 23,
+          "CBN": "判官捡起信件，脸色阴沉地看着刘德水。",
+          "CPNs": [
+            "判官当庭宣判沈度无罪",
+            "刘德水被剥去官服拖走",
+            "判官话锋一转指责沈度手段阴险。"
+          ],
+          "CEN": "圣旨下，沈度贬职至都察院做杂役。",
+          "mustCover": [
+            "案件胜诉",
+            "沈度洗脱冤屈",
+            "被贬职。"
+          ],
+          "forbiddenZones": [
+            "不可让主角直接升职。"
+          ],
+          "chapterType": "normal",
+          "hookType": "逆袭/反转",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 判官捡起信件，脸色阴沉地看着刘德水。\nCEN: 圣旨下，沈度贬职至都察院做杂役。",
+          "chapterId": "chapter-1786550964197"
+        },
+        {
+          "id": "plot-1786550963952-31",
+          "title": "都察院的厕所归你管",
+          "description": "沈度提着包袱站在都察院门口，被守卫嘲笑。",
+          "type": "chapter",
+          "keyEvents": [
+            "入职都察院受辱",
+            "确认腰牌主人身份。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 24,
+          "CBN": "沈度提着包袱站在都察院门口，被守卫嘲笑。",
+          "CPNs": [
+            "被分配去清理杂物和倒夜壶",
+            "沈度默默观察都察院人员构成",
+            "发现刻有名字的腰牌主人就在眼前。"
+          ],
+          "CEN": "那金牙百户走过来，一脚踢翻了沈度的水桶。",
+          "mustCover": [
+            "入职都察院受辱",
+            "确认腰牌主人身份。"
+          ],
+          "forbiddenZones": [
+            "不可让主角此时反击金牙百户。"
+          ],
+          "chapterType": "normal",
+          "hookType": "隐忍/铺垫",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度提着包袱站在都察院门口，被守卫嘲笑。\nCEN: 那金牙百户走过来，一脚踢翻了沈度的水桶。",
+          "chapterId": "chapter-1786550964207"
+        },
+        {
+          "id": "plot-1786550963952-32",
+          "title": "垃圾堆里翻出大案子",
+          "description": "沈度在处理废纸堆时，敏锐发现一份发黄卷宗。",
+          "type": "chapter",
+          "keyEvents": [
+            "发现“无头案”",
+            "主动揽案被嘲讽。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 25,
+          "CBN": "沈度在处理废纸堆时，敏锐发现一份发黄卷宗。",
+          "CPNs": [
+            "卷宗是一桩多年未破的无头公案",
+            "沈度利用金手指分析卷宗涂改痕迹",
+            "推断出案子另有隐情。"
+          ],
+          "CEN": "沈度主动向主事请求接手此案，引来哄堂大笑。",
+          "mustCover": [
+            "发现“无头案”",
+            "主动揽案被嘲讽。"
+          ],
+          "forbiddenZones": [
+            "不可此时就破案。"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼/解谜",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度在处理废纸堆时，敏锐发现一份发黄卷宗。\nCEN: 沈度主动向主事请求接手此案，引来哄堂大笑。",
+          "chapterId": "chapter-1786550964217"
+        },
+        {
+          "id": "plot-1786550963952-33",
+          "title": "这尸体生前是个官",
+          "description": "沈度拿着卷宗来到停尸房，掀开白布。",
+          "type": "chapter",
+          "keyEvents": [
+            "展示法医审计能力",
+            "推翻旧案结论。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 26,
+          "CBN": "沈度拿着卷宗来到停尸房，掀开白布。",
+          "CPNs": [
+            "通过尸体的手指茧子和衣服磨损推断职业",
+            "指出死者生前习惯与卷宗记录不符",
+            "推翻原有验尸结论。"
+          ],
+          "CEN": "仵作脸色惨白，拔腿就要跑。",
+          "mustCover": [
+            "展示法医审计能力",
+            "推翻旧案结论。"
+          ],
+          "forbiddenZones": [
+            "不可直接查明死者身份。"
+          ],
+          "chapterType": "normal",
+          "hookType": "碾压/智商碾压",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度拿着卷宗来到停尸房，掀开白布。\nCEN: 仵作脸色惨白，拔腿就要跑。",
+          "chapterId": "chapter-1786550964228"
+        },
+        {
+          "id": "plot-1786550963952-34",
+          "title": "三天查不清就滚蛋",
+          "description": "主事为了赶走沈度，立下赌约。",
+          "type": "chapter",
+          "keyEvents": [
+            "立下赌约",
+            "找到关键物证玉佩。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 27,
+          "CBN": "主事为了赶走沈度，立下赌约。",
+          "CPNs": [
+            "沈度接下赌约",
+            "开始走访案发现场周边",
+            "利用税务记录锁定嫌疑人活动范围。"
+          ],
+          "CEN": "在嫌疑人废弃的据点发现一枚独特的玉佩。",
+          "mustCover": [
+            "立下赌约",
+            "找到关键物证玉佩。"
+          ],
+          "forbiddenZones": [
+            "不可让同事此时支持主角。"
+          ],
+          "chapterType": "normal",
+          "hookType": "打脸/立威",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 主事为了赶走沈度，立下赌约。\nCEN: 在嫌疑人废弃的据点发现一枚独特的玉佩。",
+          "chapterId": "chapter-1786550964239"
+        },
+        {
+          "id": "plot-1786550963952-35",
+          "title": "这玉佩怎么有点眼熟",
+          "description": "沈度借着烛光细看玉佩，眉头紧锁。",
+          "type": "chapter",
+          "keyEvents": [
+            "锁定线索指向柳家",
+            "产生内心冲突。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 28,
+          "CBN": "沈度借着烛光细看玉佩，眉头紧锁。",
+          "CPNs": [
+            "认出玉佩纹路属于某个特定家族",
+            "回忆柳如是身上的配饰风格",
+            "内心产生动摇但决定查到底。"
+          ],
+          "CEN": "玉佩底部的刻字，指向了柳家商行。",
+          "mustCover": [
+            "锁定线索指向柳家",
+            "产生内心冲突。"
+          ],
+          "forbiddenZones": [
+            "不可破坏主角与柳如是的核心盟友关系。"
+          ],
+          "chapterType": "normal",
+          "hookType": "解谜/冲突",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度借着烛光细看玉佩，眉头紧锁。\nCEN: 玉佩底部的刻字，指向了柳家商行。",
+          "chapterId": "chapter-1786550964250"
+        },
+        {
+          "id": "plot-1786550963952-36",
+          "title": "案卷后面藏着半本账",
+          "description": "沈度拿着玉佩回到办公桌，发现桌上多了东西。",
+          "type": "chapter",
+          "keyEvents": [
+            "发现烧焦账册",
+            "确认柳家涉案",
+            "接到恐吓。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 29,
+          "CBN": "沈度拿着玉佩回到办公桌，发现桌上多了东西。",
+          "CPNs": [
+            "发现桌上放着一封恐吓信和半本烧焦的账册",
+            "账册内容与柳家有关",
+            "意识到有人在暗中引导。"
+          ],
+          "CEN": "沈度抬头望向窗外，感觉有一双眼睛在盯着自己。",
+          "mustCover": [
+            "发现烧焦账册",
+            "确认柳家涉案",
+            "接到恐吓。"
+          ],
+          "forbiddenZones": [
+            "不可直接揭穿暗中观察者。"
+          ],
+          "chapterType": "normal",
+          "hookType": "悬念/揭秘",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度拿着玉佩回到办公桌，发现桌上多了东西。\nCEN: 沈度抬头望向窗外，感觉有一双眼睛在盯着自己。",
+          "chapterId": "chapter-1786550964260"
+        },
+        {
+          "id": "plot-1786550963952-37",
+          "title": "这笔账怎么算到我头上",
+          "description": "沈度收起账本，假装没看见窗外人影，出门倒垃圾。",
+          "type": "chapter",
+          "keyEvents": [
+            "乔装潜入柳家商行",
+            "发现资金异常",
+            "被柳如是抓现行。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 30,
+          "CBN": "沈度收起账本，假装没看见窗外人影，出门倒垃圾。",
+          "CPNs": [
+            "沈度乔装打扮去柳家商行踩点",
+            "发现商行账目虽然整洁但现金流异常",
+            "与掌柜发生言语试探。"
+          ],
+          "CEN": "柳如是从暗处走出，冷冷质问他在查谁。",
+          "mustCover": [
+            "乔装潜入柳家商行",
+            "发现资金异常",
+            "被柳如是抓现行。"
+          ],
+          "forbiddenZones": [
+            "不可让柳如是直接站在主角这边。"
+          ],
+          "chapterType": "normal",
+          "hookType": "解谜/智斗",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度收起账本，假装没看见窗外人影，出门倒垃圾。\nCEN: 柳如是从暗处走出，冷冷质问他在查谁。",
+          "chapterId": "chapter-1786550964272"
+        },
+        {
+          "id": "plot-1786550963952-38",
+          "title": "帮你洗白，信不信我",
+          "description": "柳如是按住刀柄，眼神里满是失望。",
+          "type": "chapter",
+          "keyEvents": [
+            "揭露柳家涉案真相",
+            "说服柳如是合作",
+            "平息冲突。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 31,
+          "CBN": "柳如是按住刀柄，眼神里满是失望。",
+          "CPNs": [
+            "沈度展示烧焦账册与柳家商行的关联",
+            "柳如是愤怒辩解这是家族自救",
+            "沈度指出关键漏洞——有人在利用柳家洗钱。"
+          ],
+          "CEN": "柳如是将刀拔出半寸，问你要我怎么做。",
+          "mustCover": [
+            "揭露柳家涉案真相",
+            "说服柳如是合作",
+            "平息冲突。"
+          ],
+          "forbiddenZones": [
+            "不可让柳如是毫无理由就相信。"
+          ],
+          "chapterType": "normal",
+          "hookType": "说服/反转",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 柳如是按住刀柄，眼神里满是失望。\nCEN: 柳如是将刀拔出半寸，问你要我怎么做。",
+          "chapterId": "chapter-1786550964296"
+        },
+        {
+          "id": "plot-1786550963952-39",
+          "title": "柳家只是个提款机",
+          "description": "柳如是收刀回鞘，带沈度直闯柳家书房。",
+          "type": "chapter",
+          "keyEvents": [
+            "查封柳家账目",
+            "确认柳家背锅",
+            "引出漕运帮会王姓大佬。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 32,
+          "CBN": "柳如是收刀回鞘，带沈度直闯柳家书房。",
+          "CPNs": [
+            "沈度利用合规审计手段查封柳家核心账目",
+            "发现大量不明来源的银两过账",
+            "柳父坦白这是被迫配合漕运帮会。"
+          ],
+          "CEN": "柳父颤抖着说，那个漕运帮会的老大姓王。",
+          "mustCover": [
+            "查封柳家账目",
+            "确认柳家背锅",
+            "引出漕运帮会王姓大佬。"
+          ],
+          "forbiddenZones": [
+            "不可直接接触王姓大佬。"
+          ],
+          "chapterType": "normal",
+          "hookType": "破案/解谜",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 柳如是收刀回鞘，带沈度直闯柳家书房。\nCEN: 柳父颤抖着说，那个漕运帮会的老大姓王。",
+          "chapterId": "chapter-1786550964306"
+        },
+        {
+          "id": "plot-1786550963952-40",
+          "title": "这里的规矩我说了算",
+          "description": "沈度合上账本，嘴角勾起一抹冷笑。",
+          "type": "chapter",
+          "keyEvents": [
+            "设计钓鱼执法",
+            "现场抓获直接责任人",
+            "柳家暂时脱险。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 33,
+          "CBN": "沈度合上账本，嘴角勾起一抹冷笑。",
+          "CPNs": [
+            "沈度设计让柳家继续配合漕运帮会交易",
+            "在交易地点埋伏",
+            "利用税务检查的名义突击抓人。"
+          ],
+          "CEN": "被抓的管事大喊，是柳老爷让我干的！",
+          "mustCover": [
+            "设计钓鱼执法",
+            "现场抓获直接责任人",
+            "柳家暂时脱险。"
+          ],
+          "forbiddenZones": [
+            "不可让漕运帮会主力出现。"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼/立威",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度合上账本，嘴角勾起一抹冷笑。\nCEN: 被抓的管事大喊，是柳老爷让我干的！",
+          "chapterId": "chapter-1786550964317"
+        },
+        {
+          "id": "plot-1786550963952-41",
+          "title": "漕运帮会要你死",
+          "description": "沈度当众宣读律法，直接定罪管事。",
+          "type": "chapter",
+          "keyEvents": [
+            "保全柳家",
+            "管事被抓",
+            "收到漕运帮会死亡威胁。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 34,
+          "CBN": "沈度当众宣读律法，直接定罪管事。",
+          "CPNs": [
+            "沈度利用逻辑陷阱切断柳父与管事的联系",
+            "柳父安然无恙但心有余悸",
+            "管事被带走前露出诡异笑容。"
+          ],
+          "CEN": "一把飞镖钉在沈度门柱上，上面带着血书。",
+          "mustCover": [
+            "保全柳家",
+            "管事被抓",
+            "收到漕运帮会死亡威胁。"
+          ],
+          "forbiddenZones": [
+            "不可让柳家完全无事。"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/危机",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度当众宣读律法，直接定罪管事。\nCEN: 一把飞镖钉在沈度门柱上，上面带着血书。",
+          "chapterId": "chapter-1786550964327"
+        },
+        {
+          "id": "plot-1786550963952-42",
+          "title": "绣春刀出，谁敢挡我",
+          "description": "沈度走在回家路上，周围小巷突然涌出十几个大汉。",
+          "type": "chapter",
+          "keyEvents": [
+            "遭遇围攻",
+            "陷入绝境",
+            "王猛登场。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 35,
+          "CBN": "沈度走在回家路上，周围小巷突然涌出十几个大汉。",
+          "CPNs": [
+            "杀手围攻沈度",
+            "沈度利用地形和随身携带的石灰粉周旋",
+            "体力不支即将被杀。"
+          ],
+          "CEN": "一道黑影从墙头跃下，手中绣春刀寒光凛冽。",
+          "mustCover": [
+            "遭遇围攻",
+            "陷入绝境",
+            "王猛登场。"
+          ],
+          "forbiddenZones": [
+            "不可让主角武力反杀。"
+          ],
+          "chapterType": "normal",
+          "hookType": "救场/反转",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度走在回家路上，周围小巷突然涌出十几个大汉。\nCEN: 一道黑影从墙头跃下，手中绣春刀寒光凛冽。",
+          "chapterId": "chapter-1786550964338"
+        },
+        {
+          "id": "plot-1786550963952-43",
+          "title": "救命恩人要杀我",
+          "description": "王猛手起刀落，三颗头颅滚落尘埃。",
+          "type": "chapter",
+          "keyEvents": [
+            "王猛解决杀手",
+            "王猛对沈度产生怀疑",
+            "威胁。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 36,
+          "CBN": "王猛手起刀落，三颗头颅滚落尘埃。",
+          "CPNs": [
+            "王猛轻松解决剩余杀手",
+            "沈度冷静观察王猛刀法",
+            "沈度捡起杀手身上的令牌。"
+          ],
+          "CEN": "王猛把刀架在沈度脖子上，问账本在哪。",
+          "mustCover": [
+            "王猛解决杀手",
+            "王猛对沈度产生怀疑",
+            "威胁。"
+          ],
+          "forbiddenZones": [
+            "不可让两人立刻推心置腹。"
+          ],
+          "chapterType": "normal",
+          "hookType": "压抑/反转",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 王猛手起刀落，三颗头颅滚落尘埃。\nCEN: 王猛把刀架在沈度脖子上，问账本在哪。",
+          "chapterId": "chapter-1786550964348"
+        },
+        {
+          "id": "plot-1786550963952-44",
+          "title": "咱们做个交易吧",
+          "description": "沈度面不改色，指着地上的尸体说账本在脑子里。",
+          "type": "chapter",
+          "keyEvents": [
+            "揭穿王猛身份",
+            "达成交易",
+            "确立保护关系。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 37,
+          "CBN": "沈度面不改色，指着地上的尸体说账本在脑子里。",
+          "CPNs": [
+            "沈度分析王猛身份（锦衣卫）",
+            "沈度提出用账本换取王猛保护",
+            "王猛权衡利弊收刀。"
+          ],
+          "CEN": "王猛冷笑一声，跟着我，别掉队。",
+          "mustCover": [
+            "揭穿王猛身份",
+            "达成交易",
+            "确立保护关系。"
+          ],
+          "forbiddenZones": [
+            "不可让王猛完全坦白任务。"
+          ],
+          "chapterType": "normal",
+          "hookType": "谈判/智斗",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度面不改色，指着地上的尸体说账本在脑子里。\nCEN: 王猛冷笑一声，跟着我，别掉队。",
+          "chapterId": "chapter-1786550964359"
+        },
+        {
+          "id": "plot-1786550963952-45",
+          "title": "一张纸吓破苦胆",
+          "description": "沈度带着王猛回到都察院，开始写文书。",
+          "type": "chapter",
+          "keyEvents": [
+            "起草稽查令",
+            "借王猛势压人",
+            "激怒漕运帮会。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 38,
+          "CBN": "沈度带着王猛回到都察院，开始写文书。",
+          "CPNs": [
+            "沈度起草一份针对漕运帮会的税务稽查令",
+            "利用王猛的锦衣卫身份背书",
+            "文书送达漕运码头。"
+          ],
+          "CEN": "漕运帮会堂主看到文书，气得把桌子拍碎了。",
+          "mustCover": [
+            "起草稽查令",
+            "借王猛势压人",
+            "激怒漕运帮会。"
+          ],
+          "forbiddenZones": [
+            "不可直接开战。"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼/打脸",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度带着王猛回到都察院，开始写文书。\nCEN: 漕运帮会堂主看到文书，气得把桌子拍碎了。",
+          "chapterId": "chapter-1786550964370"
+        },
+        {
+          "id": "plot-1786550963952-46",
+          "title": "这本账谁都不敢看",
+          "description": "沈度带着衙役和王猛站在码头大门前。",
+          "type": "chapter",
+          "keyEvents": [
+            "突袭码头",
+            "查封资产",
+            "发现宫廷账本。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 39,
+          "CBN": "沈度带着衙役和王猛站在码头大门前。",
+          "CPNs": [
+            "沈度宣读稽查令阻拦漕运帮会反抗",
+            "王猛震慑武力反抗者",
+            "搜查出大量违禁品和账册。"
+          ],
+          "CEN": "查封的账册中夹着半本烧焦的宫廷内务府账本。",
+          "mustCover": [
+            "突袭码头",
+            "查封资产",
+            "发现宫廷账本。"
+          ],
+          "forbiddenZones": [
+            "不可让主角此时知道宫廷秘密核心。"
+          ],
+          "chapterType": "normal",
+          "hookType": "收服/碾压",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度带着衙役和王猛站在码头大门前。\nCEN: 查封的账册中夹着半本烧焦的宫廷内务府账本。",
+          "chapterId": "chapter-1786550964381"
+        },
+        {
+          "id": "plot-1786550963952-47",
+          "title": "这东西看一眼都要掉脑袋",
+          "description": "王猛一把抢过账册，脸色瞬间惨白如纸。",
+          "type": "chapter",
+          "keyEvents": [
+            "王猛认出印信",
+            "将烫手山芋转移给王猛。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 40,
+          "CBN": "王猛一把抢过账册，脸色瞬间惨白如纸。",
+          "CPNs": [
+            "王猛认出内务府印信",
+            "沈度坚持要把账本带走",
+            "外面喊杀声逼近。"
+          ],
+          "CEN": "沈度把账本塞进王猛怀里，说这可是护身符。",
+          "mustCover": [
+            "王猛认出印信",
+            "将烫手山芋转移给王猛。"
+          ],
+          "forbiddenZones": [
+            "不可让王猛此时就倒台。"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/惊险",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 王猛一把抢过账册，脸色瞬间惨白如纸。\nCEN: 沈度把账本塞进王猛怀里，说这可是护身符。",
+          "chapterId": "chapter-1786550964393"
+        },
+        {
+          "id": "plot-1786550963952-48",
+          "title": "你们的账，我全查封",
+          "description": "沈度拿着朱笔，在漕运图上画了一个大大的红叉。",
+          "type": "chapter",
+          "keyEvents": [
+            "锁定帮会资产",
+            "下达查封命令。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 41,
+          "CBN": "沈度拿着朱笔，在漕运图上画了一个大大的红叉。",
+          "CPNs": [
+            "依据账本锁定帮会所有钱庄",
+            "下达税务稽查文书",
+            "王猛带队封锁各处路口。"
+          ],
+          "CEN": "钱庄管事狞笑，说这上面可是有三爷的名字。",
+          "mustCover": [
+            "锁定帮会资产",
+            "下达查封命令。"
+          ],
+          "forbiddenZones": [
+            "不可让沈度直接对抗三皇子。"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼/立威",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度拿着朱笔，在漕运图上画了一个大大的红叉。\nCEN: 钱庄管事狞笑，说这上面可是有三爷的名字。",
+          "chapterId": "chapter-1786550964404"
+        },
+        {
+          "id": "plot-1786550963952-49",
+          "title": "有背景也得交税",
+          "description": "管事话音未落，沈度一巴掌拍在柜台上。",
+          "type": "chapter",
+          "keyEvents": [
+            "利用律法压制特权",
+            "查封巨额银两。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 42,
+          "CBN": "管事话音未落，沈度一巴掌拍在柜台上。",
+          "CPNs": [
+            "沈度引用大魏律法反驳特权",
+            "当众宣读偷税漏税罪状",
+            "下令查封所有现银。"
+          ],
+          "CEN": "地窖被打开，里面的银子堆成了小山。",
+          "mustCover": [
+            "利用律法压制特权",
+            "查封巨额银两。"
+          ],
+          "forbiddenZones": [
+            "不可让管事直接叫来军队。"
+          ],
+          "chapterType": "normal",
+          "hookType": "打脸/碾压",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 管事话音未落，沈度一巴掌拍在柜台上。\nCEN: 地窖被打开，里面的银子堆成了小山。",
+          "chapterId": "chapter-1786550964414"
+        },
+        {
+          "id": "plot-1786550963952-50",
+          "title": "这银子上有血腥味",
+          "description": "沈度随手拿起一锭银子，发现上面刻着暗记。",
+          "type": "chapter",
+          "keyEvents": [
+            "发现军饷贪墨证据",
+            "帮会首领带人赶到。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 43,
+          "CBN": "沈度随手拿起一锭银子，发现上面刻着暗记。",
+          "CPNs": [
+            "辨认出是军饷专用的官银",
+            "推断漕运帮会私吞军费",
+            "王猛拔刀控制现场。"
+          ],
+          "CEN": "帮会首领带人赶到，手里拿着三皇子的令牌。",
+          "mustCover": [
+            "发现军饷贪墨证据",
+            "帮会首领带人赶到。"
+          ],
+          "forbiddenZones": [
+            "不可让王猛直接杀死首领。"
+          ],
+          "chapterType": "normal",
+          "hookType": "解谜/危机",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度随手拿起一锭银子，发现上面刻着暗记。\nCEN: 帮会首领带人赶到，手里拿着三皇子的令牌。",
+          "chapterId": "chapter-1786550964425"
+        },
+        {
+          "id": "plot-1786550963952-51",
+          "title": "令牌在律法面前是废铁",
+          "description": "首领高举令牌，威胁沈度全家死绝。",
+          "type": "chapter",
+          "keyEvents": [
+            "揭穿令牌伪造",
+            "彻底捣毁漕运帮会。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 44,
+          "CBN": "首领高举令牌，威胁沈度全家死绝。",
+          "CPNs": [
+            "沈度指出令牌是伪造的",
+            "王猛以伪造御物罪名拿下首领",
+            "帮会全员束手就擒。"
+          ],
+          "CEN": "首领被捕前，悄悄吞下了一颗蜡丸。",
+          "mustCover": [
+            "揭穿令牌伪造",
+            "彻底捣毁漕运帮会。"
+          ],
+          "forbiddenZones": [
+            "不可让蜡丸当场毒死首领。"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/立威",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 首领高举令牌，威胁沈度全家死绝。\nCEN: 首领被捕前，悄悄吞下了一颗蜡丸。",
+          "chapterId": "chapter-1786550964437"
+        },
+        {
+          "id": "plot-1786550963952-52",
+          "title": "这烫手山芋送给谁",
+          "description": "沈度看着那半本宫廷账本，冷汗浸透了后背。",
+          "type": "chapter",
+          "keyEvents": [
+            "决定站队太子",
+            "潜入太子府。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 45,
+          "CBN": "沈度看着那半本宫廷账本，冷汗浸透了后背。",
+          "CPNs": [
+            "与王猛分析局势决定投靠",
+            "伪造副本掩人耳目",
+            "深夜潜入太子府邸。"
+          ],
+          "CEN": "太子府的暗卫长枪，直指沈度眉心。",
+          "mustCover": [
+            "决定站队太子",
+            "潜入太子府。"
+          ],
+          "forbiddenZones": [
+            "不可直接见到太子。"
+          ],
+          "chapterType": "normal",
+          "hookType": "博弈/抉择",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度看着那半本宫廷账本，冷汗浸透了后背。\nCEN: 太子府的暗卫长枪，直指沈度眉心。",
+          "chapterId": "chapter-1786550964448"
+        },
+        {
+          "id": "plot-1786550963952-53",
+          "title": "太子爷，这局你赢了",
+          "description": "太子把玩着玉扳指，根本没抬头看沈度。",
+          "type": "chapter",
+          "keyEvents": [
+            "太子接纳情报",
+            "获得太子信任。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 46,
+          "CBN": "太子把玩着玉扳指，根本没抬头看沈度。",
+          "CPNs": [
+            "沈度呈上账本分析局势",
+            "指出这是三皇子自毁的陷阱",
+            "太子猛拍桌子叫好。"
+          ],
+          "CEN": "太子屏退左右，亲自为沈度倒了一杯茶。",
+          "mustCover": [
+            "太子接纳情报",
+            "获得太子信任。"
+          ],
+          "forbiddenZones": [
+            "不可让太子完全信任沈度。"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼/智斗",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 太子把玩着玉扳指，根本没抬头看沈度。\nCEN: 太子屏退左右，亲自为沈度倒了一杯茶。",
+          "chapterId": "chapter-1786550964464"
+        },
+        {
+          "id": "plot-1786550963952-54",
+          "title": "我要进都察院的核心",
+          "description": "沈度婉拒赏金，提出要一个职位。",
+          "type": "chapter",
+          "keyEvents": [
+            "提出升职诉求",
+            "获得承诺。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 47,
+          "CBN": "沈度婉拒赏金，提出要一个职位。",
+          "CPNs": [
+            "太子询问沈度诉求",
+            "沈度请求掌控都察院实权",
+            "太子许诺明日上朝提携。"
+          ],
+          "CEN": "宫门落锁，沈度成了太子府的座上宾。",
+          "mustCover": [
+            "提出升职诉求",
+            "获得承诺。"
+          ],
+          "forbiddenZones": [
+            "不可让主角此时就掌握大权。"
+          ],
+          "chapterType": "normal",
+          "hookType": "逆袭/爽文",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 沈度婉拒赏金，提出要一个职位。\nCEN: 宫门落锁，沈度成了太子府的座上宾。",
+          "chapterId": "chapter-1786550964475"
+        },
+        {
+          "id": "plot-1786550963952-55",
+          "title": "这一夜，京官无眠",
+          "description": "次日清晨，沈度走出宫门发现气氛不对。",
+          "type": "chapter",
+          "keyEvents": [
+            "离开皇宫",
+            "感知局势变化。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 48,
+          "CBN": "次日清晨，沈度走出宫门发现气氛不对。",
+          "CPNs": [
+            "发现同僚眼神躲闪",
+            "听到三皇子昨夜大怒的消息",
+            "意识到自己已被卷入漩涡中心。"
+          ],
+          "CEN": "宫门外的长街上，一辆马车静静停着。",
+          "mustCover": [
+            "离开皇宫",
+            "感知局势变化。"
+          ],
+          "forbiddenZones": [
+            "不可真的被太后带走。"
+          ],
+          "chapterType": "normal",
+          "hookType": "氛围/期待",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 次日清晨，沈度走出宫门发现气氛不对。\nCEN: 宫门外的长街上，一辆马车静静停着。",
+          "chapterId": "chapter-1786550964486"
+        },
+        {
+          "id": "plot-1786550963952-56",
+          "title": "三爷请你喝杯茶",
+          "description": "马车的车帘缓缓拉开，露出一张阴鸷的脸。",
+          "type": "chapter",
+          "keyEvents": [
+            "三皇子截道",
+            "提出邀请",
+            "威胁。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 49,
+          "CBN": "马车的车帘缓缓拉开，露出一张阴鸷的脸。",
+          "CPNs": [
+            "三皇子露出阴鸷笑容",
+            "邀请沈度上车叙旧",
+            "沈度礼貌拒绝并暗自戒备。"
+          ],
+          "CEN": "车帘后伸出的手，做了一个请的手势。",
+          "mustCover": [
+            "三皇子截道",
+            "提出邀请",
+            "威胁。"
+          ],
+          "forbiddenZones": [
+            "不可让主角直接上车。"
+          ],
+          "chapterType": "normal",
+          "hookType": "对抗/危机",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 马车的车帘缓缓拉开，露出一张阴鸷的脸。\nCEN: 车帘后伸出的手，做了一个请的手势。",
+          "chapterId": "chapter-1786550964497"
+        }
+      ],
+      "targetWordCount": 540000,
+      "emotionGoal": {
+        "id": "emotion-1786550963953",
+        "primary": "紧张、压抑后的爆发、智斗的快感。",
+        "secondary": "悬念、好奇、愤怒（对反派）、爽快。",
+        "arc": "mixed",
+        "density": 3,
+        "highPoints": [
+          25,
+          50,
+          120
+        ],
+        "lowPoints": [
+          4,
+          85,
+          115
+        ]
+      },
+      "coolPointDesign": {
+        "id": "coolpoint-1786550963953",
+        "patterns": [
+          "face-slapping",
+          "face-slapping",
+          "face-slapping"
+        ],
+        "arranged": [
+          {
+            "id": "arrangement-1786550963953-0",
+            "chapter": 25,
+            "type": "face-slapping",
+            "description": "在公堂上利用律法条文的矛盾，让贪官自己承认罪行。｜21-25章",
+            "trigger": "公堂对峙，刘德水以为胜券在握。",
+            "buildup": "刘德水买通了证人，做好了假账，以为无懈可击。",
+            "payoff": "沈度指出某条律法与当前情况的特殊关联，利用刘德水不懂会计细节的漏洞，诱导他在回答问题时自相矛盾，当堂承认挪用。",
+            "cost": "沈度被贬职，未能彻底扳倒刘德水背后的势力。"
+          },
+          {
+            "id": "arrangement-1786550963953-1",
+            "chapter": 42,
+            "type": "face-slapping",
+            "description": "利用帮规和律法的冲突，让漕运帮会自相残杀。｜41-45章",
+            "trigger": "突袭漕运帮会据点。",
+            "buildup": "漕运帮会仗着有官方背景，气焰嚣张。",
+            "payoff": "沈度指出帮会私吞公款违反了大魏律，按律当斩；同时指出帮会内部私吞公款违反帮规，按帮规当剁手。帮会成员为了保命，纷纷供出老大。",
+            "cost": "沈度得罪了背后的三皇子，面临更猛烈的报复。"
+          },
+          {
+            "id": "arrangement-1786550963953-2",
+            "chapter": 75,
+            "type": "face-slapping",
+            "description": "通过税务筹划，将贪官的不义之财合法充公。｜71-80章",
+            "trigger": "查抄某位权贵的家产。",
+            "buildup": "权贵狡兔三窟，资产转移得干干净净，看似无法查抄。",
+            "payoff": "沈度利用“赠与税”和“遗产税”的漏洞，计算出权贵虽然转移了资产但未缴纳税款，反而欠朝廷巨额税款，只能用资产抵债。",
+            "cost": "主角被贪官集团视为眼中钉，遭遇多次暗杀。"
+          }
+        ],
+        "density": {
+          "micro": 3000,
+          "small": 9000,
+          "big": 21000
+        }
+      },
+      "coreSellingPoints": [
+        {
+          "id": "selling-point-1786550963954-0",
+          "name": "合规杀招",
+          "description": "主角每次出招都引经据典，合法合规，让对手哑巴吃黄连。；全篇，每章小爽点，每卷大爽点。",
+          "priority": 5
+        },
+        {
+          "id": "selling-point-1786550963954-1",
+          "name": "职场升级",
+          "description": "从底层小吏到权倾朝野的大臣，清晰的晋升路径。；第一卷至第三卷。",
+          "priority": 4
+        },
+        {
+          "id": "selling-point-1786550963954-2",
+          "name": "智斗反转",
+          "description": "不到最后一刻不知道谁是赢家，剧情反转不断。；关键剧情节点。",
+          "priority": 3
+        }
+      ],
+      "conflictDesign": {
+        "id": "conflict-1786550963954",
+        "source": "resource",
+        "escalation": [
+          {
+            "level": 1,
+            "name": "自保反击（户部冤案）-> 清理门户（京官贪腐）-> 派系斗争（夺嫡党争）-> 终极审判（皇权合规性）。",
+            "description": "自保反击（户部冤案）-> 清理门户（京官贪腐）-> 派系斗争（夺嫡党争）-> 终极审判（皇权合规性）。",
+            "examples": []
+          }
+        ],
+        "majorConflicts": [
+          {
+            "id": "major-conflict-1786550963954-0",
+            "title": "沈度 vs 户部尚书刘德水（直属上司）、刑部官员（草菅人命）。",
+            "type": "B",
+            "status": "pending",
+            "chapters": [],
+            "stakes": "沈度 vs 户部尚书刘德水（直属上司）、刑部官员（草菅人命）。",
+            "resolution": ""
+          },
+          {
+            "id": "major-conflict-1786550963954-1",
+            "title": "沈度 vs 六部贪官集团、三皇子党羽。",
+            "type": "B",
+            "status": "pending",
+            "chapters": [],
+            "stakes": "沈度 vs 六部贪官集团、三皇子党羽。",
+            "resolution": ""
+          },
+          {
+            "id": "major-conflict-1786550963954-2",
+            "title": "沈度 vs 三皇子集团、甚至皇帝本人。",
+            "type": "B",
+            "status": "pending",
+            "chapters": [],
+            "stakes": "沈度 vs 三皇子集团、甚至皇帝本人。",
+            "resolution": ""
+          }
+        ]
+      },
+      "storyLines": {
+        "id": "storylines-1786550963954",
+        "map": {
+          "planned": [
+            "刑部大牢",
+            "户部",
+            "都察院",
+            "京城六部",
+            "边关军营",
+            "皇宫。"
+          ],
+          "introduced": [],
+          "current": "刑部大牢",
+          "chaptersPerLocation": 50
+        },
+        "faction": {
+          "planned": [
+            "无党派",
+            "太子党",
+            "权倾朝野的独立监察者。"
+          ],
+          "introduced": [],
+          "currentLevel": 1,
+          "escalationChapters": []
+        },
+        "character": {
+          "planned": [
+            {
+              "id": "替罪羊",
+              "role": ""
+            },
+            {
+              "id": "能吏",
+              "role": ""
+            },
+            {
+              "id": "酷吏",
+              "role": ""
+            },
+            {
+              "id": "能臣",
+              "role": ""
+            },
+            {
+              "id": "敢于谏言的国士。",
+              "role": ""
+            }
+          ],
+          "introduced": [],
+          "keyRelationships": []
+        },
+        "goldenfinger": {
+          "type": "识别笔迹 -> 识别账目漏洞 -> 推导资金流向 -> 洞察人心欲望 -> 预判规则演变。",
+          "currentStage": 1,
+          "upgrades": []
+        },
+        "worldRules": {
+          "revealed": [
+            "严刑峻法",
+            "有法不依",
+            "拨乱反正",
+            "法治确立。"
+          ],
+          "pending": []
+        },
+        "conflict": {
+          "chains": [
+            {
+              "level": 1,
+              "name": "个人生死",
+              "description": "个人生死",
+              "chapters": [],
+              "status": "pending"
+            },
+            {
+              "level": 2,
+              "name": "官场倾轧",
+              "description": "官场倾轧",
+              "chapters": [],
+              "status": "pending"
+            },
+            {
+              "level": 3,
+              "name": "派系党争",
+              "description": "派系党争",
+              "chapters": [],
+              "status": "pending"
+            },
+            {
+              "level": 4,
+              "name": "皇权与法权的冲突。",
+              "description": "皇权与法权的冲突。",
+              "chapters": [],
+              "status": "pending"
+            }
+          ],
+          "activeConflict": "个人生死"
+        },
+        "collection": {
+          "target": [
+            "贪官的罪证",
+            "各处账本碎片",
+            "忠诚的伙伴",
+            "终极的尚方宝剑。"
+          ],
+          "progress": []
+        },
+        "romance": {
+          "currentStage": "cold",
+          "progression": []
+        }
+      },
+      "goldenfingerDesign": {
+        "id": "goldenfinger-1786550963954",
+        "type": "真知之眼（被动洞察技能）+ 现代审计知识库",
+        "trigger": "接触账册、公文、契约或案卷时自动触发，能以高亮形式看到逻辑矛盾、数据异常和伪造痕迹。",
+        "upgradePath": [
+          "初阶仅能识别伪造笔迹和数字漏洞 -> 进阶能通过关联数据推导出资金流向和隐藏关系网 -> 终极能洞察人心欲望与规则漏洞",
+          "预判对手操作路径。"
+        ],
+        "limitation": "必须有实物载体（账本、文书等）作为媒介，不能凭空读取人心。",
+        "cost": "极度消耗脑力，过度使用会导致剧烈头痛甚至短暂失明。",
+        "firstRevealChapter": 2
+      },
+      "metadata": {
+        "startupPack": {
+          "openingHook": "一睁眼正跪在刑部大堂听着秋后问斩。",
+          "promiseToReader": "看主角如何用最讲理的手段，干最狠的事。",
+          "protagonistFirstImpression": "冷静、逻辑缜密、甚至有点冷血的算计者。",
+          "firstMajorCoolPoint": "在死牢里仅凭一支秃笔和半碗水，推翻了原本的铁证。",
+          "firstConflictCycle": "从被判死刑到查清真相，反杀陷害者，入职都察院。",
+          "chapterBlocks": [
+            {
+              "range": "1-5章",
+              "objective": "确立死刑危机，觉醒金手指，争取复核机会。",
+              "mustEvents": [
+                "沈度发现案卷供词笔迹有误",
+                "当场要求翻供被驳回",
+                "利用狱卒传递消息。"
+              ],
+              "coolPoints": [
+                "在狱中凭借真知之眼看穿狱卒受贿细节",
+                "反向拿捏狱卒。"
+              ],
+              "hookRequirement": "刑部主官为何急于结案，暗示背后有更大黑手。",
+              "pacing": "fast",
+              "readerExpectation": "主角如何利用这微小的笔迹漏洞逆天改命。",
+              "forbiddenZones": [
+                "不可让主角直接武力越狱",
+                "必须走程序路线。"
+              ]
+            },
+            {
+              "range": "6-10章",
+              "objective": "争取重审，获得短暂自由，接触核心账本。",
+              "mustEvents": [
+                "御史台新人柳如是巡狱发现疑点",
+                "沈度利用合规条例说服她联名上书。"
+              ],
+              "coolPoints": [
+                "柳如是原本是来探监的",
+                "反被沈度的逻辑折服",
+                "变成临时助手。"
+              ],
+              "hookRequirement": "重审前夕，证人离奇暴毙。",
+              "pacing": "medium",
+              "readerExpectation": "证人死后，主角如何在没有口供的情况下定罪。",
+              "forbiddenZones": [
+                "不可让柳如是成为无脑倒贴的花瓶",
+                "要有利益交换。"
+              ]
+            },
+            {
+              "range": "11-15章",
+              "objective": "孤身查账，寻找铁证，遭遇追杀。",
+              "mustEvents": [
+                "沈度潜入户部档案库查找原始单据",
+                "被神秘杀手围攻。"
+              ],
+              "coolPoints": [
+                "利用档案库的机关和律法条款（擅闯库房者死）借刀杀人反杀刺客。"
+              ],
+              "hookRequirement": "在尸体上发现了属于都察院的腰牌。",
+              "pacing": "medium",
+              "readerExpectation": "都察院为何要杀一个死囚？谁是真正的幕后黑手？",
+              "forbiddenZones": [
+                "主角武力值不可过高",
+                "只能靠智取。"
+              ]
+            },
+            {
+              "range": "16-20章",
+              "objective": "分析证据，设局钓鱼，引蛇出洞。",
+              "mustEvents": [
+                "沈度通过账本推导出贪腐路径",
+                "故意放出一份假账引诱对手上钩。"
+              ],
+              "coolPoints": [
+                "看着对手因为假账而自乱阵脚",
+                "急于销毁真证据",
+                "从而暴露藏匿地点。"
+              ],
+              "hookRequirement": "刘德水（反派）开始怀疑身边有内鬼。",
+              "pacing": "medium",
+              "readerExpectation": "对手上钩后，主角如何收网。",
+              "forbiddenZones": [
+                "不可让反派过于愚蠢",
+                "反派也要有反制手段。"
+              ]
+            },
+            {
+              "range": "21-25章",
+              "objective": "公开对决，当堂反杀，洗清冤屈。",
+              "mustEvents": [
+                "公堂之上沈度利用逻辑陷阱逼刘德水说出真相",
+                "并拿出关键证据。"
+              ],
+              "coolPoints": [
+                "刘德水原本自信满满",
+                "结果一步步走进沈度的语言陷阱",
+                "当众承认挪用公款。"
+              ],
+              "hookRequirement": "沈度虽然胜诉，但被判决“虽然无罪但言行不端”，贬职去都察院做苦力。",
+              "pacing": "medium",
+              "readerExpectation": "主角在都察院如何从底层爬起。",
+              "forbiddenZones": [
+                "不可让主角直接升官",
+                "贬职去新地图更符合网文节奏。"
+              ]
+            },
+            {
+              "range": "26-30章",
+              "objective": "入职都察院，遭遇排挤，接手第一个案子。",
+              "mustEvents": [
+                "沈度在都察院被分配去管杂物",
+                "却主动揽下一个没人敢查的“无头案”。"
+              ],
+              "coolPoints": [
+                "同事们等着看笑话",
+                "结果沈度三天就查清了案情",
+                "打了所有人的脸。"
+              ],
+              "hookRequirement": "案子的线索指向了柳如是的家族。",
+              "pacing": "medium",
+              "readerExpectation": "主角如何处理情义与律法的冲突。",
+              "forbiddenZones": [
+                "不可让主角在都察院混得风生水起",
+                "要有阻力。"
+              ]
+            },
+            {
+              "range": "31-35章",
+              "objective": "查办柳家案，与柳如是产生冲突，发现更大阴谋。",
+              "mustEvents": [
+                "沈度深入调查柳家商行",
+                "发现柳家只是替人背锅",
+                "真正幕后是漕运帮会。"
+              ],
+              "coolPoints": [
+                "面对柳如是的质问",
+                "沈度拿出了完美的证据链",
+                "既保全了柳家核心人物",
+                "又惩办了直接责任人。"
+              ],
+              "hookRequirement": "漕运帮会大佬发话要沈度的命。",
+              "pacing": "medium",
+              "readerExpectation": "主角如何应对江湖势力的暗杀。",
+              "forbiddenZones": [
+                "不可破坏主角与柳如如是核心盟友的关系。"
+              ]
+            },
+            {
+              "range": "36-40章",
+              "objective": "应对漕运帮会，结识武力担当，反击开始。",
+              "mustEvents": [
+                "沈度遭遇漕运帮会围攻",
+                "被路过的锦衣卫百户王猛所救。"
+              ],
+              "coolPoints": [
+                "沈度不用刀剑",
+                "仅凭一张嘴和一份律法文书",
+                "就让漕运帮会内部分崩离析。"
+              ],
+              "hookRequirement": "王猛救沈度是因为他手中的账本，其实王猛也有秘密任务。",
+              "pacing": "medium",
+              "readerExpectation": "沈度与王猛的合作会产生什么化学反应。",
+              "forbiddenZones": [
+                "不可让王猛直接解决问题",
+                "王猛只是武力辅助。"
+              ]
+            },
+            {
+              "range": "41-45章",
+              "objective": "联手王猛，突袭漕运，找到关键账册。",
+              "mustEvents": [
+                "沈度设计“税务合规大检查”",
+                "合法搜查漕运帮会所有据点。"
+              ],
+              "coolPoints": [
+                "帮会众人大喊“我们有背景”",
+                "沈度淡定回应“背景也得纳税”",
+                "当场查封巨额资产。"
+              ],
+              "hookRequirement": "查封的账册中夹着半本烧焦的宫廷内务府账本。",
+              "pacing": "fast",
+              "readerExpectation": "宫廷账本为何会在江湖帮会手中？",
+              "forbiddenZones": [
+                "不可让主角一下就查到终极秘密",
+                "要循序渐进。"
+              ]
+            },
+            {
+              "range": "46-50章",
+              "objective": "分析宫廷账本，引起高层注意，正式卷入夺嫡。",
+              "mustEvents": [
+                "沈度将账本秘密呈交太子",
+                "太子深夜召见沈度。"
+              ],
+              "coolPoints": [
+                "太子原本看不起沈度",
+                "但听完沈度的分析后",
+                "起身行礼。"
+              ],
+              "hookRequirement": "出宫时，三皇子的马车拦住了去路，邀请沈度“喝茶”。",
+              "pacing": "medium",
+              "readerExpectation": "面对三皇子的威逼利诱，主角如何应对。",
+              "forbiddenZones": [
+                "不可让主角此时就彻底站队",
+                "要保持相对独立性。"
+              ]
+            }
+          ]
+        },
+        "storyScale": {
+          "targetWordCount": "450000字",
+          "estimatedChapterCount": 180,
+          "averageWordsPerChapter": 2500,
+          "suggestedVolumeCount": 3,
+          "estimatedChaptersPerVolume": 60,
+          "startupPhaseRatio": "约28%",
+          "longformProgressionNote": "前50章仅完成“洗冤+初级复仇+进入中央监察机构”的启动阶段，后续130章将扩展至六部、军费、皇储三个更大层级，地图从户部扩展至京城官场、边关军营，最终直指皇宫。"
+        },
+        "volumePlans": [
+          {
+            "volumeIndex": 1,
+            "title": "户部黑账",
+            "objective": "洗脱冤屈，反杀贪官刘德水，入职都察院。",
+            "coreConflict": "沈度 vs 户部尚书刘德水（直属上司）、刑部官员（草菅人命）。",
+            "climax": "公堂之上利用律法条款反客为主，当堂指证刘德水做假账。",
+            "reversal": "刘德水以为沈度求饶是服软，实则是引诱他露出更多马脚。",
+            "endingHook": "沈度入职都察院第一天，发现自己的办公桌上放着一封匿名恐吓信和半本烧焦的账册。",
+            "protagonistGrowth": "从阶下囚到六部官员，初步掌握官场生存法则，真知之眼升级至进阶前兆。",
+            "keyCharacters": [
+              "沈度",
+              "柳如是",
+              "王猛",
+              "刘德水。"
+            ],
+            "setupForeshadows": [
+              "烧焦账册的来源",
+              "王猛的真实身份",
+              "皇帝对户部的态度。"
+            ],
+            "payoffForeshadows": [
+              "案卷漏洞",
+              "刘德水的贪腐证据。"
+            ],
+            "relationshipShifts": [
+              "沈度与王猛从互相利用到生死之交",
+              "与柳如是建立利益同盟。"
+            ]
+          },
+          {
+            "volumeIndex": 2,
+            "title": "京华烟云",
+            "objective": "在都察院查办京官贪腐，卷入夺嫡漩涡，选择阵营。",
+            "coreConflict": "沈度 vs 六部贪官集团、三皇子党羽。",
+            "climax": "查办漕运贪腐案，当街扣押三皇子的亲信商船。",
+            "reversal": "三皇子试图收买沈度，被沈度用合规手段录音留证。",
+            "endingHook": "太子深夜密会沈度，展示了一份关于边关军费的绝密账本。",
+            "protagonistGrowth": "升任给事中，声名鹊起，被称为“铁面阎罗”。",
+            "keyCharacters": [
+              "沈度",
+              "太子",
+              "三皇子",
+              "顾言。"
+            ],
+            "setupForeshadows": [
+              "太子的身体状况",
+              "边关军费的真实去向。"
+            ],
+            "payoffForeshadows": [
+              "烧焦账册指向漕运帮会。"
+            ],
+            "relationshipShifts": [
+              "沈度与太子结盟",
+              "与三皇子彻底决裂。"
+            ]
+          },
+          {
+            "volumeIndex": 3,
+            "title": "九重天阙",
+            "objective": "查办军费案，对抗终极反派，确立新秩序。",
+            "coreConflict": "沈度 vs 三皇子集团、甚至皇帝本人。",
+            "climax": "金殿对峙，用大魏律条约束皇帝的私欲。",
+            "reversal": "皇帝并非糊涂，而是故意默许贪腐以平衡朝局，沈度需打破这个平衡。",
+            "endingHook": "沈度辞官归隐，江湖上流传着关于“大魏第一合规官”的传说。",
+            "protagonistGrowth": "升任左都御史，精神层面达到“无我”境界，真知之眼达到终极。",
+            "keyCharacters": [
+              "沈度",
+              "皇帝",
+              "三皇子",
+              "太后。"
+            ],
+            "setupForeshadows": [
+              "无（本卷为终局）。"
+            ],
+            "payoffForeshadows": [
+              "所有关于皇权",
+              "夺嫡",
+              "军费的伏笔。"
+            ],
+            "relationshipShifts": [
+              "沈度与皇帝达成某种政治妥协",
+              "与旧友各自珍重。"
+            ]
+          }
+        ],
+        "plannedChapterCount": 180,
+        "plannedWordCount": 540000
+      },
+      "chapterMemories": []
+    }
+  ]
+}

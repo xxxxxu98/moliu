@@ -25,6 +25,9 @@ import {
   splitByHeading,
   splitNamedSections,
 } from './utils';
+import { OUTLINE_COMPLETENESS_POLICY } from '../validation/outlineCompleteness';
+
+const STARTUP_CHAPTER_COUNT = OUTLINE_COMPLETENESS_POLICY.startupChapterCount;
 
 function extractAliasedFieldValue(block: string, fieldNames: string[]): string | null {
   for (const fieldName of fieldNames) {
@@ -209,7 +212,10 @@ function parseStoryScalePlan(section: string): StoryScalePlan {
     averageWordsPerChapter,
     suggestedVolumeCount,
     estimatedChaptersPerVolume,
-    startupPhaseRatio: extractFieldValue(section, '前30章占比') ?? '',
+    startupPhaseRatio:
+      extractFieldValue(section, `前${STARTUP_CHAPTER_COUNT}章占比`) ??
+      extractFieldValue(section, '前30章占比') ??
+      '',
     longformProgressionNote: extractFieldValue(section, '长线推进说明') ?? '',
   };
 }
@@ -581,6 +587,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
     '四幕结构',
     '卷纲',
     '世界与势力规划',
+    `前${STARTUP_CHAPTER_COUNT}章启动包`,
     '前30章启动包',
     '单章蓝图',
     '主要支线',
@@ -599,7 +606,8 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
   const actsSection = sections['四幕结构'];
   const volumeSection = sections['卷纲'];
   const worldBuildingSection = sections['世界与势力规划'];
-  const startupSection = sections['前30章启动包'];
+  const startupSection =
+    sections[`前${STARTUP_CHAPTER_COUNT}章启动包`] || sections['前30章启动包'];
   const chapterBlueprintSection = sections['单章蓝图'];
   const subplotsSection = sections['主要支线'];
   const storyLinesSection = sections['故事线规划'];
@@ -624,7 +632,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
   const chapterBlocks = startupBlocks.length > 0
     ? startupBlocks.map((block) => parseStartupBlock(block.body, block.heading.replace(/^###\s*/, '').trim()))
     : [{
-      range: '1-30章',
+      range: `1-${STARTUP_CHAPTER_COUNT}章`,
       objective: '',
       mustEvents: [],
       coolPoints: [],

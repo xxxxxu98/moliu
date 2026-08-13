@@ -13,6 +13,8 @@ import { useSettingsStore } from '@/stores/settings.store';
 import type { AIGenerationConfig } from '@/stores/settings.store';
 import { UnifiedOutlineGenerator } from '../unified-generator';
 
+const OUTLINE_STREAM_DONE_MARK = '[DONE]';
+
 /** 合法方向文本：与 direction-prompt 输出格式一致，可被 parseDirections 解析 */
 const DIRECTION_TEXT = `## 方向方案1
 - 标题：凡人修仙传
@@ -178,6 +180,68 @@ describe('UnifiedOutlineGenerator 请求参数', () => {
     const body = lastRequestBody(fetchMock);
     expect(body.generationConfig.temperature).toBe(0.3);
     expect(body.generationConfig.topP).toBe(0.7);
+  });
+
+  it('openai 兼容分支走 SSE 流式，按增量拼回完整文本', async () => {
+    injectSettings({ provider: 'openai' });
+    // 把方向文本切成多个 SSE 事件，并混入 reasoning_content 与半截事件边界
+    const pieces = [DIRECTION_TEXT.slice(0, 40), DIRECTION_TEXT.slice(40, 200), DIRECTION_TEXT.slice(200)];
+    const sse = [
+      'data: {"choices":[{"delta":{"reasoning_content":"思考中"}}]}',
+      ...pieces.map(piece => `data: ${JSON.stringify({ choices: [{ delta: { content: piece } }] })}`),
+      `data: ${OUTLINE_STREAM_DONE_MARK}`,
+    ].join('\n\n') + '\n\n';
+    const encoder = new TextEncoder();
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      body: {
+        getReader: () => {
+          // 故意在事件中间切断，验证跨分片的半截事件能被正确补齐
+          const chunks = [sse.slice(0, 60), sse.slice(60, 300), sse.slice(300)];
+          let index = 0;
+          return {
+            read: async () =>
+              index < chunks.length
+                ? { done: false, value: encoder.encode(chunks[index++]) }
+                : { done: true, value: undefined },
+          };
+        },
+      },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    const result = await generator.generateDirections('创意种子', { maxRetries: 1 });
+
+    expect(lastRequestBody(fetchMock).stream).toBe(true);
+    expect(result.directions.length).toBeGreaterThan(0);
+    expect(result.rawText).toBe(DIRECTION_TEXT);
+  });
+
+  it('网关忽略 stream 参数直接返回整包 JSON 时仍能取到内容', async () => {
+    injectSettings({ provider: 'openai' });
+    const encoder = new TextEncoder();
+    const payload = JSON.stringify({ choices: [{ message: { content: DIRECTION_TEXT } }] });
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      body: {
+        getReader: () => {
+          let sent = false;
+          return {
+            read: async () => {
+              if (sent) return { done: true, value: undefined };
+              sent = true;
+              return { done: false, value: encoder.encode(payload) };
+            },
+          };
+        },
+      },
+    })));
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    const result = await generator.generateDirections('创意种子', { maxRetries: 1 });
+
+    expect(result.directions.length).toBeGreaterThan(0);
   });
 
   it('长请求悬挂时按单次超时中断，不无限占用生成链路', async () => {

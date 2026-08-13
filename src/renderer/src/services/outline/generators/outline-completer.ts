@@ -16,6 +16,12 @@ type StructuredTextCaller = (
 const PLACEHOLDER_TITLE_RE =
   /^第[一二三四五六七八九十百千零\d]+章(?:\s*[（(]?未命名[)）]?)?$/u;
 
+/** 启动包小节标题：首项为当前规范写法，其余为历史稿件兼容别名 */
+const STARTUP_PACK_SECTION_ALIASES = [
+  `前${OUTLINE_COMPLETENESS_POLICY.startupChapterCount}章启动包`,
+  '前30章启动包',
+];
+
 function isUsableBlueprint(blueprint: ChapterBlueprint | undefined): blueprint is ChapterBlueprint {
   return Boolean(
     blueprint &&
@@ -135,7 +141,12 @@ export function extractRequestedChapterBlocks(raw: string, requested: number[]):
   return result;
 }
 
-export function compactContext(outline: ExecutableOutline, direction: OutlineDirection): string {
+export function compactContext(
+  outline: ExecutableOutline,
+  direction: OutlineDirection,
+  excludeChapterNumbers: number[] = [],
+): string {
+  const excluded = new Set(excludeChapterNumbers);
   return JSON.stringify({
     direction,
     title: outline.title,
@@ -145,7 +156,7 @@ export function compactContext(outline: ExecutableOutline, direction: OutlineDir
     volumePlan: outline.volumePlan,
     startupPack30: outline.startupPack30,
     existingChapterCanon: (outline.chapterBlueprints ?? [])
-      .filter(isUsableBlueprint)
+      .filter(blueprint => isUsableBlueprint(blueprint) && !excluded.has(blueprint.orderIndex))
       .sort((a, b) => a.orderIndex - b.orderIndex)
       .map(blueprint => ({
         chapter: blueprint.orderIndex,
@@ -159,26 +170,44 @@ export function compactContext(outline: ExecutableOutline, direction: OutlineDir
   }, null, 2);
 }
 
+const {
+  titleMinChars,
+  titleMaxChars,
+  hookMinChars,
+  hookMaxChars,
+  minimumCpns,
+  maximumCpns,
+} = OUTLINE_COMPLETENESS_POLICY;
+
+/**
+ * 单章蓝图是续写的「合同」，节点质量直接决定正文质量。字数区间必须与
+ * OUTLINE_COMPLETENESS_POLICY 保持一致，否则批量生成的蓝图会被硬门禁挡在应用之外。
+ */
 function buildChapterCompletionPrompt(
   outline: ExecutableOutline,
   direction: OutlineDirection,
   chapterNumbers: number[],
 ): { system: string; user: string } {
   return {
-    system: `你是中文长篇网文大纲补全器。只补写指定章号的单章蓝图，不复述已有章节，不输出解释。
+    system: `你是中文长篇网文大纲拆章器。只输出指定章号的单章蓝图，不复述已有章节，不输出解释。
 每章必须严格使用以下结构：
 ### 第N章
-- 标题：6-16字、有具体画面或冲突，禁止只写“第N章”
-- CBN：10-35字的章首动作钩子
-- CPNs：1-3个单章可写场景，用中文分号分隔
-- CEN：10-35字章尾悬念
-- mustCover：1-3个本章能完成的具体事件，用中文分号分隔，禁止整卷目标
+- 标题：${titleMinChars}-${titleMaxChars}字的网文口语标题，要有画面/情绪/钩子，抓住本章最刺激的一点（打脸/翻车/反转/期限/秘密/意外）；禁止只写“第N章”
+- CBN：${hookMinChars}-${hookMaxChars}字的章首动作钩子，写开篇 10 秒抓人的瞬间画面或冲突，禁止整章剧情概括
+- CPNs：${minimumCpns}-${maximumCpns}个本章必须兑现的推进节点，每条独立可写成一个场面，用中文分号分隔
+- CEN：${hookMinChars}-${hookMaxChars}字章尾悬念，要让读者必须点下一章
+- mustCover：1-3个本章能完成的具体事件，用中文分号分隔，禁止整卷或全书级目标（如“完成…逆转”“实现…复兴”）
 - 禁区：1-3条本章不得提前泄露的事项
-- 章尾钩子文案：给读者看的短句
-- 爽点类型：打脸/反转/解谜/立威/收服等
-相邻章节必须承接上一章 CEN，所有字段都不得留空。
-“existingChapterCanon”是不可改写的既有事实：新章不得重置期限、重复破案/入狱/升职等已完成事件，不得让已倒台或被羁押的反派无解释恢复原职。每章 CBN 必须承接上一章 CEN，并推动到新状态。`,
-    user: `【故事上下文】\n${compactContext(outline, direction)}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
+- 章尾钩子文案：给读者看的一句钩子话术，区别于 CEN 的事件描述
+- 爽点类型：打脸/碾压/反转/装逼/解谜/逆袭/立威/收服等
+硬约束：
+1. 标题、CBN、CEN 的字数必须落在上面给出的区间内，超出即为格式错误；
+2. 一章只能承载一个核心转折（一次对决/一次破局/一次身份反转/一次关键抉择），禁止把两个独立高潮压进同一章；
+3. 第 N 章必须承接第 N-1 章的 CEN 状态并推动到新状态，不得无视上章终态；
+4. 逐章节奏必须落在“startupPack30.chapterBlocks”对应 5 章区块的目标、必出事件、必留钩子与本块禁区之内，不得提前兑现后续区块的爽点；
+5. 所有字段都不得留空，禁止使用括号补充说明。
+“existingChapterCanon”是不可改写的既有事实：新章不得重置期限、重复破案/入狱/升职等已完成事件，不得让已倒台或被羁押的反派无解释恢复原职。`,
+    user: `【故事上下文】\n${compactContext(outline, direction, chapterNumbers)}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
   };
 }
 
@@ -290,9 +319,95 @@ export interface CompleteOutlineResult {
   warnings: string[];
 }
 
+/** 单章蓝图每批最大章数：批越大越容易踩网关的非流式输出上限 */
+export const CHAPTER_BLUEPRINT_BATCH_SIZE = 10;
+
+const BLUEPRINT_SECTION_ALIASES = ['单章蓝图', '逐章蓝图'];
+
 /**
- * 对长响应尾部的高频截断做定向补全。章节每批最多 10 个，角色与伏笔独立请求，
- * 避免再次把 30 章 + 10 角色 + 10 伏笔塞进一次输出。
+ * 分批生成/重写指定章号的单章蓝图。
+ *
+ * 每批独立请求，批内逐章拼回「## 单章蓝图」再解析，只有解析出可用蓝图才覆盖旧值，
+ * 因此模型漏答或答坏时保留原有内容，不会把已有好章洗掉。
+ */
+export async function repairChapterBlueprints(params: {
+  rawText: string;
+  outline: ExecutableOutline;
+  direction: OutlineDirection;
+  options: GenerateOptions;
+  callStructuredTextMode: StructuredTextCaller;
+  chapterNumbers: number[];
+  phase: '补全' | '定点修复';
+  onProgress?: (message: string) => void;
+}): Promise<CompleteOutlineResult> {
+  const { chapterNumbers, phase, onProgress } = params;
+  let rawText = params.rawText;
+  let outline = params.outline;
+  const warnings: string[] = [];
+  if (chapterNumbers.length === 0) return { rawText, outline, warnings };
+
+  const usableBlueprints = new Map<number, ChapterBlueprint>();
+  for (const blueprint of outline.chapterBlueprints ?? []) {
+    if (isUsableBlueprint(blueprint)) usableBlueprints.set(blueprint.orderIndex, blueprint);
+  }
+
+  const batchCount = Math.ceil(chapterNumbers.length / CHAPTER_BLUEPRINT_BATCH_SIZE);
+  for (let index = 0; index < chapterNumbers.length; index += CHAPTER_BLUEPRINT_BATCH_SIZE) {
+    const batch = chapterNumbers.slice(index, index + CHAPTER_BLUEPRINT_BATCH_SIZE);
+    const batchIndex = Math.floor(index / CHAPTER_BLUEPRINT_BATCH_SIZE) + 1;
+    onProgress?.(
+      `正在${phase}单章蓝图 第${batch[0]}-${batch.at(-1)}章（${batchIndex}/${batchCount}）...`,
+    );
+    const prompt = buildChapterCompletionPrompt(outline, params.direction, batch);
+    const generated = await params.callStructuredTextMode(
+      prompt.system,
+      prompt.user,
+      { ...params.options, temperature: phase === '定点修复' ? 0.2 : 0.35 },
+    );
+    const blocks = extractRequestedChapterBlocks(generated, batch);
+    for (const [chapterNumber, block] of blocks) {
+      const stitched = replaceOutlineSection(
+        rawText,
+        BLUEPRINT_SECTION_ALIASES,
+        BLUEPRINT_SECTION_ALIASES[0],
+        [
+          ...[...usableBlueprints.values()]
+            .filter(blueprint => blueprint.orderIndex !== chapterNumber)
+            .map(serializeBlueprint),
+          block,
+        ].join('\n\n'),
+      );
+      const parsed = parseExpandedOutline(stitched);
+      const parsedBlueprint = parsed?.chapterBlueprints?.find(
+        item => item.orderIndex === chapterNumber,
+      );
+      if (parsed && isUsableBlueprint(parsedBlueprint)) {
+        usableBlueprints.set(chapterNumber, parsedBlueprint);
+      }
+    }
+    rawText = replaceOutlineSection(
+      rawText,
+      BLUEPRINT_SECTION_ALIASES,
+      BLUEPRINT_SECTION_ALIASES[0],
+      [...usableBlueprints.values()]
+        .sort((a, b) => a.orderIndex - b.orderIndex)
+        .map(serializeBlueprint)
+        .join('\n\n'),
+    );
+    outline = parseExpandedOutline(rawText) ?? outline;
+    if (blocks.size < batch.length) {
+      warnings.push(
+        `单章蓝图${phase}批次 ${batch[0]}-${batch.at(-1)} 仅返回 ${blocks.size}/${batch.length} 章`,
+      );
+    }
+  }
+
+  return { rawText, outline, warnings };
+}
+
+/**
+ * 单章蓝图常规就走这里分批生成：主请求只产出启动包与卷纲，逐章拆解每批最多 10 章，
+ * 角色与伏笔独立请求，避免把 50 章 + 10 角色 + 10 伏笔塞进一次输出触发网关超时或截断。
  */
 export async function completeIncompleteOutline(params: {
   rawText: string;
@@ -300,66 +415,32 @@ export async function completeIncompleteOutline(params: {
   direction: OutlineDirection;
   options: GenerateOptions;
   callStructuredTextMode: StructuredTextCaller;
+  onProgress?: (message: string) => void;
 }): Promise<CompleteOutlineResult> {
   let rawText = params.rawText;
   let outline = params.outline;
   const warnings: string[] = [];
 
-  const repairChapterBlueprints = async (
+  const runBlueprintRepair = async (
     chapterNumbers: number[],
     phase: '补全' | '定点修复',
   ): Promise<void> => {
-    const usableBlueprints = new Map<number, ChapterBlueprint>();
-    for (const blueprint of outline.chapterBlueprints ?? []) {
-      if (isUsableBlueprint(blueprint)) usableBlueprints.set(blueprint.orderIndex, blueprint);
-    }
-
-    for (let index = 0; index < chapterNumbers.length; index += 10) {
-      const batch = chapterNumbers.slice(index, index + 10);
-      const prompt = buildChapterCompletionPrompt(outline, params.direction, batch);
-      const generated = await params.callStructuredTextMode(
-        prompt.system,
-        prompt.user,
-        { ...params.options, temperature: phase === '定点修复' ? 0.2 : 0.35 },
-      );
-      const blocks = extractRequestedChapterBlocks(generated, batch);
-      for (const [chapterNumber, block] of blocks) {
-        const stitched = replaceOutlineSection(
-          rawText,
-          ['单章蓝图', '逐章蓝图'],
-          '单章蓝图',
-          [
-            ...[...usableBlueprints.values()].map(serializeBlueprint),
-            block,
-          ].join('\n\n'),
-        );
-        const parsed = parseExpandedOutline(stitched);
-        const parsedBlueprint = parsed?.chapterBlueprints?.find(
-          item => item.orderIndex === chapterNumber,
-        );
-        if (parsed && isUsableBlueprint(parsedBlueprint)) {
-          usableBlueprints.set(chapterNumber, parsedBlueprint);
-        }
-      }
-      rawText = replaceOutlineSection(
-        rawText,
-        ['单章蓝图', '逐章蓝图'],
-        '单章蓝图',
-        [...usableBlueprints.values()]
-          .sort((a, b) => a.orderIndex - b.orderIndex)
-          .map(serializeBlueprint)
-          .join('\n\n'),
-      );
-      outline = parseExpandedOutline(rawText) ?? outline;
-      if (blocks.size < batch.length) {
-        warnings.push(
-          `单章蓝图${phase}批次 ${batch[0]}-${batch.at(-1)} 仅返回 ${blocks.size}/${batch.length} 章`,
-        );
-      }
-    }
+    const repaired = await repairChapterBlueprints({
+      rawText,
+      outline,
+      direction: params.direction,
+      options: params.options,
+      callStructuredTextMode: params.callStructuredTextMode,
+      chapterNumbers,
+      phase,
+      onProgress: params.onProgress,
+    });
+    rawText = repaired.rawText;
+    outline = repaired.outline;
+    warnings.push(...repaired.warnings);
   };
 
-  await repairChapterBlueprints(findIncompleteChapterNumbers(outline), '补全');
+  await runBlueprintRepair(findIncompleteChapterNumbers(outline), '补全');
 
   if (!outline.startupPack30.openingHook.trim()) {
     const firstChapterHook = outline.chapterBlueprints
@@ -368,8 +449,8 @@ export async function completeIncompleteOutline(params: {
     if (firstChapterHook) {
       rawText = replaceSectionField(
         rawText,
-        ['前30章启动包'],
-        '前30章启动包',
+        STARTUP_PACK_SECTION_ALIASES,
+        STARTUP_PACK_SECTION_ALIASES[0],
         '开篇钩子',
         firstChapterHook.slice(0, 35),
       );
@@ -458,7 +539,7 @@ export async function completeIncompleteOutline(params: {
     warnings.push(
       `单章蓝图补全后仍有 ${incompleteChapters.length} 章不完整，执行第 ${round + 1} 轮定点修复：${incompleteChapters.join('、')}`,
     );
-    await repairChapterBlueprints(incompleteChapters, '定点修复');
+    await runBlueprintRepair(incompleteChapters, '定点修复');
   }
 
   return { rawText, outline, warnings };

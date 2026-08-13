@@ -484,7 +484,7 @@ function buildAdvanceCbn(
 /**
  * 把 startupPack30 的"5 章一组"区间块拆成单章 GeneratedChapter
  *
- * 由于 AI 当前不生成 chapterBlueprints（受 prompt 约束），单章结构化节点（CBN/CPNs/CEN 等）
+ * 仅在 chapterBlueprints 缺失（分批拆章全部失败）时兜底：单章结构化节点（CBN/CPNs/CEN 等）
  * 由这里的拆分算法保守派生，让续写端的字段消费不至于全部失效。
  */
 function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChapter[] {
@@ -662,7 +662,7 @@ function toChapters(outline: ExecutableOutline): GeneratedChapter[] {
     });
   }
 
-  // 当前 AI 不生成 chapterBlueprints，走拆分 startupPack30 的路径
+  // 分批拆章全部失败时才会走到这里：退化为拆分 startupPack30 区间块
   return splitStartupBlocksToChapters(outline);
 }
 
@@ -941,7 +941,7 @@ export function mapExecutableOutlineToGeneratedOutline(
     foreshadows: toForeshadows(outline),
     estimatedWordCount: toEstimatedWordCount(outline, options?.targetWordCountRange),
     storyScale: toStoryScale(outline, options?.targetWordCountRange),
-    // 透传前 30 章启动包，供 useProjectCreator 落库到 metadata
+    // 透传启动包，供 useProjectCreator 落库到 metadata
     startupPack30: outline.startupPack30,
     emotionGoal: toEmotionGoal(outline),
     coolPointDesign: toCoolPointDesign(outline),

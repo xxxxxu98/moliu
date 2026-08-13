@@ -16,7 +16,11 @@ import type { GenerateOptions } from './unified-generator';
 import type { OutlineDirection } from '../types/direction';
 import type { ExecutableOutline } from '../types/executable-outline';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
-import { inspectOutlineCompleteness } from '../validation/outlineCompleteness';
+import { inspectOutlineCompleteness, OUTLINE_COMPLETENESS_POLICY } from '../validation/outlineCompleteness';
+import { extractOutlineSectionBody, replaceOutlineSection } from './outline-completer';
+
+const STARTUP_PACK_HEADING = `前${OUTLINE_COMPLETENESS_POLICY.startupChapterCount}章启动包`;
+const BLUEPRINT_SECTION_ALIASES = ['单章蓝图', '逐章蓝图'];
 
 export type OutlineQualityIssueKind =
   | 'placeholder-events'
@@ -203,7 +207,7 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
       if (!packText.includes(clause)) {
         issues.push({
           kind: 'missing-selling-point',
-          detail: `卷级卖点「${clause.slice(0, 40)}」未出现在前 30 章启动包（openingHook/coolPoints/readerExpectation）`,
+          detail: `卷级卖点「${clause.slice(0, 40)}」未出现在${STARTUP_PACK_HEADING}（openingHook/coolPoints/readerExpectation）`,
         });
         break;
       }
@@ -313,7 +317,10 @@ export interface OutlineReviewPrompt {
 }
 
 /**
- * 构建审查修正 prompt：要求模型基于问题清单输出修正后的完整主方案（保持模板结构）。
+ * 构建审查修正 prompt。
+ *
+ * 送审文本已剥离「## 单章蓝图」（50 章逐章内容重发会撑爆非流式输出），
+ * 章级缺陷改由 outline-completer 分批定点修复。
  */
 export function buildOutlineReviewPrompt(params: {
   initialRawText: string;
@@ -324,14 +331,13 @@ export function buildOutlineReviewPrompt(params: {
   const system = `你是一名擅长中文长篇网文策划的资深故事架构师，同时担任大纲质检员。
 用户会给你一份「主方案」初稿和一份质检问题清单。你的任务：
 1. 逐条修复问题清单中列出的缺陷；
-2. 修复时保持原模板的固定结构（## 故事定位 / ## 核心驱动 / ## 故事规模规划 / ## 四幕结构 / ## 卖点承载规划 / ## 卷纲 / ## 前30章启动包 / ## 核心角色 / ## 伏笔规划 等小节及字段名一律不变），只修改具体内容；
+2. 修复时保持原模板的固定结构（## 故事定位 / ## 核心驱动 / ## 故事规模规划 / ## 四幕结构 / ## 卖点承载规划 / ## 卷纲 / ## ${STARTUP_PACK_HEADING} / ## 核心角色 / ## 伏笔规划 等小节及字段名一律不变），只修改具体内容；
 3. 不要重写整份方案、不要更换主角与核心卖点、不要增加新章节块；
 4. 【必出事件硬约束】每个区间的「必出事件」必须是单章可兑现的独立事件：同一场景链合并为一条；每条事件 8～30 字一句话写完，禁止换行；
    【括号硬约束】禁止使用任何括号（中文（）或英文()），补充说明一律用逗号并入句中。若问题清单报"括号跨事件拆分"，说明初稿把一个括号拆到了两条事件里，修正时必须删除括号、把括号内容用逗号并入对应事件正文，确保修正后每条事件的开括号与闭括号各自配平；
 5. 【开篇钩子硬约束】开篇钩子 30 字以内的单场景动作钩子；
-6. 【单章 mustCover 硬约束】单章蓝图「## 单章蓝图」中每章的 mustCover 必须是单章可兑现的具体事件（一个场景、一次对决、一次破局），禁止写整卷或全书级目标（如「完成…逆转」「实现…复兴」「达成…统一」「打败…集团」「通过…考绩」等）。若问题清单报 over-scoped-mustcover，必须把目标拆成本章能完成的一个具体动作；
-7. 【单章格式硬约束】标题必须 6～16 字；CBN、CEN 必须各 8～25 字；CPN 必须 1～3 个。若问题清单报 invalid-blueprint-format，只修改所列章节并逐项校验长度；
-8. 若问题清单为（无）或已全部修复，原样输出主方案即可。
+6. 【禁止输出单章蓝图】初稿已剥离逐章内容，你也不得补写「## 单章蓝图」「## 逐章蓝图」小节，章级缺陷由后续独立请求修复；
+7. 若问题清单为（无）或已全部修复，原样输出主方案即可。
 直接输出修正后的完整主方案 Markdown，不要任何前后解释文字。`;
 
   const user = `【方向卡】
@@ -340,12 +346,21 @@ ${JSON.stringify(direction, null, 2)}
 【质检问题清单】
 ${formatIssues(issues)}
 
-【初稿主方案（请基于它修复，保持结构与字段名）】
+【初稿主方案（已剥离单章蓝图，请基于它修复，保持结构与字段名）】
 ${initialRawText}
 
 请输出修正后的完整主方案。`;
 
   return { system, user };
+}
+
+/** 取出「## 单章蓝图」正文；没有该节时返回空串 */
+function extractBlueprintSection(raw: string): string {
+  const hasSection = new RegExp(
+    `^##\\s*(?:${BLUEPRINT_SECTION_ALIASES.join('|')})(?:\\s*[（(].*)?\\s*$`,
+    'mu',
+  ).test(raw);
+  return hasSection ? extractOutlineSectionBody(raw, BLUEPRINT_SECTION_ALIASES) : '';
 }
 
 export interface OutlineReviewResult {
@@ -354,11 +369,16 @@ export interface OutlineReviewResult {
   /** 是否采用了修正稿 */
   applied: boolean;
   warnings: string[];
+  /** 需要交给分批定点修复的章号（章级质量缺陷） */
+  chapterIssueNumbers: number[];
 }
 
 /**
  * 审查+修正执行：初稿无问题直接返回；有问题则发起二次请求，修正稿解析失败或质量未提升时回退初稿。
  * abort 异常向上抛（与生成器竞态语义一致）。
+ *
+ * 送审前剥离单章蓝图并在采用修正稿时原样拼回，章级缺陷通过 chapterIssueNumbers 外抛，
+ * 避免一次请求重发全部逐章内容。
  */
 export async function reviewAndFixOutline(params: {
   initialRawText: string;
@@ -374,30 +394,54 @@ export async function reviewAndFixOutline(params: {
 
   const initialOutline = parseExpandedOutline(initialRawText);
   if (!initialOutline) {
-    return { rawText: initialRawText, applied: false, warnings: ['初稿无法解析，跳过审查修正'] };
+    return {
+      rawText: initialRawText,
+      applied: false,
+      warnings: ['初稿无法解析，跳过审查修正'],
+      chapterIssueNumbers: [],
+    };
   }
   const initialIssues = inspectOutlineQuality(initialOutline);
-  if (initialIssues.length === 0) {
-    return { rawText: initialRawText, applied: false, warnings: [] };
+  const chapterIssueNumbers = [
+    ...new Set(
+      initialIssues
+        .map(issue => issue.chapterOrder)
+        .filter((order): order is number => order !== undefined),
+    ),
+  ].sort((a, b) => a - b);
+  const documentIssues = initialIssues.filter(issue => issue.chapterOrder === undefined);
+  if (documentIssues.length === 0) {
+    return { rawText: initialRawText, applied: false, warnings: [], chapterIssueNumbers };
   }
+
+  const blueprintSection = extractBlueprintSection(initialRawText);
+  const restoreBlueprints = (raw: string): string =>
+    blueprintSection
+      ? replaceOutlineSection(raw, BLUEPRINT_SECTION_ALIASES, BLUEPRINT_SECTION_ALIASES[0], blueprintSection)
+      : raw;
 
   try {
     const { system, user } = buildOutlineReviewPrompt({
-      initialRawText,
+      initialRawText: blueprintSection
+        ? replaceOutlineSection(initialRawText, BLUEPRINT_SECTION_ALIASES, BLUEPRINT_SECTION_ALIASES[0], '（本次省略，勿输出该节）')
+        : initialRawText,
       direction,
-      issues: initialIssues,
+      issues: documentIssues,
     });
     // 修正请求用低温（0.3）求稳定输出；signal 透传保持可取消
-    const fixedRawText = await callStructuredTextMode(system, user, {
-      ...(params.options ?? {}),
-      temperature: 0.3,
-    });
+    const fixedRawText = restoreBlueprints(
+      await callStructuredTextMode(system, user, {
+        ...(params.options ?? {}),
+        temperature: 0.3,
+      }),
+    );
     const fixedOutline = parseExpandedOutline(fixedRawText);
     if (!fixedOutline) {
       return {
         rawText: initialRawText,
         applied: false,
         warnings: ['修正稿无法解析，回退初稿'],
+        chapterIssueNumbers,
       };
     }
     const initialCompleteness = inspectOutlineCompleteness(initialOutline);
@@ -412,25 +456,39 @@ export async function reviewAndFixOutline(params: {
         warnings: [
           `修正稿结构完整性退化（阻断项 ${initialCompleteness.blockers.length}→${fixedCompleteness.blockers.length}），回退初稿`,
         ],
+        chapterIssueNumbers,
       };
     }
-    const fixedIssues = inspectOutlineQuality(fixedOutline);
-    if (fixedIssues.length >= initialIssues.length) {
+    const fixedDocumentIssues = inspectOutlineQuality(fixedOutline).filter(
+      issue => issue.chapterOrder === undefined,
+    );
+    if (fixedDocumentIssues.length >= documentIssues.length) {
       return {
         rawText: initialRawText,
         applied: false,
-        warnings: [`修正稿质量未提升（${initialIssues.length}→${fixedIssues.length} 处问题），回退初稿`],
+        warnings: [
+          `修正稿质量未提升（${documentIssues.length}→${fixedDocumentIssues.length} 处问题），回退初稿`,
+        ],
+        chapterIssueNumbers,
       };
     }
     return {
       rawText: fixedRawText,
       applied: true,
-      warnings: [`大纲审查修正完成：修复 ${initialIssues.length - fixedIssues.length} 处问题`],
+      warnings: [
+        `大纲审查修正完成：修复 ${documentIssues.length - fixedDocumentIssues.length} 处问题`,
+      ],
+      chapterIssueNumbers,
     };
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') throw error;
     if (error instanceof Error && error.name === 'AbortError') throw error;
     const message = error instanceof Error ? error.message : String(error);
-    return { rawText: initialRawText, applied: false, warnings: [`大纲审查修正失败，回退初稿：${message.slice(0, 120)}`] };
+    return {
+      rawText: initialRawText,
+      applied: false,
+      warnings: [`大纲审查修正失败，回退初稿：${message.slice(0, 120)}`],
+      chapterIssueNumbers,
+    };
   }
 }

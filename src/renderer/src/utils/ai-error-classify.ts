@@ -85,7 +85,7 @@ const WORDCOUNT_RE = /字数严重不足|字数严重超限|word-count-(?:short|
 const TIMEOUT_RE = /timeout|超时|timed?\s*out/iu;
 
 /** 配额耗尽文案特征（部分 provider 会用文案而非 429） */
-const QUOTA_RE = /quota|配额|rate\s*limit|insufficient.*quota|余额不足/iu;
+const QUOTA_RE = /quota|配额|rate\s*limit|insufficient.*quota|余额不足|速率限制|请求频率/iu;
 
 // ============================================
 // 辅助判定
@@ -96,6 +96,14 @@ function readStatus(err: unknown): number | undefined {
   if (typeof err !== 'object' || err === null) return undefined;
   const status = (err as { status?: unknown }).status;
   return typeof status === 'number' ? status : undefined;
+}
+
+/** 从「API 请求失败: 429 {…}」这类包装错误里抽出 HTTP 状态码 */
+function readStatusFromMessage(message: string): number | undefined {
+  const match = message.match(/请求失败:\s*(\d{3})\b/u);
+  if (!match) return undefined;
+  const status = Number(match[1]);
+  return Number.isInteger(status) ? status : undefined;
 }
 
 /** 是否是 AbortError / DOMException('Aborted') */
@@ -129,8 +137,8 @@ export function classifyError(err: unknown, signal?: AbortSignal): ClassifiedErr
     return { kind: 'timeout', retryable: true, transient: true, message };
   }
 
-  // 3) HTTP 状态码（multi-ai-sdk AIError 携带 status）
-  const status = readStatus(err);
+  // 3) HTTP 状态码（multi-ai-sdk AIError 携带 status；项目内 fetch 包装成「请求失败: 429 …」）
+  const status = readStatus(err) ?? readStatusFromMessage(message);
   if (typeof status === 'number') {
     const fromStatus = classifyHttpStatus(status);
     if (fromStatus) return { ...fromStatus, message };

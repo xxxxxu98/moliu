@@ -6,6 +6,13 @@ import {
   type WordCountBreakdown,
 } from '@/services/outline/utils';
 import { buildWebnovelCraftPrompt } from './core-principles';
+import { OUTLINE_COMPLETENESS_POLICY } from '@/services/outline/validation/outlineCompleteness';
+
+/** 启动包/单章蓝图必须覆盖的章数，与可应用门槛共用同一常量 */
+const STARTUP_CHAPTER_COUNT = OUTLINE_COMPLETENESS_POLICY.startupChapterCount;
+
+/** 启动包区块粒度：每 5 章一块 */
+const STARTUP_BLOCK_SIZE = 5;
 
 export interface ExpandDirectionPromptOptions {
   seed: string;
@@ -22,7 +29,7 @@ function buildScaleGuidance(wordCountRange: string): WordCountBreakdown & {
   return {
     ...breakdown,
     averageWordsPerChapter: AVG_WORDS_PER_CHAPTER,
-    startupRatio: Number((30 / breakdown.estimatedChapterCount).toFixed(3)),
+    startupRatio: Number((STARTUP_CHAPTER_COUNT / breakdown.estimatedChapterCount).toFixed(3)),
   };
 }
 
@@ -38,6 +45,27 @@ const VOLUME_FIELDS = `- 卷标题：
 - 回收伏笔：
 - 关系变化：`;
 
+const STARTUP_BLOCK_FIELDS = `- 目标：
+- 必出事件：
+- 必出爽点：
+- 必留钩子：
+- 本块禁区：
+- 节奏要求：
+- 读者期待：`;
+
+/** 按 STARTUP_CHAPTER_COUNT 动态生成启动包区块模板（1-5 / 6-10 / …） */
+export function buildStartupBlockSection(
+  chapterCount: number = STARTUP_CHAPTER_COUNT,
+  blockSize: number = STARTUP_BLOCK_SIZE,
+): string {
+  const blockCount = Math.ceil(chapterCount / blockSize);
+  return Array.from({ length: blockCount }, (_, index) => {
+    const start = index * blockSize + 1;
+    const end = Math.min((index + 1) * blockSize, chapterCount);
+    return `### ${start}-${end}章\n${STARTUP_BLOCK_FIELDS}`;
+  }).join('\n\n');
+}
+
 /** 按目标规模动态生成卷纲模板（百万/千万字可达数十卷，不再写死 3 卷） */
 export function buildVolumePlanSection(volumeCount: number): string {
   const count = Math.max(3, Math.min(48, Math.round(volumeCount) || 3));
@@ -48,25 +76,24 @@ export function buildVolumePlanSection(volumeCount: number): string {
 
 const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事架构师。现在用户已经从多个方向中选定了一个最值得展开的方向，你的任务是把它扩展成“可执行型长篇方案”。
 
-注意：你的目标不是写成文学赏析稿，也不是写百科设定，而是产出一份适合继续拆卷纲、拆前30章、拆章节蓝图的工程化方案。
+注意：你的目标不是写成文学赏析稿，也不是写百科设定，而是产出一份适合继续拆卷纲、拆前${STARTUP_CHAPTER_COUNT}章、拆章节蓝图的工程化方案。
 
 请优先满足以下要求：
 1. 方案必须具备明确卖点、明确主角路径、明确冲突升级链
-2. 方案必须适合长篇网文连载，强调前30章抓读者的能力
+2. 方案必须适合长篇网文连载，强调前${STARTUP_CHAPTER_COUNT}章抓读者的能力
 3. 所有模块都要服务“后续可继续写”，而不是只服务展示
 4. 尽量少写空泛设定，多写冲突、目标、代价、升级、钩子
-5. 禁止把章节展开成 100 章以上的整本梗概；但【前 30 章的单章蓝图是必需输出】（见下方「## 单章蓝图」段），必须逐章给出标题与节点，不得省略
-6. 必须严格匹配目标字数区间对应的总章节规模，按“平均每章约2500字”估算总章节数，避免前30章就消耗完主线
+5. 【本次不要输出单章蓝图】禁止把章节展开成整本梗概，也禁止输出「## 单章蓝图」「## 逐章蓝图」等逐章小节；逐章拆解会在后续请求中分批完成，本次只需把前${STARTUP_CHAPTER_COUNT}章的节奏写进「## 前${STARTUP_CHAPTER_COUNT}章启动包」的 5 章区块里
+6. 必须严格匹配目标字数区间对应的总章节规模，按“平均每章约2500字”估算总章节数，避免前${STARTUP_CHAPTER_COUNT}章就消耗完主线
 7. 【开篇钩子硬约束】开篇钩子必须是 30 字以内的单场景动作钩子（如「一睁眼正在验尸」「金手指砸脸」），只写开局第一幕的瞬间画面，禁止写整卷剧情概括、目标陈述或倒计时预告。超过 35 字视为格式错误，必须删减到 30 字以内再输出
 8. 【必出事件硬约束】每个区间的「必出事件」必须是单章可兑现的独立事件：
    - 同一场景链（如「醒来→验尸→当众指认→被诬入狱」）必须合并为一条，禁止拆成多条
    - 每条事件一句话写完（8～30 字，最多 40 字），禁止换行
    - 【括号硬约束】禁止使用任何括号（中文（）或英文()）；如需补充说明一律用逗号并入句中。括号不得跨事件拆分——「发现效果（场景重复」+「人物卡帧）」这种把一个括号拆到两条事件里的写法属于严重格式错误
-9. 【单章高潮密度硬约束】单章蓝图的单章节奏必须与「平均每章约2500字」的篇幅容量匹配，避免把多条独立的重大转折压缩进一章：
-   - 一章的 mustCover 只能承载一个核心转折（一次对决/一次破局/一次身份反转/一次关键抉择，四者居其一），同一章内不得并列两个或以上各自独立的重大高潮（如「决战+登基+真相揭露」并列为同一章 mustCover 属于严重超载）
-   - 区段（如 1-5 章 / 6-10 章等五章块）的「目标」若出现「同时完成X与Y」这类并列任务，必须说明二者是同一事件链的两个环节，而非两个独立高潮
-   - 单章 CEN 只能落在一个悬念上；若一章内出现「A 发生+同时 B 发生」的双线并发转折，必须拆为相邻两章，由后一章的 CBN 承接前一章 CEN
-   - 中后期（约第 11 章起）不得通过提高单章事件密度来压缩主线——主线推进速度应通过「升级新场景/引入新变量/深化已有冲突」实现，而非「一章塞满三件大事」
+9. 【区块高潮密度硬约束】每个 5 章区块的节奏必须与「平均每章约2500字」「一块约 1.2 万字」的篇幅容量匹配，避免把多条独立的重大转折压缩进同一块：
+   - 一个区块最多承载 2 个核心转折（对决/破局/身份反转/关键抉择），后续拆章时才有空间逐章分配
+   - 区块「目标」若出现「同时完成X与Y」这类并列任务，必须说明二者是同一事件链的两个环节，而非两个独立高潮
+   - 中后期区块不得通过提高事件密度来压缩主线——主线推进速度应通过「升级新场景/引入新变量/深化已有冲突」实现，而非「一块塞满五件大事」
 
 ${buildWebnovelCraftPrompt()}
 
@@ -108,7 +135,7 @@ ${buildWebnovelCraftPrompt()}
 - 章节平均字数：
 - 建议卷数：
 - 每卷预计章节数：
-- 前30章占比：
+- 前${STARTUP_CHAPTER_COUNT}章占比：
 - 长线推进说明：
 
 ## 四幕结构
@@ -208,380 +235,14 @@ ${buildWebnovelCraftPrompt()}
 - 限制/代价：
 - 关联规则：
 
-## 前30章启动包
+## 前${STARTUP_CHAPTER_COUNT}章启动包
 - 开篇钩子：
 - 对读者的承诺：
 - 主角第一印象：
 - 第一次强记忆爽点：
 - 第一轮冲突闭环：
 
-### 1-5章
-- 目标：
-- 必出事件：
-- 必出爽点：
-- 必留钩子：
-- 本块禁区：
-- 节奏要求：
-- 读者期待：
-
-### 6-10章
-- 目标：
-- 必出事件：
-- 必出爽点：
-- 必留钩子：
-- 本块禁区：
-- 节奏要求：
-- 读者期待：
-
-### 11-15章
-- 目标：
-- 必出事件：
-- 必出爽点：
-- 必留钩子：
-- 本块禁区：
-- 节奏要求：
-- 读者期待：
-
-### 16-20章
-- 目标：
-- 必出事件：
-- 必出爽点：
-- 必留钩子：
-- 本块禁区：
-- 节奏要求：
-- 读者期待：
-
-### 21-25章
-- 目标：
-- 必出事件：
-- 必出爽点：
-- 必留钩子：
-- 本块禁区：
-- 节奏要求：
-- 读者期待：
-
-### 26-30章
-- 目标：
-- 必出事件：
-- 必出爽点：
-- 必留钩子：
-- 本块禁区：
-- 节奏要求：
-- 读者期待：
-
-## 单章蓝图
-（【强制】逐章产出前 30 章的单章蓝图，每章一块，必须写满 30 块。这是续写的「合同」，节点质量直接决定正文质量。下面的「块级」必出事件/钩子/禁区只是节奏参考，单章蓝图的节点才是真正驱动续写的依据，二者不可互相替代。）
-
-【单章蓝图硬约束】
-- 标题必须是 6～16 字的网文口语标题，有画面/情绪/钩子；禁止「第N章」纯序号、禁止空标题。优先抓本章最刺激的一点（打脸/翻车/反转/期限/秘密/意外）
-- CBN（章首钩子）：本章开篇 10 秒抓住读者的瞬间画面或冲突，一句话（8～25 字），禁止写整章剧情概括
-- CPNs（推进节点）：本章必须兑现的 1～3 个情节推进点，每条一句话、独立可写成一个场面
-- CEN（章尾钩子）：本章结尾留下的悬念/压迫/反转，一句话（8～25 字），要让读者必须点下一章
-- mustCover（必出事件）：本章正文必须写到的核心事件，每条一句话；与 CBN/CPN/CEN 可以同源但不可一字不差重复
-- 禁区：本章正文不能触碰的设定/提前揭示（如「不能揭示主角穿越原因」）
-- 章尾钩子文案：章尾收束的一句钩子话术（区别于 CEN 的「事件描述」，这里是给读者看的「话术感」短句，可空）
-- 爽点类型：本章主要爽点类型（如「打脸」「碾压」「反转」「装逼」「解谜」「逆袭」「立威」「收服」）
-- 第 N 章的蓝图必须承接第 N-1 章的 CEN 状态，不得无视上章终态（如上章角色已死、本章不得让其无说明地活动）
-
-### 第1章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第2章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第3章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第4章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第5章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第6章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第7章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第8章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第9章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第10章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第11章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第12章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第13章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第14章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第15章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第16章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第17章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第18章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第19章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第20章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第21章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第22章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第23章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第24章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第25章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第26章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第27章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第28章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第29章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
-
-### 第30章
-- 标题：
-- CBN：
-- CPNs：
-- CEN：
-- mustCover：
-- 禁区：
-- 章尾钩子文案：
-- 爽点类型：
+{{STARTUP_BLOCK_SECTION}}
 
 ## 主要支线
 ### 支线1
@@ -1040,13 +701,15 @@ ${buildWebnovelCraftPrompt()}
 - 如果原始方向信息不足，请主动补足能支撑长篇网文连载的目标链、冲突链和卷级递进结构，但不要脱离已选方向的核心卖点。
 - “故事规模规划”必须与目标字数区间一致；“预计总章节数”要按平均每章约2500字估算，误差尽量控制在±10%以内
 - “建议卷数”必须与卷纲实际输出卷数一致，并与目标字数区间匹配
-- “前30章占比”必须体现为总章节数的前期启动比例，并在“长线推进说明”中解释为什么30章后仍有足够篇幅推进主线升级、地图扩展或人物关系递进。`;
+- “前${STARTUP_CHAPTER_COUNT}章占比”必须体现为总章节数的前期启动比例，并在“长线推进说明”中解释为什么${STARTUP_CHAPTER_COUNT}章后仍有足够篇幅推进主线升级、地图扩展或人物关系递进。`;
 
 export function buildExpandDirectionPrompt(options: ExpandDirectionPromptOptions): BuiltPrompt {
   const { direction, seed, wordCountRange } = options;
   const scale = buildScaleGuidance(wordCountRange);
   const volumePlanSection = buildVolumePlanSection(scale.suggestedVolumeCount);
-  const system = SYSTEM_PROMPT.replace('{{VOLUME_PLAN_SECTION}}', volumePlanSection);
+  const system = SYSTEM_PROMPT
+    .replace('{{VOLUME_PLAN_SECTION}}', volumePlanSection)
+    .replace('{{STARTUP_BLOCK_SECTION}}', buildStartupBlockSection());
 
   return {
     system,
@@ -1061,7 +724,7 @@ ${wordCountRange}
 - 预计总章节数约${scale.estimatedChapterCount}章
 - 建议卷数约${scale.suggestedVolumeCount}卷
 - 每卷预计约${scale.estimatedChaptersPerVolume}章
-- 前30章约占全书${Math.round(scale.startupRatio * 100)}%
+- 前${STARTUP_CHAPTER_COUNT}章约占全书${Math.round(scale.startupRatio * 100)}%
 
 【原始创意种子】
 ${seed}
@@ -1083,11 +746,11 @@ ${options.enhancementBrief}
 
 ` : ''}要求：
 1. 优先增强长篇承载力和网文追读动力
-2. 把前30章设计成明确可执行的启动包
+2. 把前${STARTUP_CHAPTER_COUNT}章设计成明确可执行的启动包，按 5 章一块给满 ${Math.ceil(STARTUP_CHAPTER_COUNT / 5)} 块
 3. ${scale.suggestedVolumeCount}卷规划要彼此递进，不能重复，卷数须与建议卷数一致
 4. 尽量具体，不要空泛设定
 5. 输出必须严格遵守指定结构
-6. 章节规模必须与目标字数区间匹配，前30章只能完成“开局承诺 + 第一轮冲突闭环 + 更大主线入口”，不能提前耗尽整本书的核心悬念与升级空间
+6. 章节规模必须与目标字数区间匹配，前${STARTUP_CHAPTER_COUNT}章只能完成“开局承诺 + 第一轮冲突闭环 + 更大主线入口”，不能提前耗尽整本书的核心悬念与升级空间
 7. 如果提供了“本次增强目标”，必须优先落实这些增强项，重点补强地图扩张线、势力博弈线、人物关系变量、长期悬念中的缺口，但不能偏离当前方向核心卖点
 8. 默认按长篇商业网文规格补足角色和伏笔密度：关键角色至少覆盖"常驻核心 4 + 中前期 2 + 中后期 2 + 势力代表 2"共 10 个槽位，伏笔至少 10 条（短 3 + 中 3 + 长 2 + 终局 2），分布在前期、中期、后期多个阶段，不得只集中在开篇或结尾
 9. 角色分布不能只围绕主角单点展开，至少要形成 3 组以上非主角之间的关系链或利益冲突链

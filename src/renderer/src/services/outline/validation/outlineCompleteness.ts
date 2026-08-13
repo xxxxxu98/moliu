@@ -4,10 +4,10 @@ import type { ChapterBlueprint, ExecutableOutline } from '../types/executable-ou
  * 长篇商业网文大纲的可应用门槛。
  *
  * 这些数值必须与 expand-direction-prompt 的固定模板保持一致，避免提示词要求
- * 30/10/10，运行时却用更低阈值放行残缺结果。
+ * 50/10/10，运行时却用更低阈值放行残缺结果。
  */
 export const OUTLINE_COMPLETENESS_POLICY = {
-  startupChapterCount: 30,
+  startupChapterCount: 50,
   minimumKeyCharacters: 10,
   minimumForeshadows: 10,
   titleMinChars: 6,
@@ -166,7 +166,7 @@ export function inspectOutlineCompleteness(
   if (!(outline.startupPack30?.openingHook ?? '').trim()) {
     blockers.push({
       kind: 'opening-hook',
-      message: '前30章启动包缺少开篇钩子，不能用于生产续写',
+      message: `前${OUTLINE_COMPLETENESS_POLICY.startupChapterCount}章启动包缺少开篇钩子，不能用于生产续写`,
     });
   }
 

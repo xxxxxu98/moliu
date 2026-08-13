@@ -109,6 +109,14 @@ describe('classifyError', () => {
       expect(result.retryable).toBe(true);
     });
 
+    it('包装后的「请求失败: 429」文案也归为 rate_limit', () => {
+      const result = classifyError(
+        new Error('API 请求失败: 429 {"error":{"code":"1302","message":"您的账户已达到速率限制，请您控制请求频率"}}'),
+      );
+      expect(result.kind).toBe('rate_limit');
+      expect(result.transient).toBe(true);
+    });
+
     it('500/502/503 归为 server', () => {
       for (const status of [500, 502, 503]) {
         const result = classifyError(makeAiError(`API error ${status}`, status));

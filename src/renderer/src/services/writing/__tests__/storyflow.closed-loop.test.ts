@@ -22,7 +22,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { isRealAiEnabled } from './realStructuredAI';
 import { runStoryflowClosedLoop } from './storyflowClosedLoopHarness';
-import { inspectOutlineCompleteness } from '@/services/outline/validation/outlineCompleteness';
+import {
+  inspectOutlineCompleteness,
+  OUTLINE_COMPLETENESS_POLICY,
+} from '@/services/outline/validation/outlineCompleteness';
 import { checkWordCountBounds } from '@/services/writing/supplement';
 import { isPlaceholderChapterTitle } from '@/services/writing/chapterTitle';
 
@@ -61,7 +64,9 @@ describe.runIf(isRealAiEnabled())(
         expect(result.generatedOutline.title).toBeTruthy();
         const outlineCompleteness = inspectOutlineCompleteness(result.executableOutline);
         expect(outlineCompleteness.blockers).toEqual([]);
-        expect((result.generatedOutline.chapters ?? []).length).toBe(30);
+        expect((result.generatedOutline.chapters ?? []).length).toBe(
+          OUTLINE_COMPLETENESS_POLICY.startupChapterCount,
+        );
         expect(result.executableOutline.startupPack30.openingHook).toBeTruthy();
         // 开篇钩子不过长（质量门槛，与 topic-discovery real 冒烟一致）
         expect(result.executableOutline.startupPack30.openingHook.length).toBeLessThanOrEqual(45);
@@ -78,11 +83,12 @@ describe.runIf(isRealAiEnabled())(
         expect(chapterNodes[0].CBN).toBeTruthy();
         // 建章数量 = 大纲章节数
         expect(result.createdChapterIds.length).toBe((result.generatedOutline.chapters ?? []).length);
+        const startupChapterCount = OUTLINE_COMPLETENESS_POLICY.startupChapterCount;
         expect(result.projectStorageVerification).toMatchObject({
-          chapterCount: 30,
-          plotChapterCount: 30,
-          linkedPlotChapterCount: 30,
-          structuredPlotChapterCount: 30,
+          chapterCount: startupChapterCount,
+          plotChapterCount: startupChapterCount,
+          linkedPlotChapterCount: startupChapterCount,
+          structuredPlotChapterCount: startupChapterCount,
         });
         expect(result.projectStorageVerification.characterCount).toBeGreaterThanOrEqual(10);
         expect(result.projectStorageVerification.foreshadowCount).toBeGreaterThanOrEqual(10);

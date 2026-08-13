@@ -1,14 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
+  CHAPTER_BLUEPRINT_BATCH_SIZE,
   compactContext,
   extractOutlineSectionBody,
   extractRequestedChapterBlocks,
   findIncompleteChapterNumbers,
+  repairChapterBlueprints,
   replaceOutlineSection,
 } from '../outline-completer';
+import { parseExpandedOutline } from '../../parser/expanded-outline-parser';
 import type { ExecutableOutline } from '../../types/executable-outline';
 import type { OutlineDirection } from '../../types/direction';
+import { OUTLINE_COMPLETENESS_POLICY } from '../../validation/outlineCompleteness';
 
 describe('outline-completer', () => {
   it('替换被截断到文末的单章蓝图 section，并保留前文', () => {
@@ -76,7 +80,9 @@ describe('outline-completer', () => {
   });
 
   it('定点识别缺字段或占位标题的章节，不重生成其余章节', () => {
-    const chapterBlueprints = Array.from({ length: 30 }, (_, index) => ({
+    const chapterBlueprints = Array.from({
+      length: OUTLINE_COMPLETENESS_POLICY.startupChapterCount,
+    }, (_, index) => ({
       orderIndex: index + 1,
       title: `第${index + 1}章 有效标题`,
       CBN: '主角从上一章悬念切入并立刻采取行动',
@@ -93,5 +99,104 @@ describe('outline-completer', () => {
     } as ExecutableOutline);
 
     expect(incomplete).toEqual([16, 17]);
+  });
+});
+
+/** 主请求不再内联单章蓝图后的最小主方案：足够解析出合法 ExecutableOutline */
+const MAIN_OUTLINE_TEXT = `# 主方案
+
+## 故事定位
+- 标题：验尸官升官记
+- 一句话卖点：现代法医穿越古代查案升官
+
+## 卷纲
+### 第1卷
+- 卷标题：初入县衙
+- 卷目标：洗清杀人嫌疑
+- 卷冲突：主角与县丞的权力对抗
+
+## 前50章启动包
+- 开篇钩子：一睁眼正趴在尸体上
+- 对读者的承诺：每章都有翻案反转
+
+### 1-5章
+- 目标：建立验尸金手指与首轮冤案
+- 必出事件：主角当众验出真凶
+- 必留钩子：县丞连夜销毁卷宗
+- 本块禁区：不能揭示主角穿越身份
+- 节奏要求：快节奏
+- 读者期待：看主角打脸县丞
+`;
+
+function buildChapterBlock(chapterNumber: number): string {
+  return `### 第${chapterNumber}章
+- 标题：夜审第${chapterNumber}宗旧案
+- CBN：卷宗第${chapterNumber}页突然少了一角
+- CPNs：主角复验尸格；仵作改口
+- CEN：新证据把矛头指向县丞
+- mustCover：完成本章复验
+- 禁区：不得揭晓幕后主使
+- 章尾钩子文案：这一页是谁撕的
+- 爽点类型：反转`;
+}
+
+describe('repairChapterBlueprints', () => {
+  it('按批补齐缺失章节，批次数与批大小一致', async () => {
+    const outline = parseExpandedOutline(MAIN_OUTLINE_TEXT)!;
+    const chapterNumbers = Array.from({ length: 50 }, (_, index) => index + 1);
+    const callStructuredTextMode = vi.fn(async (_system: string, user: string) => {
+      const requested = (user.match(/【只需补写的章号】\n([^\n]+)/u)?.[1] ?? '')
+        .split('、')
+        .map(Number);
+      return requested.map(buildChapterBlock).join('\n\n');
+    });
+
+    const result = await repairChapterBlueprints({
+      rawText: MAIN_OUTLINE_TEXT,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode,
+      chapterNumbers,
+      phase: '补全',
+    });
+
+    expect(callStructuredTextMode).toHaveBeenCalledTimes(50 / CHAPTER_BLUEPRINT_BATCH_SIZE);
+    expect(result.outline.chapterBlueprints).toHaveLength(50);
+    expect(result.outline.chapterBlueprints?.map(item => item.orderIndex)).toEqual(chapterNumbers);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('重写已有章节时不产生重复章块', async () => {
+    const seeded = replaceOutlineSection(
+      MAIN_OUTLINE_TEXT,
+      ['单章蓝图', '逐章蓝图'],
+      '单章蓝图',
+      [1, 2].map(buildChapterBlock).join('\n\n'),
+    );
+    const outline = parseExpandedOutline(seeded)!;
+
+    const result = await repairChapterBlueprints({
+      rawText: seeded,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode: async () => `### 第2章
+- 标题：改写后的夜审旧案
+- CBN：卷宗被人从中间撕走一页
+- CPNs：主角复验尸格
+- CEN：撕页人留下了官靴泥印
+- mustCover：锁定撕页人
+- 禁区：不得揭晓幕后主使
+- 章尾钩子文案：泥印是谁留下的
+- 爽点类型：解谜`,
+      chapterNumbers: [2],
+      phase: '定点修复',
+    });
+
+    const blueprints = result.outline.chapterBlueprints ?? [];
+    expect(blueprints.map(item => item.orderIndex)).toEqual([1, 2]);
+    expect(blueprints[1].title).toBe('改写后的夜审旧案');
+    expect(result.rawText.match(/^### 第2章$/gmu)).toHaveLength(1);
   });
 });

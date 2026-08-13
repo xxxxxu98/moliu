@@ -9,6 +9,7 @@ import type { ProviderType } from '@/config/ai-providers';
 import { getBaseUrl } from '@/config/ai-providers';
 import { useActiveAIProvider } from '@/composables/useActiveAIProvider';
 import {
+  classifyError,
   isAbortedError,
   isTransientError,
   backoffDelayMs,
@@ -27,16 +28,94 @@ import { buildDirectionPrompt } from '../prompts/system/direction-prompt';
 import { buildExpandDirectionPrompt } from '../prompts/system/expand-direction-prompt';
 import { parseDirections } from '../parser/direction-parser';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
-import { reviewAndFixOutline } from './outline-reviewer';
+import { inspectOutlineQuality, reviewAndFixOutline } from './outline-reviewer';
 import {
   hasStructuralOutlineBlockers,
   inspectOutlineCompleteness,
 } from '../validation/outlineCompleteness';
-import { completeIncompleteOutline } from './outline-completer';
+import { completeIncompleteOutline, repairChapterBlueprints } from './outline-completer';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 
 /** 大纲主方案是长输出，但单次请求不能无限悬挂。 */
 export const OUTLINE_REQUEST_TIMEOUT_MS = 900_000;
+
+/**
+ * 大纲请求走 SSE 流式。
+ *
+ * 非流式下网关只看到一条长时间零字节的连接：实测 bigmodel 网关在 735 秒整点
+ * RST（socket hang up），与请求体大小无关，客户端超时永远轮不到触发。
+ * 流式下 token 持续到达，连接不再静默，长输出才可能跑完。
+ */
+const OUTLINE_STREAM_DONE = '[DONE]';
+
+/** 读取 OpenAI 兼容 SSE 流并拼回完整文本；网关忽略 stream 参数时回退整包 JSON */
+async function readOpenAiCompatibleStream(response: Response): Promise<string> {
+  const body = response.body;
+  if (!body?.getReader) {
+    const data = await response.json();
+    return data?.choices?.[0]?.message?.content ?? '';
+  }
+
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let rawBody = '';
+  let content = '';
+  let sawStreamEvent = false;
+
+  const consumeEvent = (rawEvent: string): void => {
+    for (const line of rawEvent.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith('data:')) continue;
+      sawStreamEvent = true;
+      const payload = trimmed.slice(5).trim();
+      if (!payload || payload === OUTLINE_STREAM_DONE) continue;
+      try {
+        const chunk = JSON.parse(payload);
+        const choice = chunk?.choices?.[0];
+        // reasoning_content 只用于维持连接，不进正文
+        const piece = choice?.delta?.content ?? choice?.message?.content;
+        if (typeof piece === 'string') content += piece;
+      } catch {
+        // 半截事件在下一个分片补齐，忽略即可
+      }
+    }
+  };
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const text = decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
+    rawBody += text;
+    buffer += text;
+    let boundary = buffer.indexOf('\n\n');
+    while (boundary !== -1) {
+      consumeEvent(buffer.slice(0, boundary));
+      buffer = buffer.slice(boundary + 2);
+      boundary = buffer.indexOf('\n\n');
+    }
+  }
+  if (buffer.trim()) consumeEvent(buffer);
+
+  if (!sawStreamEvent) {
+    try {
+      const data = JSON.parse(rawBody);
+      return data?.choices?.[0]?.message?.content ?? '';
+    } catch {
+      throw new Error('大纲流式响应无法解析：既不是 SSE 事件也不是合法 JSON');
+    }
+  }
+
+  return content;
+}
+
+function transientRetryDelayMs(error: unknown, attempt: number): number {
+  // 账户级 429（「已达到速率限制」）2 秒后再打只会再吃一个 429；给 15s/30s/60s/120s。
+  if (classifyError(error).kind === 'rate_limit') {
+    return backoffDelayMs(attempt, 15_000, 120_000);
+  }
+  return backoffDelayMs(attempt, 2000, 30_000);
+}
 
 function matchesDefaultModelSelection(
   provider: {
@@ -238,7 +317,7 @@ export class UnifiedOutlineGenerator {
         const errorMsg = error instanceof Error ? error.message : String(error);
         // 瞬态错误（429 / 网络抖动 / 5xx）按指数退避重试，不降温（同 runWithRetry 口径）
         if (attempt < maxAttempts && isTransientError(error)) {
-          const delayMs = backoffDelayMs(attempt, 2000, 30_000);
+          const delayMs = transientRetryDelayMs(error, attempt);
           onProgress?.(`请求被限流或网络抖动，${delayMs}ms 后重试 (${attempt}/${maxAttempts}): ${errorMsg}`);
           await sleep(delayMs, opts.signal);
           continue;
@@ -404,15 +483,15 @@ export class UnifiedOutlineGenerator {
         let rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts, 'outline-expand');
         let outline = parseExpandedOutline(rawText);
 
-        // 角色、伏笔和逐章蓝图位于长模板后半段，最容易被截断。完整性门槛与
-        // prompt 的 30 章 / 10 角色 / 10 伏笔要求共用同一策略，任何硬缺口都触发重试。
+        // 主请求只产出启动包与卷纲，单章蓝图常规就走分批补全；角色与伏笔若被截断也在这里补齐。
+        // 完整性门槛与 prompt 的 50 章 / 10 角色 / 10 伏笔要求共用同一策略，任何硬缺口都触发重试。
         const warnings: string[] = [];
         let severelyTruncated = false;
         let blockers: string[] = [];
         if (outline) {
           let completeness = inspectOutlineCompleteness(outline);
           if (hasStructuralOutlineBlockers(completeness)) {
-            onProgress?.('主方案响应不完整，正在分段补全章节、角色与伏笔...');
+            onProgress?.('主方案已就绪，正在分批拆解单章蓝图...');
             try {
               const completed = await completeIncompleteOutline({
                 rawText,
@@ -421,6 +500,7 @@ export class UnifiedOutlineGenerator {
                 options: opts,
                 callStructuredTextMode: (system, user, callOptions) =>
                   this.callStructuredTextMode(system, user, callOptions, 'outline-expand'),
+                onProgress,
               });
               rawText = completed.rawText;
               outline = completed.outline;
@@ -462,6 +542,38 @@ export class UnifiedOutlineGenerator {
           if (fix.warnings.length > 0) {
             warnings.push(...fix.warnings);
           }
+
+          // 章级缺陷不进审查请求，改为按批重写对应章节，避免二次请求重发全部逐章内容。
+          if (outline && fix.chapterIssueNumbers.length > 0) {
+            try {
+              const repaired = await repairChapterBlueprints({
+                rawText: appliedFixRawText ?? rawText,
+                outline,
+                direction,
+                options: opts,
+                callStructuredTextMode: (system, user, callOptions) =>
+                  this.callStructuredTextMode(system, user, callOptions, 'outline-expand'),
+                chapterNumbers: fix.chapterIssueNumbers,
+                phase: '定点修复',
+                onProgress,
+              });
+              const repairedOutline = repaired.outline;
+              const before = inspectOutlineQuality(outline).length;
+              const after = inspectOutlineQuality(repairedOutline).length;
+              if (after <= before) {
+                outline = repairedOutline;
+                appliedFixRawText = repaired.rawText;
+              } else {
+                warnings.push(`单章蓝图定点修复后质量未提升（${before}→${after} 处问题），保留原稿`);
+              }
+              warnings.push(...repaired.warnings);
+            } catch (error) {
+              if (isAbortError(error)) throw error;
+              const message = error instanceof Error ? error.message : String(error);
+              warnings.push(`单章蓝图定点修复失败：${message.slice(0, 160)}`);
+            }
+          }
+
           // 修正请求失败或回退初稿时也必须重新执行最终硬门禁，格式不合格不得应用。
           const finalCompleteness = inspectOutlineCompleteness(outline);
           severelyTruncated = !finalCompleteness.canApply;
@@ -541,7 +653,7 @@ export class UnifiedOutlineGenerator {
         // —— 降温对限流毫无意义，限流不是输出质量问题，反复立即重试只会再吃一个 429。
         // 实测 ARK provider 6/6 模块全部触发 429，无退避时重试额度白白耗尽。
         if (attempt < total && isTransientError(error)) {
-          const delayMs = backoffDelayMs(attempt, 2000, 30_000);
+          const delayMs = transientRetryDelayMs(error, attempt);
           onProgress?.(`请求被限流或网络抖动，${delayMs}ms 后重试 (${attempt}/${total}): ${errorMsg}`);
           await sleep(delayMs);
           // 瞬态重试不降温：保持 coolingTemp 不变（首次为 undefined = 沿用原温度）
@@ -808,11 +920,13 @@ export class UnifiedOutlineGenerator {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
         ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
       },
       body: JSON.stringify({
         model: config.model || undefined,
         messages,
+        stream: true,
         temperature: options.temperature ?? config.generationConfig?.temperature ?? 0.7,
         top_p: options.topP ?? config.generationConfig?.topP ?? 0.9,
       }),
@@ -823,7 +937,9 @@ export class UnifiedOutlineGenerator {
       throw await buildHttpError(response, 'API 请求失败');
     }
 
-    return response.json();
+    return {
+      choices: [{ message: { content: await readOpenAiCompatibleStream(response) } }],
+    };
   }
 
   private buildMarkdownSystemPrompt(wordCountRange: string, count: number = 3): string {

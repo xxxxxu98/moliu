@@ -16,6 +16,7 @@ import {
   buildWindowedOutlineText,
 } from '@/services/writing/OutlineContextBuilder';
 import type { PlotNode } from '@/types/project';
+import { OUTLINE_COMPLETENESS_POLICY } from '@/services/outline/validation/outlineCompleteness';
 
 // 构造一个"模拟首页大纲落地后的 plotOutline"：
 // 4 个 act 节点 + 3 个章节型节点（chapter 节点的 orderIndex 会被前面的 act 污染，
@@ -249,14 +250,14 @@ describe('OutlineContextBuilder - orderIndex 去污染（启动包窗口修复�
     const ctx = extractChapterContext(plot, 'plot-ch-1', '第1章');
     expect(ctx).not.toBeNull();
     // 关键断言：ctx.orderIndex 必须是 0（章节序号），不是 4（被污染的节点序号）。
-    // 若透传 node.orderIndex，buildEnhancedDesignPrompt 的 `orderIndex+1 <= 30` 启动包判断会提前失效。
+    // 若透传 node.orderIndex，buildEnhancedDesignPrompt 的启动包窗口判断会提前失效。
     expect(ctx!.orderIndex).toBe(0);
 
     const ctx2 = extractChapterContext(plot, 'plot-ch-3', '第3章');
     expect(ctx2!.orderIndex).toBe(2); // 不是 6
   });
 
-  it('buildEnhancedDesignPrompt: 启动包在 polluted-orderIndex 场景下仍正确注入（前 30 章）', async () => {
+  it('buildEnhancedDesignPrompt: 启动包在 polluted-orderIndex 场景下仍正确注入', async () => {
     // 直接验证最终效果：30 个 chapter 节点但 orderIndex 被前置 act 污染到 4..33，
     // 第 1 章（位置 0）必须仍命中 startupPack 注入条件。
     const { buildEnhancedDesignPrompt } = await import('@/services/writing/OutlineContextBuilder');
@@ -278,7 +279,9 @@ describe('OutlineContextBuilder - orderIndex 去污染（启动包窗口修复�
       },
     });
     // ctx.orderIndex=0 → currentChapterNo=1 → 应注入启动包段落
-    expect(prompt).toContain('开篇承诺与前 30 章启动包');
+    expect(prompt).toContain(
+      `开篇承诺与前 ${OUTLINE_COMPLETENESS_POLICY.startupChapterCount} 章启动包`,
+    );
     expect(prompt).toContain('当前是第 1 章');
   });
 });

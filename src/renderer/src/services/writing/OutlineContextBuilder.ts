@@ -16,6 +16,7 @@ import type {
   GoldenFingerDesign,
   ProjectStartupPack,
 } from '@/types/project';
+import { OUTLINE_COMPLETENESS_POLICY } from '@/services/outline/validation/outlineCompleteness';
 
 // ============================================
 // 类型定义
@@ -61,7 +62,7 @@ export interface EnhancedProjectContext {
   /** 金手指设定（爽点引擎，优先于 storyLines.goldenfinger 简版） */
   goldenfingerDesign?: GoldenFingerDesign;
   coreSellingPoints?: CoreSellingPoint[];
-  /** 前 30 章启动包（首页大纲产出） */
+  /** 启动包（首页大纲产出，覆盖前 OUTLINE_COMPLETENESS_POLICY.startupChapterCount 章） */
   startupPack?: ProjectStartupPack;
   /** 故事规模规划（P2-4：接通 startupPhaseRatio 消费，让续写端感知开篇占比） */
   storyScale?: {
@@ -194,7 +195,7 @@ export function extractChapterContext(
 
   // orderIndex 用「在 chapter 型节点序列中的位置」，而非节点原始 orderIndex。
   // 首页大纲落地时 chapter 节点的 orderIndex 会被前面的 act/subplot 污染（不是 0-based 章节序号），
-  // 直接透传会导致 buildEnhancedDesignPrompt 的「前 30 章启动包」窗口判断错位（提前若干章丢弃启动包）。
+  // 直接透传会导致 buildEnhancedDesignPrompt 的「启动包」窗口判断错位（提前若干章丢弃启动包）。
   const positionalIndex = chapterNodes.findIndex((n) => n.id === node.id);
 
   return plotNodeToContext(
@@ -483,16 +484,16 @@ ${ctx.coreSellingPoints.map((p) => `- ${p.name}：${p.description}`).join('\n')}
 请确保章节内容体现和强化这些核心卖点。`);
   }
 
-  // 开篇承诺（前 30 章启动包）—— 主要在续写前 30 章时生效
-  // 仅当前章节属于启动区间（orderIndex + 1 <= 30）时才注入，避免长篇后期冗余
+  // 开篇承诺（启动包）—— 仅当前章节属于启动区间时才注入，避免长篇后期冗余
+  const startupChapterCount = OUTLINE_COMPLETENESS_POLICY.startupChapterCount;
   const currentChapterNo = (ctx.currentChapter.orderIndex ?? 0) + 1;
-  if (ctx.startupPack && currentChapterNo <= 30) {
+  if (ctx.startupPack && currentChapterNo <= startupChapterCount) {
     const sp = ctx.startupPack;
     // P2-4：注入开篇占比与长线推进说明，让模型感知当前节奏定位
     const scaleHint = ctx.storyScale
       ? `- 开篇占比：${ctx.storyScale.startupPhaseRatio || '约5-10%'}${ctx.storyScale.longformProgressionNote ? `；长线说明：${ctx.storyScale.longformProgressionNote}` : ''}`
       : '';
-    sections.push(`## 【开篇承诺与前 30 章启动包】
+    sections.push(`## 【开篇承诺与前 ${startupChapterCount} 章启动包】
 - 开篇钩子：${sp.openingHook || '（暂无）'}
 - 对读者的承诺：${sp.promiseToReader || '（暂无）'}
 - 主角第一印象：${sp.protagonistFirstImpression || '（暂无）'}
@@ -505,7 +506,7 @@ ${sp.chapterBlocks?.length ? sp.chapterBlocks.map((b) => {
         : '';
       return `- 第${b.range}章：${b.objective}（节奏：${b.pacing === 'fast' ? '快' : '中'}；读者期待：${b.readerExpectation || '无'}${zoneText}）`;
     }).join('\n') : ''}
-当前是第 ${currentChapterNo} 章，请严格落实启动包对应的承诺与节奏。开篇 30 章是黄金留存窗口，必须强力推进主角处境、立人设、埋冲突、铺爽点。`);
+当前是第 ${currentChapterNo} 章，请严格落实启动包对应的承诺与节奏。开篇 ${startupChapterCount} 章是黄金留存窗口，必须强力推进主角处境、立人设、埋冲突、铺爽点。`);
   }
 
   return sections.join('\n\n');

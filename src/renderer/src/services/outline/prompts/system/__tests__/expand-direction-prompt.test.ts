@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildExpandDirectionPrompt,
+  buildStartupBlockSection,
   buildVolumePlanSection,
 } from '../expand-direction-prompt';
 import type { OutlineDirection } from '../../../types/direction';
+import { OUTLINE_COMPLETENESS_POLICY } from '../../../validation/outlineCompleteness';
 
 const sampleDirection: OutlineDirection = {
   id: 'dir-1',
@@ -51,23 +53,34 @@ describe('buildExpandDirectionPrompt', () => {
     expect(prompt.user).toContain('建议卷数约');
   });
 
-  it('包含「## 单章蓝图」段及 30 章逐章模板（P0-A）', () => {
+  it('主请求不再内联单章蓝图，改由后续分批拆章', () => {
     const prompt = buildExpandDirectionPrompt({
       seed: '测试种子',
       direction: sampleDirection,
       wordCountRange: '30万-60万字',
     });
-    expect(prompt.system).toContain('## 单章蓝图');
-    // 30 章逐章占位（第1章 ~ 第30章）
-    expect(prompt.system).toContain('### 第1章');
-    expect(prompt.system).toContain('### 第30章');
-    // 每章必备字段
-    expect(prompt.system).toContain('- 标题：');
-    expect(prompt.system).toContain('- CBN：');
-    expect(prompt.system).toContain('- CEN：');
-    expect(prompt.system).toContain('- mustCover：');
-    // 第5条硬约束措辞调整：允许 30 章单章蓝图，禁止的是 100 章整本梗概
-    expect(prompt.system).toMatch(/禁止把章节展开成 100 章以上/);
-    expect(prompt.system).toMatch(/前 30 章的单章蓝图是必需输出/);
+    expect(prompt.system).not.toMatch(/^## 单章蓝图\s*$/m);
+    expect(prompt.system).not.toMatch(/^### 第\d+章\s*$/m);
+    expect(prompt.system).toMatch(/逐章拆解会在后续请求中分批完成/);
+  });
+
+  it('启动包按 5 章一块覆盖到第 50 章', () => {
+    const prompt = buildExpandDirectionPrompt({
+      seed: '测试种子',
+      direction: sampleDirection,
+      wordCountRange: '30万-60万字',
+    });
+    expect(prompt.system).toContain(`## 前${OUTLINE_COMPLETENESS_POLICY.startupChapterCount}章启动包`);
+    expect(prompt.system).not.toContain('{{STARTUP_BLOCK_SECTION}}');
+    expect(prompt.system).toContain('### 1-5章');
+    expect(prompt.system).toContain('### 46-50章');
+    expect(prompt.system.match(/### \d+-\d+章/g)?.length).toBe(10);
+  });
+});
+
+describe('buildStartupBlockSection', () => {
+  it('末块按剩余章数收口，不越过总章数', () => {
+    const section = buildStartupBlockSection(12, 5);
+    expect(section.match(/### \d+-\d+章/g)).toEqual(['### 1-5章', '### 6-10章', '### 11-12章']);
   });
 });
