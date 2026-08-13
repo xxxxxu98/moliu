@@ -168,6 +168,48 @@ describe('resolveAllowedChapterCharacters', () => {
       expect.objectContaining({ notBeforeChapter: 20 }),
     ]);
   });
+
+  it('登场时点已到的角色即使合同只用泛称指代也放行', () => {
+    const project = makeProject();
+    project.characters = [
+      {
+        id: 'hero',
+        name: '沈哲',
+        role: '主角',
+        profile: { personality: [] },
+        createdAt: '',
+        updatedAt: '',
+      },
+      {
+        id: 'ally',
+        name: '萧景',
+        role: 'ally',
+        profile: { personality: [], revealTiming: '第1章' },
+        createdAt: '',
+        updatedAt: '',
+      },
+      {
+        id: 'future',
+        name: '崔浩',
+        role: '反派',
+        profile: { personality: [], revealTiming: '第60章' },
+        createdAt: '',
+        updatedAt: '',
+      },
+    ];
+
+    const result = resolveAllowedChapterCharacters({
+      project,
+      chapterNumber: 1,
+      // 合同只写“皇子”泛称，不含“萧景”本名
+      chapterText: '穿越到金殿外听候发落，不可让皇子此刻展现出任何自救能力。',
+    });
+
+    expect(result.allowedNames).toEqual(['沈哲', '萧景']);
+    expect(result.futureReveals).toEqual([
+      expect.objectContaining({ notBeforeChapter: 60 }),
+    ]);
+  });
 });
 
 describe('ChapterWritingPipeline', () => {

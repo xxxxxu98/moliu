@@ -721,8 +721,12 @@ export function useProjectCreator(): UseProjectCreatorReturn {
       if (newProject) {
         // 保存增强数据到项目顶层字段（不是 metadata）
         // 注意：条件必须覆盖所有可能的增强字段，否则单一字段场景会被跳过（原 bug：漏掉 coolPointDesign）
+        const hasPositioning = Object.values(metadata.outlinePositioning).some(
+          (values) => values.length > 0
+        );
         const hasEnhancement =
-          metadata.emotionGoal
+          hasPositioning
+          || metadata.emotionGoal
           || metadata.coolPointDesign
           || (metadata.coreSellingPoints && metadata.coreSellingPoints.length > 0)
           || metadata.conflictDesign
@@ -740,6 +744,7 @@ export function useProjectCreator(): UseProjectCreatorReturn {
           // 双层保护避免旧版数据或并发局部更新丢失大纲定位、启动包和卷计划。
           const existingMetadata = (newProject.metadata || {}) as Record<string, unknown>;
           const newMetadata: Record<string, unknown> = {};
+          if (hasPositioning) newMetadata.outlinePositioning = metadata.outlinePositioning;
           if (metadata.startupPack) newMetadata.startupPack = metadata.startupPack;
           if (metadata.storyScale) newMetadata.storyScale = metadata.storyScale;
           if (metadata.volumePlans) newMetadata.volumePlans = metadata.volumePlans;

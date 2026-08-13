@@ -62,6 +62,9 @@ async function readOpenAiCompatibleStream(response: Response): Promise<string> {
   let rawBody = '';
   let content = '';
   let sawStreamEvent = false;
+  let sawStreamEnd = false;
+  let hitLengthCap = false;
+  let reasoningChars = 0;
 
   const consumeEvent = (rawEvent: string): void => {
     for (const line of rawEvent.split('\n')) {
@@ -69,13 +72,23 @@ async function readOpenAiCompatibleStream(response: Response): Promise<string> {
       if (!trimmed.startsWith('data:')) continue;
       sawStreamEvent = true;
       const payload = trimmed.slice(5).trim();
-      if (!payload || payload === OUTLINE_STREAM_DONE) continue;
+      if (!payload) continue;
+      if (payload === OUTLINE_STREAM_DONE) {
+        sawStreamEnd = true;
+        continue;
+      }
       try {
         const chunk = JSON.parse(payload);
         const choice = chunk?.choices?.[0];
+        if (choice?.finish_reason) {
+          sawStreamEnd = true;
+          if (choice.finish_reason === 'length') hitLengthCap = true;
+        }
         // reasoning_content 只用于维持连接，不进正文
         const piece = choice?.delta?.content ?? choice?.message?.content;
         if (typeof piece === 'string') content += piece;
+        const reasoning = choice?.delta?.reasoning_content;
+        if (typeof reasoning === 'string') reasoningChars += reasoning.length;
       } catch {
         // 半截事件在下一个分片补齐，忽略即可
       }
@@ -104,6 +117,24 @@ async function readOpenAiCompatibleStream(response: Response): Promise<string> {
     } catch {
       throw new Error('大纲流式响应无法解析：既不是 SSE 事件也不是合法 JSON');
     }
+  }
+
+  // 网关中途 RST 时 reader 也会正常 done，只能靠 [DONE]/finish_reason 判断是否真的写完
+  if (!sawStreamEnd) {
+    throw new Error(
+      `大纲流式响应提前中断：已收到 ${content.length} 字，未见结束标记`,
+    );
+  }
+
+  // finish_reason=length 说明撞到厂商默认输出上限。推理型模型可能把预算全烧在
+  // reasoning_content 上，一个正文字都没吐，此时只报"未返回内容"会完全掩盖真因。
+  if (hitLengthCap) {
+    throw new Error(
+      `大纲输出被长度上限截断：正文 ${content.length} 字、推理 ${reasoningChars} 字` +
+        (content.length === 0
+          ? '（输出预算全部消耗在推理上，请换用输出上限更高的厂商配置或非推理模型）'
+          : ''),
+    );
   }
 
   return content;
@@ -575,7 +606,57 @@ export class UnifiedOutlineGenerator {
           }
 
           // 修正请求失败或回退初稿时也必须重新执行最终硬门禁，格式不合格不得应用。
-          const finalCompleteness = inspectOutlineCompleteness(outline);
+          let finalCompleteness = inspectOutlineCompleteness(outline);
+
+          // 门禁的章级阻断项（钩子/标题超长、CPN 数量、占位标题等）此前没有定点修复通道，
+          // 只能整份大纲重新生成——而模型钩子超几个字是常态，重来一次仍会踩同类问题，
+          // 一轮就是 20 分钟且基本不收敛。这里先按章重写，重写不掉才升级为整体重试。
+          const gateChapterNumbers = [
+            ...new Set(
+              finalCompleteness.blockers
+                .map(blocker => blocker.chapterNumber)
+                .filter((no): no is number => no !== undefined),
+            ),
+          ].sort((a, b) => a - b);
+          if (!finalCompleteness.canApply && gateChapterNumbers.length > 0) {
+            const issuesByChapter = new Map<number, string[]>();
+            for (const blocker of finalCompleteness.blockers) {
+              if (blocker.chapterNumber === undefined) continue;
+              const list = issuesByChapter.get(blocker.chapterNumber) ?? [];
+              list.push(blocker.message);
+              issuesByChapter.set(blocker.chapterNumber, list);
+            }
+            try {
+              const repaired = await repairChapterBlueprints({
+                rawText: appliedFixRawText ?? rawText,
+                outline,
+                direction,
+                options: opts,
+                callStructuredTextMode: (system, user, callOptions) =>
+                  this.callStructuredTextMode(system, user, callOptions, 'outline-expand'),
+                chapterNumbers: gateChapterNumbers,
+                phase: '定点修复',
+                onProgress,
+                issuesByChapter,
+              });
+              const repairedCompleteness = inspectOutlineCompleteness(repaired.outline);
+              if (repairedCompleteness.blockers.length < finalCompleteness.blockers.length) {
+                outline = repaired.outline;
+                appliedFixRawText = repaired.rawText;
+                finalCompleteness = repairedCompleteness;
+              } else {
+                warnings.push(
+                  `门禁章级缺陷定点修复后未减少（${finalCompleteness.blockers.length}→${repairedCompleteness.blockers.length} 项），保留原稿`,
+                );
+              }
+              warnings.push(...repaired.warnings);
+            } catch (error) {
+              if (isAbortError(error)) throw error;
+              const message = error instanceof Error ? error.message : String(error);
+              warnings.push(`门禁章级缺陷定点修复失败：${message.slice(0, 160)}`);
+            }
+          }
+
           severelyTruncated = !finalCompleteness.canApply;
           blockers = finalCompleteness.blockers.map(blocker => blocker.message);
         }

@@ -244,6 +244,69 @@ describe('UnifiedOutlineGenerator 请求参数', () => {
     expect(result.directions.length).toBeGreaterThan(0);
   });
 
+  it('流在无结束标记时中断，报错而不是把半截大纲当成功', async () => {
+    injectSettings({ provider: 'openai' });
+    // 网关中途 RST：reader 正常 done，但没有 [DONE] 也没有 finish_reason
+    const sse =
+      [
+        'data: {"choices":[{"delta":{"reasoning_content":"思考中"}}]}',
+        `data: ${JSON.stringify({ choices: [{ delta: { content: DIRECTION_TEXT.slice(0, 30) } }] })}`,
+      ].join('\n\n') + '\n\n';
+    const encoder = new TextEncoder();
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      body: {
+        getReader: () => {
+          let sent = false;
+          return {
+            read: async () => {
+              if (sent) return { done: true, value: undefined };
+              sent = true;
+              return { done: false, value: encoder.encode(sse) };
+            },
+          };
+        },
+      },
+    })));
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    await expect(
+      generator.generateDirections('创意种子', { maxRetries: 1 }),
+    ).rejects.toThrow('提前中断');
+  });
+
+  it('finish_reason=length 且正文为空时报长度上限截断，而非“未返回内容”', async () => {
+    injectSettings({ provider: 'openai' });
+    // 推理型模型把输出预算全烧在 reasoning_content 上，content 一个字都没吐
+    const sse =
+      [
+        'data: {"choices":[{"delta":{"content":"","reasoning_content":"让我仔细想想"}}]}',
+        'data: {"choices":[{"delta":{"content":""},"finish_reason":"length"}]}',
+        'data: [DONE]',
+      ].join('\n\n') + '\n\n';
+    const encoder = new TextEncoder();
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      body: {
+        getReader: () => {
+          let sent = false;
+          return {
+            read: async () => {
+              if (sent) return { done: true, value: undefined };
+              sent = true;
+              return { done: false, value: encoder.encode(sse) };
+            },
+          };
+        },
+      },
+    })));
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    await expect(
+      generator.generateDirections('创意种子', { maxRetries: 1 }),
+    ).rejects.toThrow('输出被长度上限截断');
+  });
+
   it('长请求悬挂时按单次超时中断，不无限占用生成链路', async () => {
     vi.useFakeTimers();
     try {

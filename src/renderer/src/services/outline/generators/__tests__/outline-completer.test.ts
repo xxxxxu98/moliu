@@ -199,4 +199,32 @@ describe('repairChapterBlueprints', () => {
     expect(blueprints[1].title).toBe('改写后的夜审旧案');
     expect(result.rawText.match(/^### 第2章$/gmu)).toHaveLength(1);
   });
+
+  it('把本章具体违规写进提示词，仅告知字数区间不足以让模型压缩超长钩子', async () => {
+    const seeded = replaceOutlineSection(
+      MAIN_OUTLINE_TEXT,
+      ['单章蓝图', '逐章蓝图'],
+      '单章蓝图',
+      [1, 2].map(buildChapterBlock).join('\n\n'),
+    );
+    const outline = parseExpandedOutline(seeded)!;
+    let capturedUser = '';
+
+    await repairChapterBlueprints({
+      rawText: seeded,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode: async (_system: string, user: string) => {
+        capturedUser = user;
+        return buildChapterBlock(2);
+      },
+      chapterNumbers: [2],
+      phase: '定点修复',
+      issuesByChapter: new Map([[2, ['第2章 CBN 长度 28 字，必须为 8～25 字']]]),
+    });
+
+    expect(capturedUser).toContain('本次必须修掉的格式违规');
+    expect(capturedUser).toContain('第2章 CBN 长度 28 字，必须为 8～25 字');
+  });
 });

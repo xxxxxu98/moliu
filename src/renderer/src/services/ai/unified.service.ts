@@ -352,13 +352,13 @@ export class UnifiedAIService {
         : {}),
     };
 
-    // 结构化输出（scene-draft / chapter-judge / 事实提取）走非流式 chat()：
-    // 第三方 OpenAI 兼容网关的流式实现常是"裸透传 token"，中途断流只给半截 JSON 或空 body，
-    // 而 json_mode 的完整性保证在网关层就被绕过。非流式 chat() 一次性返回完整响应，
-    // provider 要么完整送达、要么超时，不会有半截 JSON，对长正文结构化输出更稳。
-    // 注：multi-ai-sdk 的 chat() 不接受 signal（仅 stream() 的第 4 参数支持），
-    // 因此用 Promise.race 监听 signal——触发时立即 reject 解除调用方阻塞
-    // （底层 fetch 无法真正中止，但调用方拿到 AbortError 即可走重试/超时分类）。
+    // 结构化输出（scene-draft / chapter-judge / 事实提取）走 SSE 流式。
+    //
+    // 曾用非流式 chat() 以规避"网关裸透传 token、断流只给半截 JSON"的风险，但代价更大：
+    // 网关只看到一条长时间零字节的连接，实测长正文请求会被静默挂死到客户端 15 分钟超时才
+    // abort，被丢弃的 socket 随后 RST 抛 socket hang up，单次就吃掉 15 分钟。
+    // 流式下 token 持续到达，连接不再静默；半截 JSON 的风险改由结束标记校验兜住——
+    // 未收到 finish_reason 即判定截断并抛可重试错误，不会把半截内容当成功。
     const SINGLE_REQUEST_MAX_RETRIES = 2;
     let lastError: unknown;
     for (let attempt = 0; attempt <= SINGLE_REQUEST_MAX_RETRIES; attempt++) {
@@ -366,12 +366,7 @@ export class UnifiedAIService {
         throw new DOMException("Aborted", "AbortError");
       }
       try {
-        const response = await this.raceChatWithSignal(
-          this.client.chat(messages, chatOpts as any),
-          signal
-        );
-        const content =
-          typeof response === "string" ? response : JSON.stringify(response);
+        const content = await this.streamChatText(messages, chatOpts, signal);
         return extractPureText(content);
       } catch (error) {
         // 用户主动取消：立即抛出，不重试
@@ -425,26 +420,60 @@ export class UnifiedAIService {
   }
 
   /**
-   * 用 Promise.race 让不支持 signal 的 chat() 响应外部 abort。
-   * signal 触发时立即 reject AbortError 解除调用方阻塞（底层 fetch 无法真正中止，
-   * 但资源泄漏可接受——chat 完成后其 promise 自行 settle，不会阻塞进程退出）。
+   * 读取 SSE 流并拼回完整文本，signal 触发时 cancel 真正中断底层 fetch。
+   *
+   * 必须校验结束标记：SDK 只在收到 finish_reason 时才产出 done chunk，网关中途 RST 时
+   * 迭代器会静默正常结束，半截 JSON 会被当成完整响应交给下游解析。
    */
-  private raceChatWithSignal<T>(
-    chatPromise: Promise<T>,
+  private async streamChatText(
+    messages: Array<{ role: "system" | "user"; content: string }>,
+    chatOpts: Record<string, unknown>,
     signal?: AbortSignal
-  ): Promise<T> {
-    if (!signal) return chatPromise;
-    if (signal.aborted) {
-      return Promise.reject(new DOMException("Aborted", "AbortError"));
+  ): Promise<string> {
+    if (!this.client) {
+      throw new Error("Client not initialized");
     }
-    let onAbort: (() => void) | undefined;
-    const abortPromise = new Promise<never>((_, reject) => {
-      onAbort = (): void => reject(new DOMException("Aborted", "AbortError"));
-      signal.addEventListener("abort", onAbort, { once: true });
-    });
-    return Promise.race([chatPromise, abortPromise]).finally(() => {
-      if (onAbort) signal.removeEventListener("abort", onAbort);
-    });
+    const stream = this.client.stream(messages, chatOpts as any);
+    const onAbort = (): void => {
+      stream.cancel();
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+    try {
+      let content = "";
+      let sawStreamEnd = false;
+      let hitLengthCap = false;
+      for await (const chunk of stream) {
+        if (signal?.aborted) {
+          throw new DOMException("Aborted", "AbortError");
+        }
+        if (chunk.content) {
+          content += chunk.content;
+        }
+        if (chunk.done || chunk.finishReason != null) {
+          sawStreamEnd = true;
+          if (chunk.finishReason === "length") hitLengthCap = true;
+        }
+      }
+      // cancel() 后迭代器是 return 而非 throw，漏判会把已中断的半截内容当成功
+      if (signal?.aborted) {
+        throw new DOMException("Aborted", "AbortError");
+      }
+      if (!sawStreamEnd) {
+        throw new Error(
+          `AI 流式响应提前中断：已收到 ${content.length} 字，未见结束标记`
+        );
+      }
+      // 推理型模型可能把厂商默认输出预算全烧在推理上，一个正文字都不吐；
+      // 不显式报出 length 会让下游只看到"JSON 解析失败"，完全掩盖真因。
+      if (hitLengthCap) {
+        throw new Error(
+          `AI 输出被长度上限截断：仅收到 ${content.length} 字`
+        );
+      }
+      return content;
+    } finally {
+      signal?.removeEventListener("abort", onAbort);
+    }
   }
 
   /**

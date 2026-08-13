@@ -93,6 +93,8 @@ describe.runIf(isRealAiEnabled())(
         expect(result.projectStorageVerification.characterCount).toBeGreaterThanOrEqual(10);
         expect(result.projectStorageVerification.foreshadowCount).toBeGreaterThanOrEqual(10);
         expect(result.projectStorageVerification.volumeCount).toBeGreaterThan(0);
+        // 大纲定位（题材/文风/读者/情绪）必须随项目落盘，否则续写端拿不到定位约束
+        expect(result.projectStorageVerification.positioningPersisted).toBe(true);
 
         // ---------- ③ 批量续写断言 ----------
         // 默认 5 章覆盖跨章合同；P0 快速回归可通过 MOLIU_CHAPTER_COUNT 缩到 1 章。

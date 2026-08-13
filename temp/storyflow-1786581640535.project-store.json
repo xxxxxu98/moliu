@@ -1,0 +1,3814 @@
+{
+  "projects": [
+    {
+      "id": "proj-1786584418295",
+      "name": "奉旨造神：朕的口碑你负责",
+      "description": "把危机公关和饭圈文化带入朝堂，把皇帝打造成天下最大的爱豆，谁敢黑就封杀谁。 顶级公关总监穿越成伴读，绑定了一个即将被废黜的废柴皇子。面对铺天盖地的负面舆论和政敌构陷，主角不靠政绩靠包装，利用水军、造谣、洗白等现代手段，操纵天下民心，逆风翻盘。 政敌的传统构陷 VS 主角的现代公关反击；皇帝想做明君 VS 主角只想造神敛财。",
+      "genre": [
+        {
+          "id": "genre-1786584418294-bb65a0tre",
+          "name": "历史架空",
+          "color": "#8b5cf6"
+        },
+        {
+          "id": "genre-1786584418294-dd6im9osd",
+          "name": "朝堂权谋",
+          "color": "#8b5cf6"
+        },
+        {
+          "id": "genre-1786584418294-vcw64dgbn",
+          "name": "系统经营",
+          "color": "#8b5cf6"
+        }
+      ],
+      "wordCount": 0,
+      "status": "planning",
+      "volumes": [
+        {
+          "id": "vol-1786584418294-0",
+          "name": "夺嫡公关战",
+          "orderIndex": 0,
+          "summary": "帮助废柴皇子萧景洗白，在夺嫡大战中逆风翻盘。；太子党的政治构陷 VS 沈哲的舆论洗白。；皇帝寿辰宴上，沈哲策划“万民书”事件，让萧景民意逼宫太子。；太子被废并非因为失德，而是因为沈哲伪造了太子的“得德”人设导致皇帝忌惮。；萧景登基前夕，沈哲发现系统的新任务竟是制造一个傀儡神。；从单纯的求生者转变为冷酷的操盘手，掌握京城底层舆论渠道。"
+        },
+        {
+          "id": "vol-1786584418294-1",
+          "name": "舆论平叛与外交战",
+          "orderIndex": 1,
+          "summary": "巩固新皇政权，利用舆论手段解决外患与内忧。；边疆叛军与敌国入侵 VS 帝国虚弱的经济与军力。；沈哲不派一兵一卒，仅靠散布“敌国将领是瘟疫源头”的谣言瓦解敌军士气。；叛军首领竟是沈哲前世仰慕的历史名人，沈哲在抹黑与敬佩中挣扎。；门阀世家发现沈哲是最大的威胁，决定对他进行物理抹杀。；将公关手段升级为国家战略武器，影响力跨越国界。"
+        },
+        {
+          "id": "vol-1786584418294-2",
+          "name": "造神终局",
+          "orderIndex": 2,
+          "summary": "彻底粉碎门阀对思想的垄断，完成对帝国的终极造神。；门阀世家掌控的历史解释权 VS 沈哲构建的皇权神话。；全国范围内展开“真理大辩论”，沈哲利用印刷术和小册子文化发动底层认知革命。；系统揭示最终目的，沈哲必须决定是成为神还是毁灭神。；沈哲站在权力巅峰，回望自己制造出的虚假盛世。；领悟到“虚构战胜现实”的代价，成为孤独的守望者。"
+        }
+      ],
+      "chapters": [
+        {
+          "id": "chapter-1786584418306",
+          "volumeId": "vol-1786584418294-0",
+          "title": "跪在大殿外，脑子里叮一声响了",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 0,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.306Z",
+          "updatedAt": "2026-08-13T01:26:58.310Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】冰冷的鬼头刀架在脖子上，眼前突然弹出透明进度条。\n【CPNs】确认自己穿越成伴读\n激活造神系统\n接收免死首杀任务。\n【CEN】皇帝大怒宣旨流放，生死只在这一念之间。\n【必须覆盖】穿越到金殿外听候发落、激活系统并查看属性、接下逆转必死局的任务。\n【禁区】不可让皇子此刻展现出任何自救能力、不可使用武力反抗御林军。",
+          "plotSummary": "CBN: 冰冷的鬼头刀架在脖子上，眼前突然弹出透明进度条。\nCEN: 皇帝大怒宣旨流放，生死只在这一念之间。"
+        },
+        {
+          "id": "chapter-1786584418318",
+          "volumeId": "vol-1786584418294-0",
+          "title": "一句谣言，让御史当场尿裤子",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 1,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.318Z",
+          "updatedAt": "2026-08-13T01:26:58.321Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我指着御史大喊他私吞赈灾款，满朝文武瞬间哗然。\n【CPNs】利用金殿外的流言制造恐慌\n引导舆论攻击构陷者\n拖延皇帝下旨的时间。\n【CEN】御史脸色惨白被拖下去，皇帝挥手暂缓流放圣旨。\n【必须覆盖】利用谣言构陷构陷者、争取到调查时间、暂时化解流放危机。\n【禁区】不可使用超自然力量直接攻击、必须利用心理战和人群效应。",
+          "plotSummary": "CBN: 我指着御史大喊他私吞赈灾款，满朝文武瞬间哗然。\nCEN: 御史脸色惨白被拖下去，皇帝挥手暂缓流放圣旨。"
+        },
+        {
+          "id": "chapter-1786584418330",
+          "volumeId": "vol-1786584418294-0",
+          "title": "京城乞丐，竟然是我的键盘侠",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 2,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.330Z",
+          "updatedAt": "2026-08-13T01:26:58.334Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我扔出银子，老乞丐立刻分发起印有皇子头像的传单。\n【CPNs】收服京城丐帮作为水军\n建立底层情报传播网络\n教导乞丐洗脑口号。\n【CEN】一张写着皇子冤屈的纸条，顺着风飘进了深宫内院。\n【必须覆盖】接触乞丐并建立合作、铺设第一条舆论传播渠道、让“皇子冤枉”的论调在市井出现。\n【禁区】不可让乞丐瞬间变成武林高手、只能利用其传播速度。",
+          "plotSummary": "CBN: 我扔出银子，老乞丐立刻分发起印有皇子头像的传单。\nCEN: 一张写着皇子冤屈的纸条，顺着风飘进了深宫内院。"
+        },
+        {
+          "id": "chapter-1786584418341",
+          "volumeId": "vol-1786584418294-0",
+          "title": "把流放罪名，洗成大义灭亲",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 3,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.341Z",
+          "updatedAt": "2026-08-13T01:26:58.344Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我看着流放圣旨，将殴打权贵改写成替天行道的榜文。\n【CPNs】重新定义皇子打人事件性质\n利用舆论逼迫礼部重新定性\n将坏事变成营销机会。\n【CEN】皇帝收回成命，反而赏赐皇子一块刚正不阿的牌匾。\n【必须覆盖】彻底解决流放危机、将“废柴”标签置换为“刚直”、确立主角在皇子府的核心地位。\n【禁区】不可让皇子因政治智慧获得功劳、归功于主角的策划。",
+          "plotSummary": "CBN: 我看着流放圣旨，将殴打权贵改写成替天行道的榜文。\nCEN: 皇帝收回成命，反而赏赐皇子一块刚正不阿的牌匾。"
+        },
+        {
+          "id": "chapter-1786584418352",
+          "volumeId": "vol-1786584418294-0",
+          "title": "系统发布S级任务，造神之路开启",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 4,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.352Z",
+          "updatedAt": "2026-08-13T01:26:58.355Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】眼前红光一闪，系统弹窗占据半边视野。\n【CPNs】庆祝流放危机解除\n系统发布S级造神任务\n查看任务详情与倒计时。\n【CEN】任务失败惩罚竟是诛九族，这刀太快了。\n【必须覆盖】系统发布首个S级任务、造神之路开启\n【禁区】不可让皇子表现出过人智慧、不可让系统直接给出现成解决方案",
+          "plotSummary": "CBN: 眼前红光一闪，系统弹窗占据半边视野。\nCEN: 任务失败惩罚竟是诛九族，这刀太快了。"
+        },
+        {
+          "id": "chapter-1786584418362",
+          "volumeId": "vol-1786584418294-0",
+          "title": "雨中下跪，这演技奥斯卡欠他一座",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 5,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.362Z",
+          "updatedAt": "2026-08-13T01:26:58.365Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】大雨倾盆，我命令皇子立刻脱下外衣跪在宫门口。\n【CPNs】策划“雨中请安”剧本\n皇子被迫在雨中跪立\n贵女路过并心疼围观。\n【CEN】皇子浑身湿透晕倒，贵女们尖叫着围上来。\n【必须覆盖】策划皇子雨中跪求父皇安好\n【禁区】不可让主角直接暴露穿越者身份、不可让皇子真心孝顺",
+          "plotSummary": "CBN: 大雨倾盆，我命令皇子立刻脱下外衣跪在宫门口。\nCEN: 皇子浑身湿透晕倒，贵女们尖叫着围上来。"
+        },
+        {
+          "id": "chapter-1786584418373",
+          "volumeId": "vol-1786584418294-0",
+          "title": "青楼头牌，都在传唱殿下的词",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 6,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.373Z",
+          "updatedAt": "2026-08-13T01:26:58.379Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】苏红袖唱出皇子那首emo词，满座贵女哭得梨花带雨。\n【CPNs】利用青楼作为高端舆论场\n让皇子词作在贵女圈刷屏\n建立第一批核心粉丝群。\n【CEN】一位丞相夫人红着眼眶问，这首绝世好词究竟是谁所作。\n【必须覆盖】利用苏红袖传唱皇子作品、在京圈贵女中建立粉丝基础、提升皇子的文化形象。\n【禁区】不可让主角亲自上台卖艺、必须借他人之口。",
+          "plotSummary": "CBN: 苏红袖唱出皇子那首emo词，满座贵女哭得梨花带雨。\nCEN: 一位丞相夫人红着眼眶问，这首绝世好词究竟是谁所作。"
+        },
+        {
+          "id": "chapter-1786584418393",
+          "volumeId": "vol-1786584418294-0",
+          "title": "太子党找茬？正好立个靶子打",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 7,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.393Z",
+          "updatedAt": "2026-08-13T01:26:58.396Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】太子党羽在大街上公然羞辱落魄皇子，我拦在前面。\n【CPNs】太子家臣挑衅皇子\n沈哲引导围观群众嘲讽\n太子党羽狼狈逃离。\n【CEN】太子党羽回去告状，太子拍碎了一只玉杯。\n【必须覆盖】打压太子党羽的嚣张气焰\n【禁区】不可让主角直接暴露穿越者身份、不可动用武力解决",
+          "plotSummary": "CBN: 太子党羽在大街上公然羞辱落魄皇子，我拦在前面。\nCEN: 太子党羽回去告状，太子拍碎了一只玉杯。"
+        },
+        {
+          "id": "chapter-1786584418403",
+          "volumeId": "vol-1786584418294-0",
+          "title": "京城热搜榜，全是皇子名字",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 8,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.403Z",
+          "updatedAt": "2026-08-13T01:26:58.406Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我看着满大街关于皇子“深情”的评书，笑了。\n【CPNs】皇子成为京城话题中心\n太子发现舆论异常\n太子决定调查幕后黑手。\n【CEN】太子召见心腹，眼神阴鸷地指向沈府方向。\n【必须覆盖】太子察觉到舆论异常、派出密探调查沈哲\n【禁区】不可让主角直接暴露穿越者身份、不可让太子立刻查出真相",
+          "plotSummary": "CBN: 我看着满大街关于皇子“深情”的评书，笑了。\nCEN: 太子召见心腹，眼神阴鸷地指向沈府方向。"
+        },
+        {
+          "id": "chapter-1786584418413",
+          "volumeId": "vol-1786584418294-0",
+          "title": "太子的密探，被我忽悠瘸了",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 9,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.413Z",
+          "updatedAt": "2026-08-13T01:26:58.416Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】黑影刚翻进院墙就被按住，我故意在他耳边说出假情报。\n【CPNs】捕获太子派来的密探\n故意泄露皇子“病重垂危”的假消息\n放长线钓大鱼。\n【CEN】密探慌张跑回东宫，太子听完后露出得意的狞笑。\n【必须覆盖】发现太子的调查行动、利用反间计误导太子、为下一轮舆论战埋下伏笔。\n【禁区】不可杀死密探、必须让他把错误情报带回去。",
+          "plotSummary": "CBN: 黑影刚翻进院墙就被按住，我故意在他耳边说出假情报。\nCEN: 密探慌张跑回东宫，太子听完后露出得意的狞笑。"
+        },
+        {
+          "id": "chapter-1786584418423",
+          "volumeId": "vol-1786584418294-0",
+          "title": "踢开米袋，里面全是陈旧沙子",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 10,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.423Z",
+          "updatedAt": "2026-08-13T01:26:58.427Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我踢开一袋赈灾粮，陈旧的沙子哗啦啦流淌而出。\n【CPNs】截获太子党私运的劣质赈灾粮\n收集太子克扣粮款的证据\n让乞丐以此为据散布谣言。\n【CEN】领头的乞丐咬了一口米，吐出带血的牙齿。\n【必须覆盖】揭露太子赈灾粮款被查出问题、拿到太子的实锤把柄。\n【禁区】不可让太子此刻察觉证据外泄。",
+          "plotSummary": "CBN: 我踢开一袋赈灾粮，陈旧的沙子哗啦啦流淌而出。\nCEN: 领头的乞丐咬了一口米，吐出带血的牙齿。"
+        },
+        {
+          "id": "chapter-1786584418434",
+          "volumeId": "vol-1786584418294-0",
+          "title": "满城风雨，都在骂太子吃人",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 11,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.434Z",
+          "updatedAt": "2026-08-13T01:26:58.437Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】一张张讽刺漫画贴满全城，画中太子把米换成金子。\n【CPNs】利用水军刷屏太子的负面传闻\n编排“太子吃人”的顺口溜\n制造京城米价恐慌引发民怨。\n【CEN】皇帝坐在龙椅上，听到窗外孩童唱着嘲讽太子的歌谣。\n【必须覆盖】利用水军刷屏太子的负面传闻、制造舆论风暴。\n【禁区】不可让皇帝直接下令调查。",
+          "plotSummary": "CBN: 一张张讽刺漫画贴满全城，画中太子把米换成金子。\nCEN: 皇帝坐在龙椅上，听到窗外孩童唱着嘲讽太子的歌谣。"
+        },
+        {
+          "id": "chapter-1786584418445",
+          "volumeId": "vol-1786584418294-0",
+          "title": "皇帝皱眉，这赈灾银哪去了",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 12,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.445Z",
+          "updatedAt": "2026-08-13T01:26:58.448Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】皇帝把奏折扔在地上，当庭质问太子为何米价飞涨。\n【CPNs】太子在朝堂上为米价辩解\n皇帝要求户部核实账目\n沈哲利用说书人传播“传言”佐证。\n【CEN】户部尚书颤抖着呈上账本，墨迹看起来可疑地新鲜。\n【必须覆盖】让皇帝对太子产生怀疑、太子陷入被动解释。\n【禁区】不可让皇帝公开责骂太子。",
+          "plotSummary": "CBN: 皇帝把奏折扔在地上，当庭质问太子为何米价飞涨。\nCEN: 户部尚书颤抖着呈上账本，墨迹看起来可疑地新鲜。"
+        },
+        {
+          "id": "chapter-1786584418455",
+          "volumeId": "vol-1786584418294-0",
+          "title": "老狐狸出洞，要拿我祭旗",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 13,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.455Z",
+          "updatedAt": "2026-08-13T01:26:58.459Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】王拓的轿子停在我面前，他的目光冰冷如刀。\n【CPNs】王拓正面警告沈哲停止炒作\n王拓利用职权查封沈哲的“印刷店”\n沈哲拒绝低头并对峙。\n【CEN】御林军包围了沈府，王拓手持圣旨要抓我。\n【必须覆盖】权相王拓出手、试图用传统手段封杀沈哲。\n【禁区】不可让王拓直接杀了沈哲。",
+          "plotSummary": "CBN: 王拓的轿子停在我面前，他的目光冰冷如刀。\nCEN: 御林军包围了沈府，王拓手持圣旨要抓我。"
+        },
+        {
+          "id": "chapter-1786584418467",
+          "volumeId": "vol-1786584418294-0",
+          "title": "大街上撒银子，谁敢抓我",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 14,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.467Z",
+          "updatedAt": "2026-08-13T01:26:58.470Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我抓起一把银锭扔向人群，大喊权相抢劫平民。\n【CPNs】制造围观群众阻碍官兵\n把抓捕扭曲为“权相抢钱”\n利用民意逼迫官兵后退。\n【CEN】王拓气得胡子发抖，知道今天抓不了我。\n【必须覆盖】利用舆论化解被捕危机、暂时摆脱权相的封杀。\n【禁区】不可让沈哲武力对抗官兵。",
+          "plotSummary": "CBN: 我抓起一把银锭扔向人群，大喊权相抢劫平民。\nCEN: 王拓气得胡子发抖，知道今天抓不了我。"
+        },
+        {
+          "id": "chapter-1786584418476",
+          "volumeId": "vol-1786584418294-0",
+          "title": "大周第一份小报，上市了",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 15,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.476Z",
+          "updatedAt": "2026-08-13T01:26:58.480Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我把印好的“京华时报”拍在桌上，油墨味扑鼻而来。\n【CPNs】创办大周第一份小报\n整合乞丐与说书人成为情报网\n全城抢购小报。\n【CEN】王拓看着手中的报纸，上面是他纳妾的详细丑闻。\n【必须覆盖】创办大周第一份小报、建立独立舆论渠道。\n【禁区】不可让报纸立刻获得官方认可。",
+          "plotSummary": "CBN: 我把印好的“京华时报”拍在桌上，油墨味扑鼻而来。\nCEN: 王拓看着手中的报纸，上面是他纳妾的详细丑闻。"
+        },
+        {
+          "id": "chapter-1786584418487",
+          "volumeId": "vol-1786584418294-0",
+          "title": "说我造谣？那我就去坐牢",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 16,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.487Z",
+          "updatedAt": "2026-08-13T01:26:58.491Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】衙役冲进来给我戴上枷锁，王拓在角落冷笑。\n【CPNs】王拓诬陷沈哲撰写“谋反文章”\n沈哲被捕入狱\n沈哲暗中指示手下继续办报。\n【CEN】狱门咣当关上，我却在黑暗中笑出了声。\n【必须覆盖】沈哲遭遇权相陷害入狱、坚持智斗不动武。\n【禁区】不可让沈哲表现出对坐牢的恐惧。",
+          "plotSummary": "CBN: 衙役冲进来给我戴上枷锁，王拓在角落冷笑。\nCEN: 狱门咣当关上，我却在黑暗中笑出了声。"
+        },
+        {
+          "id": "chapter-1786584418499",
+          "volumeId": "vol-1786584418294-0",
+          "title": "牢房里发号施令，外面乱套了",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 17,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.499Z",
+          "updatedAt": "2026-08-13T01:26:58.503Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我从牢房栏杆递出一张纸条，乞丐立刻消失在夜色中。\n【CPNs】在狱中指挥舆论战\n小报将沈哲塑造成“因言获罪”的英雄\n引发百姓请愿。\n【CEN】狱卒颤抖着拿来新报纸，头条是“救救沈先生”。\n【必须覆盖】在狱中指挥舆论战、逼迫权相放人。\n【禁区】不可让沈哲获得越狱工具。",
+          "plotSummary": "CBN: 我从牢房栏杆递出一张纸条，乞丐立刻消失在夜色中。\nCEN: 狱卒颤抖着拿来新报纸，头条是“救救沈先生”。"
+        },
+        {
+          "id": "chapter-1786584418511",
+          "volumeId": "vol-1786584418294-0",
+          "title": "狱中疯子，说皇子生母没死",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 18,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.511Z",
+          "updatedAt": "2026-08-13T01:26:58.515Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】隔壁牢房的疯子抓着栏杆，嘶吼着一个禁忌名字。\n【CPNs】接触狱中神秘人\n得知皇子生母之死有隐情\n神秘人透露关键线索。\n【CEN】神秘人递出一块玉佩，随即被狱卒拖走毒打致死。\n【必须覆盖】狱中神秘人透露当年皇子生母之死的线索。\n【禁区】不可让皇子生母真的出现。",
+          "plotSummary": "CBN: 隔壁牢房的疯子抓着栏杆，嘶吼着一个禁忌名字。\nCEN: 神秘人递出一块玉佩，随即被狱卒拖走毒打致死。"
+        },
+        {
+          "id": "chapter-1786584418523",
+          "volumeId": "vol-1786584418294-0",
+          "title": "杀人灭口？这下更说不清了",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 19,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.523Z",
+          "updatedAt": "2026-08-13T01:26:58.527Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我高举神秘人的血衣，大喊狱中杀人灭口。\n【CPNs】将神秘人之死归咎于权相灭口\n利用舆论将狱中案政治化\n皇帝被迫介入。\n【CEN】皇帝的圣旨传到狱中，命令即刻释放沈哲。\n【必须覆盖】洗清冤屈、反击权相、获得皇帝召见机会。\n【禁区】不可让沈哲在心理上真正战胜王拓。",
+          "plotSummary": "CBN: 我高举神秘人的血衣，大喊狱中杀人灭口。\nCEN: 皇帝的圣旨传到狱中，命令即刻释放沈哲。"
+        },
+        {
+          "id": "chapter-1786584418536",
+          "volumeId": "vol-1786584418294-0",
+          "title": "一出狱就发报，王拓完了",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 20,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.536Z",
+          "updatedAt": "2026-08-13T01:26:58.539Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】刚跨出牢门，我就将特刊塞进围观者手里。\n【CPNs】发行小报揭露权相贪腐证据\n引发京城舆论热议\n王拓气急败坏却无法辩驳\n【CEN】圣旨到狱，宣我即刻进宫对质。\n【必须覆盖】利用小报揭露权相贪腐证据、洗清冤屈\n【禁区】不可让主角立刻获得高官厚禄",
+          "plotSummary": "CBN: 刚跨出牢门，我就将特刊塞进围观者手里。\nCEN: 圣旨到狱，宣我即刻进宫对质。"
+        },
+        {
+          "id": "chapter-1786584418546",
+          "volumeId": "vol-1786584418294-0",
+          "title": "金殿舌战，我把舆论当武器",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 21,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.546Z",
+          "updatedAt": "2026-08-13T01:26:58.549Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】跪在金砖上，我把那份小报高举过头顶。\n【CPNs】驳斥权相构陷\n向皇帝阐述“舆论治国策”\n展示舆论对朝政的影响\n【CEN】皇帝盯着小报，突然问了一句：“若是朕呢？”\n【必须覆盖】皇帝召见沈哲问对、沈哲献上舆论治国策\n【禁区】不可让主角立刻获得高官厚禄",
+          "plotSummary": "CBN: 跪在金砖上，我把那份小报高举过头顶。\nCEN: 皇帝盯着小报，突然问了一句：“若是朕呢？”"
+        },
+        {
+          "id": "chapter-1786584418557",
+          "volumeId": "vol-1786584418294-0",
+          "title": "满朝文武，成了我的扩音器",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 22,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.557Z",
+          "updatedAt": "2026-08-13T01:26:58.560Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我指使乞丐把报纸贴满朝房门口。\n【CPNs】利用官员私生活制造热点\n分化太子的支持者\n王拓众叛亲离\n【CEN】王拓在朝堂上被同僚弹劾，狼狈不堪。\n【必须覆盖】当朝驳斥权相、展示舆论力量\n【禁区】不可让主角立刻获得高官厚禄",
+          "plotSummary": "CBN: 我指使乞丐把报纸贴满朝房门口。\nCEN: 王拓在朝堂上被同僚弹劾，狼狈不堪。"
+        },
+        {
+          "id": "chapter-1786584418569",
+          "volumeId": "vol-1786584418294-0",
+          "title": "皇帝拍案，这招太毒了",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 23,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.569Z",
+          "updatedAt": "2026-08-13T01:26:58.573Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】皇帝看着奏折，指着上面被百姓涂鸦的批语。\n【CPNs】皇帝意识到言论的恐怖\n沈哲获得皇帝暂时信任\n王拓被降职罚俸\n【CEN】皇帝看着我的眼神，像是在看一把绝世凶剑。\n【必须覆盖】当朝驳斥权相、皇帝拍案叫绝\n【禁区】不可让主角立刻获得高官厚禄",
+          "plotSummary": "CBN: 皇帝看着奏折，指着上面被百姓涂鸦的批语。\nCEN: 皇帝看着我的眼神，像是在看一把绝世凶剑。"
+        },
+        {
+          "id": "chapter-1786584418581",
+          "volumeId": "vol-1786584418294-0",
+          "title": "赈灾其实是场精心策划的真人秀",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 24,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.581Z",
+          "updatedAt": "2026-08-13T01:26:58.584Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我在地图上圈出地点，告诉皇子这里最“上镜”。\n【CPNs】策划皇子主动请缨赈灾\n设计赈灾剧本\n说服皇帝放行\n【CEN】马车驶出京城，身后是全城的欢呼声。\n【必须覆盖】皇子主动请缨赈灾、沈哲随行策划赈灾真人秀\n【禁区】不可将赈灾写成单纯的施舍",
+          "plotSummary": "CBN: 我在地图上圈出地点，告诉皇子这里最“上镜”。\nCEN: 马车驶出京城，身后是全城的欢呼声。"
+        },
+        {
+          "id": "chapter-1786584418591",
+          "volumeId": "vol-1786584418294-0",
+          "title": "灾区现场，我喊卡皇子才哭",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 25,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.591Z",
+          "updatedAt": "2026-08-13T01:26:58.595Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】皇子正要发饭，我大喊一声：“表情不对！”\n【CPNs】指导皇子进行赈灾表演\n安排画师记录“感人”瞬间\n控制灾民情绪\n【CEN】太子派来的监军冷冷地看着这一场闹剧。\n【必须覆盖】沈哲随行策划赈灾真人秀\n【禁区】不可将赈灾写成单纯的施舍",
+          "plotSummary": "CBN: 皇子正要发饭，我大喊一声：“表情不对！”\nCEN: 太子派来的监军冷冷地看着这一场闹剧。"
+        },
+        {
+          "id": "chapter-1786584418603",
+          "volumeId": "vol-1786584418294-0",
+          "title": "挖出一袋米，全是太子的罪证",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 26,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.603Z",
+          "updatedAt": "2026-08-13T01:26:58.607Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我割开麻袋，里面滚出的不是米，是金砖。\n【CPNs】截获太子私吞赈灾银的实锤\n发现太子的秘密账本\n藏匿证据\n【CEN】账本上赫然写着王拓的名字，他们是一伙的。\n【必须覆盖】截获太子私吞赈灾银的实锤\n【禁区】不可让证据立刻曝光",
+          "plotSummary": "CBN: 我割开麻袋，里面滚出的不是米，是金砖。\nCEN: 账本上赫然写着王拓的名字，他们是一伙的。"
+        },
+        {
+          "id": "chapter-1786584418615",
+          "volumeId": "vol-1786584418294-0",
+          "title": "抢粮草？百姓就是我的武器",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 27,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.615Z",
+          "updatedAt": "2026-08-13T01:26:58.619Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】太子党羽抢夺粮食，我鼓动灾民围了上去。\n【CPNs】制造冲突事件\n利用灾民攻击太子党羽\n皇子“挺身而出”保护粮食\n【CEN】监军被打得鼻青脸肿，跪地求饶。\n【必须覆盖】皇子亲力亲为感动灾民、打击太子党羽\n【禁区】不可将赈灾写成单纯的施舍",
+          "plotSummary": "CBN: 太子党羽抢夺粮食，我鼓动灾民围了上去。\nCEN: 监军被打得鼻青脸肿，跪地求饶。"
+        },
+        {
+          "id": "chapter-1786584418627",
+          "volumeId": "vol-1786584418294-0",
+          "title": "京城沸腾，都在喊皇子万岁",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 28,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.627Z",
+          "updatedAt": "2026-08-13T01:26:58.631Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】飞鸽传书带回京城头条，皇子画像被供在庙里。\n【CPNs】皇子声望达到顶峰\n太子在朝堂上被弹劾\n皇帝对太子彻底失望\n【CEN】欢呼声中，一个灾民突然口吐白沫倒地。\n【必须覆盖】皇子声望达到顶峰、太子在朝堂上哑口无言\n【禁区】不可让瘟疫立刻失控",
+          "plotSummary": "CBN: 飞鸽传书带回京城头条，皇子画像被供在庙里。\nCEN: 欢呼声中，一个灾民突然口吐白沫倒地。"
+        },
+        {
+          "id": "chapter-1786584418640",
+          "volumeId": "vol-1786584418294-0",
+          "title": "这不是瘟疫，这是杀人诛心",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 29,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.640Z",
+          "updatedAt": "2026-08-13T01:26:58.643Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我捏开死者嘴皮，闻到一股苦杏仁的味道。\n【CPNs】确诊人为投毒\n调查投毒源头\n发现针对皇子的阴谋\n【CEN】查验尸体发现毒素，这根本不是瘟疫。\n【必须覆盖】灾区出现不明瘟疫（实为投毒）、制造危机感\n【禁区】不可让瘟疫失控导致不可逆后果",
+          "plotSummary": "CBN: 我捏开死者嘴皮，闻到一股苦杏仁的味道。\nCEN: 查验尸体发现毒素，这根本不是瘟疫。"
+        },
+        {
+          "id": "chapter-1786584418652",
+          "volumeId": "vol-1786584418294-0",
+          "title": "这哪是瘟疫，分明是太子杀人",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 30,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.652Z",
+          "updatedAt": "2026-08-13T01:26:58.657Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我抓着一把发黑的米，大喊太子送来断头饭。\n【CPNs】将瘟疫定性为投毒\n编造“太子降罪”的谣言\n煽动灾民愤怒。\n【CEN】灾民红着眼，举着火把冲向太子的粮仓。\n【必须覆盖】散布瘟疫乃太子党降罪灾民的谣言、制造恐慌。\n【禁区】不可让瘟疫真的失控扩散。",
+          "plotSummary": "CBN: 我抓着一把发黑的米，大喊太子送来断头饭。\nCEN: 灾民红着眼，举着火把冲向太子的粮仓。"
+        },
+        {
+          "id": "chapter-1786584418665",
+          "volumeId": "vol-1786584418294-0",
+          "title": "神医背书：喝碗汤就能活命",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 31,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.665Z",
+          "updatedAt": "2026-08-13T01:26:58.669Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】老郎中喝下汤药，立刻跪地高呼神迹。\n【CPNs】皇子“研发”汤药\n名医背书皇子仁德\n灾民感恩跪拜。\n【CEN】太子派来的御医被发现死在枯井里。\n【必须覆盖】联合名医推广防疫手段、皇子声望上升。\n【禁区】不可让瘟疫真正造成大规模死亡。",
+          "plotSummary": "CBN: 老郎中喝下汤药，立刻跪地高呼神迹。\nCEN: 太子派来的御医被发现死在枯井里。"
+        },
+        {
+          "id": "chapter-1786584418677",
+          "volumeId": "vol-1786584418294-0",
+          "title": "万人下跪，皇子活菩萨",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 32,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.677Z",
+          "updatedAt": "2026-08-13T01:26:58.681Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】成千上万人跪地叩首，呼喊声震动天地。\n【CPNs】组织感恩仪式\n皇子发表感人演讲\n将恶魔太子与圣人皇子对比。\n【CEN】京城快马传来：太子的马车被百姓砸了。\n【必须覆盖】皇子声望达到顶峰、灾民诅咒太子。\n【禁区】不可让瘟疫失控导致不可逆后果。",
+          "plotSummary": "CBN: 成千上万人跪地叩首，呼喊声震动天地。\nCEN: 京城快马传来：太子的马车被百姓砸了。"
+        },
+        {
+          "id": "chapter-1786584418690",
+          "volumeId": "vol-1786584418294-0",
+          "title": "深夜刺客，刀尖直指咽喉",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 33,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.690Z",
+          "updatedAt": "2026-08-13T01:26:58.693Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】寒光一闪，我猛地把皇子推倒，刀锋划破帐篷。\n【CPNs】刺客潜入行刺\n沈哲启动预设机关\n刺客受伤被围。\n【CEN】刺客咬破毒囊，倒地抽搐。\n【必须覆盖】皇子遇刺未遂、太子狗急跳墙派出刺客。\n【禁区】不可让皇子真的受重伤。",
+          "plotSummary": "CBN: 寒光一闪，我猛地把皇子推倒，刀锋划破帐篷。\nCEN: 刺客咬破毒囊，倒地抽搐。"
+        },
+        {
+          "id": "chapter-1786584418701",
+          "volumeId": "vol-1786584418294-0",
+          "title": "天哪，太子竟敢弑杀亲弟",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 34,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.701Z",
+          "updatedAt": "2026-08-13T01:26:58.705Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我高举染血的匕首，向营地所有人展示。\n【CPNs】展示刺客罪证\n归咎于太子的绝望\n博取天下同情。\n【CEN】灾区爆发“杀太子”的怒吼。\n【必须覆盖】沈哲利用此事大做文章、发起舆论攻势。\n【禁区】不可让太子直接认罪。",
+          "plotSummary": "CBN: 我高举染血的匕首，向营地所有人展示。\nCEN: 灾区爆发“杀太子”的怒吼。"
+        },
+        {
+          "id": "chapter-1786584418713",
+          "volumeId": "vol-1786584418294-0",
+          "title": "万民血书，跪请废太子",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 35,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.713Z",
+          "updatedAt": "2026-08-13T01:26:58.717Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】儒生咬破手指，在白绢上写下请诛国贼。\n【CPNs】起草请愿书\n利用信鸽传播消息\n各地学子响应。\n【CEN】太学院门口，数百名书生跪成了人海。\n【必须覆盖】发起废除太子的联署请愿、各地学子游行请愿。\n【禁区】不可让太子直接认罪。",
+          "plotSummary": "CBN: 儒生咬破手指，在白绢上写下请诛国贼。\nCEN: 太学院门口，数百名书生跪成了人海。"
+        },
+        {
+          "id": "chapter-1786584418725",
+          "volumeId": "vol-1786584418294-0",
+          "title": "满城哭声，都在骂太子断子绝孙",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 36,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.725Z",
+          "updatedAt": "2026-08-13T01:26:58.729Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】妇女儿童向太子的马车扔烂菜叶和石头。\n【CPNs】全民声讨太子\n太子被彻底孤立\n舆论全面爆发。\n【CEN】皇帝看着奏折，愤怒得将玉玺摔碎。\n【必须覆盖】各地学子游行请愿、皇帝震怒。\n【禁区】不可让太子直接认罪。",
+          "plotSummary": "CBN: 妇女儿童向太子的马车扔烂菜叶和石头。\nCEN: 皇帝看着奏折，愤怒得将玉玺摔碎。"
+        },
+        {
+          "id": "chapter-1786584418738",
+          "volumeId": "vol-1786584418294-0",
+          "title": "皇帝召见：这天下到底是谁的",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 37,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.738Z",
+          "updatedAt": "2026-08-13T01:26:58.742Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我跪在殿中，呈上那把带血的匕首。\n【CPNs】汇报刺杀真相\n展示民间请愿\n沈哲暗示太子威胁皇权。\n【CEN】皇帝死死盯着我，突然问起刺客的底细。\n【必须覆盖】皇帝介入调查、对峙升级。\n【禁区】不可让皇帝立刻下旨废太子。",
+          "plotSummary": "CBN: 我跪在殿中，呈上那把带血的匕首。\nCEN: 皇帝死死盯着我，突然问起刺客的底细。"
+        },
+        {
+          "id": "chapter-1786584418753",
+          "volumeId": "vol-1786584418294-0",
+          "title": "刺客身上，竟带着宫廷秘药",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 38,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.753Z",
+          "updatedAt": "2026-08-13T01:26:58.757Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我查验刺客遗物，发现了一个特殊的香囊。\n【CPNs】分析香囊成分\n确认只有宫廷才有\n怀疑内部背叛。\n【CEN】香囊上绣着一条金龙，那是御用之物。\n【必须覆盖】调查刺客背景、发现宫廷线索。\n【禁区】不可立即揭露叛徒身份。",
+          "plotSummary": "CBN: 我查验刺客遗物，发现了一个特殊的香囊。\nCEN: 香囊上绣着一条金龙，那是御用之物。"
+        },
+        {
+          "id": "chapter-1786584418764",
+          "volumeId": "vol-1786584418294-0",
+          "title": "这块腰牌，吓得皇帝手抖",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 39,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.764Z",
+          "updatedAt": "2026-08-13T01:26:58.768Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我从刺客靴筒里摸出一块令牌，呈给皇帝。\n【CPNs】出示禁军令牌\n确认属于皇家亲卫\n皇帝震惊阴谋。\n【CEN】皇帝指着令牌，面如死灰，一言不发。\n【必须覆盖】发现刺客身上带有皇宫禁军的令牌。\n【禁区】不可立即揭露叛徒身份。",
+          "plotSummary": "CBN: 我从刺客靴筒里摸出一块令牌，呈给皇帝。\nCEN: 皇帝指着令牌，面如死灰，一言不发。"
+        },
+        {
+          "id": "chapter-1786584418776",
+          "volumeId": "vol-1786584418294-0",
+          "title": "寿宴前夜，太子送来请柬",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 40,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.776Z",
+          "updatedAt": "2026-08-13T01:26:58.780Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】金帖飞进窗内，太子嚣张的笑声传出院外。\n【CPNs】分析太子“祥瑞”计划的漏洞\n沈哲准备“万民书”陷阱\n让萧景保持冷静备战。\n【CEN】寿辰之日，紫禁城笼罩在诡异的寂静中。\n【必须覆盖】寿辰献礼环节的准备、太子献祥瑞的铺垫。\n【禁区】不可让皇帝立刻驾崩。",
+          "plotSummary": "CBN: 金帖飞进窗内，太子嚣张的笑声传出院外。\nCEN: 寿辰之日，紫禁城笼罩在诡异的寂静中。"
+        },
+        {
+          "id": "chapter-1786584418789",
+          "volumeId": "vol-1786584418294-0",
+          "title": "麒麟降世？太子疯了",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 41,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.789Z",
+          "updatedAt": "2026-08-13T01:26:58.792Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】笼子打开，一只“麒麟”咆哮，满座皆惊。\n【CPNs】太子展示祥瑞\n群臣阿谀奉承\n皇帝假装高兴但心存怀疑。\n【CEN】麒麟突然咳嗽，吐出一只未消化的皮靴。\n【必须覆盖】太子献祥瑞。\n【禁区】不可让皇帝立刻驾崩。",
+          "plotSummary": "CBN: 笼子打开，一只“麒麟”咆哮，满座皆惊。\nCEN: 麒麟突然咳嗽，吐出一只未消化的皮靴。"
+        },
+        {
+          "id": "chapter-1786584418801",
+          "volumeId": "vol-1786584418294-0",
+          "title": "一堆破纸，竟敢压过祥瑞",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 42,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.801Z",
+          "updatedAt": "2026-08-13T01:26:58.805Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】萧景拖着一箱沾血的请愿书，重重放下。\n【CPNs】萧景展示请愿书\n太子的嘲讽\n皇帝的不耐烦，沈哲发声吸引注意。\n【CEN】沈哲打开书，第一个名字竟是大理寺卿。\n【必须覆盖】皇子献上万民书。\n【禁区】不可让皇帝立刻驾崩。",
+          "plotSummary": "CBN: 萧景拖着一箱沾血的请愿书，重重放下。\nCEN: 沈哲打开书，第一个名字竟是大理寺卿。"
+        },
+        {
+          "id": "chapter-1786584418814",
+          "volumeId": "vol-1786584418294-0",
+          "title": "祥瑞是假的！油漆还没干",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 43,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.814Z",
+          "updatedAt": "2026-08-13T01:26:58.818Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我指着那头鹿，大喊“看那尾巴上的油漆！”\n【CPNs】揭露祥瑞造假（染色\n机械）\n公众哗然，太子恐慌辩解。\n【CEN】皇帝下令当场处决那头假神兽。\n【必须覆盖】沈哲策划祥瑞造假事件。\n【禁区】不可让皇帝立刻驾崩。",
+          "plotSummary": "CBN: 我指着那头鹿，大喊“看那尾巴上的油漆！”\nCEN: 皇帝下令当场处决那头假神兽。"
+        },
+        {
+          "id": "chapter-1786584418826",
+          "volumeId": "vol-1786584418294-0",
+          "title": "万民书在手，皇位在望",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 44,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.826Z",
+          "updatedAt": "2026-08-13T01:26:58.831Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】皇帝将血书与假兽对比，扔掉太子的礼物。\n【CPNs】皇帝支持萧景\n对比假的祥瑞与“真实”的爱戴\n萧景被指定为继承人。\n【CEN】老皇帝倒下，吐血，太监惊慌藏起诏书。\n【必须覆盖】皇子借机上位。\n【禁区】不可让皇帝立刻驾崩。",
+          "plotSummary": "CBN: 皇帝将血书与假兽对比，扔掉太子的礼物。\nCEN: 老皇帝倒下，吐血，太监惊慌藏起诏书。"
+        },
+        {
+          "id": "chapter-1786584418842",
+          "volumeId": "vol-1786584418294-0",
+          "title": "禁军令牌，成了太子的催命符",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 45,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.842Z",
+          "updatedAt": "2026-08-13T01:26:58.846Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】我把令牌扔在太子脸上，他瞬间瘫软。\n【CPNs】对峙刺客事件\n使用令牌证据\n太子最后的挣扎。\n【CEN】皇帝痛苦地签字，墨汁滴落如泪。\n【必须覆盖】皇帝下旨废太子。\n【禁区】不可让主角失去危机感。",
+          "plotSummary": "CBN: 我把令牌扔在太子脸上，他瞬间瘫软。\nCEN: 皇帝痛苦地签字，墨汁滴落如泪。"
+        },
+        {
+          "id": "chapter-1786584418854",
+          "volumeId": "vol-1786584418294-0",
+          "title": "皇太孙！这名字听着真顺耳",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 46,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.854Z",
+          "updatedAt": "2026-08-13T01:26:58.859Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】圣旨宣读，萧景跪在地上，浑身颤抖。\n【CPNs】太子被拖走\n萧景被封为皇太孙\n百姓欢呼。\n【CEN】萧景坐在太子的位置上，感到不真实的恐惧。\n【必须覆盖】萧景被封为皇太孙。\n【禁区】不可让主角失去危机感。",
+          "plotSummary": "CBN: 圣旨宣读，萧景跪在地上，浑身颤抖。\nCEN: 萧景坐在太子的位置上，感到不真实的恐惧。"
+        },
+        {
+          "id": "chapter-1786584418866",
+          "volumeId": "vol-1786584418294-0",
+          "title": "官拜太傅，我要做那个影子",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 47,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.866Z",
+          "updatedAt": "2026-08-13T01:26:58.870Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】皇帝授予我印信，手冰凉刺骨。\n【CPNs】沈哲晋升太傅\n苏红袖被接入府中\n开始清洗政敌。\n【CEN】苏红袖在我耳边低语：“太傅，有人想让你死。”\n【必须覆盖】沈哲官拜太傅、苏红袖因功被接入府中。\n【禁区】不可让主角失去危机感。",
+          "plotSummary": "CBN: 皇帝授予我印信，手冰凉刺骨。\nCEN: 苏红袖在我耳边低语：“太傅，有人想让你死。”"
+        },
+        {
+          "id": "chapter-1786584418879",
+          "volumeId": "vol-1786584418294-0",
+          "title": "清洗旧部，京城血流成河",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 48,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.879Z",
+          "updatedAt": "2026-08-13T01:26:58.882Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】官员名单，每一个名字都划掉了。\n【CPNs】流放太子的支持者\n沈哲巩固权力\n处理旧日仇敌。\n【CEN】我站在城墙上，看着政敌被赶出城。\n【必须覆盖】昔日嚣张的政敌被流放边疆。\n【禁区】不可让主角失去危机感。",
+          "plotSummary": "CBN: 官员名单，每一个名字都划掉了。\nCEN: 我站在城墙上，看着政敌被赶出城。"
+        },
+        {
+          "id": "chapter-1786584418892",
+          "volumeId": "vol-1786584418294-0",
+          "title": "系统警告：鸟尽弓藏时",
+          "content": "",
+          "wordCount": 0,
+          "orderIndex": 49,
+          "version": 1,
+          "status": "draft",
+          "createdAt": "2026-08-13T01:26:58.892Z",
+          "updatedAt": "2026-08-13T01:26:58.897Z",
+          "writeStatus": "pending",
+          "outline": "\n\n--- 结构化节点 ---\n【CBN】系统面板变红，弹出“鸟尽弓藏”。\n【CPNs】系统发布清洗功臣任务\n沈哲意识到皇帝的猜忌\n危机临近。\n【CEN】萧景拿着毒药看着我，眼神冰冷。\n【必须覆盖】系统提示新任务、清洗功臣计划启动。\n【禁区】不可让主角失去危机感。",
+          "plotSummary": "CBN: 系统面板变红，弹出“鸟尽弓藏”。\nCEN: 萧景拿着毒药看着我，眼神冰冷。"
+        }
+      ],
+      "characters": [
+        {
+          "id": "char-1786584418294-0",
+          "name": "沈哲",
+          "role": "protagonist",
+          "description": "推动剧情，解决危机，制造冲突。；帮助皇子夺嫡。；证明虚构可以战胜现实。",
+          "profile": {
+            "personality": [
+              "求生者",
+              "操盘手",
+              "孤独的守望者"
+            ],
+            "appearance": "",
+            "background": "在这个时代活下去，并建立自己的秩序。；前世被资本抛弃，对现实失望。；系统的能量来源是民众的智商税。",
+            "abilities": [
+              "系统",
+              "苏红袖",
+              "乞丐网"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786584418294-1",
+                "targetName": "萧景",
+                "type": "neutral",
+                "description": "依赖→忌惮→决裂"
+              },
+              {
+                "characterId": "",
+                "targetName": "皇帝",
+                "type": "neutral",
+                "description": "棋子→工具→威胁"
+              }
+            ],
+            "keyNeed": "在这个时代活下去，并建立自己的秩序。",
+            "publicGoal": "帮助皇子夺嫡。",
+            "hiddenNeed": "证明虚构可以战胜现实。",
+            "fearOrWound": "前世被资本抛弃，对现实失望。",
+            "secret": "系统的能量来源是民众的智商税。",
+            "turningPoint": "第50章（意识到造神的可怕）、第120章（决定牺牲部分利益）。",
+            "arcStart": "求生者",
+            "arcMid": "操盘手",
+            "arcEnd": "孤独的守望者",
+            "revealTiming": "第1章"
+          },
+          "createdAt": "2026-08-13T01:26:58.294Z",
+          "updatedAt": "2026-08-13T01:26:58.294Z"
+        },
+        {
+          "id": "char-1786584418294-1",
+          "name": "萧景",
+          "role": "ally",
+          "description": "提供权力载体，承载主角的造神计划。；夺嫡成功。；摆脱傀儡身份，掌握实权。",
+          "profile": {
+            "personality": [
+              "废柴皇子",
+              "傀儡皇帝",
+              "孤家寡人"
+            ],
+            "appearance": "",
+            "background": "获得父皇认可，登基为帝。；母妃之死，父皇冷漠。；其实知道主角在利用他，但为了权力甘愿配合。",
+            "abilities": [
+              "皇位",
+              "禁军"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "alliance",
+                "description": "想当明君 VS 主角只想造神。"
+              },
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "enemy",
+                "description": "导师→恶奴→仇敌"
+              }
+            ],
+            "keyNeed": "获得父皇认可，登基为帝。",
+            "publicGoal": "夺嫡成功。",
+            "hiddenNeed": "摆脱傀儡身份，掌握实权。",
+            "fearOrWound": "母妃之死，父皇冷漠。",
+            "secret": "其实知道主角在利用他，但为了权力甘愿配合。",
+            "turningPoint": "第50章（尝到甜头）、第150章（试图摆脱控制）。",
+            "arcStart": "废柴皇子",
+            "arcMid": "傀儡皇帝",
+            "arcEnd": "孤家寡人",
+            "revealTiming": "第1章"
+          },
+          "createdAt": "2026-08-13T01:26:58.294Z",
+          "updatedAt": "2026-08-13T01:26:58.294Z"
+        },
+        {
+          "id": "char-1786584418294-2",
+          "name": "萧承",
+          "role": "antagonist",
+          "description": "前期的主要阻碍，提供冲突来源。；打压皇子党。；获得父皇真正的爱，而非仅仅是身份。",
+          "profile": {
+            "personality": [
+              "嚣张太子",
+              "惶恐囚徒"
+            ],
+            "appearance": "",
+            "background": "保住太子之位，铲除异己。；活在优秀弟弟的阴影下（虽已死，仍需证明自己）。；并非生母所生，而是抱养。",
+            "abilities": [
+              "东宫",
+              "门阀支持"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "enemy",
+                "description": "正统继承人 VS 篡位者。"
+              },
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "neutral",
+                "description": "无视→痛恨→恐惧"
+              }
+            ],
+            "keyNeed": "保住太子之位，铲除异己。",
+            "publicGoal": "打压皇子党。",
+            "hiddenNeed": "获得父皇真正的爱，而非仅仅是身份。",
+            "fearOrWound": "活在优秀弟弟的阴影下（虽已死，仍需证明自己）。",
+            "secret": "并非生母所生，而是抱养。",
+            "turningPoint": "第30章（感到威胁）、第48章（被废）。",
+            "arcStart": "嚣张太子",
+            "arcMid": "惶恐囚徒",
+            "revealTiming": "第2章"
+          },
+          "createdAt": "2026-08-13T01:26:58.294Z",
+          "updatedAt": "2026-08-13T01:26:58.294Z"
+        },
+        {
+          "id": "char-1786584418294-3",
+          "name": "王拓",
+          "role": "antagonist",
+          "description": "代表传统官僚势力，不断给主角制造麻烦。；除掉沈哲这个妖言惑众的奸佞。；成为帝国的无冕之王。",
+          "profile": {
+            "personality": [
+              "权倾朝野",
+              "功亏一篑",
+              "郁郁而终"
+            ],
+            "appearance": "",
+            "background": "维护世家利益，压制皇权旁落。；家族曾在权力斗争中惨败。；暗中资助门阀对抗皇权。",
+            "abilities": [
+              "门阀关系网",
+              "言官"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "enemy",
+                "description": "守旧派 VS 革新派。"
+              },
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "neutral",
+                "description": "轻视→重视→必杀"
+              }
+            ],
+            "keyNeed": "维护世家利益，压制皇权旁落。",
+            "publicGoal": "除掉沈哲这个妖言惑众的奸佞。",
+            "hiddenNeed": "成为帝国的无冕之王。",
+            "fearOrWound": "家族曾在权力斗争中惨败。",
+            "secret": "暗中资助门阀对抗皇权。",
+            "turningPoint": "第40章（入狱失败）、第100章（发动政变未遂）。",
+            "arcStart": "权倾朝野",
+            "arcMid": "功亏一篑",
+            "arcEnd": "郁郁而终",
+            "revealTiming": "第10章"
+          },
+          "createdAt": "2026-08-13T01:26:58.294Z",
+          "updatedAt": "2026-08-13T01:26:58.294Z"
+        },
+        {
+          "id": "char-1786584418294-4",
+          "name": "崔家主（崔浩）",
+          "role": "antagonist",
+          "description": "绞杀沈哲的舆论机器。；证明只有血统高贵者才能统治。",
+          "profile": {
+            "personality": [
+              "高高在上",
+              "信仰崩塌"
+            ],
+            "appearance": "",
+            "background": "维持世家对历史的垄断。；目睹平民造反带来的混乱。；掌握着前朝灭亡的真正黑历史。",
+            "abilities": [
+              "崔氏家族",
+              "太学",
+              "历史书"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "enemy",
+                "description": "解释权争夺，真相 VS 虚构。"
+              },
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "neutral",
+                "description": "无视→敬畏→消灭"
+              }
+            ],
+            "keyNeed": "维持世家对历史的垄断。",
+            "publicGoal": "绞杀沈哲的舆论机器。",
+            "hiddenNeed": "证明只有血统高贵者才能统治。",
+            "fearOrWound": "目睹平民造反带来的混乱。",
+            "secret": "掌握着前朝灭亡的真正黑历史。",
+            "turningPoint": "第120章（全面开战）、第170章（理念崩塌）。",
+            "arcStart": "高高在上",
+            "arcMid": "信仰崩塌",
+            "revealTiming": "第60章"
+          },
+          "createdAt": "2026-08-13T01:26:58.294Z",
+          "updatedAt": "2026-08-13T01:26:58.294Z"
+        },
+        {
+          "id": "char-1786584418294-5",
+          "name": "神秘狱友",
+          "role": "mentor",
+          "description": "传授主角古代政治的潜规则，提供关键线索。；活下去。；看到旧王朝覆灭。",
+          "profile": {
+            "personality": [
+              "落魄囚犯",
+              "复国者",
+              "牺牲品"
+            ],
+            "appearance": "",
+            "background": "报复朝廷，推翻暴政。；被挚友背叛，满门抄斩。；前朝太子。",
+            "abilities": [
+              "前朝旧部",
+              "皇室秘辛"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "alliance",
+                "description": "利用关系，互相试探。"
+              },
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "neutral",
+                "description": "利用者→合作者→悼念者"
+              }
+            ],
+            "keyNeed": "报复朝廷，推翻暴政。",
+            "publicGoal": "活下去。",
+            "hiddenNeed": "看到旧王朝覆灭。",
+            "fearOrWound": "被挚友背叛，满门抄斩。",
+            "secret": "前朝太子。",
+            "turningPoint": "第80章（出狱）、第140章（牺牲）。",
+            "arcStart": "落魄囚犯",
+            "arcMid": "复国者",
+            "arcEnd": "牺牲品",
+            "revealTiming": "第20章"
+          },
+          "createdAt": "2026-08-13T01:26:58.294Z",
+          "updatedAt": "2026-08-13T01:26:58.294Z"
+        },
+        {
+          "id": "char-1786584418294-6",
+          "name": "苏红袖",
+          "role": "support",
+          "description": "情报中转，情感寄托，公关执行者。；成为皇子妃。；被当作独立的人尊重。",
+          "profile": {
+            "personality": [
+              "青楼花魁",
+              "情报首脑",
+              "牺牲者"
+            ],
+            "appearance": "",
+            "background": "摆脱青楼籍贯，获得自由。；被亲人出卖。；是敌国派来的细作，后真心爱上沈哲。",
+            "abilities": [
+              "美人计",
+              "情报网"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "alliance",
+                "description": "互相利用，产生真情。"
+              },
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "lover",
+                "description": "工具人→爱人→遗憾"
+              }
+            ],
+            "keyNeed": "摆脱青楼籍贯，获得自由。",
+            "publicGoal": "成为皇子妃。",
+            "hiddenNeed": "被当作独立的人尊重。",
+            "fearOrWound": "被亲人出卖。",
+            "secret": "是敌国派来的细作，后真心爱上沈哲。",
+            "turningPoint": "第50章（入府）、第90章（身份暴露）。",
+            "arcStart": "青楼花魁",
+            "arcMid": "情报首脑",
+            "arcEnd": "牺牲者",
+            "revealTiming": "第6章"
+          },
+          "createdAt": "2026-08-13T01:26:58.294Z",
+          "updatedAt": "2026-08-13T01:26:58.294Z"
+        },
+        {
+          "id": "char-1786584418294-7",
+          "name": "秦烈",
+          "role": "ally",
+          "description": "武力保障，执行脏活。；带兵打仗。；证明忠诚。",
+          "profile": {
+            "personality": [
+              "叛逆将军",
+              "忠诚护卫",
+              "权臣"
+            ],
+            "appearance": "",
+            "background": "洗刷家族冤屈。；父亲被冤杀。；其实痛恨皇帝，只忠于沈哲。",
+            "abilities": [
+              "边军"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "alliance",
+                "description": "武夫 VS 文人，互相看不顺眼。"
+              },
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "neutral",
+                "description": "收买→信任→倚重"
+              }
+            ],
+            "keyNeed": "洗刷家族冤屈。",
+            "publicGoal": "带兵打仗。",
+            "hiddenNeed": "证明忠诚。",
+            "fearOrWound": "父亲被冤杀。",
+            "secret": "其实痛恨皇帝，只忠于沈哲。",
+            "turningPoint": "第70章（投诚）、第130章（平叛）。",
+            "arcStart": "叛逆将军",
+            "arcMid": "忠诚护卫",
+            "arcEnd": "权臣",
+            "revealTiming": "第55章"
+          },
+          "createdAt": "2026-08-13T01:26:58.294Z",
+          "updatedAt": "2026-08-13T01:26:58.294Z"
+        },
+        {
+          "id": "char-1786584418294-8",
+          "name": "阿史那",
+          "role": "support",
+          "description": "外部压力源，外交舆论战的对手。；在谈判桌上羞辱大周。；学习大周的先进制度。",
+          "profile": {
+            "personality": [
+              "傲慢使节",
+              "仰慕者",
+              "附庸"
+            ],
+            "appearance": "",
+            "background": "入侵大周，掠夺财富。；部落被大周欺负。；其实向往大周文化。",
+            "abilities": [
+              "骑兵",
+              "蛮力"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "alliance",
+                "description": "野蛮 VS 文明（虚假）。"
+              }
+            ],
+            "keyNeed": "入侵大周，掠夺财富。",
+            "publicGoal": "在谈判桌上羞辱大周。",
+            "hiddenNeed": "学习大周的先进制度。",
+            "fearOrWound": "部落被大周欺负。",
+            "secret": "其实向往大周文化。",
+            "turningPoint": "第80章（被舆论击败）、第100章（结盟）。",
+            "arcStart": "傲慢使节",
+            "arcMid": "仰慕者",
+            "arcEnd": "附庸",
+            "revealTiming": "第65章"
+          },
+          "createdAt": "2026-08-13T01:26:58.294Z",
+          "updatedAt": "2026-08-13T01:26:58.294Z"
+        },
+        {
+          "id": "char-1786584418294-9",
+          "name": "言官首领",
+          "role": "support",
+          "description": "弹劾沈哲。；流芳百世。",
+          "profile": {
+            "personality": [
+              "正直言官",
+              "伪君子",
+              "盲从者"
+            ],
+            "appearance": "",
+            "background": "维护儒家道统。；老师被沈哲抹黑。；私下里也看小报。",
+            "abilities": [
+              "笔杆子",
+              "清流名声"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "alliance",
+                "description": "卫道士 VS 毁道者。"
+              },
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "enemy",
+                "description": "死敌→妥协→工具"
+              }
+            ],
+            "keyNeed": "维护儒家道统。",
+            "publicGoal": "弹劾沈哲。",
+            "hiddenNeed": "流芳百世。",
+            "fearOrWound": "老师被沈哲抹黑。",
+            "secret": "私下里也看小报。",
+            "turningPoint": "第110章（被收买）、第160章（忏悔）。",
+            "arcStart": "正直言官",
+            "arcMid": "伪君子",
+            "arcEnd": "盲从者",
+            "revealTiming": "第30章"
+          },
+          "createdAt": "2026-08-13T01:26:58.294Z",
+          "updatedAt": "2026-08-13T01:26:58.294Z"
+        },
+        {
+          "id": "char-1786584418294-10",
+          "name": "老皇帝",
+          "role": "support",
+          "description": "考察继承人。；被真心爱戴，而非被敬畏。",
+          "profile": {
+            "personality": [
+              "威严帝王",
+              "多疑老人",
+              "孤魂野鬼"
+            ],
+            "appearance": "",
+            "background": "皇权永固，江山万代。；年轻时杀兄弑弟。；其实知道沈哲是穿越者（或类似存在）。",
+            "abilities": [
+              "皇权"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "alliance",
+                "description": "被操纵者 VS 操纵者。"
+              },
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "neutral",
+                "description": "棋子→心腹→恐惧对象"
+              }
+            ],
+            "keyNeed": "皇权永固，江山万代。",
+            "publicGoal": "考察继承人。",
+            "hiddenNeed": "被真心爱戴，而非被敬畏。",
+            "fearOrWound": "年轻时杀兄弑弟。",
+            "secret": "其实知道沈哲是穿越者（或类似存在）。",
+            "turningPoint": "第50章（立储）、第70章（驾崩）。",
+            "arcStart": "威严帝王",
+            "arcMid": "多疑老人",
+            "arcEnd": "孤魂野鬼",
+            "revealTiming": "第3章"
+          },
+          "createdAt": "2026-08-13T01:26:58.294Z",
+          "updatedAt": "2026-08-13T01:26:58.294Z"
+        },
+        {
+          "id": "char-1786584418294-11",
+          "name": "崔家主",
+          "role": "support",
+          "description": "控制新皇。；保全文脉。",
+          "profile": {
+            "personality": [
+              "泰山北斗",
+              "旧时代象征"
+            ],
+            "appearance": "",
+            "background": "维持世家统治。；家族曾为天下牺牲却未被理解。；藏有传国玉玺。",
+            "abilities": [
+              "门阀",
+              "经济命脉"
+            ],
+            "relationships": [
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "alliance",
+                "description": "既得利益者 VS 挑战者。"
+              },
+              {
+                "characterId": "char-1786584418294-0",
+                "targetName": "沈哲",
+                "type": "neutral",
+                "description": "无视→敬畏→消灭"
+              }
+            ],
+            "keyNeed": "维持世家统治。",
+            "publicGoal": "控制新皇。",
+            "hiddenNeed": "保全文脉。",
+            "fearOrWound": "家族曾为天下牺牲却未被理解。",
+            "secret": "藏有传国玉玺。",
+            "turningPoint": "第120章（决裂）、第175章（身死）。",
+            "arcStart": "泰山北斗",
+            "arcMid": "旧时代象征",
+            "revealTiming": "第60章"
+          },
+          "createdAt": "2026-08-13T01:26:58.294Z",
+          "updatedAt": "2026-08-13T01:26:58.294Z"
+        }
+      ],
+      "worldSchema": {
+        "locations": [
+          {
+            "id": "loc-1786584418294-0",
+            "name": "京城（大周帝都）",
+            "description": "权力中心，夺嫡主战场，舆论策源地。；太子党与皇子党的朝堂博弈，青楼茶馆的舆论战。",
+            "level": "city",
+            "parentId": ""
+          },
+          {
+            "id": "loc-1786584418294-1",
+            "name": "春风阁（京城第一青楼）",
+            "description": "情报集散地，沈哲初代水军基地，谣言发酵温床。；沈哲利用苏红袖控制权贵阶层的信息流。",
+            "level": "district",
+            "parentId": ""
+          },
+          {
+            "id": "loc-1786584418294-2",
+            "name": "北疆边关",
+            "description": "第二卷外交与平叛战场，检验舆论战威力的实验场。；周军与敌国的心理战，沈哲与秦烈的合作。",
+            "level": "special",
+            "parentId": ""
+          }
+        ],
+        "rules": [
+          {
+            "id": "rule-1786584418294-0",
+            "name": "舆论即民心",
+            "description": "在古代，民心向背直接影响政权的合法性，但民心极易被操纵。；一旦舆论反噬，后果比武力镇压更惨烈。",
+            "locked": false,
+            "category": "social",
+            "relatedRuleIds": []
+          },
+          {
+            "id": "rule-1786584418294-1",
+            "name": "宗法制与孝道",
+            "description": "社会行为的底层逻辑，也是攻击政敌的最有效武器。；皇子必须表现出至孝，否则无法获得继承权。",
+            "locked": false,
+            "category": "custom",
+            "relatedRuleIds": []
+          },
+          {
+            "id": "rule-1786584418294-2",
+            "name": "皇权神授",
+            "description": "皇帝的权力来源于上天，不可置疑。；任何对皇帝本人的质疑都是大逆不道。",
+            "locked": false,
+            "category": "custom",
+            "relatedRuleIds": []
+          }
+        ],
+        "factions": [
+          {
+            "id": "faction-1786584418294-0",
+            "name": "太子党",
+            "description": "当权派，保守政治集团；维护太子地位，铲除异己。；死敌，主角前期的主要打击对象。",
+            "parentId": "",
+            "relation": {
+              "targetFactionId": "",
+              "targetFactionName": "门阀世家",
+              "type": "ally",
+              "description": ""
+            }
+          },
+          {
+            "id": "faction-1786584418294-1",
+            "name": "势力2",
+            "description": "在野派，新兴舆论集团；通过操纵民心夺取皇位。；依附关系，主角利用皇子实现自己的抱负。",
+            "parentId": "",
+            "relation": {
+              "targetFactionId": "",
+              "targetFactionName": "底层平民",
+              "type": "ally",
+              "description": ""
+            }
+          },
+          {
+            "id": "faction-1786584418294-2",
+            "name": "清流门阀",
+            "description": "意识形态守护者，隐形统治者；垄断历史解释权，维持家族利益。；终极反派，中后期死敌。",
+            "parentId": "",
+            "relation": {
+              "targetFactionId": "",
+              "targetFactionName": "世家大族",
+              "type": "ally",
+              "description": ""
+            }
+          }
+        ]
+      },
+      "foreshadows": [
+        {
+          "id": "foreshadow-1786584418294-0",
+          "hint": "皇子生母死前留下的一个带血手帕",
+          "type": "item",
+          "status": "buried",
+          "createdChapter": 8,
+          "suggestedResolutionChapter": 28,
+          "payoffValue": "揭开皇子身世之谜，增加皇帝愧疚，助力夺嫡",
+          "carrierCharacter": "萧景",
+          "linkedConflict": "夺嫡合法性",
+          "importance": "main",
+          "setupChapter": 8,
+          "payoffChapter": 28
+        },
+        {
+          "id": "foreshadow-1786584418294-1",
+          "hint": "乞丐王身上有一块只有皇室才能拥有的腰牌",
+          "type": "identity",
+          "status": "buried",
+          "createdChapter": 4,
+          "suggestedResolutionChapter": 22,
+          "payoffValue": "收编一支前朝禁军残部作为死士",
+          "carrierCharacter": "老乞丐",
+          "linkedConflict": "建立水军忠诚度",
+          "importance": "subplot",
+          "setupChapter": 4,
+          "payoffChapter": 22
+        },
+        {
+          "id": "foreshadow-1786584418294-2",
+          "hint": "沈哲第一次使用系统时听到的机械杂音",
+          "type": "world-rule",
+          "status": "buried",
+          "createdChapter": 1,
+          "suggestedResolutionChapter": 15,
+          "payoffValue": "发现系统Bug可以无限刷分，但伴随反噬风险",
+          "carrierCharacter": "沈哲",
+          "linkedConflict": "系统的不稳定性",
+          "importance": "main",
+          "setupChapter": 1,
+          "payoffChapter": 15
+        },
+        {
+          "id": "foreshadow-1786584418294-3",
+          "hint": "苏红袖总是对着月亮发呆并哼唱异国曲调",
+          "type": "character",
+          "status": "buried",
+          "createdChapter": 12,
+          "suggestedResolutionChapter": 55,
+          "payoffValue": "揭露其细作身份，导致主角陷入两难",
+          "carrierCharacter": "苏红袖",
+          "linkedConflict": "外交危机与信任危机",
+          "importance": "emotion",
+          "setupChapter": 12,
+          "payoffChapter": 55
+        },
+        {
+          "id": "foreshadow-1786584418294-4",
+          "hint": "皇帝书房密室里供奉着一个无字牌位",
+          "type": "event",
+          "status": "buried",
+          "createdChapter": 25,
+          "suggestedResolutionChapter": 45,
+          "payoffValue": "揭示无字牌位是前朝太子的，皇帝心中有鬼",
+          "carrierCharacter": "老皇帝",
+          "linkedConflict": "皇位继承的秘密",
+          "importance": "main",
+          "setupChapter": 25,
+          "payoffChapter": 45
+        },
+        {
+          "id": "foreshadow-1786584418294-5",
+          "hint": "太子的老师在一次讲课中突然失态提到“天变不足畏”",
+          "type": "dialogue",
+          "status": "buried",
+          "createdChapter": 30,
+          "suggestedResolutionChapter": 60,
+          "payoffValue": "引出王拓其实是变法派隐藏极深的激进分子",
+          "carrierCharacter": "王拓",
+          "linkedConflict": "改革与保守的冲突",
+          "importance": "subplot",
+          "setupChapter": 30,
+          "payoffChapter": 60
+        },
+        {
+          "id": "foreshadow-1786584418294-6",
+          "hint": "大周国库长年亏空，但世家富可敌国",
+          "type": "world-rule",
+          "status": "buried",
+          "createdChapter": 35,
+          "suggestedResolutionChapter": 110,
+          "payoffValue": "主角发动经济改革，利用舆论逼迫世家交权",
+          "carrierCharacter": "崔家主",
+          "linkedConflict": "经济战与舆论战结合",
+          "importance": "main",
+          "setupChapter": 35,
+          "payoffChapter": 110
+        },
+        {
+          "id": "foreshadow-1786584418294-7",
+          "hint": "沈哲发现史书中关于前朝灭亡的记载存在明显的逻辑断层",
+          "type": "event",
+          "status": "buried",
+          "createdChapter": 50,
+          "suggestedResolutionChapter": 150,
+          "payoffValue": "揭开前朝真相，摧毁门阀统治的法理基础",
+          "carrierCharacter": "神秘狱友",
+          "linkedConflict": "历史解释权的争夺",
+          "importance": "main",
+          "setupChapter": 50,
+          "payoffChapter": 150
+        },
+        {
+          "id": "foreshadow-1786584418294-8",
+          "hint": "系统的最终任务“创造真神”一直没有显示完成条件",
+          "type": "world-rule",
+          "status": "buried",
+          "createdChapter": 60,
+          "suggestedResolutionChapter": 180,
+          "payoffValue": "主角意识到自己就是那个“神”，但也因此失去了人性",
+          "carrierCharacter": "沈哲",
+          "linkedConflict": "主角的自我认知与系统设定",
+          "importance": "main",
+          "setupChapter": 60,
+          "payoffChapter": 180
+        },
+        {
+          "id": "foreshadow-1786584418294-9",
+          "hint": "萧景小时候做的一个关于“戴着面具的人统治天下”的噩梦",
+          "type": "character",
+          "status": "buried",
+          "createdChapter": 100,
+          "suggestedResolutionChapter": 178,
+          "payoffValue": "预言成真，萧景在最后关头背刺沈哲",
+          "carrierCharacter": "萧景",
+          "linkedConflict": "主仆关系的最终破裂",
+          "importance": "emotion",
+          "setupChapter": 100,
+          "payoffChapter": 178
+        }
+      ],
+      "plotOutline": [
+        {
+          "id": "plot-1786584418294-0",
+          "title": "第一幕",
+          "description": "废柴皇子声望逆袭，洗清冤屈，在夺嫡战中站稳脚跟。；皇子在沈哲策划下，利用一场赈灾“真人秀”获得民心，首次压过太子风头。",
+          "type": "act",
+          "orderIndex": 0
+        },
+        {
+          "id": "plot-1786584418294-1",
+          "title": "第二幕上",
+          "description": "皇子势力壮大，遭遇太子与门阀联合反扑。；敌国使节进京羞辱，沈哲利用“饭圈应援”策略激起民愤，迫使皇帝对敌国强硬。",
+          "type": "act",
+          "orderIndex": 1
+        },
+        {
+          "id": "plot-1786584418294-2",
+          "title": "第二幕下",
+          "description": "新皇登基，面临门阀世家把持朝政的困境，沈哲试图推行新政受阻。；门阀利用笔杆子抹黑新政，引发民变，沈哲被皇帝猜忌，被迫下野蛰伏。",
+          "type": "act",
+          "orderIndex": 2
+        },
+        {
+          "id": "plot-1786584418294-3",
+          "title": "第三幕",
+          "description": "彻底瓦解门阀的话语权，确立皇权对思想的绝对统治。；沈哲成为帝国背后的影子统治者，看似胜利实则被自己创造的规则吞噬。",
+          "type": "act",
+          "orderIndex": 3
+        },
+        {
+          "id": "plot-1786584418294-4",
+          "title": "青楼情报网",
+          "description": "为主角提供情报支持，作为水军发源地。；辅助主角获取信息，执行舆论渗透任务。",
+          "type": "subplot",
+          "chapterRange": [
+            6,
+            120
+          ],
+          "purpose": "辅助主角获取信息，执行舆论渗透任务。",
+          "relatedCharacters": [
+            "苏红袖"
+          ],
+          "orderIndex": 4
+        },
+        {
+          "id": "plot-1786584418294-5",
+          "title": "乞丐水军养成记",
+          "description": "提供底层舆论执行力，解决信息传递最后一公里。；在关键时刻制造大规模民意假象。",
+          "type": "subplot",
+          "chapterRange": [
+            4,
+            90
+          ],
+          "purpose": "在关键时刻制造大规模民意假象。",
+          "relatedCharacters": [
+            "老乞丐"
+          ],
+          "orderIndex": 5
+        },
+        {
+          "id": "plot-1786584418294-6",
+          "title": "前朝遗孤之谜",
+          "description": "揭示历史真相，为主角后期提供攻击门阀的弹药。；作为终极炸弹，摧毁门阀合法性。",
+          "type": "subplot",
+          "chapterRange": [
+            20,
+            150
+          ],
+          "purpose": "作为终极炸弹，摧毁门阀合法性。",
+          "relatedCharacters": [
+            "神秘狱友"
+          ],
+          "orderIndex": 6
+        },
+        {
+          "id": "plot-1786584418294-7",
+          "title": "跪在大殿外，脑子里叮一声响了",
+          "description": "冰冷的鬼头刀架在脖子上，眼前突然弹出透明进度条。",
+          "type": "chapter",
+          "keyEvents": [
+            "穿越到金殿外听候发落",
+            "激活系统并查看属性",
+            "接下逆转必死局的任务。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 0,
+          "CBN": "冰冷的鬼头刀架在脖子上，眼前突然弹出透明进度条。",
+          "CPNs": [
+            "确认自己穿越成伴读",
+            "激活造神系统",
+            "接收免死首杀任务。"
+          ],
+          "CEN": "皇帝大怒宣旨流放，生死只在这一念之间。",
+          "mustCover": [
+            "穿越到金殿外听候发落",
+            "激活系统并查看属性",
+            "接下逆转必死局的任务。"
+          ],
+          "forbiddenZones": [
+            "不可让皇子此刻展现出任何自救能力",
+            "不可使用武力反抗御林军。"
+          ],
+          "chapterType": "world_intro",
+          "hookType": "逆袭/系统",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 冰冷的鬼头刀架在脖子上，眼前突然弹出透明进度条。\nCEN: 皇帝大怒宣旨流放，生死只在这一念之间。",
+          "chapterId": "chapter-1786584418306"
+        },
+        {
+          "id": "plot-1786584418294-8",
+          "title": "一句谣言，让御史当场尿裤子",
+          "description": "我指着御史大喊他私吞赈灾款，满朝文武瞬间哗然。",
+          "type": "chapter",
+          "keyEvents": [
+            "利用谣言构陷构陷者",
+            "争取到调查时间",
+            "暂时化解流放危机。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 1,
+          "CBN": "我指着御史大喊他私吞赈灾款，满朝文武瞬间哗然。",
+          "CPNs": [
+            "利用金殿外的流言制造恐慌",
+            "引导舆论攻击构陷者",
+            "拖延皇帝下旨的时间。"
+          ],
+          "CEN": "御史脸色惨白被拖下去，皇帝挥手暂缓流放圣旨。",
+          "mustCover": [
+            "利用谣言构陷构陷者",
+            "争取到调查时间",
+            "暂时化解流放危机。"
+          ],
+          "forbiddenZones": [
+            "不可使用超自然力量直接攻击",
+            "必须利用心理战和人群效应。"
+          ],
+          "chapterType": "character_intro",
+          "hookType": "打脸/反转",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我指着御史大喊他私吞赈灾款，满朝文武瞬间哗然。\nCEN: 御史脸色惨白被拖下去，皇帝挥手暂缓流放圣旨。",
+          "chapterId": "chapter-1786584418318"
+        },
+        {
+          "id": "plot-1786584418294-9",
+          "title": "京城乞丐，竟然是我的键盘侠",
+          "description": "我扔出银子，老乞丐立刻分发起印有皇子头像的传单。",
+          "type": "chapter",
+          "keyEvents": [
+            "接触乞丐并建立合作",
+            "铺设第一条舆论传播渠道",
+            "让“皇子冤枉”的论调在市井出现。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 2,
+          "CBN": "我扔出银子，老乞丐立刻分发起印有皇子头像的传单。",
+          "CPNs": [
+            "收服京城丐帮作为水军",
+            "建立底层情报传播网络",
+            "教导乞丐洗脑口号。"
+          ],
+          "CEN": "一张写着皇子冤屈的纸条，顺着风飘进了深宫内院。",
+          "mustCover": [
+            "接触乞丐并建立合作",
+            "铺设第一条舆论传播渠道",
+            "让“皇子冤枉”的论调在市井出现。"
+          ],
+          "forbiddenZones": [
+            "不可让乞丐瞬间变成武林高手",
+            "只能利用其传播速度。"
+          ],
+          "chapterType": "plot_setup",
+          "hookType": "布局/掌控",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我扔出银子，老乞丐立刻分发起印有皇子头像的传单。\nCEN: 一张写着皇子冤屈的纸条，顺着风飘进了深宫内院。",
+          "chapterId": "chapter-1786584418330"
+        },
+        {
+          "id": "plot-1786584418294-10",
+          "title": "把流放罪名，洗成大义灭亲",
+          "description": "我看着流放圣旨，将殴打权贵改写成替天行道的榜文。",
+          "type": "chapter",
+          "keyEvents": [
+            "彻底解决流放危机",
+            "将“废柴”标签置换为“刚直”",
+            "确立主角在皇子府的核心地位。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 3,
+          "CBN": "我看着流放圣旨，将殴打权贵改写成替天行道的榜文。",
+          "CPNs": [
+            "重新定义皇子打人事件性质",
+            "利用舆论逼迫礼部重新定性",
+            "将坏事变成营销机会。"
+          ],
+          "CEN": "皇帝收回成命，反而赏赐皇子一块刚正不阿的牌匾。",
+          "mustCover": [
+            "彻底解决流放危机",
+            "将“废柴”标签置换为“刚直”",
+            "确立主角在皇子府的核心地位。"
+          ],
+          "forbiddenZones": [
+            "不可让皇子因政治智慧获得功劳",
+            "归功于主角的策划。"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/解谜",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我看着流放圣旨，将殴打权贵改写成替天行道的榜文。\nCEN: 皇帝收回成命，反而赏赐皇子一块刚正不阿的牌匾。",
+          "chapterId": "chapter-1786584418341"
+        },
+        {
+          "id": "plot-1786584418294-11",
+          "title": "系统发布S级任务，造神之路开启",
+          "description": "眼前红光一闪，系统弹窗占据半边视野。",
+          "type": "chapter",
+          "keyEvents": [
+            "系统发布首个S级任务",
+            "造神之路开启"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 4,
+          "CBN": "眼前红光一闪，系统弹窗占据半边视野。",
+          "CPNs": [
+            "庆祝流放危机解除",
+            "系统发布S级造神任务",
+            "查看任务详情与倒计时。"
+          ],
+          "CEN": "任务失败惩罚竟是诛九族，这刀太快了。",
+          "mustCover": [
+            "系统发布首个S级任务",
+            "造神之路开启"
+          ],
+          "forbiddenZones": [
+            "不可让皇子表现出过人智慧",
+            "不可让系统直接给出现成解决方案"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼/解谜",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 眼前红光一闪，系统弹窗占据半边视野。\nCEN: 任务失败惩罚竟是诛九族，这刀太快了。",
+          "chapterId": "chapter-1786584418352"
+        },
+        {
+          "id": "plot-1786584418294-12",
+          "title": "雨中下跪，这演技奥斯卡欠他一座",
+          "description": "大雨倾盆，我命令皇子立刻脱下外衣跪在宫门口。",
+          "type": "chapter",
+          "keyEvents": [
+            "策划皇子雨中跪求父皇安好"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 5,
+          "CBN": "大雨倾盆，我命令皇子立刻脱下外衣跪在宫门口。",
+          "CPNs": [
+            "策划“雨中请安”剧本",
+            "皇子被迫在雨中跪立",
+            "贵女路过并心疼围观。"
+          ],
+          "CEN": "皇子浑身湿透晕倒，贵女们尖叫着围上来。",
+          "mustCover": [
+            "策划皇子雨中跪求父皇安好"
+          ],
+          "forbiddenZones": [
+            "不可让主角直接暴露穿越者身份",
+            "不可让皇子真心孝顺"
+          ],
+          "chapterType": "normal",
+          "hookType": "操控人心/布局",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 大雨倾盆，我命令皇子立刻脱下外衣跪在宫门口。\nCEN: 皇子浑身湿透晕倒，贵女们尖叫着围上来。",
+          "chapterId": "chapter-1786584418362"
+        },
+        {
+          "id": "plot-1786584418294-13",
+          "title": "青楼头牌，都在传唱殿下的词",
+          "description": "苏红袖唱出皇子那首emo词，满座贵女哭得梨花带雨。",
+          "type": "chapter",
+          "keyEvents": [
+            "利用苏红袖传唱皇子作品",
+            "在京圈贵女中建立粉丝基础",
+            "提升皇子的文化形象。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 6,
+          "CBN": "苏红袖唱出皇子那首emo词，满座贵女哭得梨花带雨。",
+          "CPNs": [
+            "利用青楼作为高端舆论场",
+            "让皇子词作在贵女圈刷屏",
+            "建立第一批核心粉丝群。"
+          ],
+          "CEN": "一位丞相夫人红着眼眶问，这首绝世好词究竟是谁所作。",
+          "mustCover": [
+            "利用苏红袖传唱皇子作品",
+            "在京圈贵女中建立粉丝基础",
+            "提升皇子的文化形象。"
+          ],
+          "forbiddenZones": [
+            "不可让主角亲自上台卖艺",
+            "必须借他人之口。"
+          ],
+          "chapterType": "normal",
+          "hookType": "收服/装逼",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 苏红袖唱出皇子那首emo词，满座贵女哭得梨花带雨。\nCEN: 一位丞相夫人红着眼眶问，这首绝世好词究竟是谁所作。",
+          "chapterId": "chapter-1786584418373"
+        },
+        {
+          "id": "plot-1786584418294-14",
+          "title": "太子党找茬？正好立个靶子打",
+          "description": "太子党羽在大街上公然羞辱落魄皇子，我拦在前面。",
+          "type": "chapter",
+          "keyEvents": [
+            "打压太子党羽的嚣张气焰"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 7,
+          "CBN": "太子党羽在大街上公然羞辱落魄皇子，我拦在前面。",
+          "CPNs": [
+            "太子家臣挑衅皇子",
+            "沈哲引导围观群众嘲讽",
+            "太子党羽狼狈逃离。"
+          ],
+          "CEN": "太子党羽回去告状，太子拍碎了一只玉杯。",
+          "mustCover": [
+            "打压太子党羽的嚣张气焰"
+          ],
+          "forbiddenZones": [
+            "不可让主角直接暴露穿越者身份",
+            "不可动用武力解决"
+          ],
+          "chapterType": "normal",
+          "hookType": "打脸/立威",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 太子党羽在大街上公然羞辱落魄皇子，我拦在前面。\nCEN: 太子党羽回去告状，太子拍碎了一只玉杯。",
+          "chapterId": "chapter-1786584418393"
+        },
+        {
+          "id": "plot-1786584418294-15",
+          "title": "京城热搜榜，全是皇子名字",
+          "description": "我看着满大街关于皇子“深情”的评书，笑了。",
+          "type": "chapter",
+          "keyEvents": [
+            "太子察觉到舆论异常",
+            "派出密探调查沈哲"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 8,
+          "CBN": "我看着满大街关于皇子“深情”的评书，笑了。",
+          "CPNs": [
+            "皇子成为京城话题中心",
+            "太子发现舆论异常",
+            "太子决定调查幕后黑手。"
+          ],
+          "CEN": "太子召见心腹，眼神阴鸷地指向沈府方向。",
+          "mustCover": [
+            "太子察觉到舆论异常",
+            "派出密探调查沈哲"
+          ],
+          "forbiddenZones": [
+            "不可让主角直接暴露穿越者身份",
+            "不可让太子立刻查出真相"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/幕后黑手",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我看着满大街关于皇子“深情”的评书，笑了。\nCEN: 太子召见心腹，眼神阴鸷地指向沈府方向。",
+          "chapterId": "chapter-1786584418403"
+        },
+        {
+          "id": "plot-1786584418294-16",
+          "title": "太子的密探，被我忽悠瘸了",
+          "description": "黑影刚翻进院墙就被按住，我故意在他耳边说出假情报。",
+          "type": "chapter",
+          "keyEvents": [
+            "发现太子的调查行动",
+            "利用反间计误导太子",
+            "为下一轮舆论战埋下伏笔。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 9,
+          "CBN": "黑影刚翻进院墙就被按住，我故意在他耳边说出假情报。",
+          "CPNs": [
+            "捕获太子派来的密探",
+            "故意泄露皇子“病重垂危”的假消息",
+            "放长线钓大鱼。"
+          ],
+          "CEN": "密探慌张跑回东宫，太子听完后露出得意的狞笑。",
+          "mustCover": [
+            "发现太子的调查行动",
+            "利用反间计误导太子",
+            "为下一轮舆论战埋下伏笔。"
+          ],
+          "forbiddenZones": [
+            "不可杀死密探",
+            "必须让他把错误情报带回去。"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/布局",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 黑影刚翻进院墙就被按住，我故意在他耳边说出假情报。\nCEN: 密探慌张跑回东宫，太子听完后露出得意的狞笑。",
+          "chapterId": "chapter-1786584418413"
+        },
+        {
+          "id": "plot-1786584418294-17",
+          "title": "踢开米袋，里面全是陈旧沙子",
+          "description": "我踢开一袋赈灾粮，陈旧的沙子哗啦啦流淌而出。",
+          "type": "chapter",
+          "keyEvents": [
+            "揭露太子赈灾粮款被查出问题",
+            "拿到太子的实锤把柄。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 10,
+          "CBN": "我踢开一袋赈灾粮，陈旧的沙子哗啦啦流淌而出。",
+          "CPNs": [
+            "截获太子党私运的劣质赈灾粮",
+            "收集太子克扣粮款的证据",
+            "让乞丐以此为据散布谣言。"
+          ],
+          "CEN": "领头的乞丐咬了一口米，吐出带血的牙齿。",
+          "mustCover": [
+            "揭露太子赈灾粮款被查出问题",
+            "拿到太子的实锤把柄。"
+          ],
+          "forbiddenZones": [
+            "不可让太子此刻察觉证据外泄。"
+          ],
+          "chapterType": "normal",
+          "hookType": "解谜/打脸",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我踢开一袋赈灾粮，陈旧的沙子哗啦啦流淌而出。\nCEN: 领头的乞丐咬了一口米，吐出带血的牙齿。",
+          "chapterId": "chapter-1786584418423"
+        },
+        {
+          "id": "plot-1786584418294-18",
+          "title": "满城风雨，都在骂太子吃人",
+          "description": "一张张讽刺漫画贴满全城，画中太子把米换成金子。",
+          "type": "chapter",
+          "keyEvents": [
+            "利用水军刷屏太子的负面传闻",
+            "制造舆论风暴。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 11,
+          "CBN": "一张张讽刺漫画贴满全城，画中太子把米换成金子。",
+          "CPNs": [
+            "利用水军刷屏太子的负面传闻",
+            "编排“太子吃人”的顺口溜",
+            "制造京城米价恐慌引发民怨。"
+          ],
+          "CEN": "皇帝坐在龙椅上，听到窗外孩童唱着嘲讽太子的歌谣。",
+          "mustCover": [
+            "利用水军刷屏太子的负面传闻",
+            "制造舆论风暴。"
+          ],
+          "forbiddenZones": [
+            "不可让皇帝直接下令调查。"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/装逼",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 一张张讽刺漫画贴满全城，画中太子把米换成金子。\nCEN: 皇帝坐在龙椅上，听到窗外孩童唱着嘲讽太子的歌谣。",
+          "chapterId": "chapter-1786584418434"
+        },
+        {
+          "id": "plot-1786584418294-19",
+          "title": "皇帝皱眉，这赈灾银哪去了",
+          "description": "皇帝把奏折扔在地上，当庭质问太子为何米价飞涨。",
+          "type": "chapter",
+          "keyEvents": [
+            "让皇帝对太子产生怀疑",
+            "太子陷入被动解释。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 12,
+          "CBN": "皇帝把奏折扔在地上，当庭质问太子为何米价飞涨。",
+          "CPNs": [
+            "太子在朝堂上为米价辩解",
+            "皇帝要求户部核实账目",
+            "沈哲利用说书人传播“传言”佐证。"
+          ],
+          "CEN": "户部尚书颤抖着呈上账本，墨迹看起来可疑地新鲜。",
+          "mustCover": [
+            "让皇帝对太子产生怀疑",
+            "太子陷入被动解释。"
+          ],
+          "forbiddenZones": [
+            "不可让皇帝公开责骂太子。"
+          ],
+          "chapterType": "normal",
+          "hookType": "逆袭/借刀杀人",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 皇帝把奏折扔在地上，当庭质问太子为何米价飞涨。\nCEN: 户部尚书颤抖着呈上账本，墨迹看起来可疑地新鲜。",
+          "chapterId": "chapter-1786584418445"
+        },
+        {
+          "id": "plot-1786584418294-20",
+          "title": "老狐狸出洞，要拿我祭旗",
+          "description": "王拓的轿子停在我面前，他的目光冰冷如刀。",
+          "type": "chapter",
+          "keyEvents": [
+            "权相王拓出手",
+            "试图用传统手段封杀沈哲。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 13,
+          "CBN": "王拓的轿子停在我面前，他的目光冰冷如刀。",
+          "CPNs": [
+            "王拓正面警告沈哲停止炒作",
+            "王拓利用职权查封沈哲的“印刷店”",
+            "沈哲拒绝低头并对峙。"
+          ],
+          "CEN": "御林军包围了沈府，王拓手持圣旨要抓我。",
+          "mustCover": [
+            "权相王拓出手",
+            "试图用传统手段封杀沈哲。"
+          ],
+          "forbiddenZones": [
+            "不可让王拓直接杀了沈哲。"
+          ],
+          "chapterType": "normal",
+          "hookType": "立威/冲突",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 王拓的轿子停在我面前，他的目光冰冷如刀。\nCEN: 御林军包围了沈府，王拓手持圣旨要抓我。",
+          "chapterId": "chapter-1786584418455"
+        },
+        {
+          "id": "plot-1786584418294-21",
+          "title": "大街上撒银子，谁敢抓我",
+          "description": "我抓起一把银锭扔向人群，大喊权相抢劫平民。",
+          "type": "chapter",
+          "keyEvents": [
+            "利用舆论化解被捕危机",
+            "暂时摆脱权相的封杀。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 14,
+          "CBN": "我抓起一把银锭扔向人群，大喊权相抢劫平民。",
+          "CPNs": [
+            "制造围观群众阻碍官兵",
+            "把抓捕扭曲为“权相抢钱”",
+            "利用民意逼迫官兵后退。"
+          ],
+          "CEN": "王拓气得胡子发抖，知道今天抓不了我。",
+          "mustCover": [
+            "利用舆论化解被捕危机",
+            "暂时摆脱权相的封杀。"
+          ],
+          "forbiddenZones": [
+            "不可让沈哲武力对抗官兵。"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/装逼",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我抓起一把银锭扔向人群，大喊权相抢劫平民。\nCEN: 王拓气得胡子发抖，知道今天抓不了我。",
+          "chapterId": "chapter-1786584418467"
+        },
+        {
+          "id": "plot-1786584418294-22",
+          "title": "大周第一份小报，上市了",
+          "description": "我把印好的“京华时报”拍在桌上，油墨味扑鼻而来。",
+          "type": "chapter",
+          "keyEvents": [
+            "创办大周第一份小报",
+            "建立独立舆论渠道。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 15,
+          "CBN": "我把印好的“京华时报”拍在桌上，油墨味扑鼻而来。",
+          "CPNs": [
+            "创办大周第一份小报",
+            "整合乞丐与说书人成为情报网",
+            "全城抢购小报。"
+          ],
+          "CEN": "王拓看着手中的报纸，上面是他纳妾的详细丑闻。",
+          "mustCover": [
+            "创办大周第一份小报",
+            "建立独立舆论渠道。"
+          ],
+          "forbiddenZones": [
+            "不可让报纸立刻获得官方认可。"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼/碾压",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我把印好的“京华时报”拍在桌上，油墨味扑鼻而来。\nCEN: 王拓看着手中的报纸，上面是他纳妾的详细丑闻。",
+          "chapterId": "chapter-1786584418476"
+        },
+        {
+          "id": "plot-1786584418294-23",
+          "title": "说我造谣？那我就去坐牢",
+          "description": "衙役冲进来给我戴上枷锁，王拓在角落冷笑。",
+          "type": "chapter",
+          "keyEvents": [
+            "沈哲遭遇权相陷害入狱",
+            "坚持智斗不动武。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 16,
+          "CBN": "衙役冲进来给我戴上枷锁，王拓在角落冷笑。",
+          "CPNs": [
+            "王拓诬陷沈哲撰写“谋反文章”",
+            "沈哲被捕入狱",
+            "沈哲暗中指示手下继续办报。"
+          ],
+          "CEN": "狱门咣当关上，我却在黑暗中笑出了声。",
+          "mustCover": [
+            "沈哲遭遇权相陷害入狱",
+            "坚持智斗不动武。"
+          ],
+          "forbiddenZones": [
+            "不可让沈哲表现出对坐牢的恐惧。"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼/反转",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 衙役冲进来给我戴上枷锁，王拓在角落冷笑。\nCEN: 狱门咣当关上，我却在黑暗中笑出了声。",
+          "chapterId": "chapter-1786584418487"
+        },
+        {
+          "id": "plot-1786584418294-24",
+          "title": "牢房里发号施令，外面乱套了",
+          "description": "我从牢房栏杆递出一张纸条，乞丐立刻消失在夜色中。",
+          "type": "chapter",
+          "keyEvents": [
+            "在狱中指挥舆论战",
+            "逼迫权相放人。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 17,
+          "CBN": "我从牢房栏杆递出一张纸条，乞丐立刻消失在夜色中。",
+          "CPNs": [
+            "在狱中指挥舆论战",
+            "小报将沈哲塑造成“因言获罪”的英雄",
+            "引发百姓请愿。"
+          ],
+          "CEN": "狱卒颤抖着拿来新报纸，头条是“救救沈先生”。",
+          "mustCover": [
+            "在狱中指挥舆论战",
+            "逼迫权相放人。"
+          ],
+          "forbiddenZones": [
+            "不可让沈哲获得越狱工具。"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼/掌控全局",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我从牢房栏杆递出一张纸条，乞丐立刻消失在夜色中。\nCEN: 狱卒颤抖着拿来新报纸，头条是“救救沈先生”。",
+          "chapterId": "chapter-1786584418499"
+        },
+        {
+          "id": "plot-1786584418294-25",
+          "title": "狱中疯子，说皇子生母没死",
+          "description": "隔壁牢房的疯子抓着栏杆，嘶吼着一个禁忌名字。",
+          "type": "chapter",
+          "keyEvents": [
+            "狱中神秘人透露当年皇子生母之死的线索。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 18,
+          "CBN": "隔壁牢房的疯子抓着栏杆，嘶吼着一个禁忌名字。",
+          "CPNs": [
+            "接触狱中神秘人",
+            "得知皇子生母之死有隐情",
+            "神秘人透露关键线索。"
+          ],
+          "CEN": "神秘人递出一块玉佩，随即被狱卒拖走毒打致死。",
+          "mustCover": [
+            "狱中神秘人透露当年皇子生母之死的线索。"
+          ],
+          "forbiddenZones": [
+            "不可让皇子生母真的出现。"
+          ],
+          "chapterType": "normal",
+          "hookType": "解谜/悬疑",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 隔壁牢房的疯子抓着栏杆，嘶吼着一个禁忌名字。\nCEN: 神秘人递出一块玉佩，随即被狱卒拖走毒打致死。",
+          "chapterId": "chapter-1786584418511"
+        },
+        {
+          "id": "plot-1786584418294-26",
+          "title": "杀人灭口？这下更说不清了",
+          "description": "我高举神秘人的血衣，大喊狱中杀人灭口。",
+          "type": "chapter",
+          "keyEvents": [
+            "洗清冤屈",
+            "反击权相",
+            "获得皇帝召见机会。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 19,
+          "CBN": "我高举神秘人的血衣，大喊狱中杀人灭口。",
+          "CPNs": [
+            "将神秘人之死归咎于权相灭口",
+            "利用舆论将狱中案政治化",
+            "皇帝被迫介入。"
+          ],
+          "CEN": "皇帝的圣旨传到狱中，命令即刻释放沈哲。",
+          "mustCover": [
+            "洗清冤屈",
+            "反击权相",
+            "获得皇帝召见机会。"
+          ],
+          "forbiddenZones": [
+            "不可让沈哲在心理上真正战胜王拓。"
+          ],
+          "chapterType": "normal",
+          "hookType": "打脸/逆袭",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我高举神秘人的血衣，大喊狱中杀人灭口。\nCEN: 皇帝的圣旨传到狱中，命令即刻释放沈哲。",
+          "chapterId": "chapter-1786584418523"
+        },
+        {
+          "id": "plot-1786584418294-27",
+          "title": "一出狱就发报，王拓完了",
+          "description": "刚跨出牢门，我就将特刊塞进围观者手里。",
+          "type": "chapter",
+          "keyEvents": [
+            "利用小报揭露权相贪腐证据",
+            "洗清冤屈"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 20,
+          "CBN": "刚跨出牢门，我就将特刊塞进围观者手里。",
+          "CPNs": [
+            "发行小报揭露权相贪腐证据",
+            "引发京城舆论热议",
+            "王拓气急败坏却无法辩驳"
+          ],
+          "CEN": "圣旨到狱，宣我即刻进宫对质。",
+          "mustCover": [
+            "利用小报揭露权相贪腐证据",
+            "洗清冤屈"
+          ],
+          "forbiddenZones": [
+            "不可让主角立刻获得高官厚禄"
+          ],
+          "chapterType": "normal",
+          "hookType": "打脸",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 刚跨出牢门，我就将特刊塞进围观者手里。\nCEN: 圣旨到狱，宣我即刻进宫对质。",
+          "chapterId": "chapter-1786584418536"
+        },
+        {
+          "id": "plot-1786584418294-28",
+          "title": "金殿舌战，我把舆论当武器",
+          "description": "跪在金砖上，我把那份小报高举过头顶。",
+          "type": "chapter",
+          "keyEvents": [
+            "皇帝召见沈哲问对",
+            "沈哲献上舆论治国策"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 21,
+          "CBN": "跪在金砖上，我把那份小报高举过头顶。",
+          "CPNs": [
+            "驳斥权相构陷",
+            "向皇帝阐述“舆论治国策”",
+            "展示舆论对朝政的影响"
+          ],
+          "CEN": "皇帝盯着小报，突然问了一句：“若是朕呢？”",
+          "mustCover": [
+            "皇帝召见沈哲问对",
+            "沈哲献上舆论治国策"
+          ],
+          "forbiddenZones": [
+            "不可让主角立刻获得高官厚禄"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 跪在金砖上，我把那份小报高举过头顶。\nCEN: 皇帝盯着小报，突然问了一句：“若是朕呢？”",
+          "chapterId": "chapter-1786584418546"
+        },
+        {
+          "id": "plot-1786584418294-29",
+          "title": "满朝文武，成了我的扩音器",
+          "description": "我指使乞丐把报纸贴满朝房门口。",
+          "type": "chapter",
+          "keyEvents": [
+            "当朝驳斥权相",
+            "展示舆论力量"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 22,
+          "CBN": "我指使乞丐把报纸贴满朝房门口。",
+          "CPNs": [
+            "利用官员私生活制造热点",
+            "分化太子的支持者",
+            "王拓众叛亲离"
+          ],
+          "CEN": "王拓在朝堂上被同僚弹劾，狼狈不堪。",
+          "mustCover": [
+            "当朝驳斥权相",
+            "展示舆论力量"
+          ],
+          "forbiddenZones": [
+            "不可让主角立刻获得高官厚禄"
+          ],
+          "chapterType": "normal",
+          "hookType": "借刀杀人",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我指使乞丐把报纸贴满朝房门口。\nCEN: 王拓在朝堂上被同僚弹劾，狼狈不堪。",
+          "chapterId": "chapter-1786584418557"
+        },
+        {
+          "id": "plot-1786584418294-30",
+          "title": "皇帝拍案，这招太毒了",
+          "description": "皇帝看着奏折，指着上面被百姓涂鸦的批语。",
+          "type": "chapter",
+          "keyEvents": [
+            "当朝驳斥权相",
+            "皇帝拍案叫绝"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 23,
+          "CBN": "皇帝看着奏折，指着上面被百姓涂鸦的批语。",
+          "CPNs": [
+            "皇帝意识到言论的恐怖",
+            "沈哲获得皇帝暂时信任",
+            "王拓被降职罚俸"
+          ],
+          "CEN": "皇帝看着我的眼神，像是在看一把绝世凶剑。",
+          "mustCover": [
+            "当朝驳斥权相",
+            "皇帝拍案叫绝"
+          ],
+          "forbiddenZones": [
+            "不可让主角立刻获得高官厚禄"
+          ],
+          "chapterType": "normal",
+          "hookType": "立威",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 皇帝看着奏折，指着上面被百姓涂鸦的批语。\nCEN: 皇帝看着我的眼神，像是在看一把绝世凶剑。",
+          "chapterId": "chapter-1786584418569"
+        },
+        {
+          "id": "plot-1786584418294-31",
+          "title": "赈灾其实是场精心策划的真人秀",
+          "description": "我在地图上圈出地点，告诉皇子这里最“上镜”。",
+          "type": "chapter",
+          "keyEvents": [
+            "皇子主动请缨赈灾",
+            "沈哲随行策划赈灾真人秀"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 24,
+          "CBN": "我在地图上圈出地点，告诉皇子这里最“上镜”。",
+          "CPNs": [
+            "策划皇子主动请缨赈灾",
+            "设计赈灾剧本",
+            "说服皇帝放行"
+          ],
+          "CEN": "马车驶出京城，身后是全城的欢呼声。",
+          "mustCover": [
+            "皇子主动请缨赈灾",
+            "沈哲随行策划赈灾真人秀"
+          ],
+          "forbiddenZones": [
+            "不可将赈灾写成单纯的施舍"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我在地图上圈出地点，告诉皇子这里最“上镜”。\nCEN: 马车驶出京城，身后是全城的欢呼声。",
+          "chapterId": "chapter-1786584418581"
+        },
+        {
+          "id": "plot-1786584418294-32",
+          "title": "灾区现场，我喊卡皇子才哭",
+          "description": "皇子正要发饭，我大喊一声：“表情不对！”",
+          "type": "chapter",
+          "keyEvents": [
+            "沈哲随行策划赈灾真人秀"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 25,
+          "CBN": "皇子正要发饭，我大喊一声：“表情不对！”",
+          "CPNs": [
+            "指导皇子进行赈灾表演",
+            "安排画师记录“感人”瞬间",
+            "控制灾民情绪"
+          ],
+          "CEN": "太子派来的监军冷冷地看着这一场闹剧。",
+          "mustCover": [
+            "沈哲随行策划赈灾真人秀"
+          ],
+          "forbiddenZones": [
+            "不可将赈灾写成单纯的施舍"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 皇子正要发饭，我大喊一声：“表情不对！”\nCEN: 太子派来的监军冷冷地看着这一场闹剧。",
+          "chapterId": "chapter-1786584418591"
+        },
+        {
+          "id": "plot-1786584418294-33",
+          "title": "挖出一袋米，全是太子的罪证",
+          "description": "我割开麻袋，里面滚出的不是米，是金砖。",
+          "type": "chapter",
+          "keyEvents": [
+            "截获太子私吞赈灾银的实锤"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 26,
+          "CBN": "我割开麻袋，里面滚出的不是米，是金砖。",
+          "CPNs": [
+            "截获太子私吞赈灾银的实锤",
+            "发现太子的秘密账本",
+            "藏匿证据"
+          ],
+          "CEN": "账本上赫然写着王拓的名字，他们是一伙的。",
+          "mustCover": [
+            "截获太子私吞赈灾银的实锤"
+          ],
+          "forbiddenZones": [
+            "不可让证据立刻曝光"
+          ],
+          "chapterType": "normal",
+          "hookType": "解谜",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我割开麻袋，里面滚出的不是米，是金砖。\nCEN: 账本上赫然写着王拓的名字，他们是一伙的。",
+          "chapterId": "chapter-1786584418603"
+        },
+        {
+          "id": "plot-1786584418294-34",
+          "title": "抢粮草？百姓就是我的武器",
+          "description": "太子党羽抢夺粮食，我鼓动灾民围了上去。",
+          "type": "chapter",
+          "keyEvents": [
+            "皇子亲力亲为感动灾民",
+            "打击太子党羽"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 27,
+          "CBN": "太子党羽抢夺粮食，我鼓动灾民围了上去。",
+          "CPNs": [
+            "制造冲突事件",
+            "利用灾民攻击太子党羽",
+            "皇子“挺身而出”保护粮食"
+          ],
+          "CEN": "监军被打得鼻青脸肿，跪地求饶。",
+          "mustCover": [
+            "皇子亲力亲为感动灾民",
+            "打击太子党羽"
+          ],
+          "forbiddenZones": [
+            "不可将赈灾写成单纯的施舍"
+          ],
+          "chapterType": "normal",
+          "hookType": "打脸",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 太子党羽抢夺粮食，我鼓动灾民围了上去。\nCEN: 监军被打得鼻青脸肿，跪地求饶。",
+          "chapterId": "chapter-1786584418615"
+        },
+        {
+          "id": "plot-1786584418294-35",
+          "title": "京城沸腾，都在喊皇子万岁",
+          "description": "飞鸽传书带回京城头条，皇子画像被供在庙里。",
+          "type": "chapter",
+          "keyEvents": [
+            "皇子声望达到顶峰",
+            "太子在朝堂上哑口无言"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 28,
+          "CBN": "飞鸽传书带回京城头条，皇子画像被供在庙里。",
+          "CPNs": [
+            "皇子声望达到顶峰",
+            "太子在朝堂上被弹劾",
+            "皇帝对太子彻底失望"
+          ],
+          "CEN": "欢呼声中，一个灾民突然口吐白沫倒地。",
+          "mustCover": [
+            "皇子声望达到顶峰",
+            "太子在朝堂上哑口无言"
+          ],
+          "forbiddenZones": [
+            "不可让瘟疫立刻失控"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 飞鸽传书带回京城头条，皇子画像被供在庙里。\nCEN: 欢呼声中，一个灾民突然口吐白沫倒地。",
+          "chapterId": "chapter-1786584418627"
+        },
+        {
+          "id": "plot-1786584418294-36",
+          "title": "这不是瘟疫，这是杀人诛心",
+          "description": "我捏开死者嘴皮，闻到一股苦杏仁的味道。",
+          "type": "chapter",
+          "keyEvents": [
+            "灾区出现不明瘟疫（实为投毒）",
+            "制造危机感"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 29,
+          "CBN": "我捏开死者嘴皮，闻到一股苦杏仁的味道。",
+          "CPNs": [
+            "确诊人为投毒",
+            "调查投毒源头",
+            "发现针对皇子的阴谋"
+          ],
+          "CEN": "查验尸体发现毒素，这根本不是瘟疫。",
+          "mustCover": [
+            "灾区出现不明瘟疫（实为投毒）",
+            "制造危机感"
+          ],
+          "forbiddenZones": [
+            "不可让瘟疫失控导致不可逆后果"
+          ],
+          "chapterType": "normal",
+          "hookType": "解谜",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我捏开死者嘴皮，闻到一股苦杏仁的味道。\nCEN: 查验尸体发现毒素，这根本不是瘟疫。",
+          "chapterId": "chapter-1786584418640"
+        },
+        {
+          "id": "plot-1786584418294-37",
+          "title": "这哪是瘟疫，分明是太子杀人",
+          "description": "我抓着一把发黑的米，大喊太子送来断头饭。",
+          "type": "chapter",
+          "keyEvents": [
+            "散布瘟疫乃太子党降罪灾民的谣言",
+            "制造恐慌。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 30,
+          "CBN": "我抓着一把发黑的米，大喊太子送来断头饭。",
+          "CPNs": [
+            "将瘟疫定性为投毒",
+            "编造“太子降罪”的谣言",
+            "煽动灾民愤怒。"
+          ],
+          "CEN": "灾民红着眼，举着火把冲向太子的粮仓。",
+          "mustCover": [
+            "散布瘟疫乃太子党降罪灾民的谣言",
+            "制造恐慌。"
+          ],
+          "forbiddenZones": [
+            "不可让瘟疫真的失控扩散。"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/造谣",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我抓着一把发黑的米，大喊太子送来断头饭。\nCEN: 灾民红着眼，举着火把冲向太子的粮仓。",
+          "chapterId": "chapter-1786584418652"
+        },
+        {
+          "id": "plot-1786584418294-38",
+          "title": "神医背书：喝碗汤就能活命",
+          "description": "老郎中喝下汤药，立刻跪地高呼神迹。",
+          "type": "chapter",
+          "keyEvents": [
+            "联合名医推广防疫手段",
+            "皇子声望上升。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 31,
+          "CBN": "老郎中喝下汤药，立刻跪地高呼神迹。",
+          "CPNs": [
+            "皇子“研发”汤药",
+            "名医背书皇子仁德",
+            "灾民感恩跪拜。"
+          ],
+          "CEN": "太子派来的御医被发现死在枯井里。",
+          "mustCover": [
+            "联合名医推广防疫手段",
+            "皇子声望上升。"
+          ],
+          "forbiddenZones": [
+            "不可让瘟疫真正造成大规模死亡。"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼/收服",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 老郎中喝下汤药，立刻跪地高呼神迹。\nCEN: 太子派来的御医被发现死在枯井里。",
+          "chapterId": "chapter-1786584418665"
+        },
+        {
+          "id": "plot-1786584418294-39",
+          "title": "万人下跪，皇子活菩萨",
+          "description": "成千上万人跪地叩首，呼喊声震动天地。",
+          "type": "chapter",
+          "keyEvents": [
+            "皇子声望达到顶峰",
+            "灾民诅咒太子。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 32,
+          "CBN": "成千上万人跪地叩首，呼喊声震动天地。",
+          "CPNs": [
+            "组织感恩仪式",
+            "皇子发表感人演讲",
+            "将恶魔太子与圣人皇子对比。"
+          ],
+          "CEN": "京城快马传来：太子的马车被百姓砸了。",
+          "mustCover": [
+            "皇子声望达到顶峰",
+            "灾民诅咒太子。"
+          ],
+          "forbiddenZones": [
+            "不可让瘟疫失控导致不可逆后果。"
+          ],
+          "chapterType": "normal",
+          "hookType": "立威/造神",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 成千上万人跪地叩首，呼喊声震动天地。\nCEN: 京城快马传来：太子的马车被百姓砸了。",
+          "chapterId": "chapter-1786584418677"
+        },
+        {
+          "id": "plot-1786584418294-40",
+          "title": "深夜刺客，刀尖直指咽喉",
+          "description": "寒光一闪，我猛地把皇子推倒，刀锋划破帐篷。",
+          "type": "chapter",
+          "keyEvents": [
+            "皇子遇刺未遂",
+            "太子狗急跳墙派出刺客。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 33,
+          "CBN": "寒光一闪，我猛地把皇子推倒，刀锋划破帐篷。",
+          "CPNs": [
+            "刺客潜入行刺",
+            "沈哲启动预设机关",
+            "刺客受伤被围。"
+          ],
+          "CEN": "刺客咬破毒囊，倒地抽搐。",
+          "mustCover": [
+            "皇子遇刺未遂",
+            "太子狗急跳墙派出刺客。"
+          ],
+          "forbiddenZones": [
+            "不可让皇子真的受重伤。"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/智斗",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 寒光一闪，我猛地把皇子推倒，刀锋划破帐篷。\nCEN: 刺客咬破毒囊，倒地抽搐。",
+          "chapterId": "chapter-1786584418690"
+        },
+        {
+          "id": "plot-1786584418294-41",
+          "title": "天哪，太子竟敢弑杀亲弟",
+          "description": "我高举染血的匕首，向营地所有人展示。",
+          "type": "chapter",
+          "keyEvents": [
+            "沈哲利用此事大做文章",
+            "发起舆论攻势。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 34,
+          "CBN": "我高举染血的匕首，向营地所有人展示。",
+          "CPNs": [
+            "展示刺客罪证",
+            "归咎于太子的绝望",
+            "博取天下同情。"
+          ],
+          "CEN": "灾区爆发“杀太子”的怒吼。",
+          "mustCover": [
+            "沈哲利用此事大做文章",
+            "发起舆论攻势。"
+          ],
+          "forbiddenZones": [
+            "不可让太子直接认罪。"
+          ],
+          "chapterType": "normal",
+          "hookType": "借刀杀人",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我高举染血的匕首，向营地所有人展示。\nCEN: 灾区爆发“杀太子”的怒吼。",
+          "chapterId": "chapter-1786584418701"
+        },
+        {
+          "id": "plot-1786584418294-42",
+          "title": "万民血书，跪请废太子",
+          "description": "儒生咬破手指，在白绢上写下请诛国贼。",
+          "type": "chapter",
+          "keyEvents": [
+            "发起废除太子的联署请愿",
+            "各地学子游行请愿。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 35,
+          "CBN": "儒生咬破手指，在白绢上写下请诛国贼。",
+          "CPNs": [
+            "起草请愿书",
+            "利用信鸽传播消息",
+            "各地学子响应。"
+          ],
+          "CEN": "太学院门口，数百名书生跪成了人海。",
+          "mustCover": [
+            "发起废除太子的联署请愿",
+            "各地学子游行请愿。"
+          ],
+          "forbiddenZones": [
+            "不可让太子直接认罪。"
+          ],
+          "chapterType": "normal",
+          "hookType": "立威/收服",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 儒生咬破手指，在白绢上写下请诛国贼。\nCEN: 太学院门口，数百名书生跪成了人海。",
+          "chapterId": "chapter-1786584418713"
+        },
+        {
+          "id": "plot-1786584418294-43",
+          "title": "满城哭声，都在骂太子断子绝孙",
+          "description": "妇女儿童向太子的马车扔烂菜叶和石头。",
+          "type": "chapter",
+          "keyEvents": [
+            "各地学子游行请愿",
+            "皇帝震怒。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 36,
+          "CBN": "妇女儿童向太子的马车扔烂菜叶和石头。",
+          "CPNs": [
+            "全民声讨太子",
+            "太子被彻底孤立",
+            "舆论全面爆发。"
+          ],
+          "CEN": "皇帝看着奏折，愤怒得将玉玺摔碎。",
+          "mustCover": [
+            "各地学子游行请愿",
+            "皇帝震怒。"
+          ],
+          "forbiddenZones": [
+            "不可让太子直接认罪。"
+          ],
+          "chapterType": "normal",
+          "hookType": "打脸/碾压",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 妇女儿童向太子的马车扔烂菜叶和石头。\nCEN: 皇帝看着奏折，愤怒得将玉玺摔碎。",
+          "chapterId": "chapter-1786584418725"
+        },
+        {
+          "id": "plot-1786584418294-44",
+          "title": "皇帝召见：这天下到底是谁的",
+          "description": "我跪在殿中，呈上那把带血的匕首。",
+          "type": "chapter",
+          "keyEvents": [
+            "皇帝介入调查",
+            "对峙升级。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 37,
+          "CBN": "我跪在殿中，呈上那把带血的匕首。",
+          "CPNs": [
+            "汇报刺杀真相",
+            "展示民间请愿",
+            "沈哲暗示太子威胁皇权。"
+          ],
+          "CEN": "皇帝死死盯着我，突然问起刺客的底细。",
+          "mustCover": [
+            "皇帝介入调查",
+            "对峙升级。"
+          ],
+          "forbiddenZones": [
+            "不可让皇帝立刻下旨废太子。"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼/解谜",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我跪在殿中，呈上那把带血的匕首。\nCEN: 皇帝死死盯着我，突然问起刺客的底细。",
+          "chapterId": "chapter-1786584418738"
+        },
+        {
+          "id": "plot-1786584418294-45",
+          "title": "刺客身上，竟带着宫廷秘药",
+          "description": "我查验刺客遗物，发现了一个特殊的香囊。",
+          "type": "chapter",
+          "keyEvents": [
+            "调查刺客背景",
+            "发现宫廷线索。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 38,
+          "CBN": "我查验刺客遗物，发现了一个特殊的香囊。",
+          "CPNs": [
+            "分析香囊成分",
+            "确认只有宫廷才有",
+            "怀疑内部背叛。"
+          ],
+          "CEN": "香囊上绣着一条金龙，那是御用之物。",
+          "mustCover": [
+            "调查刺客背景",
+            "发现宫廷线索。"
+          ],
+          "forbiddenZones": [
+            "不可立即揭露叛徒身份。"
+          ],
+          "chapterType": "normal",
+          "hookType": "解谜/反转",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我查验刺客遗物，发现了一个特殊的香囊。\nCEN: 香囊上绣着一条金龙，那是御用之物。",
+          "chapterId": "chapter-1786584418753"
+        },
+        {
+          "id": "plot-1786584418294-46",
+          "title": "这块腰牌，吓得皇帝手抖",
+          "description": "我从刺客靴筒里摸出一块令牌，呈给皇帝。",
+          "type": "chapter",
+          "keyEvents": [
+            "发现刺客身上带有皇宫禁军的令牌。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 39,
+          "CBN": "我从刺客靴筒里摸出一块令牌，呈给皇帝。",
+          "CPNs": [
+            "出示禁军令牌",
+            "确认属于皇家亲卫",
+            "皇帝震惊阴谋。"
+          ],
+          "CEN": "皇帝指着令牌，面如死灰，一言不发。",
+          "mustCover": [
+            "发现刺客身上带有皇宫禁军的令牌。"
+          ],
+          "forbiddenZones": [
+            "不可立即揭露叛徒身份。"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/震惊",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我从刺客靴筒里摸出一块令牌，呈给皇帝。\nCEN: 皇帝指着令牌，面如死灰，一言不发。",
+          "chapterId": "chapter-1786584418764"
+        },
+        {
+          "id": "plot-1786584418294-47",
+          "title": "寿宴前夜，太子送来请柬",
+          "description": "金帖飞进窗内，太子嚣张的笑声传出院外。",
+          "type": "chapter",
+          "keyEvents": [
+            "寿辰献礼环节的准备",
+            "太子献祥瑞的铺垫。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 40,
+          "CBN": "金帖飞进窗内，太子嚣张的笑声传出院外。",
+          "CPNs": [
+            "分析太子“祥瑞”计划的漏洞",
+            "沈哲准备“万民书”陷阱",
+            "让萧景保持冷静备战。"
+          ],
+          "CEN": "寿辰之日，紫禁城笼罩在诡异的寂静中。",
+          "mustCover": [
+            "寿辰献礼环节的准备",
+            "太子献祥瑞的铺垫。"
+          ],
+          "forbiddenZones": [
+            "不可让皇帝立刻驾崩。"
+          ],
+          "chapterType": "normal",
+          "hookType": "布局/装逼",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 金帖飞进窗内，太子嚣张的笑声传出院外。\nCEN: 寿辰之日，紫禁城笼罩在诡异的寂静中。",
+          "chapterId": "chapter-1786584418776"
+        },
+        {
+          "id": "plot-1786584418294-48",
+          "title": "麒麟降世？太子疯了",
+          "description": "笼子打开，一只“麒麟”咆哮，满座皆惊。",
+          "type": "chapter",
+          "keyEvents": [
+            "太子献祥瑞。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 41,
+          "CBN": "笼子打开，一只“麒麟”咆哮，满座皆惊。",
+          "CPNs": [
+            "太子展示祥瑞",
+            "群臣阿谀奉承",
+            "皇帝假装高兴但心存怀疑。"
+          ],
+          "CEN": "麒麟突然咳嗽，吐出一只未消化的皮靴。",
+          "mustCover": [
+            "太子献祥瑞。"
+          ],
+          "forbiddenZones": [
+            "不可让皇帝立刻驾崩。"
+          ],
+          "chapterType": "normal",
+          "hookType": "打脸/反转",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 笼子打开，一只“麒麟”咆哮，满座皆惊。\nCEN: 麒麟突然咳嗽，吐出一只未消化的皮靴。",
+          "chapterId": "chapter-1786584418789"
+        },
+        {
+          "id": "plot-1786584418294-49",
+          "title": "一堆破纸，竟敢压过祥瑞",
+          "description": "萧景拖着一箱沾血的请愿书，重重放下。",
+          "type": "chapter",
+          "keyEvents": [
+            "皇子献上万民书。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 42,
+          "CBN": "萧景拖着一箱沾血的请愿书，重重放下。",
+          "CPNs": [
+            "萧景展示请愿书",
+            "太子的嘲讽",
+            "皇帝的不耐烦，沈哲发声吸引注意。"
+          ],
+          "CEN": "沈哲打开书，第一个名字竟是大理寺卿。",
+          "mustCover": [
+            "皇子献上万民书。"
+          ],
+          "forbiddenZones": [
+            "不可让皇帝立刻驾崩。"
+          ],
+          "chapterType": "normal",
+          "hookType": "打脸/立威",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 萧景拖着一箱沾血的请愿书，重重放下。\nCEN: 沈哲打开书，第一个名字竟是大理寺卿。",
+          "chapterId": "chapter-1786584418801"
+        },
+        {
+          "id": "plot-1786584418294-50",
+          "title": "祥瑞是假的！油漆还没干",
+          "description": "我指着那头鹿，大喊“看那尾巴上的油漆！”",
+          "type": "chapter",
+          "keyEvents": [
+            "沈哲策划祥瑞造假事件。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 43,
+          "CBN": "我指着那头鹿，大喊“看那尾巴上的油漆！”",
+          "CPNs": [
+            "揭露祥瑞造假（染色",
+            "机械）",
+            "公众哗然，太子恐慌辩解。"
+          ],
+          "CEN": "皇帝下令当场处决那头假神兽。",
+          "mustCover": [
+            "沈哲策划祥瑞造假事件。"
+          ],
+          "forbiddenZones": [
+            "不可让皇帝立刻驾崩。"
+          ],
+          "chapterType": "normal",
+          "hookType": "打脸/解谜",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我指着那头鹿，大喊“看那尾巴上的油漆！”\nCEN: 皇帝下令当场处决那头假神兽。",
+          "chapterId": "chapter-1786584418814"
+        },
+        {
+          "id": "plot-1786584418294-51",
+          "title": "万民书在手，皇位在望",
+          "description": "皇帝将血书与假兽对比，扔掉太子的礼物。",
+          "type": "chapter",
+          "keyEvents": [
+            "皇子借机上位。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 44,
+          "CBN": "皇帝将血书与假兽对比，扔掉太子的礼物。",
+          "CPNs": [
+            "皇帝支持萧景",
+            "对比假的祥瑞与“真实”的爱戴",
+            "萧景被指定为继承人。"
+          ],
+          "CEN": "老皇帝倒下，吐血，太监惊慌藏起诏书。",
+          "mustCover": [
+            "皇子借机上位。"
+          ],
+          "forbiddenZones": [
+            "不可让皇帝立刻驾崩。"
+          ],
+          "chapterType": "normal",
+          "hookType": "立威/反转",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 皇帝将血书与假兽对比，扔掉太子的礼物。\nCEN: 老皇帝倒下，吐血，太监惊慌藏起诏书。",
+          "chapterId": "chapter-1786584418826"
+        },
+        {
+          "id": "plot-1786584418294-52",
+          "title": "禁军令牌，成了太子的催命符",
+          "description": "我把令牌扔在太子脸上，他瞬间瘫软。",
+          "type": "chapter",
+          "keyEvents": [
+            "皇帝下旨废太子。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 45,
+          "CBN": "我把令牌扔在太子脸上，他瞬间瘫软。",
+          "CPNs": [
+            "对峙刺客事件",
+            "使用令牌证据",
+            "太子最后的挣扎。"
+          ],
+          "CEN": "皇帝痛苦地签字，墨汁滴落如泪。",
+          "mustCover": [
+            "皇帝下旨废太子。"
+          ],
+          "forbiddenZones": [
+            "不可让主角失去危机感。"
+          ],
+          "chapterType": "normal",
+          "hookType": "碾压/复仇",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 我把令牌扔在太子脸上，他瞬间瘫软。\nCEN: 皇帝痛苦地签字，墨汁滴落如泪。",
+          "chapterId": "chapter-1786584418842"
+        },
+        {
+          "id": "plot-1786584418294-53",
+          "title": "皇太孙！这名字听着真顺耳",
+          "description": "圣旨宣读，萧景跪在地上，浑身颤抖。",
+          "type": "chapter",
+          "keyEvents": [
+            "萧景被封为皇太孙。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 46,
+          "CBN": "圣旨宣读，萧景跪在地上，浑身颤抖。",
+          "CPNs": [
+            "太子被拖走",
+            "萧景被封为皇太孙",
+            "百姓欢呼。"
+          ],
+          "CEN": "萧景坐在太子的位置上，感到不真实的恐惧。",
+          "mustCover": [
+            "萧景被封为皇太孙。"
+          ],
+          "forbiddenZones": [
+            "不可让主角失去危机感。"
+          ],
+          "chapterType": "normal",
+          "hookType": "立威/逆袭",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 圣旨宣读，萧景跪在地上，浑身颤抖。\nCEN: 萧景坐在太子的位置上，感到不真实的恐惧。",
+          "chapterId": "chapter-1786584418854"
+        },
+        {
+          "id": "plot-1786584418294-54",
+          "title": "官拜太傅，我要做那个影子",
+          "description": "皇帝授予我印信，手冰凉刺骨。",
+          "type": "chapter",
+          "keyEvents": [
+            "沈哲官拜太傅",
+            "苏红袖因功被接入府中。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 47,
+          "CBN": "皇帝授予我印信，手冰凉刺骨。",
+          "CPNs": [
+            "沈哲晋升太傅",
+            "苏红袖被接入府中",
+            "开始清洗政敌。"
+          ],
+          "CEN": "苏红袖在我耳边低语：“太傅，有人想让你死。”",
+          "mustCover": [
+            "沈哲官拜太傅",
+            "苏红袖因功被接入府中。"
+          ],
+          "forbiddenZones": [
+            "不可让主角失去危机感。"
+          ],
+          "chapterType": "normal",
+          "hookType": "装逼/收服",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 皇帝授予我印信，手冰凉刺骨。\nCEN: 苏红袖在我耳边低语：“太傅，有人想让你死。”",
+          "chapterId": "chapter-1786584418866"
+        },
+        {
+          "id": "plot-1786584418294-55",
+          "title": "清洗旧部，京城血流成河",
+          "description": "官员名单，每一个名字都划掉了。",
+          "type": "chapter",
+          "keyEvents": [
+            "昔日嚣张的政敌被流放边疆。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 48,
+          "CBN": "官员名单，每一个名字都划掉了。",
+          "CPNs": [
+            "流放太子的支持者",
+            "沈哲巩固权力",
+            "处理旧日仇敌。"
+          ],
+          "CEN": "我站在城墙上，看着政敌被赶出城。",
+          "mustCover": [
+            "昔日嚣张的政敌被流放边疆。"
+          ],
+          "forbiddenZones": [
+            "不可让主角失去危机感。"
+          ],
+          "chapterType": "normal",
+          "hookType": "碾压/立威",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 官员名单，每一个名字都划掉了。\nCEN: 我站在城墙上，看着政敌被赶出城。",
+          "chapterId": "chapter-1786584418879"
+        },
+        {
+          "id": "plot-1786584418294-56",
+          "title": "系统警告：鸟尽弓藏时",
+          "description": "系统面板变红，弹出“鸟尽弓藏”。",
+          "type": "chapter",
+          "keyEvents": [
+            "系统提示新任务",
+            "清洗功臣计划启动。"
+          ],
+          "relatedCharacters": [],
+          "orderIndex": 49,
+          "CBN": "系统面板变红，弹出“鸟尽弓藏”。",
+          "CPNs": [
+            "系统发布清洗功臣任务",
+            "沈哲意识到皇帝的猜忌",
+            "危机临近。"
+          ],
+          "CEN": "萧景拿着毒药看着我，眼神冰冷。",
+          "mustCover": [
+            "系统提示新任务",
+            "清洗功臣计划启动。"
+          ],
+          "forbiddenZones": [
+            "不可让主角失去危机感。"
+          ],
+          "chapterType": "normal",
+          "hookType": "反转/解谜",
+          "pacingStrategy": "confront",
+          "isClimax": false,
+          "expectedCoolPoints": 1,
+          "purpose": "CBN: 系统面板变红，弹出“鸟尽弓藏”。\nCEN: 萧景拿着毒药看着我，眼神冰冷。",
+          "chapterId": "chapter-1786584418892"
+        }
+      ],
+      "targetWordCount": 540000,
+      "emotionGoal": {
+        "id": "emotion-1786584418295",
+        "primary": "掌控感、反转爽",
+        "secondary": "紧张、压抑、释然",
+        "arc": "mixed",
+        "density": 3000,
+        "highPoints": [
+          30,
+          50,
+          120,
+          180
+        ],
+        "lowPoints": [
+          19,
+          75
+        ]
+      },
+      "coolPointDesign": {
+        "id": "coolpoint-1786584418295",
+        "patterns": [
+          "face-slapping",
+          "face-slapping",
+          "face-slapping"
+        ],
+        "arranged": [
+          {
+            "id": "arrangement-1786584418295-0",
+            "chapter": 3,
+            "type": "face-slapping",
+            "description": "皇子被构陷殴打官员，沈哲将其定性为大义灭亲，不仅无罪反获赞。｜1-5章",
+            "trigger": "金殿对质，百官群起攻之。",
+            "buildup": "外界普遍认为皇子残暴不仁，必死无疑。",
+            "payoff": "沈哲抛出被打官员贪赃枉法的证据，瞬间扭转风向，百官哑口无言。",
+            "cost": "沈哲被记恨，后续遭遇针对。"
+          },
+          {
+            "id": "arrangement-1786584418295-1",
+            "chapter": 12,
+            "type": "face-slapping",
+            "description": "利用青楼歌女传播太子的丑闻，让太子在寿宴上出丑。｜11-15章",
+            "trigger": "太子举办宴会炫耀功德。",
+            "buildup": "沈哲提前布局，收买歌女，编排段子。",
+            "payoff": "皇帝闻听流言，当场质问，太子惊慌失措，形象崩塌。",
+            "cost": "苏红袖暴露，被太子软禁。"
+          },
+          {
+            "id": "arrangement-1786584418295-2",
+            "chapter": 45,
+            "type": "face-slapping",
+            "description": "利用灾民请愿，迫使皇帝在废太子问题上表态。｜46-50章",
+            "trigger": "皇帝犹豫不决，朝堂僵持。",
+            "buildup": "前期赈灾积攒的巨大民望，配合水军煽动。",
+            "payoff": "宫门外跪满请愿百姓，皇帝无奈下旨废太子。",
+            "cost": "民气过度使用，导致后续治理困难。"
+          }
+        ],
+        "density": {
+          "micro": 3000,
+          "small": 9000,
+          "big": 21000
+        }
+      },
+      "coreSellingPoints": [
+        {
+          "id": "selling-point-1786584418295-0",
+          "name": "舆论战实体化",
+          "description": "将看不见的舆论转化为具体的道具（小报、歌谣、水军），让读者直观感受公关的力量。；第一卷",
+          "priority": 5
+        },
+        {
+          "id": "selling-point-1786584418295-1",
+          "name": "造神反噬",
+          "description": "主角一手打造的偶像最终成为束缚自己的枷锁，探讨虚构与真实的边界。；第三卷",
+          "priority": 4
+        },
+        {
+          "id": "selling-point-1786584418295-2",
+          "name": "饭圈文化乱入",
+          "description": "用现代饭圈思维解构古代政治，产生强烈的荒诞感和爽感。；第一、二卷",
+          "priority": 3
+        }
+      ],
+      "conflictDesign": {
+        "id": "conflict-1786584418295",
+        "source": "resource",
+        "escalation": [
+          {
+            "level": 1,
+            "name": "夺嫡舆论战 → 外交舆论战与平叛 → 与门阀世族争夺解释权",
+            "description": "夺嫡舆论战 → 外交舆论战与平叛 → 与门阀世族争夺解释权",
+            "examples": []
+          }
+        ],
+        "majorConflicts": [
+          {
+            "id": "major-conflict-1786584418295-0",
+            "title": "太子党的政治构陷 VS 沈哲的舆论洗白。",
+            "type": "B",
+            "status": "pending",
+            "chapters": [],
+            "stakes": "太子党的政治构陷 VS 沈哲的舆论洗白。",
+            "resolution": ""
+          },
+          {
+            "id": "major-conflict-1786584418295-1",
+            "title": "边疆叛军与敌国入侵 VS 帝国虚弱的经济与军力。",
+            "type": "B",
+            "status": "pending",
+            "chapters": [],
+            "stakes": "边疆叛军与敌国入侵 VS 帝国虚弱的经济与军力。",
+            "resolution": ""
+          },
+          {
+            "id": "major-conflict-1786584418295-2",
+            "title": "门阀世家掌控的历史解释权 VS 沈哲构建的皇权神话。",
+            "type": "B",
+            "status": "pending",
+            "chapters": [],
+            "stakes": "门阀世家掌控的历史解释权 VS 沈哲构建的皇权神话。",
+            "resolution": ""
+          }
+        ]
+      },
+      "storyLines": {
+        "id": "storylines-1786584418295",
+        "map": {
+          "planned": [
+            "京城",
+            "北疆边关",
+            "全国（含地方郡县）"
+          ],
+          "introduced": [],
+          "current": "京城",
+          "chaptersPerLocation": 50
+        },
+        "faction": {
+          "planned": [
+            "太子党",
+            "皇子党",
+            "皇帝",
+            "门阀世家"
+          ],
+          "introduced": [],
+          "currentLevel": 1,
+          "escalationChapters": []
+        },
+        "character": {
+          "planned": [
+            {
+              "id": "沈哲的权欲膨胀",
+              "role": ""
+            },
+            {
+              "id": "萧景的傀儡挣扎",
+              "role": ""
+            },
+            {
+              "id": "皇帝的猜忌与利用",
+              "role": ""
+            }
+          ],
+          "introduced": [],
+          "keyRelationships": []
+        },
+        "goldenfinger": {
+          "type": "从初级洗白到终极造神，系统功能的逐步解锁",
+          "currentStage": 1,
+          "upgrades": []
+        },
+        "worldRules": {
+          "revealed": [
+            "从迷信皇权到迷信舆论",
+            "社会认知的重塑"
+          ],
+          "pending": []
+        },
+        "conflict": {
+          "chains": [
+            {
+              "level": 1,
+              "name": "夺嫡之争",
+              "description": "夺嫡之争",
+              "chapters": [],
+              "status": "pending"
+            },
+            {
+              "level": 2,
+              "name": "平叛之战",
+              "description": "平叛之战",
+              "chapters": [],
+              "status": "pending"
+            },
+            {
+              "level": 3,
+              "name": "意识形态之战",
+              "description": "意识形态之战",
+              "chapters": [],
+              "status": "pending"
+            }
+          ],
+          "activeConflict": "夺嫡之争"
+        },
+        "collection": {
+          "target": [
+            "情报网",
+            "水军",
+            "盟友",
+            "黑料"
+          ],
+          "progress": []
+        },
+        "romance": {
+          "currentStage": "cold",
+          "progression": []
+        }
+      },
+      "goldenfingerDesign": {
+        "id": "goldenfinger-1786584418295",
+        "type": "造神系统（舆论操控面板）",
+        "trigger": "当主角采取行动改变特定目标（皇子/皇帝）的声望值时触发。",
+        "upgradePath": [
+          "初级（引导百人级舆论）→ 中级（操控一城或特定阶层风向）→ 终极（跨国界",
+          "跨阶层操纵帝国意识形态）"
+        ],
+        "limitation": "必须基于事实的“扭曲”而非凭空捏造，且需要消耗“声望值”兑换道具（如流言加速卡、水军召唤令）。",
+        "cost": "过度使用系统会导致主角丧失部分真实情感，逐渐异化为纯粹的利己主义者；且声望值若转为负数将反噬主角。",
+        "firstRevealChapter": 3
+      },
+      "metadata": {
+        "startupPack": {
+          "openingHook": "睁眼发现自己正跪在金殿外听候发落",
+          "promiseToReader": "看现代公关如何玩转古代官场，把废柴捧成神。",
+          "protagonistFirstImpression": "冷静、腹黑、擅长洗脑的操盘手。",
+          "firstMajorCoolPoint": "利用一句谣言让当朝红人身败名裂。",
+          "firstConflictCycle": "皇子被构陷殴打朝廷命官→沈哲通过舆论反转定性为“大义灭亲”→皇子不仅免罪还获得刚直名声。",
+          "chapterBlocks": [
+            {
+              "range": "1-5章",
+              "objective": "绑定系统，化解皇子流放危机，确立主角价值。",
+              "mustEvents": [
+                "穿越绑定系统",
+                "利用舆论术化解废皇子被流放危机",
+                "初次接触乞丐水军网络。"
+              ],
+              "coolPoints": [
+                "利用一句谣言让构陷者身败名裂。"
+              ],
+              "hookRequirement": "系统发布首个S级任务，造神之路开启。",
+              "pacing": "fast",
+              "readerExpectation": "看主角如何在这个绝望开局中翻盘。",
+              "forbiddenZones": [
+                "不可让皇子表现出过人智慧",
+                "必须依赖主角。"
+              ]
+            },
+            {
+              "range": "6-10章",
+              "objective": "打造皇子“忧郁深情”人设，在京圈贵女中建立粉丝基础。",
+              "mustEvents": [
+                "策划皇子雨中跪求父皇安好",
+                "利用青楼歌女传唱皇子词作",
+                "打压太子党羽的嚣张气焰。"
+              ],
+              "coolPoints": [
+                "京城贵女为皇子疯狂",
+                "太子举办宴会无人捧场。"
+              ],
+              "hookRequirement": "太子察觉到舆论异常，派出密探调查沈哲。",
+              "pacing": "medium",
+              "readerExpectation": "看饭圈文化如何腐蚀古代贵族。",
+              "forbiddenZones": [
+                "不可让主角直接暴露穿越者身份。"
+              ]
+            },
+            {
+              "range": "11-15章",
+              "objective": "第一次正面舆论交锋，瓦解太子的“仁德”人设。",
+              "mustEvents": [
+                "揭露太子假仁假义的真面目",
+                "利用水军刷屏太子的负面传闻",
+                "皇帝对太子产生怀疑。"
+              ],
+              "coolPoints": [
+                "太子的赈灾粮款被查出问题",
+                "民意倒向皇子。"
+              ],
+              "hookRequirement": "权相王拓出手，试图用传统手段封杀沈哲。",
+              "pacing": "medium",
+              "readerExpectation": "看公关战如何影响高层决策。",
+              "forbiddenZones": [
+                "不可让皇帝直接表态支持皇子",
+                "只能暗中观察。"
+              ]
+            },
+            {
+              "range": "16-20章",
+              "objective": "建立独立的舆论渠道，对抗官方封杀。",
+              "mustEvents": [
+                "创办大周第一份小报",
+                "整合乞丐与说书人成为情报网",
+                "沈哲遭遇权相陷害入狱。"
+              ],
+              "coolPoints": [
+                "在狱中指挥舆论战",
+                "逼迫权相放人。"
+              ],
+              "hookRequirement": "狱中神秘人透露当年皇子生母之死的线索。",
+              "pacing": "medium",
+              "readerExpectation": "看主角如何掌握狱中话语权。",
+              "forbiddenZones": [
+                "不可让主角武力值暴涨",
+                "坚持智斗。"
+              ]
+            },
+            {
+              "range": "21-25章",
+              "objective": "洗清冤屈，反击权相，获得皇帝召见。",
+              "mustEvents": [
+                "利用小报揭露权相贪腐证据",
+                "皇帝召见沈哲问对",
+                "沈哲献上舆论治国策。"
+              ],
+              "coolPoints": [
+                "当朝驳斥权相",
+                "皇帝拍案叫绝。"
+              ],
+              "hookRequirement": "皇帝对沈哲的才能既喜且忌。",
+              "pacing": "medium",
+              "readerExpectation": "看主角如何舌战群儒。",
+              "forbiddenZones": [
+                "不可让主角立刻获得高官厚禄。"
+              ]
+            },
+            {
+              "range": "26-30章",
+              "objective": "介入赈灾事件，为皇子积攒实打实的政治资本。",
+              "mustEvents": [
+                "皇子主动请缨赈灾",
+                "沈哲随行策划赈灾真人秀",
+                "截获太子私吞赈灾银的实锤。"
+              ],
+              "coolPoints": [
+                "皇子亲力亲为感动灾民",
+                "太子在朝堂上哑口无言。"
+              ],
+              "hookRequirement": "灾区出现不明瘟疫，疑似人为投毒。",
+              "pacing": "medium",
+              "readerExpectation": "看现代营销手段如何包装赈灾。",
+              "forbiddenZones": [
+                "不可将赈灾写成单纯的施舍",
+                "要有营销痕迹。"
+              ]
+            },
+            {
+              "range": "31-35章",
+              "objective": "解决瘟疫危机，同时抹黑太子势力。",
+              "mustEvents": [
+                "散布瘟疫乃太子党降罪灾民的谣言",
+                "联合名医推广防疫手段",
+                "皇子声望达到顶峰。"
+              ],
+              "coolPoints": [
+                "灾民跪谢皇子恩德",
+                "诅咒太子断子绝孙。"
+              ],
+              "hookRequirement": "太子狗急跳墙，派出刺客。",
+              "pacing": "medium",
+              "readerExpectation": "看谣言如何变成“事实”。",
+              "forbiddenZones": [
+                "不可让瘟疫失控导致不可逆后果。"
+              ]
+            },
+            {
+              "range": "36-40章",
+              "objective": "挫败刺杀，引发全国范围对太子的声讨。",
+              "mustEvents": [
+                "皇子遇刺未遂",
+                "沈哲利用此事大做文章",
+                "发起废除太子的联署请愿。"
+              ],
+              "coolPoints": [
+                "各地学子游行请愿",
+                "皇帝震怒。"
+              ],
+              "hookRequirement": "发现刺客身上带有皇宫禁军的令牌。",
+              "pacing": "medium",
+              "readerExpectation": "看民愿如何倒逼皇权。",
+              "forbiddenZones": [
+                "不可让太子直接认罪",
+                "要留有一线生机。"
+              ]
+            },
+            {
+              "range": "41-45章",
+              "objective": "皇帝寿辰，夺嫡决战前夕的最后博弈。",
+              "mustEvents": [
+                "寿辰献礼环节",
+                "太子献上祥瑞",
+                "皇子献上万民书",
+                "沈哲策划祥瑞造假事件。"
+              ],
+              "coolPoints": [
+                "太子的祥瑞被揭穿是人工伪造",
+                "皇子借机上位。"
+              ],
+              "hookRequirement": "皇帝身体每况愈下，传位诏书疑似被篡改。",
+              "pacing": "medium",
+              "readerExpectation": "看最后的胜负手。",
+              "forbiddenZones": [
+                "不可让皇帝立刻驾崩。"
+              ]
+            },
+            {
+              "range": "46-50章",
+              "objective": "太子被废，皇子入主东宫，主角位极人臣。",
+              "mustEvents": [
+                "皇帝下旨废太子",
+                "萧景被封为皇太孙",
+                "沈哲官拜太傅",
+                "苏红袖因功被接入府中。"
+              ],
+              "coolPoints": [
+                "昔日嚣张的政敌被流放边疆",
+                "主角俯瞰京城。"
+              ],
+              "hookRequirement": "系统提示新任务，清洗功臣计划启动。",
+              "pacing": "medium",
+              "readerExpectation": "看主角如何处理胜利后的危机。",
+              "forbiddenZones": [
+                "不可让主角失去危机感。"
+              ]
+            }
+          ]
+        },
+        "storyScale": {
+          "targetWordCount": "450000字",
+          "estimatedChapterCount": 180,
+          "averageWordsPerChapter": 2500,
+          "suggestedVolumeCount": 3,
+          "estimatedChaptersPerVolume": 60,
+          "startupPhaseRatio": "28%",
+          "longformProgressionNote": "前50章完成夺嫡胜利的第一阶段（皇子声望逆转），第51-120章扩展至外交与军事层面的舆论博弈，第121-180章升级为与世家门阀的意识形态决战，确保主线不枯竭。"
+        },
+        "volumePlans": [
+          {
+            "volumeIndex": 1,
+            "title": "夺嫡公关战",
+            "objective": "帮助废柴皇子萧景洗白，在夺嫡大战中逆风翻盘。",
+            "coreConflict": "太子党的政治构陷 VS 沈哲的舆论洗白。",
+            "climax": "皇帝寿辰宴上，沈哲策划“万民书”事件，让萧景民意逼宫太子。",
+            "reversal": "太子被废并非因为失德，而是因为沈哲伪造了太子的“得德”人设导致皇帝忌惮。",
+            "endingHook": "萧景登基前夕，沈哲发现系统的新任务竟是制造一个傀儡神。",
+            "protagonistGrowth": "从单纯的求生者转变为冷酷的操盘手，掌握京城底层舆论渠道。",
+            "keyCharacters": [
+              "萧景（皇子）",
+              "萧承（太子）",
+              "苏红袖（名伶）",
+              "王拓（权相）。"
+            ],
+            "setupForeshadows": [
+              "萧景生母的真相",
+              "系统的真实来源。"
+            ],
+            "payoffForeshadows": [
+              "无（主要为第一卷服务）。"
+            ],
+            "relationshipShifts": [
+              "萧景从依赖沈哲到产生忌惮",
+              "沈哲与苏红袖结成利益同盟。"
+            ]
+          },
+          {
+            "volumeIndex": 2,
+            "title": "舆论平叛与外交战",
+            "objective": "巩固新皇政权，利用舆论手段解决外患与内忧。",
+            "coreConflict": "边疆叛军与敌国入侵 VS 帝国虚弱的经济与军力。",
+            "climax": "沈哲不派一兵一卒，仅靠散布“敌国将领是瘟疫源头”的谣言瓦解敌军士气。",
+            "reversal": "叛军首领竟是沈哲前世仰慕的历史名人，沈哲在抹黑与敬佩中挣扎。",
+            "endingHook": "门阀世家发现沈哲是最大的威胁，决定对他进行物理抹杀。",
+            "protagonistGrowth": "将公关手段升级为国家战略武器，影响力跨越国界。",
+            "keyCharacters": [
+              "秦烈（将军）",
+              "阿史那（敌国使节）",
+              "崔家主（门阀代表）。"
+            ],
+            "setupForeshadows": [
+              "门阀掌握的“正统论”底牌",
+              "皇帝的身体状况。"
+            ],
+            "payoffForeshadows": [
+              "萧景生母之死与门阀有关。"
+            ],
+            "relationshipShifts": [
+              "皇帝对沈哲由倚重转为恐惧",
+              "秦烈成为沈哲的武力靠山。"
+            ]
+          },
+          {
+            "volumeIndex": 3,
+            "title": "造神终局",
+            "objective": "彻底粉碎门阀对思想的垄断，完成对帝国的终极造神。",
+            "coreConflict": "门阀世家掌控的历史解释权 VS 沈哲构建的皇权神话。",
+            "climax": "全国范围内展开“真理大辩论”，沈哲利用印刷术和小册子文化发动底层认知革命。",
+            "reversal": "系统揭示最终目的，沈哲必须决定是成为神还是毁灭神。",
+            "endingHook": "沈哲站在权力巅峰，回望自己制造出的虚假盛世。",
+            "protagonistGrowth": "领悟到“虚构战胜现实”的代价，成为孤独的守望者。",
+            "keyCharacters": [
+              "崔家主",
+              "言官首领",
+              "老皇帝（回忆杀）。"
+            ],
+            "setupForeshadows": [
+              "无。"
+            ],
+            "payoffForeshadows": [
+              "系统来源",
+              "萧景生母真相",
+              "门阀底牌。"
+            ],
+            "relationshipShifts": [
+              "沈哲与萧景主仆名存实亡",
+              "门阀彻底衰败。"
+            ]
+          }
+        ],
+        "plannedChapterCount": 180,
+        "plannedWordCount": 540000
+      },
+      "chapterMemories": []
+    }
+  ]
+}

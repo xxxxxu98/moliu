@@ -60,6 +60,30 @@ describe('AIChapterJudge', () => {
     expect(result.issues).toHaveLength(1);
   });
 
+  it('提示词声明未来揭示护的是核心信息本身，换载体同样算提前揭示', async () => {
+    // 实测缺陷：伏笔约定「死者密纸上有绩效二字」，第 2 章照写被拦下，
+    // 第 1 章改成主角自己包袱里的纸写同样两字却放行——判官把载体当成了事实边界。
+    let capturedSystem = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        return { fulfillment: [], forbidden: [], issues: [] };
+      }),
+    };
+
+    await new AIChapterJudge(ai).judge({
+      mustCover: [],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+      chapterNumber: 1,
+      futureReveals: [{ description: '死者官员的密纸上有绩效二字', notBeforeChapter: 4 }],
+    });
+
+    expect(capturedSystem).toContain('保护的是该事实的核心信息本身，不是它的载体');
+    expect(capturedSystem).toContain('换了承载物');
+  });
+
   it('无待审项且关闭深度语义时不调用 AI', async () => {
     const ai: StructuredAI = {
       generate: vi.fn(async () => emptyJudgePayload()),

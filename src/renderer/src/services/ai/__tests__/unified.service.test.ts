@@ -44,14 +44,14 @@ describe('UnifiedAIService.complete - jsonMode 强制 JSON 输出', () => {
     };
   }
 
-  it('jsonMode=true 时 chat 分支携带 responseFormat json_object', async () => {
+  it('jsonMode=true 时流式分支携带 responseFormat json_object', async () => {
     const service = makeService('openai');
     stubClient(service);
 
     await service.complete('返回 JSON', { jsonMode: true });
 
-    expect(chatMock).toHaveBeenCalledTimes(1);
-    const [, chatOpts] = chatMock.mock.calls[0] as [unknown, Record<string, unknown>];
+    expect(streamMock).toHaveBeenCalledTimes(1);
+    const [, chatOpts] = streamMock.mock.calls[0] as [unknown, Record<string, unknown>];
     expect(chatOpts.responseFormat).toEqual({ type: 'json_object' });
   });
 
@@ -61,21 +61,20 @@ describe('UnifiedAIService.complete - jsonMode 强制 JSON 输出', () => {
 
     await service.complete('普通文本');
 
-    expect(chatMock).toHaveBeenCalledTimes(1);
-    const [, chatOpts] = chatMock.mock.calls[0] as [unknown, Record<string, unknown>];
+    expect(streamMock).toHaveBeenCalledTimes(1);
+    const [, chatOpts] = streamMock.mock.calls[0] as [unknown, Record<string, unknown>];
     expect(chatOpts.responseFormat).toBeUndefined();
   });
 
-  it('jsonMode=true 时带 signal 的非流式 chat 同样携带 responseFormat', async () => {
+  it('jsonMode=true 时带 signal 同样携带 responseFormat', async () => {
     const service = makeService('openai');
     stubClient(service);
 
     const controller = new AbortController();
     await service.complete('返回 JSON', { jsonMode: true, signal: controller.signal });
 
-    // complete() 带 signal 现走非流式 chat()（非 stream），jsonMode 仍透传 responseFormat
-    expect(chatMock).toHaveBeenCalledTimes(1);
-    const [, chatOpts] = chatMock.mock.calls[0] as [unknown, Record<string, unknown>];
+    expect(streamMock).toHaveBeenCalledTimes(1);
+    const [, chatOpts] = streamMock.mock.calls[0] as [unknown, Record<string, unknown>];
     expect(chatOpts.responseFormat).toEqual({ type: 'json_object' });
   });
 
@@ -85,8 +84,8 @@ describe('UnifiedAIService.complete - jsonMode 强制 JSON 输出', () => {
 
     await service.complete('普通文本', { jsonMode: false });
 
-    expect(chatMock).toHaveBeenCalledTimes(1);
-    const [, chatOpts] = chatMock.mock.calls[0] as [unknown, Record<string, unknown>];
+    expect(streamMock).toHaveBeenCalledTimes(1);
+    const [, chatOpts] = streamMock.mock.calls[0] as [unknown, Record<string, unknown>];
     expect(chatOpts.responseFormat).toBeUndefined();
   });
 
@@ -234,11 +233,28 @@ describe('UnifiedAIService 内部 JSON 方法 - JSON 强制覆盖', () => {
   });
 });
 
-describe('UnifiedAIService.complete - chat 路径瞬态错误内层重试（非流式）', () => {
+describe('UnifiedAIService.complete - 流式路径瞬态错误内层重试', () => {
+  /** 把整段文本包成一次性 SSE 流；done=true 提供结束标记 */
   function stubChat(service: UnifiedAIService, impl: () => Promise<string>): void {
-    // complete() 现走非流式 chat()；mock chat 返回完整 content 字符串
     (service as unknown as { client: unknown }).client = {
-      chat: vi.fn().mockImplementation(impl),
+      stream: vi.fn().mockImplementation(() => {
+        const controller = new AbortController();
+        return {
+          cancel: () => controller.abort(),
+          async *[Symbol.asyncIterator]() {
+            // 对齐 SDK 语义：cancel 后迭代器直接 return，不抛错
+            const canceled = Symbol('canceled');
+            const onCancel = new Promise<typeof canceled>(resolve => {
+              controller.signal.addEventListener('abort', () => resolve(canceled), {
+                once: true,
+              });
+            });
+            const text = await Promise.race([impl(), onCancel]);
+            if (text === canceled || controller.signal.aborted) return;
+            yield { content: text, done: true, finishReason: 'stop' };
+          },
+        };
+      }),
     };
   }
 
@@ -327,8 +343,7 @@ describe('UnifiedAIService.complete - chat 路径瞬态错误内层重试（非�
     expect(calls).toBe(0);
   });
 
-  it('chat 进行中 abort 通过 Promise.race 立即抛出 AbortError', async () => {
-    // chat() 不支持 signal；raceChatWithSignal 用 Promise.race 监听 abort
+  it('请求进行中 abort 时 cancel 流并抛出 AbortError', async () => {
     const service = makeService('openai');
     let calls = 0;
     stubChat(service, () => {
@@ -343,6 +358,46 @@ describe('UnifiedAIService.complete - chat 路径瞬态错误内层重试（非�
     await expect(
       service.complete('返回 JSON', { signal: ctrl.signal })
     ).rejects.toThrow();
-    expect(calls).toBe(1); // chat 已发起（1 次），abort 后立即解除阻塞
+    expect(calls).toBe(1); // 请求已发起（1 次），abort 后立即解除阻塞
+  });
+
+  it('流未收到结束标记时判定截断并重试，不把半截内容当成功', async () => {
+    const service = makeService('openai');
+    let calls = 0;
+    (service as unknown as { client: unknown }).client = {
+      stream: vi.fn().mockImplementation(() => ({
+        cancel: () => undefined,
+        async *[Symbol.asyncIterator]() {
+          calls++;
+          // 网关中途 RST：有内容但没有 finish_reason，迭代器静默结束
+          yield { content: '{"ok":tr', done: false, finishReason: null };
+          if (calls > 1) {
+            yield { content: 'ue}', done: true, finishReason: 'stop' };
+          }
+        },
+      })),
+    };
+
+    const result = await service.complete('返回 JSON');
+
+    expect(calls).toBe(2); // 第 1 次截断被判瞬态错误并重试
+    expect(result).toContain('ok');
+  });
+
+  it('finish_reason=length 时报长度上限截断，不把空正文当成功', async () => {
+    const service = makeService('openai');
+    (service as unknown as { client: unknown }).client = {
+      stream: vi.fn().mockImplementation(() => ({
+        cancel: () => undefined,
+        async *[Symbol.asyncIterator]() {
+          // 推理型模型烧光输出预算，content 全空
+          yield { content: '', done: true, finishReason: 'length' };
+        },
+      })),
+    };
+
+    await expect(service.complete('返回 JSON')).rejects.toThrow(
+      '输出被长度上限截断'
+    );
   });
 });

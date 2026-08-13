@@ -68,7 +68,7 @@ const TRANSIENT_NETWORK_RE =
  * 等，多半是流式响应中途断开的连带症状。
  */
 const TRUNCATED_RE =
-  /unexpected end of (json )?input|无法解析 AI 返回的 JSON|AI 返回的结构化 JSON 无法解析|AI 未返回可解析的结构化 JSON|json\s*解析失败|json repair|bad control character/iu;
+  /unexpected end of (json )?input|无法解析 AI 返回的 JSON|AI 返回的结构化 JSON 无法解析|AI 未返回可解析的结构化 JSON|json\s*解析失败|json repair|bad control character|流式响应提前中断|输出被长度上限截断/iu;
 
 /** schema 校验失败特征（来自 schemas.ts:234 的 `${label} 结构校验失败:` 模板） */
 const SCHEMA_RE = /结构校验失败|expected .+ received|invalid_enum_value|invalid_type|required/iu;

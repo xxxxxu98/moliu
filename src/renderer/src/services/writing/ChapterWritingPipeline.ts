@@ -301,8 +301,12 @@ function parseNotBeforeChapter(revealTiming: string | undefined): number | null 
 }
 
 /**
- * 本章角色白名单只允许“主角 + 本章合同明确提及的人物”。不能把全量角色表直接
- * 当白名单，否则后期人物可以在模型自由发挥时提前登场。
+ * 本章角色白名单 = 主角 + 登场时点已到的角色 + 本章合同明确提及的人物。
+ * 不能把全量角色表直接当白名单，否则后期人物可以在模型自由发挥时提前登场。
+ *
+ * 登场时点已到的角色必须放行：合同文本常以“皇子”“狱友”等泛称指代，不写本名，
+ * 若只按名字文本匹配，大纲安排在本章登场的角色反而会被审查判成 critical 违规，
+ * 写作端与审查端互相打架，触发无意义的 repair 重写。
  */
 export function resolveAllowedChapterCharacters(input: {
   project: Project;
@@ -323,7 +327,8 @@ export function resolveAllowedChapterCharacters(input: {
     }
 
     const isProtagonist = /主角|protagonist|hero/iu.test(character.role ?? '');
-    if (isProtagonist || input.chapterText.includes(character.name)) {
+    const hasDebuted = notBeforeChapter !== null && notBeforeChapter <= input.chapterNumber;
+    if (isProtagonist || hasDebuted || input.chapterText.includes(character.name)) {
       allowedNames.add(character.name);
     }
   }

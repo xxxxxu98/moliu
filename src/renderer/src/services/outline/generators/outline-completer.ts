@@ -187,7 +187,12 @@ function buildChapterCompletionPrompt(
   outline: ExecutableOutline,
   direction: OutlineDirection,
   chapterNumbers: number[],
+  issues: string[] = [],
 ): { system: string; user: string } {
+  // 只说"区间是多少"不足以让模型改掉超长几个字的钩子，必须点名本次要修的具体违规
+  const issueSection = issues.length > 0
+    ? `\n\n【本次必须修掉的格式违规】\n${issues.map(issue => `- ${issue}`).join('\n')}\n改写时优先压缩到区间内，宁可删修饰语也不得超字数。`
+    : '';
   return {
     system: `你是中文长篇网文大纲拆章器。只输出指定章号的单章蓝图，不复述已有章节，不输出解释。
 每章必须严格使用以下结构：
@@ -207,7 +212,7 @@ function buildChapterCompletionPrompt(
 4. 逐章节奏必须落在“startupPack30.chapterBlocks”对应 5 章区块的目标、必出事件、必留钩子与本块禁区之内，不得提前兑现后续区块的爽点；
 5. 所有字段都不得留空，禁止使用括号补充说明。
 “existingChapterCanon”是不可改写的既有事实：新章不得重置期限、重复破案/入狱/升职等已完成事件，不得让已倒台或被羁押的反派无解释恢复原职。`,
-    user: `【故事上下文】\n${compactContext(outline, direction, chapterNumbers)}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
+    user: `【故事上下文】\n${compactContext(outline, direction, chapterNumbers)}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
   };
 }
 
@@ -339,8 +344,10 @@ export async function repairChapterBlueprints(params: {
   chapterNumbers: number[];
   phase: '补全' | '定点修复';
   onProgress?: (message: string) => void;
+  /** 章号 → 该章需要修掉的具体违规描述 */
+  issuesByChapter?: Map<number, string[]>;
 }): Promise<CompleteOutlineResult> {
-  const { chapterNumbers, phase, onProgress } = params;
+  const { chapterNumbers, phase, onProgress, issuesByChapter } = params;
   let rawText = params.rawText;
   let outline = params.outline;
   const warnings: string[] = [];
@@ -358,7 +365,8 @@ export async function repairChapterBlueprints(params: {
     onProgress?.(
       `正在${phase}单章蓝图 第${batch[0]}-${batch.at(-1)}章（${batchIndex}/${batchCount}）...`,
     );
-    const prompt = buildChapterCompletionPrompt(outline, params.direction, batch);
+    const batchIssues = batch.flatMap(no => issuesByChapter?.get(no) ?? []);
+    const prompt = buildChapterCompletionPrompt(outline, params.direction, batch, batchIssues);
     const generated = await params.callStructuredTextMode(
       prompt.system,
       prompt.user,
