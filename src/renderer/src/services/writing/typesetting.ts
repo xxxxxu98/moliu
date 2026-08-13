@@ -349,6 +349,15 @@ export function analyzeParagraphDensity(prose: string): ParagraphDensityStats {
   };
 }
 
+/** 说话提示语 + 冒号 + 一整句台词，且台词没有被引号包住 */
+const BARE_DIALOGUE_PATTERN =
+  /(?:说|道|问|答|喊|叫|喝|吼|应|劝|骂|催|叹|笑|哑|开口|出声|脱口而出|低声|冷声|沉声|声音|嗓音|语气|意味)\s*[：:]\s*[^“”「」『』\n]{8,}[。！？!?]/u;
+
+function countQuotePairs(text: string): number {
+  const pairPatterns = [/\u201C[^\u201D]*\u201D/gu, /「[^」]*」/gu, /『[^』]*』/gu];
+  return pairPatterns.reduce((total, pattern) => total + (text.match(pattern)?.length ?? 0), 0);
+}
+
 /**
  * 根据密度统计产出门禁问题（供 G8 使用）。
  * 假定 prose 已经过 normalize；若仍超标则要求重写。
@@ -401,6 +410,23 @@ export function buildTypesettingIssues(prose: string): ParagraphDensityIssue[] {
       suggestion: '逐段补齐对话开引号和收引号；换人说话必须换段',
       evidence: paragraphs.find(paragraph => paragraph.includes(quoteDefect[0]) || paragraph.includes(quoteDefect[1]))?.slice(0, 80),
     });
+  }
+
+  // 全章没有任何成对引号，却有多处「提示语＋冒号＋整句台词」——模型把对话写成了裸台词。
+  // 引号数量平衡检查抓不到这种（0 对 0 也平衡），但成品缺引号在任何平台都是硬伤。
+  // 真实回归：smoke:storyflow:real 第 1、2 章通篇裸台词，两道门禁全部放行。
+  if (countQuotePairs(normalized) === 0) {
+    const bareDialogueParagraphs = paragraphs.filter(paragraph =>
+      BARE_DIALOGUE_PATTERN.test(paragraph)
+    );
+    if (bareDialogueParagraphs.length >= 2) {
+      issues.push({
+        severity: 'high',
+        description: `对话未使用中文引号：${bareDialogueParagraphs.length} 处提示语后直接接台词，全章没有一对引号`,
+        suggestion: '人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段',
+        evidence: bareDialogueParagraphs[0]?.slice(0, 80),
+      });
+    }
   }
 
   let currentShortRun = 0;

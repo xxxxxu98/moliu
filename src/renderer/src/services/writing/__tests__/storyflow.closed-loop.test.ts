@@ -93,6 +93,8 @@ describe.runIf(isRealAiEnabled())(
         expect(result.projectStorageVerification.characterCount).toBeGreaterThanOrEqual(10);
         expect(result.projectStorageVerification.foreshadowCount).toBeGreaterThanOrEqual(10);
         expect(result.projectStorageVerification.volumeCount).toBeGreaterThan(0);
+        // 建章必须把章纲描述写进 chapter.outline，只剩结构化节点块等于丢了整章章纲
+        expect(result.projectStorageVerification.chapterOutlineTextCount).toBe(startupChapterCount);
         // 大纲定位（题材/文风/读者/情绪）必须随项目落盘，否则续写端拿不到定位约束
         expect(result.projectStorageVerification.positioningPersisted).toBe(true);
 
@@ -124,6 +126,16 @@ describe.runIf(isRealAiEnabled())(
           .map(node => node.title);
         expect(persistedChapterTitles).toHaveLength(chapterCount);
         expect(persistedChapterTitles.every(title => !isPlaceholderChapterTitle(title))).toBe(true);
+
+        // 写作链路不得回头覆盖大纲阶段的关键数据：批量续写结束后重新冷读，
+        // 角色/伏笔/卷/章节蓝图数量必须与建章后一致，正文也必须真的落进项目。
+        expect(result.postWritePersistence).toMatchObject({
+          characterCount: result.projectStorageVerification.characterCount,
+          foreshadowCount: result.projectStorageVerification.foreshadowCount,
+          volumeCount: result.projectStorageVerification.volumeCount,
+          plotChapterCount: result.projectStorageVerification.plotChapterCount,
+        });
+        expect(result.postWritePersistence.writtenChapterCount).toBe(chapterCount);
 
         // ---------- 汇总落盘（供 smoke 脚本展示） ----------
         // 大纲数据已由 harness 在建章后提前落盘（避免续写超时丢失），此处仅落正文与 summary
@@ -172,6 +184,7 @@ describe.runIf(isRealAiEnabled())(
           runtimeBackendAuthentic: result.runtimeBackend === 'sqlite',
           runtimeVerification: result.runtimeVerification,
           projectStorageVerification: result.projectStorageVerification,
+          postWritePersistence: result.postWritePersistence,
           provider: result.cfg.provider,
           model: result.cfg.model,
           totalMs,

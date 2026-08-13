@@ -210,6 +210,49 @@ describe('resolveAllowedChapterCharacters', () => {
       expect.objectContaining({ notBeforeChapter: 60 }),
     ]);
   });
+
+  it('履约要求点名的后期角色必须放行，避免“必须写到”与“不许露面”自相矛盾', () => {
+    const project = makeProject();
+    project.characters = [
+      {
+        id: 'hero',
+        name: '曹玉梁',
+        role: '主角',
+        profile: { personality: [] },
+        createdAt: '',
+        updatedAt: '',
+      },
+      {
+        id: 'judge',
+        name: '温伯衡',
+        role: '导师',
+        profile: { personality: [], revealTiming: '第5章正式登场' },
+        createdAt: '',
+        updatedAt: '',
+      },
+      {
+        id: 'boss',
+        name: '钱墨渊',
+        role: '反派',
+        profile: { personality: [], revealTiming: '第30章' },
+        createdAt: '',
+        updatedAt: '',
+      },
+    ];
+
+    const result = resolveAllowedChapterCharacters({
+      project,
+      chapterNumber: 1,
+      chapterText: '禁区：不得点出盐引底档与钱墨渊的关系。\n当众亮证，岑述被温伯衡锁走。',
+      fulfillmentText: '当众亮证，岑述被温伯衡锁走。',
+    });
+
+    expect(result.allowedNames).toEqual(['曹玉梁', '温伯衡']);
+    // 只在禁区文本里被提到的钱墨渊不解锁，仍按计划保护
+    expect(result.futureReveals).toEqual([
+      expect.objectContaining({ notBeforeChapter: 30 }),
+    ]);
+  });
 });
 
 describe('ChapterWritingPipeline', () => {

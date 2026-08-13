@@ -671,8 +671,26 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
+  /**
+   * 切换当前项目，并同步全部独立 ref。
+   *
+   * saveCurrentProject() 以独立 ref 为准覆盖 characters/foreshadows/worldSchema 等字段，
+   * 只设 currentProject 而不灌 ref，下一次保存就会把这些字段写成空数组（真实回归：
+   * storyflow 闭环冒烟批量续写后，落盘项目的 characters/foreshadows 全被清空）。
+   */
   function setCurrentProject(project: Project | null) {
     currentProject.value = project;
+    volumes.value = project?.volumes ?? [];
+    chapters.value = project?.chapters ?? [];
+    characters.value = project?.characters ?? [];
+    worldSchema.value = project?.worldSchema ?? { locations: [], rules: [], factions: [] };
+    foreshadows.value = project?.foreshadows ?? [];
+    plotOutline.value = project?.plotOutline ?? [];
+    chapterMemories.value = project?.chapterMemories ?? [];
+    emotionGoal.value = project?.emotionGoal ?? null;
+    conflictDesign.value = project?.conflictDesign ?? null;
+    coolPointDesign.value = project?.coolPointDesign ?? null;
+    storyLines.value = project?.storyLines ?? null;
   }
 
   function setProjects(list: Project[]) {

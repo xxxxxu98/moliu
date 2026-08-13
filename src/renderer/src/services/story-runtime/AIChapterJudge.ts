@@ -82,6 +82,7 @@ export class AIChapterJudge implements ChapterJudge {
         '- 若 futureReveals 中某事实的 notBeforeChapter 大于当前 chapterNumber，正文却明确点名、确认身份或下结论，必须报 foreshadow 且 severity=critical',
         '- futureReveals 保护的是该事实的核心信息本身，不是它的载体：只要核心信息（关键词句、身份、真相）在正文中对读者揭穿，即使换了承载物、换了持有人、换了出现场合（如约定“死者身上的密信写着 X”，正文改成主角自己包袱里的纸写着 X），同样按提前揭示论处',
         '- 若 allowedCharacterNames 非空，名单外的已登记角色在现场说话、行动或即时反应，必须报 logic_gap 且 severity=critical；仅被回忆或背景提及不算出场',
+        '- 【出场豁免】若某角色在 mustCover 节点里被点名要求参与（如节点写「被温伯衡锁走」），则该角色本章允许出场，即使不在 allowedCharacterNames 里也不得报 logic_gap；换成无名身份称呼（如「青袍老者」）同样豁免',
         '- 只报真实问题，不挑文笔；critical 留给明显硬伤',
         '- 若无问题，issues 为 []',
         '',

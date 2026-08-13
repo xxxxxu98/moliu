@@ -7,6 +7,8 @@ import type {
   SceneDraft,
 } from '@/types/story-runtime';
 
+import { classifyError } from '@/utils/ai-error-classify';
+
 import { ChapterCommitService, type ChapterCommitPort } from '../ChapterCommitService';
 import { ContinuityValidator } from '../ContinuityValidator';
 import { makeContracts, makeState } from './testFixtures';
@@ -197,6 +199,56 @@ describe('ContinuityValidator', () => {
     expect(report.accepted).toBe(false);
     expect(report.issues.some(issue => issue.message.includes('未当众指认凶手'))).toBe(true);
     expect(report.issues.some(issue => issue.message.includes('logic_gap'))).toBe(true);
+  });
+
+  // 真实回归：smoke:storyflow:real（opencode/deepseek-v4-flash）第 2 章 chapter-judge 返回空响应，
+  // 被包成 [review-unavailable] 后 classifyError 判 transient=false，引擎重试预算失效，
+  // 批量续写在第 2 章整体中止。瞬态失败必须原样抛出，让步骤级重试真正跑起来。
+  it('ChapterJudge 瞬态失败（空响应/截断）原样抛出，不包成 review-unavailable', async () => {
+    const contracts = makeContracts();
+    contracts.chapter.mustCover = ['当众指出凶手是县令公子'];
+    contracts.chapter.forbidden = [];
+    const error = await new ContinuityValidator({
+      chapterJudge: {
+        judge: async () => {
+          throw new Error('AI 返回的结构化 JSON 无法解析：Unexpected end of JSON input');
+        },
+      },
+      enableDeepSemantic: true,
+    })
+      .validate({
+        contracts,
+        state: makeState(),
+        drafts: [makeDraft()],
+        facts: makeFacts(),
+      })
+      .then(() => null)
+      .catch((err: unknown) => err as Error);
+
+    expect(error?.message).toContain('AI 返回的结构化 JSON 无法解析');
+    expect(error?.message).not.toContain('[review-unavailable]');
+    expect(classifyError(error).transient).toBe(true);
+  });
+
+  it('ChapterJudge 持久失败仍包成 review-unavailable，避免被当成未履约驱动整章重写', async () => {
+    const contracts = makeContracts();
+    contracts.chapter.mustCover = ['当众指出凶手是县令公子'];
+    contracts.chapter.forbidden = [];
+    const validate = new ContinuityValidator({
+      chapterJudge: {
+        judge: async () => {
+          throw new Error('结构校验失败: judgment.fulfillment 必须为数组');
+        },
+      },
+      enableDeepSemantic: true,
+    }).validate({
+      contracts,
+      state: makeState(),
+      drafts: [makeDraft()],
+      facts: makeFacts(),
+    });
+
+    await expect(validate).rejects.toThrow('[review-unavailable]');
   });
 
   it('字面履约已通过且关闭深度语义时不调用 ChapterJudge', async () => {

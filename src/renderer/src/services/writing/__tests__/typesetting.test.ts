@@ -126,6 +126,30 @@ describe('buildTypesettingIssues 生产硬门禁', () => {
     const issues = buildTypesettingIssues(['他抬头。', '门响了。', '风停了。', '灯灭了。', '脚步近了。'].join('\n\n'));
     expect(issues.some(issue => issue.severity === 'high' && issue.description.includes('连续碎段'))).toBe(true);
   });
+
+  it('通篇裸台词（提示语加冒号、全章无引号）报告 high', () => {
+    const issues = buildTypesettingIssues(
+      [
+        '一个压低的嗓音凑到他耳边，带着一股子哄人的意味：陛下，太医说了，这参汤要趁热用。',
+        '他忽然笑了一声，声音还带着方才的哑：都慌什么，朕说的是实情。',
+        '张嬷嬷端着碗的手一僵，低声道：老奴一个奴婢，怎么敢碰陛下的御药。',
+      ].join('\n\n')
+    );
+    expect(
+      issues.some(issue => issue.severity === 'high' && issue.description.includes('对话未使用中文引号'))
+    ).toBe(true);
+  });
+
+  it('正常引号对话与叙述冒号不误报', () => {
+    const issues = buildTypesettingIssues(
+      [
+        '他把三样东西摆在案上：账页的撕口，从外头别过的门闩，还有后颈上那两处伤。',
+        '“大人要把这案子按畏罪自尽销掉，得先圆这三件事。”周砚把牛皮纸推过去，语气不高。',
+        '司务额上沁出一层细汗，往门口退了半步，扯出个干笑。',
+      ].join('\n\n')
+    );
+    expect(issues.some(issue => issue.description.includes('对话未使用中文引号'))).toBe(false);
+  });
 });
 
 describe('buildWritingRulesWithTypesetting', () => {

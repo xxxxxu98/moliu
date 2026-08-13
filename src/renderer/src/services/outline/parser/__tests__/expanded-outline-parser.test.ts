@@ -502,6 +502,19 @@ describe('parseExpandedOutline · H3 子小节解析回归', () => {
     expect(outline!.storyEngine.protagonistName).toBe('林北');
     expect(outline!.goldenfingerPlan?.firstRevealChapter).toBe(3);
   });
+
+  it('姓名带头衔同位语（赵珝，康王 / 萧景（三皇子））只取本名，避免下游按名字匹配全部落空', () => {
+    const source = buildSampleOutline({ withWorldH3: true })
+      .replace('- 姓名：陈明远', '- 姓名：赵珝，康王')
+      .replace('- 姓名：王建国', '- 姓名：萧景（三皇子）');
+    const outline = parseExpandedOutline(source);
+    const names = outline!.keyCharacters.map(character => character.name);
+
+    expect(names).toContain('赵珝');
+    expect(names).toContain('萧景');
+    expect(names).not.toContain('赵珝，康王');
+    expect(names).not.toContain('萧景（三皇子）');
+  });
 });
 
 describe('parseExpandedOutline · 单章蓝图（chapterBlueprints）解析', () => {

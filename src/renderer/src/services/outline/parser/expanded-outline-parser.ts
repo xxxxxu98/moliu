@@ -522,9 +522,23 @@ function parseForeshadowSection(section: string): ForeshadowPlan[] {
   return [];
 }
 
+/**
+ * 姓名字段归一：模型常写成「赵珝，康王」「萧景（三皇子）」这类「本名＋头衔」同位语，
+ * 整串当姓名会让下游按名字做的文本匹配（出场白名单、角色真相挑选、改名检测）全部失效，
+ * prompt 里也会出现「只能使用：赵珝，康王」这种病句。这里只取本名段。
+ */
+function normalizeCharacterName(raw: string): string {
+  const primary = raw
+    .split(/[，,、（(]/u)[0]
+    .replace(/[）)]/gu, '')
+    .trim();
+  return primary || raw.trim();
+}
+
 function parseCharacterBlock(block: string, protagonistName?: string): CharacterPlan {
   const roleRaw = extractFieldValue(block, '角色定位') ?? '配角';
-  const name = extractFieldValue(block, '姓名') ?? '未命名角色';
+  const nameRaw = extractFieldValue(block, '姓名') ?? '未命名角色';
+  const name = normalizeCharacterName(nameRaw);
   const normalizedRole = protagonistName && name === protagonistName
     ? 'protagonist'
     : mapRole(roleRaw);

@@ -11,6 +11,7 @@ import {
   buildVolumePlansMetadata,
   buildVolumesFromOutline,
 } from "./projectCreatorBuilders";
+import { useChapterOutlineGenerator } from "./useChapterOutlineGenerator";
 
 export interface CreateProjectOptions {
   /** 开题中心写入的题材合同种子 */
@@ -769,6 +770,18 @@ export function useProjectCreator(): UseProjectCreatorReturn {
         router.push(`/project/${newProject.id}`);
         // 完善项目数据（填充角色关系等）
         await projectStore.finalizeProjectCreation(newProject.id);
+
+        // 应用大纲必须连章节实体一起建出来。只写 plotOutline 的话 chapters 表是空的、
+        // 章节节点 chapterId 全空，编辑器里没有任何可写章节，续写链路也拿不到章节。
+        // 首页四个入口（QuickStart/ProOutliner/InspirationPanel/TopicDiscoveryBoard）
+        // 都走这里，此前只有编辑器内的 WritingSetupWizard 会补建章。
+        // 必须放在 finalizeProjectCreation 之后：projectStore.createProject 不设
+        // currentProject，提前调用会让 createChapter 每章都返回 null 且不报错。
+        const outlineChapters = outlineData.chapters;
+        if (Array.isArray(outlineChapters) && outlineChapters.length > 0) {
+          const { createChapters } = useChapterOutlineGenerator();
+          await createChapters(outlineChapters);
+        }
         return newProject.id;
       }
 

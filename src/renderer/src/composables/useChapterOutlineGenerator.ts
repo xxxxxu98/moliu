@@ -164,6 +164,11 @@ export interface ChapterPreview {
 export interface GeneratedChapter {
   title: string;
   outline: string;
+  /**
+   * 大纲应用链路（inspiration.GeneratedChapter）用 summary 承载同一份章纲文本。
+   * 两个 GeneratedChapter 类型靠 as unknown 互转，只读 outline 会让整章章纲静默丢失。
+   */
+  summary?: string;
   orderIndex: number;
   keyEvents: string[];
   foreshadows: string[];
@@ -540,7 +545,7 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
         if (newChapter) {
           const chapterId = newChapter.id;
           // 构建扩展大纲（包含结构化节点）
-          let extendedOutline = chapter.outline || '';
+          let extendedOutline = chapter.outline || chapter.summary || '';
           if (chapter.CBN || chapter.CPNs || chapter.CEN) {
             const structureSection = [
               '\n\n--- 结构化节点 ---',

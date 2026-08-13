@@ -14,6 +14,8 @@ import type {
   ValidationSeverity,
 } from '@/types/story-runtime';
 
+import { classifyError } from '@/utils/ai-error-classify';
+
 import { applyProvisionalOverlay } from './stateOverlay';
 import { isForbiddenExemptForFulfillment } from './contractHealth';
 import { stripOpeningCbnPrefix } from './chapterBlueprintNormalize';
@@ -354,6 +356,13 @@ export class ContinuityValidator {
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') throw error;
         if (error instanceof Error && error.name === 'AbortError') throw error;
+        // 瞬态失败（空响应/截断/网络/限流/5xx）原样抛出，让 LongFormWritingEngine 的
+        // 步骤级重试真正生效——包成 [review-unavailable] 会被 classifyError 判为
+        // transient=false，重试预算形同虚设，一次空响应就终止整批续写。
+        // 重试耗尽后由引擎统一包成 review-unavailable，语义不变。
+        if (classifyError(error).transient) {
+          throw error;
+        }
         const detail = error instanceof Error ? error.message : String(error);
         // 审查基础设施失败不是正文内容结论。向上抛后由 LongFormWritingEngine
         // 只重试 validate 阶段，绝不能转换成“未履约”驱动整章重写。

@@ -6,7 +6,7 @@
  *    （与开题中心 TopicDiscoveryBoard 的 prompt 玩法同路径，真实 fetch AI）
  * 2. 应用大纲：mapExecutableOutlineToGeneratedOutline → useProjectCreator.createProject
  *    （真实执行 buildPlotOutline/buildCharacters/buildVolumes 等全部纯函数）
- * 3. 建章：useChapterOutlineGenerator.createChapters（真实执行，含结构化节点落库）
+ * 3. 建章：由 createProject 内联执行 useChapterOutlineGenerator.createChapters（含结构化节点落库）
  * 4. 批量续写：runContinueWriteChapters（mode:'batch' = BATCH_CONTINUE_PRESET，
  *    与 useBatchWriter / 批量 UI 同路径，指数退避重试 + 门禁）
  *
@@ -33,7 +33,6 @@ import type { GeneratedOutline } from '@/types/inspiration';
 import type { Project } from '@/types/project';
 import type { ProviderType } from '@/config/ai-providers';
 import { useProjectCreator } from '@/composables/useProjectCreator';
-import { useChapterOutlineGenerator } from '@/composables/useChapterOutlineGenerator';
 import { useSettingsStore } from '@/stores/settings.store';
 import { useProjectStore } from '@/stores/project.store';
 import {
@@ -64,7 +63,8 @@ export interface StoryflowClosedLoopOptions {
 
 export interface StoryflowClosedLoopResult {
   cfg: ResolvedRealAiConfig;
-  direction: OutlineDirection;
+  /** 复用 MOLIU_OUTLINE_CACHE 缓存大纲时不会跑方向生成，此处为 null */
+  direction: OutlineDirection | null;
   executableOutline: ExecutableOutline;
   generatedOutline: GeneratedOutline;
   project: Project;
@@ -72,6 +72,8 @@ export interface StoryflowClosedLoopResult {
   runtimeBackend: HarnessRuntimeBackend;
   runtimeVerification: StoryRuntimeVerification;
   projectStorageVerification: ProjectStorageVerification;
+  /** 批量续写结束后的冷读取复核：大纲阶段的关键数据不得被写作链路覆盖 */
+  postWritePersistence: PostWritePersistenceVerification;
   /** 建章后、续写前的章节 ID（大纲应用产物） */
   createdChapterIds: string[];
 }
@@ -84,10 +86,19 @@ export interface ProjectStorageVerification {
   characterCount: number;
   foreshadowCount: number;
   volumeCount: number;
+  chapterOutlineTextCount: number;
   coldReloadVerified: boolean;
   criticalDataHash: string;
   completeCharacterProfileCount: number;
   positioningPersisted: boolean;
+}
+
+export interface PostWritePersistenceVerification {
+  characterCount: number;
+  foreshadowCount: number;
+  volumeCount: number;
+  plotChapterCount: number;
+  writtenChapterCount: number;
 }
 
 function cloneProject(project: Project): Project {
@@ -265,35 +276,51 @@ export async function runStoryflowClosedLoop(
 
   // ---------- 1. 开题中心大纲生成（真实 AI fetch，与 TopicDiscoveryBoard prompt 玩法同路径） ----------
   // 传 trace.runId 让大纲阶段的 prompt/响应落盘 temp/ai-traces/，便于人工评估单章蓝图产出质量。
-  const generator = new UnifiedOutlineGenerator();
-  const outlineTraceRunId = `${runIdPrefix}-outline-${Date.now()}`;
-  const dirResult = await generator.generateDirections(prompt, {
-    wordCountRange,
-    trace: { runId: outlineTraceRunId, model: cfg.model, provider: cfg.provider },
-  });
-  if (!dirResult.directions || dirResult.directions.length === 0) {
-    throw new Error(
-      `storyflow 闭环失败：大纲方向生成为空（generateDirections 未返回任何方向，${dirResult.warnings?.[0] ?? ''}）`,
-    );
-  }
-  const direction = [...dirResult.directions].sort(
-    (a, b) => b.recommendationScore - a.recommendationScore,
-  )[0];
+  // MOLIU_OUTLINE_CACHE：调试续写阶段时复用上一轮 ExecutableOutline，跳过 30-40 分钟的
+  // 大纲生成。默认不开启，完整冒烟仍然全程真实生成。
+  const outlineCachePath = process.env.MOLIU_OUTLINE_CACHE?.trim();
+  let direction: OutlineDirection | null = null;
+  const generateExecutableOutline = async (): Promise<ExecutableOutline> => {
+    const generator = new UnifiedOutlineGenerator();
+    const outlineTraceRunId = `${runIdPrefix}-outline-${Date.now()}`;
+    const dirResult = await generator.generateDirections(prompt, {
+      wordCountRange,
+      trace: { runId: outlineTraceRunId, model: cfg.model, provider: cfg.provider },
+    });
+    if (!dirResult.directions || dirResult.directions.length === 0) {
+      throw new Error(
+        `storyflow 闭环失败：大纲方向生成为空（generateDirections 未返回任何方向，${dirResult.warnings?.[0] ?? ''}）`,
+      );
+    }
+    direction = [...dirResult.directions].sort(
+      (a, b) => b.recommendationScore - a.recommendationScore,
+    )[0];
 
-  const expandedResult = await generator.expandDirection(prompt, direction, {
-    wordCountRange,
-    trace: { runId: outlineTraceRunId, model: cfg.model, provider: cfg.provider },
-  });
-  const expanded = expandedResult.outline;
-  if (!expanded) {
-    const failureDetails = expandedResult.blockers?.length
-      ? expandedResult.blockers.join('；')
-      : expandedResult.warnings?.join('；') || '未提供失败详情';
-    throw new Error(
-      `storyflow 闭环失败：大纲展开为空（expandDirection 返回 null，${failureDetails}）`,
-    );
-  }
-  const executableOutline = expanded;
+    const expandedResult = await generator.expandDirection(prompt, direction, {
+      wordCountRange,
+      trace: { runId: outlineTraceRunId, model: cfg.model, provider: cfg.provider },
+    });
+    const expanded = expandedResult.outline;
+    if (!expanded) {
+      const failureDetails = expandedResult.blockers?.length
+        ? expandedResult.blockers.join('；')
+        : expandedResult.warnings?.join('；') || '未提供失败详情';
+      throw new Error(
+        `storyflow 闭环失败：大纲展开为空（expandDirection 返回 null，${failureDetails}）`,
+      );
+    }
+    if (outlineCachePath) {
+      mkdirSync(join(outlineCachePath, '..'), { recursive: true });
+      writeFileSync(outlineCachePath, JSON.stringify(expanded, null, 2), 'utf-8');
+    }
+    return expanded;
+  };
+
+  const cachedOutline =
+    outlineCachePath && existsSync(outlineCachePath)
+      ? (JSON.parse(readFileSync(outlineCachePath, 'utf-8')) as ExecutableOutline)
+      : null;
+  const executableOutline = cachedOutline ?? (await generateExecutableOutline());
 
   const generatedOutline = mapExecutableOutlineToGeneratedOutline(executableOutline);
   const outlineChapters = generatedOutline.chapters;
@@ -310,19 +337,17 @@ export async function runStoryflowClosedLoop(
     throw new Error(`storyflow 闭环失败：应用大纲失败（createProject 返回 null，${projectCreator.error.value}）`);
   }
 
-  // ---------- 3. 建章（真实 useChapterOutlineGenerator.createChapters 链路） ----------
-  const chapterOutlineGenerator = useChapterOutlineGenerator();
-  // 类型断言：inspiration.GeneratedChapter 与 composable 自有类型字段略有差异（outline 等运行时兜底为空串）
-  const createdChapterIds = await chapterOutlineGenerator.createChapters(
-    outlineChapters as unknown as Parameters<typeof chapterOutlineGenerator.createChapters>[0],
-  );
+  // ---------- 3. 建章 ----------
+  // 建章已并入 createProject（首页各入口只调 createProject，冒烟必须走同一条路径，
+  // 这里再补一次就会把每章建两遍，反而测不出真实链路）。
+  const projectStore = useProjectStore();
+  const createdChapterIds = projectStore.chapters.map(chapter => chapter.id);
   if (createdChapterIds.length !== outlineChapters.length) {
     throw new Error(
       `storyflow 闭环失败：建章数量不符（期望 ${outlineChapters.length}，实际 ${createdChapterIds.length}）`,
     );
   }
 
-  const projectStore = useProjectStore();
   const rawProject = projectStore.currentProject;
   if (!rawProject) {
     throw new Error('storyflow 闭环失败：currentProject 为空');
@@ -365,6 +390,11 @@ export async function runStoryflowClosedLoop(
     characterCount: persistedProject.characters.length,
     foreshadowCount: persistedProject.foreshadows.length,
     volumeCount: persistedProject.volumes.length,
+    // 章纲正文（结构化节点块之外的描述文本）：建章时只读 chapter.outline 而大纲链路
+    // 用的是 chapter.summary，会让每章只剩 CBN/CPNs/CEN，续写合同拿不到章纲描述。
+    chapterOutlineTextCount: persistedProject.chapters.filter(
+      chapter => (chapter.outline ?? '').split('--- 结构化节点 ---')[0].trim().length > 0,
+    ).length,
     coldReloadVerified: true,
     criticalDataHash: coldHash,
     completeCharacterProfileCount: persistedProject.characters.filter(character =>
@@ -459,6 +489,23 @@ export async function runStoryflowClosedLoop(
     onChapterHydrated: () => injectSettingsStore(cfg),
   });
 
+  // 续写全程都在往同一个项目里存章节；批量结束后必须再冷读一次，确认大纲阶段落盘的
+  // 角色/伏笔/卷没有被写作链路的保存覆盖掉（真实回归：saveCurrentProject 以 store 的
+  // 独立 ref 为准，store 未灌角色时会把 characters/foreshadows 覆盖成空数组）。
+  const afterWriteProject = projectStorage.coldReload(projectId);
+  if (!afterWriteProject) {
+    throw new Error('storyflow 闭环失败：批量续写后无法冷读取项目');
+  }
+  const postWritePersistence: PostWritePersistenceVerification = {
+    characterCount: afterWriteProject.characters.length,
+    foreshadowCount: afterWriteProject.foreshadows.length,
+    volumeCount: afterWriteProject.volumes.length,
+    plotChapterCount: afterWriteProject.plotOutline.filter(node => node.type === 'chapter').length,
+    writtenChapterCount: afterWriteProject.chapters.filter(
+      chapter => (chapter.content ?? '').length > 300,
+    ).length,
+  };
+
   return {
     cfg,
     direction,
@@ -469,6 +516,7 @@ export async function runStoryflowClosedLoop(
     runtimeBackend: result.runtimeBackend,
     runtimeVerification: result.runtimeVerification,
     projectStorageVerification,
+    postWritePersistence,
     createdChapterIds,
   };
 }

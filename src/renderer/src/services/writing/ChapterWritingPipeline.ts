@@ -307,18 +307,32 @@ function parseNotBeforeChapter(revealTiming: string | undefined): number | null 
  * 登场时点已到的角色必须放行：合同文本常以“皇子”“狱友”等泛称指代，不写本名，
  * 若只按名字文本匹配，大纲安排在本章登场的角色反而会被审查判成 critical 违规，
  * 写作端与审查端互相打架，触发无意义的 repair 重写。
+ *
+ * 履约文本（fulfillmentText：CBN/CPNs/CEN/mustCover）点名的角色，其优先级高于大纲
+ * 规划的登场时点：本章被要求兑现的事件里就有这个人，再禁止其出场就是自相矛盾的合同。
  */
 export function resolveAllowedChapterCharacters(input: {
   project: Project;
   chapterNumber: number;
   chapterText: string;
+  /**
+   * 本章履约要求原文（CBN/CPNs/CEN/mustCover）。缺省时不做履约覆盖，
+   * 行为与只传 chapterText 时一致。
+   */
+  fulfillmentText?: string;
 }): { allowedNames: string[]; futureReveals: Array<{ description: string; notBeforeChapter: number }> } {
   const allowedNames = new Set<string>();
   const futureReveals: Array<{ description: string; notBeforeChapter: number }> = [];
+  const fulfillmentText = input.fulfillmentText ?? '';
 
   for (const character of input.project.characters ?? []) {
     const notBeforeChapter = parseNotBeforeChapter(character.profile?.revealTiming);
-    if (notBeforeChapter && notBeforeChapter > input.chapterNumber) {
+    // 履约要求点名 → 必须放行。否则「必须写到」与「不许露面」互相打架，模型怎么写都被
+    // 判 critical logic_gap，重写轮次全部空烧。
+    // 真实回归：smoke:storyflow:real ch1 mustCover「当众亮证，岑述被温伯衡锁走」，
+    // 而温伯衡 revealTiming=第5章 → 被排除出白名单 → 连续两轮 critical，批量卡死在第 1 章。
+    const requiredByContract = Boolean(character.name) && fulfillmentText.includes(character.name);
+    if (notBeforeChapter && notBeforeChapter > input.chapterNumber && !requiredByContract) {
       futureReveals.push({
         description: `角色“${character.name}”不得登场或被揭示（计划：${character.profile.revealTiming}）`,
         notBeforeChapter,
@@ -328,7 +342,7 @@ export function resolveAllowedChapterCharacters(input: {
 
     const isProtagonist = /主角|protagonist|hero/iu.test(character.role ?? '');
     const hasDebuted = notBeforeChapter !== null && notBeforeChapter <= input.chapterNumber;
-    if (isProtagonist || hasDebuted || input.chapterText.includes(character.name)) {
+    if (isProtagonist || hasDebuted || requiredByContract || input.chapterText.includes(character.name)) {
       allowedNames.add(character.name);
     }
   }
@@ -730,9 +744,7 @@ export class ChapterWritingPipeline {
       // 但结构化节点已通过 outlineNode 的独立字段传递，outline 里那份会让 goal/description
       // 变成一大段结构化节点，污染 scene-draft 合同语义。
       const cleanOutline = stripStructuredNodeBlock(input.chapter.outline || '');
-      const chapterContractText = [
-        cleanOutline,
-        input.chapter.plotSummary,
+      const chapterFulfillmentText = [
         taskBook?.CBN,
         ...(taskBook?.CPNs ?? []),
         taskBook?.CEN,
@@ -740,10 +752,14 @@ export class ChapterWritingPipeline {
       ]
         .filter(Boolean)
         .join('\n');
+      const chapterContractText = [cleanOutline, input.chapter.plotSummary, chapterFulfillmentText]
+        .filter(Boolean)
+        .join('\n');
       const characterConstraints = resolveAllowedChapterCharacters({
         project: input.project,
         chapterNumber,
         chapterText: chapterContractText,
+        fulfillmentText: chapterFulfillmentText,
       });
       const outlineNode = {
         id: input.chapter.id,

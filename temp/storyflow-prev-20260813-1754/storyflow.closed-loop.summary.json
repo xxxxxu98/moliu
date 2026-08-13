@@ -1,0 +1,132 @@
+{
+  "book": "当社畜开始查账，整个王朝都在发抖",
+  "mode": "storyflow-closed-loop",
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "穿越睁眼，账本没平人先凉",
+      "words": 2446,
+      "head": "后颈的疼比意识来得更早，像一根烧红的细铁钉钉进骨头缝，一路往上窜到后脑勺。周砚没睁眼，先倒吸了一口凉气，想把这一阵疼咽回去，却连牙齿都咬得咯咯发响。他整个人从榻上弹了一下，额头撞上桌沿，又是咚的一声闷响，疼得他满眼金星。他抱着头缓了好一会儿",
+      "tail": "。话音没落，一只手拍在门板上，那根横着的门闩被拨动了一下，格愣响了一声。周砚在昏暗中睁开眼，指头缓缓攥住官袍的衣摆，把心口那口气压了又压，等着那扇门推开的一刻。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "算盘一响，死人账也有破绽",
+      "words": 2919,
+      "head": "门板被一只手从外头拽住，横在门外的门闩哐当一声撤走，跟着一只靴跟踹上来，门轴吃不住力，吱呀着撞开。灰蒙蒙的天光直扑进屋，扫出一条人影落在桌面上，当先那个穿着青灰官袍，手里拎着一卷白布，正是户部司务；后头跟着一个捧文状的书吏，嘴里还在念“畏罪",
+      "tail": "留后手。后手刚藏好，杀人的脚步就到了门外。残页上露出来的只有半行字，剩下的那半截被火烧得干干净净。周砚低头又看了一会儿，低声开口：“剩下的半页，到底写了什么。”",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "碎纸拼账，越拼越像要命图",
+      "words": 3147,
+      "head": "周砚把那半张烧残的账页举到灯火前，翻来覆去看了半晌，只认出半个批文号和一串烧得发黄的粮数。账册上的条目他早已背熟，可这张残页偏偏不在任何一栏里。他忽然动了念头，既然案角的灰堆里藏着这么一片，底下或许还有别的。他把残页小心压进算盘底下，重新蹲",
+      "tail": "也不点破，说声“改日再来核”，便走了出去。他回到值房，把碎纸重新摊开，那枚“粮”字右半与簿上笔迹在脑中拼合，最后一角缺口也严严实实地扣上，像一把钥匙落进了锁孔。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "书架暗格，藏着一本催命册",
+      "words": 2460,
+      "head": "二更天刚过，窗外那道贴纸的影子才总算不见了。周砚没有急着动，摸着黑又数了五十息，数到自己都嫌自己胆子小。他摸出火折子，拢着火先不点灯，贴着窗纸的破缝往外照了一圈，外头空落落的，连风动树梢的影子都没有。确认没人，他才把火头凑近烛台，蜡油一烫，",
+      "tail": "斜，皮面上的烫痕跟着一明一灭。他盯着那道烫痕，心里翻上来一阵说不清的后怕。原主连命都丢了，都没来得及把这本册子带走，里头装着的东西，怕不是让人安稳睡一觉的物件。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "名册第一页，崔敬之三个字",
+      "words": 2904,
+      "head": "周砚把那本册子从暗格里抽出来的时候，掌心里先汗了一层。指腹触到封皮，触感冰凉，带着老牛皮特有的涩，像摸着一块磨了多年的刀鞘。他屏住呼吸，退到灯边坐下，把册子平放在膝上，没有急着翻。烛火晃了两晃，映得封皮上的烫痕忽明忽暗。暗褐色的皮面，没有书",
+      "tail": "中睁开眼。他知道自己明天一早该往哪儿走了。粮行的门是从哪边开的，后门又通着哪条巷子，他得亲眼去看一看。名册上的字已经替他画好了路，接下来的几脚，得靠他自己踩实。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "穿越睁眼，账本没平人先凉"
+    },
+    {
+      "orderIndex": 1,
+      "title": "算盘一响，死人账也有破绽"
+    },
+    {
+      "orderIndex": 2,
+      "title": "碎纸拼账，越拼越像要命图"
+    },
+    {
+      "orderIndex": 3,
+      "title": "书架暗格，藏着一本催命册"
+    },
+    {
+      "orderIndex": 4,
+      "title": "名册第一页，崔敬之三个字"
+    },
+    {
+      "orderIndex": 5,
+      "title": "粮商掌柜，昨夜上吊了"
+    },
+    {
+      "orderIndex": 6,
+      "title": "伙计一指，逼死人命的罪落到头上"
+    },
+    {
+      "orderIndex": 7,
+      "title": "伪钞案撞上仓场亏空"
+    },
+    {
+      "orderIndex": 8,
+      "title": "指甲缝里翻出真死因"
+    },
+    {
+      "orderIndex": 9,
+      "title": "库门锁灰，锁着同一条线"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1786613399390",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-yotphD\\story-runtime\\proj-1786613399390-7dc64810f717.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 5,
+    "canonicalSnapshots": 6,
+    "latestSnapshotChapter": 5,
+    "sceneChunks": 5,
+    "events": 26
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "coldReloadVerified": true,
+    "criticalDataHash": "74d99a4f0abed68fe941d8472952681aab458c0b67e2c029500a8fcc751a7799",
+    "completeCharacterProfileCount": 12,
+    "positioningPersisted": true
+  },
+  "provider": "openai",
+  "model": "deepseek-v4-flash",
+  "totalMs": 3449194,
+  "warnings": []
+}
