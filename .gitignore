@@ -110,5 +110,7 @@ temp/storyflow.closed-loop.*
 temp/storyflow.closed-loop.prose/
 # harness 模拟主进程的项目存储（每轮冒烟一个，数百 KB，含正文）
 temp/*.project-store.json
+# 多厂商矩阵冒烟产物（每厂商一轮的真实 AI 大纲/正文 + 对比矩阵）
+temp/storyflow-matrix/
 test.md
 *.console.log

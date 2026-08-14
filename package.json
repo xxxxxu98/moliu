@@ -19,6 +19,7 @@
     "smoke:continue-write:real:multi": "node scripts/agent-continue-write-real-multi.mjs",
     "smoke:topic-discovery:real": "node scripts/agent-topic-discovery-real-smoke.mjs",
     "smoke:storyflow:real": "node scripts/agent-storyflow-real-smoke.mjs",
+    "smoke:storyflow:real:multi": "node scripts/agent-storyflow-real-multi.mjs",
     "cleanup:continue-write-artifacts": "node scripts/cleanup-continue-write-artifacts.mjs"
   },
   "keywords": [],
