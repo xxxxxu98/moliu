@@ -27,6 +27,7 @@ import { join } from 'node:path';
 
 import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
 import { mapExecutableOutlineToGeneratedOutline } from '@/services/outline/adapters/executable-outline-adapter';
+import { inspectOutlineCompleteness } from '@/services/outline/validation/outlineCompleteness';
 import type { ExecutableOutline } from '@/services/outline/types/executable-outline';
 import type { OutlineDirection } from '@/services/outline/types/direction';
 import type { GeneratedOutline } from '@/types/inspiration';
@@ -118,6 +119,7 @@ export interface StoryflowArtifactPaths {
   summaryPath: string;
   outlinePath: string;
   proseDir: string;
+  resumeOutlinePath: string;
 }
 
 export function resolveStoryflowArtifactPaths(): StoryflowArtifactPaths {
@@ -138,6 +140,7 @@ export function resolveStoryflowArtifactPaths(): StoryflowArtifactPaths {
     summaryPath: join(tempDir, names.summary),
     outlinePath: join(tempDir, names.outline),
     proseDir: join(tempDir, names.proseDir),
+    resumeOutlinePath: join(tempDir, 'storyflow-checkpoints', `${suffix || 'default'}.outline.json`),
   };
 }
 
@@ -321,6 +324,8 @@ export async function runStoryflowClosedLoop(
   // MOLIU_OUTLINE_CACHE：调试续写阶段时复用上一轮 ExecutableOutline，跳过 30-40 分钟的
   // 大纲生成。默认不开启，完整冒烟仍然全程真实生成。
   const outlineCachePath = process.env.MOLIU_OUTLINE_CACHE?.trim();
+  const artifactPaths = resolveStoryflowArtifactPaths();
+  const resumeRequested = /^(?:1|true|yes)$/iu.test(process.env.MOLIU_RESUME_STORYFLOW?.trim() ?? '');
   let direction: OutlineDirection | null = null;
   const generateExecutableOutline = async (): Promise<ExecutableOutline> => {
     const generator = new UnifiedOutlineGenerator();
@@ -355,14 +360,49 @@ export async function runStoryflowClosedLoop(
       mkdirSync(join(outlineCachePath, '..'), { recursive: true });
       writeFileSync(outlineCachePath, JSON.stringify(expanded, null, 2), 'utf-8');
     }
+    mkdirSync(join(artifactPaths.resumeOutlinePath, '..'), { recursive: true });
+    writeFileSync(artifactPaths.resumeOutlinePath, JSON.stringify({
+      version: 1,
+      prompt,
+      wordCountRange,
+      provider: cfg.provider,
+      model: cfg.model,
+      outline: expanded,
+    }, null, 2), 'utf-8');
     return expanded;
   };
 
-  const cachedOutline =
+  const explicitCachedOutline =
     outlineCachePath && existsSync(outlineCachePath)
       ? (JSON.parse(readFileSync(outlineCachePath, 'utf-8')) as ExecutableOutline)
       : null;
-  const executableOutline = cachedOutline ?? (await generateExecutableOutline());
+  let resumableOutline: ExecutableOutline | null = null;
+  if (!explicitCachedOutline && resumeRequested && existsSync(artifactPaths.resumeOutlinePath)) {
+    try {
+      const checkpoint = JSON.parse(readFileSync(artifactPaths.resumeOutlinePath, 'utf-8')) as {
+        version?: number;
+        prompt?: string;
+        wordCountRange?: string;
+        provider?: string;
+        model?: string;
+        outline?: ExecutableOutline;
+      };
+      const matchesRun = checkpoint.version === 1
+        && checkpoint.prompt === prompt
+        && checkpoint.wordCountRange === wordCountRange
+        && checkpoint.provider === cfg.provider
+        && checkpoint.model === cfg.model;
+      if (matchesRun && checkpoint.outline
+        && inspectOutlineCompleteness(checkpoint.outline).canApply) {
+        resumableOutline = checkpoint.outline;
+      }
+    } catch {
+      // 检查点损坏时按未命中处理并重新生成；不能让可选加速能力阻断真实 smoke。
+    }
+  }
+  const executableOutline = explicitCachedOutline
+    ?? resumableOutline
+    ?? (await generateExecutableOutline());
 
   const generatedOutline = mapExecutableOutlineToGeneratedOutline(executableOutline);
   const outlineChapters = generatedOutline.chapters;
@@ -452,7 +492,7 @@ export async function runStoryflowClosedLoop(
   // 建章后立即落盘大纲产物：真实 AI 续写阶段耗时长、可能超时，提前留存大纲数据供质量评估
   // （并发矩阵时带后缀路径，见 resolveStoryflowArtifactPaths）
   writeFileSync(
-    resolveStoryflowArtifactPaths().outlinePath,
+    artifactPaths.outlinePath,
     JSON.stringify(
       {
         title: generatedOutline.title,
@@ -485,6 +525,43 @@ export async function runStoryflowClosedLoop(
     ),
     'utf8'
   );
+
+  const checkpointResults: ContinueWriteChapterRunResult[] = [];
+  const persistProgress = (): void => {
+    mkdirSync(artifactPaths.proseDir, { recursive: true });
+    for (const chapter of checkpointResults) {
+      writeFileSync(
+        join(artifactPaths.proseDir, `ch${String(chapter.chapterNumber).padStart(2, '0')}.txt`),
+        chapter.output.prose,
+        'utf8',
+      );
+    }
+    writeFileSync(artifactPaths.summaryPath, JSON.stringify({
+      book: project.name,
+      mode: 'storyflow-closed-loop',
+      status: 'in-progress',
+      requestedChapterCount: chapterCount,
+      completedChapters: checkpointResults.length,
+      chapters: outlineChapters.length,
+      outlinePath: artifactPaths.outlinePath,
+      proseDir: artifactPaths.proseDir,
+      batch: checkpointResults.map(chapter => ({
+        ch: chapter.chapterNumber,
+        accepted: chapter.output.success,
+        title: chapter.output.title,
+        words: chapter.output.prose.length,
+        head: chapter.output.prose.slice(0, 120),
+        tail: chapter.output.prose.slice(-80),
+        error: chapter.output.error ?? null,
+      })),
+      projectStorageVerification,
+      provider: cfg.provider,
+      model: cfg.model,
+      updatedAt: new Date().toISOString(),
+      warnings: ['任务尚未完成；本摘要为阶段性检查点，进程超时或中断后仍可用于诊断。'],
+    }, null, 2), 'utf8');
+  };
+  persistProgress();
 
   // ---------- 4. 批量续写（真实 BATCH_CONTINUE 路径，与 useBatchWriter 对齐） ----------
   // 真实模式注入真实 StructuredAI（此前缺省导致内部回落 ContinueWriteFakeAI，冒烟失真）
@@ -530,6 +607,10 @@ export async function runStoryflowClosedLoop(
     // 让记忆提取（enhanceWithAI → useAIService → useSettingsStore）能读到 provider，
     // 避免「请先配置 AI 服务」导致记忆 AI 增强静默失败。
     onChapterHydrated: () => injectSettingsStore(cfg),
+    onChapterSettled: ({ result: chapterResult }) => {
+      checkpointResults.push(chapterResult);
+      persistProgress();
+    },
   });
 
   // 续写全程都在往同一个项目里存章节；批量结束后必须再冷读一次，确认大纲阶段落盘的

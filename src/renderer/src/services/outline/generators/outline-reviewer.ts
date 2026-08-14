@@ -32,7 +32,11 @@ export type OutlineQualityIssueKind =
   | 'opening-hook'
   | 'goldenfinger-late-reveal'
   | 'over-scoped-mustcover'
-  | 'invalid-blueprint-format';
+  | 'invalid-blueprint-format'
+  | 'inconsistent-story-scale'
+  | 'chapter-reference-out-of-range'
+  | 'unknown-character-reference'
+  | 'protagonist-name-mismatch';
 
 export interface OutlineQualityIssue {
   kind: OutlineQualityIssueKind;
@@ -286,6 +290,23 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
     }
   }
 
+  // 9. 跨模块语义一致性。大纲各节是同一份合同的不同投影：角色、章数、字数
+  // 任一处不一致都不能靠下游“猜”。复用最终可应用门禁，保证审查与落库口径一致。
+  const semanticKinds = new Set([
+    'inconsistent-story-scale',
+    'chapter-reference-out-of-range',
+    'unknown-character-reference',
+    'protagonist-name-mismatch',
+  ]);
+  for (const blocker of inspectOutlineCompleteness(outline).blockers) {
+    if (!semanticKinds.has(blocker.kind)) continue;
+    issues.push({
+      kind: blocker.kind as OutlineQualityIssueKind,
+      chapterOrder: blocker.chapterNumber,
+      detail: blocker.message,
+    });
+  }
+
   return issues;
 }
 
@@ -337,7 +358,9 @@ export function buildOutlineReviewPrompt(params: {
    【括号硬约束】禁止使用任何括号（中文（）或英文()），补充说明一律用逗号并入句中。若问题清单报"括号跨事件拆分"，说明初稿把一个括号拆到了两条事件里，修正时必须删除括号、把括号内容用逗号并入对应事件正文，确保修正后每条事件的开括号与闭括号各自配平；
 5. 【开篇钩子硬约束】开篇钩子 30 字以内的单场景动作钩子；
 6. 【禁止输出单章蓝图】初稿已剥离逐章内容，你也不得补写「## 单章蓝图」「## 逐章蓝图」小节，章级缺陷由后续独立请求修复；
-7. 若问题清单为（无）或已全部修复，原样输出主方案即可。
+7. 【角色真源】「核心角色/关键角色规划」是全书角色唯一真源。卷纲、支线、伏笔中的每个具名人物都必须在角色规划中有完整角色块；职位、阵营、身份标签不得冒充姓名。发现漏登角色时补齐角色块，禁止另造一套同功能角色替换卷纲人物；
+8. 【规模真源】目标总字数、总章数、平均章字数、卷数与每卷章数必须能互相验算，所有支线/伏笔/情绪/爽点章节不得超过总章数；
+9. 若问题清单为（无）或已全部修复，原样输出主方案即可。
 直接输出修正后的完整主方案 Markdown，不要任何前后解释文字。`;
 
   const user = `【方向卡】

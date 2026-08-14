@@ -202,6 +202,7 @@ export interface StepBuildContext {
   direction: OutlineDirection;
   wordCountRange: string;
   enhancementBrief?: string;
+  creativeExpansionMode?: 'preserve-genre' | 'allow-cross-genre';
   /** 前序步骤已拼装的累计方案文本，供提取上下文段 */
   accumulatedRawText: string;
 }
@@ -217,11 +218,15 @@ const SKELETON_SECTIONS: StepSectionDef[] = [
 
 /** 步1 设定层：定位/驱动/金手指/规模/四幕/世界。主方案起点，无上下文依赖。 */
 export function buildSkeletonStepPrompt(ctx: StepBuildContext): BuiltPrompt {
+  const genreBoundary = ctx.creativeExpansionMode === 'allow-cross-genre'
+    ? '用户已允许跨题材扩展，可新增超自然机制，但必须服务原始故事核。'
+    : '保持原始题材边界：种子未明确包含超自然/系统/异能/修仙/魔法时，禁止擅自添加；金手指可写成现代知识、职业能力、信息差或制度工具。';
   const extraGuidance = `本步是方案骨架，请先定下来：题材定位、主角与核心冲突、金手指、故事规模、四幕骨架、世界与势力。
 - 主角姓名必须明确（禁止用「主角」「少年」等泛称），后续步骤会沿用此姓名。
 - 「故事规模规划」的「建议卷数」必须与目标字数区间匹配，后续卷纲步骤会按此卷数生成。
 - 「四幕结构」必须完整输出四幕，每幕给出幕目标、关键转折、幕结束状态。
-- 「世界与势力规划」至少 3 个核心地点、3 个关键势力、3 条世界规则，不要用卷标题充当地点名。`;
+- 「世界与势力规划」至少 3 个核心地点、3 个关键势力、3 条世界规则，不要用卷标题充当地点名。
+- 【题材边界】${genreBoundary}`;
 
   const system = buildStepSystem(SKELETON_SECTIONS, extraGuidance);
   const user = `请将下面这个已选中的创作方向，展开为方案骨架（仅本步要求的段落）。

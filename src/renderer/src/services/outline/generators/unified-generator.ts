@@ -228,6 +228,8 @@ export interface GenerateOptions {
   requestTimeoutMs?: number;
   /** 一次生成的大纲数量，默认 3 */
   count?: number;
+  /** 默认 preserve-genre；只有用户明确授权时才允许跨题材增加超自然机制。 */
+  creativeExpansionMode?: 'preserve-genre' | 'allow-cross-genre';
   /** 可选 AbortSignal：用于在发起新请求 / 重置时取消旧的在飞请求，避免竞势与多余计费。 */
   signal?: AbortSignal;
   /**
@@ -463,6 +465,7 @@ export class UnifiedOutlineGenerator {
         const builtPrompt = buildDirectionPrompt({
           seed: prompt,
           wordCountRange: opts.wordCountRange || DEFAULT_WORD_COUNT_RANGE,
+          creativeExpansionMode: opts.creativeExpansionMode ?? 'preserve-genre',
         });
 
         onProgress?.(attempt === 1 ? '正在生成创作方向...' : `重新生成创作方向... (${attempt})`);

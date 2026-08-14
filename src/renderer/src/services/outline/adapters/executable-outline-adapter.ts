@@ -53,7 +53,8 @@ function parseWordCountRange(rangeText?: string): number | null {
     const min = Number(rangeMatch[1]);
     const max = Number(rangeMatch[2]);
     if (Number.isFinite(min) && Number.isFinite(max)) {
-      return Math.round(((min + max) / 2) * 10000);
+      const multiplier = normalized.includes('万') ? 10_000 : 1;
+      return Math.round(((min + max) / 2) * multiplier);
     }
   }
 
@@ -83,6 +84,13 @@ function resolveTargetWordCount(
   const preferred = parseWordCountRange(preferredRange);
   if (preferred) {
     return preferred;
+  }
+
+  // storyScale 是大纲规模的结构化真源。旧实现跳过它，导致“45 万字 / 180 章”
+  // 在应用时按 3 卷兜底重算成 54 万字，metadata 出现两套互相矛盾的计划。
+  const structuredTarget = parseWordCountRange(outline.storyScale?.targetWordCount);
+  if (structuredTarget) {
+    return structuredTarget;
   }
 
   const candidates = [

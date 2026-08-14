@@ -4,6 +4,8 @@ import { buildWordCountBreakdown } from '@/services/outline/utils';
 export interface DirectionPromptOptions {
   seed: string;
   wordCountRange: string;
+  /** 默认守住原题材边界；只有用户明确授权时才允许跨题材增加超自然机制。 */
+  creativeExpansionMode?: 'preserve-genre' | 'allow-cross-genre';
 }
 
 const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事总编，任务是根据用户提供的创意种子，生成 3 个“适合继续展开成长篇网文”的创作方向卡。
@@ -86,13 +88,16 @@ const SYSTEM_PROMPT = `你是一名擅长中文长篇网文策划的资深故事
 - 三个方案中必须有一个方案的“推荐分”最高，并且推荐理由最完整
 - 所有方案都要避免空泛词汇，必须具体到题材驱动、人物处境、冲突机制、章节推进方式或读者体验
 - 如果创意信息不足，请优先保证结构完整，再给出合理但简洁的内容。宁可短而完整，也不要长而失控。
-- 脑洞保留硬要求：每个方向的“标题”与“premise”必须保留创意种子中的反常识设定/新鲜元素组合，禁止将其洗回平庸套路；脑洞与可写性并重，宁可让设定更野，也不要退回经典开局`;
+- 脑洞保留硬要求：每个方向的“标题”与“premise”必须保留创意种子已经给出的反常识设定/新鲜元素组合，禁止将其洗回平庸套路；“放大已有脑洞”不等于擅自新增题材机制`;
 
 export function buildDirectionPrompt(options: DirectionPromptOptions): BuiltPrompt {
   const breakdown = buildWordCountBreakdown(options.wordCountRange);
+  const genreBoundary = options.creativeExpansionMode === 'allow-cross-genre'
+    ? '用户已允许跨题材扩展：可以新增超自然/系统/异能机制，但必须说明它如何服务原始故事核。'
+    : '题材边界必须保持：若创意种子没有明确出现超自然、系统、异能、修仙、魔法等设定，禁止擅自添加；应从职业方法、制度博弈、人物关系与现实知识中提炼差异化。';
 
   return {
-    system: SYSTEM_PROMPT,
+    system: `${SYSTEM_PROMPT}\n- 【题材边界】${genreBoundary}`,
     user: `请基于以下创意种子，生成 3 个适合继续展开成长篇网文的方向方案卡。
 
 【目标字数区间】
@@ -113,6 +118,7 @@ ${options.seed}
 2. 优先考虑网文读者的追读动力、爽点密度和长线可写性
 3. 如果原始创意比较模糊，请主动补足能支撑长篇的冲突与成长路径
 4. 不要直接输出完整大纲，只输出方向方案卡
-5. 每个方向都必须体现“章节规模意识”：前30章只能完成开局承诺、建立第一轮冲突闭环，并为后续长线升级留下足够空间`,
+5. 每个方向都必须体现“章节规模意识”：前30章只能完成开局承诺、建立第一轮冲突闭环，并为后续长线升级留下足够空间
+6. ${genreBoundary}`,
   };
 }

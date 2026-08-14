@@ -177,4 +177,75 @@ describe('inspectOutlineCompleteness', () => {
 
     expect(result.blockers.some(blocker => blocker.kind === 'chronology-regression')).toBe(false);
   });
+
+  it('目标字数与章数乘单章字数偏差过大时阻断应用', () => {
+    const outline = makeOutline();
+    outline.storyScale = {
+      targetWordCount: '45万字',
+      estimatedChapterCount: 180,
+      averageWordsPerChapter: 3000,
+      suggestedVolumeCount: 3,
+      estimatedChaptersPerVolume: 60,
+      startupPhaseRatio: '28%',
+      longformProgressionNote: '',
+    };
+
+    const result = inspectOutlineCompleteness(outline);
+
+    expect(result.blockers.map(blocker => blocker.kind)).toContain('inconsistent-story-scale');
+  });
+
+  it('支线与伏笔章节超出全书总章数时阻断应用', () => {
+    const outline = makeOutline();
+    outline.storyScale = {
+      targetWordCount: '45万字',
+      estimatedChapterCount: 180,
+      averageWordsPerChapter: 2500,
+      suggestedVolumeCount: 3,
+      estimatedChaptersPerVolume: 60,
+      startupPhaseRatio: '28%',
+      longformProgressionNote: '',
+    };
+    outline.subplots = [{
+      title: '旧案线',
+      functionInStory: '推动主线',
+      relatedCharacters: [],
+      startChapter: 20,
+      endChapter: 188,
+      relationToMainPlot: '提供证据',
+    }];
+    outline.foreshadowPlan[0] = {
+      ...outline.foreshadowPlan[0],
+      hint: '终局密档',
+      setupChapter: 30,
+      payoffChapter: 214,
+    } as never;
+
+    const result = inspectOutlineCompleteness(outline);
+
+    expect(result.blockers.filter(blocker => blocker.kind === 'chapter-reference-out-of-range'))
+      .toHaveLength(2);
+  });
+
+  it('卷纲引用未登记具名角色时阻断应用', () => {
+    const outline = makeOutline();
+    outline.volumePlan = [{
+      volumeIndex: 1,
+      title: '第一卷',
+      objective: '',
+      coreConflict: '',
+      climax: '',
+      reversal: '',
+      endingHook: '',
+      protagonistGrowth: '',
+      keyCharacters: ['刑部主事郑伯昭，负责追查旧案'],
+      setupForeshadows: [],
+      payoffForeshadows: [],
+      relationshipShifts: [],
+    }];
+
+    const result = inspectOutlineCompleteness(outline);
+
+    expect(result.blockers.map(blocker => blocker.kind)).toContain('unknown-character-reference');
+  });
 });

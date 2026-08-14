@@ -163,6 +163,32 @@ describe('mapExecutableOutlineToGeneratedOutline - 定位字段不污染题材',
   });
 });
 
+describe('mapExecutableOutlineToGeneratedOutline - 故事规模真源', () => {
+  it('estimatedWordCount 优先读取 storyScale.targetWordCount', () => {
+    const outline = makeOutline();
+    outline.storyScale = {
+      ...outline.storyScale,
+      targetWordCount: '45万字',
+      estimatedChapterCount: 180,
+      averageWordsPerChapter: 2500,
+      suggestedVolumeCount: 3,
+      estimatedChaptersPerVolume: 60,
+    };
+
+    const result = mapExecutableOutlineToGeneratedOutline(outline);
+
+    expect(result.estimatedWordCount).toBe(450_000);
+    expect(result.storyScale?.targetWordCount).toBe('45万字');
+  });
+
+  it('纯数字字数区间不会被误乘一万', () => {
+    const outline = makeOutline();
+    outline.storyScale.targetWordCount = '300000-600000字';
+
+    expect(mapExecutableOutlineToGeneratedOutline(outline).estimatedWordCount).toBe(450_000);
+  });
+});
+
 describe('splitStartupBlocksToChapters - CBN 用本章关键事件（不再承接上章 CEN）', () => {
   it('第 1 章 CBN 用开篇钩子', () => {
     const result = mapExecutableOutlineToGeneratedOutline(makeOutline());

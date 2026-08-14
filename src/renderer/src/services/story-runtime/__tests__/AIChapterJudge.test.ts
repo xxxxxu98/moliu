@@ -139,6 +139,40 @@ describe('AIChapterJudge', () => {
       violated: false,
     });
   });
+
+  it('不得把未具名职位脑补成 mustCover 点名的具体角色', async () => {
+    let capturedSystem = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        return {
+          fulfillment: [{
+            node: '郑伯昭当堂扣下账册并威胁沈砚',
+            fulfilled: true,
+            evidence: ['主事把账册扣在袖中，冷声威胁沈砚。'],
+            reason: '主事即郑伯昭',
+          }],
+          forbidden: [],
+          issues: [],
+        };
+      }),
+    };
+
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: ['郑伯昭当堂扣下账册并威胁沈砚'],
+      forbiddenZones: [],
+      chapterText: '主事把账册扣在袖中，冷声威胁沈砚。',
+      allowedCharacterNames: ['沈砚', '郑伯昭'],
+      checkDeepSemantic: true,
+    });
+
+    expect(capturedSystem).toContain('禁止身份脑补');
+    expect(result.fulfillment[0]).toMatchObject({
+      fulfilled: false,
+      evidence: [],
+    });
+    expect(result.fulfillment[0].reason).toContain('郑伯昭');
+  });
 });
 
 describe('AIFulfillmentJudge 兼容封装', () => {

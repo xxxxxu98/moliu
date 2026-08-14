@@ -47,6 +47,9 @@ const cleanupCfg = smokeCleanupConfig(runSuffix);
 cleanupSmokeArtifacts('smoke:storyflow:real', cleanupCfg.artifacts, {
   prefixes: cleanupCfg.prefixes,
   tracePrefixes: cleanupCfg.tracePrefixes,
+  // 自动断点独立于本轮诊断产物；只有 MOLIU_RESUME_STORYFLOW=1 才会读取，
+  // 默认新跑仍不会被旧大纲掩盖。
+  keepNames: new Set(['storyflow-checkpoints']),
 });
 
 // better-sqlite3 必须按 Electron ABI 编译。普通系统 Node 跑 Vitest 会因

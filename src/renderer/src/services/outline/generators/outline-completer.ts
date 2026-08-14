@@ -167,6 +167,11 @@ export function compactContext(
     oneLiner: outline.oneLiner,
     premise: outline.premise,
     storyEngine: outline.storyEngine,
+    // 角色规划是续写合同的真源。定点拆章若看不到它，会继续沿用卷纲里的漏登姓名，
+    // 最终形成“卷纲一套人、角色表另一套人”的不可写状态。
+    canonicalCharacterNames: (outline.keyCharacters ?? []).map(character => character.name),
+    keyCharacters: outline.keyCharacters ?? [],
+    foreshadowPlan: outline.foreshadowPlan ?? [],
     volumePlan: outline.volumePlan,
     startupPack30: outline.startupPack30,
     existingChapterCanon: (outline.chapterBlueprints ?? [])
@@ -245,7 +250,8 @@ function buildCharacterCompletionPrompt(
   direction: OutlineDirection,
 ): { system: string; user: string } {
   return {
-    system: `你是中文长篇网文角色架构师。输出“## 关键角色规划”完整替换节，共 10 个互不重名的角色：主角1、核心盟友2、阶段反派3、贯穿反派1、终局反派1、功能型配角2。
+    system: `你是中文长篇网文角色架构师。输出“## 关键角色规划”完整替换节，至少 10 个互不重名的角色：主角1、核心盟友2、阶段反派3、贯穿反派1、终局反派1、功能型配角2。
+卷纲 keyCharacters 中出现的每个具体姓名都必须逐一建档，不得另造同功能角色替换；“主角/九品书吏/司天监监正”等职位或身份标签不是姓名，不得单独建档。
 每个角色严格使用：
 #### 角色名或功能标签
 - 姓名：

@@ -30,6 +30,8 @@
  * - 每厂商全程真实 AI（默认 5 章约 70-110 分钟）；快速回归先 MOLIU_CHAPTER_COUNT=1。
  * - 设 MOLIU_OUTLINE_CACHE=temp/outline.shared.json 可让所有厂商共用同一份缓存大纲，
  *   只对比写作阶段的厂商差异（大纲阶段不重复跑）。
+ * - 设 MOLIU_RESUME_STORYFLOW=1 可复用同厂商、同模型、同种子、同字数区间的自动大纲检查点；
+ *   默认仍全新生成，避免真实大纲回归被旧缓存掩盖。
  * - 单厂商失败（配置错/断言挂/进程崩）不中断矩阵：记录失败继续其它；
  *   任一厂商失败最终退出码非 0。厂商配置在跑前统一预检，ID 写错立即报出可用列表。
  */
@@ -191,7 +193,11 @@ function buildMatrixRow(providerMeta, exitCode, wallMs) {
       const s = JSON.parse(readFileSync(summaryPath, 'utf8'));
       const batch = s.batch ?? [];
       const words = batch.map(item => item.words).filter(w => typeof w === 'number');
-      row.chaptersAccepted = `${batch.filter(item => item.accepted).length}/${batch.length}`;
+      const requested = Number.isFinite(Number(s.requestedChapterCount))
+        ? Number(s.requestedChapterCount)
+        : batch.length;
+      row.chaptersAccepted = `${batch.filter(item => item.accepted).length}/${requested}`;
+      row.status = s.status ?? null;
       row.wordsMin = words.length ? Math.min(...words) : null;
       row.wordsAvg = words.length ? Math.round(words.reduce((a, b) => a + b, 0) / words.length) : null;
       row.wordsMax = words.length ? Math.max(...words) : null;

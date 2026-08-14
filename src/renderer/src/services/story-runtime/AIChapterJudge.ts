@@ -59,6 +59,8 @@ export class AIChapterJudge implements ChapterJudge {
         '## 1) 履约（fulfillment）',
         '- 判断 mustCover 节点是否已在正文中情节兑现',
         '- 看语义，不要求与节点原文一字不差；同义改写、拆句、换人称均算履约',
+        '- 【禁止身份脑补】节点点名具体角色时，正文必须有该姓名或无歧义的已建立称谓，并有其动作/对白证据；不得把未具名的“主事/公公/侍卫”等职位自动等同为节点中的具名角色',
+        '- evidence 必须是正文中真实存在的原句；不得改写证据、补写姓名或用推断性说明代替原文',
         '- 【可见场面】必须有可感知的对话/动作/取证场面；仅一句带过、回忆里提一句、章末口号式表态 → fulfilled=false',
         '- 仅当完全看不到该情节时也判 fulfilled=false',
         '- 【跨章目标】若节点含限期/倒计时/否则将/「N 天内」等跨章标记（如「必须在三天内翻案，否则将被处斩」），正文做到实质推进（取得关键证据、当众指认、完成阶段对峙）即视为履约，不要求章内完整兑现；不要把「未彻底完结」判为未履约',
@@ -107,21 +109,57 @@ export class AIChapterJudge implements ChapterJudge {
     });
 
     const parsed = parseSchema(chapterJudgeResultSchema, raw, '章节语义审查结果');
-    return this.normalize(mustCover, forbiddenZones, checkDeepSemantic, parsed);
+    return this.normalize(
+      mustCover,
+      forbiddenZones,
+      checkDeepSemantic,
+      parsed,
+      input.chapterText,
+      [
+        ...(input.allowedCharacterNames ?? []),
+        ...(input.stateDigest?.entities ?? []).map(entity => entity.name),
+      ],
+    );
   }
 
   private normalize(
     mustCover: string[],
     forbiddenZones: string[],
     checkDeepSemantic: boolean,
-    parsed: ChapterJudgeResult
+    parsed: ChapterJudgeResult,
+    chapterText: string,
+    knownCharacterNames: string[],
   ): ChapterJudgeResult {
     const fulfillmentByNode = new Map(
       parsed.fulfillment.map(item => [normalizeContractKey(item.node), item]),
     );
     const fulfillment: FulfillmentNodeJudgment[] = mustCover.map(node => {
       const hit = fulfillmentByNode.get(normalizeContractKey(node));
-      if (hit) return { ...hit, node };
+      if (hit) {
+        const requiredNames = [...new Set(knownCharacterNames)]
+          .map(name => name.trim())
+          .filter(name => name.length >= 2 && node.includes(name));
+        const missingNames = requiredNames.filter(name => !chapterText.includes(name));
+        if (hit.fulfilled && missingNames.length > 0) {
+          return {
+            node,
+            fulfilled: false,
+            evidence: [],
+            reason: `正文未明确出现节点点名角色：${missingNames.join('、')}；禁止用未具名职位推断履约`,
+          };
+        }
+        const invalidEvidence = hit.evidence.filter(evidence => !chapterText.includes(evidence));
+        if (hit.fulfilled && requiredNames.length > 0
+          && hit.evidence.length > 0 && invalidEvidence.length === hit.evidence.length) {
+          return {
+            node,
+            fulfilled: false,
+            evidence: [],
+            reason: '模型返回的履约证据均不是正文原句，无法据此放行',
+          };
+        }
+        return { ...hit, node };
+      }
       return {
         node,
         fulfilled: false,

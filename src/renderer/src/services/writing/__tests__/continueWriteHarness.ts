@@ -990,6 +990,13 @@ export async function runContinueWriteChapters(options: {
    * 供调用方重新注入 AI 配置，避免记忆提取等走 settings 的组件读不到 provider。
    */
   onChapterHydrated?: () => void;
+  /** 每章成功或最终失败后回调；真实长跑冒烟用它即时落盘，避免进程超时后整轮无摘要。 */
+  onChapterSettled?: (input: {
+    result: ContinueWriteChapterRunResult;
+    completedChapters: number;
+    requestedChapters: number;
+    project: Project;
+  }) => void | Promise<void>;
   /** 续写章节标题回写客户端，透传到 pipeline（harness 默认无） */
   plotOutlineClient?: {
     updateChapterTitle(input: ChapterTitleUpdate): Promise<void>;
@@ -1114,6 +1121,12 @@ export async function runContinueWriteChapters(options: {
       // 成功：保留结果，继续下一章
       if (finalResult?.output.success) {
         chapters.push(finalResult);
+        await options.onChapterSettled?.({
+          result: finalResult,
+          completedChapters: chapters.length,
+          requestedChapters: chapterCount,
+          project: session.getProject(),
+        });
         continue;
       }
       // 重试耗尽（持久/瞬态）：记录失败章信息后结束整批（质量优先，不再留白补章继续）
@@ -1147,6 +1160,12 @@ export async function runContinueWriteChapters(options: {
           },
           taskBook: null,
           mode,
+        });
+        await options.onChapterSettled?.({
+          result: chapters.at(-1)!,
+          completedChapters: chapters.length,
+          requestedChapters: chapterCount,
+          project: session.getProject(),
         });
       }
       break; // 重试耗尽：结束整批，不再继续后续章（质量优先）

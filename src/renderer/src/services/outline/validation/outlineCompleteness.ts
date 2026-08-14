@@ -29,7 +29,11 @@ export type OutlineCompletenessBlockerKind =
   | 'invalid-cpn-count'
   | 'invalid-chapter-order'
   | 'incomplete-blueprint'
-  | 'chronology-regression';
+  | 'chronology-regression'
+  | 'inconsistent-story-scale'
+  | 'chapter-reference-out-of-range'
+  | 'unknown-character-reference'
+  | 'protagonist-name-mismatch';
 
 export interface OutlineCompletenessBlocker {
   kind: OutlineCompletenessBlockerKind;
@@ -87,6 +91,146 @@ function blueprintEvents(blueprint: ChapterBlueprint): string[] {
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+}
+
+function parseTargetWordCount(value: string | undefined): number | null {
+  if (!value) return null;
+  const normalized = value.replace(/[,，\s]/gu, '');
+  const range = normalized.match(/(\d+(?:\.\d+)?)万?[-~～至到](\d+(?:\.\d+)?)万?(?:字)?/u);
+  if (range) {
+    const min = Number(range[1]);
+    const max = Number(range[2]);
+    if (Number.isFinite(min) && Number.isFinite(max)) {
+      const multiplier = normalized.includes('万') ? 10_000 : 1;
+      return Math.round(((min + max) / 2) * multiplier);
+    }
+  }
+  const wan = normalized.match(/(\d+(?:\.\d+)?)万(?:字)?/u);
+  if (wan) return Math.round(Number(wan[1]) * 10_000);
+  const plain = normalized.match(/(\d{4,9})(?:字)?/u);
+  return plain ? Number(plain[1]) : null;
+}
+
+const GENERIC_CHARACTER_REFERENCES = new Set([
+  '主角', '男主', '女主', '皇帝', '太子', '皇后', '反派', '盟友', '导师', '配角',
+]);
+
+function inspectSemanticConsistency(outline: ExecutableOutline): OutlineCompletenessBlocker[] {
+  const blockers: OutlineCompletenessBlocker[] = [];
+  const totalChapters = outline.storyScale?.estimatedChapterCount;
+
+  if (outline.storyScale && Number.isFinite(totalChapters) && totalChapters > 0) {
+    const targetWords = parseTargetWordCount(outline.storyScale.targetWordCount);
+    const computedWords = totalChapters * outline.storyScale.averageWordsPerChapter;
+    if (targetWords && computedWords > 0) {
+      const drift = Math.abs(targetWords - computedWords) / targetWords;
+      if (drift > 0.1) {
+        blockers.push({
+          kind: 'inconsistent-story-scale',
+          message: `故事规模互相矛盾：目标 ${targetWords} 字，但 ${totalChapters} 章 × ${outline.storyScale.averageWordsPerChapter} 字 = ${computedWords} 字（偏差 ${Math.round(drift * 100)}%）`,
+        });
+      }
+    }
+    const plannedByVolumes = outline.storyScale.suggestedVolumeCount
+      * outline.storyScale.estimatedChaptersPerVolume;
+    if (plannedByVolumes > 0 && Math.abs(plannedByVolumes - totalChapters) / totalChapters > 0.1) {
+      blockers.push({
+        kind: 'inconsistent-story-scale',
+        message: `卷章规模互相矛盾：总章数 ${totalChapters}，但 ${outline.storyScale.suggestedVolumeCount} 卷 × 每卷 ${outline.storyScale.estimatedChaptersPerVolume} 章 = ${plannedByVolumes} 章`,
+      });
+    }
+  }
+
+  if (Number.isFinite(totalChapters) && totalChapters > 0) {
+    const checkChapter = (label: string, chapter: number | null | undefined): void => {
+      if (chapter !== null && chapter !== undefined && (chapter < 1 || chapter > totalChapters)) {
+        blockers.push({
+          kind: 'chapter-reference-out-of-range',
+          message: `${label}指向第 ${chapter} 章，超出全书 1～${totalChapters} 章范围`,
+        });
+      }
+    };
+    for (const subplot of outline.subplots ?? []) {
+      checkChapter(`支线「${subplot.title}」开始章节`, subplot.startChapter);
+      checkChapter(`支线「${subplot.title}」结束章节`, subplot.endChapter);
+      if (subplot.startChapter && subplot.endChapter && subplot.startChapter > subplot.endChapter) {
+        blockers.push({
+          kind: 'chapter-reference-out-of-range',
+          message: `支线「${subplot.title}」章节倒置：${subplot.startChapter}～${subplot.endChapter} 章`,
+        });
+      }
+    }
+    for (const foreshadow of outline.foreshadowPlan ?? []) {
+      checkChapter(`伏笔「${foreshadow.hint}」埋设章节`, foreshadow.setupChapter);
+      checkChapter(`伏笔「${foreshadow.hint}」回收章节`, foreshadow.payoffChapter);
+      if (foreshadow.setupChapter && foreshadow.payoffChapter
+        && foreshadow.setupChapter > foreshadow.payoffChapter) {
+        blockers.push({
+          kind: 'chapter-reference-out-of-range',
+          message: `伏笔「${foreshadow.hint}」先回收后埋设：第${foreshadow.setupChapter}章埋设、第${foreshadow.payoffChapter}章回收`,
+        });
+      }
+    }
+    for (const point of outline.coolPointPlan ?? []) {
+      checkChapter(`爽点「${point.description || point.type}」兑现章节`, point.suggestedChapter);
+    }
+    for (const chapter of outline.emotionPlan?.highPoints ?? []) checkChapter('情绪高点', chapter);
+    for (const chapter of outline.emotionPlan?.lowPoints ?? []) checkChapter('情绪低点', chapter);
+    checkChapter('金手指首次兑现章节', outline.goldenfingerPlan?.firstRevealChapter);
+  }
+
+  const canonicalNames = new Set(
+    (outline.keyCharacters ?? []).map(character => character.name?.trim()).filter(Boolean),
+  );
+  const protagonistName = outline.storyEngine?.protagonistName?.trim();
+  if (protagonistName
+    && !GENERIC_CHARACTER_REFERENCES.has(protagonistName)
+    && !canonicalNames.has(protagonistName)) {
+    blockers.push({
+      kind: 'protagonist-name-mismatch',
+      message: `核心驱动中的主角「${protagonistName}」未进入关键角色规划，角色真源不一致`,
+    });
+  }
+
+  const checkCharacterReference = (
+    label: string,
+    reference: string | undefined,
+    chapterNumber?: number,
+  ): void => {
+    const value = reference?.trim();
+    if (!value || GENERIC_CHARACTER_REFERENCES.has(value)) return;
+    if ([...canonicalNames].some(name => value.includes(name))) return;
+    blockers.push({
+      kind: 'unknown-character-reference',
+      chapterNumber,
+      message: `${label}引用了未登记角色「${value}」；必须补入关键角色规划或改用已登记角色`,
+    });
+  };
+  for (const volume of outline.volumePlan ?? []) {
+    for (const reference of volume.keyCharacters ?? []) {
+      checkCharacterReference(`第${volume.volumeIndex}卷关键角色`, reference);
+    }
+  }
+  for (const subplot of outline.subplots ?? []) {
+    for (const reference of subplot.relatedCharacters ?? []) {
+      checkCharacterReference(`支线「${subplot.title}」关联角色`, reference);
+    }
+  }
+  for (const foreshadow of outline.foreshadowPlan ?? []) {
+    checkCharacterReference(`伏笔「${foreshadow.hint}」载体角色`, foreshadow.carrierCharacter);
+  }
+  for (const character of outline.keyCharacters ?? []) {
+    for (const relationship of character.relationshipChanges ?? []) {
+      checkCharacterReference(`角色「${character.name}」关系`, relationship.targetName);
+    }
+  }
+  for (const blueprint of outline.chapterBlueprints ?? []) {
+    for (const reference of blueprint.involvedCharacters ?? []) {
+      checkCharacterReference(`第${blueprint.orderIndex}章出场角色`, reference, blueprint.orderIndex);
+    }
+  }
+
+  return blockers;
 }
 
 function inspectChronologyRegressions(outline: ExecutableOutline): OutlineCompletenessBlocker[] {
@@ -282,6 +426,7 @@ export function inspectOutlineCompleteness(
   }
 
   blockers.push(...inspectChronologyRegressions(outline));
+  blockers.push(...inspectSemanticConsistency(outline));
 
   return { canApply: blockers.length === 0, blockers };
 }

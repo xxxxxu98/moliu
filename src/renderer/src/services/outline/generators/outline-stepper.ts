@@ -169,6 +169,7 @@ export async function generateExpandedOutlineInSteps(
       direction,
       wordCountRange,
       enhancementBrief,
+      creativeExpansionMode: options.creativeExpansionMode ?? 'preserve-genre',
       accumulatedRawText: rawText,
     };
     const built: BuiltPrompt = step.build(ctx);

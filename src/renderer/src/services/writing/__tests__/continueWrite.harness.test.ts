@@ -51,6 +51,7 @@ describe('continueWrite harness', () => {
 
   it('多章复用 session：正式批量路径 BATCH_CONTINUE（连续 2 章 accepted）', async () => {
     const { project } = makeSyntheticHarnessProject({ chapterCount: 2 });
+    const checkpoints: Array<{ completed: number; requested: number; chapter: number }> = [];
     const result = await runContinueWriteChapters({
       project,
       fromChapter: 1,
@@ -59,6 +60,13 @@ describe('continueWrite harness', () => {
       runIdPrefix: 'continue-write-multi-harness',
       persistTrace: false,
       mode: 'batch',
+      onChapterSettled: ({ result: chapter, completedChapters, requestedChapters }) => {
+        checkpoints.push({
+          completed: completedChapters,
+          requested: requestedChapters,
+          chapter: chapter.chapterNumber,
+        });
+      },
     });
 
     expect(result.mode).toBe('batch');
@@ -71,6 +79,10 @@ describe('continueWrite harness', () => {
     expect(result.chapters.every(item => item.output.longFormResult?.commit.status === 'accepted')).toBe(
       true
     );
+    expect(checkpoints).toEqual([
+      { completed: 1, requested: 2, chapter: 1 },
+      { completed: 2, requested: 2, chapter: 2 },
+    ]);
 
     const written = result.project.chapters
       .filter(item => item.orderIndex < 2)

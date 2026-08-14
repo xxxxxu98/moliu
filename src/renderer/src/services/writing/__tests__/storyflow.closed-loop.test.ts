@@ -78,6 +78,9 @@ function writeClosedLoopArtifacts(
   const summary = {
     book: result.project.name,
     mode: 'storyflow-closed-loop',
+    status: 'complete',
+    requestedChapterCount: envInt('MOLIU_CHAPTER_COUNT', 5),
+    completedChapters: result.chapterRunResults.length,
     chapters: outlineChapters.length,
     outlinePath: OUTLINE_PATH,
     proseDir: PROSE_DIR,
