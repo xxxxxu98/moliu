@@ -25,7 +25,7 @@ import { buildWebnovelCraftPrompt } from '../prompts/system/core-principles';
 import type { DirectionGenerationResult, OutlineDirection } from '../types/direction';
 import type { ExpandedOutlineResult } from '../types/executable-outline';
 import { buildDirectionPrompt } from '../prompts/system/direction-prompt';
-import { buildExpandDirectionPrompt } from '../prompts/system/expand-direction-prompt';
+import { generateExpandedOutlineInSteps } from './outline-stepper';
 import { parseDirections } from '../parser/direction-parser';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
 import { inspectOutlineQuality, reviewAndFixOutline } from './outline-reviewer';
@@ -503,21 +503,29 @@ export class UnifiedOutlineGenerator {
           ...options,
           ...(temperature !== undefined ? { temperature } : {}),
         };
-        const builtPrompt = buildExpandDirectionPrompt({
-          seed: prompt,
-          direction,
-          wordCountRange: opts.wordCountRange || DEFAULT_WORD_COUNT_RANGE,
-          enhancementBrief: opts.enhancementBrief,
-        });
+        const wordCountRange = opts.wordCountRange || DEFAULT_WORD_COUNT_RANGE;
 
         onProgress?.(attempt === 1 ? '正在展开主方案...' : `重新展开主方案... (${attempt})`);
 
-        let rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts, 'outline-expand');
+        // 主请求拆成 5 步分步生成（骨架→卷纲→启动包→角色伏笔→节奏包装），
+        // 单步输出量大幅下降，显著降低推理型模型撞 finish_reason=length 的概率。
+        // 拼装完成的 rawText 与原一次性产出的格式完全一致，后续补全/审查/修复流程不变。
+        const stepped = await generateExpandedOutlineInSteps({
+          seed: prompt,
+          direction,
+          options: opts,
+          enhancementBrief: opts.enhancementBrief,
+          wordCountRange,
+          callStructuredTextMode: (system, user, callOptions) =>
+            this.callStructuredTextMode(system, user, callOptions, 'outline-expand'),
+          onProgress,
+        });
+        let rawText = stepped.rawText;
         let outline = parseExpandedOutline(rawText);
 
         // 主请求只产出启动包与卷纲，单章蓝图常规就走分批补全；角色与伏笔若被截断也在这里补齐。
         // 完整性门槛与 prompt 的 50 章 / 10 角色 / 10 伏笔要求共用同一策略，任何硬缺口都触发重试。
-        const warnings: string[] = [];
+        const warnings: string[] = [...stepped.warnings];
         let severelyTruncated = false;
         let blockers: string[] = [];
         if (outline) {

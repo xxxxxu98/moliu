@@ -232,6 +232,58 @@ export function canonicalizeExtractedFacts(input: FactCanonicalizeInput): FactCa
       }
       return expanded;
     }
+    // knowledge.<knower>.<fact>：三段路径，模型常把 value 写成 true/对象
+    // （真实冒烟案例：{"operation":"set","path":"knowledge.char-x.火焰纹与史书印记一致","value":true}）。
+    // knowledge 契约是 Record<entityId, string[]>——事实本身就是 key，value 无意义。
+    // 归一化为对 knowledge.<knower> 的 add（追加 fact 字符串），与 effects 的
+    // `knowledge:<knower>:<fact>` 协议对齐；fact 为空则丢弃。
+    const knowledgeFactMatch = delta.path.match(/^knowledge\.([^.]+)\.(.+)$/u);
+    if (knowledgeFactMatch) {
+      const knower = resolveParticipant(knowledgeFactMatch[1]);
+      const fact = knowledgeFactMatch[2].trim();
+      if (!fact) return [];
+      return [
+        {
+          ...delta,
+          operation: 'add',
+          path: `knowledge.${knower}`,
+          value: fact,
+        },
+      ];
+    }
+    // knowledge.<knower>：两段路径。合法形态是 add string / set string[]；
+    // 模型偶发把 value 写成 {fact: true} 对象或裸布尔 → 归一化为逐 fact 的 add delta。
+    const knowledgeOwnerMatch = delta.path.match(/^knowledge\.([^.]+)$/u);
+    if (knowledgeOwnerMatch) {
+      const knower = resolveParticipant(knowledgeOwnerMatch[1]);
+      const value = delta.value;
+      const facts: string[] = [];
+      if (typeof value === 'string') {
+        if (value.trim()) facts.push(value.trim());
+      } else if (Array.isArray(value)) {
+        for (const item of value) {
+          if (typeof item === 'string' && item.trim()) facts.push(item.trim());
+        }
+      } else if (value && typeof value === 'object') {
+        // {事实A: true, 事实B: "某章得知"} → 事实 A、事实 B 都是「知道了」的事实
+        for (const factKey of Object.keys(value as Record<string, unknown>)) {
+          if (factKey.trim()) facts.push(factKey.trim());
+        }
+      }
+      if (facts.length === 0) return [];
+      // 每个 fact 一个 add，避免数组套数组（applyDelta 的 add 只 push 单值）
+      return facts.map(fact => ({
+        ...delta,
+        operation: 'add' as const,
+        path: `knowledge.${knower}`,
+        value: fact,
+      }));
+    }
+    // 其余 knowledge.* 形态（如尾部空段 knowledge.hero. / 裸 knowledge）：
+    // 无法归一化为合法事实表达，直接丢弃——stateOverlay 与 schema 层还有防线兜底。
+    if (delta.path === 'knowledge' || delta.path.startsWith('knowledge.')) {
+      return [];
+    }
     return [delta];
   });
 

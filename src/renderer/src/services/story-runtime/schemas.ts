@@ -139,6 +139,54 @@ const inventorySchema = z.preprocess(
   z.record(z.string(), z.record(z.string(), z.number()))
 );
 
+/**
+ * knowledge Record 容错：knowledge 契约是 Record<entityId, string[]>，但模型经
+ * state delta 写入时偶发把叶子污染成布尔/对象（真实案例：delta value:true 写入
+ * knowledge.char-x.火焰纹一致 → char-x 变成 {火焰纹一致: true}）。
+ * 污染一旦落进 canonical snapshot，后续每章 loadState 都会整章崩溃且重试无解。
+ * 这里在 schema 入口把每个 owner 软归一化回 string[]：
+ * - string[] → 原样（过滤非字符串与空串）
+ * - object → 所有 key 视为「知道了的事实」（{事实A: true} → ['事实A']）
+ * - string → 单事实包装；其它 → 丢弃该 owner
+ */
+export function coerceKnowledgeRecord(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return value;
+  const knowledge = value as Record<string, unknown>;
+  const droppedOwners: string[] = [];
+  for (const knower of Object.keys(knowledge)) {
+    const raw = knowledge[knower];
+    let facts: string[] | undefined;
+    if (Array.isArray(raw)) {
+      const filtered = raw.filter(
+        (item): item is string => typeof item === 'string' && item.trim().length > 0
+      );
+      if (filtered.length > 0) facts = filtered;
+    } else if (typeof raw === 'string') {
+      if (raw.trim()) facts = [raw.trim()];
+    } else if (raw && typeof raw === 'object') {
+      const keys = Object.keys(raw as Record<string, unknown>).filter(key => key.trim());
+      if (keys.length > 0) facts = keys;
+    }
+    if (facts) {
+      knowledge[knower] = facts;
+    } else {
+      droppedOwners.push(knower);
+      delete knowledge[knower];
+    }
+  }
+  if (droppedOwners.length > 0) {
+    console.warn(
+      `[schemas] knowledge owner 被软归一化/丢弃（模型写入了非法形态）：${droppedOwners.slice(0, 8).join(', ')}${droppedOwners.length > 8 ? ` 等 ${droppedOwners.length} 项` : ''}`
+    );
+  }
+  return knowledge;
+}
+
+const knowledgeSchema = z.preprocess(
+  coerceKnowledgeRecord,
+  z.record(z.string(), z.array(z.string()))
+);
+
 const idStringArraySchema = z.preprocess((value: unknown) => {
   if (!Array.isArray(value)) return value;
   return value
@@ -233,7 +281,7 @@ export const storyStateSchema: z.ZodType<StoryState> = z.object({
   entities: z.record(z.string(), storyEntitySchema),
   events: z.array(storyEventSchema),
   inventory: inventorySchema,
-  knowledge: z.record(z.string(), z.array(z.string())),
+  knowledge: knowledgeSchema,
   timeline: z.array(z.string()),
   openForeshadows: z.array(z.string()),
   fulfilledNodes: z.array(z.string()),
