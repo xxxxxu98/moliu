@@ -37,8 +37,14 @@ import {
 import { completeIncompleteOutline, repairChapterBlueprints } from './outline-completer';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 
-/** 大纲主方案是长输出，但单次请求不能无限悬挂。 */
-export const OUTLINE_REQUEST_TIMEOUT_MS = 900_000;
+/**
+ * 大纲单次请求超时（默认 20 分钟）。慢模型单步实测可达 6 分钟+，9 厂商矩阵中
+ * qwen3.8-max 单步 379s、glm 网关一次卡满 900s 被误杀；900s 对慢模型偏紧。
+ * 可用 MOLIU_OUTLINE_TIMEOUT_MS 覆盖（冒烟脚本/矩阵按需调整）。
+ */
+export const OUTLINE_REQUEST_TIMEOUT_MS = Number(process.env.MOLIU_OUTLINE_TIMEOUT_MS) > 0
+  ? Number(process.env.MOLIU_OUTLINE_TIMEOUT_MS)
+  : 1_200_000;
 
 /**
  * 大纲请求走 SSE 流式。
@@ -904,6 +910,14 @@ export class UnifiedOutlineGenerator {
     resolvedBaseUrl: string,
     signal: AbortSignal | undefined,
   ): Promise<any> {
+    // 厂商显式配置的输出上限（正数才下发；未配置不下发沿用网关默认，见 AIGenerationConfig.maxTokens）
+    const configuredMaxTokens = config.generationConfig?.maxTokens;
+    const maxTokens =
+      typeof configuredMaxTokens === 'number' &&
+      Number.isFinite(configuredMaxTokens) &&
+      configuredMaxTokens > 0
+        ? Math.floor(configuredMaxTokens)
+        : undefined;
 
     if (provider === 'gemini') {
       const model = config.model || 'gemini-2.0-flash';
@@ -930,6 +944,7 @@ export class UnifiedOutlineGenerator {
           generationConfig: {
             temperature: options.temperature ?? config.generationConfig?.temperature ?? 0.7,
             topP: options.topP ?? config.generationConfig?.topP ?? 0.9,
+            ...(maxTokens ? { maxOutputTokens: maxTokens } : {}),
           },
         }),
         ...(signal ? { signal } : {}),
@@ -979,6 +994,7 @@ export class UnifiedOutlineGenerator {
           messages: [{ role: 'user', content: userContent }],
           temperature: options.temperature ?? config.generationConfig?.temperature ?? 0.7,
           top_p: options.topP ?? config.generationConfig?.topP ?? 0.9,
+          ...(maxTokens ? { max_tokens: maxTokens } : {}),
         }),
         ...(signal ? { signal } : {}),
       });
@@ -1018,6 +1034,7 @@ export class UnifiedOutlineGenerator {
         stream: true,
         temperature: options.temperature ?? config.generationConfig?.temperature ?? 0.7,
         top_p: options.topP ?? config.generationConfig?.topP ?? 0.9,
+        ...(maxTokens ? { max_tokens: maxTokens } : {}),
       }),
       ...(signal ? { signal } : {}),
     });

@@ -41,6 +41,9 @@ vi.mock('vue-router', () => ({
 const { summaryPath: SUMMARY_PATH, outlinePath: OUTLINE_PATH, proseDir: PROSE_DIR } =
   resolveStoryflowArtifactPaths();
 
+/** 测试总超时：默认 2 小时；慢模型（矩阵实测 qwen3.8-max 每步 4-5 分钟）用 MOLIU_TEST_TIMEOUT_MIN 放宽 */
+const TEST_TIMEOUT_MS = envInt('MOLIU_TEST_TIMEOUT_MIN', 120) * 60_000;
+
 function envInt(name: string, fallback: number): number {
   const value = Number(process.env[name] ?? '');
   return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
@@ -217,7 +220,7 @@ describe.runIf(isRealAiEnabled())(
         expect(result.postWritePersistence.writtenChapterCount).toBe(chapterCount);
 
       },
-      120 * 60 * 1000, // 真实 AI 全链路批量续写（默认 5 章；10 章真实 AI 实测约 70-110 分钟）
+      TEST_TIMEOUT_MS, // 真实 AI 全链路批量续写（默认 2 小时；慢模型用 MOLIU_TEST_TIMEOUT_MIN 放宽，矩阵实测 qwen3.8-max 需 3 小时+）
     );
   },
 );

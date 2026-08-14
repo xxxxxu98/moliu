@@ -329,6 +329,15 @@ function saveProvider() {
     return;
   }
 
+  // UI 的输出上限存顶层 maxTokens（历史字段）；保存时同步进 generationConfig.maxTokens，
+  // 请求层只从 generationConfig 读取下发（正数才生效，undefined = 不限制沿用网关默认）
+  const maxTokens = editingProvider.value.maxTokens;
+  editingProvider.value.generationConfig = {
+    ...editingProvider.value.generationConfig,
+    maxTokens:
+      typeof maxTokens === 'number' && maxTokens > 0 ? maxTokens : undefined,
+  };
+
   if (editingProvider.value.id) {
     settingsStore.updateAIProvider(editingProvider.value.id, editingProvider.value);
     message.success(t('settings.aiProviders.messages.saveSuccess'));

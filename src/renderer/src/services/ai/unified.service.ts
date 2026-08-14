@@ -142,6 +142,12 @@ export interface AIGenerationConfig {
   topP: number;
   frequencyPenalty: number;
   presencePenalty: number;
+  /**
+   * 输出上限（tokens）。仅当用户为该厂商显式配置时才下发到请求，
+   * 未配置一律不下发（沿用厂商默认；显式传超模型支持上限会被部分网关直接 400）。
+   * 推理型模型的 reasoning 也计入输出预算，低默认上限的网关需要调高此项。
+   */
+  maxTokens?: number;
 }
 
 /**
@@ -157,6 +163,7 @@ export class UnifiedAIService {
     topP: number;
     frequencyPenalty: number;
     presencePenalty: number;
+    maxTokens?: number;
   };
   private _baseUrl: string;
   private _apiKey: string;
@@ -172,6 +179,7 @@ export class UnifiedAIService {
       topP: number;
       frequencyPenalty: number;
       presencePenalty: number;
+      maxTokens?: number;
     },
   ) {
     this.provider = provider;
@@ -244,6 +252,7 @@ export class UnifiedAIService {
       topP: number;
       frequencyPenalty: number;
       presencePenalty: number;
+      maxTokens?: number;
     },
   ) {
     this.model = model || this.model;
@@ -345,6 +354,13 @@ export class UnifiedAIService {
       topP: this.generationConfig.topP,
       frequencyPenalty: this.generationConfig.frequencyPenalty,
       presencePenalty: this.generationConfig.presencePenalty,
+      // 仅厂商显式配置时下发 maxTokens（正数）；未配置不下发，沿用网关默认上限。
+      // 推理型模型的 reasoning 计入同一输出预算，低默认上限的网关需在设置页调高此项。
+      ...(typeof this.generationConfig.maxTokens === 'number' &&
+      Number.isFinite(this.generationConfig.maxTokens) &&
+      this.generationConfig.maxTokens > 0
+        ? { maxTokens: Math.floor(this.generationConfig.maxTokens) }
+        : {}),
       // multi-ai-sdk：OpenAI 兼容（含 Ollama /v1 端点）透传为 response_format，
       // Gemini 转为 responseMimeType=application/json，Anthropic 等白名单构造自动忽略（安全降级）
       ...(options?.jsonMode

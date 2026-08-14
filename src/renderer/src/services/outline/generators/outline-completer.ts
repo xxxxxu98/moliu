@@ -6,12 +6,17 @@ import type {
 } from '../types/executable-outline';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
 import { OUTLINE_COMPLETENESS_POLICY } from '../validation/outlineCompleteness';
+import { retryBackoffDelayMs } from '@/utils/ai-error-classify';
 
 type StructuredTextCaller = (
   system: string,
   user: string,
   options: GenerateOptions,
 ) => Promise<string>;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 const PLACEHOLDER_TITLE_RE =
   /^第[一二三四五六七八九十百千零\d]+章(?:\s*[（(]?未命名[)）]?)?$/u;
@@ -397,11 +402,28 @@ export async function repairChapterBlueprints(params: {
     );
     const batchIssues = batch.flatMap(no => issuesByChapter?.get(no) ?? []);
     const prompt = buildChapterCompletionPrompt(outline, params.direction, batch, batchIssues);
-    const generated = await params.callStructuredTextMode(
-      prompt.system,
-      prompt.user,
-      { ...params.options, temperature: phase === '定点修复' ? 0.2 : 0.35 },
-    );
+
+    // 空响应批次重试：矩阵实测 minimax-m3/glm 网关会把批次请求「成功」返回 0 字
+    // （无错误事件、流正常结束），此前只记 warning 放过 → 这批章永远缺失 → fail-closed。
+    // 空响应大概率是网关抖动，按瞬态退避小次数重试；重试后仍空则维持 warning（不硬造内容）。
+    const MAX_EMPTY_BATCH_ATTEMPTS = 2;
+    let generated = '';
+    for (let attempt = 1; attempt <= MAX_EMPTY_BATCH_ATTEMPTS; attempt += 1) {
+      generated = await params.callStructuredTextMode(
+        prompt.system,
+        prompt.user,
+        { ...params.options, temperature: phase === '定点修复' ? 0.2 : 0.35 },
+      );
+      if (generated.trim()) break;
+      if (attempt < MAX_EMPTY_BATCH_ATTEMPTS) {
+        const delayMs = retryBackoffDelayMs('network', attempt, 2000, 10_000);
+        warnings.push(
+          `单章蓝图${phase}批次 ${batch[0]}-${batch.at(-1)} 返回空响应（第 ${attempt} 次），${delayMs}ms 后重试`,
+        );
+        onProgress?.(`单章蓝图批次返回空响应，重试 ${attempt}/${MAX_EMPTY_BATCH_ATTEMPTS - 1}...`);
+        await sleep(delayMs);
+      }
+    }
     const blocks = extractRequestedChapterBlocks(generated, batch);
     for (const [chapterNumber, block] of blocks) {
       const stitched = replaceOutlineSection(

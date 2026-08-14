@@ -17,6 +17,8 @@ export interface ContinueWriteRealConfig {
   provider?: string;
   model?: string;
   baseUrl?: string;
+  /** 输出上限（tokens）：正数才下发；0/未配置不下发（沿用策略：默认不传 max_tokens） */
+  maxTokens?: number;
   projectId?: string;
   projectName?: string;
   chapterNumber?: number;
@@ -32,6 +34,8 @@ export interface ResolvedRealAiConfig {
   apiKey: string;
   model?: string;
   baseUrl?: string;
+  /** 厂商输出上限（tokens）；正数才下发到请求，undefined = 不下发 */
+  maxTokens?: number;
   projectId: string;
   projectName?: string;
   chapterNumber: number;
@@ -108,6 +112,7 @@ function readAppProviders(): Array<{
   apiKey?: string;
   baseUrl?: string;
   enabled?: boolean;
+  generationConfig?: { maxTokens?: number };
 }> {
   const settingsPath = path.join(
     process.env.APPDATA || '',
@@ -123,6 +128,7 @@ function readAppProviders(): Array<{
       apiKey?: string;
       baseUrl?: string;
       enabled?: boolean;
+      generationConfig?: { maxTokens?: number };
     }>;
   };
   return raw.aiProviders ?? [];
@@ -148,6 +154,7 @@ function resolveProviderFromApp(providerId?: string): {
   apiKey: string;
   model?: string;
   baseUrl?: string;
+  maxTokens?: number;
 } | null {
   const providers = readAppProviders();
   const selection = readAppDefaultSelection();
@@ -173,6 +180,11 @@ function resolveProviderFromApp(providerId?: string): {
     apiKey: decryptStoredApiKey(matched.apiKey),
     model: matched.modelName || selection?.modelName,
     baseUrl: matched.baseUrl || undefined,
+    maxTokens:
+      typeof matched.generationConfig?.maxTokens === 'number' &&
+      matched.generationConfig.maxTokens > 0
+        ? Math.floor(matched.generationConfig.maxTokens)
+        : undefined,
   };
 }
 
@@ -215,6 +227,12 @@ export function resolveContinueWriteRealConfig(): ResolvedRealAiConfig {
   let model = (process.env.MOLIU_AI_MODEL || config.model || '').trim() || undefined;
   let baseUrl =
     (process.env.MOLIU_AI_BASE_URL || config.baseUrl || '').trim() || undefined;
+  /** 输出上限：环境变量 > 配置文件 > App 厂商配置；正数才生效（默认不下发） */
+  let maxTokens: number | undefined = (() => {
+    const fromEnv = Number(process.env.MOLIU_AI_MAX_TOKENS || '');
+    if (Number.isFinite(fromEnv) && fromEnv > 0) return Math.floor(fromEnv);
+    return config.maxTokens && config.maxTokens > 0 ? Math.floor(config.maxTokens) : undefined;
+  })();
   let resolvedProviderId: string | undefined = providerId || undefined;
 
   if (providerId) {
@@ -228,6 +246,7 @@ export function resolveContinueWriteRealConfig(): ResolvedRealAiConfig {
     apiKey = fromId.apiKey;
     model = model || fromId.model;
     baseUrl = baseUrl || fromId.baseUrl;
+    maxTokens = maxTokens || fromId.maxTokens;
     resolvedProviderId = fromId.providerId;
   } else {
     const useApp =
@@ -241,6 +260,7 @@ export function resolveContinueWriteRealConfig(): ResolvedRealAiConfig {
         apiKey = fromApp.apiKey;
         model = model || fromApp.model;
         baseUrl = baseUrl || fromApp.baseUrl;
+        maxTokens = maxTokens || fromApp.maxTokens;
         resolvedProviderId = fromApp.providerId;
       }
     }
@@ -276,6 +296,7 @@ export function resolveContinueWriteRealConfig(): ResolvedRealAiConfig {
     apiKey,
     model,
     baseUrl,
+    maxTokens,
     projectId: (config.projectId || '').trim(),
     projectName: (config.projectName || '').trim(),
     chapterNumber: config.chapterNumber && config.chapterNumber > 0 ? config.chapterNumber : 1,

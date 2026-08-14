@@ -117,6 +117,49 @@ describe('UnifiedOutlineGenerator 请求参数', () => {
     expect(body.top_p).toBe(0.8);
   });
 
+  // 输出上限策略（2026-08 修订）：默认仍不下发 max_tokens（沿用网关默认，避免压低
+  // 本就充足的默认值）；仅当厂商显式配置 generationConfig.maxTokens 时才下发。
+  // 推理型模型的 reasoning 计入同一输出预算，低默认上限网关（矩阵实测 glm/doubao）
+  // 需在设置页调高此项，否则大纲步撞 finish_reason=length 直接失败。
+  it('厂商配置了 maxTokens 时下发到 openai 兼容请求体', async () => {
+    injectSettings({
+      provider: 'openai',
+      generationConfig: { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0, maxTokens: 32768 },
+    });
+    const fetchMock = mockChatFetch();
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    await generator.generateDirections('创意种子', { maxRetries: 1 });
+
+    expect(lastRequestBody(fetchMock).max_tokens).toBe(32768);
+  });
+
+  it('厂商未配置 maxTokens 时请求体不含 max_tokens（沿用网关默认）', async () => {
+    injectSettings({
+      provider: 'openai',
+      generationConfig: { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0 },
+    });
+    const fetchMock = mockChatFetch();
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    await generator.generateDirections('创意种子', { maxRetries: 1 });
+
+    expect(lastRequestBody(fetchMock)).not.toHaveProperty('max_tokens');
+  });
+
+  it('maxTokens 配置为 0/负数时视为未配置，不下发', async () => {
+    injectSettings({
+      provider: 'openai',
+      generationConfig: { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0, maxTokens: 0 },
+    });
+    const fetchMock = mockChatFetch();
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    await generator.generateDirections('创意种子', { maxRetries: 1 });
+
+    expect(lastRequestBody(fetchMock)).not.toHaveProperty('max_tokens');
+  });
+
   it('重试降温基于厂商生效温度，不升温（厂商 0.2）', async () => {
     injectSettings({
       provider: 'openai',

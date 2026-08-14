@@ -50,7 +50,7 @@ function parseStructuredJson(raw: string, schemaName?: string): unknown {
 
 export type RealAiEnvConfig = Pick<
   ResolvedRealAiConfig,
-  'provider' | 'apiKey' | 'model' | 'baseUrl'
+  'provider' | 'apiKey' | 'model' | 'baseUrl' | 'maxTokens'
 >;
 
 /** 读取配置文件（及可选环境变量覆盖） */
@@ -61,6 +61,7 @@ export function readRealAiEnvConfig(): RealAiEnvConfig {
     apiKey: resolved.apiKey,
     model: resolved.model,
     baseUrl: resolved.baseUrl,
+    maxTokens: resolved.maxTokens,
   };
 }
 
@@ -72,7 +73,12 @@ export function createRealStructuredAI(
     config.provider as ProviderType,
     config.apiKey,
     config.baseUrl,
-    config.model
+    config.model,
+    undefined,
+    // 仅冒烟配置了输出上限（MOLIU_AI_MAX_TOKENS）时透传，未配置保持 undefined（不下发）
+    config.maxTokens
+      ? { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0, maxTokens: config.maxTokens }
+      : undefined,
   );
 
   // 对齐 ChapterWritingPipeline.createStructuredAIFromActiveProvider：

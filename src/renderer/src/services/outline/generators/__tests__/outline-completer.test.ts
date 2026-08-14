@@ -261,4 +261,53 @@ describe('repairChapterBlueprints', () => {
     expect(capturedUser).toContain('本次必须修掉的格式违规');
     expect(capturedUser).toContain('第2章 CBN 长度 28 字，必须为 8～25 字');
   });
+
+  // 矩阵实测（minimax-m3/glm 网关）：蓝图批次请求「成功」但返回 0 字——无错误事件、
+  // 不进任何重试链，这批章永远缺失 → fail-closed。现在空响应批次按瞬态退避重试。
+  it('批次返回空响应时退避重试，重试成功后照常拼装', async () => {
+    const outline = parseExpandedOutline(MAIN_OUTLINE_TEXT)!;
+    const callStructuredTextMode = vi.fn(async () => {
+      const calls = callStructuredTextMode.mock.calls.length;
+      // 首次空响应（模拟网关抖动），第二次正常返回
+      if (calls <= 1) return '';
+      return [1].map(buildChapterBlock).join('\n\n');
+    });
+
+    const result = await repairChapterBlueprints({
+      rawText: MAIN_OUTLINE_TEXT,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode,
+      chapterNumbers: [1],
+      phase: '补全',
+    });
+
+    // 空了一次 → 重试一次 → 共 2 次调用
+    expect(callStructuredTextMode).toHaveBeenCalledTimes(2);
+    // 重试成功后蓝图照常补上
+    expect(result.outline.chapterBlueprints?.map(item => item.orderIndex)).toEqual([1]);
+    // 记录了空响应重试的 warning
+    expect(result.warnings.some(w => w.includes('返回空响应'))).toBe(true);
+  }, 30_000);
+
+  it('批次连续空响应重试耗尽后不再硬重试，只记 warning（不硬造内容）', async () => {
+    const outline = parseExpandedOutline(MAIN_OUTLINE_TEXT)!;
+    const callStructuredTextMode = vi.fn(async () => '');
+
+    const result = await repairChapterBlueprints({
+      rawText: MAIN_OUTLINE_TEXT,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode,
+      chapterNumbers: [1],
+      phase: '补全',
+    });
+
+    // 2 次尝试（1 次原始 + 1 次重试）后放弃，不无限重试
+    expect(callStructuredTextMode).toHaveBeenCalledTimes(2);
+    expect(result.warnings.some(w => w.includes('返回空响应'))).toBe(true);
+    expect(result.warnings.some(w => w.includes('仅返回 0/1 章'))).toBe(true);
+  }, 30_000);
 });

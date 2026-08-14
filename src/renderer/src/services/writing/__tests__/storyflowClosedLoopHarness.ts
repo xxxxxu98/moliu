@@ -292,6 +292,10 @@ function injectSettingsStore(cfg: ResolvedRealAiConfig): void {
       baseUrl: cfg.baseUrl,
       modelName: cfg.model ?? '',
       enabled: true,
+      // 冒烟也支持厂商级输出上限（MOLIU_AI_MAX_TOKENS）：推理型模型撞默认输出上限时按需下发
+      generationConfig: cfg.maxTokens
+        ? { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0, maxTokens: cfg.maxTokens }
+        : undefined,
     },
   ];
   settings.defaultModel = {
