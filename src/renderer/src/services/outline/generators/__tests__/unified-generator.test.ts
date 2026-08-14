@@ -160,6 +160,61 @@ describe('UnifiedOutlineGenerator 请求参数', () => {
     expect(lastRequestBody(fetchMock)).not.toHaveProperty('max_tokens');
   });
 
+  // 统一配 1M 时低上限网关（minimax 系实测上限 131072）会 400 拒绝：
+  // 解析网关报的上限降级重试一次，并把降级值记回厂商配置（后续请求直接用对）。
+  it('max_tokens 超网关上限时解析网关上限降级重试，并回写厂商配置', async () => {
+    injectSettings({
+      provider: 'openai',
+      generationConfig: { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0, maxTokens: 1048576 },
+    });
+    const fetchMock = vi.fn(async () => {
+      const calls = fetchMock.mock.calls.length;
+      if (calls <= 1) {
+        return {
+          ok: false,
+          status: 400,
+          text: async () =>
+            '{"error":{"code":"InvalidParameter","message":"The parameter `max_tokens` ... expected a value <= 131072, but got 1048576 instead."}}',
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: DIRECTION_TEXT } }] }),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    await generator.generateDirections('创意种子', { maxRetries: 1 });
+
+    // 第二次请求的 max_tokens 降级为网关报的 131072
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(lastRequestBody(fetchMock).max_tokens).toBe(131072);
+    // 厂商配置被回写（后续请求不再踩 400）
+    const { useSettingsStore: useSettings } = await import('@/stores/settings.store');
+    const provider = useSettings().aiProviders[0];
+    expect(provider.generationConfig?.maxTokens).toBe(131072);
+    expect(provider.maxTokens).toBe(131072);
+  });
+
+  it('非 max_tokens 类 400 不触发降级，照常上抛', async () => {
+    injectSettings({
+      provider: 'openai',
+      generationConfig: { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0, maxTokens: 1048576 },
+    });
+    const fetchMock = vi.fn(async () => ({
+      ok: false,
+      status: 400,
+      text: async () => '{"error":{"message":"invalid api key"}}',
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    await expect(generator.generateDirections('创意种子', { maxRetries: 1 })).rejects.toThrow('400');
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('重试降温基于厂商生效温度，不升温（厂商 0.2）', async () => {
     injectSettings({
       provider: 'openai',

@@ -151,6 +151,25 @@ export interface AIGenerationConfig {
 }
 
 /**
+ * 解析「max_tokens 超网关上限」的 400 错误（SDK AIError 或包装 Error）。
+ * 返回网关报的上限值；确认超限但拿不到数值返回 0（调用方减半降级）；非此类错误返回 null。
+ * 与 outline 侧 unified-generator.parseMaxTokensCapError 同规则（SDK 消息文案略异，合并兼容）。
+ */
+export function parseMaxTokensCap(error: unknown): number | null {
+  const message = error instanceof Error ? error.message : String(error);
+  if (!/max_tokens|maximum context|too large|above maximum value/iu.test(message)) return null;
+  const match =
+    message.match(/<=\s*(\d{4,7})/u) ??
+    message.match(/maximum value\D{0,20}(\d{4,7})/u) ??
+    message.match(/max_tokens\D{0,20}?(\d{4,7})/u);
+  if (match) {
+    const value = Number(match[1]);
+    if (Number.isFinite(value) && value >= 1024) return value;
+  }
+  return 0;
+}
+
+/**
  * Unified AI Service
  * Uses multi-ai-sdk to provide consistent API across all providers
  */
@@ -377,14 +396,29 @@ export class UnifiedAIService {
     // 未收到 finish_reason 即判定截断并抛可重试错误，不会把半截内容当成功。
     const SINGLE_REQUEST_MAX_RETRIES = 2;
     let lastError: unknown;
+    // 可变副本：max_tokens 超网关上限的 400 发生时按网关上限降级重写一次
+    let effectiveOpts = chatOpts;
     for (let attempt = 0; attempt <= SINGLE_REQUEST_MAX_RETRIES; attempt++) {
       if (signal?.aborted) {
         throw new DOMException("Aborted", "AbortError");
       }
       try {
-        const content = await this.streamChatText(messages, chatOpts, signal);
+        const content = await this.streamChatText(messages, effectiveOpts, signal);
         return extractPureText(content);
       } catch (error) {
+        // max_tokens 超网关上限（统一配 1M 时低上限网关 400 拒）：解析网关报的上限
+        // （拿不到就减半）改写 effectiveOpts 后立即重试本次请求，且记住该上限
+        const cap = parseMaxTokensCap(error);
+        if (cap !== null && attempt === 0) {
+          const original = Number(effectiveOpts.maxTokens ?? 0);
+          const fallback = cap > 0 ? cap : Math.max(1024, Math.floor(original / 2));
+          console.warn(
+            `[unified.service] max_tokens=${original} 超网关上限（${cap > 0 ? `网关报上限 ${cap}` : "上限未知"}），降级为 ${fallback} 重试`
+          );
+          this.generationConfig = { ...this.generationConfig, maxTokens: fallback };
+          effectiveOpts = { ...effectiveOpts, maxTokens: fallback };
+          continue;
+        }
         // 用户主动取消：立即抛出，不重试
         if (signal?.aborted) {
           throw new DOMException("Aborted", "AbortError");
