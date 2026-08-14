@@ -114,5 +114,7 @@ temp/*.project-store.json
 temp/storyflow-matrix/
 # 矩阵冒烟的用户厂商列表配置（--init 生成，含个人 provider 选择，不入库）
 temp/storyflow.matrix.config.json
+# 大纲自动断点（MOLIU_RESUME_STORYFLOW 续跑输入，冒烟 keepNames 刻意保留）
+temp/storyflow-checkpoints/
 test.md
 *.console.log
