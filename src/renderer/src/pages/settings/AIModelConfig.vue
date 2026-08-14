@@ -57,7 +57,8 @@ const providerOptions = defaultProviders.map(p => ({
 
 // Token options based on common AI model context limits
 const tokenOptions = [
-  { label: '不限制 (默认)', value: undefined },
+  { label: '1M (默认)', value: 1048576 },
+  { label: '不限制', value: undefined },
   { label: '4K', value: 4096 },
   { label: '8K', value: 8192 },
   { label: '16K', value: 16384 },
@@ -68,7 +69,6 @@ const tokenOptions = [
   { label: '200K', value: 200000 },
   { label: '256K', value: 262144 },
   { label: '512K', value: 524288 },
-  { label: '1M', value: 1048576 },
   { label: '2M', value: 2097152 },
 ];
 
@@ -301,7 +301,10 @@ function openAddModal() {
     apiKey: '',
     enabled: true,
     modelName: '',
-    maxTokens: undefined,
+    // 默认 1M：推理型模型的 reasoning 计入输出预算，网关默认上限（常见 4K）会让
+    // 长输出大纲必撞 finish_reason=length（9 厂商矩阵实测）；1M 是网关安全上限，
+    // 实际输出仍由模型自然长度决定，不会强行拉长
+    maxTokens: 1_048_576,
     generationConfig: { ...defaultGenerationConfig },
   };
   showAdvancedSettings.value = false;
@@ -860,7 +863,7 @@ onMounted(() => {
             :options="tokenOptions"
             class="w-full"
             clearable
-            placeholder="不限制 (默认)"
+            placeholder="1M (默认)"
           />
         </NFormItem>
 

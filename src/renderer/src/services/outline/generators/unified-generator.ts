@@ -38,13 +38,13 @@ import { completeIncompleteOutline, repairChapterBlueprints } from './outline-co
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 
 /**
- * 大纲单次请求超时（默认 20 分钟）。慢模型单步实测可达 6 分钟+，9 厂商矩阵中
- * qwen3.8-max 单步 379s、glm 网关一次卡满 900s 被误杀；900s 对慢模型偏紧。
+ * 大纲单次请求超时（默认 30 分钟）。慢模型单步实测可达 6 分钟+，9 厂商矩阵中
+ * qwen3.8-max 单步 379s、glm 网关一次卡满 900s 被误杀。
  * 可用 MOLIU_OUTLINE_TIMEOUT_MS 覆盖（冒烟脚本/矩阵按需调整）。
  */
 export const OUTLINE_REQUEST_TIMEOUT_MS = Number(process.env.MOLIU_OUTLINE_TIMEOUT_MS) > 0
   ? Number(process.env.MOLIU_OUTLINE_TIMEOUT_MS)
-  : 1_200_000;
+  : 1_800_000;
 
 /**
  * 大纲请求走 SSE 流式。

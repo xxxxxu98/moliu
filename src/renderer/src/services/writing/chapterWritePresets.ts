@@ -61,12 +61,12 @@ export function resolveChapterWriteOptions(
  * 不返回）要等满 30 分钟才被 abort，单次就吃掉整轮 1/3 时长。曾用 8 分钟，慢模型
  * 长输出偶发不够；现 15 分钟覆盖正常长输出并留余量，挂死时仍远早于 30 分钟放弃。
 /**
- * 单章正文单次请求超时（默认 20 分钟）。scene-draft 需生成 2000 字以上正文，
+ * 单章正文单次请求超时（默认 30 分钟）。scene-draft 需生成 2000 字以上正文，
  * 慢模型（deepseek-v4-flash 等）单次实测 3-6 分钟，900s 曾连续误杀正常长输出。
  * 可用 MOLIU_AI_TIMEOUT_MS 覆盖（冒烟/矩阵按需调整）。
  */
 export const AI_SINGLE_REQUEST_TIMEOUT_MS = Number(process.env.MOLIU_AI_TIMEOUT_MS) > 0
   ? Number(process.env.MOLIU_AI_TIMEOUT_MS)
-  : 1_200_000; // 20 分钟
+  : 1_800_000; // 30 分钟
 /** 事实提取/审查与正文共用上限，避免慢模型误杀。 */
 export const AI_AUXILIARY_REQUEST_TIMEOUT_MS = AI_SINGLE_REQUEST_TIMEOUT_MS;
