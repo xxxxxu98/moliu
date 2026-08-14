@@ -102,7 +102,7 @@ function writeMatrixConfigTemplate() {
     MATRIX_CONFIG_PATH,
     JSON.stringify(
       {
-        providerIds: ['provider-1785564561850'],
+        providerIds: ['provider-1781144847239', 'provider-1781144969420', 'provider-1781145001549', 'provider-1781145026571', 'provider-1785758934445', 'provider-1785859077824', 'provider-1786452987791', 'provider-1786707815420', 'provider-1786707866866'],
         concurrency: DEFAULT_CONCURRENCY,
       },
       null,
