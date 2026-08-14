@@ -79,6 +79,40 @@ describe('outline-completer', () => {
     expect(context).toContain('县丞被押往州府候审');
   });
 
+  it('远离本批的既有章只留标题与 CEN，避免 canon 随批次线性膨胀', () => {
+    const blueprint = (orderIndex: number) => ({
+      orderIndex,
+      title: `第${orderIndex}章标题`,
+      CBN: `第${orderIndex}章开场动作钩子`,
+      CPNs: [`第${orderIndex}章推进节点`],
+      CEN: `第${orderIndex}章章尾悬念`,
+      mustCover: [`第${orderIndex}章必出事件`],
+      forbiddenZones: [`第${orderIndex}章禁区`],
+    });
+    const context = compactContext(
+      {
+        title: '测试书',
+        oneLiner: '一句话',
+        premise: '前提',
+        storyEngine: {} as ExecutableOutline['storyEngine'],
+        volumePlan: [],
+        startupPack30: {} as ExecutableOutline['startupPack30'],
+        chapterBlueprints: [blueprint(1), blueprint(38), blueprint(50)],
+      } as ExecutableOutline,
+      { title: '方向' } as OutlineDirection,
+      [41, 42, 43],
+    );
+
+    // 邻接窗口内（38 距 41 只差 3 章）：完整字段，承接关系要能看见
+    expect(context).toContain('第38章开场动作钩子');
+    expect(context).toContain('第38章禁区');
+    // 窗口外：只留标题与 CEN
+    expect(context).toContain('第1章标题');
+    expect(context).toContain('第1章章尾悬念');
+    expect(context).not.toContain('第1章开场动作钩子');
+    expect(context).not.toContain('第1章必出事件');
+  });
+
   it('定点识别缺字段或占位标题的章节，不重生成其余章节', () => {
     const chapterBlueprints = Array.from({
       length: OUTLINE_COMPLETENESS_POLICY.startupChapterCount,

@@ -1,0 +1,63 @@
+﻿[
+  {
+    "file": "ch01.txt",
+    "title": "鍏爞涓婄湡鍑剁殑鎵嬩竴鐩村湪鎶?,
+    "words": 2939,
+    "paragraphs": 13,
+    "maxParagraph": 294,
+    "avgParagraph": 224,
+    "quotePairs": 28,
+    "ellipsis": 2,
+    "dash": 0
+  },
+  {
+    "file": "ch02.txt",
+    "title": "妗堝嵎閲屾€庝箞鍏ㄦ槸鐧界焊",
+    "words": 2627,
+    "paragraphs": 14,
+    "maxParagraph": 263,
+    "avgParagraph": 186,
+    "quotePairs": 21,
+    "ellipsis": 0,
+    "dash": 0
+  },
+  {
+    "file": "ch03.txt",
+    "title": "杩欏€熸潯钀芥鏄【搴?,
+    "words": 2507,
+    "paragraphs": 12,
+    "maxParagraph": 239,
+    "avgParagraph": 207,
+    "quotePairs": 16,
+    "ellipsis": 0,
+    "dash": 0
+  },
+  {
+    "file": "ch04.txt",
+    "title": "杩欓〉璐﹀唽鐨勬棩鏈熸槸鍋囩殑",
+    "words": 2471,
+    "paragraphs": 15,
+    "maxParagraph": 263,
+    "avgParagraph": 163,
+    "quotePairs": 23,
+    "ellipsis": 0,
+    "dash": 0
+  },
+  {
+    "file": "ch05.txt",
+    "title": "鍗峰畻閲岃汉鐫€涓悓鍚嶆浜?,
+    "words": 2511,
+    "paragraphs": 13,
+    "maxParagraph": 242,
+    "avgParagraph": 191,
+    "quotePairs": 27,
+    "ellipsis": 2,
+    "dash": 0
+  }
+]
+璺ㄧ珷閲嶅 8 瀛楃墖娈垫暟: 5
+浜嗕袱鍐屾病鐧昏鐨勬棫 (ch 1/3)
+涓ゅ唽娌＄櫥璁扮殑鏃ф。 (ch 1/3)
+浠庢涓嬫嫋鍑轰竴鍙棫 (ch 4/5)
+鍦ㄩ偅鍗锋柊妗ｇ殑灏佺毊 (ch 4/5)
+閭ｅ嵎鏂版。鐨勫皝鐨笂 (ch 4/5)

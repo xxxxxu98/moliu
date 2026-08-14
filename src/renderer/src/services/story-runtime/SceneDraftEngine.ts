@@ -156,6 +156,12 @@ export interface SceneDraftOptions {
   allowedAppearanceNames?: string[];
   /** 未来章节才允许说破的事实 */
   futureReveals?: FutureRevealConstraint[];
+  /**
+   * 章节已有正式标题（非「第N章」占位）。传入时不再让模型另拟标题：
+   * 大纲链路的标题本就不是占位，生成的标题下游必然被丢弃（ChapterWritingPipeline
+   * 只在占位时采纳），白占十余行 system 指令与模型注意力。
+   */
+  existingChapterTitle?: string;
 }
 
 export class SceneDraftEngine {
@@ -202,7 +208,7 @@ export class SceneDraftEngine {
         ? [
             `- 本章目标 ${targetWordCount} 字（与编辑器一致：全文长度口径）；paragraphs 合计硬性区间 ${minWordCount}–${maxWordCount} 字（${minPct}%–${maxPct}%）`,
             `- 低于 ${minWordCount} 或高于 ${maxWordCount} 都视为不合格草稿`,
-            `- 【字数硬要求】这是整章 single-shot 起草，不会有后续补字机会，必须一次写够 ${minWordCount} 字。请充分展开对话、动作、感官细节与场景转换，把 ${targetWordCount} 字的篇幅写满`,
+            `- 【字数硬要求】这是整章 single-shot 起草，必须一次写够 ${minWordCount} 字。后续补字只是兜底救急，补出来的段落看不到全书上下文，极易与本章事实冲突并导致整章重写。请充分展开对话、动作、感官细节与场景转换，把 ${targetWordCount} 字的篇幅一次写满`,
             `- 禁止无意义注水、重复开场、把同一事件换措辞再写一遍；也禁止把一章写成远超目标的长文`,
             `- 分段适中：每段约 3～5 句；忌超长大段堆砌`,
           ]
@@ -253,6 +259,11 @@ export class SceneDraftEngine {
         '- 可以替换或合并有问题的段落，但不得删除已履约的 CBN/CPNs/CEN',
       ],
     };
+    // 已有正式标题时只要求原样回填，省掉整套拟标题规则与 titleHints
+    const existingChapterTitle = options?.existingChapterTitle?.trim() ?? '';
+    const titleRules = existingChapterTitle
+      ? [`- chapterTitle 直接原样回填「${existingChapterTitle}」，本章不需要另拟标题`]
+      : CHAPTER_TITLE_PROMPT_RULES;
     const revisionRules =
       revisionHints.length > 0 && revisionPlan
         ? [
@@ -274,7 +285,7 @@ export class SceneDraftEngine {
         `{"sceneId":"${expectedSceneId}","beatId":"${primaryBeat.id}","chapterTitle":"短标题","paragraphs":["段落1","段落2"],"candidateEvents":[{"id":"..."}]}`,
         `- sceneId 必须等于 "${expectedSceneId}"`,
         `- beatId 必须等于 "${primaryBeat.id}"`,
-        ...CHAPTER_TITLE_PROMPT_RULES,
+        ...titleRules,
         '- paragraphs 至少 1 段，写可直接入库的小说正文（中文）',
         '- 必须一次写完全章：按 chapterBeats 顺序覆盖 CBN→CPNs→CEN，情节只向前推进',
         '- 【本章范围】只兑现本章 CBN/CPNs/CEN；禁止提前写后续章高光（如后章才该发生的当堂对线、翻案完结、新实验高潮）',
@@ -318,32 +329,34 @@ export class SceneDraftEngine {
           allowedAppearanceNames,
           futureReveals: options?.futureReveals ?? [],
         },
-        titleHints: {
-          vibe: '口语网文目录风，信息量够、别公文/案情通报',
-          length: {
-            min: 2,
-            max: 22,
-            prefer: '6-16字，宁可稍长也不要四字电报',
-          },
-          prefer: [
-            '打脸',
-            '翻车',
-            '反转',
-            '第一次',
-            '秘密',
-            '麻烦',
-            '悬念半截话',
-            '人物+事件',
-            '反差钩子',
-          ],
-          avoid: ['四字成语堆砌', '公文味短句', '过于严肃的案情概括', '连续章节同款硬四字'],
-          examples: [
-            '这尸体怎么验都不对劲',
-            '刚穿越就被诬下狱',
-            '县令公子当场翻车',
-            '今晚睡不着了',
-          ],
-        },
+        titleHints: existingChapterTitle
+          ? { fixedTitle: existingChapterTitle }
+          : {
+              vibe: '口语网文目录风，信息量够、别公文/案情通报',
+              length: {
+                min: 2,
+                max: 22,
+                prefer: '6-16字，宁可稍长也不要四字电报',
+              },
+              prefer: [
+                '打脸',
+                '翻车',
+                '反转',
+                '第一次',
+                '秘密',
+                '麻烦',
+                '悬念半截话',
+                '人物+事件',
+                '反差钩子',
+              ],
+              avoid: ['四字成语堆砌', '公文味短句', '过于严肃的案情概括', '连续章节同款硬四字'],
+              examples: [
+                '这尸体怎么验都不对劲',
+                '刚穿越就被诬下狱',
+                '县令公子当场翻车',
+                '今晚睡不着了',
+              ],
+            },
         revisionFeedback:
           revisionHints.length > 0 && revisionPlan
             ? {
@@ -357,7 +370,7 @@ export class SceneDraftEngine {
         requiredOutput: {
           sceneId: expectedSceneId,
           beatId: primaryBeat.id,
-          chapterTitle: '口语标题（6-16字优先，如：这尸体怎么验都不对劲）',
+          chapterTitle: existingChapterTitle || '口语标题（6-16字优先，如：这尸体怎么验都不对劲）',
           paragraphs: ['正文段落...'],
           candidateEvents: candidateIds.map(id => ({ id })),
         },

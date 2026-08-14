@@ -39,7 +39,7 @@ export async function extractChapterMemory(
   const enableAIEnhancement = options?.enableAIEnhancement ?? true;
   if (enableAIEnhancement) {
     try {
-      const aiEnhanced = await enhanceWithAI(chapter, chapterIndex, baseMemory);
+      const aiEnhanced = await enhanceWithAI(chapter);
       if (aiEnhanced) {
         Object.assign(baseMemory, aiEnhanced);
       }
@@ -551,11 +551,7 @@ function analyzeEmotion(content: string): string {
  * - 返回 null 时使用规则提取结果
  * - 严格验证 AI 返回内容，避免注入
  */
-async function enhanceWithAI(
-  chapter: Chapter,
-  chapterIndex: number,
-  baseMemory: ReturnType<typeof extractByRules>
-): Promise<Partial<ChapterMemory> | null> {
+async function enhanceWithAI(chapter: Chapter): Promise<Partial<ChapterMemory> | null> {
   try {
     const { useAIService } = await import('@/services/ai/useAIService');
     const aiService = useAIService();
@@ -596,15 +592,16 @@ async function enhanceWithAI(
       console.warn('[情节记忆] AI 情感分析失败:', emotionResult.reason);
     }
 
-    // 处理主题结果
+    // 处理主题结果：这是「本章主要事件」的一句话概括，属于 corePlot。
+    // 曾误写进 emotionalTone，把情感基调覆盖成一整句事件摘要，导致下游按
+    // 情感词匹配（如 includes('温馨')）的节奏判断与完结感知全部失效。
+    // 规则版 corePlot 只是首段前 200 字原文，AI 概括更适合中期记忆，故直接替换。
     if (themeResult.status === 'fulfilled') {
       try {
         const theme = String(themeResult.value).trim();
-        // 严格验证：只接受纯文本
+        // 严格验证：只接受纯文本，长度对齐 ChapterMemory.corePlot 的 100 字上限
         if (theme && theme.length <= 100 && !theme.includes('{') && !theme.includes('[') && !theme.includes('\\')) {
-          // 这里我们保留原来的 corePlot，只用 AI 补充情感信息
-          // 如果 AI 返回的主题更有价值，可以考虑替换
-          result.emotionalTone = theme; // 可以用 theme 更新 emotionalTone
+          result.corePlot = theme;
         }
       } catch (parseError) {
         console.warn('[情节记忆] 解析主题结果失败:', parseError);

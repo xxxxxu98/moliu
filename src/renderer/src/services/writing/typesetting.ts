@@ -283,11 +283,27 @@ export function mergeSparseParagraphs(paragraphs: string[]): string[] {
 }
 
 /**
+ * 单弯引号升格为双弯引号。
+ *
+ * 模型偶尔整章用 ‘…’ 写对话（成对、可读），但中文出版规范里 ‘’ 是二级引号，
+ * 成品缺一级引号在任何平台都是硬伤，且会让「全章无引号」门禁误判为裸台词而整章重写。
+ * 只在「全文没有一对双引号」且单引号数量配平时整体升格，避免破坏 “他说‘走’。” 这类合法嵌套。
+ */
+function promoteSingleQuotesToPrimary(text: string): string {
+  if (/\u201C[^\u201D]*\u201D/u.test(text)) return text;
+  const openCount = (text.match(/\u2018/gu) ?? []).length;
+  const closeCount = (text.match(/\u2019/gu) ?? []).length;
+  if (openCount === 0 || openCount !== closeCount) return text;
+  return text.replace(/\u2018/gu, '\u201C').replace(/\u2019/gu, '\u201D');
+}
+
+/**
  * 轻量规范化：尊重模型原有分段，不做主动拆段/并段。
  *
  * 仅做：
  * - 统一换行、去掉段首段尾空白
  * - 连续空行压成一段间隔
+ * - 标点归一（破折号/省略号、单弯引号升格）
  * - 修补「收引号被误甩到下一段开头」（历史拆段残留 / 偶发模型笔误）
  *
  * 段密问题交给 prompt 约束与 G8 门禁反馈，不再用启发式改写正文结构。
@@ -295,7 +311,7 @@ export function mergeSparseParagraphs(paragraphs: string[]): string[] {
 export function normalizeWebnovelParagraphs(prose: string): string {
   if (!prose?.trim()) return prose ?? '';
 
-  const punctuationNormalized = prose
+  const punctuationNormalized = promoteSingleQuotesToPrimary(prose)
     .replace(/\r\n/g, '\n')
     .replace(/—{2,}(?=[“"「『])/gu, '：')
     .replace(/—+/gu, '，')
@@ -351,10 +367,17 @@ export function analyzeParagraphDensity(prose: string): ParagraphDensityStats {
 
 /** 说话提示语 + 冒号 + 一整句台词，且台词没有被引号包住 */
 const BARE_DIALOGUE_PATTERN =
-  /(?:说|道|问|答|喊|叫|喝|吼|应|劝|骂|催|叹|笑|哑|开口|出声|脱口而出|低声|冷声|沉声|声音|嗓音|语气|意味)\s*[：:]\s*[^“”「」『』\n]{8,}[。！？!?]/u;
+  /(?:说|道|问|答|喊|叫|喝|吼|应|劝|骂|催|叹|笑|哑|开口|出声|脱口而出|低声|冷声|沉声|声音|嗓音|语气|意味)\s*[：:]\s*[^\u201C\u201D\u2018\u2019「」『』\n]{8,}[。！？!?]/u;
 
 function countQuotePairs(text: string): number {
-  const pairPatterns = [/\u201C[^\u201D]*\u201D/gu, /「[^」]*」/gu, /『[^』]*』/gu];
+  // 单弯引号一般已被 promoteSingleQuotesToPrimary 升格；此处仍计数，兜住数量不配平
+  // 而未被升格的情形——那是引号写法问题，不该被当成「全章裸台词」再罚一次整章重写。
+  const pairPatterns = [
+    /\u201C[^\u201D]*\u201D/gu,
+    /\u2018[^\u2019]*\u2019/gu,
+    /「[^」]*」/gu,
+    /『[^』]*』/gu,
+  ];
   return pairPatterns.reduce((total, pattern) => total + (text.match(pattern)?.length ?? 0), 0);
 }
 

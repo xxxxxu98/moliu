@@ -84,6 +84,29 @@ describe('extractMultiValueField 编号列表解析', () => {
     expect(result).toEqual(['A', 'B', 'C']);
   });
 
+  it('整句陈述里的逗号不再被当成并列切分（只按分号分阶）', () => {
+    // 实测回归：升级路径三阶被切成 11 个碎片落库，之后原样注入写作 prompt 灌噪音
+    const block =
+      '升级路径：初阶为应急工具，主角用来破案自保，应付差事；进阶为管理体系，主角用来推动漕运改革；终极为治国框架，主角用来重塑朝堂规则';
+    const result = extractMultiValueField(block, '升级路径');
+
+    expect(result).toHaveLength(3);
+    expect(result[0]).toBe('初阶为应急工具，主角用来破案自保，应付差事');
+    expect(result[2]).toBe('终极为治国框架，主角用来重塑朝堂规则');
+  });
+
+  it('无强分隔符的整句话保持完整，不按逗号打碎', () => {
+    const block = '势力版图：前期夹缝求生，中期被三方拉扯，后期成为改革支点';
+    const result = extractMultiValueField(block, '势力版图');
+    expect(result).toEqual(['前期夹缝求生，中期被三方拉扯，后期成为改革支点']);
+  });
+
+  it('短词组并列仍按逗号切分', () => {
+    const block = '涉及角色：赵文远，顾庸，范通判';
+    const result = extractMultiValueField(block, '涉及角色');
+    expect(result).toEqual(['赵文远', '顾庸', '范通判']);
+  });
+
   // ---------- 缺陷修复：单行内联编号切分 ----------
   // AI 常把 CPNs/mustCover 写成同一行的内联编号：
   //   `- CPNs：1. 陈默穿越，发现自己是大梁七品小吏 2. 陈默用现代法医思维 3. 陈默破案`

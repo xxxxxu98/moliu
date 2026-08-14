@@ -30,6 +30,7 @@ import {
   checkWordCountBounds,
   chooseProseAfterCondense,
 } from '@/services/writing/supplement';
+import { isPlaceholderChapterTitle } from '@/services/writing/chapterTitle';
 import { buildTypesettingIssues } from '@/services/writing/typesetting';
 import {
   classifyError,
@@ -315,6 +316,10 @@ export class LongFormWritingEngine {
               contracts.chapter.allowedCharacterNames,
             ),
             futureReveals: contracts.chapter.futureReveals ?? [],
+            // 大纲链路的章节标题已是正式标题，模型再拟一个也会被 pipeline 丢弃
+            existingChapterTitle: isPlaceholderChapterTitle(contracts.chapter.title)
+              ? undefined
+              : contracts.chapter.title,
           });
           // 提交前进补字：避免 SQLite accepted 后仍只有 ~900 字
           return this.padDraftsToTarget(d, writeInput);
@@ -532,6 +537,19 @@ export class LongFormWritingEngine {
       input.contracts.chapter.goal ||
       input.contracts.chapter.CBN ||
       input.contracts.chapter.CEN;
+    // 补字与起草共用同一套硬约束：只给「结尾片段 + 章大纲」时，补字会拉来未登场角色、
+    // 踩禁区或写出与本章前文冲突的事实，代价是整章重写（实测 ch5 因此白烧一轮）。
+    const chapterBeats = [
+      input.contracts.chapter.CBN,
+      ...(input.contracts.chapter.CPNs ?? []),
+      input.contracts.chapter.CEN,
+    ]
+      .map(item => (typeof item === 'string' ? item.trim() : ''))
+      .filter(Boolean);
+    const allowedAppearanceNames = extractAllowedAppearanceNames(
+      input.state.entities,
+      input.contracts.chapter.allowedCharacterNames,
+    );
 
     let currentBounds = bounds;
     for (let round = 1; round <= maxPadRounds; round += 1) {
@@ -553,6 +571,9 @@ export class LongFormWritingEngine {
         maxRounds: maxPadRounds,
         chapterTitle: input.contracts.chapter.title,
         chapterOutline: outline,
+        pendingBeats: chapterBeats,
+        allowedAppearanceNames,
+        forbiddenZones: input.contracts.chapter.forbidden ?? [],
         outputFormat: 'json',
       });
 

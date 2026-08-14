@@ -184,11 +184,40 @@ export function extractMultiValueField(block: string, fieldName: string): string
     return inlineNumbered;
   }
 
-  return value
-    .split(/[；;、，,/]/)
-    .map((item) => item.trim())
+  return splitEnumeration(value);
+}
+
+/** 明确的并列标记：分号、顿号、斜杠、箭头 */
+const STRONG_SEPARATORS = /[；;、/｜|]|→|->/u;
+/** 逗号切分时单项允许的最大长度（超过就更像句子里的语法停顿而非词组并列） */
+const MAX_COMMA_ITEM_CHARS = 6;
+
+const dedupeNonEmpty = (items: string[]): string[] =>
+  items
+    .map(item => item.trim())
     .filter(Boolean)
     .filter((item, index, array) => array.indexOf(item) === index);
+
+/**
+ * 把一个字段值切成并列项。
+ *
+ * 逗号在中文里多数时候是句内停顿而不是并列标记，一律按逗号切会把整句话打成碎片：
+ * 「初阶为应急工具，主角用来破案自保；进阶为管理体系……」曾被切成 11 个碎片落库，
+ * 之后又被原样注入写作 prompt，等于往上下文里灌噪音。
+ * 所以先用强分隔符切；只有强分隔符切不动、且各段都短到像词组并列时，才退回逗号切分。
+ */
+function splitEnumeration(value: string): string[] {
+  const strong = dedupeNonEmpty(value.split(STRONG_SEPARATORS));
+  const parts = strong.length > 1 ? strong : [value];
+  return dedupeNonEmpty(parts.flatMap(splitWordListByComma));
+}
+
+/** 只有「短词组并列」才按逗号切；一旦出现长片段，说明逗号是句内停顿，整段保留 */
+function splitWordListByComma(part: string): string[] {
+  const items = dedupeNonEmpty(part.split(/[，,]/u));
+  const looksLikeWordList =
+    items.length > 1 && items.every(item => item.length <= MAX_COMMA_ITEM_CHARS);
+  return looksLikeWordList ? items : [part];
 }
 
 export function safeParseScore(value: string | null, fallback = 70): number {

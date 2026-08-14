@@ -140,10 +140,15 @@ export function parseChapterBlueprintSection(section: string): ChapterBlueprint[
       const hookText = extractFieldValue(block.body, '章尾钩子文案') ?? '';
       const hookType = (extractFieldValue(block.body, '爽点类型') ?? '').trim();
       const coolPointType = hookType || undefined;
+      // 章纲描述：summary 会成为 plotOutline.description 与 chapter.outline 的正文段。
+      // 只回退 CBN 时，章纲描述与结构化节点里的 CBN 逐字重复，等于整章章纲零信息增量。
+      const summary = (
+        extractAliasedFieldValue(block.body, ['概要', 'summary', '本章概要', '章节概要']) ?? ''
+      ).trim();
       return {
         orderIndex,
         title: title || CBN.slice(0, 16),
-        summary: CBN || title,
+        summary: summary || CBN || title,
         CBN,
         CPNs: CPNs.length > 0 ? CPNs : (CBN ? [CBN] : []),
         CEN,

@@ -199,8 +199,9 @@ describe('buildSupplementPrompt', () => {
     expect(snippet.startsWith('水很凉')).toBe(false);
     expect(snippet.includes('他必须活下去')).toBe(true);
 
+    // 超长正文（>6000 字）退回结尾片段锚定
     const prompt = buildSupplementPrompt({
-      existingContent: `${'前段完整句。'.repeat(40)}下一拍从半截开始会坏。最终落到完整句。续写从这里开始。`,
+      existingContent: `${'前段完整句。'.repeat(1200)}下一拍从半截开始会坏。最终落到完整句。续写从这里开始。`,
       targetWordCount: 3000,
       additionalWords: 200,
       round: 1,
@@ -210,6 +211,42 @@ describe('buildSupplementPrompt', () => {
       prompt.split('## 原文结尾（请从这里继续）\n')[1]?.split('\n\n## 章节上下文')[0] ?? '';
     expect(endingBlock.startsWith('下，')).toBe(false);
     expect(endingBlock.includes('续写从这里开始')).toBe(true);
+  });
+
+  it('单章体量正文整章塞进上下文，而不是只给结尾片段', () => {
+    // 回归：只给 500 字结尾时，补字看不到本章前半程已确立的事实，
+    // 实测补出「某人三年前死在漕运船上」与前文「去年冬天就死了」冲突，整章重写。
+    const openingFact = '顾庸说，写这行批注的人去年冬天就死了。';
+    const prompt = buildSupplementPrompt({
+      existingContent: `${openingFact}\n\n${'中段推进。'.repeat(200)}\n\n结尾锚点在这里。`,
+      targetWordCount: 3000,
+      additionalWords: 600,
+      round: 1,
+      chapterTitle: '第5章',
+      outputFormat: 'json',
+    });
+
+    expect(prompt).toContain('本章已写正文');
+    expect(prompt).toContain(openingFact);
+    expect(prompt).toContain('结尾锚点在这里');
+    expect(prompt).toContain('事实一致');
+  });
+
+  it('带上出场名单与禁区（与起草同一套硬约束）', () => {
+    const prompt = buildSupplementPrompt({
+      existingContent: '正文内容。'.repeat(20),
+      targetWordCount: 3000,
+      additionalWords: 600,
+      round: 1,
+      chapterTitle: '第5章',
+      allowedAppearanceNames: ['赵文远', '顾庸'],
+      forbiddenZones: ['不让姜闻道登场'],
+      outputFormat: 'json',
+    });
+
+    expect(prompt).toContain('出场名单');
+    expect(prompt).toContain('赵文远、顾庸');
+    expect(prompt).toContain('不让姜闻道登场');
   });
 
   it('outputFormat=json 时输出 JSON 数组指令（LongFormWritingEngine 偏短补字路径依赖）', () => {

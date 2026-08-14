@@ -234,6 +234,13 @@ export interface BuildSupplementPromptParams {
   /** 尚未写满的履约节点 / 章末钩子，补字必须朝它们推进 */
   pendingBeats?: string[];
   /**
+   * 本章允许现身/发声的角色名。补字与起草共用同一份白名单，
+   * 否则补字会拉来未到登场章的角色，触发 critical 门禁并让整章重写。
+   */
+  allowedAppearanceNames?: string[];
+  /** 本章禁区（合同 forbidden），补字同样受约束 */
+  forbiddenZones?: string[];
+  /**
    * 输出格式：'json' 表示调用方要求 AI 只返回 JSON 数组（如 LongFormWritingEngine 补字路径，
    * system 已要求 {"paragraphs":[...]}）；'plain' 表示直接输出正文（runSupplementRounds 纯文本路径）。
    * 默认 'plain'。区分二者避免“只输出 JSON”与“直接输出补充内容”两条指令互相矛盾
@@ -243,6 +250,9 @@ export interface BuildSupplementPromptParams {
 }
 
 const DEFAULT_ENDING_SNIPPET_CHARS = 500;
+
+/** 整章塞进补字上下文的字数上限；超过则退回结尾片段锚定 */
+const FULL_CHAPTER_CONTEXT_CHARS = 6000;
 
 /**
  * 截取原文结尾供补充续写锚定：优先段落边界，其次句末标点，避免从半句起读。
@@ -290,11 +300,12 @@ export function buildSupplementPrompt(params: BuildSupplementPromptParams): stri
     chapterTitle,
     chapterOutline,
     pendingBeats = [],
+    allowedAppearanceNames = [],
+    forbiddenZones = [],
     outputFormat = 'plain',
   } = params;
 
   const currentWords = countWords(existingContent);
-  const endingSnippet = sliceEndingSnippet(existingContent);
   const beats = pendingBeats.map(item => item.trim()).filter(Boolean).slice(0, 6);
   const beatSection =
     beats.length > 0
@@ -302,6 +313,28 @@ export function buildSupplementPrompt(params: BuildSupplementPromptParams): stri
           .map((item, index) => `${index + 1}. ${item}`)
           .join('\n')}\n`
       : '';
+
+  // 只给 500 字结尾片段时，模型看不到本章前半程已经确立的事实（谁死了、哪天画的押），
+  // 补出来的段落常与前文互相打架，反而触发 logic_gap 让整章重写。
+  // 单章体量本就只有几千字，能整章塞就整章塞，让补字在完整事实面前续写。
+  const trimmedContent = existingContent.trim();
+  const includeFullChapter = trimmedContent.length > 0 && trimmedContent.length <= FULL_CHAPTER_CONTEXT_CHARS;
+  const contentSection = includeFullChapter
+    ? `## 本章已写正文（禁止与其中任何事实冲突，也不要重复其中场面；请接着最后一段往下写）
+${trimmedContent}`
+    : `## 原文结尾（请从这里继续）
+${sliceEndingSnippet(existingContent)}`;
+
+  const constraintLines = [
+    allowedAppearanceNames.length > 0
+      ? `- 【出场名单】本章只有以下角色可以现身、说话或行动：${allowedAppearanceNames.join('、')}；其他角色最多作为背景被提及，不得到场或发声`
+      : '',
+    forbiddenZones.length > 0
+      ? `- 【禁区】不得触碰：${forbiddenZones.join('；')}`
+      : '',
+  ].filter(Boolean);
+  const constraintSection =
+    constraintLines.length > 0 ? `\n## 硬约束\n${constraintLines.join('\n')}\n` : '';
 
   return `【补充续写指令】
 
@@ -318,9 +351,9 @@ export function buildSupplementPrompt(params: BuildSupplementPromptParams): stri
 4. **禁止复读**：不要再次穿越醒来、不要无因由再次入狱、不要把已写过的公堂戏换皮重写
 5. **衔接自然**：补充内容与原文之间过渡要自然，不突兀
 6. **分段适中**：每段约 3～5 句、180～280 字；段间空行；忌一句一段与超长大段
-${beatSection}
-## 原文结尾（请从这里继续）
-${endingSnippet}
+7. **事实一致**：人物的生死、时间、身份、持有物必须与前文完全一致；不确定就不要写死
+${beatSection}${constraintSection}
+${contentSection}
 
 ## 章节上下文
 - 章节标题：${chapterTitle}

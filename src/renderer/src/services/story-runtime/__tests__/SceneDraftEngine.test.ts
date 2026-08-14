@@ -256,6 +256,37 @@ describe('SceneDraftEngine.draft', () => {
     expect(drafts[0].chapterTitle).toBe('这尸体不对劲');
   });
 
+  it('已有正式标题时只要求回填，不再注入整套拟标题规则', async () => {
+    // 大纲链路的章节标题非占位，pipeline 只在占位时采纳生成标题，
+    // 再让模型拟一个等于白占十余行 system 指令与注意力。
+    const generate = vi.fn(async () => ({
+      chapterTitle: '睁眼就替人顶罪画押',
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 1,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context, { existingChapterTitle: '睁眼就替人顶罪画押' });
+
+    const request = generate.mock.calls[0][0] as { system: string; prompt: string };
+    expect(request.system).toContain('直接原样回填「睁眼就替人顶罪画押」');
+    expect(request.system).not.toContain('拜师学艺');
+    const prompt = JSON.parse(request.prompt) as {
+      titleHints: { fixedTitle?: string; vibe?: string };
+      requiredOutput: { chapterTitle: string };
+    };
+    expect(prompt.titleHints.fixedTitle).toBe('睁眼就替人顶罪画押');
+    expect(prompt.titleHints.vibe).toBeUndefined();
+    expect(prompt.requiredOutput.chapterTitle).toBe('睁眼就替人顶罪画押');
+  });
+
   it('字数规则同时声明上下限，并写入 writingRules', async () => {
     const generate = vi.fn(async () => ({
       paragraphs: ['开篇。', '推进。', '章末钩子。'],

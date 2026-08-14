@@ -141,12 +141,26 @@ export function extractRequestedChapterBlocks(raw: string, requested: number[]):
   return result;
 }
 
+/**
+ * 邻接窗口：本批章号前后各多少章给完整 canon。
+ * 窗口外的章只留「章号 + 标题 + CEN」——足够模型判断「这事已经写过了」，
+ * 但不会让 canon 随批次线性膨胀（50 章分 5 批时，末批本会背上前 40 章的全字段）。
+ */
+const CANON_DETAIL_WINDOW = 5;
+
 export function compactContext(
   outline: ExecutableOutline,
   direction: OutlineDirection,
   excludeChapterNumbers: number[] = [],
 ): string {
   const excluded = new Set(excludeChapterNumbers);
+  const detailFrom = excludeChapterNumbers.length > 0
+    ? Math.min(...excludeChapterNumbers) - CANON_DETAIL_WINDOW
+    : Number.NEGATIVE_INFINITY;
+  const detailTo = excludeChapterNumbers.length > 0
+    ? Math.max(...excludeChapterNumbers) + CANON_DETAIL_WINDOW
+    : Number.POSITIVE_INFINITY;
+
   return JSON.stringify({
     direction,
     title: outline.title,
@@ -158,15 +172,24 @@ export function compactContext(
     existingChapterCanon: (outline.chapterBlueprints ?? [])
       .filter(blueprint => isUsableBlueprint(blueprint) && !excluded.has(blueprint.orderIndex))
       .sort((a, b) => a.orderIndex - b.orderIndex)
-      .map(blueprint => ({
-        chapter: blueprint.orderIndex,
-        title: blueprint.title,
-        CBN: blueprint.CBN,
-        CPNs: blueprint.CPNs,
-        CEN: blueprint.CEN,
-        mustCover: blueprint.mustCover,
-        forbiddenZones: blueprint.forbiddenZones,
-      })),
+      .map(blueprint => {
+        const digest = {
+          chapter: blueprint.orderIndex,
+          title: blueprint.title,
+          CEN: blueprint.CEN,
+        };
+        const isNearBatch =
+          blueprint.orderIndex >= detailFrom && blueprint.orderIndex <= detailTo;
+        return isNearBatch
+          ? {
+              ...digest,
+              CBN: blueprint.CBN,
+              CPNs: blueprint.CPNs,
+              mustCover: blueprint.mustCover,
+              forbiddenZones: blueprint.forbiddenZones,
+            }
+          : digest;
+      }),
   }, null, 2);
 }
 
@@ -198,6 +221,7 @@ function buildChapterCompletionPrompt(
 每章必须严格使用以下结构：
 ### 第N章
 - 标题：${titleMinChars}-${titleMaxChars}字的网文口语标题，要有画面/情绪/钩子，抓住本章最刺激的一点（打脸/翻车/反转/期限/秘密/意外）；禁止只写“第N章”
+- 概要：40-80字，用一段话交代本章从哪儿起、中间怎么推、落到什么后果，写给作者看的章纲；必须比 CBN 多出信息量，禁止照抄 CBN/标题
 - CBN：${hookMinChars}-${hookMaxChars}字的章首动作钩子，写开篇 10 秒抓人的瞬间画面或冲突，禁止整章剧情概括
 - CPNs：${minimumCpns}-${maximumCpns}个本章必须兑现的推进节点，每条独立可写成一个场面，用中文分号分隔
 - CEN：${hookMinChars}-${hookMaxChars}字章尾悬念，要让读者必须点下一章

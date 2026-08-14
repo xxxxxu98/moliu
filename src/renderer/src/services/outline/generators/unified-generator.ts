@@ -32,6 +32,7 @@ import { inspectOutlineQuality, reviewAndFixOutline } from './outline-reviewer';
 import {
   hasStructuralOutlineBlockers,
   inspectOutlineCompleteness,
+  OUTLINE_COMPLETENESS_POLICY,
 } from '../validation/outlineCompleteness';
 import { completeIncompleteOutline, repairChapterBlueprints } from './outline-completer';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
@@ -1027,6 +1028,14 @@ export class UnifiedOutlineGenerator {
     const breakdown = buildWordCountBreakdown(wordCountRange);
     const { targetWordCount, estimatedChapterCount, suggestedVolumeCount } = breakdown;
     const wordsPerVolume = Math.round(targetWordCount / suggestedVolumeCount / 10000);
+    // 启动包章数与可应用门槛共用同一常量：写死 30 会让模型收到两把规划尺子
+    // （提示词说前 30 章，完整性门槛按 50 章卡），拆章阶段被迫补跑。
+    const startupChapterCount = OUTLINE_COMPLETENESS_POLICY.startupChapterCount;
+    const startupBlockCount = Math.ceil(startupChapterCount / 5);
+    const startupBlockRanges = Array.from(
+      { length: startupBlockCount },
+      (_, index) => `${index * 5 + 1}-${Math.min((index + 1) * 5, startupChapterCount)}`,
+    ).join(' / ');
 
     return `你是一位专业的小说创作顾问。根据用户的创意种子，生成结构清晰的故事大纲。
 
@@ -1104,12 +1113,12 @@ ${buildWebnovelCraftPrompt()}
 - **作用**：
 
 ## 章节规划
-- **规划原则**：不要列出全书 ${estimatedChapterCount} 章；只输出前30章启动包和后续卷级概览，避免长篇大纲被章节目录挤占。
-- **前30章启动包**：按 1-5 / 6-10 / 11-15 / 16-20 / 21-25 / 26-30 六个区间输出，每区间写目标、关键事件、爽点、钩子。
+- **规划原则**：不要列出全书 ${estimatedChapterCount} 章；只输出前${startupChapterCount}章启动包和后续卷级概览，避免长篇大纲被章节目录挤占。
+- **前${startupChapterCount}章启动包**：按 ${startupBlockRanges} 共 ${startupBlockCount} 个区间输出，每区间写目标、关键事件、爽点、钩子。
 - **开篇钩子**：必须是 30 字以内的单场景动作钩子（如「一睁眼正在验尸」「金手指砸脸」），只写开局第一幕的瞬间画面，禁止写整卷剧情概括、目标陈述或倒计时预告。
 - **关键事件粒度**：每个区间的「关键事件」必须是单章可兑现的独立事件——同一场景链（如「醒来→验尸→当众指认→被诬入狱」）必须合并为一条，禁止拆成多条；每条一句话写完（8～30 字，最多 40 字），禁止换行、禁止括号注解。
 - **后续章节概览**：按卷输出，每卷写章节范围、卷目标、核心冲突、高潮、卷尾钩子。
-- **规模校验**：总章节规模约 ${estimatedChapterCount} 章，前30章只完成开局承诺和第一轮冲突闭环。
+- **规模校验**：总章节规模约 ${estimatedChapterCount} 章，前${startupChapterCount}章只完成开局承诺和第一轮冲突闭环。
 
 ## 伏笔
 - **伏笔**：

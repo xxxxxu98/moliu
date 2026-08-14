@@ -4,6 +4,7 @@
  */
 
 import type { CoolPointDensity, StrandConfig, ConflictLevel } from '../contracts/story-contract';
+import { OUTLINE_COMPLETENESS_POLICY } from '../../validation/outlineCompleteness';
 
 /**
  * 核心信念
@@ -510,6 +511,8 @@ export function buildWritingTipsPrompt(): string {
  * 3. 章节标题接地气、章尾留钩子等通用规范统一
  */
 export function buildWebnovelCraftPrompt(): string {
+  // 启动区间长度与可应用门槛共用同一常量，避免提示词按 30 章讲节奏、门禁按 50 章卡结果
+  const startupChapterCount = OUTLINE_COMPLETENESS_POLICY.startupChapterCount;
   return `## 【核心信念】网文写作是工程，不是灵感
 - 网文写作是工程，不是灵感。靠灵感写不了长篇，靠工程可以。
 - 追读率由爽点密度决定：每 3000-5000 字必须有一个让读者"爽"的情绪节点。
@@ -542,6 +545,6 @@ export function buildWebnovelCraftPrompt(): string {
 ## 【章节大纲设计原则】
 - 前 3 章：全力打磨，钩子 + 人设 + 爽点 + 悬念四管齐下
 - 4-10 章：快速推进，每章有明确进展
-- 11-30 章：稳定节奏，开始铺设中长线伏笔
-- 30 章后：进入中长篇节奏，避免前 30 章就耗尽主线升级空间`;
+- 11-${startupChapterCount} 章：稳定节奏，开始铺设中长线伏笔
+- ${startupChapterCount} 章后：进入中长篇节奏，避免前 ${startupChapterCount} 章就耗尽主线升级空间`;
 }

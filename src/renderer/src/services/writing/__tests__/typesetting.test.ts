@@ -140,6 +140,26 @@ describe('buildTypesettingIssues 生产硬门禁', () => {
     ).toBe(true);
   });
 
+  it('整章用单弯引号写对话时升格为双引号，不再误判为裸台词', () => {
+    // smoke:storyflow:real 第 1 章回归：模型整章用 ‘…’ 写对话（成对可读），
+    // 旧口径按「全章无引号」阻断并整章重写，白烧一轮真实请求。
+    const prose = [
+      '狱卒蹲下来，脸凑到栅栏前，咧嘴笑了笑：‘赵书办，醒啦？你按个手印，咱们都省事。’',
+      '赵文远没急着答话，先端起碗把那半碗水喝了，才慢慢展开那张纸。',
+      '他抬头看向堂上，声音不高不低：‘大人，小人有三处疑问，想请这位老吏答一答。’',
+    ].join('\n\n');
+
+    expect(normalizeWebnovelParagraphs(prose)).toContain('“赵书办，醒啦？');
+    expect(
+      buildTypesettingIssues(prose).some(issue => issue.description.includes('对话未使用中文引号'))
+    ).toBe(false);
+  });
+
+  it('双引号内嵌套的单引号不被升格', () => {
+    const prose = '他压低声音：“顾庸只说了一句‘走’，就再没开口。”';
+    expect(normalizeWebnovelParagraphs(prose)).toBe(prose);
+  });
+
   it('正常引号对话与叙述冒号不误报', () => {
     const issues = buildTypesettingIssues(
       [

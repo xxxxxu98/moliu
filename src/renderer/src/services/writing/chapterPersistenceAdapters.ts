@@ -9,10 +9,17 @@ import type {
   ChapterPersistenceClient,
   MemoryClient,
 } from '@/services/orchestrator';
+import type { Chapter } from '@/types/project';
 import { DeAIService } from './de-ai-service';
 import { countWords } from './utils';
 import { safeExtractChapterMemory } from './extract-plot-memory';
 import { initializeMemoryManager, getMemoryManager } from './memory-manager';
+
+const CHAPTER_STATUSES: readonly Chapter['status'][] = ['draft', 'editing', 'final'];
+
+function isChapterStatus(value: unknown): value is Chapter['status'] {
+  return typeof value === 'string' && (CHAPTER_STATUSES as readonly string[]).includes(value);
+}
 
 /**
  * 创建章节正文持久化适配器（追加语义）。
@@ -38,7 +45,10 @@ export function createChapterPersistenceClient(): ChapterPersistenceClient {
       wordCount: countWords(newContent),
       isGenerated: true,
       generatedAt: new Date().toISOString(),
-      status: 'published',
+      // 曾硬编码 'published'：既不是 Chapter.status 的合法值（draft|editing|final），
+      // 也把刚生成、还没人读过的初稿标成了终态。AI 落稿就是初稿，
+      // 已有状态（作者手动改成 editing/final）不覆盖。
+      ...(isChapterStatus(ch?.status) ? {} : { status: 'draft' satisfies Chapter['status'] }),
     };
     if (extractedTitle) updateData.title = extractedTitle;
     await projectStore.updateChapter(chapterId, updateData);

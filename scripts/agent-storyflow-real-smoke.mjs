@@ -22,6 +22,7 @@ import { join } from 'node:path';
 import { createRequire } from 'node:module';
 
 import { cleanupSmokeArtifacts } from './cleanup-smoke-artifacts.mjs';
+import { ensureElectronSqliteAbi } from './ensure-electron-sqlite-abi.mjs';
 
 process.env.REAL_AI = process.env.REAL_AI || '1';
 
@@ -43,9 +44,16 @@ cleanupSmokeArtifacts(
   },
 );
 
-// better-sqlite3 由 electron-builder 按 Electron ABI 编译。普通系统 Node 跑 Vitest 会因
+// better-sqlite3 必须按 Electron ABI 编译。普通系统 Node 跑 Vitest 会因
 // NODE_MODULE_VERSION 不同而假失败并降级内存；这里让 Electron 作为 Node 运行 Vitest，
 // 与生产桌面进程加载同一 native 模块，真实验证 SQLite。
+// `npm test` 的 pretest 会把它按系统 Node 重编译，所以每轮冒烟前都先探针 + 必要时重建，
+// 否则要等一小时后的 runtimeBackend 断言才发现整轮跑在内存后端上。
+if (!ensureElectronSqliteAbi('smoke:storyflow:real')) {
+  console.error('[smoke:storyflow:real] SQLite 后端不可用，中止（真实持久化无法验证）');
+  process.exit(1);
+}
+
 const require = createRequire(import.meta.url);
 const electronBinary = require('electron');
 const vitestRunner = join(process.cwd(), 'scripts', 'electron-vitest-runner.mjs');
