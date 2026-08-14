@@ -215,6 +215,76 @@ describe('UnifiedOutlineGenerator 请求参数', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  // 真实网关（ARK/minimax 系）错误体的 < 是 JSON 字面转义 \u003c（response.text() 原文
+  // 直接拼进 Error message，不反转义），解析必须兼容这种写法才能一轮收敛到网关上限。
+  it('错误消息含字面转义 \\u003c= 时第一轮即按网关上限收敛（无需减半试错）', async () => {
+    injectSettings({
+      provider: 'openai',
+      generationConfig: { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0, maxTokens: 1048576 },
+    });
+    const fetchMock = vi.fn(async () => {
+      const calls = fetchMock.mock.calls.length;
+      if (calls <= 1) {
+        return {
+          ok: false,
+          status: 400,
+          text: async () =>
+            '{"error":{"code":"InvalidParameter","message":"The parameter `max_tokens` ... expected a value \\u003c= 393216, but got 1048576 instead."}}',
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: DIRECTION_TEXT } }] }),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    await generator.generateDirections('创意种子', { maxRetries: 1 });
+
+    // 第一轮解析 \u003c= 393216 直接收敛，第二轮成功
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(lastRequestBody(fetchMock).max_tokens).toBe(393216);
+  });
+
+  it('网关不报上限数值时按减半降级，多轮循环直到收敛或额度耗尽', async () => {
+    injectSettings({
+      provider: 'openai',
+      generationConfig: { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0, maxTokens: 1048576 },
+    });
+    // 前两轮报「超限但无数值」（走减半），第三轮起网关吐出明文上限
+    const fetchMock = vi.fn(async () => {
+      const calls = fetchMock.mock.calls.length;
+      if (calls <= 2) {
+        return {
+          ok: false,
+          status: 400,
+          text: async () => '{"error":{"code":"BadRequest","message":"max_tokens is too large"}}',
+        };
+      }
+      if (calls <= 3) {
+        return {
+          ok: false,
+          status: 400,
+          text: async () =>
+            '{"error":{"code":"InvalidParameter","message":"max_tokens ... expected a value <= 131072, but got 262144 instead."}}',
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: DIRECTION_TEXT } }] }),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    await generator.generateDirections('创意种子', { maxRetries: 1 });
+
+    // 1048576 →（减半）524288 →（减半）262144 →（网关上限）131072 → 成功，共 4 次调用
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(lastRequestBody(fetchMock).max_tokens).toBe(131072);
+  });
+
   it('重试降温基于厂商生效温度，不升温（厂商 0.2）', async () => {
     injectSettings({
       provider: 'openai',

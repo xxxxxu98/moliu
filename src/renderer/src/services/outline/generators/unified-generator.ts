@@ -155,17 +155,23 @@ function transientRetryDelayMs(error: unknown, attempt: number): number {
 
 /**
  * 解析「max_tokens 超网关上限」的 400 错误。
- * 匹配两类文案：minimax 风格 `expected a value <= 131072`、
+ * 匹配两类文案：minimax/ARK 风格 `expected a value <= 131072`、
  * OpenAI 风格 `maximum value ... 16384` / `max_tokens is too large: 16384`。
+ * 注意错误 message 来自 response.text() 原文，`<` 可能仍是 JSON 字面转义 `\u003c`
+ * 或 HTML 实体 `&lt;`，三种写法都兼容。
  * 返回网关报的上限值；确认是超限错误但拿不到数值时返回 0（调用方减半降级）；
  * 不是这类错误返回 null。
  */
 export function parseMaxTokensCapError(error: unknown): number | null {
   const message = error instanceof Error ? error.message : String(error);
   if (!/max_tokens|maximum context|too large|above maximum value/iu.test(message)) return null;
-  const leMatch = message.match(/<=\s*(\d{4,7})/u) ?? message.match(/maximum value\D{0,20}(\d{4,7})/u);
-  if (leMatch) {
-    const value = Number(leMatch[1]);
+  const capPattern = /(?:<=|\\u003c=?|&lt;=?|：|:)\s*(\d{4,7})/u;
+  const match =
+    message.match(capPattern) ??
+    message.match(/maximum value\D{0,20}(\d{4,7})/u) ??
+    message.match(/max_tokens\D{0,20}?(\d{4,7})/u);
+  if (match) {
+    const value = Number(match[1]);
     if (Number.isFinite(value) && value >= 1024) return value;
   }
   return 0;
@@ -882,35 +888,39 @@ export class UnifiedOutlineGenerator {
     const userText = messages.filter(m => m.role === 'user').map(m => m.content).join('\n\n');
 
     try {
+      // max_tokens 超网关上限的 400（统一配 1M 时低上限网关会拒）：解析网关报的上限
+      // （拿不到就减半）降级重试，循环最多 3 轮（首降减半后仍超限时靠新一轮错误里的
+      // 网关上限收敛），并把最终收敛值记回厂商配置，后续请求不再踩。
+      const MAX_TOKENS_CAP_ROUNDS = 3;
+      let effectiveConfig = config;
       let result: any;
-      try {
-        result = await this.doRequestChatCompletion(
-          messages,
-          options,
-          config,
-          provider,
-          resolvedBaseUrl,
-          requestSignal,
-        );
-      } catch (error) {
-        // max_tokens 超网关上限的 400（统一配 1M 时低上限网关会拒）：解析网关报的上限
-        // （拿不到就减半）降级重试一次，并把降级值记回厂商配置，后续请求不再踩。
-        const capped = parseMaxTokensCapError(error);
-        if (capped === null) throw error;
-        const original = config.generationConfig?.maxTokens ?? 0;
-        const fallback = capped > 0 ? capped : Math.max(1024, Math.floor(original / 2));
-        console.warn(
-          `[UnifiedOutlineGenerator] max_tokens=${original} 超网关上限（${capped > 0 ? `网关报上限 ${capped}` : '上限未知'}），降级为 ${fallback} 重试`,
-        );
-        this.rememberProviderMaxTokensCap(config, fallback);
-        result = await this.doRequestChatCompletion(
-          messages,
-          options,
-          { ...config, generationConfig: { ...config.generationConfig, maxTokens: fallback } },
-          provider,
-          resolvedBaseUrl,
-          requestSignal,
-        );
+      for (let capRound = 0; ; capRound += 1) {
+        try {
+          result = await this.doRequestChatCompletion(
+            messages,
+            options,
+            effectiveConfig,
+            provider,
+            resolvedBaseUrl,
+            requestSignal,
+          );
+          break;
+        } catch (error) {
+          if (capRound >= MAX_TOKENS_CAP_ROUNDS) throw error;
+          const capped = parseMaxTokensCapError(error);
+          if (capped === null) throw error;
+          const original = effectiveConfig.generationConfig?.maxTokens ?? 0;
+          const fallback = capped > 0 ? capped : Math.max(1024, Math.floor(original / 2));
+          if (fallback >= original && original > 0) throw error;
+          console.warn(
+            `[UnifiedOutlineGenerator] max_tokens=${original} 超网关上限（${capped > 0 ? `网关报上限 ${capped}` : '上限未知'}），降级为 ${fallback} 重试（第 ${capRound + 1} 轮）`,
+          );
+          this.rememberProviderMaxTokensCap(effectiveConfig, fallback);
+          effectiveConfig = {
+            ...effectiveConfig,
+            generationConfig: { ...effectiveConfig.generationConfig, maxTokens: fallback },
+          };
+        }
       }
       if (tracer) {
         const content = result?.choices?.[0]?.message?.content ?? '';

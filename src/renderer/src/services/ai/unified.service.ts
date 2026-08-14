@@ -158,8 +158,10 @@ export interface AIGenerationConfig {
 export function parseMaxTokensCap(error: unknown): number | null {
   const message = error instanceof Error ? error.message : String(error);
   if (!/max_tokens|maximum context|too large|above maximum value/iu.test(message)) return null;
+  // `<=` 可能是 JSON 字面转义 \u003c 或 HTML 实体 &lt;（错误 message 来自响应原文）
+  const capPattern = /(?:<=|\\u003c=?|&lt;=?|：|:)\s*(\d{4,7})/u;
   const match =
-    message.match(/<=\s*(\d{4,7})/u) ??
+    message.match(capPattern) ??
     message.match(/maximum value\D{0,20}(\d{4,7})/u) ??
     message.match(/max_tokens\D{0,20}?(\d{4,7})/u);
   if (match) {
@@ -396,8 +398,9 @@ export class UnifiedAIService {
     // 未收到 finish_reason 即判定截断并抛可重试错误，不会把半截内容当成功。
     const SINGLE_REQUEST_MAX_RETRIES = 2;
     let lastError: unknown;
-    // 可变副本：max_tokens 超网关上限的 400 发生时按网关上限降级重写一次
+    // 可变副本：max_tokens 超网关上限的 400 发生时按网关上限降级改写（最多 3 轮收敛）
     let effectiveOpts = chatOpts;
+    let capRoundsLeft = 3;
     for (let attempt = 0; attempt <= SINGLE_REQUEST_MAX_RETRIES; attempt++) {
       if (signal?.aborted) {
         throw new DOMException("Aborted", "AbortError");
@@ -409,14 +412,17 @@ export class UnifiedAIService {
         // max_tokens 超网关上限（统一配 1M 时低上限网关 400 拒）：解析网关报的上限
         // （拿不到就减半）改写 effectiveOpts 后立即重试本次请求，且记住该上限
         const cap = parseMaxTokensCap(error);
-        if (cap !== null && attempt === 0) {
+        if (cap !== null && capRoundsLeft > 0) {
+          capRoundsLeft -= 1;
           const original = Number(effectiveOpts.maxTokens ?? 0);
           const fallback = cap > 0 ? cap : Math.max(1024, Math.floor(original / 2));
+          if (fallback >= original && original > 0) throw error;
           console.warn(
             `[unified.service] max_tokens=${original} 超网关上限（${cap > 0 ? `网关报上限 ${cap}` : "上限未知"}），降级为 ${fallback} 重试`
           );
           this.generationConfig = { ...this.generationConfig, maxTokens: fallback };
           effectiveOpts = { ...effectiveOpts, maxTokens: fallback };
+          attempt -= 1; // 降级重试不占用瞬态重试额度
           continue;
         }
         // 用户主动取消：立即抛出，不重试
