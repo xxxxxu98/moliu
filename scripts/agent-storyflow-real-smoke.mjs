@@ -29,7 +29,9 @@ process.env.REAL_AI = process.env.REAL_AI || '1';
 console.log('[smoke:storyflow:real] 真实 AI 闭环：大纲生成 → 应用 → 批量续写');
 
 // ---------- 清理上一轮产物与 trace，避免新旧混淆 ----------
-// 产物：temp/ 下 storyflow.closed-loop.* 的 outline/summary/prose 及带后缀的 .bak 孪生产物；
+// 产物：temp/ 下的 storyflow.closed-loop.* 大纲/summary/prose；storyflow-*（横杠）是
+// harness installFileElectronAPI 每轮写的 project-store 模拟主进程存储（含正文，数百 KB/轮），
+// 不清会无限累积；顺带覆盖 storyflow-run*.log 等历史调试日志。
 // trace：temp/ai-traces/ 下 storyflow-*（本轮冒烟自己的，不碰 continue-write/topic 等）。
 cleanupSmokeArtifacts(
   'smoke:storyflow:real',
@@ -39,7 +41,7 @@ cleanupSmokeArtifacts(
     'storyflow.closed-loop.prose',
   ],
   {
-    prefixes: ['storyflow.closed-loop.'],
+    prefixes: ['storyflow.closed-loop.', 'storyflow-'],
     tracePrefixes: ['storyflow-'],
   },
 );

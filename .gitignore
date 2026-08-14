@@ -108,5 +108,7 @@ temp/continue-write.real.multi.*
 # storyflow 闭环冒烟产物（真实 AI 大纲/正文，含未发布创作内容，不入库）
 temp/storyflow.closed-loop.*
 temp/storyflow.closed-loop.prose/
+# harness 模拟主进程的项目存储（每轮冒烟一个，数百 KB，含正文）
+temp/*.project-store.json
 test.md
 *.console.log
