@@ -27,7 +27,8 @@ import {
 import {
   isAbortedError,
   isTransientError,
-  backoffDelayMs,
+  classifyError,
+  retryBackoffDelayMs,
 } from '@/utils/ai-error-classify';
 
 /** 注入式结构化文本调用器（与 outline-completer / outline-reviewer 同模式） */
@@ -59,7 +60,7 @@ function sleep(ms: number): Promise<void> {
 
 /**
  * 带瞬态退避的单步请求。
- * 瞬态错误（429/网络/5xx）按指数退避重试；非瞬态（如长度截断、解析失败）不重试，直接抛。
+ * 瞬态错误（429/网络/5xx）按指数退避重试；非瞬态（如长度上限截断、解析失败）不重试，直接抛。
  * 主动取消（abort）一律上抛，不重试。
  */
 async function callStepWithRetry(
@@ -81,14 +82,15 @@ async function callStepWithRetry(
       lastError = error;
       if (attempt >= total) break;
       if (isTransientError(error)) {
-        const delay = backoffDelayMs(attempt);
+        // 限流走独立退避（15/30s 起步；短退避下账户级 429 只会连吃 429 耗尽额度）
+        const delay = retryBackoffDelayMs(classifyError(error).kind, attempt);
         onProgress?.(
           `${stepLabel ? `${stepLabel}：` : ''}请求被限流或网络抖动，${delay}ms 后重试 (${attempt}/${total})`,
         );
         await sleep(delay);
         continue;
       }
-      // 非瞬态错误（长度截断、解析失败等）：重试无益，直接中止本步
+      // 非瞬态错误（长度上限截断、解析失败等）：重试无益，直接中止本步
       break;
     }
   }

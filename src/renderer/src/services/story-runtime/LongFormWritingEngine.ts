@@ -34,7 +34,7 @@ import { isPlaceholderChapterTitle } from '@/services/writing/chapterTitle';
 import { buildTypesettingIssues } from '@/services/writing/typesetting';
 import {
   classifyError,
-  backoffDelayMs,
+  retryBackoffDelayMs,
   type ClassifiedError,
 } from '@/utils/ai-error-classify';
 import { normalizedSimilarity } from '@/utils/text-similarity';
@@ -68,7 +68,8 @@ async function runStepWithTransientRetry<T>(
       if (!classified.transient || attempt >= options.maxRetries) {
         throw err;
       }
-      const delayMs = backoffDelayMs(attempt + 1, 2000, 10_000);
+      // 限流走独立退避（15/30/60s 封顶 10s 内的短退避在账户级 429 下只会连吃 429）
+      const delayMs = retryBackoffDelayMs(classified.kind, attempt + 1, 2000, 10_000);
       console.warn(
         `[LongFormWritingEngine] ${options.label} 瞬态失败（${classified.kind}），${delayMs}ms 后重试 ${attempt + 1}/${options.maxRetries}`
       );

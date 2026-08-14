@@ -652,6 +652,50 @@ describe('generateExpandedOutlineInSteps 分步编排', () => {
     ).rejects.toThrow('卷纲生成失败');
   });
 
+  // finish_reason=length 是确定性失败（撞厂商输出上限），同参数重试必然复现。
+  // 步级不得徒劳重试——生产默认 maxRetries=2 下必须只调一次就上抛（此前被误判为
+  // 瞬态走指数退避，白烧数分钟长请求后仍同样失败）。
+  it('硬步撞长度上限：非瞬态不重试，单次失败即上抛（生产默认 maxRetries=2）', async () => {
+    const callStructuredTextMode = vi.fn(async () => {
+      throw new Error('大纲输出被长度上限截断：正文 0 字、推理 12000 字');
+    });
+
+    await expect(
+      generateExpandedOutlineInSteps({
+        seed: '法医穿越',
+        direction: DIRECTION,
+        options: { maxRetries: 2 },
+        wordCountRange: '100万-200万字',
+        callStructuredTextMode,
+      }),
+    ).rejects.toThrow('长度上限截断');
+    expect(callStructuredTextMode).toHaveBeenCalledTimes(1);
+  });
+
+  // 对照：网络类截断（网关中途 RST）是真瞬态，步级退避重试的行为保持不变
+  it('网络瞬态错误：步级仍按指数退避重试', async () => {
+    let callIndex = 0;
+    const callStructuredTextMode = vi.fn(async () => {
+      callIndex += 1;
+      if (callIndex === 1) {
+        throw new Error('socket hang up');
+      }
+      return STEP_RESPONSES[callIndex - 2];
+    });
+
+    const result = await generateExpandedOutlineInSteps({
+      seed: '法医穿越',
+      direction: DIRECTION,
+      options: { maxRetries: 2 },
+      wordCountRange: '100万-200万字',
+      callStructuredTextMode,
+    });
+
+    // 步1 首次失败 + 重试成功，其余 4 步各一次 → 共 6 次
+    expect(callStructuredTextMode).toHaveBeenCalledTimes(6);
+    expect(result.rawText).toContain('## 故事定位');
+  });
+
   it('某步返回缺失部分段：只记 warning，已返回的段仍拼装', async () => {
     let callIndex = 0;
     const callStructuredTextMode = vi.fn(async () => {

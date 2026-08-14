@@ -61,7 +61,7 @@ import {
 } from '@/services/writing/chapterWritePresets';
 import { countWords } from '@/services/writing/utils';
 import { MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
-import { backoffDelayMs, classifyError, type ErrorKind } from '@/utils/ai-error-classify';
+import { retryBackoffDelayMs, classifyError, type ErrorKind } from '@/utils/ai-error-classify';
 import {
   createChapterMemoryClient,
   createChapterPersistenceClient,
@@ -1099,9 +1099,9 @@ export async function runContinueWriteChapters(options: {
           );
           continue; // 不退避
         }
-        // 瞬态错误（网络/超时/截断/5xx/429）：指数退避重试
+        // 瞬态错误（网络/超时/截断/5xx/429）：指数退避重试（429 限流走 15/30/60/120s）
         if (attempt < maxRetries) {
-          const waitMs = backoffDelayMs(attempt); // 4/8/16/30/30s
+          const waitMs = retryBackoffDelayMs(classified.kind, attempt); // 默认 4/8/16/30/30s
           // eslint-disable-next-line no-console
           console.warn(
             `[runContinueWriteChapters] 第${chapterNumber}章瞬态失败（第 ${attempt}/${maxRetries} 次，${classified.kind}），${Math.round(waitMs / 1000)}s 后重试：${lastError}`

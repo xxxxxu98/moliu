@@ -33,7 +33,7 @@ import {
 import { WritingError, ErrorCode } from '@/types/errors';
 import {
   classifyError,
-  backoffDelayMs,
+  retryBackoffDelayMs,
   type ErrorKind,
   type ClassifiedError,
 } from '@/utils/ai-error-classify';
@@ -1206,6 +1206,14 @@ export function useBatchWriter(): UseBatchWriterReturn {
               break;
             }
 
+            // 截断/空响应（抛异常、无 gateResult）：注入固定引导种子，避免下一轮原样盲发
+            // （与 continueWriteHarness 同兜底；上面 gateResult 分支提不到这类失败的反馈）
+            if (classified.kind === 'truncated') {
+              internalState.currentRevisionHints = [
+                '上一轮 AI 返回了空内容或被截断的 JSON。请务必一次性输出完整的 JSON 对象，paragraphs 数组必须包含完整的正文段落，不要在中途停笔，不要返回空字符串。',
+              ];
+            }
+
             // 审查基础设施已在章节引擎内部完成步骤级重试。再次整章重跑只会
             // 重复生成正文和事实提取，因此直接停止当前批次，等待用户重试审查服务。
             if (classified.kind === 'review_unavailable') {
@@ -1225,9 +1233,10 @@ export function useBatchWriter(): UseBatchWriterReturn {
               continue; // 不退避，直接下一轮（模型会带 revisionHints 重新起草）
             }
 
-            // 瞬态错误：仍有重试机会则指数退避（4/8/16/30s 封顶）
+            // 瞬态错误：仍有重试机会则指数退避（4/8/16/30s 封顶；429 限流走 15/30/60/120s，
+            // 短退避下账户级限流只会连吃 429 耗尽重试额度——实测 ARK 6/6 模块全触发）
             if (attempt < chapterMaxRetries) {
-              const waitMs = backoffDelayMs(attempt); // 默认 base=4000, max=30000
+              const waitMs = retryBackoffDelayMs(classified.kind, attempt); // 默认 base=4000, max=30000
               const waitSeconds = Math.round(waitMs / 1000);
               error.value = `第${currentIndex + 1}章失败（第 ${attempt}/${chapterMaxRetries} 次，${classified.kind}），${waitSeconds}s 后重试…`;
               // 退避期间响应 abort（避免退避中途用户停止还要等满）

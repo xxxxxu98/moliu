@@ -28,7 +28,8 @@
 export type ErrorKind =
   | 'network'      // fetch 失败 / ERR_CONNECTION_CLOSED / ECONNRESET / TypeError(fetch)
   | 'timeout'      // AbortError 且 signal 未 abort（超时护栏触发）
-  | 'truncated'    // JSON 截断 / 解析失败
+  | 'truncated'    // JSON 截断 / 解析失败（多半是流式中断的连带症状，瞬态）
+  | 'length_capped' // finish_reason=length 确定性截断（撞厂商输出上限，同参数重试必然复现）
   | 'schema'       // "结构校验失败:" / zod 报错
   | 'review'       // "严格门禁未通过" / "严格连续性门禁未通过"
   | 'review_unavailable' // 审查服务异常；不得伪装成内容未履约，也不得整章重写
@@ -68,7 +69,14 @@ const TRANSIENT_NETWORK_RE =
  * 等，多半是流式响应中途断开的连带症状。
  */
 const TRUNCATED_RE =
-  /unexpected end of (json )?input|无法解析 AI 返回的 JSON|AI 返回的结构化 JSON 无法解析|AI 未返回可解析的结构化 JSON|json\s*解析失败|json repair|bad control character|流式响应提前中断|输出被长度上限截断/iu;
+  /unexpected end of (json )?input|无法解析 AI 返回的 JSON|AI 返回的结构化 JSON 无法解析|AI 未返回可解析的结构化 JSON|json\s*解析失败|json repair|bad control character|流式响应提前中断/iu;
+
+/**
+ * finish_reason=length 的确定性截断特征（readOpenAiCompatibleStream / unified.service 抛出）。
+ * 撞厂商输出上限是确定性失败：同参数重试必然复现，重试只会白烧几分钟长请求。
+ * 必须先于 TRUNCATED_RE 判定（「长度上限截断」字样已从 TRUNCATED_RE 移除，避免误伤）。
+ */
+const LENGTH_CAPPED_RE = /输出被长度上限截断/iu;
 
 /** schema 校验失败特征（来自 schemas.ts:234 的 `${label} 结构校验失败:` 模板） */
 const SCHEMA_RE = /结构校验失败|expected .+ received|invalid_enum_value|invalid_type|required/iu;
@@ -194,6 +202,10 @@ function classifyByMessage(message: string): Omit<ClassifiedError, 'message'> | 
   if (WORDCOUNT_RE.test(message)) {
     return { kind: 'wordcount', retryable: false, transient: false };
   }
+  if (LENGTH_CAPPED_RE.test(message)) {
+    // 确定性失败：撞输出上限，重试同参数必然复现
+    return { kind: 'length_capped', retryable: false, transient: false };
+  }
   if (TRUNCATED_RE.test(message)) {
     return { kind: 'truncated', retryable: true, transient: true };
   }
@@ -246,4 +258,28 @@ export function backoffDelayMs(
   // attempt=1 → base, attempt=2 → base*2, ...
   const raw = baseMs * 2 ** (attempt - 1);
   return Math.min(raw, maxMs);
+}
+
+/**
+ * kind 感知的重试退避。
+ *
+ * 账户级 429（「已达到速率限制」）下，2-4 秒后再打只会再吃一个 429 并白白耗尽重试额度
+ * （实测 ARK provider 6/6 模块全部触发），因此 rate_limit 用独立基数 15s 起步、
+ * 120s 封顶；其余瞬态错误沿用调用方传入的默认基数。
+ *
+ * @param kind 错误类别（来自 classifyError）
+ * @param attempt 第几次重试（从 1 起）
+ * @param baseMs 非限流错误的基数，默认 4000
+ * @param maxMs 非限流错误的上限，默认 30000；限流固定 15s/30s/60s/120s
+ */
+export function retryBackoffDelayMs(
+  kind: ErrorKind,
+  attempt: number,
+  baseMs = 4000,
+  maxMs = 30_000
+): number {
+  if (kind === 'rate_limit') {
+    return backoffDelayMs(attempt, 15_000, 120_000);
+  }
+  return backoffDelayMs(attempt, baseMs, maxMs);
 }

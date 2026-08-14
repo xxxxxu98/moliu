@@ -457,6 +457,47 @@ describe('BatchConfig 类型与失败重试', () => {
     expect(writer.batchSummary.value?.failed[0].attempts).toBe(2);
   }, 15000);
 
+  // 截断/空响应以异常抛出（无 gateResult），上面「提取门禁 critical 作反馈种子」的
+  // 分支提不到反馈。此前下一轮重试是原样盲发同一 prompt；现在必须注入固定引导种子，
+  // 让重试带着「一次性输出完整 JSON」的教训定向重写（与 continueWriteHarness 对齐）。
+  it('截断失败后重试时注入固定引导种子（seedRevisionHints）', async () => {
+    setupProjectWithEmptyChapters(1);
+    // 第 1 次截断失败、第 2 次成功
+    mockPipelineExecute
+      .mockRejectedValueOnce(
+        new Error('AI 返回的结构化 JSON 无法解析：Unexpected end of JSON input')
+      )
+      .mockResolvedValueOnce({
+        success: true,
+        prose: '重试后的完整正文',
+        title: null,
+        taskBook: null,
+        gateResult: { passed: true, allIssues: [], blockingCount: 0, highCount: 0 },
+        attempts: 2,
+        forceAccepted: false,
+      });
+
+    const { useBatchWriter } = await import('@/composables/useBatchWriter');
+    const writer = useBatchWriter();
+
+    await writer.startBatchWriting(1, {
+      wordsPerChapter: 2000,
+      writingStyle: 'concise',
+      maxRetries: 2,
+      useReview: false,
+    });
+
+    // 截断分类为 truncated（瞬态），重试成功
+    expect(mockPipelineExecute).toHaveBeenCalledTimes(2);
+    expect(writer.progress.value.writtenChapters).toBe(1);
+    // 第 2 次调用携带了截断引导种子，而非 undefined（原样盲发）
+    const secondCall = mockPipelineExecute.mock.calls[1][0] as {
+      seedRevisionHints?: string[];
+    };
+    expect(secondCall.seedRevisionHints).toBeDefined();
+    expect(secondCall.seedRevisionHints?.[0]).toContain('完整的 JSON 对象');
+  }, 15000);
+
   it('失败重试成功后继续写下一章', async () => {
     setupProjectWithEmptyChapters(2);
     // 第 1 章第 1 次 pipeline 瞬态失败、第 2 次成功；第 2 章一次成功

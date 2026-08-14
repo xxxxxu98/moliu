@@ -12,7 +12,7 @@ import {
   classifyError,
   isAbortedError,
   isTransientError,
-  backoffDelayMs,
+  retryBackoffDelayMs,
 } from '@/utils/ai-error-classify';
 import { createOutlineTracer, type OutlineTracer, type OutlineTracePurpose } from '../utils/outline-trace';
 import {
@@ -142,11 +142,9 @@ async function readOpenAiCompatibleStream(response: Response): Promise<string> {
 }
 
 function transientRetryDelayMs(error: unknown, attempt: number): number {
-  // 账户级 429（「已达到速率限制」）2 秒后再打只会再吃一个 429；给 15s/30s/60s/120s。
-  if (classifyError(error).kind === 'rate_limit') {
-    return backoffDelayMs(attempt, 15_000, 120_000);
-  }
-  return backoffDelayMs(attempt, 2000, 30_000);
+  // kind 感知退避：账户级 429 走 15s/30s/60s/120s（2 秒后再打只会再吃一个 429）；
+  // 其余瞬态错误 2s 起步、30s 封顶。
+  return retryBackoffDelayMs(classifyError(error).kind, attempt, 2000, 30_000);
 }
 
 function matchesDefaultModelSelection(
@@ -362,10 +360,8 @@ export class UnifiedOutlineGenerator {
           errors: [`生成失败: ${errorMsg}`],
           strategy: 'markdown-remark',
         };
-
-        if (attempt >= maxAttempts) {
-          break;
-        }
+        // 非瞬态错误（长度上限截断等）重试同参数必然复现，跳过剩余尝试直接走 legacy 兜底
+        break;
       }
     }
 
@@ -750,9 +746,9 @@ export class UnifiedOutlineGenerator {
           continue;
         }
         onProgress?.(`生成出错: ${errorMsg}`);
-        if (attempt >= total) {
-          throw error;
-        }
+        // 非瞬态错误（长度上限截断、schema 等）重试同参数必然复现，立即上抛；
+        // 只有解析结果不完整（不抛异常的 soft-fail）才值得降温重试。
+        throw error;
       }
     }
 

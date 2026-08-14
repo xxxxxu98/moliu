@@ -8,6 +8,7 @@ import {
   isRetryableError,
   isAbortedError,
   backoffDelayMs,
+  retryBackoffDelayMs,
 } from '../ai-error-classify';
 
 /** 模拟 multi-ai-sdk 的 AIError（name 恒为 'AIError'，带 status） */
@@ -169,6 +170,37 @@ describe('classifyError', () => {
     });
   });
 
+  describe('length_capped（finish_reason=length 确定性截断）', () => {
+    // 撞厂商输出上限是确定性失败：同参数重试必然复现，重试只会白烧几分钟长请求。
+    // 文案来自 readOpenAiCompatibleStream（unified-generator.ts）与 unified.service.ts。
+    it('大纲输出被长度上限截断 归为 length_capped（非瞬态、不可重试）', () => {
+      const result = classifyError(
+        new Error('大纲输出被长度上限截断：正文 0 字、推理 12000 字（输出预算全部消耗在推理上）')
+      );
+      expect(result.kind).toBe('length_capped');
+      expect(result.retryable).toBe(false);
+      expect(result.transient).toBe(false);
+    });
+
+    it('AI 输出被长度上限截断（unified.service 文案）同样归为 length_capped', () => {
+      const result = classifyError(
+        new Error('AI 输出被长度上限截断：仅收到 120 字')
+      );
+      expect(result.kind).toBe('length_capped');
+      expect(result.transient).toBe(false);
+    });
+
+    // 网关中途 RST 是真瞬态（连接问题而非输出上限），必须保持可重试
+    it('流式响应提前中断仍归为 truncated（瞬态、可重试）', () => {
+      const result = classifyError(
+        new Error('大纲流式响应提前中断：已收到 5200 字，未见结束标记')
+      );
+      expect(result.kind).toBe('truncated');
+      expect(result.retryable).toBe(true);
+      expect(result.transient).toBe(true);
+    });
+  });
+
   describe('schema（结构校验失败）', () => {
     it('结构校验失败前缀归为 schema', () => {
       const result = classifyError(
@@ -285,5 +317,22 @@ describe('backoffDelayMs', () => {
 
   it('自定义上限生效', () => {
     expect(backoffDelayMs(5, 4000, 60000)).toBe(60000);
+  });
+});
+
+describe('retryBackoffDelayMs（kind 感知退避）', () => {
+  // 账户级 429 下短退避只会连吃 429 耗尽重试额度（实测 ARK 6/6 模块全触发），
+  // 限流固定 15s/30s/60s/120s，与其余瞬态错误的默认基数互不干扰。
+  it('rate_limit 走 15s 起步、120s 封顶，忽略调用方基数', () => {
+    expect(retryBackoffDelayMs('rate_limit', 1)).toBe(15_000);
+    expect(retryBackoffDelayMs('rate_limit', 2)).toBe(30_000);
+    expect(retryBackoffDelayMs('rate_limit', 3)).toBe(60_000);
+    expect(retryBackoffDelayMs('rate_limit', 4, 2000, 10_000)).toBe(120_000);
+  });
+
+  it('非限流瞬态错误沿用调用方基数与上限', () => {
+    expect(retryBackoffDelayMs('network', 1, 2000, 10_000)).toBe(2000);
+    expect(retryBackoffDelayMs('timeout', 3, 2000, 10_000)).toBe(8000);
+    expect(retryBackoffDelayMs('server', 1)).toBe(4000);
   });
 });
