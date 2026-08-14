@@ -23,6 +23,11 @@ import { createRequire } from 'node:module';
 
 import { cleanupSmokeArtifacts } from './cleanup-smoke-artifacts.mjs';
 import { ensureElectronSqliteAbi } from './ensure-electron-sqlite-abi.mjs';
+import {
+  sanitizeRunSuffix,
+  smokeCleanupConfig,
+  storyflowArtifactNames,
+} from './storyflow-run-suffix.mjs';
 
 process.env.REAL_AI = process.env.REAL_AI || '1';
 
@@ -33,18 +38,16 @@ console.log('[smoke:storyflow:real] 真实 AI 闭环：大纲生成 → 应用 �
 // harness installFileElectronAPI 每轮写的 project-store 模拟主进程存储（含正文，数百 KB/轮），
 // 不清会无限累积；顺带覆盖 storyflow-run*.log 等历史调试日志。
 // trace：temp/ai-traces/ 下 storyflow-*（本轮冒烟自己的，不碰 continue-write/topic 等）。
-cleanupSmokeArtifacts(
-  'smoke:storyflow:real',
-  [
-    'storyflow.closed-loop.outline.json',
-    'storyflow.closed-loop.summary.json',
-    'storyflow.closed-loop.prose',
-  ],
-  {
-    prefixes: ['storyflow.closed-loop.', 'storyflow-'],
-    tracePrefixes: ['storyflow-'],
-  },
-);
+// 并发矩阵（MOLIU_RUN_SUFFIX）：清理只匹配本轮后缀，绝不触碰并发中的兄弟轮次。
+const runSuffix = sanitizeRunSuffix(process.env.MOLIU_RUN_SUFFIX);
+if (runSuffix) {
+  console.log(`[smoke:storyflow:real] 矩阵并发模式：runSuffix=${runSuffix}（产物/清理均按后缀隔离）`);
+}
+const cleanupCfg = smokeCleanupConfig(runSuffix);
+cleanupSmokeArtifacts('smoke:storyflow:real', cleanupCfg.artifacts, {
+  prefixes: cleanupCfg.prefixes,
+  tracePrefixes: cleanupCfg.tracePrefixes,
+});
 
 // better-sqlite3 必须按 Electron ABI 编译。普通系统 Node 跑 Vitest 会因
 // NODE_MODULE_VERSION 不同而假失败并降级内存；这里让 Electron 作为 Node 运行 Vitest，
@@ -71,14 +74,19 @@ const result = spawnSync(
   },
 );
 
-const summary = join(process.cwd(), 'temp', 'storyflow.closed-loop.summary.json');
+const artifactNames = storyflowArtifactNames(runSuffix);
+const summary = join(process.cwd(), 'temp', artifactNames.summary);
 if (existsSync(summary)) {
   console.log(`[smoke:storyflow:real] summary: ${summary}`);
 }
 const traceDir = join(process.cwd(), 'temp', 'ai-traces');
 if (existsSync(traceDir)) {
+  // 并发矩阵只认本轮后缀的 trace；单跑认全部 storyflow-*
+  const traceFilter = runSuffix
+    ? (name => name.startsWith(`storyflow-${runSuffix}-`) && name.endsWith('.jsonl'))
+    : (name => name.includes('storyflow') && name.endsWith('.jsonl'));
   const files = readdirSync(traceDir)
-    .filter(name => name.includes('storyflow') && name.endsWith('.jsonl'))
+    .filter(traceFilter)
     .map(name => {
       const full = join(traceDir, name);
       return { full, mtime: statSync(full).mtimeMs };

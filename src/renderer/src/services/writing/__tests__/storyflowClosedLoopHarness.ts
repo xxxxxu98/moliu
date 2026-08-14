@@ -101,6 +101,46 @@ export interface PostWritePersistenceVerification {
   writtenChapterCount: number;
 }
 
+/**
+ * 并发矩阵冒烟（smoke:storyflow:real:multi）的产物路径隔离：设 MOLIU_RUN_SUFFIX 后
+ * summary/outline/prose 及 trace/project-store 文件名均带后缀，多轮并发互不覆盖，
+ * 跑前清理也只清自己的后缀。单跑不设此变量，路径与既有固定名完全一致。
+ * 命名约定镜像 scripts/storyflow-run-suffix.mjs（TS 无法直接 import scripts 的 .mjs，
+ * 两边必须同步改）。
+ */
+export function resolveStoryflowRunSuffix(): string {
+  return (process.env.MOLIU_RUN_SUFFIX || '')
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/gu, '');
+}
+
+export interface StoryflowArtifactPaths {
+  summaryPath: string;
+  outlinePath: string;
+  proseDir: string;
+}
+
+export function resolveStoryflowArtifactPaths(): StoryflowArtifactPaths {
+  const suffix = resolveStoryflowRunSuffix();
+  const tempDir = join(process.cwd(), 'temp');
+  const names = suffix
+    ? {
+        summary: `storyflow.closed-loop.${suffix}.summary.json`,
+        outline: `storyflow.closed-loop.${suffix}.outline.json`,
+        proseDir: `storyflow.closed-loop.${suffix}.prose`,
+      }
+    : {
+        summary: 'storyflow.closed-loop.summary.json',
+        outline: 'storyflow.closed-loop.outline.json',
+        proseDir: 'storyflow.closed-loop.prose',
+      };
+  return {
+    summaryPath: join(tempDir, names.summary),
+    outlinePath: join(tempDir, names.outline),
+    proseDir: join(tempDir, names.proseDir),
+  };
+}
+
 function cloneProject(project: Project): Project {
   return JSON.parse(JSON.stringify(project)) as Project;
 }
@@ -267,7 +307,9 @@ export async function runStoryflowClosedLoop(
   const wordCountRange = options.wordCountRange ?? '30万-60万';
   const chapterCount = options.chapterCount ?? 5;
   const targetWordCount = options.targetWordCount ?? 2000;
-  const runIdPrefix = options.runIdPrefix ?? 'storyflow';
+  // 并发矩阵时带后缀（storyflow-<suffix>），project-store 与 trace 文件名随之隔离
+  const suffix = resolveStoryflowRunSuffix();
+  const runIdPrefix = options.runIdPrefix ?? (suffix ? `storyflow-${suffix}` : 'storyflow');
 
   // ---------- 0. 配置与测试环境桩 ----------
   const cfg = resolveContinueWriteRealConfig();
@@ -408,8 +450,9 @@ export async function runStoryflowClosedLoop(
   };
 
   // 建章后立即落盘大纲产物：真实 AI 续写阶段耗时长、可能超时，提前留存大纲数据供质量评估
+  // （并发矩阵时带后缀路径，见 resolveStoryflowArtifactPaths）
   writeFileSync(
-    join(process.cwd(), 'temp', 'storyflow.closed-loop.outline.json'),
+    resolveStoryflowArtifactPaths().outlinePath,
     JSON.stringify(
       {
         title: generatedOutline.title,

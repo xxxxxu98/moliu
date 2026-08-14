@@ -21,7 +21,10 @@ import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import { isRealAiEnabled } from './realStructuredAI';
-import { runStoryflowClosedLoop } from './storyflowClosedLoopHarness';
+import {
+  resolveStoryflowArtifactPaths,
+  runStoryflowClosedLoop,
+} from './storyflowClosedLoopHarness';
 import {
   inspectOutlineCompleteness,
   OUTLINE_COMPLETENESS_POLICY,
@@ -34,9 +37,9 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-const SUMMARY_PATH = join(process.cwd(), 'temp', 'storyflow.closed-loop.summary.json');
-const OUTLINE_PATH = join(process.cwd(), 'temp', 'storyflow.closed-loop.outline.json');
-const PROSE_DIR = join(process.cwd(), 'temp', 'storyflow.closed-loop.prose');
+// 产物路径：并发矩阵（MOLIU_RUN_SUFFIX）时带后缀隔离，单跑为原固定名
+const { summaryPath: SUMMARY_PATH, outlinePath: OUTLINE_PATH, proseDir: PROSE_DIR } =
+  resolveStoryflowArtifactPaths();
 
 function envInt(name: string, fallback: number): number {
   const value = Number(process.env[name] ?? '');
