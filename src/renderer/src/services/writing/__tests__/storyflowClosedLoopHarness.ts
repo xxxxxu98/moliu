@@ -77,6 +77,14 @@ export interface StoryflowClosedLoopResult {
   postWritePersistence: PostWritePersistenceVerification;
   /** 建章后、续写前的章节 ID（大纲应用产物） */
   createdChapterIds: string[];
+  /** 分阶段耗时（ms）：定位慢环节用（大纲生成/应用/批量续写各占多久） */
+  phaseTimings: {
+    outlineDirectionsMs: number;
+    outlineExpandMs: number;
+    applyOutlineMs: number;
+    continueWriteMs: number;
+    totalMs: number;
+  };
 }
 
 export interface ProjectStorageVerification {
@@ -331,13 +339,22 @@ export async function runStoryflowClosedLoop(
   const artifactPaths = resolveStoryflowArtifactPaths();
   const resumeRequested = /^(?:1|true|yes)$/iu.test(process.env.MOLIU_RESUME_STORYFLOW?.trim() ?? '');
   let direction: OutlineDirection | null = null;
+  const phaseTimings = {
+    outlineDirectionsMs: 0,
+    outlineExpandMs: 0,
+    applyOutlineMs: 0,
+    continueWriteMs: 0,
+    totalMs: 0,
+  };
   const generateExecutableOutline = async (): Promise<ExecutableOutline> => {
     const generator = new UnifiedOutlineGenerator();
     const outlineTraceRunId = `${runIdPrefix}-outline-${Date.now()}`;
+    const directionsStartedAt = Date.now();
     const dirResult = await generator.generateDirections(prompt, {
       wordCountRange,
       trace: { runId: outlineTraceRunId, model: cfg.model, provider: cfg.provider },
     });
+    phaseTimings.outlineDirectionsMs += Date.now() - directionsStartedAt;
     if (!dirResult.directions || dirResult.directions.length === 0) {
       throw new Error(
         `storyflow 闭环失败：大纲方向生成为空（generateDirections 未返回任何方向，${dirResult.warnings?.[0] ?? ''}）`,
@@ -347,10 +364,12 @@ export async function runStoryflowClosedLoop(
       (a, b) => b.recommendationScore - a.recommendationScore,
     )[0];
 
+    const expandStartedAt = Date.now();
     const expandedResult = await generator.expandDirection(prompt, direction, {
       wordCountRange,
       trace: { runId: outlineTraceRunId, model: cfg.model, provider: cfg.provider },
     });
+    phaseTimings.outlineExpandMs += Date.now() - expandStartedAt;
     const expanded = expandedResult.outline;
     if (!expanded) {
       const failureDetails = expandedResult.blockers?.length
@@ -417,11 +436,13 @@ export async function runStoryflowClosedLoop(
   }
 
   // ---------- 2. 应用大纲（真实 useProjectCreator.createProject 链路） ----------
+  const applyStartedAt = Date.now();
   const projectCreator = useProjectCreator();
   const projectId = await projectCreator.createProject(generatedOutline, {});
   if (!projectId) {
     throw new Error(`storyflow 闭环失败：应用大纲失败（createProject 返回 null，${projectCreator.error.value}）`);
   }
+  phaseTimings.applyOutlineMs = Date.now() - applyStartedAt;
 
   // ---------- 3. 建章 ----------
   // 建章已并入 createProject（首页各入口只调 createProject，冒烟必须走同一条路径，
@@ -569,6 +590,7 @@ export async function runStoryflowClosedLoop(
 
   // ---------- 4. 批量续写（真实 BATCH_CONTINUE 路径，与 useBatchWriter 对齐） ----------
   // 真实模式注入真实 StructuredAI（此前缺省导致内部回落 ContinueWriteFakeAI，冒烟失真）
+  const continueWriteStartedAt = Date.now();
   const ai = isRealAiEnabled()
     ? createRealStructuredAI({
         provider: cfg.provider,
@@ -616,6 +638,12 @@ export async function runStoryflowClosedLoop(
       persistProgress();
     },
   });
+  phaseTimings.continueWriteMs = Date.now() - continueWriteStartedAt;
+  phaseTimings.totalMs =
+    phaseTimings.outlineDirectionsMs +
+    phaseTimings.outlineExpandMs +
+    phaseTimings.applyOutlineMs +
+    phaseTimings.continueWriteMs;
 
   // 续写全程都在往同一个项目里存章节；批量结束后必须再冷读一次，确认大纲阶段落盘的
   // 角色/伏笔/卷没有被写作链路的保存覆盖掉（真实回归：saveCurrentProject 以 store 的
@@ -646,5 +674,6 @@ export async function runStoryflowClosedLoop(
     projectStorageVerification,
     postWritePersistence,
     createdChapterIds,
+    phaseTimings,
   };
 }

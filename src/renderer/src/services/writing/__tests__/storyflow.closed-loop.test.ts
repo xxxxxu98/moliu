@@ -15,7 +15,7 @@
  * AI 配置复用 temp/continue-write.real.config.json（resolveContinueWriteRealConfig）。
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
@@ -47,6 +47,26 @@ const TEST_TIMEOUT_MS = envInt('MOLIU_TEST_TIMEOUT_MIN', 120) * 60_000;
 function envInt(name: string, fallback: number): number {
   const value = Number(process.env[name] ?? '');
   return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
+}
+
+/**
+ * 开题提示可配置：MOLIU_STORYFLOW_PROMPT_FILE（文件路径，读取全文 trim）>
+ * MOLIU_STORYFLOW_PROMPT（内联文本）> 默认一句话。
+ * 支持长企划文本（如 temp/text.md 整份开题文档）直接当开题输入。
+ */
+function resolveStoryflowPrompt(): { prompt: string; source: string } {
+  const fromFile = process.env.MOLIU_STORYFLOW_PROMPT_FILE?.trim();
+  if (fromFile) {
+    return { prompt: readFileSync(fromFile, 'utf8').trim(), source: fromFile };
+  }
+  const inline = process.env.MOLIU_STORYFLOW_PROMPT?.trim();
+  if (inline) {
+    return { prompt: inline, source: 'MOLIU_STORYFLOW_PROMPT' };
+  }
+  return {
+    prompt: '一个现代社畜穿越到古代朝堂，凭借现代知识在官场步步高升，卷入皇权之争',
+    source: 'default',
+  };
 }
 
 /**
@@ -82,7 +102,10 @@ function writeClosedLoopArtifacts(
     book: result.project.name,
     mode: 'storyflow-closed-loop',
     status: 'complete',
+    promptSource,
+    promptChars: prompt.length,
     requestedChapterCount: envInt('MOLIU_CHAPTER_COUNT', 5),
+    phaseTimings: result.phaseTimings,
     completedChapters: result.chapterRunResults.length,
     chapters: outlineChapters.length,
     outlinePath: OUTLINE_PATH,
@@ -129,8 +152,9 @@ describe.runIf(isRealAiEnabled())(
         const startedAt = Date.now();
         const chapterCount = envInt('MOLIU_CHAPTER_COUNT', 5);
         const targetWordCount = envInt('MOLIU_TARGET_WORDS', 3000);
+        const { prompt, source: promptSource } = resolveStoryflowPrompt();
         const result = await runStoryflowClosedLoop({
-          prompt: '一个现代社畜穿越到古代朝堂，凭借现代知识在官场步步高升，卷入皇权之争',
+          prompt,
           wordCountRange: '30万-60万',
           chapterCount,
           targetWordCount,

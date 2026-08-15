@@ -1,0 +1,13 @@
+=== trace files (storyflow*) ===
+2026-08-15T13:50:16.956Z    100428  storyflow-outline-1786801709599.jsonl
+(total 1)
+
+=== run log tail ===
+[smoke:storyflow:real] 真实 AI 闭环：大纲生成 → 应用 → 批量续写
+[smoke:storyflow:real] 清理 storyflow-run10.log 失败：EBUSY: resource busy or locked, unlink 'D:\project\2026\moliu\temp\storyflow-run10.log'（已跳过）
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.5 [39m[90mD:/project/2026/moliu[39m
+POST https://ark.cn-beijing.volces.com/api/coding/v3/chat/completions 400 (Bad Request)
+[90mstderr[2m | src/renderer/src/services/writing/__tests__/storyflow.closed-loop.test.ts[2m > [22m[2mstoryflow 闭环（真实 AI）：大纲生成 → 应用 → 批量续写[2m > [22m[2m开
+[22m[39m[UnifiedOutlineGenerator] max_tokens=1048576 超网关上限（网关报上限 393216），降级为 393216 重试（第 1 轮）
+
+=== summary checkpoint (if any) ===

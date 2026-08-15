@@ -1,0 +1,4 @@
+events: 3
+{"purpose":"outline-direction","len":2297}
+{"purpose":"outline-expand","len":4298}
+{"purpose":"outline-expand","len":2679}
