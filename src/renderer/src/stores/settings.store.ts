@@ -321,6 +321,24 @@ function setDefaultModel(selection: AIDefaultModelSelection | null) {
     return newProvider;
   }
 
+  /**
+   * 拖拽排序：把厂商从 oldIndex 移动到 newIndex，顺序随数组持久化
+   */
+  function reorderAIProviders(oldIndex: number, newIndex: number) {
+    if (
+      oldIndex === newIndex
+      || oldIndex < 0
+      || newIndex < 0
+      || oldIndex >= aiProviders.value.length
+      || newIndex >= aiProviders.value.length
+    ) {
+      return;
+    }
+    const [moved] = aiProviders.value.splice(oldIndex, 1);
+    aiProviders.value.splice(newIndex, 0, moved);
+    saveAIProviders();
+  }
+
   // Reset all testing states - useful for cleanup on page mount
   function resetTestingStates() {
     let hasChanges = false;
@@ -434,6 +452,7 @@ function setDefaultModel(selection: AIDefaultModelSelection | null) {
     updateAIProvider,
     removeAIProvider,
     duplicateAIProvider,
+    reorderAIProviders,
     resetTestingStates,
     testAIProvider,
   };

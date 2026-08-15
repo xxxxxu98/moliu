@@ -9,6 +9,8 @@
  * 调用方应优先使用预设，避免魔法布尔值散落。
  */
 
+import { readPositiveIntEnv } from '@/utils/env';
+
 /** 管道场景可选开关 */
 export interface ChapterWriteOptionFlags {
   useTaskBook: boolean;
@@ -65,8 +67,6 @@ export function resolveChapterWriteOptions(
  * 慢模型（deepseek-v4-flash 等）单次实测 3-6 分钟，900s 曾连续误杀正常长输出。
  * 可用 MOLIU_AI_TIMEOUT_MS 覆盖（冒烟/矩阵按需调整）。
  */
-export const AI_SINGLE_REQUEST_TIMEOUT_MS = Number(process.env.MOLIU_AI_TIMEOUT_MS) > 0
-  ? Number(process.env.MOLIU_AI_TIMEOUT_MS)
-  : 1_800_000; // 30 分钟
+export const AI_SINGLE_REQUEST_TIMEOUT_MS = readPositiveIntEnv('MOLIU_AI_TIMEOUT_MS') ?? 1_800_000; // 30 分钟
 /** 事实提取/审查与正文共用上限，避免慢模型误杀。 */
 export const AI_AUXILIARY_REQUEST_TIMEOUT_MS = AI_SINGLE_REQUEST_TIMEOUT_MS;

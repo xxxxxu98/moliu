@@ -26,7 +26,9 @@ import {
   Cpu,
   ChevronDown,
   ChevronRight,
+  GripVertical,
 } from 'lucide-vue-next';
+import Sortable from 'sortablejs';
 import { useI18n } from 'vue-i18n';
 import {
   useSettingsStore,
@@ -49,6 +51,10 @@ const settingsStore = useSettingsStore();
 const showAddModal = ref(false);
 const editingProvider = ref<AIProvider | null>(null);
 const showAdvancedSettings = ref(false);
+
+// Provider list drag-to-sort
+const providerGridRef = ref<HTMLElement | null>(null);
+let sortableInstance: Sortable | null = null;
 
 const providerOptions = defaultProviders.map(p => ({
   label: providerNameMap[p.provider],
@@ -483,6 +489,10 @@ function handleDefaultModelChange(modelId: string) {
 
 // Cleanup on component unmount - reset any stuck testing states
 onUnmounted(() => {
+  if (sortableInstance) {
+    sortableInstance.destroy();
+    sortableInstance = null;
+  }
   if (activeTestController) {
     activeTestController.abort();
     activeTestController = null;
@@ -497,12 +507,35 @@ onUnmounted(() => {
 
 // Reset any stuck testing states on page mount
 onMounted(() => {
+  initProviderSortable();
   const hasStuckProviders = settingsStore.resetTestingStates();
   if (hasStuckProviders) {
     console.warn('[AIModelConfig] Found stuck testing states on mount, resetting...');
     message.warning(t('settings.aiProviders.messages.stuckStateReset'));
   }
 });
+
+// Provider list drag-to-sort (Sortable.js on the two-column grid)
+function initProviderSortable() {
+  if (!providerGridRef.value || sortableInstance) return;
+  sortableInstance = new Sortable(providerGridRef.value, {
+    handle: '.drag-handle',
+    animation: 150,
+    ghostClass: 'provider-card-ghost',
+    chosenClass: 'provider-card-chosen',
+    onEnd(evt) {
+      const { oldIndex, newIndex, item, from } = evt;
+      if (oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) {
+        return;
+      }
+      // Sortable moved the DOM node itself; revert it so the vdom stays
+      // authoritative and Vue re-renders the new order from store data
+      const refNode = from.children[oldIndex < newIndex ? oldIndex : oldIndex + 1] ?? null;
+      from.insertBefore(item, refNode);
+      settingsStore.reorderAIProviders(oldIndex, newIndex);
+    },
+  });
+}
 </script>
 
 <template>
@@ -659,7 +692,7 @@ onMounted(() => {
       </div>
 
       <!-- Provider List -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div ref="providerGridRef" class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div
           v-for="provider in settingsStore.aiProviders"
           :key="provider.id"
@@ -719,6 +752,13 @@ onMounted(() => {
               </div>
 
               <div class="flex flex-col items-end gap-1.5 flex-shrink-0 pt-0.5">
+                <button
+                  type="button"
+                  class="drag-handle inline-flex items-center justify-center w-5 h-5 rounded text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 cursor-grab active:cursor-grabbing transition-colors"
+                  :title="t('settings.aiProviders.dragToSort')"
+                >
+                  <GripVertical class="w-3.5 h-3.5" />
+                </button>
                 <NSwitch :value="provider.enabled" @update:value="() => toggleProvider(provider)" />
                 <NTag v-if="provider.isValid === true" type="success" size="tiny" round>
                   {{ t('settings.common.verified') }}
@@ -947,3 +987,14 @@ onMounted(() => {
     </NModal>
   </div>
 </template>
+
+<style scoped>
+/* Provider card drag states (Sortable.js adds these at runtime) */
+.provider-card-ghost {
+  opacity: 0.35;
+}
+
+.provider-card-chosen {
+  cursor: grabbing;
+}
+</style>

@@ -360,6 +360,7 @@
       "titleDesc": "管理你的AI模型连接",
       "addProvider": "添加厂商",
       "addFirstProvider": "添加第一个厂商",
+      "dragToSort": "拖拽调整顺序",
       "emptyTitle": "暂无AI厂商配置",
       "emptyDesc": "添加你的AI厂商配置，开始使用智能创作功能",
       "securityTitle": "安全说明",

@@ -343,6 +343,7 @@
       "titleDesc": "Manage your AI model connections",
       "addProvider": "Add Provider",
       "addFirstProvider": "Add First Provider",
+      "dragToSort": "Drag to reorder",
       "emptyTitle": "No AI Provider Configured",
       "emptyDesc": "Add your AI provider configuration to start using smart creation features",
       "securityTitle": "Security Notice",
