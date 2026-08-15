@@ -400,7 +400,33 @@ describe('UnifiedAIService.complete - 流式路径瞬态错误内层重试', () 
       '输出被长度上限截断'
     );
   });
-});
+
+  // 2026-08-15 冒烟实测：opencode 网关语义审查请求 200 + finish_reason=stop
+  // 但正文 0 字。此前空串直通下游 JSON 解析，报「无法解析」被归类
+  // review_unavailable（持久）停整批；必须按瞬态「API 未返回内容」重试。
+  it('正常结束但正文 0 字时按瞬态空响应退避重试', async () => {
+    const service = makeService('openai');
+    let calls = 0;
+    (service as unknown as { client: unknown }).client = {
+      stream: vi.fn().mockImplementation(() => ({
+        cancel: () => undefined,
+        async *[Symbol.asyncIterator]() {
+          calls++;
+          if (calls === 1) {
+            // 网关抖动：正常结束但一个字都没吐
+            yield { content: '', done: true, finishReason: 'stop' };
+          } else {
+            yield { content: '{"ok":true}', done: true, finishReason: 'stop' };
+          }
+        },
+      })),
+    };
+
+    const result = await service.complete('返回 JSON');
+
+    expect(calls).toBe(2); // 空响应被判瞬态并重试
+    expect(result).toContain('ok');
+  });});
 
 describe('UnifiedAIService.complete - 网关参数约束自动降级（与 outline 侧同口径）', () => {
   /** stub stream 并捕获每次调用的 chatOpts（kimi/minimax 参数约束的改值重试验证） */

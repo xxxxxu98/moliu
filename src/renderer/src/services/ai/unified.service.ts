@@ -546,6 +546,13 @@ export class UnifiedAIService {
           `AI 输出被长度上限截断：仅收到 ${content.length} 字`
         );
       }
+      // 网关 200 + 正常 finish_reason 但正文 0 字（2026-08-15 冒烟实测 opencode 网关
+      // 语义审查请求出现）：此前把空串交给下游 JSON 解析，报「无法解析」被归类
+      // review_unavailable 持久错误 → 停整批。按瞬态「API 未返回内容」抛出，
+      // 走内层 1s/2s 退避重试（isTransientError 已收录该文案）。
+      if (!content.trim()) {
+        throw new Error("API 未返回内容");
+      }
       return content;
     } finally {
       signal?.removeEventListener("abort", onAbort);
