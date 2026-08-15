@@ -94,9 +94,10 @@ describe('useProjectCreator.createProject - 应用大纲同时建章', () => {
     const persisted = projects.get(projectId!);
 
     expect(persisted?.chapters).toHaveLength(2);
+    // 建章落库标题带序号「第N章 短标题」，与续写回写口径一致
     expect(persisted?.chapters?.map(chapter => chapter.title)).toEqual([
-      '醒来就被灌毒酒',
-      '汤里还有一口毒',
+      '第1章 醒来就被灌毒酒',
+      '第2章 汤里还有一口毒',
     ]);
 
     // createChapter 用 `chapter-${Date.now()}` 生成 id，同毫秒批量建章会撞 id，

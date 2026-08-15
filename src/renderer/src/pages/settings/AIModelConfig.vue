@@ -32,6 +32,7 @@ import Sortable from 'sortablejs';
 import { useI18n } from 'vue-i18n';
 import {
   useSettingsStore,
+  migrateMaxTokens,
   type AIProvider,
 } from '@/stores/settings.store';
 import { providerNameMap, defaultProviders } from '@/config/ai-providers';
@@ -62,20 +63,22 @@ const providerOptions = defaultProviders.map(p => ({
 }));
 
 // Token options based on common AI model context limits
+// 注意：模型厂商的 K/M 均为十进制（OpenAI 128K=128000、Gemini 1M=1000000），
+// 不能用 1024 的 KiB 值；存量厂商配置里的 KiB 值由 settings.store 迁移到十进制。
 const tokenOptions = [
-  { label: '1M (默认)', value: 1048576 },
+  { label: '1M (默认)', value: 1000000 },
   { label: '不限制', value: undefined },
-  { label: '4K', value: 4096 },
-  { label: '8K', value: 8192 },
-  { label: '16K', value: 16384 },
-  { label: '32K', value: 32768 },
-  { label: '64K', value: 65536 },
-  { label: '128K', value: 131072 },
-  { label: '192K', value: 196608 },
+  { label: '4K', value: 4000 },
+  { label: '8K', value: 8000 },
+  { label: '16K', value: 16000 },
+  { label: '32K', value: 32000 },
+  { label: '64K', value: 64000 },
+  { label: '128K', value: 128000 },
+  { label: '192K', value: 192000 },
   { label: '200K', value: 200000 },
-  { label: '256K', value: 262144 },
-  { label: '512K', value: 524288 },
-  { label: '2M', value: 2097152 },
+  { label: '256K', value: 256000 },
+  { label: '512K', value: 512000 },
+  { label: '2M', value: 2000000 },
 ];
 
 // Temperature presets for creative writing (range: 0.1-1.2)
@@ -310,7 +313,7 @@ function openAddModal() {
     // 默认 1M：推理型模型的 reasoning 计入输出预算，网关默认上限（常见 4K）会让
     // 长输出大纲必撞 finish_reason=length（9 厂商矩阵实测）；1M 是网关安全上限，
     // 实际输出仍由模型自然长度决定，不会强行拉长
-    maxTokens: 1_048_576,
+    maxTokens: 1_000_000,
     generationConfig: { ...defaultGenerationConfig },
   };
   showAdvancedSettings.value = false;
@@ -319,7 +322,12 @@ function openAddModal() {
 }
 
 function openEditModal(provider: AIProvider) {
-  editingProvider.value = { ...provider };
+  editingProvider.value = {
+    ...provider,
+    // 旧版存的是 1024 进制值（1M=1048576 等），选项表已改十进制；此处归一显示值，
+    // 否则 NSelect 匹配不到选项会直接显示裸数字 1048576（保存时会一并写回归一值）
+    maxTokens: migrateMaxTokens(provider.maxTokens),
+  };
   showAddModal.value = true;
 }
 

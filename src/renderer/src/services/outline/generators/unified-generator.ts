@@ -40,6 +40,7 @@ import {
   findUnregisteredCharacterNames,
   repairChapterBlueprints,
   repairUnregisteredCharacters,
+  sanitizeOutlineHookLengths,
 } from './outline-completer';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 import { readPositiveIntEnv } from '@/utils/env';
@@ -659,6 +660,22 @@ export class UnifiedOutlineGenerator {
           // 门禁的章级阻断项（钩子/标题超长、CPN 数量、占位标题等）此前没有定点修复通道，
           // 只能整份大纲重新生成——而模型钩子超几个字是常态，重来一次仍会踩同类问题，
           // 一轮就是 20 分钟且基本不收敛。这里先按章重写，重写不掉才升级为整体重试。
+          //
+          // 先做零成本本地 sanitize：标题/CBN/CEN 超长按分句收缩（2026-08-15 冒烟 22/50 章
+          // 超长 1-16 字，全部可本地收口），只有 sanitize 处理不了的章才进 AI 定点修复。
+          if (!finalCompleteness.canApply) {
+            const sanitized = sanitizeOutlineHookLengths(rawText, outline);
+            if (sanitized) {
+              outline = sanitized.outline;
+              rawText = sanitized.rawText;
+              appliedFixRawText = undefined;
+              finalCompleteness = inspectOutlineCompleteness(outline);
+              warnings.push(...sanitized.warnings);
+              onProgress?.(
+                `本地收缩超长钩子后剩余阻断项 ${finalCompleteness.blockers.length} 项`,
+              );
+            }
+          }
           const gateChapterNumbers = [
             ...new Set(
               finalCompleteness.blockers

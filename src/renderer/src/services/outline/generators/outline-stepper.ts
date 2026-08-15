@@ -2,8 +2,13 @@
  * 大纲主方案分步生成编排器。
  *
  * 把原来一次性产出全部 14 段的主请求，拆成 5 个聚焦小请求，逐步拼装 rawText：
- *   步1 骨架（定位/驱动/金手指/规模/四幕/世界）→ 步2 卷纲 → 步3 启动包 →
- *   步4 角色+伏笔 → 步5 支线/故事线/情绪/卖点
+ *   步1 骨架（定位/驱动/金手指/规模/四幕/世界）→ 步2 卷纲 → 并行{步3 启动包、
+ *   步4 角色+伏笔、步5 支线/故事线/情绪/卖点}
+ *
+ * 步3-5 的上下文都只依赖骨架+卷纲（步1-2），三路并行把 5 次串行请求折叠为
+ * 3 次往返（2026-08-15 冒烟实测：正常请求 65s/个，串行 5 步 ~5.4min）。
+ * 三步产出的段互不相交，拼装顺序不影响结果。
+ * MOLIU_OUTLINE_STEP_CONCURRENCY=1 可退回全串行（网关限并发时用）。
  *
  * 单步最大输出从 ~14000 字降到 ~3000-4500 字，显著降低推理型模型撞 finish_reason=length
  * 的概率。对外仍是一次 Promise，拼装完成的 rawText 交给外层 parseExpandedOutline 与
@@ -22,6 +27,7 @@ import {
 } from './outline-completer';
 import {
   OUTLINE_GENERATION_STEPS,
+  type OutlineGenerationStep,
   type StepBuildContext,
 } from '../prompts/system/expand-direction-steps';
 import {
@@ -30,6 +36,7 @@ import {
   classifyError,
   retryBackoffDelayMs,
 } from '@/utils/ai-error-classify';
+import { readPositiveIntEnv } from '@/utils/env';
 
 /** 注入式结构化文本调用器（与 outline-completer / outline-reviewer 同模式） */
 export type StructuredTextCaller = (
@@ -161,22 +168,21 @@ export async function generateExpandedOutlineInSteps(
   const warnings: string[] = [];
   let rawText = '';
 
-  for (const step of OUTLINE_GENERATION_STEPS) {
-    onProgress?.(step.progressMessage);
-
+  const runStep = async (
+    step: OutlineGenerationStep,
+    accumulated: string,
+  ): Promise<string> => {
     const ctx: StepBuildContext = {
       seed,
       direction,
       wordCountRange,
       enhancementBrief,
       creativeExpansionMode: options.creativeExpansionMode ?? 'preserve-genre',
-      accumulatedRawText: rawText,
+      accumulatedRawText: accumulated,
     };
     const built: BuiltPrompt = step.build(ctx);
-
-    let generated: string;
     try {
-      generated = await callStepWithRetry(
+      return await callStepWithRetry(
         callStructuredTextMode,
         built.system,
         built.user,
@@ -195,10 +201,46 @@ export async function generateExpandedOutlineInSteps(
       // 软步失败：记 warning 并跳过，由下游 completeIncompleteOutline 兜底或接受缺失
       const message = error instanceof Error ? error.message : String(error);
       warnings.push(`「${step.id}」步生成失败，已跳过：${message.slice(0, 160)}`);
-      continue;
+      return '';
     }
+  };
 
-    rawText = stitchStepSections(rawText, generated, step.sections, warnings);
+  // 卷纲之后的步骤（启动包/角色伏笔/节奏包装）上下文只依赖骨架+卷纲，
+  // 产出段互不相交——并发跑三路，把 5 次串行往返折叠成 3 次。
+  const forkIndex = OUTLINE_GENERATION_STEPS.findIndex(step => step.id === 'startup');
+  const concurrency = readPositiveIntEnv('MOLIU_OUTLINE_STEP_CONCURRENCY') ?? 3;
+
+  const headSteps = forkIndex > 0 ? OUTLINE_GENERATION_STEPS.slice(0, forkIndex) : OUTLINE_GENERATION_STEPS;
+  const tailSteps = forkIndex > 0 ? OUTLINE_GENERATION_STEPS.slice(forkIndex) : [];
+
+  for (const step of headSteps) {
+    onProgress?.(step.progressMessage);
+    const generated = await runStep(step, rawText);
+    if (generated) {
+      rawText = stitchStepSections(rawText, generated, step.sections, warnings);
+    }
+  }
+
+  if (tailSteps.length > 0 && concurrency > 1 && tailSteps.length > 1) {
+    onProgress?.(
+      `并行生成启动包 / 角色伏笔 / 节奏包装（${tailSteps.length} 路）...`,
+    );
+    const settled = await Promise.all(
+      tailSteps.map(async step => ({ step, generated: await runStep(step, rawText) })),
+    );
+    for (const { step, generated } of settled) {
+      if (generated) {
+        rawText = stitchStepSections(rawText, generated, step.sections, warnings);
+      }
+    }
+  } else {
+    for (const step of tailSteps) {
+      onProgress?.(step.progressMessage);
+      const generated = await runStep(step, rawText);
+      if (generated) {
+        rawText = stitchStepSections(rawText, generated, step.sections, warnings);
+      }
+    }
   }
 
   return { rawText, warnings };

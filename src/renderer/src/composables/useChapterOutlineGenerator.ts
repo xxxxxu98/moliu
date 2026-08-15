@@ -11,6 +11,7 @@ import { useActiveAIProvider } from './useActiveAIProvider';
 import type { WritingStyle, GenerateChapterResponse } from '@/types/writing';
 import type { PlotNode, Character } from '@/types/project';
 import { PromptBuilder } from '@/services/writing/prompt-builder';
+import { formatStoredChapterTitle } from '@/services/writing/chapterTitle';
 
 /**
  * 章节结构化节点
@@ -475,7 +476,7 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
             };
         return {
           ...base,
-          title: chapter.title,
+          title: formatStoredChapterTitle(index + 1, chapter.title),
           description: chapter.outline,
           type: 'chapter' as const,
           orderIndex: index,
@@ -559,7 +560,9 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
           }
 
           await projectStore.updateChapter(chapterId, {
-            title: chapter.title,
+            // 落库带序号「第N章 短标题」，与续写回写 formatStoredChapterTitle 口径一致；
+            // 蓝图标题本身是无序号短标题，目录页直接展示会缺失章节定位
+            title: formatStoredChapterTitle(chapterIndex + 1, chapter.title),
             outline: extendedOutline,
             plotSummary: chapter.CBN ? `CBN: ${chapter.CBN}\nCEN: ${chapter.CEN}` : undefined,
           });

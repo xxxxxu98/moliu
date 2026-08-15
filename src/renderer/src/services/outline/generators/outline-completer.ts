@@ -5,12 +5,13 @@ import type {
   ExecutableOutline,
 } from '../types/executable-outline';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
+import { isAbortedError, retryBackoffDelayMs } from '@/utils/ai-error-classify';
+import { readPositiveIntEnv } from '@/utils/env';
 import {
   inspectOutlineCompleteness,
   OUTLINE_COMPLETENESS_POLICY,
 } from '../validation/outlineCompleteness';
 import type { OutlineCompletenessBlocker } from '../validation/outlineCompleteness';
-import { retryBackoffDelayMs } from '@/utils/ai-error-classify';
 
 type StructuredTextCaller = (
   system: string,
@@ -403,6 +404,37 @@ const CHARACTER_REFERENCE_BLOCKER_RE = /引用了未登记角色「([^」]+)」/
 const PROTAGONIST_MISMATCH_RE = /主角「([^」]+)」未进入关键角色规划/u;
 
 /**
+ * 中文姓名合理长度：真实姓名 2-4 字，带姓的前缀称呼最多到 6-8 字（「城隍庙更夫陈哑巴」）。
+ * 超过 10 字的基本是把「与陈哑巴从互不干涉到被陈哑巴揭穿身份」这类关系整句、
+ * 或整段弧线描述当姓名提取（2026-08-15 冒烟：7 条清单 6 条不是姓名，
+ * 模型按臆造清单连续 4 次空响应白烧 40 分钟）。
+ */
+const MAX_CHARACTER_NAME_CHARS = 10;
+/** 关系/弧线句式特征词：出现在「姓名」里说明提取源是整句而非姓名 */
+const RELATION_PHRASE_RE = /[，。；、从到与和及在对为向着]/u;
+/**
+ * 组织/势力称呼特征：集体名词尾（门/派/司/会/盟…）、「旧X/新X」指代、「N老」合称。
+ * 给组织建「角色档」没有意义（无个人弧线无转折），第 2 轮实测模型被迫为
+ * 「旧七老」「镇灵司」臆造人设，污染角色表。
+ */
+const ORGANIZATION_NAME_RE =
+  /(?:[门派司会盟教帮堂阁殿宗楼局署馆](?:军|团|队|众)?$)|(?:^[旧新][\u4e00-\u9fa5]{1,4}$)|(?:^[一二三四五六七八九十]+老$)/u;
+
+/**
+ * 判断提取出的「未登记角色名」是否像一个可建档的姓名。
+ * 过滤掉整句关系描述、超长条目、组织称呼——这些发给补登记请求只会得到
+ * 空响应或臆造角色，fail-closed 应交给整体重试而不是无效修复。
+ */
+export function isLikelyCharacterName(value: string): boolean {
+  const name = value.trim().replace(/^[·•、，。\s]+|[·•、，。\s]+$/gu, '');
+  if (!name) return false;
+  if ([...name].length > MAX_CHARACTER_NAME_CHARS) return false;
+  if (RELATION_PHRASE_RE.test(name)) return false;
+  if (ORGANIZATION_NAME_RE.test(name)) return false;
+  return true;
+}
+
+/**
  * 从门禁 blockers 中提取所有未登记角色名（unknown-character-reference 的
  * 「引用了未登记角色「X」」与 protagonist-name-mismatch 的「主角「X」未进入」
  * 两种文案），按出现顺序去重。提取失败（文案变化等）返回空数组，调用方按
@@ -415,7 +447,8 @@ export function findUnregisteredCharacterNames(
   const collect = (raw: string | undefined): void => {
     if (!raw) return;
     const name = raw.trim();
-    if (name && !names.includes(name)) names.push(name);
+    if (!isLikelyCharacterName(name)) return;
+    if (!names.includes(name)) names.push(name);
   };
   for (const blocker of blockers) {
     collect(CHARACTER_REFERENCE_BLOCKER_RE.exec(blocker.message)?.[1]);
@@ -515,6 +548,129 @@ export interface CompleteOutlineResult {
   warnings: string[];
 }
 
+/**
+ * 截断到 maxChars 个字符（按 Unicode code point，中文一字一计），保证不切在代理对中间。
+ */
+function truncateByChars(value: string, maxChars: number): string {
+  const chars = [...value];
+  if (chars.length <= maxChars) return value;
+  return chars.slice(0, maxChars).join('').trim();
+}
+
+/**
+ * 钩子句（CBN/CEN）超长时的本地收缩：优先按标点/连接符切到包含 maxChars 的最近分句，
+ * 找不到分句再硬截断。AI 产出超 1-16 字是常态小偏差（2026-08-15 冒烟 22/50 章超长，
+ * 整章重写每批 1-10 分钟还不收敛），本地收口语义损失极小且零请求成本。
+ */
+export function shrinkHookText(hook: string, maxChars: number): string {
+  const trimmed = hook.trim().replace(/[。；;.!！?？,，、]+$/u, '');
+  if (trimmed.length <= maxChars) return trimmed;
+  const separators = /[，。；;、——….!！?？]/u;
+  const chars = [...trimmed];
+  // 收集不超过 maxChars 的分句边界，取最后一个
+  let cutIndex = -1;
+  let acc = 0;
+  for (let i = 0; i < chars.length && acc <= maxChars; i += 1) {
+    acc += 1;
+    if (separators.test(chars[i])) cutIndex = i;
+  }
+  if (cutIndex >= Math.floor(maxChars / 2)) {
+    return chars.slice(0, cutIndex).join('').replace(/[，。；;、]+$/u, '').trim();
+  }
+  return truncateByChars(trimmed, maxChars);
+}
+
+/**
+ * 门禁章级字段超长的本地 sanitize：标题、CBN、CEN 超上限时按规则收缩到区间内，
+ * 不足下限的（信息量太少，本地造不出）仍留给 AI 定点修复。
+ * 返回 null 表示无需修改。
+ */
+export function sanitizeBlueprintLengths(
+  blueprint: ChapterBlueprint,
+  policy: {
+    titleMinChars: number;
+    titleMaxChars: number;
+    hookMinChars: number;
+    hookMaxChars: number;
+  },
+): ChapterBlueprint | null {
+  const changes: string[] = [];
+  let title = blueprint.title.trim();
+  if (title.length > policy.titleMaxChars) {
+    title = truncateByChars(title, policy.titleMaxChars);
+    if (title.length >= policy.titleMinChars) {
+      changes.push(`标题超长已截断`);
+    } else {
+      title = blueprint.title.trim();
+    }
+  }
+  let CBN = blueprint.CBN;
+  let CEN = blueprint.CEN;
+  if (CBN.trim().length > policy.hookMaxChars) {
+    const shrunk = shrinkHookText(CBN, policy.hookMaxChars);
+    if (shrunk.length >= policy.hookMinChars) {
+      CBN = shrunk;
+      changes.push('CBN 超长已收缩');
+    }
+  }
+  if (CEN.trim().length > policy.hookMaxChars) {
+    const shrunk = shrinkHookText(CEN, policy.hookMaxChars);
+    if (shrunk.length >= policy.hookMinChars) {
+      CEN = shrunk;
+      changes.push('CEN 超长已收缩');
+    }
+  }
+  if (changes.length === 0) return null;
+  return { ...blueprint, title, CBN, CEN };
+}
+
+/**
+ * 门禁章级超长缺陷的批量本地 sanitize：对所有蓝图应用 sanitizeBlueprintLengths，
+ * 有任一章被修改时重写「单章蓝图」段并重新解析。零 AI 请求成本。
+ * 返回 null 表示全部蓝图都在区间内、无需修改。
+ */
+export function sanitizeOutlineHookLengths(
+  rawText: string,
+  outline: ExecutableOutline,
+): { rawText: string; outline: ExecutableOutline; warnings: string[] } | null {
+  const blueprints = outline.chapterBlueprints ?? [];
+  if (blueprints.length === 0) return null;
+  const sanitizedByOrder = new Map<number, ChapterBlueprint>();
+  const touched: number[] = [];
+  for (const blueprint of blueprints) {
+    const sanitized = sanitizeBlueprintLengths(blueprint, {
+      titleMinChars: OUTLINE_COMPLETENESS_POLICY.titleMinChars,
+      titleMaxChars: OUTLINE_COMPLETENESS_POLICY.titleMaxChars,
+      hookMinChars: OUTLINE_COMPLETENESS_POLICY.hookMinChars,
+      hookMaxChars: OUTLINE_COMPLETENESS_POLICY.hookMaxChars,
+    });
+    if (sanitized) {
+      sanitizedByOrder.set(blueprint.orderIndex, sanitized);
+      touched.push(blueprint.orderIndex);
+    }
+  }
+  if (touched.length === 0) return null;
+
+  const nextRawText = replaceOutlineSection(
+    rawText,
+    BLUEPRINT_SECTION_ALIASES,
+    BLUEPRINT_SECTION_ALIASES[0],
+    blueprints
+      .map(blueprint => sanitizedByOrder.get(blueprint.orderIndex) ?? blueprint)
+      .sort((a, b) => a.orderIndex - b.orderIndex)
+      .map(serializeBlueprint)
+      .join('\n\n'),
+  );
+  const nextOutline = parseExpandedOutline(nextRawText);
+  return {
+    rawText: nextRawText,
+    outline: nextOutline ?? outline,
+    warnings: [
+      `本地收缩超长标题/CBN/CEN 共 ${touched.length} 章（第 ${touched.join('、')} 章），未发 AI 请求`,
+    ],
+  };
+}
+
 /** 单章蓝图每批最大章数：批越大越容易踩网关的非流式输出上限 */
 export const CHAPTER_BLUEPRINT_BATCH_SIZE = 10;
 
@@ -549,15 +705,19 @@ export async function repairChapterBlueprints(params: {
     if (isUsableBlueprint(blueprint)) usableBlueprints.set(blueprint.orderIndex, blueprint);
   }
 
-  const batchCount = Math.ceil(chapterNumbers.length / CHAPTER_BLUEPRINT_BATCH_SIZE);
+  const batches: number[][] = [];
   for (let index = 0; index < chapterNumbers.length; index += CHAPTER_BLUEPRINT_BATCH_SIZE) {
-    const batch = chapterNumbers.slice(index, index + CHAPTER_BLUEPRINT_BATCH_SIZE);
-    const batchIndex = Math.floor(index / CHAPTER_BLUEPRINT_BATCH_SIZE) + 1;
-    onProgress?.(
-      `正在${phase}单章蓝图 第${batch[0]}-${batch.at(-1)}章（${batchIndex}/${batchCount}）...`,
-    );
+    batches.push(chapterNumbers.slice(index, index + CHAPTER_BLUEPRINT_BATCH_SIZE));
+  }
+
+  /**
+   * 单批请求（含空响应退避重试）。prompt 基于传入的 outline 快照构建；
+   * 并发模式下所有批次共用进入时的快照——canon 只带邻接窗口（±5 章），
+   * 跨批新鲜度差异可忽略，换来的是 5 批 10 章从串行 5 次往返折叠为 ~2 次。
+   */
+  const requestBatch = async (batch: number[], outlineForPrompt: ExecutableOutline): Promise<string> => {
     const batchIssues = batch.flatMap(no => issuesByChapter?.get(no) ?? []);
-    const prompt = buildChapterCompletionPrompt(outline, params.direction, batch, batchIssues);
+    const prompt = buildChapterCompletionPrompt(outlineForPrompt, params.direction, batch, batchIssues);
 
     // 空响应批次重试：矩阵实测 minimax-m3/glm 网关会把批次请求「成功」返回 0 字
     // （无错误事件、流正常结束），此前只记 warning 放过 → 这批章永远缺失 → fail-closed。
@@ -590,8 +750,12 @@ export async function repairChapterBlueprints(params: {
         await sleep(delayMs);
       }
     }
-    const blocks = extractRequestedChapterBlocks(generated, batch);
-    for (const [chapterNumber, block] of blocks) {
+    return generated;
+  };
+
+  /** 把一批响应里的章块合入 usableBlueprints 并重写蓝图段；疑似截断时小批补发 */
+  const mergeBatch = async (batch: number[], generated: string): Promise<void> => {
+    const stitchBlock = (chapterNumber: number, block: string): void => {
       const stitched = replaceOutlineSection(
         rawText,
         BLUEPRINT_SECTION_ALIASES,
@@ -610,21 +774,119 @@ export async function repairChapterBlueprints(params: {
       if (parsed && isUsableBlueprint(parsedBlueprint)) {
         usableBlueprints.set(chapterNumber, parsedBlueprint);
       }
-    }
-    rawText = replaceOutlineSection(
-      rawText,
-      BLUEPRINT_SECTION_ALIASES,
-      BLUEPRINT_SECTION_ALIASES[0],
-      [...usableBlueprints.values()]
-        .sort((a, b) => a.orderIndex - b.orderIndex)
-        .map(serializeBlueprint)
-        .join('\n\n'),
-    );
-    outline = parseExpandedOutline(rawText) ?? outline;
-    if (blocks.size < batch.length) {
-      warnings.push(
-        `单章蓝图${phase}批次 ${batch[0]}-${batch.at(-1)} 仅返回 ${blocks.size}/${batch.length} 章`,
+    };
+    const rebuildSection = (): void => {
+      rawText = replaceOutlineSection(
+        rawText,
+        BLUEPRINT_SECTION_ALIASES,
+        BLUEPRINT_SECTION_ALIASES[0],
+        [...usableBlueprints.values()]
+          .sort((a, b) => a.orderIndex - b.orderIndex)
+          .map(serializeBlueprint)
+          .join('\n\n'),
       );
+      outline = parseExpandedOutline(rawText) ?? outline;
+    };
+
+    const blocks = extractRequestedChapterBlocks(generated, batch);
+    for (const [chapterNumber, block] of blocks) {
+      stitchBlock(chapterNumber, block);
+      if (!usableBlueprints.has(chapterNumber)) {
+        warnings.push(
+          `单章蓝图${phase}批次第 ${chapterNumber} 章响应不可用（解析失败或字段缺失），本章保留原稿`,
+        );
+      }
+    }
+    rebuildSection();
+
+    // 批次响应明显偏短（<120 字/章，正常每章 250-400 字）视为网关吐了半截：
+    // 只记 warning 放过的话，这批章在定点修复轮全部原样漏掉，门禁原样复现，
+    // 外层只能整体重试（2026-08-15 冒烟：修复批次 328 字符/10 章 → 两轮全损）。
+    // 这里按章号拆小批（每批 3 章）立即补一次，再不齐就留给外层重试。
+    const missing = batch.filter(no => !usableBlueprints.has(no));
+    if (
+      missing.length > 0
+      && phase === '定点修复'
+      && (blocks.size === 0 || generated.length < missing.length * 120)
+      && missing.length <= CHAPTER_BLUEPRINT_BATCH_SIZE
+    ) {
+      onProgress?.(
+        `定点修复批次 ${batch[0]}-${batch.at(-1)} 响应疑似截断（${generated.length} 字符），按 3 章小批补发...`,
+      );
+      const smallBatches: number[][] = [];
+      for (let mi = 0; mi < missing.length; mi += 3) {
+        smallBatches.push(missing.slice(mi, mi + 3));
+      }
+      for (const smallBatch of smallBatches) {
+        let smallGenerated = '';
+        try {
+          smallGenerated = await requestBatch(smallBatch, outline);
+        } catch (error) {
+          if (isAbortedError(error)) throw error;
+          warnings.push(
+            `定点修复小批 ${smallBatch.join('、')} 请求失败：${error instanceof Error ? error.message.slice(0, 120) : String(error).slice(0, 120)}`,
+          );
+          continue;
+        }
+        const smallBlocks = extractRequestedChapterBlocks(smallGenerated, smallBatch);
+        for (const [chapterNumber, block] of smallBlocks) {
+          stitchBlock(chapterNumber, block);
+        }
+        rebuildSection();
+        warnings.push(
+          `定点修复小批补发 ${smallBatch.join('、')} 章：解出 ${smallBlocks.size}/${smallBatch.length} 章`,
+        );
+      }
+    }
+    const missingAfterRetry = batch.filter(no => !usableBlueprints.has(no));
+    if (missingAfterRetry.length > 0) {
+      warnings.push(
+        `单章蓝图${phase}批次 ${batch[0]}-${batch.at(-1)} 仍有 ${missingAfterRetry.length}/${batch.length} 章未解出（第 ${missingAfterRetry.join('、')} 章）`,
+      );
+    }
+  };
+
+  /** 简单并发池：最多 limit 个批次请求在途 */
+  const runWithConcurrency = async (
+    tasks: Array<() => Promise<void>>,
+    limit: number,
+  ): Promise<void> => {
+    let cursor = 0;
+    const workers = Array.from({ length: Math.min(limit, tasks.length) }, async () => {
+      for (;;) {
+        const index = cursor;
+        cursor += 1;
+        if (index >= tasks.length) return;
+        await tasks[index]();
+      }
+    });
+    await Promise.all(workers);
+  };
+
+  const batchConcurrency = readPositiveIntEnv('MOLIU_OUTLINE_BATCH_CONCURRENCY') ?? 3;
+  if (batchConcurrency > 1 && batches.length > 1) {
+    onProgress?.(
+      `并发${phase}单章蓝图 ${batches.length} 批（每批 ${CHAPTER_BLUEPRINT_BATCH_SIZE} 章，并发 ${Math.min(batchConcurrency, batches.length)}）...`,
+    );
+    const results = new Map<number[], string>();
+    await runWithConcurrency(
+      batches.map(batch => async () => {
+        const generated = await requestBatch(batch, outline);
+        results.set(batch, generated);
+      }),
+      batchConcurrency,
+    );
+    for (const batch of batches) {
+      await mergeBatch(batch, results.get(batch) ?? '');
+    }
+  } else {
+    const batchCount = batches.length;
+    for (const [batchIndex, batch] of batches.entries()) {
+      onProgress?.(
+        `正在${phase}单章蓝图 第${batch[0]}-${batch.at(-1)}章（${batchIndex + 1}/${batchCount}）...`,
+      );
+      const generated = await requestBatch(batch, outline);
+      await mergeBatch(batch, generated);
     }
   }
 

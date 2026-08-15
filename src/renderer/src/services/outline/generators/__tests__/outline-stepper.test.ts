@@ -537,7 +537,7 @@ describe('generateExpandedOutlineInSteps 分步编排', () => {
     expect(result.warnings).toHaveLength(0);
   });
 
-  it('进度回调：每步开始时触发对应文案', async () => {
+  it('进度回调：串行步与并行段都触发对应文案', async () => {
     let callIndex = 0;
     const callStructuredTextMode = vi.fn(async () => {
       callIndex += 1;
@@ -555,11 +555,13 @@ describe('generateExpandedOutlineInSteps 分步编排', () => {
     });
 
     const messages = onProgress.mock.calls.map(call => call[0] as string);
+    // 串行段（骨架/卷纲）逐步触发
     expect(messages.some(m => m.includes('方案骨架'))).toBe(true);
     expect(messages.some(m => m.includes('卷纲'))).toBe(true);
+    // 尾三步并行段：并行进度消息携带各步关键词（启动包/角色伏笔/节奏包装）
     expect(messages.some(m => m.includes('启动包'))).toBe(true);
-    expect(messages.some(m => m.includes('关键角色与伏笔'))).toBe(true);
-    expect(messages.some(m => m.includes('支线'))).toBe(true);
+    expect(messages.some(m => m.includes('角色伏笔') || m.includes('关键角色与伏笔'))).toBe(true);
+    expect(messages.some(m => m.includes('节奏包装') || m.includes('支线'))).toBe(true);
   });
 
   it('软步（角色伏笔）失败：跳过并记 warning，不阻断后续步骤', async () => {

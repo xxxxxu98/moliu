@@ -20,6 +20,8 @@ export interface AIGenerationConfig {
   frequencyPenalty: number;
   /** 存在惩罚，增加话题多样性 (-2 to 2)，默认 0 */
   presencePenalty: number;
+  /** 厂商级输出上限（tokens）：厂商侧 K/M 为十进制（128K=128000、1M=1000000） */
+  maxTokens?: number;
 }
 
 export interface AIProvider {
@@ -98,6 +100,31 @@ function normalizeDefaultModelSelection(
   return value;
 }
 
+/**
+ * 存量 maxTokens 的 KiB→十进制迁移。
+ * 旧版选项用的是 1024 进制值（1M=1048576 等），而模型厂商的 K/M 全是十进制
+ * （OpenAI 128K=128000、Gemini 1M=1000000），发出去会被网关当成超上限拒绝。
+ * 精确匹配旧选项值再换算，避免误伤用户手填的任意值。
+ */
+const KIB_TO_DECIMAL_MAX_TOKENS = new Map<number, number>([
+  [4096, 4000],
+  [8192, 8000],
+  [16384, 16000],
+  [32768, 32000],
+  [65536, 64000],
+  [131072, 128000],
+  [196608, 192000],
+  [262144, 256000],
+  [524288, 512000],
+  [1048576, 1000000],
+  [2097152, 2000000],
+]);
+
+export function migrateMaxTokens(value: number | undefined): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+  return KIB_TO_DECIMAL_MAX_TOKENS.get(value) ?? value;
+}
+
 export const useSettingsStore = defineStore('settings', () => {
   // State - Initialize with defaults
   const theme = ref<ThemeMode>(defaultSettings.theme);
@@ -149,7 +176,24 @@ export const useSettingsStore = defineStore('settings', () => {
       // Load AI providers
       const providers = await window.electronAPI.getAIProviders() as AIProvider[];
       if (providers && providers.length > 0) {
+        // KiB→十进制迁移：命中旧选项值才换算，换算后回写持久化
+        let maxTokensMigrated = false;
+        for (const provider of providers) {
+          const raw = provider.maxTokens ?? provider.generationConfig?.maxTokens;
+          const migrated = migrateMaxTokens(raw);
+          if (migrated !== undefined && migrated !== raw) {
+            if (provider.maxTokens !== undefined) {
+              provider.maxTokens = migrated;
+            } else {
+              provider.generationConfig = { ...provider.generationConfig, maxTokens: migrated };
+            }
+            maxTokensMigrated = true;
+          }
+        }
         aiProviders.value = providers;
+        if (maxTokensMigrated) {
+          await saveAIProviders();
+        }
       }
       // 默认不加载任何厂商，用户需要手动配置
 

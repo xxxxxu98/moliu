@@ -181,7 +181,9 @@ export const useProjectStore = defineStore('project', () => {
     
     const volumeChapters = chapters.value.filter(c => c.volumeId === volumeId);
     const newChapter: Chapter = {
-      id: `chapter-${Date.now()}`,
+      // 时间戳 + 全局章序：批量建章在同毫秒内连续 create，裸 Date.now() 会撞 id，
+      // 后续 updateChapter 按 id findIndex 会改到同一条章节上
+      id: `chapter-${Date.now()}-${chapters.value.length}`,
       volumeId,
       title: `第${volumeChapters.length + 1}章`,
       content: '',

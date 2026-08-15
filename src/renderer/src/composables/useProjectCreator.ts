@@ -12,6 +12,7 @@ import {
   buildVolumesFromOutline,
 } from "./projectCreatorBuilders";
 import { useChapterOutlineGenerator } from "./useChapterOutlineGenerator";
+import { formatStoredChapterTitle } from "@/services/writing/chapterTitle";
 
 export interface CreateProjectOptions {
   /** 开题中心写入的题材合同种子 */
@@ -114,7 +115,8 @@ export function useProjectCreator(): UseProjectCreatorReturn {
       outline.chapters.forEach((chapter, chapterIndex) => {
         plotOutline.push({
           id: `plot-${Date.now()}-${plotIndex++}`,
-          title: chapter.title,
+          // 落库带序号「第N章 短标题」，与建章/续写回写口径一致（蓝图标题本身无序号）
+          title: formatStoredChapterTitle(chapterIndex + 1, chapter.title),
           description: chapter.summary,
           type: "chapter" as const,
           keyEvents: Array.isArray(chapter.keyEvents) ? chapter.keyEvents : undefined,

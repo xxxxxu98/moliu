@@ -314,7 +314,10 @@ describe('repairChapterBlueprints', () => {
     // 2 次尝试（1 次原始 + 1 次重试）后放弃，不无限重试
     expect(callStructuredTextMode).toHaveBeenCalledTimes(2);
     expect(result.warnings.some(w => w.includes('返回空响应'))).toBe(true);
-    expect(result.warnings.some(w => w.includes('仅返回 0/1 章'))).toBe(true);
+    // 「补全」阶段空响应批次只记缺章 warning，不触发小批补发（补发只留给定点修复轮）
+    expect(
+      result.warnings.some(w => w.includes('仍有 1/1 章未解出')),
+    ).toBe(true);
   }, 30_000);
 
   // 真实请求层的空响应是抛错（unified-generator「API 未返回内容」），不是返回空串；
