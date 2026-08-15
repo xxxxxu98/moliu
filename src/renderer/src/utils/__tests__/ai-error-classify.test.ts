@@ -9,6 +9,7 @@ import {
   isAbortedError,
   backoffDelayMs,
   retryBackoffDelayMs,
+  parseAllowedTemperature,
 } from '../ai-error-classify';
 
 /** 模拟 multi-ai-sdk 的 AIError（name 恒为 'AIError'，带 status） */
@@ -100,6 +101,49 @@ describe('classifyError', () => {
       expect(result.kind).toBe('network');
       expect(result.retryable).toBe(true);
       expect(result.transient).toBe(true);
+    });
+
+    // 大纲请求层（unified-generator.callStructuredTextMode）对流正常结束但 0 字正文
+    // 抛「API 未返回内容」。矩阵实测 minimax/glm 网关抖动会这样返回；与 length_capped
+    // 的确定性截断不同，必须瞬态重试，否则一次空响应就废掉整步。
+    it('API 未返回内容 归为 network（瞬态、可重试）', () => {
+      const result = classifyError(new Error('API 未返回内容'));
+      expect(result.kind).toBe('network');
+      expect(result.retryable).toBe(true);
+      expect(result.transient).toBe(true);
+    });
+
+    it('大纲输出被长度上限截断仍归为 length_capped（确定性、不重试）', () => {
+      const result = classifyError(new Error('大纲输出被长度上限截断：正文 82 字、推理 9599 字'));
+      expect(result.kind).toBe('length_capped');
+      expect(result.retryable).toBe(false);
+      expect(result.transient).toBe(false);
+    });
+  });
+
+  describe('parseAllowedTemperature（网关温度约束）', () => {
+    // kimi-k3 OpenAI 兼容层实测：400 invalid temperature: only 1 is allowed for this model。
+    // 参数约束必须解析后改值重试，同参数重试只会复现。
+    it('「only 1 is allowed for this model」解析为 1', () => {
+      expect(
+        parseAllowedTemperature(
+          new Error('invalid temperature: only 1 is allowed for this model'),
+        ),
+      ).toBe(1);
+    });
+
+    it('「temperature must be 1」解析为 1', () => {
+      expect(parseAllowedTemperature(new Error('temperature must be 1 for this model'))).toBe(1);
+    });
+
+    it('其它 temperature 报错（如区间越界未给值）返回 null', () => {
+      expect(
+        parseAllowedTemperature(new Error('temperature must be between 0 and 2')),
+      ).toBeNull();
+    });
+
+    it('非温度错误返回 null', () => {
+      expect(parseAllowedTemperature(new Error('API 请求失败: 429 too many requests'))).toBeNull();
     });
   });
 

@@ -247,6 +247,38 @@ describe('UnifiedOutlineGenerator 请求参数', () => {
     expect(lastRequestBody(fetchMock).max_tokens).toBe(393216);
   });
 
+  // DeepSeek 官方网关的真实文案（2026-08-15 实测）：上限藏在区间语法里，
+  // 不识别时会白烧 2 个减半 400 才靠 3 轮循环兜底收敛。
+  it('DeepSeek 区间语法 [1, N] 第一轮即按区间上界收敛', async () => {
+    injectSettings({
+      provider: 'openai',
+      generationConfig: { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0, maxTokens: 1048576 },
+    });
+    const fetchMock = vi.fn(async () => {
+      const calls = fetchMock.mock.calls.length;
+      if (calls <= 1) {
+        return {
+          ok: false,
+          status: 400,
+          text: async () =>
+            '{"error":{"message":"Invalid max_tokens value, the valid range of max_tokens is [1, 393216]","type":"invalid_request_error","param":null,"code":"invalid_request_error"}}',
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: DIRECTION_TEXT } }] }),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    await generator.generateDirections('创意种子', { maxRetries: 1 });
+
+    // 区间上界 393216 一轮收敛，第二个请求即成功
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(lastRequestBody(fetchMock).max_tokens).toBe(393216);
+  });
+
   it('网关不报上限数值时按减半降级，多轮循环直到收敛或额度耗尽', async () => {
     injectSettings({
       provider: 'openai',

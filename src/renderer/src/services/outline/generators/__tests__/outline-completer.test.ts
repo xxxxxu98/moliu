@@ -3,16 +3,22 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   CHAPTER_BLUEPRINT_BATCH_SIZE,
   compactContext,
+  completeIncompleteOutline,
   extractOutlineSectionBody,
   extractRequestedChapterBlocks,
   findIncompleteChapterNumbers,
+  findUnregisteredCharacterNames,
   repairChapterBlueprints,
+  repairUnregisteredCharacters,
   replaceOutlineSection,
 } from '../outline-completer';
 import { parseExpandedOutline } from '../../parser/expanded-outline-parser';
 import type { ExecutableOutline } from '../../types/executable-outline';
 import type { OutlineDirection } from '../../types/direction';
-import { OUTLINE_COMPLETENESS_POLICY } from '../../validation/outlineCompleteness';
+import {
+  inspectOutlineCompleteness,
+  OUTLINE_COMPLETENESS_POLICY,
+} from '../../validation/outlineCompleteness';
 
 describe('outline-completer', () => {
   it('替换被截断到文末的单章蓝图 section，并保留前文', () => {
@@ -310,4 +316,227 @@ describe('repairChapterBlueprints', () => {
     expect(result.warnings.some(w => w.includes('返回空响应'))).toBe(true);
     expect(result.warnings.some(w => w.includes('仅返回 0/1 章'))).toBe(true);
   }, 30_000);
+
+  // 真实请求层的空响应是抛错（unified-generator「API 未返回内容」），不是返回空串；
+  // 分类器已把它归为瞬态，但 completer 批次层必须吞掉这种异常形态继续拼装，
+  // 否则外层整体重试会废掉本批之前已成功的所有批次。
+  it('批次请求抛「API 未返回内容」时退避重试，重试成功后照常拼装', async () => {
+    const outline = parseExpandedOutline(MAIN_OUTLINE_TEXT)!;
+    const callStructuredTextMode = vi.fn(async () => {
+      if (callStructuredTextMode.mock.calls.length <= 1) {
+        throw new Error('API 未返回内容');
+      }
+      return [1].map(buildChapterBlock).join('\n\n');
+    });
+
+    const result = await repairChapterBlueprints({
+      rawText: MAIN_OUTLINE_TEXT,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode,
+      chapterNumbers: [1],
+      phase: '补全',
+    });
+
+    expect(callStructuredTextMode).toHaveBeenCalledTimes(2);
+    expect(result.outline.chapterBlueprints?.map(item => item.orderIndex)).toEqual([1]);
+    expect(result.warnings.some(w => w.includes('返回空响应'))).toBe(true);
+  }, 30_000);
+
+  it('批次抛非空响应错误时原样上抛，不吞异常', async () => {
+    const outline = parseExpandedOutline(MAIN_OUTLINE_TEXT)!;
+    const callStructuredTextMode = vi.fn(async () => {
+      throw new Error('大纲输出被长度上限截断：正文 82 字、推理 9599 字');
+    });
+
+    await expect(repairChapterBlueprints({
+      rawText: MAIN_OUTLINE_TEXT,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode,
+      chapterNumbers: [1],
+      phase: '补全',
+    })).rejects.toThrow('长度上限截断');
+    expect(callStructuredTextMode).toHaveBeenCalledTimes(1);
+  }, 30_000);
 });
+
+describe('completeIncompleteOutline 空响应防护', () => {
+  // 主方案已带可用蓝图与足量角色/伏笔时才便于隔离测「补全请求空响应」的影响面；
+  // 这里构造只缺角色的输入：蓝图批次不需要跑（1-50 章全可用），角色补全必然触发。
+  const buildCompleteOutlineText = (): string => {
+    const chapters = Array.from(
+      { length: OUTLINE_COMPLETENESS_POLICY.startupChapterCount },
+      (_, index) => buildChapterBlock(index + 1),
+    ).join('\n\n');
+    return replaceOutlineSection(
+      MAIN_OUTLINE_TEXT,
+      ['单章蓝图', '逐章蓝图'],
+      '单章蓝图',
+      chapters,
+    );
+  };
+
+  it('角色补全连续空响应时不把已有节洗成空节，只记 warning', async () => {
+    const seeded = buildCompleteOutlineText();
+    // 预置已有角色节内容，验证空响应不会把它替换掉
+    const seededWithCharacters = replaceOutlineSection(
+      seeded,
+      ['关键角色规划', '关键角色'],
+      '关键角色规划',
+      '#### 主角\n- 姓名：林川\n- 角色定位：主角',
+    );
+    const outlineWithCharacters = parseExpandedOutline(seededWithCharacters)!;
+    expect(outlineWithCharacters.keyCharacters.length).toBeGreaterThan(0);
+
+    const callStructuredTextMode = vi.fn(async () => {
+      throw new Error('API 未返回内容');
+    });
+
+    const result = await completeIncompleteOutline({
+      rawText: seededWithCharacters,
+      outline: outlineWithCharacters,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode,
+    });
+
+    // 已有角色节原样保留（没被空节洗掉）
+    expect(result.rawText).toContain('姓名：林川');
+    expect(result.outline.keyCharacters.length).toBe(outlineWithCharacters.keyCharacters.length);
+    expect(result.warnings.some(w => w.includes('空响应'))).toBe(true);
+    // 角色(2)+角色补量(2)+伏笔(2)+伏笔补量(2)：每处空响应重试 2 次耗尽后即跳过，
+    // 不得进入无限补量循环
+    expect(callStructuredTextMode.mock.calls.length).toBeLessThanOrEqual(8);
+  }, 60_000);
+});
+
+describe('未登记角色修复通道', () => {
+  const blockerMsg = (name: string) =>
+    `第1卷关键角色引用了未登记角色「${name}」；必须补入关键角色规划或改用已登记角色`;
+
+  it('从门禁 blockers 提取未登记角色名并按出现顺序去重', () => {
+    const names = findUnregisteredCharacterNames([
+      { kind: 'unknown-character-reference', message: blockerMsg('顾师爷') },
+      { kind: 'unknown-character-reference', message: blockerMsg('赵文德') },
+      { kind: 'unknown-character-reference', message: blockerMsg('顾师爷') },
+      { kind: 'protagonist-name-mismatch', message: '核心驱动中的主角「沈砚」未进入关键角色规划，角色真源不一致' },
+      { kind: 'invalid-hook-length', message: '第3章 CBN 超长', chapterNumber: 3 },
+    ] as never[]);
+
+    expect(names).toEqual(['顾师爷', '赵文德', '沈砚']);
+  });
+
+  it('定向补登记：追加角色块后未登记 blocker 消除', async () => {
+    // 卷纲引用两个未登记角色，角色节只有主角
+    const seeded = replaceOutlineSection(
+      MAIN_OUTLINE_TEXT,
+      ['卷纲'],
+      '卷纲',
+      '### 第1卷\n- 卷标题：初入县衙\n- 卷目标：洗清杀人嫌疑\n- 卷冲突：主角与县丞的权力对抗\n- 关键角色：林川；顾师爷；赵文德',
+    );
+    const withCharacters = replaceOutlineSection(
+      seeded,
+      ['关键角色规划', '关键角色'],
+      '关键角色规划',
+      '#### 主角\n- 姓名：林川\n- 角色定位：主角\n- 剧情功能：推动主线\n- 核心需求：洗清嫌疑\n- 与主角张力：自身\n- 最佳登场时机：第1章\n- 外显目标：升官\n- 隐性需求：回家\n- 核心创伤：蒙冤\n- 角色秘密：现代法医\n- 角色转折点：当众验尸\n- 角色弧线：蒙冤 → 立足 → 翻案\n- 角色资源：验尸术；现代知识\n- 关系变化：林川与钱县丞敌对',
+    );
+    const outline = parseExpandedOutline(withCharacters)!;
+    const names = findUnregisteredCharacterNames(
+      inspectOutlineCompleteness(outline).blockers,
+    );
+    expect(names).toEqual(['顾师爷', '赵文德']);
+
+    const callStructuredTextMode = vi.fn(async (_system: string, user: string) => {
+      // 清单中的姓名必须原样下发，模型按清单建档
+      expect(user).toContain('顾师爷');
+      expect(user).toContain('赵文德');
+      return '#### 新增反派师爷\n- 姓名：顾师爷\n- 角色定位：反派\n- 剧情功能：县丞爪牙\n- 核心需求：保住靠山\n- 与主角张力：制造冤案\n- 最佳登场时机：第2章\n- 外显目标：把主角逐出县衙\n- 隐性需求：掩盖旧案\n- 核心创伤：被上司轻视\n- 角色秘密：私改卷宗\n- 角色转折点：被主角当众揭穿\n- 角色弧线：得势 → 失势 → 伏法\n- 角色资源：县丞庇护\n- 关系变化：顾师爷与林川敌对\n\n#### 新增配角\n- 姓名：赵文德\n- 角色定位：配角\n- 剧情功能：传递信息\n- 核心需求：自保\n- 与主角张力：摇摆\n- 最佳登场时机：第3章\n- 外显目标：观望\n- 隐性需求：赎罪\n- 核心创伤：曾构陷好人\n- 角色秘密：藏有真卷宗\n- 角色转折点：交出证据\n- 角色弧线：观望 → 动摇 → 反水\n- 角色资源：卷宗副本\n- 关系变化：赵文德与林川结盟';
+    });
+
+    const result = await repairUnregisteredCharacters({
+      rawText: withCharacters,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode,
+      names,
+    });
+
+    expect(result.outline.keyCharacters.map(c => c.name)).toEqual(
+      expect.arrayContaining(['林川', '顾师爷', '赵文德']),
+    );
+    // 修复后不再有未登记角色 blocker
+    const nextNames = findUnregisteredCharacterNames(
+      inspectOutlineCompleteness(result.outline).blockers,
+    );
+    expect(nextNames).toEqual([]);
+    expect(result.warnings.some(w => w.includes('已补登记 2/2'))).toBe(true);
+  }, 30_000);
+
+  it('空响应时不洗掉既有角色节，只记 warning', async () => {
+    const withCharacters = replaceOutlineSection(
+      MAIN_OUTLINE_TEXT,
+      ['关键角色规划', '关键角色'],
+      '关键角色规划',
+      '#### 主角\n- 姓名：林川\n- 角色定位：主角',
+    );
+    const outline = parseExpandedOutline(withCharacters)!;
+
+    const result = await repairUnregisteredCharacters({
+      rawText: withCharacters,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode: async () => '',
+      names: ['顾师爷'],
+    });
+
+    expect(result.rawText).toContain('姓名：林川');
+    expect(result.warnings.some(w => w.includes('返回空响应'))).toBe(true);
+  }, 30_000);
+
+  it('completeIncompleteOutline 主流程接线：补全后仍有未登记角色时自动补登记', async () => {
+    const chapters = Array.from(
+      { length: OUTLINE_COMPLETENESS_POLICY.startupChapterCount },
+      (_, index) => buildChapterBlock(index + 1),
+    ).join('\n\n');
+    const seeded = replaceOutlineSection(
+      MAIN_OUTLINE_TEXT,
+      ['单章蓝图', '逐章蓝图'],
+      '单章蓝图',
+      chapters,
+    );
+    // 卷纲引用未登记角色，角色节为空（数量不足 + 未登记双缺口）
+    const withVolume = replaceOutlineSection(
+      seeded,
+      ['卷纲'],
+      '卷纲',
+      '### 第1卷\n- 卷标题：初入县衙\n- 卷目标：洗清杀人嫌疑\n- 卷冲突：主角与县丞的权力对抗\n- 关键角色：林川；顾师爷',
+    );
+    const outline = parseExpandedOutline(withVolume)!;
+
+    // 角色补全整体替换节：包含卷纲引用的顾师爷（源头约束生效的形态）
+    const callStructuredTextMode = vi.fn(async () =>
+      '#### 主角\n- 姓名：林川\n- 角色定位：主角\n#### 盟友一\n- 姓名：周仵作\n- 角色定位：盟友\n#### 盟友二\n- 姓名：孙捕头\n- 角色定位：盟友\n#### 反派一\n- 姓名：钱县丞\n- 角色定位：反派\n#### 反派二\n- 姓名：顾师爷\n- 角色定位：反派\n#### 反派三\n- 姓名：李主簿\n- 角色定位：反派\n#### 导师\n- 姓名：王神医\n- 角色定位：导师\n#### 配角一\n- 姓名：赵掌柜\n- 角色定位：配角\n#### 配角二\n- 姓名：吴铁匠\n- 角色定位：配角\n#### 配角三\n- 姓名：郑书吏\n- 角色定位：配角');
+
+    const result = await completeIncompleteOutline({
+      rawText: withVolume,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode,
+    });
+
+    expect(
+      result.outline.keyCharacters.map(c => c.name),
+    ).toEqual(expect.arrayContaining(['顾师爷']));
+    const names = findUnregisteredCharacterNames(
+      inspectOutlineCompleteness(result.outline).blockers,
+    );
+    expect(names).toEqual([]);
+  }, 60_000);
+});
+

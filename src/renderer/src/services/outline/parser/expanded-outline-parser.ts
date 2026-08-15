@@ -205,11 +205,42 @@ function sanitizeChapterBlueprintMustCover(blueprints: ChapterBlueprint[]): Chap
   });
 }
 
+/**
+ * 从「每卷预计章节数」的散文式值中提取每卷章数。
+ * 实测模型两种写法都会让裸 `/\d+/` 抓错数字（首个数字是「第1卷」的卷号 1）：
+ * - 「第一卷约60章，第二卷约60章」（骨架步）
+ * - 「第1卷约60章对应第1至60章，第2卷约60章对应第61至120章」（审查重写步）
+ * 提取优先级：约/为/是 + N章 > 卷…N章 > 任意 N章。
+ */
+function parseChaptersPerVolume(value: string | undefined): number {
+  if (!value) return 0;
+  const about = value.match(/(?:约|为|是)\s*(\d+)\s*章/u);
+  if (about) return Number(about[1]);
+  const afterVolume = value.match(/卷[^\d]*(?:约|共)?\s*(\d+)\s*章/u);
+  if (afterVolume) return Number(afterVolume[1]);
+  const plain = value.match(/(\d+)\s*章/u);
+  if (plain) return Number(plain[1]);
+  return 0;
+}
+
 function parseStoryScalePlan(section: string): StoryScalePlan {
   const estimatedChapterCount = Number(extractFieldValue(section, '预计总章节数')?.match(/\d+/)?.[0] ?? '0');
   const averageWordsPerChapter = Number(extractFieldValue(section, '章节平均字数')?.match(/\d+/)?.[0] ?? '2500');
   const suggestedVolumeCount = Number(extractFieldValue(section, '建议卷数')?.match(/\d+/)?.[0] ?? '3');
-  const estimatedChaptersPerVolume = Number(extractFieldValue(section, '每卷预计章节数')?.match(/\d+/)?.[0] ?? '0');
+  let estimatedChaptersPerVolume = parseChaptersPerVolume(
+    extractFieldValue(section, '每卷预计章节数'),
+  );
+  // 交叉校验兜底：字段噪声再抓错时，用「总章数 / 卷数」这两个更权威的锚点重算，
+  // 避免 inconsistent-story-scale blocker 拦下语义正确的大纲（实测 2026-08-15：
+  // 「第1卷约60章」被抓成 1，3卷×1章≠180章，整份大纲被判矛盾）。
+  if (
+    estimatedChapterCount > 0 &&
+    suggestedVolumeCount > 0 &&
+    Math.abs(estimatedChaptersPerVolume * suggestedVolumeCount - estimatedChapterCount)
+      / estimatedChapterCount > 0.5
+  ) {
+    estimatedChaptersPerVolume = Math.round(estimatedChapterCount / suggestedVolumeCount);
+  }
 
   return {
     targetWordCount: extractFieldValue(section, '目标字数') ?? '',

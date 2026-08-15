@@ -1,11 +1,15 @@
-import type { GenerateOptions } from './unified-generator';
+﻿import type { GenerateOptions } from './unified-generator';
 import type { OutlineDirection } from '../types/direction';
 import type {
   ChapterBlueprint,
   ExecutableOutline,
 } from '../types/executable-outline';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
-import { OUTLINE_COMPLETENESS_POLICY } from '../validation/outlineCompleteness';
+import {
+  inspectOutlineCompleteness,
+  OUTLINE_COMPLETENESS_POLICY,
+} from '../validation/outlineCompleteness';
+import type { OutlineCompletenessBlocker } from '../validation/outlineCompleteness';
 import { retryBackoffDelayMs } from '@/utils/ai-error-classify';
 
 type StructuredTextCaller = (
@@ -16,6 +20,48 @@ type StructuredTextCaller = (
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/** 「API 未返回内容」的 message 特征（unified-generator.callStructuredTextMode 抛出） */
+const EMPTY_RESPONSE_RE = /api\s*未返回内容/iu;
+
+function isEmptyResponse(value: string): boolean {
+  return !value.trim();
+}
+
+/**
+ * 带空响应退避重试的结构化文本调用。空响应两种形态统一处理：
+ * 请求层抛「API 未返回内容」（网关 200 但 0 字，请求层视为错误）与调用器
+ * 正常返回空串。其余错误原样上抛。重试耗尽仍空时返回 ''，由调用方决定
+ * 是跳过替换（防护已有内容被洗掉）还是记 warning。
+ */
+async function callTextWithEmptyRetry(
+  params: {
+    system: string;
+    user: string;
+    options: GenerateOptions;
+    callStructuredTextMode: StructuredTextCaller;
+  },
+): Promise<string> {
+  const MAX_EMPTY_ATTEMPTS = 2;
+  for (let attempt = 1; attempt <= MAX_EMPTY_ATTEMPTS; attempt += 1) {
+    try {
+      const generated = await params.callStructuredTextMode(
+        params.system,
+        params.user,
+        params.options,
+      );
+      if (!isEmptyResponse(generated)) return generated;
+    } catch (error) {
+      if (!EMPTY_RESPONSE_RE.test(error instanceof Error ? error.message : String(error))) {
+        throw error;
+      }
+    }
+    if (attempt < MAX_EMPTY_ATTEMPTS) {
+      await sleep(retryBackoffDelayMs('network', attempt, 2000, 10_000));
+    }
+  }
+  return '';
 }
 
 const PLACEHOLDER_TITLE_RE =
@@ -353,6 +399,116 @@ function buildAdditionalForeshadowPrompt(
   };
 }
 
+const CHARACTER_REFERENCE_BLOCKER_RE = /引用了未登记角色「([^」]+)」/u;
+const PROTAGONIST_MISMATCH_RE = /主角「([^」]+)」未进入关键角色规划/u;
+
+/**
+ * 从门禁 blockers 中提取所有未登记角色名（unknown-character-reference 的
+ * 「引用了未登记角色「X」」与 protagonist-name-mismatch 的「主角「X」未进入」
+ * 两种文案），按出现顺序去重。提取失败（文案变化等）返回空数组，调用方按
+ * 「无修复目标」处理。
+ */
+export function findUnregisteredCharacterNames(
+  blockers: OutlineCompletenessBlocker[],
+): string[] {
+  const names: string[] = [];
+  const collect = (raw: string | undefined): void => {
+    if (!raw) return;
+    const name = raw.trim();
+    if (name && !names.includes(name)) names.push(name);
+  };
+  for (const blocker of blockers) {
+    collect(CHARACTER_REFERENCE_BLOCKER_RE.exec(blocker.message)?.[1]);
+    collect(PROTAGONIST_MISMATCH_RE.exec(blocker.message)?.[1]);
+  }
+  return names;
+}
+
+function buildUnregisteredCharacterPrompt(
+  outline: ExecutableOutline,
+  direction: OutlineDirection,
+  names: string[],
+): { system: string; user: string } {
+  return {
+    system: `你是中文长篇网文角色架构师。大纲的卷纲/支线/伏笔中引用了一些尚未建档的角色姓名，你的任务是把它们逐一补进「关键角色规划」。
+只输出恰好 ${names.length} 个新增角色块，每个块的「姓名」必须严格使用下方清单中给出的姓名原文（可去掉职位前缀，保留核心姓名），不得另造姓名、不得重复现有角色。
+每个新增角色严格使用：
+#### 新增角色功能标签
+- 姓名：（必须与清单中的姓名一致）
+- 角色定位：盟友/反派/导师/配角
+- 剧情功能：
+- 核心需求：
+- 与主角张力：
+- 最佳登场时机：
+- 外显目标：
+- 隐性需求：
+- 核心创伤：
+- 角色秘密：
+- 角色转折点：
+- 角色弧线：起点 → 中段 → 终点
+- 角色资源：用中文分号分隔
+- 关系变化：用中文分号分隔
+人设必须与上下文中该姓名的既有剧情一致，全部字段具体且非空，不输出二级标题或解释。`,
+    user: `【故事上下文】\n${compactContext(outline, direction)}\n\n【必须逐一建档的姓名清单】\n${names.join('\n')}\n\n【禁止重复的现有姓名】\n${(outline.keyCharacters ?? []).map(character => character.name).join('、')}\n\n请只输出 ${names.length} 个新增角色块。`,
+  };
+}
+
+/**
+ * 未登记角色定向补登记：把卷纲/支线/伏笔引用了但没进「关键角色规划」的姓名，
+ * 逐一向角色节追加建档（不替换既有角色）。修复的是 2026-08-15 冒烟实测的
+ * fail-closed 场景：分步生成中卷纲先于角色步产出，卷纲自创的姓名没有全部
+ * 被角色步骤登记，门禁拦下后此前无修复通道只能整体重试。
+ */
+export async function repairUnregisteredCharacters(params: {
+  rawText: string;
+  outline: ExecutableOutline;
+  direction: OutlineDirection;
+  options: GenerateOptions;
+  callStructuredTextMode: StructuredTextCaller;
+  names: string[];
+  onProgress?: (message: string) => void;
+}): Promise<CompleteOutlineResult> {
+  const { names, onProgress } = params;
+  let rawText = params.rawText;
+  let outline = params.outline;
+  const warnings: string[] = [];
+  if (names.length === 0) return { rawText, outline, warnings };
+
+  onProgress?.(`正在补登记 ${names.length} 个未建档角色...`);
+  const prompt = buildUnregisteredCharacterPrompt(outline, params.direction, names);
+  const generated = await callTextWithEmptyRetry({
+    system: prompt.system,
+    user: prompt.user,
+    options: { ...params.options, temperature: 0.25 },
+    callStructuredTextMode: params.callStructuredTextMode,
+  });
+  if (isEmptyResponse(generated)) {
+    warnings.push(`未登记角色补登记返回空响应（${names.length} 个姓名未处理）`);
+    return { rawText, outline, warnings };
+  }
+  const existingBody = extractOutlineSectionBody(rawText, ['关键角色规划', '关键角色']);
+  rawText = replaceOutlineSection(
+    rawText,
+    ['关键角色规划', '关键角色'],
+    '关键角色规划',
+    `${existingBody}\n\n${extractOutlineSectionBody(generated, ['关键角色规划', '关键角色'])}`,
+  );
+  const nextOutline = parseExpandedOutline(rawText);
+  if (nextOutline) outline = nextOutline;
+
+  const stillMissing = findUnregisteredCharacterNames(
+    inspectOutlineCompleteness(outline).blockers,
+  );
+  const fixedCount = names.filter(name => !stillMissing.includes(name)).length;
+  if (fixedCount > 0) {
+    warnings.push(`未登记角色已补登记 ${fixedCount}/${names.length} 个`);
+  }
+  if (stillMissing.length > 0) {
+    warnings.push(`仍有 ${stillMissing.length} 个未登记角色（模型未按清单建档）：${stillMissing.join('、')}`);
+  }
+  return { rawText, outline, warnings };
+}
+
 export interface CompleteOutlineResult {
   rawText: string;
   outline: ExecutableOutline;
@@ -405,15 +561,25 @@ export async function repairChapterBlueprints(params: {
 
     // 空响应批次重试：矩阵实测 minimax-m3/glm 网关会把批次请求「成功」返回 0 字
     // （无错误事件、流正常结束），此前只记 warning 放过 → 这批章永远缺失 → fail-closed。
-    // 空响应大概率是网关抖动，按瞬态退避小次数重试；重试后仍空则维持 warning（不硬造内容）。
+    // 空响应有两种形态：请求层抛「API 未返回内容」（isTransientError 现归类瞬态，
+    // 步级退避本会重试，但 completer 层必须吞掉异常形态才能继续拼装），或调用器
+    // 正常返回空串（mock/部分网关）。两种都按瞬态退避小次数重试；重试后仍空则
+    // 维持 warning（不硬造内容）。
     const MAX_EMPTY_BATCH_ATTEMPTS = 2;
     let generated = '';
     for (let attempt = 1; attempt <= MAX_EMPTY_BATCH_ATTEMPTS; attempt += 1) {
-      generated = await params.callStructuredTextMode(
-        prompt.system,
-        prompt.user,
-        { ...params.options, temperature: phase === '定点修复' ? 0.2 : 0.35 },
-      );
+      try {
+        generated = await params.callStructuredTextMode(
+          prompt.system,
+          prompt.user,
+          { ...params.options, temperature: phase === '定点修复' ? 0.2 : 0.35 },
+        );
+      } catch (error) {
+        if (!EMPTY_RESPONSE_RE.test(error instanceof Error ? error.message : String(error))) {
+          throw error;
+        }
+        generated = '';
+      }
       if (generated.trim()) break;
       if (attempt < MAX_EMPTY_BATCH_ATTEMPTS) {
         const delayMs = retryBackoffDelayMs('network', attempt, 2000, 10_000);
@@ -521,18 +687,20 @@ export async function completeIncompleteOutline(params: {
 
   if (outline.keyCharacters.length < OUTLINE_COMPLETENESS_POLICY.minimumKeyCharacters) {
     const prompt = buildCharacterCompletionPrompt(outline, params.direction);
-    const generated = await params.callStructuredTextMode(
-      prompt.system,
-      prompt.user,
-      { ...params.options, temperature: 0.35 },
+    const generated = await callTextWithEmptyRetry(
+      { ...prompt, options: { ...params.options, temperature: 0.35 }, callStructuredTextMode: params.callStructuredTextMode },
     );
-    rawText = replaceOutlineSection(
-      rawText,
-      ['关键角色规划', '关键角色'],
-      '关键角色规划',
-      extractOutlineSectionBody(generated, ['关键角色规划', '关键角色']),
-    );
-    outline = parseExpandedOutline(rawText) ?? outline;
+    if (isEmptyResponse(generated)) {
+      warnings.push('关键角色规划补全返回空响应，已跳过替换（保留原节内容）');
+    } else {
+      rawText = replaceOutlineSection(
+        rawText,
+        ['关键角色规划', '关键角色'],
+        '关键角色规划',
+        extractOutlineSectionBody(generated, ['关键角色规划', '关键角色']),
+      );
+      outline = parseExpandedOutline(rawText) ?? outline;
+    }
     for (
       let round = 0;
       round < 2 && outline.keyCharacters.length < OUTLINE_COMPLETENESS_POLICY.minimumKeyCharacters;
@@ -540,11 +708,13 @@ export async function completeIncompleteOutline(params: {
     ) {
       const missing = OUTLINE_COMPLETENESS_POLICY.minimumKeyCharacters - outline.keyCharacters.length;
       const supplementPrompt = buildAdditionalCharacterPrompt(outline, params.direction, missing);
-      const supplement = await params.callStructuredTextMode(
-        supplementPrompt.system,
-        supplementPrompt.user,
-        { ...params.options, temperature: 0.3 },
+      const supplement = await callTextWithEmptyRetry(
+        { ...supplementPrompt, options: { ...params.options, temperature: 0.3 }, callStructuredTextMode: params.callStructuredTextMode },
       );
+      if (isEmptyResponse(supplement)) {
+        warnings.push('关键角色规划补量返回空响应，已跳过合并');
+        break;
+      }
       const existingBody = extractOutlineSectionBody(rawText, ['关键角色规划', '关键角色']);
       rawText = replaceOutlineSection(
         rawText,
@@ -558,18 +728,20 @@ export async function completeIncompleteOutline(params: {
 
   if (outline.foreshadowPlan.length < OUTLINE_COMPLETENESS_POLICY.minimumForeshadows) {
     const prompt = buildForeshadowCompletionPrompt(outline, params.direction);
-    const generated = await params.callStructuredTextMode(
-      prompt.system,
-      prompt.user,
-      { ...params.options, temperature: 0.3 },
+    const generated = await callTextWithEmptyRetry(
+      { ...prompt, options: { ...params.options, temperature: 0.3 }, callStructuredTextMode: params.callStructuredTextMode },
     );
-    rawText = replaceOutlineSection(
-      rawText,
-      ['伏笔规划'],
-      '伏笔规划',
-      extractOutlineSectionBody(generated, ['伏笔规划']),
-    );
-    outline = parseExpandedOutline(rawText) ?? outline;
+    if (isEmptyResponse(generated)) {
+      warnings.push('伏笔规划补全返回空响应，已跳过替换（保留原节内容）');
+    } else {
+      rawText = replaceOutlineSection(
+        rawText,
+        ['伏笔规划'],
+        '伏笔规划',
+        extractOutlineSectionBody(generated, ['伏笔规划']),
+      );
+      outline = parseExpandedOutline(rawText) ?? outline;
+    }
     for (
       let round = 0;
       round < 2 && outline.foreshadowPlan.length < OUTLINE_COMPLETENESS_POLICY.minimumForeshadows;
@@ -577,11 +749,13 @@ export async function completeIncompleteOutline(params: {
     ) {
       const missing = OUTLINE_COMPLETENESS_POLICY.minimumForeshadows - outline.foreshadowPlan.length;
       const supplementPrompt = buildAdditionalForeshadowPrompt(outline, params.direction, missing);
-      const supplement = await params.callStructuredTextMode(
-        supplementPrompt.system,
-        supplementPrompt.user,
-        { ...params.options, temperature: 0.25 },
+      const supplement = await callTextWithEmptyRetry(
+        { ...supplementPrompt, options: { ...params.options, temperature: 0.25 }, callStructuredTextMode: params.callStructuredTextMode },
       );
+      if (isEmptyResponse(supplement)) {
+        warnings.push('伏笔规划补量返回空响应，已跳过合并');
+        break;
+      }
       const existingBody = extractOutlineSectionBody(rawText, ['伏笔规划']);
       rawText = replaceOutlineSection(
         rawText,
@@ -600,6 +774,34 @@ export async function completeIncompleteOutline(params: {
       `单章蓝图补全后仍有 ${incompleteChapters.length} 章不完整，执行第 ${round + 1} 轮定点修复：${incompleteChapters.join('、')}`,
     );
     await runBlueprintRepair(incompleteChapters, '定点修复');
+  }
+
+  // 角色引用一致性修复：卷纲/支线/伏笔引用了但未进「关键角色规划」的姓名，
+  // 走定向补登记而不是放弃（2026-08-15 冒烟实测：这类 blocker 拦下整份大纲、
+  // 无修复通道时只能整体重试，20 分钟一轮且不保证收敛）。
+  for (let round = 0; round < 2; round += 1) {
+    const unregistered = findUnregisteredCharacterNames(
+      inspectOutlineCompleteness(outline).blockers,
+    );
+    if (unregistered.length === 0) break;
+    warnings.push(
+      `大纲存在 ${unregistered.length} 个未登记角色（${unregistered.join('、')}），执行第 ${round + 1} 轮补登记`,
+    );
+    const repaired = await repairUnregisteredCharacters({
+      rawText,
+      outline,
+      direction: params.direction,
+      options: params.options,
+      callStructuredTextMode: params.callStructuredTextMode,
+      names: unregistered,
+      onProgress: params.onProgress,
+    });
+    rawText = repaired.rawText;
+    outline = repaired.outline;
+    warnings.push(...repaired.warnings);
+    if (outline.keyCharacters.length < OUTLINE_COMPLETENESS_POLICY.minimumKeyCharacters) {
+      break; // 数量都不足时交给外层整体重试，不再空转补登记
+    }
   }
 
   return { rawText, outline, warnings };

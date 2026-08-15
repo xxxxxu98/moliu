@@ -401,3 +401,115 @@ describe('UnifiedAIService.complete - 流式路径瞬态错误内层重试', () 
     );
   });
 });
+
+describe('UnifiedAIService.complete - 网关参数约束自动降级（与 outline 侧同口径）', () => {
+  /** stub stream 并捕获每次调用的 chatOpts（kimi/minimax 参数约束的改值重试验证） */
+  function stubStreamWithOptsCapture(
+    service: UnifiedAIService,
+    impls: Array<(opts: Record<string, unknown>) => AsyncGenerator<{ content: string; done: boolean; finishReason: string | null }>>,
+  ): Array<Record<string, unknown>> {
+    const captured: Array<Record<string, unknown>> = [];
+    (service as unknown as { client: unknown }).client = {
+      stream: vi.fn().mockImplementation((_messages: unknown, opts: Record<string, unknown>) => {
+        const index = Math.min(captured.length, impls.length - 1);
+        captured.push(opts);
+        return impls[index](opts);
+      }),
+    };
+    return captured;
+  }
+
+  function okStream(content = '{"ok":true}') {
+    return async function* (): AsyncGenerator<{ content: string; done: boolean; finishReason: string | null }> {
+      yield { content, done: true, finishReason: 'stop' };
+    };
+  }
+
+  function errorStream(error: Error) {
+    return async function* (): AsyncGenerator<{ content: string; done: boolean; finishReason: string | null }> {
+      throw error;
+      // eslint 无 dead-code 检查时 yield 不可达没问题；显式 return 保证生成器签名
+      yield { content: '', done: true, finishReason: null };
+    };
+  }
+
+  // MiniMax OpenAI 兼容层：`does not support max tokens > 524288`（空格拼写 + `>` 分隔）。
+  // 2026-08-15 矩阵实测 minimax-m3 死于此文案，旧正则只认下划线 max_tokens 直接抛死。
+  it('max tokens > N（空格形态）解析出上限并降级重试', async () => {
+    const service = makeService('openai');
+    const captured = stubStreamWithOptsCapture(service, [
+      errorStream(
+        Object.assign(
+          new Error(
+            'invalid params, model[MiniMax-M3] does not support max tokens > 524288 (2013)'
+          ),
+          { status: 400 },
+        ),
+      ),
+      okStream(),
+    ]);
+
+    const result = await service.complete('返回 JSON', { temperature: 0.65 });
+
+    expect(result).toContain('ok');
+    expect(captured).toHaveLength(2);
+    expect(captured[1].maxTokens).toBe(524288);
+  });
+
+  // kimi-k3 OpenAI 兼容层：`invalid temperature: only 1 is allowed for this model`。
+  // 写作链路显式下发 0.65/0.2，必须改值重试而不是同参数复现 400。
+  it('temperature only 1 约束改 temperature=1 后立即重试成功', async () => {
+    const service = makeService('openai');
+    const captured = stubStreamWithOptsCapture(service, [
+      errorStream(
+        Object.assign(
+          new Error('invalid temperature: only 1 is allowed for this model'),
+          { status: 400 },
+        ),
+      ),
+      okStream(),
+    ]);
+
+    const result = await service.complete('返回 JSON', { temperature: 0.65 });
+
+    expect(result).toContain('ok');
+    expect(captured).toHaveLength(2);
+    expect(captured[0].temperature).toBe(0.65);
+    expect(captured[1].temperature).toBe(1);
+  });
+
+  it('改值重试不占用瞬态重试额度（一次 400 约束 + 一次瞬态失败仍能成功）', async () => {
+    const service = makeService('openai');
+    const captured = stubStreamWithOptsCapture(service, [
+      errorStream(
+        Object.assign(new Error('invalid temperature: only 1 is allowed for this model'), {
+          status: 400,
+        }),
+      ),
+      errorStream(new TypeError('fetch failed')),
+      okStream(),
+    ]);
+
+    const result = await service.complete('返回 JSON', { temperature: 0.65 });
+
+    expect(result).toContain('ok');
+    expect(captured).toHaveLength(3);
+    expect(captured[2].temperature).toBe(1);
+  });
+
+  it('当前温度已等于约束值时不再重试，直接抛出（防死循环）', async () => {
+    const service = makeService('openai');
+    const captured = stubStreamWithOptsCapture(service, [
+      errorStream(
+        Object.assign(new Error('invalid temperature: only 1 is allowed for this model'), {
+          status: 400,
+        }),
+      ),
+    ]);
+
+    await expect(
+      service.complete('返回 JSON', { temperature: 1 })
+    ).rejects.toThrow('only 1 is allowed');
+    expect(captured).toHaveLength(1);
+  });
+});

@@ -324,15 +324,19 @@ ${formatDirection(ctx.direction)}
 /** 步4 角色 + 伏笔：关键角色规划 + 伏笔规划。依赖步1（主角姓名/金手指）。失败可兜底。 */
 export function buildCastStepPrompt(ctx: StepBuildContext): BuiltPrompt {
   const sections = [SEC.characters, SEC.foreshadow];
-  const contextSections = [SEC.storyPositioning, SEC.storyEngine, SEC.goldfinger];
+  // 卷纲（步2）与启动包（步3）已先行产出姓名，角色规划必须把它们逐一登记，
+  // 否则完整性门禁会以「未登记角色」拦下整份大纲（实测分步生成的常态缺口）。
+  const contextSections = [SEC.storyPositioning, SEC.storyEngine, SEC.goldfinger, SEC.volumePlan];
   const contextBlock = buildContextBlock(ctx.accumulatedRawText, contextSections);
 
   const extraGuidance = `本步生成关键角色规划与伏笔规划。
 - 角色主角姓名必须与【已确定方案】「核心驱动」中的主角姓名一致。
+- 【已确定方案】卷纲各卷「关键角色」中出现的每个具体姓名都必须逐一建档，不得另造同功能角色替换，不得遗漏任何一个；「主角/九品书吏/司天监监正」等职位或身份标签不是姓名，不得单独建档。
 - 关键角色至少 10 个，覆盖：常驻核心 4 + 中前期 2 + 中后期 2 + 势力代表 2；按分层模板完整输出，不得跳层。
 - 反派梯队：每卷一个阶段性小 boss + 贯穿中期反派 + 终极反派。
 - 至少 3 组非主角之间的关系链或利益冲突链。
 - 伏笔至少 10 条（短 3 + 中 3 + 长 2 + 终局 2），覆盖身份/关系/规则/能力/事件/物件/角色/对话八类中至少五类。
+- 伏笔载体角色必须使用关键角色规划中已登记的姓名。
 - 角色弧线必须可推进至少两卷。`;
 
   const system = buildStepSystem(sections, extraGuidance);
@@ -360,6 +364,7 @@ export function buildRhythmStepPrompt(ctx: StepBuildContext): BuiltPrompt {
 
   const extraGuidance = `本步生成主要支线、故事线规划、情绪与爽点节奏、卖点承载规划。
 - 主要支线至少 3 条，给出起始/收束章节。
+- 支线「关联角色」只能使用【已确定方案】中已出现的姓名，禁止自创新姓名。
 - 故事线规划逐项填写地图线/阵营线/人物线/金手指线/世界规则线/矛盾线/收集线/感情线。
 - 情绪与爽点节奏：给出情绪弧线、高点/低点章节，至少 3 个明确爽点（每个是完整兑现闭环）。
 - 卖点承载规划至少 3 条，分类限定为：设定/角色/冲突/情绪/钩子/爽点。`;

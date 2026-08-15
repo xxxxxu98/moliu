@@ -21,7 +21,7 @@ import {
   type ParseResult,
 } from "@/utils/json-parser";
 import { extractErrorMessage } from "@/utils/error-message";
-import { isTransientError } from "@/utils/ai-error-classify";
+import { isTransientError, parseAllowedTemperature } from "@/utils/ai-error-classify";
 
 /**
  * 从原始响应中提取纯文本内容
@@ -153,17 +153,23 @@ export interface AIGenerationConfig {
 /**
  * 解析「max_tokens 超网关上限」的 400 错误（SDK AIError 或包装 Error）。
  * 返回网关报的上限值；确认超限但拿不到数值返回 0（调用方减半降级）；非此类错误返回 null。
- * 与 outline 侧 unified-generator.parseMaxTokensCapError 同规则（SDK 消息文案略异，合并兼容）。
+ * 与 outline 侧 unified-generator.parseMaxTokensCapError 同规则（SDK 消息文案略异，合并兼容）：
+ * 含 MiniMax OpenAI 兼容层 `does not support max tokens > 524288`（空格拼写 + `>` 分隔）。
  */
 export function parseMaxTokensCap(error: unknown): number | null {
   const message = error instanceof Error ? error.message : String(error);
-  if (!/max_tokens|maximum context|too large|above maximum value/iu.test(message)) return null;
-  // `<=` 可能是 JSON 字面转义 \u003c 或 HTML 实体 &lt;（错误 message 来自响应原文）
-  const capPattern = /(?:<=|\\u003c=?|&lt;=?|：|:)\s*(\d{4,7})/u;
+  if (!/max[_\s]?tokens|maximum context|too large|above maximum value/iu.test(message)) return null;
+  // `<=` 可能是 JSON 字面转义 \u003c 或 HTML 实体 &lt;（错误 message 来自响应原文）；
+  // MiniMax 空格形态用 `>` 分隔（`max tokens > 524288`）
+  const capPattern = /(?:<=|\\u003c=?|&lt;=?|：|:|>)\s*(\d{4,7})/u;
   const match =
     message.match(capPattern) ??
+    // DeepSeek 风格：`the valid range of max_tokens is [1, 393216]`（区间上界即上限）
+    message.match(/\[\s*\d{1,7}\s*,\s*(\d{4,7})\s*\]/u) ??
+    // minimax/ARK 拼写形式：`less than or equal to 131072`（`<=` 符号形式走 capPattern）
+    message.match(/(?:less than or equal to|at most|不超过|最大)\s*(\d{4,7})/iu) ??
     message.match(/maximum value\D{0,20}(\d{4,7})/u) ??
-    message.match(/max_tokens\D{0,20}?(\d{4,7})/u);
+    message.match(/max[_\s]?tokens\D{0,20}?(\d{4,7})/u);
   if (match) {
     const value = Number(match[1]);
     if (Number.isFinite(value) && value >= 1024) return value;
@@ -423,6 +429,20 @@ export class UnifiedAIService {
           this.generationConfig = { ...this.generationConfig, maxTokens: fallback };
           effectiveOpts = { ...effectiveOpts, maxTokens: fallback };
           attempt -= 1; // 降级重试不占用瞬态重试额度
+          continue;
+        }
+        // 「该模型只允许 temperature=1」参数约束（kimi-k3 实测）：改值后立即重试，
+        // 不占瞬态重试额度——同参数重试只会复现 400。与 outline 侧同口径。
+        const allowedTemperature = parseAllowedTemperature(error);
+        if (allowedTemperature !== null) {
+          const current = Number(effectiveOpts.temperature ?? 0.5);
+          if (current === allowedTemperature) throw error;
+          console.warn(
+            `[unified.service] 网关要求 temperature=${allowedTemperature}（当前 ${current}），改值重试`
+          );
+          this.generationConfig = { ...this.generationConfig, temperature: allowedTemperature };
+          effectiveOpts = { ...effectiveOpts, temperature: allowedTemperature };
+          attempt -= 1;
           continue;
         }
         // 用户主动取消：立即抛出，不重试

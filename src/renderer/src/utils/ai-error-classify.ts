@@ -59,9 +59,12 @@ export interface ClassifiedError {
 /**
  * 网络瞬时错误消息特征。
  * 覆盖：fetch 失败、连接重置/超时/拒绝、TLS、断流、429 文案、空响应体等。
+ * 「API 未返回内容」是大纲请求层对流正常结束但 0 字正文的抛错（矩阵实测
+ * minimax/glm 网关抖动会这样返回）——与 length_capped 的确定性截断不同，
+ * 无结束异常的空响应大概率是网关抖动，按瞬态处理才能进退避重试。
  */
 const TRANSIENT_NETWORK_RE =
-  /socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|ERR_CONNECTION_CLOSED|fetch\s*(\(\))?|failed to fetch|network|TLS|disconnected|connection\s+(closed|reset|aborted)|too many requests|429|server overload|unable to handle additional requests|response body is null|body is null/iu;
+  /socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|ERR_CONNECTION_CLOSED|fetch\s*(\(\))?|failed to fetch|network|TLS|disconnected|connection\s+(closed|reset|aborted)|too many requests|429|server overload|unable to handle additional requests|response body is null|body is null|api\s*未返回内容/iu;
 
 /**
  * JSON 截断 / 解析失败特征。
@@ -282,4 +285,22 @@ export function retryBackoffDelayMs(
     return backoffDelayMs(attempt, 15_000, 120_000);
   }
   return backoffDelayMs(attempt, baseMs, maxMs);
+}
+
+/**
+ * 解析「该模型只允许 temperature=1」的网关 400。
+ * 实测 kimi-k3 OpenAI 兼容层：`invalid temperature: only 1 is allowed for this model`。
+ * 这是参数约束而非瞬态错误：同参数重试必然复现，应改 temperature=1 后立即重试。
+ * 返回网关允许的温度值（目前只见过 1）；不是这类约束返回 null。
+ */
+export function parseAllowedTemperature(error: unknown): number | null {
+  const message = error instanceof Error ? error.message : String(error);
+  if (!/temperature/iu.test(message)) return null;
+  if (
+    /only\s*1\s*(?:is\s*)?allowed/iu.test(message) ||
+    /(?:must\s*be|only\s*supports?|只允许|仅支持)\s*1\b/iu.test(message)
+  ) {
+    return 1;
+  }
+  return null;
 }

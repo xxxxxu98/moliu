@@ -47,9 +47,12 @@ const cleanupCfg = smokeCleanupConfig(runSuffix);
 cleanupSmokeArtifacts('smoke:storyflow:real', cleanupCfg.artifacts, {
   prefixes: cleanupCfg.prefixes,
   tracePrefixes: cleanupCfg.tracePrefixes,
-  // 自动断点独立于本轮诊断产物；只有 MOLIU_RESUME_STORYFLOW=1 才会读取，
-  // 默认新跑仍不会被旧大纲掩盖。
-  keepNames: new Set(['storyflow-checkpoints']),
+// 自动断点独立于本轮诊断产物；只有 MOLIU_RESUME_STORYFLOW=1 才会读取，
+// 默认新跑仍不会被旧大纲掩盖。
+// storyflow-matrix 是 multi 矩阵的归档目录：无后缀单跑的前缀清理 'storyflow-'
+// 会递归删掉整个矩阵归档（2026-08-15 实测：并发单跑启动清理，把矩阵已归档的
+// 4 个厂商目录连带 run.log 全部抹掉），必须白名单保护。
+keepNames: new Set(['storyflow-checkpoints', 'storyflow-matrix']),
 });
 
 // better-sqlite3 必须按 Electron ABI 编译。普通系统 Node 跑 Vitest 会因

@@ -12,6 +12,7 @@ import {
   classifyError,
   isAbortedError,
   isTransientError,
+  parseAllowedTemperature,
   retryBackoffDelayMs,
 } from '@/utils/ai-error-classify';
 import { createOutlineTracer, type OutlineTracer, type OutlineTracePurpose } from '../utils/outline-trace';
@@ -34,7 +35,12 @@ import {
   inspectOutlineCompleteness,
   OUTLINE_COMPLETENESS_POLICY,
 } from '../validation/outlineCompleteness';
-import { completeIncompleteOutline, repairChapterBlueprints } from './outline-completer';
+import {
+  completeIncompleteOutline,
+  findUnregisteredCharacterNames,
+  repairChapterBlueprints,
+  repairUnregisteredCharacters,
+} from './outline-completer';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 import { readPositiveIntEnv } from '@/utils/env';
 
@@ -155,7 +161,8 @@ function transientRetryDelayMs(error: unknown, attempt: number): number {
 /**
  * 解析「max_tokens 超网关上限」的 400 错误。
  * 匹配两类文案：minimax/ARK 风格 `expected a value <= 131072`、
- * OpenAI 风格 `maximum value ... 16384` / `max_tokens is too large: 16384`。
+ * OpenAI 风格 `maximum value ... 16384` / `max_tokens is too large: 16384`、
+ * MiniMax OpenAI 兼容层 `does not support max tokens > 524288`（空格形态 + `>` 分隔）。
  * 注意错误 message 来自 response.text() 原文，`<` 可能仍是 JSON 字面转义 `\u003c`
  * 或 HTML 实体 `&lt;`，三种写法都兼容。
  * 返回网关报的上限值；确认是超限错误但拿不到数值时返回 0（调用方减半降级）；
@@ -163,12 +170,16 @@ function transientRetryDelayMs(error: unknown, attempt: number): number {
  */
 export function parseMaxTokensCapError(error: unknown): number | null {
   const message = error instanceof Error ? error.message : String(error);
-  if (!/max_tokens|maximum context|too large|above maximum value/iu.test(message)) return null;
-  const capPattern = /(?:<=|\\u003c=?|&lt;=?|：|:)\s*(\d{4,7})/u;
+  if (!/max[_\s]?tokens|maximum context|too large|above maximum value/iu.test(message)) return null;
+  const capPattern = /(?:<=|\\u003c=?|&lt;=?|：|:|>)\s*(\d{4,7})/u;
   const match =
     message.match(capPattern) ??
+    // DeepSeek 风格：`the valid range of max_tokens is [1, 393216]`（区间上界即上限）
+    message.match(/\[\s*\d{1,7}\s*,\s*(\d{4,7})\s*\]/u) ??
+    // minimax/ARK 拼写形式：`less than or equal to 131072`（`<=` 符号形式走 capPattern）
+    message.match(/(?:less than or equal to|at most|不超过|最大)\s*(\d{4,7})/iu) ??
     message.match(/maximum value\D{0,20}(\d{4,7})/u) ??
-    message.match(/max_tokens\D{0,20}?(\d{4,7})/u);
+    message.match(/max[_\s]?tokens\D{0,20}?(\d{4,7})/u);
   if (match) {
     const value = Number(match[1]);
     if (Number.isFinite(value) && value >= 1024) return value;
@@ -694,6 +705,43 @@ export class UnifiedOutlineGenerator {
             }
           }
 
+          // 门禁的全局阻断项：卷纲/支线/伏笔引用了未登记角色（unknown-character-reference）。
+          // 分步生成中卷纲先于角色步产出，卷纲自创的姓名没被角色步骤全部登记是实测常态
+          // （2026-08-15 冒烟：26 个未登记角色把整份大纲拦在 fail-closed，只能整体重试）。
+          // 这里把姓名提取出来定向补登记，补不齐才交给外层整体重试。
+          if (!finalCompleteness.canApply) {
+            const unregisteredNames = findUnregisteredCharacterNames(finalCompleteness.blockers);
+            if (unregisteredNames.length > 0) {
+              try {
+                const repaired = await repairUnregisteredCharacters({
+                  rawText: appliedFixRawText ?? rawText,
+                  outline,
+                  direction,
+                  options: opts,
+                  callStructuredTextMode: (system, user, callOptions) =>
+                    this.callStructuredTextMode(system, user, callOptions, 'outline-expand'),
+                  names: unregisteredNames,
+                  onProgress,
+                });
+                const repairedCompleteness = inspectOutlineCompleteness(repaired.outline);
+                if (repairedCompleteness.blockers.length < finalCompleteness.blockers.length) {
+                  outline = repaired.outline;
+                  appliedFixRawText = repaired.rawText;
+                  finalCompleteness = repairedCompleteness;
+                } else {
+                  warnings.push(
+                    `未登记角色补登记后阻断项未减少（${finalCompleteness.blockers.length}→${repairedCompleteness.blockers.length} 项），保留原稿`,
+                  );
+                }
+                warnings.push(...repaired.warnings);
+              } catch (error) {
+                if (isAbortError(error)) throw error;
+                const message = error instanceof Error ? error.message : String(error);
+                warnings.push(`未登记角色补登记失败：${message.slice(0, 160)}`);
+              }
+            }
+          }
+
           severelyTruncated = !finalCompleteness.canApply;
           blockers = finalCompleteness.blockers.map(blocker => blocker.message);
         }
@@ -890,14 +938,17 @@ export class UnifiedOutlineGenerator {
       // max_tokens 超网关上限的 400（统一配 1M 时低上限网关会拒）：解析网关报的上限
       // （拿不到就减半）降级重试，循环最多 3 轮（首降减半后仍超限时靠新一轮错误里的
       // 网关上限收敛），并把最终收敛值记回厂商配置，后续请求不再踩。
+      // 同一循环还兜「该模型只允许 temperature=1」的参数约束（kimi-k3 实测）：
+      // 显式 options 温度优先于厂商配置，必须双写 effectiveOptions/effectiveConfig。
       const MAX_TOKENS_CAP_ROUNDS = 3;
       let effectiveConfig = config;
+      let effectiveOptions = options;
       let result: any;
       for (let capRound = 0; ; capRound += 1) {
         try {
           result = await this.doRequestChatCompletion(
             messages,
-            options,
+            effectiveOptions,
             effectiveConfig,
             provider,
             resolvedBaseUrl,
@@ -907,18 +958,35 @@ export class UnifiedOutlineGenerator {
         } catch (error) {
           if (capRound >= MAX_TOKENS_CAP_ROUNDS) throw error;
           const capped = parseMaxTokensCapError(error);
-          if (capped === null) throw error;
-          const original = effectiveConfig.generationConfig?.maxTokens ?? 0;
-          const fallback = capped > 0 ? capped : Math.max(1024, Math.floor(original / 2));
-          if (fallback >= original && original > 0) throw error;
-          console.warn(
-            `[UnifiedOutlineGenerator] max_tokens=${original} 超网关上限（${capped > 0 ? `网关报上限 ${capped}` : '上限未知'}），降级为 ${fallback} 重试（第 ${capRound + 1} 轮）`,
-          );
-          this.rememberProviderMaxTokensCap(effectiveConfig, fallback);
-          effectiveConfig = {
-            ...effectiveConfig,
-            generationConfig: { ...effectiveConfig.generationConfig, maxTokens: fallback },
-          };
+          if (capped === null) {
+            const allowedTemperature = parseAllowedTemperature(error);
+            const currentTemperature =
+              effectiveOptions.temperature ?? effectiveConfig.generationConfig?.temperature ?? 0.7;
+            if (allowedTemperature === null || currentTemperature === allowedTemperature) {
+              throw error;
+            }
+            console.warn(
+              `[UnifiedOutlineGenerator] 网关要求 temperature=${allowedTemperature}（当前 ${currentTemperature}），改值重试（第 ${capRound + 1} 轮）`,
+            );
+            this.rememberProviderTemperatureLock(effectiveConfig, allowedTemperature);
+            effectiveOptions = { ...effectiveOptions, temperature: allowedTemperature };
+            effectiveConfig = {
+              ...effectiveConfig,
+              generationConfig: { ...effectiveConfig.generationConfig, temperature: allowedTemperature },
+            };
+          } else {
+            const original = effectiveConfig.generationConfig?.maxTokens ?? 0;
+            const fallback = capped > 0 ? capped : Math.max(1024, Math.floor(original / 2));
+            if (fallback >= original && original > 0) throw error;
+            console.warn(
+              `[UnifiedOutlineGenerator] max_tokens=${original} 超网关上限（${capped > 0 ? `网关报上限 ${capped}` : '上限未知'}），降级为 ${fallback} 重试（第 ${capRound + 1} 轮）`,
+            );
+            this.rememberProviderMaxTokensCap(effectiveConfig, fallback);
+            effectiveConfig = {
+              ...effectiveConfig,
+              generationConfig: { ...effectiveConfig.generationConfig, maxTokens: fallback },
+            };
+          }
         }
       }
       if (tracer) {
@@ -1281,6 +1349,30 @@ ${buildWebnovelCraftPrompt()}
     } catch (error) {
       console.warn(
         `[UnifiedOutlineGenerator] 记录网关输出上限失败（不影响本次请求）：`,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  /**
+   * 把「只允许 temperature=N」的网关约束记回厂商配置（kimi-k3 等推理型模型只放行 1），
+   * 后续请求不再每次先吃一个 400。写失败只告警不影响主流程。
+   */
+  private rememberProviderTemperatureLock(
+    config: { apiKey: string; generationConfig?: AIGenerationConfig },
+    temperature: number,
+  ): void {
+    try {
+      const settingsStore = useSettingsStore();
+      const target = settingsStore.aiProviders.find(item => item.apiKey === config.apiKey);
+      if (!target) return;
+      target.generationConfig = {
+        ...target.generationConfig,
+        temperature,
+      };
+    } catch (error) {
+      console.warn(
+        `[UnifiedOutlineGenerator] 记录网关温度约束失败（不影响本次请求）：`,
         error instanceof Error ? error.message : String(error),
       );
     }

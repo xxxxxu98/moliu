@@ -703,3 +703,42 @@ describe('parseExpandedOutline · 单章蓝图（chapterBlueprints）解析', ()
     ]);
   });
 });
+
+describe('故事规模规划解析（散文式每卷章数）', () => {
+  // 2026-08-15 冒烟实测两种真实文案：裸 /\\d+/ 会把「第1卷」的卷号 1 当成每卷章数，
+  // 3卷×1章≠180章 触发 inconsistent-story-scale blocker，整份语义正确的大纲被拦。
+  it('骨架步文案「第一卷约60章，第二卷约60章」解析为 60', () => {
+    const outline = parseExpandedOutline(
+      buildSampleOutline().replace(
+        '- 每卷预计章节数：60',
+        '- 每卷预计章节数：第一卷约60章，第二卷约60章，第三卷约60章。',
+      ),
+    );
+    expect(outline!.storyScale!.estimatedChaptersPerVolume).toBe(60);
+  });
+
+  it('审查重写步文案「第1卷约60章对应第1至60章」解析为 60', () => {
+    const outline = parseExpandedOutline(
+      buildSampleOutline().replace(
+        '- 每卷预计章节数：60',
+        '- 每卷预计章节数：第1卷约60章对应第1至60章，第2卷约60章对应第61至120章，第3卷约60章对应第121至180章，三卷合计180章与总章节数一致',
+      ),
+    );
+    expect(outline!.storyScale!.estimatedChaptersPerVolume).toBe(60);
+  });
+
+  it('字段完全抓不到数字时用总章数/卷数交叉兜底重算', () => {
+    const outline = parseExpandedOutline(
+      buildSampleOutline().replace(
+        '- 每卷预计章节数：60',
+        '- 每卷预计章节数：三卷均分',
+      ),
+    );
+    expect(outline!.storyScale!.estimatedChaptersPerVolume).toBe(60);
+  });
+
+  it('裸数字「60」仍解析为 60（既有形态不回归）', () => {
+    const outline = parseExpandedOutline(buildSampleOutline());
+    expect(outline!.storyScale!.estimatedChaptersPerVolume).toBe(60);
+  });
+});
