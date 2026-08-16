@@ -12,6 +12,12 @@ import {
   isCrossChapterGoal,
   splitPlotClauses,
 } from '@/services/story-runtime/chapterBlueprintNormalize';
+import {
+  classifyError,
+  isAbortedError,
+  isTransientError,
+  retryBackoffDelayMs,
+} from '@/utils/ai-error-classify';
 import type { GenerateOptions } from './unified-generator';
 import type { OutlineDirection } from '../types/direction';
 import type { ExecutableOutline } from '../types/executable-outline';
@@ -186,8 +192,11 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
   }
 
   // 4. 卷卖点未在启动包覆盖（开篇承诺与卷高潮脱节）。
-  //    只要求"场景型卖点"（卷高潮/具体画面）出现在启动包；
-  //    "完成/建立/让…"开头的卷目标是方向陈述，不要求逐字出现在开篇承诺。
+  //    只查卷 climax 的"场景型卖点"（会审逼供词等具体画面）是否出现在启动包；
+  //    objective 整体跳过——它是卷级目标/弧线陈述（章节范围、多目标并列、主线/
+  //    感情线/世界线推进），不属于开篇画面承诺，2026-08-16 实测其从句几乎必然
+  //    缺席启动包文本，混入检查会让每份初稿都触发一次修正请求，弱模型场景白花
+  //    1-3 分钟（luna 冒烟：6 条误报里 5 条来自 objective）。
   const volume = outline.volumePlan?.[0];
   if (volume) {
     const packText = [
@@ -201,10 +210,7 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
     ]
       .filter((item): item is string => typeof item === 'string' && !!item.trim())
       .join(' ');
-    const sellingClauses = [
-      ...splitPlotClauses(stripMeta(volume.climax)),
-      ...splitPlotClauses(stripMeta(volume.objective)),
-    ];
+    const sellingClauses = splitPlotClauses(stripMeta(volume.climax));
     for (const clause of sellingClauses) {
       if (clause.length < 8) continue;
       if (/^(完成|建立|让|使|实现|达成|推动)/u.test(clause)) continue;
@@ -396,6 +402,13 @@ export interface OutlineReviewResult {
   chapterIssueNumbers: number[];
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/** 审查修正请求的瞬态重试上限（1 次首发 + 2 次重试，对齐大纲步进的默认重试量级） */
+const REVIEW_TRANSIENT_ATTEMPTS = 3;
+
 /**
  * 审查+修正执行：初稿无问题直接返回；有问题则发起二次请求，修正稿解析失败或质量未提升时回退初稿。
  * abort 异常向上抛（与生成器竞态语义一致）。
@@ -451,13 +464,31 @@ export async function reviewAndFixOutline(params: {
       direction,
       issues: documentIssues,
     });
-    // 修正请求用低温（0.3）求稳定输出；signal 透传保持可取消
-    const fixedRawText = restoreBlueprints(
-      await callStructuredTextMode(system, user, {
-        ...(params.options ?? {}),
-        temperature: 0.3,
-      }),
-    );
+    // 修正请求用低温（0.3）求稳定输出；signal 透传保持可取消。
+    // 瞬态错误（429/5xx/网络抖动/断流）按指数退避重试：review 曾是大纲管线唯一
+    // 无重试的 AI 步骤，一次网关抖动（实测 Cloudflare 524）就永久放弃修正——弱模型
+    // 场景 review 恰是提质关键步骤，跳过会放大质量问题。持久错误一次即弃，
+    // 维持软失败回退初稿；用户取消（signal 已 abort）立即上抛。
+    const requestReviewFix = async (): Promise<string> => {
+      for (let attempt = 1; ; attempt += 1) {
+        try {
+          return await callStructuredTextMode(system, user, {
+            ...(params.options ?? {}),
+            temperature: 0.3,
+          });
+        } catch (error) {
+          if (isAbortedError(error, params.options?.signal)) throw error;
+          if (attempt >= REVIEW_TRANSIENT_ATTEMPTS || !isTransientError(error)) throw error;
+          const delayMs = retryBackoffDelayMs(classifyError(error).kind, attempt, 2000, 30_000);
+          console.warn(
+            `[outline-reviewer] 审查修正请求瞬态失败（第 ${attempt}/${REVIEW_TRANSIENT_ATTEMPTS} 次），` +
+              `${Math.round(delayMs / 1000)}s 后重试：${error instanceof Error ? error.message : String(error)}`,
+          );
+          await sleep(delayMs);
+        }
+      }
+    };
+    const fixedRawText = restoreBlueprints(await requestReviewFix());
     const fixedOutline = parseExpandedOutline(fixedRawText);
     if (!fixedOutline) {
       return {

@@ -93,6 +93,7 @@ const {
   isGenerating,
   error: generationError,
   progress: generationProgress,
+  warnings: outlineWarnings,
   generateDirections,
   expandDirection,
   cancel: cancelGeneration,
@@ -484,6 +485,14 @@ async function handleExpandDirection(options?: {
   if (!outline) {
     if (isGenerating.value) return;
     return;
+  }
+
+  // 大纲生成成功但带软质量警告（审查回退/补全失败等）：不阻塞应用，
+  // 但必须让用户知道成品有已知瑕疵，避免静默带病落库。
+  if (outlineWarnings.value.length > 0) {
+    message.warning(
+      `大纲已生成，但有 ${outlineWarnings.value.length} 条质量提示：${outlineWarnings.value[0].slice(0, 80)}`,
+    );
   }
 
   sessionStore.setExpandedOutline(tab, outline);

@@ -367,6 +367,28 @@ describe('inspectOutlineQuality', () => {
     const issues = inspectOutlineQuality(outline);
     expect(issues.filter(i => i.kind === 'over-scoped-mustcover').length).toBe(3);
   });
+
+  // ---------- missing-selling-point 误报收敛（2026-08-16 luna 冒烟回归） ----------
+  // 卷 objective 里的弧线/范围陈述不是场景型卖点，不要求出现在启动包；
+  // 不过滤会让几乎每份初稿都触发一次修正请求，弱模型场景白花 1-3 分钟。
+  it('卷 objective 含章节范围/主线感情线世界线语句：不误报 missing-selling-point', () => {
+    const outline = makeCleanOutline();
+    outline.volumePlan[0].objective =
+      '第1至60章，沈砚从无品户部书吏变成临时清查主官；查清京畿赈灾粮款亏空，取得正式官身，并拿到一省钱粮清查权。主线推进赈灾核账、官商勾连、盐运入口三层；感情线推进沈砚与顾清漪从互相试探到共同担责；世界线揭开朝廷用地方亏空掩盖军费调度的规则。';
+    expect(
+      inspectOutlineQuality(outline).some(i => i.kind === 'missing-selling-point'),
+    ).toBe(false);
+  });
+
+  it('卷 climax 场景型卖点确实缺席启动包：照常报 missing-selling-point', () => {
+    const outline = makeCleanOutline();
+    outline.volumePlan[0].climax = '沈砚在户部会审中用仓耗、运价和到货量反推出真实亏空，逼出粮商与仓场官员的供词';
+    outline.startupPack30.chapterBlocks.forEach(block => {
+      block.coolPoints = ['无关爽点'];
+    });
+    const issues = inspectOutlineQuality(outline).filter(i => i.kind === 'missing-selling-point');
+    expect(issues.length).toBeGreaterThanOrEqual(1);
+  });
 });
 
 describe('parseChapterRange', () => {
@@ -468,23 +490,112 @@ describe('reviewAndFixOutline', () => {
     const result = await reviewAndFixOutline({
       initialRawText: '初稿',
       direction: DIRECTION,
-      callStructuredTextMode: vi.fn().mockRejectedValue(new Error('网络错误')),
+      callStructuredTextMode: vi.fn().mockRejectedValue(new Error('schema 结构校验失败')),
     });
     expect(result.applied).toBe(false);
     expect(result.rawText).toBe('初稿');
     expect(result.warnings.join('')).toContain('回退');
   });
 
-  it('修正请求被 abort：向上抛（不吞取消）', async () => {
+  it('修正请求瞬态错误（429/5xx）：指数退避重试后成功，不再一次失败即放弃', async () => {
+    vi.useFakeTimers();
+    try {
+      parseExpandedOutlineMock
+        .mockReturnValueOnce(makeDirtyOutline())
+        .mockReturnValueOnce(makeCleanOutline());
+      const call = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('API 请求失败: 524 Gateway Timeout'))
+        .mockRejectedValueOnce(new Error('API 请求失败: 429 Too Many Requests'))
+        .mockResolvedValue('修正后的完整大纲');
+      const pending = reviewAndFixOutline({
+        initialRawText: '初稿',
+        direction: DIRECTION,
+        callStructuredTextMode: call,
+      });
+      // 两次退避（429 限流 15s + 30s）用假时钟推进，不真等
+      await vi.advanceTimersByTimeAsync(60_000);
+      const result = await pending;
+      expect(call).toHaveBeenCalledTimes(3);
+      expect(result.applied).toBe(true);
+      expect(result.rawText).toBe('修正后的完整大纲');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('修正请求瞬态错误连续 3 次耗尽：软失败回退初稿，warning 带重试语义', async () => {
+    vi.useFakeTimers();
+    try {
+      parseExpandedOutlineMock.mockReturnValue(makeDirtyOutline());
+      const call = vi.fn().mockRejectedValue(new Error('API 请求失败: 503 Service Unavailable'));
+      const pending = reviewAndFixOutline({
+        initialRawText: '初稿',
+        direction: DIRECTION,
+        callStructuredTextMode: call,
+      });
+      await vi.advanceTimersByTimeAsync(30_000);
+      const result = await pending;
+      expect(call).toHaveBeenCalledTimes(3);
+      expect(result.applied).toBe(false);
+      expect(result.rawText).toBe('初稿');
+      expect(result.warnings.join('')).toContain('回退');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('修正请求持久错误（4xx/schema）：不重试，一次即软失败回退', async () => {
     parseExpandedOutlineMock.mockReturnValue(makeDirtyOutline());
+    const call = vi.fn().mockRejectedValue(new Error('API 请求失败: 401 Unauthorized'));
+    const result = await reviewAndFixOutline({
+      initialRawText: '初稿',
+      direction: DIRECTION,
+      callStructuredTextMode: call,
+    });
+    expect(call).toHaveBeenCalledTimes(1);
+    expect(result.applied).toBe(false);
+    expect(result.rawText).toBe('初稿');
+  });
+
+  it('裸 AbortError（网关断流，无 signal）：按瞬态语义重试，耗尽后原样上抛', async () => {
+    // 对齐 callStepWithRetry / unified-generator 的 AbortError 三态归一：signal 未 abort 的
+    // AbortError 是连接层断流（timeout，可重试），不是用户取消——用户取消只可能来自 signal。
+    vi.useFakeTimers();
+    try {
+      parseExpandedOutlineMock.mockReturnValue(makeDirtyOutline());
+      const call = vi
+        .fn()
+        .mockRejectedValue(new DOMException('Aborted', 'AbortError'));
+      const pending = reviewAndFixOutline({
+        initialRawText: '初稿',
+        direction: DIRECTION,
+        callStructuredTextMode: call,
+      });
+      pending.catch(() => undefined); // 防止未处理拒绝告警
+      await vi.advanceTimersByTimeAsync(30_000);
+      await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+      expect(call).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('用户取消（signal 已 abort 的 AbortError）：立即上抛，不进重试', async () => {
+    parseExpandedOutlineMock.mockReturnValue(makeDirtyOutline());
+    const controller = new AbortController();
+    controller.abort();
+    const call = vi
+      .fn()
+      .mockRejectedValue(new DOMException('Aborted', 'AbortError'));
     await expect(
       reviewAndFixOutline({
         initialRawText: '初稿',
         direction: DIRECTION,
-        callStructuredTextMode: vi
-          .fn()
-          .mockRejectedValue(new DOMException('Aborted', 'AbortError')),
+        options: { signal: controller.signal } as never,
+        callStructuredTextMode: call,
       })
     ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(call).toHaveBeenCalledTimes(1);
   });
 });

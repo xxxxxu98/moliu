@@ -77,6 +77,12 @@ export interface StoryflowClosedLoopResult {
   postWritePersistence: PostWritePersistenceVerification;
   /** 建章后、续写前的章节 ID（大纲应用产物） */
   createdChapterIds: string[];
+  /**
+   * 大纲阶段 warnings（expandDirection 原样透传）：reviewer 回退/补全失败等软质量信号，
+   * 不代表失败，但冒烟报告必须可见——否则网关抖动被静默吞掉（实测 524 跳过 review
+   * 在 summary 里隐形，只能翻 trace 才能发现）。
+   */
+  outlineWarnings: string[];
   /** 分阶段耗时（ms）：定位慢环节用（大纲生成/应用/批量续写各占多久） */
   phaseTimings: {
     outlineDirectionsMs: number;
@@ -339,6 +345,7 @@ export async function runStoryflowClosedLoop(
   const artifactPaths = resolveStoryflowArtifactPaths();
   const resumeRequested = /^(?:1|true|yes)$/iu.test(process.env.MOLIU_RESUME_STORYFLOW?.trim() ?? '');
   let direction: OutlineDirection | null = null;
+  const outlineWarnings: string[] = [];
   const phaseTimings = {
     outlineDirectionsMs: 0,
     outlineExpandMs: 0,
@@ -371,6 +378,7 @@ export async function runStoryflowClosedLoop(
     });
     phaseTimings.outlineExpandMs += Date.now() - expandStartedAt;
     const expanded = expandedResult.outline;
+    outlineWarnings.push(...(expandedResult.warnings ?? []));
     if (!expanded) {
       const failureDetails = expandedResult.blockers?.length
         ? expandedResult.blockers.join('；')
@@ -580,6 +588,7 @@ export async function runStoryflowClosedLoop(
         error: chapter.output.error ?? null,
       })),
       projectStorageVerification,
+      outlineWarnings,
       provider: cfg.provider,
       model: cfg.model,
       updatedAt: new Date().toISOString(),
@@ -674,6 +683,7 @@ export async function runStoryflowClosedLoop(
     projectStorageVerification,
     postWritePersistence,
     createdChapterIds,
+    outlineWarnings,
     phaseTimings,
   };
 }

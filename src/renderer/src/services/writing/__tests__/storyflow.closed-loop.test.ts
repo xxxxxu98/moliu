@@ -89,6 +89,11 @@ function writeClosedLoopArtifacts(
       `状态持久化/查询/commit 语义与生产 SQLite 不一致，结果中存储相关行为不具备真实代表性。`
     );
   }
+  // 大纲阶段软质量信号（reviewer 回退/补全失败等）进 summary 顶部告警：
+  // 不代表失败，但必须醒目——524 跳过 review 这类网关抖动曾在此隐形，只能翻 trace 发现。
+  if (result.outlineWarnings.length > 0) {
+    warnings.push(`大纲阶段 warnings（${result.outlineWarnings.length} 条，详见 outlineWarnings 字段）`);
+  }
 
   // 每章正文落盘，供人工/读者视角评估
   mkdirSync(PROSE_DIR, { recursive: true });
@@ -130,6 +135,9 @@ function writeClosedLoopArtifacts(
     runtimeVerification: result.runtimeVerification,
     projectStorageVerification: result.projectStorageVerification,
     postWritePersistence: result.postWritePersistence,
+    // 大纲阶段 warnings 全量落盘：reviewer 回退原因、补全/定点修复失败等软质量信号，
+    // 与 warnings 顶部的计数告警配套，供冒烟后人工评估是否影响本轮产出质量。
+    outlineWarnings: result.outlineWarnings,
     provider: result.cfg.provider,
     model: result.cfg.model,
     totalMs,

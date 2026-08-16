@@ -86,6 +86,7 @@ const {
   isGenerating,
   error: generationError,
   progress: generationProgress,
+  warnings: outlineWarnings,
   outlines: generatedOutlines,
   generateOutlines,
   generateDirections,
@@ -605,6 +606,12 @@ async function handleExpandDirection(options?: { enhancementBrief?: string; dire
   enhanceTargetDirectionId.value = null;
 
   if (expandedOutline.value) {
+    // 大纲生成成功但带软质量警告（审查回退/补全失败等）：不阻塞应用，但让用户知道成品有已知瑕疵
+    if (outlineWarnings.value.length > 0) {
+      message.warning(
+        `大纲已生成，但有 ${outlineWarnings.value.length} 条质量提示：${outlineWarnings.value[0].slice(0, 80)}`,
+      );
+    }
     selectedOutline.value = previewGeneratedOutline.value;
     await scrollToPreviewSection();
   }

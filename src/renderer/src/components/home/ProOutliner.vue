@@ -67,10 +67,12 @@ const message = useMessage();
 const projectStore = useProjectStore();
 const settingsStore = useSettingsStore();
 
-// 只解构实际用到的：expandDirection（生成）、generationError（错误展示）。
-// 其余状态（isGenerating/progress/reset）原本从未在模板或 script 中被引用，留着会触发 noUnusedLocals。
+// 只解构实际用到的：expandDirection（生成）、generationError（错误展示）、
+// outlineWarnings（软质量提示）。其余状态（isGenerating/progress/reset）原本
+// 从未在模板或 script 中被引用，留着会触发 noUnusedLocals。
 const {
   error: generationError,
+  warnings: outlineWarnings,
   expandDirection,
 } = useOutlineGenerator();
 
@@ -411,6 +413,12 @@ async function generateFiveStepOutline() {
       fiveStepResult.value = mapExecutableOutlineToGeneratedOutline(executable, {
         targetWordCountRange: wordCountRange.value,
       });
+      // 软质量警告（审查回退/补全失败等）：不阻塞应用，但让用户知道成品有已知瑕疵
+      if (outlineWarnings.value.length > 0) {
+        message.warning(
+          `大纲已生成，但有 ${outlineWarnings.value.length} 条质量提示：${outlineWarnings.value[0].slice(0, 80)}`,
+        );
+      }
       message.success('大纲生成成功，可点击下方"创建项目"应用');
     } else {
       message.error(generationError.value || '大纲生成失败，请重试');
