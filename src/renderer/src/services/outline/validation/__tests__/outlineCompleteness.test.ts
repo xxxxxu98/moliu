@@ -238,7 +238,7 @@ describe('inspectOutlineCompleteness', () => {
       reversal: '',
       endingHook: '',
       protagonistGrowth: '',
-      keyCharacters: ['刑部主事郑伯昭，负责追查旧案'],
+      keyCharacters: ['郑伯昭'],
       setupForeshadows: [],
       payoffForeshadows: [],
       relationshipShifts: [],
@@ -247,5 +247,54 @@ describe('inspectOutlineCompleteness', () => {
     const result = inspectOutlineCompleteness(outline);
 
     expect(result.blockers.map(blocker => blocker.kind)).toContain('unknown-character-reference');
+  });
+
+  it('关系短语/括号注解/职务/组织等非姓名引用不产生未登记角色 blocker', () => {
+    // 2026-08-16 矩阵实测：mimo/ds-pro 大纲把关系整句写进角色字段，40+ 条此类
+    // blocker 把整轮 fail-closed 且无修复通道（补登记救不了整句，重试格式惯性复现）
+    const outline = makeOutline();
+    outline.volumePlan = [{
+      volumeIndex: 1,
+      title: '第一卷',
+      objective: '',
+      coreConflict: '',
+      climax: '',
+      reversal: '',
+      endingHook: '',
+      protagonistGrowth: '',
+      keyCharacters: ['忠诚执行者）', '韩尚书（六部尚书，务实官僚集团的代表，态度复杂）。', '临川商会会长'],
+      setupForeshadows: [],
+      payoffForeshadows: [],
+      relationshipShifts: [],
+    }];
+    outline.subplots = [{
+      title: '商税新政',
+      description: '',
+      purpose: '',
+      relatedCharacters: ['府衙通判', '与通判从施政冲突，到生死博弈的对手'],
+      startChapter: null,
+      endChapter: null,
+    }];
+    outline.keyCharacters = [
+      ...outline.keyCharacters,
+      {
+        id: 'extra-1',
+        name: '林溪',
+        relationshipChanges: [
+          { targetName: '与皇帝从工具利用，到复杂危险的相互依存。' },
+          { targetName: '顾清焉' },
+        ],
+      },
+    ] as ExecutableOutline['keyCharacters'];
+
+    const result = inspectOutlineCompleteness(outline);
+
+    const unknownRefs = result.blockers.filter(
+      blocker => blocker.kind === 'unknown-character-reference',
+    );
+    // 非姓名形态全部放行；真实姓名「顾清焉」仍应产生 blocker
+    expect(unknownRefs.map(blocker => blocker.message)).toEqual([
+      '角色「林溪」关系引用了未登记角色「顾清焉」；必须补入关键角色规划或改用已登记角色',
+    ]);
   });
 });

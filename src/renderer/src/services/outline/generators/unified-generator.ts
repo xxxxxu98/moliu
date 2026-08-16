@@ -226,14 +226,16 @@ async function buildHttpError(response: Response, prefix: string): Promise<Error
 }
 
 /**
- * 判断异常是否由 AbortController 触发。
- * fetch 被 abort 时抛出的 DOMException name 为 'AbortError'；
- * 上层在竞态场景下主动 abort 旧请求，这类异常不应被当作"生成失败"提示。
+ * 判断异常是否为「用户主动取消」：AbortError 且关联 signal 已 abort。
+ * 只看 error name 是不够的——网关 RST 时 undici/Electron net 也会抛
+ * DOMException AbortError（2026-08-16 矩阵 5 家全灭的根因），必须结合
+ * signal.aborted 才能区分；未关联 signal 的 AbortError 按连接层断流处理，
+ * 交给瞬态重试。调用方拿不到 signal 的场景传 undefined 之外没有安全默认。
  */
-function isAbortError(error: unknown): boolean {
-  if (error instanceof DOMException && error.name === 'AbortError') return true;
-  if (error instanceof Error && error.name === 'AbortError') return true;
-  return false;
+function isUserCancelled(error: unknown, signal?: AbortSignal): boolean {
+  if (signal?.aborted) return true;
+  if (!(error instanceof Error) || error.name !== 'AbortError') return false;
+  return signal?.aborted === true;
 }
 
 /**
@@ -384,7 +386,7 @@ export class UnifiedOutlineGenerator {
       } catch (error) {
         // 主动取消（竞态 / 重置）直接向上抛，由调用方按 currentId 判定丢弃，
         // 不再走 legacy 兜底，避免取消后还多打一次 API。
-        if (isAbortError(error)) {
+        if (isUserCancelled(error, opts.signal)) {
           throw error;
         }
         const errorMsg = error instanceof Error ? error.message : String(error);
@@ -527,6 +529,7 @@ export class UnifiedOutlineGenerator {
       onProgress,
       // 冷却基准 = 本次生效温度，避免厂商低温度配置被 0.7 基准“升温”
       options?.temperature ?? this.getAIConfig().generationConfig?.temperature ?? 0.7,
+      options?.signal,
     );
   }
 
@@ -587,7 +590,7 @@ export class UnifiedOutlineGenerator {
               warnings.push(...completed.warnings);
               completeness = inspectOutlineCompleteness(outline);
             } catch (error) {
-              if (isAbortError(error)) throw error;
+              if (isUserCancelled(error, opts.signal)) throw error;
               const message = error instanceof Error ? error.message : String(error);
               warnings.push(`分段补全失败：${message.slice(0, 160)}`);
             }
@@ -648,7 +651,7 @@ export class UnifiedOutlineGenerator {
               }
               warnings.push(...repaired.warnings);
             } catch (error) {
-              if (isAbortError(error)) throw error;
+              if (isUserCancelled(error, opts.signal)) throw error;
               const message = error instanceof Error ? error.message : String(error);
               warnings.push(`单章蓝图定点修复失败：${message.slice(0, 160)}`);
             }
@@ -716,7 +719,7 @@ export class UnifiedOutlineGenerator {
               }
               warnings.push(...repaired.warnings);
             } catch (error) {
-              if (isAbortError(error)) throw error;
+              if (isUserCancelled(error, opts.signal)) throw error;
               const message = error instanceof Error ? error.message : String(error);
               warnings.push(`门禁章级缺陷定点修复失败：${message.slice(0, 160)}`);
             }
@@ -752,7 +755,7 @@ export class UnifiedOutlineGenerator {
                 }
                 warnings.push(...repaired.warnings);
               } catch (error) {
-                if (isAbortError(error)) throw error;
+                if (isUserCancelled(error, opts.signal)) throw error;
                 const message = error instanceof Error ? error.message : String(error);
                 warnings.push(`未登记角色补登记失败：${message.slice(0, 160)}`);
               }
@@ -782,6 +785,7 @@ export class UnifiedOutlineGenerator {
       onProgress,
       // 冷却基准 = 本次生效温度，避免厂商低温度配置被 0.7 基准“升温”
       options?.temperature ?? this.getAIConfig().generationConfig?.temperature ?? 0.7,
+      options?.signal,
     );
 
     // fail-closed：残缺稿可留作诊断，但不得通过 outline 字段进入 UI 应用链路。
@@ -810,6 +814,8 @@ export class UnifiedOutlineGenerator {
     onProgress?: (message: string) => void,
     /** 重试降温的基准温度：应为本次请求生效温度（显式 options > 厂商 generationConfig > 0.7） */
     baseTemperature?: number,
+    /** 用户取消信号：runWithRetry 自身拿不到 options，由调用方传入 */
+    signal?: AbortSignal,
   ): Promise<T> {
     const total = Math.max(1, maxAttempts);
     let lastResult: T | null = null;
@@ -828,7 +834,7 @@ export class UnifiedOutlineGenerator {
         }
       } catch (error) {
         // 主动取消（竞态 / 重置）不重试，直接向上抛，由调用方按 currentId 判定丢弃。
-        if (isAbortError(error)) {
+        if (isUserCancelled(error, signal)) {
           throw error;
         }
         const errorMsg = error instanceof Error ? error.message : String(error);
@@ -1018,9 +1024,17 @@ export class UnifiedOutlineGenerator {
       }
       return result;
     } catch (error) {
-      const normalizedError = timeoutController.signal.aborted && !signal?.aborted
-        ? new Error(`[大纲请求超时] 单次 AI 请求超过 ${requestTimeoutMs}ms`)
-        : error;
+      // 错误归一（用户取消原样上抛 / 超时改写文案 / 网关断连的 AbortError 改写为网络错误）：
+      // 网关 RST 时 undici/Electron net 会抛 DOMException AbortError（message='aborted'），
+      // 若原样上抛，上层 isUserCancelled/isAbortedError 会误判「用户主动取消」零重试直接终止
+      // 整轮（2026-08-16 矩阵 5 家全部死于此）。真正的用户取消只可能来自 options.signal——
+      // signal 未 abort 且超时控制器也未触发的 AbortError 一律是连接层断流，按瞬态重试。
+      let normalizedError: unknown = error;
+      if (timeoutController.signal.aborted && !signal?.aborted) {
+        normalizedError = new Error(`[大纲请求超时] 单次 AI 请求超过 ${requestTimeoutMs}ms`);
+      } else if (error instanceof Error && error.name === 'AbortError' && !signal?.aborted) {
+        normalizedError = new Error('网络连接中断：AI 流式连接被远端重置（AbortError）');
+      }
       if (tracer) {
         tracer.record({
           purpose,

@@ -81,11 +81,13 @@ async function callStepWithRetry(
 ): Promise<string> {
   const total = Math.max(1, maxAttempts);
   let lastError: unknown;
-  for (let attempt = 1; attempt <= total; attempt++) {
+  for (let attempt = 1; attempt <= total; attempt += 1) {
     try {
       return await callStructuredTextMode(system, user, options);
     } catch (error) {
-      if (isAbortedError(error)) throw error;
+      // 用户取消（signal 已 abort）才上抛；网关断流的 AbortError 无 signal，
+      // 必须落进瞬态重试（2026-08-16 矩阵：不传 signal 误判取消，5 家全灭零重试）
+      if (isAbortedError(error, options.signal)) throw error;
       lastError = error;
       if (attempt >= total) break;
       if (isTransientError(error)) {
@@ -192,8 +194,9 @@ export async function generateExpandedOutlineInSteps(
         step.id,
       );
     } catch (error) {
-      // 主动取消一律上抛，由调用方按 currentId 判定丢弃
-      if (isAbortedError(error)) throw error;
+      // 用户取消（signal 已 abort）一律上抛，由调用方按 currentId 判定丢弃；
+      // 无 signal 的 AbortError 是网关断流，走 required/soft 分支的常规处理
+      if (isAbortedError(error, options.signal)) throw error;
       if (step.required) {
         // 硬必需步失败：上抛触发外层 runWithRetry 整体重试（降温）
         throw error;

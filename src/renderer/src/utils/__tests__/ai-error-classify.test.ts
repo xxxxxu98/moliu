@@ -119,6 +119,15 @@ describe('classifyError', () => {
       expect(result.retryable).toBe(false);
       expect(result.transient).toBe(false);
     });
+
+    // 大纲请求层把网关断流的 AbortError 改写为中文网络文案（unified-generator 归一化），
+    // 必须命中 network 才能进退避重试（2026-08-16 矩阵 5 家全灭的根因之一）
+    it('网络连接中断改写文案归为 network（瞬态、可重试）', () => {
+      const result = classifyError(new Error('网络连接中断：AI 流式连接被远端重置（AbortError）'));
+      expect(result.kind).toBe('network');
+      expect(result.retryable).toBe(true);
+      expect(result.transient).toBe(true);
+    });
   });
 
   describe('parseAllowedTemperature（网关温度约束）', () => {

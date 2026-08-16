@@ -115,6 +115,35 @@ const GENERIC_CHARACTER_REFERENCES = new Set([
   '主角', '男主', '女主', '皇帝', '太子', '皇后', '反派', '盟友', '导师', '配角',
 ]);
 
+/**
+ * 非姓名形态的"角色引用"特征：括号注解（「忠诚执行者）」「韩尚书（六部尚书…）"）、
+ * 标点断句、关系短语字（从/到/与/和…）。这些是模型把关系字段/描述整句写进了
+ * 角色引用字段（2026-08-16 矩阵实测 mimo/ds-pro 大纲触发 40+ 条此类 blocker
+ * 拦死整轮），补登记救不了（不是名字）、整体重试不收敛（格式惯性）。
+ */
+const IMPLAUSIBLE_NAME_RE = /[（()），,。；;、··]/u;
+const RELATION_PHRASE_RE = /[从到与和及在对为向着]/u;
+/** 组织/集体称呼（「临川商会」类）与纯职务词尾（「府衙通判」类），非可建档姓名 */
+const ORGANIZATION_NAME_RE =
+  /(?:[门派司会盟教帮堂阁殿宗楼局署馆](?:军|团|队|众)?$)|(?:^[旧新][\u4e00-\u9fa5]{1,4}$)|(?:^[一二三四五六七八九十]+老$)/u;
+/** 纯职务词（「通判」「知府」——整体即职务，无姓名成分）；「顾师爷」「钱通判」这类姓+职务是合法称呼，放行 */
+const TITLE_ONLY_RE = /^(?:会长|通判|知府|知县|师爷|管家|主簿|幕僚|掌柜|首领|侍卫|仆役)$/u;
+/** 机构前缀（含可选职务后缀）（「临川商会会长」「府衙通判」「县衙主簿」）：机构代称，非可建档个人姓名 */
+const ORG_TITLE_RE = /^[\u4e00-\u9fa5]{0,6}(?:商会|府衙|县衙|衙门|朝廷|东宫|内阁|翰林|司礼监|军机处)(?:会长|通判|知府|知县|主簿|幕僚|首领|掌印|大学士)?$/u;
+
+/** 引用值是否像一个可建档的姓名；不像姓名的引用不产生 unknown-character-reference blocker */
+function isPlausibleCharacterName(value: string): boolean {
+  const name = value.trim();
+  if (!name) return false;
+  if ([...name].length > 10) return false;
+  if (IMPLAUSIBLE_NAME_RE.test(name)) return false;
+  if (RELATION_PHRASE_RE.test(name)) return false;
+  if (ORGANIZATION_NAME_RE.test(name)) return false;
+  if (TITLE_ONLY_RE.test(name)) return false;
+  if (ORG_TITLE_RE.test(name)) return false;
+  return true;
+}
+
 function inspectSemanticConsistency(outline: ExecutableOutline): OutlineCompletenessBlocker[] {
   const blockers: OutlineCompletenessBlocker[] = [];
   const totalChapters = outline.storyScale?.estimatedChapterCount;
@@ -200,6 +229,9 @@ function inspectSemanticConsistency(outline: ExecutableOutline): OutlineComplete
     const value = reference?.trim();
     if (!value || GENERIC_CHARACTER_REFERENCES.has(value)) return;
     if ([...canonicalNames].some(name => value.includes(name))) return;
+    // 关系短语/职务/组织等非姓名形态：字段本身被模型写坏，不是缺角色登记，
+    // 产生 blocker 只会把整份大纲 fail-closed 且无修复通道。
+    if (!isPlausibleCharacterName(value)) return;
     blockers.push({
       kind: 'unknown-character-reference',
       chapterNumber,

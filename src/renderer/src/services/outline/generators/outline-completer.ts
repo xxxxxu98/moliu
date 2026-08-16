@@ -5,7 +5,7 @@ import type {
   ExecutableOutline,
 } from '../types/executable-outline';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
-import { isAbortedError, retryBackoffDelayMs } from '@/utils/ai-error-classify';
+import { isAbortedError, isTransientError, retryBackoffDelayMs } from '@/utils/ai-error-classify';
 import { readPositiveIntEnv } from '@/utils/env';
 import {
   inspectOutlineCompleteness,
@@ -428,6 +428,8 @@ const ORGANIZATION_NAME_RE =
 export function isLikelyCharacterName(value: string): boolean {
   const name = value.trim().replace(/^[·•、，。\s]+|[·•、，。\s]+$/gu, '');
   if (!name) return false;
+  // 括号注解形态（「忠诚执行者）」「韩尚书（六部尚书…）」）：字段被描述污染，非姓名
+  if (/[（()）]/u.test(name)) return false;
   if ([...name].length > MAX_CHARACTER_NAME_CHARS) return false;
   if (RELATION_PHRASE_RE.test(name)) return false;
   if (ORGANIZATION_NAME_RE.test(name)) return false;
@@ -719,13 +721,11 @@ export async function repairChapterBlueprints(params: {
     const batchIssues = batch.flatMap(no => issuesByChapter?.get(no) ?? []);
     const prompt = buildChapterCompletionPrompt(outlineForPrompt, params.direction, batch, batchIssues);
 
-    // 空响应批次重试：矩阵实测 minimax-m3/glm 网关会把批次请求「成功」返回 0 字
-    // （无错误事件、流正常结束），此前只记 warning 放过 → 这批章永远缺失 → fail-closed。
-    // 空响应有两种形态：请求层抛「API 未返回内容」（isTransientError 现归类瞬态，
-    // 步级退避本会重试，但 completer 层必须吞掉异常形态才能继续拼装），或调用器
-    // 正常返回空串（mock/部分网关）。两种都按瞬态退避小次数重试；重试后仍空则
-    // 维持 warning（不硬造内容）。
-    const MAX_EMPTY_BATCH_ATTEMPTS = 2;
+    // 批次级瞬态重试：空响应（「成功」返回 0 字）与瞬态异常（网关断流/429/5xx）都退避重试。
+    // 空响应有两种形态：请求层抛「API 未返回内容」，或调用器正常返回空串（mock/部分网关）。
+    // 断流等瞬态异常此前直接上抛——并发池里一个批次挂掉整轮作废（2026-08-16 矩阵实测），
+    // 这里吞掉退避重试；重试后仍失败才上抛给外层。用户取消（signal 已 abort）不重试。
+    const MAX_EMPTY_BATCH_ATTEMPTS = 3;
     let generated = '';
     for (let attempt = 1; attempt <= MAX_EMPTY_BATCH_ATTEMPTS; attempt += 1) {
       try {
@@ -735,10 +735,22 @@ export async function repairChapterBlueprints(params: {
           { ...params.options, temperature: phase === '定点修复' ? 0.2 : 0.35 },
         );
       } catch (error) {
-        if (!EMPTY_RESPONSE_RE.test(error instanceof Error ? error.message : String(error))) {
+        if (isAbortedError(error, params.options.signal)) throw error;
+        const message = error instanceof Error ? error.message : String(error);
+        if (!EMPTY_RESPONSE_RE.test(message) && !isTransientError(error)) {
           throw error;
         }
         generated = '';
+        if (attempt < MAX_EMPTY_BATCH_ATTEMPTS) {
+          const delayMs = retryBackoffDelayMs('network', attempt, 2000, 10_000);
+          warnings.push(
+            `单章蓝图${phase}批次 ${batch[0]}-${batch.at(-1)} 瞬态失败（第 ${attempt} 次，${message.slice(0, 60)}），${delayMs}ms 后重试`,
+          );
+          onProgress?.(`单章蓝图批次瞬态失败，重试 ${attempt}/${MAX_EMPTY_BATCH_ATTEMPTS - 1}...`);
+          await sleep(delayMs);
+          continue;
+        }
+        throw error;
       }
       if (generated.trim()) break;
       if (attempt < MAX_EMPTY_BATCH_ATTEMPTS) {
@@ -822,7 +834,8 @@ export async function repairChapterBlueprints(params: {
         try {
           smallGenerated = await requestBatch(smallBatch, outline);
         } catch (error) {
-          if (isAbortedError(error)) throw error;
+          // 只上抛用户取消（signal 已 abort）；网关断流的 AbortError 记 warning 走小批继续
+          if (isAbortedError(error, params.options.signal)) throw error;
           warnings.push(
             `定点修复小批 ${smallBatch.join('、')} 请求失败：${error instanceof Error ? error.message.slice(0, 120) : String(error).slice(0, 120)}`,
           );

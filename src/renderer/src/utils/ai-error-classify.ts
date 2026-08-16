@@ -64,7 +64,7 @@ export interface ClassifiedError {
  * 无结束异常的空响应大概率是网关抖动，按瞬态处理才能进退避重试。
  */
 const TRANSIENT_NETWORK_RE =
-  /socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|ERR_CONNECTION_CLOSED|fetch\s*(\(\))?|failed to fetch|network|TLS|disconnected|connection\s+(closed|reset|aborted)|too many requests|429|server overload|unable to handle additional requests|response body is null|body is null|api\s*未返回内容/iu;
+  /socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|ERR_CONNECTION_CLOSED|fetch\s*(\(\))?|failed to fetch|network|TLS|disconnected|connection\s+(closed|reset|aborted)|too many requests|429|server overload|unable to handle additional requests|response body is null|body is null|api\s*未返回内容|连接中断|断连|连接被远端重置/iu;
 
 /**
  * JSON 截断 / 解析失败特征。

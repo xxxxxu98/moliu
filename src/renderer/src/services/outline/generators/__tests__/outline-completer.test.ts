@@ -323,8 +323,8 @@ describe('repairChapterBlueprints', () => {
       phase: '补全',
     });
 
-    // 2 次尝试（1 次原始 + 1 次重试）后放弃，不无限重试
-    expect(callStructuredTextMode).toHaveBeenCalledTimes(2);
+    // 3 次尝试（1 次原始 + 2 次重试）后放弃，不无限重试
+    expect(callStructuredTextMode).toHaveBeenCalledTimes(3);
     expect(result.warnings.some(w => w.includes('返回空响应'))).toBe(true);
     // 「补全」阶段空响应批次只记缺章 warning，不触发小批补发（补发只留给定点修复轮）
     expect(
@@ -338,7 +338,7 @@ describe('repairChapterBlueprints', () => {
   it('批次请求抛「API 未返回内容」时退避重试，重试成功后照常拼装', async () => {
     const outline = parseExpandedOutline(MAIN_OUTLINE_TEXT)!;
     const callStructuredTextMode = vi.fn(async () => {
-      if (callStructuredTextMode.mock.calls.length <= 1) {
+      if (callStructuredTextMode.mock.calls.length <= 2) {
         throw new Error('API 未返回内容');
       }
       return [1].map(buildChapterBlock).join('\n\n');
@@ -354,9 +354,9 @@ describe('repairChapterBlueprints', () => {
       phase: '补全',
     });
 
-    expect(callStructuredTextMode).toHaveBeenCalledTimes(2);
+    expect(callStructuredTextMode).toHaveBeenCalledTimes(3);
     expect(result.outline.chapterBlueprints?.map(item => item.orderIndex)).toEqual([1]);
-    expect(result.warnings.some(w => w.includes('返回空响应'))).toBe(true);
+    expect(result.warnings.some(w => w.includes('瞬态失败'))).toBe(true);
   }, 30_000);
 
   it('批次抛非空响应错误时原样上抛，不吞异常', async () => {
