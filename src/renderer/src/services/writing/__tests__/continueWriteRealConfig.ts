@@ -3,6 +3,7 @@ import path from 'node:path';
 import { createDecipheriv, scryptSync } from 'node:crypto';
 
 import type { ProviderType } from '@/config/ai-providers';
+import { migrateMaxTokens } from '@/stores/settings.store';
 
 export interface ContinueWriteRealConfig {
   enabled?: boolean;
@@ -174,17 +175,18 @@ function resolveProviderFromApp(providerId?: string): {
   if (!matched?.apiKey) return null;
   const providerRaw = (matched.provider || 'openai').toLowerCase();
   if (!PROVIDER_SET.has(providerRaw)) return null;
+  // 磁盘配置可能仍带 KiB 旧值（generationConfig.maxTokens=1048576：App 内启动迁移
+  // 曾因 `top ?? gen` 短路漏迁该字段；冒烟直读磁盘必须自己过一遍迁移，
+  // 否则每个厂商首轮请求都发 1048576 踩网关 400 再靠降级重试救回）
+  const maxTokensRaw =
+    matched.maxTokens ?? matched.generationConfig?.maxTokens;
   return {
     providerId: matched.id,
     provider: providerRaw as ProviderType,
     apiKey: decryptStoredApiKey(matched.apiKey),
     model: matched.modelName || selection?.modelName,
     baseUrl: matched.baseUrl || undefined,
-    maxTokens:
-      typeof matched.generationConfig?.maxTokens === 'number' &&
-      matched.generationConfig.maxTokens > 0
-        ? Math.floor(matched.generationConfig.maxTokens)
-        : undefined,
+    maxTokens: migrateMaxTokens(maxTokensRaw),
   };
 }
 

@@ -176,16 +176,27 @@ export const useSettingsStore = defineStore('settings', () => {
       // Load AI providers
       const providers = await window.electronAPI.getAIProviders() as AIProvider[];
       if (providers && providers.length > 0) {
-        // KiB→十进制迁移：命中旧选项值才换算，换算后回写持久化
+        // KiB→十进制迁移：顶层 maxTokens（UI 字段）与 generationConfig.maxTokens
+        // （请求层下发真源）必须各自独立换算——旧实现用 `top ?? gen` 取值，
+        // 顶层有值时短路，generationConfig 里的 1048576 从未被迁移，请求层
+        // 照传 KiB 值触发网关 400（实测 opencode/DeepSeek 每轮首个请求必踩）。
+        // 迁移后以顶层为 UI 真源同步两者，保证「所有地方都是统一的」。
         let maxTokensMigrated = false;
         for (const provider of providers) {
-          const raw = provider.maxTokens ?? provider.generationConfig?.maxTokens;
-          const migrated = migrateMaxTokens(raw);
-          if (migrated !== undefined && migrated !== raw) {
-            if (provider.maxTokens !== undefined) {
-              provider.maxTokens = migrated;
-            } else {
-              provider.generationConfig = { ...provider.generationConfig, maxTokens: migrated };
+          const topRaw = provider.maxTokens;
+          const genRaw = provider.generationConfig?.maxTokens;
+          const topMigrated = migrateMaxTokens(topRaw);
+          const genMigrated = migrateMaxTokens(genRaw);
+          const unified =
+            topMigrated ?? genMigrated;
+          if (
+            (topMigrated !== undefined && topMigrated !== topRaw)
+            || (genMigrated !== undefined && genMigrated !== genRaw)
+            || (topMigrated !== undefined && genMigrated !== undefined && topMigrated !== genMigrated)
+          ) {
+            if (unified !== undefined) {
+              provider.maxTokens = unified;
+              provider.generationConfig = { ...provider.generationConfig, maxTokens: unified };
             }
             maxTokensMigrated = true;
           }
