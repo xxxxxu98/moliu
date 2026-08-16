@@ -22,8 +22,17 @@ function emptyResult(): ChapterJudgeResult {
   return { fulfillment: [], forbidden: [], issues: [] };
 }
 
+/**
+ * 零宽/控制类不可见字符（ZWSP/ZWNJ/ZWJ/LRM/RLM/word joiner/BOM）。
+ * 大纲产出实测在 mustCover 节点末尾混入 U+200B：trim 与 \s 均不匹配它，
+ * 判定模型回显的节点文本（不带该字符）永远对不上合同键，
+ * 每一章都被误判「模型未返回该节点的履约判定」而触发整章重写。
+ */
+const INVISIBLE_CHARS_RE = /[\u200b-\u200f\u2060\ufeff]/gu;
+
 function normalizeContractKey(value: string): string {
   return value
+    .replace(INVISIBLE_CHARS_RE, '')
     .trim()
     .replace(/[。！？!?；;，,：:\s]+$/gu, '')
     .replace(/\s+/gu, '');

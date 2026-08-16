@@ -894,6 +894,17 @@ export async function repairChapterBlueprints(params: {
 }
 
 /**
+ * 大纲文本的零宽/控制类不可见字符清洗。
+ * 模型产出实测会在字段末尾混入 U+200B 等零宽字符：门禁长度判定、
+ * 续写合同的 mustCover 匹配全部被它干扰（normalizeContractKey 侧已做兜底，
+ * 但落库文本本身干净才是治本）。只清零宽/格式控制类，不动正文标点。
+ */
+export function stripInvisibleOutlineChars(rawText: string): string {
+  if (!/[\u200b-\u200f\u2060\ufeff]/u.test(rawText)) return rawText;
+  return rawText.replace(/[\u200b-\u200f\u2060\ufeff]/gu, '');
+}
+
+/**
  * 单章蓝图常规就走这里分批生成：主请求只产出启动包与卷纲，逐章拆解每批最多 10 章，
  * 角色与伏笔独立请求，避免把 50 章 + 10 角色 + 10 伏笔塞进一次输出触发网关超时或截断。
  */
@@ -1064,6 +1075,15 @@ export async function completeIncompleteOutline(params: {
     if (outline.keyCharacters.length < OUTLINE_COMPLETENESS_POLICY.minimumKeyCharacters) {
       break; // 数量都不足时交给外层整体重试，不再空转补登记
     }
+  }
+
+  // 出口清洗零宽字符：补全/修复各环节都可能从模型响应拼入 U+200B 之类不可见字符
+  // （2026-08-16 冒烟：ch3 mustCover 尾部一个零宽空格导致续写履约匹配 3 轮全灭）。
+  const cleanedRawText = stripInvisibleOutlineChars(rawText);
+  if (cleanedRawText !== rawText) {
+    rawText = cleanedRawText;
+    outline = parseExpandedOutline(rawText) ?? outline;
+    warnings.push('已清洗大纲文本中的零宽/不可见字符');
   }
 
   return { rawText, outline, warnings };

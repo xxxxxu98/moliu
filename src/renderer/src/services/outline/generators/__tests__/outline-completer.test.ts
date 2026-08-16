@@ -11,6 +11,7 @@ import {
   repairChapterBlueprints,
   repairUnregisteredCharacters,
   replaceOutlineSection,
+  stripInvisibleOutlineChars,
 } from '../outline-completer';
 import { parseExpandedOutline } from '../../parser/expanded-outline-parser';
 import type { ExecutableOutline } from '../../types/executable-outline';
@@ -139,6 +140,17 @@ describe('outline-completer', () => {
     } as ExecutableOutline);
 
     expect(incomplete).toEqual([16, 17]);
+  });
+
+  it('stripInvisibleOutlineChars 清洗零宽字符且不动正文', () => {
+    // 2026-08-16 冒烟：mustCover 尾部 U+200B 导致续写履约匹配失败整章重写
+    const raw = '### 第3章\n- mustCover：张洞锁死地窖疑点。\u200b\n- CEN：右掌里传来声音\u200f';
+    const cleaned = stripInvisibleOutlineChars(raw);
+    expect(cleaned).not.toMatch(/[\u200b-\u200f\u2060\ufeff]/u);
+    expect(cleaned).toContain('张洞锁死地窖疑点。');
+    // 无零宽字符时原样返回（同一引用）
+    const clean = '普通正文，无零宽字符。';
+    expect(stripInvisibleOutlineChars(clean)).toBe(clean);
   });
 });
 

@@ -140,6 +140,35 @@ describe('AIChapterJudge', () => {
     });
   });
 
+  it('mustCover 节点混入零宽字符（如 U+200B）时仍能匹配模型回显', async () => {
+    // 2026-08-16 冒烟实测：大纲 mustCover 尾部带 U+200B，判定模型回显不带，
+    // normalizeContractKey 剥标点剥不掉它 → 每章误判「模型未返回履约判定」触发整章重写。
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => ({
+        fulfillment: [
+          {
+            node: '张洞发现鬼手自主动作并锁死地窖疑点。',
+            fulfilled: true,
+            evidence: ['右掌里的鬼手自己攥成了拳'],
+            reason: '已写到',
+          },
+        ],
+        forbidden: [],
+        issues: [],
+      })),
+    };
+    const judge = new AIChapterJudge(ai);
+
+    const result = await judge.judge({
+      mustCover: ['张洞发现鬼手自主动作并锁死地窖疑点。\u200b'],
+      forbiddenZones: [],
+      chapterText: '右掌里的鬼手自己攥成了拳，张洞盯着它看了很久。',
+      checkDeepSemantic: true,
+    });
+
+    expect(result.fulfillment[0]).toMatchObject({ fulfilled: true });
+  });
+
   it('不得把未具名职位脑补成 mustCover 点名的具体角色', async () => {
     let capturedSystem = '';
     const ai: StructuredAI = {

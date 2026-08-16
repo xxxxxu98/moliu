@@ -76,6 +76,7 @@ function resolveStoryflowPrompt(): { prompt: string; source: string } {
 function writeClosedLoopArtifacts(
   result: Awaited<ReturnType<typeof runStoryflowClosedLoop>>,
   totalMs: number,
+  promptContext: { prompt: string; promptSource: string },
 ): void {
   const outlineChapters = result.generatedOutline.chapters ?? [];
 
@@ -102,8 +103,8 @@ function writeClosedLoopArtifacts(
     book: result.project.name,
     mode: 'storyflow-closed-loop',
     status: 'complete',
-    promptSource,
-    promptChars: prompt.length,
+    promptSource: promptContext.promptSource,
+    promptChars: promptContext.prompt.length,
     requestedChapterCount: envInt('MOLIU_CHAPTER_COUNT', 5),
     phaseTimings: result.phaseTimings,
     completedChapters: result.chapterRunResults.length,
@@ -164,7 +165,7 @@ describe.runIf(isRealAiEnabled())(
         // ---------- 汇总落盘（先于断言）----------
         // 断言在落盘之后跑：任何一条断言失败都不该丢掉这一轮（真实 AI 约 70-110 分钟）的正文与
         // summary，否则只能回头从 ai-traces 里手工还原。大纲数据已由 harness 在建章后提前落盘。
-        writeClosedLoopArtifacts(result, totalMs);
+        writeClosedLoopArtifacts(result, totalMs, { prompt, promptSource });
 
         // ---------- ① 大纲生成断言 ----------
         expect(result.generatedOutline.title).toBeTruthy();
