@@ -306,6 +306,79 @@ export const sceneDraftSchema: z.ZodType<SceneDraft> = z.object({
 });
 
 /**
+ * 单个 event 元素的软修复：缺 type/summary/participants 等字段时填默认值。
+ * 2026-08-17 矩阵实测 gemini ch3 事实提取返回 events[0] 缺 type/summary/participants
+ * 三字段，zod 硬拒后只能靠「持久错误立即重试」碰运气（模型输出随机，重试可能原样复现）。
+ * 元素级缺陷应降级为丢/修该元素，而不是整章失败——与顶层软兜底同一防线下移一层。
+ * 返回 null 表示该元素无法修复（缺 summary 的事件没有语义，直接丢弃）。
+ */
+function repairEventElement(item: unknown, index: number, chapterNumber: number): unknown | null {
+  if (typeof item !== 'object' || item === null || Array.isArray(item)) return null;
+  const record = item as Record<string, unknown>;
+  const hasSummary = typeof record.summary === 'string' && record.summary.trim();
+  if (!hasSummary) return null; // 无摘要的事件无语义，丢弃
+  const repaired = { ...record };
+  let touched = false;
+  if (typeof repaired.id !== 'string' || !(repaired.id as string).trim()) {
+    repaired.id = `fact-extract:recovered:${chapterNumber}:${index}`;
+    touched = true;
+  }
+  if (typeof repaired.type !== 'string' || !(repaired.type as string).trim()) {
+    repaired.type = 'event';
+    touched = true;
+  }
+  if (typeof repaired.sceneId !== 'string' || !(repaired.sceneId as string).trim()) {
+    repaired.sceneId = `chapter-${chapterNumber}:unknown:scene`;
+    touched = true;
+  }
+  if (typeof repaired.chapter !== 'number' || !Number.isFinite(repaired.chapter)) {
+    repaired.chapter = chapterNumber;
+    touched = true;
+  }
+  if (!Array.isArray(repaired.participants)) {
+    repaired.participants = [];
+    touched = true;
+  }
+  if (!Array.isArray(repaired.causes)) {
+    repaired.causes = [];
+    touched = true;
+  }
+  if (touched) {
+    console.warn(
+      `[schemas] 事实提取 events[${index}] 元素字段软修复（补默认值/丢无效字段），summary=${String(repaired.summary).slice(0, 30)}`
+    );
+  }
+  return repaired;
+}
+
+/**
+ * 单个 delta 元素的软修复：缺 operation/path/evidence 时填默认值或丢弃。
+ * deltas 的 evidence 是必填 min(1)，缺失时用 summary 语义兜底；缺 path 无从应用，丢弃。
+ */
+function repairDeltaElement(item: unknown, index: number): unknown | null {
+  if (typeof item !== 'object' || item === null || Array.isArray(item)) return null;
+  const record = item as Record<string, unknown>;
+  if (typeof record.path !== 'string' || !record.path.trim()) return null;
+  const repaired = { ...record };
+  let touched = false;
+  if (repaired.operation !== 'set' && repaired.operation !== 'add'
+    && repaired.operation !== 'remove' && repaired.operation !== 'increment') {
+    repaired.operation = 'set';
+    touched = true;
+  }
+  if (typeof repaired.evidence !== 'string' || !(repaired.evidence as string).trim()) {
+    repaired.evidence = `delta@${record.path}（模型未提供证据，软兜底）`;
+    touched = true;
+  }
+  if (touched) {
+    console.warn(
+      `[schemas] 事实提取 deltas[${index}] 元素字段软修复（operation/evidence 补默认值）`
+    );
+  }
+  return repaired;
+}
+
+/**
  * 事实提取软校验：模型常少返回顶层 events/deltas/evidence 数组字段，
  * 旧逻辑会因 `expected array, received undefined` 整章崩。
  * 这里用 z.preprocess 把缺失/非数组的字段回填 []，照搬现有 idStringArraySchema 的兜底模式。
@@ -356,6 +429,50 @@ export function coerceExtractedFacts(value: unknown): unknown {
     console.warn(
       `[schemas] 事实提取顶层字段被软兜底为 []（模型返回退化）：${missing.join(', ')}`
     );
+  }
+  // 元素级软修复：单条 event/delta 缺字段不再整章崩（丢弃无语义元素、补默认值救回其余）。
+  // 章号未知时用 0 占位（repairEventElement 的默认 id/sceneId 仍可保证 schema 通过）。
+  const chapterHint = typeof obj.chapter === 'number'
+    ? obj.chapter
+    : Array.isArray(obj.events) && obj.events.length > 0
+      && typeof (obj.events[0] as { chapter?: unknown })?.chapter === 'number'
+      ? (obj.events[0] as { chapter: number }).chapter
+      : 0;
+  if (Array.isArray(obj.events)) {
+    const repaired: unknown[] = [];
+    let dropped = 0;
+    obj.events.forEach((item, index) => {
+      const fixed = repairEventElement(item, index, chapterHint);
+      if (fixed === null) {
+        dropped += 1;
+      } else {
+        repaired.push(fixed);
+      }
+    });
+    if (dropped > 0) {
+      console.warn(
+        `[schemas] 事实提取 events 丢弃 ${dropped} 条无法修复的元素（缺 summary 等核心字段），保留 ${repaired.length} 条`
+      );
+    }
+    obj.events = repaired;
+  }
+  if (Array.isArray(obj.deltas)) {
+    const repaired: unknown[] = [];
+    let dropped = 0;
+    obj.deltas.forEach((item, index) => {
+      const fixed = repairDeltaElement(item, index);
+      if (fixed === null) {
+        dropped += 1;
+      } else {
+        repaired.push(fixed);
+      }
+    });
+    if (dropped > 0) {
+      console.warn(
+        `[schemas] 事实提取 deltas 丢弃 ${dropped} 条无法修复的元素（缺 path），保留 ${repaired.length} 条`
+      );
+    }
+    obj.deltas = repaired;
   }
   return obj;
 }

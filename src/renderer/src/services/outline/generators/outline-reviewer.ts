@@ -191,12 +191,14 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
     }
   }
 
-  // 4. 卷卖点未在启动包覆盖（开篇承诺与卷高潮脱节）。
-  //    只查卷 climax 的"场景型卖点"（会审逼供词等具体画面）是否出现在启动包；
-  //    objective 整体跳过——它是卷级目标/弧线陈述（章节范围、多目标并列、主线/
-  //    感情线/世界线推进），不属于开篇画面承诺，2026-08-16 实测其从句几乎必然
-  //    缺席启动包文本，混入检查会让每份初稿都触发一次修正请求，弱模型场景白花
-  //    1-3 分钟（luna 冒烟：6 条误报里 5 条来自 objective）。
+  // 4. 卷卖点未在启动包形成回响（开篇承诺与卷高潮脱节）。
+  //    只查卷 climax 的"场景型卖点"；objective 整体跳过（弧线/范围陈述，见下）。
+  //    匹配用「实体回响」而非逐字 includes：climax 是卷末高潮场景（约 46-60 章兑现），
+  //    开篇本就不该逐字复刻它，逐字检查模型无法合法满足——2026-08-16 双模型矩阵实测
+  //    3 轮 review 全由该检查触发，且 luna 的修正稿为凑逐字命中把卷末高潮硬塞进
+  //    46-50 章必出事件并全文复读同一句，结构退化 0→3 被拒，每轮白烧 1-3 个请求。
+  //    回响判定：从 climax 从句抽取人名等实体关键词（≥2 字中文词），要求启动包
+  //    文本覆盖过半（≥50%）；从句数多时只看单条覆盖率，不要求全部从句都命中。
   const volume = outline.volumePlan?.[0];
   if (volume) {
     const packText = [
@@ -211,13 +213,22 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
       .filter((item): item is string => typeof item === 'string' && !!item.trim())
       .join(' ');
     const sellingClauses = splitPlotClauses(stripMeta(volume.climax));
+    // 权威实体列表：主角名 + 登记角色名（回响检查的唯一判定依据）
+    const knownNames = [
+      outline.storyEngine?.protagonistName,
+      ...(outline.keyCharacters ?? []).map(character => character?.name),
+    ].filter((name): name is string => typeof name === 'string' && !!name.trim());
     for (const clause of sellingClauses) {
       if (clause.length < 8) continue;
       if (/^(完成|建立|让|使|实现|达成|推动)/u.test(clause)) continue;
-      if (!packText.includes(clause)) {
+      const { mentioned } = collectCharacterEcho(clause, knownNames);
+      // 从句不含任何角色名 → 无从判定回响（纯场景描述），跳过
+      if (mentioned.length === 0) continue;
+      const hit = mentioned.filter(name => packText.includes(name));
+      if (hit.length === 0) {
         issues.push({
           kind: 'missing-selling-point',
-          detail: `卷级卖点「${clause.slice(0, 40)}」未出现在${STARTUP_PACK_HEADING}（openingHook/coolPoints/readerExpectation）`,
+          detail: `卷级卖点「${clause.slice(0, 40)}」的关键角色（${mentioned.join('、')}）均未在${STARTUP_PACK_HEADING}登场，开篇承诺与卷高潮脱节`,
         });
         break;
       }
@@ -321,6 +332,21 @@ function stripMeta(text: string): string {
     .replace(/[；;].*读者期待.*$/u, '')
     .replace(/读者期待[：:][^；;]*/gu, '')
     .trim();
+}
+
+/** 从句里出现过的角色名（回响判定的唯一依据） */
+function collectCharacterEcho(
+  clause: string,
+  knownCharacterNames: string[],
+): { mentioned: string[]; } {
+  const mentioned: string[] = [];
+  for (const name of knownCharacterNames) {
+    const trimmed = (name ?? '').trim();
+    if (trimmed.length >= 2 && clause.includes(trimmed)) {
+      mentioned.push(trimmed);
+    }
+  }
+  return { mentioned };
 }
 
 function formatIssues(issues: OutlineQualityIssue[]): string {

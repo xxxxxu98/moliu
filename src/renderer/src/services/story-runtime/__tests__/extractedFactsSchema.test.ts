@@ -150,19 +150,68 @@ describe('extractedFactsSchema 顶层缺失字段软兜底', () => {
     expect(parsed.evidence).toEqual([]);
   });
 
-  it('内层 event 结构错误仍然抛出（不掩盖真实结构问题）', () => {
+  it('内层 event 缺核心字段（无 summary）时丢弃该元素，不再整章崩', () => {
+    // 语义升级（2026-08-17）：元素级缺陷从「整章抛错靠重试碰运气」降级为
+    // 「丢弃/修复该元素」——弱模型（gemini 矩阵实测）会偶发返回缺字段的元素，
+    // 整章失败会拖垮批量续写的持久错误重试额度。
     const raw = {
       events: [
         {
-          // 缺 id/sceneId 等必填字段
+          // 缺 id/sceneId/summary 等必填字段
           chapter: 1,
-          summary: 'x',
+          summary: '',
         },
       ],
       deltas: [],
       evidence: [],
     };
-    expect(() => parseSchema(extractedFactsSchema, raw, '事实提取结果')).toThrow();
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.events).toEqual([]);
+  });
+
+  it('内层 event 缺 type/participants 等非核心字段时补默认值救回（gemini ch3 真实回归）', () => {
+    // 2026-08-17 矩阵实测：gemini ch3 事实提取返回 events[0] 缺 type/summary/participants，
+    // zod 硬拒「expected string, received undefined」→ 持久错误重试。
+    // 有 summary 的元素应被救回（补 type='event'、participants=[] 等），
+    // 只有 summary 也缺的才丢弃。
+    const raw = {
+      events: [
+        {
+          id: 'chapter-3:event:1',
+          chapter: 3,
+          sceneId: 'chapter-3:CBN:scene',
+          // 缺 type / participants / causes / effects / evidence
+          summary: '陆渊识破绝笔信夹层中的底单',
+        },
+        {
+          // 这条连 summary 都缺 → 丢弃
+          id: 'chapter-3:event:2',
+          chapter: 3,
+        },
+      ],
+      deltas: [],
+      evidence: [],
+    };
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.events).toHaveLength(1);
+    expect(parsed.events[0].summary).toBe('陆渊识破绝笔信夹层中的底单');
+    expect(parsed.events[0].type).toBe('event');
+    expect(parsed.events[0].participants).toEqual([]);
+  });
+
+  it('内层 delta 缺 operation/evidence 时补默认值，缺 path 时丢弃', () => {
+    const raw = {
+      events: [],
+      deltas: [
+        { path: 'inventory.hero.银两', value: 5 }, // 缺 operation/evidence → 救回
+        { operation: 'set', value: 1 }, // 缺 path → 丢弃
+      ],
+      evidence: [],
+    };
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.deltas).toHaveLength(1);
+    expect(parsed.deltas[0].operation).toBe('set');
+    expect(typeof parsed.deltas[0].evidence).toBe('string');
   });
 });
 

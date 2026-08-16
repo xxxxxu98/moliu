@@ -64,13 +64,35 @@ function makeDirtyOutline(): ExecutableOutline {
       escalationPath: [],
       failureCost: '',
     },
+    keyCharacters: [
+      {
+        name: '药尘',
+        role: 'antagonist' as const,
+        functionInStory: '制造冲突',
+        keyNeed: '夺宝',
+        tensionWithProtagonist: '争夺异火',
+        revealTiming: '第1卷',
+        publicGoal: '炼丹',
+        hiddenNeed: '长生',
+        fearOrWound: '旧伤',
+        secret: '真实身份',
+        turningPoint: ' exposed',
+        arcStart: '隐世',
+        arcMid: '现世',
+        arcEnd: '陨落',
+        resources: ['丹炉'],
+        relationshipChanges: [],
+      },
+    ],
     volumePlan: [
       {
         volumeIndex: 1,
         title: '第1卷',
         objective: '完成校园鬼域闭环',
         coreConflict: '',
-        climax: '厉鬼群自动让开一条路',
+        // climax 点名「药尘」（keyCharacters 里的对手角色），dirty 夹具的启动包
+        // 全程不提这个名字 → 关键角色零登场，触发 missing-selling-point
+        climax: '药尘当众厉鬼群自动让开一条路',
         reversal: '',
         endingHook: '',
         protagonistGrowth: '',
@@ -105,7 +127,6 @@ function makeDirtyOutline(): ExecutableOutline {
         }),
       ],
     },
-    keyCharacters: [],
     foreshadowPlan: [],
   } as ExecutableOutline;
 }
@@ -113,6 +134,8 @@ function makeDirtyOutline(): ExecutableOutline {
 /** 干净大纲：五类问题全无 */
 function makeCleanOutline(): ExecutableOutline {
   const outline = makeDirtyOutline();
+  // climax 点名的「药尘」必须在启动包登场（回响语义：块3 coolPoints 让他提前现身）
+  outline.volumePlan[0].climax = '药尘当众厉鬼群自动让开一条路';
   outline.startupPack30.chapterBlocks = [
     makeBlock({
       objective: '完成校园鬼域闭环',
@@ -128,7 +151,7 @@ function makeCleanOutline(): ExecutableOutline {
     makeBlock({
       range: '11-15章',
       mustEvents: ['厉鬼群自动让开一条路'],
-      coolPoints: ['厉鬼群自动让开一条路'],
+      coolPoints: ['药尘现世，厉鬼群自动让开一条路'],
       forbiddenZones: ['不能让药老提前暴露真实身份'],
     }),
   ];
@@ -382,12 +405,54 @@ describe('inspectOutlineQuality', () => {
 
   it('卷 climax 场景型卖点确实缺席启动包：照常报 missing-selling-point', () => {
     const outline = makeCleanOutline();
-    outline.volumePlan[0].climax = '沈砚在户部会审中用仓耗、运价和到货量反推出真实亏空，逼出粮商与仓场官员的供词';
+    // climax 点名登记角色「沈砚」（keyCharacters），启动包文本把该名字全部抹掉 → 零登场，触发
+    outline.keyCharacters = [
+      {
+        name: '沈砚',
+        role: 'protagonist' as const,
+        functionInStory: '破局',
+        keyNeed: '查账',
+        tensionWithProtagonist: '体制对抗',
+        revealTiming: '第1章',
+        publicGoal: '洗冤',
+        hiddenNeed: '改制',
+        fearOrWound: '背锅',
+        secret: '现代知识',
+        turningPoint: '会审',
+        arcStart: '底层',
+        arcMid: '立足',
+        arcEnd: '掌权',
+        resources: ['算学'],
+        relationshipChanges: [],
+      },
+    ];
+    outline.volumePlan[0].climax =
+      '沈砚在户部会审中用仓耗、运价和到货量反推出真实亏空，逼出仓场官员的供词';
     outline.startupPack30.chapterBlocks.forEach(block => {
       block.coolPoints = ['无关爽点'];
+      block.objective = '无关目标';
+      block.readerExpectation = '无关期待';
+      block.mustEvents = ['无关事件'];
+      block.hookRequirement = '无关钩子';
     });
+    outline.startupPack30.openingHook = '一个人在教室醒来';
     const issues = inspectOutlineQuality(outline).filter(i => i.kind === 'missing-selling-point');
     expect(issues.length).toBeGreaterThanOrEqual(1);
+    expect(issues[0].detail).toContain('沈砚');
+  });
+
+  it('卷 climax 关键角色已在启动包登场：不误报 missing-selling-point（回响语义）', () => {
+    const outline = makeCleanOutline();
+    // climax 场景细节（借贷底稿/银锭流转）开篇没有——但这些是卷末才揭示的内容，
+    // 不该要求逐字出现；只要主角「陆渊」已在启动包登场就不算脱节
+    outline.volumePlan[0].climax =
+      '陆渊在户部会审中当众展示三联借贷底稿与银锭流转闭环，一举击溃户部侍郎与大理寺少卿的伪证防线';
+    outline.startupPack30.chapterBlocks.forEach(block => {
+      block.coolPoints = ['陆渊初显身手'];
+    });
+    expect(
+      inspectOutlineQuality(outline).some(i => i.kind === 'missing-selling-point'),
+    ).toBe(false);
   });
 });
 

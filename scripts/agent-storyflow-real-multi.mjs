@@ -145,11 +145,21 @@ function archiveRunArtifacts(providerId) {
   const suffix = sanitizeRunSuffix(providerId);
   const names = storyflowArtifactNames(suffix);
   const dest = join(MATRIX_DIR, providerId);
-  // 清掉上一轮同名矩阵目录里「可被本轮覆盖的归档产物」；run.log 是本轮刚写的，必须保留
+  // 清掉上一轮同名矩阵目录里「可被本轮覆盖的归档产物」；run.log 是本轮刚写的，必须保留。
+  // trace（*.jsonl）与 project-store 也必须清：归档只按前缀收敛，上一轮的旧 trace
+  // 会原样残留（2026-08-16 实测 gemini 目录混入两个 ch5 trace，分不清哪轮是哪轮，
+  // 分析时曾被误导）。清完只剩 run.log，本轮归档再逐个写入。
   for (const stale of ['storyflow.closed-loop.summary.json', 'storyflow.closed-loop.outline.json', 'prose']) {
     rmSync(join(dest, stale), { recursive: true, force: true });
   }
   mkdirSync(dest, { recursive: true });
+  if (existsSync(dest)) {
+    for (const name of readdirSync(dest)) {
+      if (name.endsWith('.jsonl') || name.endsWith('.project-store.json')) {
+        rmSync(join(dest, name), { force: true });
+      }
+    }
+  }
   const moved = [];
   const moveInto = (from, to) => {
     if (!existsSync(from)) return;
