@@ -376,6 +376,101 @@ describe('repairChapterBlueprints', () => {
     })).rejects.toThrow('长度上限截断');
     expect(callStructuredTextMode).toHaveBeenCalledTimes(1);
   }, 30_000);
+
+  // 2026-08-18 opencode 矩阵实测：并发池里批1 成功（227s 完整 10 章块），批2 瞬态重试
+  // 耗尽上抛 → Promise.all 一拒全弃，已成功批次成果被整体丢弃，expandDirection 返回
+  // null、角色/伏笔补齐全部没机会跑。现在失败批只记 warning，缺章交给定点修复轮。
+  it('并发批次部分重试耗尽时保留成功批次成果，不整体作废', async () => {
+    const outline = parseExpandedOutline(MAIN_OUTLINE_TEXT)!;
+    const chapterNumbers = Array.from(
+      { length: CHAPTER_BLUEPRINT_BATCH_SIZE * 2 },
+      (_, index) => index + 1,
+    );
+    const callStructuredTextMode = vi.fn(async (_system: string, user: string) => {
+      const requested = (user.match(/【只需补写的章号】\n([^\n]+)/u)?.[1] ?? '')
+        .split('、')
+        .map(Number);
+      if (requested[0] > CHAPTER_BLUEPRINT_BATCH_SIZE) {
+        throw new Error('大纲流式响应提前中断：已收到 0 字，未见结束标记');
+      }
+      return requested.map(buildChapterBlock).join('\n\n');
+    });
+
+    const result = await repairChapterBlueprints({
+      rawText: MAIN_OUTLINE_TEXT,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode,
+      chapterNumbers,
+      phase: '补全',
+    });
+
+    // 第 1 批（1-10 章）成果保留，第 2 批（11-20 章）只记 warning
+    expect(result.outline.chapterBlueprints?.map(item => item.orderIndex))
+      .toEqual(Array.from({ length: CHAPTER_BLUEPRINT_BATCH_SIZE }, (_, index) => index + 1));
+    expect(result.warnings.some(w => w.includes('重试耗尽仍失败'))).toBe(true);
+    expect(result.warnings.some(w => w.includes('仍有 10/10 章未解出'))).toBe(true);
+  }, 60_000);
+
+  it('并发批次全部重试耗尽时仍上抛，触发外层整体重试', async () => {
+    const outline = parseExpandedOutline(MAIN_OUTLINE_TEXT)!;
+    const chapterNumbers = Array.from(
+      { length: CHAPTER_BLUEPRINT_BATCH_SIZE * 2 },
+      (_, index) => index + 1,
+    );
+    const callStructuredTextMode = vi.fn(async () => {
+      throw new Error('大纲流式响应提前中断：已收到 0 字，未见结束标记');
+    });
+
+    await expect(repairChapterBlueprints({
+      rawText: MAIN_OUTLINE_TEXT,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode,
+      chapterNumbers,
+      phase: '补全',
+    })).rejects.toThrow('流式响应提前中断');
+    // 每批 1 次原始 + 2 次重试，共 2 批
+    expect(callStructuredTextMode).toHaveBeenCalledTimes(6);
+  }, 60_000);
+
+  it('串行批次部分重试耗尽时同样保留成功批次成果', async () => {
+    process.env.MOLIU_OUTLINE_BATCH_CONCURRENCY = '1';
+    try {
+      const outline = parseExpandedOutline(MAIN_OUTLINE_TEXT)!;
+      const chapterNumbers = Array.from(
+        { length: CHAPTER_BLUEPRINT_BATCH_SIZE * 2 },
+        (_, index) => index + 1,
+      );
+      const callStructuredTextMode = vi.fn(async (_system: string, user: string) => {
+        const requested = (user.match(/【只需补写的章号】\n([^\n]+)/u)?.[1] ?? '')
+          .split('、')
+          .map(Number);
+        if (requested[0] > CHAPTER_BLUEPRINT_BATCH_SIZE) {
+          throw new Error('read ECONNRESET');
+        }
+        return requested.map(buildChapterBlock).join('\n\n');
+      });
+
+      const result = await repairChapterBlueprints({
+        rawText: MAIN_OUTLINE_TEXT,
+        outline,
+        direction: { title: '方向' } as OutlineDirection,
+        options: {},
+        callStructuredTextMode,
+        chapterNumbers,
+        phase: '补全',
+      });
+
+      expect(result.outline.chapterBlueprints?.map(item => item.orderIndex))
+        .toEqual(Array.from({ length: CHAPTER_BLUEPRINT_BATCH_SIZE }, (_, index) => index + 1));
+      expect(result.warnings.some(w => w.includes('重试耗尽仍失败'))).toBe(true);
+    } finally {
+      delete process.env.MOLIU_OUTLINE_BATCH_CONCURRENCY;
+    }
+  }, 60_000);
 });
 
 describe('completeIncompleteOutline 空响应防护', () => {

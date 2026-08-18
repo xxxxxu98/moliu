@@ -1,4 +1,4 @@
----
+﻿---
 name: storyflow-auto-loop
 description: Storyflow 真实冒烟自动诊断-修复-回归循环。跑真实 AI 矩阵冒烟后用确定性 triage 脚本提取失败签名，按判定分类决定修复策略，快速回归验证后对比签名 diff，并把新失败模式写回 triage 分类规则实现自我升级。触发方式：/storyflow-auto-loop、「自动调优」「自动修复冒烟」「跑一轮自动循环」「自我升级冒烟流程」。
 ---
@@ -118,6 +118,7 @@ node scripts/storyflow-triage.mjs --diff
 ## 已知噪音（见到不要当成问题）
 
 - 合聚网关 502/ETIMEDOUT/ECONNRESET/流式 0 字中断：重试机制兜住即为黄，属正常抖动
+- `POST ... 400` 紧邻「max_tokens 超网关上限降级重试」：预期协商（triage 记黄 `infra.maxtokens-downgrade`），opencode 网关上限 524288
 - outline-expand trace 里 2 字符空响应（配对出现的缓存命中/空批次）：黄
 - `outline.titles-shrunk-local`：本地收缩不发 AI 请求，无成本，黄
 - 章 0 次通过但 `passed-with-repairs`：兜底机制工作正常，只有重写代价大时才优化

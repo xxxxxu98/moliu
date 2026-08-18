@@ -1,0 +1,139 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-18T07:07:06.026Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-matrix",
+  "providers": [
+    {
+      "providerId": "provider-1786762713932",
+      "model": "minimax-m3",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 41,
+      "chaptersAccepted": "0",
+      "words": null,
+      "phaseTimings": null,
+      "runtimeBackend": null,
+      "verdict": "infra-failure",
+      "verdictReason": "失败由网络/网关错误主导",
+      "signatures": [
+        {
+          "id": "infra.transient.http-400",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "HTTP 400"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": null,
+          "count": 7,
+          "evidence": [
+            "trace storyflow-provider-1786762713932-outline-1787034258056.jsonl seq5 outline-expand 响应 2 字符",
+            "trace storyflow-provider-1786762713932-outline-1787034258056.jsonl seq12 outline-expand 响应 2 字符",
+            "trace storyflow-provider-1786762713932-outline-1787034258056.jsonl seq13 outline-expand 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.econnreset",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "Error: read ECONNRESET"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 37806,
+          "p50Ms": 37806,
+          "maxMs": 37806
+        },
+        "outline-expand": {
+          "count": 26,
+          "avgMs": 193828,
+          "p50Ms": 152579,
+          "maxMs": 386125
+        }
+      }
+    },
+    {
+      "providerId": "provider-1786762978054",
+      "model": "qwen3.8-max",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 24,
+      "chaptersAccepted": "0",
+      "words": null,
+      "phaseTimings": null,
+      "runtimeBackend": null,
+      "verdict": "infra-failure",
+      "verdictReason": "失败由网络/网关错误主导",
+      "signatures": [
+        {
+          "id": "infra.transient.http-400",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "HTTP 400"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.http-503",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "HTTP 503"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": null,
+          "count": 9,
+          "evidence": [
+            "trace storyflow-provider-1786762978054-outline-1787034258055.jsonl seq3 outline-expand 响应 2 字符",
+            "trace storyflow-provider-1786762978054-outline-1787034258055.jsonl seq4 outline-expand 响应 2 字符",
+            "trace storyflow-provider-1786762978054-outline-1787034258055.jsonl seq5 outline-expand 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.econnreset",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "Error: read ECONNRESET"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 95115,
+          "p50Ms": 95115,
+          "maxMs": 95115
+        },
+        "outline-expand": {
+          "count": 15,
+          "avgMs": 141725,
+          "p50Ms": 150338,
+          "maxMs": 294187
+        }
+      }
+    }
+  ]
+}

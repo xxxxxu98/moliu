@@ -98,6 +98,15 @@ const TIMEOUT_RE = /timeout|超时|timed?\s*out/iu;
 /** 配额耗尽文案特征（部分 provider 会用文案而非 429） */
 const QUOTA_RE = /quota|配额|rate\s*limit|insufficient.*quota|余额不足|速率限制|请求频率/iu;
 
+/**
+ * 窗口级配额耗尽特征（opencode GoUsageLimitError，文案形如
+ * "5-hour usage limit reached. Resets in 2hr 13min"）。
+ * 与秒级 429 限流不同：窗口配额重置以小时计，退避重试注定失败，
+ * 只会空转烧时间（2026-08-18 回归实测：写作阶段空转 85 分钟），
+ * 必须快速失败把错误冒给用户。
+ */
+const WINDOW_QUOTA_RE = /usage\s*limit\s*reached/iu;
+
 // ============================================
 // 辅助判定
 // ============================================
@@ -148,19 +157,32 @@ export function classifyError(err: unknown, signal?: AbortSignal): ClassifiedErr
     return { kind: 'timeout', retryable: true, transient: true, message };
   }
 
-  // 3) HTTP 状态码（multi-ai-sdk AIError 携带 status；项目内 fetch 包装成「请求失败: 429 …」）
+  // 3) 窗口级配额耗尽（GoUsageLimitError，HTTP 429 或纯文案）：重置以小时计，
+  //    必须先于 status=429 判定，否则会被当秒级限流退避重试空转到天荒地老
+  if (WINDOW_QUOTA_RE.test(message) || readErrorType(err) === 'GoUsageLimitError') {
+    return { kind: 'rate_limit', retryable: false, transient: false, message };
+  }
+
+  // 4) HTTP 状态码（multi-ai-sdk AIError 携带 status；项目内 fetch 包装成「请求失败: 429 …」）
   const status = readStatus(err) ?? readStatusFromMessage(message);
   if (typeof status === 'number') {
     const fromStatus = classifyHttpStatus(status);
     if (fromStatus) return { ...fromStatus, message };
   }
 
-  // 4) message 模式匹配（项目内抛的普通 Error）
+  // 5) message 模式匹配（项目内抛的普通 Error）
   const fromMessage = classifyByMessage(message);
   if (fromMessage) return { ...fromMessage, message };
 
-  // 5) 兜底
+  // 6) 兜底
   return { kind: 'unknown', retryable: false, transient: false, message };
+}
+
+/** 安全读取错误对象上的 type 字段（multi-ai-sdk 的 AIError 子类用它区分业务错误） */
+function readErrorType(err: unknown): string | undefined {
+  if (typeof err !== 'object' || err === null) return undefined;
+  const type = (err as { type?: unknown }).type;
+  return typeof type === 'string' ? type : undefined;
 }
 
 /**

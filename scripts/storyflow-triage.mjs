@@ -129,9 +129,18 @@ function parseRunLog(logText, acc) {
       acc.add(classifyTransient(m[4]), null, `重试 ${m[2]}/${m[3]}：${m[4]}`.slice(0, EVIDENCE_MAX));
     }
 
-    // 原始 HTTP 失败行（大纲阶段批量修复的 502 只在这出现）
+    // 原始 HTTP 失败行（大纲阶段批量修复的 502 只在这出现）。
+    // 400 且近邻有 max_tokens 降级重试日志 = 网关上限协商（UnifiedOutlineGenerator
+    // 按网关报的上限降参重试，属预期兜底），不计入故障红签名
     m = line.match(/^POST\s+\S+\s+(\d{3})\s/);
-    if (m) acc.add(`infra.transient.http-${m[1]}`, null, `HTTP ${m[1]}`);
+    if (m) {
+      const nearby = lines.slice(i + 1, i + 4).join('\n');
+      if (m[1] === '400' && /超网关上限[^\n]*降级/.test(nearby)) {
+        acc.add('infra.maxtokens-downgrade', null, 'max_tokens 超网关上限，降级重试');
+      } else {
+        acc.add(`infra.transient.http-${m[1]}`, null, `HTTP ${m[1]}`);
+      }
+    }
 
     // 原始网络错误块（Error: read ECONNRESET 等）
     m = line.match(/^Error:\s+(?:read|connect)\s+(ECONNRESET|ETIMEDOUT)/);
@@ -271,6 +280,7 @@ function triageProvider(providerId, meta) {
   // 分级：章节最终 accepted → 黄（已恢复）；否则红（阻断）。infra/outline/assert 恒定分级
   const RED_ALWAYS = new Set(['assert.chapters-accepted']);
   const YELLOW_ALWAYS = new Set([
+    'infra.maxtokens-downgrade',
     'infra.transient.http-502',
     'infra.transient.http-429',
     'infra.transient.etimedout',

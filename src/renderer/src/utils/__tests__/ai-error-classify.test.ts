@@ -130,6 +130,39 @@ describe('classifyError', () => {
     });
   });
 
+  describe('窗口级配额（opencode GoUsageLimitError）', () => {
+    // 2026-08-18 回归实测：GoUsageLimitError 带 status 429，被当秒级限流退避重试，
+    // 写作阶段空转 85 分钟直到矩阵超时。窗口配额重置以小时计，必须快速失败。
+    const makeGoUsageLimitError = (): Error => {
+      const err = new Error('5-hour usage limit reached. Resets in 2hr 13min.');
+      Object.assign(err, { status: 429, type: 'GoUsageLimitError' });
+      return err;
+    };
+
+    it('type=GoUsageLimitError 的 429 归为不可重试 rate_limit', () => {
+      const result = classifyError(makeGoUsageLimitError());
+      expect(result.kind).toBe('rate_limit');
+      expect(result.retryable).toBe(false);
+      expect(result.transient).toBe(false);
+    });
+
+    it('纯文案 usage limit reached（无 type/status）同样快速失败', () => {
+      const result = classifyError(new Error('5-hour usage limit reached. Resets in 2hr 13min.'));
+      expect(result.kind).toBe('rate_limit');
+      expect(result.retryable).toBe(false);
+      expect(result.transient).toBe(false);
+    });
+
+    it('普通 429 限流仍可重试（不受窗口配额规则影响）', () => {
+      const err = new Error('Too many requests');
+      Object.assign(err, { status: 429 });
+      const result = classifyError(err);
+      expect(result.kind).toBe('rate_limit');
+      expect(result.retryable).toBe(true);
+      expect(result.transient).toBe(true);
+    });
+  });
+
   describe('parseAllowedTemperature（网关温度约束）', () => {
     // kimi-k3 OpenAI 兼容层实测：400 invalid temperature: only 1 is allowed for this model。
     // 参数约束必须解析后改值重试，同参数重试只会复现。

@@ -882,24 +882,59 @@ export async function repairChapterBlueprints(params: {
       `并发${phase}单章蓝图 ${batches.length} 批（每批 ${CHAPTER_BLUEPRINT_BATCH_SIZE} 章，并发 ${Math.min(batchConcurrency, batches.length)}）...`,
     );
     const results = new Map<number[], string>();
+    let lastPoolError: unknown;
     await runWithConcurrency(
       batches.map(batch => async () => {
-        const generated = await requestBatch(batch, outline);
-        results.set(batch, generated);
+        try {
+          const generated = await requestBatch(batch, outline);
+          results.set(batch, generated);
+        } catch (error) {
+          // 用户取消必须立刻终止整轮。其余批次重试耗尽后只记账不扩散：
+          // Promise.all 一拒全弃会丢掉已成功批次（2026-08-18 opencode 矩阵实测：
+          // 批1 成功 227s，批2/3 耗尽重试后整轮作废，expandDirection 返回 null），
+          // 缺章交给「定点修复」轮按批补发。
+          if (isAbortedError(error, params.options.signal)) throw error;
+          lastPoolError = error;
+          const message = error instanceof Error ? error.message : String(error);
+          warnings.push(
+            `单章蓝图${phase}批次 ${batch[0]}-${batch.at(-1)} 重试耗尽仍失败：${message.slice(0, 120)}`,
+          );
+        }
       }),
       batchConcurrency,
     );
+    if (results.size === 0 && lastPoolError !== undefined) {
+      // 一批都没成：无成果可保，上抛触发外层整体重试（降温）
+      throw lastPoolError instanceof Error ? lastPoolError : new Error(String(lastPoolError));
+    }
     for (const batch of batches) {
       await mergeBatch(batch, results.get(batch) ?? '');
     }
   } else {
     const batchCount = batches.length;
+    let succeededBatches = 0;
+    let lastSerialError: unknown;
     for (const [batchIndex, batch] of batches.entries()) {
       onProgress?.(
         `正在${phase}单章蓝图 第${batch[0]}-${batch.at(-1)}章（${batchIndex + 1}/${batchCount}）...`,
       );
-      const generated = await requestBatch(batch, outline);
+      let generated: string;
+      try {
+        generated = await requestBatch(batch, outline);
+      } catch (error) {
+        if (isAbortedError(error, params.options.signal)) throw error;
+        lastSerialError = error;
+        const message = error instanceof Error ? error.message : String(error);
+        warnings.push(
+          `单章蓝图${phase}批次 ${batch[0]}-${batch.at(-1)} 重试耗尽仍失败：${message.slice(0, 120)}`,
+        );
+        continue;
+      }
+      succeededBatches += 1;
       await mergeBatch(batch, generated);
+    }
+    if (succeededBatches === 0 && lastSerialError !== undefined) {
+      throw lastSerialError instanceof Error ? lastSerialError : new Error(String(lastSerialError));
     }
   }
 
