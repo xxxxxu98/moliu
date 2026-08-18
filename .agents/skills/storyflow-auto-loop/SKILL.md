@@ -119,6 +119,7 @@ node scripts/storyflow-triage.mjs --diff
 
 - 合聚网关 502/ETIMEDOUT/ECONNRESET/流式 0 字中断：重试机制兜住即为黄，属正常抖动
 - `POST ... 400` 紧邻「max_tokens 超网关上限降级重试」：预期协商（triage 记黄 `infra.maxtokens-downgrade`），opencode 网关上限 524288
+- 反重力网关 400 "User location is not supported"（上游地区路由拦截）：多上游通道轮换级抖动，同轮重试常即恢复；被步级重试兜住为黄 `infra.transient.geo-block`。ai-error-classify 已按瞬态分类（2026-08-18），若仍出现整章/整份大纲被单次拦截废掉的签名，说明分类回归了
 - outline-expand trace 里 2 字符空响应（配对出现的缓存命中/空批次）：黄
 - `outline.titles-shrunk-local`：本地收缩不发 AI 请求，无成本，黄
 - 章 0 次通过但 `passed-with-repairs`：兜底机制工作正常，只有重写代价大时才优化

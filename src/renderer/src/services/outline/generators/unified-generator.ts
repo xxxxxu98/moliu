@@ -667,7 +667,9 @@ export class UnifiedOutlineGenerator {
           // 先做零成本本地 sanitize：标题/CBN/CEN 超长按分句收缩（2026-08-15 冒烟 22/50 章
           // 超长 1-16 字，全部可本地收口），只有 sanitize 处理不了的章才进 AI 定点修复。
           if (!finalCompleteness.canApply) {
-            const sanitized = sanitizeOutlineHookLengths(rawText, outline);
+            // 基底必须取修正稿：sanitize 会整份重解析文本，用初稿 rawText 会把
+            // review 修正成果（如已收缩的开篇钩子）静默回退成初稿版本。
+            const sanitized = sanitizeOutlineHookLengths(appliedFixRawText ?? rawText, outline);
             if (sanitized) {
               outline = sanitized.outline;
               rawText = sanitized.rawText;

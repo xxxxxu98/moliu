@@ -107,6 +107,15 @@ const QUOTA_RE = /quota|配额|rate\s*limit|insufficient.*quota|余额不足|速
  */
 const WINDOW_QUOTA_RE = /usage\s*limit\s*reached/iu;
 
+/**
+ * 网关上游地区路由拦截（实测反重力网关 HTTP 400 "User location is not supported
+ * for the API use"）：网关多上游通道轮换，同轮稍后请求常即恢复（gemini-3.7 矩阵
+ * 全绿轮 ch4 同签名第 1 次重试即过）。属通道抖动而非业务 4xx，必须先于
+ * classifyHttpStatus 的 4xx 分支判定，否则会被归成 provider 不可重试，
+ * 一次拦截就废掉整章/整份大纲。
+ */
+const GEO_BLOCK_RE = /user location is not supported/iu;
+
 // ============================================
 // 辅助判定
 // ============================================
@@ -161,6 +170,11 @@ export function classifyError(err: unknown, signal?: AbortSignal): ClassifiedErr
   //    必须先于 status=429 判定，否则会被当秒级限流退避重试空转到天荒地老
   if (WINDOW_QUOTA_RE.test(message) || readErrorType(err) === 'GoUsageLimitError') {
     return { kind: 'rate_limit', retryable: false, transient: false, message };
+  }
+
+  // 3.5) 网关上游地区路由拦截：通道轮换级瞬态，先于 4xx 业务分类判定
+  if (GEO_BLOCK_RE.test(message)) {
+    return { kind: 'server', retryable: true, transient: true, message };
   }
 
   // 4) HTTP 状态码（multi-ai-sdk AIError 携带 status；项目内 fetch 包装成「请求失败: 429 …」）

@@ -73,6 +73,9 @@ function parseIssue(text) {
 function classifyTransient(reason) {
   if (reason.includes('502')) return 'infra.transient.http-502';
   if (reason.includes('429')) return 'infra.transient.http-429';
+  // 网关上游地区路由拦截（实测反重力 400 "User location is not supported"）：
+  // 通道轮换级抖动，重试常即恢复。单独成签名，别落进 400 大类被误读为业务错误。
+  if (/user location is not supported/i.test(reason)) return 'infra.transient.geo-block';
   if (reason.includes('ETIMEDOUT')) return 'infra.transient.etimedout';
   if (reason.includes('ECONNRESET')) return 'infra.transient.econnreset';
   if (reason.includes('流式响应提前中断')) return 'infra.transient.stream-interrupted';
