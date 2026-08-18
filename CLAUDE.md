@@ -31,6 +31,14 @@
 
 ---
 
+## 🔁 真实冒烟自动循环护栏（storyflow-auto-loop）
+
+- ❌ **禁止自动放宽质量门**：reviewer 判定 schema、合同 mustCover/forbidden、字数区间等判定标准的任何放宽必须人工确认——让测试变绿 ≠ 修复
+- ❌ **禁止对 stalled 失败继续 patch**：triage 判定 `model-capability-suspect`（同章质量拒绝 ≥3 轮）时立即停止修代码，产出「换模型 / 调合同」结论上报
+- ⚠️ **单会话修复→回归上限 3 轮**：超限输出阶段总结停止，循环协议见 `.agents/skills/storyflow-auto-loop/SKILL.md`
+
+---
+
 ## 🎯 核心技术栈（版本以 `package.json` 为准）
 
 | 层级 | 技术 |

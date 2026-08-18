@@ -20,7 +20,8 @@
     "smoke:topic-discovery:real": "node scripts/agent-topic-discovery-real-smoke.mjs",
     "smoke:storyflow:real": "node scripts/agent-storyflow-real-smoke.mjs",
     "smoke:storyflow:real:multi": "node scripts/agent-storyflow-real-multi.mjs",
-    "cleanup:continue-write-artifacts": "node scripts/cleanup-continue-write-artifacts.mjs"
+    "cleanup:continue-write-artifacts": "node scripts/cleanup-continue-write-artifacts.mjs",
+    "triage:storyflow": "node scripts/storyflow-triage.mjs"
   },
   "keywords": [],
   "author": {
