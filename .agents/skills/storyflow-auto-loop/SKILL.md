@@ -92,7 +92,7 @@ node scripts/storyflow-triage.mjs --diff
 - 「新增」里没有红签名（有则退出码 1，必须处理或回滚）
 - 同厂商 verdict 不劣化（如 passed-with-repairs → quality-rejection）
 
-快速回归通过 ≠ 完成。涉及写作管线行为的修复，最终验收用全量 5 章矩阵重跑一轮。
+快速回归通过 ≠ 完成。涉及写作管线行为的修复，最终验收用全量 20 章矩阵重跑一轮。
 
 ## 第 6 步：知识回写（自我升级）
 

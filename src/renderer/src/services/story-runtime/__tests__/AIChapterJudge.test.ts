@@ -231,6 +231,70 @@ describe('AIFulfillmentJudge 兼容封装', () => {
   });
 });
 
+describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2 实测）', () => {
+  it('只返回 fulfillment、缺 forbidden/issues 时软兜底为空数组，不再 schema 硬拒终止整批', async () => {
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => ({
+        fulfillment: [{ node: '节点A', fulfilled: true, evidence: ['正文原句'], reason: '已写到' }],
+      })),
+    };
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A', '节点B'],
+      forbiddenZones: ['禁区1'],
+      chapterText: '正文原句',
+      checkDeepSemantic: true,
+    });
+    expect(result.fulfillment[0]).toMatchObject({ node: '节点A', fulfilled: true });
+    // 漏回的节点/禁区按既有 normalize 语义补默认判定，而非抛错停批
+    expect(result.fulfillment[1]).toMatchObject({ node: '节点B', fulfilled: false });
+    expect(result.forbidden[0]).toMatchObject({ zone: '禁区1', violated: false });
+    expect(result.issues).toEqual([]);
+  });
+
+  it('数组内缺核心字段的元素被剔除，保留可解析部分', async () => {
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => ({
+        fulfillment: [
+          { node: '节点A', fulfilled: true, evidence: [], reason: 'ok' },
+          { node: 123, fulfilled: true },
+        ],
+        forbidden: [
+          { zone: '禁区1', violated: false, evidence: [], reason: 'ok' },
+          { zone: '禁区2' },
+        ],
+        issues: [
+          { type: 'logic_gap', severity: 'high', location: '第2段', description: '矛盾', evidence: [] },
+          { type: '未知类型', description: '枚举外，剔除' },
+        ],
+      })),
+    };
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: ['禁区1'],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+    });
+    expect(result.fulfillment).toHaveLength(1);
+    expect(result.forbidden).toHaveLength(1);
+    expect(result.issues).toHaveLength(1);
+    expect(result.issues[0]?.type).toBe('logic_gap');
+  });
+
+  it('空字符串等非对象输入仍走硬失败（由上层 truncated 重试兜住）', async () => {
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => ''),
+    };
+    await expect(
+      new AIChapterJudge(ai).judge({
+        mustCover: ['节点A'],
+        forbiddenZones: [],
+        chapterText: '正文',
+        checkDeepSemantic: true,
+      }),
+    ).rejects.toThrow('结构校验失败');
+  });
+});
+
 function emptyJudgePayload() {
   return { fulfillment: [], forbidden: [], issues: [] };
 }

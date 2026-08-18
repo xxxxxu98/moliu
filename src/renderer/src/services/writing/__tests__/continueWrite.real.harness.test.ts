@@ -7,7 +7,7 @@
  * 配置：temp/continue-write.real.config.json
  * 运行：
  * - 单章：npm run smoke:continue-write:real
- * - 多章：npm run smoke:continue-write:real:multi（默认 3 章；或配置 chapterCount / MOLIU_CHAPTER_COUNT）
+ * - 多章：npm run smoke:continue-write:real:multi（默认 20 章；或配置 chapterCount / MOLIU_CHAPTER_COUNT）
  *
  * 产物：
  * - 单章：temp/continue-write.real.summary.json / steps.txt / report.json

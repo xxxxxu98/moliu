@@ -6,7 +6,7 @@
  *
  * 配置：temp/continue-write.real.config.json
  * - chapterNumber：起始章（默认 1）
- * - chapterCount：连续章数（默认至少 3；也可用 MOLIU_CHAPTER_COUNT）
+ * - chapterCount：连续章数（默认 20；也可用 MOLIU_CHAPTER_COUNT）
  *
  * 跑前清本轮冒烟自己的全部产物与 trace（不保留历史，避免新旧混淆误判）。
  */
@@ -19,7 +19,7 @@ import { cleanupSmokeArtifacts } from './cleanup-smoke-artifacts.mjs';
 process.env.REAL_AI = process.env.REAL_AI || '1';
 process.env.REAL_AI_MULTI = process.env.REAL_AI_MULTI || '1';
 if (!process.env.MOLIU_CHAPTER_COUNT) {
-  process.env.MOLIU_CHAPTER_COUNT = '3';
+  process.env.MOLIU_CHAPTER_COUNT = '20';
 }
 
 const configPath = join(process.cwd(), 'temp', 'continue-write.real.config.json');

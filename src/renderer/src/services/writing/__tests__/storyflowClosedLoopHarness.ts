@@ -40,6 +40,7 @@ import {
   resolveContinueWriteRealConfig,
   type ResolvedRealAiConfig,
 } from './continueWriteRealConfig';
+
 import {
   runContinueWriteChapters,
   type ContinueWriteChapterRunResult,
@@ -51,11 +52,14 @@ import {
   isRealAiEnabled,
 } from './realStructuredAI';
 
+/** 真实 Storyflow 冒烟默认连续续写章数；环境变量仍可用于快速回归缩短批次。 */
+export const DEFAULT_STORYFLOW_CHAPTER_COUNT = 20;
+
 export interface StoryflowClosedLoopOptions {
   /** 开题提示（默认：一个可写 30 万字长篇的起点） */
   prompt?: string;
   wordCountRange?: string;
-  /** 批量续写章数（默认 5，覆盖开篇多章以精准测试跨章合同去重/状态衔接） */
+  /** 批量续写章数（默认 20，覆盖更长连续正文以检验跨章合同去重/状态衔接） */
   chapterCount?: number;
   /** 每章目标字数（真实 AI 冒烟建议 1500-2500） */
   targetWordCount?: number;
@@ -326,7 +330,7 @@ export async function runStoryflowClosedLoop(
 ): Promise<StoryflowClosedLoopResult> {
   const prompt = options.prompt ?? '一个现代社畜穿越到古代朝堂，凭借现代知识在官场步步高升，卷入皇权之争';
   const wordCountRange = options.wordCountRange ?? '30万-60万';
-  const chapterCount = options.chapterCount ?? 5;
+  const chapterCount = options.chapterCount ?? DEFAULT_STORYFLOW_CHAPTER_COUNT;
   const targetWordCount = options.targetWordCount ?? 2000;
   // 并发矩阵时带后缀（storyflow-<suffix>），project-store 与 trace 文件名随之隔离
   const suffix = resolveStoryflowRunSuffix();

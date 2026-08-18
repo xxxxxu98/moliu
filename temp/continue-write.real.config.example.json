@@ -7,7 +7,7 @@
   "provider": "openai",
   "model": "",
   "baseUrl": "",
-  "chapterCount": 5,
+  "chapterCount": 20,
   "emptyRewrite": true,
   "targetWordCount": 3000
 }

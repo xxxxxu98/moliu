@@ -499,18 +499,7 @@ export const fulfillmentCheckResultSchema: z.ZodType<FulfillmentCheckResult> = z
   results: z.array(fulfillmentNodeJudgmentSchema),
 });
 
-export const chapterJudgeResultSchema: z.ZodType<ChapterJudgeResult> = z.object({
-  fulfillment: z.array(fulfillmentNodeJudgmentSchema),
-  forbidden: z.array(
-    z.object({
-      zone: z.string().min(1),
-      violated: z.boolean(),
-      evidence: stringArraySchema,
-      reason: z.string(),
-    })
-  ),
-  issues: z.array(
-    z.object({
+const chapterJudgeIssueSchema = z.object({
       type: z.enum([
         'fact_conflict',
         'logic_gap',
@@ -523,9 +512,60 @@ export const chapterJudgeResultSchema: z.ZodType<ChapterJudgeResult> = z.object(
       location: z.string(),
       description: z.string(),
       evidence: stringArraySchema,
+    });
+
+/**
+ * chapter-judge 响应软兜底：模型偶发只返回部分字段（如只给 fulfillment，
+ * issues/forbidden 为 undefined——2026-08-18 gemini-3.6 20 章矩阵 ch2 实测），
+ * 旧口径 zod 硬拒 → classifyError 判 schema 非瞬态 → 包成 review-unavailable
+ * 直接终止整批续写。缺的字段填「不阻断正文」的安全默认（issues=[]、forbidden=[]），
+ * 履约判定由 AIChapterJudge.normalize 对缺失节点补「未返回判定」。
+ * 空响应/非对象不在此兜底（仍走硬失败 → truncated 重试）。
+ */
+function coerceChapterJudgeResult(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return value;
+  const obj = { ...(value as Record<string, unknown>) };
+  for (const key of ['fulfillment', 'forbidden', 'issues'] as const) {
+    if (obj[key] === undefined || obj[key] === null) {
+      obj[key] = [];
+      console.warn(`[schemas] 章节审查结果缺 ${key} 字段，已软兜底为 []`);
+    }
+  }
+  // 数组内缺核心字段的元素直接剔除（无法安全构造判定），保留可解析部分
+  obj.fulfillment = (obj.fulfillment as unknown[]).filter(
+    item => typeof item === 'object' && item !== null
+      && typeof (item as Record<string, unknown>).node === 'string'
+      && typeof (item as Record<string, unknown>).fulfilled === 'boolean',
+  );
+  obj.forbidden = (obj.forbidden as unknown[]).filter(
+    item => typeof item === 'object' && item !== null
+      && typeof (item as Record<string, unknown>).zone === 'string'
+      && typeof (item as Record<string, unknown>).violated === 'boolean',
+  );
+  obj.issues = (obj.issues as unknown[]).filter(
+    item => typeof item === 'object' && item !== null
+      && typeof (item as Record<string, unknown>).type === 'string'
+      && typeof (item as Record<string, unknown>).severity === 'string'
+      && typeof (item as Record<string, unknown>).description === 'string',
+  );
+  return obj;
+}
+
+export const chapterJudgeResultSchema: z.ZodType<ChapterJudgeResult> = z.preprocess(
+  coerceChapterJudgeResult,
+  z.object({
+  fulfillment: z.array(fulfillmentNodeJudgmentSchema),
+  forbidden: z.array(
+    z.object({
+      zone: z.string().min(1),
+      violated: z.boolean(),
+      evidence: stringArraySchema,
+      reason: z.string(),
     })
   ),
-});
+  issues: z.array(chapterJudgeIssueSchema),
+  }),
+);
 
 export const endingClosureResultSchema: z.ZodType<EndingClosureResult> = z.object({
   closed: z.boolean(),

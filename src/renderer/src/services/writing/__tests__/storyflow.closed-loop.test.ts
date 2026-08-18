@@ -22,6 +22,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { isRealAiEnabled } from './realStructuredAI';
 import {
+  DEFAULT_STORYFLOW_CHAPTER_COUNT,
   resolveStoryflowArtifactPaths,
   runStoryflowClosedLoop,
 } from './storyflowClosedLoopHarness';
@@ -110,21 +111,34 @@ function writeClosedLoopArtifacts(
     status: 'complete',
     promptSource: promptContext.promptSource,
     promptChars: promptContext.prompt.length,
-    requestedChapterCount: envInt('MOLIU_CHAPTER_COUNT', 5),
+    requestedChapterCount: envInt('MOLIU_CHAPTER_COUNT', DEFAULT_STORYFLOW_CHAPTER_COUNT),
     phaseTimings: result.phaseTimings,
     completedChapters: result.chapterRunResults.length,
     chapters: outlineChapters.length,
     outlinePath: OUTLINE_PATH,
     proseDir: PROSE_DIR,
-    batch: result.chapterRunResults.map((r, i) => ({
-      ch: i + 1,
-      accepted: r.output.success,
-      title: r.output.title,
-      words: r.output.prose.length,
-      head: r.output.prose.slice(0, 120),
-      tail: r.output.prose.slice(-80),
-      error: r.output.error ?? null,
-    })),
+    batch: result.chapterRunResults.map((r, i) => {
+      // 段落节奏指标（AI 腔信号）：cv=段长变异系数，健康网文 ≥0.25，
+      // 均匀中长段（cv<0.14 且段数≥12）是机器腔节奏。落盘供 triage/人工抽查明趋势。
+      const paras = r.output.prose.split(/\n\s*\n/u).map(p => p.trim()).filter(Boolean);
+      const lens = paras.map(p => p.length);
+      const avgLen = lens.length > 0 ? lens.reduce((a, b) => a + b, 0) / lens.length : 0;
+      const cv =
+        lens.length > 1 && avgLen > 0
+          ? Math.sqrt(lens.reduce((a, b) => a + (b - avgLen) ** 2, 0) / lens.length) / avgLen
+          : 0;
+      return {
+        ch: i + 1,
+        accepted: r.output.success,
+        title: r.output.title,
+        words: r.output.prose.length,
+        paras: paras.length,
+        paraCv: Number(cv.toFixed(2)),
+        head: r.output.prose.slice(0, 120),
+        tail: r.output.prose.slice(-80),
+        error: r.output.error ?? null,
+      };
+    }),
     // 续写后 plotOutline 章节标题（验证 chapterTitle 回写：应不再是「第N章」纯序号）
     plotOutlineTitles: (result.project.plotOutline ?? [])
       .filter(n => n.type === 'chapter')
@@ -159,7 +173,7 @@ describe.runIf(isRealAiEnabled())(
       '开题中心生成大纲并应用，对生成的网文批量续写全部 accepted',
       async () => {
         const startedAt = Date.now();
-        const chapterCount = envInt('MOLIU_CHAPTER_COUNT', 5);
+        const chapterCount = envInt('MOLIU_CHAPTER_COUNT', DEFAULT_STORYFLOW_CHAPTER_COUNT);
         const targetWordCount = envInt('MOLIU_TARGET_WORDS', 3000);
         const { prompt, source: promptSource } = resolveStoryflowPrompt();
         const result = await runStoryflowClosedLoop({
@@ -214,7 +228,7 @@ describe.runIf(isRealAiEnabled())(
         expect(result.projectStorageVerification.positioningPersisted).toBe(true);
 
         // ---------- ③ 批量续写断言 ----------
-        // 默认 5 章覆盖跨章合同；P0 快速回归可通过 MOLIU_CHAPTER_COUNT 缩到 1 章。
+        // 默认 20 章覆盖更长连续正文；P0 快速回归可通过 MOLIU_CHAPTER_COUNT 缩到 1 章。
         expect(result.chapterRunResults.length).toBe(chapterCount);
         const failed = result.chapterRunResults.filter(r => !r.output.success);
         expect(failed).toEqual([]);

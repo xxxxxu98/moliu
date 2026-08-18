@@ -23,7 +23,7 @@ export interface ContinueWriteRealConfig {
   projectId?: string;
   projectName?: string;
   chapterNumber?: number;
-  /** 连续续写章数；默认 1。多章冒烟默认至少 3 */
+  /** 连续续写章数；默认 1。多章冒烟脚本默认 20 */
   chapterCount?: number;
   emptyRewrite?: boolean;
   targetWordCount?: number;
