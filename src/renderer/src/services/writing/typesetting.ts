@@ -34,6 +34,20 @@ export const MAX_CONSECUTIVE_SHORT_PARAGRAPHS = 5;
 export const LONG_PARAGRAPH_RATIO_THRESHOLD = 0.5;
 
 /**
+ * 段落长度均匀化阈值：变异系数（标准差/均值）低于此值且段数足够时，
+ * 说明全章段落长度雷同（如清一色 150-200 字中长段）——这是最典型的
+ * AI 腔节奏（2026-08-18 双 gemini 矩阵实测 cv 0.07-0.13，人类网文
+ * 因对话短拍与叙述长段交错通常在 0.25+）。仅报 medium 信号不阻断。
+ */
+export const UNIFORM_PARAGRAPH_CV_THRESHOLD = 0.14;
+
+/** 均匀化判定所需最少段数（段太少统计无意义） */
+export const UNIFORM_PARAGRAPH_MIN_COUNT = 12;
+
+/** 均匀化判定所需最小平均段长（平均过短属碎段问题，由既有检测负责） */
+export const UNIFORM_PARAGRAPH_MIN_AVG_CHARS = 120;
+
+/**
  * 注入起草/任务书的排版硬约束（尽量短，避免挤占预算）。
  * 目标：适中分段——挡住超长大段，同时避免空行刷屏。
  */
@@ -73,6 +87,8 @@ export interface ParagraphDensityStats {
   avgParagraphChars: number;
   /** 超过 MAX_SENTENCES_PER_PARAGRAPH 的段落数 */
   overSentenceParagraphCount: number;
+  /** 段落长度变异系数（标准差/均值）；越低越均匀，过低是 AI 腔节奏信号 */
+  paragraphLengthCV: number;
 }
 
 export interface ParagraphDensityIssue {
@@ -344,6 +360,7 @@ export function analyzeParagraphDensity(prose: string): ParagraphDensityStats {
       maxParagraphChars: 0,
       avgParagraphChars: 0,
       overSentenceParagraphCount: 0,
+      paragraphLengthCV: 0,
     };
   }
 
@@ -353,6 +370,8 @@ export function analyzeParagraphDensity(prose: string): ParagraphDensityStats {
   const overSentenceParagraphCount = paragraphs.filter(
     p => splitIntoSentences(p).length > MAX_SENTENCES_PER_PARAGRAPH
   ).length;
+  const avgParagraphChars = lengths.reduce((a, b) => a + b, 0) / lengths.length;
+  const variance = lengths.reduce((a, b) => a + (b - avgParagraphChars) ** 2, 0) / lengths.length;
 
   return {
     paragraphCount: paragraphs.length,
@@ -360,8 +379,9 @@ export function analyzeParagraphDensity(prose: string): ParagraphDensityStats {
     extremeParagraphCount,
     longParagraphRatio: longParagraphCount / paragraphs.length,
     maxParagraphChars: Math.max(...lengths),
-    avgParagraphChars: lengths.reduce((a, b) => a + b, 0) / paragraphs.length,
+    avgParagraphChars,
     overSentenceParagraphCount,
+    paragraphLengthCV: avgParagraphChars > 0 ? Math.sqrt(variance) / avgParagraphChars : 0,
   };
 }
 
@@ -463,6 +483,21 @@ export function buildTypesettingIssues(prose: string): ParagraphDensityIssue[] {
       severity: 'high',
       description: `连续碎段过多：最长连续 ${longestShortRun} 段不足 40 字`,
       suggestion: '合并同一动作或同一视角下的短段，保留必要的单句重拍，避免通篇一句一段',
+    });
+  }
+
+  // 段落节奏均匀化（AI 腔信号，medium 不阻断）：段数够多、平均段长达到中长段、
+  // 但变异系数过低——说明没有短拍与长段的呼吸交错。人类网文因对话独立成段
+  // 与叙述段的交替，cv 通常 0.25+；模型不守「对话换行」时全章段长趋同。
+  if (
+    stats.paragraphCount >= UNIFORM_PARAGRAPH_MIN_COUNT &&
+    stats.avgParagraphChars >= UNIFORM_PARAGRAPH_MIN_AVG_CHARS &&
+    stats.paragraphLengthCV < UNIFORM_PARAGRAPH_CV_THRESHOLD
+  ) {
+    issues.push({
+      severity: 'medium',
+      description: `段落节奏均匀化：${stats.paragraphCount} 段平均 ${Math.round(stats.avgParagraphChars)} 字、变异系数 ${stats.paragraphLengthCV.toFixed(2)}，长短段缺乏交错`,
+      suggestion: '关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段',
     });
   }
 

@@ -109,6 +109,75 @@ describe('analyzeParagraphDensity / buildTypesettingIssues', () => {
     const after = analyzeParagraphDensity(normalizeWebnovelParagraphs(dense));
     expect(after.paragraphCount).toBe(before.paragraphCount);
   });
+
+  it('paragraphLengthCV：均匀中长段趋近 0，长短交错明显偏大', () => {
+    // 14 段每段约 170 字（矩阵实测的 AI 腔形态）
+    const uniform = Array.from({ length: 14 }, (_, i) => '字'.repeat(168 + (i % 3))).join('\n\n');
+    const uniformStats = analyzeParagraphDensity(normalizeWebnovelParagraphs(uniform));
+    expect(uniformStats.paragraphLengthCV).toBeLessThan(0.05);
+
+    // 短拍与长段交错（人类网文节奏）
+    const mixed = [
+      '“你敢！”周砚猛地起身。',
+      '长叙述段。'.repeat(40),
+      '他没接话。',
+      '长叙述段。'.repeat(45),
+      '“按律，这个字不能签。”',
+      '长叙述段。'.repeat(38),
+      '灯花爆了一声。',
+      '长叙述段。'.repeat(42),
+      '“那就换个写法。”',
+      '长叙述段。'.repeat(40),
+      '他搁下笔。',
+      '长叙述段。'.repeat(44),
+      '“明日再来。”',
+      '长叙述段。'.repeat(39),
+    ].join('\n\n');
+    const mixedStats = analyzeParagraphDensity(normalizeWebnovelParagraphs(mixed));
+    expect(mixedStats.paragraphLengthCV).toBeGreaterThan(0.25);
+  });
+
+  it('段落均匀化（段数够、平均中长、cv 过低）报 medium 段落节奏信号', () => {
+    // 2026-08-18 双 gemini 矩阵实测形态：13-18 段、均值 150-190 字、cv 0.07-0.13
+    const uniform = Array.from({ length: 14 }, () => '字'.repeat(170)).join('\n\n');
+    const issues = buildTypesettingIssues(uniform);
+    expect(
+      issues.some(i => i.severity === 'medium' && i.description.includes('段落节奏均匀化'))
+    ).toBe(true);
+  });
+
+  it('长短交错的正常节奏不报均匀化', () => {
+    const mixed = [
+      '“你敢！”周砚猛地起身。',
+      '长叙述段。'.repeat(40),
+      '他没接话。',
+      '长叙述段。'.repeat(45),
+      '“按律，这个字不能签。”',
+      '长叙述段。'.repeat(38),
+      '灯花爆了一声。',
+      '长叙述段。'.repeat(42),
+      '“那就换个写法。”',
+      '长叙述段。'.repeat(40),
+      '他搁下笔。',
+      '长叙述段。'.repeat(44),
+      '“明日再来。”',
+      '长叙述段。'.repeat(39),
+    ].join('\n\n');
+    const issues = buildTypesettingIssues(mixed);
+    expect(issues.some(i => i.description.includes('段落节奏均匀化'))).toBe(false);
+  });
+
+  it('段数不足或平均过短时不报均匀化（碎段问题归既有检测）', () => {
+    // 8 段均匀中长段：段数不够，统计无意义
+    const few = Array.from({ length: 8 }, () => '字'.repeat(170)).join('\n\n');
+    expect(buildTypesettingIssues(few).some(i => i.description.includes('段落节奏均匀化'))).toBe(false);
+
+    // 14 段均匀但平均只有 60 字：碎段问题，不是均匀化节奏问题
+    const shortUniform = Array.from({ length: 14 }, () => '字'.repeat(60)).join('\n\n');
+    expect(
+      buildTypesettingIssues(shortUniform).some(i => i.description.includes('段落节奏均匀化'))
+    ).toBe(false);
+  });
 });
 
 describe('buildTypesettingIssues 生产硬门禁', () => {
