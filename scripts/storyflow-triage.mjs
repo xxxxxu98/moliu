@@ -354,6 +354,33 @@ function triageProvider(providerId, meta) {
   const requested = Number.isFinite(Number(summary?.requestedChapterCount))
     ? Number(summary.requestedChapterCount)
     : null;
+
+  // 段落节奏指标（AI 腔信号）：章级 summary 的 paras/paraCv 字段（2026-08-19 起写入）。
+  // 均匀化章占比 >30% 时打黄色签名，冒烟后无需手动跑脚本即可看到节奏退化。
+  const paraCvRows = (summary?.batch ?? []).filter(it => typeof it.paraCv === 'number');
+  const paraStats = paraCvRows.length
+    ? (() => {
+        const cvs = paraCvRows.map(it => it.paraCv).sort((a, b) => a - b);
+        const uniformCount = paraCvRows.filter(
+          it => it.paraCv < 0.14 && it.paras >= 12,
+        ).length;
+        return {
+          chapters: paraCvRows.length,
+          medianCv: cvs[Math.floor(cvs.length / 2)],
+          uniformChapters: uniformCount,
+        };
+      })()
+    : null;
+  if (paraStats && paraStats.uniformChapters / paraStats.chapters > 0.3) {
+    acc.add(
+      'prose.rhythm-uniform',
+      null,
+      `均匀化章 ${paraStats.uniformChapters}/${paraStats.chapters}，cv 中位 ${paraStats.medianCv}（<0.14 且段数≥12 为均匀化）`,
+    );
+    const sig = signatures.get('prose.rhythm-uniform|null');
+    if (sig) sig.severity = 'yellow';
+  }
+
   return {
     providerId,
     model: meta.model,
@@ -364,6 +391,7 @@ function triageProvider(providerId, meta) {
     words: words.length
       ? { min: Math.min(...words), avg: Math.round(words.reduce((a, b) => a + b, 0) / words.length), max: Math.max(...words) }
       : null,
+    paraRhythm: paraStats,
     phaseTimings: summary?.phaseTimings ?? null,
     runtimeBackend: summary?.runtimeBackend ?? null,
     verdict,

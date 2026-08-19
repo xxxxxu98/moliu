@@ -849,6 +849,16 @@ export class ChapterWritingPipeline {
         targetWordCount: input.targetWordCount,
         seedRevisionHints: input.seedRevisionHints,
         maxRewriteRounds: input.maxRewriteRounds,
+        // 本章到达回收时点且尚未回收的伏笔 → 判官证据确认后经
+        // longFormResult.report.resolvedForeshadowIds 带出，驱动进度面板 buried→resolved 流转
+        payoffCandidates: (input.project.foreshadows ?? [])
+          .filter(
+            foreshadow =>
+              foreshadow.status !== 'resolved' &&
+              (foreshadow.payoffChapter ?? foreshadow.suggestedResolutionChapter ?? Infinity) <=
+                chapterNumber,
+          )
+          .map(foreshadow => ({ id: foreshadow.id, hint: foreshadow.hint })),
       });
       // coerce 已清洗段落；出口兜底：剥 schema 残留 → 确定性去重（治章末台词重复）→ 排版归一化
       // dedupProse 内部已含 normalizeWebnovelParagraphs，无需外层再调

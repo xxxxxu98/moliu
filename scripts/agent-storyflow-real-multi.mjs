@@ -355,10 +355,24 @@ async function main() {
     await Promise.race(inflight);
   }
 
-  // 保持计划顺序输出矩阵
+  // 保持计划顺序输出矩阵；单跑/补跑时与既有 matrix.json 合并而非整份覆盖——
+  // 覆盖会把之前轮次的厂商登记清掉，triage --provider 就找不到它们的归档目录
   const ordered = ids.map(id => rows.find(row => row.providerId === id));
+  const matrixPath = join(MATRIX_DIR, 'matrix.json');
+  let previousProviders = [];
+  try {
+    const prev = JSON.parse(readFileSync(matrixPath, 'utf8'));
+    if (Array.isArray(prev.providers)) previousProviders = prev.providers;
+  } catch {
+    /* 首轮或损坏：无既有登记 */
+  }
+  const runIds = new Set(ids);
+  const merged = [
+    ...ordered,
+    ...previousProviders.filter(row => row?.providerId && !runIds.has(row.providerId)),
+  ];
   writeFileSync(
-    join(MATRIX_DIR, 'matrix.json'),
+    matrixPath,
     JSON.stringify(
       {
         mode: 'storyflow-matrix',
@@ -367,7 +381,7 @@ async function main() {
         chapterCount: process.env.MOLIU_CHAPTER_COUNT
           ? Number(process.env.MOLIU_CHAPTER_COUNT)
           : DEFAULT_CHAPTER_COUNT,
-        providers: ordered,
+        providers: merged,
       },
       null,
       2,

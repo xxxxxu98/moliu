@@ -1,8 +1,169 @@
 {
   "mode": "storyflow-triage",
-  "generatedAt": "2026-08-19T02:34:47.428Z",
+  "generatedAt": "2026-08-19T01:48:25.761Z",
   "source": "D:\\project\\2026\\moliu\\temp\\storyflow-matrix",
   "providers": [
+    {
+      "providerId": "provider-1787044972770",
+      "model": "gemini-3.6-flash-high",
+      "pass": true,
+      "exitCode": 0,
+      "wallMinutes": 41,
+      "chaptersAccepted": "40/40",
+      "words": {
+        "min": 2488,
+        "avg": 2934,
+        "max": 3528
+      },
+      "phaseTimings": {
+        "outlineDirectionsMs": 10081,
+        "outlineExpandMs": 129024,
+        "applyOutlineMs": 677,
+        "continueWriteMs": 2319272,
+        "totalMs": 2459054
+      },
+      "runtimeBackend": "sqlite",
+      "verdict": "passed-with-repairs",
+      "verdictReason": "质量问题/空响应均被章内压缩或重试兜住，最终通过",
+      "signatures": [
+        {
+          "id": "quality.review-other",
+          "chapter": 11,
+          "count": 2,
+          "evidence": [
+            "段落过密：超长段 1 个，长段占比 100%，最长 596 字。请调整分段：每段约 3～5 句、180～280 字；优先合并过碎短段；对话换人换行；忌整章大段与一句一段（证据：沈淮转过身，拖着铁链挺立在陆霄身侧。他面沉如水，声音波澜不惊：“陆世子若是觉得滑稽，不如当堂解释一下，为何安国公府独享的带金粉紫檀奇香，会留在侍",
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 11,
+          "count": 2,
+          "evidence": [
+            "未履约节点：陆霄出示伪造的不在场证明酒楼账单",
+            "未履约节点：陆霄拿出盖有户部印信的酒楼账单，冷笑亮出不在场铁证"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 15,
+          "count": 2,
+          "evidence": [
+            "正文末尾段落: “账册残页的缝隙里，赫然残留着半枚二皇子府的私印纹路！”: 设定的 futureReveals 中规定角色“萧王”（即二皇子）不得登场或被揭示（限制在第18章及以后），但本章（第15章）结尾正文已明确下结论并揭示账册残页缝隙中残留“二皇子府的私印纹路”，提前揭露了萧王卷入国库账目案的核心事实。（证据：在",
+            "章节结尾沈淮提取账册残页印纹部分: 当前章节为第15章，正文已明确指出资金流向二皇子府并确认二皇子府私印纹路。这提前泄露了角色萧王（二皇子）的核心背景真相，违反了futureReveals中关于角色‘萧王’不得在第18章前登场或被揭示的限制。（证据: 而在账册残页的缝隙里，赫然残留着半枚二皇子府的私印纹路！ / 原本以"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 15,
+          "count": 2,
+          "evidence": [
+            "未履约节点：账册残页的缝隙里，赫然残留着半枚二皇子府的私印纹路",
+            "未履约节点：账册残页的缝隙里，赫然残留着半枚二皇子府的私印纹路"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 5,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 16,
+          "count": 1,
+          "evidence": [
+            "顾云舟查看账册印记段落: futureReveals 规定角色“萧王”（即二皇子）不得在第18章前登场或被揭示，但第16章正文明确指认出“二皇子府私印”，并下了“当朝皇子参与党争、私吞国库”的明确结论，揭穿了该关键事实的核心信息，属于提前爆伏笔/提前揭示。（证据: “二皇子府私印……”顾云舟倒吸一口凉气，瞳孔剧烈收缩，"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 17,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 17,
+          "count": 1,
+          "evidence": [
+            "未履约节点：沈淮利用风控审计模型复盘安国公府账目"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 32,
+          "count": 1,
+          "evidence": [
+            "未履约节点：沈淮带兵强行抢救原始试卷。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.titles-shrunk-local",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "本地收缩超长标题/CBN/CEN 共 14 章（第 8、11、14、15、16、18、19、20、31、34、35、36、40、47 章），未发 AI 请求"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 68,
+          "avgMs": 21408,
+          "p50Ms": 21772,
+          "maxMs": 46301
+        },
+        "fact-extraction": {
+          "count": 53,
+          "avgMs": 7911,
+          "p50Ms": 7514,
+          "maxMs": 23014
+        },
+        "chapter-judge": {
+          "count": 53,
+          "avgMs": 5701,
+          "p50Ms": 4808,
+          "maxMs": 18708
+        },
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 10078,
+          "p50Ms": 10078,
+          "maxMs": 10078
+        },
+        "outline-expand": {
+          "count": 13,
+          "avgMs": 18369,
+          "p50Ms": 17446,
+          "maxMs": 40921
+        }
+      }
+    },
     {
       "providerId": "provider-1787039781123",
       "model": "gemini-3.7-flash-high",
@@ -14,11 +175,6 @@
         "min": 2558,
         "avg": 3085,
         "max": 3477
-      },
-      "paraRhythm": {
-        "chapters": 40,
-        "medianCv": 0.33,
-        "uniformChapters": 1
       },
       "phaseTimings": {
         "outlineDirectionsMs": 19528,

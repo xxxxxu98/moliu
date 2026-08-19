@@ -59,6 +59,22 @@ export class AIChapterJudge implements ChapterJudge {
       evidence: event.evidence,
     }));
 
+    const payoffCandidates = (input.payoffCandidates ?? []).filter(
+      item => item.id.trim() && item.hint.trim(),
+    );
+    const payoffRules =
+      payoffCandidates.length > 0
+        ? [
+            '',
+            '## 4) 伏笔回收判定（resolvedForeshadowIds）',
+            '- payoffCandidates 列出本章已到回收时点的伏笔（id + hint）',
+            '- 判定某伏笔「已回收」的标准：正文中该伏笔的核心信息已向读者揭晓、兑现或产生实质影响（真相大白/物证现世/承诺兑现），且你能从正文引用支撑证据原句',
+            '- 仅被再次提及、只出现载体物品而无信息揭晓 → 不算回收，不要列入',
+            '- 宁缺勿滥：拿不准的一律不列（误判已回收会让进度统计漏报未解决伏笔）',
+            '- resolvedForeshadowIds 只填 id 字符串数组；无任何回收时为 []',
+          ]
+        : [];
+
     const raw = await this.ai.generate<ChapterJudgeResult>({
       purpose: 'chapter-judge',
       schemaName: 'ChapterJudgeResult',
@@ -96,12 +112,15 @@ export class AIChapterJudge implements ChapterJudge {
         '- 【出场豁免】若某角色在 mustCover 节点里被点名要求参与（如节点写「被温伯衡锁走」），则该角色本章允许出场，即使不在 allowedCharacterNames 里也不得报 logic_gap；换成无名身份称呼（如「青袍老者」）同样豁免',
         '- 只报真实问题，不挑文笔；critical 留给明显硬伤',
         '- 若无问题，issues 为 []',
+        ...payoffRules,
         '',
         '只输出一个 JSON 对象，不要 Markdown 代码块，不要解释。',
         'JSON 字段必须为：',
         '{"fulfillment":[{"node":"…","fulfilled":true,"evidence":["…"],"reason":"…"}],',
         '"forbidden":[{"zone":"…","violated":false,"evidence":[],"reason":"…"}],',
-        '"issues":[{"type":"logic_gap","severity":"high","location":"…","description":"…","evidence":["…"]}]}',
+        '"issues":[{"type":"logic_gap","severity":"high","location":"…","description":"…","evidence":["…"]}]' +
+          (payoffCandidates.length > 0 ? ',"resolvedForeshadowIds":["fs-…"]' : '') +
+          '}',
       ].join('\n'),
       prompt: JSON.stringify({
         mustCover,
@@ -113,6 +132,7 @@ export class AIChapterJudge implements ChapterJudge {
         chapterNumber: input.chapterNumber ?? null,
         allowedCharacterNames: input.allowedCharacterNames ?? [],
         futureReveals: input.futureReveals ?? [],
+        payoffCandidates: payoffCandidates.length > 0 ? payoffCandidates : undefined,
       }),
       parse: value => parseSchema(chapterJudgeResultSchema, value, '章节语义审查结果'),
     });
@@ -128,6 +148,7 @@ export class AIChapterJudge implements ChapterJudge {
         ...(input.allowedCharacterNames ?? []),
         ...(input.stateDigest?.entities ?? []).map(entity => entity.name),
       ],
+      payoffCandidates,
     );
   }
 
@@ -138,6 +159,7 @@ export class AIChapterJudge implements ChapterJudge {
     parsed: ChapterJudgeResult,
     chapterText: string,
     knownCharacterNames: string[],
+    payoffCandidates: Array<{ id: string; hint: string }> = [],
   ): ChapterJudgeResult {
     const fulfillmentByNode = new Map(
       parsed.fulfillment.map(item => [normalizeContractKey(item.node), item]),
@@ -195,6 +217,15 @@ export class AIChapterJudge implements ChapterJudge {
       fulfillment,
       forbidden,
       issues: checkDeepSemantic ? parsed.issues : [],
+      // 只放行候选集内的 id：模型偶发幻觉出不在 payoffCandidates 里的 id，
+      // 或把未到期的伏笔一并列入；按严证据门口径一律丢弃。
+      ...(payoffCandidates.length > 0
+        ? {
+            resolvedForeshadowIds: (parsed.resolvedForeshadowIds ?? []).filter(id =>
+              payoffCandidates.some(candidate => candidate.id === id),
+            ),
+          }
+        : {}),
     };
   }
 }

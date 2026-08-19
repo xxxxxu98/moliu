@@ -293,6 +293,52 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
       }),
     ).rejects.toThrow('结构校验失败');
   });
+
+  it('payoffCandidates 存在时判定伏笔回收：候选内的 id 透传，候选外的幻觉 id 丢弃', async () => {
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => ({
+        fulfillment: [],
+        forbidden: [],
+        issues: [],
+        // fs-1 在候选内（正文有回收证据）；fs-99 是模型幻觉，不在候选内必须丢弃
+        resolvedForeshadowIds: ['fs-1', 'fs-99'],
+      })),
+    };
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: [],
+      forbiddenZones: [],
+      chapterText: '真相揭晓：断角玉佩内的齿轮暗刻正是当年灭门案的关键物证。',
+      checkDeepSemantic: true,
+      payoffCandidates: [
+        { id: 'fs-1', hint: '断角玉佩内部有齿轮暗刻与微缩编号' },
+      ],
+    });
+    expect(result.resolvedForeshadowIds).toEqual(['fs-1']);
+
+    const prompt = JSON.parse((ai.generate as ReturnType<typeof vi.fn>).mock.calls[0][0].prompt);
+    expect(prompt.payoffCandidates).toHaveLength(1);
+  });
+
+  it('无 payoffCandidates 输入时不做回收判定（旧调用方零影响）', async () => {
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => ({
+        fulfillment: [],
+        forbidden: [],
+        issues: [],
+        resolvedForeshadowIds: ['fs-1'],
+      })),
+    };
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: [],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+    });
+    // 无候选输入：不带回收字段（消费方 ?? [] 兜底），prompt 也不注入候选
+    expect(result.resolvedForeshadowIds ?? []).toEqual([]);
+    const prompt = JSON.parse((ai.generate as ReturnType<typeof vi.fn>).mock.calls[0][0].prompt);
+    expect(prompt.payoffCandidates).toBeUndefined();
+  });
 });
 
 function emptyJudgePayload() {

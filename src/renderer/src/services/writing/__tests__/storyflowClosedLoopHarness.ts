@@ -649,6 +649,24 @@ export async function runStoryflowClosedLoop(
     onChapterSettled: ({ result: chapterResult }) => {
       checkpointResults.push(chapterResult);
       persistProgress();
+      // 伏笔回收流转：判官证据确认已回收的伏笔 buried→resolved 并写回 project store，
+      // 让 postWritePersistence/进度面板不再恒报「全部 buried」（严证据门：判官未列出的不动）
+      const resolvedIds =
+        chapterResult.output.longFormResult?.report?.resolvedForeshadowIds ?? [];
+      if (resolvedIds.length > 0) {
+        let touched = false;
+        for (const foreshadow of project.foreshadows ?? []) {
+          if (resolvedIds.includes(foreshadow.id) && foreshadow.status !== 'resolved') {
+            foreshadow.status = 'resolved';
+            touched = true;
+          }
+        }
+        if (touched) {
+          console.log(
+            `[storyflow:real] 第${chapterResult.chapterNumber}章判官确认回收伏笔 ${resolvedIds.length} 条，已流转 buried→resolved`,
+          );
+        }
+      }
     },
   });
   phaseTimings.continueWriteMs = Date.now() - continueWriteStartedAt;

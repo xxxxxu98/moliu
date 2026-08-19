@@ -378,6 +378,12 @@ export interface ChapterJudgeResult {
   fulfillment: FulfillmentNodeJudgment[];
   forbidden: ForbiddenZoneJudgment[];
   issues: ChapterJudgeIssue[];
+  /**
+   * 本章已实际回收的伏笔 id 列表（须有正文证据原句支撑）。
+   * 仅当输入给了 payoffCandidates 且判官能在正文中找到回收证据时非空；
+   * 无 payoffCandidates 输入的旧调用方此字段恒为空数组。
+   */
+  resolvedForeshadowIds?: string[];
 }
 
 export interface ChapterJudgeStateDigest {
@@ -399,6 +405,12 @@ export interface ChapterJudgeInput {
   futureReveals?: FutureRevealConstraint[];
   /** 是否审查事实/逻辑/OOC/时间线/战力/伏笔（默认 true） */
   checkDeepSemantic?: boolean;
+  /**
+   * 本章到达回收时点的伏笔候选（id + hint 文案）。
+   * 传入后判官额外判定哪些伏笔已在正文实际回收（resolvedForeshadowIds），
+   * 用于驱动进度面板的 buried→resolved 流转。未传则不做回收判定。
+   */
+  payoffCandidates?: Array<{ id: string; hint: string }>;
 }
 
 export interface ChapterJudge {
@@ -460,6 +472,12 @@ export interface ContinuityReport {
   accepted: boolean;
   issues: ContinuityIssue[];
   checkedDomains: ContinuityDomain[];
+  /**
+   * 本章经判官证据确认已实际回收的伏笔 id（来自 chapterJudge 的
+   * resolvedForeshadowIds，无 payoffCandidates 时为空数组）。
+   * 消费方据此做 buried→resolved 流转；判官未列出的伏笔保持原状态。
+   */
+  resolvedForeshadowIds?: string[];
 }
 
 export interface ChapterCommit {
@@ -557,6 +575,11 @@ export interface LongFormWriteInput {
    * 引擎内部重写循环仍会在此基础上追加新问题的 hints。
    */
   seedRevisionHints?: string[];
+  /**
+   * 本章到达回收时点的伏笔候选（id + hint）。透传给语义审查判官，
+   * 证据确认已回收的 id 会出现在 result.report.resolvedForeshadowIds。
+   */
+  payoffCandidates?: Array<{ id: string; hint: string }>;
 }
 
 export interface LongFormWriteResult {

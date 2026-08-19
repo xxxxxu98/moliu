@@ -26,6 +26,8 @@ export interface ContinuityValidationInput {
   overlay?: ProvisionalStateOverlay;
   drafts: SceneDraft[];
   facts: ExtractedFacts;
+  /** 本章到达回收时点的伏笔候选；传入后 report.resolvedForeshadowIds 带出证据确认的回收 id */
+  payoffCandidates?: Array<{ id: string; hint: string }>;
 }
 
 export interface ContinuityValidatorOptions {
@@ -226,12 +228,13 @@ export class ContinuityValidator {
       }
     }
 
-    await this.validateSemanticGates(
+    const resolvedForeshadowIds = await this.validateSemanticGates(
       input.contracts,
       state,
       chapterText(input.drafts),
       input.facts,
-      addIssue
+      addIssue,
+      input.payoffCandidates ?? []
     );
 
     const blockingCount = issues.filter(issue => issue.severity === 'blocking').length;
@@ -245,6 +248,7 @@ export class ContinuityValidator {
         blockingCount === 0 && warningCount <= input.contracts.review.maxWarnings,
       issues,
       checkedDomains,
+      ...(resolvedForeshadowIds.length > 0 ? { resolvedForeshadowIds } : {}),
     };
   }
 
@@ -259,8 +263,12 @@ export class ContinuityValidator {
       evidence?: string[],
       sceneId?: string,
       severityOverride?: ValidationSeverity
-    ) => void
-  ): Promise<void> {
+    ) => void,
+    payoffCandidates: Array<{ id: string; hint: string }> = []
+  ): Promise<string[]> {
+    // 判官确认已回收的伏笔 id（严证据门：判官未列出/判定失败一律返回空，
+    // 让进度统计保持 buried 而非误标 resolved）
+    let resolvedForeshadowIds: string[] = [];
     const contract = contracts.chapter;
     const pendingNodes = contract.mustCover.filter(
       node => !fulfilledLexically(node, text, facts)
@@ -295,6 +303,7 @@ export class ContinuityValidator {
           chapterNumber: contract.chapterNumber,
           allowedCharacterNames: contract.allowedCharacterNames,
           futureReveals: contract.futureReveals,
+          payoffCandidates,
           stateDigest: {
             entities: Object.values(state.entities).slice(0, 20).map(entity => ({
               id: entity.id,
@@ -353,6 +362,7 @@ export class ContinuityValidator {
             severity
           );
         }
+        resolvedForeshadowIds = judgment.resolvedForeshadowIds ?? [];
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') throw error;
         if (error instanceof Error && error.name === 'AbortError') throw error;
@@ -368,7 +378,7 @@ export class ContinuityValidator {
         // 只重试 validate 阶段，绝不能转换成“未履约”驱动整章重写。
         throw new Error(`[review-unavailable] 语义审查不可用：${detail}`, { cause: error });
       }
-      return;
+      return resolvedForeshadowIds;
     }
 
     // 无 chapterJudge：旧履约适配或纯字面
@@ -402,5 +412,6 @@ export class ContinuityValidator {
         }
       }
     }
+    return resolvedForeshadowIds;
   }
 }

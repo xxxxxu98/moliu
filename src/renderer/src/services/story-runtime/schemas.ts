@@ -531,6 +531,14 @@ function coerceChapterJudgeResult(value: unknown): unknown {
       console.warn(`[schemas] 章节审查结果缺 ${key} 字段，已软兜底为 []`);
     }
   }
+  // 回收伏笔 id 列表（可选新字段）：非数组/缺省一律视为「无回收」，不阻断主流程
+  if (!Array.isArray(obj.resolvedForeshadowIds)) {
+    obj.resolvedForeshadowIds = [];
+  } else {
+    obj.resolvedForeshadowIds = (obj.resolvedForeshadowIds as unknown[]).filter(
+      item => typeof item === 'string' && item.trim().length > 0,
+    );
+  }
   // 数组内缺核心字段的元素直接剔除（无法安全构造判定），保留可解析部分
   obj.fulfillment = (obj.fulfillment as unknown[]).filter(
     item => typeof item === 'object' && item !== null
@@ -564,6 +572,7 @@ export const chapterJudgeResultSchema: z.ZodType<ChapterJudgeResult> = z.preproc
     })
   ),
   issues: z.array(chapterJudgeIssueSchema),
+  resolvedForeshadowIds: z.array(z.string()).optional(),
   }),
 );
 

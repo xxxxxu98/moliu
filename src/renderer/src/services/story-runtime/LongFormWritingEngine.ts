@@ -163,11 +163,23 @@ export function buildRevisionPlanFromReport(
   const bounds = targetWordCount && targetWordCount > 0
     ? checkWordCountBounds('', targetWordCount)
     : null;
+  const mode: RevisionPlan['mode'] = hasOverIssue
+    ? 'compress'
+    : hasShortIssue
+      ? 'expand'
+      : 'repair';
+  // 压缩轮给模型的目标上限比硬门禁再收紧 10%：模型压字普遍「贴着给的上限」执行，
+  // 传硬门禁上限会压出 3540-3600 的擦边稿（40 章实测 3 章压缩后仍超限保留）。
+  // 收紧后即使执行打折也落在硬门禁内；硬门禁本身不动（审查范围不变）。
+  const maxWordsForMode =
+    mode === 'compress' && bounds
+      ? Math.max(Math.round(bounds.maxWords * 0.9), Math.round(bounds.minWords * 1.05))
+      : bounds?.maxWords;
 
   return {
-    mode: hasOverIssue ? 'compress' : hasShortIssue ? 'expand' : 'repair',
+    mode,
     hints,
-    ...(bounds ? { minWords: bounds.minWords, maxWords: bounds.maxWords } : {}),
+    ...(bounds ? { minWords: bounds.minWords, maxWords: maxWordsForMode } : {}),
   };
 }
 
@@ -186,10 +198,15 @@ function buildSeedRevisionPlan(
     : /字数严重不足|word-count-short|低于下限/u.test(combined)
       ? 'expand'
       : 'repair';
+  // 与 buildRevisionPlanFromReport 同口径：压缩轮目标上限收紧 10%，硬门禁不变
+  const maxWordsForMode =
+    mode === 'compress' && bounds
+      ? Math.max(Math.round(bounds.maxWords * 0.9), Math.round(bounds.minWords * 1.05))
+      : bounds?.maxWords;
   return {
     mode,
     hints: normalized,
-    ...(bounds ? { minWords: bounds.minWords, maxWords: bounds.maxWords } : {}),
+    ...(bounds ? { minWords: bounds.minWords, maxWords: maxWordsForMode } : {}),
   };
 }
 
@@ -357,6 +374,7 @@ export class LongFormWritingEngine {
             state: canonical.stateForValidation,
             drafts,
             facts: canonical.facts,
+            payoffCandidates: writeInput.payoffCandidates,
           }),
           { label: 'semantic-review', maxRetries: 2 }
         );
@@ -402,6 +420,26 @@ export class LongFormWritingEngine {
                 message: `${issue.description}。${issue.suggestion}`,
                 evidence: issue.evidence ? [issue.evidence] : [],
               })),
+          ],
+          checkedDomains: report.checkedDomains.includes('fulfillment')
+            ? report.checkedDomains
+            : [...report.checkedDomains, 'fulfillment'],
+        };
+      } else if (typesettingIssues.length > 0) {
+        // medium 级排版问题（段落节奏均匀化等 AI 腔信号）不阻断 accept，
+        // 但作为 warning 进入 issues → revisionHints 驱动下一次重写自我修正。
+        // 没有其它 blocking 问题时不会触发重写，只在重写已发生时附带修掉。
+        report = {
+          ...report,
+          issues: [
+            ...report.issues.filter(issue => !issue.id.startsWith('typesetting-density')),
+            ...typesettingIssues.map((issue, index) => ({
+              id: index === 0 ? 'typesetting-density' : `typesetting-density-${index + 1}`,
+              domain: 'fulfillment' as const,
+              severity: 'warning' as const,
+              message: `${issue.description}。${issue.suggestion}`,
+              evidence: issue.evidence ? [issue.evidence] : [],
+            })),
           ],
           checkedDomains: report.checkedDomains.includes('fulfillment')
             ? report.checkedDomains
