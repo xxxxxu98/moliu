@@ -231,25 +231,27 @@ describe('classifyError', () => {
     // 反重力网关实测：多上游通道轮换会间歇性返回 400 FAILED_PRECONDITION
     // "User location is not supported"。通道抖动而非业务错误，同轮重试常即恢复，
     // 必须先于 4xx provider 分类判为瞬态，否则一次拦截废掉整章/整份大纲。
-    it('网关上游地区拦截（400 User location）归为 server 瞬态', () => {
+    // 归 rate_limit：复用 15-120s 长退避（长阻断窗口下 1-4s 短退避只会耗尽预算）。
+    it('网关上游地区拦截（400 User location）归为 rate_limit 瞬态（长退避）', () => {
       const result = classifyError(
         makeAiError(
           'API 请求失败: 400 {"error":{"message":"{\n  \\"error\\": {\n    \\"code\\": 400,\n    \\"message\\": \\"User location is not supported for the API use.\\",\n    \\"status\\": \\"FAILED_PRECONDITION\\"', 
           400,
         ),
       );
-      expect(result.kind).toBe('server');
+      expect(result.kind).toBe('rate_limit');
       expect(result.retryable).toBe(true);
       expect(result.transient).toBe(true);
+      expect(retryBackoffDelayMs(result.kind, 1)).toBeGreaterThanOrEqual(15_000);
     });
 
-    it('被包进 review-unavailable 的地区拦截文案同样归为 server 瞬态（步级重试仍可救）', () => {
+    it('被包进 review-unavailable 的地区拦截文案同样归为 rate_limit 瞬态（步级重试仍可救）', () => {
       const result = classifyError(
         new Error(
           '[review-unavailable] 语义审查不可用：API 请求失败: 400 {"error":{"message":"User location is not supported for the API use."}}',
         ),
       );
-      expect(result.kind).toBe('server');
+      expect(result.kind).toBe('rate_limit');
       expect(result.transient).toBe(true);
     });
   });

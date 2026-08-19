@@ -495,12 +495,23 @@ function main() {
   const provIdx = argv.indexOf('--provider');
   if (provIdx !== -1 && argv[provIdx + 1]) {
     const want = new Set(argv[provIdx + 1].split(',').map(s => s.trim()));
-    const unknown = [...want].filter(w => !ids.includes(w));
+    // matrix.json 只登记最近一轮矩阵；单跑失败轮/更早轮次的归档目录可能不在其中。
+    // 显式点名的厂商只要归档目录完整（有 run.log）就放行分析，否则失败轮无法 triage。
+    const archived = new Set(
+      readdirSync(MATRIX_DIR).filter(n => {
+        try {
+          return statSync(join(MATRIX_DIR, n)).isDirectory() && existsSync(join(MATRIX_DIR, n, 'run.log'));
+        } catch {
+          return false;
+        }
+      }),
+    );
+    const unknown = [...want].filter(w => !ids.includes(w) && !archived.has(w));
     if (unknown.length) {
-      console.error(`[storyflow-triage] 未知的厂商目录：${unknown.join(', ')}（可用：${ids.join(', ')}）`);
+      console.error(`[storyflow-triage] 未知的厂商目录：${unknown.join(', ')}（可用：${[...new Set([...ids, ...archived])].join(', ')}）`);
       process.exit(2);
     }
-    ids = ids.filter(id => want.has(id));
+    ids = [...want].filter(w => ids.includes(w) || archived.has(w));
   }
   if (ids.length === 0) {
     console.error('[storyflow-triage] 没有可分析的厂商目录（需要 run.log）。');

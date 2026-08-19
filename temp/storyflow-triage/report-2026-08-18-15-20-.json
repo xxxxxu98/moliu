@@ -1,0 +1,225 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-18T15:20:44.263Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-matrix",
+  "providers": [
+    {
+      "providerId": "provider-1787044972770",
+      "model": "(未知模型)",
+      "pass": false,
+      "exitCode": -1,
+      "wallMinutes": null,
+      "chaptersAccepted": "15/20",
+      "words": {
+        "min": 0,
+        "avg": 2951,
+        "max": 3507
+      },
+      "phaseTimings": {
+        "outlineDirectionsMs": 14807,
+        "outlineExpandMs": 191653,
+        "applyOutlineMs": 752,
+        "continueWriteMs": 2177579,
+        "totalMs": 2384791
+      },
+      "runtimeBackend": "sqlite",
+      "verdict": "quality-rejection",
+      "verdictReason": "存在质量拒绝且未恢复，但未达 3 轮停滞",
+      "signatures": [
+        {
+          "id": "infra.transient.http-400",
+          "chapter": null,
+          "count": 109,
+          "evidence": [
+            "HTTP 400",
+            "HTTP 400",
+            "HTTP 400"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 16,
+          "count": 12,
+          "evidence": [
+            "trace storyflow-provider-1787044972770-ch16-1787057676901.jsonl seq1 scene-draft 响应 2 字符",
+            "trace storyflow-provider-1787044972770-ch16-1787057676901.jsonl seq2 scene-draft 响应 2 字符",
+            "trace storyflow-provider-1787044972770-ch16-1787057714729.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 11,
+          "count": 2,
+          "evidence": [
+            "正文第二段至第五段: 设定中限定第12章及以后才可揭示/出现的伏笔“陆舟在审查三皇子府邸报销的清册中，注意到一种特殊的双重平账涂改手法”（notBeforeChapter: 12），在第11章正文中已被明确点名并详细描写，属于提前揭示。（证据: 长案之上，摊放着数张盖有三皇子府邸专用印记的岁末报销清册。 / 陆舟朱笔一",
+            "正文开头至前半段陆舟审查三皇子府邸凭单部分: 受保护事实“陆舟在审查三皇子府邸报销的清册中，注意到一种特殊的双重平账涂改手法”设定解禁章节为第12章（notBeforeChapter: 12），但正文第11章已明确描写陆舟审查三皇子府邸报销凭单并剖析双重平账手法，属于违规提前揭示伏笔。（证据: 陆舟身穿九品青衫，手中握"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "assert.chapters-accepted",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "断言 expected 20 to be 16（期望 20 章，实际 16 章）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 1,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "未履约节点：迫使徐宗定暂停当场定罪"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 11,
+          "count": 1,
+          "evidence": [
+            "触发本章禁区：不可提前引燃大火（正文开篇即写明“后阁楼火光冲天，喧闹的救火声与水桶撞击声在空气中此起彼伏”，大火已被引燃，触犯了禁区限制。）（证据：后阁楼火光冲天，喧闹的救火声与水桶撞击声在空气中此起彼伏）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 11,
+          "count": 1,
+          "evidence": [
+            "未履约节点：预判徐宗定放火烧库阴谋。"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.other",
+          "chapter": null,
+          "count": 78,
+          "evidence": [
+            "重试 1/2：{",
+            "重试 1/2：{",
+            "重试 1/2：{"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 15,
+          "count": 8,
+          "evidence": [
+            "trace storyflow-provider-1787044972770-ch15-1787057448943.jsonl seq1 scene-draft 响应 2 字符",
+            "trace storyflow-provider-1787044972770-ch15-1787057448943.jsonl seq2 scene-draft 响应 2 字符",
+            "trace storyflow-provider-1787044972770-ch15-1787057486133.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 13,
+          "count": 6,
+          "evidence": [
+            "trace storyflow-provider-1787044972770-ch13-1787057098807.jsonl seq3 fact-extraction 响应 2 字符",
+            "trace storyflow-provider-1787044972770-ch13-1787057098807.jsonl seq4 fact-extraction 响应 2 字符",
+            "trace storyflow-provider-1787044972770-ch13-1787057098807.jsonl seq5 fact-extraction 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 8,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3857/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 8,
+          "count": 1,
+          "evidence": [
+            "当前 3857 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 14,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787044972770-ch14-1787057343942.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.titles-shrunk-local",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "本地收缩超长标题/CBN/CEN 共 13 章（第 7、25、26、28、30、42、43、45、46、47、48、49、50 章），未发 AI 请求"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 42,
+          "avgMs": 29126,
+          "p50Ms": 29146,
+          "maxMs": 71993
+        },
+        "fact-extraction": {
+          "count": 32,
+          "avgMs": 14126,
+          "p50Ms": 11189,
+          "maxMs": 101161
+        },
+        "chapter-judge": {
+          "count": 24,
+          "avgMs": 9917,
+          "p50Ms": 9605,
+          "maxMs": 17510
+        },
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 14804,
+          "p50Ms": 14804,
+          "maxMs": 14804
+        },
+        "outline-expand": {
+          "count": 12,
+          "avgMs": 28870,
+          "p50Ms": 28659,
+          "maxMs": 65323
+        }
+      }
+    }
+  ]
+}

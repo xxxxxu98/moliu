@@ -21,7 +21,7 @@ import {
   type ParseResult,
 } from "@/utils/json-parser";
 import { extractErrorMessage } from "@/utils/error-message";
-import { isTransientError, parseAllowedTemperature } from "@/utils/ai-error-classify";
+import { classifyError, isTransientError, parseAllowedTemperature, retryBackoffDelayMs } from "@/utils/ai-error-classify";
 
 /**
  * 从原始响应中提取纯文本内容
@@ -461,8 +461,9 @@ export class UnifiedAIService {
         if (!transient || attempt >= SINGLE_REQUEST_MAX_RETRIES) {
           throw error;
         }
-        // 指数退避 1s/2s，退避期间响应 abort
-        const delayMs = 1000 * 2 ** attempt;
+        // kind 感知退避：限流/网关地区拦截走 15/30s（长窗口下 1-4s 只会连吃失败），
+        // 其余瞬态 1s/2s
+        const delayMs = retryBackoffDelayMs(classifyError(error).kind, attempt + 1, 1000, 30_000);
         console.warn(
           `[unified.service] chat 瞬态失败，${delayMs}ms 后重试 ${attempt + 1}/${SINGLE_REQUEST_MAX_RETRIES}: ${error instanceof Error ? error.message : String(error)}`
         );

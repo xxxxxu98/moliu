@@ -172,9 +172,12 @@ export function classifyError(err: unknown, signal?: AbortSignal): ClassifiedErr
     return { kind: 'rate_limit', retryable: false, transient: false, message };
   }
 
-  // 3.5) 网关上游地区路由拦截：通道轮换级瞬态，先于 4xx 业务分类判定
+  // 3.5) 网关上游地区路由拦截：通道轮换级瞬态，先于 4xx 业务分类判定。
+  // 归 rate_limit 而非 server：同为「上游资源窗口限制、分钟级恢复」，可复用
+  // 15-120s 长退避（1-4s 短退避在长阻断窗口下只会连吃 400 耗尽预算——
+  // 2026-08-18 gemini-3.6 20 章矩阵 ch16 实测）。
   if (GEO_BLOCK_RE.test(message)) {
-    return { kind: 'server', retryable: true, transient: true, message };
+    return { kind: 'rate_limit', retryable: true, transient: true, message };
   }
 
   // 4) HTTP 状态码（multi-ai-sdk AIError 携带 status；项目内 fetch 包装成「请求失败: 429 …」）
