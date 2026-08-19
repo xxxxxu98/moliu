@@ -27,7 +27,7 @@
  * - matrix.json            全厂商对比矩阵（通过率/耗时/字数/后端/告警）
  *
  * 提示：
- * - 每厂商全程真实 AI（默认 20 章，耗时随模型而变）；快速回归先 MOLIU_CHAPTER_COUNT=1。
+ * - 每厂商全程真实 AI（默认 80 章，耗时随模型而变）；快速回归先 MOLIU_CHAPTER_COUNT=1。
  * - 设 MOLIU_OUTLINE_CACHE=temp/outline.shared.json 可让所有厂商共用同一份缓存大纲，
  *   只对比写作阶段的厂商差异（大纲阶段不重复跑）。
  * - 设 MOLIU_RESUME_STORYFLOW=1 可复用同厂商、同模型、同种子、同字数区间的自动大纲检查点；
@@ -62,7 +62,7 @@ if (`${MATRIX_DIR}${sep}`.startsWith(SAFE_MATRIX_ROOT) === false) {
 const MATRIX_CONFIG_PATH = join(TEMP_DIR, 'storyflow.matrix.config.json');
 const SMOKE_SCRIPT = join(process.cwd(), 'scripts', 'agent-storyflow-real-smoke.mjs');
 const DEFAULT_CONCURRENCY = 3;
-const DEFAULT_CHAPTER_COUNT = 20;
+const DEFAULT_CHAPTER_COUNT = 80;
 
 // 与 src/renderer/src/services/writing/__tests__/continueWriteRealConfig.ts 的
 // PROVIDER_SET 保持一致（该文件是 .ts，脚本无法直接 import，只能镜像维护）

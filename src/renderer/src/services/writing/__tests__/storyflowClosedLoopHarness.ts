@@ -50,13 +50,13 @@ import {
 import { createRealStructuredAI, isRealAiEnabled } from './realStructuredAI';
 
 /** 真实 Storyflow 冒烟默认连续续写章数；环境变量仍可用于快速回归缩短批次。 */
-export const DEFAULT_STORYFLOW_CHAPTER_COUNT = 20;
+export const DEFAULT_STORYFLOW_CHAPTER_COUNT = 80;
 
 export interface StoryflowClosedLoopOptions {
   /** 开题提示（默认：一个可写 30 万字长篇的起点） */
   prompt?: string;
   wordCountRange?: string;
-  /** 批量续写章数（默认 20，覆盖更长连续正文以检验跨章合同去重/状态衔接） */
+  /** 批量续写章数（默认 80，覆盖更长连续正文以检验跨章合同去重/状态衔接） */
   chapterCount?: number;
   /** 每章目标字数（真实 AI 冒烟建议 1500-2500） */
   targetWordCount?: number;
@@ -168,6 +168,7 @@ function cloneProject(project: Project): Project {
 interface FileProjectStorage {
   get(id: string): Project | undefined;
   coldReload(id: string): Project | undefined;
+  save(project: Project): void;
 }
 
 /** 文件版 electronAPI：每次读写都经过 JSON 序列化，支持销毁 renderer 状态后的冷读取。 */
@@ -255,7 +256,74 @@ function installFileElectronAPI(runId: string): FileProjectStorage {
     get: id => readProjects().find(item => item.id === id),
     // 新一轮 readFileSync + JSON.parse，不复用任何对象或 Map，模拟应用冷启动。
     coldReload: id => readProjects().find(item => item.id === id),
+    save: project => {
+      const projects = readProjects();
+      const snapshot = cloneProject(project);
+      writeProjects([...projects.filter(item => item.id !== project.id), snapshot]);
+    },
   };
+}
+
+/**
+ * 启动包只保证首批结构化章纲；长跑冒烟可能要求写得更远。
+ * 为超出启动包的章节补齐最小章节/大纲槽，让正式续写引擎依据滚动状态继续推进。
+ * 新槽不伪造 CBN/CPNs/mustCover，避免把测试占位描述误当成质量合同。
+ */
+export function ensureStoryflowWritingCapacity(project: Project, minCount: number): Project {
+  const needed = Math.max(1, Math.floor(minCount));
+  const expanded = cloneProject(project);
+  const now = new Date().toISOString();
+  const chapters = [...(expanded.chapters ?? [])].sort((a, b) => a.orderIndex - b.orderIndex);
+  const chapterNodes = (expanded.plotOutline ?? [])
+    .filter(node => node.type === 'chapter')
+    .sort((a, b) => a.orderIndex - b.orderIndex);
+  const lastVolume = [...(expanded.volumes ?? [])]
+    .sort((a, b) => a.orderIndex - b.orderIndex)
+    .at(-1);
+
+  for (let index = chapters.length; index < needed; index += 1) {
+    const chapterNumber = index + 1;
+    const title = `第${chapterNumber}章`;
+    const description = `滚动续写槽位：承接第${chapterNumber - 1}章既有状态，由续写引擎根据当前合同推进主线。`;
+    chapters.push({
+      id: `chapter-storyflow-${expanded.id}-${chapterNumber}`,
+      volumeId: lastVolume?.id,
+      title,
+      content: '',
+      wordCount: 0,
+      orderIndex: index,
+      version: 1,
+      status: 'draft',
+      createdAt: now,
+      updatedAt: now,
+      plotSummary: description,
+      outline: description,
+      isGenerated: false,
+      writeStatus: 'pending',
+    });
+  }
+
+  const existingNodeIndexes = new Set(chapterNodes.map(node => node.orderIndex));
+  for (let index = 0; index < needed; index += 1) {
+    if (existingNodeIndexes.has(index)) continue;
+    const chapter = chapters[index];
+    const chapterNumber = index + 1;
+    expanded.plotOutline.push({
+      id: `plot-storyflow-${expanded.id}-${chapterNumber}`,
+      title: chapter?.title || `第${chapterNumber}章`,
+      description: `滚动续写槽位：承接第${chapterNumber - 1}章既有状态，由续写引擎根据当前合同推进主线。`,
+      type: 'chapter',
+      orderIndex: index,
+      chapterId: chapter?.id,
+    });
+  }
+
+  expanded.chapters = chapters;
+  expanded.metadata = {
+    ...(expanded.metadata ?? {}),
+    plannedChapterCount: Math.max(expanded.metadata?.plannedChapterCount ?? 0, needed),
+  };
+  return expanded;
 }
 
 function buildCriticalProjectHash(project: Project): string {
@@ -480,7 +548,7 @@ export async function runStoryflowClosedLoop(
   }
   // 深拷贝去 Vue 响应式代理（与 useProjectCreator 内做法一致）。
   // 用独立 refs 覆盖一次，保证传给续写层的是保存成功后的完整项目快照。
-  const project = JSON.parse(
+  let project = JSON.parse(
     JSON.stringify({
       ...rawProject,
       chapters: projectStore.chapters,
@@ -538,6 +606,25 @@ export async function runStoryflowClosedLoop(
     ).length,
     positioningPersisted: Boolean(persistedProject.metadata?.outlinePositioning),
   };
+
+  // 启动包当前为 50 章；80 章长跑必须在正式续写前补齐后续槽位并写入文件存储。
+  // 否则第 51 章会稳定报“缺少第 51 章”，被误判成模型连续质量拒绝。
+  project = ensureStoryflowWritingCapacity(project, chapterCount);
+  projectStorage.save(project);
+  const capacitySnapshot = projectStorage.coldReload(projectId);
+  const capacityChapterNodes = capacitySnapshot?.plotOutline.filter(
+    node => node.type === 'chapter'
+  );
+  if (
+    !capacitySnapshot ||
+    capacitySnapshot.chapters.length < chapterCount ||
+    (capacityChapterNodes?.length ?? 0) < chapterCount
+  ) {
+    throw new Error(
+      `storyflow 闭环失败：续写容量补齐失败（章节 ${capacitySnapshot?.chapters.length ?? 0}/${chapterCount}，` +
+        `大纲槽 ${capacityChapterNodes?.length ?? 0}/${chapterCount}）`
+    );
+  }
 
   // 建章后立即落盘大纲产物：真实 AI 续写阶段耗时长、可能超时，提前留存大纲数据供质量评估
   // （并发矩阵时带后缀路径，见 resolveStoryflowArtifactPaths）

@@ -304,9 +304,11 @@ describe.runIf(isRealAiEnabled())('storyflow 闭环（真实 AI）：大纲生�
       expect(result.executableOutline.startupPack30.openingHook.length).toBeLessThanOrEqual(45);
 
       // ---------- ② 应用大纲断言 ----------
-      // plotOutline 含 act/subplot 等非章节节点，章节节点数应与大纲章节数一致
+      // plotOutline 含 act/subplot 等非章节节点；长跑超过启动包时还应包含滚动续写槽。
       const chapterNodes = result.project.plotOutline.filter(n => n.type === 'chapter');
-      expect(chapterNodes.length).toBe((result.generatedOutline.chapters ?? []).length);
+      expect(chapterNodes.length).toBe(
+        Math.max((result.generatedOutline.chapters ?? []).length, chapterCount)
+      );
       expect(result.project.characters.length).toBeGreaterThan(0);
       expect(result.project.characters.length).toBeGreaterThanOrEqual(10);
       expect(result.project.foreshadows.length).toBeGreaterThanOrEqual(10);
@@ -331,7 +333,7 @@ describe.runIf(isRealAiEnabled())('storyflow 闭环（真实 AI）：大纲生�
       expect(result.projectStorageVerification.positioningPersisted).toBe(true);
 
       // ---------- ③ 批量续写断言 ----------
-      // 默认 20 章覆盖更长连续正文；P0 快速回归可通过 MOLIU_CHAPTER_COUNT 缩到 1 章。
+      // 默认 80 章覆盖更长连续正文；P0 快速回归可通过 MOLIU_CHAPTER_COUNT 缩到 1 章。
       expect(result.chapterRunResults.length).toBe(chapterCount);
       const failed = result.chapterRunResults.filter(r => !r.output.success);
       expect(failed).toEqual([]);
@@ -363,8 +365,10 @@ describe.runIf(isRealAiEnabled())('storyflow 闭环（真实 AI）：大纲生�
         characterCount: result.projectStorageVerification.characterCount,
         foreshadowCount: result.projectStorageVerification.foreshadowCount,
         volumeCount: result.projectStorageVerification.volumeCount,
-        plotChapterCount: result.projectStorageVerification.plotChapterCount,
       });
+      expect(result.postWritePersistence.plotChapterCount).toBe(
+        Math.max(result.projectStorageVerification.plotChapterCount, chapterCount)
+      );
       expect(result.postWritePersistence.writtenChapterCount).toBe(chapterCount);
     },
     TEST_TIMEOUT_MS // 真实 AI 全链路批量续写（默认 2 小时；慢模型用 MOLIU_TEST_TIMEOUT_MIN 放宽，矩阵实测 qwen3.8-max 需 3 小时+）

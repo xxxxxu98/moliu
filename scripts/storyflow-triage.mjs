@@ -39,7 +39,11 @@ const EVIDENCE_MAX = 160;
 // ---------- 单条 reviewer 问题文本 → 签名 ----------
 export function parseIssue(text) {
   const t = text.trim();
-  let m = t.match(/^语义问题\[(\w+)\]\s*([^：]+)[:：]\s*([\s\S]+)$/);
+  let m = t.match(/^缺少第\s*(\d+)\s*章/);
+  if (m) {
+    return { id: 'pipeline.missing-chapter-slot', evidence: `缺少第 ${m[1]} 章章节槽` };
+  }
+  m = t.match(/^语义问题\[(\w+)\]\s*([^：]+)[:：]\s*([\s\S]+)$/);
   if (m) {
     const type = m[1];
     const id =
@@ -424,13 +428,13 @@ function triageProvider(providerId, meta) {
     } else {
       // 质量拒绝：所属章节最终被接受 → 已恢复；未接受/整轮失败 → 阻断
       const chapterAccepted = sig.chapter != null && acceptedChapters.has(sig.chapter);
-      sig.severity = meta.pass && chapterAccepted ? 'yellow' : 'red';
+      sig.severity = chapterAccepted ? 'yellow' : 'red';
     }
     sig.stalled =
       sig.severity === 'red' &&
       sig.chapter != null &&
       (acc.chapterAttempts[sig.chapter] || 0) >= 3 &&
-      !sig.id.startsWith('infra.');
+      sig.id.startsWith('quality.');
   }
 
   const has = pred => [...signatures.values()].some(pred);
@@ -443,6 +447,9 @@ function triageProvider(providerId, meta) {
   } else if (has(s => s.severity === 'red' && s.id.startsWith('quality.'))) {
     verdict = 'quality-rejection';
     verdictReason = '存在质量拒绝且未恢复，但未达 3 轮停滞';
+  } else if (!meta.pass && has(s => s.severity === 'red' && s.id.startsWith('pipeline.'))) {
+    verdict = 'pipeline-bug';
+    verdictReason = '存在确定性管线错误，优先修复管线后再回归';
   } else if (!meta.pass && has(s => s.id.startsWith('infra.'))) {
     verdict = 'infra-failure';
     verdictReason = '失败由网络/网关错误主导';

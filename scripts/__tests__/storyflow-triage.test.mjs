@@ -18,6 +18,13 @@ test('读者与合同问题保留稳定签名', () => {
   assert.equal(parseIssue('语义问题[logic_gap] 第3段：人物无理由离场').id, 'quality.logic-gap');
 });
 
+test('缺少章节槽归为管线错误，不误判成模型质量停滞', () => {
+  assert.deepEqual(parseIssue('缺少第 51 章'), {
+    id: 'pipeline.missing-chapter-slot',
+    evidence: '缺少第 51 章章节槽',
+  });
+});
+
 test('Markdown 报告包含读者质量和修复成本列', () => {
   const markdown = markdownReport({
     generatedAt: '2026-08-19T00:00:00.000Z',

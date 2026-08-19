@@ -1,6 +1,6 @@
 {
   "mode": "storyflow-triage",
-  "generatedAt": "2026-08-19T08:55:26.203Z",
+  "generatedAt": "2026-08-19T08:51:49.609Z",
   "source": "D:\\project\\2026\\moliu\\temp\\storyflow-matrix",
   "providers": [
     {
@@ -60,17 +60,50 @@
         "totalMs": 3781750
       },
       "runtimeBackend": "sqlite",
-      "verdict": "pipeline-bug",
-      "verdictReason": "存在确定性管线错误，优先修复管线后再回归",
+      "verdict": "model-capability-suspect",
+      "verdictReason": "第51章质量拒绝连续 3 轮未收敛，重试无意义，考虑换模型或调合同（需人工确认）",
       "signatures": [
         {
-          "id": "pipeline.missing-chapter-slot",
+          "id": "quality.review-other",
           "chapter": 51,
           "count": 3,
           "evidence": [
-            "缺少第 51 章章节槽",
-            "缺少第 51 章章节槽",
-            "缺少第 51 章章节槽"
+            "缺少第 51 章",
+            "缺少第 51 章",
+            "缺少第 51 章"
+          ],
+          "severity": "red",
+          "stalled": true
+        },
+        {
+          "id": "quality.semantic-fact_conflict",
+          "chapter": 19,
+          "count": 2,
+          "evidence": [
+            "九司大厅大案旁: 状态摘要中赵从文在第15章太仓决算中已被揭穿并送入死狱（身上带有精钢铁枷与脚镣），但本章正文中赵从文却自侧廊缓步走出并以官吏身份发言，与状态摘要中的角色生死/位置状态发生跨章存在性矛盾。",
+            "在周侍郎身后，远处的阴影里，户部郎中赵从文与勋贵梁方的随从暗中露面，目光冷冷注视着场内的死局。: 根据状态摘要，赵从文在第15章太仓决算落马后已入死狱并随身持有铁枷脚镣，而本章（第19章）正文中赵从文却仍以户部郎中身份在现场自由活动，构成跨章存在性矛盾。"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 39,
+          "count": 2,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。",
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 39,
+          "count": 2,
+          "evidence": [
+            "正文后半段朱纨拿出羊皮夹子展示文书处: futureReveals 中规定「伏笔尚未到埋设时点: 朱纨在东南巡抚衙门暗格里封存的一箱被涂黑的海盗劫粮报损单。」的 notBeforeChapter 为 40，而当前为第 39 章，正文中已明确出现朱纨掏出并展示被涂黑的劫粮损耗单，属于提前揭示/提前埋设伏笔。（证据：随后从",
+            "水下暗库: futureReveals中设定“朱纨在东南巡抚衙门暗格里封存的一箱被涂黑的海盗劫粮报损单”不得在第40章前揭示，而当前章节为第39章，正文已明确出现朱纨拿出被涂黑的劫粮损耗单并由陆远舟解析的核心信息，属于提前揭示伏笔。（证据: 他从怀中缓缓取出一份用厚重黑漆布包裹的官方海损损耗卷宗，递到了陆远舟面前。 /"
           ],
           "severity": "red",
           "stalled": false
@@ -81,6 +114,96 @@
           "count": 1,
           "evidence": [
             "断言 expected 80 to be 50（期望 80 章，实际 50 章）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "正文结尾: 正文第3章明确点名揭示了“废太子潜邸私账”核心伏笔，但futureReveals设定中关于“废太子潜邸私账”的伏笔限制章节为第14章（notBeforeChapter: 14），当前为第3章，属于提前揭示。（证据: 那纸条的抬头赫然写着八个血淋淋的黑字：“废太子潜邸私账”。）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 12,
+          "count": 1,
+          "evidence": [
+            "段落过密：超长段 0 个，长段占比 58%，最长 359 字。请调整分段：每段约 3～5 句、180～280 字；优先合并过碎短段；对话换人换行；忌整章大段与一句一段"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 19,
+          "count": 1,
+          "evidence": [
+            "段落偏长：长段 0/18，超过 5 句的段 6。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 19,
+          "count": 1,
+          "evidence": [
+            "未履约节点：陆远舟识破九边军饷假账陷阱。"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 25,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 26,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 27,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 42,
+          "count": 1,
+          "evidence": [
+            "正文结尾梁方喊叫处: 梁方当庭叫嚣喊出‘每年东南三成盐税全数划入皇室私库’，提前揭示了规定在第45章之后才可揭露的核心伏笔信息（三成赋税划入皇室私库）。（证据: “每年东南三成盐税，根本就不入户部国库！而是由内务府直接提走，全数划入了皇室私库！”）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 49,
+          "count": 1,
+          "evidence": [
+            "段落过密：超长段 0 个，长段占比 100%，最长 401 字。请调整分段：每段约 3～5 句、180～280 字；优先合并过碎短段；对话换人换行；忌整章大段与一句一段"
           ],
           "severity": "red",
           "stalled": false
@@ -134,39 +257,6 @@
           "stalled": false
         },
         {
-          "id": "quality.semantic-fact_conflict",
-          "chapter": 19,
-          "count": 2,
-          "evidence": [
-            "九司大厅大案旁: 状态摘要中赵从文在第15章太仓决算中已被揭穿并送入死狱（身上带有精钢铁枷与脚镣），但本章正文中赵从文却自侧廊缓步走出并以官吏身份发言，与状态摘要中的角色生死/位置状态发生跨章存在性矛盾。",
-            "在周侍郎身后，远处的阴影里，户部郎中赵从文与勋贵梁方的随从暗中露面，目光冷冷注视着场内的死局。: 根据状态摘要，赵从文在第15章太仓决算落马后已入死狱并随身持有铁枷脚镣，而本章（第19章）正文中赵从文却仍以户部郎中身份在现场自由活动，构成跨章存在性矛盾。"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.review-other",
-          "chapter": 39,
-          "count": 2,
-          "evidence": [
-            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。",
-            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.foreshadow-premature",
-          "chapter": 39,
-          "count": 2,
-          "evidence": [
-            "正文后半段朱纨拿出羊皮夹子展示文书处: futureReveals 中规定「伏笔尚未到埋设时点: 朱纨在东南巡抚衙门暗格里封存的一箱被涂黑的海盗劫粮报损单。」的 notBeforeChapter 为 40，而当前为第 39 章，正文中已明确出现朱纨掏出并展示被涂黑的劫粮损耗单，属于提前揭示/提前埋设伏笔。（证据：随后从",
-            "水下暗库: futureReveals中设定“朱纨在东南巡抚衙门暗格里封存的一箱被涂黑的海盗劫粮报损单”不得在第40章前揭示，而当前章节为第39章，正文已明确出现朱纨拿出被涂黑的劫粮损耗单并由陆远舟解析的核心信息，属于提前揭示伏笔。（证据: 他从怀中缓缓取出一份用厚重黑漆布包裹的官方海损损耗卷宗，递到了陆远舟面前。 /"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
           "id": "reader.other-1",
           "chapter": 3,
           "count": 2,
@@ -195,96 +285,6 @@
           "evidence": [
             "陆远舟的专业压迫感明确，但台词仍偏通用的现代审计/爽文宣言；老账房、赵从文的反应也主要是冷笑、变色、冒汗，人物辨识度尚未拉开。（“数据不会撒谎”“如此明显的套现逻辑矛盾，你们管这叫精算核出？”）",
             "1-3章：模型指出读者体验问题"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.foreshadow-premature",
-          "chapter": 3,
-          "count": 1,
-          "evidence": [
-            "正文结尾: 正文第3章明确点名揭示了“废太子潜邸私账”核心伏笔，但futureReveals设定中关于“废太子潜邸私账”的伏笔限制章节为第14章（notBeforeChapter: 14），当前为第3章，属于提前揭示。（证据: 那纸条的抬头赫然写着八个血淋淋的黑字：“废太子潜邸私账”。）"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.review-other",
-          "chapter": 12,
-          "count": 1,
-          "evidence": [
-            "段落过密：超长段 0 个，长段占比 58%，最长 359 字。请调整分段：每段约 3～5 句、180～280 字；优先合并过碎短段；对话换人换行；忌整章大段与一句一段"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.review-other",
-          "chapter": 19,
-          "count": 1,
-          "evidence": [
-            "段落偏长：长段 0/18，超过 5 句的段 6。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.node-unfulfilled",
-          "chapter": 19,
-          "count": 1,
-          "evidence": [
-            "未履约节点：陆远舟识破九边军饷假账陷阱。"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.review-other",
-          "chapter": 25,
-          "count": 1,
-          "evidence": [
-            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.review-other",
-          "chapter": 26,
-          "count": 1,
-          "evidence": [
-            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.review-other",
-          "chapter": 27,
-          "count": 1,
-          "evidence": [
-            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.foreshadow-premature",
-          "chapter": 42,
-          "count": 1,
-          "evidence": [
-            "正文结尾梁方喊叫处: 梁方当庭叫嚣喊出‘每年东南三成盐税全数划入皇室私库’，提前揭示了规定在第45章之后才可揭露的核心伏笔信息（三成赋税划入皇室私库）。（证据: “每年东南三成盐税，根本就不入户部国库！而是由内务府直接提走，全数划入了皇室私库！”）"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.review-other",
-          "chapter": 49,
-          "count": 1,
-          "evidence": [
-            "段落过密：超长段 0 个，长段占比 100%，最长 401 字。请调整分段：每段约 3～5 句、180～280 字；优先合并过碎短段；对话换人换行；忌整章大段与一句一段"
           ],
           "severity": "yellow",
           "stalled": false
@@ -2496,20 +2496,20 @@
         "totalMs": 5061582
       },
       "runtimeBackend": "sqlite",
-      "verdict": "pipeline-bug",
-      "verdictReason": "存在确定性管线错误，优先修复管线后再回归",
+      "verdict": "model-capability-suspect",
+      "verdictReason": "第51章质量拒绝连续 3 轮未收敛，重试无意义，考虑换模型或调合同（需人工确认）",
       "signatures": [
         {
-          "id": "pipeline.missing-chapter-slot",
+          "id": "quality.review-other",
           "chapter": 51,
           "count": 3,
           "evidence": [
-            "缺少第 51 章章节槽",
-            "缺少第 51 章章节槽",
-            "缺少第 51 章章节槽"
+            "缺少第 51 章",
+            "缺少第 51 章",
+            "缺少第 51 章"
           ],
           "severity": "red",
-          "stalled": false
+          "stalled": true
         },
         {
           "id": "assert.chapters-accepted",
@@ -2517,6 +2517,106 @@
           "count": 1,
           "evidence": [
             "断言 expected 80 to be 50（期望 80 章，实际 50 章）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 13,
+          "count": 1,
+          "evidence": [
+            "触发本章禁区：不可过早爆发物理武力战（正文中陆渊拔刀击杀两名死士，柳青鸾跃起甩出三枚追魂透骨钉打穿死士首领琵琶骨，爆发了直接且正面的物理武力打斗与杀伤场面，触发了禁区。）（证据：陆渊面容沉冷如冰，玄色官袍在狂乱的气流中猎猎作响，佩刀划出一道凌厉至极的黑色圆弧，径直封死了死士的退路。 / 刀光如雪，两名殿后的死士惨叫着跌"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.dialogue-quotes",
+          "chapter": 30,
+          "count": 1,
+          "evidence": [
+            "对话未使用中文引号：3 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：沈淮安神色沉静，双手捧印，微微躬身道：\"回陛下，度支司旧账虽乱，但银钱流转必有痕迹，只要依律循迹穿透审计，亏空自无所遁形。）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 31,
+          "count": 1,
+          "evidence": [
+            "正文第5段及倒数第3段（推行凭证联签与借贷复核章程处）: 伏笔“沈淮安初入户部度支部时，在京师度支司推行了一套小范围使用的凭证票据与分期记账借贷试行章程”的 notBeforeChapter 为 45，当前为第 31 章，正文已提前全面推行凭证联签新规、借贷复核与双向凭证章程，核心情节提前揭示埋设。（证据: 自今日起，"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 33,
+          "count": 1,
+          "evidence": [
+            "段落节奏均匀化：19 段平均 158 字、变异系数 0.13，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.dialogue-quotes",
+          "chapter": 37,
+          "count": 1,
+          "evidence": [
+            "对话未使用中文引号：2 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：沈淮安从袖中取出一柄算筹，朗声说道：\"西北三镇虽缺粮，但晋陕两地的富商巨贾手中，却藏有数百万石私粮。他们不肯放粮，无非是朝廷既往信用破产，拿不出即时兑付的现银。）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.unregistered-character",
+          "chapter": 37,
+          "count": 1,
+          "evidence": [
+            "【该名未在角色表登记】若为功能性临时配角，正文请改用身份称呼（如「那斥候」「一名伤兵」），不要让其以具名角色身份登场或被抽为事件参与者；若为已知角色的笔误/形近字，请用角色表中的正确名字。"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.semantic-fact_conflict",
+          "chapter": 37,
+          "count": 1,
+          "evidence": [
+            "奉天殿朝堂争论处: 皇子身份与设定事实冲突: 设定摘要中萧成瑾为大皇子，萧成瑞为二皇子；正文中却将萧成瑾写为“二皇子萧成瑾”，将萧成瑞写为“六皇子萧成瑞”，皇子排行身份与既定事实不符。"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.dialogue-quotes",
+          "chapter": 38,
+          "count": 1,
+          "evidence": [
+            "对话未使用中文引号：2 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：军需官擦着脸上的血水，强作镇定地狞笑道：\"放屁！九里仓粮册乃是户部崔侍郎亲自用印批复的！西北路远，漕运火耗与仓储折损历来便有定额，三成运耗合情合理！粮草在仓中受）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 38,
+          "count": 1,
+          "evidence": [
+            "未履约节点：沈淮安在搜查密库时发现户部历年内帑调拨的诡异账本。"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 39,
+          "count": 1,
+          "evidence": [
+            "【禁止】提前完结翻案、幕后全貌或长线身份揭晓。"
           ],
           "severity": "red",
           "stalled": false
@@ -2756,111 +2856,11 @@
           "stalled": false
         },
         {
-          "id": "quality.review-other",
-          "chapter": 13,
-          "count": 1,
-          "evidence": [
-            "触发本章禁区：不可过早爆发物理武力战（正文中陆渊拔刀击杀两名死士，柳青鸾跃起甩出三枚追魂透骨钉打穿死士首领琵琶骨，爆发了直接且正面的物理武力打斗与杀伤场面，触发了禁区。）（证据：陆渊面容沉冷如冰，玄色官袍在狂乱的气流中猎猎作响，佩刀划出一道凌厉至极的黑色圆弧，径直封死了死士的退路。 / 刀光如雪，两名殿后的死士惨叫着跌"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.dialogue-quotes",
-          "chapter": 30,
-          "count": 1,
-          "evidence": [
-            "对话未使用中文引号：3 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：沈淮安神色沉静，双手捧印，微微躬身道：\"回陛下，度支司旧账虽乱，但银钱流转必有痕迹，只要依律循迹穿透审计，亏空自无所遁形。）"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.foreshadow-premature",
-          "chapter": 31,
-          "count": 1,
-          "evidence": [
-            "正文第5段及倒数第3段（推行凭证联签与借贷复核章程处）: 伏笔“沈淮安初入户部度支部时，在京师度支司推行了一套小范围使用的凭证票据与分期记账借贷试行章程”的 notBeforeChapter 为 45，当前为第 31 章，正文已提前全面推行凭证联签新规、借贷复核与双向凭证章程，核心情节提前揭示埋设。（证据: 自今日起，"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
           "id": "quality.words-overlimit",
           "chapter": 32,
           "count": 1,
           "evidence": [
             "当前 3633 / 上限 3540 / 目标 3000"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.review-other",
-          "chapter": 33,
-          "count": 1,
-          "evidence": [
-            "段落节奏均匀化：19 段平均 158 字、变异系数 0.13，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.dialogue-quotes",
-          "chapter": 37,
-          "count": 1,
-          "evidence": [
-            "对话未使用中文引号：2 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：沈淮安从袖中取出一柄算筹，朗声说道：\"西北三镇虽缺粮，但晋陕两地的富商巨贾手中，却藏有数百万石私粮。他们不肯放粮，无非是朝廷既往信用破产，拿不出即时兑付的现银。）"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.unregistered-character",
-          "chapter": 37,
-          "count": 1,
-          "evidence": [
-            "【该名未在角色表登记】若为功能性临时配角，正文请改用身份称呼（如「那斥候」「一名伤兵」），不要让其以具名角色身份登场或被抽为事件参与者；若为已知角色的笔误/形近字，请用角色表中的正确名字。"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.semantic-fact_conflict",
-          "chapter": 37,
-          "count": 1,
-          "evidence": [
-            "奉天殿朝堂争论处: 皇子身份与设定事实冲突: 设定摘要中萧成瑾为大皇子，萧成瑞为二皇子；正文中却将萧成瑾写为“二皇子萧成瑾”，将萧成瑞写为“六皇子萧成瑞”，皇子排行身份与既定事实不符。"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.dialogue-quotes",
-          "chapter": 38,
-          "count": 1,
-          "evidence": [
-            "对话未使用中文引号：2 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：军需官擦着脸上的血水，强作镇定地狞笑道：\"放屁！九里仓粮册乃是户部崔侍郎亲自用印批复的！西北路远，漕运火耗与仓储折损历来便有定额，三成运耗合情合理！粮草在仓中受）"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.node-unfulfilled",
-          "chapter": 38,
-          "count": 1,
-          "evidence": [
-            "未履约节点：沈淮安在搜查密库时发现户部历年内帑调拨的诡异账本。"
-          ],
-          "severity": "yellow",
-          "stalled": false
-        },
-        {
-          "id": "quality.review-other",
-          "chapter": 39,
-          "count": 1,
-          "evidence": [
-            "【禁止】提前完结翻案、幕后全貌或长线身份揭晓。"
           ],
           "severity": "yellow",
           "stalled": false
