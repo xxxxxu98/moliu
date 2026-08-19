@@ -19,7 +19,8 @@ export type OutlineTracePurpose =
   | 'outline-markdown'   // generate() 单次 markdown 生成
   | 'outline-direction'  // generateDirections()
   | 'outline-expand'     // expandDirection()
-  | 'outline-review';    // reviewAndFixOutline() 修正请求
+  | 'outline-review'     // reviewAndFixOutline() 修正请求
+  | 'outline-roll';      // rollOutlineForward() 滚动续纲批次
 
 export interface OutlineTraceRecord {
   seq: number;

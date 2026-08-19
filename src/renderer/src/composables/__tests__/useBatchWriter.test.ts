@@ -181,13 +181,14 @@ describe('useBatchWriter', () => {
       expect(writer.config.value.wordsPerChapter).toBe(3000);
       expect(writer.config.value.writingStyle).toBe('concise');
       expect(writer.config.value.temperature).toBe(0.5);
-      expect(writer.config.value.deAIEnabled).toBe(true);
       expect(writer.config.value.useTaskBook).toBe(true);
       expect(writer.config.value.useReview).toBe(true);
-      expect(writer.config.value.useCommit).toBe(true);
       expect(writer.config.value.requireBlockingPass).toBe(true);
       expect(writer.config.value.initialStrictness).toBe('normal');
       expect(writer.config.value.maxRetries).toBe(5);
+      // v3.1：deAI/useCommit 已移除（去AI味并入写作规则、提交由 canonical commit 接管）
+      expect(writer.config.value).not.toHaveProperty('deAIEnabled');
+      expect(writer.config.value).not.toHaveProperty('useCommit');
     });
 
     it('should expose retry state refs', async () => {

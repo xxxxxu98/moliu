@@ -936,6 +936,23 @@ export class UnifiedOutlineGenerator {
     return content;
   }
 
+  /**
+   * 滚动续纲（outline-roller）等外部流程的结构化文本调用入口：
+   * 复用 callStructuredTextMode 的流式读回/超时/trace/错误归一，不暴露私有状态。
+   */
+  async callStructuredTextForRoll(
+    systemPrompt: string,
+    userPrompt: string,
+    options?: GenerateOptions,
+  ): Promise<string> {
+    return this.callStructuredTextMode(
+      systemPrompt,
+      userPrompt,
+      { ...this.defaultOptions, ...options },
+      'outline-roll',
+    );
+  }
+
   private async requestChatCompletion(
     messages: Array<{ role: 'system' | 'user'; content: string }>,
     options: GenerateOptions,

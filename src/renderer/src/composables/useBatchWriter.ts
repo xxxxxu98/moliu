@@ -56,6 +56,12 @@ import {
   type RecoveryStrategy,
   type RecoveryEvent,
 } from '@/services/writing/failure-recovery';
+import {
+  computeOutlineRunway,
+  rollOutlineForward,
+  OUTLINE_ROLL_RUNWAY_THRESHOLD,
+} from '@/services/outline/rolling/outline-roller';
+import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
 
 export type WritingTarget = 'specific' | 'finish';
 
@@ -215,6 +221,8 @@ export interface UseBatchWriterReturn {
   // 批量进度持久化（P2-2）：跨会话恢复未完成的批量
   resumableBatch: Ref<BatchSummary | null>; // localStorage 里未确认的上次进度
   dismissResumableBatch: () => void; // 用户忽略后清除
+  // 滚动续纲：51 章后细纲跑道的后台补充状态
+  outlineRollStatus: Ref<string | null>;
 
   // 写到完结状态
   endingStatus: Ref<EndingCheckResult | null>; // 完结判断结果
@@ -229,10 +237,8 @@ export interface UseBatchWriterReturn {
     wordsPerChapter: number;
     writingStyle: 'concise' | 'elegant' | 'humorous' | 'ancient';
     temperature: number;
-    deAIEnabled: boolean;
     useTaskBook: boolean;
     useReview: boolean;
-    useCommit: boolean;
     requireBlockingPass: boolean;
     // 审查配置
     initialStrictness: ReviewStrictness; // 初始严格度
@@ -311,14 +317,14 @@ export interface VolumeProgress {
 }
 
 // 批量写作配置
+// v3.1 说明：deAI/useCommit 已随流水线演进移除——去AI味并入正文写作规则，
+// 提交由 canonical commit（SQLite 原子写）语义接管，无可关闭的开关面。
 export interface BatchConfig {
   wordsPerChapter: number;
   writingStyle: 'concise' | 'elegant' | 'humorous' | 'ancient';
   temperature?: number;
-  deAIEnabled?: boolean;
   useTaskBook?: boolean;
   useReview?: boolean;
-  useCommit?: boolean;
   requireBlockingPass?: boolean;
   initialStrictness?: ReviewStrictness; // 初始审查严格度
   maxRetries?: number; // 单章失败重试次数（指数退避）
@@ -648,6 +654,10 @@ export function useBatchWriter(): UseBatchWriterReturn {
   const currentPipelineStep = ref('idle');
   const blockingIssues = ref<any[]>([]);
 
+  // 滚动续纲状态（后台异步，不阻塞写作循环）
+  const outlineRollStatus = ref<string | null>(null);
+  let outlineRollInFlight: Promise<void> | null = null;
+
   // 写作目标
   const target = ref<WritingTarget>('specific');
 
@@ -675,10 +685,8 @@ export function useBatchWriter(): UseBatchWriterReturn {
     wordsPerChapter: 3000,
     writingStyle: 'concise' as 'concise' | 'elegant' | 'humorous' | 'ancient',
     temperature: 0.5,
-    deAIEnabled: true,
     useTaskBook: true,
     useReview: true,
-    useCommit: true,
     requireBlockingPass: true,
     initialStrictness: 'normal' as ReviewStrictness,
     maxRetries: 5,
@@ -779,6 +787,63 @@ export function useBatchWriter(): UseBatchWriterReturn {
   }
 
   /**
+   * 细纲跑道不足时后台滚动补充下一批章级蓝图（不 await，不阻塞写作循环）。
+   *
+   * 触发口径：chapter 型 plot 节点数 − 已建章节数 < 阈值。启动包只有前 50 章细纲，
+   * 不补的话第 51 章起章节合同退化为标题兜底，CBN/CPNs/CEN/mustCover 全部失效。
+   * 失败只记入 outlineRollStatus 供 UI 展示——续纲挂了不该拖死正文写作，
+   * 写不出的章走 buildWindowedOutlineText 的无细纲声明路径。
+   */
+  function ensureOutlineRunwayAsync(): void {
+    const project = projectStore.currentProject;
+    if (!project || outlineRollInFlight) return;
+
+    const runwayState = computeOutlineRunway(projectStore.sortedChapters, project.plotOutline || []);
+    if (runwayState.runway >= OUTLINE_ROLL_RUNWAY_THRESHOLD) return;
+
+    const rollFromEstimate =
+      Math.max(runwayState.chapterNodeCount, runwayState.writtenThrough) + 1;
+    outlineRollStatus.value =
+      `细纲跑道不足（还有 ${runwayState.runway} 章有细纲待写，已写到第 ${runwayState.writtenThrough} 章），` +
+      `正在滚动补充第 ${rollFromEstimate} 章起的蓝图...`;
+    outlineRollInFlight = (async () => {
+      try {
+        const generator = new UnifiedOutlineGenerator();
+        const result = await rollOutlineForward({
+          project: projectStore.currentProject ?? project,
+          callStructuredText: (system, user, temperature) =>
+            generator.callStructuredTextForRoll(system, user, { temperature }),
+          persist: async (nodes, plannedChapterCount) => {
+            for (const node of nodes) {
+              await projectStore.createPlotNode(node);
+            }
+            if (projectStore.currentProject) {
+              projectStore.currentProject.metadata = {
+                ...projectStore.currentProject.metadata,
+                plannedChapterCount,
+              };
+              await projectStore.saveCurrentProject();
+            }
+          },
+        });
+        if (result.appendedCount > 0) {
+          outlineRollStatus.value = `已滚动补充第 ${result.fromChapter}-${result.toChapter} 章细纲`;
+        } else {
+          outlineRollStatus.value = result.skippedReason
+            ?? `滚动续纲未产出可用蓝图：${result.warnings[0] ?? '原因未知'}`;
+        }
+        for (const warning of result.warnings) {
+          console.warn(`[批量写作] 滚动续纲：${warning}`);
+        }
+      } catch (err) {
+        outlineRollStatus.value = `滚动续纲失败：${err instanceof Error ? err.message.slice(0, 120) : String(err).slice(0, 120)}`;
+      } finally {
+        outlineRollInFlight = null;
+      }
+    })();
+  }
+
+  /**
    * 执行单章写作（核心逻辑）—— v3.1 委托给共享管道
    *
    * 老版本（内联 9 步流水线：TaskBook→起草→blockingReview→润色→保存→Commit→记忆→伏笔）
@@ -798,8 +863,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
     options: {
       useTaskBook: boolean;
       useReview: boolean;
-      useCommit: boolean;
-      deAIEnabled: boolean;
       writingStyle: string;
       wordsPerChapter: number;
       requireBlockingPass: boolean;
@@ -836,9 +899,14 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
       currentPipelineStep.value = '写作中';
 
-      // 委托共享管道执行单章（批量预设：跳过预检，开启补字）
+      // 委托共享管道执行单章（批量预设：跳过预检，开启补字）。
+      // v3.1 管道的真实开关面是 useTaskBook/enablePreflight/enableSupplement/maxRewriteRounds；
+      // 旧 UI 旋钮按语义映射接线（此前四个旋钮收参后被直接忽略，关审查实际照跑）：
+      // - useReview=false → maxRewriteRounds=0（引擎内不再整章重写，语义门仍产出报告）
+      // - requireBlockingPass=false → enableSupplement=false（不强制补字达标）
       const writeOptions = resolveChapterWriteOptions(BATCH_CONTINUE_PRESET, {
         useTaskBook: options.useTaskBook,
+        enableSupplement: options.requireBlockingPass ? undefined : false,
       });
       const result = await pipeline.execute({
         project,
@@ -846,6 +914,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
         targetWordCount: options.wordsPerChapter,
         writingStyle: options.writingStyle as any,
         ...writeOptions,
+        maxRewriteRounds: options.useReview === false ? 0 : undefined,
         previousChapter,
         signal: internalState.abortController?.signal,
         // 上一轮失败留下的门禁反馈种子：让重试带教训定向重写，而非盲目重跑（提升成功率）
@@ -1012,10 +1081,8 @@ export function useBatchWriter(): UseBatchWriterReturn {
       config.value.wordsPerChapter = batchConfig.wordsPerChapter;
       config.value.writingStyle = batchConfig.writingStyle;
       config.value.temperature = batchConfig.temperature ?? 0.5;
-      config.value.deAIEnabled = batchConfig.deAIEnabled ?? true;
       config.value.useTaskBook = true;
       config.value.useReview = batchConfig.useReview ?? true;
-      config.value.useCommit = batchConfig.useCommit ?? true;
       config.value.requireBlockingPass = batchConfig.requireBlockingPass ?? true;
       config.value.initialStrictness = batchConfig.initialStrictness ?? 'normal';
       config.value.maxRetries = batchConfig.maxRetries ?? 5;
@@ -1134,6 +1201,16 @@ export function useBatchWriter(): UseBatchWriterReturn {
             }
           }
 
+          // 空章用尽 = 细纲跑道归零。若滚动续纲正在后台跑，等它落地再建章——
+          // 位置兜底按「第 N 个 chapter 节点 = 第 N 章」对齐，先建章后补节点同样能对上，
+          // 但等落地能让新章直接带蓝图进写作合同，而不是先裸写一章。
+          if (outlineRollInFlight) {
+            currentPipelineStep.value = '等待滚动续纲落地...';
+            await outlineRollInFlight;
+            currentPipelineStep.value = 'idle';
+            if (internalState.shouldStop) break;
+          }
+
           currentIndex = await createNewChapter();
           if (currentIndex < 0) {
             break;
@@ -1169,8 +1246,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
             const success = await executeChapterWriting(currentIndex, {
               useTaskBook: config.value.useTaskBook,
               useReview: config.value.useReview,
-              useCommit: config.value.useCommit,
-              deAIEnabled: config.value.deAIEnabled,
               writingStyle: config.value.writingStyle,
               wordsPerChapter: config.value.wordsPerChapter,
               requireBlockingPass: config.value.requireBlockingPass,
@@ -1291,6 +1366,9 @@ export function useBatchWriter(): UseBatchWriterReturn {
           isReadyToEnd.value = updatedCheck.isReady;
         }
 
+        // 细纲跑道不足时后台补下一批蓝图（异步，不等待）；下一轮循环若仍在途则跳过
+        ensureOutlineRunwayAsync();
+
         // 找下一个空章节
         currentIndex = getNextChapterIndex();
       }
@@ -1373,9 +1451,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
       wordsPerChapter: config.value.wordsPerChapter,
       writingStyle: config.value.writingStyle,
       temperature: config.value.temperature,
-      deAIEnabled: config.value.deAIEnabled,
       useReview: config.value.useReview,
-      useCommit: config.value.useCommit,
       requireBlockingPass: config.value.requireBlockingPass,
       initialStrictness: config.value.initialStrictness,
       maxRetries: config.value.maxRetries,
@@ -1507,6 +1583,8 @@ export function useBatchWriter(): UseBatchWriterReturn {
     retryFailedChapters,
     resumableBatch,
     dismissResumableBatch,
+    // 滚动续纲状态（供 UI 展示补充进度/失败原因）
+    outlineRollStatus,
     // 写到完结状态
     endingStatus,
     isReadyToEnd,

@@ -855,6 +855,25 @@ export function openContinueWriteSession(options: {
         persistence,
         memoryClient,
         plotOutlineClient: options.plotOutlineClient ?? null,
+        // 伏笔回收流转（与生产同源）：判官确认的 resolvedForeshadowIds 经 pipeline
+        // 提交阶段流转到 project 副本——此前 harness 在 onChapterSettled 手动消费，
+        // 生产链路却没有对应物；现在两侧都走 foreshadowClient.markResolved。
+        foreshadowClient: {
+          markResolved: async (ids: string[]) => {
+            let touched = 0;
+            for (const foreshadow of project.foreshadows ?? []) {
+              if (ids.includes(foreshadow.id) && foreshadow.status !== 'resolved') {
+                foreshadow.status = 'resolved';
+                touched += 1;
+              }
+            }
+            if (touched > 0) {
+              console.log(
+                `[continueWriteHarness] 第${chapterNumber}章判官确认回收伏笔 ${touched} 条，已流转 buried→resolved`
+              );
+            }
+          },
+        },
       };
 
       const targetWordCount = chapterOptions.targetWordCount ?? 3000;
@@ -1001,6 +1020,22 @@ export async function runContinueWriteChapters(options: {
   plotOutlineClient?: {
     updateChapterTitle(input: ChapterTitleUpdate): Promise<void>;
   };
+  /**
+   * 细纲跑道监控（与生产 useBatchWriter.ensureOutlineRunwayAsync 同构）：
+   * 每章成功后计算跑道（chapter 节点数 − 已建章节数），低于阈值时触发本回调，
+   * 由调用方执行滚动续纲（rollOutlineForward）。回调返回的 Promise 会被 await——
+   * 生产环境是后台异步不阻塞写作，冒烟为了确定性断言选择同步等待落地；
+   * 空章用尽（跑道归零）且续纲仍在途时，生产会等待落地再建章，这里由
+   * 「下一章前跑道必须 ≥1」的同步语义等价覆盖。
+   */
+  onRunwayLow?: (input: {
+    runway: number;
+    writtenThrough: number;
+    nextChapterNumber: number;
+    project: Project;
+  }) => Promise<void>;
+  /** 跑道阈值；与生产 OUTLINE_ROLL_RUNWAY_THRESHOLD 对齐（默认 10） */
+  runwayThreshold?: number;
 }): Promise<{
   runtimeBackend: HarnessRuntimeBackend;
   runtimeVerification: StoryRuntimeVerification;
@@ -1127,12 +1162,41 @@ export async function runContinueWriteChapters(options: {
           requestedChapters: chapterCount,
           project: session.getProject(),
         });
+        // 细纲跑道检查（与生产 ensureOutlineRunwayAsync 同构）：每章成功后看跑道，
+        // 不足阈值时让调用方滚动续纲。跑道 = 细纲节点数 − 已写章数（空章不消耗跑道，
+        // 与生产口径一致——否则预建空章的 mid 模式首章后就触发，状态基底只有 1 章 digest）。
+        // 同步 await 保证下一章开写前细纲已就位（生产是后台异步+空章用尽时等待，语义等价）。
+        if (options.onRunwayLow) {
+          const currentProject = session.getProject();
+          const chapterNodeCount = (currentProject.plotOutline ?? []).filter(
+            node => node.type === 'chapter'
+          ).length;
+          const writtenThrough = (currentProject.chapters ?? []).filter(
+            chapter => (chapter.content ?? '').trim().length > 0
+          ).length;
+          const runway = chapterNodeCount - writtenThrough;
+          if (runway < (options.runwayThreshold ?? 10)) {
+            await options.onRunwayLow({
+              runway,
+              writtenThrough,
+              nextChapterNumber: chapterNumber + 1,
+              project: currentProject,
+            });
+          }
+        }
         continue;
       }
       // 重试耗尽（持久/瞬态）：记录失败章信息后结束整批（质量优先，不再留白补章继续）
       const failedChapter =
         options.project.chapters.find(item => item.orderIndex + 1 === chapterNumber) ?? null;
       if (failedChapter) {
+        // 对齐 useBatchWriter:1346-1355：失败章标记 writeStatus='failed' + 失败详情，
+        // 供失败章节红标/断点续写跳过/重试入口消费。此处直接写 project 副本
+        // （harness 无 store updateChannel），语义与 store.updateChapter 一致。
+        failedChapter.writeStatus = 'failed';
+        failedChapter.lastError = lastError || `重试耗尽（${lastErrorKind}）`;
+        failedChapter.lastErrorKind = lastErrorKind;
+        failedChapter.lastErrorAt = new Date().toISOString();
         const noopAi: StructuredAI = {
           async generate() {
             throw new Error('failed-chapter placeholder: no AI available');

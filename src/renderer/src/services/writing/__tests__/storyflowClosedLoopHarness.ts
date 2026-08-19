@@ -28,6 +28,10 @@ import { join } from 'node:path';
 import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
 import { mapExecutableOutlineToGeneratedOutline } from '@/services/outline/adapters/executable-outline-adapter';
 import { inspectOutlineCompleteness } from '@/services/outline/validation/outlineCompleteness';
+import {
+  rollOutlineForward,
+  type RollCaller,
+} from '@/services/outline/rolling/outline-roller';
 import type { ExecutableOutline } from '@/services/outline/types/executable-outline';
 import type { OutlineDirection } from '@/services/outline/types/direction';
 import type { GeneratedOutline } from '@/types/inspiration';
@@ -84,14 +88,17 @@ export interface StoryflowClosedLoopResult {
    * 在 summary 里隐形，只能翻 trace 才能发现）。
    */
   outlineWarnings: string[];
-  /** 分阶段耗时（ms）：定位慢环节用（大纲生成/应用/批量续写各占多久） */
+  /** 分阶段耗时（ms）：定位慢环节用（大纲生成/滚动续纲/应用/批量续写各占多久） */
   phaseTimings: {
     outlineDirectionsMs: number;
     outlineExpandMs: number;
+    outlineRollMs: number;
     applyOutlineMs: number;
     continueWriteMs: number;
     totalMs: number;
   };
+  /** 滚动续纲报告（仅当长跑超出启动包细纲时存在）：真滚/占位占比与警告 */
+  outlineRoll?: StoryflowOutlineRollReport;
 }
 
 export interface ProjectStorageVerification {
@@ -266,11 +273,75 @@ function installFileElectronAPI(runId: string): FileProjectStorage {
 
 /**
  * 启动包只保证首批结构化章纲；长跑冒烟可能要求写得更远。
- * 为超出启动包的章节补齐最小章节/大纲槽，让正式续写引擎依据滚动状态继续推进。
- * 新槽不伪造 CBN/CPNs/mustCover，避免把测试占位描述误当成质量合同。
+ * 真实对齐：优先走生产同款滚动续纲（rollOutlineForward + UnifiedOutlineGenerator），
+ * 补不出的章（模型失败/网关抖动）才落最小占位槽兜底——占位不伪造 CBN/CPNs/mustCover，
+ * 避免把测试占位描述误当成质量合同。冒烟报告通过 outlineRoll 记录两条路径的占比。
  */
-export function ensureStoryflowWritingCapacity(project: Project, minCount: number): Project {
+export async function ensureStoryflowWritingCapacity(
+  project: Project,
+  minCount: number,
+  rollOptions?: {
+    callStructuredText: RollCaller;
+    signal?: AbortSignal;
+    onProgress?: (message: string) => void;
+  }
+): Promise<Project & { outlineRoll?: StoryflowOutlineRollReport }> {
   const needed = Math.max(1, Math.floor(minCount));
+  let expanded = cloneProject(project);
+  const rollReport: StoryflowOutlineRollReport = {
+    requestedChapters: needed,
+    rolledFromChapter: 0,
+    rolledToChapter: 0,
+    rolledCount: 0,
+    placeholderCount: 0,
+    warnings: [],
+  };
+
+  if (rollOptions) {
+    const beforeNodes = expanded.plotOutline.filter(node => node.type === 'chapter').length;
+    const beforeWritten = (expanded.chapters ?? []).filter(
+      chapter => (chapter.content ?? '').trim().length > 0
+    ).length;
+    const rollFrom = Math.max(beforeNodes, beforeWritten) + 1;
+    if (rollFrom <= needed) {
+      const result = await rollOutlineForward({
+        project: expanded,
+        callStructuredText: rollOptions.callStructuredText,
+        signal: rollOptions.signal,
+        onProgress: rollOptions.onProgress,
+        maxChapters: needed,
+        persist: (nodes, plannedChapterCount) => {
+          expanded.plotOutline.push(...nodes);
+          expanded.metadata = {
+            ...expanded.metadata,
+            plannedChapterCount: Math.max(expanded.metadata?.plannedChapterCount ?? 0, plannedChapterCount),
+          };
+        },
+      });
+      rollReport.rolledFromChapter = result.fromChapter;
+      rollReport.rolledToChapter = result.toChapter;
+      rollReport.rolledCount = result.appendedCount;
+      rollReport.warnings.push(...result.warnings);
+      // 占位兜底只补滚动没补到的章
+      expanded = ensurePlaceholderCapacity(expanded, needed, rollReport);
+      return Object.assign(expanded, { outlineRoll: rollReport });
+    }
+    rollReport.warnings.push(
+      `滚动续纲未触发：细纲槽 ${beforeNodes} 已满足目标 ${needed} 章`,
+    );
+    return Object.assign(expanded, { outlineRoll: rollReport });
+  }
+
+  // 未提供真实 AI 调用器（非真实冒烟路径）：全部占位兜底
+  expanded = ensurePlaceholderCapacity(expanded, needed, rollReport);
+  return Object.assign(expanded, { outlineRoll: rollReport });
+}
+
+function ensurePlaceholderCapacity(
+  project: Project,
+  needed: number,
+  rollReport: StoryflowOutlineRollReport
+): Project {
   const expanded = cloneProject(project);
   const now = new Date().toISOString();
   const chapters = [...(expanded.chapters ?? [])].sort((a, b) => a.orderIndex - b.orderIndex);
@@ -308,6 +379,7 @@ export function ensureStoryflowWritingCapacity(project: Project, minCount: numbe
     if (existingNodeIndexes.has(index)) continue;
     const chapter = chapters[index];
     const chapterNumber = index + 1;
+    rollReport.placeholderCount += 1;
     expanded.plotOutline.push({
       id: `plot-storyflow-${expanded.id}-${chapterNumber}`,
       title: chapter?.title || `第${chapterNumber}章`,
@@ -322,6 +394,55 @@ export function ensureStoryflowWritingCapacity(project: Project, minCount: numbe
   expanded.metadata = {
     ...(expanded.metadata ?? {}),
     plannedChapterCount: Math.max(expanded.metadata?.plannedChapterCount ?? 0, needed),
+  };
+  return expanded;
+}
+
+/** 滚动续纲在冒烟报告中的落点：真滚了多少章、占位兜底多少章、警告透传 */
+export interface StoryflowOutlineRollReport {
+  requestedChapters: number;
+  rolledFromChapter: number;
+  rolledToChapter: number;
+  rolledCount: number;
+  placeholderCount: number;
+  warnings: string[];
+}
+
+/**
+ * mid 模式容量：只建空章（无大纲节点），大纲槽由写作中途的 onRunwayLow 滚动补齐。
+ * 章节实体必须预建——harness 的 runChapter 按 orderIndex 定位章节，不预建会「缺少第 N 章」。
+ */
+export async function ensureStoryflowChapterCapacity(
+  project: Project,
+  minCount: number
+): Promise<Project> {
+  const expanded = cloneProject(project);
+  const now = new Date().toISOString();
+  const chapters = [...(expanded.chapters ?? [])].sort((a, b) => a.orderIndex - b.orderIndex);
+  const lastVolume = [...(expanded.volumes ?? [])]
+    .sort((a, b) => a.orderIndex - b.orderIndex)
+    .at(-1);
+  for (let index = chapters.length; index < minCount; index += 1) {
+    const chapterNumber = index + 1;
+    chapters.push({
+      id: `chapter-storyflow-${expanded.id}-${chapterNumber}`,
+      volumeId: lastVolume?.id,
+      title: `第${chapterNumber}章`,
+      content: '',
+      wordCount: 0,
+      orderIndex: index,
+      version: 1,
+      status: 'draft',
+      createdAt: now,
+      updatedAt: now,
+      isGenerated: false,
+      writeStatus: 'pending',
+    });
+  }
+  expanded.chapters = chapters;
+  expanded.metadata = {
+    ...(expanded.metadata ?? {}),
+    plannedChapterCount: Math.max(expanded.metadata?.plannedChapterCount ?? 0, minCount),
   };
   return expanded;
 }
@@ -415,6 +536,7 @@ export async function runStoryflowClosedLoop(
   const phaseTimings = {
     outlineDirectionsMs: 0,
     outlineExpandMs: 0,
+    outlineRollMs: 0,
     applyOutlineMs: 0,
     continueWriteMs: 0,
     totalMs: 0,
@@ -608,21 +730,68 @@ export async function runStoryflowClosedLoop(
   };
 
   // 启动包当前为 50 章；80 章长跑必须在正式续写前补齐后续槽位并写入文件存储。
-  // 否则第 51 章会稳定报“缺少第 51 章”，被误判成模型连续质量拒绝。
-  project = ensureStoryflowWritingCapacity(project, chapterCount);
+  // 滚动模式（MOLIU_STORYFLOW_ROLL_MODE，默认 pre）：
+  // - pre：开跑前一次性滚动补齐（快，占位兜底；中段触发的质量路径不覆盖）
+  // - mid：开跑前只建空章不建大纲节点，细纲全部由 onRunwayLow 中段触发补——
+  //   与生产 useBatchWriter.ensureOutlineRunwayAsync（写到 40 章跑道<10 时带着
+  //   40 章 digest 滚动）完全同构，覆盖「承接已写状态滚动续纲」的核心质量路径。
+  const rollMode = (process.env.MOLIU_STORYFLOW_ROLL_MODE?.trim() || 'pre') as 'pre' | 'mid';
+  const chapterNodesBeforeRoll = project.plotOutline.filter(node => node.type === 'chapter').length;
+  const rollNeeded = chapterCount > chapterNodesBeforeRoll;
+  let outlineRoll: StoryflowOutlineRollReport | undefined;
+  if (rollNeeded && isRealAiEnabled() && rollMode === 'pre') {
+    const rollStartedAt = Date.now();
+    const rollGenerator = new UnifiedOutlineGenerator();
+    const rollTraceRunId = `${runIdPrefix}-outline-roll-${Date.now()}`;
+    const rolled = await ensureStoryflowWritingCapacity(project, chapterCount, {
+      callStructuredText: (system, user, temperature) =>
+        rollGenerator.callStructuredTextForRoll(system, user, {
+          temperature,
+          trace: { runId: rollTraceRunId, model: cfg.model, provider: cfg.provider },
+        }),
+      onProgress: message => console.log(`[storyflow:roll] ${message}`),
+    });
+    outlineRoll = rolled.outlineRoll;
+    project = rolled;
+    phaseTimings.outlineRollMs = Date.now() - rollStartedAt;
+    console.log(
+      `[storyflow:roll] 滚动续纲完成：真滚 ${outlineRoll.rolledCount} 章` +
+        `（第 ${outlineRoll.rolledFromChapter}-${outlineRoll.rolledToChapter} 章），` +
+        `占位兜底 ${outlineRoll.placeholderCount} 章` +
+        (outlineRoll.warnings.length > 0 ? `，警告 ${outlineRoll.warnings.length} 条` : '')
+    );
+    if (outlineRoll.warnings.length > 0) {
+      outlineWarnings.push(...outlineRoll.warnings.map(w => `[滚动续纲] ${w}`));
+    }
+  } else if (rollNeeded) {
+    // mid 模式（或非真实 AI）：只建空章占位（无大纲节点），大纲槽由中段滚动补。
+    // 非 mid 的非真实 AI 场景仍需完整占位（无 AI 可滚）。
+    if (rollMode === 'mid' && isRealAiEnabled()) {
+      project = await ensureStoryflowChapterCapacity(project, chapterCount);
+      outlineRoll = {
+        requestedChapters: chapterCount,
+        rolledFromChapter: 0,
+        rolledToChapter: 0,
+        rolledCount: 0,
+        placeholderCount: 0,
+        warnings: ['mid 模式：细纲由中段滚动触发补齐（与生产 ensureOutlineRunwayAsync 同构）'],
+      };
+    } else {
+      project = await ensureStoryflowWritingCapacity(project, chapterCount);
+      outlineRoll = project.outlineRoll;
+    }
+  }
   projectStorage.save(project);
   const capacitySnapshot = projectStorage.coldReload(projectId);
-  const capacityChapterNodes = capacitySnapshot?.plotOutline.filter(
-    node => node.type === 'chapter'
-  );
   if (
     !capacitySnapshot ||
     capacitySnapshot.chapters.length < chapterCount ||
-    (capacityChapterNodes?.length ?? 0) < chapterCount
+    (rollMode !== 'mid' &&
+      (capacitySnapshot.plotOutline.filter(node => node.type === 'chapter')?.length ?? 0) < chapterCount)
   ) {
     throw new Error(
       `storyflow 闭环失败：续写容量补齐失败（章节 ${capacitySnapshot?.chapters.length ?? 0}/${chapterCount}，` +
-        `大纲槽 ${capacityChapterNodes?.length ?? 0}/${chapterCount}）`
+        `大纲槽 ${capacitySnapshot?.plotOutline.filter(node => node.type === 'chapter')?.length ?? 0}/${chapterCount}）`
     );
   }
 
@@ -705,8 +874,26 @@ export async function runStoryflowClosedLoop(
           })),
           projectStorageVerification,
           outlineWarnings,
+          outlineRoll: outlineRoll
+            ? {
+                requestedChapters: outlineRoll.requestedChapters,
+                rolledFromChapter: outlineRoll.rolledFromChapter,
+                rolledToChapter: outlineRoll.rolledToChapter,
+                rolledCount: outlineRoll.rolledCount,
+                placeholderCount: outlineRoll.placeholderCount,
+                warnings: outlineRoll.warnings,
+              }
+            : null,
           provider: cfg.provider,
           model: cfg.model,
+          phaseTimings: {
+            outlineDirectionsMs: phaseTimings.outlineDirectionsMs,
+            outlineExpandMs: phaseTimings.outlineExpandMs,
+            outlineRollMs: phaseTimings.outlineRollMs,
+            applyOutlineMs: phaseTimings.applyOutlineMs,
+            continueWriteMs: phaseTimings.continueWriteMs,
+            totalMs: phaseTimings.totalMs,
+          },
           updatedAt: new Date().toISOString(),
           warnings: ['任务尚未完成；本摘要为阶段性检查点，进程超时或中断后仍可用于诊断。'],
         },
@@ -766,29 +953,99 @@ export async function runStoryflowClosedLoop(
     onChapterSettled: ({ result: chapterResult }) => {
       checkpointResults.push(chapterResult);
       persistProgress();
-      // 伏笔回收流转：判官证据确认已回收的伏笔 buried→resolved 并写回 project store，
-      // 让 postWritePersistence/进度面板不再恒报「全部 buried」（严证据门：判官未列出的不动）
-      const resolvedIds = chapterResult.output.longFormResult?.report?.resolvedForeshadowIds ?? [];
-      if (resolvedIds.length > 0) {
-        let touched = false;
-        for (const foreshadow of project.foreshadows ?? []) {
-          if (resolvedIds.includes(foreshadow.id) && foreshadow.status !== 'resolved') {
-            foreshadow.status = 'resolved';
-            touched = true;
-          }
-        }
-        if (touched) {
-          console.log(
-            `[storyflow:real] 第${chapterResult.chapterNumber}章判官确认回收伏笔 ${resolvedIds.length} 条，已流转 buried→resolved`
-          );
-        }
-      }
+      // 伏笔回收流转已下沉到 pipeline 提交阶段（foreshadowClient.markResolved，
+      // 与生产 useBatchWriter 同源），此处不再手动消费 resolvedForeshadowIds。
     },
+    // mid 模式：细纲跑道不足时中段滚动续纲（与生产 ensureOutlineRunwayAsync 同构——
+    // 带着已写章节 digest 滚，这是「承接实写状态」的核心质量路径）。
+    // 直调 rollOutlineForward 并原地变更 liveProject（session 内部引用）：
+    // ensureStoryflowWritingCapacity 会 clone 后再滚，产物回不到 session 的章节定位闭包。
+    ...(rollMode === 'mid' && isRealAiEnabled()
+      ? {
+          onRunwayLow: async ({ runway, writtenThrough, nextChapterNumber, project: liveProject }) => {
+            const rollStartedAt = Date.now();
+            const rollGenerator = new UnifiedOutlineGenerator();
+            const rollTraceRunId = `${runIdPrefix}-outline-roll-mid-${Date.now()}`;
+            console.log(
+              `[storyflow:roll] 跑道不足（还有 ${runway} 章有细纲待写，已写到第 ${writtenThrough} 章），中段滚动补第 ${nextChapterNumber} 章起细纲...`
+            );
+            const rollResult = await rollOutlineForward({
+              project: liveProject,
+              callStructuredText: (system, user, temperature) =>
+                rollGenerator.callStructuredTextForRoll(system, user, {
+                  temperature,
+                  trace: { runId: rollTraceRunId, model: cfg.model, provider: cfg.provider },
+                }),
+              maxChapters: chapterCount,
+              persist: (nodes, plannedChapterCount) => {
+                liveProject.plotOutline.push(...nodes);
+                liveProject.metadata = {
+                  ...liveProject.metadata,
+                  plannedChapterCount: Math.max(
+                    liveProject.metadata?.plannedChapterCount ?? 0,
+                    plannedChapterCount
+                  ),
+                };
+              },
+            });
+            phaseTimings.outlineRollMs += Date.now() - rollStartedAt;
+
+            // 滚动没补到的章（模型失败/前缀截断）落占位节点兜底：mid 模式只预建了空章，
+            // 这些章若无节点，位置兜底取不到 → 无细纲降级（诚实但浪费了本轮已建章位）。
+            let placeholderFilled = 0;
+            const nodeIndexes = new Set(
+              liveProject.plotOutline
+                .filter(node => node.type === 'chapter')
+                .map(node => node.orderIndex)
+            );
+            for (let index = 0; index < chapterCount; index += 1) {
+              if (nodeIndexes.has(index)) continue;
+              const chapter = liveProject.chapters[index];
+              liveProject.plotOutline.push({
+                id: `plot-storyflow-mid-${projectId}-${index}`,
+                title: chapter?.title || `第${index + 1}章`,
+                description: `滚动续写槽位：承接第${index}章既有状态，由续写引擎根据当前合同推进主线。`,
+                type: 'chapter',
+                orderIndex: index,
+                chapterId: chapter?.id,
+              });
+              placeholderFilled += 1;
+            }
+
+            if (outlineRoll) {
+              outlineRoll.rolledCount += rollResult.appendedCount;
+              outlineRoll.rolledToChapter = Math.max(
+                outlineRoll.rolledToChapter,
+                rollResult.toChapter
+              );
+              outlineRoll.placeholderCount += placeholderFilled;
+              outlineRoll.warnings.push(...rollResult.warnings);
+            } else {
+              outlineRoll = {
+                requestedChapters: chapterCount,
+                rolledFromChapter: rollResult.fromChapter,
+                rolledToChapter: rollResult.toChapter,
+                rolledCount: rollResult.appendedCount,
+                placeholderCount: placeholderFilled,
+                warnings: [...rollResult.warnings],
+              };
+            }
+            console.log(
+              `[storyflow:roll] 中段滚动落地：真滚 ${rollResult.appendedCount} 章` +
+                `（第 ${rollResult.fromChapter}-${rollResult.toChapter} 章），占位兜底 ${placeholderFilled} 章`
+            );
+            outlineWarnings.push(
+              ...rollResult.warnings.map(w => `[中段滚动@${writtenThrough}章] ${w}`)
+            );
+          },
+        }
+      : {}),
   });
   phaseTimings.continueWriteMs = Date.now() - continueWriteStartedAt;
   phaseTimings.totalMs =
     phaseTimings.outlineDirectionsMs +
     phaseTimings.outlineExpandMs +
+    phaseTimings.outlineRollMs +
     phaseTimings.applyOutlineMs +
     phaseTimings.continueWriteMs;
 
@@ -823,5 +1080,6 @@ export async function runStoryflowClosedLoop(
     createdChapterIds,
     outlineWarnings,
     phaseTimings,
+    outlineRoll,
   };
 }

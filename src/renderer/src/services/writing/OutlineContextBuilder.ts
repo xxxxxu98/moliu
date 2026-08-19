@@ -338,13 +338,15 @@ export function buildWindowedOutlineText(
   const chapters = getChapterPlotNodes(plotOutline);
   if (chapters.length === 0) return '';
 
-  // 越界 clamp（R4 修复）：真实章节数可能多于大纲节点数（用户手动加章），
-  // 此时传入的 chapterOrderIndex 会落在 chapters.length 之外，
-  // 导致 `i === current` 永不命中、当前章无细纲、所有章节只剩标题行。
-  // 这里把 current 钳到 [0, length-1]，保证总有 1 章被标“当前章”。
-  const current = Math.min(Math.max(0, chapterOrderIndex), chapters.length - 1);
-  const lo = Math.max(0, current - windowSize);
-  const hi = Math.min(chapters.length - 1, current + windowSize);
+  // 越界处理：真实章节数可能多于大纲节点数（启动包只有前 50 章细纲 / 用户手动加章）。
+  // 旧实现把 current 钳到末节点，第 51 章会把第 50 章节点错标成「【当前章】」，
+  // 给模型注入错误的承接信号（比缺大纲更糟——是错误信号而非缺失信号）。
+  // 现在：越界时不标当前章，窗口锚定末节点（保留最近上下文），并显式声明本章无细纲。
+  const beyondOutline = chapterOrderIndex > chapters.length - 1;
+  const current = beyondOutline ? -1 : Math.min(Math.max(0, chapterOrderIndex), chapters.length - 1);
+  const windowAnchor = beyondOutline ? chapters.length - 1 : current;
+  const lo = Math.max(0, windowAnchor - windowSize);
+  const hi = Math.min(chapters.length - 1, windowAnchor + windowSize);
 
   const lines: string[] = [];
   if (lo > 0) {
@@ -368,6 +370,12 @@ export function buildWindowedOutlineText(
   });
   if (hi < chapters.length - 1) {
     lines.push(`\n……（省略后 ${chapters.length - 1 - hi} 章）……`);
+  }
+  if (beyondOutline) {
+    lines.push(
+      `\n【本章无章级细纲】当前写到第 ${chapterOrderIndex + 1} 章，已超出已规划细纲范围（现有 ${chapters.length} 章）。` +
+      '本章请依据卷级目标、既有人物状态与上一章收束推进，禁止重复上方已列出的任何事件。',
+    );
   }
   return lines.join('\n\n');
 }

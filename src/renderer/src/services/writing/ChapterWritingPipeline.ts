@@ -251,6 +251,16 @@ export interface ChapterWritingPipelineDeps {
   plotOutlineClient?: {
     updateChapterTitle(input: ChapterTitleUpdate): Promise<void>;
   } | null;
+  /**
+   * 伏笔回收流转客户端（可选）。
+   * 判官在 G5/G7 语义门确认回收的伏笔（report.resolvedForeshadowIds），
+   * 提交成功后经此客户端把 buried/hinted → resolved 写回项目伏笔表，
+   * 驱动进度面板与完结判断（checkEndingReadiness 读 resolved 状态）。
+   * 未注入时降级跳过（不影响续写主流程）。
+   */
+  foreshadowClient?: {
+    markResolved(ids: string[]): Promise<void>;
+  } | null;
   /** 注入外部已配置好的 orchestrator（跳过内部创建） */
   orchestrator?: StateDrivenWritingOrchestrator;
   /**
@@ -363,6 +373,9 @@ export class ChapterWritingPipeline {
   private readonly plotOutlineClient: {
     updateChapterTitle(input: ChapterTitleUpdate): Promise<void>;
   } | null;
+  private readonly foreshadowClient: {
+    markResolved(ids: string[]): Promise<void>;
+  } | null;
   private readonly structuredAI: StructuredAI | undefined;
   private readonly storyRuntimeClient: StoryRuntimeClient | undefined;
   private readonly storyRuntimeApi: StoryRuntimeAPI | undefined;
@@ -408,6 +421,7 @@ export class ChapterWritingPipeline {
           }),
         } satisfies NonNullable<ChapterWritingPipelineDeps['contextAgent']>);
       this.plotOutlineClient = deps?.plotOutlineClient ?? null;
+      this.foreshadowClient = deps?.foreshadowClient ?? null;
       return;
     }
 
@@ -503,6 +517,20 @@ export class ChapterWritingPipeline {
                 chapterNodes[chapterNumber - 1];
               if (node) {
                 await projectStore.updatePlotNode(node.id, { title });
+              }
+            },
+          };
+    // 默认 foreshadowClient：判官证据确认的回收经 store 落库（saveCurrentProject 持久化）。
+    this.foreshadowClient =
+      deps?.foreshadowClient !== undefined
+        ? deps.foreshadowClient
+        : {
+            markResolved: async ids => {
+              for (const id of ids) {
+                const target = projectStore.foreshadows.find(f => f.id === id);
+                if (target && target.status !== 'resolved') {
+                  await projectStore.updateForeshadow(id, { status: 'resolved' });
+                }
               }
             },
           };
@@ -929,6 +957,22 @@ export class ChapterWritingPipeline {
       } catch (error) {
         memoryProjectionError = error;
         console.warn('[Pipeline] accepted commit 的记忆投影失败，可由 outbox 重放:', error);
+      }
+
+      // 伏笔回收流转（accepted commit 的状态投影）：判官在 G5/G7 证据确认的回收
+      // 落到项目伏笔表 buried/hinted → resolved。此前仅测试 harness 手动消费该字段，
+      // 生产链路无消费方导致真实批量写作后伏笔永远 buried、完结判断读数恒偏高。
+      // 失败只记 warning，不改变本章提交结果（下一章判官仍会带出该候选）。
+      const resolvedIds = result.report.resolvedForeshadowIds ?? [];
+      if (resolvedIds.length > 0 && this.foreshadowClient) {
+        try {
+          await this.foreshadowClient.markResolved(resolvedIds);
+        } catch (error) {
+          console.warn(
+            `[Pipeline] 伏笔回收流转失败（${resolvedIds.length} 条，不影响本章提交）:`,
+            error,
+          );
+        }
       }
 
       for (const item of result.receipt.projectionOutbox ?? []) {

@@ -336,13 +336,17 @@ describe('OutlineContextBuilder - Bug 3/4 故事线渲染修复', () => {
   });
 });
 
-describe('OutlineContextBuilder - R4 窗口化越界 clamp', () => {
-  it('chapterOrderIndex 超出节点数时 clamp 到最后一章，仍标记当前章', () => {
+describe('OutlineContextBuilder - R4 窗口化越界处理', () => {
+  it('chapterOrderIndex 超出节点数时不把末章错标为当前章，改为显式声明无细纲', () => {
     const plot = makePlotOutline(); // 3 个 chapter 节点（0..2）
-    // 模拟用户手动加章，真实章序号 10 远超大纲节点数
+    // 启动包只有前 50 章细纲，写第 51 章时 chapterOrderIndex=50 远超节点数。
+    // 旧行为把第 50 个节点错标成「【当前章】」——给模型注入错误的承接信号；
+    // 新行为：不标当前章，窗口锚定末节点保留最近上下文，并声明本章无细纲。
     const win = buildWindowedOutlineText(plot, 10, 5);
-    expect(win).toContain('【当前章】');
-    // 当前章 clamp 到第 3 章（最后一章），不应崩溃或全空
+    expect(win).not.toContain('【当前章】');
+    expect(win).toContain('【本章无章级细纲】');
+    expect(win).toContain('第 11 章');
+    // 窗口仍锚定末节点：第 3 章细纲保留（供承接参考）
     expect(win).toContain('【第3章】');
   });
 
