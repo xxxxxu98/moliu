@@ -114,38 +114,119 @@ export interface ReaderWindowChapter {
   prose?: string;
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function firstText(...values: unknown[]): string {
+  return (
+    values
+      .find(value => typeof value === 'string' && value.trim())
+      ?.toString()
+      .trim() ?? ''
+  );
+}
+
+function normalizeConfidence(value: unknown): number {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0.7;
+  return Math.min(1, Math.max(0, numeric > 1 ? numeric / 100 : numeric));
+}
+
+function normalizeBoolean(value: unknown): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  return /^(?:1|true|yes|y|是|愿意|继续)$/iu.test(String(value ?? '').trim());
+}
+
+function normalizeSeverity(value: unknown): ReaderIssueSeverity {
+  const text = String(value ?? '').toLowerCase();
+  if (/critical|block|致命|阻断|严重/iu.test(text)) return 'critical';
+  if (/high|高/iu.test(text)) return 'high';
+  if (/low|低|轻微/iu.test(text)) return 'low';
+  return 'medium';
+}
+
+function normalizeCategory(value: unknown): ReaderIssueCategory {
+  const text = String(value ?? '').toLowerCase();
+  const mappings: Array<[RegExp, ReaderIssueCategory]> = [
+    [/read|可读|理解/iu, 'readability'],
+    [/hook|钩子|追读|悬念/iu, 'hook'],
+    [/conflict|冲突/iu, 'conflict'],
+    [/emotion|情绪|情感/iu, 'emotion'],
+    [/character|人物|角色/iu, 'character'],
+    [/payoff|兑现|爽点|回报/iu, 'payoff'],
+    [/pacing|节奏/iu, 'pacing'],
+    [/dialogue|对话/iu, 'dialogue'],
+    [/original|原创|套路/iu, 'originality'],
+    [/continu|连贯|主线|伏笔/iu, 'continuity'],
+    [/genre|题材|类型承诺/iu, 'genre-promise'],
+    [/repeat|重复|同质/iu, 'repetition'],
+  ];
+  return mappings.find(([pattern]) => pattern.test(text))?.[1] ?? 'other';
+}
+
+function normalizeIssueInput(value: unknown): Record<string, unknown> {
+  const issue = asRecord(value);
+  const evidence = issue.evidence ?? issue.quote ?? issue.example ?? [];
+  return {
+    ...issue,
+    severity: normalizeSeverity(issue.severity ?? issue.level),
+    category: normalizeCategory(issue.category ?? issue.type),
+    location: firstText(issue.location, issue.position, issue.scope, '全文'),
+    description: firstText(
+      issue.description,
+      issue.problem,
+      issue.issue,
+      issue.reason,
+      issue.detail,
+      issue.message,
+      '模型指出读者体验问题'
+    ),
+    evidence,
+    suggestion: firstText(issue.suggestion, issue.advice, issue.fix),
+    confidence: normalizeConfidence(issue.confidence),
+  };
+}
+
 const scoreSchema = z.coerce.number().min(0).max(100);
-const confidenceSchema = z.coerce.number().min(0).max(1);
-const issueSchema = z.object({
-  id: z.string().trim().optional().default(''),
-  severity: z.enum(['critical', 'high', 'medium', 'low']),
-  category: z.enum([
-    'readability',
-    'hook',
-    'conflict',
-    'emotion',
-    'character',
-    'payoff',
-    'pacing',
-    'dialogue',
-    'originality',
-    'continuity',
-    'genre-promise',
-    'repetition',
-    'other',
-  ]),
-  location: z.string().trim().min(1),
-  description: z.string().trim().min(1),
-  evidence: z
-    .preprocess(
-      value => (typeof value === 'string' ? [value] : value),
-      z.array(z.string().trim().min(1)).max(3)
-    )
-    .default([]),
-  suggestion: z.string().trim().optional().default(''),
-  blocking: z.boolean().optional().default(false),
-  confidence: confidenceSchema.optional().default(0.7),
-});
+const confidenceSchema = z.preprocess(normalizeConfidence, z.number().min(0).max(1));
+const booleanSchema = z.preprocess(normalizeBoolean, z.boolean());
+const issueSchema = z.preprocess(
+  normalizeIssueInput,
+  z.object({
+    id: z.string().trim().optional().default(''),
+    severity: z.enum(['critical', 'high', 'medium', 'low']),
+    category: z.enum([
+      'readability',
+      'hook',
+      'conflict',
+      'emotion',
+      'character',
+      'payoff',
+      'pacing',
+      'dialogue',
+      'originality',
+      'continuity',
+      'genre-promise',
+      'repetition',
+      'other',
+    ]),
+    location: z.string().trim().min(1),
+    description: z.string().trim().min(1),
+    evidence: z
+      .preprocess(
+        value => (typeof value === 'string' ? [value] : value),
+        z.array(z.string().trim().min(1)).max(3)
+      )
+      .default([]),
+    suggestion: z.string().trim().optional().default(''),
+    blocking: z.boolean().optional().default(false),
+    confidence: confidenceSchema.optional().default(0.7),
+  })
+);
 
 const outlineResultSchema = z.object({
   dimensions: z.object({
@@ -158,7 +239,7 @@ const outlineResultSchema = z.object({
     suspensePlanning: scoreSchema,
     audienceFit: scoreSchema,
   }),
-  wouldStartReading: z.boolean(),
+  wouldStartReading: booleanSchema,
   confidence: confidenceSchema,
   issues: z.array(issueSchema).max(20),
   summary: z.string().trim().min(1),
@@ -175,7 +256,7 @@ const chapterResultSchema = z.object({
     pacing: scoreSchema,
     endingPull: scoreSchema,
   }),
-  continueReading: z.boolean(),
+  continueReading: booleanSchema,
   confidence: confidenceSchema,
   issues: z.array(issueSchema).max(20),
   summary: z.string().trim().min(1),
@@ -192,7 +273,7 @@ const windowResultSchema = z.object({
     genrePromise: scoreSchema,
     continuationDesire: scoreSchema,
   }),
-  continueReading: z.boolean(),
+  continueReading: booleanSchema,
   confidence: confidenceSchema,
   issues: z.array(issueSchema).max(20),
   summary: z.string().trim().min(1),

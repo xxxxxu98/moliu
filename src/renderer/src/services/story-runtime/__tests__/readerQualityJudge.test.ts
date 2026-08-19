@@ -123,4 +123,52 @@ describe('ReaderQualityJudge', () => {
     expect(result.toChapter).toBe(10);
     expect(result.score).toBe(61.5);
   });
+
+  it('宽容归一化百分制置信度、中文类别与缺失字段', async () => {
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>) =>
+        request.parse({
+          dimensions: {
+            readability: 80,
+            openingHook: 70,
+            conflictEffectiveness: 70,
+            emotionalDrive: 60,
+            characterVoice: 60,
+            payoffValue: 70,
+            pacing: 60,
+            endingPull: 70,
+          },
+          continueReading: 1,
+          confidence: 85,
+          issues: [
+            {
+              level: '高风险',
+              type: '节奏拖沓',
+              problem: '中段重复解释。',
+              quote: '他再次解释了一遍。',
+              confidence: 80,
+            },
+          ],
+          summary: '整体可读。',
+        })
+      ),
+    };
+
+    const result = await new ReaderQualityJudge(ai).evaluateChapter({
+      context,
+      chapter: 1,
+      title: '测试章',
+      prose: '正文',
+    });
+
+    expect(result.confidence).toBe(0.85);
+    expect(result.issues[0]).toMatchObject({
+      severity: 'high',
+      category: 'pacing',
+      location: '全文',
+      description: '中段重复解释。',
+      evidence: ['他再次解释了一遍。'],
+      confidence: 0.8,
+    });
+  });
 });

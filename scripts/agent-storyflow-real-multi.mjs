@@ -281,6 +281,8 @@ function launchRun(meta) {
     const dest = join(MATRIX_DIR, meta.id);
     mkdirSync(dest, { recursive: true });
     const logPath = join(dest, 'run.log');
+    // 子进程结束前日志先保存在内存，若不清空旧文件，运行中的进度检查会误读上一轮结果。
+    writeFileSync(logPath, '', 'utf-8');
     console.log(
       `[smoke:storyflow:real:multi] 启动 ${meta.id}（${meta.provider}/${meta.modelName || '默认模型'}），日志: ${logPath}`
     );
