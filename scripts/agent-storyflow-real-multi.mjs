@@ -45,13 +45,20 @@ import {
   rmSync,
   writeFileSync,
 } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 
 import { sanitizeRunSuffix, storyflowArtifactNames } from './storyflow-run-suffix.mjs';
 
 const TEMP_DIR = join(process.cwd(), 'temp');
 const TRACE_DIR = join(TEMP_DIR, 'ai-traces');
-const MATRIX_DIR = join(TEMP_DIR, 'storyflow-matrix');
+const matrixDirOverride = (process.env.MOLIU_STORYFLOW_MATRIX_DIR || '').trim();
+const MATRIX_DIR = matrixDirOverride
+  ? resolve(process.cwd(), matrixDirOverride)
+  : join(TEMP_DIR, 'storyflow-matrix');
+const SAFE_MATRIX_ROOT = `${resolve(TEMP_DIR)}${sep}`;
+if (`${MATRIX_DIR}${sep}`.startsWith(SAFE_MATRIX_ROOT) === false) {
+  throw new Error(`MOLIU_STORYFLOW_MATRIX_DIR 必须位于 ${TEMP_DIR} 内：${MATRIX_DIR}`);
+}
 const MATRIX_CONFIG_PATH = join(TEMP_DIR, 'storyflow.matrix.config.json');
 const SMOKE_SCRIPT = join(process.cwd(), 'scripts', 'agent-storyflow-real-smoke.mjs');
 const DEFAULT_CONCURRENCY = 3;
@@ -60,9 +67,24 @@ const DEFAULT_CHAPTER_COUNT = 20;
 // 与 src/renderer/src/services/writing/__tests__/continueWriteRealConfig.ts 的
 // PROVIDER_SET 保持一致（该文件是 .ts，脚本无法直接 import，只能镜像维护）
 const SUPPORTED_PROVIDERS = new Set([
-  'openai', 'anthropic', 'gemini', 'moonshot', 'deepseek', 'ollama', 'groq',
-  'qwen', 'mistral', 'cohere', 'nvidia', 'perplexity', 'together', 'cerebras',
-  'azure', 'grok', 'fireworks', 'zhipu',
+  'openai',
+  'anthropic',
+  'gemini',
+  'moonshot',
+  'deepseek',
+  'ollama',
+  'groq',
+  'qwen',
+  'mistral',
+  'cohere',
+  'nvidia',
+  'perplexity',
+  'together',
+  'cerebras',
+  'azure',
+  'grok',
+  'fireworks',
+  'zhipu',
 ]);
 
 function readAppProviders() {
@@ -89,8 +111,8 @@ function printProviderList() {
     const usable = supported && p.enabled !== false && !!p.apiKey;
     console.log(
       `  ${usable ? '★' : ' '} ${p.id}  ${type}${p.modelName ? ` / ${p.modelName}` : ''}` +
-      `${p.enabled === false ? '  [已禁用]' : ''}${!p.apiKey ? '  [缺 apiKey]' : ''}` +
-      `${!supported ? `  [类型不支持: ${type}]` : ''}`
+        `${p.enabled === false ? '  [已禁用]' : ''}${!p.apiKey ? '  [缺 apiKey]' : ''}` +
+        `${!supported ? `  [类型不支持: ${type}]` : ''}`
     );
   }
 }
@@ -105,16 +127,32 @@ function writeMatrixConfigTemplate() {
     MATRIX_CONFIG_PATH,
     JSON.stringify(
       {
-        providerIds: ['provider-1781144900790', 'provider-1781145026571', 'provider-1781144969420', 'provider-1781145001549', 'provider-1781144847239', 'provider-1785859077824', 'provider-1786762880239', 'provider-1786762462935', 'provider-1785758934445', 'provider-1786762630678', 'provider-1786762713932', 'provider-1786762978054', 'provider-1786762979344'],
+        providerIds: [
+          'provider-1781144900790',
+          'provider-1781145026571',
+          'provider-1781144969420',
+          'provider-1781145001549',
+          'provider-1781144847239',
+          'provider-1785859077824',
+          'provider-1786762880239',
+          'provider-1786762462935',
+          'provider-1785758934445',
+          'provider-1786762630678',
+          'provider-1786762713932',
+          'provider-1786762978054',
+          'provider-1786762979344',
+        ],
         concurrency: DEFAULT_CONCURRENCY,
       },
       null,
-      2,
+      2
     ) + '\n',
-    'utf-8',
+    'utf-8'
   );
   console.log(`已生成配置模板：${MATRIX_CONFIG_PATH}`);
-  console.log('把 providerIds 改成你要测的厂商 ID 列表（--list 查看），concurrency 为并发数（1=顺序）。');
+  console.log(
+    '把 providerIds 改成你要测的厂商 ID 列表（--list 查看），concurrency 为并发数（1=顺序）。'
+  );
 }
 
 function readMatrixConfig() {
@@ -150,7 +188,11 @@ function archiveRunArtifacts(providerId) {
   // trace（*.jsonl）与 project-store 也必须清：归档只按前缀收敛，上一轮的旧 trace
   // 会原样残留（2026-08-16 实测 gemini 目录混入两个 ch5 trace，分不清哪轮是哪轮，
   // 分析时曾被误导）。清完只剩 run.log，本轮归档再逐个写入。
-  for (const stale of ['storyflow.closed-loop.summary.json', 'storyflow.closed-loop.outline.json', 'prose']) {
+  for (const stale of [
+    'storyflow.closed-loop.summary.json',
+    'storyflow.closed-loop.outline.json',
+    'prose',
+  ]) {
     rmSync(join(dest, stale), { recursive: true, force: true });
   }
   mkdirSync(dest, { recursive: true });
@@ -191,6 +233,7 @@ function archiveRunArtifacts(providerId) {
 function buildMatrixRow(providerMeta, exitCode, wallMs) {
   const row = {
     providerId: providerMeta.id,
+    scenarioId: process.env.MOLIU_STORYFLOW_SCENARIO_ID || null,
     provider: (providerMeta.provider || 'openai').toLowerCase(),
     model: providerMeta.modelName || '(未配置模型)',
     pass: exitCode === 0,
@@ -210,10 +253,19 @@ function buildMatrixRow(providerMeta, exitCode, wallMs) {
       row.chaptersAccepted = `${batch.filter(item => item.accepted).length}/${requested}`;
       row.status = s.status ?? null;
       row.wordsMin = words.length ? Math.min(...words) : null;
-      row.wordsAvg = words.length ? Math.round(words.reduce((a, b) => a + b, 0) / words.length) : null;
+      row.wordsAvg = words.length
+        ? Math.round(words.reduce((a, b) => a + b, 0) / words.length)
+        : null;
       row.wordsMax = words.length ? Math.max(...words) : null;
       row.runtimeBackend = s.runtimeBackend ?? null;
       row.warnings = (s.warnings ?? []).length;
+      row.firstPassRate = s.repairMetrics?.firstPassRate ?? null;
+      row.totalRewriteRounds = s.repairMetrics?.totalRewriteRounds ?? null;
+      row.requestCount = s.runtimeMetrics?.requestCount ?? null;
+      row.readerOutlineScore = s.readerEvaluation?.outline?.score ?? null;
+      row.readerChapterAverage = s.readerEvaluation?.metrics?.chapterAverage ?? null;
+      row.readerChapterMinimum = s.readerEvaluation?.metrics?.chapterMinimum ?? null;
+      row.readerIndependent = s.readerEvaluation?.evaluator?.independentFromWriter ?? null;
     } catch {
       row.note = 'summary 解析失败';
     }
@@ -229,7 +281,9 @@ function launchRun(meta) {
     const dest = join(MATRIX_DIR, meta.id);
     mkdirSync(dest, { recursive: true });
     const logPath = join(dest, 'run.log');
-    console.log(`[smoke:storyflow:real:multi] 启动 ${meta.id}（${meta.provider}/${meta.modelName || '默认模型'}），日志: ${logPath}`);
+    console.log(
+      `[smoke:storyflow:real:multi] 启动 ${meta.id}（${meta.provider}/${meta.modelName || '默认模型'}），日志: ${logPath}`
+    );
     const startedAt = Date.now();
     const child = spawn(process.execPath, [SMOKE_SCRIPT], {
       env: {
@@ -263,7 +317,7 @@ function launchRun(meta) {
       const moved = archiveRunArtifacts(meta.id);
       console.log(
         `[smoke:storyflow:real:multi] ${meta.id} 完成：exit=${exitCode}，` +
-        `耗时 ${Math.round(wallMs / 60000)} 分钟，归档 ${moved.length} 个产物 → temp/storyflow-matrix/${meta.id}/`
+          `耗时 ${Math.round(wallMs / 60000)} 分钟，归档 ${moved.length} 个产物 → temp/storyflow-matrix/${meta.id}/`
       );
       resolve(buildMatrixRow(meta, exitCode, wallMs));
     });
@@ -284,7 +338,12 @@ function resolveProviderIdsAndConcurrency(argv) {
   else if (fileConfig) ids = fileConfig.providerIds;
   else {
     ids = readAppProviders()
-      .filter(p => p.enabled !== false && !!p.apiKey && SUPPORTED_PROVIDERS.has((p.provider || 'openai').toLowerCase()))
+      .filter(
+        p =>
+          p.enabled !== false &&
+          !!p.apiKey &&
+          SUPPORTED_PROVIDERS.has((p.provider || 'openai').toLowerCase())
+      )
       .map(p => p.id);
   }
   const fromEnvConc = Number(process.env.MOLIU_MATRIX_CONCURRENCY);
@@ -305,7 +364,9 @@ async function main() {
 
   const { ids, concurrency } = resolveProviderIdsAndConcurrency(argv);
   if (ids.length === 0) {
-    console.error('[smoke:storyflow:real:multi] 没有可跑的厂商。用 --list 查看可用厂商，--init 生成配置模板，或用 MOLIU_PROVIDER_IDS=ID1,ID2 显式指定。');
+    console.error(
+      '[smoke:storyflow:real:multi] 没有可跑的厂商。用 --list 查看可用厂商，--init 生成配置模板，或用 MOLIU_PROVIDER_IDS=ID1,ID2 显式指定。'
+    );
     process.exit(1);
   }
 
@@ -332,10 +393,14 @@ async function main() {
   const perRunHint = process.env.MOLIU_CHAPTER_COUNT
     ? `（MOLIU_CHAPTER_COUNT=${process.env.MOLIU_CHAPTER_COUNT}，耗时相应缩短）`
     : `（默认 ${DEFAULT_CHAPTER_COUNT} 章）`;
-  console.log(`[smoke:storyflow:real:multi] 矩阵计划：${ids.length} 个厂商，并发 ${concurrency} ${perRunHint}`);
+  console.log(
+    `[smoke:storyflow:real:multi] 矩阵计划：${ids.length} 个厂商，并发 ${concurrency} ${perRunHint}`
+  );
   ids.forEach((id, i) => {
     const meta = providers.find(p => p.id === id);
-    console.log(`  ${i + 1}/${ids.length}  ${id}  ${(meta.provider || 'openai')}${meta.modelName ? ` / ${meta.modelName}` : ''}`);
+    console.log(
+      `  ${i + 1}/${ids.length}  ${id}  ${meta.provider || 'openai'}${meta.modelName ? ` / ${meta.modelName}` : ''}`
+    );
   });
   console.log('');
 
@@ -381,31 +446,38 @@ async function main() {
         chapterCount: process.env.MOLIU_CHAPTER_COUNT
           ? Number(process.env.MOLIU_CHAPTER_COUNT)
           : DEFAULT_CHAPTER_COUNT,
+        scenarioId: process.env.MOLIU_STORYFLOW_SCENARIO_ID || null,
         providers: merged,
       },
       null,
-      2,
+      2
     ),
-    'utf-8',
+    'utf-8'
   );
 
   console.log('\n[smoke:storyflow:real:multi] ===== 矩阵结果 =====');
   for (const row of ordered) {
     console.log(
       `${row.pass ? '✓' : '✗'} ${row.providerId}  ${row.provider}/${row.model}` +
-      `  ${Math.round(row.wallMinutes)}min` +
-      (row.chaptersAccepted ? `  章节 ${row.chaptersAccepted}` : '') +
-      (row.wordsAvg ? `  字数 ${row.wordsMin}/${row.wordsAvg}/${row.wordsMax}(min/avg/max)` : '') +
-      (row.runtimeBackend ? `  backend=${row.runtimeBackend}` : '') +
-      (row.warnings ? `  告警 ${row.warnings}` : '') +
-      (row.note ? `  ⚠️ ${row.note}` : '')
+        `  ${Math.round(row.wallMinutes)}min` +
+        (row.chaptersAccepted ? `  章节 ${row.chaptersAccepted}` : '') +
+        (row.wordsAvg
+          ? `  字数 ${row.wordsMin}/${row.wordsAvg}/${row.wordsMax}(min/avg/max)`
+          : '') +
+        (row.runtimeBackend ? `  backend=${row.runtimeBackend}` : '') +
+        (row.firstPassRate != null ? `  首过=${Math.round(row.firstPassRate * 100)}%` : '') +
+        (row.readerChapterAverage != null ? `  读者均分=${row.readerChapterAverage}` : '') +
+        (row.warnings ? `  告警 ${row.warnings}` : '') +
+        (row.note ? `  ⚠️ ${row.note}` : '')
     );
   }
   console.log(`\n[smoke:storyflow:real:multi] matrix: ${join(MATRIX_DIR, 'matrix.json')}`);
   process.exit(ordered.some(row => !row.pass) ? 1 : 0);
 }
 
-const invokedDirectly = (process.argv[1] || '').replace(/\\/g, '/').endsWith('agent-storyflow-real-multi.mjs');
+const invokedDirectly = (process.argv[1] || '')
+  .replace(/\\/g, '/')
+  .endsWith('agent-storyflow-real-multi.mjs');
 if (invokedDirectly) {
   await main();
 }

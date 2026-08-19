@@ -1,4 +1,5 @@
 export * from './AIChapterJudge';
+export * from './readerQualityJudge';
 export * from './AIFulfillmentJudge';
 export * from './ChapterCommitService';
 export * from './chapterBlueprintNormalize';

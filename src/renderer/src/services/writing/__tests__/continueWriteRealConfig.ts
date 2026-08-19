@@ -46,6 +46,16 @@ export interface ResolvedRealAiConfig {
   configPath: string;
 }
 
+export interface ResolvedReaderJudgeConfig {
+  provider: ProviderType;
+  providerId?: string;
+  apiKey: string;
+  model?: string;
+  baseUrl?: string;
+  independentFromWriter: boolean;
+  selectionReason: 'explicit' | 'automatic-independent' | 'writer-fallback';
+}
+
 const PROVIDER_SET = new Set<string>([
   'openai',
   'anthropic',
@@ -113,13 +123,10 @@ function readAppProviders(): Array<{
   apiKey?: string;
   baseUrl?: string;
   enabled?: boolean;
+  maxTokens?: number;
   generationConfig?: { maxTokens?: number };
 }> {
-  const settingsPath = path.join(
-    process.env.APPDATA || '',
-    'moliu',
-    'moliu-settings.json'
-  );
+  const settingsPath = path.join(process.env.APPDATA || '', 'moliu', 'moliu-settings.json');
   if (!fs.existsSync(settingsPath)) return [];
   const raw = JSON.parse(fs.readFileSync(settingsPath, 'utf8')) as {
     aiProviders?: Array<{
@@ -129,6 +136,7 @@ function readAppProviders(): Array<{
       apiKey?: string;
       baseUrl?: string;
       enabled?: boolean;
+      maxTokens?: number;
       generationConfig?: { maxTokens?: number };
     }>;
   };
@@ -136,11 +144,7 @@ function readAppProviders(): Array<{
 }
 
 function readAppDefaultSelection(): { providerId?: string; modelName?: string } | null {
-  const settingsPath = path.join(
-    process.env.APPDATA || '',
-    'moliu',
-    'moliu-settings.json'
-  );
+  const settingsPath = path.join(process.env.APPDATA || '', 'moliu', 'moliu-settings.json');
   if (!fs.existsSync(settingsPath)) return null;
   const raw = JSON.parse(fs.readFileSync(settingsPath, 'utf8')) as {
     settings?: { defaultModel?: { providerId?: string; modelName?: string } };
@@ -160,15 +164,10 @@ function resolveProviderFromApp(providerId?: string): {
   const providers = readAppProviders();
   const selection = readAppDefaultSelection();
   const matched =
-    (providerId
-      ? providers.find(item => item.id === providerId && !!item.apiKey)
-      : undefined) ??
+    (providerId ? providers.find(item => item.id === providerId && !!item.apiKey) : undefined) ??
     (selection?.providerId
       ? providers.find(
-          item =>
-            item.id === selection.providerId &&
-            item.enabled !== false &&
-            !!item.apiKey
+          item => item.id === selection.providerId && item.enabled !== false && !!item.apiKey
         )
       : undefined) ??
     providers.find(item => item.enabled !== false && !!item.apiKey);
@@ -178,8 +177,7 @@ function resolveProviderFromApp(providerId?: string): {
   // 磁盘配置可能仍带 KiB 旧值（generationConfig.maxTokens=1048576：App 内启动迁移
   // 曾因 `top ?? gen` 短路漏迁该字段；冒烟直读磁盘必须自己过一遍迁移，
   // 否则每个厂商首轮请求都发 1048576 踩网关 400 再靠降级重试救回）
-  const maxTokensRaw =
-    matched.maxTokens ?? matched.generationConfig?.maxTokens;
+  const maxTokensRaw = matched.maxTokens ?? matched.generationConfig?.maxTokens;
   return {
     providerId: matched.id,
     provider: providerRaw as ProviderType,
@@ -200,9 +198,7 @@ export function loadContinueWriteRealConfigFile(): {
       '未找到配置文件。请复制 temp/continue-write.real.config.example.json 为 temp/continue-write.real.config.json 并填写。'
     );
   }
-  const config = JSON.parse(
-    fs.readFileSync(configPath, 'utf8')
-  ) as ContinueWriteRealConfig;
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf8')) as ContinueWriteRealConfig;
   return { config, configPath };
 }
 
@@ -216,19 +212,14 @@ export function resolveContinueWriteRealConfig(): ResolvedRealAiConfig {
     throw new Error(`配置已禁用（enabled=false）：${path.basename(configPath)}`);
   }
 
-  const providerId = (
-    process.env.MOLIU_AI_PROVIDER_ID ||
-    config.providerId ||
-    ''
-  ).trim();
+  const providerId = (process.env.MOLIU_AI_PROVIDER_ID || config.providerId || '').trim();
 
   let provider = (process.env.MOLIU_AI_PROVIDER || config.provider || 'openai')
     .trim()
     .toLowerCase();
   let apiKey = (process.env.MOLIU_AI_API_KEY || config.apiKey || '').trim();
   let model = (process.env.MOLIU_AI_MODEL || config.model || '').trim() || undefined;
-  let baseUrl =
-    (process.env.MOLIU_AI_BASE_URL || config.baseUrl || '').trim() || undefined;
+  let baseUrl = (process.env.MOLIU_AI_BASE_URL || config.baseUrl || '').trim() || undefined;
   /** 输出上限：环境变量 > 配置文件 > App 厂商配置；正数才生效（默认不下发） */
   let maxTokens: number | undefined = (() => {
     const fromEnv = Number(process.env.MOLIU_AI_MAX_TOKENS || '');
@@ -278,11 +269,12 @@ export function resolveContinueWriteRealConfig(): ResolvedRealAiConfig {
   }
 
   const targetFromEnv = Number(process.env.MOLIU_TARGET_WORDS || '');
-  const targetWordCount = Number.isFinite(targetFromEnv) && targetFromEnv > 0
-    ? targetFromEnv
-    : config.targetWordCount && config.targetWordCount > 0
-      ? config.targetWordCount
-      : 3000;
+  const targetWordCount =
+    Number.isFinite(targetFromEnv) && targetFromEnv > 0
+      ? targetFromEnv
+      : config.targetWordCount && config.targetWordCount > 0
+        ? config.targetWordCount
+        : 3000;
 
   const chapterCountFromEnv = Number(process.env.MOLIU_CHAPTER_COUNT || '');
   const chapterCount =
@@ -306,5 +298,77 @@ export function resolveContinueWriteRealConfig(): ResolvedRealAiConfig {
     emptyRewrite: config.emptyRewrite !== false,
     targetWordCount,
     configPath,
+  };
+}
+
+/**
+ * 读者评审优先使用与写作模型不同的 App 厂商配置，避免模型自评。
+ * 显式设置 MOLIU_READER_JUDGE_PROVIDER_ID 时严格按 ID 解析；没有第二套可用配置时
+ * 才回退写作模型，并在结构化报告中标记 independentFromWriter=false。
+ */
+export function resolveReaderJudgeConfig(writer: ResolvedRealAiConfig): ResolvedReaderJudgeConfig {
+  const preferredId = (process.env.MOLIU_READER_JUDGE_PROVIDER_ID || '').trim();
+  const providers = readAppProviders();
+  const resolveItem = (id: string): ResolvedReaderJudgeConfig | null => {
+    const item = providers.find(provider => provider.id === id);
+    if (!item?.apiKey || item.enabled === false) return null;
+    const providerName = (item.provider || 'openai').toLowerCase();
+    if (!PROVIDER_SET.has(providerName)) return null;
+    const isDifferentModel =
+      item.id !== writer.providerId &&
+      (providerName !== writer.provider || (item.modelName || '') !== (writer.model || ''));
+    return {
+      provider: providerName as ProviderType,
+      providerId: item.id,
+      apiKey: decryptStoredApiKey(item.apiKey),
+      model: item.modelName || undefined,
+      baseUrl: item.baseUrl || undefined,
+      independentFromWriter: isDifferentModel,
+      selectionReason: 'explicit',
+    };
+  };
+
+  if (preferredId) {
+    const selected = resolveItem(preferredId);
+    if (!selected) {
+      throw new Error(
+        `MOLIU_READER_JUDGE_PROVIDER_ID=${preferredId} 不可用（不存在、已禁用、缺少 apiKey 或类型不支持）`
+      );
+    }
+    return selected;
+  }
+
+  const alternative = providers.find(item => {
+    const providerName = (item.provider || 'openai').toLowerCase();
+    const isDifferentModel =
+      item.id !== writer.providerId &&
+      (providerName !== writer.provider || (item.modelName || '') !== (writer.model || ''));
+    return (
+      item.id !== writer.providerId &&
+      isDifferentModel &&
+      item.enabled !== false &&
+      Boolean(item.apiKey) &&
+      PROVIDER_SET.has(providerName)
+    );
+  });
+  if (alternative) {
+    const selected = resolveItem(alternative.id);
+    if (selected) {
+      return {
+        ...selected,
+        independentFromWriter: true,
+        selectionReason: 'automatic-independent',
+      };
+    }
+  }
+
+  return {
+    provider: writer.provider,
+    providerId: writer.providerId,
+    apiKey: writer.apiKey,
+    model: writer.model,
+    baseUrl: writer.baseUrl,
+    independentFromWriter: false,
+    selectionReason: 'writer-fallback',
   };
 }

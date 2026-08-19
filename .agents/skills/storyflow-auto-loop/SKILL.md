@@ -11,7 +11,7 @@ description: Storyflow 真实冒烟自动诊断-修复-回归循环。跑真实 
 ## 循环总览
 
 ```
-跑矩阵 → triage → 按 verdict 分诊 → （允许时）修复 → 快速回归 → diff 验证 → 知识回写
+跑矩阵 → 硬门禁 → 读者影子评审 → triage → 按 verdict 分诊 → （允许时）修复 → 快速回归 → diff 验证 → 知识回写
                                                     ↘ （stalled/需人工）出结论停止
 ```
 
@@ -28,6 +28,12 @@ MOLIU_CHAPTER_COUNT=1 node scripts/agent-storyflow-real-multi.mjs <id1>
 
 # 共享大纲缓存：只对比写作阶段（多厂商回归同一份大纲）
 MOLIU_OUTLINE_CACHE=temp/outline.shared.json node scripts/agent-storyflow-real-multi.mjs <id1> <id2>
+
+# 多题材场景矩阵（场景内多厂商，场景间隔离产物）
+MOLIU_STORYFLOW_SCENARIO_IDS=court-power,fair-mystery npm run smoke:storyflow:scenario-matrix -- <id1> <id2>
+
+# 读者评审器质量变异冒烟（验证评审器能识别假钩子/注水）
+npm run smoke:reader-eval:real
 ```
 
 产物在 `temp/storyflow-matrix/<providerId>/`（run.log / trace jsonl / prose / summary），矩阵元数据在 `temp/storyflow-matrix/matrix.json`。
@@ -54,6 +60,10 @@ node scripts/storyflow-triage.mjs --diff         # 最近两份报告的签名�
 | `model-capability-suspect` | 同章质量拒绝 ≥3 轮（stalled） | **停止 patch**。产出结论：换模型 / 调整合同（需人工确认），本轮结束 |
 | `infra-failure` | 网络/网关主导 | 先重跑一次排除瞬态窗口；若新错误类别未被重试兜住，补重试分类 |
 | `pipeline-bug` | 断言失败但无质量/网络签名 | 排查管线代码（`src/renderer/src/services/writing/`），修复后回归 |
+
+读者评审当前为 `reader-eval-v1` **影子模式**：`reader.*` 签名一律为黄，不改变章节
+accepted，也不自动驱动重写。它用于校准追读力、人物、情绪、爽点、跨章重复等质量趋势；
+只有积累足够人工抽查样本、冻结阈值后，才能人工批准将高置信度底线问题升级为阻断。
 
 stalled 是硬停止信号：同签名 3 轮不收敛说明是模型能力或合同问题，代码修不动，
 继续重试只烧钱。历史先例：max_tokens 区间语法、空响应守卫、schema 软兜底都是 1-2 轮内可修的；
@@ -91,6 +101,10 @@ node scripts/storyflow-triage.mjs --diff
 - 目标签名出现在「已消失」
 - 「新增」里没有红签名（有则退出码 1，必须处理或回滚）
 - 同厂商 verdict 不劣化（如 passed-with-repairs → quality-rejection）
+- 首过率下降不超过 10%，平均重写轮次不增长超过 20%
+- 读者大纲分/章节均分不下降超过 5 分（影子告警；显式设置
+  `MOLIU_READER_REGRESSION_BLOCK=1` 才阻断）
+- 请求 P95 延迟不增长超过 25%
 
 快速回归通过 ≠ 完成。涉及写作管线行为的修复，最终验收用全量 20 章矩阵重跑一轮。
 
@@ -123,3 +137,4 @@ node scripts/storyflow-triage.mjs --diff
 - outline-expand trace 里 2 字符空响应（配对出现的缓存命中/空批次）：黄
 - `outline.titles-shrunk-local`：本地收缩不发 AI 请求，无成本，黄
 - 章 0 次通过但 `passed-with-repairs`：兜底机制工作正常，只有重写代价大时才优化
+- `reader.self-evaluation-fallback`：未配置独立 reader judge，回退写作模型自评；结果只能低置信度观察

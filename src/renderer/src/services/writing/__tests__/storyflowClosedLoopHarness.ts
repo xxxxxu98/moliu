@@ -47,10 +47,7 @@ import {
   type HarnessRuntimeBackend,
   type StoryRuntimeVerification,
 } from './continueWriteHarness';
-import {
-  createRealStructuredAI,
-  isRealAiEnabled,
-} from './realStructuredAI';
+import { createRealStructuredAI, isRealAiEnabled } from './realStructuredAI';
 
 /** 真实 Storyflow 冒烟默认连续续写章数；环境变量仍可用于快速回归缩短批次。 */
 export const DEFAULT_STORYFLOW_CHAPTER_COUNT = 20;
@@ -128,9 +125,7 @@ export interface PostWritePersistenceVerification {
  * 两边必须同步改）。
  */
 export function resolveStoryflowRunSuffix(): string {
-  return (process.env.MOLIU_RUN_SUFFIX || '')
-    .trim()
-    .replace(/[^a-zA-Z0-9_-]/gu, '');
+  return (process.env.MOLIU_RUN_SUFFIX || '').trim().replace(/[^a-zA-Z0-9_-]/gu, '');
 }
 
 export interface StoryflowArtifactPaths {
@@ -158,7 +153,11 @@ export function resolveStoryflowArtifactPaths(): StoryflowArtifactPaths {
     summaryPath: join(tempDir, names.summary),
     outlinePath: join(tempDir, names.outline),
     proseDir: join(tempDir, names.proseDir),
-    resumeOutlinePath: join(tempDir, 'storyflow-checkpoints', `${suffix || 'default'}.outline.json`),
+    resumeOutlinePath: join(
+      tempDir,
+      'storyflow-checkpoints',
+      `${suffix || 'default'}.outline.json`
+    ),
   };
 }
 
@@ -198,10 +197,7 @@ function installFileElectronAPI(runId: string): FileProjectStorage {
       writeProjects([...readProjects().filter(item => item.id !== data.id), snapshot]);
       return cloneProject(snapshot);
     },
-    updateProject: async (
-      id: string,
-      updates: Partial<Project>,
-    ): Promise<Project | null> => {
+    updateProject: async (id: string, updates: Partial<Project>): Promise<Project | null> => {
       const projects = readProjects();
       const current = projects.find(item => item.id === id);
       if (!current) return null;
@@ -211,16 +207,13 @@ function installFileElectronAPI(runId: string): FileProjectStorage {
         metadata: { ...(current.metadata ?? {}), ...(updates.metadata ?? {}) },
       };
       const snapshot = cloneProject(merged);
-      writeProjects(projects.map(item => item.id === id ? snapshot : item));
+      writeProjects(projects.map(item => (item.id === id ? snapshot : item)));
       return cloneProject(snapshot);
     },
     saveProject: async (project: Project): Promise<void> => {
       const projects = readProjects();
       const snapshot = cloneProject(project);
-      writeProjects([
-        ...projects.filter(item => item.id !== project.id),
-        snapshot,
-      ]);
+      writeProjects([...projects.filter(item => item.id !== project.id), snapshot]);
     },
     deleteProject: async (id: string): Promise<void> => {
       writeProjects(readProjects().filter(item => item.id !== id));
@@ -239,22 +232,14 @@ function installFileElectronAPI(runId: string): FileProjectStorage {
       proj.set(data.filePath, data.content);
       return { success: true };
     },
-    loadMemoryFile: async (data: {
-      projectId: string;
-      filePath: string;
-    }): Promise<string | null> =>
+    loadMemoryFile: async (data: { projectId: string; filePath: string }): Promise<string | null> =>
       memoryStore.get(data.projectId)?.get(data.filePath) ?? null,
-    listMemoryFiles: async (data: {
-      projectId: string;
-      basePath: string;
-    }): Promise<string[]> => {
+    listMemoryFiles: async (data: { projectId: string; basePath: string }): Promise<string[]> => {
       const proj = memoryStore.get(data.projectId);
       if (!proj) return [];
-      const prefix = data.basePath.endsWith('/')
-        ? data.basePath
-        : data.basePath + '/';
+      const prefix = data.basePath.endsWith('/') ? data.basePath : data.basePath + '/';
       return Array.from(proj.keys()).filter(
-        f => f.startsWith(prefix) || f.startsWith(data.basePath),
+        f => f.startsWith(prefix) || f.startsWith(data.basePath)
       );
     },
     deleteMemoryFile: async (data: {
@@ -312,7 +297,13 @@ function injectSettingsStore(cfg: ResolvedRealAiConfig): void {
       enabled: true,
       // 冒烟也支持厂商级输出上限（MOLIU_AI_MAX_TOKENS）：推理型模型撞默认输出上限时按需下发
       generationConfig: cfg.maxTokens
-        ? { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0, maxTokens: cfg.maxTokens }
+        ? {
+            temperature: 0.7,
+            topP: 0.9,
+            frequencyPenalty: 0,
+            presencePenalty: 0,
+            maxTokens: cfg.maxTokens,
+          }
         : undefined,
     },
   ];
@@ -326,9 +317,10 @@ function injectSettingsStore(cfg: ResolvedRealAiConfig): void {
  * 闭环：大纲生成 → 应用 → 建章 → 批量续写（全部真实代码 + 真实 AI）
  */
 export async function runStoryflowClosedLoop(
-  options: StoryflowClosedLoopOptions = {},
+  options: StoryflowClosedLoopOptions = {}
 ): Promise<StoryflowClosedLoopResult> {
-  const prompt = options.prompt ?? '一个现代社畜穿越到古代朝堂，凭借现代知识在官场步步高升，卷入皇权之争';
+  const prompt =
+    options.prompt ?? '一个现代社畜穿越到古代朝堂，凭借现代知识在官场步步高升，卷入皇权之争';
   const wordCountRange = options.wordCountRange ?? '30万-60万';
   const chapterCount = options.chapterCount ?? DEFAULT_STORYFLOW_CHAPTER_COUNT;
   const targetWordCount = options.targetWordCount ?? 2000;
@@ -347,7 +339,9 @@ export async function runStoryflowClosedLoop(
   // 大纲生成。默认不开启，完整冒烟仍然全程真实生成。
   const outlineCachePath = process.env.MOLIU_OUTLINE_CACHE?.trim();
   const artifactPaths = resolveStoryflowArtifactPaths();
-  const resumeRequested = /^(?:1|true|yes)$/iu.test(process.env.MOLIU_RESUME_STORYFLOW?.trim() ?? '');
+  const resumeRequested = /^(?:1|true|yes)$/iu.test(
+    process.env.MOLIU_RESUME_STORYFLOW?.trim() ?? ''
+  );
   let direction: OutlineDirection | null = null;
   const outlineWarnings: string[] = [];
   const phaseTimings = {
@@ -368,11 +362,11 @@ export async function runStoryflowClosedLoop(
     phaseTimings.outlineDirectionsMs += Date.now() - directionsStartedAt;
     if (!dirResult.directions || dirResult.directions.length === 0) {
       throw new Error(
-        `storyflow 闭环失败：大纲方向生成为空（generateDirections 未返回任何方向，${dirResult.warnings?.[0] ?? ''}）`,
+        `storyflow 闭环失败：大纲方向生成为空（generateDirections 未返回任何方向，${dirResult.warnings?.[0] ?? ''}）`
       );
     }
     direction = [...dirResult.directions].sort(
-      (a, b) => b.recommendationScore - a.recommendationScore,
+      (a, b) => b.recommendationScore - a.recommendationScore
     )[0];
 
     const expandStartedAt = Date.now();
@@ -388,7 +382,7 @@ export async function runStoryflowClosedLoop(
         ? expandedResult.blockers.join('；')
         : expandedResult.warnings?.join('；') || '未提供失败详情';
       throw new Error(
-        `storyflow 闭环失败：大纲展开为空（expandDirection 返回 null，${failureDetails}）`,
+        `storyflow 闭环失败：大纲展开为空（expandDirection 返回 null，${failureDetails}）`
       );
     }
     if (outlineCachePath) {
@@ -396,14 +390,22 @@ export async function runStoryflowClosedLoop(
       writeFileSync(outlineCachePath, JSON.stringify(expanded, null, 2), 'utf-8');
     }
     mkdirSync(join(artifactPaths.resumeOutlinePath, '..'), { recursive: true });
-    writeFileSync(artifactPaths.resumeOutlinePath, JSON.stringify({
-      version: 1,
-      prompt,
-      wordCountRange,
-      provider: cfg.provider,
-      model: cfg.model,
-      outline: expanded,
-    }, null, 2), 'utf-8');
+    writeFileSync(
+      artifactPaths.resumeOutlinePath,
+      JSON.stringify(
+        {
+          version: 1,
+          prompt,
+          wordCountRange,
+          provider: cfg.provider,
+          model: cfg.model,
+          outline: expanded,
+        },
+        null,
+        2
+      ),
+      'utf-8'
+    );
     return expanded;
   };
 
@@ -422,28 +424,31 @@ export async function runStoryflowClosedLoop(
         model?: string;
         outline?: ExecutableOutline;
       };
-      const matchesRun = checkpoint.version === 1
-        && checkpoint.prompt === prompt
-        && checkpoint.wordCountRange === wordCountRange
-        && checkpoint.provider === cfg.provider
-        && checkpoint.model === cfg.model;
-      if (matchesRun && checkpoint.outline
-        && inspectOutlineCompleteness(checkpoint.outline).canApply) {
+      const matchesRun =
+        checkpoint.version === 1 &&
+        checkpoint.prompt === prompt &&
+        checkpoint.wordCountRange === wordCountRange &&
+        checkpoint.provider === cfg.provider &&
+        checkpoint.model === cfg.model;
+      if (
+        matchesRun &&
+        checkpoint.outline &&
+        inspectOutlineCompleteness(checkpoint.outline).canApply
+      ) {
         resumableOutline = checkpoint.outline;
       }
     } catch {
       // 检查点损坏时按未命中处理并重新生成；不能让可选加速能力阻断真实 smoke。
     }
   }
-  const executableOutline = explicitCachedOutline
-    ?? resumableOutline
-    ?? (await generateExecutableOutline());
+  const executableOutline =
+    explicitCachedOutline ?? resumableOutline ?? (await generateExecutableOutline());
 
   const generatedOutline = mapExecutableOutlineToGeneratedOutline(executableOutline);
   const outlineChapters = generatedOutline.chapters;
   if (!outlineChapters || outlineChapters.length < 2) {
     throw new Error(
-      `storyflow 闭环失败：大纲章节过少（${outlineChapters?.length ?? 0} < 2），无法支撑批量续写`,
+      `storyflow 闭环失败：大纲章节过少（${outlineChapters?.length ?? 0} < 2），无法支撑批量续写`
     );
   }
 
@@ -452,7 +457,9 @@ export async function runStoryflowClosedLoop(
   const projectCreator = useProjectCreator();
   const projectId = await projectCreator.createProject(generatedOutline, {});
   if (!projectId) {
-    throw new Error(`storyflow 闭环失败：应用大纲失败（createProject 返回 null，${projectCreator.error.value}）`);
+    throw new Error(
+      `storyflow 闭环失败：应用大纲失败（createProject 返回 null，${projectCreator.error.value}）`
+    );
   }
   phaseTimings.applyOutlineMs = Date.now() - applyStartedAt;
 
@@ -463,7 +470,7 @@ export async function runStoryflowClosedLoop(
   const createdChapterIds = projectStore.chapters.map(chapter => chapter.id);
   if (createdChapterIds.length !== outlineChapters.length) {
     throw new Error(
-      `storyflow 闭环失败：建章数量不符（期望 ${outlineChapters.length}，实际 ${createdChapterIds.length}）`,
+      `storyflow 闭环失败：建章数量不符（期望 ${outlineChapters.length}，实际 ${createdChapterIds.length}）`
     );
   }
 
@@ -473,14 +480,16 @@ export async function runStoryflowClosedLoop(
   }
   // 深拷贝去 Vue 响应式代理（与 useProjectCreator 内做法一致）。
   // 用独立 refs 覆盖一次，保证传给续写层的是保存成功后的完整项目快照。
-  const project = JSON.parse(JSON.stringify({
-    ...rawProject,
-    chapters: projectStore.chapters,
-    volumes: projectStore.sortedVolumes,
-  })) as Project;
+  const project = JSON.parse(
+    JSON.stringify({
+      ...rawProject,
+      chapters: projectStore.chapters,
+      volumes: projectStore.sortedVolumes,
+    })
+  ) as Project;
   if (!project.chapters || project.chapters.length === 0) {
     throw new Error(
-      `storyflow 闭环失败：建章后 project.chapters 仍为空（createChapters 未写入 store chapters ref）`,
+      `storyflow 闭环失败：建章后 project.chapters 仍为空（createChapters 未写入 store chapters ref）`
     );
   }
 
@@ -489,7 +498,9 @@ export async function runStoryflowClosedLoop(
   if (!persistedProject) {
     throw new Error('storyflow 闭环失败：建章后项目未写入主进程存储');
   }
-  const persistedChapterNodes = persistedProject.plotOutline.filter(node => node.type === 'chapter');
+  const persistedChapterNodes = persistedProject.plotOutline.filter(
+    node => node.type === 'chapter'
+  );
   const firstHash = buildCriticalProjectHash(persistedProject);
   const coldReloadedProject = projectStorage.coldReload(projectId);
   if (!coldReloadedProject) {
@@ -497,14 +508,16 @@ export async function runStoryflowClosedLoop(
   }
   const coldHash = buildCriticalProjectHash(coldReloadedProject);
   if (firstHash !== coldHash) {
-    throw new Error(`storyflow 闭环失败：冷启动前后关键数据哈希不一致（${firstHash} != ${coldHash}）`);
+    throw new Error(
+      `storyflow 闭环失败：冷启动前后关键数据哈希不一致（${firstHash} != ${coldHash}）`
+    );
   }
   const projectStorageVerification: ProjectStorageVerification = {
     chapterCount: persistedProject.chapters.length,
     plotChapterCount: persistedChapterNodes.length,
     linkedPlotChapterCount: persistedChapterNodes.filter(node => Boolean(node.chapterId)).length,
     structuredPlotChapterCount: persistedChapterNodes.filter(node =>
-      Boolean(node.CBN && node.CPNs?.length && node.CEN && node.mustCover?.length),
+      Boolean(node.CBN && node.CPNs?.length && node.CEN && node.mustCover?.length)
     ).length,
     characterCount: persistedProject.characters.length,
     foreshadowCount: persistedProject.foreshadows.length,
@@ -512,7 +525,7 @@ export async function runStoryflowClosedLoop(
     // 章纲正文（结构化节点块之外的描述文本）：建章时只读 chapter.outline 而大纲链路
     // 用的是 chapter.summary，会让每章只剩 CBN/CPNs/CEN，续写合同拿不到章纲描述。
     chapterOutlineTextCount: persistedProject.chapters.filter(
-      chapter => (chapter.outline ?? '').split('--- 结构化节点 ---')[0].trim().length > 0,
+      chapter => (chapter.outline ?? '').split('--- 结构化节点 ---')[0].trim().length > 0
     ).length,
     coldReloadVerified: true,
     criticalDataHash: coldHash,
@@ -520,8 +533,8 @@ export async function runStoryflowClosedLoop(
       Boolean(
         character.profile &&
         Array.isArray(character.profile.personality) &&
-        Array.isArray(character.profile.relationships),
-      ),
+        Array.isArray(character.profile.relationships)
+      )
     ).length,
     positioningPersisted: Boolean(persistedProject.metadata?.outlinePositioning),
   };
@@ -570,34 +583,51 @@ export async function runStoryflowClosedLoop(
       writeFileSync(
         join(artifactPaths.proseDir, `ch${String(chapter.chapterNumber).padStart(2, '0')}.txt`),
         chapter.output.prose,
-        'utf8',
+        'utf8'
       );
     }
-    writeFileSync(artifactPaths.summaryPath, JSON.stringify({
-      book: project.name,
-      mode: 'storyflow-closed-loop',
-      status: 'in-progress',
-      requestedChapterCount: chapterCount,
-      completedChapters: checkpointResults.length,
-      chapters: outlineChapters.length,
-      outlinePath: artifactPaths.outlinePath,
-      proseDir: artifactPaths.proseDir,
-      batch: checkpointResults.map(chapter => ({
-        ch: chapter.chapterNumber,
-        accepted: chapter.output.success,
-        title: chapter.output.title,
-        words: chapter.output.prose.length,
-        head: chapter.output.prose.slice(0, 120),
-        tail: chapter.output.prose.slice(-80),
-        error: chapter.output.error ?? null,
-      })),
-      projectStorageVerification,
-      outlineWarnings,
-      provider: cfg.provider,
-      model: cfg.model,
-      updatedAt: new Date().toISOString(),
-      warnings: ['任务尚未完成；本摘要为阶段性检查点，进程超时或中断后仍可用于诊断。'],
-    }, null, 2), 'utf8');
+    writeFileSync(
+      artifactPaths.summaryPath,
+      JSON.stringify(
+        {
+          book: project.name,
+          mode: 'storyflow-closed-loop',
+          status: 'in-progress',
+          requestedChapterCount: chapterCount,
+          completedChapters: checkpointResults.length,
+          chapters: outlineChapters.length,
+          outlinePath: artifactPaths.outlinePath,
+          proseDir: artifactPaths.proseDir,
+          batch: checkpointResults.map(chapter => ({
+            ch: chapter.chapterNumber,
+            accepted: chapter.output.success,
+            title: chapter.output.title,
+            words: chapter.output.prose.length,
+            attempts: chapter.output.attempts,
+            rewriteRounds: chapter.output.longFormResult?.rewriteRounds ?? 0,
+            gateIssues: (chapter.output.gateResult?.allIssues ?? []).map(issue => ({
+              category: issue.category,
+              severity: issue.severity,
+              location: issue.location,
+              description: issue.description,
+              evidence: issue.evidence,
+            })),
+            head: chapter.output.prose.slice(0, 120),
+            tail: chapter.output.prose.slice(-80),
+            error: chapter.output.error ?? null,
+          })),
+          projectStorageVerification,
+          outlineWarnings,
+          provider: cfg.provider,
+          model: cfg.model,
+          updatedAt: new Date().toISOString(),
+          warnings: ['任务尚未完成；本摘要为阶段性检查点，进程超时或中断后仍可用于诊断。'],
+        },
+        null,
+        2
+      ),
+      'utf8'
+    );
   };
   persistProgress();
 
@@ -651,8 +681,7 @@ export async function runStoryflowClosedLoop(
       persistProgress();
       // 伏笔回收流转：判官证据确认已回收的伏笔 buried→resolved 并写回 project store，
       // 让 postWritePersistence/进度面板不再恒报「全部 buried」（严证据门：判官未列出的不动）
-      const resolvedIds =
-        chapterResult.output.longFormResult?.report?.resolvedForeshadowIds ?? [];
+      const resolvedIds = chapterResult.output.longFormResult?.report?.resolvedForeshadowIds ?? [];
       if (resolvedIds.length > 0) {
         let touched = false;
         for (const foreshadow of project.foreshadows ?? []) {
@@ -663,7 +692,7 @@ export async function runStoryflowClosedLoop(
         }
         if (touched) {
           console.log(
-            `[storyflow:real] 第${chapterResult.chapterNumber}章判官确认回收伏笔 ${resolvedIds.length} 条，已流转 buried→resolved`,
+            `[storyflow:real] 第${chapterResult.chapterNumber}章判官确认回收伏笔 ${resolvedIds.length} 条，已流转 buried→resolved`
           );
         }
       }
@@ -689,7 +718,7 @@ export async function runStoryflowClosedLoop(
     volumeCount: afterWriteProject.volumes.length,
     plotChapterCount: afterWriteProject.plotOutline.filter(node => node.type === 'chapter').length,
     writtenChapterCount: afterWriteProject.chapters.filter(
-      chapter => (chapter.content ?? '').length > 300,
+      chapter => (chapter.content ?? '').length > 300
     ).length,
   };
 

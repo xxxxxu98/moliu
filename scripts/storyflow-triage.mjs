@@ -27,13 +27,17 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { join } from 'node:path';
 
 const TEMP_DIR = join(process.cwd(), 'temp');
-const MATRIX_DIR = join(TEMP_DIR, 'storyflow-matrix');
-const TRIAGE_DIR = join(TEMP_DIR, 'storyflow-triage');
+const MATRIX_DIR = process.env.MOLIU_STORYFLOW_MATRIX_DIR
+  ? join(process.cwd(), process.env.MOLIU_STORYFLOW_MATRIX_DIR)
+  : join(TEMP_DIR, 'storyflow-matrix');
+const TRIAGE_DIR = process.env.MOLIU_STORYFLOW_TRIAGE_DIR
+  ? join(process.cwd(), process.env.MOLIU_STORYFLOW_TRIAGE_DIR)
+  : join(TEMP_DIR, 'storyflow-triage');
 const ANSI_RE = /\x1b\[[0-9;]*m/g;
 const EVIDENCE_MAX = 160;
 
 // ---------- 单条 reviewer 问题文本 → 签名 ----------
-function parseIssue(text) {
+export function parseIssue(text) {
   const t = text.trim();
   let m = t.match(/^语义问题\[(\w+)\]\s*([^：]+)[:：]\s*([\s\S]+)$/);
   if (m) {
@@ -70,7 +74,7 @@ function parseIssue(text) {
   return { id: 'quality.review-other', evidence: t };
 }
 
-function classifyTransient(reason) {
+export function classifyTransient(reason) {
   if (reason.includes('502')) return 'infra.transient.http-502';
   if (reason.includes('429')) return 'infra.transient.http-429';
   // 网关上游地区路由拦截（实测反重力 400 "User location is not supported"）：
@@ -129,7 +133,11 @@ function parseRunLog(logText, acc) {
     // 瞬态网络失败（统一入口日志）。502 单独由下方 POST 行计数，这里跳过避免重复
     m = line.match(/\[unified\.service\] chat 瞬态失败，(\d+)ms 后重试 (\d+)\/(\d+):?\s*(.*)/);
     if (m && !m[4].includes('502')) {
-      acc.add(classifyTransient(m[4]), null, `重试 ${m[2]}/${m[3]}：${m[4]}`.slice(0, EVIDENCE_MAX));
+      acc.add(
+        classifyTransient(m[4]),
+        null,
+        `重试 ${m[2]}/${m[3]}：${m[4]}`.slice(0, EVIDENCE_MAX)
+      );
     }
 
     // 原始 HTTP 失败行（大纲阶段批量修复的 502 只在这出现）。
@@ -168,12 +176,14 @@ function parseRunLog(logText, acc) {
       acc.add(
         'quality.words-overlimit-survived',
         currentChapter,
-        `压缩后仍 ${m[1]}/${m[2]}，保留压缩稿`,
+        `压缩后仍 ${m[1]}/${m[2]}，保留压缩稿`
       );
     }
 
     // 章级持久错误（unknown 是分类占位；立即重试/连续 N 次结束批量）
-    m = line.match(/\[runContinueWriteChapters\] 第(\d+)章持久错误.*?(?:，立即重试|，结束批量)[:：]\s*(.*)/);
+    m = line.match(
+      /\[runContinueWriteChapters\] 第(\d+)章持久错误.*?(?:，立即重试|，结束批量)[:：]\s*(.*)/
+    );
     if (m) {
       const ch = Number(m[1]);
       currentChapter = ch;
@@ -201,7 +211,7 @@ function parseRunLog(logText, acc) {
       acc.add(
         'assert.chapters-accepted',
         null,
-        `断言 expected ${m[2]} to be ${m[1]}（期望 ${m[2]} 章，实际 ${m[1]} 章）`,
+        `断言 expected ${m[2]} to be ${m[1]}（期望 ${m[2]} 章，实际 ${m[1]} 章）`
       );
     }
   }
@@ -217,7 +227,9 @@ function parseRunLog(logText, acc) {
 
 // ---------- trace 解析：延迟统计 + 空响应 ----------
 function parseTraces(dir, acc) {
-  for (const name of readdirSync(dir).filter(n => n.endsWith('.jsonl')).sort()) {
+  for (const name of readdirSync(dir)
+    .filter(n => n.endsWith('.jsonl'))
+    .sort()) {
     const chMatch = name.match(/-ch(\d+)-/);
     const chapter = chMatch ? Number(chMatch[1]) : null;
     for (const line of readFileSync(join(dir, name), 'utf8').trim().split('\n')) {
@@ -231,11 +243,17 @@ function parseTraces(dir, acc) {
       const purpose = j.purpose || 'unknown';
       const ms = Number(j.ms) || 0;
       const len =
-        typeof j.response === 'string' ? j.response.length : JSON.stringify(j.response ?? '').length;
+        typeof j.response === 'string'
+          ? j.response.length
+          : JSON.stringify(j.response ?? '').length;
       acc.latency[purpose] = acc.latency[purpose] || [];
       acc.latency[purpose].push(ms);
       if (len <= 3) {
-        acc.add('model.empty-response', chapter, `trace ${name} seq${j.seq} ${purpose} 响应 ${len} 字符`);
+        acc.add(
+          'model.empty-response',
+          chapter,
+          `trace ${name} seq${j.seq} ${purpose} 响应 ${len} 字符`
+        );
       }
     }
   }
@@ -248,8 +266,86 @@ function parseSummary(dir, acc) {
   const s = JSON.parse(readFileSync(p, 'utf8'));
   for (const w of s.outlineWarnings ?? []) {
     if (w.includes('瞬态失败')) acc.add('outline.repair-transient', null, w.slice(0, EVIDENCE_MAX));
-    else if (w.includes('本地收缩')) acc.add('outline.titles-shrunk-local', null, w.slice(0, EVIDENCE_MAX));
+    else if (w.includes('本地收缩'))
+      acc.add('outline.titles-shrunk-local', null, w.slice(0, EVIDENCE_MAX));
     else acc.add('outline.warning-other', null, w.slice(0, EVIDENCE_MAX));
+  }
+  const reader = s.readerEvaluation;
+  if (reader?.enabled) {
+    if (reader.outline && reader.outline.score < (reader.thresholds?.outlineWarningBelow ?? 75)) {
+      acc.add(
+        'reader.outline-score-low',
+        null,
+        `大纲读者评分 ${reader.outline.score}：${reader.outline.summary ?? ''}`.slice(
+          0,
+          EVIDENCE_MAX
+        )
+      );
+    }
+    for (const issue of reader.outline?.issues ?? []) {
+      acc.add(
+        issue.id || `reader.${issue.category || 'outline-other'}`,
+        null,
+        `${issue.description ?? ''}${issue.evidence?.[0] ? `（${issue.evidence[0]}）` : ''}`.slice(
+          0,
+          EVIDENCE_MAX
+        )
+      );
+    }
+    for (const chapter of reader.chapters ?? []) {
+      if (chapter.score < (reader.thresholds?.chapterWarningBelow ?? 60)) {
+        acc.add(
+          'reader.chapter-score-low',
+          chapter.chapter,
+          `读者评分 ${chapter.score}：${chapter.summary ?? ''}`.slice(0, EVIDENCE_MAX)
+        );
+      }
+      if (chapter.continueReading === false) {
+        acc.add(
+          'reader.continue-reading-no',
+          chapter.chapter,
+          `读者不愿继续阅读：${chapter.summary ?? ''}`.slice(0, EVIDENCE_MAX)
+        );
+      }
+      for (const issue of chapter.issues ?? []) {
+        acc.add(
+          issue.id || `reader.${issue.category || 'chapter-other'}`,
+          chapter.chapter,
+          `${issue.description ?? ''}${issue.evidence?.[0] ? `（${issue.evidence[0]}）` : ''}`.slice(
+            0,
+            EVIDENCE_MAX
+          )
+        );
+      }
+    }
+    for (const window of reader.windows ?? []) {
+      if (window.score < (reader.thresholds?.windowWarningBelow ?? 70)) {
+        acc.add(
+          'reader.window-score-low',
+          window.toChapter,
+          `${window.fromChapter}-${window.toChapter}章窗口评分 ${window.score}：${window.summary ?? ''}`.slice(
+            0,
+            EVIDENCE_MAX
+          )
+        );
+      }
+      for (const issue of window.issues ?? []) {
+        acc.add(
+          issue.id || `reader.${issue.category || 'window-other'}`,
+          window.toChapter,
+          `${window.fromChapter}-${window.toChapter}章：${issue.description ?? ''}`.slice(
+            0,
+            EVIDENCE_MAX
+          )
+        );
+      }
+    }
+    for (const error of reader.errors ?? []) {
+      acc.add('reader.evaluation-error', null, String(error).slice(0, EVIDENCE_MAX));
+    }
+    if (reader.evaluator?.independentFromWriter === false) {
+      acc.add('reader.self-evaluation-fallback', null, '无独立读者模型，本轮回退写作模型自评');
+    }
   }
   return s;
 }
@@ -276,9 +372,31 @@ function triageProvider(providerId, meta) {
   const summary = parseSummary(dir, acc);
 
   const acceptedChapters = new Set(
-    (summary?.batch ?? []).filter(it => it.accepted).map(it => it.ch),
+    (summary?.batch ?? []).filter(it => it.accepted).map(it => it.ch)
   );
   const words = (summary?.batch ?? []).map(it => it.words).filter(w => typeof w === 'number');
+
+  // 段落节奏指标（AI 腔信号）：章级 summary 的 paras/paraCv 字段（2026-08-19 起写入）。
+  // 在统一分级前加入签名，避免后补签名遗漏 severity。
+  const paraCvRows = (summary?.batch ?? []).filter(it => typeof it.paraCv === 'number');
+  const paraStats = paraCvRows.length
+    ? (() => {
+        const cvs = paraCvRows.map(it => it.paraCv).sort((a, b) => a - b);
+        const uniformCount = paraCvRows.filter(it => it.paraCv < 0.14 && it.paras >= 12).length;
+        return {
+          chapters: paraCvRows.length,
+          medianCv: cvs[Math.floor(cvs.length / 2)],
+          uniformChapters: uniformCount,
+        };
+      })()
+    : null;
+  if (paraStats && paraStats.uniformChapters / paraStats.chapters > 0.3) {
+    acc.add(
+      'prose.rhythm-uniform',
+      null,
+      `均匀化章 ${paraStats.uniformChapters}/${paraStats.chapters}，cv 中位 ${paraStats.medianCv}（<0.14 且段数≥12 为均匀化）`
+    );
+  }
 
   // 分级：章节最终 accepted → 黄（已恢复）；否则红（阻断）。infra/outline/assert 恒定分级
   const RED_ALWAYS = new Set(['assert.chapters-accepted']);
@@ -298,6 +416,8 @@ function triageProvider(providerId, meta) {
   for (const sig of signatures.values()) {
     if (RED_ALWAYS.has(sig.id)) sig.severity = 'red';
     else if (YELLOW_ALWAYS.has(sig.id)) sig.severity = 'yellow';
+    else if (sig.id.startsWith('infra.transient.')) sig.severity = 'yellow';
+    else if (sig.id.startsWith('reader.') || sig.id.startsWith('prose.')) sig.severity = 'yellow';
     else if (sig.id === 'model.empty-response' || sig.id === 'quality.words-overlimit') {
       // 章级空响应/超限且该章最终未通过 → 红；大纲阶段或已恢复 → 黄
       sig.severity = sig.chapter != null && !acceptedChapters.has(sig.chapter) ? 'red' : 'yellow';
@@ -355,49 +475,34 @@ function triageProvider(providerId, meta) {
     ? Number(summary.requestedChapterCount)
     : null;
 
-  // 段落节奏指标（AI 腔信号）：章级 summary 的 paras/paraCv 字段（2026-08-19 起写入）。
-  // 均匀化章占比 >30% 时打黄色签名，冒烟后无需手动跑脚本即可看到节奏退化。
-  const paraCvRows = (summary?.batch ?? []).filter(it => typeof it.paraCv === 'number');
-  const paraStats = paraCvRows.length
-    ? (() => {
-        const cvs = paraCvRows.map(it => it.paraCv).sort((a, b) => a - b);
-        const uniformCount = paraCvRows.filter(
-          it => it.paraCv < 0.14 && it.paras >= 12,
-        ).length;
-        return {
-          chapters: paraCvRows.length,
-          medianCv: cvs[Math.floor(cvs.length / 2)],
-          uniformChapters: uniformCount,
-        };
-      })()
-    : null;
-  if (paraStats && paraStats.uniformChapters / paraStats.chapters > 0.3) {
-    acc.add(
-      'prose.rhythm-uniform',
-      null,
-      `均匀化章 ${paraStats.uniformChapters}/${paraStats.chapters}，cv 中位 ${paraStats.medianCv}（<0.14 且段数≥12 为均匀化）`,
-    );
-    const sig = signatures.get('prose.rhythm-uniform|null');
-    if (sig) sig.severity = 'yellow';
-  }
-
   return {
     providerId,
     model: meta.model,
     pass: meta.pass,
     exitCode: meta.exitCode,
     wallMinutes: meta.wallMinutes,
-    chaptersAccepted: requested ? `${acceptedChapters.size}/${requested}` : String(acceptedChapters.size),
+    chaptersAccepted: requested
+      ? `${acceptedChapters.size}/${requested}`
+      : String(acceptedChapters.size),
     words: words.length
-      ? { min: Math.min(...words), avg: Math.round(words.reduce((a, b) => a + b, 0) / words.length), max: Math.max(...words) }
+      ? {
+          min: Math.min(...words),
+          avg: Math.round(words.reduce((a, b) => a + b, 0) / words.length),
+          max: Math.max(...words),
+        }
       : null,
     paraRhythm: paraStats,
+    repairMetrics: summary?.repairMetrics ?? null,
+    runtimeMetrics: summary?.runtimeMetrics ?? null,
+    readerMetrics: summary?.readerEvaluation?.metrics ?? null,
+    readerOutlineScore: summary?.readerEvaluation?.outline?.score ?? null,
+    readerIndependent: summary?.readerEvaluation?.evaluator?.independentFromWriter ?? null,
     phaseTimings: summary?.phaseTimings ?? null,
     runtimeBackend: summary?.runtimeBackend ?? null,
     verdict,
     verdictReason,
     signatures: [...signatures.values()].sort(
-      (a, b) => a.severity.localeCompare(b.severity) || b.count - a.count,
+      (a, b) => (a.severity ?? 'yellow').localeCompare(b.severity ?? 'yellow') || b.count - a.count
     ),
     latency,
   };
@@ -410,7 +515,7 @@ function printProvider(row) {
     `\n== ${row.providerId} / ${row.model}  ${mark} exit=${row.exitCode}` +
       `${row.wallMinutes != null ? `  ${row.wallMinutes}min` : ''}  章节 ${row.chaptersAccepted}` +
       `${row.words ? `  字数 ${row.words.min}/${row.words.avg}/${row.words.max}` : ''}` +
-      `${row.runtimeBackend ? `  backend=${row.runtimeBackend}` : ''} ==`,
+      `${row.runtimeBackend ? `  backend=${row.runtimeBackend}` : ''} ==`
   );
   console.log(`  判定: ${row.verdict} —— ${row.verdictReason}`);
   for (const s of row.signatures) {
@@ -422,28 +527,86 @@ function printProvider(row) {
   }
   const latParts = Object.entries(row.latency)
     .filter(([, v]) => v.count >= 2)
-    .map(([k, v]) => `${k} n=${v.count} avg=${Math.round(v.avgMs / 1000)}s p50=${Math.round(v.p50Ms / 1000)}s`);
+    .map(
+      ([k, v]) =>
+        `${k} n=${v.count} avg=${Math.round(v.avgMs / 1000)}s p50=${Math.round(v.p50Ms / 1000)}s`
+    );
   if (latParts.length) console.log(`  耗时: ${latParts.join(' | ')}`);
+  if (row.repairMetrics) {
+    console.log(
+      `  修复成本: 首过率 ${Math.round((row.repairMetrics.firstPassRate ?? 0) * 100)}%` +
+        `，重写章 ${row.repairMetrics.rewrittenChapters ?? 0}` +
+        `，总重写 ${row.repairMetrics.totalRewriteRounds ?? 0}`
+    );
+  }
+  if (row.readerMetrics) {
+    console.log(
+      `  读者影子分: 大纲 ${row.readerOutlineScore ?? '-'}，章节均值 ${row.readerMetrics.chapterAverage ?? '-'}` +
+        `，中位 ${row.readerMetrics.chapterMedian ?? '-'}，最低 ${row.readerMetrics.chapterMinimum ?? '-'}` +
+        `，独立评审=${row.readerIndependent === true ? '是' : '否'}`
+    );
+  }
+}
+
+export function markdownReport(report) {
+  const lines = [
+    '# Storyflow 冒烟质量报告',
+    '',
+    `- 生成时间：${report.generatedAt}`,
+    `- 数据源：${report.source}`,
+    '',
+    '| 模型 | 工程结果 | 判定 | 章节 | 首过率 | 读者大纲分 | 读者章节均分/最低 |',
+    '|---|---|---|---:|---:|---:|---:|',
+  ];
+  for (const provider of report.providers ?? []) {
+    const firstPass = provider.repairMetrics?.firstPassRate;
+    lines.push(
+      `| ${provider.model} | ${provider.pass ? '通过' : '失败'} | ${provider.verdict} | ${provider.chaptersAccepted} | ` +
+        `${firstPass == null ? '-' : `${Math.round(firstPass * 100)}%`} | ${provider.readerOutlineScore ?? '-'} | ` +
+        `${provider.readerMetrics?.chapterAverage ?? '-'}/${provider.readerMetrics?.chapterMinimum ?? '-'} |`
+    );
+  }
+  for (const provider of report.providers ?? []) {
+    lines.push('', `## ${provider.model}`, '', provider.verdictReason, '');
+    const signatures = provider.signatures ?? [];
+    if (signatures.length === 0) {
+      lines.push('无异常签名。');
+      continue;
+    }
+    lines.push('| 级别 | 签名 | 章节 | 次数 | 证据 |', '|---|---|---:|---:|---|');
+    for (const signature of signatures) {
+      const evidence = String(signature.evidence?.[0] ?? '').replaceAll('|', '\\|');
+      lines.push(
+        `| ${signature.severity === 'red' ? '红' : '黄'} | ${signature.id} | ` +
+          `${signature.chapter ?? '-'} | ${signature.count} | ${evidence} |`
+      );
+    }
+  }
+  return `${lines.join('\n')}\n`;
 }
 
 // ---------- diff ----------
 function sigKey(model, sig) {
   return `${model}|${sig.id}|${sig.chapter ?? 0}`;
 }
-function runDiff(oldReport, newReport) {
+export function runDiff(oldReport, newReport) {
   const oldKeys = new Map();
   for (const p of oldReport.providers ?? [])
-    for (const s of p.signatures) oldKeys.set(sigKey(p.model, s), { provider: p.providerId, sig: s });
+    for (const s of p.signatures)
+      oldKeys.set(sigKey(p.model, s), { provider: p.providerId, sig: s });
   const newKeys = new Map();
   for (const p of newReport.providers ?? [])
-    for (const s of p.signatures) newKeys.set(sigKey(p.model, s), { provider: p.providerId, sig: s });
+    for (const s of p.signatures)
+      newKeys.set(sigKey(p.model, s), { provider: p.providerId, sig: s });
 
   const resolved = [...oldKeys.keys()].filter(k => !newKeys.has(k));
   const persisted = [...oldKeys.keys()].filter(k => newKeys.has(k));
   const added = [...newKeys.keys()].filter(k => !oldKeys.has(k));
   const fmt = k => `${k.replace('|0', '|-')}${newKeys.get(k) || oldKeys.get(k) ? '' : ''}`;
 
-  console.log(`\n[storyflow-triage] 回归 diff：${oldReport.generatedAt} → ${newReport.generatedAt}`);
+  console.log(
+    `\n[storyflow-triage] 回归 diff：${oldReport.generatedAt} → ${newReport.generatedAt}`
+  );
   console.log(`\n已消失 (${resolved.length})：`);
   for (const k of resolved) console.log(`  ✓ ${fmt(k)}`);
   console.log(`\n持续存在 (${persisted.length})：`);
@@ -462,7 +625,63 @@ function runDiff(oldReport, newReport) {
     if (old && old.verdict !== p.verdict)
       console.log(`  判定变化 ${p.model}: ${old.verdict} → ${p.verdict}`);
   }
-  return newRed;
+  const regressions = [];
+  for (const current of newReport.providers ?? []) {
+    const previous = (oldReport.providers ?? []).find(old => old.model === current.model);
+    if (!previous) continue;
+    const oldReader = previous.readerMetrics;
+    const newReader = current.readerMetrics;
+    if (
+      oldReader?.chapterAverage != null &&
+      newReader?.chapterAverage != null &&
+      oldReader.chapterAverage - newReader.chapterAverage > 5
+    ) {
+      regressions.push(
+        `${current.model} 章节读者均分 ${oldReader.chapterAverage} → ${newReader.chapterAverage}`
+      );
+    }
+    if (
+      previous.readerOutlineScore != null &&
+      current.readerOutlineScore != null &&
+      previous.readerOutlineScore - current.readerOutlineScore > 5
+    ) {
+      regressions.push(
+        `${current.model} 大纲读者分 ${previous.readerOutlineScore} → ${current.readerOutlineScore}`
+      );
+    }
+    const oldFirst = previous.repairMetrics?.firstPassRate;
+    const newFirst = current.repairMetrics?.firstPassRate;
+    if (oldFirst != null && newFirst != null && oldFirst - newFirst > 0.1) {
+      regressions.push(
+        `${current.model} 首过率 ${Math.round(oldFirst * 100)}% → ${Math.round(newFirst * 100)}%`
+      );
+    }
+    const oldRewrite = previous.repairMetrics?.averageRewriteRounds;
+    const newRewrite = current.repairMetrics?.averageRewriteRounds;
+    if (
+      oldRewrite != null &&
+      newRewrite != null &&
+      oldRewrite > 0 &&
+      newRewrite / oldRewrite > 1.2
+    ) {
+      regressions.push(`${current.model} 平均重写轮 ${oldRewrite} → ${newRewrite}`);
+    }
+    const oldP95 = previous.runtimeMetrics?.latencyP95Ms;
+    const newP95 = current.runtimeMetrics?.latencyP95Ms;
+    if (oldP95 != null && newP95 != null && oldP95 > 0 && newP95 / oldP95 > 1.25) {
+      regressions.push(
+        `${current.model} 请求 P95 ${Math.round(oldP95 / 1000)}s → ${Math.round(newP95 / 1000)}s`
+      );
+    }
+  }
+  console.log(`\n数值劣化 (${regressions.length})：`);
+  for (const regression of regressions) console.log(`  ⚠ ${regression}`);
+  return {
+    newRed,
+    regressionFailed:
+      regressions.length > 0 &&
+      /^(?:1|true|yes)$/i.test(process.env.MOLIU_READER_REGRESSION_BLOCK ?? ''),
+  };
 }
 
 // ---------- main ----------
@@ -497,8 +716,11 @@ function main() {
       oldPath = join(TRIAGE_DIR, reports[reports.length - 2]);
       newPath = join(TRIAGE_DIR, reports[reports.length - 1]);
     }
-    const newRed = runDiff(JSON.parse(readFileSync(oldPath, 'utf8')), JSON.parse(readFileSync(newPath, 'utf8')));
-    process.exit(newRed ? 1 : 0);
+    const diff = runDiff(
+      JSON.parse(readFileSync(oldPath, 'utf8')),
+      JSON.parse(readFileSync(newPath, 'utf8'))
+    );
+    process.exit(diff.newRed || diff.regressionFailed ? 1 : 0);
   }
 
   if (!existsSync(MATRIX_DIR)) {
@@ -528,15 +750,20 @@ function main() {
     const archived = new Set(
       readdirSync(MATRIX_DIR).filter(n => {
         try {
-          return statSync(join(MATRIX_DIR, n)).isDirectory() && existsSync(join(MATRIX_DIR, n, 'run.log'));
+          return (
+            statSync(join(MATRIX_DIR, n)).isDirectory() &&
+            existsSync(join(MATRIX_DIR, n, 'run.log'))
+          );
         } catch {
           return false;
         }
-      }),
+      })
     );
     const unknown = [...want].filter(w => !ids.includes(w) && !archived.has(w));
     if (unknown.length) {
-      console.error(`[storyflow-triage] 未知的厂商目录：${unknown.join(', ')}（可用：${[...new Set([...ids, ...archived])].join(', ')}）`);
+      console.error(
+        `[storyflow-triage] 未知的厂商目录：${unknown.join(', ')}（可用：${[...new Set([...ids, ...archived])].join(', ')}）`
+      );
       process.exit(2);
     }
     ids = [...want].filter(w => ids.includes(w) || archived.has(w));
@@ -568,6 +795,9 @@ function main() {
   const reportPath = join(TRIAGE_DIR, `report-${stamp}.json`);
   writeFileSync(reportPath, JSON.stringify(report, null, 2) + '\n', 'utf-8');
   writeFileSync(join(TRIAGE_DIR, 'latest.json'), JSON.stringify(report, null, 2) + '\n', 'utf-8');
+  const markdown = markdownReport(report);
+  writeFileSync(reportPath.replace(/\.json$/u, '.md'), markdown, 'utf-8');
+  writeFileSync(join(TRIAGE_DIR, 'latest.md'), markdown, 'utf-8');
 
   if (argv.includes('--json')) {
     console.log(JSON.stringify(report, null, 2));
@@ -576,11 +806,16 @@ function main() {
     for (const row of providers) printProvider(row);
     const redCount = providers.reduce(
       (n, p) => n + p.signatures.filter(s => s.severity === 'red').length,
-      0,
+      0
     );
-    console.log(`\n[storyflow-triage] 红签名 ${redCount} 个；判定：${providers.map(p => `${p.model}=${p.verdict}`).join('，')}`);
+    console.log(
+      `\n[storyflow-triage] 红签名 ${redCount} 个；判定：${providers.map(p => `${p.model}=${p.verdict}`).join('，')}`
+    );
   }
   process.exit(providers.some(p => !p.pass) ? 1 : 0);
 }
 
-main();
+const invokedDirectly = (process.argv[1] || '')
+  .replace(/\\/g, '/')
+  .endsWith('storyflow-triage.mjs');
+if (invokedDirectly) main();
