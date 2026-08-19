@@ -53,8 +53,14 @@ export interface ResolvedReaderJudgeConfig {
   model?: string;
   baseUrl?: string;
   independentFromWriter: boolean;
-  selectionReason: 'explicit' | 'automatic-independent' | 'writer-fallback';
+  selectionReason:
+    | 'explicit'
+    | 'default-wawa-gpt-5.6-luna'
+    | 'automatic-independent'
+    | 'writer-fallback';
 }
+
+export const DEFAULT_READER_JUDGE_PROVIDER_NAME = 'wawa-gpt-5.6-luna';
 
 const PROVIDER_SET = new Set<string>([
   'openai',
@@ -118,6 +124,7 @@ function decryptStoredApiKey(apiKey: string): string {
 
 function readAppProviders(): Array<{
   id: string;
+  name?: string;
   provider: string;
   modelName?: string;
   apiKey?: string;
@@ -131,6 +138,7 @@ function readAppProviders(): Array<{
   const raw = JSON.parse(fs.readFileSync(settingsPath, 'utf8')) as {
     aiProviders?: Array<{
       id: string;
+      name?: string;
       provider: string;
       modelName?: string;
       apiKey?: string;
@@ -302,9 +310,10 @@ export function resolveContinueWriteRealConfig(): ResolvedRealAiConfig {
 }
 
 /**
- * 读者评审优先使用与写作模型不同的 App 厂商配置，避免模型自评。
+ * 读者评审默认使用 App 中名为 wawa-gpt-5.6-luna 的配置。
  * 显式设置 MOLIU_READER_JUDGE_PROVIDER_ID 时严格按 ID 解析；没有第二套可用配置时
- * 才回退写作模型，并在结构化报告中标记 independentFromWriter=false。
+ * 再自动选择其他可用配置，最终才回退写作模型。若默认裁判恰好也是写作模型，
+ * 在结构化报告中如实标记 independentFromWriter=false。
  */
 export function resolveReaderJudgeConfig(writer: ResolvedRealAiConfig): ResolvedReaderJudgeConfig {
   const preferredId = (process.env.MOLIU_READER_JUDGE_PROVIDER_ID || '').trim();
@@ -336,6 +345,28 @@ export function resolveReaderJudgeConfig(writer: ResolvedRealAiConfig): Resolved
       );
     }
     return selected;
+  }
+
+  const normalizeProviderName = (value: string | undefined): string =>
+    (value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/gpt-?5\.6/gu, 'gpt-5.6');
+  const defaultJudge = providers.find(
+    item =>
+      normalizeProviderName(item.name) === DEFAULT_READER_JUDGE_PROVIDER_NAME &&
+      item.enabled !== false &&
+      Boolean(item.apiKey) &&
+      PROVIDER_SET.has((item.provider || 'openai').toLowerCase())
+  );
+  if (defaultJudge) {
+    const selected = resolveItem(defaultJudge.id);
+    if (selected) {
+      return {
+        ...selected,
+        selectionReason: 'default-wawa-gpt-5.6-luna',
+      };
+    }
   }
 
   const alternative = providers.find(item => {

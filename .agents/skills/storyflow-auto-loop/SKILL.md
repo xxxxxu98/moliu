@@ -64,6 +64,8 @@ node scripts/storyflow-triage.mjs --diff         # 最近两份报告的签名�
 读者评审当前为 `reader-eval-v1` **影子模式**：`reader.*` 签名一律为黄，不改变章节
 accepted，也不自动驱动重写。它用于校准追读力、人物、情绪、爽点、跨章重复等质量趋势；
 只有积累足够人工抽查样本、冻结阈值后，才能人工批准将高置信度底线问题升级为阻断。
+未设置 `MOLIU_READER_JUDGE_PROVIDER_ID` 时，默认读取 App 中名为
+`wawa-gpt-5.6-luna` 的已启用配置作为裁判；显式环境变量仍具有最高优先级。
 
 stalled 是硬停止信号：同签名 3 轮不收敛说明是模型能力或合同问题，代码修不动，
 继续重试只烧钱。历史先例：max_tokens 区间语法、空响应守卫、schema 软兜底都是 1-2 轮内可修的；
