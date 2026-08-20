@@ -118,22 +118,38 @@ export interface RollContextBase {
 
 /**
  * 卷级锚点：本批章号落在哪一卷、该卷的目标/冲突/回收伏笔。
- * 卷区间按 estimatedChaptersPerVolume 估算（卷纲本身不带章区间）。
+ * 卷纲声明了章节区间时按真实区间定位；缺失（旧项目/旧大纲）按
+ * estimatedChaptersPerVolume 估算（卷纲不带章区间的旧行为）。
  */
 export function buildVolumeAnchor(project: Project, fromChapterNumber: number): string {
   const volumePlans = project.metadata?.volumePlans ?? [];
   if (volumePlans.length === 0) return '（本项目无结构化卷纲）';
-  const perVolume = project.metadata?.storyScale?.estimatedChaptersPerVolume;
-  const estimated = perVolume && perVolume > 0 ? perVolume : 40;
-  const currentIndex = Math.min(
-    Math.floor((fromChapterNumber - 1) / estimated),
-    volumePlans.length - 1,
+  const ranges = volumePlans.filter(
+    plan => plan.chapterRange && plan.chapterRange.start >= 1 && plan.chapterRange.end >= plan.chapterRange.start,
   );
+  let currentIndex: number;
+  if (ranges.length === volumePlans.length && ranges.length >= 2) {
+    const hit = volumePlans.findIndex(
+      plan =>
+        fromChapterNumber >= (plan.chapterRange?.start ?? 1)
+        && fromChapterNumber <= (plan.chapterRange?.end ?? Number.MAX_SAFE_INTEGER),
+    );
+    // 越过末卷区间（滚动续写超出规划规模）钳到最后一卷
+    currentIndex = hit >= 0 ? hit : volumePlans.length - 1;
+  } else {
+    const perVolume = project.metadata?.storyScale?.estimatedChaptersPerVolume;
+    const estimated = perVolume && perVolume > 0 ? perVolume : 40;
+    currentIndex = Math.min(
+      Math.floor((fromChapterNumber - 1) / estimated),
+      volumePlans.length - 1,
+    );
+  }
   const render = (index: number, mark: boolean): string => {
     const plan = volumePlans[index];
     const payoffs = plan.payoffForeshadows?.length ? `回收伏笔：${plan.payoffForeshadows.join('、')}` : '';
     return [
       `${mark ? '【当前卷】' : ''}第${plan.volumeIndex || index + 1}卷《${plan.title}》`,
+      plan.chapterRange && `章节区间：第${plan.chapterRange.start}-${plan.chapterRange.end}章`,
       plan.objective && `目标：${plan.objective}`,
       plan.coreConflict && `冲突：${plan.coreConflict}`,
       plan.climax && `卷高潮：${plan.climax}`,

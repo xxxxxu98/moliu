@@ -28,6 +28,7 @@ import { join } from 'node:path';
 import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
 import { mapExecutableOutlineToGeneratedOutline } from '@/services/outline/adapters/executable-outline-adapter';
 import { inspectOutlineCompleteness } from '@/services/outline/validation/outlineCompleteness';
+import { volumeAssignmentSourceFromProject, volumeIdForChapter } from '@/services/outline/volumeAssignment';
 import {
   rollOutlineForward,
   type RollCaller,
@@ -348,17 +349,19 @@ function ensurePlaceholderCapacity(
   const chapterNodes = (expanded.plotOutline ?? [])
     .filter(node => node.type === 'chapter')
     .sort((a, b) => a.orderIndex - b.orderIndex);
-  const lastVolume = [...(expanded.volumes ?? [])]
-    .sort((a, b) => a.orderIndex - b.orderIndex)
-    .at(-1);
+  const sortedVolumes = [...(expanded.volumes ?? [])]
+    .sort((a, b) => a.orderIndex - b.orderIndex);
+  const lastVolume = sortedVolumes.at(-1);
+  const assignmentSource = volumeAssignmentSourceFromProject(expanded);
 
   for (let index = chapters.length; index < needed; index += 1) {
     const chapterNumber = index + 1;
     const title = `第${chapterNumber}章`;
     const description = `滚动续写槽位：承接第${chapterNumber - 1}章既有状态，由续写引擎根据当前合同推进主线。`;
+    // 卷区间存在时按章号挂对应卷；区间外/无区间回退最后一卷（与生产口径一致）
     chapters.push({
       id: `chapter-storyflow-${expanded.id}-${chapterNumber}`,
-      volumeId: lastVolume?.id,
+      volumeId: volumeIdForChapter(chapterNumber, assignmentSource) ?? lastVolume?.id,
       title,
       content: '',
       wordCount: 0,
@@ -422,11 +425,13 @@ export async function ensureStoryflowChapterCapacity(
   const lastVolume = [...(expanded.volumes ?? [])]
     .sort((a, b) => a.orderIndex - b.orderIndex)
     .at(-1);
+  const assignmentSource = volumeAssignmentSourceFromProject(expanded);
   for (let index = chapters.length; index < minCount; index += 1) {
     const chapterNumber = index + 1;
     chapters.push({
       id: `chapter-storyflow-${expanded.id}-${chapterNumber}`,
-      volumeId: lastVolume?.id,
+      // 卷区间存在时按章号挂对应卷；区间外/无区间回退最后一卷（与生产口径一致）
+      volumeId: volumeIdForChapter(chapterNumber, assignmentSource) ?? lastVolume?.id,
       title: `第${chapterNumber}章`,
       content: '',
       wordCount: 0,

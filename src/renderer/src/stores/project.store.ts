@@ -176,9 +176,9 @@ export const useProjectStore = defineStore('project', () => {
     currentChapterId.value = chapterId;
   }
 
-  async function createChapter(volumeId: string): Promise<Chapter | null> {
+  async function createChapter(volumeId: string, options?: { globalOrderIndex?: number }): Promise<Chapter | null> {
     if (!currentProject.value) return null;
-    
+
     const volumeChapters = chapters.value.filter(c => c.volumeId === volumeId);
     const newChapter: Chapter = {
       // 时间戳 + 全局章序：批量建章在同毫秒内连续 create，裸 Date.now() 会撞 id，
@@ -188,7 +188,9 @@ export const useProjectStore = defineStore('project', () => {
       title: `第${volumeChapters.length + 1}章`,
       content: '',
       wordCount: 0,
-      orderIndex: volumeChapters.length,
+      // 显式传入时用全局章号（分卷建章时章序必须全书连续，卷内计数会让跨卷 orderIndex 重复）；
+      // 未传时保持旧的卷内计数行为（同卷追加场景）
+      orderIndex: options?.globalOrderIndex ?? volumeChapters.length,
       version: 1,
       status: 'draft',
       createdAt: new Date().toISOString(),

@@ -115,6 +115,7 @@ export function buildVolumePlansMetadata(outline: GeneratedOutline) {
 
   return outline.volumePlans.map((volume) => ({
     volumeIndex: volume.volumeIndex,
+    ...(volume.chapterRange ? { chapterRange: volume.chapterRange } : {}),
     title: volume.title,
     objective: volume.objective,
     coreConflict: volume.coreConflict,

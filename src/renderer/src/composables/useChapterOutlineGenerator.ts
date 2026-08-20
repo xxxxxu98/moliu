@@ -12,6 +12,7 @@ import type { WritingStyle, GenerateChapterResponse } from '@/types/writing';
 import type { PlotNode, Character } from '@/types/project';
 import { PromptBuilder } from '@/services/writing/prompt-builder';
 import { formatStoredChapterTitle } from '@/services/writing/chapterTitle';
+import { volumeAssignmentSourceFromProject, volumeIdForChapter } from '@/services/outline/volumeAssignment';
 
 /**
  * 章节结构化节点
@@ -534,14 +535,27 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
         });
       }
 
-      const volumeId = projectStore.sortedVolumes[0]?.id;
-      if (!volumeId) {
-        throw new Error('无法创建卷');
-      }
+      // 卷区间存在时按章号挂对应卷；推导不出（无卷规划）回退第一卷
+      const volumes = projectStore.sortedVolumes;
+      const assignmentSource = volumeAssignmentSourceFromProject({
+        volumes,
+        metadata: project.metadata,
+      });
 
       // 创建章节
       for (const [chapterIndex, chapter] of chapters.entries()) {
-        const newChapter = await projectStore.createChapter(volumeId);
+        const chapterNumber = chapter.number ?? chapterIndex + 1;
+        let volumeId = volumeIdForChapter(chapterNumber, assignmentSource);
+        if (!volumeId) {
+          volumeId = volumes[0]?.id;
+        }
+        if (!volumeId) {
+          throw new Error('无法创建卷');
+        }
+
+        const newChapter = await projectStore.createChapter(volumeId, {
+          globalOrderIndex: chapterIndex,
+        });
 
         if (newChapter) {
           const chapterId = newChapter.id;

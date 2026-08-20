@@ -66,10 +66,41 @@ interface HeadingBlock {
   body: string;
 }
 
+/** 从「章节区间」字段值中解析 1-based 闭区间。容忍「第1-60章」「1~60」「第1章-第60章」等写法 */
+export function parseVolumeChapterRange(raw: string | null): { start: number; end: number } | undefined {
+  if (!raw) return undefined;
+  const numbers = raw.match(/\d+/g);
+  if (!numbers || numbers.length < 2) return undefined;
+  const start = Number(numbers[0]);
+  const end = Number(numbers[1]);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start < 1 || end < start) return undefined;
+  return { start, end };
+}
+
+/**
+ * 卷区间合法化：AI 声明的各卷区间必须能拼成从 1 起的连续覆盖（允许重叠/缝隙 ≤1，
+ * 对齐 startupBlocks 的容错口径）才可信；任何一卷缺失或非法则整体丢弃，
+ * 由下游按 estimatedChaptersPerVolume 估算分卷（与旧行为一致）。
+ */
+function sanitizeVolumeChapterRanges(volumes: VolumePlan[]): VolumePlan[] {
+  if (volumes.length < 2) return volumes;
+  let expected = 1;
+  for (const volume of volumes) {
+    const range = volume.chapterRange;
+    if (!range) return volumes.map(({ chapterRange: _ignored, ...rest }) => rest);
+    if (range.start - expected > 1 || expected - range.start > 1) {
+      return volumes.map(({ chapterRange: _ignored, ...rest }) => rest);
+    }
+    expected = range.end;
+  }
+  return volumes;
+}
+
 function parseVolumeBlock(block: string, index: number): VolumePlan | null {
   const volume = {
     volumeIndex: index + 1,
     title: extractFieldValue(block, '卷标题') ?? `第${index + 1}卷`,
+    chapterRange: parseVolumeChapterRange(extractFieldValue(block, '章节区间')),
     objective: extractFieldValue(block, '卷目标') ?? '',
     coreConflict: extractFieldValue(block, '卷冲突') ?? '',
     climax: extractFieldValue(block, '卷高潮') ?? '',
@@ -670,7 +701,7 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
   const startupBlocks = splitByHeading(startupSection, /^###\s*\d+\s*-\s*\d+章/gm);
   const protagonistName = extractFieldValue(storyEngineSection, '主角姓名') ?? '';
 
-  const volumePlan = volumeBlocks.length > 0
+  const rawVolumePlan = volumeBlocks.length > 0
     ? volumeBlocks
       .map((block, index) => parseVolumeBlock(block.body, index))
       .filter((item): item is VolumePlan => item !== null)
@@ -678,6 +709,8 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
       const fallback = parseVolumeBlock(volumeSection, 0);
       return fallback ? [fallback] : [];
     })();
+  // 卷区间合法化：AI 区间不连续/缺失时整体丢弃，建章端回退估算分卷
+  const volumePlan = sanitizeVolumeChapterRanges(rawVolumePlan);
 
   const chapterBlocks = startupBlocks.length > 0
     ? startupBlocks.map((block) => parseStartupBlock(block.body, block.heading.replace(/^###\s*/, '').trim()))

@@ -267,7 +267,8 @@ export function buildVolumePlanStepPrompt(ctx: StepBuildContext): BuiltPrompt {
 
   const extraGuidance = `本步只生成卷纲。卷数必须与【已确定方案】中「故事规模规划」的「建议卷数」一致。
 - 各卷必须彼此递进，不能重复同一冲突模式。
-- 每卷字段（卷标题/卷目标/卷冲突/卷高潮/卷反转/卷尾钩子/主角成长/关键角色/埋设伏笔/回收伏笔/关系变化）都要填写。`;
+- 每卷的「章节区间」必须填写：按「每卷预计章数」把预计总章节数切分成首尾衔接的区间（第1卷从第1章开始，末卷止于预计总章节数），区间不重叠、不留缝隙。
+- 每卷字段（卷标题/章节区间/卷目标/卷冲突/卷高潮/卷反转/卷尾钩子/主角成长/关键角色/埋设伏笔/回收伏笔/关系变化）都要填写。`;
 
   const system = buildStepSystem([volumeSection], extraGuidance);
   const user = `请基于已确定的方案骨架，生成卷纲。

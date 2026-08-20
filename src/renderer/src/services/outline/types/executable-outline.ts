@@ -134,6 +134,8 @@ export interface StoryEngine {
 
 export interface VolumePlan {
   volumeIndex: number;
+  /** 本卷章节区间（1-based 闭区间），由卷纲「章节区间」字段解析；缺失时下游按规模估算分卷 */
+  chapterRange?: { start: number; end: number };
   title: string;
   objective: string;
   coreConflict: string;

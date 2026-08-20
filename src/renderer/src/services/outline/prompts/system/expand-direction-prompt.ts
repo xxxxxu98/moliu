@@ -34,6 +34,7 @@ function buildScaleGuidance(wordCountRange: string): WordCountBreakdown & {
 }
 
 const VOLUME_FIELDS = `- 卷标题：
+- 章节区间：本卷覆盖的全书章号区间（如「第1-60章」），各卷区间必须首尾衔接、不重叠、不留缝隙，第1卷从第1章开始，末卷止于预计总章节数
 - 卷目标：
 - 卷冲突：
 - 卷高潮：

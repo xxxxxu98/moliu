@@ -503,6 +503,44 @@ describe('parseExpandedOutline · H3 子小节解析回归', () => {
     expect(outline!.goldenfingerPlan?.firstRevealChapter).toBe(3);
   });
 
+  it('卷纲带「章节区间」字段时解析出 chapterRange', () => {
+    const source = buildSampleOutline().replace(
+      '### 第1卷\n- 卷标题：系统崩溃日',
+      '### 第1卷\n- 卷标题：系统崩溃日\n- 章节区间：第1-60章',
+    );
+    const outline = parseExpandedOutline(source);
+    expect(outline).not.toBeNull();
+    // 单卷不参与合法化,直接保留解析出的区间
+    expect(outline!.volumePlan[0].chapterRange).toEqual({ start: 1, end: 60 });
+  });
+
+  it('多卷区间首尾衔接时逐卷保留 chapterRange', () => {
+    const vol1 = buildSampleOutline().match(/## 卷纲\n### 第1卷[\s\S]*?(?=\n\n## 世界与势力规划)/)![0];
+    const volumeSection = [
+      vol1.replace('- 卷标题：系统崩溃日', '- 卷标题：系统崩溃日\n- 章节区间：第1-60章'),
+      '### 第2卷\n- 卷标题：资本围剿\n- 章节区间：第61-120章\n- 卷目标：击溃围剿资本。\n- 卷冲突：林北 vs 金融大佬。\n- 卷高潮：第118章反杀。\n- 卷反转：第120章系统背叛。\n- 卷尾钩子：清算委员会现身。\n- 主角成长：从玩家到猎手。',
+    ].join('\n\n');
+    const outline = parseExpandedOutline(buildSampleOutline().replace(/## 卷纲[\s\S]*?(?=\n\n## 世界与势力规划)/, volumeSection));
+    expect(outline).not.toBeNull();
+    expect(outline!.volumePlan.length).toBe(2);
+    expect(outline!.volumePlan[0].chapterRange).toEqual({ start: 1, end: 60 });
+    expect(outline!.volumePlan[1].chapterRange).toEqual({ start: 61, end: 120 });
+  });
+
+  it('多卷区间不连续时整体丢弃 chapterRange（回退估算分卷）', () => {
+    const vol1 = buildSampleOutline().match(/## 卷纲\n### 第1卷[\s\S]*?(?=\n\n## 世界与势力规划)/)![0];
+    // 第2卷区间从 71 起,与第1卷的 60 不衔接 → 全部丢弃
+    const volumeSection = [
+      vol1.replace('- 卷标题：系统崩溃日', '- 卷标题：系统崩溃日\n- 章节区间：第1-60章'),
+      '### 第2卷\n- 卷标题：资本围剿\n- 章节区间：第71-120章\n- 卷目标：击溃围剿资本。\n- 卷冲突：林北 vs 金融大佬。\n- 卷高潮：第118章反杀。\n- 卷反转：第120章系统背叛。\n- 卷尾钩子：清算委员会现身。\n- 主角成长：从玩家到猎手。',
+    ].join('\n\n');
+    const outline = parseExpandedOutline(buildSampleOutline().replace(/## 卷纲[\s\S]*?(?=\n\n## 世界与势力规划)/, volumeSection));
+    expect(outline).not.toBeNull();
+    expect(outline!.volumePlan.length).toBe(2);
+    expect(outline!.volumePlan[0].chapterRange).toBeUndefined();
+    expect(outline!.volumePlan[1].chapterRange).toBeUndefined();
+  });
+
   it('姓名带头衔同位语（赵珝，康王 / 萧景（三皇子））只取本名，避免下游按名字匹配全部落空', () => {
     const source = buildSampleOutline({ withWorldH3: true })
       .replace('- 姓名：陈明远', '- 姓名：赵珝，康王')

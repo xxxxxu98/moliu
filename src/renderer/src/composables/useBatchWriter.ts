@@ -61,6 +61,7 @@ import {
   rollOutlineForward,
   OUTLINE_ROLL_RUNWAY_THRESHOLD,
 } from '@/services/outline/rolling/outline-roller';
+import { volumeAssignmentSourceFromProject, volumeIdForChapter } from '@/services/outline/volumeAssignment';
 import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
 
 export type WritingTarget = 'specific' | 'finish';
@@ -525,18 +526,28 @@ function checkEndingReadiness(
 
   // ========== 增强：卷级进度 ==========
   const volumes = project?.volumes || [];
+  const volumePlans = project?.metadata?.volumePlans || [];
+  const perVolumeEstimate =
+    project?.metadata?.storyScale?.estimatedChaptersPerVolume &&
+    project.metadata.storyScale.estimatedChaptersPerVolume > 0
+      ? project.metadata.storyScale.estimatedChaptersPerVolume
+      : 10;
+  // 各卷覆盖章数：优先卷纲声明的章节区间，缺失（旧项目）按规模估算
+  const volumeSizes = volumes.map((volume: Volume, idx: number) => {
+    const range = volumePlans[idx]?.chapterRange;
+    if (range && range.end >= range.start) return range.end - range.start + 1;
+    return perVolumeEstimate;
+  });
   const currentVolume = volumes.find((v: any, idx: number) => {
-    const startChapter =
-      volumes.slice(0, idx).reduce((sum: number, prev: any) => sum + (prev.chapterCount || 10), 0) +
-      1;
-    const endChapter = startChapter + (v.chapterCount || 10) - 1;
+    const startChapter = volumes.slice(0, idx).reduce((sum: number, _prev: any, i: number) => sum + volumeSizes[i], 0) + 1;
+    const endChapter = startChapter + volumeSizes[idx] - 1;
     return currentChapterIndex >= startChapter && currentChapterIndex <= endChapter;
   });
 
   let volumeProgress: VolumeProgress | undefined;
   if (volumes.length > 0) {
     const volumeIndex = currentVolume ? volumes.indexOf(currentVolume) : -1;
-    const chaptersInVolume = currentVolume?.chapterCount || 10;
+    const chaptersInVolume = volumeIndex >= 0 ? volumeSizes[volumeIndex] : volumeSizes[0];
     const chaptersWritten =
       currentVolume && volumeIndex >= 0
         ? Math.max(
@@ -544,7 +555,7 @@ function checkEndingReadiness(
             currentChapterIndex -
               volumes
                 .slice(0, volumeIndex)
-                .reduce((sum: number, v: any) => sum + (v.chapterCount || 10), 0)
+                .reduce((sum: number, _prev: any, i: number) => sum + volumeSizes[i], 0)
           )
         : 0;
 
@@ -766,7 +777,17 @@ export function useBatchWriter(): UseBatchWriterReturn {
     const project = projectStore.currentProject;
     if (!project) return -1;
 
-    let volumeId = projectStore.sortedVolumes[0]?.id;
+    // 新章全局章号 = 既有章节数（sortedChapters 按 orderIndex 排序，追加即末尾+1）
+    const nextChapterNumber = projectStore.sortedChapters.length + 1;
+
+    let volumeId: string | undefined;
+    if (project.volumes.length > 0) {
+      // 卷区间存在时按新章章号挂对应卷；无区间/旧项目走估算回退（见 volumeAssignment）
+      volumeId = volumeIdForChapter(
+        nextChapterNumber,
+        volumeAssignmentSourceFromProject(project),
+      );
+    }
     if (!volumeId) {
       const newVolume: Volume = {
         id: `vol-${Date.now()}`,
@@ -779,7 +800,9 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
     if (!volumeId) return -1;
 
-    const newChapter = await projectStore.createChapter(volumeId);
+    const newChapter = await projectStore.createChapter(volumeId, {
+      globalOrderIndex: nextChapterNumber - 1,
+    });
     if (newChapter) {
       return projectStore.sortedChapters.findIndex((c: any) => c.id === newChapter.id);
     }

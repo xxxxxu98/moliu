@@ -97,6 +97,8 @@ export interface ProjectMetadata {
   /** 结构化卷纲（创建 volumes 实体后仍保留完整卷级冲突/伏笔规划） */
   volumePlans?: Array<{
     volumeIndex: number;
+    /** 本卷章节区间（1-based 闭区间）；缺失时下游按 estimatedChaptersPerVolume 估算分卷 */
+    chapterRange?: { start: number; end: number };
     title: string;
     objective: string;
     coreConflict: string;

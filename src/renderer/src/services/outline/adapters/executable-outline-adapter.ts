@@ -890,6 +890,7 @@ function toStoryLines(outline: ExecutableOutline): GeneratedStoryLines {
 function toVolumePlans(outline: ExecutableOutline): GeneratedVolumePlan[] {
   return outline.volumePlan.map((volume, index) => ({
     volumeIndex: volume.volumeIndex || index + 1,
+    ...(volume.chapterRange ? { chapterRange: volume.chapterRange } : {}),
     title: volume.title,
     objective: volume.objective,
     coreConflict: volume.coreConflict,
