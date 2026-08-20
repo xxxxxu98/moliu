@@ -1,0 +1,401 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-20T11:43:23.382Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-scenario-matrix\\foreshadow-network",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "pass": true,
+      "exitCode": 0,
+      "wallMinutes": 15,
+      "chaptersAccepted": "5/5",
+      "words": {
+        "min": 2869,
+        "avg": 3033,
+        "max": 3271
+      },
+      "paraRhythm": {
+        "chapters": 5,
+        "medianCv": 0.29,
+        "uniformChapters": 1
+      },
+      "repairMetrics": {
+        "firstPassChapters": 5,
+        "firstPassRate": 1,
+        "rewrittenChapters": 0,
+        "totalRewriteRounds": 0,
+        "averageRewriteRounds": 0,
+        "pipelineAttempts": 5
+      },
+      "runtimeMetrics": {
+        "requestCount": 17,
+        "requestCountsByPurpose": {
+          "scene-draft": 7,
+          "fact-extraction": 5,
+          "chapter-judge": 5
+        },
+        "latencyP50Ms": 13871,
+        "latencyP95Ms": 51302,
+        "latencyMaxMs": 51302
+      },
+      "readerMetrics": {
+        "chapterCount": 5,
+        "chapterAverage": 78.9,
+        "chapterMedian": 78.5,
+        "chapterMinimum": 71.4,
+        "openingThreeAverage": 81.8,
+        "continueReadingNoCount": 1,
+        "lowChapterCount": 0,
+        "lowWindowCount": 0,
+        "consecutiveLowRuns": []
+      },
+      "readerOutlineScore": null,
+      "readerIndependent": true,
+      "phaseTimings": {
+        "outlineDirectionsMs": 21692,
+        "outlineExpandMs": 228472,
+        "outlineRollMs": 0,
+        "applyOutlineMs": 786,
+        "continueWriteMs": 376630,
+        "totalMs": 627580
+      },
+      "runtimeBackend": "sqlite",
+      "verdict": "passed-with-repairs",
+      "verdictReason": "质量问题/空响应均被章内压缩或重试兜住，最终通过",
+      "signatures": [
+        {
+          "id": "outline.warning-other",
+          "chapter": null,
+          "count": 2,
+          "evidence": [
+            "大纲存在 1 个未登记角色（倾囊相授），执行第 1 轮补登记",
+            "未登记角色已补登记 1/1 个"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 3,
+          "count": 2,
+          "evidence": [
+            "本章前半对强酸、倒揭皮、纸张分层和伪造流程进行了多轮重复说明，技术信息虽有爽点，但削弱了突击审查带来的即时压力。（“有人在用强酸定点腐蚀这批涉及六十年代地界划分的原始公文……”）",
+            "1-3章：三章的主要冲突反复采用“上级强行销毁或定性事故—沈淮安用技术和程序反制—对方被迫封存或退让”的同构场面。连续阅读时，爽点虽在升级，但对抗节奏容易显得重复，魏德明的行动方式也缺少新的策略变化。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 3,
+          "count": 2,
+          "evidence": [
+            "苏清河的首次登场有鲜明的冷硬姿态，但她与沈淮安的对话较多承担背景介绍功能，人物目前更像审查职能的执行者，个人动机和独特表达尚未显现。（“原江陵机械厂档案室修裱工沈长林的儿子。三十年前，你父亲因机械厂改制档案库重大纵火失职案被判刑入狱。”）",
+            "1-3章：硬核技术推理的证据边界仍不够稳。仅凭现场气味和一次局部显色，主角就直接锁定具体防腐剂，并进一步推出完整的作案流程、掩盖目的和刑事性质，容易让喜欢技术解谜的读者觉得结论超出了现有检验所能支持的范围。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-3",
+          "chapter": 3,
+          "count": 2,
+          "evidence": [
+            "开篇从沈淮安已经离开档案局突然切回特修室，读者能理解是接到通知后折返，但转场缺少更明确的章节内时间或动作承接，连续阅读时会有短暂的方向切换感。（上一段：“沈淮安……沿着碎石路向城南老工业区走去。”）",
+            "1-3章：前两章的阶段性谜团回收很有效，但部分解释一次性完成得过于彻底，尤其第三章直接给出倒揭皮、换纸、重盖印章、强酸灭迹的完整流程。当前真正悬念集中在幕后主使和三十年前案件，后续需要尽快提供可验证的新线索，否则会形成“不断揭露手法、迟迟不触及核心人物”的感觉。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-4",
+          "chapter": 3,
+          "count": 2,
+          "evidence": [
+            "纪委介入确实改变了局势，但魏德明的退路被连续两次以程序和技术证据直接封死，反制过程较顺滑，暂时缺少更隐蔽的反扑或代价，因此紧张感主要来自信息揭示而非博弈拉扯。（“这一句话，彻底将魏德明所有试图当场销毁或转移证据的退路堵死。”）",
+            "1-3章：沈淮安从被动受压到关键技术证人的位置发生了外部处境变化，但他的内在选择、情感代价和与父亲的关系尚未真正展开；苏清河目前主要承担审查和程序制衡功能，人物关系仍停留在互相怀疑，缺少更具体的立场变化。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 5,
+          "count": 2,
+          "evidence": [
+            "显微检验、纸张加固和物证封存的流程连续铺陈较长，技术信息密度高，但中段缺少人物抉择、外部干扰或局势变化，阅读节奏明显放缓。（“沈淮安戴着白色乳胶手套的右手极稳，指尖极其缓慢地转动显微镜的同轴偏振光栅……”至“伴随着两声清脆的金属落锁声，沈淮安合上手提箱的锁扣……”）",
+            "1-5章：模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 5,
+          "count": 2,
+          "evidence": [
+            "大量专业术语、材料成分和微观形态描述叠加使用，能满足硬核档案题材读者，但部分段落更像技术说明书，削弱了现场感与信息主次。（“天然矿物颜料与现代化学染料在强光探针的直射下，展现出截然相反的物质晶体结构。”以及“纯棉纸中的碱性缓冲成分在微潮状态下迅速建立起化学吸附屏障……”）",
+            "1-5章：模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-3",
+          "chapter": 5,
+          "count": 2,
+          "evidence": [
+            "个别表述存在重复或用词不顺，影响专业文本应有的精确感。（“八九十年代，基层单位在内部流转未归档的临时审批审批副页时”中“审批”重复；“让纪委和监察委查你的渎职罪责”也略显法律表述生硬。）",
+            "1-5章：模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-4",
+          "chapter": 5,
+          "count": 2,
+          "evidence": [
+            "物证发现本身具有翻盘价值，但沈淮安的个人情绪、风险感和对幕后伪造者的具体联想展开不足，读者更多是在接受结论，而不是与他共同经历惊惧和推理跃迁。（“沈淮安握着物证记录笔的指尖因用力而微微泛白。”之后直接转入“这枚盖在拆迁补偿表上的印章……是一枚带着特异性暗记的专属孤品”，人物反应和推理后果之间衔接较快。）",
+            "1-5章：模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-5",
+          "chapter": 5,
+          "count": 2,
+          "evidence": [
+            "沈淮安的专业能力和谨慎被充分展示，但他的独特语言、性格偏好或与其他人的关系表达较少，人物声音容易被仪器和流程描述淹没。（本章中沈淮安主要通过“调节”“固定”“标定”“封装”等操作推进，直接体现个人判断或带有辨识度的言语仅有少量内容。）",
+            "1-5章：模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-6",
+          "chapter": 5,
+          "count": 2,
+          "evidence": [
+            "本章完成了公章暗记和审批副页后加伪的阶段性回收，证据链较扎实；但伪造者身份、伪造动机和暗记对应的历史人物尚未进一步指向，回报仍主要停留在技术层。（“证明这份决定了拆迁地界权属走向的审批副页，根本不是原始卷宗自带的部件。”但后文尚未给出是谁伪造、何时伪造或暗记指向何人。）",
+            "1-5章：模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-reader-1787225943568.jsonl seq1 reader-outline-judge 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.titles-shrunk-local",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "本地收缩超长标题/CBN/CEN 共 18 章（第 8、22、24、25、26、27、28、29、30、36、40、42、43、44、45、46、47、48 章），未发 AI 请求"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 1,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（“根据国家特级档案抢救技术规范第四条……”“按照档案法司法物证存管要求……”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 1,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（从“这不是盖印时的二次重影”到“最终精准地对齐在同一组几何坐标之上”，本章两次以检测印痕的结论推进，但后一次没有给出比“双重用印”更明确的新信息。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-3",
+          "chapter": 1,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（开篇连续描写“薄竹镊”“无酸吸水板”“双层聚酯薄膜”等抢救操作，直到“公文右下角那枚……印章”才进入谜团。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "核心化学检验的解释过于一锤定音，且从一次现场显色直接推导出具体作案材料与完整作案链，容易让硬核档案学读者产生跳步感。（“只有在pH值低于一点二的高浓度强酸环境下，它才会呈现出这种绝对的血红色。”；“这是工业级三氯苯酚防腐剂的味道。”；“有人在用强酸定点腐蚀这批涉及六十年代地界划分的原始公文后……特意喷洒了高浓度工业防腐"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "魏德明的行动目标和反应都非常直接，几乎每一步都在主动替主角证明自己可疑，削弱了公文博弈应有的迂回与现实压迫感。（“保卫科，立刻把台上这几张残页装袋，连同地库残渣一起送往后院打浆销毁！”；“明知存在人为作案痕迹还要强行打浆，就是故意毁灭罪证！”；“魏德明……却没料到这个沉默寡言的年轻人……当众将水灾定性彻底翻转为人为泼酸"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-3",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "高潮后的信息解释和结论复述较多，读者已经通过显色、气味和魏德明的反应理解局势，后续旁白再次完整归纳，略微削弱了现场余震。（“他原本计划借着通报声势强行清退沈淮安……却没料到……”；“魏德明急于销毁这份六十年代水利勘界底稿，恰恰反向证实了……”；“强酸能蚀穿纸张，水流能冲散墨迹……”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-4",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "沈淮安在高压冲突中的判断和操作极其稳定，爽点明确，但个人恐惧、风险权衡或对停职与父亲旧案的复杂情绪呈现有限，人物更像高效破局工具。（“沈淮安神色从容”：“沈淮安神色冷峻”：“沈淮安神色淡然”：“沈淮安……步履平稳地走出了文保修复室。”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continue-reading-no",
+          "chapter": 4,
+          "count": 1,
+          "evidence": [
+            "读者不愿继续阅读：本章成功把上一章抢下物证后的被动局面升级为“七十二小时内完成固证，否则背渎职风险”的明确倒计时。沈淮安以专业程序挡住销毁、苏清河以纪检身份暂时托底，形成了有层次的职场与权力冲突；章末的印章微观暗纹也给出了实质性新线索。主要不足是会议段落的压迫性描写略有重复，反派话术同质化，技术发现的即时指向还可以更具"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 4,
+          "count": 1,
+          "evidence": [
+            "会议施压、法规反驳、纪委介入的冲突链条有效，但人物反应和环境渲染重复偏多，削弱了限时危机本应有的紧迫推进。（会议室里的空气瞬间凝固）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 4,
+          "count": 1,
+          "evidence": [
+            "几名核心人物的表达都较多依赖强势职场套语，功能清晰但个人辨识度有限。（哪个部门要是借着所谓的档案受损、技术抢救在关键流程上拖后腿，那就是在跟全市的经济大局作对。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-3",
+          "chapter": 4,
+          "count": 1,
+          "evidence": [
+            "本章兑现了“争取三天”的阶段性胜利，但关键技术发现停在“撕开了一角”，尚未立刻转化为对人物或案件走向的更具体判断。（好，我就给你七十二个小时！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-5",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "1-3章：情绪整体从库房压迫、当众翻转推进到纪委介入，曲线清晰；但主角多次以近乎不变的冷静和专业完成反击，个人风险与家庭旧案带来的情绪震荡尚未充分落地，导致高潮更像连续的程序胜利，而不是逐步加深的个人危机。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-6",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "1-3章：第一章末段对双重印痕的确认与前文发现基本重复，章尾新增信息有限；不过第二章和第三章随后完成了人为破坏、伪造档案和纪委进驻的推进，因此尚未构成主线停滞。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.evaluation-error",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "大纲读者评审失败：[\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      1,\n      \"evidence\"\n  "
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 7,
+          "avgMs": 35258,
+          "p50Ms": 35264,
+          "maxMs": 51302
+        },
+        "fact-extraction": {
+          "count": 5,
+          "avgMs": 12087,
+          "p50Ms": 11593,
+          "maxMs": 14474
+        },
+        "chapter-judge": {
+          "count": 5,
+          "avgMs": 9129,
+          "p50Ms": 7082,
+          "maxMs": 13871
+        },
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 21687,
+          "p50Ms": 21687,
+          "maxMs": 21687
+        },
+        "outline-expand": {
+          "count": 15,
+          "avgMs": 28955,
+          "p50Ms": 29788,
+          "maxMs": 59506
+        },
+        "reader-outline-judge": {
+          "count": 1,
+          "avgMs": 57962,
+          "p50Ms": 57962,
+          "maxMs": 57962
+        },
+        "reader-chapter-judge": {
+          "count": 5,
+          "avgMs": 23778,
+          "p50Ms": 25188,
+          "maxMs": 26777
+        },
+        "reader-window-judge": {
+          "count": 2,
+          "avgMs": 41403,
+          "p50Ms": 41467,
+          "maxMs": 41467
+        }
+      }
+    }
+  ]
+}

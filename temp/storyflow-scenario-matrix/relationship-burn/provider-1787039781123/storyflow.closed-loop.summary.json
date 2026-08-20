@@ -1,0 +1,741 @@
+{
+  "book": "退让法则",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": "relationship-burn",
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "scenario:relationship-burn",
+  "promptChars": 67,
+  "requestedChapterCount": 5,
+  "phaseTimings": {
+    "outlineDirectionsMs": 23204,
+    "outlineExpandMs": 193695,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 781,
+    "continueWriteMs": 479681,
+    "totalMs": 697361
+  },
+  "completedChapters": 5,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 敢铲一寸我就从梁上跳下去",
+      "words": 2798,
+      "paras": 24,
+      "paraCv": 0.42,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "重型推土机的柴油引擎爆发出震耳欲聋的低吼，两米宽的精钢巨铲撕裂浑浊的扬尘，裹挟着数吨液压推力，直奔胜利大剧院外廊的承重主立柱撞去。立柱表层的百年红砖瞬间崩裂，碎屑与灰浆如雨点般向四周飞溅。\n\n沈知予右脚猛蹬地面，身形如猎豹般窜上侧方锈迹斑斑",
+      "tail": "起。沈知予在高空中冷冷俯瞰着下方的男人，眼神如刀锋般锐利：“周总，只要这根梁不断，这座剧院你就拆不掉；想把我和历史一起碾碎，就看看你的资本能不能买断重力法则。”",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 切割机破门？一张法规直接叫停",
+      "words": 2737,
+      "paras": 23,
+      "paraCv": 0.43,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "合金锯盘疯狂撕咬着胜利大剧院正门的锻铁主锁，刺耳的金铁摩擦声撕裂了整片街区的空气，暴烈的橘红色火星如急雨般向四周飞溅。沈知予从十米悬空的脚手架纵身跃下，靴底稳稳砸在满是碎石的青石门槛前。她没有后退半步，径直迎着滚烫的金属碎屑踏前，整个人如同",
+      "tail": "神情冷峻如磐石。\n\n方克勤迈着沉重的步伐走入会议室，甚至没有落座。他将夹在腋下的那份足有两寸厚、封面盖着住建与房管联合大印的拆除评估报告，重重拍在会议桌正中央。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 三分钟心算，推翻百万拆除报告",
+      "words": 2815,
+      "paras": 30,
+      "paraCv": 0.3,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "方克勤双手按在厚重的拆除评估报告上，指节因为用力而泛白。会议室里空气紧绷，陈启明斜倚在真皮椅背上，敲着桌面冷笑，声称这是盛天资本花费两百万委托甲级检测机构做出的权威论证，结论写得清清楚楚，剧院主体结构承载力枯竭，必须立刻进行全面爆破拆除。\n",
+      "tail": "\n\n周既白站起身，指尖紧紧捏着那截断口整齐的线头。昏暗的配电室内瞬间陷入死寂，只有窗外推土机怠速运转的微弱震颤隐隐传来，所有人的视线都凝固在那截冰冷的断线之上。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 七十二小时拿命对赌的军令状",
+      "words": 2666,
+      "paras": 33,
+      "paraCv": 0.42,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "大红烫金的聘任函被林殊重重摔在图纸正上方，发出沉闷的撞击声。林殊拉过那把掉漆的折叠铁椅，双手撑着膝盖坐下，满脸通红地盯着沈知予，语气里满是焦虑与急迫。\n\n“沈知予，签了这份聘书，明天一早你就去我的设计院上班。底薪百万外加三个商业文旅项目的签",
+      "tail": "。\n\n清脆的金属弹簧卡扣声在死寂的工棚内骤然炸响，秒表屏幕上的数字瞬时归零，紧接着化作一道飞速递减的红色倒计时。\n\n整整七十二小时的生死对赌，在这一秒正式开启。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 倒计时开跑！外包检测暗中使绊",
+      "words": 2845,
+      "paras": 29,
+      "paraCv": 0.12,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [
+        {
+          "category": "entity",
+          "severity": "medium",
+          "location": "chapter-5:CBN:scene",
+          "description": "事件 chapter-5:CBN:event:1 引用了未知实体 外包检测工头",
+          "evidence": "一只工业级红色发光数字计时器，被粗钢丝绳牢牢吊挂在胜利大剧院的正门石拱梁正上方。七十一小时五十九分五十秒，鲜红的数码管以毫秒为单位飞速递减，冰冷的光芒照亮了下方斑驳的青石门槛，散发着沉重的死线威压。；工头会意点头，反手将扳手卡入主接触器卡槽内，手腕发力狠狠一别。伴随着一声沉闷刺耳的电弧爆鸣，专供高精度仪器使用的稳压校准电源瞬间跳闸，箱体内冒出一缕焦糊的白烟，整条刚刚拉入剧院的供电干线彻底瘫痪。"
+        },
+        {
+          "category": "entity",
+          "severity": "medium",
+          "location": "chapter-5:CBN:scene",
+          "description": "事件 chapter-5:CPN-1:event:1 引用了未知实体 外包检测工头",
+          "evidence": "沈知予推着两只沉重的军绿色防震设备箱跨入大门。；沈知予蹲下身拉出防雷插头接上墙边插座，指示灯却一片漆黑，毫无电流通过的痕迹。；沈知予站起身，目光扫过墙角被撬开外壳的配电箱，随即落在倚着脚手架冷眼旁观的工头身上：“稳压回路被故意短路了。把备用动力闸合上，我的仪器需要立即开始热机。”；“三分钟前我进门时，主接触器的辅助线圈还在正常嗡鸣。”沈知予一步踏前，目光直视对方，“触点上有新鲜金属撬痕，绝缘皮是被外力强行短接烧穿的。你们所谓的老化故障，分明是人为破坏公共检测设施。”"
+        },
+        {
+          "category": "entity",
+          "severity": "medium",
+          "location": "chapter-5:CBN:scene",
+          "description": "事件 chapter-5:CPN-2:event:1 引用了未知实体 外包检测工头",
+          "evidence": "周既白大步跨入中庭，深灰色的高定大衣随风扬起，身后跟着面色严肃的方克勤，以及四名身穿深蓝制服的磐石事务所现场工程师。；根据住建局与规自局签署的三方监管备忘录，在七十二小时结构论证期间，磐石事务所拥有胜利大剧院工地的唯一最高现场调度权与安全排他权。；工头连忙哆嗦着交出一大串黄铜钥匙，带着手下工人灰溜溜退到警戒线之外。；周既白随即向工程师下令：“接入后院备用的五百千瓦静音柴油发电机组，铺设三相五线纯净正弦波独立电源，设立双回路互投保护。给沈工的工作站单独拉一条屏蔽地线，严禁任何无关人员靠近主供电区。”"
+        }
+      ],
+      "head": "一只工业级红色发光数字计时器，被粗钢丝绳牢牢吊挂在胜利大剧院的正门石拱梁正上方。七十一小时五十九分五十秒，鲜红的数码管以毫秒为单位飞速递减，冰冷的光芒照亮了下方斑驳的青石门槛，散发着沉重的死线威压。\n\n陈启明站在外廊粗立柱的阴影里，嘴里咬着",
+      "tail": "时间已悄然流逝至七十小时四十五分。而在十米高空的幽暗中，这根支撑着整座剧院生死存亡的百年主梁，正通过屏幕上那一串诡异紊乱的乱码，向世人展示着深不见底的未知深渊。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 敢铲一寸我就从梁上跳下去"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 切割机破门？一张法规直接叫停"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 三分钟心算，推翻百万拆除报告"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 七十二小时拿命对赌的军令状"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 倒计时开跑！外包检测暗中使绊"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 超声波探伤！百年榫卯完好无损"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 两百斤硬压！自制木构当场打脸"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 抽屉里的断榫，冷血商人的秘密"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 穹顶暗格惊魂！恩师绝密笔记现世"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 老董事长逼宫，周既白硬顶董事会"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787222681237",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-nMMUrK\\story-runtime\\proj-1787222681237-e067a4b68c59.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 5,
+    "canonicalSnapshots": 6,
+    "latestSnapshotChapter": 5,
+    "sceneChunks": 5,
+    "events": 23
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "f9b6046c04a2b6e5f9c8ca32686c5f25f003787054ec15aea50a5a118f44096b",
+    "completeCharacterProfileCount": 12,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 5
+  },
+  "outlineWarnings": [
+    "本地收缩超长标题/CBN/CEN 共 24 章（第 3、5、6、7、8、9、10、12、13、15、17、19、20、23、24、27、41、43、44、45、46、48、49、50 章），未发 AI 请求"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 3,
+    "firstPassRate": 0.6,
+    "rewrittenChapters": 2,
+    "totalRewriteRounds": 2,
+    "averageRewriteRounds": 0.4,
+    "pipelineAttempts": 5
+  },
+  "runtimeMetrics": {
+    "requestCount": 24,
+    "requestCountsByPurpose": {
+      "scene-draft": 10,
+      "fact-extraction": 7,
+      "chapter-judge": 7
+    },
+    "latencyP50Ms": 12825,
+    "latencyP95Ms": 44465,
+    "latencyMaxMs": 64760
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1786812318014",
+      "model": "gpt-5.6-luna",
+      "independentFromWriter": true,
+      "selectionReason": "default-wawa-gpt-5.6-luna"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": null,
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 81.7,
+        "continueReading": true,
+        "confidence": 0.93,
+        "dimensions": {
+          "readability": 78,
+          "openingHook": 91,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 72,
+          "characterVoice": 84,
+          "payoffValue": 76,
+          "pacing": 82,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "周既白语气淡漠地陈述事实：“建筑的价值在于使用效率与安全周转……每延误二十四小时，利息与违约成本就是八位数。”以及“工程事故的赔偿金与施工延误的对赌违约金相比，不过是损益表上一个微不足道的百分比。继续切……”"
+            ],
+            "suggestion": "可以补出他为何确信人员已撤离、事故风险被控制，或让他有明确的底线与隐藏目的，保留冷酷而非直接表现为无视人命。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.readability-2",
+            "severity": "medium",
+            "category": "readability",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“她利用自身的配重与杠杆支点，将全身重力精准压在变形节点上，使得剧院上部结构的扭矩瞬间逆向反弹，锯盘在巨大的应力挤压下发出刺耳的卡死巨响。”"
+            ],
+            "suggestion": "减少一部分力学解释，增加更可验证的工程手段、现场设备限制或队友配合，让她的胜利更像专业破局而非超常体能。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.emotion-3",
+            "severity": "medium",
+            "category": "emotion",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "沈知予始终以“声音清冽”“冷冽的气势”“声音清晰有力”“毫不退让的讥诮与笃定”应对危局，周既白则“没有惊讶，更没有任何多余的情绪起伏”。"
+            ],
+            "suggestion": "不必削弱克制风格，可以加入一个短暂失控、下意识保护、对彼此专业能力的意外确认，或揭示建筑与沈知予的私人关联，提升冲突的情感重量。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.conflict-4",
+            "severity": "low",
+            "category": "conflict",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "沈知予先说“推土机就休想再往前铲一寸”，周既白随后改用“重型金刚石切割机”，她又以“只要这根梁不断，这座剧院你就拆不掉”回应。"
+            ],
+            "suggestion": "下一步可让其中一人改变目标、抓住对方程序漏洞或迫使对方承担公开责任，避免持续重复“拆—拦”的回合结构。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "章首直接把人物置于高危拆除现场，画面冲击力强，沈知予以命护梁、周既白冷静换路径破拆，冲突升级和章尾悬念都很有效。两人的专业标签、对抗声线和双强雏形已经建立，但目前人物较依赖极端台词与无懈可击的行动来制造张力，情感层次和现实工程可信度略显不足。作为第一章，读者会想继续看沈知予如何破局、周既白是否真正无底线，以及两人的关系能否从纯粹敌对发展出专业互认。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 68.7,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 72,
+          "openingHook": 80,
+          "conflictEffectiveness": 76,
+          "emotionalDrive": 58,
+          "characterVoice": 64,
+          "payoffValue": 67,
+          "pacing": 61,
+          "endingPull": 73
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "核心破拆危机正升级时，关键官方人物突然到场并直接叫停设备，像是外部力量替主角完成了阶段性解围。前文没有充分铺垫他们为何能及时赶到，削弱了沈知予凭专业和证据破局的主动性。",
+            "evidence": [
+              "“两辆挂着行政通告牌的公务车不知何时已停在路边，车门推开，头发花白却精神矍铄的严会长拄着手杖缓步走下车，身后跟着……方克勤。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-2",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "沈知予以跳楼相威胁，随后又在切割机作业半径内拦机器，行动极端且高度危险。文本强调她的专业能力，却没有交代她为何确信现场不会造成不可逆伤亡，也没有呈现她承担这种选择的心理代价。",
+            "evidence": [
+              "“敢强行破拆，我就从这里跳下去，看看是你的资本周转快，还是重大安全事故的封停调查来得快。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "力学参数、法规条文和责任后果连续成段倾倒，专业信息主要作为角色压制对手的台词出现，缺少现场验证或更具体的因果展示。",
+            "evidence": [
+              "“正门挑梁与侧翼斜拉杆是双曲穹顶唯一的应力平衡环……两秒之内就会引发整体剪切应力激增三点七倍”以及“《历史文化名城名镇名村保护条例》第四十三条……《刑法》第三百二十四条”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.emotion-4",
+            "severity": "medium",
+            "category": "emotion",
+            "location": "全文",
+            "description": "周既白持续以完全冷硬、无波动的方式回应，沈知予也几乎始终保持锋利笃定，双方缺少短暂迟疑、误判、担忧或被对方触动的细节。冲突有强度，但关系拉扯和情绪流动尚未充分显现。",
+            "evidence": [
+              "“周既白没有反驳她的力学推论，只是语气淡漠地陈述事实”以及“周既白……神色没有泛起半点波澜”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.pacing-5",
+            "severity": "medium",
+            "category": "pacing",
+            "location": "全文",
+            "description": "单章事件层层加码，但每个阶段都用较长篇幅完整说明，后半段又迅速转入正式听证，导致高潮被多次延后，章内节奏呈现“高强度—解释堆叠—外部叫停—重新布置”的波动。",
+            "evidence": [
+              "从“重型金刚石切割机的轰鸣声瞬间盖过了全场”到“半小时后，市规划与自然资源局主楼三层会议室”，连续经历高空对抗、机械破拆、法规威慑、反派争执、官方到场和会议转场。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章章首直接承接破拆危机，切割机升级、法规反制、危房报告疑点和紧急听证都带来了明确局势变化，章尾的厚重拆除评估报告也形成了可追读的问题。主要不足是官方救场略显突然，沈知予的高危行为缺少可信的风险承担，专业与法规信息大量以宣讲式台词呈现；周既白与沈知予的对抗有锋芒，但人物情绪和关系变化仍偏薄，言情层面的吸引力尚未完全释放。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 79.7,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 83,
+          "openingHook": 78,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 73,
+          "characterVoice": 76,
+          "payoffValue": 82,
+          "pacing": 74,
+          "endingPull": 84
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“沈知予没有看任何演算纸，脑海中的力学网格如同光影般飞速重组”以及“崩塌的模拟轨迹与力学临界点，竟与沈知予方才心算的数据完全吻合。”"
+            ],
+            "suggestion": "保留高光，但给出一两个可被读者理解的现场依据或报告页码、计算逻辑，并让周既白提出一个有效质疑后再完成验证，使胜利更有可信度。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "从“二十分钟后，一行人乘车折返胜利大剧院拆迁现场”开始，连续描写“配电兼动力监控室”“主配电箱”“绝缘动力电缆”“一截约两寸长的绝缘线头”的位置、材质与状态。"
+            ],
+            "suggestion": "压缩重复的空间、线缆材质描写，提前落到“传感器被切断”的发现，并补一笔在场人物对嫌疑方向或利益链的即时反应。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "陈启明先说“这是盛天资本花费两百万委托甲级检测机构做出的权威论证”，后文又称“周总这份百万拆除方案”。"
+            ],
+            "suggestion": "明确区分“检测报告费用”“拆除方案预算”或统一金额口径。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "周既白在验证后说：“叫停破拆是为了规避施工伤亡带来的巨额赔偿与行政封停，不代表资方认可你的保护方案。”"
+            ],
+            "suggestion": "让他在坚持商业底线之外，对她的判断或冒险承担给出更具体的回应，增加克制但可感的互相看见。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章有效兑现了上章听证会的承诺：沈知予以专业判断阻止破拆，周既白亲自复核并立刻下令撤离，局势从“拆不拆”升级为“报告与监测系统是否被人为操控”，推进明确且有即时回报。红笔划图、电脑模型变红、现场撤机都具备直观爽感；周既白不盲从也不拖延，维持了双强对手戏的基本可信度。章尾发现传感器电缆被整齐切断，留下了清晰的新疑点，具备追读力。主要不足是主角三分钟口算与软件全中略显便利，后段勘查细节偏多；若加强技术论证的可感依据和人物之间更细的情绪回弹，双强博弈会更扎实。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 78.1,
+        "continueReading": false,
+        "confidence": 0.89,
+        "dimensions": {
+          "readability": 82,
+          "openingHook": 70,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 79,
+          "characterVoice": 63,
+          "payoffValue": 74,
+          "pacing": 81,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“林殊，你口中的生存现实，本质上就是向资本跪地求饶。”；“这种沾着推土机油污的百万年薪，你愿意赚那是你的选择，我沈知予绝不接受这种商业妥协。”"
+            ],
+            "suggestion": "保留沈知予拒绝的锋利，但让她回应林殊真正的担忧，例如风险、团队生计或修缮资源；也给林殊更具体的职业代价与善意动机，避免单纯充当激将工具。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“你必须完成大剧院上万平米空间的三维激光点云实测建模，建立微应变力学代偿受力体系，并拿出无可辩驳的数据证明……”"
+            ],
+            "suggestion": "将技术目标收束成一个可视化的关键难关，并在后续行动中用现场限制或模型结果解释术语的实际含义。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“一旦你在七十二小时后未能履约，不仅大剧院必须执行拆除，你个人作为方案承诺人，也将面临住建与行业协会的严厉执业惩戒。”"
+            ],
+            "suggestion": "补足该赌约为何能具备这些约束力、沈知予为何有资格或必要承担个人责任，并让她针对不平等条款进行至少一次有策略的反制或谈判。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“大红烫金的聘任函被林殊重重摔在图纸正上方……”"
+            ],
+            "suggestion": "在聘书冲突前后嵌入一条关于断线调查、嫌疑人或监测恢复的即时进展，让新冲突成为破坏事件升级后的选择，而非暂时岔开。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章用拒绝高薪、周既白入场和落印倒计时完成了连续升级，局势从“是否停拆”明确转为“七十二小时内证明能保留且能商业活化”，章尾的秒表启动具备很强追读力。沈知予的决断带来有效的微兑现，周既白也开始从纯粹阻挠者转为设下高门槛的对手/潜在盟友。主要问题在于人物立场偏二元、赌约程序的可信度尚待支撑，以及专业任务需要更易感知的具体难关。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 76.4,
+        "continueReading": true,
+        "confidence": 0.88,
+        "dimensions": {
+          "readability": 82,
+          "openingHook": 84,
+          "conflictEffectiveness": 76,
+          "emotionalDrive": 71,
+          "characterVoice": 62,
+          "payoffValue": 74,
+          "pacing": 78,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "供电破坏作为章首主冲突，铺垫了明确的时间损失威胁，却在同一场戏里被周既白以权限和资源迅速碾平。读者能获得一次周既白护场的爽点，但沈知予真正被逼入绝境、靠专业或应变破局的过程不足，倒计时的压迫感没有累积起来。",
+            "evidence": [
+              "陈启明刚说“只要拖过前十二个小时，她连基础测绘数据都凑不齐”，周既白便立刻出现并以“唯一最高现场调度权与安全排他权”清场，随即接入备用发电机。"
+            ],
+            "suggestion": "让停电造成不可逆的数据、校准时间或现场条件损失，或让沈知予先利用专业判断完成局部替代方案，再由周既白解决权限问题，使两人的能力各自落地。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "人物在这一章主要按“冷酷强势男主、阴险反派、专业冷静女主”的功能发言，陈启明的作恶尤其过于当面且低成本，降低了职场博弈应有的现实感与智性拉扯。周既白的强硬虽有效，却也进一步挤压了沈知予的主动表达。",
+            "evidence": [
+              "周既白先说“谁给你的权力在我的工地上切断总控电源？”，随后连续下令“超时一秒，直接解除分包合同并移交司法追责”；陈启明则直接说“有本事你用手摇发电机来供电”。"
+            ],
+            "suggestion": "给陈启明更符合职场规避责任的说辞和利益链条；让周既白的介入带有可被质疑的代价或立场张力，并增加沈知予针对技术、流程的独立决策。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "开篇及后续多次用重色彩、强形容词和绝对化比喻渲染紧张，画面感足，但部分表达显得用力过满，容易让紧迫感从现场真实感滑向舞台化。",
+            "evidence": [
+              "“工业级红色发光数字计时器”“粗钢丝绳牢牢吊挂”“鲜红的数码管以毫秒为单位飞速递减”“散发着沉重的死线威压”。"
+            ],
+            "suggestion": "保留一个最有辨识度的倒计时细节，其余让人物动作、设备故障和时间损失承担压力。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "扫描建模完成提供了阶段推进，也有专业操作的满足感，但过程几乎无阻地完成，成果对后续论证具体解决了什么尚未转化为更清晰的阶段胜利。",
+            "evidence": [
+              "“海量空间几何坐标化作瀑布般的绿色数据流疯狂刷新，快速重构出大剧院的三维立体点云模型。”“整体受力骨架已建模完成。”"
+            ],
+            "suggestion": "在建模完成时明确一个关键发现、排除一项拆除理由，或让沈知予借此反制陈启明一次，增强本章中段的微兑现。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章开场直接兑现倒计时并以断电制造阻碍，专业设备操作和高空探伤让行业场景具备可视性；周既白强势清场也提供了关系线上的保护与站队爽点。后半段从顺利建模转入主梁异常，章尾的“未知反向脉冲”有效抛出下一步技术谜团，追读意愿较强。主要遗憾是外包使绊被快速压制，沈知予在本章的破局主体性偏弱；反派和强势台词较模板化。整体节奏利落、信息易读，但若能让时间代价真实留下，并让女主用专业获得一次不可替代的胜利，双强博弈会更可信、更有张力。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 64.9,
+        "continueReading": true,
+        "confidence": 0.89,
+        "dimensions": {
+          "mainlineProgress": 82,
+          "patternVariation": 56,
+          "suspensePayoff": 78,
+          "characterArc": 48,
+          "emotionalArc": 43,
+          "payoffEscalation": 74,
+          "genrePromise": 59,
+          "continuationDesire": 70
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "周既白在第1章称“工程事故的赔偿金与施工延误的对赌违约金相比，不过是损益表上一个微不足道的百分比。继续切”",
+              "第2章他仍以“物理运转中的重型机械不会因为你的肉身而改变轨迹”回应沈知予",
+              "第3章即使按她的判断撤机，仍主要落在“规避施工伤亡带来的巨额赔偿与行政封停，不代表资方认可你的保护方案”"
+            ],
+            "suggestion": "保留立场冲突，在撤机、共同勘查或听证后加入双方基于专业判断产生的微小让步：例如周既白主动核对她的数据来源、替她处理现场风险，或沈知予发现他并未授意违规操作；让行动与对话改变彼此判断，而非仅用于下一轮辩论。",
+            "blocking": false,
+            "confidence": 0.91
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "第1章沈知予说“敢强行破拆，我就从这里跳下去”",
+              "第2章她“死死卡在重型切割机的有效作业半径之内”，并以法条迫使工人停机",
+              "第3章再次以连续技术陈述推翻方案，周既白随即下令“现场所有施工队伍立刻切断重型设备动力源”"
+            ],
+            "suggestion": "后续将博弈转入证据链、利益谈判、团队协作、舆论与项目方案竞争，或让双方各自赢下一局且付出代价。避免每次都由沈知予站到危险区内完成绝对压制。",
+            "blocking": false,
+            "confidence": 0.9
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "沈知予多次被描述为“没有表现出丝毫慌乱”“声音没有一丝颤抖”“神色自若”",
+              "周既白持续“神色没有泛起半点波澜”“语气听不出任何情绪起伏”“神色依旧沉静”"
+            ],
+            "suggestion": "在高危场景结束后安排短促但具体的生理和心理反应，并让对方捕捉到这些不愿示人的瞬间；不必立即示爱，只需形成“看见但不说破”的情绪落点。",
+            "blocking": false,
+            "confidence": 0.88
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "沈知予“没有看任何演算纸”，在“三分钟”内给出“八百二十千牛的偏心力矩”",
+              "周既白将参数填入软件后，“短短几秒内”模型警报，“竟与沈知予方才心算的数据完全吻合”",
+              "第2章官方人员在冲突顶点出现并直接要求“立刻切断现场所有重型设备的动力电源”"
+            ],
+            "suggestion": "用可核验的现场痕迹、旧图纸、数据缺口或第三方复测支撑关键参数；让软件结果出现部分偏差、需要共同修正，或让叫停附带程序条件与现实代价，以保留专业不确定性。",
+            "blocking": false,
+            "confidence": 0.84
+          },
+          {
+            "id": "reader.other-5",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "第3章结尾确认“断面平整如镜……分明是用特制的高硬度工业重型电缆剪一刀切断的痕迹”"
+            ],
+            "suggestion": "下一章尽快提供可供读者判断的时间线、权限记录或利益矛盾，并避免仅靠再发现一项物证继续拖延。",
+            "blocking": false,
+            "confidence": 0.8
+          }
+        ],
+        "summary": "1至3章主线推进扎实：现场强拆被叫停，百万评估报告被推翻，矛盾升级为监测系统遭人为破坏；第2章的听证悬念也在第3章得到兑现，职业破局爽感和追读钩子均成立。问题不在剧情不动，而在三章解决危机的手法与人物声线过于同质：沈知予持续以冒险和全知式专业压制破局，周既白持续冷静算账，关系尚未从敌对专业对手产生足够可感的互认。作为都市行业线可以继续读，但若面向强调双向成长与情绪细节的言情读者，后续需要让技术博弈真正改变两人的关系，并补足胜利背后的现实阻力与代价。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 5,
+      "chapterAverage": 76.9,
+      "chapterMedian": 78.1,
+      "chapterMinimum": 68.7,
+      "openingThreeAverage": 76.7,
+      "continueReadingNoCount": 1,
+      "lowChapterCount": 0,
+      "lowWindowCount": 1,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "黄金三章平均 76.7 < 78",
+      "读者不愿继续阅读：ch4",
+      "低分跨章窗口 1-3=64.9"
+    ],
+    "errors": [
+      "大纲读者评审失败：[\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      1,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      2,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      3,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      4,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      6,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      7,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  }\n]",
+      "1-5章窗口评审失败：[\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      0,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  }\n]"
+    ],
+    "durationMs": 266926
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 697443,
+  "warnings": [
+    "大纲阶段 warnings（1 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（3 条，影子模式不阻断）",
+    "读者评审失败（2 条，详见 readerEvaluation.errors）"
+  ]
+}

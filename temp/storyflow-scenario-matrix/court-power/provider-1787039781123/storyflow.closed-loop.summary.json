@@ -1,0 +1,777 @@
+{
+  "book": "大梁第一账刀",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": "court-power",
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "scenario:court-power",
+  "promptChars": 70,
+  "requestedChapterCount": 5,
+  "phaseTimings": {
+    "outlineDirectionsMs": 24118,
+    "outlineExpandMs": 209092,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 805,
+    "continueWriteMs": 468843,
+    "totalMs": 702858
+  },
+  "completedChapters": 5,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 穿成替罪死囚，一本烂账逼退狱吏",
+      "words": 3155,
+      "paras": 14,
+      "paraCv": 0.11,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/14，超过 5 句的段 10。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        },
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：14 段平均 224 字、变异系数 0.11，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "铁锁在粗粝的石壁上撞出刺耳锐响，两扇生满暗红锈迹的铁栅门被一脚重重踹开。迎面飞来一本沉甸甸的硬皮账册，带着陈年霉烂与浓重潮气，啪的一声结结实实砸在沈青舟额角。剧痛混着温热的血水顺着眉骨淌下，将脑海中最后一点混沌彻底冲散。沈青舟抬手抹开脸上的",
+      "tail": "然抽出一枚朱红色的斩首令签，手腕一扬，令签在空中划出一道森冷弧线，啪嗒一声狠狠砸在沈青舟膝前的石砖上。堂外两侧刽子手的鬼头大刀霍然出鞘，雪亮寒芒直逼沈青舟咽喉！",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 公堂暗格现残册，勾划藏杀机",
+      "words": 3102,
+      "paras": 31,
+      "paraCv": 0.52,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "惊堂木重重拍响，沉闷的撞击声在官署正堂内激荡。堂下两侧，两名魁梧的刽子手踏前半步，腰间斩马刀霍然出鞘，雪亮刀锋晃出刺目寒芒，稳稳悬停在沈青舟颈侧半寸处。森冷的刀风压得皮肉生疼，沉重的生铁木枷死死卡在双肩上，铁索随着呼吸发出微响。沈青舟跪在冰",
+      "tail": "留税册上的朱笔回勾自会说话！大人今日若在此强行挥刀杀人，朝廷勘磨官抵临之日，便是大人大难临头之时！”二人目光在空中死死交锋，公堂之内杀机暗涌，空气仿佛彻底凝固。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 公堂口算惊四座，反咬盐枭十万私盐",
+      "words": 2583,
+      "paras": 24,
+      "paraCv": 0.38,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "堂后廊道深处传来一阵沉重的铁镣拖曳声。两名膀大腰圆的差役一左一右，粗暴地将一个浑身血污、满脸横肉的汉子拖进正堂。那汉子左脸横贯着一道寸许长的刀疤，衣衫褴褛却难掩剽悍匪气，正是两淮盐帮二当家。他被差役狠狠掼倒在青石砖地上，手腕上的精铁锁链撞得",
+      "tail": "间满是狂傲不羁的煞气。他嘴里叼着一根细长的芦苇秆，双手抱胸，冷笑着踏入公堂，腰间两侧悬挂的两柄分水刺在刺目的天光下泛着森冷刺骨的寒芒。正是两淮盐帮帮主，陆九渊。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 私盐大案掀翻公堂，御史被迫缓刑三",
+      "words": 3221,
+      "paras": 31,
+      "paraCv": 0.28,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "碎裂的门槛木屑在公堂青石地上滚出老远，两名重甲卫士瘫在血泊中痛苦呻吟。陆九渊踩着满地狼藉大步跨入公堂，腰间两柄分水刺在正午刺目的日光下泛着湛蓝淬毒的幽光。他随意吐掉嘴里叼着的芦苇秆，目光越过跪倒在地的二当家，径直落向朱漆大案后的崔秉忠。\n\n",
+      "tail": "直蜷缩在角落里的老账房赵伯缓缓动了动身子。借着栅栏外摇曳微弱的残光，那双布满血丝的浑浊眼眸在黑暗中微微亮起，角落里那个缺了左手手指的断指老囚，终于缓缓抬起了头。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 鱼鳞账沾血锈气，核心底册成灰",
+      "words": 3203,
+      "paras": 33,
+      "paraCv": 0.49,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "沈青舟反手揉着脖颈上被沉重生铁木枷磨出的血痕，冰冷的刺痛让他原本混沌的神志迅速清醒。死囚仓内的潮气混合着陈年排泄物的恶臭扑鼻而来，四周死寂得只能听见远处渗水的嘀嗒声。他没有去看铁门外晃动的微弱油灯，只是席地坐在干枯发黑的稻草堆上，脑海中疯狂",
+      "tail": "\n三日之期的绞索已经套在颈上，而眼前的平账生路，却在这漫天飞落的焦黑残灰中彻底沦为了无米之炊。死牢之外，巡盐御史崔秉忠暴怒的杀意与悬在头顶的屠刀，已然近在咫尺。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 穿成替罪死囚，一本烂账逼退狱吏"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 公堂暗格现残册，勾划藏杀机"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 公堂口算惊四座，反咬盐枭十万私盐"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 私盐大案掀翻公堂，御史被迫缓刑三"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 鱼鳞账沾血锈气，核心底册成灰"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 底册烧光又如何，草料消耗反推真账"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 石壁重构连环套，伪造假账引蛇出洞"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 暗舱交割风云变，死士夜袭反撞官刀"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 连夜审讯破密文，盐帮洗钱网络全穿"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 绝密暗账现私印，御史分红曝光"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787218676533",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-u1cNKa\\story-runtime\\proj-1787218676533-18066711a84e.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 5,
+    "canonicalSnapshots": 6,
+    "latestSnapshotChapter": 5,
+    "sceneChunks": 5,
+    "events": 21
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "24f7fa3ab956bac8bc733fa704fc714b58d6259e822414167e0bf8f9a8b53c24",
+    "completeCharacterProfileCount": 12,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 5
+  },
+  "outlineWarnings": [
+    "本地收缩超长标题/CBN/CEN 共 25 章（第 4、7、8、9、13、14、15、16、17、18、20、22、23、25、26、27、28、29、30、33、38、40、43、46、47 章），未发 AI 请求"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 4,
+    "firstPassRate": 0.8,
+    "rewrittenChapters": 1,
+    "totalRewriteRounds": 1,
+    "averageRewriteRounds": 0.2,
+    "pipelineAttempts": 5
+  },
+  "runtimeMetrics": {
+    "requestCount": 21,
+    "requestCountsByPurpose": {
+      "scene-draft": 9,
+      "fact-extraction": 6,
+      "chapter-judge": 6
+    },
+    "latencyP50Ms": 16967,
+    "latencyP95Ms": 46661,
+    "latencyMaxMs": 60680
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1786812318014",
+      "model": "gpt-5.6-luna",
+      "independentFromWriter": true,
+      "selectionReason": "default-wawa-gpt-5.6-luna"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": null,
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 81.6,
+        "continueReading": true,
+        "confidence": 0.94,
+        "dimensions": {
+          "readability": 82,
+          "openingHook": 88,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 74,
+          "characterVoice": 78,
+          "payoffValue": 80,
+          "pacing": 76,
+          "endingPull": 91
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "开篇在穿越、死囚处境和狱吏逼供之后，连续插入盐政制度、考成法与连带赔补制等背景说明，信息量较大，压弱了牢房现场的紧迫感。",
+            "evidence": [
+              "“大梁立国百余年，盐铁乃朝廷税赋命脉，推行严苛至极的官盐引岸专卖制。商贾若想贩盐，必须先向户部缴纳足额现银认购盐引……”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.95
+          },
+          {
+            "id": "reader.conflict-2",
+            "severity": "medium",
+            "category": "conflict",
+            "location": "全文",
+            "description": "主角几乎立刻凭一页账册找出多个漏洞并压住狱吏，破局过程清楚爽利，但对目标读者偏好的层层博弈而言，阻力和反制略少，狱吏的溃败较快。",
+            "evidence": [
+              "“你们为了做平三万两现银亏空，在这本流水里虚增了整整五十万斤的芦苇草料采购支出……”以及“狱吏脸颊剧烈抽搐，额头渗出一层冷汗。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.88
+          },
+          {
+            "id": "reader.emotion-3",
+            "severity": "medium",
+            "category": "emotion",
+            "location": "全文",
+            "description": "沈青舟从猝死、穿越到戴枷面临斩首，始终表现得极度冷静，专业能力很突出，但个人恐惧、失去原世界的震动或对死亡的真实感受较少，情绪代入主要依赖外部险境。",
+            "evidence": [
+              "“沈青舟声音因干渴有些沙哑，但语调沉稳如铁，不见丝毫死囚应有的崩溃与惊惧。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.9
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "账目破绽的核心计算具有直观说服力，但燃料消耗、出盐比例和潮汛记录的制度依据主要由主角直接陈述，读者暂时难以判断这些数字是否确实足以定罪，硬核审计感仍可进一步增强。",
+            "evidence": [
+              "“按照两淮工部营造则例与盐规则例，每熬官盐一百斤，需耗芦苇草料一百五十斤……”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.76
+          },
+          {
+            "id": "reader.other-5",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "“冷笑、森冷、冷汗、肃杀、雪亮寒芒”等冷硬和压迫性词汇密集出现，整体风格统一，但局部容易形成同质化修辞，削弱细微情绪变化。",
+            "evidence": [
+              "“眼神阴鸷得像两把淬毒的刮骨刀”“森冷的目光直刺狱吏面门”“冷汗顺着两鬓滴落”“森严杀气在烈日下弥漫开来。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.91
+          }
+        ],
+        "summary": "本章以死囚、烂账和即将斩首的即时危机开局，主角用物料消耗、产出数量和潮汛记录建立了清晰的证据链，既完成了身份与核心卖点展示，也让局势从“牢中逼供”推进到“御史公堂斩首”，章尾的朱红令签和出鞘大刀具有很强的追读牵引力。主要问题是背景解释偏集中、主角破局过于顺滑，情绪层次和审计推理的可验证细节略少；但对于官场权谋与硬核账目智斗读者，首章仍具备明确的阅读承诺和足够强的继续阅读动力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 83.8,
+        "continueReading": true,
+        "confidence": 0.94,
+        "dimensions": {
+          "readability": 82,
+          "openingHook": 91,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 79,
+          "characterVoice": 78,
+          "payoffValue": 86,
+          "pacing": 76,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "medium",
+            "category": "pacing",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“暗格残册现世，铁证如山，沈青舟借着账册上的致命疑点与时间差，硬生生阻断了当堂定罪行刑的杀局。”；“赵伯这番战战兢兢的话语犹如平地惊雷，直接将供状上的伪证撕得粉碎。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.93
+          },
+          {
+            "id": "reader.character-2",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“沈青舟垂眸扫过供状，心如明镜。”；“沈青舟目光直刺崔秉忠……大梁《盐法考成律》明文规定……”；“沈青舟……语气沉稳而凌厉……”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.9
+          },
+          {
+            "id": "reader.readability-3",
+            "severity": "medium",
+            "category": "readability",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“大梁推行官盐引岸专卖制，商贾凭引支盐，私贩逾百斤立斩。大梁律例更设官员连带赔补之法……”；“两淮官引皆有户部勘磨的‘天干地支’阴阳骑缝连号……”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.94
+          },
+          {
+            "id": "reader.conflict-4",
+            "severity": "low",
+            "category": "conflict",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“崔秉忠……厉声喝道：‘来人，按住他的手，强行画押！’”；“崔秉忠……厉声喝令：‘把盐帮二当家给本官押上堂来！’”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.91
+          },
+          {
+            "id": "reader.other-5",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“杀气森然”“杀意暴涨”“杀气腾腾”“近乎吃人的目光”“空气仿佛彻底凝固”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.95
+          },
+          {
+            "id": "reader.payoff-6",
+            "severity": "low",
+            "category": "payoff",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“暗格残册现世……阻断了当堂定罪行刑的杀局。”；“把盐帮二当家给本官押上堂来！”；“二当家早已在死牢之中画押招认……”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.88
+          }
+        ],
+        "summary": "本章章首直接落入斩首公堂，危机明确、证据链推进清楚，暗格残册和废弃官引构成了连续的小兑现，符合官场智斗读者对硬核破局的期待。章尾由伪证被拆穿转入死牢人证危机，追读牵引力很强。主要问题是主角破局过于顺滑，三轮反转结构相似，制度说明和“杀气”类表述偏集中，使后半段略显重复。整体是推进有效、爽点明确但代价感和博弈复杂度仍可加强的一章。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 77.7,
+        "continueReading": true,
+        "confidence": 0.94,
+        "dimensions": {
+          "readability": 78,
+          "openingHook": 76,
+          "conflictEffectiveness": 82,
+          "emotionalDrive": 80,
+          "characterVoice": 74,
+          "payoffValue": 70,
+          "pacing": 77,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“一艘沙船吃水增加三尺六寸，实际载重至少在八百石以上。十二艘沙船满载出关三次，运出去的根本不是四千石，而是整整十万石！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“可海陵官库今年夏季总共采购的芦苇只有五十万斤，其中三十万斤已用于熬制正规官盐。请问崔大人，剩下的五十二万斤草料是从何而来？”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“大梁借贷之法，凡有进项必有出处，借贷两平，毫厘不爽！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“十万石私盐！”……“二当家吓得面无人色”……“来人，把这个妖言惑众的带罪录事给本官拖下去，乱棍打死！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接死局迅速进入公堂对账，主角以利润倒挂、草料消耗和船只吃水反推私盐规模，冲突明确且不断升级；崔秉忠强行灭口、陆九渊踹飞巡盐卫入场，也提供了有力章尾钩子。可惜作为本书核心卖点的账术破局，草料缺口表述和十万石运量计算都出现明显硬伤，直接伤及“硬核审计”可信度。修正关键数字并补强账簿来源后，这章的反转与追读力会更扎实。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 80,
+        "continueReading": true,
+        "confidence": 0.91,
+        "dimensions": {
+          "readability": 76,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 79,
+          "characterVoice": 74,
+          "payoffValue": 82,
+          "pacing": 68,
+          "endingPull": 84
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "沈青舟从账目审计直接跳到可以合法化十万石私盐的平账方案，核心操作缺少中间推演，容易让硬核智斗读者觉得能力是作者直接宣布的，而不是现场推导出来的。",
+            "evidence": [
+              "“物料差额可以用三年潮汛损耗与熬波折旧摊销冲抵；十二艘沙船的吃水差额，可以通过两淮盐运司的转坝改道文书拆解为跨省折色分流。只要重构出库流水与损耗底账，将十万石成盐化整为零分摊入三十六个分盐栈的合理损耗之中，这笔死账就能彻底做平！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.pacing-2",
+            "severity": "medium",
+            "category": "pacing",
+            "location": "全文",
+            "description": "本章连续使用多轮数字、损耗和责任风险说明来强化同一个结论，后半段公堂对峙的情节功能较集中，部分威胁与后果反复强调，导致紧张感出现滞重。",
+            "evidence": [
+              "“杀了我，大家一起人头落地；留着我，这本烂账便能干干净净呈报户部，保住所有人的乌纱帽与项上人头。”以及随后“杀沈青舟容易，但杀了之后的灭顶之灾他根本无法承受。唯有借助沈青舟的手把这十万石窟窿抹平……”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-3",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "陆九渊的出场视觉符号和语言较为熟悉，偏向标准化的狂悍江湖帮主形象；与沈青舟的账刀式谋略相比，人物辨识度还主要依赖外貌、兵器和凶狠台词。",
+            "evidence": [
+              "“嘴里叼着一根细长的芦苇秆，双手抱胸，冷笑着踏入公堂”以及“银子和刀子才是王法。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "沈青舟本轮破局几乎完全成功，崔秉忠和陆九渊都被迫接受他的价值，但他本人没有付出新的实质代价；虽被押入死牢并限期三日，权谋代价式上位的沉重感尚未充分落地。",
+            "evidence": [
+              "“好，很好！”崔秉忠深吸一口气，猛然抓起惊堂木……“三日之内，你必须给本官交出一套天衣无缝的平账总册！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-5",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "部分制度与后果由叙述直接替人物和读者总结，削弱了读者自行拼接证据链的参与感。若能让沈青舟利用一两份具体文书或现场反应完成验证，智斗的兑现感会更强。",
+            "evidence": [
+              "“这种对大梁律法漏洞与财税账目的精微掌控，绝非寻常九品录事所能拥有。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章章首承接上章的账目反转，迅速将小额赃银升级为十万石私盐和二十四万两官帑窟窿，冲突规模、危机强度和章尾悬念都明显有效。沈青舟以“杀我则所有人一起暴露”的方式迫使御史暂缓杀人，完成了清晰的局势逆转，并在死牢中引出赵伯的新信息，追读动力较强。主要问题是平账方案的关键步骤过于跳跃，数字论证虽密集但缺少可验证的中间证据；对峙后半段也有重复解释风险。总体上适合继续追更，尤其能满足喜欢官场危局和账目破局的读者，但后续需要兑现三日平账的具体操作与代价，避免“主角一句话全盘做平”。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 73.8,
+        "continueReading": true,
+        "confidence": 0.91,
+        "dimensions": {
+          "readability": 74,
+          "openingHook": 76,
+          "conflictEffectiveness": 79,
+          "emotionalDrive": 68,
+          "characterVoice": 70,
+          "payoffValue": 73,
+          "pacing": 63,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "medium",
+            "category": "pacing",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "赵伯连续解释“鱼鳞暗码”“官银血锈”“火耗与成色差额”，其中包括“若是‘天’字末笔微挑，便代表该笔银两实入内库；若是‘地’字偏旁缺角，则是挪借抵扣”以及“但凡是用药水洗过血锈的银子，锭子底部的蜂窝孔内必会留下暗灰色的铅斑沉淀”。"
+            ],
+            "suggestion": "保留关键规则，其余暗码和银锭细节可拆成沈青舟实际验账、试探赵伯或遭遇反证时逐步揭示，让知识同时承担行动和冲突功能。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.conflict-2",
+            "severity": "medium",
+            "category": "conflict",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "沈青舟刚提出“明日一早我便让当值狱卒向崔秉忠传话，调取盐运司档案库……三日内我有把握重构出一套滴水不漏的新账”，随即发生“盐运司！是盐运司的西跨院档案库！”和“核心底册全烧光了”。"
+            ],
+            "suggestion": "可在火灾前埋下一个异常线索，或让沈青舟从残灰、狱吏口供、赵伯反应中立即发现可追查的证据链，使反转不止是生路被切断，也成为下一步智斗的起点。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-3",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "赵伯概括官厅机制时使用了“古代官僚体系为了规避审计而演化出的暗码账套”，沈青舟又判断“现代的审计模型若是不结合这套暗码规则，强行平账确实极易引发逻辑互斥”。"
+            ],
+            "suggestion": "把现代概念更多转化为沈青舟的内心类比，把赵伯的解释压缩成带有个人经历和忌惮的行话，减少直接给出完整机制的百科式表达。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.payoff-4",
+            "severity": "low",
+            "category": "payoff",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "本章前段确立了“只要拿到原始底册……三日内我有把握重构出一套滴水不漏的新账”，结尾则落到“平账生路，却在这漫天飞落的焦黑残灰中彻底沦为了无米之炊”。"
+            ],
+            "suggestion": "结尾在档案焚毁后补一个极小但可信的发现，例如残灰中的特殊纸张、火油来源或赵伯反常反应，让沈青舟虽然失去底册，却立刻抓住一条可追查的线索。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.readability-5",
+            "severity": "low",
+            "category": "readability",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "文中多次以近似功能重复强调底册焚毁后的绝境，如“整座存放两淮盐道三十年旧账……全烧成了一片火海”“核心底册全烧光了，连半张完整的纸都没留下来”“所有原始记录化为乌有，死无对证”。"
+            ],
+            "suggestion": "保留狱吏的现场报告和沈青舟的判断即可，删减一到两处同义复述，把篇幅留给沈青舟对火灾时机、纵火者动机或灰烬异常的判断。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章完成了从公堂暂时脱死到死牢内获得关键账法，再到核心底册被焚、破局基础骤然崩塌的连续升级，章尾悬念很强，赵伯身份和纵火事件都能推动追读。主要问题是中段审计设定集中以讲解形式输出，人物行动和情绪被压低；档案焚毁虽有效，却带有较强的外力截断感。若在结尾让沈青舟从火灾中抓住一条可验证线索，智斗感和回报感会更完整。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 55.9,
+        "continueReading": true,
+        "confidence": 0.91,
+        "dimensions": {
+          "mainlineProgress": 68,
+          "patternVariation": 38,
+          "suspensePayoff": 61,
+          "characterArc": 34,
+          "emotionalArc": 55,
+          "payoffEscalation": 58,
+          "genrePromise": 52,
+          "continuationDesire": 72
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "核心卖点是硬核审计和可验证的账术，但本章最关键的草料缺口出现直接算术错误：总采购五十万斤、其中三十万斤已用于官盐，剩余应为二十万斤，文本却称“五十二万斤”。这会让读者无法信任主角据此压垮对手的证据链。",
+            "evidence": [
+              "“海陵官库今年夏季总共采购的芦苇只有五十万斤，其中三十万斤已用于熬制正规官盐。请问崔大人，剩下的五十二万斤草料是从何而来？”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.99
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "十万石私盐的核心反推与前文给出的船数、单船载重和出关次数不相符。按文本最低载重“八百石”、十二艘船、三次出关计算，至少只能推出二万八千八百石，而非十万石；且“至少”无法自然推出精确十万。作为全章升级性大案的支点，这一跳算明显削弱硬核智斗的公平性。",
+            "evidence": [
+              "“一艘沙船吃水增加三尺六寸，实际载重至少在八百石以上。十二艘沙船满载出关三次，运出去的根本不是四千石，而是整整十万石！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.98
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "连续三章都在同一公堂中，以崔秉忠抛出一份伪证或人证、沈青舟即时指出账册/制度漏洞、崔秉忠暴怒转而下杀手的结构推进。每次反转本身有小兑现，但敌手造假持续低级、主角持续无代价口算破解，窗口阅读会产生重复闯关感，权谋博弈尚未形成多方策略与反制。",
+            "evidence": [
+              "第2章：“崔秉忠缓缓坐回太师椅……‘但这残册只能证明旧账有漏，却洗不脱你勾结私枭倒卖官引的嫌疑！’”；第3章：“‘住口！你这狂徒休要在此信口雌黄！’……‘把这个妖言惑众的带罪录事给本官拖下去，乱棍打死！’”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.92
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "三章内沈青舟主要呈现为稳定的全知解题者，面对死囚、强迫画押、当堂斩首和乱棍打死均几乎没有策略失误、信息盲区或切实代价；赵伯则反复承担被震住后作证的功能。读者能看到能力展示，但人物关系、立场交换和代价式上位尚未启动。",
+            "evidence": [
+              "第1章：“神色淡漠如冰”；第2章：“面对崔秉忠杀气腾腾的逼视，沈青舟戴着重枷的身躯巍然不动”；第3章：“沈青舟神色没有丝毫波澜”。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.83
+          },
+          {
+            "id": "reader.other-5",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "第2章末尾已由赵伯拆穿旧引伪证，第3章随即切入二当家现场指控，推进虽快，但“朱笔回勾究竟指向谁”和崔秉忠为何敢在公开公堂连续冒险的更深层答案仍持续后移。陆九渊强势入场提供新钩子，但需要下一章改变公堂内单向拆证的节奏，才能把悬念转成更高层的势力博弈。",
+            "evidence": [
+              "第2章：“亏空真相究竟在谁手中，那本遗留税册上的朱笔回勾自会说话！”；第3章结尾：“正是两淮盐帮帮主，陆九渊。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.76
+          }
+        ],
+        "summary": "前三章开局危机强、盐政账目与官场构陷的题材承诺清晰，旧账时间差、废引防伪和盐帮帮主入场都能维持追读。问题在于公堂拆伪证的模式连续复用，人物和关系尚未实质移动；尤其第3章草料余数与船运总量两处硬伤，恰好击中“硬核审计破局”的可信度底座。修正计算、补足数据来源，并让陆九渊带来能反制主角的新利益条件，可显著提升权谋厚度与升级感。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 5,
+      "chapterAverage": 79.4,
+      "chapterMedian": 80,
+      "chapterMinimum": 73.8,
+      "openingThreeAverage": 81,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 1,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "低分跨章窗口 1-3=55.9"
+    ],
+    "errors": [
+      "大纲读者评审失败：[\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      0,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      1,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      2,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      3,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      4,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  }\n]",
+      "1-5章窗口评审失败：[\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      1,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  }\n]"
+    ],
+    "durationMs": 277088
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 702962,
+  "warnings": [
+    "大纲阶段 warnings（1 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（1 条，影子模式不阻断）",
+    "读者评审失败（2 条，详见 readerEvaluation.errors）"
+  ]
+}

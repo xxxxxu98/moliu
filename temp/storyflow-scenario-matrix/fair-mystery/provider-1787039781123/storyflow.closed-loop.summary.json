@@ -1,0 +1,985 @@
+{
+  "book": "监控下的明牌杀局：44路停运十年后",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": "fair-mystery",
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "scenario:fair-mystery",
+  "promptChars": 72,
+  "requestedChapterCount": 5,
+  "phaseTimings": {
+    "outlineDirectionsMs": 17932,
+    "outlineExpandMs": 205901,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 788,
+    "continueWriteMs": 540192,
+    "totalMs": 764813
+  },
+  "completedChapters": 5,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 停运十年，幽灵公交突现老监控",
+      "words": 2656,
+      "paras": 15,
+      "paraCv": 0.08,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：15 段平均 175 字、变异系数 0.08，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "林彻将最后一份户籍变更底册合上，指尖在泛黄的牛皮纸封皮上轻轻敲了两下。窗外夜色浓重，光明路派出所三楼的综合监控机房里，主机风扇正发出低沉而单调的嗡鸣。墙上挂着的十四块监视分屏泛着冷幽的荧光，冰冷地切分出清河老城区错综复杂的巷道。这一带属于待",
+      "tail": "屏住呼吸，抬眼望向老客运站首发站的方向。路口仅剩的那一盏昏黄路灯在沉闷的引擎震动中剧烈闪烁，伴随着电火花的爆裂声，惨黄色的灯丝骤然暗淡，彻底熄灭在浓重的夜雾里。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 路灯抹黑漆，首发站的光学陷阱",
+      "words": 3461,
+      "paras": 26,
+      "paraCv": 0.21,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "林彻拎着折叠式铝合金人字梯穿过派出所后侧的破损铁丝网。他反手将警服外套的下摆扎进战术腰带，压低帽檐，借着拆迁生活区错综复杂的断壁残垣隐藏身形。刚才在机房被赵秉忠强行打断的神经此刻紧绷如弦，胸口内袋里的移动硬盘随着快步走动轻轻撞击着肋骨，提醒",
+      "tail": "沟的距离。就在他踩碎脚下一片极薄的塑料挡板发出轻微脆响的瞬间，地沟旁的黑影动作骤然停滞，手中的撬棍猛地反握横在胸前，整个人如同一张瞬间拉满的强弓，霍然转过头来。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 深夜清库，汽运老板慌乱抹痕迹",
+      "words": 3417,
+      "paras": 29,
+      "paraCv": 0.47,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 1/29，超过 5 句的段 2。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "地沟旁的黑影在听到塑料脆响的刹那，整个人展现出极强的警觉。对方没有发出一声惊呼，握着加力撬棍的右手顺势在悬吊的底盘钢梁上借力一撑，双腿轻巧地蹬上侧面的配电箱外壳。伴随着一阵极其微弱的衣物摩擦声，那道矫健的身影如灵猫般翻上了车间顶部的行车检修",
+      "tail": "孔器，为何会带着血迹，完好无损地藏匿在周泰急于毁灭痕迹的秘密车库深处？十年旧案那张看似天衣无缝的结案铁幕，在这一串冰冷的工号面前，被硬生生撕开了一道狰狞的血痕。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 公式打脸，两帧监控撕破鬼车谎言",
+      "words": 3235,
+      "paras": 23,
+      "paraCv": 0.25,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "赵秉忠布满老茧的右手重重拍在讲台正中央，震得上面的搪瓷茶缸嗡嗡作响。讲台上的茶水溅落出来，打湿了早会签到表的一角。早晨八点整，光明路派出所二楼大会议室内鸦雀无声，十几个民警规规矩矩地坐在条木凳上，连翻动笔记本的沙沙声都瞬间停滞。会议室前方拉",
+      "tail": "浓雾深处忽然划过一阵极其微弱的空气湍流。调度室废墟窗外，一道庞大而沉重的深色车影正熄灭了所有车灯，悄无声息地穿透漫天翻滚的夜雾，缓缓滑入了一号老站台的阴影之中。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 暗格残单，十年前代签路单现世",
+      "words": 2973,
+      "paras": 27,
+      "paraCv": 0.26,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "林彻手腕骤然发力，将战术手电的聚光环拧到最紧。冷白色的强光撕裂了调度室破损窗框处的尘埃，笔直刺向窗外昏暗的发车场。生锈的铁皮窗页在穿堂风中发出尖锐的嘎吱声，那道沉重的双层客车黑影宛如融化在浓雾中的巨兽，沿着废弃的一号站台边缘缓缓滑行。四周没",
+      "tail": "电的防滑手柄上，目光穿透昏暗的厂区废墟，死死锁定了加气站那座被锈蚀管道包围的巨大储气罐阴影。新的伪装正在这片死寂的工业遗址深处紧锣密鼓地铺开，而夜色才刚刚降临。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 停运十年，幽灵公交突现老监控"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 路灯抹黑漆，首发站的光学陷阱"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 深夜清库，汽运老板慌乱抹痕迹"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 公式打脸，两帧监控撕破鬼车谎言"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 暗格残单，十年前代签路单现世"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 夜探加气站，反光漆下的套牌车"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 深夜破门，老调度员咽气前塞残单"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 审讯破防，三秒时差逼出幕后人"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 黑脸队长进驻，名单首位竟是师兄"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 老茶馆问策，温敬揭开第二站疑云"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787221660280",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-dOa6RP\\story-runtime\\proj-1787221660280-3815f16d5ee5.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 5,
+    "canonicalSnapshots": 6,
+    "latestSnapshotChapter": 5,
+    "sceneChunks": 5,
+    "events": 23
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "52475f7d6613b355316c99f45ae4e7559584035433920ec843d0c6558f4d5960",
+    "completeCharacterProfileCount": 12,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 5
+  },
+  "outlineWarnings": [
+    "本地收缩超长标题/CBN/CEN 共 6 章（第 5、15、16、18、48、50 章），未发 AI 请求"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 4,
+    "firstPassRate": 0.8,
+    "rewrittenChapters": 1,
+    "totalRewriteRounds": 1,
+    "averageRewriteRounds": 0.2,
+    "pipelineAttempts": 5
+  },
+  "runtimeMetrics": {
+    "requestCount": 20,
+    "requestCountsByPurpose": {
+      "scene-draft": 8,
+      "fact-extraction": 6,
+      "chapter-judge": 6
+    },
+    "latencyP50Ms": 12603,
+    "latencyP95Ms": 40536,
+    "latencyMaxMs": 40536
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1786812318014",
+      "model": "gpt-5.6-luna",
+      "independentFromWriter": true,
+      "selectionReason": "default-wawa-gpt-5.6-luna"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": null,
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 84.9,
+        "continueReading": true,
+        "confidence": 0.91,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 91,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 84,
+          "characterVoice": 78,
+          "payoffValue": 82,
+          "pacing": 83,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“十年前那个暴雨倾盆的清晨，同型号、同涂装的44路夜班车在跨江大桥南段失控坠江，全车十二人无一生还。当年初出茅庐的林彻只因在结案前指出监控时间戳存在两分十七秒的人为拼接痕迹……”"
+            ],
+            "suggestion": "保留“时间戳两分十七秒”这一关键钩子，但将完整旧案背景拆入后续调查；此处用更具体的感官记忆或赵秉忠的异常反应带出林彻的旧伤。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“惨白的过曝画面在三秒后迅速回落，漫天翻滚的浓重夜雾之中，一具庞大而沉重的钢铁阴影撕开浓雾……”；“那是一辆双层公交车。锈蚀斑驳的红白车漆大面积脱落……”"
+            ],
+            "suggestion": "压缩部分同类的阴冷、浓雾、锈蚀修饰，尽快让林彻做出第一个高风险判断或行动，以维持章首已建立的紧迫度。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“画面最初的强光并非来自路灯，而是废弃十年的老客运站调度大院铁门处的反光板，那辆双层公交最初的发车起点，正是老客运站贴着封条的地下维修车库出口。”"
+            ],
+            "suggestion": "可在前文监控画面中提前放入可辨认的反光角度、门缝光线或车身出站轨迹，让读者能在揭示前参与判断。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "首章用停运十年的44路重现、赵秉忠失控删证、林彻暗中备份三连推进，迅速建立了旧案翻案、内部遮掩与现实追踪三层矛盾。监控技术细节和角色行动形成了可信的明牌博弈，主角也拿到了可供追查的车库线索，开章吸引力与章尾压迫感都很强。当前主要遗憾是旧案背景解释略集中、部分氛围描写重复；不过核心事件清晰，且以引擎逼近监控死角收尾，足以促使读者继续追更。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 74.9,
+        "continueReading": true,
+        "confidence": 0.91,
+        "dimensions": {
+          "readability": 72,
+          "openingHook": 84,
+          "conflictEffectiveness": 82,
+          "emotionalDrive": 64,
+          "characterVoice": 68,
+          "payoffValue": 79,
+          "pacing": 63,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "现场勘查连续堆叠光学、车辆和轮胎参数，信息密度很高，部分读者可能难以在脑中还原现场空间关系。",
+            "evidence": [
+              "七号探头属于老旧的模拟枪机，动态范围极窄。一旦地面与背景建筑的反光被这层人为设置的阻断层彻底吃掉，探头传感器就只能接收到高对比度的移动光源。",
+              "车体反光折射轴向整体向右发生了整整三十度的倾角偏移。",
+              "双排轮外缘间距两米四五，花纹节距十二厘米，胎面接地宽度整整三十公分。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.93
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "光学陷阱和实体车辙的揭示有明确回报，但从现场反射异常直接推导出精确三十度、特定车辆型号以及完整布置方案，证据链略显跳跃，硬核推理读者可能会质疑测量依据。",
+            "evidence": [
+              "林彻将角度规的游标卡尺对准地面残存的高光反射残留点，读数窗口里的液晶数字迅速跳动，最终稳稳停在了一个触目惊心的数字上：三十度。",
+              "这个异常的偏角意味着，视频里看似沿着化工路笔直碾过的车身，在真实的物理空间中根本没有沿着主干道行驶。",
+              "这是属于十年前老款黄河牌重型柴油客车的专用承重轮胎印记"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.86
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "林彻始终冷静、专业且主动，局势推进清晰，但内在情绪和个人代价表达较少，十年前案件对他的具体创伤或执念主要依靠背景信息概括，情绪张力因此弱于线索张力。",
+            "evidence": [
+              "林彻缓缓垂下眼帘收敛锋芒，语气恢复了平日的顺从：“我知道了赵所，我这就执行底层清除。”",
+              "他的动作沉稳而迅速，作为曾经的刑警骨干，这套痕迹检验动作已经在户籍档案室里搁置了整整十年，但肌肉记忆却未曾磨灭分毫。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.88
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "本章从保留监控到追踪车辙、潜入车库，推进并不空转，但中段多次以完整技术解释暂停行动，连续参数说明削弱了追踪过程的紧迫感。",
+            "evidence": [
+              "这不是灵异现象，而是一场精密计算过的光学魔术。",
+              "按照清河市市政道路设计规范，老客运站三岔路口的监控探头架设高度为四点五米，镜头俯角设定为标准的二十八度。",
+              "林彻拿出石膏粉和取样板，熟练地在最完整的一段花纹凹槽周围打好挡泥板，开始配制石膏浆液进行现场拓印。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.9
+          },
+          {
+            "id": "reader.other-5",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "林彻的职业能力和冷峻风格稳定，但人物声音更多通过专业判断和动作体现，独特的口语习惯、价值取舍或与对手的个性化交锋仍不够突出。",
+            "evidence": [
+              "“吸光阻断层，难怪监控里完全看不到地表反光。”",
+              "林彻直视着赵秉忠满是血丝的双眼，声音冷得像冰。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.84
+          },
+          {
+            "id": "reader.other-6",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "部分形容和效果描写重复强调黑暗、死寂、寒意与机械声，氛围统一但略有同质化，可能让文本显得偏用力。",
+            "evidence": [
+              "街道两侧空无一人，拆迁废墟在夜雾中宛如连绵起伏的黑色墓碑。",
+              "车库地面上到处散落着碎玻璃和风化开裂的橡胶皮带，空气中弥漫着刺鼻的粉尘。",
+              "在空旷死寂的车间大厅内回荡，令人头皮发麻。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.82
+          }
+        ],
+        "summary": "本章承接上章的异常公交影像，迅速完成了从监控保全、光学陷阱拆解到实体车辙追踪的连续推进，最后在废弃维修库发现正在拆解老客车底盘的神秘人，章尾对峙钩子很强。读者能获得明确的线索回报和局势升级，赵秉忠的灭证行为也强化了主线冲突。主要问题是技术参数和推理结论过密，部分关键判断显得一步到位，人物情绪仍被职业化冷静压住，导致紧张感更多来自事件与环境而非人物内心。整体仍具备较强追读动力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 82,
+        "continueReading": true,
+        "confidence": 0.94,
+        "dimensions": {
+          "readability": 78,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 76,
+          "characterVoice": 68,
+          "payoffValue": 91,
+          "pacing": 72,
+          "endingPull": 94
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "现场机械、取证和切割过程写得很密，连续堆叠结构名词、尺寸和器材，部分段落会让读者从追踪紧张感中抽离。",
+            "evidence": [
+              "“前轴悬挂系统已经被暴力拆解开来，减震弹簧歪斜地垂在一侧。”；“非独立双横臂悬挂结构与固定螺栓间距依然完整保留”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.92
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "林彻主要以专业动作和作者说明呈现，缺少能区分他个人性格、价值判断或情绪创伤的语言与选择；相较之下周泰的慌乱和命令更鲜明。",
+            "evidence": [
+              "“他的动作沉稳而迅速，作为曾经的刑警骨干，这套痕迹检验动作已经在户籍档案室里搁置了整整十年”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.89
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "证据发现很有冲击力，但林彻对十年前旧案、死者陆建平以及重新接近真相的个人情绪反应被迅速跳过，读者更多是在接受信息，而不是与他共同经历震动。",
+            "evidence": [
+              "“林彻的指尖猛地收紧。”；“本该随着客车一同沉入冰冷江底……为何会带着血迹，完好无损地藏匿在周泰急于毁灭痕迹的秘密车库深处？”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.87
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "本章的局势推进明确，但从潜入、追踪、老板清库到逐项检验的过程反复强调火星、焦糊、锈蚀和专业器材，行动段略显冗长，高潮到终点之间的节奏不够利落。",
+            "evidence": [
+              "“漫天飞溅的橘红色火星如同一阵暴雨……”；“刺目的火花在周泰胸前疯狂爆裂……”；“蓝白色的火焰将厚重的钢板烧得一片赤红……”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.93
+          },
+          {
+            "id": "reader.other-5",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "周泰销毁底盘与铭牌后仍留下关键打孔器，爽点成立，但其在有人员、有设备、且即将押运熔化证据的现场几乎没有进行最后搜索，反派疏漏略显服务剧情，削弱了硬核推理感。",
+            "evidence": [
+              "“周泰和他的手下在刚才的疯狂清理中根本没有注意到这个死角。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.84
+          },
+          {
+            "id": "reader.other-6",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "个别动作带有明显电影化夸张色彩，可能让重视现实侦查逻辑的读者产生出戏感，尤其是林彻在突发包围中迅速找到并进入高处排气管暗道。",
+            "evidence": [
+              "“林彻迅速收回脚步，目光在零点五秒内扫过车库两侧的建筑结构。”；“整个人无声地潜入了悬空三米高的排气管检修暗道内。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.82
+          },
+          {
+            "id": "reader.other-7",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "结尾的04407反转很强，但本章提前用较多直白说明告知读者周泰确实在销毁十年前改装痕迹，削弱了部分推理悬念，读者更像是在等待新物证出现，而不是判断周泰是否涉案。",
+            "evidence": [
+              "“十年前那场坠江惨案所有的底层改装痕迹，全都是在这座车库里连夜由同型号报废客车拼凑完成的。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.9
+          }
+        ],
+        "summary": "本章以潜入废弃车库和现场清库为核心，局势推进充分：林彻目击周泰毁灭底盘证据，并在废墟中找到带血且标有04407工号的车票打孔器，结尾直接把十年旧案重新连接到死者陆建平，追读拉力很强。主要问题是专业细节和感官描写过密，行动段略拖；林彻的个人情绪和独特声音不足，反派留下关键物证的原因也略显便利。整体属于证据回报明确、章尾悬念强的有效悬疑章节。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 76.4,
+        "continueReading": true,
+        "confidence": 0.91,
+        "dimensions": {
+          "readability": 78,
+          "openingHook": 82,
+          "conflictEffectiveness": 81,
+          "emotionalDrive": 68,
+          "characterVoice": 65,
+          "payoffValue": 79,
+          "pacing": 70,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "核心推理过程信息密度很高，但部分光学与车辆参数连续堆叠，读者需要接受多层专业结论，现场画面感因此被解释性语言压过。",
+            "evidence": [
+              "“七号枪机架设高度四点五米，镜头俯角二十八度，视场中心正对化工路主干道。”；“双排承重轮外缘间距两米四五，花纹节距十二厘米，接地宽度三十公分。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "派出所内的对抗确实改变了局势，赵秉忠从强行销案退到封存备查，但林彻几乎凭一场完整讲解就压倒了阻力，制度层面的后续阻挠和反制尚未出现，冲突的阻力感略显单薄。",
+            "evidence": [
+              "“行啊，既然你们觉得有疑点，那就先把录像封存备查！”；“但是在没有接到正式报案之前，谁也不准擅自立案侦查！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "本章主要依靠证据揭示和当众驳斥推动情绪，林彻本人几乎没有显露对十年前旧案、陆建平或潜在受害者的私人情绪，读者更容易感到“推理正确”，而不是被人物命运牵动。",
+            "evidence": [
+              "“林彻的指尖猛地收紧。”；“林彻放下白板笔，转过身直面面色铁青的赵秉忠，声音掷地有声：……”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "林彻的语言高度统一为专业结论和法律定性，人物能力很突出，但个人性格、经验代价或与同僚关系的独特声音还不够鲜明；赵秉忠则较多依靠“阴沉、恶狠狠、脸色铁青”等标签完成塑造。",
+            "evidence": [
+              "“模拟信号如果遭遇强电短路，感光元件产生的电荷溢出会呈现出均匀的水平高亮横条纹。”；“赵秉忠阴沉着脸，两道浓黑的短眉死死拧在一起。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-5",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "两帧监控和实物痕迹完成了“鬼车并非灵异、而是实车伪装”的阶段性兑现，爽点明确；但“套牌车与十年前44路事故的关系”尚未进一步闭合，读者得到的是中段证明而非关键真相。",
+            "evidence": [
+              "“这绝不是什么网络谣言，而是一辆悬挂十年前44路假号牌、经过精密物理伪装的实车套牌违法上路。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-6",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "前半段会议冲突推进很快，后半段复核废墟的行走、环境和测量描写相对舒缓，虽然为结尾车影蓄力，但中间重复验证视线死角的段落略有拖慢。",
+            "evidence": [
+              "“林彻穿过坑洼不平的碎石便道，再次来到了老客运站的废弃厂区。”；“林彻走到正对着发车场地的破损窗台前，取下测距仪，对照着昨夜推导出的三十度视线死角进行物理复核。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-7",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "章首的禁令和销毁监控直接建立了权力压制，但与上一章尾部周泰毁车行动的现场切换缺少即时承接，读者需要稍后才理解本章为何从晨会开始。",
+            "evidence": [
+              "“今天晨会就强调一条纪律，谁也不准再议论昨晚的监控画面。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章完成了一个清晰且有回报的阶段性破局：林彻用两帧监控、物理痕迹和轮胎证据拆穿线路故障与鬼车传闻，迫使赵秉忠暂时封存录像；章尾真正的熄灯车影又把危险重新推到眼前，追读力很强。主要短板是专业解释偏密、人物情绪和独特声音不足，权力对抗解决得过于顺滑，旧案真相仍停留在进一步追查的门槛。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 78.7,
+        "continueReading": true,
+        "confidence": 0.93,
+        "dimensions": {
+          "readability": 78,
+          "openingHook": 86,
+          "conflictEffectiveness": 82,
+          "emotionalDrive": 70,
+          "characterVoice": 68,
+          "payoffValue": 84,
+          "pacing": 74,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "部分现场判断从单一痕迹直接跳到确定性结论，削弱硬核推理读者对证据标准的信任。",
+            "evidence": [
+              "“结合油滴未被秋雨稀释的物理形态，可以明确判定，这辆套牌客车在几十分钟前刚刚在此处完成过机油加注或动力系统的临时补能。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "大量专业细节在出现后立即被林彻解释为唯一结论，读者缺少自行观察、比较和推理的空间。",
+            "evidence": [
+              "“那道压痕呈现出独特的梅花十字交叉槽结构……这种特定的冲压磨损形态，与林彻昨夜在车库地沟深处提取到的零四四零七号打孔器底座完全契合。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-3",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "林彻在封闭现场单独取样、追踪并接近可疑车辆，虽有风险意识，但行动后果和权限边界交代不足。",
+            "evidence": [
+              "“林彻没有盲目冲出房间。”以及“他顺着双排车辙延伸的方向，踩着泥泞中的碎石无声向前推进。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.pacing-4",
+            "severity": "medium",
+            "category": "pacing",
+            "location": "全文",
+            "description": "本章连续兑现轮胎、路单、油滴、车辆内饰和喷漆等多组线索，推进很快，但线索层级相近，缺少停顿或人物情绪反应来形成递进。",
+            "evidence": [
+              "“这张十年前的手撕代签路单，直接击穿了当年醉酒司机单人肇事的官方结论。”之后又连续出现“新鲜的机油滴落点”、 “打孔器的底座完全契合”以及“新的伪装正在……铺开”。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-5",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "林彻的语言和行动高度稳定、理性、程序化，与其他办案人物的表达区分度不够，个人情感和私人成因较弱。",
+            "evidence": [
+              "“物证具有不可逆的时效性，雨水随时会冲刷掉地面痕迹。”以及“我只做客观记录和样本提取，严格遵守证据保全规范，绝不会越权干预其他部门。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-6",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "章首直接承接上一章会议室对峙的余波，冲突有效但缺少一个新的即时问题作为本章开场驱动。",
+            "evidence": [
+              "上一段结尾是“赵所……将来市局法制科倒查责任时……”，正文开头则转入“林彻手腕骤然发力，将战术手电的聚光环拧到最紧。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章整体推进明确，章首延续车辆真伪对峙，随后通过暗格代签路单实质性改写十年前事故的解释，再以真实车辙、车内压痕和正在进行的喷漆伪装把案件推向新的行动阶段。章尾“新的伪装正在铺开”形成了较强追读力。主要问题是证据结论过于确定、专业说明密度偏高，读者参与推理的空间不足；林彻虽有程序意识，却持续独自深入封闭现场，风险与人物动机还需要更具体的支撑。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 77,
+        "continueReading": false,
+        "confidence": 0.93,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 70,
+          "suspensePayoff": 76,
+          "characterArc": 62,
+          "emotionalArc": 64,
+          "payoffEscalation": 82,
+          "genrePromise": 87,
+          "continuationDesire": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "三章的推进方式高度相似，基本都是林彻凭借专业设备现场勘查，迅速得到唯一结论，再发现下一处线索；连续阅读时容易产生“检查—测量—定性—追踪”的重复感。",
+            "evidence": [
+              "“林彻在脑海中飞速调出刚刚拷入硬盘的初始监控画面，将公交车车顶反光条的移动轨迹与现场道路中线进行坐标对齐。”",
+              "“林彻拿出激光测距笔……最终稳稳停在了一个触目惊心的数字上：三十度。”",
+              "“林彻蹲下身，仔细勘验被气割切断的断口。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.94
+          },
+          {
+            "id": "reader.character-2",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "林彻在行动能力上持续展现优势，但三章中他的个人代价、旧案创伤和与赵秉忠等人的关系变化仍较少，人物更像稳定高效的勘查工具，尚未形成明显的内在转折。",
+            "evidence": [
+              "“林彻缓缓垂下眼帘收敛锋芒，语气恢复了平日的顺从：‘我知道了赵所，我这就执行底层清除。’”",
+              "“他的动作沉稳而迅速，作为曾经的刑警骨干，这套痕迹检验动作已经在户籍档案室里搁置了整整十年，但肌肉记忆却未曾磨灭分毫。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.91
+          },
+          {
+            "id": "reader.emotion-3",
+            "severity": "medium",
+            "category": "emotion",
+            "location": "全文",
+            "description": "危机和证据不断升级，但林彻的情绪反应主要由冷静、屏息、凝重构成，读者能感到局势紧张，却较难感受到他对十年前冤案、陆建平死亡或重返刑侦现场的具体情感变化。",
+            "evidence": [
+              "“林彻屏住呼吸，右手悄然按住后腰处的警用电筒。”",
+              "“林彻的眼神变得愈发凝重。”",
+              "“林彻的指尖猛地收紧。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.9
+          },
+          {
+            "id": "reader.payoff-4",
+            "severity": "medium",
+            "category": "payoff",
+            "location": "全文",
+            "description": "幽灵公交的核心视觉谜团在第二章得到清晰解释，车库也提供了有效物证回报；但幕后电话中的上级、黑衣人身份以及车票打孔器为何能留存十年仍只是继续挖坑，当前窗口的深层真相兑现不足。",
+            "evidence": [
+              "“这不是灵异现象，而是一场精密计算过的光学魔术。”",
+              "“您放心，这边已经全部切成废铁了……神仙来了也验不出原件。”",
+              "“本该随着客车一同沉入冰冷江底……的当班打孔器，为何会带着血迹，完好无损地藏匿在……秘密车库深处？”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.96
+          },
+          {
+            "id": "reader.other-5",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "部分关键判断和物证出现得过于顺利，尤其是隐藏物证在反派刚完成清库后被主角发现，以及凭工号直接锁定死者身份，悬疑线索虽明确但有一定作者安排感。",
+            "evidence": [
+              "“在这道常年不见天日的黑暗缝隙深处，一抹极其特殊的暗红色反光在手电微光的折射下隐隐闪烁。”",
+              "“这枚带血的打孔器显然是在慌乱中被踢进或者掉落进工具台缝隙深处的。”",
+              "“04407号工号，属于且仅属于一个人，正是十年前坠江身亡……的44路当班司机陆建平。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.87
+          },
+          {
+            "id": "reader.other-6",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "技术参数、器材操作和材质感官描写密度很高，强化了硬核推理定位，但也拖慢了潜入、对峙和毁证行动的节奏。",
+            "evidence": [
+              "“探头架设高度为四点五米，镜头俯角设定为标准的二十八度。”",
+              "“双排轮外缘间距两米四五，花纹节距十二厘米，胎面接地宽度整整三十公分。”",
+              "“非独立双横臂悬挂结构与固定螺栓间距依然完整保留。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.97
+          }
+        ],
+        "summary": "连续三章的主线推进明确且持续升级，幽灵公交从视觉奇观被还原为可验证的光学骗局，随后落到真实车辆、毁证行动和带血打孔器，符合重视公平线索与因果闭合的悬疑读者期待。主要短板是推进模式重复、专业细节偏密，林彻的情感和关系变化不足；深层幕后仍在持续挖掘，下一阶段需要尽快回应打孔器、黑衣人和电话上级之间的因果联系。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 70.6,
+        "continueReading": true,
+        "confidence": 0.91,
+        "dimensions": {
+          "mainlineProgress": 86,
+          "patternVariation": 61,
+          "suspensePayoff": 72,
+          "characterArc": 48,
+          "emotionalArc": 55,
+          "payoffEscalation": 74,
+          "genrePromise": 84,
+          "continuationDesire": 83
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "连续五章反复采用“林彻单独进入废弃场所—发现人为伪装或物证—对手撤离—以新的黑影、车影或漆雾收尾”的推进模式，场景和行动功能逐渐同质化，削弱了跨章的新鲜感。",
+            "evidence": [
+              "第2章以“地沟旁的黑影动作骤然停滞……霍然转过头来”收尾；第3章在林彻藏身后目击周泰毁证并找到打孔器；第4章又以“目光……死死锁定了加气站”式的现场追踪推进；第5章再次以“新的伪装正在……铺开”收尾。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.payoff-2",
+            "severity": "medium",
+            "category": "payoff",
+            "location": "全文",
+            "description": "每章都有局部证据回报，但核心悬念仍主要停留在“有人伪造幽灵公交、有人在掩盖旧案”的重复确认，幕后指令来源、十年前车辆调换的完整因果和陆建平死亡真相尚未形成更具体的阶段性闭合。",
+            "evidence": [
+              "第3章只确认“十年旧案那张看似天衣无缝的结案铁幕”被撕开；第5章仍停留在“有人在发车前临时更改了当班司机，并提前将车辆放出了客运站”。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-3",
+            "severity": "high",
+            "category": "character",
+            "location": "全文",
+            "description": "林彻的能力和证据意识持续被展示，但个人关系、心理代价和行动选择没有明显变化。他从档案室边缘人变成主动调查者，却几乎始终以同一种冷静、专业、独行的方式行动，人物弧线缺少新的选择或风险转折。",
+            "evidence": [
+              "第1章写他“语气恢复了平日的顺从”并暗中备份；第4章公开展示公式迫使赵秉忠封存录像；第5章面对陈海警告仍只回答“我只做客观记录和样本提取”，行动逻辑基本未变。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.emotion-4",
+            "severity": "medium",
+            "category": "emotion",
+            "location": "全文",
+            "description": "紧张感主要依赖夜雾、车影、机械声和危险现场，林彻对十年前被诬陷、陆建平被定性为醉酒肇事等事件的愤怒、愧疚或私人牵连表现不足，导致证据越重，情绪峰值却没有同步升级。",
+            "evidence": [
+              "第1章提到林彻“被扣上收受黑金的莫须有罪名，直接发配到户籍档案室坐了十年冷板凳”，但后续关键发现时主要仍是“指尖猛地收紧”“目光瞬间定格”等克制反应。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.readability-5",
+            "severity": "medium",
+            "category": "readability",
+            "location": "全文",
+            "description": "大量专业参数直接被林彻转化为确定结论，读者较少有机会在证据与结论之间自行推理；这符合硬核题材的信息密度，但部分结论过早封死了替代解释。",
+            "evidence": [
+              "第2章直接得出“这是一场精密计算过的光学魔术”；第5章明确写成“可以明确判定，这辆套牌客车在几十分钟前刚刚在此处完成过机油加注或动力系统的临时补能”。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-6",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "林彻在身份受限、已被赵秉忠盯防且专案组即将进驻的情况下，仍多次独自深入封闭现场并提取物证。文本解释了他的程序意识，却没有充分交代他为何能持续承担这种高风险越权行动，也缺少一次真正的后果反馈。",
+            "evidence": [
+              "第5章陈海明确警告“你现在的身份是户籍民警，没有现场勘验权……赵所正盯着你的把柄”，林彻仍“顺着双排车辙延伸的方向……无声向前推进”。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.payoff-7",
+            "severity": "medium",
+            "category": "payoff",
+            "location": "全文",
+            "description": "证据等级从监控、车辙、销毁行为升级到代签路单和车辆内饰复刻，表面回报在增强；但行动结果仍多为发现和记录，对赵秉忠、周泰或更高层的实际打击没有同步升级，爽感容易停留在“证明自己判断正确”。",
+            "evidence": [
+              "第4章林彻公开揭穿后，赵秉忠最终只是“先把录像封存备查”；第5章林彻找到路单后仍只能“将物证贴身藏进内衬口袋”。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-8",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "技术解释、测量参数和气味材质描写持续占据较大篇幅，现场行动的节奏因此被反复暂停。对于重视公平推理的读者，线索本身有效，但信息呈现略显堆叠。",
+            "evidence": [
+              "第2章连续列出“架设高度为四点五米”“镜头俯角……二十八度”“偏角……三十度”；第5章又详细解释“硝基喷漆与高浓度二甲苯溶剂”的气味。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "这五章的主线推进扎实，幽灵公交被拆解为物理骗局、周泰毁证暴露旧案关联、代签路单改写事故叙事，线索公平性和悬疑题材承诺都较强，章尾也持续提供有效追读动力。主要问题在跨章体验：调查场景、证据发现和黑影收尾高度重复，核心真相虽不断加码却尚未形成更明确的阶段性闭环；林彻的情绪、关系和行动代价变化不足，使人物更像稳定的推理工具。后续若能让调查引发现实反击、迫使林彻在程序与个人清算之间作出代价明确的选择，并让一条旧案线索真正兑现为人物或责任链上的突破，追读欲望会进一步提升。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 5,
+      "chapterAverage": 79.4,
+      "chapterMedian": 78.7,
+      "chapterMinimum": 74.9,
+      "openingThreeAverage": 80.6,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [],
+    "errors": [
+      "大纲读者评审失败：[\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      0,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      2,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      4,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      5,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      6,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      7,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      8,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      9,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  }\n]"
+    ],
+    "durationMs": 260047
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 764895,
+  "warnings": [
+    "大纲阶段 warnings（1 条，详见 outlineWarnings 字段）",
+    "读者评审失败（1 条，详见 readerEvaluation.errors）"
+  ]
+}

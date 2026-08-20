@@ -1,0 +1,684 @@
+{
+  "book": "寒流盲盒：商场十二夜",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": "ensemble-survival",
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "scenario:ensemble-survival",
+  "promptChars": 69,
+  "requestedChapterCount": 5,
+  "phaseTimings": {
+    "outlineDirectionsMs": 25127,
+    "outlineExpandMs": 228657,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 818,
+    "continueWriteMs": 461290,
+    "totalMs": 715892
+  },
+  "completedChapters": 5,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 暴雪破门封死退路",
+      "words": 2910,
+      "paras": 29,
+      "paraCv": 0.4,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆巡掌心被生锈的钢制螺栓边缘硬生生划开一道两寸长的血口，黏稠的鲜血顺着一字改锥的防滑胶柄淌下，在零下十五度的空气里迅速发黑结壳。他右膝死死顶在防火隔断门的横撑底座上，左肩前倾，用整个上半身的重量压住那根即将脱扣的铁质插栓。铁门外侧传来钢铁龙",
+      "tail": "接着，商场外围残存的高音应急喇叭因为短路与狂风的撕扯，骤然爆发出极其尖锐刺耳的红色极寒冻雨警报声，凄厉的啸叫穿透厚重的防火钢板，在死寂黑暗的地下走廊内疯狂回荡。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 恶霸抢暖气点燃群愤",
+      "words": 3059,
+      "paras": 19,
+      "paraCv": 0.1,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：19 段平均 159 字、变异系数 0.10，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "门外的防空警报声被数寸厚的特级防火钢板削弱为沉闷的嘶鸣，刺骨的极寒仍顺着门轴细缝向地下一层疯狂渗透。走廊顶端的黄色应急灯管明灭不定，发出低微的电流嗡鸣，混凝土墙面上迅速凝结出一层灰白硬霜。十二名避难市民挤在狭窄的配电房外侧通道里，单薄的衣物",
+      "tail": "缕微弱干瘪的余温从高处窄缝中散逸出来。走廊内微薄的暖意被极寒空气迅速吞噬殆尽，冰霜沿着地面与墙壁加速蔓延，将十二个人的生死前路尽数冻结在死寂冰冷的钢铁绝境之中。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 盲盒公投立下生死规矩",
+      "words": 3168,
+      "paras": 25,
+      "paraCv": 0.49,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 1/25，超过 5 句的段 2。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "陆巡将十二个折叠瓦楞纸盒重重掼在生锈的铁皮调度台上。厚重的铁板发出一声沉闷震耳的金属轰鸣，在狭窄潮湿的地下一层走廊内激荡开来，硬生生切断了电焊枪残留的焦臭与电弧爆鸣。所有人被震得浑身一颤，连正握着电棍的周猛也下意识收住了叫嚣，凶狠的目光瞬间",
+      "tail": "文雪，缓缓收回目光，隐藏在防寒服下摆里的右手悄然抬起，借着宽大布料的遮掩，一截泛着冷冽银白反光的金属硬物从指缝间滑出，被极其熟练地塞进了厚实紧绷的棉服袖口深处。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 一眼拆穿藏匿发热贴",
+      "words": 3072,
+      "paras": 23,
+      "paraCv": 0.31,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆巡的右手五指如同一把淬了冰的铁钳，毫无征兆地卡在黑衣保安的右侧手腕上。缠着白纱布的指节精准压迫在尺神经与桡动脉的交汇处，指尖稍一发力，对方便发出了一声短促的痛呼。冰冷刺骨的目光越过半空中的微弱尘埃，直接穿透应急灯昏黄的光晕，如利刃般扎进那",
+      "tail": "糊味与蓝光骤然熄灭。\n\n失去最大倚仗的周猛踉跄着后退了两步，后背重重撞在冰冷的混凝土墙壁上。在全场冰冷鄙夷的注视下，周猛被当众夺下电棍，眼里闪过一丝刺骨的怨毒。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 暖机变红警报骤然拉响",
+      "words": 3452,
+      "paras": 35,
+      "paraCv": 0.4,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆巡把缴获的高压防暴电棍随手递给身侧的杜远，目光自周猛阴鸷的脸上挪开。走廊里的第一轮物资唱票刚刚尘埃落定，分到发热贴的市民各自退回承重柱下，用冻僵的指节拆开包装，紧紧贴在胸口与腰腹处。微弱的温热让众人紧绷的神经稍有松弛，但空气中的柴油焦味与",
+      "tail": "吞没在一片血色之中。刺耳的蜂鸣警报疯狂尖啸，出风口喷出的暖气瞬间彻底断流，刺骨的寒流沿着走廊缝隙汹涌倒灌，致命的极寒阴影在这一刻毫无保留地笼罩在每一个人的心头。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 暴雪破门封死退路"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 恶霸抢暖气点燃群愤"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 盲盒公投立下生死规矩"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 一眼拆穿藏匿发热贴"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 暖机变红警报骤然拉响"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 高烧失控引发疯抢药箱"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 限流规程秒杀特权叫嚣"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 盲盒暗战锁定废票黑手"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 乱码指令撕开黑客伪装"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 电缆平切引爆惊天杀机"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787223685348",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-xAdihz\\story-runtime\\proj-1787223685348-b2fa4e9cd55a.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 5,
+    "canonicalSnapshots": 6,
+    "latestSnapshotChapter": 5,
+    "sceneChunks": 5,
+    "events": 21
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 16,
+    "foreshadowCount": 10,
+    "volumeCount": 4,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "48453bfdfff5517d69ca09593919a802b0bb5d3dcb7ce6c50d80d914be84f2e7",
+    "completeCharacterProfileCount": 16,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 16,
+    "foreshadowCount": 10,
+    "volumeCount": 4,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 5
+  },
+  "outlineWarnings": [
+    "大纲存在 4 个未登记角色（商场经理赵振廷、退休电工老孙、假赵振廷、老孙），执行第 1 轮补登记",
+    "未登记角色已补登记 4/4 个",
+    "本地收缩超长标题/CBN/CEN 共 11 章（第 16、18、26、29、32、33、35、36、37、38、39 章），未发 AI 请求"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 4,
+    "firstPassRate": 0.8,
+    "rewrittenChapters": 1,
+    "totalRewriteRounds": 1,
+    "averageRewriteRounds": 0.2,
+    "pipelineAttempts": 5
+  },
+  "runtimeMetrics": {
+    "requestCount": 21,
+    "requestCountsByPurpose": {
+      "scene-draft": 9,
+      "fact-extraction": 6,
+      "chapter-judge": 6
+    },
+    "latencyP50Ms": 15342,
+    "latencyP95Ms": 44646,
+    "latencyMaxMs": 50880
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1786812318014",
+      "model": "gpt-5.6-luna",
+      "independentFromWriter": true,
+      "selectionReason": "default-wawa-gpt-5.6-luna"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": null,
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 76.8,
+        "continueReading": true,
+        "confidence": 0.88,
+        "dimensions": {
+          "readability": 82,
+          "openingHook": 88,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 79,
+          "characterVoice": 61,
+          "payoffValue": 68,
+          "pacing": 73,
+          "endingPull": 76
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“梁岳和假赵振廷同时扑了上来”以及后文“假赵振廷靠在配电房外围的铁丝网旁”"
+            ],
+            "suggestion": "首次出现时补一笔可验证的认定来源，或暂以表面身份称呼、在陆巡观察中埋下不对劲的细节。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "从“整面厚达二十四毫米的双层钢化玻璃”炸裂，到“防火门被硬生生推进门框内槽”的逃生段落，连续使用大量材质、尺寸、受力和生理反应描写。"
+            ],
+            "suggestion": "保留玻璃炸裂、楼梯结冰、防火门卡死等关键障碍，其余同类感官描写适当合并，把篇幅让给十二人的状态差异或资源抉择。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“陆巡环视着这十二张神色各异、满怀戒备与恐惧的脸庞，正准备开口梳理目前的生存物资储备。”随后立刻被“咚！”打断。"
+            ],
+            "suggestion": "在撞击前给出一个短促但具体的资源发现、人员分歧或陆巡的分配决定，再让撞门改变该决定的条件，能同时兑现生存博弈并增强章尾悬念。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "陆巡多次以“冷声喝道”“厉声指挥”“暴喝出声”发布指令；梁岳、孙长发和沈文雪的主要台词也都服务于执行、报障或提醒。"
+            ],
+            "suggestion": "在共同救援中加入一两处角色对风险优先级的不同判断或带个人经验的反应，让分工不只体现为职业标签。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "章首以玻璃爆裂、寒流倒灌和封门逃生迅速建立了明确的生存危机，空间路线和行动目标始终清晰，防火门锁死也提供了有效的阶段性小兑现。问题在于灾害描写略显同质，人物尚主要承担功能性分工；“假赵振廷”的突兀命名会造成理解卡顿。结尾的撞门与警报具备继续追读动力，但若能让资源危机或人际博弈先落下一子，作为废土群像首章会更有独特抓力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 68.7,
+        "continueReading": true,
+        "confidence": 0.93,
+        "dimensions": {
+          "readability": 72,
+          "openingHook": 82,
+          "conflictEffectiveness": 78,
+          "emotionalDrive": 64,
+          "characterVoice": 61,
+          "payoffValue": 54,
+          "pacing": 58,
+          "endingPull": 84
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“好，姓陆的，算你嘴皮子厉害！”……“周猛……拽出一台手提式小型工业电焊机。”以及“将整个核心出风口彻底封死在一道密不透风的钢铁囚笼之中。”"
+            ],
+            "suggestion": "让陆巡的逻辑交涉换取一个具体筹码，或提前埋下并立刻利用设备、燃料、门禁等条件，使周猛的封锁带来代价；即使暂时失败，也应让主角掌握新的主动权。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“老子就是规矩！谁敢炸刺，老子先捅几个窟窿扔到门外喂冻雨！”以及“谁再敢跟老子讲道理，老子就让这道铁栅栏全天通着高压电。”"
+            ],
+            "suggestion": "给周猛设置明确的顾虑和支持基础，例如保安队内部意见、燃料控制权或伤员压力；让群众、崔敏、假赵振廷分别采取有差异的策略，而不是只负责推动冲突。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“钝器造成的重度头皮挫裂伤会在两分钟内导致血管严重痉挛，血小板失去凝血活性。”以及“尸体会进一步拉低狭窄空间的整体热容。”"
+            ],
+            "suggestion": "保留一两个能直接改变决策的关键数据，其余通过动作、测温变化、机器异响或人物反应呈现；让陆巡的判断带有概率和代价，而非连续给出绝对结论。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "周猛先“狠狠踹在孙长发的右肩上”，随后“抽出一柄沉重的高压防暴电棍”，又“将整个核心出风口彻底封死”，最后还威胁“让你们连一丝温气都闻不到”。"
+            ],
+            "suggestion": "删减一轮威胁或重复性动作，把篇幅换成一次真正改变站位的行动，例如有人切断电源、藏走燃料、转投陆巡，形成更清晰的阶段性转折。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-5",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“严重的失温正悄无声息地侵蚀着每一个人的神智。”以及“将十二个人的生死前路尽数冻结在死寂冰冷的钢铁绝境之中。”"
+            ],
+            "suggestion": "选择一两名避难者展示失温、争抢、退让或背叛的具体行为，并让暖气被封后立刻产生可见后果，增强关系变化和生存代价。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-6",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "本章开头写“门外的防空警报声被数寸厚的特级防火钢板削弱为沉闷的嘶鸣”，而上一章尾声刚写“咚！”和“骤然爆发出极其尖锐刺耳的红色极寒冻雨警报声”。"
+            ],
+            "suggestion": "开头先用一两个动作回应门外撞击的结果，再转入暖风机启动和周猛夺权，能让连续追更的承接更紧。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章用稀缺暖气迅速制造了清晰而具有生存压力的冲突，周猛封死暖风机的结尾也有较强追读力。但冲突主要依靠恶霸连续升级和陆巡输出技术判断推进，主角没有获得实质性小胜，群像人物也较扁平。读者会继续追看下一章如何破局，但对“高智商博弈”和“资源公投”的期待尚未得到兑现。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 79.4,
+        "continueReading": true,
+        "confidence": 0.88,
+        "dimensions": {
+          "readability": 83,
+          "openingHook": 86,
+          "conflictEffectiveness": 82,
+          "emotionalDrive": 74,
+          "characterVoice": 72,
+          "payoffValue": 78,
+          "pacing": 76,
+          "endingPull": 84
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“这套严密的博弈规则如同一盆冰水，浇灭了周猛继续施暴的气焰，也让绝望的人群找到了一根救命稻草。”随后又用较长篇幅解释工具箱的油泥、划痕、擦拭痕迹。"
+            ],
+            "suggestion": "保留工具箱异常这一关键线索，但压缩对“崭新”“锋利”“擦拭过”等同类痕迹的连番确认，让孙长发的异常反应更快落到一个可供读者推断的具体缺失物或风险上。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "陆巡说“每浪费一升柴油，我们所有人的生存时间就会直接扣除四小时”；沈文雪紧接着说“当核心体温跌破三十度，心室纤颤会在十分钟内夺走性命”。"
+            ],
+            "suggestion": "让陆巡更集中于制度、风险和人心判断，让沈文雪更多从具体病人症状与救治选择出发；同时给反对者一两句不完全出于贪婪或暴力的现实顾虑，可增强群像可信度。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“十二人一人一盒，无记名公投。”与后文“每个纸盒代表一个人的独立诉求，投入总箱后当众拆封”以及“纸盒装入投票签后全部堆在长桌正中央”并列出现。"
+            ],
+            "suggestion": "明确一次完整流程：每人写一张方案票后投进同一个透明总箱，或每项议题对应一个票箱；并说明纸盒在匿名、封存和唱票中各自承担什么功能。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章有效承接上章周猛以武力封锁暖风口的危机：陆巡没有只靠嘴压人，而是迅速把个人对抗转化为全员公投和公开监督，周猛收起电棍、假赵振廷夺取计票权失败，局势有明确变化。孙长发修复油机提供了即时生存回报，工具箱划痕与阴影中藏入袖口的金属物又把读者拉回“全员嫌疑”的主线，章尾具备追读力。主要不足不在于缺事件，而在于专业术语、强结论和线索描写过密，且公投机制的物理流程需要再厘清；若后续尽快兑现工具箱遭动手脚和金属物的实际用途，悬疑张力会更扎实。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 81.7,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 80,
+          "openingHook": 88,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 78,
+          "characterVoice": 74,
+          "payoffValue": 89,
+          "pacing": 72,
+          "endingPull": 82
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“正常人在零下十度以上的低温环境下，为了维持核心平衡，双脚行走的受力重心会自然落在脚掌中轴线上。”"
+            ],
+            "suggestion": "修正温度表述，并减少无法现场精确测量的数字；可以把重点放在右侧衣物融霜、局部湿痕和保安行动路线等可复核物证上。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“而你从刚才走到桌前开始，六十秒内眨眼了四十二次，瞳孔在接触应急灯光时呈现出异常的回避反射，右侧颈动脉的搏动频率已经超过了一百一十次。”"
+            ],
+            "suggestion": "保留一到两个最有说服力的异常即可，把其余判断转化为陆巡的短句或动作，让证据揭露更快、更有压迫感。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-3",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“物理定律和人体机能不会撒谎。”“极寒求生不需要繁琐的官僚做账，只需要最纯粹的物理透明。”"
+            ],
+            "suggestion": "在胜利判断之外补一个代价、犹豫或对某个具体人的偏袒，让陆巡的规则观与群像关系产生更具体的摩擦。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-4",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“在全场冰冷鄙夷的注视下，周猛被当众夺下电棍，眼里闪过一丝刺骨的怨毒。”"
+            ],
+            "suggestion": "可在结尾追加一个立即可见的反扑信号，例如周猛触发备用电源、有人趁混乱失踪，或陆巡发现被夺电棍并非真正目标，以增强追更驱动力。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一段的藏匿金属物线索，以陆巡当众拆穿保安私藏发热贴为核心，完成了物资公投规则落地、管理层夺权受阻和周猛威信受损三重推进，证据揭露与冲突升级都能给读者明确回报。主要问题是生理数据和物理判断解释过密，部分“高智商推理”缺少可信的现场观察基础；陆巡持续全知全能，群像人物的自主选择和关系变化相对有限。结尾已有周猛怨恨与暴力升级的追读点，但还可以用更具体的反扑动作或幕后线索把悬念再推高。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 64.9,
+        "continueReading": false,
+        "confidence": 0.94,
+        "dimensions": {
+          "mainlineProgress": 78,
+          "patternVariation": 55,
+          "suspensePayoff": 62,
+          "characterArc": 52,
+          "emotionalArc": 68,
+          "payoffEscalation": 60,
+          "genrePromise": 64,
+          "continuationDesire": 76
+        },
+        "issues": [
+          {
+            "id": "reader.payoff-1",
+            "severity": "high",
+            "category": "payoff",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "第3章写道“那人警惕地环视四周……一截泛着冷冽银白反光的金属硬物从指缝间滑出”，第5章又写“有人在极寒降临前就对整栋建筑的动力系统动了手脚”，并继续称“必然潜伏着那个执行破坏指令的真正黑手”。"
+            ],
+            "suggestion": "下一阶段应至少兑现一次身份线索或行动后果，例如明确某人的行动轨迹、利益动机或与冷备份黑产的联系，同时保留真正反转空间。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "第2章中陆巡以“机器撑不过一小时”迫使周猛让步，但周猛随后“将整个核心出风口彻底封死”；第4章陆巡又识破保安私藏物资并夺下电棍，结尾仍是“周猛被当众夺下电棍，眼里闪过一丝刺骨的怨毒”。"
+            ],
+            "suggestion": "让后续破局更多由群体投票、孙长发的专业选择、沈文雪的医疗判断或普通避难者的利益交换完成，避免每次都由陆巡单点识破并夺取控制权。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-3",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "第3章中“杜远跟着站到了长桌旁”，第4章中沈文雪“眼神中带着不加掩饰的信任”，第5章则由杜远“手持消防破拆斧守在暖风机铁栅栏旁”。"
+            ],
+            "suggestion": "安排一次阵营成员因资源分配、隐瞒信息或救人取舍产生真实分歧，并让他们在选择后承担可见代价。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.genre-promise-4",
+            "severity": "medium",
+            "category": "genre-promise",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "第3章宣布“每天由全体人员对柴油暖风机运行功率、防寒服轮换使用权、高热量食物配给以及急救药品优先权进行匿名投票”，第4章却直接写“最终，失温最严重的老弱病残和孙长发优先分到了足额的发热贴与保暖毯”。"
+            ],
+            "suggestion": "让下一轮投票出现互相冲突的合理诉求，例如维修人员需要燃料、伤员需要保温、守门者需要体力，并明确多数决如何牺牲少数人的利益。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.payoff-5",
+            "severity": "medium",
+            "category": "payoff",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "陆巡发现“锁扣处留有新鲜的刮擦痕迹”，又确认“供暖管线不仅被人动过手脚”，随后“除了几根垂落的废弃橡胶水管和堆积的灰尘，视线所及之处空无一人”。"
+            ],
+            "suggestion": "在故障发生前后保留一两个可复核的现场证据，并让至少两名角色的行动时间线发生冲突，使读者能参与判断而不只是等待陆巡揭晓。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-6",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "例如“右肩下沉了整整四公分”“六十秒内眨眼了四十二次”“核心体温跌破三十二度，九十分钟内就会发生不可逆的呼吸麻痹”，以及“温差不会超过三度”“每浪费一升柴油……生存时间就会直接扣除四小时”。"
+            ],
+            "suggestion": "减少无必要的精确数字，改用可观察的症状、设备读数和因果链；关键数字只保留能直接影响决策的部分。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-7",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "第1章直接多次使用“假赵振廷”，但此前未交代读者为何知道此人是假身份；第3章和第5章又称其为“假赵振廷”并让他参与管理层博弈。"
+            ],
+            "suggestion": "先使用“赵经理”或“自称赵振廷”，通过证件、口音、他人记忆或行为矛盾逐步证明其身份可疑。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "五章内主线从暴雪封锁推进到暖风机争夺、公开公投、物资盗窃和能源系统被人为破坏，事件链清楚，章末钩子连续有效，读者有较强继续阅读动力。主要短板是冲突结构反复依赖陆巡的技术判断和现场压制，周猛虽持续受挫却没有改变策略；公投这一核心卖点尚未真正成为资源博弈，群像关系也主要停留在站队。工具箱和金属物线索已经得到部分兑现，但“谁在破坏、为何破坏”的悬疑仍停留在加码阶段，下一窗口需要给出可推理的身份线索和更具代价的群体决策。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 4,
+      "chapterAverage": 76.7,
+      "chapterMedian": 78.1,
+      "chapterMinimum": 68.7,
+      "openingThreeAverage": 75,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 1,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "黄金三章平均 75 < 78",
+      "低分跨章窗口 1-5=64.9"
+    ],
+    "errors": [
+      "大纲读者评审失败：[\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      2,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  },\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      5,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  }\n]",
+      "第5章读者评审失败：AI 流式响应提前中断：已收到 0 字，未见结束标记",
+      "1-3章窗口评审失败：[\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      3,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  }\n]"
+    ],
+    "durationMs": 256829
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 715980,
+  "warnings": [
+    "大纲阶段 warnings（3 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（2 条，影子模式不阻断）",
+    "读者评审失败（3 条，详见 readerEvaluation.errors）"
+  ]
+}

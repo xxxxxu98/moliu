@@ -1,0 +1,33 @@
+{
+  "mode": "storyflow-matrix",
+  "generatedAt": "2026-08-20T10:57:08.734Z",
+  "concurrency": 5,
+  "chapterCount": 5,
+  "scenarioId": "relationship-burn",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "scenarioId": "relationship-burn",
+      "provider": "openai",
+      "model": "gemini-3.7-flash-high",
+      "pass": true,
+      "exitCode": 0,
+      "wallMinutes": 16,
+      "note": "",
+      "chaptersAccepted": "5/5",
+      "status": "complete",
+      "wordsMin": 2666,
+      "wordsAvg": 2772,
+      "wordsMax": 2845,
+      "runtimeBackend": "sqlite",
+      "warnings": 3,
+      "firstPassRate": 0.6,
+      "totalRewriteRounds": 2,
+      "requestCount": 24,
+      "readerOutlineScore": null,
+      "readerChapterAverage": 76.9,
+      "readerChapterMinimum": 68.7,
+      "readerIndependent": true
+    }
+  ]
+}
