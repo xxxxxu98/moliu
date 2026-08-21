@@ -176,22 +176,19 @@ export const useProjectStore = defineStore('project', () => {
     currentChapterId.value = chapterId;
   }
 
-  async function createChapter(volumeId: string, options?: { globalOrderIndex?: number }): Promise<Chapter | null> {
+  async function createChapter(volumeId: string): Promise<Chapter | null> {
     if (!currentProject.value) return null;
-
-    // 章号一律全书连续：显式传入时用全局章序，未传按全书章数追加。
-    // 卷内计数会让跨卷新章的占位标题错位（全书第99章显示成卷内第29章），
-    // 多卷项目手动建章的 orderIndex 还会与别卷重复导致排序错乱。
-    const orderIndex = options?.globalOrderIndex ?? chapters.value.length;
+    
+    const volumeChapters = chapters.value.filter(c => c.volumeId === volumeId);
     const newChapter: Chapter = {
       // 时间戳 + 全局章序：批量建章在同毫秒内连续 create，裸 Date.now() 会撞 id，
       // 后续 updateChapter 按 id findIndex 会改到同一条章节上
       id: `chapter-${Date.now()}-${chapters.value.length}`,
       volumeId,
-      title: `第${orderIndex + 1}章`,
+      title: `第${volumeChapters.length + 1}章`,
       content: '',
       wordCount: 0,
-      orderIndex,
+      orderIndex: volumeChapters.length,
       version: 1,
       status: 'draft',
       createdAt: new Date().toISOString(),

@@ -221,12 +221,7 @@ async function handleChapterDialogConfirm() {
       message.warning("请选择所属卷");
       return;
     }
-    await projectStore.createChapter(newChapterVolumeId.value);
-    const newChapter = projectStore.chapters.find(
-      (c) =>
-        c.title ===
-        `第${projectStore.chapters.filter((ch) => ch.volumeId === newChapterVolumeId.value).length}章`,
-    );
+    const newChapter = await projectStore.createChapter(newChapterVolumeId.value);
     if (newChapter) {
       await projectStore.updateChapter(newChapter.id, {
         title: newChapterTitle.value.trim(),
