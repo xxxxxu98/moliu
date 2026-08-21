@@ -116,6 +116,7 @@ export class AIChapterJudge implements ChapterJudge {
         '',
         '只输出一个 JSON 对象，不要 Markdown 代码块，不要解释。',
         '顶层必须是 { 开头的对象，禁止返回数组（不要把对象包成 [{…}]）；fulfillment/forbidden/issues 的值才是数组。',
+        '数组每一项必须包含下列示例的全部字段，一个都不能省略；reason 必填（一句话即可），evidence 无内容时用 []。',
         'JSON 字段必须为：',
         '{"fulfillment":[{"node":"…","fulfilled":true,"evidence":["…"],"reason":"…"}],',
         '"forbidden":[{"zone":"…","violated":false,"evidence":[],"reason":"…"}],',

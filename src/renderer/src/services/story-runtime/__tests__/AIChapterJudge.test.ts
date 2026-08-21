@@ -345,6 +345,73 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
       checkDeepSemantic: true,
     });
     expect(capturedSystem).toContain('禁止返回数组');
+    expect(capturedSystem).toContain('一个都不能省略');
+    expect(capturedSystem).toContain('reason 必填');
+  });
+
+  it('履约/禁区项漏写 reason 时补空串放行，不再硬拒终止整批', async () => {
+    // 2026-08-21 生产实测 proj-1787300146075 ch38：fulfillment[1] 漏写 reason，
+    // expected string, received undefined → review-unavailable 停整批。
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => ({
+        fulfillment: [
+          { node: '节点A', fulfilled: true, evidence: ['正文原句'] },
+          { node: '节点B', fulfilled: false },
+        ],
+        forbidden: [{ zone: '禁区1', violated: false }],
+        issues: [],
+      })),
+    };
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A', '节点B'],
+      forbiddenZones: ['禁区1'],
+      chapterText: '正文原句',
+      checkDeepSemantic: true,
+    });
+    expect(result.fulfillment[0]).toMatchObject({ node: '节点A', fulfilled: true, reason: '' });
+    expect(result.fulfillment[1]).toMatchObject({ node: '节点B', fulfilled: false, reason: '' });
+    expect(result.forbidden[0]).toMatchObject({ zone: '禁区1', violated: false, reason: '' });
+  });
+
+  it('issues 项漏写 location 时补空串放行', async () => {
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => ({
+        fulfillment: [],
+        forbidden: [],
+        issues: [
+          { type: 'logic_gap', severity: 'high', description: '前后矛盾', evidence: [] },
+        ],
+      })),
+    };
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: [],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+    });
+    expect(result.issues[0]).toMatchObject({ type: 'logic_gap', severity: 'high', location: '' });
+  });
+
+  it('issues 项 type/severity 枚举外时剔除该项而非硬拒整批', async () => {
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => ({
+        fulfillment: [],
+        forbidden: [],
+        issues: [
+          { type: 'logic_gap', severity: 'high', location: '第2段', description: '矛盾', evidence: [] },
+          { type: '未知类型', severity: 'high', location: '第3段', description: 'type 枚举外剔除', evidence: [] },
+          { type: 'ooc', severity: '超高', location: '第4段', description: 'severity 枚举外剔除', evidence: [] },
+        ],
+      })),
+    };
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: [],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+    });
+    expect(result.issues).toHaveLength(1);
+    expect(result.issues[0]?.type).toBe('logic_gap');
   });
 
   it('payoffCandidates 存在时判定伏笔回收：候选内的 id 透传，候选外的幻觉 id 丢弃', async () => {

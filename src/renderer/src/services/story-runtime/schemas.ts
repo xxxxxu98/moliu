@@ -499,16 +499,12 @@ export const fulfillmentCheckResultSchema: z.ZodType<FulfillmentCheckResult> = z
   results: z.array(fulfillmentNodeJudgmentSchema),
 });
 
+const chapterJudgeIssueTypes = ['fact_conflict', 'logic_gap', 'ooc', 'timeline', 'power', 'foreshadow'] as const;
+const chapterJudgeSeverities = ['critical', 'high', 'medium', 'low'] as const;
+
 const chapterJudgeIssueSchema = z.object({
-      type: z.enum([
-        'fact_conflict',
-        'logic_gap',
-        'ooc',
-        'timeline',
-        'power',
-        'foreshadow',
-      ]),
-      severity: z.enum(['critical', 'high', 'medium', 'low']),
+      type: z.enum(chapterJudgeIssueTypes),
+      severity: z.enum(chapterJudgeSeverities),
       location: z.string(),
       description: z.string(),
       evidence: stringArraySchema,
@@ -551,23 +547,37 @@ function coerceChapterJudgeResult(value: unknown): unknown {
       item => typeof item === 'string' && item.trim().length > 0,
     );
   }
-  // 数组内缺核心字段的元素直接剔除（无法安全构造判定），保留可解析部分
-  obj.fulfillment = (obj.fulfillment as unknown[]).filter(
-    item => typeof item === 'object' && item !== null
-      && typeof (item as Record<string, unknown>).node === 'string'
-      && typeof (item as Record<string, unknown>).fulfilled === 'boolean',
-  );
-  obj.forbidden = (obj.forbidden as unknown[]).filter(
-    item => typeof item === 'object' && item !== null
-      && typeof (item as Record<string, unknown>).zone === 'string'
-      && typeof (item as Record<string, unknown>).violated === 'boolean',
-  );
-  obj.issues = (obj.issues as unknown[]).filter(
-    item => typeof item === 'object' && item !== null
-      && typeof (item as Record<string, unknown>).type === 'string'
-      && typeof (item as Record<string, unknown>).severity === 'string'
-      && typeof (item as Record<string, unknown>).description === 'string',
-  );
+  // 数组内缺核心字段的元素直接剔除（无法安全构造判定），保留可解析部分；
+  // 辅助字段（reason/location）不参与门禁决策，缺失补安全默认而非硬拒——
+  // 2026-08-21 生产实测 proj-1787300146075 ch38：fulfillment[1] 漏写 reason，
+  // zod 硬拒 → review-unavailable 终止整批。evidence 由 stringArraySchema 兜底 []。
+  // 剔除口径与 zod 约束对齐（枚举、min(1)），否则不合格元素穿透剔除后仍会硬拒。
+  const isRecord = (item: unknown): item is Record<string, unknown> =>
+    typeof item === 'object' && item !== null;
+  const issueTypeSet = new Set<string>(chapterJudgeIssueTypes);
+  const severitySet = new Set<string>(chapterJudgeSeverities);
+  obj.fulfillment = (obj.fulfillment as unknown[])
+    .filter(
+      item => isRecord(item)
+        && typeof item.node === 'string' && item.node.trim().length > 0
+        && typeof item.fulfilled === 'boolean',
+    )
+    .map(item => ({ ...item, reason: typeof item.reason === 'string' ? item.reason : '' }));
+  obj.forbidden = (obj.forbidden as unknown[])
+    .filter(
+      item => isRecord(item)
+        && typeof item.zone === 'string' && item.zone.trim().length > 0
+        && typeof item.violated === 'boolean',
+    )
+    .map(item => ({ ...item, reason: typeof item.reason === 'string' ? item.reason : '' }));
+  obj.issues = (obj.issues as unknown[])
+    .filter(
+      item => isRecord(item)
+        && typeof item.type === 'string' && issueTypeSet.has(item.type)
+        && typeof item.severity === 'string' && severitySet.has(item.severity)
+        && typeof item.description === 'string',
+    )
+    .map(item => ({ ...item, location: typeof item.location === 'string' ? item.location : '' }));
   return obj;
 }
 
