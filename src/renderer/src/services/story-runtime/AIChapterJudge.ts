@@ -115,6 +115,7 @@ export class AIChapterJudge implements ChapterJudge {
         ...payoffRules,
         '',
         '只输出一个 JSON 对象，不要 Markdown 代码块，不要解释。',
+        '顶层必须是 { 开头的对象，禁止返回数组（不要把对象包成 [{…}]）；fulfillment/forbidden/issues 的值才是数组。',
         'JSON 字段必须为：',
         '{"fulfillment":[{"node":"…","fulfilled":true,"evidence":["…"],"reason":"…"}],',
         '"forbidden":[{"zone":"…","violated":false,"evidence":[],"reason":"…"}],',

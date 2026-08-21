@@ -294,6 +294,59 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
     ).rejects.toThrow('结构校验失败');
   });
 
+  it('模型把对象裹一层数组返回时解包首元素，不再硬拒终止整批', async () => {
+    // 2026-08-21 生产实测 proj-1787300146075 ch31：审查模型返回 [{…}]，
+    // expected object, received array 硬拒 → review-unavailable 停整批。
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => ({
+        fulfillment: [{ node: '节点A', fulfilled: true, evidence: ['正文原句'], reason: '已写到' }],
+        forbidden: [],
+        issues: [],
+      })),
+    };
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文原句',
+      checkDeepSemantic: true,
+    });
+    expect(result.fulfillment[0]).toMatchObject({ node: '节点A', fulfilled: true });
+  });
+
+  it('多元素顶层数组无法安全选定，仍走硬失败', async () => {
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => [
+        { fulfillment: [], forbidden: [], issues: [] },
+        { fulfillment: [], forbidden: [], issues: [] },
+      ]),
+    };
+    await expect(
+      new AIChapterJudge(ai).judge({
+        mustCover: ['节点A'],
+        forbiddenZones: [],
+        chapterText: '正文',
+        checkDeepSemantic: true,
+      }),
+    ).rejects.toThrow('结构校验失败');
+  });
+
+  it('系统提示词明确禁止顶层数组返回', async () => {
+    let capturedSystem = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        return { fulfillment: [], forbidden: [], issues: [] };
+      }),
+    };
+    await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+    });
+    expect(capturedSystem).toContain('禁止返回数组');
+  });
+
   it('payoffCandidates 存在时判定伏笔回收：候选内的 id 透传，候选外的幻觉 id 丢弃', async () => {
     const ai: StructuredAI = {
       generate: vi.fn(async () => ({

@@ -523,6 +523,18 @@ const chapterJudgeIssueSchema = z.object({
  * 空响应/非对象不在此兜底（仍走硬失败 → truncated 重试）。
  */
 function coerceChapterJudgeResult(value: unknown): unknown {
+  // 顶层数组解包：模型偶发把对象裹一层数组返回（[{fulfillment:…}]——
+  // 2026-08-21 生产实测 proj-1787300146075 ch31，expected object, received array
+  // 硬拒 → review-unavailable 终止整批）。单元素数组取元素本身；
+  // 多元素/空数组不在此兜底（无法安全选定，仍走硬失败由上层处理）。
+  if (Array.isArray(value)) {
+    if (value.length === 1) {
+      console.warn('[schemas] 章节审查结果顶层为数组，已解包取首元素');
+      value = value[0];
+    } else {
+      return value;
+    }
+  }
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return value;
   const obj = { ...(value as Record<string, unknown>) };
   for (const key of ['fulfillment', 'forbidden', 'issues'] as const) {

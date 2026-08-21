@@ -22,4 +22,15 @@ describe('buildDirectionPrompt', () => {
 
     expect(prompt.system).toContain('用户已允许跨题材扩展');
   });
+
+  it('要求三个方向标题命名格式错开，禁止清一色冒号或清一色短句', () => {
+    const prompt = buildDirectionPrompt({
+      seed: '退休魔王在小区当保安',
+      wordCountRange: '100万-300万',
+    });
+
+    expect(prompt.system).toContain('标题风格多样性');
+    expect(prompt.system).toContain('冒号格式与不带冒号的短句式都要出现');
+    expect(prompt.system).toContain('禁止三张卡全部使用同一格式');
+  });
 });
