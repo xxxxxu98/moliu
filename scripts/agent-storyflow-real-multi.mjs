@@ -7,6 +7,7 @@
  *   node scripts/agent-storyflow-real-multi.mjs id1 id2       # 位置参数临时指定
  *   node scripts/agent-storyflow-real-multi.mjs --list        # 列出可用厂商（ID/类型/模型）
  *   node scripts/agent-storyflow-real-multi.mjs --init        # 生成 temp/storyflow.matrix.config.json 模板
+ *   node scripts/agent-storyflow-real-multi.mjs --prune       # 清理旧轮产物（dry-run 预览；--exec 真删）
  *
  * 配置（temp/storyflow.matrix.config.json，gitignore 不入库，--init 生成模板）：
  *   { "providerIds": ["id1", "id2"], "concurrency": 3 }
@@ -361,6 +362,18 @@ async function main() {
   }
   if (argv.includes('--init')) {
     writeMatrixConfigTemplate();
+    return;
+  }
+  if (argv.includes('--prune')) {
+    // 跨轮产物清理（旧 provider 归档/孤儿 trace/崩跑残留）。默认 dry-run，
+    // --exec 才真删；范围与保护清单详见 storyflow-prune.mjs 头注释。
+    const { runPrune } = await import('./storyflow-prune.mjs');
+    const { count, freedBytes, dryRun, targets } = runPrune({ dryRun: !argv.includes('--exec') });
+    console.log(
+      `[smoke:storyflow:real:multi] prune${dryRun ? ' [dry-run]' : ''}：命中 ${count} 项，可释放 ${(freedBytes / 1048576).toFixed(1)} MB`
+    );
+    for (const t of targets) console.log(`  ${t.kind.padEnd(18)} ${t.path}`);
+    if (dryRun) console.log('确认后执行：node scripts/agent-storyflow-real-multi.mjs --prune --exec');
     return;
   }
 

@@ -12,19 +12,13 @@
  * - unified.service streamChatText：for-await 包 withStreamIdleDeadline（超时抛错并 cancel 流）
  */
 
+import { readPositiveIntEnv } from '@/utils/env';
+
 /** 默认空闲上限：正常流式生成的 chunk 间隔远低于此值；默认 3 分钟覆盖慢模型长思考。 */
-export const STREAM_IDLE_TIMEOUT_MS = readIdleTimeoutFromEnv();
+export const STREAM_IDLE_TIMEOUT_MS =
+  readPositiveIntEnv('MOLIU_STREAM_IDLE_TIMEOUT_MS') ?? 180_000;
 
 const STREAM_IDLE_TIMEOUT_LABEL = '流式响应空闲超时';
-
-function readIdleTimeoutFromEnv(): number {
-  // 与 utils/env.ts 的 readPositiveIntEnv 同口径，但本文件可能被 node 侧脚本引用，
-  // 保持零依赖直接读 process.env（node 场景安全；renderer 场景本模块仅在被
-  // 调用时才执行此行，且 vitest/Electron 均有 process 垫片）。
-  const raw = typeof process !== 'undefined' ? process.env?.MOLIU_STREAM_IDLE_TIMEOUT_MS : undefined;
-  const parsed = typeof raw === 'string' ? Number(raw) : NaN;
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : 180_000;
-}
 
 /**
  * 给 ReadableStreamDefaultReader.read() 包一层空闲超时。
