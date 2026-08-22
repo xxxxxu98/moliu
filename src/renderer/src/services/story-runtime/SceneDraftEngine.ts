@@ -162,6 +162,12 @@ export interface SceneDraftOptions {
    * 只在占位时采纳），白占十余行 system 指令与模型注意力。
    */
   existingChapterTitle?: string;
+  /**
+   * 近几章的结尾句（跨章收尾去重用）。长动作段落里模型会连续多章复用同一句
+   * 收尾句式（2026-08-21 实测 76/200 章同尾句），注入「最近写过的收尾」让模型
+   * 换一种落笔方式。
+   */
+  recentEndingSnippets?: Array<{ chapterIndex: number; ending: string }>;
 }
 
 export class SceneDraftEngine {
@@ -244,6 +250,16 @@ export class SceneDraftEngine {
           ),
         ]
       : [];
+    // 跨章收尾去重：把近几章实际写出的结尾句列出来，禁止本章再写同款收尾
+    const recentEndingRules = (options?.recentEndingSnippets ?? []).length > 0
+      ? [
+          '- 【跨章收尾去重】以下是最近几章已经写过的结尾句，本章最后一段禁止重复这些句子或其同款句式（换几个词的变体也不行）：',
+          ...(options?.recentEndingSnippets ?? []).map(item =>
+            `  - 第${item.chapterIndex}章结尾：「…${item.ending}」`
+          ),
+          '- 本章收尾必须落在 CEN 的新后果/新悬念上，用与前章不同的动作、意象和句式落笔',
+        ]
+      : [];
     const modeRules: Record<RevisionPlan['mode'], string[]> = {
       expand: [
         '- 【扩写模式】保留原稿已经发生的情节与因果，在场景内部增加有效对话、动作、阻力和感官细节；不得用同义复述注水',
@@ -297,6 +313,7 @@ export class SceneDraftEngine {
         '- 【禁止】把章节拆成互不衔接的几段独立短文；段落之间必须文气连贯',
         '- 【禁止台词重复】同一句台词/同一句话在本章内不得重复出现（包括章末回扣开篇钩子句）；若需强调，必须变换措辞、场景或由不同人物说出',
         '- 【禁止章末复读】章末段落不得把本章或上文已写过的句子原样再写一遍作为收尾；章末应是新的悬念/后果，而非复读',
+        ...recentEndingRules,
         '- 【对话格式】人物说出的完整台词必须使用成对中文引号“”；禁止出现只有收引号、没有开引号的裸台词',
         '- 【段落节奏】长短段必须交错：冲突爆发、反转、关键台词可独立成一两句的短段，铺垫叙述可用长段；禁止全章段落长度雷同（如清一色一百五十字上下的中长段），均匀节奏是机器腔',
         '- 【对话分段】两人及以上对话时，每个说话人的台词（含伴随小动作）独立成段，一段只装一个说话人；禁止把多轮你问我答挤进同一段',

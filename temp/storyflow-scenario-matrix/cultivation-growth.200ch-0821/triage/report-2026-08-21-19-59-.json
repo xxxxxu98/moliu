@@ -1,0 +1,436 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-21T19:59:24.178Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-scenario-matrix\\cultivation-growth",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "pass": true,
+      "exitCode": 0,
+      "wallMinutes": 261,
+      "chaptersAccepted": "200/200",
+      "words": {
+        "min": 2409,
+        "avg": 2963,
+        "max": 3536
+      },
+      "paraRhythm": {
+        "chapters": 200,
+        "medianCv": 0.25,
+        "uniformChapters": 17
+      },
+      "repairMetrics": {
+        "firstPassChapters": 185,
+        "firstPassRate": 0.925,
+        "rewrittenChapters": 15,
+        "totalRewriteRounds": 15,
+        "averageRewriteRounds": 0.07,
+        "pipelineAttempts": 200
+      },
+      "runtimeMetrics": {
+        "requestCount": 687,
+        "requestCountsByPurpose": {
+          "scene-draft": 256,
+          "fact-extraction": 216,
+          "chapter-judge": 215
+        },
+        "latencyP50Ms": 14361,
+        "latencyP95Ms": 39690,
+        "latencyMaxMs": 74368
+      },
+      "readerMetrics": {
+        "chapterCount": 0,
+        "chapterAverage": null,
+        "chapterMedian": null,
+        "chapterMinimum": null,
+        "openingThreeAverage": null,
+        "continueReadingNoCount": 0,
+        "lowChapterCount": 0,
+        "lowWindowCount": 0,
+        "consecutiveLowRuns": []
+      },
+      "readerOutlineScore": null,
+      "readerIndependent": true,
+      "phaseTimings": {
+        "outlineDirectionsMs": 27712,
+        "outlineExpandMs": 225040,
+        "outlineRollMs": 199971,
+        "applyOutlineMs": 703,
+        "continueWriteMs": 14059460,
+        "totalMs": 14512886
+      },
+      "runtimeBackend": "sqlite",
+      "verdict": "passed-with-repairs",
+      "verdictReason": "质量问题/空响应均被章内压缩或重试兜住，最终通过",
+      "signatures": [
+        {
+          "id": "infra.transient.http-502",
+          "chapter": null,
+          "count": 616,
+          "evidence": [
+            "HTTP 502",
+            "HTTP 502",
+            "HTTP 502"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": null,
+          "count": 210,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-outline-roll-1787326986616.jsonl seq4 outline-roll 响应 2 字符",
+            "trace storyflow-provider-1787039781123-outline-roll-1787326986616.jsonl seq5 outline-roll 响应 2 字符",
+            "trace storyflow-provider-1787039781123-outline-roll-1787326986616.jsonl seq6 outline-roll 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.evaluation-error",
+          "chapter": null,
+          "count": 206,
+          "evidence": [
+            "大纲读者评审失败：API error 502",
+            "第1章读者评审失败：API error 502",
+            "第2章读者评审失败：API error 502"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.etimedout",
+          "chapter": null,
+          "count": 6,
+          "evidence": [
+            "Error: connect ETIMEDOUT",
+            "重试 2/2：Failed to execute \"fetch()\" on \"Window\" with URL \"https://wawazz.xyz/v1/chat/completions\": connect ETIMEDOUT 198.18.0.114:443",
+            "Error: connect ETIMEDOUT"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.warning-other",
+          "chapter": null,
+          "count": 3,
+          "evidence": [
+            "大纲存在 1 个未登记角色（重塑后的天地意志），执行第 1 轮补登记",
+            "未登记角色已补登记 1/1 个",
+            "[滚动续纲] 批次 81-90 失败：滚动续纲批次 81-90 重试耗尽：Failed to execute \"fetch()\" on \"Window\" with URL \"http://127.0.0.1:8045/v1/chat/completions\": connect "
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.econnreset",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "Error: read ECONNRESET"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 196,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3657/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 10,
+          "count": 1,
+          "evidence": [
+            "未履约节点：顺利抵达流云仙坊黑市边缘"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.semantic-fact_conflict",
+          "chapter": 10,
+          "count": 1,
+          "evidence": [
+            "正文第十五自然段: 状态摘要中陆沉持有的物品清单显示【断齿铁镐】数量为0，但正文描写主角将【断齿铁镐被黑布严密包裹背在身后】，与持有物状态存在跨章事实冲突。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 17,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 27,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 29,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 31,
+          "count": 1,
+          "evidence": [
+            "段落节奏均匀化：17 段平均 188 字、变异系数 0.09，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 45,
+          "count": 1,
+          "evidence": [
+            "char-1787326985909-7 的物品 烈阳爆裂符 数量不能为负（证据：偏门废墟之后的牛通猛然扯开嗓子，双手将两枚烈阳爆裂符狠狠砸向大殿入口处的承重石柱）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 47,
+          "count": 1,
+          "evidence": [
+            "暗格的最底层还压着一本以不知名兽皮鞣制而成的暗红小册: 《血髓淬灵录》及抽取活人体内古脉灵根/精血养阵的秘辛在第48章前不得揭示（notBeforeChapter: 48），当前第47章已明确翻阅并下结论，属于核心伏笔提前揭示。（证据: 暗格的最底层还压着一本以不知名兽皮鞣制而成的暗红小册，封皮上歪歪扭扭地用血墨写着《"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 50,
+          "count": 1,
+          "evidence": [
+            "段落节奏均匀化：16 段平均 157 字、变异系数 0.10，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 74,
+          "count": 1,
+          "evidence": [
+            "段落节奏均匀化：26 段平均 125 字、变异系数 0.11，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 94,
+          "count": 1,
+          "evidence": [
+            "段落过密：超长段 0 个，长段占比 14%，最长 422 字。请调整分段：每段约 3～5 句、180～280 字；优先合并过碎短段；对话换人换行；忌整章大段与一句一段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 95,
+          "count": 1,
+          "evidence": [
+            "段落节奏均匀化：19 段平均 152 字、变异系数 0.14，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 101,
+          "count": 1,
+          "evidence": [
+            "第十三段: 陆沉在地面成功平息暴走地脉并瓦解双腿石化后，正文突兀重复出现此前下坠获救的描写原句“暗岩间层层共振回荡，如同一只自洪荒太古苏醒的遮天巨手，在无尽虚无中稳稳接住了陆沉急速坠落的残破身躯”，与陆沉当前已处于地面且正迈步走向青铜门的实际行动状态产生直接逻辑矛盾。（证据: 暗岩间层层共振回荡，如同一只自洪荒太古苏醒"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 101,
+          "count": 1,
+          "evidence": [
+            "段落节奏均匀化：14 段平均 182 字、变异系数 0.08，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 108,
+          "count": 1,
+          "evidence": [
+            "char-1787326985909-1 的物品 敛息丹 数量不能为负（证据：哑姑重重地点了点头，双腿死死绞住陆沉的腰腹，将整个人贴附在他的后背，空出右手迅速自腰间摸出一枚漆黑的药丸，不由分说地塞进了陆沉因失血而干裂发白的唇间。那是流云黑市中专门用来锁闭气血与真元波动的敛息丹，药力化开的瞬间，一股辛辣炽烈的热流顺着喉管"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 111,
+          "count": 1,
+          "evidence": [
+            "char-1787326985909-1 的物品 避煞骨符 数量不能为负（证据：腾出右手迅速从储物袋中摸出两枚避煞骨符，死死贴在两人的肩头。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 117,
+          "count": 1,
+          "evidence": [
+            "char-1787326985909-1 的物品 精铜阵盘 数量不能为负（证据：哑姑在陆沉背后果断扬手，一枚精铜阵盘脱手而出，在两尊凶傀身前轰然炸裂，化作一团漆黑冰冷的蚀骨阴雷。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 194,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 196,
+          "count": 1,
+          "evidence": [
+            "当前 3657 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 197,
+          "count": 1,
+          "evidence": [
+            "char-1787326985909-10 的物品 玄铁骨符 数量不能为负（证据：顾凌虚将那枚带着血温的骨符递向陆沉）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 22,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-ch22-1787328770051.jsonl seq2 fact-extraction 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 94,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-ch94-1787333993199.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.titles-shrunk-local",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "本地收缩超长标题/CBN/CEN 共 9 章（第 16、18、20、23、24、26、29、44、48 章），未发 AI 请求"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 263,
+          "avgMs": 31037,
+          "p50Ms": 31006,
+          "maxMs": 61944
+        },
+        "fact-extraction": {
+          "count": 222,
+          "avgMs": 14831,
+          "p50Ms": 14305,
+          "maxMs": 74368
+        },
+        "chapter-judge": {
+          "count": 221,
+          "avgMs": 6736,
+          "p50Ms": 6011,
+          "maxMs": 46059
+        },
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 27709,
+          "p50Ms": 27709,
+          "maxMs": 27709
+        },
+        "outline-expand": {
+          "count": 14,
+          "avgMs": 31869,
+          "p50Ms": 34203,
+          "maxMs": 50883
+        },
+        "outline-roll": {
+          "count": 9,
+          "avgMs": 21327,
+          "p50Ms": 26323,
+          "maxMs": 49753
+        },
+        "reader-outline-judge": {
+          "count": 1,
+          "avgMs": 6404,
+          "p50Ms": 6404,
+          "maxMs": 6404
+        },
+        "reader-chapter-judge": {
+          "count": 200,
+          "avgMs": 5422,
+          "p50Ms": 5126,
+          "maxMs": 25562
+        },
+        "reader-window-judge": {
+          "count": 5,
+          "avgMs": 5276,
+          "p50Ms": 5245,
+          "maxMs": 5410
+        }
+      }
+    }
+  ]
+}

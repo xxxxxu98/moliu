@@ -44,6 +44,7 @@ import {
 } from './outline-completer';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 import { readPositiveIntEnv } from '@/utils/env';
+import { readWithIdleTimeout } from '@/utils/streamIdleWatchdog';
 
 /**
  * 大纲单次请求超时（默认 30 分钟）。慢模型单步实测可达 6 分钟+，9 厂商矩阵中
@@ -109,8 +110,16 @@ async function readOpenAiCompatibleStream(response: Response): Promise<string> {
   };
 
   for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
+    let chunk: ReadableStreamReadResult<Uint8Array>;
+    try {
+      chunk = await readWithIdleTimeout(reader);
+    } catch (error) {
+      // 空闲超时（网关挂死）时必须释放底层连接，否则连接会一直挂着占资源
+      void reader.cancel().catch(() => {});
+      throw error;
+    }
+    if (chunk.done) break;
+    const value = chunk.value;
     const text = decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
     rawBody += text;
     buffer += text;

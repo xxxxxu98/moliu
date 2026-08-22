@@ -1,0 +1,780 @@
+{
+  "book": "地脉回声：从矿奴到垄断仙商",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": "cultivation-growth",
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "scenario:cultivation-growth",
+  "promptChars": 74,
+  "requestedChapterCount": 5,
+  "phaseTimings": {
+    "outlineDirectionsMs": 27786,
+    "outlineExpandMs": 242008,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 888,
+    "continueWriteMs": 401700,
+    "totalMs": 672382
+  },
+  "completedChapters": 5,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 皮鞭抽不碎账本，死矿底听心跳",
+      "words": 2561,
+      "paras": 35,
+      "paraCv": 0.52,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "带刺的铁鞭卷着刺鼻的风煞呼啸而下，正中宁修的后背。粗糙的麻布囚衣瞬间被撕成碎缕，倒钩扯下一层血肉，火辣的剧痛顺着脊椎直冲脑门。宁修身子猛地一沉，双膝重重磕在尖锐的碎矿渣上，膝盖骨发出沉闷的撞击声。\n\n“小杂种，今天的赤铜矿定额差了三成，你拿",
+      "tail": "下的第一道裂纹，但在宁修的神识共振中，却宛如沉睡万年的远古凶兽在黑暗中悄然睁开眼睛，发出了一声冰冷而饥渴的喘息。更深处的地脉应力，正在以不可逆转的趋势轰然移位。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 吃人不吐骨头，管事下达绝命死令",
+      "words": 2468,
+      "paras": 17,
+      "paraCv": 0.1,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：17 段平均 143 字、变异系数 0.10，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "刺耳的铜钟声顺着潮湿的矿道层层荡开，撞在黑煞岩壁上，震落簇簇干燥石粉。到了监工暗堡开饭的时辰，三号采矿区那些面如死灰的矿奴们宛如提线木偶，拖着沉重的铁镣与玄铁镐，麻木地挪向巷道口的石台。石台旁，监工赵屠夫腰悬带刺铁鞭，大马金刀地坐着大嚼油汪",
+      "tail": "处，确实藏着一条从未被商会开采过的庞大高纯赤铜矿脉。就在他收回手掌的瞬间，穿透那厚重死寂的黑煞岩层，死坑极深处隐隐传出了一阵极其微弱、却清脆尖锐的金属共振蜂鸣。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 抢我矿道送你归西，废渣里淘出精粹",
+      "words": 3315,
+      "paras": 24,
+      "paraCv": 0.07,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：24 段平均 136 字、变异系数 0.07，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "七号死坑外围的风道口弥漫着一股刺鼻的硫磺与烂泥腥气。宁修双手死死握紧沉重的玄铁镐，靴底踩在松散的暗赤色碎石堆上，每落一步都能感觉到地底缝隙里渗出的阴冷潮气。在他身侧，阿吉正弓着消瘦的脊背，用满是血口的粗糙双手将昨夜坍塌落下的顽石一块块挪开，",
+      "tail": "衣，在护卫的推搡下快步朝昏暗的囚牢走去。低下头的瞬间，宁修眼眸深处闪过一道冰冷刺骨的光芒，严崇身上那枚青铜残片散发出的奇特脉动，已深深烙印在了他的神魂记忆之中。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 哑巴铁匠亮绝活，暗格铁册锁神魂",
+      "words": 2858,
+      "paras": 23,
+      "paraCv": 0.46,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "宁修反手扣上废弃石室的朽木暗门，顺手将一截锈蚀的粗铁栓狠狠插进岩槽。石室位于三号采矿区与废弃弃渣洞的夹角死穴，头顶悬着蛛网般的危岩断层，平日连巡逻监工都嫌晦气不愿靠近。昏黄发绿的磷火在石缝里明灭不定，将两人的影子拉扯得如鬼魅般摇曳。宁修弯下",
+      "tail": "脉心跳。\n\n石室顶部的灰尘簌簌落下，矮铁砧上的火星随之猛烈跳动。宁修与阿吉同时僵在原地，两人脚下的坚硬岩层深处，正有一股隐秘而狂暴的地底暗流，在黑暗中悄然苏醒。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 地脉剧烈狂跳，大坍塌倒计时三天",
+      "words": 2914,
+      "paras": 30,
+      "paraCv": 0.5,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "宁修整个人伏倒在冰冷的岩板上，右掌五指如铁钩般死死扣住黑煞石缝。来自地底数千丈深处的暴烈震动透过坚硬石壁，顺着他的指尖、腕骨与手肘一路狂涌而上。那不是寻常的碎石脱落，而是整座黑风煞矿庞大地骨在剧烈战栗。狂暴的地脉律动如万千根钢针，狠狠扎进宁",
+      "tail": "微尘。无论宁修如何催动神识去捕捉挽留，那些关于生父容貌的线条与神采，依旧如同被狂风卷起的漫天沙画，在无声无息间彻底崩解消散，最终只留下一片冰冷刺骨的虚无与空白。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 皮鞭抽不碎账本，死矿底听心跳"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 吃人不吐骨头，管事下达绝命死令"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 抢我矿道送你归西，废渣里淘出精粹"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 哑巴铁匠亮绝活，暗格铁册锁神魂"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 地脉剧烈狂跳，大坍塌倒计时三天"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 潜入极煞死区，避开巡逻刀锋"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 挖出无价髓心铜，符印深处生血线"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 监工疯狂大搜身，暗格藏宝戏老把式"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 暗点引煞死穴，给赵阎王备好棺材"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 严崇密令封井口，断绝生路引爆杀机"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787219696233",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-zAtJgf\\story-runtime\\proj-1787219696233-d31d59a8b20c.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 5,
+    "canonicalSnapshots": 6,
+    "latestSnapshotChapter": 5,
+    "sceneChunks": 5,
+    "events": 22
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 5,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "1aecbbb5faa95f053efa05df798305a71d1c7fa58c761d80d5692418be73e585",
+    "completeCharacterProfileCount": 12,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 5,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 5
+  },
+  "outlineWarnings": [
+    "本地收缩超长标题/CBN/CEN 共 10 章（第 24、25、26、27、28、29、30、32、33、34 章），未发 AI 请求"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 5,
+    "firstPassRate": 1,
+    "rewrittenChapters": 0,
+    "totalRewriteRounds": 0,
+    "averageRewriteRounds": 0,
+    "pipelineAttempts": 5
+  },
+  "runtimeMetrics": {
+    "requestCount": 17,
+    "requestCountsByPurpose": {
+      "scene-draft": 7,
+      "fact-extraction": 5,
+      "chapter-judge": 5
+    },
+    "latencyP50Ms": 12667,
+    "latencyP95Ms": 63106,
+    "latencyMaxMs": 63106
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1786812318014",
+      "model": "gpt-5.6-luna",
+      "independentFromWriter": true,
+      "selectionReason": "default-wawa-gpt-5.6-luna"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 77.2,
+      "wouldStartReading": true,
+      "confidence": 0.91,
+      "dimensions": {
+        "openingAttraction": 82,
+        "coreSellingPoint": 88,
+        "protagonistDrive": 84,
+        "conflictEscalation": 72,
+        "payoffPlanning": 69,
+        "characterRelations": 65,
+        "suspensePlanning": 71,
+        "audienceFit": 86
+      },
+      "issues": [
+        {
+          "id": "reader.other-1",
+          "severity": "high",
+          "category": "other",
+          "location": "全文",
+          "description": "模型指出读者体验问题",
+          "evidence": [
+            "第28章写明“正面交锋并亲手斩杀黑石商会管事严崇”。",
+            "第31章却写“严崇与李万山在暗阁商议以连带债务陷阱坑杀接盘者”。",
+            "第39章又写“严崇失魂落魄逃回暗巷”，第41章写“严崇调集黑石商会全部亡命死士”，第44章再次写“斩杀严崇清除第一仇敌”。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.99
+        },
+        {
+          "id": "reader.other-2",
+          "severity": "high",
+          "category": "other",
+          "location": "全文",
+          "description": "模型指出读者体验问题",
+          "evidence": [
+            "伏笔表称青铜残片“payoffChapter”:28，且写“宁修在矿难暗堡陷阱中击杀严崇”。",
+            "章节蓝图第28章实际已经位于黑市反杀阶段；而第44章又写“青铜残卷与随身铁册共鸣，显现玄元子代号与李万山暗账”。",
+            "卷一设定的高潮写为“矿难大崩塌之夜……携髓心赤铜潜出死矿，并在黑市拍卖会上……高价变现”，但30章启动包将拍卖放在21—23章，落凤峡公决及严崇终战则延伸到44章。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.97
+        },
+        {
+          "id": "reader.other-3",
+          "severity": "medium",
+          "category": "other",
+          "location": "全文",
+          "description": "模型指出读者体验问题",
+          "evidence": [
+            "一句话和主线多处写“九渊商号”或“九渊商会”，如第二幕A目标是“成立九渊商号”。",
+            "第一卷第33章写“地鸣商号正式挂牌开业”，第46章写“地鸣商号全面吞并黑石商会资产”。",
+            "终局又写“地鸣商盟颁布天下灵矿新法”。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.95
+        },
+        {
+          "id": "reader.other-4",
+          "severity": "medium",
+          "category": "other",
+          "location": "全文",
+          "description": "模型指出读者体验问题",
+          "evidence": [
+            "金手指初阶描述为“感知方圆十丈内的岩层应力”。",
+            "第49章则写“听脉感知范围暴涨至方圆十里”。",
+            "限制同时强调“过度使用会在短时间内造成认知断层与定向失忆”。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.84
+        },
+        {
+          "id": "reader.other-5",
+          "severity": "medium",
+          "category": "other",
+          "location": "全文",
+          "description": "模型指出读者体验问题",
+          "evidence": [
+            "苏红衣的关系设定称“由纯利益中介转为性命相交的共生伙伴”。",
+            "阿吉被定义为“活体记忆校验员”，并设定会在宁修冷酷时“唤醒其人性”。",
+            "但前50章蓝图中，苏红衣主要承担“递出天宝阁拍卖请柬”“交割三万灵石”“引开外围眼线”，阿吉主要承担锻造、护法和配合杀阵。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.79
+        },
+        {
+          "id": "reader.other-6",
+          "severity": "low",
+          "category": "other",
+          "location": "全文",
+          "description": "模型指出读者体验问题",
+          "evidence": [
+            "第17章安排“连续三刀切出中品紫灵晶与伴生金煞”。",
+            "第22章安排“三万灵石天价，仇人当场气吐血”。",
+            "第37章安排“鉴宝当场打假，假灵石原形毕露”。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.68
+        }
+      ],
+      "summary": "这份大纲的开书卖点清楚且具有差异化：矿奴绝境、地脉听音、记忆代价、鉴矿套利与反向卡宗门命脉能在前三章迅速建立阅读理由；宁修的求生、复仇和建商号目标也足够具体。前50章有连续的矿难、脱籍、拍卖、反杀和创业回报，适合期待升级与资源争夺的男频读者。最大问题不是缺少事件，而是章节时间轴发生硬性自撞：严崇多次死亡、伏笔回收坐标和卷内高潮互相矛盾。先完成第一卷事件表的统一，再把记忆代价落实为不可轻易被组织账本抹平的人物代价，作品的核心卖点会更有说服力。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 84.6,
+        "continueReading": true,
+        "confidence": 0.91,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 84,
+          "conflictEffectiveness": 80,
+          "emotionalDrive": 86,
+          "characterVoice": 82,
+          "payoffValue": 85,
+          "pacing": 83,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "本章完成了救下阿吉与展示能力的局部胜利，但赵屠夫对塌方和宁修异常的反应仅停留在迁怒，矿奴定额危机也未被改变，主角与监工之间的压迫关系暂未形成更明确的新局面。对期待“反客为主”或资源破局的读者而言，阶段性反制感略弱。",
+            "evidence": [
+              "“算你们命大，没死就赶紧把碎石头清理干净，天黑前要是堆不满矿车，老子剥了你们的皮！”",
+              "赵屠夫似乎也有些忌惮这处坑道的不稳定，不敢多待，挥动着皮鞭快步朝矿洞外围的监工暗堡走去。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.83
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "听脉机制的解释、童年记忆燃烧和矿脉结构感知连续铺陈，信息本身有吸引力，但在鞭刑现场插入较完整的规则说明，稍微削弱了前段即将塌方的倒计时压迫感。",
+            "evidence": [
+              "“天地灵脉如同人体经络，地底深处的矿脉无时无刻不在以极低的频率震颤。”",
+              "“凡人肉身无法承受这种震动，更无法接入地脉的律动，唯有以神魂深处最纯粹的记忆作为燃料……”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.76
+          }
+        ],
+        "summary": "开篇用鞭刑、欠额和阴煞窟威胁快速确立矿奴绝境，宁修以童年记忆换取听脉能力，并在倒计时中救下阿吉，能力展示与代价绑定清晰，既有紧张也有温度。铁册记录“第七次听脉”的设定有效强化了主角务实、克制且害怕自我消失的人物底色，杂粮饼的回馈也提供了小而扎实的情绪回报。章末更深地脉移位构成明确的新危机，具备追读力。当前主要不足是赵屠夫和定额压迫尚未因塌方产生实质变化，读者会期待下一章尽快把灾变转化为矿脉情报、资源机会或对监工体系的实际反制。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 80.6,
+        "continueReading": true,
+        "confidence": 0.94,
+        "dimensions": {
+          "readability": 84,
+          "openingHook": 78,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 76,
+          "characterVoice": 73,
+          "payoffValue": 79,
+          "pacing": 78,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.hook-1",
+            "severity": "medium",
+            "category": "hook",
+            "location": "全文",
+            "description": "章首重新从吃饭和矿奴日常铺陈开始，承接上一章末尾的地脉异动较慢，读者需要读到管事出现后才重新获得明确推进。",
+            "evidence": [
+              "“刺耳的铜钟声顺着潮湿的矿道层层荡开，撞在黑煞岩壁上，震落簇簇干燥石粉。到了监工暗堡开饭的时辰……”；上一章末尾已有“阿吉……将稍大的一半递到宁修面前”以及“更深处的地脉应力，正在以不可逆转的趋势轰然移位”。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.91
+          },
+          {
+            "id": "reader.character-2",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "严崇的恶行能迅速建立敌我关系，但主要依靠踢翻饭盆、羞辱矿奴、提高定额等较直白的反派模板行为，人物辨识度和商会管理者的具体算计还不够突出。",
+            "evidence": [
+              "“像你们这种下贱的泥腿子，也配在地底下安稳嚼食？”；“都给本管事听好了。从明日起，全矿所有采矿组的赤铜定额翻倍……”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.9
+          },
+          {
+            "id": "reader.emotion-3",
+            "severity": "low",
+            "category": "emotion",
+            "location": "全文",
+            "description": "宁修始终冷静克制，符合硬核求生定位，但他对阿吉受辱和被发配死坑的内在情绪表现较少，读者更多是理解局势危险，而非强烈感受到他的愤怒或决意。",
+            "evidence": [
+              "“宁修手指却如铁钳般死死按住他的肩膀，以极低的声音喝止道：‘别动。’”；“宁修伸手按住阿吉颤抖的肩膀，沉静地摇头道：‘逃不掉的。’”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.88
+          },
+          {
+            "id": "reader.payoff-4",
+            "severity": "low",
+            "category": "payoff",
+            "location": "全文",
+            "description": "绝命调令很快转化为资源机遇，完成了本章的局势反转和能力兑现；但矿脉尚未开采、利用或反制商会，当前回报仍主要停留在发现层面。",
+            "evidence": [
+              "“七号死坑深处，确实藏着一条从未被商会开采过的庞大高纯赤铜矿脉。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.95
+          },
+          {
+            "id": "reader.pacing-5",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "反派登场和地脉探测都提供了有效信息，但外貌、环境和矿脉感知描写较密集，部分形容反复强调阴冷、死寂、黑煞，略微削弱快节奏推进感。",
+            "evidence": [
+              "“数名身穿玄色皮甲、手按长刀的商会护卫列队开道，随后踱出一位身穿暗红锦袍的干瘦中年男子……”；“在神识感知的世界中，四周原本尽是死寂顽石与黑煞裂纹……”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.87
+          }
+        ],
+        "summary": "本章完成了清晰的连续升级链：管事羞辱并加倍定额，宁修与阿吉被发配七号死坑，宁修凭听脉能力发现高纯赤铜矿脉，局势从必死转为潜在资源翻盘。阿吉的保护和宁修的记忆代价增强了求生情绪，章尾的金属共振蜂鸣又留下了比矿脉更深一层的悬念。主要不足是章首承接略慢、反派手段偏直白模板化，以及本章的资源发现尚未转化为实际行动或即时收益，但追更动力较强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 83.7,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 82,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 80,
+          "characterVoice": 76,
+          "payoffValue": 84,
+          "pacing": 85,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“别冲动，退后。”、“算你小子识相！”、“小杂种，你抱块烂焦石做什么？发癔症了？”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“宁修抬起头，指着壮汉身后凹槽：‘那处凹槽是三号主脉断裂层，往里走三步去挖，一镐头就能凑齐半车上品原石。’”以及“赵屠夫也被巨响震得身形一晃，快步冲上前来”。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“宁修手腕微翻将晶石扣入掌心”后紧接着“赵屠夫咬牙冷笑，强压凶光抢过赤铜精塞入皮袋”。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章从矿位争夺直接切入，宁修借地脉知识反杀压迫者、从废渣开出赤铜精，再与严崇的青铜残片产生共鸣，冲突、能力展示和主线谜团衔接紧密。赤铜精虽被收缴，但完成定额并让敌方持有物暴露，仍形成有效微兑现。章尾将严崇与开天传承的关联明确抛出，具备较强追读力；若补强旁观者对塌方事故的疑虑及主角的实际收益，紧张感和掌控感会更扎实。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 81.5,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 82,
+          "conflictEffectiveness": 78,
+          "emotionalDrive": 84,
+          "characterVoice": 76,
+          "payoffValue": 80,
+          "pacing": 74,
+          "endingPull": 91
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "medium",
+            "category": "pacing",
+            "location": "全文",
+            "description": "锻造过程和铁册功能说明较为完整，但连续的工艺细节、性能解释与数据设定让中段行动感有所减弱，读者需要较长时间消化设定。",
+            "evidence": [
+              "“完成了整整三十六次古法折叠”“即便修士催动练气后期的神识正面扫过，也只会将其感知为一块毫无灵气波动的顽铁废料”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.91
+          },
+          {
+            "id": "reader.conflict-2",
+            "severity": "medium",
+            "category": "conflict",
+            "location": "全文",
+            "description": "本章主要完成装备制作、情报记录和同盟确立，现实层面的阻力没有真正逼近；严崇的威胁停留在宁修的判断中，局势虽有推进但尚未形成一次明确的对抗或反制。",
+            "evidence": [
+              "“他不仅不会放过我们，而且很快就会借矿难灭口。”“只要我们摸清地脉走向与塌方规律，就能在暗堡被崩塌摧毁的当夜，撕开生路逃出去。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.84
+          },
+          {
+            "id": "reader.character-3",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "宁修的目标、能力和算计表达清楚，但人物语言整体偏功能性宣告，个人性格差异主要靠形容词呈现；阿吉的声音仍主要由旁白代述，导致两人的关系有情绪，却缺少更独特的互动质感。",
+            "evidence": [
+              "“我能听出矿脉断层的心跳，你能打出瞒过仙宗神识的器物。”“我们一起活着走出去。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.82
+          },
+          {
+            "id": "reader.payoff-4",
+            "severity": "low",
+            "category": "payoff",
+            "location": "全文",
+            "description": "铁册和暗盒是明确的即时回报，记忆代偿也得到记录这一具体化处理；但铁册尚未在实际危机中发挥作用，功能性收益暂时主要停留在说明层面。",
+            "evidence": [
+              "“足以藏下最致命的绝密信物。”“整整三页铁册，密密麻麻记录了黑风矿区最致命的地脉机密”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.87
+          },
+          {
+            "id": "reader.other-5",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "部分比喻和强度词连续叠加，容易削弱冷硬务实的质感，使关键异象与人物情绪都处在相近的高强度档位。",
+            "evidence": [
+              "“巧夺天工的器物”“宗师气度”“炽烈火种”“太古巨兽”“震彻神魂的地脉心跳”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.83
+          }
+        ],
+        "summary": "本章承接上章青铜残片共振后的危机，完成了玄磁铁册与暗盒的制作、地脉情报归档以及宁修和阿吉的求生结盟，属于有效的准备与关系推进章。记忆代偿让升级能力付出代价，结尾地脉异动也提供了很强的追读动力。主要问题是中段工艺和功能说明偏密，现实冲突更多由宁修预判而非当场发生，人物互动也略偏口号化；但整体局势确实前进，且章尾将逃生计划立即推入未知变故，足以促使读者继续阅读。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 83.5,
+        "continueReading": true,
+        "confidence": 0.94,
+        "dimensions": {
+          "readability": 82,
+          "openingHook": 87,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 84,
+          "characterVoice": 78,
+          "payoffValue": 83,
+          "pacing": 72,
+          "endingPull": 91
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "medium",
+            "category": "pacing",
+            "location": "全文",
+            "description": "地脉灾变的原理、应力和矿山结构连续以大段说明展开，信息虽然明确，但读者需要较长时间消化，紧迫感被部分技术解释稀释。",
+            "evidence": [
+              "“三条凶悍绝伦的黑煞暗河，竟然在七号死坑正下方八百丈处彻底贯通。”以及“这是一种正在迅速叠加的毁灭性共振，整座黑风矿山的地基，已然被推到了彻底崩溃的悬崖边缘。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "三天倒计时被多次重复确认，强化了危机但也削弱了信息递进；如果加入明确的第一项行动或即时阻碍，节奏会更有推进感。",
+            "evidence": [
+              "“三天。”、“只剩下最后三天期限。”、“三天之内，他会拼死打造出两套能抵御极煞毒雾的闭气甲胄与破岩重凿。”以及“开始进入了冰冷的倒计时。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-3",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "宁修的冷静、计算和决断与定位相符，但部分台词直接承担设定讲解功能，人物声音容易被功能性说明覆盖，缺少更具个人棱角的表达。",
+            "evidence": [
+              "“置之死地，方有生机。”宁修语速极快，手指沿着铁页上的暗纹精准划动。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.payoff-4",
+            "severity": "low",
+            "category": "payoff",
+            "location": "全文",
+            "description": "本章完成了灾变真相、逃生路线和核心资源的揭示，回报清晰；但真正进入死区、夺取髓心赤铜和破解血契尚未发生，因此升级流读者期待的实质性战果仍需后续兑现。",
+            "evidence": [
+              "“那里正在孕育整座黑风矿区最核心的重宝，极品髓心赤铜。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章有效完成了从异常震动到三日灭矿倒计时的局势升级，并把七号极煞死区从必死之地反转为唯一生路，同时绑定极品髓心赤铜这一明确目标，冲突、资源争夺和生存压力都很清楚。宁修以记忆为代价换取能力的设定在结尾获得了有力的情绪兑现，父亲面容消失也形成较强追读牵引。主要问题是地脉机制和灾变说明偏密集，倒计时表达略有重复，且本章更多是战略揭示而非行动兑现。整体仍具较强连续追读动力。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 71.3,
+        "continueReading": true,
+        "confidence": 0.88,
+        "dimensions": {
+          "mainlineProgress": 78,
+          "patternVariation": 64,
+          "suspensePayoff": 70,
+          "characterArc": 66,
+          "emotionalArc": 74,
+          "payoffEscalation": 61,
+          "genrePromise": 72,
+          "continuationDesire": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“赵屠夫……抢过赤铜精塞入皮袋”后，宁修获得的仅是“今日你们俩的差事交了”；至第5章，核心收益仍是“极品髓心赤铜”这一待夺目标。"
+            ],
+            "suggestion": "在进入三日倒计时前，给予宁修一个不能被轻易收缴的实际成果，例如利用废料留下的小份材料、从赤铜精事件中换得的权限或可执行的交易筹码，使准备阶段同时产生可见回报。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "第1章以“更深处的地脉应力，正在以不可逆转的趋势轰然移位”收束；第4章再以“地底暗流，在黑暗中悄然苏醒”收束；第5章继续以“大坍塌倒计时三天”强化同一地脉灾变。"
+            ],
+            "suggestion": "后续倒计时内让压力更多转化为不同维度的即时阻碍，如严崇因残片共鸣展开调查、矿奴争抢避难资源、锁灵符印的解除条件或与外部商会的交易窗口，避免主要依赖新的地脉警报续钩。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "第4章中宁修说“你替我守着账本，帮我记着我忘掉的事。我们一起活着走出去”，阿吉以“重重地点了点头”回应；第5章阿吉承诺“三天之内，他会拼死打造出两套能抵御极煞毒雾的闭气甲胄与破岩重凿”。"
+            ],
+            "suggestion": "让阿吉的铁匠经验或矿奴人脉提出一个宁修未曾掌握的风险、替代材料或交易条件，并使宁修据此修正计划，强化其作为共同创业与求生伙伴而非辅助执行者的能动性。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "连续阅读下，故事完成了从矿奴绝境、发现死坑高纯矿脉，到赤铜精事件暴露严崇残片，再到建立铁册盟约并锁定三日坍塌夺宝路线的清晰推进。能力规则、记忆代价、矿业勘测与底层求生彼此咬合，冷硬矿区氛围和“以智借地势破局”的题材承诺较稳定。第1、2、4章抛出的地脉异动和共鸣线索均在后文获得一定回应，悬念链总体公平。当前的主要追读点是宁修如何在严崇起疑、锁灵符印未解和大坍塌倒计时中进入极煞区夺取髓心赤铜；不足在于阶段性资源回报仍偏延后，且地脉震动式钩子略有重复。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 5,
+      "chapterAverage": 82.8,
+      "chapterMedian": 83.5,
+      "chapterMinimum": 80.6,
+      "openingThreeAverage": 83,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [],
+    "errors": [
+      "1-3章窗口评审失败：[\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_big\",\n    \"maximum\": 3,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      1,\n      \"evidence\"\n    ],\n    \"message\": \"Too big: expected array to have <=3 items\"\n  }\n]"
+    ],
+    "durationMs": 219424
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 672483,
+  "warnings": [
+    "大纲阶段 warnings（1 条，详见 outlineWarnings 字段）",
+    "读者评审失败（1 条，详见 readerEvaluation.errors）"
+  ]
+}

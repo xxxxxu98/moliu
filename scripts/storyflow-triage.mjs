@@ -35,6 +35,7 @@ const TRIAGE_DIR = process.env.MOLIU_STORYFLOW_TRIAGE_DIR
   : join(TEMP_DIR, 'storyflow-triage');
 const ANSI_RE = /\x1b\[[0-9;]*m/g;
 const EVIDENCE_MAX = 160;
+const TAIL_DUP_SLICE = 45;
 
 // ---------- 单条 reviewer 问题文本 → 签名 ----------
 export function parseIssue(text) {
@@ -86,6 +87,9 @@ export function classifyTransient(reason) {
   if (/user location is not supported/i.test(reason)) return 'infra.transient.geo-block';
   if (reason.includes('ETIMEDOUT')) return 'infra.transient.etimedout';
   if (reason.includes('ECONNRESET')) return 'infra.transient.econnreset';
+  // 流式空闲 watchdog（streamIdleWatchdog）：连接挂着但分钟级零 chunk 的网关挂死，
+  // 与「流中断（已收到部分内容）」区分开——前者重试换新连接即可穿过
+  if (reason.includes('空闲超时')) return 'infra.transient.stream-idle-timeout';
   if (reason.includes('流式响应提前中断')) return 'infra.transient.stream-interrupted';
   return 'infra.transient.other';
 }
@@ -400,6 +404,34 @@ function triageProvider(providerId, meta) {
       null,
       `均匀化章 ${paraStats.uniformChapters}/${paraStats.chapters}，cv 中位 ${paraStats.medianCv}（<0.14 且段数≥12 为均匀化）`
     );
+  }
+
+  // 结尾句跨章复读（2026-08-21 发现：65/200 章结尾为同一句式变体，单章门禁与
+  // reader 窗口评审（当时恰好被 502 全灭）都看不到，只有全书聚合才能抓到）。
+  const proseDir = join(dir, 'prose');
+  if (existsSync(proseDir)) {
+    const tails = readdirSync(proseDir)
+      .filter(name => /^ch\d+\.txt$/.test(name))
+      .map(name => {
+        const text = readFileSync(join(proseDir, name), 'utf8').trimEnd();
+        return { name, tail: text.slice(-TAIL_DUP_SLICE).replace(/\s+/g, '') };
+      });
+    const groups = new Map();
+    for (const { name, tail } of tails) {
+      const list = groups.get(tail) || [];
+      list.push(name);
+      groups.set(tail, list);
+    }
+    const dupGroups = [...groups.values()].filter(list => list.length >= 3);
+    const dupChapters = dupGroups.reduce((sum, list) => sum + list.length, 0);
+    if (dupChapters / tails.length > 0.15) {
+      const worst = dupGroups.sort((a, b) => b.length - a.length)[0];
+      acc.add(
+        'prose.tail-duplication',
+        null,
+        `${dupChapters}/${tails.length} 章结尾句重复（≥3 章同尾句，去空白取后 ${TAIL_DUP_SLICE} 字）；最大一组 x${worst.length}（${worst.slice(0, 5).join(',')}…）`
+      );
+    }
   }
 
   // 分级：章节最终 accepted → 黄（已恢复）；否则红（阻断）。infra/outline/assert 恒定分级

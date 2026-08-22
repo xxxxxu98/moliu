@@ -22,6 +22,11 @@ import {
 } from "@/utils/json-parser";
 import { extractErrorMessage } from "@/utils/error-message";
 import { classifyError, isTransientError, parseAllowedTemperature, retryBackoffDelayMs } from "@/utils/ai-error-classify";
+import {
+  STREAM_IDLE_TIMEOUT_MESSAGE_PREFIX,
+  STREAM_IDLE_TIMEOUT_MS,
+  createStreamIdleGuard,
+} from "@/utils/streamIdleWatchdog";
 
 /**
  * 从原始响应中提取纯文本内容
@@ -515,11 +520,20 @@ export class UnifiedAIService {
       stream.cancel();
     };
     signal?.addEventListener("abort", onAbort, { once: true });
+    // 空闲 watchdog：网关挂死（连接 ESTABLISHED 但分钟级零 chunk）时 cancel 流并
+    // 抛「流式响应空闲超时」。cancel 后 for-await 会 return 而非 throw，靠下方
+    // idleExpired 标志把静默中断变成可重试的显式超时错误。
+    let idleExpired = false;
+    const idleGuard = createStreamIdleGuard(() => {
+      idleExpired = true;
+      stream.cancel();
+    });
     try {
       let content = "";
       let sawStreamEnd = false;
       let hitLengthCap = false;
       for await (const chunk of stream) {
+        idleGuard.touch();
         if (signal?.aborted) {
           throw new DOMException("Aborted", "AbortError");
         }
@@ -530,6 +544,11 @@ export class UnifiedAIService {
           sawStreamEnd = true;
           if (chunk.finishReason === "length") hitLengthCap = true;
         }
+      }
+      if (idleExpired) {
+        throw new Error(
+          `${STREAM_IDLE_TIMEOUT_MESSAGE_PREFIX}：${STREAM_IDLE_TIMEOUT_MS}ms 内未收到任何数据块（已收 ${content.length} 字）`
+        );
       }
       // cancel() 后迭代器是 return 而非 throw，漏判会把已中断的半截内容当成功
       if (signal?.aborted) {
@@ -556,6 +575,7 @@ export class UnifiedAIService {
       }
       return content;
     } finally {
+      idleGuard.dispose();
       signal?.removeEventListener("abort", onAbort);
     }
   }

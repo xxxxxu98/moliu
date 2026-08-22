@@ -74,6 +74,15 @@ describe('classifyError', () => {
       const result = classifyError(new Error('请求超时'));
       expect(result.kind).toBe('timeout');
     });
+
+    it('流式空闲超时（streamIdleWatchdog）归为 timeout 瞬态可重试', () => {
+      const result = classifyError(
+        new Error('流式响应空闲超时：180000ms 内未收到任何数据块（已收 0 字）')
+      );
+      expect(result.kind).toBe('timeout');
+      expect(result.retryable).toBe(true);
+      expect(result.transient).toBe(true);
+    });
   });
 
   describe('network（网络瞬时错误）', () => {

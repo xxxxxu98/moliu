@@ -92,8 +92,13 @@ const REVIEW_UNAVAILABLE_RE = /\[review-unavailable\]|语义审查不可用/iu;
 /** 字数边界特征（来自 supplement.ts 的 buildWordCountBoundsIssue） */
 const WORDCOUNT_RE = /字数严重不足|字数严重超限|word-count-(?:short|over)|字数不足|字数超限/iu;
 
-/** 超时特征（超时护栏自己抛的文案，非 AbortError 路径） */
-const TIMEOUT_RE = /timeout|超时|timed?\s*out/iu;
+/**
+ * 超时特征（超时护栏自己抛的文案，非 AbortError 路径）。
+ * 「空闲超时」来自 streamIdleWatchdog：网关挂死、连接 ESTABLISHED 但分钟级零
+ * chunk（2026-08-21 反重力实测静默 35 分钟）。归 timeout 瞬态可重试——重试换新
+ * 连接，能穿过挂死窗口，这正是 watchdog 存在的意义。
+ */
+const TIMEOUT_RE = /timeout|超时|timed?\s*out|空闲超时/iu;
 
 /** 配额耗尽文案特征（部分 provider 会用文案而非 429） */
 const QUOTA_RE = /quota|配额|rate\s*limit|insufficient.*quota|余额不足|速率限制|请求频率/iu;

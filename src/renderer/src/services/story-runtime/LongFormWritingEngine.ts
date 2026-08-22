@@ -6,6 +6,7 @@ import type {
   LongFormWriteInput,
   LongFormWriteResult,
   RevisionPlan,
+  SceneChunk,
   SceneDraft,
   StoryEntity,
   StructuredAI,
@@ -90,6 +91,38 @@ export interface LongFormWritingEngineDependencies {
 
 function draftsProse(drafts: SceneDraft[]): string {
   return drafts.flatMap(draft => draft.paragraphs).join('\n\n');
+}
+
+/**
+ * 提取近几章的结尾句，用于起草 prompt 的跨章收尾去重约束。
+ * 2026-08-21 玄幻 200 章冒烟发现：76/200 章结尾是同一句式的变体复读
+ * （如「毅然迎向深渊之下更为凶险的苍溟杀局」连刷 27 章）。单章门禁与章内
+ * 台词去重都看不到跨章重复，必须在起草时把「最近写过的收尾」摆到模型眼前。
+ * 只取每章最后 ~40 字：比对收尾句式足够，塞全文会挤占上下文预算。
+ */
+export function extractRecentEndingSnippets(
+  scenes: SceneChunk[],
+  chapterNumber: number,
+  maxChapters = 3
+): Array<{ chapterIndex: number; ending: string }> {
+  const byChapter = new Map<number, SceneChunk[]>();
+  for (const scene of scenes) {
+    if (!Number.isInteger(scene.chapterIndex) || scene.chapterIndex <= 0) continue;
+    if (scene.chapterIndex >= chapterNumber) continue;
+    const list = byChapter.get(scene.chapterIndex) ?? [];
+    list.push(scene);
+    byChapter.set(scene.chapterIndex, list);
+  }
+  return [...byChapter.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .slice(0, maxChapters)
+    .map(([chapterIndex, list]) => {
+      // 同章多 scene 时取 order 最大的末段文本
+      const tailScene = [...list].sort((a, b) => b.order - a.order)[0];
+      const ending = (tailScene?.text ?? '').trim().slice(-40).replace(/\s+/g, ' ');
+      return { chapterIndex, ending };
+    })
+    .filter(item => item.ending.length > 0);
 }
 
 /**
@@ -327,6 +360,11 @@ export class LongFormWritingEngine {
             targetWordCount: writeInput.targetWordCount,
             revisionPlan: draftRevisionPlan,
             rewriteRound: draftRevisionPlan ? Math.max(1, rewriteRounds) : undefined,
+            // 跨章收尾去重：把最近几章的结尾句摆到模型眼前（详见 extractRecentEndingSnippets）
+            recentEndingSnippets: extractRecentEndingSnippets(
+              input.recentScenes,
+              contracts.chapter.chapterNumber
+            ),
             // 完整角色库（未被 context 压缩筛选），注入 prompt 白名单约束名字一致性
             knownCharacterNames: extractCharacterNames(input.state.entities),
             allowedAppearanceNames: extractAllowedAppearanceNames(
