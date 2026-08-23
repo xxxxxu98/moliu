@@ -262,13 +262,16 @@ export function buildVolumePlanStepPrompt(ctx: StepBuildContext): BuiltPrompt {
   );
   const volumeSection: StepSectionDef = { ...SEC.volumePlan, template: volumeTemplate };
 
-  const contextSections = [SEC.storyPositioning, SEC.storyEngine, SEC.storyScale];
+  // 注入四幕与世界设定：卷纲的地名/势力必须与世界规划真源一致，
+  // 否则会产生「幕层南江市 vs 正文江城市」的跨层漂移（真实项目复盘）
+  const contextSections = [SEC.storyPositioning, SEC.storyEngine, SEC.storyScale, SEC.acts, SEC.world];
   const contextBlock = buildContextBlock(ctx.accumulatedRawText, contextSections);
 
   const extraGuidance = `本步只生成卷纲。卷数必须与【已确定方案】中「故事规模规划」的「建议卷数」一致。
 - 各卷必须彼此递进，不能重复同一冲突模式。
 - 每卷的「章节区间」必须填写：按「每卷预计章数」把预计总章节数切分成首尾衔接的区间（第1卷从第1章开始，末卷止于预计总章节数），区间不重叠、不留缝隙。
-- 每卷字段（卷标题/章节区间/卷目标/卷冲突/卷高潮/卷反转/卷尾钩子/主角成长/关键角色/埋设伏笔/回收伏笔/关系变化）都要填写。`;
+- 每卷字段（卷标题/章节区间/卷目标/卷冲突/卷高潮/卷反转/卷尾钩子/主角成长/关键角色/埋设伏笔/回收伏笔/关系变化）都要填写。
+- 【地名一致性】卷纲中出现的所有地点必须使用「世界与势力规划」里已登记的地点名，禁止自创新地名或同义变体（如已定「江城市」就不得写「南江市」）；需要新地点时表述为已登记地点的下属区域（如「江城市·南郊」）。`;
 
   const system = buildStepSystem([volumeSection], extraGuidance);
   const user = `请基于已确定的方案骨架，生成卷纲。
@@ -295,7 +298,8 @@ export function buildStartupStepPrompt(ctx: StepBuildContext): BuiltPrompt {
   );
   const startupSection: StepSectionDef = { ...SEC.startup, template: startupTemplate };
 
-  const contextSections = [SEC.storyPositioning, SEC.storyEngine, SEC.volumePlan];
+  // 世界规划一并注入：启动包的逐块场景地点必须与真源一致（防地名漂移）
+  const contextSections = [SEC.storyPositioning, SEC.storyEngine, SEC.volumePlan, SEC.world];
   const contextBlock = buildContextBlock(ctx.accumulatedRawText, contextSections);
 
   const extraGuidance = `本步只生成「## 前${STARTUP_CHAPTER_COUNT}章启动包」。
@@ -303,7 +307,8 @@ export function buildStartupStepPrompt(ctx: StepBuildContext): BuiltPrompt {
 - 必出事件：单章可兑现、同一场景链合并为一条、禁止括号、每条 8-30 字。
 - 区块高潮密度：每 5 章区块最多 2 个核心转折。
 - 必须给满 ${Math.ceil(STARTUP_CHAPTER_COUNT / 5)} 个 5 章区块（1-5 / 6-10 / …）。
-- 前${STARTUP_CHAPTER_COUNT}章只完成“开局承诺 + 第一轮冲突闭环 + 更大主线入口”，不能耗尽全书核心悬念。`;
+- 前${STARTUP_CHAPTER_COUNT}章只完成“开局承诺 + 第一轮冲突闭环 + 更大主线入口”，不能耗尽全书核心悬念。
+- 【地名一致性】必出事件与场景地点必须使用「世界与势力规划」已登记的地点名，禁止自创地名或同义变体。`;
 
   const system = buildStepSystem([startupSection], extraGuidance);
   const user = `请基于已确定方案，生成前${STARTUP_CHAPTER_COUNT}章启动包。

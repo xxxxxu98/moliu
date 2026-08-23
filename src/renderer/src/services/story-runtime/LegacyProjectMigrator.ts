@@ -7,6 +7,7 @@ import type {
   StoryEntity,
   StoryState,
 } from '@/types/story-runtime';
+import { normalizeForeshadow } from './foreshadowLifecycle';
 
 const SCENE_BREAK_PATTERN = /\n\s*(?:---+|={3,}|#{1,3}\s*场景[^\n]*|\*{3,})\s*\n|\n{3,}/u;
 
@@ -59,7 +60,9 @@ export class LegacyProjectMigrator {
       id: character.id,
       kind: 'character',
       name: character.name,
-      aliases: [],
+      // 别名透传（称呼变体由 FactCanonicalizer 的姓氏+称谓消歧动态挂载，
+      // 这里带上项目侧已维护的别名表，避免「宋教授」查无别名新建重复卡）
+      aliases: [...(character.aliases ?? [])],
       attributes: {
         role: character.role ?? '',
         description: character.description ?? '',
@@ -111,27 +114,42 @@ export class LegacyProjectMigrator {
       })),
     ];
 
-    const foreshadows: StoryEntity[] = (project.foreshadows ?? []).map(foreshadow => ({
-      id: foreshadow.id,
-      kind: 'foreshadow',
-      name: foreshadow.hint,
-      aliases: [],
-      attributes: {
-        hint: foreshadow.hint,
-        type: foreshadow.type ?? 'event',
-        status: foreshadow.status,
-        createdChapter: foreshadow.createdChapter ?? 0,
-        suggestedResolutionChapter: foreshadow.suggestedResolutionChapter ?? null,
-      },
-      knownBy: [],
-      sourceTrace: [
-        {
-          source: 'legacy-foreshadow',
-          sourceId: foreshadow.id,
-          chapter: foreshadow.createdChapter,
+    // 已写章数：用于把「大纲预埋但正文未写到」的伏笔归一化为 planned，
+    // 避免规划章号（如千章书的 488）污染 openForeshadows/紧急度。
+    const writtenChapterCount = Math.max(
+      0,
+      ...(project.chapters ?? [])
+        .filter(chapter => chapter.content.trim().length > 0)
+        .map(chapter => chapter.orderIndex + 1)
+    );
+    const foreshadows: StoryEntity[] = (project.foreshadows ?? []).map(rawForeshadow => {
+      const foreshadow = normalizeForeshadow(
+        rawForeshadow as Parameters<typeof normalizeForeshadow>[0],
+        writtenChapterCount
+      );
+      return {
+        id: foreshadow.id,
+        kind: 'foreshadow',
+        name: foreshadow.hint,
+        aliases: [],
+        attributes: {
+          hint: foreshadow.hint,
+          type: foreshadow.type ?? 'event',
+          status: foreshadow.status,
+          createdChapter: foreshadow.createdChapter ?? 0,
+          suggestedResolutionChapter: foreshadow.suggestedResolutionChapter ?? null,
+          actualPlantedChapter: foreshadow.actualPlantedChapter ?? null,
         },
-      ],
-    }));
+        knownBy: [],
+        sourceTrace: [
+          {
+            source: 'legacy-foreshadow',
+            sourceId: foreshadow.id,
+            chapter: foreshadow.createdChapter,
+          },
+        ],
+      };
+    });
 
     const sceneChunks = [...(project.chapters ?? [])]
       .sort((left, right) => left.orderIndex - right.orderIndex)
@@ -153,7 +171,8 @@ export class LegacyProjectMigrator {
         .map(memory => memory.timelineMark)
         .filter((mark): mark is string => Boolean(mark)),
       openForeshadows: foreshadows
-        .filter(entity => entity.attributes.status !== 'resolved')
+        // planned = 大纲预埋、正文尚未埋设，不进入催收/回收候选清单
+        .filter(entity => entity.attributes.status !== 'resolved' && entity.attributes.status !== 'planned')
         .map(entity => entity.id),
       fulfilledNodes: [],
     };

@@ -277,6 +277,12 @@ export class StoryRuntimeClient {
           typeof attributes.description === 'string' ? attributes.description : '',
         payload_json: toJsonValue(entity),
         last_chapter: commit.chapterNumber,
+        // 首次出现章：introducedInChapter 由 FactCanonicalizer 写入实际章号
+        // （旧数据是布尔 true，视为未知传 null，不覆盖已有首现记录）
+        first_chapter:
+          typeof attributes.introducedInChapter === 'number'
+            ? attributes.introducedInChapter
+            : null,
       };
     });
     const aliasRows = Object.values(canonicalState.entities).flatMap(entity =>

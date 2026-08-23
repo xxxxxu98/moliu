@@ -223,6 +223,10 @@ export function compactContext(
     // 最终形成“卷纲一套人、角色表另一套人”的不可写状态。
     canonicalCharacterNames: (outline.keyCharacters ?? []).map(character => character.name),
     keyCharacters: outline.keyCharacters ?? [],
+    // 已登记地点表（地名真源）：拆章蓝图只能用这里的地点名，防跨层地名漂移
+    registeredLocations: (outline.worldBuilding?.locations ?? []).map(
+      location => location.name
+    ),
     foreshadowPlan: outline.foreshadowPlan ?? [],
     volumePlan: outline.volumePlan,
     startupPack30: outline.startupPack30,
@@ -291,7 +295,8 @@ function buildChapterCompletionPrompt(
 2. 一章只能承载一个核心转折（一次对决/一次破局/一次身份反转/一次关键抉择），禁止把两个独立高潮压进同一章；
 3. 第 N 章必须承接第 N-1 章的 CEN 状态并推动到新状态，不得无视上章终态；
 4. 逐章节奏必须落在“startupPack30.chapterBlocks”对应 5 章区块的目标、必出事件、必留钩子与本块禁区之内，不得提前兑现后续区块的爽点；
-5. 所有字段都不得留空，禁止使用括号补充说明。
+5. 所有字段都不得留空，禁止使用括号补充说明；
+6. 地点必须使用“registeredLocations”里已登记的地点名，禁止自创新地名或同义变体（如已登记「江城市」就不得写「南江市」）；需要新场景时写成已登记地点的下属区域（如「江城市·南郊冷库」）。
 “existingChapterCanon”是不可改写的既有事实：新章不得重置期限、重复破案/入狱/升职等已完成事件，不得让已倒台或被羁押的反派无解释恢复原职。`,
     user: `【故事上下文】\n${compactContext(outline, direction, chapterNumbers)}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
   };

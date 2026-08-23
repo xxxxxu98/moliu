@@ -220,6 +220,8 @@ export interface Character {
   role?: string; // 角色定位，如"主角"、"反派"、"导师"等
   description?: string;
   profile: CharacterProfile;
+  /** 称呼变体（本名/称号互通），供实体消歧与检索 */
+  aliases?: string[];
   avatarPath?: string;
   createdAt: string;
   updatedAt: string;
@@ -333,9 +335,16 @@ export interface Foreshadow {
   id: string;
   hint: string;
   type: 'item' | 'dialogue' | 'event' | 'mystery';
-  status: 'buried' | 'hinted' | 'foreshadowed' | 'resolved';
+  /**
+   * planned = 大纲预埋（尚未在正文落笔）；buried 及之后 = 已在正文实际埋设。
+   * 旧数据 createdChapter 可能指向未写章节（全书规划章号），迁移见
+   * services/story-runtime/foreshadowLifecycle.ts 的 normalizeForeshadow。
+   */
+  status: 'planned' | 'buried' | 'hinted' | 'foreshadowed' | 'resolved' | 'abandoned';
   createdChapter: number;
   suggestedResolutionChapter?: number;
+  /** 正文实际埋设章号（区别于大纲规划的 setupChapter；planned 状态下未定义） */
+  actualPlantedChapter?: number;
   // ========== 富伏笔字段（来自首页大纲 foreshadowPlan）==========
   /** 回收收益（伏笔回收时给读者带来的价值/震撼） */
   payoffValue?: string;

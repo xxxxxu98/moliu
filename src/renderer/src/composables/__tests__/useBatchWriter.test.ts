@@ -99,11 +99,6 @@ vi.mock('@/services/writing/chapter-commit', () => ({
   extractChapterFacts: vi.fn().mockResolvedValue([]),
 }));
 
-vi.mock('@/services/writing/foreshadow-tracker', () => ({
-  createForeshadowTracker: vi.fn(),
-  analyzeForeshadows: vi.fn().mockReturnValue([]),
-}));
-
 // v3.1：useBatchWriter 现在通过 ChapterWritingPipeline 执行单章写作
 // mock 管道，默认返回成功结果；具体用例可在 beforeEach 里覆盖
 const mockPipelineExecute = vi.fn().mockResolvedValue({

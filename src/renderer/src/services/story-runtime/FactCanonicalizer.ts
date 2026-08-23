@@ -11,6 +11,7 @@ import type {
 
 import { applyProvisionalOverlay } from './stateOverlay';
 import { extractInventoryNumeric } from './schemas';
+import { matchBySurnameAndTitle } from './entityDisambiguation';
 
 /**
  * 通用主角称呼：模型在事实抽取时常用占位称呼指代主角
@@ -33,6 +34,8 @@ export interface FactCanonicalizeInput {
   state: StoryState;
   drafts: SceneDraft[];
   overlay?: ProvisionalStateOverlay;
+  /** 当前章号（1 起）。传入时新角色实体的 introducedInChapter 记录章号而非布尔值 */
+  chapterNumber?: number;
 }
 
 export interface FactCanonicalizeResult {
@@ -56,6 +59,10 @@ function normalizeLabel(value: string): string {
 
 function chapterText(drafts: SceneDraft[]): string {
   return drafts.flatMap(draft => draft.paragraphs).join('\n');
+}
+
+function isCJK(value: string): boolean {
+  return /^[\u4e00-\u9fff]+$/u.test(value);
 }
 
 function stableIntroId(name: string): string {
@@ -118,6 +125,8 @@ export function canonicalizeExtractedFacts(input: FactCanonicalizeInput): FactCa
   const text = chapterText(input.drafts);
   const lookup = buildEntityLookup(baseState.entities);
   const introduced = new Map<string, StoryEntity>();
+  // 消歧命中的实体 → 本章新增称谓别名（以 alias delta 持久化）
+  const mergedAliases = new Map<string, Set<string>>();
   const droppedCauses: Array<{ eventId: string; cause: string }> = [];
 
   // 通用主角称呼兜底：模型常把主角写成 hero/protagonist/主角 等占位称呼，
@@ -138,6 +147,19 @@ export function canonicalizeExtractedFacts(input: FactCanonicalizeInput): FactCa
       return protagonist.id;
     }
 
+    // 「姓氏 + 称谓」消歧：宋教授→宋怀远、周老板→周荣成。
+    // 唯一同姓候选时归并到既有实体，避免同一人落两张卡；
+    // 挂为别名 delta 持久化，后续章节直接走别名表命中（无需每章重跑模糊匹配）。
+    if (isCJK(ref.trim())) {
+      const mergedId = matchBySurnameAndTitle(ref, Object.values(baseState.entities));
+      if (mergedId) {
+        lookup.set(key, mergedId);
+        if (!mergedAliases.has(mergedId)) mergedAliases.set(mergedId, new Set());
+        mergedAliases.get(mergedId)!.add(ref.trim());
+        return mergedId;
+      }
+    }
+
     // 仅当正文确实出现该称呼时，才允许引入新角色实体
     if (ref.trim() && text.includes(ref.trim())) {
       const introId = stableIntroId(ref.trim());
@@ -147,7 +169,7 @@ export function canonicalizeExtractedFacts(input: FactCanonicalizeInput): FactCa
           kind: 'character',
           name: ref.trim(),
           aliases: [],
-          attributes: { introducedInChapter: true },
+          attributes: { introducedInChapter: input.chapterNumber ?? true },
           knownBy: [introId],
           sourceTrace: [{ source: 'fact-canonicalize', sourceId: ref.trim() }],
         };
@@ -294,6 +316,28 @@ export function canonicalizeExtractedFacts(input: FactCanonicalizeInput): FactCa
     evidence: `正文引入角色：${entity.name}`,
   }));
 
+  // 消歧别名持久化：把「宋教授→宋怀远」这类称谓映射写进实体 aliases，
+  // 下一章 buildEntityLookup 直接命中，模糊匹配只需跑一次。
+  const aliasDeltas: StateDelta[] = [...mergedAliases.entries()].flatMap(
+    ([entityId, aliases]) => {
+      const existing = baseState.entities[entityId];
+      const known = new Set((existing?.aliases ?? []).map(normalizeLabel));
+      const additions = [...aliases].filter(alias => !known.has(normalizeLabel(alias)));
+      if (additions.length === 0 || !existing) return [];
+      return [
+        {
+          operation: 'set' as const,
+          path: `entities.${entityId}`,
+          value: {
+            ...existing,
+            aliases: [...(existing.aliases ?? []), ...additions],
+          } as unknown as JsonValue,
+          evidence: `称谓消歧：${additions.join('、')} → ${existing.name}`,
+        },
+      ];
+    }
+  );
+
   const stateForValidation: StoryState = {
     ...baseState,
     entities: {
@@ -305,7 +349,7 @@ export function canonicalizeExtractedFacts(input: FactCanonicalizeInput): FactCa
   return {
     facts: {
       events,
-      deltas: [...deltas, ...introductionDeltas],
+      deltas: [...deltas, ...introductionDeltas, ...aliasDeltas],
       evidence: input.facts.evidence,
     },
     stateForValidation,

@@ -260,6 +260,12 @@ export interface ChapterWritingPipelineDeps {
    */
   foreshadowClient?: {
     markResolved(ids: string[]): Promise<void>;
+    /**
+     * 正文确认埋设流转（可选）。
+     * 本章大纲/正文命中 planned 伏笔的埋设点时，经此客户端把 planned → buried
+     * 并回填 actualPlantedChapter。未实现时降级跳过（旧注入方兼容）。
+     */
+    markPlanted?(input: { ids: string[]; chapterNumber: number }): Promise<void>;
   } | null;
   /** 注入外部已配置好的 orchestrator（跳过内部创建） */
   orchestrator?: StateDrivenWritingOrchestrator;
@@ -308,6 +314,33 @@ function parseNotBeforeChapter(revealTiming: string | undefined): number | null 
   if (!exact) return null;
   const value = Number(exact[1]);
   return Number.isInteger(value) && value > 0 ? value : null;
+}
+
+// ============================================================
+// bootstrap 会话级缓存（批量续写性能）
+// ============================================================
+
+/** runtime 实例 → projectId → 静态设定指纹 */
+const bootstrapFingerprints = new WeakMap<object, Map<string, string>>();
+
+function computeBootstrapFingerprint(project: {
+  characters?: Array<{ id: string; updatedAt?: string; aliases?: string[] }>;
+  foreshadows?: Array<{ id: string; status: string; setupChapter?: number; actualPlantedChapter?: number }>;
+  worldSchema?: unknown;
+  plotOutline?: unknown[];
+  volumes?: unknown[];
+  chapters?: unknown[];
+}): string {
+  const characters = (project.characters ?? [])
+    .map(c => `${c.id}:${c.updatedAt ?? ''}:${(c.aliases ?? []).join(',')}`)
+    .join('|');
+  const foreshadows = (project.foreshadows ?? [])
+    .map(f => `${f.id}:${f.status}:${f.setupChapter ?? ''}:${f.actualPlantedChapter ?? ''}`)
+    .join('|');
+  const outlineSize = project.plotOutline?.length ?? 0;
+  const volumeSize = project.volumes?.length ?? 0;
+  const chapterSize = project.chapters?.length ?? 0;
+  return [characters, foreshadows, outlineSize, volumeSize, chapterSize].join('~');
 }
 
 /**
@@ -375,14 +408,14 @@ export class ChapterWritingPipeline {
   } | null;
   private readonly foreshadowClient: {
     markResolved(ids: string[]): Promise<void>;
+    markPlanted?(input: { ids: string[]; chapterNumber: number }): Promise<void>;
   } | null;
   private readonly structuredAI: StructuredAI | undefined;
   private readonly storyRuntimeClient: StoryRuntimeClient | undefined;
   private readonly storyRuntimeApi: StoryRuntimeAPI | undefined;
   private readonly forceStoryRuntime: boolean;
 
-  constructor(deps?: ChapterWritingPipelineDeps) {
-    this.structuredAI = deps?.structuredAI;
+  constructor(deps?: ChapterWritingPipelineDeps) {    this.structuredAI = deps?.structuredAI;
     this.storyRuntimeClient = deps?.storyRuntimeClient;
     this.storyRuntimeApi = deps?.storyRuntimeApi;
     this.forceStoryRuntime = Boolean(deps?.forceStoryRuntime);
@@ -520,7 +553,8 @@ export class ChapterWritingPipeline {
               }
             },
           };
-    // 默认 foreshadowClient：判官证据确认的回收经 store 落库（saveCurrentProject 持久化）。
+    // 默认 foreshadowClient：判官证据确认的回收经 store 落库（saveCurrentProject 持久化）；
+    // markPlanted 处理大纲预埋伏笔的 planned → buried 流转（回填 actualPlantedChapter）。
     this.foreshadowClient =
       deps?.foreshadowClient !== undefined
         ? deps.foreshadowClient
@@ -530,6 +564,18 @@ export class ChapterWritingPipeline {
                 const target = projectStore.foreshadows.find(f => f.id === id);
                 if (target && target.status !== 'resolved') {
                   await projectStore.updateForeshadow(id, { status: 'resolved' });
+                }
+              }
+            },
+            markPlanted: async ({ ids, chapterNumber }) => {
+              for (const id of ids) {
+                const target = projectStore.foreshadows.find(f => f.id === id);
+                if (target && target.status === 'planned') {
+                  await projectStore.updateForeshadow(id, {
+                    status: 'buried',
+                    actualPlantedChapter: chapterNumber,
+                    createdChapter: chapterNumber,
+                  });
                 }
               }
             },
@@ -728,6 +774,34 @@ export class ChapterWritingPipeline {
     );
   }
 
+  /**
+   * 带会话级缓存的幂等 bootstrap。
+   * 批量写 N 章时 migrate+bootstrap 每章全量重跑，同一份近乎不变的
+   * bootstrap 被序列化/IPC 传输 N 次；指纹未变时跳过重复下发。
+   *
+   * 缓存按 runtime 实例隔离（WeakMap）：换 runtime（测试 harness 的内存
+   * 实例、应用重启）自然失效，不存在「新库没灌种子」的风险；同一实例
+   * 上静态设定变化（用户改人设/伏笔/大纲）时指纹变化自动重灌。
+   * 失败不记指纹，下一章重试完整 bootstrap。
+   */
+  private async bootstrapWithCache(
+    projectId: string,
+    bootstrap: Awaited<ReturnType<LegacyProjectMigrator['migrate']>>,
+    runtime: StoryRuntimeClient
+  ): Promise<void> {
+    const fingerprint = computeBootstrapFingerprint(
+      bootstrap as unknown as Parameters<typeof computeBootstrapFingerprint>[0]
+    );
+    let projectCache = bootstrapFingerprints.get(runtime);
+    if (!projectCache) {
+      projectCache = new Map();
+      bootstrapFingerprints.set(runtime, projectCache);
+    }
+    if (projectCache.get(projectId) === fingerprint) return;
+    await runtime.bootstrap(bootstrap);
+    projectCache.set(projectId, fingerprint);
+  }
+
   private resolveStoryRuntimeApi(): StoryRuntimeAPI {
     if (this.storyRuntimeApi) return this.storyRuntimeApi;
     if (typeof window !== 'undefined' && window.electronAPI?.storyRuntime) {
@@ -752,7 +826,7 @@ export class ChapterWritingPipeline {
     const runtime = this.storyRuntimeClient ?? new StoryRuntimeClient(api);
 
     try {
-      await runtime.bootstrap(bootstrap);
+      await this.bootstrapWithCache(input.project.id, bootstrap, runtime);
       const loadedState = await runtime.loadState(input.project.id);
       const chapterNumber = input.chapter.orderIndex + 1;
       const isEmptyRewrite = !input.chapter.content.trim();
@@ -970,6 +1044,25 @@ export class ChapterWritingPipeline {
         } catch (error) {
           console.warn(
             `[Pipeline] 伏笔回收流转失败（${resolvedIds.length} 条，不影响本章提交）:`,
+            error,
+          );
+        }
+      }
+
+      // 埋设流转（accepted commit 的状态投影）：大纲预埋伏笔（planned）在本章
+      // 到达规划埋设点、且正文确实出现该线索的关键词签名时，转 buried 并回填
+      // actualPlantedChapter。确定性检测（非判官），失败只记 warning。
+      const plantedIds = this.detectPlannedForeshadowings(
+        input.project.foreshadows ?? [],
+        chapterNumber,
+        prose
+      );
+      if (plantedIds.length > 0 && this.foreshadowClient?.markPlanted) {
+        try {
+          await this.foreshadowClient.markPlanted({ ids: plantedIds, chapterNumber });
+        } catch (error) {
+          console.warn(
+            `[Pipeline] 伏笔埋设流转失败（${plantedIds.length} 条，不影响本章提交）:`,
             error,
           );
         }
@@ -1214,6 +1307,33 @@ export class ChapterWritingPipeline {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * 检测本章应确认埋设的 planned 伏笔。
+   *
+   * 规划埋设点（setupChapter）到达且正文出现该线索的关键词签名时确认：
+   * 到点但正文没写 → 不确认（交给下一章重试，避免空挂 buried）；
+   * 未到点但正文提前出现（模型抢跑埋设）→ 也确认，记录实际章号。
+   * hint 关键词签名 = 从 hint 提取的 2 字以上 CJK 词段，命中任一即算出现。
+   */
+  private detectPlannedForeshadowings(
+    foreshadows: Array<{ id: string; hint: string; status: string; setupChapter?: number; createdChapter?: number }>,
+    chapterNumber: number,
+    prose: string
+  ): string[] {
+    const planned = foreshadows.filter(
+      f => f.status === 'planned' && (f.setupChapter ?? f.createdChapter ?? 0) <= chapterNumber + 1
+    );
+    if (planned.length === 0) return [];
+    return planned
+      .filter(f => {
+        const signature = f.hint.match(/[\u4e00-\u9fff]{2,}/gu) ?? [];
+        const keywords = signature.filter(term => term.length >= 2);
+        if (keywords.length === 0) return true;
+        return keywords.some(term => prose.includes(term));
+      })
+      .map(f => f.id);
   }
 
   /**

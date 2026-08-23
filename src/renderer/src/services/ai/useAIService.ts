@@ -97,11 +97,20 @@ ${c.content || '（本章暂无内容）'}`;
       ? projectStore.sortedChapters[currentChapterIndex + 1]
       : null;
 
-    // 获取相关的伏笔
+    // 获取相关的伏笔：
+    // - planned：取规划埋设点前后 3 章（写到埋设点时把线索带进 prompt）；
+    // - 已埋设：取实际埋设/最近提及章前后 3 章（回收铺垫）。
+    // 旧逻辑只按 createdChapter 过滤，大纲预埋伏笔（规划章号远超已写章数）
+    // 永远差 >3 被漏掉，线索从未进入写作 prompt。
     const relatedForeshadows = project.foreshadows?.filter(f => {
-      if (!f.createdChapter) return false;
       const chapterNum = parseInt(currentChapter.title.replace(/[^0-9]/g, '')) || 1;
-      return Math.abs(f.createdChapter - chapterNum) <= 3;
+      if (f.status === 'planned') {
+        const setup = f.setupChapter ?? f.createdChapter;
+        return Boolean(setup) && Math.abs(setup - chapterNum) <= 3;
+      }
+      const anchor = f.actualPlantedChapter ?? f.createdChapter;
+      if (!anchor) return false;
+      return Math.abs(anchor - chapterNum) <= 3;
     });
 
     // 提取章节大纲上下文（包含 hookType、timeSpan、keyEvents、expectedCoolPoints）

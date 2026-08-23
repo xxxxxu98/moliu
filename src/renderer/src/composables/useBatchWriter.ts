@@ -19,9 +19,10 @@
  */
 
 import { ref, computed, type Ref, type ComputedRef } from 'vue';
-import type { Volume, ChapterMemory } from '@/types/project';
+import type { Volume, ChapterMemory, Foreshadow } from '@/types/project';
 import { useProjectStore } from '@/stores/project.store';
 import { useSettingsStore } from '@/stores/settings.store';
+import { calculateForeshadowUrgency } from '@/services/story-runtime/foreshadowLifecycle';
 import { useActiveAIProvider } from './useActiveAIProvider';
 import { ContextManager } from '@/services/writing/context-manager';
 import {
@@ -369,30 +370,11 @@ interface InternalWritingState {
  * 不依赖 EndingPerceptionEngine 的私有方法
  */
 function calculateInlineUrgency(
-  foreshadow: any,
-  currentChapterIndex: number
+  foreshadow: Foreshadow,
+  currentChapterIndex: number,
+  plannedChapterCount?: number
 ): 'critical' | 'high' | 'medium' | 'low' {
-  const planted = foreshadow.createdChapter || 0;
-  const expected = foreshadow.suggestedResolutionChapter;
-  const plannedCount = 100;
-
-  // 如果有期望揭示章节
-  if (expected) {
-    const remaining = expected - currentChapterIndex;
-    if (remaining <= 0) return 'critical';
-    if (remaining <= 3) return 'high';
-    if (remaining <= 5) return 'medium';
-    return 'low';
-  }
-
-  // 按总进度推算
-  const plantedProgress = planted / plannedCount;
-  const currentProgress = currentChapterIndex / plannedCount;
-
-  if (plantedProgress > 0.8 && currentProgress > 0.9) return 'critical';
-  if (plantedProgress > 0.6 && currentProgress > 0.75) return 'high';
-  if (plantedProgress > 0.4 && currentProgress > 0.5) return 'medium';
-  return 'low';
+  return calculateForeshadowUrgency(foreshadow, currentChapterIndex, plannedChapterCount).level;
 }
 
 /**
@@ -400,45 +382,11 @@ function calculateInlineUrgency(
  * 参考 webnovel-writer 的公式：紧急度 = (已过章节 / 目标回收章节) × 层级权重
  */
 function calculateForeshadowUrgencyScore(
-  createdChapter: number,
-  suggestedResolutionChapter: number | undefined,
+  foreshadow: Foreshadow,
   currentChapterIndex: number,
-  urgency: 'critical' | 'high' | 'medium' | 'low'
+  plannedChapterCount?: number
 ): number {
-  const plannedCount = 100; // 默认计划章节数
-  const elapsed = currentChapterIndex - createdChapter;
-
-  // 基础紧急度
-  let score = 0;
-  const urgencyWeight = { critical: 100, high: 75, medium: 50, low: 25 };
-
-  // 如果有目标章节，计算超期程度
-  if (suggestedResolutionChapter) {
-    const targetElapsed = suggestedResolutionChapter - createdChapter;
-    if (currentChapterIndex > suggestedResolutionChapter) {
-      // 超期
-      const overdue = currentChapterIndex - suggestedResolutionChapter;
-      score = Math.min(100, 50 + overdue * 10);
-    } else {
-      // 未超期
-      const remaining = suggestedResolutionChapter - currentChapterIndex;
-      score = Math.min(urgencyWeight[urgency], 100 - remaining * 5);
-    }
-  } else {
-    // 按进度推算
-    const progress = currentChapterIndex / plannedCount;
-    if (progress > 0.9) {
-      score = urgencyWeight.critical;
-    } else if (progress > 0.75) {
-      score = urgencyWeight.high;
-    } else if (progress > 0.5) {
-      score = urgencyWeight.medium;
-    } else {
-      score = urgencyWeight.low;
-    }
-  }
-
-  return Math.round(score);
+  return calculateForeshadowUrgency(foreshadow, currentChapterIndex, plannedChapterCount).score;
 }
 
 /**
@@ -471,27 +419,24 @@ function checkEndingReadiness(
 
   // ========== 增强：计算伏笔紧急度评分 ==========
   const foreshadows = project?.foreshadows || [];
+  // planned = 大纲预埋未埋设，不参与「应回收」统计与催收排序
   const unresolvedForeshadows = foreshadows.filter(
-    (f: any) => f.status !== 'resolved' && f.status !== 'abandoned'
+    (f: Foreshadow) =>
+      f.status !== 'resolved' && f.status !== 'abandoned' && f.status !== 'planned'
   );
 
   // 计算每个伏笔的紧急度
   const criticalForeshadows: ForeshadowUrgencyItem[] = unresolvedForeshadows
-    .map((f: any) => {
-      // 计算伏笔紧急度（内联计算，不依赖私有方法）
-      const urgency = calculateInlineUrgency(f, currentChapterIndex);
-      const urgencyWeight = { critical: 100, high: 75, medium: 50, low: 25 };
+    .map((f: Foreshadow) => {
+      // 计算伏笔紧急度（统一口径：实际埋设章 + plannedChapterCount，旧实现
+      // 硬编码 100 且拿规划章号当埋设章，千章书伏笔恒为 critical）
+      const urgency = calculateInlineUrgency(f, currentChapterIndex, plannedChapterCount);
 
       return {
         hint: f.hint || '',
         urgency,
-        urgencyScore: calculateForeshadowUrgencyScore(
-          f.createdChapter || 0,
-          f.suggestedResolutionChapter,
-          currentChapterIndex,
-          urgency
-        ),
-        plantedChapter: f.createdChapter || 0,
+        urgencyScore: calculateForeshadowUrgencyScore(f, currentChapterIndex, plannedChapterCount),
+        plantedChapter: f.actualPlantedChapter ?? f.createdChapter ?? 0,
         suggestedResolutionChapter: f.suggestedResolutionChapter,
         overdueChapters: f.suggestedResolutionChapter
           ? Math.max(0, currentChapterIndex - f.suggestedResolutionChapter)

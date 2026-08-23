@@ -68,6 +68,7 @@ function getStatusColor(status: string) {
 
 function getStatusText(status: string) {
   const statusMap: Record<string, string> = {
+    planned: t('editor.planned') || '规划中',
     buried: t('editor.toBeRevealed'),
     hinted: t('editor.revealed'),
     foreshadowed: t('editor.toBeRevealed'),

@@ -33,7 +33,8 @@ export type OutlineCompletenessBlockerKind =
   | 'inconsistent-story-scale'
   | 'chapter-reference-out-of-range'
   | 'unknown-character-reference'
-  | 'protagonist-name-mismatch';
+  | 'protagonist-name-mismatch'
+  | 'unknown-location-reference';
 
 export interface OutlineCompletenessBlocker {
   kind: OutlineCompletenessBlockerKind;
@@ -259,6 +260,50 @@ function inspectSemanticConsistency(outline: ExecutableOutline): OutlineComplete
   for (const blueprint of outline.chapterBlueprints ?? []) {
     for (const reference of blueprint.involvedCharacters ?? []) {
       checkCharacterReference(`第${blueprint.orderIndex}章出场角色`, reference, blueprint.orderIndex);
+    }
+  }
+
+  // 未登记地名检测：与角色登记对称的软门禁。地点表（worldBuilding.locations）
+  // 是地名真源；卷纲/蓝图引用了表外地名即跨层漂移（真实项目：幕层写「南江市」、
+  // 正文写「江城市」）。只在「行政地名形态」文本中提取候选（以
+  // 市/县/省/区/镇/村/港/城 等结尾且 ≥3 字），普通场景词（仓库/学校/大坝）
+  // 不在检测范围，避免误伤。
+  const registeredLocations = (outline.worldBuilding?.locations ?? [])
+    .map(location => location.name?.trim())
+    .filter((name): name is string => Boolean(name));
+  if (registeredLocations.length >= 3) {
+    const ADMINISTRATIVE_LOCATION_RE =
+      /[\u4e00-\u9fff·]{2,6}(?:市|县|省|自治区|区|镇|乡|村|港|城|州|郡|府|都|京)/gu;
+    const extractUnregisteredLocations = (text: string): string[] => {
+      const candidates = text.match(ADMINISTRATIVE_LOCATION_RE) ?? [];
+      return [
+        ...new Set(
+          candidates.filter(
+            candidate =>
+              candidate.length >= 3 &&
+              !registeredLocations.some(location => candidate.includes(location) || location.includes(candidate))
+          )
+        ),
+      ];
+    };
+    for (const volume of outline.volumePlan ?? []) {
+      const volumeText = [volume.objective, volume.coreConflict, volume.climax].join('；');
+      for (const location of extractUnregisteredLocations(volumeText)) {
+        blockers.push({
+          kind: 'unknown-location-reference',
+          message: `第${volume.volumeIndex}卷卷纲引用了未登记地点「${location}」；必须补入世界与势力规划或改用已登记地点`,
+        });
+      }
+    }
+    for (const blueprint of outline.chapterBlueprints ?? []) {
+      const blueprintTextValue = blueprintText(blueprint);
+      for (const location of extractUnregisteredLocations(blueprintTextValue)) {
+        blockers.push({
+          kind: 'unknown-location-reference',
+          chapterNumber: blueprint.orderIndex,
+          message: `第${blueprint.orderIndex}章蓝图引用了未登记地点「${location}」；必须补入世界与势力规划或改用已登记地点`,
+        });
+      }
     }
   }
 

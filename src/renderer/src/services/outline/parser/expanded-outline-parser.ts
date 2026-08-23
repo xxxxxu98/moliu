@@ -78,22 +78,66 @@ export function parseVolumeChapterRange(raw: string | null): { start: number; en
 }
 
 /**
- * 卷区间合法化：AI 声明的各卷区间必须能拼成从 1 起的连续覆盖（允许重叠/缝隙 ≤1，
- * 对齐 startupBlocks 的容错口径）才可信；任何一卷缺失或非法则整体丢弃，
- * 由下游按 estimatedChaptersPerVolume 估算分卷（与旧行为一致）。
+ * 卷区间合法化：AI 声明的各卷区间应拼成从 1 起的连续覆盖（允许重叠/缝隙 ≤1，
+ * 对齐 startupBlocks 的容错口径）。
+ *
+ * 修复策略（2026-08-23 改造）：单卷缺失/非法时按相邻边界插值补算，不再
+ * 「一卷非法全弃」。旧行为在 23 卷规模下任何一卷被模型写坏，全部 chapterRange
+ * 被整体丢弃 → 下游按 estimatedChaptersPerVolume 估算 → 前几十章只命中前
+ * 两卷（真实项目复盘）。仅当首卷起点远离 1 或修复后仍有 >1 缝隙（整体不可信）
+ * 才整体丢弃回退估算。
  */
 function sanitizeVolumeChapterRanges(volumes: VolumePlan[]): VolumePlan[] {
   if (volumes.length < 2) return volumes;
-  let expected = 1;
-  for (const volume of volumes) {
-    const range = volume.chapterRange;
-    if (!range) return volumes.map(({ chapterRange: _ignored, ...rest }) => rest);
-    if (range.start - expected > 1 || expected - range.start > 1) {
-      return volumes.map(({ chapterRange: _ignored, ...rest }) => rest);
-    }
-    expected = range.end;
+
+  // 首卷必须从 1 附近开始，否则整套区间不可信
+  const firstRange = volumes[0].chapterRange;
+  if (!firstRange || Math.abs(firstRange.start - 1) > 1) {
+    return volumes.map(({ chapterRange: _ignored, ...rest }) => rest);
   }
-  return volumes;
+
+  const repaired: VolumePlan[] = [volumes[0]];
+  for (let index = 1; index < volumes.length; index += 1) {
+    const volume = volumes[index];
+    const previousEnd = repaired[index - 1].chapterRange?.end ?? 0;
+    const nextRange = volumes[index + 1]?.chapterRange;
+
+    if (
+      volume.chapterRange &&
+      volume.chapterRange.start >= previousEnd &&
+      volume.chapterRange.start - previousEnd <= 2
+    ) {
+      // 合法：与前卷衔接（容忍 ≤2 缝隙，clamp 到紧接前卷）
+      repaired.push({
+        ...volume,
+        chapterRange: {
+          start: Math.max(volume.chapterRange.start, previousEnd + 1),
+          end: volume.chapterRange.end,
+        },
+      });
+      continue;
+    }
+
+    // 单卷缺失/非法：按前卷结束与下一卷起点插值。
+    // 无下一卷边界（尾卷）且原区间只是「起点跳变」时，保留原区间的长度
+    // 只平移起点——缩成单章卷会让分卷严重失真。
+    const interpolatedStart = previousEnd + 1;
+    const originalLength = volume.chapterRange
+      ? volume.chapterRange.end - volume.chapterRange.start + 1
+      : 0;
+    const interpolatedEnd = nextRange
+      ? Math.max(interpolatedStart, nextRange.start - 1)
+      : originalLength > 0
+        ? interpolatedStart + originalLength - 1
+        : interpolatedStart;
+    repaired.push({ ...volume, chapterRange: { start: interpolatedStart, end: interpolatedEnd } });
+  }
+
+  // 尾卷结束不应为 0（插值失败的兜底标记）；失败则整体回退估算
+  if (repaired.some(volume => (volume.chapterRange?.end ?? 0) <= 0)) {
+    return volumes.map(({ chapterRange: _ignored, ...rest }) => rest);
+  }
+  return repaired;
 }
 
 function parseVolumeBlock(block: string, index: number): VolumePlan | null {
@@ -259,7 +303,7 @@ function parseStoryScalePlan(section: string): StoryScalePlan {
   const averageWordsPerChapter = Number(extractFieldValue(section, '章节平均字数')?.match(/\d+/)?.[0] ?? '2500');
   const suggestedVolumeCount = Number(extractFieldValue(section, '建议卷数')?.match(/\d+/)?.[0] ?? '3');
   let estimatedChaptersPerVolume = parseChaptersPerVolume(
-    extractFieldValue(section, '每卷预计章节数'),
+    extractFieldValue(section, '每卷预计章节数') ?? undefined,
   );
   // 交叉校验兜底：字段噪声再抓错时，用「总章数 / 卷数」这两个更权威的锚点重算，
   // 避免 inconsistent-story-scale blocker 拦下语义正确的大纲（实测 2026-08-15：

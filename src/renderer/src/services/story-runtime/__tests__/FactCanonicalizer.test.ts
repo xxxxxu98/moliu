@@ -45,6 +45,85 @@ describe('FactCanonicalizer', () => {
     expect(result.introductionDeltas).toEqual([]);
   });
 
+  it('姓氏+称谓消歧归并到同姓唯一实体并持久化别名（宋教授→宋怀远）', () => {
+    const state = makeState();
+    state.entities['char-song'] = {
+      id: 'char-song',
+      kind: 'character',
+      name: '宋怀远',
+      aliases: [],
+      attributes: {},
+      knownBy: [],
+      sourceTrace: [],
+    };
+    const facts: ExtractedFacts = {
+      events: [
+        {
+          id: 'evt-1',
+          chapter: 5,
+          sceneId: 'scene-1',
+          type: 'dialogue',
+          summary: '宋教授讲解尸骨',
+          participants: ['宋教授'],
+          causes: [],
+          effects: [],
+          evidence: ['宋教授讲解尸骨'],
+        },
+      ],
+      deltas: [],
+      evidence: ['宋教授讲解尸骨'],
+    };
+
+    const result = canonicalizeExtractedFacts({
+      facts,
+      state,
+      drafts: [makeDraft('宋教授站在讲台前讲解尸骨的钝器伤。')],
+      chapterNumber: 5,
+    });
+
+    // 不新建 char:intro 卡，归并到既有宋怀远
+    expect(result.facts.events[0].participants).toEqual(['char-song']);
+    expect(result.introductionDeltas).toEqual([]);
+    // 别名以 delta 持久化，下一章走别名表直接命中
+    const aliasDelta = result.facts.deltas.find(
+      delta =>
+        delta.path === 'entities.char-song' &&
+        (delta.value as { aliases?: string[] }).aliases?.includes('宋教授')
+    );
+    expect(aliasDelta).toBeDefined();
+  });
+
+  it('新角色实体的 introducedInChapter 记录实际章号', () => {
+    const facts: ExtractedFacts = {
+      events: [
+        {
+          id: 'evt-1',
+          chapter: 7,
+          sceneId: 'scene-1',
+          type: 'arrival',
+          summary: '王铁柱登场',
+          participants: ['王铁柱'],
+          causes: [],
+          effects: [],
+          evidence: ['王铁柱推门进来'],
+        },
+      ],
+      deltas: [],
+      evidence: ['王铁柱推门进来'],
+    };
+
+    const result = canonicalizeExtractedFacts({
+      facts,
+      state: makeState(),
+      drafts: [makeDraft('王铁柱推门进来。')],
+      chapterNumber: 7,
+    });
+
+    const introDelta = result.introductionDeltas[0];
+    const entity = introDelta.value as { attributes?: { introducedInChapter?: unknown } };
+    expect(entity.attributes?.introducedInChapter).toBe(7);
+  });
+
   it('正文新角色可引入，自然语言因果边丢弃而非当成缺前件', async () => {
     const prose =
       '陈渡看见周远身上标注，张宏盛在旁冷笑。周远被执行死刑的传闻让全场一静。';

@@ -400,6 +400,8 @@ export class LongFormWritingEngine {
         state: input.state,
         drafts,
         overlay: input.overlay,
+        // 章号传给 canonicalize：新角色实体的 introducedInChapter 记录实际章号
+        chapterNumber: contracts.chapter.chapterNumber,
       });
       facts = canonical.facts;
 

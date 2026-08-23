@@ -401,6 +401,7 @@ function getSeverityLabel(type: string): string {
 
 function getForeshadowStatusText(status: string): string {
   const statusMap: Record<string, string> = {
+    planned: '规划中',
     buried: '已埋设',
     hinted: '已暗示',
     foreshadowed: '已铺垫',
@@ -413,6 +414,7 @@ function getForeshadowStatusType(
   status: string
 ): 'default' | 'info' | 'success' | 'warning' | 'error' {
   const typeMap: Record<string, 'default' | 'info' | 'success' | 'warning' | 'error'> = {
+    planned: 'info',
     buried: 'default',
     hinted: 'info',
     foreshadowed: 'warning',

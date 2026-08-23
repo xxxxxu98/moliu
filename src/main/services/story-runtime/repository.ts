@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3';
 import { STORY_RUNTIME_SCHEMA_VERSION } from './migrations';
 import { StoryRuntimeDatabaseManager } from './database';
+import { buildUpsertSql } from './upsertSql';
 import type {
   AcceptedCommitResult,
   JsonPrimitive,
@@ -517,17 +518,9 @@ export class StoryRuntimeRepository {
         }
       }
 
-      const updateColumns = columns.filter(column => !definition.conflictColumns.includes(column));
-      const conflictSql = updateColumns.length
-        ? `DO UPDATE SET ${updateColumns
-            .map(column => `${column} = excluded.${column}`)
-            .join(', ')}`
-        : 'DO NOTHING';
-      const statement = database.prepare(
-        `INSERT INTO ${table} (${columns.join(', ')})
-         VALUES (${columns.map(() => '?').join(', ')})
-         ON CONFLICT (${definition.conflictColumns.join(', ')}) ${conflictSql}`
-      );
+      // 保留列（first_chapter 首现章）语义与 SQL 构造见 upsertSql.ts
+      const { sql } = buildUpsertSql(table, columns, definition);
+      const statement = database.prepare(sql);
       const values = columns.map(column =>
         bindValue(row[column], definition.jsonColumns.includes(column))
       );

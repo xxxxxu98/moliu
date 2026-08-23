@@ -103,6 +103,8 @@ export interface LegacyCharacter {
   role?: string;
   description?: string;
   profile?: Record<string, unknown>;
+  /** 称呼变体（本名/称号互通），迁移时透传给 StoryEntity.aliases */
+  aliases?: string[];
 }
 
 export interface LegacyRule {
@@ -136,6 +138,10 @@ export interface LegacyForeshadow {
   type?: string;
   createdChapter?: number;
   suggestedResolutionChapter?: number;
+  /** 大纲规划的埋设章（全书章号，未必已写到）；归一化见 foreshadowLifecycle */
+  setupChapter?: number;
+  /** 正文实际埋设章号（确认埋设后回填） */
+  actualPlantedChapter?: number;
 }
 
 export interface LegacyOutlineNode {

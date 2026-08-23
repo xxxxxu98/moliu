@@ -172,7 +172,10 @@ export function useProjectCreator(): UseProjectCreatorReturn {
         id: `foreshadow-${Date.now()}-${i}`,
         hint: f.hint,
         type: (f.type || "mystery") as "item" | "dialogue" | "event" | "mystery",
-        status: "buried" as const,
+        // 大纲预埋只算 planned；正文写到埋设点后才由 pipeline 转 buried。
+        // 旧项目直接标 buried + createdChapter=setupChapter 的失真见
+        // services/story-runtime/foreshadowLifecycle.ts。
+        status: "planned" as const,
         createdChapter: f.setupChapter ?? 1,
         suggestedResolutionChapter: f.suggestedChapter ?? f.payoffChapter,
         // 富伏笔字段（来自首页大纲 foreshadowPlan）

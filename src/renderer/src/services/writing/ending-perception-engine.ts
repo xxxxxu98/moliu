@@ -1119,8 +1119,14 @@ export class EndingPerceptionEngine {
       return 100;
     }
 
-    const resolved = this.foreshadows.filter(f => f.status === 'resolved').length;
-    return Math.round((resolved / this.foreshadows.length) * 100);
+    // 分母剔除 planned（大纲预埋未埋设）：把还没埋的伏笔算进「未完成」
+    // 会让百章书读出虚假的低完成率，干扰完结判断。
+    const effective = this.foreshadows.filter(f => f.status !== 'planned');
+    if (effective.length === 0) {
+      return this.foreshadows.some(f => f.status === 'resolved') ? 100 : 0;
+    }
+    const resolved = effective.filter(f => f.status === 'resolved').length;
+    return Math.round((resolved / effective.length) * 100);
   }
 
   /**
@@ -1128,11 +1134,14 @@ export class EndingPerceptionEngine {
    */
   private getUnresolvedForeshadows(): UnresolvedForeshadow[] {
     return this.foreshadows
-      .filter(f => f.status !== 'resolved' && f.status !== 'abandoned')
+      // planned = 大纲预埋未埋设：不算「未回收债」，也不该催收
+      .filter(
+        f => f.status !== 'resolved' && f.status !== 'abandoned' && f.status !== 'planned'
+      )
       .map(f => ({
         id: f.id,
         hint: f.hint,
-        plantedChapter: f.createdChapter,
+        plantedChapter: f.actualPlantedChapter ?? f.createdChapter,
         urgency: this.calculateForeshadowUrgency(f),
         difficulty: this.estimatePayoffDifficulty(f),
         reason: this.getUrgencyReason(f),
@@ -1147,7 +1156,7 @@ export class EndingPerceptionEngine {
    * 计算伏笔紧急度
    */
   private calculateForeshadowUrgency(foreshadow: Foreshadow): 'critical' | 'high' | 'medium' | 'low' {
-    const planted = foreshadow.createdChapter;
+    const planted = foreshadow.actualPlantedChapter ?? foreshadow.createdChapter;
     const expected = foreshadow.suggestedResolutionChapter;
     const plannedCount = this.project.metadata?.plannedChapterCount || 100;
 
@@ -1593,10 +1602,14 @@ export function generatePayoffMissions(
   plannedTotalChapters: number
 ): PayoffMission[] {
   return foreshadows
-    .filter(f => f.status !== 'resolved' && f.status !== 'abandoned')
+    // planned 未埋设不生成回收任务；已埋未收的才进揭示队列
+    .filter(
+      f => f.status !== 'resolved' && f.status !== 'abandoned' && f.status !== 'planned'
+    )
     .map(f => {
-      const expected = f.suggestedResolutionChapter || 
-        Math.min(f.createdChapter + 10, plannedTotalChapters);
+      const plantedAnchor = f.actualPlantedChapter ?? f.createdChapter;
+      const expected = f.suggestedResolutionChapter ||
+        Math.min(plantedAnchor + 10, plannedTotalChapters);
 
       return {
         foreshadowId: f.id,
@@ -1623,7 +1636,7 @@ function calculateUrgency(
   currentChapter: number,
   totalChapters: number
 ): 'critical' | 'high' | 'medium' | 'low' {
-  const planted = foreshadow.createdChapter;
+  const planted = foreshadow.actualPlantedChapter ?? foreshadow.createdChapter;
   const expected = foreshadow.suggestedResolutionChapter;
 
   if (expected) {

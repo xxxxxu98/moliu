@@ -12,6 +12,12 @@
 
 import type { StateSnapshot } from '../state/types';
 
+/** 检索侧姓氏称谓变体：与 story-runtime/entityDisambiguation 的词表保持同源子集 */
+const SURNAME_TITLE_VARIANTS = [
+  '教授', '院士', '老师', '先生', '老板', '老汉', '队长', '局长', '所长',
+  '大夫', '师傅', '大叔', '大爷', '掌柜', '专家', '总',
+];
+
 // ============================================================
 // 类型
 // ============================================================
@@ -54,9 +60,16 @@ export class EntityGraph {
   registerFromSnapshot(snapshot: StateSnapshot): void {
     for (const c of Object.values(snapshot.characters)) {
       this.registerAlias(c.name, c.name);
-      // 名称的常见变体
-      if (c.name.length >= 2) {
-        // 姓氏 + 称呼（如"林动" → "林"开头匹配）
+      // 姓氏 + 称谓变体（如"宋怀远" → "宋教授"可解析回主名）。
+      // 检索按主名计数，不注册这些变体会漏检以称号提及角色的切片。
+      if (c.name.length >= 2 && /^[\u4e00-\u9fff]{2,}$/u.test(c.name)) {
+        const surname = c.name[0];
+        for (const title of SURNAME_TITLE_VARIANTS) {
+          this.aliasMap.set(`${surname}${title}`, c.name);
+        }
+        for (const prefix of ['老', '小', '阿']) {
+          this.aliasMap.set(`${prefix}${surname}`, c.name);
+        }
       }
     }
     for (const l of Object.values(snapshot.locations)) {

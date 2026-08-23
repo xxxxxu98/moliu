@@ -527,12 +527,42 @@ describe('parseExpandedOutline · H3 子小节解析回归', () => {
     expect(outline!.volumePlan[1].chapterRange).toEqual({ start: 61, end: 120 });
   });
 
-  it('多卷区间不连续时整体丢弃 chapterRange（回退估算分卷）', () => {
+  it('多卷区间起点跳变时平移修复而非整体丢弃（插值修复策略）', () => {
     const vol1 = buildSampleOutline().match(/## 卷纲\n### 第1卷[\s\S]*?(?=\n\n## 世界与势力规划)/)![0];
-    // 第2卷区间从 71 起,与第1卷的 60 不衔接 → 全部丢弃
+    // 第2卷区间从 71 起，与第1卷的 60 不衔接：插值修复为 61-110（保留 50 章长度）
     const volumeSection = [
       vol1.replace('- 卷标题：系统崩溃日', '- 卷标题：系统崩溃日\n- 章节区间：第1-60章'),
       '### 第2卷\n- 卷标题：资本围剿\n- 章节区间：第71-120章\n- 卷目标：击溃围剿资本。\n- 卷冲突：林北 vs 金融大佬。\n- 卷高潮：第118章反杀。\n- 卷反转：第120章系统背叛。\n- 卷尾钩子：清算委员会现身。\n- 主角成长：从玩家到猎手。',
+    ].join('\n\n');
+    const outline = parseExpandedOutline(buildSampleOutline().replace(/## 卷纲[\s\S]*?(?=\n\n## 世界与势力规划)/, volumeSection));
+    expect(outline).not.toBeNull();
+    expect(outline!.volumePlan.length).toBe(2);
+    expect(outline!.volumePlan[0].chapterRange).toEqual({ start: 1, end: 60 });
+    // 旧策略：一卷跳变全部丢弃回退估算；新策略：平移起点保留区间长度
+    expect(outline!.volumePlan[1].chapterRange).toEqual({ start: 61, end: 110 });
+  });
+
+  it('中间卷缺失区间时按相邻边界插值补算', () => {
+    const vol1 = buildSampleOutline().match(/## 卷纲\n### 第1卷[\s\S]*?(?=\n\n## 世界与势力规划)/)![0];
+    // 第2卷缺区间：插值为 61-89（紧接前卷 60，止于第3卷起点前）
+    const volumeSection = [
+      vol1.replace('- 卷标题：系统崩溃日', '- 卷标题：系统崩溃日\n- 章节区间：第1-60章'),
+      '### 第2卷\n- 卷标题：资本围剿\n- 卷目标：击溃围剿资本。\n- 卷冲突：林北 vs 金融大佬。\n- 卷高潮：第78章反杀。\n- 卷反转：第80章系统背叛。\n- 卷尾钩子：清算委员会现身。\n- 主角成长：从玩家到猎手。',
+      '### 第3卷\n- 卷标题：终局清算\n- 章节区间：第90-150章\n- 卷目标：终极对决。\n- 卷冲突：林北 vs 系统本体。\n- 卷高潮：第148章决战。\n- 卷反转：第150章真相。\n- 卷尾钩子：新世界。\n- 主角成长：从猎手到守门人。',
+    ].join('\n\n');
+    const outline = parseExpandedOutline(buildSampleOutline().replace(/## 卷纲[\s\S]*?(?=\n\n## 世界与势力规划)/, volumeSection));
+    expect(outline).not.toBeNull();
+    expect(outline!.volumePlan.length).toBe(3);
+    expect(outline!.volumePlan[1].chapterRange).toEqual({ start: 61, end: 89 });
+    expect(outline!.volumePlan[2].chapterRange).toEqual({ start: 90, end: 150 });
+  });
+
+  it('首卷起点远离 1 时整体不可信，丢弃 chapterRange（回退估算分卷）', () => {
+    const vol1 = buildSampleOutline().match(/## 卷纲\n### 第1卷[\s\S]*?(?=\n\n## 世界与势力规划)/)![0];
+    // 首卷从 5 起，整套区间不可信 → 全部丢弃
+    const volumeSection = [
+      vol1.replace('- 卷标题：系统崩溃日', '- 卷标题：系统崩溃日\n- 章节区间：第5-60章'),
+      '### 第2卷\n- 卷标题：资本围剿\n- 章节区间：第61-120章\n- 卷目标：击溃围剿资本。\n- 卷冲突：林北 vs 金融大佬。\n- 卷高潮：第118章反杀。\n- 卷反转：第120章系统背叛。\n- 卷尾钩子：清算委员会现身。\n- 主角成长：从玩家到猎手。',
     ].join('\n\n');
     const outline = parseExpandedOutline(buildSampleOutline().replace(/## 卷纲[\s\S]*?(?=\n\n## 世界与势力规划)/, volumeSection));
     expect(outline).not.toBeNull();
