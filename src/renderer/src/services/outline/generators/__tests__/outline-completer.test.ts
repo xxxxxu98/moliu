@@ -8,8 +8,10 @@ import {
   extractRequestedChapterBlocks,
   findIncompleteChapterNumbers,
   findUnregisteredCharacterNames,
+  findUnregisteredLocationNames,
   repairChapterBlueprints,
   repairUnregisteredCharacters,
+  repairUnregisteredLocations,
   replaceOutlineSection,
   stripInvisibleOutlineChars,
 } from '../outline-completer';
@@ -648,5 +650,94 @@ describe('未登记角色修复通道', () => {
     );
     expect(names).toEqual([]);
   }, 60_000);
+});
+
+describe('repairUnregisteredLocations', () => {
+  const WORLD_OUTLINE_TEXT = `# 主方案
+
+## 世界与势力规划
+### 核心地点
+#### 江城市
+- 名称：江城市
+- 层级：city
+- 剧情功能：主线舞台
+#### 清河县
+- 名称：清河县
+- 层级：district
+- 剧情功能：第一卷案发地
+#### 汉东省
+- 名称：汉东省
+- 层级：province
+- 剧情功能：行政区背景
+
+### 关键势力
+#### 市局
+- 名称：市局
+- 势力定位：执法
+- 核心目标：破案
+`;
+
+  function makeOutlineWithVolumeRef(rawText: string, refText: string): {
+    rawText: string;
+    outline: ExecutableOutline;
+  } {
+    const withVolume = replaceOutlineSection(
+      rawText,
+      ['卷纲'],
+      '卷纲',
+      `### 第1卷\n- 卷标题：初入县衙\n- 卷目标：${refText}\n- 卷冲突：对抗`
+    );
+    return { rawText: withVolume, outline: parseExpandedOutline(withVolume)! };
+  }
+
+  it('从 blockers 提取未登记地点名', () => {
+    const { outline } = makeOutlineWithVolumeRef(
+      WORLD_OUTLINE_TEXT,
+      '主角在南江市揭开真相'
+    );
+    const blockers = inspectOutlineCompleteness(outline).blockers;
+    expect(findUnregisteredLocationNames(blockers)).toEqual(['南江市']);
+  });
+
+  it('把未登记地点补进核心地点子段，blocker 消除', () => {
+    const { rawText, outline } = makeOutlineWithVolumeRef(
+      WORLD_OUTLINE_TEXT,
+      '主角在南江市揭开真相'
+    );
+    const before = inspectOutlineCompleteness(outline).blockers.filter(
+      blocker => blocker.kind === 'unknown-location-reference'
+    );
+    expect(before.length).toBeGreaterThan(0);
+
+    const result = repairUnregisteredLocations({
+      rawText,
+      outline,
+      locationNames: findUnregisteredLocationNames(
+        inspectOutlineCompleteness(outline).blockers
+      ),
+    });
+
+    const after = inspectOutlineCompleteness(result.outline).blockers.filter(
+      blocker => blocker.kind === 'unknown-location-reference'
+    );
+    expect(after).toEqual([]);
+    // 补登记条目可被 parser 识别为 location
+    expect(
+      (result.outline.worldBuilding?.locations ?? []).map(location => location.name)
+    ).toEqual(expect.arrayContaining(['江城市', '南江市']));
+    expect(result.warnings.join(' ')).toContain('已补登记');
+  });
+
+  it('缺核心地点子段时跳过并警告（不破坏原稿）', () => {
+    const noWorldText = `# 主方案\n\n## 卷纲\n### 第1卷\n- 卷标题：卷一\n- 卷目标：主角在南江市行动\n- 卷冲突：对抗`;
+    const outline = parseExpandedOutline(noWorldText)!;
+    const result = repairUnregisteredLocations({
+      rawText: noWorldText,
+      outline,
+      locationNames: ['南江市'],
+    });
+    expect(result.rawText).toBe(noWorldText);
+    expect(result.warnings.join(' ')).toContain('无法补登记');
+  });
 });
 

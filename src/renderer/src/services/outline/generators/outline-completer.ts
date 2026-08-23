@@ -555,6 +555,71 @@ export interface CompleteOutlineResult {
   warnings: string[];
 }
 
+/** 从门禁 blockers 提取未登记地点名（unknown-location-reference 文案），按出现顺序去重 */
+export function findUnregisteredLocationNames(
+  blockers: OutlineCompletenessBlocker[],
+): string[] {
+  const locations: string[] = [];
+  const pattern = /引用了未登记地点「([^」]+)」/u;
+  for (const blocker of blockers) {
+    if (blocker.kind !== 'unknown-location-reference') continue;
+    const matched = pattern.exec(blocker.message)?.[1]?.trim();
+    if (matched && !locations.includes(matched)) locations.push(matched);
+  }
+  return locations;
+}
+
+/**
+ * 未登记地点定向补登记：把卷纲/蓝图引用了但不在「世界与势力规划」地点表里的
+ * 地名，确定性追加到「### 核心地点」子段（无需 AI：地点条目是结构化字段，
+ * 模型原文已经在用它，只需登记入表）。与 repairUnregisteredCharacters 对称——
+ * 没有修复通道时该门禁会把整份大纲 fail-closed 只能整体重试。
+ */
+export function repairUnregisteredLocations(params: {
+  rawText: string;
+  outline: ExecutableOutline;
+  locationNames: string[];
+}): CompleteOutlineResult {
+  const { locationNames } = params;
+  let rawText = params.rawText;
+  let outline = params.outline;
+  const warnings: string[] = [];
+  if (locationNames.length === 0) return { rawText, outline, warnings };
+
+  // 地点条目必须落在「### 核心地点」子段内（parser 按该子段切 #### 块），
+  // 且带 名称/层级/剧情功能 字段（functionInStory 为空的条目会被过滤）。
+  const locationSectionPattern = /(^#{2,}\s*核心地点[^\n]*$)/mu;
+  if (!locationSectionPattern.test(rawText)) {
+    warnings.push(`世界规划缺「核心地点」子段，${locationNames.length} 个地点无法补登记`);
+    return { rawText, outline, warnings };
+  }
+  const appended = locationNames
+    .map(
+      name =>
+        `#### ${name}\n- 名称：${name}\n- 层级：city\n- 剧情功能：卷纲与章节蓝图引用的地点，补登记入表。`
+    )
+    .join('\n\n');
+  // 追加到核心地点子段末尾 = 下一个同级/更高级标题之前。锚定下一个标题行插入。
+  rawText = rawText.replace(
+    locationSectionPattern,
+    (_match, heading: string) => `${heading}\n${appended}\n`
+  );
+  const nextOutline = parseExpandedOutline(rawText);
+  if (nextOutline) outline = nextOutline;
+
+  const stillMissing = findUnregisteredLocationNames(
+    inspectOutlineCompleteness(outline).blockers,
+  );
+  const fixedCount = locationNames.filter(name => !stillMissing.includes(name)).length;
+  if (fixedCount > 0) {
+    warnings.push(`未登记地点已补登记 ${fixedCount}/${locationNames.length} 个`);
+  }
+  if (stillMissing.length > 0) {
+    warnings.push(`仍有 ${stillMissing.length} 个未登记地点：${stillMissing.join('、')}`);
+  }
+  return { rawText, outline, warnings };
+}
+
 /**
  * 截断到 maxChars 个字符（按 Unicode code point，中文一字一计），保证不切在代理对中间。
  */

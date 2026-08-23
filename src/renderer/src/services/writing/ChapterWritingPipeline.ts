@@ -1050,13 +1050,15 @@ export class ChapterWritingPipeline {
       }
 
       // 埋设流转（accepted commit 的状态投影）：大纲预埋伏笔（planned）在本章
-      // 到达规划埋设点、且正文确实出现该线索的关键词签名时，转 buried 并回填
+      // 到达规划埋设点、且章大纲确实承载该线索（实体词共现，见
+      // detectPlannedForeshadowings 标定注释）时，转 buried 并回填
       // actualPlantedChapter。确定性检测（非判官），失败只记 warning。
-      const plantedIds = this.detectPlannedForeshadowings(
-        input.project.foreshadows ?? [],
+      const plantedIds = this.detectPlannedForeshadowings({
+        foreshadows: input.project.foreshadows ?? [],
         chapterNumber,
-        prose
-      );
+        chapterOutline: input.chapter.outline ?? input.chapter.plotSummary ?? '',
+        characterNames: (input.project.characters ?? []).map(c => c.name),
+      });
       if (plantedIds.length > 0 && this.foreshadowClient?.markPlanted) {
         try {
           await this.foreshadowClient.markPlanted({ ids: plantedIds, chapterNumber });
@@ -1312,28 +1314,54 @@ export class ChapterWritingPipeline {
   /**
    * 检测本章应确认埋设的 planned 伏笔。
    *
-   * 规划埋设点（setupChapter）到达且正文出现该线索的关键词签名时确认：
+   * 规划埋设点（setupChapter）到达且本章确实承载该线索时确认：
    * 到点但正文没写 → 不确认（交给下一章重试，避免空挂 buried）；
    * 未到点但正文提前出现（模型抢跑埋设）→ 也确认，记录实际章号。
-   * hint 关键词签名 = 从 hint 提取的 2 字以上 CJK 词段，命中任一即算出现。
+   *
+   * 迹象判定用实体词共现（真实冒烟标定：hint 是整段长句，正文常换措辞，
+   * 「密押暗记」写成「密押票」，整段 includes 必 miss；字符 bigram 比率
+   * 又被主角名等高频词淹没）。方案：hint 的 2 字滑窗词（剔除角色名片段）
+   * 与【章大纲】共现 ≥5 判定。标定数据：埋设章 8 分 vs 邻章 0-3 分，
+   * 信噪比 4:1；用大纲而非正文做锚——大纲 CPN 与伏笔规划同源（拆章时
+   * 从伏笔 hint 派生），换措辞率远低于正文。
    */
   private detectPlannedForeshadowings(
-    foreshadows: Array<{ id: string; hint: string; status: string; setupChapter?: number; createdChapter?: number }>,
-    chapterNumber: number,
-    prose: string
+    input: {
+      foreshadows: Array<{ id: string; hint: string; status: string; setupChapter?: number; createdChapter?: number }>;
+      chapterNumber: number;
+      chapterOutline: string;
+      characterNames: string[];
+    }
   ): string[] {
+    const { foreshadows, chapterNumber, chapterOutline, characterNames } = input;
     const planned = foreshadows.filter(
-      f => f.status === 'planned' && (f.setupChapter ?? f.createdChapter ?? 0) <= chapterNumber + 1
+      f =>
+        f.status === 'planned' &&
+        (f.setupChapter ?? f.createdChapter ?? 0) <= chapterNumber + 1
     );
-    if (planned.length === 0) return [];
-    return planned
-      .filter(f => {
-        const signature = f.hint.match(/[\u4e00-\u9fff]{2,}/gu) ?? [];
-        const keywords = signature.filter(term => term.length >= 2);
-        if (keywords.length === 0) return true;
-        return keywords.some(term => prose.includes(term));
+    if (planned.length === 0 || !chapterOutline.trim()) return [];
+
+    const nameTerms = new Set(
+      characterNames.flatMap(name => {
+        const chars = [...name];
+        return chars.map((_, i) => name.slice(i, i + 2)).filter(t => t.length === 2);
       })
-      .map(f => f.id);
+    );
+    const sharedCount = (hint: string): number => {
+      const chars = [...hint.matchAll(/[\u4e00-\u9fff]/gu)].map(m => m[0]).join('');
+      let hits = 0;
+      const seen = new Set<string>();
+      for (let i = 0; i < chars.length - 1; i += 1) {
+        const term = chars.slice(i, i + 2);
+        if (seen.has(term)) continue;
+        seen.add(term);
+        if (nameTerms.has(term)) continue;
+        if (chapterOutline.includes(term)) hits += 1;
+      }
+      return hits;
+    };
+
+    return planned.filter(f => sharedCount(f.hint) >= 5).map(f => f.id);
   }
 
   /**

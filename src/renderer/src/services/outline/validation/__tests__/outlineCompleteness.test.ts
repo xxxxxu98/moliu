@@ -297,4 +297,118 @@ describe('inspectOutlineCompleteness', () => {
       '角色「林溪」关系引用了未登记角色「顾清焉」；必须补入关键角色规划或改用已登记角色',
     ]);
   });
+
+  describe('unknown-location-reference（地名漂移门禁）', () => {
+    function makeOutlineWithLocations(): ExecutableOutline {
+      const outline = makeOutline();
+      outline.worldBuilding = {
+        locations: [
+          { name: '江城市' },
+          { name: '清河县' },
+          { name: '汉东省' },
+        ],
+      } as ExecutableOutline['worldBuilding'];
+      return outline;
+    }
+
+    it('卷纲引用表外行政地名（南江市）产生 blocker', () => {
+      const outline = makeOutlineWithLocations();
+      outline.volumePlan = [{
+        volumeIndex: 3,
+        title: '第三卷',
+        objective: '主角在南江市揭开最终真相',
+        coreConflict: '',
+        climax: '',
+        reversal: '',
+        endingHook: '',
+        protagonistGrowth: '',
+        keyCharacters: [],
+        setupForeshadows: [],
+        payoffForeshadows: [],
+        relationshipShifts: [],
+      }];
+
+      const result = inspectOutlineCompleteness(outline);
+      expect(result.blockers.map(blocker => blocker.kind)).toContain('unknown-location-reference');
+    });
+
+    it('人名+介词的弱后缀误切（陆衡在京）不产生 blocker（2026-08-23 真实冒烟误报）', () => {
+      const outline = makeOutlineWithLocations();
+      outline.keyCharacters = [
+        ...outline.keyCharacters,
+        { id: 'lu-heng', name: '陆衡' },
+      ] as ExecutableOutline['keyCharacters'];
+      outline.volumePlan = [{
+        volumeIndex: 3,
+        title: '第三卷',
+        objective: '陆衡在京统筹全局，主角在江城市配合行动',
+        coreConflict: '',
+        climax: '',
+        reversal: '',
+        endingHook: '',
+        protagonistGrowth: '',
+        keyCharacters: [],
+        setupForeshadows: [],
+        payoffForeshadows: [],
+        relationshipShifts: [],
+      }];
+
+      const result = inspectOutlineCompleteness(outline);
+      expect(result.blockers.filter(b => b.kind === 'unknown-location-reference')).toEqual([]);
+    });
+
+    it('以已登记角色名开头的候选（陆衡在济南市）不产生 blocker', () => {
+      const outline = makeOutlineWithLocations();
+      outline.keyCharacters = [
+        ...outline.keyCharacters,
+        { id: 'lu-heng', name: '陆衡' },
+      ] as ExecutableOutline['keyCharacters'];
+      outline.chapterBlueprints = [
+        ...(outline.chapterBlueprints ?? []),
+        {
+          ...makeBlueprint(31),
+          CBN: '陆衡在济南市发来密电，主角连夜出发',
+        },
+      ];
+
+      const result = inspectOutlineCompleteness(outline);
+      expect(result.blockers.filter(b => b.kind === 'unknown-location-reference')).toEqual([]);
+    });
+
+    it('已登记地点的包含式引用（江城市·南郊）不产生 blocker', () => {
+      const outline = makeOutlineWithLocations();
+      outline.chapterBlueprints = [
+        ...(outline.chapterBlueprints ?? []),
+        {
+          ...makeBlueprint(32),
+          CBN: '江城市南郊冷库的锁被人动过',
+        },
+      ];
+
+      const result = inspectOutlineCompleteness(outline);
+      expect(result.blockers.filter(b => b.kind === 'unknown-location-reference')).toEqual([]);
+    });
+
+    it('登记地点不足 3 个时门禁关闭（旧大纲兼容）', () => {
+      const outline = makeOutline();
+      outline.worldBuilding = { locations: [{ name: '江城市' }] } as ExecutableOutline['worldBuilding'];
+      outline.volumePlan = [{
+        volumeIndex: 1,
+        title: '第一卷',
+        objective: '主角在南江市调查案件',
+        coreConflict: '',
+        climax: '',
+        reversal: '',
+        endingHook: '',
+        protagonistGrowth: '',
+        keyCharacters: [],
+        setupForeshadows: [],
+        payoffForeshadows: [],
+        relationshipShifts: [],
+      }];
+
+      const result = inspectOutlineCompleteness(outline);
+      expect(result.blockers.filter(b => b.kind === 'unknown-location-reference')).toEqual([]);
+    });
+  });
 });

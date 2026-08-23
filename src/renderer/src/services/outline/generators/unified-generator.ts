@@ -38,8 +38,10 @@ import {
 import {
   completeIncompleteOutline,
   findUnregisteredCharacterNames,
+  findUnregisteredLocationNames,
   repairChapterBlueprints,
   repairUnregisteredCharacters,
+  repairUnregisteredLocations,
   sanitizeOutlineHookLengths,
 } from './outline-completer';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
@@ -770,6 +772,34 @@ export class UnifiedOutlineGenerator {
                 const message = error instanceof Error ? error.message : String(error);
                 warnings.push(`未登记角色补登记失败：${message.slice(0, 160)}`);
               }
+            }
+          }
+
+          // 未登记地点定向补登记（unknown-location-reference）：与角色补登记对称。
+          // 确定性修复（无 AI 调用），把卷纲/蓝图引用的表外地名补进核心地点子段。
+          if (!finalCompleteness.canApply) {
+            const unregisteredLocations = findUnregisteredLocationNames(finalCompleteness.blockers);
+            if (unregisteredLocations.length > 0) {
+              const repairedLocations = repairUnregisteredLocations({
+                rawText: appliedFixRawText ?? rawText,
+                outline,
+                locationNames: unregisteredLocations,
+              });
+              const repairedLocationCompleteness = inspectOutlineCompleteness(
+                repairedLocations.outline
+              );
+              if (
+                repairedLocationCompleteness.blockers.length < finalCompleteness.blockers.length
+              ) {
+                outline = repairedLocations.outline;
+                appliedFixRawText = repairedLocations.rawText;
+                finalCompleteness = repairedLocationCompleteness;
+              } else {
+                warnings.push(
+                  `未登记地点补登记后阻断项未减少（${finalCompleteness.blockers.length}→${repairedLocationCompleteness.blockers.length} 项），保留原稿`,
+                );
+              }
+              warnings.push(...repairedLocations.warnings);
             }
           }
 

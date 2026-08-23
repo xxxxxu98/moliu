@@ -265,24 +265,54 @@ function inspectSemanticConsistency(outline: ExecutableOutline): OutlineComplete
 
   // 未登记地名检测：与角色登记对称的软门禁。地点表（worldBuilding.locations）
   // 是地名真源；卷纲/蓝图引用了表外地名即跨层漂移（真实项目：幕层写「南江市」、
-  // 正文写「江城市」）。只在「行政地名形态」文本中提取候选（以
-  // 市/县/省/区/镇/村/港/城 等结尾且 ≥3 字），普通场景词（仓库/学校/大坝）
-  // 不在检测范围，避免误伤。
+  // 正文写「江城市」）。只在「强行政后缀」文本中提取候选（市/县/省/区/镇/乡/村/港
+  // 且 ≥3 字）。后缀集刻意排除 京/城/州/郡/府/都 等弱后缀——它们高频出现在
+  // 动词短语里（真实冒烟误报：「陆衡在京」被当成了地名 fail-closed 整份大纲）。
   const registeredLocations = (outline.worldBuilding?.locations ?? [])
     .map(location => location.name?.trim())
     .filter((name): name is string => Boolean(name));
   if (registeredLocations.length >= 3) {
     const ADMINISTRATIVE_LOCATION_RE =
-      /[\u4e00-\u9fff·]{2,6}(?:市|县|省|自治区|区|镇|乡|村|港|城|州|郡|府|都|京)/gu;
+      /[\u4e00-\u9fff·]{2,6}(?:市|县|省|自治区|区|镇|乡|村|港)/gu;
+    // 「人名+介词+后缀字」的误切防御：以已登记角色名开头的候选（陆衡在济南市）
+    // 不是地名引用
+    const characterNameList = (outline.keyCharacters ?? [])
+      .map(character => character.name?.trim())
+      .filter((name): name is string => Boolean(name && name.length >= 2));
+    // 候选前缀剥离：动词/介词短语黏在地名前（「主角在南江市」「前往清河县」），
+    // 正则贪婪前缀会整段吞进来。逐词剥离后若剩余仍 ≥2 字+后缀才算地名候选。
+    const LOCATION_PREFIX_WORDS = [
+      '主角', '前往', '抵达', '回到', '进入', '赶赴', '赶往', '奔向', '位于',
+      '在', '到', '去', '向', '从', '于', '与', '和', '及', '至',
+    ];
+    const stripLocationPrefix = (candidate: string): string => {
+      let value = candidate;
+      let stripped = true;
+      while (stripped) {
+        stripped = false;
+        for (const word of LOCATION_PREFIX_WORDS) {
+          // 剥离后必须仍满足「≥2 字 + 行政后缀」，否则该前缀是地名本体的一部分
+          if (value.startsWith(word) && value.length - word.length >= 3) {
+            value = value.slice(word.length);
+            stripped = true;
+            break;
+          }
+        }
+      }
+      return value;
+    };
     const extractUnregisteredLocations = (text: string): string[] => {
       const candidates = text.match(ADMINISTRATIVE_LOCATION_RE) ?? [];
       return [
         ...new Set(
-          candidates.filter(
-            candidate =>
-              candidate.length >= 3 &&
-              !registeredLocations.some(location => candidate.includes(location) || location.includes(candidate))
-          )
+          candidates
+            .map(stripLocationPrefix)
+            .filter(
+              candidate =>
+                candidate.length >= 3 &&
+                !characterNameList.some(name => candidate.startsWith(name)) &&
+                !registeredLocations.some(location => candidate.includes(location) || location.includes(candidate))
+            )
         ),
       ];
     };
