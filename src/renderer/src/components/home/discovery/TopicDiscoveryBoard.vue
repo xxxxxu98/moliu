@@ -483,7 +483,11 @@ async function handleExpandDirection(options?: {
     return;
   }
   if (!outline) {
-    if (isGenerating.value) return;
+    // 展开失败必须可见：首次展开时页面上还没有大纲，OutlineDisplay 不会渲染，
+    // pipelineError 无处展示——这里必须主动 toast，否则网关/模型故障被静默吞掉。
+    if (!isGenerating.value && generationError.value) {
+      message.error(generationError.value.slice(0, 200));
+    }
     return;
   }
 

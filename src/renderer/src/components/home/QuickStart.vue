@@ -614,6 +614,10 @@ async function handleExpandDirection(options?: { enhancementBrief?: string; dire
     }
     selectedOutline.value = previewGeneratedOutline.value;
     await scrollToPreviewSection();
+  } else if (!isGenerating.value && generationError.value) {
+    // 展开失败必须可见：非 compact 面板不渲染 DirectionPicker 的 error，
+    // OutlineDisplay 仅在已有大纲时挂载——首次失败时 combinedError 无处展示。
+    message.error(generationError.value.slice(0, 200));
   }
 }
 
