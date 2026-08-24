@@ -240,6 +240,11 @@ describe('SceneDraftEngine.draft', () => {
     expect(request.system).toContain('禁区最高优先级');
     expect(request.system).toContain('不得现身、说话、发声');
     expect(request.system).toContain('章末约束');
+    // 对话引号规则（2026-08-24 gemini3.7flash 冒烟 7 章 dialogue-quotes 后强化）：
+    // 锁住三个具体形态——成对中文引号、禁半角引号、禁提示语后裸接台词
+    expect(request.system).toContain('成对中文引号');
+    expect(request.system).toContain('半角引号');
+    expect(request.system).toContain('裸接台词');
     const prompt = JSON.parse(request.prompt) as {
       titleHints: { vibe: string; length: { prefer: string } };
       requiredOutput: { chapterTitle: string };

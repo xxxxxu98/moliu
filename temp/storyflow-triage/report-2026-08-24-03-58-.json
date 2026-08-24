@@ -1,0 +1,304 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-24T03:58:28.849Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-matrix",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 120,
+      "chaptersAccepted": "67/100",
+      "words": {
+        "min": 2464,
+        "avg": 2950,
+        "max": 3532
+      },
+      "paraRhythm": null,
+      "repairMetrics": null,
+      "runtimeMetrics": null,
+      "readerMetrics": null,
+      "readerOutlineScore": null,
+      "readerIndependent": null,
+      "phaseTimings": {
+        "outlineDirectionsMs": 24068,
+        "outlineExpandMs": 422591,
+        "outlineRollMs": 233228,
+        "applyOutlineMs": 876,
+        "continueWriteMs": 0,
+        "totalMs": 0
+      },
+      "runtimeBackend": null,
+      "verdict": "infra-failure",
+      "verdictReason": "失败由网络/网关错误主导",
+      "signatures": [
+        {
+          "id": "infra.transient.stream-interrupted",
+          "chapter": null,
+          "count": 64,
+          "evidence": [
+            "重试 1/2：AI 流式响应提前中断：已收到 0 字，未见结束标记",
+            "重试 1/2：AI 流式响应提前中断：已收到 652 字，未见结束标记",
+            "重试 1/2：AI 流式响应提前中断：已收到 2047 字，未见结束标记"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": null,
+          "count": 9,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-outline-1787536292072.jsonl seq2 outline-expand 响应 0 字符",
+            "trace storyflow-provider-1787039781123-outline-1787536292072.jsonl seq5 outline-expand 响应 0 字符",
+            "trace storyflow-provider-1787039781123-outline-1787536292072.jsonl seq6 outline-expand 响应 0 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.warning-other",
+          "chapter": null,
+          "count": 7,
+          "evidence": [
+            "主方案未返回「伏笔规划」段正文",
+            "大纲存在 4 个未登记角色（七皇子、大皇子、由初期的公事公办、程序至上”的由衷敬佩），执行第 1 轮补登记",
+            "未登记角色已补登记 4/4 个"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.repair-transient",
+          "chapter": null,
+          "count": 2,
+          "evidence": [
+            "单章蓝图补全批次 41-50 瞬态失败（第 1 次，API 未返回内容），2000ms 后重试",
+            "单章蓝图补全批次 31-40 瞬态失败（第 1 次，API 未返回内容），2000ms 后重试"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 21,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3848/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 30,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4641/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 11,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 21,
+          "count": 1,
+          "evidence": [
+            "当前 3848 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.dialogue-quotes",
+          "chapter": 26,
+          "count": 1,
+          "evidence": [
+            "对话未使用中文引号：2 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：沈淮身形未动，目光直视主审大案上的周崇礼，朗声宣喝：\"《大宣律·断狱律·录囚勘合令》第七条，凡遇三品以上要员之死罪大案，非三司合印不得定谳；大理寺承办录事官拥有）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 27,
+          "count": 1,
+          "evidence": [
+            "连续碎段过多：最长连续 5 段不足 40 字。合并同一动作或同一视角下的短段，保留必要的单句重拍，避免通篇一句一段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.dialogue-quotes",
+          "chapter": 27,
+          "count": 1,
+          "evidence": [
+            "对话未使用中文引号：3 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 30,
+          "count": 1,
+          "evidence": [
+            "当前 4641 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 43,
+          "count": 1,
+          "evidence": [
+            "段落节奏均匀化：16 段平均 183 字、变异系数 0.13，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 51,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 54,
+          "count": 1,
+          "evidence": [
+            "未履约节点：刑部底层书吏对沈淮产生敬畏。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.dialogue-quotes",
+          "chapter": 54,
+          "count": 1,
+          "evidence": [
+            "对话未使用中文引号：2 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：钱禄额头上的冷汗混合着黑墨大滴滚落，嘴唇哆嗦着喊道：\"不！周大人答应过我，只要我把那几页暗账烧了，就把我调去南京刑部升任正七品主簿！他不会害我！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 56,
+          "count": 1,
+          "evidence": [
+            "未履约节点：当众打脸周崇礼与陈恪。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.dialogue-quotes",
+          "chapter": 56,
+          "count": 1,
+          "evidence": [
+            "对话未使用中文引号：3 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：陈恪面色微沉，重重一拍桌案，冷哼道：\"一派胡言！各地验尸仵作粗鄙无知，记录时辰偶有疏漏笔误实属常事。再者，江南入秋暑热未退，尸身在湿热舟车之中加速腐败亦非罕见。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 61,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.dialogue-quotes",
+          "chapter": 61,
+          "count": 1,
+          "evidence": [
+            "对话未使用中文引号：4 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：周崇礼身上的孔雀官袍早已被剥除，只换了一身半旧的灰布短袍，眼底布满了猩红的血丝。他一脚跨过门槛，目光如淬了毒的利刃般死死盯住公案后的沈淮，厉声嘶吼道：\"沈淮，你）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 62,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 94,
+          "avgMs": 42470,
+          "p50Ms": 37924,
+          "maxMs": 142932
+        },
+        "fact-extraction": {
+          "count": 80,
+          "avgMs": 16840,
+          "p50Ms": 14523,
+          "maxMs": 49107
+        },
+        "chapter-judge": {
+          "count": 80,
+          "avgMs": 8952,
+          "p50Ms": 6931,
+          "maxMs": 23964
+        },
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 24064,
+          "p50Ms": 24064,
+          "maxMs": 24064
+        },
+        "outline-expand": {
+          "count": 24,
+          "avgMs": 26677,
+          "p50Ms": 25932,
+          "maxMs": 67859
+        },
+        "outline-roll": {
+          "count": 8,
+          "avgMs": 28649,
+          "p50Ms": 30635,
+          "maxMs": 42564
+        }
+      }
+    }
+  ]
+}

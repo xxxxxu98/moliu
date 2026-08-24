@@ -503,6 +503,35 @@ describe('parseExpandedOutline · H3 子小节解析回归', () => {
     expect(outline!.goldenfingerPlan?.firstRevealChapter).toBe(3);
   });
 
+  it('姓名字段被描述污染的角色块拒收，不混进 keyCharacters（2026-08-24 冒烟实测）', () => {
+    // 真实故障形态：模型把「关系变化」首句错填进「姓名」字段
+    const source = buildSampleOutline().replace(
+      '#### 主角\n- 姓名：林北',
+      [
+        '#### 主角',
+        '- 姓名：林北',
+        '',
+        '#### 功能型配角·皇城禁卫官校',
+        '- 姓名：由初期的公事公办',
+        '- 角色定位：配角',
+        '- 剧情功能：殿前司承天门值守与皇城门禁巡察军校。',
+        '- 核心需求：在严酷党争中严守章程保全性命。',
+        '- 最佳登场时机：第16章辕门对峙时入场。',
+        '- 角色弧线：机械执行者 → 程序盟友',
+        '- 角色资源：门禁勘合核验权',
+        '- 关系变化：初期公事公办，后转变为对沈淮的由衷敬佩。',
+        '',
+        '#### 主角',
+        '- 姓名：林北',
+      ].join('\n'),
+    );
+    const outline = parseExpandedOutline(source);
+    expect(outline).not.toBeNull();
+    const names = outline!.keyCharacters.map(c => c.name);
+    expect(names).not.toContain('由初期的公事公办');
+    expect(names).toContain('林北');
+  });
+
   it('卷纲带「章节区间」字段时解析出 chapterRange', () => {
     const source = buildSampleOutline().replace(
       '### 第1卷\n- 卷标题：系统崩溃日',
@@ -511,8 +540,7 @@ describe('parseExpandedOutline · H3 子小节解析回归', () => {
     const outline = parseExpandedOutline(source);
     expect(outline).not.toBeNull();
     // 单卷不参与合法化,直接保留解析出的区间
-    expect(outline!.volumePlan[0].chapterRange).toEqual({ start: 1, end: 60 });
-  });
+    expect(outline!.volumePlan[0].chapterRange).toEqual({ start: 1, end: 60 });  });
 
   it('多卷区间首尾衔接时逐卷保留 chapterRange', () => {
     const vol1 = buildSampleOutline().match(/## 卷纲\n### 第1卷[\s\S]*?(?=\n\n## 世界与势力规划)/)![0];

@@ -286,6 +286,7 @@ export function buildRollBlueprintPrompt(params: {
 const BLUEPRINT_FIELD_RE = /^-\s*(标题|概要|CBN|CPNs|CEN|mustCover|禁区|章尾钩子文案|爽点类型)\s*[：:]\s*(.*)$/u;
 
 function splitList(raw: string): string[] {
+  if (typeof raw !== 'string') return [];
   return raw
     .split(/[；;]/u)
     .map(item => item.trim())
@@ -314,7 +315,7 @@ export function parseBlueprintBlocks(raw: string, requested: number[]): Map<numb
       CPNs: splitList(fields.get('CPNs') ?? ''),
       CEN,
       mustCover: splitList(fields.get('mustCover') ?? ''),
-      forbiddenZones: splitList(fields.get('禁区') ?? []),
+      forbiddenZones: splitList(fields.get('禁区') ?? ''),
       hookText: fields.get('章尾钩子文案') || undefined,
       coolPointType: fields.get('爽点类型') || undefined,
       hookType: '',

@@ -21,6 +21,7 @@ import type {
 import {
   extractFieldValue,
   extractMultiValueField,
+  isLikelyCharacterName,
   normalizeGeneratedText,
   splitByHeading,
   splitNamedSections,
@@ -617,7 +618,25 @@ function parseTieredForeshadowBlocks(section: string): HeadingBlock[] {
 function parseCharacterSection(section: string, protagonistName?: string): CharacterPlan[] {
   const characterBlocks = parseTieredCharacterBlocks(section);
   if (characterBlocks.length > 0) {
-    return characterBlocks.map((block) => parseCharacterBlock(block.body, protagonistName));
+    // 姓名字段被描述污染的块直接拒收（2026-08-24 冒烟实测：模型把「关系变化」
+    // 首句错填进姓名字段，产生「由初期的公事公办」这类假角色混进 keyCharacters，
+    // 污染角色名单与出场白名单 prompt）。主角块豁免——主角名由 direction 传入，
+    // 模型偶尔写带修饰的主角全称不该被丢。
+    const plans: CharacterPlan[] = [];
+    for (const block of characterBlocks) {
+      const plan = parseCharacterBlock(block.body, protagonistName);
+      if (
+        plan.name !== protagonistName &&
+        !isLikelyCharacterName(plan.name)
+      ) {
+        console.warn(
+          `[outline-parser] 角色块姓名「${plan.name}」疑似描述污染，已拒收该角色块`
+        );
+        continue;
+      }
+      plans.push(plan);
+    }
+    return plans;
   }
 
   const name = extractFieldValue(section, '姓名');

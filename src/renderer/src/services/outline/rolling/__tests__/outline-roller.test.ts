@@ -212,6 +212,22 @@ describe('parseBlueprintBlocks / isUsableRolledBlueprint', () => {
     expect(isUsableRolledBlueprint(weak)).toBe(false);
   });
 
+  it('缺 mustCover/禁区等可选字段的章块不再抛 raw.split TypeError（2026-08-24 冒烟批次 51-60 实测）', () => {
+    // 网关截断响应：只有标题/概要/CBN/CPNs/CEN，缺 mustCover 与禁区
+    const truncated = `### 第54章
+- 标题：残卷滴血露破绊
+- 概要：沈淮细勘血印密卷查出时序矛盾，深夜遭抢夺。
+- CBN：烛光下血印边缘泛硫磺黄
+- CPNs：细勘密卷发现时序矛盾；周崇礼深夜带人抢卷；沈淮抢先转移原件
+- CEN：刀光逼近值房门`;
+    expect(() => parseBlueprintBlocks(truncated, [54])).not.toThrow();
+    const bp = parseBlueprintBlocks(truncated, [54]).get(54);
+    expect(bp).toBeDefined();
+    expect(bp!.mustCover).toEqual([]);
+    expect(bp!.forbiddenZones).toEqual([]);
+    expect(isUsableRolledBlueprint(bp)).toBe(false); // mustCover 空 → 不可用，留给定点修复
+  });
+
   it('蓝图落 PlotNode：orderIndex=章号-1，结构化字段齐全', () => {
     const bp = parseBlueprintBlocks(validBlock(51), [51]).get(51)!;
     const node = blueprintToPlotNode(bp, 'proj-test');

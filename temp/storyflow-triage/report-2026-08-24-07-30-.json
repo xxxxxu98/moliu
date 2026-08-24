@@ -1,0 +1,331 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-24T07:30:22.289Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-matrix",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 200,
+      "chaptersAccepted": "100/100",
+      "words": {
+        "min": 2441,
+        "avg": 2976,
+        "max": 3514
+      },
+      "paraRhythm": null,
+      "repairMetrics": null,
+      "runtimeMetrics": null,
+      "readerMetrics": null,
+      "readerOutlineScore": null,
+      "readerIndependent": null,
+      "phaseTimings": {
+        "outlineDirectionsMs": 0,
+        "outlineExpandMs": 0,
+        "outlineRollMs": 314620,
+        "applyOutlineMs": 716,
+        "continueWriteMs": 0,
+        "totalMs": 0
+      },
+      "runtimeBackend": null,
+      "verdict": "infra-failure",
+      "verdictReason": "失败由网络/网关错误主导",
+      "signatures": [
+        {
+          "id": "infra.transient.stream-interrupted",
+          "chapter": null,
+          "count": 88,
+          "evidence": [
+            "重试 1/2：AI 流式响应提前中断：已收到 0 字，未见结束标记",
+            "重试 1/2：AI 流式响应提前中断：已收到 424 字，未见结束标记",
+            "重试 1/2：AI 流式响应提前中断：已收到 2812 字，未见结束标记"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": null,
+          "count": 31,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-outline-roll-1787544084779.jsonl seq3 outline-roll 响应 0 字符",
+            "trace storyflow-provider-1787039781123-outline-roll-1787544084779.jsonl seq5 outline-roll 响应 0 字符",
+            "trace storyflow-provider-1787039781123-outline-roll-1787544084779.jsonl seq7 outline-roll 响应 0 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 35,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3696/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 48,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4523/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 6,
+          "count": 1,
+          "evidence": [
+            "段落偏长：长段 1/14，超过 5 句的段 6。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 24,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.dialogue-quotes",
+          "chapter": 25,
+          "count": 1,
+          "evidence": [
+            "对话未使用中文引号：3 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：顾廷芳快步走至桌案前，目光在三个名字上凝视片刻，沉声说道：\"这三人皆已在刑部供状上画押受审，口供咬合得滴水不漏。三法司正堂之上，若是刑部先行传唤这三人登堂作证，）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 32,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 35,
+          "count": 1,
+          "evidence": [
+            "当前 3696 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 46,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.dialogue-quotes",
+          "chapter": 46,
+          "count": 1,
+          "evidence": [
+            "对话未使用中文引号：2 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：王崇浑身剧烈颤抖起来，豆大的冷汗混着泥灰从下巴滴落。他自知在时序铁证面前已无从狡辩，只能嘶声尖叫：\"即便供状有误，也是刑部令史交办的差事！本官不过是奉命行事，大）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 48,
+          "count": 1,
+          "evidence": [
+            "当前 4523 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 49,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 56,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.dialogue-quotes",
+          "chapter": 63,
+          "count": 1,
+          "evidence": [
+            "对话未使用中文引号：2 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：守在架阁库外回廊上的两名刑部差役见状大惊，慌忙拔出腰刀横在台阶前。领头的差役厉声喝道：\"此乃刑部要地，未得堂官手令，外官擅闯者格杀勿论！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.dialogue-quotes",
+          "chapter": 67,
+          "count": 1,
+          "evidence": [
+            "对话未使用中文引号：5 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：沉重的黑玉棋子撞在坚硬的黄梨木公案上，发出啪的一声脆响，硬生生在羊皮地图的西山官庄位置压出一道深陷的圆痕。赵恒抬起头，眉宇间满是森然寒意，沉声说道：\"陈恪与宗人）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.dialogue-quotes",
+          "chapter": 80,
+          "count": 1,
+          "evidence": [
+            "对话未使用中文引号：2 处提示语后直接接台词，全章没有一对引号。人物说出口的台词一律用成对中文引号“”包起来；换人说话另起一段（证据：大皇子脸色微微一沉，向前跨出一步，厉声呵斥道：\"荒唐！宣德司乃是宗室禁地，掌管皇族玉牒与岁贡礼度，岂容你一个六品主事带着差役胡乱闯入搜刮？沈淮，你借着办案之名擅）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 86,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 88,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 100,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 24,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-ch24-1787546569528.jsonl seq6 fact-extraction 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 72,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-ch72-1787551326221.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 95,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-ch95-1787553251013.jsonl seq3 fact-extraction 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.warning-other",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "[滚动续纲] 批次 51-60 失败：raw.split is not a function"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 140,
+          "avgMs": 42071,
+          "p50Ms": 38436,
+          "maxMs": 96296
+        },
+        "fact-extraction": {
+          "count": 118,
+          "avgMs": 17321,
+          "p50Ms": 15363,
+          "maxMs": 40759
+        },
+        "chapter-judge": {
+          "count": 116,
+          "avgMs": 9258,
+          "p50Ms": 7621,
+          "maxMs": 40121
+        },
+        "outline-roll": {
+          "count": 10,
+          "avgMs": 30658,
+          "p50Ms": 33288,
+          "maxMs": 40435
+        },
+        "reader-outline-judge": {
+          "count": 1,
+          "avgMs": 34461,
+          "p50Ms": 34461,
+          "maxMs": 34461
+        },
+        "reader-chapter-judge": {
+          "count": 47,
+          "avgMs": 43883,
+          "p50Ms": 27259,
+          "maxMs": 129947
+        }
+      }
+    }
+  ]
+}

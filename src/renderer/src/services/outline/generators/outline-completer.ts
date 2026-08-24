@@ -5,6 +5,7 @@ import type {
   ExecutableOutline,
 } from '../types/executable-outline';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
+import { isLikelyCharacterName } from '../parser/utils';
 import { isAbortedError, isTransientError, retryBackoffDelayMs } from '@/utils/ai-error-classify';
 import { readPositiveIntEnv } from '@/utils/env';
 import {
@@ -409,37 +410,11 @@ const CHARACTER_REFERENCE_BLOCKER_RE = /引用了未登记角色「([^」]+)」/
 const PROTAGONIST_MISMATCH_RE = /主角「([^」]+)」未进入关键角色规划/u;
 
 /**
- * 中文姓名合理长度：真实姓名 2-4 字，带姓的前缀称呼最多到 6-8 字（「城隍庙更夫陈哑巴」）。
- * 超过 10 字的基本是把「与陈哑巴从互不干涉到被陈哑巴揭穿身份」这类关系整句、
- * 或整段弧线描述当姓名提取（2026-08-15 冒烟：7 条清单 6 条不是姓名，
- * 模型按臆造清单连续 4 次空响应白烧 40 分钟）。
+ * 中文姓名合理性判定已移至 parser/utils（大纲解析层与补登记清单共用同一口径）：
+ * 解析层拒收「姓名」字段被描述污染的角色块（2026-08-24 冒烟：模型把「关系变化」
+ * 首句「由初期的公事公办」错填进姓名字段），这里 re-export 保持补登记链路兼容。
  */
-const MAX_CHARACTER_NAME_CHARS = 10;
-/** 关系/弧线句式特征词：出现在「姓名」里说明提取源是整句而非姓名 */
-const RELATION_PHRASE_RE = /[，。；、从到与和及在对为向着]/u;
-/**
- * 组织/势力称呼特征：集体名词尾（门/派/司/会/盟…）、「旧X/新X」指代、「N老」合称。
- * 给组织建「角色档」没有意义（无个人弧线无转折），第 2 轮实测模型被迫为
- * 「旧七老」「镇灵司」臆造人设，污染角色表。
- */
-const ORGANIZATION_NAME_RE =
-  /(?:[门派司会盟教帮堂阁殿宗楼局署馆](?:军|团|队|众)?$)|(?:^[旧新][\u4e00-\u9fa5]{1,4}$)|(?:^[一二三四五六七八九十]+老$)/u;
-
-/**
- * 判断提取出的「未登记角色名」是否像一个可建档的姓名。
- * 过滤掉整句关系描述、超长条目、组织称呼——这些发给补登记请求只会得到
- * 空响应或臆造角色，fail-closed 应交给整体重试而不是无效修复。
- */
-export function isLikelyCharacterName(value: string): boolean {
-  const name = value.trim().replace(/^[·•、，。\s]+|[·•、，。\s]+$/gu, '');
-  if (!name) return false;
-  // 括号注解形态（「忠诚执行者）」「韩尚书（六部尚书…）」）：字段被描述污染，非姓名
-  if (/[（()）]/u.test(name)) return false;
-  if ([...name].length > MAX_CHARACTER_NAME_CHARS) return false;
-  if (RELATION_PHRASE_RE.test(name)) return false;
-  if (ORGANIZATION_NAME_RE.test(name)) return false;
-  return true;
-}
+export { isLikelyCharacterName };
 
 /**
  * 从门禁 blockers 中提取所有未登记角色名（unknown-character-reference 的

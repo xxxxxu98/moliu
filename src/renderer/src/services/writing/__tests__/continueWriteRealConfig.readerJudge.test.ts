@@ -10,12 +10,12 @@ const providers = [
     enabled: true,
   },
   {
-    id: 'wawa-provider',
-    name: 'wawa-gpt-5.6-luna',
+    id: 'agif-provider',
+    name: '反重力-gemini-3.7-flash',
     provider: 'openai',
-    modelName: 'gpt-5.6-luna',
-    baseUrl: 'https://wawa.example/v1',
-    apiKey: 'wawa-key',
+    modelName: 'gemini-3.7-flash-high',
+    baseUrl: 'http://127.0.0.1:8045/v1',
+    apiKey: 'agif-key',
     enabled: true,
   },
 ];
@@ -51,13 +51,13 @@ describe('resolveReaderJudgeConfig', () => {
     delete process.env.MOLIU_READER_JUDGE_PROVIDER_ID;
   });
 
-  it('默认优先选择 wawa-gpt-5.6-luna，而不是配置列表第一项', () => {
+  it('默认优先选择反重力-gemini-3.7-flash，而不是配置列表第一项', () => {
     expect(resolveReaderJudgeConfig(writer)).toMatchObject({
-      providerId: 'wawa-provider',
-      model: 'gpt-5.6-luna',
-      baseUrl: 'https://wawa.example/v1',
+      providerId: 'agif-provider',
+      model: 'gemini-3.7-flash-high',
+      baseUrl: 'http://127.0.0.1:8045/v1',
       independentFromWriter: true,
-      selectionReason: 'default-wawa-gpt-5.6-luna',
+      selectionReason: 'default-judge-provider',
     });
   });
 

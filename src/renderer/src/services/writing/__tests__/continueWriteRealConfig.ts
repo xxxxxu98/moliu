@@ -55,12 +55,19 @@ export interface ResolvedReaderJudgeConfig {
   independentFromWriter: boolean;
   selectionReason:
     | 'explicit'
-    | 'default-wawa-gpt-5.6-luna'
+    | 'default-judge-provider'
     | 'automatic-independent'
     | 'writer-fallback';
 }
 
-export const DEFAULT_READER_JUDGE_PROVIDER_NAME = 'wawa-gpt-5.6-luna';
+/**
+ * 读者评审默认裁判厂商名（App 设置页里的 name，normalize 后精确匹配）。
+ * 2026-08-24 前为 wawa-gpt-5.6-luna；实测 luna 当裁判时大纲评审 summary 写成
+ * object、章节评审 evidence 超 3 条被 zod 硬拒（reader.evaluation-error ×2），
+ * 切到反重力 gemini-3.7-flash（与写作同厂商不同模型仍判 independent）。
+ * MOLIU_READER_JUDGE_PROVIDER_ID 显式环境变量优先级不变。
+ */
+export const DEFAULT_READER_JUDGE_PROVIDER_NAME = '反重力-gemini-3.7-flash';
 
 const PROVIDER_SET = new Set<string>([
   'openai',
@@ -364,7 +371,7 @@ export function resolveReaderJudgeConfig(writer: ResolvedRealAiConfig): Resolved
     if (selected) {
       return {
         ...selected,
-        selectionReason: 'default-wawa-gpt-5.6-luna',
+        selectionReason: 'default-judge-provider',
       };
     }
   }

@@ -1,0 +1,129 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-24T13:48:52.604Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-matrix",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 200,
+      "chaptersAccepted": "100/100",
+      "words": {
+        "min": 2441,
+        "avg": 2976,
+        "max": 3514
+      },
+      "paraRhythm": null,
+      "repairMetrics": null,
+      "runtimeMetrics": null,
+      "readerMetrics": null,
+      "readerOutlineScore": null,
+      "readerIndependent": null,
+      "phaseTimings": {
+        "outlineDirectionsMs": 0,
+        "outlineExpandMs": 0,
+        "outlineRollMs": 314620,
+        "applyOutlineMs": 716,
+        "continueWriteMs": 0,
+        "totalMs": 0
+      },
+      "runtimeBackend": null,
+      "verdict": "pipeline-bug",
+      "verdictReason": "存在确定性管线错误，优先修复管线后再回归",
+      "signatures": [
+        {
+          "id": "pipeline.type-error",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "[滚动续纲] 批次 51-60 失败：raw.split is not a function"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": null,
+          "count": 31,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-outline-roll-1787544084779.jsonl seq3 outline-roll 响应 0 字符",
+            "trace storyflow-provider-1787039781123-outline-roll-1787544084779.jsonl seq5 outline-roll 响应 0 字符",
+            "trace storyflow-provider-1787039781123-outline-roll-1787544084779.jsonl seq7 outline-roll 响应 0 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 24,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-ch24-1787546569528.jsonl seq6 fact-extraction 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 72,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-ch72-1787551326221.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 95,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-ch95-1787553251013.jsonl seq3 fact-extraction 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 140,
+          "avgMs": 42071,
+          "p50Ms": 38436,
+          "maxMs": 96296
+        },
+        "fact-extraction": {
+          "count": 118,
+          "avgMs": 17321,
+          "p50Ms": 15363,
+          "maxMs": 40759
+        },
+        "chapter-judge": {
+          "count": 116,
+          "avgMs": 9258,
+          "p50Ms": 7621,
+          "maxMs": 40121
+        },
+        "outline-roll": {
+          "count": 10,
+          "avgMs": 30658,
+          "p50Ms": 33288,
+          "maxMs": 40435
+        },
+        "reader-outline-judge": {
+          "count": 1,
+          "avgMs": 34461,
+          "p50Ms": 34461,
+          "maxMs": 34461
+        },
+        "reader-chapter-judge": {
+          "count": 47,
+          "avgMs": 43883,
+          "p50Ms": 27259,
+          "maxMs": 129947
+        }
+      }
+    }
+  ]
+}

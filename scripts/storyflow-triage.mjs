@@ -276,6 +276,10 @@ function parseSummary(dir, acc) {
     if (w.includes('瞬态失败')) acc.add('outline.repair-transient', null, w.slice(0, EVIDENCE_MAX));
     else if (w.includes('本地收缩'))
       acc.add('outline.titles-shrunk-local', null, w.slice(0, EVIDENCE_MAX));
+    else if (/is not a function/.test(w))
+      // 管线代码 TypeError（如 2026-08-24 outline-roller splitList 收到数组默认值）：
+      // 不是模型/网关问题，属于 pipeline-bug 候选，需要代码修复而非重试
+      acc.add('pipeline.type-error', null, w.slice(0, EVIDENCE_MAX));
     else acc.add('outline.warning-other', null, w.slice(0, EVIDENCE_MAX));
   }
   const reader = s.readerEvaluation;
