@@ -1,0 +1,47 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-25T01:59:13.319Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-scenario-matrix\\ensemble-survival",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 14,
+      "chaptersAccepted": "0",
+      "words": null,
+      "paraRhythm": null,
+      "repairMetrics": null,
+      "runtimeMetrics": null,
+      "readerMetrics": null,
+      "readerOutlineScore": null,
+      "readerIndependent": null,
+      "phaseTimings": null,
+      "runtimeBackend": null,
+      "verdict": "clean",
+      "verdictReason": "无异常签名",
+      "signatures": [],
+      "latency": {
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 22020,
+          "p50Ms": 22020,
+          "maxMs": 22020
+        },
+        "outline-expand": {
+          "count": 30,
+          "avgMs": 32923,
+          "p50Ms": 34317,
+          "maxMs": 59756
+        },
+        "outline-review": {
+          "count": 2,
+          "avgMs": 140000,
+          "p50Ms": 169824,
+          "maxMs": 169824
+        }
+      }
+    }
+  ]
+}

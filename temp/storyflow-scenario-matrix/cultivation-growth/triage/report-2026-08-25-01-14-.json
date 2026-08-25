@@ -1,0 +1,248 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-25T01:14:16.230Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-scenario-matrix\\cultivation-growth",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "pass": true,
+      "exitCode": 0,
+      "wallMinutes": 17,
+      "chaptersAccepted": "5/5",
+      "words": {
+        "min": 2700,
+        "avg": 3023,
+        "max": 3440
+      },
+      "paraRhythm": {
+        "chapters": 5,
+        "medianCv": 0.37,
+        "uniformChapters": 0
+      },
+      "repairMetrics": {
+        "firstPassChapters": 4,
+        "firstPassRate": 0.8,
+        "rewrittenChapters": 1,
+        "totalRewriteRounds": 1,
+        "averageRewriteRounds": 0.2,
+        "pipelineAttempts": 5
+      },
+      "runtimeMetrics": {
+        "requestCount": 18,
+        "requestCountsByPurpose": {
+          "scene-draft": 6,
+          "fact-extraction": 6,
+          "chapter-judge": 6
+        },
+        "latencyP50Ms": 11732,
+        "latencyP95Ms": 48442,
+        "latencyMaxMs": 48442
+      },
+      "readerMetrics": {
+        "chapterCount": 5,
+        "chapterAverage": 85.5,
+        "chapterMedian": 85.3,
+        "chapterMinimum": 84.8,
+        "openingThreeAverage": 85.1,
+        "continueReadingNoCount": 0,
+        "lowChapterCount": 0,
+        "lowWindowCount": 0,
+        "consecutiveLowRuns": []
+      },
+      "readerOutlineScore": 89.3,
+      "readerIndependent": false,
+      "phaseTimings": {
+        "outlineDirectionsMs": 26173,
+        "outlineExpandMs": 556396,
+        "outlineRollMs": 0,
+        "applyOutlineMs": 784,
+        "continueWriteMs": 353530,
+        "totalMs": 936883
+      },
+      "runtimeBackend": "sqlite",
+      "verdict": "passed-with-repairs",
+      "verdictReason": "质量问题/空响应均被章内压缩或重试兜住，最终通过",
+      "signatures": [
+        {
+          "id": "outline.warning-other",
+          "chapter": null,
+          "count": 2,
+          "evidence": [
+            "门禁章级缺陷定点修复后未减少（25→26 项），保留原稿",
+            "未登记地点已补登记 22/22 个"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 3,
+          "count": 2,
+          "evidence": [
+            "叙事视角在此处出现轻微的全知溢出。此前陆玄仅观察到一个‘须发灰白杂乱的老矿奴’，此处直接在旁白中指名称呼为‘老葛’，若两人此前相识应有简短辨认反应，若不相识则属于叙述者视角的提前泄露。（原本垂着头颅的老矿奴老葛猛然抬起了双眸。）",
+            "1-3章：第1章与第3章的两场战斗破局逻辑存在结构镜像：均为主角色弱佯退诱敌、敌人轻敌大意踏入地质临界点（第1章应力尖石、第3章地煞喷口反冲）、随后击杀并冷静搜尸。虽然非常符合前期弱小凡人流借地利破局的设定，但短窗口内连续两场陷阱诱杀套路略有重复。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.titles-shrunk-local",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "本地收缩超长标题/CBN/CEN 共 16 章（第 17、18、20、23、25、28、29、30、31、34、35、36、37、38、39、40 章），未发 AI 请求"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "卷纲宏观规划将黑山矿坑破局设定为完整的60章体量，但在前50章章节蓝图中，叙事节奏明显加快，主角在第30章就已完成黑山全盘收割并转场天阙灵脉坊，导致第31-50章实际上前置消耗了第2卷近半数的核心冲突（天阙立足、沈玉衡赌石、赤霞门矿战）。这虽使前50章紧凑爽快，但后续若仍按300章/5卷推进，需重新校准分卷章节范围与各"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "地点实体数据库中存在较多从正文描述句断句错误而自动抽取的非标准地名，且功能描述均为模板补登记占位符，建议清洗这些噪音词条以保证世界观设定的规范与清晰。（worldBuilding.locations 中包含：'{\"name\":\"垄断黑市\",\"level\":\"city\",\"functionInStory\":\"卷纲与章节蓝"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-3",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "蓝图中有4个章节的章末钩子未生成具体的剧情悬念或期待描述，仅保留了爽点分类标签，需补齐具体情境下的卡点钩子文本以指导后续正文写作。（第3章、第4章、第32章、第33章的 hookText 字段分别为：'orderIndex':3,'hookText':'- 爽点类型：碾压'；'orderIndex':4,'hookTe"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 1,
+          "count": 1,
+          "evidence": [
+            "首章重点建立了主角冷酷果决的求生性格与地脉通感金手指，但书名与定位中强调的‘断忆/记忆代价’核心设定尚未在首章露出端倪，略显单向聚焦于通感挖掘。（怀中贴肉藏着的那枚边缘残破的黑色石片，也在此刻变得滚烫异常，像是一块烧红的炭火，将地底深处那些极其微弱的震动无限放大。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "设定阐述略有集中插入感（若是缺失了核心情感锚点，使用者神魂将在三十天内彻底晶石化，沦为无知无觉的地脉死灵。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 4,
+          "count": 1,
+          "evidence": [
+            "主角与老矿奴之间的信任建立略显顺畅，虽有黑虎帮药囊和地脉断层事实作证，但作为在矿渊底层挣扎三十年的老江湖，老葛对初次见面的陌生人交出三十年心血图谱的速度偏快。（老夫绝不是忘恩负义的白眼狼。你想从中层矿区潜出去，光凭那手听懂岩石回声的本事还远远不够。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 5,
+          "count": 1,
+          "evidence": [
+            "1-5章：解局破关手段存在连续重复：第3章主角利用地脉通感诱敌并引爆'地底地煞'击杀黑虎帮打手，第5章面对铁闸搜检困局时，再次采用几乎完全相同的'地脉共振引动下方地煞喷发'解法，短时间内连续复用相同破局模版，略微削弱了智斗的新鲜感。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.self-evaluation-fallback",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "无独立读者模型，本轮回退写作模型自评"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 6,
+          "avgMs": 36689,
+          "p50Ms": 36215,
+          "maxMs": 48442
+        },
+        "fact-extraction": {
+          "count": 6,
+          "avgMs": 12209,
+          "p50Ms": 11732,
+          "maxMs": 16392
+        },
+        "chapter-judge": {
+          "count": 6,
+          "avgMs": 6403,
+          "p50Ms": 5776,
+          "maxMs": 9332
+        },
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 26170,
+          "p50Ms": 26170,
+          "maxMs": 26170
+        },
+        "outline-expand": {
+          "count": 28,
+          "avgMs": 28768,
+          "p50Ms": 29288,
+          "maxMs": 50404
+        },
+        "outline-review": {
+          "count": 1,
+          "avgMs": 102987,
+          "p50Ms": 102987,
+          "maxMs": 102987
+        },
+        "reader-outline-judge": {
+          "count": 1,
+          "avgMs": 19027,
+          "p50Ms": 19027,
+          "maxMs": 19027
+        },
+        "reader-chapter-judge": {
+          "count": 5,
+          "avgMs": 8233,
+          "p50Ms": 8344,
+          "maxMs": 9013
+        },
+        "reader-window-judge": {
+          "count": 2,
+          "avgMs": 11931,
+          "p50Ms": 12388,
+          "maxMs": 12388
+        }
+      }
+    }
+  ]
+}

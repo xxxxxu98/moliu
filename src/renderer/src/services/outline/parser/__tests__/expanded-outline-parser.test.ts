@@ -532,6 +532,31 @@ describe('parseExpandedOutline · H3 子小节解析回归', () => {
     expect(names).toContain('林北');
   });
 
+  it('含「成/在/为/后」等常见人名用字的姓名不再被误杀（2026-08-25 反重力矩阵实测）', () => {
+    // 单字黑名单曾把「赵成」「魏天成」「沈天成」「赵天成」拒收，导致这些角色
+    // 无法登记 → unknown-character-reference fail-closed → 3 个场景全灭。
+    // 这些字是常见人名用字，只有组合句式（从X到Y/由X转变成Y）才是关系描述特征。
+    const source = buildSampleOutline().replace(
+      '#### 主角\n- 姓名：林北',
+      [
+        '#### 主角',
+        '- 姓名：林北',
+        '',
+        '#### 反派·资本方代表',
+        '- 姓名：赵成',
+        '- 角色定位：反派',
+        '- 剧情功能：资金链绞杀的执行者。',
+        '- 角色弧线：意气风发 → 身败名裂',
+        '- 关系变化：与主角从合作到决裂。',
+      ].join('\n'),
+    );
+    const outline = parseExpandedOutline(source);
+    expect(outline).not.toBeNull();
+    const names = outline!.keyCharacters.map(c => c.name);
+    expect(names).toContain('赵成');
+    expect(names).toContain('林北');
+  });
+
   it('卷纲带「章节区间」字段时解析出 chapterRange', () => {
     const source = buildSampleOutline().replace(
       '### 第1卷\n- 卷标题：系统崩溃日',

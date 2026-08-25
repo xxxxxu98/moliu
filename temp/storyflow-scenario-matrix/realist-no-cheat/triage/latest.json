@@ -1,0 +1,298 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-25T02:19:56.397Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-scenario-matrix\\realist-no-cheat",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "pass": true,
+      "exitCode": 0,
+      "wallMinutes": 21,
+      "chaptersAccepted": "5/5",
+      "words": {
+        "min": 2675,
+        "avg": 2980,
+        "max": 3467
+      },
+      "paraRhythm": {
+        "chapters": 5,
+        "medianCv": 0.16,
+        "uniformChapters": 2
+      },
+      "repairMetrics": {
+        "firstPassChapters": 4,
+        "firstPassRate": 0.8,
+        "rewrittenChapters": 1,
+        "totalRewriteRounds": 1,
+        "averageRewriteRounds": 0.2,
+        "pipelineAttempts": 5
+      },
+      "runtimeMetrics": {
+        "requestCount": 21,
+        "requestCountsByPurpose": {
+          "scene-draft": 9,
+          "fact-extraction": 6,
+          "chapter-judge": 6
+        },
+        "latencyP50Ms": 13651,
+        "latencyP95Ms": 48490,
+        "latencyMaxMs": 57644
+      },
+      "readerMetrics": {
+        "chapterCount": 5,
+        "chapterAverage": 87.8,
+        "chapterMedian": 87.9,
+        "chapterMinimum": 85.4,
+        "openingThreeAverage": 86.3,
+        "continueReadingNoCount": 0,
+        "lowChapterCount": 0,
+        "lowWindowCount": 0,
+        "consecutiveLowRuns": []
+      },
+      "readerOutlineScore": 90.1,
+      "readerIndependent": false,
+      "phaseTimings": {
+        "outlineDirectionsMs": 19471,
+        "outlineExpandMs": 656953,
+        "outlineRollMs": 0,
+        "applyOutlineMs": 912,
+        "continueWriteMs": 472962,
+        "totalMs": 1150298
+      },
+      "runtimeBackend": "sqlite",
+      "verdict": "passed-with-repairs",
+      "verdictReason": "质量问题/空响应均被章内压缩或重试兜住，最终通过",
+      "signatures": [
+        {
+          "id": "outline.warning-other",
+          "chapter": null,
+          "count": 4,
+          "evidence": [
+            "大纲存在 3 个未登记角色（陈师傅、沈总、李局长），执行第 1 轮补登记",
+            "未登记角色已补登记 3/3 个",
+            "大纲审查修正完成：修复 1 处问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.semantic-ooc",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "正文后半段孙铁柱登门查封与逼债情节: 设定中孙铁柱为林建国三十年过命兄弟、老实本分的过气老焊工与主角方盟友，但在正文中却被描写为带领打手持铁棍暴力催债、贴封条查封工坊并出言威胁废掉主角双手的地痞债主，人物身份与人设产生严重崩坏与矛盾。（证据: 去而复返的孙铁柱嘴里叼着烟卷，带着两个手持铁棍的跟班大摇大摆跨进门，手里还抖"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.titles-shrunk-local",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "本地收缩超长标题/CBN/CEN 共 2 章（第 38、40 章），未发 AI 请求"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "人物角色设定表中存在多对同名/同功能人物词条拆分冗余（陈大山与陈师傅、沈鹏与沈总、李振华与李局长），且在章节细纲中命名交替混用，容易造成读者对人物身份归属的认知混乱；同时林建国的人物关系中存在文本解析切分残留错误（如将句子断片作为targetName）。（{\"name\":\"陈大山\",\"role\":\"ally\"}...{"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "世界观地点列表中混入了大量由短语提取截断产生的非实体碎片词（如'拿下全县'、'迎击省'等），虽不影响核心剧情走向，但降低了大纲结构数据的纯净度与规范性。（{\"name\":\"达车业在青阳县\",\"level\":\"city\"},{\"name\":\"拿下全县\",\"level\":\"city\"},{\"name\":\"迎击省\",\"lev"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-3",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "第41-48章集中爆发'自燃诬陷'并在听证会调取黑匣子一举将核心反派宏达车业彻底扳倒送入经侦，从发难到反派入狱仅用8章，节奏极快；虽然爽感密集，但容易让第二卷前期的核心矛盾过早清空，给后续接续车联天下的充电桩博弈带来节奏换挡压力。（宏达车业主要涉案人员被青阳县经侦支队带走立案调查）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 1,
+          "count": 1,
+          "evidence": [
+            "林建国刚声称厂里连绝缘工具都没有，林锐随后便拿出专业的一千伏耐高压手套、面罩、兆欧表及耐高温绝缘套管等特种维修耗材，未交代这些专业设备是由林锐从主机厂带回还是另有来源，产生轻微的道具逻辑小瑕疵。（浓烈的高压警告标识让林建国连连后退，摆手拒绝：“大山，这活儿我们真接不了！这是四百伏直流高压电，摸错一根线人当场就电焦了！我"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "催债人员上门的节点与修车完成无缝衔接，且催债头目被男主一番关于行业前景的说辞与一千五百元迅速劝退，退让过程略显顺畅。（催债头目脸色阴晴不定，死死盯了林锐几秒钟，最终将那一千五百块钱抓进掌心揣入怀中。他冷哼一声，伸手撕下已经贴在举升机上的一半封条）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "本章以修车成功、绿灯亮起作为情绪高潮收尾，技术闭环圆满，但对'3天还清2.85万'的紧迫主线缺乏即时的下步剧情牵引（如陈大山连夜联络车友群、或宏达车业的新动静），章尾悬念钩子略显平缓。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 4,
+          "count": 1,
+          "evidence": [
+            "对话引语中出现了感叹号与逗号直接连用（'！，'），属于排版输入失误，影响阅读顺畅度。（这三千块钱先压在账上，谁也不准乱动！，不过，你刚才用坏的那些细铜丝）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 5,
+          "count": 1,
+          "evidence": [
+            "多名营运司机在早高峰出站的关键营收时段，集体放弃接单并组队掉头开往修理厂，在戏剧张力上极具煽动性，但从极度精打细算的网约车底层生计逻辑来看，行为的一致性稍显舞台化。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "1-3章：核心配角姓名发生严重实体冲突与人设断裂：第1章中踹门上门催债、戴粗金链子的恶霸头目被明确命名为'孙铁柱'；但在第2章和第3章中，车间内陪伴林建国并肩作战、手持灭火器护主的老焊工工友同样被命名为'老焊工孙铁柱/柱子叔'，导致敌对反派与己方忠诚工友同名同姓在同场戏中对抗，造成严重的阅读混乱与设定事故。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "1-3章：连续两章结尾的爽点反馈模式高度同质化：第2章与第3章连续复用'通电->绿灯就绪->继电器吸合->陈大山激动扑车落泪大喊亮了/全绿了'的台词与动作模板，使得开箱大修的核心高潮在情绪表达上略显单调机械。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 5,
+          "count": 1,
+          "evidence": [
+            "1-5章：关键配角命名与身份出现严重前后冲突。第1章中‘孙铁柱’被明确描写为踹门收债、戴金链子的催债头目；但从第2章开始，‘孙铁柱’（铁柱叔）却突兀变成了与林建国共事三十年的老焊工、汽修厂合伙帮手，而催债头目在第2章后变成了无名头目。该穿帮直接破坏了人物关系的连续性。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.self-evaluation-fallback",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "无独立读者模型，本轮回退写作模型自评"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "prose.rhythm-uniform",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "均匀化章 2/5，cv 中位 0.16（<0.14 且段数≥12 为均匀化）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 9,
+          "avgMs": 36080,
+          "p50Ms": 32474,
+          "maxMs": 57644
+        },
+        "fact-extraction": {
+          "count": 6,
+          "avgMs": 11638,
+          "p50Ms": 12227,
+          "maxMs": 13651
+        },
+        "chapter-judge": {
+          "count": 6,
+          "avgMs": 8685,
+          "p50Ms": 7974,
+          "maxMs": 15265
+        },
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 19466,
+          "p50Ms": 19466,
+          "maxMs": 19466
+        },
+        "outline-expand": {
+          "count": 30,
+          "avgMs": 29839,
+          "p50Ms": 31209,
+          "maxMs": 50059
+        },
+        "outline-review": {
+          "count": 2,
+          "avgMs": 78853,
+          "p50Ms": 79851,
+          "maxMs": 79851
+        },
+        "reader-outline-judge": {
+          "count": 1,
+          "avgMs": 12849,
+          "p50Ms": 12849,
+          "maxMs": 12849
+        },
+        "reader-chapter-judge": {
+          "count": 5,
+          "avgMs": 8951,
+          "p50Ms": 9124,
+          "maxMs": 10201
+        },
+        "reader-window-judge": {
+          "count": 2,
+          "avgMs": 16140,
+          "p50Ms": 18929,
+          "maxMs": 18929
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,584 @@
+{
+  "book": "末班车重临：老街刑警的十年拼图",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": "fair-mystery",
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "scenario:fair-mystery",
+  "promptChars": 72,
+  "requestedChapterCount": 5,
+  "phaseTimings": {
+    "outlineDirectionsMs": 24260,
+    "outlineExpandMs": 260631,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 857,
+    "continueWriteMs": 426795,
+    "totalMs": 712543
+  },
+  "completedChapters": 5,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 凌晨三点，停运十年的夜班车进站",
+      "words": 3148,
+      "paras": 29,
+      "paraCv": 0.27,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆川用棉布蘸了点风油精，使劲在监视器屏幕右上角擦了几下。值班室这台十四寸的老式彩显布满油垢，那是对面早点铺常年油烟熏出来的痕迹。随着指尖用力，屏幕上凝固的油污终于被抹开，露出一块相对清晰的荧光区域。老式大头显像管发出轻微的滋滋电流声，屏幕右",
+      "tail": "通道中骤然传出，伴随着金属剧烈扭曲的声响，那辆载满死难者面孔的绿皮公交车，就这样迎着刺鼻的滚滚白烟，直挺挺地一头扎进了那堵没有任何退路与通口的实心砖墙死胡同里。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 刑侦空降夺权，斥责片警多管闲事",
+      "words": 2687,
+      "paras": 21,
+      "paraCv": 0.17,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "老街派出所值班室的窗框剧烈晃动起来，尖锐刺耳的刹车声瞬间撕破了沉闷的雨夜。三辆挂着市局特种号牌的深蓝色越野警车带着刺目的红蓝爆闪，粗暴地斜插在派出所那道狭窄的铁栅栏大门前，将进出老街的唯一通道彻底封死。车轮在泥泞的沥青路面上犁出深深的水痕，",
+      "tail": "沉闷而浑厚的机械轰鸣自地底深处的管网疯狂传导，派出所厚重的红砖墙体剧烈晃动，办公桌上的玻璃茶杯震落在地摔得粉碎，天花板上的老式吊灯在刺耳的金属扭曲声中疯狂摇摆。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 翻烂清掏记录，算出十吨钢铁真身",
+      "words": 3374,
+      "paras": 18,
+      "paraCv": 0.14,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "市局刑侦支队的三辆警车闪烁着红蓝警灯，在尖锐的警报声中调头驶离。随着车轮碾碎泥泞积水，原本被照得通明的老街再度沉入浓稠夜色。值班室里一片狼藉，地上散落着刚才剧烈震颤震落的公文夹与碎玻璃渣，空气中弥漫着老旧电线过热后的焦糊味。张建国弯腰将茶杯",
+      "tail": "交车，其庞大的机械身躯与油箱补给，绝不可能脱离这三家地下作坊的供料网络。陆川将物证袋收入怀中，抓起桌上的警用雨衣，将目光投向了窗外依旧被阴云笼罩的清河老街深巷。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 甩出碎渣打脸，违建阴影拆穿鬼把戏",
+      "words": 3219,
+      "paras": 37,
+      "paraCv": 0.54,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆川一把推开值班室厚重的木门，灌进来的穿堂风卷起桌角的办案便签纸。屋内的刑侦技术专家正手持激光笔，指着投在发黄白墙上的频谱分析图高谈阔论，市局刑侦支队长则面色冷峻地抱臂伫立在一旁。\n\n“这起所谓的幽灵客车进站，本质上就是利用老旧光交箱串联信",
+      "tail": "车灯的光束都在一微秒内被无形吞没。整辆夜班客车就这样在宏发烂尾大厦遗址死寂的外墙监控注视下，彻底化为了虚无，屏幕上只剩下冰冷斑驳的水泥高墙与漫天砸落的冰冷泥水。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 修鞋铺撕角日历，盲区消失的鬼影",
+      "words": 3331,
+      "paras": 21,
+      "paraCv": 0.37,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 1/21，超过 5 句的段 1。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "陆川反手带上派出所侧门的铁栓，将值班室内刑侦专家的激烈争辩隔绝在身后。市局刑侦支队的警员们正围着监控屏幕排查光缆故障，没人注意一个基层片警的悄然离开。老街弄堂里的积水已经漫过脚背，冰凉的雨水顺着警帽边缘不断往下淌。陆川踩着碎石与泥泞的青石板",
+      "tail": "道：“师娘铺子后墙漏水，我去帮着搭了块油布，顺便看看老街管涌的情况。”张建国盯着他看了足足三秒，终究没再追问，只是侧过身，声音低沉地示意他立刻跟自己回所里开会。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 凌晨三点，停运十年的夜班车进站"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 刑侦空降夺权，斥责片警多管闲事"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 翻烂清掏记录，算出十吨钢铁真身"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 甩出碎渣打脸，违建阴影拆穿鬼把戏"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 修鞋铺撕角日历，盲区消失的鬼影"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 片警例行查消防，直扑三家汽修铺"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 废油桶专用喷码，撞破恶霸手臂火吻"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 走访独居老人，暗渠轰鸣震碎伪证"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 门牌变迁锁死暗道，当场截获假车牌"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 钥匙扣挂血工牌，十年前冤魂索命"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787626581910",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-qjguVr\\story-runtime\\proj-1787626581910-b1633bd69c38.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 5,
+    "canonicalSnapshots": 6,
+    "latestSnapshotChapter": 5,
+    "sceneChunks": 5,
+    "events": 22
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 22,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "55b4a936aa2c92087f2e4496b028ee9538551320724cba1b56b1f6251d9bf1fe",
+    "completeCharacterProfileCount": 22,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 22,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 5
+  },
+  "outlineWarnings": [
+    "大纲存在 10 个未登记角色（清河街派出所老所长、市局刑侦支队长、404复仇同盟策划者、刑侦副支队长、宏发置业拆迁主管、老街退休水暖工、宏发置业董事长、省厅督察专员、老所长、殉职师父遗孀），执行第 1 轮补登记",
+    "未登记角色已补登记 10/10 个",
+    "本地收缩超长标题/CBN/CEN 共 15 章（第 4、5、6、7、8、9、10、34、35、37、39、40、46、48、50 章），未发 AI 请求",
+    "门禁章级缺陷定点修复后未减少（13→27 项），保留原稿",
+    "未登记地点已补登记 13/13 个"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 4,
+    "firstPassRate": 0.8,
+    "rewrittenChapters": 1,
+    "totalRewriteRounds": 1,
+    "averageRewriteRounds": 0.2,
+    "pipelineAttempts": 5
+  },
+  "runtimeMetrics": {
+    "requestCount": 21,
+    "requestCountsByPurpose": {
+      "scene-draft": 9,
+      "fact-extraction": 6,
+      "chapter-judge": 6
+    },
+    "latencyP50Ms": 13172,
+    "latencyP95Ms": 40032,
+    "latencyMaxMs": 47964
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "default-judge-provider"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 88.6,
+      "wouldStartReading": true,
+      "confidence": 0.92,
+      "dimensions": {
+        "openingAttraction": 90,
+        "coreSellingPoint": 92,
+        "protagonistDrive": 88,
+        "conflictEscalation": 88,
+        "payoffPlanning": 86,
+        "characterRelations": 82,
+        "suspensePlanning": 90,
+        "audienceFit": 92
+      },
+      "issues": [
+        {
+          "id": "reader.other-1",
+          "severity": "medium",
+          "category": "other",
+          "location": "worldBuilding.locations",
+          "description": "世界观地点注册表中存在大量因文本抓取/生成切分错误导致的碎片脏数据，严重影响设定规范性。",
+          "evidence": [
+            "{\"name\":\"投影与路网盲区\",\"level\":\"city\",\"functionInStory\":\"卷纲与章节蓝图引用的地点，补登记入表。\"}, {\"name\":\"并当众斥责社区\",\"level\":\"city\",...}, {\"name\":\"厦遗址外墙盲区\",\"level\":\"city\",...}, {\"name\":\"出所翻出老街市\",\"level\":\"city\",...}, {\"name\":\"笑着挡在临江市\",\"level\":\"city\",...}"
+          ],
+          "suggestion": "清理 locations 表中被句子片段截断污染的伪地点条目，仅保留“清河老街与清河街派出所”、“宏发烂尾大厦遗址”、“临江市公安局档案资料中心”等具备实际实体与冲突功能的真实场景。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.character-2",
+          "severity": "medium",
+          "category": "character",
+          "location": "keyCharacters",
+          "description": "主要人物列表中存在大面积的角色重复定义问题，同一个人格既以真实姓名登记，又以身份职能重复登记了一整遍。",
+          "evidence": [
+            "列表中前半部分已完整定义了主角及配角：“张建国”、“宋志成”、“周铁生”、“林晨”、“王秀芳”、“徐宏发”，但后半部分又重复出现了“清河街派出所老所长”、“404复仇同盟策划者”、“刑侦副支队长”、“宏发置业拆迁主管”、“宏发置业董事长”、“老所长”、“殉职师父遗孀”等同名同功能条目。"
+          ],
+          "suggestion": "合并 keyCharacters 中的重复人物卡，统一采用“姓名（身份）”规范命名，删除冗余的无名职能卡，避免后续写作提示词检索人物关系时产生冲突。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.pacing-3",
+          "severity": "low",
+          "category": "pacing",
+          "location": "chapterBlueprints[39-41] (第40-42章)",
+          "description": "第一卷卷末与第二卷卷初在首名伪证者死亡的现场勘查上存在微弱的重复交代与节奏拖沓。",
+          "evidence": [
+            "第40章结尾：“陆川赶到隔壁旅馆发现第一名伪证保安赵大顺在密闭房间内窒息死亡”；第41章：“陆川利用片警地缘优势抢先封锁清河老街与清河街派出所·街角旅馆，初步排查密闭门窗确认赵大顺死亡”。"
+          ],
+          "suggestion": "第41章开篇可直接切入宋志成专案组强行破门夺权与现场微量物证（化学结晶）的争夺，避免在“确认死亡”和“拉警戒线”的动作上重复铺垫。",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "这是一份在题材卖点、本格公平性与市井刑侦质感上都极具吸引力的高质量悬疑大纲。黄金三章切入凌厉，以‘404路夜班公交’伪灵异开局，迅速落脚到‘化粪池清掏记录测算吨位’、‘违建雨棚阴影角度与沥青碎渣’等硬核市井台账破谜，反差感与解谜爽感十足。主角作为边缘片警以民生档案对抗资本与体制内鬼的驱动力极强，十个长线伏笔在水电表强检、调解笔记、公厕清掏档案等细节上闭环严密，极度契合硬核推理与社会派读者的期待。当前仅在世界观地点表与人物列表中存在部分数据清洗/重复注册的技术性瑕疵，剧情主线与节奏规划非常扎实，完全具备立即开书的价值。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 84.7,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 88,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 82,
+          "characterVoice": 85,
+          "payoffValue": 80,
+          "pacing": 86,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "主角在夜间通过老旧标清模拟探头与显像管监控，仅经简单锐化便能精准辨认出死者颈部微小的烧结疤痕及档案位次，对硬核本格读者而言信息获取略显顺畅与全知。",
+            "evidence": [
+              "在锐化后的监控画面里，男人脖颈右侧赫然显露出一大片触目惊心的暗红色烧结疤痕，那是重度烧伤愈合后特有的肉芽增生组织。陆川的瞳孔骤然收缩。十年前宏发大厦特大火灾案的现场勘查卷宗瞬间在他眼前浮现。死难者名单第七位，宏发大厦保洁工..."
+            ],
+            "suggestion": "可补充主角结合特定工服标识、体态特征或翻阅档案照片进行二次比对的动作，强化基层刑警勘验的扎实质感。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章开篇极具市井悬疑质感，通过老旧值班室、风油精、显像管等具象细节迅速建立起冷硬沉浸的氛围。核心谜题抛出利落：物理报废十年的公交车载着已故火灾遇难者驶入死胡同，超自然表象下主角坚守物理规则与管辖职责，人物立得极稳，张弛有度，章尾悬念钩子强劲。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 76.9,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 80,
+          "openingHook": 84,
+          "conflictEffectiveness": 72,
+          "emotionalDrive": 76,
+          "characterVoice": 65,
+          "payoffValue": 75,
+          "pacing": 80,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "第三人称限制视角出现严重的上帝视角剧透与大纲标签泄露。主角隔着雨幕仅看到骑楼下的兜帽黑影，正文却直接以全知视角交代该人名为'林晨'且身份为'404复仇同盟策划者'，破坏了硬核悬疑的线索探索感与视角沉浸度。",
+            "evidence": [
+              "那是林晨。作为404复仇同盟策划者，林晨并未在制造骚乱后仓皇逃窜，而是如同一尊潜伏在阴影中的雕像，在老街雨夜的暗处冷冷注视着派出所内刑侦警力的一举一动。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "人物指代机械重复，带有明显的大纲化/NPC化痕迹。全文多次重复使用完整职衔'市局刑侦支队长'作为主语，缺乏真实办案环境中的姓氏称呼或自然指代。",
+            "evidence": [
+              "市局刑侦支队长大步迈进房间，高大的身躯在昏暗的灯光下投下一道压迫感十足的阴影。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "刑侦空降夺权的阻力设置略显脸谱化与降智。技术专家给出的'视频流劫持'虽具备一定本格对抗感，但支队长对主角提出的流体力学压强与路面下陷等硬核物理证据完全不予核验即粗暴打压，削弱了市局刑警的专业可信度。",
+            "evidence": [
+              "这里轮不到你来上技术鉴定课。市局刑侦支队的专业结论不需要一个片警来挑刺，更不容许你在这里用主观臆测干扰侦查方向。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章悬念迅速展开空降夺权冲突，陆川用'车辆自重压强与飞溅抛物线'反驳黑客视频覆盖的技术辩驳展现了硬核推理素养，章尾硬盘刚拔即触发地底轰鸣震颤的卡点极佳，追读动力强。主要缺陷在于中段突然出现全知视角的凶手身份剧透（'404复仇同盟策划者林晨'）严重破坏悬疑浸入感，且刑侦支队长命名与阻挠方式偏向工具人化。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 89.3,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 86,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 88,
+          "characterVoice": 90,
+          "payoffValue": 92,
+          "pacing": 90,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.chem-test-verisimilitude",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "主角仅凭火柴点燃油滴观察火焰与气味，即可极其精准地报出'工业级十六烷值改进剂和高沸点抗凝剂'等深层化学组分，在硬核写实基调下略显直觉神化，适当弱化为判断出土炼重柴油特征即可保持专业感而不失真。",
+            "evidence": [],
+            "suggestion": "可调整为通过燃烧残留、浓烟异味与拉丝黏度判定为非标土炼重柴油，添加剂细节可留给后续化验或作为老作坊特有配方经验推断。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章市局草率撤离的冲突，节奏紧凑、硬核扎实。主角通过老街市政管网台账与路面剪切沉降精准算出客车10.2吨的物理真身，以纯本格物理与档案推理有力反驳了'全息假象论'；同时顺藤摸瓜引出十年前宏发大厦提前一小时断电的翻案级新线索，并通过油品燃烧特性锁定三家地下作坊，信息密度高，微兑现与解谜爽点极强，追读动力充沛。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 88.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 88,
+          "payoffValue": 89,
+          "pacing": 88,
+          "endingPull": 92
+        },
+        "issues": [],
+        "summary": "本章推理硬核、节奏凌厉。主角通过老街违建彩钢瓦雨棚的遮挡阴影与预制板垂直剪切承重极限两组严密的物理/光学证据，有力推翻了市局专家所谓的'数字黑客合成'假说，充分兑现了基层片警凭借地利细节与扎实勘验实现逆袭的微爽点。同时穿插杂货铺老板赵大顺心虚逃窜的暗线，自然勾出十年前火灾假证内幕。章尾在刚刚确立'十吨实体改装车'的定论后，紧接着抛出'实体客车在开阔水泥墙监控下凭空蒸发'的二次不可能消失谜面，本格悬念感极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 86.4,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 82,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 86,
+          "characterVoice": 88,
+          "payoffValue": 90,
+          "pacing": 86,
+          "endingPull": 84
+        },
+        "issues": [],
+        "summary": "本章质量扎实，完美契合硬核刑侦与本格解谜读者的预期。对上一章末尾‘重型客车在监控下凭空蒸发’的诡计给予了严谨、硬核的物理级微兑现（光影死角+倾斜暗坡+卷扬机物理拖入防空洞），解谜公平爽快。同时，通过修鞋铺泛黄日历被撕去关键日期的细节，将牺牲师父秦卫国的遗孀也拉入嫌疑与线索网中，信息密度高、市井氛围与悬疑张力兼备。章尾与老所长的暗流交锋进一步拉紧了局势。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 81.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 85,
+          "patternVariation": 80,
+          "suspensePayoff": 78,
+          "characterArc": 82,
+          "emotionalArc": 80,
+          "payoffEscalation": 82,
+          "genrePromise": 80,
+          "continuationDesire": 88
+        },
+        "issues": [
+          {
+            "id": "reader.payoff-1",
+            "severity": "high",
+            "category": "payoff",
+            "location": "全文",
+            "description": "叙事视角突变引发全知剧透。前文一直维持主角陆川的有限视角与现场刑侦视线，此处旁白突然以全知视角直接公布幕后黑影的真实姓名与组织性质（'404复仇同盟策划者林晨'），剥夺了悬疑推理读者自主观察、推理嫌疑人身份的参与感与信息差悬念。",
+            "evidence": [
+              "那是林晨。作为404复仇同盟策划者，林晨并未在制造骚乱后仓皇逃窜，而是如同一尊潜伏在阴影中的雕像，在老街雨夜的暗处冷冷注视着派出所内刑侦警力的一举一动。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-2",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "空降夺权的刑侦领导缺乏具体姓名与深层办案动机支撑，全程以'市局刑侦支队长'指代，仅作为强行收缴证物、打压主角的工具人出场，与本作主打的现实硬核基调相比略显脸谱化。",
+            "evidence": [
+              "市局刑侦支队长大步迈进房间，高大的身躯在昏暗的灯光下投下一道压迫感十足的阴影。他甚至没有抖落风衣肩头的雨水，冷峻如刀的目光直接掠过堆满杂物的办公桌，死死钉在操作台前的陆川身上。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前三章开局极为扎实，市井冷硬刑侦氛围浓烈。第1章抛出物理报废客车载死者重临的强悬念；第2章虽出现全知视角剧透凶手身份（林晨）及支队长脸谱化的瑕疵，但冲突张力充沛；第3章展现了极高的本格与现实硬核水平，主角利用老街管网承重力学计算锁定十吨钢铁真身，并顺藤摸瓜挖出火灾前一小时断电、土炼高标柴油作坊等硬核线索，主线推进高效，解谜爽感强烈，追读意愿高。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 82.4,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 85,
+          "patternVariation": 80,
+          "suspensePayoff": 84,
+          "characterArc": 76,
+          "emotionalArc": 80,
+          "payoffEscalation": 80,
+          "genrePromise": 88,
+          "continuationDesire": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "全知视角突兀介入剧透核心幕后身份与组织名称，破坏了本格硬核推理的读者视点一致性与解谜沉浸感。",
+            "evidence": [
+              "那是林晨。作为404复仇同盟策划者，林晨并未在制造骚乱后仓皇逃窜，而是如同一尊潜伏在阴影中的雕像"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-2",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "市局空降刑侦力量被处理为符号化、脸谱化的打脸工具人，全篇通篇以职衔'市局刑侦支队长'指代且缺乏具体姓名与层次。",
+            "evidence": [
+              "市局刑侦支队长大步迈进房间，高大的身躯在昏暗的灯光下投下一道压迫感十足的阴影。他甚至没有抖落风衣肩头的雨水"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "出现微小设定笔误，将前文反复强调的404路夜班客车误写为'六路'。",
+            "evidence": [
+              "那两道深陷的压痕胎纹间距恰好是二点四米，与那辆消失的六路老款公交车完全吻合。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前5章开篇扎实凌厉，硬核本格与市井片警的质感极佳。作者以违建雨棚阴影、预制板剪切承重、高芳烃土炼柴油燃烧特性以及高杆探头盲区与斜坡卷扬机等纯物理/光学证据，连续破除了'幽灵车'与'监控下凭空蒸发'两大不可能谜面，线索公平且解谜爽感扎实。主要瑕疵在于第2章突然以全知视角剧透策划者林晨姓名与复仇同盟，以及市局刑侦人员稍显脸谱化，但不掩整体出色的追读张力。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 5,
+      "chapterAverage": 85.2,
+      "chapterMedian": 86.4,
+      "chapterMinimum": 76.9,
+      "openingThreeAverage": 83.6,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察"
+    ],
+    "errors": [],
+    "durationMs": 79402
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 712640,
+  "warnings": [
+    "大纲阶段 warnings（5 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（1 条，影子模式不阻断）"
+  ]
+}

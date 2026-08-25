@@ -1,0 +1,47 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-25T02:33:35.192Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-scenario-matrix\\foreshadow-network",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 14,
+      "chaptersAccepted": "0",
+      "words": null,
+      "paraRhythm": null,
+      "repairMetrics": null,
+      "runtimeMetrics": null,
+      "readerMetrics": null,
+      "readerOutlineScore": null,
+      "readerIndependent": null,
+      "phaseTimings": null,
+      "runtimeBackend": null,
+      "verdict": "clean",
+      "verdictReason": "无异常签名",
+      "signatures": [],
+      "latency": {
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 28096,
+          "p50Ms": 28096,
+          "maxMs": 28096
+        },
+        "outline-expand": {
+          "count": 33,
+          "avgMs": 30148,
+          "p50Ms": 30385,
+          "maxMs": 56836
+        },
+        "outline-review": {
+          "count": 2,
+          "avgMs": 126193,
+          "p50Ms": 136101,
+          "maxMs": 136101
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "mode": "storyflow-scenario-matrix",
+  "generatedAt": "2026-08-25T03:04:49.176Z",
+  "chapterCount": 5,
+  "results": [
+    {
+      "scenarioId": "fair-mystery",
+      "name": "公平悬疑",
+      "exitCode": 0,
+      "matrixDir": "temp\\storyflow-scenario-matrix\\fair-mystery",
+      "triageExitCode": 0,
+      "triageDir": "temp\\storyflow-scenario-matrix\\fair-mystery\\triage"
+    }
+  ]
+}

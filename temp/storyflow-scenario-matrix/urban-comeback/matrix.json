@@ -1,0 +1,19 @@
+{
+  "mode": "storyflow-matrix",
+  "generatedAt": "2026-08-25T01:25:17.632Z",
+  "concurrency": 3,
+  "chapterCount": 5,
+  "scenarioId": "urban-comeback",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "scenarioId": "urban-comeback",
+      "provider": "openai",
+      "model": "gemini-3.7-flash-high",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 11,
+      "note": "未产出 summary（前半段失败）"
+    }
+  ]
+}

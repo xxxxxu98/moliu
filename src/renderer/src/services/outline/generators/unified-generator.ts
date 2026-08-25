@@ -803,6 +803,25 @@ export class UnifiedOutlineGenerator {
             }
           }
 
+          // 修复链末道 sanitize：上面的章级定点修复/角色补登会整段重写文本，可能
+          // 重新引入超长钩子（2026-08-25 反重力矩阵实测：定点修复按「未登记地点」
+          // 违规重写 8 章，新稿 CBN/CEN 重新超长 26-27 字；blockers 11→9 净减被
+          // 采纳后终态 9 条超长阻断，直接 fail-closed 烧掉两轮整体重试）。这里
+          // 零成本再收缩一次，基底取最新修复稿（appliedFixRawText ?? rawText）。
+          if (!finalCompleteness.canApply) {
+            const finalSanitized = sanitizeOutlineHookLengths(
+              appliedFixRawText ?? rawText,
+              outline,
+            );
+            if (finalSanitized) {
+              outline = finalSanitized.outline;
+              rawText = finalSanitized.rawText;
+              appliedFixRawText = undefined;
+              finalCompleteness = inspectOutlineCompleteness(outline);
+              warnings.push(...finalSanitized.warnings);
+            }
+          }
+
           severelyTruncated = !finalCompleteness.canApply;
           blockers = finalCompleteness.blockers.map(blocker => blocker.message);
         }

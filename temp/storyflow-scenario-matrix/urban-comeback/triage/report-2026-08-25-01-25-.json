@@ -1,0 +1,47 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-25T01:25:17.694Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-scenario-matrix\\urban-comeback",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 11,
+      "chaptersAccepted": "0",
+      "words": null,
+      "paraRhythm": null,
+      "repairMetrics": null,
+      "runtimeMetrics": null,
+      "readerMetrics": null,
+      "readerOutlineScore": null,
+      "readerIndependent": null,
+      "phaseTimings": null,
+      "runtimeBackend": null,
+      "verdict": "clean",
+      "verdictReason": "无异常签名",
+      "signatures": [],
+      "latency": {
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 19020,
+          "p50Ms": 19020,
+          "maxMs": 19020
+        },
+        "outline-expand": {
+          "count": 31,
+          "avgMs": 30788,
+          "p50Ms": 30760,
+          "maxMs": 56467
+        },
+        "outline-review": {
+          "count": 2,
+          "avgMs": 81881,
+          "p50Ms": 83186,
+          "maxMs": 83186
+        }
+      }
+    }
+  ]
+}

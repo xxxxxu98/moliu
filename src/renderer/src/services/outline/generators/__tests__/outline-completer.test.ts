@@ -13,6 +13,7 @@ import {
   repairUnregisteredCharacters,
   repairUnregisteredLocations,
   replaceOutlineSection,
+  sanitizeOutlineHookLengths,
   stripInvisibleOutlineChars,
 } from '../outline-completer';
 import { parseExpandedOutline } from '../../parser/expanded-outline-parser';
@@ -153,6 +154,30 @@ describe('outline-completer', () => {
     // 无零宽字符时原样返回（同一引用）
     const clean = '普通正文，无零宽字符。';
     expect(stripInvisibleOutlineChars(clean)).toBe(clean);
+  });
+
+  it('sanitizeOutlineHookLengths 修复 26 字 CBN 并通过门禁（2026-08-25 冒烟实测形态）', () => {
+    // 反重力矩阵 relationship-burn：终态 9 章 CBN/CEN 26-27 字超长。
+    // 钩子句含尾句号时 trim 不掉，26 字是真实分布形态。
+    const cbn26 = '刺耳的断裂巨响在红星大剧场回荡，人群尖叫着涌向出口。';
+    expect(cbn26.length).toBe(26);
+
+    const rawWithLongHook = `${MAIN_OUTLINE_TEXT}\n## 单章蓝图\n${buildChapterBlock(1).replace(
+      '- CBN：卷宗第1页突然少了一角',
+      `- CBN：${cbn26}`,
+    )}\n${buildChapterBlock(2)}\n`;
+    const parsed = parseExpandedOutline(rawWithLongHook)!;
+    const before = inspectOutlineCompleteness(parsed);
+    expect(
+      before.blockers.filter(blocker => blocker.kind === 'invalid-hook-length').length,
+    ).toBeGreaterThan(0);
+
+    const sanitized = sanitizeOutlineHookLengths(rawWithLongHook, parsed);
+    expect(sanitized).not.toBeNull();
+    const after = inspectOutlineCompleteness(sanitized!.outline);
+    expect(
+      after.blockers.filter(blocker => blocker.kind === 'invalid-hook-length').length,
+    ).toBe(0);
   });
 });
 

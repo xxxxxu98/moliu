@@ -1,0 +1,525 @@
+{
+  "book": "地脉回声：我在断忆中掌执万矿",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": "cultivation-growth",
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "scenario:cultivation-growth",
+  "promptChars": 74,
+  "requestedChapterCount": 5,
+  "phaseTimings": {
+    "outlineDirectionsMs": 26173,
+    "outlineExpandMs": 556396,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 784,
+    "continueWriteMs": 353530,
+    "totalMs": 936883
+  },
+  "completedChapters": 5,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 塌方绝境，地脉嗡鸣觉醒",
+      "words": 2809,
+      "paras": 31,
+      "paraCv": 0.68,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "头顶的支撑木轰然爆裂，重达数千斤的黑岩带着呼啸的风声砸碎了整条矿道。陆玄整个人被狂暴的气浪掀飞出去，重重撞在坚硬的岩壁上。碎石如暴雨般倾泻而下，将退路封得严严实实。他喉头猛然一甜，剧烈地呛咳起来，一口污黑发臭的淤血直接喷溅在灰白色的碎石堆上",
+      "tail": "陆玄伏在碎石堆上大口喘息，借着微弱的气流抬起头，顺着幽深的岩壁裂缝深处望去。在那片未曾被任何人踏足过的地底阴影最深处，赫然隐隐透出一抹纯净而幽蓝的伴生灵髓微光。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 掘取灵髓，刻石锚定断忆",
+      "words": 2700,
+      "paras": 23,
+      "paraCv": 0.3,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆玄收紧双肩，侧身硬生生挤进了那道狭窄冰冷的岩壁缝隙。粗糙尖锐的岩角撕扯着本就破烂的粗麻衣衫，在他腰肋处刮擦出数道火辣辣的血痕，但他脚下没有半分迟疑。随着双臂发力向前攀爬，穿过数丈长仅容一人匍匐的逼仄死角后，周遭窒息的压迫感骤然消散，一阵清",
+      "tail": "缝隙中，整个人如同一尊石雕般紧贴在暗道的死角阴影内。他缓缓抬起沾满石灰与血污的手掌，铁钎尖端斜指向前，目光穿过黑暗死死盯住前方拐角处那抹晃动不定的昏黄矿灯微光。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 暗井截杀，引动地煞反坑",
+      "words": 3125,
+      "paras": 29,
+      "paraCv": 0.45,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "废弃排风暗井的宽阔空腔内，昏黄的矿灯将三道扭曲的人影投射在粗糙的岩壁上。一名衣衫褴褛的落单矿奴被死死踩在泥泞的碎石堆里，双腿已然被生生砸断，嘴里不断涌出血沫。踩在他背上的黑脸打手满脸横肉，手里掂量着一块拳头大小、泛着温润土黄色泽的石块，眼中",
+      "tail": "尖端没有半分颤抖，以极其老辣狠绝的角度斜挑向上，死死锁定在陆玄的咽喉要害之处，残存的微弱灵压如同一张拉满至极限的强弓，在死寂的矿道中激荡出令人窒息的肃杀与绝望。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 盲区联手，残兵与矿奴结盟",
+      "words": 3440,
+      "paras": 29,
+      "paraCv": 0.37,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "冰冷刺骨的锈蚀刃尖稳稳抵在咽喉皮肉上，割开了一道极细微的血线。陆玄甚至没有眨一下眼睛，身形在逼仄阴湿的坑道死角中站得笔直，两只脚掌如古树盘根般扣紧碎石地面。视线穿过昏暗浑浊的光晕，陆玄的目光平静得近乎冷酷，沉沉落向眼前半跪在血泊中的老矿奴。",
+      "tail": "的光芒。赵管事右手把玩着一枚猩红如血的宗门警讯玉符，一双阴鸷恶毒的三角眼如毒蛇吐信般缓缓扫过大厅四周所有的阴暗洞口，面上横肉狞恶地抖动，赫然已经布下了重重杀局。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 搜检铁闸，照妖铜镜逐个查",
+      "words": 3040,
+      "paras": 29,
+      "paraCv": 0.3,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "老葛干瘪带血的五指猛地收紧，死死扣住身旁湿冷的岩角，整个人如同一具风干的死尸般伏在暗影深处。前方巨大的精铁闸门下方，十二盏刺目的日光石矿灯将整片开阔矿厅照得惨白如昼，空气中弥漫着浓烈的硫磺焦味与铁锈腥气。两名身披重甲的凶悍监工正拖拽着一名披",
+      "tail": "有回头去理会面前跪地求饶的矿奴，身形骤然如鬼魅般扭转，手中铜镜高高抬起，两道冰冷如毒蛇般的凶残目光，带着毫不掩饰的杀意，猛然刺向了陆玄与老葛潜伏的那处阴暗岩缝。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 塌方绝境，地脉嗡鸣觉醒"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 掘取灵髓，刻石锚定断忆"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 暗井截杀，引动地煞反坑"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 盲区联手，残兵与矿奴结盟"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 搜检铁闸，照妖铜镜逐个查"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 引爆灵盘，搜检大乱无伤脱身"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 暗室交易，伴生灵髓换解药"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 当众辨伪，一眼看穿假矿骗局"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 趁乱捡漏，废石堆里夺青金"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 绝密公文，矿务司整肃令曝光"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787620017621",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-MI2sek\\story-runtime\\proj-1787620017621-3e9a2902750a.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 5,
+    "canonicalSnapshots": 6,
+    "latestSnapshotChapter": 5,
+    "sceneChunks": 5,
+    "events": 18
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 5,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "8615c9e941c34622824f2ddcdb8c3de5990e892c1ff0744283b12993b3e68ac4",
+    "completeCharacterProfileCount": 12,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 5,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 5
+  },
+  "outlineWarnings": [
+    "本地收缩超长标题/CBN/CEN 共 16 章（第 17、18、20、23、25、28、29、30、31、34、35、36、37、38、39、40 章），未发 AI 请求",
+    "门禁章级缺陷定点修复后未减少（25→26 项），保留原稿",
+    "未登记地点已补登记 22/22 个"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 4,
+    "firstPassRate": 0.8,
+    "rewrittenChapters": 1,
+    "totalRewriteRounds": 1,
+    "averageRewriteRounds": 0.2,
+    "pipelineAttempts": 5
+  },
+  "runtimeMetrics": {
+    "requestCount": 18,
+    "requestCountsByPurpose": {
+      "scene-draft": 6,
+      "fact-extraction": 6,
+      "chapter-judge": 6
+    },
+    "latencyP50Ms": 11732,
+    "latencyP95Ms": 48442,
+    "latencyMaxMs": 48442
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "default-judge-provider"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 89.3,
+      "wouldStartReading": true,
+      "confidence": 0.92,
+      "dimensions": {
+        "openingAttraction": 88,
+        "coreSellingPoint": 91,
+        "protagonistDrive": 89,
+        "conflictEscalation": 87,
+        "payoffPlanning": 90,
+        "characterRelations": 88,
+        "suspensePlanning": 90,
+        "audienceFit": 92
+      },
+      "issues": [
+        {
+          "id": "reader.pacing-1",
+          "severity": "medium",
+          "category": "pacing",
+          "location": "全文",
+          "description": "卷纲宏观规划将黑山矿坑破局设定为完整的60章体量，但在前50章章节蓝图中，叙事节奏明显加快，主角在第30章就已完成黑山全盘收割并转场天阙灵脉坊，导致第31-50章实际上前置消耗了第2卷近半数的核心冲突（天阙立足、沈玉衡赌石、赤霞门矿战）。这虽使前50章紧凑爽快，但后续若仍按300章/5卷推进，需重新校准分卷章节范围与各卷核心高潮节点，避免中后期大纲主线体量失调。",
+          "evidence": [
+            "卷纲第1卷设定：'\"chapterRange\":{\"start\":1,\"end\":60},\"objective\":\"从黑山深渊矿区塌方绝境中生还...做空矿霸黄立并赎回矿奴身契\"'，其卷末钩子为'七曜宗矿务司已下达征召令让他以鉴矿客卿身份前往七曜天阙灵脉坊'；然而在章节细纲中，第30章'orderIndex\":30,\"title\":\"天阙调令！矿奴摇身变鉴矿客卿'已启程前往天阙灵脉坊，第31章'初入天阙！世家子弟冷眼拦考场'已进入天阙考场，第41章'赤霞矿帮袭外道世家囤居奇'已打响原属于第2卷的赤霞门矿战。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.9
+        },
+        {
+          "id": "reader.other-2",
+          "severity": "low",
+          "category": "other",
+          "location": "全文",
+          "description": "地点实体数据库中存在较多从正文描述句断句错误而自动抽取的非标准地名，且功能描述均为模板补登记占位符，建议清洗这些噪音词条以保证世界观设定的规范与清晰。",
+          "evidence": [
+            "worldBuilding.locations 中包含：'{\"name\":\"垄断黑市\",\"level\":\"city\",\"functionInStory\":\"卷纲与章节蓝图引用的地点，补登记入表。\"}'、'{\"name\":\"夺取区\"...}'、'{\"name\":\"造赤霞门占领区\"...}'、'{\"name\":\"滴血皮鞭的黑市\"...}' 等20余处异常实体。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.95
+        },
+        {
+          "id": "reader.other-3",
+          "severity": "low",
+          "category": "other",
+          "location": "全文",
+          "description": "蓝图中有4个章节的章末钩子未生成具体的剧情悬念或期待描述，仅保留了爽点分类标签，需补齐具体情境下的卡点钩子文本以指导后续正文写作。",
+          "evidence": [
+            "第3章、第4章、第32章、第33章的 hookText 字段分别为：'orderIndex':3,'hookText':'- 爽点类型：碾压'；'orderIndex':4,'hookText':'- 爽点类型：收服'；'orderIndex':32,'hookText':'- 爽点类型：打脸'；'orderIndex':33,'hookText':'- 爽点类型：立威'。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.95
+        }
+      ],
+      "summary": "这是一份极具吸引力与差异化辨识度的硬核修仙商战大纲。故事将传统凡人矿奴开局与“地脉做空操盘+失忆等价代偿”机制紧密结合，核心卖点突出且执行扎实。前50章冲突推进极快，从底层的地脉反杀、黑市做空破产矿霸，到转场宗门石坊打脸世家、期货现货砸盘狙击，商战逻辑与修仙设定融合自然，爽点密集且情绪代偿（记忆剥落）赋予了主角冷峻悲壮的宿命感。主要修正点在于分卷规划与细纲推进节奏之间存在约30章的前置位移，需统一分卷边界以保证长篇体量承载力。整体构架完整、看点鲜明，完全符合目标读者群期待。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 84.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 83,
+          "characterVoice": 85,
+          "payoffValue": 82,
+          "pacing": 86,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "首章重点建立了主角冷酷果决的求生性格与地脉通感金手指，但书名与定位中强调的‘断忆/记忆代价’核心设定尚未在首章露出端倪，略显单向聚焦于通感挖掘。",
+            "evidence": [
+              "怀中贴肉藏着的那枚边缘残破的黑色石片，也在此刻变得滚烫异常，像是一块烧红的炭火，将地底深处那些极其微弱的震动无限放大。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "这是一篇非常标准的凡人流硬核求生开篇。开局直接将主角置于‘矿道塌方+化髓散毒发倒计时+恶劣同僚劫杀’的三重危机中，节奏紧凑、绝境感强烈。主角觉醒‘地脉通感’后并非无脑反杀，而是借助地质应力借刀杀人，果断补刀搜尸，立住了‘步步为营、利益至上’的心性。章尾顺势利用通感破开死局并发现‘伴生灵髓’，微兑现与悬念兼备，追读拉力充沛。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 85.6,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 84,
+          "conflictEffectiveness": 82,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 86,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "设定阐述略有集中插入感",
+            "evidence": [
+              "若是缺失了核心情感锚点，使用者神魂将在三十天内彻底晶石化，沦为无知无觉的地脉死灵。"
+            ],
+            "suggestion": "'三十天彻底晶石化'这一具体惩罚规则可以通过更具象的身体异化感受或过往见闻带出，减少纯旁白规则宣告感。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接紧密且推进高效，完美兑现了上一章末尾的资源悬念。极品伴生灵髓的获取不仅完成了压制化髓散剧毒、升级地脉通感感知的即时爽点，更扎实落地了核心卖点——地脉通感的'断忆代价'与'刻石锚定'机制，情感压迫感与生存博弈兼具。结尾利用升级后的感知精准破局，并以中层矿区突发的血腥冲突收尾，追读拉力充沛。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 84.9,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 82,
+          "characterVoice": 85,
+          "payoffValue": 84,
+          "pacing": 86,
+          "endingPull": 83
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "叙事视角在此处出现轻微的全知溢出。此前陆玄仅观察到一个‘须发灰白杂乱的老矿奴’，此处直接在旁白中指名称呼为‘老葛’，若两人此前相识应有简短辨认反应，若不相识则属于叙述者视角的提前泄露。",
+            "evidence": [
+              "原本垂着头颅的老矿奴老葛猛然抬起了双眸。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接紧凑，战斗设计符合凡人流/智斗流的核心期待。主角在实力处于绝对劣势下，充分利用金手指‘地脉通感’与环境地形，以佯装示弱、诱敌深入的方式引动地煞反杀两名黑虎帮打手，越级破局合理且具爽感。战后战利品结算（丹药、中品灵石、走私残图）及时兑现了阶段性生存收益，推进了逃生主线。章尾重伤老矿奴持刃截击的悬念设置利落，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 85.3,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 83,
+          "characterVoice": 85,
+          "payoffValue": 82,
+          "pacing": 86,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "主角与老矿奴之间的信任建立略显顺畅，虽有黑虎帮药囊和地脉断层事实作证，但作为在矿渊底层挣扎三十年的老江湖，老葛对初次见面的陌生人交出三十年心血图谱的速度偏快。",
+            "evidence": [
+              "老夫绝不是忘恩负义的白眼狼。你想从中层矿区潜出去，光凭那手听懂岩石回声的本事还远远不够。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章末尾的对峙危机，节奏紧凑明快。主角凭借冷静的心理素质、精准的创伤洞察与地脉感知能力迅速化解敌意，与残兵老矿奴达成利益互补的合理结盟。信息交换（地脉避煞感知换取监工换防时序）逻辑闭环且符合资源流/博弈流读者偏好。章尾以赵管事设伏严阵以待打破既定逃生计划，制造出强烈的战术困境与紧迫感，钩子极具追读吸引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 87.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 87,
+          "characterVoice": 85,
+          "payoffValue": 80,
+          "pacing": 88,
+          "endingPull": 92
+        },
+        "issues": [],
+        "summary": "本章承接前文探查铁闸关卡的局势，开篇通过当众剖腹搜石与照妖鉴灵镜的无情排查，迅速将黑山矿区的残酷生存压力和搜检铁网的窒息感推向高潮。主角面临怀揣极品灵髓必死无疑的绝境，未盲目硬拼，而是依托核心金手指‘地脉通感’精准锁定地底积压的地煞节点，展现了硬核智斗与地形博弈的看点。章尾主角刚引动共振即引起镜面异动、赵管事目光直刺藏身地，卡点精准，生死悬念强烈，追读拉力极佳。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 85.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 80,
+          "suspensePayoff": 88,
+          "characterArc": 82,
+          "emotionalArc": 85,
+          "payoffEscalation": 84,
+          "genrePromise": 90,
+          "continuationDesire": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "第1章与第3章的两场战斗破局逻辑存在结构镜像：均为主角色弱佯退诱敌、敌人轻敌大意踏入地质临界点（第1章应力尖石、第3章地煞喷口反冲）、随后击杀并冷静搜尸。虽然非常符合前期弱小凡人流借地利破局的设定，但短窗口内连续两场陷阱诱杀套路略有重复。",
+            "evidence": [
+              "第1章：'故意发出一声惊慌的闷哼，手脚并用地朝着左侧凹坑踉跄翻滚...身体恰好稳稳停在巨石坠落的正下方'；第3章：'陆玄脚步踉跄，身形看似狼狈不堪地向后跌退...大口喘着粗气，脸上故意露出绝望与惊恐的神色...两人脚掌重重踏上暗井中央青黑石板的刹那...猩红炽烈的地煞毒火与狂暴气浪自破碎的石坑中冲天而起'"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前3章开篇表现极为扎实，是高水准的硬核凡人求生与升级流范本。主线推进迅猛，三章内完成‘绝境求生→地脉金手指觉醒→掘取伴生灵髓压毒→确立断忆代价与黑石锚点机制→地利反杀黑帮打手并获取走私地图’的完整闭环。悬念设置与即时兑现节奏明快（第1章伴生灵髓悬念在第2章完全兑现，第2章暗道异响在第3章迅速爆发），战利品结算清晰。核心设定‘地脉通感+记忆剥离代价’为主角增添了硬核博弈与情感张力，后续进入中层黑市与商战操盘的期待感拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 84.5,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 76,
+          "suspensePayoff": 86,
+          "characterArc": 82,
+          "emotionalArc": 84,
+          "payoffEscalation": 85,
+          "genrePromise": 84,
+          "continuationDesire": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "解局破关手段存在连续重复：第3章主角利用地脉通感诱敌并引爆'地底地煞'击杀黑虎帮打手，第5章面对铁闸搜检困局时，再次采用几乎完全相同的'地脉共振引动下方地煞喷发'解法，短时间内连续复用相同破局模版，略微削弱了智斗的新鲜感。",
+            "evidence": [
+              "第3章：'暗井下方三丈深处，一条被远古地火炙烤的地煞脉络正如同被激怒的狂龙...猩红炽烈的地煞毒火与狂暴气浪自破碎的石坑中冲天而起。'；第5章：'那是一条积蓄已久的狂暴地煞脉络...只要施加微弱的地脉共振引动其内部应力，积压数十年的恐怖地煞便会顺着铁闸地基的裂隙狂暴喷发...'"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前5章开篇扎实凌厉，标准凡人流矿奴开局。主线推进紧凑无废笔，从塌方绝境、夺取灵髓、反杀矿霸爪牙到与老矿奴利益结盟并推进至搜检铁闸，生存压力与即时回报层层递进。核心金手指'地脉通感'与'断忆代价/刻石锚定'设定落地自然，主角行事果决、利益至上，读者代入感极强。唯一的瑕疵在于第3章与第5章破局手段均采用了'引动地底地煞'的相同机制，出现轻微模式重复，但不影响整体强劲的追读体验与章尾生死悬念。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 5,
+      "chapterAverage": 85.5,
+      "chapterMedian": 85.3,
+      "chapterMinimum": 84.8,
+      "openingThreeAverage": 85.1,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察"
+    ],
+    "errors": [],
+    "durationMs": 84107
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 936961,
+  "warnings": [
+    "大纲阶段 warnings（3 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（1 条，影子模式不阻断）"
+  ]
+}
