@@ -298,23 +298,64 @@ function inspectSemanticConsistency(outline: ExecutableOutline): OutlineComplete
             break;
           }
         }
+        if (stripped) continue;
+        // 句中匹配的动词黏连修复：「慧被带至青河市」「证据链指向南江市」——
+        // 介词/连词出现在候选内部而非开头。找候选内最后一个连接词，截断其前
+        // 的动词短语。真地名几乎不含这些虚词（「王大志市」类反例远少于黏连）
+        for (let i = value.length - 4; i >= 0; i -= 1) {
+          const word = LOCATION_PREFIX_WORDS.find(item => value.startsWith(item, i));
+          if (word && value.length - i - word.length >= 3) {
+            const remainder = value.slice(i + word.length);
+            // 截断前的片段以已登记角色名开头（「陆衡在济南市」）说明这是
+            // 人名+介词形态，由 characterName 前缀检查负责，不再切
+            const precededByCharacterName = characterNameList.some(name =>
+              value.slice(0, Math.max(0, i)).includes(name)
+            );
+            if (!precededByCharacterName) {
+              value = remainder;
+              stripped = true;
+            }
+            break;
+          }
+        }
       }
       return value;
     };
+    // 行政后缀后紧跟的组词字符（市级/市局/市政/市公安）：后缀在此是修饰语而非
+    // 地名边界，正则吞进来的 2-6 字其实是动词短语。2026-08-25 8题材矩阵实测
+    // 「利用市级权限」→「利用市」、「比对市局台账」→「比对市」被补登记进地点表。
+    const LOCATION_COMPOUND_FOLLOWERS = new Set(['级', '局', '所', '厅', '队', '域', '政', '公']);
     const extractUnregisteredLocations = (text: string): string[] => {
-      const candidates = text.match(ADMINISTRATIVE_LOCATION_RE) ?? [];
-      return [
-        ...new Set(
-          candidates
-            .map(stripLocationPrefix)
-            .filter(
-              candidate =>
-                candidate.length >= 3 &&
-                !characterNameList.some(name => candidate.startsWith(name)) &&
-                !registeredLocations.some(location => candidate.includes(location) || location.includes(candidate))
-            )
-        ),
-      ];
+      const found: string[] = [];
+      const pattern = new RegExp(ADMINISTRATIVE_LOCATION_RE.source, 'gu');
+      for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
+        const candidate = stripLocationPrefix(match[0]);
+        if (candidate.length < 3) continue;
+        // 盲区是叙述概念（视觉盲区/排查盲区），不是可登记地名
+        if (candidate.endsWith('盲区')) continue;
+        if (characterNameList.some(name => candidate.startsWith(name))) continue;
+        if (
+          registeredLocations.some(
+            location => candidate.includes(location) || location.includes(candidate)
+          )
+        ) {
+          continue;
+        }
+        // 与已登记地点共享 ≥2 连续字符 = 同一地点的动词黏连变体
+        // （「东押解至青河市」vs 已登记「青河大桥北江滩…」、「梳理出老街片区」vs
+        // 已登记「光明路派出所及老街片区」）。前缀剥离救不了：黏着的是人名尾字或
+        // 动词组，没有可枚举的词表；按字符窗口重叠判定即可覆盖。
+        const sharesRunWithRegistered = registeredLocations.some(location => {
+          for (let i = 0; i + 2 <= candidate.length; i += 1) {
+            if (location.includes(candidate.slice(i, i + 2))) return true;
+          }
+          return false;
+        });
+        if (sharesRunWithRegistered) continue;
+        if (LOCATION_COMPOUND_FOLLOWERS.has(text[pattern.lastIndex] ?? '')) continue;
+        if (!found.includes(candidate)) found.push(candidate);
+      }
+      return found;
     };
     for (const volume of outline.volumePlan ?? []) {
       const volumeText = [volume.objective, volume.coreConflict, volume.climax].join('；');

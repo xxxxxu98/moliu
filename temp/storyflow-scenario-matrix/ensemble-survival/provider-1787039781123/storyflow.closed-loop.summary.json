@@ -1,0 +1,539 @@
+{
+  "book": "零下四十度的十二张选票",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": "ensemble-survival",
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "scenario:ensemble-survival",
+  "promptChars": 69,
+  "requestedChapterCount": 5,
+  "phaseTimings": {
+    "outlineDirectionsMs": 25496,
+    "outlineExpandMs": 222510,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 876,
+    "continueWriteMs": 588939,
+    "totalMs": 837821
+  },
+  "completedChapters": 5,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 极寒降临断电，安保封门抢防寒服",
+      "words": 2967,
+      "paras": 32,
+      "paraCv": 0.46,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆衡握着红圆珠笔的指节有些发僵。超市货架最下层的午战肉罐头外壳泛着铁青的冷光，他刚在盘点表格上画出半个对勾，圆珠笔尖的油墨便凝成了一粒干涸的硬块。他低头呵出一口气，白雾在空气中迅速凝结成细碎的霜粒，落在立柱悬挂的温度计表盘上。原本指在五摄氏",
+      "tail": "着重型机械锁扣咬合的轰鸣，门外渗入的水汽与极寒气流接触，在几秒钟之内迅速冻结成坚硬无比的玄冰。厚重的防爆铁门在身后被暴风雪彻底焊死，退路彻底化为一片冰封的绝壁。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 特权管制抢粮，谁给你的狗胆",
+      "words": 2906,
+      "paras": 27,
+      "paraCv": 0.41,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆衡反手将防爆钢门内侧沉重的机械插销彻底扣死，指骨处传来一阵刺骨的麻木。地下负二层人防工事内弥漫着陈年机油与湿冷尘土的气味，几支散落在水泥地面上的荧光棒散发出幽绿惨淡的光斑。几十名仓皇逃入的幸存者瘫软在冰冷的地面上，粗重混乱的喘息声与牙齿打",
+      "tail": "起凶残嗜血的红光。他根本不再听任何废话，浑身骨节发出令人牙酸的脆响，粗壮的右臂猛然抡圆，手中的合金防暴棍裹挟着刺耳的尖锐破空风声，恶狠狠朝着陆衡的面门狂暴砸下！",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 伪善调解，配电房总闸竟被人为切断",
+      "words": 3389,
+      "paras": 24,
+      "paraCv": 0.23,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "防暴棍带起的冷风尖锐地割在陆衡鼻尖上，金属锯齿距离他的鼻梁只有不到半寸。特制合金棍体在幽暗的应急荧光下泛着冰冷哑光，周铁粗壮的手臂肌肉紧绷如铁，指节因为过度用力而微微发白。陆衡连眼皮都没有眨一下，视线平静地越过那根冰冷的凶器，径直钉在周铁布",
+      "tail": "瑟发抖的老金脸上一一掠过。在这座与世隔绝、被暴风雪彻底焊死的地下冰窟深处，有人正带着极其专业而致命的手段，在所有人的眼皮底下，无声地切断通往生存的最后一道防线。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 安保虚报油耗，精算师当场列公式",
+      "words": 3424,
+      "paras": 15,
+      "paraCv": 0.14,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 1/15，超过 5 句的段 6。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        },
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：15 段平均 226 字、变异系数 0.14，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "陆衡用防静电布擦净指尖沾染的铜粉黑灰，负二层头顶的几盏应急荧光灯发出低沉嗡鸣，重新洒下惨白冰冷的光线。临时接驳的备用铜排虽恢复了基础供电，但空气中的温度仍在迅速下跌。通风管道由于缺乏足量热源循环，吐出的全是从地表灌入的干冷气流，水泥墙面上凝",
+      "tail": "夷目光中，周铁彻底失去了理智，他猛地丢下手中的铁壶，左手闪电般拔出挂在战术腰带上的高压改装柴油喷枪，伴随着刺耳的机括上膛声，恼羞成怒地将手按在了柴油喷枪阀门上。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 热量公式降维打击，当众逼退油老虎",
+      "words": 3103,
+      "paras": 28,
+      "paraCv": 0.33,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆衡右臂一扬，一张泛黄的硬质工程草稿纸裹着劲风，重重拍在铁皮桌案正中。金属桌面爆出一声清脆震响，纸面上一排排用石墨笔重重圈出的加黑数字，笔锋直直刺向周铁按在喷枪阀门上的手指。周铁指节剧烈跳动了一下，改装喷枪的扳机卡榫在刺耳的机括声中骤然悬停",
+      "tail": "锐摩擦声。在所有人的注视下，粗壮钢管外壁附着的温润水珠迅速冻结，坚硬的白色冰晶如蛛网般在铸铁阀门表面疯狂蔓延，将那枚跌破零度大关的水温表指针彻底封死在坚冰深处。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 极寒降临断电，安保封门抢防寒服"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 特权管制抢粮，谁给你的狗胆"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 伪善调解，配电房总闸竟被人为切断"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 安保虚报油耗，精算师当场列公式"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 热量公式降维打击，当众逼退油老虎"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 零下二十五度，柴油告急断生路"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 一人一票多数决，把强权关进投票箱"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 算力拉拢摇摆票，密室暗战争选票"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 七比五绝杀，特权派首尝惨败苦果"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 食品库物资失窃，地上惊现商管钥匙"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787632000708",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-JyQLqu\\story-runtime\\proj-1787632000708-1c4e05f481d1.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 5,
+    "canonicalSnapshots": 6,
+    "latestSnapshotChapter": 5,
+    "sceneChunks": 5,
+    "events": 21
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 4,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "5e4ccbcf05c2725702622ba8f2e6f95d96a44c208c9299311fe2e6201a2c25c4",
+    "completeCharacterProfileCount": 12,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 4,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 5
+  },
+  "outlineWarnings": [
+    "本地收缩超长标题/CBN/CEN 共 22 章（第 6、7、8、9、10、11、12、14、16、18、19、20、38、42、43、44、45、46、47、48、49、50 章），未发 AI 请求",
+    "未登记地点已补登记 11/11 个",
+    "本地收缩超长标题/CBN/CEN 共 2 章（第 41、48 章），未发 AI 请求"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 5,
+    "firstPassRate": 1,
+    "rewrittenChapters": 0,
+    "totalRewriteRounds": 0,
+    "averageRewriteRounds": 0,
+    "pipelineAttempts": 5
+  },
+  "runtimeMetrics": {
+    "requestCount": 17,
+    "requestCountsByPurpose": {
+      "scene-draft": 7,
+      "fact-extraction": 5,
+      "chapter-judge": 5
+    },
+    "latencyP50Ms": 10542,
+    "latencyP95Ms": 33984,
+    "latencyMaxMs": 33984
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "default-judge-provider"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 88.7,
+      "wouldStartReading": true,
+      "confidence": 0.92,
+      "dimensions": {
+        "openingAttraction": 88,
+        "coreSellingPoint": 92,
+        "protagonistDrive": 89,
+        "conflictEscalation": 90,
+        "payoffPlanning": 86,
+        "characterRelations": 84,
+        "suspensePlanning": 88,
+        "audienceFit": 92
+      },
+      "issues": [
+        {
+          "id": "reader.other-1",
+          "severity": "medium",
+          "category": "other",
+          "location": "全文",
+          "description": "worldBuilding.locations 中录入了大量由文本抓取或切词错误生成的伪地点，如'学公式推算出市'、'给与防寒核心区'、'管廊发现私接市'等，且功能说明均为统一的占位文本。这会影响大纲设定表的严谨性与后续写作调用。",
+          "evidence": [
+            "{\"name\":\"给与防寒核心区\",\"level\":\"city\",\"functionInStory\":\"卷纲与章节蓝图引用的地点，补登记入表。\"},{\"name\":\"学公式推算出市\",\"level\":\"city\",\"functionInStory\":\"卷纲与章节蓝图引用的地点，补登记入表。\"}"
+          ],
+          "suggestion": "清理 locations 表中机械切词生成的冗余项，保留并规范补充老城区主商圈、城西老热电二厂、CBD极光能源地下穹顶等真实地理坐标及空间层级关系。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.pacing-2",
+          "severity": "medium",
+          "category": "pacing",
+          "location": "全文",
+          "description": "在第5、7、9、10、11、12、13、14、34、37等章节蓝图中，hookText 字段未生成具体剧情悬念或情绪钩子，直接填入了类似'- 爽点类型：打脸'的占位内容，降低了章节末尾的钩子落地质量。",
+          "evidence": [
+            "\"orderIndex\":5,\"title\":\"热量公式降维打击，当众逼退油老虎\"...\"hookType\":\"打脸\",\"hookText\":\"- 爽点类型：打脸\",\"coolPointType\":\"打脸\""
+          ],
+          "suggestion": "重写这些章节的 hookText，将其替换为具体的末尾悬念句（例如发电机燃油刻度异常、暗处窥伺的视线、或者地热回流管的异常温降），强化章末连读欲。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.character-3",
+          "severity": "low",
+          "category": "character",
+          "location": "全文",
+          "description": "故事核心设定依赖'一人一票制'与'十二张选票'的微型社会博弈，但人物卡中万象汇原住民仅详细设定了陆衡、周铁、陈主任、林薇、苏晴、老金等6人，其余6名拥有投票权的幸存者缺乏明确的阶层背景、诉求弱点与选票倾向，可能导致早期投票博弈沦为主角与反派的二元对决，削弱群像的动态博弈感。",
+          "evidence": [
+            "\"premise\":\"致命寒潮冰封全城，老旧商场成为十二名不同阶层幸存者的避难孤岛。没有绝对武力压制，所有关键物资调配、防寒区划定与对外搜救都由全员一人一票的议事会决定\""
+          ],
+          "suggestion": "在人物设定或前卷大纲中为剩余6名代表补充简短身份标签（如独居老人、商场保洁、带病青年、外卖骑手等），赋予他们明确的选票利益诉求，使7比5、10比2等关键投票更加丰满可信。",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "这是一份概念极为惊艳、执行路径清晰的高智商末日生存大纲。作品精准抓住了'一人一票微型社会'与'精算模型智斗'的核心卖点，将末世物理法则（极寒相变、柴油凝固、卡路里平衡）与博弈论结合，彻底跳出了传统末日文盲目堆砌异能或无脑杀伐的俗套。故事体量升级阶梯平滑（商场避难所内部平权 -> 街区难民与防卫要塞 -> 全城电台与热网串联 -> 终局推翻能源垄断），情绪回报和反转设计扎实。仅需修正地理数据表中的自动切词杂质、补齐部分章节钩子占位符并丰富剩余投票代表的面貌，便是一部极具开读吸引力与长线追读价值的优质作品。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 84.2,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 83,
+          "characterVoice": 82,
+          "payoffValue": 80,
+          "pacing": 87,
+          "endingPull": 84
+        },
+        "issues": [
+          {
+            "id": "reader.payoff-1",
+            "severity": "low",
+            "category": "payoff",
+            "location": "全文",
+            "description": "核心书名设定的‘选票/微型社会治理’机制在首章尚未显露苗头，首章偏重灾难突发与物理避难跑图，但节奏推进符合开篇题材惯例。",
+            "evidence": [
+              "厚重的防爆铁门在身后被暴风雪彻底焊死，退路彻底化为一片冰封的绝壁。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "开篇极寒降临的感官细节扎实（圆珠笔油墨冻结、温度计急速滑落、幕墙气压炸裂），灾难压迫感极强。冲突由‘天灾降温’自然引申为‘人祸安保抢夺物资’，主角通过工程知识与热压差计算化解强权压迫，树立了冷静专业的技术流人设，局势从混乱对峙迅速转为密闭避难所的绝境孤岛，有效完成了第一章的危机搭建与追读闭环。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 85.7,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 84,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 84,
+          "payoffValue": 80,
+          "pacing": 86,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "反派的恶劣行径采用了较为直白的脸谱化手段（如特意踩碎婴儿奶粉），虽然迅速调动了读者的愤怒情绪，但略微削弱了冷峻写实博弈的质感。",
+            "evidence": [
+              "周铁抬起厚重的军靴，狠狠一脚踩在了包装袋上，雪白的粉末伴随着塑料破裂声在泥泞的冰渣里四散飞溅。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏紧凑、高压压迫感强烈。剧情紧接上章避难所封闭，迅速展开物业管理层利用武力强推特权管制的微型社会冲突。主角运用专业精算底稿和物理模型在智力层面戳破特权者的生存盲区，形成了极具题材特色的智斗张力；章尾断在防暴棍当面砸下的物理冲突最高点，悬念与追读吸引力拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 89.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 91,
+          "emotionalDrive": 87,
+          "characterVoice": 92,
+          "payoffValue": 88,
+          "pacing": 90,
+          "endingPull": 92
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "周铁暴怒之下挥棍砸向面门，仅凭主角口头计算卡路里便悬停在鼻尖半寸，略显戏剧化与主角光环；好在徐天成随即介入拉偏架，使对峙化解具备了合理的社会性台阶。",
+            "evidence": [
+              "防暴棍带起的冷风尖锐地割在陆衡鼻尖上，金属锯齿距离他的鼻梁只有不到半寸。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接紧凑，完成度极高。开篇以主角极致冷静的数据威慑与徐天成的笑里藏刀顺利化解肢体冲突，并借商户私利迅速撕裂群体信任，将阶层矛盾由浅入深铺开。中段突发停电危机，节奏骤然加快；配电房调查阶段展现了硬核写实的专业推演，机械冷切痕迹的发现瞬间将生存危机升格为高压内鬼悬疑。主角藏匿物证、暗中审视全员的收尾极具张力，牢牢抓住了废土群像与社会派悬疑的目标受众。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 91,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 90,
+          "characterVoice": 92,
+          "payoffValue": 94,
+          "pacing": 90,
+          "endingPull": 91
+        },
+        "issues": [],
+        "summary": "本章精准兑现了章节名与题材定位的核心卖点，将末日硬核推演与微型社会博弈结合得极为出色。主角用扎实的热工学公式与严密数据当场粉碎安保队虚报油耗的借口，完成了极具智斗爽感的‘数据降维打击’。群像人物性格鲜明：陈主任的官僚威压、徐天成的和事佬骑墙、周铁的恃强凌弱以及底层商户的绝望愤怒均跃然纸上。局势由强权压迫迅速转化为群众倒戈，末尾周铁恼羞成怒拔出改装武器，冲突再次升级，悬念与追读拉力拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 89.8,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 90,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 88,
+          "characterVoice": 90,
+          "payoffValue": 90,
+          "pacing": 89,
+          "endingPull": 92
+        },
+        "issues": [],
+        "summary": "本章承接上文的喷枪对峙，主角凭借对低温黏度与密闭燃烧缺氧的硬核物理推演，从战术与心理层面彻底瓦解周铁的武力威慑，完成了以知识制衡暴力的爽点兑现；各方角色的站位与反应（老金的反扑、苏晴的抗议、徐天成的和事佬姿态、陈主任的退缩）鲜明饱满，群像博弈真实自然。随后节奏无缝切换，以地热回水管网骤然冻结、水温表断崖式暴跌引出更大的生存危机，悬念与压迫感瞬间拉满，追读动力极强。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 88.3,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 90,
+          "patternVariation": 88,
+          "suspensePayoff": 87,
+          "characterArc": 86,
+          "emotionalArc": 88,
+          "payoffEscalation": 86,
+          "genrePromise": 90,
+          "continuationDesire": 92
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "书名与核心卖点中的‘一人一票制/选票政治’在开局前3章尚未正式登场，目前仍处于避难所阶层撕裂与特权对抗阶段。虽属于合理的前置铺垫，但需注意在后续1-2章内尽快将微型社会的权力重构（选票契约）落地，以完全兑现书名承诺。",
+            "evidence": [
+              "第1章至第3章全文主要聚焦于物理逃生、物资精算与配电房人为破坏，尚未建立正式的选票规则体系。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前三章展现了极其扎实的社会派废土与硬核悬疑功底。开篇天灾压迫感与物理降温细节充实，技术流人设立体；随后迅速展开由特权阶层（陈主任/周铁）、自利商户（徐天成/老金）、底层妇孺（苏晴）构成的微型阶层博弈。第3章不仅平滑化解了上一章末尾的暴力危机，更借由精密机械切痕的发现，将单纯的生存危机瞬间拔高为人为蓄意破坏的内鬼高压悬疑，节奏紧凑、多方利益交错分明，读者追读欲与题材契合度极高。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 84,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 82,
+          "patternVariation": 78,
+          "suspensePayoff": 85,
+          "characterArc": 84,
+          "emotionalArc": 86,
+          "payoffEscalation": 83,
+          "genrePromise": 86,
+          "continuationDesire": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "第2章与第4-5章的冲突解决逻辑存在局部同构：均以安保队武力垄断/虚报消耗为引子，管理层陈主任官僚施压，随后陆衡拿出草稿纸当场列出热工学与人体代谢公式进行数据打脸，最终周铁恼羞成怒拔出武器对峙。虽然硬核计算非常契合题材，但连续两轮由单人算式降维打击化解危机，稍显结构套路化。",
+            "evidence": [
+              "第2章：'陆衡手中的圆珠笔尖在泛黄的纸页上飞速游走，正式开始建立避难所第一份物资能耗计算底稿'，第4章：'陆衡连眼皮都没有抬一下，手中的黑色记号笔已经在硬纸板表面飞速书写起来。粗黑清晰的物理符号与算式瞬间展现在众人眼前'。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.genre-promise-2",
+            "severity": "low",
+            "category": "genre-promise",
+            "location": "全文",
+            "description": "书名与核心卖点主打的‘一人一票制微型社会/十二张选票’契约制度在前5章尚未正式提出或建立，目前仍处于主角依靠硬核物理知识与个人威信瓦解强权的铺垫期。不过底层群众觉醒的趋势已铺垫扎实，符合自然发酵节奏。",
+            "evidence": [
+              "第1-5章完成了入驻避难所、打击安保特权、发现内鬼人为破坏配电房、揭穿油耗谎言及地热管网冻结，尚未出现正式的选票机制与议事规则建设。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前5章开篇质量极高，精准切中硬核写实与末日博弈的题材受众。天灾极寒细节真实扎实，主角凭借热工学、流体力学与代谢精算进行‘数据降维打击’的人设极其鲜明。群像塑造生动（蛮横打手周铁、官僚陈主任、笑面虎徐天成、护食小商户老金），阶层利益摩擦自然顺畅。第3章引入配电房机械冷切割的‘内鬼悬疑’与第5章末尾地热回水断崖式暴跌的‘次生灾难’双线交织，悬念拉扯与追读动力十分强劲。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 5,
+      "chapterAverage": 88.1,
+      "chapterMedian": 89.6,
+      "chapterMinimum": 84.2,
+      "openingThreeAverage": 86.5,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察"
+    ],
+    "errors": [],
+    "durationMs": 75157
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 837935,
+  "warnings": [
+    "大纲阶段 warnings（3 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（1 条，影子模式不阻断）"
+  ]
+}

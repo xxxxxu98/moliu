@@ -1,5 +1,5 @@
 {
-  "book": "大账房：从贬谪胥吏到首辅执刀人",
+  "book": "执笔断命：以天下亏空做孤臣",
   "mode": "storyflow-closed-loop",
   "status": "complete",
   "scenarioId": "court-power",
@@ -8,12 +8,12 @@
   "promptChars": 70,
   "requestedChapterCount": 5,
   "phaseTimings": {
-    "outlineDirectionsMs": 20587,
-    "outlineExpandMs": 622679,
+    "outlineDirectionsMs": 23860,
+    "outlineExpandMs": 267889,
     "outlineRollMs": 0,
-    "applyOutlineMs": 824,
-    "continueWriteMs": 340358,
-    "totalMs": 984448
+    "applyOutlineMs": 947,
+    "continueWriteMs": 327972,
+    "totalMs": 620668
   },
   "completedChapters": 5,
   "chapters": 50,
@@ -23,24 +23,38 @@
     {
       "ch": 1,
       "accepted": true,
-      "title": "第1章 断头画押？你这假账漏了三个月",
-      "words": 3465,
-      "paras": 28,
-      "paraCv": 0.24,
+      "title": "第1章 断头台上一脚踩碎假账本",
+      "words": 2743,
+      "paras": 37,
+      "paraCv": 0.42,
       "attempts": 1,
       "rewriteRounds": 0,
       "gateIssues": [],
-      "head": "钱富贵粗粝肥厚的大手像铁钳一般死死卡住沈淮安的右手腕，骨节被捏得咯咯作响。那根沾满了浓稠朱砂印泥的大拇指，正被硬生生往黄麻纸写就的认罪状右下角按去。刺鼻的咸涩海盐味夹杂着霉烂稻草的气味直冲鼻腔，沈淮安浑身剧痛，脑海中属于现代资深审计总监猝死",
-      "tail": "泥、地上的短刀与供状，最终定格在衣衫褴褛却神情泰然的沈淮安身上。\n\n两淮巡盐御史陆知白驻足负手，目光深沉地注视着靠墙而立的沈淮安，死牢内的空气瞬间凝固到了极点。",
+      "head": "一口辛辣滚烫的烧刀子酒，混杂着令人作呕的蒜臭与铁锈腥气，劈头盖脸喷在精钢鬼头刀的刃口上。水雾在正午毒辣的日头下蒸腾开来，化作一缕惨白的寒光，直逼后颈皮肉。\n\n沈青舟跪在满是陈年血垢的榆木刑台上，粗麻绳将两臂反剪勒进骨缝，沉重死囚枷锁压得脊椎",
+      "tail": "书赫赫七个大字。\n\n淮安巡盐御史。\n\n狂暴的马蹄声直逼刑台阶下，生生将扑向沈青舟的死士逼退半步。监斩官手中的惊堂木啪嗒一声砸在地上，整个人如坠冰窟，僵在了原地。",
       "error": null
     },
     {
       "ch": 2,
       "accepted": true,
-      "title": "第2章 钦差夜审死囚，烂账也能开口？",
-      "words": 2798,
-      "paras": 16,
-      "paraCv": 0.14,
+      "title": "第2章 巡盐御史亲临刑场强逼画押",
+      "words": 3291,
+      "paras": 33,
+      "paraCv": 0.31,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "八抬绿呢大轿重重顿在法场前铺地的青石板上，八名精壮轿夫齐齐撤手，沉重的轿杆发出令人牙酸的吱呀声。轿帘被随从打起，走下一名身着正四品绣獬豸官袍的中年文官，面容清瘦，眉骨高耸，颌下一缕修剪整齐的山羊胡在热风中微动。他眼神冷得如腊月淮水里的寒冰，",
+      "tail": "在半空，眼角剧烈抽搐，脸色瞬间变得惨白一片。而在刑台碎纸与血污之中，沈青舟缓缓仰起染血的脸庞，在沉重的木枷之下，与顾承安那双深邃如渊、审视着全场的眼眸轰然相撞。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 物料衡算当堂逼疯贪官账房",
+      "words": 3176,
+      "paras": 15,
+      "paraCv": 0.11,
       "attempts": 1,
       "rewriteRounds": 0,
       "gateIssues": [
@@ -48,97 +62,90 @@
           "category": "blueprint",
           "severity": "medium",
           "location": "章节",
-          "description": "段落节奏均匀化：16 段平均 173 字、变异系数 0.14，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "description": "段落偏长：长段 0/15，超过 5 句的段 5。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        },
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：15 段平均 210 字、变异系数 0.11，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
           "evidence": ""
         }
       ],
-      "head": "玄色官靴踩碎了泥地上散落的猩红印泥，沉闷有力的脚步声在阴湿逼仄的死牢中戛然而止。沈淮安尚未看清来人的全貌，耳畔便猝然炸开一声冰冷清脆的金铁出鞘之音。两淮巡盐御史陆知白腰间悬挂的雁翎佩刀应声出鞘半寸，雪亮的锋刃泛着青幽幽的寒芒，带着破风的煞气",
-      "tail": "染着血污的指尖轻轻触碰到了冰冷粘稠的账页。死牢内针落可闻，所有按刀亲兵的森冷目光与陆知白满含审视的视线尽数压在他的后背之上，倒计时的青烟在潮湿的海风中无声摇曳。",
-      "error": null
-    },
-    {
-      "ch": 3,
-      "accepted": true,
-      "title": "第3章 地上画复式表，残账倒推出三万两",
-      "words": 3068,
-      "paras": 20,
-      "paraCv": 0.34,
-      "attempts": 1,
-      "rewriteRounds": 0,
-      "gateIssues": [],
-      "head": "沈淮安没有去接书吏战战兢兢递来的狼毫笔，也没有去碰那方干涸结块的劣质石砚。他径直弯下腰，从散落着馊饭酸气的碎瓦碗旁捡起了那截被踩裂的粗木筷子。借着石壁凸起的硬角，他双手发力，随着一声清脆的折裂声，木筷前端被硬生生断出一道扁平锋利的斜面。他将",
-      "tail": "与盐丁的厚背砍刀在狭窄的死牢门前轰然相撞，金铁交鸣声与火把爆裂的毕剥声响彻地牢，两方人马在方寸青砖之间悍然拔刀相向，狭窄甬道内的火药引线在浓重的水汽中滋滋作响。",
+      "head": "玄黑铁甲的缇骑腰刀出鞘，寒芒闪过，沈青舟十指间的实木夹棍应声而断，碎木与血绳跌落血污之中。两名差役在顾承安森冷目光的逼视下，慌忙抬来红木长案，并排铺开两卷长逾丈余的素白生绢。沈青舟双肩虽仍负沉重死囚木枷，十指皮开肉绽、鲜血淋漓，动作却无半分",
+      "tail": "孤立于台阶下的阴影中，大袖底下的双手因惊怒剧烈颤抖。他死死盯着沈青舟离去的背影，面容在光影交错间扭曲狰狞，眼底翻涌着森冷暴戾的杀机，生生将下唇咬出一道殷红血痕。",
       "error": null
     },
     {
       "ch": 4,
       "accepted": true,
-      "title": "第4章 撕开残账夹层，半截红印惊现",
-      "words": 2979,
-      "paras": 26,
-      "paraCv": 0.41,
+      "title": "第4章 内廷权宦死牢深夜密审死囚",
+      "words": 2734,
+      "paras": 28,
+      "paraCv": 0.26,
       "attempts": 1,
       "rewriteRounds": 0,
       "gateIssues": [],
-      "head": "青钢刀锋擦出刺目的火星，两柄雁翎腰刀以迅雷之势横架在牢房门前，硬生生截住了当头劈落的厚背朴刀。陆知白面沉如水，深绯色官袍大袖在逼仄的甬道中烈烈作响，右手掌心已稳稳按在了腰间金丝盘龙的巡盐钦差关防之上。四名身披玄色锁子甲的亲兵跨步上前，沉重的",
-      "tail": "珠之上，眼底的疲惫瞬间被极致的清明所取代。他左手翻飞如风翻开第一卷尘封的原始运单，右手食指与中指骤然发力，算珠在寂静的公廨大堂内爆发出如同暴雨破空般的连绵脆响。",
+      "head": "沈青舟背靠着阴冷潮湿的石壁，合目调息。双腕处的粗重铁铐死死卡在骨缝之间，十指在白日夹棍刑讯下裂开的皮肉已然泛起暗紫，结出一层干硬的血痂。大理寺行辕这间地处地底三丈的死牢密不透风，唯有壁缝渗出的咸涩水滴，在死寂的石地上砸出清脆回响。\n\n幽深的",
+      "tail": "。铁栅门外那名试图挣扎爬起的东厂番子，被领头的黑影反手一刀割断喉管，在窒息与血沫的翻滚中发出一记短促而凄厉的咽气闷哼，整座死牢刹那间被浓烈的血腥与杀意彻底吞没。",
       "error": null
     },
     {
       "ch": 5,
       "accepted": true,
-      "title": "第5章 钦差允诺重查，死牢深处杀机现",
-      "words": 2967,
-      "paras": 24,
-      "paraCv": 0.25,
+      "title": "第5章 水师千总拔刀斩破死牢绝杀",
+      "words": 2969,
+      "paras": 32,
+      "paraCv": 0.48,
       "attempts": 1,
       "rewriteRounds": 0,
       "gateIssues": [],
-      "head": "公案上摊开的提审文书泛着陈旧的黄麻光泽，四周跳跃的烛火将墨迹照得清清楚楚。陆知白右手提起紫毫狼毫笔，笔尖在赤红如血的朱砂小碟中饱蘸浓墨，悬停在文书正中央。正堂内数十盏牛油大烛噼啪爆裂，将这位两淮巡盐御史清瘦的面庞映照得明暗交错。案头堆叠的账",
-      "tail": "弥漫。\n\n矮瘦狱卒脚下猛然发力，整个人如同一头被逼入绝境的恶狼，带着刺骨阴恻的杀意，手中的淬毒短刃划破浑浊死寂的空气，直直朝着闭目养神的沈淮安心窝悍然扑刺而去。",
+      "head": "幽绿色的毒烟在死牢甬道内翻卷扩散，领头的黑衣刺客身形如鬼魅般穿过铁门缺口。他手中的精钢分水短刃泛着幽蓝淬毒的光泽，没有半分拖泥带水，直奔沈青舟的咽喉与面门狠狠刺下。刃尖撕裂湿冷的空气，带起一阵尖锐刺耳的破风厉啸，浓烈的腥甜死气已然扑面而来。",
+      "tail": "遮天蔽日的浓黑烟尘伴随着噼啪爆响直插云霄。隔着数里之遥，滚滚热浪与焦糊气息已然顺着河风倒灌而入，将整座阴暗死牢映照得一片血红。\n\n官仓的方向，大火已然冲天而起。",
       "error": null
     }
   ],
   "plotOutlineTitles": [
     {
       "orderIndex": 0,
-      "title": "第1章 断头画押？你这假账漏了三个月"
+      "title": "第1章 断头台上一脚踩碎假账本"
     },
     {
       "orderIndex": 1,
-      "title": "第2章 钦差夜审死囚，烂账也能开口？"
+      "title": "第2章 巡盐御史亲临刑场强逼画押"
     },
     {
       "orderIndex": 2,
-      "title": "第3章 地上画复式表，残账倒推出三万两"
+      "title": "第3章 物料衡算当堂逼疯贪官账房"
     },
     {
       "orderIndex": 3,
-      "title": "第4章 撕开残账夹层，半截红印惊现"
+      "title": "第4章 内廷权宦死牢深夜密审死囚"
     },
     {
       "orderIndex": 4,
-      "title": "第5章 钦差允诺重查，死牢深处杀机现"
+      "title": "第5章 水师千总拔刀斩破死牢绝杀"
     },
     {
       "orderIndex": 5,
-      "title": "第6章 空手反制刺客，逼问暗号见朱印"
+      "title": "第6章 伏击纵火死士起获隐秘底账"
     },
     {
       "orderIndex": 6,
-      "title": "第7章 堆叠假账下马威？算盘一响全作废"
+      "title": "第7章 百万银票买孤臣，沈青舟当面撕碎"
     },
     {
       "orderIndex": 7,
-      "title": "第8章 单式流水现漏洞，十年平账成笑柄"
+      "title": "第8章 红颜商贾暗送地下走私线索"
     },
     {
       "orderIndex": 8,
-      "title": "第9章 重构收支底册，三万两凭空蒸发？"
+      "title": "第9章 染血算盘暗藏三年盐道底数"
     },
     {
       "orderIndex": 9,
-      "title": "第10章 飞票无痕狡辩，实物库房见真章"
+      "title": "第10章 带枷踏碎刀阵强开公审大门"
     }
   ],
   "runtimeBackend": "sqlite",
@@ -146,8 +153,8 @@
   "runtimeVerification": {
     "health": {
       "ok": true,
-      "projectId": "proj-1787618996790",
-      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-eHi3RS\\story-runtime\\proj-1787618996790-405bd5dc3c0b.db",
+      "projectId": "proj-1787627743733",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-CFE9fI\\story-runtime\\proj-1787627743733-0851a84e0a6d.db",
       "schemaVersion": 2,
       "journalMode": "wal",
       "foreignKeys": true,
@@ -158,34 +165,35 @@
     "canonicalSnapshots": 6,
     "latestSnapshotChapter": 5,
     "sceneChunks": 5,
-    "events": 22
+    "events": 20
   },
   "projectStorageVerification": {
     "chapterCount": 50,
     "plotChapterCount": 50,
     "linkedPlotChapterCount": 50,
     "structuredPlotChapterCount": 50,
-    "characterCount": 21,
+    "characterCount": 22,
     "foreshadowCount": 10,
     "volumeCount": 3,
     "chapterOutlineTextCount": 50,
     "coldReloadVerified": true,
-    "criticalDataHash": "a6947188cb98a62cd58588de19ff5e7def1b4d4f223d8112e10f8316b5aac86f",
-    "completeCharacterProfileCount": 21,
+    "criticalDataHash": "0285899fa213f227f1fb1d45bfd63bc85148c3de09ddd61ddc20456aaf8303df",
+    "completeCharacterProfileCount": 22,
     "positioningPersisted": true
   },
   "postWritePersistence": {
-    "characterCount": 21,
+    "characterCount": 22,
     "foreshadowCount": 10,
     "volumeCount": 3,
     "plotChapterCount": 50,
     "writtenChapterCount": 5
   },
   "outlineWarnings": [
-    "大纲存在 10 个未登记角色（两淮巡盐御史、沧海盐场总监、户部度支清吏司员外郎、大景皇帝、齐王、江南盐运使司盐运使、户部度支清吏司郎中、新登基大景皇帝、内阁首辅、江南布政使司布政使），执行第 1 轮补登记",
+    "大纲存在 10 个未登记角色（淮安巡盐御史、江南盐商总代表、两江总督派系暗探、天子内侍督办、内阁首辅、户部尚书、东宫储君、内阁文官集团言官领袖、大乾天子、九边领军大将），执行第 1 轮补登记",
     "未登记角色已补登记 10/10 个",
-    "本地收缩超长标题/CBN/CEN 共 9 章（第 2、3、4、5、6、7、8、10、14 章），未发 AI 请求",
-    "未登记地点已补登记 1/1 个"
+    "本地收缩超长标题/CBN/CEN 共 2 章（第 18、19 章），未发 AI 请求",
+    "未登记地点已补登记 1/1 个",
+    "本地收缩超长标题/CBN/CEN 共 1 章（第 27 章），未发 AI 请求"
   ],
   "repairMetrics": {
     "firstPassChapters": 5,
@@ -202,9 +210,9 @@
       "fact-extraction": 5,
       "chapter-judge": 5
     },
-    "latencyP50Ms": 12253,
-    "latencyP95Ms": 56038,
-    "latencyMaxMs": 56038
+    "latencyP50Ms": 12342,
+    "latencyP95Ms": 48179,
+    "latencyMaxMs": 48179
   },
   "readerEvaluation": {
     "version": "reader-eval-v1",
@@ -228,78 +236,78 @@
     },
     "outline": {
       "version": "reader-eval-v1",
-      "score": 89.4,
+      "score": 88.7,
       "wouldStartReading": true,
-      "confidence": 0.95,
+      "confidence": 0.92,
       "dimensions": {
         "openingAttraction": 90,
         "coreSellingPoint": 92,
         "protagonistDrive": 90,
-        "conflictEscalation": 89,
-        "payoffPlanning": 86,
-        "characterRelations": 85,
-        "suspensePlanning": 90,
-        "audienceFit": 93
+        "conflictEscalation": 85,
+        "payoffPlanning": 88,
+        "characterRelations": 84,
+        "suspensePlanning": 88,
+        "audienceFit": 92
       },
       "issues": [
         {
-          "id": "reader.issue-1",
-          "severity": "medium",
-          "category": "hook",
-          "location": "全文",
-          "description": "第3章至第10章蓝图中的hookText字段存在多处未写具体情境钩子、直接残留模板标签的情况，削弱了前十连更期间的断章拉扯感。",
+          "id": "reader.pacing-1",
+          "severity": "high",
+          "category": "pacing",
+          "location": "volumePlan[0].chapterRange / chapterBlueprints[35-50]",
+          "description": "分卷规划（volumePlan第1卷）与故事线地图（storyLines.map）明确标注第1-60章为淮安地方盐案、第61-120章为京师户部；但前50章章节蓝图在第30章便已结清淮安案并获旨进京，第36章即抵达京师户部大堂，第45-50章已进入太仓开箱与诏狱博弈。中盘节奏出现明显的卷期规划与细纲章节错位。",
           "evidence": [
-            "第3章hookText为\"- 爽点类型：打脸\"，第4章hookText为\"- 爽点类型：解谜\"，第5章hookText为\"- 爽点类型：立威\"。"
+            "volumePlan第1卷标注'chapterRange':{'start':1,'end':60}且map标注'淮安漕运分司及水运总码头（第1-60章）'，但第36章细纲为'orderIndex':36,'title':'血衣单骑撞正门，千人围观撕碎官威'（沈青舟纵马撞碎户部拒马），第50章已至'诏狱铁锁合拢孤臣冷笑送出废储账'。"
           ],
-          "suggestion": "补齐第3至10章章末的具体悬念事件卡点（如杀手逼近、账册突遭抢夺等即时危机），确保读者翻页驱动力连贯。",
+          "suggestion": "统一全书节奏锚点：若采取前30章淮安、31-90章京师户部、91-180章朝堂大决战的高频快节奏，需同步修正分卷规划中的章数范围与地图对应章节，避免写作时篇幅分配失衡。",
           "blocking": false,
           "confidence": 0.7
         },
         {
-          "id": "reader.issue-2",
-          "severity": "low",
+          "id": "reader.character-2",
+          "severity": "medium",
           "category": "character",
-          "location": "全文",
-          "description": "人物列表中存在同一角色的‘官职版’与‘具名版’重复建档现象，导致实体冗余。",
+          "location": "keyCharacters",
+          "description": "人物列表中同时独立存在了具有明确姓名的人物与其官职身份条目（如'严成化'与'淮安巡盐御史'、'徐阶平'与'内阁首辅'、'裴玄敬'与'户部尚书'、'赵宣'与'东宫储君'等），且同一人物在两个条目下的role类型出现矛盾（如裴玄敬标记为support，户部尚书标记为antagonist）。",
           "evidence": [
-            "keyCharacters中同时存在【陆知白】与【两淮巡盐御史】、【严崇山】与【户部度支清吏司员外郎】、【赵恒】与【新登基大景皇帝】。"
+            "人物表中分别独立存在'{\"name\":\"严成化\",\"role\":\"antagonist\"}'与'{\"name\":\"淮安巡盐御史\",\"role\":\"antagonist\"}'；'{\"name\":\"裴玄敬\",\"role\":\"support\"}'与'{\"name\":\"户部尚书\",\"role\":\"antagonist\"}'。"
           ],
-          "suggestion": "合并重复的角色档案，保留具名完整版，避免正文生成时引用设定产生歧义。",
+          "suggestion": "合并重复人物条目，统一采用'姓名（官职）'规范，并修正角色阵营属性（如裴玄敬/户部尚书统一归为antagonist反派）。",
           "blocking": false,
           "confidence": 0.7
         },
         {
-          "id": "reader.issue-3",
-          "severity": "medium",
+          "id": "reader.other-3",
+          "severity": "low",
           "category": "other",
-          "location": "全文",
-          "description": "前50章剧情密度与信息量极大，而全书总规划仅45万字（180章），承载全国十三省度支改制、夺嫡大案与审计院立法的宏大框架容易在后半程显得仓促。",
+          "location": "storyLines.romance / keyCharacters.苏清漪",
+          "description": "故事线中声明全书无传统男女情爱线，但关键人物苏清漪的关系类型被标注为lover（情感知己），存在细微口径偏差。",
           "evidence": [
-            "storyScale中targetWordCount为\"450000字\"，而主线涵盖\"全国度支重构与皇权清算，地图、势力与权力对抗层级逐级递增\"。"
+            "storyLines.romance写明'无传统男女情爱线'，而keyCharacters中苏清漪的relationshipChanges标注'relationType':'lover'，'dynamic':'苏清漪与沈青舟从互惠互利的账目交易转为生死相依的情感知己'。"
           ],
-          "suggestion": "若保持当前硬核写实的制度推演密度，建议将预估篇幅扩展至80-100万字，或在二三卷适当收束官僚层级，确保博弈细节不被压缩跳过。",
+          "suggestion": "将苏清漪的relationType调整为ally或confidant，明确其为并肩作战的利益红颜与事业合伙人，保持与'无纯爱/主权谋'定位的一致性。",
           "blocking": false,
           "confidence": 0.7
         }
       ],
-      "summary": "这是一份卖点极其清晰、专业度与爽感结合优秀的硬核历史官场大纲。开篇死牢画双轨借贷破局极具冲击力，以现代穿透式审计对抗封建假账与官场潜规则的切入点非常新颖且执行扎实。前50章节奏紧凑，官场博弈环环相扣，精准命中历史权谋与高智商智斗读者的核心爽点，强烈建议开书。"
+      "summary": "该大纲选题极具辨识度，将现代穿透式审计、物料守恒与古代官场火耗折色、帝王养痈之术深度结合，开篇刑场踩账、物料衡算反杀的情节张力极强，完美切中高智商数字博弈与孤臣死斗读者的爽点。主要待优化点在于高层分卷规划（60章/卷）与前50章实际细纲推进节奏（30章即破淮安入京）存在章节区间脱节，以及人物表中存在身份与姓名双重录入的冗余问题。修正结构分期与人物表后，整体具备极高的开书吸引力与可读性。"
     },
     "chapters": [
       {
         "version": "reader-eval-v1",
         "chapter": 1,
-        "score": 89,
+        "score": 88.4,
         "continueReading": true,
-        "confidence": 0.95,
+        "confidence": 0.92,
         "dimensions": {
-          "readability": 90,
-          "openingHook": 92,
-          "conflictEffectiveness": 89,
-          "emotionalDrive": 88,
+          "readability": 88,
+          "openingHook": 90,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 86,
           "characterVoice": 88,
-          "payoffValue": 86,
+          "payoffValue": 85,
           "pacing": 90,
-          "endingPull": 90
+          "endingPull": 89
         },
         "issues": [
           {
@@ -307,98 +315,65 @@
             "severity": "low",
             "category": "other",
             "location": "全文",
-            "description": "生死关头的解局借助了钦差仪仗破门而入的外部时机，虽然此前主角已用心理战瓦解了狱头心智，但在纯靠逻辑自救与外部营救的交织上略显经典巧合。",
+            "description": "刑场最后关头御史鸣锣赶到的'刀下留人'解局方式略显套路化，属于网文惯用桥段，后续需要强化御史与主角之间的利益博弈而非单纯的天降救星。",
             "evidence": [
-              "就在这千钧一发的紧要关头，死牢深处厚重的精铁大门突然传来一声轰然巨响。"
+              "就在短刃尖端距离沈青舟咽喉不足三寸的电光石火之间，长街尽头骤然炸响一声凄厉悠长的破空长啸。"
             ],
             "suggestion": "",
             "blocking": false,
             "confidence": 0.7
           }
         ],
-        "summary": "极佳的首章开局，精准切中‘硬核技术流+体制内博弈’的读者受众。开篇以死牢按手印的生死危机切入，将现代穿透审计逻辑与古代盐税征收规程（盐引夏税入库节点、户部通则颁行时间差）紧密结合，两次指出‘时间倒挂’的假账硬伤，降维打击感极强。章尾巡盐御史陆知白登场，顺畅衔接至下一个高阶博弈场，追读欲望强烈。"
+        "summary": "开篇极具张力与卖点辨识度。直接切入刑场断头台的生死死局，主角通过现代审计思维从'吸潮增重'、'零火耗悖论'、'期初结转抹平'三处致命数据硬伤当场破局，完美契合'硬核审计破案+当堂算账对质'的受众定位。节奏紧凑凌厉，情绪层层递进，章尾以巡盐御史八抬大轿强行切入断章，留存悬念与追读吸引力极强。"
       },
       {
         "version": "reader-eval-v1",
         "chapter": 2,
-        "score": 87.1,
+        "score": 90,
         "continueReading": true,
         "confidence": 0.95,
         "dimensions": {
-          "readability": 88,
+          "readability": 91,
           "openingHook": 88,
-          "conflictEffectiveness": 87,
-          "emotionalDrive": 86,
-          "characterVoice": 87,
-          "payoffValue": 84,
+          "conflictEffectiveness": 91,
+          "emotionalDrive": 90,
+          "characterVoice": 92,
+          "payoffValue": 90,
           "pacing": 88,
-          "endingPull": 91
+          "endingPull": 89
         },
         "issues": [
           {
-            "id": "reader.other-1",
-            "severity": "low",
-            "category": "other",
+            "id": "reader.pacing-1",
+            "severity": "medium",
+            "category": "pacing",
             "location": "全文",
-            "description": "‘勾稽平衡’带有较强的现代复式记账及财会复合词色彩，由明清背景的巡按御史直接口述略显超前，但在硬核算吏技术流网文中尚属读者可接受的术语降维表达。",
+            "description": "连续两章结尾均采用‘利刃悬于颈前毫厘被外部高位官员强行打断救场’的套路（上章末尾是御史鸣锣截刀，本章末尾是大理寺缇骑破障截刀），危机破局结构出现连续重复。",
             "evidence": [
-              "把这十七笔墨污账目的差额与勾稽平衡给本官算出来。"
+              "就在刀刃距离沈青舟后颈皮肉不足半寸的电光石火之际，法场外围用以阻隔人群的粗壮拒马突然发出一声惊天动地的爆响"
             ],
-            "suggestion": "",
+            "suggestion": "后续情节宜多利用主角主动布置的后手或信息差进行自救破局，避免连续依赖‘最后一秒机械降神/刀下留人’的单一解困模板。",
             "blocking": false,
             "confidence": 0.7
           }
         ],
-        "summary": "本章承接紧凑，局势从死牢狱卒私刑灭口迅速升级为巡盐御史的生死审讯。主角沈淮安面对御史拔刀威胁，立足现代审计思维，以‘盐场资金亏空与实际产盐量不减’的实物资金勾稽破绽切中伪账本质，完成了令人信服的技术降维反击；同时暗留原始凭证底单的情节兼顾了官场博弈的谨小慎微。章尾御史抛出墨污残账并点燃线香限时推演，倒计时压迫感拉满，悬念与追读吸引力极强。"
+        "summary": "本章承接上章死斗悬念，将硬核审计与法场辩驳推向高潮。主角沈青舟在夹棍酷刑下以严密的‘盐水溶解度+船只排水吃水深’双重物料推演，当众彻底击碎盐道‘雨淋化盐’的伪证，爽点扎实且极为契合硬核官场权谋定位。大理寺少卿的介入迅速完成地方盐道与中央法统的权力交接，节奏凌厉，智斗张力充足。"
       },
       {
         "version": "reader-eval-v1",
         "chapter": 3,
-        "score": 90.5,
-        "continueReading": true,
-        "confidence": 0.95,
-        "dimensions": {
-          "readability": 90,
-          "openingHook": 88,
-          "conflictEffectiveness": 92,
-          "emotionalDrive": 88,
-          "characterVoice": 90,
-          "payoffValue": 92,
-          "pacing": 90,
-          "endingPull": 94
-        },
-        "issues": [
-          {
-            "id": "reader.other-1",
-            "severity": "low",
-            "category": "other",
-            "location": "全文",
-            "description": "算账流推演细节存在轻微的算术勾稽纰漏：文中前述解运十万引共四百万斤（即每引40斤），三成虚耗为一百二十万斤（合三万引）。后文设定'户部每引盐折银七钱（0.7两）'，则3万引×0.7两应为2.1万两，与文中直接结论'正好不多不少，整整三万两纹银'存在微小数学出入。在主打硬核推演的题材中易被考据读者挑刺，建议修正引价或引数基数。",
-            "evidence": [
-              "六月份解运的盐引总额为十万引，共计官盐四百万斤，但在运费与损耗的对冲科目上，竟硬生生挂出了三成半的损耗大账……四百万斤官盐的三成，便是一百二十万斤食盐。按照大景户部每引盐折银七钱的官定折算，这一百二十万斤所谓在海上被海潮化掉的官盐，在账面上对应的亏空数额，正好不多不少，整整三万两纹银。"
-            ],
-            "suggestion": "",
-            "blocking": false,
-            "confidence": 0.7
-          }
-        ],
-        "summary": "本章极好地兑现了前章'一炷香残账倒推'的生死考验。主角断筷蘸泥水在青砖画复式借贷T型表的破局极具视觉画面感与硬核降维打击的爽感，成功让钦差御史陆知白收回问斩手令。章尾盐场死士持火铳砍刀强行冲牢灭口，将智斗胜利瞬间无缝切换为生死一线的物理冲突，节奏紧凑凌厉，追读欲望极强。"
-      },
-      {
-        "version": "reader-eval-v1",
-        "chapter": 4,
-        "score": 91,
+        "score": 92.2,
         "continueReading": true,
         "confidence": 0.95,
         "dimensions": {
           "readability": 92,
-          "openingHook": 90,
-          "conflictEffectiveness": 93,
-          "emotionalDrive": 89,
+          "openingHook": 88,
+          "conflictEffectiveness": 95,
+          "emotionalDrive": 94,
           "characterVoice": 90,
-          "payoffValue": 92,
-          "pacing": 91,
-          "endingPull": 90
+          "payoffValue": 95,
+          "pacing": 92,
+          "endingPull": 88
         },
         "issues": [
           {
@@ -406,62 +381,66 @@
             "severity": "low",
             "category": "other",
             "location": "全文",
-            "description": "模型指出读者体验问题",
+            "description": "文中提及'纯度八波美的煎熬浓卤'，'波美度（Baumé）'为近代化学浓度量度单位，虽用于体现主角的硬核专业计算，但在纯正古代权谋语境下略带现代术语痕迹，建议后续可用古代盐法术语（如'石莲浮沉'、'十度卤'等）或作模糊化表述。",
             "evidence": [
-              "上一章尾部：“以及一行写着天佑三年六月转运使船队领盐出海的朱砂小字。”与本章陆知白指令：“开架取册，将承平三年至五年沧海盐场所有原始过秤底单、海运驳运公文悉数取下。”"
+              "按两淮盐规，海滨灶户煎熬生盐，每出一石粗盐，需耗用纯度八波美的煎熬浓卤整整八石、芦苇柴薪三百斤。"
             ],
             "suggestion": "",
             "blocking": false,
             "confidence": 0.7
           }
         ],
-        "summary": "本章承接紧凑，冲突推进利落高效。作者巧妙将“肢体抢夺账册”的武力冲突转化为“撕开双层夹页”的物证大反转，不仅物理保住了证据，更顺势带出“泥金棉宣暗裱”与“通兑京兆二万两”的暗线汇票，瞬间将地方贪腐案拔高至京城权力博弈层面。主角沈淮安就此摆脱死囚身份、堂堂正正进驻总监公廨大账房，人物处境实现阶段性跃迁。章尾算盘声起与狱头暗杀手势形成双重张力，硬核专业感与危机感并存，追读欲望强烈。"
+        "summary": "本章是极其出色的高潮兑现章。接续上文大理寺少卿刀下留人的转折，沈青舟当堂以血墨白绢立账，运用'物料衡算'对淮安盐道的'四柱清册'展开了教科书级别的降维打击。三层递进的逻辑推演（熬盐物料比、包装折损率、浓卤腐蚀与守恒）严丝合缝、步步紧逼，逼得三十年老账房道心崩溃当堂吐血认罪，彻底撕开官仓假账遮羞布。硬核审计与法场博弈的情绪宣泄感极强，成功完成绝境反杀，人物群像鲜明，节奏凌厉，充分满足了目标读者对高智商数字博弈与官场翻盘的期待。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 89.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 86,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 88,
+          "characterVoice": 92,
+          "payoffValue": 86,
+          "pacing": 90,
+          "endingPull": 93
+        },
+        "issues": [],
+        "summary": "本章承接法场暂缓死刑的局势，迅速切入东厂提督冯忠的深夜密审。文戏博弈极具张力，主角沈青舟直切皇权与党争本质，完成从‘待死囚徒’向‘天子孤臣之刀’的身份转折与阶梯搭建，人物声音冷峻犀利。后半段骤然切入刺客灭口的生死危机，节奏紧凑凌厉，将主角与内廷权宦瞬间捆绑于同一险境，章尾断点极具悬念与追读拉力。"
       },
       {
         "version": "reader-eval-v1",
         "chapter": 5,
-        "score": 75,
+        "score": 90.4,
         "continueReading": true,
-        "confidence": 0.92,
+        "confidence": 0.95,
         "dimensions": {
-          "readability": 82,
-          "openingHook": 65,
-          "conflictEffectiveness": 75,
-          "emotionalDrive": 74,
-          "characterVoice": 80,
-          "payoffValue": 70,
-          "pacing": 68,
-          "endingPull": 85
+          "readability": 90,
+          "openingHook": 91,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 89,
+          "characterVoice": 90,
+          "payoffValue": 88,
+          "pacing": 91,
+          "endingPull": 93
         },
         "issues": [
           {
-            "id": "reader.continuity-1",
-            "severity": "high",
-            "category": "continuity",
-            "location": "全文",
-            "description": "模型指出读者体验问题",
-            "evidence": [
-              "按大景刑名规制，在正式升堂对质之前，沈淮安需先被押回死牢深处的单独石室暂押，待天明移送手续齐备后再行带入大账房。"
-            ],
-            "suggestion": "",
-            "blocking": false,
-            "confidence": 0.7
-          },
-          {
-            "id": "reader.character-2",
+            "id": "reader.pacing-1",
             "severity": "low",
-            "category": "character",
+            "category": "pacing",
             "location": "全文",
-            "description": "模型指出读者体验问题",
-            "evidence": [
-              "沈淮安依然靠坐在潮湿冰凉的石墙角落，甚至连眼皮都未曾惊慌眨动，只是在昏暗中微闭双目，任由周遭杀意弥漫。"
-            ],
-            "suggestion": "",
+            "description": "主角刚刚推断出严成化要火烧官仓灭迹，窗外立刻锣声大作火光冲天，时间节点卡位略显戏剧化巧合，但紧凑度足以支撑连载追读节奏。",
+            "evidence": [],
+            "suggestion": "后续章节可稍作铺垫严成化部署放火的时间差细节，使双线推进在逻辑上更显严密。",
             "blocking": false,
             "confidence": 0.7
           }
         ],
-        "summary": "本章完成了钦差正式签署‘重查’流程并引入了钱富贵买凶下毒刺杀的死牢危机。主角沈淮安凭借对钦差禁酒规制与杏仁苦味的敏锐洞察识破鸩毒，章尾淬毒短刃突刺形成强悬念钩子。但本章与上章结尾存在明显的时空回退与衔接矛盾（上章已在大账房拨响算盘，本章却倒退回重新定案并押回死牢等待天明），打乱了查账节奏，建议修正前置状态的一致性。"
+        "summary": "本章承接上章死牢刺杀危机，动作戏干脆利落，迅速引入水师千总韩烈破局。核心爽点与智斗极为扎实，主角沈青舟通过水师巡江日志、吃水记录与克扣军饷折色银的交叉比对，当场穿透严成化利用水师走私并甩锅的阴谋，迅速策反/绑定韩烈成为关键同盟。章尾主角精准预判‘火烧官仓灭迹’，紧接着总码头烈焰冲天，危机升级与悬念拉满，权谋张力极强。"
       }
     ],
     "windows": [
@@ -469,90 +448,63 @@
         "version": "reader-eval-v1",
         "fromChapter": 1,
         "toChapter": 3,
-        "score": 88.6,
+        "score": 87.2,
         "continueReading": true,
-        "confidence": 0.92,
+        "confidence": 0.95,
         "dimensions": {
           "mainlineProgress": 88,
-          "patternVariation": 86,
-          "suspensePayoff": 90,
-          "characterArc": 85,
-          "emotionalArc": 88,
-          "payoffEscalation": 89,
-          "genrePromise": 92,
-          "continuationDesire": 90
+          "patternVariation": 78,
+          "suspensePayoff": 88,
+          "characterArc": 80,
+          "emotionalArc": 90,
+          "payoffEscalation": 88,
+          "genrePromise": 95,
+          "continuationDesire": 88
         },
         "issues": [
           {
             "id": "reader.other-1",
-            "severity": "high",
+            "severity": "low",
             "category": "other",
             "location": "全文",
-            "description": "人物空间位置与状态出现严重断层。第2章中钱富贵已在牢房内被钦差卫队震慑并‘烂泥般瘫软在满是污泥的青砖地面上，连滚带爬地伏地叩首’，第3章末尾在未交代其如何离开钦差重重包围牢房的前提下，突然出现在死牢大门外，带领总监公廨死士踹门杀入。",
+            "description": "第1章与第2章末尾连续两次使用'鬼头刀/短刃临颈半寸之间被官差快马打断'的极限刀下留人套路，悬念转折技法略有重复。",
             "evidence": [
-              "死牢沉重的生铁栅栏门被硬生生踹开，数十名手持短铁铳与朴刀的精壮盐丁如狼似虎地涌入甬道。领头的钱富贵满脸横肉拧作一团"
+              "第1章尾'就在短刃尖端距离沈青舟咽喉不足三寸的电光石火之间……淮安巡盐御史' 与 第2章尾'就在刀刃距离沈青舟后颈皮肉不足半寸的电光石火之际……大理寺提刑办案'"
             ],
             "suggestion": "",
             "blocking": false,
             "confidence": 0.7
           }
         ],
-        "summary": "开篇3章高度契合‘硬核算吏+官场博弈’的题材定位，通过时间倒挂、实物与资金勾稽、复式记账法（T型账户）穿透残账等专业硬核推演，极好地兑现了技术降维打击与生死破局的爽感，智斗节奏紧凑、压迫感强。唯一明显硬伤在于第3章末尾狱头钱富贵的空间位置与阵营动作出现脱节断层，需修正其脱身或带队冲牢的情节逻辑衔接。"
+        "summary": "前三章开篇极具冲击力与题材辨识度。紧扣'硬核审计破案+法场算账对质'的核心卖点，主角沈青舟从断头台死局中步步为营，以物料衡算、溶解度与吃水深度、四柱清册勾稽等极具说服力的专业逻辑层层递进击碎官场伪证。情节节奏凌厉、对手层级逐步升级、情绪宣泄感强烈，老账房当堂吐血认罪的高潮兑现干脆利落，精准满足硬核官场权谋文目标读者的期待。"
       },
       {
         "version": "reader-eval-v1",
         "fromChapter": 1,
         "toChapter": 5,
-        "score": 82.4,
+        "score": 91.6,
         "continueReading": true,
         "confidence": 0.95,
         "dimensions": {
-          "mainlineProgress": 78,
-          "patternVariation": 72,
-          "suspensePayoff": 85,
-          "characterArc": 80,
-          "emotionalArc": 82,
-          "payoffEscalation": 84,
-          "genrePromise": 92,
-          "continuationDesire": 86
+          "mainlineProgress": 92,
+          "patternVariation": 88,
+          "suspensePayoff": 90,
+          "characterArc": 90,
+          "emotionalArc": 93,
+          "payoffEscalation": 91,
+          "genrePromise": 95,
+          "continuationDesire": 94
         },
-        "issues": [
-          {
-            "id": "reader.other-1",
-            "severity": "high",
-            "category": "other",
-            "location": "全文",
-            "description": "第4章章尾沈淮安已正式进驻公廨大账房并落座拨响算盘开启查账，但第5章开篇剧情出现明显的时空回退，不仅重新描写钦差朱批‘重查’定案，还将主角强行押回死牢过夜等待天明，前后状态衔接存在硬伤，打乱了查账节奏。",
-            "evidence": [
-              "第4章末尾：‘沈淮安指尖轻轻搭在冰凉圆润的算珠之上……算珠在寂静的公廨大堂内爆发出如同暴雨破空般的连绵脆响。’对比第5章：‘由于移送三年来积存的数十箱账目手续繁琐……沈淮安需先被押回死牢深处的单独石室暂押，待天明移送手续齐备后再行带入大账房。’"
-            ],
-            "suggestion": "",
-            "blocking": false,
-            "confidence": 0.7
-          },
-          {
-            "id": "reader.conflict-2",
-            "severity": "medium",
-            "category": "conflict",
-            "location": "全文",
-            "description": "前5章内连续安排了3次狱卒/死士在牢房内图谋灭口的物理冲突（第1章持刀硬杀、第3章带队冲牢、第5章暗中下毒刺杀），在短篇幅内对‘牢中灭口’危机依赖度过高，略显套路化。",
-            "evidence": [
-              "第1章：‘反手从牛皮腰带中拔出一柄寒光闪闪的剔骨短刀’；第3章：‘领头的钱富贵……手中倒提着一柄滴血的厚背砍刀’；第5章：‘抽出一柄不过七寸长、通体泛着幽蓝寒芒的淬毒短刃’"
-            ],
-            "suggestion": "",
-            "blocking": false,
-            "confidence": 0.7
-          }
-        ],
-        "summary": "前5章开篇惊艳，精准兑现了‘古代权谋+硬核技术流’的题材定位。主角以时间差漏洞、实物资金倒推以及复式借贷T型表等穿透审计手段连续破局，降维打击感与智斗爽感极强；账页夹层中揭出的京兆汇票也将地方贪腐顺利拔高至朝堂博弈。唯一明显瑕疵在于第4章至第5章之间存在场景状态回退的硬伤（已在公廨开算却又回退到牢房等天明），且5章内出现3次牢房刺杀，略有模式化倾向，但整体节奏严密，追读欲望强烈。"
+        "issues": [],
+        "summary": "前5章开篇惊艳，节奏极其凌厉，完全精准踩中了‘硬核官场权谋+现代审计思维破案+向死而生孤臣’的读者预期。主角沈青舟从刑场断头台的绝境起步，接连通过‘吸潮增重悖论’、‘雨淋溶解度与船只吃水’、‘熬盐物料比与浓卤腐蚀守恒’等硬核物理与数字逻辑完成当堂降维打击，反杀爽感扎实饱满。随后剧情迅速从法场死斗延展至朝堂大理寺、东厂内廷权宦与地方水师的多方角力，主角主动将自身定位为‘天子孤臣之刀’，格局迅速拔高。第5章以水师军饷账目穿透严成化走私网络，并精准预判‘火烧官仓’引爆危机，悬念与情绪推进一气呵成，具备极强的追读吸引力。"
       }
     ],
     "metrics": {
       "chapterCount": 5,
-      "chapterAverage": 86.5,
-      "chapterMedian": 89,
-      "chapterMinimum": 75,
-      "openingThreeAverage": 88.9,
+      "chapterAverage": 90,
+      "chapterMedian": 90,
+      "chapterMinimum": 88.4,
+      "openingThreeAverage": 90.2,
       "continueReadingNoCount": 0,
       "lowChapterCount": 0,
       "lowWindowCount": 0,
@@ -562,13 +514,13 @@
       "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察"
     ],
     "errors": [],
-    "durationMs": 94440
+    "durationMs": 82543
   },
   "provider": "openai",
   "model": "gemini-3.7-flash-high",
-  "totalMs": 984537,
+  "totalMs": 620754,
   "warnings": [
-    "大纲阶段 warnings（4 条，详见 outlineWarnings 字段）",
+    "大纲阶段 warnings（5 条，详见 outlineWarnings 字段）",
     "读者评审 warnings（1 条，影子模式不阻断）"
   ]
 }

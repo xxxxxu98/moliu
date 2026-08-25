@@ -389,6 +389,102 @@ describe('inspectOutlineCompleteness', () => {
       expect(result.blockers.filter(b => b.kind === 'unknown-location-reference')).toEqual([]);
     });
 
+    it('行政后缀是组词修饰语的动词短语（利用市级权限/比对市局台账）不产生 blocker（2026-08-25 矩阵实测）', () => {
+      const outline = makeOutlineWithLocations();
+      outline.chapterBlueprints = [
+        ...(outline.chapterBlueprints ?? []),
+        {
+          ...makeBlueprint(33),
+          CBN: '利用市级权限调走卷宗，比对市局台账发现两处涂改',
+        },
+      ];
+
+      const result = inspectOutlineCompleteness(outline);
+      expect(result.blockers.filter(b => b.kind === 'unknown-location-reference')).toEqual([]);
+    });
+
+    it('叙述概念盲区（造成的视觉盲区/市政道路盲区）不产生 blocker（2026-08-25 矩阵实测）', () => {
+      const outline = makeOutlineWithLocations();
+      outline.chapterBlueprints = [
+        ...(outline.chapterBlueprints ?? []),
+        {
+          ...makeBlueprint(34),
+          CBN: '凶手利用市政道路监控盲区撤离，造成了视觉盲区之外的第二现场',
+        },
+      ];
+
+      const result = inspectOutlineCompleteness(outline);
+      expect(result.blockers.filter(b => b.kind === 'unknown-location-reference')).toEqual([]);
+    });
+
+    it('与已登记地点共享字符的动词黏连变体（东押解至青河市/梳理出老街片区）不产生 blocker（2026-08-25 矩阵实测）', () => {
+      const outline = makeOutline();
+      outline.worldBuilding = {
+        locations: [
+          { name: '青河大桥北江滩与废弃404路总站' },
+          { name: '光明路派出所及老街片区' },
+          { name: '青河市公安局刑侦支队指挥中心' },
+        ],
+      } as ExecutableOutline['worldBuilding'];
+      outline.chapterBlueprints = [
+        ...(outline.chapterBlueprints ?? []),
+        {
+          ...makeBlueprint(35),
+          CBN: '嫌疑人耀东押解至青河市途中翻供，警方梳理出老街片区的新目击证词',
+        },
+      ];
+
+      const result = inspectOutlineCompleteness(outline);
+      expect(result.blockers.filter(b => b.kind === 'unknown-location-reference')).toEqual([]);
+    });
+
+    it('真实矩阵蓝图文本回放（fair-mystery 08-25）不产生垃圾地点 blocker', () => {
+      const outline = makeOutline();
+      outline.worldBuilding = {
+        locations: [
+          { name: '青河大桥北江滩与废弃404路总站' },
+          { name: '光明路派出所及老街片区' },
+          { name: '青河市公安局刑侦支队指挥中心' },
+        ],
+      } as ExecutableOutline['worldBuilding'];
+      outline.chapterBlueprints = [
+        ...(outline.chapterBlueprints ?? []),
+        {
+          ...makeBlueprint(37),
+          CBN: '陈淮当众演示高流明光影投射在老街夹角造成的视觉盲区',
+          CPNs: [
+            '市局技术员伸手去关录像，陈淮一把按住了暂停键',
+            '陈淮梳理出老街片区避开监控的物理岔道',
+            '陈淮在青河市公安局刑侦支队指挥中心推演倒车盲区打脸技术员',
+          ],
+          CEN: '天网抓拍图放大十倍，一辆白色货车正拐进暗巷',
+          mustCover: [
+            '陈淮结合公房压痕与道路盲区算出改装车间具体门牌',
+            '陈淮利用路口时间戳数据推翻刑侦技术员的设备故障论',
+          ],
+          forbiddenZones: ['陈淮比对时间戳证实货车曾与幽灵公交同秒擦肩而过'],
+        },
+      ];
+
+      const result = inspectOutlineCompleteness(outline);
+      expect(result.blockers.filter(b => b.kind === 'unknown-location-reference')).toEqual([]);
+    });
+
+    it('组词过滤不影响真漂移（南江市）检出', () => {
+      const outline = makeOutlineWithLocations();
+      outline.chapterBlueprints = [
+        ...(outline.chapterBlueprints ?? []),
+        {
+          ...makeBlueprint(36),
+          CBN: '证据链指向南江市，主角连夜赶往南州市级党校外围蹲守',
+        },
+      ];
+
+      const result = inspectOutlineCompleteness(outline);
+      const locations = result.blockers.filter(b => b.kind === 'unknown-location-reference');
+      expect(locations.length).toBeGreaterThan(0);
+    });
+
     it('登记地点不足 3 个时门禁关闭（旧大纲兼容）', () => {
       const outline = makeOutline();
       outline.worldBuilding = { locations: [{ name: '江城市' }] } as ExecutableOutline['worldBuilding'];

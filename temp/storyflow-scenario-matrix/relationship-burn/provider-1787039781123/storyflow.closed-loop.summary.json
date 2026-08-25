@@ -1,0 +1,559 @@
+{
+  "book": "修补旧日回声",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": "relationship-burn",
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "scenario:relationship-burn",
+  "promptChars": 67,
+  "requestedChapterCount": 5,
+  "phaseTimings": {
+    "outlineDirectionsMs": 19754,
+    "outlineExpandMs": 213163,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 857,
+    "continueWriteMs": 445820,
+    "totalMs": 679594
+  },
+  "completedChapters": 5,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 枪响声级归零，悬梁飞落朱砂线",
+      "words": 3221,
+      "paras": 25,
+      "paraCv": 0.26,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆见声将精密三脚架稳稳支在红星大剧场第七排的中轴线上，左手拇指利落地推开发令枪的保险栓。他没有抬头去看上方剥落严重的灰泥天花板，修长的食指在声级计的校准旋钮上微调了半格。随着指节骤然发力，沉闷的撞针击发声在空旷死寂的大厅内猛烈爆开，刺鼻的硫",
+      "tail": "冷：“三天后的拆除评审会前，我们需要一份能够说服专家委员会的联合诊断方案。既然赌约已定，我保留声学数据验证权，而你的大木营造，最好真能让这里的回响重新活过来。”",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 焊枪烧穿大铁门，带队强拆踢铁板",
+      "words": 3183,
+      "paras": 20,
+      "paraCv": 0.15,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "沈青禾将缠绕在指间的朱砂细线缓缓摇回黑木墨斗中。她蹲在断裂的第七排过道前，指尖轻轻抹过地砖上殷红的痕迹，抬头看向站在声级计旁的青年。大厅里的灰尘在斜射的微光中浮沉，空气中混杂着火药与朱砂的微腥。她站起身拍掉手掌上的木屑，眼底的锐气没有褪去半",
+      "tail": "晨雾，顺着烧毁变形的铁门缝隙狠狠灌入了整座剧场的庞大空间。刺耳的啸叫在空旷破败的观众厅内剧烈反弹，激荡起一层层杂乱无章的回响，将刚刚落下的尘埃再度震得漫天狂舞。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 铜喇叭封门断水，墨斗暗槽初露锋芒",
+      "words": 3388,
+      "paras": 26,
+      "paraCv": 0.17,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "高月娥一把推开半掩的变形铁门，手里的老式铜喇叭在门框上磕得当当作响。她身后跟着数十位槐花巷的老街坊，有人提着竹扫帚，有人拎着旧板凳，黑压压的人群如同一道灰色的铁闸，在剧场正门前排得水泄不通。晨雾尚未完全散去，那只包着红布边缘的旧铜喇叭再次贴",
+      "tail": "离的瞬间，前方的阴影深处毫无预兆地响起了一声细微的机括弹跳声。那扇常年挂着厚重锈锁、封条早已风化断裂的档案室木门内，铜质暗锁的弹簧芯突然发出一声极为清脆的轻响。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 残缺图纸撕页，暗室暗藏玄机",
+      "words": 3398,
+      "paras": 18,
+      "paraCv": 0.14,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/18，超过 5 句的段 5。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "陆见声掌心发力，推开了二楼档案室那扇沉重的实木门。受潮变形的锁芯弹簧早已不堪重负，随着一声脆响彻底崩开，年久失修的门轴发出刺耳艰涩的摩擦声。一股封存数十年的陈腐气味扑面而来，夹杂着霉菌、干燥纸张与氧化铁锈的微苦气息。沈青禾用衣袖掩住口鼻，拧",
+      "tail": "起骇人的声压级。清脆的开嗓尾音如同利剑破空，携带着完美的泛音列，顺着二楼挑台的木质穹顶轰然回荡开来，震得整座死寂大厅内的百年老杉木梁架发出一阵共鸣般的悠长低颤。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 老名角开嗓，三根粉笔打脸伪专家",
+      "words": 2740,
+      "paras": 22,
+      "paraCv": 0.28,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "宋德海单手按在二楼破损包厢的雕花木栏边缘，一声刚劲高亢的京白如同惊雷贯顶，猛烈撕裂了大厅内积蓄半世纪的死寂。老人的身形消瘦如竹，却稳稳立在朽烂翘起的木龙骨上方，月白色的旧绸褂在阴暗的穿堂风里翻卷作响。那一口气沉入丹田，字正腔圆的念白咬字极重",
+      "tail": "硬化混凝土。半块五十年前浇筑的水泥块如同一只冰冷丑陋的铁塞，死死咬合在木质导音管的咽喉要道，水泥侧面甚至还清晰残留着半截早已氧化的铁丝与当年工程留下的粗糙气孔。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 枪响声级归零，悬梁飞落朱砂线"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 焊枪烧穿大铁门，带队强拆踢铁板"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 铜喇叭封门断水，墨斗暗槽初露锋芒"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 残缺图纸撕页，暗室暗藏玄机"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 老名角开嗓，三根粉笔打脸伪专家"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 豪车堵门递封口费，激光建模突报错"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 危房报告拍在桌上，住建局下倒计时"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 焊死三号电箱，暗处相机闪光"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 实习生潜入暗房，抓拍假材料现行"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 听音辨木揭穿假货，周院长深夜来电"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787631196181",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-6nd00L\\story-runtime\\proj-1787631196181-9091cd9423f3.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 5,
+    "canonicalSnapshots": 6,
+    "latestSnapshotChapter": 5,
+    "sceneChunks": 5,
+    "events": 20
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "d0e3aac0d3a494ab8512734400339ba74bafc65cd05f19250e6b48daa13fb39a",
+    "completeCharacterProfileCount": 12,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 5
+  },
+  "outlineWarnings": [
+    "本地收缩超长标题/CBN/CEN 共 3 章（第 6、49、50 章），未发 AI 请求",
+    "未登记地点已补登记 7/7 个",
+    "本地收缩超长标题/CBN/CEN 共 4 章（第 4、8、20、27 章），未发 AI 请求"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 4,
+    "firstPassRate": 0.8,
+    "rewrittenChapters": 1,
+    "totalRewriteRounds": 1,
+    "averageRewriteRounds": 0.2,
+    "pipelineAttempts": 5
+  },
+  "runtimeMetrics": {
+    "requestCount": 23,
+    "requestCountsByPurpose": {
+      "scene-draft": 11,
+      "fact-extraction": 6,
+      "chapter-judge": 6
+    },
+    "latencyP50Ms": 13116,
+    "latencyP95Ms": 36228,
+    "latencyMaxMs": 41012
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "default-judge-provider"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 89.1,
+      "wouldStartReading": true,
+      "confidence": 0.92,
+      "dimensions": {
+        "openingAttraction": 88,
+        "coreSellingPoint": 92,
+        "protagonistDrive": 90,
+        "conflictEscalation": 89,
+        "payoffPlanning": 90,
+        "characterRelations": 82,
+        "suspensePlanning": 94,
+        "audienceFit": 86
+      },
+      "issues": [
+        {
+          "id": "reader.character-1",
+          "severity": "medium",
+          "category": "character",
+          "location": "全文",
+          "description": "言情定位下前期情感张力与互动留白略显滞后。前40章章节禁区多次严格限制'不可让男女主产生非专业的情感暧昧'，导致第1卷几乎完全成为纯职场技术攻坚与文保对抗，男女主之间的情感火花、心理防线的微妙试探在黄金前30章缺乏足够的情绪发酵空间，容易让奔着言情而来的读者在前中期产生'纯职场文'的错觉。",
+          "evidence": [
+            "不可让反派势力过早动用暴力手段，不可让两人产生非专业的情感暧昧。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-2",
+          "severity": "low",
+          "category": "other",
+          "location": "全文",
+          "description": "世界观地点列表中混入了多个章节文本切词残留的无效命名（如'完成全街区'、'三毫米应力死区'、'形变与高频死区'等），属于设定集自动抓取生成的冗余脏数据，虽不影响主线推演，但影响大纲设定的整洁度与规范性。",
+          "evidence": [
+            "{\"name\":\"三毫米应力死区\",\"level\":\"city\",\"functionInStory\":\"卷纲与章节蓝图引用的地点，补登记入表。\"}"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.payoff-3",
+          "severity": "low",
+          "category": "payoff",
+          "location": "全文",
+          "description": "反派初期现场破坏的手段存在部分重复（如第8章与第34章均围绕'焊死配电箱'展开破坏），现场物理使绊子的模式略显单一，可进一步丰富资方在前期行政合规、舆论造势等维度的组合拳干扰。",
+          "evidence": [
+            "第8章：钱广发在红星大剧场·配电间焊死三号配电箱；第34章：林舒用微型相机拍下钱广发焊死配电箱挂锁的违规举动"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "这是一份立意极高、专业壁垒扎实且极具辨识度的硬核职场/文保解谜大纲。将'现代建筑声学仿真'与'传统大木作非遗营造'作为双核驱动，通过声音黑洞、落针测试、地下暗渠次低频共振等技术关卡，创造了极具冲击力的匠人燃爽感与文脉治愈感。伏笔规划严密，跨卷解谜层次清晰。唯一需要注意的是，在言情品类标签下，前40章对男女主情感暧昧的过度压制可能使前期言情浓度偏薄，建议在保持专业互补的同时，增加两人在微观情绪、彼此认同上的细腻暗涌与眼神拉扯。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 85.6,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 88,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 82,
+          "characterVoice": 88,
+          "payoffValue": 85,
+          "pacing": 86,
+          "endingPull": 82
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "中段关于声学物理与大木营造的理念争锋中，专业术语集中出现，稍有概念宣讲感，但未影响整体阅读流畅度与双强对峙张力。",
+            "evidence": [
+              "“根据声线追踪算法，红星大剧场的轴线聚焦原点在第七排，这里的声压骤降是典型的反射面角度失衡。”……“建筑声学是一门严谨的物理科学，混响时间、房间脉冲响应与几何边界条件完全遵循能量守恒。”"
+            ],
+            "suggestion": "可在后续章节将专业名词进一步融于肢体动作与空间探查的微细节中，减少整段理论互掷。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章开篇极具辨识度与专业质感。以发令枪声学测试为切入点迅速抛出‘声学黑洞’核心谜题，随后女主悬梁登场，现代物理声学与传统大木营造的碰撞火花四溅。朱砂线定穴的微高潮兼具视觉冲击力与专业说服力，男女主人设立体且势均力敌，3天拆除倒计时的外部危机与联合诊断的悬念闭环自然，具备极强的开篇追读吸引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 87.3,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 85,
+          "characterVoice": 90,
+          "payoffValue": 86,
+          "pacing": 88,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "强拆工头钱广发的台词和做派略偏脸谱化，属于常见的功能性反派工具人。",
+            "evidence": [
+              "老子不认什么声学，我只认总包合同上的工期！上头给我的指令是限期清场"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文赌约，迅速引入外部强拆危机。男女主分工与性格特质展现得十分鲜明：女主敢打敢拼守护老建筑，男主冷静严密以法制人，双强联手退敌的微爽点节奏利落。章尾以突如其来的老旧喇叭啸叫声作为声学悬念切入，追读动力充沛。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 87.4,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 87,
+          "characterVoice": 86,
+          "payoffValue": 88,
+          "pacing": 87,
+          "endingPull": 89
+        },
+        "issues": [],
+        "summary": "本章紧承上章悬念，老街坊封门断水的群体冲突处理利落。核心亮点在于陆见声徒手粉笔绘制声波干涉图与沈青禾墨斗暗槽刻度的严密契合，将现代声学与传统大木作巧妙呼应，提供了强烈的专业爽感与双强默契。局势在解封大门后迅速推进至探查二楼封锁暗阁，章尾暗锁机括异响悬念十足，追读动力强劲。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 87.5,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 84,
+          "characterVoice": 87,
+          "payoffValue": 86,
+          "pacing": 88,
+          "endingPull": 92
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "上一章末尾档案室内传出的神秘机括弹跳声，在开篇被处理为门锁弹簧自然受潮受压崩开，承接上微悬念略有降级消解，但随后迅速通过人为撕页谜团补足了推进动力。",
+            "evidence": [
+              "受潮变形的锁芯弹簧早已不堪重负，随着一声脆响彻底崩开，年久失修的门轴发出刺耳艰涩的摩擦声。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏明快且信息量充实。情节由内向外、再由外折返：从暗室发现核心声学图纸遭人为撕毁的陈年谜团，到与设计院周怀仁在体制规矩与危房拆迁利益前的硬核交锋，再到男女主利用8.2度偏差将现代声学与沈氏大木作'锁音扣'巧妙咬合。章尾的残破包厢追查与突如其来的苍劲戏腔破空拉嗓，极具视听通感与悬疑张力，钩子坚实有力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 86.3,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 85,
+          "characterVoice": 86,
+          "payoffValue": 88,
+          "pacing": 85,
+          "endingPull": 84
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "反派带队进场的时机与老艺人对峙刚结束无缝衔接，戏剧冲突发生的时间节点略显工整和巧合。",
+            "evidence": [
+              "宋德海话音未落，剧场紧闭的破损铁门突然被人在外重重踹开。伴随着刺耳的铁轴刮擦声，钱广发领着四个西装革履、神情倨傲的男子大摇大摆迈进门厅。"
+            ],
+            "suggestion": "可略微增加反派在外听到动静或提前蹲守的细节铺垫，使踹门切入的动机与时机更具现实合理性。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-2",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "男女主角在硬核破局中的默契配合极佳，但言情线的情感拉扯与互动细节在本章被高密度的技术打脸稀释，双强互动偏功能性协作。",
+            "evidence": [
+              "“因为吃掉声音的不是木头，而是被人塞进声腔里的东西。”陆见声面无表情地转过头，看向身旁的沈青禾，“青禾，起砖。”"
+            ],
+            "suggestion": "在二人合力起砖或眼神交汇处，可增添一两句带有二人性格互补与隐性张力的小细节，增强言情读者的情感代入感。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章结尾的开嗓悬念，节奏紧凑凌厉。前半段借老名角宋德海的肉嗓试音确立了声学流失的物理参数，后半段通过‘三根粉笔’现场拆解伪专家假报告的硬核打脸情节，极具专业爽感与视觉画面感。结尾迅速起砖挖出五十年前的混凝土异物，彻底坐实历史人为破坏的悬疑线索，情节兑现度与推进效率极高。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 84.4,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 85,
+          "suspensePayoff": 84,
+          "characterArc": 82,
+          "emotionalArc": 80,
+          "payoffEscalation": 83,
+          "genrePromise": 88,
+          "continuationDesire": 86
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "当前前三章的剧情推进紧密依托高密度的专业对决和外部事件（强拆、街坊围堵），男女主之间的化学反应主要体现在技术认知与职场配合上，言情维度的微观情绪拉扯与心动细节略显被事件推着走，建议在后续档案室探秘等封闭空间中增加更多人物层面的细腻互动。",
+            "evidence": [
+              "整座剧场大厅内安静得能听见彼此的呼吸声，连上方穹顶微尘飘落的轨迹都显得格外清晰。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前三章开篇极具质感与辨识度，完美兑现了硬核声学、传统大木作与双强职场的题材承诺。第1章以发令枪声级归零与朱砂线定穴建立专业碰撞；第2章以公文法条迅速化解外部暴力强拆危机；第3章则通过粉笔声波干涉图与墨斗暗槽刻度的严密契合达成技术共振的高潮，层次递进清晰，节奏明快利落。章尾暗阁异响悬念留钩精准，整体具备极强的可信度与追读动力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 84.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 74,
+          "suspensePayoff": 88,
+          "characterArc": 80,
+          "emotionalArc": 82,
+          "payoffEscalation": 85,
+          "genrePromise": 84,
+          "continuationDesire": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "核心解谜打脸的道具与动作模式在短间隔内高度重复。第3章中男主刚刚使用‘废墟中捡起红白蓝三色粉笔徒手绘制声线干涉图’压制街坊质疑，第5章面对反派伪专家时，再度出现完全相同的‘从坍塌灰泥堆拾起红白蓝三色粉笔现场画声线图’操作，结构和视觉意象略显套路化。",
+            "evidence": [
+              "顺势从坍塌的灰泥堆里拾起红、白、蓝三根工程石膏粉笔，大步走到了大厅东侧完好的木质护壁前。陆见声将三角板按在护壁中轴线上，白色粉笔在斑驳的木板上骤然划过……蓝色粉笔已然沿着三角板的斜边急速延伸……红色粉笔在陆见声掌中如同手术刀般迅疾飞舞。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "言情定位下的情感拉扯与细腻情绪偏弱。前5章高度聚焦于‘硬核技术解谜+文保冲突’的职场与悬疑主线，男女主互动多停留于高效率的专业合作与默契配合（如‘青禾，起砖’），个人层面的情绪流动、背景交底或暧昧张力在开篇窗口中略显单薄。",
+            "evidence": [
+              "沈青禾站起身拍掉尘土，凑近细看：‘负三度与五点二度，正好差了八点二度。如果按照沈家大木作的“锁音扣”来排，当年修缮时梁架肯定被人故意改动过榫眼位置。只要顺着这个参数逆向倒推，我们就能摸出被撕掉的导音结构到底长什么样。’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前5章阅读体验极其流畅且专业质感出众。现代建筑声学与传统大木营造的碰撞构成了极高辨识度的技术看点，主线目标（7天/3天倒计时保卫老剧场）清晰紧凑，危机与爽点层层升级——从发令枪声级归零，到粉笔定位干涉死角、暗室撕页、名角肉嗓试音，直至第5章挖出五十年前浇筑的人为破坏水泥块，悬念填挖严丝合缝。唯一不足是第3章与第5章的‘三色粉笔画图解围’桥段在动作与视觉设计上产生了明显复用，且言情维度的情感拉扯稍让位于快节奏的工程破案。总体而言追读欲望极强，硬核双强与文脉解谜定位兑现度极高。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 5,
+      "chapterAverage": 86.8,
+      "chapterMedian": 87.3,
+      "chapterMinimum": 85.6,
+      "openingThreeAverage": 86.8,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察"
+    ],
+    "errors": [],
+    "durationMs": 106570
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 679677,
+  "warnings": [
+    "大纲阶段 warnings（3 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（1 条，影子模式不阻断）"
+  ]
+}

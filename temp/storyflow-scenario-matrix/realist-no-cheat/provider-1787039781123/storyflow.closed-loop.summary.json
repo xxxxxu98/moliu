@@ -1,5 +1,5 @@
 {
-  "book": "逆流换电：小城车行突围记",
+  "book": "高压线上的修理铺",
   "mode": "storyflow-closed-loop",
   "status": "complete",
   "scenarioId": "realist-no-cheat",
@@ -8,12 +8,12 @@
   "promptChars": 73,
   "requestedChapterCount": 5,
   "phaseTimings": {
-    "outlineDirectionsMs": 19471,
-    "outlineExpandMs": 656953,
+    "outlineDirectionsMs": 15333,
+    "outlineExpandMs": 216188,
     "outlineRollMs": 0,
-    "applyOutlineMs": 912,
-    "continueWriteMs": 472962,
-    "totalMs": 1150298
+    "applyOutlineMs": 854,
+    "continueWriteMs": 655871,
+    "totalMs": 888246
   },
   "completedChapters": 5,
   "chapters": 50,
@@ -23,138 +23,122 @@
     {
       "ch": 1,
       "accepted": true,
-      "title": "第1章 催债堵门，绝症电车进厂",
-      "words": 2675,
-      "paras": 21,
-      "paraCv": 0.11,
+      "title": "第1章 辞职接盘三十五万烂账",
+      "words": 3502,
+      "paras": 28,
+      "paraCv": 0.42,
       "attempts": 1,
-      "rewriteRounds": 0,
-      "gateIssues": [
-        {
-          "category": "blueprint",
-          "severity": "medium",
-          "location": "章节",
-          "description": "段落节奏均匀化：21 段平均 125 字、变异系数 0.11，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
-          "evidence": ""
-        }
-      ],
-      "head": "万用表红黑表笔狠狠扎进高压配电盒，电弧瞬间炸响。幽蓝色的电火花在铜排触点间爆开刺目的亮光，伴随着焦糊味，在逼仄的车间里升起一股青烟。林锐握着耐压一千伏的特种绝缘表笔，手腕稳如磐石。表盘液晶屏上的红色数字在四百伏高压区间疯狂跳动，最终停留在两",
-      "tail": "平稳的电机就绪声并未出现。下一瞬间，车厢内部的控制单元骤然爆发出极其刺耳而急促的蜂鸣警报，尖锐的声浪瞬间撕裂了整个汽修车间的寂静，仪表盘上的红色故障灯疯狂闪烁！",
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "陈锐右手稳稳捏着红黑两根双重绝缘表笔，笔尖两枚细长锋利的镀金探针悬在裸露的四百伏高压铜排上方，距离那抹泛着冷冽金属光泽的母排表面只有不到三毫米。昏暗的车间空气里，弥漫着陈年齿轮油的酸涩与微弱的电离臭氧气味。他的两根手指保持着外科手术般的绝对",
+      "tail": "在那张摊开的维修工单正中央，更换动力电池总成与高压控制盒的字样触目惊心，而在最终报价栏那一栏上，赫然打印着一个足以彻底压垮普通营运家庭的天文数字：伍万捌仟元整。",
       "error": null
     },
     {
       "ch": 2,
       "accepted": true,
-      "title": "第2章 自制试灯，两分钟揪出漏电",
-      "words": 3094,
-      "paras": 25,
-      "paraCv": 0.16,
+      "title": "第2章 两万八天价单逼死跑车人",
+      "words": 3211,
+      "paras": 26,
+      "paraCv": 0.34,
       "attempts": 1,
       "rewriteRounds": 1,
       "gateIssues": [],
-      "head": "车厢控制单元发出的尖锐蜂鸣瞬间撕扯着车间里的空气，仪表盘上的红色绝缘故障灯如同嗜血的眼睛般疯狂暴闪。林建国吓得脸色煞白，手里的干燥长木棍险些脱手砸在地上。他一个箭步冲上前，干裂的大手死死抓向林锐的胳膊，嘴唇剧烈颤抖着大吼：“拉闸！小锐你快松",
-      "tail": "条和晨光下的车间，布满皱纹的脸上没有丝毫轻松，反而满是深深的沉重与忧虑。三天凑齐近三万块巨款，对这个濒临倒闭的老汽修厂来说，依旧是一道横亘在生死边缘的万丈深渊。",
+      "head": "李向前通红着双眼，右手猛地扬起，将那张盖着华驰官方公章的自费换包报价单狠狠甩在白色纯电网约车的引擎盖上。单据与冰冷的铁皮机盖撞击，发出“啪”的一记脆响，在弥漫着机油味的车间内格外刺耳。那张被汗水浸软的白纸在机盖上滑出半寸，上面赫然印着两万八",
+      "tail": "手精准卡住机舱右上角配电盒的自锁卡扣，右手螺丝刀利落挑开侧面的高压防护锁销。伴随着一声清脆干脆的塑料卡扣弹开声，陈锐当着众人的面一把掀开了前机舱的高压配电盒盖。",
       "error": null
     },
     {
       "ch": 3,
       "accepted": true,
-      "title": "第3章 连夜开箱，五毛钱套管救绝症",
-      "words": 2899,
-      "paras": 17,
-      "paraCv": 0.07,
+      "title": "第3章 一块万用表拆穿天价忽悠",
+      "words": 2935,
+      "paras": 15,
+      "paraCv": 0.15,
       "attempts": 1,
-      "rewriteRounds": 0,
+      "rewriteRounds": 1,
       "gateIssues": [
         {
           "category": "blueprint",
           "severity": "medium",
           "location": "章节",
-          "description": "段落节奏均匀化：17 段平均 169 字、变异系数 0.07，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "description": "段落偏长：长段 0/15，超过 5 句的段 4。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
           "evidence": ""
         }
       ],
-      "head": "门外催债黑车的烟尘尚未散尽，林锐已拔掉了插在OBD接口上的数据采集盒。示波器屏幕上，那道微弱的寄生漏电杂波仍在微安级区间跳动。“外围PTC虚接只是引子。”林锐抄起加长套筒扳手，神色冷峻，“颠簸测试下的高压绝缘阻抗波动很大，电池包内部底壳肯定",
-      "tail": "毛钱的绝缘套管与一小片紫铜，不仅彻底撕开了垄断黑修厂精心编织的高价技术神话，更让这个风雨飘摇的老汽修铺，在绝境深渊的边缘硬生生砸开了一条属于他们自己的通天生路。",
+      "head": "掀开的塑料盖斜搭在蓄电池支架旁，机舱内部露出一整片密布的高压走线。粗壮的橙色阻燃波纹管盘错在金属托架内，三组镀锡高压铜排在白炽灯下折射出冷硬的光泽。陈锐双手套着千伏级绝缘手套，神情冷静地从工具箱中取出一块磨损老旧的数字万用表。他左手拇指熟练",
+      "tail": "还没咽气呢？听说宏达快揭不开锅了，居然还敢在这儿打肿脸充胖子修新能源？老头子，上个月欠我那八万块配件尾款今天要是拿不出来，这铺子的招牌，老子今天就替你们拆了！”",
       "error": null
     },
     {
       "ch": 4,
       "accepted": true,
-      "title": "第4章 无损上电，到账三千救命钱",
-      "words": 3467,
-      "paras": 22,
-      "paraCv": 0.4,
+      "title": "第4章 限期三天不还钱就收铺子",
+      "words": 3044,
+      "paras": 25,
+      "paraCv": 0.23,
       "attempts": 1,
       "rewriteRounds": 0,
-      "gateIssues": [
-        {
-          "category": "blueprint",
-          "severity": "medium",
-          "location": "章节",
-          "description": "段落偏长：长段 1/22，超过 5 句的段 2。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
-          "evidence": ""
-        }
-      ],
-      "head": "林锐右手搭在旋钮式换挡器上，食指与拇指轻轻一转，顺势切入倒车挡。中控屏瞬间切换为倒车影像，车尾低频雷达发出清脆而有节奏的提示音。他松开电子手刹，右脚轻点电门，两吨多重的白色纯电轿车在没有任何发动机轰鸣的寂静中平稳起步。车轮碾过车间门口凹凸不",
-      "tail": "林建国兜里的手机也接连震动起来，陈大山在对讲机里散播的消息显然已经炸开了整条出租车与网约车圈子，一场围绕着新能源三电维修的暗战与逆袭，在青阳县城正式拉开了序幕。",
+      "gateIssues": [],
+      "head": "赵鑫泰嘴里叼着半截劣质过滤嘴香烟，皮鞋重重踏在满是机油的水泥地上。两名胳膊上纹着青黑刺青的壮汉一左一右堵在门框两侧，双手抱胸，直接将汽修铺通往外街的退路封得严严实实。车间里原本弥漫的松节油味，瞬间被一股刺鼻的劣质烟草与汗酸味冲散。\n\n赵鑫泰",
+      "tail": "笔在白纸上飞速重构着华驰BMS绝缘检测芯片的等效采样拓扑。墙上老式石英钟的秒针在一格一格沉重跳动，发出清脆的嗒嗒声，如同无声的战鼓，催逼着即将到来的生死倒计时。",
       "error": null
     },
     {
       "ch": 5,
       "accepted": true,
-      "title": "第5章 调度场炸锅，司机群狂推神医",
-      "words": 2766,
-      "paras": 19,
-      "paraCv": 0.19,
+      "title": "第5章 手绘高压图纸死磕第一单",
+      "words": 3056,
+      "paras": 18,
+      "paraCv": 0.24,
       "attempts": 1,
       "rewriteRounds": 0,
       "gateIssues": [],
-      "head": "青阳县高铁站地下营运车蓄车池内，刺鼻的尾气混杂着冬日清晨的湿冷寒意。上百台纯电网约车与燃油出租车密密麻麻挤在蓄车通道里，大部分电车司机为了省电和防止电路跳闸，连车内暖风都舍不得开，一个个裹着厚棉袄蹲在冰冷的花坛水泥台阶上，一边搓着冻僵的手指",
-      "tail": "灯，整齐划一地甩开车头，在几十名早班司机震撼的注视下，齐齐掉头冲出地下调度场闸口，排成一道长龙，顶着清晨的凛冽寒风，径直向着城北汽配街建国汽修厂的方向疾驰而去。",
+      "head": "陈锐将削尖的铅笔芯重重按在一张发黄的大号牛皮草稿纸上。碳粉在粗糙的纸面上擦出一道清晰而干脆的黑痕，顺着直尺边缘迅速延伸。没有主机厂内部绝密的高压原理图，没有4S店专属的电路维修手册，他只能凭借脑海中吃透的电气原理与方才实车拆解的线索，在线条",
+      "tail": "的圆圈。故障机理已经完全锁死，只要明早周晓芸将订购的耐高温云母绝缘垫与导热硅脂送达，他们就能用几十块钱的成本完成这场外科手术般的修复，彻底粉碎赵鑫泰的逼债阴谋。",
       "error": null
     }
   ],
   "plotOutlineTitles": [
     {
       "orderIndex": 0,
-      "title": "第1章 催债堵门，绝症电车进厂"
+      "title": "第1章 辞职接盘三十五万烂账"
     },
     {
       "orderIndex": 1,
-      "title": "第2章 自制试灯，两分钟揪出漏电"
+      "title": "第2章 两万八天价单逼死跑车人"
     },
     {
       "orderIndex": 2,
-      "title": "第3章 连夜开箱，五毛钱套管救绝症"
+      "title": "第3章 一块万用表拆穿天价忽悠"
     },
     {
       "orderIndex": 3,
-      "title": "第4章 无损上电，到账三千救命钱"
+      "title": "第4章 限期三天不还钱就收铺子"
     },
     {
       "orderIndex": 4,
-      "title": "第5章 调度场炸锅，司机群狂推神医"
+      "title": "第5章 手绘高压图纸死磕第一单"
     },
     {
       "orderIndex": 5,
-      "title": "第6章 三车堵门排队，全县通病爆发"
+      "title": "第6章 铺设绝缘垫搭起高压排障台"
     },
     {
       "orderIndex": 6,
-      "title": "第7章 老爹藏工具被抓，暗格翻出旧账"
+      "title": "第7章 分段切断母线排查漏电点"
     },
     {
       "orderIndex": 7,
-      "title": "第8章 汽配街联合抬价，当面点破假货"
+      "title": "第8章 美工刀切开密封胶抓真凶"
     },
     {
       "orderIndex": 8,
-      "title": "第9章 废品堆里淘金，手搓零件破封锁"
+      "title": "第9章 锁定漏电孔却遭遇全网断件"
     },
     {
       "orderIndex": 9,
-      "title": "第10章 三车齐修复，黑恶势力暗中摸底"
+      "title": "第10章 报废板淘出救命特种陶瓷管"
     }
   ],
   "runtimeBackend": "sqlite",
@@ -162,8 +146,8 @@
   "runtimeVerification": {
     "health": {
       "ok": true,
-      "projectId": "proj-1787623832360",
-      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-dS5jFP\\story-runtime\\proj-1787623832360-f6af5d4e7fb0.db",
+      "projectId": "proj-1787632900467",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-rEMKhM\\story-runtime\\proj-1787632900467-f98fab3a9978.db",
       "schemaVersion": 2,
       "journalMode": "wal",
       "foreignKeys": true,
@@ -174,54 +158,54 @@
     "canonicalSnapshots": 6,
     "latestSnapshotChapter": 5,
     "sceneChunks": 5,
-    "events": 18
+    "events": 23
   },
   "projectStorageVerification": {
     "chapterCount": 50,
     "plotChapterCount": 50,
     "linkedPlotChapterCount": 50,
     "structuredPlotChapterCount": 50,
-    "characterCount": 14,
+    "characterCount": 13,
     "foreshadowCount": 10,
     "volumeCount": 3,
     "chapterOutlineTextCount": 50,
     "coldReloadVerified": true,
-    "criticalDataHash": "2d8975c1d5e7e7a37724c6acf89d1ecea0cfd6a087006e70ee0172fc233448f7",
-    "completeCharacterProfileCount": 14,
+    "criticalDataHash": "bea8f828e337188f6e5e14abd1897cab6a1fd48d511b402cc4d327bec38050ba",
+    "completeCharacterProfileCount": 13,
     "positioningPersisted": true
   },
   "postWritePersistence": {
-    "characterCount": 14,
+    "characterCount": 13,
     "foreshadowCount": 10,
     "volumeCount": 3,
     "plotChapterCount": 50,
     "writtenChapterCount": 5
   },
   "outlineWarnings": [
-    "大纲存在 3 个未登记角色（陈师傅、沈总、李局长），执行第 1 轮补登记",
-    "未登记角色已补登记 3/3 个",
-    "大纲审查修正完成：修复 1 处问题",
-    "本地收缩超长标题/CBN/CEN 共 2 章（第 38、40 章），未发 AI 请求",
-    "未登记地点已补登记 25/25 个"
+    "大纲存在 1 个未登记角色（黄老板），执行第 1 轮补登记",
+    "未登记角色已补登记 1/1 个",
+    "本地收缩超长标题/CBN/CEN 共 9 章（第 2、4、6、22、27、28、35、38、40 章），未发 AI 请求",
+    "未登记地点已补登记 17/17 个",
+    "本地收缩超长标题/CBN/CEN 共 2 章（第 9、26 章），未发 AI 请求"
   ],
   "repairMetrics": {
-    "firstPassChapters": 4,
-    "firstPassRate": 0.8,
-    "rewrittenChapters": 1,
-    "totalRewriteRounds": 1,
-    "averageRewriteRounds": 0.2,
+    "firstPassChapters": 2,
+    "firstPassRate": 0.4,
+    "rewrittenChapters": 3,
+    "totalRewriteRounds": 3,
+    "averageRewriteRounds": 0.6,
     "pipelineAttempts": 5
   },
   "runtimeMetrics": {
-    "requestCount": 21,
+    "requestCount": 29,
     "requestCountsByPurpose": {
-      "scene-draft": 9,
-      "fact-extraction": 6,
-      "chapter-judge": 6
+      "scene-draft": 13,
+      "fact-extraction": 8,
+      "chapter-judge": 8
     },
-    "latencyP50Ms": 13651,
-    "latencyP95Ms": 48490,
-    "latencyMaxMs": 57644
+    "latencyP50Ms": 14364,
+    "latencyP95Ms": 39349,
+    "latencyMaxMs": 43947
   },
   "readerEvaluation": {
     "version": "reader-eval-v1",
@@ -245,223 +229,199 @@
     },
     "outline": {
       "version": "reader-eval-v1",
-      "score": 90.1,
+      "score": 89,
       "wouldStartReading": true,
-      "confidence": 0.95,
+      "confidence": 0.92,
       "dimensions": {
-        "openingAttraction": 90,
-        "coreSellingPoint": 93,
-        "protagonistDrive": 91,
+        "openingAttraction": 88,
+        "coreSellingPoint": 92,
+        "protagonistDrive": 90,
         "conflictEscalation": 89,
-        "payoffPlanning": 90,
-        "characterRelations": 82,
-        "suspensePlanning": 92,
+        "payoffPlanning": 86,
+        "characterRelations": 84,
+        "suspensePlanning": 90,
         "audienceFit": 93
       },
       "issues": [
         {
-          "id": "reader.character-1",
+          "id": "reader.other-1",
           "severity": "medium",
-          "category": "character",
+          "category": "other",
           "location": "全文",
-          "description": "人物角色设定表中存在多对同名/同功能人物词条拆分冗余（陈大山与陈师傅、沈鹏与沈总、李振华与李局长），且在章节细纲中命名交替混用，容易造成读者对人物身份归属的认知混乱；同时林建国的人物关系中存在文本解析切分残留错误（如将句子断片作为targetName）。",
+          "description": "第12章至第19章的章节蓝图中，多处钩子字段（hookText）出现了模板占位符污染，直接填入了爽点标签而非具体的章末悬念钩子，影响连载断章节奏规划的精细度。",
           "evidence": [
-            "{\"name\":\"陈大山\",\"role\":\"ally\"}...{\"name\":\"陈师傅\",\"role\":\"ally\"}...{\"name\":\"沈鹏\",\"role\":\"antagonist\"}...{\"name\":\"沈总\",\"role\":\"antagonist\"}...{\"name\":\"李振华\",\"role\":\"support\"}...{\"name\":\"李局长\",\"role\":\"support\"}"
+            "\"orderIndex\":12,\"title\":\"绝缘阻抗拉满四百兆欧\",\"summary\":\"陈锐右手拇指悬在动力电池手动高压维护开关上方。\",\"CBN\":\"陈锐右手拇指悬在动力电池手动高压维护开关上方。\",\"CPNs\":[\"特种导热绝缘硅胶完成高温固化\",\"陈锐按规范合上高压维护开关\",\"绝缘测试仪显示绝缘阻抗达到四百兆欧。\"],\"CEN\":\"车机仪表盘上的高压黄色绝缘警告标志瞬间熄灭。\",\"mustCover\":[\"陈锐完成高压盒复原与灌封\",\"绝缘阻抗测试达到四百兆欧合格标准。\"],\"forbiddenZones\":[\"不可直接收取全额尾款\",\"不可让华驰4S店立刻知晓结果。\"],\"hookType\":\"逆袭\",\"hookText\":\"- 爽点类型：逆袭\",\"coolPointType\":\"逆袭\""
           ],
-          "suggestion": "建议统一人物标准命名（如将陈大山/陈师傅合并，统一称呼与职务设定），并在入库前清洗人物关系中的JSON切分残留字段，保持人物图谱的严谨性。",
+          "suggestion": "将12-19章蓝图中的 hookText 补充为具体情境悬念（例如第12章可设为试车前的高压合闸盲测悬念或车队围观司机的屏息期待），避免模板占位符影响实际写作时的卡点效果。",
           "blocking": false,
           "confidence": 0.7
         },
         {
           "id": "reader.other-2",
-          "severity": "low",
+          "severity": "medium",
           "category": "other",
           "location": "全文",
-          "description": "世界观地点列表中混入了大量由短语提取截断产生的非实体碎片词（如'拿下全县'、'迎击省'等），虽不影响核心剧情走向，但降低了大纲结构数据的纯净度与规范性。",
+          "description": "人物关系动态字段存在多处字符串断裂与切分错误，导致王大柱、黄老板等角色的关系演变被拆成了残缺碎片。",
           "evidence": [
-            "{\"name\":\"达车业在青阳县\",\"level\":\"city\"},{\"name\":\"拿下全县\",\"level\":\"city\"},{\"name\":\"迎击省\",\"level\":\"city\"},{\"name\":\"限电期为全县\",\"level\":\"city\"}"
+            "{\"targetName\":\"对陈锐从最初的怀疑\",\"relationType\":\"unknown\",\"dynamic\":\"对陈锐从最初的怀疑\"},{\"targetName\":\"观望到彻底信服并执行所有技术指令。\",\"relationType\":\"unknown\",\"dynamic\":\"观望到彻底信服并执行所有技术指令。\"}"
           ],
-          "suggestion": "清理无效截断短语，只保留'建国汽修厂/新锐三电运维中心'、'青阳县城北汽配街'、'青阳县高铁站营运车调度场'等真实核心地理场景。",
+          "suggestion": "清洗角色关系数组中的脏数据，将断裂的文本合并为完整的人物动态（如'王大柱对陈锐从最初的怀疑观望，转为彻底信服并坚决执行所有技术指令'）。",
           "blocking": false,
           "confidence": 0.7
         },
         {
-          "id": "reader.pacing-3",
+          "id": "reader.other-3",
           "severity": "low",
-          "category": "pacing",
+          "category": "other",
           "location": "全文",
-          "description": "第41-48章集中爆发'自燃诬陷'并在听证会调取黑匣子一举将核心反派宏达车业彻底扳倒送入经侦，从发难到反派入狱仅用8章，节奏极快；虽然爽感密集，但容易让第二卷前期的核心矛盾过早清空，给后续接续车联天下的充电桩博弈带来节奏换挡压力。",
+          "description": "世界观地点列表中混入了大量从正文分词截断产生的无效地点条目（如'承接全县'、'质电池在青川县'、'连夜动身前往省'等），属于大纲生成时的提取杂质。",
           "evidence": [
-            "宏达车业主要涉案人员被青阳县经侦支队带走立案调查"
+            "{\"name\":\"质电池在青川县\",\"level\":\"city\",\"functionInStory\":\"卷纲与章节蓝图引用的地点，补登记入表。\"}"
           ],
-          "suggestion": "在执行第41-48章具体正文写作时，可适当强化赵宏达在倒台前的多重挣扎或与省城资本的暗中利益切割拉扯，让听证会铁证反杀的悬念积蓄更加厚重。",
+          "suggestion": "剔除地点表中'质电池在青川县'、'承接全县'等误抓取的动宾短语条目，保留宏达汽修铺、顺达网约车服务中心、华驰4S店等真实核心场景。",
           "blocking": false,
           "confidence": 0.7
         }
       ],
-      "summary": "这是一份立意极佳、现实质感扎实且下沉市场洞察极其深刻的硬核职场商战大纲。黄金前三章以万用表带电排障、5毛钱套管救活两万块总成绝症电车破局，迅速建立起主角'硬核三电工程师'的专业形象与还债动机，爽点利落且专业干货十足。三幕主线层层递进，从单兵自研精修破配件封锁，到黑匣子解码反诬陷，再到分布式梯次储能迎战资本倾销与暴雪极端寒潮保供，技术逻辑自洽且现实温情饱满。父子两代匠人和解与底层营运司机互助的群像刻画精准，完全契合目标读者对硬核现实逆袭与烟火商战的高期待，极具开书吸引力。"
+      "summary": "这是一份立足现实痛点、兼具硬核技术爽感与深厚生活质感的现实成长题材大纲。开局切入点极佳，以小镇汽修二代接盘三十五万债务、面对高压强电三电故障自制工具破局为核心动力，精准击中了网约车司机维保昂贵、4S店'只换不修'暴利垄断的现实共鸣。三幕冲突递进清晰（单车排障→车队模组均衡与黑修对抗→OTA云端解密与暴雪救援打破垄断），父子两代手艺人的代际和解感情线扎实动人。除部分蓝图钩子存在占位符残留及数据清洗小瑕疵外，整体可读性与开书吸引力极强，完全符合硬核技能与草根逆袭目标受众的期待。"
     },
     "chapters": [
       {
         "version": "reader-eval-v1",
         "chapter": 1,
-        "score": 85.4,
+        "score": 86,
         "continueReading": true,
         "confidence": 0.92,
         "dimensions": {
-          "readability": 90,
+          "readability": 88,
           "openingHook": 86,
-          "conflictEffectiveness": 85,
+          "conflictEffectiveness": 88,
           "emotionalDrive": 86,
-          "characterVoice": 84,
+          "characterVoice": 85,
           "payoffValue": 80,
-          "pacing": 84,
-          "endingPull": 88
+          "pacing": 87,
+          "endingPull": 89
         },
         "issues": [
           {
-            "id": "reader.other-1",
+            "id": "reader.pacing-1",
             "severity": "low",
-            "category": "other",
+            "category": "pacing",
             "location": "全文",
-            "description": "林建国刚声称厂里连绝缘工具都没有，林锐随后便拿出专业的一千伏耐高压手套、面罩、兆欧表及耐高温绝缘套管等特种维修耗材，未交代这些专业设备是由林锐从主机厂带回还是另有来源，产生轻微的道具逻辑小瑕疵。",
+            "description": "第2段及第7段对主角电子厂过往与三十五万债务构成的说明略带说明文色彩，但在后续人物对话与动作中得到了较好的场景化消化。",
             "evidence": [
-              "浓烈的高压警告标识让林建国连连后退，摆手拒绝：“大山，这活儿我们真接不了！这是四百伏直流高压电，摸错一根线人当场就电焦了！我们连绝缘工具都没有，你赶紧找拖车拉走吧。”"
+              "还有上个月师父突发脑梗做支架手术找亲戚凑的八万医药费，加上之前抵押铺面换来的二十四万设备周转贷，前后加起来整整三十五万烂账。"
             ],
             "suggestion": "",
             "blocking": false,
             "confidence": 0.7
           }
         ],
-        "summary": "本章开篇干脆利落，将硬核三电诊断技术与下沉市场小人物的生存困境紧密咬合。催债压迫、网约车司机的生计绝境与老派机修父亲的恐慌形成多重现实张力；维修过程专业扎实、细节逼真（如父亲手持干燥木棍防触电、MSD物理断电等），极具行业说服力。章末上电瞬间意外触发警报，悬念反转有力，有效激发追读欲望。"
+        "summary": "作为现实工业/技能文的开篇，本章表现优异。章首以四百伏高压测量的微距操作切入，瞬间立住主角沉稳、专业的技术极客形象；随后层层铺开宏达汽修铺的内忧外患——三十五万债务重压、老一辈传统机修与新一代三电电控的观念代际冲突，以及4S店利用技术垄断开出的五万八天价换件单。冲突扎实接地，小人物的生存焦虑与硬核破局点咬合紧密，章尾落在一纸天价工单上，追读驱动力极强。"
       },
       {
         "version": "reader-eval-v1",
         "chapter": 2,
+        "score": 86.4,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 82,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 88,
+          "characterVoice": 90,
+          "payoffValue": 84,
+          "pacing": 86,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.continuity-1",
+            "severity": "high",
+            "category": "continuity",
+            "location": "全文",
+            "description": "上一章结尾展示的4S店报价单总额与本章标题及正文金额发生严重前后矛盾。上一章结尾为‘伍万捌仟元整’，本章开篇及标题直接变成了‘两万八’。",
+            "evidence": [
+              "上一章结尾：【而在最终报价栏那一栏上，赫然打印着一个足以彻底压垮普通营运家庭的天文数字：伍万捌仟元整。】；本章正文：【上面赫然印着两万八千元整的电池包总成自费分项金额，黑白分明，字字如刀。“两万八千块！他们张嘴就要两万八！”】"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧扣硬核三电诊断与小人物生存困境展开，技术解析扎实且极富代入感。陈锐利用母线电压读数结合除霜操作瞬间跳闸的细节，逻辑严密地推导出PTC加热器绝缘击穿而非电池包报废，精准击中读者对‘打破4S店技术垄断与只换不修霸王条款’的爽点诉求。人物性格鲜明，父子间关于高压危险的理念碰撞自然，结尾开箱操作悬念十足。唯一明显瑕疵为上一章尾部的5.8万报价与本章2.8万存在数值前后不一致的连载硬伤。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 86.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 85,
+          "endingPull": 86
+        },
+        "issues": [],
+        "summary": "本章承接上文排障行动，以两轮逻辑严密的万用表与分压测试拆穿4S店天价换包忽悠，硬核技术排查写实且极具说服力。李向前的劫后余生感与老父亲的心理转变提供了扎实的情绪回报。章尾自然承接新人物周晓芸并迅速切入汽修铺被追讨八万欠款的外部现实危机，节奏明快，追读期待明确。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 88.5,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 88,
+          "characterVoice": 90,
+          "payoffValue": 84,
+          "pacing": 88,
+          "endingPull": 88
+        },
+        "issues": [],
+        "summary": "本章紧接上一章末尾的突发冲突，完成了一次极高水准的危机加码与局势转折。赵鑫泰以债务与地皮为要挟，将主线目标从‘单台网约车排障’直接抬升至‘宏达生死存亡与建立车队信任’，设立了紧迫的‘三天八万’时间锁。李向前当场垫付定金并号召车队的微兑现有效回击了反派嚣张气焰；结尾处陈建国在后屋掀开老铁盒、凝视旧绝缘工具的细节克制而深情，极具年代感与人物厚度，父子双线的悬念与情感张力俱佳，追读动力充沛。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
         "score": 85.6,
         "continueReading": true,
         "confidence": 0.92,
         "dimensions": {
           "readability": 88,
-          "openingHook": 88,
+          "openingHook": 84,
           "conflictEffectiveness": 85,
-          "emotionalDrive": 84,
-          "characterVoice": 86,
+          "emotionalDrive": 86,
+          "characterVoice": 87,
           "payoffValue": 85,
           "pacing": 86,
           "endingPull": 83
         },
         "issues": [
           {
-            "id": "reader.other-1",
+            "id": "reader.continuity-1",
             "severity": "low",
-            "category": "other",
+            "category": "continuity",
             "location": "全文",
-            "description": "催债人员上门的节点与修车完成无缝衔接，且催债头目被男主一番关于行业前景的说辞与一千五百元迅速劝退，退让过程略显顺畅。",
+            "description": "上一章结尾明确交代李向前已离开（'李向前也抹了把热汗，匆匆告辞回车队调度站收拢定金。等送走二人……'），本章结尾却描写其'一直守在门外不敢出声打扰'，人物行动轨迹与上一章交代略有出入。",
             "evidence": [
-              "催债头目脸色阴晴不定，死死盯了林锐几秒钟，最终将那一千五百块钱抓进掌心揣入怀中。他冷哼一声，伸手撕下已经贴在举升机上的一半封条"
+              "工位外的卷帘门缝隙处，一直守在门外不敢出声打扰的李向前忍不住踮起脚尖"
             ],
             "suggestion": "",
             "blocking": false,
             "confidence": 0.7
           }
         ],
-        "summary": "本章承接上章末尾的高压报警悬念，通过硬核的三电诊断细节迅速完成二次排故，打脸传统汽修经验的同时兑现了技术爽点。后半段迅速切入催债冲突，男主利用修车成果与行业稀缺性化解危机，并顺势立下三天筹措近三万利息的倒计时主线目标，节奏紧凑，情绪与期待感建立扎实。"
-      },
-      {
-        "version": "reader-eval-v1",
-        "chapter": 3,
-        "score": 87.9,
-        "continueReading": true,
-        "confidence": 0.95,
-        "dimensions": {
-          "readability": 88,
-          "openingHook": 86,
-          "conflictEffectiveness": 85,
-          "emotionalDrive": 88,
-          "characterVoice": 90,
-          "payoffValue": 92,
-          "pacing": 90,
-          "endingPull": 83
-        },
-        "issues": [
-          {
-            "id": "reader.other-1",
-            "severity": "low",
-            "category": "other",
-            "location": "全文",
-            "description": "本章以修车成功、绿灯亮起作为情绪高潮收尾，技术闭环圆满，但对'3天还清2.85万'的紧迫主线缺乏即时的下步剧情牵引（如陈大山连夜联络车友群、或宏达车业的新动静），章尾悬念钩子略显平缓。",
-            "evidence": [],
-            "suggestion": "",
-            "blocking": false,
-            "confidence": 0.7
-          }
-        ],
-        "summary": "本章是一次非常扎实且畅快的硬核技术微兑现。作者精准承接上章逻辑，合理补充了'静态点亮不等于彻底排除颠簸搭铁'的技术细节，展开了一场极具工业质感的连夜开箱排障戏。老技工（孙铁柱、林建国）的传统机修经验与林锐的现代三电专业知识配合默契，'5毛钱套管+紫铜跨接片破解3.8万垄断黑幕'的手艺爽点落地扎实，人物声音鲜明，节奏紧凑明快。"
-      },
-      {
-        "version": "reader-eval-v1",
-        "chapter": 4,
-        "score": 89.1,
-        "continueReading": true,
-        "confidence": 0.95,
-        "dimensions": {
-          "readability": 90,
-          "openingHook": 88,
-          "conflictEffectiveness": 85,
-          "emotionalDrive": 90,
-          "characterVoice": 92,
-          "payoffValue": 92,
-          "pacing": 88,
-          "endingPull": 88
-        },
-        "issues": [
-          {
-            "id": "reader.other-1",
-            "severity": "low",
-            "category": "other",
-            "location": "全文",
-            "description": "对话引语中出现了感叹号与逗号直接连用（'！，'），属于排版输入失误，影响阅读顺畅度。",
-            "evidence": [
-              "这三千块钱先压在账上，谁也不准乱动！，不过，你刚才用坏的那些细铜丝"
-            ],
-            "suggestion": "",
-            "blocking": false,
-            "confidence": 0.7
-          }
-        ],
-        "summary": "本章承接上一章的修车高潮，通过硬核的全工况路测（急加速、颠簸、动能回收）完成了技术闭环，随后迅速兑现爽点：陈大山主动支付三千元救命钱并在网约车频道全县广播，情绪价值与经济回报扎实落地。父子间关于传统油车与新能源转型的对话兼具代际温情与观念碰撞，人物声音鲜明立体。章尾电话齐鸣的业务爆发点钩子强劲，追读驱动力极强。"
-      },
-      {
-        "version": "reader-eval-v1",
-        "chapter": 5,
-        "score": 91,
-        "continueReading": true,
-        "confidence": 0.95,
-        "dimensions": {
-          "readability": 92,
-          "openingHook": 90,
-          "conflictEffectiveness": 91,
-          "emotionalDrive": 90,
-          "characterVoice": 88,
-          "payoffValue": 93,
-          "pacing": 91,
-          "endingPull": 92
-        },
-        "issues": [
-          {
-            "id": "reader.other-1",
-            "severity": "low",
-            "category": "other",
-            "location": "全文",
-            "description": "多名营运司机在早高峰出站的关键营收时段，集体放弃接单并组队掉头开往修理厂，在戏剧张力上极具煽动性，但从极度精打细算的网约车底层生计逻辑来看，行为的一致性稍显舞台化。",
-            "evidence": [],
-            "suggestion": "",
-            "blocking": false,
-            "confidence": 0.85
-          }
-        ],
-        "summary": "本章承接上文陈大山的对讲机呼叫，生动展现了青阳县高铁站蓄车池内底层网约车司机群体的真实生存困境与舆论爆发。通过车内滚烫暖风与寒冷车库的感官对比，以及9张实拍照片和透明工单的硬核细节，将‘元器件级精修’对‘总成垄断收割’的降维打击具象化。情绪推动有力，司机群体从狐疑到群情激愤、再到组队退单奔赴建国汽修厂的转折自然爽快，微兑现到位，章尾车队长龙的画面感极强，成功为下一章的客流承接与商业冲突升级拉满了追读期待。"
+        "summary": "本章紧扣硬核排障主线，从手绘高压拓扑图纸到带电实测定位故障，技术推导与通俗比喻结合得当。实测阶段安排了共模干扰导致的读数异常小高潮，既展现了主角扎实的电气功底与决断力，也自然完成了初步确诊的微爽点兑现，老父亲暗中关注与师弟信服的细节强化了群像质感，节奏紧凑扎实。"
       }
     ],
     "windows": [
@@ -469,27 +429,29 @@
         "version": "reader-eval-v1",
         "fromChapter": 1,
         "toChapter": 3,
-        "score": 79.5,
+        "score": 82.4,
         "continueReading": true,
         "confidence": 0.95,
         "dimensions": {
-          "mainlineProgress": 80,
-          "patternVariation": 72,
-          "suspensePayoff": 82,
-          "characterArc": 74,
+          "mainlineProgress": 82,
+          "patternVariation": 78,
+          "suspensePayoff": 84,
+          "characterArc": 82,
           "emotionalArc": 80,
-          "payoffEscalation": 80,
-          "genrePromise": 86,
-          "continuationDesire": 80
+          "payoffEscalation": 81,
+          "genrePromise": 90,
+          "continuationDesire": 83
         },
         "issues": [
           {
-            "id": "reader.character-1",
+            "id": "reader.other-1",
             "severity": "high",
-            "category": "character",
+            "category": "other",
             "location": "全文",
-            "description": "核心配角姓名发生严重实体冲突与人设断裂：第1章中踹门上门催债、戴粗金链子的恶霸头目被明确命名为'孙铁柱'；但在第2章和第3章中，车间内陪伴林建国并肩作战、手持灭火器护主的老焊工工友同样被命名为'老焊工孙铁柱/柱子叔'，导致敌对反派与己方忠诚工友同名同姓在同场戏中对抗，造成严重的阅读混乱与设定事故。",
-            "evidence": [],
+            "description": "核心报价数据前后章严重矛盾：第1章末尾明确写明4S店报价单为5.8万元，而第2章开篇及全章反复变更为2.8万元，属于连载关键数值断层。",
+            "evidence": [
+              "第1章末尾：而在最终报价栏那一栏上，赫然打印着一个足以彻底压垮普通营运家庭的天文数字：伍万捌仟元整。\n第2章开头：上面赫然印着两万八千元整的电池包总成自费分项金额，黑白分明，字字如刀。"
+            ],
             "suggestion": "",
             "blocking": false,
             "confidence": 0.7
@@ -499,56 +461,67 @@
             "severity": "medium",
             "category": "other",
             "location": "全文",
-            "description": "连续两章结尾的爽点反馈模式高度同质化：第2章与第3章连续复用'通电->绿灯就绪->继电器吸合->陈大山激动扑车落泪大喊亮了/全绿了'的台词与动作模板，使得开箱大修的核心高潮在情绪表达上略显单调机械。",
+            "description": "债务构成前后描述不一致：第1章交代欠汽配城的是3万多货款、8万为亲戚医药费；第3章上门催收的汽配城老板却称宏达欠其“八万块配件尾款”。",
+            "evidence": [
+              "第1章：汽配城刘经理限咱们这周必须把去年冬天欠下的三万多缸垫和润滑油款结清……还有上个月师父突发脑梗做支架手术找亲戚凑的八万医药费，加上之前抵押铺面换来的二十四万设备周转贷，前后加起来整整三十五万烂账。\n第3章：老头子，上个月欠我那八万块配件尾款今天要是拿不出来，这铺子的招牌，老子今天就替你们拆了！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前3章开局扎实亮眼，高度契合现实硬核技能文的定位。开篇以四百伏高压微距测量立住主角沉稳专业的人设，并通过小汽修铺面临的35万债务、两代人观念冲突与网约车司机的生存重压迅速构建戏剧张力。第2至3章通过逻辑严密的三电并联排障与万用表分压测试，层层拆穿4S店天价换件垄断，技术解谜与底层共情体验极佳。老父亲的心态转变与章尾追债危机的切入节奏紧凑，追读动力强。主要瑕疵在于第1章到第2章的核心维修报价（5.8万变2.8万）及第3章配件欠款金额存在明显的数值前后不一致，需修正以维持现实题材的严谨度。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 89.5,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 90,
+          "patternVariation": 86,
+          "suspensePayoff": 88,
+          "characterArc": 92,
+          "emotionalArc": 90,
+          "payoffEscalation": 87,
+          "genrePromise": 94,
+          "continuationDesire": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "第1章结尾4S店维修工单最终报价为58000元，但第2章开头紧接剧情时，李向前口中与单据上的金额直接变成了28000元，前后章节核心数字发生明显跳变与不一致。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "故障定位在第3章已通过静态与分压测试确诊为PTC漏电并向李向前交代完毕，第5章再次进行了一轮‘锁死PTC故障’的高压实测，虽然加入了共模干扰这一合理技术细节，但剧情功能与情绪反应上略有回环重复。",
             "evidence": [],
             "suggestion": "",
             "blocking": false,
             "confidence": 0.7
           }
         ],
-        "summary": "前三章开篇扎实有力，精准兑现了硬核三电诊断、下沉市场熟人社会与蓝领突围的题材承诺。技术细节专业过硬，'5毛钱套管与紫铜片破解3.8万垄断黑幕'的手艺爽点落地极为扎实，危机与倒计时目标（3天凑齐2.85万）节奏紧凑。唯一重大硬伤在于第1章的催债恶霸与第2/3章的忠厚老机修工友发生重名（同为孙铁柱），属于明显的实体设定冲突，需尽快更正。"
-      },
-      {
-        "version": "reader-eval-v1",
-        "fromChapter": 1,
-        "toChapter": 5,
-        "score": 87.1,
-        "continueReading": true,
-        "confidence": 0.95,
-        "dimensions": {
-          "mainlineProgress": 88,
-          "patternVariation": 82,
-          "suspensePayoff": 86,
-          "characterArc": 84,
-          "emotionalArc": 88,
-          "payoffEscalation": 87,
-          "genrePromise": 92,
-          "continuationDesire": 90
-        },
-        "issues": [
-          {
-            "id": "reader.character-1",
-            "severity": "high",
-            "category": "character",
-            "location": "全文",
-            "description": "关键配角命名与身份出现严重前后冲突。第1章中‘孙铁柱’被明确描写为踹门收债、戴金链子的催债头目；但从第2章开始，‘孙铁柱’（铁柱叔）却突兀变成了与林建国共事三十年的老焊工、汽修厂合伙帮手，而催债头目在第2章后变成了无名头目。该穿帮直接破坏了人物关系的连续性。",
-            "evidence": [
-              "第1章：“三个流里流气的壮汉跨进门槛，为首的孙铁柱脖子上挂着粗金链子……手里抖着一张皱巴巴的借据，扯开嗓门大吼：‘老林头，别猫在地沟里装死了，给老子滚出来！’” 与 第2章：“缩在配电箱旁边的老焊工孙铁柱也吓得直哆嗦，怀里紧紧抱着个干粉灭火器……”"
-            ],
-            "suggestion": "将第1章中的催债打手头目另行命名（如赵宏达手下的马仔），确保‘孙铁柱’专属于汽修厂老焊工这一核心配角。",
-            "blocking": false,
-            "confidence": 0.7
-          }
-        ],
-        "summary": "前5章展现了极为扎实过硬的行业质感与快节奏突围爽感。硬核三电诊断技术（从PTC微漏电到特氟龙套管、紫铜跨接片）与底层司机被垄断售后宰割的现实痛点紧密结合，‘5毛钱耗材破解3.8万黑幕’的手艺爽点落地极为扎实；中式父子外冷内热的代际和解、司机群体的抱团共情刻画得生动鲜活。唯一严重硬伤是第1章与后续章节中‘孙铁柱’一角在催债恶霸与老焊工叔辈之间发生了人物身份穿帮，修复该命名冲突后整体连贯性将极高。"
+        "summary": "本窗口（1-5章）开篇质量极高，硬核三电维修、逆向电路推导与草根汽修铺现实困境的结合紧凑扎实。通过四百伏高压排障成功立住主角专业人设，并以天价工单、恶霸逼债与‘三天八万’时间锁建立了强烈的戏剧张力。父子间由理念代际冲突到暗中支持的传承弧线细腻动人，除前两章工单报价存在数值前后不一致的微瑕外，整体节奏明快，题材承诺履行度优异，追读驱动力强。"
       }
     ],
     "metrics": {
       "chapterCount": 5,
-      "chapterAverage": 87.8,
-      "chapterMedian": 87.9,
-      "chapterMinimum": 85.4,
-      "openingThreeAverage": 86.3,
+      "chapterAverage": 86.5,
+      "chapterMedian": 86.1,
+      "chapterMinimum": 85.6,
+      "openingThreeAverage": 86.2,
       "continueReadingNoCount": 0,
       "lowChapterCount": 0,
       "lowWindowCount": 0,
@@ -558,11 +531,11 @@
       "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察"
     ],
     "errors": [],
-    "durationMs": 89962
+    "durationMs": 73955
   },
   "provider": "openai",
   "model": "gemini-3.7-flash-high",
-  "totalMs": 1150380,
+  "totalMs": 888347,
   "warnings": [
     "大纲阶段 warnings（5 条，详见 outlineWarnings 字段）",
     "读者评审 warnings（1 条，影子模式不阻断）"

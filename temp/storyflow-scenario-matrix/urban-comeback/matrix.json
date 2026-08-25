@@ -1,6 +1,6 @@
 {
   "mode": "storyflow-matrix",
-  "generatedAt": "2026-08-25T01:25:17.632Z",
+  "generatedAt": "2026-08-25T03:54:37.346Z",
   "concurrency": 3,
   "chapterCount": 5,
   "scenarioId": "urban-comeback",
@@ -10,10 +10,24 @@
       "scenarioId": "urban-comeback",
       "provider": "openai",
       "model": "gemini-3.7-flash-high",
-      "pass": false,
-      "exitCode": 1,
-      "wallMinutes": 11,
-      "note": "未产出 summary（前半段失败）"
+      "pass": true,
+      "exitCode": 0,
+      "wallMinutes": 17,
+      "note": "",
+      "chaptersAccepted": "5/5",
+      "status": "complete",
+      "wordsMin": 2915,
+      "wordsAvg": 3199,
+      "wordsMax": 3494,
+      "runtimeBackend": "sqlite",
+      "warnings": 2,
+      "firstPassRate": 0.6,
+      "totalRewriteRounds": 2,
+      "requestCount": 23,
+      "readerOutlineScore": 85.6,
+      "readerChapterAverage": 86.7,
+      "readerChapterMinimum": 84.8,
+      "readerIndependent": false
     }
   ]
 }

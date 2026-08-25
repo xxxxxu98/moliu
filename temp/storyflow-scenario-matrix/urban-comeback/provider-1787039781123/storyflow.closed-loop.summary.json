@@ -1,0 +1,526 @@
+{
+  "book": "从被裁开始造物逆袭",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": "urban-comeback",
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "scenario:urban-comeback",
+  "promptChars": 67,
+  "requestedChapterCount": 5,
+  "phaseTimings": {
+    "outlineDirectionsMs": 30560,
+    "outlineExpandMs": 260576,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 861,
+    "continueWriteMs": 646075,
+    "totalMs": 938072
+  },
+  "completedChapters": 5,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 拒签自燃图纸！我被巨头扫地出门",
+      "words": 3361,
+      "paras": 28,
+      "paraCv": 0.29,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "厚达六十页的工程变更单在空中呼啸而过，散开的图纸犹如一片片锋利的白刃，直挺挺砸在赵崇明的鼻梁与镜框上。红色的拒签印章赫然盖在首页，油墨未干，刺目得像是一道淌血的伤口。赵崇明的金丝眼镜被砸得歪斜在一旁，几张印满热力学仿真云图的A3图纸顺着他的",
+      "tail": "目光锁定在前方那座挂着脱漆木牌的破旧红砖厂房。他深吸了一口带着铁锈味的潮湿空气，抱着决定未来命运的风道底稿，迎着漫天风雨，大步迈进了这片被时代遗忘的老工业基地。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 破产老厂房，三十年老钳工的死局",
+      "words": 2915,
+      "paras": 25,
+      "paraCv": 0.25,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "沈淮安抬手推开宏达模具厂那扇沉重的双开铁门。生锈的铰链发出令人牙酸的摩擦声，在空旷昏暗的车间里回荡，显得格外刺耳。伴随着铁门被推开的动静，车间深处那原本极有节奏的金属刮研声突兀地停了下来，整个厂房瞬间陷入一片压抑的死寂。\n\n高耸的苏式人字形",
+      "tail": "建国眯起眼睛，手指因极度愤怒而指节发白，握紧刮刀冷声质问图纸来源，“你到底是从凌云偷了图纸跑出来避风头的商业间谍，还是赵崇明派来彻底搞垮我这间破厂房的狗腿子？”",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 一张假草图，给前东家挖下天坑",
+      "words": 3042,
+      "paras": 19,
+      "paraCv": 0.26,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "沈淮安看着指在胸前的冰冷刃口，神色没有丝毫慌乱。他伸出两根手指，稳稳捏住三棱刮刀的侧脊，将刀尖从胸口轻轻推开半寸。看着满脸警惕的老钳工，他语气平静如水：“赵崇明要是能看懂这份底稿的深层流体力学，凌云智造就不会在过去三年里连续发生四起取暖器过",
+      "tail": "被他攥在掌心，化作一道催命符，径直冲向了凌云智造的核心车间。而在海州老工业园区的风雨深处，另一场颠覆行业底层规则的精密风暴，才刚刚在铁屑与机油的气息中拉开序幕。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 垃圾堆里的极客，单挑大厂算法",
+      "words": 3185,
+      "paras": 29,
+      "paraCv": 0.32,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "绿色的示波器屏幕上，正弦波波形突兀地发生剧烈畸变，密密麻麻的高频毛刺瞬间吞没了基线。伴随着一声短促的蜂鸣报错，固定在洞洞板上的功率MOS管冒出一缕刺鼻的焦青烟气。楚峰双眼布满血丝，死死盯着那道彻底失控的电压尖峰，手里的恒温电烙铁在半空中停滞",
+      "tail": "痕。迈出逼仄木门的瞬间，楚峰回头冷冷扫了一眼那堆残破的报废主板，眼底原先的颓丧与戾气荡然无存，取而代之的是两道犹如电弧般灼热、誓要将大厂黑幕烧成灰烬的狂热火芒。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 午夜突遭断电！前司打手堵门逼迁",
+      "words": 3494,
+      "paras": 38,
+      "paraCv": 0.42,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "沈淮安将万用表的两根测试表笔抵在工作台铜排两端，液晶屏上跳动出稳定的接地阻抗读数。楚峰蹲在旁边，手指飞快地拧紧自制测试底板上的四颗沉头螺丝。两台微型示波器与恒温焊台整齐码放在铸铁台面上，那是他们刚刚从城中村出租屋搬过来的全部家底。\n\n陆建国",
+      "tail": "起金属盒中的固件板，借着微弱的天光看向沈淮安。距离天亮只剩不到四个小时，老厂区的供电线路彻底瘫痪，而推土机的轰鸣声与三日期限的战火，已经悬在了宏达模具厂的头顶。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 拒签自燃图纸！我被巨头扫地出门"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 破产老厂房，三十年老钳工的死局"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 一张假草图，给前东家挖下天坑"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 垃圾堆里的极客，单挑大厂算法"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 午夜突遭断电！前司打手堵门逼迁"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 老钳工撞上代码狂，风道公差磨合"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 硬核暗访！热成像仪下的真家伙"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 泰斗挑刺图纸，指点微米级死穴"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 手工刮研微米导轨！手搓极限公差"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 首台样机点亮！通电零火花打脸前司"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787629335930",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-wYPJGe\\story-runtime\\proj-1787629335930-5ef52c82ed95.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 5,
+    "canonicalSnapshots": 6,
+    "latestSnapshotChapter": 5,
+    "sceneChunks": 5,
+    "events": 18
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 21,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "3c216947b232201c2742759ecaa67a2e56b2fb35d0050c47c08742d01212cefe",
+    "completeCharacterProfileCount": 21,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 21,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 5
+  },
+  "outlineWarnings": [
+    "大纲存在 9 个未登记角色（老工匠厂长、极客电路师、凌云智造研发副总、国家质检督查组组长、黑水公关操盘手、长三角代工同盟代表、华尔资本执行董事、华尔资本掌舵人、凌云智造董事长），执行第 1 轮补登记",
+    "未登记角色已补登记 9/9 个",
+    "本地收缩超长标题/CBN/CEN 共 5 章（第 27、34、39、40、49 章），未发 AI 请求",
+    "未登记地点已补登记 7/7 个",
+    "本地收缩超长标题/CBN/CEN 共 8 章（第 11、15、17、21、27、30、31、48 章），未发 AI 请求"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 3,
+    "firstPassRate": 0.6,
+    "rewrittenChapters": 2,
+    "totalRewriteRounds": 2,
+    "averageRewriteRounds": 0.4,
+    "pipelineAttempts": 5
+  },
+  "runtimeMetrics": {
+    "requestCount": 23,
+    "requestCountsByPurpose": {
+      "scene-draft": 9,
+      "fact-extraction": 7,
+      "chapter-judge": 7
+    },
+    "latencyP50Ms": 12486,
+    "latencyP95Ms": 45163,
+    "latencyMaxMs": 45434
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "default-judge-provider"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 85.6,
+      "wouldStartReading": true,
+      "confidence": 0.92,
+      "dimensions": {
+        "openingAttraction": 88,
+        "coreSellingPoint": 92,
+        "protagonistDrive": 88,
+        "conflictEscalation": 80,
+        "payoffPlanning": 85,
+        "characterRelations": 78,
+        "suspensePlanning": 82,
+        "audienceFit": 90
+      },
+      "issues": [
+        {
+          "id": "reader.pacing-1",
+          "severity": "high",
+          "category": "pacing",
+          "location": "全文",
+          "description": "分卷规划中将第1-60章设定为第1卷（高潮为众筹千万破局与账户冻结），第61-120章设定为第2卷（核心为代工厂倒戈、质检风暴查封前司与海外封杀）。但在前50章的详细章节大纲中，第30章就已完成第1卷收尾事件，第46-50章更是直接完成了长三角代工厂联盟成立、前司直播自燃暴雷、严守诚查封前司产线以及华尔资本海外封杀令下达等整套第2卷高潮与卷末钩子。这导致前50章直接透支了前120章的主线剧情量，若按180章/45万字全书体量推进，后续剧情将面临主线空洞或严重注水风险。",
+          "evidence": [
+            "volumePlan第1卷设定范围为‘chapterRange: 1-60’且endingHook为‘冻结了初创团队全部众筹回款账户’；而细纲第30章即触发‘千万众筹账户遭法院诉前保全冻结’。volumePlan第2卷设定范围为‘chapterRange: 61-120’且climax/endingHook为‘长三角数十家代工厂集体倒戈’与‘国家质检督查组...对凌云智造开展异地联合执法’；而细纲第47章即完成‘二十家代工厂负责人集体签字加入造物纪元制造阵营’，第50章即发生‘严守诚亲手给凌云智造贴上查封条，百亿巨头轰然停摆... 崔文渊联合海外财团以离岸专利侵权为由封杀其参展资格’。"
+          ],
+          "suggestion": "重新校准分卷节奏与章节序号分配：若保持前50章紧凑暴烈的爽快推进，建议将全书重划为4-5个篇章/卷，或在第1卷（1-30章）适度增加试产工艺爬坡与早期代工博弈的交锋回合，使宏观分卷计划与微观章节进度完全对齐。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.character-2",
+          "severity": "medium",
+          "category": "character",
+          "location": "全文",
+          "description": "角色表中存在严重的冗余双份登记现象：同一角色分别以真实姓名和功能性代称各建了一份档案（如‘陆建国’与‘老工匠厂长’、‘楚峰’与‘极客电路师’、‘赵崇明’与‘凌云智造研发副总’、‘崔文渊’与‘华尔资本执行董事’、‘严守诚’与‘国家质检督查组组长’、‘陈金富’与‘长三角代工同盟代表’、‘许凌云’与‘凌云智造董事长’）。此外，部分人物关系的目标字段混入了整段叙述文本，存在数据清洗瑕疵。",
+          "evidence": [
+            "keyCharacters中同时存在‘陆建国’（‘负责老厂区产线改造’）与‘老工匠厂长’（‘负责老厂区产线智能化改造’）；沈淮安角色关系中出现‘targetName: 与许凌云从被剥削的技术骨干转变为在国际舞台将其彻底击溃的宿命对手。’。"
+          ],
+          "suggestion": "合并同名角色档案，保留具体姓名条目并剔除纯职能重复项，清理人物关系中的冗余长句，确保人物图谱清晰凝练。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-3",
+          "severity": "low",
+          "category": "other",
+          "location": "全文",
+          "description": "世界观地点表中混入了多条从章节描述中错误抓取的非地点片段词，影响大纲整洁度与设定严肃性。",
+          "evidence": [
+            "worldBuilding.locations列表中出现‘杀令致使老厂区’、‘严重散热盲区’、‘取嵌入开源社区’、‘般淹没数码社区’、‘接管市’等错误地名。"
+          ],
+          "suggestion": "清理无效地点词条，仅保留‘海州智造产业园老厂区’、‘凌云智造全球总部大厦’、‘拉斯维加斯全球消费电子展主展馆’等核心场景。",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "这是一份硬核工业实体创业题材的优质网文大纲。其核心卖点极其突出，将扎实的结构热力学、模具公差、敏捷供应链与无螺丝模块化设计融入商战打脸，用‘现场暴力拆机盲测’、‘代码时间戳反诉’和‘国家质检下架’等硬核对抗取代虚浮的商战套路，极具极客浪漫与实业逆袭爽感。黄金三章建置干脆，主角因守住安全底线被裁后背水一战，情绪动机充足。主要隐患在于微观章节（前50章）的事件消耗速率远超宏观分卷（1-120章）规划，已在第50章提前透支了第二卷的全部高潮收尾，需重新对齐全书卷章架构并清理角色表冗余。整体开篇吸引力与受众匹配度极高，值得开书。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 86.7,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 92,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 88,
+          "payoffValue": 78,
+          "pacing": 90,
+          "endingPull": 84
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "今天这字你签也得签，不签也得签。只要你签字，年终奖金池分你两百万期权；你要是不签，信不信我让你在整个长三角工业设计圈彻底除名？"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "开篇极具冲击力与专业辨识度，以‘拒绝为自燃降本方案签字’迅速立住主角坚守安全底线的硬核工程师人设。技术参数与火灾隐患的辩驳扎实可信，戏剧冲突激烈且局势转变迅速。主角被巨头开除后没有多余内耗，直接携底层核心手稿奔赴老工业区寻找破局点，创业主线动机明确，工业硬核感与追读吸引力拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 85,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 82,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 84,
+          "characterVoice": 85,
+          "payoffValue": 82,
+          "pacing": 85,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "那串手写的代号赫然标注着：LY-RD-HEAT-V0。那是凌云智造研发总部内部绝密级底层热力学架构的专有代号格式"
+            ],
+            "suggestion": "在下章开局对话中快速补齐沈淮安对代号来源的合理合理解释（例如：在职期间曾试图按规范推动立项打样而顺手标注），避免让读者产生‘主角是否私自盗取公司资产’的道德与法律疑虑。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文行云流水，硬核工业质感极其扎实。主角通过肉眼观察显斑与热力形变、精准预判机床6微米热偏摆的‘专业打脸/折服’桥段，迅速立住了硬核技术大牛的人设，也顺利说服了老钳工。章尾巧妙带出老厂长与反派凌云集团的历史宿怨，以‘图纸代号引发商业间谍误会、刮刀拔刀相向’迅速推高戏剧张力，追读期待感拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 88.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 87,
+          "payoffValue": 89,
+          "pacing": 88,
+          "endingPull": 87
+        },
+        "issues": [],
+        "summary": "本章结构紧凑且爽点明确。前半段无缝接续上章结尾的对峙悬念，借由五年前的技术旧案自然化解老钳工的敌意，敲定了场地与股权合作；后半段精准兑现章节标题承诺，通过视点切换展现反派赵崇明急功近利吞下‘假草图’诱饵的全过程。双线并进，既夯实了主角团的底层制造实力，又构筑了信息不对称带来的强烈反打期待感，商战智斗与硬核工业质感兼备。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 88.2,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 89,
+          "characterVoice": 87,
+          "payoffValue": 88,
+          "pacing": 90,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "楚峰放下戒备并交出隐藏三年的核心绝密固件的过程略显迅速，心理破防到完全信任的转折稍显紧凑。",
+            "evidence": [
+              "楚峰转过身，一把拉开工作台底层的铁皮抽屉。他捧出一只磨损严重的防静电金属盒，里面整齐摆放着两块手工蚀刻的黑油金手指控制板，以及三枚绝密固态硬盘。那是他在七百多个绝望长夜里，彻底推翻凌云剽窃版本、独立重构出的终极固件内核。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏明快、硬核极客氛围浓郁。开篇示波器报错与元件烧毁的描写迅速确立了技术困境与人物处境；沈淮安以软硬件解耦的底层物理逻辑直击楚峰卡壳半月的死穴，不仅完成了精彩的技术装逼，更顺理成章解开了楚峰两年来背负的自责心结。三人初创团队（模具工匠+架构设计+算法极客）正式集结完毕，复仇反打大厂的实业逆袭主线目标明确，极客浪漫与情绪调动非常到位。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 84.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 82,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 84,
+          "characterVoice": 85,
+          "payoffValue": 83,
+          "pacing": 86,
+          "endingPull": 85
+        },
+        "issues": [],
+        "summary": "本章节奏明快、冲突紧凑。开篇由夜间连线调试迅速切入断电破门的危机事件，反派打手逼迁压迫感十足；主角利用老旧电火花机床高压电容放电退敌的破局方式，极具硬核工业与极客解题特色，微爽点兑现自然。章尾抛出'无电环境'、'明早推土机压境'与'三日期限点火'的多重紧迫危机，悬念与追读推力充足。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 85,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 82,
+          "suspensePayoff": 85,
+          "characterArc": 80,
+          "emotionalArc": 84,
+          "payoffEscalation": 83,
+          "genrePromise": 90,
+          "continuationDesire": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "第1章沈淮安被开除收拾东西时并未提及在抽屉暗格特意留下一份致盲假草图，第3章反派助理搜出时属于典型的事后补充设定，伏笔前置略显仓促，不过对整体阅读爽感影响较小。",
+            "evidence": [
+              "在沈淮安工位搜出的硬质文件夹……在他办公桌底层的暗格里，搜出了这份手绘草图。看签批时间，正好是他被开除前一天晚上熬夜画出来的。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前3章开篇表现优异，完美兑现了都市硬核工业与职场商战的题材承诺。第1章以‘拒绝签字为自燃降本背书’建立坚守原则的高智商工程师形象；第2章通过6.2微米热偏摆机床暗伤等扎实工业参数迅速折服老钳工，工业质感极其过硬；第3章不仅顺利化解误会建立研发同盟，更通过双线叙事展现反派赵崇明贪功吞下假图纸的致命陷阱，挖坑与收钩节奏明快，反打预期强烈，追读意愿极高。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 88.8,
+        "continueReading": true,
+        "confidence": 0.93,
+        "dimensions": {
+          "mainlineProgress": 90,
+          "patternVariation": 88,
+          "suspensePayoff": 89,
+          "characterArc": 86,
+          "emotionalArc": 88,
+          "payoffEscalation": 87,
+          "genrePromise": 92,
+          "continuationDesire": 91
+        },
+        "issues": [
+          {
+            "id": "reader.issue-001",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "前司反派破拆私人抽屉直接获取‘致命缺陷草图’并毫无技术复核地全线开模，虽然有反派贪功和赶发布会的心理支撑，但在大型工业制造流程中略显轻率。",
+            "evidence": [
+              "办公桌底层的暗格里，搜出了这份手绘草图。看签批时间，正好是他被开除前一天晚上熬夜画出来的...‘去做三个月破坏性测试，黄花菜都凉了！沈淮安是行业顶尖设计师，他藏在暗格里的底牌，难道还会犯低级热力学错误吗？’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.issue-002",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "利用电火花机床高压储能电容手工放电退敌的桥段极具极客爽感，但在都市实业题材中略偏向动作武力威慑，后续需注意硬核工程与现实法制博弈的平衡。",
+            "evidence": [
+              "沈淮安猛地伸手，合上了电容柜侧面的重型双投隔离开关...两万四千伏的高压脉冲电荷在刹那间释放，粗大的蓝白色电弧如同一条狂暴的雷蛇，在铁丝网与地面之间疯狂跳跃撕裂。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前5章节奏凌厉、题材承诺兑现极佳。从拒签自燃降本图纸被裁，到老厂房折服八级钳工、城中村破除极客心结集结核心三人组，再到给贪婪前司设下隐蔽技术陷阱并化解午夜逼迁危机，主线推进环环相扣。硬核工业参数与物理逻辑支撑扎实，极客浪漫与实业逆袭情绪拉满，三日期限与断电逼迁的危机悬念极具追读吸引力。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 5,
+      "chapterAverage": 86.7,
+      "chapterMedian": 86.7,
+      "chapterMinimum": 84.8,
+      "openingThreeAverage": 86.8,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察"
+    ],
+    "errors": [],
+    "durationMs": 94368
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 938149,
+  "warnings": [
+    "大纲阶段 warnings（5 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（1 条，影子模式不阻断）"
+  ]
+}

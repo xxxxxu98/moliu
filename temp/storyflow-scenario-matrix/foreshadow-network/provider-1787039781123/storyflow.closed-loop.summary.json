@@ -1,0 +1,521 @@
+{
+  "book": "伪印藏锋：县志里的六十年假局",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": "foreshadow-network",
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "scenario:foreshadow-network",
+  "promptChars": 79,
+  "requestedChapterCount": 5,
+  "phaseTimings": {
+    "outlineDirectionsMs": 21117,
+    "outlineExpandMs": 231624,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 903,
+    "continueWriteMs": 436733,
+    "totalMs": 690377
+  },
+  "completedChapters": 5,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 暴雨淹库房，泥水里抢出绝密红头件",
+      "words": 3184,
+      "paras": 26,
+      "paraCv": 0.15,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆准手中的羊毛排笔猛地一顿，笔尖蘸着的纯小麦淀粉浆糊险些抹出衬纸边界。头顶上方骤然传来一阵沉闷的断裂声，苍山县档案馆地下二层的吊顶石膏板被狂暴的积水彻底压垮，大股泛着腐殖质腥味的黄褐色泥浆如瀑布般砸落下来。\n\n特藏库房的水位以骇人的速度向上",
+      "tail": "殆尽。\n\n做完基础清理后，陆准屏住呼吸，取出一柄特制的无磁平头钛合金镊子，夹住批文未受损的右上角空白处，将那份湿透的矿权批文轻轻移到了体视显微镜的圆形载物台下。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 放大镜下的微米缺角，这印不对劲",
+      "words": 2830,
+      "paras": 25,
+      "paraCv": 0.17,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆准旋动体视显微镜的粗调手轮，圆形载物台平稳下移。同轴双路冷光源在两点钟方向以四十五度夹角切入，惨白的环形光斑死死锁定了二零零八年矿权转让批文落款处的红色印章。随着物镜倍率从二十倍调至四十倍，原本看似平整的纸面在目镜视野中骤然隆起为纵横交错",
+      "tail": "当清晰加盖印模拓样、并用毛笔端正填注审批字号的表格里，朱红拓样处空空如也，右侧的刻制单位、经手人、启用时间以及唯一的档案备案序列号栏内，赫然全是一片死寂的空白。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 退休老主任敲门，别查那枚要命的印",
+      "words": 3308,
+      "paras": 24,
+      "paraCv": 0.26,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆准合上手中沉重的黑布面公章登记总谱，硬质书壳撞在实木修复台上，发出沉闷的钝响。还没等他将总谱锁回铁皮保密箱，修复室最内侧紧靠老排污井的铸铁检修门上，突然传来了三声极轻却急促的叩击。沉重的金属门板在敲击下微微震颤，节奏两长一短，带着某种刻意",
+      "tail": "水如瀑布般冲刷着冰冷平滑的黑色车顶。两盏未曾完全熄灭的暗黄色雾灯穿透暴雨水幕，犹如一双蛰伏在黑夜中的冰冷眼睛，正居高临下地死死钉在地下修复室这扇唯一的通风窗前。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 一滴蒸馏水，副局长的脸当场被打肿",
+      "words": 2544,
+      "paras": 26,
+      "paraCv": 0.53,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "会议室厚重的橡木大门被猛然撞开，周建国铁青着脸大步迈入。清晨八点整，苍山县档案局二楼小会议室里已经坐满了各业务科室的骨干与保卫科人员，空气中弥漫着隔夜暴雨留下的浓重潮气与刺鼻的来苏水味道。周建国甚至没有脱下沾满泥点子的黑色雨衣外套，他阴沉着",
+      "tail": "乱的脚步声渐渐远去。会议室内的窃窃私语并未停歇，陆准静静收起移液枪，目光越过窗外依旧阴沉的天空，落在托盘中那页未干的纸面上，暗潮涌动的博弈才刚刚撕开第一道裂口。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 底册查无此印，发小送来致命线索",
+      "words": 3225,
+      "paras": 21,
+      "paraCv": 0.25,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆准端着铺有纯白吸水棉垫的不锈钢托盘，快步走过二楼幽暗的长廊。会议室门前聚集的各科室人员还在低声议论着刚才那一幕，但接触到陆准投去的目光时，众人纷纷闪烁其词地避开视线。周建国打翻茶杯摔门而去的狼藉还留在水泥地上，空气里弥漫着刺鼻的茶腥味与未",
+      "tail": "黑印。陆准的右手食指轻轻划过那道毫无墨迹的宣纸空白处，纸面粗糙的纤维在指尖下泛起阵阵凉意，修复室内只剩下排风扇单调低沉的轰鸣声，在这间深埋地下的暗室中久久回荡。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 暴雨淹库房，泥水里抢出绝密红头件"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 放大镜下的微米缺角，这印不对劲"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 退休老主任敲门，别查那枚要命的印"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 一滴蒸馏水，副局长的脸当场被打肿"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 底册查无此印，发小送来致命线索"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 竹麻帘纹旧档案，抽屉里的暗度陈仓"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 关门打狗，夜半黑影栽在面粉堆里"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 专案组突击进驻，冷面审查官到了"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 问话如过堂，你这点技术唬得住谁"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 理化报告出炉，伪造公文铁证封喉"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787633887191",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-PBqODf\\story-runtime\\proj-1787633887191-207ae4bf9afa.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 5,
+    "canonicalSnapshots": 6,
+    "latestSnapshotChapter": 5,
+    "sceneChunks": 5,
+    "events": 22
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 4,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "fb01ff8845f33e07d578ff880c1abded9b2f6b7b79c41aef7cb4173b9ddd03b1",
+    "completeCharacterProfileCount": 12,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 4,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 5
+  },
+  "outlineWarnings": [
+    "本地收缩超长标题/CBN/CEN 共 6 章（第 11、14、16、17、18、49 章），未发 AI 请求",
+    "未登记地点已补登记 17/17 个",
+    "本地收缩超长标题/CBN/CEN 共 4 章（第 17、23、26、47 章），未发 AI 请求"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 4,
+    "firstPassRate": 0.8,
+    "rewrittenChapters": 1,
+    "totalRewriteRounds": 1,
+    "averageRewriteRounds": 0.2,
+    "pipelineAttempts": 5
+  },
+  "runtimeMetrics": {
+    "requestCount": 20,
+    "requestCountsByPurpose": {
+      "scene-draft": 8,
+      "fact-extraction": 6,
+      "chapter-judge": 6
+    },
+    "latencyP50Ms": 13453,
+    "latencyP95Ms": 51285,
+    "latencyMaxMs": 51285
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "default-judge-provider"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 90.7,
+      "wouldStartReading": true,
+      "confidence": 0.92,
+      "dimensions": {
+        "openingAttraction": 89,
+        "coreSellingPoint": 94,
+        "protagonistDrive": 91,
+        "conflictEscalation": 88,
+        "payoffPlanning": 90,
+        "characterRelations": 89,
+        "suspensePlanning": 93,
+        "audienceFit": 92
+      },
+      "issues": [
+        {
+          "id": "reader.pacing-1",
+          "severity": "medium",
+          "category": "pacing",
+          "location": "全文",
+          "description": "第一卷前50章整体用来解决单份2008年矿权批文与周建国，在中后段（33-48章）密集安排了多次痕检实验与听证/通报交锋（晶体定性、紫外荧光、三道实验、荧光比对、微米测绘），物证博弈虽然硬核扎实，但连续在同一份公文上展开微观攻防，易让读者在30-45章产生一定程度的‘实验室攻防疲劳’。建议在实际写作中加强外部人身危险与体制博弈的即时压迫感。",
+          "evidence": [
+            "\"firstConflictCycle\":\"第45-50章在联合听证会上以多光谱荧光与微观晶体铁证，彻底证实2008年矿权批文系伪造，搞垮打压者周建国，陆准成功转正并受聘为专案组特聘专家，正式开启1986年旧案调查。\""
+          ],
+          "suggestion": "在第30-45章之间适当压缩单纯仪器分析的过程性描写，将更多篇幅倾斜给专案组与地方保护伞在暗处的盯梢、抢夺、行政角力，增强动静结合的张力。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-2",
+          "severity": "low",
+          "category": "other",
+          "location": "全文",
+          "description": "世界观设定中的地点列表存在较多大纲蓝图文本切词错误生成的冗余脏数据（如‘撕破县’、‘遭遇市’、‘秘密前往天南省’、‘确立调阅全县’等共计17处）。",
+          "evidence": [
+            "\"name\":\"撕破县\",\"level\":\"city\",\"functionInStory\":\"卷纲与章节蓝图引用的地点，补登记入表。\""
+          ],
+          "suggestion": "清理世界观地点库中的分词残留项，保持苍山县、临江市、天南省省会三级标准地理层级定义。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-3",
+          "severity": "low",
+          "category": "other",
+          "location": "全文",
+          "description": "部分章节蓝图中的 hookText 字段残留了模板标记文本（如‘- 爽点类型：解谜’、‘- 爽点类型：打脸’），未完全填充具体剧情钩子文案。",
+          "evidence": [
+            "\"hookType\":\"解谜\",\"hookText\":\"- 爽点类型：解谜\",\"coolPointType\":\"解谜\""
+          ],
+          "suggestion": "补齐第5、11、13、14、15、18、19、22、29章章节末尾的具体悬念钩子语句，以便直接指导正文连载卡点。",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "这是一份在网文市场中辨识度极高、设定极其扎实的硬核技术流悬疑大纲。大纲将冷门的‘公文档案修裱与理化痕检’（朱墨时序、纸张酸化、荧光增白剂断代、辰砂晶体共生分析）与长达六十年的三代国资侵吞大案完美结合。主角从濒临被开除的档案局派遣工起步，以不可篡改的微观物理铁证作为破局利刃，层层掀翻体制蛀虫与地方豪强，底层逆袭与技术打脸爽感充足。伏笔回收系统闭环清晰（一枚私刻汉白玉伪印串联2008、1986、1953三代历史），人物动机与体制内规则严密可信，高度契合25-45岁偏好硬核物证推理与现实向大案纪实的目标读者群，完全具备立即开书的价值。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 86.5,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 90,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 84,
+          "characterVoice": 85,
+          "payoffValue": 82,
+          "pacing": 88,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "副局长周建国在水灾现场的言行意图暴露偏快，作为体制内分管领导，直接提出将核心涉密件当场判定销毁略显直白，略微削弱了高级别官场博弈的隐蔽感。",
+            "evidence": [
+              "周建国根本不听陈述……这几盒涉及历史改制的重点卷宗既然已经被脏水泡透，纸质全毁，就已经完全丧失了保存和修复价值。根据局里的突发灾害应急处置规定，所有严重霉变受损的废旧文书，立刻清点装袋，明天一早直接送往造纸厂集中销毁"
+            ],
+            "suggestion": "可稍加强化周建国用冠冕堂皇的合规流程（如‘启动应急封存交接’）来掩盖意图的伪装层，使博弈更具官场深沉感。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "开篇极其亮眼，完美契合‘硬核物证痕检+体制内智斗’的定位。以暴雨倒灌特藏库的危机开局，通过极其扎实专业的档案修复物理动作展开情节，并在水浸过程中敏锐捕捉到‘2008年矿权批文纸张异常、油墨不洇、印泥有溶剂味’的核心物证疑点。副局长周建国的施压与强行销毁意图迅速拉满阻力，建立了‘明晨销毁前连夜微观检验’的紧迫倒计时，章尾停在显微镜载物台前，钩子精准有力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 88,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 86,
+          "characterVoice": 88,
+          "payoffValue": 88,
+          "pacing": 89,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "周建国将红头处置决定书砸在桌上，转身摔门而去...门外随即传来铁链拉动与门把手落锁",
+            "description": "周建国急于销毁证据且深知陆准的技术能力，在明知文件在室内的情况下仅将陆准锁在实验室内限期打包，而未当场强制收缴文件，属于为主角留出独立取样和查册时间的情节便利设计，但有前后交接流程和看守布置作为合理掩护，未破坏整体严肃感。",
+            "evidence": [],
+            "suggestion": "可进一步强调周建国忌惮涉密交接规程在监控和门禁下的责任留痕，必须由当班修复员签字归档移交，以强化其不当场粗暴夺走的体制内逻辑。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接紧凑，物证痕检细节（30微米缺角、树脂印油氧化年限、无损微量切片取样）专业硬核且极具画面感，完美契合技术流破案定位。反派以体制内程序施压设定6小时倒计时销毁危机，主角沉着取样反制并查阅印模总谱，结尾以总谱栏目‘一片死寂的空白’制造强悬念，节奏紧凑且智斗张力充足。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 86.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 84,
+          "characterVoice": 87,
+          "payoffValue": 85,
+          "pacing": 86,
+          "endingPull": 88
+        },
+        "issues": [],
+        "summary": "本章承接紧密，通过老主任孙德林深夜潜入修复室的戏剧化事件，以物证显微镜观察为催化剂，自然引出三十年前的伪印历史、双重底册机制以及主角父母的旧案伏线。信息揭示与体制内悬疑张力结合扎实，结尾无号牌黑车监视的高位压迫感极大提升了下一章的追读欲望。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 87.4,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 84,
+          "payoffValue": 92,
+          "pacing": 88,
+          "endingPull": 80
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "上章末尾黑车伏击的惊险悬念在转场至早八点晨会后未做呼应过渡，略有断层感",
+            "evidence": [
+              "两盏未曾完全熄灭的暗黄色雾灯穿透暴雨水幕，犹如一双蛰伏在黑夜中的冰冷眼睛，正居高临下地死死钉在地下修复室这扇唯一的通风窗前。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章是一次非常精准且高爽感的物证痕检微兑现。作者紧扣硬核破案定位，通过‘蒸馏水析出合成树脂游离油膜’的实验，在体制内晨会公开撕破了周建国借灾毁证的阴谋。技术推演扎实，打脸节奏干脆利落，充分兑现了技术流逆袭与体制内智斗的核心卖点。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 86.8,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 84,
+          "characterVoice": 86,
+          "payoffValue": 88,
+          "pacing": 87,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "标题标明为“发小”，文中苏青展现了极强的调查记者属性与现场行动力，但两人的发小渊源与过往默契在叙事中多体现为纯事务对接，若能稍加点染二人少时的信任基底，人物互动张力会更丰富。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章会议室技术对峙的余波，节奏推进稳健扎实。发小兼调查记者苏青从排污暗道潜入，带出了苍山铁矿私改排污、致残村民、封杀报道等触目惊心的现实黑幕，迅速将剧情冲突由体制内科室博弈提升至百亿国资侵吞与民生大案的宏大格局。后半段回归硬核档案排查，在全县印章总谱中精准定位并揭晓该督办专印为未入档的“幽灵黑印”，完全兑现了标题预期，长线谜团层层递进，章尾悬念有力。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 86.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 85,
+          "suspensePayoff": 86,
+          "characterArc": 84,
+          "emotionalArc": 85,
+          "payoffEscalation": 83,
+          "genrePromise": 94,
+          "continuationDesire": 90
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "主角父母旧案作为动机引入略显网文经典模板化，但作为前3章揭示历史跨度与个人恩怨的锚点功能明确，整体节奏紧凑。",
+            "evidence": [
+              "三十年前那场风波有多惨烈你根本不知道！你父母当年在厂里，多少老实本分的技术员因为碰了这枚印背后的东西，一夜之间家破人亡！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前3章开局质量极高，精准兑现了‘硬核物证痕检+档案文献修复+体制内博弈’的题材承诺。第1章以暴雨险情带出异常文书与副局长施压；第2章以高倍显微痕检（30微米缺角、氧化周期）及无损微量切片留证完成技术破局，并通过空白底册强化悬念；第3章老主任深夜来访完成世界观拓展（30年前黑印、双重底册、父母旧案），章尾黑车监视将局部危机迅速拉升至人身安全层面。节奏紧凑明快，伏笔层层递进，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 86,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 84,
+          "suspensePayoff": 85,
+          "characterArc": 80,
+          "emotionalArc": 86,
+          "payoffEscalation": 85,
+          "genrePromise": 92,
+          "continuationDesire": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "第3章与第5章",
+            "description": "地下修复室的废弃排污铸铁检修门在第3章（老主任孙德林）和第5章（记者苏青）连续两次被用作秘密潜入的通道，功能设计略显套路化。",
+            "evidence": [
+              "第3章：'修复室最内侧紧靠老排污井的铸铁检修门上，突然传来了三声极轻却急促的叩击……来人正是半年前刚刚从档案馆技术科退休的老主任孙德林'；第5章：'修复室最内侧紧靠老排污廊道的铸铁检修门上，突然传来了一阵极其轻微的金属摩擦声……一个扎着利落马尾、身穿墨绿色连帽冲锋衣的身影敏捷地闪了进来。'"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前5章开篇表现极为扎实，精准兑现了硬核档案痕检、体制内智斗与历史长线悬疑的题材承诺。从暴雨抢救公文、显微镜下30微米缺角与树脂印油分析，到第4章以一滴蒸馏水析出油膜公开击破副局长阴谋，技术破局与体制博弈张弛有度。随后引入暗中监视的黑车、记者调查的矿区生态灾难与80年代‘幽灵黑印’底册，将微观技术证据迅速链接至百亿国资与民生大案，主线推进清晰且情绪层层递进。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 5,
+      "chapterAverage": 87,
+      "chapterMedian": 86.8,
+      "chapterMinimum": 86.1,
+      "openingThreeAverage": 86.9,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察"
+    ],
+    "errors": [],
+    "durationMs": 86041
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 690469,
+  "warnings": [
+    "大纲阶段 warnings（3 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（1 条，影子模式不阻断）"
+  ]
+}
