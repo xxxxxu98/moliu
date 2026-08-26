@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   assertHarnessInvariants,
+  classifyChapterRunFailure,
   makeMalformedChapter1Contracts,
   makeSyntheticHarnessProject,
   runContinueWriteChapters,
@@ -93,4 +94,59 @@ describe('continueWrite harness', () => {
     assertHarnessInvariants(result.chapters[0].recording);
     assertHarnessInvariants(result.chapters[1].recording);
   }, 40_000);
+});
+
+describe('classifyChapterRunFailure（与 useBatchWriter 分类优先级对齐）', () => {
+  it('结构化 errorKind/retryable 优先于 message 文本分类', () => {
+    // message 文本会判成 schema（不可重试），但管道结构化字段判定为 server 瞬态——必须采信结构化，
+    // 否则冒烟与真实环境在特殊错误文案下的重试预算分叉
+    const classified = classifyChapterRunFailure(
+      { errorKind: 'server', retryable: true },
+      '结构校验失败: unexpected token',
+    );
+    expect(classified.kind).toBe('server');
+    expect(classified.retryable).toBe(true);
+  });
+
+  it('结构化字段缺失时回退 message 文本分类', () => {
+    const classified = classifyChapterRunFailure(
+      { errorKind: undefined, retryable: undefined },
+      '请求失败: 429 too many requests',
+    );
+    expect(classified.kind).toBe('rate_limit');
+    expect(classified.retryable).toBe(true);
+  });
+
+  it('output 为 null（runChapter 抛异常路径）同样走文本分类', () => {
+    const classified = classifyChapterRunFailure(null, 'socket hang up');
+    expect(classified.kind).toBe('network');
+    expect(classified.retryable).toBe(true);
+  });
+
+  it('retryable 缺失时沿用 message 分类的 retryable（生产 details 合成口径）', () => {
+    const classified = classifyChapterRunFailure(
+      { errorKind: 'server', retryable: undefined },
+      'ETIMEDOUT',
+    );
+    expect(classified.kind).toBe('server');
+    expect(classified.retryable).toBe(true);
+  });
+
+  it('用户中止（signal 已 abort）优先归为 aborted', () => {
+    const controller = new AbortController();
+    controller.abort();
+    const classified = classifyChapterRunFailure(
+      null,
+      'The operation was aborted',
+      controller.signal,
+    );
+    expect(classified.kind).toBe('aborted');
+    expect(classified.retryable).toBe(false);
+  });
+
+  it('未被正则覆盖的空 message 落 unknown 兜底（不可重试，与生产一致）', () => {
+    const classified = classifyChapterRunFailure(null, '写作失败');
+    expect(classified.kind).toBe('unknown');
+    expect(classified.retryable).toBe(false);
+  });
 });

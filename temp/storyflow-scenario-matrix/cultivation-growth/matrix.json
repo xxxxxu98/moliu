@@ -1,8 +1,8 @@
 {
   "mode": "storyflow-matrix",
-  "generatedAt": "2026-08-25T03:37:22.169Z",
+  "generatedAt": "2026-08-25T10:05:12.362Z",
   "concurrency": 3,
-  "chapterCount": 5,
+  "chapterCount": 20,
   "scenarioId": "cultivation-growth",
   "providers": [
     {
@@ -12,21 +12,21 @@
       "model": "gemini-3.7-flash-high",
       "pass": true,
       "exitCode": 0,
-      "wallMinutes": 15,
+      "wallMinutes": 32,
       "note": "",
-      "chaptersAccepted": "5/5",
+      "chaptersAccepted": "20/20",
       "status": "complete",
-      "wordsMin": 2688,
-      "wordsAvg": 2951,
-      "wordsMax": 3182,
+      "wordsMin": 2413,
+      "wordsAvg": 2962,
+      "wordsMax": 3467,
       "runtimeBackend": "sqlite",
       "warnings": 2,
-      "firstPassRate": 0.6,
-      "totalRewriteRounds": 2,
-      "requestCount": 23,
-      "readerOutlineScore": 92.1,
-      "readerChapterAverage": 86.6,
-      "readerChapterMinimum": 86.2,
+      "firstPassRate": 1,
+      "totalRewriteRounds": 0,
+      "requestCount": 63,
+      "readerOutlineScore": 90.8,
+      "readerChapterAverage": 86.3,
+      "readerChapterMinimum": 77.3,
       "readerIndependent": false
     }
   ]

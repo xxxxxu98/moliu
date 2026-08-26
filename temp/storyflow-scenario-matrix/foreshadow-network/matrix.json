@@ -1,8 +1,8 @@
 {
   "mode": "storyflow-matrix",
-  "generatedAt": "2026-08-25T05:06:50.992Z",
+  "generatedAt": "2026-08-25T14:19:23.743Z",
   "concurrency": 3,
-  "chapterCount": 5,
+  "chapterCount": 20,
   "scenarioId": "foreshadow-network",
   "providers": [
     {
@@ -12,21 +12,21 @@
       "model": "gemini-3.7-flash-high",
       "pass": true,
       "exitCode": 0,
-      "wallMinutes": 13,
+      "wallMinutes": 45,
       "note": "",
-      "chaptersAccepted": "5/5",
+      "chaptersAccepted": "20/20",
       "status": "complete",
-      "wordsMin": 2544,
-      "wordsAvg": 3018,
-      "wordsMax": 3308,
+      "wordsMin": 2431,
+      "wordsAvg": 2838,
+      "wordsMax": 3318,
       "runtimeBackend": "sqlite",
       "warnings": 2,
-      "firstPassRate": 0.8,
-      "totalRewriteRounds": 1,
-      "requestCount": 20,
-      "readerOutlineScore": 90.7,
-      "readerChapterAverage": 87,
-      "readerChapterMinimum": 86.1,
+      "firstPassRate": 0.75,
+      "totalRewriteRounds": 5,
+      "requestCount": 79,
+      "readerOutlineScore": 83.4,
+      "readerChapterAverage": 86.2,
+      "readerChapterMinimum": 79.7,
       "readerIndependent": false
     }
   ]

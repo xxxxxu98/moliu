@@ -10,6 +10,8 @@
  * - 失败策略：错误分级重试（对齐 useBatchWriter.startBatchWriting）
  *   · 瞬态错误（网络/超时/截断/5xx/429）：maxRetries=5 次，backoffDelayMs 退避（4/8/16/30/30s）
  *   · 持久错误（schema/审核/字数/auth/4xx）：立即重试 3 次（不退避，模型带 revisionHints 换写法）
+ *   · 分类优先级：pipeline 输出的 errorKind/retryable 结构化字段优先，缺失才回退 message
+ *     文本分类（对齐 useBatchWriter details.errorKind 优先级；error 为空时按失败形态合成 message）
  *   · 用户停止（aborted）：立即停整批
  *   · 重试耗尽（无论持久/瞬态）：记录失败章后结束整批（质量优先，不再跳过继续）
  * - 写作风格：batch 默认 'humorous'（App 批量 UI 默认值）
@@ -61,7 +63,12 @@ import {
 } from '@/services/writing/chapterWritePresets';
 import { countWords } from '@/services/writing/utils';
 import { MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
-import { retryBackoffDelayMs, classifyError, type ErrorKind } from '@/utils/ai-error-classify';
+import {
+  classifyError,
+  retryBackoffDelayMs,
+  type ClassifiedError,
+  type ErrorKind,
+} from '@/utils/ai-error-classify';
 import {
   createChapterMemoryClient,
   createChapterPersistenceClient,
@@ -978,6 +985,32 @@ export async function runContinueWriteHarness(options?: {
 }
 
 /**
+ * 单章失败分类：与 useBatchWriter 同优先级——pipeline 输出的结构化
+ * errorKind/retryable 优先（由门禁/补写/提交阶段用原始错误对象分类得出），
+ * 缺失才回退 message 文本分类。retryable 缺失时沿用生产口径：取 message
+ * 分类的 retryable（useBatchWriter 先合成 details 再消费，效果等价）。
+ * 此前 harness 无条件按文本重分类，未被正则覆盖的新错误文案会被 unknown
+ * （不可重试）兜底吞掉重试预算，特殊情况下与真实环境分叉。
+ */
+export function classifyChapterRunFailure(
+  output: Pick<ChapterWriteOutput, 'errorKind' | 'retryable'> | null,
+  message: string,
+  signal?: AbortSignal
+): ClassifiedError {
+  const fromMessage = classifyError(new Error(message), signal);
+  const kind = output?.errorKind;
+  if (kind === undefined) {
+    return fromMessage;
+  }
+  return {
+    kind,
+    retryable: output.retryable ?? fromMessage.retryable,
+    transient: false,
+    message,
+  };
+}
+
+/**
  * 连续多章：默认走正式批量路径（BATCH_CONTINUE_PRESET）。
  * 传 mode:'smart' 可改为连续智能续写（一般仅对照用）。
  */
@@ -1109,8 +1142,22 @@ export async function runContinueWriteChapters(options: {
           }
         }
 
-        // 错误分级（对齐 useBatchWriter:1162-1164）
-        const classified = classifyError(new Error(lastError), options.signal);
+        // 对齐 useBatchWriter：error 为空时按失败形态合成 message，让门禁未通过类
+        // 失败两侧都得到 review 标签（triage 签名可比）；抛异常路径的 lastError 原样保留
+        if (finalResult && !lastError) {
+          lastError =
+            finalResult.output.forceAccepted || finalResult.output.gateResult?.passed === false
+              ? '严格门禁未通过，章节未提交'
+              : '写作失败';
+        }
+
+        // 错误分级：优先管道层透传的结构化 errorKind/retryable，缺失才回退文本分类
+        // （对齐 useBatchWriter 的 details.errorKind 优先级）
+        const classified = classifyChapterRunFailure(
+          finalResult?.output ?? null,
+          lastError,
+          options.signal
+        );
         lastErrorKind = classified.kind;
 
         // 截断/空响应（抛异常、无 gateResult）时注入固定引导种子，避免下一轮原样盲发。

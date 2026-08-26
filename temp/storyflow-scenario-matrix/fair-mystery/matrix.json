@@ -1,8 +1,8 @@
 {
   "mode": "storyflow-matrix",
-  "generatedAt": "2026-08-25T04:09:20.159Z",
+  "generatedAt": "2026-08-25T11:23:57.444Z",
   "concurrency": 3,
-  "chapterCount": 5,
+  "chapterCount": 20,
   "scenarioId": "fair-mystery",
   "providers": [
     {
@@ -12,21 +12,21 @@
       "model": "gemini-3.7-flash-high",
       "pass": true,
       "exitCode": 0,
-      "wallMinutes": 15,
+      "wallMinutes": 42,
       "note": "",
-      "chaptersAccepted": "5/5",
+      "chaptersAccepted": "20/20",
       "status": "complete",
-      "wordsMin": 2514,
-      "wordsAvg": 2970,
-      "wordsMax": 3459,
+      "wordsMin": 2765,
+      "wordsAvg": 3116,
+      "wordsMax": 3492,
       "runtimeBackend": "sqlite",
       "warnings": 2,
-      "firstPassRate": 0.8,
-      "totalRewriteRounds": 1,
-      "requestCount": 19,
-      "readerOutlineScore": 86.5,
-      "readerChapterAverage": 88.6,
-      "readerChapterMinimum": 87.6,
+      "firstPassRate": 0.85,
+      "totalRewriteRounds": 3,
+      "requestCount": 77,
+      "readerOutlineScore": 87.3,
+      "readerChapterAverage": 86.7,
+      "readerChapterMinimum": 82.9,
       "readerIndependent": false
     }
   ]

@@ -1,8 +1,8 @@
 {
   "mode": "storyflow-matrix",
-  "generatedAt": "2026-08-25T04:22:29.534Z",
+  "generatedAt": "2026-08-25T12:08:57.470Z",
   "concurrency": 3,
-  "chapterCount": 5,
+  "chapterCount": 20,
   "scenarioId": "relationship-burn",
   "providers": [
     {
@@ -12,21 +12,21 @@
       "model": "gemini-3.7-flash-high",
       "pass": true,
       "exitCode": 0,
-      "wallMinutes": 13,
+      "wallMinutes": 45,
       "note": "",
-      "chaptersAccepted": "5/5",
+      "chaptersAccepted": "20/20",
       "status": "complete",
-      "wordsMin": 2740,
-      "wordsAvg": 3186,
-      "wordsMax": 3398,
+      "wordsMin": 2571,
+      "wordsAvg": 3003,
+      "wordsMax": 3529,
       "runtimeBackend": "sqlite",
       "warnings": 2,
-      "firstPassRate": 0.8,
-      "totalRewriteRounds": 1,
-      "requestCount": 23,
-      "readerOutlineScore": 89.1,
-      "readerChapterAverage": 86.8,
-      "readerChapterMinimum": 85.6,
+      "firstPassRate": 0.85,
+      "totalRewriteRounds": 3,
+      "requestCount": 77,
+      "readerOutlineScore": 87.9,
+      "readerChapterAverage": 86.1,
+      "readerChapterMinimum": 82,
       "readerIndependent": false
     }
   ]

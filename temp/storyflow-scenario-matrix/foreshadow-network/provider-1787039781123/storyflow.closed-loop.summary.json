@@ -1,21 +1,21 @@
 {
-  "book": "伪印藏锋：县志里的六十年假局",
+  "book": "秘阁洗冤：六十年假官印",
   "mode": "storyflow-closed-loop",
   "status": "complete",
   "scenarioId": "foreshadow-network",
   "evaluationVersion": "reader-eval-v1",
   "promptSource": "scenario:foreshadow-network",
   "promptChars": 79,
-  "requestedChapterCount": 5,
+  "requestedChapterCount": 20,
   "phaseTimings": {
-    "outlineDirectionsMs": 21117,
-    "outlineExpandMs": 231624,
+    "outlineDirectionsMs": 26236,
+    "outlineExpandMs": 241679,
     "outlineRollMs": 0,
-    "applyOutlineMs": 903,
-    "continueWriteMs": 436733,
-    "totalMs": 690377
+    "applyOutlineMs": 775,
+    "continueWriteMs": 2148560,
+    "totalMs": 2417250
   },
-  "completedChapters": 5,
+  "completedChapters": 20,
   "chapters": 50,
   "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
   "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
@@ -23,114 +23,339 @@
     {
       "ch": 1,
       "accepted": true,
-      "title": "第1章 暴雨淹库房，泥水里抢出绝密红头件",
-      "words": 3184,
-      "paras": 26,
-      "paraCv": 0.15,
+      "title": "第1章 竹刀挑血纸幽灵暗印现",
+      "words": 2931,
+      "paras": 25,
+      "paraCv": 0.32,
       "attempts": 1,
       "rewriteRounds": 0,
       "gateIssues": [],
-      "head": "陆准手中的羊毛排笔猛地一顿，笔尖蘸着的纯小麦淀粉浆糊险些抹出衬纸边界。头顶上方骤然传来一阵沉闷的断裂声，苍山县档案馆地下二层的吊顶石膏板被狂暴的积水彻底压垮，大股泛着腐殖质腥味的黄褐色泥浆如瀑布般砸落下来。\n\n特藏库房的水位以骇人的速度向上",
-      "tail": "殆尽。\n\n做完基础清理后，陆准屏住呼吸，取出一柄特制的无磁平头钛合金镊子，夹住批文未受损的右上角空白处，将那份湿透的矿权批文轻轻移到了体视显微镜的圆形载物台下。",
+      "head": "沈错手中的七寸水磨青竹刀薄如蝉翼，刀尖蘸了极淡的明矾温水，顺着泛黄泛脆的纸页边缘缓缓探入。浸透在纸纤维里的陈年血渍早已经发黑发硬，像一层干涸的铁锈，将两层皮纸死死咬合在一起。只要手腕有一丝微不可察的颤抖，这页薄如蝉翼的绝密卷宗就会立时碎成齑",
+      "tail": "涉嫌私拆密件、勾结逆党，格杀勿论，当场验卷！\n\n砰的一声巨响，还魂堂沉重的包铁大门被外力狠狠撞击，门轴发出令人牙酸的扭曲呻吟，门缝外的火把光芒如血浪般漫了进来。",
       "error": null
     },
     {
       "ch": 2,
       "accepted": true,
-      "title": "第2章 放大镜下的微米缺角，这印不对劲",
-      "words": 2830,
-      "paras": 25,
-      "paraCv": 0.17,
+      "title": "第2章 蒸纸还魂术当堂破死局",
+      "words": 3184,
+      "paras": 23,
+      "paraCv": 0.27,
       "attempts": 1,
       "rewriteRounds": 0,
       "gateIssues": [],
-      "head": "陆准旋动体视显微镜的粗调手轮，圆形载物台平稳下移。同轴双路冷光源在两点钟方向以四十五度夹角切入，惨白的环形光斑死死锁定了二零零八年矿权转让批文落款处的红色印章。随着物镜倍率从二十倍调至四十倍，原本看似平整的纸面在目镜视野中骤然隆起为纵横交错",
-      "tail": "当清晰加盖印模拓样、并用毛笔端正填注审批字号的表格里，朱红拓样处空空如也，右侧的刻制单位、经手人、启用时间以及唯一的档案备案序列号栏内，赫然全是一片死寂的空白。",
+      "head": "精钢铸造的粗重锁链携着刺耳的呼啸，猛地砸在满是药水的木案上。泛着酸涩气味的白芨水与温热明矾浆液四溅而起，在泛黄的牛角压尺与青竹刮刀间炸开一团团浑浊的泡沫。案台正中那张刚被挑开夹层的两淮盐铁案卷猛烈震颤，几滴药水擦着泛脆的纸页边缘滚落，险些将",
+      "tail": "拔修长的黑色身影不知何时已然伫立在冰冷的飞檐瓦当之上，两道冷峻如鹰隼般的锐利视线穿透了铁质窗棂的缝隙，无声无息却又带着令人骨髓战栗的压迫感，死死钉在沈错的身上。",
       "error": null
     },
     {
       "ch": 3,
       "accepted": true,
-      "title": "第3章 退休老主任敲门，别查那枚要命的印",
-      "words": 3308,
-      "paras": 24,
-      "paraCv": 0.26,
+      "title": "第3章 倒流毛边逆推伪造账册",
+      "words": 2864,
+      "paras": 18,
+      "paraCv": 0.18,
       "attempts": 1,
       "rewriteRounds": 0,
       "gateIssues": [],
-      "head": "陆准合上手中沉重的黑布面公章登记总谱，硬质书壳撞在实木修复台上，发出沉闷的钝响。还没等他将总谱锁回铁皮保密箱，修复室最内侧紧靠老排污井的铸铁检修门上，突然传来了三声极轻却急促的叩击。沉重的金属门板在敲击下微微震颤，节奏两长一短，带着某种刻意",
-      "tail": "水如瀑布般冲刷着冰冷平滑的黑色车顶。两盏未曾完全熄灭的暗黄色雾灯穿透暴雨水幕，犹如一双蛰伏在黑夜中的冰冷眼睛，正居高临下地死死钉在地下修复室这扇唯一的通风窗前。",
+      "head": "沈错抬手合上还魂堂的内插销，两道精铁门闩严丝合缝地落入石槽，发出一声沉闷的咬合脆响。他没有在门边多作停留，甚至未曾回头去望气窗外那一闪而过的冷峻黑影。在这座吃人的刑部秘阁深处，无论方才在屋檐上窥伺的是哪一方的密探，只要他手中的动作稍有迟滞，",
+      "tail": "炭火与药汤残汽在密闭的空间内飞速积聚，化作一股令人胸口窒闷的滚烫浊雾。昏黄的牛油灯火在沉滞的死寂中剧烈摇晃，将沈错孤身一人的修长阴影重重压在冷硬如铁的青砖墙上。",
       "error": null
     },
     {
       "ch": 4,
       "accepted": true,
-      "title": "第4章 一滴蒸馏水，副局长的脸当场被打肿",
-      "words": 2544,
-      "paras": 26,
-      "paraCv": 0.53,
+      "title": "第4章 毒茶试纸反手布下暗扣",
+      "words": 2546,
+      "paras": 16,
+      "paraCv": 0.14,
       "attempts": 1,
-      "rewriteRounds": 1,
+      "rewriteRounds": 0,
       "gateIssues": [],
-      "head": "会议室厚重的橡木大门被猛然撞开，周建国铁青着脸大步迈入。清晨八点整，苍山县档案局二楼小会议室里已经坐满了各业务科室的骨干与保卫科人员，空气中弥漫着隔夜暴雨留下的浓重潮气与刺鼻的来苏水味道。周建国甚至没有脱下沾满泥点子的黑色雨衣外套，他阴沉着",
-      "tail": "乱的脚步声渐渐远去。会议室内的窃窃私语并未停歇，陆准静静收起移液枪，目光越过窗外依旧阴沉的天空，落在托盘中那页未干的纸面上，暗潮涌动的博弈才刚刚撕开第一道裂口。",
+      "head": "沈错伸手推开操作台右侧的黄铜药水盂，指尖刚触及冰凉的榆木桌面，紧闭的包铁木门外便传来一阵沉闷的铁锁划动声。沉重的门板被缓缓推开半截，一名端着乌木托盘的年迈书吏步履蹒跚地走了进来。老书吏将一只青花粗瓷大碗重重搁在桌案正中，白瓷碗沿与坚硬的案木",
+      "tail": "气。大理寺寺丞萧南巡的大靴踏进了死寂的秘阁，鞋底镶嵌的精铁防滑扣与青砖地面摩擦出刺耳的沙沙声，冰冷的目光穿透摇曳不定的灯火，直直锁死在立于满案狼藉前的沈错身上。",
       "error": null
     },
     {
       "ch": 5,
       "accepted": true,
-      "title": "第5章 底册查无此印，发小送来致命线索",
-      "words": 3225,
+      "title": "第5章 三年后生纸戳穿绝命书",
+      "words": 2431,
+      "paras": 22,
+      "paraCv": 0.2,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "萧南巡反手合上被外力震裂的厚重木门，玄色狴犴斗篷在穿堂寒风中猎猎作响。他没有立刻去扶倒在操作台内侧的沈错，刀削般的面庞在昏黄烛光下毫无波澜。他的目光如鹰隼般扫过地面翻倒的青花粗瓷茶碗，又掠过木案边缘未干的水渍，最后精准停留在西侧沉香木文书架",
+      "tail": "柄百炼错银短刀霍然出鞘半寸。雪亮冰冷的刀锋在烛火下掠过一道惨白的寒芒，快得让人根本无法看清轨迹，下一瞬，森寒刺骨的刀刃已然稳稳架在了沈错颈项左侧的跳动动脉之上。",
+      "error": null
+    },
+    {
+      "ch": 6,
+      "accepted": true,
+      "title": "第6章 律令为盾逼退寺丞杀气",
+      "words": 2827,
+      "paras": 25,
+      "paraCv": 0.39,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "冰凉的刀锋陷进颈侧皮肉三分，刺骨的寒意顺着经脉瞬间蔓延开来。沈错没有后退，甚至连眼睫都未曾颤动一下，只是任由那柄百炼错银短刀紧紧贴在自己的颈项左侧。锋利的刃口轻易割破了单薄的表皮，一滴殷红温热的血珠顺着他修长的后颈缓缓滑落，悄无声息地渗入洗",
+      "tail": "的猛火油气味，如同决堤的毒雾般在密闭的暗室之中轰然弥漫开来。头顶的青砖木梁深处，隐隐亮起了一抹狰狞刺目的橘红火光，将整座被彻底钉死的还魂堂瞬间拖入了绝命的死牢。",
+      "error": null
+    },
+    {
+      "ch": 7,
+      "accepted": true,
+      "title": "第7章 火海夺卷封泥护持孤本",
+      "words": 2570,
       "paras": 21,
+      "paraCv": 0.14,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "泼洒在青砖缝隙间的猛火油遇上暗红的炭火，瞬间爆出一团沉闷骇人的闷响。橘红色的火舌如同脱缰的恶兽，沿着还魂堂四壁干燥的老旧木架疯狂蹿升，赤红的烈焰顺着整排整排的沉香木书架冲天而起。滚烫的气浪夹杂着刺鼻的油烟在密闭的空间内轰然炸开，将原本昏暗幽",
+      "tail": "，极为突兀地在炽热余温的蒸腾之下幽幽弥漫开来。那股幽邃清冷的异香与周围刺鼻浓烈的黑烟截然不同，久久萦绕在两人的鼻端，在森寒的夜色中留下了一抹深不可测的诡异谜团。",
+      "error": null
+    },
+    {
+      "ch": 8,
+      "accepted": true,
+      "title": "第8章 烈火烤出御赐松烟墨膏",
+      "words": 2489,
+      "paras": 17,
       "paraCv": 0.25,
       "attempts": 1,
       "rewriteRounds": 0,
       "gateIssues": [],
-      "head": "陆准端着铺有纯白吸水棉垫的不锈钢托盘，快步走过二楼幽暗的长廊。会议室门前聚集的各科室人员还在低声议论着刚才那一幕，但接触到陆准投去的目光时，众人纷纷闪烁其词地避开视线。周建国打翻茶杯摔门而去的狼藉还留在水泥地上，空气里弥漫着刺鼻的茶腥味与未",
-      "tail": "黑印。陆准的右手食指轻轻划过那道毫无墨迹的宣纸空白处，纸面粗糙的纤维在指尖下泛起阵阵凉意，修复室内只剩下排风扇单调低沉的轰鸣声，在这间深埋地下的暗室中久久回荡。",
+      "head": "沈错反手扯开腰间紧束的粗麻绑带，从随身携带的鹿皮针囊中抽出一柄三寸长的鹤嘴细银镊。他没有理会身后不断坍塌的残垣，单膝点在尚有余温的焦黑碎瓦之上，目光紧紧锁住脚下青砖缝隙间那一处并未完全化灰的暗色凹陷。银镊前段极其纤细，沈错指节微沉，镊尖如探",
+      "tail": "现而出，他步履极快，反手合上了腰间的佩刀，右臂之下赫然夹着一本以厚重生牛皮包角、封皮上盖有刑部堂印与内府朱戳的发暗账册，正是刑部近三年《内府贡墨发放领用底册》。",
+      "error": null
+    },
+    {
+      "ch": 9,
+      "accepted": true,
+      "title": "第9章 堂官施压反遭物证咬死",
+      "words": 2791,
+      "paras": 21,
+      "paraCv": 0.44,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "崔景和一脚踹开横在废墟前方的半截焦黑断梁，四溅的火星顺着厚底官靴的边缘颓然熄灭。他身上那袭正三品绯红云雁官袍在穿堂夜风中猎猎作响，胸前补子上的金线在余火映照下泛着森冷的光晕。十余名手持水火重棍与腰悬雁翎刀的刑部带刀亲卫紧随其后，沉重的玄铁皮",
+      "tail": "目光在夜色掩护下悄无声息地微移，精准落向了侍立在自己身侧半步之后的心腹卫士腰间。那名心腹的皂皮革带上，正严严实实系着一只以黑绸暗纹密缝、装着堂官私印的狭长印囊。",
+      "error": null
+    },
+    {
+      "ch": 10,
+      "accepted": true,
+      "title": "第10章 领墨朱印直指当朝侍郎",
+      "words": 3038,
+      "paras": 22,
+      "paraCv": 0.26,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "沈错拂去案头残存的焦灰，从袖囊深处抽出一张裁切齐整的半透明油纸。萧南巡反手将偏厅沉重的雕花隔扇门合拢，两名大理寺亲信拔刀守在阶前，将院落中杂乱的泼水呼喊声阻隔在数丈开外。跳动的青铜烛台下，那本以厚重生牛皮包角的《内府贡墨发放领用底册》被平整",
+      "tail": "一声，反手将底册塞入袍袖暗袋，佩刀霍然出鞘三寸，露出一抹森然白刃：“来得正好。陆九安，传本官将令，大理寺所属一律列阵拔刀，本官倒要看看，今夜谁敢踏入偏厅半步！”",
+      "error": null
+    },
+    {
+      "ch": 11,
+      "accepted": true,
+      "title": "第11章 官船遭伏！一把竹刀挑翻截杀",
+      "words": 2684,
+      "paras": 22,
+      "paraCv": 0.15,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "沈错手中握着一柄三寸长的青竹裁刀，刀刃在跳动的桐油灯下泛着青碧的微光。他指尖沉稳如秤，顺着摊在紫檀案几上的公文衬纸边缘缓缓推移，将粘连在底纸上的陈年胶浆一点点剔除剥离。官船正顺着南下的运河水脉破浪前行，舱体随着水流微微起伏，却丝毫不影响他手",
+      "tail": "刀挑出的密图边缘，灯影在他清瘦的面庞上投下一片冰冷凝重的阴翳。离京前的一举一动与官船上的严密防务，早已被藏在暗处的内鬼全盘抄送到了运河水匪与盐商刺客的掌心之中。",
+      "error": null
+    },
+    {
+      "ch": 12,
+      "accepted": true,
+      "title": "第12章 封库阻挠？当场背诵律令硬闯",
+      "words": 3318,
+      "paras": 30,
+      "paraCv": 0.31,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [
+        {
+          "category": "entity",
+          "severity": "medium",
+          "location": "chapter-12:CBN:scene",
+          "description": "事件 chapter-12:CBN:event:1 引用了未知实体 两淮盐道令史",
+          "evidence": "领头的两淮盐道正八品令史猛地拔出腰间雁翎刀，雪亮刀锋带着刺耳金铁声横在门槛正中，刀尖直指当先踏上石阶的萧南巡。；“两淮重地，盐法自成一体，大理寺无权查库。”那名令史面皮紧绷，厉声喝止"
+        },
+        {
+          "category": "entity",
+          "severity": "medium",
+          "location": "chapter-12:CBN:scene",
+          "description": "事件 chapter-12:CPN-1:event:1 引用了未知实体 两淮盐道令史",
+          "evidence": "沈错嗓音清冽，字字沉稳清晰，回荡在森严的石阶上下，“凡朝廷命官巡视地方，非疾暴毙于督办要务任上，且涉及国帑亏空逾十万两者，大理寺持御赐金牌关防，享天下刑狱卷宗‘遇缺即补、随到随封’之特勘权，不受六部地方分司之限。”；萧南巡冷笑一声，左手猛然扬起御赐金牌关防，高大身形如黑豹般踏上最后一级台阶，右手反手一记重鞘，精准砸在令史的手腕之上。；陆九安拔出短刀挑开门环上的两道重锁，沉重厚实的铁皮大门轰然向内洞开，扬起一阵呛鼻的陈年霉味。"
+        }
+      ],
+      "head": "两淮巡盐御史司署的青石台阶前，二十余名身披皮甲的盐道兵卒手持长枪短刀，将通往后堂卷库的朱漆大门围得密不透风。运河上的血腥味尚未散尽，署衙重地内已是杀气逼人。领头的两淮盐道正八品令史猛地拔出腰间雁翎刀，雪亮刀锋带着刺耳金铁声横在门槛正中，刀尖",
+      "tail": "没有堆叠如山的密信，没有记录分赃的账册残页，也没有任何金银信物。在空空荡荡的丝绒垫衬正中央，赫然只摆放着一方被清水冲洗得干干净净、未留半分宿墨的漆黑端石空砚台。",
+      "error": null
+    },
+    {
+      "ch": 13,
+      "accepted": true,
+      "title": "第13章 死人不会写字！绝笔书全是破绽",
+      "words": 3140,
+      "paras": 26,
+      "paraCv": 0.41,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "沈错将那方漆黑冰凉的端石空砚稳稳置于案几正中，反手自贴身油布暗袋中取出那卷被刑部奉为定案铁证的巡盐御史自缢绝笔。残破的纸卷在扬州潮湿的晨光中泛着微黄，边角处还残留着被水渍浸染过的硬化毛边。案前两侧，两名按刀的大理寺缇骑肃然而立，被反剪双臂按",
+      "tail": "底气绝身亡。偏堂内瞬间陷入了一片令人窒息的死寂，唯有那方在幽暗烛火下静静横陈的漆黑空砚，石面泛着森冷幽暗的微光，在喷溅的黑血映衬之下，显露出深不可测的诡异死结。",
+      "error": null
+    },
+    {
+      "ch": 14,
+      "accepted": true,
+      "title": "第14章 砸开紫端砚！祖传残片居然合上了",
+      "words": 2868,
+      "paras": 30,
+      "paraCv": 0.33,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "萧南巡抬脚踢开地上散落的精钢脚镣，侧头向门外守候的几名大理寺缇骑打了个手势：“将尸身抬去偏院，用生石灰与白醋封存，切莫让剧毒渗入砖缝与水井。”\n\n两名缇骑肃然领命，手脚麻利地将已然气绝的盐道令史抬了出去。卷库偏堂内弥漫着淡淡的苦杏仁味与血腥",
+      "tail": "赫然从纸面中央浮现而出！\n\n在那方四寸见方的青铜印范正中，五个笔力如铁钩银划、森然威严的古拙篆字排布得井然有序，字字透着跨越两朝三代的嗜血杀意：“督考清平司”！",
+      "error": null
+    },
+    {
+      "ch": 15,
+      "accepted": true,
+      "title": "第15章 两片残拓严丝合缝，火海突围返京",
+      "words": 2727,
+      "paras": 34,
+      "paraCv": 0.45,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "沈错稳住手腕，用薄竹裁刀压住两张发黄拓片的接缝。案头牛油巨烛的火苗在夜风中剧烈跳动，两张历经数十年的残纸在通透的明光下严密拼合。左侧是从紫端砚夹层中取出的新拓，右侧则是沈家祖传的三代残卷。纸面上以深黑松烟古墨拓出的青铜齿槽与回纹，在断口处分",
+      "tail": "去。\n\n沈错在疾驰的颠簸中微微回眸。夜色苍茫如墨，身后两淮重镇的连天火光直冲云霄，照亮了半边江南夜空，而前方通往京城三法司会审大堂的漫漫长路，杀机已然铺天盖地。",
+      "error": null
+    },
+    {
+      "ch": 16,
+      "accepted": true,
+      "title": "第16章 龙脑冷香辨假印，抵京忽见通缉令",
+      "words": 3240,
+      "paras": 27,
+      "paraCv": 0.53,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "官道旁的荒废驿亭中，夜雨初歇，几匹快马低头啃食着湿漉漉的野草。连续两日两夜的急行军让马匹浑身挂满泥浆，萧南巡将佩刀横在膝头，闭目调息。沈错在石凳上坐下，小心解开贴身油绢，将紫端砚内取出的残拓与沈家祖传残卷平铺在石桌之上。残破的纸页边缘，还凝",
+      "tail": "局已被撕开一道裂口，只要趁着都察院与刑部在城前纠缠的空隙，经由金水河暗渠潜入内城，这枚足以颠覆朝局的假印铁证，便能在破晓的廷议公堂之上，彻底刺穿幕后黑手的咽喉。",
+      "error": null
+    },
+    {
+      "ch": 17,
+      "accepted": true,
+      "title": "第17章 封城拿人？暗度陈仓溜回秘阁",
+      "words": 2988,
+      "paras": 27,
+      "paraCv": 0.34,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "沈错一把扯低了浸满泥水的破旧毡帽，脚尖在湿滑的青苔碎石上一碾，整个人如灵猫般紧贴住斑驳的高墙阴影。远处朱雀大街的方向，铜锣声与战马嘶鸣交织成一片，刑部差役凄厉的哨音在夜雨中此起彼伏。\n\n萧南巡故意策马在通往大理寺的宽阔官道上现身，高举错银短",
+      "tail": "知自己早已潜伏在咫尺之遥的脚下暗格。只要掌握了上方那份尚未被彻底销毁的两淮原版底账，明日三法司公堂之上，便能将崔景和伪造公文、构陷忠良的罪证彻底钉死在铁案之上。",
+      "error": null
+    },
+    {
+      "ch": 18,
+      "accepted": true,
+      "title": "第18章 暗室屏息避搜查，竹刀剥离双层纸",
+      "words": 2942,
+      "paras": 33,
+      "paraCv": 0.36,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "沈错双臂紧紧撑住夹层上方的粗壮楠木横梁，整个人如壁虎般贴在逼仄阴暗的死角里。头顶的松木地板猛地一颤，伴随着一声沉闷刺耳的重响，陆九安的铁拐杖重重砸在暗格翻板的正上方。腐朽的木屑混杂着呛人的石灰粉尘，顺着木板缝隙簌簌倾落，落在沈错紧闭的双唇与",
+      "tail": "藏其下的神秘夹层。\n\n夹层之中并无半点寻常托裱所用的素白衬纸。借着案头摇曳微弱的油灯光亮，一片沉郁如铁、透着冰冷光泽的诡异旧墨色，自揭开的纸隙深处幽幽浮现而出。",
+      "error": null
+    },
+    {
+      "ch": 19,
+      "accepted": true,
+      "title": "第19章 绝妙裱贴现原形，调制药水唤死墨",
+      "words": 2484,
+      "paras": 20,
+      "paraCv": 0.16,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "沈错右臂悬空未动，指尖稳稳压住苦竹裁刀的重心。薄如蝉翼的竹刃顺着绝笔公文的天头缝隙缓慢推进，刀背贴紧纸肌向右平推。随着竹刀寸寸横移，整张写满认罪供词的表层薄宣被轻巧地挑离台面，夹层深处封闭已久的面筋熟浆在热气催化下彻底化开，一股浓烈刺鼻的陈",
+      "tail": "去多余的水珠。\n\n沈错右手稳稳悬起，笔锋微侧，带着湿润药液的柔软羊毫毛刷悬停在底层纸张的上方。下一刻，刷毛极轻极缓地贴上泛黄干枯的纸面，自右向左平稳地扫了过去。",
+      "error": null
+    },
+    {
+      "ch": 20,
+      "accepted": true,
+      "title": "第20章 三十年前密卷！血色编号现形",
+      "words": 2700,
+      "paras": 25,
+      "paraCv": 0.34,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "羊毫排刷自右向左平滑推过，淡紫青色的澄清药液瞬间化开在干涩发脆的纸肌之上。原本紧密咬合的桑皮纤维在药水浸润下舒展开来，纸面上腾起一层极淡的白雾。五倍子与皂矾交融出的微涩清气在暗室中弥漫，药液中的没食子酸如细针般渗入纸芯，与深埋在纤维骨肉之中",
+      "tail": "隐隐传来。暗室之内，那行泛着冷冽朱光的绝密卷号静静横卧在长案之上，如同一柄淬了三十年寒霜的锋利短刃，在即将到来的天光破晓前，彻底撕开了通往三法司公堂的铁血杀路。",
       "error": null
     }
   ],
   "plotOutlineTitles": [
     {
       "orderIndex": 0,
-      "title": "第1章 暴雨淹库房，泥水里抢出绝密红头件"
+      "title": "第1章 竹刀挑血纸幽灵暗印现"
     },
     {
       "orderIndex": 1,
-      "title": "第2章 放大镜下的微米缺角，这印不对劲"
+      "title": "第2章 蒸纸还魂术当堂破死局"
     },
     {
       "orderIndex": 2,
-      "title": "第3章 退休老主任敲门，别查那枚要命的印"
+      "title": "第3章 倒流毛边逆推伪造账册"
     },
     {
       "orderIndex": 3,
-      "title": "第4章 一滴蒸馏水，副局长的脸当场被打肿"
+      "title": "第4章 毒茶试纸反手布下暗扣"
     },
     {
       "orderIndex": 4,
-      "title": "第5章 底册查无此印，发小送来致命线索"
+      "title": "第5章 三年后生纸戳穿绝命书"
     },
     {
       "orderIndex": 5,
-      "title": "第6章 竹麻帘纹旧档案，抽屉里的暗度陈仓"
+      "title": "第6章 律令为盾逼退寺丞杀气"
     },
     {
       "orderIndex": 6,
-      "title": "第7章 关门打狗，夜半黑影栽在面粉堆里"
+      "title": "第7章 火海夺卷封泥护持孤本"
     },
     {
       "orderIndex": 7,
-      "title": "第8章 专案组突击进驻，冷面审查官到了"
+      "title": "第8章 烈火烤出御赐松烟墨膏"
     },
     {
       "orderIndex": 8,
-      "title": "第9章 问话如过堂，你这点技术唬得住谁"
+      "title": "第9章 堂官施压反遭物证咬死"
     },
     {
       "orderIndex": 9,
-      "title": "第10章 理化报告出炉，伪造公文铁证封喉"
+      "title": "第10章 领墨朱印直指当朝侍郎"
     }
   ],
   "runtimeBackend": "sqlite",
@@ -138,64 +363,65 @@
   "runtimeVerification": {
     "health": {
       "ok": true,
-      "projectId": "proj-1787633887191",
-      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-PBqODf\\story-runtime\\proj-1787633887191-207ae4bf9afa.db",
+      "projectId": "proj-1787665122818",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-gJIyLs\\story-runtime\\proj-1787665122818-2ffd819281b7.db",
       "schemaVersion": 2,
       "journalMode": "wal",
       "foreignKeys": true,
       "integrity": "ok",
       "pendingOutbox": 0
     },
-    "acceptedDrafts": 5,
-    "canonicalSnapshots": 6,
-    "latestSnapshotChapter": 5,
-    "sceneChunks": 5,
-    "events": 22
+    "acceptedDrafts": 20,
+    "canonicalSnapshots": 21,
+    "latestSnapshotChapter": 20,
+    "sceneChunks": 20,
+    "events": 89
   },
   "projectStorageVerification": {
     "chapterCount": 50,
     "plotChapterCount": 50,
     "linkedPlotChapterCount": 50,
     "structuredPlotChapterCount": 50,
-    "characterCount": 12,
+    "characterCount": 13,
     "foreshadowCount": 10,
     "volumeCount": 4,
     "chapterOutlineTextCount": 50,
     "coldReloadVerified": true,
-    "criticalDataHash": "fb01ff8845f33e07d578ff880c1abded9b2f6b7b79c41aef7cb4173b9ddd03b1",
-    "completeCharacterProfileCount": 12,
+    "criticalDataHash": "df149f8ce498d9e0083d331c24b9b3082ff1e9c5fc19730a02e944725cbc0d70",
+    "completeCharacterProfileCount": 13,
     "positioningPersisted": true
   },
   "postWritePersistence": {
-    "characterCount": 12,
+    "characterCount": 13,
     "foreshadowCount": 10,
     "volumeCount": 4,
     "plotChapterCount": 50,
-    "writtenChapterCount": 5
+    "writtenChapterCount": 20
   },
   "outlineWarnings": [
-    "本地收缩超长标题/CBN/CEN 共 6 章（第 11、14、16、17、18、49 章），未发 AI 请求",
-    "未登记地点已补登记 17/17 个",
-    "本地收缩超长标题/CBN/CEN 共 4 章（第 17、23、26、47 章），未发 AI 请求"
+    "大纲存在 1 个未登记角色（大靖皇帝），执行第 1 轮补登记",
+    "未登记角色已补登记 1/1 个",
+    "本地收缩超长标题/CBN/CEN 共 1 章（第 50 章），未发 AI 请求",
+    "未登记地点已补登记 1/1 个"
   ],
   "repairMetrics": {
-    "firstPassChapters": 4,
-    "firstPassRate": 0.8,
-    "rewrittenChapters": 1,
-    "totalRewriteRounds": 1,
-    "averageRewriteRounds": 0.2,
-    "pipelineAttempts": 5
+    "firstPassChapters": 15,
+    "firstPassRate": 0.75,
+    "rewrittenChapters": 5,
+    "totalRewriteRounds": 5,
+    "averageRewriteRounds": 0.25,
+    "pipelineAttempts": 20
   },
   "runtimeMetrics": {
-    "requestCount": 20,
+    "requestCount": 79,
     "requestCountsByPurpose": {
-      "scene-draft": 8,
-      "fact-extraction": 6,
-      "chapter-judge": 6
+      "scene-draft": 29,
+      "fact-extraction": 25,
+      "chapter-judge": 25
     },
-    "latencyP50Ms": 13453,
-    "latencyP95Ms": 51285,
-    "latencyMaxMs": 51285
+    "latencyP50Ms": 14842,
+    "latencyP95Ms": 46538,
+    "latencyMaxMs": 95616
   },
   "readerEvaluation": {
     "version": "reader-eval-v1",
@@ -219,110 +445,77 @@
     },
     "outline": {
       "version": "reader-eval-v1",
-      "score": 90.7,
+      "score": 83.4,
       "wouldStartReading": true,
       "confidence": 0.92,
       "dimensions": {
-        "openingAttraction": 89,
-        "coreSellingPoint": 94,
-        "protagonistDrive": 91,
-        "conflictEscalation": 88,
-        "payoffPlanning": 90,
-        "characterRelations": 89,
-        "suspensePlanning": 93,
-        "audienceFit": 92
+        "openingAttraction": 88,
+        "coreSellingPoint": 90,
+        "protagonistDrive": 86,
+        "conflictEscalation": 75,
+        "payoffPlanning": 82,
+        "characterRelations": 72,
+        "suspensePlanning": 86,
+        "audienceFit": 88
       },
       "issues": [
         {
-          "id": "reader.pacing-1",
+          "id": "reader.character-1",
+          "severity": "high",
+          "category": "character",
+          "location": "全文",
+          "description": "核心角色“陆九安”的身份设定与章节细纲发生严重倒错与分裂。在人物设定中其为残废护道恩师，但在前40章细纲中却成了贪腐反派侍郎并被沈错当堂反坐入狱。",
+          "evidence": [
+            "人物表描述：\"functionInStory\": \"传授沈错微观物理辨伪绝学，保管祖父遗留的核心线索，前期沈错的精神与技术支柱。\"、\"turningPoint\": \"第38章为了掩护沈错带出两淮盐铁账册真本，毅然自焚卷库引开刺客，伤重身亡。\"；章节第38-39章描述：\"荧光显影当堂坐实陆九安夜闯秘阁篡改公文\"、\"三法司当堂下令反坐陆九安并革去其侍郎官职。\""
+          ],
+          "suggestion": "彻底厘清刑部反派堂官与恩师老吏的命名与职责分配。建议反派侍郎统一由崔景和或另设新反派堂官（如陆侍郎改名），将“陆九安”严格固定为秘阁残废老录事与护道恩师，避免同一角色既舍身成仁又贪腐受审。",
+          "blocking": false,
+          "confidence": 0.95
+        },
+        {
+          "id": "reader.pacing-2",
           "severity": "medium",
           "category": "pacing",
           "location": "全文",
-          "description": "第一卷前50章整体用来解决单份2008年矿权批文与周建国，在中后段（33-48章）密集安排了多次痕检实验与听证/通报交锋（晶体定性、紫外荧光、三道实验、荧光比对、微米测绘），物证博弈虽然硬核扎实，但连续在同一份公文上展开微观攻防，易让读者在30-45章产生一定程度的‘实验室攻防疲劳’。建议在实际写作中加强外部人身危险与体制博弈的即时压迫感。",
+          "description": "第一卷内连续两次出现高度相似的“三法司开堂审理-当堂验公文-当场反坐刑部侍郎”大高潮结构，冲突套路自我重复。",
           "evidence": [
-            "\"firstConflictCycle\":\"第45-50章在联合听证会上以多光谱荧光与微观晶体铁证，彻底证实2008年矿权批文系伪造，搞垮打压者周建国，陆准成功转正并受聘为专案组特聘专家，正式开启1986年旧案调查。\""
+            "第24章：\"比对刑部用墨记录彻底咬死崔景和构陷伪造公文之罪，三法司主审官当场下令剥除崔景和官袍并押入死牢。\"；第39章：\"沈错当众将暗印锯齿缺口与六十年案卷划痕严密比对……三法司当堂下令反坐陆九安并革去其侍郎官职。\""
           ],
-          "suggestion": "在第30-45章之间适当压缩单纯仪器分析的过程性描写，将更多篇幅倾斜给专案组与地方保护伞在暗处的盯梢、抢夺、行政角力，增强动静结合的张力。",
+          "suggestion": "调整第21-25章的冲突层级，将其降格为刑部内部合勘或大理寺秘密勘验，让崔景和在暴露前夕被暗杀灭口，把唯一的“三法司终审公堂反坐高官”完整爆发力留给第36-40章。",
           "blocking": false,
-          "confidence": 0.7
-        },
-        {
-          "id": "reader.other-2",
-          "severity": "low",
-          "category": "other",
-          "location": "全文",
-          "description": "世界观设定中的地点列表存在较多大纲蓝图文本切词错误生成的冗余脏数据（如‘撕破县’、‘遭遇市’、‘秘密前往天南省’、‘确立调阅全县’等共计17处）。",
-          "evidence": [
-            "\"name\":\"撕破县\",\"level\":\"city\",\"functionInStory\":\"卷纲与章节蓝图引用的地点，补登记入表。\""
-          ],
-          "suggestion": "清理世界观地点库中的分词残留项，保持苍山县、临江市、天南省省会三级标准地理层级定义。",
-          "blocking": false,
-          "confidence": 0.7
+          "confidence": 0.9
         },
         {
           "id": "reader.other-3",
-          "severity": "low",
+          "severity": "medium",
           "category": "other",
           "location": "全文",
-          "description": "部分章节蓝图中的 hookText 字段残留了模板标记文本（如‘- 爽点类型：解谜’、‘- 爽点类型：打脸’），未完全填充具体剧情钩子文案。",
+          "description": "人物图谱中的 targetName 字段存在大量非人名字符串混入与断句截断等数据污染。",
           "evidence": [
-            "\"hookType\":\"解谜\",\"hookText\":\"- 爽点类型：解谜\",\"coolPointType\":\"解谜\""
+            "沈错属性：\"targetName\": \"对萧南巡由戒备利用转为托付生死的知己\"；薛道衡属性：\"targetName\": \"乱臣贼子”转为向其躬身致敬并自请削去文宗封号\""
           ],
-          "suggestion": "补齐第5、11、13、14、15、18、19、22、29章章节末尾的具体悬念钩子语句，以便直接指导正文连载卡点。",
+          "suggestion": "规范 targetName 为标准角色名，将演变叙述完整归入 dynamic 字段。",
           "blocking": false,
-          "confidence": 0.7
+          "confidence": 0.95
         }
       ],
-      "summary": "这是一份在网文市场中辨识度极高、设定极其扎实的硬核技术流悬疑大纲。大纲将冷门的‘公文档案修裱与理化痕检’（朱墨时序、纸张酸化、荧光增白剂断代、辰砂晶体共生分析）与长达六十年的三代国资侵吞大案完美结合。主角从濒临被开除的档案局派遣工起步，以不可篡改的微观物理铁证作为破局利刃，层层掀翻体制蛀虫与地方豪强，底层逆袭与技术打脸爽感充足。伏笔回收系统闭环清晰（一枚私刻汉白玉伪印串联2008、1986、1953三代历史），人物动机与体制内规则严密可信，高度契合25-45岁偏好硬核物证推理与现实向大案纪实的目标读者群，完全具备立即开书的价值。"
+      "summary": "该大纲切入点极其惊艳，将古代公文流转制度、纸墨纤维物理学、印泥配方与代际翻案紧密结合，具有极高辨识度的硬核历史悬疑质感与下克上爽感。黄金前五章与卷一主线节奏明快、钩子扎实。目前最核心的瑕疵在于‘陆九安’一角在人物库（舍身恩师）与细纲（贪腐侍郎）中存在严重的人设倒错与分裂，且卷一连续两次三法司反坐侍郎略显重复。只要修正人物身份冲突并微调公堂节奏，将是一部极具爆款潜力的公文刑侦权谋佳作。"
     },
     "chapters": [
       {
         "version": "reader-eval-v1",
         "chapter": 1,
-        "score": 86.5,
+        "score": 84.6,
         "continueReading": true,
         "confidence": 0.95,
         "dimensions": {
-          "readability": 88,
-          "openingHook": 90,
-          "conflictEffectiveness": 87,
-          "emotionalDrive": 84,
-          "characterVoice": 85,
-          "payoffValue": 82,
-          "pacing": 88,
-          "endingPull": 90
-        },
-        "issues": [
-          {
-            "id": "reader.character-1",
-            "severity": "low",
-            "category": "character",
-            "location": "全文",
-            "description": "副局长周建国在水灾现场的言行意图暴露偏快，作为体制内分管领导，直接提出将核心涉密件当场判定销毁略显直白，略微削弱了高级别官场博弈的隐蔽感。",
-            "evidence": [
-              "周建国根本不听陈述……这几盒涉及历史改制的重点卷宗既然已经被脏水泡透，纸质全毁，就已经完全丧失了保存和修复价值。根据局里的突发灾害应急处置规定，所有严重霉变受损的废旧文书，立刻清点装袋，明天一早直接送往造纸厂集中销毁"
-            ],
-            "suggestion": "可稍加强化周建国用冠冕堂皇的合规流程（如‘启动应急封存交接’）来掩盖意图的伪装层，使博弈更具官场深沉感。",
-            "blocking": false,
-            "confidence": 0.7
-          }
-        ],
-        "summary": "开篇极其亮眼，完美契合‘硬核物证痕检+体制内智斗’的定位。以暴雨倒灌特藏库的危机开局，通过极其扎实专业的档案修复物理动作展开情节，并在水浸过程中敏锐捕捉到‘2008年矿权批文纸张异常、油墨不洇、印泥有溶剂味’的核心物证疑点。副局长周建国的施压与强行销毁意图迅速拉满阻力，建立了‘明晨销毁前连夜微观检验’的紧迫倒计时，章尾停在显微镜载物台前，钩子精准有力。"
-      },
-      {
-        "version": "reader-eval-v1",
-        "chapter": 2,
-        "score": 88,
-        "continueReading": true,
-        "confidence": 0.95,
-        "dimensions": {
-          "readability": 90,
-          "openingHook": 88,
-          "conflictEffectiveness": 87,
-          "emotionalDrive": 86,
-          "characterVoice": 88,
-          "payoffValue": 88,
-          "pacing": 89,
+          "readability": 85,
+          "openingHook": 86,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 82,
+          "characterVoice": 82,
+          "payoffValue": 85,
+          "pacing": 86,
           "endingPull": 88
         },
         "issues": [
@@ -330,67 +523,115 @@
             "id": "reader.other-1",
             "severity": "low",
             "category": "other",
-            "location": "周建国将红头处置决定书砸在桌上，转身摔门而去...门外随即传来铁链拉动与门把手落锁",
-            "description": "周建国急于销毁证据且深知陆准的技术能力，在明知文件在室内的情况下仅将陆准锁在实验室内限期打包，而未当场强制收缴文件，属于为主角留出独立取样和查册时间的情节便利设计，但有前后交接流程和看守布置作为合理掩护，未破坏整体严肃感。",
-            "evidence": [],
-            "suggestion": "可进一步强调周建国忌惮涉密交接规程在监控和门禁下的责任留痕，必须由当班修复员签字归档移交，以强化其不当场粗暴夺走的体制内逻辑。",
+            "location": "全文",
+            "description": "多处角色对白末尾遗漏闭合后双引号，影响排版规范度与视线停顿感。",
+            "evidence": [
+              "\"回崔司务的话，血迹已经渗入纸骨，若用滚水硬逼，墨迹定然晕散。小的正以温矾水软化血痂，还需半个时辰方能将夹层完好剥离。"
+            ],
+            "suggestion": "补齐文中崔景和与沈错对话末尾的闭合引号（如第5、6、7、18段多处）。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "反派崔景和前脚刚给沈错半个时辰时限并锁门离开，极短时间内（仅完成一次揭纸勘验）便迅速带重兵折返破门灭口，时间压缩极度紧凑，虽强化了危机感但转折稍显突兀。",
+            "evidence": [
+              "沈错静静听着那阵脚步声渐行渐远，直至秘阁回廊完全恢复死寂……然而就在他的笔尖刚刚触碰到纸页边缘的刹那，还魂堂外深邃幽暗的石阶长廊上，突然炸响了一阵急促杂乱的铁靴踏地声。"
+            ],
+            "suggestion": "可在中段暗印揭开时稍加暗示外面堂官已在暗中部署或调兵脚步声，使杀局早有预谋的压迫感更自然连贯。",
             "blocking": false,
             "confidence": 0.7
           }
         ],
-        "summary": "本章承接紧凑，物证痕检细节（30微米缺角、树脂印油氧化年限、无损微量切片取样）专业硬核且极具画面感，完美契合技术流破案定位。反派以体制内程序施压设定6小时倒计时销毁危机，主角沉着取样反制并查阅印模总谱，结尾以总谱栏目‘一片死寂的空白’制造强悬念，节奏紧凑且智斗张力充足。"
+        "summary": "本章作为历史公文刑侦题材的首章表现极其亮眼。开篇直接切入“古纸还魂”的微操修卷场景，水磨青竹刀、白芨水软化、帘丝纹理等硬核物证细节质感扎实，迅速立住主角待罪录事的专业人设；中段通过“三十年前绝版冷金楮皮纸”、“先印后文”、“督考清平司”幽灵印章层层剥茧，完美兑现悬疑与下克上翻案的核心卖点；章尾直接引爆刑部高层灭口围捕的生死危机，断章钩子强劲，追读驱动力极强。"
       },
       {
         "version": "reader-eval-v1",
-        "chapter": 3,
-        "score": 86.1,
-        "continueReading": true,
-        "confidence": 0.95,
-        "dimensions": {
-          "readability": 88,
-          "openingHook": 85,
-          "conflictEffectiveness": 86,
-          "emotionalDrive": 84,
-          "characterVoice": 87,
-          "payoffValue": 85,
-          "pacing": 86,
-          "endingPull": 88
-        },
-        "issues": [],
-        "summary": "本章承接紧密，通过老主任孙德林深夜潜入修复室的戏剧化事件，以物证显微镜观察为催化剂，自然引出三十年前的伪印历史、双重底册机制以及主角父母的旧案伏线。信息揭示与体制内悬疑张力结合扎实，结尾无号牌黑车监视的高位压迫感极大提升了下一章的追读欲望。"
-      },
-      {
-        "version": "reader-eval-v1",
-        "chapter": 4,
+        "chapter": 2,
         "score": 87.4,
         "continueReading": true,
         "confidence": 0.92,
         "dimensions": {
           "readability": 88,
-          "openingHook": 85,
-          "conflictEffectiveness": 90,
-          "emotionalDrive": 88,
-          "characterVoice": 84,
-          "payoffValue": 92,
+          "openingHook": 90,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 85,
+          "characterVoice": 88,
+          "payoffValue": 87,
           "pacing": 88,
-          "endingPull": 80
+          "endingPull": 86
         },
         "issues": [
           {
-            "id": "reader.pacing-1",
+            "id": "reader.other-1",
             "severity": "low",
-            "category": "pacing",
+            "category": "other",
             "location": "全文",
-            "description": "上章末尾黑车伏击的惊险悬念在转场至早八点晨会后未做呼应过渡，略有断层感",
+            "description": "崔景和带队杀气腾腾以‘格杀勿论’为由闯入，但在沈错展示完修复术后仅凭口头律法震慑便全员退走，反派的施压在技术展示完成后收束略快，但有三法司连坐律法作为合理解释。",
             "evidence": [
-              "两盏未曾完全熄灭的暗黄色雾灯穿透暴雨水幕，犹如一双蛰伏在黑夜中的冰冷眼睛，正居高临下地死死钉在地下修复室这扇唯一的通风窗前。"
+              "今日之事，若明日午时三法司会审之时由下官如实禀奏于刑部尚书与大理寺卿案前，不知擅闯禁阁、构宪同僚的死罪，崔司务有几个脑袋可以掉？"
             ],
             "suggestion": "",
             "blocking": false,
             "confidence": 0.7
           }
         ],
-        "summary": "本章是一次非常精准且高爽感的物证痕检微兑现。作者紧扣硬核破案定位，通过‘蒸馏水析出合成树脂游离油膜’的实验，在体制内晨会公开撕破了周建国借灾毁证的阴谋。技术推演扎实，打脸节奏干脆利落，充分兑现了技术流逆袭与体制内智斗的核心卖点。"
+        "summary": "本章承接上一章破门而入的危机高潮，节奏紧凑凌厉。核心看点‘蒸纸还魂术’的硬核古法修复细节描写扎实专业，将行业技艺与生死博弈完美融合；主角沈错沉着冷静、以技破局并以大靖律法反将一军，完成了高质量的‘下克上’微爽点兑现。章尾屋檐黑影的窥探适时抛出新的悬念钩子，追读动力充沛。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 90.5,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 86,
+          "conflictEffectiveness": 91,
+          "emotionalDrive": 90,
+          "characterVoice": 89,
+          "payoffValue": 93,
+          "pacing": 90,
+          "endingPull": 94
+        },
+        "issues": [],
+        "summary": "本章极其精准地兑现了定位中'硬核公文探案、物证刑侦'的核心卖点。通过温矾水显影、鱼鳞暗记比对、内府贡墨鹿胶脱胶周期（百日与三日之辨）以及墨水倒流毛边等扎实考究的纸墨物证细节，逻辑严密地推导出三百万两盐银亏空的惊天阴谋与主角自身的死局陷阱，带来强烈的智力推演快感。章尾刑部右侍郎下令用透骨钉与生牛皮封死气窗，将还魂堂变为密闭死室，危机瞬间压顶，追读张力拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 87,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 84,
+          "characterVoice": 88,
+          "payoffValue": 86,
+          "pacing": 88,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "袖内导水竹管的准备略显偶合，若前文稍作铺垫其日常修卷工具的佩戴习惯，假喝毒茶的动作成立度会更自然。",
+            "evidence": [
+              "然而碗中的滚烫毒汤却顺着他宽大袖口内衬的导水竹管，悄无声息地尽数倾泻入案底深处的废液铜盂之中"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏紧凑，情节推进极具张力。承接上章封死气窗的死局，迅速导入毒参汤刺杀，主角运用专业纸药试毒、假饮装死骗过眼线，并利用时间差将翻案铁证暗扣于无法销毁的三法司底册中，硬核公文探案与职业反制爽感十足。章尾大理寺强力角色萧南巡破门而入，打破了原本与刑部崔景和博弈的单一预期，戏剧冲突瞬间升级，追读悬念极强。"
       },
       {
         "version": "reader-eval-v1",
@@ -400,12 +641,271 @@
         "confidence": 0.95,
         "dimensions": {
           "readability": 88,
-          "openingHook": 86,
-          "conflictEffectiveness": 87,
+          "openingHook": 85,
+          "conflictEffectiveness": 86,
           "emotionalDrive": 84,
-          "characterVoice": 86,
+          "characterVoice": 88,
+          "payoffValue": 90,
+          "pacing": 86,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "物证设定的前后文连续性存在出入：上一章末尾沈错在查验簿夹层写下的断定为‘前朝景泰内府四十二道帘纹冷金楮皮纸’，而本章正文萧南巡核验与沈错陈词时却变为了‘天佑四年皖南澄心堂造三十五道细丝’。虽本章内逻辑自洽（死人不能用三年后产的生纸），但连缀前章细节会出现物证参数漂移，微损硬核公文刑侦的严密感。",
+            "evidence": [
+              "按照大靖工部与内府造纸律令，天佑三年之前所造的内府官纸，竹帘皆为三十八道粗丝编织，纹理稀疏且略显粗糙。唯有天佑四年春，皖南官造澄心堂为了进贡御前文书，耗费重金改良了捞纸竹帘，将每寸帘丝加密至整整三十五道细丝。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.9
+          }
+        ],
+        "summary": "本章硬核物证与公文刑侦特色鲜明，以‘竹帘编织纹道数’与‘年号时间差’作为破局铁证，极好地兑现了公文探案的智力爽感。萧南巡与沈错的暗室交锋张力十足，人物性格鲜明凌厉。章末以拔刀相向收尾，将敌友未明、生死悬于一线的紧迫感推向高潮，追读欲极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 6,
+        "score": 89.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 87,
+          "characterVoice": 89,
           "payoffValue": 88,
-          "pacing": 87,
+          "pacing": 89,
+          "endingPull": 92
+        },
+        "issues": [],
+        "summary": "本章承接紧凑，刀锋逼颈的危机下，主角利用公文律令与硬核物证（鹿胶固化周期与倒流毛边）展开智力反制，成功与大理寺少卿达成各取所需的攻守同盟。情节推进扎实，揭示盐银被贪背后的军饷黑幕，拔高了冲突格局；章尾猛火油灌顶纵火将密室危机推向高潮，具有极强的追读吸引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 7,
+        "score": 86.2,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 84,
+          "characterVoice": 87,
+          "payoffValue": 85,
+          "pacing": 86,
+          "endingPull": 85
+        },
+        "issues": [],
+        "summary": "本章承接上章末尾猛火油泼洒的生死绝境，节奏紧凑凌厉。沈错利用草木灰封泥护持铁柜与贴身藏卷的专业刑名技能，与萧南巡斩梁破壁、格杀死士的武力护持形成极佳的文武互补与双人协作感。冲突解决利落且符合题材定位，不仅成功兑现物证存留的阶段目标，章尾更通过大火余温中散发的“龙涎香”巧妙抛出高阶幕后黑手的悬念，兼具动作张力与悬疑钩子。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 8,
+        "score": 88.7,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 87,
+          "characterVoice": 90,
+          "payoffValue": 90,
+          "pacing": 88,
+          "endingPull": 87
+        },
+        "issues": [],
+        "summary": "本章紧承上文火场余烬中的龙涎异香，以极其硬核细腻的物证刑侦展开推演。沈错利用松烟御墨的物化特性（重胶延燃机理）不仅推翻了意外失火说，更通过大靖律法物料配额规制，直接将幕后黑手的层级锁定至刑部堂官（尚书与侍郎），完全契合‘公文刑侦、物证打脸’的核心卖点。萧南巡趁乱潜入库房取回关键底册，节奏紧凑凌厉，为明日三法司合勘公堂反杀完成了关键闭环布局，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 9,
+        "score": 83.1,
+        "continueReading": true,
+        "confidence": 0.05,
+        "dimensions": {
+          "readability": 78,
+          "openingHook": 85,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 82,
+          "characterVoice": 85,
+          "payoffValue": 83,
+          "pacing": 85,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.issue_character_title_inconsistency",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "人物官职与上一章推理逻辑发生严重前后矛盾。前章沈错明确指出崔景和仅是从五品司务、无权领用御墨，以此推导幕后主使必为正二品尚书或正三品侍郎；但本章崔景和出场直接变成了正三品刑部侍郎，使得前章的核心物证推导链条产生逻辑坍塌。",
+            "evidence": [
+              "上一章尾部明确写道：‘崔景和区区一个从五品刑部司务，平日里连这等御墨的边角都摸不到。’而本章第1段即写：‘他身上那袭正三品绯红云雁官袍在穿堂夜风中猎猎作响……这刑部侍郎的脸上。’沈错亦当面称其为‘崔侍郎’。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.issue_scene_transition_slip",
+            "severity": "low",
+            "category": "continuity",
+            "location": "全文",
+            "description": "萧南巡的入场时机与上章结尾衔接微有错位。上章末尾萧南巡已带着底册回到沈错身旁，本章前半段沈错独自受阻对质，萧南巡又重新以‘自废墟西侧断墙后横掠而出’的方式二次登场救场。",
+            "evidence": [
+              "上一章结尾写道：‘萧南巡高大的身影自阴影中闪现而出……右臂之下赫然夹着一本……发暗账册’；本章中段却写道：‘一道玄黑色的高大身影如鹰隼般自废墟西侧的断墙后横掠而出……左臂之下紧紧夹着那本……’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章对峙戏张力拉满，沈错在死境中临危不乱、以法条和御墨物证反将一军，随后萧南巡持底册与关防拔刀镇场，下克上的智斗与武力反制节奏明快，极具戏剧爽感；章尾崔景和暗窥心腹印囊，为假官印伏笔留下强劲钩子。唯一严重瑕疵是崔景和的官职从前章的‘从五品司务’突变为本章的‘正三品侍郎’，直接动摇了前章以此为前提的刑侦推理逻辑，需修正官职统一性。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 10,
+        "score": 85.4,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 84,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 82,
+          "characterVoice": 86,
+          "payoffValue": 84,
+          "pacing": 85,
+          "endingPull": 89
+        },
+        "issues": [],
+        "summary": "本章紧承上章对峙，迅速切入硬核公文物证检验。通过熟桐油纸透光显影、辰砂与蓖麻油扩散环定日、龙涎香御墨残渣比对等扎实的刑侦细节，坐实了崔景和领墨纵火的时间链；随后逻辑严密地推演出三品堂官特免权与调取江南底档的破局之策，并借装订夹层中的‘龙脑朱印’引出更高层内阁势力的悬念；章尾崔景和带人武力硬闯与萧南巡拔刀对峙形成极强危机感，节奏紧凑，爽点与悬念兼备。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 11,
+        "score": 79.7,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 84,
+          "openingHook": 72,
+          "conflictEffectiveness": 80,
+          "emotionalDrive": 78,
+          "characterVoice": 82,
+          "payoffValue": 80,
+          "pacing": 76,
+          "endingPull": 84
+        },
+        "issues": [
+          {
+            "id": "reader.continuity-1",
+            "severity": "high",
+            "category": "continuity",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "上一章尾部明示'明日午时三法司大堂之上，你且用生纸破绽与倒流墨迹拖住审限'且'正带人朝偏厅硬闯而来，口口声声要收回内府底册并将沈书办收押待审'，而本章开篇直接跳转为'官船正顺着南下的运河水脉破浪前行...今夜官船出了通州闸口'，沈错与萧南巡已双双登船南下。"
+            ],
+            "suggestion": "在开篇或对话中补入几句前情过渡交代，说明偏厅对峙是如何化解的（如萧南巡借大理寺法度暂退崔景和），以及为何推翻原计划让沈错一同暗随官船南下，使场景切换符合逻辑。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章动作截杀与公文刑侦卖点结合紧凑，沈错利用裁纸竹刀自卫并剥离伪造文牒夹层发现内鬼密图的情节，极好地展现了技术流主角的特色与悬疑张力。主要问题在于与第10章末尾的强烈冲突悬念存在断层，跳过了偏厅对峙且更改了沈错留京的行动线，缺乏平滑过渡。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 12,
+        "score": 87.5,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 85,
+          "characterVoice": 90,
+          "payoffValue": 86,
+          "pacing": 88,
+          "endingPull": 87
+        },
+        "issues": [],
+        "summary": "本章节奏紧凑且高度契合硬核公文刑侦定位。开篇通过背诵大靖律令精准破除地方官吏的封库阻挠，兼顾了智斗与下克上的爽感；进入卷库后，通过地气水湿走向、纸张纤维霉斑差异及裁切开本尺寸等物证痕迹学细节，迅速识破伪造账卷，专业质感扎实；结尾暗格开启却仅留一方洗净的无墨端砚，悬念设置精妙，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 13,
+        "score": 88.4,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 88,
+          "payoffValue": 90,
+          "pacing": 88,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "涉案小吏在铁证如山后咬破后槽牙毒囊自尽的情节属于古风悬疑公案文常见桥段，稍显套路化，但收尾处死前指认砚台的动作有效挽回了悬念感。",
+            "evidence": [
+              "只听得一声极其微细的蜡丸碎裂声自其口腔深处炸响。未等陆九安的大手按住其下颌，那名令史的眼角、鼻孔与双耳便以肉眼可见的速度渗出粘稠发黑的污血。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章是极具硬核公文刑侦特色的高光断案章节。上一章末尾铺垫的‘空砚台’在本章中与‘伪造绝笔’形成了严丝合缝的物证闭环。作者从古法造纸的‘揭二层’工艺、松烟墨渗透机理、落墨时间差到墨汁用料差异，层层剥茧，技术细节扎实且画面感极强，智力碾压与翻案打脸感十分充实。章尾令史服毒濒死前反常指向空砚台的举动，迅速将单纯的破案收尾转入新一层谜团，追读张力十足。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 14,
+        "score": 89.3,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 90,
+          "characterVoice": 87,
+          "payoffValue": 92,
+          "pacing": 89,
+          "endingPull": 91
+        },
+        "issues": [],
+        "summary": "本章承接上章死士令史临死指向空砚台的悬念，以极其扎实硬核的物证刑侦流程层层展开。从银通条探声判空心、沸水软化生漆封胶到铁锤精准破砚，破拆技艺与物证考据极具职业质感。更关键的是，本章完成了开篇以来最重要的阶段性伏笔回收——巡盐御史暗藏的母范拓片与沈家祖传残片完美拼合，揭晓‘督考清平司’五字，将当下两淮盐税案与六十年代际冤案正式榫卯咬合，给读者带来了强烈的解谜快感与情绪沉淀，追读张力拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 15,
+        "score": 87.6,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 87,
+          "characterVoice": 86,
+          "payoffValue": 89,
+          "pacing": 86,
           "endingPull": 88
         },
         "issues": [
@@ -414,14 +914,192 @@
             "severity": "low",
             "category": "other",
             "location": "全文",
-            "description": "标题标明为“发小”，文中苏青展现了极强的调查记者属性与现场行动力，但两人的发小渊源与过往默契在叙事中多体现为纯事务对接，若能稍加点染二人少时的信任基底，人物互动张力会更丰富。",
-            "evidence": [],
+            "description": "本章开篇前两段对残拓拼合细节与“督考清平司”印文存在轻微的跨章信息重复，略微延缓了从物证锁定切入突围动作戏的衔接速度。",
+            "evidence": [
+              "在那方四寸见方的青铜印范正中，“督考清平司”五个铁线古篆如铁钩银划，笔锋勾连处透出跨越两朝三代的深沉杀意。"
+            ],
             "suggestion": "",
             "blocking": false,
             "confidence": 0.7
           }
         ],
-        "summary": "本章承接上章会议室技术对峙的余波，节奏推进稳健扎实。发小兼调查记者苏青从排污暗道潜入，带出了苍山铁矿私改排污、致残村民、封杀报道等触目惊心的现实黑幕，迅速将剧情冲突由体制内科室博弈提升至百亿国资侵吞与民生大案的宏大格局。后半段回归硬核档案排查，在全县印章总谱中精准定位并揭晓该督办专印为未入档的“幽灵黑印”，完全兑现了标题预期，长线谜团层层递进，章尾悬念有力。"
+        "summary": "本章承接上文完成了关键物证青铜母范拓片的严密缝合与法理确认，顺利完成阶段性长线伏笔回收；随后迅速切换为卷库火海突围战，战斗调度紧凑、动作干脆利落。结尾确定转入旱道八百里加急进京三法司对质的全新主线阶段，危机感与长线期待感均维持在较高水准。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 16,
+        "score": 82.9,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 82,
+          "conflictEffectiveness": 83,
+          "emotionalDrive": 81,
+          "characterVoice": 83,
+          "payoffValue": 80,
+          "pacing": 84,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "都察院御史轿仗在主角团受阻瞬间恰好抵达，解围巧合度略高，削弱了一小部分主角自主破局的博弈厚度。",
+            "evidence": [],
+            "suggestion": "可在入城排队前增加半句对远处官道仪仗动向的提前观察，让主角“主动引势”而非单纯“被动撞运”。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏明快且极具历史悬疑质感。开篇通过龙脑香与海珠粉的公文物证考据，迅速拔高幕后黑手层级；抵京后崔景和倒打一耙的海捕公文带来极强压迫感，主角利用官僚体制内部（刑部与都察院、九门巡防）的权属龃龉巧妙脱身，智斗逻辑在线，章尾潜入内城直指廷议翻盘，追读期待感充足。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 17,
+        "score": 80.5,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 84,
+          "openingHook": 82,
+          "conflictEffectiveness": 75,
+          "emotionalDrive": 80,
+          "characterVoice": 82,
+          "payoffValue": 78,
+          "pacing": 80,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.continuity-1",
+            "severity": "high",
+            "category": "continuity",
+            "location": "中后段，沈错潜入地字库暗格后",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "头顶地板上突然传来陆九安与心腹令史沉重的踱步声。"
+            ],
+            "suggestion": "在章首萧南巡声东击西时，补充一两句交代陆九安的分工去向（例如陆九安假意被巡防营抓回秘阁做工、或依计提前潜回秘阁充当内应），避免人物从城外芦苇荡直接‘瞬移’到守备森严的秘阁内部。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏紧凑且质感扎实，排湿暗道、生铁水闸机关与修卷用料等细节充分展现了硬核物证/机关探案的职业特色；地板下潜伏听壁脚的桥段成功将两淮七十万两亏空账目、丑时三刻取账的时限压力与明晨三法司会审紧密串联，章尾追读力强。核心瑕疵在于人物动线出现明显断层：上章结尾陆九安尚随沈错在城外芦苇荡潜行，本章却毫无过渡地直接出现在已被刑部封锁的秘阁正堂内受令史胁迫，削弱了剧情的严密性。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 18,
+        "score": 87.9,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 85,
+          "characterVoice": 88,
+          "payoffValue": 88,
+          "pacing": 88,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "搜查危机的化解略微依赖外围萧南巡制造骚乱的外部巧合介入，好在前后衔接紧凑，并未破坏整体暗室潜伏的窒息感。",
+            "evidence": [
+              "就在差役弯腰准备伸手掀动翻板把手的刹那，地字库外方的朱雀大街方向骤然炸开一声凄厉尖锐的响箭破空声。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章结构扎实，深度契合硬核公文刑侦与历史悬疑的题材预期。前半段刑部差役突击搜查、铁尺穿缝的暗室避险戏张力饱满；后半段沈错运用‘解胶还魂汤’、水汽熏蒸及‘青竹裁刀’剥离双层托裱伪公文的专业技术细节描写极其考究且富有质感。结尾停在夹层下隐秘旧墨浮现的瞬间，悬念钩子力度充足，追读体验优异。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 19,
+        "score": 84.3,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 92,
+          "openingHook": 82,
+          "conflictEffectiveness": 80,
+          "emotionalDrive": 84,
+          "characterVoice": 88,
+          "payoffValue": 82,
+          "pacing": 78,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.issue-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "暗室技术勘验与物理操作的工笔描摹跨越两章，动作细节极其微观，剧情空间推进相对集中于技术复原环节。",
+            "evidence": [
+              "沈错右臂悬空未动，指尖稳稳压住苦竹裁刀的重心……五倍子入研钵……动作极其平稳地向研钵中注入半盏清冽的井水……刷毛极轻极缓地贴上泛黄干枯的纸面"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.issue-2",
+            "severity": "low",
+            "category": "payoff",
+            "location": "全文",
+            "description": "唤墨显影的真正谜底（底层旧纸原本记载的文字内容）卡在药水刷上去的最后一瞬，核心解密回报后置到了下一章。",
+            "evidence": [
+              "刷毛极轻极缓地贴上泛黄干枯的纸面，自右向左平稳地扫了过去。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章展现了极高的硬核公文刑侦专业质感。通过对古纸托裱剥离、帘纹竹丝密数比对（24道对36道）、滑石粉掺杂比例及御用监蟠螭暗记的微观勘验，扎实确立了‘伪证底纸跨越八年’的铁证断层，智力碾压与职业探案卖点兑现充分。文风沉稳考究，环境压迫感（三更鼓声与排气孔防漏）营造得当，章尾断在唤墨药水触纸显影的一刹那，悬念钩子极具追读吸引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 20,
+        "score": 87.2,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 88,
+          "characterVoice": 84,
+          "payoffValue": 90,
+          "pacing": 86,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "反派伪造文书时恰好挑中三十年前核心大案的原始审讯草卷作为垫底废纸，情节巧合度略高，依赖‘秘阁废纸库随手取材’的设定来解释，略有戏剧化便利之嫌。",
+            "evidence": [
+              "崔景和为了伪造两淮巡盐御史的自缢绝笔，特意从秘阁废纸库中寻来这张前朝硬黄纸作为底托。他以为洗去墨迹便能天衣无缝，却不知这张纸本身，就是三十年前被刑部暗中销毁的原始审讯草卷。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章的唤墨显影悬念，直接给出了极高密度的物证微兑现。硬核物证刑侦（酸矾唤墨、朱墨层析）描写扎实，成功将当下的巡盐御史伪案与三十年前沈、萧两家的代际血仇主线无缝咬合。萧南巡带回的外部朝堂局势与暗室内的铁证合流，情绪张力饱满，章尾揭出绝密案卷编号与晨钟齐鸣，将破晓公堂对质的期待感推至顶点。"
       }
     ],
     "windows": [
@@ -429,77 +1107,154 @@
         "version": "reader-eval-v1",
         "fromChapter": 1,
         "toChapter": 3,
-        "score": 86.6,
+        "score": 88.5,
         "continueReading": true,
         "confidence": 0.95,
         "dimensions": {
           "mainlineProgress": 88,
-          "patternVariation": 85,
-          "suspensePayoff": 86,
-          "characterArc": 84,
-          "emotionalArc": 85,
-          "payoffEscalation": 83,
+          "patternVariation": 83,
+          "suspensePayoff": 90,
+          "characterArc": 85,
+          "emotionalArc": 90,
+          "payoffEscalation": 86,
           "genrePromise": 94,
-          "continuationDesire": 90
+          "continuationDesire": 92
         },
         "issues": [
           {
-            "id": "reader.character-1",
+            "id": "reader.pacing-1",
             "severity": "low",
-            "category": "character",
+            "category": "pacing",
             "location": "全文",
-            "description": "主角父母旧案作为动机引入略显网文经典模板化，但作为前3章揭示历史跨度与个人恩怨的锚点功能明确，整体节奏紧凑。",
+            "description": "前3章全部情节均高度聚焦在还魂堂的操作台前，第1章与第3章均采用了【案台操作->药水显影->放大镜观察->推导黑幕】的微观物证勘验闭环。虽然推导出的信息量层层递进、逻辑极为硬核，但在密闭单一空间内的连续同构推演略显空间局促，后续需要尽快借三法司大堂等外部冲突打破密室局限。",
             "evidence": [
-              "三十年前那场风波有多惨烈你根本不知道！你父母当年在厂里，多少老实本分的技术员因为碰了这枚印背后的东西，一夜之间家破人亡！"
+              "他快步走回老榆木操作台前。案上狼藉已被收拾停当，空气里却依然残留着崔景和等人带来的生铁腥气与泥泞湿痕。沈错探手入怀，从粗麻内衫最隐秘的夹缝中，取出一片巴掌大小、质地硬脆的残破纸页。"
             ],
             "suggestion": "",
             "blocking": false,
             "confidence": 0.7
           }
         ],
-        "summary": "前3章开局质量极高，精准兑现了‘硬核物证痕检+档案文献修复+体制内博弈’的题材承诺。第1章以暴雨险情带出异常文书与副局长施压；第2章以高倍显微痕检（30微米缺角、氧化周期）及无损微量切片留证完成技术破局，并通过空白底册强化悬念；第3章老主任深夜来访完成世界观拓展（30年前黑印、双重底册、父母旧案），章尾黑车监视将局部危机迅速拉升至人身安全层面。节奏紧凑明快，伏笔层层递进，追读欲望强烈。"
+        "summary": "前3章展现了极高水平的“公文刑侦与硬核物证”题材质感。开篇以水磨青竹刀、冷金楮皮纸、督考清平司幽灵暗印迅速建立起高智商待罪录事人设与跨代悬疑主线；第2章以扎实考究的“蒸纸还魂术”配合大靖律法正面打脸反制崔景和，利落兑现下克上爽点；第3章进一步通过鹿胶脱胶周期、墨水倒流毛边及鱼鳞暗记，严密推导引爆三百万两盐银亏空的通天大案，并在章尾以生牛皮透骨钉封死气窗建立紧迫的密室生死时限。情节环环相扣，专业考据与悬疑博弈深度融合，追读驱动力极强。"
       },
       {
         "version": "reader-eval-v1",
         "fromChapter": 1,
         "toChapter": 5,
-        "score": 86,
+        "score": 80.9,
         "continueReading": true,
         "confidence": 0.92,
         "dimensions": {
-          "mainlineProgress": 88,
-          "patternVariation": 84,
-          "suspensePayoff": 85,
-          "characterArc": 80,
-          "emotionalArc": 86,
-          "payoffEscalation": 85,
-          "genrePromise": 92,
-          "continuationDesire": 88
+          "mainlineProgress": 82,
+          "patternVariation": 80,
+          "suspensePayoff": 74,
+          "characterArc": 78,
+          "emotionalArc": 83,
+          "payoffEscalation": 81,
+          "genrePromise": 86,
+          "continuationDesire": 85
         },
         "issues": [
           {
             "id": "reader.other-1",
-            "severity": "low",
+            "severity": "high",
             "category": "other",
-            "location": "第3章与第5章",
-            "description": "地下修复室的废弃排污铸铁检修门在第3章（老主任孙德林）和第5章（记者苏青）连续两次被用作秘密潜入的通道，功能设计略显套路化。",
+            "location": "全文",
+            "description": "核心物证设定前后矛盾：第1章与第4章明确界定两淮巡盐御史绝笔供状底纸为‘三十年前景泰年间内府专造的四十二道帘纹冷金楮皮纸’（破绽为先印后文、旧纸新墨）；但第5章萧南巡与沈错勘验同一份绝笔时，破绽机制却突变为‘天佑四年皖南澄心堂造三十五道帘纹纸’（破绽为天佑元年死囚用了三年后新纸）。两处对于同一份核心公文的纸张类型、帘纹数量及年代逻辑产生了直接冲突，严重损害了硬核公文探案的严密性。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.pacing-2",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "前5章剧情完全被锁闭在刑部秘阁还魂堂单一暗室内，虽然危机递进层层加码（崔景和拔刀逼迫 -> 钉死气窗 -> 送毒参汤 -> 萧南巡破门拔刀），但密闭空间与操作台道具的反复利用略显局促，需注意后续章节及时转入公堂或外景以避免场景疲劳。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "1-5章开局极其惊艳，完美契合‘硬核公文探案、物证刑侦、下克上’的核心定位。开篇通过青竹刀分层、温矾水洗胶、蒸纸还魂术、鹿胶脱胶逆流毛边等极其扎实的古法造纸与修卷刑侦细节，迅速立住了主角沉着精绝的职业人设与压迫感十足的朝堂党争背景。危机一环扣一环，反制凌厉果决。唯一存在的明显硬伤在于第5章对核心案卷纸张属性的设定出现了前后打架（第1/4章的‘景泰朝42道旧纸新用’与第5章的‘天佑四年35道新纸死人用’相冲突），需尽快统一定义以保全硬核推演的说服力。整体追读欲望极强，萧南巡的介入为后续三法司会审拉足了期待。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 6,
+        "toChapter": 10,
+        "score": 83.2,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 82,
+          "patternVariation": 80,
+          "suspensePayoff": 85,
+          "characterArc": 82,
+          "emotionalArc": 81,
+          "payoffEscalation": 83,
+          "genrePromise": 88,
+          "continuationDesire": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "核心反派崔景和的官阶设定在相邻章节中出现严重前后矛盾，动摇了关键刑侦推演的逻辑链。第8章中沈错推导'崔景和区区一个从五品刑部司务领不到御墨'，从而断言'真正的指使者官阶高居刑部堂官之列'；然而第9章崔景和出场却身着'正三品绯红云雁官袍'、被称为'崔侍郎'，第10章底册更明文记录崔景和以'正三品刑部右侍郎'身份亲自支取御墨。这使得第8章借官阶推导幕后主使的推理逻辑产生硬伤。",
             "evidence": [
-              "第3章：'修复室最内侧紧靠老排污井的铸铁检修门上，突然传来了三声极轻却急促的叩击……来人正是半年前刚刚从档案馆技术科退休的老主任孙德林'；第5章：'修复室最内侧紧靠老排污廊道的铸铁检修门上，突然传来了一阵极其轻微的金属摩擦声……一个扎着利落马尾、身穿墨绿色连帽冲锋衣的身影敏捷地闪了进来。'"
+              "崔景和区区一个从五品刑部司务，平日里连这等御墨的边角都摸不到。"
+            ],
+            "suggestion": "统一崔景和的官职设定。若将其设定为正三品刑部右侍郎，须修正第8章中'从五品刑部司务'的台词与推导逻辑（改为推导其领用记录而非越级领用）；若其为司务，则第9、10章中其服制与领墨记录应对应修正。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本阅读窗口（第6-10章）展现了极高水准的硬核历史悬疑质感。沈错与萧南巡由互相试探迅速转化为文武互补的破局同盟，火海夺卷、草木灰封泥、松烟御墨延燃机理、熟桐油纸透光显影及印泥扩散环定日等公文刑侦细节极为扎实，精准兑现了'公文刑侦、物证打脸'的题材核心承诺。情节在密室遇险、焦土对峙与夜查底册之间紧凑推进，并顺畅引出内阁龙脑残印的更高阶阴谋。唯需修正第8章与第9-10章之间崔景和官职前后不一（从五品司务骤变正三品侍郎）的逻辑漏洞。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 16,
+        "toChapter": 20,
+        "score": 88,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 84,
+          "suspensePayoff": 90,
+          "characterArc": 82,
+          "emotionalArc": 86,
+          "payoffEscalation": 88,
+          "genrePromise": 94,
+          "continuationDesire": 92
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "第16章末尾：‘萧南巡与陆九安紧随其后，三人借着两方官差拔刀对峙、过往百姓惊慌骚乱的掩护，悄无声息地绕过城门口的刑部眼线，贴着护城河畔的芦苇荡迅疾向西潜行。’；第17章正文：‘头顶地板上突然传来陆九安与心腹令史沉重的踱步声。’"
             ],
             "suggestion": "",
             "blocking": false,
             "confidence": 0.7
           }
         ],
-        "summary": "前5章开篇表现极为扎实，精准兑现了硬核档案痕检、体制内智斗与历史长线悬疑的题材承诺。从暴雨抢救公文、显微镜下30微米缺角与树脂印油分析，到第4章以一滴蒸馏水析出油膜公开击破副局长阴谋，技术破局与体制博弈张弛有度。随后引入暗中监视的黑车、记者调查的矿区生态灾难与80年代‘幽灵黑印’底册，将微观技术证据迅速链接至百亿国资与民生大案，主线推进清晰且情绪层层递进。"
+        "summary": "本阅读窗口（第16-20章）高度契合‘硬核公文刑侦、代际复仇、物证打脸’的定位卖点。剧情从城门借势脱身、暗道潜入秘阁，层层推进至暗室避险与古法剥离双层伪公文，节奏张弛有度。作者在纸张纤维帘纹比对（24道对36道）、防伪暗记考据、五倍子与皂矾‘唤墨秘法’等物理刑侦细节上展现了极高的专业质感，并极其顺畅地将两淮巡盐伪案与三十年前‘肃奸案’的代际血仇融为一体。第20章末尾绝密编号显影与晨钟齐鸣，将破晓公堂对质的期待值拉至最高，追读欲望强烈。"
       }
     ],
     "metrics": {
-      "chapterCount": 5,
-      "chapterAverage": 87,
-      "chapterMedian": 86.8,
-      "chapterMinimum": 86.1,
-      "openingThreeAverage": 86.9,
+      "chapterCount": 20,
+      "chapterAverage": 86.2,
+      "chapterMedian": 87.1,
+      "chapterMinimum": 79.7,
+      "openingThreeAverage": 87.5,
       "continueReadingNoCount": 0,
       "lowChapterCount": 0,
       "lowWindowCount": 0,
@@ -509,13 +1264,13 @@
       "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察"
     ],
     "errors": [],
-    "durationMs": 86041
+    "durationMs": 291374
   },
   "provider": "openai",
   "model": "gemini-3.7-flash-high",
-  "totalMs": 690469,
+  "totalMs": 2417332,
   "warnings": [
-    "大纲阶段 warnings（3 条，详见 outlineWarnings 字段）",
+    "大纲阶段 warnings（4 条，详见 outlineWarnings 字段）",
     "读者评审 warnings（1 条，影子模式不阻断）"
   ]
 }

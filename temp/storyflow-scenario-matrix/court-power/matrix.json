@@ -1,8 +1,8 @@
 {
   "mode": "storyflow-matrix",
-  "generatedAt": "2026-08-25T03:22:35.316Z",
+  "generatedAt": "2026-08-25T09:33:37.171Z",
   "concurrency": 3,
-  "chapterCount": 5,
+  "chapterCount": 20,
   "scenarioId": "court-power",
   "providers": [
     {
@@ -12,21 +12,21 @@
       "model": "gemini-3.7-flash-high",
       "pass": true,
       "exitCode": 0,
-      "wallMinutes": 12,
+      "wallMinutes": 34,
       "note": "",
-      "chaptersAccepted": "5/5",
+      "chaptersAccepted": "20/20",
       "status": "complete",
-      "wordsMin": 2734,
-      "wordsAvg": 2983,
-      "wordsMax": 3291,
+      "wordsMin": 2468,
+      "wordsAvg": 2866,
+      "wordsMax": 3312,
       "runtimeBackend": "sqlite",
       "warnings": 2,
       "firstPassRate": 1,
       "totalRewriteRounds": 0,
-      "requestCount": 16,
-      "readerOutlineScore": 88.7,
-      "readerChapterAverage": 90,
-      "readerChapterMinimum": 88.4,
+      "requestCount": 63,
+      "readerOutlineScore": 91.1,
+      "readerChapterAverage": 87.8,
+      "readerChapterMinimum": 84.1,
       "readerIndependent": false
     }
   ]
