@@ -1189,6 +1189,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
           enableAIEnhancement: true,
           enableFileBackup: true,
           fallbackToPrevious: true,
+          characterRoster: (projectStore.currentProject?.characters ?? []).map(c => c.name),
         }
       );
 

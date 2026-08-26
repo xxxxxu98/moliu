@@ -34,9 +34,17 @@ MOLIU_STORYFLOW_SCENARIO_IDS=court-power,fair-mystery npm run smoke:storyflow:sc
 
 # 读者评审器质量变异冒烟（验证评审器能识别假钩子/注水）
 npm run smoke:reader-eval:real
+
+# 回归验证修复时避免覆盖上一轮长跑产物：归档目录重定向（必须在 temp/ 内）
+MOLIU_STORYFLOW_MATRIX_DIR=temp/storyflow-matrix-regXX node scripts/agent-storyflow-real-multi.mjs <id>
 ```
 
 产物在 `temp/storyflow-matrix/<providerId>/`（run.log / trace jsonl / prose / summary），矩阵元数据在 `temp/storyflow-matrix/matrix.json`。
+
+规模联动（2026-08-26 起）：`MOLIU_CHAPTER_COUNT` 超过默认字数区间可承载的章数
+（约 240 章，按每章 2500 字折算）时，闭环测试自动按章数放大 wordCountRange
+生成对应百万级长篇区间——大纲的卷数/每卷章数随请求规模走，避免「按小书规划、
+写大书篇幅」的规模错配。`MOLIU_STORYFLOW_WORD_RANGE` 显式指定时优先。
 
 ## 第 2 步：triage（确定性，不要跳过）
 
@@ -60,6 +68,13 @@ node scripts/storyflow-triage.mjs --diff         # 最近两份报告的签名�
 | `model-capability-suspect` | 同章质量拒绝 ≥3 轮（stalled） | **停止 patch**。产出结论：换模型 / 调整合同（需人工确认），本轮结束 |
 | `infra-failure` | 网络/网关主导 | 先重跑一次排除瞬态窗口；若新错误类别未被重试兜住，补重试分类 |
 | `pipeline-bug` | 断言失败但无质量/网络签名 | 排查管线代码（`src/renderer/src/services/writing/`），修复后回归 |
+
+`prose.dead-resurrection`（2026-08-26 新增，恒红）：跨章人物状态幻觉——
+已死/下狱/定罪角色在其后章节以活体出场。由 triage 对全书正文与角色卡做
+确定性扫描产出（对话密集文本的共现匹配假阳性极多，脚本内已用「主语紧邻
+命运谓语」句式收敛）。它直接触发 `quality-rejection`，即使全部章节 accepted
+也拦得住——章内 reviewer 看不到这种跨百章状态矛盾（500 章实测漏报 ~95%）。
+长跑（>50 章）冒烟必须跑 triage 看这个签名，不能只看矩阵绿勾。
 
 读者评审当前为 `reader-eval-v1` **影子模式**：`reader.*` 签名一律为黄，不改变章节
 accepted，也不自动驱动重写。它用于校准追读力、人物、情绪、爽点、跨章重复等质量趋势；

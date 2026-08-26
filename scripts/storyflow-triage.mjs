@@ -438,8 +438,129 @@ function triageProvider(providerId, meta) {
     }
   }
 
+  // 人物死而复活确定性扫描（2026-08-26 发现：500 章实测周茂 ch59 定罪下狱后 ch81
+  // 无交代复活、崇仁帝 ch250 驾崩后 ch265 起继续临朝，reviewer 全书只抓到 5 处、
+  // 漏报 ~95%）。从正文正扫命运级事件（死亡/驾崩/下狱/定罪），再看其后章节里
+  // 同名角色是否还有活体动作；命中即红——这是终端状态被静默推翻，章内 reviewer
+  // 与重试都无法自愈的跨章幻觉。回忆性提及（「当年周茂案」）不算活体。
+  {
+    const storeFile = readdirSync(dir).find(
+      name => name.startsWith('storyflow-') && name.endsWith('.project-store.json')
+    );
+    const proseFallbackDir = join(dir, 'prose');
+    const chapters = [];
+    if (storeFile) {
+      try {
+        const store = JSON.parse(readFileSync(join(dir, storeFile), 'utf8'));
+        const proj = store.projects?.[0];
+        for (const ch of proj?.chapters ?? []) {
+          if (ch?.content && ch.content.trim()) {
+            chapters.push({ n: (ch.orderIndex ?? 0) + 1, text: ch.content });
+          }
+        }
+      } catch {
+        /* store 损坏时退 prose 目录 */
+      }
+    } else if (existsSync(proseFallbackDir)) {
+      for (const name of readdirSync(proseFallbackDir).filter(n => /^ch\d+\.txt$/.test(n))) {
+        chapters.push({
+          n: Number(name.match(/\d+/)[0]),
+          text: readFileSync(join(proseFallbackDir, name), 'utf8'),
+        });
+      }
+    }
+    chapters.sort((a, b) => a.n - b.n);
+    // 角色白名单：只信项目角色卡里的名字，否则「当场驾崩」「押解进京」这类
+    // 谓语片段会被当成角色名，产生大量假阳性红签名。
+    let roster = [];
+    if (storeFile) {
+      try {
+        const store2 = JSON.parse(readFileSync(join(dir, storeFile), 'utf8'));
+        roster = (store2.projects?.[0]?.characters ?? [])
+          .map(c => (c?.name || '').trim())
+          .filter(n => n.length >= 2 && n.length <= 8);
+      } catch {
+        /* 已在上面吃过一次解析失败，这里 roster 留空则跳过扫描 */
+      }
+    }
+    if (chapters.length >= 3 && roster.length > 0) {
+      const rosterSet = new Set(roster);
+      // 事件章：角色 → {state, chapter}。中文正文叙事的惯例是「主语+命运谓语」
+      // 紧邻（「周茂气绝」「崇仁帝驾崩了」「沈宛君被押入天牢」），因此事件词
+      // 只认「名字后紧跟命运谓语」的句式；名字与事件词隔了引语/他人/从句的
+      // 一律不算（「陈廷敬悲呼：大行皇帝龙驭宾天」是转述，「宗人府死牢里的
+      // 画押」是名词短语）。逆序共现（「杀死了周茂」）用独立谓语式覆盖。
+      const fates = new Map();
+      const recordFate = (name, state, n) => {
+        if (!name || name.length < 2 || name.length > 8) return;
+        if (!rosterSet.has(name)) return;
+        const prev = fates.get(name);
+        if (!prev || n > prev.chapter) {
+          fates.set(name, { name, state, chapter: n });
+        }
+      };
+      const DEATH_PRED = '(?:气绝|毙命|身亡|丧命|殒命|惨死|暴毙|命丧|吐血而亡|服毒自尽|自刎|坠亡|被杀|被鸩杀|被毒杀|被人所杀|死于非命)';
+      const DEATH_REVERSE = '(?:杀了|斩杀|鸩杀|毒杀|格杀|击杀|处死|勒死|刺死)';
+      const JAISON_REVERSE = '(?:押(?:解|送|入)进?(?:天牢|大牢|死牢|宗人府|诏狱))';
+      const CONDEMN_PRED = '(?:被处斩|被判斩|被问斩|被定罪|被定谳|被论罪|被革职抄没|被满门抄斩)';
+      const ADVERB = '(?:当场|随即|立刻|当即|最终|当晚|当日|翌日|不久|很快)?';
+      for (const ch of chapters) {
+        for (const name of rosterSet) {
+          let from = 0;
+          for (;;) {
+            const at = ch.text.indexOf(name, from);
+            if (at < 0) break;
+            from = at + name.length;
+            const tail = ch.text.slice(at + name.length, at + name.length + 24);
+            const lead = ch.text.slice(Math.max(0, at - 12), at);
+            // 主语式：名字 + (副词) + 死亡谓语；逆序式：杀死类动词 + (字) + 名字
+            const deathSubj = new RegExp(`^${ADVERB}${DEATH_PRED}`).test(tail);
+            // 逆序式（「杀死了周茂」）排除悬赏/条件/反问语境：
+            // 「格杀裴修远者赏万金」「斩杀钦差者连升三级」「杀了周茂就能翻盘」
+            // 都不是既成事实——名字后紧跟「者+赏封连升即可」类句式一律放弃。
+            const deathRev =
+              new RegExp(`${DEATH_REVERSE}[^。！？，,、地得]{0,6}$`).test(lead) &&
+              !/者[，,]?.{0,6}(?:赏|封|连升|免死|免罪|记功)|就能|便能|岂能|焉能|何以|万一|若是|若真|当真|如果|假设|不如|不妨/.test(tail) &&
+              !/(?:若|倘若|假使|若是)[^。！？]{0,8}$/.test(lead);
+            const jairev = new RegExp(`${JAISON_REVERSE}[^。！？，,、]{0,4}$`).test(lead);
+            // 「下狱」主语式排除并列列举（「齐王与三皇子下狱」是摘要式排比，
+            // 并列主语时单个名字不算独立命运事件）；被押式保持原样。
+            // 假设/威胁语气（「必会将你下狱治罪」）也不是既成事实。
+            const jailSubj =
+              (new RegExp(`^${ADVERB}(?:被[关押打入抓锁](?:进|入|到)?(?:天牢|大牢|死牢|宗人府|诏狱|大狱)|沦为阶下囚|被圈禁(?:终身|于|在)?(?:，|。|$))`).test(tail) ||
+                (/^(?:当场|随即|立刻|当即|最终|当晚|当日|翌日|不久|很快)?下狱/.test(tail) && !/[与、及跟同]/.test(lead))) &&
+              !/治罪|问罪|就[要会]|必定|定将|必将|恐将|只怕|难免|不[如妨]/.test(tail);
+            const throneSubj = new RegExp(`^${ADVERB}(?:驾崩|晏驾|崩逝|薨逝|龙驭上宾|宾天)`).test(tail);
+            const condemnSubj = new RegExp(`^${ADVERB}${CONDEMN_PRED}`).test(tail);
+            if (deathSubj || deathRev) recordFate(name, '死亡', ch.n);
+            if (throneSubj) recordFate(name, '驾崩', ch.n);
+            if (jailSubj || jairev) recordFate(name, '下狱', ch.n);
+            if (condemnSubj) recordFate(name, '定罪', ch.n);
+          }
+        }
+      }
+      // 活体动作扫描：命运章之后出现「名字+说话/动作」
+      const ACTIVE_RE = (name) =>
+        new RegExp(`${name}[^。！？””]{0,8}(?:说道|道|开口|下令|禀报|躬身|拱手|上前|快步|走进|站起|点头|摇头|吩咐|呈报|朗声|沉声|冷笑)`, 'u');
+      const RESURRECT_RELEASE = /平反|翻案|无罪释放|赦免|大赦|越狱|劫狱|起复|官复原职|重新起用|假死|诈死|并未.{0,4}死|苏醒/;
+      for (const fate of fates.values()) {
+        const active = chapters.filter(
+          ch => ch.n > fate.chapter && ACTIVE_RE(fate.name).test(ch.text) && !RESURRECT_RELEASE.test(ch.text)
+        );
+        if (active.length > 0) {
+          acc.add(
+            'prose.dead-resurrection',
+            fate.chapter,
+            `${fate.name}于第${fate.chapter}章${fate.state}，其后 ${active.length} 章仍以活体出场` +
+              `（首见第${active[0].n}章，章号：${active.slice(0, 8).map(c => c.n).join(',')}${active.length > 8 ? '…' : ''}）`
+          );
+        }
+      }
+    }
+  }
+
   // 分级：章节最终 accepted → 黄（已恢复）；否则红（阻断）。infra/outline/assert 恒定分级
-  const RED_ALWAYS = new Set(['assert.chapters-accepted']);
+  const RED_ALWAYS = new Set(['assert.chapters-accepted', 'prose.dead-resurrection']);
   const YELLOW_ALWAYS = new Set([
     'infra.maxtokens-downgrade',
     'infra.transient.http-502',
@@ -480,9 +601,11 @@ function triageProvider(providerId, meta) {
   if (stalledSig) {
     verdict = 'model-capability-suspect';
     verdictReason = `第${stalledSig.chapter}章质量拒绝连续 ${acc.chapterAttempts[stalledSig.chapter]} 轮未收敛，重试无意义，考虑换模型或调合同（需人工确认）`;
-  } else if (has(s => s.severity === 'red' && s.id.startsWith('quality.'))) {
+  } else if (
+    has(s => s.severity === 'red' && (s.id.startsWith('quality.') || s.id === 'prose.dead-resurrection'))
+  ) {
     verdict = 'quality-rejection';
-    verdictReason = '存在质量拒绝且未恢复，但未达 3 轮停滞';
+    verdictReason = '存在质量拒绝且未恢复（或跨章人物状态幻觉：死/囚角色复活），但未达 3 轮停滞';
   } else if (!meta.pass && has(s => s.severity === 'red' && s.id.startsWith('pipeline.'))) {
     verdict = 'pipeline-bug';
     verdictReason = '存在确定性管线错误，优先修复管线后再回归';

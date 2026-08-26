@@ -3,7 +3,15 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { extractChapterMemory, safeExtractChapterMemory, buildCharacterStateTable, buildPlotProgressTable } from '../extract-plot-memory';
+import {
+  extractChapterMemory,
+  safeExtractChapterMemory,
+  buildCharacterStateTable,
+  buildPlotProgressTable,
+  extractCriticalStatusChanges,
+  collectCharacterFates,
+  collectFateForbiddenZones,
+} from '../extract-plot-memory';
 import type { Chapter, ChapterMemory } from '@/types/project';
 
 function createMockChapter(overrides?: Partial<Chapter>): Chapter {
@@ -134,5 +142,97 @@ describe('buildPlotProgressTable', () => {
     
     expect(result).toBeDefined();
     expect(typeof result).toBe('string');
+  });
+});
+
+// ---------- 命运级状态提取（死亡/驾崩/下狱/定罪/官职） ----------
+// 500 章实测：滑动窗口状态摘要完全丢掉命运事件，已死角色大面积复活。
+// 这里锁定规则提取的召回与关键误报形态。
+
+describe('extractCriticalStatusChanges', () => {
+  it('提取主语式死亡与鸩杀', () => {
+    const changes = extractCriticalStatusChanges('酒过三巡，周茂气绝身亡，倒在案前。');
+    const zhou = changes.find(c => c.characterName === '周茂' && c.state === '死亡');
+    expect(zhou).toBeDefined();
+    expect(zhou?.detail).toContain('周茂');
+  });
+
+  it('提取逆序式（被杀/处死+人名）', () => {
+    const changes = extractCriticalStatusChanges('三皇子败露，圣旨当夜将其处死，沈文渊被鸩杀灭口。');
+    expect(changes.some(c => c.state === '死亡')).toBe(true);
+  });
+
+  it('提取驾崩/下狱/定罪/官职', () => {
+    const text = [
+      '崇仁帝驾崩，丧钟响彻宫城。',
+      '齐王被押入宗人府，沦为阶下囚。',
+      '户部侍郎被判斩立决。',
+      '裴修远升任户部尚书，统领天下钱粮。',
+    ].join('');
+    const changes = extractCriticalStatusChanges(text);
+    const states = new Set(changes.map(c => c.state));
+    expect(states.has('驾崩')).toBe(true);
+    expect(states.has('下狱')).toBe(true);
+    expect(states.has('定罪')).toBe(true);
+    expect(states.has('官职变更')).toBe(true);
+  });
+
+  it('悬赏/假设语境不产生死亡状态', () => {
+    const changes = extractCriticalStatusChanges('「斩杀裴修远者，赏银万两！」叛军头目嘶吼。');
+    expect(changes.some(c => c.characterName === '裴修远' && c.state === '死亡')).toBe(false);
+  });
+
+  it('传入角色白名单时只保留名单内命中，过滤谓语前缀噪声', () => {
+    const text = '昏暗的死牢重新陷入一片死寂，只有墙角渗水滴落。赵德禄被押入死牢，跪地求饶。';
+    // 有白名单：只认名单内的赵德禄，其余前缀噪声全部被滤掉
+    const filtered = extractCriticalStatusChanges(text, ['赵德禄', '沈淮']);
+    expect(filtered.length).toBeGreaterThan(0);
+    expect(filtered.every(c => ['赵德禄', '沈淮'].includes(c.characterName))).toBe(true);
+  });
+});
+
+function memoryWith(changes: ChapterMemory['characterStateChanges'], index: number, corePlot = ''): ChapterMemory {
+  return {
+    chapterId: `ch-${index}`,
+    chapterTitle: `第${index + 1}章`,
+    chapterIndex: index,
+    corePlot: corePlot || `第${index + 1}章剧情`,
+    keyEvents: [],
+    locations: [],
+    characterStateChanges: changes,
+    revealedForeshadows: [],
+    newForeshadows: [],
+    wordCount: 3000,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+describe('collectCharacterFates / collectFateForbiddenZones', () => {
+  it('死亡事件跨百章后仍保留在命运表，并生成禁入条目', () => {
+    const memories = [
+      memoryWith([{ characterName: '周茂', stateType: 'status', state: '下狱', detail: '圣旨定罪' }], 58),
+      ...Array.from({ length: 300 }, (_, i) => memoryWith([], 59 + i)),
+    ];
+    const fates = collectCharacterFates(memories);
+    expect(fates.some(f => f.characterName === '周茂' && f.state === '下狱')).toBe(true);
+
+    const zones = collectFateForbiddenZones(memories, ['裴修远', '周茂', '沈宛君']);
+    const zone = zones.find(z => z.includes('周茂'));
+    expect(zone).toBeDefined();
+    expect(zone).toContain('第59章');
+    expect(zone).toContain('下狱');
+    // 白名单外的名字不生成禁入（规则提取的非人名命中被过滤）
+    expect(zones.every(z => !z.includes('当场'))).toBe(true);
+  });
+
+  it('后续平反/赦免会解除命运禁入', () => {
+    const memories = [
+      memoryWith([{ characterName: '周茂', stateType: 'status', state: '下狱', detail: '定罪' }], 58),
+      memoryWith([{ characterName: '齐王', stateType: 'status', state: '下狱', detail: '圈禁' }], 58),
+      memoryWith([], 90, '新皇登基大赦天下，周茂冤案平反昭雪，官复原职。'),
+    ];
+    const zones = collectFateForbiddenZones(memories, ['周茂', '齐王']);
+    expect(zones.some(z => z.includes('周茂'))).toBe(false);
+    expect(zones.some(z => z.includes('齐王'))).toBe(true);
   });
 });

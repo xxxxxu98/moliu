@@ -126,4 +126,44 @@ describe('ensureStoryflowWritingCapacity', () => {
     expect(expanded.outlineRoll!.rolledCount).toBe(0);
     expect(expanded.outlineRoll!.warnings[0]).toContain('未触发');
   });
+
+  it('真实 AI 路径：单批截断后循环续滚直到补满，不留占位槽', async () => {
+    const blockFor = (n: number) => `### 第${n}章
+- 标题：第${n}章夜审惊变
+- 概要：概要内容填写足够长以通过基本校验要求第${n}章概要补充说明文字。
+- CBN：三更灯下账页缺角第${n}章
+- CPNs：比对旧账发现缺口；主簿带人围库房；以印信压住场面
+- CEN：主簿身后闪出禁军影子第${n}章
+- mustCover：查清军资缺口；逼退巡夜主簿
+- 禁区：不得揭示玉印来历
+- 章尾钩子文案：账还没查完，刀已经架到脖子上了
+- 爽点类型：解谜`;
+
+    // 首批只解出第 3-4 章（第 5 章缺失截断）→ 循环从第 5 章续滚第二批补满 3-5
+    let call = 0;
+    const expanded = await ensureStoryflowWritingCapacity(makeProject(), 5, {
+      callStructuredText: async (_system, user) => {
+        call += 1;
+        if (call === 1) return `${blockFor(3)}\n${blockFor(4)}`;
+        return user.includes('第5章') ? blockFor(5) : blockFor(4);
+      },
+    });
+
+    const chapterNodes = expanded.plotOutline
+      .filter(node => node.type === 'chapter')
+      .sort((a, b) => a.orderIndex - b.orderIndex);
+    expect(call).toBeGreaterThanOrEqual(2);
+    expect(chapterNodes).toHaveLength(5);
+    // 循环续滚的章节同样带结构化合同，不再是「滚动续写槽位」占位
+    for (const node of chapterNodes.slice(2)) {
+      expect(node.CBN).toContain('账页缺角');
+      expect(node.mustCover?.length).toBeGreaterThan(0);
+    }
+    expect(expanded.outlineRoll).toMatchObject({
+      rolledFromChapter: 3,
+      rolledToChapter: 5,
+      rolledCount: 3,
+      placeholderCount: 0,
+    });
+  });
 });

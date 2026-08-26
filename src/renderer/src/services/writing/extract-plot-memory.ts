@@ -27,13 +27,15 @@ export async function extractChapterMemory(
   options?: {
     enableAIEnhancement?: boolean;
     enableFileBackup?: boolean;
+    /** 项目角色名白名单：传入时命运级提取只认名单内的名字，过滤谓语前缀噪声 */
+    characterRoster?: string[];
   }
 ): Promise<ChapterMemory> {
   const content = chapter.content;
   const wordCount = Math.ceil(content.length / 2);
 
   // 1. 基础提取：使用规则从正文中提取
-  const baseMemory = extractByRules(chapter, chapterIndex, wordCount);
+  const baseMemory = extractByRules(chapter, chapterIndex, wordCount, options?.characterRoster);
 
   // 2. 尝试 AI 辅助增强（可选，不影响主流程）
   const enableAIEnhancement = options?.enableAIEnhancement ?? true;
@@ -77,6 +79,8 @@ export async function safeExtractChapterMemory(
     enableAIEnhancement?: boolean;
     enableFileBackup?: boolean;
     fallbackToPrevious?: boolean;
+    /** 项目角色名白名单：传入时命运级提取只认名单内的名字 */
+    characterRoster?: string[];
   }
 ): Promise<ChapterMemory | null> {
   try {
@@ -271,7 +275,8 @@ export function buildPlotProgressTable(memories: ChapterMemory[]): string {
 function extractByRules(
   chapter: Chapter,
   chapterIndex: number,
-  wordCount: number
+  wordCount: number,
+  characterRoster?: string[]
 ): ChapterMemory {
   const content = chapter.content;
   const sentences = content.split(/[。！？；]/).filter(s => s.trim().length > 5);
@@ -305,7 +310,7 @@ function extractByRules(
   const timelineMark = extractTimeline(content);
 
   // 5. 角色状态变化：提取对话和动作中的角色
-  const characterStateChanges = extractCharacterChanges(content, sentences);
+  const characterStateChanges = extractCharacterChanges(content, sentences, characterRoster);
 
   // 6. 伏笔相关：查找悬念描写
   const { revealedForeshadows, newForeshadows } = extractForeshadows(content);
@@ -406,7 +411,11 @@ function extractTimeline(content: string): string | undefined {
 /**
  * 从正文中提取角色状态变化
  */
-function extractCharacterChanges(content: string, sentences: string[]): CharacterStateChange[] {
+function extractCharacterChanges(
+  content: string,
+  sentences: string[],
+  characterRoster?: string[]
+): CharacterStateChange[] {
   const changes: CharacterStateChange[] = [];
   const characterSet = new Set<string>();
 
@@ -447,12 +456,173 @@ function extractCharacterChanges(content: string, sentences: string[]): Characte
 
     changes.push({
       characterName: charName,
-      stateType: isFirstAppear ? '出场' : '动作',
+      stateType: isFirstAppear ? 'appearance' : 'status',
       state: isFirstAppear ? '首次出场' : '执行动作',
       detail: isFirstAppear ? `在情节中首次出现` : `发生动作描写`,
     });
   }
 
+  // 关键状态事件（生死/下狱/官职）：滑动窗口状态摘要曾经完全丢掉这类事件，
+  // 500 章实测导致已死角色大面积复活。规则提取带正文证据，供下游合同禁入。
+  changes.push(...extractCriticalStatusChanges(content, characterRoster));
+  return changes;
+}
+
+/**
+ * 命运级状态：一旦进入即视为「不可自由活动」的终端状态。
+ * 后续章节要写他们出场（回忆/翻案/平反除外）必须先显式解除。
+ */
+const FATE_STATES = new Set(['死亡', '驾崩', '下狱', '定罪']);
+
+/** 可解除命运（翻案/越狱/官复原职）的规则词，命中则从禁入名单剔除 */
+const FATE_RELEASE_PATTERNS: RegExp[] = [
+  /平反/, /翻案/, /无罪释放/, /赦免/, /大赦/, /洗清(?:冤屈|罪名)/,
+  /越狱/, /劫狱/, /逃出(?:天牢|大牢|宗人府|诏狱)/,
+  /起复/, /官复原职/, /重新起用/,
+];
+
+export interface FateStatus {
+  characterName: string;
+  state: string;
+  chapterIndex: number;
+  detail: string;
+}
+
+/**
+ * 汇总全量章节记忆的角色命运状态：取每个角色最晚一次的命运级变化；
+ * 若其后的章节记忆里出现了解除性叙述（平反/越狱等），则不再列为禁入。
+ */
+export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {
+  const byCharacter = new Map<string, FateStatus>();
+  const memorySorted = [...memories].sort((a, b) => a.chapterIndex - b.chapterIndex);
+  for (const memory of memorySorted) {
+    for (const change of memory.characterStateChanges) {
+      if (!FATE_STATES.has(change.state)) continue;
+      const prev = byCharacter.get(change.characterName);
+      if (!prev || memory.chapterIndex >= prev.chapterIndex) {
+        byCharacter.set(change.characterName, {
+          characterName: change.characterName,
+          state: change.state,
+          chapterIndex: memory.chapterIndex,
+          detail: change.detail,
+        });
+      }
+    }
+    // 解除检测：只有「命运事件之后」且解除叙述与该角色同章共现才生效——
+    // 一段平反文本只救它提到的人，不能顺带赦免同章所有在押角色
+    for (const [name, fate] of byCharacter) {
+      if (memory.chapterIndex <= fate.chapterIndex) continue;
+      const text = `${memory.corePlot || ''}\n${memory.keyEvents.join('\n')}`;
+      if (!text.includes(name)) continue;
+      const released = FATE_RELEASE_PATTERNS.some(re => re.test(text));
+      if (released) {
+        byCharacter.delete(name);
+      }
+    }
+  }
+  return [...byCharacter.values()];
+}
+
+/**
+ * 续写合同用的命运级禁入条目。
+ * 只登记在角色名单内的角色（规则提取的名字可能撞上非人名词，做一次白名单过滤），
+ * 每条带发生章号与证据，让模型能对上号而不是盲目避开一个字符串。
+ */
+export function collectFateForbiddenZones(
+  memories: ChapterMemory[],
+  characterNames: string[]
+): string[] {
+  const roster = new Set(characterNames.map(n => n.trim()).filter(Boolean));
+  return collectCharacterFates(memories)
+    .filter(fate => roster.has(fate.characterName))
+    .map(
+      fate =>
+        `${fate.characterName}已于第${fate.chapterIndex + 1}章${fate.state}（证据：${fate.detail.slice(0, 50)}），` +
+        `本章禁止其以在场活人身份出场、对话或行动；仅可作回忆/追述提及`
+    );
+}
+const CRITICAL_STATUS_RULES: Array<{
+  state: string;
+  patterns: RegExp[];
+}> = [
+  {
+    state: '死亡',
+    patterns: [
+      // 命名式：X 死了/被杀/被鸩杀/毒发身亡/气绝/毙命/人头落地…
+      /([\u4e00-\u9fa5]{2,8}?)(?:被[人毒酒刀剑]?[\u4e00-\u9fa5]{0,2}(?:杀|害|鸩))亡?/,
+      /([\u4e00-\u9fa5]{2,8}?)(?:气绝|毙命|身亡|丧命|殒命|惨死|暴毙|命丧|死于)/,
+      /杀了([\u4e00-\u9fa5]{2,8})/,
+      /([\u4e00-\u9fa5]{2,8}?)(?:的(?:尸[体首]|遗体|遗容))|(?:收殓|安葬|下葬)(?:了)?([\u4e00-\u9fa5]{2,8})/,
+    ],
+  },
+  {
+    state: '驾崩',
+    patterns: [
+      /([\u4e00-\u9fa5]{1,6}(?:帝|皇|上|圣上|天子|君王))(?:驾崩|晏驾|崩逝|龙驭上宾|宾天|薨逝)/,
+    ],
+  },
+  {
+    state: '下狱',
+    patterns: [
+      /([\u4e00-\u9fa5]{2,8}?)(?:被[关押打入抓投入锁] ?(?:进|入|到)? ?(?:天牢|大牢|死牢|宗人府|大狱|监狱|诏狱))/,
+      /(?:天牢|大牢|死牢|宗人府|大狱|诏狱)(?:中|里)?的?([\u4e00-\u9fa5]{2,8})/,
+      /(?:押(?:解|送|入)|囚禁|圈禁)(?:了)?([\u4e00-\u9fa5]{2,8})/,
+      /([\u4e00-\u9fa5]{2,8}?)(?:沦为阶下囚|被打入死牢|下狱)/,
+    ],
+  },
+  {
+    state: '定罪',
+    patterns: [
+      /([\u4e00-\u9fa5]{2,8}?)(?:被|遭)?(?:判斩|处斩|问斩|论罪|定罪|革职抄没|满门抄斩|褫夺)/,
+    ],
+  },
+  {
+    state: '官职变更',
+    patterns: [
+      /(?:擢升|晋升|升任|提拔|任命|敕封|册封|加封|封)(?:为)?([\u4e00-\u9fa5]{2,6}?(?:尚书|侍郎|大学士|首辅|总督|巡抚|将军|都统|御史|给事中|郎中|少卿|总兵|指挥使))/,
+      /([\u4e00-\u9fa5]{2,8})(?:出任|接任|转任|擢|升) ?([\u4e00-\u9fa5]{2,6}?(?:尚书|侍郎|大学士|首辅|总督|巡抚|将军|都统|御史|给事中|郎中|少卿|总兵|指挥使))/,
+    ],
+  },
+];
+
+/**
+ * 从正文提取命运级状态变化（死亡/驾崩/下狱/定罪/官职）。
+ * 返回去重后的 CharacterStateChange 列表，detail 带命中正文原句片段。
+ * roster 传入时只保留命中角色名单的名字——谓语前缀（「重新陷入一片死寂」的
+ * 「重新陷入一片死寂」）没有词典可以枚举，白名单是唯一可靠的过滤。
+ */
+export function extractCriticalStatusChanges(
+  content: string,
+  roster?: string[]
+): CharacterStateChange[] {
+  const rosterSet = roster && roster.length > 0 ? new Set(roster) : null;
+  const changes: CharacterStateChange[] = [];
+  const seen = new Set<string>();
+  for (const rule of CRITICAL_STATUS_RULES) {
+    for (const pattern of rule.patterns) {
+      const re = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(content)) !== null) {
+        const name = (m[1] || m[2] || '').trim();
+        if (!name || name.length < 2 || name.length > 8) continue;
+        // 排除代词/指示词与明显非人名的命中
+        if (/^(?:的|了|他|她|它|这|那|此|其|众|一|被|又|即|皆|全部|在场)/.test(name)) continue;
+        if (rosterSet && !rosterSet.has(name)) continue;
+        const key = `${name}|${rule.state}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const start = Math.max(0, m.index - 15);
+        const evidence = content.slice(start, m.index + m[0].length + 15).replace(/\s+/g, ' ').trim();
+        changes.push({
+          characterName: name,
+          stateType: 'status',
+          state: rule.state,
+          detail: evidence,
+        });
+        if (changes.length >= 24) return changes;
+      }
+    }
+  }
   return changes;
 }
 

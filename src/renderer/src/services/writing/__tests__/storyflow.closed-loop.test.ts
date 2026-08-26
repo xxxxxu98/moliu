@@ -30,6 +30,7 @@ import {
   inspectOutlineCompleteness,
   OUTLINE_COMPLETENESS_POLICY,
 } from '@/services/outline/validation/outlineCompleteness';
+import { AVG_WORDS_PER_CHAPTER, parseWordCountRange } from '@/services/outline/utils';
 import { checkWordCountBounds } from '@/services/writing/supplement';
 import { isPlaceholderChapterTitle } from '@/services/writing/chapterTitle';
 import {
@@ -283,8 +284,21 @@ describe.runIf(isRealAiEnabled())('storyflow 闭环（真实 AI）：大纲生�
       const {
         prompt,
         source: promptSource,
-        wordCountRange = '30万-60万',
+        wordCountRange: scenarioWordCountRange,
       } = resolveStoryflowPrompt();
+      // 规模联动：大纲字数区间必须撑得起请求章数（按 AVG_WORDS_PER_CHAPTER=2500 折算），
+      // 否则大纲按小书规划（如 45 万字/180 章）、写作却要写 500 章，后半本没有大纲约束。
+      // 默认 30万-60万 只够约 240 章；超过时按章数放大到对应百万级长篇区间再交给
+      // buildWordCountBreakdown 统一换算卷数/每卷章数。场景矩阵与显式 MOLIU_STORYFLOW_WORD_RANGE
+      // 不做联动（它们对规模有独立要求）。
+      const impliedWords = chapterCount * AVG_WORDS_PER_CHAPTER;
+      const defaultRangeFits = parseWordCountRange('30万-60万') >= impliedWords;
+      const wordCountRange =
+        process.env.MOLIU_STORYFLOW_WORD_RANGE?.trim() ||
+        scenarioWordCountRange ||
+        (defaultRangeFits
+          ? '30万-60万'
+          : `${Math.floor((impliedWords * 0.95) / 10000)}万-${Math.ceil((impliedWords * 1.2) / 10000)}万`);
       const result = await runStoryflowClosedLoop({
         prompt,
         wordCountRange,

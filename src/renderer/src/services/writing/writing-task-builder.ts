@@ -13,6 +13,7 @@ import type { WritingTaskBook, CharacterConstraint, StyleGuidance, ChapterStruct
 import type { WritingStyle } from '@/types/writing';
 import { ContextManager } from './context-manager';
 import { getMemoryManager } from './memory-manager';
+import { collectFateForbiddenZones } from './extract-plot-memory';
 import { createEndingPerceptionEngine, generateWritingStrategyAdjustment } from './ending-perception-engine';
 import type { EndingPhase, EndingReadiness, UnresolvedForeshadow } from '@/types/ending-perception';
 
@@ -516,6 +517,14 @@ export class WritingTaskBuilder {
     // 构建章节节点类型
     const nodeType = this.determineChapterNodeType();
 
+    // 命运级状态禁入：从全量章节记忆里收集「已死/已下狱/已定罪」的角色，
+    // 写进 forbiddenZones。recentMemories 只回看 5 章，而死亡事件往往发生在
+    // 数百章前——滑动窗口一旦滑出，续写就会让死人复活（500 章实测系统性幻觉）。
+    const fateForbidden = collectFateForbiddenZones(
+      this.project.chapterMemories || [],
+      characters.map(c => c.name)
+    );
+
     return {
       // 1. 开篇委托
       bookTitle: this.project.name,
@@ -531,7 +540,7 @@ export class WritingTaskBuilder {
       CPNs: chapterStructure.cpns,
       CEN: chapterStructure.cen,
       mustCover: chapterStructure.mustCover,
-      forbiddenZones: chapterStructure.forbiddenZones,
+      forbiddenZones: [...chapterStructure.forbiddenZones, ...fateForbidden].slice(0, 5),
       crossChapterConstraints,
       ragClues: urgentForeshadows.map(f => f.hint),
 

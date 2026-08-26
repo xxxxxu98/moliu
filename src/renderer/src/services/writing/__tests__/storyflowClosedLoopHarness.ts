@@ -305,24 +305,60 @@ export async function ensureStoryflowWritingCapacity(
     ).length;
     const rollFrom = Math.max(beforeNodes, beforeWritten) + 1;
     if (rollFrom <= needed) {
-      const result = await rollOutlineForward({
-        project: expanded,
-        callStructuredText: rollOptions.callStructuredText,
-        signal: rollOptions.signal,
-        onProgress: rollOptions.onProgress,
-        maxChapters: needed,
-        persist: (nodes, plannedChapterCount) => {
-          expanded.plotOutline.push(...nodes);
-          expanded.metadata = {
-            ...expanded.metadata,
-            plannedChapterCount: Math.max(expanded.metadata?.plannedChapterCount ?? 0, plannedChapterCount),
-          };
-        },
-      });
-      rollReport.rolledFromChapter = result.fromChapter;
-      rollReport.rolledToChapter = result.toChapter;
-      rollReport.rolledCount = result.appendedCount;
-      rollReport.warnings.push(...result.warnings);
+      // 循环滚动直到补满目标章数：rollOutlineForward 单次只滚一批（OUTLINE_ROLL_BATCH_CHAPTERS，
+      // 默认 50 章），长跑请求远超一批时旧逻辑只滚一批就停，剩余章节全部落占位槽——
+      // 500 章实测 101-500 章无章纲约束，跨章连贯性崩坏。逐批循环、每批 persist 后
+      // 用最新项目状态计算下一批起点；单批失败（appendedCount=0）立即止损，
+      // 余下章节走占位兜底，不让网关抖动卡死整个冒烟。
+      let nextFrom = rollFrom;
+      let lastFromChapter = 0;
+      let lastToChapter = 0;
+      while (nextFrom <= needed) {
+        const result = await rollOutlineForward({
+          project: expanded,
+          callStructuredText: rollOptions.callStructuredText,
+          signal: rollOptions.signal,
+          onProgress: rollOptions.onProgress,
+          maxChapters: needed,
+          persist: (nodes, plannedChapterCount) => {
+            expanded.plotOutline.push(...nodes);
+            expanded.metadata = {
+              ...expanded.metadata,
+              plannedChapterCount: Math.max(expanded.metadata?.plannedChapterCount ?? 0, plannedChapterCount),
+            };
+          },
+        });
+        rollReport.warnings.push(...result.warnings);
+        lastFromChapter = lastFromChapter === 0 ? result.fromChapter : lastFromChapter;
+        lastToChapter = Math.max(lastToChapter, result.toChapter);
+        if (result.appendedCount > 0) {
+          rollReport.rolledCount += result.appendedCount;
+        }
+        if (rollOptions.signal?.aborted) break;
+        if (result.appendedCount === 0) {
+          if (result.skippedReason) {
+            // 计划章数上限被 plannedChapterCount 压住：抬到请求章数后重试一次，
+            // 仍不动说明是其它原因（返回 0 且无 skippedReason 时下面统一止损）
+            if (
+              expanded.metadata?.plannedChapterCount &&
+              expanded.metadata.plannedChapterCount < needed
+            ) {
+              expanded.metadata = {
+                ...expanded.metadata,
+                plannedChapterCount: needed,
+              };
+              continue;
+            }
+          }
+          rollReport.warnings.push(
+            `滚动续纲第 ${nextFrom} 章起连续失败，剩余 ${needed - nextFrom + 1} 章走占位兜底`
+          );
+          break;
+        }
+        nextFrom = result.toChapter + 1;
+      }
+      rollReport.rolledFromChapter = lastFromChapter;
+      rollReport.rolledToChapter = lastToChapter;
       // 占位兜底只补滚动没补到的章
       expanded = ensurePlaceholderCapacity(expanded, needed, rollReport);
       return Object.assign(expanded, { outlineRoll: rollReport });

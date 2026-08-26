@@ -89,6 +89,7 @@ export function createChapterMemoryClient(): MemoryClient {
         // 由下方统一执行并校验保存结果，避免提取层 best-effort 吞掉写盘失败。
         enableFileBackup: false,
         fallbackToPrevious: true,
+        characterRoster: (project.characters ?? []).map(c => c.name),
       });
 
       if (memory) {
