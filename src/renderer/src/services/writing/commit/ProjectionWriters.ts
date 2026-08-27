@@ -10,6 +10,10 @@
  */
 
 import { useProjectStore } from '@/stores/project.store';
+import {
+  extractCriticalStatusChanges,
+  mergeCharacterStateChanges,
+} from '@/services/writing/extract-plot-memory';
 import type {
   ExtractionResult,
   DisambiguationResult,
@@ -419,21 +423,46 @@ export class ProjectionOrchestrator {
   ): ChapterMemory {
     const extraction = context.extraction;
 
+    // AI 状态提取（stateDeltas）会漏掉处决/枭首这类情节性死亡——100 章矩阵实测
+    // 第 60 章公开斩立决未产出任何状态变更，后续章节禁入名单空转，死人复活重启
+    // 审判线。此处用确定性死亡谓词补扫兜底，与 AI 提取按 名字+状态 去重合并。
+    const projectStore = useProjectStore();
+    const chapterMeta = (projectStore.sortedChapters || []).find(
+      (c) => c.orderIndex === chapterNumber - 1
+    );
+    const roster = (projectStore.characters || [])
+      .map((c) => c.name)
+      .filter((n): n is string => !!n);
+    const idToName = new Map(
+      roster.flatMap((name) => {
+        const hit = (projectStore.characters || []).find((c) => c.name === name);
+        return hit?.id ? [[hit.id, name] as const] : [];
+      })
+    );
+    const aiChanges = extraction.stateDeltas.map((d) => ({
+      characterName: idToName.get(d.entity_id) || d.entity_id,
+      stateType: 'status' as const,
+      state: String(d.to ?? d.field ?? '').trim(),
+      detail: `${d.field}: ${d.from} → ${d.to}`,
+    }));
+    const proseForFateScan =
+      chapterMeta?.content || extraction.summaryText || '';
+    const characterStateChanges = mergeCharacterStateChanges([
+      ...aiChanges,
+      ...extractCriticalStatusChanges(proseForFateScan, roster),
+    ]);
+
     return {
       chapterId: `chapter-${chapterNumber}`,
       chapterIndex: chapterNumber - 1,
-      chapterTitle: `第${chapterNumber}章`,
+      chapterTitle: chapterMeta?.title || `第${chapterNumber}章`,
       corePlot: extraction.summaryText.slice(0, 200),
       summary: extraction.summaryText,
       keyEvents: extraction.acceptedEvents.map((e) => e.payload.result as string),
       coolPoints: [],
       foreshadows: [],
       newForeshadows: [],
-      characterStateChanges: extraction.stateDeltas.map((d) => ({
-        characterName: d.entity_id,
-        field: d.field,
-        detail: d.to,
-      })),
+      characterStateChanges,
       locations: [...new Set(extraction.scenes.map((s) => s.location))],
       timelineMark: extraction.scenes[0]?.time || '',
       createdAt: new Date().toISOString(),

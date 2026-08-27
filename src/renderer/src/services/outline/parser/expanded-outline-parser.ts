@@ -213,7 +213,10 @@ export function parseChapterBlueprintSection(section: string): ChapterBlueprint[
         '禁区',
         'forbiddenZones',
       ]);
-      const hookText = extractFieldValue(block.body, '章尾钩子文案') ?? '';
+      const hookTextRaw = extractFieldValue(block.body, '章尾钩子文案') ?? '';
+      // 书审实测：字段错位时会把「- 爽点类型：收服」这类邻行当钩子文案吞进来，
+      // 污染下游章尾工程。宁可空（适配层回退 CEN/hookType）也不收泄漏值。
+      const hookText = sanitizeHookText(hookTextRaw);
       const hookType = (extractFieldValue(block.body, '爽点类型') ?? '').trim();
       const coolPointType = hookType || undefined;
       // 章纲描述：summary 会成为 plotOutline.description 与 chapter.outline 的正文段。
@@ -236,6 +239,18 @@ export function parseChapterBlueprintSection(section: string): ChapterBlueprint[
       };
     })
     .filter((item): item is ChapterBlueprint => item !== null);
+}
+
+/**
+ * 章尾钩子文案守卫：空值/连字符号开头的残行/字段名错位值（如「爽点类型：收服」）
+ * 一律返回 undefined，让适配层走既定回退链，而不是把结构化垃圾当文案下发。
+ */
+export function sanitizeHookText(value: string | undefined | null): string | undefined {
+  const v = (value ?? '').trim();
+  if (!v) return undefined;
+  if (/^[-•*·]/u.test(v)) return undefined;
+  if (/^(?:爽点类型|CBN|CEN|CPNs|标题|概要|禁区|mustCover|章尾钩子)\s*[:：]/u.test(v)) return undefined;
+  return v;
 }
 
 /**

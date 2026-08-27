@@ -63,6 +63,7 @@ export class AIFactExtractor implements FactExtractor {
         '4) 顶层 evidence 必须汇总本章关键正文原句，不得为空（可与 events[].evidence 重复）',
         '5) deltas.path 用点分路径写状态变更；inventory 变更必须形如 inventory.<角色实体id>.<物品名>，value 必须是纯数字（数量/件数），禁止写 {unit,note,quantity,描述} 等对象或带单位的字符串',
         '6) 顶层必须输出一个 JSON 对象 {...}，禁止输出裸数组 [...]；events/deltas/evidence 三个字段都要存在',
+        '7) 生死与命运事件必检：处决/斩首/枭首/格杀/气绝/毙命/身亡/暴毙/驾崩/自尽/溺亡等情节性死亡，以及下狱/定罪等终局状态，本章正文出现即必须登记——每条产出 event(type="death"或"status_change") 并附带 deltas(path 用 characters.<实体id>.attributes.status，value 用「死亡/下狱/定罪/驾崩」)，evidence 引用正文原句。不得因场面血腥、群像处决或篇幅原因漏登；群像处决须逐个列出名单内的死者',
         'JSON 字段必须为：',
         '{"events":[{"id":"string","chapter":0,"sceneId":"string","type":"string","summary":"string","participants":["实体id或人名"],"causes":[],"effects":[],"evidence":["正文原句"]}],"deltas":[{"operation":"set|add|remove|increment","path":"inventory.char-1.银两","value":5,"evidence":"正文原句"}],"evidence":["正文原句"]}',
       ].join('\n'),

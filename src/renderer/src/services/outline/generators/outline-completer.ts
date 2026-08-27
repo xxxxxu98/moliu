@@ -284,9 +284,9 @@ function buildChapterCompletionPrompt(
 ### 第N章
 - 标题：${titleMinChars}-${titleMaxChars}字的网文口语标题，要有画面/情绪/钩子，抓住本章最刺激的一点（打脸/翻车/反转/期限/秘密/意外）；禁止只写“第N章”。【超 ${titleMaxChars} 字即为格式错误：先砍修饰语和副词，再砍次要信息，宁可短不可超】
 - 概要：40-80字，用一段话交代本章从哪儿起、中间怎么推、落到什么后果，写给作者看的章纲；必须比 CBN 多出信息量，禁止照抄 CBN/标题
-- CBN：${hookMinChars}-${hookMaxChars}字的章首动作钩子，写开篇 10 秒抓人的瞬间画面或冲突，禁止整章剧情概括
+- CBN：${hookMinChars}-${hookMaxChars}字的章首动作钩子，写开篇 10 秒抓人的瞬间画面或冲突，禁止整章剧情概括；必须以句号/叹号等终止符收尾
 - CPNs：${minimumCpns}-${maximumCpns}个本章必须兑现的推进节点，每条独立可写成一个场面，用中文分号分隔
-- CEN：${hookMinChars}-${hookMaxChars}字章尾悬念，要让读者必须点下一章
+- CEN：${hookMinChars}-${hookMaxChars}字章尾悬念，要让读者必须点下一章；必须以终止符收尾
 - mustCover：1-3个本章能完成的具体事件，用中文分号分隔，禁止整卷或全书级目标（如“完成…逆转”“实现…复兴”）
 - 禁区：1-3条本章不得提前泄露的事项
 - 章尾钩子文案：给读者看的一句钩子话术，区别于 CEN 的事件描述
@@ -635,22 +635,51 @@ function truncateAtClauseBoundary(value: string, maxChars: number): string {
   return truncateByChars(value.trimEnd(), maxChars);
 }
 
+/** 钩子文案必须以终止符收尾（书审预检红线）：无句读结尾的 CBN/CEN 会让
+ *  「上一章刚发生什么」读起来像半截话，也是跨章衔接质量问题的信号源 */
+const HOOK_TERMINATOR_RE = /[。！？…”』」]$/u;
+
+function ensureHookTerminator(value: string, maxChars: number): string {
+  const trimmed = value.replace(/[，、；;]+$/u, '').trim();
+  if (HOOK_TERMINATOR_RE.test(trimmed)) return trimmed;
+  // 补终止符预算不足时先按字数回退一位再补，保证不超上限
+  if ([...trimmed].length + 1 > maxChars) {
+    const shrunkContent = [...trimmed].slice(0, maxChars - 1).join('');
+    return `${shrunkContent}。`;
+  }
+  return `${trimmed}。`;
+}
+
 export function shrinkHookText(hook: string, maxChars: number): string {
-  const trimmedHook = hook.trim().replace(/[。；;.!！?？,，、]+$/u, '');
-  if (trimmedHook.length <= maxChars) return trimmedHook;
+  const source = hook.trim();
+  const trimmedHook = source.replace(/[。；;.!！?？,，、]+$/u, '');
+  if (trimmedHook.length <= maxChars) {
+    const keepOriginal = source.trimEnd();
+    if (
+      keepOriginal !== trimmedHook &&
+      HOOK_TERMINATOR_RE.test(keepOriginal) &&
+      [...keepOriginal].length <= maxChars
+    ) {
+      return keepOriginal;
+    }
+    // 入参可能恰在上限（无预算补终止符）或带终止符即超限时，
+    // 交给 ensureHookTerminator 按内容预算截断后统一补终止符
+    return ensureHookTerminator(truncateAtClauseBoundary(trimmedHook, Math.max(1, maxChars - 1)), maxChars);
+  }
   const separators = /[，。；;、——….!！?？]/u;
   const chars = [...trimmedHook];
-  // 收集不超过 maxChars 的分句边界，取最后一个
+  const contentBudget = Math.max(1, maxChars - 1);
+  // 收集不超过内容预算的分句边界，取最后一个（预留 1 字给终止符）
   let cutIndex = -1;
   let acc = 0;
-  for (let i = 0; i < chars.length && acc <= maxChars; i += 1) {
+  for (let i = 0; i < chars.length && acc <= contentBudget; i += 1) {
     acc += 1;
     if (separators.test(chars[i])) cutIndex = i;
   }
-  if (cutIndex >= Math.floor(maxChars / 2)) {
-    return chars.slice(0, cutIndex).join('').replace(/[，。；;、]+$/u, '').trim();
+  if (cutIndex >= Math.floor(contentBudget / 2)) {
+    return ensureHookTerminator(chars.slice(0, cutIndex).join('').replace(/[，、]+$/u, ''), maxChars);
   }
-  return truncateAtClauseBoundary(trimmedHook, maxChars);
+  return ensureHookTerminator(truncateAtClauseBoundary(trimmedHook, contentBudget), maxChars);
 }
 
 /**

@@ -190,11 +190,33 @@ describe('outline-completer', () => {
     // 不再以半截词收尾:收口点必须是结构助词后沿或完整词
     expect(shrunk).not.toMatch(/(?:的隐|众人眼|拂面而|大石|红木桌)$/u);
 
-    // 有逗号时维持既有行为:切到最后一个分句边界
+    // 有逗号时维持既有行为:切到最后一个分句边界(并补终止符——书审预检红线)
     const longHookWithComma = '老中医凑近林舟耳边，低声吐露省城权贵正四处求药的隐情';
     const shrunkComma = shrinkHookText(longHookWithComma, 25);
-    expect(shrunkComma).toBe('老中医凑近林舟耳边，低声吐露省城权贵正四处求药');
+    expect(shrunkComma).toBe('老中医凑近林舟耳边，低声吐露省城权贵正四处求药。');
     expect(shrunkComma).not.toMatch(/(?:的隐|隐情)$/u);
+    expect(shrunkComma.length).toBeLessThanOrEqual(25);
+  });
+
+  it('shrinkHookText 输出始终以终止符收尾（2026-08-27 百章书审：35章CBN无终止符形态）', () => {
+    // 超上限且无终止符：截断后必须补终止符且不超限
+    const overLimitNoTerminator = '沈淮安把账册拍在案上，冷冷盯着满堂官员不许任何人离开大堂';
+    expect([...overLimitNoTerminator].length).toBeGreaterThan(25);
+    const out1 = shrinkHookText(overLimitNoTerminator, 25);
+    expect(out1).toMatch(/[。！？…]$/u);
+    expect(out1.length).toBeLessThanOrEqual(25);
+
+    // 原文已带终止符且在预算内：原样保留
+    const alreadyOk = '巡检司的重枷落下，崔晋面如死灰。';
+    const out2 = shrinkHookText(alreadyOk, 25);
+    expect(out2).toBe(alreadyOk);
+
+    // 带终止符但恰好超限：截断补终止符后落回预算内
+    const atLimitWithTerminator = '刺耳的断裂巨响在红星大剧场回荡，人群尖叫着涌向出口。';
+    expect([...atLimitWithTerminator].length).toBe(26);
+    const out3 = shrinkHookText(atLimitWithTerminator, 25);
+    expect(out3).toMatch(/[。！？…]$/u);
+    expect(out3.length).toBeLessThanOrEqual(25);
   });
 });
 

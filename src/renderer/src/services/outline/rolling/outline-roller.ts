@@ -18,6 +18,7 @@ import {
   extractRequestedChapterBlocks,
   sanitizeBlueprintLengths,
 } from '../generators/outline-completer';
+import { sanitizeHookText } from '../parser/expanded-outline-parser';
 import { OUTLINE_COMPLETENESS_POLICY } from '../validation/outlineCompleteness';
 import {
   isCrossChapterGoal,
@@ -326,7 +327,7 @@ export function parseBlueprintBlocks(raw: string, requested: number[]): Map<numb
       CEN,
       mustCover: splitList(fields.get('mustCover') ?? ''),
       forbiddenZones: splitList(fields.get('禁区') ?? ''),
-      hookText: fields.get('章尾钩子文案') || undefined,
+      hookText: sanitizeHookText(fields.get('章尾钩子文案')),
       coolPointType: fields.get('爽点类型') || undefined,
       hookType: '',
     });

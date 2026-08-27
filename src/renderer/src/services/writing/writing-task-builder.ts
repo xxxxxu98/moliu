@@ -540,7 +540,9 @@ export class WritingTaskBuilder {
       CPNs: chapterStructure.cpns,
       CEN: chapterStructure.cen,
       mustCover: chapterStructure.mustCover,
-      forbiddenZones: [...chapterStructure.forbiddenZones, ...fateForbidden].slice(0, 5),
+      // 命运级禁入排在前面再统一截断：普通禁区被截掉只损失一处描写约束，
+      // 命运禁入被截掉就是死人复活（合同上限不变，仅调整优先序）
+      forbiddenZones: [...fateForbidden, ...chapterStructure.forbiddenZones].slice(0, 5),
       crossChapterConstraints,
       ragClues: urgentForeshadows.map(f => f.hint),
 

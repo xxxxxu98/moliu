@@ -12,6 +12,7 @@ import {
   collectCharacterFates,
   collectFateForbiddenZones,
   overlayCharacterFates,
+  mergeCharacterStateChanges,
 } from '../extract-plot-memory';
 import type { Chapter, ChapterMemory } from '@/types/project';
 import type { StoryEntity } from '@/types/story-runtime';
@@ -190,6 +191,38 @@ describe('extractCriticalStatusChanges', () => {
     const filtered = extractCriticalStatusChanges(text, ['赵德禄', '沈淮']);
     expect(filtered.length).toBeGreaterThan(0);
     expect(filtered.every(c => ['赵德禄', '沈淮'].includes(c.characterName))).toBe(true);
+  });
+
+  it('处决完成体：主语与斩立决/头颅滚落隔十余字也登记死亡（100章矩阵第60章受害样本）', () => {
+    const text =
+      '"两淮盐运使严世宽，勾结奸商，吞没国家正税七百万两！按大齐律，着即斩立决！"' +
+      '刀光凌空划过一道刺目的匹练，严世宽等十余名贪官的头颅骨碌碌滚落高台。';
+    const changes = extractCriticalStatusChanges(text, ['严世宽', '沈淮安']);
+    const dead = changes.find(c => c.characterName === '严世宽' && c.state === '死亡');
+    expect(dead).toBeDefined();
+    expect(dead?.detail).toContain('头颅');
+  });
+
+  it('圣旨表彰句「斩杀巨贪严世宽」剥称号前缀后命中白名单', () => {
+    const text = '御史沈淮安忠勇无双，斩杀巨贪严世宽，护国本于危难，功莫大焉。';
+    const changes = extractCriticalStatusChanges(text, ['严世宽', '沈淮安']);
+    expect(changes.some(c => c.characterName === '严世宽' && c.state === '死亡')).toBe(true);
+  });
+
+  it('幸免于斩立决的改判句不登记死亡', () => {
+    const text = '大理寺卿当堂求情，崔晋幸免于斩立决，改判流放三千里。';
+    const changes = extractCriticalStatusChanges(text, ['崔晋']);
+    expect(changes.some(c => c.characterName === '崔晋' && c.state === '死亡')).toBe(false);
+  });
+
+  it('mergeCharacterStateChanges 同角色同状态去重且保持首条优先', () => {
+    const merged = mergeCharacterStateChanges([
+      { characterName: '严世宽', stateType: 'status', state: '死亡', detail: 'AI提取' },
+      { characterName: '严世宽', stateType: 'status', state: '死亡', detail: '规则补扫' },
+      { characterName: '钱万乘', stateType: 'status', state: '下狱', detail: '锁拿归案' },
+    ]);
+    expect(merged.filter(c => c.characterName === '严世宽').length).toBe(1);
+    expect(merged.length).toBe(2);
   });
 });
 

@@ -1,0 +1,1400 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-27T09:20:31.877Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-matrix-agif100ch",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "pass": true,
+      "exitCode": 0,
+      "wallMinutes": 191,
+      "chaptersAccepted": "100/100",
+      "words": {
+        "min": 2426,
+        "avg": 3032,
+        "max": 3531
+      },
+      "paraRhythm": {
+        "chapters": 100,
+        "medianCv": 0.33,
+        "uniformChapters": 5
+      },
+      "repairMetrics": {
+        "firstPassChapters": 81,
+        "firstPassRate": 0.81,
+        "rewrittenChapters": 19,
+        "totalRewriteRounds": 19,
+        "averageRewriteRounds": 0.19,
+        "pipelineAttempts": 100
+      },
+      "runtimeMetrics": {
+        "requestCount": 394,
+        "requestCountsByPurpose": {
+          "scene-draft": 154,
+          "fact-extraction": 121,
+          "chapter-judge": 119
+        },
+        "latencyP50Ms": 16169,
+        "latencyP95Ms": 45305,
+        "latencyMaxMs": 80876
+      },
+      "readerMetrics": {
+        "chapterCount": 99,
+        "chapterAverage": 86.8,
+        "chapterMedian": 87.5,
+        "chapterMinimum": 45.8,
+        "openingThreeAverage": 87.9,
+        "continueReadingNoCount": 1,
+        "lowChapterCount": 1,
+        "lowWindowCount": 0,
+        "consecutiveLowRuns": []
+      },
+      "readerOutlineScore": 90.6,
+      "readerIndependent": false,
+      "phaseTimings": {
+        "outlineDirectionsMs": 29749,
+        "outlineExpandMs": 278752,
+        "outlineRollMs": 174750,
+        "applyOutlineMs": 798,
+        "continueWriteMs": 9632067,
+        "totalMs": 10116116
+      },
+      "runtimeBackend": "sqlite",
+      "verdict": "quality-rejection",
+      "verdictReason": "存在质量拒绝且未恢复（或跨章人物状态幻觉：死/囚角色复活），但未达 3 轮停滞",
+      "signatures": [
+        {
+          "id": "prose.dead-resurrection",
+          "chapter": 60,
+          "count": 1,
+          "evidence": [
+            "严世宽于第60章死亡，其后 2 章仍以活体出场（首见第85章，章号：85,91）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "outline.warning-other",
+          "chapter": null,
+          "count": 3,
+          "evidence": [
+            "大纲存在 8 个未登记角色（大理寺卿、户部左侍郎、二皇子、江南三大盐商首领、扬州盐运使、三皇子、押运统领、户部尚书），执行第 1 轮补登记",
+            "未登记角色已补登记 8/8 个",
+            "未登记地点已补登记 3/3 个"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 10,
+          "count": 2,
+          "evidence": [
+            "崔晋在大理寺官职为左寺正，沈淮安对话中却称呼其为‘崔主事’，官职称谓存在轻微笔误。（崔主事若有闲暇，不如多关心关心度支部的平账细目）",
+            "6-10章：反派崔晋的衙门职衔称谓在'左寺正'与'崔主事'之间混用，大理寺属官体系中寺正与六部主事职权不同，行文时称谓跳跃。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 40,
+          "count": 2,
+          "evidence": [
+            "上一章结尾巡检司包围的兵戈对峙危机，通过亮出王命金牌迅速压制化解，虽然节奏明快且具有官威压制的爽感，但对抗过程略显单向碾压，阻力较快消解。（“御赐王命金牌在此，如朕亲临！”沈淮安的声音并不高亢，却宛如九天落雷般在空旷的庄院上空轰然炸响）",
+            "36-40章：模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 10,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3579/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 48,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3562/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 6,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“堂尊若是想拿死人来压活人，好歹也该将戏做得逼真一些。”沈淮安缓缓放下手臂，目光直视堂案后方的主审官，语调平稳得听不出一丝起伏，”大理寺掌管天下刑名重狱，堂堂正）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 10,
+          "count": 1,
+          "evidence": [
+            "当前 3579 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 10,
+          "count": 1,
+          "evidence": [
+            "char-1787811262435-0 的物品 银锞子 数量不能为负"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 12,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：沈淮安将那本用熟桐油纸包裹的绝密暗票底册随手扔在红木案几上，发出一声沉闷的撞击。他居高临下地看着掌柜，语气没有半点波澜：“四成贴息，一千二百八十两白银凭空蒸发。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“这就是你说的资金平衡？”陆昭伸出带茧的手指，指着图谱上直指崔晋与户部的箭头，沉声问道，”只要这最后一笔三百两填进去，他们就再也没有任何推诿给火耗亏空的借口了？）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 29,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“咳咳，沈淮安，你敢私设重刑审我？”崔晋猛地呛出一口血沫，猩红的双目死死盯着迈步进来的沈淮安，声音嘶哑如破锣，”我是朝廷命官，度支部选拔的文吏，三司会审未定大辟）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 33,
+          "count": 1,
+          "evidence": [
+            "段落偏长：长段 0/18，超过 5 句的段 8。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 35,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 43,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 46,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“大理寺地底深处，竟然能让持有江南水路通关文牒的水鬼死士直插内库。”皇帝的声音沙哑低沉，听不出喜怒，却透着刺骨的冰寒，”沈淮安，你昨夜在度支部封存的底账里，当真）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 48,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“南下的官道看似平坦，实则是二皇子伏击死士的修罗场。”裴守约声音压得极低，将一份盖有大理寺密印的运河通关勘合塞入沈淮安袖中，”老夫已按你的计策，命人在正门备下全）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 48,
+          "count": 1,
+          "evidence": [
+            "当前 3562 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 52,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 52,
+          "count": 1,
+          "evidence": [
+            "正文第3段、第5段、第11段、第14段: futureReveals 规定角色“严世宽”不得在第62章前登场或被揭示（notBeforeChapter: 62），但当前第52章正文中已多次明确点名“严世宽”并提及其实质贪腐案情与被扣押状态。（证据: 严世宽这帮蛀虫，到底把朝廷的银子运到哪里去了！ / 熔铸火耗通常不过百"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 55,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：沈淮安抹去溅在脸颊上的雨水，目光从城西冲天的火光中收回，语气平静得没有一丝波澜。声东击西这种把戏在法务审计里见过太多，放火烧行辕不过是虚晃一枪，真正的核心人物此）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 56,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 57,
+          "count": 1,
+          "evidence": [
+            "二进院签押房沈淮安与陆昭对话处: 设定明确限制角色“严世宽”不得登场或被揭示（notBeforeChapter: 62），但当前第57章正文已明确点名严世宽，并透露其已被扣押及搜出秘密私账事实，构成提前揭示。（证据: 但根据严世宽的秘密私账，近三个月流入三大盐商手里的现银至少在七百万两以上。 / “严世宽被扣押前，运河"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 63,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 67,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“八艘重甲运银大船，吃水深达九尺，即便借着今夜顺风顺水，在这狭窄多弯的运河道里也绝不可能疾驰如飞。”沈淮安将手中的盐运使官印收入袖中，语气平静得令人胆寒，”从你）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 75,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“盛隆汇、四海通、源泰升，这三家可是京城号称底蕴最深的暗庄票号。”苏凌波抬手解下青缎披风，快步走至长案前。她自随身的沉香木匣中取出一架以纯银为梁、九行乌木为档的）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 79,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 85,
+          "count": 1,
+          "evidence": [
+            "未履约节点：严世宽彻底招供。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 85,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“大理寺缇骑何在？”沈淮安将密匣置于案头，声音平静却字字清晰，”将严世宽押上来。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 91,
+          "count": 1,
+          "evidence": [
+            "触发本章禁区：不得提前让三大盐商落网。（正文中钱万乘与另外两名盐商首领已被铁锁与重枷押在泥水里，直接违背了三大盐商不得提前落网的禁区限制。）（证据：被铁锁与重枷死死压在泥水里的钱万乘与两名盐商首领，听到这串分毫不差的数字，眼中侥幸彻底熄灭。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 93,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 96,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：钱万乘眼见外头的大军已然缴械归降，心知大势已去，但他依然妄图在谋逆灭族的大罪面前抓取最后一根救命稻草。他膝行半步，扯着嘶哑的嗓子拼命磕头：“殿下明察，沈大人明察）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 27,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-ch27-1787813747645.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 47,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-ch47-1787815644971.jsonl seq3 fact-extraction 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 55,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-ch55-1787816631029.jsonl seq6 fact-extraction 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 56,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-ch56-1787816792804.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 91,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-ch91-1787819891543.jsonl seq5 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787039781123-reader-1787821070125.jsonl seq44 reader-chapter-judge 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.titles-shrunk-local",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "本地收缩超长标题/CBN/CEN 共 8 章（第 18、19、20、21、23、24、25、50 章），未发 AI 请求"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "核心人物列表中存在严重的角色实体冗余与重名分裂现象。主要配角与反派被拆分为两套几乎一致的档案（如赵煜与二皇子、赵衡与三皇子、王延龄与户部尚书、裴守约与大理寺卿、严世宽与扬州盐运使、林铁鹰与押运统领、钱万乘与江南三大盐商首领），且主角的人际关系动态中残留未填补完整的断句占位。（\"name\":\"赵煜\" 与 \"name\":\""
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "地理架构（locations）中混入了因大纲提取截断导致的错误地名数据，出现了把动词短语识别为城市地名的乱码词条。（{\"name\":\"根密押拼出跨省\",\"level\":\"city\",\"functionInStory\":\"卷纲与章节蓝图引用的地点，补登记入表。\"}、{\"name\":\"画出跨省\"}、{\"name\":\"深入核"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-3",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "部分章节蓝图中的章尾钩子文本（hookText）残留了未生成的模板占位符，缺少具体的故事悬念描写。（第4章、第12章、第13章、第16章、第17章的 \"hookText\":\"- 爽点类型：收服\"、\"hookText\":\"- 爽点类型：装逼\"）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 1,
+          "count": 1,
+          "evidence": [
+            "本章节奏极为紧凑，但在结尾处停留在发现暗号和异常数字的瞬间，第一波实质性的破局反杀动作留待下一章，爽点处于蓄力阶段。（那是一串看似毫无规律的折算尾数，精确到了库平银的三厘七毫，且尾端隐隐透着一个经过特意涂改后重新描补的墨印。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "上一章结尾主角已在脑内快速推演过五月初三与五月十一的重复扣耗逻辑，本章落笔制图时略有局部信息复述；好在后续迅速跟进了总虚增比例（千分之二百二十）与未熔扣耗三大铁证的系统化提炼，未对整体节奏造成实质拖累。（五月初三入库的一万两足色官银，在丁字账左侧稳稳落定为资产增加。然而紧接着对应到右侧的支出端时，沈淮安的炭笔猛然停顿，"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "前任绝密底册的发现依赖偶发机括与极限微操。在踹门倒计时的极短窗口内，主角需完成藏纸、摸索暗格、顶出中空算珠、识别油麻纸并再度合并塞入的系列精密动作，在千钧一发的搜查情境下动作密度略显过载。（而在门闩即将崩断的电光石火间，以极快的手法将折成细条的草纸，精准顺着破算盘底部开裂的暗槽塞了进去。然而就在草纸滑入算盘底梁夹层的刹"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": 4,
+          "count": 1,
+          "evidence": [
+            "时间压迫感与操作精细度略有轻微张力：上章崔晋已带队先行并催促升堂，本章沈淮安完成‘切箱剥纸-分类拼合-温水软化-糊裱加固’全套物证复原流程相对复杂，若后续能进一步强调其争分夺秒的极限操作感，代入感会更紧凑。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.genre-promise-1",
+          "chapter": 6,
+          "count": 1,
+          "evidence": [
+            "本章破局手段主要依托于文书物证与死亡时辰的法医刑侦逻辑（墨迹氧化期与仵作验尸记录错位），虽在公堂对峙中干净利落且压制感强，但相较于前两章的纯粹财务审计/数字降维打击略微转向传统刑侦推演。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 8,
+          "count": 1,
+          "evidence": [
+            "油布夹层暗记的来源存在轻微交代歧义。前文表述油布为沈淮安'早已备好'，章尾却从油布夹层融解出'漕帮绝密暗记'，易让细心读者疑惑该物证夹层究竟是沈淮安自备材料还是来自库房/残券原有包装。（沈淮安从宽大的官袍内衬中取出早已备好的数层厚重熟桐油布……原本包裹在油布夹层中的一道隐秘封蜡悄然融解，油布包的外层赫然浮出了一层未干的"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 10,
+          "count": 1,
+          "evidence": [
+            "后半段自杂役回报起，包含多轮对话、动作推进及裴守约现身授符，近600字未合理分段，对话与叙述混杂在一起，影响移动端排版体验。（沈淮安从袖中摸出一块两钱重的足色碎银，稳稳递入那名杂役手中……尽数推入了这盘无路可退的死局之中。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": 11,
+          "count": 1,
+          "evidence": [
+            "杂役在上一章末尾刚汇报完骡车进户部，本章开篇又立刻折返汇报骡车离开户部去南城，线人传递情报的节奏略显紧凑仓促，但未对主线推进造成实质逻辑障碍。（那辆装载沉香木箱的骡车，在户部侧门仅仅停了半盏茶工夫，根本没有卸车入库，而是换了无标暗灯，直接拐入后街朝南城暗巷去了！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 12,
+          "count": 1,
+          "evidence": [
+            "主角在对古代掌柜问话时直接脱口而出‘现代贴现率’，略微带有第四面墙破损的现代词汇违和感，若替换为更具古今语境转换感的表述会更沉浸。（沈淮安从袖中抽出一截细炭笔，扯过一张空白的硬质账纸，神色自若地在纸面上划出两条横纵交错的标线：“用单式流水账里的火耗与损耗概念来掩盖资金折现，你以为在大齐朝没人懂现代贴现率？”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 13,
+          "count": 1,
+          "evidence": [
+            "本章侧重于动作脱险与局势逆转，主角沈淮安的现代审计/数字破局特长退居次席，更多体现为应急生存与利用京城律例借力打力。（沈淮安身形灵巧地往下一伏，借着货架木桩的遮挡避开劈砍而来的刀锋，顺手抓起案头沉重无比的十三档生铁算盘，用尽全力朝着刺客头目的面门砸了过去。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 15,
+          "count": 1,
+          "evidence": [
+            "后半段从反派封门、撞门、隔空攻心到暗门开启与裴守约回援被合并在同一个长段落中，行文密集缺少分段，在连续阅读时排版稍显压迫。（朱漆大门在铁索与重木的撞击下剧烈震颤，门框上积存多年的陈年尘灰簌簌而落。陆昭眼中寒芒暴涨……夜雨将歇，天际泛白，这一场筹谋已久的夺嫡大案，终于将在晨曦公堂上揭开最后的血色序幕。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.chapter-score-low",
+          "chapter": 16,
+          "count": 1,
+          "evidence": [
+            "读者评分 45.8：本章存在极其严重的连续性事故（吃书回档）。上一章结尾裴守约带兵解围并拿下崔晋的情节被彻底抹去，本章开篇崔晋再次带户部主事踹门围困，导致读者产生强烈的割裂与疲劳感。同时，反派正六品文官当堂撕封条抢刀刺杀的行为脱离了硬核官场智斗的基调，前章承诺的公堂决战也被原地拖延，严重伤害追读体验。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continue-reading-no",
+          "chapter": 16,
+          "count": 1,
+          "evidence": [
+            "读者不愿继续阅读：本章存在极其严重的连续性事故（吃书回档）。上一章结尾裴守约带兵解围并拿下崔晋的情节被彻底抹去，本章开篇崔晋再次带户部主事踹门围困，导致读者产生强烈的割裂与疲劳感。同时，反派正六品文官当堂撕封条抢刀刺杀的行为脱离了硬核官场智斗的基调，前章承诺的公堂决战也被原地拖延，严重伤害追读体验。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continuity-1",
+          "chapter": 16,
+          "count": 1,
+          "evidence": [
+            "上一章结尾裴守约已率大理寺内卫赶到并将门外崔晋等人拿下、暗门开启，本章却完全推翻重置，崔晋毫发无伤带户部主事再次破门查封，剧情产生严重回档与逻辑断层。（晨光刚刚撕开案牍库窗纸的微光，两扇沉重的包铁榆木大门便伴随着一声震耳欲聋的巨响，被一只裹着生铁掌的厚重铁靴猛然踹开。……在他身后，刚刚包扎好肩头血迹的崔晋亦步亦趋地跟着"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-2",
+          "chapter": 16,
+          "count": 1,
+          "evidence": [
+            "正六品户部度支部主事在官衙重地直接撕毁公文封条、亲自抢刀化身武夫刺杀录事，严重脱离官场权谋与智斗文的人物行为逻辑，降智明显。（户部主事狂笑出声，眼神中翻涌起嗜血的疯狂。他猛地扬手，一把将那张盖有度支部大印的白麻纸封条撕成了漫天碎屑。……户部主事反手夺过身侧差役腰间的精钢长刀，脚踏碎木如恶狼般飞扑而上！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.payoff-3",
+          "chapter": 16,
+          "count": 1,
+          "evidence": [
+            "前章预告的“晨曦公堂上揭开血色序幕”爽点未兑现，本章依旧滞留在案牍库重复嘴炮与低级肉搏，主线推进受阻。（沈淮安，就算你算尽天下假账，今日这间屋子，也只能是你的葬身之地！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": 18,
+          "count": 1,
+          "evidence": [
+            "沈淮安当面向大理寺正宣读的公物毁损与律法清单，与上一章末尾沈淮安落笔时的自述内容高度重合，连续追更时略有信息复述感。（上一章末尾：“劈毁太祖朝御赐紫檀案卷柜四具，折银一百二十两；砸毁先皇朝律典注释原典三套……”；本章中段：“其一，户部差役持斧劈毁太祖朝工部督造的御赐楠木案卷重柜四具……折银一百二十两……其二，户部推倒沉"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": 19,
+          "count": 1,
+          "evidence": [
+            "上一章结尾户部主事窥见梁上未干墨迹的危机线索在本章暂未直接交织，而是切入密审主线；虽属双线推进的合理编排，但稍缓了上章末尾营造的紧迫偷家危机感。（户部主事瞳孔骤然收缩成针尖大小，死死盯住了暗格木料严丝合缝的边缘缝隙。晨光映照之下，在那极窄的木缝深处，隐约透出了一抹极其微小、尚未彻底干透的深浓墨迹！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "“白皮书”一词现代政经色彩较浓，虽然贴合“现代审计降维打击”的核心卖点，但若直接作为古代卷宗封皮题名，稍显出戏。（《通惠河火耗亏空穿透审讯白皮书》）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.readability-1",
+          "chapter": 21,
+          "count": 1,
+          "evidence": [
+            "文末出现一处错别字，“具休死尸”疑似为“冰冷死尸”或“具具死尸/具体死尸”的输入错误。（那眼神就像是在看着一具早已被剥开皮肉、无处遁形的具休死尸。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 22,
+          "count": 1,
+          "evidence": [
+            "公堂陈词中使用了较多偏现代的数学与统计表述（如‘百分之三’、‘百分之六点六’），虽契合专业降维打击的爽感，但在极重考据的历史语境下略带现代口语痕迹。（按照户部颁布的大统仓储常耗律，顶格火耗率为百分之三，即三百六十石。崔主事为了做平三千二百两的总亏空，直接虚报了八百石。你账面上的火耗率高达百分之六点六）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 26,
+          "count": 1,
+          "evidence": [
+            "夜间值房黑影潜入送拜帖的桥段带有较浓的武侠飞贼色彩，与前文写实的官场博弈和硬核审计画风略有反差，但对营造悬念和压迫感有效。（一道鬼祟的漆黑身影如同没有重量的飞絮，悄无声息地穿过窗棂缝隙滑入屋内。那黑影身法快得不可思议...）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 29,
+          "count": 1,
+          "evidence": [
+            "供词在关键四字密押即将吐露的瞬间因暗毒发作而中断，属于较传统的情节截断手法，但在此处节奏紧凑、氛围烘托到位，未实质损伤阅读爽感。（“密押是什么？”沈淮安上前一步，目光如电般逼视着崔晋。崔晋身子剧烈颤抖着，张开满是血沫的嘴唇，喉咙里发出急切的气流声：“密押，密押就在那本双头暗账的夹层里，字号是……”话音未落，崔晋的声音突"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 31,
+          "count": 1,
+          "evidence": [
+            "主角在古风对话中直接脱口而出‘物理世界的物料守恒’等现代学术词汇，略带出戏感，虽有追问解释缓冲，仍可更自然地转化为古代表达（如‘工料相生、有出必有入’）。（流水账可以伪造，银钱划拨可以平账，但物理世界的物料守恒他们抹不掉。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 32,
+          "count": 1,
+          "evidence": [
+            "章节标题《算出万套重甲》与正文实际核算数据存在口径偏差。正文中推算的最终组合为‘一万张破甲强弩，外加三千六百套具装骑兵重铠与步战明光铠’（若纯造重甲亦为四千五百具），将弩机与重铠泛化合并为‘万套重甲’稍有夸大。（隐龙铁庄的真实产出规模，是一万张破甲强弩，外加足足三千六百套连人带马皆披重铠的具装骑兵重铠与步战明光铠。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 33,
+          "count": 1,
+          "evidence": [
+            "朝会散场与传旨进宫的转场镜头切跳略显频繁（殿前传旨-偏院接旨-殿外皇子首辅反应-夹道进宫），时序有轻微交错感，但不影响整体连贯性。（奉天殿前朝会方散，二皇子赵煜并未如往常那般乘舆离去，而是孤身伫立在汉白玉石阶之上……沈淮安在太监总管与禁卫的严密护送下，终于踏上了通往御书房的幽深夹道。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 34,
+          "count": 1,
+          "evidence": [
+            "沈淮安身负大理寺九品录事官职，御前面圣自陈时自称‘草民’略有官制称谓瑕疵，一般低阶官吏自称‘微臣’或‘卑职’更合官场语境。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 38,
+          "count": 1,
+          "evidence": [
+            "沈淮安在向古代嫌犯问话时直接使用了'所有者权益'、'主营业务'等现代极强的会计报表词汇，虽符合其穿越社楚人设，但在古代审讯语境下略显生硬出戏。（负债与所有者权益却无任何主营业务支撑。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.issue-1",
+          "chapter": 41,
+          "count": 1,
+          "evidence": [
+            "旁白中直接出现‘拓扑图’这一偏现代数理/信息学的专有名词，在历史权谋正剧语境中略显跳脱，建议微调为‘资金总图’或‘钱脉图’以更贴合古典画卷质感。（一幅贯穿大齐南北两千里江山的资金流转拓扑图在白纸上彻底成型。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": 44,
+          "count": 1,
+          "evidence": [
+            "章首对天字号/地字号汇票及具体银两数额的拆解与上一章章尾信息有部分重合复述，略微放缓了开篇节奏，但随后通过‘夺嫡双簧戏’的权谋定性迅速拉回了信息增量。（二皇子在京师暗中打造千具重甲，前后支取了二百八十四万两白银；而三皇子在北境边防大营虚报军需折色，领取的也是三百二十万两密押银。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 46,
+          "count": 1,
+          "evidence": [
+            "反派二皇子得知失败后的肢体动作与台词较为脸谱化（捏碎茶盏、手掌流血拍舆图、咆哮‘废物’），相比主角与皇帝的博弈描写略显模板化。（他手中的青玉茶盏被五指硬生生捏得粉碎，滚烫的茶水混合着碎瓷片刺入掌心，鲜血顺着指缝一滴滴砸在案几上的地图上……‘废物！全是一群成事不足败事有余的废物！’）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 47,
+          "count": 1,
+          "evidence": [
+            "敌方伏击视角的描写稍显全知视角的交代感，略微稀释了主角团遭遇战时的侦查悬念。（距离官驿不到三里的一线峡密林深处，泥土中隐隐泛着令人作呕的血腥气。数十名身着粗布兽皮、打扮成绿林响马的强悍汉子正伏在湿滑的苔藓丛中）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 48,
+          "count": 1,
+          "evidence": [
+            "上一章末尾主角与林铁鹰已在淮安水路的官船上遭遇伏击并下令变阵备战，本章开头却毫无过渡地时空倒退回京城大理寺出门，且林铁鹰变成了在陆路官道骑马护送空轿，造成严重的前后设定与情境断层。（上一章结尾：【林铁鹰闻言阔步走至船舷边……沈淮安一袭青衫长袍缓步走出中军舱……】；本章开头：【沈淮安抬手整了整身上的青色葛布长衫……一步迈"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 51,
+          "count": 1,
+          "evidence": [
+            "查抄大库与总账房的过程极为顺畅，缺少司库差役或地方势力的实质性阻滞博弈，略显推进过快，但属于为了节奏紧凑做出的合理让步。（林统领暴喝一声，战马狂奔而至，手中陌刀横扫而出，直接将紧闭的朱漆院门劈得木屑纷飞。铁骑瞬间踏破院落，那几名企图携账潜逃的书吏被当场按倒）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 52,
+          "count": 1,
+          "evidence": [
+            "与上一章结尾存在严重的人物状态逻辑冲突：前文已明确将三大盐商首领戴重枷当场抓捕，本章中段却描写三大盐商首领在深宅水榭围坐喝茶密谋。（三位身着昂贵紫貂大氅的江南三大盐商首领围坐在一张紫檀八仙桌旁，案几上的极品明前龙井早已凉透，却无人动过一口。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 52,
+          "count": 1,
+          "evidence": [
+            "现代专业术语‘资金流向拓扑图’在历史正剧语境中略显跳脱。（沈淮安正就着烛火将刚刚核算出的资金流向拓扑图绘制在白绢之上。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 53,
+          "count": 1,
+          "evidence": [
+            "商会会长突然展现‘内劲捏碎瓷杯’的武侠特征，在侧重硬核权谋与现代审计逻辑的历史官场文脉络中略显套路化，轻微影响历史官场沉浸感。（名贵酒杯被内劲捏得粉碎，锋利瓷片深深刺入掌心）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 54,
+          "count": 1,
+          "evidence": [
+            "死士头目随身携带盖有堂官私印且言辞极其直白露骨的杀人纵火手谕，在硬核权谋博弈中略显‘送证据’的工具化痕迹。虽有主角关于推脱栽赃的说明，但密信逻辑可更隐蔽。（两淮账目决不可入京，着即焚毁盐运使司总账房，尽诛大理寺钦差随员，事成之后取道运河潜回京郊铁庄，自当保全诸人家眷前程。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 56,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（沈淮安未作停歇，反手解开身后背负的熟桐油布卷，将一张长达丈余的巨幅白麻纸资金穿透图谱在大堂屏风前轰然展开。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 57,
+          "count": 1,
+          "evidence": [
+            "水下银库的物流线索（运冰船吃水、熟石膏桐油）获取较为顺畅，稍微弱化了反派藏匿银两的隐蔽性与前期侦查难度。（苏凌波目光一闪，立即翻开身旁一本从盐商总会调取的物资采购底册。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 58,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（上一章推导结论为'就藏在老码头盐仓地底的水下暗库之中'并令'直扑城南老码头'，本章执行时变为'轰然撞向通宝钱庄总号那两扇紧闭的铸铁大门'并在钱庄夹墙内找到800万两银墙）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 60,
+          "count": 1,
+          "evidence": [
+            "圣旨册封官名直译为“皇家首席审计官”，现代职场味较浓，在传统古言官场语境下略有违和感，但尚在“社畜审计降维”题材的风格接受度之内。（着即加封沈淮安为皇家首席审计官，进正三品衔，赐稽查天下财赋赤金宝印！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continuity-1",
+          "chapter": 61,
+          "count": 1,
+          "evidence": [
+            "时空与剧情推进存在明显回退错位：上一章结尾沈淮安已在扬州盐运使司内接旨升官，且严世宽已死，交代'明日清晨登船，顺运河而下'；本章开头却又写官船刚撞上'扬州官码头'，盐商称其'初来江南、舟车劳顿、接风洗尘'，并重新去查封'两淮盐运使司总库'，前后场景衔接出现逻辑循环。（上一章结尾：'正当扬州城内清查黑账如火如荼之际……斩"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 63,
+          "count": 1,
+          "evidence": [
+            "沈淮安识破公堂暗格的过程缺乏前置观察或逻辑推演铺垫，直接以内劲震碎暗锁掀翻木壁，略带动作戏便利感，稍减硬核智斗的探查质感。（沈淮安根本不再听他多费口舌，径直大步走向公堂东侧那面看似严丝合缝的雕花紫檀木墙。他抬手在墙壁第三处铜钉上猛然一拍，内劲震碎暗锁，随后右臂发力，猛地掀翻整面公堂暗格木壁！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 64,
+          "count": 1,
+          "evidence": [
+            "主角台词中出现现代网络流行语'翻车'，在严肃历史官场语境下略显突兀违和。（想看本官翻车，他们还不够格。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 65,
+          "count": 1,
+          "evidence": [
+            "沈淮安破解需特定密钥的四柱九进加密法时，通过‘现代复式记账法与多维资金拓扑模型’等概括性描写快速跨过，专业审计层面的微观拆解过程略显写意。（沈淮安并未答话，脑海中现代复式记账法与多维资金拓扑模型飞速运转，双眼如同精准的算盘，快速剥离着字里行间被刻意错位的数字矩阵。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 66,
+          "count": 1,
+          "evidence": [
+            "将现代财务审计概念（资金穿透模型）强行套用到近身武斗的刀轨预判上，修辞与逻辑略显牵强生硬，稍有出戏感。（在法务审计与资金穿透模型中锻炼出的极致冷静与空间预判，让他在死士动身的瞬间便看穿了这一刀的所有攻击路径。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.readability-1",
+          "chapter": 67,
+          "count": 1,
+          "evidence": [
+            "守闸截击的水师将领在文中被冠以'押运统领'称谓，与其实际承担的水闸守备、伏击敌船之职责在语义上产生偏差，易引起误读。（押运统领身披重甲，高高伫立在第三道总水闸的箭楼之上。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.payoff-2",
+          "chapter": 67,
+          "count": 1,
+          "evidence": [
+            "前章盐运使宣称有八百万两私饷由八艘巨舰押运，本章苏凌波盘点八船总数却为'超过了一百万两'，与前章数字铺垫存在落差且未补充解释是否为分批运送。（整座底舱内的铁皮箱不下五百口，八艘大船合在一起，截获的私饷现银绝对超过了一百万两！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.issue-1",
+          "chapter": 68,
+          "count": 1,
+          "evidence": [
+            "三大盐商首领在面对囚徒困境时从死扛到彻底失态扭打抢供的心理转变极快，戏剧化反差强烈但也略微削弱了江南巨贾原本城府深沉的压迫感。（三人为了争夺唯一免死的首告机会，在庄严肃穆的行辕大堂上争先恐后地扭打攀咬，再无半点昔日江南巨贾的体面与傲气。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": 69,
+          "count": 1,
+          "evidence": [
+            "千人披甲推攻城木夜袭行辕的声势极其浩大，但化解过程较为模式化且偏快（城头普法诛九族动摇军心、一箭秒杀主将、三千伏兵合围即纳头便拜），导致千钧一发的危机感消解略快。（只听嘣的一声闷雷般的弦响，离弦的重箭撕裂夜空，化作一道凄厉的乌光破空而过。那叛军主将甚至来不及横刀格挡，重箭便精准无比地贯穿了他的咽喉铁甲...整场凶险万分"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 71,
+          "count": 1,
+          "evidence": [
+            "沈淮安当众口头驳斥户部主事时直接报出公制单位“克”，在明代背景的公堂/码头对话语境下略有现代词汇出戏感，建议转化为古代常用微量衡重单位（如分、厘、铢）或直接以总斤两阐述。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 72,
+          "count": 1,
+          "evidence": [
+            "故事背景为架空大齐王朝，朝堂礼制通篇呈现宋明风格（如奉天殿、象牙笏板、二品锦鸡文官补服、梁冠等），但在皇帝降旨处出现了清代特有的“革去顶戴花翎”，与后文禁卫“抓落梁冠”存在微小的服制术语冲突，对硬核历史读者稍有出戏感。（传朕旨意，将户部左侍郎当场革去顶戴花翎，剥去官袍！着大内禁卫即刻押入诏狱）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 73,
+          "count": 1,
+          "evidence": [
+            "沈淮安在刚办完江南盐税案的回京朝堂上，能随手拿出跨越十年的‘运河水闸起运底根’与‘西北大营核算草签’，情报准备略显全知，若能在前文或台词中简单交待是江南转运使司或户部调卷所得，逻辑会更严密。（沈淮安从容不迫地从宽大衣袖中抽出一卷泛黄的羊皮底册……根据臣自运河水闸调取的起运底根，以及西北大营各营实收的核算草签）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 74,
+          "count": 1,
+          "evidence": [
+            "炭化纸张用明矾水定影与透光镜显影的情节带有一定戏剧化放大，但符合硬核技术流爽文的阅读预期，未破坏整体逻辑闭环。（用毛笔蘸取明矾水，一点点润湿黏连在一起的焦黑残卷边缘。水分子渗入干枯的纸纤维，原本脆弱的残页在明矾定影下恢复了微弱韧性。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 75,
+          "count": 1,
+          "evidence": [
+            "苏凌波恰好在此刻带着总号底簿登场，虽然文中有'沈大人提前传信'的一句交待，但在偏殿刚起出暗匣的紧迫时间线上，衔接略显工整巧合。（“若非沈大人提前传信让我带齐源丰润的总号底簿，寻常账房看到这些花押，只怕连看都看不明白。”苏凌波微微侧头，纤细白皙的手指已然按在了算盘的第一档乌木珠上。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 76,
+          "count": 1,
+          "evidence": [
+            "沈淮安在审讯中直接报出‘三千具重甲’的精确数字，虽与前文四十万斤生铁折旧报废暗合，但缺少一句简短的现代算力折算展示，稍显信息前置。（京郊作坊私铸的重甲，数量足有三千具。今夜户部案牍库偏殿起火，你急于从西直门逃出京城……）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 77,
+          "count": 1,
+          "evidence": [
+            "物理密度换算细节上略有笔误（花岗岩/青石密度通常为每立方约两吨半以上，文中称每立方五百余斤偏轻），但在行文语境下不影响论证‘石头体积庞大无法藏匿’的核心逻辑。（寻常花岗岩与青石的密度，每立方不过五百余斤。若要将一艘四百料的空船硬生生压入水下三尺四寸，底舱至少需要填满整整两百方青石）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 79,
+          "count": 1,
+          "evidence": [
+            "圣旨到达的时机过于紧凑，在公堂刚审结、时间差破绽刚揭露的瞬间，宣旨太监便已带着写明‘三司审明’与对王延龄处分的圣旨进堂，略显机械降神以推进结案。（王延龄站在公堂中央，苍老的身躯微微颤抖……就在这剑拔弩张的时刻，大理寺公堂外突然传来尖锐急促的唱喏之声：“圣旨到！三司堂官并一干人等接旨！”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.dialogue-2",
+          "chapter": 79,
+          "count": 1,
+          "evidence": [
+            "沈淮安当堂陈词中出现‘物理铁证’等偏现代专业术语，在古代公堂语境下稍显出戏。（大人算尽了官场文书的规制，却算漏了时间这个无法作伪的物理铁证。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 81,
+          "count": 1,
+          "evidence": [
+            "沈淮安作为审计官吏设定，只身一脚踹开‘厚达三寸的铁皮密门’在物理表现上略显突兀，由随行的林铁鹰或护卫军破门在力量逻辑上会更严密。（轰然一声暴响，厚达三寸的铁皮密门被沈淮安一脚狠狠踹开。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 82,
+          "count": 1,
+          "evidence": [
+            "京城涉案三大票号的前后名称出现轻微不一致：前文列举为天成元、德聚、源泰，后文大理寺卿下令查封时却变为德聚、源泰及同升和。（随后，万通钱庄向京城的天成元、德聚、源泰三大票号开出等额的飞钱汇票……与……查封京城德聚、源泰以及同升和三大涉案票号！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continuity-1",
+          "chapter": 83,
+          "count": 1,
+          "evidence": [
+            "空间与时间线衔接存在瞬移感：上章大理寺卿、沈淮安与林铁鹰等人尚在京城王府查抄京城票号，严世宽在千里之外的扬州接信立刻销毁账册；本章开头同一时间段内主角团全员已出现在扬州现场破门抓人并坐堂，缺少转场时间过渡或分兵铺垫的交代。（千里之外，扬州盐运使司衙门……整整七年来的所有原始盐税底册……严世宽抢过一柄长柄铁铲，状若疯魔般"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 87,
+          "count": 1,
+          "evidence": [
+            "钱万乘在底牌尽失被按倒在地时，台词略偏向标准的‘反派临死叫嚣模板’，不过后续掏出五爪龙纹玉牌的动作迅速拉回了官场老狐狸的政治底气。（钱万乘死死盯着赵乾，神色中满是鱼死网破的疯狂：‘太子殿下，沈淮安不懂规矩，难道您也不懂规矩么？...你们敢动我一根汗毛试试！’）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.issue-01",
+          "chapter": 89,
+          "count": 1,
+          "evidence": [
+            "本章承接上章口供后主要为武力截杀与现场查封，专业审计与智商压制的特色篇幅偏少，主要依靠‘吃水比重推断’简短带过。（若是满载轻飘飘的稻谷，船身本该在水面上轻盈起伏。可眼下任凭外河浪头如何拍打，这几艘船的船帮竟连一丝晃动都没有。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.issue-02",
+          "chapter": 89,
+          "count": 1,
+          "evidence": [
+            "章尾停留在截获私银铁矿后起锚押运的平稳过渡阶段，缺乏新的危机预警或对手反应的钩子。（十二艘满载着重铁与巨额私银的重船排成一条望不到尽头的长龙，破开层层水雾，浩浩荡荡朝着扬州城盐运总库的方向破浪而去。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 90,
+          "count": 1,
+          "evidence": [
+            "幕后反派皇子的身份指代存在前后不一致，前文指控为二皇子，后文场景切换至京城时写为三皇子。（本章前半段沈淮安喝道‘二皇子私库密押在此’，后半段京城视角却转为‘三皇子府邸的书房内’、‘原本是三皇子筹备西北私军与打造万具重铠的全部粮饷命脉’。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continuity-1",
+          "chapter": 91,
+          "count": 1,
+          "evidence": [
+            "上一章结尾明确写明三大盐商首领已被林铁鹰用生铁锁链与木枷锁拿归案并压跪在泥泞中，三皇子收到的急报也确认‘钱万乘等三大盐商首领在扬州被铁锁锁拿’；但本章中段三大盐商首领却完好无损地聚集在扬州城西深宅水榭内开会，还称‘再过两个时辰，锁链就要套到咱们脖子上了’并策划煽动暴动。出现严重的情节前后矛盾与状态错乱。（上一章明确提及"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 91,
+          "count": 1,
+          "evidence": [
+            "严世宽身为两淮盐运使司主官，在被当场查获假银时辩称‘库房常年受潮，银两生了铅斑’，辩词过于反智儿戏，略微削弱了官场权谋博弈的严肃感与对手智商。（‘殿下明鉴！这都是往年地方解运上来的火耗损耗，库房常年受潮，银两生了铅斑也是常有的事，微臣当真不知情啊！’）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 93,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（当场将江南三大盐商首领死死扣住双臂，彻底控制江南三大盐商首领。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 94,
+          "count": 1,
+          "evidence": [
+            "在生死搏杀的围攻场景下突然插入‘现代法务审计的穿透模型’等现代术语独白，略微稀释了历史官场文的沉浸感。（现代法务审计的穿透模型在他脑海中急速运转，资金流、物资调拨单与军营出入库勘合在他眼中化作一条条清晰的逻辑线。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 95,
+          "count": 1,
+          "evidence": [
+            "沈淮安作为文职审计官员，自两丈高哨台向门外长街骑马敌将投掷卷轴并精准击中面甲致其后仰，带有较强演义夸张色彩，在主打硬核写实的权谋文境中略显戏剧化。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 95,
+          "count": 1,
+          "evidence": [
+            "本章完成了围庄死局破局与林铁鹰十年冤屈昭雪的大高潮兑现，情感闭合完整，但章尾未抛出后续盐商残局或京城权贵反扑的新悬念钩子，追更拉力稍显平缓。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": 97,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（水寨外围的所有卡口防御便被驻防营快船全部控制，那些尚未来得及登船的水匪死士被逼得步步后退，纷纷丢盔弃甲退入山坳。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 98,
+          "count": 1,
+          "evidence": [
+            "沈淮安通过敲击墙壁找暗格的桥段被强行套上‘现代法务审计逻辑’，术语嫁接略显生硬，属于常见的标签化表述，但对主线解密推进无大碍。（在现代法务审计的逻辑中，但凡涉及谋逆这等滔天大罪的核心操盘手，绝不可能将所有身家性命全押在容易被突袭销毁的明面上，真正具有法律效力与控制权的抵押契约，必定藏在更为坚固的物理暗格之中。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 99,
+          "count": 1,
+          "evidence": [
+            "本章承接上章起获的关键物证，重心转移至雨夜遇刺与八百里加急信使调度，硬核账目推演等专业解谜元素在动作节奏中占比有所降低，但整体仍较好地维系了危机倒计时的紧迫感。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": 100,
+          "count": 1,
+          "evidence": [
+            "阶段性大高潮收尾处缺乏新悬念钩子，追读拉力主要依靠爽后余韵而非后续危机驱动。（清晨的日光穿透殿门，洒在满地碎裂的端砚残渣与长达三丈的审计长卷之上。满殿文武百官战战兢兢地伏地叩首，偌大的殿堂之内唯有圣威浩荡，无人再敢发出半点声响。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "1-3章：第2章末尾明确写道主角已将草图藏入'官袍内衬贴胸的暗袋之中'，第3章开头搜查前改为'在门闩崩断的电光石火间塞入破算盘暗槽'。虽有意识到搜身风险的心理补丁，但两章衔接处的动作衔接略显跳跃。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": 5,
+          "count": 1,
+          "evidence": [
+            "1-5章：第3章末尾差役催促升堂，主角跨出门扉，第4章开头主角在押解间隙脱身进入故纸偏库寻找物证，转场衔接略显兵行险着，但逻辑上通过‘未立刻去大堂、借阴影掩护’进行了解释，未形成硬伤。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 10,
+          "count": 1,
+          "evidence": [
+            "6-10章：人物官职与从属身份出现跨章不一致：第6章明确陆昭为缇骑（锦衣卫/御史台武职），第7章描述为'大理寺少卿陆昭'；第8章中裴守约为'大理寺少卿裴守约'，到第10章裴守约又变为'大理寺卿裴守约'。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "16-20章：第16章中沈淮安曾当面质问户部主事“可有大理寺卿裴大人的亲笔手令”，明确裴守约即为大理寺卿；但在第20章大理寺卿深夜亲临案牍库时，却以第三人称对沈淮安说出“即便有裴守约护你”，导致大理寺卿与裴守约的人物身份与官职归属出现前后自相矛盾的混乱。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.genre-promise-2",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "16-20章：正六品度支部文官在无死士掩护的情况下，当众撕封条亲自抢刀刺杀九品录事，行为模式偏向底层匪帮，与硬核官场博弈、讲求程序与规制的基调略有出入。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 40,
+          "count": 1,
+          "evidence": [
+            "36-40章：模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.evaluation-error",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "第43章读者评审失败：[\n  {\n    \"expected\": \"object\",\n    \"code\": \"invalid_type\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received array\"\n  }\n]"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.self-evaluation-fallback",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "无独立读者模型，本轮回退写作模型自评"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 163,
+          "avgMs": 34264,
+          "p50Ms": 33700,
+          "maxMs": 80876
+        },
+        "fact-extraction": {
+          "count": 127,
+          "avgMs": 16612,
+          "p50Ms": 14749,
+          "maxMs": 50155
+        },
+        "chapter-judge": {
+          "count": 125,
+          "avgMs": 10722,
+          "p50Ms": 8329,
+          "maxMs": 47640
+        },
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 29746,
+          "p50Ms": 29746,
+          "maxMs": 29746
+        },
+        "outline-expand": {
+          "count": 14,
+          "avgMs": 32185,
+          "p50Ms": 31022,
+          "maxMs": 56087
+        },
+        "outline-roll": {
+          "count": 6,
+          "avgMs": 29123,
+          "p50Ms": 32263,
+          "maxMs": 35474
+        },
+        "reader-outline-judge": {
+          "count": 1,
+          "avgMs": 25252,
+          "p50Ms": 25252,
+          "maxMs": 25252
+        },
+        "reader-chapter-judge": {
+          "count": 100,
+          "avgMs": 12249,
+          "p50Ms": 10453,
+          "maxMs": 42982
+        },
+        "reader-window-judge": {
+          "count": 5,
+          "avgMs": 16645,
+          "p50Ms": 13656,
+          "maxMs": 29269
+        }
+      }
+    }
+  ]
+}

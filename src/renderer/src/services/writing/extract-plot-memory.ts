@@ -604,6 +604,9 @@ const CRITICAL_STATUS_RULES: Array<{
       /([\u4e00-\u9fa5]{2,8}?)(?:被[人毒酒刀剑]?[\u4e00-\u9fa5]{0,2}(?:杀|害|鸩))亡?/,
       /([\u4e00-\u9fa5]{2,8}?)(?:气绝|毙命|身亡|丧命|殒命|惨死|暴毙|命丧|死于)/,
       /杀了([\u4e00-\u9fa5]{2,8})/,
+      // 动词后置式：斩杀巨贪严世宽／格杀首恶——捕获段含称号前缀，经
+      // stripNameEpithets 剥除后再过白名单（「者」入前瞻集防悬赏句误吞）
+      /(?:斩|格|射|毒|勒|绞)(?:杀了?)([\u4e00-\u9fa5]{2,10}?)(?=[，。！？；、"”'」』者]|$)/,
       /([\u4e00-\u9fa5]{2,8}?)(?:的(?:尸[体首]|遗体|遗容))|(?:收殓|安葬|下葬)(?:了)?([\u4e00-\u9fa5]{2,8})/,
     ],
   },
@@ -655,10 +658,19 @@ export function extractCriticalStatusChanges(
       const re = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
       let m: RegExpExecArray | null;
       while ((m = re.exec(content)) !== null) {
-        const name = (m[1] || m[2] || '').trim();
+        const name = stripNameEpithets(m[1] || m[2] || '');
         if (!name || name.length < 2 || name.length > 8) continue;
         // 排除代词/指示词与明显非人名的命中
         if (/^(?:的|了|他|她|它|这|那|此|其|众|一|被|又|即|皆|全部|在场)/.test(name)) continue;
+        // 悬赏/通缉语境的「斩杀X者赏银万两」不是已发生的死亡
+        if (
+          rule.state === '死亡' &&
+          /(?:赏银|悬赏|通缉|缉拿|重金|购其首级|活捉|捉拿)/.test(
+            content.slice(Math.max(0, m.index - 40), m.index + m[0].length + 40)
+          )
+        ) {
+          continue;
+        }
         if (rosterSet && !rosterSet.has(name)) continue;
         const key = `${name}|${rule.state}`;
         if (seen.has(key)) continue;
@@ -675,7 +687,66 @@ export function extractCriticalStatusChanges(
       }
     }
   }
+  changes.push(...extractExecutionDeaths(content, rosterSet));
+  return mergeCharacterStateChanges(changes);
+}
+
+/** 抓捕后叠加重复项（同角色同状态保留首条），按章节内出现顺序稳定输出 */
+export function mergeCharacterStateChanges(
+  changes: CharacterStateChange[]
+): CharacterStateChange[] {
+  const seen = new Set<string>();
+  const out: CharacterStateChange[] = [];
+  for (const change of changes) {
+    if (!change?.characterName || !change.state) continue;
+    const key = `${change.characterName}|${change.state}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(change);
+  }
+  return out;
+}
+
+/** 命中式死亡谓词不足以覆盖「处决完成体」：斩立决当堂执行、头颅滚落这类
+ *  叙事句里，人名与死亡谓语常常隔着十几个字（100 章矩阵实测第 60 章公开
+ *  斩立决整体漏提→禁入名单空转→死人复活重启审判线）。此处退到句子粒度：
+ *  句中含处决/头颅落地谓语且出现名单内角色 → 该角色记 死亡。 */
+const EXECUTION_SENTENCE_RE =
+  /斩立决|枭首|腰斩|凌迟|处决|就地正法|问斩|斩首示众|(?:头颅|首级)[^。！？]{0,8}(?:滚落|落地)|人头落地/;
+const EXECUTION_AVOID_RE = /幸免|免于|刀下留人|且慢|手下留情|暂且留命|死罪可免/;
+
+function extractExecutionDeaths(
+  content: string,
+  rosterSet: Set<string> | null
+): CharacterStateChange[] {
+  if (rosterSet === null) return [];
+  const changes: CharacterStateChange[] = [];
+  for (const sentence of content.split(/(?<=[。！？])/)) {
+    if (EXECUTION_AVOID_RE.test(sentence)) continue;
+    if (!EXECUTION_SENTENCE_RE.test(sentence)) continue;
+    for (const name of rosterSet) {
+      if (!sentence.includes(name)) continue;
+      changes.push({
+        characterName: name,
+        stateType: 'status',
+        state: '死亡',
+        detail: sentence.replace(/\s+/g, '').slice(0, 60),
+      });
+    }
+    if (changes.length >= 8) break;
+  }
   return changes;
+}
+
+/** 「斩杀巨贪严世宽」式动词后带修饰语的命中，剥掉称号前缀再交给白名单过滤 */
+function stripNameEpithets(raw: string): string {
+  let name = (raw || '').trim();
+  for (;;) {
+    const next = name.replace(/^(?:巨贪|巨寇|大盗|逆贼|奸商|罪臣|钦犯|前朝|老贼|贼子)/, '');
+    if (next === name) break;
+    name = next;
+  }
+  return name;
 }
 
 /**
