@@ -80,6 +80,34 @@ import {
 import { robustJsonParse } from '@/utils/json-parser';
 import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
 import { stripStructuredNodeBlock } from '@/services/outline/parser/utils';
+import type { SceneChunk } from '@/types/story-runtime';
+
+/**
+ * 按章数（而非场景块数）选取近期上下文场景。
+ *
+ * 正文段落归一化后是统一的 \n\n 间隔，SCENE_BREAK_PATTERN 的 \n{3,} 分支几乎不再命中，
+ * 整章常只切成 1 个场景块（《绝症当虫治》2026-08-26 实测 10/10 章均 1 块）——
+ * 旧的 slice(-4) 在该形态下只覆盖 4 个块即 1 章多一点，跨章事实（药方成分、
+ * 已发生状态）在起草 prompt 里不可见。改为按 chapterIndex 去重取最近 N 章
+ * 的全部场景块，一章多块形态下同样覆盖 N 章。
+ */
+export function selectRecentScenesByChapter(
+  sceneChunks: SceneChunk[],
+  chapterNumber: number,
+  maxChapters: number
+): SceneChunk[] {
+  const chapterIndexes = [
+    ...new Set(
+      sceneChunks
+        .map(scene => scene.chapterIndex)
+        .filter(index => Number.isInteger(index) && index < chapterNumber)
+    ),
+  ]
+    .sort((a, b) => b - a)
+    .slice(0, maxChapters);
+  const wanted = new Set(chapterIndexes);
+  return sceneChunks.filter(scene => wanted.has(scene.chapterIndex));
+}
 
 function createStructuredAIFromActiveProvider(signal?: AbortSignal): StructuredAI {
   const inner: StructuredAI = {
@@ -929,9 +957,11 @@ export class ChapterWritingPipeline {
         currentChapter: chapterNumber,
         topK: 8,
       });
-      const recentScenes = bootstrap.sceneChunks
-        .filter(scene => scene.chapterIndex < chapterNumber)
-        .slice(-4);
+      const recentScenes = selectRecentScenesByChapter(
+        bootstrap.sceneChunks,
+        chapterNumber,
+        3
+      );
       const ai: StructuredAI =
         this.structuredAI ?? createStructuredAIFromActiveProvider(input.signal);
       const engine = new LongFormWritingEngine({
@@ -951,6 +981,9 @@ export class ChapterWritingPipeline {
         targetWordCount: input.targetWordCount,
         seedRevisionHints: input.seedRevisionHints,
         maxRewriteRounds: input.maxRewriteRounds,
+        // 上章结尾仲裁：批量链路构造的 previousChapter.ending 此前只喂任务书生成,
+        // 不进起草 prompt;CBN 与上章正文事实冲突时模型无从对照(花海怒放被回退成含苞)。
+        previousChapterEnding: input.previousChapter?.ending || '',
         // 本章到达回收时点且尚未回收的伏笔 → 判官证据确认后经
         // longFormResult.report.resolvedForeshadowIds 带出，驱动进度面板 buried→resolved 流转
         payoffCandidates: (input.project.foreshadows ?? [])

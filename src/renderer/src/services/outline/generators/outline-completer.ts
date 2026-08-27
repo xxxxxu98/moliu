@@ -606,14 +606,40 @@ function truncateByChars(value: string, maxChars: number): string {
 
 /**
  * 钩子句（CBN/CEN）超长时的本地收缩：优先按标点/连接符切到包含 maxChars 的最近分句，
- * 找不到分句再硬截断。AI 产出超 1-16 字是常态小偏差（2026-08-15 冒烟 22/50 章超长，
- * 整章重写每批 1-10 分钟还不收敛），本地收口语义损失极小且零请求成本。
+ * 找不到分句再按子句边界反向收口（见 truncateAtClauseBoundary）。AI 产出超 1-16 字
+ * 是常态小偏差（2026-08-15 冒烟 22/50 章超长，整章重写每批 1-10 分钟还不收敛），
+ * 本地收口语义损失极小且零请求成本。
  */
+/**
+ * 硬截断兜底：按字数切会产出「…的隐」「…众人眼」这类残句（《绝症当虫治》2026-08-26
+ * 审查实测 31/50 章）。回退策略改为反向扫描：从 maxChars 位置向左找最近的分句边界，
+ * 在那里收口；找不到分句再找结构助词后沿；仍找不到（极端无标点长串）才按字数切。
+ */
+function truncateAtClauseBoundary(value: string, maxChars: number): string {
+  const chars = [...value];
+  if (chars.length <= maxChars) return value;
+
+  const separators = /[，。；;、….!！?？：:——]/u;
+  for (let i = maxChars; i >= Math.floor(maxChars / 2); i -= 1) {
+    if (separators.test(chars[i - 1])) {
+      return chars.slice(0, i).join('').replace(/[，。；;、….!！?？]+$/u, '').trim();
+    }
+  }
+  // 次选：结构助词/连接词后收口（「…的」「…了」），语义完整度远高于切在词中间。
+  const tailWords = /^(?:的|了|着|地|过|与|和|在|向|往|到|被|把|将)/u;
+  for (let i = maxChars; i >= Math.floor(maxChars / 2); i -= 1) {
+    if (tailWords.test(chars[i])) {
+      return chars.slice(0, i).join('').trim();
+    }
+  }
+  return truncateByChars(value.trimEnd(), maxChars);
+}
+
 export function shrinkHookText(hook: string, maxChars: number): string {
-  const trimmed = hook.trim().replace(/[。；;.!！?？,，、]+$/u, '');
-  if (trimmed.length <= maxChars) return trimmed;
+  const trimmedHook = hook.trim().replace(/[。；;.!！?？,，、]+$/u, '');
+  if (trimmedHook.length <= maxChars) return trimmedHook;
   const separators = /[，。；;、——….!！?？]/u;
-  const chars = [...trimmed];
+  const chars = [...trimmedHook];
   // 收集不超过 maxChars 的分句边界，取最后一个
   let cutIndex = -1;
   let acc = 0;
@@ -624,7 +650,7 @@ export function shrinkHookText(hook: string, maxChars: number): string {
   if (cutIndex >= Math.floor(maxChars / 2)) {
     return chars.slice(0, cutIndex).join('').replace(/[，。；;、]+$/u, '').trim();
   }
-  return truncateByChars(trimmed, maxChars);
+  return truncateAtClauseBoundary(trimmedHook, maxChars);
 }
 
 /**

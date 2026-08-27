@@ -314,6 +314,56 @@ function promoteSingleQuotesToPrimary(text: string): string {
 }
 
 /**
+ * ASCII 直引号归一为中文弯引号。
+ *
+ * 2026-08-26《绝症当虫治》第 6 章实测：模型整章用 "..." 写对话，弯引号配对门禁
+ * （“ 与 ” 数量比对）完全不覆盖直引号，带伤入库。归一规则：
+ * - 全文没有弯引号且直引号成对（出现于段首/空白后视为开引号，其余视为闭引号）时整体转换
+ * - 直引号数量为奇数（丢闭引号）时只做能确定的开引号转换，剩余交给未闭合修补/门禁
+ */
+function normalizeStraightQuotes(text: string): string {
+  const hasCurly = /[\u201C\u201D]/u.test(text);
+  const straightCount = (text.match(/"/gu) ?? []).length;
+  if (hasCurly || straightCount === 0) return text;
+
+  // 按位置判定开/闭：段首、行首、空白后、开引号类字符后的 " 是开引号
+  const openContext = /(?:^|[\n\s\u201C\u2018「『（(：:])$/u;
+  let result = '';
+  let prevChar = '';
+  for (const ch of text) {
+    if (ch === '"') {
+      result += openContext.test(prevChar) ? '\u201C' : '\u201D';
+      prevChar = result[result.length - 1];
+    } else {
+      result += ch;
+      prevChar = ch;
+    }
+  }
+  return result;
+}
+
+/**
+ * 修补段内未闭合的对话引号：段落以开引号起头、含对话句末标点但没有闭引号时，
+ * 在段末补上闭引号。
+ *
+ * 丢闭引号的段落（2026-08-26 实测第 6 章三处）会让 G8 引号配对门禁数量失衡，
+ * 触发整章重写；实际上只需在段末补 ” 即可修复，无需浪费一次重写。
+ * 保守起见只处理「段落本身就是一句对话」（以 “ 开头）的明确形态。
+ */
+export function repairUnterminatedDialogueQuotes(paragraphs: string[]): string[] {
+  return paragraphs.map(paragraph => {
+    const trimmedPara = paragraph.trim();
+    if (!trimmedPara.startsWith('\u201C')) return paragraph;
+    const openCount = (trimmedPara.match(/\u201C/gu) ?? []).length;
+    const closeCount = (trimmedPara.match(/\u201D/gu) ?? []).length;
+    if (openCount !== closeCount + 1) return paragraph;
+    // 只补一处缺口，且段末必须是句末标点（对话说完了只是引号丢了）
+    if (!/[。！？…!?]\s*$/u.test(trimmedPara)) return paragraph;
+    return trimmedPara + '\u201D';
+  });
+}
+
+/**
  * 轻量规范化：尊重模型原有分段，不做主动拆段/并段。
  *
  * 仅做：
@@ -327,7 +377,9 @@ function promoteSingleQuotesToPrimary(text: string): string {
 export function normalizeWebnovelParagraphs(prose: string): string {
   if (!prose?.trim()) return prose ?? '';
 
-  const punctuationNormalized = promoteSingleQuotesToPrimary(prose)
+  const punctuationNormalized = promoteSingleQuotesToPrimary(
+    normalizeStraightQuotes(prose)
+  )
     .replace(/\r\n/g, '\n')
     .replace(/—{2,}(?=[“"「『])/gu, '：')
     .replace(/—+/gu, '，')
@@ -341,7 +393,9 @@ export function normalizeWebnovelParagraphs(prose: string): string {
     .map(p => p.trim())
     .filter(Boolean);
 
-  const repaired = repairOrphanClosingQuotes(paragraphs);
+  const repaired = repairOrphanClosingQuotes(
+    repairUnterminatedDialogueQuotes(paragraphs)
+  );
   return repaired.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 

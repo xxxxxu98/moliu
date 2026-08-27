@@ -6,6 +6,8 @@ import {
   buildVolumeAnchor,
   buildWrittenChapterDigests,
   computeOutlineRunway,
+  findBlueprintRepetition,
+  inspectRolledBlueprintQuality,
   isUsableRolledBlueprint,
   parseBlueprintBlocks,
   rollOutlineForward,
@@ -436,5 +438,59 @@ describe('rollOutlineForward', () => {
     expect(result.toChapter).toBe(55);
     expect(result.appendedCount).toBe(5);
     expect(persisted.at(-1)).toHaveLength(5);
+  });
+});
+
+describe('inspectRolledBlueprintQuality / findBlueprintRepetition', () => {
+  const bpFrom = (raw: string, n: number) => parseBlueprintBlocks(raw, [n]).get(n)!;
+
+  it('跨章目标 mustCover 判 over-scoped-mustcover', () => {
+    const raw = `### 第61章
+- 标题：血染公堂翻旧案
+- 概要：概要内容足够长概要内容足够长概要补充说明文字。
+- CBN：三更灯下账页缺角61
+- CPNs：比对旧账发现缺口；主簿带人围库房；以印信压住场面
+- CEN：主簿身后闪出禁军影子61
+- mustCover：完成从查账到定罪的全流程
+- 禁区：不得揭示玉印来历`;
+    const issues = inspectRolledBlueprintQuality(bpFrom(raw, 61));
+    expect(issues.some(issue => issue.kind === 'over-scoped-mustcover')).toBe(true);
+  });
+
+  it('承接模板 CBN 判 template-cbn', () => {
+    const raw = `### 第62章
+- 标题：禁军围府锁重门
+- 概要：概要内容足够长概要内容足够长概要补充说明文字。
+- CBN：承接上章结尾：主簿身后闪出禁军影子
+- CPNs：比对旧账发现缺口；主簿带人围库房；以印信压住场面
+- CEN：府门外的马蹄声越来越近62
+- mustCover：查清军资缺口
+- 禁区：不得揭示玉印来历`;
+    const issues = inspectRolledBlueprintQuality(bpFrom(raw, 62));
+    expect(issues.some(issue => issue.kind === 'template-cbn')).toBe(true);
+  });
+
+  it('企划口吻节点判 reader-meta', () => {
+    const raw = `### 第63章
+- 标题：库房对峙见真章
+- 概要：概要内容足够长概要内容足够长概要补充说明文字。
+- CBN：三更灯下账页缺角63
+- CPNs：让读者对接下来的反转充满期待
+- CEN：主簿身后闪出禁军影子63
+- mustCover：查清军资缺口
+- 禁区：不得揭示玉印来历`;
+    const issues = inspectRolledBlueprintQuality(bpFrom(raw, 63));
+    expect(issues.some(issue => issue.kind === 'reader-meta')).toBe(true);
+  });
+
+  it('相邻章 CBN：子串包含判复述；仅差序号的模板句不误伤', () => {
+    const mk = (n: number, cbn: string) =>
+      ({ ...bpFrom(`### 第${n}章\n- 标题：夜审账本惊变\n- 概要：概要内容足够长概要补充说明文字。\n- CBN：${cbn}\n- CPNs：比对旧账发现缺口\n- CEN：影子逼近${n}\n- mustCover：查清缺口`, n), orderIndex: n });
+    // 本章开头吞了上章 CBN 全文再加尾巴 → 子串包含，判复述
+    const repeated = [mk(64, '三更灯下账页缺角见血印'), mk(65, '三更灯下账页缺角见血印加急')];
+    expect(findBlueprintRepetition(repeated)).toHaveLength(1);
+    // 仅差一个序号（换查第几笔账）→ 合法的相邻推进，不误伤
+    const sequential = [mk(66, '核对第3笔账目发现缺口'), mk(67, '核对第4笔账目发现缺口')];
+    expect(findBlueprintRepetition(sequential)).toHaveLength(0);
   });
 });

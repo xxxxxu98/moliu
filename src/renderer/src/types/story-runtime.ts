@@ -594,6 +594,13 @@ export interface LongFormWriteInput {
    * 证据确认已回收的 id 会出现在 result.report.resolvedForeshadowIds。
    */
   payoffCandidates?: Array<{ id: string; hint: string }>;
+  /**
+   * 上一章实际写出的结尾原文（批量续写链路传入）。
+   * 用于起草时的「上章衔接」仲裁指令：大纲 CBN 与上章正文事实冲突时
+   * 以后者为准向前推进，防止开场状态回退（2026-08-26 实测：第 9 章花海已怒放、
+   * 第 10 章 CBN 写含苞待放，模型照 CBN 字面把状态回退了）。
+   */
+  previousChapterEnding?: string;
 }
 
 export interface LongFormWriteResult {

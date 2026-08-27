@@ -74,3 +74,30 @@ export function normalizedSimilarity(a: string, b: string): number {
   const distance = editDistance(longer, shorter);
   return (longer.length - distance) / longer.length;
 }
+
+/**
+ * 归一化相似度的「保留数字」变体（0-1）。
+ *
+ * 跨章蓝图开场比对（outlineCompleteness / outline-roller findBlueprintRepetition）
+ * 必须保留数字：「核对第3笔账目」和「核对第4笔账目」是两个不同事件，
+ * 去掉数字后会误判成复述；而连环重写熔断用的 {@link normalizedSimilarity} 恰恰要去数字
+ * （字数每轮变化），两者语义相反，不能混用。标点/空白仍去除、统一小写。
+ */
+export function normalizedSimilarityKeepingNumbers(a: string, b: string): number {
+  const normalize = (text: string): string =>
+    (text ?? '')
+      .replace(/[\s\p{P}\p{S}]/gu, '')
+      .toLowerCase();
+  const na = normalize(a);
+  const nb = normalize(b);
+  if (na === nb) return 1;
+  if (na.length === 0 || nb.length === 0) return 0;
+
+  const longer = na.length > nb.length ? na : nb;
+  const shorter = na.length > nb.length ? nb : na;
+  if (shorter.length * 2 <= longer.length) {
+    return longer.includes(shorter) ? shorter.length / longer.length : 0;
+  }
+  const distance = editDistance(longer, shorter);
+  return (longer.length - distance) / longer.length;
+}

@@ -19,7 +19,13 @@ import {
   sanitizeBlueprintLengths,
 } from '../generators/outline-completer';
 import { OUTLINE_COMPLETENESS_POLICY } from '../validation/outlineCompleteness';
-import { normalizeChapterBlueprint } from '@/services/story-runtime/chapterBlueprintNormalize';
+import {
+  isCrossChapterGoal,
+  isHollowChapterHook,
+  isReaderMetaText,
+  normalizeChapterBlueprint,
+} from '@/services/story-runtime/chapterBlueprintNormalize';
+import { normalizedSimilarityKeepingNumbers } from '@/utils/text-similarity';
 import { readPositiveIntEnv } from '@/utils/env';
 
 /** 细纲跑道低于该值时触发滚动补充；MOLIU_OUTLINE_ROLL_THRESHOLD 覆盖 */
@@ -270,6 +276,10 @@ export function buildRollBlueprintPrompt(params: {
 1. 标题、CBN、CEN 的字数必须落在区间内，超出即为格式错误；
 2. 一章只能承载一个核心转折，禁止把两个独立高潮压进同一章；
 3. 第 N 章必须承接第 N-1 章的 CEN/收束状态并推动到新状态，不得无视上章终态；
+   【承接≠复述】CBN 是本章开头 10 秒的新事件画面，禁止把上一章 CEN/收束状态的原文
+   改写、扩写或换措辞重述一遍来充当 CBN——读者在上一章末尾刚读过这段内容，
+   本章再演一遍就是剧情空转。承接收束状态只能作为暗前提（一句话内体现「接上了」），
+   镜头必须立刻进入上一章没有出现过的新动作；
 4. 「已写进度与收束状态」和「上一批蓝图收束」是不可改写的既有事实：新章不得重置期限、重复已完成事件（破案/入狱/升职等），不得让已倒台或被羁押的角色无解释恢复原位；
 5. 本批章节必须落在当前卷的目标与冲突射程内推进，不得提前兑现后续卷的高潮或反转；
 6. 回收章节落在本批次区间内的伏笔，必须在对应章节的 mustCover 中兑现；
@@ -335,6 +345,110 @@ export function isUsableRolledBlueprint(blueprint: ChapterBlueprint | undefined)
     blueprint.CPNs.length >= OUTLINE_COMPLETENESS_POLICY.minimumCpns &&
     blueprint.mustCover.length > 0,
   );
+}
+
+/**
+ * 章级蓝图内容质检（滚动批次专用，对齐生成侧 outline-reviewer 的章级规则子集）。
+ * 滚动续纲此前只查字段可用性——字段齐全但内容有病的蓝图照样落库，
+ * 下游由履约审核硬扛（跨章目标→履约死循环；CBN 复述上章结尾→章界重演）。
+ * 这里在落库前拦三类高频病：
+ * - over-scoped：mustCover 含整卷/全书级跨章目标（单章无法兑现）
+ * - template-cbn / 模板 CEN：承接话术、流程话术泄漏进情节字段
+ * - reader-meta：企划口吻（读者期待等）混进节点
+ */
+export interface RolledBlueprintIssue {
+  chapterNumber: number;
+  kind: 'over-scoped-mustcover' | 'template-cbn' | 'hollow-cen' | 'reader-meta';
+  detail: string;
+}
+
+export function inspectRolledBlueprintQuality(bp: ChapterBlueprint): RolledBlueprintIssue[] {
+  const issues: RolledBlueprintIssue[] = [];
+  const overScoped = bp.mustCover.find(node => isCrossChapterGoal(node));
+  if (overScoped) {
+    issues.push({
+      chapterNumber: bp.orderIndex,
+      kind: 'over-scoped-mustcover',
+      detail: `mustCover「${overScoped.slice(0, 30)}」是整卷/全书级跨章目标，改为本章可兑现的具体事件`,
+    });
+  }
+  if (/^(?:开场承接|承接上[章段](?:结尾)?)[：:]/u.test(bp.CBN.trim())) {
+    issues.push({
+      chapterNumber: bp.orderIndex,
+      kind: 'template-cbn',
+      detail: `CBN「${bp.CBN.slice(0, 30)}」是承接模板话术而非本章新事件`,
+    });
+  }
+  // CEN 空壳（推进至/元指令/模板钩子/复读 CPN）
+  if (isHollowChapterHook(bp.CEN, bp.CPNs)) {
+    issues.push({
+      chapterNumber: bp.orderIndex,
+      kind: 'hollow-cen',
+      detail: `CEN「${bp.CEN.slice(0, 30)}」是零信息量空壳钩子`,
+    });
+  }
+  for (const node of [...bp.CPNs, ...bp.mustCover]) {
+    if (isReaderMetaText(node)) {
+      issues.push({
+        chapterNumber: bp.orderIndex,
+        kind: 'reader-meta',
+        detail: `节点「${node.slice(0, 30)}」是企划口吻（读者期待类），不是可执行情节`,
+      });
+      break;
+    }
+  }
+  return issues;
+}
+
+/** 章节间蓝图质量检查：相邻两章 CBN 过于接近 = 本章开局复读上章（章界重演信号）。
+ * 仅差一个序号/人名的模板句是合法相邻推进，归一化编辑距离 ≥3 才判复述 */
+export function findBlueprintRepetition(
+  blueprints: ChapterBlueprint[],
+  threshold = 0.85,
+): RolledBlueprintIssue[] {
+  const issues: RolledBlueprintIssue[] = [];
+  for (let i = 1; i < blueprints.length; i += 1) {
+    const prev = (blueprints[i - 1].CBN ?? '').trim();
+    const curr = (blueprints[i].CBN ?? '').trim();
+    if (!prev || !curr) continue;
+    if (curr.includes(prev) || prev.includes(curr)) {
+      // 子串包含即复述（本章开头直接吞了上章 CBN 全文）
+    } else if (
+      normalizedSimilarityKeepingNumbers(prev, curr) >= threshold &&
+      normalizedEditDistanceKeepingNumbers(prev, curr) >= 3
+    ) {
+      // 高相似且差异足够多：不是「换个序号」的模板推进，是真复述
+    } else {
+      continue;
+    }
+    issues.push({
+      chapterNumber: blueprints[i].orderIndex,
+      kind: 'template-cbn',
+      detail: `第${blueprints[i].orderIndex}章 CBN 与第${blueprints[i - 1].orderIndex}章高度相似或为其子串，疑为跨章复述；改写为本章独立的新开篇事件`,
+    });
+  }
+  return issues;
+}
+
+/** 归一化编辑距离（保留数字）：与 outlineCompleteness.blueprintEditDistance 同口径 */
+function normalizedEditDistanceKeepingNumbers(a: string, b: string): number {
+  const normalize = (text: string): string =>
+    (text ?? '').replace(/[\s\p{P}\p{S}]/gu, '').toLowerCase();
+  const na = normalize(a);
+  const nb = normalize(b);
+  const matrix: number[][] = [];
+  for (let i = 0; i <= nb.length; i += 1) matrix[i] = [i];
+  for (let j = 0; j <= na.length; j += 1) matrix[0][j] = j;
+  for (let i = 1; i <= nb.length; i += 1) {
+    for (let j = 1; j <= na.length; j += 1) {
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j - 1] + (nb.charAt(i - 1) === na.charAt(j - 1) ? 0 : 1),
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j] + 1,
+      );
+    }
+  }
+  return matrix[nb.length][na.length];
 }
 
 /** 就地应用本地 sanitize（标题/CBN/CEN 超长收缩）；不可本地修复的返回原值 */
@@ -543,22 +657,41 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
     }
   }
 
-  // 定点修复一轮：解出但不可用 / 完全缺失的章号合并补一次
+  // 内容质检（章级）：字段可用但内容有病的蓝图不该落库硬扛履约。
+  // 单章病（跨章 mustCover / 模板 CBN / 空壳 CEN）+ 批内相邻章 CBN 复述（章界重演信号）
+  // 合并进下一轮定点修复，修复轮提示词已支持「本次必须修掉的问题」注入。
+  const qualityIssues = [
+    ...[...blueprints.values()].flatMap(inspectRolledBlueprintQuality),
+    ...findBlueprintRepetition([...blueprints.values()]),
+  ];
+  const problematicChapters = [
+    ...new Set(qualityIssues.map(issue => issue.chapterNumber)),
+  ].sort((a, b) => a - b);
+
+  // 定点修复一轮：解出但不可用 / 完全缺失 / 质检不合格的章号合并补一次
   const missingOrInvalid = chapterNumbers.filter(n => !isUsableRolledBlueprint(blueprints.get(n)));
-  if (missingOrInvalid.length > 0 && missingOrInvalid.length <= chapterNumbers.length && !signal?.aborted) {
-    onProgress?.(`滚动续纲定点修复 ${missingOrInvalid.length} 章（第 ${missingOrInvalid.join('、')} 章）...`);
-    const issues = missingOrInvalid.flatMap(n => {
+  const repairTargets = [
+    ...new Set([...missingOrInvalid, ...problematicChapters]),
+  ].filter(n => n >= fromChapter && n <= toChapter);
+  if (repairTargets.length > 0 && repairTargets.length <= chapterNumbers.length && !signal?.aborted) {
+    onProgress?.(`滚动续纲定点修复 ${repairTargets.length} 章（第 ${repairTargets.join('、')} 章）...`);
+    const issues = repairTargets.flatMap(n => {
       const bp = blueprints.get(n);
       if (!bp) return [`第${n}章缺失，未在响应中解出`];
       const list: string[] = [];
       if (!bp.CPNs.length) list.push(`第${n}章 CPNs 为空`);
       if (!bp.mustCover.length) list.push(`第${n}章 mustCover 为空`);
+      list.push(
+        ...qualityIssues
+          .filter(issue => issue.chapterNumber === n)
+          .map(issue => `第${n}章 ${issue.detail}`),
+      );
       return list;
     });
     try {
       const prompt = buildRollBlueprintPrompt({
         base,
-        chapterNumbers: missingOrInvalid,
+        chapterNumbers: repairTargets,
         recentBlueprintEndings: [...blueprints.values()].slice(-3).map(bp => `第${bp.orderIndex}章《${bp.title}》收束：${bp.CEN}`),
         issues,
       });
@@ -567,10 +700,10 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
         prompt.system,
         prompt.user,
         0.2,
-        `修复${missingOrInvalid[0]}-${missingOrInvalid.at(-1)}`,
+        `修复${repairTargets[0]}-${repairTargets.at(-1)}`,
         signal,
       );
-      for (const [n, bp] of parseBlueprintBlocks(generated, missingOrInvalid)) {
+      for (const [n, bp] of parseBlueprintBlocks(generated, repairTargets)) {
         blueprints.set(n, applyLocalSanitize(bp));
       }
     } catch (error) {

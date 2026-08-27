@@ -1,0 +1,11 @@
+const fs = require('fs');
+const read = f => fs.readFileSync('D:/project/2026/moliu/temp/book-review/juezheng-0827-rewrite20/' + f, 'utf8');
+const tail = t => t.trim().slice(-160);
+const head = t => { const i = t.indexOf('\n\n'); return t.slice(i + 2, i + 200); };
+console.log('=== 新9章结尾 ===');
+console.log(tail(read('009.txt')));
+console.log('=== 新10章开头 ===');
+console.log(head(read('010.txt')));
+console.log('=== 4→5 章界(新) ===');
+console.log('[4结尾] ' + tail(read('004.txt')).slice(0, 110));
+console.log('[5开头] ' + head(read('005.txt')).slice(0, 110));

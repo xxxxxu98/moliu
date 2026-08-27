@@ -20,7 +20,7 @@ import {
 } from './ChapterCommitService';
 import { ContextPackBuilder } from './ContextPackBuilder';
 import { ContinuityValidator } from './ContinuityValidator';
-import { enrichRevisionHint, healChapterContract } from './contractHealth';
+import { detectOpeningRepetitionIssue, enrichRevisionHint, healChapterContract } from './contractHealth';
 import { SceneBeatPlanner } from './SceneBeatPlanner';
 import { SceneDraftEngine } from './SceneDraftEngine';
 import { sanitizeSceneDraftParagraphs } from './stripDraftLeakage';
@@ -365,6 +365,8 @@ export class LongFormWritingEngine {
               input.recentScenes,
               contracts.chapter.chapterNumber
             ),
+            // 上章结尾仲裁：CBN 是规划语句，与上章正文事实冲突时以后者为准
+            previousChapterEnding: input.previousChapterEnding,
             // 完整角色库（未被 context 压缩筛选），注入 prompt 白名单约束名字一致性
             knownCharacterNames: extractCharacterNames(input.state.entities),
             allowedAppearanceNames: extractAllowedAppearanceNames(
@@ -434,6 +436,26 @@ export class LongFormWritingEngine {
       const target = writeInput.targetWordCount ?? 0;
       const wordCountIssue = buildWordCountBoundsIssue(draftsProse(drafts), target);
       const typesettingIssues = buildTypesettingIssues(draftsProse(drafts));
+      // 开场重叠（章界重演）写作期防线：确定性比对本章开头与上章结尾
+      const openingRepetitionIssue = detectOpeningRepetitionIssue(
+        draftsProse(drafts),
+        input.previousChapterEnding,
+      );
+      if (openingRepetitionIssue) {
+        console.warn(
+          `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 开场重演上章结尾（相似度过高），判 blocking 驱动重写`
+        );
+        report = {
+          accepted: false,
+          issues: [
+            ...report.issues.filter(issue => issue.id !== 'chapter-opening-repetition'),
+            openingRepetitionIssue,
+          ],
+          checkedDomains: report.checkedDomains.includes('fulfillment')
+            ? report.checkedDomains
+            : [...report.checkedDomains, 'fulfillment'],
+        };
+      }
       if (wordCountIssue) {
         report = {
           accepted: false,

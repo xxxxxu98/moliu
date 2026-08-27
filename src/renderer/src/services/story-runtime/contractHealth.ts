@@ -2,8 +2,9 @@
  * 章节合同健康度：mustCover×禁区冲突消解、已兑现节点去重、畸形 CBN 清洗、可执行重写提示。
  */
 
-import type { ChapterContract, ExtractedFacts, StoryState } from '@/types/story-runtime';
+import type { ChapterContract, ContinuityIssue, ExtractedFacts, StoryState } from '@/types/story-runtime';
 
+import { normalizedSimilarity } from '@/utils/text-similarity';
 import {
   isCrossChapterGoal,
   sanitizeInheritedCbn,
@@ -236,12 +237,39 @@ export function healChapterContract(
     fallback: chapter.goal || chapter.title,
   });
 
-  const mustPrune = pruneFulfilledNodes(
-    chapter.mustCover.map(item => stripOpeningCbnPrefix(item) || item),
-    options
-  );
+  // 陈旧度门禁：状态里已进入命运级终态的角色，其蓝图硬约束节点先行裁除
+  const staleNames = collectDeceasedEntityNames(options.state);
+  const stalePrunedMustCover = staleNames.size > 0
+    ? (chapter.mustCover ?? [])
+        .map(item => stripOpeningCbnPrefix(item) || item)
+        .filter(item => {
+          const offender = nodeMentionsFateLockedCharacter(item, staleNames);
+          if (offender) {
+            console.info(
+              `[contractHealth] ch${chapter.chapterNumber} 陈旧度裁剪 mustCover「${item.slice(0, 30)}」（${offender} 已进入终态）`
+            );
+            return false;
+          }
+          return true;
+        })
+    : [];
+  const stalePrunedCpns = staleNames.size > 0
+    ? (chapter.CPNs ?? []).filter(
+        item => !nodeMentionsFateLockedCharacter(stripOpeningCbnPrefix(item) || item, staleNames)
+      )
+    : [];
+
+  const mustSource =
+    stalePrunedMustCover.length > 0
+      ? stalePrunedMustCover
+      : staleNames.size === 0
+        ? chapter.mustCover.map(item => stripOpeningCbnPrefix(item) || item)
+        : [];
+  const mustPrune = pruneFulfilledNodes(mustSource, options);
   const cpnPrune = pruneFulfilledNodes(
-    chapter.CPNs.map(item => stripOpeningCbnPrefix(item) || item),
+    (stalePrunedCpns.length > 0 ? stalePrunedCpns : chapter.CPNs).map(
+      item => stripOpeningCbnPrefix(item) || item
+    ),
     options
   );
   // CPN 裁空时回退到 mustCover / goal
@@ -273,6 +301,16 @@ export function healChapterContract(
 
   const notes: string[] = [];
   if (cbnResult.changed) notes.push(`CBN 已清洗：${originalCbn.slice(0, 40)} → ${cbnResult.cbn.slice(0, 40)}`);
+  const stalePrunedMustCount =
+    staleNames.size > 0 ? chapter.mustCover.length - mustSource.length : 0;
+  const stalePrunedCpnCount =
+    staleNames.size > 0 ? Math.max(0, chapter.CPNs.length - stalePrunedCpns.length) : 0;
+  const stalePrunedCount = stalePrunedMustCount + stalePrunedCpnCount;
+  if (staleNames.size > 0 && mustSource.length === 0 && chapter.mustCover.length > 0) {
+    notes.push(`mustCover 全部节点涉及终态角色，已整体裁剪待重生`);
+  } else if (stalePrunedCount > 0) {
+    notes.push(`陈旧度裁剪 ${stalePrunedCount} 条（节点涉及终态角色）`);
+  }
   if (mustPrune.pruned.length > 0) {
     notes.push(`mustCover 去重 ${mustPrune.pruned.length} 条（上章已兑现）`);
   }
@@ -361,6 +399,79 @@ export function enrichRevisionHint(message: string, evidence: string[] = []): st
     );
   }
   return base;
+}
+
+/**
+ * 陈旧度门禁（根治方案 ④）：远期蓝图降级为咨询性。
+ *
+ * 批内第 40 章蓝图是对着 30 章前的状态写的；其中引用的角色若已进入
+ * 命运级终态（死亡/驾崩/下狱/定罪，词表与 extract-plot-memory 对齐），
+ * 该节点作为硬约束必然触发 fact_conflict → 履约死循环。
+ * 与其让审查层事后拦截重写，不如起草前把「与已写状态矛盾」的节点
+ * 从硬合同里静默裁掉——蓝图语义仍在上下文包里作软提示，但不再强制验收。
+ */
+const STALE_FATE_ATTRIBUTE_VALUES = new Set(['死亡', '驾崩', '下狱', '定罪']);
+
+function collectDeceasedEntityNames(state?: StoryState): Set<string> {
+  const names = new Set<string>();
+  if (!state?.entities) return names;
+  for (const entity of Object.values(state.entities)) {
+    if (entity.kind !== 'character') continue;
+    const status = entity.attributes?.status;
+    if (typeof status === 'string' && STALE_FATE_ATTRIBUTE_VALUES.has(status)) {
+      names.add(entity.name.trim());
+      for (const alias of entity.aliases ?? []) {
+        if (alias.trim()) names.add(alias.trim());
+      }
+    }
+  }
+  return names;
+}
+
+/**
+ * 从节点文本中解析出命运级终态角色名；至少命中一个即视为「被过期货污染」的节点。
+ * 命中即视为「被过期货污染」的节点（子串匹配：蓝图提及终态角色的在场行动，
+ * 如「周茂现身公堂」；回忆/追述由模型措辞区分，此处宁可保守裁剪）。
+ */
+function nodeMentionsFateLockedCharacter(node: string, staleNames: Set<string>): string | null {
+  for (const name of staleNames) {
+    if (node.includes(name)) return name;
+  }
+  return null;
+}
+
+/**
+ * 开场重叠检测（章界重演的写作期防线）。
+ *
+ * 根因链：大纲把「上章 CEN 复述」写成 CBN → 履约校验当硬约束强制覆盖 →
+ * 正文整段重演上章结尾（绝症书 4→5、7→8 章实测）。前两道防线在大纲层
+ * （prompt 反复述约束 + outlineCompleteness 相似度 blocker）；这是第三道：
+ * 成稿后确定性比对「本章开头 vs 上章结尾」，大面积重叠即 blocking 驱动重写。
+ *
+ * 阈值取 0.55（归一化后）：正文承接时短暂呼应上一幕属正常叙事，只有
+ * 「结尾窗口的一半以上被原文复刻」才算重演；比较窗口各取 ~120 字，
+ * 覆盖「整段复读」形态而不误伤单句钩子衔接。
+ */
+export function detectOpeningRepetitionIssue(
+  prose: string,
+  previousChapterEnding?: string,
+  threshold = 0.55,
+): ContinuityIssue | null {
+  const prevTail = (previousChapterEnding ?? '').trim().slice(-120);
+  const opening = (prose ?? '').trim().slice(0, 160);
+  if (prevTail.length < 40 || opening.length < 40) return null;
+  const similarity = normalizedSimilarity(prevTail, opening);
+  if (similarity < threshold) return null;
+  return {
+    id: 'chapter-opening-repetition',
+    domain: 'fulfillment',
+    severity: 'blocking',
+    message:
+      `本章开场与上章结尾高度重叠（相似度 ${Math.round(similarity * 100)}%），` +
+      `读者刚在上一章末尾读过这段内容，整段重演是剧情空转。重写时删除对上章结尾的复述段落，` +
+      `从上一章没有出现过的新动作直接开场，收束状态只用一句话暗前提带过。`,
+    evidence: [opening.slice(0, 80), prevTail.slice(0, 80)],
+  };
 }
 
 /** 判断禁区触发是否因履约 mustCover 而被豁免（安全网） */

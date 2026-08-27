@@ -341,18 +341,23 @@ export class SixGatePolishPipeline {
   private gateD_Rhythm(content: string): string {
     let result = content;
 
-    // 1. 打断连续排比（保留最强一条）
-    const parallelismRegex = /(，([^，]+)，)+([^，]+)，?$/g;
+    // 1. 打断连续排比（保留最强一条）。
+    // 排比项之间只允许逗号（不允许句号/问号/引号等边界跨越），
+    // 否则「他沉声道：“这就是你的答案？”」这类单逗号句子会被
+    // (，([^，]+)，)+ 贪心匹配跨界吞掉半句对话（2026-08-26 回归实测）。
+    const parallelismRegex = /((?:[^，。！？；：\u201C\u201D"'\n]+){2,})，((?:[^，。！？；：\u201C\u201D"'\n]+){2,})，((?:[^，。！？；：\u201C\u201D"'\n]+){2,})(?:，([^，。！？；：\u201C\u201D"'\n]+))?/g;
     let match;
     while ((match = parallelismRegex.exec(result)) !== null) {
-      const parts = match[0].split('，').filter(Boolean);
-      if (parts.length > 2) {
-        const last = parts[parts.length - 1];
-        result = result.replace(match[0], `，${last}，`);
+      // 至少三个排比项（第三项起才算排比堆砌）
+      if (match[3] === undefined) continue;
+      const last = match[4] ?? match[3];
+      const replacement = `${match[1]}，${last}`;
+      if (replacement !== match[0]) {
+        result = result.replace(match[0], replacement);
         this.fixes.push({
           type: 'gate_d',
           original: match[0],
-          replacement: `，${last}，`,
+          replacement,
           reason: '打断排比',
         });
       }
@@ -381,14 +386,16 @@ export class SixGatePolishPipeline {
       });
     }
 
-    // 3. 简化连续四字词
-    const fourCharPattern = /([^，。！？；：""''\n]{4}[，。！？；：""''\n]?){3,}/g;
+    // 3. 简化连续四字词：只匹配「顿号/逗号串联的四字词组」（如「风驰电掣，一日千里，快马加鞭」），
+    //    不允许匹配无标点分隔的连续汉字——那会把正常对话当四字词串吞掉
+    //    （2026-08-26 实测：「这就是你的答案？」被吃成「这就是」）。
+    const fourCharPattern = /(?:[^，。！？；：\u201C\u201D"'\n]{4})(?:[，、][^，。！？；：\u201C\u201D"'\n]{4}){2,}/g;
     let fMatch;
     while ((fMatch = fourCharPattern.exec(result)) !== null) {
       const matched = fMatch[0];
-      const parts = matched.match(/[^，。！？；：""''\n]{4}/g) || [];
+      const parts = matched.split(/[，、]/g) || [];
       if (parts.length >= 3) {
-        const simplified = parts.slice(0, 2).join('');
+        const simplified = parts.slice(0, 2).join('，');
         if (simplified !== matched) {
           result = result.replace(matched, simplified);
           this.fixes.push({
@@ -443,13 +450,13 @@ export class SixGatePolishPipeline {
       }
     }
 
-    // 2. 删除机械的 "沉声道"、"淡淡地说" 等
-    result = result.replace(/沉声道：/g, '说：');
-    result = result.replace(/淡淡地说：/g, '说：');
-    result = result.replace(/淡淡道：/g, '说：');
-    result = result.replace(/轻笑道：/g, '笑：');
-    result = result.replace(/低声说：/g, '小声说：');
-    result = result.replace(/高声说：/g, '喊：');
+    // 2. 删除机械的 "沉声道"、"淡淡地说" 等（冒号兼容中英文形态）
+    result = result.replace(/沉声道[：:]/g, '说：');
+    result = result.replace(/淡淡地说[：:]/g, '说：');
+    result = result.replace(/淡淡道[：:]/g, '说：');
+    result = result.replace(/轻笑道[：:]/g, '笑：');
+    result = result.replace(/低声说[：:]/g, '小声说：');
+    result = result.replace(/高声说[：:]/g, '喊：');
 
     // 3. 添加口语化语气词（可选）
     // 注意：这个可能会改变语义，只在必要时使用

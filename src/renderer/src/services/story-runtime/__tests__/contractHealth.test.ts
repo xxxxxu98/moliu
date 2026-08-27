@@ -5,6 +5,7 @@ import {
 } from '../chapterBlueprintNormalize';
 import {
   detectMustCoverForbiddenConflicts,
+  detectOpeningRepetitionIssue,
   enrichRevisionHint,
   healChapterContract,
   isForbiddenExemptForFulfillment,
@@ -168,5 +169,46 @@ describe('contractHealth', () => {
     expect(
       isForbiddenExemptForFulfillment(helpZone, [GENERIC_PLOT.accuseBeat], 'mustCover 要求主角获得狱卒帮助')
     ).toBe(true);
+  });
+
+  it('陈旧度门禁：终态角色的 mustCover/CPN 节点被裁剪（500章人物状态幻觉防线）', () => {
+    const contracts = makeContracts();
+    contracts.chapter.mustCover = [
+      '林夜押送证物回府',
+      '周茂现身公堂反扑',
+      '清点赃款入库',
+    ];
+    contracts.chapter.CPNs = ['周茂当堂翻供', '林夜取得新证据'];
+    const state = makeState();
+    state.entities['char-zhoumao'] = {
+      id: 'char-zhoumao',
+      kind: 'character',
+      name: '周茂',
+      aliases: [],
+      attributes: { status: '下狱' },
+      knownBy: ['char-zhoumao'],
+      sourceTrace: [],
+    };
+    const { chapter, report } = healChapterContract(contracts.chapter, { state });
+    expect(chapter.mustCover).not.toContain('周茂现身公堂反扑');
+    expect(chapter.mustCover).toContain('林夜押送证物回府');
+    expect(chapter.CPNs).not.toContain('周茂当堂翻供');
+    expect(report.notes.some(note => note.includes('终态'))).toBe(true);
+  });
+
+  it('开场重叠检测：本章开头复读上章结尾判 blocking，正常承接放过', () => {
+    const prevEnding =
+      '他攥紧了手中的账册，转身推开了库房的大门，门外的火把连成一片，将他的影子拉得很长很长。';
+    const repeatedProse = `他攥紧了手中的账册，转身推开了库房的大门，门外的火把连成一片，将他的影子拉得很长很长。人群哗然而退。`;
+    const issue = detectOpeningRepetitionIssue(repeatedProse, prevEnding);
+    expect(issue).not.toBeNull();
+    expect(issue!.severity).toBe('blocking');
+
+    // 正常承接：只呼应一个短句就进入新动作
+    const normalProse =
+      '库房门外的火把还未熄灭，林夜已经翻身上马。三枚铜钱在掌心排成一列，每一枚都刻着漕帮的暗记——这是三年来第一次凑齐。';
+    expect(detectOpeningRepetitionIssue(normalProse, prevEnding)).toBeNull();
+    // 无上章结尾时不误报
+    expect(detectOpeningRepetitionIssue(repeatedProse, '')).toBeNull();
   });
 });

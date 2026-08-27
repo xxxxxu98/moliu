@@ -98,17 +98,30 @@ describe('SixGatePolishPipeline', () => {
 
   describe('Gate E: 对话去腔调', () => {
     it('应替换机械对话标签', () => {
-      const input = '他沉声道："这就是你的答案？"';
-      const result = pipeline.execute(input);
-      
-      expect(result.content).not.toContain('沉声道');
+      // 弯引号形态:Gate E 能识别并替换标签
+      const curly = '他沉声道：“这就是你的答案？”';
+      const curlyResult = pipeline.execute(curly);
+      expect(curlyResult.content).not.toContain('沉声道');
+
+      // 直引号形态:归一化为弯引号后同样被 Gate E 处理
+      const straight = '他沉声道："这就是你的答案？"';
+      const straightResult = pipeline.execute(straight);
+      expect(straightResult.content).not.toContain('沉声道');
     });
 
     it('应保留正常对话', () => {
+      const input = '他说：“我不知道。”';
+      const result = pipeline.execute(input);
+
+      expect(result.content).toContain('“我不知道。”');
+    });
+
+    it('ASCII 直引号对话被归一为中文弯引号（2026-08-26 typesetting 增强）', () => {
       const input = '他说："我不知道。"';
       const result = pipeline.execute(input);
-      
-      expect(result.content).toContain('"');
+
+      expect(result.content).toContain('“我不知道。”');
+      expect(result.content).not.toContain('"');
     });
   });
 

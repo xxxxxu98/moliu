@@ -12,8 +12,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   ChapterWritingPipeline,
   resolveAllowedChapterCharacters,
+  selectRecentScenesByChapter,
 } from '../ChapterWritingPipeline';
 import type { Project, Chapter } from '@/types/project';
+import type { SceneChunk } from '@/types/story-runtime';
 
 // ====== Mock orchestrator（管道的核心委托对象） ======
 const mockInitialize = vi.fn().mockResolvedValue({ snapshot: {}, warnings: [] });
@@ -252,6 +254,50 @@ describe('resolveAllowedChapterCharacters', () => {
     expect(result.futureReveals).toEqual([
       expect.objectContaining({ notBeforeChapter: 30 }),
     ]);
+  });
+});
+
+describe('selectRecentScenesByChapter', () => {
+  function scene(chapterIndex: number, order: number): SceneChunk {
+    return {
+      id: `c${chapterIndex}:s${order}`,
+      chapterId: `c${chapterIndex}`,
+      chapterIndex,
+      order,
+      title: `第${chapterIndex}章场景${order}`,
+      text: '正文',
+      participants: [],
+      locations: [],
+      sourceTrace: [],
+    };
+  }
+
+  it('一章一场景块形态下按章取足近 N 章（旧 slice(-4) 只覆盖 1 章出头）', () => {
+    // 《绝症当虫治》实测形态:每章只切成 1 个场景块
+    const chunks = Array.from({ length: 10 }, (_, i) => scene(i + 1, 0));
+    const selected = selectRecentScenesByChapter(chunks, 11, 3);
+    expect(selected.map(c => c.chapterIndex)).toEqual([8, 9, 10]);
+  });
+
+  it('一章多场景块时同样覆盖 N 章的全部块', () => {
+    const chunks = [
+      scene(7, 0), scene(7, 1),
+      scene(8, 0), scene(8, 1), scene(8, 2),
+      scene(9, 0),
+    ];
+    const selected = selectRecentScenesByChapter(chunks, 10, 2);
+    expect(selected.map(c => c.chapterIndex)).toEqual([8, 8, 8, 9]);
+  });
+
+  it('不包含本章及之后的场景块', () => {
+    const chunks = [scene(9, 0), scene(10, 0), scene(11, 0)];
+    const selected = selectRecentScenesByChapter(chunks, 10, 3);
+    expect(selected.map(c => c.chapterIndex)).toEqual([9]);
+  });
+
+  it('空列表与无前章时返回空', () => {
+    expect(selectRecentScenesByChapter([], 5, 3)).toEqual([]);
+    expect(selectRecentScenesByChapter([scene(5, 0)], 1, 3)).toEqual([]);
   });
 });
 

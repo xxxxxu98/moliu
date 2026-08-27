@@ -168,6 +168,13 @@ export interface SceneDraftOptions {
    * 换一种落笔方式。
    */
   recentEndingSnippets?: Array<{ chapterIndex: number; ending: string }>;
+  /**
+   * 上一章实际写出的结尾原文（批量续写链路由 useBatchWriter 构造传入）。
+   * 大纲 CBN 是规划性语句，可能与上章实际收尾状态冲突（如上章已写花海怒放、
+   * 本章 CBN 却写含苞待放）；把真实结尾摆到模型眼前并在指令中声明
+   * 「正文事实优先于大纲字面」，仲裁权交给已成文的叙事状态，杜绝状态回退。
+   */
+  previousChapterEnding?: string;
 }
 
 export class SceneDraftEngine {
@@ -260,6 +267,14 @@ export class SceneDraftEngine {
           '- 本章收尾必须落在 CEN 的新后果/新悬念上，用与前章不同的动作、意象和句式落笔',
         ]
       : [];
+    // 上章结尾仲裁：CBN 是规划语句，正文事实优先；防止开场状态回退
+    const previousEndingRules = (options?.previousChapterEnding ?? '').trim()
+      ? [
+          '- 【上章衔接】上一章正文结尾原文如下（这是已成文的既定事实）：',
+          `  「…${(options?.previousChapterEnding ?? '').trim().slice(-200)}」`,
+          '- 本章开场必须承接该结尾的场景状态继续推进；若本章 CBN 与该结尾描述的状态有出入（如已开花 vs 含苞、已昏迷 vs 站立），以上章正文事实为准向前推进，禁止把状态回退到 CBN 字面描述',
+        ]
+      : [];
     const modeRules: Record<RevisionPlan['mode'], string[]> = {
       expand: [
         '- 【扩写模式】保留原稿已经发生的情节与因果，在场景内部增加有效对话、动作、阻力和感官细节；不得用同义复述注水',
@@ -314,6 +329,7 @@ export class SceneDraftEngine {
         '- 【禁止台词重复】同一句台词/同一句话在本章内不得重复出现（包括章末回扣开篇钩子句）；若需强调，必须变换措辞、场景或由不同人物说出',
         '- 【禁止章末复读】章末段落不得把本章或上文已写过的句子原样再写一遍作为收尾；章末应是新的悬念/后果，而非复读',
         ...recentEndingRules,
+        ...previousEndingRules,
         '- 【对话格式】人物说出的完整台词必须使用成对中文引号“”，开引号紧贴台词第一个字、收引号紧贴最后一个字；禁止使用半角引号"…"或『…』等其它包裹；禁止「说/喝/问道：」等提示语后不加引号直接裸接台词；禁止整章出现零对引号（只要有开口说话就必须有引号对）',
         '- 【段落节奏】长短段必须交错：冲突爆发、反转、关键台词可独立成一两句的短段，铺垫叙述可用长段；禁止全章段落长度雷同（如清一色一百五十字上下的中长段），均匀节奏是机器腔',
         '- 【对话分段】两人及以上对话时，每个说话人的台词（含伴随小动作）独立成段，一段只装一个说话人；禁止把多轮你问我答挤进同一段',

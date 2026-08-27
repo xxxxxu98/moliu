@@ -14,6 +14,7 @@ import {
   repairUnregisteredLocations,
   replaceOutlineSection,
   sanitizeOutlineHookLengths,
+  shrinkHookText,
   stripInvisibleOutlineChars,
 } from '../outline-completer';
 import { parseExpandedOutline } from '../../parser/expanded-outline-parser';
@@ -178,6 +179,22 @@ describe('outline-completer', () => {
     expect(
       after.blockers.filter(blocker => blocker.kind === 'invalid-hook-length').length,
     ).toBe(0);
+  });
+
+  it('shrinkHookText 硬截断回退不再产出「…的隐」式残句（2026-08-26 绝症当虫治实测形态）', () => {
+    // 前半句无逗号、25 字内找不到分句边界时,旧实现按字数硬切,
+    // 产出「低声吐露省城权贵正四处求药的隐」这类残句并污染续写开头指令。
+    const longHookNoComma = '老中医凑近林舟耳边低声吐露省城权贵正四处求药的隐情与重金悬赏';
+    const shrunk = shrinkHookText(longHookNoComma, 25);
+    expect(shrunk.length).toBeLessThanOrEqual(25);
+    // 不再以半截词收尾:收口点必须是结构助词后沿或完整词
+    expect(shrunk).not.toMatch(/(?:的隐|众人眼|拂面而|大石|红木桌)$/u);
+
+    // 有逗号时维持既有行为:切到最后一个分句边界
+    const longHookWithComma = '老中医凑近林舟耳边，低声吐露省城权贵正四处求药的隐情';
+    const shrunkComma = shrinkHookText(longHookWithComma, 25);
+    expect(shrunkComma).toBe('老中医凑近林舟耳边，低声吐露省城权贵正四处求药');
+    expect(shrunkComma).not.toMatch(/(?:的隐|隐情)$/u);
   });
 });
 

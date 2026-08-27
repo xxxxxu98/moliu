@@ -62,6 +62,13 @@ import {
   rollOutlineForward,
   OUTLINE_ROLL_RUNWAY_THRESHOLD,
 } from '@/services/outline/rolling/outline-roller';
+import {
+  applyBlueprintToPlotNode,
+  BlueprintRepairLedger,
+  inspectChapterBlueprintDefects,
+  isFulfillmentDomainFailure,
+  regenerateChapterBlueprint,
+} from '@/services/outline/rolling/chapter-blueprint-regenerator';
 import { volumeAssignmentSourceFromProject, volumeIdForChapter } from '@/services/outline/volumeAssignment';
 import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
 
@@ -580,6 +587,9 @@ export function useBatchWriter(): UseBatchWriterReturn {
     currentRevisionHints: undefined,
   };
 
+  // 单章蓝图再生账本：履约域失败连续 ≥2 次后触发蓝图体检/再生（每章最多 1 次）
+  const blueprintRepairLedger = new BlueprintRepairLedger();
+
   // 响应式状态
   const isWriting = ref(false);
   const isPaused = ref(false);
@@ -951,6 +961,14 @@ export function useBatchWriter(): UseBatchWriterReturn {
           internalState.currentRevisionHints =
             revisionHints.length > 0 ? revisionHints : undefined;
         }
+        // 履约域失败记账：连续 ≥2 次 → 下一轮重试前触发单章蓝图再生（根治方案①）。
+        // 此前坏蓝图只能靠履约重试硬扛；现在把失败归因反转到蓝图本身。
+        if (isFulfillmentDomainFailure(failureMessage)) {
+          const failures = blueprintRepairLedger.recordFailure(chapter.id);
+          console.warn(
+            `[批量写作] 第${chapterIndex + 1}章履约域失败（累计 ${failures} 次），达阈值后触发蓝图体检/再生`
+          );
+        }
         throw new WritingError(
           failureMessage,
           ErrorCode.AI_GENERATION_FAILED,
@@ -972,6 +990,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
       // 成功：清空重试反馈种子（下一章从头开始，不沿用本章的失败教训）
       internalState.currentRevisionHints = undefined;
+      blueprintRepairLedger.resetChapter(chapter.id);
 
       // 进度统计
       progress.value.writtenChapters++;
@@ -1267,6 +1286,50 @@ export function useBatchWriter(): UseBatchWriterReturn {
             // 持久错误（schema/审核/字数/auth/4xx）：给模型 persistentMaxRetries 次换写法机会，不退避（非网络问题）。
             // 耗尽则跳出重试循环 → 进下面的"结束整批"逻辑。
             if (!classified.retryable) {
+              // 履约域连续失败 → 单章蓝图再生（根治方案①）：先确定性体检，
+              // 有病或无病都允许以已写状态为基底再生一次蓝图，再继续重试写作。
+              const failedChapterForRepair = projectStore.sortedChapters[currentIndex];
+              if (
+                failedChapterForRepair &&
+                blueprintRepairLedger.shouldTrigger(failedChapterForRepair.id)
+              ) {
+                blueprintRepairLedger.markRegenerated(failedChapterForRepair.id);
+                try {
+                  error.value = `第${currentIndex + 1}章履约连续失败，正在体检并再生本章蓝图...`;
+                  const generator = new UnifiedOutlineGenerator();
+                  const repair = await regenerateChapterBlueprint({
+                    project: projectStore.currentProject!,
+                    chapterNumber: currentIndex + 1,
+                    callStructuredText: (system, user, temperature) =>
+                      generator.callStructuredTextForRoll(system, user, { temperature }),
+                  });
+                  if (repair.blueprint) {
+                    applyBlueprintToPlotNode(
+                      projectStore.currentProject!.plotOutline ?? [],
+                      currentIndex + 1,
+                      repair.blueprint
+                    );
+                    await projectStore.saveCurrentProject();
+                    const defectSummary = repair.defects.length > 0
+                      ? `（体检缺陷：${repair.defects.map(d => d.kind).join('、')}）`
+                      : '';
+                    console.warn(
+                      `[批量写作] 第${currentIndex + 1}章蓝图已再生${defectSummary}，继续重写正文`,
+                      repair.defects.map(d => d.detail)
+                    );
+                    error.value = `第${currentIndex + 1}章蓝图已再生${defectSummary}，重试写作...`;
+                    // 蓝图换了，上一轮针对旧合同的失败教训作废
+                    internalState.currentRevisionHints = undefined;
+                  } else {
+                    console.warn(
+                      `[批量写作] 第${currentIndex + 1}章蓝图再生未成功：${repair.error}`,
+                      repair.defects
+                    );
+                  }
+                } catch (repairErr) {
+                  console.warn(`[批量写作] 第${currentIndex + 1}章蓝图再生异常（不影响原重试路径）:`, repairErr);
+                }
+              }
               persistentAttempts += 1;
               if (persistentAttempts >= persistentMaxRetries) {
                 error.value = `第${currentIndex + 1}章持久错误（${classified.kind}）连续 ${persistentMaxRetries} 次，结束批量写作`;

@@ -91,6 +91,41 @@ describe('normalizeWebnovelParagraphs（少动刀）', () => {
     const text = ['他回到屋里。', '翌日', '晨光透过窗棂。', '他沉默了。'].join('\n\n');
     expect(normalizeWebnovelParagraphs(text)).toBe(text);
   });
+
+  it('整章 ASCII 直引号归一为中文弯引号（2026-08-26 绝症当虫治第 6 章实测形态）', () => {
+    const straight = `"把枪拿开，别挡着我救人。"林舟语气平静。
+"快住手！生石灰遇水放热！"老医生尖叫着阻拦。
+他说完了，转身就走。`;
+    const normalized = normalizeWebnovelParagraphs(straight);
+    expect(normalized).toContain('\u201C把枪拿开，别挡着我救人。\u201D');
+    expect(normalized).toContain('\u201C快住手！生石灰遇水放热！\u201D');
+    // 叙述段不受影响
+    expect(normalized).toContain('他说完了，转身就走。');
+    // 归一后引号配平,门禁不再失衡
+    const openCount = (normalized.match(/\u201C/gu) ?? []).length;
+    const closeCount = (normalized.match(/\u201D/gu) ?? []).length;
+    expect(openCount).toBe(closeCount);
+  });
+
+  it('段内对话丢闭引号时在段末补齐（免整章重写）', () => {
+    const qL = '\u201C';
+    const qR = '\u201D';
+    const unterminated = `${qL}快住手！你这是在用杀树虫的强碱土农药活活烧穿赵总的食道和胃壁！`;
+    const normalized = normalizeWebnovelParagraphs(unterminated);
+    expect(normalized.endsWith(qR)).toBe(true);
+    expect(normalized.startsWith(qL)).toBe(true);
+
+    // 非对话段（不以开引号起头）不补
+    const narration = '老医生吓得魂飞魄散，连滚带爬地冲上前想要抢夺药碗。';
+    expect(normalizeWebnovelParagraphs(narration)).toBe(narration);
+  });
+
+  it('已有弯引号的正文不触动直引号（混合形态保守处理）', () => {
+    const mixed = '\u201C他说什么？\u201D\n英文缩写 "OK" 出现在叙述里。';
+    const normalized = normalizeWebnovelParagraphs(mixed);
+    // 弯引号存在时直引号保持原样,不做位置推断
+    expect(normalized).toContain('"OK"');
+  });
 });
 
 describe('analyzeParagraphDensity / buildTypesettingIssues', () => {
@@ -187,7 +222,9 @@ describe('buildTypesettingIssues 生产硬门禁', () => {
   });
 
   it('中文对话引号未闭合时报告 high', () => {
-    const issues = buildTypesettingIssues('“你到底看见了什么？\n\n他没有回答，只把账本合上。');
+    // 段落中段出现的开引号未闭合(非段首对话形态)由门禁报 high 触发重写;
+    // 段首整段对话丢尾引号已被 normalize 层 repairUnterminatedDialogueQuotes 自动修补
+    const issues = buildTypesettingIssues('他没有回答，只把账本合上，低声说：“你到底看见了什么？\n\n风把灯吹灭了。');
     expect(issues.some(issue => issue.severity === 'high' && issue.description.includes('引号未闭合'))).toBe(true);
   });
 

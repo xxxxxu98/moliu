@@ -1,4 +1,5 @@
 import type { ChapterBlueprint, ExecutableOutline } from '../types/executable-outline';
+import { normalizedSimilarityKeepingNumbers } from '@/utils/text-similarity';
 
 /**
  * 长篇商业网文大纲的可应用门槛。
@@ -30,6 +31,7 @@ export type OutlineCompletenessBlockerKind =
   | 'invalid-chapter-order'
   | 'incomplete-blueprint'
   | 'chronology-regression'
+  | 'chapter-opening-repetition'
   | 'inconsistent-story-scale'
   | 'chapter-reference-out-of-range'
   | 'unknown-character-reference'
@@ -446,6 +448,63 @@ function inspectChronologyRegressions(outline: ExecutableOutline): OutlineComple
 }
 
 /**
+ * 跨章开场复述检测：相邻章 CBN 高度相似或互为子串 = 本章开局复读上章结尾
+ * （章界重演，绝症书审实测形态：第4→5、7→8章边界处方剧情重演）。
+ * 履约校验会把复述型 CBN 当硬约束强制覆盖 → 正文整段重演。
+ * 检测放大纲侧（blocker），滚动批次另有 findBlueprintRepetition 同口径检查。
+ */
+/** 归一化（去标点/空白，保留数字）编辑距离；详见 text-similarity */
+function blueprintEditDistance(a: string, b: string): number {
+  const normalize = (text: string): string =>
+    (text ?? '').replace(/[\s\p{P}\p{S}]/gu, '').toLowerCase();
+  const na = normalize(a);
+  const nb = normalize(b);
+  const matrix: number[][] = [];
+  for (let i = 0; i <= nb.length; i += 1) matrix[i] = [i];
+  for (let j = 0; j <= na.length; j += 1) matrix[0][j] = j;
+  for (let i = 1; i <= nb.length; i += 1) {
+    for (let j = 1; j <= na.length; j += 1) {
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j - 1] + (nb.charAt(i - 1) === na.charAt(j - 1) ? 0 : 1),
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j] + 1,
+      );
+    }
+  }
+  return matrix[nb.length][na.length];
+}
+
+function inspectBlueprintOpeningRepetition(
+  outline: ExecutableOutline,
+): OutlineCompletenessBlocker[] {
+  const blockers: OutlineCompletenessBlocker[] = [];
+  const sorted = [...(outline.chapterBlueprints ?? [])].sort(
+    (a, b) => a.orderIndex - b.orderIndex
+  );
+  for (let i = 1; i < sorted.length; i += 1) {
+    const prev = (sorted[i - 1].CBN ?? '').trim();
+    const curr = (sorted[i].CBN ?? '').trim();
+    if (!prev || !curr) continue;
+    // 子串包含 = 明确复述；相似度路径要求归一化编辑距离 ≥3（更细粒度的
+    // normalizedSimilarityKeepingNumbers 无法表达阈值）：仅差一个序号/人名的
+    // 模板句（「核对第3笔账目」vs「核对第4笔账目」）是合法的相邻推进，不算重演。
+    if (!curr.includes(prev) && !prev.includes(curr)) {
+      const distance = blueprintEditDistance(prev, curr);
+      if (distance < 3) continue;
+      if (normalizedSimilarityKeepingNumbers(prev, curr) < 0.85) continue;
+    }
+    blockers.push({
+      kind: 'chapter-opening-repetition',
+      chapterNumber: sorted[i].orderIndex,
+      message:
+        `第${sorted[i].orderIndex}章 CBN「${curr.slice(0, 30)}」与第${sorted[i - 1].orderIndex}章 ` +
+        `CBN「${prev.slice(0, 30)}」高度相似或为跨章复述；本章开篇必须推进到新事件而非重演上章结尾`,
+    });
+  }
+  return blockers;
+}
+
+/**
  * 只检查“能否安全应用”的硬条件；内容质量问题仍由 outline-reviewer 负责。
  */
 export function inspectOutlineCompleteness(
@@ -574,6 +633,7 @@ export function inspectOutlineCompleteness(
   }
 
   blockers.push(...inspectChronologyRegressions(outline));
+  blockers.push(...inspectBlueprintOpeningRepetition(outline));
   blockers.push(...inspectSemanticConsistency(outline));
 
   return { canApply: blockers.length === 0, blockers };
