@@ -6,6 +6,9 @@ export default defineConfig({
   plugins: [vue()],
   test: {
     globals: true,
+    // 全局测试数据清理：跑前清扫历史遗留的 moliu-* Temp 目录（>1h 宽限期），
+    // 跑后再清一轮本轮残留。详见 tests/cleanup-temp-dirs.global.ts。
+    globalSetup: './tests/cleanup-temp-dirs.global.ts',
     environment: 'happy-dom',
     // happy-dom 会对跨域 fetch 先发 CORS 预检；真实 AI 冒烟直连厂商网关（部分网关如
     // opencode.ai 对 OPTIONS 返回 404），预检失败会被判成 NetworkError。生产是 Electron

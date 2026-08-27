@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PlotNode } from '@/types/project';
+import type { PlotNode, Project } from '@/types/project';
 
 import {
   BlueprintRepairLedger,
   applyBlueprintToPlotNode,
+  blueprintToChapterUpdate,
   inspectChapterBlueprintDefects,
+  inspectBlueprintObjectDefects,
   isFulfillmentDomainFailure,
+  regenerateChapterBlueprint,
 } from '../chapter-blueprint-regenerator';
 import { parseBlueprintBlocks } from '../outline-roller';
 
@@ -107,5 +110,125 @@ describe('isFulfillmentDomainFailure', () => {
     expect(isFulfillmentDomainFailure('语义问题[fulfillment] 第2段 未兑现 查清缺口')).toBe(true);
     expect(isFulfillmentDomainFailure('严格门禁未通过：正文触发本章禁区')).toBe(false);
     expect(isFulfillmentDomainFailure(undefined)).toBe(false);
+  });
+});
+
+describe('inspectBlueprintObjectDefects（再生产物复检核）', () => {
+  it('残缺稿判 empty-fields：mustCover 为空', () => {
+    const defects = inspectBlueprintObjectDefects({
+      orderIndex: 3,
+      title: '再生标题',
+      summary: '概要',
+      CBN: '三更灯下账页缺角',
+      CPNs: ['推进节点一'],
+      CEN: '章尾悬念钩子',
+      mustCover: [],
+    });
+    expect(defects.some(defect => defect.kind === 'empty-fields')).toBe(true);
+  });
+
+  it('健康稿零缺陷', () => {
+    const defects = inspectBlueprintObjectDefects({
+      orderIndex: 4,
+      title: '夜审账本惊变',
+      summary: '概要足够长以供校验之用。',
+      CBN: '三更灯下账页缺角见血印',
+      CPNs: ['比对旧账发现缺口'],
+      CEN: '主簿身后闪出禁军影子',
+      mustCover: ['查清军资缺口'],
+    });
+    expect(defects).toEqual([]);
+  });
+});
+
+describe('blueprintToChapterUpdate（Chapter 实体同步）', () => {
+  it('产出带结构化节点块的 outline 与 CBN/CEN 摘要 plotSummary', () => {
+    const raw = `### 第5章
+- 标题：再生后的新章题
+- 概要：再生后的概要内容足够长。
+- CBN：再生蓝图的新开篇动作
+- CPNs：新推进节点一；新推进节点二
+- CEN：再生后的章尾悬念
+- mustCover：新事件一；新事件二
+- 禁区：不得揭示新蓝图的底牌`;
+    const blueprint = parseBlueprintBlocks(raw, [5]).get(5)!;
+    const update = blueprintToChapterUpdate(blueprint);
+    expect(update.outline).toContain('【CBN】再生蓝图的新开篇动作');
+    expect(update.outline).toContain('【必须覆盖】新事件一、新事件二');
+    expect(update.outline).toContain('【禁区】不得揭示新蓝图的底牌');
+    expect(update.plotSummary).toBe('CBN: 再生蓝图的新开篇动作\nCEN: 再生后的章尾悬念');
+  });
+});
+
+describe('regenerateChapterBlueprint 复检门禁', () => {
+  const makeProject = (nodes: PlotNode[]): Project =>
+    ({
+      id: 'proj-regen',
+      name: '测试书',
+      plotOutline: nodes,
+      chapters: [],
+      characters: [],
+      foreshadows: [],
+      metadata: {},
+    }) as unknown as Project;
+
+  const healthyRaw = `### 第2章
+- 标题：再生产物健康稿
+- 概要：再生后的概要内容足够长以通过校验。
+- CBN：再生的独立新开篇画面
+- CPNs：再生节点一；再生节点二
+- CEN：再生后的章尾悬念钩子
+- mustCover：再生事件一；再生事件二`;
+
+  // 解析可过但内容退化：mustCover 是跨章目标（over-scoped）——原稿健康，
+  // 再生稿引入原稿没有的新缺陷类别 → 复检必须拒绝
+  const degradedRaw = `### 第2章
+- 标题：退化的再生稿
+- 概要：再生后的概要内容足够长以通过。
+- CBN：再生的独立新开篇画面
+- CPNs：再生节点一；再生节点二
+- CEN：再生后的章尾悬念钩子
+- mustCover：完成从查账到定罪的全流程`;
+
+  it('健康再生产物正常返回', async () => {
+    const result = await regenerateChapterBlueprint({
+      project: makeProject([makeChapterNode(0), makeChapterNode(1)]),
+      chapterNumber: 2,
+      callStructuredText: async () => healthyRaw,
+    });
+    expect(result.blueprint).toBeDefined();
+    expect(result.error).toBeUndefined();
+  });
+
+  it('带新缺陷的再生产物被复检拒绝且不返回蓝图', async () => {
+    const original = makeChapterNode(1); // 原稿健康（0 缺陷）
+    const result = await regenerateChapterBlueprint({
+      project: makeProject([makeChapterNode(0), original]),
+      chapterNumber: 2,
+      callStructuredText: async () => degradedRaw,
+    });
+    expect(result.blueprint).toBeUndefined();
+    expect(result.error).toContain('复检未通过');
+    expect(result.error).toContain('over-scoped-mustcover');
+  });
+
+  it('解析层就残缺的响应按原有错误路径拒绝', async () => {
+    const result = await regenerateChapterBlueprint({
+      project: makeProject([makeChapterNode(0), makeChapterNode(1)]),
+      chapterNumber: 2,
+      callStructuredText: async () => '完全不是蓝图格式的回复',
+    });
+    expect(result.blueprint).toBeUndefined();
+    expect(result.error).toContain('无法解析出本章内容');
+  });
+
+  it('目标章无 plot 节点时明确报错', async () => {
+    const result = await regenerateChapterBlueprint({
+      project: makeProject([]),
+      chapterNumber: 3,
+      callStructuredText: async () => healthyRaw,
+    });
+    expect(result.blueprint).toBeUndefined();
+    expect(result.error).toContain('没有 plot 节点');
   });
 });

@@ -3,8 +3,17 @@ import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { migrateStoryRuntime } from './migrations';
+import { resolveNativeBindingPath } from './sqliteNativeBinding';
 
 const MAX_SAFE_PROJECT_ID_LENGTH = 80;
+
+/**
+ * 双 ABI 的 native binding 路径在模块加载时解析一次：App（electron，ABI 145）
+ * 与 vitest（系统 Node，ABI 127）各取 prebuilds/ 下自己那份编译产物，
+ * 互不复用 node_modules/build/Release 的单份文件——App 开着也能跑测试。
+ * 打包产物 / 未跑过双编译脚本的全新环境回退默认路径（undefined）。
+ */
+const nativeBindingPath = resolveNativeBindingPath();
 
 export function sanitizeProjectId(projectId: string): string {
   const normalized = projectId.trim().normalize('NFKC');
@@ -49,7 +58,9 @@ export class StoryRuntimeDatabaseManager {
     }
 
     mkdirSync(this.runtimeDirectory, { recursive: true });
-    const database = new Database(databasePath);
+    const database = nativeBindingPath
+      ? new Database(databasePath, { nativeBinding: nativeBindingPath })
+      : new Database(databasePath);
     database.pragma('journal_mode = WAL');
     database.pragma('foreign_keys = ON');
     database.pragma('busy_timeout = 5000');

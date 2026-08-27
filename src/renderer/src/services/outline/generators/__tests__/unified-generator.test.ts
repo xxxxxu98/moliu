@@ -364,6 +364,27 @@ describe('UnifiedOutlineGenerator 请求参数', () => {
     expect(body.top_p).toBe(0.8);
   });
 
+  it('方向卡部分解析（1/3）低于期望数一半时触发重试；耗尽后优雅降级返回已解析部分', async () => {
+    injectSettings({ provider: 'openai' });
+    // 三轮全部只返回 1 个方向（< ceil(3/2)=2 的成功门槛）
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async () => ({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: DIRECTION_TEXT } }] }),
+      }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 2 });
+    const result = await generator.generateDirections('创意种子', { maxRetries: 2, count: 3 });
+
+    // 重试额度烧满（maxRetries:2 = 初试+1 次重试；部分解析不再一次通过），
+    // 但已解析的部分仍优雅返回
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.directions).toHaveLength(1);
+    expect(result.warnings.join('；')).toContain('仅完整解析出 1/3');
+  });
+
   it('Gemini 分支同样使用厂商配置', async () => {
     injectSettings({
       provider: 'gemini',

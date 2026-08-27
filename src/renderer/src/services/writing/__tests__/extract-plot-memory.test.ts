@@ -11,8 +11,10 @@ import {
   extractCriticalStatusChanges,
   collectCharacterFates,
   collectFateForbiddenZones,
+  overlayCharacterFates,
 } from '../extract-plot-memory';
 import type { Chapter, ChapterMemory } from '@/types/project';
+import type { StoryEntity } from '@/types/story-runtime';
 
 function createMockChapter(overrides?: Partial<Chapter>): Chapter {
   return {
@@ -234,5 +236,59 @@ describe('collectCharacterFates / collectFateForbiddenZones', () => {
     const zones = collectFateForbiddenZones(memories, ['周茂', '齐王']);
     expect(zones.some(z => z.includes('周茂'))).toBe(false);
     expect(zones.some(z => z.includes('齐王'))).toBe(true);
+  });
+});
+
+describe('overlayCharacterFates（runtime 实体命运状态接线）', () => {
+  function entityOf(id: string, name: string, aliases: string[] = []): StoryEntity {
+    return {
+      id,
+      kind: 'character',
+      name,
+      aliases,
+      attributes: {},
+      knownBy: [id],
+      sourceTrace: [],
+    };
+  }
+
+  it('命运终态映射到实体 attributes.status，别名命中同一实体', () => {
+    const entities: Record<string, StoryEntity> = {
+      'char-zhou': entityOf('char-zhou', '周茂', ['周大人']),
+      'char-hero': entityOf('char-hero', '裴修远'),
+      'char-item': { ...entityOf('char-item', '传国玉玺'), kind: 'item' },
+    };
+    const memories = [
+      memoryWith([{ characterName: '周茂', stateType: 'status', state: '下狱', detail: '圣旨定罪' }], 58),
+    ];
+    const { entities: next, applied } = overlayCharacterFates(entities, memories);
+    expect(applied).toBe(1);
+    expect(next['char-zhou'].attributes.status).toBe('下狱');
+    // 未命中的实体不被改动；非 character 不参与
+    expect(next['char-hero'].attributes.status).toBeUndefined();
+    expect(next['char-item'].attributes.status).toBeUndefined();
+  });
+
+  it('平反后不再写 status（解除检测复用 collectCharacterFates）', () => {
+    const entities: Record<string, StoryEntity> = {
+      'char-zhou': entityOf('char-zhou', '周茂'),
+    };
+    const memories = [
+      memoryWith([{ characterName: '周茂', stateType: 'status', state: '下狱', detail: '定罪' }], 58),
+      memoryWith([], 90, '新皇登基大赦天下，周茂冤案平反昭雪。'),
+    ];
+    const { applied } = overlayCharacterFates(entities, memories);
+    expect(applied).toBe(0);
+  });
+
+  it('已有不同显式终态时保守跳过，不互相覆盖', () => {
+    const base = entityOf('char-zhou', '周茂');
+    base.attributes = { status: '死亡' };
+    const memories = [
+      memoryWith([{ characterName: '周茂', stateType: 'status', state: '下狱', detail: '定罪' }], 58),
+    ];
+    const { entities: next, applied } = overlayCharacterFates({ 'char-zhou': base }, memories);
+    expect(applied).toBe(0);
+    expect(next['char-zhou'].attributes.status).toBe('死亡');
   });
 });

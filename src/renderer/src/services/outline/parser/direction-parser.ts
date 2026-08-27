@@ -38,6 +38,13 @@ function parseDirectionBlock(block: string, index: number): OutlineDirection | n
   if (meaningfulFieldCount < 2) {
     return null;
   }
+  // 展开种子最低信息量门槛：premise / 核心冲突至少其一。expandDirection 的整条
+  // 大纲管线都从这两个字段落笔（故事引擎/卷纲/启动包全部由它们派生）——
+  // 只有「标题+一句话卖点」的薄卡走进展开，等于让模型对着一句话猜一整本书
+  // （8题材矩阵实测此类卡展开后占位事件率显著偏高）。缺这两个字段宁可不进列表。
+  if (!premise && !coreConflict) {
+    return null;
+  }
 
   return {
     id: `direction-${index + 1}`,

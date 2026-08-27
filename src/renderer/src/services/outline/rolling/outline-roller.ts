@@ -703,8 +703,22 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
         `修复${repairTargets[0]}-${repairTargets.at(-1)}`,
         signal,
       );
-      for (const [n, bp] of parseBlueprintBlocks(generated, repairTargets)) {
-        blueprints.set(n, applyLocalSanitize(bp));
+      const repaired = parseBlueprintBlocks(generated, repairTargets);
+      for (const n of repairTargets) {
+        const incoming = repaired.get(n);
+        if (!incoming) continue;
+        const next = applyLocalSanitize(incoming);
+        // 复检：修复稿质检缺陷不得多于原稿。修复轮消耗一次请求后把「越修越坏」
+        // 的稿子换进去会让 validTo 前缀断得更早；不达标则保留原稿（带病但完整）。
+        const beforeCount = inspectRolledBlueprintQuality(blueprints.get(n)!).length;
+        const afterCount = inspectRolledBlueprintQuality(next).length;
+        if (beforeCount > 0 && afterCount > beforeCount) {
+          warnings.push(
+            `第${n}章定点修复稿质检退化（${beforeCount}→${afterCount} 处），保留原稿`,
+          );
+          continue;
+        }
+        blueprints.set(n, next);
       }
     } catch (error) {
       if (signal?.aborted) {

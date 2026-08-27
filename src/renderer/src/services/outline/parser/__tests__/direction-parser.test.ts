@@ -143,4 +143,35 @@ describe('parseDirections', () => {
 
     expect(result).toHaveLength(1);
   });
+
+  it('「标题+一句话卖点」薄卡被新门槛过滤（缺 premise 与核心冲突，展开种子信息量不足）', () => {
+    // 这类卡能凑满旧门槛（标题真值 + oneLiner = 2 个有效字段），
+    // 但 expandDirection 全靠 premise/核心冲突派生故事引擎——对着一句话展开=让模型猜整本书
+    const raw = [
+      fullBlock(1, '凡人修仙', '凡人逆袭'),
+      `## 方向方案2
+- 标题：有一张真标题的薄卡
+- 一句话卖点：卖点很吸睛但没有前提和冲突`,
+    ].join('\n');
+
+    const result = parseDirections(raw);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe('凡人修仙');
+  });
+
+  it('只有 premise 没有核心冲突的卡可通过（两字段任居其一即达种子最低信息量）', () => {
+    const raw = [
+      fullBlock(1, '凡人修仙', '凡人逆袭'),
+      `## 方向方案2
+- 标题：只有前提的卡
+- 一句话卖点：卖点表述
+- premise：一个足够具体的故事前提描述`,
+    ].join('\n');
+
+    const result = parseDirections(raw);
+
+    expect(result).toHaveLength(2);
+    expect(result[1].title).toBe('只有前提的卡');
+  });
 });

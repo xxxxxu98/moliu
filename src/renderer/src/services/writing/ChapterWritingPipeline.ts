@@ -79,6 +79,7 @@ import {
 } from '@/services/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
+import { overlayCharacterFates } from '@/services/writing/extract-plot-memory';
 import { stripStructuredNodeBlock } from '@/services/outline/parser/utils';
 import type { SceneChunk } from '@/types/story-runtime';
 
@@ -355,7 +356,7 @@ function computeBootstrapFingerprint(project: {
   characters?: Array<{ id: string; updatedAt?: string; aliases?: string[] }>;
   foreshadows?: Array<{ id: string; status: string; setupChapter?: number; actualPlantedChapter?: number }>;
   worldSchema?: unknown;
-  plotOutline?: unknown[];
+  plotOutline?: Array<{ id?: string; title?: string; CBN?: string; mustCover?: string[] }>;
   volumes?: unknown[];
   chapters?: unknown[];
 }): string {
@@ -365,10 +366,15 @@ function computeBootstrapFingerprint(project: {
   const foreshadows = (project.foreshadows ?? [])
     .map(f => `${f.id}:${f.status}:${f.setupChapter ?? ''}:${f.actualPlantedChapter ?? ''}`)
     .join('|');
+  // outline 参与种子（master 契约 payload + plot_threads），只记长度会漏检
+  // 「蓝图再生/定点修复」这类数量不变的内容改写——补 id+CBN 摘要签名。
+  const outlineSignature = (project.plotOutline ?? [])
+    .map(node => `${node.id ?? ''}:${(node.CBN ?? '').slice(0, 24)}`)
+    .join('|');
   const outlineSize = project.plotOutline?.length ?? 0;
   const volumeSize = project.volumes?.length ?? 0;
   const chapterSize = project.chapters?.length ?? 0;
-  return [characters, foreshadows, outlineSize, volumeSize, chapterSize].join('~');
+  return [characters, foreshadows, outlineSize, outlineSignature, volumeSize, chapterSize].join('~');
 }
 
 /**
@@ -630,11 +636,13 @@ export class ChapterWritingPipeline {
       useTaskBook = true,
       enablePreflight = false,
       enableSupplement = false,
-      userInstructions,
+      userInstructions: initialUserInstructions,
       windowedOutline,
       previousChapter,
       signal,
     } = input;
+    // 任务书失败降级时会把「无合同裸写」的系统提示并入写作指令（两条执行路径共用）
+    let userInstructions = initialUserInstructions;
 
     try {
       throwIfAborted(signal);
@@ -667,8 +675,13 @@ export class ChapterWritingPipeline {
         if (tbResult.success && tbResult.taskBook) {
           taskBook = tbResult.taskBook;
         } else {
-          // 任务书失败不中断，降级为无任务书写作
-          console.warn('[Pipeline] 任务书生成失败，降级为无任务书:', tbResult.error);
+          // 任务书失败不中断，降级为无任务书写作；但必须把降级事实并入写作指令，
+          // 让两条执行路径都看到「本章是无合同裸写」（此前只有 console.warn，
+          // 履约失败归因时会误把无合同的失败当成蓝图质量问题）。
+          const reason = tbResult.error ?? '未知原因';
+          console.warn('[Pipeline] 任务书生成失败，降级为无任务书:', reason);
+          userInstructions =
+            `${userInstructions ?? ''}\n【系统提示】本章写作任务书生成失败（${reason.slice(0, 80)}），已降级为按大纲直接写作，不得臆造必出事件。`.trim();
         }
       }
 
@@ -859,12 +872,21 @@ export class ChapterWritingPipeline {
       const chapterNumber = input.chapter.orderIndex + 1;
       const isEmptyRewrite = !input.chapter.content.trim();
       // 清空正文后重写：剥离本章及之后的旧 accepted 事件，避免 stale runtime 污染起草 prompt
-      const state = isEmptyRewrite
+      let state = isEmptyRewrite
         ? stripStateForChapterRewrite(loadedState, chapterNumber)
         : loadedState;
       if (state.chapter >= chapterNumber && !isEmptyRewrite) {
         throw new Error(`第 ${chapterNumber} 章已有 accepted 状态，请使用章节重写流程`);
       }
+      // 命运级状态接线（陈旧度门禁的数据源）：runtime 状态库自身从不产生
+      // attributes.status，把章节记忆里收集的角色命运终态映射到实体上，
+      // contractHealth.healChapterContract 的终态节点裁剪由此有据可裁。
+      // 不落 SQLite（每章从记忆重推导），仅作用于本章的校验/健康度视图。
+      const fateOverlay = overlayCharacterFates(
+        state.entities,
+        input.project.chapterMemories ?? [],
+      );
+      if (fateOverlay.applied > 0) state.entities = fateOverlay.entities;
 
       const volume = input.project.volumes.find(item => item.id === input.chapter.volumeId);
       const volumePlan = input.project.metadata?.volumePlans?.find(

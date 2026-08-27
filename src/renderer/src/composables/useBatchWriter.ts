@@ -64,6 +64,7 @@ import {
 } from '@/services/outline/rolling/outline-roller';
 import {
   applyBlueprintToPlotNode,
+  blueprintToChapterUpdate,
   BlueprintRepairLedger,
   inspectChapterBlueprintDefects,
   isFulfillmentDomainFailure,
@@ -1104,10 +1105,15 @@ export function useBatchWriter(): UseBatchWriterReturn {
     batchSummary.value = null;
     resumableBatch.value = null; // 开始新批量，清除上次恢复提示
 
-    // 获取计划章节数
-    const plannedChapterCount =
-      project.metadata?.plannedChapterCount ||
-      (project.plotOutline?.length > 0 ? project.plotOutline.length : 100);
+    // 计划章节数：每次循环实时读取（滚动续纲落地会推进 metadata.plannedChapterCount，
+    // 循环前快照会让「写到完结」模式的分界判断用过期值）；兜底 100 与既有口径一致。
+    const getPlannedChapterCount = (): number => {
+      const current = projectStore.currentProject;
+      const fromMetadata = current?.metadata?.plannedChapterCount ?? 0;
+      if (fromMetadata > 0) return fromMetadata;
+      const outlineSize = current?.plotOutline?.length ?? 0;
+      return outlineSize > 0 ? outlineSize : 100;
+    };
 
     const batchStartedAt = Date.now();
     let writtenCount = 0; // 提到 try 外，finally 的 batchSummary 需要访问
@@ -1164,7 +1170,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
           }
 
           // 如果已完成大纲章节但还可以创建新章节，继续创建
-          if (currentIndex >= plannedChapterCount && !endingCheck.isReady) {
+          if (currentIndex >= getPlannedChapterCount() && !endingCheck.isReady) {
             // 可以继续创建章节，但需要明确告知用户
           }
         }
@@ -1309,6 +1315,15 @@ export function useBatchWriter(): UseBatchWriterReturn {
                       currentIndex + 1,
                       repair.blueprint
                     );
+                    // 同步 Chapter 实体文本字段：pipeline 的 goal/角色白名单来自
+                    // chapter.outline/plotSummary，只改 plotOutline 会造成合同半新半旧
+                    const failedChapterForSync = projectStore.sortedChapters[currentIndex];
+                    if (failedChapterForSync) {
+                      await projectStore.updateChapter(
+                        failedChapterForSync.id,
+                        blueprintToChapterUpdate(repair.blueprint)
+                      );
+                    }
                     await projectStore.saveCurrentProject();
                     const defectSummary = repair.defects.length > 0
                       ? `（体检缺陷：${repair.defects.map(d => d.kind).join('、')}）`

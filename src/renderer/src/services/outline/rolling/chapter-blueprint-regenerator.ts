@@ -37,8 +37,29 @@ export interface BlueprintDefect {
  * 与滚动质检同口径（subset），但面向单章、无需批内相邻比较。
  */
 export function inspectChapterBlueprintDefects(node: PlotNode): BlueprintDefect[] {
+  return inspectBlueprintObjectDefects({
+    orderIndex: (node.orderIndex ?? 0) + 1,
+    title: node.title,
+    summary: node.description,
+    CBN: node.CBN,
+    CPNs: node.CPNs,
+    CEN: node.CEN,
+    mustCover: node.mustCover,
+  });
+}
+
+/** 体检的纯函数核：PlotNode 与再生产物（ChapterBlueprint 形状）共用同一套规则 */
+export function inspectBlueprintObjectDefects(input: {
+  orderIndex: number;
+  title?: string;
+  summary?: string;
+  CBN?: string;
+  CPNs?: string[];
+  CEN?: string;
+  mustCover?: string[];
+}): BlueprintDefect[] {
   const defects: BlueprintDefect[] = [];
-  const mustCover = node.mustCover ?? [];
+  const mustCover = input.mustCover ?? [];
   const overScoped = mustCover.find(item => isCrossChapterGoal(item));
   if (overScoped) {
     defects.push({
@@ -46,19 +67,23 @@ export function inspectChapterBlueprintDefects(node: PlotNode): BlueprintDefect[
       detail: `mustCover「${overScoped.slice(0, 30)}」是整卷/全书级跨章目标，单章无法兑现`,
     });
   }
-  if ((node.CEN ?? '').trim() && isHollowChapterHook(node.CEN ?? '', node.CPNs ?? [])) {
+  if ((input.CEN ?? '').trim() && isHollowChapterHook(input.CEN ?? '', input.CPNs ?? [])) {
     defects.push({
       kind: 'hollow-cen',
-      detail: `CEN「${node.CEN!.slice(0, 30)}」是零信息量空壳钩子`,
+      detail: `CEN「${input.CEN!.slice(0, 30)}」是零信息量空壳钩子`,
     });
   }
-  if (/^(?:开场承接|承接上[章段](?:结尾)?)[：:]/u.test((node.CBN ?? '').trim())) {
+  if (/^(?:开场承接|承接上[章段](?:结尾)?)[：:]/u.test((input.CBN ?? '').trim())) {
     defects.push({
       kind: 'template-cbn',
-      detail: `CBN「${node.CBN!.slice(0, 30)}」是承接模板话术而非本章新事件`,
+      detail: `CBN「${input.CBN!.slice(0, 30)}」是承接模板话术而非本章新事件`,
     });
   }
-  if (mustCover.length === 0 || !(node.CBN ?? '').trim() || !(node.CEN ?? '').trim()) {
+  if (
+    mustCover.length === 0 ||
+    !(input.CBN ?? '').trim() ||
+    !(input.CEN ?? '').trim()
+  ) {
     defects.push({ kind: 'empty-fields', detail: 'CBN/CEN/mustCover 存在空缺，合同不完整' });
   }
   return defects;
@@ -95,7 +120,6 @@ export async function regenerateChapterBlueprint(
     return { defects: [], error: `第 ${chapterNumber} 章没有 plot 节点，无法再生蓝图` };
   }
   const defects = inspectChapterBlueprintDefects(targetNode);
-
   // 上章既有规划收束，作为承接链
   const recentBlueprintEndings = nodes
     .filter(node => (node.orderIndex ?? 0) + 1 < chapterNumber && Boolean(node.CEN?.trim()))
@@ -120,6 +144,28 @@ export async function regenerateChapterBlueprint(
     if (!blueprint) {
       return { defects, error: `第 ${chapterNumber} 章蓝图再生响应无法解析出本章内容` };
     }
+    // 复检门禁：再生产物缺陷数不得超过原稿，且不得出现原稿没有的新类别
+    // （尤其 empty-fields——原稿至少 mustCover 非空，残缺稿换进去等于烧掉
+    // 唯一再生预算还恶化合同）。不达标则放弃采用（保留原稿），失败只走文本重试。
+    const nextDefects = inspectBlueprintObjectDefects({
+      orderIndex: chapterNumber,
+      title: blueprint.title,
+      summary: blueprint.summary,
+      CBN: blueprint.CBN,
+      CPNs: blueprint.CPNs,
+      CEN: blueprint.CEN,
+      mustCover: blueprint.mustCover,
+    });
+    const originalKinds = new Set(defects.map(defect => defect.kind));
+    const hasNewKind = nextDefects.some(defect => !originalKinds.has(defect.kind));
+    if (nextDefects.length > defects.length || hasNewKind) {
+      return {
+        defects,
+        error:
+          `再生产物复检未通过（缺陷 ${defects.length}→${nextDefects.length}${hasNewKind ? '，含新类别' : ''}），放弃采用：` +
+          nextDefects.map(defect => `${defect.kind}:${defect.detail}`).join('；'),
+      };
+    }
     return { blueprint, defects };
   } catch (error) {
     return {
@@ -127,6 +173,31 @@ export async function regenerateChapterBlueprint(
       error: `蓝图再生请求失败：${error instanceof Error ? error.message.slice(0, 120) : String(error).slice(0, 120)}`,
     };
   }
+}
+
+/**
+ * 把再生后的蓝图折算成 Chapter 实体的文本字段更新。
+ *
+ * pipeline 组装合同时 goal/角色白名单来自 Chapter.outline / plotSummary，
+ * 只改 plotOutline 节点的话硬约束是新蓝图、引导与白名单仍是旧蓝图——
+ * 合同半新半旧。重试前必须两侧同步。
+ */
+export function blueprintToChapterUpdate(blueprint: ChapterBlueprint): {
+  outline: string;
+  plotSummary: string;
+} {
+  const structured = [
+    '--- 结构化节点 ---',
+    `【CBN】${blueprint.CBN}`,
+    ...(blueprint.CPNs.length ? [`【CPNs】${blueprint.CPNs.join('\n')}`] : []),
+    `【CEN】${blueprint.CEN}`,
+    ...(blueprint.mustCover.length ? [`【必须覆盖】${blueprint.mustCover.join('、')}`] : []),
+    ...(blueprint.forbiddenZones.length ? [`【禁区】${blueprint.forbiddenZones.join('、')}`] : []),
+  ].join('\n');
+  return {
+    outline: `${blueprint.summary || blueprint.title}\n\n${structured}`,
+    plotSummary: `CBN: ${blueprint.CBN}\nCEN: ${blueprint.CEN}`,
+  };
 }
 
 /**

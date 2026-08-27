@@ -118,3 +118,5 @@ temp/storyflow.matrix.config.json
 temp/storyflow-checkpoints/
 test.md
 *.console.log
+prebuilds/better-sqlite3/
+prebuilds/*.tar.gz

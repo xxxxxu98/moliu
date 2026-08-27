@@ -10,6 +10,7 @@
 
 import type { ChapterMemory, CharacterStateChange } from '@/types/project';
 import type { Chapter } from '@/types/project';
+import type { StoryEntity } from '@/types/story-runtime';
 import { getMemoryManager } from './memory-manager';
 
 /**
@@ -492,8 +493,7 @@ export interface FateStatus {
  * 汇总全量章节记忆的角色命运状态：取每个角色最晚一次的命运级变化；
  * 若其后的章节记忆里出现了解除性叙述（平反/越狱等），则不再列为禁入。
  */
-export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {
-  const byCharacter = new Map<string, FateStatus>();
+export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {  const byCharacter = new Map<string, FateStatus>();
   const memorySorted = [...memories].sort((a, b) => a.chapterIndex - b.chapterIndex);
   for (const memory of memorySorted) {
     for (const change of memory.characterStateChanges) {
@@ -521,6 +521,58 @@ export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {
     }
   }
   return [...byCharacter.values()];
+}
+
+/**
+ * 命运级终态 → runtime 状态库的接线（陈旧度门禁的数据源）。
+ *
+ * runtime 的 StoryEntity.attributes.status 从不被事实提取写入，
+ * contractHealth.healChapterContract 的陈旧度裁剪若只读状态库将恒空转。
+ * 批量写作每章起草前，把 collectCharacterFates 汇总出的终态映射到
+ * 加载后的 state.entities（按 name/alias 匹配），门禁由此有据可裁。
+ * 已解除命运的角色不在 fates 列表中，天然不会误标。
+ */
+export const RUNTIME_FATE_STATUS_VALUES = ['死亡', '驾崩', '下狱', '定罪'] as const;
+
+export interface CharacterFateOverlayResult {
+  /** 替换后的实体表（未命中的实体原样保留） */
+  entities: Record<string, StoryEntity>;
+  /** 实际写入 status 的实体数 */
+  applied: number;
+}
+
+export function overlayCharacterFates(
+  entities: Record<string, StoryEntity>,
+  memories: ChapterMemory[],
+): CharacterFateOverlayResult {
+  const fateValues = RUNTIME_FATE_STATUS_VALUES as readonly string[];
+  const fates = collectCharacterFates(memories).filter(fate =>
+    fateValues.includes(fate.state)
+  );
+  if (fates.length === 0) return { entities, applied: 0 };
+
+  const byName = new Map<string, StoryEntity>();
+  for (const entity of Object.values(entities)) {
+    if (entity.kind !== 'character') continue;
+    if (entity.name.trim()) byName.set(entity.name.trim(), entity);
+    for (const alias of entity.aliases ?? []) {
+      if (alias.trim()) byName.set(alias.trim(), entity);
+    }
+  }
+
+  let applied = 0;
+  const next = { ...entities };
+  for (const fate of fates) {
+    const entity = byName.get(fate.characterName.trim());
+    if (!entity) continue;
+    // 已有不同终态登记时保守跳过：显式数据优先于记忆推导，避免互相覆盖
+    const existing = String(entity.attributes?.status ?? '');
+    if (existing && existing !== fate.state) continue;
+    if (existing === fate.state) continue;
+    next[entity.id] = { ...entity, attributes: { ...entity.attributes, status: fate.state } };
+    applied += 1;
+  }
+  return { entities: next, applied };
 }
 
 /**

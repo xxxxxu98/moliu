@@ -513,6 +513,11 @@ export class UnifiedOutlineGenerator {
     options?: GenerateOptions,
     onProgress?: (message: string) => void,
   ): Promise<DirectionGenerationResult> {
+    const expectedCount = Math.max(1, options?.count ?? 3);
+    // 成功门槛 = 至少解析出期望方向数的一半：此前「解出任意 1 个即算成功」，
+    // 3 个方向只回 1 个残卡也通过，用户拿到的选择面塌缩且无重试机会。
+    // 收紧后部分解析会触发 runWithRetry 的降温重试；耗尽后仍返回已解析的部分（优雅降级）。
+    const minimumAcceptable = Math.max(1, Math.ceil(expectedCount / 2));
     return this.runWithRetry<DirectionGenerationResult>(
       async (attempt, temperature) => {
         const opts = { ...this.defaultOptions, ...options, ...(temperature !== undefined ? { temperature } : {}) };
@@ -527,15 +532,26 @@ export class UnifiedOutlineGenerator {
         const rawText = await this.callStructuredTextMode(builtPrompt.system, builtPrompt.user, opts, 'outline-direction');
         const directions = parseDirections(rawText);
 
+        const warnings: string[] = [];
+        if (directions.length === 0) {
+          warnings.push('未能解析出任何创作方向，建议调整提示词后重试');
+        } else if (directions.length < expectedCount) {
+          warnings.push(`仅完整解析出 ${directions.length}/${expectedCount} 个方向`);
+        }
+
         return {
           directions,
           rawText,
-          strategy: directions.length > 0 ? 'structured-text' : 'fallback',
-          warnings:
-            directions.length > 0 ? [] : ['未能完整解析 3 个方向，建议调整提示词后重试'],
+          strategy:
+            directions.length >= expectedCount
+              ? 'structured-text'
+              : directions.length > 0
+                ? 'fallback'
+                : 'fallback',
+          warnings,
         };
       },
-      (result) => result.directions.length > 0,
+      (result) => result.directions.length >= minimumAcceptable,
       options?.maxRetries ?? 2,
       onProgress,
       // 冷却基准 = 本次生效温度，避免厂商低温度配置被 0.7 基准“升温”
