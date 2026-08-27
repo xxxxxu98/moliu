@@ -1,0 +1,19 @@
+{
+  "mode": "storyflow-matrix",
+  "generatedAt": "2026-08-27T06:06:24.443Z",
+  "concurrency": 3,
+  "chapterCount": 100,
+  "scenarioId": null,
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "scenarioId": null,
+      "provider": "openai",
+      "model": "gemini-3.7-flash-high",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 0,
+      "note": "未产出 summary（前半段失败）"
+    }
+  ]
+}

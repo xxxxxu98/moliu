@@ -1,0 +1,6 @@
+{
+  "enabled": true,
+  "useAppDefaultProvider": true,
+  "providerId": "",
+  "_comment": "模板：复制为 continue-write.real.config.json 后使用。useAppDefaultProvider=true 时复用 App 默认模型（解密 %APPDATA%/moliu/moliu-settings.json）；也可填 providerId 精确指定某个已保存厂商，或直接填 apiKey/provider/model/baseUrl。"
+}

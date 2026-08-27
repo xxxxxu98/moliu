@@ -24,7 +24,9 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const tempRoot = path.join(repoRoot, 'temp');
 
-/** 默认保护清单:体积小且回读价值高(AI 排查证据 / 书审回归样本 / 断点续跑) */
+/** 默认保护清单:体积小且回读价值高(AI 排查证据 / 书审回归样本 / 断点续跑)
+ *  含 temp 根目录的散文件配置(冒烟 harness 与矩阵厂商表):被 --all 清掉后
+ *  下轮真实冒烟直接启动失败(2026-08-27 实测),故与目录一并点名保护。 */
 const KEEP_DEFAULT = new Set([
   'ai-traces',
   'book-review',
@@ -32,6 +34,9 @@ const KEEP_DEFAULT = new Set([
   'review-500ch',
   'review-xcjz',
   'storyflow-checkpoints',
+  'continue-write.real.config.json',
+  'continue-write.real.config.example.json',
+  'storyflow.matrix.config.json',
 ]);
 
 function dirSize(p) {
