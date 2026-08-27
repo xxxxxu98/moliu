@@ -403,6 +403,24 @@ describe('inspectOutlineCompleteness', () => {
       expect(result.blockers.filter(b => b.kind === 'unknown-location-reference')).toEqual([]);
     });
 
+    it('动词开头的叙事短语（遭遇商帮罢市/依赖顾青舟救市/拼出跨省）不登记为地点 blocker（2026-08-27 百章书审两轮实证）', () => {
+      const outline = makeOutlineWithLocations();
+      outline.chapterBlueprints = [
+        ...(outline.chapterBlueprints ?? []),
+        {
+          ...makeBlueprint(35),
+          CBN: '盐商联手发动遭遇商帮罢市，官府不得不依赖顾青舟救市平息风波',
+        },
+        {
+          ...makeBlueprint(36),
+          CEN: '他从残页中拼出跨省走私的完整路线图',
+        },
+      ];
+
+      const result = inspectOutlineCompleteness(outline);
+      expect(result.blockers.filter(b => b.kind === 'unknown-location-reference')).toEqual([]);
+    });
+
     it('叙述概念盲区（造成的视觉盲区/市政道路盲区）不产生 blocker（2026-08-25 矩阵实测）', () => {
       const outline = makeOutlineWithLocations();
       outline.chapterBlueprints = [

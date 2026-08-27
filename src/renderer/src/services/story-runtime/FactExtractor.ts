@@ -63,7 +63,7 @@ export class AIFactExtractor implements FactExtractor {
         '4) 顶层 evidence 必须汇总本章关键正文原句，不得为空（可与 events[].evidence 重复）',
         '5) deltas.path 用点分路径写状态变更；inventory 变更必须形如 inventory.<角色实体id>.<物品名>，value 必须是纯数字（数量/件数），禁止写 {unit,note,quantity,描述} 等对象或带单位的字符串',
         '6) 顶层必须输出一个 JSON 对象 {...}，禁止输出裸数组 [...]；events/deltas/evidence 三个字段都要存在',
-        '7) 生死与命运事件必检：处决/斩首/枭首/格杀/气绝/毙命/身亡/暴毙/驾崩/自尽/溺亡等情节性死亡，以及下狱/定罪等终局状态，本章正文出现即必须登记——每条产出 event(type="death"或"status_change") 并附带 deltas(path 用 characters.<实体id>.attributes.status，value 用「死亡/下狱/定罪/驾崩」)，evidence 引用正文原句。不得因场面血腥、群像处决或篇幅原因漏登；群像处决须逐个列出名单内的死者',
+        '7) 生死与命运事件必检：正文出现死亡/下狱/定罪的【已完成事实】时必须登记——每条产出 event(type="death"或"status_change") 并附带 deltas(path 用 characters.<实体id>.attributes.status，value 用「死亡/下狱/定罪/驾崩」)，evidence 必须引用【结果性】原文原句（如倒地气绝/头颅滚落/当场毙命/收殓下葬）。注意区分：判决宣布（"判斩立决"）、威胁命令（"给我杀了他"）、预谋计划（"要除掉X"）都不是事实，禁止据其写死亡 status；拿不准是否已完成时只产 event 不写 status delta。群像处决须逐个列出名单内的死者',
         'JSON 字段必须为：',
         '{"events":[{"id":"string","chapter":0,"sceneId":"string","type":"string","summary":"string","participants":["实体id或人名"],"causes":[],"effects":[],"evidence":["正文原句"]}],"deltas":[{"operation":"set|add|remove|increment","path":"inventory.char-1.银两","value":5,"evidence":"正文原句"}],"evidence":["正文原句"]}',
       ].join('\n'),
@@ -75,8 +75,81 @@ export class AIFactExtractor implements FactExtractor {
         eventCatalog,
       }),
       parse: value =>
-        ensureTopLevelEvidence(parseSchema(extractedFactsSchema, value, '事实提取结果')),
+        ensureTopLevelEvidence(
+          sanitizeUnconfirmedDeathDeltas(
+            parseSchema(extractedFactsSchema, value, '事实提取结果'),
+            state.entities
+          )
+        ),
     });
-    return ensureTopLevelEvidence(parseSchema(extractedFactsSchema, raw, '事实提取结果'));
+    return ensureTopLevelEvidence(
+      sanitizeUnconfirmedDeathDeltas(parseSchema(extractedFactsSchema, raw, '事实提取结果'), state.entities)
+    );
   }
+}
+
+/** 死亡结果的不可逆完成体信号。判决词/威胁句均不具备，用于二次拒登 */
+const DEATH_RESULT_CUE_RE =
+  /人头落地|(?:头颅|首级)[^。"」』]{0,10}(?:滚落|落地)|气绝|毙命|身亡|丧命|殒命|咽气|断气|尸[体首]|收殓|下葬|暴毙|溺亡/;
+
+/**
+ * 死亡 status delta 的确定性防误报闸口（2026-08-27 双轮回归实证）：
+ * 「替死鬼被判斩立决」「给我杀了主角」这类判词/威胁会被 flash 模型当事实登记，
+ * 主角下一章即被自己的状态摘要判死、评审 fact_conflict 连拒至管线中止。
+ * 规则：value 含「死亡」的 attributes.status 变更，其 evidence（或该角色名
+ * 邻近 ±30 字的顶层 evidence）必须含完成体结果信号，否则整条丢弃。
+ * 下狱/定罪等可逆终态不经此闸，由既有解除机制管理。
+ */
+export function sanitizeUnconfirmedDeathDeltas(
+  facts: ExtractedFacts,
+  entities?: Record<string, { id: string; name: string; aliases?: string[] }>
+): ExtractedFacts {
+  const idToName = new Map<string, string>();
+  const idToAliases = new Map<string, string[]>();
+  if (entities) {
+    for (const entity of Object.values(entities)) {
+      idToName.set(entity.id, entity.name);
+      const aliases = (entity.aliases ?? []).filter(a => a.trim());
+      if (aliases.length) idToAliases.set(entity.id, aliases);
+    }
+  }
+  const topLevel = facts.evidence ?? [];
+  const hasConfirmedResult = (rawEvidence: unknown, entityId: string): boolean => {
+    const own = Array.isArray(rawEvidence)
+      ? String(rawEvidence.join('\n'))
+      : String(rawEvidence ?? '');
+    if (DEATH_RESULT_CUE_RE.test(own)) return true;
+    // 角色在证据里可能以任一别名出现（证据用「严运使」而登记名是「严世宽」）
+    const nameVariants = [
+      ...(idToName.get(entityId) ? [idToName.get(entityId)!] : []),
+      ...(idToAliases.get(entityId) ?? []),
+    ];
+    for (const name of nameVariants) {
+      for (const line of topLevel) {
+        let idx = line.indexOf(name);
+        while (idx >= 0) {
+          if (
+            DEATH_RESULT_CUE_RE.test(line.slice(Math.max(0, idx - 30), idx + name.length + 30))
+          ) {
+            return true;
+          }
+          idx = line.indexOf(name, idx + name.length);
+        }
+      }
+    }
+    return false;
+  };
+  const kept = facts.deltas.filter(delta => {
+    const isDeathStatus =
+      /attributes\.status$/u.test(String(delta.path || '')) &&
+      String((delta as unknown as { value?: unknown }).value ?? '').includes('死亡');
+    if (!isDeathStatus) return true;
+    const entityId = String(delta.path || '').split('.')[1] ?? '';
+    return hasConfirmedResult(
+      (delta as unknown as { evidence?: string | string[] }).evidence,
+      entityId
+    );
+  });
+  if (kept.length === facts.deltas.length) return facts;
+  return { ...facts, deltas: kept };
 }

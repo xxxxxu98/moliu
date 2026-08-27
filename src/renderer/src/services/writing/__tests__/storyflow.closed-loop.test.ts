@@ -51,13 +51,14 @@ const {
 } = resolveStoryflowArtifactPaths();
 
 /**
- * 测试总超时：默认按章数动态预算 = 章数 × 1.5 分钟 + 50 分钟固定开销（大纲生成 +
- * 滚动续纲 + 读者影子评审 ~0.5 分钟/章已含在 1.5 里，50 分钟兜大纲与评审基础耗时）。
- * 依据 2026-08-24 反重力 gemini3.7-flash 100 章实测：写作 150min + 评审 50min，
- * 旧固定 120min 默认在 67/100 章处被杀。MOLIU_TEST_TIMEOUT_MIN 显式设置仍最高优先。
+ * 测试总超时：默认按章数动态预算 = 章数 × 2 分钟 + 60 分钟固定开销（大纲生成 +
+ * 滚动续纲 + 读者影子评审 ~0.5 分钟/章已含在 2 里，60 分钟兜大纲与评审基础耗时）。
+ * 2026-08-27 反重力 gemini3.7-flash-high 100 章实测：99 章写作+评审 199min 压线
+ * 旧 1.5x+50=200min 预算被杀（修复迭代后章内评审轮次变重）。MOLIU_TEST_TIMEOUT_MIN
+ * 显式设置仍最高优先。
  */
 const chapterCountForBudget = envInt('MOLIU_CHAPTER_COUNT', DEFAULT_STORYFLOW_CHAPTER_COUNT);
-const DEFAULT_TIMEOUT_MIN = Math.ceil(chapterCountForBudget * 1.5) + 50;
+const DEFAULT_TIMEOUT_MIN = Math.ceil(chapterCountForBudget * 2) + 60;
 const TEST_TIMEOUT_MS = envInt('MOLIU_TEST_TIMEOUT_MIN', DEFAULT_TIMEOUT_MIN) * 60_000;
 
 function envInt(name: string, fallback: number): number {

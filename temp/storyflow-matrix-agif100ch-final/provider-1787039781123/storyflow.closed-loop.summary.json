@@ -1,0 +1,1490 @@
+{
+  "book": "大乾算账人：社畜的明规与暗局",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": null,
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "default",
+  "promptChars": 34,
+  "requestedChapterCount": 100,
+  "phaseTimings": {
+    "outlineDirectionsMs": 24059,
+    "outlineExpandMs": 277933,
+    "outlineRollMs": 174177,
+    "applyOutlineMs": 711,
+    "continueWriteMs": 2483524,
+    "totalMs": 2960404
+  },
+  "completedChapters": 24,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 穿成替罪羊？账本砸脸限期三日",
+      "words": 2715,
+      "paras": 13,
+      "paraCv": 0.13,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：13 段平均 207 字、变异系数 0.13，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "两条粗布裤管在冰冷的青石地砖上拖出长长的暗红色擦痕，两名精壮差役一前一后，正把一具瘫软的尸体从案牍库门槛上架出去。那死者的脑袋无力地垂在胸前，右手五指扭曲变形，指甲缝里还嵌着未干的黑红血泥，显然死前受尽了严酷折磨。一滴浓稠的朱砂墨从悬空的紫",
+      "tail": "这三日内你若是敢耍半点花招，孙瘸子在乱葬岗上的位子，可就留给你了。”长毫笔尖上的朱砂在拉扯间不偏不倚抹在陆行舟洗得发白的官服袖口上，宛如一道猩红刺目的索命符咒。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 四脚账坑人？老子闭眼都能挑错",
+      "words": 2988,
+      "paras": 22,
+      "paraCv": 0.32,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "赵德海威胁的余音还在空旷的值房内回荡，那扇本就虚掩的厚重榆木门猛地被人从外面撞开。深秋的穿堂风卷着一股子陈年纸浆的霉味呼啸而入，门轴发出刺耳的嘎吱呻吟，三名身着灰绿暗纹官袍的年长算手在赵德海身后依次排开，脸上挂着看好戏的讥讽笑意。这几人都是",
+      "tail": "达十万两的巨额资金，通过伪造三边战损与承兑引票，在短短三个月内被有预谋地集中抽调搬空。十万两假账的最底层脉络，终于在墨迹淋漓的借贷平衡表上露出了致命的血腥獠牙。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 当堂三平法！算崩司库多年假账",
+      "words": 2686,
+      "paras": 28,
+      "paraCv": 0.35,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆行舟将最后一张裁切规整的硬黄宣纸在案头压平，指尖上沾着浓黑未干的松烟墨。整整三日三夜，他未曾合过一次眼，布满血丝的眼眶深陷，但那双眸子却比案头的烛火还要明亮摄人。桌案之上，原本杂乱无章的几十捆三边流水底册被重新归类，取而代之的是三张密密麻",
+      "tail": "喀嚓一声脆响，坚硬的青瓷茶盏在他掌心硬生生被捏得四分五裂。滚烫的茶汤混合着碎瓷片刺破手掌，殷红的血水顺着掌纹蜿蜒滴落，在铺满绿色毡布的公案上洇开一片刺目的腥红。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 倒查平账漏洞！周侍郎当场变脸",
+      "words": 2543,
+      "paras": 23,
+      "paraCv": 0.44,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "公案上的碎瓷片散落一地，温热的茶汤混着暗红的血水顺着绿毡滴答落地。公堂内外鸦雀无声，差役们握着水火棍僵在原地，三名资深老算手瘫坐在青砖上，连大气都不敢喘。赵德海整条右臂剧烈哆嗦，掌心的刺痛远不及心中的惊骇，他死死盯着那三张摊开的试算平衡表，",
+      "tail": "边颤动的朱漆令签，整个人彻底瘫软在血泊与碎瓷之间，面如死灰。陆行舟静静立在公堂正中，目光越过伏地求饶的司库官，冷冷投向了度支司后方那两扇挂满铜锁的机密重库大门。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 暗格夹层！丰备仓提货单惊现",
+      "words": 3099,
+      "paras": 18,
+      "paraCv": 0.27,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆行舟没有在公堂前多作停留，他甚至没有低头去看脚边那支颤动的漆金朱令签，而是径直跨过满地的碎瓷与茶汤，迈步走向度支司后方的那两扇机密重库大门。公堂内静得可怕，瘫软在地的赵德海面如死灰，整个人像是被抽去了脊梁骨。两名差役在周景春冰冷的注视下，",
+      "tail": "制的朱砂银朱，历经数年光阴依然鲜红夺目，在晨光的斜照下散发着森然的光泽。残印正中刻着两行铁画银钩的篆字，上方赫然写着：通州丰备仓支拨正项漕粮，钦差督运承兑凭券！",
+      "error": null
+    },
+    {
+      "ch": 6,
+      "accepted": true,
+      "title": "第6章 抱团孤立我？工时分工碾压算房",
+      "words": 3449,
+      "paras": 22,
+      "paraCv": 0.16,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "晨光照入公堂，通州丰备仓的朱红大印在残页上分外刺眼。虽历经数年，残纸边缘带着封蜡焦痕，但两行篆字关防依然森冷清晰。周景春快步上前拾起残纸，狭长的眸子里寒意凛冽。他执掌户部多年，深知这张承兑凭券背后牵扯着何等惊涛骇浪。公案两侧整齐码放着三十只",
+      "tail": "声，三声震耳云板穿透长空，重甲卫士脚步轰鸣。差役连滚带爬冲进大堂，变调喊道：“侍郎大人！三法司御史大轿已过户部仪门，刑部、大理寺与都察院的会审队伍，到门外了！”",
+      "error": null
+    },
+    {
+      "ch": 7,
+      "accepted": true,
+      "title": "第7章 三年柴薪流水！战马一天烧两石炭",
+      "words": 3295,
+      "paras": 31,
+      "paraCv": 0.3,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "度支司公堂仪门之外，急促浑厚的开道铜锣声震得屋檐瓦片微微发颤。刑部、大理寺与都察院三法司会审的仪仗队伍已经停在照壁之前，沉重的甲叶撞击声与官差的喝道声交织在一起，由远及近，带着山雨欲来的森严压迫。\n\n周景春按在公案边缘的手指微微收紧，狭长的",
+      "tail": "库拿着通融飞签直接支取的，下官连一两炭灰都没见着啊！”\n\n公堂之外的仪门台阶上，三法司刑部侍郎与都察院御史的皂靴脚步声已然沉沉踏落，冰冷的肃杀之气瞬间压向门槛。",
+      "error": null
+    },
+    {
+      "ch": 8,
+      "accepted": true,
+      "title": "第8章 银号暗查！女掌柜撞破假官票",
+      "words": 3416,
+      "paras": 26,
+      "paraCv": 0.28,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "度支司大堂前的肃杀之气在铁证面前迅速化解，三法司刑部与都察院的官差在周景春的雷霆手腕下，将面如死灰的赵德海直接锁入精铁囚车。矮胖算吏的供词与满案荒唐的柴薪账目成了钉死假账的铁证。然而那笔经由通融飞签套现的十万两白银，最终流向却直指正阳门外的",
+      "tail": "竟然赫然叠印着通州丰备仓的绝密防伪花押。而在三张兑票的背书流转栏内，每一笔流经顺天府地下钱庄的银两批注旁，都赫然用朱笔写着一个极其刺眼的暗记代号：内库折色拨引！",
+      "error": null
+    },
+    {
+      "ch": 9,
+      "accepted": true,
+      "title": "第9章 内鬼现形！柴薪账房意图纵火",
+      "words": 3075,
+      "paras": 35,
+      "paraCv": 0.43,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆行舟指尖轻压在微凉的茶案边缘，目光停留在三张被墨迹精心涂改过的泛黄兑票上。暗室之内檀香袅袅，摇曳的烛光照亮了票面右下角叠印的通州丰备仓绝密花押，以及背书流转栏内那行刺目的朱笔暗记。\n\n苏清竹退后半步立在黄花梨书架旁，清丽的面容在灯影下显得",
+      "tail": "喉两侧。另外两名精壮汉子合力上前，铁钳般的大手反扭住算吏的双臂，将他整个人死死按在散落着浓烈火油与厚重纸页的账册堆中，任凭他如何疯狂挣扎咆哮，也无法再动弹分毫。",
+      "error": null
+    },
+    {
+      "ch": 10,
+      "accepted": true,
+      "title": "第10章 连夜审讯！临死招出惊天黑幕",
+      "words": 2902,
+      "paras": 30,
+      "paraCv": 0.33,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "两名精壮差役反剪着算吏的手臂，像拖死狗一般将他硬生生拽进了度支司正堂后侧的阴暗值房。长案上的油灯被穿堂风吹得剧烈摇晃，在斑驳的青砖墙壁上投下狰狞扭曲的暗影。差役抬腿狠狠踹在算吏的膝弯处，伴随着骨骼撞击青砖的脆响，算吏整个人扑倒在冰冷的地面上",
+      "tail": "烛爆出一声清脆的灯花爆响。周景春面如死灰地瘫坐在太师椅上，双手不可抑制地颤抖着；而陆行舟低头看着袖口上那片尚未凝固的暗黑血迹，眼底深处翻涌起前所未有的惊涛骇浪。",
+      "error": null
+    },
+    {
+      "ch": 11,
+      "accepted": true,
+      "title": "第11章 连升两级直接掌管算房",
+      "words": 3118,
+      "paras": 33,
+      "paraCv": 0.49,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "冰冷的青砖地上血迹尚未彻底干涸，差役用厚重的草席将死透的算吏尸身紧紧裹起，踩着沉重的脚步声从后角门抬了出去。浓烈的血腥气与残存的火油味在阴暗的值房内久久不散，晨光穿透斑驳的雕花窗棂，在弥漫的尘埃中投下几道惨白冰冷的光柱。陆行舟抬手用浸了清水",
+      "tail": "纸缝间，猛然掠过数道鬼魅般迅疾利落的黑色人影。\n\n紧接着，一股浓稠刺鼻、令人作呕的猛火油腥味，顺着雕花窗棂的缝隙疯狂倒灌而入，在死寂冰冷的库房深处迅速蔓延开来。",
+      "error": null
+    },
+    {
+      "ch": 12,
+      "accepted": true,
+      "title": "第12章 锦衣卫破门抓现行",
+      "words": 3414,
+      "paras": 33,
+      "paraCv": 0.34,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "猛火油那股混杂着松脂与硫磺的浓烈恶臭，像无孔不入的毒瘴，顺着案牍库雕花窗棂的缝隙疯狂倒灌而入。陆行舟脊背骤然绷紧，悬在半空的狼毫笔微微一顿，一滴饱蘸的朱砂重重滴落在新编制的复式分录底稿上，宛如一滩刺目的新鲜血渍。今夜轮值巡夜的差役不知所踪，",
+      "tail": "染血残页。沈炼盯着刀尖上那枚在昏暗油灯下泛着森冷金光的蟠螭暗记，握刀的五指因极度用力而骨节发白，而陆行舟凝视着那方微小的铜片，眼底深处翻涌起前所未有的冷冽波澜。",
+      "error": null
+    },
+    {
+      "ch": 13,
+      "accepted": true,
+      "title": "第13章 新算具降维碾压老油条",
+      "words": 2921,
+      "paras": 25,
+      "paraCv": 0.12,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "沈炼将刻有蟠螭暗记的精铜薄片包入内衬暗袋，领着校尉悄然隐入阴影。晨钟悠悠敲响，惊碎了度支司衙门的残夜。陆行舟换上一身从八品青色官袍，腰间佩着周景春特赐的青铜令牌，手提一叠连夜裁切规整的硬皮网格纸，穿过青石长廊，径直走向西侧大算房。\n\n大算房",
+      "tail": "现银，就这么借着漫天飞舞的柴薪灰烬，在户部的糊涂账里被烧得干干净净。陆行舟握着朱笔的指节泛起冷硬青白，油灯将他的身影斜斜拉长，倒映在那行触目惊心的赤红数字之上。",
+      "error": null
+    },
+    {
+      "ch": 14,
+      "accepted": true,
+      "title": "第14章 户部账面上根本没银子",
+      "words": 3032,
+      "paras": 26,
+      "paraCv": 0.18,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "粉壁上的朱红数字在火光照耀下分外刺目，满堂年轻书吏屏息肃立，整间大算房内死寂无声。周景春死死盯着那十一万八千两的巨额亏空，额角青筋跳动，面色青白交替。他强压着没有当场发作，铁青着脸挥退了所有算吏，随后一把扣住陆行舟的手腕，将他径直拽进了公堂",
+      "tail": "平账草册呈递上去。胸口处那张带着内库朱批拓印的薄纸隔着衣衫传来微凉的触感，户部这本掩盖了十几年的国库烂账，其最致命的命门与底牌，已然被他悄无声息地彻底拓印在怀。",
+      "error": null
+    },
+    {
+      "ch": 15,
+      "accepted": true,
+      "title": "第15章 首辅朱批四字惊艳内阁",
+      "words": 2932,
+      "paras": 25,
+      "paraCv": 0.37,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "值房书吏将一叠刚由通政司转呈的户部卷宗，轻手轻脚地搁在紫檀雕花大案的右侧角。皇城文渊阁内静得只能听见铜漏滴水的清脆声响，空气中浮动着陈年古墨与沉香混合的幽冷气息。当朝首辅徐阶微阖双目，手边的青花盖碗散着淡淡的苦丁茶香，桌案上整齐堆叠着六部递",
+      "tail": "粉末，凑近鼻端略一辨识，指尖微微收紧，纸页在掌中发出细微的脆响。\n\n原本应当记录着数十万石战马草料收发流水的边关底册，字里行间竟然浸透了军工火药独有的硫磺气息。",
+      "error": null
+    },
+    {
+      "ch": 16,
+      "accepted": true,
+      "title": "第16章 战马吞豆超标整整三倍",
+      "words": 3040,
+      "paras": 29,
+      "paraCv": 0.28,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆行舟指尖轻捻，将账册封皮边缘那抹暗黄色的硫磺粉末弹入火盆。青白色的火苗骤然窜起半寸，爆出一星微弱的脆响。他没有片刻停顿，伸手扣住泛黄的书脊，将这本自塞外加急递解入京的《三边骑兵粮秣草料底册》平摊在紫檀大案正中。\n\n大算房内几盏羊角风灯高高",
+      "tail": "身家性命，更是京畿深处那座庞然大物的命脉。既然账目已经捂不住，那唯一能让这笔烂账永远闭嘴的办法，便只有让算账的人彻底消失。黑夜之中，死士与杀招已在暗处无声布下。",
+      "error": null
+    },
+    {
+      "ch": 17,
+      "accepted": true,
+      "title": "第17章 引蛇出洞反设空城计",
+      "words": 3055,
+      "paras": 29,
+      "paraCv": 0.19,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "赵德海狼狈退走的脚步声在廊下散尽，大算房内依然凝重如铁。几名年轻书吏垂手立在桌案旁，连呼吸都不敢放重。方才陆行舟那一番连珠炮般的数据推演与太祖律令剖析，不仅彻底碾碎了赵德海的狡辩，更将整间屋子的人震得心神发颤。\n\n周景春抹了把额角虚汗，快步",
+      "tail": "实权权贵方能持有的通天信物。死士身上的杀机已被生生掐灭，但这枚冰冷的黑铁腰牌，却将四十二万两草料银与硫磺火药的真正源头，无可辩驳地指向了那座深不可测的通州巨仓。",
+      "error": null
+    },
+    {
+      "ch": 18,
+      "accepted": true,
+      "title": "第18章 审死士咬出偷天换日账",
+      "words": 3099,
+      "paras": 15,
+      "paraCv": 0.13,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/15，超过 5 句的段 4。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        },
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：15 段平均 205 字、变异系数 0.13，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "皮鞭撕裂空气的厉响在诏狱石室中炸开，浸透浓盐水的生牛皮鞭裹着刺鼻腥气，狠狠抽在铜柱死士的胸膛上。皮开肉绽的闷响回荡不休，暗红的血水混着盐水飞溅在青石板上，激起一阵皮肉焦灼般的青白微烟。纵火死士仰头发出野兽濒死般的低吼，额角青筋暴起，牙缝间渗",
+      "tail": "批巨额票据在柜台被兑成死无对证的散碎现银，这条刚刚咬出的夺命黑线便会被当场斩断，而即将面临三法司御前会审的户部度支司，也将彻底失去揪出幕后黑手最关键的资金铁证。",
+      "error": null
+    },
+    {
+      "ch": 19,
+      "accepted": true,
+      "title": "第19章 顺藤摸瓜！五万草料银全被洗白",
+      "words": 2600,
+      "paras": 26,
+      "paraCv": 0.38,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "晨钟尚未撞响，正阳门外的棋盘街已泛起一层灰蒙蒙的青白晨雾。沈炼率领的北镇抚司缇骑如同铁铸的阴影，在各大钱庄门板尚未卸下前便已破门而入。同泰银号的几名老账房紧随其后，以雷霆之势将柜台账房内所有的存根、引票与汇兑存根全数查扣封存。厚厚几大箱刚从",
+      "tail": "烙印着皇城深处那座不容任何人染指的内廷私库印信。晨风穿过回廊拍打着窗棂，整座大堂内的空气如同坠入冰窟，浓烈得化不开的凶险死局，在这一枚赤红的密印前无声蔓延开来。",
+      "error": null
+    },
+    {
+      "ch": 20,
+      "accepted": true,
+      "title": "第20章 借调密册直指皇城内库",
+      "words": 2890,
+      "paras": 31,
+      "paraCv": 0.37,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "大堂内烛火摇晃，映在周景春惨白的面孔上，整间屋子静得只剩下炭盆里偶尔爆开的炭星声。陆行舟面色沉稳，伸手从酸枝木案头的紫檀匣里取出一柄三寸长的小巧银镊。银镊通体泛着雪亮的冷光，镊尖打磨得比绣花针还要纤细。\n\n周景春双手死死按着公案边缘，两条膝",
+      "tail": "。夹层中的借调暗号已然揭开通天巨案的咽喉要害，然而当这柄由复式铁账淬炼出的利刃真正刺向太府寺与深宫内库时，即将掀起的滔天狂澜，已然在大乾朝堂的黎明前夕无声汇聚。",
+      "error": null
+    },
+    {
+      "ch": 21,
+      "accepted": true,
+      "title": "第21章 三账合一，一张报表压垮司库",
+      "words": 3081,
+      "paras": 19,
+      "paraCv": 0.27,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "晨雾尚未散尽，户部度支司值房厚重的雕花木门被一股蛮力粗暴推开。赵德海一身青绸官袍褶皱不堪，眼角布满猩红的血丝，满身夹杂着彻夜未眠的戾气与焦躁。他大步跨入屋内，反手抓起一把浸透了浓黑墨汁的铁框大算盘，狠狠砸在长条公案正中。沉重的撞击声震得案头",
+      "tail": "将面如死灰的罪官提离地面。陆行舟从容躬身向徐阶行了一礼，声音平静而坚定：“阁老过誉，风控大表虽已定乾坤，但午后三法司堂审在即，真正的狂风骤雨，此刻才刚刚开始。”",
+      "error": null
+    },
+    {
+      "ch": 22,
+      "accepted": true,
+      "title": "第22章 锦衣夜入，腰牌暗纹扯出江南",
+      "words": 3189,
+      "paras": 25,
+      "paraCv": 0.33,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "漆黑沉重的黑铁绣春刀鞘啪的一声重重压在泛黄的卷宗正中。沈炼立在案牍库幽暗的烛台下，目光如鹰隼般扫视四周，森然的寒意掠过每一处高耸的书架与回廊阴影。度支司案牍库深处弥漫着陈年纸浆与防蛀芸草的苦涩气味，数名身着飞鱼服的北镇抚司缇骑手按佩刀，严密",
+      "tail": "沈炼按住腰间绣春刀柄，抬起右手压低帽檐，朝案牍库通往后巷的隐秘铁门侧身示意，低沉的话音在阴暗的库房内回荡：“马匹与通关文牒已在正阳门外备齐，陆主事，即刻启程。”",
+      "error": null
+    },
+    {
+      "ch": 23,
+      "accepted": true,
+      "title": "第23章 夜入文渊阁！一张风控表惊呆首辅",
+      "words": 3283,
+      "paras": 28,
+      "paraCv": 0.41,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "沈炼按住腰间绣春刀的鲨皮刀柄，右臂沉稳发力，缓缓推开了文渊阁西侧那扇厚重的铁力木密门。门轴在阴暗的夹道内发出一声轻微的低鸣，文华殿后方的重重宫阙在夜色中肃穆沉寂，密室内的烛火被门缝漏入的微风牵引，光影微微摇曳起来。\n\n当朝首辅徐阶一袭半旧的",
+      "tail": "微风中摇曳不定，将三人的影子长长拉在文渊阁巍峨森严的朱红宫墙之上，而正阳门外的苍茫夜色里，一场席卷京畿与江南万宝金山的狂澜，已然在这无声的重击下轰然拉开了序幕。",
+      "error": null
+    },
+    {
+      "ch": 24,
+      "accepted": false,
+      "title": "第24章 缇骑出京！算定仓官必杀人灭口",
+      "words": 0,
+      "paras": 0,
+      "paraCv": 0,
+      "attempts": 5,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "",
+      "tail": "",
+      "error": "语义问题[fact_conflict] 正文开头及全篇: 状态摘要中陆行舟的当前生命状态为“死亡”，但正文中陆行舟正常活动、对话并主导查案，存在跨章存在性矛盾。"
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 穿成替罪羊？账本砸脸限期三日"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 四脚账坑人？老子闭眼都能挑错"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 当堂三平法！算崩司库多年假账"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 倒查平账漏洞！周侍郎当场变脸"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 暗格夹层！丰备仓提货单惊现"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 抱团孤立我？工时分工碾压算房"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 三年柴薪流水！战马一天烧两石炭"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 银号暗查！女掌柜撞破假官票"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 内鬼现形！柴薪账房意图纵火"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 连夜审讯！临死招出惊天黑幕"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787830013821",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-yt1gMU\\story-runtime\\proj-1787830013821-ab8cae2f3bc1.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 23,
+    "canonicalSnapshots": 24,
+    "latestSnapshotChapter": 23,
+    "sceneChunks": 23,
+    "events": 96
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 14,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "e7ce79be4e84f057cb64206c495a830ada3ba094a98e1ca253d24ed8cd652999",
+    "completeCharacterProfileCount": 14,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 14,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 100,
+    "writtenChapterCount": 23
+  },
+  "outlineWarnings": [
+    "大纲存在 2 个未登记角色（三皇子、大皇子），执行第 1 轮补登记",
+    "未登记角色已补登记 2/2 个",
+    "未登记地点已补登记 1/1 个"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 24,
+    "firstPassRate": 1,
+    "rewrittenChapters": 0,
+    "totalRewriteRounds": 0,
+    "averageRewriteRounds": 0,
+    "pipelineAttempts": 28
+  },
+  "runtimeMetrics": {
+    "requestCount": 75,
+    "requestCountsByPurpose": {
+      "scene-draft": 29,
+      "fact-extraction": 23,
+      "chapter-judge": 23
+    },
+    "latencyP50Ms": 14872,
+    "latencyP95Ms": 63829,
+    "latencyMaxMs": 75384
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "explicit"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 88.9,
+      "wouldStartReading": true,
+      "confidence": 0.95,
+      "dimensions": {
+        "openingAttraction": 91,
+        "coreSellingPoint": 93,
+        "protagonistDrive": 88,
+        "conflictEscalation": 87,
+        "payoffPlanning": 86,
+        "characterRelations": 82,
+        "suspensePlanning": 89,
+        "audienceFit": 94
+      },
+      "issues": [
+        {
+          "id": "reader.character-1",
+          "severity": "medium",
+          "category": "character",
+          "location": "全文",
+          "description": "在 keyCharacters 人物配置中，三皇子同时以‘李景隆’与‘三皇子’两个独立条目出现，大皇子亦同时以‘李景煊’与‘大皇子’两个独立条目出现。两组重复条目在人设背景和阶段弧光上有高度重叠，易在后续正文生成或设定检索时导致命名、关系链引用冲突。",
+          "evidence": [
+            "\"name\":\"李景隆\",\"role\":\"antagonist\" 与 \"name\":\"三皇子\",\"role\":\"antagonist\"；\"name\":\"李景煊\",\"role\":\"support\" 与 \"name\":\"大皇子\",\"role\":\"support\""
+          ],
+          "suggestion": "合并重复角色条目，统一规范为主名（如‘李景隆（三皇子）’、‘李景煊（大皇子）’），并整合其隐藏需求与人物关系。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.pacing-2",
+          "severity": "medium",
+          "category": "pacing",
+          "location": "全文",
+          "description": "第一卷卷纲设定的章节区间为1-60章，其核心高潮为御前会审反杀；但在前50章细纲蓝图中，第46-50章已密集完成三法司御前开审、算崩侍郎、皇帝破格擢升以及密旨钦差下两淮的全套收尾事件。第51-60章缺少明确的细化承接，容易导致从第50章接旨到第61章开启第二卷江南地图之间出现节奏塌陷或10章水文。",
+          "evidence": [
+            "第一卷设定为 \"chapterRange\":{\"start\":1,\"end\":60}，而第50章已完成第一卷终局事件 \"CPNs\":[\"皇帝下旨擢升陆行舟为正六品御前行走兼度支司主事\",\"徐阶与内阁群臣领旨赞同\",\"陆行舟在暖阁接领查办两淮盐运使司衙门密旨\"]，第二卷直接从第61章开启 \"chapterRange\":{\"start\":61,\"end\":120}。"
+          ],
+          "suggestion": "建议将第51-60章明确定义为‘京师离京筹备、组建清吏司独立审计班底、江南反派布防与首轮刺杀拦截’的过渡蓄势期；或直接将第一卷缩减调整为50章，让第二卷从51章正式下江南展开。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-3",
+          "severity": "low",
+          "category": "other",
+          "location": "全文",
+          "description": "在 locations 列表中收录了名为‘达全国银号休市’的地点，且标注为 city 级别，显系从第三卷决战关键事件‘下达全国银号休市令’中误分词提取生成的异常条目。",
+          "evidence": [
+            "\"name\":\"达全国银号休市\",\"level\":\"city\",\"functionInStory\":\"卷纲与章节蓝图引用的地点，补登记入表。\""
+          ],
+          "suggestion": "删除该异常地点条目，将全国银号联动归入金融商业规则或势力网络。",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "这是一份高度契合‘历史权谋+专业硬核降维打击’定位的优秀大纲。黄金三章开局危机极度紧迫（染血账本、前任横死、限期平账），以现代试算平衡法秒破假账的落地爽感明确扎实；专业查账手段（如战马草料代谢上限推算吃空饷、粮仓容积与地基沉降反推暗室、码头苦力工钱簿反算私盐运力）逻辑严丝合缝，避免了同类文常见的降智打脸缺陷。主角从自保小吏到执掌国家预算第一财相的升级弧光清晰，伏笔回收与宏观夺嫡冲突结合紧密。仅需在正式动笔前清理角色与地点表的个别冗余脏数据，并明确第51-60章从京师到江南的过渡节奏即可顺利开书。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 86.7,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 92,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 80,
+          "pacing": 88,
+          "endingPull": 86
+        },
+        "issues": [],
+        "summary": "开篇极具张力与画面感，以拖尸、血痕与朱墨切入，迅速建立起‘拒不平账即死、签了画押也是死’的生死死局。主角前世资深审计经理的专业人设与九品算手的底层处境结合紧密，面对反派逼迫，主角没有无脑硬顶，而是顺水推舟索要原始底册并瞬间侦破‘双向虚列、印泥重影’的作假手法，微解谜与智斗爽感兑现迅速。三日期限与索命朱笔的章尾意象将追读期待拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 89.4,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 89,
+          "characterVoice": 88,
+          "payoffValue": 90,
+          "pacing": 89,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "上一章结尾赵德海刚给出三日期限并递交朱笔，本章开篇三名老算手立刻撞门而入拿出已拟好的平账公文逼迫画押，前后施压的动作逻辑衔接稍显紧密重叠，但属于合理的职场围剿施压，不影响核心阅读流畅度。",
+            "evidence": [
+              "“赵德海威胁的余音还在空旷的值房内回荡，那扇本就虚掩的厚重榆木门猛地被人从外面撞开……三名身着灰绿暗纹官袍的年长算手在赵德海身后依次排开”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏明快紧凑，精准击中了历史官场与硬核账目智斗的核心卖点。开篇迅速承接上章危机并加码冲突，主角面对三名老油条的逼迫画押，利用跨卫所、跨年度的勾稽漏洞进行专业降维反驳，既打脸了反派，又合理地逼迫赵德海交出近三年的全部底册。后半段引入现代复式记账法进行穿透审计，在深夜算盘声中锁定十万两亏空的集中抽调真相，微兑现与解谜推进感极强，章尾钩子有力，期待感充沛。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 92.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 92,
+          "openingHook": 89,
+          "conflictEffectiveness": 94,
+          "emotionalDrive": 92,
+          "characterVoice": 90,
+          "payoffValue": 95,
+          "pacing": 92,
+          "endingPull": 91
+        },
+        "issues": [],
+        "summary": "本章高水准兑现了上一章铺垫的查账悬念。主角利用‘当堂三平法’（复式记账法）对古代单式四脚账实施降维打击，将跨地域、跨年度的十万两洗钱脉络当堂拆解得明明白白，反杀逼得老账房摔算盘、司库赵德海失态惊怒。专业度与爽点结合紧密，节奏紧凑凌厉，章尾危机升级，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 89.6,
+        "continueReading": true,
+        "confidence": 0.93,
+        "dimensions": {
+          "readability": 84,
+          "openingHook": 88,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 90,
+          "characterVoice": 90,
+          "payoffValue": 93,
+          "pacing": 91,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "人物出场状态与上一章末尾存在明显的前后衔接矛盾。上章末尾周景春作为公堂杂役/随从在堂前‘捧着印泥匣’，本章开篇却变为‘屏风后暗中督阵的正三品侍郎’，且赵德海此前对此浑然不知。",
+            "evidence": [
+              "上一章结尾：‘周景春站在后方，呼吸急促，捧着印泥匣的手臂剧烈颤抖起来。’ vs 本章正文：‘屏风后暗中督阵... 赵德海更是吓得魂飞魄散... 颤声道：下官不知侍郎大人在此’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章是开篇首个核心破局高潮的完美兑现。主角不仅凭借现代审计逻辑击碎假账，更精准切中官场生存痛点——抓住‘通融飞签’对上位者的致命威胁，化被动受审为主动递送‘救命稻草’，智斗逻辑极度硬核且符合官场生态。反派赵德海当场倒台、主角夺得掌印之权与开库令签，爽点释放干脆利落。除上章章尾关于周景春身份动作的微小衔接硬伤外，全章节奏紧凑、张力拉满，午后三法司复核的时间倒计时为后续追读提供了极强的牵引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 87.9,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 88,
+          "payoffValue": 88,
+          "pacing": 88,
+          "endingPull": 90
+        },
+        "issues": [],
+        "summary": "本章承接上文雷厉风行，将现代审计中的'穿透式实物核验与痕迹检验'与古代官场查账巧妙融合。通过纸张克重、装订针脚、硬木封皮厚度异常等物理细节层层剥茧，不仅极具硬核专业质感，更让破案过程充满沉浸感。暗格起获通州丰备仓提货单与钦差官印的收尾，精准实现了危机升级与悬念拉满，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 6,
+        "score": 88.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 87,
+          "characterVoice": 85,
+          "payoffValue": 90,
+          "pacing": 88,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "在两个时辰内仅靠6名识字小吏毛笔抄录与8名算童加总处理近九万笔原始流水，物理速度上略带网文式的夸张放大。",
+            "evidence": [
+              "两百余册厚重的流水底账，记录着景和十六年至十八年宣府、大同、蓟州三大防区七十余处仓隘的钱粮往来，九万余笔细目堆积如山"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章残页线索，以'两个时辰清查三十箱底账'的极限倒计时与'老算手抱团罢工'的职场垄断构建了坚实的双重危机。主角利用工业化流水线工时分工与穿透式抽样审计进行降维打击，将原本复杂的账房秘术拆解为基础动作，彻底粉碎老吏阶层的技术封锁，专业反杀与职场整肃爽感十足。章末三法司御史大轿临门，精准卡在高潮将启的节点，追读张力饱满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 7,
+        "score": 89.7,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 90,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 91,
+          "characterVoice": 87,
+          "payoffValue": 90,
+          "pacing": 92,
+          "endingPull": 91
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "核心算账推论存在基础算术错误：三年虚报的56万石白炭分摊到2.8万匹马身上，三年冬季共计约270天，平均每匹马每日分摊约0.074石（约9斤）；即便将56万石全算作单年冬日90天，每匹马每日也仅约0.22石（约26.4斤），与主角断言的'每天整整两石（240斤）'存在数量级偏差。对主打硬核账目智斗的目标读者而言，核心反杀论据的计算纰漏会削弱严密感。",
+            "evidence": [
+              "三镇常驻战马共计两万八千匹。将这凭空多出来的五十六万石无烟特等白炭，平摊到这两万八千匹战马头上。刨去春夏秋三季无需生火取暖，单算冬日塞外结冰的这三个月，平均每一匹战马每天要烧掉整整两石上等西山白炭！"
+            ],
+            "suggestion": "建议调整虚报的总石数基数（如虚报五百余万石），或修正主角台词中的具体日均数字与换算口径，确保硬核专业风控人设与算术逻辑严丝合缝。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章三法司兵临城下的危机，节奏极度紧凑。主角陆行舟另辟蹊径从杂项柴薪入手，利用物理规律、实物消耗模型与物流数据三重绞杀对手，‘战马一天烧两石炭变炼丹炉’的比喻辛辣生动，官场反杀爽感十足。章尾下属崩溃招认与三法司踩入门槛无缝衔接，追读张力极强。唯一瑕疵在于核心算式中的数字与结论存在换算漏洞，微调后硬核智斗感将更为扎实。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 8,
+        "score": 86.5,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 84,
+          "characterVoice": 86,
+          "payoffValue": 86,
+          "pacing": 87,
+          "endingPull": 88
+        },
+        "issues": [],
+        "summary": "承接上章度支司大堂对质后的余波，剧情迅速转向追查十万两军饷的民间洗钱终端。银号现场的突发冲突紧凑且具张力，主角陆行舟运用纸张折痕、平水火耗倒挂与熔铸批号等专业审计知识多维度降维破局，爽点扎实且符合硬核官场权谋定位。女掌柜苏清竹形象立得住，章尾引出“内库折色拨引”与通州丰备仓暗记，成功将线索引向更高层级的内廷博弈，追读钩子强劲。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 9,
+        "score": 85.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 84,
+          "characterVoice": 83,
+          "payoffValue": 85,
+          "pacing": 87,
+          "endingPull": 81
+        },
+        "issues": [
+          {
+            "id": "reader.payoff-1",
+            "severity": "low",
+            "category": "payoff",
+            "location": "全文",
+            "description": "章节标题强调‘内鬼现形’，但实际潜入纵火并被当场捕获的凶手仅被描述为‘跟随赵德海经手杂项核销的资深算吏’，缺乏具体姓名与前期伏笔对应，使得抓出内鬼的身份震慑感与揭秘爽感略有折损。",
+            "evidence": [
+              "这人正是平日里跟随赵德海经手杂项核销的资深算吏。他眼中闪烁着孤注一掷的狂乱……"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "章尾在扑灭火折、制伏纵火犯的动作高潮处直接截断，防守反击阶段已完成闭环，但尚未抛出针对幕后大内牵连的审讯突破口或新的危机变数，追读推力偏向常规平稳。",
+            "evidence": [
+              "另外两名精壮汉子合力上前，铁钳般的大手反扭住算吏的双臂，将他整个人死死按在散落着浓烈火油与厚重纸页的账册堆中，任凭他如何疯狂挣扎咆哮，也无法再动弹分毫。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文密室线索后迅速转换战场，陆行舟精准预判对手‘销账灭证’的极端手段并联合周侍郎设伏。整章节奏紧凑明快，从夜潜泼油到湿毡隔火、飞脚灭星的抓捕动作戏调度极佳，智斗预判与现场抓赃的爽点兑现利落，成功将度支司的被动防守转化为人赃并获的胜势局。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 10,
+        "score": 88.2,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 86,
+          "characterVoice": 87,
+          "payoffValue": 88,
+          "pacing": 89,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "算吏在重度服毒垂死之际精准吐露多重核心线索并在说出具体藏匿点前咽气，属于较典型的悬疑断章技法，戏剧化设计感较强。",
+            "evidence": [
+              "他将嘴唇贴近陆行舟的耳际，用尽生命中最后一丝游丝般的残力，吐出了最后一段惊悚绝伦的微弱低语：“丰备仓，地下暗渠，水运密闸，银子在。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上章案牍库人赃并获的悬念，以高密度的审讯与倒计时式的服毒冲突切入，节奏紧凑凌厉。主角陆行舟运用扎实的账目专业知识（九八倒挂平水、拆分假票洗钱）与心理攻防迅速击垮嫌犯心防，并抛出‘十万两官银从未出京’的重大剧情反转，不仅兑现了破案解谜的爽感，而且将冲突层级从度支司内部贪腐直接拔高到京畿防务与更高层权谋，章尾抛出的丰备仓地下暗渠线索极具追读吸引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 11,
+        "score": 88.2,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 88,
+          "payoffValue": 88,
+          "pacing": 88,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "反派老吏的密谋台词略带自述罪证的脸谱化功能性，但在随后引入更具威胁的专业刺客与猛火油伏击后，剧情张力得到了快速补强。",
+            "evidence": [
+              "照他这般分工倒腾下去，不出明日午时，丰备仓用漕船洗银子、把军饷截留在京城的二十八笔暗账就得全被拼出来！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接紧凑，履约干脆。主角受命连升两级掌管算房，以现代流水线与内部控制制度（流水复式分工法）强势整肃积年老吏，降维打击的职场爽点与硬核财会特色鲜明；同时无缝衔接外部银号线索推进主线解谜。章尾由老吏小动作直接升级为专业死士夜袭倒灌猛火油，危机感拉满，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 12,
+        "score": 86.2,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 88,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 84,
+          "characterVoice": 83,
+          "payoffValue": 85,
+          "pacing": 86,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "主角在瞬息万变的近战厮杀中，仅凭纸页飘落与气流在数秒内算出'猛火油沉降密度与回风口位置'，带有较强的即兴神探色彩，略显夸张，但符合降维打击爽感定位。",
+            "evidence": [
+              "空气穿堂风正向西北倒吸，猛火油的沉降密度比寻常水汽重三成，真正的火油大库在西北角癸水地道回风口第三个樟木柜底！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章案牍库遇袭的高悬念结尾，节奏紧凑凌厉，动作打斗与智谋破局结合流畅。锦衣卫破门抓现行不仅完成了外部解围，更通过主角对物理气流与火油伪装的敏锐洞察，让主角在武力冲突中依然保持了高智商控场的高光。章尾搜出三皇子府蟠螭铜片，将基层账目反腐迅速拔高至夺嫡权谋主线，局势升级自然且追读钩子强劲。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 13,
+        "score": 89.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 89,
+          "characterVoice": 87,
+          "payoffValue": 92,
+          "pacing": 90,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "陆行舟一人双手同时拨动两架算盘左右开弓且无需看盘速算数十万笔流水，表现手法略带超现实的爽文夸张，在硬核权谋写实基调下稍显戏剧化，但属于网文合理的装逼爽点放大。",
+            "evidence": [
+              "陆行舟端坐案前左右开弓，双手同时拨动两架改良算盘。密集如暴雨的算珠声骤然在大堂内炸响，他十指如幻影般飞速弹拨，口诵归除速算口诀，甚至无需低头看盘"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章执行力极强，完美契合职场社畜与硬核智斗的题材定位。主角以现代复式记账法、标准化制表与流水线分工作业，直接粉碎了算房老吏的技术垄断与消极怠工；随后的当堂打脸与周侍郎背书形成了扎实的微兑现爽感。章末由平账顺理成章穿透出‘柴薪折银十一万八千两’的大案线索，边军冻死惨状与贪官数字游戏形成强烈情绪冲击，追读悬念与反贪动机立得极稳。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 14,
+        "score": 88.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 92,
+          "openingHook": 88,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 86,
+          "characterVoice": 88,
+          "payoffValue": 87,
+          "pacing": 88,
+          "endingPull": 86
+        },
+        "issues": [],
+        "summary": "本章承接上章柴薪亏空悬念，迅速完成格局升级。通过周景春密室交底，将剧情从基层吏治贪腐拓展至'内库吸血国库'的朝廷顶层财政溃烂，权谋厚度显著提升。主角表面恭顺逢迎、暗中构建现代穿透审计模型并在上官眼皮底下极限拓印御批铁证的段落，智斗张力拉满，掌控感与解谜爽点兼备，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 15,
+        "score": 89.7,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 89,
+          "conflictEffectiveness": 91,
+          "emotionalDrive": 89,
+          "characterVoice": 88,
+          "payoffValue": 92,
+          "pacing": 90,
+          "endingPull": 93
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "部分段落对话的引号存在遗漏闭合或缺失前引号的排版瑕疵，影响阅读流畅感。",
+            "evidence": [
+              "乃是度支司一名刚补了从八品算正的年轻后生陆行舟所创。周侍郎见其算法神异，不敢擅自隐匿，特制成初核清册呈请阁老过目。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文的穿透审计成果，通过首辅徐阶视角的开篇审阅，完美兑现了现代复式记账法降维打击封建流水账的专业爽感。“精微严密”四字朱批使主角迅速斩获最高层权力背书，局势完成从被动自保到奉旨深查的质变。章尾沈炼截获底册，引出草料账目暗藏军工火药硫磺的惊人黑幕，悬念钩子极具张力，节奏沉稳老练。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 16,
+        "score": 86.3,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 84,
+          "payoffValue": 88,
+          "pacing": 85,
+          "endingPull": 84
+        },
+        "issues": [],
+        "summary": "本章承接上章火药硫磺味线索，以硬核严密的审计逻辑完成了一次极具爽感的降维打击。战马日吞二十斤黑豆的生理悖论、太祖祖制损耗率与通州漕运运力上限的多维印证，层层剥离出四十二万两私库黑金的真相。赵德海的公堂发难与溃败反衬出主角专业风控能力的强悍，章尾由‘查账破局’顺畅过渡至‘灭口杀机’，张力充足，追读欲强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 17,
+        "score": 88.5,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 84,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 87,
+          "characterVoice": 89,
+          "payoffValue": 90,
+          "pacing": 88,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "陆行舟从容道：“这是财务舞弊的风控必然。当巨额烂账在数据层面被完全穿透、改无可改时，造假者唯一的生路，便是物理毁灭，让证据连同案柜化作灰烬。”"
+            ],
+            "suggestion": "可将现代管理学术语适度转化为兼具现代风控内核与古风语境的表述（如'账目既已被穿透到底、死无对证，造假者便只剩毁尸灭迹这一条绝路'）。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文赵德海败走后的反扑危机，陆行舟利用'引蛇出洞+空城计'精准预判并瓦解了敌方的夜间纵火与栽赃计划。情节推进紧凑流畅，从大堂演戏调包、锦衣卫埋伏，到五息之内生擒死士并搜出带有'内廷暗码'与'通州丰备仓'字样的黑铁腰牌，智斗逻辑严密，微爽点兑现充分，成功将冲突与悬念引向更高层级的权谋漩涡。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 18,
+        "score": 89.7,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 86,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 88,
+          "characterVoice": 90,
+          "payoffValue": 90,
+          "pacing": 89,
+          "endingPull": 92
+        },
+        "issues": [
+          {
+            "id": "reader.issue-18-01",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "作为负责执行底层放火销账任务的死士兼前库役，对上层极其机密的洗钱分流金额（精准到五万两草料银票据及三日内兑现要求）掌握得过于详尽，口供推进略显工具化，但未脱离快节奏追读的合理推演范围。",
+            "evidence": [
+              "死士感受到刀锋透骨的寒意，急声交代：“大头确实直接封箱运往了西山，但最近户部查账风声吃紧，上面为了避开文渊阁与三法司耳目，改变了银流转运的路数。三天前，丰备仓刚完成了一批宣大草料的折银交割，主事官未敢直接调运五十两的官铸大锭，而是将一笔五万两草料兑银票据，分批暗中承兑了！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章是一次非常标准的硬核查账权谋爽点兑现。作者没有落入单纯诏狱皮肉用刑的俗套，而是通过陆行舟的微观观察（库役手茧压痕）、漕运物理极限（运粮船吃水仅四寸）、仓储周转率上限（80座库廒年吞吐极限90万石对冲虚报的240万石）三重降维打击，从物理与数学逻辑上彻底绞碎贪腐链条，极佳地契合了‘专业风控破局’的核心卖点。章尾迅速由审讯静态解谜无缝切入‘辰时钱庄提现洗钱’的半时辰倒计时生死时速，危机感与追读欲拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 19,
+        "score": 88.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 87,
+          "characterVoice": 86,
+          "payoffValue": 88,
+          "pacing": 89,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "章节标题表述为“五万草料银全被洗白”，而正文实际情节为北镇抚司在清晨开市前提早破门查扣、成功拦截提现并截获分赃洗钱原稿，标题与正文拦截成功的爽感存在轻微语义偏差。",
+            "evidence": [
+              "沈炼率领的北镇抚司缇骑如同铁铸的阴影，在各大钱庄门板尚未卸下前便已破门而入。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上章辰时截击的时限压迫，节奏紧凑凌厉。主角通过“贴息倒贴异常”、“签发日期早于起运的时间倒挂”以及“桑皮纸夹层水汽熏蒸”三层硬核审计与勘查手段，层层剥离伪装，直接将贪腐案的矛头引向皇室内廷私库密印，完成了从底层仓储贪腐到顶层权力博弈的精彩跃升，钩子极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 20,
+        "score": 86.3,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 85,
+          "characterVoice": 86,
+          "payoffValue": 88,
+          "pacing": 83,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "上章末尾已提及透光可见朱砂密印，本章剥离夹层后初段描述纸面'一片灰白干涩、依稀只能看到几团模糊灰墨'，在视觉呈现的过渡上略有细微的衔接顿挫，不过随后通过隐字矾法显影顺畅圆回。",
+            "evidence": [
+              "剥离出来的底层衬纸薄软如纱，但纸面上却是一片灰白干涩。上面的字迹显然被一层特制的熟石膏与明矾水反复涂抹掩盖，肉眼望去，只能依稀看到几团模糊不清的灰墨污斑"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "中段借陆行舟之口串联四十二万两军饷洗钱闭环（通州仓、漂没、日升昌、太府寺借调）信息密度较高，略偏说明性复盘，但因与解谜核心强相关，尚在硬核智斗接受范围内。",
+            "evidence": [
+              "通州丰备仓的实权管库官，全是由太府寺与内廷暗中委派的心腹。四十二万两草料银自江南运抵通州后……在账面上虚报三倍的道路艰险与自然损耗，用一场根本不存在的假漂没把数十万两粮秣缺口彻底抹平。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章高质量兑现了上一章留下的密册悬念。物理拆解夹层与'隐字矾法'的化学显影过程描写细致硬核，极具代入感；通过四十二万两军饷的闭环复盘，彻底将线索从通州仓粮案升格为太府寺侵吞军饷的惊天大案，逻辑严密，权谋张力十足。章尾封存铁匣、直指明日御前会审，追读势头强劲。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 21,
+        "score": 90.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 92,
+          "characterVoice": 89,
+          "payoffValue": 93,
+          "pacing": 90,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "时间线与氛围描写细节存在轻微抵触：章节开篇明确为清晨（'晨雾尚未散尽'、'晨光透过窗棂'），中段在营造刺杀杀机时却出现了'晨光消退'以及'更夫缓慢而空洞的夜巡梆子声'，白天出现夜巡更夫用语略显违和。",
+            "evidence": [
+              "户部高耸森严的青砖院墙之外，由远及近响起了更夫缓慢而空洞的夜巡梆子声，笃、笃、笃的敲击声在死寂的深巷中荡开"
+            ],
+            "suggestion": "建议将'夜巡梆子声'修改为巡城官兵的号令、昼巡刁斗声或带有灭口暗号性质的特定敲击声，使白昼的时间线保持一致。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章完美兑现了上章铺垫的决战高潮与章节标题的承诺。主角以‘合并风控报表’降维打击传统四脚流水假账，不仅账目推导环环相扣，更通过‘运粮挽马每日吃下自身三倍干草’的物理常识归谬法形成极为直观凌厉的打脸爽感。赵德海从嚣张逼迫到防线崩溃、恐惧求饶的转变自然顺畅，随后灭口杀机与内阁次辅徐阶的压轴登场将爽点进一步转化为高层政治博弈的势能，节奏紧凑硬核，极为契合职场智斗与历史权谋读者的核心诉求。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 22,
+        "score": 84.7,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 82,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 80,
+          "characterVoice": 85,
+          "payoffValue": 86,
+          "pacing": 85,
+          "endingPull": 88
+        },
+        "issues": [],
+        "summary": "本章承接上章户部查账胜局，迅速切入案牍库限时深挖资金去向。通过“空船回程运费倒挂三倍”和“出闸吃水线反超满载一尺”的硬核风控推演，结合暗槽腰牌实证，合理解构出军饷走私两淮的闭环链条。不仅完成了上一阶段的解谜闭环，而且顺理成章将地图与权谋格局从京城推向江南两淮，节奏紧凑，追读钩子明确。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 23,
+        "score": 87.6,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 87,
+          "characterVoice": 90,
+          "payoffValue": 88,
+          "pacing": 84,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "汇报推演内容与上一章结论有一定重合，略带信息复述感，但依托首辅视角和风控大表的呈现缓解了拖沓感。",
+            "evidence": [
+              "户部按年核拨宣大两镇军饷一百二十六万两，账面上宣称足额采购粮秣草料。但学生调取兵部实报战损与驿站马力消耗，以复式平衡法交叉穿透……"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.82
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "上一章尾部称‘马匹与通关文牒已在正阳门外备齐，即刻启程’，本章直接转入‘夜入文渊阁’面见首辅，衔接处缺乏一句交接过渡。",
+            "evidence": [
+              "马匹与通关文牒已在正阳门外备齐，陆主事，即刻启程。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.85
+          }
+        ],
+        "summary": "本章完成了从‘京畿查账破局’到‘奉旨密查下江南’的关键枢纽过渡。主角利用现代复式记账与穿透式风控大表向首辅徐阶直观展现贪腐巨链，职场降维打击感强烈；徐阶老谋深算、权衡大局后的雷霆决断十分贴合权谋文的人物调性。文末盖印授信、锦衣卫护航的微兑现扎实有力，顺利拉开扬州下半场大幕，追读期待感充足。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 24,
+        "score": 0,
+        "continueReading": false,
+        "confidence": 1,
+        "dimensions": {
+          "readability": 0,
+          "openingHook": 0,
+          "conflictEffectiveness": 0,
+          "emotionalDrive": 0,
+          "characterVoice": 0,
+          "payoffValue": 0,
+          "pacing": 0,
+          "endingPull": 0
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "critical",
+            "category": "other",
+            "location": "全文",
+            "description": "本章正文内容完全为空，读者无法获取任何剧情展开或阅读体验。",
+            "evidence": [
+              "\"prose\":\"\""
+            ],
+            "suggestion": "",
+            "blocking": true,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章正文内容为空，无法进行实质阅读与剧情体验评估。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 91,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 90,
+          "patternVariation": 86,
+          "suspensePayoff": 92,
+          "characterArc": 88,
+          "emotionalArc": 91,
+          "payoffEscalation": 92,
+          "genrePromise": 95,
+          "continuationDesire": 93
+        },
+        "issues": [
+          {
+            "id": "reader.issue-001",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "第3章主角在三法司御史尚未到堂的前提下，当着持有水火棍的差役与反派司库赵德海的面直接掀底牌，存在被反派狗急跳墙当场灭口的物理安全漏洞，需看后续如何收束现场掌控力。",
+            "evidence": [
+              "赵德海身着七品团领绿袍，大马金刀地跨过门槛，身后鱼贯涌入六名手持黑红水火棍的精壮差役……三法司的复核御史今日午后便到户部大堂。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前三章开篇极其惊艳，精准击中‘硬核会计降维打击+官场权谋生死破局’的题材卖点。节奏紧凑凌厉，从第1章的拖尸生死死局、第2章的反击老油条与深夜复式记账穿透审计，到第3章公堂‘当堂三平法’公开撕碎假账脉络，爽点层层递进、悬念兑现利落。专业术语与剧情博弈融合自然，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 86.6,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 86,
+          "suspensePayoff": 88,
+          "characterArc": 82,
+          "emotionalArc": 86,
+          "payoffEscalation": 85,
+          "genrePromise": 90,
+          "continuationDesire": 88
+        },
+        "issues": [
+          {
+            "id": "reader.continuity-1",
+            "severity": "medium",
+            "category": "continuity",
+            "location": "全文",
+            "description": "人物命名与身份出现明显前后串名冲突。第2章与第3章中‘周景春’是度支司案牍库内缩在角落、端印泥匣的微末杂役书吏，第4章却突然变成了屏风后现身的正三品户部左侍郎周景春，产生设定打架与出戏感。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前5章开篇质量极高，硬核审计与古代官场权谋的结合极为丝滑。从第1章的生死逼迫，到第2-3章以复式记账法当堂撕毁单式四脚账伪装，再到第4章以‘通融飞签’切中侍郎利益痛点反杀司库，最后第5章运用物理痕迹检验起获暗格提货单，破局爽感密集、专业度扎实且层层升级。除第4章出现‘书吏周景春’与‘侍郎周景春’同名的小型人名衔接瑕疵外，整体行文紧凑冷峻，主线推进高效，三法司午后复核与钦差漕粮大案的追读牵引力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 6,
+        "toChapter": 10,
+        "score": 92,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 92,
+          "patternVariation": 89,
+          "suspensePayoff": 94,
+          "characterArc": 88,
+          "emotionalArc": 92,
+          "payoffEscalation": 91,
+          "genrePromise": 95,
+          "continuationDesire": 94
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "战马燃炭量数学换算存在数量级误差。按三年冬季总计270天、28000匹战马分摊56万石石炭计算，每日每匹实际约为0.074石（约8.8斤），而非文中推导得出的'每天整整两石（240斤）'。虽辛辣的修辞讽刺感极强，但硬核审计层面的数值精度略有瑕疵。",
+            "evidence": [
+              "三边三镇常驻战马共计两万八千匹。将这凭空多出来的五十六万石无烟特等白炭，平摊到这两万八千匹战马头上。刨去春夏秋三季无需生火取暖，单算冬日塞外结冰的这三个月，平均每一匹战马每天要烧掉整整两石上等西山白炭！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "第7章章末三法司大队人马踩入门槛的压迫感极强，第8章开头却以概述性文字迅速略过大堂正面交锋并将赵德海下狱，节奏转换偏快，略微削弱了三法司当面对质的临场张力。",
+            "evidence": [
+              "度支司大堂前的肃杀之气在铁证面前迅速化解，三法司刑部与都察院的官差在周景春的雷霆手腕下，将面如死灰的赵德海直接锁入精铁囚车。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本窗口（第6至10章）表现优异，剧情推进凌厉迅猛。主角陆行舟先后展现了工业化流水线分工破垄断、实物消耗模型穿透柴薪假账、钱庄防伪与平水火耗识破洗钱、预判销账设伏擒内鬼，以及心理攻防逼问口供等多重硬核破局手段。各章冲突形式多变，爽点从司内同僚打脸逐步升级至幕后黑幕揭露。章尾抛出'十万两饷银从未出京，藏于丰备仓水运暗渠'的重大反转，主线悬念拉满，追读欲望极为强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 16,
+        "toChapter": 20,
+        "score": 87.8,
+        "continueReading": true,
+        "confidence": 0.7,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 85,
+          "suspensePayoff": 90,
+          "characterArc": 82,
+          "emotionalArc": 86,
+          "payoffEscalation": 88,
+          "genrePromise": 93,
+          "continuationDesire": 90
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "配角周景春的‘工具人惊骇’反应在五章内出现频次偏密，多处呈现为‘脸色煞白、双腿发软、衣袖颤抖’，功能较为单一，略显刻板模板化。",
+            "evidence": [
+              "周景春只觉眼前一阵发黑，身子晃了晃，一屁股跌坐在身后的酸枝木椅上，声音抖得不成样子"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "第19章章尾与第20章开篇在‘桑皮纸夹层剥离’的动作节点上存在微小的重叠描写（19章末已分离纸页窥见内库印，20章初再次使用银镊与热气进行细致剥离与显影），节奏稍有停顿。",
+            "evidence": [
+              "陆行舟俯下身子，目光凝在桑皮纸受热卷翘的切口处。他修长的手指极稳，银镊尖端顺着方才茶汤水汽烘出的微小缝隙，轻巧地插进两层纸浆之间。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本窗口（16-20章）表现优异，完美兑现了‘硬核查账、降维打击、官场权谋’的题材承诺。剧情推进严丝合缝，从战马食量与漕运运力极限的逻辑碾压，到空城计反制纵火死士，再到仓储周转率绞杀供词与钱庄洗钱倒挂穿透，最后以‘隐字矾法’物理显影引爆‘太府寺借调军饷’通天巨案，层层递进，爽点与危机感同步升级，紧紧锚定明日御前会审的强烈追读期待。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 24,
+      "chapterAverage": 84.5,
+      "chapterMedian": 88.1,
+      "chapterMinimum": 0,
+      "openingThreeAverage": 89.4,
+      "continueReadingNoCount": 1,
+      "lowChapterCount": 1,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察",
+      "低分章节 ch24=0",
+      "读者不愿继续阅读：ch24"
+    ],
+    "errors": [],
+    "durationMs": 367467
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 2960490,
+  "warnings": [
+    "大纲阶段 warnings（3 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（3 条，影子模式不阻断）"
+  ]
+}

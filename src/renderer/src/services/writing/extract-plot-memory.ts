@@ -475,10 +475,13 @@ function extractCharacterChanges(
  */
 const FATE_STATES = new Set(['死亡', '驾崩', '下狱', '定罪']);
 
-/** 可解除命运（翻案/越狱/官复原职）的规则词，命中则从禁入名单剔除 */
+/** 可解除命运（翻案/越狱/官复原职/保释候勘）的规则词，命中则从禁入名单剔除。
+ *  保释/候勘系来自 2026-08-27 百章实测：权臣「待罪保释在外」「闭门待勘」是剧情
+ *  合法中间态，不识别会把终态当永续、把后续正常活动误判为死而复活。 */
 const FATE_RELEASE_PATTERNS: RegExp[] = [
   /平反/, /翻案/, /无罪释放/, /赦免/, /大赦/, /洗清(?:冤屈|罪名)/,
   /越狱/, /劫狱/, /逃出(?:天牢|大牢|宗人府|诏狱)/,
+  /保释(?:在外)?/, /取保(?:候审)?/, /候勘/, /待勘/, /戴罪(?:立功)?/,
   /起复/, /官复原职/, /重新起用/,
 ];
 
@@ -520,7 +523,31 @@ export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {
       }
     }
   }
+  dropFatesContradictedByLaterActivity(byCharacter, memorySorted);
   return [...byCharacter.values()];
+}
+
+/** 后生事实熔断：死亡登记之后，同角色在同章之后又出现任何出场/行动类状态行，
+ *  说明死亡是误登（修辞/威胁/句级共现假阳性）或剧情有诈——取更晚的活动事实，
+ *  解除终态避免主角被自己的状态摘要判死、评审连拒至管线中止（2026-08-27 三轮
+ *  回归实证）。真复活场景上游门禁先拦；漏网者由 triage 恒红 dead-resurrection
+ *  对最终语料审计兜底。 */
+function dropFatesContradictedByLaterActivity(
+  byCharacter: Map<string, FateStatus>,
+  memorySorted: ChapterMemory[]
+): void {
+  for (const memory of memorySorted) {
+    for (const change of memory.characterStateChanges) {
+      const name = change.characterName;
+      const fate = byCharacter.get(name);
+      if (!fate) continue;
+      const activityChapter = memory.chapterIndex;
+      if (activityChapter <= fate.chapterIndex) continue;
+      if (change.state && FATE_STATES.has(change.state)) continue;
+      byCharacter.delete(name);
+      break;
+    }
+  }
 }
 
 /**
@@ -671,6 +698,8 @@ export function extractCriticalStatusChanges(
         ) {
           continue;
         }
+        // 威胁/命令语气：「给我杀了顾青舟」是意图，不是事实（2026-08-27 回归实测反噬）
+        if (rule.state === '死亡' && isVolitionalThreat(content, m.index)) continue;
         if (rosterSet && !rosterSet.has(name)) continue;
         const key = `${name}|${rule.state}`;
         if (seen.has(key)) continue;
@@ -711,9 +740,32 @@ export function mergeCharacterStateChanges(
  *  叙事句里，人名与死亡谓语常常隔着十几个字（100 章矩阵实测第 60 章公开
  *  斩立决整体漏提→禁入名单空转→死人复活重启审判线）。此处退到句子粒度：
  *  句中含处决/头颅落地谓语且出现名单内角色 → 该角色记 死亡。 */
+/** 仅认「结果可见」的完成体：裸判词（斩立决/处决）大量出现于威胁与宣判台词，
+ *  不构成已发生的死亡——100章矩阵里它是漏报源，新版书里它曾把「给我杀了主角」
+ *  误报成真死。锚定点改为头颅落地/当场毙命这类不可逆结果描写。 */
 const EXECUTION_SENTENCE_RE =
-  /斩立决|枭首|腰斩|凌迟|处决|就地正法|问斩|斩首示众|(?:头颅|首级)[^。！？]{0,8}(?:滚落|落地)|人头落地/;
-const EXECUTION_AVOID_RE = /幸免|免于|刀下留人|且慢|手下留情|暂且留命|死罪可免/;
+  /人头落地|(?:头颅|首级)[^。！？]{0,8}(?:滚落|落地)|当场毙命|当场身亡|气绝身亡|当场殒命/;
+const EXECUTION_AVOID_RE =
+  /幸免|免于|刀下留人|且慢|手下留情|暂且留命|死罪可免/;
+/** 修辞引用豁免：完成体结果词被用来修饰文书/抽象概念（「承载着无数人头落地的
+ *  勘合」「人头落地的旧案卷」）是文学修辞不是事件——100章终验第24章实测把主角
+ *  同句共现误判为死亡、评审以跨章生死冲突连拒至管线中止 */
+const RHETORICAL_CUE_RE =
+  /(?:勘合|文书|账册|账本|卷宗|名册|密报|邸报|檄文|供状|话本|戏文|故事|传闻|消息|流言|记载)[^。！？]{0,6}(?:人头落地|(?:头颅|首级)(?:滚落|落地))|人头落地的|(?:头颅|首级)(?:滚落|落地)的/u;
+
+function isRhetoricalCueSentence(sentence: string): boolean {
+  return RHETORICAL_CUE_RE.test(sentence);
+}
+
+/** 威胁/命令语气守卫：「给我杀了X」「要把X处斩」是意图不是事实。
+ *  在死亡谓语命中点之前的小窗口内看到祈使/将来助词即放弃登记。 */
+const VOLITIONAL_THREAT_TAIL_RE =
+  /(?:把|要|想|敢|欲|企图|扬言|威胁|下令|传令|吩咐|去|给(?:我)?|要是)[^。！？，、"”』」]{0,10}$/u;
+
+function isVolitionalThreat(content: string, index: number): boolean {
+  const windowStart = Math.max(0, index - 14);
+  return VOLITIONAL_THREAT_TAIL_RE.test(content.slice(windowStart, index));
+}
 
 function extractExecutionDeaths(
   content: string,
@@ -724,6 +776,7 @@ function extractExecutionDeaths(
   for (const sentence of content.split(/(?<=[。！？])/)) {
     if (EXECUTION_AVOID_RE.test(sentence)) continue;
     if (!EXECUTION_SENTENCE_RE.test(sentence)) continue;
+    if (isRhetoricalCueSentence(sentence)) continue;
     for (const name of rosterSet) {
       if (!sentence.includes(name)) continue;
       changes.push({

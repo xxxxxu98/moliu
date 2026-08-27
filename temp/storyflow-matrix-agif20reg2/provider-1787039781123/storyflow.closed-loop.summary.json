@@ -1,0 +1,372 @@
+{
+  "book": "大梁做账人：从户部胥吏到天子近臣",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": null,
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "default",
+  "promptChars": 34,
+  "requestedChapterCount": 20,
+  "phaseTimings": {
+    "outlineDirectionsMs": 22947,
+    "outlineExpandMs": 258854,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 833,
+    "continueWriteMs": 610648,
+    "totalMs": 893282
+  },
+  "completedChapters": 3,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 睁眼就要画押问斩？我先挑个错！",
+      "words": 3473,
+      "paras": 46,
+      "paraCv": 0.61,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "“啪！”\n\n惊堂木在斑驳的公案上轰然炸响，沉闷的木音震得屋梁上的积灰簌簌跌落。\n\n沈准刚从彻骨的严寒与窒息中恢复意识，两只铁钳般的粗糙大手已经死死按住了他的右肩。剧痛顺着肩胛骨直冲脑门，将他最后一丝昏沉硬生生扯碎。身前是一张浸透了油脂与陈年",
+      "tail": "被粗麻绳勒出淤青的双手，又看了看满屋子杂乱无章的单式流水账册，缓缓走到杉木案前坐下。三天时间，面对这片贪腐织就的账目泥潭，一场押上性命的生死突围正式拉开了序幕。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 夹层暗格现线索，复式记账法降临",
+      "words": 3060,
+      "paras": 36,
+      "paraCv": 0.4,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "沈准揉了揉手腕上被麻绳勒出的青紫勒痕，指节活动时发出轻微的脆响。杉木案上的油灯如豆，昏黄的火苗在阴湿的冷风中微微摇曳，照亮了四周堆积如山的陈年账册。那些用黄麻纸装订的厚重册页自地面一直垒到房梁下方，空气中弥漫着纸张受潮后的刺鼻酸霉与陈年油墨",
+      "tail": "押，唯独在流水底册的最隐秘处，挂着一个不起眼的特殊暗记，直接划向了京城内城的一处私密户头。\n\n沈准凝视着纸面上借贷拉平后浮现出的这行墨字，缓缓放下了手中的毛笔。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": false,
+      "title": "第3章 连夜拆解七假账，老吏看傻了眼",
+      "words": 0,
+      "paras": 0,
+      "paraCv": 0,
+      "attempts": 5,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "",
+      "tail": "",
+      "error": "语义问题[fact_conflict] 正文全篇: 状态摘要中角色“沈准”的状态记录为“死亡”，但本章正文中沈准全程作为主角进行推演破案与对话活动，存在角色生死状态冲突（已死角色复活活动）。"
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 睁眼就要画押问斩？我先挑个错！"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 夹层暗格现线索，复式记账法降临"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 连夜拆解七假账，老吏看傻了眼"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 公堂核账大对质，当场逼跪老算吏"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 暂缓行刑入密室，桌上赫见夺命刀"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 密室交锋反客为主，开出平账活路"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 重构年度决算表，老内鬼狗急跳墙"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 案卷库人赃并获，铁面御史初登场"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 侍郎突击抽查账，滴水不漏反获赞"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 摆脱奴籍穿官袍，绝密暗账现首辅"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787826077025",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-fzJ1Xx\\story-runtime\\proj-1787826077025-29d73f51b209.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 2,
+    "canonicalSnapshots": 3,
+    "latestSnapshotChapter": 2,
+    "sceneChunks": 2,
+    "events": 7
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 25,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "03636d8c97778c3566404d6e00d9a4cac077a994967e8dd8fe117ec12e00ba07",
+    "completeCharacterProfileCount": 25,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 25,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 2
+  },
+  "outlineWarnings": [
+    "大纲存在 12 个未登记角色（内阁首辅、户部侍郎、三皇子、司礼监掌印太监、户部浙江清吏司老算吏、大皇子、大同镇总兵、扬州盐商总会长、永嘉帝、四皇子、宗室领袖王爷、户部主事班底），执行第 1 轮补登记",
+    "未登记角色已补登记 12/12 个",
+    "仍有 1 个未登记角色（模型未按清单建档）：传统老吏集团",
+    "大纲存在 1 个未登记角色（传统老吏集团），执行第 2 轮补登记",
+    "未登记角色已补登记 1/1 个",
+    "未登记地点已补登记 1/1 个",
+    "本地收缩超长标题/CBN/CEN 共 3 章（第 13、23、29 章），未发 AI 请求"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 3,
+    "firstPassRate": 1,
+    "rewrittenChapters": 0,
+    "totalRewriteRounds": 0,
+    "averageRewriteRounds": 0,
+    "pipelineAttempts": 7
+  },
+  "runtimeMetrics": {
+    "requestCount": 6,
+    "requestCountsByPurpose": {
+      "scene-draft": 2,
+      "fact-extraction": 2,
+      "chapter-judge": 2
+    },
+    "latencyP50Ms": 10908,
+    "latencyP95Ms": 43525,
+    "latencyMaxMs": 43525
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "explicit"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 91,
+      "wouldStartReading": true,
+      "confidence": 0.95,
+      "dimensions": {
+        "openingAttraction": 92,
+        "coreSellingPoint": 94,
+        "protagonistDrive": 90,
+        "conflictEscalation": 92,
+        "payoffPlanning": 90,
+        "characterRelations": 86,
+        "suspensePlanning": 88,
+        "audienceFit": 94
+      },
+      "issues": [
+        {
+          "id": "reader.other-1",
+          "severity": "low",
+          "category": "other",
+          "location": "全文",
+          "description": "人物设定表中存在角色条目冗余重复登记的现象，部分核心角色同时以具体姓名与官衔代称各建了一条档案（如‘崔元礼’与‘户部侍郎’、‘谢安石’与‘内阁首辅’、‘李泰’与‘三皇子’、‘李显’与‘永嘉帝’）。",
+          "evidence": [
+            "{\"name\":\"崔元礼\",\"role\":\"antagonist\"...},{\"name\":\"户部侍郎\",\"role\":\"antagonist\"...}"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-2",
+          "severity": "low",
+          "category": "other",
+          "location": "全文",
+          "description": "前50章细化蓝图中，第32-35及37-40章等部分章节缺少单独的hookText钩子文案配置，仅保留了hookType与coolPointType，尾钩具体设计在蓝图中略有省略。",
+          "evidence": [
+            "\"orderIndex\":32,\"title\":\"当堂比斗速算刺头老吏全淘汰\"...\"hookType\":\"打脸\",\"coolPointType\":\"打脸\""
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-3",
+          "severity": "low",
+          "category": "other",
+          "location": "全文",
+          "description": "伏笔规划因文本预算存在部分省略标记，使得第7号及后续伏笔的闭环节点在大纲文本中未完全展现整洁。",
+          "evidence": [
+            "\"hint\":\"柳知韫在协助沈准清理顺天府地下钱庄账册时……【中间内容因评审输入预算省略】……\""
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "这是一份执行力极强、卖点高度统一且极具辨识度的历史权谋智斗大纲。黄金三章‘濒死背锅小吏凭复式借贷平衡表绝地翻盘’的建置节奏明快，精准击中‘专业技能降维打击封建潜规则’的爽点。全篇将现代内审、现金流穿透、做空挤兑等硬核财务工具严丝合缝地嵌入户部争端、江南漕案、九边军饷与夺嫡财政战中，从基层自救升维至财税法典制约皇权，冲突升级层次分明，主角驱动力极强，完全契合历史官场与智斗爽文核心读者的期待。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 89.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 92,
+          "openingHook": 90,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 88,
+          "payoffValue": 87,
+          "pacing": 90,
+          "endingPull": 88
+        },
+        "issues": [],
+        "summary": "开篇节奏极快且压迫感十足，利用‘生死画押’的危机开局迅速抓住读者。主角凭借现代内审与四柱清册的专业知识，在千钧一发之际完成硬核‘数据挑错’打脸，瞬间完成绝地翻盘。主事与老算吏的反应生动真实，将危机从‘必死替罪羊’转化为‘立下军令状限时破局’，局势转换利落，章尾三天倒计时与铁门封闭的悬念拉满，契合硬核智斗爽文定位。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 85.9,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 82,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 85,
+          "characterVoice": 84,
+          "payoffValue": 86,
+          "pacing": 88,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "主角刚入算房便迅速在公案暗格中摸出记录核心贪腐猫腻的草稿，关键线索的获取稍显巧合，好在文中以'新鲜刮痕'提供了合理前置细节，整体逻辑未受明显影响。",
+            "evidence": [
+              "右侧抽屉下方的挡板厚度明显与左侧不对称，榫卯拼接处的缝隙里还残留着极为新鲜的刮痕。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章高效且扎实地兑现了‘降维做账、穿透审计’的核心卖点。主角进入算房后行动目标极度明确，通过暗格线索与复式记账法双管齐下，迅速将3万两烂账中的2.2万两虚增亏空剥离拉平，展现出极强的专业掌控感。老吏徐敬之的质疑与惊叹有效衬托了主角的降维打击，章尾精准扣出8000两流向京城内城神秘户头的黑洞，悬念与追读吸引力拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 0,
+        "continueReading": false,
+        "confidence": 1,
+        "dimensions": {
+          "readability": 0,
+          "openingHook": 0,
+          "conflictEffectiveness": 0,
+          "emotionalDrive": 0,
+          "characterVoice": 0,
+          "payoffValue": 0,
+          "pacing": 0,
+          "endingPull": 0
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "critical",
+            "category": "other",
+            "location": "全文",
+            "description": "本章正文（prose）内容完全为空，没有提供任何正文文本供读者阅读。",
+            "evidence": [
+              "\"prose\":\"\""
+            ],
+            "suggestion": "",
+            "blocking": true,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章正文内容为空字符串，导致无法进行任何正常剧情阅读与体验评估，出现整章内容缺失的致命问题。"
+      }
+    ],
+    "windows": [],
+    "metrics": {
+      "chapterCount": 3,
+      "chapterAverage": 58.3,
+      "chapterMedian": 85.9,
+      "chapterMinimum": 0,
+      "openingThreeAverage": 58.3,
+      "continueReadingNoCount": 1,
+      "lowChapterCount": 1,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察",
+      "黄金三章平均 58.3 < 78",
+      "低分章节 ch3=0",
+      "读者不愿继续阅读：ch3"
+    ],
+    "errors": [
+      "1-3章窗口评审失败：[\n  {\n    \"origin\": \"string\",\n    \"code\": \"too_small\",\n    \"minimum\": 1,\n    \"inclusive\": true,\n    \"path\": [\n      \"issues\",\n      0,\n      \"evidence\",\n      0\n    ],\n    \"message\": \"Too small: expected string to have >=1 characters\"\n  }\n]"
+    ],
+    "durationMs": 47060
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 893359,
+  "warnings": [
+    "大纲阶段 warnings（7 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（4 条，影子模式不阻断）",
+    "读者评审失败（1 条，详见 readerEvaluation.errors）"
+  ]
+}

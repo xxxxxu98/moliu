@@ -515,13 +515,15 @@ function triageProvider(providerId, meta) {
             const lead = ch.text.slice(Math.max(0, at - 12), at);
             // 主语式：名字 + (副词) + 死亡谓语；逆序式：杀死类动词 + (字) + 名字
             const deathSubj = new RegExp(`^${ADVERB}${DEATH_PRED}`).test(tail);
-            // 逆序式（「杀死了周茂」）排除悬赏/条件/反问语境：
+            // 逆序式（「杀死了周茂」）排除悬赏/条件/反问/求刑语境：
             // 「格杀裴修远者赏万金」「斩杀钦差者连升三级」「杀了周茂就能翻盘」
-            // 都不是既成事实——名字后紧跟「者+赏封连升即可」类句式一律放弃。
+            // 「求陛下明察……斩杀顾成舟以谢天下清流」都不是既成事实——
+            // 名字后紧跟「者+赏封/以谢/以正」类、或 lead 以求恳类措辞收尾即放弃。
             const deathRev =
               new RegExp(`${DEATH_REVERSE}[^。！？，,、地得]{0,6}$`).test(lead) &&
-              !/者[，,]?.{0,6}(?:赏|封|连升|免死|免罪|记功)|就能|便能|岂能|焉能|何以|万一|若是|若真|当真|如果|假设|不如|不妨/.test(tail) &&
-              !/(?:若|倘若|假使|若是)[^。！？]{0,8}$/.test(lead);
+              !/者[，,]?.{0,6}(?:赏|封|连升|免死|免罪|记功)|就能|便能|岂能|焉能|何以|万一|若是|若真|当真|如果|假设|不如|不妨|以谢|以正|以平|以儆|以绝|谢天下|慰天下|祭旗|明志|偿命|抵命/.test(tail) &&
+              !/(?:若|倘若|假使|若是)[^。！？]{0,8}$/.test(lead) &&
+              !/(?:求|恳请|请|奏请|祈求)(?:陛下|皇上|圣上|太后|殿下|天子)?[^。！？，]{0,14}$/.test(lead);
             const jairev = new RegExp(`${JAISON_REVERSE}[^。！？，,、]{0,4}$`).test(lead);
             // 「下狱」主语式排除并列列举（「齐王与三皇子下狱」是摘要式排比，
             // 并列主语时单个名字不算独立命运事件）；被押式保持原样。
@@ -542,8 +544,18 @@ function triageProvider(providerId, meta) {
       // 活体动作扫描：命运章之后出现「名字+说话/动作」
       const ACTIVE_RE = (name) =>
         new RegExp(`${name}[^。！？””]{0,8}(?:说道|道|开口|下令|禀报|躬身|拱手|上前|快步|走进|站起|点头|摇头|吩咐|呈报|朗声|沉声|冷笑)`, 'u');
-      const RESURRECT_RELEASE = /平反|翻案|无罪释放|赦免|大赦|越狱|劫狱|起复|官复原职|重新起用|假死|诈死|并未.{0,4}死|苏醒/;
+      const RESURRECT_RELEASE = /平反|翻案|无罪释放|赦免|大赦|越狱|劫狱|起复|官复原职|重新起用|假死|诈死|并未.{0,4}死|苏醒|保释|取保|候勘|待勘|戴罪/;
       for (const fate of fates.values()) {
+        // 解除章覆盖语义（对齐 collectCharacterFates）：命运章之后任何一章同时
+        // 出现该角色名 + 解除信号（保释/候勘/假死揭穿等），该终态即视为已解除，
+        // 此后所有活体出场不再计红（2026-08-27 实测「待罪保释在外」被当越狱红签）。
+        const dissolved = chapters.some(
+          ch =>
+            ch.n > fate.chapter &&
+            ch.text.includes(fate.name) &&
+            RESURRECT_RELEASE.test(ch.text)
+        );
+        if (dissolved) continue;
         const active = chapters.filter(
           ch => ch.n > fate.chapter && ACTIVE_RE(fate.name).test(ch.text) && !RESURRECT_RELEASE.test(ch.text)
         );

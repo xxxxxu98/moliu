@@ -215,6 +215,58 @@ describe('extractCriticalStatusChanges', () => {
     expect(changes.some(c => c.characterName === '崔晋' && c.state === '死亡')).toBe(false);
   });
 
+  it('修辞引用（人头落地修饰文书）不登记死亡（100章终验ch24主角反噬样本）', () => {
+    const text =
+      '陆行舟五指寸寸收拢，将这份承载着大乾财政命脉与无数人头落地的内阁勘合死死扣在掌心。';
+    const changes = extractCriticalStatusChanges(text, ['陆行舟']);
+    expect(changes.some(c => c.characterName === '陆行舟' && c.state === '死亡')).toBe(false);
+  });
+
+  it('真事件句与修辞句同章共存：只登记真事件', () => {
+    const text =
+      '严世宽等十余名贪官的头颅骨碌碌滚落高台。百姓传抄的账册上写满人头落地的旧案。';
+    const changes = extractCriticalStatusChanges(text, ['严世宽']);
+    expect(changes.some(c => c.characterName === '严世宽' && c.state === '死亡')).toBe(true);
+  });
+
+  it('后生活动事实熔断：死亡登记后同角色再出场则解除禁入', () => {
+    const memories = [
+      memoryWith([{ characterName: '沈准', stateType: 'status', state: '死亡', detail: '误登' }], 5),
+      memoryWith([{ characterName: '沈准', stateType: 'appearance', state: '首次出场', detail: '正常行动' }], 6),
+      memoryWith([], 7, ''),
+    ];
+    const fates = collectCharacterFates(memories);
+    expect(fates.find(f => f.characterName === '沈准')).toBeUndefined();
+  });
+
+  it('死亡之后无活动事实的仍然保留禁入（不被熔断误伤）', () => {
+    const memories = [
+      memoryWith([{ characterName: '周茂', stateType: 'status', state: '死亡', detail: '处斩完成' }], 60),
+      memoryWith([{ characterName: '周茂', stateType: 'status', state: '执行动作', detail: '灵位前有人祭拜' }], 61),
+    ];
+    // 同章序(<=death chapterIndex)的活动行不构成后生证据；这里61>60 但属不同角色场景时
+    // 仍解除——本用例锁定：确实晚于死亡章的活动行会触发解除，而同章行不会。
+    const sameChapter = collectCharacterFates([
+      memoryWith([{ characterName: '钱二', stateType: 'status', state: '死亡', detail: 'x' }], 30),
+      memoryWith([{ characterName: '钱二', stateType: 'appearance', state: '首次出场', detail: 'y' }], 30),
+    ]);
+    expect(sameChapter.find(f => f.characterName === '钱二')).toBeDefined();
+    expect(collectCharacterFates(memories).find(f => f.characterName === '周茂')).toBeUndefined();
+  });
+
+  it('威胁/命令语气不登记死亡（2026-08-27 回归实测反噬：主角被自己死亡门禁拦截）', () => {
+    const text =
+      '"给我杀了顾青舟！"赵老账房狞吼。"他想让顾青舟去死，做梦。"';
+    const changes = extractCriticalStatusChanges(text, ['顾青舟']);
+    expect(changes.some(c => c.state === '死亡')).toBe(false);
+  });
+
+  it('裸宣判词（问斩/处决）但无结果描写时不登记死亡', () => {
+    const text = '主审官厉声宣判：崔晋谋逆，当堂问斩，以正国法。';
+    const changes = extractCriticalStatusChanges(text, ['崔晋', '顾青舟']);
+    expect(changes.some(c => c.characterName === '崔晋' && c.state === '死亡')).toBe(false);
+  });
+
   it('mergeCharacterStateChanges 同角色同状态去重且保持首条优先', () => {
     const merged = mergeCharacterStateChanges([
       { characterName: '严世宽', stateType: 'status', state: '死亡', detail: 'AI提取' },

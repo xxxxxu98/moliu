@@ -327,6 +327,18 @@ function inspectSemanticConsistency(outline: ExecutableOutline): OutlineComplete
     // 地名边界，正则吞进来的 2-6 字其实是动词短语。2026-08-25 8题材矩阵实测
     // 「利用市级权限」→「利用市」、「比对市局台账」→「比对市」被补登记进地点表。
     const LOCATION_COMPOUND_FOLLOWERS = new Set(['级', '局', '所', '厅', '队', '域', '政', '公']);
+    // 动词短语形态拒绝：候选以双字动词开头或含事件动词宾语结构，是把叙事句
+    // 当地点名（2026-08-27 两轮实证：「遭遇商帮罢市」「依赖顾青舟救市」「拼出跨省」
+    // 均被登记成 city 级地点污染设定表）。真地名几乎不含这些开场动词。
+    const LOCATION_VERB_OPENERS = [
+      '遭遇', '依赖', '勾结', '串联', '突袭', '夜袭', '驰援', '营救', '护送',
+      '查抄', '起获', '引爆', '埋伏', '穿透', '击溃', '解救', '押送', '运抵',
+    ];
+    const isVerbPhraseLocation = (name: string): boolean => {
+      if (LOCATION_VERB_OPENERS.some(word => name.startsWith(word))) return true;
+      if (/(?:罢市|救市|跨省)$/u.test(name)) return true;
+      return false;
+    };
     const extractUnregisteredLocations = (text: string): string[] => {
       const found: string[] = [];
       const pattern = new RegExp(ADMINISTRATIVE_LOCATION_RE.source, 'gu');
@@ -355,6 +367,7 @@ function inspectSemanticConsistency(outline: ExecutableOutline): OutlineComplete
         });
         if (sharesRunWithRegistered) continue;
         if (LOCATION_COMPOUND_FOLLOWERS.has(text[pattern.lastIndex] ?? '')) continue;
+        if (isVerbPhraseLocation(candidate)) continue;
         if (!found.includes(candidate)) found.push(candidate);
       }
       return found;

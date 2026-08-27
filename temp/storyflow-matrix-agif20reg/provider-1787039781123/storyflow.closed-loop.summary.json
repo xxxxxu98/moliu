@@ -1,0 +1,415 @@
+{
+  "book": "大炎平账人：社畜的户部升迁指南",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": null,
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "default",
+  "promptChars": 34,
+  "requestedChapterCount": 20,
+  "phaseTimings": {
+    "outlineDirectionsMs": 30307,
+    "outlineExpandMs": 247798,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 840,
+    "continueWriteMs": 746256,
+    "totalMs": 1025201
+  },
+  "completedChapters": 3,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 逼我替死画押？老子当场拒签！",
+      "words": 3004,
+      "paras": 30,
+      "paraCv": 0.58,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "沉重的惊堂木带着厉风，狠狠拍在顾青舟眼前的梨木公案上！案头青瓷笔洗里的水花猛然溅起，朱砂墨汁四散飞射，在摊开的厚重账册上晕开一片刺目的猩红。公案两侧肃立的差役齐齐顿下水火棍，沉闷的撞击声在空旷的值房内回荡，震得人耳膜生疼。\n\n站在公案对面的",
+      "tail": "啷一声拔出了身旁差役腰间的配刀！\n\n森寒的刀光在昏暗的值房中骤然闪过，冰冷锋利的刀尖带着刺骨的杀机，稳稳停在顾青舟的喉结之前，只需再往前递出半寸，便能刺穿皮肉！",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 刀架脖子上，反手跟你赌命！",
+      "words": 2564,
+      "paras": 18,
+      "paraCv": 0.15,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "冰凉的精钢刀尖刺破皮肤，一抹刺目的血珠顺着顾青舟修长的脖颈缓缓渗出。顾青舟连眼皮都未眨一下，目光平静如深潭寒水，呼吸节律丝毫不乱。值房内空气瞬间凝固，两侧握着水火棍的差役屏息静气，谁也没料到这个平日默不作声的九品算吏，面对利刃竟有泰山崩于前",
+      "tail": "开，里面赫然露出一截被烈火焚烧过半的深紫色封皮折子。在那焦黑残破的折角边缘，一枚鲜红如血、带有大内密记与特殊飞鸟暗纹的朱红印鉴，在微弱火光下泛着森然刺骨的寒意。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": false,
+      "title": "第3章 老账房刁难？十秒算出天量火耗！",
+      "words": 0,
+      "paras": 0,
+      "paraCv": 0,
+      "attempts": 5,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "",
+      "tail": "",
+      "error": "语义问题[fact_conflict] 第1段至第7段: 状态摘要中顾青舟的状态记录为“死亡”，但正文中顾青舟作为主角仍在正常活动、心算查账并当面击溃赵老账房，存在跨章生死状态矛盾。"
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 逼我替死画押？老子当场拒签！"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 刀架脖子上，反手跟你赌命！"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 老账房刁难？十秒算出天量火耗！"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 半夜来偷账本？抓你个现行！"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 贪官急红眼，失口漏出天机！"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 通宵绘制新表，降维碾压古账！"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 借贷不平！揪出二十万断头账！"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 想当众抢账本？你算盘打得太响！"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 穿透资金链！揪出洗钱地下钱庄！"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 首战大获全胜！底层算吏集体归心！"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787824697854",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-ElNuWg\\story-runtime\\proj-1787824697854-922939b67901.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 2,
+    "canonicalSnapshots": 3,
+    "latestSnapshotChapter": 2,
+    "sceneChunks": 2,
+    "events": 8
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 15,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "3109a8ab7473f27486c54ecbcbad5904bbabef5045283f2a434c610a68504762",
+    "completeCharacterProfileCount": 15,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 15,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 2
+  },
+  "outlineWarnings": [
+    "大纲存在 1 个未登记角色（二皇子），执行第 1 轮补登记",
+    "未登记角色已补登记 1/1 个",
+    "本地收缩超长标题/CBN/CEN 共 1 章（第 27 章），未发 AI 请求",
+    "未登记地点已补登记 2/2 个"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 2,
+    "firstPassRate": 0.667,
+    "rewrittenChapters": 1,
+    "totalRewriteRounds": 1,
+    "averageRewriteRounds": 0.33,
+    "pipelineAttempts": 7
+  },
+  "runtimeMetrics": {
+    "requestCount": 11,
+    "requestCountsByPurpose": {
+      "scene-draft": 5,
+      "fact-extraction": 3,
+      "chapter-judge": 3
+    },
+    "latencyP50Ms": 19489,
+    "latencyP95Ms": 40427,
+    "latencyMaxMs": 40427
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "explicit"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 89.1,
+      "wouldStartReading": true,
+      "confidence": 0.92,
+      "dimensions": {
+        "openingAttraction": 90,
+        "coreSellingPoint": 92,
+        "protagonistDrive": 88,
+        "conflictEscalation": 89,
+        "payoffPlanning": 88,
+        "characterRelations": 82,
+        "suspensePlanning": 90,
+        "audienceFit": 92
+      },
+      "issues": [
+        {
+          "id": "reader.character-1",
+          "severity": "high",
+          "category": "character",
+          "location": "keyCharacters[周承煜 / 二皇子]",
+          "description": "人物设定表中存在完全同义重复的角色条目，且关系字段存在错填污染问题。周承煜与二皇子为同一人物，但在列表中被分别立项，导致属性重复，且二皇子条目下的 targetName 误填为动态描述内容。",
+          "evidence": [
+            "原大纲中同时存在：'name': '周承煜', 'functionInStory': '全书跨卷核心对抗源泉，夺嫡斗争中最具野心与军政手腕的实权皇子' 与 'name': '二皇子', 'functionInStory': '全书中后期夺嫡核心对抗势力与兵变危机发起者，勾结内阁首辅并操纵九边粮秣暗账以图谋逼宫'；并在二皇子条目中出现 'targetName': '对顾青舟从居高临下招揽到忌惮刺杀，最终被主角以现金流断饷彻底击垮'。"
+          ],
+          "suggestion": "合并周承煜与二皇子为一个标准条目，清理重复的人物卡，并修正 relationshipChanges 中 targetName 与 dynamic 的键值对应关系。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-2",
+          "severity": "medium",
+          "category": "other",
+          "location": "worldBuilding.locations",
+          "description": "世界观地点列表中混入了剧情动词短语作为城市级地点，属于大纲生成或数据提取时的脏数据残留，破坏设定严谨性。",
+          "evidence": [
+            "worldBuilding.locations 出现：{'name': '遭遇商帮罢市', 'level': 'city', 'functionInStory': '卷纲与章节蓝图引用的地点，补登记入表。'} 以及 {'name': '依赖顾青舟救市', 'level': 'city', 'functionInStory': '卷纲与章节蓝图引用的地点，补登记入表。'}"
+          ],
+          "suggestion": "清理 worldBuilding.locations 中非地名的异常数据条目，保留太安城、扬州两淮盐运使司、九边蓟镇大营等真实地理实体。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.pacing-3",
+          "severity": "medium",
+          "category": "pacing",
+          "location": "chapterBlueprints (第36-45章)",
+          "description": "金銮殿御前清算高潮戏连续铺展了10个章节（第36章至第45章），单一场景与同一事件的拉锯过长，若缺乏层层递进的外在变数，读者易产生信息疲劳与节奏拖沓感。",
+          "evidence": [
+            "第36章'九卿大典开启，奸党抢先栽赃！'至第45章'御前密谈！帝王留下三年烂账'均发生在金銮殿/朝堂同一核算对质事件内，涵盖第37章撕假账、第38章展巨图、第39章瘫反派、第40章封殿门、第41章推死账、第42章引律例、第43章锁拿、第44章上课、第45章密谈。"
+          ],
+          "suggestion": "在写作执行时，需强化36-45章每一章的微型攻防切入点（例如第37章主打时间逻辑盲区、第39章突击铅汞假银实物、第42章转向律法制度漏洞），避免每章仅在重复'讲解报表-群臣震惊'的单调循环。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-4",
+          "severity": "low",
+          "category": "other",
+          "location": "storyScale",
+          "description": "总规划仅45万字（180章），但涵盖了'度支内库清算'、'两淮盐引改制与商帮公债战'、'北境军饷断链与太安挤兑兵变'、'国家内阁预算法案落地'四个宏观篇章，体量相对庞大，篇幅可能偏紧凑。",
+          "evidence": [
+            "'targetWordCount': '450000字', 'estimatedChapterCount': 180, 'longformProgressionNote': '...地图由京城度支司扩展至两淮盐运司、江南漕运总督与北境九边军饷，矛盾从部门内斗升级为国策改制与诸王争储...'"
+          ],
+          "suggestion": "注意控制后两卷中金融商战与军事后勤博弈的细节展开节奏，若实际创作中权谋推演充分，可适度放宽至60-80万字以保证制度改革推行的合理厚度。",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "这是一份极具吸引力与爆款相的硬核历史官场权谋大纲。核心卖点“现代复式记账/穿透审计降维打击古代糊涂账”与“以财政杠杆拿捏诸王夺嫡”定位清晰且执行扎实。黄金前三章危机紧迫、专业爽点释放迅速；前50章细化蓝图钩子严密，伏笔与回收逻辑清晰。主要缺陷在于人物设定表存在个别重复条目与数据提取残留的异常地名，以及御前清算高潮篇幅偏长需要注重微节奏调控。整体大纲完成度极高，完全能激发目标读者的强烈开读欲望。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 86.5,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 85,
+          "characterVoice": 85,
+          "payoffValue": 85,
+          "pacing": 88,
+          "endingPull": 87
+        },
+        "issues": [],
+        "summary": "本章开局节奏凌厉，精准切入穿越者面临的‘替死背锅’绝境。主角凭借现代财务审计与古代四柱清册的专业知识，当场三连指出假账破绽，智斗降维打击感与硬核爽点十足。冲突层层升级，从文斗查账到亮出侍郎特恩批条，再到反派狗急跳墙拔刀逼喉，章尾钩子紧绷，悬念拉满，展现了出色的商业网文首章水准。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 87.8,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 86,
+          "characterVoice": 88,
+          "payoffValue": 86,
+          "pacing": 88,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "陈小乙贴近窗边确认巡逻差役走远后，咬牙解开棉袍内层暗扣，摸出一枚用油布严密包裹的沉重铜匙塞入顾青舟手中……我爹当年看懂猫腻被打断腿，出事前留了这把备用私钥。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上章生死绝境，主角以背诵律例与权衡利弊反将对手一军，成功立下“三日赌约”破局，展现了极强的智谋通透感与临危不乱的人物魅力。后半段夜探甲字库节奏紧凑，运用现代审计“穿透核验”与“火耗余平”的专业知识迅速锁定贪腐源头，章尾翻出带有大内密记与飞鸟暗纹的残卷，将单纯的账目亏空瞬间拔高至宫廷权谋层次，悬念拉满，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 0,
+        "continueReading": false,
+        "confidence": 1,
+        "dimensions": {
+          "readability": 0,
+          "openingHook": 0,
+          "conflictEffectiveness": 0,
+          "emotionalDrive": 0,
+          "characterVoice": 0,
+          "payoffValue": 0,
+          "pacing": 0,
+          "endingPull": 0
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "critical",
+            "category": "other",
+            "location": "全文",
+            "description": "本章正文内容完全为空（prose 为空字符串），缺少所有可读文本，导致整章剧情停滞、冲突真空。",
+            "evidence": [
+              "prose: \"\""
+            ],
+            "suggestion": "",
+            "blocking": true,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章正文内容完全缺失（为空字符串），无法进行常规阅读与剧情评估，属于致命内容缺失。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 53.8,
+        "continueReading": false,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 50,
+          "patternVariation": 65,
+          "suspensePayoff": 40,
+          "characterArc": 65,
+          "emotionalArc": 50,
+          "payoffEscalation": 55,
+          "genrePromise": 75,
+          "continuationDesire": 40
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "critical",
+            "category": "other",
+            "location": "全文",
+            "description": "第3章正文内容完全缺失（仅有章节标题与说明），导致第2章末尾夜探甲字库发现大内飞鸟暗纹折子的重大悬念彻底悬空，主线进程直接中断，触犯读者底线。",
+            "evidence": [
+              "head: \"\", tail: \"\""
+            ],
+            "suggestion": "",
+            "blocking": true,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前两章在现代财务审计破局、官场律例博弈及夜探甲字库的节奏把控上极具水准，专业度高且爽感凌厉，精准兑现了硬核权谋与降维打击的题材承诺。但第3章正文内容彻底缺失，导致剧情断崖式中断，严重破坏阅读体验。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 3,
+      "chapterAverage": 58.1,
+      "chapterMedian": 86.5,
+      "chapterMinimum": 0,
+      "openingThreeAverage": 58.1,
+      "continueReadingNoCount": 1,
+      "lowChapterCount": 1,
+      "lowWindowCount": 1,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察",
+      "黄金三章平均 58.1 < 78",
+      "低分章节 ch3=0",
+      "读者不愿继续阅读：ch3",
+      "低分跨章窗口 1-3=53.8"
+    ],
+    "errors": [],
+    "durationMs": 51119
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 1025290,
+  "warnings": [
+    "大纲阶段 warnings（4 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（5 条，影子模式不阻断）"
+  ]
+}

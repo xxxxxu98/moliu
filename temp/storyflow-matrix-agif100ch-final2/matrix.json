@@ -1,0 +1,33 @@
+{
+  "mode": "storyflow-matrix",
+  "generatedAt": "2026-08-27T15:40:14.839Z",
+  "concurrency": 3,
+  "chapterCount": 100,
+  "scenarioId": null,
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "scenarioId": null,
+      "provider": "openai",
+      "model": "gemini-3.7-flash-high",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 200,
+      "note": "",
+      "chaptersAccepted": "99/100",
+      "status": "in-progress",
+      "wordsMin": 2413,
+      "wordsAvg": 3036,
+      "wordsMax": 3529,
+      "runtimeBackend": null,
+      "warnings": 1,
+      "firstPassRate": null,
+      "totalRewriteRounds": null,
+      "requestCount": null,
+      "readerOutlineScore": null,
+      "readerChapterAverage": null,
+      "readerChapterMinimum": null,
+      "readerIndependent": null
+    }
+  ]
+}

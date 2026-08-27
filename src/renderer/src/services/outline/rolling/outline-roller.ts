@@ -359,7 +359,12 @@ export function isUsableRolledBlueprint(blueprint: ChapterBlueprint | undefined)
  */
 export interface RolledBlueprintIssue {
   chapterNumber: number;
-  kind: 'over-scoped-mustcover' | 'template-cbn' | 'hollow-cen' | 'reader-meta';
+  kind:
+    | 'over-scoped-mustcover'
+    | 'template-cbn'
+    | 'hollow-cen'
+    | 'reader-meta'
+    | 'locked-foreshadow';
   detail: string;
 }
 
@@ -452,9 +457,82 @@ function normalizedEditDistanceKeepingNumbers(a: string, b: string): number {
   return matrix[nb.length][na.length];
 }
 
+/** 锁定伏笔的计时信息（Pipeline 侧 futureReveals 同源：createdChapter = 大纲预埋章号） */
+export interface ForeshadowTimingHint {
+  hint: string;
+  createdChapter?: number;
+  setupChapter?: number;
+}
+
+/** 从提示语中提取 CJK 连续段（≥2 字），供词面命中统计 */
+function foreshadowCoreTokens(hint: string): string[] {
+  return (hint ?? '')
+    .replace(/[^\u4e00-\u9fff]+/gu, ' ')
+    .split(/\s+/u)
+    .map(token => token.trim())
+    .filter(token => token.length >= 2);
+}
+
+/**
+ * 锁定伏笔词面校验：蓝图 CPN/CEN/mustCover 若把「第 X 章才埋设的伏笔」的触发词
+ * 直接写进本章节点，写作时模型履约即提前揭示，评审必拒——同一章 3 拒即管线中止
+ * （2026-08-28 百章终验 ch40 死锁实证：CPN「调阅兵部战马清册发现异常台阶数据」
+ * vs 伏笔 notBeforeChapter=42）。
+ * 命中规则：提示语 CJK 连续段的 2-gram 在蓝词条文中命中 ≥max(2, 34%) 个——
+ * 单独出现「清册」或「战马」的无关章节不误伤，完整词组共存即拦。
+ */
+export function findLockedForeshadowViolations(
+  blueprints: ChapterBlueprint[],
+  foreshadows: ForeshadowTimingHint[],
+): RolledBlueprintIssue[] {
+  const issues: RolledBlueprintIssue[] = [];
+  const locked = foreshadows
+    .map(f => ({ hint: (f.hint ?? '').trim(), setupAt: f.setupChapter ?? f.createdChapter ?? 0 }))
+    .filter(f => f.setupAt > 0 && f.hint.length >= 4);
+  if (locked.length === 0) return issues;
+  for (const bp of blueprints) {
+    const text = [bp.CBN, bp.CEN, bp.summary, ...bp.CPNs, ...bp.mustCover]
+      .filter(Boolean)
+      .join('\n');
+    if (!text) continue;
+    for (const f of locked) {
+      if (bp.orderIndex >= f.setupAt) continue;
+      const tokens = foreshadowCoreTokens(f.hint);
+      const grams = new Set<string>();
+      for (const token of tokens) {
+        for (let i = 0; i + 2 <= token.length; i += 1) grams.add(token.slice(i, i + 2));
+      }
+      if (grams.size === 0) continue;
+      let hits = 0;
+      for (const gram of grams) if (text.includes(gram)) hits += 1;
+      if (hits < Math.max(2, Math.ceil(grams.size * 0.34))) continue;
+      issues.push({
+        chapterNumber: bp.orderIndex,
+        kind: 'locked-foreshadow',
+        detail:
+          `第${bp.orderIndex}章蓝图词面命中第${f.setupAt}章才埋设的伏笔「${f.hint.slice(0, 24)}」` +
+          `（命中 ${hits}/${grams.size} 个二字组）。把该节点改写为不含伏笔触发词的中性事件，` +
+          `相关物件与异常结论留到第${f.setupAt}章再出现`,
+      });
+      break;
+    }
+  }
+  return issues;
+}
+
+/** 单章质检缺陷总数（含锁定伏笔），供修复轮「越修越坏」对比 */
+function blueprintDefectCount(
+  bp: ChapterBlueprint,
+  foreshadows: ForeshadowTimingHint[],
+): number {
+  return (
+    inspectRolledBlueprintQuality(bp).length +
+    findLockedForeshadowViolations([bp], foreshadows).length
+  );
+}
+
 /** 就地应用本地 sanitize（标题/CBN/CEN 超长收缩）；不可本地修复的返回原值 */
-function applyLocalSanitize(blueprint: ChapterBlueprint): ChapterBlueprint {
-  const sanitized = sanitizeBlueprintLengths(blueprint, {
+function applyLocalSanitize(blueprint: ChapterBlueprint): ChapterBlueprint {  const sanitized = sanitizeBlueprintLengths(blueprint, {
     titleMinChars: OUTLINE_COMPLETENESS_POLICY.titleMinChars,
     titleMaxChars: OUTLINE_COMPLETENESS_POLICY.titleMaxChars,
     hookMinChars: OUTLINE_COMPLETENESS_POLICY.hookMinChars,
@@ -660,10 +738,17 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
 
   // 内容质检（章级）：字段可用但内容有病的蓝图不该落库硬扛履约。
   // 单章病（跨章 mustCover / 模板 CBN / 空壳 CEN）+ 批内相邻章 CBN 复述（章界重演信号）
+  // + 锁定伏笔词面冲突（提前揭示必被评审 3 拒中止，2026-08-28 终验实证）
   // 合并进下一轮定点修复，修复轮提示词已支持「本次必须修掉的问题」注入。
+  const rollForeshadows: ForeshadowTimingHint[] = (project.foreshadows ?? []).map(f => ({
+    hint: f.hint,
+    createdChapter: f.createdChapter,
+    setupChapter: (f as unknown as { setupChapter?: number }).setupChapter,
+  }));
   const qualityIssues = [
     ...[...blueprints.values()].flatMap(inspectRolledBlueprintQuality),
     ...findBlueprintRepetition([...blueprints.values()]),
+    ...findLockedForeshadowViolations([...blueprints.values()], rollForeshadows),
   ];
   const problematicChapters = [
     ...new Set(qualityIssues.map(issue => issue.chapterNumber)),
@@ -709,10 +794,10 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
         const incoming = repaired.get(n);
         if (!incoming) continue;
         const next = applyLocalSanitize(incoming);
-        // 复检：修复稿质检缺陷不得多于原稿。修复轮消耗一次请求后把「越修越坏」
+        // 复检：修复稿质检缺陷不得多于原稿（含锁定伏笔词面冲突）。「越修越坏」
         // 的稿子换进去会让 validTo 前缀断得更早；不达标则保留原稿（带病但完整）。
-        const beforeCount = inspectRolledBlueprintQuality(blueprints.get(n)!).length;
-        const afterCount = inspectRolledBlueprintQuality(next).length;
+        const beforeCount = blueprintDefectCount(blueprints.get(n)!, rollForeshadows);
+        const afterCount = blueprintDefectCount(next, rollForeshadows);
         if (beforeCount > 0 && afterCount > beforeCount) {
           warnings.push(
             `第${n}章定点修复稿质检退化（${beforeCount}→${afterCount} 处），保留原稿`,

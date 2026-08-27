@@ -14,6 +14,7 @@ import {
   extractCriticalStatusChanges,
   mergeCharacterStateChanges,
 } from '@/services/writing/extract-plot-memory';
+import { sanitizeUnconfirmedDeathDeltas } from '@/services/story-runtime/FactExtractor';
 import type {
   ExtractionResult,
   DisambiguationResult,
@@ -439,12 +440,29 @@ export class ProjectionOrchestrator {
         return hit?.id ? [[hit.id, name] as const] : [];
       })
     );
-    const aiChanges = extraction.stateDeltas.map((d) => ({
-      characterName: idToName.get(d.entity_id) || d.entity_id,
-      stateType: 'status' as const,
-      state: String(d.to ?? d.field ?? '').trim(),
-      detail: `${d.field}: ${d.from} → ${d.to}`,
-    }));
+    // AI 提取的死亡 status 同样过「结果完成体」闸：判词/威胁（替死鬼开局、
+    // 「给我杀了X」）不是事实——两轮回归实测主角因此被状态摘要误判死亡。
+    const entityMapForSanitize = Object.fromEntries(
+      (projectStore.characters || [])
+        .filter((c) => c.id && c.name)
+        .map((c) => [c.id!, { id: c.id!, name: c.name! }])
+    );
+    const sanitizedDeltaBag = sanitizeUnconfirmedDeathDeltas(
+      {
+        events: [],
+        deltas: extraction.stateDeltas as never[],
+        evidence: [],
+      } as never,
+      entityMapForSanitize as never
+    );
+    const aiChanges = (sanitizedDeltaBag.deltas as unknown as typeof extraction.stateDeltas).map(
+      (d) => ({
+        characterName: idToName.get(d.entity_id) || d.entity_id,
+        stateType: 'status' as const,
+        state: String(d.to ?? d.field ?? '').trim(),
+        detail: `${d.field}: ${d.from} → ${d.to}`,
+      })
+    );
     const proseForFateScan =
       chapterMeta?.content || extraction.summaryText || '';
     const characterStateChanges = mergeCharacterStateChanges([
