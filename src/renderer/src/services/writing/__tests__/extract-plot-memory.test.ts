@@ -259,6 +259,42 @@ describe('extractCriticalStatusChanges', () => {
     expect(changes.some(c => c.characterName === '严世宽' && c.state === '死亡')).toBe(true);
   });
 
+  it('革爵下狱三明治形态登记下狱并剥称号过名单（终验书 ch100 实测漏报）', () => {
+    const text =
+      '朝廷眼下真正的死穴在北境，二皇子赵泰虽被革爵下狱，晋王党被连根拔起，谁来填这数百万两银子的窟窿？';
+    const changes = extractCriticalStatusChanges(text, ['赵泰']);
+    expect(changes.some(c => c.characterName === '赵泰' && c.state === '下狱')).toBe(true);
+  });
+
+  it('革爵/抄家作为既成处置登记定罪', () => {
+    const text = '圣旨一下，崔景泰被革爵抄没家产，当日执行。';
+    const changes = extractCriticalStatusChanges(text, ['崔景泰']);
+    expect(changes.some(c => c.characterName === '崔景泰' && c.state === '定罪')).toBe(true);
+  });
+
+  it('转述者与死者同句：只登记死者不登记说话人（终验 ch31 受害样本）', () => {
+    const text =
+      '周铁衣沉声答道："回大人，属下奉命带人前去提审钱有德核验密卷，刚到地牢门前，便见钱有德倒在草席上口吐黑血，气绝身亡。"';
+    const changes = extractCriticalStatusChanges(text, ['周铁衣', '钱有德']);
+    expect(changes.some(c => c.characterName === '钱有德' && c.state === '死亡')).toBe(true);
+    expect(changes.some(c => c.characterName === '周铁衣' && c.state === '死亡')).toBe(false);
+  });
+
+  it('发现者与死者同句：只登记死者不登记发现者（终验 ch67 受害样本）', () => {
+    const text =
+      '顾修远面色凝重，快步冲下高台来到吴德贵身侧，伸手探向其颈侧脉搏，却发现此人早已气绝身亡。';
+    const changes = extractCriticalStatusChanges(text, ['顾修远', '吴德贵']);
+    expect(changes.some(c => c.characterName === '吴德贵' && c.state === '死亡')).toBe(true);
+    expect(changes.some(c => c.characterName === '顾修远' && c.state === '死亡')).toBe(false);
+  });
+
+  it('一句双死者：两个结果词各自归属最近名单名', () => {
+    const text = '张三气绝，李四也当场毙命。';
+    const changes = extractCriticalStatusChanges(text, ['张三', '李四']);
+    expect(changes.some(c => c.characterName === '张三' && c.state === '死亡')).toBe(true);
+    expect(changes.some(c => c.characterName === '李四' && c.state === '死亡')).toBe(true);
+  });
+
   it('overlayCharacterFates 清除被后生活动证伪的残留终态', () => {
     const base: StoryEntity = {
       id: 'char-hero',

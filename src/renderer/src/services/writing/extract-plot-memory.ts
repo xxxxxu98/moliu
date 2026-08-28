@@ -680,12 +680,17 @@ const CRITICAL_STATUS_RULES: Array<{
       /(?:天牢|大牢|死牢|宗人府|大狱|诏狱)(?:中|里)?的?([\u4e00-\u9fa5]{2,8})/,
       /(?:押(?:解|送|入)|囚禁|圈禁)(?:了)?([\u4e00-\u9fa5]{2,8})/,
       /([\u4e00-\u9fa5]{2,8}?)(?:沦为阶下囚|被打入死牢|下狱)/,
+      // 「二皇子赵泰虽被革爵下狱」三明治形态：爵位处置夹在被…与下狱之间，
+      // 既有窄窗捕获会切出「被革爵」垃圾名被代词/名单过滤静默丢弃（终验书实测漏报）
+      /([\u4e00-\u9fa5]{2,8}?)(?:虽|竟|已|亦)?被(?:革爵|削爵|夺爵|削籍|革职)[^。，；！？、]{0,4}?(?:下狱|入狱|收监|下在大理寺狱|打入大牢|押入大牢|囚禁)/,
     ],
   },
   {
     state: '定罪',
     patterns: [
       /([\u4e00-\u9fa5]{2,8}?)(?:被|遭)?(?:判斩|处斩|问斩|论罪|定罪|革职抄没|满门抄斩|褫夺)/,
+      // 「革爵/削爵/夺爵/削籍/抄家」是既成处置事实（区别于「拟革爵」——由假设守卫兜）
+      /([\u4e00-\u9fa5]{2,8}?)(?:被|遭)?(?:革爵|削爵|夺爵|削籍|抄家|抄没家产|籍没家产)/,
     ],
   },
   {
@@ -715,10 +720,17 @@ export function extractCriticalStatusChanges(
       const re = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
       let m: RegExpExecArray | null;
       while ((m = re.exec(content)) !== null) {
-        const name = stripNameEpithets(m[1] || m[2] || '');
-        if (!name || name.length < 2 || name.length > 8) continue;
+        const rawName = stripNameEpithets(m[1] || m[2] || '');
+        if (!rawName || rawName.length < 2 || rawName.length > 8) continue;
         // 排除代词/指示词与明显非人名的命中
-        if (/^(?:的|了|他|她|它|这|那|此|其|众|一|被|又|即|皆|全部|在场)/.test(name)) continue;
+        if (/^(?:的|了|他|她|它|这|那|此|其|众|一|被|又|即|皆|全部|在场)/.test(rawName)) continue;
+        // 称号前缀候选（「二皇子赵泰」→「赵泰」）：原带称号形式不过名单时改试本名，
+        // 两者都不过才放弃。无名单（rosterSet=null）时保持原名行为不变
+        const name =
+          [rawName, stripRoyalTitle(rawName)].find(
+            candidate => !rosterSet || rosterSet.has(candidate)
+          ) ?? rawName;
+        if (rosterSet && !rosterSet.has(name)) continue;
         // 悬赏/通缉语境的「斩杀X者赏银万两」不是已发生的死亡
         if (
           rule.state === '死亡' &&
@@ -820,6 +832,16 @@ function isVolitionalThreat(content: string, index: number): boolean {
   return VOLITIONAL_THREAT_TAIL_RE.test(content.slice(windowStart, index));
 }
 
+/** 死亡结果词全局形态（供结果词锚定归属逐个定位） */
+const EXECUTION_CUE_GLOBAL_RE =
+  /人头落地|(?:头颅|首级)[^。！？]{0,8}(?:滚落|落地)|当场毙命|当场身亡|气绝身亡|当场殒命|气绝|毙命|身亡|暴毙|咽气|断气|服毒/gu;
+
+/** 结果词锚定归属：句内「发现者/转述者与死者同句」不等于全员皆死。
+ *  2026-08-28 终验 ch31/ch67 双样本：「周铁衣答道：…便见钱有德…气绝身亡」
+ *  「顾修远…来到吴德贵身侧…发现此人早已气绝身亡」——说话人/发现者与死者
+ *  同句共现，全员登记把活人记死，下章状态摘要带毒连拒至管线中止。
+ *  规则：每个死亡结果命中只归属其前 40 字内最近的名单名（真死者必然紧邻
+ *  结果词；发现者/转述者隔着「便见/答道/身侧」等叙述必然更远）。 */
 function extractExecutionDeaths(
   content: string,
   rosterSet: Set<string> | null
@@ -831,16 +853,31 @@ function extractExecutionDeaths(
     if (!EXECUTION_SENTENCE_RE.test(sentence)) continue;
     if (isRhetoricalCueSentence(sentence)) continue;
     if (HYPOTHETICAL_SENTENCE_RE.test(sentence)) continue;
-    for (const name of rosterSet) {
-      if (!sentence.includes(name)) continue;
-      // 「杀了陆承安」式动词紧贴人名 = 意图/盘算，即便句中带结果词也不登记
-      if (VERB_BEFORE_NAME_RE(name).test(sentence)) continue;
+    const claimed = new Set<string>();
+    for (const cue of sentence.matchAll(EXECUTION_CUE_GLOBAL_RE)) {
+      let bestName: string | null = null;
+      let bestIdx = -1;
+      for (const name of rosterSet) {
+        if (claimed.has(name)) continue;
+        const idx = sentence.lastIndexOf(name, cue.index ?? 0);
+        if (idx < 0) continue;
+        if ((cue.index ?? 0) - (idx + name.length) > 40) continue;
+        // 「杀了陆承安」式动词紧贴人名 = 意图/盘算，即便句中带结果词也不登记
+        if (VERB_BEFORE_NAME_RE(name).test(sentence)) continue;
+        if (idx > bestIdx) {
+          bestIdx = idx;
+          bestName = name;
+        }
+      }
+      if (!bestName) continue;
+      claimed.add(bestName);
       changes.push({
-        characterName: name,
+        characterName: bestName,
         stateType: 'status',
         state: '死亡',
         detail: sentence.replace(/\s+/g, '').slice(0, 60),
       });
+      if (changes.length >= 8) break;
     }
     if (changes.length >= 8) break;
   }
@@ -856,6 +893,17 @@ function stripNameEpithets(raw: string): string {
     name = next;
   }
   return name;
+}
+
+/** 皇家/亲缘称号前缀剥离：「二皇子赵泰」→「赵泰」「太子朱承煜」→「朱承煜」。
+ *  仅当剥离后仍 ≥2 字才有意义；「齐王」「太子」这类本身即称呼名的短引用剥不出
+ *  剩余本名，原样保留（齐王在很多书里就是登记名）。 */
+function stripRoyalTitle(raw: string): string {
+  const stripped = raw.replace(
+    /^[一二三四五六七八九十]{0,2}(?:太子|皇太子|皇子|皇孙|阿哥|亲王|王子|世子|殿下|王爷|大人|将军|尚书|侍郎|御史|总管)/u,
+    ''
+  );
+  return stripped.length >= 2 ? stripped : raw;
 }
 
 /**

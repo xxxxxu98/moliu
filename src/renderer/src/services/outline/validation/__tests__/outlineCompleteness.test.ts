@@ -298,6 +298,32 @@ describe('inspectOutlineCompleteness', () => {
     ]);
   });
 
+  it('阵营标签+身份泛称组合不产生未登记角色 blocker（r2 百章占位符实证）', () => {
+    // 2026-08-28 r2 百章实测：「户部革新派年轻官员」被判成可建档姓名，补登记后
+    // 标签词以角色名身份 9+ 处进入正文。此类功能性描述不是姓名，不应产生 blocker
+    const outline = makeOutline();
+    outline.volumePlan = [{
+      volumeIndex: 1,
+      title: '第一卷',
+      objective: '',
+      coreConflict: '',
+      climax: '',
+      reversal: '',
+      endingHook: '',
+      protagonistGrowth: '',
+      keyCharacters: ['户部革新派年轻官员', '维新派老臣', '年轻御史'],
+      setupForeshadows: [],
+      payoffForeshadows: [],
+      relationshipShifts: [],
+    }];
+
+    const result = inspectOutlineCompleteness(outline);
+
+    expect(
+      result.blockers.filter(blocker => blocker.kind === 'unknown-character-reference'),
+    ).toEqual([]);
+  });
+
   describe('unknown-location-reference（地名漂移门禁）', () => {
     function makeOutlineWithLocations(): ExecutableOutline {
       const outline = makeOutline();

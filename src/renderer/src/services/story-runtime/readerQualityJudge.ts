@@ -288,6 +288,12 @@ const windowResultSchema = z.object({
   summary: z.string().trim().min(1),
 });
 
+/** 顶层单元素数组拆包：个别模型把评审结果包成 [{…}] 返回（2026-08-28 终验
+ *  ch21 实测整份章节评审被 zod 以 expected object 拒掉），校验前先拆包 */
+function unwrapTopLevelArray(value: unknown): unknown {
+  return Array.isArray(value) && value.length === 1 ? value[0] : value;
+}
+
 const OUTLINE_WEIGHTS: Record<keyof ReaderOutlineDimensions, number> = {
   openingAttraction: 0.15,
   coreSellingPoint: 0.15,
@@ -388,9 +394,9 @@ export class ReaderQualityJudge {
         context: input.context,
         outline: clipText(JSON.stringify(input.outline), 60_000),
       }),
-      parse: value => outlineResultSchema.parse(value),
+      parse: value => outlineResultSchema.parse(unwrapTopLevelArray(value)),
     });
-    const parsed = outlineResultSchema.parse(raw);
+    const parsed = outlineResultSchema.parse(unwrapTopLevelArray(raw));
     return {
       version: READER_EVALUATION_VERSION,
       score: weightedScore(parsed.dimensions, OUTLINE_WEIGHTS),
@@ -424,9 +430,9 @@ export class ReaderQualityJudge {
         previousTail: input.previousTail ? clipText(input.previousTail, 1_500) : undefined,
         prose: clipText(input.prose, 24_000),
       }),
-      parse: value => chapterResultSchema.parse(value),
+      parse: value => chapterResultSchema.parse(unwrapTopLevelArray(value)),
     });
-    const parsed = chapterResultSchema.parse(raw);
+    const parsed = chapterResultSchema.parse(unwrapTopLevelArray(raw));
     return {
       version: READER_EVALUATION_VERSION,
       chapter: input.chapter,
@@ -465,9 +471,9 @@ export class ReaderQualityJudge {
           prose: chapter.prose ? clipText(chapter.prose, 8_000) : undefined,
         })),
       }),
-      parse: value => windowResultSchema.parse(value),
+      parse: value => windowResultSchema.parse(unwrapTopLevelArray(value)),
     });
-    const parsed = windowResultSchema.parse(raw);
+    const parsed = windowResultSchema.parse(unwrapTopLevelArray(raw));
     return {
       version: READER_EVALUATION_VERSION,
       fromChapter,

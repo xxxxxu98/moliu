@@ -133,6 +133,11 @@ const ORGANIZATION_NAME_RE =
 const TITLE_ONLY_RE = /^(?:会长|通判|知府|知县|师爷|管家|主簿|幕僚|掌柜|首领|侍卫|仆役)$/u;
 /** 机构前缀（含可选职务后缀）（「临川商会会长」「府衙通判」「县衙主簿」）：机构代称，非可建档个人姓名 */
 const ORG_TITLE_RE = /^[\u4e00-\u9fa5]{0,6}(?:商会|府衙|县衙|衙门|朝廷|东宫|内阁|翰林|司礼监|军机处)(?:会长|通判|知府|知县|主簿|幕僚|首领|掌印|大学士)?$/u;
+/** 阵营/群体标签 + 身份泛称组合（「户部革新派年轻官员」「维新派老臣」「东党年轻御史」）：
+ *  功能性描述被当人名引用，补登记后标签词直接进正文当角色名（2026-08-28 r2 百章
+ *  9+ 处实证），非可建档姓名 */
+const FACTION_ROLE_PHRASE_RE =
+  /(?:[派党系][\u4e00-\u9fa5]{0,4}(?:官员|老臣|朝臣|党人|勋贵|子弟|御史|干将)$)|(?:年轻|青年|老年|老|小)(?:官员|太监|宫女|侍卫|总管|幕僚|师爷|掌柜|管家|首领|差役|捕头|千户|百户|校尉|亲兵|死士|刺客|账房|书吏|算吏|盐商|商人|御史|郎中)$/u;
 
 /** 引用值是否像一个可建档的姓名；不像姓名的引用不产生 unknown-character-reference blocker */
 function isPlausibleCharacterName(value: string): boolean {
@@ -144,6 +149,7 @@ function isPlausibleCharacterName(value: string): boolean {
   if (ORGANIZATION_NAME_RE.test(name)) return false;
   if (TITLE_ONLY_RE.test(name)) return false;
   if (ORG_TITLE_RE.test(name)) return false;
+  if (FACTION_ROLE_PHRASE_RE.test(name)) return false;
   return true;
 }
 

@@ -417,6 +417,8 @@ export class LongFormWritingEngine {
             drafts,
             facts: canonical.facts,
             payoffCandidates: writeInput.payoffCandidates,
+            // 上章结尾给判官做「重置登场」在场连续性判定（ch8→9 类断裂根治）
+            prevChapterTail: input.previousChapterEnding,
           }),
           { label: 'semantic-review', maxRetries: 2 }
         );

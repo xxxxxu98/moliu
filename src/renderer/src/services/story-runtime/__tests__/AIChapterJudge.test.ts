@@ -60,6 +60,32 @@ describe('AIChapterJudge', () => {
     expect(result.issues).toHaveLength(1);
   });
 
+  it('判官合同包含重置登场与节点抄用检查规则，且 prevChapterTail 进入 prompt', async () => {
+    // 2026-08-28 r2 百章实测：ch8 在场角色 ch9 被按初次登场重写（重置登场），
+    // ch20 大纲节点原句逐字抄进正文（节点抄用）——两类都是章内裁判此前不查的盲区
+    let capturedSystem = '';
+    let capturedPrompt = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        capturedPrompt = String(request.prompt ?? '');
+        return { fulfillment: [], forbidden: [], issues: [] };
+      }),
+    };
+
+    await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      prevChapterTail: '…上章结尾：沈青舟亲手验看了私印。',
+      checkDeepSemantic: true,
+    });
+
+    expect(capturedSystem).toContain('【重置登场】');
+    expect(capturedSystem).toContain('【节点抄用】');
+    expect(capturedPrompt).toContain('沈青舟亲手验看了私印');
+  });
+
   it('提示词声明未来揭示护的是核心信息本身，换载体同样算提前揭示', async () => {
     // 实测缺陷：伏笔约定「死者密纸上有绩效二字」，第 2 章照写被拦下，
     // 第 1 章改成主角自己包袱里的纸写同样两字却放行——判官把载体当成了事实边界。

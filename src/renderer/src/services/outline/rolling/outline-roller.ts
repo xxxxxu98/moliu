@@ -285,6 +285,7 @@ export function buildRollBlueprintPrompt(params: {
 5. 本批章节必须落在当前卷的目标与冲突射程内推进，不得提前兑现后续卷的高潮或反转；
 6. 回收章节落在本批次区间内的伏笔，必须在对应章节的 mustCover 中兑现；
 7. 出场角色只能使用「角色名单」中已登记的姓名（可按卷纲引入名单内角色的后续登场），不得另造同名同功能新角色；
+   【禁止标签称谓】凡需要行动/对白的功能性角色（僚属、官员、差役、侍卫等），必须起真实中文姓名（姓+名，如「方正平」）或复用名单内角色；禁止用「XX派年轻官员」「老总管」「年轻御史」这类阵营标签+身份泛称当角色名写进节点与出场名单——它们不是姓名，会被正文照抄成占位符；
 8. 所有字段都不得留空，禁止使用括号补充说明。`,
     user: `【故事定位】\n${base.positioning}\n\n【卷纲锚点】\n${base.volumeAnchor}\n\n【已写进度与收束状态】\n${base.writtenState}${plannedTailSection}${endingSection}\n\n【活跃伏笔（埋设→回收）】\n${base.activeForeshadows}\n\n【角色名单】\n${base.characterRoster}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
   };

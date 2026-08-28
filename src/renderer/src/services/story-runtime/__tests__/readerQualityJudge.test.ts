@@ -165,6 +165,37 @@ describe('ReaderQualityJudge', () => {
     expect(result.issues[0].evidence).toEqual(['真实证据句。']);
   });
 
+  it('顶层单元素数组自动拆包，不拖垮整份章节评审（终验 ch21 实测反噬）', async () => {
+    const payload = {
+      dimensions: {
+        readability: 80,
+        openingHook: 70,
+        conflictEffectiveness: 70,
+        emotionalDrive: 60,
+        characterVoice: 60,
+        payoffValue: 70,
+        pacing: 60,
+        endingPull: 70,
+      },
+      continueReading: true,
+      confidence: 0.8,
+      issues: [],
+      summary: '本章成立。',
+    };
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>) => request.parse([payload])),
+    };
+
+    const result = await new ReaderQualityJudge(ai).evaluateChapter({
+      context,
+      chapter: 21,
+      title: '测试章',
+      prose: '正文',
+    });
+    expect(result.score).toBeGreaterThan(0);
+    expect(result.summary).toBe('本章成立。');
+  });
+
   it('宽容归一化百分制置信度、中文类别与缺失字段', async () => {
     const ai: StructuredAI = {
       generate: vi.fn(async <T>(request: StructuredAIRequest<T>) =>

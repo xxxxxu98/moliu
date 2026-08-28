@@ -412,6 +412,8 @@ export interface ChapterJudgeInput {
   mustCover: string[];
   forbiddenZones: string[];
   chapterText: string;
+  /** 上章结尾原文（截取尾部）：用于判定「上章已登场角色本章被重置登场」类断裂 */
+  prevChapterTail?: string;
   facts?: ExtractedFacts;
   stateDigest?: ChapterJudgeStateDigest;
   chapterNumber?: number;

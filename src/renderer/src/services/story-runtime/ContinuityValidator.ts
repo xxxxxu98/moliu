@@ -26,6 +26,8 @@ export interface ContinuityValidationInput {
   overlay?: ProvisionalStateOverlay;
   drafts: SceneDraft[];
   facts: ExtractedFacts;
+  /** 上章结尾原文：传给章节判官做「重置登场」类在场连续性判定 */
+  prevChapterTail?: string;
   /** 本章到达回收时点的伏笔候选；传入后 report.resolvedForeshadowIds 带出证据确认的回收 id */
   payoffCandidates?: Array<{ id: string; hint: string }>;
 }
@@ -234,7 +236,8 @@ export class ContinuityValidator {
       chapterText(input.drafts),
       input.facts,
       addIssue,
-      input.payoffCandidates ?? []
+      input.payoffCandidates ?? [],
+      input.prevChapterTail
     );
 
     const blockingCount = issues.filter(issue => issue.severity === 'blocking').length;
@@ -264,7 +267,8 @@ export class ContinuityValidator {
       sceneId?: string,
       severityOverride?: ValidationSeverity
     ) => void,
-    payoffCandidates: Array<{ id: string; hint: string }> = []
+    payoffCandidates: Array<{ id: string; hint: string }> = [],
+    prevChapterTail?: string
   ): Promise<string[]> {
     // 判官确认已回收的伏笔 id（严证据门：判官未列出/判定失败一律返回空，
     // 让进度统计保持 buried 而非误标 resolved）
@@ -298,6 +302,7 @@ export class ContinuityValidator {
           mustCover: pendingNodes,
           forbiddenZones: semanticForbidden,
           chapterText: text,
+          prevChapterTail,
           facts,
           checkDeepSemantic: enableDeepSemantic,
           chapterNumber: contract.chapterNumber,

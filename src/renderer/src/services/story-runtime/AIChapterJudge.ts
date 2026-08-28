@@ -110,6 +110,8 @@ export class AIChapterJudge implements ChapterJudge {
         '- futureReveals 保护的是该事实的核心信息本身，不是它的载体：只要核心信息（关键词句、身份、真相）在正文中对读者揭穿，即使换了承载物、换了持有人、换了出现场合（如约定“死者身上的密信写着 X”，正文改成主角自己包袱里的纸写着 X），同样按提前揭示论处',
         '- 若 allowedCharacterNames 非空，名单外的已登记角色在现场说话、行动或即时反应，必须报 logic_gap 且 severity=critical；仅被回忆或背景提及不算出场',
         '- 【出场豁免】若某角色在 mustCover 节点里被点名要求参与（如节点写「被温伯衡锁走」），则该角色本章允许出场，即使不在 allowedCharacterNames 里也不得报 logic_gap；换成无名身份称呼（如「青袍老者」）同样豁免',
+        '- 【重置登场】若 prevChapterTail（上章结尾原文）显示某角色已在本场景登场、行动或与主角共事，本章却将其按初次登场处理（从场外重新通报到场、对已发生案情一无所知、重新自报身份/重新试探主角），必须报 logic_gap 且 severity=critical；正确写法是延续其在场状态与既有认知。此判定以 prevChapterTail 的在场事实为准，状态摘要未登记的在场信息不构成豁免',
+        '- 【节点抄用】正文与任一 mustCover 节点存在连续 ≥12 字逐字相同（把大纲节点原句直接当正文抄），报 logic_gap 且 severity=high，description 注明「节点原句照抄」；同义改写、拆句、换人称不算',
         '- 只报真实问题，不挑文笔；critical 留给明显硬伤',
         '- 若无问题，issues 为 []',
         ...payoffRules,
@@ -129,6 +131,9 @@ export class AIChapterJudge implements ChapterJudge {
         forbiddenZones,
         checkDeepSemantic,
         chapterText: truncateText(input.chapterText, MAX_CHAPTER_CHARS),
+        prevChapterTail: input.prevChapterTail
+          ? truncateText(input.prevChapterTail, 800)
+          : undefined,
         extractedFacts: factDigest,
         stateDigest: input.stateDigest ?? null,
         chapterNumber: input.chapterNumber ?? null,

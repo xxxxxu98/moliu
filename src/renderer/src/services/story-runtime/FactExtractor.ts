@@ -63,7 +63,7 @@ export class AIFactExtractor implements FactExtractor {
         '4) 顶层 evidence 必须汇总本章关键正文原句，不得为空（可与 events[].evidence 重复）',
         '5) deltas.path 用点分路径写状态变更；inventory 变更必须形如 inventory.<角色实体id>.<物品名>，value 必须是纯数字（数量/件数），禁止写 {unit,note,quantity,描述} 等对象或带单位的字符串',
         '6) 顶层必须输出一个 JSON 对象 {...}，禁止输出裸数组 [...]；events/deltas/evidence 三个字段都要存在',
-        '7) 生死与命运事件必检：正文出现死亡/下狱/定罪的【已完成事实】时必须登记——每条产出 event(type="death"或"status_change") 并附带 deltas(path 用 characters.<实体id>.attributes.status，value 用「死亡/下狱/定罪/驾崩」)，evidence 必须引用【结果性】原文原句（如倒地气绝/头颅滚落/当场毙命/收殓下葬）。注意区分：判决宣布（"判斩立决"）、威胁命令（"给我杀了他"）、预谋计划（"要除掉X"）都不是事实，禁止据其写死亡 status；拿不准是否已完成时只产 event 不写 status delta。群像处决须逐个列出名单内的死者',
+        '7) 生死与命运事件必检：正文出现死亡/下狱/定罪的【已完成事实】时必须登记——每条产出 event(type="death"或"status_change") 并附带 deltas(path 用 characters.<实体id>.attributes.status，value 用「死亡/下狱/定罪/驾崩」)，evidence 必须引用【结果性】原文原句（如倒地气绝/头颅滚落/当场毙命/收殓下葬）。注意区分：判决宣布（"判斩立决"）、威胁命令（"给我杀了他"）、预谋计划（"要除掉X"）都不是事实，禁止据其写死亡 status；拿不准是否已完成时只产 event 不写 status delta。群像处决须逐个列出名单内的死者。死者以结果词紧邻的实体为准：发现者/转述者/报信人不是死者（「X发现Y已气绝身亡」只登记Y），不得给同句出现的活人登记死亡',
         'JSON 字段必须为：',
         '{"events":[{"id":"string","chapter":0,"sceneId":"string","type":"string","summary":"string","participants":["实体id或人名"],"causes":[],"effects":[],"evidence":["正文原句"]}],"deltas":[{"operation":"set|add|remove|increment","path":"inventory.char-1.银两","value":5,"evidence":"正文原句"}],"evidence":["正文原句"]}',
       ].join('\n'),
