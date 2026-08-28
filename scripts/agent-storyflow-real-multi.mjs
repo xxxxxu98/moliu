@@ -64,6 +64,10 @@ const MATRIX_CONFIG_PATH = join(TEMP_DIR, 'storyflow.matrix.config.json');
 const SMOKE_SCRIPT = join(process.cwd(), 'scripts', 'agent-storyflow-real-smoke.mjs');
 const DEFAULT_CONCURRENCY = 3;
 const DEFAULT_CHAPTER_COUNT = 80;
+// 同厂商并行多轮：两轮共用同一 providerId 时，temp 根目录产物/trace/project-store
+// 文件名都按 providerId 后缀派生，会互相覆盖，且先归档方会把兄弟轮的在写文件抢走。
+// 设 MOLIU_STORYFLOW_RUN_SUFFIX 给本轮一个独立后缀即可并行；不设时行为不变。
+const RUN_SUFFIX_OVERRIDE = sanitizeRunSuffix(process.env.MOLIU_STORYFLOW_RUN_SUFFIX || '');
 
 // 与 src/renderer/src/services/writing/__tests__/continueWriteRealConfig.ts 的
 // PROVIDER_SET 保持一致（该文件是 .ts，脚本无法直接 import，只能镜像维护）
@@ -181,8 +185,8 @@ function readMatrixConfig() {
  * 矩阵目录内的规范名（summary/outline/prose 恢复固定名，便于横向对比）。
  * 只逐文件移动、不整目录重建：run.log 在归档前已写入 dest，重建目录会把它删掉。
  */
-function archiveRunArtifacts(providerId) {
-  const suffix = sanitizeRunSuffix(providerId);
+function archiveRunArtifacts(providerId, suffixOverride) {
+  const suffix = suffixOverride ?? sanitizeRunSuffix(providerId);
   const names = storyflowArtifactNames(suffix);
   const dest = join(MATRIX_DIR, providerId);
   // 清掉上一轮同名矩阵目录里「可被本轮覆盖的归档产物」；run.log 是本轮刚写的，必须保留。
@@ -292,7 +296,7 @@ function launchRun(meta) {
       env: {
         ...process.env,
         MOLIU_AI_PROVIDER_ID: meta.id,
-        MOLIU_RUN_SUFFIX: sanitizeRunSuffix(meta.id),
+        MOLIU_RUN_SUFFIX: RUN_SUFFIX_OVERRIDE || sanitizeRunSuffix(meta.id),
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -317,7 +321,7 @@ function launchRun(meta) {
       } catch {
         /* 日志落盘失败不影响矩阵 */
       }
-      const moved = archiveRunArtifacts(meta.id);
+      const moved = archiveRunArtifacts(meta.id, RUN_SUFFIX_OVERRIDE || undefined);
       console.log(
         `[smoke:storyflow:real:multi] ${meta.id} 完成：exit=${exitCode}，` +
           `耗时 ${Math.round(wallMs / 60000)} 分钟，归档 ${moved.length} 个产物 → temp/storyflow-matrix/${meta.id}/`
