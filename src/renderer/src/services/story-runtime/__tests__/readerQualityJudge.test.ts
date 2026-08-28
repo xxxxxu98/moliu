@@ -124,6 +124,47 @@ describe('ReaderQualityJudge', () => {
     expect(result.score).toBe(61.5);
   });
 
+  it('evidence 空串被软兜底过滤，不拖垮整份窗口评审（r2 百章 1-5 窗口实测反噬）', async () => {
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>) =>
+        request.parse({
+          dimensions: {
+            mainlineProgress: 70,
+            patternVariation: 60,
+            suspensePayoff: 50,
+            characterArc: 70,
+            emotionalArc: 60,
+            payoffEscalation: 50,
+            genrePromise: 80,
+            continuationDesire: 60,
+          },
+          continueReading: true,
+          confidence: 0.75,
+          issues: [
+            {
+              severity: 'medium',
+              category: 'pacing',
+              location: '全文',
+              description: '节奏问题。',
+              evidence: ['', '   ', '真实证据句。'],
+            },
+          ],
+          summary: '窗口整体成立。',
+        })
+      ),
+    };
+
+    const result = await new ReaderQualityJudge(ai).evaluateWindow({
+      context,
+      chapters: [
+        { chapter: 1, title: '第一章', head: '开头', tail: '结尾' },
+        { chapter: 5, title: '第五章', head: '开头', tail: '结尾' },
+      ],
+    });
+    expect(result.score).toBeGreaterThan(0);
+    expect(result.issues[0].evidence).toEqual(['真实证据句。']);
+  });
+
   it('宽容归一化百分制置信度、中文类别与缺失字段', async () => {
     const ai: StructuredAI = {
       generate: vi.fn(async <T>(request: StructuredAIRequest<T>) =>

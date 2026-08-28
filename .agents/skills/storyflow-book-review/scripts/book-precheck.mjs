@@ -74,8 +74,33 @@ function parseHooks(outlineText) {
   return hooks;
 }
 
+// 按章解析大纲节点原句（CBN/CPNs/CEN），供"节点漏入正文"扫描。
+// 【必须覆盖】/【禁区】是指令性文字，刻意不扫（逐字进正文属正常改写来源，误报高）。
+function parseOutlineNodes(outlineText) {
+  const chapters = [];
+  const chapterRe = /=== (.*?)(?: \(orderIndex=\d+\))? ===\n([\s\S]*?)(?=\n=== |$)/g;
+  let cm;
+  while ((cm = chapterRe.exec(outlineText)) !== null) {
+    const title = cm[1];
+    const nodes = [];
+    const nodeRe = /【(CBN|CEN|CPNs)】([\s\S]*?)(?=\n【|$)/g;
+    let nm;
+    while ((nm = nodeRe.exec(cm[2])) !== null) {
+      const kind = nm[1];
+      for (const line of nm[2].split('\n')) {
+        const text = line.trim();
+        if (!text) continue;
+        if (kind === 'CPNs' && /^【|^---/.test(text)) break;
+        nodes.push({ kind, text });
+      }
+    }
+    chapters.push({ title, nodes });
+  }
+  return chapters;
+}
+
 function runChecks(dir) {
-  const report = { generatedAt: new Date().toISOString(), dir, chapters: [], hookIssues: [], boundaryOverlaps: [], aiWordTotals: {} };
+  const report = { generatedAt: new Date().toISOString(), dir, chapters: [], hookIssues: [], nodeLeaks: [], boundaryOverlaps: [], aiWordTotals: {} };
   const files = listChapterFiles(dir);
   const chapters = files.map(f => analyzeChapter(f, fs.readFileSync(path.join(dir, f), 'utf8')));
   report.chapters = chapters.map(({ head, tail, ...rest }) => rest);
@@ -112,6 +137,23 @@ function runChecks(dir) {
         }
       }
     }
+
+    // 节点原句漏入正文：大纲 CBN/CPNs/CEN 逐句去空白后 ≥10 字逐字命中本章正文
+    // （2026-08-28 r2 百章 ch20 实测两处大纲节点整句漏进终稿，读者评审标记为
+    // "大纲/分镜提示词残留"）。正文必须情节兑现节点，不是逐字抄节点。
+    const outlineChapters = parseOutlineNodes(fs.readFileSync(outlinePath, 'utf8'));
+    for (let i = 0; i < chapters.length; i += 1) {
+      const meta = outlineChapters[i];
+      if (!meta || meta.nodes.length === 0) continue;
+      const raw = fs.readFileSync(path.join(dir, chapters[i].file), 'utf8');
+      const bodyNormText = chapterBody(raw).replace(/\s/g, '');
+      for (const node of meta.nodes) {
+        const norm = node.text.replace(/\s/g, '');
+        if (norm.length >= 10 && bodyNormText.includes(norm)) {
+          report.nodeLeaks.push({ title: meta.title, file: chapters[i].file, kind: node.kind, text: node.text });
+        }
+      }
+    }
   }
 
   // AI 词频汇总
@@ -135,6 +177,8 @@ function printSummary(r) {
   console.log(`段落CV过低(<0.15,AI腔): ${cvRed.length}${cvRed.length ? ' -> ' + cvRed.map(c => `${c.file}(cv=${c.paraCV})`).join(' ') : ''}`);
   console.log(`钩子问题(残句/同拍复述): ${r.hookIssues.length}`);
   for (const h of r.hookIssues.slice(0, 12)) console.log(`  [${h.title}] ${h.kind}: ${h.text.slice(0, 40)} (${h.reason})`);
+  console.log(`大纲节点原句漏入正文: ${r.nodeLeaks.length}`);
+  for (const n of r.nodeLeaks.slice(0, 12)) console.log(`  [${n.title}] ${n.kind}: ${n.text.slice(0, 40)}`);
   console.log(`章界重演嫌疑: ${r.boundaryOverlaps.length}`);
   for (const b of r.boundaryOverlaps) console.log(`  ${b.at} sim=${b.similarity} [${b.level}] ${b.chapterHead}`);
   const aiSorted = Object.entries(r.aiWordTotals).sort((a, b) => b[1] - a[1]).slice(0, 10);
@@ -148,6 +192,7 @@ function diffReports(oldR, newR) {
     引号不配对: r.chapters.filter(c => c.quoteOpen !== c.quoteClose).length,
     直引号章节: r.chapters.filter(c => c.straightQuotes > 0).length,
     钩子问题: r.hookIssues.length,
+    节点漏入: r.nodeLeaks.length,
     章界重演high: r.boundaryOverlaps.filter(b => b.level === 'high').length,
     章界重演watch: r.boundaryOverlaps.length,
     CV红章: r.chapters.filter(c => c.paraCV < 0.15 && c.paraCount >= 8).length,

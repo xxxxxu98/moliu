@@ -170,7 +170,16 @@ function normalizeCategory(value: unknown): ReaderIssueCategory {
 
 function normalizeIssueInput(value: unknown): Record<string, unknown> {
   const issue = asRecord(value);
-  const evidence = issue.evidence ?? issue.quote ?? issue.example ?? [];
+  // evidence 空串/空白项会让 issueSchema 的 min(1) 拒掉整份评审结果
+  // （2026-08-28 r2 百章实测 1-5 窗口评审整体失败），此处先软兜底过滤；
+  // 字符串形态（evidence/quote 直给一句）先包数组，避免丢给 zod 前被误清
+  const rawEvidence = issue.evidence ?? issue.quote ?? issue.example ?? [];
+  const evidence =
+    typeof rawEvidence === 'string'
+      ? [rawEvidence.trim()].filter(Boolean)
+      : Array.isArray(rawEvidence)
+        ? rawEvidence.map(item => String(item ?? '').trim()).filter(Boolean).slice(0, 3)
+        : [];
   return {
     ...issue,
     severity: normalizeSeverity(issue.severity ?? issue.level),
