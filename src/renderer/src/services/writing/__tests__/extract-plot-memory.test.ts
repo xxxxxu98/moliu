@@ -244,6 +244,21 @@ describe('extractCriticalStatusChanges', () => {
     expect(changes.some(c => c.characterName === '陆云铮' && c.state === '死亡')).toBe(false);
   });
 
+  it('只要/便会型条件句不登记死亡（百章双开r1 ch13受害样本：刀架脖颈但未死）', () => {
+    const text =
+      '身后的书吏吓得失声尖叫，两名差役更是面如死灰，握刀的手剧烈颤抖。只要统领手腕稍一用力，顾衡的头颅便会当场落地。';
+    const changes = extractCriticalStatusChanges(text, ['顾衡']);
+    expect(changes.some(c => c.characterName === '顾衡' && c.state === '死亡')).toBe(false);
+  });
+
+  it('只要型条件句与真处决同章共存：只登记真事件', () => {
+    const text =
+      '只要统领手腕稍一用力，顾衡的头颅便会当场落地。刀光落下，严世宽的头颅滚落高台。';
+    const changes = extractCriticalStatusChanges(text, ['顾衡', '严世宽']);
+    expect(changes.some(c => c.characterName === '顾衡' && c.state === '死亡')).toBe(false);
+    expect(changes.some(c => c.characterName === '严世宽' && c.state === '死亡')).toBe(true);
+  });
+
   it('overlayCharacterFates 清除被后生活动证伪的残留终态', () => {
     const base: StoryEntity = {
       id: 'char-hero',

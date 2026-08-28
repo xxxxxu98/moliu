@@ -47,6 +47,18 @@ describe('sanitizeUnconfirmedDeathDeltas', () => {
     expect(out.deltas).toHaveLength(0);
   });
 
+  it('只要/便会型条件句的结果词不作为死亡证据（百章双开r1 ch13受害样本）', () => {
+    const facts = makeFacts([
+      {
+        path: 'characters.char-hero.attributes.status',
+        value: '死亡',
+        evidence: ['只要统领手腕稍一用力，顾青舟的头颅便会当场落地。'],
+      },
+    ]);
+    const out = sanitizeUnconfirmedDeathDeltas(facts, ENTITIES);
+    expect(out.deltas).toHaveLength(0);
+  });
+
   it('带结果完成体证据的死亡 status 保留（头颅滚落/气绝）', () => {
     const facts = makeFacts([
       {
