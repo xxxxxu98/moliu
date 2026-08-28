@@ -355,7 +355,11 @@ describe('inspectOutlineCompleteness', () => {
       }];
 
       const result = inspectOutlineCompleteness(outline);
-      expect(result.blockers.map(blocker => blocker.kind)).toContain('unknown-location-reference');
+      // 2026-08-28 降级：自由文本地点扫描命中不再 fail-closed，改为黄签 warnings
+      //（正则猜地名误报史太长），canApply 不受其影响；补登记通道改读 warnings
+      expect(result.warnings?.map(blocker => blocker.kind)).toContain('unknown-location-reference');
+      expect(result.blockers.filter(blocker => blocker.kind === 'unknown-location-reference')).toEqual([]);
+      expect(result.canApply).toBe(true);
     });
 
     it('人名+介词的弱后缀误切（陆衡在京）不产生 blocker（2026-08-23 真实冒烟误报）', () => {
@@ -525,7 +529,9 @@ describe('inspectOutlineCompleteness', () => {
       ];
 
       const result = inspectOutlineCompleteness(outline);
-      const locations = result.blockers.filter(b => b.kind === 'unknown-location-reference');
+      const locations = [...result.blockers, ...(result.warnings ?? [])].filter(
+        b => b.kind === 'unknown-location-reference'
+      );
       expect(locations.length).toBeGreaterThan(0);
     });
 

@@ -351,6 +351,8 @@ export function canonicalizeExtractedFacts(input: FactCanonicalizeInput): FactCa
       events,
       deltas: [...deltas, ...introductionDeltas, ...aliasDeltas],
       evidence: input.facts.evidence,
+      // 死亡候选仲裁结论透传：引擎据此在提交侧门控确定性登记（2026-08-28 根治方案）
+      candidateVerdicts: input.facts.candidateVerdicts,
     },
     stateForValidation,
     introductionDeltas,

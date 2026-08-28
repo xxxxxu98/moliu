@@ -13,6 +13,9 @@ import {
   collectFateForbiddenZones,
   overlayCharacterFates,
   mergeCharacterStateChanges,
+  collectDeathArbitrationCandidates,
+  setDeathArbitration,
+  clearDeathArbitration,
 } from '../extract-plot-memory';
 import type { Chapter, ChapterMemory } from '@/types/project';
 import type { StoryEntity } from '@/types/story-runtime';
@@ -293,6 +296,60 @@ describe('extractCriticalStatusChanges', () => {
     const changes = extractCriticalStatusChanges(text, ['张三', '李四']);
     expect(changes.some(c => c.characterName === '张三' && c.state === '死亡')).toBe(true);
     expect(changes.some(c => c.characterName === '李四' && c.state === '死亡')).toBe(true);
+  });
+
+  it('一旦+都要模态句不登记死亡（终验 agiffix2 ch45 受害样本：陆衡被锚定误杀）', () => {
+    const text =
+      '他深知大堤已成且民心尽归陆衡，一旦断刀与惊天亏空被捅到御前，他们背后所有人都要人头落地，唯有抢先弹劾恶人先告状。';
+    const changes = extractCriticalStatusChanges(text, ['陆衡']);
+    expect(changes.some(c => c.characterName === '陆衡' && c.state === '死亡')).toBe(false);
+  });
+
+  it('锚定归属取离结果词最近的名单名，远端同句活人不登记', () => {
+    const text =
+      '消息早已传遍朝野上下人人自危，钱有德倒在草席上口吐黑血，气绝身亡。';
+    const changes = extractCriticalStatusChanges(text, ['钱有德', '朝野上下']);
+    expect(changes.some(c => c.characterName === '钱有德' && c.state === '死亡')).toBe(true);
+    expect(changes.some(c => c.characterName === '朝野上下' && c.state === '死亡')).toBe(false);
+  });
+
+  it('守卫拦截候选被 AI 确认后救回登记（守卫降级为 hint，2026-08-28）', () => {
+    const text = '只要一刀落下，顾青舟的头颅便会当场落地。';
+    // 未仲裁（或仲裁缺票）时：假设守卫拦截，不登记
+    expect(extractCriticalStatusChanges(text, ['顾青舟']).some(c => c.state === '死亡')).toBe(false);
+    const candidates = collectDeathArbitrationCandidates(text, ['顾青舟']);
+    const blocked = candidates.find(c => c.hint === 'guard-blocked' && c.name === '顾青舟');
+    expect(blocked).toBeDefined();
+    // AI 显式 isDeath=true → 救回登记
+    setDeathArbitration(candidates, [{ id: blocked!.id, isDeath: true, reason: '后文证实已处决' }]);
+    const rescued = extractCriticalStatusChanges(text, ['顾青舟']);
+    expect(rescued.some(c => c.characterName === '顾青舟' && c.state === '死亡')).toBe(true);
+    clearDeathArbitration();
+    expect(extractCriticalStatusChanges(text, ['顾青舟']).some(c => c.state === '死亡')).toBe(false);
+  });
+
+  it('AI 仲裁：显式否决的候选被门控丢弃，确认/未提及的保留（2026-08-28 根治方案）', () => {
+    const text = '刀光落下，严世宽的头颅滚落高台。老者收殓了顾青舟的遗体。';
+    const candidates = collectDeathArbitrationCandidates(text, ['严世宽', '顾青舟']);
+    // 两条命运级候选（死亡）都应被收集，sentence 与登记 detail 同源
+    expect(candidates.length).toBe(2);
+    expect(candidates.map(c => c.name).sort()).toEqual(['严世宽', '顾青舟']);
+
+    // AI 否决严世宽那条（按名定位，不依赖候选顺序），顾青舟不在 verdict 里
+    //（缺票=召回优先，保留）
+    const victim = candidates.find(c => c.name === '严世宽');
+    expect(victim).toBeDefined();
+    setDeathArbitration(candidates, [
+      { id: victim!.id, isDeath: false, reason: '修辞场景' },
+    ]);
+    const gated = extractCriticalStatusChanges(text, ['严世宽', '顾青舟']);
+    expect(gated.some(c => c.characterName === '严世宽' && c.state === '死亡')).toBe(false);
+    expect(gated.some(c => c.characterName === '顾青舟' && c.state === '死亡')).toBe(true);
+
+    // 清槽位后回到未仲裁行为
+    clearDeathArbitration();
+    const restored = extractCriticalStatusChanges(text, ['严世宽', '顾青舟']);
+    expect(restored.some(c => c.characterName === '严世宽' && c.state === '死亡')).toBe(true);
   });
 
   it('overlayCharacterFates 清除被后生活动证伪的残留终态', () => {

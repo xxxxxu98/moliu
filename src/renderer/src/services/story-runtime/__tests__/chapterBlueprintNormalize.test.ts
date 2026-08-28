@@ -250,4 +250,12 @@ describe('chapterBlueprintNormalize', () => {
     expect(tip).toBeTruthy();
     expect(tip).toMatch(/炭炉|密信|烙开/);
   });
+
+  it('生成侧【跨章】/【单章】标注优先于词表猜测（2026-08-28 根治方案）', () => {
+    // 滚纲输出时自标注单章可兑现性：标注语义由模型在生成语境里判断，
+    // 正则词表只兜底无标注的旧路径（含限期词但被标【单章】的节点不得误判）
+    expect(isCrossChapterGoal('【跨章】协助靖王彻查两淮盐税亏空')).toBe(true);
+    expect(isCrossChapterGoal('【单章】限期三日呈交亏空总册')).toBe(false);
+    expect(isCrossChapterGoal('限期翻案，否则将被处斩')).toBe(true);
+  });
 });

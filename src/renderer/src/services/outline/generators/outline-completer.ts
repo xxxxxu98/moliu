@@ -582,9 +582,12 @@ export function repairUnregisteredLocations(params: {
   const nextOutline = parseExpandedOutline(rawText);
   if (nextOutline) outline = nextOutline;
 
-  const stillMissing = findUnregisteredLocationNames(
-    inspectOutlineCompleteness(outline).blockers,
-  );
+  // 地点命中已降级为 warnings（不 fail-closed），补登记通道合并读取两个数组
+  const recheck = inspectOutlineCompleteness(outline);
+  const stillMissing = findUnregisteredLocationNames([
+    ...recheck.blockers,
+    ...(recheck.warnings ?? []),
+  ]);
   const fixedCount = locationNames.filter(name => !stillMissing.includes(name)).length;
   if (fixedCount > 0) {
     warnings.push(`未登记地点已补登记 ${fixedCount}/${locationNames.length} 个`);

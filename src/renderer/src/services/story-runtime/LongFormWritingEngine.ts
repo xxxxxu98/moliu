@@ -34,6 +34,10 @@ import {
 import { isPlaceholderChapterTitle } from '@/services/writing/chapterTitle';
 import { buildTypesettingIssues } from '@/services/writing/typesetting';
 import {
+  collectDeathArbitrationCandidates,
+  setDeathArbitration,
+} from '@/services/writing/extract-plot-memory';
+import {
   classifyError,
   retryBackoffDelayMs,
   type ClassifiedError,
@@ -386,6 +390,12 @@ export class LongFormWritingEngine {
       );
 
       // Step B：事实提取单独重试。审查失败时保留 drafts 和 facts，不重复付费提取。
+      // 确定性死亡候选随章仲裁：正则网只出候选，AI 显式否决（isDeath=false）的
+      // 候选在提交侧被丢弃（2026-08-28 根治方案，替换逐形态补正则的打法）
+      const deathCandidates = collectDeathArbitrationCandidates(
+        draftsProse(drafts),
+        extractCharacterNames(input.state.entities)
+      );
       const rawFacts = await runStepWithTransientRetry(
         async (_attempt: number) =>
           this.dependencies.factExtractor.extract({
@@ -394,6 +404,7 @@ export class LongFormWritingEngine {
             sceneDrafts: drafts,
             state: input.state,
             overlay: input.overlay,
+            deathCandidates,
           }),
         { label: 'fact-extraction', maxRetries: 2 }
       );
@@ -406,6 +417,8 @@ export class LongFormWritingEngine {
         chapterNumber: contracts.chapter.chapterNumber,
       });
       facts = canonical.facts;
+      // 仲裁结论注入登记侧：Step D 提交期间 extractCriticalStatusChanges 消费
+      setDeathArbitration(deathCandidates, facts.candidateVerdicts ?? []);
 
       // Step C：只重试连续性/语义审查。耗尽后标记为 review_unavailable，
       // 让批量层停止当前章，而不是重新起草整章。

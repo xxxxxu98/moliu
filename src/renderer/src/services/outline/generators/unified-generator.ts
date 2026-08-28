@@ -791,10 +791,14 @@ export class UnifiedOutlineGenerator {
             }
           }
 
-          // 未登记地点定向补登记（unknown-location-reference）：与角色补登记对称。
+          // 未登记地点定向补登记（unknown-location-reference，已降级为 warnings 非阻断）：
           // 确定性修复（无 AI 调用），把卷纲/蓝图引用的表外地名补进核心地点子段。
-          if (!finalCompleteness.canApply) {
-            const unregisteredLocations = findUnregisteredLocationNames(finalCompleteness.blockers);
+          // 2026-08-28 降级后不再以 canApply 为前提——命中即补，保持地点表完整。
+          {
+            const unregisteredLocations = findUnregisteredLocationNames([
+              ...finalCompleteness.blockers,
+              ...(finalCompleteness.warnings ?? []),
+            ]);
             if (unregisteredLocations.length > 0) {
               const repairedLocations = repairUnregisteredLocations({
                 rawText: appliedFixRawText ?? rawText,
@@ -804,15 +808,18 @@ export class UnifiedOutlineGenerator {
               const repairedLocationCompleteness = inspectOutlineCompleteness(
                 repairedLocations.outline
               );
-              if (
-                repairedLocationCompleteness.blockers.length < finalCompleteness.blockers.length
-              ) {
+              const beforeCount =
+                finalCompleteness.blockers.length + (finalCompleteness.warnings ?? []).length;
+              const afterCount =
+                repairedLocationCompleteness.blockers.length +
+                (repairedLocationCompleteness.warnings ?? []).length;
+              if (afterCount < beforeCount) {
                 outline = repairedLocations.outline;
                 appliedFixRawText = repairedLocations.rawText;
                 finalCompleteness = repairedLocationCompleteness;
               } else {
                 warnings.push(
-                  `未登记地点补登记后阻断项未减少（${finalCompleteness.blockers.length}→${repairedLocationCompleteness.blockers.length} 项），保留原稿`,
+                  `未登记地点补登记后命中项未减少（${beforeCount}→${afterCount} 项），保留原稿`,
                 );
               }
               warnings.push(...repairedLocations.warnings);

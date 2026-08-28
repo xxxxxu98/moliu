@@ -754,36 +754,37 @@ describe('repairUnregisteredLocations', () => {
     return { rawText: withVolume, outline: parseExpandedOutline(withVolume)! };
   }
 
-  it('从 blockers 提取未登记地点名', () => {
+  function locationHits(outline: ExecutableOutline) {
+    // 2026-08-28 降级：地点命中在 warnings（非阻断），补登记通道合并读取
+    const report = inspectOutlineCompleteness(outline);
+    return [...report.blockers, ...(report.warnings ?? [])].filter(
+      blocker => blocker.kind === 'unknown-location-reference'
+    );
+  }
+
+  it('从 blockers+warnings 提取未登记地点名', () => {
     const { outline } = makeOutlineWithVolumeRef(
       WORLD_OUTLINE_TEXT,
       '主角在南江市揭开真相'
     );
-    const blockers = inspectOutlineCompleteness(outline).blockers;
-    expect(findUnregisteredLocationNames(blockers)).toEqual(['南江市']);
+    expect(findUnregisteredLocationNames(locationHits(outline))).toEqual(['南江市']);
   });
 
-  it('把未登记地点补进核心地点子段，blocker 消除', () => {
+  it('把未登记地点补进核心地点子段，命中消除', () => {
     const { rawText, outline } = makeOutlineWithVolumeRef(
       WORLD_OUTLINE_TEXT,
       '主角在南江市揭开真相'
     );
-    const before = inspectOutlineCompleteness(outline).blockers.filter(
-      blocker => blocker.kind === 'unknown-location-reference'
-    );
+    const before = locationHits(outline);
     expect(before.length).toBeGreaterThan(0);
 
     const result = repairUnregisteredLocations({
       rawText,
       outline,
-      locationNames: findUnregisteredLocationNames(
-        inspectOutlineCompleteness(outline).blockers
-      ),
+      locationNames: findUnregisteredLocationNames(locationHits(outline)),
     });
 
-    const after = inspectOutlineCompleteness(result.outline).blockers.filter(
-      blocker => blocker.kind === 'unknown-location-reference'
-    );
+    const after = locationHits(result.outline);
     expect(after).toEqual([]);
     // 补登记条目可被 parser 识别为 location
     expect(

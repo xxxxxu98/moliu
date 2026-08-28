@@ -481,6 +481,18 @@ const extractedFactsStrictSchema = z.object({
   events: z.array(storyEventSchema),
   deltas: z.array(stateDeltaSchema),
   evidence: z.array(z.string()),
+  // 死亡候选仲裁结论：strict schema 默认剥未知键，必须显式声明才能带回登记侧
+  candidateVerdicts: z
+    .array(
+      z.object({
+        id: z.coerce.number(),
+        isDeath: z.boolean(),
+        reason: z.string().optional().default(''),
+      })
+    )
+    .max(32)
+    .optional()
+    .default([]),
 });
 
 export const extractedFactsSchema: z.ZodType<ExtractedFacts> = z.preprocess(

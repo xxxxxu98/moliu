@@ -10,7 +10,11 @@
 
 import type { ChapterMemory, CharacterStateChange } from '@/types/project';
 import type { Chapter } from '@/types/project';
-import type { StoryEntity } from '@/types/story-runtime';
+import type {
+  DeathArbitrationCandidate,
+  DeathCandidateVerdict,
+  StoryEntity,
+} from '@/types/story-runtime';
 import { getMemoryManager } from './memory-manager';
 
 /**
@@ -665,6 +669,9 @@ const CRITICAL_STATUS_RULES: Array<{
       // stripNameEpithets 剥除后再过白名单（「者」入前瞻集防悬赏句误吞）
       /(?:斩|格|射|毒|勒|绞)(?:杀了?)([\u4e00-\u9fa5]{2,10}?)(?=[，。！？；、"”'」』者]|$)/,
       /([\u4e00-\u9fa5]{2,8}?)(?:的(?:尸[体首]|遗体|遗容))|(?:收殓|安葬|下葬)(?:了)?([\u4e00-\u9fa5]{2,8})/,
+      // 「老者收殓了顾青舟的遗体」：贪婪捕获会吃进主语（老者收殓了顾青舟）过不了
+      // 名单——加紧邻遗体消歧分支，捕获名紧贴 的遗体/坟/墓（2026-08-28 仲裁候选实测漏报）
+      /(?:收殓|安葬|下葬)(?:了)?([\u4e00-\u9fa5]{2,8}?)(?:的)?(?:尸[体首]|遗体|遗容|骨灰|坟|墓)/,
     ],
   },
   {
@@ -769,7 +776,149 @@ export function extractCriticalStatusChanges(
     }
   }
   changes.push(...extractExecutionDeaths(content, rosterSet));
-  return mergeCharacterStateChanges(changes);
+  const merged = gateFateChangesByArbitration(mergeCharacterStateChanges(changes));
+  // AI 救回的守卫拦截候选（isDeath=true）在此并入——守卫降级为 hint 后的唯一回票通道
+  if (activeDeathArbitration && activeDeathArbitration.rescues.length > 0) {
+    return mergeCharacterStateChanges([...merged, ...activeDeathArbitration.rescues]);
+  }
+  return merged;
+}
+
+// ============================================================
+// 死亡候选 AI 仲裁（2026-08-28 根治方案）
+// ============================================================
+// 正则网只懂语法：转述者同句、只要/便会、一旦/都要……每种新形态都要补正则，
+// 语法枚举永不收敛（2026-08-28 一天实测 8 种形态）。根治：正则降级为「候选召回网」，
+// 候选随当章 fact-extraction 请求交 AI 逐句仲裁，AI 显式否决（isDeath=false）的
+// 候选不进章记忆。召回=正则∪AI，精度=AI 语义判断；今后新形态只改仲裁 prompt。
+//
+// 仲裁结论经 setDeathArbitration 注入本模块单槽位，extractCriticalStatusChanges
+// 在登记前消费（引擎在 Step B 事实提取后、Step D 提交前设置）。无槽位（App 侧
+// 旧路径/未接线路径）保持原行为——召回优先，只有 AI 显式否决才丢。
+
+/** 参与 AI 仲裁的命运级状态（官职变更误报不阻塞管线，不参与仲裁保召回） */
+const FATE_ARBITRATION_STATES = new Set(['死亡', '驾崩', '下狱', '定罪']);
+
+let activeDeathArbitration: {
+  dropKeys: Set<string>;
+  rescues: CharacterStateChange[];
+} | null = null;
+
+function deathArbitrationKey(change: {
+  characterName: string;
+  state: string;
+  detail: string;
+}): string {
+  return `${change.characterName}|${change.state}|${change.detail.replace(/\s+/g, '')}`;
+}
+
+/** 引擎在事实提取完成后调用：候选 + AI 逐条仲裁结论。
+ *  registered 候选显式 isDeath=false → 从登记中丢弃；
+ *  guard-blocked 候选显式 isDeath=true → 救回登记（守卫只是 hint，语义终审归 AI）；
+ *  缺票一律保留（召回优先） */
+export function setDeathArbitration(
+  candidates: DeathArbitrationCandidate[],
+  verdicts: DeathCandidateVerdict[]
+): void {
+  const byId = new Map(candidates.map(candidate => [candidate.id, candidate]));
+  const dropKeys = new Set<string>();
+  const rescues: CharacterStateChange[] = [];
+  for (const verdict of verdicts) {
+    if (!verdict) continue;
+    const candidate = byId.get(verdict.id);
+    if (!candidate) continue;
+    if (verdict.isDeath === false && candidate.hint !== 'guard-blocked') {
+      dropKeys.add(
+        deathArbitrationKey({
+          characterName: candidate.name,
+          state: candidate.state,
+          detail: candidate.sentence,
+        })
+      );
+    } else if (verdict.isDeath === true && candidate.hint === 'guard-blocked') {
+      rescues.push({
+        characterName: candidate.name,
+        stateType: 'status',
+        state: candidate.state,
+        detail: candidate.sentence,
+      });
+    }
+  }
+  activeDeathArbitration = { dropKeys, rescues };
+}
+
+/** 清除仲裁槽位（回到未仲裁的原行为） */
+export function clearDeathArbitration(): void {
+  activeDeathArbitration = null;
+}
+
+function gateFateChangesByArbitration(
+  changes: CharacterStateChange[]
+): CharacterStateChange[] {
+  if (!activeDeathArbitration) return changes;
+  return changes.filter(
+    change =>
+      !FATE_ARBITRATION_STATES.has(change.state) ||
+      !activeDeathArbitration!.dropKeys.has(deathArbitrationKey(change))
+  );
+}
+
+/** 供引擎在 fact-extraction 前收集确定性候选：registered=未仲裁时将登记的命运级
+ *  变化；guard-blocked=被假设/威胁/修辞守卫拦下但含死亡结果词+名单锚的句子——
+ *  守卫只是 hint，AI 显式 isDeath=true 可救回（正则不做语义终审） */
+export function collectDeathArbitrationCandidates(
+  content: string,
+  roster?: string[]
+): DeathArbitrationCandidate[] {
+  const resolved = extractCriticalStatusChanges(content, roster);
+  const candidates: DeathArbitrationCandidate[] = [];
+  const seen = new Set<string>();
+  for (const change of resolved) {
+    if (!FATE_ARBITRATION_STATES.has(change.state)) continue;
+    const key = `${change.characterName}|${change.detail.replace(/\s+/g, '')}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    candidates.push({
+      id: candidates.length,
+      sentence: change.detail,
+      name: change.characterName,
+      state: change.state,
+      hint: 'registered',
+    });
+  }
+  // 守卫拦截句召回：死亡结果词 + 名单锚（≤40 字）即成候选，其余交给 AI 判断
+  const rosterSet = roster && roster.length > 0 ? new Set(roster) : null;
+  if (!rosterSet || candidates.length >= 32) return candidates;
+  for (const sentence of content.split(/(?<=[。！？])/)) {
+    for (const cue of sentence.matchAll(EXECUTION_CUE_GLOBAL_RE)) {
+      let bestName: string | null = null;
+      let bestIdx = -1;
+      for (const name of rosterSet) {
+        const idx = sentence.lastIndexOf(name, cue.index ?? 0);
+        if (idx < 0) continue;
+        if ((cue.index ?? 0) - (idx + name.length) > 40) continue;
+        if (idx > bestIdx) {
+          bestIdx = idx;
+          bestName = name;
+        }
+      }
+      if (!bestName) continue;
+      const detail = sentence.replace(/\s+/g, '').slice(0, 60);
+      const key = `${bestName}|${detail}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      candidates.push({
+        id: candidates.length,
+        sentence: detail,
+        name: bestName,
+        state: '死亡',
+        hint: 'guard-blocked',
+      });
+      break;
+    }
+    if (candidates.length >= 32) break;
+  }
+  return candidates;
 }
 
 /** 抓捕后叠加重复项（同角色同状态保留首条），按章节内出现顺序稳定输出 */
@@ -814,9 +963,12 @@ function isRhetoricalCueSentence(sentence: string): boolean {
  *  祈使不挡条件句。含假设/推演标记的句子一律不登记。
  *  「只要统领手腕稍一用力，顾衡的头颅便会当场落地」是同族条件句（刀架脖颈但未死），
  *  百章双开 r1 ch13 漏挡致主角登记死亡、ch14 连拒 5 次管线中止——与 FactExtractor
- *  侧同源，两侧必须同步改。 */
+ *  侧同源，两侧必须同步改。
+ *  「一旦断刀被捅到御前，他们背后所有人都要人头落地」是一旦+都要模态句（终验1
+ *  agiffix2 ch45 漏挡，陆衡被锚定登记死亡再卡死 ch45）——将来/推演模态词族一并
+ *  收口：完成体事实不用这些模态。 */
 const HYPOTHETICAL_SENTENCE_RE =
-  /不过是|无非是|大不了|照样[要会]|便[是要]|便会|就得|要是|若是|如果|倘若|万一|与其|只当|等于|无非|想想|盘算|权衡|只要/u;
+  /不过是|无非是|大不了|照样[要会]|便[是要]|便会|就得|要是|若是|如果|倘若|万一|与其|只当|等于|无非|想想|盘算|权衡|只要|一旦|都要|都将|必将|终将|将要|将会|恐怕|难免/u;
 
 /** 句内「动词紧贴人名」（杀了陆承安/斩了严世宽）：意图/盘算形态，不构成完成体 */
 const VERB_BEFORE_NAME_RE = (name: string): RegExp =>
@@ -861,6 +1013,8 @@ function extractExecutionDeaths(
         if (claimed.has(name)) continue;
         const idx = sentence.lastIndexOf(name, cue.index ?? 0);
         if (idx < 0) continue;
+        // 窗口 40：真死者与结果词间可隔着短叙述（「吴德贵身侧…发现此人早已气绝」
+        // 距离 ~20）；ch45「一旦…都要人头落地」型由模态守卫兜，不靠缩窗
         if ((cue.index ?? 0) - (idx + name.length) > 40) continue;
         // 「杀了陆承安」式动词紧贴人名 = 意图/盘算，即便句中带结果词也不登记
         if (VERB_BEFORE_NAME_RE(name).test(sentence)) continue;

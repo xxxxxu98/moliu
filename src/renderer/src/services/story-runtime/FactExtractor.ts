@@ -1,4 +1,5 @@
 import type {
+  DeathArbitrationCandidate,
   ExtractedFacts,
   FactExtractor,
   ProvisionalStateOverlay,
@@ -18,6 +19,9 @@ export interface FactExtractionInput {
   sceneDrafts: SceneDraft[];
   state: StoryState;
   overlay?: ProvisionalStateOverlay;
+  /** 确定性死亡候选（见 extract-plot-memory.collectDeathArbitrationCandidates）：
+   *  传入后请求 AI 逐条仲裁，结论随 candidateVerdicts 返回供登记侧门控 */
+  deathCandidates?: DeathArbitrationCandidate[];
 }
 
 /** 顶层 evidence 为空时，从 events/deltas 回填，避免结构化证据丢失 */
@@ -50,6 +54,14 @@ export class AIFactExtractor implements FactExtractor {
       summary: event.summary,
     }));
 
+    const deathCandidates = input.deathCandidates ?? [];
+    const arbitrationRules =
+      deathCandidates.length > 0
+        ? [
+            '8) 死亡候选仲裁：deathCandidates 是确定性规则筛出的疑似死亡/下狱/定罪句，逐条判定 isDeath——只有该角色本人的该状态确已发生才是 true。以下情形一律 false：假设/盘算/推演（只要/若是/一旦…都要/必将/恐怕等）、威胁/命令/判决宣布、修辞转喻、发现者/转述者提及他人（「X发现Y已气绝」只认Y）、死讯传闻或假消息。每条候选必须在 candidateVerdicts 输出 {id,isDeath,reason}，不得遗漏',
+          ]
+        : [];
+
     const raw = await this.ai.generate<ExtractedFacts>({
       purpose: 'fact-extraction',
       schemaName: 'ExtractedFacts',
@@ -64,8 +76,13 @@ export class AIFactExtractor implements FactExtractor {
         '5) deltas.path 用点分路径写状态变更；inventory 变更必须形如 inventory.<角色实体id>.<物品名>，value 必须是纯数字（数量/件数），禁止写 {unit,note,quantity,描述} 等对象或带单位的字符串',
         '6) 顶层必须输出一个 JSON 对象 {...}，禁止输出裸数组 [...]；events/deltas/evidence 三个字段都要存在',
         '7) 生死与命运事件必检：正文出现死亡/下狱/定罪的【已完成事实】时必须登记——每条产出 event(type="death"或"status_change") 并附带 deltas(path 用 characters.<实体id>.attributes.status，value 用「死亡/下狱/定罪/驾崩」)，evidence 必须引用【结果性】原文原句（如倒地气绝/头颅滚落/当场毙命/收殓下葬）。注意区分：判决宣布（"判斩立决"）、威胁命令（"给我杀了他"）、预谋计划（"要除掉X"）都不是事实，禁止据其写死亡 status；拿不准是否已完成时只产 event 不写 status delta。群像处决须逐个列出名单内的死者。死者以结果词紧邻的实体为准：发现者/转述者/报信人不是死者（「X发现Y已气绝身亡」只登记Y），不得给同句出现的活人登记死亡',
+        ...arbitrationRules,
         'JSON 字段必须为：',
-        '{"events":[{"id":"string","chapter":0,"sceneId":"string","type":"string","summary":"string","participants":["实体id或人名"],"causes":[],"effects":[],"evidence":["正文原句"]}],"deltas":[{"operation":"set|add|remove|increment","path":"inventory.char-1.银两","value":5,"evidence":"正文原句"}],"evidence":["正文原句"]}',
+        '{"events":[{"id":"string","chapter":0,"sceneId":"string","type":"string","summary":"string","participants":["实体id或人名"],"causes":[],"effects":[],"evidence":["正文原句"]}],"deltas":[{"operation":"set|add|remove|increment","path":"inventory.char-1.银两","value":5,"evidence":"正文原句"}],"evidence":["正文原句"]' +
+          (deathCandidates.length > 0
+            ? ',"candidateVerdicts":[{"id":0,"isDeath":true,"reason":"一句话理由"}]'
+            : '') +
+          '}',
       ].join('\n'),
       prompt: JSON.stringify({
         projectId: input.projectId,
@@ -73,6 +90,7 @@ export class AIFactExtractor implements FactExtractor {
         sceneDrafts: input.sceneDrafts,
         entityCatalog,
         eventCatalog,
+        deathCandidates: deathCandidates.length > 0 ? deathCandidates : undefined,
       }),
       parse: value =>
         ensureTopLevelEvidence(
@@ -96,9 +114,11 @@ const DEATH_RESULT_CUE_RE =
  *  「杀了陆承安不过是交差抵罪……自己照样人头落地」2026-08-28 第五轮回归实证
  *  「只要统领手腕稍一用力，顾衡的头颅便会当场落地」2026-08-28 百章双开r1 ch13 实证：
  *  只要/便会型条件句漏挡 → 主角被登记死亡 → 下章状态摘要判死，裁判 fact_conflict
- *  连拒 5 次触发 stalled 硬停止，全书中止于 14/100 */
+ *  连拒 5 次触发 stalled 硬停止，全书中止于 14/100
+ *  「一旦断刀被捅到御前，他们背后所有人都要人头落地」2026-08-28 终验 agiffix2 ch45
+ *  实证：一旦+都要模态句漏挡，陆衡被锚定登记死亡再卡死 ch45——模态词族一并收口 */
 const HYPOTHETICAL_SENTENCE_RE =
-  /不过是|无非是|大不了|照样[要会]|便[是要]|便会|就得|要是|若是|如果|倘若|万一|与其|只当|等于|无非|想想|盘算|权衡|只要/u;
+  /不过是|无非是|大不了|照样[要会]|便[是要]|便会|就得|要是|若是|如果|倘若|万一|与其|只当|等于|无非|想想|盘算|权衡|只要|一旦|都要|都将|必将|终将|将要|将会|恐怕|难免/u;
 
 /**
  * 死亡 status delta 的确定性防误报闸口（2026-08-27 双轮回归实证）：

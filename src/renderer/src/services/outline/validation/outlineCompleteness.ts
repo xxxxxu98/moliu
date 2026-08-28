@@ -47,6 +47,10 @@ export interface OutlineCompletenessBlocker {
 export interface OutlineCompletenessReport {
   canApply: boolean;
   blockers: OutlineCompletenessBlocker[];
+  /** 非阻断观察项（黄签）：地点自由文本扫描的命中——正则猜地名误报史太长
+   *  （「利用市」「遭遇商帮罢市」都进过表），2026-08-28 用户批准降级：
+   *  不再 fail-closed，地点补登记通道照常读这里 */
+  warnings?: OutlineCompletenessBlocker[];
 }
 
 const STRUCTURAL_BLOCKER_KINDS = new Set<OutlineCompletenessBlockerKind>([
@@ -153,8 +157,12 @@ function isPlausibleCharacterName(value: string): boolean {
   return true;
 }
 
-function inspectSemanticConsistency(outline: ExecutableOutline): OutlineCompletenessBlocker[] {
+function inspectSemanticConsistency(outline: ExecutableOutline): {
+  blockers: OutlineCompletenessBlocker[];
+  locationWarnings: OutlineCompletenessBlocker[];
+} {
   const blockers: OutlineCompletenessBlocker[] = [];
+  const locationWarnings: OutlineCompletenessBlocker[] = [];
   const totalChapters = outline.storyScale?.estimatedChapterCount;
 
   if (outline.storyScale && Number.isFinite(totalChapters) && totalChapters > 0) {
@@ -381,25 +389,25 @@ function inspectSemanticConsistency(outline: ExecutableOutline): OutlineComplete
     for (const volume of outline.volumePlan ?? []) {
       const volumeText = [volume.objective, volume.coreConflict, volume.climax].join('；');
       for (const location of extractUnregisteredLocations(volumeText)) {
-        blockers.push({
+        locationWarnings.push({
           kind: 'unknown-location-reference',
-          message: `第${volume.volumeIndex}卷卷纲引用了未登记地点「${location}」；必须补入世界与势力规划或改用已登记地点`,
+          message: `第${volume.volumeIndex}卷卷纲引用了未登记地点「${location}」；建议补入世界与势力规划或改用已登记地点`,
         });
       }
     }
     for (const blueprint of outline.chapterBlueprints ?? []) {
       const blueprintTextValue = blueprintText(blueprint);
       for (const location of extractUnregisteredLocations(blueprintTextValue)) {
-        blockers.push({
+        locationWarnings.push({
           kind: 'unknown-location-reference',
           chapterNumber: blueprint.orderIndex,
-          message: `第${blueprint.orderIndex}章蓝图引用了未登记地点「${location}」；必须补入世界与势力规划或改用已登记地点`,
+          message: `第${blueprint.orderIndex}章蓝图引用了未登记地点「${location}」；建议补入世界与势力规划或改用已登记地点`,
         });
       }
     }
   }
 
-  return blockers;
+  return { blockers, locationWarnings };
 }
 
 function inspectChronologyRegressions(outline: ExecutableOutline): OutlineCompletenessBlocker[] {
@@ -653,7 +661,8 @@ export function inspectOutlineCompleteness(
 
   blockers.push(...inspectChronologyRegressions(outline));
   blockers.push(...inspectBlueprintOpeningRepetition(outline));
-  blockers.push(...inspectSemanticConsistency(outline));
+  const semantic = inspectSemanticConsistency(outline);
+  blockers.push(...semantic.blockers);
 
-  return { canApply: blockers.length === 0, blockers };
+  return { canApply: blockers.length === 0, blockers, warnings: semantic.locationWarnings };
 }

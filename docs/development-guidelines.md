@@ -26,6 +26,7 @@
   - [9.1 服务结构](#91-服务结构)
   - [9.2 错误处理](#92-错误处理)
   - [9.3 AI 请求：禁止 max_tokens / maxTokens](#93-ai-请求禁止-max_tokens--maxtokens)
+  - [9.4 禁止前端用规则/正则做语义判定](#94-禁止前端用规则正则做语义判定)
 - [10. 测试规范](#10-测试规范)
 - [11. 文档要求](#11-文档要求)
 - [12. 样式规范](#12-样式规范)
@@ -897,6 +898,52 @@ body: JSON.stringify({ model, messages, temperature: 0.7, top_p: 0.9 })
 - 上下文预算、本地截断（如 `ContextPackBuilder.maxTokens`、`truncateToTokens`）属于**输入侧**控制，与本规则无关，可以保留。
 - 设置页若仍有「最大 Token」字段，也不得再写入实际 API 请求。
 - 目标字数请通过提示词约束，不要用 `max_tokens` 代替。
+
+---
+
+### 9.4 禁止前端用规则/正则做语义判定
+
+**红线**：除非特别情况，**禁止在渲染进程（前端）用正则/规则表/关键词词表做语义判定类逻辑**——这种方式不保险。
+
+**什么算"语义判定"**（禁止清单）：
+
+- 判断某句话是否表达真实事件（如「这句是不是死亡事实」）
+- 意图/语气识别（威胁 vs 陈述、假设 vs 完成、转述 vs 目击）
+- 文本语义分类（跨章目标 vs 单章目标、禁区与履约是否冲突）
+- 角色/实体关系与状态的语义推断
+
+**为什么禁**：语法枚举不收敛。正则只懂字面，模型文风与题材一变就翻出新形态，每个新形态都是一次新的误报/漏报 + 一次补丁。2026-08-28 单日实证：死亡提取的确定性词表连爆 8 种新形态（转述者同句、只要/便会、一旦/都要……），每一轮"修漏报"还引入新的误报语境，形成反噬循环。
+
+```typescript
+// ❌ 错误 — 用词表裁决"这句话是否真实死亡"（2026-08-28 连爆 8 形态的根源）
+if (EXECUTION_SENTENCE_RE.test(sentence) && rosterSet.has(name)) {
+  changes.push({ characterName: name, state: '死亡', ... })
+}
+if (HYPOTHETICAL_SENTENCE_RE.test(sentence)) continue  // 每遇到新句式就要补词
+```
+
+**✅ 正确姿势**（确定性代码只允许做三件事）：
+
+1. **格式校验**：引号配对、字数区间、标题长度、终止符检查等确定性指标
+2. **统计指标**：段落 CV、词频、相似度（复用 `normalizedSimilarity`）
+3. **候选召回**：规则网只筛"疑似句"作为候选，**语义终审交 AI**——候选随当章已有的 AI 请求下发，逐条仲裁，AI 显式否决才丢弃，缺票保留（召回优先）
+
+```typescript
+// ✅ 正确 — 正则只出候选，AI 逐条仲裁（参考 DeathArbitrationCandidate 模式）
+const deathCandidates = collectDeathArbitrationCandidates(prose, roster)
+const facts = await factExtractor.extract({ ..., deathCandidates })
+setDeathArbitration(deathCandidates, facts.candidateVerdicts ?? [])
+// AI 显式 isDeath=false 才丢弃；isDeath=true 可救回被守卫拦截的候选
+```
+
+**优先级更高的做法——生成侧自标注**：让模型在生成时就输出结构化元数据，消费端标注优先、词表只兜无标注的旧路径。例如滚纲对 mustCover 节点自标注【单章】/【跨章】（`isCrossChapterGoal` 标注优先）、对禁区自标注【让路】（`detectMustCoverForbiddenConflicts` 直认冲突）。
+
+**特殊情况必须用规则时**（白名单 + 留痕义务）：
+
+- 格式校验、统计指标、结构初筛（如姓名形态初筛 `isPlausibleCharacterName`）——正则是对的工具
+- 性能敏感热路径且语义误差可接受——必须在注释写明"为什么规则够用"，并配**双向回归样本**（误报向 + 漏报向各至少一条）
+
+**存量正则的处理原则**：新 bug 不再补词表，按上述模式改造成 AI 仲裁或生成侧标注。参考实现：`FactExtractor` 死亡候选仲裁、`outline-roller` 单章/跨章自标注、`outlineCompleteness` 地点扫描降级 warnings。
 
 ---
 

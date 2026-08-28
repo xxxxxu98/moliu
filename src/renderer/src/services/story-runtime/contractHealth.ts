@@ -72,6 +72,9 @@ const REVEAL_MUST_RE = /指出|指认|揭穿|当众|铁证|凶手|验尸|真相|
 const HELP_MUST_RE = /获得.*(帮助|援助|外援)|救援|神秘人/u;
 /** 已软化过的禁区标记（幂等：避免多级清洗时在已软化文本上重复追加） */
 const SOFTENED_ZONE_RE = /本章为履约「|以履约为准|所需帮助除外/u;
+/** 生成侧自标注（【让路】=滚纲判定该禁区与本章 mustCover 必然冲突）：
+ *  跳过词表猜测直接按冲突软化（2026-08-28 根治方案，词表只兜底无标注旧路径） */
+const YIELD_ZONE_RE = /^【让路】/u;
 
 export interface ContractConflict {
   mustCover: string;
@@ -122,6 +125,13 @@ export function detectMustCoverForbiddenConflicts(
   for (const zone of unique(forbidden)) {
     // 已软化过的禁区不再二次处理，避免多级清洗重复追加豁免文本
     if (SOFTENED_ZONE_RE.test(zone)) continue;
+    // 生成侧【让路】标注：与本章每个 mustCover 配对成冲突，走通用「以履约为准」软化
+    if (YIELD_ZONE_RE.test(zone)) {
+      for (const node of unique(mustCover)) {
+        conflicts.push({ mustCover: node, forbidden: zone, kind: 'overlap' });
+      }
+      continue;
+    }
     for (const node of unique(mustCover)) {
       if (REVEAL_ZONE_RE.test(zone) && (REVEAL_MUST_RE.test(node) || shareKeyTokens(zone, node))) {
         conflicts.push({ mustCover: node, forbidden: zone, kind: 'reveal' });

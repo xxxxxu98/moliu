@@ -1,0 +1,2427 @@
+{
+  "book": "大理寺项目经理：奉旨破局",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": null,
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "default",
+  "promptChars": 34,
+  "requestedChapterCount": 100,
+  "phaseTimings": {
+    "outlineDirectionsMs": 24318,
+    "outlineExpandMs": 326210,
+    "outlineRollMs": 191099,
+    "applyOutlineMs": 764,
+    "continueWriteMs": 4707714,
+    "totalMs": 5250105
+  },
+  "completedChapters": 45,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.agiffix2-final.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.agiffix2-final.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 替死鬼开局，三日问斩催命符",
+      "words": 3040,
+      "paras": 15,
+      "paraCv": 0.12,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [
+        {
+          "category": "entity",
+          "severity": "medium",
+          "location": "chapter-1:CBN:scene",
+          "description": "事件 chapter-1:CEN:event:1 引用了未知实体 神秘黑影",
+          "evidence": "一道幽灵般的黑影如青烟般无声滑入屋内，落地的脚步甚至没有惊起地上的尘土。；而在死寂的屋内，黑影的手指正迅速摸向尸体腰间内衬的一道暗缝。"
+        },
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/15，超过 5 句的段 8。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        },
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：15 段平均 201 字、变异系数 0.12，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "“啪”的一声脆响，紫檀惊堂木重重砸在公案上，震得案头朱砂砚台乱跳。沾着暗红朱砂的竹木死囚签挟着破空厉风呼啸而来，不偏不倚砸在陆衡额角。尖锐的木刺划破皮肉，温热的血珠顺着眉骨淌下来，刺得他左眼生疼。陆衡伏跪在冰凉刺骨的青石地砖上，脑海中仿佛被",
+      "tail": "动作极其熟练地在李茂冰冷僵硬的尸身衣襟、发髻以及靴底夹层中寸寸翻动。停尸房外的更夫敲响了三更的梆子，而在死寂的屋内，黑影的手指正迅速摸向尸体腰间内衬的一道暗缝。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 停尸房暗藏铁证，户部催命逼近",
+      "words": 3053,
+      "paras": 26,
+      "paraCv": 0.31,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "穿堂而过的夜风灌进破旧的换气窗，吹得停尸房中央的白麻布剧烈翻卷。陆衡立在石台旁，戴着厚实鹿皮手套的五指稳稳扣在李茂僵硬的外衣边缘。尸身经过半夜的阴冷停放早已彻底僵硬，干瘪凹陷的肋骨如同一排铁栅，死死夹着腰带内衬那道极为隐秘的缝隙。为了不扯碎",
+      "tail": "片松动。火把熄灭后的幽暗光线中，一道黑影自梁上如夜蝠般掠过。精钢锻造的淬毒袖箭在夜色中闪烁着森寒的幽蓝冷光，紧绷的机簧已然就绪，冰冷的箭头死死瞄准了陆衡的咽喉！",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 帝王密探现身，奉天殿百官甩锅",
+      "words": 3456,
+      "paras": 28,
+      "paraCv": 0.32,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "房梁上的冷风尚未散去，一道幽魅般的黑影已然自半空倒卷而下。陆衡甚至来不及眨眼，后颈处便感到一阵刺骨的寒意。紧接着，一柄泛着幽蓝毒光的薄刃悄然贴住了他的颈侧动脉。锋刃割破了表层皮肉，渗出的细小血珠在冰凉的刀锋上凝结，森然杀机瞬间笼罩了整间停尸",
+      "tail": "飘散，露出一双布满血丝却幽冷彻骨的眼睛。天子的威压在大殿内无声蔓延，景泰帝阴鸷的目光穿透虚空，如同一柄淬了寒冰的锋利匕首，直直刺向了殿下这位脊背挺拔的九品书吏。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 数据打脸，一张因果图问懵侍郎",
+      "words": 3296,
+      "paras": 24,
+      "paraCv": 0.31,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "金砖地面泛着幽沉的冷光，整座大殿死寂无声。龙案后方，景泰帝那双布满血丝的阴鸷双目如利刃般压来，天子威压笼罩全场。陆衡却没有半点退缩与避让。他迎着殿堂上压顶而来的冷意，双手猛然扣住白麻布卷轴的两端，手腕骤然发力下压，长达两丈的巨幅图纸带着破空",
+      "tail": "朱漆托盘里，拿起了户部今晨呈递的那份索要三百万两内帑的折子。\n\n大殿内针落可闻，连群臣的喘息声都在此刻彻底湮灭。景泰帝缓缓合上奏折，嘴角勾起一抹冰冷彻骨的杀意。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 奉旨立状，十二时辰调粮催命牌",
+      "words": 3241,
+      "paras": 26,
+      "paraCv": 0.22,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "景泰帝手中的奏折重重摔在龙案上，发出沉闷的撞击声。案头摆放的朱砂笔架被震得一阵乱颤，鲜红的墨汁溅在明黄缎面上，宛若点点刺目的血斑。满朝朱紫大员无不噤若寒蝉，连呼吸声都下意识屏住，生怕龙椅上的天子雷霆震怒降临在自己头上。\n\n“三百万两内帑，你",
+      "tail": "数十名身着无标黑衣的死士护卫隐在阴暗库道与射孔后，粗壮的臂膀猛然发力，将泛着淬毒幽光的精钢强弩缓缓拉满上弦，冰冷的箭头透过门缝与射孔，死死锁定了门外陆衡的胸膛！",
+      "error": null
+    },
+    {
+      "ch": 6,
+      "accepted": true,
+      "title": "第6章 强闯架阁库，查扣底账谁敢拦！",
+      "words": 2616,
+      "paras": 30,
+      "paraCv": 0.35,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "铁门射孔后方，淬毒箭尖泛着幽冷的蓝芒，十余名死士的手指已然扣在弩机扳机之上。青鸾的身形快得只剩下一道残影，腰间双刀凌空出鞘，两道刺目的雪亮弧光贴着门缝直刺射孔深处。血花飞溅伴随着机括断裂的脆响，两名死士应声倒地，其余弩手的准星彻底被打乱，毒",
+      "tail": "合，却用朱砂与密密麻麻的隐语符号，详细记录着历次江南漕粮被私下替换为发霉陈粮的真正船号与交割暗记。利用看着那张残页落入陆衡手中，整个人彻底瘫软在地上，面如死灰。",
+      "error": null
+    },
+    {
+      "ch": 7,
+      "accepted": true,
+      "title": "第7章 复式记账法！当场抓获贪粮蛀虫",
+      "words": 3173,
+      "paras": 26,
+      "paraCv": 0.14,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：26 段平均 120 字、变异系数 0.14，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "陆衡指尖捏着那张边缘带着火燎焦痕的暗码残页，深邃的目光越过瘫软在地的利用，直直射向公廨正堂中央的红木公案。公案后方，通州主事仓官脸色惨白如纸，额头上的冷汗顺着两颊涔涔滑落。在他身旁，三名户部资深老账房正拼命拨动着红木算盘，枯瘦的手指快得带出",
+      "tail": "合力转动绞盘。伴随着生铁机括刺耳的摩擦轰鸣，沉重城门轰然洞开，满载着万民生机的运粮车队咆哮着冲入皇城主道，滚滚车轮踏过青石板路面，激荡起穿透整座京城的沉闷回响。",
+      "error": null
+    },
+    {
+      "ch": 8,
+      "accepted": true,
+      "title": "第8章 夜抵流民营，西山偶遇失意匠官",
+      "words": 3451,
+      "paras": 41,
+      "paraCv": 0.45,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "车轮重重碾过皇城西侧崎岖的官道，三千石漕粮在数十辆大车的重压下发出沉闷声响。夜雾笼罩着城郊旷野，远远望去，京西流民大营像是一头匍匐在黑暗中的庞大巨兽。残破的窝棚连绵数里，刺骨寒风卷着冰冷的尘土，空气中弥漫着草木灰、腐烂杂草与绝望的气息。\n\n",
+      "tail": "，乡亲们，抢了粮仓才有饭吃啊！”\n\n火光摇曳的夜幕下，无数密密麻麻的凶戾黑影手持木棒与草叉，从黑暗的沟壑中汹涌而出，像决堤的黑潮一般疯狂扑向专班设立的临时粮仓！",
+      "error": null
+    },
+    {
+      "ch": 9,
+      "accepted": true,
+      "title": "第9章 铁牛聚众闹事，割开粮袋全是沙！",
+      "words": 3283,
+      "paras": 29,
+      "paraCv": 0.29,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "铁牛双臂青筋暴起，一把扯开挡在身前的专班差役，手中生锈的柴刀在火把映照下掠过一道惨白寒光。他没有砍向差役的脖颈，而是抬起布满老茧的大脚，带着千钧怒力狠狠踹在施粥大锅旁的水曲柳木桶上。沉重的木桶应声崩裂，大半桶泛着灰白沫子的浑浊米汤夹杂着腥臭",
+      "tail": "作熟练而隐秘地将那沓带着松墨香气的银票，不着痕迹地硬塞进了户部差役宽大的官服袖口之内。差役指尖微微一掂那厚度，嘴角泛起满意的狞笑，转身隐入了暗巷的重重浓墨之中。",
+      "error": null
+    },
+    {
+      "ch": 10,
+      "accepted": true,
+      "title": "第10章 直捣黑市粮铺，当场截获真粮",
+      "words": 2809,
+      "paras": 32,
+      "paraCv": 0.42,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "户部差役刚将那一沓厚实的银票塞入宽大袍袖，脸上狞笑尚未完全敛去，暗巷拐角处的青石屋脊上便炸开了一声极细碎的瓦片脆响。一道漆黑如墨的矫健身影自半空凌空扑下，青鸾手中的雁翎刀鞘裹挟着凌厉劲风，精准狠辣地砸在那名差役的后膝弯上。\n\n伴随着骨骼错位",
+      "tail": "槁、衣衫褴褛的饥民被狂暴的人潮裹挟着，手中高举着削尖的竹竿、生锈的柴刀与铁耙，双眼泛着猩红的血光，带着崩山裂地般的怒吼与疯狂，排山倒海般朝着脆弱的营门扑面砸来！",
+      "error": null
+    },
+    {
+      "ch": 11,
+      "accepted": true,
+      "title": "第11章 十万流民围仓，当众砸碎掺沙粮！",
+      "words": 3161,
+      "paras": 34,
+      "paraCv": 0.46,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "铁牛粗壮的手臂青筋暴突，手中那根沾染着暗红血迹的白蜡木哨棍重重顿在泥水里。在他身后，数百名衣衫褴褛、骨瘦如柴的流民青壮紧密地挤成一团，手中的草叉与削尖竹竿齐刷刷对准了前方。炽热的火把将铁牛那张满是烟灰与泪痕的方脸映得一片通红，他胸膛剧烈起伏",
+      "tail": "数名面色阴鸷的粗布汉子缓缓收回了敲锣的木槌，眼底闪烁着犹如毒蛇般的森冷杀意。他们互相对视了一眼，手掌悄无声息地探入宽大的棉袍内襟，死死按住了藏在暗处的精钢短刃。",
+      "error": null
+    },
+    {
+      "ch": 12,
+      "accepted": true,
+      "title": "第12章 夜半煽动炸营，暴徒虎口露老茧！",
+      "words": 2908,
+      "paras": 59,
+      "paraCv": 0.55,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "利用正抓着狼毫笔，在摊开的厚重账簿上飞快核对着领粮流民的丁籍与工分。案几旁的松油火把猎猎作响，沈工正指挥着工匠将刚卸下的大车推入排架，整个临时度支账房内算盘声与喧嚷声交织成一片。\n\n笃！\n\n三道凄厉刺耳的破空尖啸毫无征兆地划破夜空。\n\n三支",
+      "tail": "大眼死死盯着那道刺青，脚步止不住地向后连退了两步。\n\n“黑蛟盘刃，这是黑市底下专门吃人血馒头的夺命堂刺青！”铁牛失声惊呼，粗糙的面孔在跳动的火光映照下变了颜色。",
+      "error": null
+    },
+    {
+      "ch": 13,
+      "accepted": true,
+      "title": "第13章 铁牛倒戈擒凶，十万饥民甘愿领命！",
+      "words": 3089,
+      "paras": 39,
+      "paraCv": 0.44,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "跳动的火光照在黑脸汉子手腕内侧，那道狰狞的黑蛟盘刃刺青泛着幽暗的光泽。铁牛死死盯着那枚图腾，粗重的喘息声在逼仄的账房内回荡，额角上的青筋像蚯蚓一样剧烈暴跳。逃荒路上的一幕幕惨状在他脑海中翻江倒海，沿途那些被活活逼死卖掉的乡亲，那些趁火打劫掠",
+      "tail": "暗的信鸽振翅飞出雕花木窗，划破京城清晨的薄雾，迅速没入西郊连绵的群山与密林阴影之中，将那道彻底封死西山所有原料调拨的绝杀密令，送向了盘踞在关隘要道上的暗处势力。",
+      "error": null
+    },
+    {
+      "ch": 14,
+      "accepted": true,
+      "title": "第14章 十万民夫整编，西山石场突罢工",
+      "words": 2937,
+      "paras": 38,
+      "paraCv": 0.35,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "当啷一声沉浑洪亮的铜音撕裂了清晨的雾气。十几个头裹赭红布巾的哨官跨步站上夯土望台，手中的铜锣被重重敲响。金铁震荡的声浪在京西平原上层层荡开，惊动了栖息在荒草丛中的大片宿鸟。\n\n随着锣声起伏，流民大营内原本低矮凌乱的窝棚群并未如往日那般发生推",
+      "tail": "着卷过空无一人的采石坑道，将残存的白灰与冷烟卷向半空。陆衡端坐鞍辔之上，面色沉静地注视着这片彻底陷入瘫痪的漆黑山谷，工期倒计时的沙漏声在死寂中显得格外惊心动魄。",
+      "error": null
+    },
+    {
+      "ch": 15,
+      "accepted": true,
+      "title": "第15章 暗红私印现形，克扣工钱逼停产",
+      "words": 2623,
+      "paras": 26,
+      "paraCv": 0.44,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆衡翻身从马背上跃下，皂靴踏碎了脚边凝固的泥浆与焦黑炭渣。刺鼻的黄泥生水味混着冷灰在峡谷间回荡，数座被冷水强行灌灭的高耸炉膛在夜色里宛如冰冷的墓碑。青鸾轻巧落地，反手按在腰间刀柄上，目光警惕地扫过两侧陡峭的山崖。铁牛抹了一把脸上的冷雨灰迹，",
+      "tail": "匠死死盯着案前对峙的两人，山道上堆积如山的青石与熄灭的冷窑在黑暗中静默伫立，三千两现银的死结如同一柄无形的沉重铁锁，将整个黄河工期的命脉彻底卡死在西山绝境之中。",
+      "error": null
+    },
+    {
+      "ch": 16,
+      "accepted": true,
+      "title": "第16章 夺权锁拿贪官，革新计件工资制",
+      "words": 2954,
+      "paras": 42,
+      "paraCv": 0.37,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "山风穿过死寂的矿场，松脂火把在夜色中发出噼啪爆响。工部督办李主事双手撑在实木大案上，满脸横肉随着狞笑剧烈抖动，八百名枯瘦石匠屏息凝神，空气紧绷得像拉满的弓弦。\n\n“怎么，陆大人哑巴了？”工部督办挑着眼角，朝地上啐了一口浓痰，“拿不出三千两现",
+      "tail": "的眼前。\n\n所有的质疑与绝望在这一刻烟消云散，整座漆黑的山谷被火光与银芒彻底照亮，排山倒海般的欢呼声冲破夜空，宣告着黄河抢险的物资生命线在这片矿山之中悍然重启。",
+      "error": null
+    },
+    {
+      "ch": 17,
+      "accepted": true,
+      "title": "第17章 现银按件结算，八百匠人疯狂爆单！",
+      "words": 2783,
+      "paras": 20,
+      "paraCv": 0.21,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "利用抹了一把额头上的热汗，抬手一挥，数十名手执水火棍的差役齐步上前。五口沉重如铁的楠木大箱被两名壮汉合力抬起，底座猛地磕在料场中央排开的榆木长案上，震得整张大案嗡然作响。“开箱！倒银！”利用扯开破锣般的嗓子运足中气大喝。差役们齐声应和，手中",
+      "tail": "异物。沈工紧紧捧着温热的青灰废渣，转头望向远处石台上正提笔勾画图纸的陆衡，胸膛剧烈起伏，他敏锐地意识到，这一捧看似焦烂的残渣，足以将整座大胤山河的工法彻底颠覆！",
+      "error": null
+    },
+    {
+      "ch": 18,
+      "accepted": true,
+      "title": "第18章 慈宁宫问责，一张预算表平息风暴！",
+      "words": 2815,
+      "paras": 29,
+      "paraCv": 0.46,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "天色刚破晓，西山工造所的三十座高耸窑炉仍在彻夜轰鸣，青灰色的试制熟料已在矿场堆积如山。陆衡换上一身洗得发白的九品绿袍，片刻未歇便策马疾驰赶回皇城。工部与礼部的弹劾折子早已如同漫天飞雪般递入内阁，礼部尚书与户部侍郎赵秉文联名上奏，直指通政司专",
+      "tail": "门疾步溜出，拐入了一条偏僻昏暗的夹道。\n\n不多时，一封用蜜蜡封口的加急密信，自那名内监手中递出，在重重深宫阴影的遮掩下，悄然送往了文渊阁内阁首辅严府的书斋深处。",
+      "error": null
+    },
+    {
+      "ch": 19,
+      "accepted": true,
+      "title": "第19章 废渣变坚石，快干水泥初问世",
+      "words": 2850,
+      "paras": 24,
+      "paraCv": 0.13,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "西山工造所后山的试制工棚内，焦糊味伴着滚滚热灰充斥着虚空。十几个粗糙的方形木模倒在泥地上，里面的泥块大多布满裂纹，更有数个试块在脱模时便直接散成满地残渣。沈工两眼布满血丝，蓬乱的头发落满草木灰，死死抓着一块刚刚硬化的泥砖，粗糙的手指因过度用",
+      "tail": "来急促凄厉的铜锣声。一名浑身浴血的通政司传令骑兵伏在马背上狂奔而来，马蹄踏碎沿途碎石，撕心裂肺的嘶喊声响彻山谷，带来了黄河下游决口第二道防线彻底告急的血色军情。",
+      "error": null
+    },
+    {
+      "ch": 20,
+      "accepted": true,
+      "title": "第20章 神泥惊全场，运料官道突被封！",
+      "words": 2422,
+      "paras": 31,
+      "paraCv": 0.42,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "传令骑兵滚鞍摔在泥地上，后背衣甲已被鲜血浸透大半。他死死攥着一封沾满血污的羽檄军报，朝着石台上的陆衡嘶声狂吼：“黄河第二道防线决口溃退三十里！下游三州十八县尽成泽国，洪峰三日后将直扑主堤！请专班速发料石！”\n\n陆衡快步走下石台，伸手将脱力的",
+      "tail": "皮甲、手握明晃晃厚背砍刀的豪强家丁列阵排开。为首的刀疤壮汉一脚踩在专班被砸烂的通政司木牌上，狞笑着扬起滴血的长刀，带着身后数十名恶徒，森然封死了前方所有的去路！",
+      "error": null
+    },
+    {
+      "ch": 21,
+      "accepted": true,
+      "title": "第21章 拔刀堵路？直接强拆勋贵私卡！",
+      "words": 3140,
+      "paras": 34,
+      "paraCv": 0.28,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "刀疤壮汉手中的厚背砍刀还滴着暗红的马血，刀锋斜指着泥地，散发着刺鼻的血腥气。在他身前，三辆满载着快干水泥熟料与模块化沉箱骨架的双轴重大车横在泥泞中，坚韧的熟牛皮缰绳被齐齐斩断，断口处参差不齐。数匹受惊的挽马嘶鸣着侧翻在路沟旁，车架倾斜，防潮",
+      "tail": "兵马司差役与兵丁齐声暴喝，数十面生铁重盾铿锵合拢，闪烁着冰冷寒光的长矛与上弦待发的强弩织成一片铁壁，将陆衡及身旁的二十余名专班随从死死封锁在狭窄逼仄的峡口正中！",
+      "error": null
+    },
+    {
+      "ch": 22,
+      "accepted": true,
+      "title": "第22章 御赐金牌压顶，亮出律法斩贪官",
+      "words": 3165,
+      "paras": 29,
+      "paraCv": 0.47,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "户科给事中脸上的狂妄尚未散去，右手已然按在腰间雁翎刀的鲨鱼皮刀柄上，伴随着一声刺耳的金铁鸣响，雪亮的刀锋直接拔出半截。冰冷的杀气在狭窄的黑石峡口弥漫开来，百余名兵马司差役手中的重型步弓与强弩齐刷刷抬高三寸，弓弦紧绷的嘎吱声让人头皮发麻。\n\n",
+      "tail": "额头渗出豆大的冷汗，原本叫嚣的言官们更是一片死寂。景泰帝眼中寒芒暴涨，龙威如山岳般倾泻而下，一场围绕防汛大计与朝堂清浊的博弈，在奉天殿中彻底迎来了最凶险的交锋。",
+      "error": null
+    },
+    {
+      "ch": 23,
+      "accepted": true,
+      "title": "第23章 言官御前发难，一张账表抽肿脸！",
+      "words": 3149,
+      "paras": 27,
+      "paraCv": 0.38,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "奉天殿内金砖森寒，满殿朱紫重臣屏息凝神，殿内的空气沉重得几乎让人透不过气。赵秉文额头冷汗直淌，死死盯着地上散落的私卡账页，嘴唇颤抖着却吐不出半句辩解。然而殿阶之下，几名户科与都察院的言官对视一眼，立刻嗅到了派系倾覆的凶险，竟是不退反进。\n\n",
+      "tail": "公廨中翻动，刺目的朱砂红印与往年亏空字迹赫然显露在众目睽睽之下。原本被数据看板压制的紧张气氛再度骤然绷紧，赵秉文眼中翻涌着恶毒的杀意，死死锁定了神色如常的陆衡。",
+      "error": null
+    },
+    {
+      "ch": 24,
+      "accepted": true,
+      "title": "第24章 残破字条曝光，侍郎吓得倒退三步",
+      "words": 3330,
+      "paras": 45,
+      "paraCv": 0.49,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "公廨正厅内鸦雀无声，唯有赵秉文粗重的喘息声在廊柱间回荡。他手里死死攥着那卷泛黄的户部往年旧账，眼神中翻涌着孤注一掷的戾气，指节因为用力过度而泛起青白之色。方才那番声色俱厉的指控，已然将侵吞三百万两修河银的滔天巨罪，硬生生扣在了督办专班的头上",
+      "tail": "大窑正昼夜不息地焙烧快干水泥，若无大宗车队转运，堆积如山的物料根本无法送往大堤。\n\n整座公廨的气氛再度跌入冰窟，一道看不见的绞索，已然死死卡住了救灾防汛的咽喉！",
+      "error": null
+    },
+    {
+      "ch": 25,
+      "accepted": true,
+      "title": "第25章 流民组建车队，洪峰提前五日杀到",
+      "words": 2820,
+      "paras": 36,
+      "paraCv": 0.39,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "公廨内的空气仿佛凝成了铅块。利用手中的算盘啪嗒一声掉在案几上，脸色煞白地喃喃自语：“包下了全城的骡马大车，他们这是要断专班的生路啊。西山大窑日夜焙烧快干水泥，若是运不出去，堆在窑口不过三天就会受潮结块，下游大堤拿什么合龙？\n\n沈工也是急得额",
+      "tail": "遇的黄河特大洪峰，提前五日杀到了！\n\n染血的军情铜管从信使脱力的掌心滑落，当啷一声砸在台阶上，摔成了两半。公廨内外所有人如遭雷击，整座大堂瞬间陷入死一般的沉寂。",
+      "error": null
+    },
+    {
+      "ch": 26,
+      "accepted": true,
+      "title": "第26章 洪峰压境，沉箱流水线通宵狂飙",
+      "words": 3167,
+      "paras": 33,
+      "paraCv": 0.36,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆衡蹲下身子，从台阶血泊中拾起那截裂成两半的军情铜管。浸透汗血的绢帛在指尖展开，上游巴颜喀拉山山洪暴发、七处堰塞湖连环溃决的血红字迹触目惊心。原本专班算定的七日合龙窗口期，被这场天灾生生腰斩，只剩下最后三十六个时辰。\n\n公廨正厅内陷入了死寂",
+      "tail": "的麻绳残段在木案上散成几缕灰白的乱麻，山风灌入大棚，吹得赤红的倒计时木牌剧烈摇晃。三十座大窑的火光照亮了陆衡毫无血色的侧脸，距离洪峰漫堤，只剩下不到二十个时辰。",
+      "error": null
+    },
+    {
+      "ch": 27,
+      "accepted": true,
+      "title": "第27章 黑商囤料作死，带兵直捣秘密暗仓",
+      "words": 3186,
+      "paras": 32,
+      "paraCv": 0.3,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "工造所大棚内，松明火把被穿堂夜风吹得猎猎作响。木案上的那截断裂麻绳灰白散乱，沈工剧烈喘着粗气，胸膛起伏不定。满场八百名工匠全都停下了手里的铁锤，数十座焙烧水泥的大窑前一片沉寂，唯有炉火映照着众人发青的脸庞。\n\n陆衡伸出两根手指，捏起案上的碎",
+      "tail": "核销批文，别说是你这个九品芝麻官，就是朝廷正二品大员亲临，也休想动用老子商行的一根草绳！有种你就把我们全砍了，否则谁敢搬走一捆铁丝，老子叫你专班上下全族偿命！”",
+      "error": null
+    },
+    {
+      "ch": 28,
+      "accepted": true,
+      "title": "第28章 战时法令征用，连根拔起侍郎暗桩",
+      "words": 3503,
+      "paras": 35,
+      "paraCv": 0.28,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "黑商管事的狂笑声在空旷的货仓大堂内回荡，那只沾满泥浆的官靴正狠狠踩在碎裂的官府封条上。陆衡面色沉静，没有多说半句废话，脚下猛然发力向前踏出一步。他右臂借着腰胯之力悍然甩出，反手一记极其响亮的耳光，结结实实抽在了黑商管事的左脸上！\n\n啪的一声",
+      "tail": "重的木质车轮狠狠碾入泥泞的官道，溅起数尺高的浑浊水花，数十辆满载生铁麻绳的重车在呼啸的夜雨狂风中撕裂重重雨幕，如同一支不可阻挡的钢铁洪流，迎着夜雨全速冲入西山。",
+      "error": null
+    },
+    {
+      "ch": 29,
+      "accepted": true,
+      "title": "第29章 百具沉箱封顶，暗账惊现通州血印",
+      "words": 2981,
+      "paras": 32,
+      "paraCv": 0.45,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "沉重的运料马车狠狠撞开西山工造所的辕门，车轮在泥泞中犁出两道深沟。铁牛率先从打头的大车上跳下，抹了一把脸上的雨水，扯开破锣嗓子高喊：“生铁和麻绳全运回来了！卸车！弟兄们动作快，莫让雨水把底座泡烂了！”\n\n沈工披着蓑衣快步迎上前，粗糙的大手一",
+      "tail": "森杀意。\n\n陆衡面无表情地看着那枚血印，修长的手指重重按在账册之上，将其缓缓合拢。外头的雷声在山谷中久久回荡，暴雨如注，而决定百万生灵生死的决战，已然箭在弦上。",
+      "error": null
+    },
+    {
+      "ch": 30,
+      "accepted": true,
+      "title": "第30章 通州密印现原形，连夜突审撕铁证",
+      "words": 3098,
+      "paras": 40,
+      "paraCv": 0.44,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆衡掀开灯罩，取下一截燃至半寸的松木细签，挑亮了桌案中央的铜柄油灯。跳跃的黄白火苗向上窜起，温热的火舌隔着半寸虚空，烘烤着账页边缘那一层泛黄的油蜡。\n\n原本深埋在纸张纤维里的暗红印文受热伸展，在跳动的火光照映下，逐步泛出清晰分明的篆字轮廓。",
+      "tail": "，火速进宫面圣，一刻不得延误！”\n\n堂内的烛火在倒灌的狂风中剧烈晃动，陆衡单手托起那只尚带温热火漆的沉重铜匣，目光越过禁军森严的刀戟，迎着漫天风雨大步迈向正门。",
+      "error": null
+    },
+    {
+      "ch": 31,
+      "accepted": true,
+      "title": "第31章 暗桩供词落地，当堂打烂侍郎脸",
+      "words": 2488,
+      "paras": 29,
+      "paraCv": 0.46,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "金吾卫的明光铁甲在宫灯照映下泛着冷光，两扇厚重的雕龙朱漆殿门被内侍左右推开。陆衡单手稳稳托着那只沉重的八宝防火铜匣，脚步沉稳地迈过文华殿配殿的高耸门槛。殿内御前金炉中沉水香烟气缭绕，却丝毫压不住满屋剑拔弩张的焦灼之气。\n\n公案正前方，户部右",
+      "tail": "朱批密旨散发着滚烫的朱砂气息。在他身后，瘫软在地的赵秉文面如死灰，而殿外那场关乎大胤王朝生死存亡的六部跨部门终极博弈，在沉重的宣召鼓声与纷沓脚步中轰然拉开帷幕。",
+      "error": null
+    },
+    {
+      "ch": 32,
+      "accepted": true,
+      "title": "第32章 甘特图一挂，满朝朱紫全闭嘴",
+      "words": 3440,
+      "paras": 43,
+      "paraCv": 0.43,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "金砖地面上还残留着碎瓷与茶汤的渍痕，六部九卿的高官重臣们提着湿漉漉的绯紫袍角，踏着沉重的步子迈入文华殿。他们甫一抬头，便瞧见了瘫在蟠龙金柱旁形如烂泥的赵秉文，原本整肃的心头俱是狠狠一跳。\n\n殿内静得针落可闻。景泰帝端坐御案之后，阴沉的眼眸如",
+      "tail": "照着群臣惨白的面孔。大殿之外暴雨倾盆，狂风夹杂着雷霆之声呼啸而来，整座紫禁城的前朝大殿死寂如坟，唯有那六面带着血红时限的倒计时牌，在昏暗的烛火下泛着森冷的光泽。",
+      "error": null
+    },
+    {
+      "ch": 33,
+      "accepted": true,
+      "title": "第33章 七日军令状，九品官逼六部画押",
+      "words": 2940,
+      "paras": 25,
+      "paraCv": 0.43,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "御案斩角处的木茬泛着白茬，景泰帝手握明晃晃的天子剑，阴鸷的目光扫视过金砖地面上伏倒的一片朱紫朝服。文华殿内风雨倒灌，烛火被穿堂风扯得剧烈摇晃，群臣伏地叩首，连粗重的喘息声都死死压在喉咙里。方才还高谈阔论祖宗成法、六部权责的九卿重臣，面对天子",
+      "tail": "全部就位，千名工匠已按四班倒轮番上阵！”陆衡翻身上马，生铁戒尺遥指京西漫天风雨，厉声喝道：“传令全员，星夜兼程驰援西山！七日抢通大限已开，胆敢退后者斩，出发！”",
+      "error": null
+    },
+    {
+      "ch": 34,
+      "accepted": true,
+      "title": "第34章 破格升参议，金牌开道万军拔营",
+      "words": 3123,
+      "paras": 39,
+      "paraCv": 0.47,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "雨水沿着承天门高耸的歇山顶飞檐急坠而下，在青石地砖上砸出密密麻麻的白浪。陆衡方才翻身上马，宫门内的长廊深处便传来一阵急促沉重的脚步声。\n\n“慢着！”\n\n伴随着一声冷硬的断喝，景泰帝竟未乘龙辇，只披着一件明黄色油绸披风，在四名持灯太监的簇拥下",
+      "tail": "，火光如同一条翻滚的赤色巨龙，照亮了泥泞漫长的官道。沉重的车轮碾碎泥泞，数以万计的脚步声与车轴轰鸣声汇成撼天动地的怒涛，撕裂漆黑的雨夜，直扑咆哮溃决的黄河前线。",
+      "error": null
+    },
+    {
+      "ch": 35,
+      "accepted": true,
+      "title": "第35章 帝王药中有毒，上游闸官卷款逃",
+      "words": 3140,
+      "paras": 36,
+      "paraCv": 0.56,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "沉重的车轮在黄泛区边缘的烂泥中碾出深沟，粗麻绳与生铁滑轮在暴风雨中发出令人牙酸的摩擦声。五百辆载着水泥沉箱与特制石料的重型大车正沿着官道向南推进，十营流民工匠手执火把紧随其后。陆衡翻身下马，带着利用与沈工大步踏入道口官驿的临时签押房。\n\n签",
+      "tail": "发出几声沉闷至极的机件断裂声。生铁崩断的尖锐脆响夹杂着千万吨浊浪的咆哮，化作一道震耳欲聋的巨石塌方轰鸣，在狂风暴雨中轰然炸响，整片河滩的大地都随之剧烈摇晃起来。",
+      "error": null
+    },
+    {
+      "ch": 36,
+      "accepted": true,
+      "title": "第36章 天子剑斩乱局，接管前线谁敢拦",
+      "words": 3489,
+      "paras": 51,
+      "paraCv": 0.63,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "泥水在急促的马蹄下炸开漫天浊沫，战马嘶鸣着冲上被暴雨冲刷得千沟万壑的碎石河堤。白沙分水闸的主营区已然沦为一片泥泞狼藉，狂风将营房顶部的茅草与油布成片掀飞。数十名负责看守闸口的兵勇与差役正像没头苍蝇般四散奔逃，地面上散落着被踩烂的号衣、断裂的",
+      "tail": "分水闸在狂暴的水流冲击下发出令人心悸的呻吟，青石筑成的基座接缝处被巨大的水压撕扯开一条条狭长的裂缝，激起漫天浊浪水雾。浑浊的洪流正疯狂拍打着摇摇欲坠的闸楼石墩。",
+      "error": null
+    },
+    {
+      "ch": 37,
+      "accepted": true,
+      "title": "第37章 水下石桩掺沙，当场抓获投毒贼",
+      "words": 3278,
+      "paras": 29,
+      "paraCv": 0.1,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "陆衡按住被狂风卷起的案头图纸，冰冷的浊浪水雾顺着窗缝直灌而入。整座闸楼石墩在咆哮的洪流冲撞下剧烈颤动，脚下青石板传来的震颤几乎让人站立不稳。黑沉沉的河水如同一头暴怒的巨兽，正不断撕扯着白沙分水闸单薄的防线。\n\n“大人，水底下的桩脚不对劲！”",
+      "tail": "工匠齐声怒吼，震天的号子声穿透黑夜。泥泞的高台之上，四名死士面如死灰，而那枚象征着户部最高权力暗面的血色印记，已然将这场黄河大汛推向了更深不可测的惊涛骇浪之中。",
+      "error": null
+    },
+    {
+      "ch": 38,
+      "accepted": true,
+      "title": "第38章 祭旗稳住军心，激流狂澜我来扛",
+      "words": 3177,
+      "paras": 49,
+      "paraCv": 0.46,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "陆衡迅速将那半截带有户部暗印的密信残页折好收进贴身内袋，反手扣紧腰间的青铜革带。台下的专班暗卫动作利落，沉重的熟铁脚镣与死囚重枷毫不留情地套在四名落水死士的颈项之上，将人死死按在泥泞中。\n\n“把这四个活口押入后方地窖严加看管，由青鸾亲自布防",
+      "tail": "光，远方的黄河河道上游出现了一道遮天蔽日的黑色水墙。那是混杂着上游数万吨崩塌石料与断木、高达数丈的毁灭性巨浪，正以排山倒海的气势向着刚刚稳住的白沙副闸狂卷而来。",
+      "error": null
+    },
+    {
+      "ch": 39,
+      "accepted": true,
+      "title": "第39章 标准化流水线，流民军团抢下基桩",
+      "words": 2725,
+      "paras": 44,
+      "paraCv": 0.54,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "黑色水墙遮蔽了天际，夹杂着上游崩落的万吨巨石与断木，发出宛如万马奔腾的隆隆巨响。狂暴的气流压得人呼吸困难，白沙副闸前沿的水位在几个喘息间又向上猛蹿了半尺。混浊的浪头拍打在青石护栏上，碎石与泥浆如雨点般砸向营地。\n\n“大人，水头太凶，光靠水泥",
+      "tail": "片天地陷入了一种诡异至极的死寂。\n\n紧接着，厚重如铁铸般的黑云彻底崩裂，天空中骤然降下百年不遇的特大暴雨，水流如天河倾覆般倾盆如注，狂暴砸向尚未完全合龙的河道。",
+      "error": null
+    },
+    {
+      "ch": 40,
+      "accepted": true,
+      "title": "第40章 暴雨连降三日，主堤撕裂百米溃口",
+      "words": 2964,
+      "paras": 30,
+      "paraCv": 0.32,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆衡反手抹去糊在眼眶上的污浊泥水，将三尺长的一柄生铁钎重重凿入防浪石台的裂缝之中。暴雨自天穹倾泻而下，水流在石板上汇成急湍，狠狠冲刷着他脚下的官靴。狂风撕扯着防雨油布，发出如战鼓般密集的爆鸣。\n\n“大人，水文站的快马来报了！”利用怀里死死抱",
+      "tail": "漫过最后一层浅滩，浑浊的水沫几乎飞溅到了签押大帐的门帘之上。陆衡迎着漫天风雨按剑立于残堤最高处，目光穿透滚滚浊浪，决战的倒计时已然敲响在这片九死一生的浩劫之中。",
+      "error": null
+    },
+    {
+      "ch": 41,
+      "accepted": true,
+      "title": "第41章 沉箱狂砸黄河口，铁索横江战洪峰",
+      "words": 2826,
+      "paras": 18,
+      "paraCv": 0.31,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆衡猛然将手中长剑插在湿透的青石方砖缝隙里，双目如鹰隼般紧盯着下方咆哮的百米深渊。扑面而来的浊浪掀起三丈多高的恶臭水雾，犹如狂暴的黑水巨兽，正张开血盆大口狠狠撕咬着残存的北岸堤根。每一次狂涛撞击，脚下的条石便随之剧烈颤动，大团大团混杂着草根",
+      "tail": "体上的一根粗壮钢索直接崩断，呼啸的水箭直冲高空。整座沉箱矩阵在水下剧烈震荡起来，刚刚被遏制住的水势再度在缝隙周围掀起狂乱的黑色漩涡，生死存亡的危机再度悬于一线。",
+      "error": null
+    },
+    {
+      "ch": 42,
+      "accepted": true,
+      "title": "第42章 快干水泥灌浆，三刻钟凝石堵恶浪！",
+      "words": 2961,
+      "paras": 24,
+      "paraCv": 0.28,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "水缸粗细的浑浊水柱带着狂暴的水压自沉箱缝隙冲天而起，混杂着碎石与淤泥的激流宛如一柄破城重锤，将两丈多高的水雾狠狠砸向四方。三名正伏在箱体边缘固定铁锚的年轻河工避无可避，护身皮甲在狂暴的水流冲击下四分五裂。沉闷的骨裂声中，两名河工当场被水柱凌",
+      "tail": "老松与百年重木。那些重达万斤的尖锐浮木如同密密麻麻的攻城重槌，在狂暴的恶浪中上下翻腾，带着毁天灭地的呼啸声，正朝着刚刚灌浆稳固、尚未彻底合龙的沉箱矩阵狂暴撞来！",
+      "error": null
+    },
+    {
+      "ch": 43,
+      "accepted": true,
+      "title": "第43章 十万民夫齐吼，主堤最后十米合龙！",
+      "words": 2890,
+      "paras": 43,
+      "paraCv": 0.55,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "数万斤重的巨型老松借着五丈高的浪头狂暴砸下，粗壮坚硬的树干前端被激流削得尖锐如矛，裹挟着千万吨浑浊泥浆的下坠之力，撕开漫天雨幕，恶狠狠扎在第一排沉箱的迎水立面上。\n\n金石交击般的恐怖爆响自水底轰然炸开。\n\n沉重的冲击波将数丈高的水墙硬生生拍",
+      "tail": "去的滚滚浊流，身前则是十万百姓山呼海啸般的叩拜与欢腾。黄河主堤抢险已然完成交付，但那些深藏在暗处的断刀残铁与账册阴霾，正等待着他在即将到来的朝堂风暴中彻底引爆。",
+      "error": null
+    },
+    {
+      "ch": 44,
+      "accepted": true,
+      "title": "第44章 大堤合龙万民拜，督办栽赃反被抽",
+      "words": 2791,
+      "paras": 26,
+      "paraCv": 0.13,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "陆衡抬手拂去朱红官袍袖口上的泥浆，天子长剑顺势归鞘，金属撞击声清脆沉稳。破晓晨曦彻底撕裂铅灰色的浓云，万道金色晨光洒在刚合龙的百米巨堤上。大堤之下，肆虐多日的浊浪被巨型沉箱稳稳拦截，化作平缓水波向东奔流，再无法逾越半步。\n\n欢呼声从前沿哨位",
+      "tail": "，必须让严首辅与赵侍郎先拿到这份折子！”\n\n死士将密件死死塞入皮甲内层，扬鞭狠抽战马，急促的马蹄声踏碎漫天泥水，载着致命的构陷暗流，顺着官道向京城方向狂奔而去。",
+      "error": null
+    },
+    {
+      "ch": 45,
+      "accepted": false,
+      "title": "第45章 现场核账反客为主，专班奉旨回京！",
+      "words": 0,
+      "paras": 0,
+      "paraCv": 0,
+      "attempts": 5,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "",
+      "tail": "",
+      "error": "语义问题[fact_conflict] 中军大帐及拔营启程全篇: 状态摘要中陆衡的生死状态登记为“死亡”，但正文中陆衡仍在现场发号施令、反驳督办主事并率队启程，存在跨章存在性矛盾。"
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 替死鬼开局，三日问斩催命符"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 停尸房暗藏铁证，户部催命逼近"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 帝王密探现身，奉天殿百官甩锅"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 数据打脸，一张因果图问懵侍郎"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 奉旨立状，十二时辰调粮催命牌"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 强闯架阁库，查扣底账谁敢拦！"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 复式记账法！当场抓获贪粮蛀虫"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 夜抵流民营，西山偶遇失意匠官"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 铁牛聚众闹事，割开粮袋全是沙！"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 直捣黑市粮铺，当场截获真粮"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1787919124361",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-1Jf6BW\\story-runtime\\proj-1787919124361-54fbf23f07b1.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 44,
+    "canonicalSnapshots": 45,
+    "latestSnapshotChapter": 44,
+    "sceneChunks": 44,
+    "events": 180
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 14,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "baf49b71c79766dc71369e403b992b6027891258a590a598bd1e59d9881953db",
+    "completeCharacterProfileCount": 14,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 14,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 100,
+    "writtenChapterCount": 44
+  },
+  "outlineWarnings": [
+    "大纲存在 2 个未登记角色（利用、齐王），执行第 1 轮补登记",
+    "未登记角色已补登记 2/2 个",
+    "大纲审查修正完成：修复 1 处问题",
+    "本地收缩超长标题/CBN/CEN 共 2 章（第 8、16 章），未发 AI 请求",
+    "未登记地点已补登记 2/2 个"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 31,
+    "firstPassRate": 0.689,
+    "rewrittenChapters": 14,
+    "totalRewriteRounds": 14,
+    "averageRewriteRounds": 0.31,
+    "pipelineAttempts": 49
+  },
+  "runtimeMetrics": {
+    "requestCount": 189,
+    "requestCountsByPurpose": {
+      "scene-draft": 73,
+      "fact-extraction": 58,
+      "chapter-judge": 58
+    },
+    "latencyP50Ms": 13119,
+    "latencyP95Ms": 48122,
+    "latencyMaxMs": 60570
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "explicit"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 89.2,
+      "wouldStartReading": true,
+      "confidence": 0.94,
+      "dimensions": {
+        "openingAttraction": 90,
+        "coreSellingPoint": 92,
+        "protagonistDrive": 89,
+        "conflictEscalation": 90,
+        "payoffPlanning": 89,
+        "characterRelations": 78,
+        "suspensePlanning": 91,
+        "audienceFit": 93
+      },
+      "issues": [
+        {
+          "id": "reader.character-1",
+          "severity": "medium",
+          "category": "character",
+          "location": "全文",
+          "description": "人物设定表中存在重复人物条目（“齐王赵元烨”与“齐王”重复），且多处 relationshipChanges 存在字符串切分异常，将动态描述误断裂为新的 targetName。",
+          "evidence": [
+            "{\"targetName\":\"暗中互相利用除掉陆衡，到兵变时彻底撕破脸皮将其软禁\",\"relationType\":\"use\",\"dynamic\":\"暗中互相利用除掉陆衡，到兵变时彻底撕破脸皮将其软禁\"}"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-2",
+          "severity": "low",
+          "category": "other",
+          "location": "全文",
+          "description": "地理设定中混入了章节动作/事件短语作为城市级地名，属于大纲数据提取时的脏数据残留。",
+          "evidence": [
+            "{\"name\":\"直捣黑市\",\"level\":\"city\",\"functionInStory\":\"卷纲与章节蓝图引用的地点，补登记入表。\"}"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.pacing-3",
+          "severity": "low",
+          "category": "pacing",
+          "location": "全文",
+          "description": "西山工造所后山铺设铸铁长轨的伏笔埋设在第22章，此时主角刚解决采石场欠薪与官道私卡，过早出现重载轨道车技术线索略显超前，需注意与前期水泥基建的节奏衔接。",
+          "evidence": [
+            "西山工造所后山极其隐秘地铺设了一条由两根平行铸铁长轨构成的狭长道路，上面停放着数辆带有双排轮滑的大型重载平板车"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "这是一份卖点极其明确、执行力与破局爽感极强的优质官场职场向大纲。核心创意将现代敏捷项目管理、关键路径法与因果看板硬核植入古代救灾、漕运与战时应急体系，与古代官僚推诿甩锅形成剧烈戏剧冲突。开局黄金三章以替罪死局极限起手，倒计时紧凑，打脸节奏与工业技术升级（复式记账、计件工资、模块化水泥沉箱）严丝合缝。三卷冲突从地方水患民生、跨部门漕粮军工到皇城平叛抗敌，层级推进扎实，伏笔回收网络完整。除人物关系表存在少量格式切分脏数据外，整体故事引擎强劲，完全具备立即开书并吸引核心读者的水准。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 88.3,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 90,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 85,
+          "characterVoice": 86,
+          "payoffValue": 88,
+          "pacing": 89,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "三十年老仵作在验尸文册中巨细靡遗地记录了软骨碎裂、指甲木屑等机械窒息特征，却草率下定论为自尽，在公堂上被主角一眼拆穿，略微削弱了原定案官僚势力的专业压迫感，属于为了给主角留破绽而设置的经典工具人瑕疵。",
+            "evidence": [
+              "卷宗第三页明确记录‘颈下软骨有微细裂痕，两颊及耳后布满暗紫淤斑’。……陆衡指出的每一个细节，全都是大理寺文书里白纸黑字记录的实证，只是此前无人去深究这些生理矛盾。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "首章质量扎实，极具类型爽感。开局以‘死囚签砸头’迅速切入极限倒计时生死局，主角凭借工程项目总监的敏锐度，从‘法医勘验生理矛盾’与‘工程物资时间线/水文逻辑’双维度降维打假，完成公堂自救与微爽点兑现。篇末既立下了‘三日重编真实账册’的核心主线倒计时，又以神秘人夜潜停尸房搜尸制造即时悬念，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 85.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 84,
+          "characterVoice": 83,
+          "payoffValue": 82,
+          "pacing": 86,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "现代项目管理术语（如敏捷原则、甘特图、风险因果树）在心理描写中较为密集，虽然符合穿越人设与卖点定位，但稍显直白，后续需注意与古代语境融合时的自然感。",
+            "evidence": [
+              "他将公文仔细折叠收好，正要迈步跨出停尸房回值房重编工程甘特图，头顶上方的悬空横梁上，却忽然传来一阵极为轻微的破空声。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上章停尸房暗探的悬念，节奏紧凑明快。前半段通过硬核物料比对与工具暗舱设计，利落获取黄河贪腐铁证，提供了扎实的阶段性线索兑现；中段户部右侍郎赵秉文带刀闯入施压，将冲突升级为‘三日补齐80万两现银’的绝境追逼，主角以退为进的理性隐忍符合职场破局逻辑；尾段以梁上淬毒暗箭突袭收尾，悬念钩子直接而有力，追读动力充沛。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 87.6,
+        "continueReading": true,
+        "confidence": 0.7,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 88,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "正文中出现词语叠字重复瑕疵。",
+            "evidence": [
+              "皇帝在乾清宫内夜不能寐，急需一柄能撕开铁板铁板一块的文官集团的快刀。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧密承接上章梁上刺客悬念，主角以冷静理性的工程思维迅速化解危机并借力暗卫青鸾；后半段场景迅速切换至奉天殿大朝会，百官互相甩锅逼宫的压抑氛围拉满，主角携工程因果图强力闯殿、用硬核数据降维打击户部工部的桥段爽感扎实，结尾皇帝的反应形成强劲追读悬念。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 91.3,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 92,
+          "openingHook": 88,
+          "conflictEffectiveness": 93,
+          "emotionalDrive": 91,
+          "characterVoice": 90,
+          "payoffValue": 94,
+          "pacing": 91,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "章首衔接处对摊开画卷的动作进行了二次描写，且卷轴尺寸表述由‘丈余’变为‘两丈’，存在轻微的动作重复与细节瑕疵，但不影响核心情节的推进与阅读体验。",
+            "evidence": [
+              "上一章尾部已有‘双手一抖，哗啦一声将那轴长达丈余的白麻布卷轴在金砖地面上彻底摊开’，本章开头再次描写‘双手猛然扣住白麻布卷轴的两端……长达两丈的巨幅图纸带着破空风声，在奉天殿正中的御道上轰然抖落铺展’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章展现了一场高水准的‘现代项目管理降维打击官僚体制’的朝堂辩论。主角陆衡运用因果链路拆解与精准数据算式（如42天公文延误、倒填日期、2200两维持7日对比虚报300万两、扣留8万石倒卖），层层击穿户部侍郎赵秉文的推诿套路，逻辑闭环、论据扎实。反派从反咬到溃败的过程极具压迫感与爽感，首辅的忌惮与皇帝的震怒将权谋张力推向高潮，完全契合目标读者对硬核破局与极速解压的期待。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 89.2,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 90,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 88,
+          "characterVoice": 86,
+          "payoffValue": 88,
+          "pacing": 90,
+          "endingPull": 92
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "古代时辰与现代分钟换算出现常识性笔误：前文立下'十二个时辰'（即24小时/1440分钟）军令状，后文主角内心的倒计时却写为'第七百二十分钟'（720分钟仅合12小时/6个时辰），换算不严谨易使硬核读者出戏。",
+            "evidence": [
+              "脑海中的项目交付倒计时已经从第七百二十分钟开始跳动"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章殿试高潮，迅速完成'立军令状-获赐金牌-组建专班-化解运力死局-兵临通州官仓'的推进闭环。以工代赈征用流民破局体现了硬核项目经理的务实思维，反派暗中下达灭口密令与关厢暗弩伏击拉满张力，行文节奏极快，追读期待感极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 6,
+        "score": 86,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 84,
+          "characterVoice": 84,
+          "payoffValue": 86,
+          "pacing": 88,
+          "endingPull": 84
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "主角作为文官/专班负责人，在此处直接凌空飞踢将五大三粗的门卒队长踹飞数丈并砸翻三人，武力表现略显突兀，但对爽感和推进节奏影响较小。",
+            "evidence": [
+              "身形借力腾起，一记凌厉至极的重脚狠狠踹在门卒队长的心窝上。沉闷的骨裂声响起，那名五大三粗的队长如同断线风筝般倒飞出去，接连砸翻了后方三名持刀差役"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧接上文的弩手伏击危机，行文节奏极为紧凑。破门强攻、弹压差役、抢救架阁库火情、搜查暗格录事、识破假账并强行搜出暗码残页，一系列动作行云流水，充分展现了职场降维打击与雷厉风行的执行力。局势推进清晰，微爽点兑现充分，成功获取了揭开贪腐链条的关键物证，章尾钩子具备良好的追读吸引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 7,
+        "score": 89,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 87,
+          "payoffValue": 92,
+          "pacing": 89,
+          "endingPull": 86
+        },
+        "issues": [],
+        "summary": "本章精准兑现了标题与前章伏笔的爽点。主角运用现代复式记账法对古代单轨流水假账实施降维打击，论证逻辑严密且爽感直观；随后迅速瓦解敌方心理防线起获地库隐粮，铁血统筹流民车队连夜破门还京，节奏凌厉紧凑，完全契合职场降维与硬核执行力的核心卖点。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 8,
+        "score": 85.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 84,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 83,
+          "pacing": 86,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "西山料场偶遇怀才不遇且恰好试制出快干水泥雏形的匠官，情节推进略带快餐式巧合，降维技术拼图获取过于顺遂，略削弱了基建探索的硬核感。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "章尾难民营煽动暴乱的情节引入稍显突兀，幕后黑手或暗桩的行动缺乏前置微弱铺垫，作为章尾危机钩子有效但略显机械式触发。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章运粮入京的高潮，节奏紧凑且执行力拉满。前半段展现了现代危机响应与防踩踏分流机制，扎实落地；中段引入'以工代赈'战略与快干水泥科技树，成功收服核心技术骨干沈工，满足了基建文读者的科技爽感；后半段以粮仓突发煽动性暴乱作为章尾钩子，悬念与危机感骤升，整体追读欲望极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 9,
+        "score": 86.2,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 85,
+          "characterVoice": 86,
+          "payoffValue": 84,
+          "pacing": 87,
+          "endingPull": 85
+        },
+        "issues": [],
+        "summary": "本章紧承上章结尾的民变危机，开篇冲突激烈。主角陆衡没有推诿或强压，而是当众剖开底层粮袋揭露调包阴谋，化被动为主动；随即推出'以工代赈+工分制'，既平息了暴动，又为西山水泥料场瞬间解决了两千劳动力瓶颈。章尾切至反派粮栈分赃现场，给出了明确的破局线索与打脸预期，节奏紧凑，爽感与职场降维执行力表现出色。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 10,
+        "score": 87.2,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 90,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 85,
+          "characterVoice": 84,
+          "payoffValue": 86,
+          "pacing": 88,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "黑市抄查到流水线装车转场的行军过程略显极速压缩，工造所与车队的调动响应如同现代特勤部队，略带机械感。",
+            "evidence": [
+              "不到半个时辰，整整三千石优质官粮彻底点验装车完毕。五十辆重载大车在主街上排成一条蜿蜒长龙"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏极为凌厉，承接上章尾声的黑市线索直接破门抄家，动作戏干净利落，当场截获真粮与暗账，迅速完成破局第一阶段的微兑现。随后主人公运用流水线装载体现职业特质，并在押运回程中无缝切入反派狗急跳墙煽动流民营暴动的次级危机，结尾车阵防御与暴民冲营的张力拉满，追读动力强劲。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 11,
+        "score": 91.2,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 89,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 93,
+          "characterVoice": 90,
+          "payoffValue": 94,
+          "pacing": 91,
+          "endingPull": 89
+        },
+        "issues": [],
+        "summary": "本章紧承上文暴乱危机，高潮迭起且爽点密集。主角通过当众剖粮示众、锁拿内鬼仓官、砸碎毒泥烂沙铁锅强力破局，随后迅速推行网格化管理与以工代赈工分制，将现代项目经理思维与古代赈灾基建硬核结合。既高额兑现了前文追回精粮的成果，又彻底收服流民领袖铁牛与数万民心。章末暗藏刺客杀机，明暗危机转换自然，节奏明快，极具追读张力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 12,
+        "score": 85.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 88,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 85,
+          "characterVoice": 84,
+          "payoffValue": 85,
+          "pacing": 87,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "线索设定叠加略显紧凑：刺客既具备‘常年握厚背朴刀、拉八斗强弓’的正规军伍老茧，又带有黑市刺客组织‘夺命堂’的黑蛟刺青，虽能自圆其说（如军中退伍死士或暗门势力），但线索集中抛出略显急促。",
+            "evidence": [
+              "唯有常年紧握大胤军制厚背朴刀、日夜拉开八斗强弓的人，才会磨出这种老茧……黑蛟盘刃，这是黑市底下专门吃人血馒头的夺命堂刺青！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上文埋下的杀机，开篇以三支火箭破空突袭、暴徒煽动炸营破局，制造出强烈的开场危机。主角陆衡临危不乱，迅速调动上一章刚刚搭建的‘百人网格’与‘工分奖惩’机制进行危机管控，配合车阵封锁，完成了现代项目应急预案的实战落地与爽感兑现。青鸾出手果决利落，陆衡验手辨茧展现大理寺官员的专业刑侦素养，结尾以‘黑蛟盘刃’刺青揭开幕后死士身份，将冲突由营地骚乱引向更深层的幕后权谋暗杀，悬念钩子扎实，追读动力强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 13,
+        "score": 89.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 90,
+          "payoffValue": 92,
+          "pacing": 90,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "沈工提及‘数万民夫能在半个时辰内整编成军’，在古代十万人规模的调度上略显过于神速，但属于快节奏爽文的合理压缩。",
+            "evidence": [
+              "沈工看着眼前井井有条的浩大场面，忍不住对陆衡赞叹：‘大人，小人干了半辈子营造，从未见过数万民夫能在半个时辰内整编成军！’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上文刺青线索，迅速逼供出户部与粮行的勾结，铁牛彻底归心。随后陆衡采用现代项目管理中的网格化管理与‘即时工分兑付’机制，当场发米发钱收服十万流民，职场降维打击与基建爽感极强。章尾视角切换至反派户部侍郎赵秉文，立刻开启原料断供的新阻碍与飞鸽传书悬念，节奏紧凑，主线推进高效有力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 14,
+        "score": 83.7,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 78,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 82,
+          "characterVoice": 85,
+          "payoffValue": 80,
+          "pacing": 84,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "章首关于十万民夫领牌编组与以工代赈的描写，与上一章末尾的整编剧情有一定程度的信息重叠，导致开篇推力稍显平缓。",
+            "evidence": [
+              "十万逃荒而来的百姓按照先前划分的网格规矩，迅速汇聚成数十道长龙……利用扯着略显沙哑的嗓子，在长条木案前高声调度。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承上启下流畅，前半段扎实落地了以工代赈的流水线组织与现结兑现，给读者提供了民心归附的即时爽感；后半段赵秉文的后手迅速显现，西山石匠罢工、督办潜逃、炉膛遭泥水灌毁等破坏直击工程关键路径，矛盾尖锐且极具紧迫感。章末停在破坏现场的冰冷死局，有效拉满了对下一章破局手段的追读期待。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 15,
+        "score": 85.9,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 86,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 88,
+          "characterVoice": 87,
+          "payoffValue": 75,
+          "pacing": 86,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "本章主要承担矛盾深化与危机升级功能（揭露赵秉文私印黑料、李督办当面叫板索银），主角尚未正式出手破局打脸，情绪压迫感拉满但核心爽点回报延后。",
+            "evidence": [
+              "若是拿不出这笔真金白银，别说开窑烧灰，你就是把天捅个窟窿，也休想从这西山运走哪怕半块碎石渣子！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "上章前情称李督办'天不亮就不见踪影，长随马匹走得干干净净'，本章却直接在石场公房内饮酒现身，缺少一句对其故意藏匿设伏的说明，衔接稍显轻微生硬。",
+            "evidence": [
+              "就在群情激愤之际，石场深处的砖木正堂公房内，忽然传来一阵刺耳的击掌声与冷笑。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章罢工危机，节奏紧凑、矛盾明确。通过底层石匠冻饿惨状与李督办酒肉正堂的强烈反差有效激发读者同仇敌忾的情绪；发现赵秉文暗红私印推进了权谋主线证据链。章尾李督办拍桌开出三千两现银的死局条件，卡点精准，极具追读张力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 16,
+        "score": 90.9,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 91,
+          "openingHook": 92,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 93,
+          "characterVoice": 88,
+          "payoffValue": 94,
+          "pacing": 91,
+          "endingPull": 86
+        },
+        "issues": [],
+        "summary": "本章紧承上一章'三千两现银'的对峙悬念，开篇以极其凌厉的动作直接撕落贪官顶戴并锁拿入狱，毫不拖泥带水，完成第一重打脸爽感；随后陆衡推行'计件工分制'并重用沈工，将现代项目管理激励与基建破局深度融合；章尾十车雪花银及时运抵料场并现场开箱，彻底兑现前期设下的资金死局，情绪释放饱满，节奏干脆利落，高度契合权谋破局与硬核执行力的爽文定位。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 17,
+        "score": 86.6,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 88,
+          "characterVoice": 84,
+          "payoffValue": 89,
+          "pacing": 86,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "上一章末尾陆衡已口头宣讲了工分计件规则，本章前半段再次通过红漆木板详细宣读三条条例，存在轻微的规则信息复述，但由于本章配合了实物放银与超产重奖细节，整体阅读爽感未受实质影响。",
+            "evidence": [
+              "第一条，西山料场全员推行计件工分！凡开凿并修整符合黄河护堤标准的青石条一方……"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏紧凑、爽感密集且落地扎实。开篇通过差役倾倒现银、当场足额发放欠饷的视觉冲击，迅速兑现了前章的悬念与情绪；中段以现代项目管理的‘计件制+超产激励’彻底激活八百匠人与三千民夫的生产力，工业流水线式的开山烧灰场面极具基建爽感；章尾顺理成章切入‘特种水泥熟料’的试制成功，通过大匠沈工的专业视角完成了划时代的科技树突破，钩子扎实且极具追读期待。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 18,
+        "score": 89,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 87,
+          "payoffValue": 91,
+          "pacing": 90,
+          "endingPull": 86
+        },
+        "issues": [],
+        "summary": "本章节奏紧凑干练，极高水准地兑现了‘项目管理降维打击封建官僚’的核心爽点。开篇直面太后雷霆之怒，主角通过工期横道图、多维预算表、标准化物料及排班优化，条理清晰地撕碎礼部中饱私囊的谎言，更将省银升华为太后的慈德圣名。打脸反转扎实可信，不仅彻底破局，还斩获内库提调金牌，章尾内监向首辅告密的情节也让政治博弈进一步升级，追读动力充沛。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 19,
+        "score": 87.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 86,
+          "payoffValue": 90,
+          "pacing": 88,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "上一章结尾埋下的‘内奸向首辅严府送密信’的权谋暗线在本章被暂时搁置，直接切入西山基建线；虽属双线并进的常见写法，但上一章末尾的政治博弈悬念需要后续章节尽快承接闭环。",
+            "evidence": [
+              "不多时，一封用蜜蜡封口的加急密信，自那名内监手中递出，在重重深宫阴影的遮掩下，悄然送往了文渊阁内阁首辅严府的书斋深处。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章是一次非常扎实且高爽感的‘技术破局+团队收服’微高潮。开篇直接承接水泥试制的工程死局，通过主角引入生石膏调凝、水力细磨、规范水灰比等标准化工业流程，以严谨落地的技术细节完成降维打击。锤击与水下硬化测试将爽感推至顶点，同时带出大匠沈工的身世与忠诚归心，情绪铺垫饱满。章尾以黄河二道防线告急的血色军情打破喘息，将新研发的水泥武器与前线危机严密锁合，追读拉力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 20,
+        "score": 90.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 91,
+          "openingHook": 90,
+          "conflictEffectiveness": 91,
+          "emotionalDrive": 89,
+          "characterVoice": 87,
+          "payoffValue": 92,
+          "pacing": 91,
+          "endingPull": 93
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "万斤巨石自三丈高空坠落砸击三尺素混凝土方墩，方墩仅留浅痕而生铁矿石崩裂，物理受力表现带有基建爽文常见的夸张化色彩，但在本题材语境下有效服务了爽感兑现。",
+            "evidence": [
+              "那块从高空坠落的万斤玄铁生石，底端竟被硬生生震裂出数道大指宽的粗糙裂缝……而承受了这万钧一击的水泥方墩，除了受力处被刮出一道浅白印痕，通体浑然一体"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏极为紧凑明快，承接上一章的水泥研发成果，迅速以万斤玄铁巨石砸击与水下激流双重极限测试完成硬核“微兑现”，极大满足了基建文读者的技术降维爽感。后半段迅速转入极速行军与后勤动员，并在黑石峡立刻抛出户部侍郎宗亲设卡阻截的新危机，章尾刀拔弩张的对峙将救灾时限压力与官场党争冲突拉满，具有极强的追读吸引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 21,
+        "score": 89,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 87,
+          "payoffValue": 89,
+          "pacing": 90,
+          "endingPull": 89
+        },
+        "issues": [],
+        "summary": "本章承接上章堵路危机，节奏极快且执行力拉满。主角以现代关键路径救灾思维结合御赐金牌果断下达死令，武力强拆私卡、搜查贪腐黑账并将恶奴示众，爽点兑现利落。随后迅速完成抢修与双线物资分流调度，体现扎实的项目经理执行力。章尾迅速迎来户科给事中引五城兵马司官军围堵的高级权谋冲突，悬念与对抗升级，追读动力强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 22,
+        "score": 89.3,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 90,
+          "characterVoice": 87,
+          "payoffValue": 91,
+          "pacing": 89,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "黑石峡缴获时描述为两只铁皮箱及七本羊皮账册，奉天殿呈堂时转为七大箱厚重账册与染血供词，证物体量存在跳跃。",
+            "evidence": [
+              "利用立刻抱着那两只沉重的红木铁皮箱大步上前，当着百余名兵马司官兵的面，将厚厚的七本羊皮账册重重砸在给事中的脚下...将利用连夜送达的七大箱厚重账册与染血供词轰然抬入大殿"
+            ],
+            "suggestion": "建议在转场时简略带出一笔利用连夜查抄赵氏田庄并整理全部口供账目，使证物从'七本'扩充为'七大箱'的过渡更为严密。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏明快强劲，完美承接上章悬念。前半段亮金牌、砸贪官、立重枷，以雷霆手段完成黑石峡危机的硬核收尾；后半段迅速转入朝堂文官集团的反扑与奉天殿对质，并在言官死谏的高潮处抛出七箱铁证当堂反杀，爽感层层递进，章尾断在朝堂交锋的最白热化阶段，追读引力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 23,
+        "score": 89.2,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 89,
+          "payoffValue": 92,
+          "pacing": 90,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "专有名词在短距离内连续使用完整全称，略显冗长重复",
+            "evidence": [
+              "'皇城通政司兼督办专班公廨门前'、'一踏入皇城通政司兼督办专班公廨'、'在皇城通政司兼督办专班公廨内搞这套'、'今日在皇城通政司兼督办专班公廨之内'"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承前章奉天殿死斗，情节推进极为紧凑。面对言官转移焦点的程序性构陷，主角通过移步专班公廨、下拉数据看板的硬核方式，用量化指标（通行效率提升12倍、损耗降低、潜在挽回180万两）形成降维打击，极好地兑现了章节标题与题材核心爽点。章尾赵秉文断臂求生抛出'前任暴毙与三百万两旧账'的反咬，使危机立刻升级，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 24,
+        "score": 87.9,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 88,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "景泰帝面对贪墨实锤仅以‘御前失仪，闭门思过’处置，虽符合古代官场大案需留待三法司勘验的缓兵逻辑，但让反派靠装病当场脱身，打脸的高潮压制感在裁决环节稍有泄力。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章悬念，以李茂绝密实测字条结合工程量化数据（1800根对比12000根），完成了一次逻辑严密且极具视觉冲击力的降维反杀。赵秉文倒退三步与装病溃退的描写精准兑现了章节卖点与读者情绪价值。章末迅速从朝堂辩驳切换至全新的供应链危机（全城车马被敌方垄断包揽），切中项目经理文的核心痛点，危机真实具体，章尾追读拉力强劲。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 25,
+        "score": 88,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 82,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 86,
+          "payoffValue": 88,
+          "pacing": 90,
+          "endingPull": 94
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "多处人物对话缺少闭合双引号或引号格式错乱，影响排版阅读体验。",
+            "evidence": [
+              "公廨内的空气仿佛凝成了铅块。利用手中的算盘啪嗒一声掉在案几上，脸色煞白地喃喃自语：“包下了全城的骡马大车，他们这是要断专班的生路啊。西山大窑日夜焙烧快干水泥，若是运不出去，堆在窑口不过三天就会受潮结块，下游大堤拿什么合龙？"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "段落中引号嵌套与逗号混用不规范。",
+            "evidence": [
+              "不可。”陆衡抬手止住青鸾，神色没有丝毫慌乱，”他们用的是民间商贾名义出资包揽，走的是合规租赁契约。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章反派断绝马车运力的死局，以高密度、快节奏的‘现代项目管理思维+以工代赈’展开破局。通过‘独轮车分段接驳+运力计件日结+猪油轴承润滑’一套扎实落地的工程组合拳，将流民转化为高效率供应链，完美兑现了基建与降维执行力的爽点。章尾信使浴血闯堂，带来‘七处堰塞湖溃决、洪峰提前五日杀到’的重磅变故，将极限倒计时的紧张感瞬间拉满，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 26,
+        "score": 87.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 87,
+          "characterVoice": 88,
+          "payoffValue": 85,
+          "pacing": 88,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "情报汇报的人设与动作衔接略显突兀：青鸾带队下山查探，回山后却由留守工场的沈工拿着断绳向陆衡汇报京城与通州商行的详细调查结果，信息交接动作略有模糊。",
+            "evidence": [
+              "沈工甚至顾不上穿外袍，快步迎上前去。只见跟在后面的青鸾面色铁青，手中空无一物，唯独沈工的手里，死死攥着一截断裂发白、满是粗糙毛刺的劣质麻绳残段。沈工三步并作两步冲到陆衡面前，将那截断绳啪的一声摔在木案上……声音嘶哑得几乎变了调：‘陆大人，塌天了大祸了！京城六大绳庄、通州五大生铁行，在昨夜被同批神秘人用现银全部包揽买断！’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上文倒计时危机，迅速展开‘流水线装配法’的硬核基建爽点，工序拆解清晰，团队执行力与节奏感极强。前半段完成了通宵赶制18具沉箱的阶段性微兑现，后半段立即引爆‘物料超前耗尽+幕后黑手提前买断全城货源’的供应链死局，冲突层层递进，章尾悬念与紧迫感拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 27,
+        "score": 86.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 83,
+          "pacing": 88,
+          "endingPull": 91
+        },
+        "issues": [],
+        "summary": "本章承接上一章物料断供危机，节奏紧凑凌厉、执行力极强。主角跳过官僚扯皮程序直接暴力破局，带队破门直捣黑商暗仓，迅速缴获关键物料并锁定幕后黑手赵秉文的证据，阶段性兑现爽点扎实。章尾反派管事撕毁御批封条、疯狂叫嚣挑衅，将矛盾和情绪推向最高峰，留下了极具张力和期待感的打脸前置钩子，追读动力充沛。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 28,
+        "score": 85.9,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 85,
+          "endingPull": 82
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "章尾以全员冒雨启程奔赴西山收尾，节奏昂扬但悬念钩子主要依托已知的18小时外部倒计时，缺乏即时的新危机变数或转折伏笔。",
+            "evidence": [
+              "数十辆满载生铁麻绳的重车在呼啸的夜雨狂风中撕裂重重雨幕，如同一支不可阻挡的钢铁洪流，迎着夜雨全速冲入西山。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧密承接上一章管事撕毁封条的挑衅，以干脆利落的肢体反击和武力镇压迅速破局；随后利用战时军防法与反向财务核算（罚款三倍倒欠三万二千两）进行降维打脸，爽感扎实且契合职场算账人设。查获暗账与青鸾暗中留记的情节有效铺垫了朝堂与密谍暗线。暴雨中紧急装车奔赴西山的场面调度紧凑，工期极限施压拉满，整体是一章执行力强、节奏明快的标准爽点兑现章。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 29,
+        "score": 87.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 88,
+          "characterVoice": 86,
+          "payoffValue": 88,
+          "pacing": 88,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "在十六个时辰内由数百名工匠手工浇筑并脱模完成100具大型水泥沉箱及两千块预制块，时间与产能压缩极其夸张，对硬核基建细节要求苛刻的读者可能会略微出戏。",
+            "evidence": [
+              "专班调整最终交付目标，沉箱总数追加至一百具，预制连锁混凝土砌块追加两千块！甲乙丙三班流水压茬推进，每半个时辰下闸脱模一批！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏极为紧凑且爽感密集。前半段以极具画面感的硬核工序描写，圆满兑现了‘百具快干水泥沉箱抢造封顶’的工业基建爽点，并借三倍工钱与抚恤树立了现代项目管理者的威信；后半段则顺畅切入权谋主线，通过密阁暗账与通州漕运血印，将户部贪腐案从简单的个案中饱私囊拔高至系统性截留杀人平账的惊天大案。基建备战与权谋探案双线并进，章尾悬念与决战氛围拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 30,
+        "score": 90.4,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 92,
+          "openingHook": 89,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 89,
+          "payoffValue": 91,
+          "pacing": 91,
+          "endingPull": 93
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "青鸾收剑入鞘，向陆衡沉声抱拳：‘回大人，外头刺客共一十二人……身上搜出了赵府特有的沉香腰牌。’",
+            "description": "死士执行灭口任务时携带证明主家身份的沉香腰牌略显脸谱化与工具人设计，不过前文已有密账与口供形成闭环证据链，对主线逻辑影响有限。",
+            "evidence": [],
+            "suggestion": "可微调为死士无明显信物，但通过青鸾辨认其独门兵刃、武功路数或特定纹刺来坐实赵府死士身份，更符合严谨权谋质感。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏极为凌厉紧凑。开篇以‘雌黄隐墨’迅速完成证据链的微观破局，紧接着通过雷霆突审击溃黑商管事心理防线，完成口供画押；刺客袭杀灭口的插曲干净利落地被青鸾反制，强化了专班的硬核执行力；末尾以黄河子堤崩裂与皇帝金牌急召陆衡携铁证面圣作为强悬念收尾，将地方基建查案与朝堂正面决战顺滑衔接，追读张力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 31,
+        "score": 87.4,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 87,
+          "characterVoice": 85,
+          "payoffValue": 90,
+          "pacing": 88,
+          "endingPull": 86
+        },
+        "issues": [],
+        "summary": "本章承接上文极为丝滑，进殿即是高潮。主角利用铁证、暗账与复式度支数据实现精准降维打击，迅速击溃赵秉文的构陷，皇帝的雷霆震怒与当场授权（赐金牌、予先斩后奏之权）给读者提供了极高密度的爽感回报。结尾六部跨部门廷议召集，顺势将冲突从‘个体反击’升级为‘统领朝堂基建大局’，节奏紧凑，期待感充足。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 32,
+        "score": 91.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 92,
+          "openingHook": 88,
+          "conflictEffectiveness": 93,
+          "emotionalDrive": 91,
+          "characterVoice": 90,
+          "payoffValue": 94,
+          "pacing": 90,
+          "endingPull": 88
+        },
+        "issues": [],
+        "summary": "本章精准且高效地兑现了章节名与核心题材卖点。将现代项目管理的甘特图、责任因果树与倒计时看板具象化为十丈巨幅麻布图表与生铁戒尺，以精准到时辰与流水账目的硬核数据，当堂撕碎了六部官僚推诿扯皮的太极套路。皇帝拔剑斩案更将廷议杀伐之气推向高潮，节奏极快、执行力爆棚、降维打击爽感十足。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 33,
+        "score": 92.5,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 91,
+          "openingHook": 92,
+          "conflictEffectiveness": 94,
+          "emotionalDrive": 93,
+          "characterVoice": 90,
+          "payoffValue": 95,
+          "pacing": 92,
+          "endingPull": 91
+        },
+        "issues": [],
+        "summary": "本章完美承接上一章殿试对峙的高潮，直接兑现了‘九品官逼六部画押’的核心爽点。主角以血书军令状为杠杆，反客为主向皇帝索取先斩后奏之权与兵符，将现代项目管理中的‘责任闭环’和‘严苛SLA考核’强行套在官僚集团头上，打脸与压制感极强。章尾迅速由朝堂辩论转入暴风雨中的前线实战执行，通州码头的即时阻力与西山工造所的四班倒动员无缝衔接，节奏紧凑，极限倒计时压迫感拉满，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 34,
+        "score": 89.8,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 92,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 90,
+          "characterVoice": 88,
+          "payoffValue": 91,
+          "pacing": 90,
+          "endingPull": 89
+        },
+        "issues": [],
+        "summary": "本章节奏明快、爽感密集。开篇景泰帝冒雨亲临赐予御佩金牌，并借怒斥言官顺理成章将主角破格擢升十级至正四品，彻底解决了办事法理身份的阻碍，爽点兑现迅速；中段西山工造所的模块化沉箱、排期调度与工分制整编，完美契合职场降维打击与硬核基建的卖点；尾段万军拔营、十里火龙奔赴黄河决口，画面宏大且充满压迫感，追读期待拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 35,
+        "score": 86.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 86,
+          "payoffValue": 80,
+          "pacing": 87,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "前哨驿卒刚送达白沙闸决口险情，青鸾便紧接着翻窗带入帝王被下毒的重磅宫廷情报，两个核心危机线索在同一签押房内连续通过两名信使集中倾泻，剧情推动极快但信息递送的巧合感略重。",
+            "evidence": [
+              "青鸾一身黑色紧身夜行衣自偏窗翻入屋内...但在我离京之前，潜伏在御药房的暗桩截获了景泰帝昨夜服用的安神汤药渣。"
+            ],
+            "suggestion": "后续章节可微调前后方情报交互的节奏与渠道，让多线并进的危机感显得更加自然交错。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧扣快节奏与强执行力卖点，以双线连环危机（前线闸门焊死卷款、后方帝王遭慢性投毒）迅速将大厦将倾的压迫感拉满。主角陆衡在极限倒计时下展现出冷静的危机拆解能力与项目分流决断（稳住宫中、分兵突进），职场破局味十足；章尾以白沙闸异动巨响断章，悬念与追读拉力强劲。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 36,
+        "score": 86.4,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 87,
+          "pacing": 86,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "反派基层官员在面对数百精锐骑兵与天子剑时，直接拔刀冲向钦差‘老子先宰了你’的行为略显脸谱化与强行送人头，略微降低了权谋斗智的真实感，但对快节奏爽感影响不大。",
+            "evidence": [
+              "督工主事吓得魂飞魄散，双膝一软几乎要跪倒在地。但他深知自己干下的勾当一旦被查实绝无活路，绝望之下恶向胆边生，狂吼一声拔刀向前扑来：‘老子先宰了你！’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文的紧迫时限，节奏紧凑明快。开篇迅速切入溃乱前线，通过天子剑立斩弃守逃官完成了极具冲击力的战地执法与爽点兑现；随后迅速转入现代职场化的‘作战单元分工’与即时现金激励，将溃军与河工迅速捏合成高效抢险团队，完美契合‘项目经理降维打击’与‘硬核基建救灾’的核心卖点。章尾洪峰压境、闸基开裂，危机感拉满，追读动力充沛。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 37,
+        "score": 88.3,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 87,
+          "characterVoice": 86,
+          "payoffValue": 88,
+          "pacing": 90,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "章节标题中提及‘当场抓获投毒贼’，但正文中水鬼死士的实际破坏手段为凿船与引爆防水药包毁坏水泥（仅死士自身嘴含自尽毒丸），标题与具体破坏行动存在轻微字面偏差。",
+            "evidence": [
+              "四个身着黑色水靠的身影自水底冒出，手握精钢短凿与桐油引火药包，正悄然向装满快干水泥的辎重船底潜去。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上文防汛抢险危机，节奏紧凑明快。开篇通过现场泥沙取样迅速坐实工部承重暗桩偷工减料的惊天贪腐，取证流程专业扎实；中段水下死士凿船炸库的突袭与暗卫反伏击动作戏干脆利落；后段搜身起获户部度支密印与图纸，将工程险情利落升格为官场党争大案。结尾抛出‘一小时水下沉箱卡位’的极限倒计时与第二道洪峰逼近的双重压迫，追读意愿极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 38,
+        "score": 89.5,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 91,
+          "emotionalDrive": 90,
+          "characterVoice": 88,
+          "payoffValue": 87,
+          "pacing": 90,
+          "endingPull": 92
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "煽动逃跑的黄巾汉子出现略显脸谱化与工具人化，主要功能是为主角提供当场立威的靶子，略带套路感。",
+            "evidence": [
+              "人群后方猛地窜出一名头裹黄巾的民夫。那人脸色惨白，扔掉手中的精铁撬棍，一边拼命向后方的石阶奔逃，一边扯着尖利刺耳的嗓门凄厉嚎叫"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上文，节奏极其紧凑凌厉。面对洪峰压境与民夫溃散的内外交困死局，主角果断拔剑斩杀煽动者以血祭旗，并采取‘恩威并施+身先士卒’的强执行力手段稳住阵脚。随后快干水泥沉箱阻流的基建硬核兑现顺理成章，成功化解第一波险情。章尾迅速抛出‘上游石坝崩塌引发巨浪’的更高阶危机，压迫感与追读悬念拉满，高度契合快节奏破局与热血抗灾的目标读者预期。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 39,
+        "score": 87.9,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 89,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "个别对话标点与排版存在轻微标点冗余或未闭合符号，但不影响阅读连贯性。",
+            "evidence": [
+              "“起木！落桩！嘿呦，！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧扣设定卖点，将现代项目管理思维（流水线分工、计件激励、强制轮休）与传统榫卯工程技术巧妙结合，极具硬核基建与执行力爽感。章节承接上章危机迅速展开，通过极具画面感的连环打桩防守战完成阶段性破局与情绪释放，章尾雷暴天气骤降再次抛出新危机，节奏紧凑且追读动力强劲。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 40,
+        "score": 85.8,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 87,
+          "payoffValue": 78,
+          "pacing": 88,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "口号化词汇在严肃险情中略显现代网感中二，稍损历史工程厚重感。",
+            "evidence": [
+              "所有人听令，立刻启动西山水泥预制沉箱终极决战矩阵！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上章暴雨危机，灾情层层递进至主堤百米溃口的大危机爆发。主角沉稳调度、稳定军心，迅速祭出水泥预制沉箱底牌，并在结尾锁定‘最后三刻钟’的极限倒计时，节奏紧凑、压迫感强，蓄力充分且追读意愿强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 41,
+        "score": 89.9,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 90,
+          "characterVoice": 88,
+          "payoffValue": 88,
+          "pacing": 92,
+          "endingPull": 91
+        },
+        "issues": [],
+        "summary": "本章紧承上文溃口危机，情节推进极快且硬核。开篇以斩杀临阵脱逃的御史军心浮动，迅速切入西山水泥沉箱下水的实操抢险；第一阶段沉箱入水咬合玄武岩、铁牛水下施工作业带来了扎实的阶段性爽感与微兑现；随后因水压积聚导致第二组沉箱燕尾缝隙喷涌、钢索崩断，悬念与危机再次升级，前后因果紧密，极具工业基建与硬核执行力的爽感。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 42,
+        "score": 92.5,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 92,
+          "conflictEffectiveness": 94,
+          "emotionalDrive": 92,
+          "characterVoice": 90,
+          "payoffValue": 94,
+          "pacing": 93,
+          "endingPull": 95
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "句首角色名‘利用’与动词‘利用’同形，在‘利用手持算筹与铜锣’一句中容易让读者产生瞬间的语法歧义（误读为状语从句）。",
+            "evidence": [
+              "利用手持算筹与铜锣，在大雨中飞速清点批次：“甲字号大槽进料十袋！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏极其紧凑且爽点密集。承接上章沉箱缝隙喷涌的致命危机，开篇即展现出极强的工程抢险现场感；通过注浆木龙压注快干水泥的硬核操作精准闭合破口，不仅稳稳兑现了章名承诺，还顺理成章完成了对唱衰御史的当场打脸。后半段节奏转换自然，借由加固物料牵出户工两部倒卖九边劣质断刀的贪腐线索，既扎实推进了官场权谋主线，又在章尾通过‘五丈水墙夹带万根巨木攻城’的第三波超级洪峰将危机推向全新高潮，追读欲望拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 43,
+        "score": 91.9,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 91,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 94,
+          "characterVoice": 89,
+          "payoffValue": 95,
+          "pacing": 92,
+          "endingPull": 90
+        },
+        "issues": [],
+        "summary": "本章高质量完成了主堤合龙的核心高潮。承接上章洪峰巨木冲击的悬念，开篇以极具冲击力的正面碰撞验证了水泥沉箱的强度，硬核打脸观望官僚；中段通过标准化分工、万人号子与沉箱精准咬合，将工程推进写出了战役般的紧张与热血；尾段合龙成功后十万民夫的宣泄式欢呼将情绪推向顶峰，并在章尾无缝钩连贪腐账册的朝堂清算线，情绪兑现与追读拉力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 44,
+        "score": 86.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 82,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 88,
+          "characterVoice": 85,
+          "payoffValue": 90,
+          "pacing": 86,
+          "endingPull": 85
+        },
+        "issues": [],
+        "summary": "本章紧承大堤合龙高潮，节奏明快，爽点密集且落地扎实。工部督办的刁难精准切入“核销与原料超支”的官场痛点，主角利用复式记账法、成本对比（3.2万对比20万两）、超低损耗率以及当场折断锈蚀断刀的硬核证据，完成了降维打击式的“反向审计”打脸，极其契合“职场/项目经理降维打击官僚”的核心卖点。尾段现银结算兑现情绪价值，同时以督办快马加急恶人先告状抛出朝堂政治战的强钩子，推进自然，追读欲强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 45,
+        "score": 0,
+        "continueReading": false,
+        "confidence": 1,
+        "dimensions": {
+          "readability": 0,
+          "openingHook": 0,
+          "conflictEffectiveness": 0,
+          "emotionalDrive": 0,
+          "characterVoice": 0,
+          "payoffValue": 0,
+          "pacing": 0,
+          "endingPull": 0
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "critical",
+            "category": "other",
+            "location": "全文",
+            "description": "第45章正文（prose）为空字符串，没有任何正文文本可供阅读与评估。",
+            "evidence": [
+              "\"prose\": \"\""
+            ],
+            "suggestion": "",
+            "blocking": true,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章正文内容缺失，正文字段为空，导致读者无法阅读任何剧情，属于严重交付事故。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 90.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 92,
+          "patternVariation": 88,
+          "suspensePayoff": 90,
+          "characterArc": 86,
+          "emotionalArc": 90,
+          "payoffEscalation": 91,
+          "genrePromise": 95,
+          "continuationDesire": 92
+        },
+        "issues": [
+          {
+            "id": "reader.hook-1",
+            "severity": "low",
+            "category": "hook",
+            "location": "全文",
+            "description": "第1章末尾以全知视角将潜入停尸房者描写为神秘黑影，制造外部威胁悬念；第2章开头顺承揭晓该黑影即为主角陆衡本人。属于网文常见的视角障眼法，虽不影响主线，但略有刻意制造惊悚假象的痕迹。",
+            "evidence": [
+              "第1章末尾：“一道幽灵般的黑影如青烟般无声滑入屋内...黑影的手指正迅速摸向尸体腰间内衬的一道暗缝。”接第2章开头：“陆衡立在石台旁，戴着厚实鹿皮手套的五指稳稳扣在李茂僵硬的外衣边缘。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "主角在与古人（密探青鸾）直接对话时使用了‘全周期交付节点’、‘全息因果图’等高度现代化的项目管理专有名词，虽强化了降维人设，但古人完全理解并接受得过于顺畅，略有出戏风险，建议后续对话中可更多转化为古人语境可理解的硬核物料逻辑。",
+            "evidence": [
+              "第3章：“凭我脑子里掌握的因果逻辑与全周期交付节点...帮我拿到进殿直奏的契机，我给皇帝交出一份能将百官推诿彻底粉碎的物料全息因果图。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前3章开局质量极高，精准踩中‘项目经理穿越+官场权谋打脸+硬核工程逻辑破局’的题材卖点。节奏推进极快，从死囚公堂自辩、夜探停尸房取证、化解暗卫刺杀，到奉天殿携因果甘特图当堂对质百官，冲突层层加码，爽点从自保升级为朝堂降维碾压。主角人设冷静克制、执行力极强，悬念回收利落，第3章末尾皇帝反应悬念有力，具备极强的追读吸引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 91.9,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 93,
+          "patternVariation": 90,
+          "suspensePayoff": 91,
+          "characterArc": 89,
+          "emotionalArc": 92,
+          "payoffEscalation": 92,
+          "genrePromise": 95,
+          "continuationDesire": 93
+        },
+        "issues": [
+          {
+            "id": "reader.issue-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "更深夜静...一道幽灵般的黑影如青烟般无声滑入屋内...而在死寂的屋内，黑影的手指正迅速摸向尸体腰间内衬的一道暗缝。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前5章展现了极高的网文工业化完成度与极强的题材爽感。开局以‘死囚签砸头’迅速切入极限倒计时生死局，主角牢固树立‘硬核工程项目经理’人设，凭借现代工程审计、法医反推与复式记账因果链路等专业知识对封建腐败官僚形成降维打击。剧情推进极快，从公堂自救、停尸房取证、奉天殿数据打脸侍郎，到奉旨组建专班、以工代赈盘活流民运力、直扑通州官仓，主线一气呵成无任何注水；章末钩子环环相扣且兑现迅速，完全兑现了‘官场权谋+职场降维打击+极限倒计时’的核心题材承诺，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 6,
+        "toChapter": 10,
+        "score": 84.9,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 82,
+          "suspensePayoff": 85,
+          "characterArc": 74,
+          "emotionalArc": 84,
+          "payoffEscalation": 85,
+          "genrePromise": 92,
+          "continuationDesire": 88
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "high",
+            "category": "character",
+            "location": "全文",
+            "description": "铁牛的角色立场与记忆认知在跨章中发生严重脱节与倒退。在第7章中铁牛已自称'末将'并带领流民装粮，第8章更作为专班核心执行者维持施粥秩序；但到第9章开篇却毫无逻辑过渡地暴怒反水，手持柴刀带领流民砸锅造反，并怒斥主角为狗官，完全无视自己此前作为押运亲历者的身份，人设立场出现断层。",
+            "evidence": [
+              "第7章：'身材魁梧的铁牛带着一身泥水大步跨入：‘末将在！’‘带上招募的两百名流民青壮直扑水门地库！’'；第8章：'铁牛骑在最前头的健马上，粗壮的胳膊高高挥舞着火把...‘排队！按陆大人的规矩来！’'；第9章：'铁牛双臂青筋暴起...生锈的柴刀直直顶在利用的胸口...‘你们这些坐衙门的狗官...你若是也跟赵侍郎那帮贼官一样拿咱们当牲口耍，今天老子这条烂命就交代在这儿，也得拉你们垫背！’'"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "黑市粮铺破获过程缺乏必要的侦查铺垫。第9章末尾刚以第三方视角展现黑商与户部差役在暗巷交易分赃，第10章开头主角与青鸾便神兵天降直接破门抄家，中间缺少追踪、摸排或顺藤摸瓜的逻辑桥梁，显得过于巧合与机械。",
+            "evidence": [
+              "第9章末：'胖掌柜一边说着，一边从肥厚的狐皮袄内衬里摸出一沓厚实的汇通票号银票...差役指尖微微一掂那厚度，嘴角泛起满意的狞笑，转身隐入了暗巷的重重浓墨之中。'；第10章初：'户部差役刚将那一沓厚实的银票塞入宽大袍袖...暗巷拐角处的青石屋脊上便炸开了一声极细碎的瓦片脆响。一道漆黑如墨的矫健身影自半空凌空扑下...陆衡迈开大步跨过碎裂的木门槛...'"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本阅读窗口（第6-10章）整体节奏凌厉，核心卖点兑现极为扎实。作者成功将'复式记账法破假账'、'危机管理分流机制'、'水泥配方基建科技树'及'以工代赈工分制'等职场/现代管理技能融入古代官场权谋与赈灾主线中，降维打击感与推进爽感十分密集。主要问题在于个别人物（如铁牛）在第8至9章之间出现了立场与认知的硬伤回退，以及第10章抄查黑市的侦查过渡略显仓促。但瑕不掩瑜，第10章结尾车阵防御与大营暴乱的双重危机钩子拉得极满，追读动力强劲。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 16,
+        "toChapter": 20,
+        "score": 89.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 90,
+          "patternVariation": 88,
+          "suspensePayoff": 90,
+          "characterArc": 84,
+          "emotionalArc": 89,
+          "payoffEscalation": 87,
+          "genrePromise": 94,
+          "continuationDesire": 91
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "第19章章尾已完成锤击与水下硬化测试，第20章开篇再次安排万斤巨石砸击与30组浸泡测试，连续两章在测试环节略有重复感，虽有场面升级但稍占篇幅。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本五章窗口节奏极为凌厉明快，高度契合职场降维、硬核基建与官场权谋的题材定位。剧情在西山整顿（计件制与现银兑现）、慈宁宫预算抗辩（甘特图与模块化成本核销）、水泥标准化研发攻坚、以及运料官道受阻之间张弛有度地推进。现代项目管理思维与封建官僚体制的碰撞扎实可信，爽点密集且层层升级，章尾在紧迫的时间倒计时下抛出恶霸封路的尖锐冲突，追读拉力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 36,
+        "toChapter": 40,
+        "score": 89.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 90,
+          "patternVariation": 82,
+          "suspensePayoff": 88,
+          "characterArc": 80,
+          "emotionalArc": 90,
+          "payoffEscalation": 92,
+          "genrePromise": 95,
+          "continuationDesire": 94
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "在连读体验中，面对险情升级与民夫恐慌时，主角多次采用高度一致的控场节拍（拔天子剑立斩不臣/祭旗 -> 宣读重赏重罚 -> 众人受震慑重拾血性），连续三章出现相似仪式化动作，略显程式化。",
+            "evidence": [
+              "第36章：陆衡面无表情，纵马踏前一步，手中天子长剑自上而下凌厉斩落！；第38章：剑锋在电光下划出一道凄厉的白芒，自上而下凌厉斩落！那造谣煽动的汉子惨叫声戛然而止；第40章：陆衡拔出腰间佩戴的天子宝剑，森寒凌厉的剑锋在漆黑暴雨中划出一道耀目光芒"
+            ],
+            "suggestion": "可适当丰富稳定军心的方式，例如通过技术参数直观展示（沈工出示水位与桩基受力数据）、基层班组长连带激励机制或青鸾的情报压制，减少对‘拔剑/斩杀+金牌训话’单一口径的重复使用。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "第40章主角台词中出现的‘终极决战矩阵’带有较浓厚的现代动漫/游戏语感，与前文扎实硬核的工部营造、流水工法等写实工程氛围产生轻微割裂。",
+            "evidence": [
+              "陆衡目光冷峻，环视四周惊魂未定的众人：“所有人听令，立刻启动西山水泥预制沉箱终极决战矩阵！”"
+            ],
+            "suggestion": "建议调整为更具工程实操或历史权谋厚重感的词汇，如‘西山预制沉箱连环锁江大阵’或‘西山沉箱甲级应急预案’。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本阅读窗口（36-40章）精准契合‘硬核基建+项目管理降维打击+极限破局’的题材卖点。情节推进凌厉，从接管白沙闸、斩杀弃守贪官，到勘验泥沙贪腐铁证、反杀凿船水鬼，再到流水线排桩阻截泥石流及决战百米溃口，危机逐级放大，情绪层层加码。现代工程管理思维（计件工筹、四班流水轮休、快干水泥沉箱）与古代防汛结合扎实，章尾抛出‘三刻钟生死倒计时’悬念极强，整体表现极佳。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 45,
+      "chapterAverage": 86.3,
+      "chapterMedian": 87.9,
+      "chapterMinimum": 0,
+      "openingThreeAverage": 87,
+      "continueReadingNoCount": 1,
+      "lowChapterCount": 1,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察",
+      "低分章节 ch45=0",
+      "读者不愿继续阅读：ch45"
+    ],
+    "errors": [],
+    "durationMs": 489262
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 5250185,
+  "warnings": [
+    "大纲阶段 warnings（5 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（3 条，影子模式不阻断）"
+  ]
+}

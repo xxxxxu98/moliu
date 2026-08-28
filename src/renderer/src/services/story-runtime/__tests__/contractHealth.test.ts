@@ -211,4 +211,18 @@ describe('contractHealth', () => {
     // 无上章结尾时不误报
     expect(detectOpeningRepetitionIssue(repeatedProse, '')).toBeNull();
   });
+
+  it('【让路】标注禁区跳过词表猜测直接软化（2026-08-28 根治方案）', () => {
+    // 无关键词命中（REVEAL/HELP 词表都不匹配）的禁区，生成侧标注后仍按冲突软化
+    const zone = '【让路】不得描写档案库内部布局与卷宗存放顺序';
+    const mustCover = ['夜探刑部档案库调阅当年底册'];
+    const conflicts = detectMustCoverForbiddenConflicts(mustCover, [zone]);
+    expect(conflicts.length).toBeGreaterThan(0);
+    const { forbidden, softened } = softenConflictingForbidden([zone], conflicts);
+    expect(softened.length).toBe(1);
+    expect(forbidden[0]).toContain('以履约为准');
+    // 未标注的同一禁区维持原样（词表不误伤）
+    const bare = zone.replace('【让路】', '');
+    expect(detectMustCoverForbiddenConflicts([mustCover[0]], [bare]).length).toBe(0);
+  });
 });

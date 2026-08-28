@@ -120,6 +120,11 @@ const CROSS_CHAPTER_ARC_RE = new RegExp(
 export function isCrossChapterGoal(node: string): boolean {
   const text = (node ?? '').trim();
   if (!text) return false;
+  // 生成侧自标注优先（2026-08-28 根治方案）：滚纲输出时已判定单章可兑现性，
+  // 标注语义由模型在生成语境里判断，不再让正则词表抢答；无标注（旧路径/
+  // 展开式大纲）才落到下方词表兜底
+  if (text.startsWith('【跨章】')) return true;
+  if (text.startsWith('【单章】')) return false;
   if (CROSS_CHAPTER_DEADLINE_RE.test(text)) return true;
   if (CROSS_CHAPTER_DEADLINE_WORD_RE.test(text)) return true;
   // 带威胁后果的限期目标（必须在…翻案，否则将被处斩）；短威胁钩子（否则将被处斩）不算
