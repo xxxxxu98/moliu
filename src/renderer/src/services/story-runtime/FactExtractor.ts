@@ -92,6 +92,11 @@ export class AIFactExtractor implements FactExtractor {
 const DEATH_RESULT_CUE_RE =
   /人头落地|(?:头颅|首级)[^。"」』]{0,10}(?:滚落|落地)|气绝|毙命|身亡|丧命|殒命|咽气|断气|尸[体首]|收殓|下葬|暴毙|溺亡/;
 
+/** 假设/盘算语气：结果词出现在权衡句里不是事实（与 extract-plot-memory 侧同源）
+ *  「杀了陆承安不过是交差抵罪……自己照样人头落地」2026-08-28 第五轮回归实证 */
+const HYPOTHETICAL_SENTENCE_RE =
+  /不过是|无非是|大不了|照样[要会]|便[是要]|就得|要是|若是|如果|倘若|万一|与其|只当|等于|无非|想想|盘算|权衡/u;
+
 /**
  * 死亡 status delta 的确定性防误报闸口（2026-08-27 双轮回归实证）：
  * 「替死鬼被判斩立决」「给我杀了主角」这类判词/威胁会被 flash 模型当事实登记，
@@ -118,6 +123,7 @@ export function sanitizeUnconfirmedDeathDeltas(
     const own = Array.isArray(rawEvidence)
       ? String(rawEvidence.join('\n'))
       : String(rawEvidence ?? '');
+    if (HYPOTHETICAL_SENTENCE_RE.test(own)) return false;
     if (DEATH_RESULT_CUE_RE.test(own)) return true;
     // 角色在证据里可能以任一别名出现（证据用「严运使」而登记名是「严世宽」）
     const nameVariants = [
@@ -126,6 +132,7 @@ export function sanitizeUnconfirmedDeathDeltas(
     ];
     for (const name of nameVariants) {
       for (const line of topLevel) {
+        if (HYPOTHETICAL_SENTENCE_RE.test(line)) continue;
         let idx = line.indexOf(name);
         while (idx >= 0) {
           if (

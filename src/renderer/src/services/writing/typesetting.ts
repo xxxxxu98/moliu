@@ -543,15 +543,29 @@ export function buildTypesettingIssues(prose: string): ParagraphDensityIssue[] {
   // 段落节奏均匀化（AI 腔信号，medium 不阻断）：段数够多、平均段长达到中长段、
   // 但变异系数过低——说明没有短拍与长段的呼吸交错。人类网文因对话独立成段
   // 与叙述段的交替，cv 通常 0.25+；模型不守「对话换行」时全章段长趋同。
+  // 附带高频词计数（瞬间/缓缓/微微/如同）：百章实测它们与 CV 低下同源出现，
+  // 放进同一条 warning 让重写提示能同时看到两类证据。
   if (
     stats.paragraphCount >= UNIFORM_PARAGRAPH_MIN_COUNT &&
     stats.avgParagraphChars >= UNIFORM_PARAGRAPH_MIN_AVG_CHARS &&
     stats.paragraphLengthCV < UNIFORM_PARAGRAPH_CV_THRESHOLD
   ) {
+    const AI_FLAVOR_WORDS = ['瞬间', '缓缓', '微微', '如同'];
+    const flavorCounts = AI_FLAVOR_WORDS.map(word => ({
+      word,
+      count: (prose.match(new RegExp(word, 'gu')) || []).length,
+    }))
+      .filter(item => item.count >= 6)
+      .map(item => `${item.word}×${item.count}`);
+    const flavorNote = flavorCounts.length > 0 ? `；高频词：${flavorCounts.join('、')}` : '';
     issues.push({
       severity: 'medium',
-      description: `段落节奏均匀化：${stats.paragraphCount} 段平均 ${Math.round(stats.avgParagraphChars)} 字、变异系数 ${stats.paragraphLengthCV.toFixed(2)}，长短段缺乏交错`,
-      suggestion: '关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段',
+      description: `段落节奏均匀化：${stats.paragraphCount} 段平均 ${Math.round(stats.avgParagraphChars)} 字、变异系数 ${stats.paragraphLengthCV.toFixed(2)}，长短段缺乏交错${flavorNote}`,
+      suggestion:
+        '关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段' +
+        (flavorCounts.length > 0
+          ? '；高频词改写为具体动作/时长过渡（瞬间→话音未落、眨眼的工夫；缓缓→直接写动作过程）'
+          : ''),
     });
   }
 

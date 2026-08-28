@@ -576,7 +576,25 @@ export function overlayCharacterFates(
   const fates = collectCharacterFates(memories).filter(fate =>
     fateValues.includes(fate.state)
   );
-  if (fates.length === 0) return { entities, applied: 0 };
+  // 每个角色「最后一次命运行」的章号，以及其后是否出现活动/出场行：
+  // 实体上的终态状态是误报当章写入的，命运表被熔断清空后它仍残留——
+  // 第六轮回归实证（主角被 ch4 误报判死、ch18 评审仍读到 死亡）。此处对
+  // 「已不在命运表、但实体带着终态、且终态章后有活动行」的实体执行清除。
+  const lastFateChapter = new Map<string, number>();
+  const activeAfterFate = new Map<string, boolean>();
+  for (const memory of [...memories].sort((a, b) => a.chapterIndex - b.chapterIndex)) {
+    for (const change of memory.characterStateChanges) {
+      if (!change.characterName) continue;
+      if (FATE_STATES.has(change.state)) {
+        const prev = lastFateChapter.get(change.characterName) ?? -1;
+        if (memory.chapterIndex > prev) lastFateChapter.set(change.characterName, memory.chapterIndex);
+      } else if (lastFateChapter.has(change.characterName)) {
+        if (memory.chapterIndex > (lastFateChapter.get(change.characterName) ?? -1)) {
+          activeAfterFate.set(change.characterName, true);
+        }
+      }
+    }
+  }
 
   const byName = new Map<string, StoryEntity>();
   for (const entity of Object.values(entities)) {
@@ -589,7 +607,9 @@ export function overlayCharacterFates(
 
   let applied = 0;
   const next = { ...entities };
+  const fateNames = new Set<string>();
   for (const fate of fates) {
+    fateNames.add(fate.characterName);
     const entity = byName.get(fate.characterName.trim());
     if (!entity) continue;
     // 已有不同终态登记时保守跳过：显式数据优先于记忆推导，避免互相覆盖
@@ -598,6 +618,16 @@ export function overlayCharacterFates(
     if (existing === fate.state) continue;
     next[entity.id] = { ...entity, attributes: { ...entity.attributes, status: fate.state } };
     applied += 1;
+  }
+  // 清除被后生活动证伪的残留终态
+  for (const [name, entity] of byName) {
+    if (fateNames.has(name)) continue;
+    const existing = String(entity.attributes?.status ?? '');
+    if (!fateValues.includes(existing)) continue;
+    if (!activeAfterFate.get(name)) continue;
+    const attributes = { ...(next[entity.id]?.attributes ?? entity.attributes) };
+    delete attributes.status;
+    next[entity.id] = { ...entity, attributes };
   }
   return { entities: next, applied };
 }
@@ -698,6 +728,16 @@ export function extractCriticalStatusChanges(
         ) {
           continue;
         }
+        // 假设/盘算/条件语境（「今夜若是强行在此处杀了陆云铮」）：动词循环窗口
+        // 覆盖命中点前后 30 字，含假设标记即放弃——窄版祈使守卫拦不住条件句
+        if (
+          rule.state === '死亡' &&
+          HYPOTHETICAL_SENTENCE_RE.test(
+            content.slice(Math.max(0, m.index - 30), m.index + m[0].length + 30)
+          )
+        ) {
+          continue;
+        }
         // 威胁/命令语气：「给我杀了顾青舟」是意图，不是事实（2026-08-27 回归实测反噬）
         if (rule.state === '死亡' && isVolitionalThreat(content, m.index)) continue;
         if (rosterSet && !rosterSet.has(name)) continue;
@@ -757,6 +797,16 @@ function isRhetoricalCueSentence(sentence: string): boolean {
   return RHETORICAL_CUE_RE.test(sentence);
 }
 
+/** 假设/盘算语气守卫（句级）：「杀了陆承安不过是交差抵罪……自己照样人头落地」
+ *  是反派内心权衡，不是处决事实——2026-08-28 第五轮回归实证，句级扫描此前只挡
+ *  祈使不挡条件句。含假设/推演标记的句子一律不登记。 */
+const HYPOTHETICAL_SENTENCE_RE =
+  /不过是|无非是|大不了|照样[要会]|便[是要]|就得|要是|若是|如果|倘若|万一|与其|只当|等于|无非|想想|盘算|权衡/u;
+
+/** 句内「动词紧贴人名」（杀了陆承安/斩了严世宽）：意图/盘算形态，不构成完成体 */
+const VERB_BEFORE_NAME_RE = (name: string): RegExp =>
+  new RegExp(`[杀斩格刺鸩毒绞]了?${name}`, 'u');
+
 /** 威胁/命令语气守卫：「给我杀了X」「要把X处斩」是意图不是事实。
  *  在死亡谓语命中点之前的小窗口内看到祈使/将来助词即放弃登记。 */
 const VOLITIONAL_THREAT_TAIL_RE =
@@ -777,8 +827,11 @@ function extractExecutionDeaths(
     if (EXECUTION_AVOID_RE.test(sentence)) continue;
     if (!EXECUTION_SENTENCE_RE.test(sentence)) continue;
     if (isRhetoricalCueSentence(sentence)) continue;
+    if (HYPOTHETICAL_SENTENCE_RE.test(sentence)) continue;
     for (const name of rosterSet) {
       if (!sentence.includes(name)) continue;
+      // 「杀了陆承安」式动词紧贴人名 = 意图/盘算，即便句中带结果词也不登记
+      if (VERB_BEFORE_NAME_RE(name).test(sentence)) continue;
       changes.push({
         characterName: name,
         stateType: 'status',

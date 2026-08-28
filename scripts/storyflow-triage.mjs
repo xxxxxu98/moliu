@@ -484,95 +484,78 @@ function triageProvider(providerId, meta) {
       }
     }
     if (chapters.length >= 3 && roster.length > 0) {
-      const rosterSet = new Set(roster);
-      // 事件章：角色 → {state, chapter}。中文正文叙事的惯例是「主语+命运谓语」
-      // 紧邻（「周茂气绝」「崇仁帝驾崩了」「沈宛君被押入天牢」），因此事件词
-      // 只认「名字后紧跟命运谓语」的句式；名字与事件词隔了引语/他人/从句的
-      // 一律不算（「陈廷敬悲呼：大行皇帝龙驭宾天」是转述，「宗人府死牢里的
-      // 画押」是名词短语）。逆序共现（「杀死了周茂」）用独立谓语式覆盖。
-      const fates = new Map();
-      const recordFate = (name, state, n) => {
-        if (!name || name.length < 2 || name.length > 8) return;
-        if (!rosterSet.has(name)) return;
-        const prev = fates.get(name);
-        if (!prev || n > prev.chapter) {
-          fates.set(name, { name, state, chapter: n });
-        }
-      };
-      const DEATH_PRED = '(?:气绝|毙命|身亡|丧命|殒命|惨死|暴毙|命丧|吐血而亡|服毒自尽|自刎|坠亡|被杀|被鸩杀|被毒杀|被人所杀|死于非命)';
-      const DEATH_REVERSE = '(?:杀了|斩杀|鸩杀|毒杀|格杀|击杀|处死|勒死|刺死)';
-      const JAISON_REVERSE = '(?:押(?:解|送|入)进?(?:天牢|大牢|死牢|宗人府|诏狱))';
-      const CONDEMN_PRED = '(?:被处斩|被判斩|被问斩|被定罪|被定谳|被论罪|被革职抄没|被满门抄斩)';
-      const ADVERB = '(?:当场|随即|立刻|当即|最终|当晚|当日|翌日|不久|很快)?';
-      for (const ch of chapters) {
-        for (const name of rosterSet) {
-          let from = 0;
-          for (;;) {
-            const at = ch.text.indexOf(name, from);
-            if (at < 0) break;
-            from = at + name.length;
-            const tail = ch.text.slice(at + name.length, at + name.length + 24);
-            const lead = ch.text.slice(Math.max(0, at - 12), at);
-            // 主语式：名字 + (副词) + 死亡谓语；逆序式：杀死类动词 + (字) + 名字
-            const deathSubj = new RegExp(`^${ADVERB}${DEATH_PRED}`).test(tail);
-            // 逆序式（「杀死了周茂」）排除悬赏/条件/反问/求刑语境：
-            // 「格杀裴修远者赏万金」「斩杀钦差者连升三级」「杀了周茂就能翻盘」
-            // 「求陛下明察……斩杀顾成舟以谢天下清流」都不是既成事实——
-            // 名字后紧跟「者+赏封/以谢/以正」类、或 lead 以求恳类措辞收尾即放弃。
-            const deathRev =
-              new RegExp(`${DEATH_REVERSE}[^。！？，,、地得]{0,6}$`).test(lead) &&
-              !/者[，,]?.{0,6}(?:赏|封|连升|免死|免罪|记功)|就能|便能|岂能|焉能|何以|万一|若是|若真|当真|如果|假设|不如|不妨|以谢|以正|以平|以儆|以绝|谢天下|慰天下|祭旗|明志|偿命|抵命/.test(tail) &&
-              !/(?:若|倘若|假使|若是)[^。！？]{0,8}$/.test(lead) &&
-              !/(?:求|恳请|请|奏请|祈求)(?:陛下|皇上|圣上|太后|殿下|天子)?[^。！？，]{0,14}$/.test(lead);
-            const jairev = new RegExp(`${JAISON_REVERSE}[^。！？，,、]{0,4}$`).test(lead);
-            // 「下狱」主语式排除并列列举（「齐王与三皇子下狱」是摘要式排比，
-            // 并列主语时单个名字不算独立命运事件）；被押式保持原样。
-            // 假设/威胁语气（「必会将你下狱治罪」）也不是既成事实。
-            const jailSubj =
-              (new RegExp(`^${ADVERB}(?:被[关押打入抓锁](?:进|入|到)?(?:天牢|大牢|死牢|宗人府|诏狱|大狱)|沦为阶下囚|被圈禁(?:终身|于|在)?(?:，|。|$))`).test(tail) ||
-                (/^(?:当场|随即|立刻|当即|最终|当晚|当日|翌日|不久|很快)?下狱/.test(tail) && !/[与、及跟同]/.test(lead))) &&
-              !/治罪|问罪|就[要会]|必定|定将|必将|恐将|只怕|难免|不[如妨]/.test(tail);
-            const throneSubj = new RegExp(`^${ADVERB}(?:驾崩|晏驾|崩逝|薨逝|龙驭上宾|宾天)`).test(tail);
-            const condemnSubj = new RegExp(`^${ADVERB}${CONDEMN_PRED}`).test(tail);
-            if (deathSubj || deathRev) recordFate(name, '死亡', ch.n);
-            if (throneSubj) recordFate(name, '驾崩', ch.n);
-            if (jailSubj || jairev) recordFate(name, '下狱', ch.n);
-            if (condemnSubj) recordFate(name, '定罪', ch.n);
-          }
-        }
+      for (const r of scanProseDeadResurrection(chapters, roster)) {
+        acc.add(
+          'prose.dead-resurrection',
+          r.chapter,
+          `${r.name}于第${r.chapter}章${r.state}，其后 ${r.activeChapters.length} 章仍以活体出场` +
+            `（首见第${r.activeChapters[0]}章，章号：${r.activeChapters.slice(0, 8).join(',')}${r.activeChapters.length > 8 ? '…' : ''}）`
+        );
       }
-      // 活体动作扫描：命运章之后出现「名字+说话/动作」
-      const ACTIVE_RE = (name) =>
-        new RegExp(`${name}[^。！？””]{0,8}(?:说道|道|开口|下令|禀报|躬身|拱手|上前|快步|走进|站起|点头|摇头|吩咐|呈报|朗声|沉声|冷笑)`, 'u');
-      const RESURRECT_RELEASE = /平反|翻案|无罪释放|赦免|大赦|越狱|劫狱|起复|官复原职|重新起用|假死|诈死|并未.{0,4}死|苏醒|保释|取保|候勘|待勘|戴罪/;
-      for (const fate of fates.values()) {
-        // 解除章覆盖语义（对齐 collectCharacterFates）：命运章之后任何一章同时
-        // 出现该角色名 + 解除信号（保释/候勘/假死揭穿等），该终态即视为已解除，
-        // 此后所有活体出场不再计红（2026-08-27 实测「待罪保释在外」被当越狱红签）。
-        const dissolved = chapters.some(
-          ch =>
-            ch.n > fate.chapter &&
-            ch.text.includes(fate.name) &&
-            RESURRECT_RELEASE.test(ch.text)
-        );
-        if (dissolved) continue;
-        const active = chapters.filter(
-          ch => ch.n > fate.chapter && ACTIVE_RE(fate.name).test(ch.text) && !RESURRECT_RELEASE.test(ch.text)
-        );
-        if (active.length > 0) {
-          acc.add(
-            'prose.dead-resurrection',
-            fate.chapter,
-            `${fate.name}于第${fate.chapter}章${fate.state}，其后 ${active.length} 章仍以活体出场` +
-              `（首见第${active[0].n}章，章号：${active.slice(0, 8).map(c => c.n).join(',')}${active.length > 8 ? '…' : ''}）`
-          );
+    }
+
+    // 裁判硬门禁（2026-08-28 用户批准冻结；数值基准 = final6 分布 88.8/74.5）
+    // 首轮触线 → 黄签警告；与上一份报告同 provider 连续触线 → 红签（连续两轮语义）。
+    {
+      const summaryFile = join(dir, 'storyflow.closed-loop.summary.json');
+      if (existsSync(summaryFile)) {
+        try {
+          const ev = JSON.parse(readFileSync(summaryFile, 'utf8')).readerEvaluation ?? {};
+          const scores = (ev.chapters ?? [])
+            .map(c => Number(c?.score ?? c?.total ?? NaN))
+            .filter(Number.isFinite)
+            .sort((a, b) => a - b);
+          const outlineScore = Number(ev.outline?.score ?? NaN);
+          const min = scores[0] ?? NaN;
+          const median = scores.length ? scores[Math.floor(scores.length / 2)] : NaN;
+          const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : NaN;
+          const GATE = { outlineMin: 85, avgMin: 85, medianMin: 87, minFloor: 60 };
+          const violations = [];
+          if (Number.isFinite(outlineScore) && outlineScore < GATE.outlineMin)
+            violations.push(`大纲分 ${outlineScore} < ${GATE.outlineMin}`);
+          if (Number.isFinite(avg) && avg < GATE.avgMin)
+            violations.push(`章节均分 ${avg.toFixed(1)} < ${GATE.avgMin}`);
+          if (Number.isFinite(median) && median < GATE.medianMin)
+            violations.push(`章节中位 ${median.toFixed(1)} < ${GATE.medianMin}`);
+          if (Number.isFinite(min) && min < GATE.minFloor)
+            violations.push(`最低分 ${min} < ${GATE.minFloor}`);
+          if (violations.length > 0) {
+            const storeName = readdirSync(dir).find(
+              name => name.startsWith('storyflow-') && name.endsWith('.project-store.json')
+            );
+            const providerId =
+              (storeName?.match(/(provider-[\d]+)-\d+\.project-store/) ?? [])[1] ?? storeName ?? '?';
+            let consecutive = false;
+            try {
+              const priorReports = readdirSync(TRIAGE_DIR)
+                .filter(f => /^report-.*\.json$/.test(f))
+                .map(f => ({ f, m: statSync(join(TRIAGE_DIR, f)).mtimeMs }))
+                .sort((a, b) => b.m - a.m);
+              if (priorReports[0]) {
+                const prior = JSON.parse(readFileSync(join(TRIAGE_DIR, priorReports[0].f), 'utf8'));
+                const priorProvider = (prior.providers ?? []).find(p => p.providerId === providerId);
+                consecutive = (priorProvider?.signatures ?? []).some(s =>
+                  String(s.id || '').startsWith('reader.hardgate')
+                );
+              }
+            } catch {
+              /* 无历史报告/解析失败按首轮处理 */
+            }
+            acc.add(
+              consecutive ? 'reader.hardgate-violation' : 'reader.hardgate-warning',
+              null,
+              `裁判硬门禁（${consecutive ? '连续第 2 轮' : '首轮'}）：${violations.join('；')}`
+            );
+          }
+        } catch {
+          /* summary 缺失/损坏时门禁静默跳过 */
         }
       }
     }
   }
 
   // 分级：章节最终 accepted → 黄（已恢复）；否则红（阻断）。infra/outline/assert 恒定分级
-  const RED_ALWAYS = new Set(['assert.chapters-accepted', 'prose.dead-resurrection']);
+  const RED_ALWAYS = new Set(['assert.chapters-accepted', 'prose.dead-resurrection', 'reader.hardgate-violation']);
   const YELLOW_ALWAYS = new Set([
     'infra.maxtokens-downgrade',
     'infra.transient.http-502',
@@ -614,10 +597,12 @@ function triageProvider(providerId, meta) {
     verdict = 'model-capability-suspect';
     verdictReason = `第${stalledSig.chapter}章质量拒绝连续 ${acc.chapterAttempts[stalledSig.chapter]} 轮未收敛，重试无意义，考虑换模型或调合同（需人工确认）`;
   } else if (
-    has(s => s.severity === 'red' && (s.id.startsWith('quality.') || s.id === 'prose.dead-resurrection'))
+    has(s => s.severity === 'red' && (s.id.startsWith('quality.') || s.id === 'prose.dead-resurrection' || s.id === 'reader.hardgate-violation'))
   ) {
     verdict = 'quality-rejection';
-    verdictReason = '存在质量拒绝且未恢复（或跨章人物状态幻觉：死/囚角色复活），但未达 3 轮停滞';
+    verdictReason = has(s => s.id === 'reader.hardgate-violation')
+      ? '读者裁判硬门禁连续两轮未达标（作者与裁判偏好叠加风险以书审通读交叉校验），按协议转入排查重写'
+      : '存在质量拒绝且未恢复（或跨章人物状态幻觉：死/囚角色复活），但未达 3 轮停滞';
   } else if (!meta.pass && has(s => s.severity === 'red' && s.id.startsWith('pipeline.'))) {
     verdict = 'pipeline-bug';
     verdictReason = '存在确定性管线错误，优先修复管线后再回归';
@@ -997,3 +982,123 @@ const invokedDirectly = (process.argv[1] || '')
   .replace(/\\/g, '/')
   .endsWith('storyflow-triage.mjs');
 if (invokedDirectly) main();
+
+// ============================================================
+// 死而复活确定性扫描（纯函数，供 CLI 与回归测试共用）
+// ============================================================
+
+/**
+ * 从全书正文扫描「命运级事件 → 活体出场」矛盾。
+ * @param chapters [{n: 章号, text: 正文}]（内部会重排升序）
+ * @param roster 角色卡名单（只信白名单，过滤谓语片段假阳性）
+ * @returns 复活列表 [{name, state, chapter, activeChapters: [章号…]}]；
+ *          已被解除信号（保释/候勘/假死揭穿等）覆盖的终态不返回
+ *
+ * 判定口径与写作侧 extract-plot-memory 六轮反噬演化对齐：
+ * - 命运事件只认「名字紧邻命运谓语」句式；逆序杀式排除悬赏/求刑/条件语境
+ * - 假设/盘算窗口守卫（「今夜若是强行杀了X」「杀了X不过是交差」非事实）
+ * - 解除章覆盖语义：终态章后任何一章「角色名+解除信号」即视为已解除
+ */
+export function scanProseDeadResurrection(chapters, roster) {
+  const sorted = [...chapters].sort((a, b) => a.n - b.n);
+  const rosterSet = new Set(roster);
+  const fates = new Map();
+  const recordFate = (name, state, n) => {
+    if (!name || name.length < 2 || name.length > 8) return;
+    if (!rosterSet.has(name)) return;
+    const prev = fates.get(name);
+    if (!prev || n > prev.chapter) {
+      fates.set(name, { name, state, chapter: n });
+    }
+  };
+  const DEATH_PRED = '(?:气绝|毙命|身亡|丧命|殒命|惨死|暴毙|命丧|吐血而亡|服毒自尽|自刎|坠亡|被杀|被鸩杀|被毒杀|被人所杀|死于非命)';
+  const DEATH_REVERSE = '(?:杀了|斩杀|鸩杀|毒杀|格杀|击杀|处死|勒死|刺死)';
+  const JAISON_REVERSE = '(?:押(?:解|送|入)进?(?:天牢|大牢|死牢|宗人府|诏狱))';
+  const CONDEMN_PRED = '(?:被处斩|被判斩|被问斩|被定罪|被定谳|被论罪|被革职抄没|被满门抄斩)';
+  const ADVERB = '(?:当场|随即|立刻|当即|最终|当晚|当日|翌日|不久|很快)?';
+  // 假设/盘算/条件语境守卫（与写作侧 HYPOTHETICAL_SENTENCE_RE 同源）：
+  // 「杀了陆承安不过是交差抵罪…照样人头落地」「今夜若是强行杀了陆云铮」
+  // 都是权衡或威胁，不是既成事实。覆盖命中点前后窗口。
+  const CONDITIONAL_RE =
+    /不过是|无非是|大不了|照样[要会]|便[是要]|就得|就能|便能|要是|若是|如果|倘若|万一|与其|只当|想想|盘算|权衡|岂能|焉能/;
+  for (const ch of sorted) {
+    for (const name of rosterSet) {
+      let from = 0;
+      for (;;) {
+        const at = ch.text.indexOf(name, from);
+        if (at < 0) break;
+        from = at + name.length;
+        const tail = ch.text.slice(at + name.length, at + name.length + 24);
+        const lead = ch.text.slice(Math.max(0, at - 12), at);
+        const deathSubj = new RegExp(`^${ADVERB}${DEATH_PRED}`).test(tail);
+        const deathRev =
+          new RegExp(`${DEATH_REVERSE}[^。！？，,、地得]{0,6}$`).test(lead) &&
+          !/者[，,]?.{0,6}(?:赏|封|连升|免死|免罪|记功)|就能|便能|何以|若真|当真|不如|不妨|以谢|以正|以平|以儆|以绝|谢天下|慰天下|祭旗|明志|偿命|抵命/.test(tail) &&
+          !/(?:求|恳请|请|奏请|祈求)(?:陛下|皇上|圣上|太后|殿下|天子)?[^。！？，]{0,14}$/.test(lead);
+        const jairev = new RegExp(`${JAISON_REVERSE}[^。！？，,、]{0,4}$`).test(lead);
+        const jailSubj =
+          (new RegExp(`^${ADVERB}(?:被[关押打入抓锁](?:进|入|到)?(?:天牢|大牢|死牢|宗人府|诏狱|大狱)|沦为阶下囚|被圈禁(?:终身|于|在)?(?:，|。|$))`).test(tail) ||
+            (/^(?:当场|随即|立刻|当即|最终|当晚|当日|翌日|不久|很快)?下狱/.test(tail) && !/[与、及跟同]/.test(lead))) &&
+          !/治罪|问罪|就[要会]|必定|定将|必将|恐将|只怕|难免|不[如妨]/.test(tail);
+        const throneSubj = new RegExp(`^${ADVERB}(?:驾崩|晏驾|崩逝|薨逝|龙驭上宾|宾天)`).test(tail);
+        const condemnSubj = new RegExp(`^${ADVERB}${CONDEMN_PRED}`).test(tail);
+        const hitFate = deathSubj || deathRev || throneSubj || jailSubj || jairev || condemnSubj;
+        if (!hitFate) continue;
+        // 假设/盘算窗口：命中点前后 30 字含条件标记即整条放弃
+        if (
+          CONDITIONAL_RE.test(ch.text.slice(Math.max(0, at - 30), at + name.length + 30))
+        ) {
+          continue;
+        }
+        if (deathSubj || deathRev) recordFate(name, '死亡', ch.n);
+        if (throneSubj) recordFate(name, '驾崩', ch.n);
+        if (jailSubj || jairev) recordFate(name, '下狱', ch.n);
+        if (condemnSubj) recordFate(name, '定罪', ch.n);
+      }
+    }
+  }
+  // 结果句式通道（与写作侧 extractExecutionDeaths 同口径）：「X等贪官的头颅滚落
+  // 高台」这类处决完成体里主语是头颅不是人名，谓语邻接式抓不到——整句含不可逆
+  // 结果词 + 名单内角色在场 + 未踩修辞/假设/动词前三类守卫 → 记 死亡。
+  const RESULT_SENTENCE_RE =
+    /人头落地|(?:头颅|首级)[^。！？]{0,8}(?:滚落|落地)|当场毙命|当场身亡|气绝身亡|当场殒命/;
+  const RHETORICAL_SENTENCE_RE =
+    /(?:勘合|文书|账册|账本|卷宗|名册|密报|邸报|檄文|供状|话本|戏文|故事|传闻|消息|流言|记载)[^。！？]{0,6}(?:人头落地|(?:头颅|首级)(?:滚落|落地))|人头落地的|(?:头颅|首级)(?:滚落|落地)的/;
+  const VERB_BEFORE_NAME_RE = (name) =>
+    new RegExp(`[杀斩格刺鸩毒绞]了?${name}`, 'u');
+  for (const ch of sorted) {
+    if (!RESULT_SENTENCE_RE.test(ch.text)) continue;
+    for (const sentence of ch.text.split(/(?<=[。！？])/)) {
+      if (!RESULT_SENTENCE_RE.test(sentence)) continue;
+      if (CONDITIONAL_RE.test(sentence)) continue;
+      if (RHETORICAL_SENTENCE_RE.test(sentence)) continue;
+      for (const name of rosterSet) {
+        if (!sentence.includes(name)) continue;
+        if (VERB_BEFORE_NAME_RE(name).test(sentence)) continue;
+        recordFate(name, '死亡', ch.n);
+      }
+    }
+  }
+  const ACTIVE_RE = (name) =>
+    new RegExp(`${name}[^。！？””]{0,8}(?:说道|道|开口|下令|禀报|躬身|拱手|上前|快步|走进|站起|点头|摇头|吩咐|呈报|朗声|沉声|冷笑)`, 'u');
+  const RESURRECT_RELEASE = /平反|翻案|无罪释放|赦免|大赦|越狱|劫狱|起复|官复原职|重新起用|假死|诈死|并未.{0,4}死|苏醒|保释|取保|候勘|待勘|戴罪/;
+  const resurrections = [];
+  for (const fate of fates.values()) {
+    const dissolved = sorted.some(
+      ch => ch.n > fate.chapter && ch.text.includes(fate.name) && RESURRECT_RELEASE.test(ch.text)
+    );
+    if (dissolved) continue;
+    const activeChapters = sorted
+      .filter(ch => ch.n > fate.chapter && ACTIVE_RE(fate.name).test(ch.text) && !RESURRECT_RELEASE.test(ch.text))
+      .map(ch => ch.n);
+    if (activeChapters.length > 0) {
+      resurrections.push({
+        name: fate.name,
+        state: fate.state,
+        chapter: fate.chapter,
+        activeChapters,
+      });
+    }
+  }
+  return resurrections;
+}

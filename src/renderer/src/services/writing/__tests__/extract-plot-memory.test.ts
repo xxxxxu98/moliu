@@ -222,6 +222,61 @@ describe('extractCriticalStatusChanges', () => {
     expect(changes.some(c => c.characterName === '陆行舟' && c.state === '死亡')).toBe(false);
   });
 
+  it('假设/盘算语气的结果句不登记死亡（100章终验第五轮治水书ch2受害样本）', () => {
+    const text =
+      '久历官场的算计在脑海中飞速转动，如今局势已烂到根子里，杀了陆承安不过是向上头交差抵罪，但三日后淮西彻底淹没，自己照样人头落地。';
+    const changes = extractCriticalStatusChanges(text, ['陆承安']);
+    expect(changes.some(c => c.characterName === '陆承安' && c.state === '死亡')).toBe(false);
+  });
+
+  it('同章真事件与假设句共存：真事件仍登记', () => {
+    const text =
+      '杀了陆承安不过是向上头交差抵罪，自己照样人头落地。刀光落下，严世宽的头颅骨碌碌滚落高台。';
+    const changes = extractCriticalStatusChanges(text, ['陆承安', '严世宽']);
+    expect(changes.some(c => c.characterName === '严世宽' && c.state === '死亡')).toBe(true);
+    expect(changes.some(c => c.characterName === '陆承安' && c.state === '死亡')).toBe(false);
+  });
+
+  it('动词循环的条件语境不登记死亡（第六轮终验ch4受害样本：今夜若是…杀了X）', () => {
+    const text =
+      '的致命绞索。今夜若是强行在此处杀了陆云铮，一旦逼得对方临死前把所有贪墨证据公之于众，这局就满盘皆输。';
+    const changes = extractCriticalStatusChanges(text, ['陆云铮']);
+    expect(changes.some(c => c.characterName === '陆云铮' && c.state === '死亡')).toBe(false);
+  });
+
+  it('overlayCharacterFates 清除被后生活动证伪的残留终态', () => {
+    const base: StoryEntity = {
+      id: 'char-hero',
+      kind: 'character',
+      name: '陆云铮',
+      aliases: [],
+      attributes: { status: '死亡' },
+    } as unknown as StoryEntity;
+    const memories = [
+      memoryWith([{ characterName: '陆云铮', stateType: 'status', state: '死亡', detail: '误登' }], 4),
+      memoryWith([{ characterName: '陆云铮', stateType: 'appearance', state: '首次出场', detail: '正常活动' }], 5),
+      memoryWith([], 17, ''),
+    ];
+    const { entities: next } = overlayCharacterFates({ 'char-hero': base }, memories);
+    expect(next['char-hero'].attributes?.status).toBeUndefined();
+  });
+
+  it('熔断语义边界：命运行之后的活动行会清除实体终态（真复活交 triage 兜底）', () => {
+    const base: StoryEntity = {
+      id: 'char-villain',
+      kind: 'character',
+      name: '周茂',
+      aliases: [],
+      attributes: { status: '死亡' },
+    } as unknown as StoryEntity;
+    const memories = [
+      memoryWith([{ characterName: '周茂', stateType: 'status', state: '死亡', detail: '处斩' }], 60),
+      memoryWith([{ characterName: '周茂', stateType: 'status', state: '执行动作', detail: '灵位被祭拜' }], 61),
+    ];
+    const { entities: next } = overlayCharacterFates({ 'char-villain': base }, memories);
+    expect(next['char-villain'].attributes?.status).toBeUndefined();
+  });
+
   it('真事件句与修辞句同章共存：只登记真事件', () => {
     const text =
       '严世宽等十余名贪官的头颅骨碌碌滚落高台。百姓传抄的账册上写满人头落地的旧案。';

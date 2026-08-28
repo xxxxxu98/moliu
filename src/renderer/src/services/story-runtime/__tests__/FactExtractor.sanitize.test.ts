@@ -35,6 +35,18 @@ describe('sanitizeUnconfirmedDeathDeltas', () => {
     expect(out.deltas).toHaveLength(0);
   });
 
+  it('假设/盘算语气的结果句不作为死亡证据（第五轮治水书ch2受害样本）', () => {
+    const facts = makeFacts([
+      {
+        path: 'characters.char-hero.attributes.status',
+        value: '死亡',
+        evidence: ['杀了陆承安不过是向上头交差抵罪，但三日后淮西彻底淹没，自己照样人头落地。'],
+      },
+    ]);
+    const out = sanitizeUnconfirmedDeathDeltas(facts, ENTITIES);
+    expect(out.deltas).toHaveLength(0);
+  });
+
   it('带结果完成体证据的死亡 status 保留（头颅滚落/气绝）', () => {
     const facts = makeFacts([
       {
