@@ -1,7 +1,7 @@
 # 正文续写 Agent 化重构方案:多轮工具调用检索循环
 
-> 状态:P0-P2 已实施并验证(P0 spike 10/10 全过;P3 A/B 待跑)
-> 日期:2026-08-29(方案定稿)/2026-08-30(P0-P2 落地)
+> 状态:**已转正**——P0-P3 全部完成,v1.1 协议经 100 章 A/B 复验达标,release-loop 已启用(2026-08-30)
+> 日期:2026-08-29(方案定稿)/2026-08-30(P0-P2 落地 + v1.0 验收 + v1.1 迭代复验)
 > 范围:`ChapterWritingPipeline → LongFormWritingEngine → SceneDraftEngine` 正文续写主链路
 > 关联:`docs/topic-discovery-refactor.md`(重构文档先例)、`docs/development-guidelines.md`
 
@@ -19,7 +19,7 @@
   - 实验组 `ab-agent`:**91+ 章零内容熔断**(被 vitest 超时墙在 ch92 附近杀死,非内容问题,超时墙已加 ×1.6 agent 系数修复),91 章接受,首过率 0.813,paraCv 0.322(AI 腔章 5 vs 基线 8)。
   - 检索回合行为:96 次运行,84 次 model-finish,**降级率 12.5%**(budget 7 / protocol-error 4 / stall 1),平均 11.0 轮、9.8 次工具调用、52s/章,六工具全用。
   - **门禁判定(§11)**:质量与稳健性全过(首过率/AI 味不回归,熔断 0 vs 1,正向);**墙钟 +51%/章(目标 ≤35%)与降级率 12.5%(目标 <5%)两项未达**。结论:**继续迭代后复验**,不做全量转正。迭代项:① `AGENT_RESEARCH_TIMEOUT_MS`/token 预算默认放宽(240s/60k 偏紧,budget 降级是最大超额来源);② 检索耗时收敛(基底已含信息提示收紧、工具返回裁剪、v2 检索与规划并行);③ S1 深审补测(矩阵版 triage 不适配单跑布局,需书审或适配脚本)。
-  - 验收对比脚本:`temp/ab-compare.mjs`(支持后缀参数)、`temp/ab-compare2.mjs`(可复跑)。
+  - 验收对比脚本:`scripts/agent-ab-compare.mjs`(用法 `node scripts/agent-ab-compare.mjs <agent后缀>`,基线固定 ab-base)。
 
 ## 迭代 v1.1(2026-08-30 晚,针对首轮验收两项未达)
 
@@ -29,6 +29,39 @@
 - **5 章短程验证(agent-v11)**:5/5 全绿、首过率 100%、读者章均 87.4、**零降级**;检索轮数 **3-5(首轮 7-12,-60%)**,批量轮 2-4/章,六工具使用正常。
 - **高峰网关延迟发现**:晚高峰单轮请求固定 ~33s 延迟(与输入 16 字/3601 字无关;凌晨低峰同代码 ~4.7s/轮;同 run 的 scene-draft p50 也从 13.4s 涨至 21s)。属网关排队,非协议/模型问题——**长跑必须在低峰执行**,否则耗时不具可比性。
 - **100 章复验**:已定时今晚 01:30 低峰执行(`MOLIU_RUN_SUFFIX=ab-agent-r2`,基线数据复用),预期检索 ~4 轮/章、降级率 <5%、墙钟 +20-28%(达标线 ≤35%)。
+
+## v1.1 复验与转正(2026-08-30 夜,用户拍板提前执行)
+
+- **r2(第一本)**:ch22 内容熔断(引号×2 + 字数 4519/3540,连续 3 次批量重试失败)——蓝图抽签难,与检索无关;熔断前 95s/章、26 次检索降级率 3.8%。
+- **r3(换书重跑,ab-agent-r3)**:**100/100 全部接受、零熔断、exit 0、测试断言全过**,首次端到端完成的 agent 百章全量验证。
+- **门禁终判(§11)**:
+
+| 门禁 | 目标 | v1.0 首轮 | v1.1 复验(r3) | 判定 |
+|---|---|---|---|---|
+| 检索降级率 | <5% | 12.5% | **0%**(110/110 model-finish) | ✓ |
+| 检索轮数/章 | ≤6 | 11.0 | **4.2** | ✓ |
+| 检索开销/章 | — | 52s | **10.2s** | ✓ |
+| 墙钟/章 vs 基线 105.2s | ≤+35% | +51% | **-13%(91.6s)** | ✓✓ |
+| paraCv(AI味) | 不回归 | 0.322 | **0.423**(变化更丰富,>0.15 非AI腔) | ✓ |
+| 读者章均 | 观测 | — | 86.7(基线 86.6) | 持平 ✓ |
+| 熔断 | — | 0(91章) | **0(100章)** vs 基线 ch81 熔断 | agent 正向 |
+| 首过率 | 不回归 | 0.813 | 0.65(重写轮 35) | ⚠️ 表观回归 |
+
+  首过率黄旗归因:r3 这本书的蓝图带复合地点标签(「太极殿与内阁大堂·南街药市」),触发 7 次「节点原句照抄」拒绝 + 引号类 23 次——是大纲数据质量问题叠加重写,非检索引入(检索只在起草前供给档案,不参与行文)。已被零熔断 + 100% 接受 + 读者分持平兜住;**转正后首个 release-loop 轮次需观察引号类重写是否与 dossier 注入相关**。
+- **转正动作**:`storyflow-release-loop` SKILL.md 生成命令与 20 章回归命令已加 `MOLIU_AGENT_RESEARCH=1`。App 交互写作路径保持默认关(UI 能力分级另行立项)。
+- **遗留**:S1 书审深测(triage 矩阵版不适配单跑布局,需 book-review 全流程)——转正后首个大循环自然覆盖。
+
+## 冒烟统一 + 冗余清理(2026-08-30 夜,转正收尾)
+
+- **冒烟统一**:4 个写行程冒烟脚本(`agent-storyflow-real-smoke/real-multi`、`agent-continue-write-real/real-multi`)头部默认 `MOLIU_AGENT_RESEARCH=1`(与 REAL_AI 同模式,显式设 0 可回老路径)——scenario-matrix 经 multi 透传覆盖。自此**全部真实冒烟默认走 agent 检索回合**,与可上线大循环行为一致;App 交互写作路径仍默认关(UI 能力分级另行立项)。
+- **死代码清理**(引用审计后删除,全量回归 1284 过):
+  - `services/ai/agents/` 旧四件套 context-agent/data-agent/reviewer-agent/orchestrator-agent + index barrel(零引用,enhanced 三件是活的生产依赖,保留);
+  - `services/ai/function-calling.ts` + `function-calling-client.ts`(原生 function calling 旧路,零引用——"大纲在用"的说法已过时);
+  - `services/writing/recent-chapters.ts`、`services/writing/index.ts`(路径全断的死 barrel)、`components/editor/AIPanelV2.vue`(零挂载);
+  - `services/writing/chapter-commit.ts` + 其测试(仅测试引用;注意 `outline/contracts/chapter-commit.ts` 是另一个同名活文件,未动);
+  - `services/writing/rag-service.ts`:运行时零引用,其 4 个向量服务接口迁入唯一消费者 `services/retrieval/HybridRetriever.ts` 后删除。
+- **保留并标注**(生产 import 链在,运行时集中在 preload 恒暴露 storyRuntime 下不可达的 StateDriven 降级分支):`services/context|state|generation|retrieval`、`services/writing/context-manager|prompt-builder|memory-*`(仍被编辑器 AIPanel 的 useChapterWriter/useBatchWriter 生产链使用)。这些是后续"编辑器链迁移 + 降级分支裁剪"专项的素材,本轮不动。
+- **验收工具转正**:`scripts/agent-ab-compare.mjs`(用法 `node scripts/agent-ab-compare.mjs <agent后缀>`,基线固定 ab-base)。
 
 ---
 

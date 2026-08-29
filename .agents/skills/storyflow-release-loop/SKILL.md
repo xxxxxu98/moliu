@@ -31,11 +31,14 @@ node scripts/agent-storyflow-real-multi.mjs --list
 （显式 `MOLIU_READER_JUDGE_PROVIDER_ID=<id>`）；规模默认 **100 章级**
 （`MOLIU_CHAPTER_COUNT` 可调，首次打通流程用 1~20 章即可）；产物隔离目录命名
 `temp/storyflow-matrix-<tag><N>ch/`。
+**agent 检索回合已转正（2026-08-30 100章 A/B 验收达标）**：生成与回归命令一律带
+`MOLIU_AGENT_RESEARCH=1`（验收数据见 docs/agent-loop-refactor.md：墙钟 -13%/章、
+降级率 0%、检索均 4.2 轮）；长跑放低峰执行，晚高峰网关单轮固定 ~33s 延迟会污染墙钟数据。
 
 ## 第 1 步：真实生成（后台）
 
 ```bash
-set MOLIU_CHAPTER_COUNT=100&& set MOLIU_READER_JUDGE_PROVIDER_ID=<id>&& set MOLIU_STORYFLOW_MATRIX_DIR=temp\storyflow-matrix-agif100ch&& node scripts/agent-storyflow-real-multi.mjs <id>
+set MOLIU_CHAPTER_COUNT=100&& set MOLIU_AGENT_RESEARCH=1&& set MOLIU_READER_JUDGE_PROVIDER_ID=<id>&& set MOLIU_STORYFLOW_MATRIX_DIR=temp\storyflow-matrix-agif100ch&& node scripts/agent-storyflow-real-multi.mjs <id>
 ```
 
 run_in_background 跑，期间做第 3 步的工具准备。规模联动规则见 auto-loop SKILL.md。
@@ -128,7 +131,7 @@ node .agents/skills/storyflow-release-loop/scripts/bookreview-extract.mjs "temp/
 这是标准「App 内清空续写 20 章」协议在本循环的等价替代（矩阵书在 project-store 里）：
 
 ```bash
-set MOLIU_CHAPTER_COUNT=20&& ... set MOLIU_STORYFLOW_MATRIX_DIR=temp\storyflow-matrix-<tag>reg&& node scripts/agent-storyflow-real-multi.mjs <id>
+set MOLIU_CHAPTER_COUNT=20&& set MOLIU_AGENT_RESEARCH=1&& ... set MOLIU_STORYFLOW_MATRIX_DIR=temp\storyflow-matrix-<tag>reg&& node scripts/agent-storyflow-real-multi.mjs <id>
 node scripts/storyflow-triage.mjs   # MOLIU_STORYFLOW_MATRIX_DIR 指向新目录
 node .agents/skills/storyflow-book-review/scripts/book-precheck.mjs "<组装出的新书审目录>"
 ```

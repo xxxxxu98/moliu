@@ -94,11 +94,6 @@ vi.mock('@/services/review/review-service', () => ({
   }),
 }));
 
-vi.mock('@/services/writing/chapter-commit', () => ({
-  createChapterCommit: vi.fn().mockResolvedValue({ status: 'accepted' }),
-  extractChapterFacts: vi.fn().mockResolvedValue([]),
-}));
-
 // v3.1：useBatchWriter 现在通过 ChapterWritingPipeline 执行单章写作
 // mock 管道，默认返回成功结果；具体用例可在 beforeEach 里覆盖
 const mockPipelineExecute = vi.fn().mockResolvedValue({

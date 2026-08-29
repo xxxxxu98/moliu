@@ -18,6 +18,9 @@ import { cleanupSmokeArtifacts } from './cleanup-smoke-artifacts.mjs';
 
 process.env.REAL_AI = process.env.REAL_AI || '1';
 process.env.REAL_AI_MULTI = process.env.REAL_AI_MULTI || '1';
+// agent 检索回合已转正(docs/agent-loop-refactor.md):冒烟默认与可上线大循环对齐;
+// 显式设 MOLIU_AGENT_RESEARCH=0 可回退确定性打包老路径。
+process.env.MOLIU_AGENT_RESEARCH = process.env.MOLIU_AGENT_RESEARCH || '1';
 if (!process.env.MOLIU_CHAPTER_COUNT) {
   process.env.MOLIU_CHAPTER_COUNT = '20';
 }

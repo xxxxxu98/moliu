@@ -12,8 +12,61 @@ import { SceneChunker } from './SceneChunker';
 import type { SceneChunk, ChunkOptions } from './SceneChunker';
 import { BM25Index } from './BM25';
 import { EntityGraph } from './EntityGraph';
-import type { IVectorStoreService, IEmbeddingService, VectorEntry, SimilarityResult } from '../writing/rag-service';
 import type { StateSnapshot } from '../state/types';
+
+// ============================================================
+// 向量服务接口(自 rag-service.ts 迁入:该文件运行时零引用已删除,
+// 本文件是这组抽象的唯一消费者)
+// ============================================================
+
+/** 向量条目 */
+export interface VectorEntry {
+  id: string;
+  chapterId: string;
+  chapterIndex: number;
+  text: string;
+  embedding: number[];
+  metadata: {
+    type: 'character' | 'plot' | 'foreshadow' | 'world' | 'dialogue';
+    tags: string[];
+    createdAt: number;
+  };
+}
+
+/** 相似度搜索结果 */
+export interface SimilarityResult {
+  entry: VectorEntry;
+  score: number;
+}
+
+/**
+ * 向量检索服务:定义向量存储和检索的接口。
+ * 未注入实现时,混合检索自动降级为 BM25 + 实体图两路。
+ */
+export interface IVectorStoreService {
+  initialize(): Promise<void>;
+  addEntry(entry: VectorEntry): Promise<void>;
+  addEntries(entries: VectorEntry[]): Promise<void>;
+  deleteEntry(id: string): Promise<void>;
+  search(
+    queryEmbedding: number[],
+    topK: number,
+    filter?: {
+      chapterId?: string;
+      chapterIndexRange?: [number, number];
+      type?: VectorEntry['metadata']['type'];
+      tags?: string[];
+    }
+  ): Promise<SimilarityResult[]>;
+  getChapterVectors(chapterId: string): Promise<VectorEntry[]>;
+  clear(): Promise<void>;
+}
+
+/** 嵌入生成服务接口 */
+export interface IEmbeddingService {
+  generateEmbedding(text: string, model?: string): Promise<number[]>;
+  generateEmbeddings(texts: string[], model?: string): Promise<number[][]>;
+}
 
 // ============================================================
 // 类型
