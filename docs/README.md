@@ -6,6 +6,7 @@
 
 | 文档 | 用途 |
 |------|------|
+| [north-star.md](./north-star.md) | **项目终极目标** — 可投稿网文八层质量目标 + 生产验收门，一切开发围绕此目标 |
 | [development-guidelines.md](./development-guidelines.md) | **开发规范唯一权威源（SSOT）** — 代码风格、目录结构、IPC、测试等 |
 | [reference-projects.md](./reference-projects.md) | 参考开源网文项目功能映射（编写网文功能前必看） |
 | [prd.md](./prd.md) | 产品需求与产品定位 |
