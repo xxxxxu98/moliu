@@ -1,5 +1,6 @@
 import type { ProviderType } from '@/config/ai-providers';
 import { AIServiceFactory } from '@/services/ai/factory';
+import type { AgentLoopTransport } from '@/services/story-runtime';
 import {
   AI_AUXILIARY_REQUEST_TIMEOUT_MS,
   AI_SINGLE_REQUEST_TIMEOUT_MS,
@@ -141,6 +142,52 @@ export function createRealStructuredAI(
 /** 用配置文件 / App 默认模型构造 StructuredAI */
 export function createRealStructuredAIFromEnv(signal?: AbortSignal): StructuredAI {
   return createRealStructuredAI(readRealAiEnvConfig(), signal);
+}
+
+/**
+ * 用同份冒烟配置构造 agent 检索循环的真实多轮 transport。
+ * 与 createRealStructuredAI 同口径:直接走 UnifiedAIService.chatComplete
+ * (复用 complete 的瞬态重试/降级护栏),请求级超时用辅助档。
+ */
+export function createRealAgentLoopTransport(
+  config: RealAiEnvConfig,
+  signal?: AbortSignal
+): AgentLoopTransport {
+  const service = AIServiceFactory.createService(
+    config.provider as ProviderType,
+    config.apiKey,
+    config.baseUrl,
+    config.model,
+    undefined,
+    config.maxTokens
+      ? { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0, maxTokens: config.maxTokens }
+      : undefined,
+  );
+  return {
+    async send(messages, options) {
+      if (signal?.aborted || options?.signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
+      }
+      const timeoutController = new AbortController();
+      const timeoutTimer = setTimeout(
+        () => timeoutController.abort(),
+        AI_AUXILIARY_REQUEST_TIMEOUT_MS,
+      );
+      const inner = options?.signal ?? signal;
+      const combined = inner
+        ? AbortSignal.any([inner, timeoutController.signal])
+        : timeoutController.signal;
+      try {
+        return await service.chatComplete(messages, {
+          temperature: 0.2,
+          signal: combined,
+          jsonMode: true,
+        });
+      } finally {
+        clearTimeout(timeoutTimer);
+      }
+    },
+  };
 }
 
 export function isRealAiEnabled(): boolean {

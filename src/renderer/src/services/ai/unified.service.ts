@@ -400,13 +400,63 @@ export class UnifiedAIService {
         : {}),
     };
 
-    // 结构化输出（scene-draft / chapter-judge / 事实提取）走 SSE 流式。
-    //
-    // 曾用非流式 chat() 以规避"网关裸透传 token、断流只给半截 JSON"的风险，但代价更大：
-    // 网关只看到一条长时间零字节的连接，实测长正文请求会被静默挂死到客户端 15 分钟超时才
-    // abort，被丢弃的 socket 随后 RST 抛 socket hang up，单次就吃掉 15 分钟。
-    // 流式下 token 持续到达，连接不再静默；半截 JSON 的风险改由结束标记校验兜住——
-    // 未收到 finish_reason 即判定截断并抛可重试错误，不会把半截内容当成功。
+    return extractPureText(await this.requestWithGuards(messages, chatOpts, signal));
+  }
+
+  /**
+   * 多轮对话补全（agent 检索循环等场景）：消息数组可含 assistant 轮，
+   * 复用 complete() 的全部护栏（瞬态重试 / max_tokens 降级 / 流式截断校验）。
+   */
+  async chatComplete(
+    messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
+    options?: {
+      temperature?: number;
+      signal?: AbortSignal;
+      /** 结构化输出场景：按 provider 能力启用 JSON 强制（与 complete 同口径） */
+      jsonMode?: boolean;
+    },
+  ): Promise<string> {
+    if (!this.client) {
+      throw new Error("Client not initialized");
+    }
+
+    const signal = options?.signal;
+    if (signal?.aborted) {
+      throw new DOMException("Aborted", "AbortError");
+    }
+
+    const chatOpts = {
+      temperature: options?.temperature ?? this.generationConfig.temperature,
+      topP: this.generationConfig.topP,
+      frequencyPenalty: this.generationConfig.frequencyPenalty,
+      presencePenalty: this.generationConfig.presencePenalty,
+      ...(typeof this.generationConfig.maxTokens === 'number' &&
+      Number.isFinite(this.generationConfig.maxTokens) &&
+      this.generationConfig.maxTokens > 0
+        ? { maxTokens: Math.floor(this.generationConfig.maxTokens) }
+        : {}),
+      ...(options?.jsonMode
+        ? { responseFormat: { type: "json_object" as const } }
+        : {}),
+    };
+
+    return extractPureText(await this.requestWithGuards(messages, chatOpts, signal));
+  }
+
+  /**
+   * 单次请求 + 全套护栏（原 complete() 内联的重试循环抽出，complete/chatComplete 共用）。
+   *
+   * 走 SSE 流式：曾用非流式 chat() 以规避"网关裸透传 token、断流只给半截 JSON"的风险，
+   * 但代价更大：网关只看到一条长时间零字节的连接，实测长正文请求会被静默挂死到客户端
+   * 15 分钟超时才 abort，被丢弃的 socket 随后 RST 抛 socket hang up，单次就吃掉 15 分钟。
+   * 流式下 token 持续到达，连接不再静默；半截 JSON 的风险改由结束标记校验兜住——
+   * 未收到 finish_reason 即判定截断并抛可重试错误，不会把半截内容当成功。
+   */
+  private async requestWithGuards(
+    messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
+    chatOpts: Record<string, unknown>,
+    signal?: AbortSignal
+  ): Promise<string> {
     const SINGLE_REQUEST_MAX_RETRIES = 2;
     let lastError: unknown;
     // 可变副本：max_tokens 超网关上限的 400 发生时按网关上限降级改写（最多 3 轮收敛）
@@ -417,8 +467,7 @@ export class UnifiedAIService {
         throw new DOMException("Aborted", "AbortError");
       }
       try {
-        const content = await this.streamChatText(messages, effectiveOpts, signal);
-        return extractPureText(content);
+        return await this.streamChatText(messages, effectiveOpts, signal);
       } catch (error) {
         // max_tokens 超网关上限（统一配 1M 时低上限网关 400 拒）：解析网关报的上限
         // （拿不到就减半）改写 effectiveOpts 后立即重试本次请求，且记住该上限
@@ -508,7 +557,7 @@ export class UnifiedAIService {
    * 迭代器会静默正常结束，半截 JSON 会被当成完整响应交给下游解析。
    */
   private async streamChatText(
-    messages: Array<{ role: "system" | "user"; content: string }>,
+    messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
     chatOpts: Record<string, unknown>,
     signal?: AbortSignal
   ): Promise<string> {

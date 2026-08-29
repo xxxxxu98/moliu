@@ -1,14 +1,19 @@
 import type {
   ContinuityIssue,
   ContinuityReport,
+  ContractPack,
   ExtractedFacts,
   FactExtractor,
   LongFormWriteInput,
   LongFormWriteResult,
+  ResearchDossier,
+  ResearchRunSummary,
   RevisionPlan,
   SceneChunk,
   SceneDraft,
+  ScenePlan,
   StoryEntity,
+  StoryState,
   StructuredAI,
 } from '@/types/story-runtime';
 
@@ -91,6 +96,33 @@ export interface LongFormWritingEngineDependencies {
   planner?: SceneBeatPlanner;
   contextBuilder?: ContextPackBuilder;
   validator?: Pick<ContinuityValidator, 'validate'>;
+  /**
+   * Agent 检索回合(docs/agent-loop-refactor.md §3.1):节拍规划之后、上下文打包
+   * 之前执行。未注入时行为与旧版完全一致。失败在引擎内降级为纯基底打包
+   * (AbortError 除外,用户取消必须冒泡)。
+   */
+  research?: AgentResearchStep;
+}
+
+export interface AgentResearchStepInput {
+  chapterNumber: number;
+  contracts: ContractPack;
+  plan: ScenePlan;
+  state: StoryState;
+  /** 全书已提交场景块(read_chapter/search_scenes 数据源);缺省退化为 recentScenes */
+  sceneChunks: SceneChunk[];
+  recentScenes: SceneChunk[];
+}
+
+export interface AgentResearchStep {
+  research(input: AgentResearchStepInput): Promise<ResearchDossier>;
+}
+
+function isAbortLike(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === 'AbortError') ||
+    (error instanceof Error && error.name === 'AbortError')
+  );
 }
 
 function draftsProse(drafts: SceneDraft[]): string {
@@ -312,6 +344,32 @@ export class LongFormWritingEngine {
       state: input.state,
       overlay: input.overlay,
     });
+
+    // Agent 检索回合:模型自主多轮补查基底之外的缺口,产出 dossier 注入 ContextPack。
+    // 任何失败(含 stall/budget 降级后的传输硬错)都回落纯基底打包,不阻塞写作主链。
+    let dossier: ResearchDossier | undefined;
+    let researchSummary: ResearchRunSummary | undefined;
+    if (this.dependencies.research) {
+      try {
+        dossier = await this.dependencies.research.research({
+          chapterNumber: contracts.chapter.chapterNumber,
+          contracts,
+          plan,
+          state: input.state,
+          sceneChunks: input.sceneChunks ?? input.recentScenes,
+          recentScenes: input.recentScenes,
+        });
+        researchSummary = dossier?.stats;
+      } catch (error) {
+        if (isAbortLike(error)) throw error;
+        console.warn(
+          `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 检索回合失败,回落纯基底打包:`,
+          error instanceof Error ? error.message : error
+        );
+        dossier = undefined;
+      }
+    }
+
     const context = this.contextBuilder.build({
       contracts,
       state: input.state,
@@ -320,6 +378,7 @@ export class LongFormWritingEngine {
       retrievedScenes: input.retrievedScenes,
       styleGuidance: input.styleGuidance,
       maxTokens: input.maxContextTokens,
+      ...(dossier ? { dossier } : {}),
     });
 
     const writeInput: LongFormWriteInput = { ...input, contracts };
@@ -589,6 +648,7 @@ export class LongFormWritingEngine {
       commit,
       receipt,
       rewriteRounds,
+      ...(researchSummary ? { research: researchSummary } : {}),
     };
   }
 

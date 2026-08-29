@@ -12,6 +12,7 @@ import type {
 } from '@/types/story-runtime';
 
 import { applyProvisionalOverlay } from './stateOverlay';
+import { renderDossier } from './agent/DossierBuilder';
 
 export class ContextBudgetError extends Error {
   constructor(
@@ -360,9 +361,23 @@ export class ContextPackBuilder {
     const candidates: ContextBlock[] = [
       makeBlock('locked-contracts', compactContractsForDraft(input.contracts, entityRefs), true),
       makeBlock('current-state', compactStateForDraft(state, input.contracts), true),
-      makeBlock('recent-scenes', compactScenes(input.recentScenes), false),
-      makeBlock('retrieval', compactScenes(input.retrievedScenes), false),
     ];
+    // 检索回合档案:agent 循环与写作上下文的唯一桥(docs/agent-loop-refactor.md §6)。
+    // critical=true(超预算优先于 recent-scenes 保留);renderDossier 分节限额
+    // 保证 ≤1000 token,不会撑爆 criticalTokens 预算校验。
+    if (input.dossier) {
+      candidates.push(
+        makeBlock(
+          'research-dossier',
+          { stats: input.dossier.stats, content: renderDossier(input.dossier) },
+          true
+        )
+      );
+    }
+    candidates.push(
+      makeBlock('recent-scenes', compactScenes(input.recentScenes), false),
+      makeBlock('retrieval', compactScenes(input.retrievedScenes), false)
+    );
     if (uniqueStyle.length > 0) {
       candidates.push(makeBlock('style', uniqueStyle, false));
     }

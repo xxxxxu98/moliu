@@ -294,6 +294,7 @@ export interface ScenePlan {
 export type ContextBlockKind =
   | 'locked-contracts'
   | 'current-state'
+  | 'research-dossier'
   | 'recent-scenes'
   | 'retrieval'
   | 'style';
@@ -311,6 +312,51 @@ export interface ContextPack {
   omitted: ContextBlockKind[];
 }
 
+/** 检索回合(agent research loop)显式记录的信息缺口：写作时须模糊化或绕开，不得虚构 */
+export interface ResearchGap {
+  topic: string;
+  reason: string;
+}
+
+/** 模型收尾时的完成自审清单（AgentLoopRunner 交叉核对后并入 dossier） */
+export interface CoverageSelfAudit {
+  castStatesConfirmed?: string[];
+  foreshadowsChecked?: string[];
+  priorEventsVerified?: string[];
+  gaps?: ResearchGap[];
+}
+
+export type ResearchFinishReason = 'model-finish' | 'stall' | 'budget' | 'protocol-error';
+
+export interface ResearchRunSummary {
+  rounds: number;
+  toolCalls: number;
+  byTool: Record<string, number>;
+  ms: number;
+  finishReason: ResearchFinishReason;
+}
+
+/**
+ * 检索回合蒸馏出的研究档案：agent 循环与写作上下文之间的唯一桥。
+ * 写作 prompt 只渲染本档案（紧凑文本形态），不渲染循环的原始对话记录，
+ * 防止多轮工具结果稀释注意力污染文风（docs/agent-loop-refactor.md §6）。
+ */
+export interface ResearchDossier {
+  entitySnapshots: Array<{
+    id: string;
+    name: string;
+    kind: string;
+    statusLine: string;
+    sourceRounds: number[];
+  }>;
+  foreshadowChecks: Array<{ id: string; hint: string; status: string; note?: string }>;
+  priorSceneRefs: Array<{ chapter: number; summary: string }>;
+  timelineFacts: string[];
+  gaps: ResearchGap[];
+  coverage?: CoverageSelfAudit;
+  stats: ResearchRunSummary;
+}
+
 export interface ContextPackInput {
   contracts: ContractPack;
   state: StoryState;
@@ -319,6 +365,8 @@ export interface ContextPackInput {
   retrievedScenes: SceneChunk[];
   styleGuidance: string[];
   maxTokens: number;
+  /** 检索回合产出（启用 agent research 时传入）；缺省时行为与旧版完全一致 */
+  dossier?: ResearchDossier;
 }
 
 export interface StructuredAIRequest<T> {
@@ -331,7 +379,8 @@ export interface StructuredAIRequest<T> {
     | 'chapter-judge'
     | 'reader-outline-judge'
     | 'reader-chapter-judge'
-    | 'reader-window-judge';
+    | 'reader-window-judge'
+    | 'agent-research';
   system: string;
   prompt: string;
   schemaName: string;
@@ -625,6 +674,12 @@ export interface LongFormWriteInput {
    * 第 10 章 CBN 写含苞待放，模型照 CBN 字面把状态回退了）。
    */
   previousChapterEnding?: string;
+  /**
+   * 全书已提交章节的场景块（检索回合 read_chapter/search_scenes 的内存数据源）。
+   * 启用 agent research 时由管线传入；缺省时检索回合的这两个工具退化为
+   * recentScenes 范围。
+   */
+  sceneChunks?: SceneChunk[];
 }
 
 export interface LongFormWriteResult {
@@ -637,4 +692,6 @@ export interface LongFormWriteResult {
   receipt?: ChapterCommitReceipt;
   /** 实际发生的重写次数（0 = 初稿即通过） */
   rewriteRounds: number;
+  /** 检索回合摘要（未启用/失败降级时为 undefined） */
+  research?: ResearchRunSummary;
 }

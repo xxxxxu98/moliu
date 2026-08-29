@@ -66,17 +66,25 @@ import type {
 import {
   AIChapterJudge,
   AIFactExtractor,
+  AgentLoopRunner,
+  BookToolkit,
   ContractPackBuilder,
   dedupProse,
   GroundedRetriever,
   LegacyProjectMigrator,
   LongFormWritingEngine,
+  RecordingAgentLoopTransport,
   RecordingStructuredAI,
   sanitizeStructuredProseLeakage,
   shouldEnableAiTrace,
   StoryRuntimeClient,
   stripStateForChapterRewrite,
 } from '@/services/story-runtime';
+import type {
+  AgentLoopTransport,
+  AgentResearchStep,
+} from '@/services/story-runtime';
+import { readPositiveIntEnv } from '@/utils/env';
 import { robustJsonParse } from '@/utils/json-parser';
 import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
 import { overlayCharacterFates } from '@/services/writing/extract-plot-memory';
@@ -169,6 +177,50 @@ function createStructuredAIFromActiveProvider(signal?: AbortSignal): StructuredA
     });
   }
   return inner;
+}
+
+/**
+ * Agent 检索回合环境开关（docs/agent-loop-refactor.md §5.2）：
+ * MOLIU_AGENT_RESEARCH=1 启用；缺省/无效时关闭（零行为变化）。
+ * 渲染进程禁裸读 process.env，一律走 utils/env.ts（浏览器上下文无 process 全局）。
+ */
+export function isAgentResearchEnvEnabled(): boolean {
+  return readPositiveIntEnv('MOLIU_AGENT_RESEARCH') !== undefined;
+}
+
+/**
+ * 从 active provider 构造 agent 检索循环的多轮传输通道。
+ * 与 createStructuredAIFromActiveProvider 同口径：请求级超时护栏 +
+ * AbortSignal 叠加；温度用辅助档 0.2（检索判定任务，非创作）。
+ */
+function createAgentLoopTransportFromActiveProvider(signal?: AbortSignal): AgentLoopTransport {
+  return {
+    async send(messages, options) {
+      if (signal?.aborted || options?.signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
+      }
+      const { requireAIService } = useActiveAIProvider();
+      const service = requireAIService();
+      const timeoutController = new AbortController();
+      const timeoutTimer = setTimeout(
+        () => timeoutController.abort(),
+        AI_AUXILIARY_REQUEST_TIMEOUT_MS,
+      );
+      const inner = options?.signal ?? signal;
+      const combined = inner
+        ? AbortSignal.any([inner, timeoutController.signal])
+        : timeoutController.signal;
+      try {
+        return await service.chatComplete(messages, {
+          temperature: 0.2,
+          signal: combined,
+          jsonMode: true,
+        });
+      } finally {
+        clearTimeout(timeoutTimer);
+      }
+    },
+  };
 }
 
 function isAbortError(error: unknown): boolean {
@@ -303,6 +355,12 @@ export interface ChapterWritingPipelineDeps {
    * 测试/冒烟注入 FakeAI 或 RealAI（可包 RecordingStructuredAI）。
    */
   structuredAI?: StructuredAI;
+  /**
+   * 注入 agent 检索循环的多轮传输通道（测试/冒烟用）。
+   * 注入即启用检索回合；正式 App 靠 MOLIU_AGENT_RESEARCH 环境开关从
+   * active provider 构造。未注入且开关关时零行为变化。
+   */
+  agentResearchTransport?: AgentLoopTransport;
   /** 注入 StoryRuntimeClient（测试用内存 IPC 客户端） */
   storyRuntimeClient?: StoryRuntimeClient;
   /** 注入 storyRuntime IPC；与 GroundedRetriever / Client 共用 */
@@ -445,11 +503,13 @@ export class ChapterWritingPipeline {
     markPlanted?(input: { ids: string[]; chapterNumber: number }): Promise<void>;
   } | null;
   private readonly structuredAI: StructuredAI | undefined;
+  private readonly agentResearchTransport: AgentLoopTransport | undefined;
   private readonly storyRuntimeClient: StoryRuntimeClient | undefined;
   private readonly storyRuntimeApi: StoryRuntimeAPI | undefined;
   private readonly forceStoryRuntime: boolean;
 
   constructor(deps?: ChapterWritingPipelineDeps) {    this.structuredAI = deps?.structuredAI;
+    this.agentResearchTransport = deps?.agentResearchTransport;
     this.storyRuntimeClient = deps?.storyRuntimeClient;
     this.storyRuntimeApi = deps?.storyRuntimeApi;
     this.forceStoryRuntime = Boolean(deps?.forceStoryRuntime);
@@ -986,10 +1046,66 @@ export class ChapterWritingPipeline {
       );
       const ai: StructuredAI =
         this.structuredAI ?? createStructuredAIFromActiveProvider(input.signal);
+      // Agent 检索回合组装（docs/agent-loop-refactor.md §8）：注入 transport 或
+      // 环境开关开启时挂上 research step；缺省完全不挂，引擎行为与旧版一致。
+      const agentTransport =
+        this.agentResearchTransport ??
+        (isAgentResearchEnvEnabled()
+          ? createAgentLoopTransportFromActiveProvider(input.signal)
+          : undefined);
+      let researchStep: AgentResearchStep | undefined;
+      if (agentTransport) {
+        const recordingTransport =
+          agentTransport instanceof RecordingAgentLoopTransport
+            ? agentTransport
+            : shouldEnableAiTrace()
+              ? new RecordingAgentLoopTransport(agentTransport, {
+                  runId: `longform-agent-${Date.now()}`,
+                  persist: true,
+                })
+              : undefined;
+        const effectiveTransport = recordingTransport ?? agentTransport;
+        const foreshadowCatalog = (input.project.foreshadows ?? []).map(foreshadow => ({
+          id: foreshadow.id,
+          hint: foreshadow.hint,
+          status: foreshadow.status,
+          setupChapter: foreshadow.setupChapter,
+          payoffChapter: foreshadow.payoffChapter ?? foreshadow.suggestedResolutionChapter,
+        }));
+        const searchPort = {
+          search: (query: string, limit: number, beforeChapter?: number) =>
+            runtime.searchScenes(input.project.id, query, limit, beforeChapter),
+        };
+        researchStep = {
+          async research(stepInput) {
+            const toolkit = new BookToolkit({
+              chapterNumber: stepInput.chapterNumber,
+              contracts: stepInput.contracts,
+              state: stepInput.state,
+              sceneChunks: stepInput.sceneChunks,
+              foreshadowCatalog,
+              searchPort,
+            });
+            const result = await new AgentLoopRunner(effectiveTransport, toolkit).research({
+              ...stepInput,
+              foreshadowCatalog,
+              searchPort,
+            });
+            recordingTransport?.recordSummary({
+              chapterNumber: stepInput.chapterNumber,
+              finishReason: result.finishReason,
+              transcript: result.transcript,
+              stats: result.dossier.stats,
+            });
+            return result.dossier;
+          },
+        };
+      }
       const engine = new LongFormWritingEngine({
         ai,
         factExtractor: new AIFactExtractor(ai),
         commitPort: runtime,
+        ...(researchStep ? { research: researchStep } : {}),
       });
       throwIfAborted(input.signal);
       const result = await engine.write({
@@ -998,6 +1114,7 @@ export class ChapterWritingPipeline {
         state,
         recentScenes,
         retrievedScenes,
+        sceneChunks: bootstrap.sceneChunks,
         styleGuidance: contracts.master.style,
         maxContextTokens: 24_000,
         targetWordCount: input.targetWordCount,
