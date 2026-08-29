@@ -14,10 +14,21 @@
   - **r1(降级路径)**:组装处漏传 toolkit 导致检索回合每章失败——降级机制按设计工作,每章回落纯基底打包,**5/5 章 accepted、首过率 100%**,证明「agent 坏 → 不阻塞写作」的护栏真实有效。事后修复(toolkit 构造挪进 research 闭包)并给 Runner 加了缺参显式守卫(vitest 不做类型检查,这类构造错误 JS 层静默)。
   - **r2(修复后)**:**5/5 章检索回合全部 model-finish**(7-12 轮/6-11 次工具调用/20-37s 每章,六工具全用),trace(`longform-agent-*.jsonl`)记录每轮 + 汇总,`scene-draft` prompt 中确认含 `'research-dossier'` block(stats+content)。工程指标:5/5 accepted、首过率 0.8(1 章字数超限压缩重写)、章均分 87.3。检索回合每章增加约 1-2 分钟(~+20% 墙钟)。
 - **实施偏差记录**:方案原定引擎内嵌 research 调用,落地时改为引擎接受 `AgentResearchStep` 接口、由 Pipeline 组装(工具目录/FTS 端口/伏笔目录都在 Pipeline 层);协议违规计数(解析失败+未知工具)合并为单一计数器,仅在成功执行工具后清零——原设计解析成功即清零会让连续未知工具永远凑不满熔断阈值。
-- **P3 A/B 命令**(同种子双跑,`MOLIU_STORYFLOW_RUN_SUFFIX` 隔离产物):
-  - 基线:`set MOLIU_STORYFLOW_RUN_SUFFIX=ab-base&& npm run smoke:storyflow:real`
-  - 实验组:`set MOLIU_AGENT_RESEARCH=1&& set MOLIU_STORYFLOW_RUN_SUFFIX=ab-agent&& npm run smoke:storyflow:real`
-  - 对比口径:§11 指标表 + 书审 triage 签名(S1 连续性 Finding / paragraphLengthCV / 首过率 / 墙钟与 token 增幅 / agent 降级率)。
+- **P3 A/B 验收结果(2026-08-30,100 章双开并行,反重力 gemini-3.7-flash-high)**:
+  - 基线 `ab-base`:81 章后 ch81 内容熔断(履约节点 3 连败,批量层按设计终止),80 章接受,首过率 0.827,paraCv 0.335,读者章均 86.6。
+  - 实验组 `ab-agent`:**91+ 章零内容熔断**(被 vitest 超时墙在 ch92 附近杀死,非内容问题,超时墙已加 ×1.6 agent 系数修复),91 章接受,首过率 0.813,paraCv 0.322(AI 腔章 5 vs 基线 8)。
+  - 检索回合行为:96 次运行,84 次 model-finish,**降级率 12.5%**(budget 7 / protocol-error 4 / stall 1),平均 11.0 轮、9.8 次工具调用、52s/章,六工具全用。
+  - **门禁判定(§11)**:质量与稳健性全过(首过率/AI 味不回归,熔断 0 vs 1,正向);**墙钟 +51%/章(目标 ≤35%)与降级率 12.5%(目标 <5%)两项未达**。结论:**继续迭代后复验**,不做全量转正。迭代项:① `AGENT_RESEARCH_TIMEOUT_MS`/token 预算默认放宽(240s/60k 偏紧,budget 降级是最大超额来源);② 检索耗时收敛(基底已含信息提示收紧、工具返回裁剪、v2 检索与规划并行);③ S1 深审补测(矩阵版 triage 不适配单跑布局,需书审或适配脚本)。
+  - 验收对比脚本:`temp/ab-compare.mjs`(支持后缀参数)、`temp/ab-compare2.mjs`(可复跑)。
+
+## 迭代 v1.1(2026-08-30 晚,针对首轮验收两项未达)
+
+- **协议 v1.1 批量查询**:单轮可发 `calls:[...]`(≤3 个独立查询,兼容 v1.0 单查询形式),砍模型-网关往返。
+- **任务书收紧**:明确「合同全文已给出,get_contract 无需调用」「read_chapter 禁止用于最近 3 章」——首轮 96 次运行中 get_contract 93 次、read_chapter 264 次多为重查基底已含信息。
+- **预算放宽**:240s/60k → 300s/80k(budget 降级是首轮超额主因)。
+- **5 章短程验证(agent-v11)**:5/5 全绿、首过率 100%、读者章均 87.4、**零降级**;检索轮数 **3-5(首轮 7-12,-60%)**,批量轮 2-4/章,六工具使用正常。
+- **高峰网关延迟发现**:晚高峰单轮请求固定 ~33s 延迟(与输入 16 字/3601 字无关;凌晨低峰同代码 ~4.7s/轮;同 run 的 scene-draft p50 也从 13.4s 涨至 21s)。属网关排队,非协议/模型问题——**长跑必须在低峰执行**,否则耗时不具可比性。
+- **100 章复验**:已定时今晚 01:30 低峰执行(`MOLIU_RUN_SUFFIX=ab-agent-r2`,基线数据复用),预期检索 ~4 轮/章、降级率 <5%、墙钟 +20-28%(达标线 ≤35%)。
 
 ---
 

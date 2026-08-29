@@ -224,7 +224,7 @@ describe('AgentLoopRunner', () => {
     // 首轮回复带代码围栏也应被宽松解析(未触发 parse-error)
     expect(result.transcript.filter(item => item.action === 'parse-error')).toHaveLength(0);
     // 系统任务书含基底描述与协议说明
-    expect(transport.calls[0]?.[0]?.content).toContain('不要重复查询');
+    expect(transport.calls[0]?.[0]?.content).toContain('禁止重查');
     expect(transport.calls[0]?.[0]?.content).toContain('query_entity');
   });
 
@@ -303,6 +303,66 @@ describe('AgentLoopRunner', () => {
     const result = await runner.research(input);
     expect(result.finishReason).toBe('protocol-error');
     expect(result.dossier.gaps.some(gap => gap.topic.includes('提前收束'))).toBe(true);
+  });
+
+  it('批量协议:一轮多个独立查询合并执行,结果合并在一条消息', async () => {
+    const batched = JSON.stringify({
+      thought: '并发查状态与伏笔',
+      action: 'tool_call',
+      calls: [
+        { tool: 'query_entity', args: { name: '周茂' } },
+        { tool: 'list_foreshadows', args: { filter: 'due' } },
+      ],
+    });
+    const transport = new ScriptedTransport([
+      batched,
+      finish({ castStatesConfirmed: ['林夜', '周茂'] }),
+    ]);
+    const { runner, input } = makeRunner(transport);
+    const result = await runner.research(input);
+
+    expect(result.finishReason).toBe('model-finish');
+    // 2 个模型轮(批量查询轮 + finish 轮),一个查询轮执行了 2 个工具
+    expect(result.dossier.stats.rounds).toBe(2);
+    expect(result.dossier.stats.toolCalls).toBe(2);
+    expect(result.dossier.stats.byTool).toEqual({ query_entity: 1, list_foreshadows: 1 });
+    expect(result.dossier.entitySnapshots[0]?.name).toBe('周茂');
+    // 两个结果合并在同一条 user 消息
+    const resultMessage = [...(transport.calls[1] ?? [])].reverse()
+      .find(message => message.role === 'user' && message.content.startsWith('{"results"'));
+    const payload = JSON.parse(resultMessage?.content ?? '{}') as {
+      results: Array<{ tool: string; ok: boolean }>;
+    };
+    expect(payload.results).toHaveLength(2);
+    expect(payload.results.map(item => item.tool)).toEqual(['query_entity', 'list_foreshadows']);
+  });
+
+  it('批量混合:重复查询跳过并标注,新查询照常执行', async () => {
+    const duplicate = toolCall('query_entity', { name: '周茂' });
+    const mixed = JSON.stringify({
+      thought: '一个重复一个新',
+      action: 'tool_call',
+      calls: [
+        { tool: 'query_entity', args: { name: '周茂' } },
+        { tool: 'search_scenes', args: { query: '鸩杀' } },
+      ],
+    });
+    const transport = new ScriptedTransport([duplicate, mixed, finish({})]);
+    const { runner, input } = makeRunner(transport);
+    const result = await runner.research(input);
+
+    expect(result.finishReason).toBe('model-finish');
+    expect(result.dossier.stats.toolCalls).toBe(2);
+    expect(result.dossier.stats.byTool).toEqual({ query_entity: 1, search_scenes: 1 });
+    const resultMessage = transport.calls[2]?.find(
+      message => message.role === 'user' && message.content.includes('skipped')
+    );
+    expect(resultMessage).toBeDefined();
+    const payload = JSON.parse(resultMessage?.content ?? '{}') as {
+      results: Array<{ tool?: string; skipped?: string[]; reason?: string }>;
+    };
+    expect(payload.results.some(item => item.tool === 'search_scenes')).toBe(true);
+    expect(payload.results.find(item => item.skipped)?.skipped).toEqual(['query_entity']);
   });
 
   it('用户取消:signal 已中止直接抛 AbortError', async () => {

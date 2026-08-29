@@ -58,7 +58,12 @@ const {
  * 显式设置仍最高优先。
  */
 const chapterCountForBudget = envInt('MOLIU_CHAPTER_COUNT', DEFAULT_STORYFLOW_CHAPTER_COUNT);
-const DEFAULT_TIMEOUT_MIN = Math.ceil(chapterCountForBudget * 2) + 60;
+// 2026-08-30 A/B 100 章实测:agent 检索回合 ~52s/章,总墙钟 +51%,2 分钟/章预算会撞墙
+const AGENT_RESEARCH_TIME_FACTOR = 1.6;
+const agentResearchOn = envInt('MOLIU_AGENT_RESEARCH', 0) > 0;
+const DEFAULT_TIMEOUT_MIN = Math.ceil(
+  chapterCountForBudget * 2 * (agentResearchOn ? AGENT_RESEARCH_TIME_FACTOR : 1)
+) + 60;
 const TEST_TIMEOUT_MS = envInt('MOLIU_TEST_TIMEOUT_MIN', DEFAULT_TIMEOUT_MIN) * 60_000;
 
 function envInt(name: string, fallback: number): number {

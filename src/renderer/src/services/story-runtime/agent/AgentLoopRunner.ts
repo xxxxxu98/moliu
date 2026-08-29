@@ -73,9 +73,17 @@ const WRAP_UP_PROMPT =
   '检索已连续多轮无新信息。请立即收尾:输出 {"action":"finish","coverage":{...}},' +
   '把已确认的信息填进对应清单,确认不了的写入 gaps(说明原因),不要再发起新查询。';
 
+/** 单轮最多并发查询数:v1.1 批量协议,砍模型-网关往返次数(100章实测均11轮/52s,主要开销即往返) */
+export const MAX_CALLS_PER_ROUND = 3;
+
+export interface AgentToolCall {
+  tool: string;
+  args: Record<string, unknown>;
+}
+
 type AgentDecision =
   | { action: 'finish'; thought?: string; coverage?: CoverageSelfAudit }
-  | { action: 'tool_call'; thought?: string; tool: string; args: Record<string, unknown> };
+  | { action: 'tool_call'; thought?: string; calls: AgentToolCall[] };
 
 function estimateTokens(messages: AgentMessage[]): number {
   return Math.ceil(messages.reduce((total, message) => total + message.content.length, 0) / 4);
@@ -130,12 +138,24 @@ function parseDecision(raw: string): AgentDecision | null {
         : undefined;
     return { action: 'finish', thought, coverage };
   }
-  if (record.action === 'tool_call' && typeof record.tool === 'string' && record.tool) {
-    const args =
-      record.args && typeof record.args === 'object' && !Array.isArray(record.args)
-        ? (record.args as Record<string, unknown>)
-        : {};
-    return { action: 'tool_call', thought, tool: record.tool, args };
+  if (record.action === 'tool_call') {
+    // v1.1 批量形式:calls 数组;兼容 v1.0 单查询形式(tool+args)
+    const rawCalls = Array.isArray(record.calls) ? record.calls : [record];
+    const calls: AgentToolCall[] = [];
+    for (const entry of rawCalls) {
+      if (!entry || typeof entry !== 'object') continue;
+      const item = entry as Record<string, unknown>;
+      if (typeof item.tool !== 'string' || !item.tool) continue;
+      calls.push({
+        tool: item.tool,
+        args:
+          item.args && typeof item.args === 'object' && !Array.isArray(item.args)
+            ? (item.args as Record<string, unknown>)
+            : {},
+      });
+    }
+    if (calls.length === 0) return null;
+    return { action: 'tool_call', thought, calls: calls.slice(0, MAX_CALLS_PER_ROUND) };
   }
   return null;
 }
@@ -194,11 +214,12 @@ function buildSystemBrief(input: AgentResearchInput, toolkit: BookToolkit): stri
     `- 收尾(CEN):${chapter.CEN}`,
     `- 必须覆盖:${chapter.mustCover.join(';')}`,
     '',
-    '【基底上下文已包含,不要重复查询】',
+    '【基底上下文已包含,禁止重查】',
     recentChapterTitles
-      ? `- 最近场景(全文已在写作上下文):${recentChapterTitles}`
+      ? `- 最近 3 章场景全文已在写作上下文(${recentChapterTitles}),read_chapter 禁止用于这三章,只用于读更早的旧章`
       : '- (本章附近无已提交场景)',
-    '- 本章合同全文与相关角色设定摘要、近期事件、未回收伏笔 id 列表',
+    '- 本章合同全文已在上方【本章任务】完整给出,get_contract 无需调用(仅当怀疑合同被截断时才用)',
+    '- 相关角色设定摘要、近期事件、未回收伏笔 id 清单已在基底;查询是为了拿到它们的精确状态/原文,不是确认存在',
     '',
     '【你的职责】核查基底没覆盖或需要精确确认的信息,典型场景:',
     '- 出场角色(尤其久未出场者)的当前状态:生死/位置/境界/持有物/已知信息',
@@ -209,8 +230,11 @@ function buildSystemBrief(input: AgentResearchInput, toolkit: BookToolkit): stri
     '【可用工具】',
     tools,
     '',
-    '【协议】每轮只输出一个 JSON 对象,禁止输出 JSON 之外的任何文字:',
+    '【协议】每轮只输出一个 JSON 对象,禁止输出 JSON 之外的任何文字。',
+    '单个查询:',
     '{"thought":"简述当前要查什么与为什么","action":"tool_call","tool":"工具名","args":{...}}',
+    '互相独立的多个查询必须合并到同一轮发出(最多 3 个),减少往返:',
+    '{"thought":"...","action":"tool_call","calls":[{"tool":"query_entity","args":{"name":"某人"}},{"tool":"search_scenes","args":{"query":"..."}}]}',
     '信息充分时收尾:',
     '{"thought":"…","action":"finish","coverage":{"castStatesConfirmed":["角色名",...],"foreshadowsChecked":["伏笔id",...],"priorEventsVerified":["第X章 ...",...],"gaps":[{"topic":"...","reason":"..."}]}}',
     '',
@@ -243,8 +267,9 @@ export class AgentLoopRunner {
       throw new Error('AgentLoopRunner 缺少 toolkit(构造函数第二参数)');
     }
     const opts = {
-      timeoutMs: 240_000,
-      tokenBudget: 60_000,
+      // 08-30 100章实测:240s/60k 下 budget 降级占比过高;放宽让「预算收尾」回归异常路径本位
+      timeoutMs: 300_000,
+      tokenBudget: 80_000,
       maxConsecutiveParseFailures: 3,
       stallNoProgressLimit: 2,
       ...this.options,
@@ -310,7 +335,7 @@ export class AgentLoopRunner {
           role: 'user',
           content:
             '上一轮输出无法解析。每轮只输出一个 JSON 对象:' +
-            '{"thought":...,"action":"tool_call","tool":...,"args":{...}} 或 {"action":"finish","coverage":{...}},不要任何多余文字。请重试。',
+            '{"thought":...,"action":"tool_call","tool":...,"args":{...}} 或 {"action":"tool_call","calls":[...]}(最多3个独立查询) 或 {"action":"finish","coverage":{...}},不要任何多余文字。请重试。',
         });
         continue;
       }
@@ -329,20 +354,36 @@ export class AgentLoopRunner {
           round: rounds,
           action: 'rejected',
           thought: decision.thought,
-          tool: decision.tool,
+          tool: decision.calls.map(call => call.tool).join(','),
           summary: '收尾提示后仍发起新查询',
         });
         finishReason = 'stall';
         break;
       }
 
-      if (!this.toolkit.has(decision.tool)) {
+      // 批量分流:未知工具 / 重复签名 / 可执行
+      const unknownTools = decision.calls.filter(call => !this.toolkit.has(call.tool));
+      const skippedDuplicates: string[] = [];
+      const freshCalls: AgentToolCall[] = [];
+      for (const call of decision.calls) {
+        if (!this.toolkit.has(call.tool)) continue;
+        const signature = `${call.tool}|${stableStringify(call.args)}`;
+        if (seenSignatures.has(signature)) {
+          skippedDuplicates.push(call.tool);
+          continue;
+        }
+        seenSignatures.add(signature);
+        freshCalls.push(call);
+      }
+
+      // 全部未知:按协议违规处理
+      if (freshCalls.length === 0 && unknownTools.length > 0) {
         consecutiveProtocolViolations += 1;
         transcript.push({
           round: rounds,
           action: 'rejected',
           thought: decision.thought,
-          tool: decision.tool,
+          tool: unknownTools.map(call => call.tool).join(','),
           summary: '未知工具',
         });
         if (consecutiveProtocolViolations >= opts.maxConsecutiveParseFailures) {
@@ -351,20 +392,19 @@ export class AgentLoopRunner {
         }
         messages.push({
           role: 'user',
-          content: `未知工具 "${decision.tool}"。可用:${this.toolkit.toolNames().join('/')}。请重新选择。`,
+          content: `未知工具 "${unknownTools.map(call => call.tool).join(',')}"。可用:${this.toolkit.toolNames().join('/')}。请重新选择。`,
         });
         continue;
       }
 
-      // 停滞检测:同签名重复查询拒绝执行
-      const signature = `${decision.tool}|${stableStringify(decision.args)}`;
-      if (seenSignatures.has(signature)) {
+      // 全部重复:按无进展处理(停滞检测)
+      if (freshCalls.length === 0) {
         consecutiveNoProgress += 1;
         transcript.push({
           round: rounds,
           action: 'rejected',
           thought: decision.thought,
-          tool: decision.tool,
+          tool: skippedDuplicates.join(','),
           summary: '重复查询(相同参数)',
         });
         messages.push({
@@ -377,43 +417,49 @@ export class AgentLoopRunner {
         }
         continue;
       }
-      seenSignatures.add(signature);
 
       const versionBefore = dossierBuilder.version();
-      let result: ToolCallResult;
-      try {
-        result = await this.toolkit.call(decision.tool, decision.args);
-      } catch (error) {
-        result = {
-          ok: false,
-          error: error instanceof Error ? error.message : String(error),
-        };
+      const resultsPayload: Array<Record<string, unknown>> = [];
+      for (const call of freshCalls) {
+        let result: ToolCallResult;
+        try {
+          result = await this.toolkit.call(call.tool, call.args);
+        } catch (error) {
+          result = {
+            ok: false,
+            error: error instanceof Error ? error.message : String(error),
+          };
+        }
+        toolCalls += 1;
+        byTool[call.tool] = (byTool[call.tool] ?? 0) + 1;
+        if (result.ok) {
+          recordToolResult(dossierBuilder, call.tool, result.result, rounds);
+        }
+        transcript.push({
+          round: rounds,
+          action: 'tool_call',
+          thought: decision.thought,
+          tool: call.tool,
+          args: call.args,
+          ok: result.ok,
+          summary: result.ok ? undefined : clip(result.error, 120),
+        });
+        resultsPayload.push(
+          result.ok
+            ? { tool: call.tool, ok: true, result: result.result }
+            : { tool: call.tool, ok: false, error: result.error }
+        );
       }
-      toolCalls += 1;
-      byTool[decision.tool] = (byTool[decision.tool] ?? 0) + 1;
-
-      if (result.ok) {
-        recordToolResult(dossierBuilder, decision.tool, result.result, rounds);
+      if (skippedDuplicates.length > 0) {
+        resultsPayload.push({ skipped: skippedDuplicates, reason: '重复查询,未执行' });
       }
-      transcript.push({
-        round: rounds,
-        action: 'tool_call',
-        thought: decision.thought,
-        tool: decision.tool,
-        args: decision.args,
-        ok: result.ok,
-        summary: result.ok ? undefined : clip(result.error, 120),
-      });
 
-      // 工具结果回填(上限防膨胀;错误信息也是有效输入,引导模型换查法或记 gaps)
-      const resultPayload = result.ok
-        ? { ok: true, result: result.result }
-        : { ok: false, error: result.error };
+      // 批量结果合并为一条消息(上限防膨胀;错误信息也是有效输入,引导模型换查法或记 gaps)
       messages.push({
         role: 'user',
-        content: clip(JSON.stringify(resultPayload), 2400),
+        content: clip(JSON.stringify({ results: resultsPayload }), 3600),
       });
-      // 一次成功执行即证明协议通道可用,清零协议违规计数
+      // 成功执行即证明协议通道可用,清零协议违规计数
       consecutiveProtocolViolations = 0;
 
       if (dossierBuilder.version() > versionBefore) {
