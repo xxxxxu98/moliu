@@ -23,7 +23,8 @@
     "smoke:reader-eval:real": "node scripts/agent-reader-eval-real-smoke.mjs",
     "cleanup:continue-write-artifacts": "node scripts/cleanup-continue-write-artifacts.mjs",
     "triage:storyflow": "node scripts/storyflow-triage.mjs",
-    "test:storyflow-triage": "node --test scripts/__tests__/storyflow-triage.test.mjs"
+    "test:storyflow-triage": "node --test scripts/__tests__/storyflow-triage.test.mjs",
+    "test:ending-audit": "node --test scripts/__tests__/ending-audit.test.mjs"
   },
   "keywords": [],
   "author": {

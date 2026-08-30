@@ -11,6 +11,7 @@ description: Storyflow 可上线验收大循环。把「真实 AI 生成整本�
 ```
 我的全书通读 Findings S1/S2 清零 + book-precheck 红线清零 + prose.dead-resurrection 恒红=0
 + 读者裁判硬门禁达线（阈值经用户批准冻结后填入；批准前为影子观察）
++ ending-audit 完本指标过关（章节完整 + 伏笔无 main 级未回收）+ 结局书审无 S1 + 前三章盲测通过
 ```
 
 ## 第 0 步：前置自检（三条全过才开跑）
@@ -62,9 +63,22 @@ set MOLIU_STORYFLOW_MATRIX_DIR=temp\storyflow-matrix-agif100ch&& node scripts/st
 
 ```bash
 node .agents/skills/storyflow-release-loop/scripts/assemble-matrix-bookreview.mjs <matrix目录>/<providerId>/<project-store>.json
-# 输出 temp/book-review/<slug>-<MMDD>/: outlines.txt + 001..NNN.txt + book.json
+# 输出 temp/book-review/<slug>-<MMDD>/: outlines.txt + 001..NNN.txt + book.json(含伏笔台账)
 node .agents/skills/storyflow-book-review/scripts/book-precheck.mjs "temp/book-review/<slug>-<MMDD>"
 ```
+
+组装完成后立刻跑**完本收束审计 + 盲测材料导出**（north-star 验收门第 5/6 项基建）：
+
+```bash
+node .agents/skills/storyflow-release-loop/scripts/ending-audit.mjs "temp/book-review/<slug>-<MMDD>"
+# 输出 ending-metrics.json(章节完整性+伏笔回收率) / ending-review-pack.txt(结局AI书审材料) / blindtest/(前三章脱敏盲测)
+npm run test:ending-audit   # 检测器自身回归
+```
+
+要点：`integrity.complete=false`（章空洞/末章截断）是工程层问题先归因；伏笔 `resolutionRate`
+与 main 级未回收清单是内容层结论——**结局书审读 ending-review-pack.txt 按 rubric 出 S1-S4
+Findings，与第 4 步逐章通读合并汇报**；盲测按 blindtest/README.txt 协议请人工评审执行，
+结果回填阶段总结。
 
 预检指标口径：引号/直引号/章界复述应恒绿（管线已兜底）；**段落 CV<0.15、CBN 无终止符、
 AI 词频**是要人工结合语境看的信号不是 blocker。

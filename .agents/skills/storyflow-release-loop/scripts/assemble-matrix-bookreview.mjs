@@ -48,14 +48,25 @@ for (const c of chapters) {
     hasContent: content.trim().length > 0,
   });
 }
+// 伏笔台账随书导出：ending-audit 只需拿到书审目录即可统计回收率，
+// 不必再回头翻 project-store（目录自足原则，与 book-precheck 同一输入）。
+const foreshadows = (project.foreshadows || []).map(f => ({
+  id: f.id,
+  hint: f.hint,
+  status: f.status,
+  importance: f.importance,
+  setupChapter: f.setupChapter,
+  actualPlantedChapter: f.actualPlantedChapter,
+  payoffChapter: f.payoffChapter,
+}));
 fs.writeFileSync(
   path.join(outDir, 'book.json'),
   JSON.stringify(
-    { id: project.id, name: project.name, genre: project.genre, exportedAt: new Date().toISOString(), source: path.resolve(storePath), chapters: manifest },
+    { id: project.id, name: project.name, genre: project.genre, exportedAt: new Date().toISOString(), source: path.resolve(storePath), chapters: manifest, foreshadows },
     null,
     1
   ),
   'utf8'
 );
-console.log(`已组装《${project.name}》→ ${outDir}`);
-console.log(`章节 ${manifest.length} 个,其中有正文 ${manifest.filter(c => c.hasContent).length} 个`);
+console.log(`assembled: ${outDir}`);
+console.log(`chapters=${manifest.length} withContent=${manifest.filter(c => c.hasContent).length} foreshadows=${foreshadows.length}`);
