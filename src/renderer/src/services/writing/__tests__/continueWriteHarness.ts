@@ -1110,7 +1110,8 @@ export async function runContinueWriteChapters(options: {
     for (let offset = 0; offset < chapterCount; offset += 1) {
       if (options.signal?.aborted) break;
       const chapterNumber = fromChapter + offset;
-      // 对齐 useBatchWriter：错误分级重试，耗尽即结束整批（质量优先：宁可不写也不继续产出有问题章节）
+      // 对齐 useBatchWriter：错误分级重试，耗尽即跳过该章继续（失败章标记 failed，
+      // 不阻断全书；此前的「耗尽即结束整批」让 fix2-final100 ch39 一章卡死 61 章）
       let finalResult: ContinueWriteChapterRunResult | null = null;
       let lastError = '';
       let lastErrorKind: ErrorKind = 'unknown';
@@ -1249,7 +1250,11 @@ export async function runContinueWriteChapters(options: {
         }
         continue;
       }
-      // 重试耗尽（持久/瞬态）：记录失败章信息后结束整批（质量优先，不再留白补章继续）
+      // 重试耗尽（持久/瞬态）：标记失败章后继续下一章。
+      // 此前是「结束整批（质量优先，不留白）」——fix2-final100 ch39 引号 5 连败
+      // 卡死全书、61 章报废，与完本能力（north-star 验收门⑥）冲突。质量损失的
+      // 正确形态是「局部失败洞可见可补」（writeStatus=failed + ending-audit holes
+      // + 书审暴露），而不是一章拖垮全书；失败章可由断点续写/补写轮回收。
       const failedChapter =
         options.project.chapters.find(item => item.orderIndex + 1 === chapterNumber) ?? null;
       if (failedChapter) {
@@ -1295,7 +1300,9 @@ export async function runContinueWriteChapters(options: {
           project: session.getProject(),
         });
       }
-      break; // 重试耗尽：结束整批，不再继续后续章（质量优先）
+      // 重试耗尽：失败章已标记（writeStatus=failed + 失败详情），跳过继续写下一章
+      // （abort/用户停止已在上方 break，走到这里的失败不阻断全书完本）
+      continue;
     }
     const runtimeVerification = await session.verifyRuntime(options.project.id);
     return {

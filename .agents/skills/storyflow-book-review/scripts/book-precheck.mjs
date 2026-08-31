@@ -13,7 +13,6 @@ const AI_WORDS = [
   '他知道', '这一刻', '以肉眼可见的速度',
 ];
 const HOOK_TERMINAL = /[。！？…；）】」』”』]$/u;
-const HOOK_HARD_CUT_LEN = [24, 25, 26]; // 旧 sanitize 硬切口径,命中即高概率残句
 const SCENE_BREAK = /\n\s*(?:---+|={3,}|#{1,3}\s*场景[^\n]*|\*{3,})\s*\n|\n{3,}/u;
 
 function listChapterFiles(dir) {
@@ -119,12 +118,14 @@ function runChecks(dir) {
   }
 
   // 钩子检查:未以终止符收尾(残句嫌疑) + 钩子链同拍复述
+  // 残句判定只看终止符：旧 sanitize「剥终止符不补回」bug 修复后，长度落在旧硬切
+  // 区间(24-26字)的完整钩子是合格钩子——r9 基线 100 章实证单凭长度误报 15/100 章。
   const outlinePath = path.join(dir, 'outlines.txt');
   if (fs.existsSync(outlinePath)) {
     const hooks = parseHooks(fs.readFileSync(outlinePath, 'utf8'));
     for (const h of hooks) {
-      if (!HOOK_TERMINAL.test(h.text) || HOOK_HARD_CUT_LEN.includes(h.text.length)) {
-        report.hookIssues.push({ ...h, length: h.text.length, reason: !HOOK_TERMINAL.test(h.text) ? '未以终止符收尾' : '长度落在旧硬切口径' });
+      if (!HOOK_TERMINAL.test(h.text)) {
+        report.hookIssues.push({ ...h, length: h.text.length, reason: '未以终止符收尾' });
       }
     }
     for (let i = 1; i < hooks.length; i += 1) {

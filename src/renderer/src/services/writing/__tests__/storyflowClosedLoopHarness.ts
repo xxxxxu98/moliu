@@ -26,17 +26,22 @@ import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 
 import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
-import { mapExecutableOutlineToGeneratedOutline } from '@/services/outline/adapters/executable-outline-adapter';
+import {
+  mapExecutableOutlineToGeneratedOutline,
+  detectDuplicateChapterCbn,
+} from '@/services/outline/adapters/executable-outline-adapter';
 import { inspectOutlineCompleteness } from '@/services/outline/validation/outlineCompleteness';
 import { volumeAssignmentSourceFromProject, volumeIdForChapter } from '@/services/outline/volumeAssignment';
 import {
   rollOutlineForward,
   type RollCaller,
 } from '@/services/outline/rolling/outline-roller';
+import { blueprintToChapterUpdate } from '@/services/outline/rolling/chapter-blueprint-regenerator';
+import type { ChapterBlueprint } from '@/services/outline/types/executable-outline';
 import type { ExecutableOutline } from '@/services/outline/types/executable-outline';
 import type { OutlineDirection } from '@/services/outline/types/direction';
 import type { GeneratedOutline } from '@/types/inspiration';
-import type { Project } from '@/types/project';
+import type { PlotNode, Project } from '@/types/project';
 import type { ProviderType } from '@/config/ai-providers';
 import { useProjectCreator } from '@/composables/useProjectCreator';
 import { useSettingsStore } from '@/stores/settings.store';
@@ -322,6 +327,7 @@ export async function ensureStoryflowWritingCapacity(
           maxChapters: needed,
           persist: (nodes, plannedChapterCount) => {
             expanded.plotOutline.push(...nodes);
+            syncRolledBlueprintsToChapters(expanded, nodes);
             expanded.metadata = {
               ...expanded.metadata,
               plannedChapterCount: Math.max(expanded.metadata?.plannedChapterCount ?? 0, plannedChapterCount),
@@ -372,6 +378,40 @@ export async function ensureStoryflowWritingCapacity(
   // 未提供真实 AI 调用器（非真实冒烟路径）：全部占位兜底
   expanded = ensurePlaceholderCapacity(expanded, needed, rollReport);
   return Object.assign(expanded, { outlineRoll: rollReport });
+}
+
+/**
+ * 滚纲产出的真蓝图同步回章节表 outline/plotSummary（数据双源统一的滚纲侧闭环）。
+ * 章节表字段在批量续写链路里是「初版快照+占位槽」——reg20 实证初版适配层的
+ * 块内同款 CBN 污染 18-50 章 outline，而滚纲只更新 plotOutline 节点、章节表
+ * 永远停留在脏快照，书审导出/合同兜底读到的全是旧文本。只覆盖节点带 CBN 的
+ * 真蓝图（占位节点无 CBN 不动章节表）；折算格式与 blueprintToChapterUpdate 一致。
+ */
+function syncRolledBlueprintsToChapters(project: Project, nodes: PlotNode[]): number {
+  const byOrder = new Map((project.chapters ?? []).map(chapter => [chapter.orderIndex, chapter]));
+  let synced = 0;
+  for (const node of nodes) {
+    if (node.type !== 'chapter' || !node.CBN?.trim()) continue;
+    const chapter = byOrder.get(node.orderIndex);
+    if (!chapter) continue;
+    const blueprint: ChapterBlueprint = {
+      orderIndex: node.orderIndex + 1,
+      title: node.title,
+      summary: node.description ?? node.title,
+      CBN: node.CBN,
+      CPNs: node.CPNs ?? [],
+      CEN: node.CEN ?? '',
+      mustCover: node.mustCover ?? [],
+      forbiddenZones: [],
+      hookText: '',
+      hookType: '',
+    };
+    const update = blueprintToChapterUpdate(blueprint);
+    chapter.outline = update.outline;
+    chapter.plotSummary = update.plotSummary;
+    synced += 1;
+  }
+  return synced;
 }
 
 function ensurePlaceholderCapacity(
@@ -672,8 +712,30 @@ export async function runStoryflowClosedLoop(
       // 检查点损坏时按未命中处理并重新生成；不能让可选加速能力阻断真实 smoke。
     }
   }
-  const executableOutline =
+  let executableOutline =
     explicitCachedOutline ?? resumableOutline ?? (await generateExecutableOutline());
+  // 拆章同文终检：AI 拆章偶发整块复制（reg20 实证 ch18-50 同文 33 章），适配层是
+  // 纯映射修不了内容，唯一治本是重新拆章——含缓存/续跑大纲（脏缓存不值得省一次拆章）。
+  // 只重试一次：再失败说明模型当前拆章能力异常，带着警告放行让书审/裁判暴露问题。
+  const duplicateScan = detectDuplicateChapterCbn(
+    mapExecutableOutlineToGeneratedOutline(executableOutline).chapters
+  );
+  const duplicateCovered = duplicateScan.reduce((sum, g) => sum + g.chapters.length, 0);
+  if (duplicateCovered >= 3) {
+    outlineWarnings.push(
+      `[拆章同文] 初版蓝图 ${duplicateCovered} 章 CBN 同文（最大组 ${duplicateScan[0].chapters.length} 章），重新拆章一次`
+    );
+    executableOutline = await generateExecutableOutline();
+    const rescan = detectDuplicateChapterCbn(
+      mapExecutableOutlineToGeneratedOutline(executableOutline).chapters
+    );
+    const rescanCovered = rescan.reduce((sum, g) => sum + g.chapters.length, 0);
+    if (rescanCovered > 0) {
+      outlineWarnings.push(
+        `[拆章同文] 重新拆章后仍有 ${rescanCovered} 章 CBN 同文，模型拆章质量异常，需人工核查`
+      );
+    }
+  }
 
   const generatedOutline = mapExecutableOutlineToGeneratedOutline(executableOutline);
   const outlineChapters = generatedOutline.chapters;

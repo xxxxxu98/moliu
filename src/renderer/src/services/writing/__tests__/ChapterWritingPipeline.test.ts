@@ -13,6 +13,8 @@ import {
   ChapterWritingPipeline,
   resolveAllowedChapterCharacters,
   selectRecentScenesByChapter,
+  buildPayoffCandidates,
+  mergeChapterBlueprintText,
 } from '../ChapterWritingPipeline';
 import type { Project, Chapter } from '@/types/project';
 import type { SceneChunk } from '@/types/story-runtime';
@@ -622,5 +624,58 @@ describe('ChapterWritingPipeline.parseStructuredJson', () => {
     expect(() =>
       ChapterWritingPipeline.parseStructuredJson('这不是合法 JSON 正文返回。', 'SceneDraft')
     ).toThrow('结构化 JSON');
+  });
+});
+
+// 回归自 r9 基线书审 Findings①：payoff=110 的锦缎密账在 ch99 被正文提前回收，
+// 旧口径（payoffChapter <= chapterNumber）让判官看不到候选，台账永远 planned。
+describe('buildPayoffCandidates（伏笔判官候选口径）', () => {
+  const foreshadows = [
+    { id: 'fs-a', hint: '提前回收线', status: 'planned', setupChapter: 42, createdChapter: 42 },
+    { id: 'fs-b', hint: '未到埋设线', status: 'planned', setupChapter: 105, createdChapter: 105 },
+    { id: 'fs-c', hint: '已回收线', status: 'resolved', setupChapter: 2, createdChapter: 2 },
+    { id: 'fs-d', hint: '无setup线', status: 'buried' },
+  ];
+
+  it('回收时点在写作范围之外但埋设点已到 → 进候选（提前回收可见）', () => {
+    const ids = buildPayoffCandidates(foreshadows, 99).map(f => f.id);
+    expect(ids).toContain('fs-a'); // payoff=110 > 99，但 setup=42 已到
+    expect(ids).toContain('fs-d'); // 无 setup 视为已埋设
+  });
+
+  it('埋设点未到仍排除；已回收排除', () => {
+    const ids = buildPayoffCandidates(foreshadows, 99).map(f => f.id);
+    expect(ids).not.toContain('fs-b');
+    expect(ids).not.toContain('fs-c');
+  });
+
+  it('undefined 台账安全返回空数组', () => {
+    expect(buildPayoffCandidates(undefined, 1)).toEqual([]);
+  });
+});
+
+// 回归自 r9 基线：批量续写章的 outline 是「滚动续写槽位」34 字占位，
+// 只用章表字段做词面共现则 planned→buried 永不触发。
+describe('mergeChapterBlueprintText（埋设检测共现源）', () => {
+  const slotChapter = {
+    outline: '滚动续写槽位：承接第99章既有状态，由续写引擎根据当前合同推进主线。',
+    plotSummary: '滚动续写槽位：承接第99章既有状态。',
+  };
+
+  it('槽位占位章以 taskBook 蓝图为主文本源', () => {
+    const taskBook = {
+      CBN: '沈清霜取出贴身锦缎密账',
+      CPNs: ['微缩复式流水密账当众展开'],
+      CEN: '线索交到陆准手中。',
+      mustCover: ['锦缎密账兑现'],
+    };
+    const text = mergeChapterBlueprintText(taskBook, slotChapter);
+    expect(text).toContain('锦缎密账');
+    expect(text).toContain('微缩复式流水密账');
+  });
+
+  it('taskBook 缺失时回落章表字段，全缺返回空串', () => {
+    expect(mergeChapterBlueprintText(null, slotChapter)).toContain('滚动续写槽位');
+    expect(mergeChapterBlueprintText(undefined, undefined)).toBe('');
   });
 });

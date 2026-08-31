@@ -364,6 +364,42 @@ export function repairUnterminatedDialogueQuotes(paragraphs: string[]): string[]
 }
 
 /**
+ * 逐段修补失配的对话引号（通用形态，确定性）。
+ *
+ * 窄形态修复器（repairUnterminatedDialogueQuotes）只覆盖「段首 “、差恰好 1」，
+ * 真实回归 fix2-final100 ch39 证明其余形态（段中开引号、差 >1）会连续 5 次重写
+ * 全败于 G8 配对门禁、一章卡死全书——重写轮修不掉的失配，确定性补齐优于继续烧预算。
+ * 逐字符配对栈找出未闭合的 “，在其后第一个句末标点处补 ”；段内无句末标点则段末补。
+ */
+export function repairUnbalancedQuotes(paragraphs: string[]): string[] {
+  return paragraphs.map(paragraph => {
+    if (!paragraph.includes('\u201C')) return paragraph;
+    // 配对栈：扫描后残留的位置即未闭合的 “
+    const stack: number[] = [];
+    for (let i = 0; i < paragraph.length; i += 1) {
+      const ch = paragraph[i];
+      if (ch === '\u201C') stack.push(i);
+      else if (ch === '\u201D') stack.pop();
+    }
+    if (stack.length === 0) return paragraph;
+
+    let result = paragraph;
+    // 从最晚的未闭合 “ 起倒序补：插入点都在更早位置之后，不影响待处理下标
+    for (const openIdx of [...stack].reverse()) {
+      const after = result.slice(openIdx + 1);
+      const sentenceEnd = after.match(/[。！？…]/u);
+      if (!sentenceEnd || sentenceEnd.index === undefined) {
+        result = `${result}\u201D`;
+      } else {
+        const insertAt = openIdx + 1 + sentenceEnd.index + sentenceEnd[0].length;
+        result = result.slice(0, insertAt) + '\u201D' + result.slice(insertAt);
+      }
+    }
+    return result;
+  });
+}
+
+/**
  * 轻量规范化：尊重模型原有分段，不做主动拆段/并段。
  *
  * 仅做：
@@ -394,7 +430,7 @@ export function normalizeWebnovelParagraphs(prose: string): string {
     .filter(Boolean);
 
   const repaired = repairOrphanClosingQuotes(
-    repairUnterminatedDialogueQuotes(paragraphs)
+    repairUnbalancedQuotes(repairUnterminatedDialogueQuotes(paragraphs))
   );
   return repaired.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
 }

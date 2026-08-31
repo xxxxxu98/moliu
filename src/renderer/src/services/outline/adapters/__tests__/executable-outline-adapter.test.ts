@@ -9,7 +9,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { mapExecutableOutlineToGeneratedOutline } from '../executable-outline-adapter';
+import {
+  mapExecutableOutlineToGeneratedOutline,
+  detectDuplicateChapterCbn,
+} from '../executable-outline-adapter';
 import type { ExecutableOutline } from '../../types/executable-outline';
 
 function makeOutline(overrides: Partial<ExecutableOutline> = {}): ExecutableOutline {
@@ -500,5 +503,25 @@ describe('splitStartupBlocksToChapters - 章号前缀清洗（P1-B）', () => {
     for (const ev of allMustCover) {
       expect(ev).not.toMatch(/^第2章/);
     }
+  });
+});
+
+// 回归自 reg20：AI 拆章偶发整块复制（ch18-50 同文 33 章），终检须把病灶量化成可判定结果
+describe('detectDuplicateChapterCbn（拆章同文终检）', () => {
+  const chapters = (cbns: string[]) =>
+    cbns.map((CBN, index) => ({ number: index + 1, CBN }));
+
+  it('同文 CBN 归组并返回覆盖章号', () => {
+    const groups = detectDuplicateChapterCbn(
+      chapters(['甲乙丙丁戊己庚辛壬', '完全不同的开头句子', '甲乙丙丁戊己庚辛壬', '甲乙丙丁戊己庚辛壬'])
+    );
+    expect(groups).toHaveLength(1);
+    expect(groups[0].chapters).toEqual([1, 3, 4]);
+    expect(groups[0].sample).toBe('甲乙丙丁戊己庚辛壬');
+  });
+
+  it('无同文返回空数组；短于8字的CBN不参与统计', () => {
+    expect(detectDuplicateChapterCbn(chapters(['各不相同的开头一', '各不相同的开头二']))).toHaveLength(0);
+    expect(detectDuplicateChapterCbn(chapters(['短CBN', '短CBN']))).toHaveLength(0);
   });
 });

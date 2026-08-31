@@ -1,0 +1,2068 @@
+{
+  "book": "大人何故造反",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": null,
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "default",
+  "promptChars": 34,
+  "requestedChapterCount": 100,
+  "phaseTimings": {
+    "outlineDirectionsMs": 17212,
+    "outlineExpandMs": 266597,
+    "outlineRollMs": 272649,
+    "applyOutlineMs": 654,
+    "continueWriteMs": 4053988,
+    "totalMs": 4611100
+  },
+  "completedChapters": 39,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787039781123.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 刚穿成死囚，开局就教暴君做公关",
+      "words": 3135,
+      "paras": 22,
+      "paraCv": 0.36,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "朱红色的令签擦着耳廓飞过，重重砸在青砖地面上，弹起半尺高后骨碌碌滚出老远。殿内两侧十数名披甲禁卫同时拔刀，刺耳的金铁摩擦声在大殿内荡开，雪亮的锋刃映出地面斑驳的水渍。顾衡脑中一阵尖锐剧痛，宿醉般的混沌迅速被刺鼻的血腥气冲散，无数驳杂的记忆碎",
+      "tail": "透铁门扑面而来。顾衡深吸了一口潮湿冰冷的空气，脑海中疯狂运转着大庆朝堂的各方利益链条与信息博弈网，三日期限如悬顶之剑，这一场以命为注的公关死局，才刚刚拉开序幕。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 诏狱验伪证，反手把锦衣卫拉下水",
+      "words": 3123,
+      "paras": 27,
+      "paraCv": 0.44,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "沉重的生铁栅栏在身后发出一声刺耳的闷响，锁簧咬合的咔哒声彻底切断了外头的微光。沈炼一把推开刑房那扇裹着生牛皮的厚门，扑面而来的炭火热浪裹挟着陈年血垢的甜腥，直往人鼻腔里钻。刑房正中悬着两根浸透黑血的熟铜立柱，墙壁上整齐悬挂着数十种森寒的铁器",
+      "tail": "布的快马早已静静等候在雨幕之下，马鼻中喷吐着白色的热气。漆黑的夜空如墨翻滚，远处紫禁城的重重殿宇在雨雾中若隐若现，一场席卷整座帝都的暗流正在无声无息地蔓延开来。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 夜闯通政司！查出邸报篡改黑手",
+      "words": 2420,
+      "paras": 34,
+      "paraCv": 0.48,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "顾衡跨上马鞍，粗糙的缰绳在掌心勒出一道深痕。夜雨顺着斗笠边缘滚落，打湿了粗布囚衣的领口，冰凉刺骨。沈炼翻身跃上另一匹黑马，双腿一夹马腹，两骑快马裹着厚软布的蹄子踩在湿漉漉的青石板上，只发出沉闷低微的嗒嗒声。\n\n“跟紧我，巡防营的更夫每两刻钟",
+      "tail": "机密重简，凡见可疑人等，一律格杀勿论！给我把卷宗库团团围住，连一只苍蝇也不准放走！”\n\n火光跳跃着透过窗棂，映亮了紧闭的厚重门扇，整座广文库已然被围得水泄不通。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 御史亲自下场，玉佩暗藏洗钱玄机",
+      "words": 3333,
+      "paras": 28,
+      "paraCv": 0.42,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "两扇沉重的雕花木门被差役重重踹开，门轴发出刺耳的呻吟，碎裂的木屑混着飞溅的雨水砸落在青砖地面上。数柄火把呼呼作响，火光将整座通政司广文库照得通明。雪亮的雁翎刀连环出鞘，清脆的金铁摩擦声在大堂内来回震荡，将窗外的滂沱雨声都压了下去。数十名身着",
+      "tail": "刀插回鞘中，转头看向顾衡，目光落在顾衡那双在昏暗灯火下异常深邃的眼眸上。宫城方向的更鼓声穿透雨幕沉闷地敲响了第四下，距离天光破晓的卯时朝会，只剩下最后两个时辰。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 太极殿当众掀桌，假死谏真相曝光",
+      "words": 2885,
+      "paras": 18,
+      "paraCv": 0.16,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "残破的窗棂外，暴雨渐渐歇止，泛白的天光刺破了浓稠夜色。沈炼按刀立在广文库门侧，警惕注视着院落中的动静。一名身着九品青绿官袍的消瘦文吏正抱着厚厚一叠布包溜进门缝，正是通政司案卷主簿钱丰。钱丰面色惨白，布鞋上沾满泥水，颤声道：“顾大人，您要的近",
+      "tail": "线索缓缓抬头，越过森严仪仗，看向文官最前列那道渊渟岳峙的身影；内阁首辅自始至终未发一言，此刻却微微侧头，深邃而森冷的目光穿透大殿阴影，毫无波澜地落在了顾衡身上。",
+      "error": null
+    },
+    {
+      "ch": 6,
+      "accepted": true,
+      "title": "第6章 空降冷门衙门，老油条集体下马威",
+      "words": 3385,
+      "paras": 44,
+      "paraCv": 0.51,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "吏部的调令与都察院的正七品官凭刚落印，顾衡便换上了簇新的青色官袍。腰间悬着监察御史的铜牌，他穿过通政司前堂肃穆的长廊，径直走向最深处那座偏僻破败的小院。案卷主簿钱丰一路缩着脖子跟在斜后方，两手紧紧抱着一匣公文，脚步虚浮得像踩在棉花上。\n\n穿",
+      "tail": "闹间隙，其中一人悄无声息地退入偏门，将一枚包裹在蜡丸中的密信，迅速塞进了外头候着的青衣小厮袖中。小厮压低斗笠，快步穿过通政司后巷，向着宫墙外的繁华深巷急奔而去。",
+      "error": null
+    },
+    {
+      "ch": 7,
+      "accepted": true,
+      "title": "第7章 青楼茶馆抓内鬼，偶遇神秘女掌柜",
+      "words": 3335,
+      "paras": 38,
+      "paraCv": 0.46,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "夜色降临，十里秦淮两岸早已挂起连绵的绯红灯笼。画舫破开泛着胭脂香气的碧波，丝竹管弦与歌姬的曼妙吴音交织在薄雾中，将整条长街烘托得如梦似幻。白日里在衙门正襟危坐的达官显贵与士子文人，此刻全换了便袍，隐入各大酒楼茶肆的暗香疏影里。\n\n那名从通政",
+      "tail": "青铜爵轻轻相碰，发出一声清脆的鸣响。窗外秦淮河的夜色正浓，繁华的市井灯火连成一片，而一场席卷朝堂与市井的舆论风暴，已在这间小小的临河雅阁内悄然埋下了第一道引线。",
+      "error": null
+    },
+    {
+      "ch": 8,
+      "accepted": true,
+      "title": "第8章 虚报三千刀？当场抓捕倒卖内贼",
+      "words": 3521,
+      "paras": 43,
+      "paraCv": 0.47,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "秦淮河上的画舫灯火在晨雾中渐次熄灭，更夫敲过五更的梆子声穿透薄雾，惊醒了整座京城。一辆挂着通政司腰牌的青蓬马车碾过青石板路，车轮在微凉的晨风中辘辘作响，径直停在了通政司后衙的夹道口。\n\n车帘掀起，顾衡率先踏下马车。他身上那袭监察御史的青色官",
+      "tail": "斗篷、腰佩绣春刀的颀长身影出现在院门之外。领头之人的玄色缎面官靴上绣着暗金蟒纹，脚掌落下无声，却带着一股阴冷森然的压迫感，已然悄无声息地踏上了邸报院正堂的石阶。",
+      "error": null
+    },
+    {
+      "ch": 9,
+      "accepted": true,
+      "title": "第9章 厂公阴鸷试探，公关话术反客为主",
+      "words": 3113,
+      "paras": 34,
+      "paraCv": 0.48,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "那双玄色缎面官靴踩过门槛，正堂内原本弥漫的松烟墨香顿时被一股阴寒的沉香气味压了下去。两列身披猩红斗篷的东厂番子雁翅排开，手按腰间狭长利刃，森冷肃杀的气息瞬间逼得廊下几个书吏瘫软在柱子旁。钱丰捧着账册的手猛烈一抖，整个人下意识往顾衡身后缩了半",
+      "tail": "衙门逼近！”\n\n沈炼急促的话音在空旷的大堂梁柱间炸响，空气骤然再度紧绷起来。刚刚平息的内廷危机尚未彻底落定，一场更大规模的民意狂潮已如山洪暴发般直扑通政司而来。",
+      "error": null
+    },
+    {
+      "ch": 10,
+      "accepted": true,
+      "title": "第10章 市井评书抹黑，肃王残暴流言四起",
+      "words": 3224,
+      "paras": 48,
+      "paraCv": 0.57,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "顾衡一把按住沈炼握刀的右手，神色沉静如水，没有半分惊惶。\n\n“三千太学生聚在宣武门，声势看似浩大，却绝非这场风暴的真正源头。”顾衡转头看向惊魂未定的钱丰，沉声吩咐道，“钱主簿，你立刻持都察院关防回印发房，将刚才崔厂公过目签押的邸报底样加急排",
+      "tail": "处的皮肤迅速蔓延至四肢百骸，刀刃极其锋利，甚至已经压破了一层薄薄的表皮，渗出细微的血珠。四周十余柄强弩紧扣扳机，整条逼仄阴暗的巷道陷入了死一般的凝滞与肃杀之中。",
+      "error": null
+    },
+    {
+      "ch": 11,
+      "accepted": true,
+      "title": "第11章 肃王拔刀？我教你立英雄人设！",
+      "words": 3049,
+      "paras": 45,
+      "paraCv": 0.51,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "冰冷的锋刃贴着皮肉寸寸下压，细细的血线顺着顾衡的领口滑入中衣，带来一阵灼热的刺痛。巷道两侧的伏兵弓弦紧绷，箭头在幽暗的阴影里泛着青黑色的毒光，将沈炼拔刀突进的路线彻底封死。\n\n沈炼手中的雁翎刀横在胸前，手腕青筋暴起，森寒的杀意在眸底翻涌，却",
+      "tail": "字迹狂草如飞，数枚兵部尚书与前线行营的大印赫然在目，暗红的血块甚至凝固在受降叛乱的阵亡将士名册之上。\n\n整座密室的空气在这一刻彻底凝固，翻盘的铁证已然摆在眼前。",
+      "error": null
+    },
+    {
+      "ch": 12,
+      "accepted": true,
+      "title": "第12章 次辅暗中递刀，邸报连夜改版",
+      "words": 3395,
+      "paras": 36,
+      "paraCv": 0.44,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "通政司邸报院后进的雕版工坊内，排插在立柱上的数十支松脂火把通宵不熄。滚热的松烟夹杂着浓稠的油墨气味在梁枋下翻滚，将十几个汗流浃背的雕版匠人身影拉得极长。案板上的梨木版被刻刀凿得笃笃作响，碎木屑如同细雪般落了满地。顾衡将那叠从文会茶楼密室取回",
+      "tail": "最终变得铁青如铁。\n\n窗外晨光大盛，早朝的景阳钟声沉闷悠远地敲响，穿透皇城重重宫门。严景安死死攥着被揉搓变形的邸报，胸膛剧烈起伏，眼底翻涌起前所未有的森冷杀机。",
+      "error": null
+    },
+    {
+      "ch": 13,
+      "accepted": true,
+      "title": "第13章 朝堂当众打脸！清流言官全哑火",
+      "words": 3485,
+      "paras": 47,
+      "paraCv": 0.54,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "早朝散去的景阳钟余音未绝，都察院与通政司联合主理的邸报署衙内，门槛几乎要被杂乱的脚步声踏烂。杨宪面色铁青地大步穿过前堂回廊，猩红的袍袖在疾行中猎猎作响，身后紧跟着五六名神色阴鸷的二皇子党言官。\n\n顾衡正坐在红木案几后翻看早间各城门送来的舆情",
+      "tail": "实打实的军界政治人情与京城防务特权，已然成为他在这座吃人朝堂上，撬动更大权柄的坚实底牌。\n\n后院的偏门无声合拢，微风拂过庭院深处的青石板，只留下一片深邃的宁静。",
+      "error": null
+    },
+    {
+      "ch": 14,
+      "accepted": true,
+      "title": "第14章 暗室伪造密信，锦衣卫遭人陷害",
+      "words": 2752,
+      "paras": 47,
+      "paraCv": 0.53,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "顾衡指尖摩挲着那枚沉甸甸的精钢巡夜腰牌，正欲将其收入袖中暗袋，院墙外骤然传出一阵沉重齐整的铁甲铿锵之声。数十道沉闷的脚步声迅疾合围，顷刻间将整座宅院的后巷与前门封锁得水泄不通。\n\n“锦衣卫北镇抚司百户沈炼何在？奉旨收缴佩械，速速受缚！”\n\n",
+      "tail": "。\n\n崔秉忠拂尘一甩，快步迈上九级白玉台阶。\n\n“启禀皇上！司礼监掌印崔秉忠、都察院御史顾衡、锦衣卫百户沈炼候旨觐见！”\n\n内侍尖细的通传声在养心殿外骤然响起。",
+      "error": null
+    },
+    {
+      "ch": 15,
+      "accepted": true,
+      "title": "第15章 殿前验纸诛心！暴君反手斩奸佞",
+      "words": 3001,
+      "paras": 35,
+      "paraCv": 0.39,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "殿门在一阵沉闷的轴磨声中徐徐开启，养心殿内阴沉得没有半点白昼的亮气。沉水香与道家丹炉的刺鼻气味纠缠在一起，压得人胸口发闷。顾衡敛目垂首，跟随崔秉忠踏上光可鉴人的墨色金砖，每一步落下都带着极轻微的回音。沈炼与杨宪分列后方，内阁次辅严景安则早已",
+      "tail": "悠之口，变成刺向朕的刀？”\n\n冰冷的质问如同一柄重锤，重重砸在空旷的大殿中央。顾衡额前三寸之处，那片漆黑的龙袍纹丝不动，整个养心殿的空气仿佛在这一刹那彻底冻结。",
+      "error": null
+    },
+    {
+      "ch": 16,
+      "accepted": true,
+      "title": "第16章 帝师初露峥嵘，司礼监深夜抄家",
+      "words": 3435,
+      "paras": 48,
+      "paraCv": 0.49,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "殿内沉香袅袅，空气重得让人喘不过气来。隆庆帝漆黑的龙袍下摆垂在顾衡眼前，那股逼人的帝王威压几乎要将青石砖压裂。\n\n顾衡额头贴着冰冷的金砖，脑海中飞速重构着危机公关的说辞。天子多疑，任何信誓旦旦的忠心表白在暴君眼中都是欺瞒，唯有将权力的利害彻",
+      "tail": "耳畔，尖细的声音幽幽响起，带着让人脊背发凉的寒意：\n\n“顾大人果然是个明白人。只是杂家得提醒你，这把喉舌之刃若是有一日敢割向内廷，杂家随时会亲手掐断你的脖子。”",
+      "error": null
+    },
+    {
+      "ch": 17,
+      "accepted": true,
+      "title": "第17章 把暴君当客户！献上舆论收权策",
+      "words": 2548,
+      "paras": 26,
+      "paraCv": 0.46,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "咽喉处的冰冷触感尚未褪去，东厂掌印太监那带着杀意的低语犹在耳畔回荡。满堂持刀的黑衣番子屏息凝神，昏暗的公堂内杀机密布，连空气都仿佛凝成了寒冰。顾衡迎着崔秉忠阴鸷森冷的目光，胸膛剧烈起伏了两下，随后竟仰起头，放声大笑起来。\n\n笑声清朗宏亮，在",
+      "tail": "\n窗外夜色渐深，更鼓声由远及近，敲过了三更，又敲过了四更。整座皇城都沉浸在浓重的黑暗之中，而养心殿雕花窗棂内的那一簇明亮灯火，却为了这本薄薄的密折，亮了一整夜。",
+      "error": null
+    },
+    {
+      "ch": 18,
+      "accepted": true,
+      "title": "第18章 密折专奏特权！书坊暗藏断头账",
+      "words": 3134,
+      "paras": 33,
+      "paraCv": 0.35,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "晨光撕开天际的重重阴霾，晨钟在紫禁城巍峨的琉璃瓦顶上方沉闷回荡。养心殿彻夜未熄的龙涎香，混杂着冷透的茶汤气味，在大殿深处凝成一股刺鼻的浊气。顾衡跨过高耸的朱红门槛，踩在温润如玉的金砖上，每一步都踏得极稳。\n\n御案后方，隆庆帝眼窝深陷，布满血",
+      "tail": "处用于通风的隐蔽气孔与夹层狭窗。此时此刻，在那片被桐油纸封严的雕花窗格外，一道如同鬼魅般的黑色人影毫无声息地飞速掠过，在昏暗的墙壁上投下一抹稍纵即逝的狭长暗影。",
+      "error": null
+    },
+    {
+      "ch": 19,
+      "accepted": true,
+      "title": "第19章 名士暗中串联，万人文会藏杀机",
+      "words": 2816,
+      "paras": 32,
+      "paraCv": 0.46,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "狭窄的暗室之内，烛芯爆开一朵暗红的火花。顾衡反手按住腰间那枚刚领到的如朕亲临紫铜腰牌，谢青鸾指间的短刃已然无声滑出袖口，刃尖直指上方通风夹层的木格死角。\n\n顶棚处却传来两轻一重的叩击声。紧接着，暗门外传来沉闷的齿轮转动声，沈炼高大的身影自石",
+      "tail": "的万人请愿书，台下的呼啸声瞬间冲破云霄。\n\n杀机已然攀升至顶峰，整条长街的青石板在万千士子的跺脚声中震颤不休，一场足以倾覆朝纲的文人海啸，已在茶楼门前轰然成型。",
+      "error": null
+    },
+    {
+      "ch": 20,
+      "accepted": true,
+      "title": "第20章 首辅法统压顶，帝师点破免死局",
+      "words": 2958,
+      "paras": 31,
+      "paraCv": 0.35,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "秦淮河畔的喧嚣声浪尚未传至内城，紫禁城下的汉白玉阶前已是一片冷寂。值守的金吾卫按刀肃立，文武百官在丹墀两侧垂手屏息，整座宫城沉浸在一种令人窒息的肃穆之中。就在此时，一顶黑呢银顶的八抬官轿自午门正道不疾不徐地抬入，停在太极殿前。\n\n抬轿的轿夫",
+      "tail": "而在茶楼最高处，两名赤膊壮汉猛然抡起沉重的鼓槌，东林书院象征召集四海清流的巨型战鼓，在茶楼之巅轰然擂响，沉闷的鼓声如同滚滚闷雷，压过了整座京城的喧嚣，直冲九霄！",
+      "error": null
+    },
+    {
+      "ch": 21,
+      "accepted": true,
+      "title": "第21章 名士下青楼，抓的就是你道德瑕疵",
+      "words": 2717,
+      "paras": 29,
+      "paraCv": 0.45,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "战鼓的隆隆巨响压过秦淮河水，将整座清流文会茶楼震得瓦垄乱颤。高台下数以千计的年轻士子振臂高呼，青衫翻滚如潮，激昂的请愿声浪几乎要将天边的铅云撕开一道裂口。谁也没有注意到，就在这片狂热喧嚣的侧后方，一艘挂着素纱灯笼的临江画舫正借着水雾遮掩，悄",
+      "tail": "徒的狂热与盲从。\n\n顾衡手指轻轻叩击着窗棂，袖中那张写满风流债的泥金字条泛着幽微的光芒。那张薄薄的纸页，正是撕碎清流虚伪面具、引爆这场文人海啸内耗的最凶狠尖刀。",
+      "error": null
+    },
+    {
+      "ch": 22,
+      "accepted": true,
+      "title": "第22章 虚报三千刀，抓出通政司内鬼烂账",
+      "words": 3167,
+      "paras": 38,
+      "paraCv": 0.41,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "两扇朱漆剥落的衙署大门被缇骑粗暴撞开，沉重的门轴发出刺耳的呻吟。顾衡一身从八品官袍，穿过晨光未散的天井，径直迈进通政司邸报院的签押大堂。他扬手将怀中三本边角起毛的厚重册子凌空掷出，啪的一声脆响，重重砸在正当间的黄花梨公案之上！\n\n公案上的青",
+      "tail": "丝微弱的晨光，透过破损的窗棂洒在最上方的一沓号外上。那醒目的朱砂大字与清晰的公款短笺拓印，在微光下泛着幽冷的光泽，上万份散发着油墨香的八卦号外，已连夜排版完毕。",
+      "error": null
+    },
+    {
+      "ch": 23,
+      "accepted": true,
+      "title": "第23章 八卦号外满天飞，名士私德大塌房",
+      "words": 2796,
+      "paras": 22,
+      "paraCv": 0.19,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "推车轱辘碾过青石板路，发出沉闷而密集的辘辘声响。天色刚刚破晓，杏花巷作坊侧门的厚木门轴悄然拉开，数十辆蒙着油布的轻便板车鱼贯而出，迅速隐没在京城晨雾缭绕的街巷深处。随着第一声更锣敲响，成捆的纸页被麻利解开，漫天翻飞的特刊号外带着新鲜的桐油墨",
+      "tail": "卿，你先前呈上来的折子朕还当有捕风捉影之嫌，如今看来，市井间的走卒小民反倒比六科给事中看得更为透彻。文华殿前那些跪着要朕严惩奸佞的折子，今日怕是递不上来了吧？”",
+      "error": null
+    },
+    {
+      "ch": 24,
+      "accepted": true,
+      "title": "第24章 文会变闹剧，万人请愿当街互殴",
+      "words": 3226,
+      "paras": 48,
+      "paraCv": 0.48,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "黄宗道扯着嘶哑的嗓子，双手死死扒住高台栏杆，声嘶力竭地挥舞着手中的折扇。他脸上的青筋根根暴起，对着台下骚动散乱的人群拼命呐喊：“诸位贤弟莫要听信奸贼挑拨！那邸报号外上的字条全是厂卫鹰犬的伪作！老夫一生光明磊落，岂会贪图几两阿堵物，又怎会做出",
+      "tail": "烘炉炼化皇权的赵首辅。”\n\n顾衡拂了拂衣袖上的微尘，迈步向楼下走去。长街尽头，早有通政司的官轿恭候多时，轿帘在阴沉的天色下沉稳低垂，等待着执棋人落入下一个棋盘。",
+      "error": null
+    },
+    {
+      "ch": 25,
+      "accepted": true,
+      "title": "第25章 绝望血书现首辅，暗卫旧伤藏杀机",
+      "words": 2702,
+      "paras": 22,
+      "paraCv": 0.38,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "顾衡弯腰钻进官轿，厚重的青呢布帘将外头的嘈杂声尽数隔绝。轿夫起轿极稳，青石板路在脚下发出沉闷的低响。不过一炷香的时间，轿身微顿，外头传来锦衣卫校尉低沉的通禀声，关押重犯的刑部西侧秘牢已经到了。\n\n推开厚重的包铁木门，潮湿阴冷的霉味混杂着血腥",
+      "tail": "暗流。他深吸了一口冰凉的夜气，心中已有定计，首辅赵弘毅这棵盘根错节的参天大树绝非一时能拔，但握紧了这柄直指内阁心脏的绝命血刃，接下来的朝堂棋局，主动权已然易手。",
+      "error": null
+    },
+    {
+      "ch": 26,
+      "accepted": true,
+      "title": "第26章 十面埋伏做铁证，明日朝堂定乾坤",
+      "words": 2942,
+      "paras": 32,
+      "paraCv": 0.57,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "算盘珠子在沉寂的值房内噼啪作响，清脆的撞击声撕破了后半夜的死寂。\n\n顾衡坐在榆木大案后，指尖蘸着朱砂墨，在摊开的黄麻纸上画下一道醒目的朱红横线。案头两侧堆叠的账册足有半人多高，全是这几日顺藤摸瓜从东林文会公库、广聚钱庄以及各处私邸查抄出的原",
+      "tail": "院左佥都御史严景安有本要奏！臣弹劾监察御史顾衡假借巡查之名，结党乱政、罗织冤狱，私刑构陷朝廷命官，动摇士林文脉社稷根基，罪在不赦，请陛下立降雷霆之怒以正国法！”",
+      "error": null
+    },
+    {
+      "ch": 27,
+      "accepted": true,
+      "title": "第27章 太极殿当众掀桌，清流全员偷税犯",
+      "words": 2960,
+      "paras": 30,
+      "paraCv": 0.37,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "严景安字字泣血的弹劾声在金銮殿内回荡，殿内数尊铜鹤香炉青烟笔直升腾，压得整座大殿落针可闻。文官列班之中，杨宪见机极快，当即手持象牙笏板快步出列，扑通一声跪在严景安身侧。\n\n“陛下！黄宗道乃东南士林名宿，不过因朝廷新政略有疑惑，顾衡便指使厂卫",
+      "tail": "\n顾衡立在御道中央，垂手而立，神色平静地看着脚下那幅被踩出无数脚印的长绢。殿外的晨光终于穿透层层殿门，斜斜洒在斑驳的白绫账目之上，将那些猩红的数字照得格外刺眼。",
+      "error": null
+    },
+    {
+      "ch": 28,
+      "accepted": true,
+      "title": "第28章 玉佩拓印砸金殿，当场革职查办",
+      "words": 2985,
+      "paras": 51,
+      "paraCv": 0.59,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "刺目的晨光照亮了金銮殿内的每一寸金砖，将铺展在御道上的巨幅白绢账目映得犹如一张张开的罗网。满朝文武屏息凝神，整座大殿唯有铜鹤香炉中烟气升腾的细微声响。\n\n“假的，全都是假的，这是顾衡借私造伪账陷害朝廷命官！”\n\n杨宪喉咙里发出困兽濒死般的粗",
+      "tail": "脆的撞击声。\n\n满朝文武战战兢兢，殿外深秋的凛风呼啸而入，卷动着御道上尚未收拢的斑驳长绢，整个大庆王朝最高权力中枢的格局，在这一刻彻底崩裂开一道深不见底的裂痕。",
+      "error": null
+    },
+    {
+      "ch": 29,
+      "accepted": true,
+      "title": "第29章 死囚逆袭正七品，御史台立威掌权",
+      "words": 3166,
+      "paras": 51,
+      "paraCv": 0.48,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "两名侍郎的乌纱帽滚落在金砖之上，清脆的碎玉声在大殿内久久回荡。两旁的殿前侍卫如狼似虎地扑上前来，将面如死灰的周文渊与钱谦之架起，迅速拖出了太极殿。文武百官匍匐在地，连呼吸都死死压抑着，整座大殿只剩下深秋殿风灌入的呜咽声。\n\n严景安瘫软在御道",
+      "tail": "底收服的年轻利刃，指尖轻轻摩挲着案头那方崭新的正七品铜印，眼底深处掠过一道深邃的光芒。\n\n在这座吃人的封建权力泥潭中，属于他自己的第一支嫡系铁军，终于彻底成型。",
+      "error": null
+    },
+    {
+      "ch": 30,
+      "accepted": true,
+      "title": "第30章 边关八百里加急，九门禁军起风雷",
+      "words": 2664,
+      "paras": 31,
+      "paraCv": 0.46,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "gateIssues": [],
+      "head": "都察院正堂内的激昂誓言犹在耳畔，顾衡没有片刻停歇，直接带着钱丰与新领的关防大印踏入通政司邸报院。院内书吏与典吏们早已听闻金銮殿上的雷霆风暴，眼见这位新晋的正七品监察御史兼领编撰协理跨进门槛，一个个噤若寒蝉，纷纷躬身退避到回廊两侧。\n\n顾衡径",
+      "tail": "\n粮尽兵变在即！\n\n密室内的空气仿佛在这一刹那凝固。烛火在风中剧烈摇曳，将那四个猩红刺目的血字映照在顾衡深邃的瞳孔之中，大庆王朝最凶险的军政风暴，已然拉开大幕。",
+      "error": null
+    },
+    {
+      "ch": 31,
+      "accepted": true,
+      "title": "第31章 清流恶人先告状，反咬邸报贪公款",
+      "words": 3047,
+      "paras": 38,
+      "paraCv": 0.38,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "密室之内，烛火在铜灯台上轻轻摇曳。顾衡动作利落地将那张写着血字的残破白绢卷起，收入贴身内袋，随后拍了拍钱丰的肩膀，示意他将桌上的盐水铜盆与竹刀尽数掩入暗格。\n\n“大人，西北军情若是真的压不住，京城必定要掀起滔天骇浪。”钱丰一边手脚麻利地收拾",
+      "tail": "\n密报上的朱红字迹在昏暗的光线中显得格外狰狞。顾衡指节发力，将纸页猛然攥紧在掌心之中，通政司庭院外的阴云层层压下，一场席卷整个大庆中枢的血雨腥风，已然逼至眼前。",
+      "error": null
+    },
+    {
+      "ch": 32,
+      "accepted": true,
+      "title": "第32章 顺藤摸瓜查亏空，户部黑账露马脚",
+      "words": 3135,
+      "paras": 41,
+      "paraCv": 0.48,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "顾衡将手中捏皱的密报拍在紫檀大案上，纸页撞击桌面发出清脆的响动。沈炼按着腰间的绣春刀跨前一步，玄色披风扫过门槛，带进一股深秋夜里的凉意。\n\n“三十艘黑篷重船，百余辆加厚大车。”顾衡目光冷冽，直视着沈炼，“户部度支司与内阁的免检官引，能在子时",
+      "tail": "禁军护卫的军用粮库深处。\n\n寒风穿透通政司的窗棂，吹得案头的舆图猎猎作响。公案上的烛火剧烈晃动，将那处重兵把守的禁军粮库标记，映照得如同一只择人而噬的漆黑巨兽。",
+      "error": null
+    },
+    {
+      "ch": 33,
+      "accepted": true,
+      "title": "第33章 连夜排印路线图，贪腐黑料印成报",
+      "words": 2704,
+      "paras": 31,
+      "paraCv": 0.42,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "顾衡按在京畿舆图上的指尖骤然收紧，目光穿透摇曳的灯火，落在丰益仓那三个刺目的朱砂小字上。\n\n“他们以为把粮食藏进禁军的眼皮底下，就能借着军防重地的门禁掩人耳目。”顾衡转过身，官袍大袖带起一阵冷风，声音冷冽如刀，“按常规路数，御史登台弹劾，内",
+      "tail": "特刊，已在无边夜色中精准送往各大军营哨所。通政司的檐角下，顾衡负手而立，凝望着渐渐泛起鱼肚白的天际，京畿军政中枢最猛烈的雷霆，即将在这座古老的帝都上空轰然炸响。",
+      "error": null
+    },
+    {
+      "ch": 34,
+      "accepted": true,
+      "title": "第34章 禁军兵愤围户部，甩锅砸碎清流脸",
+      "words": 2792,
+      "paras": 51,
+      "paraCv": 0.6,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "“砰！”\n\n户部衙门沉重的朱漆大门被门房杂役从里面死死顶上，粗重的顶门杠带着颤音卡进铁槽。门缝之外，密集的脚步声宛若闷雷，自棋盘街两侧的长巷呼啸而至。\n\n三大营与九门禁军的巡防官兵披甲执戈，黑压压的铁盔连成一片森寒的铁浪。数千名禁军将士手持",
+      "tail": "，这只被当众拖出的户部硕鼠，将成为点燃整座京师权贵博弈的导火索。风暴不仅没有停息，反而裹挟着九门禁军的滔天兵愤，以无可阻挡之势，重重撞向了巍峨肃穆的紫禁城内廷。",
+      "error": null
+    },
+    {
+      "ch": 35,
+      "accepted": true,
+      "title": "第35章 死士当街灭死口，安息香气露端倪",
+      "words": 3492,
+      "paras": 41,
+      "paraCv": 0.4,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "铁铸囚车在棋盘街青石路面上碾出沉闷的咯吱声，四匹健马喷着粗重的白气，拉扯着粗壮的木栅缓缓前行。度支司主事披头散发地蜷缩在囚车中央，脖颈与双腕扣着百炼精钢打制的死囚重枷，官袍撕裂的下摆拖在泥泞血污之中。两百名锦衣卫缇骑手按绣春刀柄，分列街道两",
+      "tail": "尘土掩盖，而死士遗落的药囊残片中，那一缕若有若无、源自江南特有的安息香气，依然在微凉的空气中幽幽飘散，如同一道看不见的引线，无声地指向了那座重重宫门深处的阴影。",
+      "error": null
+    },
+    {
+      "ch": 36,
+      "accepted": true,
+      "title": "第36章 奸商抬价围衙署，顾大人借兵破局",
+      "words": 3097,
+      "paras": 44,
+      "paraCv": 0.62,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "度支司主事被刺身亡的血腥气尚未从街头散尽，一股更加阴毒的暗流已在京城各大街巷悄然蔓延。原本供应城中数十万生齿的四大粮行，在同一个清晨毫无征兆地全部落锁闭市。短短两个时辰内，市面上的白米从每斗三十文一路疯涨至一百二十文，城郊数以千计的流民与贫",
+      "tail": "。他并未多看顾衡一眼，只是按刀而立，冷峻的面庞上没有丝毫波澜，如同一尊生铁铸就的雕像，冷眼注视着台阶下匍匐的万千百姓，静待这位名动京师的年轻御史如何收拾这残局。",
+      "error": null
+    },
+    {
+      "ch": 37,
+      "accepted": true,
+      "title": "第37章 联手肃王调军粮，心理战击碎粮商",
+      "words": 2487,
+      "paras": 38,
+      "paraCv": 0.46,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "石阶之上，裴显按刀而立，玄甲在深秋的冷阳下泛着铁青色的寒光。台阶下方跪倒的数百名百姓噤若寒蝉，整条长街除了兵卒甲胄偶尔碰撞的脆响，再无半点喧嚣。\n\n顾衡上前一步，迎着凛冽的秋风，居高临下看向那一双双带着惶恐与饥渴的眼睛。\n\n“乡亲们都起来吧",
+      "tail": "微敞开的窗棂后，几张煞白无血的面孔正死死盯着堆积如山的粮袋，冷汗如雨水般顺着他们苍老的下颌滑落。心理防线的彻底崩溃，已然在这些贪婪商贾的眼底化作无可挽回的绝望。",
+      "error": null
+    },
+    {
+      "ch": 38,
+      "accepted": true,
+      "title": "第38章 特刊公示抛售表，粮商联盟生内讧",
+      "words": 2781,
+      "paras": 21,
+      "paraCv": 0.25,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "望鹤楼二层临街的轩窗被夜风吹得咯吱作响，屋内的茶香早已散尽，只剩下几盏残烛在青瓷灯台上摇曳。几位平日里在京城呼风唤雨的大粮商瘫坐在雕花圈椅中，额头渗出的冷汗浸透了前襟，却连抬手擦拭的力气都没有。长街上巡夜兵马踏过青石板的铿锵声响，犹如重锤般",
+      "tail": "然拉开。微弱的风灯下，几辆装满米袋的平板大车被伙计奋力推入泥泞的雨幕。而在黑暗巷口拐角处，几个闻风而动的黑影冒着秋雨，神色匆匆地朝着各大钱庄与米贩宅院疾奔而去。",
+      "error": null
+    },
+    {
+      "ch": 39,
+      "accepted": false,
+      "title": "第39章 说书人茶楼宣讲，奸商老巢被锁定",
+      "words": 0,
+      "paras": 0,
+      "paraCv": 0,
+      "attempts": 5,
+      "rewriteRounds": 0,
+      "gateIssues": [],
+      "head": "",
+      "tail": "",
+      "error": "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 刚穿成死囚，开局就教暴君做公关"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 诏狱验伪证，反手把锦衣卫拉下水"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 夜闯通政司！查出邸报篡改黑手"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 御史亲自下场，玉佩暗藏洗钱玄机"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 太极殿当众掀桌，假死谏真相曝光"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 空降冷门衙门，老油条集体下马威"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 青楼茶馆抓内鬼，偶遇神秘女掌柜"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 虚报三千刀？当场抓捕倒卖内贼"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 厂公阴鸷试探，公关话术反客为主"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 市井评书抹黑，肃王残暴流言四起"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1788144448242",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-J0FM6D\\story-runtime\\proj-1788144448242-485d1f4ed350.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 38,
+    "canonicalSnapshots": 39,
+    "latestSnapshotChapter": 38,
+    "sceneChunks": 38,
+    "events": 159
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 13,
+    "foreshadowCount": 10,
+    "volumeCount": 1,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "9385e415c1fa4b0ec5dea369e9766e1339bb58a5bb696e19e7dd7e4bbe818b4c",
+    "completeCharacterProfileCount": 13,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 13,
+    "foreshadowCount": 10,
+    "volumeCount": 1,
+    "plotChapterCount": 100,
+    "writtenChapterCount": 38
+  },
+  "outlineWarnings": [
+    "单章蓝图补全批次 11-20 瞬态失败（第 1 次，API 未返回内容），2000ms 后重试",
+    "单章蓝图补全批次 1-10 仍有 8/10 章未解出（第 3、4、5、6、7、8、9、10 章）",
+    "单章蓝图补全后仍有 8 章不完整，执行第 1 轮定点修复：3、4、5、6、7、8、9、10",
+    "大纲存在 1 个未登记角色（隆庆帝），执行第 1 轮补登记",
+    "未登记角色已补登记 1/1 个",
+    "修正稿结构完整性退化（阻断项 13→14），回退初稿",
+    "未登记地点已补登记 7/7 个",
+    "[滚动续纲] 定点修复失败：Cannot read properties of undefined (reading 'mustCover')",
+    "[滚动续纲] 第 85-100 章蓝图缺失或不可用，本轮只补到第 84 章"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 34,
+    "firstPassRate": 0.872,
+    "rewrittenChapters": 5,
+    "totalRewriteRounds": 5,
+    "averageRewriteRounds": 0.13,
+    "pipelineAttempts": 43
+  },
+  "runtimeMetrics": {
+    "requestCount": 137,
+    "requestCountsByPurpose": {
+      "scene-draft": 51,
+      "fact-extraction": 43,
+      "chapter-judge": 43
+    },
+    "latencyP50Ms": 8523,
+    "latencyP95Ms": 40884,
+    "latencyMaxMs": 62962
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "explicit"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 85.5,
+      "wouldStartReading": true,
+      "confidence": 0.88,
+      "dimensions": {
+        "openingAttraction": 88,
+        "coreSellingPoint": 90,
+        "protagonistDrive": 86,
+        "conflictEscalation": 82,
+        "payoffPlanning": 85,
+        "characterRelations": 84,
+        "suspensePlanning": 78,
+        "audienceFit": 89
+      },
+      "issues": [
+        {
+          "id": "reader.other-1",
+          "severity": "medium",
+          "category": "other",
+          "location": "volumePlan[0]",
+          "description": "模型指出读者体验问题",
+          "evidence": [
+            "{\"volumeIndex\":1,\"title\":\"从八品御史的保命公关学\",\"chapterRange\":{\"start\":1,\"end\":60},\"objective\":\"在诏狱死局中洗脱死罪，化解隆庆帝面临的宗室贪腐民怨危机，在通政司邸报院与都察院衙署站稳脚跟，成功升任正七品监察御史并获取独立弹劾权。\",\"coreConflict\":\"顾\",\"climax\":\"\",\"reversal\":\"\",\"endingHook\":\"\",\"protagonistGrowth\":\"\",\"keyCharacters\":[],\"setupForeshadows\":[],\"payoffForeshadows\":[],\"relationshipShifts\":[]}"
+          ],
+          "suggestion": "第一卷的分卷规划中除 objective 外，coreConflict 截断且 climax/reversal/endingHook 等核心卷结构字段全部为空，需将前50-60章的卷高潮与大反转完整补全，确保长线悬念与卷弧度设计落地。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-2",
+          "severity": "low",
+          "category": "other",
+          "location": "chapterBlueprints[1].hookText",
+          "description": "模型指出读者体验问题",
+          "evidence": [
+            "\"hookType\":\"reveal\",\"hookText\":\"办案靠\""
+          ],
+          "suggestion": "第2章的钩子文本出现截断残留（\"办案靠\"），建议补齐具体悬念陈述以保证蓝图执行阶段钩子明确。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-3",
+          "severity": "low",
+          "category": "other",
+          "location": "worldBuilding.locations",
+          "description": "模型指出读者体验问题",
+          "evidence": [
+            "{\"name\":\"疾步奔入带来市\",\"level\":\"city\",\"functionInStory\":\"卷纲与章节蓝图引用的地点，补登记入表。\"}"
+          ],
+          "suggestion": "世界观地点列表中混入了切词碎片的伪地点（如'疾步奔入带来市'、'点破二皇子借市'等），建议清理地理设定表，避免干扰世界观严谨度。",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "大纲核心卖点清晰，将现代危机公关、向上管理与封建朝堂党争结合得非常老辣，男频爽点和智商博弈体验突出。黄金三章与前30章冲突密集、反转连贯，人物小传与伏笔网络扎实。主要缺陷在于分卷规划字段存在空白截断及设定表中混有切词碎屑，但不影响整体故事引擎的强劲吸引力。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 88.8,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 92,
+          "openingHook": 90,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 88,
+          "payoffValue": 86,
+          "pacing": 88,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "现代公关术语直接口述略带说教感，虽符合主角人设，但在极度严谨的古言语境下可进一步融汇于古风话术中以增强沉浸度。",
+            "evidence": [
+              "处理舆论危机，核心在于转换叙事焦点，绝不可在对手预设的战场内被动接招。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "极佳的黄金三章开局。起笔即是生死立决的高压危机，主角凭借现代公关逻辑对‘文官死谏博名’的精准拆解直击多疑暴君的心理软肋，成功完成生死逆转，爽点与紧绷感兼备。转押诏狱途中对锦衣卫沈炼的心理防线瓦解同样老练利落，三日期限与幕后博弈悬念扎实，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 86.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 85,
+          "characterVoice": 88,
+          "payoffValue": 85,
+          "pacing": 84,
+          "endingPull": 86
+        },
+        "issues": [],
+        "summary": "本章承接上文干脆利落，进入诏狱刑房后迅速建立起“验伪证”与“利益绑架”的双重博弈。主角通过纸墨破绽硬核推理打破死局，随后精准切入沈炼身世与“背锅侠”困局，完成反向拉拢，将锦衣卫拉入同盟阵营。节奏紧凑，情绪层层推进，职场危机公关与黑吃黑博弈的味道纯正，结尾暗道策马出击具有很强的悬念与追读引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 84.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 83,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 82,
+          "characterVoice": 79,
+          "payoffValue": 85,
+          "pacing": 86,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "主角在直接对古代锦衣卫沈炼对话时使用了纯现代传播学词汇，未做古风语境转化或置于内心独白，略显出戏。",
+            "evidence": [
+              "“这是教科书级别的议程设置与情绪煽动。”顾衡眼底寒芒浮动，对身旁的沈炼沉声道"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上文潜入通政司取证的行动线，情节推进干净利落。不仅有效完成了两份邸报母本篡改痕迹的比对与实锤，抓获纵火小吏拿到口供，更在章尾迅速反转将主角二人逼入重重包围的绝境，智斗推演与动作紧迫感结合良好，章尾悬念钩子极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 86.9,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 86,
+          "characterVoice": 88,
+          "payoffValue": 86,
+          "pacing": 87,
+          "endingPull": 88
+        },
+        "issues": [],
+        "summary": "本章紧接上一章的合围危机，杨宪亲自带队逼宫，主角与反派展开高张力的言语博弈与心理战。通过对杨宪腰间宗室玉佩的微表情/肢体动作捕捉，主角完成了一次逻辑严密的硬核政治推演，彻底揭露了“清流借死谏引爆舆论以掩盖宗室贪腐洗钱”的黑幕真相，极好地兑现了公关博弈与降维打击的看点。外部锦衣卫援军施压与朝堂决战的倒计时收尾，紧绷感十足，章尾追读力强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 89.5,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 85,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 88,
+          "characterVoice": 87,
+          "payoffValue": 93,
+          "pacing": 88,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "此处直接跳出叙事视角使用带有“现代公关信息战”的元解释总结，略微打破了紧凑的朝堂古典肃杀氛围，但未影响整体阅读体验。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章悬念，金殿对质推演严密、节奏紧凑，爽点兑现充分。从比对邸报母本到摔出义学洗钱账册，再到搜出宗室玉佩，三层证据连环引爆，彻底将杨宪的虚伪人设撕碎。结尾顺势抛出内阁首辅的云纹私印与冷厉注视，无缝完成了从初级冲突向更高阶朝堂博弈的升级，追读驱动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 6,
+        "score": 87,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 88,
+          "payoffValue": 85,
+          "pacing": 88,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "凭借着过目不忘的数字敏锐度，现代借贷记账法的逻辑在他脑中飞速运转，不过片刻，几处致命的破绽已然无所遁形。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章大殿斗争获胜后的任职展开，顾衡空降冷门破败的邸报院，遭遇陈典吏等老油条以陈年烂账和怠工抱团为由设下的下马威。主角采用现代流程化管理立规矩，随后精准核查翻出陈典吏侵吞公款的致命破绽，迅速夺得印信掌控权并完成立威。整章节奏明快，爽点兑现利落，结尾暗线密信传递自然抛出新悬念，追读感良好。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 7,
+        "score": 84.3,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 82,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 83,
+          "characterVoice": 85,
+          "payoffValue": 84,
+          "pacing": 85,
+          "endingPull": 82
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "谢青鸾作为一个掌控庞大情报与发行暗网的幕后商人，在与初次见面的顾衡交涉时，底牌交出得较快，防备心衰退偏迅速。",
+            "evidence": [
+              "谢青鸾从袖中取出一枚精巧的木质印章放在桌上，声音放低了几分：“京城内外七十二家大型印刷作坊、江南运河沿线十三处集散书局，以及这秦淮河上三百余名说书先生的底本，全出自我青云斋。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文抓内鬼线索，迅速由破门抓现行切入高潮，随后转入顾衡与谢青鸾的高智商利益谈判。主角运用现代公关媒介思维降维打击古代民间舆论场，将民间发行渠道收编为舆论操盘工具，爽点清晰，文风老练利落，局势推进扎实。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 8,
+        "score": 86.4,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 85,
+          "pacing": 86,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "本章标题包含“虚报三千刀”，但正文中三千刀桑皮纸悬账仅作为中间几笔过渡伏笔一笔带过，核心剧情实际上是抓捕倒卖底样内贼与整肃通政司，标题对本章主冲突的提炼稍有偏离重心。",
+            "evidence": [
+              "“邸报院每年从内承运库领取的桑皮纸，账面上报销损耗足有五千刀，可实际刻版印发的用量，每年顶多两千刀。这多出来的整整三千刀桑皮纸……”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章秦淮河博弈，顾衡清晨携锦衣卫雷霆回衙踹门立威，将倒卖公文的内鬼与刺头当场革职锁拿，随后迅速推行四组分工的现代管理章程并提拔心腹钱丰，彻底掌控邸报院。全章节奏紧凑老练，职场整顿与权力掌控感极强；中段埋下官纸悬账伏笔，末尾猩红斗篷与暗金蟒纹官靴的不速之客登门，悬念压迫感十足，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 9,
+        "score": 87,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 88,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 85,
+          "characterVoice": 86,
+          "payoffValue": 86,
+          "pacing": 87,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "崔秉忠台词中出现现代词汇'公关话术'，在古风权谋语境下略有出戏感，建议替换为'纵横辩术'或'脱罪巧言'。",
+            "evidence": [
+              "东厂的刑具可不认得什么公关话术。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章东厂逼临的危机，通过扎实的利益推演与议程设置话术完成了一场精彩的'文戏破局'。主角准确击中内廷大珰的政治恐惧，借力打力将敌意转化为政治庇护，核心卖点（危机公关、反向职场）兑现充分。章尾无缝切入三千太学生围堵通政司的群体危机，节奏紧凑，追读期待极高。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 11,
+        "score": 86.3,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 88,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 86,
+          "pacing": 87,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“危机公关的第一要义，永远不是被动自辩，而是抢占叙事高地，反客为主。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文刀架咽喉的极度危机，主角凭借老辣冷静的政局分析迅速破局并反客为主。密室与肃王长史的交锋中，将现代舆论战策略（重构事实、悲情英雄人设）巧妙植入古代夺嫡风波，既展现了高智商操盘的暗爽，又顺理成章地达成了利益结盟并拿到了关键铁证，节奏利落，翻盘链条严密，追读感良好。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 12,
+        "score": 87.3,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 87,
+          "characterVoice": 86,
+          "payoffValue": 86,
+          "pacing": 88,
+          "endingPull": 87
+        },
+        "issues": [],
+        "summary": "本章紧承上回，将舆论公关的落地执行与朝堂暗流博弈推向高潮。章首次辅严景安暗中递条施压，强化了主角行动的高危感；顾衡以重构叙事、撰写特稿连夜印发三万份邸报反击，流程扎实利落。宣武门士子舆论瞬间反转与次辅严景安破防失态构成高质量的即时爽点反馈，章尾景阳钟声敲响、朝会决战在即，悬念与追读拉力极佳。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 13,
+        "score": 85.9,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 86,
+          "endingPull": 80
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "本章作为上一轮舆论战高潮的完整收尾，打脸与结算非常充分，但章尾偏向平稳闭环，缺乏对严景安或二皇子党下一步狠招反扑的即时压迫感钩子。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章邸报发酵的攻势，在通政司大堂完成了一场极其凌厉的舌战反击。顾衡以市井舆情与北疆血书塘报双重证据，占据道德与法理制高点痛斥清流宵小，朝堂嘴替与智商碾压的爽点拉满。章末肃王府送来银两、关防及九门巡夜特权，完成了实质性的高价值政治回报闭环，整体节奏明快、行文老辣。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 14,
+        "score": 83.4,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 85,
+          "openingHook": 85,
+          "conflictEffectiveness": 82,
+          "emotionalDrive": 84,
+          "characterVoice": 78,
+          "payoffValue": 82,
+          "pacing": 85,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "古代司礼监掌印太监直接说出高度现代化的职场黑话，破坏了历史权谋语境的沉浸感。",
+            "evidence": [
+              "崔秉忠深深看了顾衡一眼，嘴角勾起一抹意味深长的弧度：“顾大人年纪轻轻，这份向上管理的城府，杂家佩服。既如此，随杂家来吧。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "旁白叙述中出现“现代”一词，存在叙述视角的轻微出戏。",
+            "evidence": [
+              "茶水落下的那一刻，原本枯黄的纸面迅速褪色，露出了内层雪白的现代宣纸纤维，一股刺鼻的硫磺酸气随之飘散在空气中。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章收益后迅速抛出反扑危机，开篇御林军封门卸刀紧迫感强。顾衡利用痕迹检验降维破局，以水验纸打脸杨宪，节奏明快利落，沈炼归心与面圣借刀杀人逻辑通顺，章尾断在殿前觐见，追读欲强。主要瑕疵在于掌印太监台词中冒出“向上管理”等现代词汇，略损权谋沉浸感。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 15,
+        "score": 87.2,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 87,
+          "endingPull": 90
+        },
+        "issues": [],
+        "summary": "本章承接上文进殿面圣，在养心殿将伪造密信的危机推至高潮并完成利落兑现。御前滴茶验纸不仅公开粉碎了杨宪的构陷，还迫使内阁次辅严景安光速断尾割席，隆庆帝雷霆暴怒斩杀奸佞，爽感与朝堂肃杀感兼备。章尾并未停留在单纯的胜利中，而是迅速引出多疑帝王对顾衡掌控舆论能力的诛心质问，生死危机再度升级，章末悬念与追读拉力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 16,
+        "score": 84.2,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 82,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 84,
+          "characterVoice": 85,
+          "payoffValue": 80,
+          "pacing": 84,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "多处对话缺少前引号或后引号，属于排版与标点闭合瑕疵，影响阅读流畅度。",
+            "evidence": [
+              "“回圣上，邸报本无锋芒，执笔之人亦无私力。”顾衡声音沉着平稳，字字清晰落地，”邸报之于朝廷……随时可弃之如敝履。（末尾缺少后引号）/ 老朽周文渊，不过是个在国子监混口闲饭的糟老头子罢了。”（首部缺少前引号）/ “崔公公冷哼一声……走出去。（末尾缺少后引号）/ 下官的清白，早已呈在皇上的御案之上。”（首部缺少前引号）"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章死局高潮，开篇以‘水镜与磨刀石’的极高情商说辞化解了隆庆帝的猜忌，微兑现利落；中段引出隐退帝师周文渊拓展朝堂势力版图；后半段司礼监崔秉忠深夜锁门抄家极限施压，主角迅速看穿‘借刀杀人与拉拢试探’的底层逻辑，利用内廷与外朝文官的死敌矛盾反向拿捏掌印太监。整章智斗张力拉满，权谋推演硬核老辣，章尾危机虽暂解但留有强力制衡悬念。仅需注意正文中多处引号缺失/不匹配的标点瑕疵。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 17,
+        "score": 87.8,
+        "continueReading": true,
+        "confidence": 0.7,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 86,
+          "payoffValue": 88,
+          "pacing": 87,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "以绝境中‘突然放声大笑’破局的桥段在架空历史文中略显套路，但后续结合现代公关‘议程设置’与宦官核心利益痛点的说辞扎实，迅速弥补了套路感。",
+            "evidence": [
+              "顾衡迎着崔秉忠阴鸷森冷的目光，胸膛剧烈起伏了两下，随后竟仰起头，放声大笑起来。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章死局，精准兑现了‘反向职场’与‘公关降维打击’的核心卖点。主角利用现代议程设置理论拆解文官集团舆论垄断，直接击中司礼监掌印太监的政治生存痛点，将必杀之局转化为通天青云梯。节奏凌厉，局势扭转逻辑严密，章尾皇帝通宵御览的画面感极强，追读期待拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 18,
+        "score": 86.3,
+        "continueReading": true,
+        "confidence": 0.7,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 84,
+          "characterVoice": 86,
+          "payoffValue": 88,
+          "pacing": 86,
+          "endingPull": 88
+        },
+        "issues": [],
+        "summary": "本章承接严密且推进高效。开篇迅速兑现上一章密折呈递的成果，顾衡获得隆庆帝御赐的“如朕亲临”腰牌与密折专奏特权，政治地位与操盘空间实质性升级；中段转入暗线青云斋，女主谢青鸾的人物弧光与江南织造局“断头账”黑金内幕自然浮出水面，将职场公关与硬核审计推演结合得当；章尾以密室外黑影窥伺骤然收尾，危机突降，追读悬念强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 19,
+        "score": 84.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 82,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 84,
+          "characterVoice": 82,
+          "payoffValue": 76,
+          "pacing": 85,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "顶棚处却传来两轻一重的叩击声。紧接着，暗门外传来沉闷的齿轮转动声，沈炼高大的身影自石壁后方转出"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "在公关战里，最坚硬的盾牌，往往也是最致命的破绽。公关反击的第一铁律，就是永远不要由官方下场做道德审判。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文并迅速将冲突升级至核心危机：东林文会领袖黄宗道串联万人血书逼宫斩杀顾衡。主角以现代公关危机处置思维（议题切割、黑料证据链、现场引爆）进行硬核推演与连夜布局。叙事节奏紧凑凌厉，结尾精准卡在万人文会山雨欲来、黄宗道登台扬起血书的最高潮点，下章反转打脸的追读期待感拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 20,
+        "score": 84.2,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 84,
+          "conflictEffectiveness": 83,
+          "emotionalDrive": 82,
+          "characterVoice": 87,
+          "payoffValue": 78,
+          "pacing": 85,
+          "endingPull": 89
+        },
+        "issues": [],
+        "summary": "本章节奏把控精当，成功将原本单一维度的市井舆论战拔高至朝堂名教法统与太祖立法的宏观政治博弈。首辅赵弘毅的殿前施压气场十足，帝师周文渊的切入与赠印则补全了破局的法理支点（抹去的三字悬念有效提升期待感）。结尾双线汇聚于秦淮河茶楼，战鼓擂响，大战一触即发的紧绷感与追读力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 21,
+        "score": 83.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 82,
+          "emotionalDrive": 84,
+          "characterVoice": 80,
+          "payoffValue": 78,
+          "pacing": 82,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "顾衡手指轻轻叩击着窗棂，袖中那张写满风流债的泥金字条泛着幽微的光芒。那张薄薄的纸页，正是撕碎清流虚伪面具、引爆这场文人海啸内耗的最凶狠尖刀。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "文官集团最擅长用宏大叙事包装野心，将派系争权粉饰为天地正气。但在现代公关的危机解构模型里……"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章万人血书逼宫的危机，精准切入“名士下青楼”与“挪用士子捐款包养名妓”的致命私德漏洞。画舫内外的荒诞反差极具讽刺意味，公关破局思路清晰硬核，信息搜集与布局紧凑，章尾蓄势充分，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 22,
+        "score": 86.4,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 85,
+          "characterVoice": 84,
+          "payoffValue": 86,
+          "pacing": 88,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章获得的证据链，行动推进干脆利落。通过通政司查账对质、查封杏花巷伪印黑作坊、再到反向利用对手的纸张印机连夜赶制爆料号外，形成了一套极具掌控感的公关反制闭环。人物分工明确，节奏紧凑，结尾蓄势充足，极大激发了对下一章舆论战引爆的期待。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 23,
+        "score": 87.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 90,
+          "pacing": 88,
+          "endingPull": 82
+        },
+        "issues": [],
+        "summary": "本章承接上一章印刷作坊夺取后的舆论战准备，完成了极其痛快的高潮释放与情绪兑现。号外散播精准切中市井茶客与底层热血士子的痛点，通过“八千公帑买胭脂”与“兼并祭田”两记重拳，将清流名士的道德人设立体拆解、全面塌房。现场士子从狂热死谏到怒砸白幡、反戈唾弃的心理转变描写生动自然，情绪推背感极强。章尾顺势切入天子养心殿视角，皇帝的玩味冷笑为朝堂层面的降维打击完成铺垫，节奏紧凑老辣。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 24,
+        "score": 87.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 88,
+          "characterVoice": 85,
+          "payoffValue": 90,
+          "pacing": 86,
+          "endingPull": 84
+        },
+        "issues": [],
+        "summary": "本章爽点兑现十分扎实，承接上文舆论攻势，以极具画面感和辛辣感的笔触描绘了所谓士林领袖从高高在上到斯文扫地、当街挨揍的狼狈过程。“道德照妖镜”与苦主现身、恶奴行凶引发士子彻底倒戈，逻辑严密、节奏紧凑，充分满足了反套路权谋读者对“人设崩塌”与“智商掌控”的核心期待。章尾官府收网、矛头指向内阁赵首辅，平稳完成了事件收尾与下一阶段博弈的铺垫。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 25,
+        "score": 86.4,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 85,
+          "characterVoice": 88,
+          "payoffValue": 82,
+          "pacing": 85,
+          "endingPull": 88
+        },
+        "issues": [],
+        "summary": "本章承接上文干净利落，刑部秘牢中黄宗道畏罪自尽并留有血书，剧情推进高效。血书中首辅私印将证据链直指赵弘毅，同时沈炼身上暴露的宫廷破甲重箭旧伤引出深层暗线，双线交织且危机感层层递进。主角冷静收敛证据、拿捏局势的微操极具权谋掌控感，章末朝堂各方人马压境，悬念与对抗感十足。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 26,
+        "score": 86.2,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 86,
+          "characterVoice": 88,
+          "payoffValue": 80,
+          "pacing": 87,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏明快、蓄势充分。前半段通过通宵查账与口供串联，将朝堂政争转化为‘皇权钱袋子被架空’的精准利益打击，展现出极强的智谋掌控感与职场降维打击快感；后半段转场太极殿，早朝钟鸣与严景安的抢先发难形成紧绷对峙，断章精准卡在正面碰撞的爆发点，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 27,
+        "score": 87.8,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 89,
+          "characterVoice": 84,
+          "payoffValue": 93,
+          "pacing": 87,
+          "endingPull": 78
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "顾衡在金殿奏对时直接使用‘现代’这一穿越术语，破坏了硬核朝堂博弈的语境沉浸感。",
+            "evidence": [
+              "启奏陛下！臣以现代度支核算法复盘东南诸府十年账目，满朝清流言官口中的书院圣地，实则是大庆最大的偷税窝点与洗钱暗庄！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "朝堂大胜的高潮落幕后，本章停留在百官瘫软与主角伫立的定格画面，缺乏指向下一阶段博弈或新危机的推进钩子。",
+            "evidence": [
+              "顾衡立在御道中央，垂手而立，神色平静地看着脚下那幅被踩出无数脚印的长绢。殿外的晨光终于穿透层层殿门，斜斜洒在斑驳的白绫账目之上，将那些猩红的数字照得格外刺眼。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章完美兑现了上一章的伏笔与策略铺垫。主角在朝堂上避开道德争端，直接通过晒账单精准引爆皇帝对‘钱袋子被掏空’的暴怒，完成了对清流文官集团的降维打击与首辅下跪的强爽点回报。节奏紧凑明快，博弈逻辑闭环清晰。微瑕在于奏对台词出现‘现代’字眼稍显出戏，且章尾偏向结算画面，缺少进一步的连环钩子。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 28,
+        "score": 89.8,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 90,
+          "characterVoice": 88,
+          "payoffValue": 92,
+          "pacing": 88,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "官制表述存在轻微口误/混淆：正三品侍郎为六部副堂官，文中使用‘身居内阁侍郎高位’在明清架空官制语境下略显不严密。",
+            "evidence": [
+              "你们两个身居内阁侍郎高位，掌管度支礼仪，究竟是尸位素餐瞎了眼，还是本就分了钱庄里的脏银！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章金殿对峙的高潮，爽点兑现非常扎实。顾衡与沈炼配合默契，层层抛出‘宗室纹样拓印’与‘钱庄掌柜供状’，彻底击溃杨宪与清流文官的心理防线。皇帝雷霆震怒下的当庭革职、扒服下狱、牵连六部侍郎，使得朝堂博弈从局部防御反击彻底上升为派系清洗的大胜，掌控感与智商碾压的暗爽感拉满，章尾局势裂痕加深，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 29,
+        "score": 88.4,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 88,
+          "characterVoice": 92,
+          "payoffValue": 92,
+          "pacing": 88,
+          "endingPull": 82
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "现代职场量化考核（积分、量化评级）切入封建御史台时稍显直白，若能增加一两句更符合古代语境的文书辞藻包装会更具沉浸感。",
+            "evidence": [
+              "我给你们一套全新的‘纠察考评律’。……每一项都有清晰确切的得分与折算方式。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章高潮，微兑现与爽点回报极为充实。从金殿之上直面帝王诛心之问、确立“刮骨尖刀”的实用主义人设并斩获正七品实权与专折特权，到都察院内部雷霆清算旧蠹、以现代职场量化考核与护身符彻底收拢寒门年轻言官，权谋博弈与反向职场整顿双线并进。主角声音鲜明辛辣，行文节奏紧凑明快，成功完成了从求生到立足掌权的阶梯式跨越，对后续剧情展开具有极强的追读推动力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 30,
+        "score": 87.5,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 85,
+          "characterVoice": 88,
+          "payoffValue": 85,
+          "pacing": 88,
+          "endingPull": 92
+        },
+        "issues": [],
+        "summary": "本章节奏极为紧凑且行文老辣。承接上章顾衡接管通政司邸报院的权力落地后，迅速以‘西北八百里加急战马撞门’的强视觉冲击开场。通过通政司门前果断拦截主事私扣军报、密室药水烤火解密双层密函等硬核细节，环环相扣地引出‘九门禁军粮饷被吞、夺嫡势力借机夺兵权’的核心大案。结尾以‘粮尽兵变在即’的血书收尾，悬念极强，将朝堂文斗顺畅升级为军政风暴，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 31,
+        "score": 86.1,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 86,
+          "characterVoice": 88,
+          "payoffValue": 84,
+          "pacing": 86,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "户部给事中的行事风格偏向脸谱化的急躁反派，冲堂查账时的逻辑漏洞（无正印公文）被抓得稍显轻易，略削弱了权谋博弈双方势均力敌的压迫感。",
+            "evidence": [
+              "户部给事中脸色微变，随即梗着脖子喝道：“工部度支已有据可查，尔等休要狡辩！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文的西北军情危机，以极具职场公关感的‘程序正义反制’化解了户部的恶意查抄。顾衡利用《大庆会典》与都察院规制反扣户部账箱，不仅完成了利落的反击，更顺势拿到了户部阴阳调拨单的关键证据。沈炼带来的黑篷重船密报将剧情推向下一层高潮，悬念与节奏把控扎实。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 32,
+        "score": 87.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 85,
+          "characterVoice": 88,
+          "payoffValue": 85,
+          "pacing": 88,
+          "endingPull": 92
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "此处旁白直接插入过于现代的经管/公关理论术语，略微打断了权谋古言的沉浸感与文风统一性，建议融入顾衡更自然的心理推演或古风语境。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接紧凑，推演扎实。通过钱丰利用算学模型与水期漏洞破解户部假账，展现了硬核技术流破局的智商碾压爽感；随后谢青鸾带来商市情报，顾衡迅速拟定三步走的反向舆论与做局策略，展现出极强的掌控感。章尾通过舆图核对实现路线反转，揭露粮食被明目张胆藏入禁军重地丰益仓的“灯下黑”黑幕，悬念与危机感瞬间拉满，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 33,
+        "score": 86.2,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 86,
+          "characterVoice": 88,
+          "payoffValue": 84,
+          "pacing": 87,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "顾衡在宣纸上绘制柱状图和图解排版的现代信息可视化手法贴合降维打击卖点，但雕版老匠人仅凭流水拼版在一时辰内完成大图雕刻，在工艺推演上略显过于顺遂，建议后续稍作工期紧张度的微小细节补充。",
+            "evidence": [
+              "顾衡没有采用传统的整版雕刻法，而是将整个大图拆解为八块小板……短短一个时辰，八块雕版便严丝合缝地拼合在铁铸印框之中。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章发现丰益仓藏粮的危机，顾衡迅速决断，打破常规文官扯皮流程，开启通政司内院连夜排印舆论特刊。章节将现代信息可视化、流水线工序与精准受众投放（绕过内阁文官直击禁军与底层将士家眷营）结合，完美展现了主角降维打击的权谋手腕与执行力。节奏明快凌厉，危机公关与信息战推演扎实，章尾蓄势充分，极具追读期待。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 34,
+        "score": 86.7,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 88,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 87,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 86,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "户部侍郎在面对群情激愤时的甩锅言辞略显单一和脸谱化，不过在快节奏爽点释放中功能性达成较好。",
+            "evidence": [
+              "侍郎拂袖冷笑，毫不犹豫地将手指向通政司的方向：‘粮草转运乃朝廷军机大略，沿途水路遭灾漂没本是常理。此乃通政司邸报院擅权乱政...’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文舆论布局，执行力与爽点回报极为扎实。从禁军兵愤围堵户部、侍郎强行甩锅反遭群情激化，到锦衣卫雷霆破门抢夺暗账、当众拖出主事示众，场面调度紧凑利落。顾衡居高临下的掌控感与底层将士的爆发形成共振，成功将风暴推向紫禁城内廷高潮。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 35,
+        "score": 86.5,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 92,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 85,
+          "characterVoice": 82,
+          "payoffValue": 84,
+          "pacing": 88,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "“在现代危机处置中，最危险的时刻往往不是舆论爆发的节点，而是关键证人即将完成闭环交付的转折点。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章逮捕度支司主事的高潮，开篇直接遭遇极具张力的当街刺杀灭口，行文节奏紧凑、动作与悬疑感十足。主角顾衡冷静破局，从死士遗留的安息香残渣中抽丝剥茧，展现了极强的智商压制与危机公关操盘力。随后针对沈炼、钱丰、谢青鸾三人做出的三步暗线部署逻辑缜密、层次分明，迅速将‘线索断绝’的死局反转为‘反向合围’的猎局，章尾意象悠长且悬念明确，整体质量过硬。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 36,
+        "score": 85,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 84,
+          "characterVoice": 86,
+          "payoffValue": 83,
+          "pacing": 85,
+          "endingPull": 84
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "章名标为‘顾大人借兵破局’，但正文中裴显登场被描述为‘奉旨巡防’且‘绝非为了替都察院解围’，顾衡‘借兵’的主动性与具体动作在文中未充分展现，文题呼应略显生硬。",
+            "evidence": [
+              "他知道这位手握重兵的九门提督向来看不起文官的唇枪舌剑，今日带兵前来也绝非为了替都察院解围，而是借巡防之名在各方势力面前亮出京营的獠牙。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏明快，开篇迅速将阴谋落地为‘粮商闭市+煽动饥民围攻都察院’的群体危机。顾衡开门直面暴民、用利益剖析反向引导群体情绪的处理符合高智商公关定位；九门提督裴显的重甲禁军介入强化了朝堂多方博弈的紧绷感。结尾裴显冷眼旁观，将悬念自然过渡到如何真正平抑粮价、击垮粮商的下一步行动，追读期待充足。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 37,
+        "score": 85.8,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 86,
+          "pacing": 85,
+          "endingPull": 82
+        },
+        "issues": [],
+        "summary": "本章承接上一章都察院被围的民怨危机，顾衡迅速抛出二十五文平价官粮稳住百姓，并通过借肃王军粮、谢青鸾舆论造势以及空车队虚张声势的三层连环计，在心理战层面直接击碎四大粮商的囤粮联盟。权谋博弈与危机公关设计严密，黑吃黑与智商压制爽点充足，节奏推进干脆利落。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 38,
+        "score": 85,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 82,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 84,
+          "characterVoice": 80,
+          "payoffValue": 86,
+          "pacing": 85,
+          "endingPull": 84
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "顾衡在与属下交谈时直接使用了过于现代的学术词汇，稍显出戏",
+            "evidence": [
+              "顾衡放下特刊，语气平静地说道：“现代博弈中最坚固的攻守同盟，往往建立在信息垄断与暴利预期之上。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章舆论战布局，通过通政司特刊公示平价抛售表与倒计时，将心理战与商业博弈推向高潮。作者精准抓住了大中小粮商在资金链、风控能力上的差异，成功诱发商盟内部的‘囚徒困境’。雨夜泰和粮栈陈掌柜因高利贷与霉变危机率先降价至十八文抢跑抛售，踩踏效应初现，智商碾压与借势做空的爽感兑现充分，节奏紧凑，章尾追读力强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 39,
+        "score": 0,
+        "continueReading": false,
+        "confidence": 1,
+        "dimensions": {
+          "readability": 0,
+          "openingHook": 0,
+          "conflictEffectiveness": 0,
+          "emotionalDrive": 0,
+          "characterVoice": 0,
+          "payoffValue": 0,
+          "pacing": 0,
+          "endingPull": 0
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "critical",
+            "category": "other",
+            "location": "全文",
+            "description": "本章正文内容完全为空，无法进行文本阅读与剧情推进评估。",
+            "evidence": [
+              "prose: \"\""
+            ],
+            "suggestion": "",
+            "blocking": true,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章正文内容缺失（字数为0），属于致命空章错误，读者无法获取任何正文剧情。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 91,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 92,
+          "patternVariation": 88,
+          "suspensePayoff": 90,
+          "characterArc": 90,
+          "emotionalArc": 92,
+          "payoffEscalation": 88,
+          "genrePromise": 94,
+          "continuationDesire": 95
+        },
+        "issues": [],
+        "summary": "黄金三章完成度极高。开局即是金殿生死立决的高压绝境，主角以现代危机公关逻辑拆解文官博名潜规则成功自救；随后在诏狱通过物证推导与利益绑架迅速反向收服锦衣卫沈炼；第3章夜探通政司抓获放火小吏并坐实邸报篡改铁证，章尾再起波澜陷入重围。节奏推进凌厉，智商碾压与反套路博弈感极强，题材承诺兑现充分，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 91.7,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 92,
+          "patternVariation": 88,
+          "suspensePayoff": 95,
+          "characterArc": 86,
+          "emotionalArc": 90,
+          "payoffEscalation": 92,
+          "genrePromise": 95,
+          "continuationDesire": 94
+        },
+        "issues": [
+          {
+            "id": "reader.issue-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "第5章开篇主簿钱丰的出现略显天降功能人，前文未对主角如何联络/策反钱丰做细致铺垫，略有工具人之嫌，但瑕不掩瑜，未破坏整体推演大逻辑。",
+            "evidence": [
+              "一名身着九品青绿官袍的消瘦文吏正抱着厚厚一叠布包溜进门缝，正是通政司案卷主簿钱丰。钱丰面色惨白，布鞋上沾满泥水，颤声道：‘顾大人，您要的近三年宗室采买度支与发往各省的邸报回执全核算出来了。’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前5章作为开篇表现极其亮眼。开局即以现代公关视角解构‘文官死谏博名’的底层逻辑，迅速击中多疑帝王的利益软肋完成绝境逆转；随后在诏狱通过利益捆绑反拉锦衣卫入局、夜闯通政司取证破局、并在太极殿上以‘邸报篡改+洗钱账册+宗室玉佩’三重连环证据完成强力掀桌打脸。整体节奏紧凑凌厉，权谋推演严密，题材承诺与核心爽点兑现充分，第5章末尾以内阁首辅的云纹私印与冷厉注视无缝接入高阶朝堂博弈，追读驱动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 6,
+        "toChapter": 10,
+        "score": 86.3,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 86,
+          "patternVariation": 84,
+          "suspensePayoff": 88,
+          "characterArc": 82,
+          "emotionalArc": 85,
+          "payoffEscalation": 86,
+          "genrePromise": 90,
+          "continuationDesire": 89
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "前世公关管理经验与古代胥吏博弈的结合虽点题定位，但部分现代词汇（如‘工单流转与责任到人’、‘末位考核’）在古风语境中稍微偏直白，可进一步润色融合以增强沉浸感。",
+            "evidence": [
+              "顾衡前世在顶级公关公司统管数百人团队，见过太多倚老卖老、结党抱团推诿责任的职场油子。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "第10章结尾连续遭遇物理架脖子威胁，与主角此前智斗布局的画风形成强烈反差，需在下章迅速转回公关嘴遁与心理战以避免战力失衡。",
+            "evidence": [
+              "不等顾衡做出任何闪避动作，一道森寒刺骨的金属触感已然狠狠贴合在他的咽喉之上。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本窗口（第6-10章）主线推进扎实且节奏极佳。顾衡从空降冷门邸报院立规矩、抓内鬼破局，到整合民间书坊渠道（谢青鸾）、文戏反客为主慑服东厂厂公崔秉忠，再到第10章迅速卷入夺嫡派系（肃王）与文官清流的舆论绞杀战，核心卖点（现代公关降维打击、刀尖行走、朝堂黑吃黑）兑现充分。各方势力（文官、内廷、东厂、皇子、民间舆论）环环相扣，第10章卡点悬念压迫感拉满，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 16,
+        "toChapter": 20,
+        "score": 88.8,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 90,
+          "patternVariation": 85,
+          "suspensePayoff": 88,
+          "characterArc": 85,
+          "emotionalArc": 88,
+          "payoffEscalation": 90,
+          "genrePromise": 92,
+          "continuationDesire": 92
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "第16章正文存在多处对话引号缺失或未闭合现象（如顾衡对答尾部无后引号、退朝叩谢无前引号等），略微影响排版阅读体验。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本窗口（16-20章）主线推进凌厉且质感极佳。主角顾衡从杨宪案后的死局试探中逆势翻盘，以《舆论收权策》直接切中内廷与皇权的痛点，拿下‘密折专奏’特权；随后迅速将战场拓宽至江南织造局黑账与东林士林集团。面对首辅赵弘毅的名教威压与黄宗道的万人血书逼宫，主角层层部署公关切割、黑料证据链与法统破局，节奏张弛有度，硬核推演与反套路朝堂博弈的爽感持续升级，大战一触即发的追读欲望极强。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 38,
+      "chapterAverage": 84.1,
+      "chapterMedian": 86.4,
+      "chapterMinimum": 0,
+      "openingThreeAverage": 86.7,
+      "continueReadingNoCount": 1,
+      "lowChapterCount": 1,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察",
+      "低分章节 ch39=0",
+      "读者不愿继续阅读：ch39"
+    ],
+    "errors": [
+      "第10章读者评审失败：[\n  {\n    \"expected\": \"number\",\n    \"code\": \"invalid_type\",\n    \"received\": \"NaN\",\n    \"path\": [\n      \"dimensions\",\n      \"endingPull\"\n    ],\n    \"message\": \"Invalid input: expected number, received NaN\"\n  }\n]"
+    ],
+    "durationMs": 253184
+  },
+  "provider": "openai",
+  "model": "gemini-3.7-flash-high",
+  "totalMs": 4611182,
+  "warnings": [
+    "大纲阶段 warnings（9 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（3 条，影子模式不阻断）",
+    "读者评审失败（1 条，详见 readerEvaluation.errors）"
+  ]
+}

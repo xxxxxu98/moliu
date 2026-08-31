@@ -674,6 +674,36 @@ function toChapters(outline: ExecutableOutline): GeneratedChapter[] {
   return splitStartupBlocksToChapters(outline);
 }
 
+export interface DuplicateCbnGroup {
+  /** 同文组覆盖的章号（1 起） */
+  chapters: number[];
+  /** 同文 CBN 样本（去空白后） */
+  sample: string;
+}
+
+/**
+ * 拆章同文终检：扫描全部章节，CBN 去空白后逐字相同的章归组。
+ * AI 拆章偶发整块复制（reg20 实证 ch18-50 同文 33 章——「冰冷的水泼在脸上…」
+ * 一字不差重复），适配层是纯映射无法修正内容，唯一治本是上层重新拆章，
+ * 这里只负责把病灶量化成可判定的结构化结果。
+ */
+export function detectDuplicateChapterCbn(
+  chapters: GeneratedChapter[] | undefined
+): DuplicateCbnGroup[] {
+  const byCbn = new Map<string, number[]>();
+  for (const chapter of chapters ?? []) {
+    const key = (chapter.CBN ?? '').replace(/\s+/gu, '');
+    if (key.length < 8) continue;
+    const list = byCbn.get(key) ?? [];
+    list.push(chapter.number ?? 0);
+    byCbn.set(key, list);
+  }
+  return [...byCbn.entries()]
+    .filter(([, list]) => list.length >= 2)
+    .map(([sample, list]) => ({ chapters: [...list].sort((a, b) => a - b), sample }))
+    .sort((a, b) => b.chapters.length - a.chapters.length);
+}
+
 function toForeshadows(outline: ExecutableOutline): GeneratedForeshadow[] {
   if (outline.foreshadowPlan.length > 0) {
     return outline.foreshadowPlan.map((foreshadow) => ({

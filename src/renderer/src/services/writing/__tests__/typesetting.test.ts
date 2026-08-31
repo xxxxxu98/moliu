@@ -11,6 +11,7 @@ import {
   buildTypesettingIssues,
   buildWritingRulesWithTypesetting,
   repairOrphanClosingQuotes,
+  repairUnbalancedQuotes,
   TYPESETTING_HARD_RULES,
   EXTREME_PARAGRAPH_CHARS,
 } from '../typesetting';
@@ -221,11 +222,14 @@ describe('buildTypesettingIssues 生产硬门禁', () => {
     expect(issues.some(issue => issue.severity === 'high' && issue.description.includes('段落过密'))).toBe(true);
   });
 
-  it('中文对话引号未闭合时报告 high', () => {
-    // 段落中段出现的开引号未闭合(非段首对话形态)由门禁报 high 触发重写;
-    // 段首整段对话丢尾引号已被 normalize 层 repairUnterminatedDialogueQuotes 自动修补
-    const issues = buildTypesettingIssues('他没有回答，只把账本合上，低声说：“你到底看见了什么？\n\n风把灯吹灭了。');
-    expect(issues.some(issue => issue.severity === 'high' && issue.description.includes('引号未闭合'))).toBe(true);
+  it('中文对话引号失配先被 normalize 确定性补齐，门禁不再报（fix2 ch39 回归）', () => {
+    // 段中开引号未闭合曾连续 5 次重写全败于本门禁；repairUnbalancedQuotes 落地后
+    // normalize 层直接补齐，失配在源头消失，门禁保持「配对即放行」语义
+    const broken = '他没有回答，只把账本合上，低声说：“你到底看见了什么？\n\n风把灯吹灭了。';
+    const normalized = normalizeWebnovelParagraphs(broken);
+    const issues = buildTypesettingIssues(normalized);
+    expect(issues.some(issue => issue.severity === 'high' && issue.description.includes('引号未闭合'))).toBe(false);
+    expect((normalized.match(/“/gu) ?? []).length).toBe((normalized.match(/”/gu) ?? []).length);
   });
 
   it('连续五个碎段时报告 high', () => {
@@ -333,5 +337,32 @@ describe('Gate8Typesetting', () => {
     });
     expect(result.passed).toBe(false);
     expect(result.issues[0]?.category).toBe('typesetting');
+  });
+});
+
+// 回归自 fix2-final100 ch39：段中开引号丢闭引号的形态不在窄形态修复器覆盖内，
+// 连续 5 次重写全败于 G8 配对门禁、一章卡死全书——通用修复器在句末确定性补齐。
+describe('repairUnbalancedQuotes（通用引号失配补齐）', () => {
+  it('段中未闭合的 “ 在其后第一个句末标点补 ”', () => {
+    const [out] = repairUnbalancedQuotes(['他低声说：“账册在此。随后转身离去。']);
+    expect((out.match(/“/gu) ?? []).length).toBe((out.match(/”/gu) ?? []).length);
+    expect(out).toContain('账册在此。”');
+  });
+
+  it('多处未闭合各自在句末补齐；平衡段不动', () => {
+    const [out] = repairUnbalancedQuotes([
+      '“第一句。中间“插了一句。收尾句！”后面还有平句。',
+    ]);
+    expect((out.match(/“/gu) ?? []).length).toBe((out.match(/”/gu) ?? []).length);
+  });
+
+  it('已平衡的段原样返回', () => {
+    const balanced = '他说：“好的。”她点头。';
+    expect(repairUnbalancedQuotes([balanced])).toEqual([balanced]);
+  });
+
+  it('无句末标点的未闭合段在段末补', () => {
+    const [out] = repairUnbalancedQuotes(['他喊道：“快跑']);
+    expect(out.endsWith('快跑”')).toBe(true);
   });
 });

@@ -25,10 +25,30 @@ const chapters = [...(project.chapters || [])].sort(
   (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
 );
 
+// 章纲真源是 plotOutline 节点（滚纲/再生只更新节点，章节表 outline 保留初版快照
+// 可能是脏数据——reg20 实证 18-50 章 outline 同文但节点与正文全正常）。
+// 按 orderIndex 对齐节点，节点有 CBN 时优先，章节表字段兜底。
+const chapterNodes = [...(project.plotOutline || [])]
+  .filter(n => n.type === 'chapter')
+  .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+function blueprintTextFor(orderIndex, fallback) {
+  const node = chapterNodes.find(n => n.orderIndex === orderIndex);
+  if (!node || !node.CBN) return fallback;
+  const structured = [
+    '--- 结构化节点 ---',
+    node.CBN ? `【CBN】${node.CBN}` : '',
+    Array.isArray(node.CPNs) && node.CPNs.length ? `【CPNs】${node.CPNs.join('\n')}` : '',
+    node.CEN ? `【CEN】${node.CEN}` : '',
+    Array.isArray(node.mustCover) && node.mustCover.length ? `【必须覆盖】${node.mustCover.join('、')}` : '',
+  ].filter(Boolean).join('\n');
+  return `${node.summary || node.title || ''}\n\n${structured}`;
+}
+
 const outlineLines = [];
 for (const c of chapters) {
+  const outlineText = blueprintTextFor(c.orderIndex, c.outline || '(无outline)');
   outlineLines.push(`=== ${c.title} (orderIndex=${c.orderIndex}) ===`);
-  outlineLines.push(c.outline || '(无outline)');
+  outlineLines.push(outlineText);
   outlineLines.push(`plotSummary: ${c.plotSummary || '(无)'}`);
   outlineLines.push('');
 }

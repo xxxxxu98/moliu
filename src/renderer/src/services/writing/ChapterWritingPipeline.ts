@@ -1123,16 +1123,8 @@ export class ChapterWritingPipeline {
         // 上章结尾仲裁：批量链路构造的 previousChapter.ending 此前只喂任务书生成,
         // 不进起草 prompt;CBN 与上章正文事实冲突时模型无从对照(花海怒放被回退成含苞)。
         previousChapterEnding: input.previousChapter?.ending || '',
-        // 本章到达回收时点且尚未回收的伏笔 → 判官证据确认后经
-        // longFormResult.report.resolvedForeshadowIds 带出，驱动进度面板 buried→resolved 流转
-        payoffCandidates: (input.project.foreshadows ?? [])
-          .filter(
-            foreshadow =>
-              foreshadow.status !== 'resolved' &&
-              (foreshadow.payoffChapter ?? foreshadow.suggestedResolutionChapter ?? Infinity) <=
-                chapterNumber,
-          )
-          .map(foreshadow => ({ id: foreshadow.id, hint: foreshadow.hint })),
+        // 未回收伏笔的判官候选，口径见 buildPayoffCandidates（已到埋设点，非回收时点）
+        payoffCandidates: buildPayoffCandidates(input.project.foreshadows, chapterNumber),
       });
       // coerce 已清洗段落；出口兜底：剥 schema 残留 → 确定性去重（治章末台词重复）→ 排版归一化
       // dedupProse 内部已含 normalizeWebnovelParagraphs，无需外层再调
@@ -1222,13 +1214,13 @@ export class ChapterWritingPipeline {
       }
 
       // 埋设流转（accepted commit 的状态投影）：大纲预埋伏笔（planned）在本章
-      // 到达规划埋设点、且章大纲确实承载该线索（实体词共现，见
+      // 到达规划埋设点、且本章蓝图确实承载该线索（实体词共现，见
       // detectPlannedForeshadowings 标定注释）时，转 buried 并回填
       // actualPlantedChapter。确定性检测（非判官），失败只记 warning。
       const plantedIds = this.detectPlannedForeshadowings({
         foreshadows: input.project.foreshadows ?? [],
         chapterNumber,
-        chapterOutline: input.chapter.outline ?? input.chapter.plotSummary ?? '',
+        chapterOutline: mergeChapterBlueprintText(taskBook, input.chapter),
         characterNames: (input.project.characters ?? []).map(c => c.name),
       });
       if (plantedIds.length > 0 && this.foreshadowClient?.markPlanted) {
@@ -1559,6 +1551,48 @@ export class ChapterWritingPipeline {
       retryable: classified.retryable,
     };
   }
+}
+
+/**
+ * 未回收伏笔的判官回收候选。口径是「已到埋设点」而非「已到回收时点」：
+ * 模型会按剧情需要提前兑现线索（r9 实证：payoff=110 的锦缎密账在 ch99 被正文
+ * 完整回收，回收时点过滤让判官永远看不到候选，台账永远 planned 误报烂尾）。
+ * 埋设点已过的线索理论上可出现在正文任意处，回收判定交判官「宁缺勿滥」护栏兜底。
+ */
+export function buildPayoffCandidates(
+  foreshadows:
+    | Array<{ id: string; hint: string; status: string; setupChapter?: number; createdChapter?: number }>
+    | undefined,
+  chapterNumber: number
+): Array<{ id: string; hint: string }> {
+  return (foreshadows ?? [])
+    .filter(
+      foreshadow =>
+        foreshadow.status !== 'resolved' &&
+        (foreshadow.setupChapter ?? foreshadow.createdChapter ?? 0) <= chapterNumber,
+    )
+    .map(foreshadow => ({ id: foreshadow.id, hint: foreshadow.hint }));
+}
+
+/**
+ * 埋设检测的共现文本源：taskBook 履约蓝图（CBN/CPNs/CEN/mustCover）优先，
+ * 章表 outline/plotSummary 兜底。批量续写时章表 outline 是「滚动续写槽位」
+ * 占位（r9 实证仅 34 字），只用它做词面共现则 planned→buried 永不触发。
+ */
+export function mergeChapterBlueprintText(
+  taskBook: { CBN?: string; CPNs?: string[]; CEN?: string; mustCover?: string[] } | null | undefined,
+  chapter: { outline?: string; plotSummary?: string } | null | undefined
+): string {
+  return [
+    taskBook?.CBN,
+    ...(taskBook?.CPNs ?? []),
+    taskBook?.CEN,
+    ...(taskBook?.mustCover ?? []),
+    chapter?.outline ?? '',
+    chapter?.plotSummary ?? '',
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 // ============================================================
