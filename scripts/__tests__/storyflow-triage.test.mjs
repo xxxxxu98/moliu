@@ -52,6 +52,90 @@ test('误报形态：反派意图叙述「唯有强冲斩杀陆安方有一线�
   assert.equal(scanProseDeadResurrection(chapters, ['陆安']).length, 0);
 });
 
+test('去职/受难入牢 + 朝堂活体出场：B 书反派重置复现（2026-09-01 书审实锤）', () => {
+  // B 书 200 章实测：赵元泰 ch157 被削爵枷入天牢，ch181 却「率先跨出队列」
+  // 领衔勋贵上朝；旧词表无去职态、进牢形态漏检、ACTIVE_RE 无朝堂动词，
+  // 重置矛盾连续 40+ 章零检出
+  const chapters = [
+    ch(157, '「赵元泰连亲王爵位都被削了，脖子上套着死囚枷进了天牢！」定远侯嘶吼着烧掉暗账。'),
+    ch(181, '殿内左侧是以内阁首辅崔景渊为首的重臣，右侧宗人府宗正赵元泰带领的一众皇亲勋贵。肃立在勋贵首位的赵元泰便率先跨出队列，厉声喝斥顾承安谋逆。'),
+  ];
+  const res = scanProseDeadResurrection(chapters, ['赵元泰', '崔景渊']);
+  const zhao = res.find(r => r.name === '赵元泰');
+  assert.ok(zhao, '赵元泰应检出下狱/去职后活体出场');
+  assert.ok(zhao.state === '下狱' || zhao.state === '去职');
+  assert.ok(zhao.activeChapters.includes(181));
+});
+
+test('去职直接形态 + 朝堂捧奏折活体：崔景渊形态', () => {
+  const chapters = [
+    ch(139, '两名校尉上前，崔景渊被当堂停职查办，收缴相印。'),
+    ch(181, '金銮殿上，内阁首辅崔景渊双手捧着奏折，伏跪在地。'),
+  ];
+  const res = scanProseDeadResurrection(chapters, ['崔景渊']);
+  const cui = res.find(r => r.name === '崔景渊');
+  assert.ok(cui, '停职后上朝应检出');
+  assert.equal(cui.state, '去职');
+  assert.deepEqual(cui.activeChapters, [181]);
+});
+
+test('对照：受难字门控——探监/送物叙述不产生下狱命运', () => {
+  const chapters = [
+    ch(1, '陆文渊走进大牢探监，给旧友送了些御寒衣物。'),
+    ch(2, '陆文渊在公堂朗声陈词。'),
+  ];
+  assert.equal(scanProseDeadResurrection(chapters, ['陆文渊']).length, 0);
+});
+
+test('圣旨跨句处置 + 叙述追认：严嵩林弧线复现（2026-09-01 终验书 ch27/30/34/44 实锤）', () => {
+  // 罪状句点名、处置句隔着句号紧随——尾窗通道全漏；该反派其后以工部尚书/
+  // 都察院御史/内阁重臣三换身份复位 30+ 章，无任何释放词
+  const chapters = [
+    ch(27, '“户部郎中严嵩林，侵吞巨额国帑，私刻官印，欺罔君上。着即革去一身官职，剥去顶戴朝服，由刑部差役押入天牢死囚狱，交三法司会同严加看管，择日明正典刑！”'),
+    ch(30, '严嵩林虽已被打入天牢，但这户部衙门里盘踞数十年的老吏们并未真正死心。'),
+    ch(34, '裴文渊好大的雅兴！严嵩林跨进大堂，嗓音如滚雷般炸响。严嵩林怒目圆睁，指着陆衡厉声呵斥：「区区一个正六品度支主事，也敢擅改大胤祖制成法！」'),
+    ch(44, '立在下首的严嵩林虽然已被夺职，此刻仍战战兢兢地低声道：「殿下，两淮盐商总会的阴阳账本，恐怕全要暴露。」'),
+    ch(50, '朝堂之上，严嵩林朗声出列，厉声驳斥陆衡的条陈，满殿哗然。'),
+  ];
+  const res = scanProseDeadResurrection(chapters, ['严嵩林', '陆衡']);
+  const yan = res.find(r => r.name === '严嵩林');
+  assert.ok(yan, '严嵩林应检出下狱/去职后活体出场');
+  assert.ok(yan.state === '下狱' || yan.state === '去职');
+  assert.ok(yan.chapter <= 44);
+  assert.ok(yan.activeChapters.includes(50));
+});
+
+test('圣旨宣告误报守卫：宣读者不背处置（「着即将闹事者锁拿」）', () => {
+  const chapters = [
+    ch(1, '裴文渊展开告示朗声宣读：着即将闹事者锁拿下狱，严加审讯。'),
+    ch(2, '裴文渊在公堂朗声陈词。'),
+  ];
+  assert.equal(scanProseDeadResurrection(chapters, ['裴文渊']).length, 0);
+});
+
+test('圣旨宣告误报守卫：宣读者/执法者不背处置（终验书 ch160/161、B 书 ch196 实锤）', () => {
+  const chapters = [
+    ch(1, '温见山神色冷峻，声音在大殿内回荡：「大理寺与都察院依律联名签发拘押令！将管库太监及涉案一十八名内监当场革职锁拿，打入大理寺死牢严加看管！」'),
+    ch(2, '「传本尚书令！将这欺君罔上的江南粮道转运使当场革去官职，打入刑部死牢严加看管！」裴文渊掷下手签。'),
+    ch(3, '「河南道监察御史赵林等三人考核垫底，即刻褫夺官身，革职查办！」顾承安的声音清冷而洪亮。'),
+    ch(4, '温见山在公堂朗声陈词。裴文渊拂袖转身。顾承安提笔批示。'),
+  ];
+  assert.equal(scanProseDeadResurrection(chapters, ['温见山', '裴文渊', '顾承安']).length, 0);
+});
+
+test('尾窗直捕：名字紧邻处置动词（「将严嵩林革职拿问」）仍登记去职', () => {
+  // 「将+名+革职」名动紧邻是最高置信形态，与已撤销的段落归一通道无关
+  const chapters = [
+    ch(25, '老皇帝冷哼一声，拂袖下旨：「准奏。着三法司将严嵩林革职拿问，严加审讯。」'),
+    ch(30, '朝堂之上，严嵩林朗声出列，厉声驳斥陆衡的条陈。'),
+  ];
+  const res = scanProseDeadResurrection(chapters, ['严嵩林', '陆衡']);
+  const yan = res.find(r => r.name === '严嵩林');
+  assert.ok(yan, '紧邻革职应登记去职');
+  assert.equal(yan.state, '去职');
+  assert.ok(yan.activeChapters.includes(30));
+});
+
 test('对照：叙述处决「当阵斩杀了李泰」仍正常登记死亡并报复活', () => {
   // 台词守卫只拦引语内的杀式；叙述事实不能被误伤（漏报方向对照）
   const chapters = [

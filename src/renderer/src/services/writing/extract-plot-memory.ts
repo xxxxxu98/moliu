@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 情节记忆提取服务
  * 混合方案：规则提取为主 + AI 辅助为辅
  * 
@@ -476,17 +476,23 @@ function extractCharacterChanges(
 /**
  * 命运级状态：一旦进入即视为「不可自由活动」的终端状态。
  * 后续章节要写他们出场（回忆/翻案/平反除外）必须先显式解除。
+ * 去职（削爵/革职/罢免/停职/废黜）2026-09-01 增补：B 书 200 章实测反派
+ * 被削爵/停职后仍连续多章当朝履职（过期滚纲节点履约），禁入名单没有
+ * 该态可依，判定无从报 fact_conflict。
  */
-const FATE_STATES = new Set(['死亡', '驾崩', '下狱', '定罪']);
+const FATE_STATES = new Set(['死亡', '驾崩', '下狱', '定罪', '去职']);
 
 /** 可解除命运（翻案/越狱/官复原职/保释候勘）的规则词，命中则从禁入名单剔除。
  *  保释/候勘系来自 2026-08-27 百章实测：权臣「待罪保释在外」「闭门待勘」是剧情
- *  合法中间态，不识别会把终态当永续、把后续正常活动误判为死而复活。 */
+ *  合法中间态，不识别会把终态当永续、把后续正常活动误判为死而复活。
+ *  复爵/复位/东山再起系 2026-09-01 随「去职」态增补：削爵/罢免后剧情性复起的
+ *  合法通道。 */
 const FATE_RELEASE_PATTERNS: RegExp[] = [
   /平反/, /翻案/, /无罪释放/, /赦免/, /大赦/, /洗清(?:冤屈|罪名)/,
   /越狱/, /劫狱/, /逃出(?:天牢|大牢|宗人府|诏狱)/,
   /保释(?:在外)?/, /取保(?:候审)?/, /候勘/, /待勘/, /戴罪(?:立功)?/,
-  /起复/, /官复原职/, /重新起用/,
+  /起复/, /官复原职/, /重新起用/, /复爵/, /恢复(?:爵位|官职|职位|职务)/,
+  /复位/, /重返(?:朝堂|朝廷|庙堂)/, /东山再起/,
 ];
 
 export interface FateStatus {
@@ -531,11 +537,15 @@ export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {
   return [...byCharacter.values()];
 }
 
-/** 后生事实熔断：死亡登记之后，同角色在同章之后又出现任何出场/行动类状态行，
- *  说明死亡是误登（修辞/威胁/句级共现假阳性）或剧情有诈——取更晚的活动事实，
- *  解除终态避免主角被自己的状态摘要判死、评审连拒至管线中止（2026-08-27 三轮
- *  回归实证）。真复活场景上游门禁先拦；漏网者由 triage 恒红 dead-resurrection
- *  对最终语料审计兜底。 */
+/** 后生事实熔断只覆盖死亡族：误登死亡会通过状态摘要杀主角、评审连拒至管线
+ *  中止（2026-08-27 三轮回归实证），且死亡无法用剧情词合法解除，只能靠活动
+ *  事实证伪。真复活场景上游门禁先拦；漏网者由 triage 恒红 dead-resurrection
+ *  对最终语料审计兜底。下狱/定罪/去职是程序性事实，有 AI 仲裁与解除词表两条
+ *  正路；若也允许「后生活动」熔断，过期滚纲把反派写回朝堂会反向洗掉真实命运
+ *  ——B 书 200 章实测赵元泰/崔景渊去职后连续多章复位，矛盾就此被抹平
+ *  （2026-09-01）。 */
+const MISFIRE_PRONE_FATES = new Set(['死亡', '驾崩']);
+
 function dropFatesContradictedByLaterActivity(
   byCharacter: Map<string, FateStatus>,
   memorySorted: ChapterMemory[]
@@ -545,6 +555,7 @@ function dropFatesContradictedByLaterActivity(
       const name = change.characterName;
       const fate = byCharacter.get(name);
       if (!fate) continue;
+      if (!MISFIRE_PRONE_FATES.has(fate.state)) continue;
       const activityChapter = memory.chapterIndex;
       if (activityChapter <= fate.chapterIndex) continue;
       if (change.state && FATE_STATES.has(change.state)) continue;
@@ -563,7 +574,7 @@ function dropFatesContradictedByLaterActivity(
  * 加载后的 state.entities（按 name/alias 匹配），门禁由此有据可裁。
  * 已解除命运的角色不在 fates 列表中，天然不会误标。
  */
-export const RUNTIME_FATE_STATUS_VALUES = ['死亡', '驾崩', '下狱', '定罪'] as const;
+export const RUNTIME_FATE_STATUS_VALUES = ['死亡', '驾崩', '下狱', '定罪', '去职'] as const;
 
 export interface CharacterFateOverlayResult {
   /** 替换后的实体表（未命中的实体原样保留） */
@@ -710,6 +721,79 @@ const CRITICAL_STATUS_RULES: Array<{
 ];
 
 /**
+ * 去职/入牢的 roster 窗口形态（2026-09-01 B 书 200 章实测新增）。
+ * 开放捕获在长谓语链上会切出半个名字再被白名单整段丢弃（正则懒捕获无回溯），
+ * 有名单时按名扫描尾部窗口最稳。受害句：
+ * 「赵元泰连亲王爵位都被削了，脖子上套着死囚枷进了天牢！」——
+ * 爵位处置词与牢狱目的地都离名字十余字，既有规则全部漏过，
+ * 该反派其后被滚纲写回朝堂时禁入名单无据可依。
+ */
+const DISMISS_TAIL_RE =
+  /^(?:[^。！？]{0,4}?(?:被|遭)?(?:当堂|当场|即日|就地)?(?:削爵|革爵|夺爵|革职|罢免|免职|撤职|停职|废黜|废为庶民|贬为庶人))/;
+const TITLE_STRIP_TAIL_RE =
+  /^(?:[^。！？]{0,4}?(?:亲王|郡王|国公|侯)?爵位[^。！？]{0,4}?(?:被)?(?:削|夺|废|褫))/;
+// 进牢形态必须带「套/戴/枷/锁/被押/被囚/死囚/削/革/废/贬」类受难字门控：
+// 否则「X走进大牢探监」这类探视句会被误登记
+const JAIL_ENTRY_TAIL_RE =
+  /^(?=[^。！？]{0,22}?(?:套|戴|披|枷|锁|被押|被囚|囚衣|死囚|镣|削|革|废|贬))[^。！？]{0,22}?(?:被押|被驱|被扭|被塞)?(?:进|入|送)了?(?:天牢|大牢|死牢|宗人府|大狱|诏狱|大理寺狱)/;
+const JAIL_DIRECT_TAIL_RE = /^(?:被)?(?:当堂|当场|即日)?(?:下狱|入狱|收监)/;
+// 叙述追认形态（终验书 ch30/ch44 实锤）：「严嵩林虽已被打入天牢，但…」
+// 「严嵩林虽然已被夺职，此刻仍…」——命运发生后的叙述性追认
+const JAIL_NARRATIVE_TAIL_RE =
+  /^(?:虽)?(?:然)?已?(?:被)?(?:打入|押入|关进|囚禁于)(?:天牢|大牢|死牢|宗人府|诏狱)/;
+const DISMISS_NARRATIVE_TAIL_RE =
+  /^(?:虽)?(?:然)?已?(?:被)?(?:夺职|革职|罢黜|削爵|革爵)/;
+// 未来/意图标记出现在名字与谓语之间 = 计划/威胁（「定将削其爵位下狱」），不是既成事实
+const FUTURE_MARK_RE = /(?:定将|必将|将要|便要|就要|欲|谋|拟|当斩|该斩|恐)/;
+
+function extractRosterFateWindows(
+  content: string,
+  rosterSet: Set<string> | null
+): CharacterStateChange[] {
+  if (!rosterSet || rosterSet.size === 0) return [];
+  const changes: CharacterStateChange[] = [];
+  const seen = new Set<string>();
+  const push = (name: string, state: string, at: number, tail: string): boolean => {
+    const key = `${name}|${state}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    changes.push({
+      characterName: name,
+      stateType: 'status',
+      state,
+      detail: content
+        .slice(Math.max(0, at - 10), at + name.length + Math.min(34, tail.length + 8))
+        .replace(/\s+/g, ' ')
+        .trim(),
+    });
+    return changes.length >= 24;
+  };
+  for (const name of rosterSet) {
+    if (name.length < 2 || name.length > 8) continue;
+    let from = 0;
+    for (;;) {
+      const at = content.indexOf(name, from);
+      if (at < 0) break;
+      from = at + name.length;
+      const tail = content.slice(at + name.length, at + name.length + 26);
+      if (!tail || FUTURE_MARK_RE.test(tail)) continue;
+      // 去职与下狱可并存（「爵位被削…枷入天牢」），各自独立判断、独立登记
+      if (DISMISS_TAIL_RE.test(tail) || TITLE_STRIP_TAIL_RE.test(tail) || DISMISS_NARRATIVE_TAIL_RE.test(tail)) {
+        if (push(name, '去职', at, tail)) return changes;
+      }
+      if (JAIL_ENTRY_TAIL_RE.test(tail) || JAIL_DIRECT_TAIL_RE.test(tail) || JAIL_NARRATIVE_TAIL_RE.test(tail)) {
+        if (push(name, '下狱', at, tail)) return changes;
+      }
+    }
+  }
+  // 已知局限（2026-09-01 撤通道决策）：圣旨跨句处置（罪状句点名+处置句隔句号）
+  // 与「将+非名单对象」的执法场景不做段落归一归属——四书 800 章实测该通道把
+  // 执法主角/裁判（沈淮安/顾承安/温见山/裴文渊/冯保/明和帝）整批误登记为被
+  // 处置者，误登记会直接驱动禁入名单封掉主角；这类弧线由书审 AI 通读层兜底。
+  return changes;
+}
+
+/**
  * 从正文提取命运级状态变化（死亡/驾崩/下狱/定罪/官职）。
  * 返回去重后的 CharacterStateChange 列表，detail 带命中正文原句片段。
  * roster 传入时只保留命中角色名单的名字——谓语前缀（「重新陷入一片死寂」的
@@ -775,6 +859,7 @@ export function extractCriticalStatusChanges(
       }
     }
   }
+  changes.push(...extractRosterFateWindows(content, rosterSet));
   changes.push(...extractExecutionDeaths(content, rosterSet));
   const merged = gateFateChangesByArbitration(mergeCharacterStateChanges(changes));
   // AI 救回的守卫拦截候选（isDeath=true）在此并入——守卫降级为 hint 后的唯一回票通道
@@ -1226,3 +1311,4 @@ async function enhanceWithAI(chapter: Chapter): Promise<Partial<ChapterMemory> |
     return null; // 返回 null 而不是抛出异常，确保不影响主流程
   }
 }
+

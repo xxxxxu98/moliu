@@ -399,6 +399,42 @@ describe('rollOutlineForward', () => {
     expect(seenSystemPrompt).toContain('正文已写到第50章');
   });
 
+  it('命运锁：章记忆里的下狱/去职角色注入滚纲上下文与硬约束（2026-09-01 终验书反派复位实锤）', async () => {
+    const project = makeRollProject();
+    project.chapterMemories = [
+      {
+        chapterId: 'ch27',
+        chapterTitle: 'Chapter 27',
+        chapterIndex: 26,
+        corePlot: '严嵩林被革职下狱',
+        keyEvents: ['严嵩林被当堂革职下狱'],
+        locations: [],
+        characterStateChanges: [
+          { characterName: '严嵩林', stateType: 'status', state: '下狱', detail: '枷入天牢' },
+        ],
+        revealedForeshadows: [],
+        newForeshadows: [],
+        wordCount: 100,
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    let seenUserPrompt = '';
+    let seenSystemPrompt = '';
+    await rollOutlineForward({
+      project,
+      callStructuredText: async (system, user) => {
+        seenSystemPrompt = system;
+        seenUserPrompt = user;
+        return '空响应';
+      },
+      persist: async () => {},
+    });
+    expect(seenUserPrompt).toContain('【命运锁');
+    expect(seenUserPrompt).toContain('严嵩林（第27章下狱）');
+    expect(seenSystemPrompt).toContain('【命运锁】');
+    expect(seenSystemPrompt).toContain('【禁区相容】');
+  });
+
   it('冒烟场景（正文未写、蓝图已就位）进度措辞不谎称已写', async () => {
     const project = makeProject({
       chapters: Array.from({ length: 50 }, (_, i) => makeChapter({ index: i })),

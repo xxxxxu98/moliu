@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 /**
  * Storyflow 矩阵产物确定性 triage：把 temp/storyflow-matrix/ 的 run.log / summary /
  * trace 解析成结构化「失败签名」清单，供 storyflow-auto-loop 循环做诊断决策与回归 diff。
@@ -1073,9 +1073,30 @@ export function scanProseDeadResurrection(chapters, roster) {
           (new RegExp(`^${ADVERB}(?:被[关押打入抓锁](?:进|入|到)?(?:天牢|大牢|死牢|宗人府|诏狱|大狱)|沦为阶下囚|被圈禁(?:终身|于|在)?(?:，|。|$))`).test(tail) ||
             (/^(?:当场|随即|立刻|当即|最终|当晚|当日|翌日|不久|很快)?下狱/.test(tail) && !/[与、及跟同]/.test(lead))) &&
           !/治罪|问罪|就[要会]|必定|定将|必将|恐将|只怕|难免|不[如妨]/.test(tail);
+        // 去职/受难入牢（2026-09-01 B 书 200 章书审实锤）：赵元泰「连亲王爵位
+        // 都被削了，脖子上套着死囚枷进了天牢」、崔景渊被当堂革职下狱后仍被
+        // 过期滚纲写回朝堂多章——禁入/命运词表没有去职态，重置矛盾无从检测。
+        // 进牢形态带受难字门控，防止「X走进大牢探监」误报。
+        // 注意：这两类谓语不受台词守卫——台词里的「被削爵/入天牢」多为怒吼
+        // 中的既成事实播报（B 书原句即定远侯台词），与「杀了X」的祈使形态
+        // 不同；未来/条件语境由各自的词表守卫与 ±30 窗负责。
+        const dismissSubj =
+          (/^(?:[^。！？]{0,4}?(?:被|遭)?(?:当堂|当场|即日|就地)?(?:削爵|革爵|夺爵|革职|罢免|免职|撤职|停职|废黜|废为庶民|贬为庶人))/.test(tail) ||
+            /^(?:[^。！？]{0,4}?(?:亲王|郡王|国公|侯)?爵位[^。！？]{0,4}?(?:被)?(?:削|夺|废|褫))/.test(tail) ||
+            // 叙述追认形态（终验书 ch44 实锤）：「严嵩林虽然已被夺职，此刻仍…」
+            /^(?:虽)?(?:然)?已?(?:被)?(?:夺职|革职|罢黜|削爵|革爵)/.test(tail)) &&
+          !/定将|必将|将要|便要|就要|拟|谋|欲|治罪|问罪|恐/.test(tail);
+        const jailEntry =
+          (/^(?=[^。！？]{0,22}?(?:套|戴|披|枷|锁|被押|被囚|囚衣|死囚|镣|削|革|废|贬))[^。！？]{0,22}?(?:被押|被驱|被扭|被塞)?(?:进|入|送)了?(?:天牢|大牢|死牢|宗人府|大狱|诏狱|大理寺狱)/.test(tail) ||
+            /^(?:被)?(?:当堂|当场|即日)?(?:下狱|入狱|收监)/.test(tail) ||
+            // 叙述追认形态（终验书 ch30 实锤）：「严嵩林虽已被打入天牢，但…」
+            /^(?:虽)?(?:然)?已?(?:被)?(?:打入|押入|关进|囚禁于)(?:天牢|大牢|死牢|宗人府|诏狱)/.test(tail)) &&
+          !/定将|必将|将要|便要|就要|拟|谋|欲|探监|探视|送饭|送衣/.test(tail);
         const throneSubj = new RegExp(`^${ADVERB}(?:驾崩|晏驾|崩逝|薨逝|龙驭上宾|宾天)`).test(tail);
         const condemnSubj = new RegExp(`^${ADVERB}${CONDEMN_PRED}`).test(tail);
-        const hitFate = deathSubj || deathRev || throneSubj || jailSubj || jairev || condemnSubj;
+        const hitFate =
+          deathSubj || deathRev || throneSubj || jailSubj || jairev || condemnSubj ||
+          dismissSubj || jailEntry;
         if (!hitFate) continue;
         // 假设/盘算窗口：命中点前后 30 字含条件标记即整条放弃
         if (
@@ -1085,11 +1106,21 @@ export function scanProseDeadResurrection(chapters, roster) {
         }
         if (deathSubj || deathRev) recordFate(name, '死亡', ch.n);
         if (throneSubj) recordFate(name, '驾崩', ch.n);
-        if (jailSubj || jairev) recordFate(name, '下狱', ch.n);
+        if (jailSubj || jairev || jailEntry) recordFate(name, '下狱', ch.n);
         if (condemnSubj) recordFate(name, '定罪', ch.n);
+        if (dismissSubj) recordFate(name, '去职', ch.n);
       }
     }
   }
+  // 跨出/出列/高举/捧/跪/厉声/按刀：朝堂戏出场形态（2026-09-01 B 书 ch181
+  // 实锤——削爵亲王「率先跨出队列」、停职首辅「双手捧着奏折」上朝，旧动词集
+  // 全部漏过，复活检出率为零）
+  const ACTIVE_RE = (name) =>
+    new RegExp(`${name}[^。！？””]{0,8}(?:说道|道|开口|下令|禀报|躬身|拱手|上前|快步|走进|踏入|跨进|跨出|出列|站起|点头|摇头|吩咐|呈报|朗声|沉声|冷笑|高举|率领|捧|跪|厉声|按刀|嘶吼|狞笑|冷哼|怒目圆睁|厉喝|呵斥)`, 'u');
+  // 已知局限（2026-09-01 撤通道决策）：圣旨跨句处置（罪状句点名+处置句隔句号）
+  // 与「将+非名单对象」的执法场景不做段落归一归属——四书 800 章实测该通道把
+  // 执法主角/裁判（沈淮安/顾承安/温见山/裴文渊/冯保/明和帝）整批误登记为被
+  // 处置者，恒红签名首要美德是精确；这类弧线交由书审 AI 通读层兜底。
   // 结果句式通道（与写作侧 extractExecutionDeaths 同口径）：「X等贪官的头颅滚落
   // 高台」这类处决完成体里主语是头颅不是人名，谓语邻接式抓不到——整句含不可逆
   // 结果词 + 名单内角色在场 + 未踩修辞/假设/动词前三类守卫 → 记 死亡。
@@ -1112,13 +1143,16 @@ export function scanProseDeadResurrection(chapters, roster) {
       }
     }
   }
-  const ACTIVE_RE = (name) =>
-    new RegExp(`${name}[^。！？””]{0,8}(?:说道|道|开口|下令|禀报|躬身|拱手|上前|快步|走进|站起|点头|摇头|吩咐|呈报|朗声|沉声|冷笑)`, 'u');
-  const RESURRECT_RELEASE = /平反|翻案|无罪释放|赦免|大赦|越狱|劫狱|起复|官复原职|重新起用|假死|诈死|并未.{0,4}死|苏醒|保释|取保|候勘|待勘|戴罪/;
+  // 解除章覆盖语义：终态章后「角色名 + 解除信号」同段共现才视为已解除。
+  // 段落邻近是 2026-09-01 收紧：此前章级共现让「如蒙大赦」「停职锁拿待勘」
+  // 这类他人/他事的解除词整章赦免真实命运（终验书严嵩林 ch30/60/109/183
+  // 四连误赦，重置矛盾漏检）；死心负向断言拦「并未真正死心」成语。
+  const RESURRECT_RELEASE = /平反|翻案|无罪释放|赦免|大赦|越狱|劫狱|起复|官复原职|重新起用|假死|诈死|并未.{0,4}死(?!心)|苏醒|保释|取保|候勘|待勘|戴罪/;
   const resurrections = [];
   for (const fate of fates.values()) {
     const dissolved = sorted.some(
-      ch => ch.n > fate.chapter && ch.text.includes(fate.name) && RESURRECT_RELEASE.test(ch.text)
+      ch => ch.n > fate.chapter
+        && ch.text.split(/\n+/).some(para => para.includes(fate.name) && RESURRECT_RELEASE.test(para))
     );
     if (dissolved) continue;
     const activeChapters = sorted
@@ -1135,3 +1169,4 @@ export function scanProseDeadResurrection(chapters, roster) {
   }
   return resurrections;
 }
+

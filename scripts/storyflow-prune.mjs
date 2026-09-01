@@ -83,8 +83,10 @@ export function planPrune({ nowMs = Date.now(), keepDays = 7 } = {}) {
   return pruneTargets(nowMs, keepDays);
 }
 
-export function runPrune({ dryRun = true, keepDays = 7 } = {}) {
-  const targets = planPrune({ keepDays });
+export function runPrune({ dryRun = true, keepDays = 7, nowMs = Date.now() } = {}) {
+  // nowMs 必须透传 planPrune：默认真实时钟会让固定时间戳夹具（相对 now 计算
+  // OLD/FRESH 的测试）随真实日期漂移而误删 fresh 产物（2026-09-01 时间炸弹实锤）
+  const targets = planPrune({ nowMs, keepDays });
   let freedBytes = 0;
   const sizeOf = p => {
     const st = statSync(p);

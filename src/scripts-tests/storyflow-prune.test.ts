@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+﻿import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { mkdirSync, mkdtempSync, writeFileSync, rmSync, utimesSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -101,10 +101,10 @@ describe('storyflow-prune', () => {
 
   it('runPrune dry-run 不删文件，exec 删除命中项', async () => {
     const { runPrune } = await loadPrune();
-    const dry = runPrune({ dryRun: true, keepDays: 7 });
+    const dry = runPrune({ dryRun: true, keepDays: 7, nowMs: NOW });
     expect(dry.dryRun).toBe(true);
     expect(readdirSync(join(workRoot, 'temp', 'ai-traces'))).toContain('old.jsonl');
-    const exec = runPrune({ dryRun: false, keepDays: 7 });
+    const exec = runPrune({ dryRun: false, keepDays: 7, nowMs: NOW });
     expect(exec.count).toBe(dry.count);
     expect(readdirSync(join(workRoot, 'temp', 'ai-traces'))).not.toContain('old.jsonl');
     expect(readdirSync(join(workRoot, 'temp', 'ai-traces'))).toContain('fresh.jsonl');
@@ -116,3 +116,4 @@ describe('storyflow-prune', () => {
 function sep() {
   return process.platform === 'win32' ? '\\' : '/';
 }
+

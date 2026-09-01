@@ -26,6 +26,7 @@ import {
   isReaderMetaText,
   normalizeChapterBlueprint,
 } from '@/services/story-runtime/chapterBlueprintNormalize';
+import { collectCharacterFates } from '@/services/writing/extract-plot-memory';
 import { normalizedSimilarityKeepingNumbers } from '@/utils/text-similarity';
 import { readPositiveIntEnv } from '@/utils/env';
 
@@ -121,6 +122,8 @@ export interface RollContextBase {
   plannedTail: string[];
   activeForeshadows: string;
   characterRoster: string;
+  /** 命运锁：已死亡/下狱/去职/定罪角色的既定命运清单（滚纲 reconcile） */
+  fateLocks: string[];
 }
 
 /**
@@ -203,6 +206,12 @@ export function buildRollContextBase(project: Project, fromChapterNumber: number
     .filter(c => c?.name)
     .map(c => c.role ? `${c.name}(${c.role})` : c.name);
 
+  // 命运锁（2026-09-01「全部修复」）：滚纲不复核命运表会成批重插已下狱/已去职/
+  // 已死亡角色——终验书严嵩林/赵敬实锤，判定器正确拒稿反成空洞。把命运表显式
+  // 注入滚纲上下文与硬约束，让滚动续纲在源头不再产出状态冲突需求。
+  const fateLocks = collectCharacterFates(project.chapterMemories ?? [])
+    .map(f => `${f.characterName}（第${f.chapterIndex + 1}章${f.state}）`);
+
   return {
     positioning: [
       project.name && `书名：《${project.name}》`,
@@ -215,6 +224,7 @@ export function buildRollContextBase(project: Project, fromChapterNumber: number
     plannedTail,
     activeForeshadows: active.length > 0 ? active.join('\n') : '（无待回收伏笔）',
     characterRoster: roster.length > 0 ? roster.join('、') : '（未登记角色）',
+    fateLocks,
   };
 }
 
@@ -260,6 +270,9 @@ export function buildRollBlueprintPrompt(params: {
   const plannedTailSection = base.plannedTail.length > 0
     ? `\n\n【紧邻既有蓝图收束】\n${base.plannedTail.join('\n')}`
     : '';
+  const fateLockSection = base.fateLocks.length > 0
+    ? `\n\n【命运锁（已定命运，不可违反）】\n${base.fateLocks.join('；')}`
+    : '';
   return {
     system: `你是中文长篇网文大纲拆章器，正在为连载中的书做滚动续纲：${progressLine}，你只补写指定章号的单章蓝图，不复述已有章节，不输出解释。
 每章必须严格使用以下结构：
@@ -284,10 +297,12 @@ export function buildRollBlueprintPrompt(params: {
 4. 「已写进度与收束状态」和「上一批蓝图收束」是不可改写的既有事实：新章不得重置期限、重复已完成事件（破案/入狱/升职等），不得让已倒台或被羁押的角色无解释恢复原位；
 5. 本批章节必须落在当前卷的目标与冲突射程内推进，不得提前兑现后续卷的高潮或反转；
 6. 回收章节落在本批次区间内的伏笔，必须在对应章节的 mustCover 中兑现；
-7. 出场角色只能使用「角色名单」中已登记的姓名（可按卷纲引入名单内角色的后续登场），不得另造同名同功能新角色；
+7. 出场角色只能使用「角色名单」中已登记的姓名（可按卷纲引入名单内角色的后续登场），不得另造同名同功能新角色，也不得与名单内已有角色重名；
    【禁止标签称谓】凡需要行动/对白的功能性角色（僚属、官员、差役、侍卫等），必须起真实中文姓名（姓+名，如「方正平」）或复用名单内角色；禁止用「XX派年轻官员」「老总管」「年轻御史」这类阵营标签+身份泛称当角色名写进节点与出场名单——它们不是姓名，会被正文照抄成占位符；
-8. 所有字段都不得留空，禁止使用括号补充说明。`,
-    user: `【故事定位】\n${base.positioning}\n\n【卷纲锚点】\n${base.volumeAnchor}\n\n【已写进度与收束状态】\n${base.writtenState}${plannedTailSection}${endingSection}\n\n【活跃伏笔（埋设→回收）】\n${base.activeForeshadows}\n\n【角色名单】\n${base.characterRoster}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
+8. 所有字段都不得留空，禁止使用括号补充说明；
+9. 【命运锁】「命运锁」清单里的角色已有既定命运（死亡/下狱/去职/定罪），新章蓝图禁止安排其以自由身出场、行动、对话或履行原职；剧情确需其后续作用时，只能作为他人回忆/口头提及，或在本章 mustCover 中显式写出解除事件（越狱/劫狱/平反/保释/官复原职/复爵）并在该节点开头加【解除】标记；
+10. 【禁区相容】mustCover 与禁区不得互斥：若某节点要求本章发生某状态变更（下旨/定谳/圈禁/结案/复职等），对应禁区不得禁止该变更发生；确需保留防泄露约束时，只保护更早阶段的揭示，并在该条禁区开头加【让路】标记——禁止产出让写作端两头违约的合同。`,
+    user: `【故事定位】\n${base.positioning}\n\n【卷纲锚点】\n${base.volumeAnchor}\n\n【已写进度与收束状态】\n${base.writtenState}${plannedTailSection}${endingSection}${fateLockSection}\n\n【活跃伏笔（埋设→回收）】\n${base.activeForeshadows}\n\n【角色名单】\n${base.characterRoster}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
   };
 }
 

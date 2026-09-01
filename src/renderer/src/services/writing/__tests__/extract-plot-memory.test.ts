@@ -151,6 +151,121 @@ describe('buildPlotProgressTable', () => {
   });
 });
 
+// ---------- 去职/受难入牢命运提取（2026-09-01 B 书 200 章书审实锤） ----------
+// B 书反派被削爵/停职后仍连续多章当朝履职：禁入名单无去职态可依、
+// 进牢形态漏检、后生活动熔断反向洗掉真实命运，三因叠加致重置矛盾零检出。
+
+describe('去职/受难入牢命运提取', () => {
+  function makeMemory(
+    index: number,
+    changes: ChapterMemory['characterStateChanges'],
+    overrides?: Partial<Pick<ChapterMemory, 'corePlot' | 'keyEvents'>>
+  ): ChapterMemory {
+    return {
+      chapterId: `ch${index}`,
+      chapterTitle: `Chapter ${index}`,
+      chapterIndex: index,
+      corePlot: overrides?.corePlot ?? '',
+      keyEvents: overrides?.keyEvents ?? [],
+      locations: [],
+      characterStateChanges: changes,
+      revealedForeshadows: [],
+      newForeshadows: [],
+      wordCount: 100,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  it('爵位被削 + 枷入天牢双形态登记（赵元泰 ch157 受害原句）', () => {
+    const text = '「赵元泰连亲王爵位都被削了，脖子上套着死囚枷进了天牢！」定远侯嘶吼着烧掉暗账。';
+    const changes = extractCriticalStatusChanges(text, ['赵元泰', '定远侯']);
+    expect(changes.some(c => c.characterName === '赵元泰' && c.state === '去职')).toBe(true);
+    expect(changes.some(c => c.characterName === '赵元泰' && c.state === '下狱')).toBe(true);
+  });
+
+  it('被当堂停职/革职直接登记去职', () => {
+    const changes = extractCriticalStatusChanges(
+      '两名校尉上前，崔景渊被当堂停职查办，收缴相印。',
+      ['崔景渊']
+    );
+    expect(changes.some(c => c.characterName === '崔景渊' && c.state === '去职')).toBe(true);
+  });
+
+  it('探监/送物不误登记下狱', () => {
+    const changes = extractCriticalStatusChanges(
+      '陆文渊走进大牢探监，给旧友送了些御寒衣物。',
+      ['陆文渊']
+    );
+    expect(changes.some(c => c.characterName === '陆文渊' && c.state === '下狱')).toBe(false);
+  });
+
+  it('未来处置「定将削其爵位」不登记去职', () => {
+    const changes = extractCriticalStatusChanges(
+      '崔景渊跪地求饶，天子冷冷道：定将削其爵位，贬为庶人。',
+      ['崔景渊']
+    );
+    expect(changes.some(c => c.characterName === '崔景渊' && c.state === '去职')).toBe(false);
+  });
+
+  it('圣旨跨句处置 + 叙述追认：严嵩林弧线（终验书 ch27/30/44 实锤）', () => {
+    const text = [
+      '“户部郎中严嵩林，侵吞巨额国帑，私刻官印，欺罔君上。着即革去一身官职，剥去顶戴朝服，由刑部差役押入天牢死囚狱，交三法司会同严加看管，择日明正典刑！”',
+      '严嵩林虽已被打入天牢，但户部老吏们并未真正死心。',
+      '立在下首的严嵩林虽然已被夺职，此刻仍战战兢兢地低声道：「殿下，两淮盐商总会的阴阳账本，恐怕全要暴露。」',
+    ].join('\n');
+    const changes = extractCriticalStatusChanges(text, ['严嵩林', '陆衡']);
+    expect(changes.some(c => c.characterName === '严嵩林' && c.state === '去职')).toBe(true);
+    expect(changes.some(c => c.characterName === '严嵩林' && c.state === '下狱')).toBe(true);
+  });
+
+  it('圣旨宣告误报守卫：宣读者不背处置', () => {
+    const changes = extractCriticalStatusChanges(
+      '裴文渊展开告示朗声宣读：着即将闹事者锁拿下狱，严加审讯。',
+      ['裴文渊']
+    );
+    expect(changes.some(c => c.characterName === '裴文渊' && c.state === '下狱')).toBe(false);
+  });
+
+  it('圣旨宣告误报守卫：宣读者/执法者不背处置，点名对象才登记', () => {
+    const text = [
+      '温见山神色冷峻：「将管库太监及涉案一十八名内监当场革职锁拿，打入大理寺死牢严加看管！」',
+      '「传本尚书令！将这欺君罔上的江南粮道转运使当场革去官职，打入刑部死牢严加看管！」裴文渊掷下手签。',
+      '老皇帝拂袖下旨：「着三法司将严嵩林革职拿问，严加审讯。」',
+    ].join('\n');
+    const changes = extractCriticalStatusChanges(text, ['温见山', '裴文渊', '严嵩林']);
+    expect(changes.some(c => c.characterName === '温见山')).toBe(false);
+    expect(changes.some(c => c.characterName === '裴文渊')).toBe(false);
+    expect(changes.some(c => c.characterName === '严嵩林' && c.state === '去职')).toBe(true);
+  });
+
+  it('命运表：下狱后滚纲复位不再被后生活动熔断洗掉（B 书反派重置根因）', () => {
+    const memories: ChapterMemory[] = [
+      makeMemory(156, [{ characterName: '赵元泰', stateType: 'status', state: '下狱', detail: '枷入天牢' }]),
+      makeMemory(180, [{ characterName: '赵元泰', stateType: 'status', state: '执行动作', detail: '当朝出场' }]),
+    ];
+    const fates = collectCharacterFates(memories);
+    expect(fates.some(f => f.characterName === '赵元泰' && f.state === '下狱')).toBe(true);
+  });
+
+  it('死亡仍保留后生活动熔断（误登死亡不杀主角的既有语义不回退）', () => {
+    const memories: ChapterMemory[] = [
+      makeMemory(0, [{ characterName: '主角甲', stateType: 'status', state: '死亡', detail: '误登' }]),
+      makeMemory(5, [{ characterName: '主角甲', stateType: 'status', state: '执行动作', detail: '活体' }]),
+    ];
+    const fates = collectCharacterFates(memories);
+    expect(fates.some(f => f.characterName === '主角甲')).toBe(false);
+  });
+
+  it('去职经复爵/重返朝堂解除词表合法复出', () => {
+    const memories: ChapterMemory[] = [
+      makeMemory(0, [{ characterName: '赵元泰', stateType: 'status', state: '去职', detail: '削爵' }]),
+      makeMemory(10, [], { corePlot: '赵元泰复爵，重返朝堂。', keyEvents: ['赵元泰复爵，重返朝堂'] }),
+    ];
+    const fates = collectCharacterFates(memories);
+    expect(fates.some(f => f.characterName === '赵元泰')).toBe(false);
+  });
+});
+
 // ---------- 命运级状态提取（死亡/驾崩/下狱/定罪/官职） ----------
 // 500 章实测：滑动窗口状态摘要完全丢掉命运事件，已死角色大面积复活。
 // 这里锁定规则提取的召回与关键误报形态。
