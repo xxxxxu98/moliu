@@ -1,0 +1,2174 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-08-31T22:35:38.658Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-matrix-agif200ch-a",
+  "providers": [
+    {
+      "providerId": "provider-1787039781123",
+      "model": "gemini-3.7-flash-high",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 439,
+      "chaptersAccepted": "199/200",
+      "words": {
+        "min": 0,
+        "avg": 2917,
+        "max": 3520
+      },
+      "paraRhythm": {
+        "chapters": 200,
+        "medianCv": 0.44,
+        "uniformChapters": 2
+      },
+      "repairMetrics": {
+        "firstPassChapters": 145,
+        "firstPassRate": 0.725,
+        "rewrittenChapters": 55,
+        "totalRewriteRounds": 55,
+        "averageRewriteRounds": 0.28,
+        "pipelineAttempts": 204
+      },
+      "runtimeMetrics": {
+        "requestCount": 825,
+        "requestCountsByPurpose": {
+          "scene-draft": 316,
+          "fact-extraction": 255,
+          "chapter-judge": 254
+        },
+        "latencyP50Ms": 8507,
+        "latencyP95Ms": 43463,
+        "latencyMaxMs": 107600
+      },
+      "readerMetrics": {
+        "chapterCount": 200,
+        "chapterAverage": 86.9,
+        "chapterMedian": 87.5,
+        "chapterMinimum": 0,
+        "openingThreeAverage": 86.8,
+        "continueReadingNoCount": 2,
+        "lowChapterCount": 2,
+        "lowWindowCount": 0,
+        "consecutiveLowRuns": []
+      },
+      "readerOutlineScore": null,
+      "readerIndependent": false,
+      "phaseTimings": {
+        "outlineDirectionsMs": 15290,
+        "outlineExpandMs": 358858,
+        "outlineRollMs": 1113197,
+        "applyOutlineMs": 1111,
+        "continueWriteMs": 23692841,
+        "totalMs": 25181297
+      },
+      "runtimeBackend": "sqlite",
+      "verdict": "model-capability-suspect",
+      "verdictReason": "第8章质量拒绝连续 3 轮未收敛，重试无意义，考虑换模型或调合同（需人工确认）",
+      "signatures": [
+        {
+          "id": "quality.review-other",
+          "chapter": 8,
+          "count": 3,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。",
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。",
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "red",
+          "stalled": true
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 8,
+          "count": 3,
+          "evidence": [
+            "未履约节点：苏清婉登场并提供黑市粮价情报",
+            "未履约节点：苏清婉登场并提供黑市粮价情报",
+            "未履约节点：苏清婉登场并提供黑市粮价情报"
+          ],
+          "severity": "red",
+          "stalled": true
+        },
+        {
+          "id": "prose.dead-resurrection",
+          "chapter": 196,
+          "count": 1,
+          "evidence": [
+            "李泰于第196章死亡，其后 1 章仍以活体出场（首见第199章，章号：199）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.stream-interrupted",
+          "chapter": null,
+          "count": 160,
+          "evidence": [
+            "重试 1/2：AI 流式响应提前中断：已收到 668 字，未见结束标记",
+            "重试 1/2：AI 流式响应提前中断：已收到 34 字，未见结束标记",
+            "重试 1/2：AI 流式响应提前中断：已收到 2743 字，未见结束标记"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.warning-other",
+          "chapter": null,
+          "count": 19,
+          "evidence": [
+            "单章蓝图补全批次 1-10 仍有 9/10 章未解出（第 2、3、4、5、6、7、8、9、10 章）",
+            "单章蓝图补全批次 11-20 仍有 4/10 章未解出（第 17、18、19、20 章）",
+            "单章蓝图补全批次 21-30 仍有 5/10 章未解出（第 26、27、28、29、30 章）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": null,
+          "count": 11,
+          "evidence": [
+            "trace storyflow-agif200a-outline-1788189254867.jsonl seq10 outline-expand 响应 0 字符",
+            "trace storyflow-agif200a-outline-1788189254867.jsonl seq14 outline-expand 响应 0 字符",
+            "trace storyflow-agif200a-outline-roll-1788189630142.jsonl seq2 outline-roll 响应 0 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.other",
+          "chapter": null,
+          "count": 8,
+          "evidence": [
+            "重试 2/2：API error 503",
+            "重试 1/2：API 未返回内容",
+            "重试 1/2：API 未返回内容"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 26,
+          "count": 2,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“里面有动静，有人想从后梢暗渠溜走！”裴行舟耳朵一动，脚步在石阶上猛然发力，整个人宛若苍鹰般俯冲而下。）",
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“往哪儿走？”裴行舟怒喝一声，脚下青砖登时被踩碎半块，整个人如离弦之箭般纵身跃出。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 41,
+          "count": 2,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“臣户部左侍郎赵敬堂，有本启奏！”赵敬堂的声音在大殿内回荡，带着痛心疾首的悲怆，”大理寺评事沈淮安，仗着些许微末算筹之技，私设暗室，妄改六部账籍。此子所推行之所）",
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“臣户部侍郎赵敬堂，有本启奏！”赵敬堂高举象牙笏板，声调凄厉激昂，”都察院御史台日前联名弹劾大理寺从九品录事沈淮安，此人假借清核陈年旧账之名，在文文书库内私设算）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 69,
+          "count": 2,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：领头的老司吏斜着眼睛拱了拱手，语气中带着毫不掩饰的挑衅：“回沈主事的话，这是泰和年间至今，京畿十三税关与水陆抽分司的流水杂账。”清吏司旧规，凡新官到任，三日内必）",
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“从每年二百八十万两的常例，直接腰斩至二百二十万两，此后两年更是年年递减。”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 133,
+          "count": 2,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段",
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“吃吧，没下毒。”沈淮安语气平缓，随手将一双竹筷搁在碗沿上，”大理寺天字号牢房的规矩，凡是上了死囚重枷的人，断头前总能吃上一顿饱饭。金大掌柜算了一辈子身家性命，）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 186,
+          "count": 2,
+          "evidence": [
+            "连续碎段过多：最长连续 5 段不足 40 字。合并同一动作或同一视角下的短段，保留必要的单句重拍，避免通篇一句一段",
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“带走，卸掉下巴，别让他嚼了毒囊。”裴行舟抖落短刀上的雨水，神色冷峻地下令。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.repair-transient",
+          "chapter": null,
+          "count": 2,
+          "evidence": [
+            "单章蓝图补全批次 31-40 瞬态失败（第 1 次，API 未返回内容），2000ms 后重试",
+            "单章蓝图定点修复批次 2-17 瞬态失败（第 1 次，API 未返回内容），2000ms 后重试"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.http-503",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "HTTP 503"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 83,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3545/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 143,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3572/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 149,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3908/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 158,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4047/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 188,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4557/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 192,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3611/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 4,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“滚开！”陆文渊冷喝一声，抬脚直接踹开虚掩的厚重木门。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 5,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“少卿大人，属下已率精锐武卒三十六人，将文书库外围三层暗哨彻底接管。”裴行舟嗓音低沉粗粝，带着铁石交错般的冷硬，”一只苍蝇飞进来，也得被斩成两段。不过属下实在不）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 13,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“哎呀呀，陆少卿，这文书库怎的变成了这副光景？”李泰故作惊讶地叹了口气，随即脸色一沉，声音骤然拔高，”户部听闻大理寺夜起大火，特奉堂官之命前来查看。昨日本官遣人）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 14,
+          "count": 1,
+          "evidence": [
+            "段落偏长：长段 1/22，超过 5 句的段 2。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 15,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“这是听雨轩暗中截获的城南太白钱庄三年内全部往来票根。”苏清婉的声音清冷，眸光扫过瘫软在地的户部官吏，”每张票根皆有九曜连珠的朱砂暗戳，正是户部大员与民间钱庄私）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 19,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“沈淮安，你莫要拿着鸡毛当令箭！”户部员外郎指着沈淮安的鼻尖，厉声咆哮，”户部十三清吏司掌管天下钱粮度支，仅这京西大仓与淮汛赈灾两项，三年来出入库流水便多达一万）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 23,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“好一个账目疏忽！好一个公家挪用救急！”景泰帝霍然起身，明黄色的龙袍下摆在御案前翻卷。他双目泛着冷冽的寒光，居高临下地逼视着跪在地上的内廷随堂内侍与侍立在侧的皇）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 23,
+          "count": 1,
+          "evidence": [
+            "景泰帝御书房震怒处置内廷: futureReveals 明确规定角色“冯恩”不得登场或被揭示（计划第35章），但本章景泰帝台词中已明确点名“司礼监掌印冯恩”并点出其身份及受罚事实。；对话引号未闭合: “ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 30,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：大理寺正堂之内，三十口黑沉沉的生铁大箱死死压在青砖地面上，空气仿佛被抽干了一般凝滞。赵敬堂额角青筋乱跳，双手背在身后死死攥住袍袖，目光死死钉在那些箱扣的朱红封条）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 31,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 35,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：沈淮安翻开手边的户部商税征收清册，提笔在草纸上快速拉出对照横轴。按照大奉律例，凡民间钱庄签发超过万两的大宗飞钱汇票，必须向户部商税清吏司缴纳千分之五的契税，并由）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 36,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 39,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“是苏姑娘的暗线送来的。”裴行舟收刀入鞘，走回案前拔下那枚蜡筒，以刀尖挑开封蜡，倒出一卷卷得极紧的薄如蝉翼的绢帛，双手递向沈淮安。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 41,
+          "count": 1,
+          "evidence": [
+            "文官班列之中，户部侍郎赵敬堂面色阴沉如铁。: 未在 allowedCharacterNames 名单内的已登记角色赵敬堂在现场行动、对话并发生关键冲突。（证据: 文官班列之中，户部侍郎赵敬堂面色阴沉如铁。 / \"臣户部左侍郎赵敬堂，有本启奏！\"赵敬堂的声音在大殿内回荡，带着痛心疾首的悲怆）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 42,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 42,
+          "count": 1,
+          "evidence": [
+            "章首及章末处: 节点要求赵敬堂恼羞成怒打出灭口手势，但正文开篇即写赵敬堂被押出殿外，结尾发出灭口手势的执行主体被改写为魏王李泰，导致大纲指定的人物行为落空。（证据: 金吾卫甲胄铿锵，将面如死灰的赵敬堂强行押解出奉天殿。 / 李泰眼中闪过暴戾的狠芒，借着宽大蟒袍长袖的遮掩，右手悄然垂在身侧，向着奉天殿外侍立的心腹亲信暗中"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 44,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“混账东西！赵敬堂，你这丧心病狂的国贼！”户部尚书枯瘦的手指猛地指向被差役押在堂前的赵敬堂，整个人因极致的惊怒而剧烈颤抖，唾沫星子横飞，”老夫忝掌户部，信任你打）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 45,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“笃，笃，笃。”沉闷坚实的敲击声在死寂的值房内连续回响了七八声。然而，当铁尺的硬刃轻扣在墙体偏东第三排石板的正中时，原本浑厚的闷响骤然变调，一声清脆而带有明显空）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 51,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.unregistered-character",
+          "chapter": 51,
+          "count": 1,
+          "evidence": [
+            "【该名未在角色表登记】若为功能性临时配角，正文请改用身份称呼（如「那斥候」「一名伤兵」），不要让其以具名角色身份登场或被抽为事件参与者；若为已知角色的笔误/形近字，请用角色表中的正确名字。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 55,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“老实点，想死可没那么容易。”裴行舟膝盖重重顶在灰衣人的后脊梁上，随手卸掉了此人的下巴，防止其口中藏毒自尽。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 57,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 61,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：户部尚书被长棍直指面门，额前冷汗涔涔而下。他强压着狂跳的心口，猛地一拍扶手站起身来，指着沈淮安厉声喝道：“本官执掌户部多年，每一笔钱粮调拨皆有内阁票拟与户部底册）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 61,
+          "count": 1,
+          "evidence": [
+            "未履约节点：【跨章】三法司会审确定赈灾银流向异常。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 63,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“有伏弩，护住铁匣！”裴行舟怒吼出声。不等堂下差役反应，他身形已如离弦之箭暴起，脚掌狠狠踏碎公案一角的青砖借力，整个人宛如黑鹰腾空，迎着上方倾泻的阴影飞身跃上数）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 64,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“二殿下，睁大眼睛看清楚。”沈淮安居高临下地注视着面色铁青的李泰，声音不高，却字字带着刮骨的寒意，”户部主事招认画押，钱庄绝密底册与七日时差全在铁匣之中，你府上）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 67,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 70,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“从每年二百八十万两的常例，直接腰斩至二百二十万两，此后两年更是年年递减。”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 72,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“沈老弟，前头就是淮安钞关的闸口了。”裴行舟迈着大步走上甲板，腰间那柄宽背佩刀随着步伐撞击着皮甲，发出清脆的金铁声。他抬手擦了把脸上的水雾，目光警惕地扫视着周围）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 75,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“出来吧。”沈淮安语气平缓，听不出喜怒，”藏在袖子里的那卷丝绢，再往里塞就要被汗水浸花了。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 76,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 80,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“沈评事起得当真早啊，昨夜城中闹了贼匪，老夫正打算派兵前去护卫行辕，不想沈大人已然亲自登门了。”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 83,
+          "count": 1,
+          "evidence": [
+            "当前 3545 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 89,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 92,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“哎呀，沈大人，陆大人，二位通宵劳顿，实乃国之栋梁。”金万两脸上挤出讨好的褶子，把茶盏往前递了递，”这是小店存了二十年的极品雪顶龙井，特意用清晨运河活水煮透了。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 92,
+          "count": 1,
+          "evidence": [
+            "未履约节点：【单章】沈淮安用现代复式记账法当众击穿太白钱庄假账"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 96,
+          "count": 1,
+          "evidence": [
+            "【跨章状态以状态摘要为准】本章不可推翻上章已确立的状态：已死/已离开/已失忆/已揭穿身份的角色，本章不能让其活动、在场或装作未知；已销毁/已赠出/已丢失的物品，本章不能再次出现。请对照状态摘要里的实体 attributes 与 inventory 核对后重写冲突段落。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 100,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 101,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“娘的，老子带人把整座太白钱庄围得水泄不通，连只苍蝇都没放出去，这里面的银子还能插翅飞了不成？”裴行舟面色铁青，咬着牙狠狠啐了一口唾沫，刀鞘重重顿在地上。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 104,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“金万两招认的江防官仓就在瓜洲夹江口。”沈淮安抬手在舆图上的江水合流处画了个圈，”李烈敢单枪匹马闯行辕夺人，说明运银船已经进入出江航道。他们只要冲进长江主道，顺）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 110,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 111,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“奉天承运皇帝，诏曰：户部清吏司主事兼大理寺评事沈淮安，忠勤体国，洞察幽微，特授巡抚江南盐税钦差关防，加提督两淮军务衔。着即刻接管扬州卫、漕运水师及按察司全体兵）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 111,
+          "count": 1,
+          "evidence": [
+            "未履约节点：【单章】沈淮安领受景泰帝查办盐案圣旨并接管扬州驻军兵权"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 113,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“文渊，带人封住上方所有通气孔道，裴寺丞随我下去。”沈淮安从亲兵手中接过一柄油松火把，当先迈入地道。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 114,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“钱四海，金万两在地窖里把底细抖得一干二净，你们四位在扬州呼风唤雨的盐商领袖，可认得这上面自己按下的手印？”沈淮安双手按在青石案沿，俯视着堂下一众巨贾，语调平缓）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 115,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“沈淮安，你好大的官威啊。”李烈站定在公堂门槛内，居高临下地睥睨着公案后的年轻人，语气森冷如刀，”本王在北境杀敌饮血的时候，你还在文书库里抄写故纸堆。如今拿着几）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 116,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“淮安，钱四海方才在按察司供述的私盐数量，和盐运司这边的正税底册对不上。”苏清婉将一本厚重的账簿递了过来，指尖停留在景泰八年的秋汛记录上，”正册上写着当年两淮总）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 121,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“不对劲，太不对劲了。”沈淮安抓起朱砂笔，笔尖悬在半空，”兵部拨给北境的草料银，每年腊月都会在太白钱庄转一道手。而扬州盐运司每逢春汛销账时，私盐暗账里都会凭空多）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 123,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“金大掌柜，西闸口的二十箱底账已经全在此处。”沈淮安端坐在公案后，指尖轻轻叩击着账册边缘，”你帮齐王李泰洗了两淮盐银，又用私票替大皇子李烈对冲北境草料银。这借贷）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 130,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“开箱验银，当众核销！”沈淮安走下跳板，绯色官袍下摆拂过石阶，声音清亮而沉稳，在空旷的码头上远远传开。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 130,
+          "count": 1,
+          "evidence": [
+            "未履约节点：御书房门缓缓推开，景泰帝手握朱笔目光如炬盯。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 133,
+          "count": 1,
+          "evidence": [
+            "未履约节点：金万两颤抖着指向刑部大门。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 134,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 134,
+          "count": 1,
+          "evidence": [
+            "第27段（正文后半段）: 节点原句照抄: 正文中“在听雨轩截获兵部走私空白文牒”与 mustCover 节点连续 15 字完全一致。；对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 135,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“不能等天亮，现在就去兵部！”沈淮安将染着黑血的空白公文塞入袖中，转身大步迈出听雨轩的画舫。夜风拂过他的绯色官袍，衣袂猎猎作响。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 141,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 143,
+          "count": 1,
+          "evidence": [
+            "当前 3572 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 143,
+          "count": 1,
+          "evidence": [
+            "段落节奏均匀化：17 段平均 208 字、变异系数 0.12，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 147,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：萧破虏拄着斩马刀站在一旁，花白胡须还在因方才库房走火而剧烈颤动，沉闷的声音在大帐前沉沉砸落：“这是两年前兵部明文下达的调令，走的是朝廷正规驿马急递。”三千套玄甲）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 149,
+          "count": 1,
+          "evidence": [
+            "当前 3908 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 152,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“开门。”沈淮安随手将碎纸扔在雪地里，神色冷峻。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 157,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“萧大帅，蓟州防务与这八十万两现银的后续分发，就全托付给你了。”沈淮安转向身侧甲胄未除的老将，语气郑重，”张诚的画押口供、周崇礼的暗桩账簿，以及从黑风峡缴获的军）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 158,
+          "count": 1,
+          "evidence": [
+            "当前 4047 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 158,
+          "count": 1,
+          "evidence": [
+            "段落节奏均匀化：24 段平均 167 字、变异系数 0.11，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 159,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 159,
+          "count": 1,
+          "evidence": [
+            "当前 3766 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 160,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“陆大人这是何意？大清早无故擂响鸣冤重鼓，擅开三法司大堂，究竟要审谁？”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 164,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：密室石门合拢的声响极其沉闷，冯恩从暗处踱步出来，眼皮垂着，声音尖细而阴冷：“二殿下何必动这么大气。”沈淮安不过是一把刚磨快的刀，陛下想用他刮骨疗毒，可这天下骨肉）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 168,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：沈淮安没有多说半句废话。他右手探入袍袖，直接摸出一面沉甸甸的纯金令牌。令牌正面刻着”如朕亲临”四个蟠龙飞金篆字，背面则是景泰帝亲笔题写的御批密令。沈淮安跨步上前）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 169,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：站在殿门处的冯恩稳住心神，抖了抖身上略显褶皱的大红蟒袍。他斜眼睨着沈淮安，嗓音尖细而发冷：“沈大人，你也瞧见了。”内库向来遵照祖制收支，陛下年年赏赐边关、修葺宫）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 170,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：温见山收起尚方宪节，转头看向沈淮安，苍老的面容上满是冷峻：“沈大人，既然银子已经指明运往北直门外的皇庄，是否即刻调拨巡防营与缇骑出城封庄？”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 172,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：沈淮安将手中的红笔往笔架上一放，抬眼看向萧破虏：“赵福既然招了时辰与路线，驻京办的大车此刻必定已经出了外城岔道。”他们自以为有皇庄和军巡铺的凭证作掩护，走的一定）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 173,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“陆大人，温总宪，你们三法司好大的官威。”掌库太监声音沙哑刺耳，神色间带着一股有恃无恐的狂妄，”内承运库乃是皇上老人家的内帑私库，由司礼监统领掌管。外廷文官无权）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 175,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“陛下，内承运库乃天子家财，外廷插手已是逾制。”冯恩躬着身子，尖细的嗓音在死寂的殿内回荡，”大理寺拿几张来历不明的飞钱票据和死囚的屈打成招，便想将私扣贡品、勾结）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 177,
+          "count": 1,
+          "evidence": [
+            "正文后半段（第23段）: 节点原句照抄: 正文与mustCover节点「厚达三尺的宗室认罪补税文书送抵内阁案头。」存在连续13字逐字相同（「厚达三尺的宗室认罪补税文书」）。（证据：当晨光划破京城的重重阴霾时，厚达三尺的宗室认罪补税文书与全盘测绘图谱已稳稳摆放在内阁首辅温见山的公案案头。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 185,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：“姓名，籍贯，在齐王府当了几年差。”沈淮安端坐在案后，没有去看那名壮汉凶狠的目光，只是慢条条地翻开那本刚砸在案上的簿子。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 187,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段（证据：温见山没有任何迟疑，撩起绯色朝服前襟，在距离龙案三丈之处双膝重重砸在金砖地面上。他将装满账册、密信与供词的玄铁长匣高高举过头顶，手臂坚如铸铁，苍老的嗓音在大殿梁）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 188,
+          "count": 1,
+          "evidence": [
+            "当前 4557 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 192,
+          "count": 1,
+          "evidence": [
+            "当前 3611 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 196,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 199,
+          "count": 1,
+          "evidence": [
+            "【改为】正文必须情节兑现该节点，不可只在内心独白里带过。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 106,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-agif200a-ch106-1788202725250.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 115,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-agif200a-ch115-1788203802162.jsonl seq2 fact-extraction 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 23,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-agif200a-ch23-1788193249284.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 31,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-agif200a-ch31-1788194213575.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 41,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-agif200a-ch41-1788195409080.jsonl seq4 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.titles-shrunk-local",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "本地收缩超长标题/CBN/CEN 共 10 章（第 24、25、28、33、34、35、36、37、41、42 章），未发 AI 请求"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 5,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（这是景泰三年户部呈报的三江淮汛绝密赈灾假账！”陆文渊的声音低沉得可怕）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 6,
+          "count": 1,
+          "evidence": [
+            "沈淮安在长随赵禄面前直接点出户部将银两挪去填补'江南盐税亏空'，推论跨度略大（前文仅有主簿凭条与仓容数据矛盾），不过在快节奏爽文语境下属于合理的情节加速。（实际上朝廷拨付的三百万两真金白银，早在出库前就被户部暗中挪走，去填补江南盐税亏空的巨大黑洞！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.chapter-score-low",
+          "chapter": 8,
+          "count": 1,
+          "evidence": [
+            "读者评分 0：本章正文内容缺失（prose为空），无法进行实际阅读体验与情节推进评估。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continue-reading-no",
+          "chapter": 8,
+          "count": 1,
+          "evidence": [
+            "读者不愿继续阅读：本章正文内容缺失（prose为空），无法进行实际阅读体验与情节推进评估。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 8,
+          "count": 1,
+          "evidence": [
+            "正文内容完全为空，无法阅读和推进剧情。（\"prose\":\"\"）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 13,
+          "count": 1,
+          "evidence": [
+            "上一章末尾明确交代搜身死士『身上连半点刺青印记都用烙铁烫平了……腰间更无半块能验明身份的腰牌』，本章裴行舟突然拿出『从领头死士贴身里衣内搜出的提货领条』，两章衔接处的搜查细节略有出入。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 14,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（上一章：‘李郎中，你且睁大狗眼看清楚’；本章：‘被困在院中的户部清吏司主事脸色煞白’）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 16,
+          "count": 1,
+          "evidence": [
+            "中后段段落篇幅较长且包含大段紧凑的叙事与对话，视觉排版略显密集，适度分段可提升公堂对质的张力与呼吸感。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 16,
+          "count": 1,
+          "evidence": [
+            "李泰在公堂上的反抗较为扁平，直接呈现慌乱与咆哮，若能借刑部尚书或在座高官之势做出更有力的反扑再被击溃，打脸的层次感会更丰富。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 17,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（李郎中方才辩称户部账目乃依循祖制、各司其职，即便偶有亏空也是粮道天灾，那么下官便当着刑部与督察院诸位堂官的面，算一算这笔烂账背后的真正根由！\n\n堂上端坐的刑部尚书神色凝重）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "配角台词带有一定说明性功能，裴行舟的问话和苏清婉的证据呈送稍显‘捧哏’，但完全服务于专业审计破案的爽点呈现。（裴行舟按刀立于阶下，铜铃般的大眼中满是怒火，沉声喝道：“末将在北境押粮时便常听闻粮草延期，原来全被这群硕鼠卡在时间差里放贷生息！沈录事，这三年下来，他们到底从中盘剥了多少银子？”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 23,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 25,
+          "count": 1,
+          "evidence": [
+            "主角沈淮安此前定位主要为现代审计、算力推演的文职录事，此处突然展现高深武学‘以内力震碎暗锁’，与之前主要依靠裴行舟等武职护卫的设定略有轻微违和。（沈淮安接过木匣，以内力震碎暗锁，里面赫然是三本记载极其详尽的暗流水账。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 26,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 27,
+          "count": 1,
+          "evidence": [
+            "上一章末尾赵禄已因诛三族威胁崩溃并签字画押，本章开篇在刑房又突然反悔翻供，略微削弱了上一章心理防线瓦解的连贯性，属于审讯拉锯中的轻度回退。（上一章：‘赵禄的心理防线彻底崩溃...死死按下鲜红的指印’；本章开头：‘赵禄把心一横，嘶声喊叫起来：“沈录事，小人方才在地窖是被吓破了胆，胡言乱语当不得真！”’）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 28,
+          "count": 1,
+          "evidence": [
+            "文中沈淮安在古代对话中直接使用‘数据断层’、‘流水代码’等现代专业术语，虽然符合主角现代审计穿越设定，但在古代人物对质口语中略显突兀，可稍作古今融合修饰。（太白钱庄在替谁洗银子，赵敬堂在帮哪座王府补亏空，你这本贴身暗账上，可都清清楚楚记着流水代码。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 33,
+          "count": 1,
+          "evidence": [
+            "主角作为现代审计破案的核心文职智斗人设，突兀出现‘掌风震断系绳’的武侠高武描写，与人物一贯的严谨数据流画风略有割裂。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 37,
+          "count": 1,
+          "evidence": [
+            "本章属于标准的“种田/传授技能”过渡章节，内部冲突主要为算吏理解新知识与实操中的技术障碍，外部朝堂反派在这一章中处于背景板状态，缺少直接的外部危机压迫感。（长案前垂首肃立着五名年轻算吏，神情交织着拘谨与期待。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 39,
+          "count": 1,
+          "evidence": [
+            "主角团队获取御史台核心公费账册过于顺畅，大理寺直接封存御史台详细报销凭单并连夜调取，带有一定的剧情便利性。（大理寺掌管天下刑狱与三法司公费勘合，御史台每月支领的巡按车马费、采买笔墨纸张的勘合银，甚至言官外出巡查地方的差旅凭单，全都在西侧偏库的铁柜里锁着！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 41,
+          "count": 1,
+          "evidence": [
+            "本章后半部分（长卷铺展及各方进言）存在两个篇幅过长的大段落，在移动端阅读时视觉密度偏高，可适当分段提升呼吸感。（话音落下的瞬间，沈淮安双手猛然发力，将手中那卷沉甸甸的宣纸长卷向着奉天殿中央的金砖地面用力一抛……）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 42,
+          "count": 1,
+          "evidence": [
+            "在古代朝堂现场下达指令时直接出现“银行存款”现代会计科目词汇，虽有后半句太仓凭单解释，但在古风语境中略显跳戏，微损沉浸感。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.issue_1",
+          "chapter": 44,
+          "count": 1,
+          "evidence": [
+            "结尾段落中‘冯恩’突兀出现递上大印，此前本案审讯场景中并未交代其在场或侍立，略显突兀。（沈淮安接过冯恩递上来的稽核关防大印，铜印冰凉沉重）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.issue-01",
+          "chapter": 46,
+          "count": 1,
+          "evidence": [
+            "暗码破译阶段苏清婉恰好持有'江南织造局旧案残符'作为母印关键道具，巧合性略高，缺乏前情铺垫交代。（苏清婉解开随身锦囊，将一方边缘带有残缺锯齿的双鱼玉佩残片置于案上，断口处中央烙印着一道极深的阴刻火印：'这是当年江南织造局旧案流传的残符。'）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 48,
+          "count": 1,
+          "evidence": [
+            "部分反派反应描写略显脸谱化与套路化（如李烈听闻消息捏碎茶盏），但未影响整体阅读体验与核心人物塑造。（李烈在府内听闻消息，一把捏碎了手中的青瓷茶盏）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 49,
+          "count": 1,
+          "evidence": [
+            "水匪以铁索横江围堵，官舫仅凭‘底厚舱沉、满帆全速’便直接撞断铁索并冲散敌船，战术破局过程稍显平铺直叙，略微弱化了伏击带来的危机压迫感。（命掌舵差役满帆迎风，全速向前撞过去！大理寺弩手压制左翼敌船，破其阵眼！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 51,
+          "count": 1,
+          "evidence": [
+            "多条线索与重大转折在单章内极速收束（半个时辰取听雨轩账册、京城抓兵部主事、扬州扣押精铁船、抄没太白钱庄并决定返京），事件密度过大导致扬州核心冲突的攻防博弈过程略显概括化。（不过半个时辰，裴行舟便携着一具沉甸甸的紫檀木匣折返官舫……领了景泰帝的诛心口谕与大理寺密旨，陆文渊没有片刻耽搁……整备完毕。我们携这三箱铁证与涉案要"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 54,
+          "count": 1,
+          "evidence": [
+            "文本中出现“钱庄钱庄”叠字笔误，略微影响阅读顺畅度。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 58,
+          "count": 1,
+          "evidence": [
+            "架空朝代背景下出现了明代律例称谓（原设定为大奉朝堂），略微跳戏。（“大明律例中，漕粮与折银过关必有‘一式三份’的勘合存根。”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 61,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（“四海通汇，万源钱庄！”沈淮安朗声念出白绢底端的四个朱红大字……怒道：“证据确凿，账实互证，户部还有何话可说！”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 62,
+          "count": 1,
+          "evidence": [
+            "上一章结尾查扣并由陆文渊下令查抄的是‘四海通汇，万源钱庄’，本章开篇投案及后续账册核算的钱庄名字变成了‘太白钱庄’，两处钱庄名称指代未作过渡说明，存在设定轻微串称。（上一章：‘四海通汇，万源钱庄！……裴行舟，即刻率大理寺精锐黑甲封锁京城内外所有分号’；本章：‘小人乃太白钱庄总号大掌柜金万两，特来投案自首！’）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 63,
+          "count": 1,
+          "evidence": [
+            "本章主要以武戏截杀与审讯心理攻防为主，核心卖点的现代审计推演在本章转为背景提及，主事破防主要依靠生死威慑而非进一步的数据逻辑穿透。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 64,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": 68,
+          "count": 1,
+          "evidence": [
+            "本章属于较为典型的副本交接与背景铺垫过渡章，主要通过陆文渊与苏清婉之口抛出李泰、李烈及江南商帮的信息，推进方式以对话交接为主。（陆文渊身子微微前倾，枯瘦的手指沾着酒水在桌面上画出两道纵横交错的暗线：‘二皇子李泰在户部经营了整整八年……除了李泰，还有手握北境重兵的大皇子李烈。’）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 69,
+          "count": 1,
+          "evidence": [
+            "文中先写‘不过两柱香的工夫，大案上一尺多高的账册已经被翻阅过半’，后文又称‘沈淮安仅仅用了半柱香的时间’，时间表述前后有轻微出入。（‘不过两柱香的工夫，大案上一尺多高的账册已经被翻阅过半’与‘谁能想到，沈淮安仅仅用了半柱香的时间’）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 73,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 74,
+          "count": 1,
+          "evidence": [
+            "真账底册的暗格机关破解略显顺遂，主要依靠直觉推断与小银刀一挑即中，若能增加微小的排查或试错推演，破局质感会更显硬核。（沈淮安抽出随身的小银刀，顺着隔板边缘轻轻一挑。咔哒一声机簧轻响，整块乌木底板应声翘起，露出了下方一个深不过半尺的暗格。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 82,
+          "count": 1,
+          "evidence": [
+            "现代审计手法的具体推演略显概括，核算过程偏快，智斗推理细节稍薄弱。（他并不去理会每本账册末尾官印累累的结余数字，而是将三年内所有从通州、泰州运抵官仓的船运批次，与太白钱庄发出的提货票号逐一交叉比对。不过半个时辰，触目惊心的财务黑洞便在纸上彻底现形。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 84,
+          "count": 1,
+          "evidence": [
+            "金万两在重兵戒严的扬州府城内迅速调集‘八百名亡命死士’披甲持弩，在古代城防逻辑下规模略显夸张，不过符合网文高潮决战的戏剧冲突需求。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 86,
+          "count": 1,
+          "evidence": [
+            "沈淮安对裴行舟解释计划时提到'现代准备金穿透'，虽符合穿越者思维，但直接对古代下属吐露'现代'字眼略有出戏，建议调整为更符合当下语境的词汇表达。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 89,
+          "count": 1,
+          "evidence": [
+            "正文第27段中出现清代服饰制度词汇“顶戴花翎”，与架空/仿明背景（景泰朝、大理寺、锦衣卫/缇骑体系）略有违和。（陆文渊声音森寒，当堂下令。两名健壮校尉立刻扑上前来，粗暴地扯下巡盐御史头顶的官帽，扒下其身上的绯色官服）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 92,
+          "count": 1,
+          "evidence": [
+            "该句略带大纲提示词复述痕迹，与上一段制服账房的动作描写稍有重合，建议修饰使其更具自然小说叙事感。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 92,
+          "count": 1,
+          "evidence": [
+            "前一段已有动作铺垫，紧接着此句有轻度行文复述感，略作精简衔接会更顺畅。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 98,
+          "count": 1,
+          "evidence": [
+            "沈淮安作为现代审计主角在本章主要承担接收战果与翻阅账册的功能，标志性的现代专业视角与职业切入点略微让位于裴行舟的武力破阵，但属于战术突袭过渡段的合理分配。（沈淮安神情冷峻，没有在主堂多作停留，而是径直带着几名书吏，快步登上了那艘被撞得半陷在浅滩中的最大货船。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 99,
+          "count": 1,
+          "evidence": [
+            "传令兵台词中出现称谓重叠（三皇子与大殿下混淆），疑似笔误或口吃设定表达不够清晰（传令兵嘴唇干裂泛白，口中大口喘着血沫，断断续续地嘶喊出来：\"大，大理寺陆大人！沈特使！北境出大事了！\"传令兵死死抓住陆文渊的官袍下摆，拼尽全力仰起头，眼中满是惊骇与绝望：\"三皇子李烈，大殿下李烈的十万北境铁骑突然拔营南下）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 100,
+          "count": 1,
+          "evidence": [
+            "剧情时间线与上一章结尾产生严重倒流与设定矛盾。上一章结尾军报已至（李烈起兵逼京），主角团已商定'绝不走官道驿站，改由水师护送连夜开拔'；本章开头却时间倒流回晨光破晓重新拉白绢审讯钱四海、派兵抄家至正午，且章末送证方式又变成'派缇骑沿官道疾驰'。（前章结尾：'绝不能走官道驿站，必须改由大理寺水师护送快船……连夜开拔！' "
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 101,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（上一章已写到‘清晨’出动、‘正午时分彻底清点完毕’并已发八百里加急入京；本章回切到太白钱庄地库追查时出现‘冷冽的夜风’与‘天亮之前’，时序衔接略有错位感。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 109,
+          "count": 1,
+          "evidence": [
+            "沈淮安在古代审讯对质中直接口述“物理参数”这一纯现代学术名词，稍显语境出戏，若替换为“水文物理之数”或“天理水则”会更自然融入对话。（所有沉船当天的风向、水流流速与船只吃水数据，在物理参数上完全自相矛盾。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 110,
+          "count": 1,
+          "evidence": [
+            "正文叙述中直接出现了小说章节编号（第38章），破坏了沉浸感与代入感。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 110,
+          "count": 1,
+          "evidence": [
+            "标点符号有误，引号内出现了逗号紧跟感叹号的连用（，！）。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continuity-1",
+          "chapter": 114,
+          "count": 1,
+          "evidence": [
+            "前文明确设定李烈为大皇子（'大皇子李烈当年督办辽东军饷时的验承官印'），本章末尾却写成了三皇子，存在皇子排位设定前后不一致的小瑕疵。（三皇子李烈的猩红仪仗大旗在烟尘中猎猎作响。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 115,
+          "count": 1,
+          "evidence": [
+            "存在一处官职错别字笔误，将‘户部清吏司’写成了‘户部青吏司’。（“好一个沈郎中，好一个户部青吏司的算账奇才。”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-2",
+          "chapter": 115,
+          "count": 1,
+          "evidence": [
+            "在李烈拔刀欲动手时，司礼监掌印太监冯恩携圣旨口谕‘千钧一发’赶到解围，戏剧化巧合痕迹略重。（李烈眼中杀机毕露，掌心长刀猛然拔出三寸……就在这千钧一发的时刻，府衙大门外忽然传来一阵尖锐而高亢的唱喏声。“圣旨口谕到，司礼监掌印太监冯恩到！”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-1",
+          "chapter": 116,
+          "count": 1,
+          "evidence": [
+            "显影还原被涂黑账册的过程虽然充满悬疑与技术流爽感，但关于药水配方的解释略显功能性工具化，略微削弱了纯硬核审计的推演感。（苏清婉一边解释，一边动作熟练地将三种不同颜色的药水倒入白瓷海碗之中，“这里面调配了白矾、苦楝子皮汁与极浓的草木精灰……”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.chapter-score-low",
+          "chapter": 121,
+          "count": 1,
+          "evidence": [
+            "读者评分 46：本章正文内的审计对冲推演和大皇子密令揭露本身具备智斗看点，但与上一章结尾存在毁灭性的剧情时序倒流。上章已完成江南交接、接旨赐御剑并拔营北上，本章却直接回退到扬州查账与封锁运河阶段，且无任何倒叙或回忆提示，造成极其严重的连贯性崩塌。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continue-reading-no",
+          "chapter": 121,
+          "count": 1,
+          "evidence": [
+            "读者不愿继续阅读：本章正文内的审计对冲推演和大皇子密令揭露本身具备智斗看点，但与上一章结尾存在毁灭性的剧情时序倒流。上章已完成江南交接、接旨赐御剑并拔营北上，本章却直接回退到扬州查账与封锁运河阶段，且无任何倒叙或回忆提示，造成极其严重的连贯性崩塌。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 121,
+          "count": 1,
+          "evidence": [
+            "章节与前章结尾发生严重时序倒流与剧情断裂：前章末尾钦差已宣旨、沈淮安一行已点齐三百铁骑拔营奔赴北境，且镜头已切至北境萧破虏；本章却毫无过渡地退回扬州查账、裴行舟刚破别院、还要在扬州封锁运河并计划‘明日清晨在扬州府衙开堂定谳’。（前章结尾：‘三百铁骑卷起漫天尘土……径直冲出扬州北门，沿着京杭官道风驰电掣般向北疾驰而去。’"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 122,
+          "count": 1,
+          "evidence": [
+            "反派死士服毒前卡字留悬念（'被萧…'）的处理手法较为公式化，略带刻意感，但整体对北境主线的引出仍具推力。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 126,
+          "count": 1,
+          "evidence": [
+            "标点符号连用（逗号接感叹号）存在排版小疏漏，略微影响阅读体验。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 127,
+          "count": 1,
+          "evidence": [
+            "对话末尾使用了逗号而非感叹号或破折号，略微影响死士临死惊恐呼喊的情绪表现力度。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 128,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 129,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 130,
+          "count": 1,
+          "evidence": [
+            "上章末尾重点铺垫了通州码头埋设三十六具震天雷的惊天杀局，本章开头仅用一句话直接交代‘三十六具埋在暗渠里的震天雷已被大理寺缇骑尽数起出’，拆雷过程与潜在交锋被一笔带过，略显轻描淡写。（晨光撕开通州水面的白雾，三十六具埋在暗渠里的震天雷已被大理寺缇骑尽数起出。浸透猛火油的引线被裴行舟亲手斩断，连同那张染血的舆图一起锁入铁匣"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 134,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.conflict-1",
+          "chapter": 138,
+          "count": 1,
+          "evidence": [
+            "银车底盘藏火药的暗杀/销赃危机引出迅速但解决极快，裴行舟一刀断引信、陆文渊一招擒凶，险情缺乏回旋博弈，功能性过渡痕迹稍重。（只见最后一辆装满封箱银锭的重型马车下方……裴行舟暴喝一声……三尺雁翎刀在晨光中划出一道雪亮刺眼的厉芒，精准无比地削过最后一辆大车的车厢底木。伴随着咔嚓一声脆响，那截滋滋冒着黑烟的引火药绳被凌空斩断"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 139,
+          "count": 1,
+          "evidence": [
+            "前情提要（上一章结尾）已发生过一次在皇城根下马车底盘发现火药并被裴行舟斩断引信、卸下死士下巴的桥段；本章开头又在户部官库发生了一次几乎完全相同的‘推车民夫点燃车底火药、沈淮安扯断引线、裴行舟折腕卸下巴’情节，两段危机在机制和处置手法上高度雷同，略显重复。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 141,
+          "count": 1,
+          "evidence": [
+            "作为深涉军机谋逆的王府亲兵统领，在言语试探中极快自爆详细换防日期与车队编次，略显工具人属性，但尚在快节奏网文戏剧冲突的容忍度内。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 144,
+          "count": 1,
+          "evidence": [
+            "暗哨潜入执行焚尸灭口的高危任务，舌底却特意藏着能直接指明身份的大将贴身私令，线索掉落的动机略显刻意，稍稍削弱了硬核谍谋的可信度。（指尖忽然触碰到一个坚硬冰冷的金属物件。裴行舟神色一变，手腕猛地一抠，硬生生从暗哨的舌根血沫中挖出了一枚用油布裹着的紫铜令符。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 152,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 155,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（上一章结尾：“萧破虏的脚步猛然僵住，双眼瞪得滚圆，失声惊呼：‘徐校尉？京营飞骑营正六品校尉徐百川！’……徐百川死死咬着牙关”；本章正文：“背面则清晰地刻着一行小字：京营飞骑营左领校尉张诚。‘张校尉，这面牌子你总该认得吧？’……跪在冰冷泥地上的中年将领满脸青紫……张诚猛地抬起头”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 156,
+          "count": 1,
+          "evidence": [
+            "阻挠发饷的黑脸偏将在主角已手握虎符且有萧破虏支持的情况下，仍公然拔刀带兵抢银，行为动机略显脸谱化与送人头，但作为情绪宣泄工具尚在合理爽文范畴内。（黑脸偏将脸色猛然一变，眼中闪过惊怒。他自仗在蓟州军中根深蒂固，又收了大皇子不少好处，竟猛地拔出腰间战刀，朝身后的亲信大吼：‘弟兄们别听这文官妖言惑惑！’）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 157,
+          "count": 1,
+          "evidence": [
+            "主角的核心特色是现代审计与数据流断案，本章主要为过渡性质的行军分兵与反派合谋截杀，现代职业降维打击或账目推演的特色元素在本章中未有展开表现。（“沈淮安从车内取出北境通往京城的舆图，用指尖在粗糙的羊皮纸上缓缓划过……兵分三路，虚实掩护。”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 158,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 162,
+          "count": 1,
+          "evidence": [
+            "李烈在养心殿的辩白较为常规仓促，未在帝王多疑的心理层面做更深层的拉扯，不过由于前章证据链已彻底锁死，此处快速定谳符合快节奏爽文的清盘推进需求。（李烈面如金纸，嘴唇不住地颤抖着，想要再次辩驳，可在御案上那份条理分明、每一笔银两去向都精确到文引日期的巨幅穿透图谱面前，所有苍白的言辞都显得如此无力。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 164,
+          "count": 1,
+          "evidence": [
+            "反派粮商赵福在前一秒被点破贪墨巨额官粮后，叫嚣逻辑转换略显生硬直接，缺乏一丝老练奸商的挣扎心理过渡，但整体符合快节奏打脸预期。（赵福脸上的横肉猛地一抽，叫喊声戛然而止……他强自咬牙，歇斯底里地吼道：“你血口喷人！就算你有账本又如何？如今全城粮商同气连枝……”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 165,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（上一章：'秘密调集了整整二十万石平价江南新粮'；本章：'十万石平价漕粮，即刻进城！'、'整整十万石平价漕粮，全进城了！'）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 174,
+          "count": 1,
+          "evidence": [
+            "偏席的李烈、李泰在此前正堂对质过程中完全未作铺垫提及，在铁匣封签时突然作为在场背景人物切入，出场略显突兀。（端坐于偏席的李烈抚了抚腰间佩剑，嘴角噙着一抹冷冽的弧度……一旁的李泰则是面沉如水）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 175,
+          "count": 1,
+          "evidence": [
+            "御赐令箭的名称在‘赤金令箭’与‘金丝令箭’之间交替出现，称谓略显不统一。（景泰帝猛地将御案上一枚代表钦差专断之权的赤金令箭……持朕的金丝令箭……带着这柄金丝令箭……双手将那一柄沉甸甸的赤金令箭捧入怀中。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 176,
+          "count": 1,
+          "evidence": [
+            "皇庄总管赵德全在明知钦差持赤金令箭的情况下，悍然指挥护院持刀硬冲公堂，反派反抗手段略显粗糙脸谱化，缺乏更深层的官场权谋周旋。（皇庄乃是皇室私产，内承运库早有定论……来人，给我把这群招摇撞骗的狂徒轰出去！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 177,
+          "count": 1,
+          "evidence": [
+            "上一章末尾汇总数据为瞒报良田120万亩，本段物料反推时落点在三千顷（30万亩）及150万亩熟田，数据统计口径（是总数还是局部细分名目）略有跳跃，但不影响整体推演逻辑与打脸爽感。（整整三千顷隐匿未报的肥沃田产，被你们以荒滩、祖茔和猎场的名目瞒报了整整十年！三千顷，足足三十万亩上好良田。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 178,
+          "count": 1,
+          "evidence": [
+            "暗仓内部死士纵火反抗的情节解决得过于迅速平淡，缺乏实质性险情阻碍，略显工具人性质，但整体推进流畅，不影响核心爽点。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 179,
+          "count": 1,
+          "evidence": [
+            "上章结尾齐王李泰已在绝望中下达‘三日之内，血洗帝京’的提前兵变密令，本章开篇未做时间或场景过渡，直接跳入查抄钱四海暗仓的审讯线，且‘查抄暗仓-缴获数百万石粮食-死士反扑’的桥段与上章皇庄抄粮存在一定模式重合。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 182,
+          "count": 1,
+          "evidence": [
+            "正文部分对话的双引号缺失右半边闭合引号，存在排版粘连现象。（裴行舟踩着湿滑的血水步步逼近，刀尖斜指地面：\"扔下兵器，留你全尸。\\n）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 183,
+          "count": 1,
+          "evidence": [
+            "上一章结尾明确描写沈淮安、萧破虏与裴行舟点齐铁骑纵马杀向玄武门勤王，本章沈淮安却突然身处户部地库中好整以暇地步入审讯死士，随后裴行舟直接从玄武门凯旋汇报，人物行动轨迹与时空顺序产生断层。（上章结尾：'萧将军、裴行舟，立刻随我点齐所有蓟州铁骑，火速驰援玄武门！'……本章：'沈淮安手持火把步入内库'、'裴行舟高大的身影出现"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-2",
+          "chapter": 183,
+          "count": 1,
+          "evidence": [
+            "上章结尾将玄武门夺门兵变烘托为一触即发的生死决战，本章却直接跳过玄武门战场正面交锋，将其作为背景口头汇报带过，高潮情绪有所泄气。（上章结尾：'一场改写大奉朝局的血腥厮杀已在玄武门前轰然爆发'，本章裴行舟直接出场：'玄武门战事已定……李泰埋伏在内苑的残余死士尽数伏诛'）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 187,
+          "count": 1,
+          "evidence": [
+            "正八品大理寺评事越过多位二三品重臣直接统筹全京城城防后勤与武库调度，在传统官制逻辑下权力跨度极大，完全依赖帝王特许尚方令箭推动，具有较强爽文特权化色彩。（沈淮安，朕赐你尚方令箭，自此刻起，全权统筹帝京城防后勤与武库调度，便宜行事！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 188,
+          "count": 1,
+          "evidence": [
+            "主角计算过程用‘几何割补与现代测量复核法’带过，对硬核数据流读者而言推演细节略显概括，但对节奏推进影响不大。（沈淮安提起炭笔，运用几何割补与现代测量复核法，当众将图册上的边界坐标与实地测绘数据一一叠算，一个个精准的面积差额跃然纸上。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 192,
+          "count": 1,
+          "evidence": [
+            "通州六十万石与昌平军麦一夜之间调动漕帮与民夫全数抢运进城，在极短时间内的后勤物理吞吐量推演上略带网文式神速，但符合快节奏爽感和沈淮安智斗压制的题材惯例。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 194,
+          "count": 1,
+          "evidence": [
+            "章节标题为《把欠饷账单念给叛军听》，但本章主要完成了账单核算、誊录黄榜与攻心方案交付陆文渊，真正的城楼现场唱名念账与叛军军心溃散爽点延后至下一章，存在轻微的期待延期。（陆文渊不再犹豫，挥手招来身后的精锐缇骑，将巨幅黄榜与传音铁筒小心包好，迅速带离户部公署，冒着纷飞的箭雨赶赴皇城正面的承天门防线。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 197,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（左侧街道上，大理寺左寺丞裴行舟身披浸染鲜血的玄铁锁子甲……立在门廊侧面的裴行舟目光一凛）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "1-3章：配角老算吏等人的态度转变略显模板化（由冷嘲热讽迅速切换到惊叹骇然），打脸套路稍显单薄，但整体契合快节奏爽文预期，未构成严重出戏。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 10,
+          "count": 1,
+          "evidence": [
+            "6-10章：模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.issue-pacing-courtroom-density",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "16-20章：第16章至第19章连续四章均处于刑部大堂的公堂对质场景，虽然推演逻辑与破局点各不相同，但连续高密度的‘反派叫嚣-主角算盘/账目打脸-反派瘫软’结构若再延展易产生审美疲劳。好在第20章末尾司礼监携圣旨口谕强行介入，及时打破了单一场景循环。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.evaluation-error",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "大纲读者评审失败：[\n  {\n    \"expected\": \"string\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"summary\"\n    ],\n    \"message\": \"Invalid input: expected string, receiv"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.self-evaluation-fallback",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "无独立读者模型，本轮回退写作模型自评"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.hardgate-warning",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "裁判硬门禁（首轮）：最低分 0 < 60"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 377,
+          "avgMs": 28186,
+          "p50Ms": 23701,
+          "maxMs": 107600
+        },
+        "fact-extraction": {
+          "count": 307,
+          "avgMs": 9956,
+          "p50Ms": 7409,
+          "maxMs": 79282
+        },
+        "chapter-judge": {
+          "count": 306,
+          "avgMs": 5960,
+          "p50Ms": 4428,
+          "maxMs": 54617
+        },
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 15286,
+          "p50Ms": 15286,
+          "maxMs": 15286
+        },
+        "outline-expand": {
+          "count": 19,
+          "avgMs": 32063,
+          "p50Ms": 23804,
+          "maxMs": 93185
+        },
+        "outline-roll": {
+          "count": 37,
+          "avgMs": 29597,
+          "p50Ms": 26695,
+          "maxMs": 67051
+        },
+        "reader-outline-judge": {
+          "count": 1,
+          "avgMs": 3397,
+          "p50Ms": 3397,
+          "maxMs": 3397
+        },
+        "reader-chapter-judge": {
+          "count": 200,
+          "avgMs": 5785,
+          "p50Ms": 4285,
+          "maxMs": 35024
+        },
+        "reader-window-judge": {
+          "count": 5,
+          "avgMs": 3301,
+          "p50Ms": 2424,
+          "maxMs": 7407
+        }
+      }
+    }
+  ]
+}

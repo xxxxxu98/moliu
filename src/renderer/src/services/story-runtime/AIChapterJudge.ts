@@ -39,6 +39,42 @@ function normalizeContractKey(value: string): string {
 }
 
 /**
+ * 顶层对象形状归一化：模型偶发把审查包整个包进数组返回（[{...}]，甚至把对象的
+ * 各顶层键拆进数组多个元素）。2026-08-31 反重力 200 章双开冒烟 ch72 实测：
+ * 裸数组直达 parseSchema → 「expected object, received array」非瞬态硬拒 →
+ * review-unavailable 烧光重试预算，整章 0 字。
+ * 合并数组内含顶层键的对象条目；识别不出审查包形状的数组维持原样交 schema 报错
+ * （如模型误输出段落字符串数组——那是草稿形状，不是审查结论，不能瞎兜）。
+ */
+function normalizeTopLevelObjectShape(value: unknown): unknown {
+  if (!Array.isArray(value)) return value;
+  const TOP_LEVEL_KEYS = new Set([
+    'fulfillment',
+    'forbidden',
+    'issues',
+    'resolvedForeshadowIds',
+  ]);
+  const merged: Record<string, unknown> = {};
+  let recognized = false;
+  for (const item of value) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+    for (const [key, val] of Object.entries(item as Record<string, unknown>)) {
+      if (!TOP_LEVEL_KEYS.has(key)) continue;
+      recognized = true;
+      // 数组值拼接不丢弃（fulfillment/forbidden/issues 全是数组，下游按 node/zone
+      // 键归一化天然去重）；标量值首个生效
+      if (Array.isArray(val)) {
+        const existing = merged[key];
+        merged[key] = Array.isArray(existing) ? [...existing, ...val] : val;
+      } else if (merged[key] === undefined) {
+        merged[key] = val;
+      }
+    }
+  }
+  return recognized ? merged : value;
+}
+
+/**
  * 统一章节语义审查：履约 + 禁区 + 连贯性/人设，单次 AI 请求。
  */
 export class AIChapterJudge implements ChapterJudge {
@@ -141,10 +177,10 @@ export class AIChapterJudge implements ChapterJudge {
         futureReveals: input.futureReveals ?? [],
         payoffCandidates: payoffCandidates.length > 0 ? payoffCandidates : undefined,
       }),
-      parse: value => parseSchema(chapterJudgeResultSchema, value, '章节语义审查结果'),
+      parse: value => parseSchema(chapterJudgeResultSchema, normalizeTopLevelObjectShape(value), '章节语义审查结果'),
     });
 
-    const parsed = parseSchema(chapterJudgeResultSchema, raw, '章节语义审查结果');
+    const parsed = parseSchema(chapterJudgeResultSchema, normalizeTopLevelObjectShape(raw), '章节语义审查结果');
     return this.normalize(
       mustCover,
       forbiddenZones,
@@ -153,7 +189,13 @@ export class AIChapterJudge implements ChapterJudge {
       input.chapterText,
       [
         ...(input.allowedCharacterNames ?? []),
-        ...(input.stateDigest?.entities ?? []).map(entity => entity.name),
+        // 节点点名角色守卫只认角色实体：stateDigest 里混入的地点/物品实体名一旦
+        // 恰好是节点句的动词短语碎片（实测脏地点「登场并提供黑市」⊂ 节点
+        // 「苏清婉登场并提供黑市粮价情报」），守卫会要求正文逐字出现它而永远
+        // 找不到 → 误判整章未履约（2026-08-31 反重力 200 章双开冒烟 ch8 实锤）。
+        ...(input.stateDigest?.entities ?? [])
+          .filter(entity => entity.kind === 'character')
+          .map(entity => entity.name),
       ],
       payoffCandidates,
     );

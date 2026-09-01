@@ -347,10 +347,19 @@ function inspectSemanticConsistency(outline: ExecutableOutline): {
     const LOCATION_VERB_OPENERS = [
       '遭遇', '依赖', '勾结', '串联', '突袭', '夜袭', '驰援', '营救', '护送',
       '查抄', '起获', '引爆', '埋伏', '穿透', '击溃', '解救', '押送', '运抵',
+      // 2026-08-31 反重力 200 章双开冒烟：蓝图句「听雨轩暗通情报，截获黑市粮价」
+      // 切出「截获黑市」入表并随 stateDigest 进每一章上下文
+      '截获', '登场',
     ];
+    // 候选含连词/助词 = 动词短语切片而非地名本体：真地名几乎不含这些虚词，
+    // 误拒代价仅是地点不自动入表（黄签级，不 fail-closed）。2026-08-31 实证：
+    // 「苏清婉登场并提供黑市粮价情报」被 6 字贪心窗口切成「登场并提供黑市」
+    // 入表，该脏实体名随后把判定守卫的点名角色匹配污染到误判整章未履约。
+    const LOCATION_FUNCTION_CHAR_RE = /[并并且或的着了过被把]/u;
     const isVerbPhraseLocation = (name: string): boolean => {
       if (LOCATION_VERB_OPENERS.some(word => name.startsWith(word))) return true;
       if (/(?:罢市|救市|跨省)$/u.test(name)) return true;
+      if (LOCATION_FUNCTION_CHAR_RE.test(name)) return true;
       return false;
     };
     const extractUnregisteredLocations = (text: string): string[] => {

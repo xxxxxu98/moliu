@@ -228,6 +228,43 @@ describe('AIChapterJudge', () => {
     });
     expect(result.fulfillment[0].reason).toContain('郑伯昭');
   });
+
+  it('点名角色守卫只认 character 实体，地点实体名混入不再误判未履约', async () => {
+    // 2026-08-31 反重力 200 章双开冒烟 ch8 实锤：蓝图句「苏清婉登场并提供黑市
+    // 粮价情报」被地点补登记切成脏实体「登场并提供黑市」混入 stateDigest，
+    // 守卫要求正文逐字出现该动词短语碎片 → 误判未履约 → 3 轮停滞整章 0 字。
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        const prompt = JSON.parse(request.prompt) as { stateDigest: { entities: Array<{ name: string }> } };
+        expect(prompt.stateDigest.entities.map(entity => entity.name)).toContain('登场并提供黑市');
+        return {
+          fulfillment: [{
+            node: '苏清婉登场并提供黑市粮价情报',
+            fulfilled: true,
+            evidence: ['苏清婉掀帘而入，报出了今日黑市的粮价。'],
+            reason: '已写到',
+          }],
+          forbidden: [],
+          issues: [],
+        };
+      }),
+    };
+
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: ['苏清婉登场并提供黑市粮价情报'],
+      forbiddenZones: [],
+      chapterText: '苏清婉掀帘而入，报出了今日黑市的粮价。',
+      stateDigest: {
+        entities: [
+          { id: 'char-1', name: '苏清婉', kind: 'character' },
+          { id: 'loc-2', name: '登场并提供黑市', kind: 'location' },
+        ],
+      },
+      checkDeepSemantic: true,
+    });
+
+    expect(result.fulfillment[0]).toMatchObject({ fulfilled: true });
+  });
 });
 
 describe('AIFulfillmentJudge 兼容封装', () => {
@@ -320,15 +357,19 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
     ).rejects.toThrow('结构校验失败');
   });
 
-  it('模型把对象裹一层数组返回时解包首元素，不再硬拒终止整批', async () => {
-    // 2026-08-21 生产实测 proj-1787300146075 ch31：审查模型返回 [{…}]，
-    // expected object, received array 硬拒 → review-unavailable 停整批。
+  it('模型把对象裹一层数组返回时解包，不再硬拒终止整批', async () => {
+    // 2026-08-21 生产实测 proj-1787300146075 ch31 + 2026-08-31 反重力 200 章双开
+    // 冒烟 ch72：审查模型返回 [{…}]，expected object, received array 硬拒 →
+    // review-unavailable 烧光重试预算整章 0 字。历史版本的用例 mock 返回的是
+    // 裸对象，从未真正覆盖数组形状（假阳性），此处以真实形状回归。
     const ai: StructuredAI = {
-      generate: vi.fn(async () => ({
-        fulfillment: [{ node: '节点A', fulfilled: true, evidence: ['正文原句'], reason: '已写到' }],
-        forbidden: [],
-        issues: [],
-      })),
+      generate: vi.fn(async () => [
+        {
+          fulfillment: [{ node: '节点A', fulfilled: true, evidence: ['正文原句'], reason: '已写到' }],
+          forbidden: [],
+          issues: [],
+        },
+      ]),
     };
     const result = await new AIChapterJudge(ai).judge({
       mustCover: ['节点A'],
@@ -339,12 +380,31 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
     expect(result.fulfillment[0]).toMatchObject({ node: '节点A', fulfilled: true });
   });
 
-  it('多元素顶层数组无法安全选定，仍走硬失败', async () => {
+  it('对象被拆进数组多个元素时按顶层键拼接归一化，不丢任何判定', async () => {
     const ai: StructuredAI = {
       generate: vi.fn(async () => [
-        { fulfillment: [], forbidden: [], issues: [] },
-        { fulfillment: [], forbidden: [], issues: [] },
+        { fulfillment: [{ node: '节点A', fulfilled: true, evidence: ['正文原句'], reason: '已写到' }] },
+        { forbidden: [{ zone: '禁区1', violated: false, evidence: [], reason: '未触发' }] },
+        { issues: [{ type: 'logic_gap', severity: 'high', location: '章末', description: '矛盾', evidence: [] }] },
       ]),
+    };
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: ['禁区1'],
+      chapterText: '正文原句',
+      checkDeepSemantic: true,
+    });
+    expect(result.fulfillment).toHaveLength(1);
+    expect(result.fulfillment[0]).toMatchObject({ node: '节点A', fulfilled: true });
+    expect(result.forbidden[0]).toMatchObject({ zone: '禁区1', violated: false });
+    expect(result.issues).toHaveLength(1);
+  });
+
+  it('无法识别审查包形状的裸数组（如段落字符串）仍走硬失败', async () => {
+    // ch72 同一尝试里 scene-draft 也返回过段落字符串数组——那是草稿形状，
+    // 不是审查结论，归一化不能瞎兜
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => ['第一段正文。', '第二段正文。']),
     };
     await expect(
       new AIChapterJudge(ai).judge({

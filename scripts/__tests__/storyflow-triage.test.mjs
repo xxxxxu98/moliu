@@ -24,8 +24,45 @@ test('漏报形态：处决完成体与主语隔十余字仍登记死亡并报�
 });
 
 test('误报形态：祈使威胁「给我杀了顾青舟」不登记', () => {
-  const chapters = [ch(1, '「给我杀了顾青舟！」赵老账房狞吼。顾青舟冷汗涔涔。')];
+  const chapters = [
+    ch(1, '「给我杀了顾青舟！」赵老账房狞吼。顾青舟冷汗涔涔。'),
+    ch(2, '顾青舟整了整衣冠，朗声道：「升堂。」'),
+  ];
   assert.equal(scanProseDeadResurrection(chapters, ['顾青舟']).length, 0);
+});
+
+test('误报形态：战场呐喊「宰了督战队！杀了李泰！」不登记（2026-08-31 反重力 200 章双开 A 书 ch196 实锤）', () => {
+  // 倒戈士兵的呐喊 lead 窗口以「杀了」结尾命中 deathRev，被当成既成处决；
+  // 实际李泰 ch198 被擒、ch199 判终身圈禁——死亡系台词误报
+  const chapters = [
+    ch(196, '愤怒的吼声如同山洪暴发，数千名倒戈的前锋营士兵目眦欲裂。「宰了督战队！杀了李泰！」他们疯了一样扑向督战中军！'),
+    ch(198, '一身金丝软甲已被扯得残破不堪的二皇子李泰，正被金万两与钱四海合力死死按在冰冷的青石砖上。'),
+    ch(199, '景泰帝沉声道：「李泰大逆不道，削去亲王爵位，交宗人府终身圈禁。」'),
+  ];
+  assert.equal(scanProseDeadResurrection(chapters, ['李泰']).length, 0);
+});
+
+test('误报形态：反派意图叙述「唯有强冲斩杀陆安方有一线生路」不登记（2026-09-01 20 章修复回归 ch17 实锤）', () => {
+  // 死士的目的叙述不在引语内、也无私有条件词，lead 以「斩杀」结尾命中 deathRev；
+  // 实际陆安 ch17 重伤逃脱，ch18-20 正常出庭
+  const chapters = [
+    ch(17, '死士首领十分清楚，哨卡一旦合围便再无生机，唯有强冲斩杀陆安方有一线生路。'),
+    ch(18, '陆安字字如刀，目光逼视着堂上的严成礼。'),
+  ];
+  assert.equal(scanProseDeadResurrection(chapters, ['陆安']).length, 0);
+});
+
+test('对照：叙述处决「当阵斩杀了李泰」仍正常登记死亡并报复活', () => {
+  // 台词守卫只拦引语内的杀式；叙述事实不能被误伤（漏报方向对照）
+  const chapters = [
+    ch(1, '裴行舟手起刀落，当阵斩杀了李泰。三军肃然。'),
+    ch(2, '乱军之中，李泰夺得一匹快马，沉声道：「撤。」'),
+  ];
+  const res = scanProseDeadResurrection(chapters, ['李泰']);
+  assert.equal(res.length, 1);
+  assert.equal(res[0].state, '死亡');
+  assert.equal(res[0].chapter, 1);
+  assert.deepEqual(res[0].activeChapters, [2]);
 });
 
 test('误报形态：求刑台词「斩杀顾成舟以谢天下」不登记', () => {

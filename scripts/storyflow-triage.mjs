@@ -981,11 +981,34 @@ function main() {
 const invokedDirectly = (process.argv[1] || '')
   .replace(/\\/g, '/')
   .endsWith('storyflow-triage.mjs');
+// 台词守卫引号集须在 main() 调用点之前初始化：CLI 直跑时 main() 同步执行，
+// 声明放在本行之后会因 TDZ 在 insideDialogue 首次调用时报 ReferenceError
+const QUOTE_OPENERS = new Set(['「', '『', '“']);
+const QUOTE_CLOSERS = new Set(['」', '』', '”']);
 if (invokedDirectly) main();
 
 // ============================================================
 // 死而复活确定性扫描（纯函数，供 CLI 与回归测试共用）
 // ============================================================
+
+/**
+ * 命中点是否处于未闭合引语（台词）内：从命中点向前回扫引号配对，先遇到
+ * 开引号=台词，先遇到闭引号/段落空行/回扫上限=叙述。中引号「“」允许跨句，
+ * 段落空行视为引语边界（本书格式引语不跨段）。
+ */
+export function insideDialogue(text, at) {
+  let depth = 0;
+  for (let i = at - 1; i >= 0 && i >= at - 90; i -= 1) {
+    const c = text[i];
+    if (c === '\n' && text[i - 1] === '\n') break;
+    if (QUOTE_CLOSERS.has(c)) depth += 1;
+    else if (QUOTE_OPENERS.has(c)) {
+      if (depth > 0) depth -= 1;
+      else return true;
+    }
+  }
+  return false;
+}
 
 /**
  * 从全书正文扫描「命运级事件 → 活体出场」矛盾。
@@ -997,6 +1020,7 @@ if (invokedDirectly) main();
  * 判定口径与写作侧 extract-plot-memory 六轮反噬演化对齐：
  * - 命运事件只认「名字紧邻命运谓语」句式；逆序杀式排除悬赏/求刑/条件语境
  * - 假设/盘算窗口守卫（「今夜若是强行杀了X」「杀了X不过是交差」非事实）
+ * - 台词守卫：引语内的「杀了X」是号令/威胁，不是既成处决
  * - 解除章覆盖语义：终态章后任何一章「角色名+解除信号」即视为已解除
  */
 export function scanProseDeadResurrection(chapters, roster) {
@@ -1019,8 +1043,10 @@ export function scanProseDeadResurrection(chapters, roster) {
   // 假设/盘算/条件语境守卫（与写作侧 HYPOTHETICAL_SENTENCE_RE 同源）：
   // 「杀了陆承安不过是交差抵罪…照样人头落地」「今夜若是强行杀了陆云铮」
   // 都是权衡或威胁，不是既成事实。覆盖命中点前后窗口。
+  // 唯有/方有/一线生：反派意图叙述「唯有强冲斩杀陆安方有一线生路」（2026-09-01
+  // 20 章修复回归 ch17 实锤）——死士的目的，不是既成处决。
   const CONDITIONAL_RE =
-    /不过是|无非是|大不了|照样[要会]|便[是要]|就得|就能|便能|要是|若是|如果|倘若|万一|与其|只当|想想|盘算|权衡|岂能|焉能/;
+    /不过是|无非是|大不了|照样[要会]|便[是要]|就得|就能|便能|要是|若是|如果|倘若|万一|与其|只当|想想|盘算|权衡|岂能|焉能|唯有|方有|一线生/;
   for (const ch of sorted) {
     for (const name of rosterSet) {
       let from = 0;
@@ -1030,8 +1056,15 @@ export function scanProseDeadResurrection(chapters, roster) {
         from = at + name.length;
         const tail = ch.text.slice(at + name.length, at + name.length + 24);
         const lead = ch.text.slice(Math.max(0, at - 12), at);
-        const deathSubj = new RegExp(`^${ADVERB}${DEATH_PRED}`).test(tail);
+        // 台词守卫（2026-08-31 反重力 200 章双开 A 书 ch196 实锤）：倒戈士兵的
+        // 呐喊「宰了督战队！杀了李泰！」lead 窗口以「杀了」结尾命中 deathRev，
+        // 被当成既成处决记 死亡；实际李泰 ch198 被擒、ch199 判终身圈禁。
+        // 引语内的「杀了X」几乎都是号令/威胁/转述而非叙述事实，向前回扫引号
+        // 配对判定命中点是否处于未闭合台词内（与写作侧祈使窗口守卫同源）。
+        const dialogue = insideDialogue(ch.text, at);
+        const deathSubj = !dialogue && new RegExp(`^${ADVERB}${DEATH_PRED}`).test(tail);
         const deathRev =
+          !dialogue &&
           new RegExp(`${DEATH_REVERSE}[^。！？，,、地得]{0,6}$`).test(lead) &&
           !/者[，,]?.{0,6}(?:赏|封|连升|免死|免罪|记功)|就能|便能|何以|若真|当真|不如|不妨|以谢|以正|以平|以儆|以绝|谢天下|慰天下|祭旗|明志|偿命|抵命/.test(tail) &&
           !/(?:求|恳请|请|奏请|祈求)(?:陛下|皇上|圣上|太后|殿下|天子)?[^。！？，]{0,14}$/.test(lead);

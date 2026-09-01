@@ -451,6 +451,31 @@ describe('inspectOutlineCompleteness', () => {
       expect(result.blockers.filter(b => b.kind === 'unknown-location-reference')).toEqual([]);
     });
 
+    it('动词短语切片（登场并提供黑市/截获黑市）不进入地点候选（2026-08-31 反重力 200 章双开冒烟实证）', () => {
+      // 「苏清婉登场并提供黑市粮价情报」被 6 字贪心窗口切成「登场并提供黑市」
+      // 入表，该脏实体名随后污染判定守卫的点名角色匹配，误判整章未履约 3 轮
+      // 停滞；「听雨轩暗通情报，截获黑市粮价」切出「截获黑市」同批入表
+      const outline = makeOutlineWithLocations();
+      outline.chapterBlueprints = [
+        ...(outline.chapterBlueprints ?? []),
+        {
+          ...makeBlueprint(37),
+          CBN: '素手掀开竹帘',
+          CPNs: ['苏清婉登场并提供黑市粮价情报，沈淮安完成官粮流向交叉审计'],
+          mustCover: ['苏清婉登场并提供黑市粮价情报'],
+        },
+        {
+          ...makeBlueprint(38),
+          title: '听雨轩暗通情报，截获黑市粮价',
+        },
+      ];
+
+      const result = inspectOutlineCompleteness(outline);
+      const locationHits = result.warnings?.filter(b => b.kind === 'unknown-location-reference') ?? [];
+      expect(locationHits.map(b => b.message).join('；')).not.toContain('登场并提供黑市');
+      expect(locationHits.map(b => b.message).join('；')).not.toContain('截获黑市');
+    });
+
     it('叙述概念盲区（造成的视觉盲区/市政道路盲区）不产生 blocker（2026-08-25 矩阵实测）', () => {
       const outline = makeOutlineWithLocations();
       outline.chapterBlueprints = [
