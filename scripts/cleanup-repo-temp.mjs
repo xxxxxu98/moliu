@@ -30,6 +30,8 @@ const tempRoot = path.join(repoRoot, 'temp');
 const KEEP_DEFAULT = new Set([
   'ai-traces',
   'book-review',
+  'storyflow-matrix-agif200r2a',
+  'storyflow-matrix-agif200r2b',
   'review-juezheng',
   'review-500ch',
   'review-xcjz',

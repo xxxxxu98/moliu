@@ -1,0 +1,40 @@
+chapterMemories length: 199
+ch78 memory: {
+ "chapterId": "chapter-storyflow-proj-1788272763196-79",
+ "chapterTitle": "第79章 撕了假条直接开拔，二十万石官粮谁敢拦",
+ "chapterIndex": 79,
+ "corePlot": "漕运百名吏胥以集体告假逼宫抗命，钦差陆淮安当众撕毁并焚烧呈文强力震慑。",
+ "keyEvents": [
+  "（本章无明显关键事件）"
+ ],
+ "locations": [
+  "漕运总督衙门的大堂",
+  "被钦差卫队押入偏厅",
+  "漕督衙门所属的管河",
+  "生怕堂外围观的各路",
+  "这群老油条在江",
+  "陆淮安端坐在公堂",
+  "上面不仅有各房",
+  "至还附着城中回春堂"
+ ],
+ "timelineMark": "那时",
+ "characterStateChanges": [],
+ "revealedForeshadows": [
+  "“杨文渊真是个没用的废物，握着几万漕丁，竟然被一个户部出来的小吏一天之内夺了总闸。”"
+ ],
+ "newForeshadows": [],
+ "emotionalTone": "紧张、压抑",
+ "wordCount": 1462,
+ "createdAt": "2026-09-01T18:20:47.535Z"
+}
+
+ch77 stateChanges: []
+ch77 corePlot: 钦差陆淮安一行强冲淮水总闸封锁，亮出王命旗牌震慑漕兵，并当面戳穿闸官水位干涸的谎言。
+
+ch79 stateChanges: []
+ch79 corePlot: 漕运百名吏胥以集体告假逼宫抗命，钦差陆淮安当众撕毁并焚烧呈文强力震慑。
+
+ch78 chapters[] keys: id,volumeId,title,content,wordCount,orderIndex,version,status,createdAt,updatedAt,plotSummary,outline,isGenerated,writeStatus
+ch78 content len: 0
+ch78 outline 字段: "滚动续写槽位：承接第77章既有状态，由续写引擎根据当前合同推进主线。"
+ch78 mustCover: null

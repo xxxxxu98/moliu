@@ -12,7 +12,7 @@ import type {
 import type { Chapter } from '@/types/project';
 import { DeAIService } from './de-ai-service';
 import { countWords } from './utils';
-import { safeExtractChapterMemory } from './extract-plot-memory';
+import { mergeCharacterStateChanges, safeExtractChapterMemory } from './extract-plot-memory';
 import { initializeMemoryManager, getMemoryManager } from './memory-manager';
 
 const CHAPTER_STATUSES: readonly Chapter['status'][] = ['draft', 'editing', 'final'];
@@ -68,7 +68,7 @@ export function createChapterMemoryClient(): MemoryClient {
   const projectStore = useProjectStore();
 
   return {
-    async extractAndSave(chapterId, chapterNumber, prose) {
+    async extractAndSave(chapterId, chapterNumber, prose, aiStateChanges) {
       const project = projectStore.currentProject;
       if (!project) return null;
 
@@ -93,6 +93,14 @@ export function createChapterMemoryClient(): MemoryClient {
       });
 
       if (memory) {
+        // AI 命运账优先合并（契约 7-10 出账，含 sanitize 防误报）；规则层只补
+        // 移动/出场类碎片。merge 按 name|state 去重保首条，AI 条目在前。
+        if (aiStateChanges?.length) {
+          memory.characterStateChanges = mergeCharacterStateChanges([
+            ...aiStateChanges,
+            ...(memory.characterStateChanges ?? []),
+          ]);
+        }
         projectStore.addChapterMemory(memory);
         // chapterMemories 是项目关键读模型，必须同步到主项目快照。
         await projectStore.saveCurrentProject();

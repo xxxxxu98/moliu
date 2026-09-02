@@ -9,10 +9,18 @@ description: Storyflow 可上线验收大循环。把「真实 AI 生成整本�
 本 skill 是两者的**外层编排**——循环的退出条件不再是 triage 全绿，而是：
 
 ```
-我的全书通读 Findings S1/S2 清零 + book-precheck 红线清零 + prose.dead-resurrection 恒红=0
+我的全书通读 Findings S1/S2 清零 + book-precheck 红线清零 + fate.contradiction-candidate 经 AI 裁决(fate-adjudicate.mjs)确认的 S1=0
 + 读者裁判硬门禁达线（阈值经用户批准冻结后填入；批准前为影子观察）
 + ending-audit 完本指标过关（章节完整 + 伏笔无 main 级未回收）+ 结局书审无 S1 + 前三章盲测通过
 ```
+
+> **2026-09-02 agent 化重构**：命运事件的「入账」全权归写作侧 AI 提取合同
+> （FactExtractor 契约 7-10：死亡/驾崩/下狱/去职/定罪族命运宣告——含一句带过、
+> 摘要、群像连坐——必须出 status delta）；triage 的正文词表塔（死亡谓词/条件/
+> 台词/别名等七轮补丁）整体退役，改为台账驱动候选（黄签
+> `fate.contradiction-candidate` = 台账终端命运 × 后文正文提及），语义终审
+> （回忆提及/剧情解释/真复活）由 `fate-adjudicate.mjs` 的 AI 裁决给出带引用结论。
+> 词表从此冻结：再冒新语料形态优先改 AI 提取合同，不再加正则。
 
 ## 第 0 步：前置自检（三条全过才开跑）
 
@@ -52,10 +60,10 @@ set MOLIU_STORYFLOW_MATRIX_DIR=temp\storyflow-matrix-agif100ch&& node scripts/st
 ```
 
 读落盘的 latest.md（CMD 控制台中文必乱码）。要点：
-- 判定表与分诊动作继承 auto-loop 第 3 步；`prose.dead-resurrection` 恒红必须处理。
+- 判定表与分诊动作继承 auto-loop 第 3 步；`fate.contradiction-candidate` 黄签候选
+  出现时立刻跑第 4 步的 `fate-adjudicate.mjs` 做 AI 终审，真复活按 S1 处理。
 - **重要区分**：trace/run.log 里的 reviewer 告警 ≠ 终稿缺陷。引号未闭合、foreshadow 提前
-  点名这类章内问题大多被重写轮兜住了；只有「确定性扫描终稿」（如 dead-resurrection）
-  与后续人工取证才能定罪。
+  点名这类章内问题大多被重写轮兜住了；只有「确定性扫描终稿」与 AI 裁决/人工取证才能定罪。
 
 ## 第 3 步：组装书审目录 + 确定性预检
 
@@ -83,7 +91,7 @@ Findings，与第 4 步逐章通读合并汇报**；盲测按 blindtest/README.t
 预检指标口径：引号/直引号/章界复述应恒绿（管线已兜底）；**段落 CV<0.15、CBN 无终止符、
 AI 词频**是要人工结合语境看的信号不是 blocker。
 
-## 第 4 步：定向取证 + AI 通读审查
+## 第 4 步：定向取证 + 命运矛盾 AI 裁决 + AI 通读审查
 
 先跑取证脚本把跨章状态矛盾坐实到原文（输出 UTF-8 文件用 Read 读，别走控制台）：
 
@@ -93,6 +101,17 @@ node .agents/skills/storyflow-release-loop/scripts/bookreview-extract.mjs "temp/
 
 覆盖：回档嫌疑对的「上章尾 vs 下章头」拼接、重点角色出场图谱、数字/名称漂移线索、
 读者评分分布（从 closed-loop.summary.json 的 readerEvaluation 取 min/p10/p25/median）。
+
+triage 出现 `fate.contradiction-candidate` 时（或组装出书审目录后主动跑一次），
+用 AI 裁决脚本对「台账终端命运 × 后文提及」逐条终审（真复活/回忆/剧情解释/台账误登）：
+
+```bash
+node .agents/skills/storyflow-release-loop/scripts/fate-adjudicate.mjs "<matrix目录>/<providerId>/<project-store>.json"
+# 输出 temp/fate-adjudication/adjudication-<MMDD>.json：verdict + 置信度 + 原文引用
+```
+
+`real-resurrection` 结论直接进书审 Findings S1（带引用）；`flashback/explained` 记
+已核实不算；`ledger-error` 说明提取合同仍有漏误，归因到 FactExtractor 契约执行。
 
 然后逐章通读 outlines.txt 全部 + 正文（长跑至少抽读后半部若干章——文风衰减集中在尾部），
 按 story-review rubric 出 Findings(S1-S4)。维度：钩子链衔接、爽点兑现、人物一致性、

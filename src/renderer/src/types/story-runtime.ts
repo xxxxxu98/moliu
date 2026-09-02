@@ -508,30 +508,10 @@ export interface SceneDraft {
   chapterTitle?: string;
 }
 
-/** 确定性死亡候选：正则网筛出的疑似状态变化句，交 AI 仲裁（2026-08-28 根治方案）
- *  hint：registered=守卫放行（默认将登记）；guard-blocked=守卫拦截（默认不登记，
- *  AI isDeath=true 可救回）——守卫只是召回/提示，语义终审归 AI */
-export interface DeathArbitrationCandidate {
-  id: number;
-  sentence: string;
-  name: string;
-  state: string;
-  hint?: 'registered' | 'guard-blocked';
-}
-
-/** AI 对候选的仲裁结论：isDeath=false 为显式否决，登记侧丢弃该候选 */
-export interface DeathCandidateVerdict {
-  id: number;
-  isDeath: boolean;
-  reason?: string;
-}
-
 export interface ExtractedFacts {
   events: StoryEvent[];
   deltas: StateDelta[];
   evidence: string[];
-  /** 死亡候选仲裁结论（随 fact-extraction 请求一并产出；未请求仲裁时为空） */
-  candidateVerdicts?: DeathCandidateVerdict[];
 }
 
 export interface FactExtractor {
@@ -541,8 +521,6 @@ export interface FactExtractor {
     sceneDrafts: SceneDraft[];
     state: StoryState;
     overlay?: ProvisionalStateOverlay;
-    /** 确定性网筛出的死亡/下狱/定罪候选句，请求 AI 逐条仲裁 */
-    deathCandidates?: DeathArbitrationCandidate[];
   }): Promise<ExtractedFacts>;
 }
 

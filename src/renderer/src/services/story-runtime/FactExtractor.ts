@@ -1,5 +1,4 @@
 import type {
-  DeathArbitrationCandidate,
   ExtractedFacts,
   FactExtractor,
   ProvisionalStateOverlay,
@@ -19,9 +18,6 @@ export interface FactExtractionInput {
   sceneDrafts: SceneDraft[];
   state: StoryState;
   overlay?: ProvisionalStateOverlay;
-  /** 确定性死亡候选（见 extract-plot-memory.collectDeathArbitrationCandidates）：
-   *  传入后请求 AI 逐条仲裁，结论随 candidateVerdicts 返回供登记侧门控 */
-  deathCandidates?: DeathArbitrationCandidate[];
 }
 
 /** 顶层 evidence 为空时，从 events/deltas 回填，避免结构化证据丢失 */
@@ -54,14 +50,6 @@ export class AIFactExtractor implements FactExtractor {
       summary: event.summary,
     }));
 
-    const deathCandidates = input.deathCandidates ?? [];
-    const arbitrationRules =
-      deathCandidates.length > 0
-        ? [
-            '8) 死亡候选仲裁：deathCandidates 是确定性规则筛出的疑似死亡/下狱/定罪句，逐条判定 isDeath——只有该角色本人的该状态确已发生才是 true。以下情形一律 false：假设/盘算/推演（只要/若是/一旦…都要/必将/恐怕等）、威胁/命令/判决宣布、修辞转喻、发现者/转述者提及他人（「X发现Y已气绝」只认Y）、死讯传闻或假消息。每条候选必须在 candidateVerdicts 输出 {id,isDeath,reason}，不得遗漏',
-          ]
-        : [];
-
     const raw = await this.ai.generate<ExtractedFacts>({
       purpose: 'fact-extraction',
       schemaName: 'ExtractedFacts',
@@ -75,13 +63,17 @@ export class AIFactExtractor implements FactExtractor {
         '4) 顶层 evidence 必须汇总本章关键正文原句，不得为空（可与 events[].evidence 重复）',
         '5) deltas.path 用点分路径写状态变更；inventory 变更必须形如 inventory.<角色实体id>.<物品名>，value 必须是纯数字（数量/件数），禁止写 {unit,note,quantity,描述} 等对象或带单位的字符串',
         '6) 顶层必须输出一个 JSON 对象 {...}，禁止输出裸数组 [...]；events/deltas/evidence 三个字段都要存在',
-        '7) 生死与命运事件必检：正文出现死亡/下狱/定罪/削爵/罢免/革职/停职的【已完成事实】时必须登记——每条产出 event(type="death"或"status_change") 并附带 deltas(path 用 characters.<实体id>.attributes.status，value 用「死亡/下狱/定罪/驾崩/去职」)，evidence 必须引用【结果性】原文原句（如倒地气绝/头颅滚落/当场毙命/收殓下葬/枷入天牢/当堂革职/爵位被削）。注意区分：判决宣布（"判斩立决"）、威胁命令（"给我杀了他"）、预谋计划（"要除掉X"）、未来处置（"定将削其爵位"）都不是事实，禁止据其写 status delta；拿不准是否已完成时只产 event 不写 status delta。群像处决须逐个列出名单内的死者。死者以结果词紧邻的实体为准：发现者/转述者/报信人不是死者（「X发现Y已气绝身亡」只登记Y），不得给同句出现的活人登记死亡',
-        ...arbitrationRules,
+        '7) 命运宣告必检必出账（2026-09-02 r2 双开 200 章实测：模型在 corePlot 写了「崔炳坤暴毙」却不出账，此后 14 章带死人活动）：本章任何位置——正文、场景摘要、群像收束段——出现命运【既成宣告】时必须同时产出 event 和 status delta，一句带过也算：'
+        + '死亡族（暴毙/伏诛/处决/枭首/灭口/畏罪自尽/气绝/毙命/身亡/人头落地→value「死亡」；驾崩/晏驾→「驾崩」）；'
+        + '下狱族（押入/打入/关进天牢/大牢/死牢/诏狱/宗人府/收监→「下狱」）；'
+        + '去职族（革职/罢免/削爵/夺爵/废黜/贬为庶民/剥去官服/摘去顶戴→「去职」）；'
+        + '定罪族（被定罪/被定谳/满门抄斩→「定罪」）。'
+        + 'evidence 直接引用该宣告原句（含摘要句），不需要血腥结果词也可出账。',
+        '8) 群像命运逐个入账：「顾成化全族伏诛」「齐王一党亦已伏诛」「当堂剥去X一品补服」等集体宣告，角色表名单内每个被波及者各出一条 status delta，禁止只写 event 不写 delta。',
+        '9) 禁止出账的情形只有三类：假设/盘算/条件（只要/若是/一旦…便会）、威胁/命令/判决宣布（给我杀了他/判斩立决——判决宣布≠行刑完成）、修辞转喻（勘合上的「人头落地」）。此外一律出账；「只是叙述带过」「只是摘要」「拿不准」都不是不出账的理由——拿不准时重读原句判断是否既成，仍拿不准才只产 event。',
+        '10) 死者归属以宣告主语为准：「X发现Y已气绝」只登记Y；发现者/转述者/报信人不登记。同句出现的活人不连带登记。',
         'JSON 字段必须为：',
-        '{"events":[{"id":"string","chapter":0,"sceneId":"string","type":"string","summary":"string","participants":["实体id或人名"],"causes":[],"effects":[],"evidence":["正文原句"]}],"deltas":[{"operation":"set|add|remove|increment","path":"inventory.char-1.银两","value":5,"evidence":"正文原句"}],"evidence":["正文原句"]' +
-          (deathCandidates.length > 0
-            ? ',"candidateVerdicts":[{"id":0,"isDeath":true,"reason":"一句话理由"}]'
-            : '') +
+        '{"events":[{"id":"string","chapter":0,"sceneId":"string","type":"string","summary":"string","participants":["实体id或人名"],"causes":[],"effects":[],"evidence":["正文原句"]}],"deltas":[{"operation":"set|add|remove|increment","path":"characters.<实体id>.attributes.status","value":"死亡|驾崩|下狱|定罪|去职","evidence":"宣告原句"}],"evidence":["正文原句"]' +
           '}',
       ].join('\n'),
       prompt: JSON.stringify({
@@ -90,7 +82,6 @@ export class AIFactExtractor implements FactExtractor {
         sceneDrafts: input.sceneDrafts,
         entityCatalog,
         eventCatalog,
-        deathCandidates: deathCandidates.length > 0 ? deathCandidates : undefined,
       }),
       parse: value =>
         ensureTopLevelEvidence(

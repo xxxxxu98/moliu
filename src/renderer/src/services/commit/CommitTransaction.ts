@@ -14,13 +14,13 @@
  * 保证"状态永远和正文一致"——不会出现正文写了角色升级、状态库没变的脏数据。
  */
 
-import { ChangesApplier } from '../state/ChangesApplier';
+import type { ChangesApplier } from '../state/ChangesApplier';
 import type { ApplyResult, ApplyOptions } from '../state/ChangesApplier';
 import type { StateSnapshotStore } from '../state/StateSnapshotStore';
 import type { ChangesPayload, StateSnapshot } from '../state/types';
 import type { HybridRetriever } from '../retrieval/HybridRetriever';
 import type { GatePipelineResult } from '../gates/types';
-import type { ChapterMemory } from '@/types/project';
+import type { ChapterMemory, CharacterStateChange } from '@/types/project';
 
 // ============================================================
 // 提交步骤结果
@@ -82,9 +82,16 @@ export interface MemoryClient {
    * @param chapterId 章节持久化 ID
    * @param chapterNumber 章节序号（1-based）
    * @param prose 章节正文（已通过门禁）
+   * @param aiStateChanges AI 事实提取的状态 delta（命运账唯一来源，契约 7-10）；
+   *        缺省时记忆只有规则层的状态碎片，不含命运账
    * @returns 提取出的记忆，或 null
    */
-  extractAndSave(chapterId: string, chapterNumber: number, prose: string): Promise<ChapterMemory | null>;
+  extractAndSave(
+    chapterId: string,
+    chapterNumber: number,
+    prose: string,
+    aiStateChanges?: CharacterStateChange[],
+  ): Promise<ChapterMemory | null>;
 }
 
 // ============================================================

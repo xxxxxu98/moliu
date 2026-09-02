@@ -438,28 +438,30 @@ function triageProvider(providerId, meta) {
     }
   }
 
-  // 人物死而复活确定性扫描（2026-08-26 发现：500 章实测周茂 ch59 定罪下狱后 ch81
-  // 无交代复活、崇仁帝 ch250 驾崩后 ch265 起继续临朝，reviewer 全书只抓到 5 处、
-  // 漏报 ~95%）。从正文正扫命运级事件（死亡/驾崩/下狱/定罪），再看其后章节里
-  // 同名角色是否还有活体动作；命中即红——这是终端状态被静默推翻，章内 reviewer
-  // 与重试都无法自愈的跨章幻觉。回忆性提及（「当年周茂案」）不算活体。
+  // 命运台账死而复活候选扫描（2026-09-02 agent 化重构）：命运入账归写作侧 AI
+// 提取合同；此处只从台账读终端命运（死亡/驾崩），再查其后正文是否仍写到该
+// 角色。命中出黄签候选——回忆性提及与真复活的裁决由书审 AI 带原文引用执行
+// （fate-adjudicate.mjs），正文词表不再做语义终审。
   {
     const storeFile = readdirSync(dir).find(
       name => name.startsWith('storyflow-') && name.endsWith('.project-store.json')
     );
     const proseFallbackDir = join(dir, 'prose');
+    let proj = null;
     const chapters = [];
+    let memories = [];
     if (storeFile) {
       try {
         const store = JSON.parse(readFileSync(join(dir, storeFile), 'utf8'));
-        const proj = store.projects?.[0];
+        proj = store.projects?.[0] ?? null;
+        memories = proj?.chapterMemories ?? [];
         for (const ch of proj?.chapters ?? []) {
           if (ch?.content && ch.content.trim()) {
             chapters.push({ n: (ch.orderIndex ?? 0) + 1, text: ch.content });
           }
         }
       } catch {
-        /* store 损坏时退 prose 目录 */
+        /* store 损坏时退 prose 目录（无台账则无候选） */
       }
     } else if (existsSync(proseFallbackDir)) {
       for (const name of readdirSync(proseFallbackDir).filter(n => /^ch\d+\.txt$/.test(n))) {
@@ -470,31 +472,26 @@ function triageProvider(providerId, meta) {
       }
     }
     chapters.sort((a, b) => a.n - b.n);
-    // 角色白名单：只信项目角色卡里的名字，否则「当场驾崩」「押解进京」这类
-    // 谓语片段会被当成角色名，产生大量假阳性红签名。
-    let roster = [];
-    if (storeFile) {
-      try {
-        const store2 = JSON.parse(readFileSync(join(dir, storeFile), 'utf8'));
-        roster = (store2.projects?.[0]?.characters ?? [])
-          .map(c => (c?.name || '').trim())
-          .filter(n => n.length >= 2 && n.length <= 8);
-      } catch {
-        /* 已在上面吃过一次解析失败，这里 roster 留空则跳过扫描 */
-      }
-    }
-    if (chapters.length >= 3 && roster.length > 0) {
-      for (const r of scanProseDeadResurrection(chapters, roster)) {
+    // 角色白名单：台账名字须在角色卡内，滤掉「太后伸手」类脏实体入账
+    const roster = new Set(
+      (proj?.characters ?? [])
+        .map(c => (c?.name || '').trim())
+        .filter(n => n.length >= 2 && n.length <= 8)
+    );
+    if (chapters.length >= 3 && roster.size > 0) {
+      const candidates = scanLedgerDeathResurrection(memories, chapters, roster);
+      for (const r of candidates) {
+        if (!roster.has(r.name)) continue;
         acc.add(
-          'prose.dead-resurrection',
+          'fate.contradiction-candidate',
           r.chapter,
-          `${r.name}于第${r.chapter}章${r.state}，其后 ${r.activeChapters.length} 章仍以活体出场` +
-            `（首见第${r.activeChapters[0]}章，章号：${r.activeChapters.slice(0, 8).join(',')}${r.activeChapters.length > 8 ? '…' : ''}）`
+          `${r.name}于第${r.chapter}章${r.state}（台账），其后 ${r.activeChapters.length} 章正文仍写到该角色` +
+            `（首见第${r.activeChapters[0]}章，章号：${r.activeChapters.slice(0, 8).join(',')}${r.activeChapters.length > 8 ? '…' : ''}）。候选待 AI 裁决：回忆性提及/剧情解释（假死、越狱、翻案）不是复活`
         );
       }
     }
-
-    // 裁判硬门禁（2026-08-28 用户批准冻结；数值基准 = final6 分布 88.8/74.5）
+  }
+  // 裁判硬门禁（2026-08-28 用户批准冻结；数值基准 = final6 分布 88.8/74.5）
     // 首轮触线 → 黄签警告；与上一份报告同 provider 连续触线 → 红签（连续两轮语义）。
     {
       const summaryFile = join(dir, 'storyflow.closed-loop.summary.json');
@@ -552,10 +549,9 @@ function triageProvider(providerId, meta) {
         }
       }
     }
-  }
 
   // 分级：章节最终 accepted → 黄（已恢复）；否则红（阻断）。infra/outline/assert 恒定分级
-  const RED_ALWAYS = new Set(['assert.chapters-accepted', 'prose.dead-resurrection', 'reader.hardgate-violation']);
+  const RED_ALWAYS = new Set(['assert.chapters-accepted', 'reader.hardgate-violation']);
   const YELLOW_ALWAYS = new Set([
     'infra.maxtokens-downgrade',
     'infra.transient.http-502',
@@ -597,7 +593,7 @@ function triageProvider(providerId, meta) {
     verdict = 'model-capability-suspect';
     verdictReason = `第${stalledSig.chapter}章质量拒绝连续 ${acc.chapterAttempts[stalledSig.chapter]} 轮未收敛，重试无意义，考虑换模型或调合同（需人工确认）`;
   } else if (
-    has(s => s.severity === 'red' && (s.id.startsWith('quality.') || s.id === 'prose.dead-resurrection' || s.id === 'reader.hardgate-violation'))
+    has(s => s.severity === 'red' && (s.id.startsWith('quality.') || s.id === 'reader.hardgate-violation'))
   ) {
     verdict = 'quality-rejection';
     verdictReason = has(s => s.id === 'reader.hardgate-violation')
@@ -981,10 +977,8 @@ function main() {
 const invokedDirectly = (process.argv[1] || '')
   .replace(/\\/g, '/')
   .endsWith('storyflow-triage.mjs');
-// 台词守卫引号集须在 main() 调用点之前初始化：CLI 直跑时 main() 同步执行，
-// 声明放在本行之后会因 TDZ 在 insideDialogue 首次调用时报 ReferenceError
-const QUOTE_OPENERS = new Set(['「', '『', '“']);
-const QUOTE_CLOSERS = new Set(['」', '』', '”']);
+// (台词守卫引号集已随正文词表塔退役——命运入账归 AI 提取合同,
+//  候选裁决归书审 fate-adjudicate。2026-09-02 agent 化重构)
 if (invokedDirectly) main();
 
 // ============================================================
@@ -996,167 +990,38 @@ if (invokedDirectly) main();
  * 开引号=台词，先遇到闭引号/段落空行/回扫上限=叙述。中引号「“」允许跨句，
  * 段落空行视为引语边界（本书格式引语不跨段）。
  */
-export function insideDialogue(text, at) {
-  let depth = 0;
-  for (let i = at - 1; i >= 0 && i >= at - 90; i -= 1) {
-    const c = text[i];
-    if (c === '\n' && text[i - 1] === '\n') break;
-    if (QUOTE_CLOSERS.has(c)) depth += 1;
-    else if (QUOTE_OPENERS.has(c)) {
-      if (depth > 0) depth -= 1;
-      else return true;
-    }
-  }
-  return false;
-}
-
 /**
- * 从全书正文扫描「命运级事件 → 活体出场」矛盾。
- * @param chapters [{n: 章号, text: 正文}]（内部会重排升序）
- * @param roster 角色卡名单（只信白名单，过滤谓语片段假阳性）
- * @returns 复活列表 [{name, state, chapter, activeChapters: [章号…]}]；
- *          已被解除信号（保释/候勘/假死揭穿等）覆盖的终态不返回
- *
- * 判定口径与写作侧 extract-plot-memory 六轮反噬演化对齐：
- * - 命运事件只认「名字紧邻命运谓语」句式；逆序杀式排除悬赏/求刑/条件语境
- * - 假设/盘算窗口守卫（「今夜若是强行杀了X」「杀了X不过是交差」非事实）
- * - 台词守卫：引语内的「杀了X」是号令/威胁，不是既成处决
- * - 解除章覆盖语义：终态章后任何一章「角色名+解除信号」即视为已解除
+ * 命运台账死而复活候选扫描（2026-09-02 agent 化重构）。
+ * 命运事件的「入账」全权归写作侧 AI 提取合同（FactExtractor 命运宣告必出账
+ * 契约 7-10）；本扫描只做两件事：
+ * 1) 从 chapterMemories 的 characterStateChanges 读终端命运（死亡/驾崩，取最晚）；
+ * 2) 检查该角色在命运章之后的正文是否仍被写到（名字出现即候选——回忆性提及
+ *    与真复活的语义区分交给书审 AI 带原文引用裁决 fate-adjudicate.mjs）。
+ * 正文词表塔（死亡谓词/条件守卫/台词守卫/别名邻接等七轮补丁）随 AI 合同
+ * 升级整体退役，不再维护。
  */
-export function scanProseDeadResurrection(chapters, roster) {
-  const sorted = [...chapters].sort((a, b) => a.n - b.n);
-  const rosterSet = new Set(roster);
-  const fates = new Map();
-  const recordFate = (name, state, n) => {
-    if (!name || name.length < 2 || name.length > 8) return;
-    if (!rosterSet.has(name)) return;
-    const prev = fates.get(name);
-    if (!prev || n > prev.chapter) {
-      fates.set(name, { name, state, chapter: n });
-    }
-  };
-  const DEATH_PRED = '(?:气绝|毙命|身亡|丧命|殒命|惨死|暴毙|命丧|吐血而亡|服毒自尽|自刎|坠亡|被杀|被鸩杀|被毒杀|被人所杀|死于非命)';
-  const DEATH_REVERSE = '(?:杀了|斩杀|鸩杀|毒杀|格杀|击杀|处死|勒死|刺死)';
-  const JAISON_REVERSE = '(?:押(?:解|送|入)进?(?:天牢|大牢|死牢|宗人府|诏狱))';
-  const CONDEMN_PRED = '(?:被处斩|被判斩|被问斩|被定罪|被定谳|被论罪|被革职抄没|被满门抄斩)';
-  const ADVERB = '(?:当场|随即|立刻|当即|最终|当晚|当日|翌日|不久|很快)?';
-  // 假设/盘算/条件语境守卫（与写作侧 HYPOTHETICAL_SENTENCE_RE 同源）：
-  // 「杀了陆承安不过是交差抵罪…照样人头落地」「今夜若是强行杀了陆云铮」
-  // 都是权衡或威胁，不是既成事实。覆盖命中点前后窗口。
-  // 唯有/方有/一线生：反派意图叙述「唯有强冲斩杀陆安方有一线生路」（2026-09-01
-  // 20 章修复回归 ch17 实锤）——死士的目的，不是既成处决。
-  const CONDITIONAL_RE =
-    /不过是|无非是|大不了|照样[要会]|便[是要]|就得|就能|便能|要是|若是|如果|倘若|万一|与其|只当|想想|盘算|权衡|岂能|焉能|唯有|方有|一线生/;
-  for (const ch of sorted) {
-    for (const name of rosterSet) {
-      let from = 0;
-      for (;;) {
-        const at = ch.text.indexOf(name, from);
-        if (at < 0) break;
-        from = at + name.length;
-        const tail = ch.text.slice(at + name.length, at + name.length + 24);
-        const lead = ch.text.slice(Math.max(0, at - 12), at);
-        // 台词守卫（2026-08-31 反重力 200 章双开 A 书 ch196 实锤）：倒戈士兵的
-        // 呐喊「宰了督战队！杀了李泰！」lead 窗口以「杀了」结尾命中 deathRev，
-        // 被当成既成处决记 死亡；实际李泰 ch198 被擒、ch199 判终身圈禁。
-        // 引语内的「杀了X」几乎都是号令/威胁/转述而非叙述事实，向前回扫引号
-        // 配对判定命中点是否处于未闭合台词内（与写作侧祈使窗口守卫同源）。
-        const dialogue = insideDialogue(ch.text, at);
-        const deathSubj = !dialogue && new RegExp(`^${ADVERB}${DEATH_PRED}`).test(tail);
-        const deathRev =
-          !dialogue &&
-          new RegExp(`${DEATH_REVERSE}[^。！？，,、地得]{0,6}$`).test(lead) &&
-          !/者[，,]?.{0,6}(?:赏|封|连升|免死|免罪|记功)|就能|便能|何以|若真|当真|不如|不妨|以谢|以正|以平|以儆|以绝|谢天下|慰天下|祭旗|明志|偿命|抵命/.test(tail) &&
-          !/(?:求|恳请|请|奏请|祈求)(?:陛下|皇上|圣上|太后|殿下|天子)?[^。！？，]{0,14}$/.test(lead);
-        const jairev = new RegExp(`${JAISON_REVERSE}[^。！？，,、]{0,4}$`).test(lead);
-        const jailSubj =
-          (new RegExp(`^${ADVERB}(?:被[关押打入抓锁](?:进|入|到)?(?:天牢|大牢|死牢|宗人府|诏狱|大狱)|沦为阶下囚|被圈禁(?:终身|于|在)?(?:，|。|$))`).test(tail) ||
-            (/^(?:当场|随即|立刻|当即|最终|当晚|当日|翌日|不久|很快)?下狱/.test(tail) && !/[与、及跟同]/.test(lead))) &&
-          !/治罪|问罪|就[要会]|必定|定将|必将|恐将|只怕|难免|不[如妨]/.test(tail);
-        // 去职/受难入牢（2026-09-01 B 书 200 章书审实锤）：赵元泰「连亲王爵位
-        // 都被削了，脖子上套着死囚枷进了天牢」、崔景渊被当堂革职下狱后仍被
-        // 过期滚纲写回朝堂多章——禁入/命运词表没有去职态，重置矛盾无从检测。
-        // 进牢形态带受难字门控，防止「X走进大牢探监」误报。
-        // 注意：这两类谓语不受台词守卫——台词里的「被削爵/入天牢」多为怒吼
-        // 中的既成事实播报（B 书原句即定远侯台词），与「杀了X」的祈使形态
-        // 不同；未来/条件语境由各自的词表守卫与 ±30 窗负责。
-        const dismissSubj =
-          (/^(?:[^。！？]{0,4}?(?:被|遭)?(?:当堂|当场|即日|就地)?(?:削爵|革爵|夺爵|革职|罢免|免职|撤职|停职|废黜|废为庶民|贬为庶人))/.test(tail) ||
-            /^(?:[^。！？]{0,4}?(?:亲王|郡王|国公|侯)?爵位[^。！？]{0,4}?(?:被)?(?:削|夺|废|褫))/.test(tail) ||
-            // 叙述追认形态（终验书 ch44 实锤）：「严嵩林虽然已被夺职，此刻仍…」
-            /^(?:虽)?(?:然)?已?(?:被)?(?:夺职|革职|罢黜|削爵|革爵)/.test(tail)) &&
-          !/定将|必将|将要|便要|就要|拟|谋|欲|治罪|问罪|恐/.test(tail);
-        const jailEntry =
-          (/^(?=[^。！？]{0,22}?(?:套|戴|披|枷|锁|被押|被囚|囚衣|死囚|镣|削|革|废|贬))[^。！？]{0,22}?(?:被押|被驱|被扭|被塞)?(?:进|入|送)了?(?:天牢|大牢|死牢|宗人府|大狱|诏狱|大理寺狱)/.test(tail) ||
-            /^(?:被)?(?:当堂|当场|即日)?(?:下狱|入狱|收监)/.test(tail) ||
-            // 叙述追认形态（终验书 ch30 实锤）：「严嵩林虽已被打入天牢，但…」
-            /^(?:虽)?(?:然)?已?(?:被)?(?:打入|押入|关进|囚禁于)(?:天牢|大牢|死牢|宗人府|诏狱)/.test(tail)) &&
-          !/定将|必将|将要|便要|就要|拟|谋|欲|探监|探视|送饭|送衣/.test(tail);
-        const throneSubj = new RegExp(`^${ADVERB}(?:驾崩|晏驾|崩逝|薨逝|龙驭上宾|宾天)`).test(tail);
-        const condemnSubj = new RegExp(`^${ADVERB}${CONDEMN_PRED}`).test(tail);
-        const hitFate =
-          deathSubj || deathRev || throneSubj || jailSubj || jairev || condemnSubj ||
-          dismissSubj || jailEntry;
-        if (!hitFate) continue;
-        // 假设/盘算窗口：命中点前后 30 字含条件标记即整条放弃
-        if (
-          CONDITIONAL_RE.test(ch.text.slice(Math.max(0, at - 30), at + name.length + 30))
-        ) {
-          continue;
-        }
-        if (deathSubj || deathRev) recordFate(name, '死亡', ch.n);
-        if (throneSubj) recordFate(name, '驾崩', ch.n);
-        if (jailSubj || jairev || jailEntry) recordFate(name, '下狱', ch.n);
-        if (condemnSubj) recordFate(name, '定罪', ch.n);
-        if (dismissSubj) recordFate(name, '去职', ch.n);
+export function scanLedgerDeathResurrection(memories, chapters, roster) {
+  const TERMINAL_FATES = new Set(['死亡', '驾崩']);
+  const fateAt = new Map();
+  for (const m of [...(memories ?? [])].sort(
+    (a, b) => (a.chapterIndex ?? 0) - (b.chapterIndex ?? 0)
+  )) {
+    for (const change of m?.characterStateChanges ?? []) {
+      const name = String(change?.characterName || '').trim();
+      if (name.length < 2 || name.length > 8) continue;
+      if (roster && !roster.has(name)) continue;
+      if (!TERMINAL_FATES.has(change.state)) continue;
+      const chapter = (m.chapterIndex ?? 0) + 1;
+      const prev = fateAt.get(name);
+      if (!prev || chapter > prev.chapter) {
+        fateAt.set(name, { name, state: change.state, chapter });
       }
     }
   }
-  // 跨出/出列/高举/捧/跪/厉声/按刀：朝堂戏出场形态（2026-09-01 B 书 ch181
-  // 实锤——削爵亲王「率先跨出队列」、停职首辅「双手捧着奏折」上朝，旧动词集
-  // 全部漏过，复活检出率为零）
-  const ACTIVE_RE = (name) =>
-    new RegExp(`${name}[^。！？””]{0,8}(?:说道|道|开口|下令|禀报|躬身|拱手|上前|快步|走进|踏入|跨进|跨出|出列|站起|点头|摇头|吩咐|呈报|朗声|沉声|冷笑|高举|率领|捧|跪|厉声|按刀|嘶吼|狞笑|冷哼|怒目圆睁|厉喝|呵斥)`, 'u');
-  // 已知局限（2026-09-01 撤通道决策）：圣旨跨句处置（罪状句点名+处置句隔句号）
-  // 与「将+非名单对象」的执法场景不做段落归一归属——四书 800 章实测该通道把
-  // 执法主角/裁判（沈淮安/顾承安/温见山/裴文渊/冯保/明和帝）整批误登记为被
-  // 处置者，恒红签名首要美德是精确；这类弧线交由书审 AI 通读层兜底。
-  // 结果句式通道（与写作侧 extractExecutionDeaths 同口径）：「X等贪官的头颅滚落
-  // 高台」这类处决完成体里主语是头颅不是人名，谓语邻接式抓不到——整句含不可逆
-  // 结果词 + 名单内角色在场 + 未踩修辞/假设/动词前三类守卫 → 记 死亡。
-  const RESULT_SENTENCE_RE =
-    /人头落地|(?:头颅|首级)[^。！？]{0,8}(?:滚落|落地)|当场毙命|当场身亡|气绝身亡|当场殒命/;
-  const RHETORICAL_SENTENCE_RE =
-    /(?:勘合|文书|账册|账本|卷宗|名册|密报|邸报|檄文|供状|话本|戏文|故事|传闻|消息|流言|记载)[^。！？]{0,6}(?:人头落地|(?:头颅|首级)(?:滚落|落地))|人头落地的|(?:头颅|首级)(?:滚落|落地)的/;
-  const VERB_BEFORE_NAME_RE = (name) =>
-    new RegExp(`[杀斩格刺鸩毒绞]了?${name}`, 'u');
-  for (const ch of sorted) {
-    if (!RESULT_SENTENCE_RE.test(ch.text)) continue;
-    for (const sentence of ch.text.split(/(?<=[。！？])/)) {
-      if (!RESULT_SENTENCE_RE.test(sentence)) continue;
-      if (CONDITIONAL_RE.test(sentence)) continue;
-      if (RHETORICAL_SENTENCE_RE.test(sentence)) continue;
-      for (const name of rosterSet) {
-        if (!sentence.includes(name)) continue;
-        if (VERB_BEFORE_NAME_RE(name).test(sentence)) continue;
-        recordFate(name, '死亡', ch.n);
-      }
-    }
-  }
-  // 解除章覆盖语义：终态章后「角色名 + 解除信号」同段共现才视为已解除。
-  // 段落邻近是 2026-09-01 收紧：此前章级共现让「如蒙大赦」「停职锁拿待勘」
-  // 这类他人/他事的解除词整章赦免真实命运（终验书严嵩林 ch30/60/109/183
-  // 四连误赦，重置矛盾漏检）；死心负向断言拦「并未真正死心」成语。
-  const RESURRECT_RELEASE = /平反|翻案|无罪释放|赦免|大赦|越狱|劫狱|起复|官复原职|重新起用|假死|诈死|并未.{0,4}死(?!心)|苏醒|保释|取保|候勘|待勘|戴罪/;
   const resurrections = [];
-  for (const fate of fates.values()) {
-    const dissolved = sorted.some(
-      ch => ch.n > fate.chapter
-        && ch.text.split(/\n+/).some(para => para.includes(fate.name) && RESURRECT_RELEASE.test(para))
-    );
-    if (dissolved) continue;
-    const activeChapters = sorted
-      .filter(ch => ch.n > fate.chapter && ACTIVE_RE(fate.name).test(ch.text) && !RESURRECT_RELEASE.test(ch.text))
+  for (const fate of fateAt.values()) {
+    const activeChapters = chapters
+      .filter(ch => ch.n > fate.chapter && ch.text.includes(fate.name))
       .map(ch => ch.n);
     if (activeChapters.length > 0) {
       resurrections.push({

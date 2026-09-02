@@ -10,10 +10,7 @@
  */
 
 import { useProjectStore } from '@/stores/project.store';
-import {
-  extractCriticalStatusChanges,
-  mergeCharacterStateChanges,
-} from '@/services/writing/extract-plot-memory';
+import { mergeCharacterStateChanges } from '@/services/writing/extract-plot-memory';
 import { sanitizeUnconfirmedDeathDeltas } from '@/services/story-runtime/FactExtractor';
 import type {
   ExtractionResult,
@@ -463,12 +460,9 @@ export class ProjectionOrchestrator {
         detail: `${d.field}: ${d.from} → ${d.to}`,
       })
     );
-    const proseForFateScan =
-      chapterMeta?.content || extraction.summaryText || '';
-    const characterStateChanges = mergeCharacterStateChanges([
-      ...aiChanges,
-      ...extractCriticalStatusChanges(proseForFateScan, roster),
-    ]);
+    // 角色状态变化全权来自 AI 提取（sanitized），不再叠加正文规则扫描
+    // （2026-09-02 agent 化重构：命运词表塔退役，见 FactExtractor 契约 7-10）
+    const characterStateChanges = mergeCharacterStateChanges(aiChanges);
 
     return {
       chapterId: `chapter-${chapterNumber}`,

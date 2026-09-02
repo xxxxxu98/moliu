@@ -1,0 +1,33 @@
+ch156#1 tail=一党亦已伏诛，齐王谋逆已成铁证，天下共见！”
+
+‖ executeSubj=false
+ch156#2 tail=败亡、毒计泄露，必定会破釜沉舟直接逼宫。”
+
+话‖ executeSubj=false
+ch156#3 tail=伏诛前已将你通敌谋逆、勾结北蛮的密信尽数招供，太‖ executeSubj=true
+ch157#1 tail=全族伏诛，御药房下毒太医具结画押，乾清宫前三千逆‖ executeSubj=true
+ch157#2 tail=与太医构陷本王，全是你陆淮安栽赃陷害！”赵元澈面‖ executeSubj=false
+ch162#1 tail=披散着花白长发，身上那袭二品绯罗绣孔雀朝服沾满了‖ executeSubj=false
+ch162#2 tail=老泪纵横，嘶哑的嚎哭声在大殿梁柱间凄厉回荡，“老‖ executeSubj=false
+ch162#3 tail=身侧。他手捧玉笏，痛心疾首地高声附和：“顾阁老所‖ executeSubj=false
+ch162#4 tail=身侧时连眼角都没向下撇过分毫。
+
+“顾阁老这出苦‖ executeSubj=false
+ch162#5 tail=猛地抬起头，满脸是血与泪的污痕，指着陆淮安怒目而‖ executeSubj=false
+ch162#6 tail=面皮抽搐，强撑着反驳：“就算城头勉强守住，城内八‖ executeSubj=false
+ch162#7 tail=的膝盖前，“户部三十六处平准货栈推行网格化配给制‖ executeSubj=false
+ch162#8 tail=的冷汗终于混着脸上的血水淌了下来，他嘴唇发紫，犹‖ executeSubj=false
+ch162#9 tail=身旁，将托盘中的黑色油布包裹猛然掀开。里面赫然摆‖ executeSubj=false
+ch162#10 tail=，“昨夜太清仓纵火与西市暴动，并非天灾，更非民变‖ executeSubj=false
+ch162#11 tail=共事三十载，对他批阅私函的暗记花押了如指掌。这枚‖ executeSubj=false
+ch162#12 tail=藏在书斋暗格中的私家闲章！信中字迹工整，白纸黑字‖ executeSubj=false
+ch162#13 tail=看着那枚猩红的花押与熟悉的玉印，整个人仿佛被抽去‖ executeSubj=false
+ch162#14 tail=面前。
+
+“拿下！”
+
+两名身材魁梧的大汉将军如‖ executeSubj=false
+ch162#15 tail=的肩膀。伴随着刺耳的撕裂声，顾成化头上的双梁进贤‖ executeSubj=false
+ch162#16 tail=头上的双梁进贤冠被当场打落，滚落在地，身上的绯色‖ executeSubj=false
+ch162#17 tail=，大步向殿外拽去。顾成化散乱的白发在玉阶上拖出一‖ executeSubj=false
+ch162#18 tail=散乱的白发在玉阶上拖出一道长长的痕迹，凄厉求饶的‖ executeSubj=false

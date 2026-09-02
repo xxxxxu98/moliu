@@ -1,0 +1,11 @@
+projectId: 0, keys: id,name,description,genre,wordCount,status,volumes,chapters,characters,worldSchema,foreshadows,plotOutline,targetWordCount,emotionGoal,coolPointDesign,coreSellingPoints,conflictDesign,storyLines,goldenfingerDesign,metadata,chapterMemories,outlineRoll
+chapterMemories length: 199
+ch186 keys: chapterId,chapterTitle,chapterIndex,corePlot,keyEvents,locations,timelineMark,characterStateChanges,revealedForeshadows,newForeshadows,emotionalTone,wordCount,createdAt
+ch186 characterStateChanges: [{"characterName":"太后伸手","stateType":"status","state":"执行动作","detail":"发生动作描写"},{"characterName":"顾成化","stateType":"status","state":"去职","detail":"机要的重地，如今随着顾成化等人被革职清算，整座三层高的宏伟楼阁已然被贴上了封条，唯有穿堂风吹拂"}]
+ch186 summary(前600字): 
+
+===== 全书 characterStateChanges 中 林铁锋+死亡词 命中 =====
+chundefined: [{"characterName":"顾成化","stateType":"status","state":"下狱","detail":"沈阁老，带刑部的人把顾成化押入死牢，严加看管。林铁锋、杨文渊，带上神机营与漕运卫队，随我入宫！"}]
+
+===== foreshadows 中林铁锋上下文 =====
+式底账比对，当众坐实王庸人工伪造火灾销毁真账的罪证，完成首轮职场绝杀","carrierCharacter":"王庸","linkedConflict":"度支司内部贪腐栽赃与三十万两边饷去向核验","importance":"main","setupChapter":2,"payoffChapter":21},{"id":"foreshadow-1788272763195-1","hint":"林铁锋腰间佩戴的一枚北境折断箭簇上刻有户部军械司专属的劣质生铁记号","type":"item","status":"resolved","createdChapter":5,"suggestedResolutionChapter":35,"payoffValue":"借此查出军械司与齐王府勾结倒卖精铁的铁证，促使林铁锋彻底归心并接管后勤武力调度","carrierCharacter":"林铁锋","linkedConflict":"京通十三仓军需倒卖案与仓储司整肃","importance":"subplot","setupChapter":5,"payoffChapter":35},{"id":"foreshadow-1788272763195-2","hint":"沈南乔在平准货栈收到的京郊粮商定金银锭底部均铸有微小的齐字暗印","type":"event","status":"re
