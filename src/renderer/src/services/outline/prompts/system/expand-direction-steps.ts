@@ -48,8 +48,11 @@ export interface StepSectionDef {
   template: string;
 }
 
-/** 段定义集中表：所有分步都从这里取，保证段名/别名单一来源 */
-const SEC = {
+/**
+ * 段定义集中表：所有分步都从这里取，保证段名/别名单一来源。
+ * OutlineToolkit 的 get_section / replace_section 也按此表解析段名与模板。
+ */
+export const OUTLINE_SECTION_DEFS = {
   storyPositioning: {
     canonical: '故事定位',
     aliases: ['故事定位'],
@@ -121,6 +124,8 @@ const SEC = {
     template: SECTION_SELLING,
   },
 } satisfies Record<string, StepSectionDef>;
+
+const SEC = OUTLINE_SECTION_DEFS;
 
 /** 把指定段的正文从累计 rawText 中提取出来，拼成【已确定方案】上下文块 */
 function buildContextBlock(rawText: string, sections: StepSectionDef[]): string {

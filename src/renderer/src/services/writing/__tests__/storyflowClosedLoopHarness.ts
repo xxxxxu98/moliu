@@ -14,9 +14,8 @@
  * - window.electronAPI：文件实现（模拟主进程 moliu-projects.json，并执行冷读取）
  * - vue-router：由测试文件 vi.mock（useProjectCreator 依赖 useRouter）
  *
- * 覆盖范围：续写阶段固定 forceStoryRuntime=true → 仅覆盖 LongFormWritingEngine 正式长篇
- * 分支。StateDriven orchestrator 分支在生产 Electron 中因 preload（src/preload.ts）无条件
- * 注册 storyRuntime 而 hasStoryRuntime() 恒真、永不触发，属兜底死路径，故不纳入闭环冒烟。
+ * 覆盖范围：续写阶段固定 forceStoryRuntime=true → LongFormWritingEngine 正式长篇路径
+ * （生产唯一执行路径；无 storyRuntime 时管道显式失败，不存在其他分支）。
  */
 
 import { createPinia, getActivePinia, setActivePinia } from 'pinia';
@@ -964,6 +963,18 @@ export async function runStoryflowClosedLoop(
             words: chapter.output.prose.length,
             attempts: chapter.output.attempts,
             rewriteRounds: chapter.output.longFormResult?.rewriteRounds ?? 0,
+            // 改稿 agent 回合摘要(初稿即通过时为 null);A/B 脚本按此统计 writer 维度
+            writer: chapter.output.longFormResult?.writer
+              ? {
+                  finishReason: chapter.output.longFormResult.writer.finishReason,
+                  checksUsed: chapter.output.longFormResult.writer.checksUsed,
+                  revertedUnchecked: chapter.output.longFormResult.writer.revertedUnchecked,
+                  rounds: chapter.output.longFormResult.writer.rounds,
+                  toolCalls: chapter.output.longFormResult.writer.toolCalls,
+                  byTool: chapter.output.longFormResult.writer.byTool,
+                  ms: chapter.output.longFormResult.writer.ms,
+                }
+              : null,
             gateIssues: (chapter.output.gateResult?.allIssues ?? []).map(issue => ({
               category: issue.category,
               severity: issue.severity,

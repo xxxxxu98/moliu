@@ -10,9 +10,7 @@
  * 4. 进度统计（writtenChapters / writtenWords）
  * 5. 创建新章节（无空章节时自动 createNewChapter）
  *
- * 审查范式（v3.1 转变）：
- * - 老版本：strict→normal→relaxed 自适应降级重审
- * - 新版本：StateDriven G1-G7 严格门禁；失败稿保留供诊断，但绝不提交
+ * 审查范式：LongFormWritingEngine 严格连续性校验 + 判官；失败稿保留供诊断，但绝不提交
  *
  * 副作用（记忆提取/标题/元数据）已下沉到 persistence/memoryClient 适配器，
  * 单章与批量双受益。
@@ -135,7 +133,6 @@ function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
  *
  * 批量写作结束（含失败跳过 / 用户停止 / 完结）后，把 batchSummary 落盘，
  * 下次进入面板时若发现未确认的进度，可弹"上次批量到第 N 章、失败 M 章，是否重试失败章"。
- * 不依赖 CheckpointManager（那套只服务 StateDriven 路径）。
  */
 const BATCH_PROGRESS_KEY_PREFIX = 'moliu_batch_progress_';
 
@@ -567,8 +564,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
   const settingsStore = useSettingsStore();
   const { requireAIService } = useActiveAIProvider();
 
-  // 共享单章写作管道（v3.1 集成）
-  // 管道内部创建 StateDriven + persistence/memoryClient 适配器，
+  // 共享单章写作管道：管道内部装配 LongFormWritingEngine + persistence/memoryClient 适配器，
   // 与智能续写（V2）共用同一条单章流水线。
   // 批量层只保留：循环控制、重试、完结判断、进度统计。
   const pipeline = useChapterWritingPipeline();
@@ -828,9 +824,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
    * 老版本（内联 9 步流水线：TaskBook→起草→blockingReview→润色→保存→Commit→记忆→伏笔）
    * 已由 ChapterWritingPipeline + 下沉的 persistence/memoryClient 适配器统一取代。
    *
-   * 审查范式转变：
-   * - 老版本：strict→normal→relaxed 自适应降级重审（同一份草稿换严格度）
-   * - 新版本：StateDriven G1-G7 严格门禁（重写取最佳供诊断，全失败则停止）
+   * 审查范式：引擎内严格连续性校验 + 判官（重写取最佳供诊断，全失败则停止）
    *
    * 本函数只做：
    * 1. 调管道执行单章

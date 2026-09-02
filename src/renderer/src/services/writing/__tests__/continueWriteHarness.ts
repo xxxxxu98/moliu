@@ -75,7 +75,6 @@ import {
 } from '@/services/writing/chapterPersistenceAdapters';
 import { ContextManager } from '@/services/writing/context-manager';
 import { executeSmartContinue } from '@/services/writing/smartContinue';
-import { isAgentResearchEnvEnabled } from '@/services/writing/ChapterWritingPipeline';
 import {
   createRealAgentLoopTransport,
   isRealAiEnabled,
@@ -868,16 +867,12 @@ export function openContinueWriteSession(options: {
         persistence,
         memoryClient,
         plotOutlineClient: options.plotOutlineClient ?? null,
-        // Agent 检索回合(docs/agent-loop-refactor.md):真实冒烟且 MOLIU_AGENT_RESEARCH=1
-        // 时注入真实多轮 transport;常规假 AI 测试保持缺省(零行为变化)。
-        ...(isRealAiEnabled() && isAgentResearchEnvEnabled()
-          ? {
-              agentResearchTransport: createRealAgentLoopTransport(
-                readRealAiEnvConfig(),
-                chapterOptions.signal
-              ),
-            }
-          : {}),
+        // Agent 检索回合生产常开(docs/agent-architecture-refactor.md P1)：真实冒烟注入
+        // 与 structuredAI 同凭证的真实多轮 transport；假 AI 单测显式传 null 跳过
+        // （FakeAI 不会说 JSON 工具协议）。这是 harness 与 App 在检索回合上的唯一差异点。
+        agentResearchTransport: isRealAiEnabled()
+          ? createRealAgentLoopTransport(readRealAiEnvConfig(), chapterOptions.signal)
+          : null,
         // 伏笔回收流转（与生产同源）：判官确认的 resolvedForeshadowIds 经 pipeline
         // 提交阶段流转到 project 副本——此前 harness 在 onChapterSettled 手动消费，
         // 生产链路却没有对应物；现在两侧都走 foreshadowClient.markResolved。

@@ -75,7 +75,8 @@ const STARTUP_PACK_SECTION_ALIASES = [
   '前30章启动包',
 ];
 
-function isUsableBlueprint(blueprint: ChapterBlueprint | undefined): blueprint is ChapterBlueprint {
+/** 蓝图是否可用：章号在启动包范围内、标题非占位、CBN/CEN 非空（agent 写工具与补全共用口径） */
+export function isUsableBlueprint(blueprint: ChapterBlueprint | undefined): blueprint is ChapterBlueprint {
   return Boolean(
     blueprint &&
     blueprint.orderIndex >= 1 &&
@@ -105,7 +106,8 @@ function listField(values: string[]): string {
   return values.filter(Boolean).join('；');
 }
 
-function serializeBlueprint(blueprint: ChapterBlueprint): string {
+/** 把蓝图序列化回「### 第N章」Markdown 块（与 parser 期望的字段名一致） */
+export function serializeBlueprint(blueprint: ChapterBlueprint): string {
   return `### 第${blueprint.orderIndex}章
 - 标题：${blueprint.title}
 - CBN：${blueprint.CBN}
@@ -439,91 +441,6 @@ export function findUnregisteredCharacterNames(
   return names;
 }
 
-function buildUnregisteredCharacterPrompt(
-  outline: ExecutableOutline,
-  direction: OutlineDirection,
-  names: string[],
-): { system: string; user: string } {
-  return {
-    system: `你是中文长篇网文角色架构师。大纲的卷纲/支线/伏笔中引用了一些尚未建档的角色姓名，你的任务是把它们逐一补进「关键角色规划」。
-只输出恰好 ${names.length} 个新增角色块，每个块的「姓名」必须严格使用下方清单中给出的姓名原文（可去掉职位前缀，保留核心姓名），不得另造姓名、不得重复现有角色。
-每个新增角色严格使用：
-#### 新增角色功能标签
-- 姓名：（必须与清单中的姓名一致）
-- 角色定位：盟友/反派/导师/配角
-- 剧情功能：
-- 核心需求：
-- 与主角张力：
-- 最佳登场时机：
-- 外显目标：
-- 隐性需求：
-- 核心创伤：
-- 角色秘密：
-- 角色转折点：
-- 角色弧线：起点 → 中段 → 终点
-- 角色资源：用中文分号分隔
-- 关系变化：用中文分号分隔
-人设必须与上下文中该姓名的既有剧情一致，全部字段具体且非空，不输出二级标题或解释。`,
-    user: `【故事上下文】\n${compactContext(outline, direction)}\n\n【必须逐一建档的姓名清单】\n${names.join('\n')}\n\n【禁止重复的现有姓名】\n${(outline.keyCharacters ?? []).map(character => character.name).join('、')}\n\n请只输出 ${names.length} 个新增角色块。`,
-  };
-}
-
-/**
- * 未登记角色定向补登记：把卷纲/支线/伏笔引用了但没进「关键角色规划」的姓名，
- * 逐一向角色节追加建档（不替换既有角色）。修复的是 2026-08-15 冒烟实测的
- * fail-closed 场景：分步生成中卷纲先于角色步产出，卷纲自创的姓名没有全部
- * 被角色步骤登记，门禁拦下后此前无修复通道只能整体重试。
- */
-export async function repairUnregisteredCharacters(params: {
-  rawText: string;
-  outline: ExecutableOutline;
-  direction: OutlineDirection;
-  options: GenerateOptions;
-  callStructuredTextMode: StructuredTextCaller;
-  names: string[];
-  onProgress?: (message: string) => void;
-}): Promise<CompleteOutlineResult> {
-  const { names, onProgress } = params;
-  let rawText = params.rawText;
-  let outline = params.outline;
-  const warnings: string[] = [];
-  if (names.length === 0) return { rawText, outline, warnings };
-
-  onProgress?.(`正在补登记 ${names.length} 个未建档角色...`);
-  const prompt = buildUnregisteredCharacterPrompt(outline, params.direction, names);
-  const generated = await callTextWithEmptyRetry({
-    system: prompt.system,
-    user: prompt.user,
-    options: { ...params.options, temperature: 0.25 },
-    callStructuredTextMode: params.callStructuredTextMode,
-  });
-  if (isEmptyResponse(generated)) {
-    warnings.push(`未登记角色补登记返回空响应（${names.length} 个姓名未处理）`);
-    return { rawText, outline, warnings };
-  }
-  const existingBody = extractOutlineSectionBody(rawText, ['关键角色规划', '关键角色']);
-  rawText = replaceOutlineSection(
-    rawText,
-    ['关键角色规划', '关键角色'],
-    '关键角色规划',
-    `${existingBody}\n\n${extractOutlineSectionBody(generated, ['关键角色规划', '关键角色'])}`,
-  );
-  const nextOutline = parseExpandedOutline(rawText);
-  if (nextOutline) outline = nextOutline;
-
-  const stillMissing = findUnregisteredCharacterNames(
-    inspectOutlineCompleteness(outline).blockers,
-  );
-  const fixedCount = names.filter(name => !stillMissing.includes(name)).length;
-  if (fixedCount > 0) {
-    warnings.push(`未登记角色已补登记 ${fixedCount}/${names.length} 个`);
-  }
-  if (stillMissing.length > 0) {
-    warnings.push(`仍有 ${stillMissing.length} 个未登记角色（模型未按清单建档）：${stillMissing.join('、')}`);
-  }
-  return { rawText, outline, warnings };
-}
-
 export interface CompleteOutlineResult {
   rawText: string;
   outline: ExecutableOutline;
@@ -779,7 +696,7 @@ export function sanitizeOutlineHookLengths(
 /** 单章蓝图每批最大章数：批越大越容易踩网关的非流式输出上限 */
 export const CHAPTER_BLUEPRINT_BATCH_SIZE = 10;
 
-const BLUEPRINT_SECTION_ALIASES = ['单章蓝图', '逐章蓝图'];
+export const BLUEPRINT_SECTION_ALIASES = ['单章蓝图', '逐章蓝图'];
 
 /**
  * 分批生成/重写指定章号的单章蓝图。
@@ -1200,33 +1117,8 @@ export async function completeIncompleteOutline(params: {
     await runBlueprintRepair(incompleteChapters, '定点修复');
   }
 
-  // 角色引用一致性修复：卷纲/支线/伏笔引用了但未进「关键角色规划」的姓名，
-  // 走定向补登记而不是放弃（2026-08-15 冒烟实测：这类 blocker 拦下整份大纲、
-  // 无修复通道时只能整体重试，20 分钟一轮且不保证收敛）。
-  for (let round = 0; round < 2; round += 1) {
-    const unregistered = findUnregisteredCharacterNames(
-      inspectOutlineCompleteness(outline).blockers,
-    );
-    if (unregistered.length === 0) break;
-    warnings.push(
-      `大纲存在 ${unregistered.length} 个未登记角色（${unregistered.join('、')}），执行第 ${round + 1} 轮补登记`,
-    );
-    const repaired = await repairUnregisteredCharacters({
-      rawText,
-      outline,
-      direction: params.direction,
-      options: params.options,
-      callStructuredTextMode: params.callStructuredTextMode,
-      names: unregistered,
-      onProgress: params.onProgress,
-    });
-    rawText = repaired.rawText;
-    outline = repaired.outline;
-    warnings.push(...repaired.warnings);
-    if (outline.keyCharacters.length < OUTLINE_COMPLETENESS_POLICY.minimumKeyCharacters) {
-      break; // 数量都不足时交给外层整体重试，不再空转补登记
-    }
-  }
+  // 未登记角色 / 章级门禁缺陷等语义修复不在这里做：补全只负责把结构补齐，
+  // 修复交给 OutlineAgent（agent/OutlineAgent.ts）按工具多轮读写完成。
 
   // 出口清洗零宽字符：补全/修复各环节都可能从模型响应拼入 U+200B 之类不可见字符
   // （2026-08-16 冒烟：ch3 mustCover 尾部一个零宽空格导致续写履约匹配 3 轮全灭）。

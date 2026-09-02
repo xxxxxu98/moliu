@@ -10,7 +10,6 @@ import {
   findUnregisteredCharacterNames,
   findUnregisteredLocationNames,
   repairChapterBlueprints,
-  repairUnregisteredCharacters,
   repairUnregisteredLocations,
   replaceOutlineSection,
   sanitizeOutlineHookLengths,
@@ -605,76 +604,7 @@ describe('未登记角色修复通道', () => {
     expect(names).toEqual(['顾师爷', '赵文德', '沈砚']);
   });
 
-  it('定向补登记：追加角色块后未登记 blocker 消除', async () => {
-    // 卷纲引用两个未登记角色，角色节只有主角
-    const seeded = replaceOutlineSection(
-      MAIN_OUTLINE_TEXT,
-      ['卷纲'],
-      '卷纲',
-      '### 第1卷\n- 卷标题：初入县衙\n- 卷目标：洗清杀人嫌疑\n- 卷冲突：主角与县丞的权力对抗\n- 关键角色：林川；顾师爷；赵文德',
-    );
-    const withCharacters = replaceOutlineSection(
-      seeded,
-      ['关键角色规划', '关键角色'],
-      '关键角色规划',
-      '#### 主角\n- 姓名：林川\n- 角色定位：主角\n- 剧情功能：推动主线\n- 核心需求：洗清嫌疑\n- 与主角张力：自身\n- 最佳登场时机：第1章\n- 外显目标：升官\n- 隐性需求：回家\n- 核心创伤：蒙冤\n- 角色秘密：现代法医\n- 角色转折点：当众验尸\n- 角色弧线：蒙冤 → 立足 → 翻案\n- 角色资源：验尸术；现代知识\n- 关系变化：林川与钱县丞敌对',
-    );
-    const outline = parseExpandedOutline(withCharacters)!;
-    const names = findUnregisteredCharacterNames(
-      inspectOutlineCompleteness(outline).blockers,
-    );
-    expect(names).toEqual(['顾师爷', '赵文德']);
-
-    const callStructuredTextMode = vi.fn(async (_system: string, user: string) => {
-      // 清单中的姓名必须原样下发，模型按清单建档
-      expect(user).toContain('顾师爷');
-      expect(user).toContain('赵文德');
-      return '#### 新增反派师爷\n- 姓名：顾师爷\n- 角色定位：反派\n- 剧情功能：县丞爪牙\n- 核心需求：保住靠山\n- 与主角张力：制造冤案\n- 最佳登场时机：第2章\n- 外显目标：把主角逐出县衙\n- 隐性需求：掩盖旧案\n- 核心创伤：被上司轻视\n- 角色秘密：私改卷宗\n- 角色转折点：被主角当众揭穿\n- 角色弧线：得势 → 失势 → 伏法\n- 角色资源：县丞庇护\n- 关系变化：顾师爷与林川敌对\n\n#### 新增配角\n- 姓名：赵文德\n- 角色定位：配角\n- 剧情功能：传递信息\n- 核心需求：自保\n- 与主角张力：摇摆\n- 最佳登场时机：第3章\n- 外显目标：观望\n- 隐性需求：赎罪\n- 核心创伤：曾构陷好人\n- 角色秘密：藏有真卷宗\n- 角色转折点：交出证据\n- 角色弧线：观望 → 动摇 → 反水\n- 角色资源：卷宗副本\n- 关系变化：赵文德与林川结盟';
-    });
-
-    const result = await repairUnregisteredCharacters({
-      rawText: withCharacters,
-      outline,
-      direction: { title: '方向' } as OutlineDirection,
-      options: {},
-      callStructuredTextMode,
-      names,
-    });
-
-    expect(result.outline.keyCharacters.map(c => c.name)).toEqual(
-      expect.arrayContaining(['林川', '顾师爷', '赵文德']),
-    );
-    // 修复后不再有未登记角色 blocker
-    const nextNames = findUnregisteredCharacterNames(
-      inspectOutlineCompleteness(result.outline).blockers,
-    );
-    expect(nextNames).toEqual([]);
-    expect(result.warnings.some(w => w.includes('已补登记 2/2'))).toBe(true);
-  }, 30_000);
-
-  it('空响应时不洗掉既有角色节，只记 warning', async () => {
-    const withCharacters = replaceOutlineSection(
-      MAIN_OUTLINE_TEXT,
-      ['关键角色规划', '关键角色'],
-      '关键角色规划',
-      '#### 主角\n- 姓名：林川\n- 角色定位：主角',
-    );
-    const outline = parseExpandedOutline(withCharacters)!;
-
-    const result = await repairUnregisteredCharacters({
-      rawText: withCharacters,
-      outline,
-      direction: { title: '方向' } as OutlineDirection,
-      options: {},
-      callStructuredTextMode: async () => '',
-      names: ['顾师爷'],
-    });
-
-    expect(result.rawText).toContain('姓名：林川');
-    expect(result.warnings.some(w => w.includes('返回空响应'))).toBe(true);
-  }, 30_000);
-
-  it('completeIncompleteOutline 主流程接线：补全后仍有未登记角色时自动补登记', async () => {
+  it('completeIncompleteOutline 角色补全响应含卷纲引用姓名时，出口无未登记 blocker（语义补登记归 agent）', async () => {
     const chapters = Array.from(
       { length: OUTLINE_COMPLETENESS_POLICY.startupChapterCount },
       (_, index) => buildChapterBlock(index + 1),

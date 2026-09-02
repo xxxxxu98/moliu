@@ -48,75 +48,14 @@ vi.mock('@/stores/project.store', () => ({
   }),
 }));
 
-vi.mock('@/stores/settings.store', () => ({
-  useSettingsStore: () => ({ streamOutput: false }),
-}));
-
-vi.mock('@/composables/useActiveAIProvider', () => ({
-  useActiveAIProvider: () => ({
-    requireAIService: vi.fn(),
-    currentModel: { value: 'gpt-4o' },
+// ====== Mock 落库/记忆适配器（V2 实例内共享） ======
+vi.mock('../chapterPersistenceAdapters', () => ({
+  createChapterPersistenceClient: () => ({
+    save: vi.fn().mockResolvedValue({ oldContent: '' }),
   }),
-}));
-
-// ====== Mock V2 内部依赖（管道未覆盖的） ======
-vi.mock('@/services/writing/preflight/PreflightService', () => ({
-  usePreflightService: vi.fn().mockReturnValue({
-    preflight: vi.fn().mockResolvedValue({ valid: true, errors: [], warnings: [] }),
-    getCurrentChapterContext: vi.fn().mockResolvedValue({
-      chapterNumber: 1,
-      previousChapterEnding: '',
-      recentChaptersFullText: '',
-    }),
+  createChapterMemoryClient: () => ({
+    extractAndSave: vi.fn().mockResolvedValue(null),
   }),
-  PreflightService: vi.fn(),
-}));
-
-vi.mock('@/services/ai/agents/enhanced-context-agent', () => ({
-  useEnhancedContextAgent: vi.fn().mockReturnValue({
-    generateTaskBook: vi.fn().mockResolvedValue({ success: true }),
-  }),
-  EnhancedContextAgent: vi.fn(),
-}));
-
-vi.mock('@/services/ai/agents/enhanced-reviewer-agent', () => ({
-  useEnhancedReviewerAgent: vi.fn().mockReturnValue({ review: vi.fn() }),
-  EnhancedReviewerAgent: vi.fn(),
-}));
-
-vi.mock('@/services/ai/agents/enhanced-data-agent', () => ({
-  useEnhancedDataAgent: vi.fn().mockReturnValue({ extract: vi.fn() }),
-  EnhancedDataAgent: vi.fn(),
-}));
-
-vi.mock('@/services/writing/anti-patterns/AntiPatternsRegistry', () => ({
-  useAntiPatternsRegistry: vi.fn().mockReturnValue({
-    initialize: vi.fn(),
-    addFromReview: vi.fn(),
-    getPatternStrings: vi.fn().mockReturnValue([]),
-  }),
-  AntiPatternsRegistryService: vi.fn(),
-}));
-
-vi.mock('@/services/writing/polish/SixGatePolishPipeline', () => ({
-  useSixGatePolishPipeline: vi.fn().mockReturnValue({ execute: vi.fn() }),
-  SixGatePolishPipeline: vi.fn(),
-}));
-
-vi.mock('@/services/writing/commit/ProjectionWriters', () => ({
-  useProjectionOrchestrator: vi.fn().mockReturnValue({ runAll: vi.fn() }),
-  ProjectionOrchestrator: vi.fn(),
-}));
-
-vi.mock('@/services/writing/commit/ChapterCommitManagerV2', () => ({
-  useChapterCommitManagerV2: vi.fn().mockReturnValue({
-    commit: vi.fn().mockResolvedValue({ success: true, commit: {} }),
-  }),
-  ChapterCommitManagerV2: vi.fn(),
-}));
-
-vi.mock('@/services/writing/backup/GitBackupManager', () => ({
-  GitBackupManager: vi.fn().mockImplementation(() => ({ backup: vi.fn() })),
 }));
 
 describe('WritingOrchestratorV2 (v3.1 委托架构)', () => {

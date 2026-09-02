@@ -3,7 +3,7 @@
  * 网文写作核心原则库 - 基于 oh-story 和 webnovel-writer 方法论
  */
 
-import type { CoolPointDensity, StrandConfig, ConflictLevel } from '../contracts/story-contract';
+import type { CoolPointDensity, StrandConfig, ConflictLevel } from '../../contracts/story-contract';
 import { OUTLINE_COMPLETENESS_POLICY } from '../../validation/outlineCompleteness';
 
 /**

@@ -14,16 +14,6 @@ describe('DeAIService', () => {
   });
 });
 
-describe('WritingTaskBuilder', () => {
-  describe('service instantiation', () => {
-    it('should be importable', async () => {
-      const module = await import('@/services/writing/writing-task-builder');
-      expect(module.WritingTaskBuilder).toBeDefined();
-      expect(module.createTaskBookBuilder).toBeDefined();
-    });
-  });
-});
-
 describe('ReviewService', () => {
   describe('service instantiation', () => {
     it('should be importable', async () => {

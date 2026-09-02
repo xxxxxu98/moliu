@@ -30,9 +30,8 @@ import {
 } from './storyflow-run-suffix.mjs';
 
 process.env.REAL_AI = process.env.REAL_AI || '1';
-// agent 检索回合已转正(docs/agent-loop-refactor.md):冒烟默认与可上线大循环对齐;
-// 显式设 MOLIU_AGENT_RESEARCH=0 可回退确定性打包老路径。
-process.env.MOLIU_AGENT_RESEARCH = process.env.MOLIU_AGENT_RESEARCH || '1';
+// agent 检索回合已生产常开（docs/agent-architecture-refactor.md P1），无环境开关：
+// 冒烟与 App 走同一条链，差异仅限 AI 凭证来源与落盘介质。
 
 console.log('[smoke:storyflow:real] 真实 AI 闭环：大纲生成 → 应用 → 批量续写');
 

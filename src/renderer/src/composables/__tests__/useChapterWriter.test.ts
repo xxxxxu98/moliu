@@ -113,10 +113,6 @@ vi.mock('@/services/writing/de-ai-service', () => ({
   },
 }));
 
-vi.mock('@/services/writing/writing-task-builder', () => ({
-  createTaskBookBuilder: vi.fn(),
-}));
-
 vi.mock('@/services/review/blocking-review.service', () => ({
   blockingReview: vi.fn(),
   canProceedToPolish: vi.fn().mockReturnValue(true),

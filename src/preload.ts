@@ -16,11 +16,8 @@ export interface ElectronAPI {
   loadChapter: (id: string) => Promise<unknown>;
   saveChapter: (data: { projectId: string; chapter: unknown }) => Promise<{ success: boolean; error?: string }>;
   listChapters: (projectId: string) => Promise<unknown>;
-  deleteChapter: (data: { projectId: string; chapterId: string }) => Promise<{ success: boolean; error?: string }>;
 
   // AI
-  generateText: (params: unknown) => Promise<unknown>;
-  checkConsistency: (text: string) => Promise<unknown>;
   testAIConnection: (provider: string, config: { apiKey: string; baseUrl?: string; model?: string }) => Promise<{ success: boolean; error?: string; errorCode?: string; models?: string[]; responseTime?: number }>;
 
   // Memory - Characters
@@ -47,11 +44,6 @@ export interface ElectronAPI {
   saveSettings: (settings: unknown) => Promise<unknown>;
   getAIProviders: () => Promise<unknown>;
   saveAIProviders: (providers: unknown) => Promise<unknown>;
-
-  // Events
-  onAIStream: (callback: (chunk: string) => void) => () => void;
-  onProjectUpdate: (callback: (data: unknown) => void) => () => void;
-  onGenerationProgress: (callback: (progress: number) => void) => () => void;
 }
 
 const api: ElectronAPI = {
@@ -80,12 +72,8 @@ const api: ElectronAPI = {
   saveChapter: (data: { projectId: string; chapter: unknown }) =>
     ipcRenderer.invoke('chapter:save', data),
   listChapters: (projectId: string) => ipcRenderer.invoke('chapter:list', projectId),
-  deleteChapter: (data: { projectId: string; chapterId: string }) =>
-    ipcRenderer.invoke('chapter:delete', data),
 
   // AI
-  generateText: (params: unknown) => ipcRenderer.invoke('ai:generate', params),
-  checkConsistency: (text: string) => ipcRenderer.invoke('ai:check', text),
   testAIConnection: (provider: string, config: unknown) =>
     ipcRenderer.invoke('ai:test', provider, config),
 
@@ -122,26 +110,6 @@ const api: ElectronAPI = {
   saveSettings: (settings: unknown) => ipcRenderer.invoke('settings:save', settings),
   getAIProviders: () => ipcRenderer.invoke('ai-providers:get'),
   saveAIProviders: (providers: unknown) => ipcRenderer.invoke('ai-providers:save', providers),
-
-  // Events
-  onAIStream: (callback: (chunk: string) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, chunk: string) => callback(chunk);
-    ipcRenderer.on('ai:stream', handler);
-    return () => ipcRenderer.removeListener('ai:stream', handler);
-  },
-
-  onProjectUpdate: (callback: (data: unknown) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data);
-    ipcRenderer.on('project:update', handler);
-    return () => ipcRenderer.removeListener('project:update', handler);
-  },
-
-  onGenerationProgress: (callback: (progress: number) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, progress: number) =>
-      callback(progress);
-    ipcRenderer.on('generation:progress', handler);
-    return () => ipcRenderer.removeListener('generation:progress', handler);
-  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', api);

@@ -1,3 +1,7 @@
+/**
+ * 只读书籍工具集：把状态库/场景块/合同/伏笔目录暴露为 agent 循环的六个查询工具。
+ * 约束：全部工具无副作用；是 WriterToolkit / OutlineToolkit 的只读基座（经 CompositeToolkit 组合）。
+ */
 import type {
   ContractPack,
   SceneChunk,
@@ -5,6 +9,16 @@ import type {
   StoryEvent,
   StoryState,
 } from '@/types/story-runtime';
+
+import {
+  clipText as clip,
+  isPlainObject,
+  readIntArg as readInt,
+  readStringArg as readString,
+  type AgentToolkit,
+  type ToolCallResult,
+  type ToolDescriptor,
+} from './AgentToolkit';
 
 /** 伏笔目录条目（管线把 project.foreshadows 投影进来；缺省时仅用状态库 openForeshadows） */
 export interface ToolkitForeshadowEntry {
@@ -31,47 +45,12 @@ export interface BookToolkitInput {
   searchPort?: AgentSceneSearchPort;
 }
 
-export type ToolCallResult =
-  | { ok: true; result: unknown; truncated?: boolean }
-  | { ok: false; error: string };
-
-export interface ToolDescriptor {
-  name: string;
-  description: string;
-  args: string;
-}
-
-function clip(text: string, maxChars: number): string {
-  return text.length > maxChars ? `${text.slice(0, maxChars)}…` : text;
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function readString(args: Record<string, unknown>, key: string): string | undefined {
-  const value = args[key];
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
-}
-
-function readInt(
-  args: Record<string, unknown>,
-  key: string,
-  fallback: number,
-  min: number,
-  max: number
-): number {
-  const value = Number(args[key]);
-  if (!Number.isFinite(value)) return fallback;
-  return Math.min(max, Math.max(min, Math.floor(value)));
-}
-
 /**
  * 只读书籍工具集（docs/agent-loop-refactor.md §4.2）：把书籍结构化数据
  * （状态库/场景块/合同/伏笔目录）暴露为 agent 循环的查询工具。
  * 全部工具无副作用，表驱动注册——新增工具零改动循环器。
  */
-export class BookToolkit {
+export class BookToolkit implements AgentToolkit {
   constructor(private readonly input: BookToolkitInput) {}
 
   listTools(): ToolDescriptor[] {

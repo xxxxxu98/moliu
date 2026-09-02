@@ -7,35 +7,24 @@
  * 流程：
  *   0. Preflight 预检（可选，见 chapterWritePresets）
  *   1. contextAgent 生成任务书（TaskBook）
- *   2. 若 storyRuntime 可用（或 forceStoryRuntime）：LongFormWritingEngine 正式长篇路径
- *      否则 StateDriven.writeChapter()（L1-L7 降级闭环）
- *   3. 字数不足时补充续写（可选；长篇路径内已由 Engine 补字）
- *   4. 结果归一化 → ChapterWriteOutput
+ *   2. LongFormWritingEngine 正式长篇路径（唯一执行路径；storyRuntime 不可用即显式失败）
+ *   3. 结果归一化 → ChapterWriteOutput
  *
  * 测试/冒烟：注入 forceStoryRuntime + structuredAI + storyRuntimeApi，
  * 调用 execute(...SMART_CONTINUE_PRESET) 即可与正式智能续写同构。
  *
  * 设计要点：
- * - 无状态服务：依赖通过构造函数注入（drafter/gitBackup/persistence/memoryClient 适配器 +
+ * - 无状态服务：依赖通过构造函数注入（persistence/memoryClient 适配器 +
  *   preflightService + contextAgent）。
  * - 默认创建 persistence/memoryClient（与 V2 同口径），批量不再因 null 跳过落库。
- * - 内部持有 StateDrivenWritingOrchestrator 实例（跨章节复用状态快照/检索器/检查点）。
+ * - 无降级链：storyRuntime 缺失时抛出带上下文的错误（§16.1），绝不静默回落到别的引擎。
  * - 严格门禁未通过时绝不提交；forceAccepted 仅保留为兼容字段且恒为 false。
  */
 
 import { useProjectStore } from '@/stores/project.store';
 import { useActiveAIProvider } from '@/composables/useActiveAIProvider';
-import {
-  StateDrivenWritingOrchestrator,
-  type DrafterClient,
-  type GitBackupClient,
-  type ChapterPersistenceClient,
-  type MemoryClient,
-  type WriteChapterResult,
-} from '@/services/orchestrator';
 import { usePreflightService } from './preflight/PreflightService';
 import { useEnhancedContextAgent } from '@/services/ai/agents/enhanced-context-agent';
-import { GitBackupManager } from '@/services/writing/backup/GitBackupManager';
 import {
   createChapterPersistenceClient,
   createChapterMemoryClient,
@@ -44,16 +33,17 @@ import {
   isPlaceholderChapterTitle,
   prependTitleLineForPersist,
 } from './chapterTitle';
-import { runSupplementRounds } from './supplement';
 import {
   AI_AUXILIARY_REQUEST_TIMEOUT_MS,
   AI_SINGLE_REQUEST_TIMEOUT_MS,
 } from './chapterWritePresets';
-import {
-  TYPESETTING_HARD_RULES,
-  buildWritingRulesWithTypesetting,
-} from './typesetting';
-import type { GateContext, GateIssue, GatePipelineResult } from '@/services/gates/types';
+import { TYPESETTING_HARD_RULES } from './typesetting';
+import type {
+  ChapterPersistenceClient,
+  GateIssue,
+  GatePipelineResult,
+  MemoryClient,
+} from '@/types/chapter-pipeline';
 import type { WritingTaskBook } from '@/types/writing-v2';
 import type { Project, Chapter, CharacterStateChange } from '@/types/project';
 import type {
@@ -70,6 +60,7 @@ import {
   AgentLoopRunner,
   BookToolkit,
   ContractPackBuilder,
+  createWriterAgentStep,
   dedupProse,
   GroundedRetriever,
   LegacyProjectMigrator,
@@ -84,8 +75,8 @@ import {
 import type {
   AgentLoopTransport,
   AgentResearchStep,
+  WriterAgentStep,
 } from '@/services/story-runtime';
-import { readPositiveIntEnv } from '@/utils/env';
 import { robustJsonParse } from '@/utils/json-parser';
 import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
 import { overlayCharacterFates } from '@/services/writing/extract-plot-memory';
@@ -181,16 +172,9 @@ function createStructuredAIFromActiveProvider(signal?: AbortSignal): StructuredA
 }
 
 /**
- * Agent 检索回合环境开关（docs/agent-loop-refactor.md §5.2）：
- * MOLIU_AGENT_RESEARCH=1 启用；缺省/无效时关闭（零行为变化）。
- * 渲染进程禁裸读 process.env，一律走 utils/env.ts（浏览器上下文无 process 全局）。
- */
-export function isAgentResearchEnvEnabled(): boolean {
-  return readPositiveIntEnv('MOLIU_AGENT_RESEARCH') !== undefined;
-}
-
-/**
  * 从 active provider 构造 agent 检索循环的多轮传输通道。
+ * 检索回合是生产常开步骤（docs/agent-architecture-refactor.md P1）：不再有环境开关，
+ * 冒烟与 App 的唯一差异是 deps.agentResearchTransport 注入的传输层来源。
  * 与 createStructuredAIFromActiveProvider 同口径：请求级超时护栏 +
  * AbortSignal 叠加；温度用辅助档 0.2（检索判定任务，非创作）。
  */
@@ -268,7 +252,7 @@ export interface ChapterWriteInput {
   enableSupplement?: boolean;
   /** 用户自定义指令 */
   userInstructions?: string;
-  /** 窗口化大纲（可选，未传则由 StateDriven 内部回退到 chapter.outline） */
+  /** 窗口化大纲（可选；批量层传入供诊断/提示，引擎以 chapter.outline 为合同源） */
   windowedOutline?: string;
   /** 前章衔接信息（可选） */
   previousChapter?: { title: string; summary: string; ending: string };
@@ -313,15 +297,13 @@ export interface ChapterWriteOutput {
   errorKind?: ErrorKind;
   /** 是否值得在批量层重试整章（瞬态错误为 true） */
   retryable?: boolean;
-  /** story-runtime 长篇路径下的引擎原始结果；旧 StateDriven 路径为 undefined */
+  /** LongFormWritingEngine 原始结果（管道在起草前失败时为 undefined） */
   longFormResult?: LongFormWriteResult;
 }
 
 type StoryRuntimeAPI = NonNullable<Window['electronAPI']['storyRuntime']>;
 
 export interface ChapterWritingPipelineDeps {
-  drafter?: DrafterClient;
-  gitBackup?: GitBackupClient | null;
   persistence?: ChapterPersistenceClient | null;
   memoryClient?: MemoryClient | null;
   /**
@@ -349,8 +331,6 @@ export interface ChapterWritingPipelineDeps {
      */
     markPlanted?(input: { ids: string[]; chapterNumber: number }): Promise<void>;
   } | null;
-  /** 注入外部已配置好的 orchestrator（跳过内部创建） */
-  orchestrator?: StateDrivenWritingOrchestrator;
   /**
    * 注入 StructuredAI。正式 App 不传，走 active provider；
    * 测试/冒烟注入 FakeAI 或 RealAI（可包 RecordingStructuredAI）。
@@ -358,10 +338,10 @@ export interface ChapterWritingPipelineDeps {
   structuredAI?: StructuredAI;
   /**
    * 注入 agent 检索循环的多轮传输通道（测试/冒烟用）。
-   * 注入即启用检索回合；正式 App 靠 MOLIU_AGENT_RESEARCH 环境开关从
-   * active provider 构造。未注入且开关关时零行为变化。
+   * 检索回合生产常开：未注入时从 active provider 构造（与 structuredAI 同口径）。
+   * 单元测试想跳过检索回合须显式传 `null`（假 AI 不会说 JSON 工具协议）。
    */
-  agentResearchTransport?: AgentLoopTransport;
+  agentResearchTransport?: AgentLoopTransport | null;
   /** 注入 StoryRuntimeClient（测试用内存 IPC 客户端） */
   storyRuntimeClient?: StoryRuntimeClient;
   /** 注入 storyRuntime IPC；与 GroundedRetriever / Client 共用 */
@@ -491,7 +471,6 @@ export function resolveAllowedChapterCharacters(input: {
 // ============================================================
 
 export class ChapterWritingPipeline {
-  private readonly orchestrator: StateDrivenWritingOrchestrator | null;
   private readonly preflightService: NonNullable<ChapterWritingPipelineDeps['preflightService']>;
   private readonly contextAgent: NonNullable<ChapterWritingPipelineDeps['contextAgent']>;
   private readonly persistence: ChapterPersistenceClient | null;
@@ -504,12 +483,13 @@ export class ChapterWritingPipeline {
     markPlanted?(input: { ids: string[]; chapterNumber: number }): Promise<void>;
   } | null;
   private readonly structuredAI: StructuredAI | undefined;
-  private readonly agentResearchTransport: AgentLoopTransport | undefined;
+  private readonly agentResearchTransport: AgentLoopTransport | null | undefined;
   private readonly storyRuntimeClient: StoryRuntimeClient | undefined;
   private readonly storyRuntimeApi: StoryRuntimeAPI | undefined;
   private readonly forceStoryRuntime: boolean;
 
-  constructor(deps?: ChapterWritingPipelineDeps) {    this.structuredAI = deps?.structuredAI;
+  constructor(deps?: ChapterWritingPipelineDeps) {
+    this.structuredAI = deps?.structuredAI;
     this.agentResearchTransport = deps?.agentResearchTransport;
     this.storyRuntimeClient = deps?.storyRuntimeClient;
     this.storyRuntimeApi = deps?.storyRuntimeApi;
@@ -530,7 +510,6 @@ export class ChapterWritingPipeline {
           : {
               extractAndSave: async () => null,
             };
-      this.orchestrator = deps?.orchestrator ?? null;
       this.preflightService =
         deps?.preflightService ??
         ({
@@ -554,80 +533,12 @@ export class ChapterWritingPipeline {
     }
 
     const projectStore = useProjectStore();
-    const { requireAIService, currentModel } = useActiveAIProvider();
-
-    // ====== 适配器（默认实现，可被 deps 覆盖） ======
-
-    // drafter：把 StateDriven L3 拼好的 prompt 传给 AI service
-    const drafter: DrafterClient = deps?.drafter ?? {
-      async draft(prompt, params) {
-        const client = requireAIService();
-        const project = projectStore.currentProject;
-        const currentChapter = projectStore.currentChapter;
-        if (!project || !currentChapter) {
-          throw new Error('项目或章节未加载');
-        }
-        if (params.signal?.aborted) {
-          throw new DOMException('Aborted', 'AbortError');
-        }
-        const context: Record<string, unknown> = {
-          projectId: project.id,
-          currentChapterId: currentChapter.id,
-          currentChapterIndex: currentChapter.orderIndex,
-          currentChapterTitle: currentChapter.title,
-          currentChapterContent: currentChapter.content || '',
-          currentChapterOutline: currentChapter.outline || currentChapter.plotSummary || undefined,
-          customPrompt: prompt,
-          charactersInScene: project.characters || [],
-          writingStyle: 'concise',
-        };
-        const result = await (client as any).continueWriting(
-          context,
-          'smartContinue',
-          params.maxTokens || 3000,
-          params.signal,
-        );
-        return result?.content ?? result?.text ?? (typeof result === 'string' ? result : '');
-      },
-    };
-
-    // gitBackup：复用 GitBackupManager
-    const gitBackup: GitBackupClient | null =
-      deps?.gitBackup !== undefined
-        ? deps.gitBackup
-        : {
-            async backup(chapter, content, title) {
-              try {
-                const mgr = new GitBackupManager();
-                await mgr.backup(chapter, content, title);
-              } catch (err) {
-                console.warn('[Pipeline] Git 备份失败（不影响提交）:', err);
-              }
-            },
-          };
 
     // 默认创建 persistence/memory（与 V2 同口径），调用方可显式传 null 关闭
-    const persistence =
+    this.persistence =
       deps?.persistence !== undefined ? deps.persistence : createChapterPersistenceClient();
-    const memoryClient =
+    this.memoryClient =
       deps?.memoryClient !== undefined ? deps.memoryClient : createChapterMemoryClient();
-    this.persistence = persistence;
-    this.memoryClient = memoryClient;
-
-    // 优先使用注入的 orchestrator（V2 复用自己已配置好适配器的实例）；
-    // 否则用上面的适配器创建新实例。
-    this.orchestrator =
-      deps?.orchestrator ??
-      new StateDrivenWritingOrchestrator(drafter, gitBackup, persistence, memoryClient, {
-        defaultModel: currentModel.value || 'gpt-4o',
-        maxRetries: 3,
-        // 降级链：统一 ChapterJudge，G5/G7 共用至多 1 次语义审查
-        enableSemanticGate: true,
-        chapterJudge: new AIChapterJudge(createStructuredAIFromActiveProvider()),
-        enableGitBackup: true,
-        enableRetrieval: true,
-        retrievalTopK: 8,
-      });
 
     this.preflightService = deps?.preflightService ?? usePreflightService();
     this.contextAgent = deps?.contextAgent ?? useEnhancedContextAgent();
@@ -677,14 +588,6 @@ export class ChapterWritingPipeline {
           };
   }
 
-  /** 暴露内部 orchestrator（供需要 initialize/indexExistingChapters 的场景使用） */
-  getOrchestrator(): StateDrivenWritingOrchestrator {
-    if (!this.orchestrator) {
-      throw new Error('当前管道未配置 StateDriven orchestrator（forceStoryRuntime 模式）');
-    }
-    return this.orchestrator;
-  }
-
   /**
    * 执行单章写作。
    */
@@ -696,9 +599,7 @@ export class ChapterWritingPipeline {
       writingStyle,
       useTaskBook = true,
       enablePreflight = false,
-      enableSupplement = false,
       userInstructions: initialUserInstructions,
-      windowedOutline,
       previousChapter,
       signal,
     } = input;
@@ -748,113 +649,16 @@ export class ChapterWritingPipeline {
 
       throwIfAborted(signal);
 
-      if (this.hasStoryRuntime()) {
-        return this.executeLongFormRuntime(input, taskBook);
-      }
-
-      if (!this.orchestrator) {
-        return this.fail('storyRuntime 不可用，且未配置 StateDriven orchestrator');
-      }
-
-      // ====== Step 2: 任务书 → StateDriven options 转换 ======
-      const currentChapterOutline = chapter.outline || chapter.plotSummary || '';
-      // 始终注入排版硬约束；有任务书时追加任务书段落
-      const writingRules = this.buildWritingRules(taskBook);
-      const blueprint = taskBook
-        ? {
-            mustCover: taskBook.mustCover,
-            forbiddenZones: taskBook.forbiddenZones,
-            requiredCharacters: taskBook.CPNs,
-            cen: taskBook.CEN,
-          }
-        : undefined;
-
-      // ====== Step 3: 初始化 orchestrator（幂等） ======
-      await this.orchestrator.initialize(project);
-
-      throwIfAborted(signal);
-
-      // ====== Step 4: 执行写作（L1-L7 闭环） ======
-      const result: WriteChapterResult = await this.orchestrator.writeChapter(
-        project,
-        chapter,
-        targetWordCount,
-        {
-          currentChapterOutline,
-          windowedOutline,
-          writingRules,
-          blueprint,
-          previousChapter,
-          userInstructions,
-          signal,
-        }
-      );
-
-      if (!result.success || !result.gateResult?.passed) {
-        const gateErrorMsg = result.error || '严格门禁未通过，章节未提交';
-        const gateClassified = classifyError(gateErrorMsg);
-        return {
-          success: false,
-          prose: result.prose || '',
-          title: this.readBackTitle(chapter.id),
-          taskBook,
-          gateResult: result.gateResult,
-          attempts: result.attempts,
-          forceAccepted: false,
-          supplementRounds: 0,
-          error: gateErrorMsg,
-          errorKind: gateClassified.kind,
-          retryable: gateClassified.retryable,
-        };
-      }
-
-      // ====== Step 5: 字数不足时补写（可选） ======
-      let prose = result.prose;
-      let supplementRounds = 0;
-
-      if (enableSupplement && prose) {
-        throwIfAborted(signal);
-        const supplementResult = await this.runSupplementIfNeeded(
-          project,
-          chapter,
-          prose,
-          targetWordCount,
-          writingStyle,
-          blueprint,
-          signal,
+      // ====== Step 2: 唯一执行路径 —— LongFormWritingEngine ======
+      // storyRuntime 缺失是环境装配错误（preload 未暴露 / 测试未注入），不是可降级场景：
+      // 显式失败并把缺什么说清楚，绝不静默换引擎写出一章"看起来成功"的正文（§16.1）。
+      if (!this.hasStoryRuntime()) {
+        return this.fail(
+          'storyRuntime 不可用：正式 App 需 preload 暴露 electronAPI.storyRuntime；' +
+            '测试/冒烟需注入 forceStoryRuntime + storyRuntimeApi/storyRuntimeClient'
         );
-        prose = supplementResult.prose;
-        supplementRounds = supplementResult.rounds;
-        if (supplementResult.error) {
-          const supplementClassified = classifyError(supplementResult.error);
-          return {
-            success: false,
-            prose,
-            title: this.readBackTitle(chapter.id),
-            taskBook,
-            gateResult: result.gateResult,
-            attempts: result.attempts,
-            forceAccepted: false,
-            supplementRounds,
-            error: supplementResult.error,
-            errorKind: supplementClassified.kind,
-            retryable: supplementClassified.retryable,
-          };
-        }
       }
-
-      // ====== Step 6: 结果归一化（剥离结构化泄漏 → 确定性去重 → 轻量排版，不改写叙述） ======
-      return {
-        success: true,
-        prose: dedupProse(sanitizeStructuredProseLeakage(prose)),
-        title: this.readBackTitle(chapter.id),
-        taskBook,
-        gateResult: result.gateResult,
-        attempts: result.attempts,
-        forceAccepted: false,
-        supplementRounds,
-        error: result.error,
-      };
+      return this.executeLongFormRuntime(input, taskBook, { userInstructions });
     } catch (err) {
       if (isAbortError(err) || signal?.aborted) {
         return this.fail('Generation stopped by user', { err, signal: signal ?? undefined });
@@ -918,7 +722,8 @@ export class ChapterWritingPipeline {
    */
   private async executeLongFormRuntime(
     input: ChapterWriteInput,
-    taskBook: WritingTaskBook | null
+    taskBook: WritingTaskBook | null,
+    effective: { userInstructions?: string }
   ): Promise<ChapterWriteOutput> {
     const migrator = new LegacyProjectMigrator();
     const bootstrap = migrator.migrate(
@@ -1021,7 +826,8 @@ export class ChapterWritingPipeline {
           `目标约 ${input.targetWordCount} 字，按场景分配篇幅`,
           TYPESETTING_HARD_RULES,
           ...(taskBook?.styleGuidance?.reasoning ?? []),
-          input.userInstructions ?? '',
+          // 用 execute() 合并过任务书降级提示的有效指令，而非原始 input（此前丢失降级事实）
+          effective.userInstructions ?? '',
         ],
         forbidden: taskBook?.forbiddenZones ?? [],
       });
@@ -1047,14 +853,16 @@ export class ChapterWritingPipeline {
       );
       const ai: StructuredAI =
         this.structuredAI ?? createStructuredAIFromActiveProvider(input.signal);
-      // Agent 检索回合组装（docs/agent-loop-refactor.md §8）：注入 transport 或
-      // 环境开关开启时挂上 research step；缺省完全不挂，引擎行为与旧版一致。
-      const agentTransport =
-        this.agentResearchTransport ??
-        (isAgentResearchEnvEnabled()
-          ? createAgentLoopTransportFromActiveProvider(input.signal)
-          : undefined);
+      // Agent 检索回合组装（docs/agent-loop-refactor.md §8）：生产常开。
+      // deps 注入 transport 用之；显式 null 表示跳过（假 AI 单测）；未注入时从
+      // active provider 构造——这是冒烟与 App 之间唯一允许的差异点（§10.5）。
+      const agentTransport: AgentLoopTransport | undefined =
+        this.agentResearchTransport === null
+          ? undefined
+          : this.agentResearchTransport ??
+            createAgentLoopTransportFromActiveProvider(input.signal);
       let researchStep: AgentResearchStep | undefined;
+      let writerAgent: WriterAgentStep | undefined;
       if (agentTransport) {
         const recordingTransport =
           agentTransport instanceof RecordingAgentLoopTransport
@@ -1101,12 +909,19 @@ export class ChapterWritingPipeline {
             return result.dossier;
           },
         };
+        // 改稿回合与检索回合共用同一 transport(同模型同 trace 文件),初稿审查未通过时才会触发
+        writerAgent = createWriterAgentStep(effectiveTransport, {
+          foreshadowCatalog,
+          searchPort,
+          onSummary: summary => recordingTransport?.recordSummary({ kind: 'writer', ...summary }),
+        });
       }
       const engine = new LongFormWritingEngine({
         ai,
         factExtractor: new AIFactExtractor(ai),
         commitPort: runtime,
         ...(researchStep ? { research: researchStep } : {}),
+        ...(writerAgent ? { writerAgent } : {}),
       });
       throwIfAborted(input.signal);
       const result = await engine.write({
@@ -1369,102 +1184,6 @@ export class ChapterWritingPipeline {
   }
 
   /**
-   * 字数不足时循环补写；增量通过 persistence 追加落库（与主写同口径）。
-   */
-  private async runSupplementIfNeeded(
-    project: Project,
-    chapter: Chapter,
-    prose: string,
-    targetWordCount: number,
-    writingStyle: WritingStyle,
-    blueprint?: GateContext['blueprint'],
-    signal?: AbortSignal,
-  ): Promise<{ prose: string; rounds: number; error?: string }> {
-    const { requireAIService } = useActiveAIProvider();
-
-    return runSupplementRounds({
-      prose,
-      targetWordCount,
-      chapterTitle: chapter.title,
-      chapterOutline: chapter.outline || chapter.plotSummary || '',
-      signal,
-      drafter: {
-        async draft(prompt, maxTokens) {
-          throwIfAborted(signal);
-          const client = requireAIService();
-          // 补写必须清空 currentChapterOutline，避免走「按大纲整章重写」分支
-          const context: Record<string, unknown> = {
-            project,
-            currentChapterId: chapter.id,
-            currentChapterIndex: chapter.orderIndex,
-            currentChapterTitle: chapter.title,
-            currentChapterContent: '',
-            currentChapterOutline: undefined,
-            customPrompt: prompt,
-            charactersInScene: project.characters || [],
-            writingStyle,
-          };
-          const result = await (client as any).continueWriting(
-            context,
-            'smartContinue',
-            maxTokens,
-            signal,
-          );
-          return result?.content ?? result?.text ?? (typeof result === 'string' ? result : '');
-        },
-      },
-      validateRound: async (_round, _delta, fullProse) => {
-        throwIfAborted(signal);
-        const orchestrator = this.orchestrator;
-        if (!orchestrator) {
-          return '续写校验器未初始化';
-        }
-        const validation = await orchestrator.validateSupplement(
-          fullProse,
-          chapter,
-          blueprint,
-        );
-        const crashedGate = validation.gates.find(gate => gate.error);
-        if (crashedGate) {
-          return `${crashedGate.gateId} ${crashedGate.gateName}执行异常：${crashedGate.error}`;
-        }
-        return validation.passed ? null : validation.decision.reason;
-      },
-      onRound: async (_round, delta) => {
-        if (!this.persistence) {
-          throw new Error('未配置章节持久化，无法安全保存补写内容');
-        }
-        if (delta) {
-          await this.persistence.save(chapter.id, delta);
-        }
-      },
-    });
-  }
-
-  /**
-   * 把任务书转换为写作规则文本（注入 prompt）。
-   * 始终含排版硬约束；有任务书时追加。
-   */
-  private buildWritingRules(book: WritingTaskBook | null): string {
-    if (!book) {
-      return buildWritingRulesWithTypesetting(null);
-    }
-    const taskBookSection = `
-=== 写作任务书 ===
-【CBN】${book.CBN}
-【CPNs】${book.CPNs.join(' / ')}
-【CEN】${book.CEN}
-【必须覆盖】${book.mustCover.join(' / ')}
-【禁区】${book.forbiddenZones.join(' / ')}
-【风格指引】${book.styleGuidance?.reasoning?.join(' / ') || ''}
-【结尾感觉】${book.hardConstraints?.chapterEndOpenQuestion || '留下悬念'}
-【开放问题】${book.hardConstraints?.chapterEndOpenQuestion || '留下悬念'}
-=== 任务书结束 ===
-`;
-    return buildWritingRulesWithTypesetting(taskBookSection);
-  }
-
-  /**
    * 从 store 读回 persistence 适配器写入的标题。
    * persistence 适配器用 DeAIService.extractAndValidateTitle 提取标题后写入 chapter.title。
    */
@@ -1633,7 +1352,7 @@ function mapStatusDeltasToStateChanges(
       state: value,
       detail: String(
         Array.isArray((delta as { evidence?: unknown }).evidence)
-          ? ((delta as { evidence?: string[] }).evidence ?? []).join(' ')
+          ? ((delta as unknown as { evidence?: string[] }).evidence ?? []).join(' ')
           : (delta as { evidence?: string }).evidence ?? '',
       ).slice(0, 160),
     });

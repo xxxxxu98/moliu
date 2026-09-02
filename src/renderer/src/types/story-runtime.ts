@@ -336,6 +336,14 @@ export interface ResearchRunSummary {
   finishReason: ResearchFinishReason;
 }
 
+/** 改稿 agent 回合摘要（初稿即通过时不存在） */
+export interface WriterRunSummary extends ResearchRunSummary {
+  /** 消耗的完整审查次数（旧 rewriteRounds 口径） */
+  checksUsed: number;
+  /** 模型改稿后未复检、最终稿回退到上一已审查 revision */
+  revertedUnchecked: boolean;
+}
+
 /**
  * 检索回合蒸馏出的研究档案：agent 循环与写作上下文之间的唯一桥。
  * 写作 prompt 只渲染本档案（紧凑文本形态），不渲染循环的原始对话记录，
@@ -672,4 +680,6 @@ export interface LongFormWriteResult {
   rewriteRounds: number;
   /** 检索回合摘要（未启用/失败降级时为 undefined） */
   research?: ResearchRunSummary;
+  /** 改稿 agent 回合摘要（未注入 writerAgent 或初稿即通过时为 undefined） */
+  writer?: WriterRunSummary;
 }

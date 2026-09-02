@@ -27,10 +27,10 @@
 
 | webnovel-writer 模块 | 参考路径 | 对应墨流功能 |
 |---------------------|----------|------------|
-| **Story System 主链**（合同种子 + 运行时合同 + 章节提交 + 事件审计） | `webnovel-writer/skills/webnovel-write/`、`docs/architecture/` | `services/writing/chapter-commit/`、`stores/contract.store.ts` |
-| **追读力系统**（Hook / Cool-point / 微兑现 / 债务追踪） | `references/reading-power-taxonomy.md` | `services/outline/prompts/references/cool-points.md`、`hook-techniques.md` |
+| **Story System 主链**（合同种子 + 运行时合同 + 章节提交 + 事件审计） | `webnovel-writer/skills/webnovel-write/`、`docs/architecture/` | `services/story-runtime/`（ContractPack / 事实提取 / 判官 / 提交收据） |
+| **追读力系统**（Hook / Cool-point / 微兑现 / 债务追踪） | `references/reading-power-taxonomy.md` | `services/outline/prompts/system/core-principles.ts`（追读力 / 钩子 / 爽点原则）、`services/story-runtime/proseRules.ts` |
 | **长期记忆闭环**（写前注入 + 写后沉淀） | `docs/memory/`、`skills/webnovel-write/` | `services/writing/memory/`、`memory-manager.ts` |
-| **Agents**（context-agent / data-agent / reviewer / deconstruction-agent） | `webnovel-writer/agents/*.md` | `services/ai/agents/enhanced-*-agent.ts` |
+| **Agents**（context-agent / data-agent / reviewer / deconstruction-agent） | `webnovel-writer/agents/*.md` | `services/story-runtime/agent/`（AgentLoopRunner + Book/Writer/Outline Toolkit） |
 | **RAG 检索**（embedding + rerank，BM25 回退） | `docs/guides/rag-and-config.md`、`scripts/` | 墨流暂无，可作未来方向参考 |
 | **题材模板**（37 个内置网文题材） | `genres/`、`references/genre-profiles.md` | `config/`、`data/inspirations.ts` |
 | **审查报告** | `references/review-schema.md`、`webnovel-writer/skills/webnovel-review/` | `services/writing/review/`、`services/review/` |
@@ -70,12 +70,12 @@
 | oh-story 知识库 | 参考路径 | 对应墨流功能 |
 |----------------|----------|------------|
 | **去 AI 味**（预防 + 三遍去AI法 + 改写范例库 + 禁用词表） | `skills/story-deslop/references/`、`skills/story-long-write/references/anti-ai-writing.md` | `services/writing/de-ai-service.ts`、`services/writing/anti-ai-rules.md` |
-| **钩子技法**（章尾 13 式 / 章首 7 式 / 段落级钩子） | `skills/story-long-write/references/hook-techniques.md` | `services/outline/prompts/references/hook-techniques.md` |
-| **情绪设计**（6 种弧形模板 + 期待感管理） | `skills/story-long-write/references/emotional-arc-design.md` | `services/outline/prompts/techniques/emotion-design.ts` |
+| **钩子技法**（章尾 13 式 / 章首 7 式 / 段落级钩子） | `skills/story-long-write/references/hook-techniques.md` | `services/outline/prompts/system/core-principles.ts`、`services/story-runtime/proseRules.ts` |
+| **情绪设计**（6 种弧形模板 + 期待感管理） | `skills/story-long-write/references/emotional-arc-design.md` | `services/outline/prompts/system/core-principles.ts`（情绪节拍段） |
 | **大纲排布**（五步大纲法 + 节点设计 + 升级感） | `skills/story-long-write/references/outline-arrangement.md` | `services/outline/` |
 | **人物设计**（设定 + 关系映射 + 动机链 + 群像） | `skills/story-long-write/references/character-design.md` | `config/character-roles.ts` |
-| **冲突设计**（与墨流 references 同名） | — | `services/outline/prompts/references/conflict-design.md` |
-| **爽点设计** | `skills/story-long-write/references/` | `services/outline/prompts/references/cool-points.md` |
+| **冲突设计**（与墨流 references 同名） | — | `services/outline/prompts/system/core-principles.ts`（冲突升级段） |
+| **爽点设计** | `skills/story-long-write/references/` | `services/outline/prompts/system/core-principles.ts`（爽点密度段） |
 | **题材框架**（长篇八节点 / 8 大题材开头模板） | `skills/story-long-write/references/genre-frameworks-unified.md`、`genre-opening-database.md` | `data/inspirations.ts`、`config/` |
 | **质量检查**（通用 + 长篇/短篇专项 + 毒点排查） | `skills/story-long-write/references/quality-checklist.md` | `services/writing/review/` |
 | **对话/反转/风格模块** | `skills/story-long-write/references/dialogue-mastery.md`、`reversal-toolkit.md`、`style-modules.md` | `services/writing/` |

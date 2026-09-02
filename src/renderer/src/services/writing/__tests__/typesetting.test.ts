@@ -15,35 +15,6 @@ import {
   TYPESETTING_HARD_RULES,
   EXTREME_PARAGRAPH_CHARS,
 } from '../typesetting';
-import { Gate8Typesetting } from '../../gates/Gate8Typesetting';
-import { createEmptyChanges } from '../../state/ChangesProtocol';
-import type { GateContext } from '../../gates/types';
-import type { StateSnapshot } from '../../state/types';
-
-function makeEmptySnapshot(): StateSnapshot {
-  return {
-    projectId: 'test',
-    chapter: 1,
-    characters: {},
-    characterAppearances: {},
-    relationships: {},
-    characterLocations: {},
-    conflicts: {},
-    foreshadows: {},
-    plotNodes: [],
-    locations: {},
-    locationFeatures: {},
-    factions: {},
-    timeline: { currentTime: '', elapsed: '', currentChapter: 1, anchors: [] },
-    worldRules: [],
-    items: {},
-    secrets: {},
-    oaths: {},
-    deadlines: {},
-    createdAt: '',
-    updatedAt: '',
-  } as StateSnapshot;
-}
 
 describe('normalizeWebnovelParagraphs（少动刀）', () => {
   it('不主动拆没有换行的超长单段，保留模型原文结构', () => {
@@ -297,46 +268,16 @@ describe('buildWritingRulesWithTypesetting', () => {
   });
 });
 
-describe('Gate8Typesetting', () => {
-  it('正常正文应通过', async () => {
+describe('buildTypesettingIssues 作为唯一排版门禁（G8 已随 StateDriven 移除）', () => {
+  it('正常正文无 high 问题', () => {
     const prose = '他走到窗前。心里很乱。\n\n门外有脚步声。有人敲门。';
-    const gate = new Gate8Typesetting();
-    const ctx: GateContext = {
-      chapter: 1,
-      prose,
-      changes: createEmptyChanges(1),
-      snapshot: makeEmptySnapshot(),
-    };
-    const result = await gate.run(ctx, {
-      maxUnknownEntities: 5,
-      maxUnnamedExtras: 3,
-      maxMissingBlueprintRoles: 1,
-      minChapterWords: 100,
-      enableSemanticGate: false,
-      allowAIFlavorDegradedPass: true,
-    });
-    expect(result.passed).toBe(true);
+    expect(buildTypesettingIssues(prose).some(i => i.severity === 'high')).toBe(false);
   });
 
-  it('超长无标点墙应 high 失败（靠重写反馈，不靠静默拆段）', async () => {
+  it('超长无标点墙报 high（靠重写反馈，不靠静默拆段）', () => {
     const wall = '他'.repeat(EXTREME_PARAGRAPH_CHARS + 50);
-    const gate = new Gate8Typesetting();
-    const ctx: GateContext = {
-      chapter: 1,
-      prose: wall,
-      changes: createEmptyChanges(1),
-      snapshot: makeEmptySnapshot(),
-    };
-    const result = await gate.run(ctx, {
-      maxUnknownEntities: 5,
-      maxUnnamedExtras: 3,
-      maxMissingBlueprintRoles: 1,
-      minChapterWords: 100,
-      enableSemanticGate: false,
-      allowAIFlavorDegradedPass: true,
-    });
-    expect(result.passed).toBe(false);
-    expect(result.issues[0]?.category).toBe('typesetting');
+    const issues = buildTypesettingIssues(wall);
+    expect(issues.some(i => i.severity === 'high')).toBe(true);
   });
 });
 

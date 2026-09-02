@@ -1,4 +1,5 @@
 import type {
+  ContextPack,
   ContinuityIssue,
   ContinuityReport,
   ContractPack,
@@ -15,6 +16,7 @@ import type {
   StoryEntity,
   StoryState,
   StructuredAI,
+  WriterRunSummary,
 } from '@/types/story-runtime';
 
 import { AIChapterJudge } from './AIChapterJudge';
@@ -28,6 +30,8 @@ import { ContinuityValidator } from './ContinuityValidator';
 import { detectOpeningRepetitionIssue, enrichRevisionHint, healChapterContract } from './contractHealth';
 import { SceneBeatPlanner } from './SceneBeatPlanner';
 import { SceneDraftEngine } from './SceneDraftEngine';
+import type { WriterAgentStep } from './agent/WriterAgent';
+import type { ChapterReviewOutcome } from './agent/WriterToolkit';
 import { sanitizeSceneDraftParagraphs } from './stripDraftLeakage';
 import {
   buildCondensePrompt,
@@ -98,6 +102,20 @@ export interface LongFormWritingEngineDependencies {
    * (AbortError 除外,用户取消必须冒泡)。
    */
   research?: AgentResearchStep;
+  /**
+   * Agent 改稿回合(docs/agent-architecture-refactor.md P2):初稿审查未通过时,
+   * 由 agent 通过 get_draft/revise_paragraphs/run_checks + 六读工具自主改到通过。
+   * 未注入时走旧「规则拼提示 → 整章重写」循环(legacy,A/B 后删除)。
+   * 抛错原样冒泡:审查链不可用必须让批量层停章,不能静默回落。
+   */
+  writerAgent?: WriterAgentStep;
+}
+
+/** 审查链输入:初稿与每次改稿共用,保证 agent 的 run_checks 与提交门禁同口径 */
+interface ReviewContext {
+  input: LongFormWriteInput;
+  writeInput: LongFormWriteInput;
+  contracts: ContractPack;
 }
 
 export interface AgentResearchStepInput {
@@ -275,6 +293,86 @@ function buildSeedRevisionPlan(
   };
 }
 
+function withFulfillmentDomain(report: ContinuityReport): ContinuityReport['checkedDomains'] {
+  return report.checkedDomains.includes('fulfillment')
+    ? report.checkedDomains
+    : [...report.checkedDomains, 'fulfillment'];
+}
+
+/**
+ * 确定性门禁叠加到语义审查报告：字数区间、排版密度、章界重演。
+ * 字数未落入目标区间与 high 级排版问题视为 blocking（驱动重写、用尽轮次仍拒收）；
+ * medium 级排版问题只作 warning（不阻断 accept，但进入 issues 供改稿顺手修掉）。
+ */
+export function applyDeterministicGates(
+  semanticReport: ContinuityReport,
+  drafts: SceneDraft[],
+  ctx: { targetWordCount: number; previousChapterEnding?: string; chapterNumber: number }
+): ContinuityReport {
+  let report = semanticReport;
+  const prose = draftsProse(drafts);
+  const wordCountIssue = buildWordCountBoundsIssue(prose, ctx.targetWordCount);
+  const typesettingIssues = buildTypesettingIssues(prose);
+  // 开场重叠（章界重演）写作期防线：确定性比对本章开头与上章结尾
+  const openingRepetitionIssue = detectOpeningRepetitionIssue(prose, ctx.previousChapterEnding);
+  if (openingRepetitionIssue) {
+    console.warn(
+      `[LongFormWritingEngine] ch${ctx.chapterNumber} 开场重演上章结尾（相似度过高），判 blocking 驱动重写`
+    );
+    report = {
+      accepted: false,
+      issues: [
+        ...report.issues.filter(issue => issue.id !== 'chapter-opening-repetition'),
+        openingRepetitionIssue,
+      ],
+      checkedDomains: withFulfillmentDomain(report),
+    };
+  }
+  if (wordCountIssue) {
+    report = {
+      accepted: false,
+      issues: [
+        ...report.issues.filter(issue => !issue.id.startsWith('word-count-')),
+        wordCountIssue,
+      ],
+      checkedDomains: withFulfillmentDomain(report),
+    };
+  }
+  const highTypesetting = typesettingIssues.filter(issue => issue.severity === 'high');
+  if (highTypesetting.length > 0) {
+    report = {
+      accepted: false,
+      issues: [
+        ...report.issues.filter(issue => !issue.id.startsWith('typesetting-density')),
+        ...highTypesetting.map((issue, index) => ({
+          id: index === 0 ? 'typesetting-density' : `typesetting-density-${index + 1}`,
+          domain: 'fulfillment' as const,
+          severity: 'blocking' as const,
+          message: `${issue.description}。${issue.suggestion}`,
+          evidence: issue.evidence ? [issue.evidence] : [],
+        })),
+      ],
+      checkedDomains: withFulfillmentDomain(report),
+    };
+  } else if (typesettingIssues.length > 0) {
+    report = {
+      ...report,
+      issues: [
+        ...report.issues.filter(issue => !issue.id.startsWith('typesetting-density')),
+        ...typesettingIssues.map((issue, index) => ({
+          id: index === 0 ? 'typesetting-density' : `typesetting-density-${index + 1}`,
+          domain: 'fulfillment' as const,
+          severity: 'warning' as const,
+          message: `${issue.description}。${issue.suggestion}`,
+          evidence: issue.evidence ? [issue.evidence] : [],
+        })),
+      ],
+      checkedDomains: withFulfillmentDomain(report),
+    };
+  }
+  return report;
+}
+
 function shouldRewrite(report: ContinuityReport): boolean {
   if (report.accepted) return false;
   return report.issues.some(
@@ -378,245 +476,96 @@ export class LongFormWritingEngine {
     });
 
     const writeInput: LongFormWriteInput = { ...input, contracts };
+    const reviewContext: ReviewContext = { input, writeInput, contracts };
 
-    let drafts: SceneDraft[] = [];
-    let facts: ExtractedFacts = { events: [], deltas: [], evidence: [] };
-    let report: ContinuityReport = {
-      accepted: false,
-      issues: [],
-      checkedDomains: [],
-    };
-    let rewriteRounds = 0;
     // 批量层重试可能传入「上一轮失败教训」种子：初稿即带反馈，避免盲目重跑。
     // 种子只影响首次起草；后续重写循环会用本轮 report 追加新 hints 覆盖。
     let revisionPlan = buildSeedRevisionPlan(
       writeInput.seedRevisionHints,
       writeInput.targetWordCount
     );
-    // 连环重写熔断：记录上一轮 blocking issue，用于检测是否「卡在同一问题」。
-    // 字数类问题（word-count-short:*）每轮数值变化会干扰判定，比较时排除。
-    let prevBlockingIssues: ContinuityIssue[] = [];
+    let rewriteRounds = 0;
 
-    while (true) {
-      // Step A：起草 + 补字。瞬态错误（网络/截断）步骤级重试，持久错误冒泡。
-      drafts = await runStepWithTransientRetry(
-        async (attempt: number) => {
-          // 截断/空响应重试时注入引导：让模型这次输出完整 JSON 与全章正文，而非原样盲发。
-          // attempt=0 是首次调用，不追加；attempt>=1 是瞬态重试，追加截断引导。
-          const draftRevisionPlan =
-            attempt > 0
-              ? {
-                  mode: revisionPlan?.mode ?? 'repair',
-                  hints: [
-                    ...(revisionPlan?.hints ?? []),
-                    '上次输出被截断或返回了空内容。请务必一次性输出完整的 JSON 对象，paragraphs 数组必须包含完整的正文段落，不要中途停笔，不要返回空字符串。',
-                  ],
-                  ...(revisionPlan?.minWords ? { minWords: revisionPlan.minWords } : {}),
-                  ...(revisionPlan?.maxWords ? { maxWords: revisionPlan.maxWords } : {}),
-                } satisfies RevisionPlan
-              : revisionPlan;
-          const d = await this.draftEngine.draft(plan, context, {
-            targetWordCount: writeInput.targetWordCount,
-            revisionPlan: draftRevisionPlan,
-            rewriteRound: draftRevisionPlan ? Math.max(1, rewriteRounds) : undefined,
-            // 跨章收尾去重：把最近几章的结尾句摆到模型眼前（详见 extractRecentEndingSnippets）
-            recentEndingSnippets: extractRecentEndingSnippets(
-              input.recentScenes,
-              contracts.chapter.chapterNumber
-            ),
-            // 上章结尾仲裁：CBN 是规划语句，与上章正文事实冲突时以后者为准
-            previousChapterEnding: input.previousChapterEnding,
-            // 完整角色库（未被 context 压缩筛选），注入 prompt 白名单约束名字一致性
-            knownCharacterNames: extractCharacterNames(input.state.entities),
-            allowedAppearanceNames: extractAllowedAppearanceNames(
-              input.state.entities,
-              contracts.chapter.allowedCharacterNames,
-            ),
-            futureReveals: contracts.chapter.futureReveals ?? [],
-            // 大纲链路的章节标题已是正式标题，模型再拟一个也会被 pipeline 丢弃
-            existingChapterTitle: isPlaceholderChapterTitle(contracts.chapter.title)
-              ? undefined
-              : contracts.chapter.title,
-          });
-          // 提交前进补字：避免 SQLite accepted 后仍只有 ~900 字
-          return this.padDraftsToTarget(d, writeInput);
-        },
-        { label: 'draft+pad', maxRetries: 1 }
-      );
+    // Step A：初稿 + 补字 → Step B/C：事实提取 + 语义审查 + 确定性门禁
+    let drafts = await this.draftChapter(plan, context, reviewContext, revisionPlan, rewriteRounds);
+    let { facts, report } = await this.reviewDrafts(drafts, reviewContext);
+    let writerSummary: WriterRunSummary | undefined;
 
-      // Step B：事实提取单独重试。审查失败时保留 drafts 和 facts，不重复付费提取。
-      // 命运宣告入账全权归 AI 提取合同（2026-09-02 agent 化重构：确定性候选网
-      // 与仲裁槽退役，词表打地鼠打法终止——见 docs/agent-loop-refactor.md）。
-      const rawFacts = await runStepWithTransientRetry(
-        async (_attempt: number) =>
-          this.dependencies.factExtractor.extract({
-            projectId: input.projectId,
-            chapterNumber: contracts.chapter.chapterNumber,
-            sceneDrafts: drafts,
-            state: input.state,
-            overlay: input.overlay,
-          }),
-        { label: 'fact-extraction', maxRetries: 2 }
-      );
-      const canonical = canonicalizeExtractedFacts({
-        facts: rawFacts,
-        state: input.state,
-        drafts,
-        overlay: input.overlay,
-        // 章号传给 canonicalize：新角色实体的 introducedInChapter 记录实际章号
-        chapterNumber: contracts.chapter.chapterNumber,
-      });
-      facts = canonical.facts;
-
-      // Step C：只重试连续性/语义审查。耗尽后标记为 review_unavailable，
-      // 让批量层停止当前章，而不是重新起草整章。
-      try {
-        report = await runStepWithTransientRetry(
-          async (_attempt: number) => this.validator.validate({
-            contracts,
-            state: canonical.stateForValidation,
-            drafts,
-            facts: canonical.facts,
-            payoffCandidates: writeInput.payoffCandidates,
-            // 上章结尾给判官做「重置登场」在场连续性判定（ch8→9 类断裂根治）
-            prevChapterTail: input.previousChapterEnding,
-          }),
-          { label: 'semantic-review', maxRetries: 2 }
-        );
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') throw error;
-        if (error instanceof Error && error.name === 'AbortError') throw error;
-        const detail = error instanceof Error ? error.message : String(error);
-        throw new Error(
-          detail.includes('[review-unavailable]')
-            ? detail
-            : `[review-unavailable] 语义审查不可用：${detail}`,
-          { cause: error }
-        );
-      }
-
-      // 字数未落入目标区间也视为 blocking，驱动重写；用尽轮次后仍拒收提交。
-      const target = writeInput.targetWordCount ?? 0;
-      const wordCountIssue = buildWordCountBoundsIssue(draftsProse(drafts), target);
-      const typesettingIssues = buildTypesettingIssues(draftsProse(drafts));
-      // 开场重叠（章界重演）写作期防线：确定性比对本章开头与上章结尾
-      const openingRepetitionIssue = detectOpeningRepetitionIssue(
-        draftsProse(drafts),
-        input.previousChapterEnding,
-      );
-      if (openingRepetitionIssue) {
-        console.warn(
-          `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 开场重演上章结尾（相似度过高），判 blocking 驱动重写`
-        );
-        report = {
-          accepted: false,
-          issues: [
-            ...report.issues.filter(issue => issue.id !== 'chapter-opening-repetition'),
-            openingRepetitionIssue,
-          ],
-          checkedDomains: report.checkedDomains.includes('fulfillment')
-            ? report.checkedDomains
-            : [...report.checkedDomains, 'fulfillment'],
-        };
-      }
-      if (wordCountIssue) {
-        report = {
-          accepted: false,
-          issues: [
-            ...report.issues.filter(issue => !issue.id.startsWith('word-count-')),
-            wordCountIssue,
-          ],
-          checkedDomains: report.checkedDomains.includes('fulfillment')
-            ? report.checkedDomains
-            : [...report.checkedDomains, 'fulfillment'],
-        };
-      }
-      if (typesettingIssues.some(issue => issue.severity === 'high')) {
-        report = {
-          accepted: false,
-          issues: [
-            ...report.issues.filter(issue => !issue.id.startsWith('typesetting-density')),
-            ...typesettingIssues
-              .filter(issue => issue.severity === 'high')
-              .map((issue, index) => ({
-                id: index === 0 ? 'typesetting-density' : `typesetting-density-${index + 1}`,
-                domain: 'fulfillment' as const,
-                severity: 'blocking' as const,
-                message: `${issue.description}。${issue.suggestion}`,
-                evidence: issue.evidence ? [issue.evidence] : [],
-              })),
-          ],
-          checkedDomains: report.checkedDomains.includes('fulfillment')
-            ? report.checkedDomains
-            : [...report.checkedDomains, 'fulfillment'],
-        };
-      } else if (typesettingIssues.length > 0) {
-        // medium 级排版问题（段落节奏均匀化等 AI 腔信号）不阻断 accept，
-        // 但作为 warning 进入 issues → revisionHints 驱动下一次重写自我修正。
-        // 没有其它 blocking 问题时不会触发重写，只在重写已发生时附带修掉。
-        report = {
-          ...report,
-          issues: [
-            ...report.issues.filter(issue => !issue.id.startsWith('typesetting-density')),
-            ...typesettingIssues.map((issue, index) => ({
-              id: index === 0 ? 'typesetting-density' : `typesetting-density-${index + 1}`,
-              domain: 'fulfillment' as const,
-              severity: 'warning' as const,
-              message: `${issue.description}。${issue.suggestion}`,
-              evidence: issue.evidence ? [issue.evidence] : [],
-            })),
-          ],
-          checkedDomains: report.checkedDomains.includes('fulfillment')
-            ? report.checkedDomains
-            : [...report.checkedDomains, 'fulfillment'],
-        };
-      }
-
-      if (!shouldRewrite(report) || rewriteRounds >= maxRewriteRounds) {
-        break;
-      }
-
-      // 连环重写熔断：本轮 blocking issue 与上一轮高度相似 → 判定「卡在同一问题」，
-      // 停止重写（仍保持 report.accepted=false，走 rejected 分支，让批次层决定去留）。
-      // 字数类问题 id 含动态数字、每轮变化，会误判为「新问题」，比较前排除。
-      const currentBlocking = report.issues.filter(
-        issue =>
-          issue.severity === 'blocking' &&
-          !issue.id.startsWith('word-count-'),
-      );
-      if (
-        rewriteRounds > 0 &&
-        prevBlockingIssues.length > 0 &&
-        currentBlocking.length > 0
-      ) {
-        const stuckCount = currentBlocking.filter(cur =>
-          prevBlockingIssues.some(
-            prev => normalizedSimilarity(cur.message, prev.message) >= 0.7,
+    if (shouldRewrite(report) && maxRewriteRounds > 0) {
+      if (this.dependencies.writerAgent) {
+        // Agent 改稿回合：模型读问题清单、查事实、局部改稿、复检，blocking=0 才 finish。
+        // 审查次数预算 = maxRewriteRounds（每次 run_checks 成本等价一轮旧重写）。
+        const outcome = await this.dependencies.writerAgent.revise({
+          chapterNumber: contracts.chapter.chapterNumber,
+          contracts,
+          state: input.state,
+          context,
+          sceneChunks: input.sceneChunks ?? input.recentScenes,
+          initialDrafts: drafts,
+          initialReview: { facts, report },
+          reviewPort: { review: candidate => this.reviewDrafts(candidate, reviewContext) },
+          maxChecks: maxRewriteRounds,
+          targetWordCount: writeInput.targetWordCount,
+          previousChapterEnding: input.previousChapterEnding,
+          allowedAppearanceNames: extractAllowedAppearanceNames(
+            input.state.entities,
+            contracts.chapter.allowedCharacterNames
           ),
-        ).length;
-        const stuckRatio = stuckCount / currentBlocking.length;
-        // 阈值 0.4：当 40% 以上的 blocking 问题与上轮高度相似即认定「卡在同一问题」提前熔断，
-        // 避免措辞略变（相似度 <0.7）就烧满重写轮次。
-        if (stuckRatio >= 0.4) {
+          knownCharacterNames: extractCharacterNames(input.state.entities),
+        });
+        drafts = outcome.drafts;
+        facts = outcome.facts;
+        report = outcome.report;
+        rewriteRounds = outcome.checksUsed;
+        writerSummary = {
+          ...outcome.stats,
+          checksUsed: outcome.checksUsed,
+          revertedUnchecked: outcome.revertedUnchecked,
+        };
+        if (outcome.revertedUnchecked) {
           console.warn(
-            `[LongFormWritingEngine] 连环重写熔断：本轮 ${stuckCount}/${currentBlocking.length} 个 blocking 问题与上轮高度相似（卡在同一问题），停止重写（仍 rejected 提交）`,
+            `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 改稿回合结束时存在未复检改动，已回退到最后一次审查稿（${outcome.finishReason}）`
           );
-          break;
+        }
+      } else {
+        // legacy 重写循环：规则从 report 拼 hints → 整章重写 → 再审。A/B 验收后删除。
+        // 连环重写熔断：记录上一轮 blocking issue，用于检测是否「卡在同一问题」。
+        // 字数类问题（word-count-short:*）每轮数值变化会干扰判定，比较时排除。
+        let prevBlockingIssues: ContinuityIssue[] = [];
+        while (shouldRewrite(report) && rewriteRounds < maxRewriteRounds) {
+          const currentBlocking = report.issues.filter(
+            issue => issue.severity === 'blocking' && !issue.id.startsWith('word-count-')
+          );
+          if (rewriteRounds > 0 && prevBlockingIssues.length > 0 && currentBlocking.length > 0) {
+            const stuckCount = currentBlocking.filter(cur =>
+              prevBlockingIssues.some(
+                prev => normalizedSimilarity(cur.message, prev.message) >= 0.7
+              )
+            ).length;
+            // 阈值 0.4：当 40% 以上的 blocking 问题与上轮高度相似即认定「卡在同一问题」提前熔断，
+            // 避免措辞略变（相似度 <0.7）就烧满重写轮次。仍保持 accepted=false 走 rejected 分支。
+            if (stuckCount / currentBlocking.length >= 0.4) {
+              console.warn(
+                `[LongFormWritingEngine] 连环重写熔断：本轮 ${stuckCount}/${currentBlocking.length} 个 blocking 问题与上轮高度相似（卡在同一问题），停止重写（仍 rejected 提交）`
+              );
+              break;
+            }
+          }
+          prevBlockingIssues = currentBlocking;
+
+          const nextRevisionPlan = buildRevisionPlanFromReport(report, writeInput.targetWordCount);
+          if (nextRevisionPlan.hints.length === 0) break;
+
+          rewriteRounds += 1;
+          revisionPlan = nextRevisionPlan;
+          console.info(
+            `[LongFormWritingEngine] 审核未通过，开始第 ${rewriteRounds}/${maxRewriteRounds} 次 ${revisionPlan.mode} 重写`,
+            revisionPlan.hints.slice(0, 3)
+          );
+          drafts = await this.draftChapter(plan, context, reviewContext, revisionPlan, rewriteRounds);
+          ({ facts, report } = await this.reviewDrafts(drafts, reviewContext));
         }
       }
-      prevBlockingIssues = currentBlocking;
-
-      const nextRevisionPlan = buildRevisionPlanFromReport(report, writeInput.targetWordCount);
-      if (nextRevisionPlan.hints.length === 0) {
-        break;
-      }
-
-      rewriteRounds += 1;
-      revisionPlan = nextRevisionPlan;
-      console.info(
-        `[LongFormWritingEngine] 审核未通过，开始第 ${rewriteRounds}/${maxRewriteRounds} 次 ${revisionPlan.mode} 重写`,
-        revisionPlan.hints.slice(0, 3)
-      );
     }
 
     const { commit, receipt } = await this.commitService.commit({
@@ -638,6 +587,134 @@ export class LongFormWritingEngine {
       receipt,
       rewriteRounds,
       ...(researchSummary ? { research: researchSummary } : {}),
+      ...(writerSummary ? { writer: writerSummary } : {}),
+    };
+  }
+
+  /** Step A：整章起草 + 补字。瞬态错误（网络/截断）步骤级重试，持久错误冒泡。 */
+  private async draftChapter(
+    plan: ScenePlan,
+    context: ContextPack,
+    ctx: ReviewContext,
+    revisionPlan: RevisionPlan | undefined,
+    rewriteRounds: number
+  ): Promise<SceneDraft[]> {
+    const { input, writeInput, contracts } = ctx;
+    return runStepWithTransientRetry(
+      async (attempt: number) => {
+        // 截断/空响应重试时注入引导：让模型这次输出完整 JSON 与全章正文，而非原样盲发。
+        // attempt=0 是首次调用，不追加；attempt>=1 是瞬态重试，追加截断引导。
+        const draftRevisionPlan =
+          attempt > 0
+            ? ({
+                mode: revisionPlan?.mode ?? 'repair',
+                hints: [
+                  ...(revisionPlan?.hints ?? []),
+                  '上次输出被截断或返回了空内容。请务必一次性输出完整的 JSON 对象，paragraphs 数组必须包含完整的正文段落，不要中途停笔，不要返回空字符串。',
+                ],
+                ...(revisionPlan?.minWords ? { minWords: revisionPlan.minWords } : {}),
+                ...(revisionPlan?.maxWords ? { maxWords: revisionPlan.maxWords } : {}),
+              } satisfies RevisionPlan)
+            : revisionPlan;
+        const d = await this.draftEngine.draft(plan, context, {
+          targetWordCount: writeInput.targetWordCount,
+          revisionPlan: draftRevisionPlan,
+          rewriteRound: draftRevisionPlan ? Math.max(1, rewriteRounds) : undefined,
+          // 跨章收尾去重：把最近几章的结尾句摆到模型眼前（详见 extractRecentEndingSnippets）
+          recentEndingSnippets: extractRecentEndingSnippets(
+            input.recentScenes,
+            contracts.chapter.chapterNumber
+          ),
+          // 上章结尾仲裁：CBN 是规划语句，与上章正文事实冲突时以后者为准
+          previousChapterEnding: input.previousChapterEnding,
+          // 完整角色库（未被 context 压缩筛选），注入 prompt 白名单约束名字一致性
+          knownCharacterNames: extractCharacterNames(input.state.entities),
+          allowedAppearanceNames: extractAllowedAppearanceNames(
+            input.state.entities,
+            contracts.chapter.allowedCharacterNames
+          ),
+          futureReveals: contracts.chapter.futureReveals ?? [],
+          // 大纲链路的章节标题已是正式标题，模型再拟一个也会被 pipeline 丢弃
+          existingChapterTitle: isPlaceholderChapterTitle(contracts.chapter.title)
+            ? undefined
+            : contracts.chapter.title,
+        });
+        // 提交前进补字：避免 SQLite accepted 后仍只有 ~900 字
+        return this.padDraftsToTarget(d, writeInput);
+      },
+      { label: 'draft+pad', maxRetries: 1 }
+    );
+  }
+
+  /**
+   * Step B/C：事实提取 → canonicalize → 语义审查 → 确定性门禁叠加。
+   * 初稿、legacy 重写与 agent 的 run_checks 全部走这一个函数——审查口径唯一。
+   */
+  private async reviewDrafts(
+    drafts: SceneDraft[],
+    ctx: ReviewContext
+  ): Promise<ChapterReviewOutcome> {
+    const { input, writeInput, contracts } = ctx;
+
+    // Step B：事实提取单独重试。审查失败时保留 drafts 和 facts，不重复付费提取。
+    // 命运宣告入账全权归 AI 提取合同（2026-09-02 agent 化重构：确定性候选网
+    // 与仲裁槽退役，词表打地鼠打法终止——见 docs/agent-loop-refactor.md）。
+    const rawFacts = await runStepWithTransientRetry(
+      async (_attempt: number) =>
+        this.dependencies.factExtractor.extract({
+          projectId: input.projectId,
+          chapterNumber: contracts.chapter.chapterNumber,
+          sceneDrafts: drafts,
+          state: input.state,
+          overlay: input.overlay,
+        }),
+      { label: 'fact-extraction', maxRetries: 2 }
+    );
+    const canonical = canonicalizeExtractedFacts({
+      facts: rawFacts,
+      state: input.state,
+      drafts,
+      overlay: input.overlay,
+      // 章号传给 canonicalize：新角色实体的 introducedInChapter 记录实际章号
+      chapterNumber: contracts.chapter.chapterNumber,
+    });
+    const facts: ExtractedFacts = canonical.facts;
+
+    // Step C：只重试连续性/语义审查。耗尽后标记为 review_unavailable，
+    // 让批量层停止当前章，而不是重新起草整章。
+    let report: ContinuityReport;
+    try {
+      report = await runStepWithTransientRetry(
+        async (_attempt: number) =>
+          this.validator.validate({
+            contracts,
+            state: canonical.stateForValidation,
+            drafts,
+            facts: canonical.facts,
+            payoffCandidates: writeInput.payoffCandidates,
+            // 上章结尾给判官做「重置登场」在场连续性判定（ch8→9 类断裂根治）
+            prevChapterTail: input.previousChapterEnding,
+          }),
+        { label: 'semantic-review', maxRetries: 2 }
+      );
+    } catch (error) {
+      if (isAbortLike(error)) throw error;
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        detail.includes('[review-unavailable]')
+          ? detail
+          : `[review-unavailable] 语义审查不可用：${detail}`,
+        { cause: error }
+      );
+    }
+
+    return {
+      facts,
+      report: applyDeterministicGates(report, drafts, {
+        targetWordCount: writeInput.targetWordCount ?? 0,
+        previousChapterEnding: input.previousChapterEnding,
+        chapterNumber: contracts.chapter.chapterNumber,
+      }),
     };
   }
 

@@ -3,23 +3,14 @@
  *
  * 覆盖：
  * - inspectOutlineQuality：占位事件 / 模板话术 / 禁区全块复制 / 卷卖点未覆盖 / 区间断档 / 括号未配对 六类质检
- * - reviewAndFixOutline：初稿无问题不发请求 / 修正改善则采用 / 未改善回退 / 解析失败回退 / 异常回退 / abort 上抛
+ * - parseChapterRange：区间解析
+ * （「审查+修正」整份重写请求已由大纲 agent 回合取代，见 agent/__tests__/OutlineAgent.test.ts）
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import type { ExecutableOutline } from '../../types/executable-outline';
 
-// mock 解析器：reviewAndFixOutline 内部的初稿/修正稿解析结果由测试控制
-const parseExpandedOutlineMock = vi.fn();
-vi.mock('../../parser/expanded-outline-parser', () => ({
-  parseExpandedOutline: (...args: unknown[]) => parseExpandedOutlineMock(...args),
-}));
-
-import {
-  inspectOutlineQuality,
-  parseChapterRange,
-  reviewAndFixOutline,
-} from '../outline-reviewer';
+import { inspectOutlineQuality, parseChapterRange } from '../outline-reviewer';
 
 function makeBlock(overrides: Record<string, unknown> = {}) {
   return {
@@ -204,12 +195,6 @@ function makeStructurallyCompleteOutline(): ExecutableOutline {
   }));
   return outline;
 }
-
-const DIRECTION = { name: '测试方向', description: '测试' } as never;
-
-beforeEach(() => {
-  parseExpandedOutlineMock.mockReset();
-});
 
 describe('inspectOutlineQuality', () => {
   it('劣化大纲命中全部五类问题', () => {
@@ -465,202 +450,5 @@ describe('parseChapterRange', () => {
   it('非法区间返回 null', () => {
     expect(parseChapterRange('第1章')).toBeNull();
     expect(parseChapterRange('')).toBeNull();
-  });
-});
-
-describe('reviewAndFixOutline', () => {
-  it('初稿无法解析：跳过修正', async () => {
-    parseExpandedOutlineMock.mockReturnValue(null);
-    const result = await reviewAndFixOutline({
-      initialRawText: '不是合法大纲',
-      direction: DIRECTION,
-      callStructuredTextMode: vi.fn(),
-    });
-    expect(result.applied).toBe(false);
-    expect(result.rawText).toBe('不是合法大纲');
-    expect(result.warnings.join('')).toContain('跳过');
-  });
-
-  it('初稿零问题：不发修正请求', async () => {
-    parseExpandedOutlineMock.mockReturnValue(makeCleanOutline());
-    const call = vi.fn();
-    const result = await reviewAndFixOutline({
-      initialRawText: '干净稿',
-      direction: DIRECTION,
-      callStructuredTextMode: call,
-    });
-    expect(call).not.toHaveBeenCalled();
-    expect(result.applied).toBe(false);
-    expect(result.warnings).toEqual([]);
-  });
-
-  it('修正稿改善：采用修正稿', async () => {
-    // 第 1 次解析 = 初稿（劣化）；第 2 次解析 = 修正稿（干净）
-    parseExpandedOutlineMock
-      .mockReturnValueOnce(makeDirtyOutline())
-      .mockReturnValueOnce(makeCleanOutline());
-    const fixedRaw = '修正后的完整大纲';
-    const result = await reviewAndFixOutline({
-      initialRawText: '初稿',
-      direction: DIRECTION,
-      callStructuredTextMode: vi.fn().mockResolvedValue(fixedRaw),
-    });
-    expect(result.applied).toBe(true);
-    expect(result.rawText).toBe(fixedRaw);
-    expect(result.warnings.join('')).toContain('修复');
-  });
-
-  it('修正稿未改善：回退初稿', async () => {
-    parseExpandedOutlineMock
-      .mockReturnValueOnce(makeDirtyOutline())
-      .mockReturnValueOnce(makeDirtyOutline()); // 修正稿同样劣化
-    const result = await reviewAndFixOutline({
-      initialRawText: '初稿',
-      direction: DIRECTION,
-      callStructuredTextMode: vi.fn().mockResolvedValue('没修好'),
-    });
-    expect(result.applied).toBe(false);
-    expect(result.rawText).toBe('初稿');
-    expect(result.warnings.join('')).toContain('未提升');
-  });
-
-  it('完整初稿的修正稿发生截断时，必须回退完整初稿', async () => {
-    parseExpandedOutlineMock
-      .mockReturnValueOnce(makeStructurallyCompleteOutline())
-      .mockReturnValueOnce(makeCleanOutline());
-    const result = await reviewAndFixOutline({
-      initialRawText: '完整但有内容问题的初稿',
-      direction: DIRECTION,
-      callStructuredTextMode: vi.fn().mockResolvedValue('被截断的修正稿'),
-    });
-
-    expect(result.applied).toBe(false);
-    expect(result.rawText).toBe('完整但有内容问题的初稿');
-    expect(result.warnings.join('')).toContain('结构完整性退化');
-  });
-
-  it('修正稿解析失败：回退初稿', async () => {
-    parseExpandedOutlineMock.mockReturnValueOnce(makeDirtyOutline()).mockReturnValueOnce(null);
-    const result = await reviewAndFixOutline({
-      initialRawText: '初稿',
-      direction: DIRECTION,
-      callStructuredTextMode: vi.fn().mockResolvedValue('无法解析的修正稿'),
-    });
-    expect(result.applied).toBe(false);
-    expect(result.rawText).toBe('初稿');
-  });
-
-  it('修正请求异常：回退初稿并给 warning', async () => {
-    parseExpandedOutlineMock.mockReturnValue(makeDirtyOutline());
-    const result = await reviewAndFixOutline({
-      initialRawText: '初稿',
-      direction: DIRECTION,
-      callStructuredTextMode: vi.fn().mockRejectedValue(new Error('schema 结构校验失败')),
-    });
-    expect(result.applied).toBe(false);
-    expect(result.rawText).toBe('初稿');
-    expect(result.warnings.join('')).toContain('回退');
-  });
-
-  it('修正请求瞬态错误（429/5xx）：指数退避重试后成功，不再一次失败即放弃', async () => {
-    vi.useFakeTimers();
-    try {
-      parseExpandedOutlineMock
-        .mockReturnValueOnce(makeDirtyOutline())
-        .mockReturnValueOnce(makeCleanOutline());
-      const call = vi
-        .fn()
-        .mockRejectedValueOnce(new Error('API 请求失败: 524 Gateway Timeout'))
-        .mockRejectedValueOnce(new Error('API 请求失败: 429 Too Many Requests'))
-        .mockResolvedValue('修正后的完整大纲');
-      const pending = reviewAndFixOutline({
-        initialRawText: '初稿',
-        direction: DIRECTION,
-        callStructuredTextMode: call,
-      });
-      // 两次退避（429 限流 15s + 30s）用假时钟推进，不真等
-      await vi.advanceTimersByTimeAsync(60_000);
-      const result = await pending;
-      expect(call).toHaveBeenCalledTimes(3);
-      expect(result.applied).toBe(true);
-      expect(result.rawText).toBe('修正后的完整大纲');
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('修正请求瞬态错误连续 3 次耗尽：软失败回退初稿，warning 带重试语义', async () => {
-    vi.useFakeTimers();
-    try {
-      parseExpandedOutlineMock.mockReturnValue(makeDirtyOutline());
-      const call = vi.fn().mockRejectedValue(new Error('API 请求失败: 503 Service Unavailable'));
-      const pending = reviewAndFixOutline({
-        initialRawText: '初稿',
-        direction: DIRECTION,
-        callStructuredTextMode: call,
-      });
-      await vi.advanceTimersByTimeAsync(30_000);
-      const result = await pending;
-      expect(call).toHaveBeenCalledTimes(3);
-      expect(result.applied).toBe(false);
-      expect(result.rawText).toBe('初稿');
-      expect(result.warnings.join('')).toContain('回退');
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('修正请求持久错误（4xx/schema）：不重试，一次即软失败回退', async () => {
-    parseExpandedOutlineMock.mockReturnValue(makeDirtyOutline());
-    const call = vi.fn().mockRejectedValue(new Error('API 请求失败: 401 Unauthorized'));
-    const result = await reviewAndFixOutline({
-      initialRawText: '初稿',
-      direction: DIRECTION,
-      callStructuredTextMode: call,
-    });
-    expect(call).toHaveBeenCalledTimes(1);
-    expect(result.applied).toBe(false);
-    expect(result.rawText).toBe('初稿');
-  });
-
-  it('裸 AbortError（网关断流，无 signal）：按瞬态语义重试，耗尽后原样上抛', async () => {
-    // 对齐 callStepWithRetry / unified-generator 的 AbortError 三态归一：signal 未 abort 的
-    // AbortError 是连接层断流（timeout，可重试），不是用户取消——用户取消只可能来自 signal。
-    vi.useFakeTimers();
-    try {
-      parseExpandedOutlineMock.mockReturnValue(makeDirtyOutline());
-      const call = vi
-        .fn()
-        .mockRejectedValue(new DOMException('Aborted', 'AbortError'));
-      const pending = reviewAndFixOutline({
-        initialRawText: '初稿',
-        direction: DIRECTION,
-        callStructuredTextMode: call,
-      });
-      pending.catch(() => undefined); // 防止未处理拒绝告警
-      await vi.advanceTimersByTimeAsync(30_000);
-      await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
-      expect(call).toHaveBeenCalledTimes(3);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('用户取消（signal 已 abort 的 AbortError）：立即上抛，不进重试', async () => {
-    parseExpandedOutlineMock.mockReturnValue(makeDirtyOutline());
-    const controller = new AbortController();
-    controller.abort();
-    const call = vi
-      .fn()
-      .mockRejectedValue(new DOMException('Aborted', 'AbortError'));
-    await expect(
-      reviewAndFixOutline({
-        initialRawText: '初稿',
-        direction: DIRECTION,
-        options: { signal: controller.signal } as never,
-        callStructuredTextMode: call,
-      })
-    ).rejects.toMatchObject({ name: 'AbortError' });
-    expect(call).toHaveBeenCalledTimes(1);
   });
 });

@@ -5,10 +5,7 @@
  */
 
 import { useProjectStore } from '@/stores/project.store';
-import type {
-  ChapterPersistenceClient,
-  MemoryClient,
-} from '@/services/orchestrator';
+import type { ChapterPersistenceClient, MemoryClient } from '@/types/chapter-pipeline';
 import type { Chapter } from '@/types/project';
 import { DeAIService } from './de-ai-service';
 import { countWords } from './utils';

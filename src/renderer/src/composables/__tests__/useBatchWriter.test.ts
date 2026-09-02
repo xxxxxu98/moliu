@@ -73,21 +73,6 @@ vi.mock('@/services/writing/de-ai-service', () => ({
   },
 }));
 
-vi.mock('@/services/writing/writing-task-builder', () => ({
-  createTaskBookBuilder: vi.fn().mockReturnValue({
-    buildTaskBook: vi.fn().mockResolvedValue({
-      CBN: '',
-      CPNs: [],
-      CEN: '',
-      mustCover: [],
-      forbiddenZones: [],
-      styleGuidance: { pacingStrategy: '' },
-      endingSensation: '',
-      openQuestion: '',
-    }),
-  }),
-}));
-
 vi.mock('@/services/review/review-service', () => ({
   reviewChapter: vi.fn().mockResolvedValue({
     overall: { blockingCount: 0, summary: '' },

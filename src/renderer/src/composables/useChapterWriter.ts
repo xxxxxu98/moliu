@@ -45,10 +45,6 @@ import {
   buildSupplementPrompt as sharedBuildSupplementPrompt,
 } from '@/services/writing/supplement';
 import {
-  createTaskBookBuilder,
-  type WritingTaskBuilder,
-} from '@/services/writing/writing-task-builder';
-import {
   blockingReview,
   canProceedToPolish,
   getBlockingIssuesToFix,

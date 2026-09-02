@@ -4,6 +4,9 @@
 > 日期:2026-08-29(方案定稿)/2026-08-30(P0-P2 落地 + v1.0 验收 + v1.1 迭代复验)
 > 范围:`ChapterWritingPipeline → LongFormWritingEngine → SceneDraftEngine` 正文续写主链路
 > 关联:`docs/topic-discovery-refactor.md`(重构文档先例)、`docs/development-guidelines.md`
+>
+> **2026-09-02 更新**:检索回合已转为**生产常开**,`MOLIU_AGENT_RESEARCH` 开关与 StateDriven 降级链
+> 均已删除;下文提到该开关与"App 默认关"的段落为历史记录。后续演进见 `docs/agent-architecture-refactor.md`。
 
 ## 实施落地记录(2026-08-30)
 
@@ -19,7 +22,7 @@
   - 实验组 `ab-agent`:**91+ 章零内容熔断**(被 vitest 超时墙在 ch92 附近杀死,非内容问题,超时墙已加 ×1.6 agent 系数修复),91 章接受,首过率 0.813,paraCv 0.322(AI 腔章 5 vs 基线 8)。
   - 检索回合行为:96 次运行,84 次 model-finish,**降级率 12.5%**(budget 7 / protocol-error 4 / stall 1),平均 11.0 轮、9.8 次工具调用、52s/章,六工具全用。
   - **门禁判定(§11)**:质量与稳健性全过(首过率/AI 味不回归,熔断 0 vs 1,正向);**墙钟 +51%/章(目标 ≤35%)与降级率 12.5%(目标 <5%)两项未达**。结论:**继续迭代后复验**,不做全量转正。迭代项:① `AGENT_RESEARCH_TIMEOUT_MS`/token 预算默认放宽(240s/60k 偏紧,budget 降级是最大超额来源);② 检索耗时收敛(基底已含信息提示收紧、工具返回裁剪、v2 检索与规划并行);③ S1 深审补测(矩阵版 triage 不适配单跑布局,需书审或适配脚本)。
-  - 验收对比脚本:`scripts/agent-ab-compare.mjs`(用法 `node scripts/agent-ab-compare.mjs <agent后缀>`,基线固定 ab-base)。
+  - 验收对比脚本:`scripts/agent-ab-compare.mjs`(用法 `node scripts/agent-ab-compare.mjs <实验组后缀> [基线后缀=ab-base] [--window=N]`,含检索/改稿两类回合统计)。
 
 ## 迭代 v1.1(2026-08-30 晚,针对首轮验收两项未达)
 
@@ -61,7 +64,7 @@
   - `services/writing/chapter-commit.ts` + 其测试(仅测试引用;注意 `outline/contracts/chapter-commit.ts` 是另一个同名活文件,未动);
   - `services/writing/rag-service.ts`:运行时零引用,其 4 个向量服务接口迁入唯一消费者 `services/retrieval/HybridRetriever.ts` 后删除。
 - **保留并标注**(生产 import 链在,运行时集中在 preload 恒暴露 storyRuntime 下不可达的 StateDriven 降级分支):`services/context|state|generation|retrieval`、`services/writing/context-manager|prompt-builder|memory-*`(仍被编辑器 AIPanel 的 useChapterWriter/useBatchWriter 生产链使用)。这些是后续"编辑器链迁移 + 降级分支裁剪"专项的素材,本轮不动。
-- **验收工具转正**:`scripts/agent-ab-compare.mjs`(用法 `node scripts/agent-ab-compare.mjs <agent后缀>`,基线固定 ab-base)。
+- **验收工具转正**:`scripts/agent-ab-compare.mjs`(用法 `node scripts/agent-ab-compare.mjs <实验组后缀> [基线后缀=ab-base] [--window=N]`,含检索/改稿两类回合统计)。
 
 ---
 

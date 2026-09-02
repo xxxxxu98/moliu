@@ -1,35 +1,7 @@
 /**
- * Contract System - Barrel Export
- * 契约系统统一导出
+ * 大纲契约 barrel：zod 定义的故事契约 / 卷契约类型与工厂。
+ * 现仅被卷节拍 / 卷时间线提示词（ProOutliner）以类型形式消费；主链走 `types/executable-outline`。
  */
 
-// Types
 export * from './story-contract';
 export * from './volume-contract';
-export * from './chapter-commit';
-
-// Contract factories
-export {
-  createContractMeta,
-  createDefaultStoryContract,
-  createValidationResult,
-  createViolation,
-  createWarning,
-  validateStrandRatio,
-  getStrandSummary,
-} from './story-contract';
-
-export {
-  createDefaultVolumeContract,
-  generateTimelineFromBeats,
-  calculateBeatChapterRange,
-  generateDefaultBeatTable,
-  BEAT_NODE_ORDER,
-} from './volume-contract';
-
-export {
-  createDefaultChapterCommit,
-  commitToBrief,
-  determineNodeType,
-  generateDefaultNodes,
-} from './chapter-commit';

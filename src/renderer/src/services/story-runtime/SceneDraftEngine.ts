@@ -12,6 +12,7 @@ import type {
 import { CHAPTER_TITLE_PROMPT_RULES, normalizeGeneratedChapterTitle } from '@/services/writing/chapterTitle';
 import { MAX_WORD_THRESHOLD, MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
 
+import { CHAPTER_STRUCTURE_RULES, CHAPTER_STYLE_RULES } from './proseRules';
 import { parseSchema, sceneDraftSchema } from './schemas';
 import { sanitizeSceneDraftParagraphs } from './stripDraftLeakage';
 
@@ -318,26 +319,10 @@ export class SceneDraftEngine {
         `- beatId 必须等于 "${primaryBeat.id}"`,
         ...titleRules,
         '- paragraphs 至少 1 段，写可直接入库的小说正文（中文）',
-        '- 必须一次写完全章：按 chapterBeats 顺序覆盖 CBN→CPNs→CEN，情节只向前推进',
-        '- 【本章范围】只兑现本章 CBN/CPNs/CEN；禁止提前写后续章高光（如后章才该发生的当堂对线、翻案完结、新实验高潮）',
-        '- 【节点原句禁抄】CBN/CPNs/CEN 是情节要求而非文本素材：禁止把任一节点的原句（≥10 字连续相同）照抄进正文，必须用自己的话把节点展开成有对话/动作/细节的场面',
-        '- 【禁区最高优先级】context 中 forbidden/forbiddenZones 的角色若被要求“不出场”，则该角色不得现身、说话、发声、传音、写信署名或被描述现场反应；只能用环境、无名身份称呼或允许出场的角色完成场景',
-        '- 【章末约束】最后一段必须落在 CEN 的后果/悬念上，停笔；不要再开新线或无因由再次入狱/失忆重来',
-        '- 【状态衔接】开场必须承接上下文中的上章终态（在狱/在逃/证据清单），禁止无视终态重复穿越醒来',
-        '- 【开章多样】禁止每章都用环境/天气/声音描写起手（如「深夜的XX内」「XX的寒风」）；开章可直接从人物动作、对话或冲突切入，与前一章的开章方式错开',
-        '- 【禁止】中途重新开场、重复穿越/醒来、重写已发生剧情、把同一事件换措辞再写一遍',
-        '- 【禁止】把章节拆成互不衔接的几段独立短文；段落之间必须文气连贯',
-        '- 【禁止台词重复】同一句台词/同一句话在本章内不得重复出现（包括章末回扣开篇钩子句）；若需强调，必须变换措辞、场景或由不同人物说出',
-        '- 【禁止章末复读】章末段落不得把本章或上文已写过的句子原样再写一遍作为收尾；章末应是新的悬念/后果，而非复读',
+        ...CHAPTER_STRUCTURE_RULES,
         ...recentEndingRules,
         ...previousEndingRules,
-        '- 【对话格式】人物说出的完整台词必须使用成对中文引号“”，开引号紧贴台词第一个字、收引号紧贴最后一个字；禁止使用半角引号"…"或『…』等其它包裹；禁止「说/喝/问道：」等提示语后不加引号直接裸接台词；禁止整章出现零对引号（只要有开口说话就必须有引号对）',
-        '- 【段落节奏】长短段必须交错：冲突爆发、反转、关键台词可独立成一两句的短段，铺垫叙述可用长段；禁止全章段落长度雷同（如清一色一百五十字上下的中长段），均匀节奏是机器腔',
-        '- 【对话分段】两人及以上对话时，每个说话人的台词（含伴随小动作）独立成段，一段只装一个说话人；禁止把多轮你问我答挤进同一段',
-        '- 【指代节奏】同一段内“他/他们”不得连续充当多个句子的主语；关键动作的执行者优先点名（姓名或身份称呼），让读者始终知道谁在动',
-        '- 【文风去模板】避免连续使用“不是A，而是B”“像是/仿佛”解释情绪；优先用人物动作、选择和具体感官呈现',
-        '- 【套话轮换】“居高临下地”“小心翼翼地”“眼中闪过一丝”“嘴角勾起一抹”“深吸了一口气”这类高频修饰语全章至多各用一次；需要同类效果时改写为具体动作或直接删掉修饰语',
-        '- 【高频词硬配额】「瞬间」「缓缓」「微微」「如同」「一丝」「一抹」六个词全章各至多出现 2 次，且不得在相邻两段重复使用同一词；百章实测它们是 AI 腔的最大来源（单书「瞬间」达 226 次），超配额时用具体时长/动作/比喻替换（如「瞬间」→「话音未落」「眨眼的工夫」「不等X反应」）',
+        ...CHAPTER_STYLE_RULES,
         '- paragraphs 数组元素只能是小说正文，禁止写入 sceneId/beatId/candidateEvents 等字段名，禁止写入 ] } : 等 JSON 骨架',
         '- candidateEvents 只填 id 列表（从 allowedCandidateEventIds 中选），禁止重复粘贴 summary',
         ...wordCountRules,

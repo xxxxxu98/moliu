@@ -29,21 +29,14 @@ import { buildDirectionPrompt } from '../prompts/system/direction-prompt';
 import { generateExpandedOutlineInSteps } from './outline-stepper';
 import { parseDirections } from '../parser/direction-parser';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
-import { inspectOutlineQuality, reviewAndFixOutline } from './outline-reviewer';
 import {
   hasStructuralOutlineBlockers,
   inspectOutlineCompleteness,
   OUTLINE_COMPLETENESS_POLICY,
 } from '../validation/outlineCompleteness';
-import {
-  completeIncompleteOutline,
-  findUnregisteredCharacterNames,
-  findUnregisteredLocationNames,
-  repairChapterBlueprints,
-  repairUnregisteredCharacters,
-  repairUnregisteredLocations,
-  sanitizeOutlineHookLengths,
-} from './outline-completer';
+import { completeIncompleteOutline, sanitizeOutlineHookLengths } from './outline-completer';
+import { runOutlineRepairAgent } from '../agent/OutlineAgent';
+import type { AgentLoopTransport, AgentMessage } from '@/services/story-runtime/agent/AgentLoopRunner';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 import { readPositiveIntEnv } from '@/utils/env';
 import { readWithIdleTimeout } from '@/utils/streamIdleWatchdog';
@@ -626,227 +619,37 @@ export class UnifiedOutlineGenerator {
           blockers = completeness.blockers.map(blocker => blocker.message);
         }
 
-        // 方案 A：初稿内容质检不通过时，发起一次"审查+修正"二次请求（低温稳定重出）。
-        // 修正稿解析失败 / 质量未提升 / 请求异常时回退初稿；
-        // 回退后仍会过最终硬门禁，不合格则禁止应用。
-        let appliedFixRawText: string | undefined;
+        // 结构补齐后的修复交给大纲 agent（docs/agent-architecture-refactor.md P3）：
+        // 模型按门禁结果读段/读章、局部改写、复检，blockers=0 才收尾。
+        // 进 agent 前先做零成本本地收缩（超长标题/CBN/CEN 是模型常态，省掉一轮往返）。
         if (outline && !severelyTruncated) {
-          onProgress?.('正在审查并修正大纲内容...');
-          const fix = await reviewAndFixOutline({
-            initialRawText: rawText,
+          const preSanitized = sanitizeOutlineHookLengths(rawText, outline);
+          if (preSanitized) {
+            outline = preSanitized.outline;
+            rawText = preSanitized.rawText;
+            warnings.push(...preSanitized.warnings);
+          }
+
+          const repaired = await runOutlineRepairAgent({
+            rawText,
+            outline,
             direction,
-            options: opts,
-            callStructuredTextMode: (system, user, callOpts) =>
-              this.callStructuredTextMode(system, user, callOpts, 'outline-review'),
+            transport: this.createAgentTransport(opts),
+            signal: opts.signal,
+            onProgress,
           });
-          if (fix.applied) {
-            const fixedOutline = parseExpandedOutline(fix.rawText);
-            if (fixedOutline) {
-              outline = fixedOutline;
-              appliedFixRawText = fix.rawText;
-              const fixedCompleteness = inspectOutlineCompleteness(fixedOutline);
-              severelyTruncated = !fixedCompleteness.canApply;
-              blockers = fixedCompleteness.blockers.map(blocker => blocker.message);
-            }
-          }
-          if (fix.warnings.length > 0) {
-            warnings.push(...fix.warnings);
-          }
-
-          // 章级缺陷不进审查请求，改为按批重写对应章节，避免二次请求重发全部逐章内容。
-          if (outline && fix.chapterIssueNumbers.length > 0) {
-            try {
-              const repaired = await repairChapterBlueprints({
-                rawText: appliedFixRawText ?? rawText,
-                outline,
-                direction,
-                options: opts,
-                callStructuredTextMode: (system, user, callOptions) =>
-                  this.callStructuredTextMode(system, user, callOptions, 'outline-expand'),
-                chapterNumbers: fix.chapterIssueNumbers,
-                phase: '定点修复',
-                onProgress,
-              });
-              const repairedOutline = repaired.outline;
-              const before = inspectOutlineQuality(outline).length;
-              const after = inspectOutlineQuality(repairedOutline).length;
-              if (after <= before) {
-                outline = repairedOutline;
-                appliedFixRawText = repaired.rawText;
-              } else {
-                warnings.push(`单章蓝图定点修复后质量未提升（${before}→${after} 处问题），保留原稿`);
-              }
-              warnings.push(...repaired.warnings);
-            } catch (error) {
-              if (isUserCancelled(error, opts.signal)) throw error;
-              const message = error instanceof Error ? error.message : String(error);
-              warnings.push(`单章蓝图定点修复失败：${message.slice(0, 160)}`);
-            }
-          }
-
-          // 修正请求失败或回退初稿时也必须重新执行最终硬门禁，格式不合格不得应用。
-          let finalCompleteness = inspectOutlineCompleteness(outline);
-
-          // 门禁的章级阻断项（钩子/标题超长、CPN 数量、占位标题等）此前没有定点修复通道，
-          // 只能整份大纲重新生成——而模型钩子超几个字是常态，重来一次仍会踩同类问题，
-          // 一轮就是 20 分钟且基本不收敛。这里先按章重写，重写不掉才升级为整体重试。
-          //
-          // 先做零成本本地 sanitize：标题/CBN/CEN 超长按分句收缩（2026-08-15 冒烟 22/50 章
-          // 超长 1-16 字，全部可本地收口），只有 sanitize 处理不了的章才进 AI 定点修复。
-          if (!finalCompleteness.canApply) {
-            // 基底必须取修正稿：sanitize 会整份重解析文本，用初稿 rawText 会把
-            // review 修正成果（如已收缩的开篇钩子）静默回退成初稿版本。
-            const sanitized = sanitizeOutlineHookLengths(appliedFixRawText ?? rawText, outline);
-            if (sanitized) {
-              outline = sanitized.outline;
-              rawText = sanitized.rawText;
-              appliedFixRawText = undefined;
-              finalCompleteness = inspectOutlineCompleteness(outline);
-              warnings.push(...sanitized.warnings);
-              onProgress?.(
-                `本地收缩超长钩子后剩余阻断项 ${finalCompleteness.blockers.length} 项`,
-              );
-            }
-          }
-          const gateChapterNumbers = [
-            ...new Set(
-              finalCompleteness.blockers
-                .map(blocker => blocker.chapterNumber)
-                .filter((no): no is number => no !== undefined),
-            ),
-          ].sort((a, b) => a - b);
-          if (!finalCompleteness.canApply && gateChapterNumbers.length > 0) {
-            const issuesByChapter = new Map<number, string[]>();
-            for (const blocker of finalCompleteness.blockers) {
-              if (blocker.chapterNumber === undefined) continue;
-              const list = issuesByChapter.get(blocker.chapterNumber) ?? [];
-              list.push(blocker.message);
-              issuesByChapter.set(blocker.chapterNumber, list);
-            }
-            try {
-              const repaired = await repairChapterBlueprints({
-                rawText: appliedFixRawText ?? rawText,
-                outline,
-                direction,
-                options: opts,
-                callStructuredTextMode: (system, user, callOptions) =>
-                  this.callStructuredTextMode(system, user, callOptions, 'outline-expand'),
-                chapterNumbers: gateChapterNumbers,
-                phase: '定点修复',
-                onProgress,
-                issuesByChapter,
-              });
-              const repairedCompleteness = inspectOutlineCompleteness(repaired.outline);
-              if (repairedCompleteness.blockers.length < finalCompleteness.blockers.length) {
-                outline = repaired.outline;
-                appliedFixRawText = repaired.rawText;
-                finalCompleteness = repairedCompleteness;
-              } else {
-                warnings.push(
-                  `门禁章级缺陷定点修复后未减少（${finalCompleteness.blockers.length}→${repairedCompleteness.blockers.length} 项），保留原稿`,
-                );
-              }
-              warnings.push(...repaired.warnings);
-            } catch (error) {
-              if (isUserCancelled(error, opts.signal)) throw error;
-              const message = error instanceof Error ? error.message : String(error);
-              warnings.push(`门禁章级缺陷定点修复失败：${message.slice(0, 160)}`);
-            }
-          }
-
-          // 门禁的全局阻断项：卷纲/支线/伏笔引用了未登记角色（unknown-character-reference）。
-          // 分步生成中卷纲先于角色步产出，卷纲自创的姓名没被角色步骤全部登记是实测常态
-          // （2026-08-15 冒烟：26 个未登记角色把整份大纲拦在 fail-closed，只能整体重试）。
-          // 这里把姓名提取出来定向补登记，补不齐才交给外层整体重试。
-          if (!finalCompleteness.canApply) {
-            const unregisteredNames = findUnregisteredCharacterNames(finalCompleteness.blockers);
-            if (unregisteredNames.length > 0) {
-              try {
-                const repaired = await repairUnregisteredCharacters({
-                  rawText: appliedFixRawText ?? rawText,
-                  outline,
-                  direction,
-                  options: opts,
-                  callStructuredTextMode: (system, user, callOptions) =>
-                    this.callStructuredTextMode(system, user, callOptions, 'outline-expand'),
-                  names: unregisteredNames,
-                  onProgress,
-                });
-                const repairedCompleteness = inspectOutlineCompleteness(repaired.outline);
-                if (repairedCompleteness.blockers.length < finalCompleteness.blockers.length) {
-                  outline = repaired.outline;
-                  appliedFixRawText = repaired.rawText;
-                  finalCompleteness = repairedCompleteness;
-                } else {
-                  warnings.push(
-                    `未登记角色补登记后阻断项未减少（${finalCompleteness.blockers.length}→${repairedCompleteness.blockers.length} 项），保留原稿`,
-                  );
-                }
-                warnings.push(...repaired.warnings);
-              } catch (error) {
-                if (isUserCancelled(error, opts.signal)) throw error;
-                const message = error instanceof Error ? error.message : String(error);
-                warnings.push(`未登记角色补登记失败：${message.slice(0, 160)}`);
-              }
-            }
-          }
-
-          // 未登记地点定向补登记（unknown-location-reference，已降级为 warnings 非阻断）：
-          // 确定性修复（无 AI 调用），把卷纲/蓝图引用的表外地名补进核心地点子段。
-          // 2026-08-28 降级后不再以 canApply 为前提——命中即补，保持地点表完整。
-          {
-            const unregisteredLocations = findUnregisteredLocationNames([
-              ...finalCompleteness.blockers,
-              ...(finalCompleteness.warnings ?? []),
-            ]);
-            if (unregisteredLocations.length > 0) {
-              const repairedLocations = repairUnregisteredLocations({
-                rawText: appliedFixRawText ?? rawText,
-                outline,
-                locationNames: unregisteredLocations,
-              });
-              const repairedLocationCompleteness = inspectOutlineCompleteness(
-                repairedLocations.outline
-              );
-              const beforeCount =
-                finalCompleteness.blockers.length + (finalCompleteness.warnings ?? []).length;
-              const afterCount =
-                repairedLocationCompleteness.blockers.length +
-                (repairedLocationCompleteness.warnings ?? []).length;
-              if (afterCount < beforeCount) {
-                outline = repairedLocations.outline;
-                appliedFixRawText = repairedLocations.rawText;
-                finalCompleteness = repairedLocationCompleteness;
-              } else {
-                warnings.push(
-                  `未登记地点补登记后命中项未减少（${beforeCount}→${afterCount} 项），保留原稿`,
-                );
-              }
-              warnings.push(...repairedLocations.warnings);
-            }
-          }
-
-          // 修复链末道 sanitize：上面的章级定点修复/角色补登会整段重写文本，可能
-          // 重新引入超长钩子（2026-08-25 反重力矩阵实测：定点修复按「未登记地点」
-          // 违规重写 8 章，新稿 CBN/CEN 重新超长 26-27 字；blockers 11→9 净减被
-          // 采纳后终态 9 条超长阻断，直接 fail-closed 烧掉两轮整体重试）。这里
-          // 零成本再收缩一次，基底取最新修复稿（appliedFixRawText ?? rawText）。
-          if (!finalCompleteness.canApply) {
-            const finalSanitized = sanitizeOutlineHookLengths(
-              appliedFixRawText ?? rawText,
-              outline,
+          rawText = repaired.rawText;
+          outline = repaired.outline;
+          warnings.push(...repaired.warnings);
+          if (repaired.agentRan) {
+            warnings.push(
+              `大纲 agent:${repaired.finishReason},${repaired.stats.rounds} 轮 ${repaired.stats.toolCalls} 次工具调用,复检 ${repaired.checksUsed} 次`,
             );
-            if (finalSanitized) {
-              outline = finalSanitized.outline;
-              rawText = finalSanitized.rawText;
-              appliedFixRawText = undefined;
-              finalCompleteness = inspectOutlineCompleteness(outline);
-              warnings.push(...finalSanitized.warnings);
-            }
           }
 
-          severelyTruncated = !finalCompleteness.canApply;
-          blockers = finalCompleteness.blockers.map(blocker => blocker.message);
+          // agent 收束后的门禁结论即出口结论：agent 只采用校验过的稿，这里无需重跑
+          severelyTruncated = !repaired.completeness.canApply;
+          blockers = repaired.completeness.blockers.map(blocker => blocker.message);
         }
         for (const blocker of blockers) {
           if (!warnings.includes(blocker)) warnings.push(blocker);
@@ -854,8 +657,7 @@ export class UnifiedOutlineGenerator {
 
         return {
           outline,
-          // applied 时同步采用修正稿文本，避免 outline 与 rawText 错配
-          rawText: appliedFixRawText ?? rawText,
+          rawText,
           strategy: outline ? 'structured-text' : 'fallback',
           severelyTruncated,
           canApply: Boolean(outline) && !severelyTruncated,
@@ -1034,8 +836,31 @@ export class UnifiedOutlineGenerator {
     );
   }
 
+  /**
+   * 大纲 agent 回合的多轮传输通道：与 callStructuredTextMode 同一请求层
+   * （流式读回 / 超时 / max_tokens 与温度约束降级 / trace / 错误归一），
+   * 只是消息数组允许 assistant 角色。温度用辅助档 0.2（修复判定任务，非创作）。
+   * 冒烟与 App 都从这里拿 transport，是大纲 agent 的唯一注入点（单轨）。
+   */
+  private createAgentTransport(options: GenerateOptions): AgentLoopTransport {
+    return {
+      send: async (messages, sendOptions) => {
+        const data = await this.requestChatCompletion(
+          messages,
+          { ...options, temperature: 0.2, signal: sendOptions?.signal ?? options.signal },
+          'outline-agent',
+        );
+        const content = data.choices?.[0]?.message?.content;
+        if (typeof content !== 'string' || !content) {
+          throw new Error('API 未返回内容');
+        }
+        return content;
+      },
+    };
+  }
+
   private async requestChatCompletion(
-    messages: Array<{ role: 'system' | 'user'; content: string }>,
+    messages: AgentMessage[],
     options: GenerateOptions,
     purpose: OutlineTracePurpose = 'outline-markdown',
   ): Promise<any> {
@@ -1055,7 +880,12 @@ export class UnifiedOutlineGenerator {
     const tracer = this.getTracer(options);
     const startedAt = tracer ? Date.now() : 0;
     const systemText = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
-    const userText = messages.filter(m => m.role === 'user').map(m => m.content).join('\n\n');
+    // trace 的 prompt 字段：单轮请求即 user 正文；多轮 agent 回合记末条 user（工具结果）以免逐轮膨胀
+    const userMessages = messages.filter(m => m.role === 'user');
+    const userText =
+      messages.some(m => m.role === 'assistant')
+        ? (userMessages.at(-1)?.content ?? '')
+        : userMessages.map(m => m.content).join('\n\n');
 
     try {
       // max_tokens 超网关上限的 400（统一配 1M 时低上限网关会拒）：解析网关报的上限
@@ -1151,7 +981,7 @@ export class UnifiedOutlineGenerator {
   }
 
   private async doRequestChatCompletion(
-    messages: Array<{ role: 'system' | 'user'; content: string }>,
+    messages: AgentMessage[],
     options: GenerateOptions,
     config: { provider: ProviderType; apiKey: string; baseUrl: string; model?: string; generationConfig?: AIGenerationConfig },
     provider: ProviderType,
@@ -1175,10 +1005,11 @@ export class UnifiedOutlineGenerator {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          // 多轮对话：assistant 在 Gemini 协议里是 model 角色
           contents: messages
-            .filter((message) => message.role === 'user')
+            .filter((message) => message.role !== 'system')
             .map((message) => ({
-              role: 'user',
+              role: message.role === 'assistant' ? 'model' : 'user',
               parts: [{ text: message.content }],
             })),
           systemInstruction: {
@@ -1223,9 +1054,13 @@ export class UnifiedOutlineGenerator {
         .filter((message) => message.role === 'system')
         .map((message) => message.content)
         .join('\n\n');
-      const userContent = messages
-        .filter((message) => message.role === 'user')
-        .map((message) => ({ type: 'text', text: message.content }));
+      // 多轮对话：非 system 消息按原顺序保留角色，Anthropic 要求 user/assistant 交替
+      const conversation = messages
+        .filter((message) => message.role !== 'system')
+        .map((message) => ({
+          role: message.role,
+          content: [{ type: 'text', text: message.content }],
+        }));
       const model = config.model || 'claude-3-5-sonnet-20241022';
 
       const response = await fetch(`${resolvedBaseUrl}/v1/messages`, {
@@ -1239,7 +1074,7 @@ export class UnifiedOutlineGenerator {
         body: JSON.stringify({
           model,
           system: systemPrompt,
-          messages: [{ role: 'user', content: userContent }],
+          messages: conversation,
           temperature: options.temperature ?? config.generationConfig?.temperature ?? 0.7,
           top_p: options.topP ?? config.generationConfig?.topP ?? 0.9,
           ...(maxTokens ? { max_tokens: maxTokens } : {}),
