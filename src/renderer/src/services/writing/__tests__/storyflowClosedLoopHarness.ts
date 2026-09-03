@@ -41,6 +41,7 @@ import type { ExecutableOutline } from '@/services/outline/types/executable-outl
 import type { OutlineDirection } from '@/services/outline/types/direction';
 import type { GeneratedOutline } from '@/types/inspiration';
 import type { PlotNode, Project } from '@/types/project';
+import type { WriterRunSummary } from '@/types/story-runtime';
 import type { ProviderType } from '@/config/ai-providers';
 import { useProjectCreator } from '@/composables/useProjectCreator';
 import { useSettingsStore } from '@/stores/settings.store';
@@ -170,6 +171,70 @@ export function resolveStoryflowArtifactPaths(): StoryflowArtifactPaths {
       'storyflow-checkpoints',
       `${suffix || 'default'}.outline.json`
     ),
+  };
+}
+
+/**
+ * 解析 MOLIU_OUTLINE_CACHE。
+ * 支持裸 ExecutableOutline，或检查点包 `{version,prompt,…,outline}`。
+ * 旧 GeneratedOutline（title/volumes/chapters、无 storyEngine）必须拒绝：
+ * 适配器会读 `storyEngine.coreConflict`，形状不对会直接 TypeError。
+ */
+export function parseExecutableOutlineCache(raw: unknown, sourcePath: string): ExecutableOutline {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error(`MOLIU_OUTLINE_CACHE 不是 JSON 对象：${sourcePath}`);
+  }
+  const record = raw as Record<string, unknown>;
+  const nested = record.outline;
+  const candidate = (
+    nested && typeof nested === 'object' && !Array.isArray(nested) ? nested : record
+  ) as ExecutableOutline;
+  if (!candidate.storyEngine || !Array.isArray(candidate.volumePlan) || !candidate.startupPack30) {
+    const keys = Object.keys(record).slice(0, 12).join(',');
+    throw new Error(
+      `MOLIU_OUTLINE_CACHE 必须是裸 ExecutableOutline（含 storyEngine/volumePlan/startupPack30），` +
+        `或检查点包 {version,prompt,outline}。当前文件不是可执行大纲（keys=${keys}）：${sourcePath}`
+    );
+  }
+  const completeness = inspectOutlineCompleteness(candidate);
+  if (!completeness.canApply) {
+    const reasons = completeness.blockers
+      .slice(0, 3)
+      .map(blocker => blocker.message)
+      .join('；');
+    throw new Error(`MOLIU_OUTLINE_CACHE 未通过完整性门禁，拒绝复用：${reasons}（${sourcePath}）`);
+  }
+  return candidate;
+}
+
+/** 改稿 agent 回合落盘字段（初稿即通过为 null；供 A/B 脚本按 writer 维度统计） */
+export interface StoryflowWriterSummary {
+  finishReason: WriterRunSummary['finishReason'];
+  checksUsed: number;
+  revertedUnchecked: boolean;
+  rounds: number;
+  toolCalls: number;
+  byTool: Record<string, number>;
+  ms: number;
+}
+
+/**
+ * 从 LongForm 结果抽出 writer 摘要。初稿即过 / 未注入 writerAgent 时返回 null。
+ * 终态 summary 与中途 checkpoint 必须走同一函数，避免测试落盘把 writer 字段覆盖掉。
+ */
+export function summarizeWriterRun(
+  result: { writer?: WriterRunSummary } | undefined | null,
+): StoryflowWriterSummary | null {
+  const writer = result?.writer;
+  if (!writer) return null;
+  return {
+    finishReason: writer.finishReason,
+    checksUsed: writer.checksUsed,
+    revertedUnchecked: writer.revertedUnchecked,
+    rounds: writer.rounds,
+    toolCalls: writer.toolCalls,
+    byTool: writer.byTool,
+    ms: writer.ms,
   };
 }
 
@@ -681,7 +746,10 @@ export async function runStoryflowClosedLoop(
 
   const explicitCachedOutline =
     outlineCachePath && existsSync(outlineCachePath)
-      ? (JSON.parse(readFileSync(outlineCachePath, 'utf-8')) as ExecutableOutline)
+      ? parseExecutableOutlineCache(
+          JSON.parse(readFileSync(outlineCachePath, 'utf-8')) as unknown,
+          outlineCachePath,
+        )
       : null;
   let resumableOutline: ExecutableOutline | null = null;
   if (!explicitCachedOutline && resumeRequested && existsSync(artifactPaths.resumeOutlinePath)) {
@@ -963,18 +1031,7 @@ export async function runStoryflowClosedLoop(
             words: chapter.output.prose.length,
             attempts: chapter.output.attempts,
             rewriteRounds: chapter.output.longFormResult?.rewriteRounds ?? 0,
-            // 改稿 agent 回合摘要(初稿即通过时为 null);A/B 脚本按此统计 writer 维度
-            writer: chapter.output.longFormResult?.writer
-              ? {
-                  finishReason: chapter.output.longFormResult.writer.finishReason,
-                  checksUsed: chapter.output.longFormResult.writer.checksUsed,
-                  revertedUnchecked: chapter.output.longFormResult.writer.revertedUnchecked,
-                  rounds: chapter.output.longFormResult.writer.rounds,
-                  toolCalls: chapter.output.longFormResult.writer.toolCalls,
-                  byTool: chapter.output.longFormResult.writer.byTool,
-                  ms: chapter.output.longFormResult.writer.ms,
-                }
-              : null,
+            writer: summarizeWriterRun(chapter.output.longFormResult),
             gateIssues: (chapter.output.gateResult?.allIssues ?? []).map(issue => ({
               category: issue.category,
               severity: issue.severity,

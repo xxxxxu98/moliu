@@ -2,8 +2,7 @@
  * 文本相似度工具
  *
  * 用于跨轮次比对 issue / 提示等短文本是否"实质相同"：
- * - 连环重写熔断（{@link module:story-runtime/LongFormWritingEngine}）判定本轮与上轮 blocking
- *   issue 是否卡在同一问题，避免盲目重写烧预算。
+ * - 章界开场重演（`contractHealth.detectOpeningRepetitionIssue`）比对本章开头与上章结尾。
  *
  * 设计取舍：issue.message 常含动态数字（字数、章号）和易变片段（位置描述、证据引用），
  * 直接逐字比对会被这些噪音干扰。因此先做归一化（去标点 / 数字 / 空白），再算归一化编辑距离。

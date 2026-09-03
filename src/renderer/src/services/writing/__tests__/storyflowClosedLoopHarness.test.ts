@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Project, PlotNode } from '@/types/project';
-import { ensureStoryflowWritingCapacity } from './storyflowClosedLoopHarness';
+import {
+  ensureStoryflowWritingCapacity,
+  parseExecutableOutlineCache,
+  summarizeWriterRun,
+} from './storyflowClosedLoopHarness';
 
 function makeProject(): Project {
   const now = '2026-08-19T00:00:00.000Z';
@@ -164,6 +168,69 @@ describe('ensureStoryflowWritingCapacity', () => {
       rolledToChapter: 5,
       rolledCount: 3,
       placeholderCount: 0,
+    });
+  });
+});
+
+describe('parseExecutableOutlineCache', () => {
+  it('拒绝旧 GeneratedOutline（无 storyEngine），避免适配器读 coreConflict 崩掉', () => {
+    expect(() =>
+      parseExecutableOutlineCache(
+        {
+          title: '旧缓存',
+          genres: ['朝堂'],
+          synopsis: '简介',
+          volumes: [],
+          characters: [],
+          chapters: [],
+        },
+        'temp/outline-cache-p2writer.json',
+      ),
+    ).toThrow(/必须是裸 ExecutableOutline/);
+  });
+
+  it('检查点包缺 outline.storyEngine 时同样拒绝', () => {
+    expect(() =>
+      parseExecutableOutlineCache(
+        {
+          version: 1,
+          prompt: 'x',
+          outline: { title: '检查点', volumes: [], chapters: [] },
+        },
+        'temp/storyflow-checkpoints/default.outline.json',
+      ),
+    ).toThrow(/必须是裸 ExecutableOutline/);
+  });
+});
+
+describe('summarizeWriterRun', () => {
+  it('初稿即过或未注入 writerAgent 时返回 null', () => {
+    expect(summarizeWriterRun(undefined)).toBeNull();
+    expect(summarizeWriterRun(null)).toBeNull();
+    expect(summarizeWriterRun({})).toBeNull();
+  });
+
+  it('抽出改稿回合字段，供终态 summary 与 checkpoint 共用', () => {
+    expect(
+      summarizeWriterRun({
+        writer: {
+          finishReason: 'model-finish',
+          checksUsed: 1,
+          revertedUnchecked: false,
+          rounds: 3,
+          toolCalls: 4,
+          byTool: { run_checks: 1, revise_paragraphs: 1 },
+          ms: 1200,
+        },
+      }),
+    ).toEqual({
+      finishReason: 'model-finish',
+      checksUsed: 1,
+      revertedUnchecked: false,
+      rounds: 3,
+      toolCalls: 4,
+      byTool: { run_checks: 1, revise_paragraphs: 1 },
+      ms: 1200,
     });
   });
 });

@@ -11,7 +11,6 @@ vi.mock('@/services/outline/generators/unified-generator', () => ({
   UnifiedOutlineGenerator: class {
     generateDirections = generateDirectionsMock;
     expandDirection = expandDirectionMock;
-    generate = vi.fn();
   },
 }));
 

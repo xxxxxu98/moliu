@@ -3,8 +3,30 @@
  * 网文写作核心原则库 - 基于 oh-story 和 webnovel-writer 方法论
  */
 
-import type { CoolPointDensity, StrandConfig, ConflictLevel } from '../../contracts/story-contract';
 import { OUTLINE_COMPLETENESS_POLICY } from '../../validation/outlineCompleteness';
+
+/** 爽点密度（字数间隔） */
+interface CoolPointDensity {
+  micro: number;
+  small: number;
+  big: number;
+}
+
+/** 矛盾递进层级 */
+interface ConflictLevel {
+  level: number;
+  name: string;
+  description: string;
+  chapters: number[];
+  status: string;
+}
+
+/** 三线交织默认配置 */
+interface StrandConfig {
+  quest: { ratio: number; status: string; currentArc: string };
+  fire: { ratio: number; status: string; currentStage: string };
+  constellation: { ratio: number; status: string; revealedLocations: string[] };
+}
 
 /**
  * 核心信念

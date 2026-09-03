@@ -87,8 +87,6 @@ const {
   error: generationError,
   progress: generationProgress,
   warnings: outlineWarnings,
-  outlines: generatedOutlines,
-  generateOutlines,
   generateDirections,
   expandDirection,
   reset: resetOutlineState,
@@ -294,8 +292,6 @@ function buildDirectionScaleHint(wordCountRange: string, direction: OutlineDirec
     enhancementBrief,
   };
 }
-
-const isDirectionMode = computed(() => activeTab.value === 'wizard' || activeTab.value === 'custom');
 
 const directionCards = computed(() => {
   return generatedDirections.value
@@ -560,23 +556,12 @@ async function handleGenerateOutlines() {
   selectedOutline.value = null;
   expandedOutline.value = null;
 
-  if (isDirectionMode.value) {
-    generatedDirections.value = await generateDirections(promptPreview.value, {
-      wordCountRange: selectedWordCountRange.value,
-    });
-    selectedDirection.value = generatedDirections.value[0] ?? null;
-
-    if (generatedDirections.value.length > 0) {
-      clearDraft();
-    }
-    return;
-  }
-
-  await generateOutlines(promptPreview.value, {
+  generatedDirections.value = await generateDirections(promptPreview.value, {
     wordCountRange: selectedWordCountRange.value,
   });
+  selectedDirection.value = generatedDirections.value[0] ?? null;
 
-  if (generatedOutlines.value && generatedOutlines.value.length > 0) {
+  if (generatedDirections.value.length > 0) {
     clearDraft();
   }
 }

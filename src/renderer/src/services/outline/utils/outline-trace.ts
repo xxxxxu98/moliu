@@ -16,7 +16,6 @@
  */
 
 export type OutlineTracePurpose =
-  | 'outline-markdown'   // generate() 单次 markdown 生成
   | 'outline-direction'  // generateDirections()
   | 'outline-expand'     // expandDirection()
   | 'outline-agent'      // OutlineAgent 多轮修复回合（每轮一条）

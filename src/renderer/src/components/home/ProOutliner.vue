@@ -1,7 +1,6 @@
 <script setup lang="ts">
 /**
- * ProOutliner - 专业大纲系统
- * 整合五步大纲法、卷节拍表、卷时间线等高级功能
+ * ProOutliner - 专业大纲：五步大纲法 → expandDirection（与 QuickStart 同路径）
  */
 import { ref, computed, watch, onMounted } from 'vue';
 import {
@@ -16,8 +15,6 @@ import {
   Layers,
   User,
   Zap,
-  Clock,
-  FileText,
   ArrowRight,
   ListChecks,
   TrendingUp,
@@ -41,12 +38,6 @@ import {
   isAllStepsComplete,
   getProgressPercentage,
 } from '@/data/five-step-outline';
-import {
-  buildVolumeBeatPrompt,
-  buildTimelinePrompt,
-  type VolumeBeatPromptOptions,
-  type TimelinePromptOptions,
-} from '@/services/outline/prompts';
 import type { GeneratedOutline } from '@/types/inspiration';
 import { useOutlineGenerator } from '@/composables/useOutlineGenerator';
 import { useProjectCreator } from '@/composables/useProjectCreator';
@@ -96,8 +87,6 @@ const wordCountOptions = WORD_COUNT_OPTIONS.map((option) => ({
   value: option.value,
 }));
 
-// 激活的 Tab
-const activeTab = ref<'five-step' | 'volume' | 'timeline'>('five-step');
 
 // ============================================================
 // 五步大纲法状态
@@ -247,37 +236,6 @@ const fiveStepPrompt = ref('');
 const fiveStepResult = ref<GeneratedOutline | null>(null);
 const isGeneratingFiveStep = ref(false);
 
-// ============================================================
-// 卷节拍表状态
-// ============================================================
-const volumeData = ref({
-  volumeId: 1,
-  volumeTitle: '',
-  chapterStart: 1,
-  chapterEnd: 30,
-  coreConflict: '',
-  volumeClimax: '',
-  genre: '',
-  previousVolumeSummary: '',
-});
-
-const beatPrompt = ref('');
-const isGeneratingBeat = ref(false);
-
-// ============================================================
-// 卷时间线状态
-// ============================================================
-const timelineData = ref({
-  volumeId: 1,
-  volumeTitle: '第一卷',
-  beats: [] as any[],
-  baseline: '仙历3021年春',
-  hasCountdown: false,
-  countdownEvents: [] as { event: string; targetChapter: number; daysRemaining: number }[],
-});
-
-const timelinePrompt = ref('');
-const isGeneratingTimeline = ref(false);
 
 // ============================================================
 // 辅助函数
@@ -370,9 +328,6 @@ async function generateFiveStepOutline() {
       seedParts.push(`【参考模板（仅作方向参考，以用户上述意图为准）】\n${tcParts.join('\n')}`);
     }
 
-    if (volumeData.value.genre) {
-      seedParts.push(`【题材】${volumeData.value.genre}`);
-    }
 
     const seed = seedParts.join('\n\n');
 
@@ -453,71 +408,6 @@ async function applyFiveStepOutline() {
   }
 }
 
-// ============================================================
-// 卷节拍表生成
-// ============================================================
-async function generateVolumeBeat() {
-  if (!volumeData.value.volumeTitle || !volumeData.value.coreConflict) {
-    message.warning('请填写卷标题和核心冲突');
-    return;
-  }
-
-  isGeneratingBeat.value = true;
-
-  try {
-    const beatOptions: VolumeBeatPromptOptions = {
-      volumeId: volumeData.value.volumeId,
-      volumeTitle: volumeData.value.volumeTitle,
-      chapterStart: volumeData.value.chapterStart,
-      chapterEnd: volumeData.value.chapterEnd,
-      coreConflict: volumeData.value.coreConflict,
-      volumeClimax: volumeData.value.volumeClimax,
-      genre: volumeData.value.genre,
-      previousVolumeSummary: volumeData.value.previousVolumeSummary,
-    };
-
-    const { system, user } = buildVolumeBeatPrompt(beatOptions);
-    beatPrompt.value = system + '\n\n---\n\n' + user;
-
-    message.info('卷节拍表提示词已生成，请在下方查看');
-  } catch (error) {
-    message.error('生成失败: ' + (error as Error).message);
-  } finally {
-    isGeneratingBeat.value = false;
-  }
-}
-
-// ============================================================
-// 卷时间线生成
-// ============================================================
-async function generateTimeline() {
-  if (!timelineData.value.volumeTitle) {
-    message.warning('请填写卷标题');
-    return;
-  }
-
-  isGeneratingTimeline.value = true;
-
-  try {
-    const timelineOptions: TimelinePromptOptions = {
-      volumeId: timelineData.value.volumeId,
-      volumeTitle: timelineData.value.volumeTitle,
-      beats: timelineData.value.beats,
-      baseline: timelineData.value.baseline,
-      hasCountdown: timelineData.value.hasCountdown,
-      countdownEvents: timelineData.value.countdownEvents,
-    };
-
-    const { system, user } = buildTimelinePrompt(timelineOptions);
-    timelinePrompt.value = system + '\n\n---\n\n' + user;
-
-    message.info('卷时间线提示词已生成，请在下方查看');
-  } catch (error) {
-    message.error('生成失败: ' + (error as Error).message);
-  } finally {
-    isGeneratingTimeline.value = false;
-  }
-}
 
 // ============================================================
 // 重置
@@ -550,31 +440,6 @@ function resetFiveStep() {
   currentStep.value = 1;
 }
 
-function resetVolume() {
-  volumeData.value = {
-    volumeId: 1,
-    volumeTitle: '',
-    chapterStart: 1,
-    chapterEnd: 30,
-    coreConflict: '',
-    volumeClimax: '',
-    genre: '',
-    previousVolumeSummary: '',
-  };
-  beatPrompt.value = '';
-}
-
-function resetTimeline() {
-  timelineData.value = {
-    volumeId: 1,
-    volumeTitle: '第一卷',
-    beats: [],
-    baseline: '仙历3021年春',
-    hasCountdown: false,
-    countdownEvents: [],
-  };
-  timelinePrompt.value = '';
-}
 </script>
 
 <template>
@@ -587,43 +452,16 @@ function resetTimeline() {
         </div>
         <div>
           <h3 class="font-semibold text-gray-900 dark:text-white">专业大纲</h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400">五步大纲法 · 卷节拍表 · 卷时间线</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">五步大纲法</p>
         </div>
       </div>
     </div>
 
-    <!-- Tab Switcher -->
-    <div class="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
-      <button
-        class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-        :class="activeTab === 'five-step' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
-        @click="activeTab = 'five-step'"
-      >
-        <Target class="w-4 h-4" />
-        五步法
-      </button>
-      <button
-        class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-        :class="activeTab === 'volume' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
-        @click="activeTab = 'volume'"
-      >
-        <FileText class="w-4 h-4" />
-        节拍表
-      </button>
-      <button
-        class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-        :class="activeTab === 'timeline' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
-        @click="activeTab = 'timeline'"
-      >
-        <Clock class="w-4 h-4" />
-        时间线
-      </button>
-    </div>
 
     <!-- ============================================================ -->
     <!-- 五步大纲法 -->
     <!-- ============================================================ -->
-    <div v-if="activeTab === 'five-step'" class="space-y-4">
+    <div class="space-y-4">
       <!-- 步骤指示器 -->
       <div class="flex items-center gap-2 flex-wrap">
         <button
@@ -817,138 +655,5 @@ function resetTimeline() {
       </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- 卷节拍表 -->
-    <!-- ============================================================ -->
-    <div v-if="activeTab === 'volume'" class="space-y-4">
-      <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 space-y-4">
-        <h4 class="font-medium text-gray-900 dark:text-white">卷基本信息</h4>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">卷ID</label>
-            <input v-model.number="volumeData.volumeId" type="number" min="1" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">题材</label>
-            <input v-model="volumeData.genre" type="text" placeholder="如：玄幻、都市" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm" />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">卷标题</label>
-          <input v-model="volumeData.volumeTitle" type="text" placeholder="如：青云宗之变" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm" />
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">起始章节</label>
-            <input v-model.number="volumeData.chapterStart" type="number" min="1" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">结束章节</label>
-            <input v-model.number="volumeData.chapterEnd" type="number" min="1" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm" />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">核心冲突</label>
-          <textarea v-model="volumeData.coreConflict" rows="2" placeholder="本卷的核心矛盾是什么？" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm resize-none"></textarea>
-        </div>
-
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">卷末高潮</label>
-          <textarea v-model="volumeData.volumeClimax" rows="2" placeholder="本卷结尾的高潮场景" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm resize-none"></textarea>
-        </div>
-
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">上卷回顾（可选）</label>
-          <textarea v-model="volumeData.previousVolumeSummary" rows="2" placeholder="上一卷的主要情节" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm resize-none"></textarea>
-        </div>
-
-        <div class="flex gap-2 pt-2">
-          <NButton type="primary" :loading="isGeneratingBeat" @click="generateVolumeBeat">
-            <Sparkles class="w-4 h-4 mr-1" />
-            生成节拍表提示词
-          </NButton>
-          <NButton quaternary @click="resetVolume">
-            <RotateCcw class="w-4 h-4" />
-          </NButton>
-        </div>
-      </div>
-
-      <!-- 生成结果 -->
-      <div v-if="beatPrompt" class="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center gap-2 mb-2">
-          <Eye class="w-4 h-4 text-gray-500" />
-          <span class="text-xs font-medium text-gray-700 dark:text-gray-300">生成的提示词</span>
-          <button class="ml-auto text-xs text-violet-600 hover:underline" @click="navigator.clipboard.writeText(beatPrompt)">复制</button>
-        </div>
-        <pre class="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap max-h-60 overflow-y-auto">{{ beatPrompt }}...</pre>
-      </div>
-    </div>
-
-    <!-- ============================================================ -->
-    <!-- 卷时间线 -->
-    <!-- ============================================================ -->
-    <div v-if="activeTab === 'timeline'" class="space-y-4">
-      <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 space-y-4">
-        <h4 class="font-medium text-gray-900 dark:text-white">卷时间线设置</h4>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">卷ID</label>
-            <input v-model.number="timelineData.volumeId" type="number" min="1" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">卷标题</label>
-            <input v-model="timelineData.volumeTitle" type="text" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm" />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">时间基准</label>
-          <input v-model="timelineData.baseline" type="text" placeholder="如：仙历3021年春" class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm" />
-        </div>
-
-        <div class="flex items-center gap-2">
-          <input v-model="timelineData.hasCountdown" type="checkbox" id="hasCountdown" class="w-4 h-4 rounded" />
-          <label for="hasCountdown" class="text-sm text-gray-700 dark:text-gray-300">启用倒计时事件</label>
-        </div>
-
-        <div v-if="timelineData.hasCountdown" class="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
-          <p class="text-xs text-yellow-700 dark:text-yellow-400 mb-2">倒计时事件列表</p>
-          <div v-for="(event, index) in timelineData.countdownEvents" :key="index" class="flex gap-2 mb-2">
-            <input v-model="event.event" type="text" placeholder="事件名" class="flex-1 px-2 py-1 text-xs rounded border" />
-            <input v-model.number="event.targetChapter" type="number" placeholder="章节" class="w-16 px-2 py-1 text-xs rounded border" />
-            <input v-model.number="event.daysRemaining" type="number" placeholder="剩余天数" class="w-24 px-2 py-1 text-xs rounded border" />
-            <button class="text-red-500 hover:text-red-700" @click="timelineData.countdownEvents.splice(index, 1)">×</button>
-          </div>
-          <NButton size="tiny" @click="timelineData.countdownEvents.push({ event: '', targetChapter: 0, daysRemaining: 0 })">
-            + 添加倒计时事件
-          </NButton>
-        </div>
-
-        <div class="flex gap-2 pt-2">
-          <NButton type="primary" :loading="isGeneratingTimeline" @click="generateTimeline">
-            <Sparkles class="w-4 h-4 mr-1" />
-            生成时间线提示词
-          </NButton>
-          <NButton quaternary @click="resetTimeline">
-            <RotateCcw class="w-4 h-4" />
-          </NButton>
-        </div>
-      </div>
-
-      <!-- 生成结果 -->
-      <div v-if="timelinePrompt" class="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center gap-2 mb-2">
-          <Eye class="w-4 h-4 text-gray-500" />
-          <span class="text-xs font-medium text-gray-700 dark:text-gray-300">生成的提示词</span>
-          <button class="ml-auto text-xs text-violet-600 hover:underline" @click="navigator.clipboard.writeText(timelinePrompt)">复制</button>
-        </div>
-        <pre class="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap max-h-60 overflow-y-auto">{{ timelinePrompt }}...</pre>
-      </div>
-    </div>
   </div>
 </template>

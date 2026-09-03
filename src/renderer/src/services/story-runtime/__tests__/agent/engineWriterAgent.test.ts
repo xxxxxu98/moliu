@@ -1,7 +1,6 @@
 /**
  * LongFormWritingEngine × WriterAgent 集成：初稿审查未通过时由 agent 回合改稿,
- * 落库物恒为最后一次通过审查的 revision;未注入 writerAgent 时 legacy 循环行为不变
- * (legacy 由 client-and-engine.test.ts 覆盖)。
+ * 落库物恒为最后一次通过审查的 revision；未注入 writerAgent 时不整章重写，带着初审结果提交。
  */
 import { describe, expect, it, vi } from 'vitest';
 

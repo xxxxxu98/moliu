@@ -168,47 +168,6 @@ describe('UnifiedAIService 内部 JSON 方法 - JSON 强制覆盖', () => {
     expect(chatOpts.responseFormat).toEqual({ type: 'json_object' });
   });
 
-  it('generateOutline（大纲生成，提示词要求纯 JSON）携带 responseFormat', async () => {
-    const service = makeService('openai');
-    stubClient(service);
-
-    const result = await service.generateOutline('一个修仙故事');
-    expect(result).not.toBeNull();
-
-    const [, chatOpts] = chatMock.mock.calls[0] as [unknown, Record<string, unknown>];
-    expect(chatOpts.responseFormat).toEqual({ type: 'json_object' });
-  });
-
-  it('generateOutline 遇到网关 4xx 时自动降级重试（去掉 responseFormat）', async () => {
-    const service = makeService('openai');
-    const retryChat = vi
-      .fn()
-      .mockRejectedValueOnce(Object.assign(new Error('400 Bad Request'), { status: 400 }))
-      .mockResolvedValueOnce('{"outlines":[]}');
-    (service as unknown as { client: unknown }).client = { chat: retryChat };
-
-    const result = await service.generateOutline('一个修仙故事');
-    expect(result).not.toBeNull();
-    expect(retryChat).toHaveBeenCalledTimes(2);
-
-    // 第一次带 responseFormat，降级重试不带
-    const [, firstOpts] = retryChat.mock.calls[0] as [unknown, Record<string, unknown>];
-    expect(firstOpts.responseFormat).toEqual({ type: 'json_object' });
-    const [, retryOpts] = retryChat.mock.calls[1] as [unknown, Record<string, unknown>];
-    expect(retryOpts.responseFormat).toBeUndefined();
-  });
-
-  it('generateOutline 降级重试也失败时仍抛出原错误', async () => {
-    const service = makeService('openai');
-    const failingChat = vi
-      .fn()
-      .mockRejectedValueOnce(Object.assign(new Error('400 Bad Request'), { status: 400 }))
-      .mockRejectedValueOnce(Object.assign(new Error('400 Bad Request'), { status: 400 }));
-    (service as unknown as { client: unknown }).client = { chat: failingChat };
-
-    await expect(service.generateOutline('一个修仙故事')).rejects.toThrow('400 Bad Request');
-    expect(failingChat).toHaveBeenCalledTimes(2);
-  });
 
   it('continueWriting jsonMode=true 时携带 responseFormat，缺省时不携带', async () => {
     const service = makeService('openai');

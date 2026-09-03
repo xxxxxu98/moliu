@@ -25,6 +25,7 @@ import {
   DEFAULT_STORYFLOW_CHAPTER_COUNT,
   resolveStoryflowArtifactPaths,
   runStoryflowClosedLoop,
+  summarizeWriterRun,
 } from './storyflowClosedLoopHarness';
 import {
   inspectOutlineCompleteness,
@@ -236,6 +237,7 @@ function writeClosedLoopArtifacts(
         paraCv: Number(cv.toFixed(2)),
         attempts: r.output.attempts,
         rewriteRounds: r.output.longFormResult?.rewriteRounds ?? 0,
+        writer: summarizeWriterRun(r.output.longFormResult),
         gateIssues: (r.output.gateResult?.allIssues ?? []).map(issue => ({
           category: issue.category,
           severity: issue.severity,

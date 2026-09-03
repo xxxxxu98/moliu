@@ -1,6 +1,5 @@
 import type {
   ContextPack,
-  ContinuityIssue,
   ContinuityReport,
   ContractPack,
   ExtractedFacts,
@@ -27,7 +26,7 @@ import {
 } from './ChapterCommitService';
 import { ContextPackBuilder } from './ContextPackBuilder';
 import { ContinuityValidator } from './ContinuityValidator';
-import { detectOpeningRepetitionIssue, enrichRevisionHint, healChapterContract } from './contractHealth';
+import { detectOpeningRepetitionIssue, healChapterContract } from './contractHealth';
 import { SceneBeatPlanner } from './SceneBeatPlanner';
 import { SceneDraftEngine } from './SceneDraftEngine';
 import type { WriterAgentStep } from './agent/WriterAgent';
@@ -47,9 +46,8 @@ import {
   retryBackoffDelayMs,
   type ClassifiedError,
 } from '@/utils/ai-error-classify';
-import { normalizedSimilarity } from '@/utils/text-similarity';
 
-/** 审核失败后的默认最大重写次数（不含初稿） */
+/** 初稿未过时改稿 agent 的默认 run_checks 预算（不含初稿审查） */
 export const DEFAULT_MAX_REWRITE_ROUNDS = 1;
 
 /**
@@ -105,7 +103,7 @@ export interface LongFormWritingEngineDependencies {
   /**
    * Agent 改稿回合(docs/agent-architecture-refactor.md P2):初稿审查未通过时,
    * 由 agent 通过 get_draft/revise_paragraphs/run_checks + 六读工具自主改到通过。
-   * 未注入时走旧「规则拼提示 → 整章重写」循环(legacy,A/B 后删除)。
+   * 未注入时不整章重写，带着初审结果直接提交（假 AI 单测 / 显式 maxRewriteRounds=0）。
    * 抛错原样冒泡:审查链不可用必须让批量层停章,不能静默回落。
    */
   writerAgent?: WriterAgentStep;
@@ -196,28 +194,6 @@ function extractCharacterNames(
   return names;
 }
 
-/**
- * 从审核问题生成重写提示；优先 blocking，其次 warning。
- */
-export function buildRevisionHintsFromReport(report: ContinuityReport): string[] {
-  const ranked = [...report.issues].sort((a, b) => {
-    const rank = (issue: ContinuityIssue): number =>
-      issue.severity === 'blocking' ? 0 : issue.severity === 'warning' ? 1 : 2;
-    return rank(a) - rank(b);
-  });
-
-  return ranked
-    .slice(0, 8)
-    .map(issue => {
-      const evidence = issue.evidence
-        .map(item => item.trim())
-        .filter(Boolean)
-        .slice(0, 2);
-      return enrichRevisionHint(issue.message, evidence);
-    })
-    .filter(Boolean);
-}
-
 function extractAllowedAppearanceNames(
   entities: Record<string, StoryEntity> | undefined,
   requestedNames: string[] | undefined,
@@ -236,36 +212,6 @@ function extractAllowedAppearanceNames(
   return allowed;
 }
 
-export function buildRevisionPlanFromReport(
-  report: ContinuityReport,
-  targetWordCount?: number
-): RevisionPlan {
-  const hints = buildRevisionHintsFromReport(report);
-  const hasOverIssue = report.issues.some(issue => issue.id.startsWith('word-count-over'));
-  const hasShortIssue = report.issues.some(issue => issue.id.startsWith('word-count-short'));
-  const bounds = targetWordCount && targetWordCount > 0
-    ? checkWordCountBounds('', targetWordCount)
-    : null;
-  const mode: RevisionPlan['mode'] = hasOverIssue
-    ? 'compress'
-    : hasShortIssue
-      ? 'expand'
-      : 'repair';
-  // 压缩轮给模型的目标上限比硬门禁再收紧 10%：模型压字普遍「贴着给的上限」执行，
-  // 传硬门禁上限会压出 3540-3600 的擦边稿（40 章实测 3 章压缩后仍超限保留）。
-  // 收紧后即使执行打折也落在硬门禁内；硬门禁本身不动（审查范围不变）。
-  const maxWordsForMode =
-    mode === 'compress' && bounds
-      ? Math.max(Math.round(bounds.maxWords * 0.9), Math.round(bounds.minWords * 1.05))
-      : bounds?.maxWords;
-
-  return {
-    mode,
-    hints,
-    ...(bounds ? { minWords: bounds.minWords, maxWords: maxWordsForMode } : {}),
-  };
-}
-
 function buildSeedRevisionPlan(
   hints: string[] | undefined,
   targetWordCount?: number
@@ -281,7 +227,7 @@ function buildSeedRevisionPlan(
     : /字数严重不足|word-count-short|低于下限/u.test(combined)
       ? 'expand'
       : 'repair';
-  // 与 buildRevisionPlanFromReport 同口径：压缩轮目标上限收紧 10%，硬门禁不变
+  // 压缩轮目标上限比硬门禁再收紧 10%：模型压字普遍「贴着给的上限」执行
   const maxWordsForMode =
     mode === 'compress' && bounds
       ? Math.max(Math.round(bounds.maxWords * 0.9), Math.round(bounds.minWords * 1.05))
@@ -479,7 +425,6 @@ export class LongFormWritingEngine {
     const reviewContext: ReviewContext = { input, writeInput, contracts };
 
     // 批量层重试可能传入「上一轮失败教训」种子：初稿即带反馈，避免盲目重跑。
-    // 种子只影响首次起草；后续重写循环会用本轮 report 追加新 hints 覆盖。
     let revisionPlan = buildSeedRevisionPlan(
       writeInput.seedRevisionHints,
       writeInput.targetWordCount
@@ -491,80 +436,40 @@ export class LongFormWritingEngine {
     let { facts, report } = await this.reviewDrafts(drafts, reviewContext);
     let writerSummary: WriterRunSummary | undefined;
 
-    if (shouldRewrite(report) && maxRewriteRounds > 0) {
-      if (this.dependencies.writerAgent) {
-        // Agent 改稿回合：模型读问题清单、查事实、局部改稿、复检，blocking=0 才 finish。
-        // 审查次数预算 = maxRewriteRounds（每次 run_checks 成本等价一轮旧重写）。
-        const outcome = await this.dependencies.writerAgent.revise({
-          chapterNumber: contracts.chapter.chapterNumber,
-          contracts,
-          state: input.state,
-          context,
-          sceneChunks: input.sceneChunks ?? input.recentScenes,
-          initialDrafts: drafts,
-          initialReview: { facts, report },
-          reviewPort: { review: candidate => this.reviewDrafts(candidate, reviewContext) },
-          maxChecks: maxRewriteRounds,
-          targetWordCount: writeInput.targetWordCount,
-          previousChapterEnding: input.previousChapterEnding,
-          allowedAppearanceNames: extractAllowedAppearanceNames(
-            input.state.entities,
-            contracts.chapter.allowedCharacterNames
-          ),
-          knownCharacterNames: extractCharacterNames(input.state.entities),
-        });
-        drafts = outcome.drafts;
-        facts = outcome.facts;
-        report = outcome.report;
-        rewriteRounds = outcome.checksUsed;
-        writerSummary = {
-          ...outcome.stats,
-          checksUsed: outcome.checksUsed,
-          revertedUnchecked: outcome.revertedUnchecked,
-        };
-        if (outcome.revertedUnchecked) {
-          console.warn(
-            `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 改稿回合结束时存在未复检改动，已回退到最后一次审查稿（${outcome.finishReason}）`
-          );
-        }
-      } else {
-        // legacy 重写循环：规则从 report 拼 hints → 整章重写 → 再审。A/B 验收后删除。
-        // 连环重写熔断：记录上一轮 blocking issue，用于检测是否「卡在同一问题」。
-        // 字数类问题（word-count-short:*）每轮数值变化会干扰判定，比较时排除。
-        let prevBlockingIssues: ContinuityIssue[] = [];
-        while (shouldRewrite(report) && rewriteRounds < maxRewriteRounds) {
-          const currentBlocking = report.issues.filter(
-            issue => issue.severity === 'blocking' && !issue.id.startsWith('word-count-')
-          );
-          if (rewriteRounds > 0 && prevBlockingIssues.length > 0 && currentBlocking.length > 0) {
-            const stuckCount = currentBlocking.filter(cur =>
-              prevBlockingIssues.some(
-                prev => normalizedSimilarity(cur.message, prev.message) >= 0.7
-              )
-            ).length;
-            // 阈值 0.4：当 40% 以上的 blocking 问题与上轮高度相似即认定「卡在同一问题」提前熔断，
-            // 避免措辞略变（相似度 <0.7）就烧满重写轮次。仍保持 accepted=false 走 rejected 分支。
-            if (stuckCount / currentBlocking.length >= 0.4) {
-              console.warn(
-                `[LongFormWritingEngine] 连环重写熔断：本轮 ${stuckCount}/${currentBlocking.length} 个 blocking 问题与上轮高度相似（卡在同一问题），停止重写（仍 rejected 提交）`
-              );
-              break;
-            }
-          }
-          prevBlockingIssues = currentBlocking;
-
-          const nextRevisionPlan = buildRevisionPlanFromReport(report, writeInput.targetWordCount);
-          if (nextRevisionPlan.hints.length === 0) break;
-
-          rewriteRounds += 1;
-          revisionPlan = nextRevisionPlan;
-          console.info(
-            `[LongFormWritingEngine] 审核未通过，开始第 ${rewriteRounds}/${maxRewriteRounds} 次 ${revisionPlan.mode} 重写`,
-            revisionPlan.hints.slice(0, 3)
-          );
-          drafts = await this.draftChapter(plan, context, reviewContext, revisionPlan, rewriteRounds);
-          ({ facts, report } = await this.reviewDrafts(drafts, reviewContext));
-        }
+    if (shouldRewrite(report) && maxRewriteRounds > 0 && this.dependencies.writerAgent) {
+      // 改稿只走 agent：模型读问题清单、查事实、局部改稿、复检，blocking=0 才 finish。
+      // 未注入 writerAgent（假 AI 单测）时不整章重写，带着初审结果直接提交。
+      const outcome = await this.dependencies.writerAgent.revise({
+        chapterNumber: contracts.chapter.chapterNumber,
+        contracts,
+        state: input.state,
+        context,
+        sceneChunks: input.sceneChunks ?? input.recentScenes,
+        initialDrafts: drafts,
+        initialReview: { facts, report },
+        reviewPort: { review: candidate => this.reviewDrafts(candidate, reviewContext) },
+        maxChecks: maxRewriteRounds,
+        targetWordCount: writeInput.targetWordCount,
+        previousChapterEnding: input.previousChapterEnding,
+        allowedAppearanceNames: extractAllowedAppearanceNames(
+          input.state.entities,
+          contracts.chapter.allowedCharacterNames
+        ),
+        knownCharacterNames: extractCharacterNames(input.state.entities),
+      });
+      drafts = outcome.drafts;
+      facts = outcome.facts;
+      report = outcome.report;
+      rewriteRounds = outcome.checksUsed;
+      writerSummary = {
+        ...outcome.stats,
+        checksUsed: outcome.checksUsed,
+        revertedUnchecked: outcome.revertedUnchecked,
+      };
+      if (outcome.revertedUnchecked) {
+        console.warn(
+          `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 改稿回合结束时存在未复检改动，已回退到最后一次审查稿（${outcome.finishReason}）`
+        );
       }
     }
 
@@ -648,7 +553,7 @@ export class LongFormWritingEngine {
 
   /**
    * Step B/C：事实提取 → canonicalize → 语义审查 → 确定性门禁叠加。
-   * 初稿、legacy 重写与 agent 的 run_checks 全部走这一个函数——审查口径唯一。
+   * 初稿与 agent 的 run_checks 全部走这一个函数——审查口径唯一。
    */
   private async reviewDrafts(
     drafts: SceneDraft[],

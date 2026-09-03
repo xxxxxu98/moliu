@@ -324,6 +324,47 @@ describe('inspectOutlineCompleteness', () => {
     ).toEqual([]);
   });
 
+  it('地域/机构+官职与排行爵位不产生未登记角色 blocker（反重力 3 章冒烟实证）', () => {
+    // 2026-09-02：卷纲 keyCharacters 写「江南巡抚」「内阁首辅」等职务槽，
+    // 门禁当成具名角色 fail-closed；「钱通判」「顾师爷」仍是合法姓+职务称呼。
+    const outline = makeOutline();
+    outline.volumePlan = [{
+      volumeIndex: 1,
+      title: '第一卷',
+      objective: '',
+      coreConflict: '',
+      climax: '',
+      reversal: '',
+      endingHook: '',
+      protagonistGrowth: '',
+      keyCharacters: [
+        '江南巡抚',
+        '钦差副使',
+        '镜鉴司暗探',
+        '三皇子',
+        '太学祭酒',
+        '内阁权相',
+        '野心藩王',
+        '内阁首辅',
+        '镜鉴司统领',
+        '钱通判',
+        '顾师爷',
+      ],
+      setupForeshadows: [],
+      payoffForeshadows: [],
+      relationshipShifts: [],
+    }];
+
+    const result = inspectOutlineCompleteness(outline);
+    const unknownRefs = result.blockers
+      .filter(blocker => blocker.kind === 'unknown-character-reference')
+      .map(blocker => blocker.message);
+
+    expect(unknownRefs.some(message => message.includes('钱通判'))).toBe(true);
+    expect(unknownRefs.some(message => message.includes('顾师爷'))).toBe(true);
+    expect(unknownRefs.some(message => /江南巡抚|钦差副使|镜鉴司|三皇子|太学祭酒|内阁|藩王/.test(message))).toBe(false);
+  });
+
   describe('unknown-location-reference（地名漂移门禁）', () => {
     function makeOutlineWithLocations(): ExecutableOutline {
       const outline = makeOutline();

@@ -1,6 +1,6 @@
 # Storyflow 全链路 Agent 化重构方案（大纲 + 续写 + 单轨冒烟）
 
-> 状态：**实施中**（P1 落地中；P2–P4 待续，每阶段独立可回归、可回滚）
+> 状态：**实施中**（P1–P3.5 已落地；P2.3 真实 A/B 与 P4 待续）
 > 日期：2026-09-02（方案定稿）
 > 前置：`docs/agent-loop-refactor.md`（续写检索回合已转正，本方案在其上推进）
 > 关联：`docs/north-star.md`（L1/L3/L4/L6 是本方案直接推进的质量层）、`docs/development-guidelines.md` §9.4 / §10.5 / §15 / §16
@@ -154,8 +154,8 @@
   - 新增 `agent/WriterToolkit.ts`：`get_draft`（带索引全文）/ `revise_paragraphs`（替换、删除、insertAfter）/ `submit_draft`（整章替换）/ `run_checks`（走注入的 `ChapterReviewPort`）。校验账本：`run_checks` 把当前 revision 标记已审查，改稿即失效；`guardFinish()` 在「未审查 / 未通过且预算未尽」时拒绝 finish；`resolveFinal()` **只返回最后一次通过审查链的 revision**——模型改完不复检的改动被丢弃，保证落库物与审查物逐字一致。审查链抛错包成 `AgentToolFatalError` 冒泡（含 `[review-unavailable]`，批量层停章语义不变）。
   - 新增 `agent/WriterAgent.ts`：`WriterAgentStep` 端口、`createWriterAgentStep(transport)` 工厂（WriterToolkit + BookToolkit 六读经 `CompositeToolkit` 组合）、`buildWriterBrief()`（合同 + 上下文块（合同/状态/档案/文风；近章原文与检索片段交给工具按需读）+ 正文硬规则 + 改稿流程 + 协议）。默认预算 480s / 200k token（任务书含上下文包，每轮全量重发）。
   - 新增 `proseRules.ts`：`CHAPTER_STRUCTURE_RULES` / `CHAPTER_STYLE_RULES` 从 `SceneDraftEngine` 抽出为 SSOT，起草与改稿共用同一份「什么是合格正文」（prompt 文本零变化）。
-  - `LongFormWritingEngine`：抽 `draftChapter()` / `reviewDrafts()`（事实提取 → canonicalize → 判官 → `applyDeterministicGates()` 叠加字数/排版/章界重演），初稿、legacy 重写、agent `run_checks` 三处共用同一审查函数。新增 deps `writerAgent?: WriterAgentStep`；有则走 agent（`maxChecks = maxRewriteRounds`，`rewriteRounds = checksUsed`），无则走 legacy 循环（保留供 A/B，验收后删）。结果新增 `writer?: WriterRunSummary`（含 `checksUsed` / `revertedUnchecked`）。
-  - `ChapterWritingPipeline`：与检索回合共用同一 transport 构造 `writerAgent`（trace 汇总 `kind:'writer'` 落同一 JSONL）；`agentResearchTransport: null` 的假 AI 单测仍走 legacy。App 与真实冒烟单轨。
+  - `LongFormWritingEngine`：抽 `draftChapter()` / `reviewDrafts()`（事实提取 → canonicalize → 判官 → `applyDeterministicGates()` 叠加字数/排版/章界重演），初稿与 agent `run_checks` 共用同一审查函数。新增 deps `writerAgent?: WriterAgentStep`；初稿未过且注入 agent 时走改稿回合（`maxChecks = maxRewriteRounds`，`rewriteRounds = checksUsed`），未注入则不整章重写。结果新增 `writer?: WriterRunSummary`（含 `checksUsed` / `revertedUnchecked`）。
+  - `ChapterWritingPipeline`：与检索回合共用同一 transport 构造 `writerAgent`（trace 汇总 `kind:'writer'` 落同一 JSONL）；`agentResearchTransport: null` 的假 AI 单测不注入改稿 agent，初稿未过直接提交审查结果。App 与真实冒烟单轨。
   - 测试：`WriterToolkit.test.ts` 7 用例、`engineWriterAgent.test.ts` 5 用例（agent 改稿通过 / 初稿即过零开销 / 不复检反复 finish → stall 回退拒收 / run_checks 期间审查链不可用冒泡 / 端口口径）。全量 `npm test` 91 文件 / 977 用例全绿。
   - **未做（留给 P2.3 A/B）**：doc §2.2 「写工具在 dossier gaps 未处理时拒绝」未硬实现——coverage 交叉核对几乎每章都会产出 gaps，硬拒会把改稿回合卡死；现以任务书「涉及事实先查再改」+ 六读工具可用替代。100 章 A/B 后按 Findings 决定是否收紧。
 - **2026-09-02 P3 落地**（大纲修复 agent 化，生产常开）：
@@ -170,8 +170,16 @@
   - 删除：`index.ts`（总 barrel，无消费者）、`generator/**`、`knowledge/**`、`workflow/**`、`analytics/**`、`contract/**`（更旧的手写契约）、`contracts/{validator,hard-fails,chapter-commit}`、`processor/{incremental-writeback,timeline-manager}`、`prompts/{master,chapter,writing,core,techniques,templates,validators,references}/**` 与 `prompts/volume/volume-outline-prompt`、`schemas/{index,volume.schema,chapter-brief.schema}`、`types/index.ts`、`validation/` 除 `outlineCompleteness.ts` 外全部。这些模块**零单测**，删除不减少覆盖。
   - 收窄两个 barrel：`prompts/index.ts` 只留 ProOutliner 卷工具用的 `buildVolumeBeatPrompt/buildTimelinePrompt`；`contracts/index.ts` 只留 `story-contract/volume-contract`。顺带修正 `prompts/system/core-principles.ts` 一个解析到不存在目录的 type-only import 路径（`../contracts` → `../../contracts`）。`docs/reference-projects.md` 中指向已删文件的映射改指 `core-principles.ts` / `proseRules.ts` / `story-runtime/agent/`。
   - 回归：outline + composables + components 27 文件 / 326 用例全绿；`vite build` 渲染进程通过（无未解析 import）；`tsc` 无新增 TS2307/2305。
-  - **保留待产品决策**：`processor/outline-post-processor` + `parser/{remark-parser,markdown-extractor}`（约 4,300 行）仅服务 QuickStart / InspirationPanel 的旧 `generateOutlines()` 入口，冒烟不经过；`prompts/volume/*` + `contracts/*` 仅服务 ProOutliner 卷节拍/时间线。两者下线后可再删。
-- **2026-09-02 P2.3 准备**（A/B 仪表就位，真实跑受阻）：
-  - `storyflowClosedLoopHarness` summary 的 `batch[]` 新增 `writer` 字段（`finishReason/checksUsed/revertedUnchecked/rounds/toolCalls/byTool/ms`，初稿即通过为 `null`）。
+  - 当时仍保留、随后由 Batch 2/3 下线：旧 `generateOutlines()` 的 remark 解析链，以及 ProOutliner 卷节拍/时间线。
+- **2026-09-02 P3.5 Batch 2/3**（产品拍板：旧入口与卷工具一并下线）：
+  - Batch 2：删除 `UnifiedOutlineGenerator.generate()` / `tryLegacyMode` / remark 解析链；`useOutlineGenerator` 只留 `generateDirections` + `expandDirection`。QuickStart / InspirationPanel / ProOutliner 五步法全部走 `expandDirection`。删除 `processor/outline-post-processor`、`parser/{remark-parser,markdown-extractor}`、`schemas/outline.schema.ts`，并卸掉仅服务 remark-parser 的依赖 `unified` / `remark-parse` / `remark-gfm` / `unist-util-visit`。`useChapterOutlineGenerator.generateOutlines` 保留（章目录，不是旧 Markdown 大纲）。
+  - Batch 3：ProOutliner 去掉卷节拍/时间线 Tab，只留五步大纲法；删除 `prompts/index.ts`、`prompts/volume/*`、`contracts/{index,story-contract,volume-contract}`。`core-principles.ts` 契约类型已内联，不再依赖 `contracts/`。
+- **2026-09-02 P2.3 准备**（A/B 仪表就位；3 章真实冒烟已过）：
+  - `storyflowClosedLoopHarness` summary 的 `batch[]` 新增 `writer` 字段（`finishReason/checksUsed/revertedUnchecked/rounds/toolCalls/byTool/ms`，初稿即通过为 `null`）。终态落盘曾漏掉该字段（测试 `writeClosedLoopArtifacts` 覆盖 harness checkpoint），已抽 `summarizeWriterRun` 两边共用。
   - `scripts/agent-ab-compare.mjs` 重写：参数化实验组/基线后缀与同窗口大小；新增「改稿回合」维度（触发率、触发后接受率、model-finish、回退未复检、均复检/轮数/工具/耗时）；trace 汇总按 `response.kind` 把检索回合与改稿回合分流（此前 writer 汇总会被误计入检索统计）。
-  - **阻塞**：3 章快速回归（`MOLIU_RUN_SUFFIX=p2writer`，缓存大纲）全部请求被上游拒绝 `400 FAILED_PRECONDITION: User location is not supported for the API use.`（`provider-1787039781123` → 127.0.0.1:8045 → Gemini），与代码无关；换出口或换厂商后重跑。命令：`$env:MOLIU_RUN_SUFFIX='p2writer'; $env:MOLIU_CHAPTER_COUNT='20'; $env:MOLIU_OUTLINE_CACHE='<ExecutableOutline JSON>'; npm run smoke:storyflow:real`，随后 `node scripts/agent-ab-compare.mjs p2writer <基线后缀> --window=20`。注意 `MOLIU_OUTLINE_CACHE` 要的是裸 `ExecutableOutline`，`temp/storyflow-checkpoints/*.outline.json` 是带 `{version,prompt,…,outline}` 的检查点包，需先取 `.outline`。
+  - `parseExecutableOutlineCache`：`MOLIU_OUTLINE_CACHE` 只接受裸 `ExecutableOutline` 或 `{version,outline}` 检查点包；旧 `GeneratedOutline` fail-fast。
+  - 姓名形态初筛补「双字前缀+官职 / 排行爵位」（`江南巡抚` `内阁首辅` `三皇子` 等不进 unknown-character-reference）；「钱通判」「顾师爷」仍阻断。
+  - **2026-09-02 反重力 3 章冒烟通过**（`provider-1787039781123` / gemini-3.7-flash-high，`MOLIU_RUN_SUFFIX=p2writer`，现场生成大纲，约 14 分钟）：3/3 accepted，首过 2/3，ch2 重写 1 轮；读者章均 89.2、大纲 91.7（写作模型自评，影子模式）。检查点 `temp/storyflow-checkpoints/p2writer.outline.json` 是合格 ExecutableOutline，20 章可复用。
+  - **2026-09-03 反重力 20 章冒烟通过**（同厂商，`MOLIU_RUN_SUFFIX=p2w20`，复用上述检查点，约 46 分钟）：20/20 accepted，首过 18/20；ch6/ch8 走改稿 agent（`model-finish`，各 1 次 `run_checks`）；读者章均 87.0、开篇三章均 83.3，最低 ch2=72.9（章界信息回流，影子模式不阻断）。summary：`temp/storyflow.closed-loop.p2w20.summary.json`。
+  - 对比命令：`node scripts/agent-ab-compare.mjs p2w20 p2writer --window=20`（3 章基线窗口不足 20，仅作仪表连通）。
+- **2026-09-03 P2.3 收口**：删除 `LongFormWritingEngine` 的 legacy 整章重写循环（`buildRevisionPlanFromReport` / 连环熔断）。改稿只走 `writerAgent`；假 AI 单测无 agent 时初稿未过直接 rejected。随后复用 `p2writer` 大纲重跑 20 章（`MOLIU_RUN_SUFFIX=p2w20`）。

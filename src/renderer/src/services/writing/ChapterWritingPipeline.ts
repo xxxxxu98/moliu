@@ -264,8 +264,7 @@ export interface ChapterWriteInput {
    */
   seedRevisionHints?: string[];
   /**
-   * 引擎内审核失败后的最大整章重写次数（不含初稿）。未传则用引擎默认值（当前 1）。
-   * 重要章节可显式调高（如关键转折章 2-3），日常章节保持默认以节省 token。
+   * 引擎内初稿未过时改稿 agent 的 run_checks 预算（不含初稿）。未传则用引擎默认值（当前 1）。
    */
   maxRewriteRounds?: number;
 }
@@ -909,7 +908,7 @@ export class ChapterWritingPipeline {
             return result.dossier;
           },
         };
-        // 改稿回合与检索回合共用同一 transport(同模型同 trace 文件),初稿审查未通过时才会触发
+        // 与检索回合共用同一 transport 构造 writerAgent；假 AI 单测 agentResearchTransport=null 时不注入，初稿未过直接提交审查结果。
         writerAgent = createWriterAgentStep(effectiveTransport, {
           foreshadowCatalog,
           searchPort,

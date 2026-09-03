@@ -17,6 +17,8 @@ import {
   Copy,
   TrendingUp,
   Eye,
+  Rocket,
+  Layers3,
 } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useMessage } from "naive-ui";
@@ -25,12 +27,15 @@ import { useInspirationStore } from "@/stores/inspiration.store";
 import { genreTags as configGenreTags, settingElements as configSettingElements } from "@/data/inspirations";
 import { timing } from "@/config/timing";
 import type { GeneratedOutline } from "@/types/inspiration";
+import type { OutlineDirection } from "@/services/outline/types/direction";
+import type { ExecutableOutline } from "@/services/outline/types/executable-outline";
 import { useOutlineGenerator } from "@/composables/useOutlineGenerator";
 import { useProjectCreator } from "@/composables/useProjectCreator";
 import { TextAnalysisService, type AnalysisFocus } from "@/services/writing/text-analysis-service";
 import { calculateFiveDimensionEvaluation, getEvaluationAdvice } from "@/composables/useInspirationEvaluation";
 import type { FiveDimensionEvaluation } from "@/types/inspiration";
-import OutlineDisplay from "@/components/common/OutlineDisplay.vue";
+import DirectionResultPanel from "@/components/home/DirectionResultPanel.vue";
+import { mapExecutableOutlineToGeneratedOutline } from "@/services/outline/adapters/executable-outline-adapter";
 import WordCountSelector from "@/components/common/WordCountSelector.vue";
 import InspirationScore from "@/components/home/InspirationScore.vue";
 import StoryCardSelector from "@/components/home/StoryCardSelector.vue";
@@ -60,8 +65,9 @@ const {
   isGenerating,
   error: generationError,
   progress: generationProgress,
-  outlines: generatedOutlines,
-  generateOutlines,
+  warnings: outlineWarnings,
+  generateDirections,
+  expandDirection,
   reset: resetOutlineState,
 } = useOutlineGenerator();
 
@@ -116,6 +122,9 @@ const analysisFocusOptions = [
 
 // Selectors
 const selectedOutline = ref<GeneratedOutline | null>(null);
+const generatedDirections = ref<OutlineDirection[]>([]);
+const selectedDirection = ref<OutlineDirection | null>(null);
+const expandedOutline = ref<ExecutableOutline | null>(null);
 const selectedWordCountRange = ref(DEFAULT_WORD_COUNT_RANGE);
 const selectedQuickScenario = ref<string | null>(null);
 
@@ -146,6 +155,35 @@ const showMarketTrendsPanel = ref(false);
 
 const isProcessing = computed(() => isGenerating.value || isCreating.value);
 const combinedError = computed(() => generationError.value || projectCreateError.value);
+
+const directionCards = computed(() =>
+  generatedDirections.value.map((direction, index) => ({
+    id: direction.id,
+    icon: [Rocket, Layers3, Wand2][index] ?? Sparkles,
+    accent: [
+      "from-indigo-500 to-violet-600",
+      "from-fuchsia-500 to-pink-600",
+      "from-amber-500 to-orange-600",
+    ][index] ?? "from-slate-500 to-slate-600",
+    direction,
+  })),
+);
+
+const previewGeneratedOutline = computed<GeneratedOutline | null>(() => {
+  if (!expandedOutline.value) return null;
+  return mapExecutableOutlineToGeneratedOutline(expandedOutline.value, {
+    targetWordCountRange: selectedWordCountRange.value,
+  });
+});
+
+const previewOutline = computed<GeneratedOutline | null>(() => {
+  if (selectedOutline.value) return selectedOutline.value;
+  return previewGeneratedOutline.value;
+});
+
+const canExpandDirection = computed(
+  () => !!selectedDirection.value && !isProcessing.value,
+);
 
 // 当前步骤索引（0=受众选择, 1=标签, 2=元素, 3=生成）
 const currentStep = computed(() => {
@@ -319,7 +357,9 @@ function applyQuickScenario(scenario: QuickScenario) {
   });
 
   panelState.value = "selecting";
-  generatedOutlines.value = [];
+  generatedDirections.value = [];
+  selectedDirection.value = null;
+  expandedOutline.value = null;
   selectedOutline.value = null;
   tagDisplayMode.value = "all";
   elementDisplayMode.value = "all";
@@ -402,11 +442,34 @@ function buildPrompt(): string {
 
 async function handleGenerateOutlines() {
   const prompt = buildPrompt();
-  const results = await generateOutlines(prompt, {
+  selectedOutline.value = null;
+  expandedOutline.value = null;
+  generatedDirections.value = await generateDirections(prompt, {
     wordCountRange: selectedWordCountRange.value,
   });
+  selectedDirection.value = generatedDirections.value[0] ?? null;
+  panelState.value = generatedDirections.value.length > 0 ? "generated" : "selecting";
+}
 
-  panelState.value = results.length > 0 ? "generated" : "selecting";
+function selectDirection(direction: OutlineDirection) {
+  selectedDirection.value = direction;
+  expandedOutline.value = null;
+  selectedOutline.value = null;
+}
+
+async function handleExpandDirection() {
+  if (!selectedDirection.value) return;
+  expandedOutline.value = await expandDirection(buildPrompt(), selectedDirection.value, {
+    wordCountRange: selectedWordCountRange.value,
+  });
+  if (expandedOutline.value) {
+    selectedOutline.value = previewGeneratedOutline.value;
+    if (outlineWarnings.value.length > 0) {
+      message.warning(
+        `大纲已生成，但有 ${outlineWarnings.value.length} 条质量提示：${outlineWarnings.value[0].slice(0, 80)}`,
+      );
+    }
+  }
 }
 
 function selectOutline(outline: GeneratedOutline) {
@@ -414,8 +477,9 @@ function selectOutline(outline: GeneratedOutline) {
 }
 
 async function handleCreateProject() {
-  if (!selectedOutline.value) return;
-  await doCreateProject(selectedOutline.value);
+  const outline = selectedOutline.value ?? previewGeneratedOutline.value;
+  if (!outline) return;
+  await doCreateProject(outline);
 }
 
 function switchTab(tab: CreationTab) {
@@ -433,7 +497,9 @@ function resetToQuickStart() {
   selectedQuickScenario.value = null;
   creationTab.value = "quick";
   panelState.value = "selecting";
-  generatedOutlines.value = [];
+  generatedDirections.value = [];
+  selectedDirection.value = null;
+  expandedOutline.value = null;
   selectedOutline.value = null;
   tagDisplayMode.value = "collapsed";
   elementDisplayMode.value = "collapsed";
@@ -584,10 +650,16 @@ function handleStoryCardSelect(composition: StoryCardComposition) {
 
   inspirationStore.reset();
   panelState.value = "selecting";
+  generatedDirections.value = [];
+  selectedDirection.value = null;
+  expandedOutline.value = null;
+  selectedOutline.value = null;
 
-  generateOutlines(prompt, {
+  generateDirections(prompt, {
     wordCountRange: selectedWordCountRange.value,
   }).then((results) => {
+    generatedDirections.value = results;
+    selectedDirection.value = results[0] ?? null;
     if (results.length > 0) {
       panelState.value = "generated";
     }
@@ -864,17 +936,26 @@ const settingElements = configSettingElements;
       </button>
     </div>
 
-    <!-- Outline Display -->
-    <OutlineDisplay
+    <!-- Direction + outline -->
+    <DirectionResultPanel
       v-if="panelState === 'generated' || isGenerating"
-      :outlines="generatedOutlines || []"
-      :selected-outline="selectedOutline ?? null"
-      :is-generating="!!isGenerating"
+      :show="true"
+      title="候选方向"
+      description="先选一个方向展开主方案，再创建项目。"
+      :cards="directionCards"
+      :selected-direction="selectedDirection"
+      :is-processing="!!isProcessing"
       :progress="generationProgress || ''"
       :error="combinedError"
-      :show-word-count="false"
-      @select="selectOutline"
+      :can-expand="canExpandDirection"
+      compact
+      :preview-outline="previewOutline"
+      :expanded-outline="expandedOutline"
+      empty-description="请先选择一个创作方向并展开主方案。"
       @regenerate="handleGenerateOutlines"
+      @select-direction="selectDirection"
+      @expand="handleExpandDirection"
+      @select-outline="selectOutline"
       @create="handleCreateProject"
     />
 
