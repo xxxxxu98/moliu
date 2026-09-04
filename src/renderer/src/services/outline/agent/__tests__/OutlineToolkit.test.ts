@@ -170,6 +170,58 @@ describe('段级写工具', () => {
   });
 });
 
+describe('resolve_character_references（agent 语义裁决台账）', () => {
+  // 2026-09-03 语义正则塔退役:头衔/爵位/群体代称不再本地豁免,未裁决即 blocker
+  it('未裁决的爵位/群体引用产生 blocker；批量 alias/collective 裁决后 run_checks 清零', async () => {
+    const toolkit = makeToolkit(
+      buildOutlineFixture({ extraVolumeCharacters: ['齐王', '两江河道官员'] })
+    );
+    const before = await ok(toolkit, 'run_checks');
+    const unknownBefore = (before.blockers as Array<{ kind: string; message: string }>).filter(
+      item => item.kind === 'unknown-character-reference'
+    );
+    expect(unknownBefore).toHaveLength(2);
+
+    await ok(toolkit, 'resolve_character_references', {
+      items: [
+        { reference: '齐王', as: 'alias', target: '林川' },
+        { reference: '两江河道官员', as: 'collective' },
+      ],
+    });
+    const after = await ok(toolkit, 'run_checks');
+    expect(after.blocking).toBe(0);
+    expect(after.canApply).toBe(true);
+  });
+
+  it('alias 指向登记表外姓名整批拒绝，台账未写入', async () => {
+    const toolkit = makeToolkit(buildOutlineFixture({ extraVolumeCharacters: ['晋王'] }));
+    const error = await fail(toolkit, 'resolve_character_references', {
+      items: [
+        { reference: '晋王', as: 'alias', target: '不存在的名字' },
+        { reference: '太后', as: 'collective' },
+      ],
+    });
+    expect(error).toContain('不在已登记角色名单内');
+    expect(toolkit.staged.revision()).toBe(1);
+    expect(toolkit.staged.get()!.outline.characterReferenceResolutions).toBeUndefined();
+  });
+
+  it('裁决台账在后续重解析写入后保留，不被冲掉', async () => {
+    const toolkit = makeToolkit(buildOutlineFixture({ extraVolumeCharacters: ['太后'] }));
+    await ok(toolkit, 'resolve_character_references', {
+      items: [{ reference: '太后', as: 'alias', target: '林川' }],
+    });
+    // 再做一次普通文本写入(触发整份 rawText 重解析)
+    await ok(toolkit, 'rewrite_chapters', { chapters: [{ chapterNumber: 3, title: '灯下复验尸格' }] });
+    const outline = toolkit.staged.get()!.outline;
+    expect(outline.characterReferenceResolutions).toEqual([
+      { reference: '太后', as: 'alias', target: '林川' },
+    ]);
+    const check = await ok(toolkit, 'run_checks');
+    expect(check.blocking).toBe(0);
+  });
+});
+
 describe('run_checks / guardFinish / resolveFinal', () => {
   it('初稿有阻断:finish 被拒;修复并复检后放行', async () => {
     const toolkit = makeToolkit(

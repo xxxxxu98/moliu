@@ -297,6 +297,13 @@ export class OutlineToolkit implements AgentToolkit {
         dedupe: false,
       },
       {
+        name: 'resolve_character_references',
+        description:
+          '暂存记:对「未登记角色引用」做语义裁决(批量,最多 30 条)。爵位/别称/官职代称指向已登记角色 → {"reference":"齐王","as":"alias","target":"赵恺"};群体或职务泛称非个体 → {"reference":"两江河道官员","as":"collective"}。确为新具名人物时禁用本工具,改用 append_to_section 补角色块。',
+        args: '{"items":[{"reference":"齐王","as":"alias","target":"赵恺"},{"reference":"两江河道官员","as":"collective"}]}',
+        dedupe: false,
+      },
+      {
         name: 'shrink_hooks',
         description:
           '确定性修复:按分句边界收缩所有超长标题/CBN/CEN 到门禁上限(不发 AI 请求)。收不进区间的章会留在 run_checks 里,需 rewrite_chapters。',
@@ -340,6 +347,8 @@ export class OutlineToolkit implements AgentToolkit {
         return this.appendToSection(args);
       case 'register_locations':
         return this.registerLocations(args);
+      case 'resolve_character_references':
+        return this.resolveCharacterReferences(args);
       case 'shrink_hooks':
         return this.shrinkHooks();
       case 'run_checks':
@@ -425,6 +434,11 @@ export class OutlineToolkit implements AgentToolkit {
       return { ok: false, error: '写入后大纲无法解析(段结构被破坏),已拒绝。请检查二级标题与字段名是否与模板一致。' };
     }
     const after: OutlineSnapshot = { rawText: cleaned, outline: parsed };
+    // 裁决台账活在 outline 对象上，重解析不产出该字段：所有写入路径向前携带，
+    // 否则任何一次 rewrite/append/shrink 都会把 agent 已做的语义裁决静默清空
+    if (before.outline.characterReferenceResolutions) {
+      after.outline.characterReferenceResolutions = before.outline.characterReferenceResolutions;
+    }
     const rejection = verify?.(before, after) ?? null;
     if (rejection) return { ok: false, error: rejection };
     const revision = this.staged.set(after, meta);
@@ -651,8 +665,63 @@ export class OutlineToolkit implements AgentToolkit {
     );
   }
 
-  private registerLocations(args: Record<string, unknown>): ToolCallResult {
-    const names = readStringArrayArg(args, 'names');
+  /**
+   * agent 语义裁决台账写入：未登记引用 → alias(指向登记姓名)/collective(群体泛称)。
+   * alias 目标必须在登记表内（笔误名拒绝写入），确为新人物引导走 append_to_section。
+   * 台账挂在 outline 上并在所有重解析写入中向前携带（见 commitRawText）。
+   */
+  private resolveCharacterReferences(args: Record<string, unknown>): ToolCallResult {
+    const items = Array.isArray(args.items) ? args.items : null;
+    if (!items || items.length === 0) return { ok: false, error: 'items 必须是非空数组' };
+    if (items.length > 30) return { ok: false, error: '单次最多裁决 30 条,请分批' };
+    const before = this.current();
+    const registered = new Set(
+      (before.outline.keyCharacters ?? [])
+        .map(character => character.name?.trim())
+        .filter((name): name is string => Boolean(name)),
+    );
+    const merged = new Map(
+      (before.outline.characterReferenceResolutions ?? [])
+        .map(entry => [entry.reference.trim(), entry] as const),
+    );
+    const added: string[] = [];
+    for (const entry of items) {
+      if (!isPlainObject(entry)) return { ok: false, error: 'items 每项必须是对象' };
+      const reference = readStringArg(entry, 'reference')?.trim();
+      const as = readStringArg(entry, 'as');
+      const target = readStringArg(entry, 'target')?.trim();
+      if (!reference) return { ok: false, error: 'reference 必填' };
+      if (as !== 'alias' && as !== 'collective') {
+        return { ok: false, error: `as 必须是 alias 或 collective,收到:${as || '(空)'}` };
+      }
+      if (as === 'alias') {
+        if (!target || !registered.has(target)) {
+          return {
+            ok: false,
+            error: `「${reference}」的 alias 目标「${target || '(空)'}」不在已登记角色名单内。别称必须指向已登记姓名;确为新人物请用 append_to_section 补角色块`,
+          };
+        }
+        merged.set(reference, { reference, as, target });
+      } else {
+        merged.set(reference, { reference, as });
+      }
+      added.push(reference);
+    }
+    const nextOutline = {
+      ...before.outline,
+      characterReferenceResolutions: [...merged.values()],
+    };
+    const revision = this.staged.set(
+      { rawText: before.rawText, outline: nextOutline },
+      { tool: 'resolve_character_references', note: added.join('、') },
+    );
+    return {
+      ok: true,
+      result: { revision, resolvedCount: added.length, note: '改动尚未校验,收尾前必须 run_checks' },
+    };
+  }
+
+  private registerLocations(args: Record<string, unknown>): ToolCallResult {    const names = readStringArrayArg(args, 'names');
     if (names.length === 0) return { ok: false, error: 'names 必须是非空字符串数组' };
     const before = this.current();
     const repaired = repairUnregisteredLocations({

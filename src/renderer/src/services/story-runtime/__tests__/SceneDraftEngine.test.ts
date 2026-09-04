@@ -261,6 +261,40 @@ describe('SceneDraftEngine.draft', () => {
     expect(drafts[0].chapterTitle).toBe('这尸体不对劲');
   });
 
+  it('角色类 futureReveals 升级为【登场禁令】硬规则，事实类留在揭示禁区', async () => {
+    // 2026-09-04 r5 裴天禄(提前46章)/r7 过江龙(提前3章)实证：角色 embargo 混在
+    // 事实软规则里被 writer 无视。角色类条目（上游以「角色"X"…」格式产出）单列。
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 76,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context, {
+      futureReveals: [
+        { description: '角色“裴天禄”不得登场或被揭示（计划：第122章）', notBeforeChapter: 122 },
+        { description: '盐引背后的皇室宗亲身份', notBeforeChapter: 90 },
+      ],
+    } as never);
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).toContain('【登场禁令】');
+    expect(request.system).toContain('裴天禄');
+    expect(request.system).toContain('只能完全不出现');
+    expect(request.system).toContain('【未来揭示禁区】');
+    // 角色条目不再重复出现在事实揭示区
+    const factZone = request.system.slice(request.system.indexOf('【未来揭示禁区】'));
+    expect(factZone).not.toContain('裴天禄');
+    expect(factZone).toContain('盐引背后的皇室宗亲身份');
+  });
+
   it('已有正式标题时只要求回填，不再注入整套拟标题规则', async () => {
     // 大纲链路的章节标题非占位，pipeline 只在占位时采纳生成标题，
     // 再让模型拟一个等于白占十余行 system 指令与注意力。

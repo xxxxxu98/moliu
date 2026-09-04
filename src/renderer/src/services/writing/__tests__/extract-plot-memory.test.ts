@@ -11,6 +11,7 @@ import {
   collectCharacterFates,
   collectFateForbiddenZones,
   overlayCharacterFates,
+  mergeKeyEvents,
 } from '../extract-plot-memory';
 import type { Chapter, ChapterMemory } from '@/types/project';
 import type { StoryEntity } from '@/types/story-runtime';
@@ -248,5 +249,30 @@ describe('overlayCharacterFates（runtime 实体命运状态接线）', () => {
     const { entities: next, applied } = overlayCharacterFates({ 'char-zhou': base }, memories);
     expect(applied).toBe(0);
     expect(next['char-zhou'].attributes.status).toBe('死亡');
+  });
+});
+
+describe('mergeKeyEvents（keyEvents 真源合并）', () => {
+  // 2026-09-04：规则层 keyEvents 正则 25-43% 章节空转占位符，AI 事件摘要成为真源
+  it('AI 条目在前、规则层补漏；占位符被清除；超集句去重', () => {
+    const merged = mergeKeyEvents(
+      ['沈准用借贷平衡表当堂揭穿伪证', '三法司驾帖护人出狱'],
+      ['（本章无明显关键事件）', '沈准用借贷平衡表当堂揭穿伪证并定案'],
+    );
+    expect(merged[0]).toBe('沈准用借贷平衡表当堂揭穿伪证');
+    expect(merged.some(item => item.includes('无明显关键事件'))).toBe(false);
+    // 规则层的超集句（包含 AI 短句）被去重，只留两条独立事件
+    expect(merged).toHaveLength(2);
+  });
+
+  it('AI 为空时保留规则层非占位条目；双方全空返回空数组', () => {
+    expect(mergeKeyEvents([], ['王成栋下令封仓。'])).toEqual(['王成栋下令封仓。']);
+    expect(mergeKeyEvents([], ['（本章无明显关键事件）'])).toEqual([]);
+    expect(mergeKeyEvents([], [])).toEqual([]);
+  });
+
+  it('上限 8 条，超出截断', () => {
+    const many = Array.from({ length: 12 }, (_, i) => `第${i + 1}件独立事件发生了`);
+    expect(mergeKeyEvents(many, [])).toHaveLength(8);
   });
 });

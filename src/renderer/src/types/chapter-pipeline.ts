@@ -29,12 +29,15 @@ export interface MemoryClient {
    * @param prose 章节正文（已通过审查门）
    * @param aiStateChanges AI 事实提取的状态 delta（命运账唯一来源）；
    *        缺省时记忆只有规则层的状态碎片，不含命运账
+   * @param aiEvents AI 事实提取的事件摘要（keyEvents 真源，2026-09-04 起随投影
+   *        穿透；规则层 keyEvents 25-43% 章节空转，只做兜底）
    */
   extractAndSave(
     chapterId: string,
     chapterNumber: number,
     prose: string,
-    aiStateChanges?: CharacterStateChange[]
+    aiStateChanges?: CharacterStateChange[],
+    aiEvents?: string[]
   ): Promise<ChapterMemory | null>;
 }
 

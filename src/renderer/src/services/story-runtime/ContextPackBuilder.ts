@@ -107,6 +107,9 @@ export function selectCharacterTruthsForDraft(
 
   const characterTruths: Record<string, string[]> = {};
   for (const item of finalList.slice(0, maxCharacters)) {
+    // 状态真相由 ContractPackBuilder 排在 truths 首位（2026-09-04 r6 ch66 实证：
+    // 排末位会被这里的 slice(0,2) 截掉，writer 看不到在押状态），截断只作用于
+    // 第 2 条之后的普通真相。
     characterTruths[item.id] = item.truths.slice(0, 2).map(truth =>
       truth.length > 80 ? `${truth.slice(0, 80)}…` : truth
     );

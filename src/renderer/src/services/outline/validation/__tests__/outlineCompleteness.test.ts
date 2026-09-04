@@ -249,9 +249,11 @@ describe('inspectOutlineCompleteness', () => {
     expect(result.blockers.map(blocker => blocker.kind)).toContain('unknown-character-reference');
   });
 
-  it('关系短语/括号注解/职务/组织等非姓名引用不产生未登记角色 blocker', () => {
+  it('字段腐化守卫仍在:关系短语/括号注解不产生 blocker;职务/组织引用交 agent 裁决', () => {
     // 2026-08-16 矩阵实测：mimo/ds-pro 大纲把关系整句写进角色字段，40+ 条此类
     // blocker 把整轮 fail-closed 且无修复通道（补登记救不了整句，重试格式惯性复现）
+    // 2026-09-03 语义正则塔退役：职务/组织引用不再本地豁免，未裁决即 blocker，
+    // 由 agent 用 resolve_character_references 台账放行
     const outline = makeOutline();
     outline.volumePlan = [{
       volumeIndex: 1,
@@ -287,20 +289,35 @@ describe('inspectOutlineCompleteness', () => {
       },
     ] as ExecutableOutline['keyCharacters'];
 
-    const result = inspectOutlineCompleteness(outline);
+    const unresolved = inspectOutlineCompleteness(outline);
+    const unresolvedRefs = unresolved.blockers
+      .filter(blocker => blocker.kind === 'unknown-character-reference')
+      .map(blocker => blocker.message);
+    // 字段腐化（标点/关系短语）放行；职务/组织引用未裁决 → blocker；真实姓名「顾清焉」仍是 blocker
+    expect(unresolvedRefs.some(message => message.includes('临川商会会长'))).toBe(true);
+    expect(unresolvedRefs.some(message => message.includes('府衙通判'))).toBe(true);
+    expect(unresolvedRefs.some(message => message.includes('顾清焉'))).toBe(true);
+    expect(unresolvedRefs.some(message => message.includes('忠诚执行者'))).toBe(false);
+    expect(unresolvedRefs.some(message => message.includes('韩尚书'))).toBe(false);
+    expect(unresolvedRefs.some(message => message.includes('相互依存'))).toBe(false);
 
-    const unknownRefs = result.blockers.filter(
-      blocker => blocker.kind === 'unknown-character-reference',
-    );
-    // 非姓名形态全部放行；真实姓名「顾清焉」仍应产生 blocker
-    expect(unknownRefs.map(blocker => blocker.message)).toEqual([
-      '角色「林溪」关系引用了未登记角色「顾清焉」；必须补入关键角色规划或改用已登记角色',
+    outline.characterReferenceResolutions = [
+      { reference: '临川商会会长', as: 'collective' },
+      { reference: '府衙通判', as: 'collective' },
+    ];
+    const resolved = inspectOutlineCompleteness(outline);
+    expect(
+      resolved.blockers
+        .filter(blocker => blocker.kind === 'unknown-character-reference')
+        .map(blocker => blocker.message),
+    ).toEqual([
+      '角色「林溪」关系引用了未登记角色「顾清焉」；请裁决：别称/爵位/官职指向已登记角色则 resolve_character_references 记 alias，群体泛称记 collective，确为新人物则补入关键角色规划',
     ]);
   });
 
-  it('阵营标签+身份泛称组合不产生未登记角色 blocker（r2 百章占位符实证）', () => {
-    // 2026-08-28 r2 百章实测：「户部革新派年轻官员」被判成可建档姓名，补登记后
-    // 标签词以角色名身份 9+ 处进入正文。此类功能性描述不是姓名，不应产生 blocker
+  it('阵营标签+身份泛称（r2 百章占位符实证）未裁决即 blocker，collective 台账放行', () => {
+    // 2026-08-28 r2 百章实测：「户部革新派年轻官员」曾被判成可建档姓名，补登记后
+    // 标签词以角色名身份进入正文。语义正则塔退役后由 agent 裁决：群体泛称 → collective
     const outline = makeOutline();
     outline.volumePlan = [{
       volumeIndex: 1,
@@ -317,17 +334,30 @@ describe('inspectOutlineCompleteness', () => {
       relationshipShifts: [],
     }];
 
-    const result = inspectOutlineCompleteness(outline);
-
+    const unresolved = inspectOutlineCompleteness(outline);
     expect(
-      result.blockers.filter(blocker => blocker.kind === 'unknown-character-reference'),
+      unresolved.blockers.filter(blocker => blocker.kind === 'unknown-character-reference'),
+    ).toHaveLength(3);
+
+    outline.characterReferenceResolutions = [
+      { reference: '户部革新派年轻官员', as: 'collective' },
+      { reference: '维新派老臣', as: 'collective' },
+      { reference: '年轻御史', as: 'collective' },
+    ];
+    const resolved = inspectOutlineCompleteness(outline);
+    expect(
+      resolved.blockers.filter(blocker => blocker.kind === 'unknown-character-reference'),
     ).toEqual([]);
   });
 
-  it('地域/机构+官职与排行爵位不产生未登记角色 blocker（反重力 3 章冒烟实证）', () => {
-    // 2026-09-02：卷纲 keyCharacters 写「江南巡抚」「内阁首辅」等职务槽，
-    // 门禁当成具名角色 fail-closed；「钱通判」「顾师爷」仍是合法姓+职务称呼。
+  it('职务槽与排行爵位（反重力冒烟实证）未裁决即 blocker；alias/collective 台账放行', () => {
+    // 2026-09-02：卷纲 keyCharacters 写「江南巡抚」等职务槽；2026-09-03 塔退役后
+    // 全部交 agent 裁决。「钱通判」「顾师爷」是姓+职务合法称呼，裁决为 alias
     const outline = makeOutline();
+    outline.keyCharacters = [
+      ...outline.keyCharacters,
+      { id: 'qian', name: '钱通判' },
+    ] as ExecutableOutline['keyCharacters'];
     outline.volumePlan = [{
       volumeIndex: 1,
       title: '第一卷',
@@ -355,14 +385,73 @@ describe('inspectOutlineCompleteness', () => {
       relationshipShifts: [],
     }];
 
-    const result = inspectOutlineCompleteness(outline);
-    const unknownRefs = result.blockers
-      .filter(blocker => blocker.kind === 'unknown-character-reference')
-      .map(blocker => blocker.message);
+    const unresolved = inspectOutlineCompleteness(outline);
+    const unresolvedRefs = unresolved.blockers.filter(
+      blocker => blocker.kind === 'unknown-character-reference',
+    );
+    // 「钱通判」已登记（包含匹配），其余 10 个引用未裁决全部 blocker
+    expect(unresolvedRefs).toHaveLength(10);
+    expect(unresolvedRefs.some(blocker => blocker.message.includes('顾师爷'))).toBe(true);
 
-    expect(unknownRefs.some(message => message.includes('钱通判'))).toBe(true);
-    expect(unknownRefs.some(message => message.includes('顾师爷'))).toBe(true);
-    expect(unknownRefs.some(message => /江南巡抚|钦差副使|镜鉴司|三皇子|太学祭酒|内阁|藩王/.test(message))).toBe(false);
+    outline.characterReferenceResolutions = [
+      { reference: '江南巡抚', as: 'collective' },
+      { reference: '钦差副使', as: 'collective' },
+      { reference: '镜鉴司暗探', as: 'collective' },
+      { reference: '三皇子', as: 'alias', target: '角色0' },
+      { reference: '太学祭酒', as: 'collective' },
+      { reference: '内阁权相', as: 'collective' },
+      { reference: '野心藩王', as: 'alias', target: '角色1' },
+      { reference: '内阁首辅', as: 'collective' },
+      { reference: '镜鉴司统领', as: 'collective' },
+      { reference: '顾师爷', as: 'alias', target: '角色0' },
+      // alias 指向登记表外姓名 → 台账条目无效,保持 blocker(逼 agent 重裁或补登记)
+      { reference: '内阁首辅', as: 'alias', target: '不存在的名字' },
+    ];
+    const resolved = inspectOutlineCompleteness(outline);
+    const remaining = resolved.blockers.filter(
+      blocker => blocker.kind === 'unknown-character-reference',
+    );
+    // 「内阁首辅」的两条台账中 alias 无效但 collective 有效;其余全部放行
+    expect(remaining).toEqual([]);
+  });
+
+  it('国号爵位/太后/殿+皇帝（09-03 反重力 100 章受害样本）交 agent 裁决', () => {
+    const outline = makeOutline();
+    outline.keyCharacters = [
+      ...outline.keyCharacters,
+      { id: 'zhao-kai', name: '赵恺' },
+    ] as ExecutableOutline['keyCharacters'];
+    outline.volumePlan = [{
+      volumeIndex: 1,
+      title: '第一卷',
+      objective: '',
+      coreConflict: '',
+      climax: '',
+      reversal: '',
+      endingHook: '',
+      protagonistGrowth: '',
+      keyCharacters: ['韩相', '崇政殿皇帝', '齐王', '晋王', '太后'],
+      setupForeshadows: [],
+      payoffForeshadows: [],
+      relationshipShifts: [],
+    }];
+
+    const unresolved = inspectOutlineCompleteness(outline);
+    expect(
+      unresolved.blockers.filter(blocker => blocker.kind === 'unknown-character-reference'),
+    ).toHaveLength(5);
+
+    outline.characterReferenceResolutions = [
+      { reference: '齐王', as: 'alias', target: '赵恺' },
+      { reference: '晋王', as: 'alias', target: '角色0' },
+      { reference: '太后', as: 'alias', target: '角色1' },
+      { reference: '崇政殿皇帝', as: 'alias', target: '角色2' },
+      { reference: '韩相', as: 'alias', target: '角色3' },
+    ];
+    const resolved = inspectOutlineCompleteness(outline);
+    expect(
+      resolved.blockers.filter(blocker => blocker.kind === 'unknown-character-reference'),
+    ).toEqual([]);
   });
 
   describe('unknown-location-reference（地名漂移门禁）', () => {

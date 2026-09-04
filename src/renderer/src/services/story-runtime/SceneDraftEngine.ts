@@ -244,16 +244,31 @@ export class SceneDraftEngine {
     const allowedAppearanceNames = (options?.allowedAppearanceNames ?? [])
       .map(name => name.trim())
       .filter(Boolean);
+    // 角色类 embargo（上游 resolveAllowedChapterCharacters 以「角色"X"…」格式产出）单列
+    // 硬禁令：r5 裴天禄/r7 过江龙两轮实证，混在事实揭示软规则里被 writer 无视提前点名。
+    const characterEmbargoRules = (options?.futureReveals ?? [])
+      .filter(item => item.description.startsWith('角色'))
+      .map(item => `  - ${item.description}`)
+      .slice(0, 8);
+    const factEmbargoItems = (options?.futureReveals ?? [])
+      .filter(item => !item.description.startsWith('角色'))
+      .slice(0, 12);
     const appearanceRules = allowedAppearanceNames.length > 0
       ? [
           `- 【本章出场名单】只有以下已登记角色可以现身、说话或实施行动：${allowedAppearanceNames.join('、')}`,
           '- 其他已登记角色最多只能作为背景信息被提及，不得来到现场、发声、写信署名或被描述即时反应',
         ]
       : [];
-    const futureRevealRules = (options?.futureReveals ?? []).length > 0
+    const hardEmbargoRules = characterEmbargoRules.length > 0
+      ? [
+          '- 【登场禁令】以下角色未到登场章，本章任何位置禁止现身、被点名、署名、被描述即时反应或在对话中被直接谈及（只能完全不出现）：',
+          ...characterEmbargoRules,
+        ]
+      : [];
+    const futureRevealRules = factEmbargoItems.length > 0
       ? [
           '- 【未来揭示禁区】下列事实尚未到揭示章节，只能留下模糊线索，禁止明确点名或下结论：',
-          ...(options?.futureReveals ?? []).slice(0, 12).map(item =>
+          ...factEmbargoItems.map(item =>
             `  - 第${item.notBeforeChapter}章前不得揭示：${item.description}`
           ),
         ]
@@ -328,6 +343,7 @@ export class SceneDraftEngine {
         ...wordCountRules,
         ...characterNameRules,
         ...appearanceRules,
+        ...hardEmbargoRules,
         ...futureRevealRules,
         ...revisionRules,
       ].join('\n'),

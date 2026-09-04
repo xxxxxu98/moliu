@@ -661,6 +661,24 @@ export function collectFateForbiddenZones(
     );
 }
 /** 抓捕后叠加重复项（同角色同状态保留首条），按章节内出现顺序稳定输出 */
+/**
+ * keyEvents 真源合并（2026-09-04，与命运账 mergeCharacterStateChanges 同构）：
+ * AI 提取的事件摘要在前，规则层只补漏。规则层 keyEvents 正则 25-43% 章节空转
+ * 「（本章无明显关键事件）」（正则塔服役期实测），AI 条目存在时占位符一并清除。
+ */
+export function mergeKeyEvents(aiEvents: string[], ruleEvents: string[]): string[] {
+  const cleaned = [...aiEvents, ...ruleEvents]
+    .map(item => item.trim())
+    .filter(item => item.length > 0 && !item.startsWith('（本章无明显关键事件'));
+  const out: string[] = [];
+  for (const item of cleaned) {
+    if (out.some(existing => existing.includes(item) || item.includes(existing))) continue;
+    out.push(item);
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
 export function mergeCharacterStateChanges(
   changes: CharacterStateChange[]
 ): CharacterStateChange[] {

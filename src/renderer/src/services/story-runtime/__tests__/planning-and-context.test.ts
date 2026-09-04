@@ -45,6 +45,63 @@ describe('ContractPackBuilder', () => {
     ]);
     expect(pack.review.mustCheck).toContain('守卫盘查');
   });
+
+  // 2026-09-04 r5 ch76 实证：状态摘要只喂裁判侧，writer 看不到实体状态，
+  // 在押角色（陆鸣，下狱×多章）被写成自由领兵的将领，fact_conflict 三轮耗尽
+  // 成书空洞。修复=终态随 characterTruths 下发到写作侧合同。
+  it('终态角色随 characterTruths 下发状态真相（在押不可自由活动）', () => {
+    const bootstrap = makeBootstrap();
+    bootstrap.entities = [
+      ...bootstrap.entities,
+      {
+        id: 'lu-ming',
+        kind: 'character',
+        name: '陆鸣',
+        aliases: [],
+        attributes: { role: '户部主事', status: '下狱' },
+        knownBy: [],
+        sourceTrace: [],
+      },
+      {
+        id: 'dead-man',
+        kind: 'character',
+        name: '赵寅',
+        aliases: [],
+        attributes: { status: '死亡' },
+        knownBy: [],
+        sourceTrace: [],
+      },
+    ];
+    const pack = new ContractPackBuilder().build({
+      bootstrap,
+      volume: {
+        number: 1,
+        title: '入城卷',
+        objective: '站稳脚跟',
+        conflict: '守卫盘查',
+        forbidden: [],
+      },
+      chapter: {
+        number: 76,
+        title: '水营军报',
+        outlineNode: {
+          id: 'node-76',
+          title: '军报',
+          CBN: '军情抵达',
+          CPNs: ['汇报军情'],
+          CEN: '新的危机',
+          mustCover: ['汇报军情'],
+        },
+      },
+    });
+
+    expect(pack.master.characterTruths['lu-ming'].join('|')).toContain(
+      '当前在押，仅可以提审、押解或狱中场景出场，不可自由活动或领兵任职'
+    );
+    expect(pack.master.characterTruths['dead-man'].join('|')).toContain('已死亡，不可出场，回忆或转述除外');
+    // 无终态角色不追加空串
+    expect(pack.master.characterTruths['hero']).toEqual(['林夜']);
+  });
 });
 
 describe('SceneBeatPlanner', () => {

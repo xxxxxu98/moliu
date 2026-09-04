@@ -130,6 +130,16 @@ const DEFAULT_PROTOCOL_HINT =
   '上一轮输出无法解析。每轮只输出一个 JSON 对象:' +
   '{"thought":...,"action":"tool_call","tool":...,"args":{...}} 或 {"action":"tool_call","calls":[...]}(最多3个独立调用) 或 {"action":"finish",...},不要任何多余文字。请重试。';
 
+const TRUNCATION_HINT_ADDON =
+  '本次输出疑似在途中被截断(结构化字段已出现但 JSON 不完整)。请缩短单轮输出:' +
+  '一次只发一个工具调用,写入正文较长时拆成多轮小批量追加,不要试图单轮重写整个大段。';
+
+/** 解析失败 + 输出里已出现协议字段 → 大概率是长输出被截断而非乱写协议 */
+function looksLikeTruncatedProtocolJson(raw: string): boolean {
+  const trimmed = raw.trim();
+  return trimmed.length >= 20 && /"(?:action|thought|tool|calls|args)"/u.test(trimmed);
+}
+
 function estimateTokens(messages: AgentMessage[]): number {
   return Math.ceil(messages.reduce((total, message) => total + message.content.length, 0) / 4);
 }
@@ -214,7 +224,8 @@ function stableStringify(value: unknown): string {
 /**
  * 通用循环执行器。终止三件套(不设轮数上限):
  * 1. 模型自审完成——action=finish,经 session.guardFinish 前置条件放行;
- * 2. 停滞检测——同签名重复调用拒绝执行,连续无进展先注入收尾提示,仍不收尾则 stall 收束;
+ * 2. 停滞检测——同签名重复调用拒绝执行,连续无进展先注入收尾提示;收尾提示后的
+ *    有效修复解除收尾状态继续(提示本身要求「做最后一批修复再 finish」),仍无进展则 stall 收束;
  * 3. 资源安全网——墙钟/token 预算/连续协议违规触发优雅降级(产出部分产物,不拦腰截断)。
  */
 export class AgentLoopRunner {
@@ -303,7 +314,11 @@ export class AgentLoopRunner {
           finishReason = 'protocol-error';
           break;
         }
-        messages.push({ role: 'user', content: session.protocolHint ?? DEFAULT_PROTOCOL_HINT });
+        const hint = session.protocolHint ?? DEFAULT_PROTOCOL_HINT;
+        messages.push({
+          role: 'user',
+          content: looksLikeTruncatedProtocolJson(raw) ? `${hint}${TRUNCATION_HINT_ADDON}` : hint,
+        });
         continue;
       }
 
@@ -346,18 +361,10 @@ export class AgentLoopRunner {
         break;
       }
 
-      if (wrapUpInjected) {
-        // 收尾提示后仍发起调用:按停滞收束
-        transcript.push({
-          round: rounds,
-          action: 'rejected',
-          thought: decision.thought,
-          tool: decision.calls.map(call => call.tool).join(','),
-          summary: '收尾提示后仍发起新调用',
-        });
-        finishReason = 'stall';
-        break;
-      }
+      // 收尾提示后的调用不再一刀切击杀(2026-09-03 反重力 100 章实证:收尾提示本身
+      // 要求「针对 blockers 做最后一批修复并 run_checks」,模型照做却被掐死,修复全被
+      // 「只用过检版本」策略丢弃)。新语义:本轮调用产生实质进展 → 解除收尾状态继续;
+      // 仍无进展(重复调用/读不到新东西) → 按 stall 收束。
 
       // 批量分流:未知工具 / 重复签名 / 可执行
       const unknownTools = decision.calls.filter(call => !this.toolkit.has(call.tool));
@@ -409,6 +416,11 @@ export class AgentLoopRunner {
           tool: skippedDuplicates.join(','),
           summary: '重复调用(相同参数)',
         });
+        // 收尾提示已注入还只会重复旧调用:没有下一轮的必要了
+        if (wrapUpInjected) {
+          finishReason = 'stall';
+          break;
+        }
         messages.push({
           role: 'user',
           content: '该调用已执行过(相同参数)。请换角度,或输出 action=finish 收尾。',
@@ -470,8 +482,25 @@ export class AgentLoopRunner {
         consecutiveNoProgress = 0;
         // 有实质进展说明模型在响应拒绝反馈,finish 拒绝计数随之清零
         finishRejections = 0;
+        // 收尾提示后模型做出了有效修复(正是提示要求的「最后一批修复」):
+        // 解除收尾状态,给 run_checks→finish 留出回合
+        if (wrapUpInjected) {
+          wrapUpInjected = false;
+        }
       } else {
         consecutiveNoProgress += 1;
+        // 收尾提示后执行了调用却毫无进展:按停滞收束,不再给下一轮
+        if (wrapUpInjected) {
+          transcript.push({
+            round: rounds,
+            action: 'rejected',
+            thought: decision.thought,
+            tool: decision.calls.map(call => call.tool).join(','),
+            summary: '收尾提示后的调用未产生实质进展',
+          });
+          finishReason = 'stall';
+          break;
+        }
         if (consecutiveNoProgress >= opts.stallNoProgressLimit && !wrapUpInjected) {
           wrapUpInjected = true;
           messages.push({ role: 'user', content: session.wrapUpPrompt });

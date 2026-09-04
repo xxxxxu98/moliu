@@ -227,6 +227,21 @@ export interface ChapterBlueprint {
   pacingStrategy?: string;
 }
 
+/**
+ * 大纲修复 agent 对「未登记角色引用」的语义裁决台账。
+ * 语义判定（爵位/别称/官职代称指向谁、群体泛称、真新人物）全权归 agent，
+ * 本地不再维护头衔/官职/阵营正则族（2026-09-03 退役，与命运词表塔同原则）；
+ * 完整性门禁只做结构记账：未裁决引用阻断，已裁决引用放行。
+ */
+export interface CharacterReferenceResolution {
+  /** 被引用的原始字面，如「齐王」「两江河道官员」 */
+  reference: string;
+  /** alias=指向已登记角色的别称/爵位/官职代称；collective=群体或职务泛称，非个体人物 */
+  as: 'alias' | 'collective';
+  /** as=alias 时必须命中关键角色规划的某个姓名 */
+  target?: string;
+}
+
 export interface ExecutableOutline {
   title: string;
   oneLiner: string;
@@ -251,6 +266,8 @@ export interface ExecutableOutline {
   keyCharacters: CharacterPlan[];
   foreshadowPlan: ForeshadowPlan[];
   chapterBlueprints?: ChapterBlueprint[];
+  /** agent 裁决台账：仅由大纲修复 agent 的 resolve_character_references 写入 */
+  characterReferenceResolutions?: CharacterReferenceResolution[];
 }
 
 export interface ExpandedOutlineResult {

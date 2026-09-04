@@ -1,6 +1,0 @@
-chapters total: 200
-empty chapters: [{"n":78,"title":"第78章"}]
-store n=186: idx=185 orderIndex=185 title=第186章 刀都架在皇帝脖子上了，你还能怎么翻盘 len=3524
-
-===== 死亡谓词命中点(复刻扫描,未含台词/条件守卫) =====
-林铁锋 @ch161 [deathRev] lead=…，进出之人一律格杀勿论；‖ tail=，你带漕运卫队去抄了通汇当铺的后院暗库；沈掌柜，…

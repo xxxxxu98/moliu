@@ -174,6 +174,67 @@ describe('AgentLoopRunner.run 通用内核', () => {
     expect(toolkit.draft.revision()).toBe(1);
     expect(outcome.transcript.some(item => item.summary?.includes('重复调用'))).toBe(true);
   });
+
+  // 2026-09-03 反重力 100 章大纲修复 agent 实证:收尾提示本身要求「做最后一批修复
+  // 并 run_checks 再 finish」,旧实现却在收尾提示后一刀切击杀任何工具调用,导致
+  // 模型照提示做出的修复(append_to_section)在执行前被丢弃,整轮大纲带 blocker 报废。
+  it('收尾提示后的实质修复解除收尾状态,继续直至 finish(而非一刀切击杀)', async () => {
+    const toolkit = new TinyWriterToolkit();
+    const first = call('submit_text', { text: '没有钩子的初稿' });
+    const transport = new ScriptedTransport([
+      first, // 进展:revision 1
+      first, // 重复 → 无进展 1
+      first, // 重复 → 无进展 2 = 上限 → 注入收尾提示
+      call('submit_text', { text: '修复后的正文……结尾' }), // 收尾提示后的有效修复
+      call('run_checks', {}), // 复检通过
+      finish('修好了'),
+    ]);
+    const outcome = await new AgentLoopRunner(transport, toolkit).run(makeSession(toolkit));
+
+    expect(outcome.finishReason).toBe('model-finish');
+    expect(toolkit.draft.get()).toBe('修复后的正文……结尾');
+    expect(toolkit.draft.revision()).toBe(2);
+    // 收尾提示确实注入过(第 4 轮消息里)
+    const fourthRound = transport.calls[3] ?? [];
+    expect(fourthRound.some(message => message.content.includes('请收尾'))).toBe(true);
+  });
+
+  it('收尾提示后的新调用未产生实质进展(工具报错) → stall 收束', async () => {
+    const toolkit = new TinyWriterToolkit();
+    const first = call('submit_text', { text: '结尾' });
+    const transport = new ScriptedTransport([
+      first, // 进展
+      first, // 无进展 1
+      first, // 无进展 2 → 收尾提示
+      call('submit_text', { text: '' }), // 新签名但参数非法 → 无版本前进
+      finish(),
+    ]);
+    const outcome = await new AgentLoopRunner(transport, toolkit).run(makeSession(toolkit));
+
+    expect(outcome.finishReason).toBe('stall');
+    // 第 5 条回复(finish)从未被请求
+    expect(transport.calls).toHaveLength(4);
+  });
+
+  it('解析失败且输出形似被截断的 JSON → 纠偏提示带截断指引', async () => {
+    const toolkit = new TinyWriterToolkit();
+    // 2026-09-03 反重力 100 章现场形态:响应在 "calls": 处被掐断,任何补全都救不回
+    const truncated =
+      '{"thought":"读取第4章蓝图、关键角色规划段正文与模板","action":"tool_call","calls":';
+    const transport = new ScriptedTransport([
+      truncated,
+      call('submit_text', { text: '结尾' }),
+      call('run_checks', {}),
+      finish(),
+    ]);
+    const outcome = await new AgentLoopRunner(transport, toolkit).run(makeSession(toolkit));
+
+    expect(outcome.finishReason).toBe('model-finish');
+    const secondRound = transport.calls[1] ?? [];
+    const hint = secondRound[secondRound.length - 1]?.content ?? '';
+    expect(hint).toContain('只输出一个 JSON 对象');
+    expect(hint).toContain('截断');
+  });
 });
 
 describe('CompositeToolkit', () => {

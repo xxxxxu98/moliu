@@ -125,53 +125,27 @@ const GENERIC_CHARACTER_REFERENCES = new Set([
 /**
  * 非姓名形态的"角色引用"特征：括号注解（「忠诚执行者）」「韩尚书（六部尚书…）"）、
  * 标点断句、关系短语字（从/到/与/和…）。这些是模型把关系字段/描述整句写进了
- * 角色引用字段（2026-08-16 矩阵实测 mimo/ds-pro 大纲触发 40+ 条此类 blocker
- * 拦死整轮），补登记救不了（不是名字）、整体重试不收敛（格式惯性）。
+ * 角色引用字段（2026-08-16 矩阵实测 40+ 条此类 blocker 拦死整轮），补登记救不了
+ * （不是名字）、整体重试不收敛（格式惯性）——属于字段腐化的格式守卫，保留在本地。
  */
 const IMPLAUSIBLE_NAME_RE = /[（()），,。；;、··]/u;
 const RELATION_PHRASE_RE = /[从到与和及在对为向着]/u;
-/** 组织/集体称呼（「临川商会」类）与纯职务词尾（「府衙通判」类），非可建档姓名 */
-const ORGANIZATION_NAME_RE =
-  /(?:[门派司会盟教帮堂阁殿宗楼局署馆](?:军|团|队|众)?$)|(?:^[旧新][\u4e00-\u9fa5]{1,4}$)|(?:^[一二三四五六七八九十]+老$)/u;
-/** 纯职务/爵位（整串即身份，无姓氏）。「顾师爷」「钱通判」是姓+职务，不走本规则。 */
-const TITLE_ONLY_RE =
-  /^(?:会长|通判|知府|知县|师爷|管家|主簿|幕僚|掌柜|首领|侍卫|仆役|巡抚|总督|提督|总兵|钦差|副使|正使|祭酒|司业|首辅|权相|大学士|统领|暗探|尚书|侍郎|御史|藩王|亲王|郡王|皇子|公主|捕头)$/u;
-/** 机构前缀（含可选职务后缀）（「临川商会会长」「府衙通判」「县衙主簿」）：机构代称，非可建档个人姓名 */
-const ORG_TITLE_RE = /^[\u4e00-\u9fa5]{0,6}(?:商会|府衙|县衙|衙门|朝廷|东宫|内阁|翰林|司礼监|军机处)(?:会长|通判|知府|知县|主簿|幕僚|首领|掌印|大学士)?$/u;
-/**
- * 排行/修饰 + 爵位（「三皇子」「野心藩王」），不是可建档姓名。
- * 为什么规则够用：封闭爵位后缀 + 可选排行/修饰前缀，形态校验不是语义判定。
- */
-const RANKED_TITLE_RE =
-  /^(?:[一二三四五六七八九十末大小幼长]|野心)?(?:皇子|公主|亲王|郡王|藩王|世子)$/u;
-/**
- * 双字及以上前缀 + 官职（「江南巡抚」「内阁首辅」「太学祭酒」「镜鉴司暗探」「钦差副使」）。
- * 为什么规则够用：前缀长度 + 封闭官职后缀的形态初筛；单字前缀故意放行，保护
- * 「钱通判」「顾师爷」这类姓+职务合法称呼。
- * 2026-09-02 反重力 3 章冒烟：卷纲把官职槽写进 keyCharacters，agent 按字补登记，
- * 9 条职务 blocker 把 expandDirection fail-closed。
- */
-const MULTI_CHAR_OFFICE_RE =
-  /^[\u4e00-\u9fa5]{2,8}(?:巡抚|总督|提督|总兵|知府|知县|通判|主簿|师爷|祭酒|司业|首辅|权相|大学士|统领|暗探|副使|正使|钦差|尚书|侍郎|御史|掌印|会长|布政使|按察使|学政)$/u;
-/** 阵营/群体标签 + 身份泛称组合（「户部革新派年轻官员」「维新派老臣」「东党年轻御史」）：
- *  功能性描述被当人名引用，补登记后标签词直接进正文当角色名（2026-08-28 r2 百章
- *  9+ 处实证），非可建档姓名 */
-const FACTION_ROLE_PHRASE_RE =
-  /(?:[派党系][\u4e00-\u9fa5]{0,4}(?:官员|老臣|朝臣|党人|勋贵|子弟|御史|干将)$)|(?:年轻|青年|老年|老|小)(?:官员|太监|宫女|侍卫|总管|幕僚|师爷|掌柜|管家|首领|差役|捕头|千户|百户|校尉|亲兵|死士|刺客|账房|书吏|算吏|盐商|商人|御史|郎中)$/u;
 
-/** 引用值是否像一个可建档的姓名；不像姓名的引用不产生 unknown-character-reference blocker */
+/**
+ * 【2026-09-03 语义正则塔退役】头衔/官职/爵位/阵营泛称的「像不像姓名」判定
+ * （原 TITLE_ONLY/ORG_TITLE/RANKED_TITLE/MULTI_CHAR_OFFICE/FACTION_ROLE_PHRASE/
+ * ORGANIZATION 六族正则）不再由本地维护：每轮新语料形态（08-16 关系短语 → 08-28
+ * 阵营泛称 → 09-02 多字官职 → 09-03 国号爵位/太后/殿+皇帝）都要回来补丁，与
+ * 命运词表塔同款跑步机。语义判定全权归大纲修复 agent：未登记引用一律产生
+ * blocker 交给 agent 裁决（resolve_character_references 记 alias/collective 台账，
+ * 或 append_to_section 补登记），门禁只核对台账与登记表的结构一致性。
+ */
 function isPlausibleCharacterName(value: string): boolean {
   const name = value.trim();
   if (!name) return false;
   if ([...name].length > 10) return false;
   if (IMPLAUSIBLE_NAME_RE.test(name)) return false;
   if (RELATION_PHRASE_RE.test(name)) return false;
-  if (ORGANIZATION_NAME_RE.test(name)) return false;
-  if (TITLE_ONLY_RE.test(name)) return false;
-  if (ORG_TITLE_RE.test(name)) return false;
-  if (RANKED_TITLE_RE.test(name)) return false;
-  if (MULTI_CHAR_OFFICE_RE.test(name)) return false;
-  if (FACTION_ROLE_PHRASE_RE.test(name)) return false;
   return true;
 }
 
@@ -256,6 +230,21 @@ function inspectSemanticConsistency(outline: ExecutableOutline): {
     });
   }
 
+  // agent 裁决台账：collective 直接生效；alias 必须指向登记表内姓名才生效
+  // （模型把别名映射到笔误名时保持阻断，逼它重裁或补登记）
+  const effectiveResolutions = new Set(
+    (outline.characterReferenceResolutions ?? [])
+      .filter(entry => {
+        const reference = entry.reference?.trim();
+        if (!reference) return false;
+        if (entry.as === 'collective') return true;
+        if (entry.as !== 'alias') return false;
+        const target = entry.target?.trim();
+        return Boolean(target) && canonicalNames.has(target as string);
+      })
+      .map(entry => entry.reference.trim()),
+  );
+
   const checkCharacterReference = (
     label: string,
     reference: string | undefined,
@@ -264,13 +253,13 @@ function inspectSemanticConsistency(outline: ExecutableOutline): {
     const value = reference?.trim();
     if (!value || GENERIC_CHARACTER_REFERENCES.has(value)) return;
     if ([...canonicalNames].some(name => value.includes(name))) return;
-    // 关系短语/职务/组织等非姓名形态：字段本身被模型写坏，不是缺角色登记，
-    // 产生 blocker 只会把整份大纲 fail-closed 且无修复通道。
+    if (effectiveResolutions.has(value)) return;
+    // 字段腐化守卫：关系整句/标点断句不是引用，产生 blocker 只会 fail-closed 且无修复通道
     if (!isPlausibleCharacterName(value)) return;
     blockers.push({
       kind: 'unknown-character-reference',
       chapterNumber,
-      message: `${label}引用了未登记角色「${value}」；必须补入关键角色规划或改用已登记角色`,
+      message: `${label}引用了未登记角色「${value}」；请裁决：别称/爵位/官职指向已登记角色则 resolve_character_references 记 alias，群体泛称记 collective，确为新人物则补入关键角色规划`,
     });
   };
   for (const volume of outline.volumePlan ?? []) {

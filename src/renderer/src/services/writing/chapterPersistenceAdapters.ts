@@ -9,7 +9,7 @@ import type { ChapterPersistenceClient, MemoryClient } from '@/types/chapter-pip
 import type { Chapter } from '@/types/project';
 import { DeAIService } from './de-ai-service';
 import { countWords } from './utils';
-import { mergeCharacterStateChanges, safeExtractChapterMemory } from './extract-plot-memory';
+import { mergeCharacterStateChanges, mergeKeyEvents, safeExtractChapterMemory } from './extract-plot-memory';
 import { initializeMemoryManager, getMemoryManager } from './memory-manager';
 
 const CHAPTER_STATUSES: readonly Chapter['status'][] = ['draft', 'editing', 'final'];
@@ -65,7 +65,7 @@ export function createChapterMemoryClient(): MemoryClient {
   const projectStore = useProjectStore();
 
   return {
-    async extractAndSave(chapterId, chapterNumber, prose, aiStateChanges) {
+    async extractAndSave(chapterId, chapterNumber, prose, aiStateChanges, aiEvents) {
       const project = projectStore.currentProject;
       if (!project) return null;
 
@@ -97,6 +97,12 @@ export function createChapterMemoryClient(): MemoryClient {
             ...aiStateChanges,
             ...(memory.characterStateChanges ?? []),
           ]);
+        }
+        // keyEvents 真源（2026-09-04 与命运账同构）：AI 事件摘要在前，规则层只补漏，
+        // 占位符「（本章无明显关键事件）」随 AI 条目清除（规则层 25-43% 空转实证）
+        const mergedKeyEvents = mergeKeyEvents(aiEvents ?? [], memory.keyEvents ?? []);
+        if (mergedKeyEvents.length > 0) {
+          memory.keyEvents = mergedKeyEvents;
         }
         projectStore.addChapterMemory(memory);
         // chapterMemories 是项目关键读模型，必须同步到主项目快照。

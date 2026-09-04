@@ -620,18 +620,32 @@ export class UnifiedOutlineGenerator {
   private createAgentTransport(options: GenerateOptions): AgentLoopTransport {
     return {
       send: async (messages, sendOptions) => {
-        const data = await this.requestChatCompletion(
-          messages,
-          { ...options, temperature: 0.2, signal: sendOptions?.signal ?? options.signal },
-          'outline-agent',
-        );
-        const content = data.choices?.[0]?.message?.content;
-        if (typeof content !== 'string' || !content) {
+        let content = await this.requestAgentContent(messages, options, sendOptions?.signal);
+        // 空响应重试一次:网关抖动的常见形态是 200 但 content 为空(2026-09-03 反重力
+        // 100 章实证,修复 agent 直接按 transport 失败收束,整轮大纲作废)
+        if (!content) {
+          content = await this.requestAgentContent(messages, options, sendOptions?.signal);
+        }
+        if (!content) {
           throw new Error('API 未返回内容');
         }
         return content;
       },
     };
+  }
+
+  private async requestAgentContent(
+    messages: AgentMessage[],
+    options: GenerateOptions,
+    signal?: AbortSignal,
+  ): Promise<string> {
+    const data = await this.requestChatCompletion(
+      messages,
+      { ...options, temperature: 0.2, signal: signal ?? options.signal },
+      'outline-agent',
+    );
+    const content = data.choices?.[0]?.message?.content;
+    return typeof content === 'string' ? content : '';
   }
 
   private async requestChatCompletion(

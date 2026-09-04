@@ -56,3 +56,40 @@ describe('ensureTopLevelEvidence', () => {
   });
 });
 
+describe('命运提取合同护栏', () => {
+  // 2026-09-03 反重力 100 章实证：主角 ch9 下狱出账、ch13 正文「迈出死牢大门」
+  // 获释不入账，状态摘要永远停留「下狱」，ch33/94 连续 fact_conflict 拖死全跑。
+  // 契约 11 逆转族（获释/复职/平反）是对该单向阀的修复，本护栏防其被误删。
+  it('系统合同包含逆转宣告必检必出账条款与三族 value', async () => {
+    const generate = vi.fn().mockResolvedValue({ events: [], deltas: [], evidence: [] });
+    const extractor = new AIFactExtractor({ generate } as unknown as StructuredAI);
+    await extractor.extract({
+      projectId: 'p1',
+      chapterNumber: 13,
+      sceneDrafts: [],
+      state: { entities: {}, events: [] } as never,
+    });
+
+    const system = String(generate.mock.calls[0]?.[0]?.system ?? '');
+    expect(system).toContain('逆转宣告必检必出账');
+    expect(system).toContain('获释族');
+    expect(system).toContain('value「获释」');
+    expect(system).toContain('复职族');
+    expect(system).toContain('value「复职」');
+    expect(system).toContain('平反族');
+    expect(system).toContain('value「平反」');
+    // 死亡保持不可逆：真复活只能走 fate-adjudicate，不允许 delta 洗白
+    expect(system).toContain('死亡无逆转');
+    // 逆向命运族仍在（对称性：只加逆转不删逆向）
+    expect(system).toContain('命运宣告必检必出账');
+    expect(system).toContain('下狱族');
+    // 2026-09-03 r4 实证：伏法/处斩完成体曾不在死亡族清单，ch59 处决不入账
+    // → ch99-100 死人复活无人拦截。护栏防线索词再被删。
+    expect(system).toContain('伏法');
+    expect(system).toContain('被正法');
+    expect(system).toContain('越狱族');
+    expect(system).toContain('value「越狱」');
+    expect(system).toContain('判决不是行刑');
+  });
+});
+

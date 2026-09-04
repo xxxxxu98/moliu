@@ -15,8 +15,39 @@
  * 再从 %APPDATA%/moliu/moliu-settings.json 取 baseUrl/apiKey/model（openai 兼容）。
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createDecipheriv, scryptSync } from 'node:crypto';
+
+// App 设置里的 apiKey 为机器绑定 AES-256-GCM 密文（与
+// src/renderer/src/services/writing/__tests__/continueWriteRealConfig.ts
+// 的 decryptStoredApiKey 同算法）——冒烟 harness 会解密，脚本直读必须同样解密，
+// 否则密文当明文发出去就是 403 token_rejected。
+function decryptStoredApiKey(apiKey) {
+  if (!apiKey) return '';
+  const parts = apiKey.split(':');
+  if (parts.length !== 3) return apiKey;
+  try {
+    const machineId = [
+      process.env.COMPUTERNAME || process.env.HOSTNAME || 'default',
+      process.env.USERNAME || process.env.USER || 'user',
+      process.env.USERPROFILE || process.env.HOME || '/home',
+    ].join('-');
+    const key = scryptSync(machineId, 'moliu-ai-providers-v1', 32, {
+      N: 2 ** 14,
+      r: 8,
+      p: 1,
+      maxmem: 64 * 1024 * 1024,
+    });
+    const iv = Buffer.from(parts[0], 'base64');
+    const authTag = Buffer.from(parts[1], 'base64');
+    const decipher = createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(authTag);
+    return decipher.update(parts[2], 'base64', 'utf8') + decipher.final('utf8');
+  } catch {
+    return apiKey;
+  }
+}
 
 const args = process.argv.slice(2);
 const storeArg = args.find(a => !a.startsWith('--'));
@@ -28,7 +59,7 @@ const limitIdx = args.indexOf('--limit');
 const limit = limitIdx >= 0 ? Number(args[limitIdx + 1]) || 8 : 8;
 const outIdx = args.indexOf('--out');
 
-const repoRoot = resolve(pathToFileURL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'), '../../../..');
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const storePath = resolve(storeArg);
 if (!existsSync(storePath)) {
   console.error(`store 不存在: ${storePath}`);
@@ -41,7 +72,10 @@ const proj = store.projects?.[0] ?? {};
 const rosterSet = new Set(
   (proj.characters ?? []).map(c => (c?.name || '').trim()).filter(n => n.length >= 2 && n.length <= 8)
 );
-const TERMINAL_FATES = new Set(['死亡', '驾崩']);
+// 终态值域与提取合同（FactExtractor 契约 7/11）的 value 枚举保持一致：
+// 逆向族（死亡/驾崩/下狱/定罪/去职）与逆转族（获释/复职/平反）都会改写台账终态，
+// 矛盾检测取最新一条命运记录后看后文是否矛盾提及
+const TERMINAL_FATES = new Set(['死亡', '驾崩', '下狱', '定罪', '去职', '获释', '复职', '平反', '越狱']);
 const memories = [...(proj.chapterMemories ?? [])].sort(
   (a, b) => (a.chapterIndex ?? 0) - (b.chapterIndex ?? 0)
 );
@@ -103,9 +137,9 @@ if (!provider?.baseUrl || !provider?.apiKey) {
 async function chatJSON(system, user) {
   const res = await fetch(`${provider.baseUrl.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${provider.apiKey}` },
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${decryptStoredApiKey(provider.apiKey)}` },
     body: JSON.stringify({
-      model: provider.model,
+      model: provider.modelName ?? provider.model,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: user },

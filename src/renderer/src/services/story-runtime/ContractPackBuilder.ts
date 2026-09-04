@@ -51,6 +51,29 @@ function unique(values: string[]): string[] {
   return [...new Set(values.map(value => value.trim()).filter(Boolean))];
 }
 
+/**
+ * 终态随角色真相下发到写作侧（2026-09-04 r5 ch76 实证：状态摘要只喂裁判，
+ * writer 看不到实体状态，在押角色陆鸣被写成自由领兵的将领，fact_conflict
+ * 三轮耗尽成书空洞）。键集与 FactExtractor 提取合同的 value 枚举一致。
+ */
+const TERMINAL_STATUS_TRUTHS: Record<string, string> = {
+  死亡: '已死亡，不可出场，回忆或转述除外',
+  驾崩: '已驾崩，不可出场，回忆或转述除外',
+  下狱: '当前在押，仅可以提审、押解或狱中场景出场，不可自由活动或领兵任职',
+  越狱: '已越狱在逃，可写潜逃或藏匿场景，不可以官身行事，落网前不得恢复自由官务',
+  定罪: '已定罪，按判决现状描写，行刑完成前不得写已伏法',
+  去职: '已去职，无官身，不得再以原官职行事，除非剧情明确交代复职',
+  获释: '已获释，恢复自由身',
+  复职: '已复职，恢复官身',
+  平反: '已平反，恢复名誉',
+};
+
+function statusTruth(entity: { attributes?: Record<string, unknown> }): string {
+  const status = String(entity.attributes?.status ?? '').trim();
+  if (!status) return '';
+  return TERMINAL_STATUS_TRUTHS[status] ?? `当前状态：${status}`;
+}
+
 export class ContractPackBuilder {
   build(input: ContractPackBuildInput): ContractPack {
     const { bootstrap, volume, chapter } = input;
@@ -64,6 +87,9 @@ export class ContractPackBuilder {
         .map(entity => [
           entity.id,
           unique([
+            // 状态真相必须排首位：起草侧 compactContractsForDraft 只保留前 2 条，
+            // 排末位会被截掉（2026-09-04 r6 ch66 实证）
+            statusTruth(entity),
             entity.name,
             String(entity.attributes.role ?? ''),
             String(entity.attributes.description ?? ''),

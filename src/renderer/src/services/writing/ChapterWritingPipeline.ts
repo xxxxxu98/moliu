@@ -1008,8 +1008,9 @@ export class ChapterWritingPipeline {
       // AI 提取的状态 delta（命运宣告必出账，契约 7-10）随投影穿透进章记忆——
       // 章记忆是状态摘要/禁入名单/台账驱动 triage 的唯一读模型，规则提取不产命运账（2026-09-02）。
       const aiStateChanges = mapStatusDeltasToStateChanges(result.facts, state);
+      const aiEvents = mapEventsToKeyEvents(result.facts);
       try {
-        await this.memoryClient?.extractAndSave(input.chapter.id, chapterNumber, prose, aiStateChanges);
+        await this.memoryClient?.extractAndSave(input.chapter.id, chapterNumber, prose, aiStateChanges, aiEvents);
       } catch (error) {
         memoryProjectionError = error;
         console.warn('[Pipeline] accepted commit 的记忆投影失败，可由 outbox 重放:', error);
@@ -1357,4 +1358,16 @@ function mapStatusDeltasToStateChanges(
     });
   }
   return out;
+}
+
+/**
+ * facts.events（AI 提取，每条带 summary+evidence）→ 章记忆 keyEvents 真源。
+ * 规则层 keyEvents 正则空转率高（正则塔服役期 25-43% 章节出占位符），
+ * 与命运账同构地下发到记忆投影。摘要去重、限长限条。
+ */
+function mapEventsToKeyEvents(facts: LongFormWriteResult['facts']): string[] {
+  const summaries = (facts?.events ?? [])
+    .map(event => String((event as { summary?: unknown })?.summary ?? '').trim())
+    .filter(summary => summary.length >= 6 && summary.length <= 120);
+  return [...new Set(summaries)].slice(0, 8);
 }
