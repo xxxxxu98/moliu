@@ -1426,7 +1426,9 @@ app.commandLine.appendSwitch('disable-features', 'CrossSiteDocumentBlockingAlway
 
 ### 16.5 临时产物治理
 
-- `temp/` 目录产物由清理脚本统一管理（`npm run cleanup:*`）；需要长期保留的目录/文件必须登记进 KEEP 保护名单，防止误清。
+- `temp/` 目录产物由清理脚本统一管理（`npm run temp:stats` / `npm run temp:clean` / `npm run cleanup:*`）。
+- KEEP 只保护**体积小且长期回读**的项：harness 配置、书审样本、断点续跑。**禁止把单轮矩阵目录写进 KEEP**（写进去会永占数百 MB，退役只能改代码）。
+- `ai-traces/` 不整目录永保：`npm run temp:clean` 按天裁剪过期 `.jsonl`（默认 3 天）；整目录删除需显式 `--dir ai-traces`。
 - 冒烟/大循环产物必须归档到带时间戳的目录，不污染工作区。
 - 调试日志、临时 QA 产物禁止提交进 git。
 

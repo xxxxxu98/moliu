@@ -28,9 +28,10 @@ description: Storyflow 可上线验收大循环。把「真实 AI 生成整本�
 # 1. 反重力网关存活（只查端口监听；裸 HTTP 探测会 403 token_rejected，不可信）
 netstat -ano | findstr :8045 | findstr LISTENING
 
-# 2. harness 配置在位（曾因 temp 全量清扫被删导致冒烟秒失败；KEEP_DEFAULT 已加保护）
+# 2. harness 配置在位（曾因 temp 全量清扫被删导致冒烟秒失败；KEEP 只保护配置/书审/断点，不含单轮矩阵）
 #    temp/continue-write.real.config.json + temp/continue-write.real.config.example.json
 #    若缺：从 example 结构重建 {"enabled":true,"providerId":"<厂商id>"} 并 JSON.parse 验证
+#    ai-traces 由 temp:clean 按天裁剪 jsonl，整目录删除需 --dir ai-traces
 
 # 3. 厂商确认（--list 看 ★；反重力 gemini-3.7-flash-high 的当前 id 要现场核对，勿凭记忆写死）
 node scripts/agent-storyflow-real-multi.mjs --list
