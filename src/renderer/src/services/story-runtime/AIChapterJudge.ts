@@ -75,6 +75,20 @@ function normalizeTopLevelObjectShape(value: unknown): unknown {
 }
 
 /**
+ * 判官引用证据的确定性核验：容忍空白/换行/全半角引号的轻微漂移。
+ * 模型逐字摘录长句时最常见的失配是段间换行与引号宽度（2026-09-05 g38f 200 章实测：
+ * ch34/ch131 判官证据实际来自正文却因换行差异 includes 失败 → 整组证据报废翻转成
+ * 未履约，与防抄守卫对挤熬死两章）；这里只做格式级归一，不替代语义判定。
+ */
+function containsVerbatimQuote(text: string, quote: string): boolean {
+  if (text.includes(quote)) return true;
+  if (!quote.trim()) return false;
+  const squash = (s: string): string =>
+    s.replace(/\s+/gu, '').replace(/[“”]/gu, '"').replace(/[‘’]/gu, "'");
+  return squash(text).includes(squash(quote));
+}
+
+/**
  * 统一章节语义审查：履约 + 禁区 + 连贯性/人设，单次 AI 请求。
  */
 export class AIChapterJudge implements ChapterJudge {
@@ -121,7 +135,7 @@ export class AIChapterJudge implements ChapterJudge {
         '- 判断 mustCover 节点是否已在正文中情节兑现',
         '- 看语义，不要求与节点原文一字不差；同义改写、拆句、换人称均算履约',
         '- 【禁止身份脑补】节点点名具体角色时，正文必须有该姓名或无歧义的已建立称谓，并有其动作/对白证据；不得把未具名的“主事/公公/侍卫”等职位自动等同为节点中的具名角色',
-        '- evidence 必须是正文中真实存在的原句；不得改写证据、补写姓名或用推断性说明代替原文',
+        '- evidence 必须是正文中真实存在的原句：逐字摘录（保留原标点，不改写、不并句拆句、不顺手润色）；引用长句时可截取其中较短、完整、可核对的原句片段。若某节点的证据全部不是正文原句，该节点履约判定会被直接推翻为未履约',
         '- 【可见场面】必须有可感知的对话/动作/取证场面；仅一句带过、回忆里提一句、章末口号式表态 → fulfilled=false',
         '- 仅当完全看不到该情节时也判 fulfilled=false',
         '- 【跨章目标】若节点含限期/倒计时/否则将/「N 天内」等跨章标记（如「必须在三天内翻案，否则将被处斩」），正文做到实质推进（取得关键证据、当众指认、完成阶段对峙）即视为履约，不要求章内完整兑现；不要把「未彻底完结」判为未履约',
@@ -136,7 +150,7 @@ export class AIChapterJudge implements ChapterJudge {
         '- forbidden 必须覆盖输入的每一个 zone，zone 原样回传',
         '',
         '## 3) 深度语义（issues，若 checkDeepSemantic=true）',
-        '- fact_conflict：与状态摘要/事实冲突。【跨章存在性矛盾必须报此类型且 severity=critical】典型：上章已死/已离开的角色本章复活或活动、上章已销毁/已赠出的物品本章再次出现、上章已揭穿的身份本章当作未知。判定的依据是状态摘要里的实体生死/位置/持有物，而非本章自述',
+        '- fact_conflict：与状态摘要/事实冲突。【跨章存在性矛盾必须报此类型且 severity=critical】典型：上章已死/已离开的角色本章复活或活动、上章已销毁/已赠出的物品本章再次出现、上章已揭穿的身份本章当作未知、状态摘要里已下狱/被关押/被软禁的角色本章以自由身出现并行动（除非正文写明了越狱/获释过程）。判定的依据是状态摘要里的实体生死/羁押/位置/持有物，而非本章自述',
         '- logic_gap：自相矛盾或隐含逻辑漏洞；含：无视上章终态重复入狱/重复穿越、章末未落到指定钩子',
         '- ooc：人设明显崩坏',
         '- timeline：时间顺序不合理',
@@ -228,7 +242,9 @@ export class AIChapterJudge implements ChapterJudge {
             reason: `正文未明确出现节点点名角色：${missingNames.join('、')}；禁止用未具名职位推断履约`,
           };
         }
-        const invalidEvidence = hit.evidence.filter(evidence => !chapterText.includes(evidence));
+        const invalidEvidence = hit.evidence.filter(
+          evidence => !containsVerbatimQuote(chapterText, evidence),
+        );
         if (hit.fulfilled && requiredNames.length > 0
           && hit.evidence.length > 0 && invalidEvidence.length === hit.evidence.length) {
           return {

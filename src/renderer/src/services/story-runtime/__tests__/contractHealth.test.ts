@@ -196,6 +196,69 @@ describe('contractHealth', () => {
     expect(report.notes.some(note => note.includes('终态'))).toBe(true);
   });
 
+  it('陈旧裁剪项导出双形态：引擎 mustCheck 减除才不失配（g38f2-100ch ch24 孙泰案）', () => {
+    // 孙泰 ch13 死亡入账；ch24 蓝图（初始批、早于 ch13 生成）仍要求其公堂受审。
+    // review.mustCheck 建合同期固化的是【单章】前缀原句——只导出剥前缀形态会让
+    // 引擎侧 includes 减除永远落空，起草 prompt 持续被投毒直至 fact_conflict 死章。
+    const contracts = makeContracts();
+    const rawNode = '【单章】孙泰戴罪公堂受审当庭对质';
+    contracts.chapter.mustCover = [rawNode, '沈淮呈上漕运铁证'];
+    contracts.chapter.CPNs = ['沈淮呈上漕运铁证'];
+    const state = makeState();
+    state.entities['char-suntai'] = {
+      id: 'char-suntai',
+      kind: 'character',
+      name: '孙泰',
+      aliases: [],
+      attributes: { status: '死亡' },
+      knownBy: ['char-suntai'],
+      sourceTrace: [],
+    };
+    const { chapter, report } = healChapterContract(contracts.chapter, { state });
+    expect(chapter.mustCover).not.toContain(rawNode);
+    // 导出原始形态（review.mustCheck 固化的是原句）；节点带可剥前缀时另附剥前缀形态
+    expect(report.staleRemovedMustCover).toContain(rawNode);
+  });
+
+  it('mustCover 全裁空且 goal 自带陈旧剧情时，goal 不得从回退口溜回（ch24 后门）', () => {
+    const contracts = makeContracts();
+    contracts.chapter.mustCover = ['孙泰当堂认罪画押'];
+    contracts.chapter.CPNs = ['孙泰狱中悔过'];
+    contracts.chapter.goal = '孙泰在公堂上认罪伏法';
+    const state = makeState();
+    state.entities['char-suntai'] = {
+      id: 'char-suntai',
+      kind: 'character',
+      name: '孙泰',
+      aliases: [],
+      attributes: { status: '死亡' },
+      knownBy: ['char-suntai'],
+      sourceTrace: [],
+    };
+    const { chapter } = healChapterContract(contracts.chapter, { state });
+    expect(chapter.mustCover.join('')).not.toContain('孙泰');
+    expect(chapter.CPNs.join('')).not.toContain('孙泰');
+  });
+
+  it('去职也是命运级终态：去职角色节点同样被陈旧度裁剪', () => {
+    const contracts = makeContracts();
+    contracts.chapter.mustCover = ['周茂调兵围困行辕', '沈淮夜审账册'];
+    contracts.chapter.CPNs = ['周茂点齐兵马', '沈砚夜审账册'];
+    const state = makeState();
+    state.entities['char-zhoumao'] = {
+      id: 'char-zhoumao',
+      kind: 'character',
+      name: '周茂',
+      aliases: [],
+      attributes: { status: '去职' },
+      knownBy: ['char-zhoumao'],
+      sourceTrace: [],
+    };
+    const { chapter } = healChapterContract(contracts.chapter, { state });
+    expect(chapter.mustCover).not.toContain('周茂调兵围困行辕');
+    expect(chapter.mustCover).toContain('沈淮夜审账册');
+  });
+
   it('开场重叠检测：本章开头复读上章结尾判 blocking，正常承接放过', () => {
     const prevEnding =
       '他攥紧了手中的账册，转身推开了库房的大门，门外的火把连成一片，将他的影子拉得很长很长。';

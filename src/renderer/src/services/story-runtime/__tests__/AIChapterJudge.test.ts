@@ -545,6 +545,73 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
     const prompt = JSON.parse((ai.generate as ReturnType<typeof vi.fn>).mock.calls[0][0].prompt);
     expect(prompt.payoffCandidates).toBeUndefined();
   });
+  it('判官证据跨段换行/引号宽度漂移不再误杀履约（2026-09-05 g38f ch34/131 守卫对挤死锁）', async () => {
+    // 判官给出的证据逐字来自正文，但把段界换行并成一句、直引号代替了全角引号——
+    // 旧 includes 全等校验必失配 → 整组证据报废翻转未履约 → 与防抄守卫对挤熬死两章。
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => ({
+        fulfillment: [{
+          node: '沈砚截获万裕钱庄转移现银的绝密蜡丸书信',
+          fulfilled: true,
+          evidence: ['沈砚截获蜡丸，拆出万裕钱庄转移现银的绝密书信。"当夜交割。"'],
+          reason: '已写到',
+        }],
+        forbidden: [],
+        issues: [],
+      })),
+    };
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: ['沈砚截获万裕钱庄转移现银的绝密蜡丸书信'],
+      forbiddenZones: [],
+      chapterText: '沈砚截获蜡丸，拆出万裕钱庄转移现银的绝密书信。\n\n“当夜交割。”信使低声道。',
+      allowedCharacterNames: ['沈砚'],
+      checkDeepSemantic: true,
+    });
+    expect(result.fulfillment[0]).toMatchObject({ fulfilled: true });
+  });
+
+  it('证据确实是模型改写自创（非正文原句）时仍翻转为未履约——归一化不放松语义防线', async () => {
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => ({
+        fulfillment: [{
+          node: '沈砚截获万裕钱庄转移现银的绝密蜡丸书信',
+          fulfilled: true,
+          evidence: ['沈砚从信使手中取得了钱庄转移银两的密信'],
+          reason: '已写到',
+        }],
+        forbidden: [],
+        issues: [],
+      })),
+    };
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: ['沈砚截获万裕钱庄转移现银的绝密蜡丸书信'],
+      forbiddenZones: [],
+      chapterText: '沈砚截获蜡丸，拆出万裕钱庄转移现银的绝密书信。',
+      allowedCharacterNames: ['沈砚'],
+      checkDeepSemantic: true,
+    });
+    expect(result.fulfillment[0]).toMatchObject({ fulfilled: false, evidence: [] });
+    expect(result.fulfillment[0].reason).toContain('履约证据均不是正文原句');
+  });
+
+  it('系统词含证据逐字摘录要求与羁押状态矛盾的 fact_conflict 规则', async () => {
+    // g38f ch84：徐文壁 ch78 锁拿地窖不入状态摘要 → ch84 自由督烧底账无人拦
+    let capturedSystem = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        return { fulfillment: [], forbidden: [], issues: [] };
+      }),
+    };
+    await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+    });
+    expect(capturedSystem).toContain('逐字摘录');
+    expect(capturedSystem).toContain('已下狱/被关押/被软禁的角色本章以自由身出现');
+  });
 });
 
 function emptyJudgePayload() {

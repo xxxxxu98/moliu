@@ -9,7 +9,7 @@ import type {
   StructuredAIRequest,
 } from '@/types/story-runtime';
 
-import { LongFormWritingEngine } from '../LongFormWritingEngine';
+import { LongFormWritingEngine, uniformDensityIssueIds } from '../LongFormWritingEngine';
 import { parseStoryPatch } from '../patches';
 import { StoryRuntimeClient } from '../StoryRuntimeClient';
 import { makeBootstrap, makeContracts, makeState } from './testFixtures';
@@ -349,6 +349,79 @@ describe('LongFormWritingEngine', () => {
     expect(result.commit.status).toBe('accepted');
     expect(result.receipt).toEqual(receipt);
     expect(commitChapter).toHaveBeenCalledOnce();
+  });
+
+  it('均匀化 accepted 也触发一轮定向改稿：requiredIssueIds 标记 + survived 不阻断（g38f CV 触发器）', async () => {
+    // 2026-09-05 g38f 实测：200 章级 41/198、100 章级 30/97 章 CV<0.15，prompt 锚点
+    // 长跑失守；均匀化 warning 原先「顺手修掉」弱约束，accepted 直接跳过改稿回合。
+    const facts: FactExtractor = {
+      extract: async input => ({
+        events: [
+          {
+            id: 'event-1',
+            chapter: input.chapterNumber,
+            sceneId: input.sceneDrafts[0].sceneId,
+            type: 'checkpoint',
+            summary: '守卫盘查',
+            participants: ['hero'],
+            causes: [],
+            effects: ['守卫盘查'],
+            evidence: input.sceneDrafts[0].paragraphs,
+          },
+        ],
+        deltas: [],
+        evidence: input.sceneDrafts[0].paragraphs,
+      }),
+    };
+    const receipt: ChapterCommitReceipt = {
+      commitId: 'commit-1',
+      revision: 1,
+      acceptedAt: '2026-01-02T00:00:00.000Z',
+    };
+    const commitChapter = vi.fn(async () => receipt);
+    const ai = new UniformProseAI();
+    let capturedRequiredIds: string[] | undefined;
+    const engine = new LongFormWritingEngine({
+      ai,
+      factExtractor: facts,
+      commitPort: { commitChapter },
+      writerAgent: {
+        revise: async input => {
+          capturedRequiredIds = input.requiredIssueIds;
+          // 模拟定向改稿后仍未达标：原样返回初审结果（survived 语义）
+          return {
+            drafts: input.initialDrafts,
+            facts: input.initialReview.facts,
+            report: input.initialReview.report,
+            checksUsed: 1,
+            finishReason: 'model-finish' as const,
+            transcript: [],
+            stats: { rounds: 1, toolCalls: 1, byTool: {}, ms: 1 },
+            revertedUnchecked: false,
+          };
+        },
+      },
+    });
+
+    const result = await engine.write({
+      projectId: 'project-1',
+      contracts: makeContracts(),
+      state: makeState(),
+      recentScenes: [],
+      retrievedScenes: [],
+      styleGuidance: ['克制'],
+      maxContextTokens: 10_000,
+      targetWordCount: 3600,
+    });
+
+    // 均匀化是唯一改稿动因（初审 accepted）时也必须进改稿回合，且问题被标记为必须处理
+    expect(capturedRequiredIds?.some(id => id.startsWith('typesetting-density'))).toBe(true);
+    expect(result.rewriteRounds).toBe(1);
+    // survived：仍均匀不阻断，保留稿照常提交；均匀化告警仍在报告里（triage 黄签依赖的
+    // 日志行在真实管道由 run.log 承接，happy-dom 下 console spy 不可靠故不在此断言）
+    expect(result.report.accepted).toBe(true);
+    expect(result.commit.status).toBe('accepted');
+    expect(uniformDensityIssueIds(result.report).length).toBeGreaterThan(0);
   });
 
   it('无 writerAgent 时初稿禁区 blocking 不整章重写，直接 rejected', async () => {
@@ -716,6 +789,43 @@ class BloatSupplementAI implements StructuredAI {
             { length: 24 },
             () => '这是完整版正文段落，内容充实，情节推进正常。'.repeat(5),
           ),
+      candidateEvents: [],
+    };
+  }
+}
+
+/** 输出 24 段完全等长的均匀正文（CV=0），判官全放行——用于验证均匀化触发器 */
+class UniformProseAI implements StructuredAI {
+  async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
+    if (request.purpose === 'chapter-judge' || request.purpose === 'fulfillment-check') {
+      const payload = JSON.parse(request.prompt) as {
+        mustCover?: string[];
+        forbiddenZones?: string[];
+      };
+      return {
+        fulfillment: (payload.mustCover ?? []).map(node => ({
+          node,
+          fulfilled: true,
+          evidence: ['语义履约'],
+          reason: '测试放行',
+        })),
+        forbidden: (payload.forbiddenZones ?? []).map(zone => ({
+          zone,
+          violated: false,
+          evidence: [],
+          reason: '字面路径已处理',
+        })),
+        issues: [],
+      };
+    }
+    return {
+      sceneId: 'chapter-1:CBN:scene',
+      beatId: 'chapter-1:CBN',
+      chapterTitle: '测试章',
+      paragraphs: Array.from(
+        { length: 23 },
+        () => '这是均匀节奏的正文段落内容长度完全一致用来触发段落均匀化检测。'.repeat(5)
+      ),
       candidateEvents: [],
     };
   }

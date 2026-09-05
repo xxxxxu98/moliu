@@ -87,6 +87,9 @@ export interface ContractHealthReport {
   softenedForbidden: string[];
   prunedMustCover: string[];
   prunedCpns: string[];
+  /** 被陈旧度门禁裁除的 mustCover 原句（终态角色节点）——引擎侧重建 review.mustCheck
+   *  时必须同步减除，否则建合同期（无 state）固化的陈旧节点会重新喂进起草 prompt */
+  staleRemovedMustCover: string[];
   cbnSanitized: boolean;
   originalCbn: string;
   /** 人类可读摘要，便于冒烟日志 */
@@ -249,6 +252,8 @@ export function healChapterContract(
 
   // 陈旧度门禁：状态里已进入命运级终态的角色，其蓝图硬约束节点先行裁除
   const staleNames = collectDeceasedEntityNames(options.state);
+  const staleSafe = (item: string) =>
+    !nodeMentionsFateLockedCharacter(stripOpeningCbnPrefix(item) || item, staleNames);
   const stalePrunedMustCover = staleNames.size > 0
     ? (chapter.mustCover ?? [])
         .map(item => stripOpeningCbnPrefix(item) || item)
@@ -262,6 +267,19 @@ export function healChapterContract(
           }
           return true;
         })
+    : [];
+  // 被陈旧度裁掉的 mustCover 原句：必须显式导出给引擎侧减除——review.mustCheck 在
+  // ContractPackBuilder 建合同时无 state、含陈旧节点，引擎重建 mustCheck 时若减不掉
+  // （2026-09-05 g38f2-100ch ch24 实测：孙泰 ch13 死亡入账，ch24 起草 prompt 仍被
+  // 喂「孙泰公堂受审」→ 判官 fact_conflict 拒 3 轮整章死），写作侧会一直被投毒。
+  const staleRemovedMustCover = staleNames.size > 0
+    ? (chapter.mustCover ?? []).flatMap(item => {
+        if (staleSafe(item)) return [];
+        // 同时导出原始句与剥前缀句：review.mustCheck 在建合同期固化的是原始形态，
+        // 只存剥前缀形态会让引擎侧 includes 减除失配
+        const stripped = stripOpeningCbnPrefix(item) || item;
+        return item === stripped ? [item] : [item, stripped];
+      })
     : [];
   const stalePrunedCpns = staleNames.size > 0
     ? (chapter.CPNs ?? []).filter(
@@ -277,21 +295,28 @@ export function healChapterContract(
         : [];
   const mustPrune = pruneFulfilledNodes(mustSource, options);
   const cpnPrune = pruneFulfilledNodes(
-    (stalePrunedCpns.length > 0 ? stalePrunedCpns : chapter.CPNs).map(
+    // 陈旧裁剪存在时必须用裁后列表（即使被裁空）：旧写法 stalePrunedCpns.length > 0
+    // 会在「CPNs 全部涉终态角色」时回退到未裁剪原表，让死人节点从源头溜回。
+    (staleNames.size > 0 ? stalePrunedCpns : chapter.CPNs).map(
       item => stripOpeningCbnPrefix(item) || item
     ),
     options
   );
-  // CPN 裁空时回退到 mustCover / goal
+  // CPN 裁空时回退到 mustCover / goal；goal 来自整章 outline，可能自带陈旧剧情，
+  // 回退候选同样过陈旧度筛（筛空时退到 title，标题只是语境不是情节指令）
   const nextCpns =
     cpnPrune.kept.length > 0
       ? cpnPrune.kept
       : mustPrune.kept.length > 0
         ? mustPrune.kept.slice(0, 2)
-        : unique([chapter.goal, chapter.title]).slice(0, 1);
+        : chapter.goal && staleSafe(chapter.goal)
+          ? [chapter.goal]
+          : [chapter.title];
 
   let nextMustCover =
-    mustPrune.kept.length > 0 ? mustPrune.kept : unique([nextCpns[0], chapter.goal]).slice(0, 2);
+    mustPrune.kept.length > 0
+      ? mustPrune.kept
+      : unique([nextCpns[0], chapter.goal].filter(staleSafe)).slice(0, 2);
   // 防跨章目标独占 mustCover：若全部节点都是跨章目标（时限/否则将等），
   // 从 CPNs 优先补一条非跨章推进节点，避免单章履约审核对跨章目标死锁
   if (
@@ -350,6 +375,7 @@ export function healChapterContract(
       softenedForbidden: softened,
       prunedMustCover: mustPrune.pruned,
       prunedCpns: cpnPrune.pruned,
+      staleRemovedMustCover,
       cbnSanitized: cbnResult.changed,
       originalCbn,
       notes,
@@ -420,7 +446,7 @@ export function enrichRevisionHint(message: string, evidence: string[] = []): st
  * 与其让审查层事后拦截重写，不如起草前把「与已写状态矛盾」的节点
  * 从硬合同里静默裁掉——蓝图语义仍在上下文包里作软提示，但不再强制验收。
  */
-const STALE_FATE_ATTRIBUTE_VALUES = new Set(['死亡', '驾崩', '下狱', '定罪']);
+const STALE_FATE_ATTRIBUTE_VALUES = new Set(['死亡', '驾崩', '下狱', '定罪', '去职']);
 
 function collectDeceasedEntityNames(state?: StoryState): Set<string> {
   const names = new Set<string>();

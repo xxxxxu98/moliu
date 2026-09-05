@@ -188,6 +188,16 @@ function parseRunLog(logText, acc) {
       );
     }
 
+    // 段落节奏均匀化 survived（CV 触发器定向改稿一轮后仍未达标，保留重写稿不阻断）
+    m = line.match(/段落节奏改稿一轮后仍均匀化（cv 未达标）/);
+    if (m) {
+      acc.add(
+        'quality.uniform-cv-survived',
+        currentChapter,
+        'CV 均匀化改稿一轮后仍未达标，保留重写稿（AI 腔残留观察项）'
+      );
+    }
+
     // 章级持久错误（unknown 是分类占位；立即重试/连续 N 次结束批量）
     m = line.match(
       /\[runContinueWriteChapters\] 第(\d+)章持久错误.*?(?:，立即重试|，结束批量)[:：]\s*(.*)/

@@ -326,6 +326,19 @@ function shouldRewrite(report: ContinuityReport): boolean {
   );
 }
 
+/** 段落节奏均匀化（AI 腔 CV 低于阈值）是否在报告里——2026-09-05 g38f 实测：
+ *  200 章级 41/198、100 章级 30/97 章 CV<0.15，prompt 锚点在长跑尺度不足，
+ *  均匀化必须驱动一轮定向改稿而非停留在「顺手修掉」的弱约束。 */
+export function uniformDensityIssueIds(report: ContinuityReport): string[] {
+  return report.issues
+    .filter(
+      issue =>
+        issue.id.startsWith('typesetting-density') &&
+        issue.message.includes('段落节奏均匀化')
+    )
+    .map(issue => issue.id);
+}
+
 export class LongFormWritingEngine {
   private readonly planner: SceneBeatPlanner;
   private readonly contextBuilder: ContextPackBuilder;
@@ -372,7 +385,9 @@ export class LongFormWritingEngine {
           ...new Set([
             ...healedChapter.mustCover,
             ...input.contracts.review.mustCheck.filter(
-              item => !healthReport.prunedMustCover.includes(item)
+              item =>
+                !healthReport.prunedMustCover.includes(item) &&
+                !healthReport.staleRemovedMustCover.includes(item)
             ),
           ]),
         ],
@@ -436,7 +451,12 @@ export class LongFormWritingEngine {
     let { facts, report } = await this.reviewDrafts(drafts, reviewContext);
     let writerSummary: WriterRunSummary | undefined;
 
-    if (shouldRewrite(report) && maxRewriteRounds > 0 && this.dependencies.writerAgent) {
+    const uniformIssueIdsBefore = uniformDensityIssueIds(report);
+    if (
+      (shouldRewrite(report) || uniformIssueIdsBefore.length > 0) &&
+      maxRewriteRounds > 0 &&
+      this.dependencies.writerAgent
+    ) {
       // 改稿只走 agent：模型读问题清单、查事实、局部改稿、复检，blocking=0 才 finish。
       // 未注入 writerAgent（假 AI 单测）时不整章重写，带着初审结果直接提交。
       const outcome = await this.dependencies.writerAgent.revise({
@@ -449,6 +469,11 @@ export class LongFormWritingEngine {
         initialReview: { facts, report },
         reviewPort: { review: candidate => this.reviewDrafts(candidate, reviewContext) },
         maxChecks: maxRewriteRounds,
+        // 均匀化是本章唯一改稿动因时，把它标记为必须处理（否则 agent 对 warning 可不改稿直接 finish）
+        requiredIssueIds:
+          !shouldRewrite(report) && uniformIssueIdsBefore.length > 0
+            ? uniformIssueIdsBefore
+            : undefined,
         targetWordCount: writeInput.targetWordCount,
         previousChapterEnding: input.previousChapterEnding,
         allowedAppearanceNames: extractAllowedAppearanceNames(
@@ -469,6 +494,13 @@ export class LongFormWritingEngine {
       if (outcome.revertedUnchecked) {
         console.warn(
           `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 改稿回合结束时存在未复检改动，已回退到最后一次审查稿（${outcome.finishReason}）`
+        );
+      }
+      // survived 语义（照抄 words-overlimit-survived 样板）：只定向修一轮，仍均匀则保留
+      // 最优稿继续走，不把均匀化升为 blocking（那会变成重试耗尽死章），靠日志黄签进 triage。
+      if (uniformIssueIdsBefore.length > 0 && uniformDensityIssueIds(report).length > 0) {
+        console.info(
+          `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 段落节奏改稿一轮后仍均匀化（cv 未达标），保留重写稿（uniform-cv-survived，不阻断）`
         );
       }
     }

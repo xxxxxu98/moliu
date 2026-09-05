@@ -48,6 +48,9 @@ export interface WriterAgentStepInput {
   reviewPort: ChapterReviewPort;
   /** run_checks 预算 = 旧 maxRewriteRounds(每次审查成本等价一轮重写) */
   maxChecks: number;
+  /** 即便 severity=warning 也必须实际改稿处理的问题 id（如段落节奏均匀化触发器）；
+   *  不标记时 warning 仍是「尽量顺手修掉」的弱约束 */
+  requiredIssueIds?: string[];
   targetWordCount?: number;
   previousChapterEnding?: string;
   allowedAppearanceNames: string[];
@@ -162,16 +165,26 @@ export function buildWriterBrief(input: WriterAgentStepInput, toolkit: AgentTool
   ].join('\n');
 }
 
-function reviewToKickoff(review: ChapterReviewOutcome, checksRemaining: number): string {
+function reviewToKickoff(
+  review: ChapterReviewOutcome,
+  checksRemaining: number,
+  requiredIssueIds: string[] = []
+): string {
+  const required = new Set(requiredIssueIds);
   const issues = [...review.report.issues]
     .sort((a, b) => (a.severity === 'blocking' ? 0 : 1) - (b.severity === 'blocking' ? 0 : 1))
     .slice(0, 12)
     .map(issue => ({
       id: issue.id,
       severity: issue.severity,
+      required: required.has(issue.id) || undefined,
       message: issue.message.slice(0, 240),
       evidence: issue.evidence.slice(0, 2).map(item => item.slice(0, 120)),
     }));
+  const requiredNote =
+    required.size > 0
+      ? 'issues 中标记 required:true 的问题（即使 severity=warning）必须先用 revise_paragraphs 实际修改正文、再 run_checks 复检后才可 finish；只跑 run_checks 不改稿视为未完成。'
+      : '';
   return JSON.stringify({
     initialReview: {
       accepted: review.report.accepted,
@@ -179,7 +192,8 @@ function reviewToKickoff(review: ChapterReviewOutcome, checksRemaining: number):
       checksRemaining,
       issues,
     },
-    instruction: '这是初稿的审查结果。请按【改稿流程】开始:先 get_draft。',
+    instruction:
+      '这是初稿的审查结果。请按【改稿流程】开始:先 get_draft。' + (requiredNote ? requiredNote : ''),
   });
 }
 
@@ -227,7 +241,11 @@ export function createWriterAgentStep(
       });
       const session: AgentSession<WriterFinish> = {
         systemPrompt: buildWriterBrief(input, toolkit),
-        kickoffMessage: reviewToKickoff(input.initialReview, writer.checksRemaining()),
+        kickoffMessage: reviewToKickoff(
+          input.initialReview,
+          writer.checksRemaining(),
+          input.requiredIssueIds
+        ),
         wrapUpPrompt: WRITER_WRAP_UP_PROMPT,
         protocolHint: WRITER_PROTOCOL_HINT,
         // get_draft 要回喂整章全文,默认 3600 字符会截断
