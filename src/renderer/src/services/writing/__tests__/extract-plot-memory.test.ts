@@ -37,15 +37,32 @@ describe('extractChapterMemory', () => {
     const chapter = createMockChapter({
       content: '张三走进长安城，他是一个勇敢的修士。',
     });
-    
+
     const result = await extractChapterMemory(chapter, 0, {
       enableAIEnhancement: false,
       enableFileBackup: false,
     });
-    
+
     expect(result).toBeDefined();
     expect(result.chapterId).toBe(chapter.id);
     expect(result.chapterIndex).toBe(0);
+  });
+
+  // 2026-09-06 g38f-200chr2 实证退役：动作动词前缀扒名把「沈怀安快步」「沈怀安
+  // 反手」等动宾粘连串当角色名入账，主角在第 55/61/101 章被重复登记「首次出场」，
+  // 「执行动作」条目持续污染状态摘要。规则层出场/动作提取整体停用——语义归 AI
+  // 提取合同（FactExtractor 契约 7-13）。
+  it('角色状态变更规则提取已退役：不再产出「首次出场/执行动作」类条目', async () => {
+    const chapter = createMockChapter({
+      content: '沈怀安快步走到公堂，抬头看向匾额。他转身吩咐差役，随后走进偏厅。',
+    });
+
+    const result = await extractChapterMemory(chapter, 54, {
+      enableAIEnhancement: false,
+      enableFileBackup: false,
+    });
+
+    expect(result.characterStateChanges).toEqual([]);
   });
 
   it('should handle empty content gracefully', async () => {

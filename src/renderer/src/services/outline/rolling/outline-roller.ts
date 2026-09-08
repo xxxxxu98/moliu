@@ -26,7 +26,7 @@ import {
   isReaderMetaText,
   normalizeChapterBlueprint,
 } from '@/services/story-runtime/chapterBlueprintNormalize';
-import { collectCharacterFates } from '@/services/writing/extract-plot-memory';
+import { collectCharacterFates, FATE_STATES } from '@/services/writing/extract-plot-memory';
 import { normalizedSimilarityKeepingNumbers } from '@/utils/text-similarity';
 import { readPositiveIntEnv } from '@/utils/env';
 
@@ -124,6 +124,18 @@ export interface RollContextBase {
   characterRoster: string;
   /** 命运锁：已死亡/下狱/去职/定罪角色的既定命运清单（滚纲 reconcile） */
   fateLocks: string[];
+  /** 结构化命运锁（含历史计数）：解除核查与橡皮筋禁令的数据源 */
+  fateLockEntries: Array<{
+    name: string;
+    state: string;
+    chapter: number;
+    /** 终态自身的重复次数 */
+    sameStateCount: number;
+    /** 该角色所有命运方向中的最大重复次数（橡皮筋信号——终态可能只是最新方向） */
+    maxSameStateCount: number;
+    /** 按次数降序的完整历史（下狱×3、越狱×1…） */
+    history: Array<{ state: string; count: number }>;
+  }>;
 }
 
 /**
@@ -209,8 +221,38 @@ export function buildRollContextBase(project: Project, fromChapterNumber: number
   // 命运锁（2026-09-01「全部修复」）：滚纲不复核命运表会成批重插已下狱/已去职/
   // 已死亡角色——终验书严嵩林/赵敬实锤，判定器正确拒稿反成空洞。把命运表显式
   // 注入滚纲上下文与硬约束，让滚动续纲在源头不再产出状态冲突需求。
-  const fateLocks = collectCharacterFates(project.chapterMemories ?? [])
-    .map(f => `${f.characterName}（第${f.chapterIndex + 1}章${f.state}）`);
+  // 2026-09-06 r3：同向计数（台账聚合，防橡皮筋——赵烈下狱×7/越狱×3 实证）；
+  // 死亡族单列（无解除通道）。
+  const fateCounts = new Map<string, Map<string, number>>();
+  for (const memory of project.chapterMemories ?? []) {
+    for (const change of memory?.characterStateChanges ?? []) {
+      const name = String(change?.characterName ?? '').trim();
+      if (!name || !FATE_STATES.has(change.state)) continue;
+      const byState = fateCounts.get(name) ?? new Map<string, number>();
+      byState.set(change.state, (byState.get(change.state) ?? 0) + 1);
+      fateCounts.set(name, byState);
+    }
+  }
+  const fateLockEntries = collectCharacterFates(project.chapterMemories ?? []).map(f => {
+    const history = [...(fateCounts.get(f.characterName) ?? new Map<string, number>())]
+      .map(([state, count]) => ({ state, count }))
+      .sort((a, b) => b.count - a.count);
+    return {
+      name: f.characterName,
+      state: f.state,
+      chapter: f.chapterIndex + 1,
+      sameStateCount: history.find(item => item.state === f.state)?.count ?? 1,
+      maxSameStateCount: history[0]?.count ?? 1,
+      history,
+    };
+  });
+  const fateLocks = fateLockEntries.map(f => {
+    const hist =
+      f.history.length > 1 || f.maxSameStateCount > 1
+        ? `；历史：${f.history.map(item => `${item.state}×${item.count}`).join('、')}`
+        : '';
+    return `${f.name}（第${f.chapter}章${f.state}${hist}）`;
+  });
 
   return {
     positioning: [
@@ -225,6 +267,7 @@ export function buildRollContextBase(project: Project, fromChapterNumber: number
     activeForeshadows: active.length > 0 ? active.join('\n') : '（无待回收伏笔）',
     characterRoster: roster.length > 0 ? roster.join('、') : '（未登记角色）',
     fateLocks,
+    fateLockEntries,
   };
 }
 
@@ -305,8 +348,11 @@ export function buildRollBlueprintPrompt(params: {
 6. 回收章节落在本批次区间内的伏笔，必须在对应章节的 mustCover 中兑现；
 7. 出场角色只能使用「角色名单」中已登记的姓名（可按卷纲引入名单内角色的后续登场），不得另造同名同功能新角色，也不得与名单内已有角色重名；
    【禁止标签称谓】凡需要行动/对白的功能性角色（僚属、官员、差役、侍卫等），必须起真实中文姓名（姓+名，如「方正平」）或复用名单内角色；禁止用「XX派年轻官员」「老总管」「年轻御史」这类阵营标签+身份泛称当角色名写进节点与出场名单——它们不是姓名，会被正文照抄成占位符；
+   【架空人名纪律】本书朝代为虚构架空时，新起人名必须完全虚构，禁止借用真实历史人物（严嵩/和珅/张居正等）或其谐音变体（严嵩年），禁止拼贴真实帝号年号（嘉靖/景泰）——架空礼制与真实历史锚点互相穿帮；
 8. 所有字段都不得留空，禁止使用括号补充说明；
 9. 【命运锁】「命运锁」清单里的角色已有既定命运（死亡/下狱/去职/定罪），新章蓝图禁止安排其以自由身出场、行动、对话或履行原职；剧情确需其后续作用时，只能作为他人回忆/口头提及，或在本章 mustCover 中显式写出解除事件（越狱/劫狱/平反/保释/官复原职/复爵）并在该节点开头加【解除】标记；
+   【死亡锁无解除】状态为死亡/驾崩的角色没有任何解除事件：禁止规划其苏醒、病危急救、遇袭待救、「传位后复出发难」等任何存活情节或存活传闻被证实为真（2026-09-06 g38f-200chr2 实证：滚纲节点写「赵乾苏醒后」施杀局，正文无法履约整章死）；其遗诏、遗物、身后议谥只能作为向后引用；若全书设定确有假死局，必须在 mustCover 显式标注【假死设定】并写明揭破时点；
+   【命运橡皮筋禁令】清单「历史」中某命运方向累计 ≥3 次（如下狱×3）即重复节拍——不得再规划该方向事件，改用新的对抗手段或转移矛盾对象（2026-09-06 g38f-200chr2 实证：直王下狱×7/越狱×3，读者审明确标记结构性重复）；
 10. 【禁区相容】mustCover 与禁区不得互斥：若某节点要求本章发生某状态变更（下旨/定谳/圈禁/结案/复职等），对应禁区不得禁止该变更发生；确需保留防泄露约束时，只保护更早阶段的揭示，并在该条禁区开头加【让路】标记——禁止产出让写作端两头违约的合同。`,
     user: `【故事定位】\n${base.positioning}\n\n【卷纲锚点】\n${base.volumeAnchor}\n\n【已写进度与收束状态】\n${base.writtenState}${plannedTailSection}${endingSection}${fateLockSection}\n\n【活跃伏笔（埋设→回收）】\n${base.activeForeshadows}\n\n【角色名单】\n${base.characterRoster}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
   };
@@ -484,6 +530,8 @@ export interface ForeshadowTimingHint {
   hint: string;
   createdChapter?: number;
   setupChapter?: number;
+  /** 回收/兑现时点：埋设后的章节若强词面命中=提前兑现伏笔载荷（g38f-200chr2 ch36 形态） */
+  payoffChapter?: number;
 }
 
 /** 从提示语中提取 CJK 连续段（≥2 字），供词面命中统计 */
@@ -496,21 +544,28 @@ function foreshadowCoreTokens(hint: string): string[] {
 }
 
 /**
- * 锁定伏笔词面校验：蓝图 CPN/CEN/mustCover 若把「第 X 章才埋设的伏笔」的触发词
- * 直接写进本章节点，写作时模型履约即提前揭示，评审必拒——同一章 3 拒即管线中止
- * （2026-08-28 百章终验 ch40 死锁实证：CPN「调阅兵部战马清册发现异常台阶数据」
- * vs 伏笔 notBeforeChapter=42）。
- * 命中规则：提示语 CJK 连续段的 2-gram 在蓝词条文中命中 ≥max(2, 34%) 个——
- * 单独出现「清册」或「战马」的无关章节不误伤，完整词组共存即拦。
+ * 锁定伏笔词面校验（双向）：
+ * - 埋设方向：蓝图在埋设章之前把提示语触发词写进节点 → 写作履约即提前揭示，
+ *   评审必拒（2026-08-28 百章终验 ch40 死锁实证）。命中阈值 ≥max(2, 34%) 二字组。
+ * - 兑现方向：蓝图在回收章之前强词面命中（≥60% 且 ≥4 二字组）= 把伏笔载荷整段
+ *   提前兑现。2026-09-06 g38f-200chr2 ch36 实证：初版节点第 36 章「当众颁布三级
+ *   网格考成法」，伏笔蓝图锁定第 45 章才揭示——5 次拒稿整章死；reg20 同族
+ *   （伏笔标第 18 章反杀下狱、蓝图第 3 章执行）。埋设后的推进期允许部分词面
+ *   重叠（正常铺垫），只有高覆盖才算整段兑现。
  */
 export function findLockedForeshadowViolations(
   blueprints: ChapterBlueprint[],
   foreshadows: ForeshadowTimingHint[],
+  options?: { payoffMinHits?: number },
 ): RolledBlueprintIssue[] {
   const issues: RolledBlueprintIssue[] = [];
   const locked = foreshadows
-    .map(f => ({ hint: (f.hint ?? '').trim(), setupAt: f.setupChapter ?? f.createdChapter ?? 0 }))
-    .filter(f => f.setupAt > 0 && f.hint.length >= 4);
+    .map(f => ({
+      hint: (f.hint ?? '').trim(),
+      setupAt: f.setupChapter ?? f.createdChapter ?? 0,
+      payoffAt: f.payoffChapter ?? 0,
+    }))
+    .filter(f => (f.setupAt > 0 || f.payoffAt > 0) && f.hint.length >= 4);
   if (locked.length === 0) return issues;
   for (const bp of blueprints) {
     const text = [bp.CBN, bp.CEN, bp.summary, ...bp.CPNs, ...bp.mustCover]
@@ -518,7 +573,6 @@ export function findLockedForeshadowViolations(
       .join('\n');
     if (!text) continue;
     for (const f of locked) {
-      if (bp.orderIndex >= f.setupAt) continue;
       const tokens = foreshadowCoreTokens(f.hint);
       const grams = new Set<string>();
       for (const token of tokens) {
@@ -527,16 +581,38 @@ export function findLockedForeshadowViolations(
       if (grams.size === 0) continue;
       let hits = 0;
       for (const gram of grams) if (text.includes(gram)) hits += 1;
-      if (hits < Math.max(2, Math.ceil(grams.size * 0.34))) continue;
-      issues.push({
-        chapterNumber: bp.orderIndex,
-        kind: 'locked-foreshadow',
-        detail:
-          `第${bp.orderIndex}章蓝图词面命中第${f.setupAt}章才埋设的伏笔「${f.hint.slice(0, 24)}」` +
-          `（命中 ${hits}/${grams.size} 个二字组）。把该节点改写为不含伏笔触发词的中性事件，` +
-          `相关物件与异常结论留到第${f.setupAt}章再出现`,
-      });
-      break;
+      // 埋设方向：埋设章之前，弱覆盖即拦（触发词出现即危险）
+      if (f.setupAt > 0 && bp.orderIndex < f.setupAt) {
+        if (hits >= Math.max(2, Math.ceil(grams.size * 0.34))) {
+          issues.push({
+            chapterNumber: bp.orderIndex,
+            kind: 'locked-foreshadow',
+            detail:
+              `第${bp.orderIndex}章蓝图词面命中第${f.setupAt}章才埋设的伏笔「${f.hint.slice(0, 24)}」` +
+              `（命中 ${hits}/${grams.size} 个二字组）。把该节点改写为不含伏笔触发词的中性事件，` +
+              `相关物件与异常结论留到第${f.setupAt}章再出现`,
+          });
+          break;
+        }
+      }
+      // 兑现方向：埋设后、回收前，只有高覆盖（整段载荷）才拦——推进/铺垫放行。
+      // 阈值 45% 实测校准：ch36 受害样本 6/13 二字组；正常铺垫形态 ~38%。
+      // payoffMinHits 供逐条消毒路径放宽（短条目 4 命中即毒，见 dropForeshadowConflictingItems）。
+      const payoffMinHits =
+        options?.payoffMinHits ?? Math.max(4, Math.ceil(grams.size * 0.45));
+      if (f.payoffAt > 0 && bp.orderIndex < f.payoffAt) {
+        if (hits >= payoffMinHits) {
+          issues.push({
+            chapterNumber: bp.orderIndex,
+            kind: 'locked-foreshadow-payoff',
+            detail:
+              `第${bp.orderIndex}章蓝图强词面命中第${f.payoffAt}章才回收的伏笔「${f.hint.slice(0, 24)}」` +
+              `（命中 ${hits}/${grams.size} 个二字组，属整段提前兑现）。本章只许铺垫/推进：` +
+              `保留线索与阻力，把该伏笔的完整兑现/揭示留到第${f.payoffAt}章`,
+          });
+          break;
+        }
+      }
     }
   }
   return issues;
@@ -545,12 +621,95 @@ export function findLockedForeshadowViolations(
 /** 单章质检缺陷总数（含锁定伏笔），供修复轮「越修越坏」对比 */
 function blueprintDefectCount(
   bp: ChapterBlueprint,
-  foreshadows: ForeshadowTimingHint[],
+  foreshadows: ForeshadowTimingHint[]
 ): number {
   return (
     inspectRolledBlueprintQuality(bp).length +
     findLockedForeshadowViolations([bp], foreshadows).length
   );
+}
+
+/**
+ * 空章补写前的节点消毒：逐项（CPN/mustCover）跑伏笔词面校验，删掉与伏笔
+ * 时点冲突的条目（2026-09-07 r2 书修复基建：ch36 节点「当众颁布三级网格考成法」
+ * vs 伏笔第 45 章揭示——原样补写会重演 5 连拒死章）。
+ * mustCover 全部冲突时退化为一条通用缝合节点（承接上章、导向下章），不保留
+ * 任何带毒条目——空合同有 heal 兜底，带毒合同会死锁。
+ */
+export function dropForeshadowConflictingItems(
+  bp: ChapterBlueprint,
+  foreshadows: ForeshadowTimingHint[]
+): { blueprint: ChapterBlueprint; dropped: string[] } {
+  const dropped: string[] = [];
+  const keepClean = (items: string[]): string[] =>
+    (items ?? []).filter(item => {
+      const probe: ChapterBlueprint = {
+        ...bp,
+        CBN: '',
+        CEN: '',
+        summary: '',
+        CPNs: [item],
+        mustCover: [item],
+      };
+      // 单条文本短，命中数天然低：消毒口径放宽到 3（短条目「推行网格考成法」
+      // 4 命中即是毒；全蓝图口径的 6 会漏）。宁可错删一条桥接项，不可放过毒项。
+      if (findLockedForeshadowViolations([probe], foreshadows, { payoffMinHits: 3 }).length === 0) {
+        return true;
+      }
+      dropped.push(item);
+      return false;
+    });
+  const CPNs = keepClean(bp.CPNs ?? []);
+  let mustCover = keepClean(bp.mustCover ?? []);
+  if ((bp.mustCover ?? []).length > 0 && mustCover.length === 0) {
+    mustCover = [`承接第${Math.max(1, bp.orderIndex - 1)}章结尾状态并向后推进的过渡事件`];
+  }
+  return {
+    blueprint: { ...bp, CPNs, mustCover },
+    dropped,
+  };
+}
+
+/**
+ * 命运锁角色解除核查（名称命中=格式级检测，语义归修复轮 AI）：
+ * 批内蓝图提及命运锁角色但整批没有带【解除】标记的节点时，把命中章送进定点
+ * 修复轮，由修复模型裁决双分支——真自由身则补显式解除事件（越狱/平反/保释
+ * 并加「【解除】角色名」标记），在押/回忆场景则保持现状。
+ * 2026-09-06 g38f-r2fix-100ch 实证：主角获释被压成一句回述、台账下狱态滞后
+ * 10 章，判官连续拒稿靠绕过通过——解除事件必须在大纲层显式成节点。
+ * 注意：不计入 blueprintDefectCount（避免在押场景的正常提及污染「越修越坏」守卫）。
+ */
+export function findFateReleaseCheck(
+  blueprints: ChapterBlueprint[],
+  fateLocks: Array<{ name: string; state?: string }>
+): RolledBlueprintIssue[] {
+  const issues: RolledBlueprintIssue[] = [];
+  const locks = fateLocks
+    .map(lock => ({ name: (lock.name ?? '').trim(), state: lock.state }))
+    .filter(lock => lock.name.length >= 2 && lock.name.length <= 8);
+  if (locks.length === 0 || blueprints.length === 0) return issues;
+  const textOf = (bp: ChapterBlueprint) =>
+    [bp.CBN, bp.CEN, bp.summary, ...bp.CPNs, ...bp.mustCover].filter(Boolean).join('\n');
+  for (const lock of locks) {
+    const hitChapters = blueprints
+      .filter(bp => textOf(bp).includes(lock.name))
+      .map(bp => bp.orderIndex);
+    if (hitChapters.length === 0) continue;
+    const releaseMarked = blueprints.some(bp =>
+      bp.mustCover.some(item => item.includes('【解除】') && item.includes(lock.name))
+    );
+    if (releaseMarked) continue;
+    issues.push({
+      chapterNumber: hitChapters[0],
+      kind: 'fate-release-check',
+      detail:
+        `命运锁角色「${lock.name}」（${lock.state ?? '终态'}）在本批第${hitChapters.join('、')}章的节点中被提及，` +
+        `但整批没有带【解除】标记的显式解除事件。核查每个提及处：若为其自由身活动，` +
+        `必须在本批安排一次显式解除场景（越狱/劫狱/平反/保释/官复原职）并把对应 mustCover ` +
+        `节点改写为以「【解除】${lock.name}」开头；若为在押/押解/回忆/提及场景，保持现状不改`,
+    });
+  }
+  return issues;
 }
 
 /** 就地应用本地 sanitize（标题/CBN/CEN 超长收缩）；不可本地修复的返回原值 */
@@ -761,19 +920,30 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
   // 内容质检（章级）：字段可用但内容有病的蓝图不该落库硬扛履约。
   // 单章病（跨章 mustCover / 模板 CBN / 空壳 CEN）+ 批内相邻章 CBN 复述（章界重演信号）
   // + 锁定伏笔词面冲突（提前揭示必被评审 3 拒中止，2026-08-28 终验实证）
+  // + 伏笔兑现方向（埋设后回收前的高覆盖=提前兑现，2026-09-06 ch36 实证）
   // 合并进下一轮定点修复，修复轮提示词已支持「本次必须修掉的问题」注入。
   const rollForeshadows: ForeshadowTimingHint[] = (project.foreshadows ?? []).map(f => ({
     hint: f.hint,
     createdChapter: f.createdChapter,
     setupChapter: (f as unknown as { setupChapter?: number }).setupChapter,
+    payoffChapter: f.payoffChapter ?? f.suggestedResolutionChapter,
   }));
   const qualityIssues = [
     ...[...blueprints.values()].flatMap(inspectRolledBlueprintQuality),
     ...findBlueprintRepetition([...blueprints.values()]),
     ...findLockedForeshadowViolations([...blueprints.values()], rollForeshadows),
   ];
+  // 命运锁解除核查（修复提示级，不计缺陷守卫）：命中章并入定点修复，
+  // 由修复模型裁决「补解除节点 / 在押回忆保持」双分支（语义不本地判）。
+  const fateReleaseIssues = findFateReleaseCheck(
+    [...blueprints.values()],
+    base.fateLockEntries.map(entry => ({ name: entry.name, state: entry.state })),
+  );
   const problematicChapters = [
-    ...new Set(qualityIssues.map(issue => issue.chapterNumber)),
+    ...new Set([
+      ...qualityIssues.map(issue => issue.chapterNumber),
+      ...fateReleaseIssues.map(issue => issue.chapterNumber),
+    ]),
   ].sort((a, b) => a - b);
 
   // 定点修复一轮：解出但不可用 / 完全缺失 / 质检不合格的章号合并补一次
@@ -791,6 +961,9 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
       if (!bp.mustCover.length) list.push(`第${n}章 mustCover 为空`);
       list.push(
         ...qualityIssues
+          .filter(issue => issue.chapterNumber === n)
+          .map(issue => `第${n}章 ${issue.detail}`),
+        ...fateReleaseIssues
           .filter(issue => issue.chapterNumber === n)
           .map(issue => `第${n}章 ${issue.detail}`),
       );

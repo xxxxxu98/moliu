@@ -26,7 +26,12 @@ import {
 } from './ChapterCommitService';
 import { ContextPackBuilder } from './ContextPackBuilder';
 import { ContinuityValidator } from './ContinuityValidator';
-import { detectOpeningRepetitionIssue, healChapterContract } from './contractHealth';
+import {
+  collectTerminalDeathCharacters,
+  detectOpeningRepetitionIssue,
+  healChapterContract,
+  isTerminalDeathStatus,
+} from './contractHealth';
 import { SceneBeatPlanner } from './SceneBeatPlanner';
 import { SceneDraftEngine } from './SceneDraftEngine';
 import type { WriterAgentStep } from './agent/WriterAgent';
@@ -203,6 +208,10 @@ function extractAllowedAppearanceNames(
   const allowed: string[] = [];
   for (const entity of Object.values(entities)) {
     if (entity.kind !== 'character') continue;
+    // 死亡族终态角色不可「现身/说话/行动」：白名单是出场许可证，留死者会诱导
+    // 写手写出「病危急报/苏醒」类复活钩子（g38f-200chr2 ch184 五连拒死章）。
+    // 羁押/去职不在此列——在押解/解任语境出场是合法剧情。
+    if (isTerminalDeathStatus(entity.attributes?.status)) continue;
     const names = [entity.name, ...(entity.aliases ?? [])].map(name => name.trim()).filter(Boolean);
     if (!names.some(name => requested.has(name))) continue;
     for (const name of names) {
@@ -481,6 +490,7 @@ export class LongFormWritingEngine {
           contracts.chapter.allowedCharacterNames
         ),
         knownCharacterNames: extractCharacterNames(input.state.entities),
+        terminalFateCharacters: collectTerminalDeathCharacters(input.state),
       });
       drafts = outcome.drafts;
       facts = outcome.facts;
@@ -570,6 +580,8 @@ export class LongFormWritingEngine {
             input.state.entities,
             contracts.chapter.allowedCharacterNames
           ),
+          // 死亡族终态禁令：起草 prompt 显式列出死者，禁止任何存活形态出场
+          terminalFateCharacters: collectTerminalDeathCharacters(input.state),
           futureReveals: contracts.chapter.futureReveals ?? [],
           // 大纲链路的章节标题已是正式标题，模型再拟一个也会被 pipeline 丢弃
           existingChapterTitle: isPlaceholderChapterTitle(contracts.chapter.title)

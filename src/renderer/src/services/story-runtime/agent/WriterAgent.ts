@@ -55,6 +55,8 @@ export interface WriterAgentStepInput {
   previousChapterEnding?: string;
   allowedAppearanceNames: string[];
   knownCharacterNames: string[];
+  /** 死亡族终态角色（状态=死亡/驾崩）：改稿 brief 显式禁令，杜绝复活钩子改稿回潮 */
+  terminalFateCharacters?: Array<{ name: string; status: string }>;
 }
 
 export interface WriterAgentStepResult extends ChapterReviewOutcome {
@@ -119,6 +121,15 @@ export function buildWriterBrief(input: WriterAgentStepInput, toolkit: AgentTool
     input.allowedAppearanceNames.length > 0
       ? [`- 【本章出场名单】只有 ${input.allowedAppearanceNames.join('、')} 可现身、说话或行动;其他已登记角色最多被提及`]
       : [];
+  const terminalFate = (input.terminalFateCharacters ?? []).filter(item => item.name && item.status);
+  const terminalFateRules =
+    terminalFate.length > 0
+      ? [
+          '- 【命运终态禁令】以下角色已死亡,任何改稿中都不得以存活形态出现(现身/说话/下旨,或对话、急报、密报声称其病危、晕厥、遇袭待救):',
+          ...terminalFate.map(item => `  - ${item.name}（已${item.status}）`),
+          '- 初稿若已写出这类内容,属于与全书事实冲突的发明:直接删除该场景,或改写成谣言/误报被当场识破;不要试图「圆回来」',
+        ]
+      : [];
   const previousEnding = (input.previousChapterEnding ?? '').trim().slice(-200);
 
   return [
@@ -136,6 +147,7 @@ export function buildWriterBrief(input: WriterAgentStepInput, toolkit: AgentTool
     ...wordRules,
     ...nameRules,
     ...appearanceRules,
+    ...terminalFateRules,
     ...(previousEnding
       ? [`- 【上章结尾原文】「…${previousEnding}」——本章开场必须承接此状态,不得回退到 CBN 字面`]
       : []),

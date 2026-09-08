@@ -79,6 +79,8 @@ export class AIFactExtractor implements FactExtractor {
         + '平反族（平反/昭雪/洗清冤屈/沉冤得雪→value「平反」）。'
         + '死亡无逆转：真复活属剧情缺陷，禁止用 delta 洗白，交由 fate-adjudicate 裁决。evidence 直接引用逆转原句。'
         + '已在账且未变化的终态（如仍在狱中的复述性提及）不必重复出账，只有状态实际改变才出 delta。',
+        '12) 追认/回述句不是新宣告（2026-09-06 g38f-200chr2 实证：ch188「太上皇早已驾崩」被当作新宣告二次出账，终态章号被顶到 188，遮蔽了更早死亡与后文提及的复活检测窗口）：「早已/当年/此前/临终前/咽气时/大丧期间」等回溯措辞描述的命运，若角色表或事件目录中该角色已有同族终态，禁止再次出 status delta——回述最多产一条 event 供检索，不得改状态。',
+        '13) 角色名卫生：participants 与 status delta 指向的角色必须使用角色表（entityCatalog）中的登记名或其别名，逐字一致；禁止把动作/描写片段当人名（「沈怀安快步」「沈怀安反手」不是角色）；登记角色不得产出「首次出场」类条目。',
         'JSON 字段必须为：',
         '{"events":[{"id":"string","chapter":0,"sceneId":"string","type":"string","summary":"string","participants":["实体id或人名"],"causes":[],"effects":[],"evidence":["正文原句"]}],"deltas":[{"operation":"set|add|remove|increment","path":"characters.<实体id>.attributes.status","value":"死亡|驾崩|下狱|定罪|去职","evidence":"宣告原句"}],"evidence":["正文原句"]' +
           '}',

@@ -295,6 +295,70 @@ describe('SceneDraftEngine.draft', () => {
     expect(factZone).toContain('盐引背后的皇室宗亲身份');
   });
 
+  it('terminalFateCharacters 渲染【命运终态禁令】，死者只可向后引用', async () => {
+    // 2026-09-06 g38f-200chr2 ch184 实证：写手自发发明「已驾崩皇帝病危急报」
+    // 复活钩子，fact_conflict 五连拒整章死。起草侧禁令 + 出场白名单剔除双防线。
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 184,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context, {
+      terminalFateCharacters: [
+        { name: '赵乾', status: '驾崩' },
+        { name: '孙茂才', status: '死亡' },
+      ],
+    });
+
+    const request = generate.mock.calls[0][0] as { system: string; prompt: string };
+    expect(request.system).toContain('【命运终态禁令】');
+    expect(request.system).toContain('赵乾（已驾崩）');
+    expect(request.system).toContain('孙茂才（已死亡）');
+    expect(request.system).toContain('禁止以任何「仍然存活」的形态出现');
+    expect(request.system).toContain('病危、晕厥、遇袭待救');
+    expect(request.system).toContain('回忆、追述、遗物');
+    const prompt = JSON.parse(request.prompt) as {
+      writingRules: { terminalFateCharacters?: string[] };
+    };
+    expect(prompt.writingRules.terminalFateCharacters).toEqual(['赵乾（已驾崩）', '孙茂才（已死亡）']);
+  });
+
+  it('repair 模式显式解锁冲突发明内容的整体删除', async () => {
+    // 同上 ch184 死锁根因：重写指令「未涉及情节保持稳定」把首稿自发发明的
+    // 复活钩子当稳定基底保留 5 轮。修复模式必须给 fact_conflict 指向的场景
+    // 开删除/改写逃生口。
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 184,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context, {
+      revisionPlan: { mode: 'repair', hints: ['角色赵乾已驾崩，不得写其病危'] },
+      rewriteRound: 1,
+    });
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).toContain('【修复模式】');
+    expect(request.system).toContain('与全书既有事实冲突的内容');
+    expect(request.system).toContain('不受「保持稳定」保护');
+  });
+
   it('已有正式标题时只要求回填，不再注入整套拟标题规则', async () => {
     // 大纲链路的章节标题非占位，pipeline 只在占位时采纳生成标题，
     // 再让模型拟一个等于白占十余行 system 指令与注意力。
@@ -364,6 +428,7 @@ describe('SceneDraftEngine.draft', () => {
       minWordCount: 2400, // MIN_WORD_THRESHOLD=0.80 × 3000
       maxWordCount: 3540,
       allowedAppearanceNames: [],
+      terminalFateCharacters: [],
       futureReveals: [],
     });
   });

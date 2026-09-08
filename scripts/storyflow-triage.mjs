@@ -489,14 +489,22 @@ function triageProvider(providerId, meta) {
         .filter(n => n.length >= 2 && n.length <= 8)
     );
     if (chapters.length >= 3 && roster.size > 0) {
-      const candidates = scanLedgerDeathResurrection(memories, chapters, roster);
-      for (const r of candidates) {
+      const { resurrections, multiDeaths } = scanLedgerDeathResurrection(memories, chapters, roster);
+      for (const r of resurrections) {
         if (!roster.has(r.name)) continue;
         acc.add(
           'fate.contradiction-candidate',
           r.chapter,
           `${r.name}于第${r.chapter}章${r.state}（台账），其后 ${r.activeChapters.length} 章正文仍写到该角色` +
             `（首见第${r.activeChapters[0]}章，章号：${r.activeChapters.slice(0, 8).join(',')}${r.activeChapters.length > 8 ? '…' : ''}）。候选待 AI 裁决：回忆性提及/剧情解释（假死、越狱、翻案）不是复活`
+        );
+      }
+      for (const d of multiDeaths) {
+        const span = d.deaths.map(item => `第${item.chapter}章${item.state}`).join('、');
+        acc.add(
+          'fate.multi-death-ledger',
+          d.deaths[0].chapter,
+          `${d.name}存在 ${d.deaths.length} 次死亡入账（${span}）：死亡无合法逆转——要么追认句重复入账（提取合同 12），要么两次死亡之间藏着真复活（g38f-200chr2 孙茂才 ch172 毒毙→ch189 天牢再死形态）。必须过 fate-adjudicate 终审`
         );
       }
     }
@@ -1012,7 +1020,7 @@ if (invokedDirectly) main();
  */
 export function scanLedgerDeathResurrection(memories, chapters, roster) {
   const TERMINAL_FATES = new Set(['死亡', '驾崩']);
-  const fateAt = new Map();
+  const deathsByName = new Map();
   for (const m of [...(memories ?? [])].sort(
     (a, b) => (a.chapterIndex ?? 0) - (b.chapterIndex ?? 0)
   )) {
@@ -1022,26 +1030,37 @@ export function scanLedgerDeathResurrection(memories, chapters, roster) {
       if (roster && !roster.has(name)) continue;
       if (!TERMINAL_FATES.has(change.state)) continue;
       const chapter = (m.chapterIndex ?? 0) + 1;
-      const prev = fateAt.get(name);
-      if (!prev || chapter > prev.chapter) {
-        fateAt.set(name, { name, state: change.state, chapter });
+      const list = deathsByName.get(name) ?? [];
+      if (!list.some(item => item.chapter === chapter)) {
+        list.push({ state: change.state, chapter });
       }
+      deathsByName.set(name, list);
     }
   }
   const resurrections = [];
-  for (const fate of fateAt.values()) {
+  const multiDeaths = [];
+  for (const [name, deaths] of deathsByName) {
+    // 复活扫描锚定最早死亡：只锚最晚会让「死亡→后文提及→再死亡」形态的
+    // 中段全部漏检（2026-09-06 g38f-200chr2：孙茂才 ch172/ch189 双死亡入账，
+    // 终态被顶到 189，ch189 活口剧情把 ch172 之死整个遮蔽）。
+    const earliest = deaths.reduce((min, item) => (item.chapter < min.chapter ? item : min));
     const activeChapters = chapters
-      .filter(ch => ch.n > fate.chapter && ch.text.includes(fate.name))
+      .filter(ch => ch.n > earliest.chapter && ch.text.includes(name))
       .map(ch => ch.n);
     if (activeChapters.length > 0) {
       resurrections.push({
-        name: fate.name,
-        state: fate.state,
-        chapter: fate.chapter,
+        name,
+        state: earliest.state,
+        chapter: earliest.chapter,
         activeChapters,
       });
     }
+    // 同角色 ≥2 次死亡入账：死亡无合法逆转（契约 11），要么重复入账（追认句
+    // 误登），要么中间藏着真复活——两种都要过 fate-adjudicate 终审。
+    if (deaths.length >= 2) {
+      multiDeaths.push({ name, deaths: deaths.sort((a, b) => a.chapter - b.chapter) });
+    }
   }
-  return resurrections;
+  return { resurrections, multiDeaths };
 }
 

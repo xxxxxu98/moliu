@@ -465,6 +465,40 @@ function collectDeceasedEntityNames(state?: StoryState): Set<string> {
 }
 
 /**
+ * 死亡族终态子集：与 STALE 全集（含下狱/定罪/去职）不同，这一族决定
+ * 「角色不可再以存活形态出场」——羁押/去职角色仍可在押解/解任语境合法出场，
+ * 只有死者必须退场。用于出场白名单过滤与起草禁令。
+ * 2026-09-06 g38f-200chr2 ch184 实证：写手自发发明「已驾崩皇帝病危急报」钩子，
+ * 5 次重写均被 fact_conflict 拒稿，整章死。
+ */
+const DEATH_FATE_ATTRIBUTE_VALUES = new Set(['死亡', '驾崩']);
+
+export function isTerminalDeathStatus(status: unknown): boolean {
+  return typeof status === 'string' && DEATH_FATE_ATTRIBUTE_VALUES.has(status);
+}
+
+export interface TerminalDeathCharacter {
+  name: string;
+  status: string;
+}
+
+export function collectTerminalDeathCharacters(state?: StoryState): TerminalDeathCharacter[] {
+  if (!state?.entities) return [];
+  const out: TerminalDeathCharacter[] = [];
+  const seen = new Set<string>();
+  for (const entity of Object.values(state.entities)) {
+    if (entity.kind !== 'character') continue;
+    const status = entity.attributes?.status;
+    if (!isTerminalDeathStatus(status)) continue;
+    const name = entity.name.trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    out.push({ name, status });
+  }
+  return out;
+}
+
+/**
  * 从节点文本中解析出命运级终态角色名；至少命中一个即视为「被过期货污染」的节点。
  * 命中即视为「被过期货污染」的节点（子串匹配：蓝图提及终态角色的在场行动，
  * 如「周茂现身公堂」；回忆/追述由模型措辞区分，此处宁可保守裁剪）。

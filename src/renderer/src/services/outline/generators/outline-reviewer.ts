@@ -12,6 +12,10 @@ import {
 } from '@/services/story-runtime/chapterBlueprintNormalize';
 import type { ExecutableOutline } from '../types/executable-outline';
 import { inspectOutlineCompleteness, OUTLINE_COMPLETENESS_POLICY } from '../validation/outlineCompleteness';
+import {
+  findLockedForeshadowViolations,
+  type ForeshadowTimingHint,
+} from '../rolling/outline-roller';
 
 const STARTUP_PACK_HEADING = `前${OUTLINE_COMPLETENESS_POLICY.startupChapterCount}章启动包`;
 
@@ -26,6 +30,8 @@ export type OutlineQualityIssueKind =
   | 'goldenfinger-late-reveal'
   | 'over-scoped-mustcover'
   | 'invalid-blueprint-format'
+  | 'foreshadow-timing-violation'
+  | 'repeated-beat'
   | 'inconsistent-story-scale'
   | 'chapter-reference-out-of-range'
   | 'unknown-character-reference'
@@ -309,6 +315,87 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
       chapterOrder: blocker.chapterNumber,
       detail: blocker.message,
     });
+  }
+
+  // 10. 伏笔时点×章蓝图交叉（初版批次此前不过检）。滚纲修复轮的
+  // findLockedForeshadowViolations 只挂在 roll 路径，初版 expand 产物自带
+  // foreshadowPlan 却从不与 chapterBlueprints 对账——2026-09-06 g38f-200chr2
+  // ch36 实证：初版节点第 36 章「当众颁布三级网格考成法」vs 伏笔第 45 章才
+  // 揭示，5 次拒稿整章死；reg20 同族（伏笔标 18 章反杀下狱、蓝图 3 章执行）。
+  const timingHints: ForeshadowTimingHint[] = (outline.foreshadowPlan ?? [])
+    .filter(f => f && (f.hint ?? '').trim().length >= 4)
+    .map(f => ({
+      hint: f.hint,
+      setupChapter: f.setupChapter ?? undefined,
+      payoffChapter: f.payoffChapter ?? undefined,
+    }));
+  const chapterBlueprints = outline.chapterBlueprints ?? [];
+  if (timingHints.length > 0 && chapterBlueprints.length > 0) {
+    for (const violation of findLockedForeshadowViolations(chapterBlueprints, timingHints)) {
+      issues.push({
+        kind: 'foreshadow-timing-violation',
+        chapterOrder: violation.chapterNumber,
+        detail: violation.detail,
+      });
+    }
+  }
+
+  // 11. 重复节拍（初版批次内）：两个相隔 ≥3 章的蓝图若共享 ≥6 字连续段且
+  // 同涉一名主要角色，视为同一事件/擢升/道具的重复兑现。reg20 实证：第 8 章
+  // 与第 47 章「特旨擢升顾明章为正五品通政司右参议」逐字重复、第 3 章与第 42
+  // 章同一张项目甘特图两次击倒同一反派——读者审标记为大高潮情绪回报被稀释。
+  // 文档频率过滤（reg70 实测补丁）：出现在 ≥4 章的 6-gram 是场景地标/套话
+  // （「在户部衙门与」×15 章），不构成重复节拍——真重复是只出现 2~3 次的
+  // 稀有短语。统计判据，不涉语义正则。
+  // 是否真重复由大纲 agent 修复回合裁决改写。
+  const keyNames = (outline.keyCharacters ?? [])
+    .map(c => (c?.name ?? '').trim())
+    .filter(name => name.length >= 2);
+  if (chapterBlueprints.length > 1 && keyNames.length > 0) {
+    const beatItems = chapterBlueprints.map(bp => {
+      const text = [bp.title, bp.summary, bp.CBN, bp.CEN, ...bp.CPNs, ...bp.mustCover]
+        .filter(Boolean)
+        .join('\n');
+      const cjk = text.replace(/[^\u4e00-\u9fff]+/gu, '');
+      const grams = new Set<string>();
+      for (let i = 0; i + 6 <= cjk.length; i += 1) grams.add(cjk.slice(i, i + 6));
+      return {
+        order: bp.orderIndex,
+        grams,
+        names: keyNames.filter(name => text.includes(name)),
+      };
+    }).filter(item => item.grams.size > 0 && item.names.length > 0);
+    // 文档频率：gram 出现在几个蓝图里
+    const gramDf = new Map<string, number>();
+    for (const item of beatItems) {
+      for (const gram of item.grams) gramDf.set(gram, (gramDf.get(gram) ?? 0) + 1);
+    }
+    const isRare = (gram: string) => (gramDf.get(gram) ?? 0) <= 3;
+    for (let a = 0; a < beatItems.length; a += 1) {
+      for (let b = a + 1; b < beatItems.length; b += 1) {
+        const left = beatItems[a];
+        const right = beatItems[b];
+        if (Math.abs(left.order - right.order) < 3) continue;
+        if (!left.names.some(name => right.names.includes(name))) continue;
+        let shared: string | null = null;
+        for (const gram of left.grams) {
+          if (!isRare(gram)) continue;
+          if (right.grams.has(gram)) {
+            shared = gram;
+            break;
+          }
+        }
+        if (!shared) continue;
+        issues.push({
+          kind: 'repeated-beat',
+          chapterOrder: right.order,
+          detail:
+            `第${left.order}章与第${right.order}章存在近重复节拍（共享「${shared}」且同涉角色` +
+            `${left.names.find(name => right.names.includes(name))}）。同一事件/擢升/道具/对手` +
+            `不应重复兑现：把第${right.order}章改写为该线索的新进展或换用新对抗手段`,
+        });
+      }
+    }
   }
 
   return issues;

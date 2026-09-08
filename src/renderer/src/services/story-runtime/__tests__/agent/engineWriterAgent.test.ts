@@ -234,6 +234,18 @@ describe('LongFormWritingEngine × WriterAgent', () => {
 
   it('writerAgent 收到的输入携带审查端口与初审结果(端口口径 = 引擎主链)', async () => {
     const seen: WriterAgentStepInput[] = [];
+    const input = baseInput();
+    // 2026-09-06 g38f-200chr2 ch184：死亡族终态角色必须双路注入——起草 prompt
+    // 禁令 + 改稿 agent brief 禁令（写手曾自发发明「已驾崩皇帝病危急报」钩子）
+    input.state.entities.emperor = {
+      id: 'emperor',
+      kind: 'character',
+      name: '赵乾',
+      aliases: [],
+      attributes: { status: '驾崩' },
+      knownBy: [],
+      sourceTrace: [],
+    };
     const engine = new LongFormWritingEngine({
       ai: new ForbiddenDraftAI(),
       factExtractor: facts,
@@ -260,11 +272,12 @@ describe('LongFormWritingEngine × WriterAgent', () => {
         },
       },
     });
-    const result = await engine.write(baseInput());
+    const result = await engine.write(input);
     expect(seen).toHaveLength(1);
     expect(seen[0].maxChecks).toBe(2);
     expect(seen[0].initialReview.report.accepted).toBe(false);
     expect(seen[0].knownCharacterNames).toContain('林夜');
+    expect(seen[0].terminalFateCharacters).toEqual([{ name: '赵乾', status: '驾崩' }]);
     // 同一稿再审结果一致(禁区字面仍在)→ rejected
     expect(result.report.accepted).toBe(false);
     expect(result.commit.status).toBe('rejected');

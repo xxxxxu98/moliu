@@ -176,6 +176,12 @@ export interface SceneDraftOptions {
    * 「正文事实优先于大纲字面」，仲裁权交给已成文的叙事状态，杜绝状态回退。
    */
   previousChapterEnding?: string;
+  /**
+   * 死亡族终态角色（状态=死亡/驾崩）。起草 prompt 显式禁止其以任何存活形态
+   * 出场（含对话/急报声称其仍活着）。g38f-200chr2 ch184：写手自发发明
+   * 「已驾崩皇帝病危急报」钩子，fact_conflict 五连拒整章死。
+   */
+  terminalFateCharacters?: Array<{ name: string; status: string }>;
 }
 
 export class SceneDraftEngine {
@@ -273,6 +279,17 @@ export class SceneDraftEngine {
           ),
         ]
       : [];
+    // 死亡族终态禁令：死者只能向后引用（回忆/遗物/丧仪/档案），不得以任何存活形态出场
+    const terminalFateCharacters = (options?.terminalFateCharacters ?? []).filter(
+      item => item.name && item.status
+    );
+    const terminalFateRules = terminalFateCharacters.length > 0
+      ? [
+          '- 【命运终态禁令】以下角色在既成事实中已死亡，禁止以任何「仍然存活」的形态出现——不得现身、行动、说话、下旨，也不得在对话/急报/密报/传闻中被描述为刚刚还在活动（如病危、晕厥、遇袭待救）：',
+          ...terminalFateCharacters.map(item => `  - ${item.name}（已${item.status}）`),
+          '- 他们只能以回忆、追述、遗物、档案、验尸、丧仪等向后引用形式存在；若剧情确需「有人谎称其还活着」，正文必须把这是谣言或误报写明',
+        ]
+      : [];
     // 跨章收尾去重：把近几章实际写出的结尾句列出来，禁止本章再写同款收尾
     const recentEndingRules = (options?.recentEndingSnippets ?? []).length > 0
       ? [
@@ -304,6 +321,7 @@ export class SceneDraftEngine {
       repair: [
         '- 【修复模式】只针对问题清单重写相关场景；未涉及的情节、证据与因果关系保持稳定',
         '- 可以替换或合并有问题的段落，但不得删除已履约的 CBN/CPNs/CEN',
+        '- 语义问题（fact_conflict/存在性冲突）指向的场景是上一稿自行发明、与全书既有事实冲突的内容：允许整体删除或改写成符合事实的形态（回忆、误报被识破等），不受「保持稳定」保护',
       ],
     };
     // 已有正式标题时只要求原样回填，省掉整套拟标题规则与 titleHints
@@ -345,6 +363,7 @@ export class SceneDraftEngine {
         ...appearanceRules,
         ...hardEmbargoRules,
         ...futureRevealRules,
+        ...terminalFateRules,
         ...revisionRules,
       ].join('\n'),
       prompt: JSON.stringify({
@@ -368,6 +387,7 @@ export class SceneDraftEngine {
           minWordCount,
           maxWordCount,
           allowedAppearanceNames,
+          terminalFateCharacters: terminalFateCharacters.map(item => `${item.name}（已${item.status}）`),
           futureReveals: options?.futureReveals ?? [],
         },
         titleHints: existingChapterTitle

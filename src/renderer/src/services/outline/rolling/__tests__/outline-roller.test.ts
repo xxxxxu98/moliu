@@ -435,6 +435,46 @@ describe('rollOutlineForward', () => {
     expect(seenSystemPrompt).toContain('【禁区相容】');
   });
 
+  it('命运弧计数：同向命运 ≥2 次在命运锁行标注累计，橡皮筋禁令注入硬约束（赵烈下狱×7 形态）', async () => {
+    const project = makeRollProject();
+    const mem = (chapterIndex: number, state: string) => ({
+      chapterId: `ch${chapterIndex}`,
+      chapterTitle: `Chapter ${chapterIndex}`,
+      chapterIndex,
+      corePlot: '赵烈命运节点',
+      keyEvents: [],
+      locations: [],
+      characterStateChanges: [
+        { characterName: '赵烈', stateType: 'status', state, detail: '台账' },
+      ],
+      revealedForeshadows: [],
+      newForeshadows: [],
+      wordCount: 100,
+      createdAt: new Date().toISOString(),
+    });
+    project.chapterMemories = [mem(80, '下狱'), mem(119, '下狱'), mem(154, '下狱'), mem(196, '越狱')];
+    let seenUserPrompt = '';
+    let seenSystemPrompt = '';
+    const base = buildRollContextBase(project, 201);
+    await rollOutlineForward({
+      project,
+      callStructuredText: async (system, user) => {
+        seenSystemPrompt = system;
+        seenUserPrompt = user;
+        return '空响应';
+      },
+      persist: async () => {},
+    });
+    // FATE_STATES 不含越狱（解除方向不参与橡皮筋计数），终态=最晚 FATE 态（下狱@154）
+    const zhao = base.fateLockEntries.find(e => e.name === '赵烈');
+    expect(zhao?.state).toBe('下狱');
+    expect(zhao?.maxSameStateCount).toBe(3);
+    expect(zhao?.history).toEqual([{ state: '下狱', count: 3 }]);
+    expect(base.fateLocks.some(line => line.includes('赵烈') && line.includes('下狱×3'))).toBe(true);
+    expect(seenSystemPrompt).toContain('【命运橡皮筋禁令】');
+    expect(seenUserPrompt).toContain('【命运锁');
+  });
+
   it('冒烟场景（正文未写、蓝图已就位）进度措辞不谎称已写', async () => {
     const project = makeProject({
       chapters: Array.from({ length: 50 }, (_, i) => makeChapter({ index: i })),

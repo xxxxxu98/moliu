@@ -452,3 +452,137 @@ describe('parseChapterRange', () => {
     expect(parseChapterRange('')).toBeNull();
   });
 });
+
+function makeBlueprint(orderIndex: number, overrides: Record<string, unknown> = {}) {
+  return {
+    orderIndex,
+    title: `第${orderIndex}章测试`,
+    summary: `推进第${orderIndex}章冲突`,
+    CBN: `第${orderIndex}章开场出现具体危机`,
+    CPNs: [`主角处理第${orderIndex}章的具体阻碍`],
+    CEN: `新的证据指向下一章危机`,
+    mustCover: [`查清第${orderIndex}章的一处账目异常`],
+    forbiddenZones: [],
+    hookType: 'reveal',
+    ...overrides,
+  };
+}
+
+describe('初版伏笔时点×章蓝图交叉（2026-09-06 g38f-200chr2 ch36 形态）', () => {
+  it('初版节点提前兑现伏笔载荷 → foreshadow-timing-violation', () => {
+    const outline = makeDirtyOutline();
+    outline.foreshadowPlan = [
+      {
+        id: 'f1',
+        hint: '白麻布网格图卷三级网格考成法',
+        type: 'item' as const,
+        importance: 'main' as const,
+        setupPhase: '',
+        payoffPhase: '',
+        setupChapter: 20,
+        payoffChapter: 45,
+        carrierCharacter: '顾明章',
+        linkedConflict: '',
+        payoffValue: '',
+      },
+    ];
+    outline.chapterBlueprints = [
+      makeBlueprint(36, {
+        CPNs: ['沈怀安当众颁布三级网格考成法与末位罢黜令'],
+        mustCover: ['沈怀安推行网格考成法'],
+      }),
+    ];
+    const issues = inspectOutlineQuality(outline).filter(
+      issue => issue.kind === 'foreshadow-timing-violation',
+    );
+    expect(issues).toHaveLength(1);
+    expect(issues[0].chapterOrder).toBe(36);
+    expect(issues[0].detail).toContain('第45章');
+  });
+
+  it('伏笔计划与蓝图无冲突 → 无该类 issue', () => {
+    const outline = makeDirtyOutline();
+    outline.foreshadowPlan = [
+      {
+        id: 'f1',
+        hint: '白麻布网格图卷三级网格考成法',
+        type: 'item' as const,
+        importance: 'main' as const,
+        setupPhase: '',
+        payoffPhase: '',
+        setupChapter: 20,
+        payoffChapter: 45,
+        carrierCharacter: '顾明章',
+        linkedConflict: '',
+        payoffValue: '',
+      },
+    ];
+    outline.chapterBlueprints = [makeBlueprint(30, { mustCover: ['沈怀安核对白麻布图卷批注'] })];
+    expect(
+      inspectOutlineQuality(outline).filter(issue => issue.kind === 'foreshadow-timing-violation'),
+    ).toHaveLength(0);
+  });
+});
+
+describe('重复节拍检测（reg20 擢升×2 受害形态）', () => {
+  function outlineWithPair(chA: number, chB: number, mustA: string, mustB: string) {
+    const outline = makeDirtyOutline();
+    const key = { ...(outline.keyCharacters[0] as { name: string }), name: '顾明章' };
+    outline.keyCharacters = [key];
+    outline.chapterBlueprints = [
+      makeBlueprint(chA, { mustCover: [mustA] }),
+      makeBlueprint(chB, { mustCover: [mustB] }),
+    ];
+    return outline;
+  }
+
+  it('相隔 ≥3 章的两章共享 6 字连续段且同涉主要角色 → repeated-beat', () => {
+    const outline = outlineWithPair(
+      8,
+      47,
+      '特旨擢升顾明章为正五品通政司右参议',
+      '特旨擢升顾明章为正五品通政司右参议',
+    );
+    const issues = inspectOutlineQuality(outline).filter(issue => issue.kind === 'repeated-beat');
+    expect(issues).toHaveLength(1);
+    expect(issues[0].chapterOrder).toBe(47);
+    expect(issues[0].detail).toContain('顾明章');
+    expect(issues[0].detail).toContain('第8章');
+  });
+
+  it('相邻章承接性重叠（<3 章）与不同角色章节不误伤', () => {
+    const adjacent = outlineWithPair(
+      8,
+      9,
+      '特旨擢升顾明章为正五品通政司右参议',
+      '特旨擢升顾明章为正五品通政司右参议',
+    );
+    expect(
+      inspectOutlineQuality(adjacent).filter(issue => issue.kind === 'repeated-beat'),
+    ).toHaveLength(0);
+
+    const outline = makeDirtyOutline();
+    const key = { ...(outline.keyCharacters[0] as { name: string }), name: '顾明章' };
+    outline.keyCharacters = [key];
+    outline.chapterBlueprints = [
+      makeBlueprint(8, { mustCover: ['特旨擢升顾明章为正五品通政司右参议'] }),
+      makeBlueprint(47, { mustCover: ['钱伯温彻查两淮盐引旧账'] }),
+    ];
+    expect(
+      inspectOutlineQuality(outline).filter(issue => issue.kind === 'repeated-beat'),
+    ).toHaveLength(0);
+  });
+
+  it('场景地标套话（出现在 ≥4 章的 6-gram）不构成重复节拍（reg70 实测误报形态）', () => {
+    const outline = makeDirtyOutline();
+    const key = { ...(outline.keyCharacters[0] as { name: string }), name: '沈淮' };
+    outline.keyCharacters = [key];
+    // 「在户部衙门与架阁」在 ch2/5/6/7/8/9 六章反复出现（场景常驻），不应刷黄签
+    outline.chapterBlueprints = [2, 5, 6, 7, 8, 9].map(ch =>
+      makeBlueprint(ch, { mustCover: [`沈淮在户部衙门与架阁司核对第${ch}章账目`] }),
+    );
+    expect(
+      inspectOutlineQuality(outline).filter(issue => issue.kind === 'repeated-beat'),
+    ).toHaveLength(0);
+  });
+});

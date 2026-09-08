@@ -4,16 +4,67 @@ import {
   sanitizeInheritedCbn,
 } from '../chapterBlueprintNormalize';
 import {
+  collectTerminalDeathCharacters,
   detectMustCoverForbiddenConflicts,
   detectOpeningRepetitionIssue,
   enrichRevisionHint,
   healChapterContract,
   isForbiddenExemptForFulfillment,
+  isTerminalDeathStatus,
   pruneFulfilledNodes,
   softenConflictingForbidden,
 } from '../contractHealth';
 import { GENERIC_PLOT } from './genericPlotFixtures';
 import { makeContracts, makeState } from './testFixtures';
+
+describe('collectTerminalDeathCharacters（死亡族终态名单）', () => {
+  const makeFateState = (status?: string) => {
+    const state = makeState();
+    state.entities.emperor = {
+      id: 'emperor',
+      kind: 'character',
+      name: '赵乾',
+      aliases: ['老皇帝'],
+      attributes: status ? { status } : {},
+      knownBy: [],
+      sourceTrace: [],
+    };
+    state.entities.jailer = {
+      id: 'jailer',
+      kind: 'character',
+      name: '梁启端',
+      aliases: [],
+      attributes: { status: '下狱' },
+      knownBy: [],
+      sourceTrace: [],
+    };
+    return state;
+  };
+
+  // 2026-09-06 g38f-200chr2 ch184 实证：已驾崩皇帝被写手自发发明「病危急报」
+  // 复活钩子。死亡族（死亡/驾崩）必须进入起草禁令名单；羁押/去职不在此列
+  // ——在押解/解任语境出场是合法剧情（ch183 梁启端戴枷长揖是好戏）。
+  it('死亡/驾崩入选；下狱/去职/定罪不入选', () => {
+    const dead = collectTerminalDeathCharacters(makeFateState('驾崩'));
+    expect(dead).toEqual([{ name: '赵乾', status: '驾崩' }]);
+
+    const died = collectTerminalDeathCharacters(makeFateState('死亡'));
+    expect(died).toEqual([{ name: '赵乾', status: '死亡' }]);
+
+    const jailed = collectTerminalDeathCharacters(makeFateState('下狱'));
+    expect(jailed).toEqual([]);
+    const dismissed = collectTerminalDeathCharacters(makeFateState('去职'));
+    expect(dismissed).toEqual([]);
+  });
+
+  it('isTerminalDeathStatus 只认死亡族字符串', () => {
+    expect(isTerminalDeathStatus('死亡')).toBe(true);
+    expect(isTerminalDeathStatus('驾崩')).toBe(true);
+    expect(isTerminalDeathStatus('下狱')).toBe(false);
+    expect(isTerminalDeathStatus(undefined)).toBe(false);
+    expect(isTerminalDeathStatus(42)).toBe(false);
+  });
+});
 
 describe('contractHealth', () => {
   it('检测 mustCover×禁区揭示冲突并软化', () => {

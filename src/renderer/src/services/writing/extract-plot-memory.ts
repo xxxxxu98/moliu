@@ -411,61 +411,19 @@ function extractTimeline(content: string): string | undefined {
 
 /**
  * 从正文中提取角色状态变化
+ *
+ * 2026-09-06 退役：动作动词前缀扒名的启发式把「沈怀安快步」「沈怀安反手」等
+ * 动宾粘连串当角色名入账，主角在第 55/61/101 章被重复登记「首次出场」，
+ * 「执行动作」类无语义条目持续污染状态摘要（g38f-200chr2 200 章实测）。
+ * 语义判定归 AI 提取合同（命运宣告契约 7-11）；出场/动作类碎片没有下游
+ * 依赖（命运锁/禁入名单/判官冲突检测都只消费 FATE_STATES），整体停用。
  */
 function extractCharacterChanges(
-  content: string,
-  sentences: string[],
-  characterRoster?: string[]
+  _content: string,
+  _sentences: string[],
+  _characterRoster?: string[]
 ): CharacterStateChange[] {
-  const changes: CharacterStateChange[] = [];
-  const characterSet = new Set<string>();
-
-  // 提取对话中的角色名
-  const dialoguePattern = /(["""'""][^""'""]{1,20}["""'""])[说问道喊叫笑道][的]?/g;
-  let match;
-  while ((match = dialoguePattern.exec(content)) !== null) {
-    const speaker = match[1].replace(/["""'"""]/g, '').trim();
-    if (speaker.length >= 2 && speaker.length <= 8 && !speaker.includes('的')) {
-      characterSet.add(speaker);
-    }
-  }
-
-  // 查找角色动作（常见动作+角色名）
-  const actionVerbs = ['走到', '来到', '站起', '坐下', '躺下', '抬起头', '转过身', '回过头',
-    '拿起', '放下', '抽出', '握紧', '松开', '揭开', '打开', '关上',
-    '看向', '望向', '盯着', '瞥见', '听见', '听到', '闻到',
-    '走进', '冲出', '跃入', '飞向', '逃向', '奔向'];
-
-  for (const sentence of sentences.slice(0, 20)) {
-    for (const verb of actionVerbs) {
-      const idx = sentence.indexOf(verb);
-      if (idx > 0 && idx < 10) {
-        // 提取动词前的可能是角色名的部分
-        const before = sentence.slice(0, idx).trim();
-        if (before.length >= 2 && before.length <= 8 && /^[\u4e00-\u9fa5]+$/.test(before)) {
-          characterSet.add(before);
-        }
-      }
-    }
-  }
-
-  // 生成角色状态变化
-  for (const charName of Array.from(characterSet).slice(0, 10)) {
-    // 检测角色是否首次出场
-    const firstAppearPattern = new RegExp(`(?:[^\\u4e00-\\u9fa5]|^)([${charName.charAt(0)}][\\u4e00-\\u9fa5]{0,${charName.length - 1}})(?:走|来|站|坐|躺|进|出|到|去)`);
-    const isFirstAppear = firstAppearPattern.test(content.slice(0, content.length / 2));
-
-    changes.push({
-      characterName: charName,
-      stateType: isFirstAppear ? 'appearance' : 'status',
-      state: isFirstAppear ? '首次出场' : '执行动作',
-      detail: isFirstAppear ? `在情节中首次出现` : `发生动作描写`,
-    });
-  }
-
-  // 命运级状态（生死/下狱/官职）不再走规则提取：全权归 AI 提取合同
-  // （FactExtractor 命运宣告必出账契约，2026-09-02 agent 化重构）。规则词表塔已退役。
-  return changes;
+  return [];
 }
 
 /**
@@ -475,7 +433,7 @@ function extractCharacterChanges(
  * 被削爵/停职后仍连续多章当朝履职（过期滚纲节点履约），禁入名单没有
  * 该态可依，判定无从报 fact_conflict。
  */
-const FATE_STATES = new Set(['死亡', '驾崩', '下狱', '定罪', '去职']);
+export const FATE_STATES = new Set(['死亡', '驾崩', '下狱', '定罪', '去职']);
 
 /** 可解除命运（翻案/越狱/官复原职/保释候勘）的规则词，命中则从禁入名单剔除。
  *  保释/候勘系来自 2026-08-27 百章实测：权臣「待罪保释在外」「闭门待勘」是剧情

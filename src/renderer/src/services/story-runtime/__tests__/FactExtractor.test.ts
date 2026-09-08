@@ -91,5 +91,27 @@ describe('命运提取合同护栏', () => {
     expect(system).toContain('value「越狱」');
     expect(system).toContain('判决不是行刑');
   });
+
+  // 2026-09-06 g38f-200chr2 实证：ch188「太上皇早已驾崩」追认句被当新宣告
+  // 二次出账，终态章号被顶到最晚，遮蔽 ch172-188 复活检测窗口；同轮主角被
+  // 「沈怀安快步」类动宾粘连名与 mid-book「首次出场」垃圾条目污染状态摘要。
+  it('系统合同包含追认句不重复入账与角色名卫生条款', async () => {
+    const generate = vi.fn().mockResolvedValue({ events: [], deltas: [], evidence: [] });
+    const extractor = new AIFactExtractor({ generate } as unknown as StructuredAI);
+    await extractor.extract({
+      projectId: 'p1',
+      chapterNumber: 188,
+      sceneDrafts: [],
+      state: { entities: {}, events: [] } as never,
+    });
+
+    const system = String(generate.mock.calls[0]?.[0]?.system ?? '');
+    // 契约 12：追认/回述句不是新宣告
+    expect(system).toContain('追认/回述句不是新宣告');
+    expect(system).toContain('禁止再次出 status delta');
+    // 契约 13：角色名卫生
+    expect(system).toContain('角色名卫生');
+    expect(system).toContain('不是角色');
+  });
 });
 
