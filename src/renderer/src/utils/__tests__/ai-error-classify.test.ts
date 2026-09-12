@@ -83,6 +83,47 @@ describe('classifyError', () => {
       expect(result.retryable).toBe(true);
       expect(result.transient).toBe(true);
     });
+
+    it('网关断流裸 Error(aborted)（name=Error）无 signal 归为 timeout 瞬态可重试', () => {
+      // 2026-09-09 受害样本：智谱网关 RST 时 Node http/undici 抛 Error('aborted')，
+      // name 不是 'AbortError'，name-only 判定曾漏成 unknown → 不重试 → 整轮 fatal
+      const result = classifyError(new Error('aborted'));
+      expect(result.kind).toBe('timeout');
+      expect(result.retryable).toBe(true);
+      expect(result.transient).toBe(true);
+    });
+
+    it('网关断流裸 Error(aborted) 且 signal 已 abort 仍归用户取消，不被误救', () => {
+      const ctrl = new AbortController();
+      ctrl.abort();
+      const result = classifyError(new Error('aborted'), ctrl.signal);
+      expect(result.kind).toBe('aborted');
+      expect(result.retryable).toBe(false);
+      expect(result.transient).toBe(false);
+    });
+
+    it('isTransientError 对裸 aborted 返回 true（大纲 runWithRetry 据此重试断流）', () => {
+      expect(isTransientError(new Error('aborted'))).toBe(true);
+    });
+
+    it('章节语义审查结果结构校验失败归瞬态可重试（judge 形状抖动）', () => {
+      // 2026-09-10 受害样本：glm ch147 judge 返回顶层数组，schema 硬拒被归
+      // 非瞬态 → review-unavailable 烧光 5 次整章预算成洞。形状抖动重试可救。
+      const raw = new Error(
+        '章节语义审查结果 结构校验失败: ✖ Invalid input: expected object, received array'
+      );
+      const result = classifyError(raw);
+      expect(result.transient).toBe(true);
+      expect(result.retryable).toBe(true);
+    });
+
+    it('review-unavailable 包装后的审查结构失败同样瞬态（ContinuityValidator 包装形态）', () => {
+      const wrapped = new Error(
+        '[review-unavailable] 语义审查不可用：章节语义审查结果 结构校验失败: ✖ Invalid input: expected object, received array'
+      );
+      const result = classifyError(wrapped);
+      expect(result.transient).toBe(true);
+    });
   });
 
   describe('network（网络瞬时错误）', () => {

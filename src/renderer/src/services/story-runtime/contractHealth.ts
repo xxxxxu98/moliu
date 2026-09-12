@@ -511,6 +511,65 @@ function nodeMentionsFateLockedCharacter(node: string, staleNames: Set<string>):
 }
 
 /**
+ * 节点原句照抄检测（mustCover 节点 ≥minRun 字连续逐字出现在正文）。
+ *
+ * 前两道防线是 prompt 级（proseRules【节点原句禁抄】+ judge【节点抄用】规则），
+ * 终验实测（2026-09-12 gemini 196 章）仍有 4 处终稿实锤——prompt 约束在长跑
+ * 尺度必然漏。本检测与其同口径（连续 ≥12 字逐字相同，只去空白归一），命中产出
+ * warning 级 issue 驱动 writerAgent 定向改写（同 uniform-cv-survived 语义：
+ * 不升 blocking 防死章，改不掉保留最优稿走黄签）。
+ *
+ * 专名/官名不会误伤：12 字连续相同要求足够长，3-5 字专名单独不触发；
+ * 「同义改写、拆句、换人称不算」由连续性严格保证。
+ */
+export function detectNodeVerbatimOverlapIssues(
+  prose: string,
+  mustCover: string[],
+  minRun = 12,
+): ContinuityIssue[] {
+  const normalizedProse = (prose ?? '').replace(/\s+/gu, '');
+  if (!normalizedProse) return [];
+  const issues: ContinuityIssue[] = [];
+  for (const node of mustCover ?? []) {
+    const normalizedNode = (node ?? '').replace(/\s+/gu, '');
+    if (normalizedNode.length < minRun) continue;
+    // 滚动数组求最长公共子串：节点 ≤~80 字 × 正文 ~3500 字，单节点 ~28 万步
+    let prev = new Array<number>(normalizedNode.length + 1).fill(0);
+    let best = 0;
+    let bestEndInProse = -1;
+    for (let j = 1; j <= normalizedProse.length; j += 1) {
+      const cur = new Array<number>(normalizedNode.length + 1).fill(0);
+      const pj = normalizedProse[j - 1];
+      for (let i = 1; i <= normalizedNode.length; i += 1) {
+        if (pj === normalizedNode[i - 1]) {
+          const len = prev[i - 1] + 1;
+          cur[i] = len;
+          if (len > best) {
+            best = len;
+            bestEndInProse = j;
+          }
+        }
+      }
+      prev = cur;
+    }
+    if (best >= minRun) {
+      const overlap = normalizedProse.slice(bestEndInProse - best, bestEndInProse);
+      issues.push({
+        id: issues.length === 0 ? 'node-verbatim-overlap' : `node-verbatim-overlap-${issues.length + 1}`,
+        domain: 'fulfillment',
+        severity: 'warning',
+        message:
+          `正文与 mustCover 节点存在连续 ${best} 字逐字相同（节点原句照抄）：` +
+          `「${overlap.slice(0, 24)}…」。大纲节点是给作者的合同描述，不是读者要读的正文——` +
+          `把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。`,
+        evidence: [overlap.slice(0, 40)],
+      });
+    }
+  }
+  return issues;
+}
+
+/**
  * 开场重叠检测（章界重演的写作期防线）。
  *
  * 根因链：大纲把「上章 CEN 复述」写成 CBN → 履约校验当硬约束强制覆盖 →

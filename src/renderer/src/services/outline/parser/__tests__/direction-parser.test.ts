@@ -174,4 +174,75 @@ describe('parseDirections', () => {
     expect(result).toHaveLength(2);
     expect(result[1].title).toBe('只有前提的卡');
   });
+
+  // ---- 格式变体归一化（qwen-3.8-2b 真实受害样本，2026-09-10 矩阵 27s 全灭根因）----
+  // 模型把约定的「## 方向方案1 / - 标题：」偏离成「# 方案一：xxx」+「**标题：**」，
+  // 三个变体叠加：heading 中文数字、字段行 markdown 粗体包裹、premise 英文字段名大写。
+  const qwenVariantBlock = (no: string, name: string, title: string, premise: string) => `# 方案${no}：${name}
+**标题：** ${title}
+
+**一句话卖点：** 穿越者靠现代思维在朝堂立足。
+
+**Premise：** ${premise}
+
+**主角成长路径：**
+- 第1-30章：从被边缘化的县令身份起步
+- 第31-60章：升任知府，统筹郡城事务
+
+**核心冲突：**
+- 朝堂权贵集团 vs. 被效率革命颠覆的基层官僚体系
+- 主角的改革与既得利益集团的系统性反扑`;
+
+  it('qwen 变体：中文数字 heading + 粗体字段 + Premise 大写可解析出全部方向卡', () => {
+    const raw = [
+      qwenVariantBlock('一', '制度重构师', '《朝堂之内，我是规则修改者》', '主角穿越成低微县令，用现代管理学重构地方治理体系。'),
+      qwenVariantBlock('二', '信息炼金师', '《朝堂之上，我是情报炼金术士》', '主角穿越成被贬御史，把朝堂斗争转化为可控的信息战。'),
+      qwenVariantBlock('三', '资本操盘手', '《朝堂之外，我操盘一场帝国游戏》', '主角以商人身份用资本运作介入朝堂博弈。'),
+      '## 综合对比与最终推荐',
+    ].join('\n\n');
+
+    const result = parseDirections(raw);
+
+    expect(result).toHaveLength(3);
+    expect(result[0].title).toBe('《朝堂之内，我是规则修改者》');
+    expect(result[0].premise).toContain('管理学');
+    // 核心冲突的 bullet 值（无冒号的列表行）应被续行收集
+    expect(result[0].coreConflict).toContain('朝堂权贵集团');
+  });
+
+  it('qwen 变体：标准格式与粗体格式混排时均可解析', () => {
+    const raw = [
+      fullBlock(1, '凡人修仙', '凡人逆袭'),
+      qwenVariantBlock('二', '信息炼金师', '《信息战》', '把政治斗争转化为信息战。'),
+    ].join('\n');
+
+    const result = parseDirections(raw);
+
+    expect(result).toHaveLength(2);
+    expect(result[1].premise).toContain('信息战');
+  });
+
+  it('lfm 变体：闭合粗体在冒号前（**一句话卖点**：）可解析', () => {
+    // lfm2.5-2.6b 真实形态（2026-09-10 双 2B 对比矩阵）：粗体只包字段名，
+    // 冒号落在粗体之外——与 qwen 的 `**一句话卖点：**` 是两种不同变体
+    const raw = [
+      `## 方向方案一：《官道：用流程治乱局》
+**一句话卖点**：主角穿越成三品县令，用现代行政管理流程把腐朽的官场程序化。
+
+**premise**： 主角穿越到大明万历年间，成为三品县令。
+
+**核心冲突**：制度规则与人情关系的正面碰撞`,
+      `## 方向方案二
+**标题：** 《我在官场搞基建》
+**一句话卖点：** 用现代工程学在皇权倾轧中立足。
+**premise：** 主角穿越成被贬的京城侍郎。`,
+    ].join('\n');
+
+    const result = parseDirections(raw);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].oneLiner).toContain('三品县令');
+    expect(result[0].premise).toContain('万历');
+    expect(result[1].premise).toContain('侍郎');
+  });
 });

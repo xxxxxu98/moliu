@@ -213,6 +213,31 @@ describe('collectCharacterFates / collectFateForbiddenZones', () => {
     expect(zones.some(z => z.includes('周茂'))).toBe(false);
     expect(zones.some(z => z.includes('齐王'))).toBe(true);
   });
+
+  it('获释 delta 到账即解除禁入（合同8解除值不再被 FATE_STATES 丢弃）', () => {
+    // 2026-09-12 终验受害样本：萧元瑾 ch79 下狱、ch150 AI 已按合同出账
+    // state=「获释」，消费侧曾把该 delta 当未知态丢弃 → ch175 状态摘要仍是
+    // 「下狱」，获释后监国剧情被三连拒成洞。
+    const memories = [
+      memoryWith([{ characterName: '萧元瑾', stateType: 'status', state: '下狱', detail: '不许踏出冷宫半步' }], 78),
+      memoryWith([{ characterName: '萧元瑾', stateType: 'status', state: '获释', detail: '奉明旨卸去锁铐获释出狱' }], 149),
+      memoryWith([], 160, '萧元瑾监国听政，新政推行。'),
+    ];
+    const fates = collectCharacterFates(memories);
+    expect(fates.some(f => f.characterName === '萧元瑾')).toBe(false);
+  });
+
+  it('解除后再入终态自然重登禁入（越狱→再下狱）', () => {
+    const memories = [
+      memoryWith([{ characterName: '顾明章', stateType: 'status', state: '下狱', detail: '押入天牢' }], 126),
+      memoryWith([{ characterName: '顾明章', stateType: 'status', state: '越狱', detail: '撬开天牢铁锁脱逃' }], 165),
+      memoryWith([{ characterName: '顾明章', stateType: 'status', state: '下狱', detail: '监国明旨再押天牢' }], 166),
+    ];
+    const fates = collectCharacterFates(memories);
+    const fate = fates.find(f => f.characterName === '顾明章');
+    expect(fate?.state).toBe('下狱');
+    expect(fate?.chapterIndex).toBe(166);
+  });
 });
 
 describe('overlayCharacterFates（runtime 实体命运状态接线）', () => {

@@ -154,6 +154,11 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<vo
     for (const n of options.chapterNumbers) {
       let done = false;
       let lastError = '';
+      // 伏笔时序死锁熔断（与 continueWriteHarness.runContinueWriteChapters 同构）：
+      // 同一伏笔「提前揭示」连续 ≥2 次拒稿即确认蓝图-伏笔矛盾，本章豁免该伏笔
+      // 的时点禁令——pipeline 从 futureReveals 移除（2026-09-10 ch20 三连拒实证）。
+      const foreshadowRejectCounts = new Map<string, number>();
+      const foreshadowExemptions: string[] = [];
       for (let attempt = 1; attempt <= 3 && !done; attempt += 1) {
         try {
           const result = await session.runChapter({
@@ -164,6 +169,7 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<vo
             persistTrace: true,
             mode: 'batch',
             enableMemoryExtract: true,
+            foreshadowExemptions: foreshadowExemptions.length > 0 ? [...foreshadowExemptions] : undefined,
           });
           if (result.output.success) {
             const chapter = chapters.find(item => (item.orderIndex ?? 0) + 1 === n)!;
@@ -185,6 +191,21 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<vo
         } catch (error) {
           lastError = error instanceof Error ? error.message : String(error);
           console.warn(`[repair] 第${n}章 attempt ${attempt} 异常：${lastError.slice(0, 200)}`);
+        }
+        // 熔断计数：拒稿理由引用了某伏笔 hint 且已 ≥2 次时豁免
+        if (!done) {
+          const foreshadowCite = lastError.match(/[伏笔规][」』"]?[：:]?\s*[「『"]([^「」『』"]{6,80})[」』"]/u);
+          if (foreshadowCite) {
+            const prefix = foreshadowCite[1].slice(0, 16);
+            const count = (foreshadowRejectCounts.get(prefix) ?? 0) + 1;
+            foreshadowRejectCounts.set(prefix, count);
+            if (count >= 2 && !foreshadowExemptions.includes(prefix)) {
+              foreshadowExemptions.push(prefix);
+              console.warn(
+                `[repair] 第${n}章伏笔时序熔断：伏笔「${prefix}…」连续 ${count} 次提前揭示拒稿，确认蓝图与伏笔台账矛盾，本章豁免该伏笔时点禁令（源头应修蓝图）`,
+              );
+            }
+          }
         }
       }
       if (!done) throw new Error(`第 ${n} 章补写 3 次尝试全部失败：${lastError.slice(0, 300)}`);

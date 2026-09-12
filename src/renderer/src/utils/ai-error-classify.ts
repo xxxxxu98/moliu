@@ -140,10 +140,17 @@ function readStatusFromMessage(message: string): number | undefined {
   return Number.isInteger(status) ? status : undefined;
 }
 
-/** 是否是 AbortError / DOMException('Aborted') */
+/**
+ * 是否是 AbortError / DOMException('Aborted')。
+ * 除 name === 'AbortError' 外，还须认 Node http/undici 断流抛的裸 `Error('aborted')`
+ * （name='Error'）——智谱网关 RST 时实测此形态（2026-09-09 glm-5.3-flash 200 章矩阵
+ * outline-expand 381s 处 0 字断连），name-only 判定会漏成 unknown 不重试整轮全灭。
+ * 用户取消安全：classifyError 先查 signal.aborted，用户取消必归 'aborted' 不重试。
+ */
 function isAbortError(err: unknown): boolean {
   if (err instanceof DOMException && err.name === 'AbortError') return true;
-  return err instanceof Error && err.name === 'AbortError';
+  if (err instanceof Error && err.name === 'AbortError') return true;
+  return err instanceof Error && /^aborted$/iu.test(err.message);
 }
 
 // ============================================
@@ -237,6 +244,14 @@ function classifyHttpStatus(status: number): Omit<ClassifiedError, 'message'> | 
 
 /** 按 message 文案分类（项目内抛的普通 Error 走这条） */
 function classifyByMessage(message: string): Omit<ClassifiedError, 'message'> | null {
+  // 章节语义审查结果的结构校验失败是 judge 输出「形状抖动」（顶层数组/缺字段等），
+  // 与正文合同的确定性 schema 失败不同：步级重试大概率换回合法形状。必须先于
+  // SCHEMA_RE 判定归瞬态，否则单次形状抖动即非瞬态硬拒，烧光整章预算成洞
+  // （2026-09-10 glm-5.3-flash 200 章实测 ch147 死于此：5 次尝试全部
+  // review_unavailable，scene-draft 反复重写后整章 0 字）。
+  if (/章节语义审查结果.*结构校验失败/u.test(message)) {
+    return { kind: 'truncated', retryable: true, transient: true };
+  }
   if (REVIEW_UNAVAILABLE_RE.test(message)) {
     return { kind: 'review_unavailable', retryable: false, transient: false };
   }

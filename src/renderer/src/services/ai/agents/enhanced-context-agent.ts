@@ -321,11 +321,19 @@ export class EnhancedContextAgent {
     // 获取近期章节记忆
     const recentMemories = this.projectStore.getShortTermMemories();
 
+    // 目标章时点截断：补写/重写早期章时，后文终态记忆（下狱/获释/死亡）不得进入
+    // 本章上下文——否则角色状态表把后文终态压到早期章，正常剧情被误判状态矛盾
+    // （2026-09-10 glm 200 章实证：ch20 补写被 ch136 的曹敬下狱终态连拒）。
+    // 正常顺序写作全部记忆天然早于本章，过滤零影响。
+    const memoriesUpTo = this.projectStore.chapterMemories.filter(
+      (m) => (m.chapterIndex ?? 0) + 1 <= input.chapterNumber
+    );
+
     // 获取角色状态
-    const characterStates = this.buildCharacterStatesTable();
+    const characterStates = this.buildCharacterStatesTable(memoriesUpTo);
 
     // 获取情节进度
-    const plotProgress = this.buildPlotProgressTable();
+    const plotProgress = this.buildPlotProgressTable(memoriesUpTo);
 
     return {
       recentMemories,
@@ -337,20 +345,21 @@ export class EnhancedContextAgent {
   }
 
   /**
-   * 构建角色状态表
+   * 构建角色状态表。memories 为按目标章截断后的记忆（缺省回退全集，兼容旧调用点）。
    */
-  private buildCharacterStatesTable(): Record<string, string> {
+  private buildCharacterStatesTable(memories?: ChapterMemory[]): Record<string, string> {
     const states: Record<string, string> = {};
     const characters = this.projectStore.characters;
 
     for (const char of characters) {
       // 从最新记忆获取状态
-      const memories = this.projectStore.chapterMemories.filter((m) =>
+      const scoped = memories ?? this.projectStore.chapterMemories;
+      const charMemories = scoped.filter((m) =>
         m.characterStateChanges.some((c) => c.characterName === char.name)
       );
 
-      if (memories.length > 0) {
-        const latestMemory = memories[memories.length - 1];
+      if (charMemories.length > 0) {
+        const latestMemory = charMemories[charMemories.length - 1];
         const latestChange = latestMemory.characterStateChanges.find(
           (c) => c.characterName === char.name
         );
@@ -366,16 +375,17 @@ export class EnhancedContextAgent {
   }
 
   /**
-   * 构建情节进度表
+   * 构建情节进度表。memories 为按目标章截断后的记忆（缺省回退全集）——
+   * slice(-3) 取的是「目标章之前」的最后三章而非全书尾三章。
    */
-  private buildPlotProgressTable(): string {
-    const memories = this.projectStore.chapterMemories;
-    if (memories.length === 0) {
+  private buildPlotProgressTable(memories?: ChapterMemory[]): string {
+    const scoped = memories ?? this.projectStore.chapterMemories;
+    if (scoped.length === 0) {
       return '暂无情节进度';
     }
 
     // 获取最近 3 章的关键事件
-    const recentMemories = memories.slice(-3);
+    const recentMemories = scoped.slice(-3);
     const events = recentMemories.flatMap((m) => m.keyEvents);
 
     return events.slice(0, 5).join('；');

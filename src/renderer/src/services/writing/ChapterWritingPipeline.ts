@@ -267,6 +267,13 @@ export interface ChapterWriteInput {
    * 引擎内初稿未过时改稿 agent 的 run_checks 预算（不含初稿）。未传则用引擎默认值（当前 1）。
    */
   maxRewriteRounds?: number;
+  /**
+   * 伏笔时序死锁熔断豁免（hint 前缀匹配）：章级重试中同一伏笔的「提前揭示」
+   * 拒稿连续 ≥2 次时由批量层注入——确认蓝图与伏笔台账矛盾（写作端两头违约），
+   * 本章 futureReveals 移除该伏笔放行（2026-09-10 glm 200 章实证 ch20 三连拒成洞；
+   * 源头防线在蓝图层词面校验，这里是死循环熔断兜底）。
+   */
+  foreshadowExemptions?: string[];
 }
 
 /** 管道输出 */
@@ -747,9 +754,15 @@ export class ChapterWritingPipeline {
       // attributes.status，把章节记忆里收集的角色命运终态映射到实体上，
       // contractHealth.healChapterContract 的终态节点裁剪由此有据可裁。
       // 不落 SQLite（每章从记忆重推导），仅作用于本章的校验/健康度视图。
+      // 记忆按目标章截断：overlayCharacterFates 取全书「最新」命运，补写/重写
+      // 早期章时若不截断，会把后文终态（如第 136 章下狱）压到第 20 章的校验
+      // 视图上，正常早期剧情被终态误审 fact_conflict（2026-09-10 glm 200 章
+      // ch20 补写三连拒的第二重根因）。正常顺序写作时全部记忆天然 < 本章，无副作用。
       const fateOverlay = overlayCharacterFates(
         state.entities,
-        input.project.chapterMemories ?? [],
+        (input.project.chapterMemories ?? []).filter(
+          memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
+        ),
       );
       if (fateOverlay.applied > 0) state.entities = fateOverlay.entities;
 
@@ -811,6 +824,14 @@ export class ChapterWritingPipeline {
           futureReveals: [
             ...characterConstraints.futureReveals,
             ...(input.project.foreshadows ?? [])
+              // 熔断豁免：批量层确认死锁的伏笔不再向 judge 宣示时点禁令
+              .filter(foreshadow => {
+                const hint = foreshadow.hint ?? '';
+                const exempt = (input.foreshadowExemptions ?? []).some(
+                  prefix => prefix && (hint.includes(prefix) || prefix.includes(hint.slice(0, 12))),
+                );
+                return !exempt;
+              })
               .map(foreshadow => ({
                 // payoffChapter 是“回收时点”，不能拿来禁止伏笔在前文埋设；
                 // 只有 setupChapter 才表示该线索在此之前不应出现。

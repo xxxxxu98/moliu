@@ -400,6 +400,26 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
     expect(result.issues).toHaveLength(1);
   });
 
+  it('元素全是裸 issues 项的顶层数组包装成审查包（glm ch147 形态）', async () => {
+    // 2026-09-10 受害样本：glm-5.3-flash ch147 judge 返回顶层数组且元素不带
+    // 顶层键、而是 severity+location/quote 的 issue 形状——两层归一都放行 →
+    // schema 硬拒 → review-unavailable 烧光整章预算成洞
+    const ai: StructuredAI = {
+      generate: vi.fn(async () => [
+        { type: 'logic_gap', severity: 'medium', location: '章末', description: '节奏偏慢', evidence: [] },
+        { type: 'logic_gap', severity: 'low', location: '开头', description: '铺垫略长', evidence: [] },
+      ]),
+    };
+    const result = await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文原句',
+      checkDeepSemantic: true,
+    });
+    expect(result.issues).toHaveLength(2);
+    expect(result.issues[0]).toMatchObject({ severity: 'medium' });
+  });
+
   it('无法识别审查包形状的裸数组（如段落字符串）仍走硬失败', async () => {
     // ch72 同一尝试里 scene-draft 也返回过段落字符串数组——那是草稿形状，
     // 不是审查结论，归一化不能瞎兜

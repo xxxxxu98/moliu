@@ -317,14 +317,17 @@ function promoteSingleQuotesToPrimary(text: string): string {
  * ASCII 直引号归一为中文弯引号。
  *
  * 2026-08-26《绝症当虫治》第 6 章实测：模型整章用 "..." 写对话，弯引号配对门禁
- * （“ 与 ” 数量比对）完全不覆盖直引号，带伤入库。归一规则：
- * - 全文没有弯引号且直引号成对（出现于段首/空白后视为开引号，其余视为闭引号）时整体转换
- * - 直引号数量为奇数（丢闭引号）时只做能确定的开引号转换，剩余交给未闭合修补/门禁
+ * （“ 与 ” 数量比对）完全不覆盖直引号，带伤入库。
+ * 2026-09-10 glm-5.3-flash 200 章实测：45 章 868 处直引号以「混排」形态出现
+ * （章内大部分对话已是 “”，个别对话仍用 "..."）——原「全文无弯引号才转换」的
+ * 短路会让混排章整章跳过。改为只要存在直引号就逐位置判定转换（开/闭由位置
+ * 上下文决定，不依赖全章统计），混排与纯直引号章都覆盖。
+ * - 直引号数量为奇数（丢闭引号）时位置判定天然保守：能确定开引号的转开，其余
+ *   转闭，残留交给未闭合修补/门禁
  */
 function normalizeStraightQuotes(text: string): string {
-  const hasCurly = /[\u201C\u201D]/u.test(text);
   const straightCount = (text.match(/"/gu) ?? []).length;
-  if (hasCurly || straightCount === 0) return text;
+  if (straightCount === 0) return text;
 
   // 按位置判定开/闭：段首、行首、空白后、开引号类字符后的 " 是开引号
   const openContext = /(?:^|[\n\s\u201C\u2018「『（(：:])$/u;

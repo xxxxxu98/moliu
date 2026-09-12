@@ -337,6 +337,56 @@ describe('rollOutlineForward', () => {
     expect(result.warnings.join('\n')).toContain('未产出可用蓝图');
   });
 
+  it('定点修复覆盖首轮整章缺失的章号时不崩且修复稿被采纳（glm 200 章 6 次实测）', async () => {
+    // 2026-09-10 受害样本：repairTargets 含首轮 AI 未返回的章（blueprints 无该
+    // 条目），修复响应解出该章后 blueprintDefectCount(undefined) 读 mustCover
+    // 抛 TypeError → 整批修复稿被 try/catch 丢弃，后续批次连环缺失。
+    const project = makeRollProject(120);
+    let call = 0;
+    const result = await rollOutlineForward({
+      project,
+      callStructuredText: async () => {
+        call += 1;
+        if (call === 1) return blockFor(51); // 首轮只解出 51，52/53 整章缺失
+        return [blockFor(52), blockFor(53)].join('\n\n'); // 定点修复轮补齐
+      },
+      persist: async () => {},
+    });
+    expect(result.appendedCount).toBe(3); // 51 + 修复轮采纳的 52/53
+    expect(result.warnings.join('\n')).not.toContain('定点修复失败');
+  });
+
+  it('滚纲触顶全书计划章数时注入终卷收束硬约束，中段批次不注入', async () => {
+    // 2026-09-10 glm r2 实证：终批与中段用同一提示词，200 章收在「面圣亮牌
+    // 前一秒」半空（结尾不收束 S1）。终批必须带收束指令。
+    const prompts: string[] = [];
+    const project = makeRollProject(55); // plannedCount=55，滚 51-55 即触顶终批
+    await rollOutlineForward({
+      project,
+      callStructuredText: async (_system, user) => {
+        prompts.push(user);
+        return blockFor(51); // 只需触发首轮请求即可断言 prompt 内容
+      },
+      persist: async () => {},
+    });
+    expect(prompts.length).toBeGreaterThan(0);
+    expect(prompts[0]).toContain('终卷收束硬约束');
+    expect(prompts[0]).toContain('全书共55章');
+    expect(prompts[0]).toContain('末章（第55章）CEN 必须是全书收束句');
+
+    const midPrompts: string[] = [];
+    const midProject = makeRollProject(120); // 51-100 为中段批
+    await rollOutlineForward({
+      project: midProject,
+      callStructuredText: async (_system, user) => {
+        midPrompts.push(user);
+        return blockFor(51);
+      },
+      persist: async () => {},
+    });
+    expect(midPrompts[0]).not.toContain('终卷收束硬约束');
+  });
+
   it('已达计划章数上限时跳过并说明原因', async () => {
     const project = makeRollProject(50);
     const result = await rollOutlineForward({

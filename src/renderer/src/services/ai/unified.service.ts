@@ -22,6 +22,7 @@ import {
 } from "@/utils/json-parser";
 import { extractErrorMessage } from "@/utils/error-message";
 import { classifyError, isTransientError, parseAllowedTemperature, retryBackoffDelayMs } from "@/utils/ai-error-classify";
+import { shouldDisableZhipuThinking } from "@/utils/zhipuThinking";
 import {
   STREAM_IDLE_TIMEOUT_MESSAGE_PREFIX,
   STREAM_IDLE_TIMEOUT_MS,
@@ -235,6 +236,18 @@ export class UnifiedAIService {
     // 重要：SDK 的 baseUrl 参数对大多数 provider 不生效，需要直接设置 adapter 的 baseUrl
     if (this.client && resolvedBaseUrl) {
       (this.client as any).adapter.baseUrl = resolvedBaseUrl.replace(/\/$/, "");
+    }
+
+    // 智谱 glm 深度思考默认全开，写作链路必须显式关闭（实测整章 25-35 分钟，
+    // 长篇冒烟物理上跑不完；关思考后 13.8s 出全文质量正常）。SDK buildBody
+    // 白名单不透传 thinking，只能包装 adapter 注入。逃生口 MOLIU_ZHIPU_KEEP_THINKING=1。
+    if (this.client && shouldDisableZhipuThinking(resolvedBaseUrl)) {
+      const adapter = (this.client as any).adapter;
+      const origBuildBody = adapter.buildBody.bind(adapter);
+      adapter.buildBody = (messages: unknown, options: unknown, stream: boolean) => ({
+        ...origBuildBody(messages, options, stream),
+        thinking: { type: "disabled" },
+      });
     }
   }
 

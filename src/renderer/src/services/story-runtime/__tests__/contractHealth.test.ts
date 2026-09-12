@@ -6,6 +6,7 @@ import {
 import {
   collectTerminalDeathCharacters,
   detectMustCoverForbiddenConflicts,
+  detectNodeVerbatimOverlapIssues,
   detectOpeningRepetitionIssue,
   enrichRevisionHint,
   healChapterContract,
@@ -338,5 +339,36 @@ describe('contractHealth', () => {
     // 未标注的同一禁区维持原样（词表不误伤）
     const bare = zone.replace('【让路】', '');
     expect(detectMustCoverForbiddenConflicts([mustCover[0]], [bare]).length).toBe(0);
+  });
+});
+
+describe('detectNodeVerbatimOverlapIssues（节点原句照抄确定性门禁）', () => {
+  const NODE = '【单章】沈淮安在奉天殿上当众拆封信件诵读违制条款';
+
+  it('正文含节点 ≥12 字连续逐字相同即命中（终验 ch185 受害形态）', () => {
+    const prose = '殿上鸦雀无声。沈淮安在奉天殿上当众拆封信件诵读违制条款，一字一句砸在百官头顶。';
+    const issues = detectNodeVerbatimOverlapIssues(prose, [NODE]);
+    expect(issues).toHaveLength(1);
+    expect(issues[0].id).toBe('node-verbatim-overlap');
+    expect(issues[0].severity).toBe('warning');
+    expect(issues[0].message).toContain('沈淮安在奉天殿上当众拆封');
+  });
+
+  it('同义改写/拆句/换人称不命中', () => {
+    const prose = '殿上鸦雀无声。那封信被当众拆开，沈淮安站在奉天殿上，把违制的条款一条条念了出来。';
+    const issues = detectNodeVerbatimOverlapIssues(prose, [NODE]);
+    expect(issues).toHaveLength(0);
+  });
+
+  it('空白差异不影响归一（正文抄节点时加了换行仍算逐字；顿号等标点插入属改写不命中）', () => {
+    const prose = '百官屏息。\n沈淮安在奉天殿上当众拆封信件诵读违制条款，殿角有宦官腿一软。';
+    const issues = detectNodeVerbatimOverlapIssues(prose, [NODE]);
+    expect(issues.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('短专名重叠（<12 字）不误伤', () => {
+    const prose = '萧元瑾在奉天殿登基，改元新政。';
+    const issues = detectNodeVerbatimOverlapIssues(prose, ['萧元瑾于奉天殿正式登基即位宣布改元']);
+    expect(issues).toHaveLength(0);
   });
 });

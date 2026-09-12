@@ -345,6 +345,58 @@ describe('repairChapterBlueprints', () => {
     expect(capturedUser).toContain('第2章 CBN 长度 28 字，必须为 8～25 字');
   });
 
+  it('初版蓝图批次合入时对未到期伏笔做词面消毒 + 提示词带时序禁令（glm ch20 死锁形态）', async () => {
+    // 2026-09-10 受害样本：初版第 20 章蓝图 mustCover「笔迹比对定性补账出自行家
+    // 手笔」vs 伏笔台账 setupChapter=22——蓝图层无词面拦截，写作端三连拒成洞。
+    const outline = parseExpandedOutline(MAIN_OUTLINE_TEXT)!;
+    outline.foreshadowPlan = [
+      {
+        id: 'f-deadlock',
+        hint: '青阳亏空是被行家手笔补平的，补账笔法规整带着一整套暗记，与官面账房的野路子完全两样',
+        type: 'ability',
+        importance: 'main',
+        setupPhase: '',
+        payoffPhase: '',
+        setupChapter: 10,
+        payoffChapter: 20,
+        carrierCharacter: '',
+        linkedConflict: '',
+        payoffValue: '',
+      },
+    ];
+    let capturedUser = '';
+
+    const result = await repairChapterBlueprints({
+      rawText: MAIN_OUTLINE_TEXT,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode: async (_system: string, user: string) => {
+        capturedUser = user;
+        return `### 第2章
+- 标题：灯下比对笔迹
+- 概要：沈砚把补账与改笔并排比对，从墨点暗记里看出端倪，锁定补账出自行家手笔
+- CBN：灯下两页账并排摊开
+- CPNs：比对补账与改笔的笔法；从墨点暗记辨出成套手法
+- CEN：这手字不是县衙养得起的
+- mustCover：笔迹比对定性补账出自行家手笔
+- 禁区：不得直接点出补账人姓名
+- 章尾钩子文案：这手字到底是谁教的
+- 爽点类型：解谜`;
+      },
+      chapterNumbers: [2],
+      phase: '补全',
+    });
+
+    // prompt 层：未到期伏笔进入时序禁令清单
+    expect(capturedUser).toContain('本批伏笔时序禁令');
+    expect(capturedUser).toContain('埋设第10章');
+    // 产物层：冲突条目被词面消毒剥掉，warning 留痕
+    expect(result.warnings.join('\n')).toContain('伏笔时序消毒');
+    const bp = result.outline.chapterBlueprints?.find(item => item.orderIndex === 2);
+    expect(bp?.mustCover.join('\n') + (bp?.CPNs ?? []).join('\n')).not.toContain('行家手笔');
+  });
+
   // 矩阵实测（minimax-m3/glm 网关）：蓝图批次请求「成功」但返回 0 字——无错误事件、
   // 不进任何重试链，这批章永远缺失 → fail-closed。现在空响应批次按瞬态退避重试。
   it('批次返回空响应时退避重试，重试成功后照常拼装', async () => {

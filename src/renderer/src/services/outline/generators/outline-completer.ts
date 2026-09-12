@@ -6,6 +6,10 @@ import type {
 } from '../types/executable-outline';
 import { parseExpandedOutline } from '../parser/expanded-outline-parser';
 import { isLikelyCharacterName } from '../parser/utils';
+import {
+  dropForeshadowConflictingItems,
+  type ForeshadowTimingHint,
+} from '../rolling/foreshadowTiming';
 import { isAbortedError, isTransientError, retryBackoffDelayMs } from '@/utils/ai-error-classify';
 import { readPositiveIntEnv } from '@/utils/env';
 import {
@@ -280,6 +284,17 @@ function buildChapterCompletionPrompt(
   const issueSection = issues.length > 0
     ? `\n\n【本次必须修掉的格式违规】\n${issues.map(issue => `- ${issue}`).join('\n')}\n改写时优先压缩到区间内，宁可删修饰语也不得超字数。`
     : '';
+  // 伏笔时序禁令：埋设时点晚于本批任意章号的伏笔，其核心信息不得进入本批蓝图
+  // （2026-09-10 glm 200 章实证：初版第 20 章蓝图要求「笔迹比对定性补账出自行家
+  // 手笔」，伏笔台账却锁 22 章揭示——蓝图生成时 foreshadowPlan 只是惰性 JSON，
+  // 无时序约束，写作端被夹死三连拒成洞）
+  const batchMin = Math.min(...chapterNumbers);
+  const embargoed = (outline.foreshadowPlan ?? []).filter(
+    plan => plan.hint && plan.setupChapter !== null && plan.setupChapter > batchMin,
+  );
+  const foreshadowEmbargoSection = embargoed.length > 0
+    ? `\n\n【本批伏笔时序禁令】以下伏笔的埋设时点晚于本批章号，其核心信息（hint 词面及同义表述）禁止出现在第${chapterNumbers[0]}-${chapterNumbers[chapterNumbers.length - 1]}章任何蓝图的 mustCover/CPNs/CEN 中；确需铺垫只可用不触及核心词面的暗痕，不得给出定性结论：\n${embargoed.map(plan => `- 「${plan.hint}」（埋设第${plan.setupChapter}章）`).join('\n')}`
+    : '';
   return {
     system: `你是中文长篇网文大纲拆章器。只输出指定章号的单章蓝图，不复述已有章节，不输出解释。
 每章必须严格使用以下结构：
@@ -299,9 +314,10 @@ function buildChapterCompletionPrompt(
 3. 第 N 章必须承接第 N-1 章的 CEN 状态并推动到新状态，不得无视上章终态；
 4. 逐章节奏必须落在“startupPack30.chapterBlocks”对应 5 章区块的目标、必出事件、必留钩子与本块禁区之内，不得提前兑现后续区块的爽点；
 5. 所有字段都不得留空，禁止使用括号补充说明；
-6. 地点必须使用“registeredLocations”里已登记的地点名，禁止自创新地名或同义变体（如已登记「江城市」就不得写「南江市」）；需要新场景时写成已登记地点的下属区域（如「江城市·南郊冷库」）。
+6. 地点必须使用“registeredLocations”里已登记的地点名，禁止自创新地名或同义变体（如已登记「江城市」就不得写「南江市」）；需要新场景时写成已登记地点的下属区域（如「江城市·南郊冷库」）；
+7. 【伏笔时序锁】「本批伏笔时序禁令」清单列出的伏笔，其核心信息禁止出现在本批蓝图的 mustCover/CPNs/CEN 中——蓝图要求本章揭示而伏笔规定后章才许揭示时，写作端会被迫两头违约（拒稿成洞）。确需铺垫只可用不触及核心词面的暗痕（物件出现/旁人欲言又止），不得给出定性结论。
 “existingChapterCanon”是不可改写的既有事实：新章不得重置期限、重复破案/入狱/升职等已完成事件，不得让已倒台或被羁押的反派无解释恢复原职。`,
-    user: `【故事上下文】\n${compactContext(outline, direction, chapterNumbers)}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
+    user: `【故事上下文】\n${compactContext(outline, direction, chapterNumbers)}${foreshadowEmbargoSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
   };
 }
 
@@ -787,24 +803,48 @@ export async function repairChapterBlueprints(params: {
 
   /** 把一批响应里的章块合入 usableBlueprints 并重写蓝图段；疑似截断时小批补发 */
   const mergeBatch = async (batch: number[], generated: string): Promise<void> => {
+    // 伏笔时序消毒基底：初版蓝图此前只被 outline-reviewer 事后报 issue、无修复链，
+    // 与伏笔埋设时点冲突的节点会把写作端夹进「履约即提前揭示」死锁
+    // （2026-09-10 glm 200 章实证 ch20 三连拒成洞）。剥掉的条目由 heal/修复轮兜底。
+    const timingHints: ForeshadowTimingHint[] = (outline.foreshadowPlan ?? [])
+      .filter(plan => plan.hint && (plan.setupChapter ?? 0) > 0)
+      .map(plan => ({
+        hint: plan.hint,
+        createdChapter: plan.setupChapter ?? 0,
+        setupChapter: plan.setupChapter ?? 0,
+        payoffChapter: plan.payoffChapter ?? 0,
+      }));
     const stitchBlock = (chapterNumber: number, block: string): void => {
-      const stitched = replaceOutlineSection(
-        rawText,
-        BLUEPRINT_SECTION_ALIASES,
-        BLUEPRINT_SECTION_ALIASES[0],
-        [
-          ...[...usableBlueprints.values()]
-            .filter(blueprint => blueprint.orderIndex !== chapterNumber)
-            .map(serializeBlueprint),
-          block,
-        ].join('\n\n'),
-      );
-      const parsed = parseExpandedOutline(stitched);
-      const parsedBlueprint = parsed?.chapterBlueprints?.find(
-        item => item.orderIndex === chapterNumber,
-      );
-      if (parsed && isUsableBlueprint(parsedBlueprint)) {
-        usableBlueprints.set(chapterNumber, parsedBlueprint);
+      const stitchRaw = (bpBlock: string): void => {
+        const stitched = replaceOutlineSection(
+          rawText,
+          BLUEPRINT_SECTION_ALIASES,
+          BLUEPRINT_SECTION_ALIASES[0],
+          [
+            ...[...usableBlueprints.values()]
+              .filter(blueprint => blueprint.orderIndex !== chapterNumber)
+              .map(serializeBlueprint),
+            bpBlock,
+          ].join('\n\n'),
+        );
+        const parsed = parseExpandedOutline(stitched);
+        const parsedBlueprint = parsed?.chapterBlueprints?.find(
+          item => item.orderIndex === chapterNumber,
+        );
+        if (parsed && isUsableBlueprint(parsedBlueprint)) {
+          usableBlueprints.set(chapterNumber, parsedBlueprint);
+        }
+      };
+      stitchRaw(block);
+      const parsed = usableBlueprints.get(chapterNumber);
+      if (parsed) {
+        const { blueprint: clean, dropped } = dropForeshadowConflictingItems(parsed, timingHints);
+        if (dropped.length > 0) {
+          warnings.push(
+            `单章蓝图${phase}第 ${chapterNumber} 章伏笔时序消毒：删除 ${JSON.stringify(dropped)}`,
+          );
+          stitchRaw(serializeBlueprint(clean));
+        }
       }
     };
     const rebuildSection = (): void => {

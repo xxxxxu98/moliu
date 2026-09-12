@@ -43,6 +43,7 @@ function mockChatFetch(body?: Record<string, unknown>): ReturnType<typeof vi.fn>
 interface ProviderSeed {
   provider: ProviderType;
   generationConfig?: AIGenerationConfig;
+  baseUrl?: string;
 }
 
 /** 注入 settingsStore（UnifiedOutlineGenerator.getAIConfig 依赖它） */
@@ -56,7 +57,7 @@ function injectSettings(seed: ProviderSeed): void {
       name: 'test',
       provider: seed.provider,
       apiKey: 'test-key',
-      baseUrl: 'https://mock.api',
+      baseUrl: seed.baseUrl ?? 'https://mock.api',
       modelName: 'test-model',
       enabled: true,
       ...(seed.generationConfig ? { generationConfig: seed.generationConfig } : {}),
@@ -73,6 +74,7 @@ function lastRequestBody(fetchMock: ReturnType<typeof vi.fn>): Record<string, an
 describe('UnifiedOutlineGenerator 请求参数', () => {
   beforeEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it('使用厂商 generationConfig 的 temperature/topP（openai 兼容）', async () => {
@@ -554,5 +556,68 @@ describe('UnifiedOutlineGenerator 请求参数', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('网关 RST 抛裸 Error(aborted) 时归一化为断连文案并进重试救回', async () => {
+    // 2026-09-09 受害样本：智谱网关 381s 处 RST，Node http/undici 抛 Error('aborted')
+    // （name='Error' 而非 'AbortError'）。归一化须改写为网络断连文案（命中 transient
+    // 正则），否则 runWithRetry 判 unknown 零重试，大纲整轮 fatal。
+    injectSettings({ provider: 'openai' });
+    let calls = 0;
+    const fetchMock = vi.fn(async () => {
+      calls += 1;
+      if (calls === 1) throw new Error('aborted');
+      return {
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: DIRECTION_TEXT } }] }),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 2 });
+    const result = await generator.generateDirections('创意种子', { maxRetries: 2 });
+
+    expect(calls).toBe(2); // 第一次断流被 transient 重试救回
+    expect(result.directions.length).toBeGreaterThan(0);
+  });
+
+  it('智谱端点自动注入 thinking disabled（glm 深度思考默认全开，长跑不可行）', async () => {
+    injectSettings({
+      provider: 'openai',
+      baseUrl: 'https://open.bigmodel.cn/api/coding/paas/v4',
+    });
+    const fetchMock = mockChatFetch();
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    await generator.generateDirections('创意种子', { maxRetries: 1 });
+
+    const body = lastRequestBody(fetchMock);
+    expect(body.thinking).toEqual({ type: 'disabled' });
+  });
+
+  it('非智谱端点不注入 thinking（其他厂商零影响）', async () => {
+    injectSettings({ provider: 'openai' }); // 默认 https://mock.api
+    const fetchMock = mockChatFetch();
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    await generator.generateDirections('创意种子', { maxRetries: 1 });
+
+    const body = lastRequestBody(fetchMock);
+    expect(body.thinking).toBeUndefined();
+  });
+
+  it('MOLIU_ZHIPU_KEEP_THINKING=1 时智谱端点保留思考（逃生口）', async () => {
+    vi.stubEnv('MOLIU_ZHIPU_KEEP_THINKING', '1');
+    injectSettings({
+      provider: 'openai',
+      baseUrl: 'https://open.bigmodel.cn/api/coding/paas/v4',
+    });
+    const fetchMock = mockChatFetch();
+
+    const generator = new UnifiedOutlineGenerator({ maxRetries: 1 });
+    await generator.generateDirections('创意种子', { maxRetries: 1 });
+
+    const body = lastRequestBody(fetchMock);
+    expect(body.thinking).toBeUndefined();
   });
 });

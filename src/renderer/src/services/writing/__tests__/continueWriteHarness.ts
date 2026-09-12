@@ -708,6 +708,11 @@ export interface ContinueWriteSession {
      */
     seedRevisionHints?: string[];
     /**
+     * 伏笔时序死锁熔断豁免（hint 前缀）：同伏笔「提前揭示」连续 ≥2 拒后由批量层
+     * 注入，pipeline 从 futureReveals 移除该伏笔（透传 pipeline.foreshadowExemptions）。
+     */
+    foreshadowExemptions?: string[];
+    /**
      * 每章 store hydrate 完成后的回调（batch 模式下 hydrateProjectStoreForSmartContinue
      * 会重置 Pinia，导致 settingsStore 中的 AI 配置丢失）。调用方可在此重新注入
      * AI 配置，让记忆提取等走 useAIService 的组件能读到 provider。
@@ -928,6 +933,7 @@ export function openContinueWriteSession(options: {
           previousChapter: buildBatchPreviousChapter(previous),
           signal: chapterOptions.signal,
           seedRevisionHints: chapterOptions.seedRevisionHints,
+          foreshadowExemptions: chapterOptions.foreshadowExemptions,
         });
       }
 
@@ -1115,6 +1121,12 @@ export async function runContinueWriteChapters(options: {
       // 上一轮失败的门禁反馈：重试时作为 seedRevisionHints 传入，让重试带教训而非盲目重跑。
       // 仅 review/wordcount 类失败会产出 gateResult；网络/超时类失败 gateResult 为 null（无需 seed）。
       let seedRevisionHints: string[] | undefined;
+      // 伏笔时序死锁熔断：同一伏笔的「提前揭示」拒稿连续 ≥2 次即确认蓝图-伏笔矛盾
+      // （写作端两头违约），把该伏笔加入本章豁免——pipeline 从 futureReveals 移除，
+      // 让本章按蓝图履约放行。源头防线在蓝图层词面校验，这里只兜死循环
+      // （2026-09-10 glm 200 章 ch20 实证：三连拒成洞）。
+      const foreshadowRejectCounts = new Map<string, number>();
+      const foreshadowExemptions: string[] = [];
       for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
         if (options.signal?.aborted) { aborted = true; break; }
         try {
@@ -1131,6 +1143,7 @@ export async function runContinueWriteChapters(options: {
             signal: options.signal,
             enableMemoryExtract: options.enableMemoryExtract,
             seedRevisionHints,
+            foreshadowExemptions: foreshadowExemptions.length > 0 ? [...foreshadowExemptions] : undefined,
             onChapterHydrated: options.onChapterHydrated,
           });
           lastError = finalResult.output.error ?? '';
@@ -1171,6 +1184,22 @@ export async function runContinueWriteChapters(options: {
           options.signal
         );
         lastErrorKind = classified.kind;
+
+        // 伏笔提前揭示拒稿计数与熔断：judge 拒稿文本引伏笔 hint 的形态有
+        // 「伏笔「X」notBeforeChapter=」「futureReveals 规定「X」不得早于」「伏笔『X』的埋设时点」。
+        const foreshadowCite = lastError.match(/[伏笔规][」』"]?[：:]?\s*[「『"]([^「」『』"]{6,80})[」』"]/u);
+        if (foreshadowCite) {
+          const prefix = foreshadowCite[1].slice(0, 16);
+          const count = (foreshadowRejectCounts.get(prefix) ?? 0) + 1;
+          foreshadowRejectCounts.set(prefix, count);
+          if (count >= 2 && !foreshadowExemptions.includes(prefix)) {
+            foreshadowExemptions.push(prefix);
+            // eslint-disable-next-line no-console
+            console.warn(
+              `[continueWrite] 第${chapterNumber}章伏笔时序熔断：伏笔「${prefix}…」连续 ${count} 次提前揭示拒稿，确认蓝图与伏笔台账矛盾，本章豁免该伏笔时点禁令（源头应修蓝图）‖`
+            );
+          }
+        }
 
         // 截断/空响应（抛异常、无 gateResult）时注入固定引导种子，避免下一轮原样盲发。
         // 这类失败 finalResult 为 null，上面 if(gateResult) 提不到反馈，需单独兜底。

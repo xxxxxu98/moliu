@@ -102,7 +102,14 @@ export function splitNamedSections(raw: string, headings: string[]): Record<stri
 }
 
 export function extractFieldValue(block: string, fieldName: string): string | null {
-  const pattern = new RegExp(`^(?:-\\s*)?${escapeRegExp(fieldName)}\\s*[：:]\\s*(.+)$`, 'm');
+  // 字段行归一化容忍（qwen-3.8-2b / lfm2.5-2.6b 实测形态，2026-09-10 方向卡全灭根因）：
+  // - markdown 粗体包裹：`**标题：** 值`（闭合星号紧跟冒号后）与 `**一句话卖点**：`（lfm 形态，闭合星号在冒号前）；
+  // - 字段名大小写：`**Premise：**` 与 `premise` 需等价（i flag 只影响英文字段名，中文无感）；
+  // - 值允许为空串：字段行单独成行、值在下一批列表行时，靠续行收集兜住。
+  const pattern = new RegExp(
+    `^(?:-\\s*)?(?:\\*\\*|__)?\\s*${escapeRegExp(fieldName)}\\s*(?:\\*\\*|__)?\\s*[：:]\\s*(?:\\*\\*|__)?\\s*(.*)$`,
+    'mi',
+  );
   const match = block.match(pattern);
 
   if (!match) {
@@ -115,7 +122,7 @@ export function extractFieldValue(block: string, fieldName: string): string | nu
   const matchIndex = match.index ?? 0;
   const afterFirstLine = block.slice(matchIndex + match[0].length);
   const continuationLines: string[] = [];
-  const fieldStartPattern = /^(?:-\s*)?[^\s：:][^：:]{0,20}\s*[：:]/;
+  const fieldStartPattern = /^(?:-\s*)?(?:\*\*|__)?\s*[^\s：:*_][^：:]{0,20}\s*[：:]/;
   for (const rawLine of afterFirstLine.split('\n')) {
     const line = rawLine.trim();
     if (line === '') break;
@@ -139,8 +146,9 @@ export function extractFieldValue(block: string, fieldName: string): string | nu
  */
 function extractNumberedItems(block: string, fieldName: string): string[] {
   const escaped = escapeRegExp(fieldName);
-  const fieldLineRe = new RegExp(`^(?:-\\s*)?${escaped}\\s*[：:]`, 'u');
-  const fieldStart = /^(?:-\s*)?[^\s：:][^：:]{0,20}\s*[：:]/;
+  // 与 extractFieldValue 同口径的粗体/大小写容忍（字段行形态归一化，见其注释）
+  const fieldLineRe = new RegExp(`^(?:-\\s*)?(?:\\*\\*|__)?\\s*${escaped}\\s*(?:\\*\\*|__)?\\s*[：:]`, 'iu');
+  const fieldStart = /^(?:-\s*)?(?:\*\*|__)?\s*[^\s：:*_][^：:]{0,20}\s*[：:]/;
   const itemStart = /^\s*(\d+)[.、)]\s*(.+)$/;
 
   const lines = block.split('\n');

@@ -14,6 +14,19 @@
 import type { Chapter, PlotNode, Project } from '@/types/project';
 import type { ChapterBlueprint } from '../types/executable-outline';
 import {
+  dropForeshadowConflictingItems,
+  findLockedForeshadowViolations,
+  type ForeshadowTimingHint,
+  type RolledBlueprintIssue,
+} from './foreshadowTiming';
+// 词面时序校验抽到 foreshadowTiming.ts 后由此 re-export 保持外部导入兼容
+// （chapter-blueprint-regenerator / repair-empty 等仍从本模块取符号）
+export {
+  dropForeshadowConflictingItems,
+  findLockedForeshadowViolations,
+} from './foreshadowTiming';
+export type { ForeshadowTimingHint, RolledBlueprintIssue } from './foreshadowTiming';
+import {
   CHAPTER_BLUEPRINT_BATCH_SIZE,
   extractRequestedChapterBlocks,
   sanitizeBlueprintLengths,
@@ -294,8 +307,10 @@ export function buildRollBlueprintPrompt(params: {
   /** 邻接上一批已生成蓝图的收束状态（承接链） */
   recentBlueprintEndings: string[];
   issues?: string[];
+  /** 终卷批次（触顶全书计划章数）：注入收束硬约束，防「写到一半被切断」 */
+  finalBatch?: { totalChapters: number; lastChapter: number };
 }): { system: string; user: string } {
-  const { base, chapterNumbers, recentBlueprintEndings, issues = [] } = params;
+  const { base, chapterNumbers, recentBlueprintEndings, issues = [], finalBatch } = params;
   const first = chapterNumbers[0];
   // 进度措辞必须与 writtenState 一致：冒烟/开书即滚时正文未动，
   // 谎称「正文已写到第N章」会让模型臆造不存在的剧情收束。
@@ -306,6 +321,15 @@ export function buildRollBlueprintPrompt(params: {
       : `正文尚未开写，第1-${first - 1}章已有章级蓝图`;
   const issueSection = issues.length > 0
     ? `\n\n【本次必须修掉的格式违规】\n${issues.map(issue => `- ${issue}`).join('\n')}\n改写时优先压缩到区间内，宁可删修饰语也不得超字数。`
+    : '';
+  const finalBatchSection = finalBatch
+    ? `\n\n【终卷收束硬约束】本批是全书最后一批蓝图（全书共${finalBatch.totalChapters}章，本批到第${finalBatch.lastChapter}章完结）：
+- 主线核心冲突必须在本批内收束：最终对决/真相全揭/胜负分明，禁止把主矛盾悬置到「全书完」之后；
+- 反派势力必须清算：主要反派的结局（伏诛/下狱/流放/身败）必须落到具体章节的 mustCover，禁止只写「将受到清算」式预告；
+- 主角弧必须闭环：开篇立下的核心目标（身份/使命/阶层跃迁）在本批内兑现或明确抵达终点；
+- 活跃伏笔全部出清：【活跃伏笔】清单中每一条要么在对应章节兑现，要么在 mustCover 显式安排余韵交代（一句话点明用途后收档），禁止带着未回收伏笔完结；
+- 禁止引入新对手、新悬念、新势力：终卷不开新盘；约束 5「不得提前兑现后续卷高潮」在本批不适用——这就是最后的高潮；
+- 末章（第${finalBatch.lastChapter}章）CEN 必须是全书收束句：给出「故事讲完」的终局画面或交代（尘埃落定/新秩序确立/主角归处），禁止写成下一章钩子。`
     : '';
   const endingSection = recentBlueprintEndings.length > 0
     ? `\n\n【上一批蓝图收束】\n${recentBlueprintEndings.join('\n')}`
@@ -353,8 +377,9 @@ export function buildRollBlueprintPrompt(params: {
 9. 【命运锁】「命运锁」清单里的角色已有既定命运（死亡/下狱/去职/定罪），新章蓝图禁止安排其以自由身出场、行动、对话或履行原职；剧情确需其后续作用时，只能作为他人回忆/口头提及，或在本章 mustCover 中显式写出解除事件（越狱/劫狱/平反/保释/官复原职/复爵）并在该节点开头加【解除】标记；
    【死亡锁无解除】状态为死亡/驾崩的角色没有任何解除事件：禁止规划其苏醒、病危急救、遇袭待救、「传位后复出发难」等任何存活情节或存活传闻被证实为真（2026-09-06 g38f-200chr2 实证：滚纲节点写「赵乾苏醒后」施杀局，正文无法履约整章死）；其遗诏、遗物、身后议谥只能作为向后引用；若全书设定确有假死局，必须在 mustCover 显式标注【假死设定】并写明揭破时点；
    【命运橡皮筋禁令】清单「历史」中某命运方向累计 ≥3 次（如下狱×3）即重复节拍——不得再规划该方向事件，改用新的对抗手段或转移矛盾对象（2026-09-06 g38f-200chr2 实证：直王下狱×7/越狱×3，读者审明确标记结构性重复）；
-10. 【禁区相容】mustCover 与禁区不得互斥：若某节点要求本章发生某状态变更（下旨/定谳/圈禁/结案/复职等），对应禁区不得禁止该变更发生；确需保留防泄露约束时，只保护更早阶段的揭示，并在该条禁区开头加【让路】标记——禁止产出让写作端两头违约的合同。`,
-    user: `【故事定位】\n${base.positioning}\n\n【卷纲锚点】\n${base.volumeAnchor}\n\n【已写进度与收束状态】\n${base.writtenState}${plannedTailSection}${endingSection}${fateLockSection}\n\n【活跃伏笔（埋设→回收）】\n${base.activeForeshadows}\n\n【角色名单】\n${base.characterRoster}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
+10. 【禁区相容】mustCover 与禁区不得互斥：若某节点要求本章发生某状态变更（下旨/定谳/圈禁/结案/复职等），对应禁区不得禁止该变更发生；确需保留防泄露约束时，只保护更早阶段的揭示，并在该条禁区开头加【让路】标记——禁止产出让写作端两头违约的合同；
+11. 【伏笔时序锁】「活跃伏笔」清单中埋设时点（「埋设N章」的 N）晚于本批任意章号的伏笔，其核心信息（hint 词面及同义表述）禁止出现在本批任何章的 mustCover/CPN/CEN 中——蓝图要求本章揭示而伏笔规定后章才许揭示时，写作端会被迫两头违约（2026-09-10 glm 200 章实证：第 20 章蓝图要求「笔迹比对定性补账出自行家手笔」，伏笔却锁 22 章揭示，正文三连拒成空洞）。确需铺垫时只可用不触及核心词面的暗痕（物件出现/旁人欲言又止），不得给出定性结论。`,
+    user: `【故事定位】\n${base.positioning}\n\n【卷纲锚点】\n${base.volumeAnchor}\n\n【已写进度与收束状态】\n${base.writtenState}${plannedTailSection}${endingSection}${fateLockSection}\n\n【活跃伏笔（埋设→回收）】\n${base.activeForeshadows}\n\n【角色名单】\n${base.characterRoster}${finalBatchSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
   };
 }
 
@@ -425,17 +450,6 @@ export function isUsableRolledBlueprint(blueprint: ChapterBlueprint | undefined)
  * - template-cbn / 模板 CEN：承接话术、流程话术泄漏进情节字段
  * - reader-meta：企划口吻（读者期待等）混进节点
  */
-export interface RolledBlueprintIssue {
-  chapterNumber: number;
-  kind:
-    | 'over-scoped-mustcover'
-    | 'template-cbn'
-    | 'hollow-cen'
-    | 'reader-meta'
-    | 'locked-foreshadow';
-  detail: string;
-}
-
 export function inspectRolledBlueprintQuality(bp: ChapterBlueprint): RolledBlueprintIssue[] {
   const issues: RolledBlueprintIssue[] = [];
   const overScoped = bp.mustCover.find(node => isCrossChapterGoal(node));
@@ -525,99 +539,6 @@ function normalizedEditDistanceKeepingNumbers(a: string, b: string): number {
   return matrix[nb.length][na.length];
 }
 
-/** 锁定伏笔的计时信息（Pipeline 侧 futureReveals 同源：createdChapter = 大纲预埋章号） */
-export interface ForeshadowTimingHint {
-  hint: string;
-  createdChapter?: number;
-  setupChapter?: number;
-  /** 回收/兑现时点：埋设后的章节若强词面命中=提前兑现伏笔载荷（g38f-200chr2 ch36 形态） */
-  payoffChapter?: number;
-}
-
-/** 从提示语中提取 CJK 连续段（≥2 字），供词面命中统计 */
-function foreshadowCoreTokens(hint: string): string[] {
-  return (hint ?? '')
-    .replace(/[^\u4e00-\u9fff]+/gu, ' ')
-    .split(/\s+/u)
-    .map(token => token.trim())
-    .filter(token => token.length >= 2);
-}
-
-/**
- * 锁定伏笔词面校验（双向）：
- * - 埋设方向：蓝图在埋设章之前把提示语触发词写进节点 → 写作履约即提前揭示，
- *   评审必拒（2026-08-28 百章终验 ch40 死锁实证）。命中阈值 ≥max(2, 34%) 二字组。
- * - 兑现方向：蓝图在回收章之前强词面命中（≥60% 且 ≥4 二字组）= 把伏笔载荷整段
- *   提前兑现。2026-09-06 g38f-200chr2 ch36 实证：初版节点第 36 章「当众颁布三级
- *   网格考成法」，伏笔蓝图锁定第 45 章才揭示——5 次拒稿整章死；reg20 同族
- *   （伏笔标第 18 章反杀下狱、蓝图第 3 章执行）。埋设后的推进期允许部分词面
- *   重叠（正常铺垫），只有高覆盖才算整段兑现。
- */
-export function findLockedForeshadowViolations(
-  blueprints: ChapterBlueprint[],
-  foreshadows: ForeshadowTimingHint[],
-  options?: { payoffMinHits?: number },
-): RolledBlueprintIssue[] {
-  const issues: RolledBlueprintIssue[] = [];
-  const locked = foreshadows
-    .map(f => ({
-      hint: (f.hint ?? '').trim(),
-      setupAt: f.setupChapter ?? f.createdChapter ?? 0,
-      payoffAt: f.payoffChapter ?? 0,
-    }))
-    .filter(f => (f.setupAt > 0 || f.payoffAt > 0) && f.hint.length >= 4);
-  if (locked.length === 0) return issues;
-  for (const bp of blueprints) {
-    const text = [bp.CBN, bp.CEN, bp.summary, ...bp.CPNs, ...bp.mustCover]
-      .filter(Boolean)
-      .join('\n');
-    if (!text) continue;
-    for (const f of locked) {
-      const tokens = foreshadowCoreTokens(f.hint);
-      const grams = new Set<string>();
-      for (const token of tokens) {
-        for (let i = 0; i + 2 <= token.length; i += 1) grams.add(token.slice(i, i + 2));
-      }
-      if (grams.size === 0) continue;
-      let hits = 0;
-      for (const gram of grams) if (text.includes(gram)) hits += 1;
-      // 埋设方向：埋设章之前，弱覆盖即拦（触发词出现即危险）
-      if (f.setupAt > 0 && bp.orderIndex < f.setupAt) {
-        if (hits >= Math.max(2, Math.ceil(grams.size * 0.34))) {
-          issues.push({
-            chapterNumber: bp.orderIndex,
-            kind: 'locked-foreshadow',
-            detail:
-              `第${bp.orderIndex}章蓝图词面命中第${f.setupAt}章才埋设的伏笔「${f.hint.slice(0, 24)}」` +
-              `（命中 ${hits}/${grams.size} 个二字组）。把该节点改写为不含伏笔触发词的中性事件，` +
-              `相关物件与异常结论留到第${f.setupAt}章再出现`,
-          });
-          break;
-        }
-      }
-      // 兑现方向：埋设后、回收前，只有高覆盖（整段载荷）才拦——推进/铺垫放行。
-      // 阈值 45% 实测校准：ch36 受害样本 6/13 二字组；正常铺垫形态 ~38%。
-      // payoffMinHits 供逐条消毒路径放宽（短条目 4 命中即毒，见 dropForeshadowConflictingItems）。
-      const payoffMinHits =
-        options?.payoffMinHits ?? Math.max(4, Math.ceil(grams.size * 0.45));
-      if (f.payoffAt > 0 && bp.orderIndex < f.payoffAt) {
-        if (hits >= payoffMinHits) {
-          issues.push({
-            chapterNumber: bp.orderIndex,
-            kind: 'locked-foreshadow-payoff',
-            detail:
-              `第${bp.orderIndex}章蓝图强词面命中第${f.payoffAt}章才回收的伏笔「${f.hint.slice(0, 24)}」` +
-              `（命中 ${hits}/${grams.size} 个二字组，属整段提前兑现）。本章只许铺垫/推进：` +
-              `保留线索与阻力，把该伏笔的完整兑现/揭示留到第${f.payoffAt}章`,
-          });
-          break;
-        }
-      }
-    }
-  }
-  return issues;
-}
-
 /** 单章质检缺陷总数（含锁定伏笔），供修复轮「越修越坏」对比 */
 function blueprintDefectCount(
   bp: ChapterBlueprint,
@@ -627,47 +548,6 @@ function blueprintDefectCount(
     inspectRolledBlueprintQuality(bp).length +
     findLockedForeshadowViolations([bp], foreshadows).length
   );
-}
-
-/**
- * 空章补写前的节点消毒：逐项（CPN/mustCover）跑伏笔词面校验，删掉与伏笔
- * 时点冲突的条目（2026-09-07 r2 书修复基建：ch36 节点「当众颁布三级网格考成法」
- * vs 伏笔第 45 章揭示——原样补写会重演 5 连拒死章）。
- * mustCover 全部冲突时退化为一条通用缝合节点（承接上章、导向下章），不保留
- * 任何带毒条目——空合同有 heal 兜底，带毒合同会死锁。
- */
-export function dropForeshadowConflictingItems(
-  bp: ChapterBlueprint,
-  foreshadows: ForeshadowTimingHint[]
-): { blueprint: ChapterBlueprint; dropped: string[] } {
-  const dropped: string[] = [];
-  const keepClean = (items: string[]): string[] =>
-    (items ?? []).filter(item => {
-      const probe: ChapterBlueprint = {
-        ...bp,
-        CBN: '',
-        CEN: '',
-        summary: '',
-        CPNs: [item],
-        mustCover: [item],
-      };
-      // 单条文本短，命中数天然低：消毒口径放宽到 3（短条目「推行网格考成法」
-      // 4 命中即是毒；全蓝图口径的 6 会漏）。宁可错删一条桥接项，不可放过毒项。
-      if (findLockedForeshadowViolations([probe], foreshadows, { payoffMinHits: 3 }).length === 0) {
-        return true;
-      }
-      dropped.push(item);
-      return false;
-    });
-  const CPNs = keepClean(bp.CPNs ?? []);
-  let mustCover = keepClean(bp.mustCover ?? []);
-  if ((bp.mustCover ?? []).length > 0 && mustCover.length === 0) {
-    mustCover = [`承接第${Math.max(1, bp.orderIndex - 1)}章结尾状态并向后推进的过渡事件`];
-  }
-  return {
-    blueprint: { ...bp, CPNs, mustCover },
-    dropped,
-  };
 }
 
 /**
@@ -894,6 +774,12 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
       base,
       chapterNumbers: batch,
       recentBlueprintEndings: recentEndings,
+      // 终卷批次：本批触顶全书 plannedChapterCount 时注入收束硬约束——滚纲此前
+      // 与中段批次用同一份提示词（约束 5 还在把高潮推离尾部），200 章书收在
+      // 「面圣亮牌前一秒」的半空（2026-09-10 glm r2 实证：结尾不收束 S1）
+      finalBatch: plannedCap !== Number.POSITIVE_INFINITY && toChapter >= plannedCap
+        ? { totalChapters: plannedCap, lastChapter: toChapter }
+        : undefined,
     });
     onProgress?.(`滚动续纲 ${batch[0]}-${batch[batch.length - 1]} 章（${Math.floor(index / CHAPTER_BLUEPRINT_BATCH_SIZE) + 1}/${Math.ceil(chapterNumbers.length / CHAPTER_BLUEPRINT_BATCH_SIZE)}）...`);
     try {
@@ -991,7 +877,14 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
         const next = applyLocalSanitize(incoming);
         // 复检：修复稿质检缺陷不得多于原稿（含锁定伏笔词面冲突）。「越修越坏」
         // 的稿子换进去会让 validTo 前缀断得更早；不达标则保留原稿（带病但完整）。
-        const beforeCount = blueprintDefectCount(blueprints.get(n)!, rollForeshadows);
+        // repairTargets 含「整块缺失」的章（AI 首轮未返回该章蓝图），此时无原稿
+        // 可比：缺失章拿到修复稿是纯增益，按 +∞ 计数永不回退（2026-09-10 glm
+        // 200 章实测 6 次定点修复崩于此：blueprintDefectCount(undefined) 读
+        // mustCover 抛错，整批修复稿被丢弃）。
+        const existing = blueprints.get(n);
+        const beforeCount = existing
+          ? blueprintDefectCount(existing, rollForeshadows)
+          : Number.MAX_SAFE_INTEGER;
         const afterCount = blueprintDefectCount(next, rollForeshadows);
         if (beforeCount > 0 && afterCount > beforeCount) {
           warnings.push(

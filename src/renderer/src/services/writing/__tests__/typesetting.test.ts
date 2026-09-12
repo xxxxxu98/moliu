@@ -92,11 +92,16 @@ describe('normalizeWebnovelParagraphs（少动刀）', () => {
     expect(normalizeWebnovelParagraphs(narration)).toBe(narration);
   });
 
-  it('已有弯引号的正文不触动直引号（混合形态保守处理）', () => {
-    const mixed = '\u201C他说什么？\u201D\n英文缩写 "OK" 出现在叙述里。';
+  it('已有弯引号的正文同样转换直引号对话（混排形态，2026-09-10 glm 45 章 868 处实测）', () => {
+    const mixed = '\u201C他说什么？\u201D\n他低声问："裴大人怎么说？"随后又补了句 "知道了"。';
     const normalized = normalizeWebnovelParagraphs(mixed);
-    // 弯引号存在时直引号保持原样,不做位置推断
-    expect(normalized).toContain('"OK"');
+    // 混排章的直引号对话按位置判定转为中文引号，不再因存在弯引号整章跳过
+    expect(normalized).toContain('问：\u201C裴大人怎么说？\u201D');
+    expect(normalized).not.toContain('"');
+    // 取舍：叙述里的成对直引号（如英文缩写）也会被归一为中文引号——网文语境
+    // 下直引号泄漏的 868 处实锤远重于罕见英文缩写被转的观感损失
+    const abbr = '英文缩写 "OK" 出现在叙述里。';
+    expect(normalizeWebnovelParagraphs(abbr)).toContain('\u201COK\u201D');
   });
 });
 

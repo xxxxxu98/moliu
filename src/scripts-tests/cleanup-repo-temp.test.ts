@@ -28,14 +28,24 @@ beforeEach(() => {
   workRoot = mkdtempSync(join(tmpdir(), 'cleanup-repo-temp-'));
   tempRoot = join(workRoot, 'temp');
   mkdirSync(join(tempRoot, 'ai-traces'), { recursive: true });
-  mkdirSync(join(tempRoot, 'book-review', 'sample'), { recursive: true });
+  // book-review 三类子条目:退役轮次(10 天前)/近期轮次(1 天前)/基线白名单(10 天前但永留)
+  mkdirSync(join(tempRoot, 'book-review', 'sample-old-0825'), { recursive: true });
+  mkdirSync(join(tempRoot, 'book-review', 'sample-fresh-0903'), { recursive: true });
+  mkdirSync(join(tempRoot, 'book-review', 'baseline100ch-r9'), { recursive: true });
+  mkdirSync(join(tempRoot, 'storyflow-checkpoints'), { recursive: true });
   mkdirSync(join(tempRoot, 'storyflow-matrix-agif200r2a'), { recursive: true });
   mkdirSync(join(tempRoot, 'junk-run'), { recursive: true });
   writeFileSync(join(tempRoot, 'ai-traces', 'old.jsonl'), 'old-trace');
   writeFileSync(join(tempRoot, 'ai-traces', 'stale.jsonl'), 'stale-trace');
   writeFileSync(join(tempRoot, 'ai-traces', 'fresh.jsonl'), 'fresh-trace');
   writeFileSync(join(tempRoot, 'ai-traces', 'index.other'), 'index');
-  writeFileSync(join(tempRoot, 'book-review', 'sample', '001.txt'), 'chapter');
+  writeFileSync(join(tempRoot, 'ai-traces', 'longform-agent-1789000000000.jsonl'), 'agent-2d');
+  writeFileSync(join(tempRoot, 'ai-traces', 'longform-agent-1789999999999.jsonl'), 'agent-1d');
+  writeFileSync(join(tempRoot, 'book-review', 'sample-old-0825', '001.txt'), 'old-chapter');
+  writeFileSync(join(tempRoot, 'book-review', 'sample-fresh-0903', '001.txt'), 'fresh-chapter');
+  writeFileSync(join(tempRoot, 'book-review', 'baseline100ch-r9', '001.txt'), 'baseline');
+  writeFileSync(join(tempRoot, 'storyflow-checkpoints', 'stale.outline.json'), 'stale');
+  writeFileSync(join(tempRoot, 'storyflow-checkpoints', 'fresh.outline.json'), 'fresh');
   writeFileSync(join(tempRoot, 'storyflow-matrix-agif200r2a', 'store.json'), 'matrix');
   writeFileSync(join(tempRoot, 'junk-run', 'out.txt'), 'junk');
   writeFileSync(join(tempRoot, 'continue-write.real.config.json'), '{}');
@@ -43,6 +53,13 @@ beforeEach(() => {
   setMtime(join(tempRoot, 'ai-traces', 'stale.jsonl'), STALE);
   setMtime(join(tempRoot, 'ai-traces', 'fresh.jsonl'), FRESH);
   setMtime(join(tempRoot, 'ai-traces', 'index.other'), OLD);
+  setMtime(join(tempRoot, 'ai-traces', 'longform-agent-1789000000000.jsonl'), NOW - 2 * 86_400_000);
+  setMtime(join(tempRoot, 'ai-traces', 'longform-agent-1789999999999.jsonl'), FRESH);
+  setMtime(join(tempRoot, 'book-review', 'sample-old-0825'), OLD);
+  setMtime(join(tempRoot, 'book-review', 'sample-fresh-0903'), FRESH);
+  setMtime(join(tempRoot, 'book-review', 'baseline100ch-r9'), OLD);
+  setMtime(join(tempRoot, 'storyflow-checkpoints', 'stale.outline.json'), OLD);
+  setMtime(join(tempRoot, 'storyflow-checkpoints', 'fresh.outline.json'), FRESH);
 });
 
 afterEach(() => {
@@ -51,23 +68,39 @@ afterEach(() => {
 
 describe('cleanup-repo-temp KEEP 与 --all', () => {
   it('KEEP 不含单轮矩阵目录,也不整目录永保 ai-traces', async () => {
-    const { KEEP_DEFAULT } = await loadClean();
+    const { KEEP_DEFAULT, SUBDIR_AGE_PRUNE } = await loadClean();
     expect(KEEP_DEFAULT.has('storyflow-matrix-agif200r2a')).toBe(false);
     expect(KEEP_DEFAULT.has('storyflow-matrix-agif200r2b')).toBe(false);
     expect(KEEP_DEFAULT.has('ai-traces')).toBe(false);
     expect(KEEP_DEFAULT.has('continue-write.real.config.json')).toBe(true);
-    expect(KEEP_DEFAULT.has('book-review')).toBe(true);
+    // 08-26/27 退役书审正文移出 KEEP(结论已入 memory;juezheng 基线在 book-review 白名单有副本)
+    expect(KEEP_DEFAULT.has('review-xcjz')).toBe(false);
+    expect(KEEP_DEFAULT.has('review-500ch')).toBe(false);
+    expect(KEEP_DEFAULT.has('review-juezheng')).toBe(false);
+    // book-review/checkpoints 不再整目录永保(34 轮退役书审曾堆积 38MB),
+    // 改为子条目按天裁剪:近期轮次留、退役轮次清、基线白名单永留
+    expect(KEEP_DEFAULT.has('book-review')).toBe(false);
+    expect(KEEP_DEFAULT.has('storyflow-checkpoints')).toBe(false);
+    expect(SUBDIR_AGE_PRUNE.has('book-review')).toBe(true);
+    expect(SUBDIR_AGE_PRUNE.has('storyflow-checkpoints')).toBe(true);
   });
 
-  it('--all 删除单轮矩阵与 junk,保留配置和书审目录', async () => {
+  it('--all 删除单轮矩阵与 junk;book-review 子条目裁剪:退役轮删、近期与基线留', async () => {
     const { runClean } = await loadClean();
     const result = runClean({ tempRoot, cleanAll: true, nowMs: NOW });
     expect(result.removed).toContain('storyflow-matrix-agif200r2a');
     expect(result.removed).toContain('junk-run');
     expect(existsSync(join(tempRoot, 'continue-write.real.config.json'))).toBe(true);
-    expect(existsSync(join(tempRoot, 'book-review', 'sample', '001.txt'))).toBe(true);
-    expect(result.skippedProtected).toContain('book-review');
     expect(result.skippedProtected).toContain('continue-write.real.config.json');
+    // book-review:10 天前的退役轮次被裁,1 天前的近期轮次与基线白名单保留
+    expect(existsSync(join(tempRoot, 'book-review', 'sample-old-0825'))).toBe(false);
+    expect(existsSync(join(tempRoot, 'book-review', 'sample-fresh-0903', '001.txt'))).toBe(true);
+    expect(existsSync(join(tempRoot, 'book-review', 'baseline100ch-r9', '001.txt'))).toBe(true);
+    expect(result.prunedSubdirEntries).toContain('book-review/sample-old-0825');
+    expect(result.prunedSubdirEntries).not.toContain('book-review/baseline100ch-r9');
+    // checkpoints:14 天裁剪线,10 天前的仍保留(在窗口内),断点文件不动目录
+    expect(existsSync(join(tempRoot, 'storyflow-checkpoints', 'stale.outline.json'))).toBe(true);
+    expect(existsSync(join(tempRoot, 'storyflow-checkpoints', 'fresh.outline.json'))).toBe(true);
   });
 
   it('--all 默认 3 天裁剪 traces:过期 jsonl 删除,新 jsonl 与非 jsonl 保留', async () => {
@@ -81,6 +114,14 @@ describe('cleanup-repo-temp KEEP 与 --all', () => {
     expect(traces).toContain('fresh.jsonl');
     expect(traces).toContain('index.other');
     expect(existsSync(join(tempRoot, 'ai-traces'))).toBe(true);
+  });
+
+  it('--all 对 longform-agent trace 用 1 天独立窗口(2 天前的删,1 天前的留)', async () => {
+    const { runClean } = await loadClean();
+    runClean({ tempRoot, cleanAll: true, nowMs: NOW });
+    const traces = readdirSync(join(tempRoot, 'ai-traces'));
+    expect(traces).not.toContain('longform-agent-1789000000000.jsonl'); // 2 天前:agent 窗口外
+    expect(traces).toContain('longform-agent-1789999999999.jsonl'); // 1 天前:窗口内
   });
 
   it('--all --older-than 7 保留 5 天前 jsonl,仍删 10 天前', async () => {

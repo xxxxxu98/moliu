@@ -498,3 +498,77 @@ describe('UnifiedAIService.complete - 网关参数约束自动降级（与 outli
     expect(captured).toHaveLength(1);
   });
 });
+
+describe('UnifiedAIService - 智谱 thinking disabled 注入（写作链路 adapter 包装）', () => {
+  beforeEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  /** SDK 流式请求的真 fetch mock：SSE 单包返回 */
+  function sseFetchMock(): ReturnType<typeof vi.fn> {
+    const encoder = new TextEncoder();
+    const sse = [
+      'data: {"choices":[{"delta":{"content":"ok"}}]}',
+      'data: {"choices":[{"delta":{},"finish_reason":"stop"}]}',
+      'data: [DONE]',
+      '',
+    ].join('\n\n');
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      body: {
+        getReader: () => {
+          let sent = false;
+          return {
+            read: async () => {
+              if (sent) return { done: true, value: undefined };
+              sent = true;
+              return { done: false, value: encoder.encode(sse) };
+            },
+            releaseLock: () => {},
+          };
+        },
+      },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    return fetchMock;
+  }
+
+  function lastBodyJson(fetchMock: ReturnType<typeof vi.fn>): Record<string, unknown> {
+    const call = fetchMock.mock.calls.at(-1)!;
+    return JSON.parse(String((call[1] as RequestInit).body));
+  }
+
+  it('智谱端点经 SDK adapter 注入 thinking disabled', async () => {
+    const fetchMock = sseFetchMock();
+    const service = new UnifiedAIService(
+      'openai', 'sk-test', 'https://open.bigmodel.cn/api/coding/paas/v4', 'glm-5.3-flash',
+    );
+
+    const result = await service.complete('写一段');
+
+    expect(result).toBeTruthy();
+    expect(lastBodyJson(fetchMock).thinking).toEqual({ type: 'disabled' });
+  });
+
+  it('非智谱端点不注入 thinking（其他厂商零影响）', async () => {
+    const fetchMock = sseFetchMock();
+    const service = makeService('openai'); // https://api.example.com/v1
+
+    await service.complete('写一段');
+
+    expect(lastBodyJson(fetchMock).thinking).toBeUndefined();
+  });
+
+  it('MOLIU_ZHIPU_KEEP_THINKING=1 时保留思考（逃生口）', async () => {
+    vi.stubEnv('MOLIU_ZHIPU_KEEP_THINKING', '1');
+    const fetchMock = sseFetchMock();
+    const service = new UnifiedAIService(
+      'openai', 'sk-test', 'https://open.bigmodel.cn/api/coding/paas/v4', 'glm-5.3-flash',
+    );
+
+    await service.complete('写一段');
+
+    expect(lastBodyJson(fetchMock).thinking).toBeUndefined();
+  });
+});

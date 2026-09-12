@@ -28,6 +28,7 @@ import { ContextPackBuilder } from './ContextPackBuilder';
 import { ContinuityValidator } from './ContinuityValidator';
 import {
   collectTerminalDeathCharacters,
+  detectNodeVerbatimOverlapIssues,
   detectOpeningRepetitionIssue,
   healChapterContract,
   isTerminalDeathStatus,
@@ -262,7 +263,12 @@ function withFulfillmentDomain(report: ContinuityReport): ContinuityReport['chec
 export function applyDeterministicGates(
   semanticReport: ContinuityReport,
   drafts: SceneDraft[],
-  ctx: { targetWordCount: number; previousChapterEnding?: string; chapterNumber: number }
+  ctx: {
+    targetWordCount: number;
+    previousChapterEnding?: string;
+    chapterNumber: number;
+    mustCover?: string[];
+  }
 ): ContinuityReport {
   let report = semanticReport;
   const prose = draftsProse(drafts);
@@ -325,6 +331,19 @@ export function applyDeterministicGates(
       checkedDomains: withFulfillmentDomain(report),
     };
   }
+  // 节点原句照抄（prompt 禁抄+judge 规则在长跑尺度漏网，终验 4 处实锤）：
+  // warning 级并入，靠下方 requiredIssueIds 机制驱动定向改写
+  const verbatimIssues = detectNodeVerbatimOverlapIssues(prose, ctx.mustCover ?? []);
+  if (verbatimIssues.length > 0) {
+    report = {
+      ...report,
+      issues: [
+        ...report.issues.filter(issue => !issue.id.startsWith('node-verbatim-overlap')),
+        ...verbatimIssues,
+      ],
+      checkedDomains: withFulfillmentDomain(report),
+    };
+  }
   return report;
 }
 
@@ -345,6 +364,15 @@ export function uniformDensityIssueIds(report: ContinuityReport): string[] {
         issue.id.startsWith('typesetting-density') &&
         issue.message.includes('段落节奏均匀化')
     )
+    .map(issue => issue.id);
+}
+
+/** 节点原句照抄（mustCover ≥12 字逐字入正文）是否在报告里——prompt 禁抄与
+ *  judge 规则在长跑尺度漏网（2026-09-12 gemini 终验 4 处终稿实锤），确定性
+ *  门禁命中后与均匀化同机制驱动定向改写。 */
+export function nodeVerbatimIssueIds(report: ContinuityReport): string[] {
+  return report.issues
+    .filter(issue => issue.id.startsWith('node-verbatim-overlap'))
     .map(issue => issue.id);
 }
 
@@ -461,13 +489,22 @@ export class LongFormWritingEngine {
     let writerSummary: WriterRunSummary | undefined;
 
     const uniformIssueIdsBefore = uniformDensityIssueIds(report);
+    const verbatimIssueIdsBefore = nodeVerbatimIssueIds(report);
+    // 弱信号驱动的定向改稿（均匀化/节点照抄）：唯一改稿动因为 warning 级
+    // 确定性信号时合并为必须处理，否则 agent 可对 warning 不改稿直接 finish
+    const weakSignalIssueIds = [...uniformIssueIdsBefore, ...verbatimIssueIdsBefore];
+    const weakSignalDriven = !shouldRewrite(report) && weakSignalIssueIds.length > 0;
     if (
-      (shouldRewrite(report) || uniformIssueIdsBefore.length > 0) &&
+      (shouldRewrite(report) || weakSignalIssueIds.length > 0) &&
       maxRewriteRounds > 0 &&
       this.dependencies.writerAgent
     ) {
       // 改稿只走 agent：模型读问题清单、查事实、局部改稿、复检，blocking=0 才 finish。
       // 未注入 writerAgent（假 AI 单测）时不整章重写，带着初审结果直接提交。
+      // 均匀化触发的改稿预算加倍至 2 轮：gemini 终验实测 11/196 章 CV<0.14 且
+      // 一轮定向修后仍不达标（uniform-cv-survived）——节奏均匀化需要拆段/扩段
+      // 的结构操作，一轮往往只改掉高频词，第二轮才动分段。仍非 blocking，
+      // 两轮后不达标保留最优稿走黄签（survived 语义不变）。
       const outcome = await this.dependencies.writerAgent.revise({
         chapterNumber: contracts.chapter.chapterNumber,
         contracts,
@@ -477,12 +514,10 @@ export class LongFormWritingEngine {
         initialDrafts: drafts,
         initialReview: { facts, report },
         reviewPort: { review: candidate => this.reviewDrafts(candidate, reviewContext) },
-        maxChecks: maxRewriteRounds,
-        // 均匀化是本章唯一改稿动因时，把它标记为必须处理（否则 agent 对 warning 可不改稿直接 finish）
-        requiredIssueIds:
-          !shouldRewrite(report) && uniformIssueIdsBefore.length > 0
-            ? uniformIssueIdsBefore
-            : undefined,
+        maxChecks: weakSignalDriven && uniformIssueIdsBefore.length > 0
+          ? Math.max(maxRewriteRounds, 2)
+          : maxRewriteRounds,
+        requiredIssueIds: weakSignalDriven ? weakSignalIssueIds : undefined,
         targetWordCount: writeInput.targetWordCount,
         previousChapterEnding: input.previousChapterEnding,
         allowedAppearanceNames: extractAllowedAppearanceNames(
@@ -506,11 +541,16 @@ export class LongFormWritingEngine {
           `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 改稿回合结束时存在未复检改动，已回退到最后一次审查稿（${outcome.finishReason}）`
         );
       }
-      // survived 语义（照抄 words-overlimit-survived 样板）：只定向修一轮，仍均匀则保留
-      // 最优稿继续走，不把均匀化升为 blocking（那会变成重试耗尽死章），靠日志黄签进 triage。
+      // survived 语义（照抄 words-overlimit-survived 样板）：定向修后仍命中则保留
+      // 最优稿继续走，不升 blocking（那会变成重试耗尽死章），靠日志黄签进 triage。
       if (uniformIssueIdsBefore.length > 0 && uniformDensityIssueIds(report).length > 0) {
         console.info(
-          `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 段落节奏改稿一轮后仍均匀化（cv 未达标），保留重写稿（uniform-cv-survived，不阻断）`
+          `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 段落节奏改稿后仍均匀化（cv 未达标），保留重写稿（uniform-cv-survived，不阻断）`
+        );
+      }
+      if (verbatimIssueIdsBefore.length > 0 && nodeVerbatimIssueIds(report).length > 0) {
+        console.info(
+          `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 节点原句照抄改稿后仍命中（≥12 字重叠），保留改写稿（node-verbatim-survived，不阻断）`
         );
       }
     }
@@ -663,6 +703,7 @@ export class LongFormWritingEngine {
         targetWordCount: writeInput.targetWordCount ?? 0,
         previousChapterEnding: input.previousChapterEnding,
         chapterNumber: contracts.chapter.chapterNumber,
+        mustCover: contracts.chapter.mustCover,
       }),
     };
   }

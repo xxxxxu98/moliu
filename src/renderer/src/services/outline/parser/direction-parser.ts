@@ -70,11 +70,13 @@ function parseSingleFallbackBlock(raw: string): OutlineDirection[] {
 export function parseDirections(raw: string): OutlineDirection[] {
   const text = normalizeGeneratedText(raw);
 
-  const primaryBlocks = splitByHeading(text, /^##\s*方向方案\s*\d+/gm);
-  const blocks =
-    primaryBlocks.length > 0
-      ? primaryBlocks
-      : splitByHeading(text, /^#{1,3}\s*(?:方向|方案)\s*\d+/gm);
+  // heading 归一化（qwen-3.8-2b 实测形态，2026-09-10）：编号容忍中文数字
+  // （「# 方案一：xxx」），且标准「## 方向方案1」与变体「# 方案二」须合并切块——
+  // 原主备二选一逻辑在两种格式混排时会丢掉变体块（变体整段被并进前一块 body）。
+  const blocks = splitByHeading(
+    text,
+    /^#{1,3}\s*(?:方向方案|方向|方案)\s*[0-9一二三四五六七八九十]+/gm,
+  );
 
   const parsed =
     blocks.length > 0

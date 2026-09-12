@@ -43,7 +43,9 @@ function normalizeContractKey(value: string): string {
  * 各顶层键拆进数组多个元素）。2026-08-31 反重力 200 章双开冒烟 ch72 实测：
  * 裸数组直达 parseSchema → 「expected object, received array」非瞬态硬拒 →
  * review-unavailable 烧光重试预算，整章 0 字。
- * 合并数组内含顶层键的对象条目；识别不出审查包形状的数组维持原样交 schema 报错
+ * 三层归一：① 合并数组内含顶层键的对象条目；② 元素全是「裸 issues 项」
+ * （severity+location/quote 特征键）的数组包装成 {issues:[...]}（2026-09-10
+ * glm ch147 实测形态）；③ 其余识别不出审查包形状的数组维持原样交 schema 报错
  * （如模型误输出段落字符串数组——那是草稿形状，不是审查结论，不能瞎兜）。
  */
 function normalizeTopLevelObjectShape(value: unknown): unknown {
@@ -71,7 +73,24 @@ function normalizeTopLevelObjectShape(value: unknown): unknown {
       }
     }
   }
-  return recognized ? merged : value;
+  if (recognized) return merged;
+  // 2026-09-10 glm-5.3-flash ch147 实测：judge 顶层数组的元素是「裸 issues 项」
+  // （对象带 severity/location/quote 等特征键，但不含顶层键），既走不到上面的
+  // 合并也过不了 schema 的单元素解包 → review-unavailable 烧光整章预算。
+  // 识别出审查 issue 特征形状就包装成 {issues: [...]}——这是审查结论的合法
+  // 变体形状；段落字符串数组（草稿形状）仍原样上抛交 schema 报错。
+  const looksLikeIssueItem = (item: unknown): boolean => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
+    const keys = Object.keys(item as Record<string, unknown>);
+    return (
+      (keys.includes('severity') || keys.includes('type')) &&
+      keys.some((k) => k === 'location' || k === 'quote' || k === 'issue' || k === 'description')
+    );
+  };
+  if (value.length > 0 && value.every(looksLikeIssueItem)) {
+    return { issues: value };
+  }
+  return value;
 }
 
 /**

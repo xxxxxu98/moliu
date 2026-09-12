@@ -35,6 +35,7 @@ import { runOutlineRepairAgent } from '../agent/OutlineAgent';
 import type { AgentLoopTransport, AgentMessage } from '@/services/story-runtime/agent/AgentLoopRunner';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 import { readPositiveIntEnv } from '@/utils/env';
+import { shouldDisableZhipuThinking } from '@/utils/zhipuThinking';
 import { readWithIdleTimeout } from '@/utils/streamIdleWatchdog';
 
 /**
@@ -52,6 +53,20 @@ export const OUTLINE_REQUEST_TIMEOUT_MS = readPositiveIntEnv('MOLIU_OUTLINE_TIME
  * 流式下 token 持续到达，连接不再静默，长输出才可能跑完。
  */
 const OUTLINE_STREAM_DONE = '[DONE]';
+
+/**
+ * 网关断流类 AbortError 判定（供 requestChatCompletion 错误归一化）：
+ * 覆盖两种形态——DOMException(name='AbortError') 与 Node http/undici 断流的裸
+ * `Error('aborted')`（name='Error'，2026-09-09 智谱网关 381s 处 RST 实测）。
+ * 不依赖 instanceof Error：DOMException 不是 Error 子类，name-only 判定两者都会漏。
+ */
+function isConnectionAbortError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const name = (error as { name?: unknown }).name;
+  if (name === 'AbortError') return true;
+  const message = (error as { message?: unknown }).message;
+  return typeof message === 'string' && /^aborted$/iu.test(message);
+}
 
 /** 读取 OpenAI 兼容 SSE 流并拼回完整文本；网关忽略 stream 参数时回退整包 JSON */
 async function readOpenAiCompatibleStream(response: Response): Promise<string> {
@@ -751,7 +766,7 @@ export class UnifiedOutlineGenerator {
       let normalizedError: unknown = error;
       if (timeoutController.signal.aborted && !signal?.aborted) {
         normalizedError = new Error(`[大纲请求超时] 单次 AI 请求超过 ${requestTimeoutMs}ms`);
-      } else if (error instanceof Error && error.name === 'AbortError' && !signal?.aborted) {
+      } else if (!signal?.aborted && isConnectionAbortError(error)) {
         normalizedError = new Error('网络连接中断：AI 流式连接被远端重置（AbortError）');
       }
       if (tracer) {
@@ -907,6 +922,12 @@ export class UnifiedOutlineGenerator {
         temperature: options.temperature ?? config.generationConfig?.temperature ?? 0.7,
         top_p: options.topP ?? config.generationConfig?.topP ?? 0.9,
         ...(maxTokens ? { max_tokens: maxTokens } : {}),
+        // 智谱 glm 深度思考默认全开，大纲/滚纲单步会先烧数千 reasoning tokens
+        // （实测单步 12-19 分钟）；关思考后同量级输出分钟级完成。与写作侧
+        // unified.service 的 adapter 注入同口径，逃生口同为 MOLIU_ZHIPU_KEEP_THINKING=1。
+        ...(shouldDisableZhipuThinking(resolvedBaseUrl)
+          ? { thinking: { type: 'disabled' } }
+          : {}),
       }),
       ...(signal ? { signal } : {}),
     });

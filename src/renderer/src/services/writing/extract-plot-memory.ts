@@ -456,6 +456,19 @@ export interface FateStatus {
 }
 
 /**
+ * 命运级解除值（AI 提取合同 8 的规范化 value，非本地正则）：提取侧已把
+ * 「获释族（出狱/放出/开释/走出牢门…）」归一为「获释」等合法解除值。消费侧
+ * 此前只认 FATE_STATES 五态，这些解除 delta 被 `!FATE_STATES.has()` 静默
+ * 丢弃——角色永久卡死在旧终态（2026-09-12 终验实证：萧元瑾 ch150 已出账
+ * 「获释」，ch175 状态摘要仍是「下狱」，蓝图按获释后剧情写监国被三连拒成洞）。
+ * 语义判定在 AI 合同，这里只做状态机映射：合法解除 delta 到账即从禁入名单剔除。
+ * 注意「越狱」不在此列：越狱是逃亡不是合法解除，逃犯在押身份仍在（滚纲命运锁
+ * 语义：越狱后终态=最晚下狱态，重捕/通缉剧情由此正确衔接——outline-roller
+ * 命运弧用例锁定的行为）。
+ */
+const FATE_RELEASE_STATES = new Set(['获释', '平反', '复职', '复位', '赦免', '起复']);
+
+/**
  * 汇总全量章节记忆的角色命运状态：取每个角色最晚一次的命运级变化；
  * 若其后的章节记忆里出现了解除性叙述（平反/越狱等），则不再列为禁入。
  */
@@ -463,6 +476,12 @@ export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {
   const memorySorted = [...memories].sort((a, b) => a.chapterIndex - b.chapterIndex);
   for (const memory of memorySorted) {
     for (const change of memory.characterStateChanges) {
+      // 解除 delta（合同 8 规范化值）：到账即解除禁入——AI 已做语义判定，
+      // 消费侧不做二次正则。解除后若再入终态，下方 FATE_STATES 分支自然重登。
+      if (FATE_RELEASE_STATES.has(change.state)) {
+        byCharacter.delete(change.characterName);
+        continue;
+      }
       if (!FATE_STATES.has(change.state)) continue;
       const prev = byCharacter.get(change.characterName);
       if (!prev || memory.chapterIndex >= prev.chapterIndex) {
