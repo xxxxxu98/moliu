@@ -17,8 +17,51 @@ export interface RolledBlueprintIssue {
     | 'hollow-cen'
     | 'reader-meta'
     | 'locked-foreshadow'
-    | 'locked-foreshadow-payoff';
+    | 'locked-foreshadow-payoff'
+    | 'truncated-hook-clause'
+    | 'finale-not-closing';
   detail: string;
+}
+
+/**
+ * 蓝图残句截断信号（2026-09-12 g38f reg20 实证：初版第 40+ 章 CBN 密集出现
+ * 「仵作刚将浮尸抬上井栏，沈淮安手中。」「三张盖着朱印。」式生成截断残句，
+ * 长度合法通过 8-25 字闸，正文履约只能照抄半截话）。悬垂结构是格式腐败
+ * 信号，不是语义判定。两级词集：
+ * - 副词/连词悬垂（正在/而且…）——现代汉语不存在以此收尾的完整句，恒判；
+ * - 方位悬垂（手中/眼前…）——仅当近旁无介词/动词引导时判：「，沈淮安手中。」
+ *   是半截句，而「拍在督粮官眼前。」「递到陆宣手中。」是完整处置句
+ *   （2026-09-13 r4 启动实证：无引导词判据时这两句被误杀，修复轮拖死整轮）。
+ * 「…的。」「…着。」可以是完整谓语句（灯还亮着），不入词集。
+ */
+const ADVERBIAL_DANGLER_TAIL_RE =
+  /(?:正在|已经|即将|而且|但是|突然|忽然|渐渐|缓缓)[。！？!?…]?\s*$/u;
+const LOCATIVE_DANGLER_TAIL_RE = /(?:手中|怀里|袖中|眼前|身后)[。！？!?…]?\s*$/u;
+/** 方位词的合法引导：V在/到/进/入/向/往/至/于 + 名词 + 方位词 是完整句 */
+const LOCATIVE_LICENSER_RE = /[在到进向往至于落递拍塞藏送放]/u;
+
+export function isTruncatedClause(text: string): boolean {
+  const trimmed = (text ?? '').trim();
+  if (ADVERBIAL_DANGLER_TAIL_RE.test(trimmed)) return true;
+  const locativeMatch = trimmed.match(LOCATIVE_DANGLER_TAIL_RE);
+  if (!locativeMatch) return false;
+  const tailHead = trimmed.length - locativeMatch[0].length;
+  const context = trimmed.slice(Math.max(0, tailHead - 4), tailHead);
+  return ![...context].some(ch => LOCATIVE_LICENSER_RE.test(ch));
+}
+
+/**
+ * 终章收束声明信号（格式级存在性检查，语义收束质量归 outline-reviewer/书审）：
+ * 末章蓝图的 CEN/mustCover/hookText 至少含一处收束声明词。滚纲提示词的
+ * 「终卷收束硬约束」早已要求（2026-09-10 glm r2 结尾不收束 S1 后补），但纯
+ * prompt 约束无守卫——g38f r3 主轮 ch200 仍以「崔相饮鸩」新钩子收尾（残卷
+ * 报信戛然而止，无终局画面），提示词遵守与否没人拦。
+ */
+const FINALE_CLOSURE_SIGNAL_RE =
+  /尘埃落定|大结局|终章|终局|落幕|归处|归隐|新秩序|天下大定|全书完|结案|定局|善终|圆满|新朝|新篇|故?事?讲完/u;
+
+export function hasFinaleClosureSignal(text: string): boolean {
+  return FINALE_CLOSURE_SIGNAL_RE.test(text ?? '');
 }
 
 /** 锁定伏笔的计时信息（Pipeline 侧 futureReveals 同源：createdChapter = 大纲预埋章号） */

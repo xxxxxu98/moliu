@@ -20,6 +20,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { isRealAiEnabled, readRealAiEnvConfig, createRealStructuredAI } from './realStructuredAI';
 import { openContinueWriteSession } from './continueWriteHarness';
 import { dropForeshadowConflictingItems, type ForeshadowTimingHint } from '@/services/outline/rolling/outline-roller';
+import {
+  applyBlueprintToPlotNode,
+  blueprintToChapterUpdate,
+  BlueprintRepairLedger,
+  isFulfillmentDomainFailure,
+  regenerateChapterBlueprint,
+} from '@/services/outline/rolling/chapter-blueprint-regenerator';
+import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
 import { useProjectStore } from '@/stores/project.store';
 import type { Project } from '@/types/project';
 
@@ -150,10 +158,19 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<vo
 
   const ai = createRealStructuredAI(readRealAiEnvConfig());
   const session = openContinueWriteSession({ project: { ...project, chapters } as Project });
+  // 蓝图再生调用器（2026-09-13 r4 ch187 齐王命运冲突补齐）：补写路径与主循环
+  // 同样会遇到「过期节点要求已羁押角色自由出场」的死锁，纯重试修不好
+  const repairCfg = readRealAiEnvConfig();
+  const repairBlueprintCaller = (system: string, user: string, temperature?: number) =>
+    new UnifiedOutlineGenerator().callStructuredTextForRoll(system, user, {
+      temperature,
+      trace: { runId: `storyflow-repair-bp-${Date.now()}`, model: repairCfg.model, provider: repairCfg.provider },
+    });
   try {
     for (const n of options.chapterNumbers) {
       let done = false;
       let lastError = '';
+      const repairLedger = new BlueprintRepairLedger();
       // 伏笔时序死锁熔断（与 continueWriteHarness.runContinueWriteChapters 同构）：
       // 同一伏笔「提前揭示」连续 ≥2 次拒稿即确认蓝图-伏笔矛盾，本章豁免该伏笔
       // 的时点禁令——pipeline 从 futureReveals 移除（2026-09-10 ch20 三连拒实证）。
@@ -204,6 +221,43 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<vo
               console.warn(
                 `[repair] 第${n}章伏笔时序熔断：伏笔「${prefix}…」连续 ${count} 次提前揭示拒稿，确认蓝图与伏笔台账矛盾，本章豁免该伏笔时点禁令（源头应修蓝图）`,
               );
+            }
+          }
+          // 履约域/命运冲突记账 → 蓝图再生（2026-09-13 r4 ch187 形态：过期节点
+          // 要求已下狱角色自由出场，判官按命运禁区连拒，纯重试修不好）
+          const chapterForRepair = chapters.find(item => (item.orderIndex ?? 0) + 1 === n);
+          if (chapterForRepair && isFulfillmentDomainFailure(lastError)) {
+            const failures = repairLedger.recordFailure(chapterForRepair.id);
+            console.warn(`[repair] 第${n}章履约域失败（累计 ${failures} 次）`);
+            if (repairLedger.shouldTrigger(chapterForRepair.id)) {
+              repairLedger.markRegenerated(chapterForRepair.id);
+              try {
+                const repair = await regenerateChapterBlueprint({
+                  project: { ...project, chapters } as Project,
+                  chapterNumber: n,
+                  callStructuredText: repairBlueprintCaller,
+                });
+                if (repair.blueprint) {
+                  applyBlueprintToPlotNode(project.plotOutline ?? [], n, repair.blueprint);
+                  const update = blueprintToChapterUpdate(repair.blueprint);
+                  chapterForRepair.outline = update.outline;
+                  chapterForRepair.plotSummary = update.plotSummary;
+                  // 再生覆盖了 outline，重新追加阶段 1 的下章缝合锚
+                  const nextChapter = chapters.find(item => (item.orderIndex ?? 0) + 1 === n + 1);
+                  const nextHead = (nextChapter?.content ?? '').trim().slice(0, 180);
+                  if (nextHead) {
+                    chapterForRepair.outline =
+                      `${chapterForRepair.outline}\n【缝合·下章开头】下章开头原文：「${nextHead}」——本章剧情必须自然导向该状态：人物生死/羁押/在场身份/时空进度与前后章完全一致，不得矛盾；本章结尾落在导向该状态的悬念或行动上。`;
+                  }
+                  console.warn(
+                    `[repair] 第${n}章蓝图已再生（命运锁在再生提示词内生效），下轮按新合同补写`,
+                  );
+                } else {
+                  console.warn(`[repair] 第${n}章蓝图再生未成功：${repair.error}`);
+                }
+              } catch (repairError) {
+                console.warn(`[repair] 第${n}章蓝图再生异常（继续原重试）：`, repairError);
+              }
             }
           }
         }

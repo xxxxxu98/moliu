@@ -10,8 +10,11 @@ description: Storyflow 可上线验收大循环。把「真实 AI 生成整本�
 
 ```
 我的全书通读 Findings S1/S2 清零 + book-precheck 红线清零 + fate.contradiction-candidate 经 AI 裁决(fate-adjudicate.mjs)确认的 S1=0
-+ 读者裁判硬门禁达线（阈值经用户批准冻结后填入；批准前为影子观察）
-+ ending-audit 完本指标过关（章节完整 + 伏笔无 main 级未回收）+ 结局书审无 S1 + 前三章盲测通过
++ 读者裁判硬门禁达线（2026-09-13 复冻：大纲≥85 / 均值≥85 / 章节中位≥86 / 最低≥65；
+  首轮触线黄签、同 provider 连续两轮红签——中位 87 只有历史最佳轮过线，
+  长跑健康分布 85.6-86.3，86 是健康/劣化分离面）
++ ending-audit 完本指标过关（章节完整 + 伏笔无 main 级未回收 + 完本收束：
+  closure signals>0 且结局书审 rubric 第 6 项「新钩子收尾」无 S1/S2）+ 前三章盲测通过
 ```
 
 > **2026-09-02 agent 化重构**：命运事件的「入账」全权归写作侧 AI 提取合同
@@ -146,6 +149,8 @@ node .agents/skills/storyflow-release-loop/scripts/fate-adjudicate.mjs "<matrix�
 | 误报5 | 条件句+动词循环窄窗 | 「今夜若是强行在此处杀了陆云铮」 | 动词循环 ±30 字假设检测 |
 | 误报6 | 只要/便会型条件句 | 「只要统领手腕稍一用力，顾衡的头颅便会当场落地」(刀架脖颈未死) | 假设标记补 只要\|便会(双侧同源)；误报致死进状态摘要→下章 fact_conflict 连拒 5 次→stalled 中止 14/100，triage 会误判 model-capability，先查章记忆提取层 |
 | 结构 | 误报终态在实体上持久残留 | 命运表已熔断清空、评审仍读到 死亡 | overlayCharacterFates 清除"不在命运表+有后生活动"的残留状态（读取侧不变量：活人不能带死状态） |
+| 结构2 | 死亡终态被三路洗白（轻态覆盖/解除误擦/越狱熔断） | 严开礼 ch179 撞柱气绝入账死亡→ch187 越狱 delta 被 drop-pass 当"后生活动"熔断死亡→ch195 下狱重登；叠加 overlay"保守跳过"让判官全程只读到旧"下狱"，ch186 复活越狱一次过审（2026-09-12 g38f 200 章实证） | 死亡族三重保护(轻态不覆盖+解除delta不生效+解除词共现不擦) + drop-pass 状态转移(越狱/获释族)不算活动 + overlay 死亡优先级顶掉残留轻态 + collectFateForbiddenZones 接线(此前零调用死代码) + fate-adjudicate 死亡条目取最早优先裁(不被终态视图顶掉) |
+| 结构3 | 防线生效后无恢复环→"响亮成洞"；新守卫误报→fail-closed 拖死整轮 | r4 双向实证：齐王 ch136 下狱、ch187 过期节点令其率兵攻午门，判官按命运禁区五连拒成洞（防线对但纯重试修不好）；首轮启动时截断残句守卫误杀「拍在督粮官眼前。」类介词完整句，大纲展开修复轮被两条"模型眼里没病"的误报拖死 4 分钟即败 | ①蓝图再生接入闭环 harness 与补写路径（此前只在 App useBatchWriter），记账谓词扩展"触发禁区/fact_conflict"归因蓝图；②新守卫词集必须带"完整句负例"测试（介词引导方位句/谓语句尾不判悬垂）；③洞后可走 storyflow-repair-empty.mjs 定点补写（ch187 实测二次过审且合规） |
 
 同族守卫：triage 死亡扫描的求刑守卫（「斩杀X以谢天下」）、解除词表保释/候勘系、
 解除章覆盖语义；伏笔防线的蓝图词面校验（findLockedForeshadowViolations，2-gram 覆盖）

@@ -117,6 +117,10 @@ function buildReviewPack(chapters, ledger, tailK) {
   parts.push('3. 人物结局：末几章出场的主要角色命运是否有交代（不要求全员善终，要求无「凭空消失」）？主角无交代 = S1');
   parts.push('4. 结尾观感：读完最后一章，是「故事讲完了」还是「写到一半被切断」？后者 = S1');
   parts.push('5. 烂尾迹象：末 K 章是否出现加速赶稿（冲突草草和解、时间线跳跃收尾）？有 = S2');
+  parts.push('6. 新钩子收尾（2026-09-13 增补完本收束标准）：末章结尾是否以新危机/新悬念/新报信收束');
+  parts.push('   （如反派突发异动、急报冲殿、未见过的新事件戛然而止）而无终局画面交代？');
+  parts.push('   末章应落在「尘埃落定/新秩序/主角归处」类收束画面上；以新钩子收尾 = S2，');
+  parts.push('   若该钩子属主线矛盾本身的未决延续则升 S1。');
   return parts.join('\n');
 }
 
@@ -157,9 +161,27 @@ function exportBlindtest(chapters, bookName) {
 
 const integrity = collectChapterIntegrity(book.chapters ?? []);
 const ledger = collectForeshadowLedger(book.foreshadows ?? []);
+
+// 完本收束信号扫描（2026-09-13 增补，格式级）：末章正文的收束声明词命中数 +
+// 末段预览。命中为零 = 结尾缺终局画面（供 AI 结局书审 rubric 第 6 项对照，
+// 不单独定罪——ch200「崔相饮鸩」钩子收尾类问题的语义终审归 review-pack AI）
+function collectClosureSignal(chapters) {
+  const written = chapters.filter(c => c.hasContent).sort((a, b) => a.index - b.index);
+  const last = written[written.length - 1];
+  if (!last) return { closureSignals: 0, lastParagraphPreview: '' };
+  const src = path.join(bookDir, `${String(last.index).padStart(3, '0')}.txt`);
+  const text = fs.readFileSync(src, 'utf8');
+  const CLOSURE_RE = /尘埃落定|大结局|终章|终局|落幕|归处|归隐|新秩序|天下大定|全书完|结案|定局|善终|圆满|新朝|新篇/gu;
+  const signals = [...text.matchAll(CLOSURE_RE)].length;
+  const paragraphs = text.split(/\n+/u).map(p => p.trim()).filter(Boolean);
+  const lastParagraphPreview = (paragraphs[paragraphs.length - 1] ?? '').slice(0, 120);
+  return { closureSignals: signals, lastParagraphPreview };
+}
+const closure = collectClosureSignal(book.chapters ?? []);
+
 fs.writeFileSync(
   path.join(bookDir, 'ending-metrics.json'),
-  JSON.stringify({ book: book.name, exportedAt: new Date().toISOString(), integrity, foreshadowLedger: ledger }, null, 1),
+  JSON.stringify({ book: book.name, exportedAt: new Date().toISOString(), integrity, closure, foreshadowLedger: ledger }, null, 1),
   'utf8'
 );
 fs.writeFileSync(path.join(bookDir, 'ending-review-pack.txt'), buildReviewPack(book.chapters ?? [], ledger, TAIL_K), 'utf8');
@@ -168,5 +190,6 @@ const blindtestDir = exportBlindtest(book.chapters ?? [], String(book.name ?? ''
 // 控制台 ASCII 摘要；结论解读看 ending-metrics.json 与 ending-review-pack.txt 的 AI 审读
 console.log(`ending-audit: ${bookDir}`);
 console.log(`integrity: complete=${integrity.complete} holes=${integrity.holes.length} lastCh=${integrity.lastChapterIndex} lastWords=${integrity.lastChapterWords}`);
+console.log(`closure: signals=${closure.closureSignals}${closure.closureSignals === 0 ? ' [watch] 末章无收束声明词，AI 书审 rubric 第 6 项重点核查' : ''}`);
 console.log(`foreshadow: total=${ledger.total} resolved=${ledger.resolved} unresolved=${ledger.unresolvedActive} planned=${ledger.plannedNeverWritten} rate=${ledger.resolutionRate}`);
 console.log(`outputs: ending-metrics.json / ending-review-pack.txt / ${path.basename(blindtestDir)}/`);

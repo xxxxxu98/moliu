@@ -86,12 +86,26 @@ const chapters = (proj.chapters ?? [])
 
 const fateAt = new Map();
 const fateEvidence = new Map();
+// 死亡族单独跟踪（取最早一条）：只看「最新终态」会被后续轻态顶掉——
+// 2026-09-12 g38f 200 章 S1 实证：严开礼 ch180 死亡入账、ch196「下狱」覆盖，
+// 终态视图只剩「下狱@196」，真复活问题（死亡后 12 章活体）从未被送裁。
+// 死亡不可逆：有死亡条目的角色一律按死亡裁，终态候选让位。
+const DEATH_FATES = new Set(['死亡', '驾崩']);
+const deathAt = new Map();
+const deathEvidence = new Map();
 for (const m of memories) {
   for (const change of m?.characterStateChanges ?? []) {
     const name = String(change?.characterName || '').trim();
     if (name.length < 2 || name.length > 8 || !rosterSet.has(name)) continue;
     if (!TERMINAL_FATES.has(change.state)) continue;
     const chapter = (m.chapterIndex ?? 0) + 1;
+    if (DEATH_FATES.has(change.state)) {
+      const prevDeath = deathAt.get(name);
+      if (!prevDeath || chapter < prevDeath.chapter) {
+        deathAt.set(name, { name, state: change.state, chapter });
+        deathEvidence.set(name, String(change?.detail || '').slice(0, 120));
+      }
+    }
     const prev = fateAt.get(name);
     if (!prev || chapter > prev.chapter) {
       fateAt.set(name, { name, state: change.state, chapter });
@@ -107,6 +121,9 @@ function hitSentences(text, name) {
 
 const candidates = [];
 for (const fate of fateAt.values()) {
+  // 死亡在册的角色跳过终态候选：其「下狱/获释」等后续终态是死亡矛盾的下游
+  // 噪声，按死亡条目裁决才是正确问题
+  if (deathAt.has(fate.name)) continue;
   const mentions = [];
   for (const ch of chapters) {
     if (ch.n <= fate.chapter) continue;
@@ -117,10 +134,21 @@ for (const fate of fateAt.values()) {
     candidates.push({ ...fate, ledgerEvidence: fateEvidence.get(fate.name) ?? '', mentions });
   }
 }
+for (const fate of deathAt.values()) {
+  const mentions = [];
+  for (const ch of chapters) {
+    if (ch.n <= fate.chapter) continue;
+    const hits = hitSentences(ch.text, fate.name);
+    if (hits.length) mentions.push({ chapter: ch.n, title: ch.title, sentences: hits.slice(0, 2) });
+  }
+  if (mentions.length) {
+    candidates.push({ ...fate, ledgerEvidence: deathEvidence.get(fate.name) ?? '', mentions, deathEntry: true });
+  }
+}
 candidates.sort((a, b) => b.mentions.length - a.mentions.length);
 const selected = candidates.slice(0, limit);
 
-console.log(`[fate-adjudicate] 台账终端命运 ${fateAt.size} 个，矛盾候选 ${candidates.length} 条，本轮裁决 ${selected.length} 条`);
+console.log(`[fate-adjudicate] 台账终端命运 ${fateAt.size} 个（死亡族 ${deathAt.size} 个优先裁），矛盾候选 ${candidates.length} 条，本轮裁决 ${selected.length} 条`);
 
 // ---------- 模型通道 ----------
 const cfgPath = resolve(repoRoot, 'temp/continue-write.real.config.json');

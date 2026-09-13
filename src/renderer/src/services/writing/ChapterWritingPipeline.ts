@@ -79,7 +79,7 @@ import type {
 } from '@/services/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
-import { overlayCharacterFates } from '@/services/writing/extract-plot-memory';
+import { collectFateForbiddenZones, overlayCharacterFates } from '@/services/writing/extract-plot-memory';
 import { stripStructuredNodeBlock } from '@/services/outline/parser/utils';
 import type { SceneChunk } from '@/types/story-runtime';
 
@@ -766,6 +766,12 @@ export class ChapterWritingPipeline {
       );
       if (fateOverlay.applied > 0) state.entities = fateOverlay.entities;
 
+      const chapterForbiddenZones = assembleChapterForbiddenZones(
+        taskBook?.forbiddenZones,
+        input.project,
+        chapterNumber,
+      );
+
       const volume = input.project.volumes.find(item => item.id === input.chapter.volumeId);
       const volumePlan = input.project.metadata?.volumePlans?.find(
         item => item.volumeIndex === (volume?.orderIndex ?? 0)
@@ -801,7 +807,7 @@ export class ChapterWritingPipeline {
         CPNs: taskBook?.CPNs,
         CEN: taskBook?.CEN,
         mustCover: taskBook?.mustCover,
-        forbiddenZones: taskBook?.forbiddenZones,
+        forbiddenZones: chapterForbiddenZones,
       };
       const contracts = new ContractPackBuilder().build({
         bootstrap,
@@ -812,7 +818,7 @@ export class ChapterWritingPipeline {
           objective: volumePlan?.objective ?? volume?.summary ?? input.project.description,
           conflict: volumePlan?.coreConflict ?? input.project.conflictDesign?.source ?? '',
           requiredPayoffs: volumePlan?.payoffForeshadows ?? [],
-          forbidden: taskBook?.forbiddenZones ?? [],
+          forbidden: chapterForbiddenZones,
         },
         chapter: {
           number: chapterNumber,
@@ -849,7 +855,7 @@ export class ChapterWritingPipeline {
           // 用 execute() 合并过任务书降级提示的有效指令，而非原始 input（此前丢失降级事实）
           effective.userInstructions ?? '',
         ],
-        forbidden: taskBook?.forbiddenZones ?? [],
+        forbidden: chapterForbiddenZones,
       });
       const query =
         taskBook?.CPNs.join(' ') ||
@@ -1337,6 +1343,32 @@ export function mergeChapterBlueprintText(
   ]
     .filter(Boolean)
     .join('\n');
+}
+
+/**
+ * 本章禁区装配：大纲防剧透禁区 + 命运禁入条目（2026-09-12 g38f 200 章 S1 实证：
+ * collectFateForbiddenZones 此前零调用——写手/判官提示词从未收到「X已于第N章死亡」
+ * 禁令，严开礼 ch179 撞柱气绝后 ch186 按过期滚纲节点复活越狱一次过审）。与防剧透
+ * 禁区同面注入：判官读到即按 fact_conflict 拒稿，连续履约失败触发蓝图再生（滚纲
+ * 命运锁在再生提示里生效），形成自愈环。记忆按目标章截断（与 overlayCharacterFates
+ * 同口径），补写/重写早期章时不被后文终态误伤。
+ */
+export function assembleChapterForbiddenZones(
+  taskBookZones: string[] | null | undefined,
+  project: Pick<Project, 'characters' | 'chapterMemories'>,
+  chapterNumber: number
+): string[] {
+  const roster = [
+    ...(project.characters ?? []).map(character => character.name),
+    ...(project.characters ?? []).flatMap(character => character.aliases ?? []),
+  ];
+  const fateZones = collectFateForbiddenZones(
+    (project.chapterMemories ?? []).filter(
+      memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
+    ),
+    roster,
+  );
+  return [...(taskBookZones ?? []), ...fateZones];
 }
 
 // ============================================================

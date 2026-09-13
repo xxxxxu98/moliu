@@ -1112,6 +1112,17 @@ export async function runStoryflowClosedLoop(
     chapterCount,
     targetWordCount,
     persistTrace: true,
+    // 蓝图再生调用器（2026-09-13 r4 ch187 齐王命运冲突五连拒成洞补齐）：
+    // 履约域/命运禁区连续失败时以已写状态+命运锁为基底重写本章合同
+    ...(isRealAiEnabled()
+      ? {
+          repairBlueprint: (system: string, user: string, temperature?: number) =>
+            new UnifiedOutlineGenerator().callStructuredTextForRoll(system, user, {
+              temperature,
+              trace: { runId: `${runIdPrefix}-bp-regen-${Date.now()}`, model: cfg.model, provider: cfg.provider },
+            }),
+        }
+      : {}),
     runIdPrefix,
     mode: 'batch',
     ai,

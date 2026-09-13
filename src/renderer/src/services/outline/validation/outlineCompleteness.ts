@@ -1,5 +1,6 @@
 import type { ChapterBlueprint, ExecutableOutline } from '../types/executable-outline';
 import { normalizedSimilarityKeepingNumbers } from '@/utils/text-similarity';
+import { hasFinaleClosureSignal, isTruncatedClause } from '../rolling/foreshadowTiming';
 
 /**
  * 长篇商业网文大纲的可应用门槛。
@@ -36,7 +37,9 @@ export type OutlineCompletenessBlockerKind =
   | 'chapter-reference-out-of-range'
   | 'unknown-character-reference'
   | 'protagonist-name-mismatch'
-  | 'unknown-location-reference';
+  | 'unknown-location-reference'
+  | 'truncated-hook-clause'
+  | 'finale-not-closing';
 
 export interface OutlineCompletenessBlocker {
   kind: OutlineCompletenessBlockerKind;
@@ -61,6 +64,10 @@ const STRUCTURAL_BLOCKER_KINDS = new Set<OutlineCompletenessBlockerKind>([
   'placeholder-title',
   'incomplete-blueprint',
   'invalid-chapter-order',
+  // 生成截断残句与短书末章不收束是结构性腐败（2026-09-12 g38f r3/reg 实证），
+  // 触发外层重试再生成而非带病落库
+  'truncated-hook-clause',
+  'finale-not-closing',
 ]);
 
 export function hasStructuralOutlineBlockers(report: OutlineCompletenessReport): boolean {
@@ -680,5 +687,134 @@ export function inspectOutlineCompleteness(
   const semantic = inspectSemanticConsistency(outline);
   blockers.push(...semantic.blockers);
 
-  return { canApply: blockers.length === 0, blockers, warnings: semantic.locationWarnings };
+  // 生成截断残句（g38f reg20 初版第 40+ 章实测：CBN「…沈淮安手中。」通过长度闸落库）
+  for (const blueprint of blueprints) {
+    for (const [label, text] of [['CBN', blueprint.CBN], ['CEN', blueprint.CEN]] as const) {
+      if (isTruncatedClause(text)) {
+        blockers.push({
+          kind: 'truncated-hook-clause',
+          chapterNumber: blueprint.orderIndex,
+          message: `第${blueprint.orderIndex}章 ${label}「…${text.slice(-12)}」句末悬垂，疑似生成截断残句`,
+        });
+      }
+    }
+  }
+
+  // 短书末章收束声明：全书规划章数落在初版 50 章蓝图射程内时，末章必须带收束信号
+  // （200 章书的末章由滚纲终卷批次负责，outline-roller 的 finale 校验覆盖）
+  const plannedTotal = Number(outline.storyScale?.estimatedChapterCount ?? NaN);
+  if (
+    Number.isFinite(plannedTotal) &&
+    plannedTotal >= 1 &&
+    plannedTotal <= blueprints.length
+  ) {
+    const finale = blueprints.find(bp => bp.orderIndex === plannedTotal);
+    if (
+      finale &&
+      !hasFinaleClosureSignal(
+        [finale.CEN, ...finale.mustCover, finale.hookText ?? ''].join('\n'),
+      )
+    ) {
+      blockers.push({
+        kind: 'finale-not-closing',
+        chapterNumber: finale.orderIndex,
+        message: `第${finale.orderIndex}章是全书末章（规划 ${plannedTotal} 章），CEN/mustCover 缺少收束声明（尘埃落定/终局/归处/新秩序等），禁止以新危机钩子完本`,
+      });
+    }
+  }
+
+  // 爽点规划 ↔ 蓝图时序错位（g38f r3 主轮+reg 双书实测：爽点规划第 48 章「御前逼死
+  // 崔元敬」而蓝图第 19-20 章已写完其触柱身亡与主角受封——错位近 30 章，读者审标
+  // 记核心爽点脱钩）。词面对齐是格式级信号，语义复核归 outline-reviewer，故只出黄签
+  const coolPointWarnings = inspectCoolPointTimelineAlignment(outline);
+  const cardWarnings = inspectCharacterCardAndLocationPlausibility(outline);
+
+  return {
+    canApply: blockers.length === 0,
+    blockers,
+    warnings: [...(semantic.locationWarnings ?? []), ...coolPointWarnings, ...cardWarnings],
+  };
+}
+
+/**
+ * 角色卡/地名设定的格式级合理性（2026-09-12 g38f 双书实测，黄签观察项）：
+ * - relationshipChanges 条目字段残缺/描述截断（reg 实证：数组第二项元素截断错位）；
+ * - worldBuilding.locations 把政策动作误填为地名（r3 主轮实证：「预售粮票平抑市」
+ *   level=city 入表）。语义错标（政治同盟写成 lover）归读者评估/AI 书审，不本地判。
+ */
+function inspectCharacterCardAndLocationPlausibility(
+  outline: ExecutableOutline,
+): OutlineCompletenessBlocker[] {
+  const warnings: OutlineCompletenessBlocker[] = [];
+  for (const character of outline.keyCharacters ?? []) {
+    for (const relation of character.relationshipChanges ?? []) {
+      const dynamic = String(relation?.dynamic ?? '');
+      if (!String(relation?.targetName ?? '').trim() || !dynamic.trim() || isTruncatedClause(dynamic)) {
+        warnings.push({
+          kind: 'unknown-character-reference',
+          message: `角色卡「${character.name}」的 relationshipChanges 存在字段残缺/描述截断条目（target：${String(relation?.targetName ?? '（空）')}），需补全为完整关系卡`,
+        });
+        break;
+      }
+    }
+  }
+  const POLICY_ACTION_IN_NAME_RE = /[平抑预售推行颁行改革罢免查抄调升封驳兑付]/u;
+  for (const location of outline.worldBuilding?.locations ?? []) {
+    const name = String(location?.name ?? '').trim();
+    if (name.length >= 2 && POLICY_ACTION_IN_NAME_RE.test(name)) {
+      warnings.push({
+        kind: 'unknown-location-reference',
+        message: `地点表「${name}」疑似政策动作误填为地名，地点名应为空间场所而非行政措施`,
+      });
+    }
+  }
+  return warnings;
+}
+
+/** 爽点描述的 CJK 二字组词面：与蓝图文本对齐统计 */
+function cjkBigrams(text: string): Set<string> {
+  const cjk = (text ?? '').replace(/[^\u4e00-\u9fff]+/gu, '');
+  const grams = new Set<string>();
+  for (let i = 0; i + 1 < cjk.length; i += 1) grams.add(cjk.slice(i, i + 2));
+  return grams;
+}
+
+function inspectCoolPointTimelineAlignment(
+  outline: ExecutableOutline,
+): OutlineCompletenessBlocker[] {
+  const blueprints = outline.chapterBlueprints ?? [];
+  if (blueprints.length === 0) return [];
+  const bpTextByChapter = new Map<number, string>();
+  for (const bp of blueprints) {
+    bpTextByChapter.set(bp.orderIndex, blueprintText(bp));
+  }
+  const warnings: OutlineCompletenessBlocker[] = [];
+  for (const beat of outline.coolPointPlan ?? []) {
+    const suggested = Number(beat.suggestedChapter ?? NaN);
+    if (!Number.isFinite(suggested) || suggested < 1) continue;
+    const desc = `${beat.description ?? ''}${beat.payoff ?? ''}`;
+    const descGrams = cjkBigrams(desc);
+    if (descGrams.size < 6) continue;
+    let earliestHit: number | null = null;
+    for (const bp of blueprints) {
+      if (bp.orderIndex >= suggested) break;
+      const bpGrams = cjkBigrams(bpTextByChapter.get(bp.orderIndex) ?? '');
+      let hits = 0;
+      for (const gram of descGrams) if (bpGrams.has(gram)) hits += 1;
+      if (hits >= 4 && hits / descGrams.size >= 0.34) {
+        earliestHit = bp.orderIndex;
+        break;
+      }
+    }
+    // 错位 ≥15 章（reg 实证 28 章档）才报：小偏移是正常滚纲弹性
+    if (earliestHit !== null && suggested - earliestHit >= 15) {
+      warnings.push({
+        kind: 'inconsistent-story-scale',
+        message:
+          `爽点规划第 ${suggested} 章「${(beat.description ?? '').slice(0, 24)}」的词面已在第 ${earliestHit} 章蓝图中兑现，` +
+          `时序错位 ${suggested - earliestHit} 章——要么把爽点规划的章号对齐到实际节奏，要么蓝图改为铺垫不兑现`,
+      });
+    }
+  }
+  return warnings;
 }

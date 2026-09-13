@@ -611,12 +611,86 @@ describe('inspectRolledBlueprintQuality / findBlueprintRepetition', () => {
 
   it('相邻章 CBN：子串包含判复述；仅差序号的模板句不误伤', () => {
     const mk = (n: number, cbn: string) =>
-      ({ ...bpFrom(`### 第${n}章\n- 标题：夜审账本惊变\n- 概要：概要内容足够长概要补充说明文字。\n- CBN：${cbn}\n- CPNs：比对旧账发现缺口\n- CEN：影子逼近${n}\n- mustCover：查清缺口`, n), orderIndex: n });
+      ({ ...bpFrom(`### 第${n}章\n- 标题：夜审账本惊变\n- 概要：概要内容足够长概要内容足够长概要补充说明文字。\n- CBN：${cbn}\n- CPNs：比对旧账发现缺口\n- CEN：影子逼近${n}\n- mustCover：查清缺口`, n), orderIndex: n });
     // 本章开头吞了上章 CBN 全文再加尾巴 → 子串包含，判复述
     const repeated = [mk(64, '三更灯下账页缺角见血印'), mk(65, '三更灯下账页缺角见血印加急')];
     expect(findBlueprintRepetition(repeated)).toHaveLength(1);
     // 仅差一个序号（换查第几笔账）→ 合法的相邻推进，不误伤
     const sequential = [mk(66, '核对第3笔账目发现缺口'), mk(67, '核对第4笔账目发现缺口')];
     expect(findBlueprintRepetition(sequential)).toHaveLength(0);
+  });
+
+  // ---------- 2026-09-12 g38f r3 新守卫：截断残句 + 终章收束 ----------
+
+  it('CBN 句末方位悬垂判 truncated-hook-clause（reg 实证：「…沈淮安手中。」）', () => {
+    const raw = `### 第64章
+- 标题：浮尸抬上井栏
+- 概要：概要内容足够长概要内容足够长概要补充说明文字。
+- CBN：仵作刚将浮尸抬上井栏，沈淮安手中
+- CPNs：勘验浮尸伤痕；追问井边脚印
+- CEN：井底捞出一枚私印
+- mustCover：勘验浮尸锁定死因
+- 禁区：不得揭示私印主人`;
+    const issues = inspectRolledBlueprintQuality(bpFrom(raw, 64));
+    expect(issues.some(issue => issue.kind === 'truncated-hook-clause')).toBe(true);
+  });
+
+  it('完整谓语句尾（…亮着。/…假的。）不误判截断', () => {
+    const raw = `### 第65章
+- 标题：值房灯火未熄
+- 概要：概要内容足够长概要内容足够长概要补充说明文字。
+- CBN：三更过去，值房的灯还亮着
+- CPNs：伏在檐下盯梢；记下进出人影
+- CEN：帐本夹层抖出半张假契
+- mustCover：确认值房夜间异动
+- 禁区：不得揭示假契内容`;
+    const issues = inspectRolledBlueprintQuality(bpFrom(raw, 65));
+    expect(issues.some(issue => issue.kind === 'truncated-hook-clause')).toBe(false);
+  });
+
+  it('介词/动词引导的方位句尾不误判（r4 启动误伤实证：「拍在督粮官眼前。」「递到陆承宣手中。」）', () => {
+    const raw = `### 第66章
+- 标题：总表拍上公案
+- 概要：概要内容足够长概要内容足够长概要补充说明文字。
+- CBN：折算总表拍在督粮官眼前
+- CPNs：督粮官验看总表；当场对质折算口径
+- CEN：烫金公文递到陆承宣手中
+- mustCover：总表当堂呈验定口径
+- 禁区：不得揭示公文发出者`;
+    const issues = inspectRolledBlueprintQuality(bpFrom(raw, 66));
+    expect(issues.some(issue => issue.kind === 'truncated-hook-clause')).toBe(false);
+  });
+
+  it('isFinale 末章缺收束声明判 finale-not-closing；带收束词放行', () => {
+    const raw = `### 第200章
+- 标题：牢里崔相服毒了
+- 概要：概要内容足够长概要内容足够长概要补充说明文字。
+- CBN：小太监连滚带爬摔进大殿
+- CPNs：传报崔相狱中服毒；百官骤然失声
+- CEN：姜德海跌撞扑上新帝耳语
+- mustCover：传报崔文简服毒消息
+- 禁区：不得提前揭示服毒真假`;
+    const bp = bpFrom(raw, 200);
+    expect(
+      inspectRolledBlueprintQuality(bp, { isFinale: true }).some(
+        issue => issue.kind === 'finale-not-closing',
+      ),
+    ).toBe(true);
+    // 补收束声明（g38f r3 主轮 ch200 缺的正是这个）→ 放行
+    const closed = {
+      ...bp,
+      CEN: '新朝格局尘埃落定，主角功成归处已明',
+    };
+    expect(
+      inspectRolledBlueprintQuality(closed, { isFinale: true }).some(
+        issue => issue.kind === 'finale-not-closing',
+      ),
+    ).toBe(false);
+    // 非末章同内容不校验收束
+    expect(
+      inspectRolledBlueprintQuality(bp).some(
+        issue => issue.kind === 'finale-not-closing',
+      ),
+    ).toBe(false);
   });
 });

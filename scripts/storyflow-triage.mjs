@@ -509,7 +509,10 @@ function triageProvider(providerId, meta) {
       }
     }
   }
-  // 裁判硬门禁（2026-08-28 用户批准冻结；数值基准 = final6 分布 88.8/74.5）
+  // 裁判硬门禁（2026-08-28 首次冻结 85/85/87/60，基准 final6 分布 88.8/74.5；
+    // 2026-09-13 用户授权按长跑语料复冻：中位 87→86（200 章级健康分布 85.6-86.3，
+    // 87 只有历史最佳轮过线，86 是健康/劣化分离面），最低 60→65（单章 <65 是
+    // 阅读体验断崖——g38f r3 主轮 69.3 属边缘可过、reg20 57.6 吃书章应拦）。
     // 首轮触线 → 黄签警告；与上一份报告同 provider 连续触线 → 红签（连续两轮语义）。
     {
       const summaryFile = join(dir, 'storyflow.closed-loop.summary.json');
@@ -524,7 +527,7 @@ function triageProvider(providerId, meta) {
           const min = scores[0] ?? NaN;
           const median = scores.length ? scores[Math.floor(scores.length / 2)] : NaN;
           const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : NaN;
-          const GATE = { outlineMin: 85, avgMin: 85, medianMin: 87, minFloor: 60 };
+          const GATE = { outlineMin: 85, avgMin: 85, medianMin: 86, minFloor: 65 };
           const violations = [];
           if (Number.isFinite(outlineScore) && outlineScore < GATE.outlineMin)
             violations.push(`大纲分 ${outlineScore} < ${GATE.outlineMin}`);

@@ -16,6 +16,7 @@ import {
   selectRecentScenesByChapter,
   buildPayoffCandidates,
   mergeChapterBlueprintText,
+  assembleChapterForbiddenZones,
 } from '../ChapterWritingPipeline';
 import type { Project, Chapter } from '@/types/project';
 import type { SceneChunk } from '@/types/story-runtime';
@@ -460,5 +461,51 @@ describe('mergeChapterBlueprintText（埋设检测共现源）', () => {
   it('taskBook 缺失时回落章表字段，全缺返回空串', () => {
     expect(mergeChapterBlueprintText(null, slotChapter)).toContain('滚动续写槽位');
     expect(mergeChapterBlueprintText(undefined, undefined)).toBe('');
+  });
+});
+
+// 2026-09-12 g38f 200 章 S1 回归：命运禁入条目此前从未进入写手/判官提示词
+// （collectFateForbiddenZones 零调用），严开礼 ch179 撞柱气绝后 ch186 复活越狱一次过审。
+describe('assembleChapterForbiddenZones（命运禁入接线）', () => {
+  const memoryAt = (index: number, changes: Array<{ characterName: string; stateType: string; state: string; detail: string }>) => ({
+    chapterId: `ch-${index}`,
+    chapterTitle: `第${index + 1}章`,
+    chapterIndex: index,
+    corePlot: '',
+    keyEvents: [],
+    locations: [],
+    characterStateChanges: changes,
+    revealedForeshadows: [],
+    newForeshadows: [],
+    wordCount: 3000,
+    createdAt: new Date().toISOString(),
+  });
+
+  const project = {
+    characters: [{ name: '严开礼', aliases: ['严佥宪'] }, { name: '陆怀砚' }],
+    chapterMemories: [
+      memoryAt(178, [{ characterName: '严开礼', stateType: 'status', state: '死亡', detail: '撞柱气绝，彻底断了生机' }]),
+      memoryAt(195, [{ characterName: '严开礼', stateType: 'status', state: '下狱', detail: '打入北镇抚司死牢' }]),
+    ],
+  };
+
+  it('死亡禁入条目与大纲防剧透禁区合并输出', () => {
+    const zones = assembleChapterForbiddenZones(['不得提前揭示幕后主使'], project, 186);
+    expect(zones[0]).toBe('不得提前揭示幕后主使');
+    const fateZone = zones.find(z => z.includes('严开礼'));
+    expect(fateZone).toBeDefined();
+    // 死亡不被后续下狱洗白：禁入条目引用的是死亡章与死亡态
+    expect(fateZone).toContain('死亡');
+    expect(fateZone).toContain('179');
+  });
+
+  it('记忆按目标章截断：补写早期章时不被后文死亡禁入误伤', () => {
+    const zones = assembleChapterForbiddenZones([], project, 100);
+    expect(zones.some(z => z.includes('严开礼'))).toBe(false);
+  });
+
+  it('无命运记录时只返回任务书禁区', () => {
+    const zones = assembleChapterForbiddenZones(['不得提前揭示'], { characters: project.characters, chapterMemories: [] }, 50);
+    expect(zones).toEqual(['不得提前揭示']);
   });
 });

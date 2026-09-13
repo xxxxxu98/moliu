@@ -76,6 +76,13 @@ import {
 import { ContextManager } from '@/services/writing/context-manager';
 import { executeSmartContinue } from '@/services/writing/smartContinue';
 import {
+  applyBlueprintToPlotNode,
+  blueprintToChapterUpdate,
+  BlueprintRepairLedger,
+  isFulfillmentDomainFailure,
+  regenerateChapterBlueprint,
+} from '@/services/outline/rolling/chapter-blueprint-regenerator';
+import {
   createRealAgentLoopTransport,
   isRealAiEnabled,
   readRealAiEnvConfig,
@@ -1071,6 +1078,18 @@ export async function runContinueWriteChapters(options: {
     updateChapterTitle(input: ChapterTitleUpdate): Promise<void>;
   };
   /**
+   * 蓝图再生调用器（2026-09-13 r4 补齐，与生产 useBatchWriter 对齐）：
+   * 履约域/命运禁区连续失败 ≥2 次时，用单章蓝图再生活重建本章合同
+   * （再生提示词带命运锁与已写状态，过期节点由此改走【解除】或移除角色）。
+   * 缺省不启用（旧测试路径行为不变）；真实冒烟必须传，否则命运冲突
+   * 只能纯重试到耗尽成洞（r4 ch187 齐王下狱后率兵攻午门五连拒实证）。
+   */
+  repairBlueprint?: (
+    system: string,
+    user: string,
+    temperature?: number
+  ) => Promise<string>;
+  /**
    * 细纲跑道监控（与生产 useBatchWriter.ensureOutlineRunwayAsync 同构）：
    * 每章成功后计算跑道（chapter 节点数 − 已建章节数），低于阈值时触发本回调，
    * 由调用方执行滚动续纲（rollOutlineForward）。回调返回的 Promise 会被 await——
@@ -1107,10 +1126,16 @@ export async function runContinueWriteChapters(options: {
     plotOutlineClient: options.plotOutlineClient,
   });
   const chapters: ContinueWriteChapterRunResult[] = [];
+  // 履约域失败记账（与生产 useBatchWriter 同构）：连续 ≥2 次触发单章蓝图再生，
+  // 每章生命周期最多再生 1 次。r4 ch187 实证缺此环的下场：命运冲突五连拒成洞。
+  const blueprintRepairLedger = new BlueprintRepairLedger();
   try {
     for (let offset = 0; offset < chapterCount; offset += 1) {
       if (options.signal?.aborted) break;
       const chapterNumber = fromChapter + offset;
+      const chapterEntityForRepair = options.project.chapters.find(
+        chapter => (chapter.orderIndex ?? 0) === chapterNumber - 1
+      );
       // 对齐 useBatchWriter：错误分级重试，耗尽即跳过该章继续（失败章标记 failed，
       // 不阻断全书；此前的「耗尽即结束整批」让 fix2-final100 ch39 一章卡死 61 章）
       let finalResult: ContinueWriteChapterRunResult | null = null;
@@ -1151,7 +1176,11 @@ export async function runContinueWriteChapters(options: {
           lastError = error instanceof Error ? error.message : String(error);
           finalResult = null;
         }
-        if (finalResult?.output.success) break;
+        if (finalResult?.output.success) {
+          // 成功清账：下一章从头计（与 useBatchWriter.resetChapter 同构）
+          if (chapterEntityForRepair) blueprintRepairLedger.resetChapter(chapterEntityForRepair.id);
+          break;
+        }
 
         // 从本轮失败的门禁结果提取 blocking 问题，作为下一轮重试的反馈种子。
         // 用 allIssues（扁平合并数组）而非 gates.flatMap——与生产 useBatchWriter 同写法，
@@ -1214,6 +1243,58 @@ export async function runContinueWriteChapters(options: {
         if (classified.kind === 'review_unavailable') break;
         // 持久错误（schema/审核/字数/auth/4xx）：不退避，立即重试，但上限 persistentMaxRetries
         if (!classified.retryable) {
+          // 履约域/命运冲突失败记账：合同与（履约要求|命运台账）矛盾，纯重试修不好，
+          // 达阈值触发蓝图再生（再生提示词带命运锁，过期节点改走【解除】或移除角色）
+          if (chapterEntityForRepair && isFulfillmentDomainFailure(lastError)) {
+            const failures = blueprintRepairLedger.recordFailure(chapterEntityForRepair.id);
+            console.warn(
+              `[runContinueWriteChapters] 第${chapterNumber}章履约域失败（累计 ${failures} 次），达阈值后触发蓝图体检/再生`
+            );
+          }
+          // 单章蓝图再生（与生产 useBatchWriter 同构）：以已写状态+命运锁为基底重写本章合同
+          if (
+            options.repairBlueprint &&
+            chapterEntityForRepair &&
+            blueprintRepairLedger.shouldTrigger(chapterEntityForRepair.id)
+          ) {
+            blueprintRepairLedger.markRegenerated(chapterEntityForRepair.id);
+            try {
+              const repair = await regenerateChapterBlueprint({
+                project: options.project,
+                chapterNumber,
+                callStructuredText: options.repairBlueprint,
+              });
+              if (repair.blueprint) {
+                applyBlueprintToPlotNode(
+                  options.project.plotOutline ?? [],
+                  chapterNumber,
+                  repair.blueprint
+                );
+                // 合同双侧同步：pipeline 的 goal/角色白名单读 chapter.outline/plotSummary，
+                // 只改 plotOutline 会半新半旧（useBatchWriter 同款教训）
+                const update = blueprintToChapterUpdate(repair.blueprint);
+                chapterEntityForRepair.outline = update.outline;
+                chapterEntityForRepair.plotSummary = update.plotSummary;
+                // 蓝图换了，旧合同的失败教训作废
+                seedRevisionHints = undefined;
+                const defectSummary = repair.defects.length > 0
+                  ? `（体检缺陷：${repair.defects.map(d => d.kind).join('、')}）`
+                  : '';
+                console.warn(
+                  `[runContinueWriteChapters] 第${chapterNumber}章蓝图已再生${defectSummary}，继续重写正文`
+                );
+              } else {
+                console.warn(
+                  `[runContinueWriteChapters] 第${chapterNumber}章蓝图再生未成功：${repair.error}`
+                );
+              }
+            } catch (repairError) {
+              console.warn(
+                `[runContinueWriteChapters] 第${chapterNumber}章蓝图再生异常（不影响原重试路径）：`,
+                repairError
+              );
+            }
+          }
           persistentAttempts += 1;
           if (persistentAttempts >= persistentMaxRetries) {
             // eslint-disable-next-line no-console

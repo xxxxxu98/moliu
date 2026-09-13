@@ -476,15 +476,19 @@ export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {
   const memorySorted = [...memories].sort((a, b) => a.chapterIndex - b.chapterIndex);
   for (const memory of memorySorted) {
     for (const change of memory.characterStateChanges) {
-      // 解除 delta（合同 8 规范化值）：到账即解除禁入——AI 已做语义判定，
-      // 消费侧不做二次正则。解除后若再入终态，下方 FATE_STATES 分支自然重登。
+      const current = byCharacter.get(change.characterName);
+      // 死亡族在册时，获释/复职等解除 delta 一律不生效：死人不能被释放，
+      // 这条 delta 是矛盾信号（写手复活或提取误报），交 fate-adjudicate 终审
       if (FATE_RELEASE_STATES.has(change.state)) {
+        if (isDeathFate(current?.state)) continue;
         byCharacter.delete(change.characterName);
         continue;
       }
       if (!FATE_STATES.has(change.state)) continue;
-      const prev = byCharacter.get(change.characterName);
-      if (!prev || memory.chapterIndex >= prev.chapterIndex) {
+      // 死亡族在册时，轻态（下狱/定罪/去职）不覆盖：死人不能再入狱，
+      // 覆盖会让禁入名单/状态摘要读到「下狱」，真复活信号被洗白
+      if (isDeathFate(current?.state) && !isDeathFate(change.state)) continue;
+      if (!current || memory.chapterIndex >= current.chapterIndex) {
         byCharacter.set(change.characterName, {
           characterName: change.characterName,
           state: change.state,
@@ -501,7 +505,9 @@ export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {
       if (!text.includes(name)) continue;
       const released = FATE_RELEASE_PATTERNS.some(re => re.test(text));
       if (released) {
-        byCharacter.delete(name);
+        // 死亡无合法解除词：正则共现命中的「翻案/平反」对死亡族无效，
+        // 死亡只能靠 dropFatesContradictedByLaterActivity 的后生活动证伪
+        if (!isDeathFate(fate.state)) byCharacter.delete(name);
       }
     }
   }
@@ -518,6 +524,19 @@ export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {
  *  （2026-09-01）。 */
 const MISFIRE_PRONE_FATES = new Set(['死亡', '驾崩']);
 
+/**
+ * 死亡族终态不可被轻态覆盖/解除误擦（2026-09-12 g38f 200 章 S1 实证：
+ * 严开礼 ch179 撞柱气绝入账「死亡」，ch186 写手按过期滚纲节点写其越狱复活，
+ * ch196「下狱」delta 直接顶掉死亡——命运表、overlay、禁入名单、triage 裁决
+ * 全部读到「下狱」，真复活信号被静默洗白）。死人再被下狱/定罪/去职/获释
+ * 都是矛盾信号而非状态转移：死亡保持终态，语义终审归 fate-adjudicate。
+ */
+const IRREVERSIBLE_FATES = new Set(['死亡', '驾崩']);
+
+function isDeathFate(state: string | undefined): boolean {
+  return !!state && IRREVERSIBLE_FATES.has(state);
+}
+
 function dropFatesContradictedByLaterActivity(
   byCharacter: Map<string, FateStatus>,
   memorySorted: ChapterMemory[]
@@ -530,7 +549,18 @@ function dropFatesContradictedByLaterActivity(
       if (!MISFIRE_PRONE_FATES.has(fate.state)) continue;
       const activityChapter = memory.chapterIndex;
       if (activityChapter <= fate.chapterIndex) continue;
-      if (change.state && FATE_STATES.has(change.state)) continue;
+      // 状态转移不是「后生活动」：越狱/获释族 delta 断言角色活着且在押，
+      // 对在册死亡是矛盾信号而非误报证伪（2026-09-12 g38f 200 章 S1 实证：
+      // 严开礼死亡在册被 ch187 越狱 delta 当活动熔断，ch195 下狱重登，
+      // 死亡信号就此洗白）。熔断只认良性生活状态（出场/晋升/受伤类）。
+      if (
+        change.state &&
+        (FATE_STATES.has(change.state) ||
+          FATE_RELEASE_STATES.has(change.state) ||
+          change.state === '越狱')
+      ) {
+        continue;
+      }
       byCharacter.delete(name);
       break;
     }
@@ -599,9 +629,14 @@ export function overlayCharacterFates(
     fateNames.add(fate.characterName);
     const entity = byName.get(fate.characterName.trim());
     if (!entity) continue;
-    // 已有不同终态登记时保守跳过：显式数据优先于记忆推导，避免互相覆盖
+    // 已有不同终态登记时保守跳过：显式数据优先于记忆推导，避免互相覆盖。
+    // 例外（2026-09-12 g38f 200 章 S1 实证）：命运表死亡族 > 已登记轻态——
+    // 严开礼 runtime 残留「下狱」时 ch179 死亡被保守跳过，判官全程读不到
+    // 死亡，ch186 写手按过期滚纲写其越狱复活一次过审。死亡不可逆，必须顶掉
+    // 旧轻态；反向（表轻态 vs 已登记死亡）维持保守跳过。
     const existing = String(entity.attributes?.status ?? '');
-    if (existing && existing !== fate.state) continue;
+    if (isDeathFate(existing) && !isDeathFate(fate.state)) continue;
+    if (existing && existing !== fate.state && !isDeathFate(fate.state)) continue;
     if (existing === fate.state) continue;
     next[entity.id] = { ...entity, attributes: { ...entity.attributes, status: fate.state } };
     applied += 1;

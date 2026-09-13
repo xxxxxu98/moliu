@@ -258,9 +258,13 @@ export class BlueprintRepairLedger {
   }
 }
 
-/** 判断失败消息是否属于「履约域」（值得归因到蓝图本身）的失败 */
+/** 判断失败消息是否属于「履约域」（值得归因到蓝图本身）的失败。
+ *  2026-09-13 r4 扩展：命运禁区拒稿与跨章状态 fact_conflict 同属「合同与台账
+ *  矛盾」——过期蓝图节点要求已下狱/已死亡角色以自由身出场，写作端两头违约，
+ *  纯重试永远修不好（r4 ch187 齐王下狱后率兵攻午门五连拒成洞实证），
+ *  必须归因蓝图触发再生（再生提示词带命运锁，会改走【解除】或移除该角色）。 */
 const FULFILLMENT_FAILURE_RE =
-  /未履约|未兑现|mustCover|履约|fulfillment|未完成.{0,8}(事件|节点|目标)/u;
+  /未履约|未兑现|mustCover|履约|fulfillment|未完成.{0,8}(事件|节点|目标)|触发本章禁区|fact_conflict/u;
 
 export function isFulfillmentDomainFailure(message: string | undefined): boolean {
   return Boolean(message && FULFILLMENT_FAILURE_RE.test(message));

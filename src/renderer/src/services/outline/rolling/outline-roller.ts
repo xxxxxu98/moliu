@@ -16,6 +16,8 @@ import type { ChapterBlueprint } from '../types/executable-outline';
 import {
   dropForeshadowConflictingItems,
   findLockedForeshadowViolations,
+  hasFinaleClosureSignal,
+  isTruncatedClause,
   type ForeshadowTimingHint,
   type RolledBlueprintIssue,
 } from './foreshadowTiming';
@@ -450,7 +452,10 @@ export function isUsableRolledBlueprint(blueprint: ChapterBlueprint | undefined)
  * - template-cbn / 模板 CEN：承接话术、流程话术泄漏进情节字段
  * - reader-meta：企划口吻（读者期待等）混进节点
  */
-export function inspectRolledBlueprintQuality(bp: ChapterBlueprint): RolledBlueprintIssue[] {
+export function inspectRolledBlueprintQuality(
+  bp: ChapterBlueprint,
+  opts?: { isFinale?: boolean },
+): RolledBlueprintIssue[] {
   const issues: RolledBlueprintIssue[] = [];
   const overScoped = bp.mustCover.find(node => isCrossChapterGoal(node));
   if (overScoped) {
@@ -474,6 +479,28 @@ export function inspectRolledBlueprintQuality(bp: ChapterBlueprint): RolledBluep
       kind: 'hollow-cen',
       detail: `CEN「${bp.CEN.slice(0, 30)}」是零信息量空壳钩子`,
     });
+  }
+  // 生成截断残句：句末悬垂在名词化修饰尾（「…沈淮安手中。」），长度合法但半截话
+  for (const [label, text] of [['CBN', bp.CBN], ['CEN', bp.CEN]] as const) {
+    if (isTruncatedClause(text)) {
+      issues.push({
+        chapterNumber: bp.orderIndex,
+        kind: 'truncated-hook-clause',
+        detail: `第${bp.orderIndex}章 ${label}「${text.slice(-16)}」句末悬垂，疑似生成截断残句，补完为完整事件句`,
+      });
+    }
+  }
+  // 终章收束声明：末章 CEN/mustCover/hookText 至少一处收束信号（纯 prompt 约束
+  // 无守卫的补丁——g38f r3 主轮 ch200 以「崔相饮鸩」新钩子收尾无人拦）
+  if (opts?.isFinale) {
+    const finaleText = [bp.CEN, ...bp.mustCover, bp.hookText ?? ''].join('\n');
+    if (!hasFinaleClosureSignal(finaleText)) {
+      issues.push({
+        chapterNumber: bp.orderIndex,
+        kind: 'finale-not-closing',
+        detail: `第${bp.orderIndex}章是全书末章，CEN/mustCover 缺少收束声明（尘埃落定/终局/归处/新秩序等），禁止以新危机钩子收尾`,
+      });
+    }
   }
   for (const node of [...bp.CPNs, ...bp.mustCover]) {
     if (isReaderMetaText(node)) {
@@ -815,7 +842,15 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
     payoffChapter: f.payoffChapter ?? f.suggestedResolutionChapter,
   }));
   const qualityIssues = [
-    ...[...blueprints.values()].flatMap(inspectRolledBlueprintQuality),
+    ...[...blueprints.values()].flatMap(bp =>
+      inspectRolledBlueprintQuality(bp, {
+        // 终批末章带收束声明检查：终卷收束硬约束此前是纯 prompt 约束
+        isFinale:
+          plannedCap !== Number.POSITIVE_INFINITY &&
+          bp.orderIndex >= toChapter &&
+          toChapter >= plannedCap,
+      }),
+    ),
     ...findBlueprintRepetition([...blueprints.values()]),
     ...findLockedForeshadowViolations([...blueprints.values()], rollForeshadows),
   ];

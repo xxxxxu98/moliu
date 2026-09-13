@@ -5,6 +5,7 @@ import type {
   ExecutableOutline,
 } from '../../types/executable-outline';
 import {
+  hasStructuralOutlineBlockers,
   inspectOutlineCompleteness,
   OUTLINE_COMPLETENESS_POLICY,
 } from '../outlineCompleteness';
@@ -86,6 +87,98 @@ describe('inspectOutlineCompleteness', () => {
     const result = inspectOutlineCompleteness(outline);
 
     expect(result.blockers.map(blocker => blocker.kind)).toContain('opening-hook');
+  });
+
+  // ---------- 2026-09-12 g38f r3/reg 新守卫受害样本 ----------
+
+  it('CBN 句末悬垂（生成截断残句）阻断应用（reg 实证：「…沈淮安手中。」）', () => {
+    const outline = makeOutline();
+    outline.chapterBlueprints![41] = {
+      ...outline.chapterBlueprints![41],
+      CBN: '仵作刚将浮尸抬上井栏，沈淮安手中',
+    };
+
+    const result = inspectOutlineCompleteness(outline);
+
+    expect(result.blockers.map(blocker => blocker.kind)).toContain('truncated-hook-clause');
+    expect(hasStructuralOutlineBlockers(result)).toBe(true);
+  });
+
+  it('短书末章缺收束声明阻断应用（规划章数落在初版蓝图射程内）', () => {
+    const outline = makeOutline();
+    outline.storyScale = { estimatedChapterCount: 20 } as ExecutableOutline['storyScale'];
+
+    const result = inspectOutlineCompleteness(outline);
+
+    expect(result.blockers.map(blocker => blocker.kind)).toContain('finale-not-closing');
+    // 末章补上收束声明后放行
+    outline.chapterBlueprints![19] = {
+      ...outline.chapterBlueprints![19],
+      CEN: '朝局尘埃落定，主角功成身退。',
+    };
+    const rerun = inspectOutlineCompleteness(outline);
+    expect(rerun.blockers.map(blocker => blocker.kind)).not.toContain('finale-not-closing');
+  });
+
+  it('爽点规划与蓝图时序错位 ≥15 章出黄签（reg 实证：规划48章、蓝图19章已兑现）', () => {
+    const outline = makeOutline();
+    outline.coolPointPlan = [
+      {
+        type: '打脸',
+        description: '御前逼死崔元敬并获赐铜牌入吏部',
+        suggestedChapter: 48,
+      },
+    ];
+    outline.chapterBlueprints![18] = {
+      ...outline.chapterBlueprints![18],
+      title: '御前逼死崔元敬',
+      mustCover: ['崔元敬御前逼死获赐铜牌'],
+      CPNs: ['崔元敬御前对质被逼死', '主角获赐铜牌入吏部'],
+    };
+
+    const result = inspectOutlineCompleteness(outline);
+
+    const warning = (result.warnings ?? []).find(w =>
+      w.message.includes('时序错位'),
+    );
+    expect(warning).toBeDefined();
+    expect(warning!.message).toContain('第 48 章');
+    expect(warning!.message).toContain('第 19 章');
+    // 错位在阈值内（<15 章）不报
+    outline.coolPointPlan = [
+      { type: '打脸', description: '御前逼死崔元敬并获赐铜牌入吏部', suggestedChapter: 30 },
+    ];
+    const rerun = inspectOutlineCompleteness(outline);
+    expect((rerun.warnings ?? []).some(w => w.message.includes('时序错位'))).toBe(false);
+  });
+
+  it('地点表政策动作误填与关系卡截断出黄签（r3 主轮「预售粮票平抑市」实证）', () => {
+    const outline = makeOutline();
+    outline.worldBuilding = {
+      locations: [
+        { name: '预售粮票平抑市', level: 'city', functionInStory: '误填' },
+        { name: '神京', level: 'city', functionInStory: '京城' },
+      ],
+      factions: [],
+      rules: [],
+    };
+    outline.keyCharacters = outline.keyCharacters.map((character, index) =>
+      index === 0
+        ? {
+            ...character,
+            relationshipChanges: [
+              { targetName: '', relationType: 'ally', dynamic: '从暗中收礼的暧昧同盟' },
+            ],
+          }
+        : character,
+    ) as ExecutableOutline['keyCharacters'];
+
+    const result = inspectOutlineCompleteness(outline);
+
+    const messages = (result.warnings ?? []).map(w => w.message);
+    expect(messages.some(m => m.includes('预售粮票平抑市'))).toBe(true);
+    expect(messages.some(m => m.includes('relationshipChanges'))).toBe(true);
+    expect(messages.some(m => m.includes('神京'))).toBe(false);
   });
 
   it('标题、CBN、CEN 长度和 CPN 数量违反提示词契约时阻断应用', () => {

@@ -238,6 +238,41 @@ describe('collectCharacterFates / collectFateForbiddenZones', () => {
     expect(fate?.state).toBe('下狱');
     expect(fate?.chapterIndex).toBe(166);
   });
+
+  // ---------- 死亡族终态保护（2026-09-12 g38f 200 章 S1 实锤） ----------
+  // 严开礼 ch179 撞柱气绝入账死亡，ch186 写手按过期滚纲节点写其越狱复活，
+  // ch196「下狱」delta 顶掉死亡——命运表/禁入/裁决全部读到「下狱」，
+  // 真复活信号被静默洗白。死亡不可逆：轻态覆盖、解除 delta、解除词共现三路全封。
+
+  it('死亡终态不被后续下狱覆盖（死人不能再入狱，覆盖即复活信号）', () => {
+    const memories = [
+      memoryWith([{ characterName: '严开礼', stateType: 'status', state: '死亡', detail: '撞柱气绝，彻底断了生机' }], 178),
+      memoryWith([{ characterName: '严开礼', stateType: 'status', state: '越狱', detail: '重囚牢里跑了' }], 186),
+      memoryWith([{ characterName: '严开礼', stateType: 'status', state: '下狱', detail: '打入北镇抚司死牢' }], 195),
+    ];
+    const fates = collectCharacterFates(memories);
+    const fate = fates.find(f => f.characterName === '严开礼');
+    expect(fate?.state).toBe('死亡');
+    expect(fate?.chapterIndex).toBe(178);
+  });
+
+  it('死亡终态不被获释/赦免 delta 解除（死人不能被释放）', () => {
+    const memories = [
+      memoryWith([{ characterName: '严开礼', stateType: 'status', state: '死亡', detail: '撞柱气绝' }], 178),
+      memoryWith([{ characterName: '严开礼', stateType: 'status', state: '获释', detail: '奉旨出狱' }], 186),
+    ];
+    const fates = collectCharacterFates(memories);
+    expect(fates.some(f => f.characterName === '严开礼' && f.state === '死亡')).toBe(true);
+  });
+
+  it('死亡终态不被解除词共现擦除（翻案词与死者同章共现不救死亡）', () => {
+    const memories = [
+      memoryWith([{ characterName: '严开礼', stateType: 'status', state: '死亡', detail: '撞柱气绝' }], 178),
+      memoryWith([], 190, '百官议论严开礼旧案，有人主张为其翻案平反昭雪。'),
+    ];
+    const fates = collectCharacterFates(memories);
+    expect(fates.some(f => f.characterName === '严开礼' && f.state === '死亡')).toBe(true);
+  });
 });
 
 describe('overlayCharacterFates（runtime 实体命运状态接线）', () => {
@@ -291,6 +326,19 @@ describe('overlayCharacterFates（runtime 实体命运状态接线）', () => {
     const { entities: next, applied } = overlayCharacterFates({ 'char-zhou': base }, memories);
     expect(applied).toBe(0);
     expect(next['char-zhou'].attributes.status).toBe('死亡');
+  });
+
+  it('命运表死亡顶掉实体残留轻态（保守跳过对死亡族失效）', () => {
+    // 2026-09-12 g38f 200 章 S1 受害样本：严开礼 runtime 残留「下狱」，
+    // ch179 死亡入账后被保守跳过，判官全程读不到死亡，ch186 复活越狱一次过审
+    const base = entityOf('char-yan', '严开礼');
+    base.attributes = { status: '下狱' };
+    const memories = [
+      memoryWith([{ characterName: '严开礼', stateType: 'status', state: '死亡', detail: '撞柱气绝，彻底断了生机' }], 178),
+    ];
+    const { entities: next, applied } = overlayCharacterFates({ 'char-yan': base }, memories);
+    expect(applied).toBe(1);
+    expect(next['char-yan'].attributes.status).toBe('死亡');
   });
 });
 

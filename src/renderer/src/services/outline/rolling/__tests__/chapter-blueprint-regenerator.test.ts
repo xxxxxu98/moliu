@@ -108,8 +108,25 @@ describe('isFulfillmentDomainFailure', () => {
   it('履约类消息命中，网络/超时类不归因蓝图', () => {
     expect(isFulfillmentDomainFailure('未履约节点：查清军资缺口')).toBe(true);
     expect(isFulfillmentDomainFailure('语义问题[fulfillment] 第2段 未兑现 查清缺口')).toBe(true);
-    expect(isFulfillmentDomainFailure('严格门禁未通过：正文触发本章禁区')).toBe(false);
+    expect(isFulfillmentDomainFailure('network error: fetch failed')).toBe(false);
+    expect(isFulfillmentDomainFailure('AI 流式响应提前中断：已收到 17876 字')).toBe(false);
     expect(isFulfillmentDomainFailure(undefined)).toBe(false);
+  });
+
+  it('命运禁区/fact_conflict 拒稿归因蓝图（2026-09-13 r4 ch187 齐王受害样本）', () => {
+    // 过期蓝图节点要求已下狱角色自由出场：写作端两头违约，纯重试修不好，
+    // 必须走蓝图再生（再生提示词带命运锁，改走【解除】或移除该角色）
+    expect(isFulfillmentDomainFailure('严格门禁未通过：正文触发本章禁区')).toBe(true);
+    expect(
+      isFulfillmentDomainFailure(
+        '触发本章禁区：齐王已于第136章下狱（证据：着即革除齐王爵位），本章禁止其以在场活人身份出场'
+      )
+    ).toBe(true);
+    expect(
+      isFulfillmentDomainFailure(
+        '语义问题[fact_conflict] 状态摘要中齐王处于【下狱】状态，本章未交代越狱过程'
+      )
+    ).toBe(true);
   });
 });
 
