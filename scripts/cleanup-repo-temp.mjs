@@ -49,10 +49,20 @@ export const AGE_PRUNE_DIRS = new Set(['ai-traces']);
  *   500ch、fixN 前缀的是跨轮 diff 基线样本,具名永留。
  * - storyflow-checkpoints:大纲断点供同通道跨轮 resume(MOLIU_RESUME_STORYFLOW),
  *   14 天内有效;退役通道的断点无 resume 价值,清。
+ * - storyflow-matrix-*(前缀匹配):验收矩阵归档(project-store/trace/summary 是
+ *   triage、fate-adjudicate、repair-empty 的数据源)。2026-09-13 实证:不在任何
+ *   保护表里时,轮后任何一次 temp:clean --all 会无年龄整删当天产物——r4 归档
+ *   (含补写后的 project-store)全灭,裁决/复盘/二次补写全部失去数据源。
+ *   14 天对齐 checkpoints 的复盘窗口,退役轮自动清。
+ * - storyflow-triage / fate-adjudication:验收报告与裁决台账,同窗口保留。
  */
 export const SUBDIR_AGE_PRUNE = new Map([
   ['book-review', { keepDays: 3, preserve: /^(baseline|juezheng|xcjz|500ch|fix\d)/u }],
   ['storyflow-checkpoints', { keepDays: 14 }],
+  ['storyflow-triage', { keepDays: 14 }],
+  ['fate-adjudication', { keepDays: 14 }],
+  // 前缀规则:key 以 * 结尾,匹配 storyflow-matrix-<tag> 全部变体
+  ['storyflow-matrix-*', { keepDays: 14 }],
 ]);
 
 /**
@@ -177,6 +187,29 @@ export function pruneSubdirsByAge(dir, cutoffMs, preserve) {
 }
 
 /**
+ * 目录树内最新 mtime(判「该轮归档是否还在活跃窗口内」用)。
+ * 矩阵归档的目录自身 mtime 只反映直接子条目增删,trace 落盘发生在二层,
+ * 取全树最大值才不会把进行中/刚收尾的轮次误判为过期。
+ */
+function newestMtimeMs(dir) {
+  let newest = 0;
+  const stack = [dir];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    let st;
+    try {
+      st = statSync(current);
+    } catch {
+      continue;
+    }
+    if (st.mtimeMs > newest) newest = st.mtimeMs;
+    if (!st.isDirectory()) continue;
+    for (const child of readdirSync(current)) stack.push(path.join(current, child));
+  }
+  return newest;
+}
+
+/**
  * 执行一次 temp 清理。tempRoot 可注入,供单测隔离真实仓库 temp/。
  *
  * @param {{
@@ -262,6 +295,39 @@ export function runClean(options) {
       );
       freedBytes += pruned.bytes;
       continue;
+    }
+
+    // 前缀规则(以 * 结尾的 key):矩阵归档是 temp 直接子条目,按全树最新 mtime
+    // 判龄——窗口内整目录保留(复盘/裁决/补写的数据源),过期整目录删除
+    if (!explicitlyNamed) {
+      let prefixRuleHandled = false;
+      for (const [prefixKey, rule] of SUBDIR_AGE_PRUNE) {
+        if (!prefixKey.endsWith('*')) continue;
+        const prefix = prefixKey.slice(0, -1);
+        if (!name.startsWith(prefix)) continue;
+        prefixRuleHandled = true;
+        if (!cleanAll) {
+          skippedProtected.push(
+            `${name}(用 --all 按 ${rule.keepDays} 天裁剪,或 --dir ${name} 整目录删除)`,
+          );
+          break;
+        }
+        const matrixCutoff = olderThanDays > 0
+          ? nowMs - olderThanDays * 86400_000
+          : nowMs - rule.keepDays * 86400_000;
+        if (newestMtimeMs(full) >= matrixCutoff) {
+          skippedProtected.push(`${name}(<${rule.keepDays}天矩阵归档,复盘数据源)`);
+        } else {
+          const bytes = dirSize(full);
+          rmSync(full, { recursive: true, force: true });
+          if (!existsSync(full)) {
+            removed.push(name);
+            freedBytes += bytes;
+          }
+        }
+        break;
+      }
+      if (prefixRuleHandled) continue;
     }
 
     if (cutoff > 0 && statSync(full).mtimeMs > cutoff) continue;

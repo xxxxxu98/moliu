@@ -180,6 +180,7 @@ export class AIChapterJudge implements ChapterJudge {
         '- 若 allowedCharacterNames 非空，名单外的已登记角色在现场说话、行动或即时反应，必须报 logic_gap 且 severity=critical；仅被回忆或背景提及不算出场',
         '- 【出场豁免】若某角色在 mustCover 节点里被点名要求参与（如节点写「被温伯衡锁走」），则该角色本章允许出场，即使不在 allowedCharacterNames 里也不得报 logic_gap；换成无名身份称呼（如「青袍老者」）同样豁免',
         '- 【重置登场】若 prevChapterTail（上章结尾原文）显示某角色已在本场景登场、行动或与主角共事，本章却将其按初次登场处理（从场外重新通报到场、对已发生案情一无所知、重新自报身份/重新试探主角），必须报 logic_gap 且 severity=critical；正确写法是延续其在场状态与既有认知。此判定以 prevChapterTail 的在场事实为准，状态摘要未登记的在场信息不构成豁免',
+        '- 【承接断裂】若 prevChapterTail（上章结尾原文）显示上章末尾已部署或已启动的紧急行动（连夜启程的路线/计策、正在执行的追击/押运/伏击、明确时限的任务、当场宣布的决定），本章正文却将其完全无视——既不兑现也不交代取消/变故/将计就计，直接另起时间线或采取相反行动（2026-09-13 g37f r4 ch70 实证：上章部署"官船为虚、连夜走陆路"，本章却公开长亭送行改乘官船），必须报 logic_gap 且 severity=critical，description 注明「承接断裂：上章部署被无视」；正文写明计划变卦、受阻或有意明修栈道的不算',
         '- 【节点抄用】正文与任一 mustCover 节点存在连续 ≥12 字逐字相同（把大纲节点原句直接当正文抄），报 logic_gap 且 severity=high，description 注明「节点原句照抄」；同义改写、拆句、换人称不算',
         '- 只报真实问题，不挑文笔；critical 留给明显硬伤',
         '- 若无问题，issues 为 []',

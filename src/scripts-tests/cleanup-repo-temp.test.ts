@@ -34,6 +34,9 @@ beforeEach(() => {
   mkdirSync(join(tempRoot, 'book-review', 'baseline100ch-r9'), { recursive: true });
   mkdirSync(join(tempRoot, 'storyflow-checkpoints'), { recursive: true });
   mkdirSync(join(tempRoot, 'storyflow-matrix-agif200r2a'), { recursive: true });
+  // 2026-09-13 r4 灭失回归:矩阵归档按全树最新 mtime 判 14 天窗口——
+  // 窗口内的复盘数据源保留,退役轮整目录删除
+  mkdirSync(join(tempRoot, 'storyflow-matrix-retired-0820'), { recursive: true });
   mkdirSync(join(tempRoot, 'junk-run'), { recursive: true });
   writeFileSync(join(tempRoot, 'ai-traces', 'old.jsonl'), 'old-trace');
   writeFileSync(join(tempRoot, 'ai-traces', 'stale.jsonl'), 'stale-trace');
@@ -47,6 +50,7 @@ beforeEach(() => {
   writeFileSync(join(tempRoot, 'storyflow-checkpoints', 'stale.outline.json'), 'stale');
   writeFileSync(join(tempRoot, 'storyflow-checkpoints', 'fresh.outline.json'), 'fresh');
   writeFileSync(join(tempRoot, 'storyflow-matrix-agif200r2a', 'store.json'), 'matrix');
+  writeFileSync(join(tempRoot, 'storyflow-matrix-retired-0820', 'store.json'), 'retired');
   writeFileSync(join(tempRoot, 'junk-run', 'out.txt'), 'junk');
   writeFileSync(join(tempRoot, 'continue-write.real.config.json'), '{}');
   setMtime(join(tempRoot, 'ai-traces', 'old.jsonl'), OLD);
@@ -60,6 +64,9 @@ beforeEach(() => {
   setMtime(join(tempRoot, 'book-review', 'baseline100ch-r9'), OLD);
   setMtime(join(tempRoot, 'storyflow-checkpoints', 'stale.outline.json'), OLD);
   setMtime(join(tempRoot, 'storyflow-checkpoints', 'fresh.outline.json'), FRESH);
+  // 退役矩阵:目录与内文件都设到 15 天前(超 14 天窗口)
+  setMtime(join(tempRoot, 'storyflow-matrix-retired-0820', 'store.json'), NOW - 15 * 86_400_000);
+  setMtime(join(tempRoot, 'storyflow-matrix-retired-0820'), NOW - 15 * 86_400_000);
 });
 
 afterEach(() => {
@@ -85,10 +92,15 @@ describe('cleanup-repo-temp KEEP 与 --all', () => {
     expect(SUBDIR_AGE_PRUNE.has('storyflow-checkpoints')).toBe(true);
   });
 
-  it('--all 删除单轮矩阵与 junk;book-review 子条目裁剪:退役轮删、近期与基线留', async () => {
+  it('--all 删除退役矩阵与 junk;窗口内矩阵归档保留;book-review 子条目裁剪:退役轮删、近期与基线留', async () => {
     const { runClean } = await loadClean();
     const result = runClean({ tempRoot, cleanAll: true, nowMs: NOW });
-    expect(result.removed).toContain('storyflow-matrix-agif200r2a');
+    // 2026-09-13 r4 灭失回归:窗口内(<14 天)矩阵归档是复盘/裁决/补写数据源,--all 不再无年龄整删
+    expect(result.removed).not.toContain('storyflow-matrix-agif200r2a');
+    expect(existsSync(join(tempRoot, 'storyflow-matrix-agif200r2a', 'store.json'))).toBe(true);
+    expect(result.skippedProtected.some(item => item.startsWith('storyflow-matrix-agif200r2a('))).toBe(true);
+    // 退役轮(15 天前)整目录删除
+    expect(result.removed).toContain('storyflow-matrix-retired-0820');
     expect(result.removed).toContain('junk-run');
     expect(existsSync(join(tempRoot, 'continue-write.real.config.json'))).toBe(true);
     expect(result.skippedProtected).toContain('continue-write.real.config.json');
@@ -156,7 +168,9 @@ describe('cleanup-repo-temp KEEP 与 --all', () => {
       nowMs: NOW,
     });
     expect(existsSync(join(tempRoot, 'junk-run', 'out.txt'))).toBe(true);
-    expect(existsSync(join(tempRoot, 'storyflow-matrix-agif200r2a'))).toBe(false);
+    // 窗口内矩阵归档按 14 天规则保留(不再是 --all 无年龄整删对象)
+    expect(existsSync(join(tempRoot, 'storyflow-matrix-agif200r2a'))).toBe(true);
+    expect(existsSync(join(tempRoot, 'storyflow-matrix-retired-0820'))).toBe(false);
   });
 
   it('--dir ai-traces 整目录删除,含新 jsonl', async () => {
