@@ -771,6 +771,12 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
     plannedCap,
     params.maxChapters ?? Number.POSITIVE_INFINITY,
   );
+  // 终章判定基准（finalBatch/isFinale 共用）：大纲规划章数可能大于本轮写作终点
+  // （如 plannedCap=214 vs MOLIU_CHAPTER_COUNT=200），取两者较小者——写作终点章
+  // 就是读者看到的末章，必须按终章收束，不能当 214 章书的中段章
+  const effectiveCap = Number.isFinite(plannedCap)
+    ? Math.min(plannedCap, params.maxChapters ?? Number.POSITIVE_INFINITY)
+    : (params.maxChapters ?? Number.POSITIVE_INFINITY);
   if (fromChapter > toChapter) {
     return {
       appendedCount: 0,
@@ -803,9 +809,13 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
       recentBlueprintEndings: recentEndings,
       // 终卷批次：本批触顶全书 plannedChapterCount 时注入收束硬约束——滚纲此前
       // 与中段批次用同一份提示词（约束 5 还在把高潮推离尾部），200 章书收在
-      // 「面圣亮牌前一秒」的半空（2026-09-10 glm r2 实证：结尾不收束 S1）
-      finalBatch: plannedCap !== Number.POSITIVE_INFINITY && toChapter >= plannedCap
-        ? { totalChapters: plannedCap, lastChapter: toChapter }
+      // 「面圣亮牌前一秒」的半空（2026-09-10 glm r2 实证：结尾不收束 S1）。
+      // 终章判定取 min(plannedCap, 本轮写作终点 maxChapters)：大纲规划章数（如 214）
+      // 可能大于实际写作章数（MOLIU_CHAPTER_COUNT=200），只认 plannedCap 会让写作
+      // 终点章被当中段章、收束约束静默跳过（2026-09-15 g38f r4 ch200 实证：
+      // plannedCap=214 未触发，末章按拜相+清丈分田新钩收尾）
+      finalBatch: effectiveCap !== Number.POSITIVE_INFINITY && toChapter >= effectiveCap
+        ? { totalChapters: effectiveCap, lastChapter: toChapter }
         : undefined,
     });
     onProgress?.(`滚动续纲 ${batch[0]}-${batch[batch.length - 1]} 章（${Math.floor(index / CHAPTER_BLUEPRINT_BATCH_SIZE) + 1}/${Math.ceil(chapterNumbers.length / CHAPTER_BLUEPRINT_BATCH_SIZE)}）...`);
@@ -846,9 +856,9 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
       inspectRolledBlueprintQuality(bp, {
         // 终批末章带收束声明检查：终卷收束硬约束此前是纯 prompt 约束
         isFinale:
-          plannedCap !== Number.POSITIVE_INFINITY &&
+          effectiveCap !== Number.POSITIVE_INFINITY &&
           bp.orderIndex >= toChapter &&
-          toChapter >= plannedCap,
+          toChapter >= effectiveCap,
       }),
     ),
     ...findBlueprintRepetition([...blueprints.values()]),

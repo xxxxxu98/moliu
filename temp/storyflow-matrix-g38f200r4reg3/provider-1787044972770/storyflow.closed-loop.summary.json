@@ -1,0 +1,542 @@
+{
+  "book": "从刑部提牢到权倾天下",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": null,
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "default",
+  "promptChars": 34,
+  "requestedChapterCount": 3,
+  "phaseTimings": {
+    "outlineDirectionsMs": 129490,
+    "outlineExpandMs": 963467,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 789,
+    "continueWriteMs": 1483867,
+    "totalMs": 2577613
+  },
+  "completedChapters": 3,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787044972770.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787044972770.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 开局绞索勒颈，反手弄死狱卒",
+      "words": 3480,
+      "paras": 36,
+      "paraCv": 0.75,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "粗粝浸油的麻绳硬生生勒进颈项皮肉，坚硬的绳结死死顶住喉管，带起一阵令人牙酸的骨骼挤压声。\n\n沈淮眼眶里的血丝几乎要爆裂开来，视野被翻涌的赤红与剧烈的窒息彻底淹没。胸腔里的空气被强行压榨殆尽，肺叶像是烧透的焦炭，连半点微弱的抽泣都无法发出。颈",
+      "tail": "近传来了一阵沉闷的撞击声。\n\n踏、踏、踏。\n\n那是重甲铁靴踏击在青石板上的脚步声，冰冷、齐整，正一步步撕裂死牢的黑暗，朝着这间刚刚经历过生死搏杀的石牢缓缓逼近。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 提刑官逼画押，当场抓你违规！",
+      "words": 3212,
+      "paras": 49,
+      "paraCv": 0.68,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "门轴与锁链摩擦的尖响打破了死牢的死寂。\n\n两道沉重的脚步声在铁栅外停下。沈淮背靠冰冷滑腻的石壁，右手在袖袍内收拢，指尖死死扣住方才搜出的黄铜钥匙。他的呼吸压得极深，目光穿透昏暗的光晕，牢牢锁住栅栏外晃动的人影。门外传来铁匙捅入锁眼的刺耳声，",
+      "tail": "细微伤口正渗出热血，顺着锁骨渗进内衣。他摊开右手，掌心那串沾满冷汗的死牢钥匙依然坚硬冰冷。三日倒计时的锁链已经套上了脖颈，这场没有退路的死局，才刚刚掀开第一角。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 饭菜藏剧毒？逼牢头自己吃下去！",
+      "words": 3063,
+      "paras": 27,
+      "paraCv": 0.11,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "沈淮撕下一角相对洁净的内衬麻布，死死按压在颈侧渗血的伤口上。咸涩的冷汗浸透粗糙布料，激起皮肉翻卷的刺痛，但他连眉头都未曾动一下。严恪离去时那声震耳欲聋的铁门轰鸣犹在耳畔回荡，散落满地的碎供状被门缝灌进来的阴风吹得贴地乱滚。\n\n十年的法务合规",
+      "tail": "的喘息与惊魂未定的逃窜声在深邃幽暗的死牢甬道里激荡回响，撞击在坚硬滑腻的岩壁间。回音跌跌撞撞退向远方，最终化作一道微弱的余响，彻底被死牢冰冷死寂的黑暗吞噬殆尽。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 开局绞索勒颈，反手弄死狱卒"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 提刑官逼画押，当场抓你违规！"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 饭菜藏剧毒？逼牢头自己吃下去！"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 煽动死囚围杀？反手把你们全卖了！"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 疯铁匠亮绝活，玄铁令牌送进门！"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 突击搜查死牢？当场扣你私藏罪名！"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 断药断水灭口？心理战收服老铁匠！"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 大理寺来查卷，少卿当面撕公文！"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 半夜剔骨灭口？大理寺禁令砸脸上！"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 死囚和盘托出，致命暗账藏善堂！"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1789405982618",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-ZNJTul\\story-runtime\\proj-1789405982618-ae29fa2f8eb0.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 3,
+    "canonicalSnapshots": 4,
+    "latestSnapshotChapter": 3,
+    "sceneChunks": 3,
+    "events": 11
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "b323c846412e3a1e1e973f68b3df7bbc7b2c07e922006fa61a09a4941fe56158",
+    "completeCharacterProfileCount": 12,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 3
+  },
+  "outlineWarnings": [
+    "单章蓝图补全第 2 章伏笔时序消毒：删除 [\"严恪现身死字号狱逼供\"]",
+    "单章蓝图补全第 5 章伏笔时序消毒：删除 [\"沈淮包扎老铁匠伤口，老铁匠疯癫中展现听声辨铁\",\"以指摩挲辨认私铸火印的祖传辨识手法\",\"刑部天牢死字号狱中疯癫老铁匠辨认私铸火印的祖传辨识手法首次埋设\"]",
+    "单章蓝图补全第 6 章伏笔时序消毒：删除 [\"彻底架空严恪在死字号狱底层的直接禁令。\"]",
+    "单章蓝图补全第 8 章伏笔时序消毒：删除 [\"沈淮隔门高声报出皇庄案卷宗移交勘合编号缺失的关键漏洞，引发陈怀瑾震动\",\"大理寺公署介入死牢案情并依律制止刑部单方决杀。\"]",
+    "单章蓝图补全第 9 章伏笔时序消毒：删除 [\"沈淮高举刚刚盖上大理寺朱砂批复的录囚签条，直斥严恪擅杀者依律斩立决\"]",
+    "单章蓝图补全第 10 章伏笔时序消毒：删除 [\"老铁匠道出皇庄被屠并非响马所为，而是兵部私铸火器掩盖账目造假\",\"老铁匠吐露皇庄私铸真相与原始账目存底在善堂的线索\"]",
+    "单章蓝图补全第 11 章伏笔时序消毒：删除 [\"沈淮勘破木架机关搜出暗藏的空白移送封签与陈年印泥\",\"沈淮在刑部天牢死字号狱·案牍库抓获顾清辞\",\"起获木架夹层内的空白移送封签与陈年印泥留底。\"]",
+    "单章蓝图补全第 12 章伏笔时序消毒：删除 [\"沈淮在刑部天牢死字号狱·刑房击退严恪副手搜查\"]",
+    "单章蓝图补全第 13 章伏笔时序消毒：删除 [\"陆成安潜入刑部天牢死字号狱·静室与沈淮接触\"]",
+    "单章蓝图补全第 14 章伏笔时序消毒：删除 [\"沈淮与陆成安在刑部天牢死字号狱·静室达成攻守互保同盟\"]",
+    "单章蓝图补全第 15 章伏笔时序消毒：删除 [\"沈淮在刑部天牢死字号狱·静室定下借力打力之策。\"]",
+    "单章蓝图补全第 16 章伏笔时序消毒：删除 [\"沈淮在刑部天牢死字号狱·正门甬道逼严恪签署合规移交文牒\"]",
+    "单章蓝图补全第 17 章伏笔时序消毒：删除 [\"囚车在行经大理寺风宪堂公署·顺天府长街时遭遇东宫死士暗杀\"]",
+    "单章蓝图补全第 18 章伏笔时序消毒：删除 [\"沈淮在大理寺风宪堂公署·顺天府长街引爆民众舆论\"]",
+    "单章蓝图补全第 19 章伏笔时序消毒：删除 [\"沈淮在大理寺风宪堂公署·前坊台阶锁定刺杀物证\"]",
+    "单章蓝图补全第 20 章伏笔时序消毒：删除 [\"陈怀瑾在大理寺风宪堂公署·正门明堂出面阻截\"]",
+    "单章蓝图补全第 22 章伏笔时序消毒：删除 [\"沈淮当场指出账册缺失三页并点出封皮受力留下的红木压痕印迹\",\"沈淮在公署羁候所指出私铁账册缺失三页底单\",\"展示账册上的红木压痕印迹。\"]",
+    "单章蓝图补全第 26 章伏笔时序消毒：删除 [\"沈淮在大理寺风宪堂公署案牍库起获旧案勘合副卷\"]",
+    "单章蓝图补全第 27 章伏笔时序消毒：删除 [\"严恪押送皇庄私铸兵器至大理寺公署\"]",
+    "单章蓝图补全第 31 章伏笔时序消毒：删除 [\"沈淮在大理寺风宪堂公署羁候所推演出东宫借军械司平账的死穴\",\"内廷太监携奇异草药香气密临大理寺风宪堂公署传旨。\",\"陈怀瑾在大理寺风宪堂公署驳回刑部引渡催文\",\"御前内侍携奇香抵大理寺风宪堂公署暗传风向。\"]",
+    "单章蓝图补全第 32 章伏笔时序消毒：删除 [\"沈淮在大理寺风宪堂公署羁候所当面戳穿陆成安的坐山观虎斗之计\",\"沈淮抛出皇庄私铁账册缺失线索作为舆论风暴的核心炮弹\",\"沈淮在大理寺风宪堂公署会见陆成安\",\"沈淮向齐王府泄露皇庄私铁账册缺失底细\"]",
+    "单章蓝图补全第 33 章伏笔时序消毒：删除 [\"国子监祭酒手持私铁账单抄本在大理寺风宪堂公署街前痛斥司法不公\"]",
+    "单章蓝图补全第 35 章伏笔时序消毒：删除 [\"陈怀瑾在大理寺风宪堂公署当众接旨并当堂解除沈淮死囚枷锁\",\"大理寺风宪堂公署依法解除沈淮重枷羁押\"]",
+    "单章蓝图补全第 36 章伏笔时序消毒：删除 [\"沈淮向陈怀瑾推导皇庄私铁账册缺失底单的确切藏匿处\",\"锁定皇庄私铁底单藏在大理寺风宪堂公署下属顺天善堂\"]",
+    "单章蓝图补全第 38 章伏笔时序消毒：删除 [\"大理寺精锐突破大理寺风宪堂公署下属顺天善堂偏殿暗室\",\"突入大理寺风宪堂公署下属顺天善堂起获藏证暗格\"]",
+    "单章蓝图补全第 39 章伏笔时序消毒：删除 [\"沈淮在大理寺风宪堂公署暗室指出顾清辞犀角佩暗刻的旧案编号\"]",
+    "单章蓝图补全第 40 章伏笔时序消毒：删除 [\"沈淮在大理寺风宪堂公署公案上拼合私铁进出底单还原走私全貌\",\"沈淮与陈怀瑾完成皇庄私铁账册底单的合规核验\"]",
+    "单章蓝图补全第 41 章伏笔时序消毒：删除 [\"禁军奉旨抵达大理寺风宪堂公署外围。\"]",
+    "单章蓝图补全第 42 章伏笔时序消毒：删除 [\"裴胜出示中军调令接管大理寺风宪堂公署防务，收缴刑部私兵武器\",\"沈淮依凭合规移送律令与裴胜对答，裴胜怀揣绝密调防文书残卷心生疑窦并恪守中立\",\"裴胜率禁军接管大理寺风宪堂公署防务\",\"裴胜随身携带绝密调防文书残卷暗痕显露\"]",
+    "单章蓝图补全第 44 章伏笔时序消毒：删除 [\"司库在大理寺风宪堂公署当众痛哭翻供，招认受萧元直密令诬陷沈淮\"]",
+    "单章蓝图补全第 45 章伏笔时序消毒：删除 [\"大理寺风宪堂公署回廊内司库面色青黑倒地，吐出污血后气绝身亡\",\"沈淮俯身覆面按验，敏锐闻到死者七窍溢出奇异草药异香\",\"翻供司库在大理寺风宪堂公署回廊内暴毙身亡\",\"沈淮发现死者身上散发奇异草药异香\"]",
+    "单章蓝图补全第 47 章伏笔时序消毒：删除 [\"沈淮凭借顾清辞拓印的内廷公文，比对出异香与御药房送呈养心殿的秘方一致\",\"沈淮证实毒香与内侍御药房配方同源\"]",
+    "单章蓝图补全第 48 章伏笔时序消毒：删除 [\"沈淮在大理寺风宪堂公署暗格内搜出前任寺丞藏匿的半块断墨与朱砂批注\",\"批注详尽记录了三年前皇庄私铁调拨京营的暗记文号，与现有账册形成完整印证\",\"沈淮起获前任寺丞遗留的半块断墨与朱砂批注\",\"补齐皇庄私铁直通京营的关键调度证据\"]",
+    "单章蓝图补全第 49 章伏笔时序消毒：删除 [\"陆成安威逼沈淮在会审中单方面揭发东宫，沈淮点破齐王府在皇庄私铁上的同谋破绽\",\"陆成安交出齐王府调动市井清议的暗号符牌以示退让。\"]",
+    "单章蓝图补全第 50 章伏笔时序消毒：删除 [\"沈淮在满堂差役杀威棒声中步入大理寺风宪堂公署正堂，神色自若傲视群官。\",\"沈淮步入大理寺风宪堂公署正堂直面严恪与萧元直。\"]",
+    "本地收缩超长标题/CBN/CEN 共 7 章（第 43、44、45、46、47、48、49 章），未发 AI 请求",
+    "大纲 agent:model-finish,18 轮 15 次工具调用,复检 2 次"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 3,
+    "firstPassRate": 1,
+    "rewrittenChapters": 0,
+    "totalRewriteRounds": 0,
+    "averageRewriteRounds": 0,
+    "pipelineAttempts": 3
+  },
+  "runtimeMetrics": {
+    "requestCount": 10,
+    "requestCountsByPurpose": {
+      "scene-draft": 4,
+      "fact-extraction": 3,
+      "chapter-judge": 3
+    },
+    "latencyP50Ms": 53363,
+    "latencyP95Ms": 93096,
+    "latencyMaxMs": 93096
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787044972770",
+      "model": "gemini-3.8-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "explicit"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 81.9,
+      "wouldStartReading": true,
+      "confidence": 0.88,
+      "dimensions": {
+        "openingAttraction": 85,
+        "coreSellingPoint": 88,
+        "protagonistDrive": 86,
+        "conflictEscalation": 80,
+        "payoffPlanning": 82,
+        "characterRelations": 74,
+        "suspensePlanning": 76,
+        "audienceFit": 81
+      },
+      "issues": [
+        {
+          "id": "reader.other-1",
+          "severity": "high",
+          "category": "other",
+          "location": "第18章",
+          "description": "目标读者定位为喜爱高智商权谋与硬核刑侦的读者，但东宫派出的专业死士在闹市执行绝密灭口暗杀任务时，怀中居然随身携带带有自身派系明签的腰牌，属于典型的反派低级降智送人头，严重削弱了高智商权谋博弈的说服力。",
+          "evidence": [
+            "溃败的刺客咬碎毒囊倒地，怀中滑出詹事府的腰牌。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.character-2",
+          "severity": "medium",
+          "category": "character",
+          "location": "keyCharacters -> 赵显 & 沈淮",
+          "description": "人物关系字段存在严重的数据截断与格式错误：沈淮的 relationshipChanges 中 targetName 全被填入整句动态描述而非人物名称；赵显的关系列表中将一句话断裂切割，导致生成了名为“必须除之而后快的乱臣贼子。”的虚假角色条目。",
+          "evidence": [
+            "{\"targetName\":\"必须除之而后快的乱臣贼子。\",\"relationType\":\"unknown\",\"dynamic\":\"必须除之而后快的乱臣贼子。\"}"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-3",
+          "severity": "medium",
+          "category": "other",
+          "location": "foreshadowPlan -> foreshadow-10",
+          "description": "首辅周明敬耳语大虞律祖训真伪之辨的关键伏笔，其埋设章节 setupChapter 为 null，未明确指定具体的前期植入节点，存在伏笔规划落空的隐患。",
+          "evidence": [
+            "{\"id\":\"foreshadow-10\",\"hint\":\"首辅周明敬在文渊阁直房对沈淮耳语的大虞律开篇八字祖训真伪之辨\",\"type\":\"dialogue\",\"importance\":\"emotion\",\"setupPhase\":\"第2卷中期\",\"payoffPhase\":\"第3卷大结局\",\"setupChapter\":null"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.pacing-4",
+          "severity": "medium",
+          "category": "pacing",
+          "location": "storyScale",
+          "description": "全书规划字数仅为45万字（180章），却承载了从小吏洗冤、破皇庄案、大理寺立足、主审科举舞弊与漕银亏空两大案、再到天子病危诸王兵变、当庭斩叛王、新帝登基入阁拜相的庞大架构。第1卷一个首案即消耗了60章（1/3篇幅），后两卷多起大案与夺嫡决战极易因篇幅受限而被迫流水账化或严重压缩细节。",
+          "evidence": [
+            "\"targetWordCount\":\"450000字\",\"estimatedChapterCount\":180,\"averageWordsPerChapter\":2500,\"suggestedVolumeCount\":3"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.pacing-5",
+          "severity": "low",
+          "category": "pacing",
+          "location": "第20-21章",
+          "description": "第20章末尾陈怀瑾按剑下令“关闭风宪堂大门拒绝收押”，而第21章紧接着沈淮指出程序漏洞后陈怀瑾又“依法强行接管囚犯”，连续两章在大理寺辕门同一个门槛上进行收押与否的拉扯，推进略显停滞打转。",
+          "evidence": [
+            "陈怀瑾宝剑归鞘，森冷下令关闭风宪堂大门拒绝收押。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "大纲立意极佳，'现代法务合规+危机公关'切入明清式封建官场刑狱的设定辨识度拉满。开篇生死一线、反客为主的节奏迅猛老辣，程序正义与权谋博弈结合紧密，具备很强的开篇吸引力与爽感期待。主要问题在于：部分反派行动逻辑出现降智破绽（如闹市死士随身带詹事府腰牌）、45万字总容量对于涵盖三法司夺权与诸王兵变的宏大史诗线而言明显偏紧凑、以及人物关系元数据存在明显的断句与格式错误。整体具备开书潜力，建议在正文创作中强化反派智商周密度并适度扩充中后卷容量。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 88,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 92,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 87,
+          "characterVoice": 82,
+          "payoffValue": 86,
+          "pacing": 90,
+          "endingPull": 91
+        },
+        "issues": [
+          {
+            "id": "reader.issue-001",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "现场伪造逻辑存在未闭环的微瑕：主角试图伪造成狱卒酗酒失足起火窒息，但狱卒颈部有被碎陶割破的开放性创口，牛皮护领受损，且主角自身脖颈有致命新鲜勒痕，若伪装成'囚徒依然重刑昏迷'，在硬核悬疑读者视角下极易被查验者当场识破。",
+            "evidence": [
+              "碎陶割破了狱卒的皮肉，却被粗厚的熟牛皮护领硬生生挡下大半。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.issue-002",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "现代职业经历映射略显夸张，法务合规岗位拥有'千百次拆解过的防暴关节技'与前文'通宵核查违规担保底单猝死'的社畜形象略有割裂，轻微损伤写实硬核感。",
+            "evidence": [
+              "前世合规防暴演练里千百次拆解过的关节控制技巧在脑海中飞速划过"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "极具冲击力的黄金开局。开篇直接切入绞杀濒死绝境，反杀动作设计硬朗狠绝、符合力学与空间逻辑；搜尸后迅速引出'倒签三日自裁文书'的官场权谋与司法销账阴谋，展现了主角作为法务合规专家的职业推演敏锐度。整章节奏凌厉紧凑，伪造现场与地底机簧暗锁的处理展现了底层小吏的生存智慧，章尾重甲铁靴逼近的悬念压迫感十足，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 86.7,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 87,
+          "openingHook": 86,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 86,
+          "characterVoice": 84,
+          "payoffValue": 87,
+          "pacing": 88,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "严恪身为古代刑部武官，台词中出现现代解剖学词汇‘颈动脉’，略显出戏，破坏了历史官场题材的沉浸感与语境真实度。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧接上章悬念展开，节奏紧凑凌厉。主角沈淮面对持刀提刑官的致命逼供，凭借现代法务合规思维直击大虞律法漏洞与官僚割席心理，以纯逻辑和程序正义完成绝地反制，爽点兑现清晰，智斗含金量高。成功将必死之局转化为争取到三日破局时限的动态博弈，局势变化显著，悬念维持良好。唯一微瑕在于反派台词偶现现代医学名词，整体完成度极佳，追读吸引力强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 79.3,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 84,
+          "openingHook": 81,
+          "conflictEffectiveness": 76,
+          "emotionalDrive": 78,
+          "characterVoice": 82,
+          "payoffValue": 77,
+          "pacing": 82,
+          "endingPull": 75
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "下毒杀人却特意选用带包银边的瓷碗，导致劣质砒霜遇银立刻泛青变黑，这在主打“硬核逻辑、高智商权谋”的设定下显得反派智商强行下线。送毒者自带银质显色工具属于过于明显的剧情便利，削弱了智斗的严密性。",
+            "evidence": [
+              "那不是死囚专用的粗陶瓦罐，而是厚胎细瓷，最醒目的是碗沿外侧镶嵌的一道窄银边。此刻滚烫的荤汤漫过银边，在昏暗火把映照下，那圈银皮不仅毫无雪白光泽，反而以肉眼可见的速度褪色泛青，眨眼工夫便凝结成炭墨般的死黑。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.payoff-2",
+            "severity": "low",
+            "category": "payoff",
+            "location": "全文",
+            "description": "章节标题定为“逼牢头自己吃下去！”，但实际正文主角仅将碗沿抵住对方嘴唇进行威慑施压，随即将其推开，牢头分毫未食便狼狈逃跑。标题存在夸大承诺，微爽点兑现力度较预期略有折扣。",
+            "evidence": [
+              "沈淮冷笑，手中漆黑的包银碗沿直接顶上了牢头的嘴唇：“张嘴！吃一口烂肉，喝三口热汤！只要你当着本官的面咽下去，半刻钟内不死，本官立刻双手把碗奉还，向你磕头赔罪！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "结尾以牢头逃跑的回音消逝收拢，气氛烘托充分但偏平缓。牢头投毒失败逃回后势必引发严恪的下一轮反扑，但章尾未明确抛出主角下一步藏匿物证或应对更致命危机的即时悬念，追读钩子略显后劲不足。",
+            "evidence": [
+              "凌乱湿滑的草鞋践踏在积水泥浆中，激起一阵阵狼狈刺耳的扑腾水声。那沉重急促的喘息与惊魂未定的逃窜声在深邃幽暗的死牢甬道里激荡回响，撞击在坚硬滑腻的岩壁间。回音跌跌撞撞退向远方，最终化作一道微弱的余响，彻底被死牢冰冷死寂的黑暗吞噬殆尽。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文紧迫节奏，主角敏锐识破严恪“三日之约”背后的暗杀意图，利用律法知识与刑侦反侦察手段反制牢头、截留投毒物证，智斗博弈和底层小吏的生存狠劲表现出色。主要短板在于“银边瓷碗装砒霜”的道具设计过于巧合且反派行事欠缺基本周密，略有损硬核权谋质感；章尾牢头逃窜后缺乏更紧迫的即时悬念抓手。整体节奏紧凑、行文洗练，具备持续追读吸引力。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 71.1,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "mainlineProgress": 76,
+          "patternVariation": 64,
+          "suspensePayoff": 72,
+          "characterArc": 74,
+          "emotionalArc": 70,
+          "payoffEscalation": 65,
+          "genrePromise": 75,
+          "continuationDesire": 73
+        },
+        "issues": [
+          {
+            "id": "reader.genre-promise-1",
+            "severity": "medium",
+            "category": "genre-promise",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.9
+          },
+          {
+            "id": "reader.payoff-2",
+            "severity": "medium",
+            "category": "payoff",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.85
+          },
+          {
+            "id": "reader.genre-promise-3",
+            "severity": "low",
+            "category": "genre-promise",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.95
+          },
+          {
+            "id": "reader.payoff-4",
+            "severity": "low",
+            "category": "payoff",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.8
+          }
+        ],
+        "summary": "前三章展现了极强的黄金开局爆发力。主角沈淮立足现代法务合规思维，将大虞律法、程序正义与官僚自保心理转化为反杀武器，前两章由身陷绞杀的物理翻盘无缝衔接至公堂程序的智商碾压，命悬一线的紧迫感与逆境反制爽感兑现极其出色。跨章主要问题在于结构同质化初显，连续三章局限于死牢单间内的被动遇袭与拆招，且第3章对手从提刑官降级为粗鄙牢头、暗杀工具采用‘银边碗装砒霜’的经典降智套路，导致博弈质量和爽点层级略有下滑。但核心‘三日倒计时’死局依然坚固，主角手段老辣果断，整体保持了高度的追读吸引力。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 3,
+      "chapterAverage": 84.7,
+      "chapterMedian": 86.7,
+      "chapterMinimum": 79.3,
+      "openingThreeAverage": 84.7,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察"
+    ],
+    "errors": [],
+    "durationMs": 262246
+  },
+  "provider": "openai",
+  "model": "gemini-3.8-flash-high",
+  "totalMs": 2577691,
+  "warnings": [
+    "大纲阶段 warnings（37 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（1 条，影子模式不阻断）"
+  ]
+}

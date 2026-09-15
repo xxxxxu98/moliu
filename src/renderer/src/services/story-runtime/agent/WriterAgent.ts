@@ -57,6 +57,8 @@ export interface WriterAgentStepInput {
   knownCharacterNames: string[];
   /** 死亡族终态角色（状态=死亡/驾崩）：改稿 brief 显式禁令，杜绝复活钩子改稿回潮 */
   terminalFateCharacters?: Array<{ name: string; status: string }>;
+  /** 头衔锚（契约 14）：改稿称谓与最近入账头衔一致，杜绝旧头衔回潮 */
+  characterTitleAnchors?: Array<{ name: string; title: string }>;
 }
 
 export interface WriterAgentStepResult extends ChapterReviewOutcome {
@@ -130,6 +132,14 @@ export function buildWriterBrief(input: WriterAgentStepInput, toolkit: AgentTool
           '- 初稿若已写出这类内容,属于与全书事实冲突的发明:直接删除该场景,或改写成谣言/误报被当场识破;不要试图「圆回来」',
         ]
       : [];
+  const titleAnchors = (input.characterTitleAnchors ?? []).filter(item => item.name && item.title);
+  const titleAnchorRules =
+    titleAnchors.length > 0
+      ? [
+          '- 【头衔锚】各角色当前(最近一次既成任命)的官职/头衔/品级,改稿中称谓、自称、品级、补服袍色必须与之一致;禁止旧头衔、凭空新头衔或品级跳变:',
+          ...titleAnchors.map(item => `  - ${item.name}：${item.title}`),
+        ]
+      : [];
   const previousEnding = (input.previousChapterEnding ?? '').trim().slice(-200);
 
   return [
@@ -148,6 +158,7 @@ export function buildWriterBrief(input: WriterAgentStepInput, toolkit: AgentTool
     ...nameRules,
     ...appearanceRules,
     ...terminalFateRules,
+    ...titleAnchorRules,
     ...(previousEnding
       ? [`- 【上章结尾原文】「…${previousEnding}」——本章开场必须承接此状态,不得回退到 CBN 字面`]
       : []),

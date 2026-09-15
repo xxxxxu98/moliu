@@ -182,6 +182,11 @@ export interface SceneDraftOptions {
    * 「已驾崩皇帝病危急报」钩子，fact_conflict 五连拒整章死。
    */
   terminalFateCharacters?: Array<{ name: string; status: string }>;
+  /**
+   * 头衔锚（契约 14）：每角色最近一次入账的官职/头衔/品级。正文称谓必须
+   * 与之一致——g38f r4 全文通读实证主角官职五重漂移+拜相爽点被 ch200 重复兑现。
+   */
+  characterTitleAnchors?: Array<{ name: string; title: string }>;
 }
 
 export class SceneDraftEngine {
@@ -290,6 +295,16 @@ export class SceneDraftEngine {
           '- 他们只能以回忆、追述、遗物、档案、验尸、丧仪等向后引用形式存在；若剧情确需「有人谎称其还活着」，正文必须把这是谣言或误报写明',
         ]
       : [];
+    // 头衔锚：正文称谓与最近入账头衔一致（契约 14）
+    const characterTitleAnchors = (options?.characterTitleAnchors ?? []).filter(
+      item => item.name && item.title
+    );
+    const titleAnchorRules = characterTitleAnchors.length > 0
+      ? [
+          '- 【头衔锚】以下是各角色当前（最近一次既成任命）的官职/头衔/品级，正文与对话中的称谓、自称、品级、补服袍色必须与之一致；禁止使用旧头衔、凭空新头衔或品级跳变（升迁/降黜只能发生在正文写明任命之后）：',
+          ...characterTitleAnchors.map(item => `  - ${item.name}：${item.title}`),
+        ]
+      : [];
     // 跨章收尾去重：把近几章实际写出的结尾句列出来，禁止本章再写同款收尾
     const recentEndingRules = (options?.recentEndingSnippets ?? []).length > 0
       ? [
@@ -364,6 +379,7 @@ export class SceneDraftEngine {
         ...hardEmbargoRules,
         ...futureRevealRules,
         ...terminalFateRules,
+        ...titleAnchorRules,
         ...revisionRules,
       ].join('\n'),
       prompt: JSON.stringify({

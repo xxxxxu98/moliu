@@ -74,6 +74,40 @@ function isEnabled(): boolean {
   return !/^(?:0|false|no)$/iu.test(process.env.MOLIU_READER_EVAL?.trim() ?? '');
 }
 
+function envPositiveInt(name: string, fallbackMs: number): number {
+  const raw = Number(process.env[name]?.trim());
+  return Number.isFinite(raw) && raw > 0 ? raw : fallbackMs;
+}
+
+// 评审请求级超时：网关挂起形态（连接建立但永不返回）不会 throw，裸 await 会把
+// 整个闭环测试拖到 vitest 24h 超时墙。超时按既有 catch 语义记入 errors，不阻断测试。
+// 惰性读取环境变量：测试可在运行时注入小阈值。
+function requestTimeoutMs(): number {
+  return envPositiveInt('MOLIU_READER_EVAL_REQUEST_TIMEOUT_MS', 300_000);
+}
+// 评审总预算：200 章逐章评审在通道劣化时全部超时也要封顶，耗尽后剩余章跳过。
+function totalBudgetMs(): number {
+  return envPositiveInt('MOLIU_READER_EVAL_TOTAL_BUDGET_MS', 1_800_000);
+}
+
+export async function withDeadline<T>(p: Promise<T>, label: string): Promise<T> {
+  const timeoutMs = requestTimeoutMs();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      p,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`评审请求超时（${timeoutMs}ms）：${label}`)),
+          timeoutMs
+        );
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }
@@ -313,24 +347,38 @@ export async function runStoryflowReaderEvaluation(
   const context = buildContext(result);
 
   try {
-    base.outline = await judge.evaluateOutline({
-      context,
-      outline: result.executableOutline,
-    });
+    base.outline = await withDeadline(
+      judge.evaluateOutline({
+        context,
+        outline: result.executableOutline,
+      }),
+      '大纲读者评审'
+    );
   } catch (error) {
     base.errors.push(`大纲读者评审失败：${error instanceof Error ? error.message : String(error)}`);
   }
 
   let previousTail = '';
+  const budgetMs = totalBudgetMs();
   for (const chapter of result.chapterRunResults) {
+    if (Date.now() - startedAt > budgetMs) {
+      const remaining = result.chapterRunResults.length - base.chapters.length - base.errors.filter(e => e.includes('读者评审失败')).length;
+      base.warnings.push(
+        `评审总预算（${budgetMs}ms）耗尽，跳过剩余约 ${remaining} 章的逐章评审`
+      );
+      break;
+    }
     try {
-      const evaluation = await judge.evaluateChapter({
-        context,
-        chapter: chapter.chapterNumber,
-        title: chapter.output.title || chapter.chapter.title || `第${chapter.chapterNumber}章`,
-        previousTail,
-        prose: chapter.output.prose,
-      });
+      const evaluation = await withDeadline(
+        judge.evaluateChapter({
+          context,
+          chapter: chapter.chapterNumber,
+          title: chapter.output.title || chapter.chapter.title || `第${chapter.chapterNumber}章`,
+          previousTail,
+          prose: chapter.output.prose,
+        }),
+        `第${chapter.chapterNumber}章读者评审`
+      );
       base.chapters.push(evaluation);
     } catch (error) {
       base.errors.push(
@@ -344,7 +392,9 @@ export async function runStoryflowReaderEvaluation(
     const chapters = buildWindowChapters(result, base.chapters, endChapter);
     if (chapters.length === 0) continue;
     try {
-      base.windows.push(await judge.evaluateWindow({ context, chapters }));
+      base.windows.push(
+        await withDeadline(judge.evaluateWindow({ context, chapters }), `${chapters[0].chapter}-${endChapter}章窗口评审`)
+      );
     } catch (error) {
       base.errors.push(
         `${chapters[0].chapter}-${endChapter}章窗口评审失败：${error instanceof Error ? error.message : String(error)}`

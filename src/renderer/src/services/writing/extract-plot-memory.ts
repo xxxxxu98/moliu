@@ -664,13 +664,87 @@ export function collectFateForbiddenZones(
   characterNames: string[]
 ): string[] {
   const roster = new Set(characterNames.map(n => n.trim()).filter(Boolean));
+  // 分族措辞（2026-09-15 g38f r4 ch129 崔显实证：ch60 已入下狱账，ch129 仍以自由身
+  // 现身朝班举黄绫自辩——旧文案「禁止以在场活人身份出场」对下狱族语义模糊，
+  // 判官无法区分「狱中受审（合法）」与「自由身行动（违规）」）：
+  // 死亡族维持全禁；下狱/定罪/去职族禁的是自由身形态，狱中形态合法。
+  const fateZoneText = (state: string, chapterIndex: number, detail: string): string => {
+    const base = `已于第${chapterIndex + 1}章${state}（证据：${detail.slice(0, 50)}）`;
+    if (state === '死亡' || state === '驾崩') {
+      return `${base}，本章禁止其以在场活人身份出场、对话或行动；仅可作回忆/追述提及`;
+    }
+    const custody = state === '下狱' || state === '定罪';
+    return custody
+      ? `${base}，本章其只能以在押/狱中受审/押解途中的形态出现或被提及；禁止以自由身现身朝班、官署办公、领兵、自行出入或当众自辩——若剧情确需其离开牢狱，必须有明示的押解/提审/释放过程`
+      : `${base}，本章禁止其以原职身份办公、理事或受命；复起必须有明示的任命过程`;
+  };
   return collectCharacterFates(memories)
     .filter(fate => roster.has(fate.characterName))
     .map(
       fate =>
-        `${fate.characterName}已于第${fate.chapterIndex + 1}章${fate.state}（证据：${fate.detail.slice(0, 50)}），` +
-        `本章禁止其以在场活人身份出场、对话或行动；仅可作回忆/追述提及`
+        `${fate.characterName}${fateZoneText(fate.state, fate.chapterIndex, fate.detail)}`
     );
+}
+
+/**
+ * 头衔锚（2026-09-15 契约 14，g38f 200 章全文通读实证官职五重漂移）：
+ * 每角色最新一次「头衔:」入账的最新值，供写作 prompt 注入正文称谓锚——
+ * 正文中的官职/头衔/品级称谓必须与最近一次入账头衔一致。
+ */
+export interface CharacterTitleAnchor {
+  characterName: string;
+  title: string;
+}
+
+export function collectCharacterTitles(memories: ChapterMemory[]): CharacterTitleAnchor[] {
+  const byCharacter = new Map<string, CharacterTitleAnchor & { chapterIndex: number }>();
+  const memorySorted = [...memories].sort((a, b) => a.chapterIndex - b.chapterIndex);
+  for (const memory of memorySorted) {
+    for (const change of memory.characterStateChanges) {
+      if (!change.characterName || !change.state.startsWith('头衔:')) continue;
+      const title = change.state.slice('头衔:'.length).trim();
+      if (!title) continue;
+      const prev = byCharacter.get(change.characterName);
+      if (!prev || memory.chapterIndex >= prev.chapterIndex) {
+        byCharacter.set(change.characterName, {
+          characterName: change.characterName,
+          title,
+          chapterIndex: memory.chapterIndex,
+        });
+      }
+    }
+  }
+  return [...byCharacter.values()].map(({ characterName, title }) => ({ characterName, title }));
+}
+
+/**
+ * 头衔锚 → runtime 实体表接线（与 overlayCharacterFates 同构）：
+ * 把 collectCharacterTitles 的最新头衔映射到 entities.attributes.title，
+ * 不落 SQLite（每章从记忆重推导），仅作用于本章起草/校验视图。
+ */
+export function overlayCharacterTitles(
+  entities: Record<string, StoryEntity>,
+  memories: ChapterMemory[],
+): CharacterFateOverlayResult {
+  const titles = collectCharacterTitles(memories);
+  const byName = new Map<string, StoryEntity>();
+  for (const entity of Object.values(entities)) {
+    if (entity.kind !== 'character') continue;
+    if (entity.name.trim()) byName.set(entity.name.trim(), entity);
+    for (const alias of entity.aliases ?? []) {
+      if (alias.trim()) byName.set(alias.trim(), entity);
+    }
+  }
+  let applied = 0;
+  const next = { ...entities };
+  for (const anchor of titles) {
+    const entity = byName.get(anchor.characterName.trim());
+    if (!entity) continue;
+    if (String(entity.attributes?.title ?? '') === anchor.title) continue;
+    next[entity.id] = { ...entity, attributes: { ...entity.attributes, title: anchor.title } };
+    applied += 1;
+  }
+  return { entities: next, applied };
 }
 /** 抓捕后叠加重复项（同角色同状态保留首条），按章节内出现顺序稳定输出 */
 /**

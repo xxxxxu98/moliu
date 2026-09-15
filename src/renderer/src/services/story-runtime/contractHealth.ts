@@ -499,6 +499,32 @@ export function collectTerminalDeathCharacters(state?: StoryState): TerminalDeat
 }
 
 /**
+ * 头衔锚（2026-09-15 契约 14，g38f 200 章全文通读实证官职五重漂移）：
+ * 从实体 attributes.title（章记忆头衔账 overlay 接线）读每角色当前头衔，
+ * 注入起草 prompt 作正文称谓锚——官职/品级/袍服称谓必须与最近一次入账一致。
+ */
+export interface CharacterTitleAnchor {
+  name: string;
+  title: string;
+}
+
+export function collectCharacterTitleAnchors(state?: StoryState): CharacterTitleAnchor[] {
+  if (!state?.entities) return [];
+  const out: CharacterTitleAnchor[] = [];
+  const seen = new Set<string>();
+  for (const entity of Object.values(state.entities)) {
+    if (entity.kind !== 'character') continue;
+    const title = String(entity.attributes?.title ?? '').trim();
+    if (!title) continue;
+    const name = entity.name.trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    out.push({ name, title });
+  }
+  return out;
+}
+
+/**
  * 从节点文本中解析出命运级终态角色名；至少命中一个即视为「被过期货污染」的节点。
  * 命中即视为「被过期货污染」的节点（子串匹配：蓝图提及终态角色的在场行动，
  * 如「周茂现身公堂」；回忆/追述由模型措辞区分，此处宁可保守裁剪）。

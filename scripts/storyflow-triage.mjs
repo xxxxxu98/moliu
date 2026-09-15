@@ -507,6 +507,60 @@ function triageProvider(providerId, meta) {
           `${d.name}存在 ${d.deaths.length} 次死亡入账（${span}）：死亡无合法逆转——要么追认句重复入账（提取合同 12），要么两次死亡之间藏着真复活（g38f-200chr2 孙茂才 ch172 毒毙→ch189 天牢再死形态）。必须过 fate-adjudicate 终审`
         );
       }
+      // 羁押叙述未入账候选（2026-09-15 g38f r4 全文通读实证：崔显 ch60/ch121 两次
+      // 「押入死字监」完成体未入下狱账，ch129 以自由身现身朝班——禁入/陈旧度裁剪
+      // 都读台账，账面无终态则防线全程空转）。确定性候选网只认**受事主语紧邻式**
+      // （「崔显押在刑部死字监」「X已被打入大牢」）：名字与羁押动词间隔 ≤6 字且
+      // 间隔不含「将/把/令/遣/差」等处置标记——首版裸共现网把「主角把犯人押入
+      // 诏狱」的施与方也抓进来，主角九处全误报。语义核实（回忆/转述/已获释）归书审 AI。
+      const DETAINED_VERBS = '押在|押入|押进|拖入|拖进|打入|关进|收押|被押|锁拿进';
+      const DETAINED_PLACE = '死字监|死牢|大牢|天牢|诏狱|宗人府';
+      const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const detainedAsSubject = (text, name) => {
+        const re = new RegExp(
+          `${escapeRe(name)}([^。！？”」]{0,6}?)(${DETAINED_VERBS})[^。！？”」]{0,10}(?:${DETAINED_PLACE})`,
+          'g'
+        );
+        let m;
+        while ((m = re.exec(text))) {
+          const bridge = m[1] || '';
+          // 处置式/使役式的间隔标记：名字是安排押解的施方，不是被押者
+          if (/[将把令遣差着亲自率]/.test(bridge)) continue;
+          return m[0];
+        }
+        return null;
+      };
+      const bookedFateStates = new Map();
+      for (const m of memories) {
+        for (const c of m?.characterStateChanges ?? []) {
+          const name = String(c?.characterName ?? '').trim();
+          if (!name) continue;
+          if (!bookedFateStates.has(name)) bookedFateStates.set(name, new Set());
+          bookedFateStates.get(name).add(String(c?.state ?? ''));
+        }
+      }
+      const unbookedByName = new Map(); // name -> { firstChapter, chapters[] }
+      for (const m of memories) {
+        const text = `${m?.corePlot || ''}\n${(m?.keyEvents ?? []).join('\n')}`;
+        for (const name of roster) {
+          if (!text.includes(name)) continue;
+          const booked = bookedFateStates.get(name);
+          if (booked && (booked.has('下狱') || booked.has('死亡') || booked.has('驾崩'))) continue;
+          const hit = detainedAsSubject(text, name);
+          if (!hit) continue;
+          const chNum = (m.chapterIndex ?? 0) + 1;
+          const entry = unbookedByName.get(name) ?? { firstChapter: chNum, chapters: [], hit };
+          if (!entry.chapters.includes(chNum)) entry.chapters.push(chNum);
+          unbookedByName.set(name, entry);
+        }
+      }
+      for (const [name, entry] of unbookedByName) {
+        acc.add(
+          'fate.detained-unbooked',
+          entry.firstChapter,
+          `${name}有羁押完成体叙述（首见第${entry.firstChapter}章「${entry.hit.slice(0, 30)}」，共 ${entry.chapters.length} 章：${entry.chapters.slice(0, 8).join(',')}${entry.chapters.length > 8 ? '…' : ''}）但台账无其下狱账——提取合同 7 漏账会让禁入/裁剪防线空转（g38f r4 ch129 崔显在押复活实证）。候选待书审 AI 核实是否回忆/转述/已获释`
+        );
+      }
     }
   }
   // 裁判硬门禁（2026-08-28 首次冻结 85/85/87/60，基准 final6 分布 88.8/74.5；

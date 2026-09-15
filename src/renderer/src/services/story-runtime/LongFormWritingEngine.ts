@@ -27,6 +27,7 @@ import {
 import { ContextPackBuilder } from './ContextPackBuilder';
 import { ContinuityValidator } from './ContinuityValidator';
 import {
+  collectCharacterTitleAnchors,
   collectTerminalDeathCharacters,
   detectNodeVerbatimOverlapIssues,
   detectOpeningRepetitionIssue,
@@ -526,6 +527,7 @@ export class LongFormWritingEngine {
         ),
         knownCharacterNames: extractCharacterNames(input.state.entities),
         terminalFateCharacters: collectTerminalDeathCharacters(input.state),
+        characterTitleAnchors: collectCharacterTitleAnchors(input.state),
       });
       drafts = outcome.drafts;
       facts = outcome.facts;
@@ -622,6 +624,8 @@ export class LongFormWritingEngine {
           ),
           // 死亡族终态禁令：起草 prompt 显式列出死者，禁止任何存活形态出场
           terminalFateCharacters: collectTerminalDeathCharacters(input.state),
+          // 头衔锚（契约 14）：正文称谓必须与最近入账头衔一致
+          characterTitleAnchors: collectCharacterTitleAnchors(input.state),
           futureReveals: contracts.chapter.futureReveals ?? [],
           // 大纲链路的章节标题已是正式标题，模型再拟一个也会被 pipeline 丢弃
           existingChapterTitle: isPlaceholderChapterTitle(contracts.chapter.title)

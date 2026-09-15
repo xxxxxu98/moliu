@@ -9,8 +9,10 @@ import {
   buildCharacterStateTable,
   buildPlotProgressTable,
   collectCharacterFates,
+  collectCharacterTitles,
   collectFateForbiddenZones,
   overlayCharacterFates,
+  overlayCharacterTitles,
   mergeKeyEvents,
 } from '../extract-plot-memory';
 import type { Chapter, ChapterMemory } from '@/types/project';
@@ -364,5 +366,82 @@ describe('mergeKeyEvents（keyEvents 真源合并）', () => {
   it('上限 8 条，超出截断', () => {
     const many = Array.from({ length: 12 }, (_, i) => `第${i + 1}件独立事件发生了`);
     expect(mergeKeyEvents(many, [])).toHaveLength(8);
+  });
+});
+
+describe('头衔锚（契约 14：collectCharacterTitles / overlayCharacterTitles）', () => {
+  // 2026-09-15 g38f 200 章全文通读实证：主角官职五重漂移（参议→右通政→署理通政使→
+  // 参议回摆→大学士→再自称参议），拜相爽点被 ch200 重复兑现——长程无头衔锚所致
+  function entityOf(id: string, name: string, aliases: string[] = []): StoryEntity {
+    return {
+      id,
+      kind: 'character',
+      name,
+      aliases,
+      attributes: {},
+      knownBy: [id],
+      sourceTrace: [],
+    };
+  }
+
+  it('每角色取最新头衔入账（升迁链后值覆盖前值）', () => {
+    const memories = [
+      memoryWith(
+        [{ characterName: '陆承渊', stateType: 'status', state: '头衔:通政司参议·正五品', detail: '圣旨' }],
+        25,
+      ),
+      memoryWith(
+        [{ characterName: '陆承渊', stateType: 'status', state: '头衔:文渊阁大学士·正二品', detail: '拜相' }],
+        179,
+      ),
+    ];
+    const titles = collectCharacterTitles(memories);
+    expect(titles).toEqual([
+      { characterName: '陆承渊', title: '文渊阁大学士·正二品' },
+    ]);
+  });
+
+  it('命运族条目不进头衔锚，头衔条目不进命运表（两账互不污染）', () => {
+    const memories = [
+      memoryWith(
+        [
+          { characterName: '何文渊', stateType: 'status', state: '死亡', detail: '伏诛' },
+          { characterName: '陆承渊', stateType: 'status', state: '头衔:钦差巡按·正四品', detail: '旨授' },
+        ],
+        66,
+      ),
+    ];
+    expect(collectCharacterTitles(memories).map(item => item.characterName)).toEqual(['陆承渊']);
+    expect(collectCharacterFates(memories).map(item => item.characterName)).toEqual(['何文渊']);
+  });
+
+  it('overlayCharacterTitles 把最新头衔写进 entities.attributes.title（别名命中）', () => {
+    const entities: Record<string, StoryEntity> = {
+      'char-lu': entityOf('char-lu', '陆承渊', ['陆大人']),
+    };
+    const memories = [
+      memoryWith(
+        [{ characterName: '陆大人', stateType: 'status', state: '头衔:佥都御史·正四品', detail: '旨授' }],
+        138,
+      ),
+    ];
+    const { entities: next, applied } = overlayCharacterTitles(entities, memories);
+    expect(applied).toBe(1);
+    expect(next['char-lu'].attributes.title).toBe('佥都御史·正四品');
+    // 已同值时幂等不重写
+    const again = overlayCharacterTitles(next, memories);
+    expect(again.applied).toBe(0);
+  });
+
+  it('无头衔账时零写入（applied=0，实体原样保留）', () => {
+    const entities: Record<string, StoryEntity> = {
+      'char-lu': entityOf('char-lu', '陆承渊'),
+    };
+    const memories = [
+      memoryWith([{ characterName: '陆承渊', stateType: 'status', state: '下狱', detail: 'x' }], 10),
+    ];
+    const result = overlayCharacterTitles(entities, memories);
+    expect(result.applied).toBe(0);
+    expect(result.entities['char-lu'].attributes.title).toBeUndefined();
   });
 });

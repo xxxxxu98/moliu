@@ -1,0 +1,482 @@
+{
+  "book": "大乾账房：社畜的算盘打穿九卿",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": null,
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "default",
+  "promptChars": 34,
+  "requestedChapterCount": 3,
+  "phaseTimings": {
+    "outlineDirectionsMs": 62741,
+    "outlineExpandMs": 308130,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 776,
+    "continueWriteMs": 1085339,
+    "totalMs": 1456986
+  },
+  "completedChapters": 3,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787044972770.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787044972770.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 死牢逼画押，我看穿了致命破绽",
+      "words": 3355,
+      "paras": 22,
+      "paraCv": 0.16,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "喉头一阵腥甜翻涌，沈淮猛地呛出一大口发黑的血沫，整个人在撕心裂肺的剧痛中抽搐着醒来。后脑勺宛如被生铁重锤狠砸过般剧痛，耳边嗡嗡作响，刺鼻的腐臭与霉烂稻草味直往鼻腔里钻。还没等他辨清眼前景象，一只布满老茧的粗糙大手已死死钳住他的右手腕，硬生生",
+      "tail": "泥中架起，仰起满是血污的面庞，嘴角缓缓勾起一抹森冷的笑意。死牢绝境已被他硬生生撕开，而前方那座三司齐聚的森严大堂，才是他以自身为刃、彻底掀翻满堂朱紫的真正杀场！",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 三司堂前，我当众挑出十日错位",
+      "words": 3223,
+      "paras": 23,
+      "paraCv": 0.45,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "两名刑房差役像拖拽死狗一般，将沈淮从阴冷潮湿的死牢甬道一路架上了大堂。刺骨的穿堂风迎面刮来，吹散了沈淮鼻腔里的腐臭，却吹不散周身皮肉翻卷的剧痛。他的双脚拖曳在凹凸不平的条石上，脚掌在粗糙地面上拖出两道长长的暗红血痕。前方正是三司会审的森严正",
+      "tail": "不敢再往下探去半分。公堂之上，一众官员连大气都不敢喘上一口，唯有堂下那个血泊中的年轻算吏，在昏暗的烛火下，目光森冷地迎着三司官威，彻底定死了这道悬而未决的死劫。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 濒死口算，惊人差额震慑全场",
+      "words": 3132,
+      "paras": 45,
+      "paraCv": 0.86,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "主审官的手僵在签筒上方，指节因用力而发白。满堂差役屏息静气，连水火棍触地的碎响都消失得无影无踪，唯有八盏牛油大烛燃烧时的细微噼啪声回荡在梁柱之间。\n\n沈淮伏在冰冷的石板上，两只被生铁镣铐磨烂的手腕死死扣住石缝。胸腔里的断骨随着每一次喘息发出",
+      "tail": "停驻，又冷冷扫过烂泥般的王伯仁。公堂之内的空气沉重得教人喘不过气，那一声清脆的茶盏扣响余音未散，却已在满堂朱紫的头顶，悬起了一柄不知何时便会轰然落下的滴血铡刀。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 死牢逼画押，我看穿了致命破绽"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 三司堂前，我当众挑出十日错位"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 濒死口算，惊人差额震慑全场"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 勾稽关系，公堂之上撕碎伪账"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 暂缓斩决，死牢深夜杀机已至"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 锦衣夜入，提督限我三日清算"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 半日推演，算崩十载太仆烂账"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 废纸堆里，摸出淮南夺命盐引"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 阴阳双轨，账缝深处惊现暗印"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 私印现形，翻案直撞当朝九卿"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1789451003633",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-7MEn7g\\story-runtime\\proj-1789451003633-1739bc3a0261.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 3,
+    "canonicalSnapshots": 4,
+    "latestSnapshotChapter": 3,
+    "sceneChunks": 3,
+    "events": 10
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 13,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "67158735e0c6a5200350fbdf43d9b669da1888964f718c91e2185efeb3a5a5d1",
+    "completeCharacterProfileCount": 13,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 13,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 3
+  },
+  "outlineWarnings": [
+    "单章蓝图补全第 1 章伏笔时序消毒：删除 [\"沈淮发现太仆寺亏空文书疑点并拒按手印\"]",
+    "单章蓝图补全第 2 章伏笔时序消毒：删除 [\"沈淮强忍刑讯剧痛当庭高声指出供状日期与太仆寺出库日严重错位\",\"沈淮强忍刑讯剧痛指出死罪供状日期与太仆寺出库日错位\"]",
+    "单章蓝图补全第 3 章伏笔时序消毒：删除 [\"沈淮仅凭心算当庭连环报出太仆寺三年草料出入库的三万两虚假差额\",\"沈淮引用大乾开国律例指认伪证要求封存底册复核。\",\"埋设大乾开国律例指认伪证可直接封存底册并搁置原判复核之条规\"]",
+    "单章蓝图补全第 6 章伏笔时序消毒：删除 [\"陆渊表明奉密旨行事并亮出十年来太仆寺马料流水底册\"]",
+    "单章蓝图补全第 7 章伏笔时序消毒：删除 [\"沈淮运用复式记账在死牢内拼凑太仆寺马料账目\"]",
+    "单章蓝图补全第 8 章伏笔时序消毒：删除 [\"沈淮向陆渊剖析太仆寺马草亏空背后的跨区域洗钱逻辑\",\"沈淮带伤在太仆寺马草库房废旧纸堆中仔细翻找转账凭证\",\"沈淮起获盖有贡朱印泥的淮南盐道空白兑引并判定洗钱痕迹。\",\"太仆寺马草库房废纸堆中发现盖有贡朱印泥的淮南盐道空白兑引\",\"锁定太仆寺虚报马料与淮南盐道之间的资金勾连\"]",
+    "单章蓝图补全第 9 章伏笔时序消毒：删除 [\"沈淮确认太仆寺草料亏空只是户部大官分肥链的冰山一角。\"]",
+    "单章蓝图补全第 14 章伏笔时序消毒：删除 [\"沈淮高声搬出开国律例直斥公堂违律\",\"沈淮搬出大乾开国律例逼停强行定罪\",\"陆渊率内厂缇骑封存太仆寺底册并拿下王伯仁。\"]",
+    "单章蓝图补全第 19 章伏笔时序消毒：删除 [\"底册显示京畿平准仓实收物资与调拨文牒数额严重倒挂\"]",
+    "单章蓝图补全第 20 章伏笔时序消毒：删除 [\"数十万石平准仓物资去向成谜直接威胁秋防。\"]",
+    "单章蓝图补全第 21 章伏笔时序消毒：删除 [\"沈淮下令当场封存平准仓所有出入账册\"]",
+    "单章蓝图补全第 26 章伏笔时序消毒：删除 [\"沈淮在老库夹层暗锁发现蹊跷的青石粉涂抹痕迹\",\"在封条暗锁处察觉独特的青石粉印痕\"]",
+    "单章蓝图补全第 28 章伏笔时序消毒：删除 [\"公堂判定太仆寺马疫报销纯系虚构作伪\"]",
+    "单章蓝图补全第 30 章伏笔时序消毒：删除 [\"沈淮搜出盖有太仆寺私印的兵部加急通关文牒存根\"]",
+    "单章蓝图补全第 40 章伏笔时序消毒：删除 [\"乾元帝在顺天府户部衙署御前接见沈淮密奏\",\"乾元帝赋予沈淮秋防大典独断收网特权。\"]",
+    "单章蓝图补全第 47 章伏笔时序消毒：删除 [\"太仆寺马草虚报损耗与战马死淘率常数被当堂揭露无所遁形\"]",
+    "单章蓝图补全第 50 章伏笔时序消毒：删除 [\"沈淮执掌顺天府户部衙署度支司厘清京畿马政账目\"]",
+    "本地收缩超长标题/CBN/CEN 共 9 章（第 6、9、10、40、46、47、48、49、50 章），未发 AI 请求",
+    "大纲 agent:model-finish,12 轮 13 次工具调用,复检 1 次"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 3,
+    "firstPassRate": 1,
+    "rewrittenChapters": 0,
+    "totalRewriteRounds": 0,
+    "averageRewriteRounds": 0,
+    "pipelineAttempts": 3
+  },
+  "runtimeMetrics": {
+    "requestCount": 10,
+    "requestCountsByPurpose": {
+      "scene-draft": 4,
+      "fact-extraction": 3,
+      "chapter-judge": 3
+    },
+    "latencyP50Ms": 15150,
+    "latencyP95Ms": 98037,
+    "latencyMaxMs": 98037
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787044972770",
+      "model": "gemini-3.8-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "explicit"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 82.1,
+      "wouldStartReading": true,
+      "confidence": 0.88,
+      "dimensions": {
+        "openingAttraction": 76,
+        "coreSellingPoint": 88,
+        "protagonistDrive": 85,
+        "conflictEscalation": 84,
+        "payoffPlanning": 82,
+        "characterRelations": 75,
+        "suspensePlanning": 80,
+        "audienceFit": 86
+      },
+      "issues": [
+        {
+          "id": "reader.pacing-1",
+          "severity": "high",
+          "category": "pacing",
+          "location": "startupPack30.chapterBlueprints (第1-5章与第11-15章)",
+          "description": "开篇前15章的核心公堂博弈发生严重的情节结构循环与自我重复，削弱了前三章的脱罪紧迫感与第11-15章的高潮爆发力。",
+          "evidence": [
+            "第2章指出'沈淮当堂指出草料出库与采购日期错位十日'，第4章'在顺天府户部衙署大堂现场绘制借贷勾稽简图拆穿假账逻辑'迫使主审官收回斩字令；然而到了第11章再次出现'沈淮当堂指出草料流水中采购与入库日期倒挂十日的致命假账漏洞'，第12章又重复'沈淮取过狼毫在白布上划定借贷双轨...满堂官员死寂无声'。主角在极短篇幅内以完全一致的技术手段和破绽点了两次相同的公堂戏码。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-2",
+          "severity": "medium",
+          "category": "other",
+          "location": "worldBuilding.locations 及 chapterBlueprints 全文",
+          "description": "官署机构设置与古代制度常识出现明显的概念混淆，严重违背硬核历史官场文读者的基础认知预期。",
+          "evidence": [
+            "大纲通篇高频出现'顺天府户部衙署'、'顺天府户部衙署死牢'、'顺天府户部衙署度支司'、'顺天府户部衙署·平准仓'。在古代官制常识中，顺天府为地方京府衙门，户部为中央六部之一，二者职权与衙署完全分立；且户部作为掌管全国财赋之中央部寺，并无自设死囚牢房并由三司在此会审从九品小吏的职权。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-3",
+          "severity": "medium",
+          "category": "other",
+          "location": "chapterBlueprints (第40-50章) 与 keyCharacters.陆渊",
+          "description": "大纲后半部分章节细纲存在多处文本截断、残缺以及字符解析错位问题，影响细纲对正文写作的指导效度。",
+          "evidence": [
+            "第50章标题为'四十万两算个屁，崔景山口供引出两'（标题未完截断）；第40章CBN为'崔景山的自辩折子被天子狠狠掷在。'；第47章CBN为'沈淮长身而起，将三尺厚穿透式底册重重甩。'；第48章CBN为'顺天府户部衙署正门洞开。'；第8章CPNs中混入'- CEN：兑引上的朱红大印刺目惊心'；人物关系列表中将描述词'暗留后路的貌合神离'错误填充为陆渊的人物关系对象。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-4",
+          "severity": "low",
+          "category": "other",
+          "location": "foreshadowPlan 与 volumePlan (伏笔1)",
+          "description": "核心主线伏笔的回收章节在分卷规划与伏笔列表中标注不一致。",
+          "evidence": [
+            "第一卷规划中注明'淮南盐道空白兑引（物件伏笔，主线，第8章埋设，计划第75章回收）'，但在foreshadowPlan中该伏笔标记为'payoffChapter: 42'，且第42章细纲已写明'沈淮当众拿出太仆寺库房搜出的淮南盐道空白兑引...出示盖有贡朱印泥的淮南盐道空白兑引兑现伏笔'，回收节点在第42章与第75章之间产生逻辑分歧。"
+          ],
+          "suggestion": "",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "这是一份核心卖点极其鲜明、商业定位精准的硬核穿越官场文大纲。现代法务会计、穿透式审计与复式记账法降维打击封建模糊账目的设计，高度契合喜爱智谋博弈、数据打脸的男频受众；三卷规模从'太仆寺四十万两马政'进阶至'两淮八百万两盐税'再到'九边三千万两军饷与私铸假币'，冲突与利益链层层递进，主线推进扎实有力。当前主要问题在于：第一，前15章存在公堂对质情节的闭环重叠，第1-5章与第11-15章在'日期倒挂'与'绘制借贷图'两个爽点上发生了自我复刻，建议压缩死牢过渡，将第一次公堂定性为小规模甄别保命，大核验再全力释放复式记账大招；第二，'顺天府户部衙署死牢'等官制混搭表述存在硬伤，需修正为刑部大牢、大理寺狱或户部度支清吏司等严谨称谓；第三，第40-50章的细纲断句与截断需重新补齐。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 84.2,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 88,
+          "conflictEffectiveness": 82,
+          "emotionalDrive": 84,
+          "characterVoice": 82,
+          "payoffValue": 80,
+          "pacing": 86,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "主角指出破绽震慑反派后，王伯仁的第一反应是灭口强杀，主角最终脱险仍依赖于三司提审差役的‘压哨破门’，削弱了凭借专业智谋完成绝境翻盘的自洽闭环。",
+            "evidence": [
+              "就在这生死一息的危急关头，死牢长廊深处突然炸响一阵急促沉重的脚步声！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "牵扯四十万两白银、波及朝堂重臣的惊天大案，假账破绽竟是直接‘倒填年月’提前两月盖印出库，对于主打硬核严谨的官场审计文来说，反派伪账漏洞稍显低级。",
+            "evidence": [
+              "那一排朱红色的太仆寺关防印信下方，填写的用印日期赫然写着景隆三年“六月廿二”！六月下旬京畿草场连一匹战马都未曾染疫，太仆寺却提前把八月份救治病马的十四万石精料全部批复出库！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "开篇张力拉满，死牢逼画押的绝境开局与穿越前法务审计总监的专业视角融合自然，节奏紧凑凌厉。主角通过账目时间轴逻辑倒挂找寻生机的推导过程清晰利落，虽然脱险高潮略带机械降神式的按时提审，但已成功立住主角冷冽果敢的专业人设，并顺畅引出下一章‘三司会审’的大场面博弈，追读意愿强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 85.3,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 88,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 82,
+          "characterVoice": 88,
+          "payoffValue": 84,
+          "pacing": 86,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "核心查账证据的关键时间节点与上一章结尾存在严重前后矛盾。上一章结尾沈淮挑破假账时言之凿凿称是'六月廿二'签押批料、对不上'八月'马疫核销；本章公堂对质时，却毫无过渡地变成了'七月十五'批草料、'七月廿五'报马疫（十日错位）。对于主打硬核查账、数据打脸的悬疑官场文，核心证据的日期错乱极大地削弱了智谋说服力与严谨感。",
+            "evidence": [
+              "上一章末尾：“景隆三年六月廿二，京畿战马尚无一匹染疫，太仆寺少卿的大印，凭什么提前批出整整十四万石救命精料？……六月签押的调拨凭证，根本对不上八月兵部收到的马疫核销文牒！”对照本章：“按卷宗记载，景隆三年七月廿五，京畿牧马草场连降暴雨，草料霉变引发烈性马疫……落款用印日期，写的是景隆三年七月十五日！”“七月十五批草料，七月廿五才报马疫！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章公堂博弈张力极强，沈淮从阶下死囚到以账为刃反客为主的心理压迫感塑造得十分出色。主审官的惊疑悬签、王伯仁的方寸大乱以及帘后内厂提督陆渊的细微反应，形成了立体生动的朝堂博弈画面，章尾卡点有力。唯一重大硬伤在于作为核心打脸杀招的账目日期，与第1章末尾预告的月份完全不一致，硬核严谨度在连续阅读时产生明显裂痕，需前后口径对齐校正。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 90,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 88,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 90,
+          "characterVoice": 89,
+          "payoffValue": 92,
+          "pacing": 90,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "核心数据心算存在单位换算失误（石与斗混淆）。文中设定12000匹病马一个月耗费14万石，实际每日每匹马耗粮应为 140000 ÷ 12000 ÷ 30 ≈ 0.388石（即三斗八升八合，折合粮食约50-60斤，已属超标十倍的荒谬数字），但文中口算结论却写作“每天要硬吞三石黑豆，整整五百斤精料”，将“三斗余”算成了“三石”，凭空放大了十倍。对于定位“硬核严谨、数据打脸”的硬核算账文读者而言，高潮处的算术硬伤会削弱主角“算无遗策”的智商压制说服力。",
+            "evidence": [
+              "一万两千匹病骨支离的死马，一个月耗粮十四万石，相当于每匹马每天要硬吞三石黑豆！整整五百斤精料，生生往马肚里灌铁砂也填不下这等数目！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "架空历史语境下突兀出现真实历史帝号专属器物。本作为架空王朝“大乾（景隆年间）”，此处直接描写明代宪宗年号的“成化斗彩”，造成轻微出戏。建议改为符合世界观的架空御窑名称。",
+            "evidence": [
+              "那是一只成化斗彩的白瓷茶盖，被重重扣在茶盏沿口发出的尖鸣。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章极其精准地击中了“社畜算盘打穿九卿”的核心定位，是一场教科书级别的数据反杀公堂戏。主角并非抽象地高呼正义，而是将现代审计逻辑与古代《马政则例》、漕运陆运法定耗羡律例无缝结合，以极高密度的账目漏洞层层剥茧；反派王伯仁的辩驳亦符合古代官僚利用“漂没、耗羡、文移笔误”等潜规则脱罪的本能，对抗双方智商在线。暖阁内陆渊“扣茶盖”的威慑性动作将张力拉满，收尾极具压迫感。除了一处月均耗粮口算出现“斗/石”十倍级笔误外，整体节奏凌厉，打脸爽感充沛，追读欲望强烈。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 83.7,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 82,
+          "patternVariation": 76,
+          "suspensePayoff": 80,
+          "characterArc": 84,
+          "emotionalArc": 88,
+          "payoffEscalation": 86,
+          "genrePromise": 85,
+          "continuationDesire": 88
+        },
+        "issues": [
+          {
+            "id": "reader.issue-001",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "第1章与第2章的核心翻案证据存在严重的跨章日期与逻辑前后抵牾。第1章末尾沈淮在死牢中锁定的致命证据明确为：太仆寺关防印信日期为‘六月廿二’，提前批复了八月份救治病马的十四万石精料（‘战马未死，料已出库；白纸黑字，年月倒挂！’）；然而到了第2章公堂之上，同一份卷宗第三页的用印日期却变成了‘七月十五日’，马疫爆发日期也变成了‘七月廿五’，翻案核心杀招从跨越两月的倒填年月突变成了‘整整十天的致命错位’。对于主打硬核严谨法务审计、数据流翻盘的读者而言，最关键的脱罪物证在连续阅读时出现明显断裂，严重削弱智斗的严密性与可信度。",
+            "evidence": [
+              "启禀大人，卷宗第三页调拨批文后，加盖太仆寺关防大印与通州仓承兑朱印的出库文牒，上面的落款用印日期，写的是景隆三年七月十五日！"
+            ],
+            "suggestion": "统一第1章与第2章的时间设定。若采用第2章‘十日错位’（七月十五批草料、七月廿五报马疫），需将第1章中‘六月廿二’、‘八月份’等推导口径同步修改为七月十五与七月廿五；反之若保留第1章跨月倒挂，则第2章公堂辩词与‘十日错位’说法需全面校正。",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.issue-002",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "沈淮当堂进行硬核数据核算时出现数量级口算硬伤。按文中数据：战马12,000匹，一个月（30天）耗粮140,000石，每匹马日均耗粮应为 140,000 ÷ (12,000 × 30) ≈ 0.388石（即约3.88斗、38.8升，折合古代斤两约50余斤）。沈淮脱口而出的‘三石黑豆、整整五百斤’夸大了整整十倍（显然是将‘斗’与‘石’混淆）。主角被塑造成顶级法务审计总监与心算大师，在最核心的数据反杀环节出现十倍级基础计算失误，损伤了‘硬核社畜、算无遗策’的专业人设说服力。",
+            "evidence": [
+              "一万两千匹病骨支离的死马，一个月耗粮十四万石，相当于每匹马每天要硬吞三石黑豆！整整五百斤精料，生生往马肚里灌铁砂也填不下这等数目！"
+            ],
+            "suggestion": "修正口算台词中的单位与数值，改为‘相当于每匹马每天要硬吞近四斗黑豆！整整五六十斤精料’（正常马匹日食仅四升约五六斤，十倍于正常食量已足够荒谬并坐实贪腐），确保数据链条严丝合缝。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前3章开局极具爆发力与辨识度，完美践行了‘社畜算盘打穿九卿’的题材定位。故事以死牢逼画押为开端，迅速通过三司会审公堂将危机层层放大，主角沈淮凭借前世顶级法务审计经验，以复式记账与数据勾稽为利刃，由点到面当堂瓦解贪官王伯仁的伪账体系。公堂博弈中穿插古代马政则例、漕运陆运法定耗羡、官定价与市场价套现等细节，智斗质感硬核凌厉，帘后内厂提督陆渊的威慑性介入更是将朝堂暗流拉满。当前唯一的明显短板在于数据与物证的连续性：第1章与第2章的关键账目日期出现跨章口径不一致（六月倒挂变为十日错位），且第3章的核心口算存在‘斗/石’十倍级硬伤。若修正这两处逻辑硬伤，本书开篇的专业降维打击爽感将更加无可挑剔，追读黏性极高。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 3,
+      "chapterAverage": 86.5,
+      "chapterMedian": 85.3,
+      "chapterMinimum": 84.2,
+      "openingThreeAverage": 86.5,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察"
+    ],
+    "errors": [],
+    "durationMs": 100079
+  },
+  "provider": "openai",
+  "model": "gemini-3.8-flash-high",
+  "totalMs": 1457064,
+  "warnings": [
+    "大纲阶段 warnings（19 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（1 条，影子模式不阻断）"
+  ]
+}

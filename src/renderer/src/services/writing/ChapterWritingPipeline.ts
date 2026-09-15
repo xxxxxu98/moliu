@@ -79,7 +79,7 @@ import type {
 } from '@/services/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
-import { collectFateForbiddenZones, overlayCharacterFates } from '@/services/writing/extract-plot-memory';
+import { collectFateForbiddenZones, overlayCharacterFates, overlayCharacterTitles } from '@/services/writing/extract-plot-memory';
 import { stripStructuredNodeBlock } from '@/services/outline/parser/utils';
 import type { SceneChunk } from '@/types/story-runtime';
 
@@ -765,6 +765,15 @@ export class ChapterWritingPipeline {
         ),
       );
       if (fateOverlay.applied > 0) state.entities = fateOverlay.entities;
+      // 头衔锚接线（契约 14）：最新头衔映射到 entities.attributes.title，
+      // 起草 prompt 的称谓锚由此读取——正文官职/品级必须与最近一次入账一致
+      const titleOverlay = overlayCharacterTitles(
+        state.entities,
+        (input.project.chapterMemories ?? []).filter(
+          memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
+        ),
+      );
+      if (titleOverlay.applied > 0) state.entities = titleOverlay.entities;
 
       const chapterForbiddenZones = assembleChapterForbiddenZones(
         taskBook?.forbiddenZones,
@@ -1382,8 +1391,9 @@ export function useChapterWritingPipeline(
 }
 
 /**
- * AI 事实提取的 attributes.status delta → 章记忆状态变化条目。
- * 命运账的唯一来源（规则词表塔已退役）；evidence 即台账证据句。
+ * AI 事实提取的 attributes.status / attributes.title delta → 章记忆状态变化条目。
+ * 命运账的唯一来源（规则词表塔已退役）；头衔账同源（2026-09-15 契约 14，
+ * g38f 200 章全文通读实证官职五重漂移）；evidence 即台账证据句。
  */
 function mapStatusDeltasToStateChanges(
   facts: LongFormWriteResult['facts'],
@@ -1392,7 +1402,9 @@ function mapStatusDeltasToStateChanges(
   const out: CharacterStateChange[] = [];
   for (const delta of facts?.deltas ?? []) {
     const path = String(delta?.path || '');
-    if (!path.endsWith('.attributes.status')) continue;
+    const isStatus = path.endsWith('.attributes.status');
+    const isTitle = path.endsWith('.attributes.title');
+    if (!isStatus && !isTitle) continue;
     const entityId = path.split('.')[1] ?? '';
     const entity = state?.entities?.[entityId];
     const name = String(entity?.name || entityId).trim();
@@ -1402,7 +1414,7 @@ function mapStatusDeltasToStateChanges(
     out.push({
       characterName: name,
       stateType: 'status',
-      state: value,
+      state: isTitle ? `头衔:${value}` : value,
       detail: String(
         Array.isArray((delta as { evidence?: unknown }).evidence)
           ? ((delta as unknown as { evidence?: string[] }).evidence ?? []).join(' ')
