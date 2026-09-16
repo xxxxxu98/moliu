@@ -345,7 +345,51 @@ export function applyDeterministicGates(
       checkedDomains: withFulfillmentDomain(report),
     };
   }
+  // 真实历史年号黑名单（格式腐化守卫）：warning 级定向改写，同 verbatim 模式
+  const realEraIssues = detectRealEraNameIssues(prose);
+  if (realEraIssues.length > 0) {
+    report = {
+      ...report,
+      issues: [
+        ...report.issues.filter(issue => !issue.id.startsWith('real-era-name')),
+        ...realEraIssues,
+      ],
+      checkedDomains: withFulfillmentDomain(report),
+    };
+  }
   return report;
+}
+
+/** 真实历史年号黑名单（格式腐化守卫，2026-09-16 r5 全文通读实证）：架空朝代
+ *  正文混入明朝年号（r5 八种：天启/弘治/嘉靖/成化/宣德/万历/洪武/天顺；ch69
+ *  「万历八年密契」晚于故事当下属未来文件）。年号匹配是格式事实不是语义判定，
+ *  属确定性守卫范畴。warning 级并入 requiredIssueIds 驱动定向改写（换成本书
+ *  纪年），不 blocking 防死章——改不掉保留最优稿走黄签由 triage 终审。 */
+const REAL_MING_ERA_NAMES = [
+  '洪武', '建文', '永乐', '洪熙', '宣德', '正统', '景泰', '天顺',
+  '成化', '弘治', '正德', '嘉靖', '隆庆', '万历', '泰昌', '天启', '崇祯',
+];
+
+export function detectRealEraNameIssues(prose: string): ContinuityIssue[] {
+  const hits: string[] = [];
+  for (const era of REAL_MING_ERA_NAMES) {
+    const idx = prose.indexOf(era);
+    if (idx >= 0) {
+      hits.push(
+        `${era}（…${prose.slice(Math.max(0, idx - 8), idx + era.length + 4).replace(/\s+/g, '')}…）`
+      );
+    }
+  }
+  if (hits.length === 0) return [];
+  return [
+    {
+      id: 'real-era-name',
+      domain: 'fulfillment',
+      severity: 'warning',
+      message: `正文混入真实历史年号（本书为架空朝代，年号必须用本书纪年体系）：${hits.slice(0, 4).join('、')}${hits.length > 4 ? ` 等 ${hits.length} 处` : ''}。全部替换为本书既定纪年或模糊化处理（「先帝年间」「十余年前」）`,
+      evidence: hits.slice(0, 3),
+    },
+  ];
 }
 
 function shouldRewrite(report: ContinuityReport): boolean {
@@ -374,6 +418,13 @@ export function uniformDensityIssueIds(report: ContinuityReport): string[] {
 export function nodeVerbatimIssueIds(report: ContinuityReport): string[] {
   return report.issues
     .filter(issue => issue.id.startsWith('node-verbatim-overlap'))
+    .map(issue => issue.id);
+}
+
+/** 真实历史年号混入是否在报告里——与节点照抄同机制驱动定向改写。 */
+export function realEraNameIssueIds(report: ContinuityReport): string[] {
+  return report.issues
+    .filter(issue => issue.id.startsWith('real-era-name'))
     .map(issue => issue.id);
 }
 
@@ -491,9 +542,14 @@ export class LongFormWritingEngine {
 
     const uniformIssueIdsBefore = uniformDensityIssueIds(report);
     const verbatimIssueIdsBefore = nodeVerbatimIssueIds(report);
-    // 弱信号驱动的定向改稿（均匀化/节点照抄）：唯一改稿动因为 warning 级
+    const realEraIssueIdsBefore = realEraNameIssueIds(report);
+    // 弱信号驱动的定向改稿（均匀化/节点照抄/真实年号混入）：唯一改稿动因为 warning 级
     // 确定性信号时合并为必须处理，否则 agent 可对 warning 不改稿直接 finish
-    const weakSignalIssueIds = [...uniformIssueIdsBefore, ...verbatimIssueIdsBefore];
+    const weakSignalIssueIds = [
+      ...uniformIssueIdsBefore,
+      ...verbatimIssueIdsBefore,
+      ...realEraIssueIdsBefore,
+    ];
     const weakSignalDriven = !shouldRewrite(report) && weakSignalIssueIds.length > 0;
     if (
       (shouldRewrite(report) || weakSignalIssueIds.length > 0) &&
@@ -553,6 +609,11 @@ export class LongFormWritingEngine {
       if (verbatimIssueIdsBefore.length > 0 && nodeVerbatimIssueIds(report).length > 0) {
         console.info(
           `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 节点原句照抄改稿后仍命中（≥12 字重叠），保留改写稿（node-verbatim-survived，不阻断）`
+        );
+      }
+      if (realEraIssueIdsBefore.length > 0 && realEraNameIssueIds(report).length > 0) {
+        console.info(
+          `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 真实历史年号改稿后仍混入，保留改写稿（real-era-survived，不阻断）`
         );
       }
     }
@@ -626,6 +687,8 @@ export class LongFormWritingEngine {
           terminalFateCharacters: collectTerminalDeathCharacters(input.state),
           // 头衔锚（契约 14）：正文称谓必须与最近入账头衔一致
           characterTitleAnchors: collectCharacterTitleAnchors(input.state),
+          // 纪年锚：正文纪年与近章既成纪年连续（r5 实证五套纪年互斥）
+          eraAnchors: input.eraAnchors,
           futureReveals: contracts.chapter.futureReveals ?? [],
           // 大纲链路的章节标题已是正式标题，模型再拟一个也会被 pipeline 丢弃
           existingChapterTitle: isPlaceholderChapterTitle(contracts.chapter.title)

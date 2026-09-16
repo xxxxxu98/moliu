@@ -675,8 +675,8 @@ export function collectFateForbiddenZones(
     }
     const custody = state === '下狱' || state === '定罪';
     return custody
-      ? `${base}，本章其只能以在押/狱中受审/押解途中的形态出现或被提及；禁止以自由身现身朝班、官署办公、领兵、自行出入或当众自辩——若剧情确需其离开牢狱，必须有明示的押解/提审/释放过程`
-      : `${base}，本章禁止其以原职身份办公、理事或受命；复起必须有明示的任命过程`;
+      ? `${base}，本章其只能以在押/狱中受审/押解途中的形态出现或被提及；禁止以自由身现身朝班、官署办公、领兵、自行出入或当众自辩——注意「剧情性回归」同样违规：让该角色若无其事地重新出现在公堂主事、深宅议事、率部行动等日常场景，而未在本章或近章明示释放/提审/押解过程的，即属状态矛盾（2026-09-16 r5 实证：黄承德 ch63 被捕后 ch72 无交代自由出场、崔敬堂革职后无复职即复位公座）；若剧情确需其离开牢狱或恢复官身，必须先写明示的押解/提审/释放/复职过程`
+      : `${base}，本章禁止其以原职身份办公、理事或受命；复起必须有明示的任命过程——革职看管者若无复职明旨即重坐公座理事，同样属状态矛盾`;
   };
   return collectCharacterFates(memories)
     .filter(fate => roster.has(fate.characterName))
@@ -715,6 +715,42 @@ export function collectCharacterTitles(memories: ChapterMemory[]): CharacterTitl
     }
   }
   return [...byCharacter.values()].map(({ characterName, title }) => ({ characterName, title }));
+}
+
+/**
+ * 纪年锚（2026-09-16 r5 全文通读实证：纪年五套架空+八种真实年号混入互斥）：
+ * 从近章记忆文本确定性抽取「年号+数字年」叙述句（候选网，真实明朝年号在
+ * 写作层另有黑名单守卫拦截），取最近 N 条供写作 prompt 注入——正文纪年必须
+ * 与近章既成纪年连续。抽取的是原文叙述不是语义判定，属软提示非禁令。
+ */
+const ERA_NARRATIVE_RE = /[^\s。！？"」』]{2,4}(?:元|正|嘉|永|天|成|弘|万|历|宣|德|庆|和|平|安|贞|佑|兴|宁|定|光|熹|崇)[^\s。！？"」』]{0,2}[一二三四五六七八九十百零]{1,4}年/g;
+const REAL_MING_ERAS_FILTER = new Set(['洪武','建文','永乐','洪熙','宣德','正统','景泰','天顺','成化','弘治','正德','嘉靖','隆庆','万历','泰昌','天启','崇祯']);
+
+export function collectEraAnchors(
+  memories: ChapterMemory[],
+  maxAnchors = 4,
+): string[] {
+  const anchors: Array<{ chapterIndex: number; text: string }> = [];
+  const memorySorted = [...memories].sort((a, b) => a.chapterIndex - b.chapterIndex);
+  for (const memory of memorySorted) {
+    const text = `${memory.corePlot || ''}\n${(memory.keyEvents ?? []).join('\n')}`;
+    for (const match of text.matchAll(ERA_NARRATIVE_RE)) {
+      const token = match[0];
+      const eraName = token.replace(/[一二三四五六七八九十百零]{1,4}年$/, '');
+      if (REAL_MING_ERAS_FILTER.has(eraName)) continue; // 真实年号不注入锚
+      // 与已收锚同一年号只保留最新章
+      const dupIdx = anchors.findIndex(a => a.text.replace(/[一二三四五六七八九十百零]{1,4}年$/, '') === eraName);
+      if (dupIdx >= 0) {
+        anchors[dupIdx] = { chapterIndex: memory.chapterIndex, text: token };
+      } else {
+        anchors.push({ chapterIndex: memory.chapterIndex, text: token });
+      }
+    }
+  }
+  return anchors
+    .sort((a, b) => b.chapterIndex - a.chapterIndex)
+    .slice(0, maxAnchors)
+    .map(a => `第${a.chapterIndex + 1}章纪年「${a.text}」`);
 }
 
 /**

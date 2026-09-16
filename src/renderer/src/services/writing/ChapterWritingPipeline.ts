@@ -79,7 +79,7 @@ import type {
 } from '@/services/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
-import { collectFateForbiddenZones, overlayCharacterFates, overlayCharacterTitles } from '@/services/writing/extract-plot-memory';
+import { collectEraAnchors, collectFateForbiddenZones, overlayCharacterFates, overlayCharacterTitles } from '@/services/writing/extract-plot-memory';
 import { stripStructuredNodeBlock } from '@/services/outline/parser/utils';
 import type { SceneChunk } from '@/types/story-runtime';
 
@@ -974,6 +974,13 @@ export class ChapterWritingPipeline {
         // 上章结尾仲裁：批量链路构造的 previousChapter.ending 此前只喂任务书生成,
         // 不进起草 prompt;CBN 与上章正文事实冲突时模型无从对照(花海怒放被回退成含苞)。
         previousChapterEnding: input.previousChapter?.ending || '',
+        // 纪年锚（r5 实证纪年五套互斥+真实年号混入）：近章既成纪年叙述注入起草
+        // prompt，正文纪年必须与之连续；真实年号另有黑名单守卫拦截
+        eraAnchors: collectEraAnchors(
+          (input.project.chapterMemories ?? []).filter(
+            memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
+          ),
+        ),
         // 未回收伏笔的判官候选，口径见 buildPayoffCandidates（已到埋设点，非回收时点）
         payoffCandidates: buildPayoffCandidates(input.project.foreshadows, chapterNumber),
       });
@@ -1391,9 +1398,10 @@ export function useChapterWritingPipeline(
 }
 
 /**
- * AI 事实提取的 attributes.status / attributes.title delta → 章记忆状态变化条目。
- * 命运账的唯一来源（规则词表塔已退役）；头衔账同源（2026-09-15 契约 14，
- * g38f 200 章全文通读实证官职五重漂移）；evidence 即台账证据句。
+ * AI 事实提取的 attributes.status / attributes.title / attributes.custody delta
+ * → 章记忆状态变化条目。命运账的唯一来源（规则词表塔已退役）；头衔账同源
+ * （2026-09-15 契约 14）；押地账同源（2026-09-16 契约 11 押地变更——治在押者
+ * 跨地 teleport）；evidence 即台账证据句。
  */
 function mapStatusDeltasToStateChanges(
   facts: LongFormWriteResult['facts'],
@@ -1404,17 +1412,19 @@ function mapStatusDeltasToStateChanges(
     const path = String(delta?.path || '');
     const isStatus = path.endsWith('.attributes.status');
     const isTitle = path.endsWith('.attributes.title');
-    if (!isStatus && !isTitle) continue;
+    const isCustody = path.endsWith('.attributes.custody');
+    if (!isStatus && !isTitle && !isCustody) continue;
     const entityId = path.split('.')[1] ?? '';
     const entity = state?.entities?.[entityId];
     const name = String(entity?.name || entityId).trim();
     if (!name) continue;
     const value = String((delta as { value?: unknown }).value ?? '').trim();
     if (!value) continue;
+    const prefix = isTitle ? '头衔:' : isCustody ? '押地:' : '';
     out.push({
       characterName: name,
       stateType: 'status',
-      state: isTitle ? `头衔:${value}` : value,
+      state: `${prefix}${value}`,
       detail: String(
         Array.isArray((delta as { evidence?: unknown }).evidence)
           ? ((delta as unknown as { evidence?: string[] }).evidence ?? []).join(' ')

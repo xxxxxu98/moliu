@@ -187,6 +187,11 @@ export interface SceneDraftOptions {
    * 与之一致——g38f r4 全文通读实证主角官职五重漂移+拜相爽点被 ch200 重复兑现。
    */
   characterTitleAnchors?: Array<{ name: string; title: string }>;
+  /**
+   * 纪年锚：近章既成纪年叙述（r5 实证纪年五套互斥）。正文纪年必须与之一致
+   * 且单调推进，禁止引入新年号或真实历史年号。
+   */
+  eraAnchors?: string[];
 }
 
 export class SceneDraftEngine {
@@ -305,6 +310,13 @@ export class SceneDraftEngine {
           ...characterTitleAnchors.map(item => `  - ${item.name}：${item.title}`),
         ]
       : [];
+    // 纪年锚：正文纪年与近章既成纪年连续
+    const eraAnchorRules = (options?.eraAnchors ?? []).length > 0
+      ? [
+          '- 【纪年锚】以下是近章正文既成的纪年叙述，本书全部纪年必须与之一致且时间单调推进；禁止发明新年号、禁止混入任何真实历史年号（本书为架空朝代）：',
+          ...(options?.eraAnchors ?? []).map(item => `  - ${item}`),
+        ]
+      : [];
     // 跨章收尾去重：把近几章实际写出的结尾句列出来，禁止本章再写同款收尾
     const recentEndingRules = (options?.recentEndingSnippets ?? []).length > 0
       ? [
@@ -380,6 +392,7 @@ export class SceneDraftEngine {
         ...futureRevealRules,
         ...terminalFateRules,
         ...titleAnchorRules,
+        ...eraAnchorRules,
         ...revisionRules,
       ].join('\n'),
       prompt: JSON.stringify({

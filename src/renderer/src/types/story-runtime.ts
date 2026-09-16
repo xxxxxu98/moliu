@@ -652,6 +652,7 @@ export interface LongFormWriteInput {
    * 本章到达回收时点的伏笔候选（id + hint）。透传给语义审查判官，
    * 证据确认已回收的 id 会出现在 result.report.resolvedForeshadowIds。
    */
+  eraAnchors?: string[];
   payoffCandidates?: Array<{ id: string; hint: string }>;
   /**
    * 上一章实际写出的结尾原文（批量续写链路传入）。
