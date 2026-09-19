@@ -484,6 +484,10 @@ export interface ChapterJudgeInput {
    * 用于驱动进度面板的 buried→resolved 流转。未传则不做回收判定。
    */
   payoffCandidates?: Array<{ id: string; hint: string }>;
+  /** 全书既成纪年锚（写作侧同源）：正文中出现锚外年号即自创年号，判官报 logic_gap */
+  eraAnchors?: string[];
+  /** 近章既成数字叙述：同一笔数额/编制/数量无勘误剧情改写，判官报 fact_conflict */
+  numericFacts?: string[];
 }
 
 export interface ChapterJudge {
@@ -653,6 +657,17 @@ export interface LongFormWriteInput {
    * 证据确认已回收的 id 会出现在 result.report.resolvedForeshadowIds。
    */
   eraAnchors?: string[];
+  /**
+   * 近章既成数字叙述（确定性原文抽取：金额/编制/数量句）。写作侧【数字锚】与
+   * 判官【数字一致】校验的共源输入（2026-09-17 g38f r6 实证：同一笔盐税五套口径、
+   * 存粮四万石无解释改四十万石——长程数字漂移是书审最大 S1 簇）。
+   */
+  numericFacts?: string[];
+  /**
+   * 本章出场角色的角色卡身份首句（r6 实证：角色表赵宣=三皇子恭王，写手自行
+   * 发明「刑部主事姻亲」降格身份）。写作侧【身份锚】注入。
+   */
+  characterIdentityAnchors?: Array<{ name: string; identity: string }>;
   payoffCandidates?: Array<{ id: string; hint: string }>;
   /**
    * 上一章实际写出的结尾原文（批量续写链路传入）。

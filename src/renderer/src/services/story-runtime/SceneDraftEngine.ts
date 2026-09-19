@@ -192,6 +192,16 @@ export interface SceneDraftOptions {
    * 且单调推进，禁止引入新年号或真实历史年号。
    */
   eraAnchors?: string[];
+  /**
+   * 数字锚：近章既成大额数字叙述（r6 实证长程数字漂移成最大 S1 簇）。
+   * 正文引用同一笔数额/编制/数量必须与既成一致，改写须正文明示勘误过程。
+   */
+  numericFacts?: string[];
+  /**
+   * 身份锚：本章出场角色的角色卡身份首句（r6 实证同一角色前后两身份）。
+   * 正文中的身份/地位/职权必须与角色卡一致，禁止发明同名姻亲/替身。
+   */
+  characterIdentityAnchors?: Array<{ name: string; identity: string }>;
 }
 
 export class SceneDraftEngine {
@@ -303,20 +313,35 @@ export class SceneDraftEngine {
     // 头衔锚：正文称谓与最近入账头衔一致（契约 14）
     const characterTitleAnchors = (options?.characterTitleAnchors ?? []).filter(
       item => item.name && item.title
-    );
-    const titleAnchorRules = characterTitleAnchors.length > 0
+    );    const titleAnchorRules = characterTitleAnchors.length > 0
       ? [
           '- 【头衔锚】以下是各角色当前（最近一次既成任命）的官职/头衔/品级，正文与对话中的称谓、自称、品级、补服袍色必须与之一致；禁止使用旧头衔、凭空新头衔或品级跳变（升迁/降黜只能发生在正文写明任命之后）：',
           ...characterTitleAnchors.map(item => `  - ${item.name}：${item.title}`),
         ]
       : [];
-    // 纪年锚：正文纪年与近章既成纪年连续
-    const eraAnchorRules = (options?.eraAnchors ?? []).length > 0
+    // 身份锚：出场角色的身份/地位与角色卡一致（r6 实证同一角色前后两身份）
+    const characterIdentityAnchors = (options?.characterIdentityAnchors ?? []).filter(
+      item => item.name && item.identity
+    );
+    const identityAnchorRules = characterIdentityAnchors.length > 0
       ? [
-          '- 【纪年锚】以下是近章正文既成的纪年叙述，本书全部纪年必须与之一致且时间单调推进；禁止发明新年号、禁止混入任何真实历史年号（本书为架空朝代）：',
-          ...(options?.eraAnchors ?? []).map(item => `  - ${item}`),
+          '- 【身份锚】以下是本章出场角色的既定身份（角色卡为准）：正文与对话中该角色的身份、地位、职权、与皇室/朝堂的关系必须与之一致；章节大纲节点与此冲突时以角色卡为准，禁止把具名角色降格/升格，更禁止发明同名的姻亲、替身、门客来调和矛盾（2026-09-17 g38f r6 实证：角色表赵宣=当朝三皇子恭王，某章写手却把他写成「户部右侍郎的姻亲、刑部主事赵宣」，下一章又写回恭王本人——同一人前后两身份）：',
+          ...characterIdentityAnchors.map(item => `  - ${item.name}：${item.identity}`),
         ]
       : [];
+    // 纪年锚：正文纪年与近章既成纪年连续（r6 实证：锚只拦真实年号不拦自创年号，
+    // 后 50 章模型自创「建元/建昭/宣府元年」平行纪年 9 章——升格为全书唯一年号约束，
+    // 并补空锚分支：锚为空时禁止发明任何年号）
+    const eraAnchorsPresent = (options?.eraAnchors ?? []).length > 0;
+    const eraAnchorRules = eraAnchorsPresent
+      ? [
+          '- 【纪年锚·全书唯一年号】以下纪年叙述是本书自始至终唯一一套年号的既成用法。全书正文（含对话、公文、账册、回忆、旁白）只能使用这些年号，且年数只能随剧情单调递进：',
+          ...(options?.eraAnchors ?? []).map(item => `  - ${item}`),
+          '- 禁止发明任何新年号：正文中任何位置出现锚外年号（含「X元年」「X＋数字＋年」的任何新组合、把地名/府名当年号）即属事实错误；引用前朝旧事也只能用既有的朝代名/先帝庙号相对表述，不得另造年号（2026-09-17 g38f r6 实证：后 50 章自创「建元」「建昭」「宣府元年」与全书「天兴」平行纪年同一时间窗）',
+        ]
+      : [
+          '- 【纪年锚·未确立年号】本书正文尚未确立任何年号。本章禁止发明年号（不得出现「两字年号＋数字＋年/元年」组合，如「某元三年」）；需要纪年时用「当朝/今岁/去岁/前年/三年前」等相对表述，或以皇帝庙号/在位年数相对锚定',
+        ];
     // 跨章收尾去重：把近几章实际写出的结尾句列出来，禁止本章再写同款收尾
     const recentEndingRules = (options?.recentEndingSnippets ?? []).length > 0
       ? [
@@ -331,8 +356,9 @@ export class SceneDraftEngine {
     const previousEndingRules = (options?.previousChapterEnding ?? '').trim()
       ? [
           '- 【上章衔接】上一章正文结尾原文如下（这是已成文的既定事实）：',
-          `  「…${(options?.previousChapterEnding ?? '').trim().slice(-200)}」`,
+          `  「…${(options?.previousChapterEnding ?? '').trim().slice(-400)}」`,
           '- 本章开场必须承接该结尾的场景状态继续推进；若本章 CBN 与该结尾描述的状态有出入（如已开花 vs 含苞、已昏迷 vs 站立），以上章正文事实为准向前推进，禁止把状态回退到 CBN 字面描述',
+          '- 【章界动线】上章结尾时每个角色的所在地、在途状态与既定计划都是既定事实：上章末在途中（押运/行军/追赶/乘船乘车）的角色或队伍，本章开头必须交代其行止（抵达/中途变故/奉命折返），禁止无交代地瞬移到另一地点或凭空消失；在途的车辆/船队/箱笼数量禁止无解释增减；上章末已定下的路线、分工、行动方案，本章若要变更必须写出变更的原因或变故（2026-09-17 g38f r6 实证：ch30 末主角随车队押运入峡、ch31 却无折返交代直接出现在京师值房；ch69 末定「官船诱敌、三人走旱路」已出发、ch70 却折返登船走水路——两章读者评分破线）',
         ]
       : [];
     const modeRules: Record<RevisionPlan['mode'], string[]> = {
@@ -392,7 +418,16 @@ export class SceneDraftEngine {
         ...futureRevealRules,
         ...terminalFateRules,
         ...titleAnchorRules,
+        ...identityAnchorRules,
         ...eraAnchorRules,
+        '- 【皇统叙事】在位皇帝只能以「皇帝/陛下/今上/圣上/年号+帝」称呼，「先帝/先皇/大行皇帝」只能用于已驾崩者——上下文显示皇帝仍在世（颁诏/视朝/病重未死）时严禁称其先帝（2026-09-19 g38f r7 实证：老皇帝在位期间五处被称先帝）。驾崩必须有叙述场面（病榻托孤/遗诏宣读/讣告/丧仪任一），不得零叙述直接写新帝即位。「东宫/太子」指代必须单一稳定，不得在「现任储君」与「已废太子」间漂移。涉及「自X年起N年」的年数叙述，落笔前与当前年份验算跨度（r7 实证：「自嘉定三年起整整七年」而当年仅嘉定四年）',
+        ...(options?.numericFacts ?? []).length > 0
+          ? [
+              '- 【数字锚·既成名录】以下是近章已确立的大额数字事实，本章引用同一笔数额/编制/数量时必须与之一致：',
+              ...(options?.numericFacts ?? []).map(item => `  - ${item}`),
+            ]
+          : [],
+        '- 【数字锚】近章既成叙述中出现的大额数字（银两/粮饷/绢匹/引目/兵额/箱笼车船数等）是既定事实：本章引用同一笔数额、编制或数量时必须与既成数值一致；发现账目勘误、清点更正或数额本来就是虚报等剧情性修正，必须在正文中写出勘误/清点过程与原因，禁止无解释改写既成数字（2026-09-17 g38f r6 实证：同一笔盐税五套口径、存粮四万石无解释改四十万石、押运车队八十箱变八百辆，长程数字漂移成书审最大 S1 簇）。落笔前先验算：凡写「每箱N锭×M箱」「每车N石×M车」类数量×容量叙述，乘积必须与你要写的总量声明一致（2026-09-19 r7 实证：一箱六十锭×五十万箱=15亿两，正文却称三千万两，差500倍）',
         ...revisionRules,
       ].join('\n'),
       prompt: JSON.stringify({

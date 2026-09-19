@@ -754,6 +754,76 @@ export function collectEraAnchors(
 }
 
 /**
+ * 数字锚（2026-09-17 g38f r6 全文通读实证：同一笔盐税五套口径、太仓存粮四万石
+ * 无解释改写为四十万石、押运车队八十箱变八百辆——长程数字漂移是书审最大 S1 簇）：
+ * 从近章记忆文本确定性抽取含「数字+计量单位」的既成叙述句（候选网，语义判定
+ * 归判官——数值是否属于同一对象、是否矛盾由【数字一致】规则判定），取最近 N 条
+ * 供写作侧【数字锚】与判官【数字一致】共源注入。数据源含契约 15 的 numeric-fact
+ * 事件（经 keyEvents 入链）。
+ */
+const NUMERIC_UNIT_RE = /[一二三四五六七八九十百千万零\d]+(?:万|千|余)?(?:两|匹|石|引|斤|兵|人|骑|亩|顷|箱|辆|艘|张|道|锭|贯|斛|斗|文)/;
+
+export function collectNumericAnchors(
+  memories: ChapterMemory[],
+  maxAnchors = 8,
+): string[] {
+  const anchors: Array<{ chapterIndex: number; text: string }> = [];
+  const memorySorted = [...memories].sort((a, b) => b.chapterIndex - a.chapterIndex);
+  for (const memory of memorySorted) {
+    const lines = [
+      ...(memory.keyEvents ?? []),
+      memory.corePlot || '',
+    ];
+    for (const raw of lines) {
+      // 抽整句（按句号切）而非整段，避免把无关键Events段落整体灌入
+      for (const sentence of raw.split(/[。！？；\n]/)) {
+        const s = sentence.trim();
+        if (s.length < 6 || s.length > 60) continue;
+        if (!NUMERIC_UNIT_RE.test(s)) continue;
+        if (anchors.some(a => a.text === s)) continue;
+        anchors.push({ chapterIndex: memory.chapterIndex, text: s });
+        if (anchors.length >= maxAnchors) break;
+      }
+      if (anchors.length >= maxAnchors) break;
+    }
+    if (anchors.length >= maxAnchors) break;
+  }
+  return anchors.map(a => `第${a.chapterIndex + 1}章既成「${a.text}」`);
+}
+
+/**
+ * 身份锚（2026-09-17 g38f r6 实证：角色表赵宣=三皇子恭王本人，ch24 写手却自行
+ * 发明「户部右侍郎的姻亲、刑部主事赵宣」降格身份，ch25 又按角色表写回恭王本人
+ * ——同一人前后两身份）：取本章出场角色的角色卡身份首句，供写作 prompt 注入——
+ * 出场角色的身份/地位/职权必须与角色卡一致，禁止发明同名姻亲/替身/门客调和。
+ */
+export interface CharacterIdentityAnchor {
+  name: string;
+  identity: string;
+}
+
+export function collectCharacterIdentityAnchors(
+  characters: Array<{ name?: string; description?: string }>,
+  allowedNames: string[],
+  maxAnchors = 12
+): CharacterIdentityAnchor[] {
+  const allowed = new Set(allowedNames.map(n => n.trim()).filter(Boolean));
+  const out: CharacterIdentityAnchor[] = [];
+  for (const character of characters) {
+    const name = (character.name ?? '').trim();
+    if (!name || !allowed.has(name)) continue;
+    const identity = (character.description ?? '')
+      .split(/[。；;]/)[0]
+      .trim()
+      .slice(0, 50);
+    if (!identity) continue;
+    out.push({ name, identity });
+    if (out.length >= maxAnchors) break;
+  }
+  return out;
+}
+
+/**
  * 头衔锚 → runtime 实体表接线（与 overlayCharacterFates 同构）：
  * 把 collectCharacterTitles 的最新头衔映射到 entities.attributes.title，
  * 不落 SQLite（每章从记忆重推导），仅作用于本章起草/校验视图。

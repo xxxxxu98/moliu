@@ -113,5 +113,54 @@ describe('命运提取合同护栏', () => {
     expect(system).toContain('角色名卫生');
     expect(system).toContain('不是角色');
   });
+
+  // 2026-09-17 g38f r6 实证：ch102 赵宣与孙茂才同章各自画押收监只登了赵宣，
+  // 孙茂才 ch111 自由出场；ch80 江万贯「枷锁套死塞入囚车直奔大牢羁押」完成体
+  // 整章零 delta，ch88 抄家被重复执行；全书同一笔盐税五套口径无数字账。
+  it('系统合同包含同章多角色逐个入账与关键数字 numeric-fact 条款', async () => {
+    const generate = vi.fn().mockResolvedValue({ events: [], deltas: [], evidence: [] });
+    const extractor = new AIFactExtractor({ generate } as unknown as StructuredAI);
+    await extractor.extract({
+      projectId: 'p1',
+      chapterNumber: 80,
+      sceneDrafts: [],
+      state: { entities: {}, events: [] } as never,
+    });
+
+    const system = String(generate.mock.calls[0]?.[0]?.system ?? '');
+    // 契约 8 扩展：同章多角色独立宣告逐个入账
+    expect(system).toContain('同章多个角色各有独立的命运宣告句时同样逐一扫描');
+    expect(system).toContain('禁止只登主犯或合并登账');
+    // 契约 15：关键数字既成宣告出 numeric-fact 事件（写作侧数字锚的数据源）
+    expect(system).toContain('关键数字既成宣告必出 event');
+    expect(system).toContain('numeric-fact');
+    expect(system).toContain('对象＋数值＋单位＋性质');
+  });
+
+  // 2026-09-19 g38f r7 实证：ch189 事件摘要明写「周文彬被斩首处决且首级悬于正阳门
+  // 阙楼」却零 delta——死亡账未登，两章后「死士救出周文彬」全程无人拦截（死刑无声
+  // 回滚）；配角温廷翰全书 ≥6 职横跳零入账，契约 14 对配角完全空转。
+  it('系统合同含事件-账目一致性自检与配角头衔全覆盖条款（g38f r7 实证）', async () => {
+    const generate = vi.fn().mockResolvedValue({ events: [], deltas: [], evidence: [] });
+    const extractor = new AIFactExtractor({ generate } as unknown as StructuredAI);
+    await extractor.extract({
+      projectId: 'p1',
+      chapterNumber: 189,
+      sceneDrafts: [],
+      state: { entities: {}, events: [] } as never,
+    });
+
+    const system = String(generate.mock.calls[0]?.[0]?.system ?? '');
+    // 契约 8b：事件-账目一致性自检
+    expect(system).toContain('事件-账目一致性自检');
+    expect(system).toContain('事件有而账无是最优先级错误');
+    expect(system).toContain('斩首处决且首级悬于正阳门阙楼');
+    // 契约 7 死亡族补 r7 实证完成体
+    expect(system).toContain('斩首处决');
+    expect(system).toContain('首级悬于X');
+    // 契约 14：配角头衔全覆盖
+    expect(system).toContain('覆盖范围是本章出场的每一个角色，不只主角');
+    expect(system).toContain('翰林修撰/通政使');
+  });
 });
 

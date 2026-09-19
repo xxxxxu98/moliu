@@ -10,7 +10,9 @@ import {
   buildPlotProgressTable,
   collectCharacterFates,
   collectCharacterTitles,
+  collectCharacterIdentityAnchors,
   collectFateForbiddenZones,
+  collectNumericAnchors,
   overlayCharacterFates,
   overlayCharacterTitles,
   mergeKeyEvents,
@@ -443,5 +445,52 @@ describe('头衔锚（契约 14：collectCharacterTitles / overlayCharacterTitle
     const result = overlayCharacterTitles(entities, memories);
     expect(result.applied).toBe(0);
     expect(result.entities['char-lu'].attributes.title).toBeUndefined();
+  });
+});
+
+describe('数字锚（collectNumericAnchors，g38f r6 长程数字漂移实证）', () => {
+  it('从近章 keyEvents/corePlot 抽「数字+单位」既成句，最近章优先，非数字句不进锚', () => {
+    const memories = [
+      memoryWith([], 98, '钱粮清点告一段落。'),
+      memoryWith([], 99, '两淮盐税岁入实征二百二十万两。'),
+      memoryWith([], 100, '押运车队共八十辆马车、每车一箱底册。'),
+    ];
+    // memoryWith 的 keyEvents 为空——直接在 corePlot 外再塞 keyEvents 需要构造完整对象，
+    // 这里用 corePlot 覆盖核心行为；keyEvents 路径与 corePlot 同一循环
+    const anchors = collectNumericAnchors(memories, 8);
+    expect(anchors.some(a => a.includes('二百二十万两'))).toBe(true);
+    expect(anchors.some(a => a.includes('八十辆'))).toBe(true);
+    // memoryWith 的第二参是 0-based chapterIndex：99 → 前缀「第100章既成」
+    expect(anchors.some(a => a.includes('第100章既成「两淮盐税'))).toBe(true);
+    // 无数字句的章不产生锚
+    expect(anchors.some(a => a.includes('钱粮清点'))).toBe(false);
+  });
+
+  it('上限 maxAnchors 生效且重复句去重', () => {
+    const m = memoryWith([], 50, '库银共计白银三百万两。余粮仅四万石。兵额八千人。盐引二十万道。');
+    const anchors = collectNumericAnchors([m, m], 2);
+    expect(anchors).toHaveLength(2);
+  });
+});
+
+describe('身份锚（collectCharacterIdentityAnchors，g38f r6 赵宣两身份实证）', () => {
+  it('取 allowed 出场角色的角色卡身份首句，非出场角色不入锚', () => {
+    const characters = [
+      { name: '沈辞', description: '穿越者，户部度支司官员，用现代审计清算朝堂。后续升迁。' },
+      { name: '赵宣', description: '前中期夺嫡争斗策动者，操控江南织造与两淮盐税两大聚宝盆，是沈辞东南推行审计的最大政治死敌。' },
+      { name: '陆修远', description: '户部尚书，主角的上司。' },
+    ];
+    const anchors = collectCharacterIdentityAnchors(characters, ['沈辞', '赵宣']);
+    expect(anchors).toHaveLength(2);
+    expect(anchors[0]).toEqual({ name: '沈辞', identity: '穿越者，户部度支司官员，用现代审计清算朝堂' });
+    expect(anchors[1].name).toBe('赵宣');
+    expect(anchors[1].identity).toContain('夺嫡争斗策动者');
+    // 陆修远不在 allowed 名单，不入锚
+    expect(anchors.some(a => a.name === '陆修远')).toBe(false);
+  });
+
+  it('无 description 的角色跳过，空名单返回空数组', () => {
+    expect(collectCharacterIdentityAnchors([{ name: '甲' }], ['甲'])).toEqual([]);
+    expect(collectCharacterIdentityAnchors([{ name: '甲', description: '反派。' }], [])).toEqual([]);
   });
 });

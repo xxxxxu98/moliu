@@ -689,6 +689,10 @@ export class LongFormWritingEngine {
           characterTitleAnchors: collectCharacterTitleAnchors(input.state),
           // 纪年锚：正文纪年与近章既成纪年连续（r5 实证五套纪年互斥）
           eraAnchors: input.eraAnchors,
+          // 数字锚：既成大额数字显式名录（r6 实证长程数字漂移）
+          numericFacts: input.numericFacts,
+          // 身份锚：出场角色身份与角色卡一致（r6 实证同一角色前后两身份）
+          characterIdentityAnchors: input.characterIdentityAnchors,
           futureReveals: contracts.chapter.futureReveals ?? [],
           // 大纲链路的章节标题已是正式标题，模型再拟一个也会被 pipeline 丢弃
           existingChapterTitle: isPlaceholderChapterTitle(contracts.chapter.title)
@@ -750,6 +754,10 @@ export class LongFormWritingEngine {
             payoffCandidates: writeInput.payoffCandidates,
             // 上章结尾给判官做「重置登场」在场连续性判定（ch8→9 类断裂根治）
             prevChapterTail: input.previousChapterEnding,
+            // 纪年/数字跨章一致性（判官侧第二道，与写作侧锚同源）：
+            // 锚外年号=自创年号、既成数值无勘误改写=数字蒸发
+            eraAnchors: input.eraAnchors ?? [],
+            numericFacts: input.numericFacts ?? [],
           }),
         { label: 'semantic-review', maxRetries: 2 }
       );

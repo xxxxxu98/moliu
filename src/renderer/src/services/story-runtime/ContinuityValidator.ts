@@ -30,6 +30,10 @@ export interface ContinuityValidationInput {
   prevChapterTail?: string;
   /** 本章到达回收时点的伏笔候选；传入后 report.resolvedForeshadowIds 带出证据确认的回收 id */
   payoffCandidates?: Array<{ id: string; hint: string }>;
+  /** 全书既成纪年锚：透传判官做年号一致性校验（锚外年号=自创年号） */
+  eraAnchors?: string[];
+  /** 近章既成数字叙述：透传判官做跨章数字一致性校验（无勘误剧情改写既成数值） */
+  numericFacts?: string[];
 }
 
 export interface ContinuityValidatorOptions {
@@ -237,7 +241,9 @@ export class ContinuityValidator {
       input.facts,
       addIssue,
       input.payoffCandidates ?? [],
-      input.prevChapterTail
+      input.prevChapterTail,
+      input.eraAnchors ?? [],
+      input.numericFacts ?? []
     );
 
     const blockingCount = issues.filter(issue => issue.severity === 'blocking').length;
@@ -268,7 +274,9 @@ export class ContinuityValidator {
       severityOverride?: ValidationSeverity
     ) => void,
     payoffCandidates: Array<{ id: string; hint: string }> = [],
-    prevChapterTail?: string
+    prevChapterTail?: string,
+    eraAnchors: string[] = [],
+    numericFacts: string[] = []
   ): Promise<string[]> {
     // 判官确认已回收的伏笔 id（严证据门：判官未列出/判定失败一律返回空，
     // 让进度统计保持 buried 而非误标 resolved）
@@ -323,6 +331,8 @@ export class ContinuityValidator {
             inventory: state.inventory,
             openForeshadows: state.openForeshadows.slice(0, 20),
           },
+          ...(eraAnchors.length > 0 ? { eraAnchors } : {}),
+          ...(numericFacts.length > 0 ? { numericFacts } : {}),
         });
 
         for (const item of judgment.fulfillment) {

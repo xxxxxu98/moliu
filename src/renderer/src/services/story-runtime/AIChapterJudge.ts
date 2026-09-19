@@ -144,6 +144,22 @@ export class AIChapterJudge implements ChapterJudge {
           ]
         : [];
 
+    // 纪年/数字跨章一致性（写作侧同源锚的判官侧第二道）：锚外年号=自创年号、
+    // 既成数值无勘误剧情改写=数字蒸发，都是 g38f r6 全文通读的最大 S1 簇
+    const eraAnchors = (input.eraAnchors ?? []).filter(Boolean);
+    const numericFacts = (input.numericFacts ?? []).filter(Boolean);
+    const consistencyRules: string[] = [];
+    if (eraAnchors.length > 0) {
+      consistencyRules.push(
+        '- 【纪年一致】输入的 eraAnchors 是本书自始至终唯一一套年号的既成叙述。正文中任何位置（对话/公文/账册/回忆/旁白）出现的年号若与锚中年号名不同（含「X元年」的新组合、把地名府名当年号），必须报 logic_gap 且 severity=critical，description 注明「自创年号：XX」（2026-09-17 g38f r6 实证：全书「天兴」正溯之下后 50 章自创「建元/建昭/宣府元年」平行纪年 9 章）；年数与锚不连续（倒退或跳跃无过渡）报 timeline'
+      );
+    }
+    if (numericFacts.length > 0) {
+      consistencyRules.push(
+        '- 【数字一致】输入的 numericFacts 是近章既成的大额数字宣告（金额/编制/数量）。正文引用同一对象（同一笔银子/同一编制/同一批物资）的数额、数量与既成数值不一致，且未写出勘误、清点更正、查实虚报等剧情性修正过程的，必须报 fact_conflict 且 severity=critical，description 注明「数字蒸发/改写：既成X，本章写成Y」（2026-09-17 g38f r6 实证：同一笔盐税五套口径、太仓存粮四万石无解释改四十万石、押运车队八十箱变八百辆）；正文明示了勘误/清点过程的不算'
+      );
+    }
+
     const raw = await this.ai.generate<ChapterJudgeResult>({
       purpose: 'chapter-judge',
       schemaName: 'ChapterJudgeResult',
@@ -158,6 +174,7 @@ export class AIChapterJudge implements ChapterJudge {
         '- 【可见场面】必须有可感知的对话/动作/取证场面；仅一句带过、回忆里提一句、章末口号式表态 → fulfilled=false',
         '- 仅当完全看不到该情节时也判 fulfilled=false',
         '- 【跨章目标】若节点含限期/倒计时/否则将/「N 天内」等跨章标记（如「必须在三天内翻案，否则将被处斩」），正文做到实质推进（取得关键证据、当众指认、完成阶段对峙）即视为履约，不要求章内完整兑现；不要把「未彻底完结」判为未履约',
+        '- 【终态完成体】mustCover 节点（或章题）含下狱/入狱/收监/关押/抄家/革职/罢免/处决/伏法等终态动词时，「认罪/画押/伏地求饶/请旨发落/待勘待勘中」不构成履约——那是供述与哀求，不是终态执行。正文必须写到该终态实际发生的完成动作（收押/上枷/囚车/拖入牢狱/封门贴封条/剥服摘印/行刑完毕）才算 fulfilled=false 的解除；仅停在「全凭陛下发落」即判 fulfilled=false，reason 注明「终态未执行」（2026-09-17 g38f r6 实证：ch44 章题「御旨抄家入狱」，正文只写到两侍郎认罪画押，下狱动作未演，下游两章侍郎自由出场、ch58 才补首次下狱被书审记「重复下狱」断裂）',
         '- fulfillment 必须覆盖输入的每一个 mustCover，node 原样回传',
         '- evidence 优先引用正文原句（能看出场面发生）',
         '',
@@ -181,9 +198,14 @@ export class AIChapterJudge implements ChapterJudge {
         '- 【出场豁免】若某角色在 mustCover 节点里被点名要求参与（如节点写「被温伯衡锁走」），则该角色本章允许出场，即使不在 allowedCharacterNames 里也不得报 logic_gap；换成无名身份称呼（如「青袍老者」）同样豁免',
         '- 【重置登场】若 prevChapterTail（上章结尾原文）显示某角色已在本场景登场、行动或与主角共事，本章却将其按初次登场处理（从场外重新通报到场、对已发生案情一无所知、重新自报身份/重新试探主角），必须报 logic_gap 且 severity=critical；正确写法是延续其在场状态与既有认知。此判定以 prevChapterTail 的在场事实为准，状态摘要未登记的在场信息不构成豁免',
         '- 【承接断裂】若 prevChapterTail（上章结尾原文）显示上章末尾已部署或已启动的紧急行动（连夜启程的路线/计策、正在执行的追击/押运/伏击、明确时限的任务、当场宣布的决定），本章正文却将其完全无视——既不兑现也不交代取消/变故/将计就计，直接另起时间线或采取相反行动（2026-09-13 g37f r4 ch70 实证：上章部署"官船为虚、连夜走陆路"，本章却公开长亭送行改乘官船），必须报 logic_gap 且 severity=critical，description 注明「承接断裂：上章部署被无视」；正文写明计划变卦、受阻或有意明修栈道的不算',
+        '- 【章界动线】若 prevChapterTail 显示上章末某角色身处甲地或在某队伍/车船途中，本章开头该角色却无任何折返、抵达、中途变故的交代而出现在乙地（人身瞬移）；或上章末在途的押运车队、行军队伍、船队在本章凭空消失/数量级突变且无被劫、散伙、改道的交代——报 logic_gap 且 severity=critical，description 注明「章界动线断裂」（2026-09-17 g38f r6 实证：ch30 末主角随车队押运入峡，ch31 无交代瞬移回京师值房且三十八箱车队蒸发，读者评分 47.4 全书最低）；正文交代了行止（抵达/折返/遇袭失散）的不算',
+        '- 【算术自洽】正文中「数量×单位容量」类叙述必须乘积自洽：凡出现「每箱N锭/每车N石/每股N两」与箱数/车数/总数并列的，当场验算乘积与总量声明是否一致（含章名与 mustCover 节点标题里的数字——蓝图标题自带算术错误被正文照抄同样要报）。验算不符报 logic_gap 且 severity=critical，description 必须写出验算过程（如「60锭×50两×50万箱=15亿两，正文称三千万两，差500倍」）（2026-09-19 g38f r7 实证：ch177 一箱六十锭×五十万箱验算 15 亿两 vs 声明三千万两差 500 倍；ch115 五石×400辆=2000石 vs 装走两万石）',
+        '- 【称谓漂移】同一角色的官职/头衔在本章与 prevChapterTail（或本章前文）中不同（如上章还是翰林修撰、本章成了通政使），而正文没有任何任免场面（圣旨/敕令/尚书当堂宣布/就职交印）——报 logic_gap 且 severity=high，description 注明「称谓漂移：X 由A变B无任免」（2026-09-19 g38f r7 实证：温廷翰同夜由翰林修撰改称通政使，全书 ≥6 职横跳零拦截）；头衔锚（若有）列出的既定头衔与正文称谓冲突同样适用',
+        '- 【世系称谓】「先帝/先皇/大行皇帝」只能指已经驾崩的皇帝：若 stateDigest、prevChapterTail 或本章正文显示该皇帝仍在世（仍在颁诏/降旨/视朝/病重但未死），正文却称其先帝/先皇——报 fact_conflict 且 severity=critical（2026-09-19 g38f r7 实证：老皇帝 ch167 尚在位、ch161-175 五处称其先帝/先皇）。驾崩必须有可感知的叙述场面（病榻托孤/遗诏/讣告/丧仪任一），正文从「皇帝在世」直接跳到新帝即位诏而无任何驾崩叙述——报 logic_gap 且 severity=critical，description 注明「驾崩零叙述」（r7 实证：ch194 直接跳即位诏）。年数算术：「自X年起N年」的跨度与当前年份（纪年锚/正文既定年份）矛盾报 timeline（r7 实证：「自嘉定三年起整整七年」而当年仅嘉定四年）',
         '- 【节点抄用】正文与任一 mustCover 节点存在连续 ≥12 字逐字相同（把大纲节点原句直接当正文抄），报 logic_gap 且 severity=high，description 注明「节点原句照抄」；同义改写、拆句、换人称不算',
         '- 只报真实问题，不挑文笔；critical 留给明显硬伤',
         '- 若无问题，issues 为 []',
+        ...consistencyRules,
         ...payoffRules,
         '',
         '只输出一个 JSON 对象，不要 Markdown 代码块，不要解释。',
@@ -210,6 +232,8 @@ export class AIChapterJudge implements ChapterJudge {
         allowedCharacterNames: input.allowedCharacterNames ?? [],
         futureReveals: input.futureReveals ?? [],
         payoffCandidates: payoffCandidates.length > 0 ? payoffCandidates : undefined,
+        ...(eraAnchors.length > 0 ? { eraAnchors } : {}),
+        ...(numericFacts.length > 0 ? { numericFacts } : {}),
       }),
       parse: value => parseSchema(chapterJudgeResultSchema, normalizeTopLevelObjectShape(value), '章节语义审查结果'),
     });

@@ -79,7 +79,7 @@ import type {
 } from '@/services/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
-import { collectEraAnchors, collectFateForbiddenZones, overlayCharacterFates, overlayCharacterTitles } from '@/services/writing/extract-plot-memory';
+import { collectCharacterIdentityAnchors, collectEraAnchors, collectFateForbiddenZones, collectNumericAnchors, overlayCharacterFates, overlayCharacterTitles } from '@/services/writing/extract-plot-memory';
 import { stripStructuredNodeBlock } from '@/services/outline/parser/utils';
 import type { SceneChunk } from '@/types/story-runtime';
 
@@ -980,6 +980,19 @@ export class ChapterWritingPipeline {
           (input.project.chapterMemories ?? []).filter(
             memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
           ),
+        ),
+        // 数字锚（r6 实证长程数字漂移成最大 S1 簇）：近章既成数字句注入起草
+        // 【数字锚】与判官【数字一致】共源；数据源含契约 15 numeric-fact 事件
+        numericFacts: collectNumericAnchors(
+          (input.project.chapterMemories ?? []).filter(
+            memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
+          ),
+        ),
+        // 身份锚（r6 实证角色表赵宣=三皇子恭王被写手降格成刑部主事姻亲）：
+        // 本章出场角色的角色卡身份首句，正文身份/地位必须与角色卡一致
+        characterIdentityAnchors: collectCharacterIdentityAnchors(
+          input.project.characters ?? [],
+          contracts.chapter.allowedCharacterNames ?? [],
         ),
         // 未回收伏笔的判官候选，口径见 buildPayoffCandidates（已到埋设点，非回收时点）
         payoffCandidates: buildPayoffCandidates(input.project.foreshadows, chapterNumber),

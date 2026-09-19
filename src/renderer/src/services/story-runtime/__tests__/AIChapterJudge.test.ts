@@ -632,6 +632,100 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
     expect(capturedSystem).toContain('逐字摘录');
     expect(capturedSystem).toContain('已下狱/被关押/被软禁的角色本章以自由身出现');
   });
+
+  it('系统词含终态完成体与章界动线规则（g38f r6 ch31/44/70 实证）', async () => {
+    // r6 全文通读：ch44 章题「御旨抄家入狱」正文只演到认罪画押即过审，
+    // 下游两章侍郎自由出场；ch30 末主角随车队押运、ch31 无交代瞬移回京师值房
+    // 且三十八箱车队蒸发（读者评分 47.4 全书最低）——履约域与章界域双双漏判
+    let capturedSystem = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        return emptyJudgePayload();
+      }),
+    };
+    await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+    });
+    expect(capturedSystem).toContain('【终态完成体】');
+    expect(capturedSystem).toContain('全凭陛下发落');
+    expect(capturedSystem).toContain('【章界动线】');
+    expect(capturedSystem).toContain('章界动线断裂');
+  });
+
+  it('eraAnchors/numericFacts 传入时注入纪年一致与数字一致规则及锚值（g38f r6 建元分裂/盐税五套口径实证）', async () => {
+    // r6 全文通读：后 50 章自创建元/建昭平行纪年 9 章、同一笔盐税五套口径——
+    // 写作侧锚之外判官缺第二道校验输入，年号与数字的跨章一致性无人终审
+    let capturedSystem = '';
+    let capturedPrompt = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        capturedPrompt = String(request.prompt ?? '');
+        return emptyJudgePayload();
+      }),
+    };
+    await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+      eraAnchors: ['第150章纪年「天兴二十一年」'],
+      numericFacts: ['第99章既成「两淮盐税岁入实征二百二十万两」'],
+    });
+    expect(capturedSystem).toContain('【纪年一致】');
+    expect(capturedSystem).toContain('自创年号');
+    expect(capturedSystem).toContain('【数字一致】');
+    expect(capturedSystem).toContain('数字蒸发/改写');
+    expect(capturedPrompt).toContain('天兴二十一年');
+    expect(capturedPrompt).toContain('二百二十万两');
+
+    // 未传锚时规则不注入（避免空锚误报）
+    let bareSystem = '';
+    const ai2: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        bareSystem = request.system ?? '';
+        return emptyJudgePayload();
+      }),
+    };
+    await new AIChapterJudge(ai2).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+    });
+    expect(bareSystem).not.toContain('【纪年一致】');
+    expect(bareSystem).not.toContain('【数字一致】');
+  });
+
+  it('系统词含算术自洽、称谓漂移与世系称谓规则（g38f r7 四缺口实证）', async () => {
+    // r7 全文通读：ch177 一箱六十锭×五十万箱=15亿两 vs 声明三千万两（差500倍且
+    // 蓝图标题自带错误被照抄）；温廷翰全书≥6 职横跳零拦截；老皇帝在位五处被称
+    // 先帝、ch194 驾崩零叙述直接跳即位诏、「自嘉定三年起七年」当年仅嘉定四年
+    let capturedSystem = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        return emptyJudgePayload();
+      }),
+    };
+    await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+    });
+    expect(capturedSystem).toContain('【算术自洽】');
+    expect(capturedSystem).toContain('验算过程');
+    expect(capturedSystem).toContain('【称谓漂移】');
+    expect(capturedSystem).toContain('称谓漂移：X 由A变B无任免');
+    expect(capturedSystem).toContain('【世系称谓】');
+    expect(capturedSystem).toContain('驾崩零叙述');
+    expect(capturedSystem).toContain('自嘉定三年起整整七年');
+  });
 });
 
 function emptyJudgePayload() {

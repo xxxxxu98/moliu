@@ -359,6 +359,170 @@ describe('SceneDraftEngine.draft', () => {
     expect(request.system).toContain('不受「保持稳定」保护');
   });
 
+  it('上章结尾注入含章界动线硬约束，窗口取末 400 字（g38f r6 ch31/70 实证）', async () => {
+    // r6：ch30 末主角随车队押运入峡，ch31 无折返交代瞬移回京师值房；
+    // ch69 末定「官船诱敌、三人走旱路」已出发，ch70 折返登船走水路——
+    // 旧【上章衔接】只防状态回退、只给末 200 字，动线断裂两头都漏
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 31,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+    const tail = '前'.repeat(500) + '沈辞提着气死风灯随车队缓缓开拔，径直扎入落鹰峡险地，夜色吞没了最后一面旗。';
+
+    await engine.draft(plan, context, { previousChapterEnding: tail });
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).toContain('【章界动线】');
+    expect(request.system).toContain('禁止无交代地瞬移');
+    expect(request.system).toContain('数量禁止无解释增减');
+    // 末 400 字窗口：538 字 tail 只注入最后 400 字（前缀被裁、结尾句保留）
+    expect(request.system).toContain('径直扎入落鹰峡险地');
+    const injected = request.system.match(/「…[^」]+」/)?.[0] ?? '';
+    expect(injected.length).toBeLessThanOrEqual(410);
+    expect(injected).toContain('径直扎入落鹰峡险地');
+  });
+
+  it('纪年锚：有锚时锁全书唯一年号，空锚时禁止发明年号（g38f r6 后50章建元/建昭分裂实证）', async () => {
+    // r6：前 150 章年号统一「天兴」，151-200 自创「建元/建昭/宣府元年」平行纪年
+    // 9 章——旧锚措辞只拦真实历史年号，没拦模型自创第二套年号；锚为空时更是
+    // 没有任何分支，模型自由发挥
+    const mk = () =>
+      vi.fn(async () => ({ paragraphs: ['开篇。'], candidateEvents: allowed })) as unknown as
+        ReturnType<typeof vi.fn>;
+    const plan: ScenePlan = {
+      chapterNumber: 170,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    const genWithAnchor = mk();
+    await new SceneDraftEngine({ generate: genWithAnchor } as unknown as StructuredAI).draft(
+      plan,
+      context,
+      { eraAnchors: ['第150章纪年「天兴二十一年」'] }
+    );
+    const withAnchor = (genWithAnchor.mock.calls[0][0] as { system: string }).system;
+    expect(withAnchor).toContain('【纪年锚·全书唯一年号】');
+    expect(withAnchor).toContain('天兴二十一年');
+    expect(withAnchor).toContain('禁止发明任何新年号');
+
+    const genNoAnchor = mk();
+    await new SceneDraftEngine({ generate: genNoAnchor } as unknown as StructuredAI).draft(
+      plan,
+      context,
+      {}
+    );
+    const noAnchor = (genNoAnchor.mock.calls[0][0] as { system: string }).system;
+    expect(noAnchor).toContain('【纪年锚·未确立年号】');
+    expect(noAnchor).toContain('禁止发明年号');
+    expect(noAnchor).not.toContain('【纪年锚·全书唯一年号】');
+  });
+
+  it('数字锚规则常驻：既成大额数字禁无解释改写（g38f r6 盐税五套口径实证）', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 100,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context, {});
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).toContain('【数字锚】');
+    expect(request.system).toContain('禁止无解释改写既成数字');
+  });
+
+  it('numericFacts 传入时注入既成名录（g38f r6 长程数字漂移实证）', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 160,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context, {
+      numericFacts: ['第99章既成「两淮盐税岁入实征二百二十万两」'],
+    });
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).toContain('【数字锚·既成名录】');
+    expect(request.system).toContain('二百二十万两');
+  });
+
+  it('身份锚注入角色卡身份并禁止发明同名姻亲替身（g38f r6 赵宣两身份实证）', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 25,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context, {
+      characterIdentityAnchors: [
+        { name: '赵宣', identity: '前中期夺嫡争斗策动者，操控江南织造与两淮盐税两大聚宝盆' },
+      ],
+    });
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).toContain('【身份锚】');
+    expect(request.system).toContain('禁止把具名角色降格/升格');
+    expect(request.system).toContain('禁止发明同名的姻亲、替身、门客');
+    expect(request.system).toContain('前中期夺嫡争斗策动者');
+  });
+
+  it('皇统叙事规则常驻：先帝称谓/驾崩场面/东宫指代/年数验算（g38f r7 实证）', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 194,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context, {});
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).toContain('【皇统叙事】');
+    expect(request.system).toContain('只能用于已驾崩者');
+    expect(request.system).toContain('驾崩必须有叙述场面');
+    expect(request.system).toContain('不得零叙述直接写新帝即位');
+    // 数字锚含落笔前验算句
+    expect(request.system).toContain('落笔前先验算');
+  });
+
   it('已有正式标题时只要求回填，不再注入整套拟标题规则', async () => {
     // 大纲链路的章节标题非占位，pipeline 只在占位时采纳生成标题，
     // 再让模型拟一个等于白占十余行 system 指令与注意力。
