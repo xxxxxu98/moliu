@@ -586,3 +586,65 @@ describe('重复节拍检测（reg20 擢升×2 受害形态）', () => {
     ).toHaveLength(0);
   });
 });
+
+describe('结构一致性：伏笔埋设×禁区冲突与爽点计划×蓝图对齐（2026-09-20 r8reg 大纲评审实证）', () => {
+  it('伏笔 setupChapter 章禁区词面强重叠 → foreshadow-setup-forbidden-conflict；【让路】标记豁免', () => {
+    const outline = makeDirtyOutline();
+    outline.chapterBlueprints = [
+      makeBlueprint(12, { forbiddenZones: ['严禁出现江南佛寺功德金免税飞签暗号'] }),
+      makeBlueprint(13, { forbiddenZones: ['【让路】江南佛寺功德金免税飞签暗号可埋设'] }),
+    ];
+    outline.foreshadowPlan = [
+      {
+        id: 'f-conflict',
+        hint: '江南佛寺功德金免税飞签暗号',
+        type: 'item' as const,
+        importance: 'subplot' as const,
+        setupPhase: '',
+        payoffPhase: '',
+        setupChapter: 12,
+        payoffChapter: 40,
+        carrierCharacter: '',
+        linkedConflict: '',
+        payoffValue: '',
+      },
+      {
+        id: 'f-yield',
+        hint: '江南佛寺功德金免税飞签暗号（让路版）',
+        type: 'item' as const,
+        importance: 'subplot' as const,
+        setupPhase: '',
+        payoffPhase: '',
+        setupChapter: 13,
+        payoffChapter: 40,
+        carrierCharacter: '',
+        linkedConflict: '',
+        payoffValue: '',
+      },
+    ] as never;
+    const issues = inspectOutlineQuality(outline).filter(
+      issue => issue.kind === 'foreshadow-setup-forbidden-conflict',
+    );
+    expect(issues).toHaveLength(1);
+    expect(issues[0].chapterOrder).toBe(12);
+    expect(issues[0].detail).toContain('埋设');
+  });
+
+  it('爽点计划挂章与蓝图零词面关联 → coolpoint-plan-misaligned；词面相关则放行', () => {
+    const outline = makeDirtyOutline();
+    outline.chapterBlueprints = [
+      makeBlueprint(28, { title: '公审大戏', mustCover: ['沈淮公审现场翻账打脸'] }),
+      makeBlueprint(29, { title: '运河暗流' }),
+    ];
+    outline.coolPointPlan = [
+      { type: '打脸', description: '公审现场沈淮翻账当众打脸', suggestedChapter: 28 },
+      { type: '打脸', description: '边关大营犒赏三军立威', suggestedChapter: 29 },
+    ] as never;
+    const issues = inspectOutlineQuality(outline).filter(
+      issue => issue.kind === 'coolpoint-plan-misaligned',
+    );
+    // ch28 词面相关放行；ch29「犒赏三军」与「运河暗流」零关联命中
+    expect(issues).toHaveLength(1);
+    expect(issues[0].chapterOrder).toBe(29);
+  });
+});

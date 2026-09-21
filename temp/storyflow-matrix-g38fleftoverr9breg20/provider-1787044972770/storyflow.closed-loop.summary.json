@@ -1,0 +1,1655 @@
+{
+  "book": "大周算筹：从清查国库到内阁首辅",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": null,
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "default",
+  "promptChars": 34,
+  "requestedChapterCount": 20,
+  "phaseTimings": {
+    "outlineDirectionsMs": 35935,
+    "outlineExpandMs": 457304,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 858,
+    "continueWriteMs": 4676989,
+    "totalMs": 5171086
+  },
+  "completedChapters": 20,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787044972770.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787044972770.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 刀架脖子开局接盘三百万死账",
+      "words": 3282,
+      "paras": 22,
+      "paraCv": 0.18,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/22，超过 5 句的段 6。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "喉咙深处仿佛被生生灌入了一把粗粝的生石灰，每一次呛咳都扯得胸腔剧烈生疼。后颈的皮肉紧紧贴着一泓透骨的冰凉，寒意顺着椎骨直往骨髓深处钻。顾衡猛然睁开双目，浓重刺鼻的血腥气混杂着陈年旧账的霉烂气味，兜头盖脸地涌入鼻腔。悬在他颈项前不足三寸处的，",
+      "tail": "颤抖，几条黑漆漆的拘捕铁索已然从门缝间粗暴探入。孙长贵吓得瘫软在墙角惨叫。顾衡立在案前，单手死死按住染血的太仓底册，迎着门外滔天的杀机，眼底燃起一团彻骨的寒芒。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 糊涂账翻车现代复式算式抓漏",
+      "words": 3221,
+      "paras": 26,
+      "paraCv": 0.45,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "铁索穿透残破的门缝，粗如儿臂的铁链撞出刺耳锐响。门外重木撞击声一下紧过一下，整座楠木库门已被砸得木屑纷飞，门框上的陈年积灰簌簌跌落。孙长贵抱头缩在墙角，面色惨白，牙齿咯咯作响，连滚带爬地往书架深处蜷缩，只剩下破风箱似的粗重抽噎。顾衡没有分出",
+      "tail": "差官列阵，案前肃静回避牌与水火棍森严排开，衙役们沉闷的喝堂声穿透雨幕。胸前贴肉的黄麻纸散发着滚烫温度，顾衡顶着沉重铁枷踏上石阶，冷冷抬眼望向那座布满杀机的公堂。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 三道算式当堂砸烂刑部铁案",
+      "words": 2739,
+      "paras": 18,
+      "paraCv": 0.2,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/18，超过 5 句的段 5。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "雨水顺着生铁重枷的棱角流下，混着顾衡颈间擦破的血渍，滴落在湿冷的青石砖上。跨过前堂那道暗红的高门槛，两列皂衣差役齐声顿击水火棍，低沉森然的呼喝在大堂梁柱间回荡。大案下首的青砖地上，前任司库的尸首只裹着半领破席，暗红的血水顺着砖缝不断渗出，触",
+      "tail": "着，屏风阴影深处传来一声极沉极幽的冷笑。\n\n那冷笑不高，却让状若癫狂的赵元吉瞬间僵在原地，高抬的手臂抖若筛糠，满脸的狰狞在这一瞬尽数化作了毫无血色的惊骇与绝望。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 密室对质天子御前立下军令状",
+      "words": 2841,
+      "paras": 20,
+      "paraCv": 0.15,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/20，超过 5 句的段 7。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "赵元吉悬在半空的手臂僵硬如枯木。屏风后那三声清脆的击掌声并未散去，反而在死寂的前堂激起层层回荡，生生掐灭了所有的叫嚣与杀意。几名拔刀冲向顾衡的刑部差役如遭雷击，身形僵在半途，连手中钢刀都险些脱手。沉重的紫檀嵌玉大屏风发出沉闷的轴木摩擦声，缓",
+      "tail": "重门在近卫推动下轰然合拢，儿臂粗的铁栓死死落槽。黑暗重新笼罩，唯有雷雨在窗外咆哮。顾衡低头凝视脚边的黑铁令，七十二个时辰的索命倒计时，在暴雨之夜悄然扣响了机括。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 收服滑头老吏案牍库深夜突起烈火",
+      "words": 3335,
+      "paras": 24,
+      "paraCv": 0.19,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 68924
+      },
+      "gateIssues": [],
+      "head": "顾衡弯下身，手掌死死扣住浸在泥水里的玄铁。五十斤重的死囚生铁枷压得他颈骨咯咯作响，磨破的皮肉渗出猩红血水，但他连眉头都没皱一下，硬是凭着一股悍然狠劲，将跌落在泥水里的黑铁盘龙令抠了出来。生铁重门之外，禁卫的铁靴踏碎夜雨，声若擂鼓。狭窄阴暗的",
+      "tail": "底册深陷在冲天火海之中，刺鼻的焦糊味伴随着未干的墨香，在火舌翻卷间迅速化作漫天飞灰！顾衡双目赤红，顶着五十斤的生铁重枷，迎着扑面的滔天火浪，发疯似地猛扑了上去！",
+      "error": null
+    },
+    {
+      "ch": 6,
+      "accepted": true,
+      "title": "第6章 冲入火场残灰之中明矾水显影",
+      "words": 2772,
+      "paras": 20,
+      "paraCv": 0.66,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 1/20，超过 5 句的段 2。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "顾衡迎着翻卷的烈焰猛扑而上，身前翻腾的热浪几乎将他的眉毛与睫毛炙烤卷曲。套在颈项间的生铁重枷重达五十斤，在火舌的炙烤下迅速传导高温，皮肉发出细微的焦灼声。他反手死死扣住浸满冷雨的青色官袍下摆，发狠咬住衣角，用尽全身气力猛然一撕，刺啦一声硬生",
+      "tail": "座沉睡在重重铁锁之后的百斤地磅。在这七十二个时辰索命倒计时的深夜，案牍库的冲天火海不仅没能焚尽罪证，反倒将户部三十年贪腐网络最致命的物理铁证，硬生生逼出了水面！",
+      "error": null
+    },
+    {
+      "ch": 7,
+      "accepted": true,
+      "title": "第7章 标准砝码拆穿地磅偏重机关",
+      "words": 3048,
+      "paras": 19,
+      "paraCv": 0.13,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": {
+        "finishReason": "protocol-error",
+        "checksUsed": 0,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 1,
+        "byTool": {
+          "get_draft": 1
+        },
+        "ms": 176781
+      },
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：19 段平均 159 字、变异系数 0.13，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "顾衡将那几页经明矾水显影的炭化残纸用油布层层裹好，稳妥塞入官袍内衬。案牍库残火在暴雨冲刷下腾起大片刺鼻青烟，焦木与猛火油的气味在阴湿夜风中翻卷弥漫。顾衡借着身侧玄甲近卫手中的火把光亮，低头看了看颈间被五十斤生铁重枷磨破渗血的皮肉，抬手抹去颊",
+      "tail": "空的滔天血海中，生生勾出了齐王周琰庞大贪腐钱脉最狰狞的一角。顾衡顶着沉重的五十斤生铁枷，低头凝视着染血的黑铁盘龙令，冰冷的眼眸在火光与电芒映照下，泛起彻骨寒芒。",
+      "error": null
+    },
+    {
+      "ch": 8,
+      "accepted": true,
+      "title": "第8章 突审秤手破旧算盘暗藏残页",
+      "words": 3486,
+      "paras": 43,
+      "paraCv": 0.7,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "顾衡双手猛然下压，颈间五十斤生铁重枷重重磕在天字丙库的公案上，伴随着一声沉闷暴烈的震响，案头朱砚与铁令跳起半寸高。砚台内的浓墨飞溅开来，几滴墨星直直甩在大秤手刘奎惨白的面皮上。顾衡目光冷硬如霜，居高临下锁住跪伏在地的微胖身躯，生铁锁链在青石",
+      "tail": "屋顶瓦砾碎屑如暴雨般劈头盖脸砸落下来，一道全身裹在夜行黑袍中的精悍死士破顶而入，手中两柄淬毒短刃泛着幽冷血芒，携着滔天杀气凌空扑杀而下，直扑尚未起身的顾衡心口！",
+      "error": null
+    },
+    {
+      "ch": 9,
+      "accepted": true,
+      "title": "第9章 深夜死士突袭太仓暗藏刀光",
+      "words": 3336,
+      "paras": 21,
+      "paraCv": 0.46,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "顾衡避无可避，腰腹猛力一拧带动脊梁，横在颈间的五十斤生铁枷迎着扑落的冷锋暴砸上去！\n\n半空中爆开刺耳至极的金铁巨响，两柄泛着幽蓝血芒的淬毒短刃硬生生劈在生铁枷角上，炸出大团耀目火星。死士手腕借力微挫，招式狠绝狠辣，右臂翻转之间，另一柄短刃贴",
+      "tail": "雪花银的巨大窟窿之下，原本以为只是户部侍郎赵元吉与齐王周琰在暗中搬空国库，可这枚突兀出现的禁军腰牌，却将一道无法见光的恐怖深渊，硬生生凿穿到了皇城禁宫的最深处。",
+      "error": null
+    },
+    {
+      "ch": 10,
+      "accepted": true,
+      "title": "第10章 七年洗钱表成侍郎私印暴雷",
+      "words": 2886,
+      "paras": 26,
+      "paraCv": 0.18,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "顾衡手指抠紧精铁牌子的边缘，粗粝染血的棱角磨得掌心生疼。暴雨顺着天字丙库破损的屋顶倾泻泼落，在满地碎瓦与血污间溅起阵阵浊沫。穿堂而过的冷风刮得公案上的烛火剧烈摇晃，忽明忽暗的光线将回廊下几具死士尸首拉扯出长短不一的残影，刺鼻的血腥气在潮湿阴",
+      "tail": "卫充作死士。这太仓的黑云，是在拿国帑养谋逆的兵！”\n\n天字丙库外骤雨倾盆，一道雪亮厉闪撕裂沉沉夜幕，将顾衡冷硬的面容与长桌上犬牙交错的算筹大阵，映照得一片惨白。",
+      "error": null
+    },
+    {
+      "ch": 11,
+      "accepted": true,
+      "title": "第11章 拿户部手谕堵钱庄大门",
+      "words": 3342,
+      "paras": 35,
+      "paraCv": 0.68,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "顾衡将公案上排布整齐的赤黑算筹尽数收入樟木匣，扣紧铜锁，顺手扯平了身上那件被冷汗与雨水浸透的青布官袍。天字丙库外头狂暴的骤雨不知何时悄然停歇，铅灰色的天光穿透撕裂的天棚瓦隙，在满地碎瓦与凝固的黑衣死士血迹上投下惨白斑驳的亮痕。肩颈处的皮肉已",
+      "tail": "瓦砾堆。伴随着后巷碎瓦连环炸响与急促沉重的践踏声，黑影将要命的核心底册死死卡在肋下，顺着积满雨水的青苔矮墙飞掠狂奔，转瞬便扎入了聚宝门外四通八达的深巷浓雾之中！",
+      "error": null
+    },
+    {
+      "ch": 12,
+      "accepted": true,
+      "title": "第12章 查封飞钱暗账逼死掌柜",
+      "words": 3172,
+      "paras": 40,
+      "paraCv": 0.62,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 7,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 172070
+      },
+      "gateIssues": [],
+      "head": "瓦砾碎响顺着石库后巷迅速远去，浓重的晨雾眨眼间吞没了黑布裹头的矫捷身影。近卫统领足尖点地，正欲提刀翻越锯断的铁栅追击，身后却传来一声沉闷生硬的铁器撞击响动。\n\n“穷寇莫追。”顾衡拖着沉重铁镣立在账架旁，身为朝廷从九品正印司库的青布残袍上，斑",
+      "tail": "气，双膝一软险些跪倒在地。\n\n生铁木枷在寂静的大堂内发出一声沉重暴鸣，顾衡指尖死死按住借据下方的鲜红朱印，眼底寒芒如霜。太仓七年铁案的最后一环，在此刻彻底咬死。",
+      "error": null
+    },
+    {
+      "ch": 13,
+      "accepted": true,
+      "title": "第13章 连夜拼出假火耗洗钱网",
+      "words": 3319,
+      "paras": 38,
+      "paraCv": 0.66,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "顾衡小心收拢指尖，将那张带着面胶裂痕的泛黄借据妥帖折好，贴肉塞入青布囚服的内襟暗层。借据上那方鲜红如血的私印透着彻骨寒意，即便隔着粗布，也压得胸口隐隐发烫。玄甲近卫统领打了个撤离的手势，四名精锐校尉横刀断后，护送着顾衡与孙长贵踩碎满地残砖，",
+      "tail": "勾结外贼暗害库官、盗毁国库账册，罪不容诛！若敢反抗，就地格杀，斩立决！”\n\n刀光如雪，映亮了地面上那幅触目惊心的三丈朱砂大网，杀机在破晓前的极度阴冷中轰然爆发。",
+      "error": null
+    },
+    {
+      "ch": 14,
+      "accepted": true,
+      "title": "第14章 侍郎罗织罪名强锁顾衡",
+      "words": 3377,
+      "paras": 26,
+      "paraCv": 0.57,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 206287
+      },
+      "gateIssues": [],
+      "head": "精钢与长戈在大门碎裂的烟尘里猝然碰撞，火星在昏暗的天字丙库深处四溅开来。雁翎刀破空割裂寒气，六名身披玄甲的天子近卫踏步结阵，将厚重的生铁盾牌猛然砸入青砖地面，硬生生阻截了最先持械扑入的十余名刑部差役。库外破晓前的浓重冷雾卷携着刺鼻的桐油气息",
+      "tail": "力猛拽，沉重冰冷的铁链再度死死勒紧了双腕骨节，皮肉撕裂的脆响声中，顾衡身形微微一晃，随即迈开沉稳的步伐，迎着破晓时分阴冷凛冽的朔风，大步迈入未知的公堂杀局之中。",
+      "error": null
+    },
+    {
+      "ch": 15,
+      "accepted": true,
+      "title": "第15章 石刻洗钱图暗迎天子令",
+      "words": 3237,
+      "paras": 31,
+      "paraCv": 0.68,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "read_chapter": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 208921
+      },
+      "gateIssues": [],
+      "head": "差役粗暴地将朝廷从九品正印司库顾衡与太仓老吏孙长贵推入刑部大堂侧面的青石押房，生铁打造的排栅门在他们身后哐当撞合。户部侍郎赵元吉隔着厚重铁栅，冷眼扫过两人身上叮当作响的玄铁锁链。就在半个时辰前，齐王周琰持内阁急递出具保释提押勘合，强行将赵元",
+      "tail": "梁，掌心紧贴着带血的温润金玉，身后三丈青石壁上那幅深凿入骨的白色借贷铁图，在渐渐泛白的破晓天光下泛着森冷刺骨的霜芒。远处三法司正堂外，催命的沉闷大鼓，轰然敲响。",
+      "error": null
+    },
+    {
+      "ch": 16,
+      "accepted": true,
+      "title": "第16章 三司会审堂上侍郎发难",
+      "words": 2993,
+      "paras": 38,
+      "paraCv": 0.72,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "两扇裹着厚重铁皮的排栅门在差役粗暴的拉扯下轰然敞开，锈蚀的合页发出尖利刺耳的摩擦声。几名身材魁梧的刑部缉捕快手手持水火短棍，踩着门槛外尚未干透的泥水闯进狭窄的青石押房。刺鼻的晨风卷带着深秋寒意猛灌而入，将墙角那摊潮湿发霉的稻草吹得四散飞扬。",
+      "tail": "杀机，径直刺向公案主座上的刑部尚书，以及那架纹丝不动的八宝围屏。\n\n嘴角泛起一道清冷至极的讥诮，顾衡手腕微抬，神态自若地拂去肩头因押房石壁磨砺而沾染的灰白石粉。",
+      "error": null
+    },
+    {
+      "ch": 17,
+      "accepted": true,
+      "title": "第17章 亮御前腰牌铺三丈巨图",
+      "words": 3082,
+      "paras": 28,
+      "paraCv": 0.6,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "read_chapter": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 176644
+      },
+      "gateIssues": [],
+      "head": "顾衡手腕微抬，神态自若地拂去肩头因押房石壁磨砺而沾染的灰白石粉，嘴角那道清冷讥诮分毫未减。四根碗口粗细的水火大杖挟着呼啸劲风直奔顶梁，四名膀大腰圆的刑部快手面露凶光，意图在这大堂之上以雷霆之势将这名朝廷从九品正印司库当场杖毙。满堂文武呼吸一",
+      "tail": "紫血管暴突而起，犹如数条蚯蚓在皮肉下疯狂鼓胀搏动。在那血色标头正下方，赫然正是他永隆三年挪借官帑三百万两的朱砂私印摹本，悬若饮血铡刀，将这位户部侍郎逼入了绝境！",
+      "error": null
+    },
+    {
+      "ch": 18,
+      "accepted": true,
+      "title": "第18章 点破假账公堂反客为主",
+      "words": 2817,
+      "paras": 36,
+      "paraCv": 0.62,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "顾衡没有给这位户部侍郎留下任何喘息的余地。他拖着生铁锁链骤然跨前一步，玄铁与青砖相击，发出金石撕裂般的脆响。在满堂文武惊愕的目光中，他反手自旁侧通判案几上抓起一柄两尺半长的铁木界尺，腕力陡沉，乌黑坚硬的尺头撕裂虚空，伴着呼啸风声，重重顿在生",
+      "tail": "骸之间，胸膛剧烈起伏，沾满墨迹的双手死死护在胸前，整个人如坠冰窟！\n\n围屏之后，齐王周琰猛然将手中茶盏重重顿在几上，瓷器崩裂的细微碎响，透着即将反扑的无尽阴冷。",
+      "error": null
+    },
+    {
+      "ch": 19,
+      "accepted": true,
+      "title": "第19章 侍郎狡辩顾衡当众请熔银",
+      "words": 3452,
+      "paras": 48,
+      "paraCv": 0.62,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "茶盏崩裂的脆响穿透重绢八宝围屏，在森严肃杀的正堂内久久回荡，激得堂上几位主审大员后背直冒凉气。公案侧翻砸碎的木屑与四溅的浓黑墨汁狼藉一地，赵元吉面色惨白如纸，整个人半瘫在湿漉漉的青砖地上，官袍前襟沾满了黏腻的黑斑，早已看不出先前端肃威严的气",
+      "tail": "一股巨力自外向内猛力撞开！\n\n一名身着刑部号衣的押解差役浑身浴血，官帽早已不知所踪，双膝皮肉磨烂，整个人连滚带爬摔进大堂，在平整的青砖地上滑出长长一道刺目血痕！",
+      "error": null
+    },
+    {
+      "ch": 20,
+      "accepted": true,
+      "title": "第20章 熔银匠暴毙死局再起波澜",
+      "words": 3184,
+      "paras": 18,
+      "paraCv": 0.17,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 1/18，超过 5 句的段 8。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "那名浴血的差役整个人扑伏在地，双肘皮肉撕裂，十指在满是尘垢的青砖上抓抠出道道黏稠血印。他仰起满是灰土与血水的面孔，胸膛剧烈起伏，喉头发出漏风般的粗重嗬嗬声，甚至顾不得擦拭额角流下的鲜血，便朝着正堂主座以头抢地。沉闷的撞击声夹杂着凄厉的喘息在",
+      "tail": "大锅内铅铜杂质狂乱翻涌，灼热的焦气直扑满堂朱紫面门。炭火将顾衡的面庞照得通红，那双深邃冷冽的眸子里倒映着翻腾的银浪，也倒映出这场弥天大案再也无法掩盖的狰狞骨相。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 刀架脖子开局接盘三百万死账"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 糊涂账翻车现代复式算式抓漏"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 三道算式当堂砸烂刑部铁案"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 密室对质天子御前立下军令状"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 收服滑头老吏案牍库深夜突起烈火"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 冲入火场残灰之中明矾水显影"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 标准砝码拆穿地磅偏重机关"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 突审秤手破旧算盘暗藏残页"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 深夜死士突袭太仓暗藏刀光"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 七年洗钱表成侍郎私印暴雷"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1789894057844",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-rvBH4k\\story-runtime\\proj-1789894057844-600e03d81a6e.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 20,
+    "canonicalSnapshots": 21,
+    "latestSnapshotChapter": 20,
+    "sceneChunks": 20,
+    "events": 78
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "cf6b745c4da641979e176bc65571dae04ffac8e4bf34822193d1ed163c835d01",
+    "completeCharacterProfileCount": 12,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 12,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 20
+  },
+  "outlineWarnings": [
+    "单章蓝图补全第 1 章伏笔时序消毒：删除 [\"顾衡接盘太仓银库巨额亏空死账。\"]",
+    "单章蓝图补全第 2 章伏笔时序消毒：删除 [\"顾衡发现太仓出入库银两借贷平衡彻底崩塌的致命数字漏洞\"]",
+    "单章蓝图补全第 4 章伏笔时序消毒：删除 [\"顾衡在京师大周户部太仓暗室面见微服巡视的永隆帝\"]",
+    "单章蓝图补全第 7 章伏笔时序消毒：删除 [\"顾衡用砝码实测证明入库地磅实测银重比账面固定偏重两分\",\"顾衡当场拆开地磅底部暗格揭穿磨损刻槽机关让看库秤手跪地求饶。\",\"用标准砝码拆穿地磅暗藏偏重两分机关。\"]",
+    "单章蓝图补全第 8 章伏笔时序消毒：删除 [\"顾衡搜检前任太仓司库遗留下来的旧物\",\"顾衡在前任遗留的破旧紫檀木算盘夹层中摸出半截朱砂火耗折色分润残页。\"]",
+    "单章蓝图补全第 10 章伏笔时序消毒：删除 [\"顾衡在京师大周户部太仓司库值房根据残账数据手工推导出历年假火耗抽成的核心比例对照表\"]",
+    "单章蓝图补全第 11 章伏笔时序消毒：删除 [\"顾衡持调令进入京师四海通达总钱庄核查太仓往来票据\",\"顾衡持调令前往京师四海通达总钱庄\"]",
+    "单章蓝图补全第 12 章伏笔时序消毒：删除 [\"顾衡命差役封锁京师四海通达总钱庄侧门并缴获出逃暗账\",\"顾衡依法查封京师四海通达总钱庄存根\"]",
+    "单章蓝图补全第 22 章伏笔时序消毒：删除 [\"顾衡宣读京师四海通达总钱庄查扣的赵氏亲族大额通兑飞钱票根\"]",
+    "单章蓝图补全第 34 章伏笔时序消毒：删除 [\"晋王府心腹说客深夜密访京师大周户部太仓·值房密室，以万两黄金及侍郎高位劝顾衡罢手\"]",
+    "单章蓝图补全第 35 章伏笔时序消毒：删除 [\"永隆帝在京师大周户部太仓·御前值庐密召顾衡，顾衡直陈四万空额与走私铁证\",\"皇帝拍案准奏下令推行新法，朝野震动之际京师四海通达总钱庄突发大宗现银异常流失。\",\"京师四海通达总钱庄传出神秘大户暗中提空百万两现银风声。\"]",
+    "单章蓝图补全第 36 章伏笔时序消毒：删除 [\"京师四海通达总钱庄门前汇聚狂热挤兑人群，大掌柜钱有福闭门拒兑引发民变恐慌\",\"京师四海通达总钱庄发生全面挤兑骚乱\"]",
+    "单章蓝图补全第 37 章伏笔时序消毒：删除 [\"顾衡命人将百万雪花银垒成银墙立于京师四海通达总钱庄门前，宣布全额刚性兑付\"]",
+    "单章蓝图补全第 38 章伏笔时序消毒：删除 [\"顾衡带算吏入驻京师四海通达总钱庄·内库密室查验密档，运用穿透式勾稽对齐历年假账\",\"接管京师四海通达总钱庄总账\"]",
+    "单章蓝图补全第 39 章伏笔时序消毒：删除 [\"司礼监太监带护卫闯入京师四海通达总钱庄账房，以天子颜面为由索要内帑暗账原本威逼销毁\"]",
+    "单章蓝图补全第 40 章伏笔时序消毒：删除 [\"永隆帝在京师大周户部太仓·天子御书房屏退左右接见顾衡，暗疾发作神色憔悴，深感时日无多急于收拢帝国财权\",\"永隆帝嘉许顾衡平息京师钱庄风暴之能，决意命顾衡彻底清算江南财阀\"]",
+    "单章蓝图补全第 43 章伏笔时序消毒：删除 [\"周景宣挑明齐王意欲在漕运途中制造溺亡杀局\",\"顾衡与周景宣试探各自底线达成隐秘利益共识\",\"四皇子暗中密会顾衡\"]",
+    "单章蓝图补全第 47 章伏笔时序消毒：删除 [\"巡盐御史帮腔作势声称盐政连年血亏无银可解\"]",
+    "单章蓝图补全第 50 章伏笔时序消毒：删除 [\"顾衡持尚方剑查封八大商号地下私仓平抑民怨\"]",
+    "本地收缩超长标题/CBN/CEN 共 7 章（第 5、8、10、16、17、18、20 章），未发 AI 请求",
+    "大纲 agent:model-finish,11 轮 9 次工具调用,复检 1 次"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 15,
+    "firstPassRate": 0.75,
+    "rewrittenChapters": 5,
+    "totalRewriteRounds": 5,
+    "averageRewriteRounds": 0.25,
+    "pipelineAttempts": 20
+  },
+  "runtimeMetrics": {
+    "requestCount": 78,
+    "requestCountsByPurpose": {
+      "scene-draft": 28,
+      "fact-extraction": 25,
+      "chapter-judge": 25
+    },
+    "latencyP50Ms": 27405,
+    "latencyP95Ms": 67982,
+    "latencyMaxMs": 94977
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787044972770",
+      "model": "gemini-3.8-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "explicit"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 83.1,
+      "wouldStartReading": true,
+      "confidence": 0.9,
+      "dimensions": {
+        "openingAttraction": 88,
+        "coreSellingPoint": 92,
+        "protagonistDrive": 86,
+        "conflictEscalation": 72,
+        "payoffPlanning": 82,
+        "characterRelations": 74,
+        "suspensePlanning": 80,
+        "audienceFit": 90
+      },
+      "issues": [
+        {
+          "id": "reader.other-1",
+          "severity": "high",
+          "category": "other",
+          "location": "全文",
+          "description": "卷规划与前50章分章细纲进度严重脱节，卷一与卷二核心剧情边界发生混乱与重合",
+          "evidence": [
+            "volumePlan 中第1卷《太仓死局》章节范围为“chapterRange: {'start': 1, 'end': 60}”，卷末钩子为“顾衡刚接掌户部清吏司印信，永隆帝于御书房屏退左右，甩出一本江南承宣布政使司送呈的空白盐税账册，密令其南下拔除盐税黑洞”；第2卷《两淮惊涛》范围为“start: 61, end: 120”，核心舞台为巡按两淮驻地扬州。然而在 chapterBlueprints 中，顾衡在第24章即已升任主事，第41章已受命下江南，第46-50章已微服进入扬州、与陈万全在瘦西湖画舫对峙、撕毁白条并查封私仓。第41-50章直接提前消耗了第2卷（第61-120章）的核心主线冲突。"
+          ],
+          "suggestion": "重新校准卷划分与章节排期：若维持45万字/180章的三卷结构，建议将第1卷截断在第40章（完成京师户部与钱庄初探、领旨南下），或者在第31-60章间扩充京师新法推行、六部博弈与北方军饷深挖，将真正的“下江南巡盐”严格放在第61章之后展开，避免卷一与卷二大纲内容重叠互斥。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-2",
+          "severity": "high",
+          "category": "other",
+          "location": "全文",
+          "description": "重要女性配角兼情感知己陆书仪的出场安排与主线分章蓝图产生直接时空冲突，导致角色在细纲中完全缺位",
+          "evidence": [
+            "keyCharacters 中陆书仪的出场时机标为“第15章，在京郊义庄清点因官盐飞涨而冻饿致死难民账目时与顾衡初遇”，伏笔 foreshadow-3 亦对应“第15章京城外围查访”。但在 chapterBlueprints 第14-15章中，顾衡已被赵元吉“强押入京师大周户部太仓·临时押房候审”，第15章整章皆在“押房石壁上以碎石刻出完整洗钱链条”，且第15章禁区明确规定“不得出现陆书仪私盐血印暗记核心定性”。身处牢房死局的主角不可能在此阶段前往京郊义庄与陆书仪初遇，导致前50章细纲中陆书仪完全未按计划登场。"
+          ],
+          "suggestion": "将陆书仪的登场节点合理后移，例如调整至第24章顾衡洗脱罪名升官后（如第31-35章核查军饷物流或第36-40章清查京师外围钱庄盐铁时），并同步修正 foreshadow-3 的 setupChapter，保证角色登场轨迹与主角人身状态逻辑自洽。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-3",
+          "severity": "medium",
+          "category": "other",
+          "location": "全文",
+          "description": "爽点计划（coolPointPlan）中预设的章节序号与具体章节蓝图的实际爆点安排存在错位",
+          "evidence": [
+            "coolPointPlan 中爽点2“公堂降维碾压：在户部三司推事会上用流水穿透图撕毁侍郎伪证，当众摘掉顶头上司官帽”建议章节为“suggestedChapter: 13”，但实际蓝图中第13-14章顾衡被反咬收监，该高潮实际爆发在第21-24章；爽点3“金融做空反杀：洞悉齐王府洗钱钱庄资金漏洞，反向引爆挤兑抽干皇子私库白银”建议章节为“第29章”，但蓝图第29章为“上奏分科预算表查封私库”，钱庄挤兑风波被延后至第36-37章，且内容为“以太仓银质押平息挤兑”而非反向做空逼得齐王贴银掏空。"
+          ],
+          "suggestion": "对照 1-50 章的分章实际事件，重新修订 coolPointPlan 中的建议章节及触发情境，使全书重点爽点的规划与章节落地保持一致。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.other-4",
+          "severity": "low",
+          "category": "other",
+          "location": "全文",
+          "description": "人物关系表（keyCharacters）存在部分字段错位与自指冗余",
+          "evidence": [
+            "keyCharacters 数组中，周景宣的关系演变项里 targetName 误填为“周景宣”，赵元吉、徐阶庭的 targetName 亦指向自身；永隆帝的关系演变项中，第二和第三项的 targetName 分别被填入了完整的剧情描述长句（如“晋王由借皇子制衡清流，逐步升级为对其搜刮财政的震怒镇压...”）。"
+          ],
+          "suggestion": "修复人物关系元数据，规范 targetName 对应的目标人物名称，将长句剧情叙述移回 dynamic 字段。",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "这是一份立意极其鲜明、题材结合度极高的硬核历史官场与财税权谋大纲。开篇以铡刀临头的死局切入，凭借现代借贷复式记账法、试算平衡表、现金流量分析、阿基米德浮力验银以及边际成本核算等硬核专业手段降维破局，智斗逻辑扎实，数字穿透感与打脸爽感十分充沛，精准切中职场降维与逻辑流读者的爽点。主要硬伤在于宏观分卷规划与微观分章细纲出现节奏抢跑：第41-50章过早进入江南盐道，与卷一（太仓死局1-60章）的卷末定位产生严重错位；同时配角陆书仪的出场伏笔与主角入狱剧情撞车导致其实际缺席。只要理顺卷次分水岭并校正人物出场时序，整部作品将具备极高的一线连载竞争力和阅读粘性。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 87.7,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 92,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 87,
+          "characterVoice": 86,
+          "payoffValue": 83,
+          "pacing": 88,
+          "endingPull": 91
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "现代审计专业能力的展现略显速成与神化，在半炷香时间内翻阅重构三年庞杂总账，对标定硬核智斗的读者而言略显悬浮，弱化了扎实的数据穿透感。",
+            "evidence": [
+              "这个九品小官只用了不到半炷香工夫，翻了几十页账册，居然一眼刺穿了太仓三十年的铁律！"
+            ],
+            "suggestion": "可稍加一两处具体勾稽关系的微观破绽（如解运文书与入库日期的倒挂、火耗折银与铸色底册的对账矛盾），让降维打击的专业推导更有颗粒度。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "开局极具冲击力，铡刀悬颈、血泊死尸与三百万两亏空的三重生死危机瞬间拉满悬念与压迫感。主角临危不乱，反制逼供胥吏并迅速建立专业信息优势，节奏紧凑凌厉，人物立得住。章尾刑部带刀撞门格杀的危机接踵而至，情绪推力与追读欲望极强，是一篇工业化水准极高、开篇抓人且卖点鲜明的第一章。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 82.5,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 84,
+          "conflictEffectiveness": 83,
+          "emotionalDrive": 81,
+          "characterVoice": 80,
+          "payoffValue": 78,
+          "pacing": 83,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "上章末尾门栓已碎且铁索探入，本章开头也是直接撞击，但此处借孙长贵心理描写出现'不到半个时辰'，使外界破门的生死时速紧迫感与内部耗时产生了轻微的时间刻度脱节。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章门外破门的危机，顾衡在极端压迫下运用复式记账法与算筹迅速穿透太仓三百万两假账的勾稽关系，完成了核心证据的提炼与藏匿。刑部破门施加重枷的情节强化了危机感与主角坚韧的形象，最终将战场转移至户部侍郎赵元吉坐镇的前堂公堂，生死战一触即发，断章钩子有力，硬核审计爽感兑现扎实。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 87.3,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 85,
+          "openingHook": 90,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 88,
+          "characterVoice": 85,
+          "payoffValue": 84,
+          "pacing": 88,
+          "endingPull": 92
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "核心爽点“第一道账”的算式推导存在明显数学与逻辑硬伤。主角计算应收410万、支出300万，结存理应110万，而甲字库实盘恰好也是110万（账实相符），此时质问“那另外三百万两的亏空，你们在账面上凭空抹平”在逻辑上无法成立，因为300万已作为支出扣除，并非账面多出来的亏空。随后第三道账又称这300万是“三年内烧掉三百万两亏空，按三成火耗倒推”，将常规预算支出与火耗虚报贪腐混为一谈，严重削弱了硬核审计流读者的智斗信服度。",
+            "evidence": [
+              "四百一十万减去三百万，账面结存理当留存一百一十万两实银。可今夜封库实盘，甲字库里现银只有区区一百一十万两，那另外三百万两的亏空，你们在账面上凭空抹平，真金白银究竟落在何处？！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "公堂行刑与审判权责处理略显戏剧化。户部侍郎在太仓前堂公然越过刑部、都察院与大理寺三法司复核流程，未录供词直接下死刑签令立斩朝廷命官，虽有灭口动机支撑，但在严谨历史官场语境下略显过于失控与脸谱化。",
+            "evidence": [
+              "赵元吉连供状都未递下一份，枯瘦的手指便径直探入签筒，抽出一支朱砂赤红的死刑签令，手腕发力猛掷而下。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章死囚重枷压顶的生死危机，开篇直接进入断头台边缘的公堂高潮，张力拉满。主角绝境反击，后两道算式（漕运决堤导致的时间错位穿透、熔银炉产能与三成火耗的费米推演）极具现代审计穿透古代糊涂账的降维打击爽感，孙长贵的当堂反水与屏风后神秘人的掌声悬念均处理得干脆利落。唯一瑕疵在于第一道账的核心数字推导存在低级算术口径混乱，需修正账面平衡与亏空项的逻辑表述以契合硬核智斗定位。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 90,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 89,
+          "characterVoice": 90,
+          "payoffValue": 88,
+          "pacing": 91,
+          "endingPull": 92
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "帝王要求其戴着沉重生铁重枷限期三日翻查浩瀚底册与通州关凭，在实际物理操作查账上存在一定阻碍，略带有为追求悲壮压迫感而牺牲实操合理性的戏剧化痕迹。",
+            "evidence": [
+              "凭此黑铁令，太仓三库任你调阅，户部文书随你传召。……但给朕记清楚，你官身未复，铁枷不除！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接极为紧凑凌厉，屏风后的天子现身彻底打破死局，将前堂公堂灭口迅速转化为暗室御前对质。永隆帝的拔剑相向与夺嫡猜忌将冲突推向极致，顾衡凭借复式记账法核心洞察与军令状绝地反击，成功从死囚博取到手持黑铁令的查案特权。局势变化天翻地覆，节奏张弛有度，七十二个时辰的倒计时悬念极强，追读体验极佳。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 86.4,
+        "continueReading": true,
+        "confidence": 0.94,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 82,
+          "pacing": 88,
+          "endingPull": 91
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "敌方死士反应与潜入速度略显过快。皇帝前脚刚走、近卫刚接管太仓，死士便能携大量猛火油精准破窗焚库，太仓外围的禁卫防线形同虚设，虽强化了危机紧迫感，但在官场严密守卫逻辑上略显仓促。",
+            "evidence": [
+              "突然，窗外的狂风暴雨中，传来一声极其细微的瓦片碎裂声。声音极轻，混在惊雷之中几难分辨，但顾衡神色微沉，蓦地停下了翻阅底册的手指。库房外头，两名负责把守回廊的玄甲近卫突然闷哼倒地"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "主角戴着五十斤死囚重枷与铁镣，在短时间内完成疾行、翻阅厚账册、扑火抢救等动作，对文官体质而言负荷过重，虽具戏剧张力，但肉身抗压表现稍有爽文夸张化倾向。",
+            "evidence": [
+              "顾衡双目赤红，顶着五十斤的生铁重枷，迎着扑面的滔天火浪，发疯似地猛扑了上去！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章天子限期破案的死局，节奏紧凑凌厉。前半段顾衡凭借心理压制与利益分化，利落收服滑头老吏孙长贵，引出暗格真实底册，展现了硬核审计的局部微兑现；后半段反派势力迅速发起物理销账的绝杀，猛火油焚库直接将冲突推向生死存亡的高峰。章尾断在账册起火、主角扑火夺卷的瞬间，悬念与压迫感拉满，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 6,
+        "score": 90.2,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 92,
+          "conflictEffectiveness": 91,
+          "emotionalDrive": 89,
+          "characterVoice": 88,
+          "payoffValue": 90,
+          "pacing": 92,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "主角身负五十斤生铁重枷且连番受审受刑，在火场中仍能狂奔并一脚踹飞铁栅门闩，身体机能表现略显超人化，与文官背景略有轻微违和。",
+            "evidence": [
+              "顾衡拖着沉重铁镣大步狂奔，借着前冲的万钧惯性，扬起右脚裹挟着铁镣的重量，狠狠蹬在烧烫的铁栅门心！轰然一声金铁巨响，火星炸裂飞溅，受热扭曲的铁门被生生踹飞门闩！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上文火海危局，动作场景极具画面感与紧迫感。核心智斗环节巧妙利用古纸内府用料与明矾水沉淀显影的物理/化学特性绝境逆转，专业降维感极强。章尾从账目作假进一步穿透到太仓‘生铁地磅’的物理作弊铁证，局势产生实质性重大推进，智斗逻辑扎实，追读吸引力拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 7,
+        "score": 87.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 85,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 87,
+          "payoffValue": 84,
+          "pacing": 90,
+          "endingPull": 92
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "地磅作弊的杠杆力学机制与平秤读数存在物理逻辑矛盾。文中解释机关时称‘杠杆受力臂便会被垫铁强行顶短，凭空抵消掉两分力道’（受力臂缩短会导致秤台端力矩变小，秤杆游砣端应向下沉坠、游砣应向内回缩）；但前文称重时却描写为‘秤杆高高翘起直指房梁’且‘要挂上一百零二斤游砣才能平秤’（游砣外推意味着承重端力矩被放大了），二者物理受力分析前后相反。",
+            "evidence": [
+              "只要台面承重超过五十斤，杠杆受力臂便会被垫铁强行顶短，凭空抵消掉两分力道。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "度量衡‘大秤吃银’与折色记账的数理逻辑存在倒错。百斤标准砝码称出‘一百零二斤’属于使物显重的小秤；但在太仓收缴各省解银‘逼地方官吞下折色暗亏’、‘底账只按九十八斤上报’的入库盘剥场景中，理应是通过使物显轻的大秤（即实银百斤称出九十八斤，或需加码至一百零二斤实银才抵准一百斤），此处将‘称出102斤’与‘底账记98斤’生硬拼贴，对硬核智斗流读者易产生逻辑出戏。",
+            "evidence": [
+              "工部官铸足斤足两的一百斤砝码，压在这架大磅上，要挂上一百零二斤游砣才能平秤。整整多出了两斤分量，偏重两分！……每称百斤实银便凭空吃下两斤折色，底账只按九十八斤上报，余下的全成无头死银！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章残卷线索，节奏凌厉，动作执行极具审计专业范式。顾衡先发制人调取工部钦定标准砝码建立基准校准，避免了对手反咬器具磨损，降维打击感强烈；当堂破拆地磅、砸开暗格暴露物理机关与大秤手崩溃招供一气呵成，直接将户部亏空案烧向齐王府，戏剧张力与追读动力拉满。唯一瑕疵在于硬核拆解杠杆力学与大秤入库折色的数理逻辑存在局部颠倒，稍损智斗严密性，但整体爽感与局势推进依然扎实有效。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 8,
+        "score": 90.3,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 88,
+          "characterVoice": 90,
+          "payoffValue": 90,
+          "pacing": 92,
+          "endingPull": 93
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "主角顾衡身戴五十斤生铁重枷，设定上为文官兼审计专家而非顶尖武人，直接将一名微胖成年人撞飞‘两丈远’（逾六米）略显超人体能化，稍偏离历史权谋硬核写实基调。",
+            "evidence": [
+              "凭借全身力道猛然侧身飞撞，庞大的生铁横梁带起呼啸恶风，狠狠砸向地面上的刘奎，将吓傻的大秤手整个人硬生生撞飞出去两丈远！"
+            ],
+            "suggestion": "可将‘撞飞两丈远’微调为‘将地上的刘奎硬生生撞翻滚出数步’，既能保留重枷破空的爆发力与救人决断，又能维持凡人体能的合理性。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章破获歪秤后的审讯，顾衡并未流于口供表面，而是以精湛的度支核算逻辑（现金会票准备金、运银辎重与关卡通行限制）展开二次穿透式审讯，逻辑严密且降维感十足。剧情由此拓展出‘广仁生药铺运银塞外买马’的重大谋逆线索，并顺理成章起获藏于旧紫檀算盘内的分润羊皮残页，完成了证据链的关键闭环。顾衡收匿残页展现了成熟老练的权谋城府，而尾声刺客破顶灭口、淬毒弩刃近身刺杀的危机爆发，令节奏由静转动，悬念与追读欲望拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 9,
+        "score": 82.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 84,
+          "openingHook": 83,
+          "conflictEffectiveness": 82,
+          "emotionalDrive": 80,
+          "characterVoice": 81,
+          "payoffValue": 79,
+          "pacing": 82,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "关键物证（羊皮残页）的位置在章节交接处发生位置漂移矛盾。上章结尾明确交代顾衡已将羊皮残页'塞入胸口贴肉的硬甲内层'，但本章死士刺杀与战后清理时，羊皮残页却都在公案桌面上。",
+            "evidence": [
+              "近卫统领快步返回公案前，小心翼翼捧起紫檀算盘与包裹严密的羊皮残页，仔细查验确认毫发无损后，紧绷的脊梁才松弛下来。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.pacing-2",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "本章篇幅主要被死士与大内侍卫的武打格斗占据，硬核数据穿透与智斗卖点暂时缺位，戴五十斤重枷的主角偏向纯动作自卫，好在结尾搜身反转及时拉回权谋悬疑主线。",
+            "evidence": [
+              "顾衡拖动脚下铁镣猛然发力，借助全身惯性横甩铁枷，重逾五十斤的生铁横梁带起狂暴恶风，狠狠磕在死士前冲的小腿胫骨上。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章死士破顶刺杀的危机，动作戏紧凑刺激，大内侍卫及时护场保住了人证刘奎与物证。战后主角从领头死士尸身上搜出刻有蟠龙暗纹的'禁卫亲军前锋营'铁牌，瞬间将太仓亏空案从单纯的户部/齐王贪腐升级为直通禁宫大内的朝堂惊天大案，章尾反转力度强，追读欲望强烈。仅存在物证羊皮纸在上一章已被收入怀中、本章又回到桌面的轻微道具位置穿帮。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 10,
+        "score": 87.2,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 86,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "反派侍郎将贴身私印直接深刻于刺客军牌暗格内，带有较为明显的‘反派实名制行刺’工具人痕迹。在严密权谋设定下，高官蓄养死士留下如此直接的私人物证略显降智与情节便利化。",
+            "evidence": [
+              "暗格底层赫然呈现出一方以极细针笔深刻入铁的朱砂小印！印泥泛着妖异阴沉的血色，采用大周官印绝不使用的私家鸟虫篆，四个篆字清晰如刀刻，赵元吉印！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章高度契合核心定位，将现代借贷复式记账法与传统赤黑算筹深度融合，在天字丙库废墟中上演了一场极具视觉感与专业度的数据穿透大戏，有力兑现了‘降维打击’与‘智商碾压’的爽感。全章节奏紧凑凌厉，从理清七年三百万两洗钱链条，到刺客腰牌暗格私印暴雷，直接将贪腐案升格为谋逆大罪，推动局势剧烈质变，追读吸引力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 11,
+        "score": 81.6,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 85,
+          "openingHook": 83,
+          "conflictEffectiveness": 82,
+          "emotionalDrive": 78,
+          "characterVoice": 85,
+          "payoffValue": 72,
+          "pacing": 84,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.payoff-1",
+            "severity": "medium",
+            "category": "payoff",
+            "location": "全文",
+            "description": "承接上章算平三百万两的大账高潮，本章顾衡戴枷直闯钱庄、硬刚大掌柜的气势极盛，读者期待的是顺理成章起获存根闭环定罪；但结尾核心铁证在眼皮底下被飞贼跳窗截走，导致本章的调查兑现被截断，情绪从智谋碾压骤然拐入物理追凶。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "权贵背景出现多王交错。前文与本章顾衡一直强调此案系‘齐王府财脉’，但掌柜情急之下喊出的后台却是‘晋王府名下商号’。虽属九龙夺嫡的常见暗线，但此处未借主角观察或心念稍加锚定，容易使快速扫读的读者产生阵营设定的轻微困惑。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接紧凑，顾衡戴死囚重枷、持手谕强闯京师总钱庄的气场十足，主角冷峻果决的权臣雏形立得很稳。与大掌柜的言语交锋与雷霆搜查节奏极快，压迫感充沛。结尾虽然关键物证失窃略微推迟了爽点闭环，但瞬间将局势拉入雨夜追凶的高危悬念中，尾钩钩力强劲，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 12,
+        "score": 83.2,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 82,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 82,
+          "characterVoice": 85,
+          "payoffValue": 78,
+          "pacing": 84,
+          "endingPull": 80
+        },
+        "issues": [
+          {
+            "id": "reader.payoff-1",
+            "severity": "medium",
+            "category": "payoff",
+            "location": "全文",
+            "description": "章节标题明确标示“逼死掌柜”，但本章正文止步于钱有福交出暗格底册、顾衡拆出夹层借据，钱有福既未自尽也未被杀，标题关键预期在当章落空。",
+            "evidence": [
+              "标题《第12章 查封飞钱暗账逼死掌柜》与正文结尾“顾衡指尖死死按住借据下方的鲜红朱印，眼底寒芒如霜。太仓七年铁案的最后一环，在此刻彻底咬死。”全文未有掌柜死亡情节。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文干脆利落，顾衡果断放弃追击逃窜死士，转而清缴后堂、控制活口与现账。对峙戏份极其契合定位，顾衡以飞钱准备金核算、借贷平账漏洞及底层铅锌假银为杀手锏，完成逻辑与威压的降维打击，并最终用裁刀剥离揭贴暗层拿到赵元吉的三百万两隐秘借据，智斗破局爽感扎实。唯一瑕疵在于标题承诺的“逼死掌柜”在章内未予兑现，略显标题党。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 13,
+        "score": 90.8,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 91,
+          "emotionalDrive": 92,
+          "characterVoice": 87,
+          "payoffValue": 92,
+          "pacing": 91,
+          "endingPull": 94
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "敌方势力出牌时，带队捕头高喊‘奉刑部侍郎密令’，而此前核心反派为户部侍郎赵元吉。虽然前文提及三法司被齐王势力渗透，但此处两部权臣联动的背景交代极简，快节奏阅读下容易让部分读者微卡顿，误以为是笔误。",
+            "evidence": [
+              "领头一名满脸横肉的黑脸捕头阔步踏入大堂，刀尖直指被围在白绢正中的顾衡，厉声暴喝，‘奉刑部侍郎密令与缉捕司勘合！’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章质量过硬，是智斗爽点与危机张力高度结合的典范章节。作者精准抓住了‘现代审计/复式记账降维打击’的核心卖点，将枯燥的账目核验转化为‘三丈白绢朱砂绘图’的高燃视觉化场景，既集中兑现了前面积累的假火耗、暗秤克扣、钱庄洗钱与官银流向齐王府等线索，又赋予了主角‘以筹为刀、以笔为铡’的压迫感与力量感。章尾敌对势力撕破脸皮破门灭口，生死危机瞬间引爆，与地上的朱砂铁证大网形成强烈戏剧冲突，追读欲望拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 14,
+        "score": 66.7,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 78,
+          "openingHook": 74,
+          "conflictEffectiveness": 62,
+          "emotionalDrive": 60,
+          "characterVoice": 65,
+          "payoffValue": 55,
+          "pacing": 70,
+          "endingPull": 75
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "赵元吉瞳孔骤缩，心头掀起滔天骇浪...那张盖着他私印的借据更是他仕途上绝不可示人的催命符，一旦在三法司当众呈验，便是抄家灭族的大祸。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.payoff-2",
+            "severity": "medium",
+            "category": "payoff",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "赵元吉怒极反笑，抬起厚重的粉底官靴，重重踩在散落一地的演算纸页之上...殷红的鲜血从破裂的腕口缓缓渗出，顺着紧绷的指尖滴落，砸在被泥浆玷污的白绢之上"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-3",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "小畜生，你当真以为凭你那点拨弄算筹的本事，就能翻得了天？实话告诉你，三司公堂之上坐着的是刑部尚书，屏风后面候着的是齐王殿下！进得堂去，乱棍翻飞之下，本官保管叫你吐不出半句辩白，当场毙命在公堂之上！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章破门危机，赵元吉披绯袍杀回并持内阁文书强行锁拿顾衡，成功将战场转移至刑部三法司公堂，留下了较强的下章开审悬念。然而本章在权谋逻辑和情绪曲线上存在明显问题：核心物证（三百万两借据）在反派眼皮底下未被销毁亦未交代去向，反派行为存在明显降智；上一章积蓄的算账高光被生硬打断，主角全程被动受刑受辱仅能口头放狠话，缺少降维打击文应有的微反击与伏笔兑现，整体阅读体验偏向压抑。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 15,
+        "score": 89.9,
+        "continueReading": true,
+        "confidence": 0.93,
+        "dimensions": {
+          "readability": 92,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 89,
+          "characterVoice": 91,
+          "payoffValue": 86,
+          "pacing": 90,
+          "endingPull": 94
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "顾衡双臂反剪戴重锁，在半个时辰的押解候审时间内，仅凭半拳大燧石在坚硬青条石壁上凿出深达分许、宽达三丈的精密复式账目图，在物理执行力与时间尺度上略显夸张。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上回太仓被捕死局，节奏凌厉、压迫感十足。主角身陷囹圄却以碎石为笔、反手于青石壁上深凿复式记账洗钱图，硬骨逆袭的气魄极具情绪张力；深宫内侍寅夜递送‘御前行走’腰牌，天子暗中送刀，巧妙破除齐王一手遮天的公堂死结。结尾鼓响临堂，底牌已就，蓄势充足，极大激发了读者的连贯追读欲望。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 16,
+        "score": 75.8,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 85,
+          "openingHook": 82,
+          "conflictEffectiveness": 74,
+          "emotionalDrive": 72,
+          "characterVoice": 82,
+          "payoffValue": 60,
+          "pacing": 72,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.payoff-1",
+            "severity": "medium",
+            "category": "payoff",
+            "location": "全文",
+            "description": "本章全篇处于极端压制与情绪蓄水阶段。上一章末尾已交代了赵元吉的灭口计划，并向主角发放了核心底牌（御前行走腰牌）；然而本章整整一章全部用于铺垫三司威仪、赵元吉构陷与刑杖加身，直到章尾主角仍未亮牌或开口反击，仅以‘拂去石粉’的冷峻姿态断章，导致核心预期的降维反击完全推迟，单章缺乏阶段性质证与微兑现。",
+            "evidence": [
+              "四名凶神恶煞的快手齐声应喝，横跨两步逼上前来，粗粝的长茧大手抓向顾衡的双肩，沉重冰冷的刑杖更是当空扬起，卷起一阵刺耳的破风呜咽之声！……顾衡手腕微抬，神态自若地拂去肩头因押房石壁磨砺而沾染的灰白石粉。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "作为主打‘现代审计、算筹硬核智斗’的权谋文，本章会审上的交锋逻辑略显套路化。反派指控顾衡的罪名滑向了‘撕毁贡绢、泼洒朱砂邪符作法惑乱视听’等低级粗暴罪名，冲淡了原本高水准的假账、地磅吃银、复式勾稽等财政攻防质感。",
+            "evidence": [
+              "更在地上泼洒朱砂邪符、妄图布阵作法惑乱视听！此人借查账之名行盗库之实，见太仓三百万两亏空大白于天下，便丧心病狂私刻下官印信伪造借据，意图金蝉脱壳构陷上官！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章为典型的高压蓄势章。公堂布局、三手法司威严肃杀的氛围塑造到位，徐阁老的制衡与屏风后齐王的威慑增强了权谋厚度。但整章节奏被刻意放慢以服务极限施压，全章停留在反派发难施杖的临界点，主角既未开口辩驳也未出示底牌，专业审计与智斗爽点全数后置，造成较强的断章饥渴感与一定的阅读憋闷感。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 17,
+        "score": 91.4,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 92,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 93,
+          "characterVoice": 88,
+          "payoffValue": 94,
+          "pacing": 91,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "肢体动作空间逻辑略有牵强：主角双臂此前被玄铁沉锁反剪于后背，却在差役推搡间直接从贴肉内襟暗层中甩出令牌，关节自由度与藏牌位置衔接微有不顺。",
+            "evidence": [
+              "顾衡反剪于后背的十指骤然发力，掌心早已扣紧贴肉藏在内襟暗层的沉重硬物。他借着差役推搡撕扯的力道侧身拧腰，手腕由后向前猛力甩出"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章极度凶险的死局，破局与反杀节奏极其凌厉。前半段以‘御前行走’金玉腰牌物理刹住杀威棒，借天子威权彻底封死赵元吉动用私刑灭口的企图；后半段陆书仪引近卫抬入三丈巨轴，现代复式记账法正式登堂入室，借贷平衡与资金穿透对大周官员形成了强烈的认知降维打击。当堂点破火耗洗钱链路并亮出赵元吉私印，爽点兑现非常扎实，断章停在赵元吉被死死钉在绝境的高潮处，追读期待感极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 18,
+        "score": 83.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 74,
+          "openingHook": 82,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 84,
+          "payoffValue": 88,
+          "pacing": 76,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "正文台词与上一章章尾出现大段同质复述，产生剧情原地打转感",
+            "evidence": [
+              "上一章尾部已有“永隆初年秋，江南解送八十万两实银入库。按户部旧例，经太仓乾字甲号地磅虚扣火耗两分，暗房吃进一万六千两……经由会票洗入东安门草料筐，再转入京郊私庄”，本章正文再次出现“永隆元年九月，江南漕运实银解运入京，账册登记八十万两。户部库房依例在太仓乾字甲号地磅虚扣火耗两分，暗房吃进一万六千两……折入东安门草料筐，洗入了赵侍郎胞弟名下的京郊庄田！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "多处对话标点符号与引号闭合严重错乱",
+            "evidence": [
+              "如“你以为单式流水账死无对证……吞进肚里的银子就能神不知鬼不觉。”可你看看这幅图……；“本官乃朝廷正三品侍郎……何曾见过这等妖妄的借贷图录！”此物分明是你勾结民间术士……；以及赵元吉身形晃动，嘶声反驳：“反了！”这刁吏早已被你收买……"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接公堂对质的高潮，爽点兑现充分，情绪张力饱满。顾衡持界尺反客为主，由人证地磅铅块、物证钱庄票根再到三百万两两淮盐税挪用窟窿，层层递进直逼幕后齐王，最终赵元吉狼狈掀翻公案、齐王捏裂茶盏的收尾画面极具戏剧冲击力与追读吸引力。主要硬伤在于本章前半段对上一章末尾已交代的一万六千两假火耗案情进行了近乎原样的台词复述，造成追更节奏回退；且正文中存在大面积对话引号断裂错漏的排版问题，需修正标点与压缩前序重复说明。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 19,
+        "score": 85.9,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 85,
+          "characterVoice": 84,
+          "payoffValue": 80,
+          "pacing": 86,
+          "endingPull": 92
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-time-compression",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "公差出发至浴血返回的物理时间跨度表现略显急促。刑部刚发令箭，大堂仅架起炭炉点燃，差役便已遭遇变故重伤折返，若非在附近遇袭，时间流逝交代稍显仓促。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章接续上一章的高压对峙，赵元吉撕冠发狂指责顾衡妖法，顾衡则单刀直入提出‘熔银验色’，直接将战火引向太仓三百万两夹铅实物。老吏孙长贵拼死作证与徐阁老以乌纱性命作保，使朝堂威压与智斗张力推至顶点。章节尾声通过架炉升温蓄势，并在最后一刻由‘浑身浴血闯堂的差役’引爆剧变，悬念钩子极强，极大地激发了读者的连载追读欲望。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 20,
+        "score": 89.4,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 84,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 92,
+          "characterVoice": 88,
+          "payoffValue": 94,
+          "pacing": 90,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "科学常识与物理数据出现明显硬伤。纯银熔点实为961.8℃，铅熔点约327℃，文中称'纯银熔点高达两千余度'，两千度高温早已超过生铁熔点（约1150-1250℃），若达两千度大堂内的铁锅会先融化。这对主打硬核数据与逻辑流的目标读者易造成出戏感。",
+            "evidence": [
+              "纯银熔点高达两千余度，寻常炭火需费时良久方能软化；然而生铅与杂铜的熔点，不过区区六百余度！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章悬念极佳，以关键工匠暴毙的意外阻碍开篇，迅速拉高朝堂对抗张力。反派借机狂妄反扑，主角团并未被牵着鼻子走，而是通过复式记账的逻辑自洽、木箱暗记与进料暗簿三维连环破局，迅速推进至当堂开炉。最终银锭破裂、恶臭铅汁四溢的视觉化微兑现极具冲击力与打脸爽感。除银熔点的科学常识小瑕疵外，整体节奏迅猛、冲突推进硬核，追读欲望强烈。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 85.9,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 85,
+          "suspensePayoff": 86,
+          "characterArc": 82,
+          "emotionalArc": 88,
+          "payoffEscalation": 86,
+          "genrePromise": 80,
+          "continuationDesire": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "核心智商压制情节中出现基础算术口径前后矛盾。主角推导‘总应收410万 - 总支出300万 = 账面应结存110万’，随后指出‘实盘现银恰为110万’；按此算式账实完全相符，主角却紧接着质问‘另外300万亏空在哪’，导致公堂第一道反击算式在纯算术上无法自洽。作为主打‘硬核智斗、数据穿透’的文，该关键台词会瞬间打破读者沉浸感，需理顺收入、支出与结存的亏空差额逻辑。",
+            "evidence": [
+              "三年来拨付九边军饷一百八十万两、营造工程六十万两、百官俸银六十万两，总计支出三百万两！四百一十万减去三百万，账面结存理当留存一百一十万两实银。可今夜封库实盘，甲字库里现银只有区区一百一十万两，那另外三百万两的亏空，你们在账面上凭空抹平，真金白银究竟落在何处？！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "章节衔接处存在严重的时间流速脱节。第1章末尾明确写道‘撞门声轰然震碎门栓……拘捕铁索已然从门缝间粗暴探入’，但第2章主角在屋内从容画借贷表、摆算筹并耗时‘半个时辰’完成推演，门外的缉捕差役才完成撞断门栓冲入。在千钧一发的破门情境下停滞半个时辰，破坏了紧迫感的可信度。",
+            "evidence": [
+              "在不到半个时辰内，将积攒三年的烂账抽丝剥茧算得彻彻底底……公廨大门在这一刻彻底炸裂。伴随着一声山崩地裂般的震响，合抱粗的铁木门栓被硬生生冲断"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前3章工业化水准极高，开局铡刀悬颈与三百万两亏空的高压设定迅速抓牢读者。主角利用现代审计思维反制逼供、拆解假账的动作利落，第3章公堂上‘漕运决堤导致的时间差’与‘官炉产能极限的费米推演’极具专业降维打击爽感，章尾屏风后大人物击掌的断章钩子张力十足。主要瑕疵在于第3章第一道算式的核心数据口径出现自相矛盾的算术硬伤，以及第1-2章撞门与核账的时间尺度失衡，需修正基础数据逻辑以夯实硬核智斗的题材承诺。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 85.4,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 84,
+          "suspensePayoff": 86,
+          "characterArc": 82,
+          "emotionalArc": 86,
+          "payoffEscalation": 85,
+          "genrePromise": 82,
+          "continuationDesire": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "核心打脸环节的财务与算术推导出现严重逻辑硬伤。按文中数据：总流入410万两，正常支出300万两，理论账面结存为110万两（410-300=110）；而主角紧接着指出实盘现银也是110万两。此时账实完全相符（理论110万=实盘110万），在数学上根本不存在任何亏空。作者将第1章中本应为存量结存的410万两误当成三年总流入，把300万两支出与300万两亏空口径混为一谈，导致硬核审计文的公堂第一道反杀算式在算术上自我瓦解，严重违背智斗流受众的期待。",
+            "evidence": [
+              "四百一十万减去三百万，账面结存理当留存一百一十万两实银。可今夜封库实盘，甲字库里现银只有区区一百一十万两，那另外三百万两的亏空，你们在账面上凭空抹平，真金白银究竟落在何处？！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-2",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "肉体负荷与动作机动性存在失真感。前文多次强调主角身为虚弱文官，被‘五十斤死囚生铁重枷’压得皮开肉绽、颈骨咯咯作响且铁枷锁死，但在第5章案牍库遭遇死士泼洒猛火油爆燃时，主角仍能健步如飞、翻阅暗格并在熊熊火海前顶枷扑火。重刑具带来的生理限制在动作戏中被过分弱化，略微削弱了历史权谋文的冷峻写实感。",
+            "evidence": [
+              "最关键的三本天字号流水底册深陷在冲天火海之中……顾衡双目赤红，顶着五十斤的生铁重枷，迎着扑面的滔天火浪，发疯似地猛扑了上去！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前5章整体节奏凌厉紧凑，工业化叙事功底扎实。开局以‘铡刀悬颈+三百万死账’建立极限生死压力，随后迅速以现代复式记账法穿透古代流水账，完成了‘太仓破局-公堂算式打脸-御前密室立军令状-突袭案牍库遭遇纵火’的高密度推进，冲突升级自然，爽点与悬念衔接顺畅。核心缺陷在于第3章公堂辩驳的第一道算式存在低级算术口径混乱（410-300=110与实盘110账实一致，亏空不成立），对主打硬核数据审计的读者群体会产生明显的出戏感，需修正入库与支出的具体账面基数。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 6,
+        "toChapter": 10,
+        "score": 87.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 90,
+          "patternVariation": 86,
+          "suspensePayoff": 89,
+          "characterArc": 78,
+          "emotionalArc": 87,
+          "payoffEscalation": 88,
+          "genrePromise": 92,
+          "continuationDesire": 91
+        },
+        "issues": [
+          {
+            "id": "reader.prop-location-inconsistency-p8-p9",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "核心物证‘羊皮残页’位置发生前后穿帮。第8章末尾顾衡已明确将羊皮残页贴身收匿于内层硬甲中，第9章死士射箭目标及侍卫清理现场时，该残页却凭空回到公案桌面上。",
+            "evidence": [
+              "第8章：'他面无表情地反手将羊皮残页重新卷好，塞入胸口贴肉的硬甲内层'；第9章：'两支射向公案上的紫檀算盘与羊皮残页'及'近卫统领快步返回公案前，小心翼翼捧起紫檀算盘与包裹严密的羊皮残页'。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.scale-mechanism-math-inconsistency-p7",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "地磅偏重作弊的数理逻辑与太仓折色克扣机制存在轻微倒挂。文中说明太仓大秤克扣为‘每称百斤实银便凭空吃下两斤折色，底账只按九十八斤上报’，但实测百斤砝码时游砣却移至一百零二斤才平秤（读数显示超重），与‘少报入库、截留差额’的敛财逻辑在读数方向上存在颠倒。",
+            "evidence": [
+              "工部官铸足斤足两的一百斤砝码，压在这架大磅上，要挂上一百零二斤游砣才能平秤。整整多出了两斤分量，偏重两分！每称百斤实银便凭空吃下两斤折色，底账只按九十八斤上报，余下的全成无头死银！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "第6至10章展现了极其扎实的高密度推进与硬核审计权谋张力。剧情从火场抢救残页、明矾水显影，迅速递进到钦定砝码校准破拆地磅、物流穿透突审、死士破顶刺杀，最终在第10章以赤黑算筹复式记账法完成对七年三百万两洗钱全链路的数据穿透，并将贪腐案彻底引爆为蓄养禁卫死士的谋逆大案。文戏逻辑严密、武戏短促紧迫，题材承诺兑现极佳，爽感层层加码升级。仅在第8-9章交界处存在微小的物证位置穿帮，以及地磅读数折色方向的数理小瑕疵，整体阅读体验凌厉流畅，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 16,
+        "toChapter": 20,
+        "score": 88.9,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 90,
+          "patternVariation": 78,
+          "suspensePayoff": 92,
+          "characterArc": 82,
+          "emotionalArc": 90,
+          "payoffEscalation": 90,
+          "genrePromise": 94,
+          "continuationDesire": 92
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "medium",
+            "category": "pacing",
+            "location": "全文",
+            "description": "第18章前半段对第17章结尾刚刚阐述过的假火耗洗钱案情进行了近乎一字不差的台词复述，导致跨章连读时产生明显的回退与拖沓感。",
+            "evidence": [
+              "第17章顾衡台词：‘永隆初年秋，江南解送八十万两实银入库。按户部旧例，经太仓乾字甲号地磅虚扣火耗两分，暗房吃进一万六千两。旧账中只写火耗折损，然而在这张图上，这一万六千两经由会票洗入东安门草料筐，再转入京郊私庄……’对比第18章顾衡台词：‘永隆元年九月，江南漕运实银解运入京，账册登记八十万两。户部库房依例在太仓乾字甲号地磅虚扣火耗两分，暗房吃进一万六千两。旧账只记实收七十八万四千两，火耗平除，但在这张大图的借贷链条上，这一万六千两从未化作烟尘消散，而是当日便开具成四海通达钱庄的暗记会票，折入东安门草料筐，洗入了赵侍郎胞弟名下的京郊庄田！’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-2",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "第18章存在多处标点断裂与引号配对错漏，导致对话归属与叙述视角出现混乱，打断阅读沉浸感。",
+            "evidence": [
+              "‘吞进肚里的银子就能神不知鬼不觉。”可你看看这幅图’（引号提前闭合）；‘赵元吉身形晃动，嘶声反驳：“反了！”这刁吏早已被你收买，攀咬上官，按律当诛！’（引号中途断裂未闭合）；‘孙长贵一人所言不足为凭，那四海通达钱庄七年间的流水票根，又该如何抵赖？堂下一声清越女子嗓音平地而起。’（台词缺少前置引导与双引号修饰）。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "硬核技术流设定中出现常识性常态数据错误，将纯银熔点夸大至两千余度，与硬核考据基调产生微小违和。",
+            "evidence": [
+              "‘纯银熔点高达两千余度，寻常炭火需费时良久方能软化；然而生铅与杂铜的熔点，不过区区六百余度！’（注：纯银实际熔点约为961.8℃，纯铅约为327.5℃，黄铜约900-1000℃）。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本五章窗口为整部作品前期的核心高潮战役——太仓三司会审。整体编排极为紧凑凌厉，精准兑现了‘现代审计与硬核数据穿透’的题材承诺。第16章极限施压后，第17章以‘御前行走令牌’阻断私刑并轰然铺展三丈复式记账巨轴，实现强烈的认知降维压制；第18至20章则通过‘账目铁网-地磅铅块-钱庄票根-工匠毒杀阻碍-暗记暗簿反破局-当堂开炉熔银’的连环递进，将赵元吉从猖狂反扑彻底碾压至绝境癫狂，并在第20章末尾以‘银皮破裂、恶臭铅汁四溢’达成极具冲击力的视觉化物理兑现。虽在第18章存在部分台词案情重复交代及标点排版硬伤，但节奏未受实质性拖累，情节环环相扣，主线推进扎实，爽感层层升级，追读欲望强烈。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 20,
+      "chapterAverage": 85.5,
+      "chapterMedian": 87.3,
+      "chapterMinimum": 66.7,
+      "openingThreeAverage": 85.8,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察"
+    ],
+    "errors": [],
+    "durationMs": 477064
+  },
+  "provider": "openai",
+  "model": "gemini-3.8-flash-high",
+  "totalMs": 5171165,
+  "warnings": [
+    "大纲阶段 warnings（21 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（1 条，影子模式不阻断）"
+  ]
+}

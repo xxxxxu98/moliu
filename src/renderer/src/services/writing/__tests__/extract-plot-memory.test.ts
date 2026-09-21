@@ -11,6 +11,7 @@ import {
   collectCharacterFates,
   collectCharacterTitles,
   collectCharacterIdentityAnchors,
+  collectFakedDeathCharacters,
   collectFateForbiddenZones,
   collectNumericAnchors,
   overlayCharacterFates,
@@ -492,5 +493,27 @@ describe('身份锚（collectCharacterIdentityAnchors，g38f r6 赵宣两身份�
   it('无 description 的角色跳过，空名单返回空数组', () => {
     expect(collectCharacterIdentityAnchors([{ name: '甲' }], ['甲'])).toEqual([]);
     expect(collectCharacterIdentityAnchors([{ name: '甲', description: '反派。' }], [])).toEqual([]);
+  });
+});
+
+describe('假死在册（collectFakedDeathCharacters，g38f r8 主角假死线断裂实证）', () => {
+  it('登「假死」的角色在册，其后「揭晓」delta 即移除；死亡不入假死表', () => {
+    const memories = [
+      memoryWith([{ characterName: '陆九霄', stateType: 'status', state: '假死', detail: '蜡衣药丸' }], 151),
+      memoryWith([{ characterName: '韩维', stateType: 'status', state: '死亡', detail: '伏诛' }], 24),
+      memoryWith([], 160),
+    ];
+    let faked = collectFakedDeathCharacters(memories);
+    expect(faked).toHaveLength(1);
+    expect(faked[0]).toMatchObject({ name: '陆九霄', chapterIndex: 151 });
+    // 死亡族不入假死表（死亡锁仍生效）
+    expect(faked.some(f => f.name === '韩维')).toBe(false);
+
+    // 揭晓后移除
+    faked = collectFakedDeathCharacters([
+      ...memories,
+      memoryWith([{ characterName: '陆九霄', stateType: 'status', state: '揭晓', detail: '当众现身' }], 175),
+    ]);
+    expect(faked).toHaveLength(0);
   });
 });

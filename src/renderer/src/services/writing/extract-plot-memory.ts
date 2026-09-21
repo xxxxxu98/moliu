@@ -466,7 +466,7 @@ export interface FateStatus {
  * 语义：越狱后终态=最晚下狱态，重捕/通缉剧情由此正确衔接——outline-roller
  * 命运弧用例锁定的行为）。
  */
-const FATE_RELEASE_STATES = new Set(['获释', '平反', '复职', '复位', '赦免', '起复']);
+const FATE_RELEASE_STATES = new Set(['获释', '平反', '复职', '复位', '赦免', '起复', '揭晓']);
 
 /**
  * 汇总全量章节记忆的角色命运状态：取每个角色最晚一次的命运级变化；
@@ -821,6 +821,40 @@ export function collectCharacterIdentityAnchors(
     if (out.length >= maxAnchors) break;
   }
   return out;
+}
+
+/**
+ * 假死在册角色（2026-09-20 g38f r8 实证：ch152 假死被登「死亡」→ 死亡禁令/
+ * 陈旧度裁剪/判官三道防线锁死主角 48 章，蓝图活体节点全灭，写手被迫发明
+ * 衣冠道具、滚纲按死人写「生前密信」）：登「假死」且其后无「揭晓」delta 的
+ * 角色——假死=活着的隐匿状态，不进任何终态禁令（FATE_STATES/RUNTIME 状态库
+ * 均不含假死），仅供写作侧注入【假死纪律】：隐匿形态活动 + 公开现身需揭晓。
+ */
+export interface FakedDeathCharacter {
+  name: string;
+  chapterIndex: number;
+}
+
+export function collectFakedDeathCharacters(
+  memories: ChapterMemory[]
+): FakedDeathCharacter[] {
+  const memorySorted = [...memories].sort((a, b) => a.chapterIndex - b.chapterIndex);
+  const faked = new Map<string, FakedDeathCharacter>();
+  for (const memory of memorySorted) {
+    for (const change of memory.characterStateChanges) {
+      if (!change.characterName) continue;
+      if (change.state === '假死') {
+        faked.set(change.characterName, {
+          name: change.characterName,
+          chapterIndex: memory.chapterIndex,
+        });
+      } else if (change.state === '揭晓') {
+        // 揭晓后不再是假死（身份已公开），从在册表移除
+        faked.delete(change.characterName);
+      }
+    }
+  }
+  return [...faked.values()];
 }
 
 /**

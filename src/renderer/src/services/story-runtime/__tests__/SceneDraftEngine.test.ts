@@ -523,6 +523,32 @@ describe('SceneDraftEngine.draft', () => {
     expect(request.system).toContain('落笔前先验算');
   });
 
+  it('假死纪律注入：隐匿活动合法+公开现身需揭晓+禁止按死人处理（g38f r8 实证）', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 170,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context, {
+      fakedDeathCharacters: [{ name: '陆九霄', chapterIndex: 151 }],
+    });
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).toContain('【假死纪律】');
+    expect(request.system).toContain('不是死亡');
+    expect(request.system).toContain('只能以隐匿形态');
+    expect(request.system).toContain('不得一笔带过');
+    expect(request.system).toContain('衣冠道具代替本人');
+  });
+
   it('已有正式标题时只要求回填，不再注入整套拟标题规则', async () => {
     // 大纲链路的章节标题非占位，pipeline 只在占位时采纳生成标题，
     // 再让模型拟一个等于白占十余行 system 指令与注意力。

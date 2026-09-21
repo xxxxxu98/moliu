@@ -269,6 +269,8 @@ export function applyDeterministicGates(
     previousChapterEnding?: string;
     chapterNumber: number;
     mustCover?: string[];
+    /** 本章全部合同节点（CBN/CEN/mustCover）：节点原句照抄确定性检测（判官零报实证） */
+    contractNodes?: string[];
   }
 ): ContinuityReport {
   let report = semanticReport;
@@ -286,6 +288,28 @@ export function applyDeterministicGates(
       issues: [
         ...report.issues.filter(issue => issue.id !== 'chapter-opening-repetition'),
         openingRepetitionIssue,
+      ],
+      checkedDomains: withFulfillmentDomain(report),
+    };
+  }
+  // 节点原句照抄（2026-09-20 r8 实证：13 处蓝图 CBN/CEN 逐字漏入终稿，判官 17 轮
+  // 零报——逐字比对非语言模型所长；旧防线只查 mustCover 且仅 warning，r8 漏入
+  // 几乎全在 CBN/CEN）：CBN/CEN 是读者直读的钩子句，漏入升 blocking 驱动重写
+  const hookVerbatimIssues = detectNodeVerbatimOverlapIssues(
+    prose,
+    ctx.contractNodes ?? [],
+    12,
+    'blocking'
+  );
+  if (hookVerbatimIssues.length > 0) {
+    console.warn(
+      `[LongFormWritingEngine] ch${ctx.chapterNumber} CBN/CEN 原句照抄 ${hookVerbatimIssues.length} 处，判 blocking 驱动重写`
+    );
+    report = {
+      accepted: false,
+      issues: [
+        ...report.issues.filter(issue => !issue.id.startsWith('node-verbatim-overlap')),
+        ...hookVerbatimIssues,
       ],
       checkedDomains: withFulfillmentDomain(report),
     };
@@ -332,19 +356,8 @@ export function applyDeterministicGates(
       checkedDomains: withFulfillmentDomain(report),
     };
   }
-  // 节点原句照抄（prompt 禁抄+judge 规则在长跑尺度漏网，终验 4 处实锤）：
-  // warning 级并入，靠下方 requiredIssueIds 机制驱动定向改写
-  const verbatimIssues = detectNodeVerbatimOverlapIssues(prose, ctx.mustCover ?? []);
-  if (verbatimIssues.length > 0) {
-    report = {
-      ...report,
-      issues: [
-        ...report.issues.filter(issue => !issue.id.startsWith('node-verbatim-overlap')),
-        ...verbatimIssues,
-      ],
-      checkedDomains: withFulfillmentDomain(report),
-    };
-  }
+  // 节点照抄的 mustCover 通道已并入上方 contractNodes blocking 检测（r8 实证
+  // warning 定向改写通道兜不可靠，13 处终稿漏入；LCS≥12 极严误杀成本仅一轮重写）
   // 真实历史年号黑名单（格式腐化守卫）：warning 级定向改写，同 verbatim 模式
   const realEraIssues = detectRealEraNameIssues(prose);
   if (realEraIssues.length > 0) {
@@ -693,6 +706,8 @@ export class LongFormWritingEngine {
           numericFacts: input.numericFacts,
           // 身份锚：出场角色身份与角色卡一致（r6 实证同一角色前后两身份）
           characterIdentityAnchors: input.characterIdentityAnchors,
+          // 假死纪律：假死角色隐匿活动合法+公开现身需揭晓（r8 实证假死被当死亡锁死主角）
+          fakedDeathCharacters: input.fakedDeathCharacters,
           futureReveals: contracts.chapter.futureReveals ?? [],
           // 大纲链路的章节标题已是正式标题，模型再拟一个也会被 pipeline 丢弃
           existingChapterTitle: isPlaceholderChapterTitle(contracts.chapter.title)
@@ -758,6 +773,8 @@ export class LongFormWritingEngine {
             // 锚外年号=自创年号、既成数值无勘误改写=数字蒸发
             eraAnchors: input.eraAnchors ?? [],
             numericFacts: input.numericFacts ?? [],
+            // 假死例外（判官侧）：假死=活着隐匿中，活体活动不报复活冲突
+            fakedDeathCharacters: input.fakedDeathCharacters ?? [],
           }),
         { label: 'semantic-review', maxRetries: 2 }
       );
@@ -779,6 +796,13 @@ export class LongFormWritingEngine {
         previousChapterEnding: input.previousChapterEnding,
         chapterNumber: contracts.chapter.chapterNumber,
         mustCover: contracts.chapter.mustCover,
+        // 节点原句照抄确定性检测（判官 17 轮零报实证：逐字比对非模型所长，
+        // 由代码兜）：CBN/CEN 与 mustCover 一并送检
+        contractNodes: [
+          String(contracts.chapter.CBN ?? '').trim(),
+          String(contracts.chapter.CEN ?? '').trim(),
+          ...(contracts.chapter.mustCover ?? []),
+        ].filter(Boolean),
       }),
     };
   }

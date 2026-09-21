@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  buildRollContextBase,
   dropForeshadowConflictingItems,
   findFateReleaseCheck,
   findLockedForeshadowViolations,
@@ -212,4 +213,52 @@ describe('dropForeshadowConflictingItems（空章补写节点消毒）', () => {
       hookType: 'reveal',
     };
   }
+});
+
+describe('buildRollContextBase · 登场锁标注与假死在册清单（g38f r8 实证）', () => {
+  it('revealTiming 晚于滚动起点的角色在名单中标注禁登场；假死在册角色进 fakedDeaths 不进命运锁', () => {
+    // r8：赵宣 revealTiming=第155章，滚纲名单不带锁信息 → ch82 蓝图点名 → 五连拒成洞；
+    // 主角 ch151 假死被登「死亡」→ 死亡锁锁死滚纲按死人写「生前密信」
+    const project = {
+      name: '做个天子孤臣',
+      characters: [
+        { name: '陆九霄', role: 'protagonist' },
+        { name: '赵宣', role: 'antagonist', profile: { revealTiming: '第155章身份揭晓' } },
+        { name: '冯恩', role: 'support' },
+      ],
+      chapterMemories: [
+        {
+          chapterId: 'c151',
+          chapterTitle: '第151章',
+          chapterIndex: 150,
+          corePlot: '假死局',
+          keyEvents: [],
+          locations: [],
+          characterStateChanges: [
+            { characterName: '陆九霄', stateType: 'status', state: '假死', detail: '蜡衣药丸' },
+          ],
+          revealedForeshadows: [],
+          newForeshadows: [],
+          wordCount: 3000,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+      foreshadows: [],
+      plotOutline: [],
+      chapters: [],
+    } as never;
+
+    const base = buildRollContextBase(project, 155);
+    // 登场锁：赵宣 155 章起点 → 155>155 为 false 不锁；从 100 起点则锁
+    const baseEarly = buildRollContextBase(project, 100);
+    expect(baseEarly.characterRoster).toContain('赵宣(antagonist)【155章前禁登场/禁揭示】');
+    expect(baseEarly.characterRoster).not.toContain('【155章前禁登场】陆九霄');
+    expect(base.characterRoster).toContain('赵宣(antagonist)');
+
+    // 假死在册：进 fakedDeaths 清单，不进命运锁
+    expect(base.fakedDeaths).toHaveLength(1);
+    expect(base.fakedDeaths[0]).toContain('陆九霄');
+    expect(base.fakedDeaths[0]).toContain('假死在册');
+    expect(base.fateLocks.some(lock => lock.includes('陆九霄'))).toBe(false);
+  });
 });

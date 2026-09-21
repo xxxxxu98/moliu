@@ -1,0 +1,1651 @@
+{
+  "book": "账房谋国：现代审计的夺嫡杀局",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": null,
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "default",
+  "promptChars": 34,
+  "requestedChapterCount": 20,
+  "phaseTimings": {
+    "outlineDirectionsMs": 25264,
+    "outlineExpandMs": 301540,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 786,
+    "continueWriteMs": 4365110,
+    "totalMs": 4692700
+  },
+  "completedChapters": 20,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787044972770.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787044972770.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 锁链套颈逼顶罪？老子不签！",
+      "words": 3278,
+      "paras": 27,
+      "paraCv": 0.14,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "粗粝的生铁环扣猛地收紧，冰冷刺骨的链条死死勒进皮肉，几乎要把喉管当场绞断。两只布满粗茧的大手从后方暴戾下压，揪住裴慎散乱的头发，狠狠将他的头颅砸向硬木公案。伴随着砰的一声闷响，桌案上的白瓷茶盏被震得凌空跌落，碎瓷与残茶溅了一地。\n\n裴慎整张",
+      "tail": "紧接着便是黄铜大锁落下的沉闷咔哒声。整座签押房瞬间被彻底封死，仅剩窗棂缝隙中透入的几缕微弱天光，将屋内堆积如山的凌乱案卷照得鬼影重重。三天生死局，就此轰然开盘！",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 万页烂账埋杀机，废纸堆寻破绽",
+      "words": 3069,
+      "paras": 21,
+      "paraCv": 0.58,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 8,
+        "toolCalls": 6,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 157404
+      },
+      "gateIssues": [],
+      "head": "铁链拖过门环的粗暴声响彻底沉寂，门外沉重的落锁声宛如铁闸坠地。整座签押房瞬间被幽暗吞噬，仅有高处几处破损的窗棂，透入外头太仓码头泛灰的残存天光。裴慎扶着冰冷的泥金墙皮慢慢站直身子，撕裂的后背私刑伤口传来一阵阵火烧般的剧痛。他没有去看那扇被粗",
+      "tail": "拢，塞入内衬衣襟，死死贴在胸口滚烫的皮肉上。隔着破烂的单衣，那道藏在焦墨底层的森严朱红暗纹仿佛烙铁般灼烧着心口，在死寂的黑夜中无声宣告着这场生死棋局的真正开局。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 复式记账降维打击，十万两飞账！",
+      "words": 3401,
+      "paras": 58,
+      "paraCv": 0.7,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 9,
+        "toolCalls": 8,
+        "byTool": {
+          "get_draft": 3,
+          "revise_paragraphs": 4,
+          "run_checks": 1
+        },
+        "ms": 89090
+      },
+      "gateIssues": [],
+      "head": "巡夜甲士沉重的铁靴声在青石甬道尽头渐渐远去，周遭只剩下夜风撕扯破旧窗纸的呜咽。裴慎背靠着冰冷粗糙的青砖墙，抬手按了按胸口。隔着单薄破旧的官服，十三张起运鞘单残卷棱角分明，贴着皮肉渗出微凉的硬意。\n\n三天生死局，已漏掉大半个时辰。在这间被铁链",
+      "tail": "着徐敬之精心编织的所有谎言。\n\n窗外，换防差役的脚步声再次逼近，伴随着钥匙撞击铜锁的清脆铮鸣。裴慎缓缓抬起头，布满血丝的双眸中没有丝毫疲惫，唯有一片彻骨的冰寒。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 胥吏提刀夺账册？借贷不平抽肿脸",
+      "words": 3152,
+      "paras": 29,
+      "paraCv": 0.48,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 9,
+        "toolCalls": 7,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 3,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 96143
+      },
+      "gateIssues": [],
+      "head": "铜锁被钥匙拧开的刺耳刮擦声穿透清晨的浓雾，粗重的铁链哗啦啦滑落在青石台阶上。尚未等屋内积尘落定，两扇结实的黑漆榆木门便被从外头飞起一脚暴力踹开，重重撞在内侧青砖墙上，激起一片白茫茫的陈年霉灰。早春冷冽彻骨的潮风裹挟着太仓码头的粮腥与湿冷泥味",
+      "tail": "将裴慎手中的白麻纸吹得猎猎作响。白纸黑字之间，借贷两端横亘的十万两朱砂断口在晨光中泛着刺目的煞气，如同一柄出鞘的无形利刃，稳稳悬在了整座太仓所有贪官污吏的头顶。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 刑部提刑大军压境，一纸数据退索命",
+      "words": 3269,
+      "paras": 58,
+      "paraCv": 0.74,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "裴慎将手中的高丽白麻纸迎风一振，纸页边缘擦过老胥吏的耳廓，惊得那老吏连滚带爬跌出三步开外。尚未等院中围观的仓吏回过神来，沉重粗暴的撞门声陡然自太仓前院轰鸣炸响，伴随着数十道铁链拖过青石砖的刺耳刮擦，整座大通桥太仓的宁静被彻底撕碎。\n\n大批身",
+      "tail": "冰冷的木栅与封条，死死盯住屋内手持账册的裴慎。他的面孔在阴暗的光线中扭曲变形，双目布满猩红的血丝，眼底翻涌的狰狞杀意犹如淬了剧毒的钢针，要将眼前的青年生吞活剥。",
+      "error": null
+    },
+    {
+      "ch": 6,
+      "accepted": true,
+      "title": "第6章 太仓封库暗箭袭，废料场夺命拼残片",
+      "words": 3108,
+      "paras": 25,
+      "paraCv": 0.09,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": {
+        "finishReason": "protocol-error",
+        "checksUsed": 0,
+        "revertedUnchecked": false,
+        "rounds": 1,
+        "toolCalls": 0,
+        "byTool": {},
+        "ms": 9093
+      },
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：25 段平均 122 字、变异系数 0.09，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "徐敬之摔袖离去的脚步声混杂着铁锁碰撞，在青石长廊中撞出沉闷的回响。房门外，两道交叉的白麻封条吸饱了黏稠生漆，死死绷在粗木门框之间。太仓守备并未撤去，反倒在暮色四合时换上一批面孔冷硬的陌生哨卒，整齐森冷的巡夜脚步声，将这间签押房围成了一座密不",
+      "tail": "有退路。一步，两步，碎裂瓦砾在靴底化作齑粉，刺骨的刀风生生割裂了裴慎额前的乱发。那双死寂的瞳孔在夜色中急剧放大，幽青冰冷的锋刃撕裂寒气，已然逼至他身前三尺之外！",
+      "error": null
+    },
+    {
+      "ch": 7,
+      "accepted": true,
+      "title": "第7章 算学残局露破绽，杂项账簿见鬼祟",
+      "words": 3105,
+      "paras": 22,
+      "paraCv": 0.47,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 48656
+      },
+      "gateIssues": [],
+      "head": "锋刃割裂空气的厉啸已撞在耳膜上，裴慎没有后退，更没有试图起身闪避。在这半丈见方的狭窄灰坑内，任何直立逃窜的动作都只会将脖颈主动送上对方的刀锋。他腰胯猛然下沉，两只被炭火灼起水泡的手掌毫无顾忌地探入身下滚烫发红的死灰深处，十指成爪，狠狠抠出两",
+      "tail": "敬之伪造的火耗大网已被撕开一道致命的数理裂口，但这凭空蒸发的七十二万两现银究竟顺着哪条暗道流出了太仓，在这寂静无声的空库深处，逼出了一片令人骨髓发冷的未知杀局。",
+      "error": null
+    },
+    {
+      "ch": 8,
+      "accepted": true,
+      "title": "第8章 炭黑对账破熔银，存货模型摧谎言",
+      "words": 3393,
+      "paras": 43,
+      "paraCv": 0.71,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "裴慎将手中那本发脆的《太仓炉房杂项物料领用底簿》重重拍在榆木案板上，陈年煤灰与霉烂纸屑被震得扬起半尺，旋即又落回斑驳的桌面上。他没有片刻停歇，反手扯过案头一张半尺宽的黄麻废纸，抓起半截粗墨锭在干瘪的石砚里用力研磨。浓黑黏稠的汁液随着飞快的旋",
+      "tail": "下的某处阴影里，像一头蛰伏的巨兽，等待着将这摇摇欲坠的帝国财政彻底拖入无底深渊。\n\n杂项库厚重的木门外，巡防兵卒冰冷的铁靴声已然由远及近，停在了斑驳的阶梯之下。",
+      "error": null
+    },
+    {
+      "ch": 9,
+      "accepted": true,
+      "title": "第9章 巡捕搜库抄家底，密藏图表缝官服",
+      "words": 2846,
+      "paras": 24,
+      "paraCv": 0.85,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 3/24，超过 5 句的段 2。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "裴慎右手按在摊开的黄麻草算纸上，指节因过度用力而泛出青白。门外青石台阶上那道铁靴踏地的回响，像一枚钝钉死死楔在两扇榆木门扉的缝隙间。杂项库内生铁油灯晃动了几下，灯芯爆出一记细碎的焦响。身侧的赵澈面色沉肃，右手顺着玄青细布袍服的下摆探入袖口，",
+      "tail": "巨大的楠木公案之后，裴慎端坐如山，青色官服纤尘不染，面无表情地迎向涌入门内的森冷刀丛，冰冷的目光如同两柄淬火的利刃，反客为主地将冲在最前方的捕快死死钉在了原地。",
+      "error": null
+    },
+    {
+      "ch": 10,
+      "accepted": true,
+      "title": "第10章 搜库落空当场僵，残纹竟现齐王印！",
+      "words": 3447,
+      "paras": 30,
+      "paraCv": 0.42,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 100092
+      },
+      "gateIssues": [],
+      "head": "涌入门内的数十名巡捕手执出鞘钢刀，脚下踩碎门板木屑，原本作势欲扑。然而公案后的青袍身影端坐如铁，半寸残烛映得裴慎面容冷峻。面对晃动的冰冷刀尖与呛鼻火把，他连眉梢都未动一下，沉静如渊的目光反倒压得满屋杀气骤滞。领头捕快喉结上下滚动，竟被这股气",
+      "tail": "兵部与刑部车马杂沓的辘辘隆音。天光破晓，三法司勘验的死局已然临门，而这枚暗藏齐王府通天私印的凭证残片，注定要在即将开启的朝堂巨浪中，化作斩断皇子私囊的最利屠刀。",
+      "error": null
+    },
+    {
+      "ch": 11,
+      "accepted": true,
+      "title": "第11章 死囚提审！当堂硬顶三法司杀威棒",
+      "words": 3290,
+      "paras": 23,
+      "paraCv": 0.29,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/23，超过 5 句的段 6。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "太仓辕门的生铁包边巨门轰然洞开，带刺铁蹄与厚底官靴踏碎清晨坚冰。刑部差役与兵部甲士杂沓而至，数十名皂衣捕役手按铁尺，如狼似虎地封锁了大通桥太仓。破晓时分的淡灰冷雾在仓廒顶端盘旋，凛冽寒风裹挟着肃杀之气笼罩中庭。裴慎身着缝藏着要命凭证的九品旧",
+      "tail": "卷宗上的刺眼漏洞；大理寺正倒吸一口冷气，脸色惨白如纸。一旦这本断罪底册在众目睽睽下被坐实为借贷相悖的伪账，谁敢强行定案斩杀裴慎，明日便要成为百官公诛的构陷同谋！",
+      "error": null
+    },
+    {
+      "ch": 12,
+      "accepted": true,
+      "title": "第12章 亮出新账！当庭抽烂户部断罪文书",
+      "words": 2490,
+      "paras": 24,
+      "paraCv": 0.54,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "公堂之上，生铁惊堂木跌落在案毡上，沉闷的回响尚未散去。主审的刑部郎中冷汗浸透了后颈中衣，按在卷宗上的手指隐隐发颤。涉银八十万两的大案勘验，众目睽睽之下，一旦被御史台坐实公堂之上存在借贷相悖、指鹿为马的恶行，不仅三法司堂官顶戴难保，整个刑部明",
+      "tail": "的徐敬之，原本浮在面皮上的自得冷笑，在这一刻彻底僵死凝固在嘴角边。那原本自以为胜券在握的狂妄神气，像一张被严霜冻裂的面具，寸寸碎裂，化作了无以复加的震骇与绝望。",
+      "error": null
+    },
+    {
+      "ch": 13,
+      "accepted": true,
+      "title": "第13章 全场骇然！九品算盘轰动文武百官",
+      "words": 3470,
+      "paras": 59,
+      "paraCv": 0.72,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "三丈白绢铺展在青砖地上，两列朱红大字犹如悬在半空的利刃，割得满堂官员面皮生疼。徐敬之面颊上的皮肉疯狂抽搐，脚底像是生了铁钉，僵在公案前半步也挪动不得。\n\n死寂之中，忽听得偏席案几后传来哐啷一声脆响。\n\n一名须发皆白、身着从七品库使公服的户部",
+      "tail": "的冷汗，却无论如何也无法将那枚定谳的大印与木块砸向猩红的案毡。\n\n整座公堂的空气凝滞如铁，唯有那三丈白绢上的朱红大字，在透窗而入的惨白日光下，散发着刺骨的森寒。",
+      "error": null
+    },
+    {
+      "ch": 14,
+      "accepted": true,
+      "title": "第14章 模型打脸！刑部被迫暂停弃市判决",
+      "words": 3248,
+      "paras": 22,
+      "paraCv": 0.18,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "刑部郎中悬在半空的手臂僵硬如枯木，掌心冷汗顺着惊堂木棱角浸出，滴落在猩红案毡之上。满堂官差屏息凝神，三丈白绢上那两列朱红大字犹如生铁铸就的枷锁，死死套在刑部涉案官员的脖颈之上。徐敬之扶住公案旁的抱柱，面皮因极度的惊恐与暴怒而扭曲，扯着沙哑嗓",
+      "tail": "押重审，一旦三法司顺着炭黑与运单深挖资金走向，私吞国帑的大祸立时便要落在他头上。刑部大牢重重铁门之内向来是杀人灭口最隐秘之处，徐敬之眼底闪过一丝狰狞暴虐的杀机。",
+      "error": null
+    },
+    {
+      "ch": 15,
+      "accepted": true,
+      "title": "第15章 死牢杀机！暗度陈仓算准狱卒死穴",
+      "words": 2838,
+      "paras": 19,
+      "paraCv": 0.15,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "签押房的雕花木窗半掩着，深冬的刺骨寒意尽数挡在屋外。徐敬之狠狠咬着后槽牙，指甲缝渗出的血迹在梨花木案几上洇开两道暗沉污渍。他一把抓过案上墨迹未干的齐王府联保银票与一只黑釉陶壶，重重推到刑部典狱官面前：“一千两通兑汇票，外加户部下月空出来的司",
+      "tail": "混着油脂，一笔一划勒石刻下的痕迹！借着微光，裴慎瞳孔骤缩：草屑掩盖下的，竟是用太仓特制乌冈精炭刻下的借贷试算、朱墨勾稽，以及一组写满两淮盐引通兑编号的残破数字！",
+      "error": null
+    },
+    {
+      "ch": 16,
+      "accepted": true,
+      "title": "第16章 牢内绝杀！逼迫看守送出算筹密信",
+      "words": 3261,
+      "paras": 20,
+      "paraCv": 0.49,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 11,
+        "toolCalls": 9,
+        "byTool": {
+          "get_draft": 3,
+          "revise_paragraphs": 5,
+          "run_checks": 1
+        },
+        "ms": 234063
+      },
+      "gateIssues": [],
+      "head": "粗糙的乌冈精炭粉末深嵌进指节褶皱，在微弱灯火下泛着森冷油光。裴慎半跪在刺骨的青石地上，就着过道尽头如豆的气死风灯，辨认着石板上的刻痕。那不是寻常囚徒绝望抠出的血书，而是一行行极其规整的筹算分录与两淮盐引字号。每一道笔画都混着太仓地炉特有的熟",
+      "tail": "的弧线，无声滚落在纵横交错的黑白象牙算筹之间，稳稳停在了偏殿算案的正中央。冷烛摇曳，象牙的惨白与硬蜡的猩红交相辉映，仿佛一道提前在大雍官场暗账上撕开的狰狞裂口。",
+      "error": null
+    },
+    {
+      "ch": 17,
+      "accepted": true,
+      "title": "第17章 算经破绽！痴愚皇子惊看妖孽账法",
+      "words": 3251,
+      "paras": 26,
+      "paraCv": 0.55,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "赵澈快步转过楠木博古架，抬手合拢偏殿厚重的两扇雕花长门，精钢门闩应声滑入深槽，发出一声沉闷的金铁合鸣。他并未停歇，反身放下垂挂在雕窗后的双层墨青厚棉帘，将殿外初冬的清冷夜风与更夫隐约的梆子声彻底阻隔在外。偏殿之内光线陡然晦暗下来，唯有大案中",
+      "tail": "寸寸挺拔直立，骨节间发出沉闷的轻响，那张常年挂着木讷痴傻的面孔在晨光中彻底褪去伪饰，深潭般的双眸寒芒大盛，整座偏殿的空气仿佛都在这骤然爆发的森严气度下凝固结霜。",
+      "error": null
+    },
+    {
+      "ch": 18,
+      "accepted": true,
+      "title": "第18章 食盒暗格！京城钱庄底册送入死牢",
+      "words": 3439,
+      "paras": 20,
+      "paraCv": 0.51,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "生铁腰牌重重拍在签押房的乌木公案上，震得青瓷茶盏泛起一圈圈浑浊的波纹。刑部仪门外的夹道里，徐敬之安排的值守典吏刚要拔步阻拦，就被两名身着宗正寺皂色公服的护卫沉着脸按住了刀柄。领头的太仓老执事须发斑白，抖开手中盖着朱红大印的勘合公文，苍老的声",
+      "tail": "照下波澜不惊。他将册子严密收拢于囚袍胸膛之下，就着那点微弱如豆的青烟油灯，指尖在最后一页泛黄纸页边缘重重一抹，将整条盘根错节的洗钱暗渠彻底锁死在了心算杀阵之中。",
+      "error": null
+    },
+    {
+      "ch": 19,
+      "accepted": true,
+      "title": "第19章 心算破网！牢内画出齐王洗钱图",
+      "words": 3338,
+      "paras": 19,
+      "paraCv": 0.43,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 17,
+        "toolCalls": 14,
+        "byTool": {
+          "get_draft": 6,
+          "revise_paragraphs": 7,
+          "run_checks": 1
+        },
+        "ms": 231993
+      },
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/19，超过 5 句的段 5。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "裴慎没有半分停顿。囚袍内侧的底册还带着体温，脑海中那张庞大的蛛网已彻底拼齐最后一块拼图。他伏低身子，从铺满烂稻草的泥坑边缘扒出半截烧焦的粗木棍，两手用力一拗，焦木应声折断，露出内里坚硬锐利的炭芯。刑部死牢北面是一整堵湿冷的夹泥大墙，常年不见",
+      "tail": "终于穿透阴霾骤然炸响，回音在幽暗的地道中来回激荡，震得石壁泥屑扑簌跌落。而那道直指王府巢穴的焦黑箭头，已在半明半暗的阴影中化作了一柄悬在大雍朝堂头顶的断头钢刀。",
+      "error": null
+    },
+    {
+      "ch": 20,
+      "accepted": true,
+      "title": "第20章 惊动天听！五天期限戴枷重返太仓",
+      "words": 2741,
+      "paras": 16,
+      "paraCv": 0.16,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/16，超过 5 句的段 7。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "正午升堂的三声开道铜锣在死牢地道中激荡，震得老狱吏肩头的石灰泥屑簌簌发颤。老狱吏死死扒住生铁栅栏，看着那堵画满蛛网账脉与炭黑箭头的湿墙，喉咙里咯咯作响，愣是吐不出半个字来。裴慎随手扔掉指尖磨尽的焦炭，任由黑灰从指缝滑落。他神色沉静，并未多看",
+      "tail": "盘。粗大铁链在轮轴上剧烈拉扯，摩擦出连串刺目的火星。沉重的精钢门闩被一寸寸拔出，伴随着刺耳的金铁嘶鸣与沉闷轰响，太仓紧闭已久的朱漆巨门，再次在裴慎眼前轰然洞开！",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 锁链套颈逼顶罪？老子不签！"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 万页烂账埋杀机，废纸堆寻破绽"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 复式记账降维打击，十万两飞账！"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 胥吏提刀夺账册？借贷不平抽肿脸"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 刑部提刑大军压境，一纸数据退索命"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 太仓封库暗箭袭，废料场夺命拼残片"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 算学残局露破绽，杂项账簿见鬼祟"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 炭黑对账破熔银，存货模型摧谎言"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 巡捕搜库抄家底，密藏图表缝官服"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 搜库落空当场僵，残纹竟现齐王印！"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1789662362714",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-X74lJN\\story-runtime\\proj-1789662362714-68972c6cded2.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 20,
+    "canonicalSnapshots": 21,
+    "latestSnapshotChapter": 20,
+    "sceneChunks": 20,
+    "events": 109
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 14,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "f146bd31ecf466266761a041c6cd8b109bc48bdfea00402b8f5a2c138ebba960",
+    "completeCharacterProfileCount": 14,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 14,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 20
+  },
+  "outlineWarnings": [
+    "单章蓝图补全第 1 章伏笔时序消毒：删除 [\"裴慎在京畿大通桥太仓签押房苏醒并挡下刑部捕快的索命铁链\"]",
+    "单章蓝图补全第 2 章伏笔时序消毒：删除 [\"裴慎在案卷库底层废纸堆翻出被墨汁浸染的存根残片\",\"裴慎在京畿大通桥太仓案卷库排查历年单式烂账\",\"裴慎在太仓底层废纸堆中发现十三张被浓黑墨汁浸染的存根残片。\"]",
+    "单章蓝图补全第 4 章伏笔时序消毒：删除 [\"徐敬之心腹胥吏率人闯入京畿大通桥太仓签押房催逼画押\"]",
+    "单章蓝图补全第 5 章伏笔时序消毒：删除 [\"徐敬之与刑部差役在京畿大通桥太仓大堂逼拿裴慎\"]",
+    "单章蓝图补全第 6 章伏笔时序消毒：删除 [\"裴慎躲过暗箭在京畿大通桥太仓废料场抢出浸墨存根残片\"]",
+    "单章蓝图补全第 7 章伏笔时序消毒：删除 [\"裴慎清点抢救出的残纸并听到算学考场故意拨错算珠的传闻\",\"裴慎在京畿大通桥太仓库房梳理杂项物资消耗账册\",\"暗中铺垫五皇子赵澈在国子监算学考核推演时故意拨错右侧第三档的三颗算盘珠的算局异象。\"]",
+    "单章蓝图补全第 9 章伏笔时序消毒：删除 [\"徐敬之调动大雍京师巡捕以违制私查罪名搜捕京畿大通桥太仓\"]",
+    "单章蓝图补全第 10 章伏笔时序消毒：删除 [\"巡捕在京畿大通桥太仓搜查落空\"]",
+    "单章蓝图补全第 12 章伏笔时序消毒：删除 [\"两列借贷试算表当场抓出十万两无货物对冲的凭空支出\",\"暗中监堂的司礼监掌印孙芳在帘后暗暗心惊。\"]",
+    "单章蓝图补全第 17 章伏笔时序消毒：删除 [\"五皇子赵澈在暗中验算裴慎密信后惊叹其算学深不可测\"]",
+    "单章蓝图补全第 18 章伏笔时序消毒：删除 [\"裴慎与五皇子赵澈建立初次隐秘联络通道。\"]",
+    "单章蓝图补全第 19 章伏笔时序消毒：删除 [\"裴慎在大牢内仅凭心算绘制齐王钱庄资金流向图\",\"裴慎在大牢内仅凭心算绘制齐王钱庄资金流向图\"]",
+    "单章蓝图补全第 20 章伏笔时序消毒：删除 [\"裴慎戴枷重返京畿大通桥太仓。\"]",
+    "单章蓝图补全第 21 章伏笔时序消毒：删除 [\"三法司差役押解裴慎重返京畿大通桥太仓宣读勘验特旨\",\"裴慎戴枷进入京畿大通桥太仓\"]",
+    "单章蓝图补全第 22 章伏笔时序消毒：删除 [\"裴慎在京畿大通桥太仓推行分层抽样法\"]",
+    "单章蓝图补全第 23 章伏笔时序消毒：删除 [\"京畿大通桥太仓底层木箱被强行撬开\"]",
+    "单章蓝图补全第 24 章伏笔时序消毒：删除 [\"完成京畿大通桥太仓两千箱假银的数目认定\"]",
+    "单章蓝图补全第 25 章伏笔时序消毒：删除 [\"烈火逼近京畿大通桥太仓主库引发众人奔逃\",\"京畿大通桥太仓遭遇人为恶性纵火\"]",
+    "单章蓝图补全第 26 章伏笔时序消毒：删除 [\"官兵合力扑灭京畿大通桥太仓纵火点并生擒两名死士\",\"彻底扑灭京畿大通桥太仓的大火\"]",
+    "单章蓝图补全第 27 章伏笔时序消毒：删除 [\"裴慎在京畿大通桥太仓正门借势散布调银谣言\"]",
+    "单章蓝图补全第 28 章伏笔时序消毒：删除 [\"彻底锁定太仓八十万两白银洗钱回路。\",\"证实太仓八十万两白银直接转入银庄\"]",
+    "单章蓝图补全第 35 章伏笔时序消毒：删除 [\"裴慎破译皇帝朱批中关于司礼监内帑开支的暗记\"]",
+    "单章蓝图补全第 44 章伏笔时序消毒：删除 [\"裴慎辨识出母联末尾加盖的司礼监掌印孙芳专用对公核销私印\",\"发现银庄母联账本末尾盖有司礼监孙芳核销私印\"]",
+    "单章蓝图补全第 45 章伏笔时序消毒：删除 [\"户部右侍郎周成霖目睹铁证入库惊恐推诿称病闭门不出\"]",
+    "单章蓝图补全第 47 章伏笔时序消毒：删除 [\"当庭彻底穿透八十万两白银流经银庄落入徐敬之私囊的实情。\"]",
+    "单章蓝图补全第 48 章伏笔时序消毒：删除 [\"徐敬之万念俱灰当堂交代私设假库平银吃取火耗放贷的全部罪行\",\"裴慎牢记九成归库一成归天之训主动将账目断口锁定在齐王钱庄脱开内廷\"]",
+    "单章蓝图补全第 50 章伏笔时序消毒：删除 [\"司礼监掌印孙芳宣读天子加封裴慎并勒令封存太仓卷宗的圣旨\",\"孙芳私下向裴慎传达皇帝欲借其刀锋斩断江南两淮盐税黑账的密旨\"]",
+    "大纲 agent:model-finish,24 轮 18 次工具调用,复检 3 次"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 13,
+    "firstPassRate": 0.65,
+    "rewrittenChapters": 7,
+    "totalRewriteRounds": 7,
+    "averageRewriteRounds": 0.35,
+    "pipelineAttempts": 20
+  },
+  "runtimeMetrics": {
+    "requestCount": 86,
+    "requestCountsByPurpose": {
+      "scene-draft": 32,
+      "fact-extraction": 27,
+      "chapter-judge": 27
+    },
+    "latencyP50Ms": 19797,
+    "latencyP95Ms": 61825,
+    "latencyMaxMs": 167289
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787044972770",
+      "model": "gemini-3.8-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "explicit"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 84.3,
+      "wouldStartReading": true,
+      "confidence": 0.9,
+      "dimensions": {
+        "openingAttraction": 85,
+        "coreSellingPoint": 90,
+        "protagonistDrive": 86,
+        "conflictEscalation": 84,
+        "payoffPlanning": 80,
+        "characterRelations": 82,
+        "suspensePlanning": 74,
+        "audienceFit": 92
+      },
+      "issues": [
+        {
+          "id": "reader.issue-1",
+          "severity": "high",
+          "category": "other",
+          "location": "全文",
+          "description": "在大纲的伏笔规划表中，伏笔3（孙芳点拨“一成归天”）与伏笔7（宋言蹊私田质押汇票）明确标注了其设立章节（setupChapter）分别为第12章与第46章；但在具体章节细纲中，第12章与第46章的 forbiddenZones 却明文严禁出现相关内容。这导致设定在执行层面无法落地，形成严重的规划自相矛盾。",
+          "evidence": [],
+          "suggestion": "重新校对伏笔设置章节编号。例如将孙芳点拨台词移至第15-16章死牢交锋，将宋言蹊地契汇票的初次暗线铺设调整至第40-41章清算司抄查银庄过程中，并同步修正章节禁区规则。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.issue-2",
+          "severity": "medium",
+          "category": "other",
+          "location": "全文",
+          "description": "伏笔2标注五皇子赵澈在第7章于国子监算学考核中故意拨错算盘珠，然而第7章细纲（算学残局露破绽，杂项账簿见鬼祟）的场景完全集中在太仓签押房，CPNs和mustCover全部为裴慎核算炭黑消耗，赵澈推演算盘的事件在第7章镜头中完全缺失，且禁区写明“严禁赵澈直接联络裴慎”。导致该伏笔在规划章节成为空头支票，直到第17章才突兀出现赵澈验算密信。",
+          "evidence": [],
+          "suggestion": "在第7章切出一段国子监算学考核的旁侧镜头，或在第8章明确排布赵澈拨错算盘的行为并被暗探或主考官关注，落实伏笔的设立动作。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.issue-3",
+          "severity": "medium",
+          "category": "payoff",
+          "location": "全文",
+          "description": "在第11-14章中，主角已被推上三法司公堂，并当庭展示复式试算表与炭黑模型推翻了徐敬之的定罪；然而到了第46-48章，主角再次登上三法司公堂，拿出母联账册再次击溃徐敬之。同一个反派徐敬之在同一个法庭场景下被以“账目翻盘”的模式连续打脸两次，拉扯长达35章，容易导致核心爽点审美疲劳与情绪拉扯感钝化。",
+          "evidence": [],
+          "suggestion": "建议弱化第11-14章的公堂审理级别，将其改为刑部山东司内部的闭门羁押核验，避免过早消耗“三法司会审大殿”的最高仪式感；将完整的三法司会审大决战留给第46-48章，使高潮爆发力更加集中。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.issue-4",
+          "severity": "low",
+          "category": "conflict",
+          "location": "全文",
+          "description": "分卷规划中第一卷定义为1-60章，第二卷为61-120章。但在50章细纲中，第50章即以“天子敕令裴慎即刻出京南下查核两淮盐政，官船扯起黑底金字大旗，向着江南破浪而去”收尾，提前结束了京师太仓篇并进入南下状态。第51-60章如果仍在京城进行官场洗牌，则与第50章登船离京的 Hook 产生时空倒退；若已在江南，则与卷划分的第61章开卷冲突。",
+          "evidence": [],
+          "suggestion": "将第一卷范围明确收束在第1-50章，或将第50章改为“京城定谳获封钦差”，第51-60章描写清算司整肃京师六部余波及南下路途筹备，在第60章压轴离京起航。",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "这是一份极具市场竞争力和专业辨识度的硬核历史官场大纲。选题精准抓住了现代法务审计降维打击封建模糊账本的智斗快感，将朝堂夺嫡争斗从俗套的刺杀口舌下沉为底层现金流与国库物资调配的硬核经济战，设定严谨，专业模型扎实，主角从替死九品巡官到帝国计相的升级主线逻辑自洽，极其符合目标读者偏好。主要短板在于局部大纲模块对齐出现纰漏：伏笔规划表中有两条关键伏笔的 setupChapter 恰好撞上了该章节细纲明文设立的 forbiddenZones，且第1卷中三法司公堂对决徐敬之的情节出现了两次同质化大审，略显拖沓拉扯。只要对伏笔埋设章节微调并优化第1卷中期公堂节奏，整体具备极高的开书吸引力与连载稳定性。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 83.7,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 85,
+          "openingHook": 88,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 82,
+          "characterVoice": 83,
+          "payoffValue": 79,
+          "pacing": 86,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.issue-conflict-villain-intelligence",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "反派徐敬之作为执掌太仓的正六品主事且背靠齐王党，试图用粗糙的单式流水口供去抹平八十万两亏空的手段略显草率，使得主角通过背诵《大雍律》特大侵吞案规则完成翻盘的情节略带有‘反派为主角立威而强行忽视基本律令’的痕迹。",
+            "evidence": [
+              "“本官信不信不重要，外头的三法司信不信也不重要，朝廷只要账面上平了就行。”……“《大雍律》三法司大审勘验律，卷一第四条明文载定：凡朝廷钱粮亏空涉银十万两以上者，皆属特大侵吞案……”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.issue-payoff-audit-delayed",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "核心卖点‘现代审计、数据流权谋’在首章以理论威慑和指出‘统一三成折算扣除’为主，真正的账目推演和降维操作延后到了三天赌局中，微爽点偏向生死自救而非专业实操碾压。",
+            "evidence": [
+              "给我三天时间，把太仓近三年的进出总账、各坊原始流水全搬到这签押房来。三天之内，我给你做出一套挑不出瑕疵的核销账册……"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "极佳的快节奏开篇。小说开门见山切入‘铁链勒颈、屈打成招’的生死危机，主角借反抗差役争取喘息，随后迅速调动法理与专业审计知识，精准戳中八十万两亏空四司会审的致命死穴，将死局转化为‘限时三天做平账目’的博弈局面。行文冷冽利落，主角智商在线，危机感拉满，为后续展开硬核审计推演打下了极具张力的舞台。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 88.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 87,
+          "characterVoice": 90,
+          "payoffValue": 88,
+          "pacing": 89,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "仅凭45度切角推定为徐敬之独门手法略显神化与强行附会，略带福尔摩斯式过度推理痕迹；好在有特定品级专用墨香作双重支撑，未伤及大局。",
+            "evidence": [
+              "撕痕下刀的角度由右上向左下方倾斜四十五度，运刀干净利落，分明是徐敬之常年裁切官诰公文时养成的独门手劲。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "上一章章尾徐敬之宣称‘老账底册半个时辰内全搬过来’，本章紧接落锁之后，裴慎立刻在房内木架翻出历年流水总簿，未交代这些是房内既有存卷还是差役已搬来，衔接略有微瑕。",
+            "evidence": [
+              "上一章：‘至于太仓所有的老账底册，半个时辰内全搬过来。’ vs 本章：‘铁链拖过门环的粗暴声响彻底沉寂……裴慎快步走到红松木架前，双臂猛然发力，将底层那一摞堆叠得齐人高的历年流水硬册狠狠拖出’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章高度契合‘现代审计破案’与‘硬核数据流权谋’的核心定位。主角利用古代单式记账与火耗制度的漏洞层层剥离假账，结合太仓防火与门禁等空间限制，逻辑闭环严密地推导出物证藏匿点。残纸透光发现辰砂银粉暗纹的展开干脆利落，成功将一场基层贪腐栽赃案跃升为朝堂夺嫡维度的杀局，不仅兑现了破案智斗爽感，更大幅拉高了后续追读期待。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 85.9,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 82,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 84,
+          "characterVoice": 86,
+          "payoffValue": 88,
+          "pacing": 86,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "前章末尾重点渲染的“通天之人私账暗纹”在核算过程中暂时退居为纯粹的数字凭证背景，情绪焦点完全转移至差额计算，伏笔与夺嫡大局的钩连在本章稍显淡化。",
+            "evidence": [
+              "裴慎伸手从衣襟中掏出那十三张残留着朱砂暗纹的起运鞘单残卷。借着微熹晨光，他将残卷记录的碎银逐笔核验。"
+            ],
+            "suggestion": "可在发现十万两断口时，顺带点明该飞账与神秘朱砂暗纹的资金去向存在勾连，使硬核算账与朝堂夺嫡的危机感结合得更紧密。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章高质量兑现了核心题材卖点。作者将复式记账法、会计科目分类与试算平衡等专业知识，极为流畅地融入了倒计时生死局的叙事张力之中，不仅没有枯燥的说教感，反而营造出了极强的数据流推理解谜快感与降维打击爽感。算盘珠落与墨线划破纸面的动作描写画面感极佳，三十一万对二十一万的十万两飞账逻辑闭环严密。章尾差役脚步与铜锁声响起，直接将危机推向下一轮正面交锋，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 86.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 86,
+          "endingPull": 81
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "本章结尾落在全场震慑的定格收尾，爽感兑现完整，但对下一动向（如三法司何时介入、徐敬之如何反扑）的即时紧迫性拉扯稍显不足，追读钩子偏于静态余韵。",
+            "evidence": [
+              "白纸黑字之间，借贷两端横亘的十万两朱砂断口在晨光中泛着刺目的煞气，如同一柄出鞘的无形利刃，稳稳悬在了整座太仓所有贪官污吏的头顶。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章破译出的假账线索，以紧凑利落的节奏展开正面交锋。冲突从物理层面的‘提刀夺册’迅速转化为‘现代审计逻辑+大雍律法则例’的专业降维打击。主角利用‘1.5%火耗上限’和‘借贷无凭证’将十万两窟窿钉死，并以‘私灭重案铁证必被主子灭口’的官场潜规则瓦解差役杀意，智斗逻辑严丝合缝，情绪反转爽快淋漓。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 80.1,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 84,
+          "openingHook": 83,
+          "conflictEffectiveness": 82,
+          "emotionalDrive": 78,
+          "characterVoice": 77,
+          "payoffValue": 79,
+          "pacing": 75,
+          "endingPull": 82
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "核心辩驳台词与前一章存在较严重的信息复读。裴慎当场震慑刑部捕头所说的‘去岁腊月二十三出库三十一万两’、‘十三道原始鞘单只有二十一万两’、‘三法司大审勘验律’等论据与法条，几乎逐字复刻了第4章对老胥吏的训斥，导致智斗高潮在连读体验上信息增量不足，节奏有所放缓。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "配角命名打破沉浸感。刑部捕头被突然冠以历史名臣‘胡宗宪’之名，在架空朝代（大雍）的严谨权谋文语境下，让知名抗倭名臣屈居为一名听差捕头，容易让硬核历史读者产生违和出戏感。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "承接上章收尾，刑部提刑差役大军压境与主事徐敬之亲临迅速将危机推至顶点。主角利用借贷平衡表铁证与《大雍律》程序法挑动部门权责顾虑，成功逼退刑部，降维打击爽感明确。然而主角对质的说辞大段复制上章内容，智斗信息密度略显打折。尾段徐敬之恼羞成怒就地‘封库’困杀主角，重新收紧危局，悬念与追读张力保持良好。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 6,
+        "score": 88,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 86,
+          "characterVoice": 84,
+          "payoffValue": 87,
+          "pacing": 90,
+          "endingPull": 90
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "主角作为文官/账房出身，在规避死士追杀、潜行突破、利用麦壳粉尘制造烟雾弹等战术动作上表现近乎特工级敏捷，动作戏虽精彩，但需注意防范文官物理身手过分脱离硬核智斗基调。",
+            "evidence": [
+              "裴慎顺手抓起身侧一块碎青砖，手腕猛然发力，将砖石狠狠砸向右侧那堆破麻袋。轰然坍塌的脆响瞬间打破死寂……黄白色的粉尘在冷风中炸开一片浓厚迷雾，生生阻断了杀手的视线。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章封库死局，以毒箭破窗迅速引爆危机，节奏凌厉紧凑。主角凭借审计思维从纸灰焦痕反推藏证地点，在废料场冒死火中取栗，顺利补齐'十万两流向通泰银庄与王府地下银号'的关键借贷闭环，爽点与悬念兼备。章尾死士拔刀逼至三尺之内，将物理危局推至顶点，追读驱动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 7,
+        "score": 88.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 89,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 86,
+          "characterVoice": 89,
+          "payoffValue": 90,
+          "pacing": 87,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "死士被废炭篓和滑坡泥土暂时阻隔后便完全隐身，杂项库外的外部搜索压迫感稍显淡化，略微削弱了主角屋内借灯查账时的倒计时紧迫感。",
+            "evidence": [
+              "裴慎贴着冰冷发潮的青砖外墙潜行数丈，摸到杂项库那扇厚重斑驳的榆木边门。门上的插销并未锁死，仅用一根生锈的铁钩虚掩着"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章生死绝境极其干脆，主角抓热炭扬脸反击、踹骨掀篓的脱困动作狠辣利落，毫无拖泥带水。中后段审计破案展现了极高的专业智斗水准——跳脱出传统单式收支账册的局限，从“底层能源消耗与物料平衡（火耗需吃炭）”这一物理常识切入，用二十万斤与两万四千斤的巨大数据断口将贪官伪账彻底击穿，完全兑现了现代审计降维打击的核心爽点，人设冷冽硬核，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 8,
+        "score": 86.4,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 85,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 87,
+          "characterVoice": 88,
+          "payoffValue": 88,
+          "pacing": 86,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "前后章关于炭量能熔白银的数据存在口径跳跃。前章结尾粗算为'顶多只够填进炉膛熔出八万两白银，剩下七十二万两'，本章加入起炉损耗与散热后变为'顶多两万两，剩下七十八万两'。虽然有热损解释，但连续追读读者容易在初看时对数字微生困惑。",
+            "evidence": [
+              "赵澈眼角猛烈跳动，脱口而出：‘四到五次开炉，能化多少银子？’‘顶多两万两。’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-2",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "裴慎在古装历史权谋语境下向皇子对话时，直接使用了现代温标'九百六十度以上'，赵澈毫无滞涩地理解并顺承讨论，缺乏古代工料语境（如'青白纯火'、'九炼之火'）的语义转化，稍有出戏感。",
+            "evidence": [
+              "温度至少要达九百六十度以上，炉火稍弱半寸，铅锡不浮，渣料不离，官银成色便无法达标。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章发现的物料底簿，由独角戏顺畅切入与五皇子赵澈的密室交锋。通过引入工业相变潜热、炉壁起炉损耗等存货消耗模型，将八十万两火耗谎言层层压榨至荒谬的'两万两'，智谋碾压感与现代审计破案的降维爽感兑现极其充分。皇子作为具备一定算学修养的高位见证者，其反应大幅增强了破案的爽快度，同时章尾抛出'八万斤现银究竟运往何处'这一更具张力的新悬念，外加门外铁靴逼近的危机压迫，追读意愿极为强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 9,
+        "score": 85.4,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 86,
+          "conflictEffectiveness": 85,
+          "emotionalDrive": 82,
+          "characterVoice": 87,
+          "payoffValue": 80,
+          "pacing": 88,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "本章在高压倒计时下完成了物证分流隐匿，但正面对峙在破门瞬间戛然而止，单章主要容量集中在防御性的藏证环节，搜身拉扯与口舌交锋完全移至下一章，略带断章感。",
+            "evidence": [
+              "整扇厚达三寸的沉重榆木大门被狂暴的铁锤硬生生砸得向内坍塌崩碎……冰冷的目光如同两柄淬火的利刃，反客为主地将冲在最前方的捕快死死钉在了原地。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上章危机，节奏凌厉紧凑。面对徐敬之借巡捕强行破门抄库的死局，赵澈果断转入场外、裴慎冷静回防，危机应对严丝合缝。文中使用卯榫凹槽塞纸、生蜂蜡麻线缝衬做旧等物证隐匿手段，极具硬核质感与职业特色。章尾主角端坐案后反客为主，气场沉凝稳健，读者对后续搜身过关及晨堂三司会审的期待感拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 10,
+        "score": 88.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 86,
+          "payoffValue": 90,
+          "pacing": 89,
+          "endingPull": 91
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "主角仅凭指腹隔着昏暗光线摩挲，便能精确辨识出火漆印上的九叠篆体、四爪蟠螭及十二颗微凸联珠，感官精度略显夸张，对硬核写实感有微弱损耗。",
+            "evidence": [
+              "指腹之下，暗印并非寻常商贾钱庄所用的八卦聚宝纹，更非户部衙门官印的宽边方折，而是工稳繁复的九叠篆体……而在蟠螭外周，环绕着整整十二颗微不可察的凸起联珠。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章破门危局，兑现迅速且爽感充沛。前半段以精密的前置藏匿应对粗暴搜查，搜身与搜案两处伏笔严丝合缝闭环；中段借“木炭”二字实施精准的智谋反制，逼退徐敬之；后半段残卷解密将底层贪腐直接穿透至齐王夺嫡，格局瞬间拔高。结尾晨钟与三法司车马临门，悬念与期待感拉满，整体节奏冷冽紧凑，权谋与审计破案卖点表现极为扎实。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 11,
+        "score": 90.2,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 92,
+          "emotionalDrive": 90,
+          "characterVoice": 88,
+          "payoffValue": 91,
+          "pacing": 92,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "官制品阶表述略有偏差。六部‘郎中’按历朝惯例通常为正五品官职，堂上主审官若为刑部郎中，被裴慎当堂喝为‘从三品正官’在硬核历史读者眼中略显出戏，可能与侍郎等高官混淆。",
+            "evidence": [
+              "“刑部堂堂从三品正官，难道连大雍开国的大审勘验律都忘得一干二净了么？”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "杀威棒临头时仅凭一声断喝‘震得梁柱浮灰簌簌下落’并将四名全力下击的差役硬生生逼停在头顶三寸，带有较强的玄幻/武侠戏剧化夸张，与通篇冷冽写实、讲求律法程序与算学逻辑的硬核官场画风有轻微割裂感。",
+            "evidence": [
+              "这一声怒喝气贯长虹，震得公堂梁柱浮灰簌簌下落。四名差役被这股惊人气势所摄，浑身骤然僵直，杀威棒生生顿在裴慎头顶三寸之处"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章完全契合历史权谋与硬核审计文的读者爽点。面对三法司会审的死局，主角未落入低俗的撒泼或纯口舌之争，而是采用极其专业的两层反击：先以《大审勘验律》压制程序违法、瓦解刑讯合法性，再以‘入库15万两却折损18万两’的借贷赤字漏洞以及‘木炭热力极限与熔炼量脱节’的实物勾稽审查，对假账进行降维打击。节奏凌厉，智斗扎实，微兑现爽感充足，极具追读吸引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 12,
+        "score": 70.5,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 74,
+          "openingHook": 68,
+          "conflictEffectiveness": 68,
+          "emotionalDrive": 70,
+          "characterVoice": 75,
+          "payoffValue": 72,
+          "pacing": 58,
+          "endingPull": 78
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "本章核心辩驳与上一章末尾严重回锅复读。上一章结尾裴慎已完整剖析了'两淮盐运十五万两对十八万两'与'兵部冬饷四十万两对三十七万两及松木炭不足'这两处核心漏洞；本章在铺设长绢后，借自辩形式将前章刚说过的台词和数据几乎原样重背了一遍，导致本章前半段有效信息推进停滞，削弱了降维打击的冲击力。",
+            "evidence": [
+              "翻开账册第三卷，去岁九月两淮盐运折银，户部流水只记入库现银一十五万两，借记库银增加十五万；可同页之后徐主事大笔勾决，列销熔铸火耗一十八万两！……再看第五卷兵部京营冬饷案！户部单式正册实销库银四十万两，而兵部兵马司核验回执，实收太仓起运银仅三十七万两……太仓二十座化银炉同期领用松木炭仅八千斤。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.continuity-2",
+            "severity": "medium",
+            "category": "continuity",
+            "location": "全文",
+            "description": "道具动作状态出现重复穿帮。上一章末尾刑部郎中手中的生铁惊堂木已经脱手跌落案毡，本章开篇亦承接了回响，中途未见任何收捡惊堂木的动作描写，而在本章结尾主审官再次瘫软时，却又一次'手中惊堂木啪嗒滚落在地'。",
+            "evidence": [
+              "刑部郎中整个人瘫在官椅上，汗出如浆，手中惊堂木啪嗒滚落在地"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章凭借三丈白绢朱笔划借贷的视觉化呈现，把现代复式记账法对抗古代单式流水账做出了极佳的仪式感与当庭翻案爽感，末尾直指七十五万两库银洗入京师私号钱庄更把案件格局顺利拔高。但章节存在严重的‘倒带注水’与连贯性瑕疵：主角在前章尾声已完全讲透的两处核心证据，在本章又花费近半篇幅原样重述，且惊堂木掉落动作未做状态重置便重复出现，严重损伤了精密智斗应有的紧凑推演节奏。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 13,
+        "score": 88.6,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 89,
+          "characterVoice": 87,
+          "payoffValue": 91,
+          "pacing": 86,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "你说两淮折银十五万两，折出十八万两火耗，差额三万两是挂炉残渣？...兵部冬饷缺额的三万两，你按在炉前飞耗头上。可杂项账册记得清清楚楚，同期领用松木炭仅八千斤！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章完美承接上章悬念，完成了大审高潮的核心兑现。通过数十名户部老算吏当堂拨算盘验证、认知崩塌的群像刻画，极好地烘托了现代审计与复式记账法对古代单式流水的降维打击感。反派召出底牌‘铁算盘’刘老账房反扑，旋即被裴慎用严密的数据与物理常识三连击正面粉碎，并顺势带出‘四爪蟠螭暗印’的夺嫡伏笔，权谋格局骤然拉大。章尾刑部郎中悬而不决的惊堂木将朝堂博弈的临界窒息感拉满，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 14,
+        "score": 87.7,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 85,
+          "payoffValue": 90,
+          "pacing": 87,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "裴慎戴着沉重铁铐的双手并未去理会身上的枷锁，而是沉腕探入破烂官袍内襟深处，粗糙指节在破絮间摸索片刻，死死扣住了一块坚硬沉重的焦黑物事……一道乌黑坚硬的暗影破空掷出",
+            "description": "道具携带合理性略显戏剧化：裴慎身为已押赴公堂即将问斩的死囚，历经羁押搜身与大枷加身，内襟深处却仍藏有去岁太仓地炉起出的半截实物炭块未被搜缴，在法理搜检严密的死牢背景下稍显巧合便利。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "太仓炭敬房拨付给二十座化银地炉的上等乌冈精炭，十二个月汇总合账，实领实销之数只有区区两万四千斤！",
+            "description": "物料口径与上一章存在细微出入：第13章尾部质询时提及'同期领用松木炭仅八千斤'，本章则将太仓燃料统一定调为'工部冶铸则例'规定的'乌冈精炭两万四千斤'。虽可解释为单期账与全年汇总账的区别，但燃料品类由松木炭变为乌冈精炭未做口径衔接，细究略有不匀。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章死局高潮，展现了硬核数据流与现代实物盘点审计的降维打击爽感。主角并未停留在纸面数字辩驳，而是通过'工部热力标准定额-燃料实领账簿-副产物炭黑出库回执'构建出完整的物料平衡投入产出模型，逻辑闭环极强。剧情上实质性打破了斩立决的绝境，成功逼迫三司当堂暂缓行刑、加封账目，情绪兑现充沛。章尾将战场转移至刑部大牢的暗杀危机，留钩精准有力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 15,
+        "score": 88.6,
+        "continueReading": true,
+        "confidence": 0.93,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 88,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 86,
+          "characterVoice": 90,
+          "payoffValue": 88,
+          "pacing": 88,
+          "endingPull": 92
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "单夜内事件密度极高（暗杀伏击、言语反杀、司礼监掌印夜探、枯草下发现前人算盘暗记），情节推进紧凑但稍显戏剧化巧合扎堆。",
+            "evidence": [
+              "未过多久，长廊拐角处再次传来脚步声。……正是白日里在公堂屏风后观审的司礼监掌印孙芳。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "孙芳作为权倾朝野的内廷第一人，亲自深夜无声潜入刑部死牢与人犯对话且未带任何扈从，在森严的刑部大牢场景中略带舞台化调度感。",
+            "evidence": [
+              "拂尘轻甩，一道修长清瘦的身影停在生铁栅栏外。来人头戴三山滴水黑纱帽，身着飞禽暗纹赤色锦袍，面白无须，眼皮微垂，右手正慢条斯理地抚弄着白玉拂尘"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上一章公堂反杀的高潮，无缝切入死牢暗杀危机。主角裴慎在手无寸铁的劣势下，凭借对大雍律例、验尸法医学常识以及官场甩锅逻辑的透彻掌握，纯靠言语利益博弈精准拆解杀局，极度契合硬核智斗与降维打击的受众偏好。中段孙芳夜探拉高夺嫡与内廷博弈格局，尾段以死牢地砖上同源的借贷记账法与盐引暗记作结，抛出极具悬念与世界观深度的硬钩子，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 16,
+        "score": 85.7,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 88,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 85,
+          "characterVoice": 85,
+          "payoffValue": 86,
+          "pacing": 82,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "典狱官的行为逻辑在前后衔接上略显割裂与工具人化：上一章典狱官刚被裴慎以仵作验尸满门抄斩吓退泼掉鸩酒，本章却立刻又替持刃刺客望风；而在刺客刺杀失败出来后，刺客仅凭一句含混托词，望风的典狱官竟未进牢房核验要犯生死便放任其离开，削弱了反派势力的周密感。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.pacing-2",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "狱内与国子监之间的转场时间线压缩过紧。刺客刚踏出大牢门槛，下一个段落苏瑾便已不仅截获信物，还妥善转移安置了看守并送入国子监，使情报传递与外部接应的过程略显瞬间完成的折叠感。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接严密，张力十足。开篇将前章遗留的死牢石板线索与致命刺杀迅速串联，裴慎以石枕暴烈反杀并借仵作验伤死穴心理策反刺客，智勇双全的硬核感表现优异。将审计账目化入算经题解制成血字蜡丸送出的设定极具题材特色，外线赵澈破译密信亦顺利完成情报闭环，整体节奏明快，极具追读吸引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 17,
+        "score": 83.9,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 80,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 82,
+          "characterVoice": 85,
+          "payoffValue": 83,
+          "pacing": 82,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.continuity-1",
+            "severity": "low",
+            "category": "continuity",
+            "location": "全文",
+            "description": "章首与上一章结尾存在轻微的动作状态回溯重叠。上一章结尾处蜡丸已捏碎、粗麻布已平铺且二人已辨认算式，本章开头又重新描写赵澈关门拉帘后'五指探向那一卷被药蜡与血污浸染的残破粗麻布条'并重新拂袖扫开案面排布。",
+            "evidence": [
+              "上一章尾部：'汗巾展开，内里露出一枚带着浓重血腥气与药蜡微香的硬丸...修长指尖稍一施力...蜡壳应声碎裂，内里那一卷浸透鲜血的粗麻布条随即滑落而出。赵澈抖平布帛'；本章开头：'赵澈走到宽阔的紫檀平头大案前，修长的五指探向那一卷被药蜡与血污浸染的残破粗麻布条。'"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "时间跨度表述与晨钟天明略有出入。深夜送达密信后若推演了整整四个时辰（八小时），已接近巳时正午，与后文的'晨钟宏大声浪'、'辰时三刻前备妥'略显拥挤冲突。",
+            "evidence": [
+              "赵澈保持着躬身推演的姿势整整坐了四个时辰...偏殿外已隐隐传来晨钟的宏大声浪...辰时三刻前必定将赐食食盒备妥"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章以五皇子赵澈的视角，扎实推演了裴慎从死牢送出的资金穿透算阵。通过复式记账法将徐敬之八万引两淮盐凭与三十万两辽饷虚耗对冲，一举斩断齐王党在永泰庄的私账暗流，硬核审计的破案爽点与降维打击感十分充沛。面对徐敬之封锁死牢的死局，赵澈利用'太仓赐食'祖制结合蒸饼盲刺暗码的破局方案智商在线。章尾完成五皇子从装痴到亮刃的人设蜕变，审判倒计时压迫感强烈，极具追读吸引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 18,
+        "score": 84.7,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 84,
+          "conflictEffectiveness": 82,
+          "emotionalDrive": 83,
+          "characterVoice": 85,
+          "payoffValue": 85,
+          "pacing": 82,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "底板平整滑出，里面赫然整整齐齐地垫着一叠厚达两寸、用极细狼毫笔书就的密册。",
+            "description": "道具夹带逻辑与前文推演存在割裂：第17章赵澈与苏瑾明确定调‘寻常的书信与夹带断难送入’，因此才专门构想出‘面饼竹签刺孔感知凹凸’的盲文数字破局法；但本章在落实盲文蒸饼的同时，又在食盒暗格中塞入了‘厚达两寸’的三年总账抄件。这不仅让前章精心设计的隐秘传递显得多此一举，且两寸厚（约6-7厘米）的册页塞入‘破旧囚袍夹层’带入戒备森严的三法司大审，在死牢搜检严苛的情境下合理性较弱。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章死牢运筹，利用太仓祭酒赐食与大雍祖制成功突破徐敬之的心腹封锁，完成物资交接。探针验毒与暗记传递的段落张弛有度，牢狱阴冷环境与心算推理的对比极具代入感。裴慎通过现代审计视角穿透‘余盐平准-太仓火耗-私庄汇票’的洗钱死结，账目复原干净利落，专业智斗爽点兑现充分。结尾以三法司升堂锣声收尾，大战一触即发，追读驱动力强劲。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 19,
+        "score": 85.1,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 84,
+          "conflictEffectiveness": 80,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 87,
+          "pacing": 82,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "关键情绪定性短语在临近段落中重复出现，产生了轻微的语感疲劳，削弱了行文冷冽利落的质感。",
+            "evidence": [
+              "前文出现‘国库仓储转为私家重利资本的洗白暗渠，至此被他剖解得体无完肤！’，数段后再次出现‘这整套瞒天过海的漂白暗流，在此刻被他用算学刀笔彻底剖解得体无完肤。’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章精准兑现了前章铺垫与核心卖点，将现代穿透式审计与资金流拓扑图具象化为刑部死牢湿墙上的焦炭杀局。通过老狱吏的惊骇视角完成了极佳的侧面烘托，将专业枯燥的查账过程转化为极具画面感与压迫力的智谋展示。章尾三法司升堂铜锣骤响，箭头直指齐王别业，审判对决一触即发，追读张力十足。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 20,
+        "score": 84.5,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 85,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 83,
+          "characterVoice": 85,
+          "payoffValue": 80,
+          "pacing": 84,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "死牢宣旨过程中直接插入半个时辰前西暖阁的倒叙交代帝王反应，随后又切回死牢上枷，视点与时间线切换稍显生硬，但有效补足了皇帝不下杀手而是把主角当刀使的权谋动机。",
+            "evidence": [
+              "这道越过三法司与内阁、自大内直接发出的天子朱批密旨，在半个时辰前彻底掀翻了整座皇城的平静。西暖阁内龙涎香青烟缭绕……死牢深处，宣旨内侍的声音打断了周围死寂：“裴大人，起驾吧。”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章死刑锣响的危机，通过圣旨宣读完成绝处逢生。情节并未落入单纯的‘明君赏识’俗套，而是通过西暖阁的切笔展现了崇德帝多疑、利用主角充当撕咬贪官之刃的帝王心术，为主角套上‘五天查清、否则立斩’的极限倒计时。随后刑部仪门与徐敬之的言语交锋、五皇子暗处观局、戴枷重返太仓并直面户部侍郎周成霖，层层蓄势。章尾以太仓重门在铁链绞盘声中轰然洞开定格，转场利落，压迫感与开仓决战的追读期待感极强。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 86.4,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 84,
+          "suspensePayoff": 86,
+          "characterArc": 82,
+          "emotionalArc": 85,
+          "payoffEscalation": 86,
+          "genrePromise": 92,
+          "continuationDesire": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "第1章至第3章连续三章结尾均出现大段核心正文机械重复粘贴的生成/排版异常，严重打断读者的连贯阅读沉浸感。",
+            "evidence": [
+              "第1章尾部从‘徐敬之死死盯着裴慎，眼神变幻不定……三天生死局，就此轰然开盘！’整段连续重复两遍；第2章尾部从‘裴慎没有急于去刮擦墨壳……这场生死棋局的真正开局。’整段连续重复两遍；第3章尾部从‘签押房内的光线越来越亮……唯有一片彻骨的冰寒。’整段连续重复两遍。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前三章节奏凌厉、主线明确，极高质量地兑现了‘现代审计+古代权谋’的题材承诺。第1章以法理死穴破开逼供死局，第2章结合古代太仓防火与门禁逻辑推导出被撕毁的凭证，第3章利用现代复式记账法建立借贷试算平衡表、穿透十万两北疆充饷飞账，专业硬核感与降维打击爽感极其突出。唯一明显短板为连续三章结尾均存在数百字的大段内容机械重复，需清除排版与拼接错误。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 68.9,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 70,
+          "patternVariation": 55,
+          "suspensePayoff": 72,
+          "characterArc": 70,
+          "emotionalArc": 65,
+          "payoffEscalation": 60,
+          "genrePromise": 88,
+          "continuationDesire": 75
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "第4章与第5章在冲突结构与智斗说辞上高度重合。第4章主角刚用‘借贷不平、十万两飞账、火耗上限1.5%、三法司大审律’震慑老胥吏，第5章面对反派主官徐敬之与刑部大队这一更高级别危机时，主角不仅反击逻辑完全一致，且对质台词大段复刻上一章原话，缺乏新的审计证据或智斗增量，导致本应升级的高潮爽感边际递减。",
+            "evidence": [
+              "第4章：‘按大雍规制，三十一万两巨饷离库……十三道随鞘起运的实发提单，合计数额清清楚楚只有二十一万两！剩下的整整十万两白银，借方科目完全是一片空白！……火耗上限不得逾一分五厘！……凡涉银逾十万两，必须刑部、都察院、大理寺会同户部四方联合勘验！’对比第5章：‘官铸火耗上限不得逾一分五厘！……太仓总存银三十一万两全数出库……十三道原始鞘单残卷，合计数额清清楚楚只有二十一万两！剩下整整十万两现银，在借方科目完全是一片空白！……凡涉银逾十万两之亏空，必须刑部、都察院、大理寺会同户部四方联合勘验……’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "第2章末尾以‘辰砂银粉暗纹’成功将基层仓储亏空拉升至通天私账与朝堂权谋维度，钩子极强。然而在第3至第5章的核心算账与两次正面交锋中，该线索仅被当作普通21万两数字凭证使用，暗纹背后的通天人物与夺嫡悬念完全被搁置，悬念推进稍显迟滞。",
+            "evidence": [
+              "第2章：‘逆着血红刺目的光晕，一抹被重墨掩盖的朱砂色泽悄然透出！那绝非寻常地方按察使司使用的朱红大印，而是由极其细腻的辰砂掺入银粉精细套印的隐秘暗纹。……这不是太仓的账，这是通天之人的私账。’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "开篇节奏明快且硬核，以‘铁链勒颈屈打成招’迅速切入生死倒计时，现代复式记账法与穿透式审计的专业运用完美契合题材定位，数据流破案的降维打击感极强。主要问题在于第4章与第5章连续出现‘外敌提刀闯入-主角抖账单讲十万两飞账与律例-差役退却’的雷同桥段，且核心台词大段复用，削弱了第5章正面硬碰的爽点升级感。但第5章尾声徐敬之落荒封库再度收紧生存死局，配合通天私账暗纹的未解之谜，依然具备良好的连续追读动力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 6,
+        "toChapter": 10,
+        "score": 89.9,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 90,
+          "patternVariation": 88,
+          "suspensePayoff": 91,
+          "characterArc": 83,
+          "emotionalArc": 89,
+          "payoffEscalation": 90,
+          "genrePromise": 95,
+          "continuationDesire": 93
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "关键物证上的印记信息在前后章节存在叙述脱节。第6章主角在废料场起获票根时已明确辨认出‘京师某座王府地下银号独有的饕餮暗纹’；但在第10章主角摩挲残卷时，前文回顾却变成了‘此前在杂项库只刮开外层辨出通泰银庄字样与徐敬之画押’，并将王府印信重新描述为初次发现的‘四爪蟠螭配十二联珠’，两处对物证已知信息的表述不够严丝合缝。",
+            "evidence": [
+              "第6章：‘在汇票底端的受领人一栏，赫然盖着户部主事徐敬之的私印，以及京师某座王府地下银号独有的饕餮暗纹！’对比第10章：‘此前在杂项库只刮开外层辨出通泰银庄字样与徐敬之画押，此刻体温化开残墨黏结，残缺折角边缘清晰浮出一道极其精细的起伏凸痕……正中赫然是一条四爪蟠螭’。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "审计核算的核心数据在连续两章内发生了推导口径的跳跃。第7章主角粗估两万四千斤炭‘顶多只够填进炉膛熔出八万两白银，剩下整整七十二万两’；第8章向五皇子拆解相变潜热与起炉损耗时，该数据被修正压缩为‘顶多两万两，剩下七十八万两’。虽然第8章补充了热工损耗的物理逻辑，但连续阅读时缺乏明显的‘推翻初算’过渡，会给硬核数据流读者带来轻微的数据口径跳脱感。",
+            "evidence": [
+              "第7章：‘区区两万四千斤炭，顶多只够填进炉膛熔出八万两白银。剩下的整整七十二万两库银，连化银炉的烟尘都没沾上过半分。’对比第8章：‘扣除地炉每次停火复燃、烘烤炉壁所需的起炉损耗……顶多两万两……剩下的七十八万两库银’。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "这五章展现了极高的历史官场智斗水准与硬核审计叙事功底。剧情从第6章的暗箭破窗、火场夺证，到第7-8章切入物料平衡模型（以二十万斤炭对比两万四千斤炭击穿八十万两火耗谎言），完美兑现了‘现代审计思维降维打击’的题材承诺。五皇子赵澈的登场不仅提供了高位政治势能支撑，更作为懂行见证者放大了主角破案的智谋碾压感。第9-10章的强行抄库与搜身交锋节奏张弛有度，暗槽藏纸、缝线做旧等反搜查手段质感扎实，章尾揭示‘齐王密印’将底层账目穿透至皇子夺嫡，格局瞬时拓宽，晨钟与三法司到场的尾钩驱动力极强。除个别物证细节与数据口径微有瑕疵外，整体表现无可挑剔。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 16,
+        "toChapter": 20,
+        "score": 83.5,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "mainlineProgress": 85,
+          "patternVariation": 82,
+          "suspensePayoff": 78,
+          "characterArc": 82,
+          "emotionalArc": 84,
+          "payoffEscalation": 84,
+          "genrePromise": 88,
+          "continuationDesire": 86
+        },
+        "issues": [
+          {
+            "id": "reader.timeline_information_gap",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "第20章崇德帝下密旨暂免死罪的关键转折存在时间线与情报传递断层。第18章裴慎在辰时后才通过食盒暗格拿到钱庄底册并知晓‘腊月十八日虚挂火耗二十四万两’，第19章临近正午才将完整资金图谱绘制于死牢墙面；但第20章却叙述孙芳‘早间’便已呈递密报并声称‘老奴去死牢看过了’。同时，前文极力渲染死牢被徐敬之死守、赵澈仅布置送入食盒，并未描写赵澈或孙芳如何在此期间完成死牢勘查与通天递折，导致圣旨救场的转折在因果衔接上略显幕后拼凑。",
+            "evidence": [
+              "第20章：‘御案上赫然平铺着司礼监掌印孙芳早间呈递的三份密报。最上方正是裴慎用炭黑反推的热耗算式，以及借贷两平法拆解出的太仓火耗穿透图谱。’、‘孙芳垂首恭顺回道：老奴去死牢看过了。这裴慎……竟能将户部腊月十八日划走的二十四万两消渴银……咬得分毫不差。’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.hook_time_dilation",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "升堂倒计时的危机音效钩子在连续两章末尾重复出现。第18章末尾午牌报时铜锣已响，而第19章裴慎经历了‘取炭折木-逐级推演六部与钱庄账目-画满整堵泥墙-震慑老狱吏-标定齐王别业’等一系列高耗时操作，章尾却再度以‘正午升堂的三声开道铜锣终于……骤然炸响’作为悬念收束，呈现出一定的时空膨胀与套路重复感。",
+            "evidence": [
+              "第18章末尾：‘牢门外隐约传来了午牌时分的悠长报时铜锣声，沉闷的锣声穿透了层层高墙铁闸……那是三法司大理寺卿、督察院御史与刑部尚书即将在前堂升堂提审要犯的信号。’；第19章末尾：‘死牢外的高墙上，正午升堂的三声开道铜锣终于穿透阴霾骤然炸响……’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本五章窗口整体表现优异，硬核智斗与专业题材承诺兑现度极高。情节从第16章死牢搏杀策反、第17章五皇子复式记账验算破局，过渡到第18章祖制赐食暗格递信与第19章焦炭满墙画出资金拓扑图，最后在第20章以崇德帝天子密旨将必死之局转化为‘五天戴枷查仓’的极限倒计时，主线推进扎实凌厉。尤其第17章揭露赵澈装痴隐忍的人物弧光，以及第19章将抽象审计逻辑具象化为湿墙杀阵的画面感，极具智谋碾压爽感。虽在第20章圣旨下达的因果链上存在轻微的时间线缝合痕迹（孙芳早间阅查与裴慎绘图时差），且午时升堂锣声在第18、19章有重复拉伸之嫌，但瑕不掩瑜，章尾太仓巨门洞开、直面户部侍郎的对决蓄势充分，强烈驱动读者继续追读。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 20,
+      "chapterAverage": 85.5,
+      "chapterMedian": 86,
+      "chapterMinimum": 70.5,
+      "openingThreeAverage": 86.1,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 1,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察",
+      "低分跨章窗口 1-5=68.9"
+    ],
+    "errors": [],
+    "durationMs": 364099
+  },
+  "provider": "openai",
+  "model": "gemini-3.8-flash-high",
+  "totalMs": 4692779,
+  "warnings": [
+    "大纲阶段 warnings（28 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（2 条，影子模式不阻断）"
+  ]
+}

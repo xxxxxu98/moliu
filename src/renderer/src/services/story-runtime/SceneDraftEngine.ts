@@ -198,6 +198,11 @@ export interface SceneDraftOptions {
    */
   numericFacts?: string[];
   /**
+   * 假死在册角色（r8 实证：假死被当死亡锁死主角 48 章）。注入【假死纪律】：
+   * 隐匿形态活动合法，公开现身需揭晓场面。
+   */
+  fakedDeathCharacters?: Array<{ name: string; chapterIndex: number }>;
+  /**
    * 身份锚：本章出场角色的角色卡身份首句（r6 实证同一角色前后两身份）。
    * 正文中的身份/地位/职权必须与角色卡一致，禁止发明同名姻亲/替身。
    */
@@ -329,6 +334,17 @@ export class SceneDraftEngine {
           ...characterIdentityAnchors.map(item => `  - ${item.name}：${item.identity}`),
         ]
       : [];
+    // 假死纪律（r8 实证：假死被当死亡，主角 48 章无法活体登场）
+    const fakedDeathCharacters = (options?.fakedDeathCharacters ?? []).filter(
+      item => item.name
+    );
+    const fakedDeathRules = fakedDeathCharacters.length > 0
+      ? [
+          '- 【假死纪律】以下角色处于假死状态（外界认为已死，实际活着）——这是活着的隐匿状态，不是死亡：',
+          ...fakedDeathCharacters.map(item => `  - ${item.name}（第${item.chapterIndex + 1}章起假死在册，未揭晓）`),
+          '- 假死角色本章可以活体活动，但只能以隐匿形态出现（密室养伤/乔装改扮/暗线传信/借他人之手布局）；禁止未经揭晓就以原身份公开现身于朝堂、市井等公众场合；若剧情到假死揭晓时点，必须写当众现身/真相大白的具体场面（何人何地目睹、世人如何知晓），不得一笔带过；更禁止把假死角色当作真死人处理（衣冠道具代替本人、「生前」布局、遗策等表述均违规）（2026-09-20 g38f r8 实证：主角假死后被当真死 48 章，蓝图安排其现身全被写成空袍道具，滚纲写出「生前密信」）',
+        ]
+      : [];
     // 纪年锚：正文纪年与近章既成纪年连续（r6 实证：锚只拦真实年号不拦自创年号，
     // 后 50 章模型自创「建元/建昭/宣府元年」平行纪年 9 章——升格为全书唯一年号约束，
     // 并补空锚分支：锚为空时禁止发明任何年号）
@@ -419,6 +435,7 @@ export class SceneDraftEngine {
         ...terminalFateRules,
         ...titleAnchorRules,
         ...identityAnchorRules,
+        ...fakedDeathRules,
         ...eraAnchorRules,
         '- 【皇统叙事】在位皇帝只能以「皇帝/陛下/今上/圣上/年号+帝」称呼，「先帝/先皇/大行皇帝」只能用于已驾崩者——上下文显示皇帝仍在世（颁诏/视朝/病重未死）时严禁称其先帝（2026-09-19 g38f r7 实证：老皇帝在位期间五处被称先帝）。驾崩必须有叙述场面（病榻托孤/遗诏宣读/讣告/丧仪任一），不得零叙述直接写新帝即位。「东宫/太子」指代必须单一稳定，不得在「现任储君」与「已废太子」间漂移。涉及「自X年起N年」的年数叙述，落笔前与当前年份验算跨度（r7 实证：「自嘉定三年起整整七年」而当年仅嘉定四年）',
         ...(options?.numericFacts ?? []).length > 0

@@ -162,5 +162,26 @@ describe('命运提取合同护栏', () => {
     expect(system).toContain('覆盖范围是本章出场的每一个角色，不只主角');
     expect(system).toContain('翰林修撰/通政使');
   });
+
+  // 2026-09-20 g38f r8 实证：ch152 同章实写「气绝倒地」与「施针唤醒」却只登
+  // 「死亡」——死亡禁令/陈旧度/判官三道防线锁死主角 48 章，写手被迫发明衣冠道具。
+  it('系统合同含假死族与假死揭晓族，死亡无逆转豁免假死（g38f r8 实证）', async () => {
+    const generate = vi.fn().mockResolvedValue({ events: [], deltas: [], evidence: [] });
+    const extractor = new AIFactExtractor({ generate } as unknown as StructuredAI);
+    await extractor.extract({
+      projectId: 'p1',
+      chapterNumber: 152,
+      sceneDrafts: [],
+      state: { entities: {}, events: [] } as never,
+    });
+
+    const system = String(generate.mock.calls[0]?.[0]?.system ?? '');
+    expect(system).toContain('假死族');
+    expect(system).toContain('登 value「假死」而非「死亡」');
+    expect(system).toContain('假死揭晓族');
+    expect(system).toContain('value「揭晓」');
+    expect(system).toContain('「假死」不适用死亡无逆转条款');
+    expect(system).toContain('施针放血唤醒');
+  });
 });
 

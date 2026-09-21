@@ -79,7 +79,7 @@ import type {
 } from '@/services/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
-import { collectCharacterIdentityAnchors, collectEraAnchors, collectFateForbiddenZones, collectNumericAnchors, overlayCharacterFates, overlayCharacterTitles } from '@/services/writing/extract-plot-memory';
+import { collectCharacterIdentityAnchors, collectEraAnchors, collectFakedDeathCharacters, collectFateForbiddenZones, collectNumericAnchors, overlayCharacterFates, overlayCharacterTitles } from '@/services/writing/extract-plot-memory';
 import { stripStructuredNodeBlock } from '@/services/outline/parser/utils';
 import type { SceneChunk } from '@/types/story-runtime';
 
@@ -993,6 +993,13 @@ export class ChapterWritingPipeline {
         characterIdentityAnchors: collectCharacterIdentityAnchors(
           input.project.characters ?? [],
           contracts.chapter.allowedCharacterNames ?? [],
+        ),
+        // 假死纪律（r8 实证：假死被登死亡后三道防线锁死主角 48 章）：
+        // 假死在册角色不进终态禁令，写作侧按隐匿活着处理
+        fakedDeathCharacters: collectFakedDeathCharacters(
+          (input.project.chapterMemories ?? []).filter(
+            memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
+          ),
         ),
         // 未回收伏笔的判官候选，口径见 buildPayoffCandidates（已到埋设点，非回收时点）
         payoffCandidates: buildPayoffCandidates(input.project.foreshadows, chapterNumber),

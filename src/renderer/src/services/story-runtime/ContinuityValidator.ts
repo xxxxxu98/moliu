@@ -34,6 +34,8 @@ export interface ContinuityValidationInput {
   eraAnchors?: string[];
   /** 近章既成数字叙述：透传判官做跨章数字一致性校验（无勘误剧情改写既成数值） */
   numericFacts?: string[];
+  /** 假死在册角色：透传判官做假死例外（活体活动合法，不报复活类冲突） */
+  fakedDeathCharacters?: Array<{ name: string; chapterIndex: number }>;
 }
 
 export interface ContinuityValidatorOptions {
@@ -243,7 +245,8 @@ export class ContinuityValidator {
       input.payoffCandidates ?? [],
       input.prevChapterTail,
       input.eraAnchors ?? [],
-      input.numericFacts ?? []
+      input.numericFacts ?? [],
+      input.fakedDeathCharacters ?? []
     );
 
     const blockingCount = issues.filter(issue => issue.severity === 'blocking').length;
@@ -276,7 +279,8 @@ export class ContinuityValidator {
     payoffCandidates: Array<{ id: string; hint: string }> = [],
     prevChapterTail?: string,
     eraAnchors: string[] = [],
-    numericFacts: string[] = []
+    numericFacts: string[] = [],
+    fakedDeathCharacters: Array<{ name: string; chapterIndex: number }> = []
   ): Promise<string[]> {
     // 判官确认已回收的伏笔 id（严证据门：判官未列出/判定失败一律返回空，
     // 让进度统计保持 buried 而非误标 resolved）
@@ -333,6 +337,9 @@ export class ContinuityValidator {
           },
           ...(eraAnchors.length > 0 ? { eraAnchors } : {}),
           ...(numericFacts.length > 0 ? { numericFacts } : {}),
+          ...(fakedDeathCharacters.length > 0
+            ? { fakedDeathNames: fakedDeathCharacters.map(item => item.name) }
+            : {}),
         });
 
         for (const item of judgment.fulfillment) {

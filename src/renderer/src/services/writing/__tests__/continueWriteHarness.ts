@@ -254,11 +254,14 @@ export class ContinueWriteFakeAI implements StructuredAI {
         mustCover?: string[];
         forbiddenZones?: string[];
       };
+      // evidence 必须是正文真实原句（AIChapterJudge.normalize 的逐字校验会把
+      // 不在正文中的假证据推翻为未履约）；与下方 scene-draft 首段正文保持一致
+      const proseQuote = '主角猛地睁开眼，鼻腔里全是尘土与血腥气';
       return {
         fulfillment: (payload.mustCover ?? []).map(node => ({
           node,
           fulfilled: true,
-          evidence: ['语义履约'],
+          evidence: [proseQuote],
           reason: '测试放行',
         })),
         forbidden: (payload.forbiddenZones ?? []).map(zone => ({
@@ -271,7 +274,7 @@ export class ContinueWriteFakeAI implements StructuredAI {
         results: (payload.mustCover ?? []).map(node => ({
           node,
           fulfilled: true,
-          evidence: ['语义履约'],
+          evidence: [proseQuote],
           reason: '测试放行',
         })),
       };
@@ -345,7 +348,10 @@ export class ContinueWriteFakeAI implements StructuredAI {
       chapterTitle: '刚入局就被诬下狱',
       paragraphs: this.ensureMinWords(
         [
-          `主角猛地睁开眼，鼻腔里全是尘土与血腥气。${arc}。${filler}${filler}`,
+          // 注意：正文不逐字嵌入 ${arc}（节点 summary 原文）——节点照抄确定性门禁
+          // （LCS≥12 blocking）会拦；这里用场景化改写承载同一情节（r8 实测 13 处
+          // 蓝图 CBN/CEN 逐字漏入终稿的守卫对应物）
+          `主角猛地睁开眼，鼻腔里全是尘土与血腥气，视线扫过堂上众人，先把最不对劲的几处细节捏在手里。${filler}${filler}`,
           `他压住眩晕，按住关键物证，指腹下的痕迹分布与对方说辞根本对不上。${filler}${filler}`,
           `堂下哄闹声起，反派甲脸色铁青。主角知道：这一指，要么翻案，要么处斩。${filler}${filler}`,
           `三日内若拿不出铁证，刀就落在他自己脖子上——可死人不会说谎，说谎的只会是活人。${filler}`,

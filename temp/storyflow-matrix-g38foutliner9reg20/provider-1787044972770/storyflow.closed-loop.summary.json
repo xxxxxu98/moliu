@@ -1,0 +1,1706 @@
+{
+  "book": "算清天下账：户部小吏的夺嫡局",
+  "mode": "storyflow-closed-loop",
+  "status": "complete",
+  "scenarioId": null,
+  "evaluationVersion": "reader-eval-v1",
+  "promptSource": "default",
+  "promptChars": 34,
+  "requestedChapterCount": 20,
+  "phaseTimings": {
+    "outlineDirectionsMs": 36962,
+    "outlineExpandMs": 496508,
+    "outlineRollMs": 0,
+    "applyOutlineMs": 862,
+    "continueWriteMs": 5110325,
+    "totalMs": 5644657
+  },
+  "completedChapters": 20,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787044972770.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.provider-1787044972770.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 戒尺抽脸，这三万两烂账我不认",
+      "words": 3069,
+      "paras": 29,
+      "paraCv": 0.19,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "包着熟铜边缘的乌木戒尺撕裂空气，挟着恶风狠狠抽在左颊上。皮肉迸裂的闷响炸开，沈辞被抽得横飞出去，重重撞在冰凉的青砖地上。半边面孔瞬间肿胀滚烫，浓烈的血腥气在齿颊间翻涌蔓延。\n\n还没等他撑直发软的双臂，一张浸着陈年血渍的认罪伏辩拍在眼皮底下。",
+      "tail": "盖得清清楚楚！”常玉德俯下身，阴恻恻的声音如同地狱索命恶鬼，“沈辞，任你舌绽莲花、把流水账翻上天去，这张从你床板暗格里搜出来的三分利分赃借据，你待如何抵赖？！”",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 墨迹未干就栽赃，当我是蠢货？",
+      "words": 3288,
+      "paras": 18,
+      "paraCv": 0.07,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": {
+        "finishReason": "protocol-error",
+        "checksUsed": 0,
+        "revertedUnchecked": false,
+        "rounds": 1,
+        "toolCalls": 0,
+        "byTool": {},
+        "ms": 10435
+      },
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/18，超过 5 句的段 8。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        },
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：18 段平均 181 字、变异系数 0.07，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "常玉德话音未落，满脸横肉的差役便已暴起跨前一步。粗糙枯瘦的大手猛地扯起案头上那张泛黄厚纸，直直撞向沈辞眼前。“啪”的一声刺耳闷响，纸张重重拍在沾满斑驳血痕的公案上，激起一蓬呛人的陈年霉灰。差役按在水火棍上的手指关节捏得咯咯作响，厉声喝骂道：",
+      "tail": "将你当场剁碎在值房内！到时候死人没有嘴巴，伏辩卷宗任由本官怎么写！”刀锋在木案裂缝中嗡嗡狂颤，穿透破旧窗纸的晨曦薄光，在深陷木案的刀刃上映出一抹刺目的血色反光。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 当众立下生死状，三日查清烂账",
+      "words": 3035,
+      "paras": 29,
+      "paraCv": 0.15,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "没入木案三寸的精钢佩刀还在剧烈震颤，发出刺耳蜂鸣。常玉德满脸横肉拧成一团，顺势拔出刀锋。寒光凌厉的刀尖斜挑而起，带着生铁腥味直接顶在沈辞凸起的喉结前。只要再往前送上半寸，皮肉挑破，滚烫的鲜血就会喷溅在散落的文书上。\n\n“午时之前写不出招状，",
+      "tail": "链哗啦啦缠绕之声。铁锁合拢，落下一声刺耳闷响。值房彻底沉入昏黑，唯有案头残存的小半截豆大油灯在阴风中跳动，昏黄光晕艰难地照亮了四周堆积如山、不见天日的陈年死账。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 通宵画出复式账，撕开假账窟窿",
+      "words": 3304,
+      "paras": 25,
+      "paraCv": 0.67,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 105905
+      },
+      "gateIssues": [],
+      "head": "沈辞反手扯下青布内衫的一角，咬住布条边缘发力一撕。刺耳的裂帛声在死寂的值房内激荡，他将粗布死死勒在右手食指的破口上，打了个紧结。指尖传来的钻心钝痛，让昏沉胀痛的神智重归清明。常玉德锁死了房门，四周堆积的三年旧账如摇摇欲坠的黑色土丘，将狭窄的",
+      "tail": "向了深不见底的漆黑深渊。沈辞按住酸痛欲裂的手腕，指节用力到发白。整整三万两赈灾银在账面上诡异对冲消失，其背后显露出的深渊冰角，远比常玉德那张狰狞的面孔阴冷百倍。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 银子根本没出库，三万两凭空蒸发",
+      "words": 2873,
+      "paras": 20,
+      "paraCv": 0.53,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "read_chapter": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 62901
+      },
+      "gateIssues": [],
+      "head": "沈辞将第七张生宣的边缘浸上薄薄一层浆糊，平整地压合在木案最右侧。整整七尺长的大纸在青砖地上彻底舒展开来，通宵达旦的穿透拆解、借贷分录与科目归集，在此刻汇成一片纵横交错的墨色格线。他没有停下来擦拭额角滑落的汗水，连夜紧绷的脊背泛起阵阵酸胀，右",
+      "tail": "重檐在微光中若隐若现。常玉德煞费苦心要用一纸供状让他人头落地，可那整整三万两带血的江南赈灾银，分明连库门都未曾迈出半步，至今仍沉甸甸地烂在幽暗冰冷的库房最深处。",
+      "error": null
+    },
+    {
+      "ch": 6,
+      "accepted": true,
+      "title": "第6章 拿发霉烂账刁难？半日穿透全分类",
+      "words": 2830,
+      "paras": 31,
+      "paraCv": 0.45,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 25,
+        "toolCalls": 20,
+        "byTool": {
+          "get_draft": 5,
+          "revise_paragraphs": 14,
+          "run_checks": 1
+        },
+        "ms": 272483
+      },
+      "gateIssues": [],
+      "head": "沈辞抬手理正领口，指尖按了按贴胸收好的七尺大表。窗外薄雾未散，太仓银库那重重叠叠的歇山重檐在微光中若隐若现。三万两带血的江南官银去向已在脑中织成收支铁网，可要在六部彻底翻盘，单凭算式远远不够，必须拿到与正册咬合的实物流转凭信。\n\n值房外的青",
+      "tail": "！\n\n油渍在泛黄的纸面上泛着冷冽的光泽。沈辞收拢五指，将这张足以将常玉德送上断头台的吞银铁证稳稳按入掌心，抬头看向门外犹在死撑排场的常玉德，眼底透出森寒的冷意。",
+      "error": null
+    },
+    {
+      "ch": 7,
+      "accepted": true,
+      "title": "第7章 算盘打到冒烟，恶仆夜盗撞墨网",
+      "words": 3117,
+      "paras": 23,
+      "paraCv": 0.21,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "沈辞将那张盖有太仓偏库花押与常玉德官印的黄藤纸残券卷好，妥帖塞入青布内衫最里层的暗袋，指尖在坚韧的纸角上轻轻一按。门外天井里，十几名算手手中的紫竹算盘不知何时早已哑了声响。常玉德面皮剧烈抽搐，方才的倨傲神色荡然无存，泼洒的茶汤在宝蓝官袍前襟",
+      "tail": "仓残券，唇角泛起一抹冷冽的锋芒。夜盗账目、杀人灭口、人赃并获，常玉德自以为算无遗策的夺命绝杀，在这张墨网收紧的黎明前夕，已然彻底沦为将他满门送上断头台的催命锁。",
+      "error": null
+    },
+    {
+      "ch": 8,
+      "accepted": true,
+      "title": "第8章 白麻纸画交叉表，虚报火耗全现形",
+      "words": 2813,
+      "paras": 36,
+      "paraCv": 0.49,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "沈辞拽紧粗麻浸墨的绳头，拖着瘫软在地的汉子横穿公房，直抵东北角支撑房梁的粗壮楠木立柱前。那恶仆腕骨受挫，剧痛之下浑身冷汗如雨，嘴里塞着浸满墨渍的粗麻烂棉，只能发出闷雷般的呜咽。沈辞手脚利落，将恶仆双臂反剪绕过木柱，粗麻绳交错穿过肩胛与肘弯，",
+      "tail": "\n墨透纸背，字字诛心。最后一笔划下，沈辞合拢图册，将其与淬毒短刃、紫铜腰牌并排扣在掌心之下。门外回廊深处，已然隐隐传来了巡城御史与户部堂吏早衙点卯的沉重脚步声。",
+      "error": null
+    },
+    {
+      "ch": 9,
+      "accepted": true,
+      "title": "第9章 越级硬闯签押房，现银成色惊高官",
+      "words": 3102,
+      "paras": 24,
+      "paraCv": 0.38,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 195563
+      },
+      "gateIssues": [],
+      "head": "沈辞扣死公房沉重的黄铜大锁，将钥匙揣入袖袋深处。楠木立柱上捆得结实的恶仆仍在拼死扭动，口中塞着的烂棉布浸透唾沫，发出困兽般的沉闷呜咽。回廊尽头，早衙点卯的皮靴踏地声由远及近，巡城御史与户部各司执事书吏已然步入天井。常玉德今日必定会来收网验尸",
+      "tail": "了悬崖，直直捅向了朝堂上谁也不敢轻易触碰的万丈深渊。徐简死死盯住那笔触目惊心的三万两赤字，颊肉微微抽搐，整张清瘦的脸庞刹那间铁青阴鸷，沉郁得宛若暴雨压顶的渊潭！",
+      "error": null
+    },
+    {
+      "ch": 10,
+      "accepted": true,
+      "title": "第10章 账册震动侍郎堂，一纸手令被软禁",
+      "words": 3235,
+      "paras": 37,
+      "paraCv": 0.62,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": {
+        "finishReason": "protocol-error",
+        "checksUsed": 0,
+        "revertedUnchecked": true,
+        "rounds": 3,
+        "toolCalls": 2,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1
+        },
+        "ms": 25071
+      },
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "正文与 mustCover 节点存在连续 25 字逐字相同（节点原句照抄）：「厚重的偏厅木门被差役重重合上，铁锁在门外咔哒锁死…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。",
+          "evidence": "厚重的偏厅木门被差役重重合上，铁锁在门外咔哒锁死！"
+        }
+      ],
+      "head": "公案前，徐简枯瘦的双手骤然发力，将整叠宽幅白麻纸册页狠狠对折撞在一起，激起一阵沉闷的裂响。厚重的麻纸被强行收拢，这位正三品户部堂官的十指关节由于用力过度，泛出病态而冰冷的惨白。案头的紫颖朱笔被震得跌落笔山，骨碌碌滚过青呢台布，在泛黄的公文边",
+      "tail": "死局看似又被锁死在了一方暗室之中，但他很清楚，那张浸透了借贷神髓的账册图网，已然化作一把淬毒的利刃，深深刺进了大胤帝国的财政心脏。这场生死博弈，才刚刚拉开大幕。",
+      "error": null
+    },
+    {
+      "ch": 11,
+      "accepted": true,
+      "title": "第11章 当堂考校借贷法震慑全场",
+      "words": 3101,
+      "paras": 20,
+      "paraCv": 0.26,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "西侧偏厅逼仄昏暗，沈辞盘膝坐在干硬的木板床上，借着门缝漏进的惨白晨曦静数脉搏。外头巡弋差役的脚步声由远及近，停在木门外。铁链与铜环摩擦出刺耳的锐响，伴随着插销拔出的顿挫，厚木大门被人狠狠撞开。两名身披锁子甲的健硕差役面无表情，按刀阔步而入。",
+      "tail": "惊堂木重重拍下，冷声命常玉德上前对质！惊堂木挟着万钧雷霆砸在黄花梨公案之上，沉闷的巨响宛若惊雷炸裂，震得案头朱笔笔架轰然倾倒，整座司务厅的空气骤然凝固到了极点！",
+      "error": null
+    },
+    {
+      "ch": 12,
+      "accepted": true,
+      "title": "第12章 成色拆穿三年火耗假账",
+      "words": 3527,
+      "paras": 31,
+      "paraCv": 0.41,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 11,
+        "toolCalls": 9,
+        "byTool": {
+          "get_draft": 4,
+          "revise_paragraphs": 4,
+          "run_checks": 1
+        },
+        "ms": 126045
+      },
+      "gateIssues": [],
+      "head": "公案上倾倒的笔架尚在轻微晃动，满堂肃杀之间，常玉德跨步出列。他强压下眼底翻腾的慌乱，非但没有跪地伏罪，反倒仰头发出一声阴沉刺耳的冷笑。在众目睽睽之下，他猛地夺过身旁主事案头三本两寸厚的江南司旧管底册，双臂暴起青筋，对准面前的黄花梨公案狠狠砸",
+      "tail": "满堂属官面色皆变。两名按刀差役下意识按紧了刀柄，目光齐刷刷落向神色冷峻的沈辞。案后的徐简双眸微眯，幽深的视线在常玉德与沈辞之间来回扫过，公堂之内的杀机不降反升。",
+      "error": null
+    },
+    {
+      "ch": 13,
+      "accepted": true,
+      "title": "第13章 旧存根闭环当场反杀主事",
+      "words": 3128,
+      "paras": 31,
+      "paraCv": 0.53,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 2,
+          "run_checks": 1
+        },
+        "ms": 229567
+      },
+      "gateIssues": [],
+      "head": "公堂之内杀机毕露，阴风穿堂而过，案前青呢台布不住晃动。两侧差役手中的雁翎刀已拔出半寸，森白刃光映在冰凉青砖上。常玉德面皮紫涨，脖颈处青筋暴突，如被逼入绝境的疯犬般猛抢两步，颤抖的手指几乎戳到沈辞鼻尖。\n\n“妖人惑众！徐大人，这分明是通敌谋逆",
+      "tail": "得屏息敛声，脊背生寒，连一口大气也不敢喘。常玉德披头散发，双腿骨节剧烈一颤，彻底失去了全身力道，如一摊烂泥般软瘫在冰凉刺骨的方砖地上，喉间只剩下濒死的绝望哀鸣。",
+      "error": null
+    },
+    {
+      "ch": 14,
+      "accepted": true,
+      "title": "第14章 夺腰牌停职三日待结案",
+      "words": 2866,
+      "paras": 25,
+      "paraCv": 0.56,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "徐简面如沉铁，右手猛地探入公案右侧的紫檀签筒，抽出一枚冷硬的青铜令箭，甩手狠狠砸在方砖地上。铜铁交击，在死寂森严的司务厅内炸出一记刺耳的锐响，火星迸溅，令箭贴着砖缝擦出半圈白痕，停在常玉德膝前三寸处。满堂肃立的十余名户部主事与账房官吏吓得心",
+      "tail": "沈辞背影。常玉德嘴唇剧烈咬破，下颌淌下一缕腥臭黏稠的红沫，眼底迸发出一股嗜血的怨毒。那阴冷如恶鬼般的注视宛若跗骨之蛆，在空旷肃杀的衙署回廊间凝成一道未散的阴云。",
+      "error": null
+    },
+    {
+      "ch": 15,
+      "accepted": true,
+      "title": "第15章 主事夜会神秘车驾捅破天",
+      "words": 2928,
+      "paras": 29,
+      "paraCv": 0.54,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "常玉德用藏在牙槽后的一截细铁丝，狠命捣弄着脚镣上的铜芯。血水顺着他的足踝一路淌进破烂的布袜里，铁锈与皮肉摩擦发出令人牙酸的钝响。值房木栅外的守门差役早被他用袖中藏匿的一锭足色细丝马蹄银灌得酩酊大醉，此刻正趴在桌案上鼾声如雷。伴着啪嗒一声极轻",
+      "tail": "满血痂的掌纹之间，散发出一股令人作呕的焦灼气息。他缓缓站起身，转头望向远处隐约露出飞檐轮廓的户部高墙，眼眶中的血丝如蛛网般暴裂开来，唇角咧开一道癫狂至极的狞笑。",
+      "error": null
+    },
+    {
+      "ch": 16,
+      "accepted": true,
+      "title": "第16章 深夜纵火烧库冒死抢底册",
+      "words": 3083,
+      "paras": 32,
+      "paraCv": 0.61,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 1/32，超过 5 句的段 1。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "常玉德将那包药粉紧紧揣入怀口，踩着污浊冰冷的泥浆，跌跌撞撞奔回户部衙署后墙。夜风刮在皮肉翻卷的脚踝上，带来阵阵钻心的刺痛，但他整张面孔因极度的癫狂而彻底扭曲。他熟门熟路地踩上废料场的烂木箱，翻过墙头松动的青砖，悄然落回衙署偏巷的阴影里。值房",
+      "tail": "探子。晨风拂过他破损的衣襟，将纸角上残留的一道草木灰烬抖落尘埃，在他身后焦黑破碎的废墟衬托下，宛若一道不可动摇的森然利刃，牢牢悬在了所有藏在暗处之人的脖颈之上。",
+      "error": null
+    },
+    {
+      "ch": 17,
+      "accepted": true,
+      "title": "第17章 青石残痕推导三万两库银",
+      "words": 2563,
+      "paras": 29,
+      "paraCv": 0.69,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "晨风卷着焦糊的白烟，在坍塌的屋梁间穿梭呼啸。徐简踩着满地冒烟的焦黑碎瓦大步跨过断墙，猩红的侍郎官袍下摆扫过泥水，身后的数名兵马司校尉按刀紧随。满院停职待勘的户部主事与账房官吏缩在回廊阴影下，目光齐刷刷落在沈辞身上，神色阴晴不定。偏厅七十二口",
+      "tail": "的夹道，吹散了漫天浮尘。徐简伫立在森然碎裂的青石板前，负在身后的双手猛然握紧，眼中杀意毕露。而回廊深处的阴暗角落里，数名探子面如土色，悄然将身子缩回了断墙之后。",
+      "error": null
+    },
+    {
+      "ch": 18,
+      "accepted": true,
+      "title": "第18章 识破假借据反手扣恶霸",
+      "words": 2919,
+      "paras": 34,
+      "paraCv": 0.17,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "徐简拂袖转身，猩红官袍在晨风中猎猎作响。他当即指派两队披甲校尉合围前后断墙矮巷，务必生擒那几名遁逃的纵火探子。户部偏厅化为焦土，徐简面色冷肃地将沈辞一行人引至东侧尚存的誊录直房，勒令五城兵马司差役严加看守。\n\n“沈辞，手中的分录底稿与凭券截",
+      "tail": "完好无损的复式清册与异兽截角。沈辞从容收拢账卷，目光投向城南广宁坊的方向，深邃眼底寒芒凛冽。一场连根拔除承平钱庄黑金暗网的狂飙风暴，已如离弦之箭，彻底拉开序幕。",
+      "error": null
+    },
+    {
+      "ch": 19,
+      "accepted": true,
+      "title": "第19章 顺藤摸瓜揪出火耗中转站",
+      "words": 2650,
+      "paras": 17,
+      "paraCv": 0.49,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "直房破损的门扇歪斜在门框边缘，晨光斜切进屋中，在浸透水渍与残灰的青砖上投下一道刺目的光斑。沈辞神色沉着地收拢案头那一卷借贷两造轧平的复式总账底稿，连同那十二张盖有朱红异兽暗记的偏库退损折色凭券截角，严严实实纳回贴身的油布夹层。两名披挂硬甲的",
+      "tail": "天而起，甚至隐约能听到门板后传来的急促砍砸与呼喝声。沈辞眼底寒光骤聚，猛一收紧缰绳，双腿狠踢马腹，携着滚滚杀伐之势，迎着翻滚的烟尘直撞向当铺封闭的厚重黑漆大门！",
+      "error": null
+    },
+    {
+      "ch": 20,
+      "accepted": true,
+      "title": "第20章 查穿存银底簿惊现商印暗记",
+      "words": 3253,
+      "paras": 42,
+      "paraCv": 0.63,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 82660
+      },
+      "gateIssues": [],
+      "head": "四名五城兵马司校尉合抱沉重的铁裹木桩，伴着战马前蹄的猛烈蹬踏，借着前冲之势轰然撞击在聚宝阁厚达两寸的黑漆门扇上。两扇包铁大门发出不堪重负的呻吟，门闩当场崩裂断折，门板向内轰然倾倒坍塌，在当铺前堂的青石板上扬起漫天混杂草木灰的呛人浊雾。\n\n沈",
+      "tail": "怀中，指尖按在冰冷的铜扣之上。那枚暗红异兽印鉴所牵出的两淮水路与万顷私盐，已然化作一道深不见底的裂口，将户部三万两旧账，生生撕扯成了一场席卷半座江山的滔天杀局。",
+      "error": null
+    }
+  ],
+  "plotOutlineTitles": [
+    {
+      "orderIndex": 0,
+      "title": "第1章 戒尺抽脸，这三万两烂账我不认"
+    },
+    {
+      "orderIndex": 1,
+      "title": "第2章 墨迹未干就栽赃，当我是蠢货？"
+    },
+    {
+      "orderIndex": 2,
+      "title": "第3章 当众立下生死状，三日查清烂账"
+    },
+    {
+      "orderIndex": 3,
+      "title": "第4章 通宵画出复式账，撕开假账窟窿"
+    },
+    {
+      "orderIndex": 4,
+      "title": "第5章 银子根本没出库，三万两凭空蒸发"
+    },
+    {
+      "orderIndex": 5,
+      "title": "第6章 拿发霉烂账刁难？半日穿透全分类"
+    },
+    {
+      "orderIndex": 6,
+      "title": "第7章 算盘打到冒烟，恶仆夜盗撞墨网"
+    },
+    {
+      "orderIndex": 7,
+      "title": "第8章 白麻纸画交叉表，虚报火耗全现形"
+    },
+    {
+      "orderIndex": 8,
+      "title": "第9章 越级硬闯签押房，现银成色惊高官"
+    },
+    {
+      "orderIndex": 9,
+      "title": "第10章 账册震动侍郎堂，一纸手令被软禁"
+    }
+  ],
+  "runtimeBackend": "sqlite",
+  "runtimeBackendAuthentic": true,
+  "runtimeVerification": {
+    "health": {
+      "ok": true,
+      "projectId": "proj-1789872645792",
+      "databasePath": "C:\\Users\\xxxxxu98\\AppData\\Local\\Temp\\moliu-cw-runtime-NBxqpO\\story-runtime\\proj-1789872645792-87e34e2123c8.db",
+      "schemaVersion": 2,
+      "journalMode": "wal",
+      "foreignKeys": true,
+      "integrity": "ok",
+      "pendingOutbox": 0
+    },
+    "acceptedDrafts": 20,
+    "canonicalSnapshots": 21,
+    "latestSnapshotChapter": 20,
+    "sceneChunks": 20,
+    "events": 88
+  },
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 13,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "e1d97dca5759a010a060121fb62b8dee3766f8b74993f0b75c3505e89c94f368",
+    "completeCharacterProfileCount": 13,
+    "positioningPersisted": true
+  },
+  "postWritePersistence": {
+    "characterCount": 13,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "plotChapterCount": 50,
+    "writtenChapterCount": 20
+  },
+  "outlineWarnings": [
+    "单章蓝图补全第 1 章伏笔时序消毒：删除 [\"常玉德以私吞赈灾粮饷死罪威逼沈辞画押认罪\",\"常玉德恼羞成怒下令差役搜查沈辞公房寻找赃证。\",\"沈辞在大胤京师户部衙署被主事构陷赈灾银亏空\"]",
+    "单章蓝图补全第 2 章伏笔时序消毒：删除 [\"常玉德借搜出的高利贷欠条坐实沈辞亏空赈灾粮银的动机\",\"常玉德被拆穿后案头慌乱收起边缘带黑褐印泥与半月折角的原件。\",\"常玉德案头出现带有黑褐色印泥与半月折角的借据暗痕。\"]",
+    "单章蓝图补全第 4 章伏笔时序消毒：删除 [\"老账房陈松林暗中隔窗窥视沈辞怪异却严密的记账网格\"]",
+    "单章蓝图补全第 5 章伏笔时序消毒：删除 [\"老吏陈松林奉茶时随口提及四柱清册中成色折算差额二分七厘乃是衙门惯例\",\"陈松林透露四柱清册成色二分七厘折算惯例。\"]",
+    "单章蓝图补全第 7 章伏笔时序消毒：删除 [\"深夜常玉德的贴身恶仆潜入公房企图烧毁沈辞新核出的借贷底册\"]",
+    "单章蓝图补全第 8 章伏笔时序消毒：删除 [\"沈辞审讯恶仆证实常玉德暗中转移单据的指令\"]",
+    "单章蓝图补全第 9 章伏笔时序消毒：删除 [\"沈辞在三日期限最后一天越级闯入徐简签押房陈情\",\"沈辞以现银成色折算差额与穿透图当面向徐简拆解火耗亏空本质\",\"用现银与成色差额惊动高层。\"]",
+    "单章蓝图补全第 10 章伏笔时序消毒：删除 [\"下令将沈辞独自软禁在大胤京师户部衙署偏厅。\"]",
+    "单章蓝图补全第 11 章伏笔时序消毒：删除 [\"沈辞被押至大胤京师户部衙署·司务厅面对满堂属官的审视与徐简的当堂考校\",\"户部右侍郎在大胤京师户部衙署召集属官，当堂考校沈辞的借贷平衡记账法\"]",
+    "单章蓝图补全第 12 章伏笔时序消毒：删除 [\"沈辞当众推翻常玉德过去三年的全部虚假报销册\",\"徐简因公文迟延斥责书吏时沈辞锁定账期异常。\",\"沈辞在徐简斥责公文拖延时捕捉常玉德账期破绽。\"]",
+    "单章蓝图补全第 13 章伏笔时序消毒：删除 [\"常玉德向徐简呈递伪造文书诬告沈辞私通商贾\",\"沈辞亮出常玉德当年亲手签押的火耗存根原件\",\"存根数字与复式底册分毫不差逼得常玉德无言以对。\"]",
+    "单章蓝图补全第 14 章伏笔时序消毒：删除 [\"徐简下令将常玉德软禁值房并令沈辞接管清核底册\"]",
+    "单章蓝图补全第 15 章伏笔时序消毒：删除 [\"常玉德深夜密会挂着异兽暗纹的黑缎神秘马车\"]",
+    "单章蓝图补全第 16 章伏笔时序消毒：删除 [\"大胤京师户部衙署·案牍库深夜遭遇人为纵火浓烟瞬间吞没内堂\",\"火势扑灭后常玉德旧流水尽毁但沈辞新底册完好。\",\"大胤京师户部衙署案牍库深夜突发大火\"]",
+    "单章蓝图补全第 17 章伏笔时序消毒：删除 [\"沈辞在大胤京师户部衙署·案牍库根据青石受重凹陷推演原装银箱重量\",\"沈辞通过火灾废墟中残存的青石压痕勘验现场\"]",
+    "单章蓝图补全第 18 章伏笔时序消毒：删除 [\"常玉德指使京畿恶霸登门向沈辞追讨原身重利欠条\"]",
+    "单章蓝图补全第 19 章伏笔时序消毒：删除 [\"沈辞在大胤京师户部衙署·司务厅提审恶霸撕破民间借贷的掩护伪装\",\"沈辞彻底锁定涉案钱庄为常玉德转运火耗银的洗钱老巢。\"]",
+    "单章蓝图补全第 20 章伏笔时序消毒：删除 [\"沈辞穿透数十个虚构户头剥离出常玉德转存的巨额脏银\",\"沈辞在存银底簿深处翻出了江南道江都府特有商印暗记。\",\"沈辞在存银底簿上看到了江南道江都府特有的商印暗记。\"]",
+    "单章蓝图补全第 23 章伏笔时序消毒：删除 [\"沈辞撬开铁盒起获江都恒丰号开具的巨额汇票原件\",\"起获江都恒丰号承兑汇票原件\"]",
+    "单章蓝图补全第 24 章伏笔时序消毒：删除 [\"徐简见汇票私印面色骤变严令剥离长史印记只锁定常玉德\"]",
+    "单章蓝图补全第 25 章伏笔时序消毒：删除 [\"常玉德在大胤京师户部衙署公然质疑沈辞查账资格并声称旧账符合祖制\",\"钱庄掌柜当堂辨认常玉德私印掐断其退路。\"]",
+    "单章蓝图补全第 26 章伏笔时序消毒：删除 [\"沈辞比对常玉德虚报的三成折损账本证明差额高达三万两之巨\"]",
+    "单章蓝图补全第 28 章伏笔时序消毒：删除 [\"沈辞受领从九品户部吏目官职与腰牌\"]",
+    "单章蓝图补全第 29 章伏笔时序消毒：删除 [\"陈松林向沈辞交接江南清吏司旧档名录并隐晦警示官场水深\",\"沈辞正式接管大胤京师户部衙署江南清吏司旧公房\",\"探明常玉德办公公案暗藏夹层机关。\"]",
+    "单章蓝图补全第 30 章伏笔时序消毒：删除 [\"沈辞取出暗格内藏匿的奇异黄铜旧钥匙辨识出其绝非户部官库用锁\",\"沈辞勘验残缺字条确认常玉德背后另有极深资金牵涉\",\"起获常玉德案几暗格藏匿的锈蚀黄铜钥匙\"]",
+    "单章蓝图补全第 31 章伏笔时序消毒：删除 [\"沈辞踏入大胤京师户部衙署·江南清吏司点卯，发现名册上三十名抄书吏集体告假抱病\",\"沈辞履职大胤京师户部衙署·江南清吏司\"]",
+    "单章蓝图补全第 34 章伏笔时序消毒：删除 [\"老账房陈松林道出黄铜钥匙系先帝朝内帑暗库的秘钥标识\",\"陈松林警告沈辞前任主事因触碰内帑死账而沦为弃子的内幕\",\"沈辞顺藤摸瓜调阅出近五年江南各省解缴粮饷的原始底档。\",\"陈松林指认黄铜钥匙关联内帑暗账\",\"沈辞调取江南各省解缴底册。\"]",
+    "单章蓝图补全第 35 章伏笔时序消毒：删除 [\"沈辞通宵对大胤京师户部衙署江南清吏司五年解缴公文做交叉复核\",\"沈辞率白役通宵复核江南各省五年解缴公文\"]",
+    "单章蓝图补全第 37 章伏笔时序消毒：删除 [\"户部尚书高守中定下当堂当众复核旧账的自证之局。\"]",
+    "单章蓝图补全第 38 章伏笔时序消毒：删除 [\"沈辞在大胤京师户部衙署当众布设借贷平衡大展板\",\"沈辞在大胤京师户部衙署当场复核三千份烂账\"]",
+    "单章蓝图补全第 39 章伏笔时序消毒：删除 [\"户部尚书高守中现身大胤京师户部衙署大堂平息争端\",\"户部尚书高守中亲临江南清吏司\",\"高守中下令全司推行沈辞新式记账法。\"]",
+    "单章蓝图补全第 41 章伏笔时序消毒：删除 [\"沈辞与徐简联手在大胤京师户部衙署·监房设伏，人赃并获截下郎中密送的绝户毒点心\"]",
+    "单章蓝图补全第 43 章伏笔时序消毒：删除 [\"沈辞持查验手令率官差封锁大胤京师户部衙署·外司别院，无视刁难强行封存案卷\"]",
+    "单章蓝图补全第 45 章伏笔时序消毒：删除 [\"沈辞自大胤京师户部衙署·官产别庄起获关键暗账残底，迅速折返公堂收网\",\"沈辞当堂押出安然无恙的常玉德，连出多份账目铁证击碎郎中的脱罪算盘\",\"沈辞查抄别庄暗卷折返公堂\"]",
+    "单章蓝图补全第 46 章伏笔时序消毒：删除 [\"沈辞完成资金穿透图谱，抓出京畿官银借道扬州两江盐运司洗入盐商私账的确凿数额\"]",
+    "单章蓝图补全第 47 章伏笔时序消毒：删除 [\"养心殿连夜发出加急中使，命大胤京师户部衙署内待命的沈辞即刻除靴晋见。\",\"户部右侍郎带着沈辞的新总账深夜呈递御前\"]",
+    "单章蓝图补全第 48 章伏笔时序消毒：删除 [\"老皇帝当堂抛出内帑与国库堆叠多年的三道陈年烂账考校沈辞\",\"老皇帝密召沈辞当面考校查账实务\"]",
+    "单章蓝图补全第 50 章伏笔时序消毒：删除 [\"老皇帝御笔朱批加封沈辞为正六品江南清吏司主事，命其在三法司会审痛击贪腐同党\",\"沈辞手捧浸染沉重权力的密旨退出殿宇，重返大胤京师户部衙署迎战终审。\",\"皇帝在密旨上朱批沈辞擢升正六品主事\"]",
+    "本地收缩超长标题/CBN/CEN 共 14 章（第 3、7、31、32、34、42、43、44、45、46、47、48、49、50 章），未发 AI 请求",
+    "大纲 agent:model-finish,8 轮 10 次工具调用,复检 1 次"
+  ],
+  "repairMetrics": {
+    "firstPassChapters": 13,
+    "firstPassRate": 0.65,
+    "rewrittenChapters": 7,
+    "totalRewriteRounds": 7,
+    "averageRewriteRounds": 0.35,
+    "pipelineAttempts": 20
+  },
+  "runtimeMetrics": {
+    "requestCount": 85,
+    "requestCountsByPurpose": {
+      "scene-draft": 31,
+      "fact-extraction": 27,
+      "chapter-judge": 27
+    },
+    "latencyP50Ms": 23240,
+    "latencyP95Ms": 66389,
+    "latencyMaxMs": 109686
+  },
+  "readerEvaluation": {
+    "version": "reader-eval-v1",
+    "mode": "shadow",
+    "enabled": true,
+    "evaluator": {
+      "provider": "openai",
+      "providerId": "provider-1787044972770",
+      "model": "gemini-3.8-flash-high",
+      "independentFromWriter": false,
+      "selectionReason": "explicit"
+    },
+    "thresholds": {
+      "outlineWarningBelow": 75,
+      "openingThreeAverageWarningBelow": 78,
+      "chapterWarningBelow": 60,
+      "consecutiveLowBelow": 68,
+      "consecutiveLowCount": 3,
+      "windowWarningBelow": 70,
+      "coreDimensionWarningBelow": 50
+    },
+    "outline": {
+      "version": "reader-eval-v1",
+      "score": 84.9,
+      "wouldStartReading": true,
+      "confidence": 0.9,
+      "dimensions": {
+        "openingAttraction": 88,
+        "coreSellingPoint": 91,
+        "protagonistDrive": 86,
+        "conflictEscalation": 80,
+        "payoffPlanning": 78,
+        "characterRelations": 80,
+        "suspensePlanning": 85,
+        "audienceFit": 92
+      },
+      "issues": [
+        {
+          "id": "reader.issue-01",
+          "severity": "high",
+          "category": "payoff",
+          "location": "全文",
+          "description": "爽点规划表中承诺在第30章通过三法司刑部大堂百官会审一举直升正六品主事，但在实际分章蓝图中，第28-30章沈辞仅升任从九品吏目且被禁区严令禁止直接升六品，正六品主事与面圣被推后至第49-50章，且第50章末尾三法司会审仍未正式打响。这导致大纲前期的核心超大爽点承诺与章节实际执行产生了近20章的时间差与预期降级。",
+          "evidence": [
+            "coolPointPlan中明确写道：'沈辞在刑部大堂面对百官会审拉出巨幅资金流向图，反咬二皇子门生并直升六品主事，suggestedChapter: 30'；但第28章mustCover为'徐简宣读户部委任堂谕破格拔擢沈辞为从九品吏目'、forbiddenZones包含'禁止直接升任正六品主事'，直到第49章老皇帝才'力排六部规制决意简拔沈辞为江南清吏司主事'。"
+          ],
+          "suggestion": "统一爽点规划表与章节蓝图的节点标注：将coolPointPlan中第3个爽点的建议章节修正为第49-50章（或三法司会审正式结案的55-60章区间），并将第30章明确定义为'白役跃迁从九品正式入流'的阶段性爽点，避免大纲内部规划与细纲打架。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.issue-02",
+          "severity": "medium",
+          "category": "other",
+          "location": "全文",
+          "description": "作为贯穿全书三卷的核心暗线道具‘先帝内帑暗库黄铜钥匙’，在伏笔回收表中被设定为‘老账房陈松林告老离京前夕赠予沈辞’，但在第30章蓝图与分块细纲中却明确写成‘沈辞从贪腐主事常玉德的值房暗格中搜出’，且第30章禁区专门强调禁止陈松林赠予，前后设定出现直接互搏。",
+          "evidence": [
+            "foreshadow-7载明：'陈松林告老离京前夕，赠予沈辞一枚磨损严重、齿痕怪异且通体锈绿的沉重黄铜钥匙'；而第30章chapterBlueprint中写道：'暗格木板应声弹开，一截红绸包裹的沉重物滑入掌心……沈辞收好钥匙锁入随身暗囊'，且forbiddenZones明确规定'禁止出现陈松林赠予钥匙的词面信息'。"
+          ],
+          "suggestion": "统一黄铜钥匙的来源出处：建议确定为沈辞在常玉德值房暗格中起获该钥匙，而老账房陈松林在第34章作为老吏引路人负责道破钥匙通往先帝内帑暗库的秘辛，并同步修正foreshadow-7中的hint描述。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.issue-03",
+          "severity": "medium",
+          "category": "conflict",
+          "location": "全文",
+          "description": "卷一总纲将三法司百官会审作为全卷压轴大高潮，但在前50章的蓝图中，常玉德在第26-27章便已在户部大堂当众融银后伏法收监，其保护伞郎中在第45章亦被革职拿办，第48-50章主角更是直接越级面圣折服老皇帝并获赐官职。此时卷一的核心贪官已被逐个清理，若第51-60章再开启三法司会审，容易沦为已知结论的重复走过场，透支对质张力。",
+          "evidence": [
+            "volumePlan第1卷climax为：'三法司会审大堂之上，沈辞当众拉出借贷平衡对照大账……逼得主事伏诛、郎中罢官'；而在第27章mustCover已执行'当堂剥夺常玉德官职并收监大理寺'，第45章已执行'带活口主事上堂对质令郎中革职拿办'，第50章禁区却仍称'沈辞领旨退殿备战三法司会审'。"
+          ],
+          "suggestion": "调整对质节奏与反派层级：建议让第26-27章户部内部堂审仅定性为主事涉案停职移送大理寺，将主事最终认罪画押、郎中朝堂反扑、以及二皇子长史暗箱操盘的决战统一汇聚至50-60章的三法司会审公堂，使全卷高潮具备不可替代的决战爆发力。",
+          "blocking": false,
+          "confidence": 0.7
+        },
+        {
+          "id": "reader.issue-04",
+          "severity": "low",
+          "category": "character",
+          "location": "全文",
+          "description": "人物设定中的楚怀瑾和大胤皇帝条目下，关系动态描述出现了文本被错误截断、targetName字段混入描述句子的格式错位问题。",
+          "evidence": [
+            "楚怀瑾条目中出现：'{\"targetName\":\"与楚承恪\",\"relationType\":\"unknown\",\"dynamic\":\"与楚承恪\"}'以及'{\"targetName\":\"楚承钧从任人宰割的子侄转为法纪审判的铁面君主\"...}'；大胤皇帝条目中亦存在相同截断。"
+          ],
+          "suggestion": "清理并补全楚怀瑾与大胤皇帝条目中的关系定义，修复分词截断错误，确保人物关系网络严谨完整。",
+          "blocking": false,
+          "confidence": 0.7
+        }
+      ],
+      "summary": "这是一份卖点极其突出、题材辨识度极高的硬核历史官场智斗大纲。社畜审计师利用复式记账法、资金穿透追踪和火耗实测公式对封建官场烂账实施降维打击，从濒死背锅小吏一步步成长为以国库总钥操盘帝位更迭的财相，主线逻辑严密，前三章危机紧绷、开局抓人，高度契合喜爱官场算账与技术流反杀的硬核读者群。大纲当前的主要瑕疵在于：爽点规划表与章节蓝图在第30章官职跃迁和三法司会审的节奏上存在脱节，关键道具黄铜钥匙的来源前后设定矛盾，以及第一卷反派在前45章被提前多次击溃导致后续三法司会审存在情绪重复透支风险。理顺上述节奏与细节一致性后，具备极高开书吸引力与连载稳定性。"
+    },
+    "chapters": [
+      {
+        "version": "reader-eval-v1",
+        "chapter": 1,
+        "score": 87.7,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 90,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 86,
+          "pacing": 89,
+          "endingPull": 92
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "物理控制态的动作衔接略显写意。主角开局被两名壮汉差役‘粗暴反剪双臂，死死按在案面’，但在揭露破绽时却能直接自如地‘哗啦将账册翻到第七十二页’并多次拍案，差役压制的松解过程缺乏动作支点交代，微损肉体受控的压迫感。",
+            "evidence": [
+              "两名膀大腰圆的差役上前，粗暴反剪住沈辞的双臂，将他的手掌死死按在案面。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "现代审计知识与古代账册制度的结合稍显无缝。主角穿越初醒便能瞬间纯熟引用《赋役全书》及四柱清册规则进行降维反驳，原身吏员记忆与现代专业技能的交融若能增添一笔心理印证，硬核智斗的说服力会更扎实。",
+            "evidence": [
+              "密密麻麻的数字在脑海中飞速剥离重构，大胤官吏自以为天衣无缝的假账，在穿透资金链模型下破绽百出。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "极具冲击力的官场悬疑开局。第一章摒弃冗长铺垫，以逼签认罪伏辩的高压刑讯切入，迅速交代主角‘顶尖穿透审计师’的核心人设与‘替罪小吏’的生死绝境。算账破局段落丝丝入扣，将三万两亏空精准拆解为脚费重复、粮价虚高、火耗二次扣减（6000+15000+9000），专业降维打击感极强。章尾反派并未流于脸谱化溃败，而是立刻掏出预先栽赃的借契指纹死证，将智斗从‘账面核算’推向更残酷的‘官场黑吃黑’，反转干脆，追读驱动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 2,
+        "score": 86.3,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 85,
+          "characterVoice": 84,
+          "payoffValue": 86,
+          "pacing": 88,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "中段 沈辞验伪借据处",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "笔画交错处的饱墨甚至还凝着一层未收缩的胶壳！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.dialogue-2",
+            "severity": "low",
+            "category": "dialogue",
+            "location": "后段 常玉德被揭穿后拔刀处",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "好，好！好得很！常玉德狞笑出声，五官因极度的恶意而完全变了形"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章紧承上章结尾的伪证危机，主角通过手指蹭墨、查验折痕与暗格尺寸、揭破迷药下毒等细节，极其利落且具画面感地完成了实物验伪的微兑现。在文斗逻辑被彻底击碎后，反派迅速撕破脸皮拔刀剁案，将冲突从‘账目构陷’强推至‘两小时午时死线’的暴力通牒，并埋下沉香胶痕线索。节奏紧凑干脆，局势完成有效升级，追读动力强劲。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 3,
+        "score": 83.9,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 84,
+          "conflictEffectiveness": 80,
+          "emotionalDrive": 85,
+          "characterVoice": 85,
+          "payoffValue": 82,
+          "pacing": 83,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "前情上章明确强调“今日午时三刻户部就要向上递交定案清册。若是沈辞不按手印认罪，那午时过后被推上断头台顶罪的人，就是他常玉德”，将死线压在两个半时辰内；但本章常玉德拿到沈辞的三天生死状后便欣然应允并封门三日，未交代常玉德如何向上级解释原本午时三刻必须交差的定案死线，时限压力存在逻辑断层。",
+            "evidence": [
+              "本官给你三天，三天后的辰时三刻，三法司大堂之上，本官亲自来收你的项上人头！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.85
+          }
+        ],
+        "summary": "本章冲突张力与动作戏极具现场感，主角借由专业拆解大胤“四柱记账法”将存留与在途混同、粮价折色与火耗重复扣减等制度弊端公之于众，极好地兑现了硬核算账与降维反杀的题材卖点。面对暴力压迫，主角以血指立下生死状，以命相搏争取到三日查账时限并调出三年底册，破局思路硬朗。章尾满屋旧账如黑山遮光、铁锁落下的封闭绝境意象极具压迫感，极大拉升了后续破局的追读期待。主要瑕疵在于前章常玉德面临午时交差的致命死线，在本章中直接顺坡放宽为三日，缺乏常玉德如何暂缓交差的合理交待。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 4,
+        "score": 86.1,
+        "continueReading": true,
+        "confidence": 0.93,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 84,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 87,
+          "characterVoice": 83,
+          "payoffValue": 88,
+          "pacing": 85,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "建平三年四月至十月的三十本往来账目全部登入底册、汇总结账时，第一张大胤王朝从未出现过的试算平衡表在纸面上彻底成型。"
+            ],
+            "suggestion": "在面对‘能装满两辆大车、上千本’的陈年烂账时，单人单夜完成数十本往来分录、拼接七张大宣纸并完成多轮穿透核算的工作量略显超人化。可微调交代沈辞是依据目录索引精准抽检核心流水，以进一步增强硬核查账的现实严谨度。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章高质量兑现了上一章立下的‘三日生死状’承诺，是典型的硬核降维打击爽章。作者没有用抽象的‘算术高超’一笔带过，而是扎实落地了复式记账法（收付借贷、双轨分录、试算平衡表）对传统四柱清册的穿透式破解。情节推进层次清晰：从门缝老吏送饼与示警深化官场黑幕，到算盘推演剥离出‘6000+15000+9000=30000’的精准造假公式，再到章尾穿透承平钱庄揭示出‘跨衙门洗银熔炉’的深层阴谋，局势瞬间由‘被构陷自保’升级为‘掌握夺嫡/官场洗钱命脉’，解密快感与掌控感拉满，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 5,
+        "score": 87.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 89,
+          "characterVoice": 88,
+          "payoffValue": 90,
+          "pacing": 85,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "上章结尾主角心智推断银两已‘顺着承平钱庄的地下脉络涌向了深不见底的漆黑深渊’，本章迅速反转为‘钱庄过账全是一套脱离实物的纸面戏法，银子根本没出库’。虽属层层破案的反转，但上章全知断言感略重，略微削弱了主角推导的一致性。",
+            "evidence": [
+              "通州虚报的六千两脚费在出库当日，便被淮安通运社在承平钱庄开出的一张同额会票精准抵消……所有的脚费开销、折色冲抵、钱庄过账，全是一套脱离实物的纸面戏法。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章揭秘爽感与翻盘掌控感极强。通过复式记账轧平后的‘无实物出库文凭’抓出致命破绽，并层层穿透‘火耗折色、杂银回炉’的官场暗规，完成了从‘查贪墨洗钱’到‘破库内藏银构陷’的精彩逻辑闭环。破晓鼓响卡死行动节点，主角沉着克制、藏表备战，极具追读期待。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 6,
+        "score": 85.6,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 85,
+          "openingHook": 84,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 87,
+          "characterVoice": 82,
+          "payoffValue": 88,
+          "pacing": 83,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "核心铁证获取过于依赖巧合。反派故意拉来刁难的废料板车夹层里，恰好藏着反派本人当年违规核销的受领花押残卷，属于典型的‘反派推车送致命人证物证’，削弱了硬核查账破局的说服力。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "数万张严重板结受潮的残卷，单人在四个时辰内完成温水浇淋、骨簪剥离、验明水路暗戳并归入七大分类，单张耗时不足两秒，物理执行速度略超人体极限，略显夸张。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接紧凑，冲突建立快，反派以发霉烂账设局刁难，主角以现代穿透式审计思维和细致手法半日破局，降维碾压感和翻盘爽点极为强烈。美中不足的是结尾关键铁证直接在推车夹层中‘白捡’，巧合痕迹较重，略微损耗了硬核智斗的严谨感，但整体节奏凌厉，章尾对质反杀预期拉满，追读动力充沛。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 7,
+        "score": 87.3,
+        "continueReading": true,
+        "confidence": 0.9,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 88,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 89,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "刺客夜行行刺纵火，身上却贴身携带刻有主子私宅暗记的紫铜腰牌，带有较明显的‘刺客随身带身份证’的套路痕迹，在严谨智斗设定下略显反派降智。",
+            "evidence": [
+              "沈辞伸出两指探入恶仆胸口暗袋，精准摸索出一枚刻有常玉德私宅暗记的紫铜腰牌，以及一整卷浸透猛火油的引火棉条。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接紧凑，将白日的查账破局自然延伸至深夜的物理反杀。主角料敌机先，通过假意熬夜核算诱敌入局，借助墨网机关与铁木镇纸利落制伏恶仆，掌控感与爽感充沛。虽有刺客携腰牌送证据的常见网文桥段，但整体节奏行云流水，人赃并获后的局势彻底倒向主角，天亮后的官场摊牌追读期待强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 8,
+        "score": 87.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 84,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 88,
+          "characterVoice": 86,
+          "payoffValue": 92,
+          "pacing": 85,
+          "endingPull": 87
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "叙述视角中直接出现‘现代穿透式资金流向十字交叉核算表’等明显跳脱世界观背景的现代概念定性，稍显出戏，削弱了古典官场智斗的原生沉浸感。",
+            "evidence": [
+              "这不是大胤户部通行的旧管、新收、开除、实在四柱流水账，而是跨越了数百年的现代穿透式资金流向十字交叉核算表。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-2",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "被绑凶仆在此段沦为纯粹的‘反应道具’，连续三次充当震惊背景板（嗬嗬声、筛糠发抖、面如死灰），互动形式略显单一。",
+            "evidence": [
+              "柱上的恶仆瞪大充血的双眼，死死盯着那张从未见过的古怪图表，喉咙里发出困惑而惊骇的嗬嗬声。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章高质量兑现了核心卖点与章节标题承诺。主角运用复式交叉核算穿透古代流水账，层层拆解‘折色比价操纵’与‘虚增火耗截留’的作案链条，严密扎实且极具硬核智斗的降维碾压感。由绑缚凶徒迅速转入伏案制表，节奏紧凑不拖沓；结尾借由暗押牵扯出堂官与清吏司深层势力，配合清晨点卯的脚步声，将悬念与升堂反杀的预期拉满，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 9,
+        "score": 88.6,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 89,
+          "emotionalDrive": 87,
+          "characterVoice": 88,
+          "payoffValue": 89,
+          "pacing": 90,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "前后品阶设定微有出入：上一章末尾明确描述为“绝非区区一个正六品的主事常玉德所能办到”，此处徐简口中变为“从六品的主事”，官阶前后表述不一。",
+            "evidence": [],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章的高压蓄势，节奏紧凑凌厉。沈辞越级直闯侍郎签押房，以借贷复式记账图册和实物物证形成降维打击，正面震慑三品高官徐简，专业碾压与翻盘爽感兑现充分。章尾从简单的查贪迅速升维至户部背后的朝堂深水与无归巨窟，悬念收拢自然且追读动力强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 10,
+        "score": 83,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 86,
+          "openingHook": 85,
+          "conflictEffectiveness": 83,
+          "emotionalDrive": 80,
+          "characterVoice": 88,
+          "payoffValue": 78,
+          "pacing": 82,
+          "endingPull": 84
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "沈辞在抗辩徐简的政治株连质问时，大段复述了前章末尾刚刚拆解过的‘二十万两灾银、十七万两实运、三万两转入偏库’等具体账目数据，信息出现一定程度的冗余，略微稀释了双方智斗交锋的刀光剑影。",
+            "evidence": [
+              "建平三年江南解京的正项灾银，借方实实在在记录了二十万两，但通州漕船实际起运的现银，白纸黑字只有十七万两！那凭空蒸发的三万两，在四柱旧账里被火耗二字一笔勾销，但在学生的借贷大表里，它从未消失，只是换了个名目，借道杂银折色，生生转入了户部后院的熔银坊偏库！"
+            ],
+            "suggestion": "可精炼数据复述，将反驳重心更加聚焦于‘数字不认主子、只认逻辑’的锋芒对决与求生动机上，避免与上一章结尾已明示的信息形成叠床架屋。",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章借贷记账法的核算震撼，并未落入‘长官拍案即刻严办贪官’的无脑爽文套路，而是由徐简展现出正三品老官僚极度敏锐的政治生存直觉：敏锐察觉夺嫡黑金的凶险，果断封存账册铁匣，并下一纸手令软禁沈辞。这一反转将技术层面的查账碾压自然升级为官场党争的深渊博弈。沈辞身处逆境但心智在线，虽被夺去主动权关入暗室，却给读者留足了‘引信已点燃、静待大火燎原’的强劲悬念。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 11,
+        "score": 89.9,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 90,
+          "openingHook": 88,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 93,
+          "characterVoice": 89,
+          "payoffValue": 92,
+          "pacing": 88,
+          "endingPull": 91
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "上一章末尾徐简因极度忌惮牵扯二皇子夺嫡私饷而严密封存物证、将沈辞软禁以求避险，本章却直接在司务厅召集满堂老吏公开考校涉案的'建平三年二十万两赈灾正项'，且任由沈辞当众点出偏库三万两亏空。这与徐简老辣求稳、谨防事态公开引爆的行事动机存在轻微的逻辑拉扯，属于为了促成'当堂打脸'高潮而在官场保密逻辑上略作妥协。",
+            "evidence": [
+              "徐简深吸了一口带着沉香微苦的晨气……有些脓疮一旦捅破，流出来的毒血能把整座户部衙门化为焦土。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章是极具网文爽感与专业降维打击的高质量对决章节。承接上章的软禁困局，剧情迅速推进至司务厅公堂考校，以陈松林抛出的复杂折色与火耗死结为考题，沈辞舍弃算盘、直接以借贷记账法现场立表平账，精准切中读者对'专业碾压'与'当堂翻盘'的期待。情绪曲线上，常玉德的从容讥讽、老账房的骇然叹服到最后的狗急跳墙层层递进，徐简拍案命常玉德对质的收尾钩子极具压迫感，追读驱动力强劲。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 12,
+        "score": 88.7,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 89,
+          "characterVoice": 87,
+          "payoffValue": 91,
+          "pacing": 88,
+          "endingPull": 89
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "medium",
+            "category": "character",
+            "location": "全文",
+            "description": "常玉德情急反咬时提及的“外省洋庄”一词带有较浓厚的近代金融开埠色彩，在传统架空古代官场语境下略有违和，容易引起挑剔考据读者的出戏感。",
+            "evidence": [
+              "这是江南巨贾、外省洋庄私下用来藏匿黑金的阴私账法！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上文的高潮对质，智斗交锋层次极为分明。主角通过“三年火耗比例横向穿透”、“物理常识与官银戳记破除受潮生斑谎言”、“苏州常州三笔账目拼图精确还原三万两去向”连环出招，将硬核核算与官场潜规则无情撕碎，降维反杀的爽感与逻辑严密性拉满。章末常玉德被逼入绝境后狗急跳墙扣上政治诬陷，不仅让冲突局势再度逆转紧绷，也将技术审判直接拔高至政治倾轧层面，留钩坚决有力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 13,
+        "score": 87.3,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 90,
+          "emotionalDrive": 88,
+          "characterVoice": 85,
+          "payoffValue": 92,
+          "pacing": 88,
+          "endingPull": 78
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "官制服饰用语出现明清制式混杂。徐简口中提及清代特有的'顶戴花翎'，而后文差役撕扯的又是明制'乌纱冠'，在硬核严谨的官场架空语境中稍有出戏。",
+            "evidence": [
+              "来人！卸去常玉德顶戴花翎，剥去官服，即刻打入死牢看押！"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.pacing-2",
+            "severity": "low",
+            "category": "pacing",
+            "location": "全文",
+            "description": "高潮反杀与惩戒反派执行完毕后，结尾完全停留在常玉德受惩瘫软的静态结算画面，对承平钱庄背后二皇子的反扑危险、沈辞下一步的升迁或受审走向未设强钩子，章尾追读拉力略平。",
+            "evidence": [
+              "常玉德披头散发，双腿骨节剧烈一颤，彻底失去了全身力道，如一摊烂泥般软瘫在冰凉刺骨的方砖地上，喉间只剩下濒死的绝望哀鸣。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章是前期查账智斗的核心高潮兑现章。承接上一章反派的扣帽反扑，主角并未陷入言语自辩陷阱，而是以'铸银工料栗木炭消耗'与'钱庄三联截角实物'两记物理与票据双重铁证完成降维穿透，逻辑严丝合缝，爽感与掌控感充沛。主事的倒台与二皇子线索的牵出极具推进力，整体节奏凌厉，仅章尾钩子偏向常规收尾，后续可加强大案牵连出的朝局危机感。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 14,
+        "score": 80.6,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 85,
+          "openingHook": 80,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 78,
+          "characterVoice": 84,
+          "payoffValue": 76,
+          "pacing": 75,
+          "endingPull": 82
+        },
+        "issues": [
+          {
+            "id": "reader.pacing-1",
+            "severity": "medium",
+            "category": "pacing",
+            "location": "全文",
+            "description": "前后章交界处存在惩处动作与案情信息的局部复述。上一章结尾徐简已明令剥去常玉德官服打入死牢并搜查承平钱庄，且差役已扯下乌纱撕裂官袍；本章开篇徐简又重新掷令箭剥夺腰牌库钥，并再次长篇复述三万两赈银与十二张凭券的具体名目，使前半段节奏稍显回炉拖沓。",
+            "evidence": [
+              "徐简面如沉铁，右手猛地探入公案右侧的紫檀签筒，抽出一枚冷硬的青铜令箭，甩手狠狠砸在方砖地上...上章已写：'来人！卸去常玉德顶戴花翎，剥去官服，即刻打入死牢看押！查封其值房与私宅，按凭券底联搜查承平钱庄'"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章作为大反杀之后的收束与过渡章，整体表现扎实。虽然章首与上一章结尾在处置常玉德的动作和案情口供上有轻微复述拖沓，但中段沈辞敏锐指出钱庄有毁账隐患后，情节迅速转向更深层的夺嫡暗流（承平钱庄与二皇子）。徐简立下的'三日午时借贷轧平彻底结案'的死线极具紧迫感，迅速把故事驱动力从'揭穿常玉德'切换到'穿透钱庄暗账迎战皇子势力'，常玉德临下狱前的怨毒眼神与沈辞临危受命形成张力，有效拉住了追读欲望。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 15,
+        "score": 77.4,
+        "continueReading": true,
+        "confidence": 0.88,
+        "dimensions": {
+          "readability": 82,
+          "openingHook": 78,
+          "conflictEffectiveness": 80,
+          "emotionalDrive": 74,
+          "characterVoice": 78,
+          "payoffValue": 66,
+          "pacing": 80,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "值房木栅外的守门差役早被他用袖中藏匿的一锭足色细丝马蹄银灌得酩酊大醉，此刻正趴在桌案上鼾声如雷。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "模型指出读者体验问题",
+            "evidence": [
+              "沈辞指尖拨过最后三枚红木算珠，算盘发出清脆的撞击声。他神色沉静无波，在摊开的白麻宣纸上落下一笔端正的借贷记号"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章收押常玉德与封查钱庄的局势，迅速拉开反派的反扑行动线。常玉德越狱逃亡并夜会幕后黑车，揭出三万两赈灾银背后牵扯二皇子府二十余万两平色火耗的大案底细，将官场账目博弈直接升级为物理灭口的生死危机。虽然常玉德脱逃过程的看守降智略损严谨度，且主角算账主业退居次席导致爽点兑现延后，但叙事紧凑、氛围冷峻，章末纵火灭迹的死局悬念极为强烈，追读吸引力充足。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 16,
+        "score": 86.7,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 87,
+          "emotionalDrive": 86,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 86,
+          "endingPull": 88
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "火海逃生与现身的时机处理带有较重的好莱坞式‘掐秒’与摆拍感，前脚刚跨出门槛房梁即塌，大火扑灭后恰好在众官吏议论时自废墟缓步走出，略微削弱了硬核官场文的写实沉浸感。",
+            "evidence": [
+              "不等两人的脚掌完全迈出门槛，整座偏厅的屋梁轰然崩塌……就在满院官吏各怀鬼胎之际，偏厅坍塌的残垣深处，忽然传来瓦砾被踩动的清脆碎响。一道青灰色的身影踩着焦黑的断木，步履平稳地自滚滚浓烟中走了出来。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章悬念，节奏明快紧凑。常玉德纵火毁证与沈辞偏厅护账形成强烈的双线时空压迫感，作者精准利用了主角的‘现代会计思维’进行破局——果断舍弃笨重的72箱原始流水，死守轧平的复式借贷总表与关键截角凭券，既合乎专业降维定位，又合理解释了脱困逻辑。结尾沈辞持铁案底稿自废墟现身，逆转了反派及旁观官员‘死无对证’的预期，爽点兑现利落，对下一章徐简如何以此翻盘直击二皇子形成了强劲的追读拉力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 17,
+        "score": 85.9,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 85,
+          "conflictEffectiveness": 86,
+          "emotionalDrive": 88,
+          "characterVoice": 85,
+          "payoffValue": 88,
+          "pacing": 86,
+          "endingPull": 78
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "章尾落在证据闭环后的常规气氛烘托，对手探子退缩与徐简动杀意虽符合情境，但未抛出针对常玉德追捕或二皇子反扑的新危机钩子，追读推力稍显平缓。",
+            "evidence": [
+              "风穿过破损的夹道，吹散了漫天浮尘。徐简伫立在森然碎裂的青石板前，负在身后的双手猛然握紧，眼中杀意毕露。而回廊深处的阴暗角落里，数名探子面如土色，悄然将身子缩回了断墙之后。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章高度契合‘降维算账、硬核智斗’的卖点定位。承接上文‘账册被烧、死无对证’的绝境，主角没有简单陷入自证，而是通过地砖承重、车轮轨距、银箱规制、轴膏成分等物理痕迹与算学逻辑，反推还原出运银全过程。专业推导扎实可信，围观反派官吏的心理变化形成了极具质感的爽感反馈，局势彻底逆转。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 18,
+        "score": 82.9,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "readability": 85,
+          "openingHook": 80,
+          "conflictEffectiveness": 84,
+          "emotionalDrive": 82,
+          "characterVoice": 76,
+          "payoffValue": 85,
+          "pacing": 84,
+          "endingPull": 85
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "受雇来闹事的底层恶霸掌握的信息过载，逻辑可信度偏低。恶霸仅拿了管家五十两银子，却能对常玉德的核心黑钱据点聚宝阁、密窖藏银数额（五千两）以及密窖深处的官员暗流水折子如数家珍，反派高层保密意识失真。",
+            "evidence": [
+              "恶汉浑身筛糠：“在城南广宁坊！南瓦子后街的‘聚宝阁’当铺！那里是承平钱庄在南城的总放贷据点！常主事私吞扣下的火耗银，有五千两就压在当铺底下的密窖里！密窖里还锁着这些年京畿官员借贷销账的所有暗流水折子！”"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.character-2",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "男主文官小吏人设在肉搏战中突兀展现高超的分筋错骨擒拿手段，动作过于专业利落，缺乏前置身体素质或背景铺垫。",
+            "evidence": [
+              "右手宛如铁钳电闪探出，精准扣死恶霸右腕关窍！他借其前冲惯性外旋下压，左手卡住肘部关节反向狠命一别！喀嚓一声脆响炸裂！恶霸腕骨生生扭转错位"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章承接上章守房防守任务，迅速遭遇恶霸持伪造借据强闯上门，冲突爆发快。沈辞从律法顶格限制、复利勾稽错误、纸张烘烤作旧、独门天成朱泥四个层面完成全方位专业降维打脸，打脸过程严谨精彩，爽感充实。随后反击制敌并撬出口供，成功引出承平钱庄核心巢穴‘聚宝阁’，有效将剧情由被动守御转入主动抄底抓捕的高潮，推进利落，追读动力强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 19,
+        "score": 67.5,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 65,
+          "openingHook": 55,
+          "conflictEffectiveness": 68,
+          "emotionalDrive": 68,
+          "characterVoice": 72,
+          "payoffValue": 75,
+          "pacing": 52,
+          "endingPull": 82
+        },
+        "issues": [
+          {
+            "id": "reader.continuity-1",
+            "severity": "high",
+            "category": "continuity",
+            "location": "全文",
+            "description": "正文前半段与上一章结尾存在严重的情节倒退与二次登场。上一章末尾徐简已经迈入直房门槛并当场下令调动两百铁骑封锁广宁坊，而本章前文却让恶霸重新画押招供上一章已喊出的五千两火耗与水折子，并在中段让徐简再次‘跨步迈过残破的门槛’登场听审，产生明显的时空错乱与复读感。",
+            "evidence": [
+              "上一章尾：‘“好一个聚宝阁，好一条藏污纳垢的黑根子！”廊外传来怒斥，徐简一身绯袍迈入门槛。……徐简按刀下令：“……调五城兵马司两百精锐铁骑封锁广宁坊所有街巷路口……”’ 对比 本章正文第8段：‘屋外长廊下骤然传来整齐划一的靴甲铿锵之声……徐简一身猩红的三品朝服，跨步迈过残破的门槛。恶霸在铁案前招认的字字句句，徐简在直房廊檐下听得真切明白……’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.pacing-2",
+            "severity": "medium",
+            "category": "pacing",
+            "location": "全文",
+            "description": "开篇审讯信息与前章招供内容高度重合，前三分之一篇幅在已解决的供词上原地打转，延缓了抓捕行动的紧迫节奏。",
+            "evidence": [
+              "上章恶汉已供认：‘常主事私吞扣下的火耗银，有五千两就压在当铺底下的密窖里！密窖里还锁着这些年京畿官员借贷销账的所有暗流水折子！’；本章第7段恶汉再次重复：‘常主事从三万两库银与往年火耗里抠搜出的五千两纹银……死死压在地窖底层铁箱里！……还锁着常主事这五年间经手京畿官员借贷、私领折色凭票的全部暗流水折子！’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章存在明显的剧情回溯硬伤：上一章末尾已经登场并下令调骑兵封锁的徐侍郎，在本章中段又重新在门外听审并跨进门槛一次，且前半段重复交代了五千两火耗与水折子的招供信息，导致开篇节奏严重拖沓。所幸后半段迅速回正，徐简特授沈辞监兑校勘差使、赐兵符令箭先斩后奏，换装出征的过程仪式感与权力兑现感极强；章尾赶到聚宝阁时正值对方放火灭口，黑烟冲天与破门突袭将时间紧迫感与追读悬念彻底拉满。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "chapter": 20,
+        "score": 86.6,
+        "continueReading": true,
+        "confidence": 0.95,
+        "dimensions": {
+          "readability": 88,
+          "openingHook": 86,
+          "conflictEffectiveness": 88,
+          "emotionalDrive": 85,
+          "characterVoice": 84,
+          "payoffValue": 88,
+          "pacing": 87,
+          "endingPull": 86
+        },
+        "issues": [
+          {
+            "id": "reader.character-1",
+            "severity": "low",
+            "category": "character",
+            "location": "全文",
+            "description": "主角作为文职户部小吏，在破门抓人环节展现出单手压碎硬木算盘、一鞭抽翻持刀凶徒等强悍武力，动作风格略显偏向武侠猛将，与其纯粹的算账智斗底色稍有割裂。",
+            "evidence": [
+              "沈辞一步跨过翻倒的木架，右手五指宛若铁爪，精准扼死账房咽喉，单臂猛然发力下按，将账房整个人死死按在坚硬冰冷的紫檀算盘与铁皮条案之上！咔嚓！算盘硬木框在沉重力道下当场崩裂"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本章节奏极为凌厉，承接上章破门攻势迅速切入内库纵火现场。抢救账册、起获五千两被凿官戳的火耗余脏，利落兑现了前文口供预期；随后暗格搜出‘吞水狻猊’商印并与前文凭券截角严密咬合，瞬间将京畿户部贪腐案拉升至席卷东南盐运与皇商的黑金大网，解密感与翻盘爽感兼具，追读驱动力强。"
+      }
+    ],
+    "windows": [
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 3,
+        "score": 79.3,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 78,
+          "patternVariation": 73,
+          "suspensePayoff": 80,
+          "characterArc": 75,
+          "emotionalArc": 81,
+          "payoffEscalation": 77,
+          "genrePromise": 88,
+          "continuationDesire": 83
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "反派自身面临的致命死线被突兀遗忘，生死状协议缺乏逻辑自洽。第2章明确设定常玉德必须在‘今日午时三刻’向御前递交定案清册，否则自己就要掉脑袋顶罪；但在第3章沈辞提出‘以三日为期’立生死状时，常玉德却毫无阻碍地欣然应允并反锁大门，完全未交代常玉德如何向中枢拖延今日午时的交差死线。",
+            "evidence": [
+              "第2章：‘江南亏空的案子惊动了中枢御前，今日午时三刻户部就要向上递交定案清册。若是沈辞不按手印认罪，那午时过后被推上断头台顶罪的人，就是他常玉德！’对照第3章：‘常玉德悬起的心忽然落回肚里，取而代之的是按捺不住的狂喜...本官给你三天，三天后的辰时三刻，三法司大堂之上，本官亲自来收你的项上人头！’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "连贯三章完全局限于户部同一间签押房内，博弈结构出现微循环套用：第1章‘对账反杀-反派掏借据’，第2章‘验伪借据-反派拔刀’，第3章‘公开旧账漏洞-反派动刑-立生死状’。虽然节奏紧凑，但‘反派施压-主角拆解-反派恼羞成怒掀桌’的单向对抗模型连续重复了三次。",
+            "evidence": [
+              "第1章尾：‘常玉德狞笑起来...把沈书吏的真凭实据请出来’；第2章尾：‘常玉德猛然扬臂挥刀...如今已是辰时初刻，离午时换值只剩最后两个半时辰！’；第3章中：‘常玉德恼羞成怒...本官身为主事，今日便替朝廷正法！差役何在！’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "第2章抛出的高价值物证细节（借据右上角的沉香胶痕）在第3章转入公开冲突后被完全搁置，连主角的心理预留复盘都没有提及，悬念回收出现脱节感。",
+            "evidence": [
+              "第2章：‘边缘处残留着一道极其稀薄的暗褐色胶痕，散发着沉水沉香之气，绝非普通杂物，但他并未当场点破此物底细’"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本窗口作为官场智斗文开篇表现优异，题材承诺兑现极佳。作者以极高专业密度的审计知识（四柱清册拆解、在途与存留混同、脚费重列、粮价折色与火耗二次削减）为武器，成功将‘硬核算账’打造成极具爽感的降维反杀手段，牢牢抓住了目标读者的核心诉求。前三章情绪张力拉满，从刑讯逼供、伪证验伪一路升级到公房拔刀与当众血书生死状，章尾‘万卷黑山遮光、铁锁封门’的封闭绝境营造出强烈的压迫感与期待感。主要缺陷在于第2章到第3章的交差时限产生了严重逻辑断层：第2章将常玉德逼入‘午时前不交差即自身获罪’的死角，第3章却顺坡借沈辞的生死状直接宽限为‘三日’，完全丢失了常玉德如何应付中枢午时核查的交待，削弱了官场权谋的严谨度。总体而言瑕不掩瑜，追读欲望强烈。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 1,
+        "toChapter": 5,
+        "score": 73,
+        "continueReading": true,
+        "confidence": 0.7,
+        "dimensions": {
+          "mainlineProgress": 72,
+          "patternVariation": 68,
+          "suspensePayoff": 66,
+          "characterArc": 68,
+          "emotionalArc": 70,
+          "payoffEscalation": 78,
+          "genrePromise": 85,
+          "continuationDesire": 80
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "high",
+            "category": "other",
+            "location": "全文",
+            "description": "第2章中将冲突推向极致的核心驱动力是常玉德面临的极迫切死线——'今日午时三刻户部就要向上递交定案清册。若是沈辞不按手印认罪，那午时过后被推上断头台顶罪的人，就是他常玉德！'，并拔刀剁案限令'午时之前，你必须写出一份完整的认罪招状'。然而到了第3章，沈辞仅仅咬破手指立下'以三日为期'的生死状，常玉德便瞬间毫无心理负担地欣然应允并大笑'本官给你三天'。文本完全没有交代常玉德如何在原本'午时三刻不交差自己就要掉脑袋'的绝境下向堂官与中枢拖延这三天，导致前章营造的生死时速危机感与反派行事逻辑瞬间瓦解。",
+            "evidence": [
+              "第2章：'今日午时三刻户部就要向上递交定案清册。若是沈辞不按手印认罪，那午时过后被推上断头台顶罪的人，就是他常玉德！'、'离午时换值只剩最后两个半时辰！午时之前，你必须写出一份完整的认罪招状！'；第3章：'沈某不服冤屈，愿立血誓，以三日为期！'、'常玉德狰狞的面皮舒展开来，喉中发出阴鸷低笑……本官给你三天，三天后的辰时三刻，三法司大堂之上，本官亲自来收你的项上人头！'"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.pacing-2",
+            "severity": "medium",
+            "category": "pacing",
+            "location": "全文",
+            "description": "前3章保持了极高密度的言语交锋与肢体对抗，但在第3章铁锁封门后，第4章与第5章连续两章完全沦为沈辞在值房内的密室独角戏。两章中反复出现'兼毫硬笔舔饱浓墨'、'铺平四尺生宣'、'紫竹算盘飞快拨动'、'双轨墨线'等重复动作与器物描写。虽然算账背后的信息层级有所突破（从钱庄洗银深入到库内藏银），但外部对手戏与即时人际张力连续两章真空，读者体验容易产生轻微的疲劳与平直感。",
+            "evidence": [
+              "第4章：'宣纸正中顿时被切出两道笔直如刀的双轨墨线……手指在紫竹算盘上飞快拨动'；第5章：'双轨墨线的左右两造……兼毫硬笔在洗砚池内舔饱浓墨，悬腕落笔……沈辞将紫竹算盘移开半尺'"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "第2章沈辞查验借据时，特意描写了右上角剪去的小角以及'暗褐色胶痕，散发着沉水沉香之气，绝非普通杂物'，沈辞当时'并未当场点破此物底细'。然而在随后的第4章与第5章连夜通宵查账中，主角全神贯注于账目流向与火耗折色，这一高辨识度的物理线索被彻底搁置，未有任何承接或串联。",
+            "evidence": [
+              "第2章：'边缘处残留着一道极其稀薄的暗褐色胶痕，散发着沉水沉香之气，绝非普通杂物，但他并未当场点破此物底细'"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "前5章开局极其惊艳，完美契合硬核智斗、算账反杀与专业降维打击的题材定位。作者对大胤四柱记账法缺陷的拆解、现代复式借贷记账法的代入、火耗折色的官场潜规则推演都极具扎实感，爽点从'识别账面漏洞'升级到'穿透地下钱庄'再反转到'银子根本未出库的藏银大案'，解密与掌控感层层递进。当前主要缺陷在于第2章到第3章的转折中，反派原本面临'今日午时三刻交不定案清册就要掉脑袋'的生死线，在主角立生死状后被轻率放宽为'给三天'，缺乏合理交代，伤害了悬念逻辑的严密性；此外第4、5章连续处于密室算账独角戏状态，动作与场景稍显单一。但第5章章尾天亮蓄势待发，持有铁证准备反杀的钩子依然具备极强的追读吸引力。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 6,
+        "toChapter": 10,
+        "score": 87.6,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 88,
+          "patternVariation": 85,
+          "suspensePayoff": 88,
+          "characterArc": 84,
+          "emotionalArc": 86,
+          "payoffEscalation": 87,
+          "genrePromise": 93,
+          "continuationDesire": 90
+        },
+        "issues": [
+          {
+            "id": "reader.other-1",
+            "severity": "medium",
+            "category": "other",
+            "location": "全文",
+            "description": "行刺死士随身携带刻有主家暗记的紫铜腰牌，属于典型的工具人送证据桥段，略损反派常年盘根错节的心智可信度。",
+            "evidence": [
+              "沈辞伸出两指探入恶仆胸口暗袋，精准摸索出一枚刻有常玉德私宅暗记的紫铜腰牌，以及一整卷浸透猛火油的引火棉条。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "太仓偏库受领杂银的关键批复残券恰好藏在推来刁难的破板车底板暗格中，搜证带有偶发巧合。",
+            "evidence": [
+              "草席下露出霉烂的松木车斗底板。沈辞指节在底板表面寸寸摸索敲击，指尖忽然在板车轮轴上方的一处横梁边缘摸到一道暗缝。他借着微光向内探查，只见在松木底板的夹层深处，正卡着一角暗黄色的坚韧硬纸。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-3",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "未入流书吏肉身撞开侍郎值房门卫并强闯签押房，戏剧化冲堂处理略微弱化了官场严密规制。",
+            "evidence": [
+              "沈辞脚下未停，右肩沉力撞开水火棍梢，步子稳如生根。他身子借势斜插逼近门帘...门役吓得面如土色，手腕发颤，竟忘了挥棍阻拦。"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本阅读窗口（第6-10章）展现了极高水准的官场智斗与专业核算快感。剧情推进凌厉：第6章半日穿透烂账、第7章墨网诱杀刺客、第8章复式交叉表起底火耗黑洞、第9-10章直闯公堂震慑侍郎并揭露二皇子夺嫡黑金。整套剧情将现代借贷记账法与大胤赋税弊政紧密咬合，降维碾压感十足。侍郎徐简封匣避险、手令软禁的政治决断极其符合高官生存逻辑，避免了低幼无脑爽，成功将基层贪腐案平稳引爆为高层夺嫡风暴，章尾悬念蓄势充分，追读动力极强。"
+      },
+      {
+        "version": "reader-eval-v1",
+        "fromChapter": 16,
+        "toChapter": 20,
+        "score": 81.8,
+        "continueReading": true,
+        "confidence": 0.92,
+        "dimensions": {
+          "mainlineProgress": 82,
+          "patternVariation": 70,
+          "suspensePayoff": 85,
+          "characterArc": 78,
+          "emotionalArc": 80,
+          "payoffEscalation": 84,
+          "genrePromise": 88,
+          "continuationDesire": 86
+        },
+        "issues": [
+          {
+            "id": "reader.continuity-1",
+            "severity": "high",
+            "category": "continuity",
+            "location": "全文",
+            "description": "第19章前半段出现明显的剧情回溯重演硬伤：第18章末尾恶霸已被生擒并供出广宁坊聚宝阁与5000两火耗，徐侍郎亦已步入直房下令将三人套死枷押解大理寺、调兵封锁广宁坊；但第19章开篇恶霸仍被按在直房内重新逼供画押，陈松林、裴念及恶霸将聚宝阁、永泰通兑和密窖信息完全重复交代了一遍，随后徐简又以完全相同的姿态从门外跨入门槛听审并定策，导致阅读产生严重的倒带重复感与节奏拖沓。",
+            "evidence": [
+              "屋外长廊下骤然传来整齐划一的靴甲铿锵之声，守卫的兵马司甲士齐刷刷按刀肃立，恭敬高呼侍郎大人。徐简一身猩红的三品朝服，跨步迈过残破的门槛，袍角掀起一阵肃杀风声。恶霸在铁案前招认的字字句句，徐简在直房廊檐下听得真切明白"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          },
+          {
+            "id": "reader.other-2",
+            "severity": "low",
+            "category": "other",
+            "location": "全文",
+            "description": "主角作为文职算账小吏，近身搏杀设计略显程式化与过于夸张。第18章中刚用铁角紫檀算盘砸烂恶汉手背并徒手拧断关节，第20章突入密窖又用算盘木框直接将成年账房的面颊砸至骨裂出血，道具与动作套路连续复用，略微偏离硬核智斗的写实基调。",
+            "evidence": [
+              "沈辞一步跨过翻倒的木架，右手五指宛若铁爪，精准扼死账房咽喉，单臂猛然发力下按，将账房整个人死死按在坚硬冰冷的紫檀算盘与铁皮条案之上！咔嚓！算盘硬木框在沉重力道下当场崩裂"
+            ],
+            "suggestion": "",
+            "blocking": false,
+            "confidence": 0.7
+          }
+        ],
+        "summary": "本评估窗口（第16-20章）是典型的硬核智斗高潮推进段。剧情从案牍库纵火的绝境反杀展开，主角运用复式借贷总表抓关键凭证，凭借青石车辙受力、轴膏与防滑齿反推运银批次，再到公房四重破绽拆穿伪契、换装授衔领铁骑突袭南城黑庄，层层剥茧起获被凿官戳的火耗余脏与'吞水狻猊'异兽商印，将户部小吏贪渎案彻底拉升至席卷东南私盐与皇商暗网的夺嫡大案，题材承诺与降维反杀爽感兑现极佳。主要缺陷在于第18-19章衔接处出现严重的剧情回溯倒带，恶霸供述与徐侍郎进门剧情发生整段重复；但瑕不掩瑜，窗口整体推进凌厉，断章悬念充足，追读动力强劲。"
+      }
+    ],
+    "metrics": {
+      "chapterCount": 20,
+      "chapterAverage": 84.9,
+      "chapterMedian": 86.4,
+      "chapterMinimum": 67.5,
+      "openingThreeAverage": 86,
+      "continueReadingNoCount": 0,
+      "lowChapterCount": 0,
+      "lowWindowCount": 0,
+      "consecutiveLowRuns": []
+    },
+    "warnings": [
+      "没有可用的独立读者评审模型，本轮回退写作模型自评；结果仅供低置信度观察"
+    ],
+    "errors": [],
+    "durationMs": 359094
+  },
+  "provider": "openai",
+  "model": "gemini-3.8-flash-high",
+  "totalMs": 5644740,
+  "warnings": [
+    "大纲阶段 warnings（40 条，详见 outlineWarnings 字段）",
+    "读者评审 warnings（1 条，影子模式不阻断）"
+  ]
+}

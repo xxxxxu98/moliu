@@ -726,6 +726,32 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
     expect(capturedSystem).toContain('驾崩零叙述');
     expect(capturedSystem).toContain('自嘉定三年起整整七年');
   });
+
+  it('系统词含终态重演规则；fakedDeathNames 注入假死例外（g38f r8 实证）', async () => {
+    // r8：ch190 已登基理政、ch195 重演登基全套；主角假死被当真死 48 章，
+    // 判官连续拦活体登场——需要终态重演防线与假死例外双修
+    let capturedSystem = '';
+    let capturedPrompt = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        capturedPrompt = String(request.prompt ?? '');
+        return emptyJudgePayload();
+      }),
+    };
+    await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+      fakedDeathNames: ['陆九霄'],
+    });
+    expect(capturedSystem).toContain('【终态重演】');
+    expect(capturedSystem).toContain('终态重演：X仪式已在前文演过');
+    expect(capturedSystem).toContain('【假死例外】');
+    expect(capturedSystem).toContain('假死未揭晓公开现身');
+    expect(capturedPrompt).toContain('陆九霄');
+  });
 });
 
 function emptyJudgePayload() {

@@ -1,0 +1,662 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-09-19T03:36:34.505Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-matrix-g38f200chr8reg20",
+  "providers": [
+    {
+      "providerId": "provider-1787044972770",
+      "model": "gemini-3.8-flash-high",
+      "pass": true,
+      "exitCode": 0,
+      "wallMinutes": 105,
+      "chaptersAccepted": "20/20",
+      "words": {
+        "min": 2460,
+        "avg": 3136,
+        "max": 3510
+      },
+      "paraRhythm": {
+        "chapters": 20,
+        "medianCv": 0.44,
+        "uniformChapters": 0
+      },
+      "repairMetrics": {
+        "firstPassChapters": 11,
+        "firstPassRate": 0.55,
+        "rewrittenChapters": 9,
+        "totalRewriteRounds": 9,
+        "averageRewriteRounds": 0.45,
+        "pipelineAttempts": 20
+      },
+      "runtimeMetrics": {
+        "requestCount": 89,
+        "requestCountsByPurpose": {
+          "scene-draft": 31,
+          "fact-extraction": 29,
+          "chapter-judge": 29
+        },
+        "latencyP50Ms": 25556,
+        "latencyP95Ms": 69670,
+        "latencyMaxMs": 77561
+      },
+      "readerMetrics": {
+        "chapterCount": 20,
+        "chapterAverage": 84.3,
+        "chapterMedian": 87.2,
+        "chapterMinimum": 42.6,
+        "openingThreeAverage": 87.6,
+        "continueReadingNoCount": 1,
+        "lowChapterCount": 1,
+        "lowWindowCount": 1,
+        "consecutiveLowRuns": []
+      },
+      "readerOutlineScore": 86.4,
+      "readerIndependent": false,
+      "phaseTimings": {
+        "outlineDirectionsMs": 23633,
+        "outlineExpandMs": 328793,
+        "outlineRollMs": 0,
+        "applyOutlineMs": 1234,
+        "continueWriteMs": 5603158,
+        "totalMs": 5956818
+      },
+      "runtimeBackend": "sqlite",
+      "verdict": "quality-rejection",
+      "verdictReason": "读者裁判硬门禁连续两轮未达标（作者与裁判偏好叠加风险以书审通读交叉校验），按协议转入排查重写",
+      "signatures": [
+        {
+          "id": "reader.hardgate-violation",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "裁判硬门禁（连续第 2 轮）：章节均分 84.3 < 85；最低分 42.6 < 65"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "outline.warning-other",
+          "chapter": null,
+          "count": 42,
+          "evidence": [
+            "单章蓝图补全第 1 章伏笔时序消毒：删除 [\"陆纬在暴毙管库官尸身旁苏醒，识破赵秉良借命案转嫁八万石陈粮亏空的阴谋\",\"陆纬在暴毙管库官尸身旁苏醒\"]",
+            "单章蓝图补全第 2 章伏笔时序消毒：删除 [\"陆纬在京畿通惠仓·库房夹层中搜出带有飞燕朱砂暗记与错置数字的半张残缺折色勘合。\",\"搜出带有飞燕朱砂暗记与错置数字的残缺折色勘合。\"]",
+            "单章蓝图补全第 3 章伏笔时序消毒：删除 [\"陆纬连夜在京畿通惠仓·账房归纳陈年四柱底册，发现仓耗比例异常偏高\",\"陆纬用现代数理统计当场指认通惠仓仓耗造假\"]"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.other",
+          "chapter": null,
+          "count": 16,
+          "evidence": [
+            "重试 1/2：API 未返回内容",
+            "重试 1/2：API 未返回内容",
+            "重试 2/2：API 未返回内容"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 5,
+          "count": 2,
+          "evidence": [
+            "粮垛崩塌的物理尺度描写略显夸张，文弱书吏仅凭单人拉扯麻袋使‘两丈见方’粮垛整体塌陷，略微脱离常人力量范畴。（陆纬双手抓住麻袋裂口发力向外猛扯，两丈见方的粮垛表层轰然塌陷。）",
+            "1-5章：第2章刚建立‘偏厅四门落锁、踏出半步当场格杀’的七天封闭压迫感，第4章主角仅凭几句盘库行家抽检的陈词，赵秉良便迅速松口给出验仓令牌。虽有引诱至暗处灭口的心理铺垫，但前设的严密封禁与戒备被打破得略快，稍减了密室囚徒的紧绷度。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-3",
+          "chapter": 20,
+          "count": 2,
+          "evidence": [
+            "章尾断章缺乏推进力与有效悬念。在经历了上一章已知的显影过程后，本章结尾停留在‘吸水棉纸封存凭信’和‘利刃抓在手里’的心态摆姿势，既没有开启审讯对质，也没有交代如何处置敬王这一更大危机，追读动力不足。（陆纬伸出双手，沉稳地取过吸水棉纸，轻轻按在凭信之上，将那张带着崔氏内弟名讳的通兑铁证完好封存。这是足以将当朝三品侍郎乃至",
+            "16-20章：连续多章机械式复诵同一前置交代。第18章、19章、20章开篇连续三次不厌其烦地解释‘裴敬之收缴/除免陆纬死囚勘牌罪籍、命其掌案代堂官查账’，暴露出明显的模板化与粘连拼接痕迹，打乱了连读节奏。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 1,
+          "count": 1,
+          "evidence": [
+            "当前 3608 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.semantic-fact_conflict",
+          "chapter": 18,
+          "count": 1,
+          "evidence": [
+            "第1段至第7段: 跨章存在性矛盾: 状态摘要中陆纬的当前状态为「下狱」，但本章陆纬在公案前拍惊堂木、主导审讯大掌柜与崔元显、查验账册并接收罪供，以完全自由的主审官姿态行动，正文未交代任何越狱、提审或获释翻案过程，与状态摘要中的羁押事实严重冲突。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 18,
+          "count": 1,
+          "evidence": [
+            "第7段尾句: 节点原句照抄: 正文与 mustCover 节点「供状末尾的销赃暗记，赫然直指神京城内最大。」存在连续15字逐字相同（「销赃暗记，赫然直指神京城内最大」）。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.semantic-fact_conflict",
+          "chapter": 19,
+          "count": 1,
+          "evidence": [
+            "本章开头至全文: 跨章存在性矛盾: 状态摘要中主角陆纬的实体状态明确登记为“下狱”，但本章正文未交代任何越狱、获释或提审戴枷过程，直接以完全自由身在堂前拍响惊堂木、主持审讯并自如走动，与状态摘要中的羁押事实严重冲突。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.semantic-fact_conflict",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "通惠仓值房公案前: 状态摘要中陆纬的实体状态为“下狱”，但本章正文中陆纬完全以自由身在公堂自由走动、讯问证人、收拢证据并锁入随身铁盒，正文未交代任何开释免罪、暂准带罪立功或越狱过程，与状态摘要中的羁押状态存在跨章存在性矛盾。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.titles-shrunk-local",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "本地收缩超长标题/CBN/CEN 共 12 章（第 5、15、17、18、35、37、39、41、42、48、49、50 章），未发 AI 请求"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "伏笔回收章节与主线案件完结时序发生逻辑倒置：前任残缺勘合破译本是通惠仓案定谳关键，却在案情结案十余章后才进行回收。（foreshadow-1设置【setupChapter: 2, payoffChapter: 45, payoffValue: 陆纬凭朱砂暗记与数字平衡破译出赵秉良向神京粮行倒卖官粮的隐匿私账，成为公堂之"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "反派落马与主角升迁的伏笔兑现时点标定错误，标记在第49章，但实际主线在第34-36章就已彻底完成该事件。（foreshadow-3标注【setupChapter: 8, payoffChapter: 49, linkedConflict: 陆纬破获通惠仓案后直指户部高层黑手的政治反击战, payoffValue: 逼迫"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-3",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "分卷规划与细化分章表的推进节奏出现剪刀差，第一卷尚未结束，主角在第50章便已提前开启第二卷的运河下江南主线。（volumePlan卷1设定【chapterRange: {start: 1, end: 60}, endingHook: 陆纬刚换上从五品官服接管度支司大印，内廷御用监掌印太监陈安道便深夜送来一道密旨...点"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 1,
+          "count": 1,
+          "evidence": [
+            "主角作为现代高级审计经理，在被差役绝对武力压制、毫无外部自保筹码的情况下，直接撕破脸嘲讽上峰杀人灭口，策略上过于激进鲁莽，略微偏离‘冷峻缜密’的技术官僚人设。（陆纬迎着他的目光，冷笑道：“前任管库官暴毙未满百日，尸骨未寒。大人若是真有通天手段保人周全，前任何至于暴毙？下官今日若是画了押，怕是走不出这间偏厅，今夜就要跟前"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 1,
+          "count": 1,
+          "evidence": [
+            "正八品文官仓官随身携带机括钢刀并亲自拔刀行凶，处理方式略显江湖气与舞台化，微弱削弱了官场体制杀人的阴鸷与冷酷质感。（右手猛然探向腰间，咔哒一声机括脆响，雪亮的钢刀悍然出鞘！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "主角精准指出淮安漕船闭闸半月与九月初六过闸等跨省水程细节，虽强化了技术流压迫感，但作为刚穿越不久的九品库吏，其掌握跨省实时水程情报的信息来源略显天降，建议后续补足其如何从往来公文勘合中推导而出的微铺垫。（去岁八月淮安漕船遭遇暴风阻滞，水闸闭闸半月，漕粮直到九月初六才正式验关过闸。八月里粮船连通州界都没进，提举司底账上却"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "章节在高潮打脸处定格，停留在赵秉良惊骇冷汗的情绪反应，尚未给出其受制后的实质妥协或陆纬下一步的行动方案，情节推进停在言语对质节点。（通惠仓这口吞没了无数人命的巨大黑锅，已然开始顺着案头的算筹倒扣向他自己的顶戴！）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 4,
+          "count": 1,
+          "evidence": [
+            "标点符号排版瑕疵，存在逗号与感叹号连用的情况。（“咣当，！”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 4,
+          "count": 1,
+          "evidence": [
+            "主角明知对方要借刀杀人灭口，在毫无武力自保手段且未做明显后手准备的情况下，单身随两名持械敌方兵丁进入封闭死角，略微削弱了硬核智斗主角的严密算计感。（赵秉良那点借刀杀人的算盘，根本逃不过一个资深审计师的眼睛。从对方突然收敛杀意、抛出令牌的那一刻起，陆纬就断定后库之行必是杀机重重的陷阱。但他必须去。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 6,
+          "count": 1,
+          "evidence": [
+            "概念表述前后略有微瑕：前文刚说“八万石新收漕粮”，紧接着又称“造册挂账八万石陈谷”，新粮与陈谷在户部仓储账簿中属于不同科目与成色，口径略显混杂。（通惠后库名下积存的八万石新收漕粮，究竟去了哪里？！……通惠后库二十四廒，造册挂账八万石陈谷）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 6,
+          "count": 1,
+          "evidence": [
+            "公堂对峙中主审官给小吏连续长篇反驳的容忍度偏高，带有一定的戏剧便利。（崔元显并未立刻准许赵秉良的弹压，他的食指在紫檀桌面上轻轻叩了两下，语调冰冷：“本官在此，由得他讲。”）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 7,
+          "count": 1,
+          "evidence": [
+            "身负五十斤重枷的人犯在多名值堂皂隶环伺下，不仅能用铁枷撞退水火棍直扑长案，还能灵巧解开线装绳结并极快翻找细目，物理负重与动作敏捷度存在轻微脱节，略损硬核官场文的拟真感。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 7,
+          "count": 1,
+          "evidence": [
+            "官制品阶与补服常识存在微小龃龉：在以明清官制为原型的设定中，文官仙鹤补服通常为一品专属，而六部尚书一般为从一品或正二品；若此朝代定制尚书为正三品，补子通常对应孔雀，出现'正三品仙鹤'易让考据流读者出戏。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.payoff-1",
+          "chapter": 8,
+          "count": 1,
+          "evidence": [
+            "裴敬之尚书尚未正式拍板准奏军令状与调配书吏，末尾旁白便直接宣称‘三日之期已悬在当空’，使最高决策者的即时裁决略显悬空，削弱了当堂立状落定的实质反馈感。（裴敬之缓缓抚须，目光沉静而深邃，久久未发一言。三日之期已悬在当空，一场足以将户部乃至整座神京卷入其中的风暴，已在这纸军令状下彻底拉开了帷幕。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 9,
+          "count": 1,
+          "evidence": [
+            "赵秉良被当堂革职且由皂隶反剪双臂押解听审，但在前院穿堂回廊下却能避开看管、自如隐入死角向户部官署内的私养死士做切喉手势。在正统六部衙门戒备及犯官押解状态下，死士轻易潜伏中枢大堂外且差役形同虚设，略损历史官场文的严密质感。（两名皂隶如恶虎般冲上前，扯掉赵秉良的乌纱帽，反剪双臂将其死死摁倒在青砖上……赵秉良则被两名皂隶粗暴"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 10,
+          "count": 1,
+          "evidence": [
+            "用现代企业财务突审的职业本能来解释察觉武侠/刺客式‘杀意’，逻辑勾连略显生硬，有轻微出戏感。（穿越前长期从事造假企业实地突审的职业本能，让他对空气中弥漫的杀意产生了极强的警觉。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 11,
+          "count": 1,
+          "evidence": [
+            "主角陆纬作为带伤受审的文官司吏，手腕戴有铁链，仅凭脚蹬柱子便将‘重逾千斤’且满载硬皮账册的梨木巨型书架生生拉倒，力量表现略显戏剧化，微超硬核写实基调，但服务于紧张的封门脱险情节，整体瑕不掩瑜。（他反手将手腕间的细铁轻链死死绕住最左侧书架的铸铁挂钩，脚掌蹬住抱柱基石，浑身力道骤然爆发。吱呀一声刺耳的呻吟撕裂耳膜，千斤重的"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 12,
+          "count": 1,
+          "evidence": [
+            "在解释推断对方身份时，前文明确称其为‘校尉’且后文统一称‘周校尉’，但在同一推理句中出现‘身居校尉的女官，除周统领外别无二人’的称谓混用，略显口误。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 13,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（门外撞击之声震耳欲聋，千斤重的硬木书架虽死死顶住正门，但整面木板隔断墙都在剧烈震颤。尘屑扑簌簌从房梁跌落……陆纬随手从地上捡起半截残墨，在粗糙的宣纸背面上运腕疾划。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 13,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（两道苍劲有力的墨线横贯纸面，左划一道向外的墨痕，右挑一道向内的折角，精准勾连出一对首尾咬合的墨色双向箭头。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 14,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题（三人借着全身压下的蛮力，将那根粗如儿臂的楠竹化作攻城重槌，拼尽全身力气往囤心狠狠一撞。咔嚓一声刺耳的脆响撕裂夜空，整座三丈高的庞大粮囤内部传出断裂崩解的轰鸣。囤内暗藏用来撑起虚架的厚实松木隔层挡板，在空心铜刃的蛮横冲击与内外部失衡的压力下，如朽木般连环折断。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 15,
+          "count": 1,
+          "evidence": [
+            "主角作为九品账房文吏，持断竹管单人刺击便使深埋地下的暗渠青石顶板轰然塌陷，在物理受力与文官体魄表现上略显夸张，对硬核写实文风有轻微削弱。（陆纬未有多言，拾起那根断裂的楠竹验粮管，倒转管身，将生铜取粮刃口朝下，运足力气向沙坑核心凹陷处猛力贯刺而入！咚的一声闷响从地底激荡开来。整片沙土猛地下陷数尺，轰然塌落出一个方圆丈余的"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 16,
+          "count": 1,
+          "evidence": [
+            "中段视角短暂切至崇文坊周云旗突袭兑庄，偏重刑侦武戏推进，主角陆纬的现代审计推演在此处略作让位，但回仓汇合后迅速收束，未对主线体验造成明显割裂。（轰然巨响中，两扇包铁大门被整扇撞飞，数百斤重的门扇夹着断裂铁闩砸入庭院，激起漫天泥水。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 17,
+          "count": 1,
+          "evidence": [
+            "主角脑海推演时使用‘穿透式拓扑结构’等现代专业术语稍显出戏，微弱影响历史官场文的沉浸感，但符合技术流爽文受众预期。（他脑中的现代复式借贷模型与穿透式拓扑结构早已飞速运转）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 18,
+          "count": 1,
+          "evidence": [
+            "角色在场状态与前章严重脱节，出现情节回滚与重复受审/求饶的‘假高潮’现象。上一章结尾陆纬已在公案前拍案审问、大掌柜已崩溃求饶招供并抠开暗格；本章开头陆纬却突兀退回‘身负束带、立于阶下’的戴罪状态，由裴敬之重新解缚并命其上堂执案，且大掌柜也重置回‘强撑冷笑’并再次演了一遍瘫倒求饶。（上章：‘陆纬抓起案台上的十六张折色会票"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 18,
+          "count": 1,
+          "evidence": [
+            "核心物证在暗格内的呈现缺乏承接交代。上章结尾暗格揭开为‘朱砂细笔写就的暗底私档’，本章开篇陆纬伸手探入夹层却直接抽出‘七张薄黄的对冲凭折’，随后又由大掌柜从怀中额外掏出‘油布包裹的厚册’，线索道具更替交错，破坏了搜证的逻辑连贯感。（‘暗底私档上的朱砂墨迹尚未褪色……陆纬修长的指尖已探入账册的夹层暗格，抽出七张薄黄的对冲"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.emotion-1",
+          "chapter": 19,
+          "count": 1,
+          "evidence": [
+            "核心悬念线索（敬王赵恪的“飞鹰衔珠紫铜印记”）在上章末尾已作为爆点提前透底，导致本章费尽周折通过暗格与隐墨化学显影的高潮揭秘感被部分稀释。（上一章末尾已写明：“而在供状最末端所附的销赃暗记，赫然指向神京城内规模最大的粮栈四海丰。那是一枚极其特殊的飞鹰衔珠紫铜印记……幕后靠山，正是深居府邸的敬王赵恪”；而本章结尾高潮处耗"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-2",
+          "chapter": 19,
+          "count": 1,
+          "evidence": [
+            "赵秉良在上章末尾已喷血绝望并拉崔元显垫背，本章开头却突兀地重新清醒并攻击陆纬的受审资格，情绪状态衔接稍显回退与工具化。（上一章末尾赵秉良“喉间猛地喷出一股浊血。他自知罪责难逃，癫狂地冷笑起来，死死盯向崔元显……且随赵某一同上断头台吧”，而本章开头又跳出来叫嚷“尚书大人明鉴！陆纬不过是个戴罪待决的卑微仓吏……安能登堂执掌"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.chapter-score-low",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "读者评分 42.6：本章存在致命的剧情倒带与设定吞食硬伤。上一章末尾已经完成了药水显形，并彻底揭露了崔元显内弟及幕后更大黑手‘敬王赵恪’的私库印信，崔元显也已吓瘫。然而本章不仅把整套涂药显影过程重新慢镜头演了一遍，崔元显的认知也倒退为‘浑然不知’，更严重的是上一章已经爆出的‘敬王赵恪印信’在本章被完全抹去不提，导致整章"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continue-reading-no",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "读者不愿继续阅读：本章存在致命的剧情倒带与设定吞食硬伤。上一章末尾已经完成了药水显形，并彻底揭露了崔元显内弟及幕后更大黑手‘敬王赵恪’的私库印信，崔元显也已吓瘫。然而本章不仅把整套涂药显影过程重新慢镜头演了一遍，崔元显的认知也倒退为‘浑然不知’，更严重的是上一章已经爆出的‘敬王赵恪印信’在本章被完全抹去不提，导致整章两"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continuity-1",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "剧情出现严重倒带与关键线索吞食。上一章末尾药水已涂抹完毕，宣纸上已显露出崔侍郎内弟花押以及更大的幕后黑手‘敬王赵恪私库提调的飞鹰衔珠紫铜印纹’，崔元显已吓瘫如烂泥；而本章开篇崔元显心态却倒退回心存侥幸，整章更重新慢放陆纬涂药水显形的过程，且涂到最后上一章已经揭晓的‘敬王印纹’凭空消失，崔元显甚至变成了‘浑然不知死穴已大"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.pacing-2",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "整章节奏严重注水且悬念空转。全章两千余字全在精细描摹紫毫笔蘸酸涂抹、麻纸纤维起沫显字的物理过程，然而显字的结果在上一章结尾已经剧透完毕，导致读者全程在看已知结果的慢动作回放，没有任何实质性的新局势推进。（这一次，笔尖落在了黄麻衬纸最底部的落款与承兑签押之处。那是整个开户凭信最要害的所在……在总号承兑、按期提取八万两折色"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-1",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "1-3章：反派赵秉良的情绪状态在跨章后出现机械性重置。第2章末尾他已被主角层层拆解账目破绽吓得钢刀脱手、面色青白，陷入极度恐慌与忌惮；但第3章开头他前脚落锁离开，后脚送夜宵折返时，态度毫无铺垫地重置为‘居高临下’、‘挂着轻蔑冷笑’、‘抚着双下巴哈哈大笑’，甚至主动挑起‘官场惯例是鼠雀之耗’来给主角递话头，工具人痕迹过重"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "1-3章：前三章全部情节被严格锁在‘通惠仓账房偏厅’这一单一密闭空间内，连续三章的核心互动模式均为‘赵秉良施压/质疑 -> 陆纬用现代逻辑推演账目 -> 赵秉良流汗震惊’，虽然推导的技术切入点不同，但场景调度与博弈结构较为单一。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.character-2",
+          "chapter": 5,
+          "count": 1,
+          "evidence": [
+            "1-5章：甲字库中空木架与满地烂泥当场暴露，现场数十名差役前文已写到‘无不骇然变色’‘不敢卷入擅杀户部正官的抄家重罪’，此处赵秉良下令上枷时，差役却立刻‘如恶狼般扑上前来’，底层差役从恐慌观望到盲从施暴的心态过渡略显生硬。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.issue-01",
+          "chapter": 10,
+          "count": 1,
+          "evidence": [
+            "6-10章：已被尚书当堂革职拘押的重犯，在户部衙署走廊押解时仍能自如躲入死角并向私家死士下达切喉暗号，官署押解防范与内院控制逻辑略显戏剧化便利。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.issue-02",
+          "chapter": 10,
+          "count": 1,
+          "evidence": [
+            "6-10章：“虚耗8600石 + 假垛71400石 = 80000石”的拼凑逻辑在第7章已完成全面推演，第10章算账时再次完整复述该公式，核心数据点的重复度偏高。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.window-score-low",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "16-20章窗口评分 40.4：本阅读窗口（16-20章）前期保持了高水准的现代审计与快节奏破局：第16章夜袭兑庄、第17章复式借贷穿透均展现出专业技术流的降维打击快感。但从第18章开始，剧情陷入‘甲字库公案’的单一场景拉锯，出现连续多章机械重复交代前置身份的灌水问题。更为严重的是，第20章发生了灾难性的剧情倒带与设定"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "16-20章：第20章发生严重的剧情倒带、状态回滚与关键线索吞食。第19章末尾已明确完成药水显影，不仅揭晓了崔侍郎内弟商号花押，更赫然显出了幕后黑手‘敬王赵恪私库提调的飞鹰衔珠紫铜印纹’，崔元显也已彻底吓瘫。然而第20章开篇崔元显的状态竟然倒退为‘暗自指望是基层仓吏糊涂账’‘浑然不知致命死穴已大白’，整章将紫毫笔蘸药水"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "16-20章：第17章与第18章之间审讯进度与人物心理状态严重脱节重置。第17章中大掌柜已被陆纬以复式记账试算平衡彻底击溃并伏地求饶（‘小人招，小人什么都招’），且已亲手扣开牛皮账夹层；但第18章陆纬重新走上公案拍惊堂木，大掌柜又变回‘强撑着冷笑’，随后又被指控凭折吓瘫求饶一次，出现明显的重复审讯与剧情踩刹车。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-4",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "16-20章：涉案核心兑庄字号前后命名不统一。第16章与17章中被查抄的崇文坊老铺统一称为‘丰裕兑庄’，到了第18章至20章突然无说明地全盘变更为‘汇通兑庄’。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.self-evaluation-fallback",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "无独立读者模型，本轮回退写作模型自评"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 37,
+          "avgMs": 44691,
+          "p50Ms": 41042,
+          "maxMs": 77561
+        },
+        "fact-extraction": {
+          "count": 35,
+          "avgMs": 26013,
+          "p50Ms": 22193,
+          "maxMs": 71848
+        },
+        "chapter-judge": {
+          "count": 35,
+          "avgMs": 17613,
+          "p50Ms": 14608,
+          "maxMs": 54404
+        },
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 23627,
+          "p50Ms": 23627,
+          "maxMs": 23627
+        },
+        "outline-expand": {
+          "count": 10,
+          "avgMs": 44133,
+          "p50Ms": 47130,
+          "maxMs": 85736
+        },
+        "outline-agent": {
+          "count": 21,
+          "avgMs": 3764,
+          "p50Ms": 3110,
+          "maxMs": 15054
+        },
+        "reader-outline-judge": {
+          "count": 1,
+          "avgMs": 19433,
+          "p50Ms": 19433,
+          "maxMs": 19433
+        },
+        "reader-chapter-judge": {
+          "count": 20,
+          "avgMs": 12119,
+          "p50Ms": 11164,
+          "maxMs": 17822
+        },
+        "reader-window-judge": {
+          "count": 4,
+          "avgMs": 18455,
+          "p50Ms": 21231,
+          "maxMs": 21528
+        }
+      }
+    }
+  ]
+}

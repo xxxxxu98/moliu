@@ -552,6 +552,7 @@ export function detectNodeVerbatimOverlapIssues(
   prose: string,
   mustCover: string[],
   minRun = 12,
+  severity: 'warning' | 'blocking' = 'warning',
 ): ContinuityIssue[] {
   const normalizedProse = (prose ?? '').replace(/\s+/gu, '');
   if (!normalizedProse) return [];
@@ -583,9 +584,9 @@ export function detectNodeVerbatimOverlapIssues(
       issues.push({
         id: issues.length === 0 ? 'node-verbatim-overlap' : `node-verbatim-overlap-${issues.length + 1}`,
         domain: 'fulfillment',
-        severity: 'warning',
+        severity,
         message:
-          `正文与 mustCover 节点存在连续 ${best} 字逐字相同（节点原句照抄）：` +
+          `正文与大纲节点存在连续 ${best} 字逐字相同（节点原句照抄）：` +
           `「${overlap.slice(0, 24)}…」。大纲节点是给作者的合同描述，不是读者要读的正文——` +
           `把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。`,
         evidence: [overlap.slice(0, 40)],

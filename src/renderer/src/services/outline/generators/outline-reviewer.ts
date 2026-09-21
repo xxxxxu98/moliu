@@ -35,7 +35,9 @@ export type OutlineQualityIssueKind =
   | 'inconsistent-story-scale'
   | 'chapter-reference-out-of-range'
   | 'unknown-character-reference'
-  | 'protagonist-name-mismatch';
+  | 'protagonist-name-mismatch'
+  | 'foreshadow-setup-forbidden-conflict'
+  | 'coolpoint-plan-misaligned';
 
 export interface OutlineQualityIssue {
   kind: OutlineQualityIssueKind;
@@ -395,6 +397,67 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
             `不应重复兑现：把第${right.order}章改写为该线索的新进展或换用新对抗手段`,
         });
       }
+    }
+  }
+
+  // 12. 伏笔埋设×埋设章禁区冲突（结构一致性，2026-09-20 r8reg 大纲评审实证：
+  // 伏笔标 setupChapter:12「江南佛寺功德金免税飞签暗号」，第 12 章 forbiddenZones
+  // 却明文严禁该内容——埋设章的禁区把埋设拦死，伏笔永远埋不进）。判据：伏笔
+  // hint 的 2-gram 与其 setupChapter 章 forbiddenZones 任一条共享 ≥3 个连续 2-gram
+  // （词面强重叠），且该禁区条目不带【让路】标记。
+  const bigramsOf = (text: string): Set<string> => {
+    const clean = (text ?? '').replace(/\s+/gu, '');
+    const grams = new Set<string>();
+    for (let i = 0; i + 2 <= clean.length; i += 1) grams.add(clean.slice(i, i + 2));
+    return grams;
+  };
+  for (const fs2 of outline.foreshadowPlan ?? []) {
+    if (!fs2 || !fs2.hint || !fs2.setupChapter) continue;
+    const bp = chapterBlueprints.find(b => b.orderIndex === fs2.setupChapter);
+    if (!bp) continue;
+    const hintGrams = bigramsOf(fs2.hint);
+    for (const zone of bp.forbiddenZones ?? []) {
+      const zoneText = (zone ?? '').trim();
+      if (!zoneText || zoneText.includes('【让路】')) continue;
+      const zoneGrams = bigramsOf(zoneText);
+      let shared = 0;
+      for (const g of hintGrams) if (zoneGrams.has(g)) shared += 1;
+      if (shared >= 3) {
+        issues.push({
+          kind: 'foreshadow-setup-forbidden-conflict',
+          chapterOrder: fs2.setupChapter,
+          detail:
+            `伏笔「${fs2.hint.slice(0, 24)}…」计划第${fs2.setupChapter}章埋设，但该章禁区「${zoneText.slice(0, 24)}…」` +
+            `词面强重叠会把埋设拦死——要么把该伏笔的埋设改到别的章，要么该禁区条目加【让路】或改写为只保护更早揭示阶段`,
+        });
+        break;
+      }
+    }
+  }
+
+  // 13. 爽点计划×章蓝图对齐（结构一致性，r8reg 大纲评审实证：coolPointPlan 规划
+  // 第 28 章「公审打脸」大爽点，第 28 章蓝图却是完全无关剧情——爽点计划落空，
+  // 读者审按情绪回报断档扣分）。判据：suggestedChapter 落在蓝图范围内但该章
+  // 标题/CBN/mustCover 与爽点 description 零词面交集（2-gram 无一命中）。
+  for (const cool of outline.coolPointPlan ?? []) {
+    if (!cool || !cool.suggestedChapter || !(cool.description ?? '').trim()) continue;
+    const bp = chapterBlueprints.find(b => b.orderIndex === cool.suggestedChapter);
+    if (!bp) continue; // 章号超界由 broken-range/chapter-reference 类兜
+    const coolGrams = bigramsOf(cool.description);
+    const bpText = [bp.title, bp.summary, bp.CBN, bp.CEN, ...(bp.mustCover ?? [])]
+      .filter(Boolean)
+      .join('');
+    const bpGrams = bigramsOf(bpText);
+    let hit = 0;
+    for (const g of coolGrams) if (bpGrams.has(g)) hit += 1;
+    if (hit === 0) {
+      issues.push({
+        kind: 'coolpoint-plan-misaligned',
+        chapterOrder: cool.suggestedChapter,
+        detail:
+          `爽点计划「${cool.description.slice(0, 24)}…」挂第${cool.suggestedChapter}章，但该章蓝图与其零词面关联` +
+          `——爽点没落进蓝图读者就吃不到；把该爽点场面写进该章 mustCover，或把 suggestedChapter 改到真正承载它的章`,
+      });
     }
   }
 

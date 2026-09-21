@@ -159,6 +159,15 @@ export class AIChapterJudge implements ChapterJudge {
         '- 【数字一致】输入的 numericFacts 是近章既成的大额数字宣告（金额/编制/数量）。正文引用同一对象（同一笔银子/同一编制/同一批物资）的数额、数量与既成数值不一致，且未写出勘误、清点更正、查实虚报等剧情性修正过程的，必须报 fact_conflict 且 severity=critical，description 注明「数字蒸发/改写：既成X，本章写成Y」（2026-09-17 g38f r6 实证：同一笔盐税五套口径、太仓存粮四万石无解释改四十万石、押运车队八十箱变八百辆）；正文明示了勘误/清点过程的不算'
       );
     }
+    const fakedDeathNames = (input.fakedDeathNames ?? []).filter(Boolean);
+    if (fakedDeathNames.length > 0) {
+      consistencyRules.push(
+        `- 【假死例外】输入的 fakedDeathNames（${fakedDeathNames.join('、')}）处于假死在册状态——假死是活着的隐匿状态，不是死亡：其在本章活体活动、行动、说话一律合法，禁止因「前文已死」报 fact_conflict 或复活类 issue；但其未经揭晓（当众现身/真相大白场面）就以原身份公开现身于公众场合的，报 logic_gap 且 severity=high，description 注明「假死未揭晓公开现身」（2026-09-20 g38f r8 实证：主角假死被当真死，判官连续拦截活体登场，写手被迫写成空袍道具 48 章）`
+      );
+    }
+    consistencyRules.push(
+      '- 【终态重演】前文（含 prevChapterTail）或本章前文已完整演过的终态仪式/场面（登基/册封/授印/处决/废黜/下狱押解/加封），本章不得再次完整重演同一仪式——后续章只能写该终态的新后果与新进展；若正文把已演过的仪式原样再演一遍（换词不换事），报 logic_gap 且 severity=critical，description 注明「终态重演：X仪式已在前文演过」（2026-09-20 g38f r8 实证：ch190 新帝已登基理政、ch195 正文重演砸镣-更衣-正位大统全套登基典礼；赵恒削籍被演 3 遍）；正文写的是对该终态的后续处置/回响/他人反应的不算'
+    );
 
     const raw = await this.ai.generate<ChapterJudgeResult>({
       purpose: 'chapter-judge',
@@ -234,6 +243,7 @@ export class AIChapterJudge implements ChapterJudge {
         payoffCandidates: payoffCandidates.length > 0 ? payoffCandidates : undefined,
         ...(eraAnchors.length > 0 ? { eraAnchors } : {}),
         ...(numericFacts.length > 0 ? { numericFacts } : {}),
+        ...(fakedDeathNames.length > 0 ? { fakedDeathNames } : {}),
       }),
       parse: value => parseSchema(chapterJudgeResultSchema, normalizeTopLevelObjectShape(value), '章节语义审查结果'),
     });

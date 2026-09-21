@@ -488,6 +488,8 @@ export interface ChapterJudgeInput {
   eraAnchors?: string[];
   /** 近章既成数字叙述：同一笔数额/编制/数量无勘误剧情改写，判官报 fact_conflict */
   numericFacts?: string[];
+  /** 假死在册角色名单（假死=活着隐匿中，非死亡）：其活体活动不报 fact_conflict */
+  fakedDeathNames?: string[];
 }
 
 export interface ChapterJudge {
@@ -668,6 +670,11 @@ export interface LongFormWriteInput {
    * 发明「刑部主事姻亲」降格身份）。写作侧【身份锚】注入。
    */
   characterIdentityAnchors?: Array<{ name: string; identity: string }>;
+  /**
+   * 假死在册角色（r8 实证：假死被登「死亡」后三道防线锁死主角 48 章）。
+   * 假死=活着的隐匿状态，不进终态禁令；写作侧注入【假死纪律】。
+   */
+  fakedDeathCharacters?: Array<{ name: string; chapterIndex: number }>;
   payoffCandidates?: Array<{ id: string; hint: string }>;
   /**
    * 上一章实际写出的结尾原文（批量续写链路传入）。
