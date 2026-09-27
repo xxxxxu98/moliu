@@ -4,6 +4,8 @@
 
 import { describe, it, expect } from 'vitest';
 import {
+  collectEraAnchors,
+  parseChineseYear,
   extractChapterMemory,
   safeExtractChapterMemory,
   buildCharacterStateTable,
@@ -13,6 +15,7 @@ import {
   collectCharacterIdentityAnchors,
   collectFakedDeathCharacters,
   collectFateForbiddenZones,
+  collectFateStatusAnchors,
   collectNumericAnchors,
   overlayCharacterFates,
   overlayCharacterTitles,
@@ -177,9 +180,9 @@ describe('buildPlotProgressTable', () => {
 function memoryWith(changes: ChapterMemory['characterStateChanges'], index: number, corePlot = ''): ChapterMemory {
   return {
     chapterId: `ch-${index}`,
-    chapterTitle: `第${index + 1}章`,
+    chapterTitle: `第${index}章`,
     chapterIndex: index,
-    corePlot: corePlot || `第${index + 1}章剧情`,
+    corePlot: corePlot || `第${index}章剧情`,
     keyEvents: [],
     locations: [],
     characterStateChanges: changes,
@@ -202,21 +205,122 @@ describe('collectCharacterFates / collectFateForbiddenZones', () => {
     const zones = collectFateForbiddenZones(memories, ['裴修远', '周茂', '沈宛君']);
     const zone = zones.find(z => z.includes('周茂'));
     expect(zone).toBeDefined();
-    expect(zone).toContain('第59章');
+    // chapterIndex 即 1 基章号：禁区章号与入账章一致，不再 +1
+    expect(zone).toContain('第58章');
+    expect(zone).not.toContain('第59章');
     expect(zone).toContain('下狱');
     // 白名单外的名字不生成禁入（规则提取的非人名命中被过滤）
     expect(zones.every(z => !z.includes('当场'))).toBe(true);
   });
 
-  it('后续平反/赦免会解除命运禁入', () => {
+  it('平反 delta 只解除被登账的本人', () => {
     const memories = [
       memoryWith([{ characterName: '周茂', stateType: 'status', state: '下狱', detail: '定罪' }], 58),
       memoryWith([{ characterName: '齐王', stateType: 'status', state: '下狱', detail: '圈禁' }], 58),
-      memoryWith([], 90, '新皇登基大赦天下，周茂冤案平反昭雪，官复原职。'),
+      memoryWith(
+        [{ characterName: '周茂', stateType: 'status', state: '平反', detail: '周茂冤案平反昭雪' }],
+        90,
+        '新皇登基大赦天下，周茂冤案平反昭雪，官复原职。'
+      ),
     ];
     const zones = collectFateForbiddenZones(memories, ['周茂', '齐王']);
     expect(zones.some(z => z.includes('周茂'))).toBe(false);
     expect(zones.some(z => z.includes('齐王'))).toBe(true);
+  });
+
+  // ---------- 解除词共现退役（2026-09-23 r8-S1-05 回放实证） ----------
+  // ch119「崔显磕头领命戴罪效力」与顾宪诚同章共现 → 顾宪诚下狱被连带解除；
+  // ch134「防……趁乱劫狱」否定句再次命中；ch142 顾宪诚以次辅身份自由出场。
+
+  it('同章他人的解除叙述不连带解除在押者（崔显戴罪 ≠ 顾宪诚获释）', () => {
+    const memories = [
+      memoryWith([{ characterName: '顾宪诚', stateType: 'status', state: '下狱', detail: '顾宪诚被押入北镇抚司' }], 113),
+      memoryWith(
+        [],
+        119,
+        '陆九霄点破顾宪诚自身难保。陆九霄以崔氏满门性命威逼崔显充当向导，崔显磕头领命戴罪效力。'
+      ),
+      memoryWith([], 134, '此举既防外廷门生与齐王逆党趁乱劫狱，顾宪诚提笔写下割席手书。'),
+    ];
+    const fate = collectCharacterFates(memories).find(f => f.characterName === '顾宪诚');
+    expect(fate?.state).toBe('下狱');
+    expect(fate?.chapterIndex).toBe(113);
+  });
+
+  it('解除词正文无 delta 不解除（平反叙述须由提取侧出账）', () => {
+    const memories = [
+      memoryWith([{ characterName: '周茂', stateType: 'status', state: '下狱', detail: '定罪' }], 58),
+      memoryWith([], 90, '朝野议论为周茂平反昭雪。'),
+    ];
+    expect(collectCharacterFates(memories).some(f => f.characterName === '周茂')).toBe(true);
+  });
+
+  it('保释 delta 解除在押（契约 11 保释族中间态）', () => {
+    const memories = [
+      memoryWith([{ characterName: '钱谦', stateType: 'status', state: '下狱', detail: '收监' }], 40),
+      memoryWith([{ characterName: '钱谦', stateType: 'status', state: '保释', detail: '待罪保释在外' }], 52),
+    ];
+    expect(collectCharacterFates(memories).some(f => f.characterName === '钱谦')).toBe(false);
+  });
+
+  it('押地入账在解除后重建在押，并携带关押地进禁区', () => {
+    const memories = [
+      memoryWith([{ characterName: '顾宪诚', stateType: 'status', state: '下狱', detail: '押入北镇抚司' }], 113),
+      memoryWith([{ characterName: '顾宪诚', stateType: 'status', state: '获释', detail: '奉旨出狱' }], 120),
+      memoryWith(
+        [{ characterName: '顾宪诚', stateType: 'status', state: '押地:相府书斋', detail: '押回相府书斋看管' }],
+        134
+      ),
+    ];
+    const fate = collectCharacterFates(memories).find(f => f.characterName === '顾宪诚');
+    expect(fate).toMatchObject({ state: '下狱', chapterIndex: 134, custodyPlace: '相府书斋' });
+    const zone = collectFateForbiddenZones(memories, ['顾宪诚'])[0];
+    expect(zone).toContain('已于第134章下狱');
+    expect(zone).toContain('现押于相府书斋');
+  });
+
+  it('已在押者押地转移只刷新关押地，不改入狱章', () => {
+    const memories = [
+      memoryWith([{ characterName: '汪伯庸', stateType: 'status', state: '下狱', detail: '收押' }], 100),
+      memoryWith([{ characterName: '汪伯庸', stateType: 'status', state: '押地:扬州按察司牢', detail: '解往扬州' }], 125),
+    ];
+    const fate = collectCharacterFates(memories).find(f => f.characterName === '汪伯庸');
+    expect(fate).toMatchObject({ state: '下狱', chapterIndex: 100, custodyPlace: '扬州按察司牢' });
+  });
+
+  it('去职后押地入账升级为在押', () => {
+    const memories = [
+      memoryWith([{ characterName: '赵宣', stateType: 'status', state: '去职', detail: '革去爵位' }], 98),
+      memoryWith([{ characterName: '赵宣', stateType: 'status', state: '押地:宗人府', detail: '押回宗人府死看' }], 98),
+    ];
+    const fate = collectCharacterFates(memories).find(f => f.characterName === '赵宣');
+    expect(fate).toMatchObject({ state: '下狱', custodyPlace: '宗人府' });
+  });
+
+  it('同章获释与押地并存时不反向重锁；空押地值不建在押', () => {
+    const memories = [
+      memoryWith([{ characterName: '甲', stateType: 'status', state: '下狱', detail: '收押' }], 10),
+      memoryWith(
+        [
+          { characterName: '甲', stateType: 'status', state: '获释', detail: '开释' },
+          { characterName: '甲', stateType: 'status', state: '押地:刑部大牢', detail: '自刑部大牢放出' },
+        ],
+        12
+      ),
+      memoryWith([{ characterName: '乙', stateType: 'status', state: '押地:无', detail: '—' }], 12),
+    ];
+    const names = collectCharacterFates(memories).map(f => f.characterName);
+    expect(names).not.toContain('甲');
+    expect(names).not.toContain('乙');
+  });
+
+  it('押地入账不改死亡终态，也不当作后生活动熔断死亡', () => {
+    const memories = [
+      memoryWith([{ characterName: '严开礼', stateType: 'status', state: '死亡', detail: '撞柱气绝' }], 178),
+      memoryWith([{ characterName: '严开礼', stateType: 'status', state: '押地:诏狱', detail: '押入诏狱' }], 186),
+    ];
+    const fate = collectCharacterFates(memories).find(f => f.characterName === '严开礼');
+    expect(fate).toMatchObject({ state: '死亡', chapterIndex: 178 });
   });
 
   it('获释 delta 到账即解除禁入（合同8解除值不再被 FATE_STATES 丢弃）', () => {
@@ -316,7 +420,11 @@ describe('overlayCharacterFates（runtime 实体命运状态接线）', () => {
     };
     const memories = [
       memoryWith([{ characterName: '周茂', stateType: 'status', state: '下狱', detail: '定罪' }], 58),
-      memoryWith([], 90, '新皇登基大赦天下，周茂冤案平反昭雪。'),
+      memoryWith(
+        [{ characterName: '周茂', stateType: 'status', state: '平反', detail: '冤案平反昭雪' }],
+        90,
+        '新皇登基大赦天下，周茂冤案平反昭雪。'
+      ),
     ];
     const { applied } = overlayCharacterFates(entities, memories);
     expect(applied).toBe(0);
@@ -461,16 +569,60 @@ describe('数字锚（collectNumericAnchors，g38f r6 长程数字漂移实证�
     const anchors = collectNumericAnchors(memories, 8);
     expect(anchors.some(a => a.includes('二百二十万两'))).toBe(true);
     expect(anchors.some(a => a.includes('八十辆'))).toBe(true);
-    // memoryWith 的第二参是 0-based chapterIndex：99 → 前缀「第100章既成」
-    expect(anchors.some(a => a.includes('第100章既成「两淮盐税'))).toBe(true);
+    // memoryWith 的第二参即 1 基章号：99 → 前缀「第99章既成」
+    expect(anchors.some(a => a.includes('第99章既成「两淮盐税'))).toBe(true);
     // 无数字句的章不产生锚
     expect(anchors.some(a => a.includes('钱粮清点'))).toBe(false);
   });
 
-  it('上限 maxAnchors 生效且重复句去重', () => {
+  it('上限 maxAnchors 生效且重复句去重；口径正典头部声明最新值优先（2026-09-24 L1）', () => {
     const m = memoryWith([], 50, '库银共计白银三百万两。余粮仅四万石。兵额八千人。盐引二十万道。');
     const anchors = collectNumericAnchors([m, m], 2);
-    expect(anchors).toHaveLength(2);
+    // 首行为正典头部兜底句 + maxAnchors 条正文锚
+    expect(anchors).toHaveLength(3);
+    expect(anchors[0]).toContain('最新既成值');
+    expect(anchors[0]).toContain('以章号最新者为准');
+    expect(anchors.filter(a => a.startsWith('第50章既成'))).toHaveLength(2);
+  });
+
+  it('同对象多值只保留最新章一条（500ch 盐案四档漂移形态，2026-09-24 L1）', () => {
+    const memories = [
+      memoryWith([], 200, '两淮盐案亏空累计三百万两。'),
+      memoryWith([], 210, '两淮盐案亏空累计四百万两。'),
+      memoryWith([], 220, '两淮盐案亏空累计五百万两。'),
+    ];
+    const anchors = collectNumericAnchors(memories, 8);
+    // 「两淮盐案」3 字前缀共享 → 聚为一对象，仅保留最新章 220 的句子
+    expect(anchors.some(a => a.includes('五百万两'))).toBe(true);
+    expect(anchors.some(a => a.includes('三百万两'))).toBe(false);
+    expect(anchors.some(a => a.includes('四百万两'))).toBe(false);
+  });
+
+  it('命运状态正典取每角色最新状态（在押凭空自由出场防线，2026-09-24 L1）', () => {
+    const memories = [
+      {
+        chapterIndex: 10,
+        characterStateChanges: [
+          { characterName: '崔有道', state: '下狱' },
+          { characterName: '裴砚', state: '去职' },
+        ],
+      },
+      {
+        chapterIndex: 30,
+        characterStateChanges: [{ characterName: '崔有道', state: '死亡' }],
+      },
+      {
+        chapterIndex: 20,
+        characterStateChanges: [{ characterName: '裴砚', state: '复职' }],
+      },
+    ];
+    const anchors = collectFateStatusAnchors(memories as never);
+    const cui = anchors.find(a => a.name === '崔有道');
+    const pei = anchors.find(a => a.name === '裴砚');
+    expect(cui?.status).toBe('死亡');
+    expect(cui?.chapterIndex).toBe(30);
+    expect(pei?.status).toBe('复职');
+    expect(pei?.chapterIndex).toBe(20);
   });
 });
 
@@ -515,5 +667,52 @@ describe('假死在册（collectFakedDeathCharacters，g38f r8 主角假死线�
       memoryWith([{ characterName: '陆九霄', stateType: 'status', state: '揭晓', detail: '当众现身' }], 175),
     ]);
     expect(faked).toHaveLength(0);
+  });
+});
+
+describe('collectEraAnchors 当前年份锚（r11 三洞失败签名：纪年跨度/未来年份族）', () => {
+  const eraMemory = (chapterIndex: number, corePlot: string): ChapterMemory =>
+    ({
+      chapterId: `c${chapterIndex}`,
+      chapterTitle: `第${chapterIndex}章`,
+      chapterIndex,
+      corePlot,
+      keyEvents: [],
+      locations: [],
+      characterStateChanges: [],
+      revealedForeshadows: [],
+      newForeshadows: [],
+      emotionalTone: '未知',
+      wordCount: 0,
+      createdAt: new Date().toISOString(),
+    }) as ChapterMemory;
+
+  it('parseChineseYear：一~九十九换算（含十/十二/二十/二十三）', () => {
+    expect(parseChineseYear('天德九年')).toBe(9);
+    expect(parseChineseYear('天德十年')).toBe(10);
+    expect(parseChineseYear('天德十二年')).toBe(12);
+    expect(parseChineseYear('天德二十年')).toBe(20);
+    expect(parseChineseYear('天德二十三年')).toBe(23);
+    expect(parseChineseYear('无年份数字')).toBeNull();
+  });
+
+  it('当前年份锚：最晚章年份为当前年，头行带换算规则与未来年份禁令', () => {
+    // 锚正则要求年号前有 ≥2 字上文（行首裸年号不召回），年号显示取尾部两字
+    const anchors = collectEraAnchors([
+      eraMemory(3, '转眼已是天德三年，春闱开仓放粮'),
+      eraMemory(87, '翻开旧档：今年适逢天德十二年，盐课账目浮现'),
+    ]);
+    expect(anchors[0]).toContain('当前纪年「天德12年」');
+    expect(anchors[0]).toContain('跨度＝(Y−X)年');
+    expect(anchors[0]).toContain('不得大于12');
+    expect(anchors.some(l => l.includes('第87章纪年「'))).toBe(true);
+  });
+
+  it('无纪年锚时返回空数组（SceneDraftEngine 走未确立年号分支）', () => {
+    expect(collectEraAnchors([eraMemory(5, '普通剧情')])).toHaveLength(0);
+  });
+
+  it('真实明朝年号不注入锚', () => {
+    expect(collectEraAnchors([eraMemory(5, '永乐三年的旧事')])).toHaveLength(0);
   });
 });

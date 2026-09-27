@@ -26,6 +26,8 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { buildShadowLedgerReport } from './state-ledger.mjs';
+
 const TEMP_DIR = join(process.cwd(), 'temp');
 const MATRIX_DIR = process.env.MOLIU_STORYFLOW_MATRIX_DIR
   ? join(process.cwd(), process.env.MOLIU_STORYFLOW_MATRIX_DIR)
@@ -405,10 +407,24 @@ function triageProvider(providerId, meta) {
     ? (() => {
         const cvs = paraCvRows.map(it => it.paraCv).sort((a, b) => a - b);
         const uniformCount = paraCvRows.filter(it => it.paraCv < 0.14 && it.paras >= 12).length;
+        // 叙述段过重（2026-09-27 新维度）：双触发——章级叙述段中位 ≥140（默认节奏
+        // 就是墙）或墙占比 ≥0.15（中位正常但 200+ 墙成片，散点墙形态）。
+        // 对话段拉低全体均值/CV 的盲区由该字段补上；阈值与 typesetting
+        // NARRATIVE_* 同源，跑一轮真实回归后冻结。
+        const narrativeRows = paraCvRows.filter(it => typeof it.narrativeMedian === 'number');
+        const narrativeMedians = narrativeRows.map(it => it.narrativeMedian).sort((a, b) => a - b);
+        const heavyCount = narrativeRows.filter(
+          it => it.narrativeMedian >= 140 || (it.narrativeWallRatio ?? 0) >= 0.15
+        ).length;
         return {
           chapters: paraCvRows.length,
           medianCv: cvs[Math.floor(cvs.length / 2)],
           uniformChapters: uniformCount,
+          narrativeChapters: narrativeRows.length,
+          medianNarrative: narrativeMedians.length
+            ? narrativeMedians[Math.floor(narrativeMedians.length / 2)]
+            : null,
+          narrativeHeavyChapters: heavyCount,
         };
       })()
     : null;
@@ -417,6 +433,17 @@ function triageProvider(providerId, meta) {
       'prose.rhythm-uniform',
       null,
       `均匀化章 ${paraStats.uniformChapters}/${paraStats.chapters}，cv 中位 ${paraStats.medianCv}（<0.14 且段数≥12 为均匀化）`
+    );
+  }
+  if (
+    paraStats &&
+    paraStats.narrativeChapters > 0 &&
+    paraStats.narrativeHeavyChapters / paraStats.narrativeChapters > 0.3
+  ) {
+    acc.add(
+      'prose.narrative-heavy',
+      null,
+      `叙述段过重章 ${paraStats.narrativeHeavyChapters}/${paraStats.narrativeChapters}，叙述段中位字数中位 ${paraStats.medianNarrative}（章级中位 ≥140 或墙占比 ≥0.15 为过重）`
     );
   }
 
@@ -548,7 +575,7 @@ function triageProvider(providerId, meta) {
           if (booked && (booked.has('下狱') || booked.has('死亡') || booked.has('驾崩'))) continue;
           const hit = detainedAsSubject(text, name);
           if (!hit) continue;
-          const chNum = (m.chapterIndex ?? 0) + 1;
+          const chNum = m.chapterIndex ?? 0;
           const entry = unbookedByName.get(name) ?? { firstChapter: chNum, chapters: [], hit };
           if (!entry.chapters.includes(chNum)) entry.chapters.push(chNum);
           unbookedByName.set(name, entry);
@@ -560,6 +587,43 @@ function triageProvider(providerId, meta) {
           entry.firstChapter,
           `${name}有羁押完成体叙述（首见第${entry.firstChapter}章「${entry.hit.slice(0, 30)}」，共 ${entry.chapters.length} 章：${entry.chapters.slice(0, 8).join(',')}${entry.chapters.length > 8 ? '…' : ''}）但台账无其下狱账——提取合同 7 漏账会让禁入/裁剪防线空转（g38f r4 ch129 崔显在押复活实证）。候选待书审 AI 核实是否回忆/转述/已获释`
         );
+      }
+    }
+
+    // 统一状态账本·第 1 阶段影子报告（docs/unified-state-ledger.md §7）：不接管
+    // 生产，只把「状态机违规 / 事件有账无候选 / 与现有锚分歧」三类候选曝光。
+    // 全部是候选口径（交 fate-adjudicate / 书审 AI 终审），不参与 verdict 分级。
+    if (memories.length >= 3) {
+      try {
+        const shadow = buildShadowLedgerReport(memories);
+        if (shadow.violations.length > 0) {
+          for (const v of shadow.violations.slice(0, 12)) {
+            acc.add(
+              'ledger.violation-candidate',
+              v.chapter,
+              `${v.entityId} ${v.attribute} ${v.fromValue ?? '∅'}→${v.toValue}（${v.transition}）：${v.note}。影子账本候选，终审归 fate-adjudicate`
+            );
+          }
+          if (shadow.violations.length > 12) {
+            acc.add('ledger.violation-candidate', 0, `状态机违规候选共 ${shadow.violations.length} 条，仅列前 12（影子账本）`);
+          }
+        }
+        for (const g of shadow.gaps.slice(0, 8)) {
+          acc.add(
+            'ledger.gap-candidate',
+            g.chapter,
+            `第${g.chapter}章命中死亡完成体「${g.anchor}」但同章无 vital 条目（${g.preview.slice(0, 40)}…）：${g.note}`
+          );
+        }
+        for (const d of shadow.legacyDiff.slice(0, 8)) {
+          acc.add(
+            'ledger.legacy-diff',
+            0,
+            `${d.entityId} 账本快照 ${d.ledger} vs ${d.legacy}：${d.note}`
+          );
+        }
+      } catch (error) {
+        acc.add('ledger.shadow-error', 0, `影子账本报告失败：${String(error).slice(0, 120)}`);
       }
     }
   }
@@ -645,6 +709,9 @@ function triageProvider(providerId, meta) {
     else if (YELLOW_ALWAYS.has(sig.id)) sig.severity = 'yellow';
     else if (sig.id.startsWith('infra.transient.')) sig.severity = 'yellow';
     else if (sig.id.startsWith('reader.') || sig.id.startsWith('prose.')) sig.severity = 'yellow';
+    // 影子账本（unified-state-ledger 第 1 阶段）恒黄：全部是候选口径，终审归
+    // fate-adjudicate/书审 AI，不参与阻断判定（误当红签会污染 verdict 与 --diff）
+    else if (sig.id.startsWith('ledger.')) sig.severity = 'yellow';
     else if (sig.id === 'model.empty-response' || sig.id === 'quality.words-overlimit') {
       // 章级空响应/超限且该章最终未通过 → 红；大纲阶段或已恢复 → 黄
       sig.severity = sig.chapter != null && !acceptedChapters.has(sig.chapter) ? 'red' : 'yellow';
@@ -1086,7 +1153,8 @@ export function scanLedgerDeathResurrection(memories, chapters, roster) {
       if (name.length < 2 || name.length > 8) continue;
       if (roster && !roster.has(name)) continue;
       if (!TERMINAL_FATES.has(change.state)) continue;
-      const chapter = (m.chapterIndex ?? 0) + 1;
+      // chapterIndex 即 1 基章号（ChapterMemory 类型约定），与正文文件章号 ch.n 同口径
+      const chapter = m.chapterIndex ?? 0;
       const list = deathsByName.get(name) ?? [];
       if (!list.some(item => item.chapter === chapter)) {
         list.push({ state: change.state, chapter });

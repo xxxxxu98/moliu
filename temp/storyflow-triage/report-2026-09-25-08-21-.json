@@ -1,0 +1,769 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-09-25T08:21:17.158Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-matrix-g38f200chr10b",
+  "providers": [
+    {
+      "providerId": "provider-1787044972770",
+      "model": "gemini-3.8-flash-high",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 700,
+      "chaptersAccepted": "160/200",
+      "words": {
+        "min": 2516,
+        "avg": 3202,
+        "max": 3536
+      },
+      "paraRhythm": null,
+      "repairMetrics": null,
+      "runtimeMetrics": null,
+      "readerMetrics": null,
+      "readerOutlineScore": null,
+      "readerIndependent": null,
+      "phaseTimings": {
+        "outlineDirectionsMs": 26942,
+        "outlineExpandMs": 555639,
+        "outlineRollMs": 1132244,
+        "applyOutlineMs": 1295,
+        "continueWriteMs": 0,
+        "totalMs": 0
+      },
+      "runtimeBackend": null,
+      "verdict": "infra-failure",
+      "verdictReason": "失败由网络/网关错误主导",
+      "signatures": [
+        {
+          "id": "fate.contradiction-candidate",
+          "chapter": 182,
+          "count": 1,
+          "evidence": [
+            "宏景帝于第182章驾崩（台账），其后 4 章正文仍写到该角色（首见第195章，章号：195,196,198,200）。候选待 AI 裁决：回忆性提及/剧情解释（假死、越狱、翻案）不是复活"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.other",
+          "chapter": null,
+          "count": 52,
+          "evidence": [
+            "重试 1/2：API 未返回内容",
+            "重试 1/2：API 未返回内容",
+            "重试 1/2：API 未返回内容"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.warning-other",
+          "chapter": null,
+          "count": 40,
+          "evidence": [
+            "单章蓝图补全第 2 章伏笔时序消毒：删除 [\"顾显之趁其不备夺下朱笔在囚室墙面画出借贷平衡草表\",\"顾显之当面指出粮库账目借贷失衡的致命反常。\",\"顾显之抢过狱卒朱笔在囚室墙面列出复式分录\"]",
+            "单章蓝图补全第 5 章伏笔时序消毒：删除 [\"刑部尚书抛下通济仓焚毁前夕的残存底册拓片。\",\"刑部尚书暗中给予顾显之通济仓残存底册拓片。\"]",
+            "单章蓝图补全第 6 章伏笔时序消毒：删除 [\"宏景帝在大内承明殿与户部公署密阅死牢墙壁借贷报表拓印\",\"宏景帝在大内承明殿与户部公署批阅密报下令提审死囚顾显之\"]"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.stream-interrupted",
+          "chapter": null,
+          "count": 3,
+          "evidence": [
+            "重试 1/2：AI 流式响应提前中断：已收到 1617 字，未见结束标记",
+            "重试 1/2：AI 流式响应提前中断：已收到 4367 字，未见结束标记",
+            "重试 1/2：AI 流式响应提前中断：已收到 6268 字，未见结束标记"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 129,
+          "count": 2,
+          "evidence": [
+            "压缩后仍 3821/3540，保留压缩稿",
+            "压缩后仍 3839/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 92,
+          "count": 2,
+          "evidence": [
+            "正文与大纲节点存在连续 15 字逐字相同（节点原句照抄）：「开启地下密室核心机关的纯铜钥匙…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。；对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换",
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 101,
+          "count": 2,
+          "evidence": [
+            "正文与大纲节点存在连续 13 字逐字相同（节点原句照抄）：「煽动暴动的通海钱庄掌柜供词…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。；对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段",
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.legacy-diff",
+          "chapter": 0,
+          "count": 2,
+          "evidence": [
+            "黄崇德 账本快照 custody=held vs 第199章最晚行「头衔:内廷六品秉笔执事·正六品」：账本仍有终态，现有「最晚值」锚读不到（r8-S1-05 顾宪诚形态）",
+            "姬玄烈 账本快照 custody=held vs 第183章最晚行「押地:刑部死牢底层」：账本仍有终态，现有「最晚值」锚读不到（r8-S1-05 顾宪诚形态）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 11,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4638/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 13,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3624/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 22,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4177/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 41,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4740/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 62,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3791/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 64,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3577/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 65,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4391/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 67,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4582/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 79,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3735/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 83,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3868/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 92,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3706/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 100,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4354/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 101,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3830/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 140,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4457/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 155,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3653/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 156,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3576/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 159,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4381/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 8,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 34,
+          "count": 1,
+          "evidence": [
+            "正文与大纲节点存在连续 22 字逐字相同（节点原句照抄）：「老尚书沉沉叹息，案头那方旧端砚映着幽暗烛火。…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。；正文与大纲节点存在连续 22 字逐字相同（节点原句照抄）：「老尚书沉"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 41,
+          "count": 1,
+          "evidence": [
+            "章末顾显之辨认腰牌暗记处: 角色“徐世英”受 futureReveals 限制不得登场或被揭示（计划: 第42章，notBeforeChapter: 42），当前为第41章，正文却提前明确点名“定国公徐世英”并揭穿其执掌北境天雄军与私兵暗记。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 44,
+          "count": 1,
+          "evidence": [
+            "正文中段死士口供交代处与裴谦近侍传报段落: 正文出现两处严重的回环重复: 死士交代天雄军密牒及封锁九门图谋的内容被连续复述两遍；裴谦近侍通报周元朗押解与转达尚书嘱托的整段台词亦被连续复述两遍。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 77,
+          "count": 1,
+          "evidence": [
+            "通海钱庄水字大库大掌柜反应处: 文本出现相邻连续两段几乎一模一样的大掌柜神态与台词描写，属于明显的段落复制残留与逻辑重复。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 81,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 97,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 100,
+          "count": 1,
+          "evidence": [
+            "未履约节点：【单章】沈万思破获通海地下银库起获三百万两私藏现银入官库"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 129,
+          "count": 1,
+          "evidence": [
+            "正文与大纲节点存在连续 25 字逐字相同（节点原句照抄）：「钱庄门楼上大掌柜披头散发地看着街口涌来的滔天人潮…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。；正文与大纲节点存在连续 23 字逐字相同（节点原句照抄）：「现场"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.semantic-fact_conflict",
+          "chapter": 130,
+          "count": 1,
+          "evidence": [
+            "正文中段商民围观运使司榜文处: 数字蒸发/改写: 既成汪家欠国库正税与罚银整整二十四万两，本章写成汪家欠课三十六万两"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 130,
+          "count": 1,
+          "evidence": [
+            "当前 3551 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.semantic-fact_conflict",
+          "chapter": 140,
+          "count": 1,
+          "evidence": [
+            "中军舱门忽被推开，户部尚书兼文华殿大学士裴谦踱步而入。: 角色动线与前章既成事实冲突。第139章既成事实明确载明「顾显之辞别户部尚书裴谦，率领装载三百万两现银的船队整装就绪，准备由江都开拔进京」，裴谦留在江都并未随船开拔；本章正文却没有任何追赶、登船或同行变故的交代，直接让裴谦出现在运河航行的船舱中（「中军舱门忽被推开"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 156,
+          "count": 1,
+          "evidence": [
+            "未履约节点：【单章】顾显之在度支司推演出天雄军军粮七日耗尽的精确数额"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 156,
+          "count": 1,
+          "evidence": [
+            "顾显之与沈万思推算贷方粮耗段落: 算术自洽断裂: 天雄军每日粮耗算术推演严重矛盾。验算过程：1) 步卒17,000人×3升/人=51,000升，重骑3,000人×5升/人=15,000升，战兵人头消耗合计66,000升（合660石），正文却宣称「刚好是一千一百石净米」；2) 各项日耗分项累加：人头1,100石+战马13"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.semantic-fact_conflict",
+          "chapter": 156,
+          "count": 1,
+          "evidence": [
+            "顾显之分析战局对话: 徐世英阵营立场与状态摘要设定严重冲突。状态摘要明确徐世英为「居功自傲的北境宿将公侯，勾结大皇子私藏边粮的兵变主谋」、「与大皇子姬玄烈密谋截留朝廷三十万石边粮，私自储备于太原秘密粮仓作为逼宫叛乱军资」，属于逼宫叛乱的大皇子同盟核心；正文中顾显之却将其作为朝廷守城将领提及（「只要承天门守将徐世英继续以"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 159,
+          "count": 1,
+          "evidence": [
+            "当前 4381 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 103,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10b-ch103-1790287816184.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 106,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10b-ch106-1790288507061.jsonl seq4 fact-extraction 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 134,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10b-ch134-1790294960757.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 14,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10b-ch14-1790266052696.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 159,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10b-ch159-1790301737908.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 42,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10b-ch42-1790272232106.jsonl seq5 fact-extraction 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 63,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10b-ch63-1790277490980.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.titles-shrunk-local",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "本地收缩超长标题/CBN/CEN 共 5 章（第 7、24、37、40、48 章），未发 AI 请求"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 30,
+          "count": 1,
+          "evidence": [
+            "周元朗 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 48,
+          "count": 1,
+          "evidence": [
+            "周元朗 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 138,
+          "count": 1,
+          "evidence": [
+            "黄崇德 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 159,
+          "count": 1,
+          "evidence": [
+            "周元朗 custody held→fugitive（escape）：在押↔逃亡往返已达 3 次（structure.repeat 信号，供滚纲参考）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 166,
+          "count": 1,
+          "evidence": [
+            "姬玄烈 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 180,
+          "count": 1,
+          "evidence": [
+            "姬玄烈 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 183,
+          "count": 1,
+          "evidence": [
+            "姬玄烈 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 193,
+          "count": 1,
+          "evidence": [
+            "周元朗 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 195,
+          "count": 1,
+          "evidence": [
+            "周元朗 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.gap-candidate",
+          "chapter": 7,
+          "count": 1,
+          "evidence": [
+            "第7章命中死亡完成体「斩立决」但同章无 vital 条目（服并打入天牢候审，下旨暂免顾显之与沈万思斩立决之刑并押送御前值房看管…）：死亡完成体出现但同章无 vital 条目（候选，交仲裁）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.gap-candidate",
+          "chapter": 50,
+          "count": 1,
+          "evidence": [
+            "第50章命中死亡完成体「暴毙」但同章无 vital 条目（明殿外玉阶前告知顾显之前任巡盐御史陆大人暴毙旧事以作警示，顾显之坚称天理法度绝不…）：死亡完成体出现但同章无 vital 条目（候选，交仲裁）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.gap-candidate",
+          "chapter": 52,
+          "count": 1,
+          "evidence": [
+            "第52章命中死亡完成体「暴毙」但同章无 vital 条目（顾显之赴曲池别苑私宴践行并以前任巡盐御史暴毙之事出言威胁。 顾显之收下请柬但当面…）：死亡完成体出现但同章无 vital 条目（候选，交仲裁）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.gap-candidate",
+          "chapter": 121,
+          "count": 1,
+          "evidence": [
+            "第121章命中死亡完成体「暴毙」但同章无 vital 条目（见古运河对岸几大盐商大宅齐悬白幡宣告家主暴毙抗拒催缴 建安元年至三年两淮盐运使司…）：死亡完成体出现但同章无 vital 条目（候选，交仲裁）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.gap-candidate",
+          "chapter": 130,
+          "count": 1,
+          "evidence": [
+            "第130章命中死亡完成体「枭首」但同章无 vital 条目（缴欠税，逾期按谋反谋叛全族抄没家产且首恶枭首。 沈万思奉命在红榜下排布六张黄花梨…）：死亡完成体出现但同章无 vital 条目（候选，交仲裁）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.gap-candidate",
+          "chapter": 149,
+          "count": 1,
+          "evidence": [
+            "第149章命中死亡完成体「头颅滚落」但同章无 vital 条目（雄军西山大营驻扎兵额两万人性质确立 副将头颅滚落帐前，姬玄烈拔剑怒吼全军披甲攻城…）：死亡完成体出现但同章无 vital 条目（候选，交仲裁）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.gap-candidate",
+          "chapter": 166,
+          "count": 1,
+          "evidence": [
+            "第166章命中死亡完成体「伏诛」但同章无 vital 条目（白玉瓷片在金砖地上撞得粉碎。正阳门外叛逆伏诛的捷报刚由飞骑穿过重重禁门送抵内廷，…）：死亡完成体出现但同章无 vital 条目（候选，交仲裁）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.gap-candidate",
+          "chapter": 175,
+          "count": 1,
+          "evidence": [
+            "第175章命中死亡完成体「气绝」但同章无 vital 条目（门洞，披甲侍卫已拔刀抢上白石露台，将坠落气绝的黑衣死士围得水泄不通。姬玄羽手中佩…）：死亡完成体出现但同章无 vital 条目（候选，交仲裁）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "outline-roll": {
+          "count": 19,
+          "avgMs": 60781,
+          "p50Ms": 53621,
+          "maxMs": 123954
+        },
+        "scene-draft": {
+          "count": 288,
+          "avgMs": 44041,
+          "p50Ms": 39553,
+          "maxMs": 146099
+        },
+        "fact-extraction": {
+          "count": 273,
+          "avgMs": 22747,
+          "p50Ms": 20963,
+          "maxMs": 85460
+        },
+        "chapter-judge": {
+          "count": 271,
+          "avgMs": 16764,
+          "p50Ms": 14519,
+          "maxMs": 60535
+        },
+        "fact-extraction-recheck": {
+          "count": 50,
+          "avgMs": 4426,
+          "p50Ms": 3901,
+          "maxMs": 22258
+        },
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 26935,
+          "p50Ms": 26935,
+          "maxMs": 26935
+        },
+        "outline-expand": {
+          "count": 20,
+          "avgMs": 44332,
+          "p50Ms": 44566,
+          "maxMs": 83326
+        },
+        "outline-agent": {
+          "count": 17,
+          "avgMs": 4570,
+          "p50Ms": 4405,
+          "maxMs": 8363
+        }
+      }
+    }
+  ]
+}

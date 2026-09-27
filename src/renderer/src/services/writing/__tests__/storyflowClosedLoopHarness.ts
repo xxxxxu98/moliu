@@ -610,7 +610,7 @@ function buildCriticalProjectHash(project: Project): string {
 }
 
 /** 注入真实 AI 配置到 settingsStore（UnifiedOutlineGenerator.getAIConfig 依赖它） */
-function injectSettingsStore(cfg: ResolvedRealAiConfig): void {
+export function injectSettingsStore(cfg: ResolvedRealAiConfig): void {
   // 复用当前 active Pinia（每章 hydrate 后已 setActivePinia）；
   // 仅在完全没有 active Pinia 时（如开题中心首次调用）才新建。
   // 此前无条件 createPinia() 会把 hydrate 刚设好的 chapters store 冲掉，

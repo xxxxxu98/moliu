@@ -305,7 +305,7 @@ export function buildPlotProgressTable(memories: ChapterMemory[]): string {
   lines.push('### 近期情节摘要', '');
   const recentMemories = memories.slice(-5);
   for (const memory of recentMemories) {
-    lines.push(`**第${memory.chapterIndex + 1}章 · ${memory.chapterTitle}**`);
+    lines.push(`**第${memory.chapterIndex}章 · ${memory.chapterTitle}**`);
     lines.push(`> ${memory.corePlot.slice(0, 100)}${memory.corePlot.length > 100 ? '...' : ''}`);
     lines.push('');
   }
@@ -359,7 +359,7 @@ export async function buildWritingContext(
   // 构建近期章节原文（从章节数据中获取，这里用内存中的数据）
   // 注意：实际使用时应该从 projectStore 获取完整的章节内容
   const shortTermFullText = recentMemories
-    .map(m => `【第${m.chapterIndex + 1}章 · ${m.chapterTitle}】\n\n${m.corePlot}`)
+    .map(m => `【第${m.chapterIndex}章 · ${m.chapterTitle}】\n\n${m.corePlot}`)
     .join('\n\n==========\n\n');
 
   // 构建角色状态表和情节进度表

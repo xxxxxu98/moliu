@@ -1,6 +1,6 @@
 ---
 name: storyflow-release-loop
-description: Storyflow 可上线验收大循环。把「真实 AI 生成整本书 → 确定性 triage → 导出全书+预检 → AI 逐章通读书审(Findings S1-S4) → 归因四分诊 → 代码修复+vitest 回归 → 两级真实回归(20章快速+100章终验)」串成单一外层闭环，退出条件是内容质量达标而非"没报错"。触发方式：/storyflow-release-loop、「可上线大循环」「验收大循环」「上线验收一轮」「跑到可上线为止」。
+description: Storyflow 可上线验收大循环。把「真实 AI 生成整本书 → 确定性 triage → 导出全书+预检 → AI 逐章通读书审(结构化 findings.json 台账) → 跨轮收敛与升级判定 → 归因四分诊 → 代码修复+vitest 回归 → 三级真实回归(章节回放+20章快速+100章终验)」串成单一外层闭环，退出条件是由台账数据计算的上线判定而非"没报错"或报告自评。触发方式：/storyflow-release-loop、「可上线大循环」「验收大循环」「上线验收一轮」「跑到可上线为止」。
 ---
 
 # Storyflow 可上线验收大循环
@@ -16,6 +16,14 @@ description: Storyflow 可上线验收大循环。把「真实 AI 生成整本�
 + ending-audit 完本指标过关（章节完整 + 伏笔无 main 级未回收 + 完本收束：
   closure signals>0 且结局书审 rubric 第 6 项「新钩子收尾」无 S1/S2）+ 前三章盲测通过
 ```
+
+> **2026-09-23 判定权收归数据**：「可上线」不再由书审报告自行宣布，唯一出口是
+> `findings-ledger.mjs validate` 从 findings.json 计算的判定（见第 4 步末「Findings 台账」）。
+> 缺任何一项数据（审法、读者裁判、完本、盲测、干预记录）都按未通过处理——缺失 ≠ 通过。
+> r9 教训：同一份 S2 清单仅改标签就从 5 变 0；审法与读者裁判缺失照样写了 READY。
+> 与 north-star 对齐的两条：S2>0 阻断（验收门 3）；本轮用过 `storyflow-repair-empty`
+> 补写即阻断（验收门 1 人工零干预）——补写仍可用来拿到完整书审材料，但该轮判定必为
+> NOT READY，要上线判定须零补写重跑。
 
 > **2026-09-02 agent 化重构**：命运事件的「入账」全权归写作侧 AI 提取合同
 > （FactExtractor 契约 7-10：死亡/驾崩/下狱/去职/定罪族命运宣告——含一句带过、
@@ -34,7 +42,7 @@ netstat -ano | findstr :8045 | findstr LISTENING
 # 2. harness 配置在位（曾因 temp 全量清扫被删导致冒烟秒失败；KEEP 只保护配置/书审/断点，不含单轮矩阵）
 #    temp/continue-write.real.config.json + temp/continue-write.real.config.example.json
 #    若缺：从 example 结构重建 {"enabled":true,"providerId":"<厂商id>"} 并 JSON.parse 验证
-#    ai-traces 由 temp:clean 按天裁剪 jsonl，整目录删除需 --dir ai-traces
+#    ai-traces 由 temp:clean 按天裁剪 jsonl；整目录删除用 --dir ai-traces，或 npm run temp:clean -- --purge
 
 # 3. 厂商确认（--list 看 ★；反重力 gemini-3.7-flash-high 的当前 id 要现场核对，勿凭记忆写死）
 node scripts/agent-storyflow-real-multi.mjs --list
@@ -129,6 +137,66 @@ node .agents/skills/storyflow-release-loop/scripts/fate-adjudicate.mjs "<matrix�
 上线判定口径（2026-09-15 对齐）：S1=0 + S2 收敛到批量可修口径类 + 读者裁判达线即可评估
 上线；S3 观感级（套路同构/AI 腔词频）记入日常迭代，不阻塞上线。
 
+### Findings 台账（2026-09-23 起每轮强制，替代散文 QUALITY-REPORT 的判定职能）
+
+通读汇总后，除 QUALITY-REPORT.md（给人读）外必须产出结构化台账，落
+`docs/quality-ledger/findings/<轮次>-<矩阵tag>.json`（入 git；temp/book-review 3 天裁剪，
+放那里跨轮收敛会断档），然后：
+
+```bash
+node .agents/skills/storyflow-release-loop/scripts/findings-ledger.mjs validate docs/quality-ledger/findings/<文件>.json
+# → temp/findings-ledger/<文件>.verdict.md：schema 错误 + 计算判定 READY/NOT READY + 阻断项
+npm run findings:converge
+# → docs/quality-ledger/CONVERGENCE.md：跨轮分类收敛矩阵 + 升级信号（见第 5.5 步）
+npm run test:findings-ledger   # 台账工具自身回归
+```
+
+schema（`findings/v1`，字段口径以 `scripts/findings-lib.mjs` 为准）：
+
+```jsonc
+{
+  "schemaVersion": "findings/v1", "round": "r10", "book": "书名",
+  "reviewedAt": "ISO时间", "matrixDir": "temp/storyflow-matrix-xxx", "chapters": 200,
+  "review": { "method": "full-read-4ch", "chaptersRead": 200,
+              "writerModel": "...", "reviewerModel": "...", "independentReviewer": false },
+  "gates": { "precheckRedlines": 0, "fateRealResurrection": 0,
+             "readerJudge": { "outline": 0, "mean": 0, "median": 0, "min": 0, "independentFromWriter": false },
+             "ending": { "complete": true, "mainUnresolved": 0, "closureSignals": 1 },
+             "humanIntervention": [],   // 无干预也必须显式写 []
+             "blindTest": null },       // "pass" | "fail" | null
+  "findings": [{
+    "id": "r10-S1-01", "severity": "S1", "class": "state.custody",
+    "status": "final",                 // final 终稿实锤 | caught 过程已兜住（不计数）| needs-verify（阻断）
+    "rootLayer": "blueprint",          // outline|blueprint|extraction|judge|writer|model|infra|unknown
+    "chapters": [139, 143], "entity": "崔显",
+    "summary": "一句话", "evidence": [{ "chapter": 143, "quote": "正文原句" }],
+    "replayCase": "r10-S1-01"          // S1 必建回放用例（第 6 步第 0 级）
+  }]
+}
+```
+
+硬规则：
+- **class 只能取固定分类表**（`FINDING_CLASSES`，只增不改名）；确属新形态先归最近类，
+  必须新增时同步改 findings-lib.mjs 与本节。`other` 在下一轮前必须清零。
+- **终稿 S1/S2 必须附 `{chapter, quote}` 原文证据**，否则 validate 报错。
+- **caught（过程已兜住）不是 Finding**：trace 里被重写修掉的告警不计入 S1/S2，也不能把
+  终稿问题降档成 caught 来清零——判定只认 final。
+- **审法必须如实声明**：只有 `full-read`/`full-read-4ch` 且 chaptersRead=chapters 才能得出
+  S1=0；抽样轮写 `sampled`，其计数不进收敛比较。
+- 同源审稿（independentReviewer=false）只出警告不阻断；**终验轮建议审稿 agent 与读者裁判
+  换独立模型**（是否改为硬门禁待用户拍板）。
+
+**严重度锚定样例**（判档有分歧时对照，均取自历史全读轮终稿实锤）：
+
+| 档 | 判据 | 锚定样例 |
+|---|---|---|
+| S1 | 读者可感知的事实矛盾/结构断裂，会弃书或骂吃书 | r7 周文彬 ch188 枭首 → ch190 活着被劫出；r8 崔显下狱后三章自由理政无释放交代；r8 主角假死后 48 章零登场、结局按真死追尊；r7 章内「3200 锭×50 两×16 箱」写成「八万两」 |
+| S2 | 局部口径漂移，细读可察觉但不毁主线 | r8 顾宪诚首辅/次辅横跳（同章并用）；r7 押地诏狱↔刑部移监缺桥；设定数字（兵力三千/三万）前后不一 |
+| S3 | 观感级，不构成事实错误 | AI 腔词频（此刻/缓缓）、勘验动作重复、段落 CV 偏低 |
+| S4 | 优化建议 | 可加强的物证细节、节奏建议 |
+
+判档口径：同一问题跨多章出现按最严重一处定档；「过程告警已被重写修掉」不定档（caught）。
+
 ## 第 5 步：归因四分诊（继承 book-review，附加本循环实测根因库）
 
 | 类别 | 动作 | 本循环已验证的实例 |
@@ -171,7 +239,45 @@ node .agents/skills/storyflow-release-loop/scripts/fate-adjudicate.mjs "<matrix�
 生成规则（含滚动续纲过期节点 reconcile）、运行时 CV/AI味自动重写触发器、上章不可回退
 确定性断言(B1)、裁判硬门禁数值冻结。
 
-## 第 6 步：两级真实回归
+## 第 5.5 步：升级判定（每轮修复前必做，决定本轮修什么）
+
+`npm run findings:converge` 后读 `docs/quality-ledger/CONVERGENCE.md` 的升级信号，
+**信号优先于逐条 Findings 修复**——逐形态补防线是过去多轮「一直修修补补」的根因：
+
+| 信号 | 含义 | 本轮动作 |
+|---|---|---|
+| `persistent-class` | 同一类连续 2 个全读轮出现 S1，上轮针对它的修复无效 | 禁止再对该类加同层补丁；改机制（该类属 state.* 时走统一状态账本，见 docs/unified-state-ledger.md） |
+| `upstream-root` | 最新全读轮 S1 过半根因在大纲/蓝图层 | 本轮不加写作侧/判官侧防线，修复预算全部投大纲/蓝图层（其规则改动按权限边界先报用户） |
+| `shape-shift` | 最新轮 S1 过半是新类 | 暂停逐形态修复，先归纳共性根因再动手 |
+| `unverified-zero` / `review-downgrade` | S1 归零但审法或规模不可比 | 不得宣布收敛；下一轮同口径全读复核 |
+
+没有信号时按第 5 步四分诊正常修复。每条修复必须能指向 Finding id，修完在第 6 步第 0 级
+用对应回放用例证明。
+
+## 第 6 步：三级真实回归
+
+第零级（每次修复后先跑，分钟级）：**章节回放**。把 S1 固化为回放用例——取成书
+project-store 截断到「写第 N 章之前」，用当前代码只重跑 N..N+W-1 章（走
+runContinueWriteChapters，与矩阵同一入口），再由 AI 探针判定缺陷是否复现。
+200 章才暴露的后半本问题（在押回潮、皇统过渡）不必等 1000 分钟重跑，20 章快速回归
+也复现不了它们。
+
+```bash
+# 建用例：spec 写文件（中文探针走文件，规避命令行编码），字段见脚本头注释
+node scripts/storyflow-replay-chapter.mjs make --spec temp/replay-specs/<id>.json
+# 跑单个 / 全部用例（默认每用例 2 个样本，样本间从同一快照重开）
+npm run replay:chapter -- run <id> --samples 2
+npm run replay:chapter -- run all
+# 结果：temp/replay-cases/<id>/runs/<时间戳>/result.json + 各样本正文 sN-chNNN.txt
+#       temp/replay-cases/_last-suite.json 汇总
+```
+
+spec 写法要点：`fromChapter` 取缺陷首次出现章（跨章缺陷往前取到状态成立后一章，
+`window` 覆盖到暴露章）；`probe.context` 只写回放起点前已成立的台账事实，
+`probe.question` 必须是「是 = 缺陷复现」的问题，并把合理交代（释放/越狱/回忆）排除在外。
+判定：`pass`=所有样本未复现且全部提交；`recur`=任一样本复现；`hole`=未复现但有章未提交
+（修复把问题变成了成洞，同样不算修好）。已知快照差异（人物表与后续蓝图为终局版本、
+已回收伏笔按计划章回退）由执行器打印，读结果时考虑。
 
 第一级（每轮代码修复后）：同配置全新小规模矩阵（推荐 20 章），不依赖 App 注册表项目——
 这是标准「App 内清空续写 20 章」协议在本循环的等价替代（矩阵书在 project-store 里）：
@@ -194,13 +300,17 @@ verdict/首过率不劣化。快速回归通过 ≠ 完成。
 ## 第 N 轮
 - 对象：<书名/矩阵目录/章数/耗时>
 - 工程层：<accepted、首过率、裁判分概览>
-- 书审：<S1 xN / S2 xN / S3 xN 一句话各>（终稿实锤 / 已兜住 分开列）
-- 根因：<提取断供/守卫缺失/措辞缺口…对应文件:行>
+- 书审：<审法 + S1 xN / S2 xN / S3 xN 一句话各>（只列终稿实锤；caught 另列不计数）
+- 台账：<findings.json 路径 + validate 计算判定 READY/NOT READY + 阻断项>
+- 升级信号：<converge 输出的信号及本轮据此选择的修复方向>
+- 根因：<提取断供/守卫缺失/措辞缺口…对应文件:行 + Finding id>
 - 修复：<文件+一句话+测试结果>
 - 待批：<暂停点类事项清单及建议>
-- 回归：<两级结果/diff 摘要>
+- 回归：<回放用例 pass/recur/hole + 两级矩阵结果/diff 摘要>
 - 下一步：<继续 / 终验 / 停止原因>
 ```
+
+「可上线」只能引用 validate 的计算判定，不得在报告里自行宣布。
 
 ## 本机环境噪音（见到不当故障）
 

@@ -908,6 +908,11 @@ export class UnifiedOutlineGenerator {
     }
 
     const endpoint = `${resolvedBaseUrl}/chat/completions`;
+    // Claude 系模型（含 thinking 档）经网关转 Anthropic 上游时拒绝这组 OpenAI 风格
+    // 采样参数（temperature/top_p 报 400 invalid_request_error——2026-09-24 双实证：
+    // opus-thinking 与 sonnet-4-6 大循环 outline 首调即败；opus 剥参后开题 10 步全通）：
+    // 剥除采样参数，用上游默认值。
+    const isClaudeFamily = /claude|thinking/i.test(String(config.model ?? ''));
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -919,8 +924,12 @@ export class UnifiedOutlineGenerator {
         model: config.model || undefined,
         messages,
         stream: true,
-        temperature: options.temperature ?? config.generationConfig?.temperature ?? 0.7,
-        top_p: options.topP ?? config.generationConfig?.topP ?? 0.9,
+        ...(isClaudeFamily
+          ? {}
+          : {
+              temperature: options.temperature ?? config.generationConfig?.temperature ?? 0.7,
+              top_p: options.topP ?? config.generationConfig?.topP ?? 0.9,
+            }),
         ...(maxTokens ? { max_tokens: maxTokens } : {}),
         // 智谱 glm 深度思考默认全开，大纲/滚纲单步会先烧数千 reasoning tokens
         // （实测单步 12-19 分钟）；关思考后同量级输出分钟级完成。与写作侧

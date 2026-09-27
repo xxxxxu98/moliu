@@ -192,6 +192,103 @@ describe('analyzeParagraphDensity / buildTypesettingIssues', () => {
   });
 });
 
+describe('叙述段过重（对话段拉低均值/CV 的盲区，2026-09-27 新维度）', () => {
+  it('叙述段全是 200 字墙时，即使长短交错、无超 280 长段、均值不过线，也必须报过重', () => {
+    // 2026-09-27 用户实测样章形态：9 段 190～210 字叙述墙与短对话段交错——
+    // CV≈0.9（远超 0.25）、无 >280 段、均值 <120（均匀化下限），旧三处门禁全绿，
+    // 但移动端读感沉重。叙述段单列后中位 ≈200 必须命中
+    const heavy = [
+      '“你敢！”周砚猛地起身。',
+      '墙'.repeat(200),
+      '他没接话。',
+      '墙'.repeat(210),
+      '“按律，这个字不能签。”',
+      '墙'.repeat(190),
+      '灯花爆了一声。',
+      '墙'.repeat(205),
+      '“那就换个写法。”',
+      '墙'.repeat(195),
+      '他搁下笔。',
+      '墙'.repeat(200),
+    ].join('\n\n');
+    const stats = analyzeParagraphDensity(heavy);
+    expect(stats.longParagraphCount).toBe(0); // 旧绝对长度门禁不触发（无 >280 段）
+    expect(stats.avgParagraphChars).toBeLessThan(120); // 均匀化门禁下限未达
+    expect(stats.narrativeParagraphCount).toBeGreaterThanOrEqual(8);
+    const issues = buildTypesettingIssues(heavy);
+    expect(issues.some(i => i.severity === 'high')).toBe(false); // 旧 high 门禁全绿
+    expect(issues.some(i => i.severity === 'medium' && i.description.includes('叙述段过重'))).toBe(true);
+  });
+
+  it('叙述段基准 1～3 句（30～120 字）的健康章不报过重', () => {
+    const healthy = [
+      '“你敢！”周砚猛地起身。',
+      '火盆里的炭噼啪炸了一声，他数到第七声。'.repeat(2),
+      '他没接话。',
+      '门外脚步声近了，停在门边，又退开半步。'.repeat(2),
+      '“按律，这个字不能签。”',
+      '灯花爆了一声。',
+      '他把笔搁回笔山，墨迹在纸上洇开一小团。'.repeat(2),
+      '他把灯芯拨亮了些。',
+      '“那就换个写法。”',
+      '他搁下笔。',
+      '值房的更鼓敲过三巡，夜还长。'.repeat(2),
+    ].join('\n\n');
+    const stats = analyzeParagraphDensity(healthy);
+    expect(stats.narrativeParagraphCount).toBe(8); // 样本足够，靠中位数放行而非段数
+    expect(buildTypesettingIssues(healthy).some(i => i.description.includes('叙述段过重'))).toBe(false);
+  });
+
+  it('叙述段不足 8 个时统计无意义，不报过重', () => {
+    const few = ['墙'.repeat(200), '墙'.repeat(200), '短拍。', '墙'.repeat(190)].join('\n\n');
+    expect(buildTypesettingIssues(few).some(i => i.description.includes('叙述段过重'))).toBe(false);
+  });
+
+  it('散点墙形态（中位正常但 200+ 墙成片 ≥15%）由墙占比线命中——2026-09-27 用户样章形态', () => {
+    // 样章实测：21 个叙述段中位仅 93 字，但 4 段 210～330 字墙占 19%；旧三处门禁
+    // （无 >280 段、均值 <120、CV 健康）与中位线全部放行，读者仍会在墙上撞墙。
+    // 真实存书 731 章实测墙占比 p90≤0.13，0.15 为分离线
+    const short = '他把伞收了抖了抖水，靠着廊柱站定，数檐角的雨。'.repeat(1); // 23 字
+    const medium = '他把伞收了抖了抖水，靠着廊柱站定，数檐角的雨滴一声一声落进石阶的凹坑里。'.repeat(1); // 38 字
+    const scattered = [
+      '“你还在等谁？”',
+      medium + short, // 61
+      '墙'.repeat(210),
+      short + medium, // 61
+      medium + medium, // 76
+      '墙'.repeat(230),
+      short + medium,
+      medium + medium,
+      medium + short,
+      '墙'.repeat(245),
+      short + medium,
+      medium + medium,
+      '墙'.repeat(260),
+      short + medium,
+      medium + medium,
+      medium + short,
+      '“不等了。”',
+      short + medium,
+      medium + medium,
+      medium + short,
+      '“走吧。”',
+      short + medium,
+      medium + medium,
+    ].join('\n\n');
+    const stats = analyzeParagraphDensity(scattered);
+    expect(stats.longParagraphCount).toBe(0); // 无 >280 段，旧绝对长度门禁不触发
+    expect(stats.narrativeMedianParagraphChars).toBeLessThan(140); // 中位线不触发
+    expect(stats.narrativeLongParagraphRatio).toBeGreaterThanOrEqual(0.15); // 墙占比线命中
+    const issues = buildTypesettingIssues(scattered);
+    expect(issues.some(i => i.severity === 'high')).toBe(false);
+    const heavy = issues.find(
+      i => i.severity === 'medium' && i.description.includes('叙述段过重')
+    );
+    expect(heavy).toBeDefined();
+    expect(heavy?.description).toContain('中位正常'); // 明示走的是墙占比分支
+  });
+});
+
 describe('buildTypesettingIssues 生产硬门禁', () => {
   it('单段超过 420 字时直接报告 high', () => {
     const issues = buildTypesettingIssues(`${'长段内容。'.repeat(90)}\n\n正常收束。`);

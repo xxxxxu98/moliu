@@ -48,16 +48,40 @@ export const UNIFORM_PARAGRAPH_MIN_COUNT = 12;
 export const UNIFORM_PARAGRAPH_MIN_AVG_CHARS = 120;
 
 /**
+ * 叙述段（不含引号对话的自然段）过重判定：中位数上限。
+ * 移动端一屏约 25 字/行，基准段 1～3 句（30～120 字），一屏能扫 2～3 段；
+ * 叙述段中位数超过该值说明「默认节奏就是墙」。既有指标把对话段与叙述段混在
+ * 同一总体——对话短段天然拉低均值、拉高 CV，于是「全章叙述段都是 200 字墙」
+ * 在均值/CV/绝对长度门禁三处全部漏检（2026-09-27 用户实测：200～330 字段
+ * 读感沉重但全绿）。首轮校准值，跑一轮真实回归后冻结。
+ */
+export const NARRATIVE_MEDIAN_CHARS_THRESHOLD = 140;
+
+/** 叙述段过重判定所需最少叙述段数（样本不足统计无意义） */
+export const NARRATIVE_MIN_COUNT = 8;
+
+/** 叙述段「超一屏」判定字数（蓄力例外区间的上限锚点） */
+export const NARRATIVE_LONG_CHARS = 200;
+
+/**
+ * 叙述段过重第二触发线：>NARRATIVE_LONG_CHARS 的墙占叙述段比例上限。
+ * 覆盖「散点墙」形态——中位数正常（短段够多）但 200+ 字墙成片出现，读者
+ * 仍会在这些段上撞墙。标定依据（2026-09-27 真实存书 r10a/r10b/r11/r12 四本
+ * 731 章实测）：墙占比 p50=0.00、p75≤0.04、p90≤0.13；用户实测投诉章 0.19。
+ * 0.15 在正常 p90 与投诉章之间，触发面约 3～9% 章。首轮校准值，真实回归后冻结。
+ */
+export const NARRATIVE_LONG_RATIO_THRESHOLD = 0.15;
+
+/**
  * 注入起草/任务书的排版硬约束（尽量短，避免挤占预算）。
  * 目标：适中分段——挡住超长大段，同时避免空行刷屏。
  */
 export const TYPESETTING_HARD_RULES = `## 【强制】手机网文排版【观感核心】
-读者在手机上滑读。分段要适中：既不要整章大段，也不要空行刷屏。
-**请在生成时直接分好段**——系统后处理不会替你拆段/并段。
+读者在手机上滑读，一屏只容得下 2～3 个基准段。**请在生成时直接分好段**——系统后处理不会替你拆段/并段。
 
 ### 硬指标（必须遵守）
-1. **每个自然段约 3～5 句话**为宜，不要动辄一句一段
-2. **单段大约 180～280 字**较舒适；明显超过半屏请自行换段
+1. **一段一拍**：一段只装一个镜头/动作/信息点，镜头转移、执行者更换、时间推进、感官切换就换段；基准 1～3 句一段（约 30～120 字），关键台词/动作/反转可单独成短段
+2. **长段是稀缺的减速手段**：只用在场景真正的蓄力点（全章零星几处），禁止为把一个画面写“全”而撑段；多人同场逐人或分组分段，不把多人压进一段
 3. **段与段之间空一行**；禁止整章只有少数超长大段
 4. **换人就换行**：多人对话不要塞进同一段；单人短对话可与前后叙述同段
 5. **收引号必须跟在对话句末**，不要把 ” 单独甩到下一行/下一段
@@ -66,7 +90,7 @@ export const TYPESETTING_HARD_RULES = `## 【强制】手机网文排版【观�
 ### 正例（推荐观感）
 他走到窗前，夜色很黑。刚才的事还在脑子里转，像一场没醒的梦。楼下隐约传来说话声，他没有去听。
 
-"你还在想她？"老刘问。
+“你还在想她？”老刘问。
 
 他没说话，只是把烟掐灭，转身回了屋。
 
@@ -76,7 +100,7 @@ export const TYPESETTING_HARD_RULES = `## 【强制】手机网文排版【观�
 3）上一段对话缺收引号、下一段以 ” 开头。
 
 ### 自检
-单段明显超过大半屏、或一段超过 5 个句号 → 自行换段；若大量段落不足两行 → 自行合并。`;
+一段超过一屏（约 200 字）、或一段内塞了一个以上的镜头 → 自行拆段；若通篇一句一段、空行刷屏 → 自行合并。`;
 
 export interface ParagraphDensityStats {
   paragraphCount: number;
@@ -89,6 +113,12 @@ export interface ParagraphDensityStats {
   overSentenceParagraphCount: number;
   /** 段落长度变异系数（标准差/均值）；越低越均匀，过低是 AI 腔节奏信号 */
   paragraphLengthCV: number;
+  /** 叙述段（不含任何引号的自然段）数量；对话段须从节奏统计中剔除再单算 */
+  narrativeParagraphCount: number;
+  /** 叙述段长度中位数：中位数=默认节奏，过高说明默认段就是墙（对话段混入会拉低均值掩盖该问题） */
+  narrativeMedianParagraphChars: number;
+  /** 叙述段中超 NARRATIVE_LONG_CHARS（约一屏）的占比 */
+  narrativeLongParagraphRatio: number;
 }
 
 export interface ParagraphDensityIssue {
@@ -454,6 +484,9 @@ export function analyzeParagraphDensity(prose: string): ParagraphDensityStats {
       avgParagraphChars: 0,
       overSentenceParagraphCount: 0,
       paragraphLengthCV: 0,
+      narrativeParagraphCount: 0,
+      narrativeMedianParagraphChars: 0,
+      narrativeLongParagraphRatio: 0,
     };
   }
 
@@ -466,6 +499,22 @@ export function analyzeParagraphDensity(prose: string): ParagraphDensityStats {
   const avgParagraphChars = lengths.reduce((a, b) => a + b, 0) / lengths.length;
   const variance = lengths.reduce((a, b) => a + (b - avgParagraphChars) ** 2, 0) / lengths.length;
 
+  // 叙述段单列：含任何引号字符的段视为对话承载段，剔除后统计。
+  // 纯计数归属确定性范畴，不做语义判断。
+  const quotedChar = new RegExp(`[${OPEN_QUOTE_CLASS}${CLOSE_QUOTE_CLASS}]`, 'u');
+  const narrativeLengths = paragraphs
+    .filter(p => !quotedChar.test(p))
+    .map(countChineseAwareLength)
+    .sort((a, b) => a - b);
+  const narrativeMedianParagraphChars =
+    narrativeLengths.length === 0
+      ? 0
+      : narrativeLengths.length % 2 === 1
+        ? narrativeLengths[(narrativeLengths.length - 1) / 2]
+        : (narrativeLengths[narrativeLengths.length / 2 - 1] +
+            narrativeLengths[narrativeLengths.length / 2]) /
+          2;
+
   return {
     paragraphCount: paragraphs.length,
     longParagraphCount,
@@ -475,6 +524,12 @@ export function analyzeParagraphDensity(prose: string): ParagraphDensityStats {
     avgParagraphChars,
     overSentenceParagraphCount,
     paragraphLengthCV: avgParagraphChars > 0 ? Math.sqrt(variance) / avgParagraphChars : 0,
+    narrativeParagraphCount: narrativeLengths.length,
+    narrativeMedianParagraphChars,
+    narrativeLongParagraphRatio:
+      narrativeLengths.length > 0
+        ? narrativeLengths.filter(l => l > NARRATIVE_LONG_CHARS).length / narrativeLengths.length
+        : 0,
   };
 }
 
@@ -514,7 +569,7 @@ export function buildTypesettingIssues(prose: string): ParagraphDensityIssue[] {
       severity: 'high',
       description: `段落过密：超长段 ${stats.extremeParagraphCount} 个，长段占比 ${Math.round(stats.longParagraphRatio * 100)}%，最长 ${stats.maxParagraphChars} 字`,
       suggestion:
-        '请调整分段：每段约 3～5 句、180～280 字；优先合并过碎短段；对话换人换行；忌整章大段与一句一段',
+        '请拆段：一段只装一个镜头，基准 1～3 句（约 30～120 字）；对话换人换行；忌整章大段与一句一段',
       evidence: normalized
         .split(/\n\s*\n/)
         .find(p => countChineseAwareLength(p) > EXTREME_PARAGRAPH_CHARS)
@@ -527,7 +582,7 @@ export function buildTypesettingIssues(prose: string): ParagraphDensityIssue[] {
     issues.push({
       severity: 'medium',
       description: `段落偏长：长段 ${stats.longParagraphCount}/${stats.paragraphCount}，超过 ${MAX_SENTENCES_PER_PARAGRAPH} 句的段 ${stats.overSentenceParagraphCount}`,
-      suggestion: '仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段',
+      suggestion: '仅拆真正偏长的段：检查段内是否塞了多个镜头（第二感官通道、另一个人的动作、追加比喻），拆出多余镜头；不要拆成一句一段',
     });
   }
 
@@ -605,6 +660,26 @@ export function buildTypesettingIssues(prose: string): ParagraphDensityIssue[] {
         (flavorCounts.length > 0
           ? '；高频词改写为具体动作/时长过渡（瞬间→话音未落、眨眼的工夫；缓缓→直接写动作过程）'
           : ''),
+    });
+  }
+
+  // 叙述段过重（2026-09-27 新维度）：对话段与叙述段混在同一总体时，对话短段
+  // 拉低均值、拉高 CV，全章叙述段都是 200 字墙的章在既有三处门禁全部漏检。
+  // 叙述段单列后两条触发线：中位数（默认节奏就是墙）或墙占比（散点墙成片）。
+  if (
+    stats.narrativeParagraphCount >= NARRATIVE_MIN_COUNT &&
+    (stats.narrativeMedianParagraphChars >= NARRATIVE_MEDIAN_CHARS_THRESHOLD ||
+      stats.narrativeLongParagraphRatio >= NARRATIVE_LONG_RATIO_THRESHOLD)
+  ) {
+    const byMedian =
+      stats.narrativeMedianParagraphChars >= NARRATIVE_MEDIAN_CHARS_THRESHOLD
+        ? `中位 ${Math.round(stats.narrativeMedianParagraphChars)} 字（默认节奏过重）`
+        : '中位正常';
+    issues.push({
+      severity: 'medium',
+      description: `叙述段过重：${stats.narrativeParagraphCount} 个叙述段${byMedian}、超一屏（>${NARRATIVE_LONG_CHARS} 字）墙占 ${Math.round(stats.narrativeLongParagraphRatio * 100)}%`,
+      suggestion:
+        '拆段不是删内容：把墙段里多余的镜头（第二感官通道、另一个人的动作、追加的比喻）移进新段或删除；基准 1～3 句一段，长段只留给蓄力点',
     });
   }
 

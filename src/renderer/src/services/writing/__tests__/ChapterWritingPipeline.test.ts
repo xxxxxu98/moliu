@@ -496,7 +496,8 @@ describe('assembleChapterForbiddenZones（命运禁入接线）', () => {
     expect(fateZone).toBeDefined();
     // 死亡不被后续下狱洗白：禁入条目引用的是死亡章与死亡态
     expect(fateZone).toContain('死亡');
-    expect(fateZone).toContain('179');
+    // chapterIndex 即 1 基章号：入账 178 即第178章（旧 +1 口径会错报 179）
+    expect(fateZone).toContain('第178章');
   });
 
   it('记忆按目标章截断：补写早期章时不被后文死亡禁入误伤', () => {

@@ -425,12 +425,31 @@ export function uniformDensityIssueIds(report: ContinuityReport): string[] {
     .map(issue => issue.id);
 }
 
+/** 叙述段过重（叙述段中位字数超阈值）是否在报告里——2026-09-27 新维度：
+ *  对话段与叙述段混在同一总体时，对话短段拉低均值拉高 CV，「全章叙述段
+ *  都是 200 字墙」在均值/CV/绝对长度三处门禁全部漏检；叙述段单列后与
+ *  均匀化同机制驱动定向拆段改稿。 */
+export function narrativeDensityIssueIds(report: ContinuityReport): string[] {
+  return report.issues
+    .filter(
+      issue =>
+        issue.id.startsWith('typesetting-density') &&
+        issue.message.includes('叙述段过重')
+    )
+    .map(issue => issue.id);
+}
+
 /** 节点原句照抄（mustCover ≥12 字逐字入正文）是否在报告里——prompt 禁抄与
  *  judge 规则在长跑尺度漏网（2026-09-12 gemini 终验 4 处终稿实锤），确定性
  *  门禁命中后与均匀化同机制驱动定向改写。 */
 export function nodeVerbatimIssueIds(report: ContinuityReport): string[] {
   return report.issues
-    .filter(issue => issue.id.startsWith('node-verbatim-overlap'))
+    .filter(
+      issue =>
+        issue.id.startsWith('node-verbatim-overlap') ||
+        issue.message.includes('节点原句照抄') ||
+        issue.message.includes('节点抄用')
+    )
     .map(issue => issue.id);
 }
 
@@ -554,12 +573,15 @@ export class LongFormWritingEngine {
     let writerSummary: WriterRunSummary | undefined;
 
     const uniformIssueIdsBefore = uniformDensityIssueIds(report);
+    const narrativeIssueIdsBefore = narrativeDensityIssueIds(report);
     const verbatimIssueIdsBefore = nodeVerbatimIssueIds(report);
     const realEraIssueIdsBefore = realEraNameIssueIds(report);
-    // 弱信号驱动的定向改稿（均匀化/节点照抄/真实年号混入）：唯一改稿动因为 warning 级
-    // 确定性信号时合并为必须处理，否则 agent 可对 warning 不改稿直接 finish
+    // 弱信号驱动的定向改稿（均匀化/叙述段过重/节点照抄/真实年号混入）：唯一改稿
+    // 动因为 warning 级确定性信号时合并为必须处理，否则 agent 可对 warning
+    // 不改稿直接 finish
     const weakSignalIssueIds = [
       ...uniformIssueIdsBefore,
+      ...narrativeIssueIdsBefore,
       ...verbatimIssueIdsBefore,
       ...realEraIssueIdsBefore,
     ];
@@ -584,9 +606,10 @@ export class LongFormWritingEngine {
         initialDrafts: drafts,
         initialReview: { facts, report },
         reviewPort: { review: candidate => this.reviewDrafts(candidate, reviewContext) },
-        maxChecks: weakSignalDriven && uniformIssueIdsBefore.length > 0
-          ? Math.max(maxRewriteRounds, 2)
-          : maxRewriteRounds,
+        maxChecks:
+          weakSignalDriven && (uniformIssueIdsBefore.length > 0 || narrativeIssueIdsBefore.length > 0)
+            ? Math.max(maxRewriteRounds, 2)
+            : maxRewriteRounds,
         requiredIssueIds: weakSignalDriven ? weakSignalIssueIds : undefined,
         targetWordCount: writeInput.targetWordCount,
         previousChapterEnding: input.previousChapterEnding,
@@ -617,6 +640,11 @@ export class LongFormWritingEngine {
       if (uniformIssueIdsBefore.length > 0 && uniformDensityIssueIds(report).length > 0) {
         console.info(
           `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 段落节奏改稿后仍均匀化（cv 未达标），保留重写稿（uniform-cv-survived，不阻断）`
+        );
+      }
+      if (narrativeIssueIdsBefore.length > 0 && narrativeDensityIssueIds(report).length > 0) {
+        console.info(
+          `[LongFormWritingEngine] ch${contracts.chapter.chapterNumber} 叙述段过重改稿后仍未达标（中位字数超标），保留改写稿（narrative-heavy-survived，不阻断）`
         );
       }
       if (verbatimIssueIdsBefore.length > 0 && nodeVerbatimIssueIds(report).length > 0) {
@@ -708,6 +736,10 @@ export class LongFormWritingEngine {
           characterIdentityAnchors: input.characterIdentityAnchors,
           // 假死纪律：假死角色隐匿活动合法+公开现身需揭晓（r8 实证假死被当死亡锁死主角）
           fakedDeathCharacters: input.fakedDeathCharacters,
+          // 命运状态正典（2026-09-24 g38f 500ch S1/S2）：每角色最新命运状态
+          fateStatusAnchors: input.fateStatusAnchors,
+          // 实体状态卡（unified-state-ledger 第 2 阶段）：在场时替换正典块
+          stateCard: input.stateCard,
           futureReveals: contracts.chapter.futureReveals ?? [],
           // 大纲链路的章节标题已是正式标题，模型再拟一个也会被 pipeline 丢弃
           existingChapterTitle: isPlaceholderChapterTitle(contracts.chapter.title)

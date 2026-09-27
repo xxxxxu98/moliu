@@ -9,7 +9,12 @@ import type {
   StructuredAIRequest,
 } from '@/types/story-runtime';
 
-import { LongFormWritingEngine, uniformDensityIssueIds } from '../LongFormWritingEngine';
+import {
+  LongFormWritingEngine,
+  narrativeDensityIssueIds,
+  nodeVerbatimIssueIds,
+  uniformDensityIssueIds,
+} from '../LongFormWritingEngine';
 import { parseStoryPatch } from '../patches';
 import { StoryRuntimeClient } from '../StoryRuntimeClient';
 import { makeBootstrap, makeContracts, makeState } from './testFixtures';
@@ -424,6 +429,108 @@ describe('LongFormWritingEngine', () => {
     expect(uniformDensityIssueIds(result.report).length).toBeGreaterThan(0);
   });
 
+  it('叙述段过重 accepted 也触发一轮定向改稿：requiredIssueIds 标记 + survived 不阻断（2026-09-27 触发器）', async () => {
+    // 旧门禁全绿的形态：叙述墙 215 字（<280 长段线）与短对话交错（CV≈0.5、均值<均匀化
+    // 判定无关、无 high 门禁），但叙述段中位 215 字远超 140——读感沉重的真实样章形态。
+    const facts: FactExtractor = {
+      extract: async input => ({
+        events: [
+          {
+            id: 'event-1',
+            chapter: input.chapterNumber,
+            sceneId: input.sceneDrafts[0].sceneId,
+            type: 'checkpoint',
+            summary: '守卫盘查',
+            participants: ['hero'],
+            causes: [],
+            effects: ['守卫盘查'],
+            evidence: input.sceneDrafts[0].paragraphs,
+          },
+        ],
+        deltas: [],
+        evidence: input.sceneDrafts[0].paragraphs,
+      }),
+    };
+    const receipt: ChapterCommitReceipt = {
+      commitId: 'commit-1',
+      revision: 1,
+      acceptedAt: '2026-01-02T00:00:00.000Z',
+    };
+    const commitChapter = vi.fn(async () => receipt);
+    const ai = new NarrativeHeavyProseAI();
+    let capturedRequiredIds: string[] | undefined;
+    const engine = new LongFormWritingEngine({
+      ai,
+      factExtractor: facts,
+      commitPort: { commitChapter },
+      writerAgent: {
+        revise: async input => {
+          capturedRequiredIds = input.requiredIssueIds;
+          // 模拟定向改稿后仍未达标：原样返回初审结果（survived 语义）
+          return {
+            drafts: input.initialDrafts,
+            facts: input.initialReview.facts,
+            report: input.initialReview.report,
+            checksUsed: 1,
+            finishReason: 'model-finish' as const,
+            transcript: [],
+            stats: { rounds: 1, toolCalls: 1, byTool: {}, ms: 1 },
+            revertedUnchecked: false,
+          };
+        },
+      },
+    });
+
+    const result = await engine.write({
+      projectId: 'project-1',
+      contracts: makeContracts(),
+      state: makeState(),
+      recentScenes: [],
+      retrievedScenes: [],
+      styleGuidance: ['克制'],
+      maxContextTokens: 10_000,
+      targetWordCount: 3600,
+    });
+
+    // 叙述段过重是唯一改稿动因（初审 accepted、无 high 门禁）时也必须进改稿回合
+    expect(capturedRequiredIds?.some(id => id.startsWith('typesetting-density'))).toBe(true);
+    expect(result.rewriteRounds).toBe(1);
+    // survived：仍过重不阻断，保留稿照常提交
+    expect(result.report.accepted).toBe(true);
+    expect(result.commit.status).toBe('accepted');
+    expect(narrativeDensityIssueIds(result.report).length).toBeGreaterThan(0);
+  });
+
+  it('nodeVerbatimIssueIds 能同时提取确定性门禁与判官语义报出的节点抄用问题', () => {
+    const report = {
+      accepted: true,
+      issues: [
+        {
+          id: 'node-verbatim-overlap-1',
+          domain: 'fulfillment' as const,
+          severity: 'warning' as const,
+          message: '正文与大纲节点存在连续 13 字逐字相同（节点原句照抄）',
+        },
+        {
+          id: 'fulfillment-2',
+          domain: 'fulfillment' as const,
+          severity: 'warning' as const,
+          message: '语义问题[logic_gap] 第一段: 节点原句照抄',
+        },
+        {
+          id: 'other-1',
+          domain: 'fulfillment' as const,
+          severity: 'warning' as const,
+          message: '其他无关问题',
+        },
+      ],
+      checkedDomains: ['fulfillment' as const],
+    };
+
+    const ids = nodeVerbatimIssueIds(report);
+    expect(ids).toEqual(['node-verbatim-overlap-1', 'fulfillment-2']);
+  });
+
   it('无 writerAgent 时初稿禁区 blocking 不整章重写，直接 rejected', async () => {
     const facts: FactExtractor = {
       extract: async input => ({
@@ -826,6 +933,63 @@ class UniformProseAI implements StructuredAI {
         { length: 23 },
         () => '这是均匀节奏的正文段落内容长度完全一致用来触发段落均匀化检测。'.repeat(5)
       ),
+      candidateEvents: [],
+    };
+  }
+}
+
+/** 输出叙述墙与短对话交错的正文——旧门禁（CV/绝对长度/均值）全绿、叙述段中位超阈值，
+ *  用于验证叙述段过重触发器（2026-09-27 用户实测样章形态） */
+class NarrativeHeavyProseAI implements StructuredAI {
+  async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
+    if (request.purpose === 'chapter-judge' || request.purpose === 'fulfillment-check') {
+      const payload = JSON.parse(request.prompt) as {
+        mustCover?: string[];
+        forbiddenZones?: string[];
+      };
+      return {
+        fulfillment: (payload.mustCover ?? []).map(node => ({
+          node,
+          fulfilled: true,
+          evidence: ['语义履约'],
+          reason: '测试放行',
+        })),
+        forbidden: (payload.forbiddenZones ?? []).map(zone => ({
+          zone,
+          violated: false,
+          evidence: [],
+          reason: '字面路径已处理',
+        })),
+        issues: [],
+      };
+    }
+    const wall = () => '墙'.repeat(215);
+    return {
+      sceneId: 'chapter-1:CBN:scene',
+      beatId: 'chapter-1:CBN',
+      chapterTitle: '测试章',
+      paragraphs: [
+        '“你敢！”周砚猛地起身。',
+        wall(),
+        '他没接话。',
+        wall(),
+        '“按律，这个字不能签。”',
+        wall(),
+        '灯花爆了一声。',
+        wall(),
+        '“那就换个写法。”',
+        wall(),
+        '他搁下笔。',
+        wall(),
+        wall(),
+        wall(),
+        wall(),
+        wall(),
+        wall(),
+        wall(),
+        wall(),
+        wall(),
+      ],
       candidateEvents: [],
     };
   }

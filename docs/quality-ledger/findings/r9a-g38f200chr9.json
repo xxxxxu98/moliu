@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "findings/v1",
+  "round": "r9a",
+  "book": "执宪：法务社畜的诛心弹劾录",
+  "reviewedAt": "2026-09-22T10:00:00+08:00",
+  "backfilledFrom": "temp/book-review/执宪：法务社畜的诛心弹劾录-0922/QUALITY-REPORT.md",
+  "matrixDir": "temp/storyflow-matrix-g38f200chr9",
+  "chapters": 154,
+  "review": {
+    "method": "unverified",
+    "chaptersRead": 0,
+    "writerModel": "gemini-3.8-flash-high",
+    "reviewerModel": "gemini-3.8-flash-high",
+    "independentReviewer": false,
+    "note": "报告未声明审法；0922 版 S2 条目与 0921 版逐字相同仅改标签为 0，无重读证据"
+  },
+  "gates": {
+    "precheckRedlines": 0,
+    "fateRealResurrection": 0,
+    "readerJudge": null,
+    "ending": { "complete": true, "mainUnresolved": 0, "closureSignals": 1 },
+    "humanIntervention": ["storyflow-repair-empty 补写 ch86（节点照抄三连拒成洞）", "规划 200 章实成 154 章（700min 超时截断）"],
+    "blindTest": null
+  },
+  "findings": [
+    { "id": "r9a-S2-01", "severity": "S2", "class": "state.identity", "status": "caught", "rootLayer": "judge", "chapters": [81], "summary": "赵元烈自称大行皇帝亲弟（皇帝在位），重写后合规" },
+    { "id": "r9a-S2-02", "severity": "S2", "class": "number.ledger", "status": "caught", "rootLayer": "judge", "chapters": [82], "summary": "二十四万石误写十万石，重写后与前章数字锚一致" },
+    { "id": "r9a-S2-03", "severity": "S2", "class": "state.identity", "status": "caught", "rootLayer": "judge", "chapters": [111], "summary": "太子称在位皇帝为皇考，重写后合规" },
+    { "id": "r9a-S2-04", "severity": "S2", "class": "state.custody", "status": "caught", "rootLayer": "judge", "chapters": [137], "summary": "赵元翊越狱交代缺失，重写后补足劫狱情节" },
+    { "id": "r9a-S2-05", "severity": "S2", "class": "state.title", "status": "caught", "rootLayer": "judge", "chapters": [141], "summary": "周慎突现左都御史，重写后收敛为大理寺卿" },
+    { "id": "r9a-S3-01", "severity": "S3", "class": "prose.slop", "status": "final", "rootLayer": "model", "chapters": [1], "summary": "此刻×110、如同×81、缓缓×66、瞬间×64" },
+    { "id": "r9a-S3-02", "severity": "S3", "class": "prose.slop", "status": "final", "rootLayer": "writer", "chapters": [2, 82, 112], "summary": "公堂辩论长段落略密（段落 CV 0.11-0.14）" }
+  ]
+}

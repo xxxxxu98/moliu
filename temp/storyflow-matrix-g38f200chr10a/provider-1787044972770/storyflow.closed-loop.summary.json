@@ -1,0 +1,3126 @@
+{
+  "book": "度支权臣：用现代审计搞垮门阀",
+  "mode": "storyflow-closed-loop",
+  "status": "in-progress",
+  "requestedChapterCount": 200,
+  "completedChapters": 151,
+  "chapters": 50,
+  "outlinePath": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.g38f200chr10a.outline.json",
+  "proseDir": "D:\\project\\2026\\moliu\\temp\\storyflow.closed-loop.g38f200chr10a.prose",
+  "batch": [
+    {
+      "ch": 1,
+      "accepted": true,
+      "title": "第1章 铡刀临颈，十秒算破监斩官",
+      "words": 3418,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 124612
+      },
+      "gateIssues": [],
+      "head": "刺骨的铁刃直接压上了顾砚之的后颈皮肉。\n\n那是一柄沉重阔背的鬼头斩马刀，刃口淬过井水，泛着青灰色的冷光，贴着颈椎骨最脆弱的凹陷处轻轻下压。刀锋尚未割破油皮，酷烈的寒气已顺着脊髓一路炸进脑髓。混杂着陈年黑血与烧刀子酒气的腥风扑面而来，顾砚之在",
+      "tail": "言不发，翻身上马。\n\n刺骨的寒意透骨而入，顾砚之任由粗糙的铁索拖过泥泞的石板，嘴角却在剧痛中泛起一道极度森冷的弧度。\n\n这场以命为注的算局，他已经赢下了第一步。",
+      "error": null
+    },
+    {
+      "ch": 2,
+      "accepted": true,
+      "title": "第2章 收缴纸笔，死牢暗聚反击筹",
+      "words": 3380,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 1/37，超过 5 句的段 1。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "湿冷黏稠的霉烂气味直钻鼻腔，粗粝的麻绳在拖拽中磨开皮肉，取而代之的是两副加重的死囚精铁镣铐。顾砚之被两名身材魁梧的差役死死拧住臂膀，粗暴地一路掼入刑部大牢最深处的地字号死牢。生了厚重暗红铁锈的粗大链条拖曳在浸透污渍的青石地面上，刺耳的刮擦声",
+      "tail": "拨弄清点着那些泛着油垢与汗渍的青蚨铜钱，嘴角咧开一口焦黄的烂牙，算计着明日该去哪个酒肆快活。\n\n死牢深处，碎石在湿润冰冷的青砖地上缓缓划出第一道笔直锋利的竖线。",
+      "error": null
+    },
+    {
+      "ch": 3,
+      "accepted": true,
+      "title": "第3章 炭条画壁，降维算懵贪油狱卒",
+      "words": 3077,
+      "attempts": 1,
+      "rewriteRounds": 2,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 2,
+        "revertedUnchecked": false,
+        "rounds": 13,
+        "toolCalls": 10,
+        "byTool": {
+          "get_draft": 4,
+          "revise_paragraphs": 4,
+          "run_checks": 2
+        },
+        "ms": 215651
+      },
+      "gateIssues": [],
+      "head": "牢门外细碎的数钱声终于停歇，石廊陷入一片阴湿的死寂。顾砚之合拢五指，掌心的尖锐碎石已被冷汗浸得发滑。地字号死牢四壁渗水，方才在青砖地上划出的那道浅白划痕，已被墙根渗出的黑水洇得模糊难辨。青砖质地坚硬，碎石刻出的印子极浅，根本容不下通州大仓三",
+      "tail": "温的残破底单。牢内昏暗如墨，借着摇曳不定的灯笼微光，他的目光落在最上方一张草纸的断口边沿。在那发黄破损的纸边微卷处，赫然沾着一处半指宽、颜色暗沉发乌的异样油斑。",
+      "error": null
+    },
+    {
+      "ch": 4,
+      "accepted": true,
+      "title": "第4章 彻夜拆账，抠出三十万石亏空",
+      "words": 3198,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "顾砚之捻起那张断口发卷的残纸，指腹在暗沉污渍上用力蹭过。指尖泛起黏腻微涩的触感，鼻端飘出极淡的熟菜油香气，既非牢房劣质牛油，亦非巡夜松明油。这种经细布反复滤过三遍的熟菜油，唯有户部仓房批验出库的当值大管事，才会在点算朱印时掺进印泥防止干裂。",
+      "tail": "双手骨，硬生生抠挖刻凿出来的狰狞痕迹。沈定安扣在刀柄上的修长手指，在这凛冽寒风中无声地收紧了半寸。囚车周围一片死寂，唯有辕马粗重的鼻息声在冰冷的晨雾中缓缓回荡。",
+      "error": null
+    },
+    {
+      "ch": 5,
+      "accepted": true,
+      "title": "第5章 堂前掀桌，硬撕三十万石伪账",
+      "words": 3091,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "query_entity": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 55758
+      },
+      "gateIssues": [],
+      "head": "晨雾如刀，冷风卷着枯叶从刑部大门前的长街呼啸掠过。沈定安翻身上马，玄铁佩刀在马鞍旁发出一声冷硬的轻撞，他没有多说一个字，长鞭凌空一甩，黑甲缇骑便护着铁条加固的囚车，辚辚碾过刑部门前的青石街道。\n\n囚车四面以粗木封死，车轮碾过凹凸不平的深辙，",
+      "tail": "测，自始至终却未置一词。沈定安见状，长刀霍然归鞘，冷声下令：“将满地残账尽数封箱，案犯顾砚之押回刑部死牢好生看管。今日堂前言辞，北镇抚司自会一字不漏呈报御前。”",
+      "error": null
+    },
+    {
+      "ch": 6,
+      "accepted": true,
+      "title": "第6章 入驻账房，狂揽三十二房乱账",
+      "words": 3249,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 48378
+      },
+      "gateIssues": [],
+      "head": "两匹高头战马的铁蹄踏碎了通州运河驿道上的泥泞，八棱精钢马刺在深秋薄暮中撞出冷硬的脆响。北镇抚司的黑甲缇骑寸步不离地护卫着木栏囚车，车轮碾过青石板路，直直停在通州仓司衙署门前。半个时辰前，司礼监的值宿太监方才将朱批密旨送抵镇抚司值房，令北镇抚",
+      "tail": "无声息地贴着墙根后退，在阴暗的回廊深处转过几道弯，借着渐浓的夜雾快步溜出了仓司偏门，跨上早已备好的快马，扬鞭狠狠抽在马臀上，直奔京城南市齐泰私宅的方向疾驰而去。",
+      "error": null
+    },
+    {
+      "ch": 7,
+      "accepted": true,
+      "title": "第7章 泼油烧账？反手按死纵火硕鼠",
+      "words": 3422,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "齐泰猛然摔碎了手中的青瓷茶盏，滚烫的茶汤在私宅书房的地毯上洇开一片刺目的深褐色。从通州仓司狂奔而来的探子跪伏在地，浑身沾满干涸的泥浆与冷汗，连滚带爬的喘息声粗重得像被拉扯到极致的风箱。这名正六品户部主事的面皮剧烈抽动，眼底满是惊怒与难以置信",
+      "tail": "色中吞吐着刺骨寒意。沈定安冷峻的面孔隐在阴影之中，那双如鹰隼般锐利的眸子漠然扫过满地狼藉与被踩在脚下的纵火仓吏，修长的指骨扣在刀镡上，发出令人胆寒的清脆扣击声。",
+      "error": null
+    },
+    {
+      "ch": 8,
+      "accepted": true,
+      "title": "第8章 复式重构，神算惊呆满堂老吏",
+      "words": 3225,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 142169
+      },
+      "gateIssues": [],
+      "head": "玄铁佩刀在幽暗的回廊下发出一声沉闷轻鸣，半截冷芒骤然归鞘。沈定安踩着焦糊油渣与碎瓷大步踏入账房，冷硬马靴在湿漉青砖上印出深黑泥痕。两名黑甲校尉如虎狼般扑上，将瘫软在血泊中的纵火仓吏死死按住，粗暴拧过断腕，将沾满油污的脏麻布硬塞进这恶吏嘴里，",
+      "tail": "贷核算实数与关键账目的细绢卷轴，手指沉稳如铁，将这封火漆严密封口的机密卷宗牢系上海东青脚踝之上的铜环。伴随着一声裂石惊空的清越长鸣，猛禽振翅冲天，直扑京城大内。",
+      "error": null
+    },
+    {
+      "ch": 9,
+      "accepted": true,
+      "title": "第9章 天子密旨，冷面提刑入局压阵",
+      "words": 3248,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 91813
+      },
+      "gateIssues": [],
+      "head": "去往内廷的海东青振翅不过两个时辰，通州官道上便再次卷起漫天烟尘。司礼监的八百里加急缇骑策马撞入通州仓司大门，战马鼻孔喷着白沫，在青石门槛前擦出一长串金红火星。传旨内侍滚下马鞍，双手高举缠着金丝龙纹的朱漆木匣，厉声高呼圣谕亲递。满院缇骑按刀肃",
+      "tail": "重的防锈桐油气味。伴随着辕木承受万钧重负时发出的酸涩呻吟，这列庞大的重车车队正借着薄暮昏暗的遮掩，避开前堂所有人的视线，径直朝着通州西北方向的水旱要道疾驰而去。",
+      "error": null
+    },
+    {
+      "ch": 10,
+      "accepted": true,
+      "title": "第10章 顺藤摸瓜，撞破顶级门阀暗印",
+      "words": 2711,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "顾砚之猛然收回抵在北窗木棂上的手指，拖着重获自由却僵硬冰凉的双足，大步退回长案后方。案角堆叠的硬木夹板磕在桌沿上，发出一声沉闷的撞击。\n\n“沈千户，关门扣人，派骑兵盯死西北偏道！”\n\n沈定安手中那柄尚未完全归鞘的玄铁长刀当啷一响，玄黑飞鱼服",
+      "tail": "渐渐逼近，夜空深处重云密布，隐隐传来山雨欲来的低沉闷雷。\n\n长案之上，那枚展翅的血色飞雁在跳跃不定的灯火下忽明忽暗，如同一头破土而出的嗜血猛兽，露出了森冷獠牙。",
+      "error": null
+    },
+    {
+      "ch": 11,
+      "accepted": true,
+      "title": "第11章 拿漂没当借口？我先量水尺！",
+      "words": 3225,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/19，超过 5 句的段 7。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "沈定安收回落在那方朱红飞雁印上的森冷目光，大步踱至窗前。晨光穿透老账房弥漫的积尘，将昨夜核出的底册照得一片刺目。顾砚之揉了揉酸涩的眼角，算了一整夜账，这具身躯早已疲惫不堪，唯独脑海中的借贷双轨越发清晰。“这本底册能坐实车仗司私调重车，但若无",
+      "tail": "，狭长眸子里的怨毒杀机几乎化为实质。朝阳之下，奔涌的运河水倒映着万道天光，而通州大仓百万石粮亏的重重铁幕，终于在这一根白玉水尺之下，被彻底砸出了万劫不复的破口！",
+      "error": null
+    },
+    {
+      "ch": 12,
+      "accepted": true,
+      "title": "第12章 想封苦力口？过闸水牌在此！",
+      "words": 2857,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "崔元朗手中那柄名贵象牙折扇“咔嚓”折断，尖锐扇骨戳破掌心渗出血珠。他死死盯着那本浸水摊开的水尺日簿，面皮剧烈抽搐，倒在堤岸泥水里的齐泰更是拼命抓挠，恨不得将记录塞回袖中。“伪造文书，构陷朝廷命官！”崔元朗厉声嘶吼，“通州闸官早已换了三任，几",
+      "tail": "，嘴唇咬得鲜血淋漓，整个人如坠万丈冰窟。崔元朗死死盯着那排泛着血光的朱砂签条，指甲深陷掌心连连后退，后背狠狠撞在冰冷的水尺石桩上，满眼尽是不可置信的恐惧与震骇。",
+      "error": null
+    },
+    {
+      "ch": 13,
+      "accepted": true,
+      "title": "第13章 四十万石蒸发，浮力教你做人！",
+      "words": 3320,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 6,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "search_scenes": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 132172
+      },
+      "gateIssues": [],
+      "head": "木石交击的钝响骤然在河风中炸开。\n\n顾砚之拖着带伤的双脚跨前一步，扬手将那枚浸透桐油的厚重桃木水牌，重重拍在石坝码头的青石公案上！沉重的硬木砸得案面浮灰腾起，牌面上深红如血的朱砂字迹在阳光下清晰夺目。\n\n“伪造！这全是通州闸房吏役私相授受的",
+      "tail": "地震的天大窟窿，如同一道惊雷当空炸裂，将整个运河码头震得死寂无声。\n\n薛怀德手中的紫铜手炉当啷一声跌落泥水，溅起半尺高的黄泥，在死一般沉寂的寒风中显得格外刺耳。",
+      "error": null
+    },
+    {
+      "ch": 14,
+      "accepted": true,
+      "title": "第14章 提刑官护驾，黑夜重车压碎石！",
+      "words": 3130,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 6,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 2,
+          "run_checks": 1
+        },
+        "ms": 111475
+      },
+      "gateIssues": [],
+      "head": "飞溅的黄泥星星点点黏在薛怀德的绯色官袍下摆上。地上的紫铜手炉滚了两圈，炭火嗤的一声在积水里熄灭，冒出一股青黑的薄烟。老侍郎死死盯着青石案上墨迹淋漓的算纸，枯槁的面颊抽搐不止，竟连弯腰去捡手炉的气力都提不起来。\n\n在他身后，崔元朗的象牙折扇早",
+      "tail": "\n\n沈定安按刀立在凹陷的车印旁，幽黑的眼眸中翻涌起骇人的杀意。数十名缇骑的长刀齐齐压低，整条偏街在一片死寂中，只剩下寒风卷过碎石的呜咽，与那挥之不去的刺鼻气味。",
+      "error": null
+    },
+    {
+      "ch": 15,
+      "accepted": true,
+      "title": "第15章 暗仓传金铁声，死守不准进！",
+      "words": 3051,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 7,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 152256
+      },
+      "gateIssues": [],
+      "head": "偏街石道上的刺鼻气味浓烈得几乎呛人，沈定安按刀的手指关节泛白，玄铁吞口发出一声机簧扣合的脆鸣。他没有丝毫迟疑，沉重长靴挟着破风声重重踏出，一脚将偏街尽头那座私宅的黑漆兽面大门彻底踹开。两名精悍缇骑拔刀抢入，雪亮的刀光在廊庑下撕开昏暗。顾砚之",
+      "tail": "臂粗的冰冷铁索，疯狂地震击着厚重的库门。刺鼻的生桐油焦气顺着狭窄的门缝汹涌扑出，那一声声撕裂死寂的金铁交鸣，如同一柄柄沉重的铁锤，狠狠砸在庭院中每一个人的心头。",
+      "error": null
+    },
+    {
+      "ch": 16,
+      "accepted": true,
+      "title": "第16章 提刑关防在此，暗仓给我开！",
+      "words": 3320,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "get_contract": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 90730
+      },
+      "gateIssues": [],
+      "head": "库门深处那两记沉闷的金铁交鸣犹在青石天井里回荡，门缝渗出的桐油焦味愈发刺鼻。庭院内的空气好似被严冬霜雪彻底冻结，四十余名黑衣私卫的呼吸骤然粗重。方才门内传出的动静太过真切，那是百炼重刃斩击在铁甲上激荡出的锐响，伴随着垂死之人的闷哼，绝非空仓",
+      "tail": "下摆。他隔着跳跃的火光凝视着那些严整如城垣的麻袋，在大门被强行推开的这一刻，深锁的甲字三号库内没有尸骸，也没有兵甲，映入眼帘的唯有整齐堆叠、密实如山的巨大粮垛。",
+      "error": null
+    },
+    {
+      "ch": 17,
+      "accepted": true,
+      "title": "第17章 一杆刺穿粮囤，泥沙狂涌而出！",
+      "words": 3210,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 7,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 217687
+      },
+      "gateIssues": [],
+      "head": "满仓灯火把幽深的库房照得一片赤亮。堆叠如峰的麻袋整齐紧凑，沿着石壁从地面一直垒砌到楠木大梁，俨然是一座坚不可摧的粮食城关。齐泰抹去糊在脸上的烂泥，发狂般的笑声在石拱顶下激荡回响。\n\n“沈提刑，薛大人，你们都瞧清楚了！”\n\n齐泰摇晃着爬起来，",
+      "tail": "的校尉身上，沉声喝道：“将人犯押解回东跨院老账房严加看守，若有半点差池，提头来见！”夜风卷着彻骨的凉意呼啸穿堂，暗仓内外的血腥与风暴，终于彻底扯开了遮天的大幕。",
+      "error": null
+    },
+    {
+      "ch": 18,
+      "accepted": true,
+      "title": "第18章 恶鬼穷途放火，暗夜死士拔刀！",
+      "words": 3056,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 6,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 141785
+      },
+      "gateIssues": [],
+      "head": "校尉粗糙的手掌死死卡住顾砚之肩头的木夹板，毫不留情地向前狠推了一把。带伤的脚掌踩在散落一地的湿冷泥沙上，发出黏腻的摩擦声。顾砚之闷哼一声，单薄的身躯晃了两晃，脚下碎石硌入磨穿的草鞋破洞，带起一阵钻心的刺痛。\n\n铁槛车的沉重木栏发出刺耳的撞击",
+      "tail": "喊，亦无半分杀气宣泄，两柄通体泛着幽蓝死寂光泽的精钢短刃，在半空中骤然翻转，带着尖锐至极的凄厉破风声，正对准泥泊中顾砚之单薄瘦削的后心要害，毫无保留地直刺而下！",
+      "error": null
+    },
+    {
+      "ch": 19,
+      "accepted": true,
+      "title": "第19章 锦衣缇骑断喉，生擒刺客活口！",
+      "words": 2894,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "幽蓝短刃撕裂滚滚热浪的尖啸尚未落定，沈定安挺拔的身形已抢步前冲。\n\n他甚至没有分神去拽泥泊中的顾砚之，而是踏着湿滑的碎石泥泞猛然拧身暴起。腰间百炼佩刀带着尖锐的机簧颤音悍然出鞘，雪亮刀锋自下而上斜撩而起，硬生生切入两道倒悬而下的黑影之间。\n",
+      "tail": "目光越过死尸，越过面如死灰的齐泰，最后落在台阶上方负手而立的大皇子萧成昭身上。\n\n穿堂外的夜风呼啸灌入，卷起地上的灰烬与残烟，天井内浓郁的血腥与火药味久久不散。",
+      "error": null
+    },
+    {
+      "ch": 20,
+      "accepted": true,
+      "title": "第20章 画出负债大表，截获钱庄密押！",
+      "words": 3368,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 135908
+      },
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "正文混入真实历史年号（本书为架空朝代，年号必须用本书纪年体系）：正统（…未加盖大雍户部的正统官防，而…）。全部替换为本书既定纪年或模糊化处理（「先帝年间」「十余年前」）",
+          "evidence": "正统（…未加盖大雍户部的正统官防，而…）"
+        }
+      ],
+      "head": "穿堂外刺骨的夜风裹挟着焦黑余烬扑面而来，天井里火药的刺鼻硝烟与浓稠血腥尚未散去。顾砚之单膝跪在冰凉湿滑的石阶前，扯下半截被烈焰燎黑的粗布衣袖，紧紧裹住右掌掌心翻卷的焦皮。后背被火星灼出的血泡在冷风里泛着钻心的剧痛，他却浑如未觉，沾满泥水的十",
+      "tail": "，与大雍最隐秘的地下钱庄咬合在了一起。沈定安两指紧紧捏住银票边缘，缓缓抬起幽深森冷的双眸，越过瘫软的齐泰与颤抖的崔元朗，如利刃般的视线径直逼向高阶之上的萧成昭！",
+      "error": null
+    },
+    {
+      "ch": 21,
+      "accepted": true,
+      "title": "第21章 密行进京，直扑地下钱庄老巢！",
+      "words": 3177,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "沈定安两指紧夹着那叠盖有紫草密押的厚棉银票，冰冷森然的目光直刺穿堂石阶之上的皇长子萧成昭。夜风卷着未熄的炭火星子在两人之间盘旋，天井内刺鼻的硝烟与焦糊气味浓烈呛人。十张见票即付的巨额私票泛着幽冷光泽，宛如一柄柄淬毒薄刃，横在整座通州大仓与京",
+      "tail": "的分账底簿，更紧挨着三坛浸透了松香烈油的引火之物！掌柜面孔极度扭曲，冷汗如雨，眼中爆发出玉石俱焚的凶芒，颤抖的右手已闪电般探入暗格，指尖死死扣住了一枚乌金火折！",
+      "error": null
+    },
+    {
+      "ch": 22,
+      "accepted": true,
+      "title": "第22章 撕碎账本？算学密码当场复原！",
+      "words": 2718,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 105729
+      },
+      "gateIssues": [],
+      "head": "火星自铁鞘边缘炸开，刺鼻油气扑面。顾砚之顶着木枷铁链暴起前冲，硬生生插进掌柜双臂之间！\n\n沉重冰冷的生铁下压，结结实实砸在掌柜虎口软肉上。掌柜吃痛惨叫，手中引信脱手飞出。顾砚之夺过燃烧的炽热火折，反手将滚烫的焰心狠狠掼入砖缝，皮肉被烈火灼烧",
+      "tail": "上的大手沉稳如山，深邃目光扫过长卷上的七十万两铁证，又望向戴枷而立、神色从容的顾砚之。夜风穿过碎裂门框，吹动公案上的残墨微温，四下唯余白纸黑字如霜雪般森严逼人。",
+      "error": null
+    },
+    {
+      "ch": 23,
+      "accepted": true,
+      "title": "第23章 穿透洗钱！八道空壳层层扒皮！",
+      "words": 3126,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 8,
+        "toolCalls": 6,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 199306
+      },
+      "gateIssues": [],
+      "head": "破损门框外吹进来的冷风掠过公案，吹得两页刚刚拼合的大案卷宗微微作响。林清源按在案角的指节因过度用力而泛出青白，这位都察院巡按京畿的铁面宪台死死盯着纸面上齐泰的飞白画押与寿山石私印，胸膛起伏不定。七十万两白银的结数触目惊心，然而当林清源的目光",
+      "tail": "，数十名侯府精锐私兵迅速架起手臂粗的强弓硬弩，闪烁着淬毒幽光的生铁箭头，齐刷刷对准了公案前的一众官差缇骑！\n\n杀气森寒如霜，整个草厂胡同茶栈顷刻间化作一片绝地。",
+      "error": null
+    },
+    {
+      "ch": 24,
+      "accepted": true,
+      "title": "第24章 火烤显影！抵押字据抽肿侯门脸！",
+      "words": 3017,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "生铁裹头的鹿皮短鞭凌空炸出一声脆响，重重抽在黑漆长案上！案头未干的朱砂墨汁飞溅开来，几枚象牙算筹翻滚落地，摔得粉碎。崔元朗单手按着腰间嵌宝长刀，大步跨过断裂的门槛，身上的细鳞甲叶铿锵作响。他仰着下巴，阴鸷的目光刀子般刮过正厅内的众人，最终停",
+      "tail": "被黄色绫绢紧裹的票据。修长手指逐一翻开文书，定格在压在最底下的折脚汇票上。公案灯火微跳，看清那张汇票抬头的瞬间，顾砚之瞳孔骤然收缩，整个人仿佛被生生定在了原地。",
+      "error": null
+    },
+    {
+      "ch": 25,
+      "accepted": true,
+      "title": "第25章 尚书私印！资金终点竟是顶头上司",
+      "words": 3314,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "暗黄色的桑皮纸薄如蝉翼，边缘带着三道整齐裁切的齿痕。公案上方残烛摇曳，火苗在夜风中剧烈晃动，将那张自包铁木箱深处翻出的折脚大票照得透亮。顾砚之双手扣在沉重的死木枷中，两根手指死死压在票据骑缝处，指甲因用力而泛出青白。沈定安察觉异样，阔步绕过",
+      "tail": "飞檐之上，风卷残云，吞没了天际最后一颗残星。顾砚之扯动脚下铁索，在满堂带刀随卫的森冷注视下迈步向前，冰冷的生铁重枷撞击在青砖台阶上，回荡出一声沉闷而绝决的震响。",
+      "error": null
+    },
+    {
+      "ch": 26,
+      "accepted": true,
+      "title": "第26章 密室博弈，千两黄金买不动死囚！",
+      "words": 3255,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 78458
+      },
+      "gateIssues": [],
+      "head": "夜深露重，北镇抚司校尉的生铁战靴踩在湿冷青石上，一路押解着戴枷的顾砚之穿过寂静无人的宣武长街。生铁脚镣每挪动一步，都在空旷的街巷间回荡出沉闷刺耳的拖曳声。前方黑压压的深宅高墙拔地而起，户部左侍郎薛府的乌木大门早早洞开，两侧数十名带刀府卫肃容",
+      "tail": "师椅后的青砖墙壁上掣下一柄四尺精钢佩剑。伴随着一道刺破死寂的清脆龙吟，雪亮剑锋裹挟着凛冽杀气直递而出，冰冷锋刃紧紧压在顾砚之的颈侧皮肉前，激得肌肤泛起一层栗粒！",
+      "error": null
+    },
+    {
+      "ch": 27,
+      "accepted": true,
+      "title": "第27章 剑抵咽喉！坏账归责反将尚书一军",
+      "words": 3515,
+      "attempts": 1,
+      "rewriteRounds": 2,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 2,
+        "revertedUnchecked": false,
+        "rounds": 6,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 2,
+          "revise_paragraphs": 1
+        },
+        "ms": 157713
+      },
+      "gateIssues": [],
+      "head": "冰寒彻骨的青钢剑刃紧紧贴在颈侧皮肉上，浸骨的杀意顺着经络直往骨髓里钻。顾砚之立在密室青砖之上，腕间沉重的生铁镣铐未曾挪动半分，冷铁锁链下垂，触地无声。他迎着三尺外那双布满血丝的老眼，甚至连眼皮都未曾眨动一下，神色沉静得宛若无风的深潭。\n\n“",
+      "tail": "铁。\n\n铁门外，更夫敲响的四更梆子声穿透重重院落，两慢三快，声声沉闷如雷。长夜将尽，残月西沉，而明日即将开审的三法司公堂，已然蓄满了足以掀翻整座京华的惊涛骇浪。",
+      "error": null
+    },
+    {
+      "ch": 28,
+      "accepted": true,
+      "title": "第28章 密室结盟！开放老库查验往年旧账",
+      "words": 3359,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": {
+        "finishReason": "protocol-error",
+        "checksUsed": 0,
+        "revertedUnchecked": false,
+        "rounds": 1,
+        "toolCalls": 0,
+        "byTool": {},
+        "ms": 19486
+      },
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：17 段平均 196 字、变异系数 0.09，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "顾砚之抬手正了正颈上沉重的生铁枷锁，目光冷静地落在薛怀德惊疑不定的面孔上。“回部堂的话，若仅凭方才密室中的唇舌推演，明日大审，胜算不过三成。”薛怀德身形猛然一颤，枯瘦的十指死死抠住紫檀圈椅扶手，面皮剧烈抽搐起来。他本以为抓住了绝处逢生的救命",
+      "tail": "际泛起的一抹惨淡鱼肚白。皇城太和门外的五更晨鼓已隐隐穿透夜幕轰鸣而至，沉闷的鼓声击碎了京城最后的幽暗，一场决定无数人身家性命与大雍运势的滔天暴雨，已然呼啸临门。",
+      "error": null
+    },
+    {
+      "ch": 29,
+      "accepted": true,
+      "title": "第29章 恶人先告状！御史长街怒斥门阀",
+      "words": 2814,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "报信差役瘫在湿冷的青砖地上，嗓音因惊恐而尖利变调。深埋地下的架阁老库内，楠木架上的陈年卷宗在沉闷晨鼓中微微震颤。沈定安佩刀未入鞘，雪亮刀锋贴着差役面皮，寒声道：“把舌头捋直了回话！通政司接了多少本章，领衔上奏的又是何人？”\n\n差役涕泪横流，",
+      "tail": "油灯被穿堂阴风吹得剧烈摇晃，顾砚之立于铺天盖地的猩红弹章之中，神色从容无畏。他迎向林清源逼视的目光，脚镣轻撞发出一声清脆冷冽的金属沉鸣，在死寂的老库中久久回荡。",
+      "error": null
+    },
+    {
+      "ch": 30,
+      "accepted": true,
+      "title": "第30章 圣旨亲裁！三丈白绢铺就决死战场",
+      "words": 2790,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "脚镣轻撞的清越声响在薛府后衙的砖石间渐渐隐去。晨曦透入雕花窗棂，照出林清源袍袖上的暗沉风霜，也照亮了顾砚之清瘦却沉凝的面庞。散落满地的三十五道弹章抄本泛着刺目的朱砂红迹，在晨风中翻卷作响。\n\n沈定安抬手按住腰间雁翎刀，向身侧两名北镇抚司校尉",
+      "tail": "自正堂阶前一直延伸到公案之下，宛如一条横亘在生死之间的雪白深渊。\n\n生铁脚镣再度发出一声清脆的鸣响。顾砚之站在白绢起点，迎着两侧投来的森寒目光，缓缓挺直了背脊。",
+      "error": null
+    },
+    {
+      "ch": 31,
+      "accepted": true,
+      "title": "第31章 九卿会审，三丈白麻巨表震朝堂",
+      "words": 3452,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "三丈素白生绢沿着正堂青砖笔直铺展，冷硬的生铁脚镣压在绢帛边缘。顾砚之挺直腰梁，深冬清晨的冻气顺着脚底直往骨缝里钻，但他胸膛内的气血却在翻涌。公堂天井上方，正阳门谯楼传来的第三通晨鼓沉闷坠地，铜锣开道的肃杀之音顺着户部仪门呼啸灌入。\n\n九卿公",
+      "tail": "怀德惨白的面孔上，冷冷开口：“薛侍郎，退思斋的印信历历在目，宣府的汇票白纸黑字。今日三法司与九卿皆在，你身为户部堂官，倒要给本王与满朝公卿一个明明白白的交代！”",
+      "error": null
+    },
+    {
+      "ch": 32,
+      "accepted": true,
+      "title": "第32章 借贷不平，现代复式记账降维算爆",
+      "words": 3139,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 95024
+      },
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 1/18，超过 5 句的段 5。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "大皇子萧成昭按在佩刀吞口上的大拇指猛然下压，青铜刀镡撞在鞘口，激起一声沉闷的金石之鸣。正堂两侧的三法司与九卿堂官无不背脊生寒，满堂目光尽数压在户部左侍郎薛怀德煞白的面孔上。萧成昭居于公署正堂首座，声音透着彻骨寒意：“薛侍郎，退思斋印信历历在",
+      "tail": "满嘴带血的黄牙疯狂撕咬咀嚼，整个人如厉鬼般狂乱嘶叫。沈定安疾步踏前，重甲校尉扑上前将齐泰死死按在大表之下，然而那幅被撕裂的白麻布后，大堂公案上已然翻起滔天波澜。",
+      "error": null
+    },
+    {
+      "ch": 33,
+      "accepted": true,
+      "title": "第33章 人赃并获，运粮夫役当堂掀翻铁案",
+      "words": 3316,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "两名膀大腰圆的带刀差役跨步疾进，合身向前猛扑，将癫狂嘶嚎的齐泰重重压制在冰冷坚硬的青石板上。\n\n生铁刑具在撞击下迸出沉闷的钝响。齐泰嘴里还塞着半截扯烂的白麻布，带血的唾沫混着泥浆顺着嘴角横流，喉咙深处发出野兽濒死般的粗粝呜咽。沈定安一个箭步",
+      "tail": "丈深渊的铁证。\n\n当按着血红指印的口供与折脚大票根底齐齐拍在大案前，齐泰周身骨节仿佛刹那被抽去，烂泥般瘫倒在砖隙间，整张枯脸惨白干瘪，泛出死人般的焦黄暗金之色。",
+      "error": null
+    },
+    {
+      "ch": 34,
+      "accepted": true,
+      "title": "第34章 惊堂木落，户部尚书拍案革职拿人",
+      "words": 3364,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 132119
+      },
+      "gateIssues": [],
+      "head": "通州水次仓的朱漆木签横陈在青石砖地上，那张按满鲜红指印的供状，与折脚大票的票底并排铺展在大堂正中。三丈白麻大表被堂外刮进来的冷风扯得猎猎作响，朱墨方格密密匝匝，将堂上每一个人的呼吸都死死扼在喉咙里。伏在地上的齐泰宛若被抽干了精魄，面皮泛着焦",
+      "tail": "气慢慢吐出。\n\n齐泰的官袍虽然被扒了，但那幅白麻大表最底端的借贷平准栏里，一百二十万两流向西北大同与宣府的白银，却像是一枚埋在朝堂深处的引信，正无声地滋滋作响。",
+      "error": null
+    },
+    {
+      "ch": 35,
+      "accepted": true,
+      "title": "第35章 死囚惨笑，二十万石粮食去向成谜",
+      "words": 3320,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "大皇子萧成昭玄金蟒袍的一角彻底消失在仪门屏风后，靴踏青砖的沉重回响仍在大堂廊下回荡。公署正堂两侧肃立的文武官员屏息敛声，谁也不敢在此刻发出半点杂音。\n\n两名体格魁梧的带刀皂役跨步抢上前来，粗暴地把齐泰从冰冷的青石砖上揪起。一人反剪其双臂，另",
+      "tail": "贷平准大表强行撕开，齐泰伏法，薛怀德断尾封箱。然而那二十万石在关外蒸发的精粮，却如同一团浓重的阴霾，笼罩在九边塞外风沙与朝堂深渊之间，散发着令人窒息的血腥杀机。",
+      "error": null
+    },
+    {
+      "ch": 36,
+      "accepted": true,
+      "title": "第36章 暗布罗网，死牢鸩酒深夜索命来",
+      "words": 2885,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 7,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 136696
+      },
+      "gateIssues": [],
+      "head": "生铁锁链撞击青石地砖，发出一阵沉滞的钝响。\n\n沈定安反手合上值房厚重的榆木门，落锁的铁闩发出咔哒一声闷响。值房内没有点灯，仅有从墙壁暗孔透进来的一缕昏黄油烟光线，斜斜切在顾砚之脚下的湿泥地面上。顾砚之肩颈上依然死死扣着沉重的松木大枷，两名精",
+      "tail": "药液正顺着银质壶嘴凝成一滴赤珠，在浓烈的酒香与窒息的死寂中，宛若悬在整个朝堂命脉之上的血色冰棱。那只融了剧毒鹤顶红的银胎雕花酒壶，仍在滴落着最后一口致命的残浆。",
+      "error": null
+    },
+    {
+      "ch": 37,
+      "accepted": true,
+      "title": "第37章 刀断鸩酒，仓正破防反咬侯府车行",
+      "words": 3313,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "粗瓷大碗的碗沿死死抵在齐泰泛紫起皮的下唇间，混着苦杏仁怪异冷香的辛辣汾酒直往鼻腔里钻。假狱卒右臂如钢箍般死扣住他的后颈，正发狠将那一碗暗红浑浊的药汁强行灌入他的喉管。齐泰浑身僵冷，枯槁的手指痉挛般抓挠着湿泥，眼角崩裂出两道混着煤灰的血痕。\n",
+      "tail": "可逆转地烧向了京城最顶层的豪门深邸。\n\n死牢深处，齐泰瘫在污泥与毒浆之间凄厉狂笑，而那把断了毒酒的雁翎刀倒映着油灯的微光，在阴冷的石壁上投下一片冰冷肃杀的暗影。",
+      "error": null
+    },
+    {
+      "ch": 38,
+      "accepted": true,
+      "title": "第38章 黑甲夜袭，查抄车行起获绝密暗册",
+      "words": 2790,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 2,
+          "run_checks": 1
+        },
+        "ms": 197414
+      },
+      "gateIssues": [],
+      "head": "刑部死牢阴湿的石壁前，齐泰瘫在血污与鸩酒残浆里凄厉惨笑，喉管间翻涌着血沫。断了毒酒的雁翎刀插在砖缝间，雪亮锋刃倒映着昏黄油灯，照亮满地碎银胎残片。被卸了下颌、折了腕骨的假狱卒如死狗般趴在泥泞里，喉头发出漏风般的痛苦呜咽，眼底只剩死灰般的绝望",
+      "tail": "一册，封皮中央用朱砂题写着通州西仓大库提调粮料的通总底册，下方赫然盖着户部员外郎崔元朗鲜红如血的私印。暴雨在屋外疯狂拍打残破窗棂，沈定安扣紧暗册，眼底杀机毕现。",
+      "error": null
+    },
+    {
+      "ch": 39,
+      "accepted": true,
+      "title": "第39章 穿透追踪，二十万石粮竟出关赴塞",
+      "words": 2990,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 6,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 2,
+          "submit_draft": 2,
+          "run_checks": 1
+        },
+        "ms": 171210
+      },
+      "gateIssues": [],
+      "head": "夜雨穿透石缝，顺着刑部死牢的阴湿甬道流淌。沉重的铁皮门被差役推开，沈定安带着满身冷雨与血腥气步入值房，随手扣死门闩。昏暗油灯下，两名缇骑执弩立于门侧。顾砚之身上的沉重木枷虽已除去，脚踝依然锁着生铁死铐，铁链深钉入石壁地桩。他抬眼迎向沈定安那",
+      "tail": "纸上方骤然凝住，悬停半空的笔尖迟迟未落。由于长久凝滞，一滴浓稠朱砂承托不住，啪的一声坠在宣府交割私印正中，将那道隐秘的塞外铁章彻底洇染成一片触目惊心的猩红血泊。",
+      "error": null
+    },
+    {
+      "ch": 40,
+      "accepted": true,
+      "title": "第40章 端本宫印，联合关防揭开夺嫡杀机",
+      "words": 2454,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "朱砂顺着宣纸纤维无声漫延，将那一记塞外铁章彻底吞没在猩红之中。顾砚之将悬在半空的狼毫毛笔轻轻搁在青石案边的白瓷笔架上，目光没有离开桌案，而是顺势移向了垫在宣纸下方的第三本黑漆底册。死牢石壁渗下的阴水嗒嗒敲击着地砖，在死寂的石室内激起阵阵冰凉",
+      "tail": "湿的空气中肆意蔓延。\n\n灯影摇曳，那方掺了飞金的朱红大印在昏暗的值房内灼灼闪烁，“端本宫”三个大字犹如一道滴血的索命符，在冰冷的公文上散发出令人窒息的血腥杀机。",
+      "error": null
+    },
+    {
+      "ch": 41,
+      "accepted": true,
+      "title": "第41章 深夜密使，天子暗探潜入户部",
+      "words": 3261,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 1/22，超过 5 句的段 7。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "沈定安五指按住刀柄，铁鞘重重压在案头的金丝宣公文上。公文底角掺了飞金的“端本宫”朱印在昏暗烛火下格外刺目。从通州大火，到三十五万石漕粮出城，再到兵部火牌强开居庸关，这笔滔天烂账背后的庞大黑手，终于在二人眼前现了形。\n\n“单凭车行夹层里这一纸",
+      "tail": "双隐在阴影中的鹰隼双眸，正死死钉在户部公署紧闭的正门之上。\n\n长街寒意彻骨，两股截然不同的杀意在黑暗中无声对撞。晨曦未现的京城上空，夺嫡的惊天狂澜已然破土而出。",
+      "error": null
+    },
+    {
+      "ch": 42,
+      "accepted": true,
+      "title": "第42章 金山封口，皇子幕僚夜闯直庐",
+      "words": 3394,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 184218
+      },
+      "gateIssues": [],
+      "head": "长街深处的夜色尚未褪尽，晨曦未现的皇城夹道里寒意彻骨。那辆浇铸玄铁的重车碾着青石板路徐徐远去，车轮声终被五更梆子吞没。沈定安待车辙彻底消失在浓雾中，才扣住顾砚之戴着铁索的臂膀，两人顺着千步廊外侧的狭窄夹道，疾步潜回刑部大狱东侧的提审直庐。\n",
+      "tail": "牛角灯晃动的光晕，顾砚之悬腕如刀，毫不犹豫地将那滴朱砂红笔刺向案头草表最顶端，在兵部朱印与通州大仓调拨文卷的交汇处，重重写下了直指端本宫要害的最后一笔穿透批注。",
+      "error": null
+    },
+    {
+      "ch": 43,
+      "accepted": true,
+      "title": "第43章 当场充公，一纸红单气吐血！",
+      "words": 3329,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 6,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 2,
+          "run_checks": 1
+        },
+        "ms": 64042
+      },
+      "gateIssues": [],
+      "head": "猩红的朱砂在粗糙的毛边纸上迅速晕开，将那一记穿透批注彻底钉死在兵部火牌与通州大仓的调拨卷宗之间。顾砚之手腕沉稳，狼毫硬管在白瓷碟边轻轻一刮，沥尽了残余的红墨，随后将笔稳稳搁在石案右侧的笔架之上。案头烛火被穿堂风吹得一阵摇晃，将他单薄挺拔的影",
+      "tail": "畿左佥都御史林清源，奉旨关防刑部公署！三法司封堂，闲杂人等一概退避，擅出者格杀勿论！”\n\n铁锁合拢，沉重的大门自外侧轰然封闭，将整座提审直庐死死围困在风暴正中。",
+      "error": null
+    },
+    {
+      "ch": 44,
+      "accepted": true,
+      "title": "第44章 刀尖起舞，定分录算死贪官！",
+      "words": 3499,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 11,
+        "toolCalls": 9,
+        "byTool": {
+          "get_draft": 1,
+          "search_scenes": 1,
+          "revise_paragraphs": 6,
+          "run_checks": 1
+        },
+        "ms": 139542
+      },
+      "gateIssues": [],
+      "head": "刑部直庐厚重的包铁榆木门自外侧轰然封闭，门环上的铁锁撞击出沉闷回响。林清源在外封堂的军令透过门缝隐隐传来，整座公署沉入暴风眼正中的窒息死寂。公案上，那只敞开的黑漆紫檀木匣里，二十锭官铸马蹄金在跳跃的烛火下泛着森冷刺目的金芒，旁边那张刚刚染上",
+      "tail": "如金甲潮水般自宫门拐角汹涌而出，明黄伞盖与金交椅在晨曦中赫然破雾现身。\n\n景和帝萧宏的天子御驾，竟越过文华殿早朝，携雷霆万钧之势，直接亲临对街的户部公署大门前！",
+      "error": null
+    },
+    {
+      "ch": 45,
+      "accepted": true,
+      "title": "第45章 天子亲裁，御驾降临户部堂！",
+      "words": 3091,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 7,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 2,
+          "run_checks": 1
+        },
+        "ms": 91986
+      },
+      "gateIssues": [],
+      "head": "九记破空净道鞭的余音，在千步廊两侧的高墙砖瓦间层层回荡。\n\n原本笼罩在皇城夹道间的晨雾，被金吾卫披甲铁骑踏出的狂风生生撕散。数千名禁军明盔亮甲，手执雪亮长戟分列两翼，森严的刀枪锋芒将整座户部公署前街围堵得水泄不通。晨光斜刺里穿透云隙，将公署",
+      "tail": "高的浑浊泥浪。那排沉重压抑的车厢在雨雾中宛如一道森然移动的移动铁壁，车帘低垂，深不可测，一股几乎凝固全城的惨烈肃杀之意，顺着漫天雨瀑，轰然笼罩在户部公署大门前！",
+      "error": null
+    },
+    {
+      "ch": 46,
+      "accepted": true,
+      "title": "第46章 御前对质，世家侯爷反咬一口",
+      "words": 3231,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 9,
+        "toolCalls": 7,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 4,
+          "run_checks": 1
+        },
+        "ms": 101856
+      },
+      "gateIssues": [],
+      "head": "长辕重车在户部公署大门前轰然停驻，暴雨砸在熟牛皮毡上激起白茫茫的水沫。数十名披甲精骑整齐勒缰，黑底白鹭旗帜在狂风中猎猎作响。车门推开，一名身着一品紫袍、外罩苍青鹤氅的老者踏下车辕。老者须发半白，面容清瘦如削，正是吏部尚书兼内阁次辅、博陵崔氏",
+      "tail": "帝萧宏坐在金丝蟠龙御坐上，天子视线冷硬如霜刃，在薛怀德高举的长卷与顾砚之苍白的面庞上流转。良久，景和帝薄唇微启，在满堂重臣屏息之中，冷冷吐出一个沉重的“准”字。",
+      "error": null
+    },
+    {
+      "ch": 47,
+      "accepted": true,
+      "title": "第47章 边关借粮？老狐狸当堂翻供！",
+      "words": 3452,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 10,
+        "toolCalls": 6,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 4,
+          "run_checks": 1
+        },
+        "ms": 193452
+      },
+      "gateIssues": [],
+      "head": "景和帝萧宏吐出的沉重字音尚未在大堂穹顶散尽，薛怀德紧绷的脊梁便猛地一颤。这位户部左侍郎额角冷汗涔涔，双手高高托着三丈长的亏空长卷，膝行向前半步，作势便要当着九卿重臣的面铺开定分录。堂外暴雨如注，打在正堂厚重的琉璃瓦上如万马奔腾，两列禁军甲士",
+      "tail": "激荡起一层雪白的水雾。八名缇骑收步撤杠按刀肃立，三具犹自淌着冰冷雨水的铁皮重箱巍然矗立在御案正前方，黑沉沉的气势如三座铁铸重峦，硬生生阻断了崔党满堂喧嚣的退路！",
+      "error": null
+    },
+    {
+      "ch": 48,
+      "accepted": true,
+      "title": "第48章 竹签为证，撕碎运粮假面具！",
+      "words": 2735,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "沈定安阔步上前，反手拔出腰间雪亮的绣春刀，刀背挟着千钧力道，结结实实砸在最当中那具重箱的熟铜锁扣上。\n\n喀嚓一声脆响，缠绕箱体的粗黑铁链应声崩断。\n\n两名缇骑跨步上前，合力掀起沉重的青黑铁皮箱盖，接着咬紧牙关将整具大箱猛然往前一掀！\n\n三千",
+      "tail": "粮车，压得出半尺深的车辙；济民救边的米袋，淌得出防锈防雨的生熟桐油。崔爱卿，朕的内阁次辅，你来告诉朕，通州大仓那凭空挪走的二十万石精粮，究竟被你们换成了什么！”",
+      "error": null
+    },
+    {
+      "ch": 49,
+      "accepted": true,
+      "title": "第49章 铁证拍脸，穿透银钱查到底！",
+      "words": 3220,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "天子冰寒彻骨的质问在大堂穹顶盘旋，满堂朱紫重臣尽数匍匐在地，连额角贴着金砖的声响都清晰可辨。崔道宪面颊的皮肉不受控制地抽搐两下，这位执掌吏部兼位列台阁的老次辅，双膝深陷在朝服袍摆里，枯瘦的五指紧抠象牙笏板。他极力平复着紊乱的呼吸，试图在滔天",
+      "tail": "里发出意义不明的哭嚎与求饶声。正堂四周的御前带刀侍卫齐刷刷将长刀拔出半寸，森白刀光映照着天子狰狞的怒容，满堂重臣呼吸停滞，整座公署彻底陷入了杀机四伏的死局之中。",
+      "error": null
+    },
+    {
+      "ch": 50,
+      "accepted": true,
+      "title": "第50章 褫夺官服，大牢突传饮鸩声！",
+      "words": 3423,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 12,
+        "toolCalls": 10,
+        "byTool": {
+          "get_draft": 4,
+          "revise_paragraphs": 5,
+          "run_checks": 1
+        },
+        "ms": 219855
+      },
+      "gateIssues": [],
+      "head": "公署正堂之上，飞溅的端石砚台碎屑在青砖地上四处崩滚，浓稠的御墨与猩红朱砂混作一滩刺目的泥泞。崔元朗整个人瘫倒在碎石与墨汁之中，双手死死捂住被砚石擦破的血脸，浑身颤抖如筛糠。铁证与账簿散落满地，他已彻底失了世家公子的体面，在泥泞中狼狈后缩，发",
+      "tail": "视着齐泰掌心残存的那个“营”字，深邃的眸底宛如寒潭结冰。线索虽断，但火光燃尽之处，通往更深渊薮的权力铁幕，已然被这场猝不及防的鸩杀无声撕开了一道深可见骨的血口。",
+      "error": null
+    },
+    {
+      "ch": 51,
+      "accepted": true,
+      "title": "第51章 尸体刚凉你就想封卷？",
+      "words": 3480,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 9,
+        "toolCalls": 7,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 4,
+          "run_checks": 1
+        },
+        "ms": 156989
+      },
+      "gateIssues": [],
+      "head": "铁镣铐在死寂的石阶前撞击出清脆的金石之音。\n\n顾砚之俯着身子，指尖轻轻拂过身前那具僵硬尸骸的掌心。焦黑的碎屑随风散落，残存的半边朱砂“营”字在雨水浸润下显得格外刺目。刑部死牢甬道深处涌出的刺鼻浓烟仍在盘旋，火油燃烧后的焦臭与苦杏仁般的古怪腥",
+      "tail": "雨中，目光冷若冰霜，直直迎上面色惨白发青的崔道宪。\n\n崔道宪死死盯着青砖上的红蜡残片，牙关咬得咯咯作响，胸膛起伏如风箱，整张面孔僵硬扭曲，竟再也吐不出半个字来。",
+      "error": null
+    },
+    {
+      "ch": 52,
+      "accepted": true,
+      "title": "第52章 这笔蜀锦账怎么见不得人",
+      "words": 3199,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "刑部天井内，湿冷风声裹挟着浓重焦苦味，满院文武噤若寒蝉。文安侯崔道宪双膝深陷在混着药渣的泥水里，喉结剧烈翻滚，嘴唇青紫颤抖，额头冷汗砸碎在青砖上，硬是憋不出一句辩白。那片沾着赤髓鸩与塞外私贡密蜡的碎瓷，宛若淬毒利刃，将世家断尾求生的算计当众",
+      "tail": "调度巨资时，才会打上的通汇飞记！\n\n顾砚之凝视着那记触目惊心的飞雁暗纹，眼神在火光下幽深如古井。他缓缓合拢五指，生铁镣铐在死寂的天井前回荡起刺耳冰冷的金石之鸣。",
+      "error": null
+    },
+    {
+      "ch": 53,
+      "accepted": true,
+      "title": "第53章 三张大白纸拍在地上，户部老吏全哑巴了",
+      "words": 2849,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 90457
+      },
+      "gateIssues": [],
+      "head": "雨后的夜风刮过刑部天井，生铁镣铐碰撞的金石之鸣尚未落定，火把上的油脂已噼啪炸开一团团赤红星火。正堂外的空地上，差役们临时抬来两张黑漆公案，明晃晃的灯球将青砖照得亮如白昼。景和帝萧宏端坐于上首紫檀交椅之中，玄黑龙袍下摆垂在金砖边缘，面容在火光",
+      "tail": "漆硬木重箱！箱角全用熟铜厚厚包边，沉重地陷在干燥沙土里。最前方几只尚未合严的箱盖缝隙间，官铸雪花银锭在火光照耀下折射出刺人眼目的森冷银芒，晃得整座后仓一片雪亮。",
+      "error": null
+    },
+    {
+      "ch": 54,
+      "accepted": true,
+      "title": "第54章 六十车现银截在南门，大皇子当场翻车",
+      "words": 3390,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "“狂妄竖子，安敢在御前弄虚作假！”大皇子萧成昭阔步越出朝班，玄色蟒袍大袖掀起一阵厉风，悍然横在紫檀公案前。他怒目圆睁，戴着扳指的手指几乎戳到顾砚之鼻尖上。那张塞外风沙磨砺出的面孔紧绷发黑，额角青筋突突狂跳，周身腾起战场厮杀凝就的凶悍戾气。\n",
+      "tail": "景和帝单手提着寒芒吞吐的天子佩剑，剑尖斜指地面，胸口剧烈起伏。天子冰冷刺骨的目光越过跪倒一地的重臣，如两柄烧红的淬毒钢刀，重重钉死在萧成昭那张煞白如纸的面孔上！",
+      "error": null
+    },
+    {
+      "ch": 55,
+      "accepted": true,
+      "title": "第55章 老吏全关进天牢，皇帝问我要什么赏",
+      "words": 3156,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "断裂的紫檀木案角重重砸在金砖地上，碎木崩散，激起一蓬刺鼻的朱砂残粉。\n\n整座大堂内的文武百官吓得齐刷刷跪倒在地，额头死死抵着冰凉刺骨的地砖，连喉咙里的粗气都强行咽了回去。大皇子萧成昭膝行两步，蟒袍下摆已被泼溅的墨汁浸透。他满头冷汗顺着下颌直",
+      "tail": "死罪名，于你而言已是轻而易举。朕金口玉言，立下这等通天大功，你想要何封赏？”\n\n满堂公卿的耳朵在这一刻齐刷刷竖了起来，所有人的目光瞬间汇聚在顾砚之单薄的脊梁上。",
+      "error": null
+    },
+    {
+      "ch": 56,
+      "accepted": true,
+      "title": "第56章 一本红蓝册子，当场把户部老吏算哭了",
+      "words": 2907,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "公堂内静得连灯油滴落声都清晰可辨，满地散落着折断的木屑与朱砂墨渍。满朝文武的目光紧紧钉在顾砚之单薄的脊背上，连喘息都下意识屏住。户部左侍郎薛怀德把袖口攥得变形，文安侯崔道宪伏在湿冷的砖石上一动不动。谁也没想到，这个从死牢里提出来的誊录小吏，",
+      "tail": "景和帝目光如炬，字字重逾千钧，“去把度支司那座烂仓，给朕翻个底朝天。”顾砚之神色沉静，在满堂重臣窒息般的注视下，缓缓伸出双手，指尖轻轻按在了冰凉刺骨的铜印边缘。",
+      "error": null
+    },
+    {
+      "ch": 57,
+      "accepted": true,
+      "title": "第57章 想拿烂账糊弄我？当场把桌子掀了",
+      "words": 2893,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "铜印入手，沉甸甸的压在掌心。青铜兽钮上的棱角硌着皮肉，冰凉刺骨，却让顾砚之被刑具磨破的手腕泛起一阵灼热。景和帝的话犹在耳畔回荡，满堂公卿大臣尚自僵立在原地，目光各异。顾砚之没有在刑部正堂耽搁片刻，收起印绶，径直随薛怀德步入户部公署。\n\n穿过",
+      "tail": "将这群积年老吏逼到了绝境，但这仅仅是撕开户部重重铁幕的第一道口子。三日之后，当这柄新法的剔骨钢刀真正切入度支司百年烂账的核心时，更大的惊涛骇浪，才刚刚露出端倪。",
+      "error": null
+    },
+    {
+      "ch": 58,
+      "accepted": true,
+      "title": "第58章 敢不敢去掀江南那口铁棺材",
+      "words": 3056,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "薛怀德拂袖离去之后，王孔目等一众老吏连滚带爬地退出正房，杂乱狼狈的脚步声很快散入外头的夹道里。值房内重归死寂，只剩下青砖地面上一滩未干的墨迹，散发着刺鼻的松烟味。\n\n顾砚之没有多看地上的狼藉，反手将案头那方沉甸甸的兽钮青铜印收进锦匣。指尖刚",
+      "tail": "\n\n气窗外的凉风卷起顾砚之单薄的青色布袍，他静静立在案旁，目光穿过窗棂钉在漆黑的东南天际，没有片刻迟疑。\n\n“既然死牢都走过一遭，这天下，便没有我不敢查的账。”",
+      "error": null
+    },
+    {
+      "ch": 59,
+      "accepted": true,
+      "title": "第59章 文华殿当场反水，谁借你的胆子",
+      "words": 3234,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "晨钟撞过九响，文华殿前的金砖地上还凝着一层白霜。值守太监方才将朱红殿门推开半扇，两列身着绯红、深青官袍的文武重臣便已默然入列。空气冷得扎肺，谁都清楚今日早朝的火药味打哪儿来。度支司里那几盆被墨汁泼透的试行账册，昨夜就已顺着各府耳目的耳朵，传",
+      "tail": "死灰色的寒霜，宽大的紫罗官袍袖管深处，那一双干枯的手指正不可遏止地轻颤。他遥望着户部度支司案房所在的皇城西南角，眼底翻涌的杀机，终于在初升的秋日冷光下显露无遗。",
+      "error": null
+    },
+    {
+      "ch": 60,
+      "accepted": true,
+      "title": "第60章 推到御前的根本不是账本",
+      "words": 3471,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 7,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 2,
+          "run_checks": 1
+        },
+        "ms": 146440
+      },
+      "gateIssues": [],
+      "head": "皇城西暖阁内，青铜兽炉吞吐着沉水香的青烟。\n\n文华殿早朝的喧嚣方才散尽，百官退出紫禁城午门，而殿内陈设的紫檀长案后，景和帝萧宏并未传膳，只是阖目倚在软靠上。通州仓案的风波虽暂告一段落，但朝堂上下的明枪暗箭，却顺着户部度支司那几本被泼上墨汁的",
+      "tail": "凭仗门阀根基抗旨毁账，或是危及你的性命，不必请旨，以此刃断之。”\n\n顾砚之垂眸看着案头那柄泛着血腥旧气的鲨皮短匕，躬身伸出双手，指尖触碰到了冰凉透骨的生铁龙首。",
+      "error": null
+    },
+    {
+      "ch": 61,
+      "accepted": true,
+      "title": "第61章 刑部大印砸下，谁来都翻不了案",
+      "words": 3280,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 9,
+        "toolCalls": 7,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 5,
+          "run_checks": 1
+        },
+        "ms": 226934
+      },
+      "gateIssues": [],
+      "head": "蟠龙首生铁短匕入手冰凉刺骨，沉甸甸的分量直坠衣袖。顾砚之双手稳稳托住刀鞘，妥帖收入广袖深处，随后整肃衣冠，对着御座之上的景和帝萧宏恭敬拜伏。殿内沉水香在静谧中悄然浮动，景和帝挥了挥袍袖，示意退下。顾砚之躬身倒退三步，与按刀侍立的沈定安一前一",
+      "tail": "腑。运河水流滚滚向南，穿破秋晨的迷雾奔腾不息。通州这一局虽然落定，但顺着这道水脉往南，两淮盐政八大总商的三千万两滔天烂账，已然在江南风雨中露出了狰狞的冰山一角。",
+      "error": null
+    },
+    {
+      "ch": 62,
+      "accepted": true,
+      "title": "第62章 户部大印砸下，谁来都救不了你",
+      "words": 3506,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/20，超过 5 句的段 6。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "清晨凛冽的寒风掠过宣武门外的长街，押送案卷的四轮马车铁轴沉重，在青石砖上碾出沉闷的呻吟。通州大仓三十六廒已被内廷与三法司的生铁封条牢牢锁死，沈定安麾下数十名黑甲缇骑按刀随行，将装满三十二房借贷账册的铁皮箱笼径直护送进户部衙署的正仪门。公堂两",
+      "tail": "帝赐下的生铁龙首短匕，正贴着皮肉散发着渗骨的寒意。京畿的硕鼠虽已伏法，但运河滔滔南去的尽头，那场牵动半朝公卿亲贵的三千万两滔天风暴，已然到了退无可退的决战前夜。",
+      "error": null
+    },
+    {
+      "ch": 63,
+      "accepted": true,
+      "title": "第63章 假银子被当场戳穿，老侯爷公堂上拔剑砍人",
+      "words": 3089,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 11,
+        "toolCalls": 9,
+        "byTool": {
+          "get_draft": 2,
+          "read_chapter": 1,
+          "revise_paragraphs": 5,
+          "run_checks": 1
+        },
+        "ms": 183060
+      },
+      "gateIssues": [],
+      "head": "刑部死囚槛车那刺耳的轮轴声刚刚消失在宣武门街口，通州大仓百万石粮食亏空案已由薛怀德加盖大印，正式勘合定谳。就在半个时辰前，户部正堂之上刚刚当众宣读了景和帝的御批昭雪手谕。顾砚之身上戴着的死囚生铁重枷被差役当堂卸下，彻底洗刷了替死重罪，奉旨平",
+      "tail": "杀机。他没有看地上的死尸，也未看林清源手中的残页，老侯爷那双布满血丝的阴鸷双眸宛如潜伏在草丛中的嗜血毒蛇，死死锁住顾砚之的咽喉命门，森冷得仿佛要将皮肉生生嚼碎。",
+      "error": null
+    },
+    {
+      "ch": 64,
+      "accepted": true,
+      "title": "第64章 朱批刚砸下，吏部就有人跳出来挡道",
+      "words": 3058,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "户部公署院内的刺鼻血腥，顺着穿堂秋风直往人鼻腔里钻。周秉义尚有余温的尸身横陈在碎木堆中，脖颈创口还在汩汩渗血，染红了大片青石地砖。三十六辆倾覆的重车旁，散落满地的劣质铅锡假银泛着死沉的青灰色。崔道宪离去时那道阴鸷凶残的目光仿佛还凝固在空气里",
+      "tail": "不可摧。一道名为流品法度的无形铁闸重重砸落，将顾砚之步入朝堂核心的升迁之路死死截断。顾砚之立于光影交界处，看着那本合拢的名册，袖中那柄生铁龙首短匕泛出刺骨冰凉。",
+      "error": null
+    },
+    {
+      "ch": 65,
+      "accepted": true,
+      "title": "第65章 拿积年烂账堵我，算盘都不用碰",
+      "words": 2596,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "顾砚之迎着那道朱红墨痕，脚下没有移动分毫。\n\n吏部大堂内的阴风卷起案头残纸，孙伯符冷笑未敛，堂外忽然传来一阵急促沉重的朝靴撞地声。都察院左佥都御史林清源青袍翻卷，大步踏过门槛，身后赫然跟着户部左侍郎薛怀德。两人一前一后直趋案前，林清源手中的",
+      "tail": "印泛着肃杀青光。顾砚之手托官印转身而立，堂外深秋的长风呼啸而入，掠起他的袍角，而整座威严肃穆的吏部大堂之内，数百名官吏噤若寒蝉，连一根银针落地的声响都清晰可闻。",
+      "error": null
+    },
+    {
+      "ch": 66,
+      "accepted": true,
+      "title": "第66章 官印刚接过来，又查出一条大鱼",
+      "words": 2970,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "青铜官印沉甸甸地压在掌心，边缘锋利的棱角硌着皮肉。顾砚之站在吏部大堂的正中央，并未将这枚象征正六品实职的大印收入囊中，而是抬手将它重重顿在身前的红木公案上。\n\n铛的一声脆响，在大堂内久久回荡。\n\n站在公案后面的孙伯符面皮抽搐了几下，强压下胸",
+      "tail": "印刺目如血。沈定安一挥手，两名精壮缇骑跨步上前，像拖死狗一样架起瘫软如泥的高绍义，铁链哗啦啦作响，毫不留情地将他拖过高高的门槛，朝着吏部仪门外的刑部重囚车拽去。",
+      "error": null
+    },
+    {
+      "ch": 67,
+      "accepted": true,
+      "title": "第67章 刚接了六品官印，夜里就有人来灭口",
+      "words": 3345,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "read_chapter": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 93879
+      },
+      "gateIssues": [],
+      "head": "重囚车的沉重铁轮碾过青石板路，沉闷的隆隆声顺着长街渐行渐远。高绍义声嘶力竭的叫骂被厚重的铁栏死死挡在车厢里，只剩下一串带血的泥痕留在吏部高高的门槛外，转眼便被秋风卷起的枯叶遮盖得严严实实。\n\n吏部大堂之内，差役们低头屏息，谁也不敢作声。原本",
+      "tail": "上刀柄，抽出插在皮鞘中的狭长钢刃，刃口通体抹着腥臭发黑的见血封喉药汁。檐角投下的阴翳里，几柄淬满剧毒的精钢狭刀在清冷月色下悄然探出，泛起一层森冷摄人的幽绿寒芒。",
+      "error": null
+    },
+    {
+      "ch": 68,
+      "accepted": true,
+      "title": "第68章 刚把车厢射成刺猬，火把全亮了",
+      "words": 3304,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 114531
+      },
+      "gateIssues": [],
+      "head": "屋脊上的灰黑瓦片应声碎裂，四道鬼魅般的黑影裹着腥臭的夜风破顶而入，淬毒钢刀直扑书案后的青袍人影。刀锋斩裂皮肉的声音并未响起，刀刃陷入的只有粗劣的麻布与干草，那具伏在案头的身躯竟是用稻草扎成的假人。案头没有三十册积年烂账，唯有一方被青铜砚台压",
+      "tail": "\n“大皇子派暗探督阵，杀手身上揣着崔道宪的腰牌。”沈定安声音低沉得像闷雷在喉中滚过，“顾主事，你算账算得明白，这笔糊涂账，文安侯和端本宫，究竟谁在替谁背黑锅？”",
+      "error": null
+    },
+    {
+      "ch": 69,
+      "accepted": true,
+      "title": "第69章 这辆铁皮马车，专等你们上钩",
+      "words": 2868,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "京郊官道上的腥风还未散尽，浸满血污的精铜腰牌在顾砚之掌心沉甸甸地压着。饕餮纹饰深处的血迹泛着刺鼻的铜锈气，正面那行文安侯府亲兵右卫的隶书小字，在松明火把的照耀下红得晃眼。\n\n沈定安按着腰间滴血的绣春刀，目光森冷如刀锋。\n\n“文安侯是内阁次辅",
+      "tail": "，文安侯赔补的八十万两现银，根本就没进过国库。”顾砚之将路引折好收回袖中，嘴角泛起一丝冷冽的弧度，“拆东墙补西墙，崔阁老这是拿国库的银子，在替两淮盐道平账呢。”",
+      "error": null
+    },
+    {
+      "ch": 70,
+      "accepted": true,
+      "title": "第70章 尚方令箭到手，整条运河要翻天",
+      "words": 3161,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 133497
+      },
+      "gateIssues": [],
+      "head": "晨曦撕开京城上空的寒雾，将承天门外的青石板地照得一片冷硬发白。沈定安甚至顾不上换下沾满血渍的锁子甲，两名缇骑校尉死死扣着卸了下巴的刺客头目，与顾砚之一道直穿午门深邃的宫禁夹道，将那叠染血的八百里特许加急路引与通州平账凭单，原原本本递进了内廷",
+      "tail": "之立于船头高处，黑眸中精芒如电，凝视着千里运河翻卷的浑浊长波。这柄由借贷平准与严明国法淬砺而成的财税铁刃，自今日起，终将毫无保留地刺入大雍朝堂最深处的疮痈命门。",
+      "error": null
+    },
+    {
+      "ch": 71,
+      "accepted": true,
+      "title": "第71章 刚到扬州，满码头官吏全绑了麻绳",
+      "words": 3069,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "顾砚之抬手死死压住被狂风卷起的运河水程图，图纸边缘在疾风中发出刺耳的猎猎脆响。脚下的三桅福船正以雷霆之势破浪南下，浑浊的河水被厚重的尖底船艏劈成两道翻滚的白沫。沈定安按着腰间长刀大步踏上帅船甲板，玄铁护臂与生铁扶栏重重一磕，发出一记冰冷沉闷",
+      "tail": "袍，顾砚之抬手握住腰间的尚方令箭，目光越过满地自缚的官吏，冷冷落向远处扬州城内鳞次栉比的深宅大院。这出大戏的帷幕才刚拉开，刀锋所向，绝不会仅仅落在几根麻绳之上。",
+      "error": null
+    },
+    {
+      "ch": 72,
+      "accepted": true,
+      "title": "第72章 演苦肉计？尚方令箭直接钉穿门楣",
+      "words": 3175,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "扬州钞关码头的晨风裹挟着江潮湿腥，将水面上的薄雾吹散了大半。长阶之上，上百名脱去官袍、赤足反绑的盐道官吏依旧死死贴着冰冷地砖，凄厉的告罪声在空旷河道上空回荡不休。领头的两淮盐运司同知额头磕得血肉模糊，背上的荆条刺破中衣，在惨白晨光下泛着扎眼",
+      "tail": "上。清脆的击打声在死寂的公堂内外传出老远。扬州官场那张遮掩了整整十年、寄生着无数硕鼠的泼天烂账，自这一柄插在门楣上的天子令箭始，终于被彻底架上了刮骨疗毒的铁案。",
+      "error": null
+    },
+    {
+      "ch": 73,
+      "accepted": true,
+      "title": "第73章 账本全发霉？全城连一粒盐都买不到",
+      "words": 3239,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 6,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 2,
+          "run_checks": 1
+        },
+        "ms": 114873
+      },
+      "gateIssues": [],
+      "head": "门楣上的金背令箭仍在轻轻震颤，明黄丝绦拂动在汉白玉台阶前，刺痛了满院盐道官吏的眼睛。顾砚之拍在公案上的白纸表格墨线分明，整座正堂死寂得只能听见堂外运河隐隐传来的浪涛拍岸声。三个时辰的限期像一柄无形的大铡刀，悬在每一名伏地叩首的经历、提举脖颈",
+      "tail": "毒万分。他根本不需要在公堂上据理力争，只需借着钦差封存竹签的借口挑动商行闭市，断绝全城食盐，便能将缺盐激起泼天民怨的罪名，尽数焊死在这位新任巡按主事的头颅之上。",
+      "error": null
+    },
+    {
+      "ch": 74,
+      "accepted": true,
+      "title": "第74章 掌柜按在柜台上，搜出皇子私印",
+      "words": 2873,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 7,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 123713
+      },
+      "gateIssues": [],
+      "head": "门板撞击门框的沉重闷响，在整条钞关大街此起彼伏地炸开。从城东的盐市口到运河码头，七十二家临街大盐铺连同外围的粮行、油坊，全都在半个时辰内插上了坚硬的榆木排门，胳膊粗的铁锁咔哒扣死。街面上挤满了捧着瓦罐、拎着空布袋的百姓，哭喊声与怒骂声混成一",
+      "tail": "盐道这一场看似由贪官和刁商联手做下的闭市逼宫死局，其真正捏着银根、操盘掀起满城民怨的黑手，在这一抹鲜红刺目的印迹下，终于被连皮带骨地硬扯到了大雍的青天白日之下。",
+      "error": null
+    },
+    {
+      "ch": 75,
+      "accepted": true,
+      "title": "第75章 掀翻算盘查底账，后院突然烧起来了",
+      "words": 3101,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 9,
+        "toolCalls": 7,
+        "byTool": {
+          "get_draft": 3,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 334671
+      },
+      "gateIssues": [],
+      "head": "钞关东街源泰号的门槛已被铁蹄踏得粉碎，顾砚之却没有在凌乱的值房内多留片刻。那本拓着二皇子端王萧成煜随身私印的硬皮密册被他妥帖收入袖囊，扯紧缰绳翻身上马，直奔运河主岔口的通汇钱庄扬州总号。沈定安率六十名玄甲缇骑紧随其后，马蹄铁踏碎青石路面，声",
+      "tail": "是有人蓄意以猛火极速重熔大量官银与暗锭，滚烫热浪挟着烧化金属的焦臭扑面狂卷。万秉成望着那片吞噬一切的熊熊熔银烈火，整个人瘫软在泥水之中，面色彻底化作了一片死灰。",
+      "error": null
+    },
+    {
+      "ch": 76,
+      "accepted": true,
+      "title": "第76章 刚从火里抢出脏银，你就送来毒点心",
+      "words": 2870,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "地窖顶盖崩碎的青石还在半空横飞，灼热气浪夹杂着铜铁焦臭迎面扑来。万秉成瘫软在泥水碎砖之中，整个人筛糠般发抖，嘴里反复念叨着完了。沈定安足下青砖猛然蹬裂，黑甲身影借坍塌的高墙拔地而起，避开迎面卷来的火舌，重重砸落在后院天井正中。厚底官靴踩在赤",
+      "tail": "只要沾唇半点，半盏茶内必七窍流血暴毙。灯花啪的一声爆裂开来，映亮了沈定安眼底的冰冷杀机。赵承恩连最后的遮羞布都撕碎了，淬毒的利刃，已直挺挺递到了钦差的咽喉跟前。",
+      "error": null
+    },
+    {
+      "ch": 77,
+      "accepted": true,
+      "title": "第77章 毒糕点摆上桌，老狐狸当场跪了",
+      "words": 2918,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "紫檀木案几上的焦黑小洞依旧散发着酸腐恶臭，钢针尖端的青黑残渣凝成硬壳，宛如一条蜷缩的毒虫。顾砚之抬手用白绢擦去指尖少许炉灰，目光落在那盘切得薄如蝉翼的雪片糕上。雪白的糖霜在烛火下泛着诱人光泽，底下却藏着足以让十头壮牛瞬间毙命的鹤顶红。“把食",
+      "tail": "十年风雨不透的铁板黑网，随着这匣账册的扣死，最坚固也最肮脏的那处台柱，终于被顾砚之用借贷平衡的算筹硬生生掀翻了一角。而运河尽头的夜幕深处，更大的风暴正呼啸扑来。",
+      "error": null
+    },
+    {
+      "ch": 78,
+      "accepted": true,
+      "title": "第78章 想烧账灭口？整整百张汇票全截下了",
+      "words": 3073,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "semantic",
+          "severity": "medium",
+          "location": "章节",
+          "description": "语义问题[logic_gap] 钱庄暗桩伏击死士段落: 死士人数前后描写自相矛盾：开场明确写翻入后院的刺客仅为“三名裹着黑巾的汉子”，后续战斗亦仅逐一描写了这三人的被杀与被俘（一人中弩栽倒、一人被碎喉、一人被按地挑丸），结句总结却称“八名死士已尽数毙命”，凭空多出五人且无任何登场或击杀过程交待。",
+          "evidence": "三名裹着黑巾的汉子身形矫健，自屋脊上轻巧翻落，手中端着引火的猛火油柜与浸透硫磺的布囊，动作极快地摸向后进院落的密室铁门。；前后不过二十余息，赵承恩派来行刺销证的八名死士已尽数毙命，刺鼻的血腥味被穿堂风裹挟着吹散在院落天井中。"
+        }
+      ],
+      "head": "沈定安按着腰间绣春刀的鲨鱼皮刀鞘，身影悄然隐入通汇钱庄城西暗桩的廊柱后方。更夫的梆子刚在寂静长街上敲过四更，夜色浓得化不开，空气里却飘来一股极淡的火油腥气。三名裹着黑巾的汉子身形矫健，自屋脊上轻巧翻落，手中端着引火的猛火油柜与浸透硫磺的布囊",
+      "tail": "扬州水域的万顷浊浪怒吼拍打着玄铁重门，冰冷的江风卷着飞沫，将两淮盐道三十年的退路与死生，连同那座暗潮汹涌的扬州古城，一同死死焊死在了这片铁壁铸就的绝境深渊之中。",
+      "error": null
+    },
+    {
+      "ch": 79,
+      "accepted": true,
+      "title": "第79章 借口清淤拒开闸，巨斧断江破死局",
+      "words": 3025,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 136866
+      },
+      "gateIssues": [],
+      "head": "奔腾的浊浪拍打着闸基，溅起丈许高的白沫。三十六道分水铁闸已然轰然坠江，将溃逃的几十艘私盐官船死死卡在断流的水道内。顾砚之踏着湿滑冰冷的青砖石阶，快步登上了扬州钞关那座高耸的闸楼。扑面而来的江风夹杂着浓重的腥气，直扑面门。他扶住箭垛举目望去，",
+      "tail": "密封装的黑漆重桶内丝丝渗出，在逼仄的阴沟里弥漫开来。黑影动作极快地拉直暗藏的药线，那几只盛满烈油的粗厚木桶，被他们竭力挪动着，一点点推进了深不见底的夹墙最深处。",
+      "error": null
+    },
+    {
+      "ch": 80,
+      "accepted": true,
+      "title": "第80章 趁火没烧起来，先把老底拓干净",
+      "words": 2955,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 8,
+        "toolCalls": 6,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 130309
+      },
+      "gateIssues": [],
+      "head": "逼仄幽暗的夹墙深处，几只盛满猛火桐油的粗沉木桶正死死嵌在地沟盲端，药线在地砖下悄无声息地延展。一墙之隔的盐运使司总账房甲字号库房内，空气冷得凝水。一盏蒙着双层青纱的防风死角灯被压在紫檀木架最底层，微弱光晕仅聚拢在三尺方圆的乌木公案上。\n\n林",
+      "tail": "度粘稠的猛火桐油气味，正伴随着某种细微沙沙的药线燃烧声，沿着墙角地下的阴沟夹层，顺着窗棂缝隙汹涌灌入室内。\n\n林清源面色骤变，猛地将装有铁证的竹筒紧紧扣在肋下。",
+      "error": null
+    },
+    {
+      "ch": 81,
+      "accepted": true,
+      "title": "第81章 想放火灭口？当场人赃俱获",
+      "words": 2934,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/20，超过 5 句的段 8。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "木屑碎裂的脆响骤然撕开总账房北墙。沈定安玄铁重靴挟着万钧气力横空踹入，糊着厚实高丽纸的紫檀雕花木格窗四分五裂。飞溅的碎木与断裂窗棂呼啸横扫，将窗下正欲弥漫的刺鼻油烟冲散大半。沈定安身披重甲落地无声，手中长刀未曾出鞘，单臂一把将林清源及其身后",
+      "tail": "死抠入掌心，鲜血顺指缝滴落阶前。他在暴雨中无声惨笑，猩红眼眶里翻涌起濒死反扑的疯狂与怨毒。在这片漆黑如墨的江南雨夜下，最后的决绝杀意，正从他心底最深处破土而出。",
+      "error": null
+    },
+    {
+      "ch": 82,
+      "accepted": true,
+      "title": "第82章 平价放盐！盐商们当场瘫在门槛上",
+      "words": 3203,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "后衙的朱漆大门在铁锁合拢声中关死，整座扬州城的暗流却在拂晓前掀到了顶峰。天色刚泛起青灰，长街两侧已是一片嘈杂。赵承恩虽被困内宅，可早先埋下的暗子全在疯狂运转。城内七十二家大盐铺的门板卸也没卸，门楣上挂着“官引不济、存货告罄”的木牌。黑市粗盐",
+      "tail": "远飘来，像一记又一记无声的耳光，抽在紧闭的会馆门前。而在运河码头方向，押送漕粮的大船已然解开缆绳，浩浩荡荡地顺流远去，阳光洒在奔涌的江水上，映出一片刺目的金芒。",
+      "error": null
+    },
+    {
+      "ch": 83,
+      "accepted": true,
+      "title": "第83章 掏空家底去扫货，官盐根本卖不完",
+      "words": 3273,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "运河码头的水浪声渐渐低沉，押送漕粮的大船已驶入主干水道。清晨薄雾在日头下退散，扬州城东市的青石长街两侧，早已被扶老携幼的百姓围得水泄不通。昨夜钦差起获私藏淮盐的消息传遍大街小巷，苦于买不到平价盐的百姓天不亮就挎着竹篮在此守候，长队一路排到了",
+      "tail": "一声喷出大口鲜血，栽倒在冰冷砖地上。官仓方向，火把照亮了深邃仓房，连绵起伏的巨大盐垛在夜色中静静矗立，宛如一道不可逾越的高山，彻底将两淮盐商的贪婪退路死死截断。",
+      "error": null
+    },
+    {
+      "ch": 84,
+      "accepted": true,
+      "title": "第84章 全砸手里了，带头盐商跪地求饶",
+      "words": 2787,
+      "attempts": 1,
+      "rewriteRounds": 2,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 2,
+        "revertedUnchecked": false,
+        "rounds": 6,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 2,
+          "run_checks": 2
+        },
+        "ms": 146952
+      },
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 2/22，超过 5 句的段 0。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "官仓深处连绵耸立的白盐大垛，像一道无法逾越的霜雪铁壁，将两淮盐商最后的侥幸击得粉碎。逢春德记总号的大堂内，主事盐商李逢春整个人瘫软在柜台后的酸枝木高背椅上，干瘦枯槁的双手近乎麻木地来回抠摸着空空如也的票匣。八个抽屉被他反复抽拉，空铜环撞在木",
+      "tail": "下皆凿有双层暗舱，船头吃水线上烙印博陵崔氏的飞雁朱砂记，每逢粮漕过关皆挂官旗免验。在运河三十六道水关底册里，这支暗中运私洗银的庞大船队，绝密代号就唤作穿江龙。”",
+      "error": null
+    },
+    {
+      "ch": 85,
+      "accepted": true,
+      "title": "第85章 空船吃水深半尺，当场露馅了",
+      "words": 2538,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "李逢春瘫软在钦差行辕的正堂冰凉方砖上，嘴唇青紫，整个人像是被抽去了浑身骨头。案头烛火被穿堂风吹得一阵摇晃，李逢春口中吐出的每一个字，都像是在满堂肃杀中砸下一块生铁。打着博陵崔氏飞雁暗记、由漕运暗桩统辖的“穿江龙”，正是两淮官商侵吞盐利、洗白",
+      "tail": "索绷得笔直，数十名黑甲缇骑与水营精兵手按长刀飞身攀爬而上。甲板上的伪装船夫们握着篙竿的手剧烈颤抖，面对四面合围的雪亮钢刀与黑洞洞的强弩，双腿发软，彻底面如死灰。",
+      "error": null
+    },
+    {
+      "ch": 86,
+      "accepted": true,
+      "title": "第86章 一斧劈开暗舱，私盐堆成了山",
+      "words": 3421,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "黑铁探钩死死扣进坚硬的榆木船舷，在夜风中发出令人牙酸的摩擦声。沈定安身形如鹞鹰般拔地而起，玄色披风撕破江面上的雾气，双足重重踏在湿滑的甲板上，震得整艘大船猛然一沉。两名手持长篙企图反抗的漕勇尚未看清来人面目，沈定安手中绣春刀已然翻转，刀鞘如",
+      "tail": "在刺骨的夜色中四散飞扬。林清源脸色剧变，猛然转头看向顾砚之；沈定安脚下的长刀骤然一紧，漆黑的眸子里寒芒暴涨。码头火把烈烈作响，将地上那滩未干的江水照得通红如血。",
+      "error": null
+    },
+    {
+      "ch": 87,
+      "accepted": true,
+      "title": "第87章 螭虎暗印",
+      "words": 3284,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 10,
+        "toolCalls": 8,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 3,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 178611
+      },
+      "gateIssues": [],
+      "head": "江风卷着刺鼻的泥腥扑在面上，码头上堆积的粗盐被吹得沙沙作响。沈定安脚下发力，绣春刀锋往那落水押船官的颈项压下半寸，割出一道极浅的血痕。\n\n“仙女庙官道，他走的是仙女庙官道！”押船官整个人浸在冰水里，嗓子全被吓哑了，带着哭腔告饶，“运司特批的",
+      "tail": "鱼。他死死抠住公座扶手，张开嘴想要下令封衙，喉咙里却只能挤出干瘪尖利的抽气声，整个人像被抽走了浑身骨架，面孔惨白得像糊了一层死灰薄纸，彻底瘫死在冰冷的公座之上。",
+      "error": null
+    },
+    {
+      "ch": 88,
+      "accepted": true,
+      "title": "第88章 石板底下全是封条",
+      "words": 3123,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "运司衙门后堂已被北镇抚司的黑甲骑兵围得水泄不通，赵承恩瘫在太师椅上如同一滩烂泥，但钦差行辕签押房内的灯火彻夜未熄。顾砚之并未在赵承恩的告饶上浪费唇舌，羊皮底册上那三百二十万两白银的去向，早在借贷双向勾稽的复核中展露无遗。过去五年间，运司每逢",
+      "tail": "一道道未干的血痕。沈定安按在刀柄上的指节发白；林清源脸色铁青，震撼久久难以平息。暗门尚未开启，但沉睡了数年的密密封条，已将朝堂最深处的贪婪与黑暗彻底撕开了一角。",
+      "error": null
+    },
+    {
+      "ch": 89,
+      "accepted": true,
+      "title": "第89章 借贷两边平不上，你还扯什么天灾",
+      "words": 3486,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "“锁绝不能砸。”顾砚之拂去棉帕上的青黑苔藓，缓缓站直身子。水闸石堡内江风刺骨，三十二道密密封印在火把照耀下泛着沉年朱砂的暗红。运司、户部与内廷御用监的印信层层叠压，这扇铁门就是他们互相牵制又彼此分肥的铁证。倘若眼下强行破开，来日到了御前，内",
+      "tail": "黄的书页在顾砚之修长的指尖翻开，公堂之上的风仿佛在这一刻骤然停滞。赵承恩看清封签上朱红钦天监大印的瞬间，眼底最后的癫狂骤然冻结，整张脸上的血色瞬间褪得干干净净。",
+      "error": null
+    },
+    {
+      "ch": 90,
+      "accepted": true,
+      "title": "第90章 死士还想放火，退路早被全掐死了",
+      "words": 3469,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 7,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 130582
+      },
+      "gateIssues": [],
+      "head": "公堂案头那卷蓝绸气象水文册摊开着，钦天监江南分司的朱印鲜红刺目。赵承恩双膝跪在冰凉的青砖上，喉咙里发出野兽濒死般的嗬嗬声，整个人像烂泥一样瘫了下去。自景和二十年起至二十四年入春，哪一天落雨、哪一天起风，钦天监记工册上分毫不差。所谓的狂风掀翻",
+      "tail": "雪白水浪，泥浆与浪沫重重拍打在两旁的石壁之上。倒刺排栅如同一张冰冷森严的铁齿巨口，将地底暗道通往运河的所有水路、生路与退路，在一声沉重的轰鸣中彻彻底底斩为两截。",
+      "error": null
+    },
+    {
+      "ch": 91,
+      "accepted": true,
+      "title": "第91章 一斧头砸开，底下全是见不得人的勾当",
+      "words": 3222,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "沉重无匹的熟铁倒刺排栅轰然砸入花岗岩底槽，震得整座地底水脉剧烈震荡。运河主流的怒涛被生生隔绝在外，暗渠中翻腾的浊浪迅速退落，只余下水沫撞击铁栅的沉闷呜咽。暗道深处最后几声凄厉的呛咳彻底止歇，顽抗的死士被浓烟逼入绝境，尽数被巡江快船与重甲缇骑",
+      "tail": "梆子声，残夜将尽，晨雾正顺着通气石缝无声渗透。水滴自穹顶坠落，在残账旁的青石板上摔得粉碎，而在那水光倒映的火把残影之外，更凶险的风暴已在地底深处缓缓张开了大口。",
+      "error": null
+    },
+    {
+      "ch": 92,
+      "accepted": true,
+      "title": "第92章 账本直接砸脸上，看你还怎么扯天灾",
+      "words": 3152,
+      "attempts": 1,
+      "rewriteRounds": 2,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 2,
+        "revertedUnchecked": false,
+        "rounds": 13,
+        "toolCalls": 11,
+        "byTool": {
+          "get_draft": 4,
+          "revise_paragraphs": 5,
+          "run_checks": 2
+        },
+        "ms": 163665
+      },
+      "gateIssues": [],
+      "head": "更夫手里的梆子声穿透薄雾，顺着运河潮气在长街散开。天色刚破晓，扬州城南两淮盐运使司的朱红大门前，几只宿鸟被铁蹄惊起，扑棱着掠过照壁石兽。沈定安按着腰间佩刀翻身下马，靴底溅起水洼里的泥浆。数十名玄甲缇骑护着两辆牛皮辎重车肃立在后，车轴发出不堪",
+      "tail": "在漫地的烂账残页里，仰头死死瞪着那处紧闭的门扉，眼珠里布满猩红的血丝，喉咙里溢出困兽般绝望的嗬嗬声，一口黑红血水终于顺着牙缝喷涌而出，染透了胸前污浊的白绸内衬。",
+      "error": null
+    },
+    {
+      "ch": 93,
+      "accepted": true,
+      "title": "第93章 一丈血绢送出去，今晚要出大事",
+      "words": 3527,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "黑红的血沫溅在青砖残页之上，在运司正堂撕开一片惨烈的腥气。沈定安长刀微垂，两名重甲缇骑跨步上前，反剪赵承恩双臂，粗粝的熟铁镣铐咔哒一声扣死在其枯瘦的腕骨上。这位盘踞两淮二十载的盐道土皇帝，此刻发髻散乱，白绸内衬被鲜血浸透，像被抽去脊骨的皮囊",
+      "tail": "的脆响已近在咫尺。无数火把将扬州夜空映得血红一片，数千名被疯狂怒火吞噬的纤夫如狂潮般涌至门前百步之内，森严的杀气已如泰山压顶般狠狠撞向了这座孤悬长街的钦差行辕！",
+      "error": null
+    },
+    {
+      "ch": 94,
+      "accepted": true,
+      "title": "第94章 私藏暗仓被抄，老底全漏了",
+      "words": 3317,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "行辕门楼外，翻滚的火把几乎将半边夜空烧透。数千名被烈酒与流言激红了眼的纤夫力工，手握铁钎木棍狂暴嘶吼，厚重的门板被撞得簌簌落灰。值房廊下，顾砚之单手按住天子佩剑，目光越过墙头黑压压的人潮，冷静地投向了百步开外漆黑幽暗的富春后街。\n\n“正门有",
+      "tail": "边，几个端楷小字在烛光下显得尤为森严刺目。\n\n通汇钱庄大掌柜，万秉成。这三个字如同一记重锤，终于将扬州盐道深不见底的贪腐泥潭，彻底砸开了一道直通命脉的血色裂口。",
+      "error": null
+    },
+    {
+      "ch": 95,
+      "accepted": true,
+      "title": "第95章 算盘一响，你们钱庄明天就得塌",
+      "words": 3165,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "烛火在穿堂风里剧烈摇晃，将胡商画押的口供映照得一片森然。顾砚之将那张盖着万秉成私印的抵押借据压在案头，目光扫过供词上墨迹未干的朱红指印。沈定安会意，大步跨出侧堂，片刻之后便带着四名披甲缇骑，将一直软禁在后堂夹室里的万秉成押解了出来。万秉成手",
+      "tail": "，干裂起皮的嘴唇不住颤抖，用微弱得近乎耳语的气音，艰难地挤出了两句断断续续的实话：“运河下游，扬州城里的现银，没往北走，全由下游的药材商接了手，沿江以药易银。”",
+      "error": null
+    },
+    {
+      "ch": 96,
+      "accepted": true,
+      "title": "第96章 以药洗银连环套，巨驳横江压波涛",
+      "words": 3386,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 76405
+      },
+      "gateIssues": [],
+      "head": "万秉成那句干瘪的供词甫一出口，通汇钱庄后堂里的寒气便冻住了满地烛影。万秉成被两名玄甲缇骑按在青砖地上，手腕上的沉重铁镣发出干涩的摩擦声，整个人抖成一团烂泥。顾砚之掸去袖口沾染的浮灰，神情冷定如常。沈定安反手扣住佩刀吞口，刀鞘下端在石板上重重",
+      "tail": "泥中压出沉闷的吱嘎摩擦声。\n\n招供所指的这处秘密交割泊位前，正静静停着三艘吃水极其沉重的大船。沉重的船身陷在泥泞与寒浪之中，连夜风都吹不动那凝固如铁的庞然暗影。",
+      "error": null
+    },
+    {
+      "ch": 97,
+      "accepted": true,
+      "title": "第97章 全招了，夹墙里藏着掉脑袋的底单",
+      "words": 3512,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "沈定安踩着湿滑的跳板跃上头一艘驳船，腰间绣春刀骤然出鞘，雪亮刀尖挑断了捆扎舱板的粗麻绳。两名披甲缇骑合力掀开沉重的黑漆木板，一股混杂着江泥与铁锈的寒气扑面而来。舱底没有半粒漕粮，只有整整齐齐码放成四层的生铁大箱，撬开封皮，露出的全是被暗炉重",
+      "tail": "血痕。赵承恩披头散发地立在原地，铁镣在剧烈颤抖中撞击出刺耳的金铁声，那双布满血丝的眼睛死死瞪着公案后神色如常的年轻人，喉间嗬嗬作响，却再也吐不出一句成调的言语。",
+      "error": null
+    },
+    {
+      "ch": 98,
+      "accepted": true,
+      "title": "第98章 告状折子刚摔下，八十万两现银到了",
+      "words": 3351,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "碎瓷在青砖地上迸溅开来，茶水混着残渣泼洒了一地。沈定安神色冷冽，根本不给赵承恩喘息的空隙，反手一记手刀狠切在其后颈。两名披甲缇骑立时跨步上前，精铁锁链再度扣死，将喉间犹在咯咯作响的赵承恩如死狗般拖出正堂，押入行辕重牢。堂外风雨如晦，整座钦差",
+      "tail": "火舌卷过宣纸，飞灰在青砖地上打着旋散落。窗外运河波涛拍岸，寒潮未退，手中的王命旗牌沉重如铁，而京城夺嫡最凶险的漩涡，已然借着这道圣旨，无可避免地向扬州倾覆而来。",
+      "error": null
+    },
+    {
+      "ch": 99,
+      "accepted": true,
+      "title": "第99章 死到临头还想一把火烧干净",
+      "words": 3176,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "行辕重牢深处的幽暗石室内，阴寒刺骨的潮气顺着地砖缝隙直往骨头里钻。赵承恩蜷缩在生满青苔的墙角，原本身着的光鲜从三品绯色官袍早已被剥去，换成粗粝干硬的赭色囚衣，手腕脚踝上的熟铁镣铐死死勒进皮肉，稍一动弹便拖出刺耳钝响。老鹳嘴查扣的八十万两重熔",
+      "tail": "凭着这一把火就能死无对证、高枕无忧，却不知漫天烈焰焚尽的不过是一堆废纸尘泥，而一张真正足以直取京畿巨蠹的天罗地网，正借着这冲天火光的遮掩，在江南夜色中无声收拢。",
+      "error": null
+    },
+    {
+      "ch": 100,
+      "accepted": true,
+      "title": "第100章 账房烧成灰，你高兴得太早了",
+      "words": 3388,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 8,
+        "toolCalls": 6,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 4,
+          "run_checks": 1
+        },
+        "ms": 223643
+      },
+      "gateIssues": [],
+      "head": "沈定安抬手按住了腰间绣春刀的鲨鱼皮刀鞘，金属搭扣啪嗒轻响。\n\n刺鼻的桐油焦糊味扑面刮过，两人脚下的运河石拱桥栏杆已被热浪烤得滚烫。钞关前殿塌陷的残瓦还在翻滚，斜刺里的库房顶棚又在剧烈轰鸣中炸开漫天火星。一条凶猛咆哮的赤红火浪卷起重重浓烟，顺",
+      "tail": "猛地顶起长刀护手。\n\n顾砚之收剑入鞘半寸，面容沉凝如铁，厉声喝道：“沈定安，传本官按察使严令，调巡防营所有排闸水车全数上堤！即刻绞起退水暗栓，给本官抽干底仓！”",
+      "error": null
+    },
+    {
+      "ch": 101,
+      "accepted": true,
+      "title": "第101章 闸底黑水放干，里头全是大铁箱",
+      "words": 3535,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "read_chapter": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 82574
+      },
+      "gateIssues": [],
+      "head": "沈定安手中雁翎刀猛然前指，嗓音裹着杀伐戾气：“巡防营听令，起水车，开暗栓！”\n\n号角声在运河堤岸上撕开夜色，三十二辆巨型排闸水车被兵卒合力推至水闸两侧的石基上。几十名膀大腰圆的力役光着膀子扑上青铜绞架，沉重的熟铁链条在刺耳的摩擦声中节节绷紧",
+      "tail": "照下，显得格外狰狞。\n\n整座运河钞关在一片死寂中沉沦，而那枚深藏在三百万两私银夹层下的玄铁私印，已然将扬州这场滔天贪案的刀锋，无声指向了那座更为凶险的京师深宫。",
+      "error": null
+    },
+    {
+      "ch": 102,
+      "accepted": true,
+      "title": "第102章 全城罢市？直接砸仓当街放盐！",
+      "words": 3041,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落偏长：长段 0/19，超过 5 句的段 7。仅拆真正偏长的段；保持 3～5 句一段，不要拆成一句一段",
+          "evidence": ""
+        }
+      ],
+      "head": "顾砚之将那枚沾着黑油的玄铁私印推回沈定安手中，指尖在案头轻轻叩击了两下。沈定安会意，扯出一块坚韧的熟鹿皮将私印层层裹紧，塞入内甲贴身暗袋。石桥下方，六十只沉重的生铁大箱正被巡防营兵卒吃力地拖上长堤。三百万两雪花官银重见天日，钞关码头火把通明",
+      "tail": "顾砚之撕开蜡封，抽出了信筒内那张泛着血腥气的绢纸。信纸展开的刹那，扬州夜空骤然划过一道苍白的闪电，照亮了窗外沉沉压落的漆黑天幕，也照亮了那行触目惊心的求救血字。",
+      "error": null
+    },
+    {
+      "ch": 103,
+      "accepted": true,
+      "title": "第103章 两本红账砸在脚边，你招不招",
+      "words": 3358,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 8,
+        "toolCalls": 6,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 4,
+          "run_checks": 1
+        },
+        "ms": 86275
+      },
+      "gateIssues": [],
+      "head": "顾砚之将手中那张沾着泥污与暗红血痕的绢纸按在紫檀案几上。纸面上的字迹歪斜扭曲，三十六枚浸着鲜血的指印密密麻麻挤在下角，字字句句皆是在向博陵崔氏求援乞命。跳动的烛火下，那枚刚从钞关闸底生铁箱里抠出来的玄铁私印静静立在一旁，印钮上的螭虎在火光跳",
+      "tail": "弩与火油引柴尽数围死栈桥，连一只飞鸟都插翅难飞！”\n\n雨夜惊雷贴着扬州屋脊轰然炸裂，惨白的电光将整座签押房映照得森白如昼。城郊粮栈外死士合围，杀机已然压至眉睫。",
+      "error": null
+    },
+    {
+      "ch": 104,
+      "accepted": true,
+      "title": "第104章 挑开麻袋全漏了，四万石精盐当街砸盘",
+      "words": 3427,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 83638
+      },
+      "gateIssues": [],
+      "head": "顾砚之手掌重重拍在紫檀案几上，震得案头朱砂笔架一阵乱颤。\n\n“调巡防营重甲营与两百名快马缇骑，封死通济仓方圆五里。”顾砚之长身而立，天子剑穗在穿堂阴风中猎猎作响，“对方急着杀人烧仓，说明暗窖里的借贷底联是他们的催命符。沈定安，一个活口都不必",
+      "tail": "栅条。生锈的铁皮深深嵌进外翻溃烂的皮肉，任凭指骨被挤压得发出脆响，他整个人顺着栅栏一点点瘫软滑跪在泥污之中，浑浊充血的眼瞳深处，只剩下大势已去的绝望与无边死寂。",
+      "error": null
+    },
+    {
+      "ch": 105,
+      "accepted": true,
+      "title": "第105章 主子要诛你九族，你还替他扛？",
+      "words": 2902,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "赵承恩抠在生铁栅条上的血指猛地一抽，指关节因为力竭而发出一声干涩的脆响。\n\n牢门外传来沉稳有力的靴声，每一步踩在潮湿的泥地上，都像是一记重锤砸在死牢的死寂里。沈定安反手推开沉重的包铁外门，两名精壮缇骑高举牛角风灯，将昏暗潮湿的刑房甬道照得一",
+      "tail": "右手食指，死死指着青砖深处那层密封的暗格。赵承恩艰难地仰起头，充血发红的眼珠死死盯着顾砚之，惨白干裂的嘴唇剧烈颤动，从喉咙最深处挤出了四个字。\n\n“天子内库。”",
+      "error": null
+    },
+    {
+      "ch": 106,
+      "accepted": true,
+      "title": "第106章 撬开青铜钟，刺客连夜来灭口",
+      "words": 3176,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "赵承恩抠开青砖的那只右手止不住淌血，枯瘦身子伏在牢泥里剧烈倒抽凉气。底下的铅皮被生生撕开一道缺口，露出一柄带有前朝铭文的方头铜匙与熟羊皮草图。沈定安拾起羊皮纸展开，后衙假山深处那座废弃已久的八角钟亭，赫然被朱砂重重圈出。\n\n“老夫把铁册铸进",
+      "tail": "缓缓攥紧了手中的天子剑鞘。两淮不仅烂了一盘盐税，在那些贪官与皇子身后，早已有一只握着边关战刀的巨手，借着内库流出的滔天脏银，悄无声息地按在了帝国的命脉咽喉之上。",
+      "error": null
+    },
+    {
+      "ch": 107,
+      "accepted": true,
+      "title": "第107章 刺青底下还有字，贵妃私章藏不住了",
+      "words": 3121,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 132009
+      },
+      "gateIssues": [],
+      "head": "沈定安蹲在尸身旁，手中雁翎刀反扣，冰凉的锋刃顺着刺客右胸皮肉生生切入。猛火油灼烧后的焦臭弥漫在残砖碎瓦间，乌黑浓稠的血水顺着刀槽溢出。随着刀尖横向一挑，整块翻卷的外皮被揭去，显露在眼前的并非寻常江湖刺青，而是深入肌理骨膜的深蓝墨痕。那是九边",
+      "tail": "子与门阀在两淮争夺私银养兵，可当苏贵妃母族的私章落在铁证之上，这张滔天巨网已然从边关军营一直贯穿到了九重深宫的天子寝殿。两淮盐政的黑幕，终于撕开了最致命的一角。",
+      "error": null
+    },
+    {
+      "ch": 108,
+      "accepted": true,
+      "title": "第108章 账册砸在金殿上，大皇子当场翻车",
+      "words": 3110,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 9,
+        "toolCalls": 7,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 4,
+          "run_checks": 1
+        },
+        "ms": 169348
+      },
+      "gateIssues": [],
+      "head": "奉天殿内鸦雀无声，几十根沥粉蟠龙柱在大殿两侧森严列立。早朝方才议到两淮巡盐事宜，殿前的火药味便已浓烈到了极点。几名都察院御史与兵部员外郎接连出班，手中的象牙笏板直指东南，唾沫星子几乎溅到了御道两旁的铜鹤香炉上。\n\n“陛下，按察使顾砚之狂悖无",
+      "tail": "\n\n天子手中的朱批密旨并未当众宣读，只是冷冷横陈在明黄缎面上。金殿内的空气沉重得令人窒息，那道尚未开封的旨意究竟是发往宣府大营，还是直扑九重深宫，谁也无法预料。",
+      "error": null
+    },
+    {
+      "ch": 109,
+      "accepted": true,
+      "title": "第109章 两岸全是眼线，顾大人放了条空船",
+      "words": 3147,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 121087
+      },
+      "gateIssues": [],
+      "head": "京师奉天殿内天子朱批密旨的墨痕尚未干透，数千里外的运河重镇扬州，肃杀之气已然遮天蔽日。破晓时分，扬州钞关码头的生铁缆桩剧烈震颤，粗粝的麻绳被利刃斩断，沉重地甩在冰冷的青石驳岸上。沉闷沙哑的牛角号声穿透晨雾，震得沿岸百艘乌篷小船齐刷刷摇晃起来",
+      "tail": "非寻常草莽劫匪的散乱步伐，而是九边重镇精锐铁骑才能踏出的破阵战鼓之音。甲叶铿锵与战马喷鼻声穿透林雾，正以迅雷不及掩耳之势，朝着这支运送着大雍命脉的孤军迎头撞来！",
+      "error": null
+    },
+    {
+      "ch": 110,
+      "accepted": true,
+      "title": "第110章 三十车真银开进皇城，百官全懵了",
+      "words": 3358,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "沈定安单手按住刀柄，胸膛中猛然爆出一声断喝：“起厢板！结车阵！”\n\n伴随着尖锐刺耳的铜哨声，三十辆双马重辕大车在驭手的死力拉扯下骤然甩尾。辕马被迅速推进内圈，厚达三寸的铁桦木厢板顺着铁轨轰然翻起，车轴之间的熟铁扣环咔哒咬死。两排泛着冷光的倒",
+      "tail": "大雍天子景和帝萧宏不知何时已推开了殿门。他身着一袭明黄衮龙袍，在呼啸的晨风中负手而立，居高临下地注视着下方绵延如龙的三十辆银车，深邃冰冷的眼眸在银光中明灭不定。",
+      "error": null
+    },
+    {
+      "ch": 111,
+      "accepted": true,
+      "title": "第111章 三百万两现银进京，皇帝当众掀了桌子",
+      "words": 3330,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 9,
+        "toolCalls": 6,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 132741
+      },
+      "gateIssues": [],
+      "head": "晨光撕裂了皇城上空的薄雾，三十辆重辕大车在文华殿前排开，宛如一条匍匐在汉白玉石板上的钢铁长龙。刚被利刃斩断的生铁箱盖翻落在一旁，整整三百万两五十两一锭的雪花官银沐浴在朝阳下，刺目的银芒将整座广场映照得一片森白。那股伴随着千里奔波的血腥气与泥",
+      "tail": "两现银如数进京，可两淮的盐田与四海的粮商终究攥在世家掌心里。待到市井盐市风云变幻的那一刻，纵有金山银海在手，买不到盐巴的朝廷，依然不过是一头任人宰割的困兽罢了。",
+      "error": null
+    },
+    {
+      "ch": 112,
+      "accepted": true,
+      "title": "第112章 盐价暴涨十倍，满朝文武逼皇帝抓人",
+      "words": 2940,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 16,
+        "toolCalls": 13,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 10,
+          "run_checks": 1
+        },
+        "ms": 209657
+      },
+      "gateIssues": [],
+      "head": "内阁次辅兼吏部尚书崔道宪一把推开身旁内侍递来的手炉，连脚下皂靴脱了后跟都浑然不顾。这位当朝一品文安侯披头散发，双手高举着漆有三道猩红印记的加急文书，踉跄扑倒在御书房门前的汉白玉长阶上。伴随着一声撕心裂肺的长号，他的脑门重重磕在石阶之上，发出",
+      "tail": "稳地踏上御书房台阶！殿内长跪的崔道宪浑身猛然一僵，愕然回首。景和帝挥开阻拦的内侍，大步迈出殿门，凝视着阶下迎风而立的顾砚之，殿内逼宫的满朝文武更是立时面无人色！",
+      "error": null
+    },
+    {
+      "ch": 113,
+      "accepted": true,
+      "title": "第113章 一张折子，让逼宫的百官全闭嘴了",
+      "words": 3042,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 162855
+      },
+      "gateIssues": [],
+      "head": "沈定安手按绣春刀立在御书房石阶之侧，玄铁重甲泛着冷硬的煞气。殿内原本群情汹涌的六部百官，被这股迎面而来的铁血威压逼得哑了嗓子，面面相觑。伏在碎瓷茶水中的吏部尚书兼内阁次辅崔道宪猛然回首，浑身冰凉。扬州盐铺关张、分司衙门生乱的消息是他以六百里",
+      "tail": "伍掠过广袤原野，沈定安腰间佩挂的那面天子亲赐专断金牌被狂风掀开斗篷，在漫天纷飞的冰雪与昏沉天光下，透着森然刺骨的冷冽寒芒，如一道凌厉刀锋径直刺向波澜翻涌的江南。",
+      "error": null
+    },
+    {
+      "ch": 114,
+      "accepted": true,
+      "title": "第114章 天子金牌砸在漕帮脸上",
+      "words": 3218,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "沈定安猛地勒紧缰绳，胯下狂奔千里的玄色战马发出一声凄厉长嘶，前蹄在扬州漕运总码头的青石板上蹬出道道白痕。码头官道中央横着两排包着生铁皮的拒马栅栏，三十多名披甲漕丁手持长矛齐刷刷对准冲来的骑队。为首的漕运把总歪戴着红缨毡帽，按刀冷笑着迎前半步",
+      "tail": "紧，风帆迎着侧风猛烈吃满。挂着马氏商号黑幡的大船不敢再向前靠近半步，船身倾斜着在江心划出一道森白的旋涡，悄无声息地掉转船头，急速滑向下游水网交织的迷蒙芦苇荡中。",
+      "error": null
+    },
+    {
+      "ch": 115,
+      "accepted": true,
+      "title": "第115章 当堂撕了你这祖传免税引",
+      "words": 3364,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 9,
+        "toolCalls": 7,
+        "byTool": {
+          "get_draft": 3,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 196193
+      },
+      "gateIssues": [],
+      "head": "两淮都转运盐使司的朱红大印，重重盖在刚拟好的平准告示上。扬州府衙大堂两侧，六十名差役手持水火棍肃穆列队，堂下算房书吏整齐排开七张红木大案，案头算盘珠子在急促拨动下噼啪乱响。运河水闸虽然落锁，城内各家粮盐铺子门前仍旧聚着伸长脖子的百姓，都在盯",
+      "tail": "然拎着一本浸染了大片暗红血迹的羊皮私账。江风吹透长廊，掀动着残破焦黑的册页，尚未彻底凝固的黏稠鲜血顺着羊皮封角缓缓滑落，在冰冷的青石砖上砸出点点怵目惊心的殷红。",
+      "error": null
+    },
+    {
+      "ch": 116,
+      "accepted": true,
+      "title": "第116章 抄了钱庄老巢，暗账水印藏不住了",
+      "words": 2970,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 7,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 2,
+          "run_checks": 1
+        },
+        "ms": 123315
+      },
+      "gateIssues": [],
+      "head": "沈定安掌心那本自水牢暗舵夺回的羊皮私账尚沾染着黏稠血迹，焦黑残破的册页在江风中作响。顾砚之立在码头值房阶前，就着防风气死灯的光芒翻过数页。粗粝的皮面上密密麻麻记着各路走私盐船的交割水程，每一笔巨额现银的去向，最终皆赫然指归一处：扬州通汇钱庄",
+      "tail": "本按在案头，抬头迎上沈定安如刀锋般的目光。“八百里加急，铁骑护送密件直呈御前。”顾砚之眼中杀机凛然，“这本账一旦送进紫禁城，内阁那把次辅交椅，便该换个坐法了。”",
+      "error": null
+    },
+    {
+      "ch": 117,
+      "accepted": true,
+      "title": "第117章 三十文一斤，全城黑市彻底崩了",
+      "words": 3280,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 7,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 100348
+      },
+      "gateIssues": [],
+      "head": "三声震天动地的黄铜号角撕裂了扬州城的晨雾。按察使行辕重达千斤的朱红大门轰然向两侧敞开，门后整齐排开六列顶盔贯甲的北镇抚司缇骑。伴随着沉重铁蹄踏过青石板的铿锵震响，三十名健硕差役挽起粗麻背带，奋力拉动两丈长的双辕重板车。车架上整齐堆叠着从马氏",
+      "tail": "匣，没有回头去看那些仍跪在尘埃中的盐商，而是迈步走出行辕正堂，立在青石台阶上，将目光投向那片阴云密布的遥远北方。\n\n江淮大局已定，而真正的风暴，才刚刚吹向京师。",
+      "error": null
+    },
+    {
+      "ch": 118,
+      "accepted": true,
+      "title": "第118章 两淮大印落下，该京城接招了",
+      "words": 3331,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "顾砚之收回远眺北方的目光，反手推开签押房厚重的朱漆雕花木门。屋内的四角炭盆烧得通红，几张拼合的黄花梨大案上，算房书吏整齐码放着足有两尺高的厚重卷宗。墨香混着松烟气味在暖阁里弥散开来，最上层赫然是一卷用明黄云锦包边的《两淮盐务清勘汇总结案全册",
+      "tail": "正护送着足以将整座内阁碾得粉碎的惊天铁证，昼夜不息地疾驰而来。\n\n寒鸦惊飞，枯枝断裂。沉重而急促的铁蹄声踏碎了南来的冻土，将凛冽的杀机一路带向大雍权力的最深处。",
+      "error": null
+    },
+    {
+      "ch": 119,
+      "accepted": true,
+      "title": "第119章 圣旨到了，扬州百姓把官道全给堵了",
+      "words": 2760,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "八百里加急的驿马铜铃声还没在扬州城外的官道上散尽，按察使行辕门前的大街已被锦衣缇骑净空。数十面猩红的仪仗旗幡在初春晨风里猎猎招展，一名身着蟒袍的司礼监少监双手高捧着明黄织锦圣旨，在四名贴身内卫的簇拥下快步穿过照壁。行辕正堂前的石阶上下，早早",
+      "tail": "坠入书房前冰冷的青石砖上。猩红的羽管死死绑在鸽足之上，上面带着宣府军镇特有的火漆印记。风从西北狂卷而来，将这封染着边关风尘的密信，直接砸进了大雍权力博弈的心脏。",
+      "error": null
+    },
+    {
+      "ch": 120,
+      "accepted": true,
+      "title": "第120章 江南查清了，那就把九边的天捅漏",
+      "words": 3479,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "老管家快步穿过回廊，弯腰从冰凉的青石砖上捧起那只力竭而亡的灰白信鸽。鸽足边缘绑着的黄铜小管上，三道血红的飞鹰火漆完好无损，甚至还带着塞北黄沙特有的粗粝触感。他半步不敢耽搁，低头捧着死鸽穿过重重垂花门，快步迈入文安侯府最深处的那间书房。\n\n案",
+      "tail": "。\n\n窗外干枯冻硬的枝桠突然剧烈颤动，一只隐匿在屋檐暗处的黑鸦受了惊，展开漆黑如墨的羽翼，悄无声息地振翅而起，转瞬融进了京城那片铅灰色、不见星月的沉沉夜幕之中。",
+      "error": null
+    },
+    {
+      "ch": 121,
+      "accepted": true,
+      "title": "第121章 刚接官印，就有人拿烂账给我下马威",
+      "words": 3450,
+      "attempts": 1,
+      "rewriteRounds": 2,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 2,
+        "revertedUnchecked": false,
+        "rounds": 6,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 2,
+          "revise_paragraphs": 1
+        },
+        "ms": 219723
+      },
+      "gateIssues": [],
+      "head": "那只自文安侯府惊起的黑鸦隐入夜幕未久，铅灰色的晨雾便悄然笼罩了京师的重重殿宇。两淮起获的三百万两实银连夜押解抵京，沉重的银鞘大车在户部衙署外的冻土上碾出深沟。巨贪赵承恩与万秉成已在破晓前押入北镇抚司重牢。景和帝萧宏在西暖阁彻夜召对，天色微明",
+      "tail": "情，猛然仰面喷出一口滚烫的热血，整个人直挺挺地昏死过去，那支染血的铜管当啷一声滚落在顾砚之官靴前。\n\n刺骨的北风卷着未干的血沫与散落的账纸，在大堂门前呼啸回旋。",
+      "error": null
+    },
+    {
+      "ch": 122,
+      "accepted": true,
+      "title": "第122章 拿兵变压我？三日不交账全军断粮",
+      "words": 3403,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "沈定安抢步上前，抬指按在倒地差役的颈侧。那差役脖颈滚烫如烙铁，气息微弱得几乎断绝，右腕上的牛皮箭袖早已被血水与烂泥浸透。不等堂中缇骑将人抬往后堂救治，门外青石甬道上便传来一阵急促而沉重的皮靴踏雪声。\n\n四名身着赭红武官袍服的官员在一队兵部差",
+      "tail": "兵部郎中手中被朱砂涂抹废弃的文书，眼见兵部官员满脸惶急与怨毒，汉子眼皮狠狠一跳，不再停留分秒，转身扎入错综复杂的深巷，脚下生风，朝着城东文安侯府的方向狂奔而去。",
+      "error": null
+    },
+    {
+      "ch": 123,
+      "accepted": true,
+      "title": "第123章 一刀劈开，里面全是蜂窝烂铅",
+      "words": 2877,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 9,
+        "toolCalls": 7,
+        "byTool": {
+          "get_draft": 3,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 70106
+      },
+      "gateIssues": [],
+      "head": "薛怀德还在度支司签押房里擦拭冷汗，顾砚之连一口热茶都未碰，抬脚便跨出了仪门。沈定安带着十余名黑甲缇骑寸步不离，一行人的皮靴重重踏在凝霜的石板上，铿锵作响。穿过两道垂花门与狭窄夹道，前方便是户部防卫最严密的左右银库。银库背靠宫城南墙，青灰巨砖",
+      "tail": "吴泰面色惨白如纸，绝望地哭嚎道：“下官只是奉命签收盖印，收了他们五千两封口银子！调包的真银根本没进过内库大门，早在十天前从西直门换车的时候，就全部运出城去了！”",
+      "error": null
+    },
+    {
+      "ch": 124,
+      "accepted": true,
+      "title": "第124章 车辙不会撒谎，银子根本没出京！",
+      "words": 3519,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 27,
+        "toolCalls": 21,
+        "byTool": {
+          "get_draft": 7,
+          "revise_paragraphs": 13,
+          "run_checks": 1
+        },
+        "ms": 271871
+      },
+      "gateIssues": [],
+      "head": "地上的吴泰仍在扯着嗓子号哭，两手死死抓着顾砚之的袍角，鼻涕眼泪混着灰土，将那身御赐斗牛织金锦袍蹭得污浊不堪。库房里弥漫着生铅与铁锈的刺鼻恶臭，十几个被扣押的库丁缩在后方，面色灰败如土。案头横着一盏早已凉透的粗瓷残茶，茶汤泛黄，浮着两三片陈年",
+      "tail": "并两淮官银全数押回诏狱！派一队缇骑封死聚宝坊所有暗道！”言毕大步跨出作坊大门，翻身上马，向着度支司方向疾驰而去。今夜子时的接盘之约，已成了崔氏不可挽回的催命符。",
+      "error": null
+    },
+    {
+      "ch": 125,
+      "accepted": true,
+      "title": "第125章 殿门前摔碎扳指，染黑假银直接砸脚边",
+      "words": 2917,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "风雪如刀，夜色深重。沈定安带着一身未散的血腥与焦炭气，策马冲回度支司衙门。马蹄踏碎冰雪，十余名黑甲缇骑翻身下马，迅速将查扣的铁皮箱笼与五花大绑的宝丰银坊大掌柜抬入值房。顾砚之正坐案前，手边摊着数本京畿九门的巡查底册，跳动的烛光将他挺拔的身影",
+      "tail": "这突如其来的巨响震得僵死原地，黑银在靴尖前打转，发出令人心悸的嗡鸣。殿内诸臣噤若寒蝉，风雪从洞开的大殿倒灌而入，卷动着御案上的密账纸页，发出如丧钟般的猎猎声响。",
+      "error": null
+    },
+    {
+      "ch": 126,
+      "accepted": true,
+      "title": "第126章 三十车现银当街倒，谁在暗处打碎茶盏",
+      "words": 3225,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 7,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 105979
+      },
+      "gateIssues": [],
+      "head": "御案前那块被炭火炙烤过的焦黑生铅假银，在金砖上余颤未消，刺鼻的硫磺恶臭在大殿内弥漫不散。景和帝萧宏负手伫立于丹墀之上，面沉如水，逼得满殿内侍与侍卫屏息敛声。大皇子萧成昭被那记重砸震得面皮青紫、失魂落魄，终是在禁军严密押送下退出乾清门，押回端",
+      "tail": "。两名缇骑脸色一沉，刀鞘毫不留情地砸在崔元朗肩头的铁枷之上，将他当场压制跪地。楼下的长街石阶前，顾砚之似有所感，收起朱笔，抬头望向太白居三楼那扇紧闭的雕花窗棂。",
+      "error": null
+    },
+    {
+      "ch": 127,
+      "accepted": true,
+      "title": "第127章 三声巨锣震全街，见票即付分文不差",
+      "words": 3477,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 13,
+        "toolCalls": 10,
+        "byTool": {
+          "get_draft": 4,
+          "revise_paragraphs": 5,
+          "run_checks": 1
+        },
+        "ms": 157825
+      },
+      "gateIssues": [],
+      "head": "太白居三楼的雕花窗棂被朔风撞得吱呀作响，楼上瓷片碎裂与铁枷砸地的残响随风隐没。长街石阶前，顾砚之收回望向茶楼高处的冷冽目光，将手中的朱笔平稳搁在公案的白玉笔架上。案头那本加盖着两淮按察使大印与度支关防的承兑底册，第一笔划销的朱墨方才凝固。那",
+      "tail": "缇骑护卫下第一个走上台阶，朝着大门敞开的兑银柜台稳步迈去。太白居三楼暗室里，崔元朗瘫跪在碎瓷之中，听着楼下震天的欢呼声与银两落盘的脆响，面色灰败得如同一具死尸。",
+      "error": null
+    },
+    {
+      "ch": 128,
+      "accepted": true,
+      "title": "第128章 一锤砸烂三十箱，这回轮到崔家挤兑了",
+      "words": 2778,
+      "attempts": 1,
+      "rewriteRounds": 2,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 2,
+        "revertedUnchecked": false,
+        "rounds": 10,
+        "toolCalls": 8,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 4,
+          "run_checks": 2
+        },
+        "ms": 148946
+      },
+      "gateIssues": [],
+      "head": "老掌柜双手死死抱着用青布包裹的二百五十两银冬瓜，脚步虚浮地从通汇钱庄侧门走出。那沉甸甸的官银压得他腰背微弯，可布包缝隙透出的雪亮毫光，却如火星般溅落在整条长街的死寂里。阶下数千名攥着银票的商民屏住呼吸，无数道视线紧随着老掌柜的步伐挪动。前头",
+      "tail": "膝剧痛一软，重重扑倒在后巷冰冷污秽的烂泥碎冰之中，而远处街口官兵急促的搜捕呼喝声与马蹄声破空而来，正像是一张逐渐收紧的巨网，一点点勒紧在他那几乎窒息的咽喉之上。",
+      "error": null
+    },
+    {
+      "ch": 129,
+      "accepted": true,
+      "title": "第129章 从死囚袖里抖出要命账本",
+      "words": 3257,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 130752
+      },
+      "gateIssues": [],
+      "head": "后巷狭窄曲折，积雪混着烂泥早已冻成了刺骨的坚冰。崔元朗整个人狼狈地趴在泥浆之中，沉重的生铁死囚枷死死卡住脖颈，带血的半片头皮浸在冰水里，疼得浑身不住抽搐。身后急促的马蹄踏冰之声已逼至巷口，碎冰飞溅。崔元朗手脚并用拼命往前爬，铁链在石砖上划出",
+      "tail": "上方，景和帝萧宏端坐于龙椅之上，冷峻深沉的帝王目光跨越长长的殿前台阶，静静注视着这位持册破局的按察使。一场足以将六部世家根基彻底掀翻的狂澜，已然降临在金銮殿前。",
+      "error": null
+    },
+    {
+      "ch": 130,
+      "accepted": true,
+      "title": "第130章 金銮殿上甩烂账，御史当场摘乌纱",
+      "words": 2885,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 123467
+      },
+      "gateIssues": [],
+      "head": "顾砚之稳步跨过奉天殿的高阔门槛，厚底官靴在光可鉴人的金砖上踏出沉稳声响。大殿两侧数十名朱紫重臣呼吸凝滞，龙涎香从金炉中袅袅升腾，却压不住满堂紧绷的杀意。顾砚之行至御道正中，双手端肃抱拳，向丹墀龙椅之上的景和帝萧宏躬身行礼。尚未等当值内侍唱喏",
+      "tail": "易起封。你若执意掀开那道铁锁，当心折进去的，不只是你手里的算盘。”言罢，这位内阁次辅侧身拂袖而去，朱红官袍在呼啸的朔风中渐行渐远，只留下一片压抑死寂的宫墙残雪。",
+      "error": null
+    },
+    {
+      "ch": 131,
+      "accepted": true,
+      "title": "第131章 截下私运车队，箱子里竟然全是烂铁",
+      "words": 3172,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "北风呼啸，夹道高墙上的残雪被吹得四散飞扬。顾砚之拢紧斗牛织金锦袍，手握尚有温热朱印的天子手谕，步履平稳地走在青石夹道上。转过武英殿外第二道朱红宫墙转角，本该离宫的内阁次辅崔道宪，正负手伫立在夹道阴影之中。老人的朱红仙鹤官袍被穿堂风吹得紧贴脊",
+      "tail": "车沉重的生铁，只觉得一股前所未有的刺骨寒意从脚底直蹿天灵盖。真正的三百万两雪白真银，到底在什么时候被掉包了？这深不见底的京城，已然化作了一座吞噬一切的惊天漩涡。",
+      "error": null
+    },
+    {
+      "ch": 132,
+      "accepted": true,
+      "title": "第132章 三百万两全成了烂铁，赌命三天",
+      "words": 3179,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "沈定安亲率两百黑甲缇骑，连夜将积翠别苑截获的二十四辆大车押入北镇抚司诏狱，泼水成冰以掩车辙。顾砚之则换乘快马，顶着扑面风雪，手握天子手谕直奔大内。马蹄踏碎长街残雪，直达文华殿汉白玉阶前。殿内炭盆烧得通红，龙涎香混着地炉热气蒸腾，却丝毫驱不散",
+      "tail": "决的死囚无异，三百万两真银早是触碰不得的禁忌，这三天不过是顾砚之在黄泉路上为自己争取的倒计时罢了。萧成昭从鼻腔发出一声讥诮轻哼，霍然转身踏入漫天风雪，阔步离去。",
+      "error": null
+    },
+    {
+      "ch": 133,
+      "accepted": true,
+      "title": "第133章 铁水打翻一地，暗格搜出贵妃私印",
+      "words": 3239,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 6,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 2,
+          "run_checks": 1
+        },
+        "ms": 67027
+      },
+      "gateIssues": [],
+      "head": "顾砚之疾步迈下文华殿前的汉白玉台阶，满头青丝在朔风中翻飞，玄黑披风猎猎作响。大皇子萧成昭阔步离去的背影已然没入风雪之中，紧闭的朱漆大殿隔绝了内里的炭火暖意。都察院巡按京畿左佥都御史林清源气喘吁吁地追赶上来，花白胡须上沾满冰碴，急切地张开双臂",
+      "tail": "也不曾料到，这道让真银凭空蒸发的致命手令背后，竟然直指禁宫重闱之内那位执掌后宫权柄的苏贵妃。三天之限的沙漏已然翻转，而这道手令，已然将局势推向了万劫不复的深渊。",
+      "error": null
+    },
+    {
+      "ch": 134,
+      "accepted": true,
+      "title": "第134章 通宵拆解密账，银子居然就在户部眼皮底下",
+      "words": 3362,
+      "attempts": 1,
+      "rewriteRounds": 2,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 2,
+        "revertedUnchecked": false,
+        "rounds": 11,
+        "toolCalls": 8,
+        "byTool": {
+          "get_draft": 2,
+          "submit_draft": 1,
+          "run_checks": 2,
+          "revise_paragraphs": 3
+        },
+        "ms": 152536
+      },
+      "gateIssues": [],
+      "head": "顾砚之将盖着苏贵妃私印的手令收入袖中，未在翻砂铸造坊多留。他传令锦衣卫封闭现场，将涉案死士与匠役锁拿。马蹄声碎，顾砚之与沈定安押着重枷锁身的崔元朗，趁着破晓前的浓重夜色疾驰折返回度支司值房。\n\n度支司衙署内烛火彻夜长明，炭盆噼啪作响，空气中",
+      "tail": "尘封十年的地下封桩库重地之上！指尖重重按入纸背，发出沉闷的裂帛脆响。三天大限的第一天清晨，那座深埋地下、号称无人能开的户部老库铁门，已然在晨光中露出了森森杀机。",
+      "error": null
+    },
+    {
+      "ch": 135,
+      "accepted": true,
+      "title": "第135章 砸开户部老库，这批官银颜色不对",
+      "words": 3169,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "晨光刚撕开天际的灰翳，刺骨的朔风便卷着雪沫子灌入长廊。\n\n度支司值房的朱漆雕花大门被重重推开，顾砚之迈步而出，玄黑斗牛织金锦袍在寒风中翻卷作响。在他身后，北镇抚司锦衣提刑沈定安腰悬雁翎刀，通身玄铁重甲泛着幽冷寒光，百名精锐黑甲缇骑手持硬弩铁",
+      "tail": "射出来的却不是足色白银应有的温润明洁。\n\n那密密麻麻码放整齐的银锭表面，非但没有半分银白灿烂的宝光，反而在火光摇曳中，泛出了一层极不协调、发冷发暗的诡异青灰色。",
+      "error": null
+    },
+    {
+      "ch": 136,
+      "accepted": true,
+      "title": "第136章 端王当场夺铜匙，地下老库阴风扑面",
+      "words": 3016,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "跳动的松明火光映照在敞开的实木大箱之内，那一排排整齐码放的五十两官铸大锭，死寂地沉在碎稻草堆里。薛怀德喉咙里的欢呼硬生生卡在半截，脸皮由涨红转为煞白。火舌摇曳之下，银锭表面非但没有官银该有的明润宝光，反而泛着一层发冷、发暗的怪异青灰，像极了",
+      "tail": "中剧烈狂颤。众人官袍猎猎作响，被逼得连连后退。黑暗而广袤的深渊地库就在这扇洞开的锈铁巨门之后静静匍匐，散发着无尽的冰冷与死寂，将所有人彻底吞噬在浓重的阴影之中。",
+      "error": null
+    },
+    {
+      "ch": 137,
+      "accepted": true,
+      "title": "第137章 倒扣金沙",
+      "words": 3282,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "submit_draft": 1,
+          "run_checks": 1
+        },
+        "ms": 139656
+      },
+      "gateIssues": [],
+      "head": "地脉深处的阴冷腥风自锈铁重门缝隙中狂卷而出，刮擦在沈定安的黑铁护臂上，激起一阵沉闷的金属刮擦声。身后缇骑手中的火炬重新烈烈腾起，橙红火光驱散了弥漫在石道间的浓重浊气，户部太仓老库底层封桩正库的森然真容终于毫无遮掩地摊在众人眼前。沿着十二根两",
+      "tail": "漠，神情沉静如水。他双手稳稳托着那座金沙奔流的御赐沙漏，脚下沉稳踏碎御阶上的积雪寒冰，在满殿臣僚的冷眼讥诮之中，迎着猎猎风雪，朝着火光冲天的化银司工坊大步走去。",
+      "error": null
+    },
+    {
+      "ch": 138,
+      "accepted": true,
+      "title": "第138章 死士当场翻车，端着黑铅去上朝",
+      "words": 3143,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 5,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 82339
+      },
+      "gateIssues": [],
+      "head": "化银司工坊的值房内，窗纸被外头呼啸的风雪撞得啪啪作响。屋子正中央的高脚红木几案上，那座御赐的赤金双鱼刻漏正静静立着，琉璃罩子里的极细金沙顺着狭窄的孔眼沙沙下淌，在底部堆起一座发亮的小丘。\n\n端王萧成煜站在昏黄的油灯下，脸色冷肃得看不出半点平",
+      "tail": "其后。晨曦初破，灰白的天光倾泻在顾砚之冷峻的侧脸上，他脚下踩碎御道上凝结的厚重寒冰，迎着破晓时分的凛冽朔风，步履沉稳而决然，昂首阔步朝着百官肃立的早朝大殿走去。",
+      "error": null
+    },
+    {
+      "ch": 139,
+      "accepted": true,
+      "title": "第139章 一盘烂铅扣在殿前，次辅当场跪了",
+      "words": 2786,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 9,
+        "toolCalls": 7,
+        "byTool": {
+          "get_draft": 2,
+          "revise_paragraphs": 4,
+          "run_checks": 1
+        },
+        "ms": 219355
+      },
+      "gateIssues": [],
+      "head": "奉天殿朱门轰然洞开，五更钟鸣余韵仍在阶前回荡。朔风卷着残雪扑过殿前门槛，文武百官依文东武西两列垂手肃立，整座大殿静得落针可闻。顾砚之踏碎残雪迈入紫禁城正殿，双手稳稳托着一只黑漆四方生铁大盘。盘中数十枚黑灰沉浊的铁铅残渣相互堆叠，散发着刺鼻焦",
+      "tail": "，必当荡涤宿弊，澄清天下亏空！”晨光自殿门倾泻而入，洒在这位新任度支司郎中挺拔的身躯上。满殿百官俯首伏地，望着这位手握财权利刃的年轻郎中，心中皆涌起难掩的寒意。",
+      "error": null
+    },
+    {
+      "ch": 140,
+      "accepted": true,
+      "title": "第140章 银子没被贪，全拿去造反了",
+      "words": 3178,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "顾砚之跨过渡支司公署的青石门槛，身上新换的从四品绯色官袍随风轻扬。奉天殿上的风暴方才平息，天子赐下的便宜行事金牌尚在袖中泛着温热，整座值房内外早已噤若寒蝉。数十名原先依附崔氏门阀的老书吏缩在案几后，连大气都不敢喘，战战兢兢地看着这位连折朝中",
+      "tail": "霾，惨白月光自窗棂斜刺而入，将他绯色的官袍镀上一层料峭寒霜。京城森严的城楼之外，忽有巡城夜骑凄厉肃杀的角声划破夜幕，穿透重重宫阙，在空旷死寂的夜空深处回荡不绝。",
+      "error": null
+    },
+    {
+      "ch": 141,
+      "accepted": true,
+      "title": "第141章 尚方剑刚拿到手，出宫就被盯上了",
+      "words": 3370,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "巡城夜骑穿破残夜的凄厉角声渐渐在城墙根下散去，值房长案上的烛火跳跃不定，将散落满地的账卷阴影拉得修长。顾砚之没有在度支司公署耽搁半分时间，他将那三张拼出边军暗记的浸油关引收入鹿皮夹层，又将刚刚誊清的左右借贷轧平草图叠好，一并塞入怀中。\n\n“",
+      "tail": "着半截折断的朱红狼毫，在微弱的天光下显得格外狰狞。\n\n顾砚之按在剑柄上的五指缓缓收拢，脚步没有半分迟疑，径直踏下汉白玉石桥，迎着塞北冰冷的朔风大步走入晨光之中。",
+      "error": null
+    },
+    {
+      "ch": 142,
+      "accepted": true,
+      "title": "第142章 尚方宝剑直指塞北，宣府暗探吓破了胆",
+      "words": 3359,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 6,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 2,
+          "run_checks": 1
+        },
+        "ms": 131074
+      },
+      "gateIssues": [],
+      "head": "顾砚之走下汉白玉石桥，北风夹杂着塞北的寒意扑面而来。巷口那辆崔府的乌木马车依旧缩在晨雾里，车帘缝隙透出的目光怨毒而阴冷。顾砚之连半道余光都没分过去，径直踏下最后一层石阶，翻身跃上了沈定安早已备好的枣红骏马。\n\n战马嘶鸣，两匹快马踏碎京师主街",
+      "tail": "若隐若现，森严的关门紧闭如铁。\n\n宣府到了。\n\n冰冷的雪片掠过顾砚之深邃清冷的眉弓，他按在剑柄上的手指缓缓收紧，目光如穿透风雪的利刃，死死钉向那座黑沉沉的关隘。",
+      "error": null
+    },
+    {
+      "ch": 143,
+      "accepted": true,
+      "title": "第143章 灶膛里抢账本，当场抓个现行",
+      "words": 3436,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 3,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 1,
+          "run_checks": 1
+        },
+        "ms": 101483
+      },
+      "gateIssues": [],
+      "head": "暴风雪抽打着关隘冰冷的巨石，黑沉沉的宣府雄关下，两扇裹着厚重铁皮的关门在刺耳的绞盘声中，慢腾腾裂开一道两马并行的缝隙。数名顶盔贯甲的守关校尉快步迎出，甲胄上积着一层厚厚的白雪。为首的牙将目光掠过顾砚之腰间的尚方天子剑，又扫向后方森然列阵的五",
+      "tail": "，透着令人心寒的阴毒。\n\n屋外的风雪呼啸大作，将破败门洞前飘荡的黑烟吹得四散溃退，宣府内城更深处的山影在漫天飞雪中宛如巨兽张口，冰冷地注视着这群初入险地的来客。",
+      "error": null
+    },
+    {
+      "ch": 144,
+      "accepted": true,
+      "title": "第144章 马粪堆里掉出要命账本",
+      "words": 2729,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 6,
+        "toolCalls": 4,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 2,
+          "run_checks": 1
+        },
+        "ms": 96790
+      },
+      "gateIssues": [],
+      "head": "沈定安腕骨骤然发力，掌中狭长的绣春刀向侧下方猛烈抖动，锋刃上粘连的乌黑血沫与焦炭残渣被劲力甩脱，在冰冷的青砖地上激起啪嗒一声脆响。灶房内浓烟未散，被卸了下颌骨的驿丞徐茂蜷缩在滚烫的灶台墙角，喉咙里倒灌着血沫，只能发出破风箱般的嘶嘶哀鸣。两名",
+      "tail": "露出几行用炭条歪歪斜斜写下的地名，以及一串串触目惊心的数字底账。\n\n顾砚之目光穿过昏暗的灯影，指尖在尚方剑的剑鞘上轻轻一扣，眼神凝住那本从粪泥中跌出的运粮私册。",
+      "error": null
+    },
+    {
+      "ch": 145,
+      "accepted": true,
+      "title": "第145章 代王铁骑当街堵门，尚方宝剑亮出杀招",
+      "words": 3153,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 12,
+        "toolCalls": 9,
+        "byTool": {
+          "get_draft": 4,
+          "revise_paragraphs": 4,
+          "run_checks": 1
+        },
+        "ms": 152903
+      },
+      "gateIssues": [],
+      "head": "沈定安刀鞘微斜，鞘尖挑起那本沾满秽物的薄册递到公案前。案头火盆炭火噼啪作响，粗麻纸页被烤得干脆发硬，结痂的马粪剥落大半。顾砚之指尖在尚方剑的墨玉剑鞘上轻轻一扣，眼神凝住纸页间歪斜的炭笔账目。上面不仅密密麻麻记着往来车次、脚夫名姓与塞外暗语，",
+      "tail": "，目光穿透寒风迎上那双凶光毕露的虎目，神色依旧如静水无波。马车没有片刻停顿，载着三套核验生死的借贷底册，碾碎坚冰积雪，稳稳驶向不远处那座森严冷肃的度支按察分署。",
+      "error": null
+    },
+    {
+      "ch": 146,
+      "accepted": true,
+      "title": "第146章 翻开十年前的旧账，满屋人全傻眼了",
+      "words": 3340,
+      "attempts": 1,
+      "rewriteRounds": 2,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 2,
+        "revertedUnchecked": false,
+        "rounds": 13,
+        "toolCalls": 10,
+        "byTool": {
+          "get_draft": 4,
+          "revise_paragraphs": 4,
+          "run_checks": 2
+        },
+        "ms": 460407
+      },
+      "gateIssues": [],
+      "head": "车轮在度支按察分署前的青石台阶下骤然止步。厚重的棉布帘子被一把掀起，顾砚之踏出车厢，足下的玄铁战靴踩在覆满薄冰的阶石上，发出清脆的碎裂声。狂风卷着塞北的飞雪呼啸而过，扯动他肩头猩红衬里的玄色斗篷翻卷如旗。身后五百名北镇抚司黑甲缇骑翻身下马，",
+      "tail": "辙，字距行列便像刀刻斧凿般整齐划一，甚至连尾端的朱红核验圆圈都圆融得挑不出分毫差错。在这塞北阴冷的风雪之夜，整页纸张平整得毫无褶皱，透出一股令人不寒而栗的死寂。",
+      "error": null
+    },
+    {
+      "ch": 147,
+      "accepted": true,
+      "title": "第147章 这八千个死人谁在领饷",
+      "words": 2993,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "顾砚之指尖划过泛黄的硬皮纸册，目光停留在整齐划一的墨迹上，语调冷硬平缓：“两百个名字，全出自同一人之手。”\n\n大案两侧的度支司书吏面面相觑，后背冷汗直冒。边关各营每季关饷，军户领银签字向来如涂鸦糊墙，哪有整整十年笔法如出一辙的道理。这根本不",
+      "tail": "按在刀柄上的五指骤然收紧，目光与案后的顾砚之在昏暗的烛火中交汇。风雪依旧在窗外撞击着窗棂，西凉河谷这个名字，宛如一把钥匙，终于触碰到了宣府惊天迷局最致命的死穴。",
+      "error": null
+    },
+    {
+      "ch": 148,
+      "accepted": true,
+      "title": "第148章 当场砸开银箱，哗变的兵反水了",
+      "words": 3146,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": {
+        "finishReason": "protocol-error",
+        "checksUsed": 0,
+        "revertedUnchecked": false,
+        "rounds": 4,
+        "toolCalls": 1,
+        "byTool": {
+          "get_draft": 1
+        },
+        "ms": 75629
+      },
+      "gateIssues": [
+        {
+          "category": "blueprint",
+          "severity": "medium",
+          "location": "章节",
+          "description": "段落节奏均匀化：23 段平均 135 字、变异系数 0.12，长短段缺乏交错。关键台词/冲突爆点独立成短段，铺垫叙述用长段；多人对话每个说话人单独成段",
+          "evidence": ""
+        }
+      ],
+      "head": "度支按察分署正堂内，王辅供出“西凉河谷”四个字后，整个人虚脱瘫软在地，只剩浑浊的喘息。案后烛火剧烈摇曳，照亮摊开的三套借贷底册，朱砂圈出的八千虚报空额犹如道道淌血的豁口。沈定安按刀的手指骨节泛白，刀鞘轻撞护腰，正欲请令彻查暗道，城南校场方向",
+      "tail": "那张轻飘飘的兑票，目光穿透喧腾校场，投向城西群山隐现的西凉河谷。一张将皇城、江南与九边重镇尽数绞入其中的滔天黑网，终于在这一纸飞雁兑票上露出了最致命的狰狞马脚。",
+      "error": null
+    },
+    {
+      "ch": 149,
+      "accepted": true,
+      "title": "第149章 连夜撞开石门，里面的动静不对劲",
+      "words": 3398,
+      "attempts": 1,
+      "rewriteRounds": 0,
+      "writer": null,
+      "gateIssues": [],
+      "head": "狂风卷着雪粒抽打在玄铁甲胄上，发出密集的细响。校场上的领饷喧嚣仍在继续，但百户陈武被拖走时留下的血迹，已在刺骨寒风中冻成了黑紫色的硬壳。顾砚之将那张盖着飞雁朱砂印的通汇银号飞签折好收回袖中，指尖微凉。三万两现银的飞票，落在塞北边军一个区区百",
+      "tail": "倒海般涌了出来。那是无数具沉重的生铁重甲在同时踏步，无数面玄铁重盾在冰冷昏暗中相互撞击所发出的森严回响。整齐、冷酷、浩大沉重，震得整座山体深处的岩壁都隐隐颤动。",
+      "error": null
+    },
+    {
+      "ch": 150,
+      "accepted": true,
+      "title": "第150章 查出三千重甲，大东家居然是他",
+      "words": 3125,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 7,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 182852
+      },
+      "gateIssues": [],
+      "head": "倒塌的玄武岩石门砸在地面，碎石飞溅，激起数丈高的石粉烟尘。山腹深处的沉重踏步声尚未散去，漫天扬尘之后，突然炸响两声凄厉高亢的战马长嘶。狂暴的铁蹄践踏声由远及近，三道庞大的黑影撕裂烟尘，如同一道崩塌的钢铁洪流，自幽暗深邃的甬道内轰然冲撞而出。",
+      "tail": "领重铠森严冷硬，而顾砚之指尖的薄薄底单，却比整座山腹内的生铁重甲沉重万倍。宣府边患与欠饷的背后，一条淬着剧毒的夺嫡引信，终于在此刻露出了通往深宫大内的猩红血痕。",
+      "error": null
+    },
+    {
+      "ch": 151,
+      "accepted": true,
+      "title": "第151章 搜出违制龙纹铠，管事当场全招了",
+      "words": 2663,
+      "attempts": 1,
+      "rewriteRounds": 1,
+      "writer": {
+        "finishReason": "model-finish",
+        "checksUsed": 1,
+        "revertedUnchecked": false,
+        "rounds": 7,
+        "toolCalls": 5,
+        "byTool": {
+          "get_draft": 1,
+          "revise_paragraphs": 3,
+          "run_checks": 1
+        },
+        "ms": 115982
+      },
+      "gateIssues": [],
+      "head": "顾砚之将那张盖着深红辟疆居士印章的底单叠入袖袋，石壁深处骤然响起机括震响。\n\n破空风声尖锐刺耳，三支淬毒狼牙箭穿透木窗夹纸，直奔顾砚之面门电射而来。\n\n沈定安手中阔刃绣春刀翻卷出大片雪白寒芒，铛铛铛三声金铁暴鸣炸响，硬生生将射来的毒箭荡飞在",
+      "tail": "管事、缴获了大皇子的贴身密札，却没想到最致命的杀器，早已堂而皇之运入了边军最核心的心脏重地。八千具违制精甲藏在总兵大营，宣府重镇已然是一座随时会被引爆的火药桶。",
+      "error": null
+    }
+  ],
+  "projectStorageVerification": {
+    "chapterCount": 50,
+    "plotChapterCount": 50,
+    "linkedPlotChapterCount": 50,
+    "structuredPlotChapterCount": 50,
+    "characterCount": 15,
+    "foreshadowCount": 10,
+    "volumeCount": 3,
+    "chapterOutlineTextCount": 50,
+    "coldReloadVerified": true,
+    "criticalDataHash": "ce785ccbcf5451ae9f944adc18c78c2bb5aeeb5120ffba4eb506a4bafbc1782e",
+    "completeCharacterProfileCount": 15,
+    "positioningPersisted": true
+  },
+  "outlineWarnings": [
+    "单章蓝图补全第 1 章伏笔时序消毒：删除 [\"顾砚之在通州大仓刑场用斩决书推导出粮仓亏空破绽逼停行刑\"]",
+    "单章蓝图补全第 4 章伏笔时序消毒：删除 [\"狱卒畏罪暗中递送通州大仓近三年旧管与新收底册\"]",
+    "单章蓝图补全第 5 章伏笔时序消毒：删除 [\"齐泰阴笑掷出锁死的三十二房总账限期三日盘清。\"]",
+    "单章蓝图补全第 6 章伏笔时序消毒：删除 [\"顾砚之步入尘封的大雍户部公署与通州大仓账房清点杂木账\",\"顾砚之进入通州大仓账房清点堆积如山的流水杂木账\"]",
+    "单章蓝图补全第 8 章伏笔时序消毒：删除 [\"顾砚之整理通州大仓批粮条子时察觉私印笔画处存在细微刻痕暗痕\",\"顾砚之查验通州批粮条子留存印鉴时捕捉到微瑕暗痕\"]",
+    "单章蓝图补全第 9 章伏笔时序消毒：删除 [\"沈定安奉密旨进驻大雍户部公署与通州大仓暗中盯防\",\"提刑按察司沈定安奉密旨进驻通州大仓暗中盯防审计进展\"]",
+    "单章蓝图补全第 10 章伏笔时序消毒：删除 [\"深挖之下文安侯府车行在亏空期的异常出入记录全数浮出\",\"顾砚之翻开运单底联赫然看清博陵崔氏家族徽印。\",\"顾砚之在通州大仓粮道底簿中查获文安侯府车行的异常出入记录\",\"顾砚之锁定文安侯府车行异常出入\",\"运粮底联揭露博陵崔氏家族徽印。\"]",
+    "单章蓝图补全第 11 章伏笔时序消毒：删除 [\"顾砚之率杂役实地丈量通州大仓临水码头的卸粮泊位水尺\"]",
+    "单章蓝图补全第 13 章伏笔时序消毒：删除 [\"物理载重与入库四柱账对比显示通州大仓凭空蒸发四十万石粮食\"]",
+    "单章蓝图补全第 14 章伏笔时序消毒：删除 [\"通州更夫夜半向主角暗报私宅方向有重车压碎青石且散发桐油气味\",\"埋设文安侯府通州私宅重车压碎青石与桐油味线索。\"]",
+    "单章蓝图补全第 15 章伏笔时序消毒：删除 [\"通州大仓深处甲字三号暗仓被齐泰下令封锁\"]",
+    "单章蓝图补全第 16 章伏笔时序消毒：删除 [\"顾砚之手持沈定安提刑关防强行开启通州大仓甲字三号暗仓\"]",
+    "单章蓝图补全第 18 章伏笔时序消毒：删除 [\"齐泰指使亡命死士在通州大仓深夜放火制造混乱企图灭口顾砚之\"]",
+    "单章蓝图补全第 20 章伏笔时序消毒：删除 [\"顾砚之通宵达旦制成三十二房资产负债与实物缺口对照图册\",\"顾砚之连夜赶制出三十二房资产负债与实物缺口对照图册\"]",
+    "单章蓝图补全第 21 章伏笔时序消毒：删除 [\"缇骑合围大雍户部公署与通州大仓·京城汇通号钱庄截断内外通传\",\"缇骑突袭并封锁大雍户部公署与通州大仓·京城汇通号钱庄。\"]",
+    "单章蓝图补全第 22 章伏笔时序消毒：删除 [\"林清源介入大雍户部公署与通州大仓·京城汇通号钱庄案发现场。\"]",
+    "单章蓝图补全第 23 章伏笔时序消毒：删除 [\"崔元朗亲临大雍户部公署与通州大仓·京城汇通号钱庄施压阻挠。\"]",
+    "单章蓝图补全第 25 章伏笔时序消毒：删除 [\"顾砚之穿透比对核实汇票最终提银人登记盖有薛怀德私印暗记\",\"顾砚之查获汇票提银名单上的薛怀德私印暗记\"]",
+    "单章蓝图补全第 26 章伏笔时序消毒：删除 [\"顾砚之被薛怀德单独召入大雍户部公署与通州大仓·尚书私邸密室问话\"]",
+    "单章蓝图补全第 28 章伏笔时序消毒：删除 [\"顾砚之进驻大雍户部公署与通州大仓·户部老库调阅往年出库原始存根\",\"户部堂吏慌张撞门急报博陵崔氏连夜上本弹劾。\",\"顾砚之在大雍户部公署与通州大仓·户部老库调阅往年存根完善证据链。\"]",
+    "单章蓝图补全第 29 章伏笔时序消毒：删除 [\"崔元朗联合博陵崔氏宗族旧吏联名弹劾顾砚之以下犯上妖言乱政\",\"崔元朗联合博陵崔氏旧吏上本弹劾顾砚之\"]",
+    "单章蓝图补全第 37 章伏笔时序消毒：删除 [\"被俘死士搜出文安侯府腰牌令齐泰彻底断念倒戈\",\"齐泰交代文安侯府名下车行转运暗账下落。\"]",
+    "单章蓝图补全第 38 章伏笔时序消毒：删除 [\"文安侯府护卫闻讯赶来被沈定安亮出提刑关防喝退。\"]",
+    "单章蓝图补全第 44 章伏笔时序消毒：删除 [\"沈定安按定分录布防，严密监控通州私宅动向。\"]",
+    "单章蓝图补全第 46 章伏笔时序消毒：删除 [\"崔元朗盛气凌人当庭发难，将通州仓百万亏空推给底层誊录书吏\"]",
+    "本地收缩超长标题/CBN/CEN 共 23 章（第 19、22、23、24、25、26、27、28、29、31、32、33、34、35、36、37、38、39、40、43、48、49、50 章），未发 AI 请求",
+    "大纲 agent:model-finish,9 轮 8 次工具调用,复检 1 次"
+  ],
+  "outlineRoll": {
+    "requestedChapters": 200,
+    "rolledFromChapter": 51,
+    "rolledToChapter": 200,
+    "rolledCount": 150,
+    "placeholderCount": 0,
+    "warnings": []
+  },
+  "provider": "openai",
+  "model": "gemini-3.8-flash-high",
+  "phaseTimings": {
+    "outlineDirectionsMs": 29845,
+    "outlineExpandMs": 399361,
+    "outlineRollMs": 1136098,
+    "applyOutlineMs": 1028,
+    "continueWriteMs": 0,
+    "totalMs": 0
+  },
+  "updatedAt": "2026-09-25T02:13:47.466Z",
+  "warnings": [
+    "任务尚未完成；本摘要为阶段性检查点，进程超时或中断后仍可用于诊断。"
+  ]
+}

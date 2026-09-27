@@ -79,7 +79,8 @@ import type {
 } from '@/services/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
-import { collectCharacterIdentityAnchors, collectEraAnchors, collectFakedDeathCharacters, collectFateForbiddenZones, collectNumericAnchors, overlayCharacterFates, overlayCharacterTitles } from '@/services/writing/extract-plot-memory';
+import { collectCharacterIdentityAnchors, collectEraAnchors, collectFakedDeathCharacters, collectFateForbiddenZones, collectFateStatusAnchors, collectNumericAnchors, overlayCharacterFates, overlayCharacterTitles } from '@/services/writing/extract-plot-memory';
+import { buildStateCardRows, isStateCardEnabled } from '@/services/writing/stateLedger';
 import { stripStructuredNodeBlock } from '@/services/outline/parser/utils';
 import type { SceneChunk } from '@/types/story-runtime';
 
@@ -959,6 +960,11 @@ export class ChapterWritingPipeline {
         ...(writerAgent ? { writerAgent } : {}),
       });
       throwIfAborted(input.signal);
+      // 记忆按目标章截断的统一变量（era/numeric/fakedDeath/fateStatus/状态卡共源）：
+      // 与 overlayCharacterFates 同口径，补写/重写早期章时不被后文终态误伤
+      const memoriesUpToChapter = (input.project.chapterMemories ?? []).filter(
+        memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
+      );
       const result = await engine.write({
         projectId: input.project.id,
         contracts,
@@ -976,18 +982,10 @@ export class ChapterWritingPipeline {
         previousChapterEnding: input.previousChapter?.ending || '',
         // 纪年锚（r5 实证纪年五套互斥+真实年号混入）：近章既成纪年叙述注入起草
         // prompt，正文纪年必须与之连续；真实年号另有黑名单守卫拦截
-        eraAnchors: collectEraAnchors(
-          (input.project.chapterMemories ?? []).filter(
-            memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
-          ),
-        ),
+        eraAnchors: collectEraAnchors(memoriesUpToChapter),
         // 数字锚（r6 实证长程数字漂移成最大 S1 簇）：近章既成数字句注入起草
         // 【数字锚】与判官【数字一致】共源；数据源含契约 15 numeric-fact 事件
-        numericFacts: collectNumericAnchors(
-          (input.project.chapterMemories ?? []).filter(
-            memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
-          ),
-        ),
+        numericFacts: collectNumericAnchors(memoriesUpToChapter),
         // 身份锚（r6 实证角色表赵宣=三皇子恭王被写手降格成刑部主事姻亲）：
         // 本章出场角色的角色卡身份首句，正文身份/地位必须与角色卡一致
         characterIdentityAnchors: collectCharacterIdentityAnchors(
@@ -996,11 +994,16 @@ export class ChapterWritingPipeline {
         ),
         // 假死纪律（r8 实证：假死被登死亡后三道防线锁死主角 48 章）：
         // 假死在册角色不进终态禁令，写作侧按隐匿活着处理
-        fakedDeathCharacters: collectFakedDeathCharacters(
-          (input.project.chapterMemories ?? []).filter(
-            memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
-          ),
-        ),
+        fakedDeathCharacters: collectFakedDeathCharacters(memoriesUpToChapter),
+        // 命运状态正典（2026-09-24 g38f 500ch S1/S2：在押凭空自由/去职照常行使）：
+        // 每角色最新命运状态注入【命运状态正典】，正文处理须先与该状态自洽。
+        // 第 2 阶段读侧接管（unified-state-ledger）：MOLIU_STATE_CARD=1 时改注
+        // 状态账本折叠的【实体状态卡】——「最晚一条原始状态」视图读不到被押地/
+        // 头衔行覆盖的终态（r8-S1-05 顾宪诚形态），账本快照是单一真相源
+        fateStatusAnchors: collectFateStatusAnchors(memoriesUpToChapter),
+        ...(isStateCardEnabled()
+          ? { stateCard: buildStateCardRows(memoriesUpToChapter, chapterNumber) }
+          : {}),
         // 未回收伏笔的判官候选，口径见 buildPayoffCandidates（已到埋设点，非回收时点）
         payoffCandidates: buildPayoffCandidates(input.project.foreshadows, chapterNumber),
       });

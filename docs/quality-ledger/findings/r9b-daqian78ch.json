@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "findings/v1",
+  "round": "r9b",
+  "book": "大乾第一做账人",
+  "reviewedAt": "2026-09-22T18:00:00+08:00",
+  "backfilledFrom": "temp/book-review/大乾第一做账人-0922/QUALITY-REPORT.md",
+  "matrixDir": "temp/storyflow-matrix",
+  "chapters": 78,
+  "review": {
+    "method": "unverified",
+    "chaptersRead": 0,
+    "writerModel": "gemini-3.8-flash-high",
+    "reviewerModel": "gemini-3.8-flash-high",
+    "independentReviewer": false,
+    "note": "报告未声明审法，未附读者裁判；24.5 万字仅列 2 条 S3"
+  },
+  "gates": {
+    "precheckRedlines": 0,
+    "fateRealResurrection": 0,
+    "readerJudge": null,
+    "ending": { "complete": true, "mainUnresolved": 0, "closureSignals": null },
+    "humanIntervention": ["storyflow-repair-empty 补写 ch38-48 共 11 章（上游瞬态跳章）", "规划 80 章实成 78 章"],
+    "blindTest": null
+  },
+  "findings": [
+    { "id": "r9b-S3-01", "severity": "S3", "class": "prose.slop", "status": "final", "rootLayer": "model", "chapters": [1], "summary": "此刻×44、缓缓×34、轻轻×31、瞬间×29" },
+    { "id": "r9b-S3-02", "severity": "S3", "class": "prose.slop", "status": "final", "rootLayer": "writer", "chapters": [1, 20], "summary": "象牙长尺/飞算等勘验动作前20章重复约6次" }
+  ]
+}

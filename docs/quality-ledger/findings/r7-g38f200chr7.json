@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "findings/v1",
+  "round": "r7",
+  "book": "治世能臣：社畜的内阁升迁录",
+  "reviewedAt": "2026-09-19T03:00:00+08:00",
+  "backfilledFrom": "temp/book-review/治世能臣：社畜的内阁升迁录-0918/QUALITY-REPORT.md",
+  "matrixDir": "temp/storyflow-matrix-g38f200chr7",
+  "chapters": 200,
+  "review": {
+    "method": "full-read-4ch",
+    "chaptersRead": 200,
+    "writerModel": "gemini-3.8-flash-high",
+    "reviewerModel": "gemini-3.8-flash-high",
+    "independentReviewer": false
+  },
+  "gates": {
+    "precheckRedlines": 0,
+    "fateRealResurrection": 0,
+    "readerJudge": { "outline": 83.3, "mean": 87.29, "median": 87.3, "min": 74.3 },
+    "ending": { "complete": true, "mainUnresolved": 0, "closureSignals": null },
+    "humanIntervention": [],
+    "blindTest": null
+  },
+  "findings": [
+    { "id": "r7-S1-01", "severity": "S1", "class": "state.title", "status": "final", "rootLayer": "extraction", "chapters": [111, 112], "entity": "温廷翰", "summary": "同夜由翰林修撰改称通政使，全书≥6职横跳无任免（头衔锚对配角失效）" },
+    { "id": "r7-S1-02", "severity": "S1", "class": "state.custody", "status": "final", "rootLayer": "extraction", "chapters": [116, 139], "entity": "德丰掌柜", "summary": "死囚枷拘捕后22章无释放交代自由复业（孙茂才同形态复发）" },
+    { "id": "r7-S1-03", "severity": "S1", "class": "state.fate", "status": "final", "rootLayer": "extraction", "chapters": [188, 190, 191], "entity": "周文彬", "replayCase": "r7-S1-03", "summary": "ch188已枭首悬门，ch190活着被劫出、ch191改称待决——死刑无声回滚" },
+    { "id": "r7-S1-04", "severity": "S1", "class": "structure.offscreen", "status": "final", "rootLayer": "blueprint", "chapters": [194], "summary": "老皇帝驾崩零叙述直接跳新帝即位诏；东宫所指漂移，在世天子被称先帝" },
+    { "id": "r7-S1-05", "severity": "S1", "class": "state.title", "status": "final", "rootLayer": "extraction", "chapters": [121, 144, 159, 189], "summary": "宣武将军品级两说、赵元恺尚书/侍郎、王敬之撞名、薛震江双身份无招安桥" },
+    { "id": "r7-S1-06", "severity": "S1", "class": "number.arithmetic", "status": "final", "rootLayer": "judge", "chapters": [103], "summary": "一箱三千二百锭×50两×16箱=256万两 vs 实银八万两整，章内算术崩溃" },
+    { "id": "r7-S1-07", "severity": "S1", "class": "number.arithmetic", "status": "final", "rootLayer": "judge", "chapters": [115, 138], "summary": "独轮车5石×400辆≠两万石；大车200石×800辆≠三十万石" },
+    { "id": "r7-S1-08", "severity": "S1", "class": "number.arithmetic", "status": "final", "rootLayer": "blueprint", "chapters": [177], "summary": "一箱六十锭×五十万箱=15亿两≠三千万两，蓝图标题自带错误被正文照抄" },
+    { "id": "r7-S1-09", "severity": "S1", "class": "number.setting", "status": "final", "rootLayer": "extraction", "chapters": [3, 46, 49, 50], "summary": "南堤长度8倍漂移+嘉定三年帑银四套口径，历史背景数字不入 numeric-fact 网" },
+    { "id": "r7-S1-10", "severity": "S1", "class": "time.era", "status": "final", "rootLayer": "writer", "chapters": [32], "summary": "当前嘉定四年出现嘉定五年恩旨（超前纪年）" },
+    { "id": "r7-S1-11", "severity": "S1", "class": "time.sequence", "status": "final", "rootLayer": "writer", "chapters": [85], "summary": "自嘉定三年起整整七年（当年仅嘉定四年）+季节链振荡" },
+    { "id": "r7-S1-12", "severity": "S1", "class": "state.location", "status": "final", "rootLayer": "blueprint", "chapters": [112, 115], "summary": "通州装货→闯上游三险滩→回通州卸货，航运方向闭环" },
+    { "id": "r7-S1-13", "severity": "S1", "class": "continuity.boundary", "status": "final", "rootLayer": "writer", "chapters": [192, 193], "summary": "东便门瓮城伏击未触发直接跳承天门强攻" },
+    { "id": "r7-S2-title", "severity": "S2", "class": "state.title", "status": "final", "rootLayer": "extraction", "chapters": [111], "count": 10, "summary": "配角职称/头衔次级漂移约10处（聚合）" },
+    { "id": "r7-S2-custody", "severity": "S2", "class": "state.custody", "status": "final", "rootLayer": "extraction", "chapters": [139], "count": 3, "summary": "押地诏狱↔刑部移监缺桥3处（聚合）" },
+    { "id": "r7-S2-ledger", "severity": "S2", "class": "number.ledger", "status": "final", "rootLayer": "extraction", "chapters": [78, 82], "count": 8, "summary": "漕粮/帑银/盐量次级口径8处（聚合）" },
+    { "id": "r7-S2-setting", "severity": "S2", "class": "number.setting", "status": "final", "rootLayer": "blueprint", "chapters": [5], "count": 2, "summary": "章名与正文数字脱节2处（聚合）" },
+    { "id": "r7-S2-anachronism", "severity": "S2", "class": "prose.anachronism", "status": "final", "rootLayer": "model", "chapters": [1], "summary": "甘特图现代词出戏（非穿越角色使用）" },
+    { "id": "r7-S2-misc", "severity": "S2", "class": "other", "status": "final", "rootLayer": "unknown", "chapters": [1], "count": 7, "summary": "其余散项7处（原报告未分项）" }
+  ]
+}

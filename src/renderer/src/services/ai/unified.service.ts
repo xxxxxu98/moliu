@@ -249,6 +249,22 @@ export class UnifiedAIService {
         thinking: { type: "disabled" },
       });
     }
+
+    // Claude 系模型（claude-*/含 thinking 档）经网关转 Anthropic 上游时拒绝
+    // OpenAI 风格采样参数（temperature/top_p 报 400 invalid_request_error——
+    // 2026-09-24 双实证：opus-thinking 与 sonnet-4-6 大循环首调即败；opus 剥参
+    // 后开题 10 步全通）：请求体剥除采样参数，用上游默认值。
+    if (this.client && this.model && /claude|thinking/i.test(this.model)) {
+      const adapter = (this.client as any).adapter;
+      const origBuildBody = adapter.buildBody.bind(adapter);
+      adapter.buildBody = (messages: unknown, options: unknown, stream: boolean) => {
+        const body = origBuildBody(messages, options, stream) as Record<string, unknown>;
+        delete body.temperature;
+        delete body.top_p;
+        delete body.topP;
+        return body;
+      };
+    }
   }
 
   /**

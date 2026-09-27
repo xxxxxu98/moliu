@@ -675,6 +675,19 @@ export interface LongFormWriteInput {
    * 假死=活着的隐匿状态，不进终态禁令；写作侧注入【假死纪律】。
    */
   fakedDeathCharacters?: Array<{ name: string; chapterIndex: number }>;
+  /**
+   * 命运状态正典（2026-09-24 g38f 500ch 书审 S1/S2：在押角色凭空自由出场、
+   * 去职角色照常行使职权）。每角色最新一条命运状态，写作侧注入
+   * 【命运状态正典】——正文处理这些角色必须先与该状态自洽。
+   */
+  fateStatusAnchors?: Array<{ name: string; status: string; chapterIndex: number }>;
+  /**
+   * 实体状态卡（unified-state-ledger 第 2 阶段读侧接管，MOLIU_STATE_CARD=1）：
+   * 状态账本按章折叠的分组视图（在押含押地/已死/假死/去职/现任头衔）。
+   * 在场时 SceneDraftEngine 用它替换【命运状态正典】块——「最晚一条原始状态」
+   * 视图读不到被押地/头衔行覆盖的终态（r8-S1-05 顾宪诚形态）。
+   */
+  stateCard?: string[];
   payoffCandidates?: Array<{ id: string; hint: string }>;
   /**
    * 上一章实际写出的结尾原文（批量续写链路传入）。

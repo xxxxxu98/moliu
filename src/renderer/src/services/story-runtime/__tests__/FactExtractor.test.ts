@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { AIFactExtractor, ensureTopLevelEvidence } from '../FactExtractor';
+import { AIFactExtractor, ensureTopLevelEvidence, detectUnledgeredFateEvents } from '../FactExtractor';
 import type { ExtractedFacts, StructuredAI } from '@/types/story-runtime';
 
 describe('ensureTopLevelEvidence', () => {
@@ -90,6 +90,10 @@ describe('命运提取合同护栏', () => {
     expect(system).toContain('越狱族');
     expect(system).toContain('value「越狱」');
     expect(system).toContain('判决不是行刑');
+    // 2026-09-23 r8-S1-05：消费侧删除解除词正则共现后，保释中间态与主语归属只靠合同
+    expect(system).toContain('保释族');
+    expect(system).toContain('value「保释」');
+    expect(system).toContain('逆转 delta 只登给逆转句的主语本人');
   });
 
   // 2026-09-06 g38f-200chr2 实证：ch188「太上皇早已驾崩」追认句被当新宣告
@@ -185,3 +189,203 @@ describe('命运提取合同护栏', () => {
   });
 });
 
+
+describe('命运漏登复检闸（2026-09-23 g38f 500ch S1×5 根因修复）', () => {
+  // 受害样本一：ch30 events 明写「绞断颈骨悬梁气绝毙命」而 deltas=[]——
+  // 契约 8b 同响应自检失效，崔有道死亡未入账，ch41 起死人反复活体出场。
+  const cuiEntity = { id: 'char-cui', name: '崔有道', aliases: [] };
+  const ch30Facts = {
+    events: [
+      {
+        id: 'e1',
+        chapter: 30,
+        sceneId: 's1',
+        type: 'plot',
+        summary: '崔有道被牢房内预设的机关吊索生生绞断颈骨悬梁灭口毙命。',
+        participants: ['char-cui'],
+        causes: [],
+        effects: [],
+        evidence: ['崔有道被牢房内预设的机关吊索生生绞断颈骨悬梁灭口毙命。'],
+      },
+    ],
+    deltas: [],
+    evidence: ['崔有道被牢房内预设的机关吊索生生绞断颈骨悬梁灭口毙命。'],
+  };
+
+  it('events 命中死亡完成体而账面为空时触发复检并合并补登（ch30 形态）', async () => {
+    const generate = vi
+      .fn()
+      .mockResolvedValueOnce(ch30Facts)
+      .mockResolvedValueOnce({
+        deltas: [
+          { operation: 'set', path: 'characters.char-cui.attributes.status', value: '死亡', evidence: '崔有道被机关吊索绞断颈骨悬梁灭口毙命。' },
+        ],
+      });
+    const extractor = new AIFactExtractor({ generate } as unknown as StructuredAI);
+    const facts = await extractor.extract({
+      projectId: 'p1',
+      chapterNumber: 30,
+      sceneDrafts: [],
+      state: { entities: { 'char-cui': cuiEntity }, events: [] } as never,
+    });
+
+    expect(generate).toHaveBeenCalledTimes(2);
+    expect(generate.mock.calls[1]?.[0]?.purpose).toBe('fact-extraction-recheck');
+    const death = facts.deltas.find(d => d.path === 'characters.char-cui.attributes.status');
+    expect(death?.value).toBe('死亡');
+  });
+
+  // 受害样本二：ch66「冯保义于诏狱被赐死」同响应零 delta。
+  it('赐死完成体同样触发复检（ch66 形态）', async () => {
+    const generate = vi
+      .fn()
+      .mockResolvedValueOnce({
+        events: [
+          {
+            id: 'e1', chapter: 66, sceneId: 's1', type: 'plot',
+            summary: '奉天殿大案告一段落，冯保义于诏狱被赐死。',
+            participants: ['冯保义'], causes: [], effects: [],
+            evidence: ['冯保义在诏狱饮鸩，尸首弃于荒野。'],
+          },
+        ],
+        deltas: [],
+        evidence: ['冯保义在诏狱饮鸩。'],
+      })
+      .mockResolvedValueOnce({
+        deltas: [
+          { operation: 'set', path: 'characters.char-feng.attributes.status', value: '死亡', evidence: '冯保义在诏狱饮鸩，尸首弃于荒野。' },
+        ],
+      });
+    const extractor = new AIFactExtractor({ generate } as unknown as StructuredAI);
+    const facts = await extractor.extract({
+      projectId: 'p1',
+      chapterNumber: 66,
+      sceneDrafts: [],
+      state: { entities: { 'char-feng': { id: 'char-feng', name: '冯保义', aliases: [] } }, events: [] } as never,
+    });
+    expect(generate).toHaveBeenCalledTimes(2);
+    expect(facts.deltas.some(d => d.path === 'characters.char-feng.attributes.status' && d.value === '死亡')).toBe(true);
+  });
+
+  it('无命运词族时不触发复检（省调用）', async () => {
+    const generate = vi.fn().mockResolvedValue({
+      events: [
+        { id: 'e1', chapter: 14, sceneId: 's1', type: 'numeric-fact', summary: '苏晚晴核算丝市五倍暴利。', participants: ['char-a'], causes: [], effects: [], evidence: ['x'] },
+      ],
+      deltas: [],
+      evidence: ['x'],
+    });
+    const extractor = new AIFactExtractor({ generate } as unknown as StructuredAI);
+    await extractor.extract({
+      projectId: 'p1', chapterNumber: 14, sceneDrafts: [],
+      state: { entities: { 'char-a': { id: 'char-a', name: '苏晚晴', aliases: [] } }, events: [] } as never,
+    });
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
+
+  it('命中事件但角色已在账时不触发复检', async () => {
+    const generate = vi.fn().mockResolvedValue({
+      events: [
+        { id: 'e1', chapter: 31, sceneId: 's1', type: 'plot', summary: '崔有道毙命后狱中清点。', participants: ['char-cui'], causes: [], effects: [], evidence: ['x'] },
+      ],
+      deltas: [
+        { operation: 'set', path: 'characters.char-cui.attributes.status', value: '死亡', evidence: '崔有道毙命。' },
+      ],
+      evidence: ['x'],
+    });
+    const extractor = new AIFactExtractor({ generate } as unknown as StructuredAI);
+    await extractor.extract({
+      projectId: 'p1', chapterNumber: 31, sceneDrafts: [],
+      state: { entities: { 'char-cui': cuiEntity }, events: [] } as never,
+    });
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
+
+  it('复检调用失败时静默降级返回首轮结果（防线不成为新故障点）', async () => {
+    const generate = vi
+      .fn()
+      .mockResolvedValueOnce(ch30Facts)
+      .mockRejectedValueOnce(new Error('网关抖动'));
+    const extractor = new AIFactExtractor({ generate } as unknown as StructuredAI);
+    const facts = await extractor.extract({
+      projectId: 'p1', chapterNumber: 30, sceneDrafts: [],
+      state: { entities: { 'char-cui': cuiEntity }, events: [] } as never,
+    });
+    expect(generate).toHaveBeenCalledTimes(2);
+    expect(facts.events).toHaveLength(1);
+    expect(facts.deltas).toEqual([]);
+  });
+
+  it('复检返回与既有账同键的 delta 时不重复入账', async () => {
+    const generate = vi
+      .fn()
+      .mockResolvedValueOnce({
+        events: [
+          { id: 'e1', chapter: 32, sceneId: 's1', type: 'plot', summary: '崔有道毙命案卷封存。', participants: ['char-cui'], causes: [], effects: [], evidence: ['x'] },
+        ],
+        deltas: [
+          { operation: 'set', path: 'characters.char-cui.attributes.status', value: '死亡', evidence: '崔有道毙命。' },
+        ],
+        evidence: ['x'],
+      })
+      .mockResolvedValueOnce({
+        deltas: [
+          { operation: 'set', path: 'characters.char-cui.attributes.status', value: '死亡', evidence: '崔有道毙命（复检重复）。' },
+        ],
+      });
+    const extractor = new AIFactExtractor({ generate } as unknown as StructuredAI);
+    const facts = await extractor.extract({
+      projectId: 'p1', chapterNumber: 32, sceneDrafts: [],
+      state: { entities: { 'char-cui': cuiEntity }, events: [] } as never,
+    });
+    const deaths = facts.deltas.filter(d => d.path === 'characters.char-cui.attributes.status' && d.value === '死亡');
+    expect(deaths).toHaveLength(1);
+  });
+});
+
+describe('detectUnledgeredFateEvents 物理死亡描写触发（r12 ch158 受害样本）', () => {
+  it('「洞穿喉管…归于死寂」漏登死亡时触发复检候选（旧词族三道防线全漏形态）', () => {
+    const facts = {
+      events: [
+        {
+          id: 'e1',
+          chapter: 158,
+          sceneId: 's1',
+          type: 'plot',
+          summary: '利箭洞穿了周德安高高仰起的喉管，其瘫倒在地彻底归于死寂',
+          participants: ['char-zhou'],
+          causes: [],
+          effects: [],
+          evidence: ['喉管'],
+        },
+      ],
+      deltas: [],
+    } as unknown as ExtractedFacts;
+    const entities = { 'char-zhou': { id: 'char-zhou', name: '周德安' } };
+    const { suspectEvents, suspectEntityIds } = detectUnledgeredFateEvents(facts, entities);
+    expect(suspectEvents).toHaveLength(1);
+    expect(suspectEntityIds.has('char-zhou')).toBe(true);
+  });
+
+  it('无命运语汇的普通事件不触发（省一次复检调用）', () => {
+    const facts = {
+      events: [
+        {
+          id: 'e1',
+          chapter: 2,
+          sceneId: 's1',
+          type: 'plot',
+          summary: '沈淮在灯下核对新版四柱账册',
+          participants: ['char-shen'],
+          causes: [],
+          effects: [],
+          evidence: ['账册'],
+        },
+      ],
+      deltas: [],
+    } as unknown as ExtractedFacts;
+    const entities = { 'char-shen': { id: 'char-shen', name: '沈淮' } };
+    const { suspectEvents } = detectUnledgeredFateEvents(facts, entities);
+    expect(suspectEvents).toHaveLength(0);
+  });
+});

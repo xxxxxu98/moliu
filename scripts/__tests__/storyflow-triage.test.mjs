@@ -15,10 +15,10 @@ const ch = (n, text) => ({ n, text });
 
 test('台账死亡 + 后章正文提及 → 命中候选（r2 A 书顾成化形态）', () => {
   const memories = [
-    mem(156, [{ characterName: '顾成化', state: '死亡', detail: '顾成化全族伏诛' }]),
+    mem(157, [{ characterName: '顾成化', state: '死亡', detail: '顾成化全族伏诛' }]),
   ];
   const chapters = [
-    ch(156, '南门瓮城顾成化全族伏诛。'),
+    ch(157, '南门瓮城顾成化全族伏诛。'),
     ch(162, '殿阶下的顾成化跪伏在地。'),
     ch(194, '太后懿旨斥顾成化逼宫。'),
   ];
@@ -52,8 +52,8 @@ test('非终端态（下狱/去职/定罪）不出候选——复位裁决归书
 
 test('同角色双死亡入账：锚定最早章 + multiDeaths 必出（孙茂才 ch172/189 形态）', () => {
   const memories = [
-    mem(171, [{ characterName: '孙茂才', state: '死亡', detail: '毒发气绝身亡' }]),
-    mem(188, [{ characterName: '孙茂才', state: '死亡', detail: '天牢尸僵' }]),
+    mem(172, [{ characterName: '孙茂才', state: '死亡', detail: '毒发气绝身亡' }]),
+    mem(189, [{ characterName: '孙茂才', state: '死亡', detail: '天牢尸僵' }]),
   ];
   // ch180 提及（两次死亡之间）+ ch190 提及（最晚死亡之后）：旧行为只报 190
   const chapters = [
@@ -86,11 +86,19 @@ test('同章重复登记只算一次死亡', () => {
   assert.equal(res.multiDeaths.length, 0);
 });
 
-test('命运章之前的提及不算复活（chapterIndex 0 基：mem(149) → 第150章）', () => {
-  const memories = [mem(149, [{ characterName: '先帝', state: '驾崩', detail: '驾崩' }])];
+test('命运章及之前的提及不算复活（chapterIndex 即 1 基章号：mem(150) → 第150章）', () => {
+  const memories = [mem(150, [{ characterName: '先帝', state: '驾崩', detail: '驾崩' }])];
   const chapters = [ch(50, '先帝当年励精图治。'), ch(150, '先帝陵寝肃穆。')];
   const res = scanLedgerDeathResurrection(memories, chapters);
   assert.equal(res.resurrections.length, 0);
+});
+
+test('死亡次章即出场必须命中（旧 +1 口径把次章吞进死亡章，2026-09-23 修正）', () => {
+  const memories = [mem(150, [{ characterName: '严开礼', state: '死亡', detail: '撞柱气绝' }])];
+  const chapters = [ch(150, '严开礼撞柱。'), ch(151, '严开礼拱手出列。')];
+  const res = scanLedgerDeathResurrection(memories, chapters);
+  assert.equal(res.resurrections.length, 1);
+  assert.deepEqual(res.resurrections[0].activeChapters, [151]);
 });
 
 test('脏实体名（不在角色卡名单/过长/过短）不入候选', () => {

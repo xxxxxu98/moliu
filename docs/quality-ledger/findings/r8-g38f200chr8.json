@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "findings/v1",
+  "round": "r8",
+  "book": "做个天子孤臣",
+  "reviewedAt": "2026-09-20T06:00:00+08:00",
+  "backfilledFrom": "temp/book-review/做个天子孤臣-0919/QUALITY-REPORT.md",
+  "matrixDir": "temp/storyflow-matrix-g38f200chr8",
+  "chapters": 200,
+  "review": {
+    "method": "full-read-4ch",
+    "chaptersRead": 200,
+    "writerModel": "gemini-3.8-flash-high",
+    "reviewerModel": "gemini-3.8-flash-high",
+    "independentReviewer": false
+  },
+  "gates": {
+    "precheckRedlines": 13,
+    "fateRealResurrection": 0,
+    "readerJudge": { "outline": 84.9, "mean": 84.2, "median": 85.7, "min": 0 },
+    "ending": { "complete": true, "mainUnresolved": 0, "closureSignals": 1 },
+    "humanIntervention": ["storyflow-repair-empty 补写 ch82、ch140（五连拒成洞）"],
+    "blindTest": null
+  },
+  "findings": [
+    { "id": "r8-S1-01", "severity": "S1", "class": "structure.arc", "status": "final", "rootLayer": "blueprint", "chapters": [151, 160, 163, 173, 199], "summary": "主角假死线断裂：ch151假死+复活实写后48章零登场，ch199按真死追尊；大纲三次安排现身均被改写为衣冠道具" },
+    { "id": "r8-S1-02", "severity": "S1", "class": "structure.offscreen", "status": "final", "rootLayer": "blueprint", "chapters": [156, 169, 181, 182, 183], "replayCase": "r8-S1-02", "summary": "皇统过渡双断层：驾崩无叙述场面 + 五字昏厥/未写完圣旨与凭空完整托孤遗诏互斥" },
+    { "id": "r8-S1-03", "severity": "S1", "class": "state.custody", "status": "final", "rootLayer": "blueprint", "chapters": [156, 183, 190, 195], "entity": "赵宣", "summary": "自由活动 vs 三度戴罪开释为登基前提（三监狱互异）+ 登基重演" },
+    { "id": "r8-S1-04", "severity": "S1", "class": "state.custody", "status": "final", "rootLayer": "blueprint", "chapters": [139, 141, 143, 145, 149], "entity": "崔显", "replayCase": "r8-S1-04", "summary": "ch139/141革职下狱 → ch143/145/149 自由行动无释放交代" },
+    { "id": "r8-S1-05", "severity": "S1", "class": "state.custody", "status": "final", "rootLayer": "extraction", "chapters": [139, 142], "entity": "顾宪诚", "replayCase": "r8-S1-05", "summary": "ch139诏狱写手书 → ch142起紫袍自由理政，无桥接", "rootNote": "2026-09-23 回放复现后改判：ch119 FATE_RELEASE_PATTERNS 章级共现（崔显「戴罪」）误解除顾宪诚下狱，ch134 押地 delta 不参与在押判定，ch142 起草前命运表无此人。原判 blueprint。第 0 阶段止血后回放 2/2 pass（2026-09-23）。" },
+    { "id": "r8-S1-06", "severity": "S1", "class": "state.custody", "status": "final", "rootLayer": "extraction", "chapters": [131, 133, 136], "entity": "赵恒", "replayCase": "r8-S1-06", "summary": "明旨开释→又戴镣→移押京营，收押链三段漂移时序不可能" },
+    { "id": "r8-S1-07", "severity": "S1", "class": "state.location", "status": "final", "rootLayer": "writer", "chapters": [18], "summary": "主角同夜分身：死牢被缚叙述与同夜通政司/邸报馆行踪矛盾" },
+    { "id": "r8-S2-title", "severity": "S2", "class": "state.title", "status": "final", "rootLayer": "extraction", "chapters": [146], "count": 19, "entity": "顾宪诚", "summary": "顾宪诚首辅/次辅19处横跳（ch146同章并用），冯恩四段漂、沈文渊品级漂" },
+    { "id": "r8-S2-number", "severity": "S2", "class": "number.setting", "status": "final", "rootLayer": "extraction", "chapters": [1], "count": 5, "summary": "赵宣年龄、船队、兵力、精铁、官价等设定数字漂移（聚合）" },
+    { "id": "r8-S2-repeat", "severity": "S2", "class": "structure.repeat", "status": "final", "rootLayer": "blueprint", "chapters": [155, 181, 195], "summary": "赵恒削籍×3、赵宣登基×2 同一终态跨章重演" }
+  ]
+}

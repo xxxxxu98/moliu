@@ -270,7 +270,7 @@ export function buildRollContextBase(project: Project, fromChapterNumber: number
     return {
       name: f.characterName,
       state: f.state,
-      chapter: f.chapterIndex + 1,
+      chapter: f.chapterIndex,
       sameStateCount: history.find(item => item.state === f.state)?.count ?? 1,
       maxSameStateCount: history[0]?.count ?? 1,
       history,
@@ -287,7 +287,7 @@ export function buildRollContextBase(project: Project, fromChapterNumber: number
   // 滚纲——ch169 蓝图写出「依陆九霄生前密信」，其后 48 章主角无法活体登场）：
   // 假死=活着隐匿中，滚纲应按活着规划暗线与揭破节点，不进命运锁。
   const fakedDeaths = collectFakedDeathCharacters(project.chapterMemories ?? []).map(
-    f => `${f.name}（第${f.chapterIndex + 1}章起假死在册，未揭晓）`
+    f => `${f.name}（第${f.chapterIndex}章起假死在册，未揭晓）`
   );
 
   return {

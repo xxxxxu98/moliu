@@ -8,6 +8,7 @@ import type {
   FulfillmentCheckResult,
   JsonValue,
   SceneDraft,
+  StateDelta,
   StoryBootstrapData,
   StoryState,
 } from '@/types/story-runtime';
@@ -274,6 +275,11 @@ export const stateDeltaSchema = z.object({
   path: z.string().min(1),
   value: jsonValueSchema.optional(),
   evidence: z.string().min(1),
+});
+
+/** 命运漏登复检结果：只补 deltas，事件本身已由首轮提取产出 */
+export const fateRecheckResultSchema: z.ZodType<{ deltas: StateDelta[] }> = z.object({
+  deltas: z.array(stateDeltaSchema),
 });
 
 export const storyStateSchema: z.ZodType<StoryState> = z.object({

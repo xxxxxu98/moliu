@@ -455,7 +455,8 @@ describe('rollOutlineForward', () => {
       {
         chapterId: 'ch27',
         chapterTitle: 'Chapter 27',
-        chapterIndex: 26,
+        // ChapterMemory.chapterIndex 即 1 基章号
+        chapterIndex: 27,
         corePlot: '严嵩林被革职下狱',
         keyEvents: ['严嵩林被当堂革职下狱'],
         locations: [],

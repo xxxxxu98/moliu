@@ -173,6 +173,37 @@ describe('cleanup-repo-temp KEEP 与 --all', () => {
     expect(existsSync(join(tempRoot, 'storyflow-matrix-retired-0820'))).toBe(false);
   });
 
+  it('--purge 忽略保留窗口:窗口内矩阵与 ai-traces 整目录删除,基线与 KEEP 配置仍留', async () => {
+    const { runClean } = await loadClean();
+    const result = runClean({ tempRoot, cleanAll: true, purge: true, nowMs: NOW });
+    expect(result.removed).toContain('storyflow-matrix-agif200r2a');
+    expect(result.removed).toContain('storyflow-matrix-retired-0820');
+    expect(result.removed).toContain('ai-traces');
+    expect(result.removed).toContain('junk-run');
+    expect(existsSync(join(tempRoot, 'storyflow-matrix-agif200r2a'))).toBe(false);
+    expect(existsSync(join(tempRoot, 'ai-traces'))).toBe(false);
+    expect(existsSync(join(tempRoot, 'continue-write.real.config.json'))).toBe(true);
+    expect(result.skippedProtected).toContain('continue-write.real.config.json');
+    expect(existsSync(join(tempRoot, 'book-review', 'sample-fresh-0903'))).toBe(false);
+    expect(existsSync(join(tempRoot, 'book-review', 'sample-old-0825'))).toBe(false);
+    expect(existsSync(join(tempRoot, 'book-review', 'baseline100ch-r9', '001.txt'))).toBe(true);
+    expect(existsSync(join(tempRoot, 'storyflow-checkpoints', 'fresh.outline.json'))).toBe(false);
+    expect(existsSync(join(tempRoot, 'storyflow-checkpoints', 'stale.outline.json'))).toBe(false);
+  });
+
+  it('单独 --purge 也删除窗口内矩阵,且 --keep 优先于 --purge', async () => {
+    const { runClean } = await loadClean();
+    const result = runClean({
+      tempRoot,
+      purge: true,
+      extraKeep: ['ai-traces'],
+      nowMs: NOW,
+    });
+    expect(result.removed).toContain('storyflow-matrix-agif200r2a');
+    expect(existsSync(join(tempRoot, 'ai-traces', 'fresh.jsonl'))).toBe(true);
+    expect(existsSync(join(tempRoot, 'continue-write.real.config.json'))).toBe(true);
+  });
+
   it('--dir ai-traces 整目录删除,含新 jsonl', async () => {
     const { runClean } = await loadClean();
     const result = runClean({

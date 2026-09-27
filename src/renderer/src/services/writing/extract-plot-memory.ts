@@ -170,7 +170,7 @@ async function recoverFromCache(chapterId: string): Promise<ChapterMemory | null
 function createDefaultMemory(chapter: Chapter, chapterIndex: number): ChapterMemory {
   return {
     chapterId: chapter.id,
-    chapterTitle: chapter.title || `第${chapterIndex + 1}章`,
+    chapterTitle: chapter.title || `第${chapterIndex}章`,
     chapterIndex,
     corePlot: chapter.content?.slice(0, 200) || '（无内容）',
     keyEvents: [],
@@ -236,7 +236,7 @@ export function buildPlotProgressTable(memories: ChapterMemory[]): string {
   lines.push('### 近期情节摘要', '');
   const recentMemories = memories.slice(-5);
   for (const memory of recentMemories) {
-    lines.push(`**第${memory.chapterIndex + 1}章 · ${memory.chapterTitle}**`);
+    lines.push(`**第${memory.chapterIndex}章 · ${memory.chapterTitle}**`);
     lines.push(`> ${memory.corePlot.slice(0, 100)}${memory.corePlot.length > 100 ? '...' : ''}`);
     lines.push('');
   }
@@ -435,25 +435,21 @@ function extractCharacterChanges(
  */
 export const FATE_STATES = new Set(['死亡', '驾崩', '下狱', '定罪', '去职']);
 
-/** 可解除命运（翻案/越狱/官复原职/保释候勘）的规则词，命中则从禁入名单剔除。
- *  保释/候勘系来自 2026-08-27 百章实测：权臣「待罪保释在外」「闭门待勘」是剧情
- *  合法中间态，不识别会把终态当永续、把后续正常活动误判为死而复活。
- *  复爵/复位/东山再起系 2026-09-01 随「去职」态增补：削爵/罢免后剧情性复起的
- *  合法通道。 */
-const FATE_RELEASE_PATTERNS: RegExp[] = [
-  /平反/, /翻案/, /无罪释放/, /赦免/, /大赦/, /洗清(?:冤屈|罪名)/,
-  /越狱/, /劫狱/, /逃出(?:天牢|大牢|宗人府|诏狱)/,
-  /保释(?:在外)?/, /取保(?:候审)?/, /候勘/, /待勘/, /戴罪(?:立功)?/,
-  /起复/, /官复原职/, /重新起用/, /复爵/, /恢复(?:爵位|官职|职位|职务)/,
-  /复位/, /重返(?:朝堂|朝廷|庙堂)/, /东山再起/,
-];
-
+/** 命运条目；chapterIndex 与 ChapterMemory.chapterIndex 同口径（1 基章号） */
 export interface FateStatus {
   characterName: string;
   state: string;
   chapterIndex: number;
   detail: string;
+  /** 最近一次押地入账的关押地（契约 11 押地变更），仅在押族有值 */
+  custodyPlace?: string;
 }
+
+/** 押地账前缀（ChapterWritingPipeline.mapStatusDeltasToStateChanges 写入） */
+const CUSTODY_PREFIX = '押地:';
+
+/** 押地 value 的空值哨兵：格式层归一，不代表任何关押地 */
+const EMPTY_CUSTODY_VALUES = new Set(['无', '无押地', '暂无', '未知']);
 
 /**
  * 命运级解除值（AI 提取合同 8 的规范化 value，非本地正则）：提取侧已把
@@ -465,16 +461,34 @@ export interface FateStatus {
  * 注意「越狱」不在此列：越狱是逃亡不是合法解除，逃犯在押身份仍在（滚纲命运锁
  * 语义：越狱后终态=最晚下狱态，重捕/通缉剧情由此正确衔接——outline-roller
  * 命运弧用例锁定的行为）。
+ * 「保释」覆盖保释/候勘/闭门待勘等合法中间态（契约 11 保释族）。
  */
-const FATE_RELEASE_STATES = new Set(['获释', '平反', '复职', '复位', '赦免', '起复', '揭晓']);
+const FATE_RELEASE_STATES = new Set(['获释', '保释', '平反', '复职', '复位', '赦免', '起复', '揭晓']);
+
+/** 在押族：押地入账时保持原命运态，只刷新关押地 */
+const CUSTODY_FATES = new Set(['下狱', '定罪']);
 
 /**
- * 汇总全量章节记忆的角色命运状态：取每个角色最晚一次的命运级变化；
- * 若其后的章节记忆里出现了解除性叙述（平反/越狱等），则不再列为禁入。
+ * 汇总全量章节记忆的角色命运状态：取每个角色最晚一次的命运级变化。
+ *
+ * 解除只认 AI 提取的规范化解除值（FATE_RELEASE_STATES），不做正文词共现：
+ * 章级共现无法判断解除词说的是谁（2026-09-23 r8-S1-05 回放实证：ch119「崔显
+ * 磕头领命戴罪效力」与顾宪诚同章共现，顾宪诚的下狱被连带解除；ch134「防……
+ * 趁乱劫狱」否定句再次命中；ch142 起草前命运表无此人，在押者以次辅身份自由出场）。
+ *
+ * 押地入账即在押证据：押地 delta 只在在押者关押地转移时出账（契约 11），晚于最近
+ * 一次解除的押地条目重新建立在押（去职/无命运 → 下狱），已在押者只刷新关押地。
  */
-export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {  const byCharacter = new Map<string, FateStatus>();
+export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {
+  const byCharacter = new Map<string, FateStatus>();
   const memorySorted = [...memories].sort((a, b) => a.chapterIndex - b.chapterIndex);
   for (const memory of memorySorted) {
+    // 同章既有解除又有押地时，押地不反向重锁：同章先后顺序不可靠，解除 delta 是更强信号
+    const releasedThisChapter = new Set(
+      memory.characterStateChanges
+        .filter(change => FATE_RELEASE_STATES.has(change.state))
+        .map(change => change.characterName)
+    );
     for (const change of memory.characterStateChanges) {
       const current = byCharacter.get(change.characterName);
       // 死亡族在册时，获释/复职等解除 delta 一律不生效：死人不能被释放，
@@ -482,6 +496,10 @@ export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {
       if (FATE_RELEASE_STATES.has(change.state)) {
         if (isDeathFate(current?.state)) continue;
         byCharacter.delete(change.characterName);
+        continue;
+      }
+      if (change.state.startsWith(CUSTODY_PREFIX)) {
+        applyCustodyEvidence(byCharacter, change, memory.chapterIndex, releasedThisChapter);
         continue;
       }
       if (!FATE_STATES.has(change.state)) continue;
@@ -494,25 +512,40 @@ export function collectCharacterFates(memories: ChapterMemory[]): FateStatus[] {
           state: change.state,
           chapterIndex: memory.chapterIndex,
           detail: change.detail,
+          ...(CUSTODY_FATES.has(change.state) && current?.custodyPlace
+            ? { custodyPlace: current.custodyPlace }
+            : {}),
         });
-      }
-    }
-    // 解除检测：只有「命运事件之后」且解除叙述与该角色同章共现才生效——
-    // 一段平反文本只救它提到的人，不能顺带赦免同章所有在押角色
-    for (const [name, fate] of byCharacter) {
-      if (memory.chapterIndex <= fate.chapterIndex) continue;
-      const text = `${memory.corePlot || ''}\n${memory.keyEvents.join('\n')}`;
-      if (!text.includes(name)) continue;
-      const released = FATE_RELEASE_PATTERNS.some(re => re.test(text));
-      if (released) {
-        // 死亡无合法解除词：正则共现命中的「翻案/平反」对死亡族无效，
-        // 死亡只能靠 dropFatesContradictedByLaterActivity 的后生活动证伪
-        if (!isDeathFate(fate.state)) byCharacter.delete(name);
       }
     }
   }
   dropFatesContradictedByLaterActivity(byCharacter, memorySorted);
   return [...byCharacter.values()];
+}
+
+/** 押地条目 → 命运表：在押者刷新关押地；去职/无命运者重建在押；死亡族不动 */
+function applyCustodyEvidence(
+  byCharacter: Map<string, FateStatus>,
+  change: CharacterStateChange,
+  chapterIndex: number,
+  releasedThisChapter: Set<string>
+): void {
+  const place = change.state.slice(CUSTODY_PREFIX.length).trim();
+  if (!place || EMPTY_CUSTODY_VALUES.has(place)) return;
+  if (releasedThisChapter.has(change.characterName)) return;
+  const current = byCharacter.get(change.characterName);
+  if (isDeathFate(current?.state)) return;
+  if (current && CUSTODY_FATES.has(current.state)) {
+    byCharacter.set(change.characterName, { ...current, custodyPlace: place });
+    return;
+  }
+  byCharacter.set(change.characterName, {
+    characterName: change.characterName,
+    state: '下狱',
+    chapterIndex,
+    detail: change.detail,
+    custodyPlace: place,
+  });
 }
 
 /** 后生事实熔断只覆盖死亡族：误登死亡会通过状态摘要杀主角、评审连拒至管线
@@ -549,7 +582,7 @@ function dropFatesContradictedByLaterActivity(
       if (!MISFIRE_PRONE_FATES.has(fate.state)) continue;
       const activityChapter = memory.chapterIndex;
       if (activityChapter <= fate.chapterIndex) continue;
-      // 状态转移不是「后生活动」：越狱/获释族 delta 断言角色活着且在押，
+      // 状态转移不是「后生活动」：越狱/获释族/押地 delta 断言角色活着且在押，
       // 对在册死亡是矛盾信号而非误报证伪（2026-09-12 g38f 200 章 S1 实证：
       // 严开礼死亡在册被 ch187 越狱 delta 当活动熔断，ch195 下狱重登，
       // 死亡信号就此洗白）。熔断只认良性生活状态（出场/晋升/受伤类）。
@@ -557,7 +590,8 @@ function dropFatesContradictedByLaterActivity(
         change.state &&
         (FATE_STATES.has(change.state) ||
           FATE_RELEASE_STATES.has(change.state) ||
-          change.state === '越狱')
+          change.state === '越狱' ||
+          change.state.startsWith(CUSTODY_PREFIX))
       ) {
         continue;
       }
@@ -668,8 +702,14 @@ export function collectFateForbiddenZones(
   // 现身朝班举黄绫自辩——旧文案「禁止以在场活人身份出场」对下狱族语义模糊，
   // 判官无法区分「狱中受审（合法）」与「自由身行动（违规）」）：
   // 死亡族维持全禁；下狱/定罪/去职族禁的是自由身形态，狱中形态合法。
-  const fateZoneText = (state: string, chapterIndex: number, detail: string): string => {
-    const base = `已于第${chapterIndex + 1}章${state}（证据：${detail.slice(0, 50)}）`;
+  const fateZoneText = (
+    state: string,
+    chapterIndex: number,
+    detail: string,
+    custodyPlace?: string
+  ): string => {
+    const place = custodyPlace ? `，现押于${custodyPlace}` : '';
+    const base = `已于第${chapterIndex}章${state}（证据：${detail.slice(0, 50)}）${place}`;
     if (state === '死亡' || state === '驾崩') {
       return `${base}，本章禁止其以在场活人身份出场、对话或行动；仅可作回忆/追述提及`;
     }
@@ -682,7 +722,7 @@ export function collectFateForbiddenZones(
     .filter(fate => roster.has(fate.characterName))
     .map(
       fate =>
-        `${fate.characterName}${fateZoneText(fate.state, fate.chapterIndex, fate.detail)}`
+        `${fate.characterName}${fateZoneText(fate.state, fate.chapterIndex, fate.detail, fate.custodyPlace)}`
     );
 }
 
@@ -726,6 +766,20 @@ export function collectCharacterTitles(memories: ChapterMemory[]): CharacterTitl
 const ERA_NARRATIVE_RE = /[^\s。！？"」』]{2,4}(?:元|正|嘉|永|天|成|弘|万|历|宣|德|庆|和|平|安|贞|佑|兴|宁|定|光|熹|崇)[^\s。！？"」』]{0,2}[一二三四五六七八九十百零]{1,4}年/g;
 const REAL_MING_ERAS_FILTER = new Set(['洪武','建文','永乐','洪熙','宣德','正统','景泰','天顺','成化','弘治','正德','嘉靖','隆庆','万历','泰昌','天启','崇祯']);
 
+/** 中文年份（一~一百内）→ 阿拉伯数；解析失败返回 null。跨度换算是格式层算术 */
+const CN_DIGIT: Record<string, number> = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+export function parseChineseYear(text: string): number | null {
+  const m = text.match(/([一二三四五六七八九十]{1,3})年/);
+  if (!m) return null;
+  const s = m[1];
+  if (s === '十') return 10;
+  const tenIdx = s.indexOf('十');
+  if (tenIdx < 0) return CN_DIGIT[s] ?? null;
+  const tens = tenIdx === 0 ? 1 : CN_DIGIT[s[0]] ?? 0;
+  const ones = tenIdx === s.length - 1 ? 0 : CN_DIGIT[s[tenIdx + 1]] ?? 0;
+  return tens * 10 + ones;
+}
+
 export function collectEraAnchors(
   memories: ChapterMemory[],
   maxAnchors = 4,
@@ -747,10 +801,25 @@ export function collectEraAnchors(
       }
     }
   }
-  return anchors
+  const lines = anchors
     .sort((a, b) => b.chapterIndex - a.chapterIndex)
     .slice(0, maxAnchors)
-    .map(a => `第${a.chapterIndex + 1}章纪年「${a.text}」`);
+    .map(a => `第${a.chapterIndex}章纪年「${a.text}」`);
+  if (lines.length === 0) return [];
+  // 当前年份锚（r11 实证三洞失败签名全在纪年跨度/未来年份族：ch42「天德四年至
+  // 天德十二年＝整整二十年」9 年当 20 年、ch35 借据落款写至「天德二十年」而当前
+  // 十二年、ch91 元年起整十年而当前九年）。锚定「最晚章提及的年份」为当前年，
+  // 给出换算规则与未来年份禁令——跨度算术是格式层，规则可确定性给出。
+  // 锚 token 会带 ≤4 字上文（「已是天德十二年」），年号显示取去年份后的尾部两字
+  // （架空年号全书统一两字：天德/景和/建安…）。
+  const dominant = anchors.slice().sort((a, b) => b.chapterIndex - a.chapterIndex)[0];
+  const stripped = dominant.text.replace(/[一二三四五六七八九十百零]{1,4}年$/, '');
+  const eraDisplay = stripped.length >= 2 ? stripped.slice(-2) : stripped;
+  const year = parseChineseYear(dominant.text);
+  const currentLine = year != null
+    ? `当前纪年「${eraDisplay}${year}年」（第${dominant.chapterIndex}章确立）：任何纪年跨度先换算——「${eraDisplay}X年至${eraDisplay}Y年」的跨度＝(Y−X)年，禁止凭「二十年来/十年间」类笼统表述替代换算；正文与文书中出现的年份数字不得大于${year}（当前年份之后的历史不存在，回溯性文书/借据/旧账的落款年份同样不得越界）`
+    : `当前纪年「${dominant.text}」（第${dominant.chapterIndex}章确立）：纪年跨度按年份差换算，文书落款年份不得晚于当前年份`;
+  return [currentLine, ...lines];
 }
 
 /**
@@ -782,13 +851,79 @@ export function collectNumericAnchors(
         if (!NUMERIC_UNIT_RE.test(s)) continue;
         if (anchors.some(a => a.text === s)) continue;
         anchors.push({ chapterIndex: memory.chapterIndex, text: s });
-        if (anchors.length >= maxAnchors) break;
+        if (anchors.length >= 32) break;
       }
-      if (anchors.length >= maxAnchors) break;
+      if (anchors.length >= 32) break;
     }
-    if (anchors.length >= maxAnchors) break;
+    if (anchors.length >= 32) break;
   }
-  return anchors.map(a => `第${a.chapterIndex + 1}章既成「${a.text}」`);
+  // 口径正典·最新值覆盖（2026-09-24 g38f 500ch 书审 S2 实证：盐案亏空
+  // 200/300/400/500 万四档漂移——旧实现平铺最近 8 条数字句，同对象新旧值并列
+  // 注入，模型无所适从）：按「主体前缀」聚类，同对象只保留章号最新一条
+  // （候选已按章倒序，先见为准）。前缀 = 句首至首个数字/单位词前的文本；
+  // 两前缀共享任一 ≥3 字连续片段即视为同对象——措辞变化的新勘误句若聚不上
+  // 则两条都注入（退化为旧行为，不劣化），另有头部兜底规则声明最新章优先。
+  const prefixOf = (s: string): string => {
+    const m = s.match(/^[^0-9零一二三四五六七八九十百千万两]+/u);
+    return (m ? m[0] : s).trim();
+  };
+  const fragmentsOf = (prefix: string): string[] => {
+    const out: string[] = [];
+    for (let i = 0; i + 3 <= prefix.length; i += 1) out.push(prefix.slice(i, i + 3));
+    return out;
+  };
+  const canonical: Array<{ chapterIndex: number; text: string }> = [];
+  const seenFragments = new Set<string>();
+  for (const anchor of anchors) {
+    const fragments = fragmentsOf(prefixOf(anchor.text));
+    if (fragments.length > 0 && fragments.some(f => seenFragments.has(f))) continue;
+    for (const f of fragments) seenFragments.add(f);
+    canonical.push(anchor);
+    if (canonical.length >= maxAnchors) break;
+  }
+  if (canonical.length === 0) return [];
+  return [
+    '以下为各关键数字对象的最新既成值（同对象旧值已作废；若条目间仍疑似同对象不同值，以章号最新者为准，引用旧值必须写出勘误过程）。同一对象在本章内多次出现的数额必须一致；涉及乘除换算（单价×数量、比例×基数、年数×岁入）先笔算核验再落笔——乘积与总量声明对不上、同账两说，判官将直接拒稿（r11 实证 ch29 一万八千两/九千两同账两说、ch44 亩产折价差 9.1 倍、ch55 耗羡差额口径混乱，均三连拒成洞）',
+    ...canonical.map(a => `第${a.chapterIndex}章既成「${a.text}」`),
+  ];
+}
+
+/**
+ * 命运状态正典（2026-09-24 g38f 500ch 书审 S1/S2 实证：在押角色凭空自由出场、
+ * 去职角色照常行使职权——终态禁令只列死亡族，可逆终态无注入）：从章记忆的
+ * characterStateChanges 取每角色最新一条命运状态（倒序先见为准），产出
+ * 「角色：状态（第N章起）」供写作 prompt 注入。与死亡终态禁令互补：死亡禁入
+ * 是硬禁令，这里是可逆终态的「当前口径」——正文处理这些角色必须先与该状态
+ * 自洽（在押者出场需押解/提审过程，去职者不得行使原职权）。
+ */
+export interface FateStatusAnchor {
+  name: string;
+  status: string;
+  chapterIndex: number;
+}
+
+export function collectFateStatusAnchors(
+  memories: ChapterMemory[],
+  maxRows = 12,
+): FateStatusAnchor[] {
+  const sorted = [...memories].sort((a, b) => b.chapterIndex - a.chapterIndex);
+  const latest = new Map<string, FateStatusAnchor>();
+  for (const memory of sorted) {
+    for (const change of memory.characterStateChanges ?? []) {
+      const name = String(
+        (change as { characterName?: unknown }).characterName ?? ''
+      ).trim();
+      if (!name || latest.has(name)) continue;
+      const status = String(
+        (change as { state?: unknown }).state ??
+          (change as { status?: unknown }).status ??
+          ''
+      ).trim();
+      if (!status) continue;
+      latest.set(name, { name, status, chapterIndex: memory.chapterIndex });
+    }
+  }
+  return [...latest.values()].slice(0, maxRows);
 }
 
 /**

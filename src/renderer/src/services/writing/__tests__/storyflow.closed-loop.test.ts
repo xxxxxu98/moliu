@@ -218,6 +218,8 @@ function writeClosedLoopArtifacts(
     batch: result.chapterRunResults.map((r, i) => {
       // 段落节奏指标（AI 腔信号）：cv=段长变异系数，健康网文 ≥0.25，
       // 均匀中长段（cv<0.14 且段数≥12）是机器腔节奏。落盘供 triage/人工抽查明趋势。
+      // narrativeMedian=叙述段（无引号段）长度中位数：对话段会拉低全体均值/CV，
+      // 「全章叙述段都是 200 字墙」只有该字段能看到（2026-09-27 新增）。
       const paras = r.output.prose
         .split(/\n\s*\n/u)
         .map(p => p.trim())
@@ -228,6 +230,22 @@ function writeClosedLoopArtifacts(
         lens.length > 1 && avgLen > 0
           ? Math.sqrt(lens.reduce((a, b) => a + (b - avgLen) ** 2, 0) / lens.length) / avgLen
           : 0;
+      const narrativeLens = paras
+        .filter(p => !/["'\u201C\u201D\u2018\u2019「」『』]/u.test(p))
+        .map(p => p.length)
+        .sort((a, b) => a - b);
+      const narrativeMedian =
+        narrativeLens.length === 0
+          ? 0
+          : narrativeLens.length % 2 === 1
+            ? narrativeLens[(narrativeLens.length - 1) / 2]
+            : (narrativeLens[narrativeLens.length / 2 - 1] +
+                narrativeLens[narrativeLens.length / 2]) /
+              2;
+      const narrativeWallRatio =
+        narrativeLens.length > 0
+          ? narrativeLens.filter(l => l > 200).length / narrativeLens.length
+          : 0;
       return {
         ch: i + 1,
         accepted: r.output.success,
@@ -235,6 +253,8 @@ function writeClosedLoopArtifacts(
         words: r.output.prose.length,
         paras: paras.length,
         paraCv: Number(cv.toFixed(2)),
+        narrativeMedian: Math.round(narrativeMedian),
+        narrativeWallRatio: Number(narrativeWallRatio.toFixed(2)),
         attempts: r.output.attempts,
         rewriteRounds: r.output.longFormResult?.rewriteRounds ?? 0,
         writer: summarizeWriterRun(r.output.longFormResult),

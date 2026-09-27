@@ -9,12 +9,15 @@
  * 用法:
  *   npm run temp:stats              仅列体积排行,不删任何东西
  *   npm run temp:clean              清全部(KEEP 除外);ai-traces 按天裁剪 jsonl
- *   node scripts/cleanup-repo-temp.mjs --dir storyflow-matrix        清指定目录
+ *   npm run temp:clean -- --purge   忽略保留窗口,清掉全部轮次产物
+ *   node scripts/cleanup-repo-temp.mjs --dir storyflow-matrix-g38f500ch  清指定目录
  *   node scripts/cleanup-repo-temp.mjs --keep ai-traces --all        清全部但整目录保留 traces
  *   node scripts/cleanup-repo-temp.mjs --all --older-than 7          根条目与 traces 都用 7 天
  *
- * 保护规则:--all 不碰 KEEP(配置 / 书审样本 / 断点)。单轮矩阵目录禁止写入 KEEP。
- * --dir 点名即授权,可删 KEEP 与 ai-traces 整目录。
+ * 保护规则:KEEP 只留 harness 配置。--all 对矩阵归档 / 书审 / 断点 / traces 按天裁剪。
+ * --purge 忽略这些保留窗口,删除全部轮次产物(矩阵目录、ai-traces 整目录、书审近期轮次、
+ * 断点等);book-review 基线白名单仍留。单轮矩阵目录禁止写入 KEEP。
+ * --dir 点名即授权,可删 KEEP 与 ai-traces 整目录。--purge 不绕过 KEEP 与 --keep。
  */
 
 import { existsSync, readdirSync, rmSync, statSync } from 'node:fs';
@@ -55,12 +58,16 @@ export const AGE_PRUNE_DIRS = new Set(['ai-traces']);
  *   (含补写后的 project-store)全灭,裁决/复盘/二次补写全部失去数据源。
  *   14 天对齐 checkpoints 的复盘窗口,退役轮自动清。
  * - storyflow-triage / fate-adjudication:验收报告与裁决台账,同窗口保留。
+ * - replay-cases:章节回放用例(case.json + 共享 gzip 快照 _stores/)。回归语料要跨多轮
+ *   复用,窗口放宽到 30 天;回放执行器每次运行会刷新用例目录与 _stores 的 mtime,
+ *   仍在跑的用例不会被清,长期不跑的用例随快照一起退役。
  */
 export const SUBDIR_AGE_PRUNE = new Map([
   ['book-review', { keepDays: 3, preserve: /^(baseline|juezheng|xcjz|500ch|fix\d)/u }],
   ['storyflow-checkpoints', { keepDays: 14 }],
   ['storyflow-triage', { keepDays: 14 }],
   ['fate-adjudication', { keepDays: 14 }],
+  ['replay-cases', { keepDays: 30 }],
   // 前缀规则:key 以 * 结尾,匹配 storyflow-matrix-<tag> 全部变体
   ['storyflow-matrix-*', { keepDays: 14 }],
 ]);
@@ -220,6 +227,7 @@ function newestMtimeMs(dir) {
  *   olderThanDays?: number,
  *   traceKeepDays?: number,
  *   nowMs?: number,
+ *   purge?: boolean,
  * }} options
  * @returns {{
  *   removed: string[],
@@ -232,6 +240,9 @@ function newestMtimeMs(dir) {
 export function runClean(options) {
   const tempRoot = options.tempRoot;
   const cleanAll = Boolean(options.cleanAll);
+  const purge = Boolean(options.purge);
+  /** --purge 单独传入也删除无保护根条目,不要求再带 --all。 */
+  const removeUnprotected = cleanAll || purge;
   const explicitDirs = options.explicitDirs ?? [];
   const olderThanDays = options.olderThanDays ?? 0;
   const nowMs = options.nowMs ?? Date.now();
@@ -266,9 +277,18 @@ export function runClean(options) {
     }
 
     if (!explicitlyNamed && AGE_PRUNE_DIRS.has(name)) {
+      if (purge) {
+        const bytes = entry.isDirectory() ? dirSize(full) : statSync(full).size || 0;
+        rmSync(full, { recursive: true, force: true });
+        if (!existsSync(full)) {
+          removed.push(name);
+          freedBytes += bytes;
+        }
+        continue;
+      }
       if (!cleanAll) {
         skippedProtected.push(
-          `${name}(用 --all 按 ${traceKeepDays} 天裁剪,或 --dir ${name} 整目录删除)`,
+          `${name}(用 --all 按 ${traceKeepDays} 天裁剪,--purge 整目录删除,或 --dir ${name})`,
         );
         continue;
       }
@@ -280,12 +300,14 @@ export function runClean(options) {
 
     if (!explicitlyNamed && SUBDIR_AGE_PRUNE.has(name)) {
       const rule = SUBDIR_AGE_PRUNE.get(name);
-      const subdirCutoff = olderThanDays > 0
-        ? nowMs - olderThanDays * 86400_000
-        : nowMs - rule.keepDays * 86400_000;
-      if (!cleanAll) {
+      const subdirCutoff = purge
+        ? Number.POSITIVE_INFINITY
+        : olderThanDays > 0
+          ? nowMs - olderThanDays * 86400_000
+          : nowMs - rule.keepDays * 86400_000;
+      if (!removeUnprotected) {
         skippedProtected.push(
-          `${name}(用 --all 按子条目 ${rule.keepDays} 天裁剪,或 --dir ${name} 整目录删除)`,
+          `${name}(用 --all 按子条目 ${rule.keepDays} 天裁剪,--purge 忽略窗口,或 --dir ${name} 整目录删除)`,
         );
         continue;
       }
@@ -298,7 +320,8 @@ export function runClean(options) {
     }
 
     // 前缀规则(以 * 结尾的 key):矩阵归档是 temp 直接子条目,按全树最新 mtime
-    // 判龄——窗口内整目录保留(复盘/裁决/补写的数据源),过期整目录删除
+    // 判龄——窗口内整目录保留(复盘/裁决/补写的数据源),过期整目录删除。
+    // --purge 跳过判龄,窗口内的轮次也整目录删除。
     if (!explicitlyNamed) {
       let prefixRuleHandled = false;
       for (const [prefixKey, rule] of SUBDIR_AGE_PRUNE) {
@@ -306,17 +329,17 @@ export function runClean(options) {
         const prefix = prefixKey.slice(0, -1);
         if (!name.startsWith(prefix)) continue;
         prefixRuleHandled = true;
-        if (!cleanAll) {
+        if (!removeUnprotected) {
           skippedProtected.push(
-            `${name}(用 --all 按 ${rule.keepDays} 天裁剪,或 --dir ${name} 整目录删除)`,
+            `${name}(用 --all 按 ${rule.keepDays} 天裁剪,--purge 忽略窗口整目录删除,或 --dir ${name})`,
           );
           break;
         }
         const matrixCutoff = olderThanDays > 0
           ? nowMs - olderThanDays * 86400_000
           : nowMs - rule.keepDays * 86400_000;
-        if (newestMtimeMs(full) >= matrixCutoff) {
-          skippedProtected.push(`${name}(<${rule.keepDays}天矩阵归档,复盘数据源)`);
+        if (!purge && newestMtimeMs(full) >= matrixCutoff) {
+          skippedProtected.push(`${name}(<${rule.keepDays}天矩阵归档,复盘数据源;--purge 可整目录删除)`);
         } else {
           const bytes = dirSize(full);
           rmSync(full, { recursive: true, force: true });
@@ -330,10 +353,10 @@ export function runClean(options) {
       if (prefixRuleHandled) continue;
     }
 
-    if (cutoff > 0 && statSync(full).mtimeMs > cutoff) continue;
+    if (!purge && cutoff > 0 && statSync(full).mtimeMs > cutoff) continue;
 
-    if (explicitDirs.length === 0 && !cleanAll) {
-      skippedProtected.push(`${name}(用 --all 或 --dir ${name} 才会清)`);
+    if (explicitDirs.length === 0 && !removeUnprotected) {
+      skippedProtected.push(`${name}(用 --all、--purge 或 --dir ${name} 才会清)`);
       continue;
     }
 
@@ -384,8 +407,9 @@ function printStats(tempRoot) {
     );
   }
   console.log('\n清理示例:');
-  console.log('  node scripts/cleanup-repo-temp.mjs --dir storyflow-matrix   # 清指定目录');
+  console.log('  node scripts/cleanup-repo-temp.mjs --dir <目录名>          # 清指定目录(精确名)');
   console.log('  node scripts/cleanup-repo-temp.mjs --all                    # 清全部(KEEP 除外;traces 按天裁剪)');
+  console.log('  npm run temp:clean -- --purge                              # 忽略保留窗口,清全部轮次');
   console.log('  node scripts/cleanup-repo-temp.mjs --all --keep ai-traces   # 全清但整目录留 traces');
   console.log('  node scripts/cleanup-repo-temp.mjs --dir ai-traces          # 整目录删除 traces');
 }
@@ -415,8 +439,9 @@ if (isCli()) {
     }
   }
   const cleanAll = args.includes('--all');
+  const purge = args.includes('--purge');
 
-  if (modeStats && explicitDirs.length === 0 && !cleanAll) {
+  if (modeStats && explicitDirs.length === 0 && !cleanAll && !purge) {
     printStats(defaultTempRoot);
     process.exit(0);
   }
@@ -432,6 +457,7 @@ if (isCli()) {
     explicitDirs,
     extraKeep,
     olderThanDays,
+    purge,
   });
 
   for (const name of result.removed) {

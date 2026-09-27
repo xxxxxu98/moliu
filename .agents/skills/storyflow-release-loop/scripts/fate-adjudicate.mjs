@@ -68,7 +68,9 @@ if (!existsSync(storePath)) {
 
 // ---------- 台账候选(与 triage 同逻辑,独立实现保持脚本自包含) ----------
 const store = JSON.parse(readFileSync(storePath, 'utf8'));
-const proj = store.projects?.[0] ?? {};
+const proj = Array.isArray(store.projects)
+  ? store.projects[0]
+  : (store.projects ? Object.values(store.projects)[0] : store);
 const rosterSet = new Set(
   (proj.characters ?? []).map(c => (c?.name || '').trim()).filter(n => n.length >= 2 && n.length <= 8)
 );
@@ -98,7 +100,8 @@ for (const m of memories) {
     const name = String(change?.characterName || '').trim();
     if (name.length < 2 || name.length > 8 || !rosterSet.has(name)) continue;
     if (!TERMINAL_FATES.has(change.state)) continue;
-    const chapter = (m.chapterIndex ?? 0) + 1;
+    // chapterIndex 即 1 基章号（ChapterMemory 类型约定，两条写入路径均传章号）
+    const chapter = m.chapterIndex ?? 0;
     if (DEATH_FATES.has(change.state)) {
       const prevDeath = deathAt.get(name);
       if (!prevDeath || chapter < prevDeath.chapter) {

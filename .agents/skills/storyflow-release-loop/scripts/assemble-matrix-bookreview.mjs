@@ -9,9 +9,11 @@ if (!storePath) {
   process.exit(1);
 }
 const store = JSON.parse(fs.readFileSync(storePath, 'utf8'));
-const project = (store.projects || [])[0];
+const project = Array.isArray(store.projects)
+  ? store.projects[0]
+  : (store.projects ? Object.values(store.projects)[0] : store);
 if (!project) {
-  console.error('project-store 里没有 projects[0]');
+  console.error('project-store 里没有有效的 project');
   process.exit(1);
 }
 

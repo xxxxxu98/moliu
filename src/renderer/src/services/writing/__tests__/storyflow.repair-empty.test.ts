@@ -13,7 +13,7 @@
  * 4. 空章走管线 isEmptyRewrite 路径（stripStateForChapterRewrite 剥离本章后旧状态）；
  * 5. 成功后把正文/标题/记忆写回 store 文件（原文件备份 .bak）。
  */
-import { readFileSync, writeFileSync, copyFileSync, existsSync } from 'node:fs';
+import { writeFileSync, copyFileSync, existsSync } from 'node:fs';
 
 import { describe, expect, it, vi } from 'vitest';
 
@@ -27,9 +27,10 @@ import {
   isFulfillmentDomainFailure,
   regenerateChapterBlueprint,
 } from '@/services/outline/rolling/chapter-blueprint-regenerator';
-import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
 import { useProjectStore } from '@/stores/project.store';
 import type { Project } from '@/types/project';
+
+import { readProjectStoreFile, writeProjectBack } from './projectStoreFile';
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -39,6 +40,8 @@ interface RepairOptions {
   storePath: string;
   chapterNumbers: number[];
   targetWordCount: number;
+  /** 单章 3 次耗尽时记录后继续跑后续章（大段批量补写防连坐），结尾汇总失败章 */
+  continueOnFail: boolean;
 }
 
 function resolveRepairOptions(): RepairOptions | null {
@@ -57,22 +60,8 @@ function resolveRepairOptions(): RepairOptions | null {
     targetWordCount: Number(process.env.MOLIU_REPAIR_TARGET_WORDS) > 0
       ? Number(process.env.MOLIU_REPAIR_TARGET_WORDS)
       : 3000,
+    continueOnFail: process.env.MOLIU_REPAIR_CONTINUE_ON_FAIL === '1',
   };
-}
-
-/** store 文件根可能是 {projects:[...]} / {projects:{id:...}} / 直接项目对象 */
-function loadProjectFromStore(storePath: string): { root: Record<string, unknown>; project: Project } {
-  const root = JSON.parse(readFileSync(storePath, 'utf8')) as Record<string, unknown>;
-  const rawProjects = root.projects as unknown;
-  const project = Array.isArray(rawProjects)
-    ? (rawProjects[0] as Project)
-    : rawProjects && typeof rawProjects === 'object'
-      ? (Object.values(rawProjects)[0] as Project)
-      : (root as unknown as Project);
-  if (!project || !Array.isArray(project.chapters)) {
-    throw new Error('store 中找不到带 chapters 的项目');
-  }
-  return { root, project };
 }
 
 function foreshadowHintsOf(project: Project): ForeshadowTimingHint[] {
@@ -93,8 +82,15 @@ function foreshadowHintsOf(project: Project): ForeshadowTimingHint[] {
   });
 }
 
-export async function runRepairEmptyChapters(options: RepairOptions): Promise<void> {
-  const { root, project } = loadProjectFromStore(options.storePath);
+export interface RepairRunResult {
+  failedChapters: number[];
+  failureReasons: Record<number, string>;
+}
+
+export async function runRepairEmptyChapters(options: RepairOptions): Promise<RepairRunResult> {
+  const failedChapters: number[] = [];
+  const failureReasons: Record<number, string> = {};
+  const { root, project } = readProjectStoreFile(options.storePath);
   const chapters = [...project.chapters].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
   const hints = foreshadowHintsOf(project);
 
@@ -123,6 +119,12 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<vo
         console.info(`[repair] 第${n}章节点消毒：删除与伏笔时点冲突条目 ${JSON.stringify(dropped)}`);
         node.CPNs = blueprint.CPNs;
         node.mustCover = blueprint.mustCover;
+        // 消毒弃置声明（2026-09-25 r10a 实证：ch194「立萧承泰密诏」节点被删后
+        // 无任何标记，ch197 写手把从未发生的密诏当既成事实凭空引用——删除即蒸发
+        // 会留法统级缺口）：把被删条目作为「未发生的剧情」显式告知写手与判官，
+        // 相关剧情要么完整重写过程、要么彻底回避，禁止直接引述其结果。
+        chapter.outline = `${chapter.outline ?? ''}\n【消毒弃置】以下原蓝图条目因伏笔时序冲突已删除，其内容**未在正文发生**，本章及后文不得将其当作既成事实引用（如剧情确需相近走向，必须在本章完整写出过程，不得直接引述结果）：${dropped.map(item => `「${item}」`).join('')}`.trim();
+        console.info(`[repair] 第${n}章注入消毒弃置声明（${dropped.length} 条）`);
       }
     }
     const next = chapters.find(item => (item.orderIndex ?? 0) + 1 === n + 1);
@@ -144,12 +146,7 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<vo
       /* pinia 读回失败时保留原记忆表 */
     }
     const projectOut = { ...project, chapters, chapterMemories: memories } as unknown as Record<string, unknown>;
-    if (Array.isArray(root.projects)) {
-      (root.projects as unknown[])[0] = projectOut;
-    } else if (root.projects && typeof root.projects === 'object') {
-      const key = Object.keys(root.projects)[0];
-      (root.projects as Record<string, unknown>)[key] = projectOut;
-    }
+    writeProjectBack(root, projectOut);
     if (!existsSync(`${options.storePath}.bak`)) {
       copyFileSync(options.storePath, `${options.storePath}.bak`);
     }
@@ -159,12 +156,20 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<vo
   const ai = createRealStructuredAI(readRealAiEnvConfig());
   const session = openContinueWriteSession({ project: { ...project, chapters } as Project });
   // 蓝图再生调用器（2026-09-13 r4 ch187 齐王命运冲突补齐）：补写路径与主循环
-  // 同样会遇到「过期节点要求已羁押角色自由出场」的死锁，纯重试修不好
+  // 同样会遇到「过期节点要求已羁押角色自由出场」的死锁，纯重试修不好。
+  // 2026-09-23 g38f 500ch 修复：原实现走 UnifiedOutlineGenerator.callStructuredTextForRoll，
+  // 其请求层依赖 App 设置的激活 provider（本测试模拟存储为空 → ch208 蓝图再生报
+  // 「未找到当前激活的 AI 提供商配置」，数字蒸发死锁章失去恢复路径）——改走
+  // createRealStructuredAI 同一真实通道，与写作链路一致；返回原文由 regenerator 解析。
   const repairCfg = readRealAiEnvConfig();
-  const repairBlueprintCaller = (system: string, user: string, temperature?: number) =>
-    new UnifiedOutlineGenerator().callStructuredTextForRoll(system, user, {
-      temperature,
-      trace: { runId: `storyflow-repair-bp-${Date.now()}`, model: repairCfg.model, provider: repairCfg.provider },
+  const repairAi = createRealStructuredAI(repairCfg);
+  const repairBlueprintCaller = (system: string, user: string) =>
+    repairAi.generate<string>({
+      purpose: 'outline-repair-bp',
+      schemaName: 'RawText',
+      system,
+      prompt: user,
+      parse: (raw: string) => raw,
     });
   try {
     for (const n of options.chapterNumbers) {
@@ -262,7 +267,14 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<vo
           }
         }
       }
-      if (!done) throw new Error(`第 ${n} 章补写 3 次尝试全部失败：${lastError.slice(0, 300)}`);
+      if (!done) {
+        const fatal = `第 ${n} 章补写 3 次尝试全部失败：${lastError.slice(0, 300)}`;
+        if (!options.continueOnFail) throw new Error(fatal);
+        failedChapters.push(n);
+        failureReasons[n] = fatal;
+        console.warn(`[repair] ${fatal}（continue-on-fail，跳过继续后续章）`);
+        continue;
+      }
       // 逐章即时落盘：后续章超时/失败不丢已成功章（首跑实测 ch36 成功后被
       // ch184 的 30min 测试超时连坐丢失）
       writeStoreBack(project.chapterMemories);
@@ -273,6 +285,12 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<vo
   }
 
   console.info(`[repair] 全部目标章完成，store 终稿 ${options.storePath}（原文件备份 .bak）`);
+  if (failedChapters.length > 0) {
+    console.warn(
+      `[repair] 汇总：成功 ${options.chapterNumbers.length - failedChapters.length} 章，失败 ${failedChapters.length} 章：${failedChapters.join(',')}（需单独归因处理）`,
+    );
+  }
+  return { failedChapters, failureReasons };
 }
 
 const repairOptions = resolveRepairOptions();
@@ -281,9 +299,13 @@ describe('空章补写（真实 AI）', () => {
   it.runIf(isRealAiEnabled() && repairOptions !== null)(
     '定点补写判死章并通过判官门禁 + 缝合落盘',
     async () => {
-      await runRepairEmptyChapters(repairOptions!);
-      const { project } = loadProjectFromStore(repairOptions!.storePath);
-      for (const n of repairOptions!.chapterNumbers) {
+      const runResult = await runRepairEmptyChapters(repairOptions!);
+      const { project } = readProjectStoreFile(repairOptions!.storePath);
+      const assertChapters = repairOptions!.chapterNumbers.filter(n => !runResult.failedChapters.includes(n));
+      if (assertChapters.length === 0) {
+        throw new Error(`全部 ${repairOptions!.chapterNumbers.length} 章补写失败，首因：${JSON.stringify(runResult.failureReasons).slice(0, 300)}`);
+      }
+      for (const n of assertChapters) {
         const chapter = project.chapters.find(item => (item.orderIndex ?? 0) + 1 === n);
         expect(chapter, `第 ${n} 章应存在`).toBeDefined();
         expect((chapter?.content ?? '').trim().length, `第 ${n} 章正文非空`).toBeGreaterThan(2000);

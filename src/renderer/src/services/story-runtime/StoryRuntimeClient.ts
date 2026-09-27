@@ -124,7 +124,7 @@ export class StoryRuntimeClient {
           ),
         events: validated.chapterMemories.map((memory, index) => ({
           id: `${validated.project.id}:legacy-memory:${memory.chapterId || index + 1}`,
-          chapter: memory.chapterIndex + 1,
+          chapter: memory.chapterIndex,
           event_type: 'legacy_chapter_memory',
           subject_id: null,
           summary: memory.corePlot,

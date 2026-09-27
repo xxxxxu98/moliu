@@ -1,0 +1,810 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-09-25T08:19:12.426Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-matrix-g38f200chr10a",
+  "providers": [
+    {
+      "providerId": "provider-1787044972770",
+      "model": "gemini-3.8-flash-high",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 700,
+      "chaptersAccepted": "151/200",
+      "words": {
+        "min": 2454,
+        "avg": 3165,
+        "max": 3535
+      },
+      "paraRhythm": null,
+      "repairMetrics": null,
+      "runtimeMetrics": null,
+      "readerMetrics": null,
+      "readerOutlineScore": null,
+      "readerIndependent": null,
+      "phaseTimings": {
+        "outlineDirectionsMs": 29845,
+        "outlineExpandMs": 399361,
+        "outlineRollMs": 1136098,
+        "applyOutlineMs": 1028,
+        "continueWriteMs": 0,
+        "totalMs": 0
+      },
+      "runtimeBackend": null,
+      "verdict": "infra-failure",
+      "verdictReason": "失败由网络/网关错误主导",
+      "signatures": [
+        {
+          "id": "ledger.legacy-diff",
+          "chapter": 0,
+          "count": 3,
+          "evidence": [
+            "崔元朗 账本快照 custody=held vs 第175章最晚行「押地:宣府黑风峡私冶重地」：账本仍有终态，现有「最晚值」锚读不到（r8-S1-05 顾宪诚形态）",
+            "万秉成 账本快照 custody=held vs 第121章最晚行「押地:北镇抚司重牢」：账本仍有终态，现有「最晚值」锚读不到（r8-S1-05 顾宪诚形态）",
+            "赵承恩 账本快照 custody=held vs 第121章最晚行「押地:北镇抚司重牢」：账本仍有终态，现有「最晚值」锚读不到（r8-S1-05 顾宪诚形态）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 166,
+          "count": 1,
+          "evidence": [
+            "崔元朗 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 0,
+          "count": 1,
+          "evidence": [
+            "状态机违规候选共 14 条，仅列前 12（影子账本）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "ledger.gap-candidate",
+          "chapter": 170,
+          "count": 1,
+          "evidence": [
+            "第170章命中死亡完成体「枭首」但同章无 vital 条目（。 沈定安飞身出刀斩断领头部将佩刀并当场枭首，率黑甲缇骑生铁大盾合围制伏五百死士…）：死亡完成体出现但同章无 vital 条目（候选，交仲裁）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "ledger.gap-candidate",
+          "chapter": 198,
+          "count": 1,
+          "evidence": [
+            "第198章命中死亡完成体「伏诛」但同章无 vital 条目（兵变首犯大皇子萧成昭当场斩首处决，萧成昭伏诛。 薛怀德携十三省通政使司八百里加急…）：死亡完成体出现但同章无 vital 条目（候选，交仲裁）"
+          ],
+          "severity": "red",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.other",
+          "chapter": null,
+          "count": 48,
+          "evidence": [
+            "重试 1/2：API 未返回内容",
+            "重试 1/2：API 未返回内容",
+            "重试 1/2：API 未返回内容"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.warning-other",
+          "chapter": null,
+          "count": 26,
+          "evidence": [
+            "单章蓝图补全第 1 章伏笔时序消毒：删除 [\"顾砚之在通州大仓刑场用斩决书推导出粮仓亏空破绽逼停行刑\"]",
+            "单章蓝图补全第 4 章伏笔时序消毒：删除 [\"狱卒畏罪暗中递送通州大仓近三年旧管与新收底册\"]",
+            "单章蓝图补全第 5 章伏笔时序消毒：删除 [\"齐泰阴笑掷出锁死的三十二房总账限期三日盘清。\"]"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 40,
+          "count": 2,
+          "evidence": [
+            "正文与大纲节点存在连续 15 字逐字相同（节点原句照抄）：「“端本宫”三个飞金大字赫然夺目…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。；正文与大纲节点存在连续 23 字逐字相同（节点原句照抄）：「证实粮食直调宣府镇系兵",
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 95,
+          "count": 2,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段",
+            "正文与大纲节点存在连续 12 字逐字相同（节点原句照抄）：「顾砚之踏进通汇钱庄正厅。…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 34,
+          "count": 2,
+          "evidence": [
+            "齐泰 office none→none（dismiss）：去职后复职缺 appoint/restore 转移。影子账本候选，终审归 fate-adjudicate",
+            "齐泰 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 62,
+          "count": 2,
+          "evidence": [
+            "顾砚之 custody free→free（release）：custody 重复登 free（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate",
+            "崔元朗 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 121,
+          "count": 2,
+          "evidence": [
+            "赵承恩 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate",
+            "万秉成 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 15,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3754/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 16,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3545/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 17,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4121/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 32,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3815/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 40,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3612/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 42,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3910/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 46,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3623/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 52,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4206/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 61,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3837/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 63,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3685/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 79,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3884/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 85,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3697/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 87,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4132/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 100,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3865/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 113,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4454/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 116,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4058/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 126,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3758/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 137,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3787/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 139,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3923/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.stream-idle-timeout",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "重试 1/2：流式响应空闲超时：180000ms 内未收到任何数据块（已收 0 字）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 17,
+          "count": 1,
+          "evidence": [
+            "当前 4121 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 27,
+          "count": 1,
+          "evidence": [
+            "正文第15段顾砚之剖析官银流向处: 算术自洽矛盾: 正文声明私市套现总额为「一百二十万两白银」，但各项分账明细中「齐泰洗走七十万两」加「崔元朗分走十五万两」后，剩余应为三十五万两（120 - 70 - 15 = 35万两），正文却叙述为「剩下的整整七十五万两巨款」；分账相加（70 + 15 + 75 = 160万两）超"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 32,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 36,
+          "count": 1,
+          "evidence": [
+            "正文与大纲节点存在连续 12 字逐字相同（节点原句照抄）：「那壶掺了鹤顶红的雕花酒壶…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。；正文与大纲节点存在连续 12 字逐字相同（节点原句照抄）：「那壶掺了鹤顶红的雕花酒壶…」"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 39,
+          "count": 1,
+          "evidence": [
+            "第8段至第14段顾砚之与沈定安推算粮石去向处: 账目拆分自相矛盾: 顾砚之先核算通州西仓天火报损35万石与霉变核减15万石前后合计亏空50万石，且齐泰已招认其中15万石运往西山平赌债，因此追查『剩下的三十五万石』去向；但在紧接着回答『剩下三十五万石去了何处』时，顾砚之却又将这35万石出仓批次拆解为『十五万石粮食进了西山"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 47,
+          "count": 1,
+          "evidence": [
+            "未履约节点：文安侯崔道宪当堂反扑声称车行运粮乃是九边宣府镇紧急兵部借粮"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 49,
+          "count": 1,
+          "evidence": [
+            "未履约节点：景和帝猛地将御案砚台砸碎在崔元朗脚下。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 49,
+          "count": 1,
+          "evidence": [
+            "正文倒数第二段至末段: 动作承接断裂: 正文上一句写景和帝搬起五斤重的老坑端石螭龙巨砚，下一句未交代砚台砸下、掷向何处及墨汁飞溅的动作过程，直接跳至景和帝手指‘满身墨污的崔元朗’，砸砚碎裂的关键动作场面叙述脱节缺失。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 52,
+          "count": 1,
+          "evidence": [
+            "皇城禁苑深处的永和宫内苏明仪心理描写处: futureReveals 明确规定角色“萧承泰”不得登场或被揭示（计划: 第160章），当前为第52章，正文却提前明确点名“保全幼子萧承泰的将来”，违反未来揭示保护限制。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.node-unfulfilled",
+          "chapter": 55,
+          "count": 1,
+          "evidence": [
+            "未履约节点：通州仓案涉案旧吏被连根拔起尽数打入天牢。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 62,
+          "count": 1,
+          "evidence": [
+            "正文与大纲节点存在连续 22 字逐字相同（节点原句照抄）：「崔元朗戴着沉重铁枷，被差役野蛮拖出户部大门。…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.semantic-fact_conflict",
+          "chapter": 62,
+          "count": 1,
+          "evidence": [
+            "正文开头至户部公堂全过程: 跨章存在性矛盾: 状态摘要中顾砚之状态为「下狱」，正文未交代任何释放、平反、越狱或提审过程，顾砚之却直接以自由身乘坐马车、身着青色官袍先行下车，并在户部公堂自由行动、推案审卷并主持大局。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 63,
+          "count": 1,
+          "evidence": [
+            "对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 83,
+          "count": 1,
+          "evidence": [
+            "秘密账房与平准盐铺: 算术失洽: 正文明确设定平价官盐价格为「十四文一斤」，全部官盐共三十万斤，验算三十万斤总价仅为 300,000斤 × 14文 = 420万文（按通常大雍1两白银折合1000文算，折银约4,200两）；而正文后半段写盐商抢购「二十多万斤」官盐时，却称「半天之内必须凑出三十万两现银」、「今天整整砸进去"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 85,
+          "count": 1,
+          "evidence": [
+            "正文与大纲节点存在连续 12 字逐字相同（节点原句照抄）：「下达封锁瓜洲渡口的行动令…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 96,
+          "count": 1,
+          "evidence": [
+            "正文与大纲节点存在连续 20 字逐字相同（节点原句照抄）：「口供指向的交割码头上，正停着三艘吃水极深…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。；正文与大纲节点存在连续 20 字逐字相同（节点原句照抄）：「口供指向的交"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 96,
+          "count": 1,
+          "evidence": [
+            "当前 3552 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 99,
+          "count": 1,
+          "evidence": [
+            "正文与大纲节点存在连续 13 字逐字相同（节点原句照抄）：「密室之内，赵承恩将浸透火油…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。；对话引号未闭合：“ 与 ” 数量不一致。逐段补齐对话开引号和收引号；换人说话必须换段"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 100,
+          "count": 1,
+          "evidence": [
+            "石桥西侧暗仓开启部分: 算术自洽断裂: 正文声明走出「三十名膀大腰圆的玄甲缇骑」，并指明「他们每两人一组，奋力推着特制的大号平头木车」，按算术验算 30人 ÷ 2人/车 = 15辆木车，正文却紧接着声明「整整三十六辆木车鱼贯而出」（若36辆车每两人一组需72名缇骑），人数与推车数量存在明显算术自相矛盾。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 111,
+          "count": 1,
+          "evidence": [
+            "正文与大纲节点存在连续 13 字逐字相同（节点原句照抄）：「运河钞关起获的三百万两实银…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.review-other",
+          "chapter": 116,
+          "count": 1,
+          "evidence": [
+            "正文与大纲节点存在连续 12 字逐字相同（节点原句照抄）：「的飞雁朱砂水印赫然在目。…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。；正文与大纲节点存在连续 12 字逐字相同（节点原句照抄）：「的飞雁朱砂水印赫然在目。…」"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit",
+          "chapter": 130,
+          "count": 1,
+          "evidence": [
+            "当前 3546 / 上限 3540 / 目标 3000"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 141,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10a-ch141-1790299449172.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 23,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10a-ch23-1790267423594.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 33,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10a-ch33-1790269909985.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 37,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10a-ch37-1790270905081.jsonl seq3 fact-extraction 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 49,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10a-ch49-1790275459189.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 65,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10a-ch65-1790280475615.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 7,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10a-ch7-1790263288705.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 96,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10a-ch96-1790287423828.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 99,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-g38f200chr10a-ch99-1790288205607.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.titles-shrunk-local",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "本地收缩超长标题/CBN/CEN 共 23 章（第 19、22、23、24、25、26、27、28、29、31、32、33、34、35、36、37、38、39、40、43、48、49、50 章），未发 AI 请求"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "fate.contradiction-candidate",
+          "chapter": 50,
+          "count": 1,
+          "evidence": [
+            "齐泰于第50章死亡（台账），其后 20 章正文仍写到该角色（首见第51章，章号：51,52,53,54,55,56,57,58…）。候选待 AI 裁决：回忆性提及/剧情解释（假死、越狱、翻案）不是复活"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "顾砚之 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 21,
+          "count": 1,
+          "evidence": [
+            "齐泰 office none→none（dismiss）：去职后复职缺 appoint/restore 转移。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 61,
+          "count": 1,
+          "evidence": [
+            "崔元朗 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 77,
+          "count": 1,
+          "evidence": [
+            "万秉成 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 129,
+          "count": 1,
+          "evidence": [
+            "崔元朗 custody fugitive→held（arrest）：custody fugitive→held 转移枚举不合法（arrest）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.gap-candidate",
+          "chapter": 19,
+          "count": 1,
+          "evidence": [
+            "第19章命中死亡完成体「气绝身亡」但同章无 vital 条目（路引指使烧毁底册、斩杀算账书吏，言毕毒发气绝身亡。…）：死亡完成体出现但同章无 vital 条目（候选，交仲裁）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 275,
+          "avgMs": 43026,
+          "p50Ms": 38685,
+          "maxMs": 123947
+        },
+        "fact-extraction": {
+          "count": 281,
+          "avgMs": 23266,
+          "p50Ms": 20472,
+          "maxMs": 122804
+        },
+        "chapter-judge": {
+          "count": 280,
+          "avgMs": 18002,
+          "p50Ms": 15616,
+          "maxMs": 95976
+        },
+        "fact-extraction-recheck": {
+          "count": 67,
+          "avgMs": 5148,
+          "p50Ms": 4137,
+          "maxMs": 20448
+        },
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 29840,
+          "p50Ms": 29840,
+          "maxMs": 29840
+        },
+        "outline-expand": {
+          "count": 10,
+          "avgMs": 45723,
+          "p50Ms": 44069,
+          "maxMs": 78693
+        },
+        "outline-agent": {
+          "count": 9,
+          "avgMs": 17675,
+          "p50Ms": 16247,
+          "maxMs": 32482
+        },
+        "outline-roll": {
+          "count": 18,
+          "avgMs": 63113,
+          "p50Ms": 60961,
+          "maxMs": 120328
+        }
+      }
+    }
+  ]
+}

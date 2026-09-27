@@ -171,7 +171,7 @@ function collectClosureSignal(chapters) {
   if (!last) return { closureSignals: 0, lastParagraphPreview: '' };
   const src = path.join(bookDir, `${String(last.index).padStart(3, '0')}.txt`);
   const text = fs.readFileSync(src, 'utf8');
-  const CLOSURE_RE = /尘埃落定|大结局|终章|终局|落幕|归处|归隐|新秩序|天下大定|全书完|结案|定局|善终|圆满|新朝|新篇/gu;
+  const CLOSURE_RE = /尘埃落定|大结局|终章|终局|落幕|归处|归隐|新秩序|天下大定|全书完|结案|定局|善终|圆满|新朝|新篇|算平|功圆|勒石|铭功|立碑告成|沉淀的基石/gu;
   const signals = [...text.matchAll(CLOSURE_RE)].length;
   const paragraphs = text.split(/\n+/u).map(p => p.trim()).filter(Boolean);
   const lastParagraphPreview = (paragraphs[paragraphs.length - 1] ?? '').slice(0, 120);

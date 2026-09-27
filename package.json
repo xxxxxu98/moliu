@@ -24,7 +24,11 @@
     "cleanup:continue-write-artifacts": "node scripts/cleanup-continue-write-artifacts.mjs",
     "triage:storyflow": "node scripts/storyflow-triage.mjs",
     "test:storyflow-triage": "node --test scripts/__tests__/storyflow-triage.test.mjs",
-    "test:ending-audit": "node --test scripts/__tests__/ending-audit.test.mjs"
+    "test:ending-audit": "node --test scripts/__tests__/ending-audit.test.mjs",
+    "test:findings-ledger": "node --test scripts/__tests__/findings-ledger.test.mjs",
+    "findings:converge": "node .agents/skills/storyflow-release-loop/scripts/findings-ledger.mjs converge",
+    "replay:chapter": "node scripts/storyflow-replay-chapter.mjs",
+    "test:state-ledger": "node --test scripts/__tests__/state-ledger.test.mjs"
   },
   "keywords": [],
   "author": {

@@ -364,18 +364,25 @@ export class ContinuityValidator {
           }
         }
         for (const item of judgment.issues) {
-          const domain = mapJudgeIssueDomain(item.type);
+          const isNodeVerbatim =
+            item.description.includes('节点原句照抄') ||
+            item.description.includes('节点抄用');
+          const domain = isNodeVerbatim ? 'fulfillment' : mapJudgeIssueDomain(item.type);
           // fact_conflict（与状态摘要/事实冲突）一律视为 blocking，
           // 不依赖 blockingDomains 配置——跨章事实矛盾（如人物生死前后不一）属硬伤，
           // 必须触发重写/拒收，避免让读者看到「上章已死角色本章复活」类连续性断裂。
+          // 节点原句照抄/节点抄用按 node-verbatim-survived 哲学：保持 warning 级驱动定向改写，
+          // 绝不升 blocking 防死章成洞（与 contractHealth.ts 确定性门禁同口径）。
           const severity: ValidationSeverity =
             item.type === 'fact_conflict'
               ? 'blocking'
-              : item.severity === 'critical' || item.severity === 'high'
-                ? contracts.review.blockingDomains.includes(domain)
-                  ? 'blocking'
-                  : 'warning'
-                : 'warning';
+              : isNodeVerbatim
+                ? 'warning'
+                : item.severity === 'critical' || item.severity === 'high'
+                  ? contracts.review.blockingDomains.includes(domain)
+                    ? 'blocking'
+                    : 'warning'
+                  : 'warning';
           addIssue(
             domain,
             `语义问题[${item.type}] ${item.location}: ${item.description}`,

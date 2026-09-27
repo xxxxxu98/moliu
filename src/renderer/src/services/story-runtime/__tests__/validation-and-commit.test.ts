@@ -310,6 +310,43 @@ describe('ContinuityValidator', () => {
       ),
     ).toBe(true);
   });
+
+  it('判官报出的「节点原句照抄」保持 warning 级不阻断提交（node-verbatim-survived 哲学）', async () => {
+    const contracts = makeContracts();
+    contracts.review.blockingDomains = ['causality', 'fulfillment', 'evidence'];
+    contracts.review.maxWarnings = 3;
+    const report = await new ContinuityValidator({
+      chapterJudge: {
+        judge: async () => ({
+          fulfillment: [
+            { node: '守卫盘查', fulfilled: true, evidence: ['守卫盘查了林夜的路引'], reason: '已兑现' },
+          ],
+          forbidden: [],
+          issues: [
+            {
+              type: 'logic_gap',
+              severity: 'high',
+              location: '首段',
+              description: '正文与大纲节点存在连续13字逐字相同（节点原句照抄）',
+              evidence: ['守卫盘查了林夜的路引'],
+            },
+          ],
+        }),
+      },
+      enableDeepSemantic: true,
+    }).validate({
+      contracts,
+      state: makeState(),
+      drafts: [makeDraft()],
+      facts: makeFacts(),
+    });
+
+    expect(report.accepted).toBe(true);
+    const verbatimIssue = report.issues.find(i => i.message.includes('节点原句照抄'));
+    expect(verbatimIssue).toBeDefined();
+    expect(verbatimIssue?.severity).toBe('warning');
+    expect(verbatimIssue?.domain).toBe('fulfillment');
+  });
 });
 
 describe('ChapterCommitService', () => {

@@ -8,9 +8,75 @@ import type {
 } from '@/types/story-runtime';
 
 import { applyProvisionalOverlay } from './stateOverlay';
-import { extractedFactsSchema, parseSchema } from './schemas';
+import { extractedFactsSchema, fateRecheckResultSchema, parseSchema } from './schemas';
 
 export type { FactExtractor } from '@/types/story-runtime';
+
+/**
+ * 命运完成体触发词族（仅作「是否值得花一次复检调用」的触发信号，语义判定归
+ * 复检 AI——遵守禁止正则塔铁律）。词表直接取自合同契约 7/11/14 已公开族词。
+ * 2026-09-23 g38f 500ch 全文书审实证：ch30 events 明写「绞断颈骨悬梁气绝毙命」、
+ * ch66 明写「冯保义于诏狱被赐死」，deltas 却为 []——契约 8b 的同响应自检在
+ * gemini-3.8-flash-high 上失效，命运账漏登后死人复活全程无人拦截（S1×5 源头）。
+ */
+const FATE_CUE_RE =
+  /伏诛|伏法|处决|枭首|斩首|斩讫|气绝|毙命|身亡|丧命|人头落地|被正法|已处决|驾崩|晏驾|赐死|自尽|灭口|悬梁|缢死|绞断|溺亡|暴毙|下狱|收监|锁拿|收押|押入|打入死牢|打入大牢|革职|罢免|削爵|夺爵|贬为庶民|越狱|获释|出狱|复职|官复原职|平反|昭雪|劫狱|救出|定谳|满门抄斩|洞穿[^。；，]{0,8}喉|割喉|归于死寂|殒命|断了气|咽了气|没了声息|没了气息|再无声息/u;
+
+interface FateCueEntity {
+  id: string;
+  name: string;
+}
+
+/** 找「events 命中命运词族但账面无对应 status/title delta」的疑似漏登事件。
+ *  participants 可能是实体 id 或人名，统一经 entityCatalog 归一到 id 后比对。 */
+export function detectUnledgeredFateEvents(
+  facts: ExtractedFacts,
+  entities: Record<string, { id: string; name: string; aliases?: string[] }> = {}
+): { suspectEvents: ExtractedFacts['events']; suspectEntityIds: Set<string> } {
+  const nameToId = new Map<string, string>();
+  for (const entity of Object.values(entities)) {
+    nameToId.set(entity.name, entity.id);
+    for (const alias of entity.aliases ?? []) {
+      if (alias.trim()) nameToId.set(alias, entity.id);
+    }
+  }
+  const resolve = (participant: string): string | null =>
+    participant.startsWith('char-') || entities[participant] ? participant : (nameToId.get(participant) ?? null);
+
+  const ledgered = new Set(
+    facts.deltas
+      .map(delta => {
+        const parts = String(delta.path ?? '').split('.');
+        return parts[0] === 'characters' ? parts[1] : null;
+      })
+      .filter((x): x is string => Boolean(x))
+  );
+
+  const suspectEvents: ExtractedFacts['events'] = [];
+  const suspectEntityIds = new Set<string>();
+  for (const event of facts.events) {
+    if (!FATE_CUE_RE.test(event.summary ?? '')) continue;
+    const participants = (event.participants ?? [])
+      .map(resolve)
+      .filter((x): x is string => Boolean(x));
+    // 命中事件里至少一名可归一参与者不在账上，才视为疑似漏登
+    const missing = participants.filter(id => !ledgered.has(id));
+    if (missing.length === 0) continue;
+    suspectEvents.push(event);
+    for (const id of missing) suspectEntityIds.add(id);
+  }
+  return { suspectEvents, suspectEntityIds };
+}
+
+/** 合并复检补登：同实体已有同族 status 账时跳过，避免重复入账 */
+function mergeRecheckedDeltas(facts: ExtractedFacts, extra: ExtractedFacts['deltas']): ExtractedFacts {
+  if (extra.length === 0) return facts;
+  const keyOf = (delta: ExtractedFacts['deltas'][number]) => `${delta.path}|${String(delta.value ?? '')}`;
+  const existing = new Set(facts.deltas.map(keyOf));
+  const additions = extra.filter(delta => !existing.has(keyOf(delta)));
+  if (additions.length === 0) return facts;
+  return { ...facts, deltas: [...facts.deltas, ...additions] };
+}
 
 export interface FactExtractionInput {
   projectId: string;
@@ -72,14 +138,16 @@ export class AIFactExtractor implements FactExtractor {
         + '假死族（与死亡严格区分，2026-09-20 g38f r8 实证：ch152 同章实写「咽下毒酒气绝倒地」与「施针放血唤醒、猛咳瘀血」却只登「死亡」——死亡禁令/陈旧度裁剪/判官三道防线随即锁死主角，其后 48 章蓝图活体节点全部过不了审，写手被迫发明衣冠道具，滚纲也按死人写「生前密信」）：正文实写假死装置（蜡衣药丸/龟息/闭气假息/替身/诈死药）或同章/近章实写唤醒复活（施针放血/咳血睁眼/解药救回）的，登 value「假死」而非「死亡」——假死是活着的隐匿状态，不是死亡。判据：正文同时可见「死亡表象」与「存活实写/装置铺垫」二者时必登「假死」。'
         + 'evidence 直接引用该宣告原句（含摘要句），不需要血腥结果词也可出账。',
         '8) 群像命运逐个入账：「顾成化全族伏诛」「齐王一党亦已伏诛」「当堂剥去X一品补服」等集体宣告，角色表名单内每个被波及者各出一条 status delta，禁止只写 event 不写 delta。同章多个角色各有独立的命运宣告句时同样逐一扫描：每个具名角色都要各出一条 delta，禁止只登主犯或合并登账（2026-09-17 g38f r6 实证：ch102 赵宣与孙茂才同章各自画押收监，只登了赵宣，孙茂才 ch111 即自由持刀出场无人拦截；ch80 江万贯「四十斤死囚重枷套死、塞入囚车直奔行辕大牢羁押」完成体在文却整章零 delta，ch88 抄家被重复执行）',
-        '8b) 事件-账目一致性自检（2026-09-19 g38f r7 实证：ch189 事件摘要明写「周文彬在西市口被斩首处决且首级悬于正阳门阙楼」却零 delta——死亡账未登，两章后「死士救出周文彬」全程无人拦截，死刑无声回滚）：输出前逐条核对你自己的 events——任何 summary 含死亡族（斩首/处决/枭首/伏诛/毙命/气绝/驾崩等完成体）、下狱族（收监/押入/枷锁/囚车等）、去职族（革职/罢免/削爵等）语汇的，必须确认 deltas 中已存在该角色的对应 status delta；事件有而账无是最优先级错误，发现即补 delta。首级悬门/枭首示众/斩首处决都是死亡的教科书完成体，必须登「死亡」。',
+        '8b) 事件-账目一致性自检（2026-09-19 g38f r7 实证：ch189 事件摘要明写「周文彬在西市口被斩首处决且首级悬于正阳门阙楼」却零 delta——死亡账未登，两章后「死士救出周文彬」全程无人拦截，死刑无声回滚）：输出前逐条核对你自己的 events——任何 summary 含死亡族（斩首/处决/枭首/伏诛/毙命/气绝/驾崩等完成体，含物理描写形态「洞穿喉管」「割喉」「归于死寂」「殒命」「断了气/没了声息」）、下狱族（收监/押入/枷锁/囚车等）、去职族（革职/罢免/削爵等）语汇的，必须确认 deltas 中已存在该角色的对应 status delta；事件有而账无是最优先级错误，发现即补 delta。首级悬门/枭首示众/斩首处决都是死亡的教科书完成体，必须登「死亡」（2026-09-27 g38f r12 实证：ch158「洞穿了周德安高高仰起的喉管…彻底归于死寂」漏登死亡，ch172 死人复活活到完本无人拦）。',
         '9) 禁止出账的情形只有三类：假设/盘算/条件（只要/若是/一旦…便会）、威胁/命令/判决宣布（给我杀了他/判斩立决——判决宣布≠行刑完成）、修辞转喻（勘合上的「人头落地」）。此外一律出账；「只是叙述带过」「只是摘要」「拿不准」都不是不出账的理由——拿不准时重读原句判断是否既成，仍拿不准才只产 event。',
         '10) 死者归属以宣告主语为准：「X发现Y已气绝」只登记Y；发现者/转述者/报信人不登记。同句出现的活人不连带登记。',
         '11) 逆转宣告必检必出账（2026-09-03 反重力 100 章实测：主角第9章「打入死牢」正常出账，第13章正文「迈出死牢大门」获释却不入账，状态摘要永远停留「下狱」，ch33/94 连续 fact_conflict 重试耗尽拖死全跑——逆向命运只进不出是台账单向阀）：此前处于死亡以外逆境终态（下狱/去职/定罪）的角色出现【既成逆转】时必须出 status delta 覆盖旧值，一句带过也算：'
         + '获释族（获释/出狱/放出/开释/无罪开释/走出牢门/迈出死牢/解除监禁→value「获释」）；'
         + '越狱族（越狱/逃出大牢/潜逃在外/脱逃/劫狱救出/从押解中走脱→value「越狱」，2026-09-04 r6 ch66 实证：崔明德 ch57 下狱、ch66 藏匿密室密谋潜逃、ch68 再被收押，逃亡环节不入账则状态摘要与正文持续打架）；'
         + '复职族（复职/起复/官复原职/重新起用/再度出仕→value「复职」）；'
-        + '平反族（平反/昭雪/洗清冤屈/沉冤得雪→value「平反」）。'
+        + '平反族（平反/昭雪/洗清冤屈/沉冤得雪→value「平反」）；'
+        + '保释族（保释在外/取保候审/候勘/闭门待勘/戴罪出狱听用→value「保释」）：离开牢狱但罪责未了的合法中间态，同样必须出账。'
+        + '逆转 delta 只登给逆转句的主语本人：同章他人获释/戴罪/平反不得连带给其他在押者出账；否定、假设、防范语境（「防其劫狱」「若获赦免」）不是既成逆转。'
         + '假死揭晓族（假死揭晓/当众揭穿假死/真相大白其未死/假死者现身→value「揭晓」）：假死角色公开现身、世人知晓其未死时必出「揭晓」delta；「假死」不适用死亡无逆转条款——揭晓不是复活，是身份公开。'
         + '押地变更账（2026-09-16 r5 实证：汪伯庸 ch124 同日上午在「刑部死牢（神京）」、ch125 又在「扬州按察司牢」被提审——在押角色的关押地转移必须出账）：在押角色出现还押/解往/移押/转押至新关押地（含明示提审后关押地变化）时，出 characters.<实体id>.attributes.custody 的 delta（value=新关押地全称），无转移交代不得让角色出现在另一地牢狱。'
         + '死亡无逆转：真复活属剧情缺陷，禁止用 delta 洗白，交由 fate-adjudicate 裁决。「假死」及其「揭晓」不受此条约束——假死本来就活着。evidence 直接引用逆转原句。'
@@ -113,9 +181,72 @@ export class AIFactExtractor implements FactExtractor {
           )
         ),
     });
-    return ensureTopLevelEvidence(
+    const facts = ensureTopLevelEvidence(
       sanitizeUnconfirmedDeathDeltas(parseSchema(extractedFactsSchema, raw, '事实提取结果'), state.entities)
     );
+    return this.recheckUnledgeredFate(facts, input, state.entities, entityCatalog);
+  }
+
+  /**
+   * 命运漏登复检闸（2026-09-23 g38f 500ch S1×5 根因修复）：首轮 events 命中
+   * 命运完成体而账面缺对应 delta 时，把疑似事件交给 AI 复检回合逐条裁决补登。
+   * 复检失败静默降级返回原 facts——防线增强不允许成为新的故障点。
+   */
+  private async recheckUnledgeredFate(
+    facts: ExtractedFacts,
+    input: FactExtractionInput,
+    entities: Record<string, { id: string; name: string; aliases?: string[] }>,
+    entityCatalog: FateCueEntity[]
+  ): Promise<ExtractedFacts> {
+    const { suspectEvents, suspectEntityIds } = detectUnledgeredFateEvents(facts, entities);
+    if (suspectEvents.length === 0) return facts;
+    try {
+      const rechecked = await this.ai.generate<{ deltas: ExtractedFacts['deltas'] }>({
+        purpose: 'fact-extraction-recheck',
+        schemaName: 'FateRecheckResult',
+        system: [
+          '你是命运台账审计员。下列事件摘要命中命运词族，但首轮提取的 deltas 中缺少对应角色的 status 账。逐条重读事件与证据原句，判定哪些确实构成既成命运宣告，补出 status delta。',
+          '规则（与提取合同同源）：',
+          '1) 死亡族完成体（气绝/毙命/悬梁/枭首/人头落地/伏诛/伏法/已处决/赐死已执行等）→ path "characters.<实体id>.attributes.status"，value「死亡」；判决宣布（判斩立决/问斩）不是行刑，不出账。',
+          '2) 下狱族完成体（押入/打入/收监/锁拿入牢且人已在押）→ value「下狱」；待罪/候勘/闭门思过等中间态不出账。',
+          '3) 去职族（革职/罢免/削爵既成）→ value「去职」；定罪族（定谳有场面）→ value「定罪」。',
+          '4) 逆转族（越狱/获释/出狱/复职/平反既成）→ 对应 value；假设/盘算/威胁句不出账。',
+          '5) 回述句（早已/当年/虽已 X）若该角色已有同族终态，不重复出账。',
+          '6) 只有确实漏登的才补；全部无漏时返回 {"deltas":[]}。禁止改写既有 deltas，只输出补充项。',
+          '输出一个 JSON 对象：{"deltas":[{"operation":"set","path":"characters.<实体id>.attributes.status","value":"死亡","evidence":"宣告原句"}]}',
+        ].join('\n'),
+        prompt: JSON.stringify({
+          chapterNumber: input.chapterNumber,
+          suspectEvents: suspectEvents.map(event => ({
+            id: event.id,
+            summary: event.summary,
+            participants: event.participants,
+            evidence: event.evidence,
+          })),
+          suspectEntityIds: [...suspectEntityIds],
+          entityCatalog,
+          currentDeltas: facts.deltas,
+        }),
+        parse: value => parseSchema(fateRecheckResultSchema, value, '命运复检结果'),
+      });
+      const cleaned = sanitizeUnconfirmedDeathDeltas(
+        { events: [], deltas: rechecked.deltas ?? [], evidence: [] } as unknown as ExtractedFacts,
+        entities
+      );
+      const merged = mergeRecheckedDeltas(facts, cleaned.deltas);
+      if (merged.deltas.length > facts.deltas.length) {
+        console.info(
+          `[FactExtractor] 命运漏登复检补账 ${merged.deltas.length - facts.deltas.length} 条（ch${input.chapterNumber}，疑似事件 ${suspectEvents.length} 条）`
+        );
+      }
+      return ensureTopLevelEvidence(merged);
+    } catch (error) {
+      console.warn(
+        `[FactExtractor] 命运漏登复检失败（降级返回首轮结果，ch${input.chapterNumber}）：`,
+        error instanceof Error ? error.message : error
+      );
+      return facts;
+    }
   }
 }
 

@@ -48,8 +48,8 @@ export interface WriterAgentStepInput {
   reviewPort: ChapterReviewPort;
   /** run_checks 预算 = 旧 maxRewriteRounds(每次审查成本等价一轮重写) */
   maxChecks: number;
-  /** 即便 severity=warning 也必须实际改稿处理的问题 id（如段落节奏均匀化触发器）；
-   *  不标记时 warning 仍是「尽量顺手修掉」的弱约束 */
+  /** 即便 severity=warning 也必须实际改稿处理的问题 id（如段落节奏均匀化/叙述段
+   *  过重触发器）；不标记时 warning 仍是「尽量顺手修掉」的弱约束 */
   requiredIssueIds?: string[];
   targetWordCount?: number;
   previousChapterEnding?: string;
