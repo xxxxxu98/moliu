@@ -305,6 +305,36 @@ describe('buildTypesettingIssues 生产硬门禁', () => {
     expect((normalized.match(/“/gu) ?? []).length).toBe((normalized.match(/”/gu) ?? []).length);
   });
 
+  it('模板字段指令残句被 normalize 确定性剔除（r14 ch21 终稿实锤）', () => {
+    // 2026-09-28 luna 50 章 ch21 末行混入「candidateEvents 只填 id 列表」存活到终稿；
+    // 属级特征=段落以 camelCase 标识符/标识符+中文指令词起段，中文正文不会如此起段
+    const polluted = [
+      '封纸压住文书时，那道陌生朱痕仍从边角露出半寸。',
+      'candidateEvents 只填 id 列表',
+      'sceneId 必须与 beatId 对应',
+      'Output format: array of paragraph strings',
+      '他垂下眼，把朱痕的位置记进心里。',
+    ].join('\n\n');
+    const normalized = normalizeWebnovelParagraphs(polluted);
+    expect(normalized).toContain('封纸压住文书');
+    expect(normalized).toContain('记进心里');
+    expect(normalized).not.toContain('candidateEvents');
+    expect(normalized).not.toContain('sceneId');
+    expect(normalized).not.toContain('Output format');
+  });
+
+  it('正常英文内容不被模板残句消毒误杀（负例）', () => {
+    const legit = [
+      '“WHO ARE YOU？”他低声念出帽檐下的那行字。',
+      '沈砚在账页边缘描下一串编号：XJ-2046。',
+      '老吏咳了一声，缓缓开口。',
+    ].join('\n\n');
+    const normalized = normalizeWebnovelParagraphs(legit);
+    expect(normalized).toContain('WHO ARE YOU');
+    expect(normalized).toContain('XJ-2046');
+    expect(normalized).toContain('缓缓开口');
+  });
+
   it('连续五个碎段时报告 high', () => {
     const issues = buildTypesettingIssues(['他抬头。', '门响了。', '风停了。', '灯灭了。', '脚步近了。'].join('\n\n'));
     expect(issues.some(issue => issue.severity === 'high' && issue.description.includes('连续碎段'))).toBe(true);

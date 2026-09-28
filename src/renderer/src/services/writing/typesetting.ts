@@ -433,12 +433,31 @@ export function repairUnbalancedQuotes(paragraphs: string[]): string[] {
 }
 
 /**
+ * 模板字段指令残句消毒（2026-09-28 r14 ch21 终稿实锤）：模型把结构化输出的
+ * 字段说明（如「candidateEvents 只填 id 列表」）漏进 prose 正文并存活到终稿。
+ * 属级特征：段落以 camelCase/下划线 ASCII 标识符开头（中文正文不会以英文
+ * 驼峰标识符起段）；以及零 CJK 的纯 ASCII 短指令行。确定性剔除，零误伤面。
+ */
+const TEMPLATE_RESIDUE_PATTERNS: readonly RegExp[] = [
+  /^[a-z][a-zA-Z0-9]*[A-Z][a-zA-Z0-9]*\s/u, // camelCase 标识符起段（candidateEvents/sceneId…）
+  /^[A-Za-z_][A-Za-z0-9_]*\s*(?:只|需|必须|请|禁止|不得|格式|字段)/u, // 标识符+中文指令词
+  /^[A-Za-z][A-Za-z0-9 _.,-]{4,79}[:={[\]()]/u, // 零 CJK 且含结构化标点的字段说明行（Output format: …）
+];
+
+export function stripTemplateResidueParagraphs(paragraphs: string[]): string[] {
+  return paragraphs.filter(
+    p => !TEMPLATE_RESIDUE_PATTERNS.some(pattern => pattern.test(p))
+  );
+}
+
+/**
  * 轻量规范化：尊重模型原有分段，不做主动拆段/并段。
  *
  * 仅做：
  * - 统一换行、去掉段首段尾空白
  * - 连续空行压成一段间隔
  * - 标点归一（破折号/省略号、单弯引号升格）
+ * - 剔除模板字段指令残句（格式腐化消毒）
  * - 修补「收引号被误甩到下一段开头」（历史拆段残留 / 偶发模型笔误）
  *
  * 段密问题交给 prompt 约束与 G8 门禁反馈，不再用启发式改写正文结构。
@@ -456,11 +475,13 @@ export function normalizeWebnovelParagraphs(prose: string): string {
     .replace(/…{2,}(?=[”"」』])/gu, '。')
     .replace(/…+/gu, '，');
 
-  const paragraphs = punctuationNormalized
-    // 模型响应没有编辑器软换行；单换行同样表示自然段，统一提升为标准空行。
-    .split(/\n+/u)
-    .map(p => p.trim())
-    .filter(Boolean);
+  const paragraphs = stripTemplateResidueParagraphs(
+    punctuationNormalized
+      // 模型响应没有编辑器软换行；单换行同样表示自然段，统一提升为标准空行。
+      .split(/\n+/u)
+      .map(p => p.trim())
+      .filter(Boolean)
+  );
 
   const repaired = repairOrphanClosingQuotes(
     repairUnbalancedQuotes(repairUnterminatedDialogueQuotes(paragraphs))

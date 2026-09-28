@@ -1,0 +1,211 @@
+{
+  "schemaVersion": "findings/v1",
+  "round": "r14",
+  "book": "铁算盘入朝：我只想做完预算，却成了皇权的刀",
+  "reviewedAt": "2026-09-28T14:30:00.000Z",
+  "matrixDir": "temp/storyflow-matrix-luna6-50ch",
+  "chapters": 50,
+  "review": {
+    "method": "full-read-4ch",
+    "chaptersRead": 49,
+    "writerModel": "linghui-gpt-6-luna (provider-1790230785078)",
+    "reviewerModel": "claude-subagent x4 (full-read)",
+    "independentReviewer": true,
+    "notes": "ch39 为工程洞（0 字）实际通读 49 章；fate-adjudicate AI 裁决因灵辉通道 fetch failed 两连败，陆承简命运线由通读 agent D 人工终审（consistent，羁押全程一致无复活，引句见 REVIEW-D.md）"
+  },
+  "gates": {
+    "precheckRedlines": 0,
+    "fateRealResurrection": 0,
+    "readerJudge": {
+      "outline": 83.4,
+      "mean": 79.6,
+      "median": 80.3,
+      "min": 69.1,
+      "independentFromWriter": false
+    },
+    "ending": {
+      "complete": false,
+      "mainUnresolved": 1,
+      "closureSignals": 1
+    },
+    "humanIntervention": [],
+    "blindTest": null
+  },
+  "findings": [
+    {
+      "id": "r14-S1-01",
+      "severity": "S1",
+      "class": "prose.leak",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [21],
+      "entity": "全书",
+      "summary": "第21章全章末行混入生成模板指令残句「candidateEvents 只填 id 列表」，终稿逐字残留（021.txt 第117行，已二次核verify）",
+      "evidence": [{ "chapter": 21, "quote": "candidateEvents 只填 id 列表" }],
+      "replayCase": "r14-S1-01"
+    },
+    {
+      "id": "r14-S1-02",
+      "severity": "S1",
+      "class": "structure.arc",
+      "status": "final",
+      "rootLayer": "blueprint",
+      "chapters": [39],
+      "entity": "ch15 批红笔势伏笔",
+      "summary": "ch39 整章缺失（守卫对挤成洞：节点「坐实裴慎行亲手改写」措辞过窄 × 节点照抄守卫，5 连拒耗尽）；连带 ch15 埋设的批红笔势伏笔在台账标 resolved@ch39 但终稿无兑现（假回收，ending-audit rate=1.0 实为 0.9）",
+      "evidence": [{ "chapter": 39, "quote": "038.txt 首行「第38章 缺的那页被针线揭穿」紧接 040.txt 首行「第40章 没有交接的调阅凭条」" }],
+      "replayCase": "r14-S1-02"
+    },
+    {
+      "id": "r14-S2-01",
+      "severity": "S2",
+      "class": "state.custody",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [6, 7],
+      "entity": "沈砚",
+      "summary": "沈砚腕上绳索与押解差役第6章在押，第7章起无交代消失，此后自由用双手写画全书无解绳场景",
+      "evidence": [
+        { "chapter": 6, "quote": "沈砚腕上的绳索仍扣着。" },
+        { "chapter": 11, "quote": "他用两根手指捏住薄纸" }
+      ]
+    },
+    {
+      "id": "r14-S2-02",
+      "severity": "S2",
+      "class": "state.location",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [6],
+      "entity": "裴慎行",
+      "summary": "第6章同一场景内裴慎行先已在案边抽走封存清单、两段后又「从门外走进来」，且众人由清吏司账案跳至档房柜前无转场",
+      "evidence": [
+        { "chapter": 6, "quote": "裴慎行却已将封存清单抽到自己面前。" },
+        { "chapter": 6, "quote": "裴慎行本人走了进来。" }
+      ]
+    },
+    {
+      "id": "r14-S2-03",
+      "severity": "S2",
+      "class": "prose.leak",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [15, 25],
+      "entity": "全书",
+      "summary": "正文两处用「上一章/前章」指代前文，章回元概念泄漏进角色视角",
+      "evidence": [
+        { "chapter": 15, "quote": "纸上还留着上一章记下的页位、夹藏处和薄纸边缘。" },
+        { "chapter": 25, "quote": "他取出前章封存的残运单拓本" }
+      ]
+    },
+    {
+      "id": "r14-S2-04",
+      "severity": "S2",
+      "class": "continuity.boundary",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [20, 21],
+      "entity": "崔令仪/东宫文书",
+      "summary": "崔令仪第20章末已离场、21章无再入场交代即站在案侧；东宫文书20章已被当众打开、21章却封口完好由沈砚首次拆封",
+      "evidence": [
+        { "chapter": 20, "quote": "她离开后，门重新合上。" },
+        { "chapter": 20, "quote": "崔令仪打开文书，指尖在一行停住" },
+        { "chapter": 21, "quote": "封口来自东宫，朱泥压得端正……沈砚拆开文书" }
+      ]
+    },
+    {
+      "id": "r14-S2-05",
+      "severity": "S2",
+      "class": "time.sequence",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [16, 17, 18, 22],
+      "entity": "全书",
+      "summary": "时间口径漂移簇：ch16 开篇即时衔接却称前章事件在「昨夜」；ch17-18 昨日朱批/昨夜封纸墨迹次日仍「尚未干透」连续两章；ch22 封纸「刚压实」却要记「昨夜」的封存时刻",
+      "evidence": [
+        { "chapter": 16, "quote": "昨夜没有擦净的红痕" },
+        { "chapter": 17, "quote": "右下角新添的朱批尚未干透" },
+        { "chapter": 22, "quote": "封纸刚压实，沈砚便用刀背敲了敲案角：“把昨夜登记的封存时刻记在旁边。”" }
+      ]
+    },
+    {
+      "id": "r14-S2-06",
+      "severity": "S2",
+      "class": "continuity.boundary",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [31],
+      "entity": "谢临川",
+      "summary": "谢临川第31章空降登场，全书首次出现却零身份交代、主角亦不问来历，第34章再现仍无交代（第45章才见内廷传谕人身份）",
+      "evidence": [
+        { "chapter": 31, "quote": "谢临川从码头侧面的廊柱后走来，手里没有随从，也没有带任何公文。" }
+      ]
+    },
+    {
+      "id": "r14-S2-07",
+      "severity": "S2",
+      "class": "continuity.boundary",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [27, 31],
+      "entity": "青平码头私仓",
+      "summary": "私仓三门状态跳变：27章确认空仓无人，31章同组门锁再现且锁链被人从里面拽紧、门后有人答话，何人何时入仓无交代",
+      "evidence": [
+        { "chapter": 27, "quote": "沈砚站在门边等了片刻，确认没有人藏在内侧，才跨过门槛。" },
+        { "chapter": 31, "quote": "门内没有回应，只有锁链被人从里面又拽紧了一遍。" }
+      ]
+    },
+    {
+      "id": "r14-S2-08",
+      "severity": "S2",
+      "class": "structure.arc",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [32],
+      "entity": "许砺证词/东墙七袋",
+      "summary": "32章末悬置的「证词险被搬走」危机与许砺本人及「东墙七袋少一袋」线索自33章起全书零提及，支线悬空",
+      "evidence": [
+        { "chapter": 32, "quote": "人已经被撤下仓官的位置，证词却刚刚成为这座仓里最容易被单独搬走的一件东西。" }
+      ]
+    },
+    {
+      "id": "r14-S2-09",
+      "severity": "S2",
+      "class": "ending.closure",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [50],
+      "entity": "全书",
+      "summary": "ch50 以三条新开线收尾（待核粮连夜被装船调走、押运官无一回签、起运账预写抵达日期），三百九十石去向等未收（缓解：伏笔台账规划至 ch180，50章为连载切片非完本，按完本口径记档不额外加严）",
+      "evidence": [
+        { "chapter": 50, "quote": "船已经离开青平码头，待核的灾粮随水路调走，负责押运的人却没有一个回到册上。" }
+      ]
+    },
+    {
+      "id": "r14-S3-01",
+      "severity": "S3",
+      "class": "prose.slop",
+      "status": "final",
+      "rootLayer": "model",
+      "chapters": [1, 50],
+      "entity": "全书",
+      "summary": "结构同构与声线同质（读者裁判多窗口一致指出）：「发现异常—强调不能下结论—登记留痕—证物被收走—留新线索」模板逐章复跑（ch11-18、ch33-44 两段最重）；沈/顾/陆共用「只能证明X/不能证明Y」限定句式；此刻×20 轻轻×13",
+      "evidence": [
+        { "chapter": 6, "quote": "既然开了，便不能当作没发生。" }
+      ]
+    },
+    {
+      "id": "r14-S3-02",
+      "severity": "S3",
+      "class": "prose.slop",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [23, 29, 33, 34, 45, 46],
+      "entity": "全书",
+      "summary": "段落节奏残留：6 章在高对话场景把三四轮对答压进单段（ch29 85%段≥4句、ch45/46 均4.0-4.5句/段），与一段一拍合同的对话分段口径冲突；另有 ch19/21 偏碎（钩子处无长段支撑）。确定性叙述段双触发全绿（0/50），属 S3 观感级非墙",
+      "evidence": [
+        { "chapter": 29, "quote": "（通读统计：85% 段落 ≥4 句，见 REVIEW-C.md）" }
+      ]
+    }
+  ]
+}

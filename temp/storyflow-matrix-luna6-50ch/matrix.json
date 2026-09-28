@@ -1,0 +1,33 @@
+{
+  "mode": "storyflow-matrix",
+  "generatedAt": "2026-09-28T12:53:18.145Z",
+  "concurrency": 3,
+  "chapterCount": 50,
+  "scenarioId": null,
+  "providers": [
+    {
+      "providerId": "provider-1790230785078",
+      "scenarioId": null,
+      "provider": "openai",
+      "model": "gpt-6-luna",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 615,
+      "note": "",
+      "chaptersAccepted": "49/50",
+      "status": "complete",
+      "wordsMin": 0,
+      "wordsAvg": 3021,
+      "wordsMax": 3510,
+      "runtimeBackend": "sqlite",
+      "warnings": 2,
+      "firstPassRate": 0.92,
+      "totalRewriteRounds": 4,
+      "requestCount": 171,
+      "readerOutlineScore": 83.4,
+      "readerChapterAverage": 79.6,
+      "readerChapterMinimum": 69.1,
+      "readerIndependent": false
+    }
+  ]
+}
