@@ -1101,11 +1101,13 @@ export class LongFormWritingEngine {
     });
 
     // 第二轮压缩（2026-09-29 reg20 实测：单轮只压掉 ~10%，三章 3600–4100 仍超上限
-    // 3540 就放弃了）。仍超且第一轮确有缩短（≥5%）时对压缩稿再压一轮；塌方/无效
-    // 则保持第一轮结果，总轮数硬上限 2 防循环。
+    // 3540 就放弃了）。仍超且第一轮确有缩短时对压缩稿再压一轮；塌方/无效则保持
+    // 第一轮结果，总轮数硬上限 2 防循环。门控取「有任何缩短」而非 ≥5%——
+    // r15fix-reg20 ch8 实证：3613→3567（-1.3%）的边缘超写恰是最需要补刀的场景，
+    // 5% 门槛把它拦在第二轮外，叠判官语义矛盾五连拒成洞。
     if (chosen.strategy === 'condensed-kept') {
       const firstLen = countWords(firstPass ?? '');
-      if (firstLen > 0 && firstLen <= countWords(originalProse) * 0.95) {
+      if (firstLen > 0 && firstLen < countWords(originalProse)) {
         const secondPass = await condenseOnce(chosen.prose);
         if (secondPass) {
           const secondChosen = chooseProseAfterCondense({
