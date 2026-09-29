@@ -34,6 +34,10 @@ import {
   sanitizeBlueprintLengths,
 } from '../generators/outline-completer';
 import { sanitizeHookText } from '../parser/expanded-outline-parser';
+import {
+  describeRevealTimingViolation,
+  findRevealTimingViolations,
+} from '../validation/revealTiming';
 import { OUTLINE_COMPLETENESS_POLICY } from '../validation/outlineCompleteness';
 import {
   isCrossChapterGoal,
@@ -890,6 +894,21 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
     ),
     ...findBlueprintRepetition([...blueprints.values()]),
     ...findLockedForeshadowViolations([...blueprints.values()], rollForeshadows),
+    // 登场锁确定性扫描（2026-09-29 r15fix-reg20 ch18 实证：revealTiming=第35章的
+    // 老皇帝被排进 ch18——prompt 锁是概率性的，词面扫描兜成确定性）
+    ...findRevealTimingViolations(
+      [...blueprints.values()],
+      (project.characters ?? []).map(character => ({
+        name: character.name,
+        role: character.role,
+        revealTiming: (character as { profile?: { revealTiming?: string } }).profile
+          ?.revealTiming,
+      })),
+    ).map(violation => ({
+      chapterNumber: violation.chapterNumber,
+      kind: 'reveal-timing' as const,
+      detail: describeRevealTimingViolation(violation),
+    })),
   ];
   // 命运锁解除核查（修复提示级，不计缺陷守卫）：命中章并入定点修复，
   // 由修复模型裁决「补解除节点 / 在押回忆保持」双分支（语义不本地判）。

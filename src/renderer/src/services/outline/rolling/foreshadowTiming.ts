@@ -18,6 +18,7 @@ export interface RolledBlueprintIssue {
     | 'reader-meta'
     | 'locked-foreshadow'
     | 'locked-foreshadow-payoff'
+    | 'reveal-timing'
     | 'truncated-hook-clause'
     | 'finale-not-closing';
   detail: string;

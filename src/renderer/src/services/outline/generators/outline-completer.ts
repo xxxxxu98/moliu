@@ -17,6 +17,11 @@ import {
   OUTLINE_COMPLETENESS_POLICY,
 } from '../validation/outlineCompleteness';
 import type { OutlineCompletenessBlocker } from '../validation/outlineCompleteness';
+import {
+  describeRevealTimingViolation,
+  findRevealTimingViolations,
+  parseRevealNotBeforeChapter,
+} from '../validation/revealTiming';
 
 type StructuredTextCaller = (
   system: string,
@@ -295,6 +300,21 @@ function buildChapterCompletionPrompt(
   const foreshadowEmbargoSection = embargoed.length > 0
     ? `\n\n【本批伏笔时序禁令】以下伏笔的埋设时点晚于本批章号，其核心信息（hint 词面及同义表述）禁止出现在第${chapterNumbers[0]}-${chapterNumbers[chapterNumbers.length - 1]}章任何蓝图的 mustCover/CPNs/CEN 中；确需铺垫只可用不触及核心词面的暗痕，不得给出定性结论：\n${embargoed.map(plan => `- 「${plan.hint}」（埋设第${plan.setupChapter}章）`).join('\n')}`
     : '';
+  // 登场锁禁令（2026-09-29 r15fix-reg20 ch18 实证：revealTiming=第35章的老皇帝被
+  // 初版蓝图排进 ch18 御前召对——写作期对履约点名角色强制放行，蓝图点名即穿透，
+  // 只剩判官黄签兜底；滚纲路径已有同款锁，展开补全路径此前缺失）
+  const revealLocked = (outline.keyCharacters ?? [])
+    .map(character => {
+      const notBefore = parseRevealNotBeforeChapter(character.revealTiming);
+      return notBefore !== null && !/protagonist|主角/u.test(character.role ?? '')
+        ? { name: character.name, notBefore, timing: character.revealTiming }
+        : null;
+    })
+    .filter((item): item is { name: string; notBefore: number; timing: string } => item !== null)
+    .filter(item => item.notBefore > batchMin);
+  const revealLockSection = revealLocked.length > 0
+    ? `\n\n【本批登场锁禁令】以下角色在指定章号之前禁止出现在第${chapterNumbers[0]}-${chapterNumbers[chapterNumbers.length - 1]}章任何蓝图的标题/概要/CBN/CPNs/CEN/mustCover 中（不安排出场、行动、点名或身份揭示）；需要其作用时改用间接方式（传旨/他人转述/无名单侧写）：\n${revealLocked.map(item => `- 「${item.name}」（${item.timing}，第${item.notBefore}章前禁登场/禁揭示）`).join('\n')}`
+    : '';
   return {
     system: `你是中文长篇网文大纲拆章器。只输出指定章号的单章蓝图，不复述已有章节，不输出解释。
 每章必须严格使用以下结构：
@@ -317,7 +337,7 @@ function buildChapterCompletionPrompt(
 6. 地点必须使用“registeredLocations”里已登记的地点名，禁止自创新地名或同义变体（如已登记「江城市」就不得写「南江市」）；需要新场景时写成已登记地点的下属区域（如「江城市·南郊冷库」）；
 7. 【伏笔时序锁】「本批伏笔时序禁令」清单列出的伏笔，其核心信息禁止出现在本批蓝图的 mustCover/CPNs/CEN 中——蓝图要求本章揭示而伏笔规定后章才许揭示时，写作端会被迫两头违约（拒稿成洞）。确需铺垫只可用不触及核心词面的暗痕（物件出现/旁人欲言又止），不得给出定性结论。
 “existingChapterCanon”是不可改写的既有事实：新章不得重置期限、重复破案/入狱/升职等已完成事件，不得让已倒台或被羁押的反派无解释恢复原职。`,
-    user: `【故事上下文】\n${compactContext(outline, direction, chapterNumbers)}${foreshadowEmbargoSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
+    user: `【故事上下文】\n${compactContext(outline, direction, chapterNumbers)}${foreshadowEmbargoSection}${revealLockSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
   };
 }
 
@@ -1150,11 +1170,29 @@ export async function completeIncompleteOutline(params: {
 
   for (let round = 0; round < 2; round += 1) {
     const incompleteChapters = findIncompleteChapterNumbers(outline);
-    if (incompleteChapters.length === 0) break;
-    warnings.push(
-      `单章蓝图补全后仍有 ${incompleteChapters.length} 章不完整，执行第 ${round + 1} 轮定点修复：${incompleteChapters.join('、')}`,
+    // 登场锁确定性扫描：锁定期之前的蓝图点名了锁角色 → 并入定点修复
+    // （prompt 禁令是概率性的，词面扫描兜成确定性；写作期对履约点名角色
+    // 强制放行，这里是大纲侧最后一道闸）
+    const revealViolations = findRevealTimingViolations(
+      outline.chapterBlueprints ?? [],
+      outline.keyCharacters,
     );
-    await runBlueprintRepair(incompleteChapters, '定点修复');
+    const revealChapters = [...new Set(revealViolations.map(v => v.chapterNumber))];
+    const repairTargets = [...new Set([...incompleteChapters, ...revealChapters])].sort(
+      (a, b) => a - b,
+    );
+    if (repairTargets.length === 0) break;
+    if (incompleteChapters.length > 0) {
+      warnings.push(
+        `单章蓝图补全后仍有 ${incompleteChapters.length} 章不完整，执行第 ${round + 1} 轮定点修复：${incompleteChapters.join('、')}`,
+      );
+    }
+    if (revealViolations.length > 0) {
+      warnings.push(
+        `登场锁违规 ${revealViolations.length} 处，并入第 ${round + 1} 轮定点修复：${revealViolations.map(describeRevealTimingViolation).join('；')}`,
+      );
+    }
+    await runBlueprintRepair(repairTargets, '定点修复');
   }
 
   // 未登记角色 / 章级门禁缺陷等语义修复不在这里做：补全只负责把结构补齐，
