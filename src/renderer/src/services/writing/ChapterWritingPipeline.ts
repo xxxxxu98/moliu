@@ -330,7 +330,7 @@ export interface ChapterWritingPipelineDeps {
    * 未注入时降级跳过（不影响续写主流程）。
    */
   foreshadowClient?: {
-    markResolved(ids: string[]): Promise<void>;
+    markResolved(ids: string[], chapterNumber?: number): Promise<void>;
     /**
      * 正文确认埋设流转（可选）。
      * 本章大纲/正文命中 planned 伏笔的埋设点时，经此客户端把 planned → buried
@@ -486,7 +486,7 @@ export class ChapterWritingPipeline {
     updateChapterTitle(input: ChapterTitleUpdate): Promise<void>;
   } | null;
   private readonly foreshadowClient: {
-    markResolved(ids: string[]): Promise<void>;
+    markResolved(ids: string[], chapterNumber?: number): Promise<void>;
     markPlanted?(input: { ids: string[]; chapterNumber: number }): Promise<void>;
   } | null;
   private readonly structuredAI: StructuredAI | undefined;
@@ -572,11 +572,16 @@ export class ChapterWritingPipeline {
       deps?.foreshadowClient !== undefined
         ? deps.foreshadowClient
         : {
-            markResolved: async ids => {
+            markResolved: async (ids, chapterNumber) => {
               for (const id of ids) {
                 const target = projectStore.foreshadows.find(f => f.id === id);
                 if (target && target.status !== 'resolved') {
-                  await projectStore.updateForeshadow(id, { status: 'resolved' });
+                  await projectStore.updateForeshadow(id, {
+                    status: 'resolved',
+                    // 实际回收章回填：规划的 payoffChapter 可能被提前兑现，
+                    // 完本审计以 actualPayoffChapter 为准（r14 假回收误报教训）
+                    ...(chapterNumber !== undefined ? { actualPayoffChapter: chapterNumber } : {}),
+                  });
                 }
               }
             },
@@ -1089,7 +1094,7 @@ export class ChapterWritingPipeline {
       const resolvedIds = result.report.resolvedForeshadowIds ?? [];
       if (resolvedIds.length > 0 && this.foreshadowClient) {
         try {
-          await this.foreshadowClient.markResolved(resolvedIds);
+          await this.foreshadowClient.markResolved(resolvedIds, chapterNumber);
         } catch (error) {
           console.warn(
             `[Pipeline] 伏笔回收流转失败（${resolvedIds.length} 条，不影响本章提交）:`,

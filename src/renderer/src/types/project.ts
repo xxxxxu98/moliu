@@ -345,6 +345,12 @@ export interface Foreshadow {
   suggestedResolutionChapter?: number;
   /** 正文实际埋设章号（区别于大纲规划的 setupChapter；planned 状态下未定义） */
   actualPlantedChapter?: number;
+  /**
+   * 正文实际回收章号（区别于大纲规划的 payoffChapter；判官确认回收时回填）。
+   * 规划回收章可被提前兑现——只看规划 payoffChapter 会把提前回收误判成假回收
+   * （2026-09-29 r14 复盘：ch22→52/ch31→112 实为提前回收，正文有真实兑现场面）。
+   */
+  actualPayoffChapter?: number;
   // ========== 富伏笔字段（来自首页大纲 foreshadowPlan）==========
   /** 回收收益（伏笔回收时给读者带来的价值/震撼） */
   payoffValue?: string;

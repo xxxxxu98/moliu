@@ -53,29 +53,54 @@ function collectChapterIntegrity(chapters) {
  */
 const UNRESOLVED_ACTIVE = ['buried', 'hinted', 'foreshadowed'];
 const IMPORTANCE_RANK = { main: 0, subplot: 1, emotion: 2 };
-function collectForeshadowLedger(foreshadows) {
+/**
+ * 伏笔回收有效性（2026-09-28 r14 + 09-29 口径修正）：payoffChapter 是大纲规划值，
+ * 规划回收章可被提前兑现——只有「实际回收章（actualPayoffChapter，缺失时回退规划值）
+ * 落在已写范围内却没有正文」才是真·假回收（r14 ch15→39 洞回收形态），按未回收计。
+ * 规划回收章超出已写范围且已 resolved = 提前回收（r14 ch22→52/ch31→112，经正文
+ * 核实有真实兑现场面），记 informational 的 resolvedEarly，不影响回收率。
+ */
+function collectForeshadowLedger(foreshadows, hasProse = () => true, maxWrittenChapter = Infinity) {
   const by = status => foreshadows.filter(f => f.status === status);
+  const invalidResolved = by('resolved').filter(f => {
+    const actual = f.actualPayoffChapter ?? f.payoffChapter;
+    return actual != null && actual <= maxWrittenChapter && !hasProse(actual);
+  });
+  const resolvedEarly = by('resolved').filter(f => {
+    const actual = f.actualPayoffChapter ?? f.payoffChapter;
+    return actual != null && actual > maxWrittenChapter;
+  });
+  const invalidIds = new Set(invalidResolved.map(f => f.id));
   const unresolved = foreshadows
-    .filter(f => UNRESOLVED_ACTIVE.includes(f.status))
+    .filter(
+      f => UNRESOLVED_ACTIVE.includes(f.status) || invalidIds.has(f.id)
+    )
     .sort((a, b) =>
       ((IMPORTANCE_RANK[a.importance] ?? 3) - (IMPORTANCE_RANK[b.importance] ?? 3)) ||
       String(a.id).localeCompare(String(b.id))
     );
   const plannedNeverWritten = by('planned');
-  const planted = foreshadows.filter(f => UNRESOLVED_ACTIVE.includes(f.status) || f.status === 'resolved');
+  const planted = foreshadows.filter(
+    f => UNRESOLVED_ACTIVE.includes(f.status) || f.status === 'resolved'
+  );
   return {
     total: foreshadows.length,
-    resolved: by('resolved').length,
+    resolved: by('resolved').length - invalidResolved.length,
+    invalidResolved: invalidResolved.length,
+    resolvedEarly: resolvedEarly.length,
     unresolvedActive: unresolved.length,
     abandoned: by('abandoned').length,
     plannedNeverWritten: plannedNeverWritten.length,
-    // 回收率分母不含 abandoned：主动弃坑是决策不是烂尾
-    resolutionRate: planted.length ? Number((by('resolved').length / planted.length).toFixed(3)) : null,
+    // 回收率分母不含 abandoned：主动弃坑是决策不是烂尾；假回收分子分母同减
+    resolutionRate: planted.length
+      ? Number(((by('resolved').length - invalidResolved.length) / planted.length).toFixed(3))
+      : null,
     unresolvedList: unresolved.map(f => ({
       hint: String(f.hint ?? '').slice(0, 40),
-      status: f.status,
+      status: invalidIds.has(f.id) ? 'resolved-but-no-prose' : f.status,
       importance: f.importance ?? 'unknown',
       setupChapter: f.setupChapter ?? f.actualPlantedChapter ?? null,
+      payoffChapter: f.payoffChapter ?? null,
     })),
     plannedList: plannedNeverWritten.map(f => String(f.hint ?? '').slice(0, 40)),
   };
@@ -98,7 +123,11 @@ function buildReviewPack(chapters, ledger, tailK) {
     parts.push('（无未回收伏笔）');
   } else {
     for (const f of ledger.unresolvedList) {
-      parts.push(`- [${f.importance}/${f.status}] ${f.hint}（埋设章：${f.setupChapter ?? '?'}）`);
+      const payoffNote =
+        f.status === 'resolved-but-no-prose'
+          ? `（回收章：${f.payoffChapter} 无正文——假回收）`
+          : '';
+      parts.push(`- [${f.importance}/${f.status}] ${f.hint}（埋设章：${f.setupChapter ?? '?'}）${payoffNote}`);
     }
     for (const hint of ledger.plannedList) {
       parts.push(`- [planned 从未落笔] ${hint}`);
@@ -160,7 +189,15 @@ function exportBlindtest(chapters, bookName) {
 }
 
 const integrity = collectChapterIntegrity(book.chapters ?? []);
-const ledger = collectForeshadowLedger(book.foreshadows ?? []);
+const writtenChapters = new Set(
+  (book.chapters ?? []).filter(c => c.hasContent).map(c => c.index)
+);
+const maxWrittenChapter = Math.max(0, ...writtenChapters);
+const ledger = collectForeshadowLedger(
+  book.foreshadows ?? [],
+  ch => writtenChapters.has(ch),
+  maxWrittenChapter
+);
 
 // 完本收束信号扫描（2026-09-13 增补，格式级）：末章正文的收束声明词命中数 +
 // 末段预览。命中为零 = 结尾缺终局画面（供 AI 结局书审 rubric 第 6 项对照，
@@ -191,5 +228,5 @@ const blindtestDir = exportBlindtest(book.chapters ?? [], String(book.name ?? ''
 console.log(`ending-audit: ${bookDir}`);
 console.log(`integrity: complete=${integrity.complete} holes=${integrity.holes.length} lastCh=${integrity.lastChapterIndex} lastWords=${integrity.lastChapterWords}`);
 console.log(`closure: signals=${closure.closureSignals}${closure.closureSignals === 0 ? ' [watch] 末章无收束声明词，AI 书审 rubric 第 6 项重点核查' : ''}`);
-console.log(`foreshadow: total=${ledger.total} resolved=${ledger.resolved} unresolved=${ledger.unresolvedActive} planned=${ledger.plannedNeverWritten} rate=${ledger.resolutionRate}`);
+console.log(`foreshadow: total=${ledger.total} resolved=${ledger.resolved} invalidResolved=${ledger.invalidResolved}${ledger.invalidResolved ? ' [假回收：回收章无正文，r14 ch39 形态]' : ''} resolvedEarly=${ledger.resolvedEarly}${ledger.resolvedEarly ? '（规划回收章未到即提前兑现，informational）' : ''} unresolved=${ledger.unresolvedActive} planned=${ledger.plannedNeverWritten} rate=${ledger.resolutionRate}`);
 console.log(`outputs: ending-metrics.json / ending-review-pack.txt / ${path.basename(blindtestDir)}/`);

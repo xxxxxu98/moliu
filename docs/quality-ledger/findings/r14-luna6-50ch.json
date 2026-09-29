@@ -25,8 +25,9 @@
     },
     "ending": {
       "complete": false,
-      "mainUnresolved": 1,
-      "closureSignals": 1
+      "mainUnresolved": 0,
+      "closureSignals": 1,
+      "notes": "ending-audit 口径修正后复跑：invalidResolved=1（ch15→39 洞回收，真·假回收）；另 2 条（ch22→52/ch31→112）经正文核实为提前兑现（ch35 先支令、ch34-48 谢临川线有真实场面），记 resolvedEarly 不扣率；真实 resolutionRate=0.8"
     },
     "humanIntervention": [],
     "blindTest": null
@@ -52,7 +53,7 @@
       "rootLayer": "blueprint",
       "chapters": [39],
       "entity": "ch15 批红笔势伏笔",
-      "summary": "ch39 整章缺失（守卫对挤成洞：节点「坐实裴慎行亲手改写」措辞过窄 × 节点照抄守卫，5 连拒耗尽）；连带 ch15 埋设的批红笔势伏笔在台账标 resolved@ch39 但终稿无兑现（假回收，ending-audit rate=1.0 实为 0.9）",
+      "summary": "ch39 整章缺失（守卫对挤成洞：节点「坐实裴慎行亲手改写」措辞过窄 × 节点照抄守卫，5 连拒耗尽）；伏笔台账真·假回收 1 处（ch15→39 洞回收；另 2 条规划回收@52/@112 初判误报，经正文核实为提前兑现），真实回收率 0.8",
       "evidence": [{ "chapter": 39, "quote": "038.txt 首行「第38章 缺的那页被针线揭穿」紧接 040.txt 首行「第40章 没有交接的调阅凭条」" }],
       "replayCase": "r14-S1-02"
     },

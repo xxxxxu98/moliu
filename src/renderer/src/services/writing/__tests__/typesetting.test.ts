@@ -335,9 +335,33 @@ describe('buildTypesettingIssues 生产硬门禁', () => {
     expect(normalized).toContain('缓缓开口');
   });
 
-  it('连续五个碎段时报告 high', () => {
-    const issues = buildTypesettingIssues(['他抬头。', '门响了。', '风停了。', '灯灭了。', '脚步近了。'].join('\n\n'));
-    expect(issues.some(issue => issue.severity === 'high' && issue.description.includes('连续碎段'))).toBe(true);
+  it('通篇一句一段刷屏（80%+ 段落不足 20 字且段数够多）报告 high', () => {
+    const spam = Array.from({ length: 24 }, () => '他抬头。');
+    const issues = buildTypesettingIssues(spam.join('\n\n'));
+    expect(issues.some(i => i.severity === 'high' && i.description.includes('通篇碎段'))).toBe(true);
+  });
+
+  it('市场形态章（56% 段≤40、连续 6 段≤40、连续 5 段≤20）不误杀——2026-09-29 番茄#1书实测形态', () => {
+    // 《苍陆纪元》ch3 实测：241 段、中位 36 字、56% ≤40、最长段 126、连续≤40 游程 6。
+    // 连续短段是当前市场常态；旧「连续 5 段<40 字」守卫会误杀爆款形态（reg20 ch3 五连拒成洞）
+    const short = n => '他'.repeat(n - 1) + '。';
+    const paras = [
+      short(8), short(37), short(45), short(60), short(12), short(38), short(110),
+      short(22), short(33), short(88), short(41), short(26), short(95), short(36),
+      // 连续 6 段 ≤40（含 5 段 ≤20）——市场爆款里真实存在的节奏
+      short(8), short(15), short(12), short(18), short(9), short(14),
+      short(52), short(78), short(40), short(63), short(31), short(120),
+      short(44), short(70), short(39), short(58), short(85), short(48),
+      short(100), short(66), short(42), short(90), short(75), short(126),
+    ];
+    const issues = buildTypesettingIssues(paras.join('\n\n'));
+    expect(issues.some(i => i.severity === 'high' && i.description.includes('通篇碎段'))).toBe(false);
+    expect(issues.some(i => i.severity === 'high')).toBe(false); // 无任何 high 门禁误报
+  });
+
+  it('段数不足 20 时不判通篇碎段（样本无统计意义）', () => {
+    const few = Array.from({ length: 10 }, () => '他抬头。').join('\n\n');
+    expect(buildTypesettingIssues(few).some(i => i.description.includes('通篇碎段'))).toBe(false);
   });
 
   it('通篇裸台词（提示语加冒号、全章无引号）报告 high', () => {

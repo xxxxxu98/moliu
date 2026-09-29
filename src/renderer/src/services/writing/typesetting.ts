@@ -27,8 +27,17 @@ export const EXTREME_PARAGRAPH_CHARS = 520;
 /** 单段超过该值已经明显影响手机阅读，直接进入高优先级门禁。 */
 export const HARD_MAX_PARAGRAPH_CHARS = 420;
 
-/** 连续一句一段达到该数量，视为模板化碎段。 */
-export const MAX_CONSECUTIVE_SHORT_PARAGRAPHS = 5;
+/**
+ * 「通篇一句一段」刷屏守卫（占比判据，2026-09-29 市场数据重定）。
+ * 旧「连续 N 段 <40 字」判据已退役：番茄最热榜 #1《苍陆纪元》实测 4 章——段长
+ * 中位 36-40 字、52-56% 段 ≤40 字、最长段 126-141、连续 ≤40 游程最高 6、连续
+ * ≤20 游程最高 5。连续短段是当前市场常态而非缺陷，连续游程判据会误杀爆款形态
+ * （r14fix-reg20 ch3 五连拒成洞实证；用户 09-29 指令后经市场数据验证）。
+ * 真·刷屏（通篇一句话段）改由占比兜底：段数够多且 80% 以上段落 ≤20 字。
+ */
+export const ONE_LINER_PARAGRAPH_CHARS = 20;
+export const ONE_LINER_SPAM_SHARE = 0.8;
+export const ONE_LINER_SPAM_MIN_PARAS = 20;
 
 /** 超长段占比超过此值 → 门禁判定不通过 */
 export const LONG_PARAGRAPH_RATIO_THRESHOLD = 0.5;
@@ -80,7 +89,7 @@ export const TYPESETTING_HARD_RULES = `## 【强制】手机网文排版【观�
 读者在手机上滑读，一屏只容得下 2～3 个基准段。**请在生成时直接分好段**——系统后处理不会替你拆段/并段。
 
 ### 硬指标（必须遵守）
-1. **一段一拍**：一段只装一个镜头/动作/信息点，镜头转移、执行者更换、时间推进、感官切换就换段；基准 1～3 句一段（约 30～120 字），关键台词/动作/反转可单独成短段
+1. **一段一拍**：一段只装一个镜头/动作/信息点，镜头转移、执行者更换、时间推进、感官切换就换段；基准 1～3 句一段（多数 20～90 字——当前市场主流章节段长中位仅约 40 字，短段是常态），关键台词/动作/反转可一句话独立成段
 2. **长段是稀缺的减速手段**：只用在场景真正的蓄力点（全章零星几处），禁止为把一个画面写“全”而撑段；多人同场逐人或分组分段，不把多人压进一段
 3. **段与段之间空一行**；禁止整章只有少数超长大段
 4. **换人就换行**：多人对话不要塞进同一段；单人短对话可与前后叙述同段
@@ -100,7 +109,7 @@ export const TYPESETTING_HARD_RULES = `## 【强制】手机网文排版【观�
 3）上一段对话缺收引号、下一段以 ” 开头。
 
 ### 自检
-一段超过一屏（约 200 字）、或一段内塞了一个以上的镜头 → 自行拆段；若通篇一句一段、空行刷屏 → 自行合并。`;
+一段超过一屏（约 200 字）、或一段内塞了一个以上的镜头 → 自行拆段；若整章几乎每句都独立成段（80% 以上段落不足 20 字）→ 自行合并。`;
 
 export interface ParagraphDensityStats {
   paragraphCount: number;
@@ -641,17 +650,17 @@ export function buildTypesettingIssues(prose: string): ParagraphDensityIssue[] {
     }
   }
 
-  let currentShortRun = 0;
-  let longestShortRun = 0;
-  for (const paragraph of paragraphs) {
-    currentShortRun = countChineseAwareLength(paragraph) <= 40 ? currentShortRun + 1 : 0;
-    longestShortRun = Math.max(longestShortRun, currentShortRun);
-  }
-  if (longestShortRun >= MAX_CONSECUTIVE_SHORT_PARAGRAPHS) {
+  const oneLinerCount = paragraphs.filter(
+    p => countChineseAwareLength(p) <= ONE_LINER_PARAGRAPH_CHARS
+  ).length;
+  if (
+    paragraphs.length >= ONE_LINER_SPAM_MIN_PARAS &&
+    oneLinerCount / paragraphs.length >= ONE_LINER_SPAM_SHARE
+  ) {
     issues.push({
       severity: 'high',
-      description: `连续碎段过多：最长连续 ${longestShortRun} 段不足 40 字`,
-      suggestion: '合并同一动作或同一视角下的短段，保留必要的单句重拍，避免通篇一句一段',
+      description: `通篇碎段：${paragraphs.length} 段中 ${oneLinerCount} 段不足 ${ONE_LINER_PARAGRAPH_CHARS} 字（占 ${Math.round((oneLinerCount / paragraphs.length) * 100)}%）——一章几乎全是一句话一段`,
+      suggestion: '把同一动作/同一视角的连续一句话段合并成 1~3 句的自然段；保留关键拍独立成段即可，不需要每句一段',
     });
   }
 

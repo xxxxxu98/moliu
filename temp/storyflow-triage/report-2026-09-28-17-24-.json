@@ -1,0 +1,492 @@
+{
+  "mode": "storyflow-triage",
+  "generatedAt": "2026-09-28T17:24:14.812Z",
+  "source": "D:\\project\\2026\\moliu\\temp\\storyflow-matrix-r14fix-reg20",
+  "providers": [
+    {
+      "providerId": "provider-1787044972770",
+      "model": "gemini-3.8-flash-high",
+      "pass": false,
+      "exitCode": 1,
+      "wallMinutes": 127,
+      "chaptersAccepted": "19/20",
+      "words": {
+        "min": 0,
+        "avg": 3034,
+        "max": 3490
+      },
+      "paraRhythm": {
+        "chapters": 20,
+        "medianCv": 0.42,
+        "uniformChapters": 0,
+        "narrativeChapters": 20,
+        "medianNarrative": 72,
+        "narrativeHeavyChapters": 0
+      },
+      "repairMetrics": {
+        "firstPassChapters": 5,
+        "firstPassRate": 0.25,
+        "rewrittenChapters": 15,
+        "totalRewriteRounds": 17,
+        "averageRewriteRounds": 0.85,
+        "pipelineAttempts": 24
+      },
+      "runtimeMetrics": {
+        "requestCount": 113,
+        "requestCountsByPurpose": {
+          "scene-draft": 30,
+          "fact-extraction": 36,
+          "chapter-judge": 36,
+          "fact-extraction-recheck": 11
+        },
+        "latencyP50Ms": 19108,
+        "latencyP95Ms": 55332,
+        "latencyMaxMs": 100025
+      },
+      "readerMetrics": {
+        "chapterCount": 20,
+        "chapterAverage": 83.8,
+        "chapterMedian": 87.8,
+        "chapterMinimum": 0,
+        "openingThreeAverage": 58.9,
+        "continueReadingNoCount": 1,
+        "lowChapterCount": 1,
+        "lowWindowCount": 2,
+        "consecutiveLowRuns": []
+      },
+      "readerOutlineScore": 92.1,
+      "readerIndependent": true,
+      "phaseTimings": {
+        "outlineDirectionsMs": 36660,
+        "outlineExpandMs": 367666,
+        "outlineRollMs": 0,
+        "applyOutlineMs": 1371,
+        "continueWriteMs": 7035920,
+        "totalMs": 7441617
+      },
+      "runtimeBackend": "sqlite",
+      "verdict": "model-capability-suspect",
+      "verdictReason": "第3章质量拒绝连续 3 轮未收敛，重试无意义，考虑换模型或调合同（需人工确认）",
+      "signatures": [
+        {
+          "id": "quality.review-other",
+          "chapter": 3,
+          "count": 3,
+          "evidence": [
+            "连续碎段过多：最长连续 8 段不足 40 字。合并同一动作或同一视角下的短段，保留必要的单句重拍，避免通篇一句一段",
+            "连续碎段过多：最长连续 7 段不足 40 字。合并同一动作或同一视角下的短段，保留必要的单句重拍，避免通篇一句一段",
+            "连续碎段过多：最长连续 5 段不足 40 字。合并同一动作或同一视角下的短段，保留必要的单句重拍，避免通篇一句一段"
+          ],
+          "severity": "red",
+          "stalled": true
+        },
+        {
+          "id": "outline.warning-other",
+          "chapter": null,
+          "count": 33,
+          "evidence": [
+            "单章蓝图补全第 1 章伏笔时序消毒：删除 [\"抓起死牢角落的通州官仓巡仓私册，当场指出差役腰牌折损银与私册黑粮出入账的勾稽对不上\"]",
+            "单章蓝图补全第 2 章伏笔时序消毒：删除 [\"在大虞京师户部大堂与广惠仓·通州仓场通宵翻阅十年流水账，查出每年入秋核算时的雀鼠耗折损比例精确恒定在七厘三分\",\"推演自然灾损规律并以概率模型断定七厘三分系人为固定抽逃军粮。\",\"沈淮安以私册漏洞迫使提牢官暂缓行刑并准其查阅十年流水老账\",\"沈淮安在通州官仓十年老账中发现每",
+            "单章蓝图补全第 3 章伏笔时序消毒：删除 [\"沈淮安徒手在仓场白壁上画出复式借贷总表，对照出入库出水与回运流水证明十万石粮食非耗损而是整船偷运\",\"沈淮安在通州仓场大堂当众以复式平衡表推翻刑部验仓定论\"]"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "infra.transient.other",
+          "chapter": null,
+          "count": 4,
+          "evidence": [
+            "重试 1/2：API 未返回内容",
+            "重试 2/2：API 未返回内容",
+            "重试 1/2：API 未返回内容"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 12,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3986/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 13,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 4186/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.words-overlimit-survived",
+          "chapter": 20,
+          "count": 1,
+          "evidence": [
+            "压缩后仍 3950/3540，保留压缩稿"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.semantic-fact_conflict",
+          "chapter": 13,
+          "count": 1,
+          "evidence": [
+            "正文后半段沈淮安翻开账册处: 世系称谓错误: 状态摘要显示太上皇李渊成仍在世（退居奉先殿垂帘），崇德帝登基仅五年，十年前在位的老皇帝李渊成并未驾崩，正文却将十年前的底册称为「先帝年间通州实收漕粮结状底册」，将健在的太上皇误称为先帝。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.foreshadow-premature",
+          "chapter": 13,
+          "count": 1,
+          "evidence": [
+            "正文沈淮安推算漕粮文书体量处: 角色“李渊成”被提前点名揭示: futureReveals明确规定角色“李渊成”不得登场或被揭示（notBeforeChapter=45），当前为第13章，正文直接点名“太上皇李渊成”。；连续碎段过多：最长连续 7 段不足 40 字。合并同一动作或同一视角下的短段，保留必要的单句重拍，避"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "quality.logic-gap",
+          "chapter": 17,
+          "count": 1,
+          "evidence": [
+            "崇德元年，秋粮实入四十万石，挂账雀鼠折损三万石，核销拨修银七万两！: 自创年号: 崇德；正文与大纲节点存在连续 13 字逐字相同（节点原句照抄）：「算手因账目无法平衡陷入绝望…」。大纲节点是给作者的合同描述，不是读者要读的正文——把该句改写为场景化语言（换主语视角/拆句/补动作与感官细节），保留事件本身但不得逐字照抄。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "model.empty-response",
+          "chapter": 2,
+          "count": 1,
+          "evidence": [
+            "trace storyflow-provider-1787044972770-ch2-1790609041530.jsonl seq1 scene-draft 响应 2 字符"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "outline.titles-shrunk-local",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "本地收缩超长标题/CBN/CEN 共 9 章（第 3、4、5、6、7、8、9、10、35 章），未发 AI 请求"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.issue-1",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "终局反制君权的方式偏理想化。大纲设定主角依靠在全国推广阿拉伯数字和借贷算法，使四万名算吏体系绑定自身，令崇德帝因投鼠忌器全国财税瘫痪而被迫妥协拜相。在严肃硬核官场权谋语境下，封建帝王受制于记账密码体系而罢黜杀心，需补充更厚重的文官内阁制衡与兵权平叛法理支撑。（全天下四万名算吏与十三省钱粮调拨皆按沈淮安创立的密码算法运转"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.issue-2",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "苏听雪作为唯一的暗线情感与民间经济搭档，在前50章的章节细纲中仅在第8章露面接头，戏份跨度拉得较长，前期存在感稍显偏弱。（苏听雪随身携带的雕花银药囊内，夹藏着一张其父苏晏临终前写在羊皮纸上的古怪算筹九宫飞星图。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.issue-3",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "第一卷前半程在第28-30章即完成了周敬源当堂被算死的高潮，第31-50章转入顺藤摸瓜追查齐王私库与三皇子汇票暗戳，主线从通州案跳跃至江南案前置线，节奏由极速打脸转为铺陈过渡。（第1-30章平定通州十万石亏空案表层危机，查出仓场主事私运盗卖，免除死罪并在大虞京师户部大堂当堂立威，获得崇德帝破格召见与重用。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 1,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.chapter-score-low",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "读者评分 0：本章提交的正文内容为空，无法进行文本阅读、情节推演或爽点兑现评估，请检查章节内容提交完整度。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continue-reading-no",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "读者不愿继续阅读：本章提交的正文内容为空，无法进行文本阅读、情节推演或爽点兑现评估，请检查章节内容提交完整度。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "正文内容完全缺失（prose字段为空字符串），导致无法进行任何实际阅读与评估。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 4,
+          "count": 1,
+          "evidence": [
+            "主角作为文官算吏，肉身抗击专业死士并推翻数百斤重柜在动作表现上略有超常发挥，好在有借力卸力和缇骑及时破门的补救，未破坏整体严肃权谋基调。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 7,
+          "count": 1,
+          "evidence": [
+            "死士执行灭口任务时随身携带标明主使者身份的官署腰牌与盖有私印的直白密信，带有较强的工具化色彩，略微削弱了严密权谋的真实感。（在第二名刺客的皮甲内层，校尉搜出了一张用桐油纸严密包裹的折叠信笺...落款处，端端正正拓印着一枚仓场侍郎私印的朱红印泥。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 8,
+          "count": 1,
+          "evidence": [
+            "苏听雪对沈淮安的信任转折发生过快，沈淮安仅凭点出药账上的防虫耗羡差分术，苏听雪便直接开启密格取出父辈用命换来的十年绝密残账，防备卸下的过程略显仓促。（苏听雪退后半步，打量着这个身陷死局却条理骇人的年轻算吏。……‘你确实是个明白人。’苏听雪深吸一口气，走向最高处的百子柜，伸手拉动两处抽屉铜环）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 9,
+          "count": 1,
+          "evidence": [
+            "老吏‘失声痛哭、道心彻底崩解’的受挫反应带有轻微网文夸张化修辞，但在高潮打脸的爽感语境下属于可接受的戏剧化处理。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continuity-1",
+          "chapter": 10,
+          "count": 1,
+          "evidence": [
+            "上一章结尾周敬源已‘拔出佩剑直指沈淮安面门’，本章承接后又描写周敬源‘攥住了身旁随侍亲兵的鲨鱼皮刀柄，长刀骤然出鞘’，佩剑与随从长刀在动作衔接上存在轻微重复拔兵器的瑕疵。（周敬源右手猛然探出，一把攥住了身旁随侍亲兵的鲨鱼皮刀柄。伴着一声刺耳脆响，长刀骤然出鞘）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 11,
+          "count": 1,
+          "evidence": [
+            "模型指出读者体验问题"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 12,
+          "count": 1,
+          "evidence": [
+            "广惠仓底账被污水彻底泡烂成泥，属于官场文常见的物理毁账阻力；主角尾段虽提出从资金流穿透倒查，但需在后续章节尽快给出具体票号/资金对账的硬核推演，以避免爽点延宕。（整整十年的实物交存与银粮调度凭照，如今全部沤成了无法辨识的烂泥。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 13,
+          "count": 1,
+          "evidence": [
+            "上一章章尾沈淮安的心态铺垫偏向于'即便纸面全毁，也可通过借贷两端资金流复式审计破案'，本章则迅速转为'物理勘验识破假账并挖出夹墙真账'。两者虽不矛盾，但微弱分流了上章'纯靠记账法算力逆风翻盘'的即时预期。（上一章：单式流水的纸面凭证能被污水洗去，但只要白银曾在大虞江山流转过，借贷两端的资金痕迹便绝不会凭空消散。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 16,
+          "count": 1,
+          "evidence": [
+            "仓场通判奉命砸门施压的情节被锦衣卫千户一句喝退后即刻平息，外部危机的化解略显仓促，不过整体并未破坏连夜做账的核心主线与紧迫氛围。（门外的叫门声戛然而止，死一般的寂静重新笼罩大堂。）"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.window-score-low",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "1-3章窗口评分 48.1：前两章开局极具冲击力，生死绝境中的搏杀脱困与硬核审计推演（十年雀鼠耗恒定七厘三分）充分展现了专业技能降维打击的官场爽感，人物智勇兼备，司礼监与三法司介入的权谋博弈张力拉满。但因第3章正文完全缺失，导致第2章铺垫至顶峰的公堂大对决未能兑现，阅读体验被迫中断。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.continuity-1",
+          "chapter": 3,
+          "count": 1,
+          "evidence": [
+            "1-3章：第3章正文内容完全为空，导致第2章末尾三司会审公堂、限时核销亏空的核心生死危机与第3章标题承诺的‘白壁画表推翻验仓铁案’高潮爽点完全落空，造成严重的阅读断崖与悬念未兑现。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.window-score-low",
+          "chapter": 5,
+          "count": 1,
+          "evidence": [
+            "1-5章窗口评分 57.1：前两章开局凌厉，主角在死牢中凭借物理脱险与‘十年雀鼠耗恒定七厘三分’的硬核审计推演实现绝境反击，冷峻写实感与智斗张力极强。然而第3章正文内容完全缺失，导致公堂翻案的关键高潮戏份断层，直接伤害了核心爽点兑现。第4、5章节奏虽迅速回升，通过反暗杀、立军令状与‘借火销账’残存会票将战场推进至京城户"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-1",
+          "chapter": 5,
+          "count": 1,
+          "evidence": [
+            "1-5章：第3章正文完全缺失。第2章末尾三法司在暴雨公堂上升堂限主角当场验明亏空，第3章承诺的‘白壁画表推翻铁案’核心高潮戏码完全丢失，第4章直接跳到仓场值房遭遇死士暗杀，导致剧情产生严重断层，核心爽点与解密过程彻底落空。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.other-2",
+          "chapter": 5,
+          "count": 1,
+          "evidence": [
+            "1-5章：题材核心卖点承诺未兑现。本书核心定位为‘硬核审计破案、复式记账降维打击’，第2章末尾公堂对决张力已拉满，但由于第3章缺失，主角如何通过专业技能推翻铁案、震撼三法司的高光环节被直接跳过，爽点兑现链条断裂。"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 1,
+          "count": 1,
+          "evidence": [
+            "沈淮安 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "ledger.violation-candidate",
+          "chapter": 6,
+          "count": 1,
+          "evidence": [
+            "沈淮安 custody held→held（arrest）：custody 重复登 held（幂等条目或解除晚到）。影子账本候选，终审归 fate-adjudicate"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        },
+        {
+          "id": "reader.hardgate-warning",
+          "chapter": null,
+          "count": 1,
+          "evidence": [
+            "裁判硬门禁（首轮）：章节均分 83.8 < 85；最低分 0 < 65"
+          ],
+          "severity": "yellow",
+          "stalled": false
+        }
+      ],
+      "latency": {
+        "scene-draft": {
+          "count": 41,
+          "avgMs": 46726,
+          "p50Ms": 42402,
+          "maxMs": 100025
+        },
+        "fact-extraction": {
+          "count": 47,
+          "avgMs": 20243,
+          "p50Ms": 19066,
+          "maxMs": 40299
+        },
+        "chapter-judge": {
+          "count": 47,
+          "avgMs": 17708,
+          "p50Ms": 13973,
+          "maxMs": 45067
+        },
+        "fact-extraction-recheck": {
+          "count": 12,
+          "avgMs": 8220,
+          "p50Ms": 6463,
+          "maxMs": 22487
+        },
+        "outline-direction": {
+          "count": 1,
+          "avgMs": 36651,
+          "p50Ms": 36651,
+          "maxMs": 36651
+        },
+        "outline-expand": {
+          "count": 10,
+          "avgMs": 43643,
+          "p50Ms": 44369,
+          "maxMs": 73426
+        },
+        "outline-agent": {
+          "count": 16,
+          "avgMs": 8824,
+          "p50Ms": 7106,
+          "maxMs": 25125
+        },
+        "reader-outline-judge": {
+          "count": 1,
+          "avgMs": 14185,
+          "p50Ms": 14185,
+          "maxMs": 14185
+        },
+        "reader-chapter-judge": {
+          "count": 20,
+          "avgMs": 7359,
+          "p50Ms": 6864,
+          "maxMs": 12115
+        },
+        "reader-window-judge": {
+          "count": 4,
+          "avgMs": 8201,
+          "p50Ms": 8462,
+          "maxMs": 9290
+        }
+      }
+    }
+  ]
+}

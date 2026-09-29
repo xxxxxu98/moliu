@@ -154,16 +154,24 @@ const selected = candidates.slice(0, limit);
 console.log(`[fate-adjudicate] 台账终端命运 ${fateAt.size} 个（死亡族 ${deathAt.size} 个优先裁），矛盾候选 ${candidates.length} 条，本轮裁决 ${selected.length} 条`);
 
 // ---------- 模型通道 ----------
+// 裁决通道可独立于写作通道（r14 实证：写作走灵辉晚间抖动两连败 fetch failed，
+// 裁决也被拖死）。优先级：MOLIU_JUDGE_PROVIDER_ID 环境变量 > config 的
+// judgeProviderId 字段 > 兜底 providerId（写作同通道）。
 const cfgPath = resolve(repoRoot, 'temp/continue-write.real.config.json');
 const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
+const judgeProviderId =
+  process.env.MOLIU_JUDGE_PROVIDER_ID ||
+  cfg.judgeProviderId ||
+  cfg.providerId;
 const settings = JSON.parse(
   readFileSync(join(process.env.APPDATA || '', 'moliu', 'moliu-settings.json'), 'utf8')
 );
-const provider = (settings.aiProviders ?? []).find(p => p.id === cfg.providerId);
+const provider = (settings.aiProviders ?? []).find(p => p.id === judgeProviderId);
 if (!provider?.baseUrl || !provider?.apiKey) {
-  console.error(`厂商配置不完整: providerId=${cfg.providerId}`);
+  console.error(`厂商配置不完整: judgeProviderId=${judgeProviderId}`);
   process.exit(2);
 }
+console.log(`[fate-adjudicate] 裁决通道 ${judgeProviderId}（${provider.model ?? provider.modelName ?? '?'}）${judgeProviderId !== cfg.providerId ? `，独立于写作通道 ${cfg.providerId}` : '，与写作同通道'}`);
 
 async function chatJSON(system, user) {
   const res = await fetch(`${provider.baseUrl.replace(/\/$/, '')}/chat/completions`, {

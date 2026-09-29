@@ -895,11 +895,12 @@ export function openContinueWriteSession(options: {
         // 提交阶段流转到 project 副本——此前 harness 在 onChapterSettled 手动消费，
         // 生产链路却没有对应物；现在两侧都走 foreshadowClient.markResolved。
         foreshadowClient: {
-          markResolved: async (ids: string[]) => {
+          markResolved: async (ids: string[], payoffChapter?: number) => {
             let touched = 0;
             for (const foreshadow of project.foreshadows ?? []) {
               if (ids.includes(foreshadow.id) && foreshadow.status !== 'resolved') {
                 foreshadow.status = 'resolved';
+                if (payoffChapter !== undefined) foreshadow.actualPayoffChapter = payoffChapter;
                 touched += 1;
               }
             }
