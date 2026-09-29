@@ -44,7 +44,7 @@ function analyzeChapter(file, raw) {
   const variance = lens.reduce((a, b) => a + (b - mean) ** 2, 0) / (lens.length || 1);
   // 叙述段（无引号段）单列：对话段混在全体里会拉低均值、拉高 CV，「全章叙述段
   // 都是 200 字墙」在 avgParaLen/paraCV 上全绿（2026-09-27 与 typesetting
-  // NARRATIVE_MEDIAN_CHARS_THRESHOLD=140 同源，跑一轮真实回归后统一冻结）
+  // NARRATIVE_MEDIAN_CHARS_THRESHOLD=120 同源，跑一轮真实回归后统一冻结）
   const narrativeLens = paras
     .filter(p => !/["'\u201C\u201D\u2018\u2019「」『』]/u.test(p))
     .map(p => p.replace(/\s/g, '').length)
@@ -55,7 +55,7 @@ function analyzeChapter(file, raw) {
       : (narrativeLens[narrativeLens.length / 2 - 1] + narrativeLens[narrativeLens.length / 2]) / 2
     : 0;
   const narrativeWallRatio = narrativeLens.length
-    ? narrativeLens.filter(l => l > 200).length / narrativeLens.length
+    ? narrativeLens.filter(l => l > 160).length / narrativeLens.length
     : 0;
   const aiWords = {};
   for (const w of AI_WORDS) {
@@ -189,10 +189,10 @@ function printSummary(r) {
   const quoteMismatch = written.filter(c => c.quoteOpen !== c.quoteClose);
   const straight = written.filter(c => c.straightQuotes > 0);
   const cvRed = written.filter(c => c.paraCV < 0.15 && c.paraCount >= 8);
-  // 双触发与 typesetting NARRATIVE_* 同源：中位 ≥140（默认节奏就是墙）或
-  // 墙占比 ≥0.15（散点墙：中位正常但 200+ 墙成片）
+  // 双触发与 typesetting NARRATIVE_* 同源：中位 ≥120（默认节奏就是墙）或
+  // 墙占比 ≥0.15（散点墙：中位正常但 160+ 墙成片）
   const isNarrativeHeavy = c =>
-    (c.narrativeMedian ?? 0) >= 140 || (c.narrativeWallRatio ?? 0) >= 0.15;
+    (c.narrativeMedian ?? 0) >= 120 || (c.narrativeWallRatio ?? 0) >= 0.15;
   const narrativeHeavy = written.filter(c => isNarrativeHeavy(c) && (c.narrativeParaCount ?? 0) >= 8);
   const narrativeMedians = written.map(c => c.narrativeMedian).sort((a, b) => a - b);
   const bookNarrativeMedian = narrativeMedians.length
@@ -203,7 +203,7 @@ function printSummary(r) {
   console.log(`引号不配对章节: ${quoteMismatch.length}${quoteMismatch.length ? ' -> ' + quoteMismatch.map(c => `${c.file}(${c.quoteOpen}/${c.quoteClose})`).join(' ') : ''}`);
   console.log(`含ASCII直引号章节: ${straight.length}${straight.length ? ' -> ' + straight.map(c => `${c.file}(${c.straightQuotes})`).join(' ') : ''}`);
   console.log(`段落CV过低(<0.15,AI腔): ${cvRed.length}${cvRed.length ? ' -> ' + cvRed.map(c => `${c.file}(cv=${c.paraCV})`).join(' ') : ''}`);
-  console.log(`叙述段过重(中位≥140或墙占比≥15%): ${narrativeHeavy.length}/${written.length}，全书叙述段中位数中位=${bookNarrativeMedian}${narrativeHeavy.length ? ' -> 最重 ' + narrativeHeavy.sort((a, b) => (b.narrativeWallRatio ?? 0) - (a.narrativeWallRatio ?? 0) || b.narrativeMedian - a.narrativeMedian).slice(0, 8).map(c => `${c.file}(中位${c.narrativeMedian}/墙${Math.round((c.narrativeWallRatio ?? 0) * 100)}%)`).join(' ') : ''}`);
+  console.log(`叙述段过重(中位≥120或墙占比≥15%): ${narrativeHeavy.length}/${written.length}，全书叙述段中位数中位=${bookNarrativeMedian}${narrativeHeavy.length ? ' -> 最重 ' + narrativeHeavy.sort((a, b) => (b.narrativeWallRatio ?? 0) - (a.narrativeWallRatio ?? 0) || b.narrativeMedian - a.narrativeMedian).slice(0, 8).map(c => `${c.file}(中位${c.narrativeMedian}/墙${Math.round((c.narrativeWallRatio ?? 0) * 100)}%)`).join(' ') : ''}`);
   console.log(`钩子问题(残句/同拍复述): ${r.hookIssues.length}`);
   for (const h of r.hookIssues.slice(0, 12)) console.log(`  [${h.title}] ${h.kind}: ${h.text.slice(0, 40)} (${h.reason})`);
   console.log(`大纲节点原句漏入正文: ${r.nodeLeaks.length}`);
@@ -229,7 +229,7 @@ function diffReports(oldR, newR) {
     章界重演high: r.boundaryOverlaps.filter(b => b.level === 'high').length,
     章界重演watch: r.boundaryOverlaps.length,
     CV红章: r.chapters.filter(c => c.paraCV < 0.15 && c.paraCount >= 8).length,
-    叙述段过重章: r.chapters.filter(c => ((c.narrativeMedian ?? 0) >= 140 || (c.narrativeWallRatio ?? 0) >= 0.15) && (c.narrativeParaCount ?? 0) >= 8).length,
+    叙述段过重章: r.chapters.filter(c => ((c.narrativeMedian ?? 0) >= 120 || (c.narrativeWallRatio ?? 0) >= 0.15) && (c.narrativeParaCount ?? 0) >= 8).length,
     叙述段中位: bookNarrativeMedian(r),
     AI词总量: Object.values(r.aiWordTotals).reduce((a, b) => a + b, 0),
     有正文字数中位: (() => { const w = r.chapters.map(c => c.words).sort((a, b) => a - b); return w.length ? w[Math.floor((w.length - 1) / 2)] : 0; })(),

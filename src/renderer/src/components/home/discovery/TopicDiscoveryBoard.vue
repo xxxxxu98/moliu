@@ -59,7 +59,8 @@ import DicePanel from './components/DicePanel.vue';
 import PromptPanel from './components/PromptPanel.vue';
 import FavoritesPanel from './components/FavoritesPanel.vue';
 
-const MAX_MIX_PICKS = 4;
+const MAX_MIX_GENRES = 20;
+const MAX_MIX_ELEMENTS = 4;
 
 function pickRandom<T>(pool: readonly T[]): T {
   return pool[Math.floor(Math.random() * pool.length)] as T;
@@ -572,8 +573,8 @@ function toggleMixTag(name: string): void {
     selectedMixTags.value = list.filter(item => item !== name);
     return;
   }
-  if (list.length >= MAX_MIX_PICKS) {
-    message.warning(t('topicDiscovery.mixMaxGenres', { max: MAX_MIX_PICKS }));
+  if (list.length >= MAX_MIX_GENRES) {
+    message.warning(t('topicDiscovery.mixMaxGenres', { max: MAX_MIX_GENRES }));
     return;
   }
   selectedMixTags.value = [...list, name];
@@ -585,8 +586,8 @@ function toggleMixElement(name: string): void {
     selectedMixElements.value = list.filter(item => item !== name);
     return;
   }
-  if (list.length >= MAX_MIX_PICKS) {
-    message.warning(t('topicDiscovery.mixMaxElements', { max: MAX_MIX_PICKS }));
+  if (list.length >= MAX_MIX_ELEMENTS) {
+    message.warning(t('topicDiscovery.mixMaxElements', { max: MAX_MIX_ELEMENTS }));
     return;
   }
   selectedMixElements.value = [...list, name];
@@ -752,7 +753,8 @@ async function rollDice(): Promise<void> {
       v-if="activeTab === 'mix'"
       :selected-tags="selectedMixTags"
       :selected-elements="selectedMixElements"
-      :max-picks="MAX_MIX_PICKS"
+      :max-genre-picks="MAX_MIX_GENRES"
+      :max-element-picks="MAX_MIX_ELEMENTS"
       :disabled="isProcessing"
       @toggle-tag="toggleMixTag"
       @toggle-element="toggleMixElement"

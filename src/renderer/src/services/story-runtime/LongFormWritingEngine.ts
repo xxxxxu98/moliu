@@ -46,6 +46,7 @@ import {
   checkWordCountBounds,
   chooseProseAfterCondense,
 } from '@/services/writing/supplement';
+import { countWords } from '@/services/writing/utils';
 import { isPlaceholderChapterTitle } from '@/services/writing/chapterTitle';
 import { buildTypesettingIssues } from '@/services/writing/typesetting';
 import {
@@ -377,10 +378,18 @@ export function applyDeterministicGates(
  *  正文混入明朝年号（r5 八种：天启/弘治/嘉靖/成化/宣德/万历/洪武/天顺；ch69
  *  「万历八年密契」晚于故事当下属未来文件）。年号匹配是格式事实不是语义判定，
  *  属确定性守卫范畴。warning 级并入 requiredIssueIds 驱动定向改写（换成本书
- *  纪年），不 blocking 防死章——改不掉保留最优稿走黄签由 triage 终审。 */
+ *  纪年），不 blocking 防死章——改不掉保留最优稿走黄签由 triage 终审。
+ *  2026-09-29 补崇德（清太宗年号，reg20 ch17 自创年号「崇德」恰与真实年号撞名，
+ *  双重出戏：既是自创纪年污染又自带真实朝代锚点）；唐宋清高频年号一并补齐。
+ *  词面歧义甄别（fail-closed 误报比漏报致命）：「上元」（上元节）与「绍兴」
+ *  （地名/绍酒）在古风正文合法高频，禁入黑名单；只收无日常词面冲突的纯年号。 */
 const REAL_MING_ERA_NAMES = [
   '洪武', '建文', '永乐', '洪熙', '宣德', '正统', '景泰', '天顺',
   '成化', '弘治', '正德', '嘉靖', '隆庆', '万历', '泰昌', '天启', '崇祯',
+  // 清代（含崇德）
+  '崇德', '顺治', '康熙', '雍正', '乾隆', '嘉庆', '道光', '咸丰', '同治', '光绪', '宣统',
+  // 唐宋高频（架空古风书最易混入；已剔除上元/绍兴等词面歧义项）
+  '贞观', '开元', '天宝', '靖康', '淳熙', '至元', '洪宪',
 ];
 
 export function detectRealEraNameIssues(prose: string): ContinuityIssue[] {
@@ -1038,65 +1047,91 @@ export class LongFormWritingEngine {
       input.contracts.chapter.CBN ||
       input.contracts.chapter.CEN;
 
-    let condensedProse: string | null = null;
-    try {
-      const condensedParagraphs = (await this.dependencies.ai.generate<string[]>({
-        purpose: 'scene-draft',
-        schemaName: 'CondenseParagraphs',
-        system: [
-          '你是网文压缩改写引擎。只输出一个 JSON 对象：{"paragraphs":["段落1","段落2"]}',
-          `当前约 ${bounds.currentWords} 字，必须压缩到 ${bounds.minWords}–${bounds.maxWords} 字（目标 ${target}）。`,
-          `严禁压到低于 ${bounds.minWords} 字；删注水即可，不要压成剧情梗概。`,
-          '保留全部关键情节与章末钩子；不要输出 Markdown 代码块或解释。',
-        ].join('\n'),
-        prompt: buildCondensePrompt({
-          existingContent: originalProse,
-          targetWordCount: target,
-          minWords: bounds.minWords,
-          maxWords: bounds.maxWords,
-          chapterTitle: input.contracts.chapter.title,
-          chapterOutline: outline,
-        }),
-        parse: value => {
-          const record =
-            typeof value === 'object' && value !== null && !Array.isArray(value)
-              ? (value as Record<string, unknown>)
-              : {};
-          const raw = record.paragraphs ?? record['段落'] ?? value;
-          const paragraphs = sanitizeSceneDraftParagraphs(
-            Array.isArray(raw)
-              ? raw.filter((item): item is string => typeof item === 'string')
-              : typeof raw === 'string'
-                ? raw.split(/\n{2,}/u)
-                : []
-          );
-          if (paragraphs.length === 0) {
-            throw new Error('压缩改写未返回可用段落');
-          }
-          return paragraphs;
-        },
-      })) as string[];
+    const condenseOnce = async (content: string): Promise<string | null> => {
+      try {
+        const condensedParagraphs = (await this.dependencies.ai.generate<string[]>({
+          purpose: 'scene-draft',
+          schemaName: 'CondenseParagraphs',
+          system: [
+            '你是网文压缩改写引擎。只输出一个 JSON 对象：{"paragraphs":["段落1","段落2"]}',
+            `当前约 ${countWords(content)} 字，必须压缩到 ${bounds.minWords}–${bounds.maxWords} 字（目标 ${target}）。`,
+            `严禁压到低于 ${bounds.minWords} 字；删注水即可，不要压成剧情梗概。`,
+            '保留全部关键情节与章末钩子；不要输出 Markdown 代码块或解释。',
+          ].join('\n'),
+          prompt: buildCondensePrompt({
+            existingContent: content,
+            targetWordCount: target,
+            minWords: bounds.minWords,
+            maxWords: bounds.maxWords,
+            chapterTitle: input.contracts.chapter.title,
+            chapterOutline: outline,
+          }),
+          parse: value => {
+            const record =
+              typeof value === 'object' && value !== null && !Array.isArray(value)
+                ? (value as Record<string, unknown>)
+                : {};
+            const raw = record.paragraphs ?? record['段落'] ?? value;
+            const paragraphs = sanitizeSceneDraftParagraphs(
+              Array.isArray(raw)
+                ? raw.filter((item): item is string => typeof item === 'string')
+                : typeof raw === 'string'
+                  ? raw.split(/\n{2,}/u)
+                  : []
+            );
+            if (paragraphs.length === 0) {
+              throw new Error('压缩改写未返回可用段落');
+            }
+            return paragraphs;
+          },
+        })) as string[];
 
-      if (condensedParagraphs.length > 0) {
-        condensedProse = condensedParagraphs.join('\n\n');
+        return condensedParagraphs.length > 0 ? condensedParagraphs.join('\n\n') : null;
+      } catch (error) {
+        console.warn('[LongFormWritingEngine] 超长压缩失败，保留完整原稿并交由字数门禁:', error);
+        return null;
       }
-    } catch (error) {
-      console.warn('[LongFormWritingEngine] 超长压缩失败，保留完整原稿并交由字数门禁:', error);
-    }
+    };
 
-    const chosen = chooseProseAfterCondense({
+    const firstPass = await condenseOnce(originalProse);
+    let chosen = chooseProseAfterCondense({
       originalProse,
-      condensedProse: condensedProse ?? originalProse,
+      condensedProse: firstPass ?? originalProse,
       target,
     });
 
+    // 第二轮压缩（2026-09-29 reg20 实测：单轮只压掉 ~10%，三章 3600–4100 仍超上限
+    // 3540 就放弃了）。仍超且第一轮确有缩短（≥5%）时对压缩稿再压一轮；塌方/无效
+    // 则保持第一轮结果，总轮数硬上限 2 防循环。
+    if (chosen.strategy === 'condensed-kept') {
+      const firstLen = countWords(firstPass ?? '');
+      if (firstLen > 0 && firstLen <= countWords(originalProse) * 0.95) {
+        const secondPass = await condenseOnce(chosen.prose);
+        if (secondPass) {
+          const secondChosen = chooseProseAfterCondense({
+            originalProse: chosen.prose,
+            condensedProse: secondPass,
+            target,
+          });
+          if (secondChosen.strategy !== 'original-kept') {
+            chosen = secondChosen;
+            if (secondChosen.strategy === 'condensed') {
+              console.info(
+                `[LongFormWritingEngine] 第二轮压缩后落回目标区间（${secondChosen.bounds.currentWords} 字）`
+              );
+            }
+          }
+        }
+      }
+    }
+
     if (chosen.strategy === 'original-kept') {
       console.warn(
-        `[LongFormWritingEngine] AI 压缩过度（→${checkWordCountBounds(condensedProse ?? '', target).currentWords} 字），回退原文不再硬裁（优先正文质量）`
+        `[LongFormWritingEngine] AI 压缩过度（→${checkWordCountBounds(firstPass ?? '', target).currentWords} 字），回退原文不再硬裁（优先正文质量）`
       );
     } else if (chosen.strategy === 'condensed-kept') {
       console.info(
-        `[LongFormWritingEngine] AI 压缩后仍超上限（${chosen.bounds.currentWords}/${bounds.maxWords}），保留压缩稿不再硬裁（优先正文质量）`
+        `[LongFormWritingEngine] 两轮压缩后仍超上限（${chosen.bounds.currentWords}/${bounds.maxWords}），保留压缩稿不再硬裁（优先正文质量）`
       );
     }
 

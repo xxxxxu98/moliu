@@ -15,6 +15,7 @@ import {
   nodeVerbatimIssueIds,
   uniformDensityIssueIds,
 } from '../LongFormWritingEngine';
+import { detectRealEraNameIssues } from '../LongFormWritingEngine';
 import { parseStoryPatch } from '../patches';
 import { StoryRuntimeClient } from '../StoryRuntimeClient';
 import { makeBootstrap, makeContracts, makeState } from './testFixtures';
@@ -499,6 +500,13 @@ describe('LongFormWritingEngine', () => {
     expect(result.report.accepted).toBe(true);
     expect(result.commit.status).toBe('accepted');
     expect(narrativeDensityIssueIds(result.report).length).toBeGreaterThan(0);
+  });
+
+  it('detectRealEraNameIssues 年号黑名单：纯年号命中、节令/地名词面不误报（2026-09-29 扩容）', () => {
+    expect(detectRealEraNameIssues('崇德元年，秋粮实入四十万石。')).toHaveLength(1);
+    expect(detectRealEraNameIssues('这是万历八年立下的密契。')).toHaveLength(1);
+    // 词面歧义负例：上元节（元宵）/绍兴酒是古风正文合法高频，禁入黑名单
+    expect(detectRealEraNameIssues('上元节夜里，他温了一壶绍兴酒。')).toHaveLength(0);
   });
 
   it('nodeVerbatimIssueIds 能同时提取确定性门禁与判官语义报出的节点抄用问题', () => {

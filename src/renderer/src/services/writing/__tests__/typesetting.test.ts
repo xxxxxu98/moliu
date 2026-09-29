@@ -277,7 +277,7 @@ describe('叙述段过重（对话段拉低均值/CV 的盲区，2026-09-27 新�
     ].join('\n\n');
     const stats = analyzeParagraphDensity(scattered);
     expect(stats.longParagraphCount).toBe(0); // 无 >280 段，旧绝对长度门禁不触发
-    expect(stats.narrativeMedianParagraphChars).toBeLessThan(140); // 中位线不触发
+    expect(stats.narrativeMedianParagraphChars).toBeLessThan(120); // 中位线不触发（2026-09-29 市场收紧 140→120）
     expect(stats.narrativeLongParagraphRatio).toBeGreaterThanOrEqual(0.15); // 墙占比线命中
     const issues = buildTypesettingIssues(scattered);
     expect(issues.some(i => i.severity === 'high')).toBe(false);

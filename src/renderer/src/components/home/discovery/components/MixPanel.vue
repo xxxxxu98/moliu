@@ -8,7 +8,8 @@ import { BRAIN_GENRES } from '@/services/inspiration/fallback/genre-pool';
 defineProps<{
   selectedTags: string[];
   selectedElements: string[];
-  maxPicks: number;
+  maxGenrePicks: number;
+  maxElementPicks: number;
   disabled: boolean;
 }>();
 
@@ -72,7 +73,7 @@ const showAllGroups = ref(true);
     <div>
       <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         {{ t('topicDiscovery.mixGenres') }}
-        <span class="text-xs text-gray-400">({{ selectedTags.length }}/{{ maxPicks }} · {{ mixGenreOptions.length }} 项)</span>
+        <span class="text-xs text-gray-400">({{ selectedTags.length }}/{{ maxGenrePicks }} · {{ mixGenreOptions.length }} 项)</span>
       </p>
       <div class="flex flex-wrap gap-2">
         <button
@@ -100,7 +101,7 @@ const showAllGroups = ref(true);
         <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
           {{ t('topicDiscovery.mixElements') }}
           <span class="text-xs text-gray-400"
-            >({{ selectedElements.length }}/{{ maxPicks }} · {{ settingElements.length }} 项)</span
+            >({{ selectedElements.length }}/{{ maxElementPicks }} · {{ settingElements.length }} 项)</span
           >
         </p>
       </div>

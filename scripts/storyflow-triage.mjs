@@ -407,14 +407,14 @@ function triageProvider(providerId, meta) {
     ? (() => {
         const cvs = paraCvRows.map(it => it.paraCv).sort((a, b) => a - b);
         const uniformCount = paraCvRows.filter(it => it.paraCv < 0.14 && it.paras >= 12).length;
-        // 叙述段过重（2026-09-27 新维度）：双触发——章级叙述段中位 ≥140（默认节奏
-        // 就是墙）或墙占比 ≥0.15（中位正常但 200+ 墙成片，散点墙形态）。
+        // 叙述段过重（2026-09-27 新维度）：双触发——章级叙述段中位 ≥120（默认节奏
+        // 就是墙）或墙占比 ≥0.15（中位正常但 160+ 墙成片，散点墙形态）。
         // 对话段拉低全体均值/CV 的盲区由该字段补上；阈值与 typesetting
-        // NARRATIVE_* 同源，跑一轮真实回归后冻结。
+        // NARRATIVE_* 同源（2026-09-29 按市场实测收紧 140/200→120/160）。
         const narrativeRows = paraCvRows.filter(it => typeof it.narrativeMedian === 'number');
         const narrativeMedians = narrativeRows.map(it => it.narrativeMedian).sort((a, b) => a - b);
         const heavyCount = narrativeRows.filter(
-          it => it.narrativeMedian >= 140 || (it.narrativeWallRatio ?? 0) >= 0.15
+          it => it.narrativeMedian >= 120 || (it.narrativeWallRatio ?? 0) >= 0.15
         ).length;
         return {
           chapters: paraCvRows.length,
@@ -443,7 +443,7 @@ function triageProvider(providerId, meta) {
     acc.add(
       'prose.narrative-heavy',
       null,
-      `叙述段过重章 ${paraStats.narrativeHeavyChapters}/${paraStats.narrativeChapters}，叙述段中位字数中位 ${paraStats.medianNarrative}（章级中位 ≥140 或墙占比 ≥0.15 为过重）`
+      `叙述段过重章 ${paraStats.narrativeHeavyChapters}/${paraStats.narrativeChapters}，叙述段中位字数中位 ${paraStats.medianNarrative}（章级中位 ≥120 或墙占比 ≥0.15 为过重）`
     );
   }
 
