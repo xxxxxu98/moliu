@@ -3,6 +3,7 @@
  * 供 useProjectCreator 使用，覆盖百万开书落库关键字段。
  */
 import type { GeneratedOutline } from '@/types/inspiration';
+import { resolvePersistedVocabularyTier } from '@/services/story-runtime/proseRules';
 import type {
   Character,
   ProjectStartupPack,
@@ -188,6 +189,12 @@ export function buildLongformPersistPayload(outline: GeneratedOutline) {
         styleKeywords: [...(outline.styleKeywords ?? [])],
         targetReaders: [...(outline.targetReaders ?? [])],
         coreEmotions: [...(outline.coreEmotions ?? [])],
+        // 词汇档位：显式输出或关键词推导；定位全空时不落 balanced 空壳（零噪声落库）
+        vocabularyTier: resolvePersistedVocabularyTier({
+          tier: outline.vocabularyTier,
+          styleKeywords: outline.styleKeywords,
+          targetReaders: outline.targetReaders,
+        }),
       },
       startupPack,
       storyScale,

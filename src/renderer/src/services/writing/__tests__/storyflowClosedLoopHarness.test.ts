@@ -93,9 +93,11 @@ describe('ensureStoryflowWritingCapacity', () => {
 - 爽点类型：解谜`;
 
     const expanded = await ensureStoryflowWritingCapacity(makeProject(), 5, {
-      // 只为第 3 章返回可用蓝图，第 4/5 章返回垃圾 → 滚动产出 1 章，占位兜底 2 章
+      // 只为第 3 章返回可用蓝图，第 4/5 章返回垃圾 → 滚动产出 1 章，占位兜底 2 章。
+      // 分流锚定「只需补写的章号」行(4、5 起批)——2026-10-03 P2.2 相位建议会给
+      // user 注入「第N章:」字样的相位行,includes('第4章') 会误命中首批请求
       callStructuredText: async (_system, user) => {
-        if (user.includes('第4章') && user.includes('第5章')) return '无法解析的输出';
+        if (/【只需补写的章号】\s*\n\s*4、5/u.test(user)) return '无法解析的输出';
         return blockFor(3);
       },
     });

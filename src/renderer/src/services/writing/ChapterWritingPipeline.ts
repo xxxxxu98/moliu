@@ -38,6 +38,10 @@ import {
   AI_SINGLE_REQUEST_TIMEOUT_MS,
 } from './chapterWritePresets';
 import { TYPESETTING_HARD_RULES } from './typesetting';
+import {
+  VOCABULARY_TIER_LABELS,
+  normalizeVocabularyTier,
+} from '@/services/story-runtime/proseRules';
 import type {
   ChapterPersistenceClient,
   GateIssue,
@@ -791,6 +795,12 @@ export class ChapterWritingPipeline {
       const volumePlan = input.project.metadata?.volumePlans?.find(
         item => item.volumeIndex === (volume?.orderIndex ?? 0)
       );
+      // 词汇档位（2026-09-30《深海回声》书审落地）：大纲定位产出，全书唯一。
+      // 显式 tier 优先，缺失时从 styleKeywords/targetReaders 推导，旧书回落 balanced。
+      // 三处消费：master.style 信息行（进 context style 块）、起草 prompt、改稿 brief。
+      const vocabularyTier = normalizeVocabularyTier(
+        input.project.metadata?.outlinePositioning ?? {}
+      );
       // 剥离 outline 末尾的「--- 结构化节点 ---」块：建章时把 CBN/CPNs/CEN 拼进了 outline，
       // 但结构化节点已通过 outlineNode 的独立字段传递，outline 里那份会让 goal/description
       // 变成一大段结构化节点，污染 scene-draft 合同语义。
@@ -866,6 +876,7 @@ export class ChapterWritingPipeline {
           input.writingStyle,
           `目标约 ${input.targetWordCount} 字，按场景分配篇幅`,
           TYPESETTING_HARD_RULES,
+          `词汇档位：${VOCABULARY_TIER_LABELS[vocabularyTier]}`,
           ...(taskBook?.styleGuidance?.reasoning ?? []),
           // 用 execute() 合并过任务书降级提示的有效指令，而非原始 input（此前丢失降级事实）
           effective.userInstructions ?? '',
@@ -978,6 +989,8 @@ export class ChapterWritingPipeline {
         retrievedScenes,
         sceneChunks: bootstrap.sceneChunks,
         styleGuidance: contracts.master.style,
+        // 词汇档位（全书唯一）：起草与改稿按档渲染词汇规则（proseRules SSOT）
+        vocabularyTier,
         maxContextTokens: 24_000,
         targetWordCount: input.targetWordCount,
         seedRevisionHints: input.seedRevisionHints,
@@ -985,6 +998,16 @@ export class ChapterWritingPipeline {
         // 上章结尾仲裁：批量链路构造的 previousChapter.ending 此前只喂任务书生成,
         // 不进起草 prompt;CBN 与上章正文事实冲突时模型无从对照(花海怒放被回退成含苞)。
         previousChapterEnding: input.previousChapter?.ending || '',
+        // 未闭合悬念承接(2026-10-01 P1.1 悬念账本):本章前 3 章的规划 CEN 注入
+        // 起草 prompt【未闭合悬念承接】——本章必须正面接住至少一条,杜绝悬念
+        // 开而不接(读者裁判 r14「悬念累积不闭合」实证)
+        recentChapterCliffhangers: (input.project.plotOutline ?? [])
+          .filter(node => {
+            const n = (node.orderIndex ?? -1) + 1;
+            return n >= chapterNumber - 3 && n < chapterNumber && Boolean(node.CEN?.trim());
+          })
+          .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+          .map(node => `第${(node.orderIndex ?? 0) + 1}章：「${(node.CEN ?? '').trim()}」`),
         // 纪年锚（r5 实证纪年五套互斥+真实年号混入）：近章既成纪年叙述注入起草
         // prompt，正文纪年必须与之连续；真实年号另有黑名单守卫拦截
         eraAnchors: collectEraAnchors(memoriesUpToChapter),

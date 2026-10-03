@@ -11,6 +11,7 @@ import {
   type ReaderWindowEvaluation,
 } from '@/services/story-runtime/readerQualityJudge';
 import { RecordingStructuredAI } from '@/services/story-runtime/RecordingStructuredAI';
+import { normalizeVocabularyTier } from '@/services/story-runtime/proseRules';
 
 import {
   resolveReaderJudgeConfig,
@@ -177,6 +178,12 @@ function buildContext(result: StoryflowClosedLoopResult): ReaderEvaluationContex
       '未指定题材',
     targetReader:
       expected?.targetReader || positioning.targetReaders.join('、') || '通用中文网文读者',
+    // 词汇档位：与写作侧同源归一化（显式输出优先，缺失由风格关键词推导）
+    vocabularyTier: normalizeVocabularyTier({
+      tier: positioning.vocabularyTier,
+      styleKeywords: positioning.styleKeywords,
+      targetReaders: positioning.targetReaders,
+    }),
     positioning: [
       expected
         ? `大纲自产定位：${positioning.genreTags?.join('、') || '-'} / ${positioning.targetReaders.join('、') || '-'}`

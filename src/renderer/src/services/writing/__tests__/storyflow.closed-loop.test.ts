@@ -32,7 +32,7 @@ import {
   OUTLINE_COMPLETENESS_POLICY,
 } from '@/services/outline/validation/outlineCompleteness';
 import { AVG_WORDS_PER_CHAPTER, parseWordCountRange } from '@/services/outline/utils';
-import { checkWordCountBounds } from '@/services/writing/supplement';
+import { checkWordCountBounds, EDGE_OVERFLOW_TOLERANCE } from '@/services/writing/supplement';
 import { isPlaceholderChapterTitle } from '@/services/writing/chapterTitle';
 import {
   runStoryflowReaderEvaluation,
@@ -201,6 +201,24 @@ function writeClosedLoopArtifacts(
     latencyP95Ms: percentile(writerLatencies, 0.95),
     latencyMaxMs: writerLatencies.length > 0 ? writerLatencies[writerLatencies.length - 1] : null,
   };
+  // 章事件密度聚合（2026-10-01 P1.2）：低密度章（<2 事件）是流水章信号，
+  // 清单落 summary 供 triage 与读者评审判读
+  const eventCounts = result.chapterRunResults.map((r, i) => {
+    const m = (result.project.chapterMemories ?? []).find(
+      mem => (mem.chapterIndex ?? 0) === i + 1
+    );
+    return m?.keyEvents?.length ?? 0;
+  });
+  const eventDensityMetrics = {
+    chapterAverage:
+      eventCounts.length > 0
+        ? Number((eventCounts.reduce((a, b) => a + b, 0) / eventCounts.length).toFixed(2))
+        : 0,
+    chapterMinimum: eventCounts.length > 0 ? Math.min(...eventCounts) : 0,
+    lowChapters: eventCounts
+      .map((count, idx) => (count < 2 ? idx + 1 : null))
+      .filter((n): n is number => n !== null),
+  };
   const summary = {
     book: result.project.name,
     mode: 'storyflow-closed-loop',
@@ -246,6 +264,13 @@ function writeClosedLoopArtifacts(
         narrativeLens.length > 0
           ? narrativeLens.filter(l => l > 200).length / narrativeLens.length
           : 0;
+      // 章事件密度（2026-10-01 P1.2，north-star L2 缺口）：keyEvents 是 AI 提取的
+      // 章节关键事件（语义判定归 agent，此处只做确定性计数）。每章 <2 个事件
+      // 是流水章信号——只观察不阻断，交读者评审 pacing 维度终审
+      const chapterMemory = (result.project.chapterMemories ?? []).find(
+        m => (m.chapterIndex ?? 0) === i + 1
+      );
+      const eventCount = chapterMemory?.keyEvents?.length ?? 0;
       return {
         ch: i + 1,
         accepted: r.output.success,
@@ -255,6 +280,7 @@ function writeClosedLoopArtifacts(
         paraCv: Number(cv.toFixed(2)),
         narrativeMedian: Math.round(narrativeMedian),
         narrativeWallRatio: Number(narrativeWallRatio.toFixed(2)),
+        events: eventCount,
         attempts: r.output.attempts,
         rewriteRounds: r.output.longFormResult?.rewriteRounds ?? 0,
         writer: summarizeWriterRun(r.output.longFormResult),
@@ -280,6 +306,7 @@ function writeClosedLoopArtifacts(
     runtimeVerification: result.runtimeVerification,
     projectStorageVerification: result.projectStorageVerification,
     postWritePersistence: result.postWritePersistence,
+    eventDensity: eventDensityMetrics,
     // 大纲阶段 warnings 全量落盘：reviewer 回退原因、补全/定点修复失败等软质量信号，
     // 与 warnings 顶部的计数告警配套，供冒烟后人工评估是否影响本轮产出质量。
     outlineWarnings: result.outlineWarnings,
@@ -385,9 +412,16 @@ describe.runIf(isRealAiEnabled())('storyflow 闭环（真实 AI）：大纲生�
       const failed = result.chapterRunResults.filter(r => !r.output.success);
       expect(failed).toEqual([]);
       for (const chapter of result.chapterRunResults) {
-        // prose 为最终正文（含补写增量）
+        // prose 为最终正文（含补写增量）。字数口径与门禁一致:严格 ok,或
+        // 擦边超写在宽限带内(≤1.5%×上限,warning 放行落库——2026-10-01
+        // p1reg20 ch10 实证设计的合法形态,引擎与门禁均认,测试同口径)
+        const bounds = checkWordCountBounds(chapter.output.prose, targetWordCount);
+        const edgeOverflowAllowed =
+          bounds.status === 'over' &&
+          bounds.currentWords - bounds.maxWords <=
+            Math.floor(bounds.maxWords * EDGE_OVERFLOW_TOLERANCE);
+        expect(bounds.status === 'ok' || edgeOverflowAllowed).toBe(true);
         expect(chapter.output.prose.length).toBeGreaterThan(300);
-        expect(checkWordCountBounds(chapter.output.prose, targetWordCount).status).toBe('ok');
       }
 
       // ---------- ④ 真实持久化断言 ----------

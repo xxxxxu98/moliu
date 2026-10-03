@@ -341,6 +341,117 @@ export function mergeSparseParagraphs(paragraphs: string[]): string[] {
 }
 
 /**
+ * 智能拆分过长段落,改善节奏与可读性。
+ *
+ * 2026-10-01 用户反馈"段落过长读不下去"——实测200章级41/198章CV<0.15,
+ * 叙述段中位72字 vs 市场基准36-40字,prompt约束在长跑尺度失效。本函数提供
+ * 确定性兜底:墙段按语义边界拆开,零AI成本,取代"报high→整章重写烧预算"。
+ *
+ * 触发阈值(按段类型分档,对齐市场实测——番茄#1书全章最长段126-141字):
+ * - 叙述段 > 200 字(NARRATIVE_LONG_CHARS=160 墙线 + 余量)→ 拆
+ * - 对话段 > 240 字(话轮密集天然更长)→ 只在话轮边界拆
+ *
+ * 切分点选择(贪心累积,两个最低累积线):
+ * - 优质点(句末+执行者切换/感官通道/时间推进):累积 ≥100 字即切
+ * - 普通句末点:累积 ≥150 字才切(防止语义边界缺失时碎切)
+ * - 对话段:句号+闭引号(`。"`)是话轮边界,累积 ≥150 切
+ *   (调试实证:中文排版句号在引号内,"闭引号+句号"顺序零匹配)
+ *
+ * 保护机制:
+ * - 拆分后每段 ≥20 字,尾段 <20 字并回前段(不制造碎段)
+ * - 场景边界段(---/翌日等)、有意短拍不拆
+ * - 无句末标点的极端墙(拆不动)留给 HARD_MAX 门禁报 high
+ */
+const SPLIT_MIN_CHUNK_CHARS = 20;
+const SPLIT_NARRATIVE_THRESHOLD = 200;
+const SPLIT_DIALOGUE_THRESHOLD = 240;
+const SPLIT_SEMANTIC_MIN_ACCUM = 100;
+const SPLIT_SENTENCE_MIN_ACCUM = 150;
+
+/** 优质切分点:句末 + 执行者切换/感官通道/时间推进(前瞻不消耗,切点=空白后) */
+const SEMANTIC_CUT_PATTERNS: readonly RegExp[] = [
+  /[。！？…!?]\s*(?=[他她它][^，。！？…!?]{0,2}(?:转身|抬头|回头|低头|起身|走|站|坐|看|听|想|说|问|答|笑|叹))/gu,
+  /[。！？…!?]\s*(?=.{0,8}(?:看到|听见|听到|闻到|感觉|觉得|发现|注意到))/gu,
+  /[。！？…!?]\s*(?=(?:片刻后|随即|接着|然后|这时|此时|此刻|忽然|突然))/gu,
+];
+
+/** 对话话轮边界:句末标点在引号内,后跟闭引号(`。"`) */
+const DIALOGUE_TURN_PATTERN = /[。！？…!?]["”」』]/gu;
+
+/** 收集段内全部切点位置(切点=该位置前的内容归属前段),并标记优质点 */
+function collectCutPoints(para: string): Map<number, boolean> {
+  const cuts = new Map<number, boolean>();
+  for (const m of para.matchAll(/[。！？…!?]\s*/gu)) {
+    cuts.set(m.index + m[0].length, false);
+  }
+  for (const pattern of SEMANTIC_CUT_PATTERNS) {
+    for (const m of para.matchAll(pattern)) {
+      cuts.set(m.index + m[0].length, true);
+    }
+  }
+  return cuts;
+}
+
+/** 按切点贪心切分:优质点过 SEMANTIC_MIN / 普通点过 SENTENCE_MIN 才落刀 */
+function cutAtPoints(
+  para: string,
+  cuts: Map<number, boolean>,
+  semanticMinAccum: number,
+  sentenceMinAccum: number
+): string[] {
+  const parts: string[] = [];
+  let start = 0;
+  for (const [cut, isSemantic] of [...cuts.entries()].sort((a, b) => a[0] - b[0])) {
+    const accum = countChineseAwareLength(para.slice(start, cut));
+    const rest = countChineseAwareLength(para.slice(cut));
+    if (rest < SPLIT_MIN_CHUNK_CHARS) break;
+    const threshold = isSemantic ? semanticMinAccum : sentenceMinAccum;
+    if (accum >= threshold) {
+      parts.push(para.slice(start, cut).trim());
+      start = cut;
+    }
+  }
+  const tail = para.slice(start).trim();
+  if (tail) {
+    if (countChineseAwareLength(tail) >= SPLIT_MIN_CHUNK_CHARS || parts.length === 0) {
+      parts.push(tail);
+    } else {
+      parts[parts.length - 1] += tail;
+    }
+  }
+  return parts.length > 1 ? parts : [para];
+}
+
+function splitLongParagraphs(paragraphs: string[]): string[] {
+  return paragraphs.flatMap(para => {
+    if (isSceneBoundary(para) || isIntentionalBeat(para)) return [para];
+
+    const len = countChineseAwareLength(para);
+    const hasQuotes = /["“”\u201C\u201D「」『』]/.test(para);
+    if (len <= (hasQuotes ? SPLIT_DIALOGUE_THRESHOLD : SPLIT_NARRATIVE_THRESHOLD)) {
+      return [para];
+    }
+
+    if (hasQuotes) {
+      // 对话段:只在话轮边界(`。"`)切,不切断单人台词
+      const cuts = new Map<number, boolean>();
+      for (const m of para.matchAll(DIALOGUE_TURN_PATTERN)) {
+        cuts.set(m.index + m[0].length, true);
+      }
+      return cutAtPoints(para, cuts, SPLIT_SENTENCE_MIN_ACCUM, SPLIT_SENTENCE_MIN_ACCUM);
+    }
+
+    // 叙述段:优质语义点优先(更低累积线),句末兜底
+    return cutAtPoints(
+      para,
+      collectCutPoints(para),
+      SPLIT_SEMANTIC_MIN_ACCUM,
+      SPLIT_SENTENCE_MIN_ACCUM
+    );
+  });
+}
+
+/**
  * 单弯引号升格为双弯引号。
  *
  * 模型偶尔整章用 ‘…’ 写对话（成对、可读），但中文出版规范里 ‘’ 是二级引号，
@@ -477,28 +588,36 @@ export function stripTemplateResidueParagraphs(paragraphs: string[]): string[] {
 export function normalizeWebnovelParagraphs(prose: string): string {
   if (!prose?.trim()) return prose ?? '';
 
-  const punctuationNormalized = promoteSingleQuotesToPrimary(
-    normalizeStraightQuotes(prose)
-  )
-    .replace(/\r\n/g, '\n')
-    .replace(/—{2,}(?=[“"「『])/gu, '：')
-    .replace(/—+/gu, '，')
-    .replace(/--+/gu, '，')
-    .replace(/…{2,}(?=[”"」』])/gu, '。')
-    .replace(/…+/gu, '，');
+  // 先按行拆分,保护场景边界标记不被标点归一化破坏
+  const lines = prose.split(/\n+/u).map(l => l.trim()).filter(Boolean);
+  
+  const processedLines = lines.map(line => {
+    // 场景边界标记保持原样,跳过标点归一化
+    if (isSceneBoundary(line)) {
+      return line;
+    }
+    
+    // 其他行进行标点归一化
+    return promoteSingleQuotesToPrimary(
+      normalizeStraightQuotes(line)
+    )
+      .replace(/—{2,}(?=[“”「『])/gu, '：')
+      .replace(/—+/gu, '，')
+      .replace(/--+/gu, '，')
+      .replace(/…{2,}(?=[“”」』])/gu, '。')
+      .replace(/…+/gu, '，');
+  });
 
-  const paragraphs = stripTemplateResidueParagraphs(
-    punctuationNormalized
-      // 模型响应没有编辑器软换行；单换行同样表示自然段，统一提升为标准空行。
-      .split(/\n+/u)
-      .map(p => p.trim())
-      .filter(Boolean)
-  );
+  const paragraphs = stripTemplateResidueParagraphs(processedLines);
 
   const repaired = repairOrphanClosingQuotes(
     repairUnbalancedQuotes(repairUnterminatedDialogueQuotes(paragraphs))
   );
-  return repaired.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
+  
+  // 智能拆分过长段落(2026-10-01新增):prompt约束在长跑失效时的确定性兜底
+  const split = splitLongParagraphs(repaired);
+  
+  return split.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 export function analyzeParagraphDensity(prose: string): ParagraphDensityStats {

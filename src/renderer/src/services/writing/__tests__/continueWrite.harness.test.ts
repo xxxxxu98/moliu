@@ -149,4 +149,28 @@ describe('classifyChapterRunFailure（与 useBatchWriter 分类优先级对齐�
     expect(classified.kind).toBe('unknown');
     expect(classified.retryable).toBe(false);
   });
+
+  it('管线级故障熔断：连续 3 章以相同错误耗尽即中止整批（2026-10-01 r17 实证）', async () => {
+    // r17 实证：salvage 接线 ReferenceError 让 102/200 章每章 3 连拒后「跳过继续」，
+    // 无声成洞跑了 10 小时才被发现。熔断把损失锁死在 3 章内；错误互不相同的
+    // 常规内容失败（每章 lastError 不同）不受影响。
+    const { project } = makeSyntheticHarnessProject({ chapterCount: 5 });
+    const boom = {
+      async generate() {
+        throw new Error('salvage stub: dependencies is not defined');
+      },
+    } as never;
+    await expect(
+      runContinueWriteChapters({
+        project,
+        fromChapter: 1,
+        chapterCount: 5,
+        targetWordCount: 800,
+        runIdPrefix: 'continue-write-streak-breaker',
+        persistTrace: false,
+        mode: 'batch',
+        ai: boom,
+      }),
+    ).rejects.toThrow('疑似管线级故障');
+  }, 30_000);
 });

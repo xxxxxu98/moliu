@@ -5,6 +5,12 @@ export interface StoryPositioning {
   coreEmotions: string[];
   sellingPoints: string[];
   styleKeywords: string[];
+  /**
+   * 词汇档位原始输出（'hardcore'|'balanced'|'plain' 或中文标签，可空）：
+   * 定位 AI 显式产出；消费侧统一经 proseRules.normalizeVocabularyTier 归一化，
+   * 缺失时由 styleKeywords/targetReaders 推导。
+   */
+  vocabularyTier?: string;
 }
 
 export interface StoryActPlan {

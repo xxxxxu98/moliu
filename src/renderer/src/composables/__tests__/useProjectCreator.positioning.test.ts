@@ -80,7 +80,23 @@ describe('useProjectCreator.createProject - 大纲定位落库', () => {
       styleKeywords: ['冷峻', '快节奏'],
       targetReaders: ['男频权谋读者'],
       coreEmotions: ['憋屈后爽'],
+      // 冷峻/快节奏无硬核或小白信号 → balanced；有 styleKeywords 信号所以持久化
+      vocabularyTier: 'balanced',
     });
+  });
+
+  it('定位含硬核信号时词汇档位推导为 hardcore 落库', async () => {
+    const projects = installProjectApi();
+
+    const projectId = await useProjectCreator().createProject(
+      makeOutline({ styleKeywords: ['冷峻', '硬核', '严密推演'] }),
+      {},
+    );
+
+    expect(projectId).toBeTruthy();
+    expect(projects.get(projectId!)?.metadata?.outlinePositioning?.vocabularyTier).toBe(
+      'hardcore'
+    );
   });
 
   it('定位四项全空时不写入空壳，避免落库噪声字段', async () => {

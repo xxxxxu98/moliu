@@ -68,6 +68,46 @@ export function detectUnledgeredFateEvents(
   return { suspectEvents, suspectEntityIds };
 }
 
+/**
+ * 逆转族 status delta 必须伴随押地（custody）清除。
+ * 2026-09-30 g38f r16 ch114 成洞实证：徐茂德 ch49 押地「天牢」、ch109 特旨
+ * 无罪起复——复职 delta 正常入账，但 custody 属性无任何清除路径，stateDigest
+ * 里「custody:天牢」永久残留，判官按在押连拒正确章节（fact_conflict 死亡
+ * 螺旋 + 字数超限成洞，199/200）。r12 萧元瑾获释 case 修的是 status 侧的
+ * 记忆聚合，custody 侧同型缺口漏修。此处随每个逆转 delta 自动补一条
+ * custody remove（applyDelta 对缺失属性是 no-op，无逆转时零副作用）。
+ */
+const CUSTODY_CLEARING_STATUS_VALUES = new Set([
+  '获释', '保释', '平反', '复职', '复位', '赦免', '起复', '揭晓', '越狱',
+]);
+
+export function implyCustodyClearOnReversal(facts: ExtractedFacts): ExtractedFacts {
+  const companion: ExtractedFacts['deltas'] = [];
+  const touchedCustody = new Set(
+    facts.deltas
+      .map(delta => {
+        const match = String(delta.path ?? '').match(/^characters\.([^.]+)\.attributes\.custody$/);
+        return match?.[1] ?? null;
+      })
+      .filter((x): x is string => Boolean(x))
+  );
+  for (const delta of facts.deltas) {
+    const match = String(delta.path ?? '').match(/^characters\.([^.]+)\.attributes\.status$/);
+    if (!match) continue;
+    if (!CUSTODY_CLEARING_STATUS_VALUES.has(String(delta.value ?? ''))) continue;
+    const entityId = match[1];
+    if (touchedCustody.has(entityId)) continue;
+    companion.push({
+      operation: 'remove',
+      path: `characters.${entityId}.attributes.custody`,
+      evidence: delta.evidence,
+    });
+    touchedCustody.add(entityId);
+  }
+  if (companion.length === 0) return facts;
+  return { ...facts, deltas: [...facts.deltas, ...companion] };
+}
+
 /** 合并复检补登：同实体已有同族 status 账时跳过，避免重复入账 */
 function mergeRecheckedDeltas(facts: ExtractedFacts, extra: ExtractedFacts['deltas']): ExtractedFacts {
   if (extra.length === 0) return facts;
@@ -162,6 +202,7 @@ export class AIFactExtractor implements FactExtractor {
         + '覆盖范围是本章出场的每一个角色，不只主角（2026-09-19 g38f r7 实证：配角温廷翰全书 ≥6 次换职——翰林修撰/通政使/东宫侍读学士/都察院右副都御史往返横跳——零入账，头衔锚全程空转）：凡本章任何角色（含配角）被以与既有头衔不同的官职/职务/品级称呼（对白称呼/自称/旁白头衔均算），即视为头衔变更信号，必须出该角色的 title delta。'
         + 'evidence 直接引用任命原句。此台账供写作侧头衔锚注入——正文头衔必须与最近一次入账头衔一致。',
         '15) 关键数字既成宣告必出 event（2026-09-17 g38f r6 全文通读实证：同一笔盐税五套口径、太仓存粮四万石无解释改写为四十万石、押运车队八十箱变八百辆——长程数字漂移是书审最大 S1 簇，写作侧数字锚需要既成数字源）：本章正文中首次确立或勘误更正的大额数字宣告（银两/粮饷/绢匹/引目/兵额/箱笼车船数等，数额达万级及以上，以及任何首次公布的账目总数、编制数、存粮存银数）必须产出一条 event：type 固定 "numeric-fact"，summary 必须写成「对象＋数值＋单位＋性质」的完整可引用句（如「两淮盐税岁入实征二百二十万两」「太仓存粮仅剩四万石」），evidence 引宣告原句。同一数字的复述性提及不必重复出；勘误更正（清点后与旧数不符）必须再出一条 numeric-fact 并在 summary 注明勘误后新值。',
+        '16) 关键实物终态必出账（2026-09-30 g38f r16 全文通读实证：定江号 ch18 注水坐底锁死决口、ch21 称七具沉箱全数粉碎、ch22 却完好停泊被再次凿沉——核心道具沉没后复活无解释，判官 stateDigest 无据可拦）：本章出现具名关键实物（舰船/闸门/堤坝/军械/账册/信物/库藏等）的既成终态变更时，必须出 items.<实体id>.attributes.status 的 status delta（value=终态，如「沉没」「焚毁」「解体」「炸毁」「查抄」「移交」「封存」「损毁」），一句带过也算；实体 id 取 entityCatalog 中 kind=item 的登记实体（无登记实体时不出 delta 只产 event）。完成体门槛与命运族一致：实际发生为准，「下令焚毁」是命令不是既成；威胁/计划/假设语境不出账。此账供判官 stateDigest 判「上章已销毁/已移交的物品本章再次出现」类 fact_conflict——判官合同已有此检查维度，缺的正是数据源。',
         'JSON 字段必须为：',
         '{"events":[{"id":"string","chapter":0,"sceneId":"string","type":"string","summary":"string","participants":["实体id或人名"],"causes":[],"effects":[],"evidence":["正文原句"]}],"deltas":[{"operation":"set|add|remove|increment","path":"characters.<实体id>.attributes.status","value":"死亡|驾崩|下狱|定罪|去职","evidence":"宣告原句"}],"evidence":["正文原句"]' +
           '}',
@@ -184,7 +225,9 @@ export class AIFactExtractor implements FactExtractor {
     const facts = ensureTopLevelEvidence(
       sanitizeUnconfirmedDeathDeltas(parseSchema(extractedFactsSchema, raw, '事实提取结果'), state.entities)
     );
-    return this.recheckUnledgeredFate(facts, input, state.entities, entityCatalog);
+    return implyCustodyClearOnReversal(
+      await this.recheckUnledgeredFate(facts, input, state.entities, entityCatalog)
+    );
   }
 
   /**

@@ -86,6 +86,7 @@ function buildSampleOutline(opts?: { withWorldH3?: boolean; withCoolPointH3?: bo
 - 核心情绪：爽快
 - 卖点标签：系统反套路
 - 风格关键词：快节奏
+- 词汇档位：hardcore
 
 ## 核心驱动
 - 主角姓名：林北
@@ -455,6 +456,16 @@ ${emotion}
 }
 
 describe('parseExpandedOutline · H3 子小节解析回归', () => {
+  it('定位段解析词汇档位；缺字段时保持 undefined（归一化交给消费侧）', () => {
+    const withTier = parseExpandedOutline(buildSampleOutline({ withWorldH3: false }));
+    expect(withTier!.positioning.vocabularyTier).toBe('hardcore');
+
+    const withoutTier = parseExpandedOutline(
+      buildSampleOutline({ withWorldH3: false }).replace('- 词汇档位：hardcore\n', '')
+    );
+    expect(withoutTier!.positioning.vocabularyTier).toBeUndefined();
+  });
+
   it('H3 子小节模板下 worldBuilding 不再被丢弃（核心地点/势力/规则全部解析）', () => {
     const outline = parseExpandedOutline(buildSampleOutline({ withWorldH3: true }));
     expect(outline).not.toBeNull();

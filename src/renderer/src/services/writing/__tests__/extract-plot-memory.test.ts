@@ -716,3 +716,51 @@ describe('collectEraAnchors 当前年份锚（r11 三洞失败签名：纪年跨
     expect(collectEraAnchors([eraMemory(5, '永乐三年的旧事')])).toHaveLength(0);
   });
 });
+
+describe('overlayCharacterFates 押地残留清除（2026-09-30 r16 ch114 成洞实证）', () => {
+  function entityOf(id: string, name: string, attributes: Record<string, unknown> = {}): StoryEntity {
+    return {
+      id,
+      kind: 'character',
+      name,
+      aliases: [],
+      attributes: attributes as StoryEntity['attributes'],
+      knownBy: [id],
+      sourceTrace: [],
+    };
+  }
+
+  // 徐茂德形态：runtime 残留 status=下狱 + custody=天牢（ch49 入账），ch109
+  // 复职（解除 delta 不在 FATE_STATES，构成「终态章后活动」）→ 残留清解除时
+  // custody 必须一并清除，否则 stateDigest「custody:天牢」永久残留，
+  // 判官按在押连拒正确章节（fact_conflict 死亡螺旋成洞）。
+  it('后生活动清除残留终态时同步清除 custody 属性', () => {
+    const entities: Record<string, StoryEntity> = {
+      'char-xu': entityOf('char-xu', '徐茂德', { status: '下狱', custody: '天牢', title: '工部郎中·五品' }),
+    };
+    const memories = [
+      memoryWith([{ characterName: '徐茂德', stateType: 'status', state: '下狱', detail: '押赴天牢' }], 49),
+      memoryWith([
+        { characterName: '徐茂德', stateType: 'status', state: '复职', detail: '特旨无罪起复' },
+        { characterName: '徐茂德', stateType: 'status', state: '头衔:江宁冬漕验工使·正五品', detail: '授职' },
+      ], 109),
+    ];
+    const { entities: next } = overlayCharacterFates(entities, memories);
+    expect(next['char-xu'].attributes.status).toBeUndefined();
+    expect(next['char-xu'].attributes.custody).toBeUndefined();
+    // 无关属性不动
+    expect(next['char-xu'].attributes.title).toBe('工部郎中·五品');
+  });
+
+  it('仍在押者（无解除/活动）的 custody 保留', () => {
+    const entities: Record<string, StoryEntity> = {
+      'char-xu': entityOf('char-xu', '徐茂德', { status: '下狱', custody: '天牢' }),
+    };
+    const memories = [
+      memoryWith([{ characterName: '徐茂德', stateType: 'status', state: '下狱', detail: '押赴天牢' }], 49),
+    ];
+    const { entities: next } = overlayCharacterFates(entities, memories);
+    expect(next['char-xu'].attributes.status).toBe('下狱');
+    expect(next['char-xu'].attributes.custody).toBe('天牢');
+  });
+});

@@ -191,8 +191,19 @@ export function buildWordCountShortfallIssue(
 }
 
 /**
+ * 边缘超写宽限比：超限量占上限 ≤ 该比例时降为 warning（不拒收，落库偏长但完整）。
+ * 2026-10-01 p1reg20 ch10 实证：3549/3540（超 9 字，0.25%）被 blocking 五连拒成洞
+ * ——MAX_WORD_THRESHOLD=1.18 的设计初衷（118% 注释：避免 3520 左右完整成稿仅因
+ * 几十字擦边耗尽整章重试）在门禁层被反向执行。1.5%（约 53 字）只放行「完整成稿
+ * 的擦边超写」，真正失控超写（4000+）仍 blocking 走压缩/重写。
+ */
+export const EDGE_OVERFLOW_TOLERANCE = 0.015;
+
+/**
  * 正文落库前的统一字数硬门禁。短于下限和长于上限都会返回 blocking；
  * 调用方可以保留 rejected 草稿用于诊断/人工处理，但不得标记为 accepted。
+ * 例外：超限量 ≤ EDGE_OVERFLOW_TOLERANCE × 上限 的擦边超写降为 warning
+ * （不阻断 accept，进 issues 供改稿顺手修）。
  */
 export function buildWordCountBoundsIssue(
   prose: string,
@@ -200,7 +211,7 @@ export function buildWordCountBoundsIssue(
 ): {
   id: string;
   domain: 'fulfillment';
-  severity: 'blocking';
+  severity: 'blocking' | 'warning';
   message: string;
   evidence: string[];
 } | null {
@@ -209,6 +220,21 @@ export function buildWordCountBoundsIssue(
   if (bounds.status === 'ok') return null;
   if (bounds.status === 'short') {
     return buildWordCountShortfallIssue(prose, target);
+  }
+  const overflow = bounds.currentWords - bounds.maxWords;
+  if (overflow > 0 && overflow <= Math.floor(bounds.maxWords * EDGE_OVERFLOW_TOLERANCE)) {
+    return {
+      id: `word-count-over-edge:${bounds.currentWords}/${bounds.maxWords}`,
+      domain: 'fulfillment',
+      severity: 'warning',
+      message: `字数擦边超限：当前约 ${bounds.currentWords} 字，上限 ${bounds.maxWords} 字（超 ${overflow} 字，在宽限带内）。不阻断落库；若顺手改稿可删 1～2 句冗余叙述。`,
+      evidence: [
+        `currentWords=${bounds.currentWords}`,
+        `maxWords=${bounds.maxWords}`,
+        `targetWords=${target}`,
+        `edgeTolerance=${EDGE_OVERFLOW_TOLERANCE}`,
+      ],
+    };
   }
   return {
     id: `word-count-over:${bounds.currentWords}/${bounds.maxWords}`,

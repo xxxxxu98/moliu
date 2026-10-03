@@ -103,6 +103,13 @@ export interface ReaderEvaluationContext {
   genre: string;
   targetReader: string;
   positioning?: string;
+  /**
+   * 词汇档位（'hardcore' | 'balanced' | 'plain'，可空）：本书正文的用词可读性口径。
+   * hardcore=专业词是卖点的一部分，只要当场有大白话落地就不算扣分项；
+   * plain=正文应全日常语言，出现非日常术语即 readability 问题。
+   * 写作侧按同档渲染规则（proseRules SSOT），评审按同档判分，避免硬核书被误判。
+   */
+  vocabularyTier?: string;
 }
 
 export interface ReaderWindowChapter {
@@ -369,6 +376,7 @@ const COMMON_REVIEW_RULES = [
   '你是目标读者代表，不是写作模型的辩护者，也不是只查格式的校对员。',
   '判断读者实际获得的体验，不因文本出现“突然、震惊、问号、悬念”等关键词就认定钩子有效。',
   '慢热、悬疑公平性、人物可信度和题材惯例可以构成合理例外；不要把所有题材都按打脸爽文评判。',
+  '【词汇档位口径】context.vocabularyTier 标示本书用词档位：hardcore（硬核技术流）下专业术语本身不是问题，只有「术语出现但同句/邻句没有大白话落地、导致看不懂」才按 readability 记问题；plain（小白大白话）下出现非日常专业术语即按 readability 记问题；未标示时按 balanced（专业词少量且当场解释）口径。',
   'critical 只用于：看不懂发生了什么、上章明确承诺完全不回应、连续剧情无推进、整章冲突真空等读者底线。',
   '所有 high/critical 问题必须提供输入中的原句证据；没有证据时降低严重度和置信度。',
   'issues 是事实源；不要输出 overallScore，总分由程序按固定权重计算。',

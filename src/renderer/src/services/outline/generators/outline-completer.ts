@@ -12,6 +12,7 @@ import {
 } from '../rolling/foreshadowTiming';
 import { isAbortedError, isTransientError, retryBackoffDelayMs } from '@/utils/ai-error-classify';
 import { readPositiveIntEnv } from '@/utils/env';
+import { normalizeVocabularyTier, renderBlueprintVocabularyRule } from '@/services/story-runtime/proseRules';
 import {
   inspectOutlineCompleteness,
   OUTLINE_COMPLETENESS_POLICY,
@@ -22,6 +23,10 @@ import {
   findRevealTimingViolations,
   parseRevealNotBeforeChapter,
 } from '../validation/revealTiming';
+import {
+  findCoolPointPacingIssues,
+  findSuspenseDanglingIssues,
+} from '../validation/pacingLedger';
 
 type StructuredTextCaller = (
   system: string,
@@ -276,6 +281,25 @@ const {
 } = OUTLINE_COMPLETENESS_POLICY;
 
 /**
+ * 提取最近已生成章节的模式特征,用于回顾机制防止重复(P0.1 优化,2026-10-01)
+ */
+function extractRecentChapterPatterns(
+  outline: ExecutableOutline,
+  beforeChapter: number,
+  lookbackCount: number = 5
+): { cens: string[]; titles: string[]; coolPointTypes: string[] } {
+  const recentBlueprints = (outline.chapterBlueprints ?? [])
+    .filter(bp => bp.orderIndex < beforeChapter && bp.orderIndex >= beforeChapter - lookbackCount)
+    .sort((a, b) => b.orderIndex - a.orderIndex);
+  
+  return {
+    cens: recentBlueprints.map(bp => bp.CEN?.trim() || '').filter(Boolean).slice(0, 5),
+    titles: recentBlueprints.map(bp => bp.title?.trim() || '').filter(Boolean).slice(0, 5),
+    coolPointTypes: recentBlueprints.map(bp => bp.coolPointType?.trim() || '').filter(Boolean).slice(0, 5),
+  };
+}
+
+/**
  * 单章蓝图是续写的「合同」，节点质量直接决定正文质量。字数区间必须与
  * OUTLINE_COMPLETENESS_POLICY 保持一致，否则批量生成的蓝图会被硬门禁挡在应用之外。
  */
@@ -284,7 +308,14 @@ function buildChapterCompletionPrompt(
   direction: OutlineDirection,
   chapterNumbers: number[],
   issues: string[] = [],
+  recentPatterns?: { cens: string[]; titles: string[]; coolPointTypes: string[] }
 ): { system: string; user: string } {
+  // 词汇档位（全书唯一）：节点语言按档——上游节点用什么词汇，下游正文就放大什么词汇
+  const vocabularyTier = normalizeVocabularyTier({
+    tier: outline.positioning.vocabularyTier,
+    styleKeywords: outline.positioning.styleKeywords,
+    targetReaders: outline.positioning.targetReaders,
+  });
   // 只说"区间是多少"不足以让模型改掉超长几个字的钩子，必须点名本次要修的具体违规
   const issueSection = issues.length > 0
     ? `\n\n【本次必须修掉的格式违规】\n${issues.map(issue => `- ${issue}`).join('\n')}\n改写时优先压缩到区间内，宁可删修饰语也不得超字数。`
@@ -315,6 +346,30 @@ function buildChapterCompletionPrompt(
   const revealLockSection = revealLocked.length > 0
     ? `\n\n【本批登场锁禁令】以下角色在指定章号之前禁止出现在第${chapterNumbers[0]}-${chapterNumbers[chapterNumbers.length - 1]}章任何蓝图的标题/概要/CBN/CPNs/CEN/mustCover 中（不安排出场、行动、点名或身份揭示）；需要其作用时改用间接方式（传旨/他人转述/无名单侧写）：\n${revealLocked.map(item => `- 「${item.name}」（${item.timing}，第${item.notBefore}章前禁登场/禁揭示）`).join('\n')}`
     : '';
+  // P0.1 回顾机制:展示前面章节的模式,要求本批避免重复(2026-10-01)
+  const reviewSection = recentPatterns && (recentPatterns.cens.length > 0 || recentPatterns.titles.length > 0)
+    ? `\n\n【避免重复前面章节的模式】前${recentPatterns.cens.length}章已使用的模式如下,本批必须创新,不得复用相同句式或结构:\n` +
+      (recentPatterns.cens.length > 0 ? `- 章尾悬念(CEN)范例:\n${recentPatterns.cens.map((cen, i) => `  ${i + 1}. ${cen.slice(0, 60)}${cen.length > 60 ? '...' : ''}`).join('\n')}\n` : '') +
+      (recentPatterns.titles.length > 0 ? `- 标题范例:\n${recentPatterns.titles.map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n` : '') +
+      (recentPatterns.coolPointTypes.length > 0 ? `- 已用爽点类型:${[...new Set(recentPatterns.coolPointTypes)].join('、')}\n` : '') +
+      `本批章节的标题、CEN、爽点类型必须与上述范例明显不同:换用不同的句式结构、动作动词、情绪角度。`
+    : '';
+  // P2.2 节奏周期相位(2026-10-03 爽点-悬念联动编排):5 章一大周期的
+  // 蓄势→推进→爆发→余韵编排建议。相位由章号确定性映射(非语义判定),
+  // 措辞为「建议」——爆发章的爽点必须兑现本周期蓄势的张力,余韵章收束
+  // 后抛新钩,蓄势章才允许开新悬念。与区块约束(硬约束4)互补:区块管
+  // 事件归属,相位管张力起伏。
+  const phaseSection = `\n\n【节奏周期相位建议】(5 章一周期:蓄势→推进→爆发→余韵,相位按章号轮转)\n${chapterNumbers.map(n => {
+    const pos = ((n - 1) % 5) + 1;
+    const phase = pos <= 2
+      ? '蓄势(埋钩/升压/拉对立;本章允许开新悬念)'
+      : pos === 3
+        ? '推进(本章必须产出一个中型进展——揭示一层真相/拿下局部筹码/除掉一个爪牙,让读者看到主线在动;新悬念须克制)'
+        : pos === 4
+          ? '爆发(当章兑现大爽点,回收本周期蓄势的张力;禁止再蓄不兑)'
+          : '余韵+新钩(爆发后果必须落到具体的人/位/账变化——谁倒台/谁上位/账怎么清,禁止松散收场;抛出的下一周期悬念必须比本周期钩更强)';
+    return `- 第${n}章:${phase}`;
+  }).join('\n')}`;
   return {
     system: `你是中文长篇网文大纲拆章器。只输出指定章号的单章蓝图，不复述已有章节，不输出解释。
 每章必须严格使用以下结构：
@@ -336,8 +391,9 @@ function buildChapterCompletionPrompt(
 5. 所有字段都不得留空，禁止使用括号补充说明；
 6. 地点必须使用“registeredLocations”里已登记的地点名，禁止自创新地名或同义变体（如已登记「江城市」就不得写「南江市」）；需要新场景时写成已登记地点的下属区域（如「江城市·南郊冷库」）；
 7. 【伏笔时序锁】「本批伏笔时序禁令」清单列出的伏笔，其核心信息禁止出现在本批蓝图的 mustCover/CPNs/CEN 中——蓝图要求本章揭示而伏笔规定后章才许揭示时，写作端会被迫两头违约（拒稿成洞）。确需铺垫只可用不触及核心词面的暗痕（物件出现/旁人欲言又止），不得给出定性结论。
-“existingChapterCanon”是不可改写的既有事实：新章不得重置期限、重复破案/入狱/升职等已完成事件，不得让已倒台或被羁押的反派无解释恢复原职。`,
-    user: `【故事上下文】\n${compactContext(outline, direction, chapterNumbers)}${foreshadowEmbargoSection}${revealLockSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
+“existingChapterCanon”是不可改写的既有事实：新章不得重置期限、重复破案/入狱/升职等已完成事件，不得让已倒台或被羁押的反派无解释恢复原职。
+${renderBlueprintVocabularyRule(vocabularyTier)}`,
+    user: `【故事上下文】\n${compactContext(outline, direction, chapterNumbers)}${foreshadowEmbargoSection}${revealLockSection}${reviewSection}${phaseSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从”### 第${chapterNumbers[0]}章”开始输出。`,
   };
 }
 
@@ -772,10 +828,14 @@ export async function repairChapterBlueprints(params: {
    * 单批请求（含空响应退避重试）。prompt 基于传入的 outline 快照构建；
    * 并发模式下所有批次共用进入时的快照——canon 只带邻接窗口（±5 章），
    * 跨批新鲜度差异可忽略，换来的是 5 批 10 章从串行 5 次往返折叠为 ~2 次。
+   * P0.1 优化:串行模式下传入实时 outline,支持回顾机制(2026-10-01)
    */
   const requestBatch = async (batch: number[], outlineForPrompt: ExecutableOutline): Promise<string> => {
     const batchIssues = batch.flatMap(no => issuesByChapter?.get(no) ?? []);
-    const prompt = buildChapterCompletionPrompt(outlineForPrompt, params.direction, batch, batchIssues);
+    // P0.1:提取前面章节的模式特征,注入 prompt 避免重复
+    const batchMin = Math.min(...batch);
+    const recentPatterns = batchMin > 5 ? extractRecentChapterPatterns(outlineForPrompt, batchMin, 5) : undefined;
+    const prompt = buildChapterCompletionPrompt(outlineForPrompt, params.direction, batch, batchIssues, recentPatterns);
 
     // 批次级瞬态重试：空响应（「成功」返回 0 字）与瞬态异常（网关断流/429/5xx）都退避重试。
     // 空响应有两种形态：请求层抛「API 未返回内容」，或调用器正常返回空串（mock/部分网关）。
@@ -956,7 +1016,9 @@ export async function repairChapterBlueprints(params: {
     await Promise.all(workers);
   };
 
-  const batchConcurrency = readPositiveIntEnv('MOLIU_OUTLINE_BATCH_CONCURRENCY') ?? 3;
+  // P0.1 优化:强制串行生成防止同质化(2026-10-01)
+  // 并发生成导致模型复用同一套句式(r16实证:76/200章章尾复读)
+  const batchConcurrency = readPositiveIntEnv('MOLIU_OUTLINE_BATCH_CONCURRENCY') ?? 1;
   if (batchConcurrency > 1 && batches.length > 1) {
     onProgress?.(
       `并发${phase}单章蓝图 ${batches.length} 批（每批 ${CHAPTER_BLUEPRINT_BATCH_SIZE} 章，并发 ${Math.min(batchConcurrency, batches.length)}）...`,
@@ -991,6 +1053,7 @@ export async function repairChapterBlueprints(params: {
       await mergeBatch(batch, results.get(batch) ?? '');
     }
   } else {
+    // P0.1 串行模式:每批使用实时 outline,支持回顾前面批次的生成结果(2026-10-01)
     const batchCount = batches.length;
     let succeededBatches = 0;
     let lastSerialError: unknown;
@@ -1000,6 +1063,7 @@ export async function repairChapterBlueprints(params: {
       );
       let generated: string;
       try {
+        // 使用实时 outline,包含前面批次已生成的章节
         generated = await requestBatch(batch, outline);
       } catch (error) {
         if (isAbortedError(error, params.options.signal)) throw error;
@@ -1012,9 +1076,24 @@ export async function repairChapterBlueprints(params: {
       }
       succeededBatches += 1;
       await mergeBatch(batch, generated);
+      // mergeBatch 会更新 outline 变量,下一批会看到本批结果
     }
     if (succeededBatches === 0 && lastSerialError !== undefined) {
       throw lastSerialError instanceof Error ? lastSerialError : new Error(String(lastSerialError));
+    }
+    // 统计失败批次中未能生成的章节
+    if (succeededBatches < batchCount) {
+      const existingChapters = new Set(
+        outline.chapterBlueprints?.map(bp => bp.orderIndex) ?? [],
+      );
+      const failedBatches = batches.slice(succeededBatches);
+      const failedChapterNumbers = failedBatches.flatMap(batch => batch);
+      const missingCount = failedChapterNumbers.filter(num => !existingChapters.has(num)).length;
+      if (missingCount > 0) {
+        warnings.push(
+          `单章蓝图${phase}完成 ${succeededBatches}/${batchCount} 批，仍有 ${missingCount}/${failedChapterNumbers.length} 章未解出`,
+        );
+      }
     }
   }
 
@@ -1051,7 +1130,16 @@ export async function completeIncompleteOutline(params: {
   const runBlueprintRepair = async (
     chapterNumbers: number[],
     phase: '补全' | '定点修复',
+    extraIssues?: Array<{ chapterNumber: number; detail: string }>,
   ): Promise<void> => {
+    // 节奏账本等跨章检测的修复指引按章号并入 issuesByChapter——修复轮提示词
+    // 已支持「本次必须修掉的问题」注入(与滚纲定点修复同机制)
+    const issuesByChapter = new Map<number, string[]>();
+    for (const issue of extraIssues ?? []) {
+      const list = issuesByChapter.get(issue.chapterNumber) ?? [];
+      list.push(issue.detail);
+      issuesByChapter.set(issue.chapterNumber, list);
+    }
     const repaired = await repairChapterBlueprints({
       rawText,
       outline,
@@ -1061,6 +1149,7 @@ export async function completeIncompleteOutline(params: {
       chapterNumbers,
       phase,
       onProgress: params.onProgress,
+      ...(issuesByChapter.size > 0 ? { issuesByChapter } : {}),
     });
     rawText = repaired.rawText;
     outline = repaired.outline;
@@ -1178,9 +1267,23 @@ export async function completeIncompleteOutline(params: {
       outline.keyCharacters,
     );
     const revealChapters = [...new Set(revealViolations.map(v => v.chapterNumber))];
-    const repairTargets = [...new Set([...incompleteChapters, ...revealChapters])].sort(
-      (a, b) => a - b,
+    // 爽点节奏（2026-10-01 P1.1 跨章节奏账本）：全量视角纯计数，补滚动续纲
+    // 批内检测的跨批缺口。streak（连续同类型=同质化，修法明确）并入定点
+    // 修复轮；missing（标注缺失）只记 warning——旧格式大纲全量缺字段时把
+    // 所有章推入修复轮是过度反应，且「字段没填」≠「正文没爽点」
+    const coolPointIssues = findCoolPointPacingIssues(outline.chapterBlueprints ?? []);
+    const coolPointStreakIssues = coolPointIssues.filter(
+      issue => issue.kind === 'coolpoint-streak',
     );
+    for (const issue of coolPointIssues.filter(i => i.kind === 'coolpoint-missing')) {
+      warnings.push(`节奏账本·爽点:第${issue.chapterNumber}章 ${issue.detail}`);
+    }
+    const coolPointChapters = [...new Set(coolPointStreakIssues.map(issue => issue.chapterNumber))];
+    const repairTargets = [...new Set([
+      ...incompleteChapters,
+      ...revealChapters,
+      ...coolPointChapters,
+    ])].sort((a, b) => a - b);
     if (repairTargets.length === 0) break;
     if (incompleteChapters.length > 0) {
       warnings.push(
@@ -1192,7 +1295,20 @@ export async function completeIncompleteOutline(params: {
         `登场锁违规 ${revealViolations.length} 处，并入第 ${round + 1} 轮定点修复：${revealViolations.map(describeRevealTimingViolation).join('；')}`,
       );
     }
-    await runBlueprintRepair(repairTargets, '定点修复');
+    if (coolPointStreakIssues.length > 0) {
+      warnings.push(
+        `爽点同质化 ${coolPointStreakIssues.length} 处，并入第 ${round + 1} 轮定点修复：${coolPointStreakIssues.map(issue => issue.detail).join('；')}`,
+      );
+    }
+    await runBlueprintRepair(repairTargets, '定点修复', coolPointStreakIssues);
+  }
+
+  // 悬念悬空观察项（2026-10-01 P1.1）：词面是承接的下限证据——换措辞承接
+  // 会漏报、氛围型钩子会误报，只记 warning 供 triage/书审聚合与人工抽验，
+  // 不进修复轮（fail-closed 误报比漏报致命，r4 方位悬垂教训）
+  const suspenseIssues = findSuspenseDanglingIssues(outline.chapterBlueprints ?? []);
+  for (const issue of suspenseIssues) {
+    warnings.push(`节奏账本·悬念:第${issue.chapterNumber}章 ${issue.detail}`);
   }
 
   // 未登记角色 / 章级门禁缺陷等语义修复不在这里做：补全只负责把结构补齐，

@@ -1136,6 +1136,10 @@ export async function runContinueWriteChapters(options: {
   // 履约域失败记账（与生产 useBatchWriter 同构）：连续 ≥2 次触发单章蓝图再生，
   // 每章生命周期最多再生 1 次。r4 ch187 实证缺此环的下场：命运冲突五连拒成洞。
   const blueprintRepairLedger = new BlueprintRepairLedger();
+  // 管线级故障熔断记账（2026-10-01 r17 实证）：单章耗尽跳过继续是完本能力所需，
+  // 但「连续多章以完全相同的错误耗尽」说明故障在管线/代码层而非本章内容——
+  // r17 的 salvage ReferenceError 让 102/200 章无声成洞，跑了 10 小时才被发现。
+  let identicalFailureStreak = { message: '', count: 0 };
   try {
     for (let offset = 0; offset < chapterCount; offset += 1) {
       if (options.signal?.aborted) break;
@@ -1329,8 +1333,9 @@ export async function runContinueWriteChapters(options: {
       }
       // 用户停止：立即结束整批
       if (aborted || options.signal?.aborted) break;
-      // 成功：保留结果，继续下一章
+      // 成功：保留结果，继续下一章（同时清管线故障连击计数）
       if (finalResult?.output.success) {
+        identicalFailureStreak = { message: '', count: 0 };
         chapters.push(finalResult);
         await options.onChapterSettled?.({
           result: finalResult,
@@ -1411,6 +1416,18 @@ export async function runContinueWriteChapters(options: {
           requestedChapters: chapterCount,
           project: session.getProject(),
         });
+        // 管线级故障熔断：连续 3 章以完全相同错误耗尽 → 中止整批（fail-fast），
+        // 把损失锁死在 3 章内；错误互不相同的常规内容失败不受影响。
+        const exhaustedWith = lastError || `重试耗尽（${lastErrorKind}）`;
+        identicalFailureStreak =
+          identicalFailureStreak.message === exhaustedWith
+            ? { message: exhaustedWith, count: identicalFailureStreak.count + 1 }
+            : { message: exhaustedWith, count: 1 };
+        if (identicalFailureStreak.count >= 3) {
+          throw new Error(
+            `连续 ${identicalFailureStreak.count} 章以相同错误耗尽，疑似管线级故障（代码/配置），中止批量防无声成洞：${exhaustedWith.slice(0, 160)}`
+          );
+        }
       }
       // 重试耗尽：失败章已标记（writeStatus=failed + 失败详情），跳过继续写下一章
       // （abort/用户停止已在上方 break，走到这里的失败不阻断全书完本）

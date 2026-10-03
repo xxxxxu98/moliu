@@ -947,6 +947,7 @@ export function mapExecutableOutlineToGeneratedOutline(
     styleKeywords: [...outline.positioning.styleKeywords],
     targetReaders: [...outline.positioning.targetReaders],
     coreEmotions: [...outline.positioning.coreEmotions],
+    vocabularyTier: outline.positioning.vocabularyTier,
     worldSetting: toWorldSetting(outline),
     structure: {
       act1: outline.acts?.find((act) => act.name === 'act1')

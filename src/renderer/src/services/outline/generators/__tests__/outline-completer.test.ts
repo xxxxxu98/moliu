@@ -254,7 +254,7 @@ function buildChapterBlock(chapterNumber: number): string {
 - mustCover：完成本章复验
 - 禁区：不得揭晓幕后主使
 - 章尾钩子文案：这一页是谁撕的
-- 爽点类型：反转`;
+- 爽点类型：${chapterNumber % 2 === 0 ? '打脸' : '反转'}`;
 }
 
 describe('repairChapterBlueprints', () => {
@@ -397,6 +397,53 @@ describe('repairChapterBlueprints', () => {
     expect(bp?.mustCover.join('\n') + (bp?.CPNs ?? []).join('\n')).not.toContain('行家手笔');
   });
 
+  it('蓝图批次 system prompt 按词汇档位注入节点语言规则（定位无档位时由关键词推导）', async () => {
+    const outline = parseExpandedOutline(MAIN_OUTLINE_TEXT)!;
+    // 深海回声实测形态：定位无显式档位，styleKeywords 含硬核信号 → 推导 hardcore
+    outline.positioning.styleKeywords = ['冷峻', '硬核', '严密推演'];
+    outline.positioning.vocabularyTier = undefined;
+    let capturedSystem = '';
+
+    await repairChapterBlueprints({
+      rawText: MAIN_OUTLINE_TEXT,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode: async (system: string, _user: string) => {
+        capturedSystem = capturedSystem || system;
+        return buildChapterBlock(2);
+      },
+      chapterNumbers: [2],
+      phase: '补全',
+    });
+
+    expect(capturedSystem).toContain('词汇档位·硬核技术流');
+    expect(capturedSystem).toContain('蓝图节点');
+  });
+
+  it('蓝图批次 user prompt 注入节奏周期相位建议(2026-10-03 P2.2 联动编排)', async () => {
+    const outline = parseExpandedOutline(MAIN_OUTLINE_TEXT)!;
+    let capturedUser = '';
+    await repairChapterBlueprints({
+      rawText: MAIN_OUTLINE_TEXT,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode: async (_system: string, user: string) => {
+        capturedUser = user;
+        return [4].map(buildChapterBlock).join('\n\n');
+      },
+      chapterNumbers: [4],
+      phase: '补全',
+    });
+    expect(capturedUser).toContain('【节奏周期相位建议】');
+    // 第4章 = 周期爆发位(承接前3章蓄势,当章兑现大爽点)
+    expect(capturedUser).toContain('第4章:爆发');
+    expect(capturedUser).toContain('回收本周期蓄势的张力');
+    // 第5章 = 余韵位
+    expect(capturedUser).not.toContain('第5章:'); // 本批只有第4章,不标注批外章
+  });
+
   // 矩阵实测（minimax-m3/glm 网关）：蓝图批次请求「成功」但返回 0 字——无错误事件、
   // 不进任何重试链，这批章永远缺失 → fail-closed。现在空响应批次按瞬态退避重试。
   it('批次返回空响应时退避重试，重试成功后照常拼装', async () => {
@@ -529,6 +576,48 @@ describe('repairChapterBlueprints', () => {
     expect(result.warnings.some(w => w.includes('重试耗尽仍失败'))).toBe(true);
     expect(result.warnings.some(w => w.includes('仍有 10/10 章未解出'))).toBe(true);
   }, 60_000);
+
+  it('连续同类型爽点触发定点修复并注入修复指引(2026-10-01 P1.1 节奏账本)', async () => {    // 50 章蓝图完整但爽点类型全为「碾压」→ streak 全量命中(报首章)。
+    // 修复轮的 user prompt 必须携带修复指引(issuesByChapter 注入),
+    // 修复响应把首章换成「打脸」后 streak 消解。
+    const chapters = Array.from(
+      { length: OUTLINE_COMPLETENESS_POLICY.startupChapterCount },
+      (_, index) => buildChapterBlock(index + 1).replace(/爽点类型：.+$/u, '爽点类型：碾压'),
+    ).join('\n\n');
+    const seeded = replaceOutlineSection(
+      MAIN_OUTLINE_TEXT,
+      ['单章蓝图', '逐章蓝图'],
+      '单章蓝图',
+      chapters,
+    );
+    const outline = parseExpandedOutline(seeded)!;
+    expect(outline.chapterBlueprints?.[0]?.coolPointType).toBe('碾压');
+
+    const callStructuredTextMode = vi.fn(async (_system: string, user: string) => {
+      if (user.includes('【只需补写的章号】')) {
+        return buildChapterBlock(1).replace(/爽点类型：.+$/u, '爽点类型：打脸');
+      }
+      // 角色补全等旁路请求:返回合法角色节,不干扰本用例断言
+      return '#### 盟友\n- 姓名：赵六\n- 角色定位：盟友\n- 剧情功能：辅佐主角\n- 核心需求：查明旧案\n- 与主角张力：亦师亦友\n- 最佳登场时机：第2章\n- 外显目标：结案\n- 隐性需求：赎罪\n- 核心创伤：错判旧案\n- 角色秘密：持有原卷副本\n- 角色转折点：第20章\n- 角色弧线：起点 → 中段 → 终点\n- 角色资源：人脉\n- 关系变化：由疑到信';
+    });
+
+    const result = await completeIncompleteOutline({
+      rawText: seeded,
+      outline,
+      direction: { title: '方向' } as OutlineDirection,
+      options: {},
+      callStructuredTextMode,
+    });
+
+    expect(result.warnings.some(w => w.includes('爽点同质化'))).toBe(true);
+    // 修复指引确实进了修复请求(爽点轮换要求在 prompt 里)
+    const repairCall = callStructuredTextMode.mock.calls
+      .map(call => String(call[1] ?? ''))
+      .find(text => text.includes('爽点类型轮换') || text.includes('爽点会疲劳'));
+    expect(repairCall).toBeTruthy();
+    // 修复后第 1 章类型已换,streak 首章不再是第 1 章
+    expect(result.outline.chapterBlueprints?.[0]?.coolPointType).toBe('打脸');
+  }, 30_000);
 
   it('并发批次全部重试耗尽时仍上抛，触发外层整体重试', async () => {
     const outline = parseExpandedOutline(MAIN_OUTLINE_TEXT)!;

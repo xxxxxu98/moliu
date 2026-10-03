@@ -213,6 +213,35 @@ describe('SceneDraftEngine.draft', () => {
     expect(drafts[0].paragraphs).toEqual(['开篇。', '推进。', '章末钩子。']);
   });
 
+  it('vocabularyTier 按档注入词汇规则；缺省注入 balanced（规则永远在场）', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 1,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context, { vocabularyTier: 'hardcore' });
+    let system = (generate.mock.calls[0][0] as { system: string }).system;
+    expect(system).toContain('词汇档位·硬核技术流');
+    expect(system).toContain('术语落地底线');
+
+    await engine.draft(plan, context, { vocabularyTier: 'plain' });
+    system = (generate.mock.calls[1][0] as { system: string }).system;
+    expect(system).toContain('词汇档位·小白大白话');
+    expect(system).toContain('禁止非日常专业术语');
+
+    await engine.draft(plan, context);
+    system = (generate.mock.calls[2][0] as { system: string }).system;
+    expect(system).toContain('词汇档位·均衡');
+  });
+
   it('system prompt 要求同轮输出口语风 chapterTitle', async () => {
     const generate = vi.fn(async () => ({
       chapterTitle: '这尸体不对劲',
@@ -692,3 +721,188 @@ describe('stripDraftLeakage', () => {
     ).toEqual(['正文。', '下一段。']);
   });
 });
+
+describe('黄金三章专用规则注入', () => {
+  it('第一章(chapterNumber=0)注入世界观窗口规则', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 0,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context);
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).toContain('【黄金开篇】');
+    expect(request.system).toContain('【第一章·世界观窗口】');
+    expect(request.system).toContain('【第一章·主角人设】');
+    expect(request.system).toContain('【第一章·开场钩子】');
+    expect(request.system).toContain('【第一章·金手指露出】');
+    expect(request.system).toContain('前 30% 篇幅内必须建立');
+    expect(request.system).toContain('前 3 段内必须出现');
+    // 不应包含第二章或第三章的规则
+    expect(request.system).not.toContain('【第二章·');
+    expect(request.system).not.toContain('【第三章·');
+  });
+
+  it('第二章(chapterNumber=1)注入主线目标规则', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['续写。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 1,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context);
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).toContain('【黄金开篇】');
+    expect(request.system).toContain('【第二章·主线目标】');
+    expect(request.system).toContain('【第二章·首个爽点】');
+    expect(request.system).toContain('【第二章·对立建立】');
+    expect(request.system).toContain('【第二章·期待感】');
+    expect(request.system).toContain('压制→反击→小胜');
+    // 不应包含第一章或第三章的规则
+    expect(request.system).not.toContain('【第一章·');
+    expect(request.system).not.toContain('【第三章·');
+  });
+
+  it('第三章(chapterNumber=2)注入金手指展示规则', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['第三章。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 2,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context);
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).toContain('【黄金开篇】');
+    expect(request.system).toContain('【第三章·金手指展示】');
+    expect(request.system).toContain('【第三章·拉仇恨】');
+    expect(request.system).toContain('【第三章·信息差】');
+    expect(request.system).toContain('【第三章·长线悬念】');
+    expect(request.system).toContain('【第三章·钩子强度】');
+    expect(request.system).toContain('必须是 strong 级');
+    expect(request.system).toContain('碾压');
+    // 不应包含第一章或第二章的规则
+    expect(request.system).not.toContain('【第一章·');
+    expect(request.system).not.toContain('【第二章·');
+  });
+
+  it('第四章及以后(chapterNumber>=3)不注入黄金三章规则', async () => {    const generate = vi.fn(async () => ({
+      paragraphs: ['普通章节。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 3,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context);
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).not.toContain('【黄金开篇】');
+    expect(request.system).not.toContain('【第一章·');
+    expect(request.system).not.toContain('【第二章·');
+    expect(request.system).not.toContain('【第三章·');
+    expect(request.system).not.toContain('世界观窗口');
+    expect(request.system).not.toContain('金手指展示');
+  });
+
+  it('黄金三章规则包含开篇段落密度约束', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 0,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+
+    await engine.draft(plan, context);
+
+      const request = generate.mock.calls[0][0] as { system: string };
+      expect(request.system).toContain('【开篇段落强制短促】');
+      expect(request.system).toContain('中位数目标35-40字');
+      expect(request.system).toContain('连续叙述段≤2段');
+      expect(request.system).toContain('对话占比≥35%');
+    });
+  });
+
+  it('未闭合悬念清单注入【未闭合悬念承接】规则块(2026-10-01 P1.1)', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['承接正文。'],
+      candidateEvents: allowed,
+    }));
+    const engine = new SceneDraftEngine({ generate });
+    const plan: ScenePlan = {
+      chapterNumber: 6,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+
+    await engine.draft(
+      plan,
+      { blocks: [], totalTokenEstimate: 0, omitted: [] },
+      {
+        recentChapterCliffhangers: [
+          '第5章：「窗外劲弩直射陆衡面门」',
+          '第4章：「密信上的火漆印属于宫中」',
+        ],
+      },
+    );
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).toContain('【未闭合悬念承接】');
+    expect(request.system).toContain('第5章：「窗外劲弩直射陆衡面门」');
+    expect(request.system).toContain('第4章：「密信上的火漆印属于宫中」');
+    expect(request.system).toContain('禁止全部无视另起炉灶');
+    expect(request.system).toContain('以上章正文事实为准');
+  });
+
+  it('无悬念清单时不注入空规则块', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['正文。'],
+      candidateEvents: allowed,
+    }));
+    const engine = new SceneDraftEngine({ generate });
+    const plan: ScenePlan = {
+      chapterNumber: 6,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+
+    await engine.draft(plan, { blocks: [], totalTokenEstimate: 0, omitted: [] });
+
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).not.toContain('【未闭合悬念承接】');
+  });

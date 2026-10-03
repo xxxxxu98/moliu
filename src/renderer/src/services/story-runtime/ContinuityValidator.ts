@@ -99,7 +99,7 @@ function parseInventoryPath(path: string): { owner: string; item: string } | und
  * 非字符串原样保留。空 attributes 返回 undefined（不进 digest）。
  */
 function compactAttributesForDigest(
-  attributes: Record<string, JsonValue> | undefined,
+  attributes: Record<string, JsonValue> | undefined
 ): Record<string, unknown> | undefined {
   if (!attributes || Object.keys(attributes).length === 0) {
     return undefined;
@@ -113,6 +113,27 @@ function compactAttributesForDigest(
     }
   }
   return out;
+}
+
+/**
+ * 状态摘要侧的押地残留兜底（2026-09-30 g38f r16 ch114 成洞实证）：
+ * status 已是逆转族（获释/复职/平反等）却仍带 custody 属性时，判官会把
+ * 「custody:天牢」读作在押并连拒正确章节。提取侧已补伴随 remove delta
+ * （FactExtractor.implyCustodyClearOnReversal），此处兜住旧 store 回放与
+ * 任何绕过提取层的写入路径。读取侧归一化，不改状态本体。
+ */
+const DIGEST_RELEASED_STATUS_VALUES = new Set([
+  '获释', '保释', '平反', '复职', '复位', '赦免', '起复', '揭晓',
+]);
+
+export function dropStaleCustodyForDigest(
+  attributes: Record<string, JsonValue> | undefined
+): Record<string, JsonValue> | undefined {
+  if (!attributes) return attributes;
+  if (!DIGEST_RELEASED_STATUS_VALUES.has(String(attributes.status ?? ''))) return attributes;
+  if (!('custody' in attributes)) return attributes;
+  const { custody: _stale, ...rest } = attributes;
+  return rest;
 }
 
 function mapJudgeIssueDomain(type: ChapterJudgeIssueType): ContinuityDomain {
@@ -329,7 +350,7 @@ export class ContinuityValidator {
               // 补全 attributes（生死/位置/状态等）：AIChapterJudge 的 prompt 已声明
               // 「依据状态摘要里的实体生死/位置/持有物判定 fact_conflict」，此前 stateDigest
               // 只给 id/name/kind，判官缺判据 → 既会误报也会漏报。补上后弥合口径断层。
-              attributes: compactAttributesForDigest(entity.attributes),
+              attributes: compactAttributesForDigest(dropStaleCustodyForDigest(entity.attributes)),
             })),
             knowledge: state.knowledge,
             inventory: state.inventory,

@@ -13,7 +13,13 @@ import { CHAPTER_TITLE_PROMPT_RULES, normalizeGeneratedChapterTitle } from '@/se
 import { MAX_WORD_THRESHOLD, MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
 import { renderStatusRules } from '@/services/writing/stateLedger';
 
-import { CHAPTER_STRUCTURE_RULES, CHAPTER_STYLE_RULES } from './proseRules';
+import {
+  CHAPTER_STRUCTURE_RULES,
+  CHAPTER_STYLE_RULES,
+  renderVocabularyRules,
+  renderGoldenChapterRules,
+  type VocabularyTier,
+} from './proseRules';
 import { parseSchema, sceneDraftSchema } from './schemas';
 import { sanitizeSceneDraftParagraphs } from './stripDraftLeakage';
 
@@ -220,6 +226,17 @@ export interface SceneDraftOptions {
    * 正文中的身份/地位/职权必须与角色卡一致，禁止发明同名姻亲/替身。
    */
   characterIdentityAnchors?: Array<{ name: string; identity: string }>;
+  /**
+   * 近几章的章尾悬念(CEN 规划原文,如「第5章:窗外劲弩直射陆衡面门」)。
+   * 2026-10-01 P1.1 悬念账本写作层注入:把「前面抛了什么」摆到写手眼前,
+   * 要求本章自然承接至少一条(正面兑现或显式推进),杜绝悬念开而不接。
+   */
+  recentChapterCliffhangers?: string[];
+  /**
+   * 词汇档位（大纲定位产出，全书唯一）：调节正文术语密度与落地口径。
+   * 缺省 balanced；规则永远注入，只有宽严之分（详见 proseRules.renderVocabularyRules）。
+   */
+  vocabularyTier?: VocabularyTier;
 }
 
 export class SceneDraftEngine {
@@ -385,6 +402,16 @@ export class SceneDraftEngine {
           '- 本章收尾必须落在 CEN 的新后果/新悬念上，用与前章不同的动作、意象和句式落笔',
         ]
       : [];
+    // 未闭合悬念承接(2026-10-01 P1.1 悬念账本写作层):近几章 CEN 是规划性
+    // 悬念,本章必须接住至少一条——悬念开而不接是弃书点(读者裁判 r14 实证
+    // 「悬念累积不闭合」)。与上章正文实际收尾冲突时正文优先(悬念本身仍要接)
+    const recentCliffhangerRules = (options?.recentChapterCliffhangers ?? []).length > 0
+      ? [
+          '- 【未闭合悬念承接】以下是最近几章章尾抛出的悬念（规划原文），本章正文必须正面承接其中至少一条——当场兑现，或显式推进一步后抛出更强的新钩；禁止全部无视另起炉灶：',
+          ...(options?.recentChapterCliffhangers ?? []).map(item => `  - ${item}`),
+          '- 悬念与上章正文实际收尾描述有出入时，以上章正文事实为准；但悬念事件本身必须被接住，不得凭「没发生过」跳过',
+        ]
+      : [];
     // 上章结尾仲裁：CBN 是规划语句，正文事实优先；防止开场状态回退
     const previousEndingRules = (options?.previousChapterEnding ?? '').trim()
       ? [
@@ -439,9 +466,12 @@ export class SceneDraftEngine {
         ...titleRules,
         '- paragraphs 至少 1 段，写可直接入库的小说正文（中文）',
         ...CHAPTER_STRUCTURE_RULES,
+        ...renderGoldenChapterRules(plan.chapterNumber),
         ...recentEndingRules,
+        ...recentCliffhangerRules,
         ...previousEndingRules,
         ...CHAPTER_STYLE_RULES,
+        ...renderVocabularyRules(options?.vocabularyTier),
         '- paragraphs 数组元素只能是小说正文，禁止写入 sceneId/beatId/candidateEvents 等字段名，禁止写入 ] } : 等 JSON 骨架',
         '- candidateEvents 只填 id 列表（从 allowedCandidateEventIds 中选），禁止重复粘贴 summary',
         ...wordCountRules,

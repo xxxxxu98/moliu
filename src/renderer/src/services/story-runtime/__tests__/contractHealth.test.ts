@@ -272,6 +272,27 @@ describe('contractHealth', () => {
     expect(report.staleRemovedMustCover).toContain(rawNode);
   });
 
+  it('被裁节拍导出 (原句, 终态角色) 明细——引擎「裁而不弃」改写的输入（r16 S2-41/52）', () => {
+    const contracts = makeContracts();
+    contracts.chapter.mustCover = ['钱半江响应号召率商帮移交三万石漕粮', '沈淮呈上漕运铁证'];
+    contracts.chapter.CPNs = ['沈淮呈上漕运铁证'];
+    const state = makeState();
+    state.entities['char-qian'] = {
+      id: 'char-qian',
+      kind: 'character',
+      name: '钱半江',
+      aliases: [],
+      attributes: { status: '下狱' },
+      knownBy: ['char-qian'],
+      sourceTrace: [],
+    };
+    const { report } = healChapterContract(contracts.chapter, { state });
+    expect(report.staleRemovedDetails).toContainEqual({
+      item: '钱半江响应号召率商帮移交三万石漕粮',
+      offender: '钱半江',
+    });
+  });
+
   it('mustCover 全裁空且 goal 自带陈旧剧情时，goal 不得从回退口溜回（ch24 后门）', () => {
     const contracts = makeContracts();
     contracts.chapter.mustCover = ['孙泰当堂认罪画押'];
@@ -325,6 +346,31 @@ describe('contractHealth', () => {
     expect(detectOpeningRepetitionIssue(normalProse, prevEnding)).toBeNull();
     // 无上章结尾时不误报
     expect(detectOpeningRepetitionIssue(repeatedProse, '')).toBeNull();
+  });
+
+  it('句级逐字复读检测：复读上章结尾一句藏在段中(整体相似度被稀释)仍拦——2026-10-03 r17 ch40/ch127 实证', () => {
+    // ch127 实证形态：开头第一句逐字复读上章结尾句(23字)，随后全是新内容，
+    // 整体 bigram 相似度仅 0.16(旧 0.55 阈值全漏)
+    const prevEnding127 =
+      '他们是要将顾砚千辛万苦从江南抢回来的三百万两真金白银，径直推入大皇子李彻在关外那座谁也算不清底细的泥潭深渊。台阶下深重的暗影，悄无声息地向着长案蔓延开来。';
+    const prose127Open =
+      '台阶下深重的暗影，悄无声息地向着长案蔓延开来。满坪白银在秋日惨淡的光晕下泛着霜雪般的寒意。两百辆大车围在户部太仓前，沉甸甸的箱笼连成一片银海。';
+    const issue127 = detectOpeningRepetitionIssue(prose127Open, prevEnding127);
+    expect(issue127).not.toBeNull();
+    expect(issue127!.severity).toBe('blocking');
+    expect(issue127!.message).toContain('逐字复读');
+
+    // ch40 实证形态：复读句前面先铺一句新环境句(43字复读藏在第二句)
+    const prevEnding40 =
+      '顾砚立于丹墀高处，目送蟒袍身影远去，官袍下的手指缓缓收拢于朝笏之上。晨光穿透云层照在紫禁城金瓦之上，泛起刺目光晕，而皇城深处暗伏的凶险波澜，才刚刚露出带血的獠牙。';
+    const prose40Open =
+      '金水桥畔的汉白玉螭首在天光下泛着寒芒。晨光穿透云层照在紫禁城金瓦之上，泛起刺目光晕，而皇城深处暗伏的凶险波澜，才刚刚露出带血的獠牙。二皇子李琰摔袖离去的脚步声渐渐隐入宫道拐角，满朝朱紫已然散尽，金阶石坪前只余顾砚一人。';
+    expect(detectOpeningRepetitionIssue(prose40Open, prevEnding40)).not.toBeNull();
+
+    // 负例：换措辞承接(无 12 字连续逐字片段)不拦——词面下限只管逐字复读
+    const paraphraseOpen =
+      '台阶之下的浓重阴影正一寸寸漫过长案。秋阳惨淡，白银泛着霜雪似的冷光。';
+    expect(detectOpeningRepetitionIssue(paraphraseOpen, prevEnding127)).toBeNull();
   });
 
   it('【让路】标注禁区跳过词表猜测直接软化（2026-08-28 根治方案）', () => {

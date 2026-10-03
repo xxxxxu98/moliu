@@ -290,9 +290,20 @@ describe('叙述段过重（对话段拉低均值/CV 的盲区，2026-09-27 新�
 });
 
 describe('buildTypesettingIssues 生产硬门禁', () => {
-  it('单段超过 420 字时直接报告 high', () => {
-    const issues = buildTypesettingIssues(`${'长段内容。'.repeat(90)}\n\n正常收束。`);
-    expect(issues.some(issue => issue.severity === 'high' && issue.description.includes('段落过密'))).toBe(true);
+  it('有标点的超长墙被 normalize 确定性拆解；无标点墙仍报 high（2026-10-01 拆分器落地）', () => {
+    // '长段内容。'×90 = 450 字墙,句末标点充足 → 拆分器按句末切成多段,
+    // 门禁不再见到超长段(确定性修复取代报high→烧预算整章重写)
+    const wall = '长段内容。'.repeat(90);
+    const normalized = normalizeWebnovelParagraphs(wall);
+    const stats = analyzeParagraphDensity(normalized);
+    expect(stats.extremeParagraphCount).toBe(0);
+    expect(stats.paragraphCount).toBeGreaterThan(1);
+
+    // 无句末标点的极端墙(拆分器无从下刀)仍由 HARD_MAX 门禁报 high
+    const noPunct = '他'.repeat(EXTREME_PARAGRAPH_CHARS + 50);
+    expect(
+      buildTypesettingIssues(noPunct).some(issue => issue.severity === 'high')
+    ).toBe(true);
   });
 
   it('中文对话引号失配先被 normalize 确定性补齐，门禁不再报（fix2 ch39 回归）', () => {
@@ -461,5 +472,110 @@ describe('repairUnbalancedQuotes（通用引号失配补齐）', () => {
   it('无句末标点的未闭合段在段末补', () => {
     const [out] = repairUnbalancedQuotes(['他喊道：“快跑']);
     expect(out.endsWith('快跑”')).toBe(true);
+  });
+});
+
+describe('智能段落拆分后处理（2026-10-01 用户反馈段落过长根治）', () => {
+  it('单段≤280字保持原样', () => {
+    const normal = '他走到窗前看着夜色。心里想着刚才发生的一切。觉得这一切都像是一场梦。但他知道这不是梦。';
+    const normalized = normalizeWebnovelParagraphs(normal);
+    expect(normalized.split(/\n\s*\n/).length).toBe(1);
+    expect(normalized).toBe(normal);
+  });
+
+  it('叙述墙段(>200字)按视角切换拆分', () => {
+    const wall =
+      '他站在窗前看着外面的雨。雨下得很大，豆大的雨点砸在玻璃窗上发出噼啪的声响。街上已经没有行人了，只有几辆车偶尔驶过，溅起一片水花。天色越来越暗，乌云压得很低，仿佛随时都会塌下来。远处的山峦隐没在雨雾之中，什么也看不清了。' +
+      '她转身走到桌边坐下。桌上放着一盏油灯，灯光摇曳不定。灯光把她的影子投在墙上，影子也跟着摇晃。她拿起桌上的茶杯，茶水已经凉了。她抿了一口，苦涩的味道在口中蔓延开来。' +
+      '王五回头看了一眼门口。门外传来脚步声，沉重而缓慢。脚步声越来越近，在走廊里回荡。他的心跳也随之加快，手心开始冒汗。他盯着门把手，不知道门外来的是什么人。';
+    const normalized = normalizeWebnovelParagraphs(wall);
+    const paras = normalized.split(/\n\s*\n/).filter(Boolean);
+    expect(paras.length).toBeGreaterThan(1);
+    expect(paras.some(p => p.includes('她转身'))).toBe(true);
+    expect(paras.some(p => p.includes('王五回头'))).toBe(true);
+  });
+
+  it('对话墙段(>240字)只在话轮边界(句号+闭引号)拆分', () => {
+    const qL = '\u201C';
+    const qR = '\u201D';
+    const dialogueWall =
+      `${qL}你听我说完。${qR}他深吸一口气，努力让自己的声音听起来平静一些。${qL}这件事情不是你想的那样。当时的情况很复杂，有很多你不知道的内幕，你只看到了表面的东西。` +
+      `我也是被逼无奈，实在没有别的办法了。你要相信我，我做的一切都是为了我们的将来。我从来没有想过要伤害你，你要相信我。真的，我说的都是真话，一个字都没有掺假。${qR}` +
+      `她冷笑一声，眼神中满是失望和愤怒。${qL}你以为我还会相信你吗？你已经骗了我太多次了，每次都说是为了我好，结果呢？到头来受伤的还是我自己。` +
+      `这次我不会再上当了，我已经看清你的真面目了。你走吧，我不想再看到你，也不想再听你说任何话了，就当我们从来没有认识过。${qR}`;
+    const normalized = normalizeWebnovelParagraphs(dialogueWall);
+    const paras = normalized.split(/\n\s*\n/).filter(Boolean);
+    expect(paras.length).toBeGreaterThan(1);
+    // 拆分不破坏引号配对:每段开闭引号数量平衡
+    paras.forEach(p => {
+      const openCount = (p.match(/\u201C/gu) ?? []).length;
+      const closeCount = (p.match(/\u201D/gu) ?? []).length;
+      expect(openCount).toBe(closeCount);
+    });
+  });
+
+  it('拆分后每段≥20字(避免制造碎段)', () => {
+    const wall = '他站在那里。' + '思考着。'.repeat(50) + '终于下定决心。';
+    const normalized = normalizeWebnovelParagraphs(wall);
+    const paras = normalized.split(/\n\s*\n/).filter(Boolean);
+    paras.forEach(p => {
+      const len = p.replace(/[^\u4e00-\u9fa5]/gu, '').length;
+      expect(len).toBeGreaterThanOrEqual(20);
+    });
+  });
+
+  it('场景边界段(---/翌日等)不拆分', () => {
+    const scene = '---';
+    expect(normalizeWebnovelParagraphs(scene)).toBe(scene);
+    
+    const timeMarker = '翌日';
+    expect(normalizeWebnovelParagraphs(timeMarker)).toBe(timeMarker);
+  });
+
+  it('按感官通道切换拆分', () => {
+    const wall = 
+      '他看着远处的山峰。山峰在晨雾中若隐若现，云雾缭绕之间仿佛仙境一般。山顶上的积雪在朝阳的照耀下泛着金色的光芒，美得让人移不开眼睛。他就这样静静地看着，心中涌起一种说不出的感动。这样的景色他已经很久没有见过了，仿佛回到了少年时代。' +
+      '忽然听见身后传来声音。声音很轻，像是有人在窃窃私语。他竖起耳朵仔细听，似乎是两个人在低声交谈着什么。声音断断续续的，听不太清楚具体的内容。但从语气中能感觉到，他们似乎在商量着什么重要的事情。' +
+      '他感觉到一股寒意从背后袭来。寒意让他浑身一颤，鸡皮疙瘩都起来了。这种感觉很奇怪，明明现在是夏天，太阳也很大，但他就是觉得冷。他下意识地裹紧了衣服，但寒意还是从骨子里往外冒。';
+    const normalized = normalizeWebnovelParagraphs(wall);
+    const paras = normalized.split(/\n\s*\n/).filter(Boolean);
+    expect(paras.length).toBeGreaterThan(1);
+  });
+
+  it('按时间推进拆分', () => {
+    const wall = 
+      '他坐在椅子上等待着。时间一分一秒地过去，墙上的挂钟滴答滴答地响着。他的目光一直盯着门口，生怕错过了什么。手心里全是汗，心跳得很快。他不知道自己在紧张什么，但就是无法平静下来。房间里很安静，安静得只能听见自己的呼吸声。' +
+      '片刻后，门外响起了敲门声。敲门声很急促，咚咚咚地响个不停。他的心一下子提到了嗓子眼，站起身来却又不敢走过去开门。敲门声越来越急，越来越响，仿佛要把门砸破一般。他深吸一口气，强迫自己镇定下来。' +
+      '随即有人推门进来。来人是他等了很久的那个人，正是他日思夜想的故人。他愣在原地，一时间不知道该说什么好。来人看着他，眼神中满是复杂的情绪。两人就这样对视着，谁也没有先开口说话。';
+    const normalized = normalizeWebnovelParagraphs(wall);
+    const paras = normalized.split(/\n\s*\n/).filter(Boolean);
+    expect(paras.length).toBeGreaterThan(1);
+  });
+
+  it('拆分优先级:语义边界点(执行者切换)作为切点,新段以语义词开头', () => {
+    const wall =
+      '他看着窗外。雨还在下，淅淅沥沥地打在窗户上，玻璃上的水痕一道叠着一道。天色越来越暗了，乌云密布，看起来雨一时半会儿停不了。他叹了口气，心中有些烦躁，说不清是因为天气还是因为别的什么。这样的天气让人提不起精神来，只想躲在被窝里睡觉，什么都不想管。天色又暗了几分，几乎伸手不见五指，屋里的轮廓都模糊了。他起身去开灯，房间里顿时明亮起来，暖黄的灯光驱散了阴霾。' +
+      '她转身离开。脚步声渐渐远去，在空旷的走廊里回荡，一声比一声轻。他听着那脚步声，心里涌起一种说不出的失落感，像是被人抽走了什么。他想叫住她，想说点什么，但话到嘴边又咽了回去。最终他只是站在那里，看着她的背影消失在拐角处，连一句再见都没说出口。';
+    const normalized = normalizeWebnovelParagraphs(wall);
+    const paras = normalized.split(/\n\s*\n/).filter(Boolean);
+    expect(paras.length).toBeGreaterThan(1);
+    // 语义边界(他起身/她转身)是优质切点,新段应以其开头
+    expect(paras.some(p => /^(他起身|她转身)/.test(p))).toBe(true);
+  });
+
+  it('普通句末累积≥150字才切(无语义边界时不碎切)', () => {
+    // 40句×7字=280字无语义边界的叙述墙,只在句末切,每段~150字 → 2段而非碎段流
+    const sentences = Array.from({ length: 40 }, (_, i) =>
+      `这是第${i + 1}句话。`
+    ).join('');
+    const normalized = normalizeWebnovelParagraphs(sentences);
+    const paras = normalized.split(/\n\s*\n/).filter(Boolean);
+    // 应该拆成2段左右,不是40段
+    expect(paras.length).toBeLessThan(5);
+    expect(paras.length).toBeGreaterThan(1);
+    paras.forEach(p => {
+      const len = p.replace(/[^\u4e00-\u9fa5]/gu, '').length;
+      expect(len).toBeGreaterThanOrEqual(20);
+    });
   });
 });

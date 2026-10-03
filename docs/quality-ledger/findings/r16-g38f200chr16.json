@@ -1,0 +1,699 @@
+{
+  "schemaVersion": "findings/v1",
+  "round": "r16",
+  "book": "工部死囚：从治水项目经理到帝师",
+  "reviewedAt": "2026-09-30T19:55:00+08:00",
+  "matrixDir": "temp/storyflow-matrix-g38f200chr16",
+  "chapters": 200,
+  "review": {
+    "method": "full-read",
+    "chaptersRead": 200,
+    "writerModel": "gemini-3.8-flash-high（反重力 provider-1787044972770）",
+    "reviewerModel": "GLM-5.3（主会话+8路通读子agent，25章/路）",
+    "independentReviewer": true
+  },
+  "gates": {
+    "precheckRedlines": 0,
+    "fateRealResurrection": 0,
+    "readerJudge": {
+      "outline": 83.5,
+      "mean": 86.1,
+      "median": 87.3,
+      "min": 0,
+      "independentFromWriter": false
+    },
+    "ending": {
+      "complete": true,
+      "mainUnresolved": 0,
+      "closureSignals": 1
+    },
+    "humanIntervention": [
+      "storyflow-repair-empty 补写 ch114（199/200成洞→200/200，3343字 attempt2 过判官门禁，527s）"
+    ],
+    "blindTest": null
+  },
+  "findings": [
+    {
+      "id": "r16-S1-01", "severity": "S1", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [1, 8, 22], "entity": "沈淮（军令状期限）",
+      "summary": "军令状期限三重口径互矛盾：ch1 立状「申时末刻」（约5小时）同章旁白却称「六个时辰不到」（12小时），ch8 起全盘改为「三十个时辰」（60小时）且称「已过近半」时实际仅过半日，假死线贯穿开篇无延期交代",
+      "evidence": [
+        { "chapter": 1, "quote": "半日，只有短短六个时辰不到！" },
+        { "chapter": 1, "quote": "申时末刻若不能遏住水头，不必劳烦刑刀，沈淮自跳入激流填决口！" },
+        { "chapter": 8, "quote": "沈淮，三十个时辰期限已过近半，你敢听信妇人妄言？" }
+      ],
+      "replayCase": "r16-S1-01"
+    },
+    {
+      "id": "r16-S1-02", "severity": "S1", "class": "continuity.boundary", "status": "final", "rootLayer": "writer",
+      "chapters": [18, 21, 22], "entity": "定江号/沉箱船队",
+      "summary": "核心道具沉没后复活：定江号 ch18 已注水坐底锁死决口（三船连环成壁），ch21 称七具沉箱全数粉碎，ch22 定江号却完好停泊回水湾被再次凿沉合龙，沉箱数量 3→7 无增造交代",
+      "evidence": [
+        { "chapter": 18, "quote": "巨舰宛如生铁闸门嵌进两船之间的狭窄空隙，三船首尾相扣，连环成壁！" },
+        { "chapter": 21, "quote": "原本作为合龙中流砥柱的七具巨型沉箱，在狂暴到极致的水流冲压之下，全数连环粉碎崩解！" },
+        { "chapter": 22, "quote": "那是沧水营造营唯一一艘万石级的双桅重型漕舰，定江号。早前为防备洪峰顶托，底舱之中早已预先堆叠压载了整整三万斤花岗顽石！" }
+      ],
+      "replayCase": "r16-S1-02"
+    },
+    {
+      "id": "r16-S1-03", "severity": "S1", "class": "number.arithmetic", "status": "final", "rootLayer": "writer",
+      "chapters": [19, 21, 23], "entity": "龙王渡主槽溃口宽度",
+      "summary": "章内算术矛盾并跨章固化：十二丈溃口填平六丈剩六丈（ch19/ch21前文），ch21 结尾却写成「最后十丈宽的龙口」并在 ch22/23/25 固化，12−6=6≠10",
+      "evidence": [
+        { "chapter": 19, "quote": "大堤十二丈溃口如今整整六丈被彻底填平，主河槽半幅稳如泰山，合龙已然过半！" },
+        { "chapter": 21, "quote": "最后十丈宽的龙口中泓，江水咆哮翻腾宛若天河倒倾" },
+        { "chapter": 23, "quote": "十丈龙口，合龙大吉，滴水未漏！" }
+      ],
+      "replayCase": "r16-S1-03"
+    },
+    {
+      "id": "r16-S1-04", "severity": "S1", "class": "state.title", "status": "final", "rootLayer": "outline",
+      "chapters": [34, 49], "entity": "沈淮（重复授官）",
+      "summary": "ch34 已奉上谕受领工部都水司正六品主事官印并以此身份行事15章，ch49 圣旨却称其「典吏」并再次「特晋」同一官——重复授官且称谓倒退；大纲 ch34/ch49 两端各自编码两次授官，属大纲层自相冲突",
+      "evidence": [
+        { "chapter": 34, "quote": "结余账册之上，工部都水司正六品主事的青铜官印端正立定" },
+        { "chapter": 49, "quote": "都水司典吏沈淮，受命于危难之际" },
+        { "chapter": 49, "quote": "特晋沈淮为工部都水司正六品主事，赐绯袍银鱼袋" }
+      ],
+      "replayCase": "r16-S1-04"
+    },
+    {
+      "id": "r16-S1-05", "severity": "S1", "class": "number.arithmetic", "status": "final", "rootLayer": "writer",
+      "chapters": [34, 37, 38], "entity": "三日账期总账",
+      "summary": "总账对不平：ch34 公布收支明细宣称「账面更结余纹银一千二百八十两」，三种读法均不成立（差40两至1000两），而场景爽点恰是「账目两讫毫厘无差」，1280两在 ch36/37/38 复用五次",
+      "evidence": [
+        { "chapter": 34, "quote": "账面更结余纹银一千二百八十两" },
+        { "chapter": 37, "quote": "净余纹银一千二百八十两整" }
+      ],
+      "replayCase": "r16-S1-05"
+    },
+    {
+      "id": "r16-S1-06", "severity": "S1", "class": "continuity.boundary", "status": "final", "rootLayer": "infra",
+      "chapters": [114, 115], "entity": "徐茂德（补写章缝合）",
+      "summary": "补写章与下章缝合失败：同一场「进营查账→被驳→旧账打脸」对峙演两遍，ch115 把徐茂德状态重置回嚣张再首次亮底牌，差役数 20多名 vs 12名，陆青川出场方式互斥——repair 管线只消毒上游锚未消毒按垂死草稿生成的下章开头",
+      "evidence": [
+        { "chapter": 114, "quote": "原本嚣张跋扈的红润面色，在此刻以肉眼可见的速度褪得干干净净，瞬间化作一片惨无人色的煞白！" },
+        { "chapter": 115, "quote": "这位刚被内阁特旨起复的江宁冬漕验工使，身上的正五品云雁补服浆洗得笔挺，昂着下巴迈进督造大营辕门。" },
+        { "chapter": 115, "quote": "泛黄陈旧的烂账纸页劈头盖脸撞上徐茂德胸口" }
+      ],
+      "replayCase": "r16-S1-06"
+    },
+    {
+      "id": "r16-S1-07", "severity": "S1", "class": "number.arithmetic", "status": "final", "rootLayer": "writer",
+      "chapters": [109], "entity": "天门峡比降",
+      "summary": "章内算术矛盾：全长三里零四十丈总落差三尺八寸，折算比降应为约0.65‰，正文写「千分之三点二」相差约5倍，且该数字是主角当众打脸徐茂德的核心论据",
+      "evidence": [
+        { "chapter": 109, "quote": "全长三里零四十丈，总落差三尺八寸。折算水流纵向比降，为千分之三点二。" }
+      ],
+      "replayCase": "r16-S1-07"
+    },
+    {
+      "id": "r16-S1-08", "severity": "S1", "class": "number.arithmetic", "status": "final", "rootLayer": "infra",
+      "chapters": [114], "entity": "复式账册（补写章）",
+      "summary": "补写章高光账目不闭合：总进项12万两，列支6048+4100+「余下四万八千两」合计仅58148两，61852两无去向，叙述却宣称「进项有源，开支有实，平衡得宛如天平两端」",
+      "evidence": [
+        { "chapter": 114, "quote": "进项有源，开支有实，平衡得宛如天平两端。" }
+      ],
+      "replayCase": "r16-S1-08"
+    },
+    {
+      "id": "r16-S1-09", "severity": "S1", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [135, 136, 137], "entity": "军粮船队",
+      "summary": "前后章核心事实直接相悖：ch135 尾林清芷确认船队「已顺利顺流下峡、工期早七天」，ch136/137 朝堂却以「明日开闸入峡正期/今日试航定谳」为主线，ch135 深夜还提前宣告了 ch137-139 才完成的过峡结果",
+      "evidence": [
+        { "chapter": 135, "quote": "天门峡三十万石军粮船队已顺利顺流下峡，工期比预估早了七天。" },
+        { "chapter": 136, "quote": "明日便是北境军粮大船开闸入峡的正期。若真如徐验工使所言，大闸无法承受江水冲力当场坍塌，三十万石军粮沉入江底，这灭顶之灾谁来承担？！" }
+      ],
+      "replayCase": "r16-S1-09"
+    },
+    {
+      "id": "r16-S1-10", "severity": "S1", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [127, 128], "entity": "峡口-京城信息传递",
+      "summary": "千里信息「量子通信」：申时二刻峡口发图、次日清晨京城徐茂德已拆图下令峡口死士当日行动，往返不足15小时，与本书自设「八百里加急单程一昼夜以上」直接矛盾（沈淮自己预期「两日内无人在峡口掣肘」）",
+      "evidence": [
+        { "chapter": 127, "quote": "缇骑将木匣牢牢捆上鞍桥，数十骑快马……绝尘而去，奔向京城官道。" },
+        { "chapter": 127, "quote": "千里之外，京城南城。" },
+        { "chapter": 128, "quote": "晨雾尚未散尽……首批五艘满载朔方军粮的重载官船减速入峡" }
+      ],
+      "replayCase": "r16-S1-10"
+    },
+    {
+      "id": "r16-S1-11", "severity": "S1", "class": "structure.arc", "status": "final", "rootLayer": "blueprint",
+      "chapters": [173, 174, 175], "entity": "勤王军战略主线",
+      "summary": "战略主线断裂：ch173 末舰队抵京师水门百步内、赵彻令「直取京畿」，ch174 无过渡跳雁门总闸另起战场，此后顺流南下黑石峡、江宁，京师攻坚悬念整段丢弃且目标无交代改道（地理上京师不在南下航线；ch176 末才以八百里加急回收京师线）",
+      "evidence": [
+        { "chapter": 173, "quote": "全军顺流进兵，直取京畿！" },
+        { "chapter": 173, "quote": "汹涌澎湃的洪峰裹挟着重逾万斤的钢铁战舰，眨眼间便冲到了外城水闸不足百步的开阔水面" },
+        { "chapter": 174, "quote": "慌什么，都给老子稳住阵脚！雁门总闸的闸楼之上，叛将王保义反手抽刀" }
+      ],
+      "replayCase": "r16-S1-11"
+    },
+    {
+      "id": "r16-S2-01", "severity": "S2", "class": "continuity.boundary", "status": "final", "rootLayer": "writer",
+      "chapters": [2, 4, 5], "entity": "徐茂德（折扇）",
+      "summary": "折扇穿帮：ch2 折断扇骨、ch4 被靴底踩成碎篾彻底毁坏，ch5 凭空完好再现并重复「掉进烂泥」同款动作",
+      "evidence": [
+        { "chapter": 4, "quote": "手中的折扇掉在泥地里，被靴底踩成了碎篾。" },
+        { "chapter": 5, "quote": "手中折扇啪嗒掉进烂泥，僵在原地动弹不得。" }
+      ]
+    },
+    {
+      "id": "r16-S2-02", "severity": "S2", "class": "state.title", "status": "final", "rootLayer": "writer",
+      "chapters": [5, 22, 25, 109, 114, 120, 122], "entity": "徐茂德（袍服/补子）",
+      "summary": "徐茂德袍服口径全书漂移：五品郎中 ch5 白鹇补子 vs ch22/25 孔雀补服；起复后 ch109 绯色大红官袍 / ch114-115 云雁补服 / ch120-122 鹭鸶补服三口径，同品沈淮全程青袍直接冲突（本书补禽体系自洽唯鹭鸶破档）",
+      "evidence": [
+        { "chapter": 5, "quote": "结结实实砸在徐茂德胸前的绣白鹇补子上。" },
+        { "chapter": 22, "quote": "一道穿着崭新五品孔雀补服的身影" },
+        { "chapter": 120, "quote": "即刻恢复其江宁冬漕验工使正五品职衔" }
+      ]
+    },
+    {
+      "id": "r16-S2-03", "severity": "S2", "class": "state.title", "status": "final", "rootLayer": "writer",
+      "chapters": [1, 3, 15, 76, 90, 100], "entity": "陆青川（官袍）",
+      "summary": "陆青川官袍青/绯全书横跳：ch1/3 青色官袍，ch15 起改绯色，ch76/100 又青、ch90 又绯，无升品/换服交代，而袍色在本书是品级标识",
+      "evidence": [
+        { "chapter": 1, "quote": "来人一身青色官袍" },
+        { "chapter": 90, "quote": "陆青川单手按住天子剑柄侍立案侧，绯红官袍肃穆，眸底覆满寒霜。" },
+        { "chapter": 100, "quote": "石梯下方，巡按御史陆青川按剑而出，青色官袍迎风鼓荡" }
+      ]
+    },
+    {
+      "id": "r16-S2-04", "severity": "S2", "class": "state.title", "status": "final", "rootLayer": "writer",
+      "chapters": [26, 69, 88, 125], "entity": "都察院/督察院",
+      "summary": "衙门名「都察院/督察院」两写全书混用（26-125章持续），ch26/69/88 同章并用",
+      "evidence": [
+        { "chapter": 88, "quote": "那是都察院按察天下时随身提调的大雍刑统底册。" },
+        { "chapter": 88, "quote": "文渊阁藏的是工部递交的誊抄本，而督察院手里的，是大理寺留底的太祖朱批原本！" }
+      ]
+    },
+    {
+      "id": "r16-S2-05", "severity": "S2", "class": "state.title", "status": "final", "rootLayer": "writer",
+      "chapters": [1], "entity": "陆青川（官职误称）",
+      "summary": "ch1 同场景旁白把巡按御史陆青川误称「按察使」，两官职同章并用指同一人",
+      "evidence": [
+        { "chapter": 1, "quote": "来者正是巡按御史陆青川" },
+        { "chapter": 1, "quote": "沈淮迎着按察使的视线，字字沉着" }
+      ]
+    },
+    {
+      "id": "r16-S2-06", "severity": "S2", "class": "state.location", "status": "final", "rootLayer": "writer",
+      "chapters": [5, 9, 13], "entity": "黑石嘴/老龙口",
+      "summary": "爆破地点混用：ch5 首次定向爆破在黑石嘴，ch9 称石料来自「昨日老龙口定向爆破」，老龙口 ch13 才首次到达",
+      "evidence": [
+        { "chapter": 5, "quote": "指向大堤北侧那座拔地而起的陡峭绝壁。黑石嘴突入江心" },
+        { "chapter": 9, "quote": "全用昨日老龙口定向爆破炸下来的青冈岩！" }
+      ]
+    },
+    {
+      "id": "r16-S2-07", "severity": "S2", "class": "continuity.boundary", "status": "final", "rootLayer": "writer",
+      "chapters": [10, 16, 18], "entity": "细沙麻袋",
+      "summary": "细沙麻袋 ch10-11 被当场识破尽数豁开取证从未入堤，ch16/18 却改口「全垫在主堤护坦之下/早被冲得无影无踪」以解释管涌",
+      "evidence": [
+        { "chapter": 10, "quote": "整整两辆大车的防汛重袋被尽数豁开，白花花的细沙漫堤倾倒" },
+        { "chapter": 16, "quote": "但他此前私换的杂沙袋全垫在主堤护坦之下，根本经不住急流旋刷！" }
+      ]
+    },
+    {
+      "id": "r16-S2-08", "severity": "S2", "class": "structure.offscreen", "status": "final", "rootLayer": "writer",
+      "chapters": [5, 12], "entity": "周泰队23名死囚石匠",
+      "summary": "ch5 押解抵堤的二十三名死囚在 ch12 提走十四名老石匠后整体消失，免死契约只覆盖十四人，余者十余章无人提及",
+      "evidence": [
+        { "chapter": 5, "quote": "重犯石匠周泰及二十三名死囚押解抵堤，听凭驱策！" },
+        { "chapter": 12, "quote": "老龙口石匠一十四人，即刻转入工部营造营戴罪立功！" }
+      ]
+    },
+    {
+      "id": "r16-S2-09", "severity": "S2", "class": "state.identity", "status": "final", "rootLayer": "writer",
+      "chapters": [26, 35, 40], "entity": "钱庄名",
+      "summary": "钱半江系钱庄名漂移：恒通钱庄→汇通柜→江宁汇通钱庄，无两家庄号区分交代",
+      "evidence": [
+        { "chapter": 40, "quote": "江宁汇通钱庄" }
+      ]
+    },
+    {
+      "id": "r16-S2-10", "severity": "S2", "class": "structure.arc", "status": "final", "rootLayer": "writer",
+      "chapters": [26, 30, 38, 39], "entity": "沧水大堤合龙",
+      "summary": "合龙状态反复：ch26/30「已合龙」，ch38 却称「就要彻底合龙」ch39「距合龙不足五天」，无二次合龙场面",
+      "evidence": [
+        { "chapter": 38, "quote": "沧水大堤就要彻底合龙了" }
+      ]
+    },
+    {
+      "id": "r16-S2-11", "severity": "S2", "class": "state.title", "status": "final", "rootLayer": "writer",
+      "chapters": [28], "entity": "韩守敬（大轿补纹）",
+      "summary": "韩守敬正二品锦鸡补服（正确），大轿却「绣着金线仙鹤」——一品纹与二品称谓同句冲突",
+      "evidence": [
+        { "chapter": 28, "quote": "绣着金线仙鹤的正二品大轿" }
+      ]
+    },
+    {
+      "id": "r16-S2-12", "severity": "S2", "class": "time.era", "status": "final", "rootLayer": "writer",
+      "chapters": [35, 106, 185], "entity": "纪年体系（大业/建武）",
+      "summary": "真实历史年号混入架空大雍：ch35 暗账「大业三年四月」（隋炀帝年号）、ch106 工部内库冶印「建武五年冬炼」（东汉光武帝年号）、ch185「大业初年老祖宗传下来的受命之宝」——两真实年号与架空纪年构成平行体系",
+      "evidence": [
+        { "chapter": 35, "quote": "大业三年四月，江宁河银分拨，解送两万两换交汇通柜。" },
+        { "chapter": 106, "quote": "工部内库天字七号，建武五年冬炼，甲字官冶所造。" },
+        { "chapter": 185, "quote": "这是，大业初年老祖宗传下来的受命之宝！" }
+      ]
+    },
+    {
+      "id": "r16-S2-13", "severity": "S2", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [34], "entity": "水文勘册画押时辰",
+      "summary": "子时夜堂上称「今夜未正三刻联名画押」——未正系午后时辰，与「今夜」自相矛盾",
+      "evidence": [
+        { "chapter": 34, "quote": "今夜未正三刻联名画押" }
+      ]
+    },
+    {
+      "id": "r16-S2-14", "severity": "S2", "class": "state.title", "status": "final", "rootLayer": "writer",
+      "chapters": [49, 51, 61, 69, 70], "entity": "沈淮（袍色）",
+      "summary": "沈淮六品袍色绯↔青漂移：ch49 特晋赐绯袍、ch51-57 着绯，ch61-69 却连穿青色，ch70 升五品又「赐绯袍银鱼袋」（反证此前不应着青）",
+      "evidence": [
+        { "chapter": 51, "quote": "崭新的绯色六品官袍随风猎猎翻卷。" },
+        { "chapter": 61, "quote": "他身着六品都水司青色补服，靴底沾满了黄泥" }
+      ]
+    },
+    {
+      "id": "r16-S2-15", "severity": "S2", "class": "number.setting", "status": "final", "rootLayer": "writer",
+      "chapters": [51, 52], "entity": "船队载量",
+      "summary": "同一船队料数漂移：ch51「三艘万料重型驳船」vs ch52/50末「十艘三千料大驳船」，差一个数量级无改装交代",
+      "evidence": [
+        { "chapter": 51, "quote": "紧随其后的三艘万料重型驳船扯满风帆" },
+        { "chapter": 52, "quote": "十艘三千料的大驳船行至此处" }
+      ]
+    },
+    {
+      "id": "r16-S2-16", "severity": "S2", "class": "number.setting", "status": "final", "rootLayer": "writer",
+      "chapters": [51, 62], "entity": "江宁石料产能",
+      "summary": "石料产能互拆台：ch51 黑账记录调拨三万八千方特级滚石，ch62 以「全江宁府当年采石总额不过八千方」作假账铁证",
+      "evidence": [
+        { "chapter": 51, "quote": "整整三万八千方特级重型滚石" },
+        { "chapter": 62, "quote": "全江宁府当年采石总额不过八千方，徐茂德从何处买来的一万五千方？" }
+      ]
+    },
+    {
+      "id": "r16-S2-17", "severity": "S2", "class": "number.setting", "status": "final", "rootLayer": "writer",
+      "chapters": [73, 74], "entity": "水下铁桩",
+      "summary": "水下铁桩三千根 vs 十三根：ch73 称旧道水底沉三千根滚江铁龙，ch74 拔除十三根即「彻底荡平」死局",
+      "evidence": [
+        { "chapter": 73, "quote": "旧道水底不仅沉了三千根精铁包尖的滚江铁龙" },
+        { "chapter": 74, "quote": "横在乱石里的十三根生铁滚江桩" }
+      ]
+    },
+    {
+      "id": "r16-S2-18", "severity": "S2", "class": "continuity.boundary", "status": "final", "rootLayer": "writer",
+      "chapters": [50, 64, 71], "entity": "营造营良民身份",
+      "summary": "良民身份跨界相悖：ch50 末「你们拿命换回了良民身份」，ch64/71 却再演「革除世袭贱民匠籍、全员复为清白良民」并如首次脱罪般落泪",
+      "evidence": [
+        { "chapter": 50, "quote": "合龙沧水，你们拿命换回了良民身份，挣来了禁军步营的粮饷！" },
+        { "chapter": 71, "quote": "革除世袭贱民匠籍……全员复为清白良民" }
+      ]
+    },
+    {
+      "id": "r16-S2-19", "severity": "S2", "class": "number.arithmetic", "status": "final", "rootLayer": "writer",
+      "chapters": [69], "entity": "贪墨规模",
+      "summary": "同章两个量级：历年拨银四十五万两采买不足三成（贪墨约七成≈30余万两）vs「贪墨的料银实打实超出了朝廷拨银的三倍」（≥135万两）",
+      "evidence": [
+        { "chapter": 69, "quote": "贪墨的料银，实打实超出了朝廷拨银的三倍！" }
+      ]
+    },
+    {
+      "id": "r16-S2-20", "severity": "S2", "class": "state.custody", "status": "final", "rootLayer": "writer",
+      "chapters": [80, 82, 88, 131, 134, 161, 162, 170], "entity": "崔林（羁押链）",
+      "summary": "崔林羁押链全书反复横跳：ch80 已「刑部大狱/押赴京师候斩」、ch82 却在江宁本地槛车对质、ch88 又把押赴京师当新发生；ch131 刑部死牢 vs ch134 诏狱待罪；ch161-162 锁乾清宫立柱 vs ch170「诏狱铁柱上戴死锁候斩」——移监多无桥",
+      "evidence": [
+        { "chapter": 80, "quote": "东宫有严令，纵使崔阁老下了刑部大狱，今夜也必须让这批料石机件化为飞灰！" },
+        { "chapter": 82, "quote": "槛车之中锁着的，正是此前已被朝廷革职查办、押赴刑部候审的罪官崔林。" },
+        { "chapter": 170, "quote": "如今还在诏狱铁柱上戴死锁候斩" }
+      ]
+    },
+    {
+      "id": "r16-S2-21", "severity": "S2", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [87, 89, 90, 94], "entity": "通航大典日程",
+      "summary": "大典日程算不平：ch87「七日后大典」、ch90「五日后」（距ch87实为12天以上）、ch94 又「三天后核验大典」，原定大典从未按期明写举行且称谓漂移",
+      "evidence": [
+        { "chapter": 87, "quote": "距七日后的通航大典只剩百余时辰" },
+        { "chapter": 90, "quote": "他们定下的引爆时间，就在五日后万民朝贺的通航大典！" }
+      ]
+    },
+    {
+      "id": "r16-S2-22", "severity": "S2", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [85, 98, 99], "entity": "汛期季节",
+      "summary": "同一轮迫近洪汛 ch85/86 叫「春汛还有十九天」，ch98/99 改称「北方秋汛/秋季特大汛期」，其间剧情仅过约十七八天",
+      "evidence": [
+        { "chapter": 85, "quote": "春汛最多还有十九天就要压境！" },
+        { "chapter": 99, "quote": "秋季特大汛期暴洪提前三天汇聚成灾" }
+      ]
+    },
+    {
+      "id": "r16-S2-23", "severity": "S2", "class": "structure.offscreen", "status": "final", "rootLayer": "writer",
+      "chapters": [115, 116, 119, 120], "entity": "徐茂德（二次在押）",
+      "summary": "ch115 末徐茂德自由身爬上官船，ch116-119 四章零交代，ch120 开场已是囚服镣铐被开释——第二次羁押的拿人过程完全幕外",
+      "evidence": [
+        { "chapter": 115, "quote": "狼狈地转身爬上了那艘卸载完毕的官船跳板" },
+        { "chapter": 120, "quote": "徐茂德身上的囚服尚未褪去，两名按察司看守……当众解开他腕上与脚踝上的生铁镣铐" }
+      ]
+    },
+    {
+      "id": "r16-S2-24", "severity": "S2", "class": "state.title", "status": "final", "rootLayer": "writer",
+      "chapters": [109, 114, 115, 120], "entity": "起复授权主体",
+      "summary": "起复授权主体漂移：ch109/120「监国太子赵显特旨起复/开释」，ch114/115 两度「内阁特旨起复」",
+      "evidence": [
+        { "chapter": 109, "quote": "然而监国太子赵显驳回定论，以水利吃紧为由特旨将他无罪起复" },
+        { "chapter": 115, "quote": "这位刚被内阁特旨起复的江宁冬漕验工使" }
+      ]
+    },
+    {
+      "id": "r16-S2-25", "severity": "S2", "class": "structure.repeat", "status": "final", "rootLayer": "writer",
+      "chapters": [123, 124, 125], "entity": "章界逐字复读",
+      "summary": "ch124 末与 ch125 首整句一字不差复读（确定性扫描 sim=0.16 watch 命中确认）；ch123 末与 ch124 首十二字逐字复读",
+      "evidence": [
+        { "chapter": 124, "quote": "窗外狂风夹着骤雨横扫峡谷，江水撞击在紧闭的人字铁闸上，发出震天动地的沉闷巨响。" },
+        { "chapter": 125, "quote": "窗外狂风夹着骤雨横扫峡谷，江水撞击在紧闭的人字铁闸上，发出震天动地的沉闷巨响。" }
+      ]
+    },
+    {
+      "id": "r16-S2-26", "severity": "S2", "class": "number.setting", "status": "final", "rootLayer": "writer",
+      "chapters": [110, 119, 121, 122], "entity": "边军兵额",
+      "summary": "边军兵额 20万↔30万漂移：ch110 两处「北境二十万将士」，ch119/121/122「朔方九营三十万边军」，无增编交代",
+      "evidence": [
+        { "chapter": 110, "quote": "北境二十万将士" },
+        { "chapter": 121, "quote": "朔方九营三十万边军" }
+      ]
+    },
+    {
+      "id": "r16-S2-27", "severity": "S2", "class": "number.ledger", "status": "final", "rootLayer": "writer",
+      "chapters": [113], "entity": "工银期数",
+      "summary": "同章并用：叙述「三万余名工役整整两个月的活命钱」vs 沈淮当众宣布「扣下天门峡三个月的工银」",
+      "evidence": [
+        { "chapter": 113, "quote": "三万余名工役整整两个月的活命钱" }
+      ]
+    },
+    {
+      "id": "r16-S2-28", "severity": "S2", "class": "number.setting", "status": "final", "rootLayer": "writer",
+      "chapters": [111, 112, 113], "entity": "船队船级",
+      "summary": "同一支三十艘船队：ch111「万石冬漕大船」vs ch112/113「三十艘千料大船」",
+      "evidence": [
+        { "chapter": 111, "quote": "万石冬漕大船" },
+        { "chapter": 112, "quote": "三十艘千料大船" }
+      ]
+    },
+    {
+      "id": "r16-S2-29", "severity": "S2", "class": "number.setting", "status": "final", "rootLayer": "writer",
+      "chapters": [112, 118], "entity": "水道比降",
+      "summary": "比降口径差百倍：ch112「新渠比降每里半寸」（约0.03‰却配每秒两尺八寸流速）vs ch118「峡谷比降千分之三」",
+      "evidence": [
+        { "chapter": 112, "quote": "新渠比降每里半寸，表面流速本该是每秒两尺八寸" },
+        { "chapter": 118, "quote": "峡谷比降千分之三" }
+      ]
+    },
+    {
+      "id": "r16-S2-30", "severity": "S2", "class": "state.location", "status": "final", "rootLayer": "writer",
+      "chapters": [120, 122, 123], "entity": "安澜号",
+      "summary": "安澜号 ch120 已「冲出第三级闸首驶入主航道」，ch122/123 却又「在闸室内安然浮动/第三级闸室内稳稳停泊」，出闸↔回泊无交代",
+      "evidence": [
+        { "chapter": 120, "quote": "昂首破浪冲出第三级闸首，稳稳驶入天门峡上游主航道" },
+        { "chapter": 123, "quote": "第三级闸室内，安澜号巨舰稳稳停泊" }
+      ]
+    },
+    {
+      "id": "r16-S2-31", "severity": "S2", "class": "state.identity", "status": "final", "rootLayer": "writer",
+      "chapters": [108, 109, 113, 117, 125, 132, 134], "entity": "韩守敬（立场）",
+      "summary": "韩守敬立场反转缺桥：ch108/109 当众力挺背书 → ch113「奉户部韩尚书钧令」截银 → ch117 其府上亲信主持假轴销暗盘 → ch125「对外勾连户部尚书韩守敬」→ ch132 连夜递弹劾折 vs ch134 拒绝连署假折，无动机/胁迫过渡",
+      "evidence": [
+        { "chapter": 113, "quote": "奉户部韩尚书钧令" },
+        { "chapter": 132, "quote": "韩守敬与东阁的爪牙连夜递了折子" },
+        { "chapter": 134, "quote": "这假折子，老夫绝不连署" }
+      ]
+    },
+    {
+      "id": "r16-S2-32", "severity": "S2", "class": "number.ledger", "status": "final", "rootLayer": "writer",
+      "chapters": [109], "entity": "沉降量",
+      "summary": "实测「平均沉降仅一分二厘」vs 数段后韩守敬转述「沉降不足一分」，且「连旧律极限的十分之一都不到」实为恰等于十分之一",
+      "evidence": [
+        { "chapter": 109, "quote": "平均沉降仅一分二厘" },
+        { "chapter": 109, "quote": "沉降不足一分" }
+      ]
+    },
+    {
+      "id": "r16-S2-33", "severity": "S2", "class": "number.setting", "status": "final", "rootLayer": "writer",
+      "chapters": [144, 145, 147], "entity": "北元兵力",
+      "summary": "北元兵力两万↔五万漂移：ch144「五万铁骑兵分三路……两万精锐主力压向黑石隘」、ch145「两万主力铁骑在数十里外」vs ch147「五万铁甲主力将关隘重重围死」（ch148-150 沿用五万），西路/东路去向无交代",
+      "evidence": [
+        { "chapter": 145, "quote": "北元两万主力铁骑就在后方数十里外" },
+        { "chapter": 147, "quote": "北元五万铁甲主力铺天盖地奔涌而至，将整座关隘重重围死" }
+      ]
+    },
+    {
+      "id": "r16-S2-34", "severity": "S2", "class": "continuity.boundary", "status": "final", "rootLayer": "writer",
+      "chapters": [134, 135], "entity": "韩守敬通信渠道",
+      "summary": "同一信息载体前后不一：ch134 派主簿持金字铜牌八百里加急，ch135 却「韩尚书的飞鸽传书到了」，户部发鸽无铺垫、主簿到达无下文",
+      "evidence": [
+        { "chapter": 134, "quote": "八百里加急直奔天门峡" },
+        { "chapter": 135, "quote": "韩尚书的飞鸽传书到了" }
+      ]
+    },
+    {
+      "id": "r16-S2-35", "severity": "S2", "class": "structure.offscreen", "status": "final", "rootLayer": "writer",
+      "chapters": [135, 136], "entity": "陆青川（赃额传递）",
+      "summary": "十一万四千两精确赃额系深夜天门峡现场核算产物（军法封口），次晨被重兵围困在京的陆青川逐字引用并出示飞钱底单——千里+围困下信息与实物一夜传递零交代",
+      "evidence": [
+        { "chapter": 136, "quote": "昨夜臣已命东宫六率将陆青川暂羁于府中" }
+      ]
+    },
+    {
+      "id": "r16-S2-36", "severity": "S2", "class": "state.custody", "status": "final", "rootLayer": "writer",
+      "chapters": [170], "entity": "徐茂德（在押vs在逃）",
+      "summary": "ch170 韩守敬当众称徐茂德「还在诏狱铁柱上戴死锁候斩」，与 ch152 已确立、ch174-175 再次坐实的「被东宫秘密调出在逃领兵纵火设伏」直接冲突，知情的沈淮在场无纠正",
+      "evidence": [
+        { "chapter": 170, "quote": "正五品江宁冬漕验工使徐茂德，如今还在诏狱铁柱上戴死锁候斩" }
+      ]
+    },
+    {
+      "id": "r16-S2-37", "severity": "S2", "class": "number.ledger", "status": "final", "rootLayer": "writer",
+      "chapters": [165, 171], "entity": "黑石隘军粮",
+      "summary": "三万石救命粮 ch165 入关，数日后 ch171 全军存粮仅三千石且「三天断粮」，约两万七千石缺口无去向（监守自盗仅运出三千石）",
+      "evidence": [
+        { "chapter": 165, "quote": "营造营的沈淮带着三万石救命粮和槽梁冲进关了！" },
+        { "chapter": 171, "quote": "整整三千石，都是实打实的干粮！" }
+      ]
+    },
+    {
+      "id": "r16-S2-38", "severity": "S2", "class": "structure.offscreen", "status": "final", "rootLayer": "writer",
+      "chapters": [161, 169, 170, 172], "entity": "太子赵显（两度粉碎）",
+      "summary": "太子两度「被彻底粉碎」后满血复活：ch161「已被勤王大军困死外苑」→ch169 六率围逼乾清宫；ch170「逼宫谋逆被彻底粉碎」→ch171-172 又勾结九门提督闭城夺京，仅靠一句血书带过",
+      "evidence": [
+        { "chapter": 161, "quote": "东宫赵显谋逆犯阙，已被勤王大军困死外苑。" },
+        { "chapter": 172, "quote": "东宫赵显趁秦王巡按，伪造遗诏，勾结九门提督闭城" }
+      ]
+    },
+    {
+      "id": "r16-S2-39", "severity": "S2", "class": "state.title", "status": "final", "rootLayer": "writer",
+      "chapters": [177, 179, 185, 187], "entity": "徐茂德（侍卫统领）",
+      "summary": "徐茂德头衔靠换装获得：ch177 刺史明光铠、ch179 换侍卫统领软甲即被弹章坐实「侍卫统领」，无任何任免叙述；ch187 补叙权柄实为崔林转交假兵符私调死士，与正式头衔相悖",
+      "evidence": [
+        { "chapter": 179, "quote": "徐茂德换了一身侍卫统领软甲，满脸泥污未净，趴在女墙上" },
+        { "chapter": 185, "quote": "侍卫统领徐茂德，助逆伪造监国诏书，暗开武库，罪不容诛！" }
+      ]
+    },
+    {
+      "id": "r16-S2-40", "severity": "S2", "class": "state.custody", "status": "final", "rootLayer": "writer",
+      "chapters": [182, 192, 194], "entity": "赵显/徐茂德（审讯羁押地）",
+      "summary": "ch182 敕令「锁拿入狱交刑部严审」，ch192 赵显却被关在诏狱，ch194 徐茂德在按察使公堂招供——刑部敕令→诏狱/按察使公堂无桥（正文另有崔林在刑部死牢，两监并立使漂移更刺眼）",
+      "evidence": [
+        { "chapter": 182, "quote": "锁拿入狱，交刑部严审。" },
+        { "chapter": 192, "quote": "只要废太子赵显还被关在诏狱里" }
+      ]
+    },
+    {
+      "id": "r16-S2-41", "severity": "S2", "class": "outline.contract", "status": "final", "rootLayer": "outline",
+      "chapters": [193, 194], "entity": "三司会审宣判",
+      "summary": "大纲必须覆盖「三司会审正式结案、落实崔林/徐茂德死罪判决并圈禁除籍赵显」正文完全未兑现：ch194 只有狱中签草诏与查抄汇报，ch193 明旨「明日早朝铁证陈列奉天殿」亦未发生，三反派终局至 ch200 无画面",
+      "evidence": [
+        { "chapter": 193, "quote": "明日早朝，将所有铁证陈列于奉天殿御阶前" },
+        { "chapter": 194, "quote": "签了这份认罪草诏……留你全尸，免去市曹磔刑。" }
+      ]
+    },
+    {
+      "id": "r16-S2-42", "severity": "S2", "class": "state.fate", "status": "final", "rootLayer": "writer",
+      "chapters": [180, 182], "entity": "太医院医官",
+      "summary": "死活翻转：ch180「太医院三十六人当场被坑杀」vs ch182「太医院三十余名医官尽遭羁押监禁」，被杀者变在押无解释",
+      "evidence": [
+        { "chapter": 180, "quote": "太医院三十六人当场被坑杀！" },
+        { "chapter": 182, "quote": "太医院三十余名医官尽遭羁押监禁。" }
+      ]
+    },
+    {
+      "id": "r16-S2-43", "severity": "S2", "class": "state.fate", "status": "final", "rootLayer": "writer",
+      "chapters": [180, 184, 185, 189, 199], "entity": "老皇帝（生死链）",
+      "summary": "老皇帝生死链断裂：ch180 出现「陛下咽气之前的血书」「先帝亲笔」（在世皇帝称先帝）→ch184「陛下还有一口气在」→ch185 昏死后再无下文→ch189 直接登基→ch199 追认「先帝至死未曾示人」，驾崩全程幕外且称谓先行",
+      "evidence": [
+        { "chapter": 180, "quote": "这是陛下咽气之前，咬破手指在内衬写下的血书！" },
+        { "chapter": 184, "quote": "陛下，陛下还有一口气在！" }
+      ]
+    },
+    {
+      "id": "r16-S2-44", "severity": "S2", "class": "number.setting", "status": "final", "rootLayer": "writer",
+      "chapters": [179, 180, 183], "entity": "护城壕",
+      "summary": "同一水体状态反转：ch179 护城壕蓄水三百万石「竟被生生抽干了」→ch180「三百万石深水已被我们排空」→ch183「蓄水充盈，此前永定门分流只泄去南侧支流水头」，且泄水地点记错",
+      "evidence": [
+        { "chapter": 180, "quote": "护城河三百万石深水已被我们排空" },
+        { "chapter": 183, "quote": "京城护城壕蓄水充盈，此前永定门分流只泄去了南侧支流的水头。" }
+      ]
+    },
+    {
+      "id": "r16-S2-45", "severity": "S2", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [177, 189, 190, 195], "entity": "季节",
+      "summary": "季节三处互斥：ch177 初冬 → ch189/190 早春/初春（其间为连续数日）→ ch195「黑水河面严冬初冻」，无越冬时间可用",
+      "evidence": [
+        { "chapter": 177, "quote": "初冬的江水刺骨冰寒" },
+        { "chapter": 189, "quote": "早春的晨风" }
+      ]
+    },
+    {
+      "id": "r16-S2-46", "severity": "S2", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [190, 194, 195], "entity": "呼延厉行程",
+      "summary": "两日行程链不可能：ch190 登基当日呼延厉在京师侍立，ch194（两日后）含前一日相府事件的密信已带其血色将军印出塞北动员，ch195 他已亲临前线——八百里往返+北元动员两日闭环",
+      "evidence": [
+        { "chapter": 190, "quote": "御阶下方，户部尚书韩守敬与朔方都指挥使呼延厉肃穆侍立。" },
+        { "chapter": 194, "quote": "羊皮信尾，朔方都指挥使呼延厉的血色将军印章清晰如刻" }
+      ]
+    },
+    {
+      "id": "r16-S2-47", "severity": "S2", "class": "number.arithmetic", "status": "final", "rootLayer": "writer",
+      "chapters": [176, 177], "entity": "江宁-京师航程",
+      "summary": "航程口径击穿：ch176「顺风疾行最快也需五日，只剩最后三天」→ch177「整整奔袭了两天两夜」即抵白河水隘、第三日赶上大典，无提速解释",
+      "evidence": [
+        { "chapter": 176, "quote": "哪怕顺风疾行，工期与航程最快也需五日。留给他们的时间，只剩最后三天。" },
+        { "chapter": 177, "quote": "已整整奔袭了两天两夜" }
+      ]
+    },
+    {
+      "id": "r16-S2-48", "severity": "S2", "class": "number.arithmetic", "status": "final", "rootLayer": "writer",
+      "chapters": [177], "entity": "陶罐布设时长",
+      "summary": "同章时长矛盾：「仅仅一刻钟，三十只聚能陶罐便全数精准楔入」vs 两段后「自水鬼入水到布设完毕，刚好过去两刻钟」",
+      "evidence": [
+        { "chapter": 177, "quote": "仅仅一刻钟，三十只聚能陶罐便全数精准楔入了三道铁链的水底受力节点。" },
+        { "chapter": 177, "quote": "自水鬼入水到布设完毕，刚好过去两刻钟。" }
+      ]
+    },
+    {
+      "id": "r16-S2-49", "severity": "S2", "class": "number.arithmetic", "status": "final", "rootLayer": "writer",
+      "chapters": [191], "entity": "黑石隘军粮案银两",
+      "summary": "银两算不平：每石一两二钱采买价 vs 划出三两五钱（差价×三万石=十万五千两）+运费两万四千两=十二万九千两，正文两处写「共计十二万两」；冒领分项也无法恰好加总为「整整冒领了十万两」",
+      "evidence": [
+        { "chapter": 191, "quote": "这笔共计十二万两的银款" }
+      ]
+    },
+    {
+      "id": "r16-S2-50", "severity": "S2", "class": "number.setting", "status": "final", "rootLayer": "writer",
+      "chapters": [185, 195, 197], "entity": "国祚口径",
+      "summary": "国祚互斥：「大雍立国百余载」vs「大雍立朝数百年」vs「悬在天下工匠脖子上两百年的铡刀」（同章又用「百年来」）——立朝铭刻的旧律不可能比王朝更老",
+      "evidence": [
+        { "chapter": 185, "quote": "大雍立国百余载" },
+        { "chapter": 197, "quote": "悬在天下工匠脖子上两百年的铡刀" }
+      ]
+    },
+    {
+      "id": "r16-S2-51", "severity": "S2", "class": "state.title", "status": "final", "rootLayer": "writer",
+      "chapters": [190, 194, 196], "entity": "度支司隶属",
+      "summary": "度支司隶属漂移：ch190「工部度支司」→ch194「户部度支司」→ch196 户部尚书自称「掌管度支司多年」",
+      "evidence": [
+        { "chapter": 190, "quote": "工部度支司的幽深院落" },
+        { "chapter": 194, "quote": "户部度支司只准照单放关" }
+      ]
+    },
+    {
+      "id": "r16-S2-52", "severity": "S2", "class": "outline.contract", "status": "final", "rootLayer": "outline",
+      "chapters": [176, 187, 189, 194], "entity": "钱半江（盟友节点）",
+      "summary": "大纲 ch176「钱半江响应号召率商帮移交三万石漕粮」与 ch189「交割三百万石储备粮」正文均无此人；正文首次具名即奸商（ch187 暗舵起获漕船→ch194 三处暗仓查抄），从盟友到被查抄零过程交代",
+      "evidence": [
+        { "chapter": 187, "quote": "自钱半江暗舵起获三十艘大型夹底漕船！" },
+        { "chapter": 194, "quote": "钱半江在京郊水网深处私筑的三处暗仓，尽数查抄封锁" }
+      ]
+    },
+    {
+      "id": "r16-S2-53", "severity": "S2", "class": "structure.arc", "status": "final", "rootLayer": "writer",
+      "chapters": [103, 113], "entity": "钱半江（节点缺席）",
+      "summary": "钱半江大纲三节点（ch103 急信+三百车石灰、ch113 调粮）全部缺席，101-125 章 25 章零出场，合同人物蒸发",
+      "evidence": [
+        { "chapter": 113, "quote": "扣下天门峡三个月的工银" }
+      ]
+    },
+    {
+      "id": "r16-S3-01", "severity": "S3", "class": "prose.anachronism", "status": "final", "rootLayer": "writer",
+      "chapters": [87, 91, 96, 97, 99, 126, 155, 189], "entity": "现代词",
+      "summary": "现代词出戏群：吨/机油/密码锁/混凝土/标准化流水作业（对白层）/甘特图（ch126 对土著工匠喊话）/物流图/黑市炒到——甘特图与流水线为主角金手指自觉设定不计，对白与旁白层出戏最重"
+    },
+    {
+      "id": "r16-S3-02", "severity": "S3", "class": "structure.repeat", "status": "final", "rootLayer": "writer",
+      "chapters": [8, 37, 129, 130, 193, 194], "entity": "段落/章界复读",
+      "summary": "段落级与章界复读：ch8 相邻段套句、ch37 连续两段近逐字重复亮卷宗、ch129→130 整句「猩红光斑…逆行游来」重演（sim=0.21 确认）、ch193→194 章末行逐字重复"
+    },
+    {
+      "id": "r16-S3-03", "severity": "S3", "class": "structure.arc", "status": "final", "rootLayer": "writer",
+      "chapters": [128, 131], "entity": "巧合与物理夸张",
+      "summary": "反派大管家亲执爆破+冲至主角跟前未死+随身私印物证（ch128 巧合密度）；三万石舰两尺止动（ch131 物理夸张，有机理兜底）——观感级"
+    },
+    {
+      "id": "r16-S3-04", "severity": "S3", "class": "structure.arc", "status": "final", "rootLayer": "writer",
+      "chapters": [133, 134], "entity": "暗齿紫铜钥匙",
+      "summary": "ch133 章末强调的暗齿紫铜钥匙 ch134 一笔带过封存、至 ch150 全无回收，爽点断线"
+    },
+    {
+      "id": "r16-S3-05", "severity": "S3", "class": "state.identity", "status": "final", "rootLayer": "writer",
+      "chapters": [60], "entity": "周泰称谓",
+      "summary": "周泰被称「周总管」（应为副管带）等称谓小漂移；另有 ch60「自掏腰包三万两」实为官银汇票口径不一"
+    },
+    {
+      "id": "r16-S3-06", "severity": "S3", "class": "number.setting", "status": "final", "rootLayer": "writer",
+      "chapters": [56, 57, 59, 96], "entity": "尺度口径",
+      "summary": "尺度类小漂移：孤崖十七丈 vs 数十丈；药量数百斤 vs 一千八百斤；主闸门三十丈高处直坠（疑三丈之误）；灰浆两套配方无迭代交代"
+    },
+    {
+      "id": "r16-S3-07", "severity": "S3", "class": "state.location", "status": "final", "rootLayer": "writer",
+      "chapters": [98, 157, 172], "entity": "地理方位",
+      "summary": "同章金銮殿/通明殿两写；通州「京畿东大门」↔「京畿南大门」方位漂移"
+    },
+    {
+      "id": "r16-S3-08", "severity": "S3", "class": "structure.offscreen", "status": "final", "rootLayer": "writer",
+      "chapters": [26, 150, 151, 197], "entity": "悬置线索",
+      "summary": "赵家堡祖祠地窖正册真本 24 章无起获下文；赵彻 ch142 自言留守天门峡、ch151 无登舰交代出现在勤王旗舰；ch197 章末氛围钩无兑现"
+    },
+    {
+      "id": "r16-S3-09", "severity": "S3", "class": "number.arithmetic", "status": "final", "rootLayer": "writer",
+      "chapters": [63, 145, 149, 168], "entity": "战果/数量小账",
+      "summary": "死士 3死3擒 vs 总结五毙三擒；战果 1200=800+140 余 260 无交代；攻城车毁3+剩6≠10；呼延厉五百轻骑→八百残骑无补充"
+    },
+    {
+      "id": "r16-S3-10", "severity": "S3", "class": "prose.leak", "status": "final", "rootLayer": "writer",
+      "chapters": [107, 120, 121, 137], "entity": "文字瑕疵",
+      "summary": "「双向人字人字闸门」叠词、「报，！」标点异常；ch137 林清芷视角「来自异世的怪人」若前文无知情铺垫则泄底（needs-verify 降 S3）；ch109 律典名讹字「连错典」"
+    },
+    {
+      "id": "r16-S4-01", "severity": "S4", "class": "structure.repeat", "status": "final", "rootLayer": "writer",
+      "chapters": [77, 81, 86, 87, 106, 109, 120], "entity": "桥段复用",
+      "summary": "卸颌防咬毒+抠毒丸三连用；逼收回印/镣铐镜像桥段连用；太子「驳回开释+授查验衔」桥段三连（ch106/109/120）雷同"
+    },
+    {
+      "id": "r16-S4-02", "severity": "S4", "class": "prose.anachronism", "status": "final", "rootLayer": "writer",
+      "chapters": [108, 109, 125], "entity": "真实专名",
+      "summary": "紫禁城/乾清宫/《营造法式》等真实专名混入架空世界"
+    },
+    {
+      "id": "r16-S4-03", "severity": "S4", "class": "state.custody", "status": "final", "rootLayer": "writer",
+      "chapters": [62, 110, 111], "entity": "移监小缺桥",
+      "summary": "工部主簿移交都察院收押后被韩守敬带着赶回京师缺移监桥；崔林下狱收押↔按察司楼船槛车无移解桥"
+    },
+    {
+      "id": "r16-S4-04", "severity": "S4", "class": "ending.closure", "status": "final", "rootLayer": "writer",
+      "chapters": [176, 194], "entity": "收束打磨",
+      "summary": "北元十万骑以钢墙威慑化解无决战交代；反派处刑层面未收束（与 r16-S2-41 关联）；沈淮-林清芷感情线隐性未点破"
+    },
+    {
+      "id": "r16-S4-05", "severity": "S4", "class": "number.ledger", "status": "final", "rootLayer": "writer",
+      "chapters": [110, 125], "entity": "约数并存",
+      "summary": "「一千二百万石」与「千万石秋粮」约数并存；「三十万两官银+二十万石漕粮」与主线「三十万石军粮」易混"
+    }
+  ]
+}

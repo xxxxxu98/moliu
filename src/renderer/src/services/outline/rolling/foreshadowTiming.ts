@@ -20,7 +20,8 @@ export interface RolledBlueprintIssue {
     | 'locked-foreshadow-payoff'
     | 'reveal-timing'
     | 'truncated-hook-clause'
-    | 'finale-not-closing';
+    | 'finale-not-closing'
+    | 'coolpoint-pacing';
   detail: string;
 }
 

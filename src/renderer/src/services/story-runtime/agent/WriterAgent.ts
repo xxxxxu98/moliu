@@ -33,7 +33,12 @@ import {
   type ToolkitForeshadowEntry,
 } from './BookToolkit';
 import { WriterToolkit, type ChapterReviewOutcome, type ChapterReviewPort } from './WriterToolkit';
-import { CHAPTER_STRUCTURE_RULES, CHAPTER_STYLE_RULES } from '../proseRules';
+import {
+  CHAPTER_STRUCTURE_RULES,
+  CHAPTER_STYLE_RULES,
+  renderVocabularyRules,
+  type VocabularyTier,
+} from '../proseRules';
 import { MAX_WORD_THRESHOLD, MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
 
 export interface WriterAgentStepInput {
@@ -59,6 +64,8 @@ export interface WriterAgentStepInput {
   terminalFateCharacters?: Array<{ name: string; status: string }>;
   /** 头衔锚（契约 14）：改稿称谓与最近入账头衔一致，杜绝旧头衔回潮 */
   characterTitleAnchors?: Array<{ name: string; title: string }>;
+  /** 词汇档位（全书唯一）：改稿 brief 与起草同一口径，防改稿把术语密度改飘 */
+  vocabularyTier?: VocabularyTier;
 }
 
 export interface WriterAgentStepResult extends ChapterReviewOutcome {
@@ -169,6 +176,7 @@ export function buildWriterBrief(input: WriterAgentStepInput, toolkit: AgentTool
     '【正文硬规则】(审查会按这些口径打 blocking/warning)',
     ...CHAPTER_STRUCTURE_RULES,
     ...CHAPTER_STYLE_RULES,
+    ...renderVocabularyRules(input.vocabularyTier),
     '',
     '【可用工具】',
     renderToolList(toolkit),

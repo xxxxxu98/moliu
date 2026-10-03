@@ -277,6 +277,8 @@ export interface GeneratedOutline {
   styleKeywords?: string[];
   targetReaders?: string[];
   coreEmotions?: string[];
+  // 词汇档位（'hardcore'|'balanced'|'plain'，来自定位 AI 的显式输出，可空）
+  vocabularyTier?: string;
   // 世界观设定
   worldSetting?: GeneratedWorldSetting;
   // 四幕结构

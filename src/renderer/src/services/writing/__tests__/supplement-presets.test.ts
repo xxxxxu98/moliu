@@ -149,6 +149,20 @@ describe('buildWordCountBoundsIssue', () => {
     expect(issue?.id).toMatch(/^word-count-over:/);
     expect(buildWordCountBoundsIssue('字'.repeat(3000), target)).toBeNull();
   });
+
+  it('擦边超写（超限 ≤1.5% 上限）降为 warning 不拒收——2026-10-01 p1reg20 ch10 实证', () => {
+    // ch10 实测形态：3549/3540（超 9 字，0.25%）曾 blocking 五连拒成洞
+    const target = 3000; // 上限 = ceil(3000*1.18) = 3540；宽限带 = floor(3540*0.015) = 53 字
+    const edgeIssue = buildWordCountBoundsIssue('字'.repeat(3549), target);
+    expect(edgeIssue?.severity).toBe('warning');
+    expect(edgeIssue?.id).toMatch(/^word-count-over-edge:/);
+    expect(edgeIssue?.message).toContain('宽限带');
+
+    // 宽限带边界内（超 53 字）仍 warning
+    expect(buildWordCountBoundsIssue('字'.repeat(3593), target)?.severity).toBe('warning');
+    // 超出宽限带（超 54 字）回到 blocking——真正失控超写必须拦
+    expect(buildWordCountBoundsIssue('字'.repeat(3594), target)?.severity).toBe('blocking');
+  });
 });
 
 describe('buildCondensePrompt', () => {

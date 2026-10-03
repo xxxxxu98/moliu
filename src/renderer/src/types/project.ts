@@ -38,6 +38,12 @@ export interface ProjectMetadata {
     styleKeywords: string[];
     targetReaders: string[];
     coreEmotions: string[];
+    /**
+     * 词汇档位（'hardcore' | 'balanced' | 'plain'）：正文与蓝图节点的用词可读性档位。
+     * 大纲定位 AI 显式输出或由 styleKeywords/targetReaders 推导，
+     * 归一化统一走 proseRules.normalizeVocabularyTier；写作侧按档渲染词汇规则，全书唯一。
+     */
+    vocabularyTier?: string;
   };
   // 情绪目标
   emotionGoal?: {

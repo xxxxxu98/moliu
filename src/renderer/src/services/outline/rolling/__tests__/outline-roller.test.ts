@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   blueprintToPlotNode,
+  buildRollBlueprintPrompt,
   buildRollContextBase,
   buildVolumeAnchor,
   buildWrittenChapterDigests,
@@ -178,6 +179,64 @@ describe('buildRollContextBase', () => {
     const base = buildRollContextBase(project, 51);
     expect(base.writtenThrough).toBe(0);
     expect(base.writtenState).toBe('（暂无已写章节）');
+  });
+
+  it('词汇档位从 outlinePositioning 归一化：显式 tier 优先，缺失由关键词推导，无定位回落 balanced', () => {
+    expect(
+      buildRollContextBase(
+        makeProject({
+          metadata: {
+            outlinePositioning: {
+              genres: ['悬疑'],
+              styleKeywords: ['冷峻', '硬核', '严密推演'],
+              targetReaders: [],
+              coreEmotions: [],
+              vocabularyTier: 'plain',
+            },
+          },
+        }),
+        51
+      ).vocabularyTier
+    ).toBe('plain'); // 显式 tier 压过硬核关键词——UI 覆盖权最高
+    expect(
+      buildRollContextBase(
+        makeProject({
+          metadata: {
+            outlinePositioning: {
+              genres: ['悬疑'],
+              styleKeywords: ['冷峻', '硬核', '严密推演'],
+              targetReaders: [],
+              coreEmotions: [],
+            },
+          },
+        }),
+        51
+      ).vocabularyTier
+    ).toBe('hardcore');
+    expect(buildRollContextBase(makeProject(), 51).vocabularyTier).toBe('balanced');
+  });
+
+  it('滚动批次 system prompt 注入按档的节点语言规则（蓝图再生同源）', () => {
+    const base = buildRollContextBase(
+      makeProject({
+        metadata: {
+          outlinePositioning: {
+            genres: ['悬疑', '科幻', '惊悚'],
+            styleKeywords: ['冷峻', '硬核', '严密推演'],
+            targetReaders: [],
+            coreEmotions: [],
+          },
+        },
+      }),
+      51
+    );
+    const { system } = buildRollBlueprintPrompt({
+      base,
+      chapterNumbers: [51, 52],
+      recentBlueprintEndings: [],
+    });
+    expect(system).toContain('词汇档位·硬核技术流');
+    expect(system).toContain('蓝图节点');
   });
 });
 

@@ -39,7 +39,8 @@ export type OutlineCompletenessBlockerKind =
   | 'protagonist-name-mismatch'
   | 'unknown-location-reference'
   | 'truncated-hook-clause'
-  | 'finale-not-closing';
+  | 'finale-not-closing'
+  | 'duplicate-title-grant';
 
 export interface OutlineCompletenessBlocker {
   kind: OutlineCompletenessBlockerKind;
@@ -728,12 +729,86 @@ export function inspectOutlineCompleteness(
   // 记核心爽点脱钩）。词面对齐是格式级信号，语义复核归 outline-reviewer，故只出黄签
   const coolPointWarnings = inspectCoolPointTimelineAlignment(outline);
   const cardWarnings = inspectCharacterCardAndLocationPlausibility(outline);
+  const titleGrantWarnings = inspectDuplicateTitleGrants(outline);
 
   return {
     canApply: blockers.length === 0,
     blockers,
-    warnings: [...(semantic.locationWarnings ?? []), ...coolPointWarnings, ...cardWarnings],
+    warnings: [
+      ...(semantic.locationWarnings ?? []),
+      ...coolPointWarnings,
+      ...cardWarnings,
+      ...titleGrantWarnings,
+    ],
   };
+}
+
+/** 授予/到任动词族（格式级信号；单字「授」可匹配授印/授意，靠「角色名+官职尾缀」共现收窄） */
+const TITLE_GRANT_VERB_RE =
+  /(特晋|擢升|简授|补授|授予|授为|授|封为|任命为|升任|拜|到任|接任|接印|受领|上任|走马上任)/u;
+/** 官职尾缀（命中后向左看 6 字取紧邻品级，拼成比对键：升品改授是合法新官，
+ * 同品同职重复授才是冲突） */
+const OFFICE_SUFFIX_RE =
+  /(主事|尚书|侍郎|郎中|御史|大学士|监正|验工使|巡按|总督|都指挥使|通政使|修撰|侍读|指挥使|统领|府尹|知府|知县|首辅|次辅|主簿|典吏|佥事|寺卿|少卿|员外郎|给事中)/gu;
+const ADJACENT_RANK_RE = /((?:正|从)[一二三四五六七八九]品)$/u;
+
+function extractGrantedTitles(item: string): string[] {
+  const titles = new Set<string>();
+  for (const match of item.matchAll(OFFICE_SUFFIX_RE)) {
+    const before = item.slice(Math.max(0, (match.index ?? 0) - 6), match.index);
+    const rank = before.match(ADJACENT_RANK_RE);
+    titles.add(`${rank?.[1] ?? ''}${match[1]}`);
+  }
+  return [...titles];
+}
+
+/**
+ * 重复授官双端自冲突（2026-09-30 r16 S1-04 实证，黄签）：ch34 大纲节点「沈淮受领
+ * 工部都水司正六品主事官印」、ch49 又「特晋沈淮为工部都水司正六品主事」——两端
+ * 各自编码两次授予，正文照写即「已任 15 章的官再授一遍+称谓倒退典吏」。大纲两端
+ * 由不同生成轮产出互不知情，靠本扫描对齐。词面信号出黄签，改写归 outline 修复轮
+ * （后端应改为继任他职/职权变化节点，或删除后一次授予）。
+ */
+function inspectDuplicateTitleGrants(outline: ExecutableOutline): OutlineCompletenessBlocker[] {
+  const names = (outline.keyCharacters ?? [])
+    .map(character =>
+      typeof character === 'string' ? character : String(character?.name ?? '')
+    )
+    .map(name => name.trim())
+    .filter(name => name.length >= 2);
+  const firstGrantChapter = new Map<string, number>();
+  const warnings: OutlineCompletenessBlocker[] = [];
+  const sorted = [...(outline.chapterBlueprints ?? [])].sort(
+    (a, b) => a.orderIndex - b.orderIndex
+  );
+  for (const blueprint of sorted) {
+    const grantedThisChapter = new Set<string>();
+    for (const item of blueprintEvents(blueprint)) {
+      if (!TITLE_GRANT_VERB_RE.test(item)) continue;
+      const hitNames = names.filter(name => item.includes(name));
+      if (hitNames.length === 0) continue;
+      const titles = extractGrantedTitles(item);
+      if (titles.length === 0) continue;
+      for (const name of hitNames) {
+        for (const title of titles) {
+          const key = `${name}|${title}`;
+          if (grantedThisChapter.has(key)) continue;
+          grantedThisChapter.add(key);
+          const previous = firstGrantChapter.get(key);
+          if (previous !== undefined) {
+            warnings.push({
+              kind: 'duplicate-title-grant',
+              chapterNumber: blueprint.orderIndex,
+              message: `「${name}」的${title}已在第${previous}章授予，第${blueprint.orderIndex}章再次授予（大纲双端自冲突：重复授官/称谓倒退，r16 S1-04 形态）——后端节点应改写为职权变化/继任他职或删除重复授予`,
+            });
+          } else {
+            firstGrantChapter.set(key, blueprint.orderIndex);
+          }
+        }
+      }
+    }
+  }
+  return warnings;
 }
 
 /**

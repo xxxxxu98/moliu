@@ -675,7 +675,8 @@ export function overlayCharacterFates(
     next[entity.id] = { ...entity, attributes: { ...entity.attributes, status: fate.state } };
     applied += 1;
   }
-  // 清除被后生活动证伪的残留终态
+  // 清除被后生活动证伪的残留终态（含押地残留：2026-09-30 r16 ch114 实证——
+  // status 被清除后 custody「天牢」仍留在实体上，判官 stateDigest 读作在押）
   for (const [name, entity] of byName) {
     if (fateNames.has(name)) continue;
     const existing = String(entity.attributes?.status ?? '');
@@ -683,6 +684,7 @@ export function overlayCharacterFates(
     if (!activeAfterFate.get(name)) continue;
     const attributes = { ...(next[entity.id]?.attributes ?? entity.attributes) };
     delete attributes.status;
+    delete attributes.custody;
     next[entity.id] = { ...entity, attributes };
   }
   return { entities: next, applied };

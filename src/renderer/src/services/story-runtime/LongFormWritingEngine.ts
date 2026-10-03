@@ -48,7 +48,7 @@ import {
 } from '@/services/writing/supplement';
 import { countWords } from '@/services/writing/utils';
 import { isPlaceholderChapterTitle } from '@/services/writing/chapterTitle';
-import { buildTypesettingIssues } from '@/services/writing/typesetting';
+import { buildTypesettingIssues, splitIntoSentences } from '@/services/writing/typesetting';
 import {
   classifyError,
   retryBackoffDelayMs,
@@ -143,6 +143,36 @@ function isAbortLike(error: unknown): boolean {
     (error instanceof DOMException && error.name === 'AbortError') ||
     (error instanceof Error && error.name === 'AbortError')
   );
+}
+
+/**
+ * 边缘超写句边界裁剪：从倒数第二段起删段尾完整句，末段（CEN 钩子承载段）不动，
+ * 对话段（引号承载）跳过——删半轮对话比删叙述句更伤。只删到句号为止，
+ * 不掐断句子，与「不硬裁（掐断正文破坏文气）」的既有取舍不冲突。
+ * 2026-10-01 p1reg20 ch10 实证：3549/3540（超 9 字）两轮 AI 压缩仍差一点，
+ * 靠整章重写兜底是五连拒成洞的最贵路径；9～170 字级擦边超写删 1～2 句即可落回限内。
+ * 返回 null = 无法在不动末段/不掐断句子的前提下落回限内（调用方保持原逻辑）。
+ */
+export function trimEdgeOverflowToBound(prose: string, maxWords: number): string | null {
+  const paragraphs = prose
+    .split(/\n{2,}/u)
+    .map(part => part.trim())
+    .filter(Boolean);
+  if (paragraphs.length < 2) return null;
+
+  const totalWords = (): number => countWords(paragraphs.filter(Boolean).join('\n\n'));
+  for (let i = paragraphs.length - 2; i >= 0 && totalWords() > maxWords; i -= 1) {
+    if (/["“”\u201C\u201D「」『』]/u.test(paragraphs[i])) continue;
+    let sentences = splitIntoSentences(paragraphs[i]);
+    while (sentences.length > 0 && totalWords() > maxWords) {
+      sentences = sentences.slice(0, -1);
+      paragraphs[i] = sentences.join('');
+    }
+    if (totalWords() <= maxWords) break;
+  }
+  const cleaned = paragraphs.filter(Boolean);
+  if (cleaned.length === 0 || countWords(cleaned.join('\n\n')) > maxWords) return null;
+  return cleaned.join('\n\n');
 }
 
 function draftsProse(drafts: SceneDraft[]): string {
@@ -316,8 +346,10 @@ export function applyDeterministicGates(
     };
   }
   if (wordCountIssue) {
+    // 擦边超写（word-count-over-edge，2026-10-01 p1reg20 ch10 实证：超 9 字被
+    // blocking 五连拒成洞）是 warning：进 issues 供改稿顺手修，不置 accepted:false
     report = {
-      accepted: false,
+      accepted: wordCountIssue.severity === 'warning' ? report.accepted : false,
       issues: [
         ...report.issues.filter(issue => !issue.id.startsWith('word-count-')),
         wordCountIssue,
@@ -392,6 +424,17 @@ const REAL_MING_ERA_NAMES = [
   '贞观', '开元', '天宝', '靖康', '淳熙', '至元', '洪宪',
 ];
 
+/** 需年份上下文才判定的真实年号（词面歧义族，2026-09-30 r16 实证扩容）：
+ * 「大业」有「共图大业/大业未成」日常词面，「建武」可入人名——裸收会大面积
+ * 误报；仅当年号后紧跟年份标记（X年/初年/末年/年间）才判格式腐化。
+ * r16 全文通读实证：ch35 暗账「大业三年四月，江宁河银分拨」、ch106 冶印
+ * 「工部内库天字七号，建武五年冬炼」、ch185「大业初年老祖宗传下来的受命
+ * 之宝」——隋/东汉双真实年号与架空大雍构成平行纪年（time.era S2）。 */
+const CONTEXTUAL_REAL_ERA_PATTERNS: Array<{ era: string; re: RegExp }> = [
+  { era: '大业', re: /大业(?:[元一二三四五六七八九十百零\d]+年|初年|末年|年间)/u },
+  { era: '建武', re: /建武(?:[元一二三四五六七八九十百零\d]+年|初年|末年|年间)/u },
+];
+
 export function detectRealEraNameIssues(prose: string): ContinuityIssue[] {
   const hits: string[] = [];
   for (const era of REAL_MING_ERA_NAMES) {
@@ -399,6 +442,15 @@ export function detectRealEraNameIssues(prose: string): ContinuityIssue[] {
     if (idx >= 0) {
       hits.push(
         `${era}（…${prose.slice(Math.max(0, idx - 8), idx + era.length + 4).replace(/\s+/g, '')}…）`
+      );
+    }
+  }
+  for (const { era, re } of CONTEXTUAL_REAL_ERA_PATTERNS) {
+    const match = re.exec(prose);
+    if (match) {
+      const idx = match.index;
+      hits.push(
+        `${era}（…${prose.slice(Math.max(0, idx - 8), idx + match[0].length + 4).replace(/\s+/g, '')}…）`
       );
     }
   }
@@ -412,6 +464,98 @@ export function detectRealEraNameIssues(prose: string): ContinuityIssue[] {
       evidence: hits.slice(0, 3),
     },
   ];
+}
+
+/** 陈旧节拍改写的最小 AI 形状（结构性类型，测试可 mock）。
+ *  parse 入参是 unknown：真实链路的 RawText schema 会传结构化包装对象
+ *  （2026-10-01 ch3 实证），实现方负责解包或返回 ''。 */
+interface SalvageAI {
+  generate<T>(input: {
+    purpose: string;
+    schemaName: string;
+    system: string[];
+    prompt: string;
+    parse: (raw: unknown) => T;
+  }): Promise<T>;
+}
+
+/**
+ * 「裁而不弃」：被陈旧度门禁裁除的 mustCover 节拍交 AI 改写为合法形态
+ * （2026-09-30 r16 S2-41/52 实证：裁而不改写 = 节拍静默蒸发——钱半江 ch103/113
+ * 节点点名在押角色被裁后 25 章零出场、三司会审宣判 payoff 整体跳过，章节照常
+ * 通过无任何痕迹）。返回改写后的节拍行；AI 失败返回 []（fail-open：保留原
+ * 裁剪行为——裁剪本身仍是防 fact_conflict 拒稿的正确防线）。
+ *
+ * 形状防御（2026-10-01 ch3 五连拒实证）：RawText schema 在真实链路上返回
+ * {rawText/RawText/text} 结构化包装对象而非裸字符串（mock 测试恰好返回真
+ * 字符串，形状缺口测试内不可见）——String(对象)＝"[object Object]"（15 字，
+ * 骗过 ≥8 滤网）直接回填 mustCover 成非语义节点，判官整章死锁。parse 侧
+ * 解包 + 行级 CJK 过滤双保险。
+ */
+export async function salvageStaleMustCover(
+  ai: SalvageAI,
+  details: Array<{ item: string; offender: string }>,
+  chapterNumber: number,
+  entities: Record<string, { name?: string; attributes?: Record<string, unknown> }>,
+): Promise<string[]> {
+  if (details.length === 0) return [];
+  const terminalCharacters = details
+    .map(({ offender }) => {
+      const status = String(
+        Object.values(entities).find(entity => entity?.name === offender)?.attributes?.status ?? ''
+      );
+      return status ? `${offender}（${status}）` : offender;
+    })
+    .filter(Boolean);
+  try {
+    const rewritten = await ai.generate<string>({
+      purpose: 'outline-repair-bp',
+      schemaName: 'RawText',
+      system: [
+        '你是网文章节大纲修复员。下列 mustCover 节拍点名了已进入命运终态的角色，原样执行会与既成状态冲突（fact_conflict 拒稿），但直接删除会让关键剧情节拍静默蒸发。',
+        '把每个节拍改写为合法等价形态，必须保留节拍的核心信息量与主线推进作用：',
+        '- 在押/下狱角色：狱中受审、押解途中、狱中密信、商帮/部属/家眷代理人代行、他人转述其指令；公堂宣判类节拍本身合法（在押形态受审即正确形态，只需把「自由身行动」改为「在押受审/押解到庭」）',
+        '- 死亡/驾崩角色：遗物、遗诏、生前密信被起获，他人回忆/追述/翻案',
+        '- 去职角色：除非节拍明写复职过程，否则以其继任者/原部属接管该职能',
+        '禁止把节拍弱化成一句提及或直接删除。输出：每行一条改写后节拍，行数与输入一致，不要编号不要解释。',
+      ],
+      prompt: JSON.stringify({ chapterNumber, terminalCharacters, prunedNodes: details.map(({ item }) => item) }),
+      parse: (raw: unknown) => {
+        if (typeof raw === 'string') return raw;
+        // RawText schema 真实链路返回结构化包装对象：解包已知的文本键
+        if (raw && typeof raw === 'object') {
+          const record = raw as Record<string, unknown>;
+          for (const key of ['rawText', 'RawText', 'text', 'content', 'result']) {
+            const value = record[key];
+            if (typeof value === 'string' && value.trim()) return value;
+          }
+        }
+        return '';
+      },
+    });
+    const salvaged = (typeof rewritten === 'string' ? rewritten : '')
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      // 行级防御：节拍必须含 CJK 且非 "[object …]" 骨架（对象被 String 的残留形态）
+      .filter(line =>
+        line.length >= 8 &&
+        /[\u4e00-\u9fa5]/u.test(line) &&
+        !/^\[object\b/u.test(line)
+      )
+      .slice(0, details.length);
+    if (salvaged.length > 0) {
+      console.info(
+        `[LongFormWritingEngine] ch${chapterNumber} 陈旧节拍改写回填 ${salvaged.length}/${details.length} 条`
+      );
+    }
+    return salvaged;
+  } catch (error) {
+    console.warn(
+      `[LongFormWritingEngine] ch${chapterNumber} 陈旧节拍改写失败，保留裁剪（节拍蒸发风险，triage 跟进）：`,
+      error instanceof Error ? error.message : error
+    );
+    return [];
+  }
 }
 
 function shouldRewrite(report: ContinuityReport): boolean {
@@ -496,15 +640,35 @@ export class LongFormWritingEngine {
     );
 
     // 写作前再按已兑现事件去重 mustCover/CPN，并二次软化禁区
-    const { chapter: healedChapter, report: healthReport } = healChapterContract(
+    const { chapter: healedChapterBase, report: healthReport } = healChapterContract(
       input.contracts.chapter,
       { state: input.state }
     );
+    let healedChapter = healedChapterBase;
     if (healthReport.notes.length > 0) {
       console.info(
         `[LongFormWritingEngine] ch${healedChapter.chapterNumber} 合同健康度:`,
         healthReport.notes.join('；')
       );
+    }
+    // 裁而不弃（2026-09-30 r16 S2-41/52 实证：节拍静默蒸发）：陈旧度裁剪把点名
+    // 终态角色的节拍整句裁除后写手从未见过——章节照常通过却节拍蒸发（钱半江
+    // ch103/113 节点被裁后 25 章零出场、三司会审宣判 payoff 整体跳过）。把被裁
+    // 节拍交 AI 改写为合法形态回填 mustCover；改写失败仅告警（fail-open，保留
+    // 原裁剪行为——裁剪本身仍是防 fact_conflict 拒稿的正确防线）。
+    if ((healthReport.staleRemovedDetails ?? []).length > 0) {
+      const salvaged = await salvageStaleMustCover(
+        this.dependencies.ai,
+        healthReport.staleRemovedDetails,
+        healedChapter.chapterNumber,
+        input.state.entities ?? {}
+      );
+      if (salvaged.length > 0) {
+        healedChapter = {
+          ...healedChapter,
+          mustCover: [...(healedChapter.mustCover ?? []), ...salvaged],
+        };
+      }
     }
     const contracts = {
       ...input.contracts,
@@ -629,6 +793,8 @@ export class LongFormWritingEngine {
         knownCharacterNames: extractCharacterNames(input.state.entities),
         terminalFateCharacters: collectTerminalDeathCharacters(input.state),
         characterTitleAnchors: collectCharacterTitleAnchors(input.state),
+        // 词汇档位（全书唯一）：改稿与起草同一口径，防改稿回合把术语密度改飘
+        vocabularyTier: writeInput.vocabularyTier,
       });
       drafts = outcome.drafts;
       facts = outcome.facts;
@@ -720,13 +886,16 @@ export class LongFormWritingEngine {
           targetWordCount: writeInput.targetWordCount,
           revisionPlan: draftRevisionPlan,
           rewriteRound: draftRevisionPlan ? Math.max(1, rewriteRounds) : undefined,
-          // 跨章收尾去重：把最近几章的结尾句摆到模型眼前（详见 extractRecentEndingSnippets）
-          recentEndingSnippets: extractRecentEndingSnippets(
-            input.recentScenes,
-            contracts.chapter.chapterNumber
-          ),
-          // 上章结尾仲裁：CBN 是规划语句，与上章正文事实冲突时以后者为准
-          previousChapterEnding: input.previousChapterEnding,
+            // 跨章收尾去重：把最近几章的结尾句摆到模型眼前（详见 extractRecentEndingSnippets）
+            recentEndingSnippets: extractRecentEndingSnippets(
+              input.recentScenes,
+              contracts.chapter.chapterNumber
+            ),
+            // 未闭合悬念承接（2026-10-01 P1.1 悬念账本）：近章 CEN 摆到眼前，
+            // 本章必须接住至少一条
+            recentChapterCliffhangers: input.recentChapterCliffhangers,
+            // 上章结尾仲裁：CBN 是规划语句，与上章正文事实冲突时以后者为准
+            previousChapterEnding: input.previousChapterEnding,
           // 完整角色库（未被 context 压缩筛选），注入 prompt 白名单约束名字一致性
           knownCharacterNames: extractCharacterNames(input.state.entities),
           allowedAppearanceNames: extractAllowedAppearanceNames(
@@ -749,6 +918,8 @@ export class LongFormWritingEngine {
           fateStatusAnchors: input.fateStatusAnchors,
           // 实体状态卡（unified-state-ledger 第 2 阶段）：在场时替换正典块
           stateCard: input.stateCard,
+          // 词汇档位（全书唯一）：起草与改稿同一口径（proseRules SSOT 渲染）
+          vocabularyTier: writeInput.vocabularyTier,
           futureReveals: contracts.chapter.futureReveals ?? [],
           // 大纲链路的章节标题已是正式标题，模型再拟一个也会被 pipeline 丢弃
           existingChapterTitle: isPlaceholderChapterTitle(contracts.chapter.title)
@@ -1124,6 +1295,31 @@ export class LongFormWritingEngine {
             }
           }
         }
+      }
+    }
+
+    // 边缘超写确定性裁剪（2026-10-01 p1reg20 ch10 实证）：两轮 AI 压缩后仍超、
+    // 且超限量 ≤ 上限 5% 时，删段尾完整句落回限内——比整章重写兜底便宜三个
+    // 数量级，且不掐断句子（与「不硬裁」取舍不冲突的是掐断，不是删完整句）
+    const afterCondenseBounds = checkWordCountBounds(chosen.prose, target);
+    if (
+      afterCondenseBounds.status === 'over' &&
+      afterCondenseBounds.currentWords - afterCondenseBounds.maxWords <=
+        Math.ceil(afterCondenseBounds.maxWords * 0.05)
+    ) {
+      const edgeTrimmed = trimEdgeOverflowToBound(
+        chosen.prose,
+        afterCondenseBounds.maxWords
+      );
+      if (edgeTrimmed) {
+        console.info(
+          `[LongFormWritingEngine] 边缘超写句裁剪：${afterCondenseBounds.currentWords}→${countWords(edgeTrimmed)} 字（上限 ${afterCondenseBounds.maxWords}）`
+        );
+        chosen = {
+          prose: edgeTrimmed,
+          strategy: 'condensed',
+          bounds: checkWordCountBounds(edgeTrimmed, target),
+        };
       }
     }
 

@@ -90,6 +90,8 @@ export interface ContractHealthReport {
   /** 被陈旧度门禁裁除的 mustCover 原句（终态角色节点）——引擎侧重建 review.mustCheck
    *  时必须同步减除，否则建合同期（无 state）固化的陈旧节点会重新喂进起草 prompt */
   staleRemovedMustCover: string[];
+  /** 被裁节拍的 (原句, 终态角色) 明细：引擎侧「裁而不弃」AI 改写回填的输入 */
+  staleRemovedDetails: Array<{ item: string; offender: string }>;
   cbnSanitized: boolean;
   originalCbn: string;
   /** 人类可读摘要，便于冒烟日志 */
@@ -252,6 +254,11 @@ export function healChapterContract(
 
   // 陈旧度门禁：状态里已进入命运级终态的角色，其蓝图硬约束节点先行裁除
   const staleNames = collectDeceasedEntityNames(options.state);
+  // 被裁节拍的 (原句, 触发裁剪的终态角色) 明细：引擎侧「裁而不弃」改写的输入
+  // （2026-09-30 r16 S2-41/52 实证：裁而不改写 = 节拍静默蒸发——钱半江 ch103/113
+  // 节点点名在押角色被裁后 25 章零出场、三司会审宣判 payoff 整体跳过，章节照常
+  // 通过无任何痕迹）
+  const staleRemovedDetails: Array<{ item: string; offender: string }> = [];
   const staleSafe = (item: string) =>
     !nodeMentionsFateLockedCharacter(stripOpeningCbnPrefix(item) || item, staleNames);
   const stalePrunedMustCover = staleNames.size > 0
@@ -263,6 +270,7 @@ export function healChapterContract(
             console.info(
               `[contractHealth] ch${chapter.chapterNumber} 陈旧度裁剪 mustCover「${item.slice(0, 30)}」（${offender} 已进入终态）`
             );
+            staleRemovedDetails.push({ item, offender });
             return false;
           }
           return true;
@@ -376,6 +384,7 @@ export function healChapterContract(
       prunedMustCover: mustPrune.pruned,
       prunedCpns: cpnPrune.pruned,
       staleRemovedMustCover,
+      staleRemovedDetails,
       cbnSanitized: cbnResult.changed,
       originalCbn,
       notes,
@@ -607,16 +616,60 @@ export function detectNodeVerbatimOverlapIssues(
  * 阈值取 0.55（归一化后）：正文承接时短暂呼应上一幕属正常叙事，只有
  * 「结尾窗口的一半以上被原文复刻」才算重演；比较窗口各取 ~120 字，
  * 覆盖「整段复读」形态而不误伤单句钩子衔接。
+ *
+ * 2026-10-03 r17 书审补句级通道：写手形成「复读上章结尾一句 + 续新内容」的
+ * 规避形态——ch40 逐字复读 43 字/ch127 复读 23 字，整体相似度被新内容稀释到
+ * 0.16-0.19 全部漏检。上章结尾各句的**句首 ≥12 字片段**出现在本章开头窗口内
+ * → blocking（与节点照抄同口径）。限定句首是 r17 全书 200 对章界实证校准：
+ * 任意位置 12 字滑窗误杀 11/13（「数十名膀大腰圆的护院家丁」类名词短语在
+ * 连续场景中合法复用，不是复读）；复读必然整句从头复现，句首片段零漏报。
  */
+const OPENING_REPEAT_FRAGMENT_CHARS = 12;
+
 export function detectOpeningRepetitionIssue(
   prose: string,
   previousChapterEnding?: string,
   threshold = 0.55,
 ): ContinuityIssue | null {
   const prevTail = (previousChapterEnding ?? '').trim().slice(-120);
-  const opening = (prose ?? '').trim().slice(0, 160);
+  const opening = (prose ?? '').trim().slice(0, 200);
   if (prevTail.length < 40 || opening.length < 40) return null;
-  const similarity = normalizedSimilarity(prevTail, opening);
+
+  // 句级逐字复读:上章结尾各句及其子句(逗号级)的首 12 字片段在本章开头出现即坐实。
+  // 两级口径的实证校准(2026-10-03 r17 全书 200 对章界):仅整句句首漏掉 ch127
+  // 形态(复读上章末句的后半子句——「台阶下…」实为逗号连接的一整句);
+  // 任意位置滑窗则误杀 11/13(名词短语在连续场景中合法复用)。
+  // 子句首 ≥12 字(不足 12 字的短子句不参与)兼顾两形态且零误杀。
+  const clauseHeads: string[] = [];
+  for (const sentence of prevTail.split(/[。！？…!?]/u)) {
+    const trimmed = sentence.trim();
+    if (!trimmed) continue;
+    if (trimmed.length >= OPENING_REPEAT_FRAGMENT_CHARS) {
+      clauseHeads.push(trimmed.slice(0, OPENING_REPEAT_FRAGMENT_CHARS));
+    }
+    for (const clause of trimmed.split(/[，,；;、]/u)) {
+      const clauseTrimmed = clause.trim();
+      if (clauseTrimmed.length >= OPENING_REPEAT_FRAGMENT_CHARS) {
+        clauseHeads.push(clauseTrimmed.slice(0, OPENING_REPEAT_FRAGMENT_CHARS));
+      }
+    }
+  }
+  for (const fragment of clauseHeads) {
+    if (opening.includes(fragment)) {
+      return {
+        id: 'chapter-opening-repetition',
+        domain: 'fulfillment',
+        severity: 'blocking',
+        message:
+          `本章开场逐字复读上章结尾（「${fragment}…」，句/子句首 ${OPENING_REPEAT_FRAGMENT_CHARS} 字连续相同），` +
+          `读者刚在上一章末尾读过这句——重写时删除复读句，从上一章没有出现过的新动作直接开场，` +
+          `收束状态只用一句话暗前提带过。`,
+        evidence: [fragment, opening.slice(0, 60)],
+      };
+    }
+  }
+
+  const similarity = normalizedSimilarity(prevTail, opening.slice(0, 160));
   if (similarity < threshold) return null;
   return {
     id: 'chapter-opening-repetition',

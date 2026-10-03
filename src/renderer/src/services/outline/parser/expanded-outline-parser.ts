@@ -840,6 +840,9 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
       coreEmotions: extractMultiValueField(positioningSection, '核心情绪'),
       sellingPoints: extractMultiValueField(positioningSection, '卖点标签'),
       styleKeywords: extractMultiValueField(positioningSection, '风格关键词'),
+      // 词汇档位：定位 AI 的显式单值输出；空值留给 normalizeVocabularyTier 从
+      // styleKeywords 推导——解析层不做归一化，保持零语义
+      vocabularyTier: extractFieldValue(positioningSection, '词汇档位') || undefined,
     },
     storyScale: parseStoryScalePlan(scaleSection),
     storyEngine: {

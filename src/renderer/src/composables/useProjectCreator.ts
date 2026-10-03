@@ -13,6 +13,7 @@ import {
 } from "./projectCreatorBuilders";
 import { useChapterOutlineGenerator } from "./useChapterOutlineGenerator";
 import { formatStoredChapterTitle } from "@/services/writing/chapterTitle";
+import { resolvePersistedVocabularyTier } from "@/services/story-runtime/proseRules";
 
 export interface CreateProjectOptions {
   /** 开题中心写入的题材合同种子 */
@@ -369,6 +370,13 @@ export function useProjectCreator(): UseProjectCreatorReturn {
         styleKeywords: [...(outline.styleKeywords ?? [])],
         targetReaders: [...(outline.targetReaders ?? [])],
         coreEmotions: [...(outline.coreEmotions ?? [])],
+        // 词汇档位：显式输出或关键词推导；与 projectCreatorBuilders 同口径，
+        // 定位全空时不落 balanced 空壳（零噪声落库）
+        vocabularyTier: resolvePersistedVocabularyTier({
+          tier: outline.vocabularyTier,
+          styleKeywords: outline.styleKeywords,
+          targetReaders: outline.targetReaders,
+        }),
       },
       // 情绪目标 - 格式正确
       emotionGoal: outline.emotionGoal ? {
@@ -727,9 +735,12 @@ export function useProjectCreator(): UseProjectCreatorReturn {
       if (newProject) {
         // 保存增强数据到项目顶层字段（不是 metadata）
         // 注意：条件必须覆盖所有可能的增强字段，否则单一字段场景会被跳过（原 bug：漏掉 coolPointDesign）
-        const hasPositioning = Object.values(metadata.outlinePositioning).some(
-          (values) => values.length > 0
-        );
+        // vocabularyTier 是 string（其余是数组），Array.isArray 守卫避免 undefined.length 崩溃；
+        // 显式档位本身也是有效定位信号（AI 明示 hardcore/plain 时定位应落库）
+        const hasPositioning =
+          Object.values(metadata.outlinePositioning).some(
+            values => Array.isArray(values) && values.length > 0
+          ) || typeof metadata.outlinePositioning.vocabularyTier === 'string';
         const hasEnhancement =
           hasPositioning
           || metadata.emotionGoal

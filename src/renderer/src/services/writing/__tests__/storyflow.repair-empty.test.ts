@@ -87,6 +87,95 @@ export interface RepairRunResult {
   failureReasons: Record<number, string>;
 }
 
+/**
+ * 补写章与下章「同拍重演」检测（2026-09-30 r16 ch114/115 S1 实证）：
+ * 下章是按补写章垂死草稿生成的——补写完成后，下章开头可能把补写章已演完的
+ * 节拍当作未发生重演（人物状态重置/底牌二次首亮/同一道具动作复演，r16 形态：
+ * ch114 末徐茂德已被旧账残页打脸至惨白，ch115 开头却昂下巴重新进场并被同一叠
+ * 旧账再次打脸）。字面层先做确定性重叠检测；语义层一次 AI 探针终审。
+ * fail-open：只警告不阻断——补写正文本身已过判官门禁，警告供 triage/书审跟进。
+ */
+export function detectRepairStitchOverlap(
+  repairedTail: string,
+  nextHead: string,
+): { similarity: number; longestCommon: number } {
+  const tail = repairedTail.replace(/\s+/g, '');
+  const head = nextHead.replace(/\s+/g, '');
+  if (tail.length < 20 || head.length < 20) return { similarity: 0, longestCommon: 0 };
+  const bigrams = (text: string): Set<string> => {
+    const out = new Set<string>();
+    for (let i = 0; i + 1 < text.length; i += 1) out.add(text.slice(i, i + 2));
+    return out;
+  };
+  const a = bigrams(tail);
+  const b = bigrams(head);
+  let inter = 0;
+  for (const gram of a) if (b.has(gram)) inter += 1;
+  const similarity = a.size + b.size > 0 ? inter / (a.size + b.size - inter) : 0;
+  let longest = 0;
+  const dp = new Array<number>(head.length + 1).fill(0);
+  for (let i = 1; i <= tail.length; i += 1) {
+    let prev = 0;
+    for (let j = 1; j <= head.length; j += 1) {
+      const tmp = dp[j];
+      dp[j] = tail[i - 1] === head[j - 1] ? prev + 1 : 0;
+      if (dp[j] > longest) longest = dp[j];
+      prev = tmp;
+    }
+  }
+  return { similarity, longestCommon: longest };
+}
+
+interface StitchProbeAI {
+  generate<T>(input: {
+    purpose: string;
+    schemaName: string;
+    system: string[];
+    prompt: string;
+    parse: (raw: string) => T;
+  }): Promise<T>;
+}
+
+export async function warnIfNextChapterReplaysBeat(
+  chapters: Array<{ orderIndex?: number; content?: string }>,
+  repairedChapterNumber: number,
+  ai: StitchProbeAI,
+): Promise<void> {
+  const repaired = chapters.find(item => (item.orderIndex ?? 0) + 1 === repairedChapterNumber);
+  const next = chapters.find(item => (item.orderIndex ?? 0) + 1 === repairedChapterNumber + 1);
+  const tail = (repaired?.content ?? '').slice(-600);
+  const head = (next?.content ?? '').slice(0, 600);
+  if (!tail || !head) return;
+  const { similarity, longestCommon } = detectRepairStitchOverlap(tail, head);
+  if (similarity >= 0.3 || longestCommon >= 15) {
+    console.warn(
+      `[repair] 第${repairedChapterNumber + 1}章开头与补写章尾字面重叠嫌疑（sim=${similarity.toFixed(2)}，最长公共串=${longestCommon}字）——检查是否同拍重演`,
+    );
+  }
+  try {
+    const verdict = await ai.generate<{ replay: boolean; reason: string }>({
+      purpose: 'outline-repair-bp',
+      schemaName: 'RawText',
+      system: [
+        '你是网文连续性审计员。补写章（原判死空洞章）已重写完成，其末尾文本与下一章开头文本如下。',
+        '下一章是按补写章的垂死草稿生成的，可能把补写章已完成的节拍当作未发生重演。',
+        '判断下一章开头是否重演了补写章末尾已完成的关键节拍：人物状态被重置（已被打脸/震慑/击败却重新嚣张进场）、同一底牌/证据被当作首次亮出、同一道具动作复演。',
+        '正常承接（延续情绪状态、引用既有结果、推进新进展）不算重演。',
+        '只输出 JSON：{"replay":true/false,"reason":"一句话依据，引用双方原文短语"}',
+      ],
+      prompt: JSON.stringify({ repairedChapterTail: tail, nextChapterHead: head }),
+      parse: raw => JSON.parse(String(raw).replace(/```json|```/gu, '').trim()) as { replay: boolean; reason: string },
+    });
+    if (verdict?.replay) {
+      console.warn(
+        `[repair] 第${repairedChapterNumber + 1}章开头疑似重演补写章已完成节拍（${String(verdict.reason).slice(0, 160)}）——需修补下章开头`,
+      );
+    }
+  } catch {
+    // fail-open：探针失败不影响补写结果
+  }
+}
+
 export async function runRepairEmptyChapters(options: RepairOptions): Promise<RepairRunResult> {
   const failedChapters: number[] = [];
   const failureReasons: Record<number, string> = {};
@@ -206,6 +295,8 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<Re
               `[repair] 第${n}章补写成功（attempt ${attempt}，${chapter.wordCount} 字）`,
             );
             done = true;
+            // 下章同拍重演检测（r16 ch114/115 实证）：fail-open 警告
+            await warnIfNextChapterReplaysBeat(chapters, n, ai);
           } else {
             lastError = result.output.error ?? '未知失败';
             console.warn(`[repair] 第${n}章 attempt ${attempt} 失败：${lastError.slice(0, 200)}`);

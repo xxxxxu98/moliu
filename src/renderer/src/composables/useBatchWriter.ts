@@ -49,6 +49,9 @@ import {
   resolveChapterWriteOptions,
 } from '@/services/writing/chapterWritePresets';
 import {
+  calculateDynamicWordCount,
+} from '@/services/writing/dynamicWordCount';
+import {
   useFailureRecovery,
   type PipelineStep,
   type FailureState,
@@ -872,6 +875,32 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
       currentPipelineStep.value = '写作中';
 
+      // 动态字数目标计算：根据章节位置、内容密度调整字数目标
+      const chapterNumber = chapterIndex + 1;
+      const totalChapters = project.metadata?.plannedChapterCount 
+        ?? project.plotOutline?.length 
+        ?? 100;
+      const plotNode = project.plotOutline?.[chapterIndex];
+      
+      const dynamicWordCount = calculateDynamicWordCount({
+        chapterNumber,
+        totalChapters,
+        plotNode: plotNode ? {
+          CBN: plotNode.CBN,
+          CPNs: plotNode.CPNs,
+          CEN: plotNode.CEN,
+          mustCover: plotNode.mustCover,
+        } : undefined,
+        baseWordCount: options.wordsPerChapter,
+      });
+
+      console.log(
+        `[批量写作] 第${chapterNumber}章字数目标: ${dynamicWordCount} 字 ` +
+        `(基准: ${options.wordsPerChapter}, 节点数: ${plotNode ? 
+          [plotNode.CBN, ...(plotNode.CPNs || []), ...(plotNode.mustCover || [])].filter(Boolean).length : 
+          0})`
+      );
+
       // 委托共享管道执行单章（批量预设：跳过预检，开启补字）。
       // v3.1 管道的真实开关面是 useTaskBook/enablePreflight/enableSupplement/maxRewriteRounds；
       // 旧 UI 旋钮按语义映射接线（此前四个旋钮收参后被直接忽略，关审查实际照跑）：
@@ -884,7 +913,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
       const result = await pipeline.execute({
         project,
         chapter,
-        targetWordCount: options.wordsPerChapter,
+        targetWordCount: dynamicWordCount, // 使用动态计算的字数目标
         writingStyle: options.writingStyle as any,
         ...writeOptions,
         maxRewriteRounds: options.useReview === false ? 0 : undefined,

@@ -16,6 +16,8 @@ import {
   uniformDensityIssueIds,
 } from '../LongFormWritingEngine';
 import { detectRealEraNameIssues } from '../LongFormWritingEngine';
+import { salvageStaleMustCover } from '../LongFormWritingEngine';
+import { trimEdgeOverflowToBound, applyDeterministicGates } from '../LongFormWritingEngine';
 import { parseStoryPatch } from '../patches';
 import { StoryRuntimeClient } from '../StoryRuntimeClient';
 import { makeBootstrap, makeContracts, makeState } from './testFixtures';
@@ -357,6 +359,72 @@ describe('LongFormWritingEngine', () => {
     expect(commitChapter).toHaveBeenCalledOnce();
   });
 
+  it('write() 真走裁而不弃接线：陈旧裁剪触发 AI 改写回填且不抛错（2026-10-01 r17 回归）', async () => {
+    // r17 实证：salvage 接线曾在 write() 里引用构造器参数名 dependencies 而非
+    // this.dependencies——98 章后首次触发陈旧度裁剪即 ReferenceError，三连重试
+    // 耗尽成洞终止全书。单测只测 helper 不走接线（0821 教训复发），本测试补真路径。
+    const facts: FactExtractor = {
+      extract: async () => ({ events: [], deltas: [], evidence: [] }),
+    };
+    const commitChapter = vi.fn(async () => ({
+      commitId: 'commit-salvage',
+      revision: 1,
+      acceptedAt: '2026-01-02T00:00:00.000Z',
+    }));
+    const salvagePrunedNodes: string[] = [];
+    const judgeMustCovers: string[][] = [];
+    class SalvageAI extends FakeAI {
+      async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
+        if (request.purpose === 'outline-repair-bp') {
+          const payload = JSON.parse(request.prompt) as { prunedNodes?: string[] };
+          salvagePrunedNodes.push(...(payload.prunedNodes ?? []));
+          return '钱半江狱中密令账房代商帮移交三万石漕粮';
+        }
+        if (request.purpose === 'chapter-judge') {
+          const payload = JSON.parse(request.prompt) as { mustCover?: string[] };
+          judgeMustCovers.push([...(payload.mustCover ?? [])]);
+        }
+        return super.generate(request);
+      }
+    }
+    const contracts = makeContracts();
+    contracts.chapter.mustCover = ['钱半江响应号召率商帮移交三万石漕粮', '林夜呈上漕运铁证'];
+    const state = makeState();
+    state.entities['char-qian'] = {
+      id: 'char-qian',
+      kind: 'character',
+      name: '钱半江',
+      aliases: [],
+      attributes: { status: '下狱' },
+      knownBy: ['char-qian'],
+      sourceTrace: [],
+    } as never;
+    const engine = new LongFormWritingEngine({
+      ai: new SalvageAI(),
+      factExtractor: facts,
+      commitPort: { commitChapter },
+    });
+
+    const result = await engine.write({
+      projectId: 'project-1',
+      contracts,
+      state,
+      recentScenes: [],
+      retrievedScenes: [],
+      styleGuidance: ['克制'],
+      maxContextTokens: 10_000,
+      maxRewriteRounds: 0,
+    });
+
+    // 被裁节拍确实进入了改写通道（接线可达，不再是 ReferenceError）
+    expect(salvagePrunedNodes).toContain('钱半江响应号召率商帮移交三万石漕粮');
+    // 改写后的合法形态节点回填进了判官的 mustCover（裁而不弃的完整链路）
+    expect(judgeMustCovers.some(covers => covers.includes('钱半江狱中密令账房代商帮移交三万石漕粮'))).toBe(true);
+    // 原裁剪防线保持：陈旧原句不得回流判官
+    expect(judgeMustCovers.flat().some(node => node.includes('钱半江响应号召'))).toBe(false);
+    expect(result.report).toBeDefined();
+  });
+
   it('均匀化 accepted 也触发一轮定向改稿：requiredIssueIds 标记 + survived 不阻断（g38f CV 触发器）', async () => {
     // 2026-09-05 g38f 实测：200 章级 41/198、100 章级 30/97 章 CV<0.15，prompt 锚点
     // 长跑失守；均匀化 warning 原先「顺手修掉」弱约束，accepted 直接跳过改稿回合。
@@ -509,8 +577,102 @@ describe('LongFormWritingEngine', () => {
     expect(detectRealEraNameIssues('上元节夜里，他温了一壶绍兴酒。')).toHaveLength(0);
   });
 
-  it('nodeVerbatimIssueIds 能同时提取确定性门禁与判官语义报出的节点抄用问题', () => {
-    const report = {
+  it('detectRealEraNameIssues 大业/建武需年份上下文（2026-09-30 r16 实证扩容）', () => {
+    // r16 终稿实锤形态：ch35 暗账纪年、ch106 冶印纪年、ch185 受命宝纪年
+    expect(detectRealEraNameIssues('大业三年四月，江宁河银分拨，解送两万两换交汇通柜。')).toHaveLength(1);
+    expect(detectRealEraNameIssues('工部内库天字七号，建武五年冬炼，甲字官冶所造。')).toHaveLength(1);
+    expect(detectRealEraNameIssues('这是，大业初年老祖宗传下来的受命之宝！')).toHaveLength(1);
+    // 词面歧义负例：「共图大业」「大业未成」是古风正文合法高频，不判年号
+    expect(detectRealEraNameIssues('众将齐声应诺，誓与王爷共图大业，纵死无悔。')).toHaveLength(0);
+    expect(detectRealEraNameIssues('先帝大业未成而中道崩殂，此恨绵绵。')).toHaveLength(0);
+  });
+
+  it('salvageStaleMustCover：被裁节拍改写回填（r16 S2-41/52 节拍蒸发）', async () => {
+    const details = [
+      { item: '钱半江响应号召率商帮移交三万石漕粮', offender: '钱半江' },
+      { item: '三司会审正式结案落实崔林徐茂德死罪判决', offender: '崔林' },
+    ];
+    const entities = {
+      'char-qian': { name: '钱半江', attributes: { status: '下狱' } },
+      'char-cui': { name: '崔林', attributes: { status: '定罪' } },
+    };
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    // 成功：逐行回填，prompt 携带终态角色与其状态
+    let capturedPrompt = '';
+    const ai = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedPrompt = String(request.prompt ?? '');
+        return '钱半江狱中密令账房代率商帮移交三万石漕粮\n三司会审于刑部大堂宣判，崔林徐茂德押解到庭听判定谳';
+      }),
+    };
+    const salvaged = await salvageStaleMustCover(ai as never, details, 113, entities as never);
+    expect(salvaged).toHaveLength(2);
+    expect(salvaged[0]).toContain('狱中密令');
+    expect(capturedPrompt).toContain('钱半江（下狱）');
+    expect(capturedPrompt).toContain('崔林（定罪）');
+    expect(String(ai.generate.mock.calls[0]?.[0]?.system?.join('')).length).toBeGreaterThan(0);
+
+    // AI 失败：fail-open 返回 [] 且告警（保留裁剪不阻塞写作）
+    warn.mockClear();
+    const failAi = { generate: vi.fn().mockRejectedValue(new Error('网关抖动')) };
+    await expect(salvageStaleMustCover(failAi as never, details, 113, entities as never)).resolves.toEqual([]);
+    expect(warn).toHaveBeenCalled();
+
+    // 输出行数封顶与短行过滤
+    const noisyAi = {
+      generate: vi.fn().mockResolvedValue('合法改写节拍一：钱半江代理人交粮\n短\n再一条合法长节拍改写线'),
+    };
+    const capped = await salvageStaleMustCover(noisyAi as never, details, 113, entities as never);
+    expect(capped).toHaveLength(2);
+    expect(capped.every(line => line.length >= 8)).toBe(true);
+    warn.mockRestore();
+    info.mockRestore();
+  });
+
+  it('salvageStaleMustCover：RawText 包装对象解包，不再产出 [object Object] 节点（2026-10-01 ch3 五连拒实证）', async () => {
+    const details = [{ item: '幽暗档房内陆衡翻查账册', offender: '陆衡' }];
+    const entities = { 'char-lu': { name: '陆衡', attributes: { status: '下狱' } } };
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    // 真实链路形态：generate 内部调 request.parse(JSON对象)。旧 mock 直接返回
+    // 真字符串绕过了 parse，形状缺口测试内不可见——ch3 实跑时网关返回
+    // {"rawText":...,"RawText":...,"text":...} 包装，String(对象)＝"[object Object]"
+    // （15 字骗过 ≥8 滤网）回填 mustCover，判官对非语义节点五连拒死章。
+    const wrappedAi = {
+      generate: vi.fn(async (request: { parse?: (raw: unknown) => unknown }): Promise<unknown> =>
+        request.parse?.({
+          rawText: '陆衡部属遵狱中密信指引翻查账册',
+          RawText: '陆衡部属遵狱中密信指引翻查账册',
+          text: 'dup',
+        })
+      ),
+    };
+    const wrapped = await salvageStaleMustCover(wrappedAi as never, details, 3, entities as never);
+    expect(wrapped).toHaveLength(1);
+    expect(wrapped[0]).toContain('狱中密信');
+    expect(wrapped.some(line => /\[object/u.test(line))).toBe(false);
+
+    // 无可解包文本键的对象 → parse 返回 '' → salvaged 空（fail-open 不回填垃圾）
+    const junkAi = {
+      generate: vi.fn(async (request: { parse?: (raw: unknown) => unknown }): Promise<unknown> =>
+        request.parse?.({ code: 0, ok: true })
+      ),
+    };
+    const junk = await salvageStaleMustCover(junkAi as never, details, 3, entities as never);
+    expect(junk).toEqual([]);
+
+    // 兜底：即使上游漏成字符串化的 "[object Object]"，行级 CJK 过滤也把它挡在 mustCover 外
+    const leakedAi = { generate: vi.fn().mockResolvedValue('[object Object]') };
+    const leaked = await salvageStaleMustCover(leakedAi as never, details, 3, entities as never);
+    expect(leaked).toEqual([]);
+    warn.mockRestore();
+    info.mockRestore();
+  });
+
+  it('nodeVerbatimIssueIds 能同时提取确定性门禁与判官语义报出的节点抄用问题', () => {    const report = {
       accepted: true,
       issues: [
         {
@@ -1059,3 +1221,83 @@ class AlwaysForbiddenAI implements StructuredAI {
     };
   }
 }
+
+describe('擦边超写修复（2026-10-01 p1reg20 ch10 五连拒实证）', () => {
+  it('trimEdgeOverflowToBound：删段尾完整句落回限内，末段钩子不动', async () => {
+    const { countWords } = await import('@/services/writing/utils');
+    const para = (n: number) => `第${n}句叙述内容保持完整到句号。`.repeat(n);
+    const prose = [
+      para(12),
+      para(14),
+      para(13),
+      '章尾钩子悬念拉满读者必点下一章！',
+    ].join('\n\n');
+    const current = countWords(prose);
+    const max = current - 9; // ch10 实测形态：超 9 字
+    const trimmed = trimEdgeOverflowToBound(prose, max);
+    expect(trimmed).not.toBeNull();
+    expect(countWords(trimmed!)).toBeLessThanOrEqual(max);
+    // 末段钩子原样保留
+    expect(trimmed!.endsWith('章尾钩子悬念拉满读者必点下一章！')).toBe(true);
+    // 只删完整句：每段以句末标点收尾，无掐断残句
+    expect(
+      trimmed!.split(/\n{2,}/u).every(p => /[。！？…!?]$/u.test(p.trim()))
+    ).toBe(true);
+  });
+
+  it('trimEdgeOverflowToBound：纯对话段不裁，裁不动返回 null', () => {
+    const dialogueOnly = ['“你到底想说什么。”他盯着对方。', '“没什么。”她冷笑。'].join('\n\n');
+    expect(trimEdgeOverflowToBound(dialogueOnly, 5)).toBeNull();
+
+    const mixed = ['“第一轮对话内容。”他说完看着对方。', '“你怎么知道？”她反问得很快。'].join('\n\n');
+    expect(trimEdgeOverflowToBound(mixed, 8)).toBeNull();
+  });
+
+  it('applyDeterministicGates：擦边超写（超限≤1.5%）不置 accepted:false', async () => {
+    const { countWords } = await import('@/services/writing/utils');
+    const target = 3000; // 上限 3540，宽限带 53 字
+    // 30 字级段落（避开通篇碎段门禁的 ≤20 字判据）
+    const paragraphs = Array.from(
+      { length: 118 },
+      (_, i) => `第${i}段正文内容占位凑满三十个字符左右的段落到此为止收束。`
+    );
+    let prose = paragraphs.join('\n\n');
+    while (countWords(prose) < 3549) prose += '补';
+    if (countWords(prose) > 3549) prose = prose.slice(0, -(countWords(prose) - 3549));
+    expect(countWords(prose)).toBe(3549);
+
+    const drafts = [
+      { sceneId: 's', beatId: 'b', paragraphs: prose.split('\n\n'), candidateEvents: [] },
+    ];
+    const report = applyDeterministicGates(
+      { accepted: true, issues: [], checkedDomains: [] },
+      drafts,
+      { targetWordCount: target, chapterNumber: 10 }
+    );
+    // 擦边超写：warning 进 issues 供改稿顺手修，但不阻断
+    expect(report.accepted).toBe(true);
+    expect(report.issues.some(i => i.id.startsWith('word-count-over-edge'))).toBe(true);
+    expect(
+      report.issues.filter(i => i.id.startsWith('word-count')).every(i => i.severity === 'warning')
+    ).toBe(true);
+  });
+
+  it('applyDeterministicGates：失控超写（超限>1.5%）仍 blocking', async () => {
+    const { countWords } = await import('@/services/writing/utils');
+    const target = 3000;
+    let prose = '失控超写正文。'.repeat(800);
+    while (countWords(prose) > 4000) prose = prose.slice(0, -1);
+    const drafts = [
+      { sceneId: 's', beatId: 'b', paragraphs: [prose], candidateEvents: [] },
+    ];
+    const report = applyDeterministicGates(
+      { accepted: true, issues: [], checkedDomains: [] },
+      drafts,
+      { targetWordCount: target, chapterNumber: 10 }
+    );
+    expect(report.accepted).toBe(false);
+    expect(
+      report.issues.some(i => i.id.startsWith('word-count-over:') && i.severity === 'blocking')
+    ).toBe(true);
+  });
+});

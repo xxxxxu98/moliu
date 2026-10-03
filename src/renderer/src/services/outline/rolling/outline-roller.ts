@@ -14,6 +14,11 @@
 import type { Chapter, PlotNode, Project } from '@/types/project';
 import type { ChapterBlueprint } from '../types/executable-outline';
 import {
+  normalizeVocabularyTier,
+  renderBlueprintVocabularyRule,
+  type VocabularyTier,
+} from '@/services/story-runtime/proseRules';
+import {
   dropForeshadowConflictingItems,
   findLockedForeshadowViolations,
   hasFinaleClosureSignal,
@@ -38,6 +43,11 @@ import {
   describeRevealTimingViolation,
   findRevealTimingViolations,
 } from '../validation/revealTiming';
+import {
+  findSuspenseDanglingIssues,
+  findCoolPointPacingIssues,
+  SUSPENSE_CARRY_WINDOW,
+} from '../validation/pacingLedger';
 import { OUTLINE_COMPLETENESS_POLICY } from '../validation/outlineCompleteness';
 import {
   isCrossChapterGoal,
@@ -133,6 +143,8 @@ export function buildWrittenChapterDigests(
 
 export interface RollContextBase {
   positioning: string;
+  /** 词汇档位（全书唯一）：滚纲节点语言按档（proseRules 归一化） */
+  vocabularyTier: VocabularyTier;
   volumeAnchor: string;
   writtenState: string;
   /** 已写章节数（正文非空的章）——冒烟/开书即滚场景为 0 */
@@ -300,6 +312,8 @@ export function buildRollContextBase(project: Project, fromChapterNumber: number
       genre && `题材：${genre}`,
       project.description && `一句话：${project.description.slice(0, 120)}`,
     ].filter(Boolean).join('\n'),
+    // 词汇档位（全书唯一）：滚纲与蓝图再生共用 buildRollContextBase，同一口径
+    vocabularyTier: normalizeVocabularyTier(project.metadata?.outlinePositioning ?? {}),
     volumeAnchor: buildVolumeAnchor(project, fromChapterNumber),
     writtenState,
     writtenThrough: chapters.filter(c => c.content && c.content.trim().length > 0).length,
@@ -371,6 +385,20 @@ export function buildRollBlueprintPrompt(params: {
   const fakedDeathSection = base.fakedDeaths.length > 0
     ? `\n\n【假死在册（活着，隐匿中——不是死亡，不适用死亡锁）】\n${base.fakedDeaths.join('；')}\n这些角色实际活着，只是外界认为已死：本批蓝图可以安排其暗线活动（密室养伤/乔装/借他人之手布局），并应在合适的章安排「假死揭破」节点（mustCover 显式标注【假死揭破】：何人何地目睹其存活、世人如何知晓）；揭破前不得安排其以原身份公开现身，揭破后正常活动。禁止按死人处理（「生前」布局/遗策/衣冠道具代替本人等表述一律违规）。`
     : '';
+  // P2.2 节奏周期相位(2026-10-03 爽点-悬念联动编排,与 completer 同口径):
+  // 5 章一周期蓄势→推进→爆发→余韵,相位按章号确定性轮转。措辞为「建议」,
+  // 与硬约束 5(卷射程)互补:卷约束管事件归属,相位管张力起伏。
+  const phaseSection = `\n\n【节奏周期相位建议】(5 章一周期:蓄势→推进→爆发→余韵,相位按章号轮转)\n${chapterNumbers.map(n => {
+    const pos = ((n - 1) % 5) + 1;
+    const phase = pos <= 2
+      ? '蓄势(埋钩/升压/拉对立;本章允许开新悬念)'
+      : pos === 3
+        ? '推进(本章必须产出一个中型进展——揭示一层真相/拿下局部筹码/除掉一个爪牙,让读者看到主线在动;新悬念须克制)'
+        : pos === 4
+          ? '爆发(当章兑现大爽点,回收本周期蓄势的张力;禁止再蓄不兑)'
+          : '余韵+新钩(爆发后果必须落到具体的人/位/账变化——谁倒台/谁上位/账怎么清,禁止松散收场;抛出的下一周期悬念必须比本周期钩更强)';
+    return `- 第${n}章:${phase}`;
+  }).join('\n')}`;
   return {
     system: `你是中文长篇网文大纲拆章器，正在为连载中的书做滚动续纲：${progressLine}，你只补写指定章号的单章蓝图，不复述已有章节，不输出解释。
 每章必须严格使用以下结构：
@@ -411,8 +439,9 @@ export function buildRollBlueprintPrompt(params: {
        【驾崩场面锁】在位皇帝驾崩必须在当章 mustCover 有可感知的叙述场面（病榻托孤/遗诏宣读/讣告震动任一），禁止跨批直接从「皇帝在世」跳到「新帝已立/大行皇帝」——驾崩是全书级事件，off-screen 跳过即结构断裂（2026-09-20 r8 实证：ch181 仍在传口谕、ch182 直接讣告，托孤遗诏凭空出现）；
 10. 【禁区相容】mustCover 与禁区不得互斥：若某节点要求本章发生某状态变更（下旨/定谳/圈禁/结案/复职等），对应禁区不得禁止该变更发生；确需保留防泄露约束时，只保护更早阶段的揭示，并在该条禁区开头加【让路】标记——禁止产出让写作端两头违约的合同；
 11. 【伏笔时序锁】「活跃伏笔」清单中埋设时点（「埋设N章」的 N）晚于本批任意章号的伏笔，其核心信息（hint 词面及同义表述）禁止出现在本批任何章的 mustCover/CPN/CEN 中——蓝图要求本章揭示而伏笔规定后章才许揭示时，写作端会被迫两头违约（2026-09-10 glm 200 章实证：第 20 章蓝图要求「笔迹比对定性补账出自行家手笔」，伏笔却锁 22 章揭示，正文三连拒成空洞）。确需铺垫时只可用不触及核心词面的暗痕（物件出现/旁人欲言又止），不得给出定性结论。
-   【角色登场锁】「角色名单」中标注【N章前禁登场/禁揭示】的角色，在 N 章之前的批次蓝图禁止安排其出场、行动、被点名揭示身份或成为事件主语——写作端有对应的登场禁令防线，蓝图点名即两头违约成空洞（2026-09-20 g38f r8 实证：ch82 蓝图开篇点名 revealTiming=155 章的角色，正文五连拒成洞）。确需其在位的势力影响时，用其代理人/名义/传闻侧写。`,
-    user: `【故事定位】\n${base.positioning}\n\n【卷纲锚点】\n${base.volumeAnchor}\n\n【已写进度与收束状态】\n${base.writtenState}${plannedTailSection}${endingSection}${fateLockSection}${fakedDeathSection}\n\n【活跃伏笔（埋设→回收）】\n${base.activeForeshadows}\n\n【角色名单】\n${base.characterRoster}${finalBatchSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
+   【角色登场锁】「角色名单」中标注【N章前禁登场/禁揭示】的角色，在 N 章之前的批次蓝图禁止安排其出场、行动、被点名揭示身份或成为事件主语——写作端有对应的登场禁令防线，蓝图点名即两头违约成空洞（2026-09-20 g38f r8 实证：ch82 蓝图开篇点名 revealTiming=155 章的角色，正文五连拒成洞）。确需其在位的势力影响时，用其代理人/名义/传闻侧写。
+${renderBlueprintVocabularyRule(base.vocabularyTier)}`,
+    user: `【故事定位】\n${base.positioning}\n\n【卷纲锚点】\n${base.volumeAnchor}\n\n【已写进度与收束状态】\n${base.writtenState}${plannedTailSection}${endingSection}${fateLockSection}${fakedDeathSection}${phaseSection}\n\n【活跃伏笔（埋设→回收）】\n${base.activeForeshadows}\n\n【角色名单】\n${base.characterRoster}${finalBatchSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
   };
 }
 
@@ -909,7 +938,42 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
       kind: 'reveal-timing' as const,
       detail: describeRevealTimingViolation(violation),
     })),
+    // 爽点节奏(2026-10-01 P1.1 跨章节奏账本):streak(连续同类型=同质化,修法
+    // 明确)纯计数零误报,并入定点修复轮;missing(标注缺失)只记 warning——
+    // 「字段没填」≠「正文没爽点」,旧格式蓝图会全量命中,推入修复轮是过度反应。
+    // 批内检测——跨批 streak(前批末+本批首)由 completer 全量扫描兜底
+    ...findCoolPointPacingIssues([...blueprints.values()])
+      .filter(issue => issue.kind === 'coolpoint-streak')
+      .map(issue => ({
+        chapterNumber: issue.chapterNumber,
+        kind: 'coolpoint-pacing' as const,
+        detail: issue.detail,
+      })),
   ];
+  // 悬念悬空(2026-10-01 P1.1):词面是承接的下限证据——换措辞承接会漏报、
+  // 氛围型钩子会误报,只进 warnings 观察项供 triage/书审聚合,不进修复轮
+  // (fail-closed 误报比漏报致命)。检测集 = 前序规划尾窗(承接方在本批)
+  // + 本批蓝图;批末窗口不完整章由检测器内部豁免,下一轮滚纲自然覆盖。
+  // coolpoint-missing 同级进 warnings(见上)。
+  const priorPlannedTail = chapterNodesSorted(project.plotOutline ?? [])
+    .filter(node =>
+      (node.orderIndex ?? 0) + 1 < fromChapter &&
+      Boolean(node.CEN?.trim()))
+    .slice(-SUSPENSE_CARRY_WINDOW)
+    .map(node => ({
+      orderIndex: (node.orderIndex ?? 0) + 1,
+      CEN: node.CEN ?? '',
+    }));
+  for (const issue of [
+    ...findSuspenseDanglingIssues([
+      ...priorPlannedTail,
+      ...[...blueprints.values()],
+    ]),
+    ...findCoolPointPacingIssues([...blueprints.values()])
+      .filter(i => i.kind === 'coolpoint-missing'),
+  ]) {
+    warnings.push(`节奏账本·${issue.kind === 'suspense-dangling' ? '悬念' : '爽点'}:第${issue.chapterNumber}章 ${issue.detail}`);
+  }
   // 命运锁解除核查（修复提示级，不计缺陷守卫）：命中章并入定点修复，
   // 由修复模型裁决「补解除节点 / 在押回忆保持」双分支（语义不本地判）。
   const fateReleaseIssues = findFateReleaseCheck(

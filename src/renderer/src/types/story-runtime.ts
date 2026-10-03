@@ -1,5 +1,14 @@
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+
+/**
+ * 全书词汇可读性档位。大纲定位层产出，写作层执行：档位只调节术语密度与
+ * 处理方式（hardcore 允许专业词但须当场大白话落地 / balanced 默认 /
+ * plain 全大白话），不放开可读性底线。规则文本与归一化逻辑见
+ * services/story-runtime/proseRules.ts（SSOT）。
+ */
+export type VocabularyTier = 'hardcore' | 'balanced' | 'plain';
+
 export type ContractKind = 'master' | 'volume' | 'chapter' | 'review';
 export type CommitStatus = 'accepted' | 'rejected';
 export type ValidationSeverity = 'blocking' | 'warning';
@@ -702,6 +711,18 @@ export interface LongFormWriteInput {
    * recentScenes 范围。
    */
   sceneChunks?: SceneChunk[];
+  /**
+   * 词汇档位（大纲定位产出，全书唯一）：正文起草与改稿共用同一档位口径
+   * （hardcore 允许专业词但须当场大白话落地 / balanced 默认 / plain 全大白话）。
+   * 由 ChapterWritingPipeline 从 outlinePositioning 归一化后传入，全书不漂移。
+   */
+  vocabularyTier?: VocabularyTier;
+  /**
+   * 近几章章尾悬念（CEN 规划原文，形如「第5章:窗外劲弩直射陆衡面门」）。
+   * 2026-10-01 P1.1 悬念账本写作层注入：起草 prompt 的【未闭合悬念承接】
+   * 规则块数据源——本章必须正面承接至少一条，杜绝悬念开而不接。
+   */
+  recentChapterCliffhangers?: string[];
 }
 
 export interface LongFormWriteResult {

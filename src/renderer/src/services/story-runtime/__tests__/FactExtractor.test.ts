@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { AIFactExtractor, ensureTopLevelEvidence, detectUnledgeredFateEvents } from '../FactExtractor';
+import { AIFactExtractor, ensureTopLevelEvidence, detectUnledgeredFateEvents, implyCustodyClearOnReversal } from '../FactExtractor';
 import type { ExtractedFacts, StructuredAI } from '@/types/story-runtime';
 
 describe('ensureTopLevelEvidence', () => {
@@ -387,5 +387,98 @@ describe('detectUnledgeredFateEvents 物理死亡描写触发（r12 ch158 受害
     const entities = { 'char-shen': { id: 'char-shen', name: '沈淮' } };
     const { suspectEvents } = detectUnledgeredFateEvents(facts, entities);
     expect(suspectEvents).toHaveLength(0);
+  });
+});
+
+describe('逆转族 custody 清除（2026-09-30 r16 ch114 成洞实证）', () => {
+  // 徐茂德 ch49 押地「天牢」、ch109 特旨无罪起复：复职 delta 正常入账但
+  // custody 属性无清除路径，stateDigest「custody:天牢」永久残留 → 判官按
+  // 在押连拒正确章节（fact_conflict + 字数超限死亡螺旋成洞，199/200）。
+  const reversalDelta = (value: string, entityId = 'char-xu') => ({
+    operation: 'set' as const,
+    path: `characters.${entityId}.attributes.status`,
+    value,
+    evidence: '监国太子赵显驳回定论，以水利吃紧为由特旨将他无罪起复',
+  });
+
+  it('复职 delta 自动伴随 custody remove delta', () => {
+    const facts = { events: [], deltas: [reversalDelta('复职')], evidence: [] } as unknown as ExtractedFacts;
+    const out = implyCustodyClearOnReversal(facts);
+    const companion = out.deltas.find(d => d.path === 'characters.char-xu.attributes.custody');
+    expect(companion).toBeDefined();
+    expect(companion?.operation).toBe('remove');
+    expect(companion?.evidence).toContain('无罪起复');
+  });
+
+  it('获释/平反/保释/起复/越狱/揭晓同受保护；下狱/死亡不触发', () => {
+    for (const value of ['获释', '平反', '保释', '起复', '越狱', '揭晓']) {
+      const out = implyCustodyClearOnReversal({ events: [], deltas: [reversalDelta(value)], evidence: [] } as unknown as ExtractedFacts);
+      expect(out.deltas.some(d => d.path === 'characters.char-xu.attributes.custody')).toBe(true);
+    }
+    for (const value of ['下狱', '死亡', '去职', '定罪']) {
+      const out = implyCustodyClearOnReversal({ events: [], deltas: [reversalDelta(value)], evidence: [] } as unknown as ExtractedFacts);
+      expect(out.deltas.some(d => d.path === 'characters.char-xu.attributes.custody')).toBe(false);
+    }
+  });
+
+  it('本章已显式出 custody delta 时不重复补', () => {
+    const facts = {
+      events: [],
+      deltas: [
+        reversalDelta('获释'),
+        { operation: 'set', path: 'characters.char-xu.attributes.custody', value: '已出狱移交宅邸', evidence: '出狱' },
+      ],
+      evidence: [],
+    } as unknown as ExtractedFacts;
+    const out = implyCustodyClearOnReversal(facts);
+    const custodyDeltas = out.deltas.filter(d => d.path === 'characters.char-xu.attributes.custody');
+    expect(custodyDeltas).toHaveLength(1);
+    expect(custodyDeltas[0]?.value).toBe('已出狱移交宅邸');
+  });
+
+  it('无逆转 delta 时原样返回（零副作用）', () => {
+    const facts = {
+      events: [],
+      deltas: [{ operation: 'set', path: 'characters.char-xu.attributes.status', value: '下狱', evidence: '押入天牢' }],
+      evidence: [],
+    } as unknown as ExtractedFacts;
+    expect(implyCustodyClearOnReversal(facts)).toBe(facts);
+  });
+
+  it('extract() 出口接线：复职提取结果带伴随 custody remove', async () => {
+    const generate = vi.fn().mockResolvedValue({
+      events: [],
+      deltas: [reversalDelta('复职')],
+      evidence: [],
+    });
+    const extractor = new AIFactExtractor({ generate } as unknown as StructuredAI);
+    const out = await extractor.extract({
+      projectId: 'p1',
+      chapterNumber: 109,
+      sceneDrafts: [],
+      state: { entities: {}, events: [] } as never,
+    });
+    expect(out.deltas.some(d => d.path === 'characters.char-xu.attributes.custody' && d.operation === 'remove')).toBe(true);
+  });
+});
+
+describe('契约 16：关键实物终态必出账（2026-09-30 r16 S1-02 定江号复活实证）', () => {
+  it('系统合同包含实物终态条款与 items 路径、完成体门槛', async () => {
+    const generate = vi.fn().mockResolvedValue({ events: [], deltas: [], evidence: [] });
+    const extractor = new AIFactExtractor({ generate } as unknown as StructuredAI);
+    await extractor.extract({
+      projectId: 'p1',
+      chapterNumber: 18,
+      sceneDrafts: [],
+      state: { entities: {}, events: [] } as never,
+    });
+    const system = String(generate.mock.calls[0]?.[0]?.system ?? '');
+    expect(system).toContain('关键实物终态必出账');
+    expect(system).toContain('items.<实体id>.attributes.status');
+    expect(system).toContain('沉没');
+    expect(system).toContain('定江号');
+    // 完成体门槛与判官数据源说明在位
+    expect(system).toContain('是命令不是既成');
+    expect(system).toContain('判官 stateDigest');
   });
 });

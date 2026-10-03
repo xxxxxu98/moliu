@@ -752,6 +752,34 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
     expect(capturedSystem).toContain('假死未揭晓公开现身');
     expect(capturedPrompt).toContain('陆九霄');
   });
+
+  it('判官合同包含推导验算与时延可行两维度（2026-09-30 r16 shape-shift S1 族）', async () => {
+    // r16 全文通读实证：S1×11 中 number.arithmetic×4（ch34 账不平/ch109 比降差5倍/
+    // ch114 复式账缺6万余两/ch177 一刻vs两刻）+ time.sequence×3（ch135/136 船队
+    // 已下峡vs明日正期、ch127 千里往返<15小时）——旧【算术自洽】只认乘积形态，
+    // 日程/时延无任何检查维度。护栏防两规则被误删。
+    let capturedSystem = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        return { fulfillment: [], forbidden: [], issues: [] };
+      }),
+    };
+    await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+    });
+    expect(capturedSystem).toContain('【推导验算】');
+    expect(capturedSystem).toContain('收入−支出=结余');
+    expect(capturedSystem).toContain('总落差÷全长=比降');
+    // 参数不全的模糊表述不报（防误报条款在位）
+    expect(capturedSystem).toContain('参数不全的模糊表述不报');
+    expect(capturedSystem).toContain('【时延可行】');
+    expect(capturedSystem).toContain('八百里加急');
+    expect(capturedSystem).toContain('千里往返<15小时');
+  });
 });
 
 function emptyJudgePayload() {
