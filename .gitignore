@@ -120,3 +120,16 @@ test.md
 *.console.log
 prebuilds/better-sqlite3/
 prebuilds/*.tar.gz
+
+# temp/ 整体不入库（临时产物，规范 §16.5）；以下白名单为长期回读资产
+temp/*
+!temp/replay-cases/
+!temp/book-review/
+temp/book-review/*
+!temp/book-review/baseline*/
+!temp/book-review/juezheng*/
+!temp/book-review/xcjz*/
+!temp/book-review/500ch*/
+!temp/book-review/fix*/
+!temp/book-review/r17-blindtest/
+!temp/book-review/p0reg20/
