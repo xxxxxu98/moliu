@@ -397,3 +397,75 @@ describe('storyStateSchema inventory 叶子容错', () => {
     ).not.toThrow();
   });
 });
+
+describe('契约 15/17 结构化字段透传（2026-10-05 数字/时间台账）', () => {
+  it('事件携带 numeric/time 可选字段时 parseSchema 不剥离，供台账投影消费', () => {
+    const raw = {
+      events: [
+        {
+          id: 'e1',
+          chapter: 10,
+          sceneId: 's1',
+          type: 'numeric-fact',
+          summary: '周巡家欠金刚重工债务连本带利共计三百万信用点',
+          participants: [],
+          causes: [],
+          effects: [],
+          evidence: ['连本带利，三百万信用点'],
+          numeric: { object: '周巡家欠金刚重工债务总额', amount: 3000000, unit: '信用点', nature: '连本带利总额' },
+        },
+        {
+          id: 'e2',
+          chapter: 11,
+          sceneId: 's1',
+          type: 'time-promise',
+          summary: '赵莽限三天后十六强开赛前还清债务',
+          participants: [],
+          causes: [],
+          effects: [],
+          evidence: ['三天之后，就是全校联考十六强晋级赛'],
+          time: { promise: '十六强开赛前还清三百万债务', due: '三天后', action: 'open' },
+        },
+      ],
+      deltas: [],
+      evidence: [],
+    };
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.events[0].numeric).toEqual({
+      object: '周巡家欠金刚重工债务总额',
+      amount: 3000000,
+      unit: '信用点',
+      nature: '连本带利总额',
+    });
+    expect(parsed.events[1].time).toEqual({
+      promise: '十六强开赛前还清三百万债务',
+      due: '三天后',
+      action: 'open',
+    });
+  });
+
+  it('numeric 字段形态损坏（amount 非数字）时事件本体仍通过，结构化字段剥离', () => {
+    const raw = {
+      events: [
+        {
+          id: 'e1',
+          chapter: 3,
+          sceneId: 's1',
+          type: 'numeric-fact',
+          summary: '债务总额三十万',
+          participants: [],
+          causes: [],
+          effects: [],
+          evidence: ['三十万巨额债务'],
+          numeric: { object: '债务', amount: '三十万', unit: '信用点' },
+        },
+      ],
+      deltas: [],
+      evidence: [],
+    };
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.events[0].summary).toBe('债务总额三十万');
+    // zod optional 失配 → 字段被剥离而非整事件/整章失败（元素级软兜底语义不变）
+    expect(parsed.events[0].numeric).toBeUndefined();
+  });
+});

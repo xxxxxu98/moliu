@@ -9,10 +9,19 @@ import {
   getGenreProfile,
   getGenreProfileByName,
 } from '@/data/genre-profiles';
+import { genreTags } from '@/data/genre-tags';
 import type { CoolPointType, GenreProfile, HookType } from '@/types/evaluation';
 import type { GenreSeedHint } from '@/types/topic-discovery';
+import { BRAIN_GENRES } from './fallback/genre-pool';
 
 export type { GenreSeedHint };
+
+/** 题材标签名 → 数据里显式声明的 profileId（优先于名称模糊匹配） */
+const TAG_PROFILE_IDS: ReadonlyMap<string, string> = new Map(
+  [...genreTags, ...BRAIN_GENRES].flatMap(tag =>
+    tag.profileId ? [[tag.name, tag.profileId] as const] : [],
+  ),
+);
 
 const HOOK_LABEL: Record<HookType, string> = {
   cliffhanger: '悬崖悬念',
@@ -57,11 +66,17 @@ function toHint(profile: GenreProfile): GenreSeedHint {
 
 /**
  * 按题材名匹配 Profile hint。
- * 无可靠匹配时返回 null（不强行套用默认都市）。
+ * 优先使用题材标签声明的 profileId；无可靠匹配时返回 null（不强行套用默认都市）。
  */
 export function buildGenreSeedHint(genreName: string): GenreSeedHint | null {
   const name = genreName.trim();
   if (!name) return null;
+
+  const declaredId = TAG_PROFILE_IDS.get(name);
+  const declared = declaredId ? getGenreProfile(declaredId) : undefined;
+  if (declared) {
+    return toHint(declared);
+  }
 
   const byName = getGenreProfileByName(name);
   if (byName) {
@@ -101,4 +116,35 @@ export function formatGenreSeedHint(hint: GenreSeedHint): string[] {
   }
   lines.push('hook / coolPoint 应贴合上述偏好，但不要生硬堆砌标签；在读者预期之上做反转更佳。');
   return lines;
+}
+
+/**
+ * 混搭副题材 hint：逐个解析题材，按 profileId 去重并保持选择顺序，
+ * 剔除与主题材相同的 Profile（主题材已由 formatGenreSeedHint 完整注入）。
+ */
+export function buildMixGenreHints(
+  tags: readonly string[],
+  primaryProfileId?: string,
+): GenreSeedHint[] {
+  const seen = new Set<string>(primaryProfileId ? [primaryProfileId] : []);
+  const hints: GenreSeedHint[] = [];
+  for (const tag of tags) {
+    const hint = buildGenreSeedHint(tag);
+    if (!hint || seen.has(hint.profileId)) continue;
+    seen.add(hint.profileId);
+    hints.push(hint);
+  }
+  return hints;
+}
+
+/** 把混搭副题材 hint 格式化为提示词片段（只给钩子 / 爽点偏好，避免喧宾夺主） */
+export function formatMixGenreHints(hints: readonly GenreSeedHint[]): string[] {
+  if (hints.length === 0) return [];
+  return [
+    '混搭副题材读者预期（主题材定主线逻辑，副题材只贡献钩子 / 规则 / 爽点，主辅约 7:3）：',
+    ...hints.map(
+      hint =>
+        `- 「${hint.name}」偏好钩子：${hint.preferredHooks.join('、')}；偏好爽点：${hint.preferredCoolPoints.join('、')}`,
+    ),
+  ];
 }

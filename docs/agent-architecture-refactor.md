@@ -183,3 +183,26 @@
   - **2026-09-03 反重力 20 章冒烟通过**（同厂商，`MOLIU_RUN_SUFFIX=p2w20`，复用上述检查点，约 46 分钟）：20/20 accepted，首过 18/20；ch6/ch8 走改稿 agent（`model-finish`，各 1 次 `run_checks`）；读者章均 87.0、开篇三章均 83.3，最低 ch2=72.9（章界信息回流，影子模式不阻断）。summary：`temp/storyflow.closed-loop.p2w20.summary.json`。
   - 对比命令：`node scripts/agent-ab-compare.mjs p2w20 p2writer --window=20`（3 章基线窗口不足 20，仅作仪表连通）。
 - **2026-09-03 P2.3 收口**：删除 `LongFormWritingEngine` 的 legacy 整章重写循环（`buildRevisionPlanFromReport` / 连环熔断）。改稿只走 `writerAgent`；假 AI 单测无 agent 时初稿未过直接 rejected。随后复用 `p2writer` 大纲重跑 20 章（`MOLIU_RUN_SUFFIX=p2w20`）。
+- **2026-10-08 工具管线 P1（harness 借鉴项，纯重构零行为变化）**：
+  - `agent/AgentToolkit.ts` 新增 `TableToolkit` 基类与 `ToolSpec`：参数校验、按名分发、未知工具文案只实现一次；`BookToolkit` / `WriterToolkit` / `OutlineToolkit` 改为声明工具表（descriptor + handler），删除各自的 `switch`/`default`/`has`/`toolNames` 样板。`isAbortError` 收敛为共享函数（取代 runner 与 WriterToolkit 内的两份内联判断）。
+  - 新增 `agent/ToolPipeline.ts`：包住任一 `AgentToolkit`，统一做错误归一化（致命错误与取消冒泡，其余转 `{ok:false}`）与逐次调用观测（`tool/ok/ms/error`，不记录参数）。`AgentLoopRunner` 经 `ToolPipeline` 调用工具，删除原 try/catch；`AgentLoopOptions.onToolCall` 为观测钩子，缺省不观测。
+  - **未做**：观测结果尚未写入 `temp/ai-traces` JSONL——那会改变 `scripts/agent-ab-compare.mjs` 读取的 trace 格式，留待 P2（会话日志）统一处理。
+  - 验收：agent 与 outline agent 套件 96 用例全绿（基线 85 + 新增 11）；全量 `vitest run` 110 文件 / 1327 用例全绿；`vue-tsc`（需 `--ignoreDeprecations 6.0` 绕过 tsconfig 的 `baseUrl` 弃用报错）对本次改动文件无新增错误，仓库预存 582 行类型错误不在本轮范围。
+- **2026-10-08 trace 统计：P2 持久化续跑 / P3 上下文压缩的收益评估（结论：暂缓）**
+  - 样本：`temp/ai-traces/longform-agent-*.jsonl` 共 596 个运行，时间窗 2026-10-03 至 10-08。
+  - 检索回合：595 次，全部 `model-finish`，平均 18.3 次工具调用。
+  - 改稿回合：414 次，`model-finish` 350 / `protocol-error` 36 / `budget` 23 / `stall` 5。
+  - `protocol-error` 的 36 次**全部是 transport 失败**（"API 未返回内容""流式响应提前中断"），无一次是模型输出格式错误。
+  - `budget` 的 23 次**全部为墙钟触发**（最小 480.5s，预算 480s），token 预算（200k）零次触发。单轮耗时约 116s，正常运行约 53s；触发运行的 `submit_draft` 平均 2.35 次，正常运行 1.13 次（相关性，未证因果）。
+  - 未汇总即中断的循环仅 4 个（检索 1、改稿 3，约 0.7%），末行截断 0 个，进程崩溃几乎不存在。
+  - 结论：持久化续跑的收益极低，上下文压缩当前无触发场景；真实瓶颈是 transport 失败与墙钟预算。
+- **2026-10-08 轮内重试 + 单轮墙钟截断（针对上条统计）**
+  - 单轮截断：每轮 transport 调用绑定剩余墙钟（`timeoutMs - elapsed`），超出即中止并按 `budget` 收束，`transcript` 记「单轮超出墙钟预算,已截断」。原先仅在轮前检查，transport 的 30 分钟单请求超时可使一轮远超预算（观测最大 677s）。
+  - 轮内重试：transport 失败且剩余墙钟 ≥ `minRetryBudgetMs`（默认 120s）时，原地重试本轮 1 次（`transportRetries`，退避 `transportRetryDelayMs`，默认 1s）。失败时尚未追加 assistant 消息，重放安全；`transcript` 记 `transport-retry`。用户取消在退避期间也立即冒泡。
+  - 测试：新增 `AgentLoopRunner.resilience.test.ts` 7 用例；agent 套件 103 用例全绿；全量 1334 用例全绿。
+- **2026-10-08 整章重写上限（submit_draft 成本治理）**
+  - 依据：触发墙钟预算的 23 次运行中 `submit_draft` ≥2 次占 18 次（78%），≥3 次占 10 次（43%）；正常完成的 350 次运行中分别为 29% 与 8%（相关性，未证因果）。
+  - 改动：`WriterToolkit` 新增 `maxFullRewrites`（缺省 `DEFAULT_MAX_FULL_REWRITES = 2`）。每次运行第 3 次起 `submit_draft` 返回 `ok:false` 并提示改用 `revise_paragraphs`；参数非法的调用不消耗次数；工具描述同步写明上限。未改 prompt 与质量门，未改 `run_checks` 预算。
+  - 测试：`WriterToolkit.test.ts` 新增 2 用例（超限拒绝且不改暂存稿、非法参数不计数）；story-runtime + outline + writing 套件 1034 用例全绿。
+  - **未做 / 待验证**：上限对首过率、接受率、墙钟的影响尚未用真实 AI 验证。
+- **轮内重试 / 单轮截断 / 整章上限的真实验证：未完成**。需 20 章低峰冒烟后对比 `budget`、`transport-retry`、`protocol-error` 占比与首过率。2026-10-08 00:10 发现本机已有一个大规模 `smoke:storyflow:real` 运行在占用同一网关（大纲滚动阶段），故本轮未启动真实冒烟。经用户选择「等待」后，已在后台挂守护：等该运行退出后自动执行 `MOLIU_AI_PROVIDER_ID=provider-1787039781123 MOLIU_CHAPTER_COUNT=20 MOLIU_RUN_SUFFIX=sdcap20 node scripts/agent-storyflow-real-smoke.mjs`，日志 `temp/sdcap20-run.log`（末行 `smoke exited code=` 为结束标记）。基线 `p2w20` 的汇总与大纲检查点已被 temp 清理，无法做同条件逐章对比，改用 trace 统计（budget 次数、`submit_draft` 分布、`transport-retry` 次数）对照。

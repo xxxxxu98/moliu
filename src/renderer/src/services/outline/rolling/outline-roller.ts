@@ -222,7 +222,8 @@ export function buildVolumeAnchor(project: Project, fromChapterNumber: number): 
 /** 滚动续纲 prompt 的状态基底：全部来自项目已落盘的事实 */
 export function buildRollContextBase(project: Project, fromChapterNumber: number): RollContextBase {
   const genre = (project.genre ?? []).map(g => g.name).filter(Boolean).join('、');
-  const chapters = project.chapters ?? [];
+  // 必须按章序排列：digest 的章号由数组下标推导，与节点绑定口径（sortedChapters）一致
+  const chapters = [...(project.chapters ?? [])].sort((a, b) => a.orderIndex - b.orderIndex);
   const digests = buildWrittenChapterDigests(chapters, project.plotOutline ?? []);
 
   const writtenState = digests.length > 0
@@ -371,7 +372,10 @@ export function buildRollBlueprintPrompt(params: {
 - 主角弧必须闭环：开篇立下的核心目标（身份/使命/阶层跃迁）在本批内兑现或明确抵达终点；
 - 活跃伏笔全部出清：【活跃伏笔】清单中每一条要么在对应章节兑现，要么在 mustCover 显式安排余韵交代（一句话点明用途后收档），禁止带着未回收伏笔完结；
 - 禁止引入新对手、新悬念、新势力：终卷不开新盘；约束 5「不得提前兑现后续卷高潮」在本批不适用——这就是最后的高潮；
-- 末章（第${finalBatch.lastChapter}章）CEN 必须是全书收束句：给出「故事讲完」的终局画面或交代（尘埃落定/新秩序确立/主角归处），禁止写成下一章钩子。`
+- 末章（第${finalBatch.lastChapter}章）CEN 必须是全书收束句：给出「故事讲完」的终局画面或交代（尘埃落定/新秩序确立/主角归处），禁止写成下一章钩子；
+- 【收束弧两章分工】收束工作量必须分摊到末两章，禁止全部压进末章单章（2026-10-08 r19 终章三轮实证：单章装不下「对决+清算+立制+回响」，必然大纲式速通被读者弃读）：
+  · 倒数第二章（第${finalBatch.lastChapter - 1}章）= 清算与立制章：反派清算/册封封赏/新秩序确立（立制/改制/面圣）/主要配角结局交代，全部写成 mustCover 的具体场面节点；
+  · 末章（第${finalBatch.lastChapter}章）= 终局与收束章：只承载终极对决高潮+主角目标达成+终局回响+全书收束句，禁止再塞清算/立制/配角交代类节点。`
     : '';
   const endingSection = recentBlueprintEndings.length > 0
     ? `\n\n【上一批蓝图收束】\n${recentBlueprintEndings.join('\n')}`
@@ -399,6 +403,10 @@ export function buildRollBlueprintPrompt(params: {
           : '余韵+新钩(爆发后果必须落到具体的人/位/账变化——谁倒台/谁上位/账怎么清,禁止松散收场;抛出的下一周期悬念必须比本周期钩更强)';
     return `- 第${n}章:${phase}`;
   }).join('\n')}`;
+  // 时序锚（2026-10-05 都市文书审实证：35 章蓝图仅 1 章带时间标记、正文零
+  // 日期锚——死代码 buildTimelineConstraintPrompt 的意图在此接线落地）：
+  // 每章蓝图至少一处时间推进锚 + 跨章时间单调，正文 storyClock 同源消费。
+  const timeAnchorSection = `\n\n【时序锚】本批每章蓝图的 CBN 或 CPNs 中至少一处携带明确时间推进锚（当日午后/当夜/次日清晨/三日后/开赛日当天等），连续章的时间必须单调推进不得回退；跨多天推进（如「三日后」）必须与上一章锚点衔接（上章承诺三日后开赛，开赛章的锚不得早于第三天——旧书实证：三次承诺三天后开赛、次日凌晨就开打零拦截）。`;
   return {
     system: `你是中文长篇网文大纲拆章器，正在为连载中的书做滚动续纲：${progressLine}，你只补写指定章号的单章蓝图，不复述已有章节，不输出解释。
 每章必须严格使用以下结构：
@@ -441,7 +449,7 @@ export function buildRollBlueprintPrompt(params: {
 11. 【伏笔时序锁】「活跃伏笔」清单中埋设时点（「埋设N章」的 N）晚于本批任意章号的伏笔，其核心信息（hint 词面及同义表述）禁止出现在本批任何章的 mustCover/CPN/CEN 中——蓝图要求本章揭示而伏笔规定后章才许揭示时，写作端会被迫两头违约（2026-09-10 glm 200 章实证：第 20 章蓝图要求「笔迹比对定性补账出自行家手笔」，伏笔却锁 22 章揭示，正文三连拒成空洞）。确需铺垫时只可用不触及核心词面的暗痕（物件出现/旁人欲言又止），不得给出定性结论。
    【角色登场锁】「角色名单」中标注【N章前禁登场/禁揭示】的角色，在 N 章之前的批次蓝图禁止安排其出场、行动、被点名揭示身份或成为事件主语——写作端有对应的登场禁令防线，蓝图点名即两头违约成空洞（2026-09-20 g38f r8 实证：ch82 蓝图开篇点名 revealTiming=155 章的角色，正文五连拒成洞）。确需其在位的势力影响时，用其代理人/名义/传闻侧写。
 ${renderBlueprintVocabularyRule(base.vocabularyTier)}`,
-    user: `【故事定位】\n${base.positioning}\n\n【卷纲锚点】\n${base.volumeAnchor}\n\n【已写进度与收束状态】\n${base.writtenState}${plannedTailSection}${endingSection}${fateLockSection}${fakedDeathSection}${phaseSection}\n\n【活跃伏笔（埋设→回收）】\n${base.activeForeshadows}\n\n【角色名单】\n${base.characterRoster}${finalBatchSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
+    user: `【故事定位】\n${base.positioning}\n\n【卷纲锚点】\n${base.volumeAnchor}\n\n【已写进度与收束状态】\n${base.writtenState}${plannedTailSection}${endingSection}${fateLockSection}${fakedDeathSection}${phaseSection}${timeAnchorSection}\n\n【活跃伏笔（埋设→回收）】\n${base.activeForeshadows}\n\n【角色名单】\n${base.characterRoster}${finalBatchSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
   };
 }
 
@@ -514,7 +522,7 @@ export function isUsableRolledBlueprint(blueprint: ChapterBlueprint | undefined)
  */
 export function inspectRolledBlueprintQuality(
   bp: ChapterBlueprint,
-  opts?: { isFinale?: boolean },
+  opts?: { isFinale?: boolean; isPenultimateFinale?: boolean },
 ): RolledBlueprintIssue[] {
   const issues: RolledBlueprintIssue[] = [];
   const overScoped = bp.mustCover.find(node => isCrossChapterGoal(node));
@@ -559,6 +567,19 @@ export function inspectRolledBlueprintQuality(
         chapterNumber: bp.orderIndex,
         kind: 'finale-not-closing',
         detail: `第${bp.orderIndex}章是全书末章，CEN/mustCover 缺少收束声明（尘埃落定/终局/归处/新秩序等），禁止以新危机钩子收尾`,
+      });
+    }
+  }
+  // 收束弧分工（2026-10-08 r19 终章三轮实证：单章装不下「对决+清算+立制+回响」
+  // 必然速通弃读）：终批倒数第二章应承载清算/立制/交代类场面节点——候选网
+  // 词面检查，问题进修复轮（agent 按语境改写，不硬拒）
+  if (opts?.isPenultimateFinale) {
+    const penultimateText = [bp.CBN, ...bp.CPNs, bp.CEN, ...bp.mustCover].join('\n');
+    if (!/清算|伏法|伏诛|下狱|定谳|册封|封赏|革职|抄家|立制|改制|面圣|颁诏|新秩序|整肃|善后|归宿|结局交代|各得其所|尘埃落定/u.test(penultimateText)) {
+      issues.push({
+        chapterNumber: bp.orderIndex,
+        kind: 'finale-arc-division',
+        detail: `第${bp.orderIndex}章是全书倒数第二章（收束弧前哨），蓝图缺少清算/立制/交代类场面节点（反派伏法/册封立制/配角结局任一）——按收束弧两章分工，本章应承载这些收束场面，末章只留终极对决+收束句；单章塞满全部收束会被读者判速通弃读`,
       });
     }
   }
@@ -781,6 +802,26 @@ export interface RollOutlineParams {
   maxChapters?: number;
 }
 
+/**
+ * 可取消的退避等待：signal 触发后立即返回（由调用方检查 signal 决定后续），
+ * 避免用户取消后还要白等满退避时间。
+ */
+function delayUnlessAborted(ms: number, signal?: AbortSignal): Promise<void> {
+  if (!signal) return new Promise(resolve => setTimeout(resolve, ms));
+  if (signal.aborted) return Promise.resolve();
+  return new Promise(resolve => {
+    const onAbort = (): void => {
+      clearTimeout(timer);
+      resolve();
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
 /** 带空响应/瞬态退避的单次调用；用户取消原样上抛 */
 async function callWithRetry(
   caller: RollCaller,
@@ -793,6 +834,7 @@ async function callWithRetry(
   const MAX_ATTEMPTS = 3;
   let lastError: unknown;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    if (signal?.aborted) throw new Error(`滚动续纲批次 ${batchLabel} 已取消`);
     try {
       const generated = await caller(system, user, temperature);
       if (generated.trim()) return generated;
@@ -802,7 +844,7 @@ async function callWithRetry(
       lastError = error;
     }
     if (attempt < MAX_ATTEMPTS) {
-      await new Promise(resolve => setTimeout(resolve, Math.min(2000 * 2 ** (attempt - 1), 10_000)));
+      await delayUnlessAborted(Math.min(2000 * 2 ** (attempt - 1), 10_000), signal);
     }
   }
   throw lastError instanceof Error
@@ -919,6 +961,12 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
           effectiveCap !== Number.POSITIVE_INFINITY &&
           bp.orderIndex >= toChapter &&
           toChapter >= effectiveCap,
+        // 收束弧两章分工（2026-10-08）：终批倒数第二章检查（终批≥2 章才有）
+        isPenultimateFinale:
+          effectiveCap !== Number.POSITIVE_INFINITY &&
+          toChapter >= effectiveCap &&
+          bp.orderIndex === toChapter - 1 &&
+          bp.orderIndex >= fromChapter,
       }),
     ),
     ...findBlueprintRepetition([...blueprints.values()]),
@@ -1041,7 +1089,8 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
           ? blueprintDefectCount(existing, rollForeshadows)
           : Number.MAX_SAFE_INTEGER;
         const afterCount = blueprintDefectCount(next, rollForeshadows);
-        if (beforeCount > 0 && afterCount > beforeCount) {
+        // 注意：原稿无缺陷（beforeCount=0）时同样不得劣化，否则干净的原稿会被带病修复稿替换
+        if (afterCount > beforeCount) {
           warnings.push(
             `第${n}章定点修复稿质检退化（${beforeCount}→${afterCount} 处），保留原稿`,
           );

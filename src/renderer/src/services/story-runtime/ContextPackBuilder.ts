@@ -377,12 +377,34 @@ export class ContextPackBuilder {
         )
       );
     }
-    candidates.push(
-      makeBlock('recent-scenes', compactScenes(input.recentScenes), false),
-      makeBlock('retrieval', compactScenes(input.retrievedScenes), false)
+    // recent-scenes 分级裁剪（2026-10-05 借鉴 NovelAI 逐条 token 预算）：
+    // 旧实现超预算时整块丢弃——跨章事实场景全部从 prompt 消失（书审观察项）。
+    // 改为按「其余候选占用后的余量」从最旧场景开始逐块丢弃，保住最近上下文。
+    const retrievalBlock = makeBlock('retrieval', compactScenes(input.retrievedScenes), false);
+    const styleBlock =
+      uniqueStyle.length > 0 ? makeBlock('style', uniqueStyle, false) : null;
+    const criticalEstimate = candidates.reduce(
+      (total, block) => total + block.tokenEstimate,
+      0
     );
-    if (uniqueStyle.length > 0) {
-      candidates.push(makeBlock('style', uniqueStyle, false));
+    const recentScenesBudget =
+      input.maxTokens -
+      criticalEstimate -
+      retrievalBlock.tokenEstimate -
+      (styleBlock?.tokenEstimate ?? 0);
+    let fittedScenes = input.recentScenes;
+    if (recentScenesBudget > 0) {
+      while (fittedScenes.length > 0) {
+        const block = makeBlock('recent-scenes', compactScenes(fittedScenes), false);
+        if (block.tokenEstimate <= recentScenesBudget) break;
+        fittedScenes = fittedScenes.slice(1); // 丢最旧
+      }
+    } else {
+      fittedScenes = [];
+    }
+    candidates.push(makeBlock('recent-scenes', compactScenes(fittedScenes), false), retrievalBlock);
+    if (styleBlock) {
+      candidates.push(styleBlock);
     }
 
     const criticalTokens = candidates

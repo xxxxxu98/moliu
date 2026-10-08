@@ -474,6 +474,7 @@ export function buildChapterNodePrompt(): string {
 - CBN -> 下一章 CBN 必须逻辑承接
 - CPNs 必须按时间顺序排列
 - 禁止在 CBN 前出现 CPN
+- CBN/CEN 必须是语法完整的句子：主语+谓语动作+对象/结果齐备。禁止截断半句与悬空短语——逗号后只剩名词/量词/方位短语的「湛蓝色。」「狂暴气浪。」「身后两米高。」、没有谓语的名词短语「归家必经的废弃长街尽头。」都是残句废稿，必须写成完整句（2026-10-05 都市文书审实证：大纲 CEN 残句会被正文照抄成章尾钩子，直接拉低章末质量）
 
 示例：
 - CBN: 萧炎 | 抵达 | 迦南学院入口
@@ -485,24 +486,12 @@ export function buildChapterNodePrompt(): string {
 
 /**
  * 生成时间线约束提示词片段
+ *
+ * 2026-10-05 删除：定义后从未接线（全库零调用），其「每章时间锚点/倒计时 D-N」
+ * 意图已由 outline-roller 与 outline-completer 的【时序锚】段落落地（各批次
+ * 蓝图 prompt 内联），正文侧由契约 17 time-passage + storyClock 消费。保留
+ * 本注释防复活——新时序需求改 roller/completer 的 timeAnchorSection。
  */
-export function buildTimelineConstraintPrompt(): string {
-  return `
-【时间线硬约束】
-1. 时间线必须单调递增（除非明确标注闪回）
-2. 每章必须包含时间锚点
-3. 与上章时间差必须明确标注
-4. 倒计时事件必须列出并标记 D-N
-
-【时间锚点格式】
-{
-  "time_anchor": "具体时间点",
-  "chapter_time_span": "本章节内时间跨度",
-  "time_diff_from_prev": "与上章时间差（如：当天/次日/三月后）",
-  "countdown_status": "倒计时状态（如：距宗门大比30天）"
-}
-`;
-}
 
 /**
  * 生成写作技巧提示词片段

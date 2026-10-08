@@ -30,6 +30,8 @@ export type OutlineQualityIssueKind =
   | 'goldenfinger-late-reveal'
   | 'over-scoped-mustcover'
   | 'invalid-blueprint-format'
+  | 'truncated-hook'
+  | 'title-imagery-missing'
   | 'foreshadow-timing-violation'
   | 'repeated-beat'
   | 'inconsistent-story-scale'
@@ -299,6 +301,57 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
         chapterOrder: blueprint.orderIndex,
         detail: `第${blueprint.orderIndex}章格式不合格：${defects.join('；')}`,
       });
+    }
+    // 8b. 章尾钩子截断残句（2026-10-05 都市文书审实证：CEN「赵莽一脚踹裂铁门，
+    // 身后两米高。」「裁判挥下红旗瞬间，湛蓝色。」——逗号后半截悬空，句子成分
+    // 残缺，正文照抄成章尾钩子直接拉低章末质量）。候选网判定：逗号后 ≤5 字短尾
+    // 交大纲 agent 复核——完整主谓/动宾短句（如「血溅三尺」）不算残句不改写，
+    // 悬空的名词/量词/方位短语尾必须补全成完整句。
+    const cenSegments = blueprint.CEN.trim().split(/[，,]/);
+    if (cenSegments.length >= 2) {
+      const cenTail = cenSegments[cenSegments.length - 1].replace(/[。！？…]+$/u, '');
+      if (cenTail.length > 0 && cenTail.length <= 5) {
+        issues.push({
+          kind: 'truncated-hook',
+          chapterOrder: blueprint.orderIndex,
+          detail: `第${blueprint.orderIndex}章 CEN「${blueprint.CEN.trim()}」逗号后仅 ${cenTail.length} 字「${cenTail}」，疑似截断残句：若是悬空的名词/量词/方位短语（如「湛蓝色」「狂暴气浪」「身后两米高」），必须改写为语法完整的章尾钩子；若是完整主谓/动宾短句（如「血溅三尺」）可保留`,
+        });
+      }
+    }
+  }
+
+  // 8c. 书名意象覆盖（2026-10-05 都市文书审实证：书名「全校都在契约巨龙，我的
+  // 毒蜂蜇爆了泰坦」全书 50 章蓝图零「巨龙」零「泰坦」——标题承诺的核心意象在
+  // 故事里不存在，投放层货不对板）。书名取 ≥2 字实词（虚词/泛称滤除），任一
+  // 核心意象在蓝图/卖点/金手指全文零覆盖（token 及其 2 字滑窗均未命中）即报
+  // issue，交大纲 agent 补排对应元素或提示改名。
+  {
+    const TITLE_SPLIT_RE = /[，,。！？、：:；;\s的了我在都和与是要就想把被让给对这个那什么各每]+/u;
+    const TITLE_TOKEN_STOPWORDS = new Set(['全校', '开局', '来了', '之后', '以后', '可以', '自己']);
+    const rawTokens = (outline.title ?? '')
+      .split(TITLE_SPLIT_RE)
+      .map(token => token.trim())
+      .filter(token => token.length >= 2 && !TITLE_TOKEN_STOPWORDS.has(token));
+    const haystack = [
+      JSON.stringify(outline.chapterBlueprints ?? []),
+      JSON.stringify(outline.startupPack30 ?? []),
+      JSON.stringify(outline.sellingPointPlan ?? []),
+      JSON.stringify(outline.goldenfingerPlan ?? []),
+      JSON.stringify(outline.volumePlan ?? []),
+      outline.oneLiner ?? '',
+      outline.premise ?? '',
+    ].join('\n');
+    for (const token of [...new Set(rawTokens)]) {
+      const covered = haystack.includes(token)
+        || (token.length > 2
+          && Array.from({ length: token.length - 1 }, (_, i) => token.slice(i, i + 2))
+            .some(bigram => haystack.includes(bigram)));
+      if (!covered) {
+        issues.push({
+          kind: 'title-imagery-missing',
+          detail: `书名核心意象「${token}」在章节蓝图/卖点/金手指全文零出现——标题对读者的承诺在故事里不存在。要么在本批蓝图补排该意象的对应元素（登场/事件/对手），要么提示作者改名（2026-10-05 都市文实证：书名「巨龙/泰坦」全书零出现）`,
+        });
+      }
     }
   }
 

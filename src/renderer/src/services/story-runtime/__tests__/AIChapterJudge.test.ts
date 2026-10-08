@@ -701,6 +701,73 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
     expect(bareSystem).not.toContain('【数字一致】');
   });
 
+  it('2026-10-05 台账三规则：数字入账常驻，期限一致/时间轴连续随输入注入', async () => {
+    // 都市文书审实证：债务三百万→三十万蒸发判官无台账可比；三次承诺「三天后
+    // 开赛」次日开打零拦截；15 章零时间锚读者无法感知时间流逝
+    let capturedSystem = '';
+    let capturedPrompt = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        capturedPrompt = String(request.prompt ?? '');
+        return emptyJudgePayload();
+      }),
+    };
+    await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+      timePromises: ['第11章立下：「十六强开赛前还清三百万债务」（期限：三天后）——距今已 4 章'],
+      timelineMarks: ['第14章：当夜·黑市暗巷', '第15章：次日清晨'],
+      breathBeatRequired: true,
+      mentionEvidence: ['周巡｜第10章：「…赵莽亮出三百万信用点的血印借据拦住去路…」'],
+      authorCanon: ['灵能等级不可跨阶：任何角色不得越两级击败对手'],
+    });
+    // 反向检查常驻（即使台账为空也要提示新数字入账）
+    expect(capturedSystem).toContain('【数字入账】');
+    expect(capturedSystem).toContain('新数字未入账');
+    expect(capturedSystem).toContain('【期限一致】');
+    expect(capturedSystem).toContain('期限承诺违约');
+    expect(capturedSystem).toContain('剧情预告违约');
+    expect(capturedSystem).toContain('【时间轴连续】');
+    expect(capturedSystem).toContain('时间轴断裂');
+    expect(capturedSystem).toContain('【呼吸拍校验】');
+    expect(capturedSystem).toContain('呼吸拍缺生理锚点');
+    // 2026-10-05 竞品借鉴：提及证据（Novelcrafter）+ 作者正典（国内设定库）
+    expect(capturedSystem).toContain('【提及证据】');
+    expect(capturedSystem).toContain('【作者正典】');
+    expect(capturedSystem).toContain('违反作者正典');
+    // 2026-10-08 承诺兑现闭环（resolvedTimePromiseTexts）+ 押地随行形态（ch129 根因）
+    expect(capturedSystem).toContain('resolvedTimePromiseTexts');
+    expect(capturedSystem).toContain('押地随行形态');
+    expect(capturedPrompt).toContain('十六强开赛前还清三百万债务');
+    expect(capturedPrompt).toContain('次日清晨');
+    expect(capturedPrompt).toContain('血印借据');
+    expect(capturedPrompt).toContain('灵能等级不可跨阶');
+
+    // 未传时间输入时两条时间规则不注入（避免空清单误报）
+    let bareSystem = '';
+    const ai2: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        bareSystem = request.system ?? '';
+        return emptyJudgePayload();
+      }),
+    };
+    await new AIChapterJudge(ai2).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+    });
+    expect(bareSystem).not.toContain('【期限一致】');
+    expect(bareSystem).not.toContain('【时间轴连续】');
+    expect(bareSystem).not.toContain('【呼吸拍校验】');
+    expect(bareSystem).not.toContain('【提及证据】');
+    expect(bareSystem).not.toContain('【作者正典】');
+    expect(bareSystem).toContain('【数字入账】');
+  });
+
   it('系统词含算术自洽、称谓漂移与世系称谓规则（g38f r7 四缺口实证）', async () => {
     // r7 全文通读：ch177 一箱六十锭×五十万箱=15亿两 vs 声明三千万两（差500倍且
     // 蓝图标题自带错误被照抄）；温廷翰全书≥6 职横跳零拦截；老皇帝在位五处被称

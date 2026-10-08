@@ -16,6 +16,19 @@ export interface Project {
   foreshadows: Foreshadow[];
   plotOutline: PlotNode[];
   chapterMemories: ChapterMemory[];
+  /**
+   * 数字事实台账（2026-10-05 都市校园文书审实证：债务总额 30 万/300 万/30 万三说、
+   * 战宠两吨/三十吨漂移、3200+1000 算成「万出头」——旧数字锚正则单位表只认古代
+   * 计量（石两兵亩箱贯斛斗文），现代/科幻/修真题材数字全军覆没。改由 FactExtractor
+   * 契约 15 结构化出账，本台账为起草【数字锚】与判官【数字一致】的共源真值）。
+   */
+  numericLedger?: NumericLedgerEntry[];
+  /**
+   * 时间承诺台账（2026-10-05 实证：正文三次承诺「三天后开赛」实际次日开打无人
+   * 拦截；大纲 35 章仅 1 章带时间标记）。契约 17 出账：正文立下期限/倒计时时
+   * 入账，兑现/显式改期时流转状态；起草与判官注入待兑现清单。
+   */
+  timePromises?: TimePromiseEntry[];
   modelConfig?: ModelConfig;
   createdAt: string;
   updatedAt: string;
@@ -479,6 +492,43 @@ export interface ProviderConfig {
 }
 
 // ============================================
+// 跨章事实台账（数字/时间，2026-10-05 agent 化改造）
+// ============================================
+
+/** 数字事实台账条目：AI 归一的结构化「对象+数值+单位」，题材无关 */
+export interface NumericLedgerEntry {
+  /** 账目对象（名词短语，跨章保持同一写法是比对生命线） */
+  object: string;
+  /** 数值（AI 归一为纯数字，中文数字由模型换算） */
+  amount: number;
+  /** 单位（自由字符串：信用点/两/吨/天/人/倍…） */
+  unit: string;
+  /** 性质（如「本金」「连本带利总额」「勘误后新值」「自重」） */
+  nature?: string;
+  /** 确立章号（1-based） */
+  chapterIndex: number;
+  /** 正文证据原句 */
+  evidence?: string;
+}
+
+/** 时间承诺台账条目：正文立下的期限/倒计时/剧情预告，兑现或显式改期时流转 */
+export interface TimePromiseEntry {
+  /** 承诺内容（如「十六强开赛前还清债务」） */
+  promise: string;
+  /** 期限描述（如「三天后」「开赛前」「七日内」）；剧情预告通常无期限 */
+  due?: string;
+  /** 承诺种类：deadline=期限承诺（契约 17）；plot=剧情预告（契约 18） */
+  kind?: 'deadline' | 'plot';
+  /** 立下承诺章号（1-based） */
+  createdChapterIndex: number;
+  /** open=待兑现；fulfilled=已兑现；renegotiated=已显式改期/解除/否定 */
+  status: 'open' | 'fulfilled' | 'renegotiated';
+  /** 兑现/改期章号 */
+  resolvedChapterIndex?: number;
+  evidence?: string;
+}
+
+// ============================================
 // 分层记忆系统类型定义
 // ============================================
 
@@ -520,7 +570,14 @@ export interface ChapterMemory {
   
   /** 章节字数 */
   wordCount: number;
-  
+
+  /**
+   * 正文指纹（2026-10-05 作者正典配套）：生成时提取记忆时对正文算的确定性
+   * 哈希。续写前比对当前章正文指纹——不一致即「作者手改过」，触发该章
+   * 记忆/台账重提取，杜绝「手改正文后按旧账续写」的失真。
+   */
+  contentFingerprint?: string;
+
   /** 创建时间 */
   createdAt: string;
 

@@ -142,6 +142,8 @@ export interface RefreshStorySeedsOptions {
   mixTags?: string[];
   /** 元素混搭：设定元素名 */
   mixElements?: string[];
+  /** 元素混搭：副题材 Profile 提示（由服务层按 mixTags 解析，不含主题材） */
+  mixGenreHints?: GenreSeedHint[];
   /** 命运骰子结果 */
   diceRoll?: TopicDiceRoll;
   /** 来自题材雷达的完整洞察约束 */

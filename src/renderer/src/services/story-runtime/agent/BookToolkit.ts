@@ -12,12 +12,11 @@ import type {
 
 import {
   clipText as clip,
-  isPlainObject,
   readIntArg as readInt,
   readStringArg as readString,
-  type AgentToolkit,
+  TableToolkit,
   type ToolCallResult,
-  type ToolDescriptor,
+  type ToolSpec,
 } from './AgentToolkit';
 
 /** 伏笔目录条目（管线把 project.foreshadows 投影进来；缺省时仅用状态库 openForeshadows） */
@@ -50,72 +49,62 @@ export interface BookToolkitInput {
  * （状态库/场景块/合同/伏笔目录）暴露为 agent 循环的查询工具。
  * 全部工具无副作用，表驱动注册——新增工具零改动循环器。
  */
-export class BookToolkit implements AgentToolkit {
-  constructor(private readonly input: BookToolkitInput) {}
+export class BookToolkit extends TableToolkit {
+  constructor(private readonly input: BookToolkitInput) {
+    super();
+  }
 
-  listTools(): ToolDescriptor[] {
+  protected specs(): ToolSpec[] {
     return [
       {
-        name: 'query_entity',
-        description: '查实体当前状态:人物/地点/势力的身份、生死/位置/境界等属性、已知信息、持有物、最近相关事件。name 支持别名。',
-        args: '{"name":"角色名或别名"}',
+        descriptor: {
+          name: 'query_entity',
+          description: '查实体当前状态:人物/地点/势力的身份、生死/位置/境界等属性、已知信息、持有物、最近相关事件。name 支持别名。',
+          args: '{"name":"角色名或别名"}',
+        },
+        handler: args => this.queryEntity(args),
       },
       {
-        name: 'search_scenes',
-        description: '全文检索已提交的场景块,返回章号+标题+摘要+片段。用于定位某件事/某句台词出现在哪一章。',
-        args: '{"query":"关键词或短语","k":5,"beforeChapter":311}',
+        descriptor: {
+          name: 'search_scenes',
+          description: '全文检索已提交的场景块,返回章号+标题+摘要+片段。用于定位某件事/某句台词出现在哪一章。',
+          args: '{"query":"关键词或短语","k":5,"beforeChapter":311}',
+        },
+        handler: args => this.searchScenes(args),
       },
       {
-        name: 'read_chapter',
-        description: '读指定章的正文片段:默认章首+章尾;给 focus 关键词时返回命中窗口。',
-        args: '{"chapterNumber":312,"focus":"关键词"}',
+        descriptor: {
+          name: 'read_chapter',
+          description: '读指定章的正文片段:默认章首+章尾;给 focus 关键词时返回命中窗口。',
+          args: '{"chapterNumber":312,"focus":"关键词"}',
+        },
+        handler: args => this.readChapter(args),
       },
       {
-        name: 'list_foreshadows',
-        description: '查伏笔清单与状态。filter=open(未回收)/due(已到回收时点)缺省为全部。',
-        args: '{"filter":"due"}',
+        descriptor: {
+          name: 'list_foreshadows',
+          description: '查伏笔清单与状态。filter=open(未回收)/due(已到回收时点)缺省为全部。',
+          args: '{"filter":"due"}',
+        },
+        handler: args => this.listForeshadows(args),
       },
       {
-        name: 'query_timeline',
-        description: '查时间线:缺省返回最近条目;给 character 时过滤该角色参与的事件。',
-        args: '{"character":"林夜","lastN":10}',
+        descriptor: {
+          name: 'query_timeline',
+          description: '查时间线:缺省返回最近条目;给 character 时过滤该角色参与的事件。',
+          args: '{"character":"林夜","lastN":10}',
+        },
+        handler: args => this.queryTimeline(args),
       },
       {
-        name: 'get_contract',
-        description: '查本章/本卷合同原文:CBN/CPNs/CEN/mustCover/禁区/卷目标。',
-        args: '{}',
+        descriptor: {
+          name: 'get_contract',
+          description: '查本章/本卷合同原文:CBN/CPNs/CEN/mustCover/禁区/卷目标。',
+          args: '{}',
+        },
+        handler: () => this.getContract(),
       },
     ];
-  }
-
-  has(tool: string): boolean {
-    return this.toolNames().includes(tool);
-  }
-
-  toolNames(): string[] {
-    return this.listTools().map(tool => tool.name);
-  }
-
-  async call(tool: string, args: unknown): Promise<ToolCallResult> {
-    if (!isPlainObject(args)) {
-      return { ok: false, error: `args 必须是 JSON 对象,收到:${typeof args}` };
-    }
-    switch (tool) {
-      case 'query_entity':
-        return this.queryEntity(args);
-      case 'search_scenes':
-        return this.searchScenes(args);
-      case 'read_chapter':
-        return this.readChapter(args);
-      case 'list_foreshadows':
-        return this.listForeshadows(args);
-      case 'query_timeline':
-        return this.queryTimeline(args);
-      case 'get_contract':
-        return this.getContract();
-      default:
-        return { ok: false, error: `未知工具:${tool}。可用:${this.toolNames().join('/')}` };
-    }
   }
 
   /** 按名字/别名解析实体:先精确命中,再包含匹配;找不到给近似建议 */

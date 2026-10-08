@@ -83,6 +83,20 @@ export type WritingTarget = 'specific' | 'finish';
 /** 严格度降级顺序 */
 const STRICTNESS_LEVELS: ReviewStrictness[] = ['strict', 'normal', 'relaxed'];
 
+/** 「指定章数」模式未传章数时的默认写作章数（与 BatchWritingPanel 默认值一致） */
+const DEFAULT_SPECIFIC_CHAPTER_COUNT = 10;
+
+/**
+ * 连续多轮「既没写入新章、章节位置也没推进」即判定为停滞。
+ * 注意：这是进展判定，不是迭代次数上限——合法的长批量（200+ 章）每轮都会写入新章，不会触发。
+ */
+const MAX_STALLED_LOOP_ITERATIONS = 3;
+
+/** 判断章节是否为空章（无正文） */
+function isChapterEmpty(chapter: { content?: string }): boolean {
+  return !chapter.content || chapter.content.trim().length === 0;
+}
+
 /** 获取下一个更宽松的严格度 */
 function getLowerStrictness(current: ReviewStrictness): ReviewStrictness | null {
   const currentIndex = STRICTNESS_LEVELS.indexOf(current);
@@ -257,7 +271,11 @@ export interface UseBatchWriterReturn {
   }>;
 
   // 方法
-  startBatchWriting: (targetChapters?: number, batchConfig?: BatchConfig) => Promise<void>;
+  startBatchWriting: (
+    targetChapters?: number,
+    batchConfig?: BatchConfig,
+    scopeChapterIds?: string[]
+  ) => Promise<void>;
   pauseWriting: () => void;
   resumeWriting: () => void;
   stopWriting: () => void;
@@ -348,7 +366,6 @@ interface InternalWritingState {
   shouldStop: boolean;
   shouldPause: boolean;
   abortController: AbortController | null;
-  targetChapterCount: number;
   pipeline: WritingPipelineManager;
   currentReviewResult: BlockingReviewResult | null;
   // 自适应审查相关状态
@@ -577,7 +594,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
     shouldStop: false,
     shouldPause: false,
     abortController: null,
-    targetChapterCount: 10,
     pipeline: new WritingPipelineManager(),
     currentReviewResult: null,
     // 自适应审查相关状态
@@ -715,13 +731,36 @@ export function useBatchWriter(): UseBatchWriterReturn {
     for (let i = 0; i < chapters.length; i++) {
       // 空章节且非"已知失败"（writeStatus==='failed'）：可写。
       // 已知失败章跳过，避免原地反复重试同一个坏章；用户可通过"重试失败章节"入口显式清状态后再写。
-      const isEmpty =
-        !chapters[i].content || chapters[i].content.trim().length === 0;
-      if (isEmpty && chapters[i].writeStatus !== 'failed') {
+      if (isChapterEmpty(chapters[i]) && chapters[i].writeStatus !== 'failed') {
         return i;
       }
     }
     return -1;
+  }
+
+  /**
+   * 限定范围的下一章：只在 scope 章节集合内找空章（重试失败章节专用）。
+   * scope 为空时退化为普通的 getNextChapterIndex。
+   */
+  function nextPendingIndex(scopeIds: Set<string> | null): number {
+    if (!scopeIds) return getNextChapterIndex();
+    return projectStore.sortedChapters.findIndex(
+      chapter => scopeIds.has(chapter.id) && isChapterEmpty(chapter)
+    );
+  }
+
+  /** 计划章数（实时读取：滚动续纲会推进 metadata.plannedChapterCount；兜底与既有口径一致为 100） */
+  function getPlannedChapterCount(): number {
+    const current = projectStore.currentProject;
+    const fromMetadata = current?.metadata?.plannedChapterCount ?? 0;
+    if (fromMetadata > 0) return fromMetadata;
+    const outlineSize = current?.plotOutline?.length ?? 0;
+    return outlineSize > 0 ? outlineSize : 100;
+  }
+
+  /** 全书已写章数（正文非空的章），用于完结判断等需要全书进度的场景 */
+  function countWrittenChaptersInStore(): number {
+    return projectStore.sortedChapters.filter(chapter => !isChapterEmpty(chapter)).length;
   }
 
   function getTotalChapters(): number {
@@ -1072,9 +1111,16 @@ export function useBatchWriter(): UseBatchWriterReturn {
   /**
    * 开始批量写作
    */
+  /**
+   * @param targetChapters 指定章数模式的目标章数（写到完结模式忽略）
+   * @param batchConfig 本轮写作配置（缺省沿用当前 config）
+   * @param scopeChapterIds 限定范围：只写这些章节中的空章（重试失败章节用），
+   *   范围写完即结束，不会继续写范围外的空章，也不会在细纲用尽时新建章节
+   */
   async function startBatchWriting(
     targetChapters?: number,
-    batchConfig?: BatchConfig
+    batchConfig?: BatchConfig,
+    scopeChapterIds?: string[]
   ): Promise<void> {
     if (isWriting.value) {
       error.value = '正在写作中';
@@ -1099,12 +1145,17 @@ export function useBatchWriter(): UseBatchWriterReturn {
       config.value.maxRetries = batchConfig.maxRetries ?? 5;
     }
 
-    // 设置目标
-    const chaptersToWrite = targetChapters || internalState.targetChapterCount;
+    // 限定范围（重试失败章节）：范围即目标，不受指定章数影响
+    const scopeIds = scopeChapterIds ? new Set(scopeChapterIds) : null;
+    // 设置目标：范围模式按范围大小；写到完结模式的进度分母用计划章数；指定章数模式用目标章数
+    const chaptersToWrite = scopeIds
+      ? scopeIds.size
+      : targetChapters || DEFAULT_SPECIFIC_CHAPTER_COUNT;
+    const isFinishMode = target.value === 'finish' && !scopeIds;
     progress.value = {
       writtenChapters: 0,
       writtenWords: 0,
-      targetChapters: chaptersToWrite,
+      targetChapters: isFinishMode ? getPlannedChapterCount() : chaptersToWrite,
     };
 
     // 重置状态
@@ -1128,35 +1179,29 @@ export function useBatchWriter(): UseBatchWriterReturn {
     batchSummary.value = null;
     resumableBatch.value = null; // 开始新批量，清除上次恢复提示
 
-    // 计划章节数：每次循环实时读取（滚动续纲落地会推进 metadata.plannedChapterCount，
-    // 循环前快照会让「写到完结」模式的分界判断用过期值）；兜底 100 与既有口径一致。
-    const getPlannedChapterCount = (): number => {
-      const current = projectStore.currentProject;
-      const fromMetadata = current?.metadata?.plannedChapterCount ?? 0;
-      if (fromMetadata > 0) return fromMetadata;
-      const outlineSize = current?.plotOutline?.length ?? 0;
-      return outlineSize > 0 ? outlineSize : 100;
-    };
-
     const batchStartedAt = Date.now();
     let writtenCount = 0; // 提到 try 外，finally 的 batchSummary 需要访问
 
     try {
-      let currentIndex = getNextChapterIndex();
+      let currentIndex = nextPendingIndex(scopeIds);
 
-      let loopIter = 0;
+      // 停滞判定（替代旧的「循环次数 > 200」硬上限——后者会把合法的 200+ 章长批量误判为死循环）
+      let stalledIterations = 0;
+      let lastProgressSignature = '';
       while (currentIndex >= 0 || writtenCount < chaptersToWrite) {
-        loopIter++;
-        if (loopIter > 200) {
+        const progressSignature = `${writtenCount}:${currentIndex}`;
+        stalledIterations = progressSignature === lastProgressSignature ? stalledIterations + 1 : 0;
+        lastProgressSignature = progressSignature;
+        if (stalledIterations >= MAX_STALLED_LOOP_ITERATIONS) {
           console.error(
-            '[批量写作] 检测到可能的死循环，已写=' +
+            '[批量写作] 检测到停滞（连续多轮无新章写入、位置未推进），已写=' +
               writtenCount +
               ' 目标=' +
               chaptersToWrite +
               ' 当前=' +
               currentIndex
           );
-          error.value = '检测到异常：循环次数超过200次，请检查日志中的错误信息';
+          error.value = '检测到停滞：连续多轮没有写入新章节，已停止批量，请检查日志中的错误信息';
           break;
         }
 
@@ -1172,11 +1217,16 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
         if (internalState.shouldStop) break;
 
+        // 限定范围（重试失败章）：范围内没有空章即结束，不创建新章、不走完结判断
+        if (scopeIds && currentIndex < 0) {
+          break;
+        }
+
         // ========== 完结判断（写到完结模式） ==========
-        if (target.value === 'finish') {
-          // 检查完结准备度
+        if (isFinishMode) {
+          // 完结判断必须用全书进度（已写章数），不能用本轮写了几章：从中途续写时两者相差很大
           const memories = projectStore.chapterMemories || [];
-          const endingCheck = checkEndingReadiness(project, writtenCount, memories);
+          const endingCheck = checkEndingReadiness(project, countWrittenChaptersInStore(), memories);
           endingStatus.value = endingCheck;
           isReadyToEnd.value = endingCheck.isReady;
 
@@ -1191,11 +1241,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
               break;
             }
           }
-
-          // 如果已完成大纲章节但还可以创建新章节，继续创建
-          if (currentIndex >= getPlannedChapterCount() && !endingCheck.isReady) {
-            // 可以继续创建章节，但需要明确告知用户
-          }
         }
 
         // 检查是否达到指定数量目标
@@ -1205,15 +1250,11 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
         // 如果没有空章节，创建新的
         if (currentIndex < 0) {
-          // 写到完结模式：检查是否可以创建新章节
-          if (target.value === 'finish') {
+          // 写到完结模式：已完结准备好时不再新建章节
+          if (isFinishMode) {
             const checkResult = endingStatus.value;
-            if (checkResult && !checkResult.canCreateNewChapter) {
-              if (checkResult.isReady) {
-                break;
-              } else {
-                // 仍然允许创建最后一章用于完结
-              }
+            if (checkResult && !checkResult.canCreateNewChapter && checkResult.isReady) {
+              break;
             }
           }
 
@@ -1246,6 +1287,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
         let chapterLastErrorKind: ErrorKind = 'unknown';
         let chapterAttempts = 0; // 实际消耗的重试次数
         let chapterForceStop = false; // aborted 触发，需立即停整批
+        let chapterReviewUnavailable = false; // 语义审查服务不可用：本章未提交，停批但不记为章节失败
 
         for (let attempt = 1; attempt <= chapterMaxRetries; attempt++) {
           // 响应停止
@@ -1307,8 +1349,11 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
             // 审查基础设施已在章节引擎内部完成步骤级重试。再次整章重跑只会
             // 重复生成正文和事实提取，因此直接停止当前批次，等待用户重试审查服务。
+            // 审查服务异常：本章未提交，停止批量等待用户重试审查服务。
+            // 不进入「重试耗尽」分支——那里会把本章记为失败并覆盖此提示文案。
             if (classified.kind === 'review_unavailable') {
-              error.value = `第${currentIndex + 1}章语义审查暂时不可用，已保留本轮生成结果，未重复起草`;
+              chapterReviewUnavailable = true;
+              error.value = `第${currentIndex + 1}章语义审查暂时不可用，本章未提交，已停止批量（未重复起草），请稍后重试`;
               break;
             }
 
@@ -1401,6 +1446,12 @@ export function useBatchWriter(): UseBatchWriterReturn {
           break;
         }
 
+        // 审查服务不可用：停整批，本章保持空白（不标记失败），错误文案保留给用户
+        if (chapterReviewUnavailable) {
+          internalState.shouldStop = true;
+          break;
+        }
+
         // 单章重试耗尽（持久/瞬态）：标记 writeStatus='failed'，结束整批（质量优先）
         if (!chapterSuccess) {
           const failedChapter = projectStore.sortedChapters[currentIndex];
@@ -1427,10 +1478,10 @@ export function useBatchWriter(): UseBatchWriterReturn {
           break; // 结束整批，不再继续下一章
         }
 
-        // 写到完结模式：每写完一章后重新检查完结条件
-        if (target.value === 'finish') {
+        // 写到完结模式：每写完一章后重新检查完结条件（同样用全书已写章数）
+        if (isFinishMode) {
           const updatedMemories = projectStore.chapterMemories || [];
-          const updatedCheck = checkEndingReadiness(project, writtenCount, updatedMemories);
+          const updatedCheck = checkEndingReadiness(project, countWrittenChaptersInStore(), updatedMemories);
           endingStatus.value = updatedCheck;
           isReadyToEnd.value = updatedCheck.isReady;
         }
@@ -1438,8 +1489,8 @@ export function useBatchWriter(): UseBatchWriterReturn {
         // 细纲跑道不足时后台补下一批蓝图（异步，不等待）；下一轮循环若仍在途则跳过
         ensureOutlineRunwayAsync();
 
-        // 找下一个空章节
-        currentIndex = getNextChapterIndex();
+        // 找下一个空章节（范围模式下只在范围内找）
+        currentIndex = nextPendingIndex(scopeIds);
       }
     } finally {
       const batchFinishedAt = Date.now();
@@ -1515,7 +1566,8 @@ export function useBatchWriter(): UseBatchWriterReturn {
       })
     ));
 
-    // 复用 startBatchWriting 跑一轮：getNextChapterIndex 现在会选中刚重置的 pending 章
+    // 复用 startBatchWriting 跑一轮，并把范围限定为本次要重试的章节：
+    // 只写这些章，写完或再次失败即结束，不会顺延写范围外的空章
     await startBatchWriting(undefined, {
       wordsPerChapter: config.value.wordsPerChapter,
       writingStyle: config.value.writingStyle,
@@ -1524,7 +1576,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
       requireBlockingPass: config.value.requireBlockingPass,
       initialStrictness: config.value.initialStrictness,
       maxRetries: config.value.maxRetries,
-    });
+    }, targets.map(chapter => chapter.id));
   }
 
   /** 用户忽略上次进度提示后，清除 localStorage 里的 resumableBatch */

@@ -6,10 +6,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock stores
 const mockProjectStore = {
-  sortedChapters: [],
-  sortedVolumes: [],
-  currentProject: null,
-  plotOutline: [],
+  sortedChapters: [] as any[],
+  sortedVolumes: [] as any[],
+  currentProject: null as any,
+  chapterMemories: [] as any[],
+  plotOutline: [] as any[],
   memoryConfig: { shortTermChapterCount: 5 },
   updateChapter: vi.fn(),
   addChapterMemory: vi.fn(),
@@ -513,5 +514,129 @@ describe('BatchConfig 类型与失败重试', () => {
     // v3.1：writtenChapters 依赖 store 中 chapter.content，而管道是 mock 的不写 store；
     // 改为验证 progress.writtenChapters（批量层自己维护的计数）
     expect(writer.progress.value.writtenChapters).toBe(2);
+  }, 15000);
+});
+
+describe('批量写作修复回归（代码审查修复）', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function setupEmptyChapters(emptyCount: number) {
+    mockProjectStore.currentProject = {
+      id: 'p-regress',
+      name: '回归测试项目',
+      genre: [],
+      description: '',
+      metadata: { plannedChapterCount: 300 },
+      plotOutline: [],
+      characters: [],
+      foreshadows: [],
+      volumes: [],
+    };
+    mockProjectStore.sortedVolumes = [{ id: 'v1', name: '第一卷', orderIndex: 0 }];
+    mockProjectStore.chapterMemories = [];
+    mockProjectStore.sortedChapters = Array.from({ length: emptyCount }, (_, i) => ({
+      id: `c${i + 1}`,
+      content: '',
+      title: `第${i + 1}章`,
+      orderIndex: i,
+    }));
+    mockProjectStore.updateChapter.mockImplementation(async (id: string, data: any) => {
+      const ch = mockProjectStore.sortedChapters.find((c: any) => c.id === id);
+      if (ch) Object.assign(ch, data);
+    });
+  }
+
+  /** 管道成功时真实写入章节正文（使 store 状态与真实流水线一致） */
+  function pipelineWritesChapters() {
+    mockPipelineExecute.mockImplementation(async (input: { chapter: { id: string } }) => {
+      await mockProjectStore.updateChapter(input.chapter.id, { content: '正文内容', wordCount: 4 });
+      return {
+        success: true,
+        prose: '正文内容',
+        title: null,
+        taskBook: null,
+        gateResult: { passed: true, allIssues: [], blockingCount: 0, highCount: 0 },
+        attempts: 1,
+        forceAccepted: false,
+        supplementRounds: 0,
+      };
+    });
+  }
+
+  it('重试失败章节只写失败章，不顺延写范围外的空章', async () => {
+    setupEmptyChapters(4);
+    mockPipelineExecute.mockReset();
+    // 第 1 章首次持久失败，之后的调用全部成功
+    mockPipelineExecute.mockImplementationOnce(async () => {
+      throw new Error('AI service unavailable');
+    });
+    pipelineWritesChapters();
+
+    const { useBatchWriter } = await import('@/composables/useBatchWriter');
+    const writer = useBatchWriter();
+    await writer.startBatchWriting(4, {
+      wordsPerChapter: 2000,
+      writingStyle: 'concise',
+      maxRetries: 1,
+      useReview: false,
+    });
+    expect(writer.failedChapters.value.map(f => f.id)).toEqual(['c1']);
+
+    mockPipelineExecute.mockClear();
+    await writer.retryFailedChapters();
+
+    // 只重试了失败的第 1 章；第 2-4 章是正常空章，必须保持空白
+    expect(mockPipelineExecute).toHaveBeenCalledTimes(1);
+    expect(mockPipelineExecute.mock.calls[0][0].chapter.id).toBe('c1');
+    expect(mockProjectStore.sortedChapters[0].content).toBe('正文内容');
+    expect(mockProjectStore.sortedChapters[1].content).toBe('');
+    expect(mockProjectStore.sortedChapters[2].content).toBe('');
+    expect(mockProjectStore.sortedChapters[3].content).toBe('');
+  }, 15000);
+
+  it('长批量（205 章）不被循环次数上限误判为死循环', async () => {
+    setupEmptyChapters(205);
+    pipelineWritesChapters();
+
+    const { useBatchWriter } = await import('@/composables/useBatchWriter');
+    const writer = useBatchWriter();
+    await writer.startBatchWriting(205, {
+      wordsPerChapter: 2000,
+      writingStyle: 'concise',
+      maxRetries: 1,
+      useReview: false,
+    });
+
+    expect(writer.progress.value.writtenChapters).toBe(205);
+    expect(writer.error.value).toBeNull();
+  }, 60000);
+
+  it('语义审查不可用：停止批量、本章不记为失败、不重复起草，且提示文案不被覆盖', async () => {
+    setupEmptyChapters(2);
+    mockPipelineExecute.mockReset();
+    mockPipelineExecute.mockRejectedValue(new Error('[review-unavailable] 语义审查不可用'));
+
+    const { useBatchWriter } = await import('@/composables/useBatchWriter');
+    const writer = useBatchWriter();
+    await writer.startBatchWriting(2, {
+      wordsPerChapter: 2000,
+      writingStyle: 'concise',
+      maxRetries: 3,
+      useReview: false,
+    });
+
+    // 不重复起草：只调用一次管道
+    expect(mockPipelineExecute).toHaveBeenCalledTimes(1);
+    expect(writer.isWriting.value).toBe(false);
+    expect(writer.error.value).toContain('语义审查暂时不可用');
+    expect(writer.error.value).not.toContain('重试耗尽');
+    // 本章不记为失败章节，也不写入 failed 状态
+    expect(writer.failedChapters.value).toHaveLength(0);
+    expect(mockProjectStore.updateChapter).not.toHaveBeenCalledWith(
+      'c1',
+      expect.objectContaining({ writeStatus: 'failed' })
+    );
   }, 15000);
 });

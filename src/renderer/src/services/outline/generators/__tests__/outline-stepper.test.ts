@@ -747,3 +747,57 @@ describe('generateExpandedOutlineInSteps 分步编排', () => {
     expect(receivedUsers[2]).toContain('县衙风云');
   });
 });
+
+describe('尾部并行步骤的并发上限（MOLIU_OUTLINE_STEP_CONCURRENCY）', () => {
+  /** 记录同时在途的请求数峰值；每次调用人为延迟，确保并行重叠可被观测 */
+  function trackInFlight() {
+    let inFlight = 0;
+    let peak = 0;
+    let callIndex = 0;
+    const callStructuredTextMode = vi.fn(async () => {
+      const current = callIndex;
+      callIndex += 1;
+      inFlight += 1;
+      peak = Math.max(peak, inFlight);
+      await new Promise(resolve => setTimeout(resolve, 5));
+      inFlight -= 1;
+      return STEP_RESPONSES[current];
+    });
+    return { callStructuredTextMode, getPeak: () => peak };
+  }
+
+  it('并发上限为 2 时，尾部三步的在途请求数峰值不超过 2，且结果仍完整拼装', async () => {
+    vi.stubEnv('MOLIU_OUTLINE_STEP_CONCURRENCY', '2');
+    try {
+      const { callStructuredTextMode, getPeak } = trackInFlight();
+      const result = await generateExpandedOutlineInSteps({
+        seed: '法医穿越',
+        direction: DIRECTION,
+        options: BASE_OPTIONS,
+        wordCountRange: '100万-200万字',
+        callStructuredTextMode,
+      });
+
+      expect(callStructuredTextMode).toHaveBeenCalledTimes(5);
+      expect(getPeak()).toBe(2);
+      // 拼装顺序不受分批影响：五段齐全且可解析
+      expect(result.rawText).toContain('## 卖点承载规划');
+      expect(result.rawText).toContain('## 关键角色规划');
+      expect(result.warnings).toHaveLength(0);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('默认并发（3）时，尾部三步可整体并行，峰值达到 3', async () => {
+    const { callStructuredTextMode, getPeak } = trackInFlight();
+    await generateExpandedOutlineInSteps({
+      seed: '法医穿越',
+      direction: DIRECTION,
+      options: BASE_OPTIONS,
+      wordCountRange: '100万-200万字',
+      callStructuredTextMode,
+    });
+    expect(getPeak()).toBe(3);
+  });
+});

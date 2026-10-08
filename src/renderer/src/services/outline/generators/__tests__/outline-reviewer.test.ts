@@ -25,6 +25,30 @@ function makeBlock(overrides: Record<string, unknown> = {}) {
   };
 }
 
+describe('书名意象覆盖（title-imagery-missing，2026-10-05 都市文书审实证）', () => {
+  it('书名核心意象在蓝图/卖点/金手指全文零出现时报 issue（巨龙/泰坦零出现形态）', () => {
+    const outline = {
+      ...makeDirtyOutline(),
+      title: '全校都在契约巨龙，我的毒蜂蜇爆了泰坦',
+    };
+    const issues = inspectOutlineQuality(outline).filter(i => i.kind === 'title-imagery-missing');
+    // 契约巨龙/毒蜂/泰坦 全部零覆盖 → 三条（或至少命中巨龙/泰坦两条核心）
+    expect(issues.some(i => i.detail.includes('泰坦'))).toBe(true);
+    expect(issues.some(i => i.detail.includes('毒蜂'))).toBe(true);
+    expect(issues[0].detail).toContain('标题对读者的承诺');
+  });
+
+  it('意象在 oneLiner/premise/蓝图中出现（含 2 字滑窗弱命中）不报', () => {
+    const outline = {
+      ...makeDirtyOutline(),
+      title: '全校都在契约巨龙，我的毒蜂蜇爆了泰坦',
+      oneLiner: '御兽世界里人人契约巨龙，主角的毒蜂一针刺穿泰坦级巨兽',
+    };
+    const issues = inspectOutlineQuality(outline).filter(i => i.kind === 'title-imagery-missing');
+    expect(issues).toHaveLength(0);
+  });
+});
+
 /** 劣化大纲：五类问题全占 */
 function makeDirtyOutline(): ExecutableOutline {
   return {
@@ -125,6 +149,8 @@ function makeDirtyOutline(): ExecutableOutline {
 /** 干净大纲：五类问题全无 */
 function makeCleanOutline(): ExecutableOutline {
   const outline = makeDirtyOutline();
+  // 书名意象与正文对齐（title-imagery-missing 检查）：「炼药」在块目标中出现
+  outline.title = '炼药逆袭';
   // climax 点名的「药尘」必须在启动包登场（回响语义：块3 coolPoints 让他提前现身）
   outline.volumePlan[0].climax = '药尘当众厉鬼群自动让开一条路';
   outline.startupPack30.chapterBlocks = [

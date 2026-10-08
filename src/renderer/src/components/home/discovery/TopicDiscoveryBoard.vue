@@ -59,8 +59,9 @@ import DicePanel from './components/DicePanel.vue';
 import PromptPanel from './components/PromptPanel.vue';
 import FavoritesPanel from './components/FavoritesPanel.vue';
 
-const MAX_MIX_GENRES = 20;
-const MAX_MIX_ELEMENTS = 4;
+/** 混搭题材上限：首个为主题材，其余为副题材 */
+const MAX_MIX_GENRES = 8;
+const MAX_MIX_ELEMENTS = 8;
 
 function pickRandom<T>(pool: readonly T[]): T {
   return pool[Math.floor(Math.random() * pool.length)] as T;
@@ -755,6 +756,7 @@ async function rollDice(): Promise<void> {
       :selected-elements="selectedMixElements"
       :max-genre-picks="MAX_MIX_GENRES"
       :max-element-picks="MAX_MIX_ELEMENTS"
+      :audience="lockedAudience"
       :disabled="isProcessing"
       @toggle-tag="toggleMixTag"
       @toggle-element="toggleMixElement"

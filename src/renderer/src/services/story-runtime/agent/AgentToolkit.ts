@@ -32,6 +32,52 @@ export interface AgentToolkit {
   call(tool: string, args: unknown): Promise<ToolCallResult>;
 }
 
+/** 表驱动工具:描述符(给模型看的协议说明) + 处理函数(只接收已校验为对象的 args) */
+export interface ToolSpec {
+  descriptor: ToolDescriptor;
+  handler: (args: Record<string, unknown>) => ToolCallResult | Promise<ToolCallResult>;
+}
+
+/**
+ * 表驱动工具箱基类(P1 工具管线):参数校验、按名分发、未知工具分支只在这里实现一次。
+ * 子类只声明 `specs()` 工具表;新增工具 = 加一行表项,不再复制 switch/default 样板。
+ * 工具表在首次使用时构造并缓存(描述符与处理函数都是常量绑定)。
+ */
+export abstract class TableToolkit implements AgentToolkit {
+  private table: ToolSpec[] | null = null;
+
+  /** 工具表(子类实现):顺序即 listTools 的呈现顺序 */
+  protected abstract specs(): ToolSpec[];
+
+  listTools(): ToolDescriptor[] {
+    return this.getTable().map(spec => spec.descriptor);
+  }
+
+  has(tool: string): boolean {
+    return this.getTable().some(spec => spec.descriptor.name === tool);
+  }
+
+  toolNames(): string[] {
+    return this.getTable().map(spec => spec.descriptor.name);
+  }
+
+  async call(tool: string, args: unknown): Promise<ToolCallResult> {
+    if (!isPlainObject(args)) {
+      return { ok: false, error: `args 必须是 JSON 对象,收到:${typeof args}` };
+    }
+    const spec = this.getTable().find(item => item.descriptor.name === tool);
+    if (!spec) {
+      return { ok: false, error: `未知工具:${tool}。可用:${this.toolNames().join('/')}` };
+    }
+    return spec.handler(args);
+  }
+
+  private getTable(): ToolSpec[] {
+    if (this.table === null) this.table = this.specs();
+    return this.table;
+  }
+}
+
 /**
  * 工具执行中的致命错误：runner 不会把它转成 `{ok:false}` 回喂模型，而是原样冒泡终止循环。
  * 用于「继续循环没有意义」的场景（如审查链不可用、持久化端口损坏），普通参数/业务错误请返回 `{ok:false,error}`。
@@ -46,6 +92,14 @@ export class AgentToolFatalError extends Error {
 /** 截断超长文本并加省略号（工具结果回喂模型前的统一裁剪） */
 export function clipText(text: string, maxChars: number): string {
   return text.length > maxChars ? `${text.slice(0, maxChars)}…` : text;
+}
+
+/** 用户取消（AbortController）产生的错误：必须原样冒泡，不转成工具结果 */
+export function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === 'AbortError') ||
+    (error instanceof Error && error.name === 'AbortError')
+  );
 }
 
 export function isPlainObject(value: unknown): value is Record<string, unknown> {

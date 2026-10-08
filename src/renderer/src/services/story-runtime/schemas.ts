@@ -268,6 +268,55 @@ export const storyEventSchema = z.object({
   evidence: stringArraySchema,
   timestamp: z.string().optional(),
   provisional: z.boolean().optional(),
+  // 契约 15/17 结构化出账（2026-10-05）：数字/时间事实不再拍扁成句子走正则回抽，
+  // AI 归一「对象+数值+单位」「承诺+期限+动作」，题材无关（单位是自由字符串）。
+  // 形态闸走 preprocess：字段形态损坏时静默剥离该结构化字段（事件本体照常通过），
+  // 与元素级软兜底同哲学——不让一个坏 numeric 拖死整章事实提取。
+  numeric: z.preprocess(
+    (v) => {
+      if (v == null || typeof v !== 'object') return undefined;
+      const rec = v as Record<string, unknown>;
+      if (typeof rec.amount !== 'number' || !Number.isFinite(rec.amount)) return undefined;
+      if (typeof rec.object !== 'string' || !rec.object.trim()) return undefined;
+      if (typeof rec.unit !== 'string' || !rec.unit.trim()) return undefined;
+      return {
+        object: rec.object,
+        amount: rec.amount,
+        unit: rec.unit,
+        ...(typeof rec.nature === 'string' && rec.nature.trim() ? { nature: rec.nature } : {}),
+      };
+    },
+    z
+      .object({
+        object: z.string().min(1),
+        amount: z.number(),
+        unit: z.string().min(1),
+        nature: z.string().optional(),
+      })
+      .optional()
+  ),
+  time: z.preprocess(
+    (v) => {
+      if (v == null || typeof v !== 'object') return undefined;
+      const rec = v as Record<string, unknown>;
+      if (typeof rec.promise !== 'string' || !rec.promise.trim()) return undefined;
+      if (rec.action !== 'open' && rec.action !== 'fulfilled' && rec.action !== 'renegotiated') {
+        return undefined;
+      }
+      return {
+        promise: rec.promise,
+        action: rec.action,
+        ...(typeof rec.due === 'string' && rec.due.trim() ? { due: rec.due } : {}),
+      };
+    },
+    z
+      .object({
+        promise: z.string().min(1),
+        due: z.string().optional(),
+        action: z.enum(['open', 'fulfilled', 'renegotiated']),
+      })
+      .optional()
+  ),
 });
 
 export const stateDeltaSchema = z.object({
@@ -601,6 +650,7 @@ export const chapterJudgeResultSchema: z.ZodType<ChapterJudgeResult> = z.preproc
   ),
   issues: z.array(chapterJudgeIssueSchema),
   resolvedForeshadowIds: z.array(z.string()).optional(),
+  resolvedTimePromiseTexts: z.array(z.string()).optional(),
   }),
 );
 

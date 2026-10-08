@@ -21,6 +21,8 @@ export interface RolledBlueprintIssue {
     | 'reveal-timing'
     | 'truncated-hook-clause'
     | 'finale-not-closing'
+    | 'finale-arc-division'
+    | 'fate-release-check'
     | 'coolpoint-pacing';
   detail: string;
 }

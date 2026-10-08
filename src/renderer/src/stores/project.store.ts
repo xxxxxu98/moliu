@@ -4,8 +4,9 @@ import type {
   Project, Volume, Chapter, Character, WorldSchema, Foreshadow, PlotNode, LocationLevel, RuleCategory, FactionRelation,
   EmotionGoal, ConflictDesign, CoolPointDesign, StoryLines
 } from '@/types/project';
-import type { ChapterMemory, PlotThread, CharacterArc, MemoryConfig } from '@/types/project';
+import type { ChapterMemory, PlotThread, CharacterArc, MemoryConfig, NumericLedgerEntry, TimePromiseEntry } from '@/types/project';
 import { DEFAULT_MEMORY_CONFIG } from '@/types/project';
+import { mergeNumericLedger, mergeTimePromises, resolveTimePromisesByText } from '@/services/writing/numericLedger';
 
 export const useProjectStore = defineStore('project', () => {
   // State
@@ -438,6 +439,39 @@ export const useProjectStore = defineStore('project', () => {
     }
     // 按章节顺序排序
     chapterMemories.value.sort((a, b) => a.chapterIndex - b.chapterIndex);
+  }
+
+  /**
+   * 跨章事实台账合并入账（2026-10-05 数字/时间台账 agent 化）：
+   * FactExtractor 契约 15/17 结构化出账 → numericLedger/timePromises。
+   * 只改内存真源不落盘——调用方（记忆投影适配器）随后的 saveCurrentProject
+   * 会通过 spread 把台账一并持久化，避免一次生成双写盘。
+   */
+  function applyFactLedger(
+    numericEntries: NumericLedgerEntry[],
+    timeProjection: {
+      opens: TimePromiseEntry[];
+      resolves: Array<{ promise: string; action: 'fulfilled' | 'renegotiated'; evidence?: string }>;
+    },
+    chapterNumber: number,
+    judgeResolvedTexts: string[] = []
+  ) {
+    const project = currentProject.value;
+    if (!project) return;
+    if (numericEntries.length > 0) {
+      project.numericLedger = mergeNumericLedger(project.numericLedger ?? [], numericEntries);
+    }
+    if (timeProjection.opens.length > 0 || timeProjection.resolves.length > 0) {
+      project.timePromises = mergeTimePromises(project.timePromises ?? [], timeProjection, chapterNumber);
+    }
+    // 判官确认的承诺兑现流转（2026-10-08）：37/40 永远开放的解药
+    if (judgeResolvedTexts.length > 0 && (project.timePromises ?? []).length > 0) {
+      project.timePromises = resolveTimePromisesByText(
+        project.timePromises ?? [],
+        judgeResolvedTexts.map(text => ({ text, action: 'fulfilled' as const })),
+        chapterNumber
+      );
+    }
   }
 
   /**
@@ -1015,6 +1049,7 @@ export const useProjectStore = defineStore('project', () => {
     characterArcs,
     memoryConfig,
     addChapterMemory,
+    applyFactLedger,
     getChapterMemory,
     getShortTermMemories,
     getMediumTermMemories,

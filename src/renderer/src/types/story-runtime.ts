@@ -50,6 +50,27 @@ export interface StoryEvent {
   evidence: string[];
   timestamp?: string;
   provisional?: boolean;
+  /**
+   * 数字事实结构化出账（契约 15，2026-10-05）：type="numeric-fact" 的事件必带。
+   * AI 归一「对象+数值+单位+性质」，单位自由字符串（题材无关），替代旧的
+   * 句子态 summary + 正则回抽链路。
+   */
+  numeric?: {
+    object: string;
+    amount: number;
+    unit: string;
+    nature?: string;
+  };
+  /**
+   * 时间承诺结构化出账（契约 17/18，2026-10-05）：type="time-promise"（期限承诺）
+   * 或 "plot-promise"（剧情预告）的事件必带。action=fulfilled/renegotiated 时
+   * promise 引用原承诺内容。
+   */
+  time?: {
+    promise: string;
+    due?: string;
+    action: 'open' | 'fulfilled' | 'renegotiated';
+  };
 }
 
 export interface SceneChunk {
@@ -459,6 +480,13 @@ export interface ChapterJudgeResult {
    * 无 payoffCandidates 输入的旧调用方此字段恒为空数组。
    */
   resolvedForeshadowIds?: string[];
+  /**
+   * 本章已兑现/显式改期解除的时间承诺文本片段（须有正文证据支撑）。
+   * 与 timePromises 输入行做互相包含匹配后流转台账 open→fulfilled/
+   * renegotiated（2026-10-08 r19 实证：37/40 承诺永远开放——提取侧漏判
+   * 兑现，判官逐章看见承诺与兑现却无回传通道）。旧调用方恒为空数组。
+   */
+  resolvedTimePromiseTexts?: string[];
 }
 
 export interface ChapterJudgeStateDigest {
@@ -495,8 +523,18 @@ export interface ChapterJudgeInput {
   payoffCandidates?: Array<{ id: string; hint: string }>;
   /** 全书既成纪年锚（写作侧同源）：正文中出现锚外年号即自创年号，判官报 logic_gap */
   eraAnchors?: string[];
-  /** 近章既成数字叙述：同一笔数额/编制/数量无勘误剧情改写，判官报 fact_conflict */
+  /** 数字台账格式化行（对象+数值+单位+确立章号）：同对象不同值且无勘误剧情，判官报 fact_conflict；本章新立约束性数字未入账，判官报 ledger-gap 提示 */
   numericFacts?: string[];
+  /** 待兑现时间承诺清单（格式化行）：剧情时间到达/越过期限而未兑现未改期，判官报 timeline */
+  timePromises?: string[];
+  /** 近章既成时间标记（格式化行）：本章时间流逝与之不连续（回退/跳跃无交代），判官报 timeline */
+  timelineMarks?: string[];
+  /** 本章为呼吸拍章（章号确定性相位）：正文缺生理/生活锚点时判官报 warning 级 issue */
+  breathBeatRequired?: boolean;
+  /** 相关角色更早章节的原文片段：跨章 fact_conflict 仲裁的逐字证据（台账漏账的兜底） */
+  mentionEvidence?: string[];
+  /** 作者正典（locked 规则）：正文与正典冲突时判官报 critical——人工设定高于提取账 */
+  authorCanon?: string[];
   /** 假死在册角色名单（假死=活着隐匿中，非死亡）：其活体活动不报 fact_conflict */
   fakedDeathNames?: string[];
 }
@@ -566,6 +604,11 @@ export interface ContinuityReport {
    * 消费方据此做 buried→resolved 流转；判官未列出的伏笔保持原状态。
    */
   resolvedForeshadowIds?: string[];
+  /**
+   * 本章经判官确认已兑现/改期解除的时间承诺文本（无 timePromises 输入时
+   * 为空数组）。消费方据此把台账 open 条目流转为 fulfilled/renegotiated。
+   */
+  resolvedTimePromiseTexts?: string[];
 }
 
 export interface ChapterCommit {
@@ -674,6 +717,35 @@ export interface LongFormWriteInput {
    * 存粮四万石无解释改四十万石——长程数字漂移是书审最大 S1 簇）。
    */
   numericFacts?: string[];
+  /**
+   * 待兑现时间承诺清单（格式化行，2026-10-05 契约 17）：写作侧【期限承诺】
+   * 与判官【期限一致】共源。正文剧情时间到达/越过期限而未兑现未改期时，
+   * 判官报 timeline（实证：三次承诺「三天后开赛」次日开打无人拦）。
+   */
+  timePromises?: string[];
+  /**
+   * 近章既成时间标记（格式化行，如「第14章：当夜·黑市暗巷」）：写作侧
+   * 【时间轴】注入，本章时间流逝必须与之连续（实证：15 章正文零日期锚）。
+   */
+  timelineMarks?: string[];
+  /**
+   * 相关角色在更早章节的原文片段（提及索引，2026-10-05 借鉴 Novelcrafter）：
+   * 判官只见上章结尾 800 字，跨 5 章矛盾仲裁全押台账——台账漏账时判官瞎眼。
+   * 此字段给判官提供冲突角色的逐字历史证据。格式「角色｜第N章：「…」」。
+   */
+  mentionEvidence?: string[];
+  /**
+   * 作者正典（worldSchema.rules 中 locked=true 的规则，2026-10-05 借鉴国内
+   * 设定库产品形态）：起草【作者正典】块 + 判官硬约束——人工设定的优先级
+   * 高于一切提取账，人机混写时人是最终真相仲裁者。
+   */
+  authorCanon?: string[];
+  /**
+   * 本章为呼吸拍章（chapterNumber%3===2 的确定性相位，2026-10-05）：
+   * 起草侧已注入生理锚点要求；透传判官做 warning 级闭环校验
+   * （20 章验证 ch17 漏拍无感知的补丁）。
+   */
+  breathBeatRequired?: boolean;
   /**
    * 本章出场角色的角色卡身份首句（r6 实证：角色表赵宣=三皇子恭王，写手自行
    * 发明「刑部主事姻亲」降格身份）。写作侧【身份锚】注入。

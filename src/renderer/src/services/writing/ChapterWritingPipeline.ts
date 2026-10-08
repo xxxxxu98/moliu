@@ -83,7 +83,19 @@ import type {
 } from '@/services/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
-import { collectCharacterIdentityAnchors, collectEraAnchors, collectFakedDeathCharacters, collectFateForbiddenZones, collectFateStatusAnchors, collectNumericAnchors, overlayCharacterFates, overlayCharacterTitles } from '@/services/writing/extract-plot-memory';
+import { collectCharacterIdentityAnchors, collectEraAnchors, collectFakedDeathCharacters, collectFateForbiddenZones, collectFateStatusAnchors, overlayCharacterFates, overlayCharacterTitles } from '@/services/writing/extract-plot-memory';
+import {
+  collectTimelineMarks,
+  formatNumericAnchorLines,
+  formatTimePromiseLines,
+  mergeNumericLedger,
+  mergeTimePromises,
+  projectNumericLedgerEntries,
+  projectTimeLedger,
+  resolveTimePromisesByText,
+} from '@/services/writing/numericLedger';
+import { buildMentionEvidence } from '@/services/writing/mentionIndex';
+import { contentFingerprint } from './utils';
 import { buildStateCardRows, isStateCardEnabled } from '@/services/writing/stateLedger';
 import { stripStructuredNodeBlock } from '@/services/outline/parser/utils';
 import type { SceneChunk } from '@/types/story-runtime';
@@ -981,6 +993,27 @@ export class ChapterWritingPipeline {
       const memoriesUpToChapter = (input.project.chapterMemories ?? []).filter(
         memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
       );
+      // —— 竞品借鉴三件（2026-10-05）——
+      // 作者手改检测：上一章正文指纹与提取时不一致 → 重提取记忆/台账
+      await this.reextractStalePreviousChapter(input, chapterNumber, ai, memoriesUpToChapter);
+      // 台账显著性 hint（Sudowrite Saliency 思路）：本章蓝图+出场名单
+      const blueprintHint = [
+        mergeChapterBlueprintText(taskBook, input.chapter),
+        (contracts.chapter.allowedCharacterNames ?? []).join(' '),
+      ].join('\n');
+      // 作者正典（国内设定库形态）：locked 世界观规则 > 一切提取账
+      const authorCanon = (input.project.worldSchema?.rules ?? [])
+        .filter(rule => rule.locked && (rule.description || rule.name))
+        .slice(0, 12)
+        .map(rule => `${rule.name}：${rule.description}`);
+      // 提及证据（Novelcrafter 思路）：本章出场角色在更早章节的原文片段
+      const mentionEvidence = buildMentionEvidence(bootstrap.sceneChunks, {
+        chapterNumber,
+        names: (contracts.chapter.allowedCharacterNames ?? []).slice(0, 8).map(name => ({
+          name,
+          aliases: (input.project.characters ?? []).find(character => character.name === name)?.aliases,
+        })),
+      });
       const result = await engine.write({
         projectId: input.project.id,
         contracts,
@@ -1011,9 +1044,22 @@ export class ChapterWritingPipeline {
         // 纪年锚（r5 实证纪年五套互斥+真实年号混入）：近章既成纪年叙述注入起草
         // prompt，正文纪年必须与之连续；真实年号另有黑名单守卫拦截
         eraAnchors: collectEraAnchors(memoriesUpToChapter),
-        // 数字锚（r6 实证长程数字漂移成最大 S1 簇）：近章既成数字句注入起草
-        // 【数字锚】与判官【数字一致】共源；数据源含契约 15 numeric-fact 事件
-        numericFacts: collectNumericAnchors(memoriesUpToChapter),
+        // 数字锚（2026-10-05 台账化重构：契约 15 结构化出账 → 项目 numericLedger，
+        // 旧 collectNumericAnchors 单位词表正则退役——都市文信用点/吨/天全漏实证）：
+        // 起草【数字锚】与判官【数字一致】共源注入
+        numericFacts: formatNumericAnchorLines(input.project.numericLedger ?? [], chapterNumber, blueprintHint),
+        // 期限承诺（契约 17）：待兑现时间承诺清单，写作侧【期限承诺】与判官
+        // 【期限一致】共源——「三天后开赛」类断裂的解药；显著性=与本章蓝图相关优先
+        timePromises: formatTimePromiseLines(input.project.timePromises ?? [], chapterNumber, blueprintHint),
+        // 时间轴（storyClock 轻量版）：近章既成时间标记（timelineMark +
+        // 契约 17 time-passage），本章时间流逝必须与之连续
+        timelineMarks: collectTimelineMarks(memoriesUpToChapter),
+        // 呼吸拍闭环（起草侧已按章号注入生理锚点要求；透传判官做 warning 级校验）
+        breathBeatRequired: chapterNumber % 3 === 2,
+        // 提及证据：判官跨章仲裁的逐字原文（台账漏账的兜底层）
+        mentionEvidence,
+        // 作者正典：起草【作者正典】块 + 判官硬约束
+        authorCanon,
         // 身份锚（r6 实证角色表赵宣=三皇子恭王被写手降格成刑部主事姻亲）：
         // 本章出场角色的角色卡身份首句，正文身份/地位必须与角色卡一致
         characterIdentityAnchors: collectCharacterIdentityAnchors(
@@ -1108,6 +1154,41 @@ export class ChapterWritingPipeline {
       } catch (error) {
         memoryProjectionError = error;
         console.warn('[Pipeline] accepted commit 的记忆投影失败，可由 outbox 重放:', error);
+      }
+
+      // 事实台账投影（2026-10-05 契约 15/17）：本章结构化 numeric-fact / time-promise
+      // 事件合并进项目级台账——下一章的【数字锚】/【期限承诺】注入依赖它。
+      // best-effort：失败只 warning，不影响本章提交（下一章注入缺新账由判官
+      // ledger-gap 反向检查兜底提示）。
+      const numericEntries = projectNumericLedgerEntries(result.facts);
+      const timeProjection = projectTimeLedger(result.facts);
+      // 判官确认的承诺兑现流转（2026-10-08 r19 实证 37/40 永远开放的解药）
+      const judgeResolvedTexts = result.report.resolvedTimePromiseTexts ?? [];
+      if (
+        numericEntries.length > 0 ||
+        timeProjection.opens.length > 0 ||
+        timeProjection.resolves.length > 0 ||
+        judgeResolvedTexts.length > 0
+      ) {
+        try {
+          await this.memoryClient?.saveLedger?.({
+            chapterNumber,
+            numericEntries,
+            timeProjection,
+            judgeResolvedPromiseTexts: judgeResolvedTexts,
+          });
+          // 双保险：store 适配器改 currentProject，这里同步 input.project 供本章后
+          // 续注入/落盘立即生效（repair 侧两层 project 可能非同引用）
+          if (judgeResolvedTexts.length > 0 && (input.project.timePromises ?? []).length > 0) {
+            input.project.timePromises = resolveTimePromisesByText(
+              input.project.timePromises ?? [],
+              judgeResolvedTexts.map(text => ({ text, action: 'fulfilled' as const })),
+              chapterNumber
+            );
+          }
+        } catch (error) {
+          console.warn('[Pipeline] 事实台账投影失败（下一章注入将缺本章新账）:', error);
+        }
       }
 
       // 伏笔回收流转（accepted commit 的状态投影）：判官在 G5/G7 证据确认的回收
@@ -1368,6 +1449,80 @@ export class ChapterWritingPipeline {
       retryable: classified.retryable,
     };
   }
+
+  /**
+   * 作者手改检测（2026-10-05 作者正典配套）：上一章正文指纹与记忆提取时的
+   * 指纹不一致 → 作者手改过该章，重跑事实提取（契约 15/17/18）与记忆投影，
+   * 并把新账直接合并进 input.project（注入即刻生效；store 落盘由适配器负责）。
+   * best-effort：失败只 warn 按旧账继续。v1 范围：仅上一章（最常见手改位），
+   * 状态类 delta 因空 state 归一不回填（只重同步数字/时间/剧情承诺账）。
+   */
+  private async reextractStalePreviousChapter(
+    input: Parameters<ChapterWritingPipeline['executeLongFormRuntime']>[0],
+    chapterNumber: number,
+    ai: StructuredAI,
+    memoriesUpToChapter: NonNullable<typeof input.project.chapterMemories>
+  ): Promise<void> {
+    if (chapterNumber < 2) return;
+    const prev = (input.project.chapters ?? []).find(
+      ch => (ch.orderIndex ?? 0) + 1 === chapterNumber - 1
+    );
+    const prose = (prev?.content ?? '').trim();
+    if (!prev || !prose) return;
+    const prevMemory = memoriesUpToChapter.find(
+      memory => (memory.chapterIndex ?? 0) + 1 === chapterNumber - 1
+    );
+    if (!prevMemory?.contentFingerprint) return;
+    if (prevMemory.contentFingerprint === contentFingerprint(prose)) return;
+    try {
+      console.warn(
+        `[Pipeline] 第 ${chapterNumber - 1} 章正文与提取时不一致（作者手改），重提取记忆与事实台账`
+      );
+      const extractor = new AIFactExtractor(ai);
+      const facts = await extractor.extract({
+        projectId: input.project.id,
+        chapterNumber: chapterNumber - 1,
+        sceneDrafts: [
+          {
+            sceneId: `ch${chapterNumber - 1}:reextract:scene`,
+            beatId: 'reextract-beat',
+            paragraphs: prose.split(/\n{2,}/).filter(Boolean),
+            candidateEvents: [],
+          },
+        ],
+        state: {
+          chapter: 0,
+          entities: {},
+          events: [],
+          inventory: {},
+          knowledge: {},
+          timeline: [],
+          openForeshadows: [],
+          fulfilledNodes: [],
+        },
+      });
+      await this.memoryClient?.extractAndSave(prev.id, chapterNumber - 1, prose);
+      const numericEntries = projectNumericLedgerEntries(facts);
+      const timeProjection = projectTimeLedger(facts);
+      if (numericEntries.length > 0 || timeProjection.opens.length > 0 || timeProjection.resolves.length > 0) {
+        await this.memoryClient?.saveLedger?.({
+          chapterNumber: chapterNumber - 1,
+          numericEntries,
+          timeProjection,
+        });
+        // 双保险：store 适配器改的是 currentProject，这里同步改 input.project，
+        // 保证本章注入立即吃到重提取的账（两个对象可能不是同一引用）
+        input.project.numericLedger = mergeNumericLedger(input.project.numericLedger ?? [], numericEntries);
+        input.project.timePromises = mergeTimePromises(
+          input.project.timePromises ?? [],
+          timeProjection,
+          chapterNumber - 1
+        );
+      }
+    } catch (error) {
+      console.warn('[Pipeline] 手改章重提取失败（按旧账继续，不阻断续写）:', error);
+    }
+  }
 }
 
 /**
@@ -1490,10 +1645,15 @@ function mapStatusDeltasToStateChanges(
  * facts.events（AI 提取，每条带 summary+evidence）→ 章记忆 keyEvents 真源。
  * 规则层 keyEvents 正则空转率高（正则塔服役期 25-43% 章节出占位符），
  * 与命运账同构地下发到记忆投影。摘要去重、限长限条。
+ * time-passage（契约 17「时间流逝：」）走独立通道不占 8 条名额——r19 实证
+ * 127 章零新增时间标记，根因是被普通事件挤出（collectTimelineMarks 读不到）。
  */
 function mapEventsToKeyEvents(facts: LongFormWriteResult['facts']): string[] {
   const summaries = (facts?.events ?? [])
     .map(event => String((event as { summary?: unknown })?.summary ?? '').trim())
     .filter(summary => summary.length >= 6 && summary.length <= 120);
-  return [...new Set(summaries)].slice(0, 8);
+  const unique = [...new Set(summaries)];
+  const passages = unique.filter(s => s.startsWith('时间流逝：')).slice(0, 2);
+  const others = unique.filter(s => !s.startsWith('时间流逝：')).slice(0, 8);
+  return [...passages, ...others];
 }

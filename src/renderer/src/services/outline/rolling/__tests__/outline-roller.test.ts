@@ -432,6 +432,9 @@ describe('rollOutlineForward', () => {
     expect(prompts[0]).toContain('终卷收束硬约束');
     expect(prompts[0]).toContain('全书共55章');
     expect(prompts[0]).toContain('末章（第55章）CEN 必须是全书收束句');
+    // 时序锚（2026-10-05）：每批蓝图必须携带时间推进锚，跨章时间单调
+    expect(prompts[0]).toContain('【时序锚】');
+    expect(prompts[0]).toContain('单调推进');
 
     const midPrompts: string[] = [];
     const midProject = makeRollProject(120); // 51-100 为中段批

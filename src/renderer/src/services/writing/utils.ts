@@ -24,3 +24,17 @@ export function countWords(text: string): number {
 export function countDisplayChars(text: string): number {
   return countWords(text);
 }
+
+/**
+ * 正文指纹（2026-10-05 作者正典配套）：FNV-1a 32bit 十六进制。
+ * 生成时提取记忆即落指纹；续写前比对上一章正文指纹——不一致说明作者手改过，
+ * 触发该章记忆/台账重提取（治「手改正文后按旧账续写」的失真）。
+ */
+export function contentFingerprint(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+}

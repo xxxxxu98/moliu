@@ -445,6 +445,47 @@ describe('topic-discovery.service', () => {
       expect(seeds[0].oneLiner).toMatch(/修仙|系统流/);
     });
 
+    it('injects secondary mix genre hints into the AI user prompt', async () => {
+      settingsState.aiProviders = [
+        { id: 'p1', provider: 'openai', modelName: 'gpt-4o', enabled: true, apiKey: 'test-key' },
+      ];
+      settingsState.defaultModel = { providerId: 'p1', modelName: 'gpt-4o' };
+      const userPrompts: string[] = [];
+      const chat = vi.fn(async (_system: string, user: string) => {
+        userPrompts.push(user);
+        return JSON.stringify({
+          seeds: [
+            {
+              title: '宗门守则',
+              oneLiner: '外门弟子发现宗门守则第七条会吃人。',
+              genre: '修仙',
+              hook: '守则',
+              coolPoint: '破解规则',
+              audience: 'male',
+            },
+          ],
+        });
+      });
+
+      await refreshStorySeeds(
+        {
+          count: 1,
+          playStyle: 'mix',
+          genre: '修仙',
+          mixTags: ['修仙', '规则怪谈'],
+          mixElements: ['任务系统'],
+        },
+        chat
+      );
+
+      expect(chat).toHaveBeenCalled();
+      const prompt = userPrompts[0];
+      expect(prompt).toContain('首个为主题材');
+      expect(prompt).toContain('混搭副题材读者预期');
+      expect(prompt).toContain('「规则怪谈」偏好钩子');
+      expect(prompt).not.toContain('「修仙」偏好钩子');
+    });
+
     it('builds dice fallback seeds from roll faces', () => {
       const seeds = buildFallbackStorySeeds({
         count: 2,

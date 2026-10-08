@@ -11,7 +11,7 @@ import type {
   TopicLength,
   TopicPlatform,
 } from '@/types/topic-discovery';
-import { formatGenreSeedHint } from '../genre-seed-context';
+import { formatGenreSeedHint, formatMixGenreHints } from '../genre-seed-context';
 import { formatTitlePatterns } from './title-craft';
 
 export const AUDIENCE_LABEL: Record<TopicAudience, string> = {
@@ -172,7 +172,8 @@ export function buildStorySeedsUserPrompt(options: RefreshStorySeedsOptions): st
     lines.push(...formatInsightContext(insight));
   }
   if (mixTags.length > 0) {
-    lines.push(`混搭题材标签：${mixTags.join('、')}`);
+    lines.push(`混搭题材标签：${mixTags.join('、')}（首个为主题材）`);
+    lines.push(...formatMixGenreHints(options.mixGenreHints ?? []));
   }
   if (mixElements.length > 0) {
     lines.push(`混搭设定元素：${mixElements.join('、')}`);

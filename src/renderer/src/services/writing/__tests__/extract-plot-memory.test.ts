@@ -16,7 +16,6 @@ import {
   collectFakedDeathCharacters,
   collectFateForbiddenZones,
   collectFateStatusAnchors,
-  collectNumericAnchors,
   overlayCharacterFates,
   overlayCharacterTitles,
   mergeKeyEvents,
@@ -474,6 +473,22 @@ describe('mergeKeyEvents（keyEvents 真源合并）', () => {
     expect(mergeKeyEvents([], [])).toEqual([]);
   });
 
+  it('time-passage 独立通道：不占 8 条名额、自己最多 2 条（r19 127 章零时间标记的解药）', () => {
+    const ai = [
+      '时间流逝：当夜黑市到次日清晨',
+      '时间流逝：次日清晨到午后',
+      '时间流逝：午后到黄昏',
+      ...Array.from({ length: 10 }, (_, i) => `普通事件${i}：推进主线${i}`),
+    ];
+    const merged = mergeKeyEvents(ai, []);
+    const passages = merged.filter(item => item.startsWith('时间流逝：'));
+    const others = merged.filter(item => !item.startsWith('时间流逝：'));
+    expect(passages).toHaveLength(2);
+    expect(others).toHaveLength(8);
+    // passage 排前，普通事件不被挤掉第 8 条
+    expect(merged[0]).toContain('当夜黑市');
+  });
+
   it('上限 8 条，超出截断', () => {
     const many = Array.from({ length: 12 }, (_, i) => `第${i + 1}件独立事件发生了`);
     expect(mergeKeyEvents(many, [])).toHaveLength(8);
@@ -557,47 +572,7 @@ describe('头衔锚（契约 14：collectCharacterTitles / overlayCharacterTitle
   });
 });
 
-describe('数字锚（collectNumericAnchors，g38f r6 长程数字漂移实证）', () => {
-  it('从近章 keyEvents/corePlot 抽「数字+单位」既成句，最近章优先，非数字句不进锚', () => {
-    const memories = [
-      memoryWith([], 98, '钱粮清点告一段落。'),
-      memoryWith([], 99, '两淮盐税岁入实征二百二十万两。'),
-      memoryWith([], 100, '押运车队共八十辆马车、每车一箱底册。'),
-    ];
-    // memoryWith 的 keyEvents 为空——直接在 corePlot 外再塞 keyEvents 需要构造完整对象，
-    // 这里用 corePlot 覆盖核心行为；keyEvents 路径与 corePlot 同一循环
-    const anchors = collectNumericAnchors(memories, 8);
-    expect(anchors.some(a => a.includes('二百二十万两'))).toBe(true);
-    expect(anchors.some(a => a.includes('八十辆'))).toBe(true);
-    // memoryWith 的第二参即 1 基章号：99 → 前缀「第99章既成」
-    expect(anchors.some(a => a.includes('第99章既成「两淮盐税'))).toBe(true);
-    // 无数字句的章不产生锚
-    expect(anchors.some(a => a.includes('钱粮清点'))).toBe(false);
-  });
-
-  it('上限 maxAnchors 生效且重复句去重；口径正典头部声明最新值优先（2026-09-24 L1）', () => {
-    const m = memoryWith([], 50, '库银共计白银三百万两。余粮仅四万石。兵额八千人。盐引二十万道。');
-    const anchors = collectNumericAnchors([m, m], 2);
-    // 首行为正典头部兜底句 + maxAnchors 条正文锚
-    expect(anchors).toHaveLength(3);
-    expect(anchors[0]).toContain('最新既成值');
-    expect(anchors[0]).toContain('以章号最新者为准');
-    expect(anchors.filter(a => a.startsWith('第50章既成'))).toHaveLength(2);
-  });
-
-  it('同对象多值只保留最新章一条（500ch 盐案四档漂移形态，2026-09-24 L1）', () => {
-    const memories = [
-      memoryWith([], 200, '两淮盐案亏空累计三百万两。'),
-      memoryWith([], 210, '两淮盐案亏空累计四百万两。'),
-      memoryWith([], 220, '两淮盐案亏空累计五百万两。'),
-    ];
-    const anchors = collectNumericAnchors(memories, 8);
-    // 「两淮盐案」3 字前缀共享 → 聚为一对象，仅保留最新章 220 的句子
-    expect(anchors.some(a => a.includes('五百万两'))).toBe(true);
-    expect(anchors.some(a => a.includes('三百万两'))).toBe(false);
-    expect(anchors.some(a => a.includes('四百万两'))).toBe(false);
-  });
-
+describe('数字锚已于 2026-10-05 退役（collectNumericAnchors → numericLedger 台账化，见 __tests__/numericLedger.test.ts）', () => {
   it('命运状态正典取每角色最新状态（在押凭空自由出场防线，2026-09-24 L1）', () => {
     const memories = [
       {

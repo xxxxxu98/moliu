@@ -135,10 +135,24 @@ describe('命运提取合同护栏', () => {
     // 契约 8 扩展：同章多角色独立宣告逐个入账
     expect(system).toContain('同章多个角色各有独立的命运宣告句时同样逐一扫描');
     expect(system).toContain('禁止只登主犯或合并登账');
-    // 契约 15：关键数字既成宣告出 numeric-fact 事件（写作侧数字锚的数据源）
+    // 契约 15（2026-10-05 台账化）：关键数字结构化出账（题材无关单位）
     expect(system).toContain('关键数字既成宣告必出 event');
     expect(system).toContain('numeric-fact');
-    expect(system).toContain('对象＋数值＋单位＋性质');
+    expect(system).toContain('必带结构化 numeric 字段');
+    expect(system).toContain('不限于任何题材或单位');
+    // 契约 17：时间承诺/时间流逝结构化出账
+    expect(system).toContain('时间承诺与时间流逝必出 event');
+    expect(system).toContain('time-promise');
+    // 契约 18：跨章剧情预告结构化出账（首轮对手预告落空实证）
+    expect(system).toContain('跨章剧情预告必出 event');
+    expect(system).toContain('plot-promise');
+    // 契约 7/14 语义化：命运族/头衔族按世界观语义判（现代文退学/开除/S级头衔）
+    expect(system).toContain('示例而非白名单');
+    expect(system).toContain('退学/开除/解约/封杀');
+    expect(system).toContain('S级评价/签约选手');
+    // 契约 11 押地随行形态（r19 ch129 三拒成洞实证）
+    expect(system).toContain('押地随行形态');
+    expect(system).toContain('提调随军');
   });
 
   // 2026-09-19 g38f r7 实证：ch189 事件摘要明写「周文彬被斩首处决且首级悬于正阳门

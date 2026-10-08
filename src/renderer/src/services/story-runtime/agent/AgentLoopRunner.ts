@@ -19,9 +19,10 @@ import type {
 } from '@/types/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 
-import { AgentToolFatalError, type AgentToolkit, type ToolCallResult } from './AgentToolkit';
+import { type AgentToolkit, isAbortError } from './AgentToolkit';
 import type { AgentSceneSearchPort, ToolkitForeshadowEntry } from './BookToolkit';
 import { DossierBuilder } from './DossierBuilder';
+import { ToolPipeline, type ToolCallObserver } from './ToolPipeline';
 
 export interface AgentMessage {
   role: 'system' | 'user' | 'assistant';
@@ -35,7 +36,7 @@ export interface AgentLoopTransport {
 
 export interface AgentRoundLog {
   round: number;
-  action: 'tool_call' | 'finish' | 'rejected' | 'parse-error';
+  action: 'tool_call' | 'finish' | 'rejected' | 'parse-error' | 'transport-retry';
   thought?: string;
   tool?: string;
   args?: unknown;
@@ -47,8 +48,18 @@ export interface AgentRoundLog {
 export type AgentFinishReason = ResearchFinishReason;
 
 export interface AgentLoopOptions {
-  /** 墙钟(ms),默认 300s;触发即优雅降级 */
+  /**
+   * 墙钟(ms),默认 300s;触发即优雅降级。
+   * 同时作为单轮上限:每轮 transport 调用绑定剩余预算,超出即中止并按 budget 收束
+   * (transport 内部有 30 分钟单请求超时,不在此截断会让一轮远超预算)。
+   */
   timeoutMs?: number;
+  /** transport 失败后的连续轮内重试上限,默认 1;0 = 关闭(失败即 protocol-error) */
+  transportRetries?: number;
+  /** 轮内重试前的退避(ms),默认 1000 */
+  transportRetryDelayMs?: number;
+  /** 剩余墙钟不足此值时不重试(ms),默认 120s:重试吃掉的时间要留得出来 */
+  minRetryBudgetMs?: number;
   /** 消息累计 token 估算预算,默认 80k */
   tokenBudget?: number;
   /** 连续协议违规上限,默认 3;达到即 protocol-error 降级 */
@@ -57,6 +68,8 @@ export interface AgentLoopOptions {
   stallNoProgressLimit?: number;
   /** finish 被前置条件拒绝的连续上限,默认 3;达到按 stall 收束 */
   maxFinishRejections?: number;
+  /** 每次工具调用的观测钩子(耗时/成败),经 ToolPipeline 推送;缺省不观测 */
+  onToolCall?: ToolCallObserver;
   signal?: AbortSignal;
   /** 时钟注入(测试用) */
   now?: () => number;
@@ -140,15 +153,27 @@ function looksLikeTruncatedProtocolJson(raw: string): boolean {
   return trimmed.length >= 20 && /"(?:action|thought|tool|calls|args)"/u.test(trimmed);
 }
 
-function estimateTokens(messages: AgentMessage[]): number {
-  return Math.ceil(messages.reduce((total, message) => total + message.content.length, 0) / 4);
+/** 可中止的退避等待:信号触发即以 AbortError 结束,避免用户取消后还在睡 */
+function sleepAbortable(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Aborted', 'AbortError'));
+      return;
+    }
+    const onAbort = (): void => {
+      clearTimeout(timer);
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
 }
 
-function isAbortError(error: unknown): boolean {
-  return (
-    (error instanceof DOMException && error.name === 'AbortError') ||
-    (error instanceof Error && error.name === 'AbortError')
-  );
+function estimateTokens(messages: AgentMessage[]): number {
+  return Math.ceil(messages.reduce((total, message) => total + message.content.length, 0) / 4);
 }
 
 function clip(text: string, maxChars: number): string {
@@ -229,11 +254,16 @@ function stableStringify(value: unknown): string {
  * 3. 资源安全网——墙钟/token 预算/连续协议违规触发优雅降级(产出部分产物,不拦腰截断)。
  */
 export class AgentLoopRunner {
+  /** 工具调用统一经管线:错误归一化 + 耗时观测;toolkit 本身的查询/列表仍走原对象 */
+  private readonly tools: AgentToolkit;
+
   constructor(
     private readonly transport: AgentLoopTransport,
     private readonly toolkit: AgentToolkit,
     private readonly options?: AgentLoopOptions
-  ) {}
+  ) {
+    this.tools = new ToolPipeline(toolkit, { onCall: options?.onToolCall });
+  }
 
   async run<TFinish>(session: AgentSession<TFinish>): Promise<AgentLoopOutcome<TFinish>> {
     // vitest 不做类型检查,构造漏参(如只传 transport)在 JS 层静默通过;
@@ -244,6 +274,9 @@ export class AgentLoopRunner {
     const opts = {
       // 08-30 100章实测:240s/60k 下 budget 降级占比过高;放宽让「预算收尾」回归异常路径本位
       timeoutMs: 300_000,
+      transportRetries: 1,
+      transportRetryDelayMs: 1000,
+      minRetryBudgetMs: 120_000,
       tokenBudget: 80_000,
       maxConsecutiveParseFailures: 3,
       stallNoProgressLimit: 2,
@@ -271,6 +304,7 @@ export class AgentLoopRunner {
     );
     // 协议违规 = 解析失败 + 未知工具 + 非法 finish 载荷;只在「产出有效进展」后清零
     let consecutiveProtocolViolations = 0;
+    let consecutiveTransportFailures = 0;
     let consecutiveNoProgress = 0;
     let finishRejections = 0;
     let wrapUpInjected = false;
@@ -290,19 +324,45 @@ export class AgentLoopRunner {
       }
 
       rounds += 1;
+      // 单轮截断到剩余墙钟:墙钟墙只在轮前检查,transport 单请求超时 30 分钟,不截断则一轮可远超预算
+      const roundBudgetMs = Math.max(1, opts.timeoutMs - (now() - startedAt));
+      const roundAbort = new AbortController();
+      let roundBudgetFired = false;
+      const roundTimer = setTimeout(() => {
+        roundBudgetFired = true;
+        roundAbort.abort();
+      }, roundBudgetMs);
+      const forwardUserAbort = (): void => roundAbort.abort();
+      opts.signal?.addEventListener('abort', forwardUserAbort, { once: true });
       let raw: string;
       try {
-        raw = await this.transport.send(messages, { signal: opts.signal });
+        raw = await this.transport.send(messages, { signal: roundAbort.signal });
+        consecutiveTransportFailures = 0;
       } catch (error) {
-        // 用户取消冒泡;传输级失败(重试已在 transport 内做尽)按优雅降级收束
-        if (isAbortError(error) || opts.signal?.aborted) throw error;
+        // 用户取消冒泡(只有用户信号 aborted 才算取消;墙钟截断属于 budget 收束)
+        if (opts.signal?.aborted) throw error;
+        if (roundBudgetFired) {
+          finishReason = 'budget';
+          transcript.push({ round: rounds, action: 'parse-error', summary: '单轮超出墙钟预算,已截断' });
+          break;
+        }
+        if (isAbortError(error)) throw error;
+        const failure = clip(error instanceof Error ? error.message : String(error), 160);
+        const remainingMs = opts.timeoutMs - (now() - startedAt);
+        if (consecutiveTransportFailures < opts.transportRetries && remainingMs >= opts.minRetryBudgetMs) {
+          // transport 内部已重试(退避 1–30s)仍失败:在本轮原地再试一次。消息历史未追加 assistant,重放安全
+          consecutiveTransportFailures += 1;
+          transcript.push({ round: rounds, action: 'transport-retry', summary: `transport 失败,轮内重试:${failure}` });
+          await sleepAbortable(opts.transportRetryDelayMs, opts.signal);
+          continue;
+        }
+        // 传输级失败(重试已在 transport 内做尽)按优雅降级收束
         finishReason = 'protocol-error';
-        transcript.push({
-          round: rounds,
-          action: 'parse-error',
-          summary: `transport 失败:${clip(error instanceof Error ? error.message : String(error), 160)}`,
-        });
+        transcript.push({ round: rounds, action: 'parse-error', summary: `transport 失败:${failure}` });
         break;
+      } finally {
+        clearTimeout(roundTimer);
+        opts.signal?.removeEventListener('abort', forwardUserAbort);
       }
       messages.push({ role: 'assistant', content: raw });
 
@@ -435,17 +495,8 @@ export class AgentLoopRunner {
       const versionBefore = session.progressVersion();
       const resultsPayload: Array<Record<string, unknown>> = [];
       for (const call of freshCalls) {
-        let result: ToolCallResult;
-        try {
-          result = await this.toolkit.call(call.tool, call.args);
-        } catch (error) {
-          // 致命错误与用户取消不回喂模型,直接终止循环冒泡给调用方
-          if (error instanceof AgentToolFatalError || isAbortError(error)) throw error;
-          result = {
-            ok: false,
-            error: error instanceof Error ? error.message : String(error),
-          };
-        }
+        // 错误归一化(致命错误/取消冒泡、其余转 ok:false)与耗时观测由 ToolPipeline 承担
+        const result = await this.tools.call(call.tool, call.args);
         toolCalls += 1;
         byTool[call.tool] = (byTool[call.tool] ?? 0) + 1;
         if (result.ok) {

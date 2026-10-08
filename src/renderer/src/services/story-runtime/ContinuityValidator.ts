@@ -34,6 +34,16 @@ export interface ContinuityValidationInput {
   eraAnchors?: string[];
   /** 近章既成数字叙述：透传判官做跨章数字一致性校验（无勘误剧情改写既成数值） */
   numericFacts?: string[];
+  /** 待兑现时间承诺清单：透传判官做期限一致校验（越期未兑现未改期） */
+  timePromises?: string[];
+  /** 近章时间标记：透传判官做时间流逝连续性校验（回退/跳跃无交代） */
+  timelineMarks?: string[];
+  /** 本章为呼吸拍章：透传判官做生理锚点 warning 级闭环校验 */
+  breathBeatRequired?: boolean;
+  /** 相关角色更早章节原文片段：判官跨章仲裁的逐字证据（台账漏账兜底） */
+  mentionEvidence?: string[];
+  /** 作者正典（locked 规则）：正文与正典冲突时判官报 critical */
+  authorCanon?: string[];
   /** 假死在册角色：透传判官做假死例外（活体活动合法，不报复活类冲突） */
   fakedDeathCharacters?: Array<{ name: string; chapterIndex: number }>;
 }
@@ -257,7 +267,7 @@ export class ContinuityValidator {
       }
     }
 
-    const resolvedForeshadowIds = await this.validateSemanticGates(
+    const gateOutcome = await this.validateSemanticGates(
       input.contracts,
       state,
       chapterText(input.drafts),
@@ -267,7 +277,12 @@ export class ContinuityValidator {
       input.prevChapterTail,
       input.eraAnchors ?? [],
       input.numericFacts ?? [],
-      input.fakedDeathCharacters ?? []
+      input.fakedDeathCharacters ?? [],
+      input.timePromises ?? [],
+      input.timelineMarks ?? [],
+      input.breathBeatRequired ?? false,
+      input.mentionEvidence ?? [],
+      input.authorCanon ?? []
     );
 
     const blockingCount = issues.filter(issue => issue.severity === 'blocking').length;
@@ -281,7 +296,12 @@ export class ContinuityValidator {
         blockingCount === 0 && warningCount <= input.contracts.review.maxWarnings,
       issues,
       checkedDomains,
-      ...(resolvedForeshadowIds.length > 0 ? { resolvedForeshadowIds } : {}),
+      ...(gateOutcome.resolvedForeshadowIds.length > 0
+        ? { resolvedForeshadowIds: gateOutcome.resolvedForeshadowIds }
+        : {}),
+      ...(gateOutcome.resolvedTimePromiseTexts.length > 0
+        ? { resolvedTimePromiseTexts: gateOutcome.resolvedTimePromiseTexts }
+        : {}),
     };
   }
 
@@ -301,11 +321,17 @@ export class ContinuityValidator {
     prevChapterTail?: string,
     eraAnchors: string[] = [],
     numericFacts: string[] = [],
-    fakedDeathCharacters: Array<{ name: string; chapterIndex: number }> = []
-  ): Promise<string[]> {
-    // 判官确认已回收的伏笔 id（严证据门：判官未列出/判定失败一律返回空，
-    // 让进度统计保持 buried 而非误标 resolved）
+    fakedDeathCharacters: Array<{ name: string; chapterIndex: number }> = [],
+    timePromises: string[] = [],
+    timelineMarks: string[] = [],
+    breathBeatRequired = false,
+    mentionEvidence: string[] = [],
+    authorCanon: string[] = []
+  ): Promise<{ resolvedForeshadowIds: string[]; resolvedTimePromiseTexts: string[] }> {
+    // 判官确认已回收的伏笔 id / 已兑现的承诺文本（严证据门：判官未列出/判定
+    // 失败一律返回空，让进度统计保持 buried/open 而非误标）
     let resolvedForeshadowIds: string[] = [];
+    let resolvedTimePromiseTexts: string[] = [];
     const contract = contracts.chapter;
     const pendingNodes = contract.mustCover.filter(
       node => !fulfilledLexically(node, text, facts)
@@ -358,6 +384,11 @@ export class ContinuityValidator {
           },
           ...(eraAnchors.length > 0 ? { eraAnchors } : {}),
           ...(numericFacts.length > 0 ? { numericFacts } : {}),
+          ...(timePromises.length > 0 ? { timePromises } : {}),
+          ...(timelineMarks.length > 0 ? { timelineMarks } : {}),
+          ...(breathBeatRequired ? { breathBeatRequired: true } : {}),
+          ...(mentionEvidence.length > 0 ? { mentionEvidence } : {}),
+          ...(authorCanon.length > 0 ? { authorCanon } : {}),
           ...(fakedDeathCharacters.length > 0
             ? { fakedDeathNames: fakedDeathCharacters.map(item => item.name) }
             : {}),
@@ -413,6 +444,7 @@ export class ContinuityValidator {
           );
         }
         resolvedForeshadowIds = judgment.resolvedForeshadowIds ?? [];
+        resolvedTimePromiseTexts = judgment.resolvedTimePromiseTexts ?? [];
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') throw error;
         if (error instanceof Error && error.name === 'AbortError') throw error;
@@ -428,7 +460,7 @@ export class ContinuityValidator {
         // 只重试 validate 阶段，绝不能转换成“未履约”驱动整章重写。
         throw new Error(`[review-unavailable] 语义审查不可用：${detail}`, { cause: error });
       }
-      return resolvedForeshadowIds;
+      return { resolvedForeshadowIds, resolvedTimePromiseTexts };
     }
 
     // 无 chapterJudge：旧履约适配或纯字面
@@ -462,6 +494,6 @@ export class ContinuityValidator {
         }
       }
     }
-    return resolvedForeshadowIds;
+    return { resolvedForeshadowIds, resolvedTimePromiseTexts };
   }
 }

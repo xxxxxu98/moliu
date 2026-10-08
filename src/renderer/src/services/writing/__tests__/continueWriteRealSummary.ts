@@ -352,6 +352,7 @@ export function persistContinueWriteRealRun(input: PersistContinueWriteRealRunIn
   summaryPath: string;
   stepsPath: string;
   reportPath: string;
+  prosePath: string;
 } {
   const outDir = path.resolve(input.outDir ?? 'temp');
   fs.mkdirSync(outDir, { recursive: true });
@@ -360,6 +361,10 @@ export function persistContinueWriteRealRun(input: PersistContinueWriteRealRunIn
   const summaryPath = path.join(outDir, `${fileStem}.summary.json`);
   const stepsPath = path.join(outDir, `${fileStem}.steps.txt`);
   const reportPath = path.join(outDir, `${fileStem}.report.json`);
+  // 归一化终稿全文（2026-10-05）：summary 只存 preview，书审预检此前只能从
+  // steps.txt 的判官 chapterText 提取——那是归一化前置版本（直引号假阳性实证）。
+  const prosePath = path.join(outDir, `${fileStem}.prose.txt`);
+  fs.writeFileSync(prosePath, `${input.prose ?? ''}\n`, 'utf8');
 
   const dump = buildTraceDump(input.recording.getRecords(), formatRunMetaHeader(summary));
   fs.writeFileSync(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, 'utf8');
@@ -377,7 +382,7 @@ export function persistContinueWriteRealRun(input: PersistContinueWriteRealRunIn
     'utf8'
   );
 
-  return { summary, summaryPath, stepsPath, reportPath };
+  return { summary, summaryPath, stepsPath, reportPath, prosePath };
 }
 
 export function formatSummaryConsole(summary: ContinueWriteRealSummary): string {

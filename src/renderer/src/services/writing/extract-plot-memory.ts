@@ -825,70 +825,13 @@ export function collectEraAnchors(
 }
 
 /**
- * 数字锚（2026-09-17 g38f r6 全文通读实证：同一笔盐税五套口径、太仓存粮四万石
- * 无解释改写为四十万石、押运车队八十箱变八百辆——长程数字漂移是书审最大 S1 簇）：
- * 从近章记忆文本确定性抽取含「数字+计量单位」的既成叙述句（候选网，语义判定
- * 归判官——数值是否属于同一对象、是否矛盾由【数字一致】规则判定），取最近 N 条
- * 供写作侧【数字锚】与判官【数字一致】共源注入。数据源含契约 15 的 numeric-fact
- * 事件（经 keyEvents 入链）。
+ * 数字锚已于 2026-10-05 退役（collectNumericAnchors + NUMERIC_UNIT_RE 删除）：
+ * 单位词表（石两兵亩箱贯斛斗文）是历史官场文病谱，都市校园文书审实证——债务
+ * 三十万/三百万/三十万三说、战宠两吨/三十吨漂移全部漏网，账记了、回抽正则只认
+ * 旧币种。替代链路：契约 15 结构化出账（numeric 字段）→ 项目级 numericLedger
+ * （services/writing/numericLedger.ts）→ 起草【数字锚】/判官【数字一致】注入，
+ * 单位为自由字符串，题材无关。与命运词表塔退役（2026-09-02）同款路径。
  */
-const NUMERIC_UNIT_RE = /[一二三四五六七八九十百千万零\d]+(?:万|千|余)?(?:两|匹|石|引|斤|兵|人|骑|亩|顷|箱|辆|艘|张|道|锭|贯|斛|斗|文)/;
-
-export function collectNumericAnchors(
-  memories: ChapterMemory[],
-  maxAnchors = 8,
-): string[] {
-  const anchors: Array<{ chapterIndex: number; text: string }> = [];
-  const memorySorted = [...memories].sort((a, b) => b.chapterIndex - a.chapterIndex);
-  for (const memory of memorySorted) {
-    const lines = [
-      ...(memory.keyEvents ?? []),
-      memory.corePlot || '',
-    ];
-    for (const raw of lines) {
-      // 抽整句（按句号切）而非整段，避免把无关键Events段落整体灌入
-      for (const sentence of raw.split(/[。！？；\n]/)) {
-        const s = sentence.trim();
-        if (s.length < 6 || s.length > 60) continue;
-        if (!NUMERIC_UNIT_RE.test(s)) continue;
-        if (anchors.some(a => a.text === s)) continue;
-        anchors.push({ chapterIndex: memory.chapterIndex, text: s });
-        if (anchors.length >= 32) break;
-      }
-      if (anchors.length >= 32) break;
-    }
-    if (anchors.length >= 32) break;
-  }
-  // 口径正典·最新值覆盖（2026-09-24 g38f 500ch 书审 S2 实证：盐案亏空
-  // 200/300/400/500 万四档漂移——旧实现平铺最近 8 条数字句，同对象新旧值并列
-  // 注入，模型无所适从）：按「主体前缀」聚类，同对象只保留章号最新一条
-  // （候选已按章倒序，先见为准）。前缀 = 句首至首个数字/单位词前的文本；
-  // 两前缀共享任一 ≥3 字连续片段即视为同对象——措辞变化的新勘误句若聚不上
-  // 则两条都注入（退化为旧行为，不劣化），另有头部兜底规则声明最新章优先。
-  const prefixOf = (s: string): string => {
-    const m = s.match(/^[^0-9零一二三四五六七八九十百千万两]+/u);
-    return (m ? m[0] : s).trim();
-  };
-  const fragmentsOf = (prefix: string): string[] => {
-    const out: string[] = [];
-    for (let i = 0; i + 3 <= prefix.length; i += 1) out.push(prefix.slice(i, i + 3));
-    return out;
-  };
-  const canonical: Array<{ chapterIndex: number; text: string }> = [];
-  const seenFragments = new Set<string>();
-  for (const anchor of anchors) {
-    const fragments = fragmentsOf(prefixOf(anchor.text));
-    if (fragments.length > 0 && fragments.some(f => seenFragments.has(f))) continue;
-    for (const f of fragments) seenFragments.add(f);
-    canonical.push(anchor);
-    if (canonical.length >= maxAnchors) break;
-  }
-  if (canonical.length === 0) return [];
-  return [
-    '以下为各关键数字对象的最新既成值（同对象旧值已作废；若条目间仍疑似同对象不同值，以章号最新者为准，引用旧值必须写出勘误过程）。同一对象在本章内多次出现的数额必须一致；涉及乘除换算（单价×数量、比例×基数、年数×岁入）先笔算核验再落笔——乘积与总量声明对不上、同账两说，判官将直接拒稿（r11 实证 ch29 一万八千两/九千两同账两说、ch44 亩产折价差 9.1 倍、ch55 耗羡差额口径混乱，均三连拒成洞）',
-    ...canonical.map(a => `第${a.chapterIndex}章既成「${a.text}」`),
-  ];
-}
 
 /**
  * 命运状态正典（2026-09-24 g38f 500ch 书审 S1/S2 实证：在押角色凭空自由出场、
@@ -1033,13 +976,21 @@ export function mergeKeyEvents(aiEvents: string[], ruleEvents: string[]): string
   const cleaned = [...aiEvents, ...ruleEvents]
     .map(item => item.trim())
     .filter(item => item.length > 0 && !item.startsWith('（本章无明显关键事件'));
+  // time-passage 独立通道（r19 实证：挤掉后 collectTimelineMarks 断粮）——
+  // 「时间流逝：」条目不占普通事件的 8 条名额，自己最多保 2 条
+  const seen: string[] = [];
+  const passages: string[] = [];
   const out: string[] = [];
   for (const item of cleaned) {
-    if (out.some(existing => existing.includes(item) || item.includes(existing))) continue;
-    out.push(item);
-    if (out.length >= 8) break;
+    if (seen.some(existing => existing.includes(item) || item.includes(existing))) continue;
+    seen.push(item);
+    if (item.startsWith('时间流逝：')) {
+      if (passages.length < 2) passages.push(item);
+    } else if (out.length < 8) {
+      out.push(item);
+    }
   }
-  return out;
+  return [...passages, ...out];
 }
 
 export function mergeCharacterStateChanges(

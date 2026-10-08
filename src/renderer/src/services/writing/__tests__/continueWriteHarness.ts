@@ -776,6 +776,13 @@ export function openContinueWriteSession(options: {
 
   const syncProjectFromStore = (): void => {
     const projectStore = useProjectStore();
+    // 台账回读（2026-10-07 r19 relay 断链实证）：saveLedger→applyFactLedger 只改
+    // pinia currentProject；而 hydrateProjectStoreForSmartContinue 每章
+    // setActivePinia(createPinia()) 重置 Pinia——session 的 project 对象若不带
+    // 台账，下一章注入与 store 落盘双双回到旧账（relay 40+ 章的数字/承诺账
+    // 全部滞留单章内存态，store 停在断电前的 4 条）。此处在每章末把台账
+    // （及记忆）从 pinia 同步回 session project，跨章累积恢复。
+    const currentFromPinia = projectStore.currentProject as Project | null;
     project = {
       ...project,
       chapters: projectStore.sortedChapters.map(item => ({ ...item })),
@@ -783,6 +790,18 @@ export function openContinueWriteSession(options: {
         projectStore.plotOutline && projectStore.plotOutline.length > 0
           ? [...projectStore.plotOutline]
           : project.plotOutline,
+      numericLedger:
+        currentFromPinia?.numericLedger && currentFromPinia.numericLedger.length > 0
+          ? currentFromPinia.numericLedger
+          : project.numericLedger,
+      timePromises:
+        currentFromPinia?.timePromises && currentFromPinia.timePromises.length > 0
+          ? currentFromPinia.timePromises
+          : project.timePromises,
+      chapterMemories:
+        currentFromPinia?.chapterMemories && currentFromPinia.chapterMemories.length > 0
+          ? currentFromPinia.chapterMemories
+          : project.chapterMemories,
     };
   };
 

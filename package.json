@@ -28,7 +28,8 @@
     "test:findings-ledger": "node --test scripts/__tests__/findings-ledger.test.mjs",
     "findings:converge": "node .agents/skills/storyflow-release-loop/scripts/findings-ledger.mjs converge",
     "replay:chapter": "node scripts/storyflow-replay-chapter.mjs",
-    "test:state-ledger": "node --test scripts/__tests__/state-ledger.test.mjs"
+    "test:state-ledger": "node --test scripts/__tests__/state-ledger.test.mjs",
+    "bootstrap:fact-ledger": "node scripts/bootstrap-fact-ledger.mjs"
   },
   "keywords": [],
   "author": {

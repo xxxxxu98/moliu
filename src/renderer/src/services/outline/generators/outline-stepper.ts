@@ -226,11 +226,19 @@ export async function generateExpandedOutlineInSteps(
 
   if (tailSteps.length > 0 && concurrency > 1 && tailSteps.length > 1) {
     onProgress?.(
-      `并行生成启动包 / 角色伏笔 / 节奏包装（${tailSteps.length} 路）...`,
+      `并行生成启动包 / 角色伏笔 / 节奏包装（${tailSteps.length} 路，并发上限 ${concurrency}）...`,
     );
-    const settled = await Promise.all(
-      tailSteps.map(async step => ({ step, generated: await runStep(step, rawText) })),
-    );
+    // 所有尾部步骤共享同一份骨架+卷纲快照（产出段互不相交）；按并发上限分批并行，
+    // 每批内并行、批间串行，保证在途请求数不超过 MOLIU_OUTLINE_STEP_CONCURRENCY。
+    const tailSnapshot = rawText;
+    const settled: Array<{ step: (typeof tailSteps)[number]; generated: string }> = [];
+    for (let index = 0; index < tailSteps.length; index += concurrency) {
+      const batch = tailSteps.slice(index, index + concurrency);
+      const results = await Promise.all(
+        batch.map(async step => ({ step, generated: await runStep(step, tailSnapshot) })),
+      );
+      settled.push(...results);
+    }
     for (const { step, generated } of settled) {
       if (generated) {
         rawText = stitchStepSections(rawText, generated, step.sections, warnings);

@@ -8,7 +8,7 @@ import { useProjectStore } from '@/stores/project.store';
 import type { ChapterPersistenceClient, MemoryClient } from '@/types/chapter-pipeline';
 import type { Chapter } from '@/types/project';
 import { DeAIService } from './de-ai-service';
-import { countWords } from './utils';
+import { contentFingerprint, countWords } from './utils';
 import { mergeCharacterStateChanges, mergeKeyEvents, safeExtractChapterMemory } from './extract-plot-memory';
 import { initializeMemoryManager, getMemoryManager } from './memory-manager';
 
@@ -90,6 +90,15 @@ export function createChapterMemoryClient(): MemoryClient {
       });
 
       if (memory) {
+        // 正文指纹（2026-10-05）：续写前比对——不一致即作者手改过，触发重提取
+        memory.contentFingerprint = contentFingerprint(prose);
+        // 时间轴真源落位（2026-10-08 r19 缺口修复）：time-passage 独立通道进了
+        // keyEvents，这里再落到专用字段 timelineMark——collectTimelineMarks
+        // 优先读它，双通道保证时间标记不再因任何一侧的限额而断粮
+        if (!memory.timelineMark?.trim()) {
+          const passage = (memory.keyEvents ?? []).find(event => event.startsWith('时间流逝：'));
+          if (passage) memory.timelineMark = passage.slice('时间流逝：'.length);
+        }
         // AI 命运账优先合并（契约 7-10 出账，含 sanitize 防误报）；规则层只补
         // 移动/出场类碎片。merge 按 name|state 去重保首条，AI 条目在前。
         if (aiStateChanges?.length) {
@@ -114,6 +123,23 @@ export function createChapterMemoryClient(): MemoryClient {
         }
       }
       return memory;
+    },
+    /**
+     * 跨章事实台账投影（契约 15/17 结构化出账）：合并进项目 numericLedger /
+     * timePromises 并落盘。applyFactLedger 先改内存真源（下一章注入立即可见），
+     * 落盘失败只 warn——harness 无 App 环境时 window.electronAPI 不存在属预期，
+     * 与记忆投影同属 best-effort（2026-10-05 实测：内存态注入已生效，落盘在
+     * App 内才有意义）。
+     */
+    async saveLedger({ chapterNumber, numericEntries, timeProjection, judgeResolvedPromiseTexts }) {
+      const project = projectStore.currentProject;
+      if (!project) return;
+      projectStore.applyFactLedger(numericEntries, timeProjection, chapterNumber, judgeResolvedPromiseTexts ?? []);
+      try {
+        await projectStore.saveCurrentProject();
+      } catch (error) {
+        console.warn('[chapterPersistenceAdapters] 事实台账已入内存态，落盘失败（无 App 环境属预期）:', error);
+      }
     },
   };
 }

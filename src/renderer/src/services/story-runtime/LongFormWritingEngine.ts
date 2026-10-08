@@ -910,6 +910,12 @@ export class LongFormWritingEngine {
           eraAnchors: input.eraAnchors,
           // 数字锚：既成大额数字显式名录（r6 实证长程数字漂移）
           numericFacts: input.numericFacts,
+          // 期限承诺（契约 17）：待兑现清单，越期必须兑现或显式改期
+          timePromises: input.timePromises,
+          // 时间轴（storyClock 轻量版）：近章时间标记，流逝必须连续
+          timelineMarks: input.timelineMarks,
+          // 作者正典（locked 规则）：起草侧显式约束块
+          authorCanon: input.authorCanon,
           // 身份锚：出场角色身份与角色卡一致（r6 实证同一角色前后两身份）
           characterIdentityAnchors: input.characterIdentityAnchors,
           // 假死纪律：假死角色隐匿活动合法+公开现身需揭晓（r8 实证假死被当死亡锁死主角）
@@ -985,6 +991,11 @@ export class LongFormWritingEngine {
             // 锚外年号=自创年号、既成数值无勘误改写=数字蒸发
             eraAnchors: input.eraAnchors ?? [],
             numericFacts: input.numericFacts ?? [],
+            timePromises: input.timePromises ?? [],
+            timelineMarks: input.timelineMarks ?? [],
+            breathBeatRequired: input.breathBeatRequired ?? false,
+            mentionEvidence: input.mentionEvidence ?? [],
+            authorCanon: input.authorCanon ?? [],
             // 假死例外（判官侧）：假死=活着隐匿中，活体活动不报复活冲突
             fakedDeathCharacters: input.fakedDeathCharacters ?? [],
           }),

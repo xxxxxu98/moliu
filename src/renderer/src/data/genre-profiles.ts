@@ -16,12 +16,15 @@ import type {
   CoolPointType,
   GenreType 
 } from '@/types/evaluation';
+import { EXTENDED_GENRE_PROFILES } from './genre-profiles-extended';
+import { ROMANCE_GENRE_PROFILES } from './genre-profiles-romance';
 
 // ============================================================
 // 题材Profile列表
 // ============================================================
 
-export const GENRE_PROFILES: GenreProfile[] = [
+/** 基础 10 类题材；顺序影响 matchGenreProfile 部分匹配优先级与 EmotionGenreStep 展示，勿重排 */
+const BASE_GENRE_PROFILES: GenreProfile[] = [
   // ============================================================
   // 修仙/玄幻
   // ============================================================
@@ -344,6 +347,13 @@ export const GENRE_PROFILES: GenreProfile[] = [
   },
 ];
 
+/** 全部题材 Profile：基础在前，扩展题材追加在后 */
+export const GENRE_PROFILES: GenreProfile[] = [
+  ...BASE_GENRE_PROFILES,
+  ...EXTENDED_GENRE_PROFILES,
+  ...ROMANCE_GENRE_PROFILES,
+];
+
 // ============================================================
 // 辅助函数
 // ============================================================
@@ -356,11 +366,13 @@ export function getGenreProfile(id: string): GenreProfile | undefined {
 }
 
 /**
- * 根据名称获取题材Profile
+ * 根据名称获取题材Profile：精确命中优先，否则按列表顺序做包含匹配
+ * （精确优先：避免「都市异能」被排在前面、名称更短的「都市」截胡）
  */
 export function getGenreProfileByName(name: string): GenreProfile | undefined {
-  return GENRE_PROFILES.find(p => 
-    p.name.includes(name) || name.includes(p.name)
+  return (
+    GENRE_PROFILES.find(p => p.name === name) ??
+    GENRE_PROFILES.find(p => p.name.includes(name) || name.includes(p.name))
   );
 }
 

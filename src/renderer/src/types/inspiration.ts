@@ -1,7 +1,60 @@
+/**
+ * 灵感 / 开题相关类型：题材标签、设定元素、故事核与大纲生成结构
+ */
+
+import type { TopicAudience } from './topic-discovery';
+
 export interface GenreTag {
   id: string;
   name: string;
   color: string;
+}
+
+/** 题材标签分类（元素混搭面板按此分组） */
+export type GenreTagCategory =
+  | 'fantasy'
+  | 'urban'
+  | 'romance'
+  | 'scifi'
+  | 'mystery'
+  | 'historical'
+  | 'game'
+  | 'military'
+  | 'derivative';
+
+/** 题材标签配置 */
+export interface GenreTagConfig {
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
+  gradient: string;
+  description?: string;
+  category: GenreTagCategory;
+  /** 主要读者向；general 表示男女频通用 */
+  audience: TopicAudience;
+  /** 对应 GENRE_PROFILES 的 id；缺省时按名称模糊匹配 */
+  profileId?: string;
+}
+
+/** 设定元素分类（元素混搭面板按此分组） */
+export type SettingElementCategory =
+  | 'character'
+  | 'goldfinger'
+  | 'relationship'
+  | 'plot'
+  | 'world'
+  | 'conflict';
+
+/** 设定元素配置 */
+export interface SettingElementConfig {
+  id: string;
+  name: string;
+  icon: string;
+  description?: string;
+  category: SettingElementCategory;
+  /** 主要读者向；缺省视为 general */
+  audience?: TopicAudience;
 }
 
 export interface SettingElement {

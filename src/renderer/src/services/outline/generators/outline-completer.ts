@@ -370,6 +370,9 @@ function buildChapterCompletionPrompt(
           : '余韵+新钩(爆发后果必须落到具体的人/位/账变化——谁倒台/谁上位/账怎么清,禁止松散收场;抛出的下一周期悬念必须比本周期钩更强)';
     return `- 第${n}章:${phase}`;
   }).join('\n')}`;
+  // 时序锚（2026-10-05，与 outline-roller 同口径）：每章蓝图至少一处时间
+  // 推进锚 + 跨章时间单调。正文 storyClock/判官【时间轴连续】同源消费。
+  const timeAnchorSection = `\n\n【时序锚】本批每章蓝图的 CBN 或 CPNs 中至少一处携带明确时间推进锚（当日午后/当夜/次日清晨/三日后/开赛日当天等），连续章的时间必须单调推进不得回退；跨多天推进（如「三日后」）必须与上一章锚点衔接（上章承诺三日后开赛，开赛章的锚不得早于第三天）。`;
   return {
     system: `你是中文长篇网文大纲拆章器。只输出指定章号的单章蓝图，不复述已有章节，不输出解释。
 每章必须严格使用以下结构：
@@ -393,7 +396,7 @@ function buildChapterCompletionPrompt(
 7. 【伏笔时序锁】「本批伏笔时序禁令」清单列出的伏笔，其核心信息禁止出现在本批蓝图的 mustCover/CPNs/CEN 中——蓝图要求本章揭示而伏笔规定后章才许揭示时，写作端会被迫两头违约（拒稿成洞）。确需铺垫只可用不触及核心词面的暗痕（物件出现/旁人欲言又止），不得给出定性结论。
 “existingChapterCanon”是不可改写的既有事实：新章不得重置期限、重复破案/入狱/升职等已完成事件，不得让已倒台或被羁押的反派无解释恢复原职。
 ${renderBlueprintVocabularyRule(vocabularyTier)}`,
-    user: `【故事上下文】\n${compactContext(outline, direction, chapterNumbers)}${foreshadowEmbargoSection}${revealLockSection}${reviewSection}${phaseSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从”### 第${chapterNumbers[0]}章”开始输出。`,
+    user: `【故事上下文】\n${compactContext(outline, direction, chapterNumbers)}${foreshadowEmbargoSection}${revealLockSection}${reviewSection}${phaseSection}${timeAnchorSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从”### 第${chapterNumbers[0]}章”开始输出。`,
   };
 }
 

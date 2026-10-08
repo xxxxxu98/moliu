@@ -11,11 +11,12 @@ import type { ContinuityReport, ExtractedFacts, SceneDraft } from '@/types/story
 import {
   AgentToolFatalError,
   clipText,
+  isAbortError,
   isPlainObject,
   readStringArg,
-  type AgentToolkit,
+  TableToolkit,
   type ToolCallResult,
-  type ToolDescriptor,
+  type ToolSpec,
 } from './AgentToolkit';
 import { StagedArtifact } from './StagedArtifact';
 import { sanitizeSceneDraftParagraphs } from '../stripDraftLeakage';
@@ -46,7 +47,16 @@ export interface WriterToolkitInput {
   /** run_checks 预算（每次都是一轮完整 AI 审查，成本与旧重写轮等价） */
   maxChecks: number;
   targetWordCount?: number;
+  /** 整章重写(submit_draft)每次运行的上限,缺省 DEFAULT_MAX_FULL_REWRITES */
+  maxFullRewrites?: number;
 }
+
+/**
+ * 整章重写上限(2026-10-08 trace 统计):整章输出是改稿回合最慢的一步。
+ * 触发墙钟预算的运行中 43% 发生过 ≥3 次 submit_draft(正常完成运行仅 8%),
+ * 第 3 次起说明模型在用整章重写代替局部修复,应当转回 revise_paragraphs。
+ */
+export const DEFAULT_MAX_FULL_REWRITES = 2;
 
 export interface WriterFinalResolution extends CheckedRevision {
   /** 最终稿是否因「改后未复检」而回退到上一个已校验 revision */
@@ -73,12 +83,14 @@ function summarizeIssues(report: ContinuityReport): Array<Record<string, unknown
     }));
 }
 
-export class WriterToolkit implements AgentToolkit {
+export class WriterToolkit extends TableToolkit {
   readonly draft = new StagedArtifact<SceneDraft[]>();
   private lastChecked: CheckedRevision | null = null;
   private checksUsed = 0;
+  private fullRewritesUsed = 0;
 
   constructor(private readonly input: WriterToolkitInput) {
+    super();
     if (input.initialDrafts.length === 0) {
       throw new Error('WriterToolkit 需要至少一份初稿');
     }
@@ -92,61 +104,47 @@ export class WriterToolkit implements AgentToolkit {
     }
   }
 
-  listTools(): ToolDescriptor[] {
+  protected specs(): ToolSpec[] {
     return [
       {
-        name: 'get_draft',
-        description: '读当前暂存稿:带段落索引的全文(改稿前先读,索引以此为准)。',
-        args: '{}',
-        dedupe: false,
+        descriptor: {
+          name: 'get_draft',
+          description: '读当前暂存稿:带段落索引的全文(改稿前先读,索引以此为准)。',
+          args: '{}',
+          dedupe: false,
+        },
+        handler: () => this.getDraft(),
       },
       {
-        name: 'revise_paragraphs',
-        description:
-          '局部改稿:按索引替换/删除段落(text 为空串=删除),可在某段之后插入新段。只改有问题的段落,未涉及段落保持原样。',
-        args: '{"edits":[{"index":3,"text":"改后的整段正文"}],"insertAfter":[{"index":5,"paragraphs":["新段1","新段2"]}]}',
-        dedupe: false,
+        descriptor: {
+          name: 'revise_paragraphs',
+          description:
+            '局部改稿:按索引替换/删除段落(text 为空串=删除),可在某段之后插入新段。只改有问题的段落,未涉及段落保持原样。',
+          args: '{"edits":[{"index":3,"text":"改后的整段正文"}],"insertAfter":[{"index":5,"paragraphs":["新段1","新段2"]}]}',
+          dedupe: false,
+        },
+        handler: args => this.reviseParagraphs(args),
       },
       {
-        name: 'submit_draft',
-        description: '整章重写:用新的段落数组整体替换暂存稿(问题遍布全章时才用;局部问题用 revise_paragraphs)。',
-        args: '{"paragraphs":["段落1","段落2"],"chapterTitle":"可选"}',
-        dedupe: false,
+        descriptor: {
+          name: 'submit_draft',
+          description: `整章重写:用新的段落数组整体替换暂存稿(问题遍布全章时才用;局部问题用 revise_paragraphs)。每次运行最多 ${this.maxFullRewrites()} 次,超出即拒绝。`,
+          args: '{"paragraphs":["段落1","段落2"],"chapterTitle":"可选"}',
+          dedupe: false,
+        },
+        handler: args => this.submitDraft(args),
       },
       {
-        name: 'run_checks',
-        description:
-          '对当前暂存稿跑完整审查(事实提取+连续性/履约判官+字数/排版/章界重演门禁),返回 blocking/warning 问题清单。每次调用消耗 1 次预算;blocking=0 才允许 finish。',
-        args: '{}',
-        dedupe: false,
+        descriptor: {
+          name: 'run_checks',
+          description:
+            '对当前暂存稿跑完整审查(事实提取+连续性/履约判官+字数/排版/章界重演门禁),返回 blocking/warning 问题清单。每次调用消耗 1 次预算;blocking=0 才允许 finish。',
+          args: '{}',
+          dedupe: false,
+        },
+        handler: () => this.runChecks(),
       },
     ];
-  }
-
-  has(tool: string): boolean {
-    return this.toolNames().includes(tool);
-  }
-
-  toolNames(): string[] {
-    return this.listTools().map(tool => tool.name);
-  }
-
-  async call(tool: string, args: unknown): Promise<ToolCallResult> {
-    if (!isPlainObject(args)) {
-      return { ok: false, error: `args 必须是 JSON 对象,收到:${typeof args}` };
-    }
-    switch (tool) {
-      case 'get_draft':
-        return this.getDraft();
-      case 'revise_paragraphs':
-        return this.reviseParagraphs(args);
-      case 'submit_draft':
-        return this.submitDraft(args);
-      case 'run_checks':
-        return this.runChecks();
-      default:
-        return { ok: false, error: `未知工具:${tool}。可用:${this.toolNames().join('/')}` };
-    }
   }
 
   /** 进展版本:改稿或新校验都算进展(runner 停滞检测用) */
@@ -268,7 +266,17 @@ export class WriterToolkit implements AgentToolkit {
     };
   }
 
+  private maxFullRewrites(): number {
+    return this.input.maxFullRewrites ?? DEFAULT_MAX_FULL_REWRITES;
+  }
+
   private submitDraft(args: Record<string, unknown>): ToolCallResult {
+    if (this.fullRewritesUsed >= this.maxFullRewrites()) {
+      return {
+        ok: false,
+        error: `整章重写已用满 ${this.maxFullRewrites()} 次。请改用 revise_paragraphs 按段局部修复(先 get_draft 取最新索引),修完后 run_checks。`,
+      };
+    }
     const raw = Array.isArray(args.paragraphs) ? args.paragraphs : null;
     if (!raw) return { ok: false, error: 'paragraphs 必须是字符串数组' };
     const paragraphs = sanitizeSceneDraftParagraphs(
@@ -277,6 +285,7 @@ export class WriterToolkit implements AgentToolkit {
     if (paragraphs.length === 0) return { ok: false, error: 'paragraphs 无可用正文段落' };
     const title = normalizeGeneratedChapterTitle(readStringArg(args, 'chapterTitle')) ?? undefined;
     const base = this.currentDrafts()[0];
+    this.fullRewritesUsed += 1;
     const revision = this.draft.set(
       [{ ...base, paragraphs, ...(title ? { chapterTitle: title } : {}) }],
       { tool: 'submit_draft' }
@@ -311,10 +320,8 @@ export class WriterToolkit implements AgentToolkit {
     try {
       outcome = await this.input.reviewPort.review(drafts);
     } catch (error) {
-      // 审查链不可用(含 [review-unavailable])对模型而言无解,必须冒泡让批量层停章
-      if ((error instanceof DOMException || error instanceof Error) && error.name === 'AbortError') {
-        throw error;
-      }
+      // 审查链不可用(含 [review-unavailable])对模型而言无解,必须冒泡让批量层停章;取消同样冒泡
+      if (isAbortError(error)) throw error;
       throw new AgentToolFatalError(
         `run_checks 审查链失败:${error instanceof Error ? error.message : String(error)}`,
         { cause: error }

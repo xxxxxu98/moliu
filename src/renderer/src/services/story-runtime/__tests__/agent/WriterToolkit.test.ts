@@ -137,6 +137,41 @@ describe('WriterToolkit', () => {
     expect(drafts?.[0].paragraphs).toEqual(['全新开场。', '全新收尾。']);
   });
 
+  it('submit_draft 每次运行最多 maxFullRewrites 次,超出拒绝且不改暂存稿', async () => {
+    const { toolkit } = makeToolkit();
+    const limited = new WriterToolkit({
+      initialDrafts: makeDrafts(['开场。']),
+      initialReview: { facts: emptyFacts, report: report() },
+      reviewPort: { review: vi.fn() },
+      maxChecks: 2,
+      targetWordCount: 0,
+      maxFullRewrites: 1,
+    });
+    expect(toolkit.listTools().find(tool => tool.name === 'submit_draft')?.description).toContain('最多 2 次');
+    expect(
+      (await limited.call('submit_draft', { paragraphs: ['第一次。'] })).ok
+    ).toBe(true);
+    const rejected = await limited.call('submit_draft', { paragraphs: ['第二次。'] });
+    expect(rejected.ok).toBe(false);
+    expect(!rejected.ok && rejected.error).toContain('revise_paragraphs');
+    expect(limited.draft.get()?.[0].paragraphs).toEqual(['第一次。']);
+    expect(limited.draft.revision()).toBe(2);
+  });
+
+  it('submit_draft 参数非法不消耗整章重写次数', async () => {
+    const limited = new WriterToolkit({
+      initialDrafts: makeDrafts(['开场。']),
+      initialReview: { facts: emptyFacts, report: report() },
+      reviewPort: { review: vi.fn() },
+      maxChecks: 2,
+      targetWordCount: 0,
+      maxFullRewrites: 1,
+    });
+    const invalid = await limited.call('submit_draft', { paragraphs: [] });
+    expect(invalid.ok).toBe(false);
+    expect((await limited.call('submit_draft', { paragraphs: ['有效。'] })).ok).toBe(true);
+  });
+
   it('审查链抛错时包成 AgentToolFatalError 冒泡(AbortError 原样冒泡)', async () => {
     const { toolkit } = makeToolkit({
       review: async () => {

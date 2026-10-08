@@ -127,10 +127,23 @@ export class AIChapterJudge implements ChapterJudge {
       effects: event.effects,
       evidence: event.evidence,
     }));
+    const timePromises = (input.timePromises ?? []).filter(Boolean);
 
     const payoffCandidates = (input.payoffCandidates ?? []).filter(
       item => item.id.trim() && item.hint.trim(),
     );
+    const timePromiseRules =
+      timePromises.length > 0
+        ? [
+            '',
+            '## 5) 期限/剧情承诺兑现判定（resolvedTimePromiseTexts）',
+            '- timePromises 列出本书已立下且尚未兑现的承诺（期限承诺与剧情预告）',
+            '- 判定「已兑现」的标准：正文实写了该承诺的兑现场面（欠款还清/期限事件发生/预告的对手人物事件到场），或显式改期/解除/否定（情报有误/计划取消/当事者变卦）——且能引用正文原句',
+            '- 仅口头重申承诺、旁白提及而未发生 → 不算，不要列入',
+            '- 宁缺勿滥：拿不准的一律不列（误判兑现会让台账漏掉违约检测）',
+            '- resolvedTimePromiseTexts 填能定位到原承诺的关键词句（从 timePromises 行内摘取核心短语即可，系统按文本匹配流转台账）；无兑现时为 []',
+          ]
+        : [];
     const payoffRules =
       payoffCandidates.length > 0
         ? [
@@ -156,9 +169,40 @@ export class AIChapterJudge implements ChapterJudge {
     }
     if (numericFacts.length > 0) {
       consistencyRules.push(
-        '- 【数字一致】输入的 numericFacts 是近章既成的大额数字宣告（金额/编制/数量）。正文引用同一对象（同一笔银子/同一编制/同一批物资）的数额、数量与既成数值不一致，且未写出勘误、清点更正、查实虚报等剧情性修正过程的，必须报 fact_conflict 且 severity=critical，description 注明「数字蒸发/改写：既成X，本章写成Y」（2026-09-17 g38f r6 实证：同一笔盐税五套口径、太仓存粮四万石无解释改四十万石、押运车队八十箱变八百辆）；正文明示了勘误/清点过程的不算'
+        '- 【数字一致】输入的 numericFacts 是数字台账在册的既成事实（对象＝数值单位，同对象以章号最新为准）。正文引用同一对象的数额/数量与既成数值不一致，且未写出勘误、清点更正、查实虚报等剧情性修正过程的，必须报 fact_conflict 且 severity=critical，description 注明「数字蒸发/改写：既成X，本章写成Y」（2026-09-17 g38f r6 实证：同一笔盐税五套口径、太仓存粮四万石无解释改四十万石；2026-10-05 都市文实证：债务既成三百万信用点被无勘误写成三十万、战宠既成三十吨前章写两吨）；正文明示了勘误/清点过程的不算'
       );
     }
+    consistencyRules.push(
+      '- 【数字入账】（2026-10-05 台账反向检查）本章正文首次确立、且对后续剧情有约束力的新数字事实（金额/债务/价格、度量/吨位、数量/编制、期限/天数、比率/赔率——不限题材单位，判据是「后续章节引用它会错」），若既不在 numericFacts 台账中、也不在 extractedFacts 的 numeric-fact 事件里——报 logic_gap 且 severity=medium，description 注明「新数字未入账：对象X＝数值Y」（记账由提取层补齐，此处只提示不要求重写）；纯修辞数字（「一日不见如隔三秋」）与一次性场景描写（「数米深的坑」）不算'
+    );
+    const timelineMarks = (input.timelineMarks ?? []).filter(Boolean);
+    if (timePromises.length > 0) {
+      consistencyRules.push(
+        '- 【期限一致】输入的 timePromises 是正文已立下且尚未兑现的承诺（期限承诺与剧情预告）。期限承诺：若本章剧情时间已明显到达或越过期限（对照 timelineMarks 与本章正文的天/夜/晨昏标记推断），而正文既未兑现、也未写出显式改期/解除/变故场面——必须报 timeline 且 severity=critical，description 注明「期限承诺违约：X」（2026-10-05 都市文实证：正文三次承诺「三天后十六强开赛」，实际次日凌晨开打零拦截）。剧情预告：若本章已写到某预告的应兑现节点（预告的对手/人物/事件到场时点），正文却与预告矛盾或当其不存在——报 fact_conflict 且 severity=critical，description 注明「剧情预告违约：预告X，正文Y」（同轮实证：第2章预告首轮对手是钛合金巨神象、实际是蛮牛且预告人名全书消失）；正文兑现、显式否定（情报有误/计划取消）或变故交代的不算'
+      );
+    }
+    if (timelineMarks.length > 0) {
+      consistencyRules.push(
+        '- 【时间轴连续】输入的 timelineMarks 是近章既成时间标记（按章排列）。本章时间流逝与标记序列矛盾——时间回退（上章已次日本章又回到当夜）、跨天零交代、晨昏颠倒且无剧情解释——报 timeline 且 severity=high，description 注明「时间轴断裂：X」（2026-10-05 都市文实证：全书 15 章正文零日期锚，读者无法感知时间流逝）'
+      );
+    }
+    if (input.breathBeatRequired) {
+      consistencyRules.push(
+        '- 【呼吸拍校验】本章为生理节律呼吸拍章：若全章没有任何生理/生活锚点（进食/饮水/洗漱/睡眠/补眠/疲惫/饥饿/旧伤处理任一），报 ooc 且 severity=low，description 注明「呼吸拍缺生理锚点」（warning 级不阻断，提示补写——2026-10-05 20 章验证 ch17 漏拍无感知的闭环）；已有一处即算达标'
+      );
+    }
+    if ((input.mentionEvidence ?? []).length > 0) {
+      consistencyRules.push(
+        '- 【提及证据】输入的 mentionEvidence 是相关角色在更早章节的原文片段（逐字摘录）。仲裁跨章 fact_conflict 时以这些原文为准——正文与某角色历史言行/状态矛盾而台账又无账可依时，用原文片段判矛盾（2026-10-05 借鉴 Novelcrafter 提及索引：判官此前只见上章结尾 800 字，跨 5 章矛盾无逐字证据可查）'
+      );
+    }
+    if ((input.authorCanon ?? []).length > 0) {
+      consistencyRules.push(
+        '- 【作者正典】输入的 authorCanon 是作者锁定的世界观规则，优先级高于一切状态摘要/台账/大纲节点：正文与正典冲突（违反作者设定的规则、改写正典事实），必须报 fact_conflict 且 severity=critical，description 注明「违反作者正典：X」（2026-10-05 人机混写定位：人工设定是最终真相仲裁）'
+      );
+    }
+    const mentionEvidence = (input.mentionEvidence ?? []).filter(Boolean);
+    const authorCanon = (input.authorCanon ?? []).filter(Boolean);
     const fakedDeathNames = (input.fakedDeathNames ?? []).filter(Boolean);
     if (fakedDeathNames.length > 0) {
       consistencyRules.push(
@@ -167,6 +211,9 @@ export class AIChapterJudge implements ChapterJudge {
     }
     consistencyRules.push(
       '- 【终态重演】前文（含 prevChapterTail）或本章前文已完整演过的终态仪式/场面（登基/册封/授印/处决/废黜/下狱押解/加封），本章不得再次完整重演同一仪式——后续章只能写该终态的新后果与新进展；若正文把已演过的仪式原样再演一遍（换词不换事），报 logic_gap 且 severity=critical，description 注明「终态重演：X仪式已在前文演过」（2026-09-20 g38f r8 实证：ch190 新帝已登基理政、ch195 正文重演砸镣-更衣-正位大统全套登基典礼；赵恒削籍被演 3 遍）；正文写的是对该终态的后续处置/回响/他人反应的不算'
+    );
+    consistencyRules.push(
+      '- 【押地随行形态】状态摘要里 custody（押地）的值若是随行形态（提调随军/押解随行/戴罪随军/发配军前类描述）而非具体牢狱——该角色处于「合法在押但随队行动」状态：其随军出征、在场行动、受命做事一律合法，禁止按「在押者凭空自由出场」报 fact_conflict（2026-10-08 r19 实证：ch129 正文写明持密旨提调戴罪随军仍被按「天牢在押」三拒成洞）；但其脱离押解/提调管制擅自单独行动且正文无交代的，仍报 fact_conflict'
     );
 
     const raw = await this.ai.generate<ChapterJudgeResult>({
@@ -218,6 +265,7 @@ export class AIChapterJudge implements ChapterJudge {
         '- 若无问题，issues 为 []',
         ...consistencyRules,
         ...payoffRules,
+        ...timePromiseRules,
         '',
         '只输出一个 JSON 对象，不要 Markdown 代码块，不要解释。',
         '顶层必须是 { 开头的对象，禁止返回数组（不要把对象包成 [{…}]）；fulfillment/forbidden/issues 的值才是数组。',
@@ -227,6 +275,7 @@ export class AIChapterJudge implements ChapterJudge {
         '"forbidden":[{"zone":"…","violated":false,"evidence":[],"reason":"…"}],',
         '"issues":[{"type":"logic_gap","severity":"high","location":"…","description":"…","evidence":["…"]}]' +
           (payoffCandidates.length > 0 ? ',"resolvedForeshadowIds":["fs-…"]' : '') +
+          (timePromises.length > 0 ? ',"resolvedTimePromiseTexts":["承诺关键词句"]' : '') +
           '}',
       ].join('\n'),
       prompt: JSON.stringify({
@@ -245,6 +294,10 @@ export class AIChapterJudge implements ChapterJudge {
         payoffCandidates: payoffCandidates.length > 0 ? payoffCandidates : undefined,
         ...(eraAnchors.length > 0 ? { eraAnchors } : {}),
         ...(numericFacts.length > 0 ? { numericFacts } : {}),
+        ...(timePromises.length > 0 ? { timePromises } : {}),
+        ...(timelineMarks.length > 0 ? { timelineMarks } : {}),
+        ...(mentionEvidence.length > 0 ? { mentionEvidence } : {}),
+        ...(authorCanon.length > 0 ? { authorCanon } : {}),
         ...(fakedDeathNames.length > 0 ? { fakedDeathNames } : {}),
       }),
       parse: value => parseSchema(chapterJudgeResultSchema, normalizeTopLevelObjectShape(value), '章节语义审查结果'),

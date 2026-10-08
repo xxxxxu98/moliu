@@ -16,7 +16,7 @@ import {
   LENGTH_LABEL,
   PLATFORM_LABEL,
 } from './prompts/topic-discovery-prompts';
-import { buildGenreSeedHint } from './genre-seed-context';
+import { buildGenreSeedHint, buildMixGenreHints } from './genre-seed-context';
 import type {
   EntryDifficulty,
   GenreInsightCard,
@@ -540,6 +540,9 @@ export async function refreshStorySeeds(
   const enrichedOptions: RefreshStorySeedsOptions = {
     ...options,
     genreSeedHint: genreSeedHint ?? undefined,
+    mixGenreHints:
+      options.mixGenreHints ??
+      buildMixGenreHints(options.mixTags ?? [], genreSeedHint?.profileId),
   };
 
   if (!hasActiveProvider()) {

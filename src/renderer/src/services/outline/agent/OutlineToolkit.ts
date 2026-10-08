@@ -16,9 +16,9 @@ import {
   readIntArg,
   readStringArg,
   readStringArrayArg,
-  type AgentToolkit,
+  TableToolkit,
   type ToolCallResult,
-  type ToolDescriptor,
+  type ToolSpec,
 } from '@/services/story-runtime/agent/AgentToolkit';
 import { StagedArtifact } from '@/services/story-runtime/agent/StagedArtifact';
 
@@ -236,126 +236,119 @@ function summarizeBlueprint(blueprint: ChapterBlueprint): Record<string, unknown
   };
 }
 
-export class OutlineToolkit implements AgentToolkit {
+export class OutlineToolkit extends TableToolkit {
   readonly staged = new StagedArtifact<OutlineSnapshot>();
   private lastChecked: CheckedOutlineRevision | null = null;
   private checksUsed = 0;
 
   constructor(private readonly input: OutlineToolkitInput) {
+    super();
     if (!input.rawText.trim()) throw new Error('OutlineToolkit 需要非空大纲文本');
     this.staged.set({ rawText: input.rawText, outline: input.outline }, { tool: 'initial' });
   }
 
-  listTools(): ToolDescriptor[] {
+  protected specs(): ToolSpec[] {
     const sectionNames = SECTION_LIST.map(([, def]) => def.canonical).join('/');
     return [
       {
-        name: 'get_overview',
-        description:
-          '读大纲总览:规模、卷纲区间、启动包区间、已登记角色/地点/势力名单、伏笔数、蓝图章数。改动后可重读。',
-        args: '{}',
-        dedupe: false,
+        descriptor: {
+          name: 'get_overview',
+          description:
+            '读大纲总览:规模、卷纲区间、启动包区间、已登记角色/地点/势力名单、伏笔数、蓝图章数。改动后可重读。',
+          args: '{}',
+          dedupe: false,
+        },
+        handler: () => this.getOverview(),
       },
       {
-        name: 'get_section',
-        description: `读某个二级段的 Markdown 正文与该段模板(字段名以模板为准)。段名:${sectionNames}。单章蓝图请用 get_chapters。`,
-        args: '{"name":"关键角色规划"}',
-        dedupe: false,
+        descriptor: {
+          name: 'get_section',
+          description: `读某个二级段的 Markdown 正文与该段模板(字段名以模板为准)。段名:${sectionNames}。单章蓝图请用 get_chapters。`,
+          args: '{"name":"关键角色规划"}',
+          dedupe: false,
+        },
+        handler: args => this.getSection(args),
       },
       {
-        name: 'get_chapters',
-        description: `读指定章号区间的单章蓝图(最多 ${OUTLINE_CHAPTER_READ_LIMIT} 章),返回结构化字段。`,
-        args: '{"from":1,"to":10}',
-        dedupe: false,
+        descriptor: {
+          name: 'get_chapters',
+          description: `读指定章号区间的单章蓝图(最多 ${OUTLINE_CHAPTER_READ_LIMIT} 章),返回结构化字段。`,
+          args: '{"from":1,"to":10}',
+          dedupe: false,
+        },
+        handler: args => this.getChapters(args),
       },
       {
-        name: 'rewrite_chapters',
-        description:
-          `暂存写:整章替换/新增若干章蓝图(最多 ${OUTLINE_CHAPTER_WRITE_LIMIT} 章)。未给出的字段沿用该章原稿;写入前按门禁阈值校验格式(标题 ${OUTLINE_COMPLETENESS_POLICY.titleMinChars}–${OUTLINE_COMPLETENESS_POLICY.titleMaxChars} 字、CBN/CEN ${OUTLINE_COMPLETENESS_POLICY.hookMinChars}–${OUTLINE_COMPLETENESS_POLICY.hookMaxChars} 字、CPNs ${OUTLINE_COMPLETENESS_POLICY.minimumCpns}–${OUTLINE_COMPLETENESS_POLICY.maximumCpns} 条),任一章不合格则整批拒绝。`,
-        args: '{"chapters":[{"chapterNumber":3,"title":"…","CBN":"…","CPNs":["…"],"CEN":"…","mustCover":["…"],"forbiddenZones":["…"],"hookText":"…","coolPointType":"反转"}]}',
-        dedupe: false,
+        descriptor: {
+          name: 'rewrite_chapters',
+          description:
+            `暂存写:整章替换/新增若干章蓝图(最多 ${OUTLINE_CHAPTER_WRITE_LIMIT} 章)。未给出的字段沿用该章原稿;写入前按门禁阈值校验格式(标题 ${OUTLINE_COMPLETENESS_POLICY.titleMinChars}–${OUTLINE_COMPLETENESS_POLICY.titleMaxChars} 字、CBN/CEN ${OUTLINE_COMPLETENESS_POLICY.hookMinChars}–${OUTLINE_COMPLETENESS_POLICY.hookMaxChars} 字、CPNs ${OUTLINE_COMPLETENESS_POLICY.minimumCpns}–${OUTLINE_COMPLETENESS_POLICY.maximumCpns} 条),任一章不合格则整批拒绝。`,
+          args: '{"chapters":[{"chapterNumber":3,"title":"…","CBN":"…","CPNs":["…"],"CEN":"…","mustCover":["…"],"forbiddenZones":["…"],"hookText":"…","coolPointType":"反转"}]}',
+          dedupe: false,
+        },
+        handler: args => this.rewriteChapters(args),
       },
       {
-        name: 'replace_section',
-        description:
-          '暂存写:用新的 Markdown 正文整体替换某个二级段(不含「## 段名」行;字段名、子标题层级必须与模板一致)。替换后会重解析,结构条目归零即拒绝。用于修开篇钩子/必出事件/卷纲/规模等段级问题。',
-        args: '{"name":"前50章启动包","body":"- 开篇钩子：…\\n…"}',
-        dedupe: false,
+        descriptor: {
+          name: 'replace_section',
+          description:
+            '暂存写:用新的 Markdown 正文整体替换某个二级段(不含「## 段名」行;字段名、子标题层级必须与模板一致)。替换后会重解析,结构条目归零即拒绝。用于修开篇钩子/必出事件/卷纲/规模等段级问题。',
+          args: '{"name":"前50章启动包","body":"- 开篇钩子：…\\n…"}',
+          dedupe: false,
+        },
+        handler: args => this.replaceSection(args),
       },
       {
-        name: 'append_to_section',
-        description:
-          '暂存写:向某个二级段末尾追加 Markdown 块(如补登记角色:「#### 角色标签」+ 姓名/角色定位/剧情功能…全字段)。追加后重解析,对应结构计数不增即拒绝。',
-        args: '{"name":"关键角色规划","body":"#### 新增盟友\\n- 姓名：…\\n- 角色定位：盟友\\n…"}',
-        dedupe: false,
+        descriptor: {
+          name: 'append_to_section',
+          description:
+            '暂存写:向某个二级段末尾追加 Markdown 块(如补登记角色:「#### 角色标签」+ 姓名/角色定位/剧情功能…全字段)。追加后重解析,对应结构计数不增即拒绝。',
+          args: '{"name":"关键角色规划","body":"#### 新增盟友\\n- 姓名：…\\n- 角色定位：盟友\\n…"}',
+          dedupe: false,
+        },
+        handler: args => this.appendToSection(args),
       },
       {
-        name: 'register_locations',
-        description:
-          '确定性修复:把卷纲/蓝图已引用但未入表的地名登记进「核心地点」子段(不发 AI 请求)。',
-        args: '{"names":["青云宗","黑石城"]}',
-        dedupe: false,
+        descriptor: {
+          name: 'register_locations',
+          description:
+            '确定性修复:把卷纲/蓝图已引用但未入表的地名登记进「核心地点」子段(不发 AI 请求)。',
+          args: '{"names":["青云宗","黑石城"]}',
+          dedupe: false,
+        },
+        handler: args => this.registerLocations(args),
       },
       {
-        name: 'resolve_character_references',
-        description:
-          '暂存记:对「未登记角色引用」做语义裁决(批量,最多 30 条)。爵位/别称/官职代称指向已登记角色 → {"reference":"齐王","as":"alias","target":"赵恺"};群体或职务泛称非个体 → {"reference":"两江河道官员","as":"collective"}。确为新具名人物时禁用本工具,改用 append_to_section 补角色块。',
-        args: '{"items":[{"reference":"齐王","as":"alias","target":"赵恺"},{"reference":"两江河道官员","as":"collective"}]}',
-        dedupe: false,
+        descriptor: {
+          name: 'resolve_character_references',
+          description:
+            '暂存记:对「未登记角色引用」做语义裁决(批量,最多 30 条)。爵位/别称/官职代称指向已登记角色 → {"reference":"齐王","as":"alias","target":"赵恺"};群体或职务泛称非个体 → {"reference":"两江河道官员","as":"collective"}。确为新具名人物时禁用本工具,改用 append_to_section 补角色块。',
+          args: '{"items":[{"reference":"齐王","as":"alias","target":"赵恺"},{"reference":"两江河道官员","as":"collective"}]}',
+          dedupe: false,
+        },
+        handler: args => this.resolveCharacterReferences(args),
       },
       {
-        name: 'shrink_hooks',
-        description:
-          '确定性修复:按分句边界收缩所有超长标题/CBN/CEN 到门禁上限(不发 AI 请求)。收不进区间的章会留在 run_checks 里,需 rewrite_chapters。',
-        args: '{}',
-        dedupe: false,
+        descriptor: {
+          name: 'shrink_hooks',
+          description:
+            '确定性修复:按分句边界收缩所有超长标题/CBN/CEN 到门禁上限(不发 AI 请求)。收不进区间的章会留在 run_checks 里,需 rewrite_chapters。',
+          args: '{}',
+          dedupe: false,
+        },
+        handler: () => this.shrinkHooks(),
       },
       {
-        name: 'run_checks',
-        description:
-          '对当前暂存稿跑与落库门禁完全相同的完整性检查(blockers)与内容质检(qualityIssues)。blockers=0 才允许 finish;每次调用消耗 1 次预算。',
-        args: '{}',
-        dedupe: false,
+        descriptor: {
+          name: 'run_checks',
+          description:
+            '对当前暂存稿跑与落库门禁完全相同的完整性检查(blockers)与内容质检(qualityIssues)。blockers=0 才允许 finish;每次调用消耗 1 次预算。',
+          args: '{}',
+          dedupe: false,
+        },
+        handler: () => this.runChecks(),
       },
     ];
-  }
-
-  has(tool: string): boolean {
-    return this.toolNames().includes(tool);
-  }
-
-  toolNames(): string[] {
-    return this.listTools().map(tool => tool.name);
-  }
-
-  async call(tool: string, args: unknown): Promise<ToolCallResult> {
-    if (!isPlainObject(args)) {
-      return { ok: false, error: `args 必须是 JSON 对象,收到:${typeof args}` };
-    }
-    switch (tool) {
-      case 'get_overview':
-        return this.getOverview();
-      case 'get_section':
-        return this.getSection(args);
-      case 'get_chapters':
-        return this.getChapters(args);
-      case 'rewrite_chapters':
-        return this.rewriteChapters(args);
-      case 'replace_section':
-        return this.replaceSection(args);
-      case 'append_to_section':
-        return this.appendToSection(args);
-      case 'register_locations':
-        return this.registerLocations(args);
-      case 'resolve_character_references':
-        return this.resolveCharacterReferences(args);
-      case 'shrink_hooks':
-        return this.shrinkHooks();
-      case 'run_checks':
-        return this.runChecks();
-      default:
-        return { ok: false, error: `未知工具:${tool}。可用:${this.toolNames().join('/')}` };
-    }
   }
 
   /** 进展版本:写入或新校验都算进展(runner 停滞检测用) */

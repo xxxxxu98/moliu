@@ -222,19 +222,64 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<Re
       chapter.outline = `${chapter.outline ?? ''}\n【缝合·下章开头】下章开头原文：「${nextHead}」——本章剧情必须自然导向该状态：人物生死/羁押/在场身份/时空进度与前后章完全一致，不得矛盾；本章结尾落在导向该状态的悬念或行动上。`.trim();
       console.info(`[repair] 第${n}章注入下章缝合锚（${nextHead.length} 字）`);
     }
+
+    // ---- 终章收束三层（2026-10-08 r19 读者四门禁实证：末三章 77 分带、终章 58 分
+    // 全书最低——主循环有大纲层终卷收束约束，repair 补写链路对「这是最后一章」
+    // 零感知，按普通章写终章）。三层：收束段铺垫（末三章）→ 完本收束硬约束
+    // （末章：主线终局+open 台账逐条兑现+终局回响+收束句收尾）→ open 清单
+    // 实数据注入（不靠写手回忆）。
+    const finalChapter = chapters.length > 0 ? (chapters[chapters.length - 1].orderIndex ?? 0) + 1 : 0;
+    if (finalChapter > 0 && n === finalChapter) {
+      const openPromises = (project.timePromises ?? [])
+        .filter(p => p.status === 'open')
+        .map(p => `「${p.promise}」`);
+      const openForeshadows = (project.foreshadows ?? [])
+        .filter(f => {
+          const status = String((f as { status?: unknown }).status ?? '');
+          return status && status !== 'resolved';
+        })
+        .map(f => `「${String((f as { hint?: unknown }).hint ?? '').slice(0, 40)}」`);
+      chapter.outline = `${chapter.outline ?? ''}\n【完本收束硬约束】本章是全书最后一章（共${finalChapter}章），正文必须完成四件事：
+1. 主线终局：本书核心冲突当章出最终结果（反派阵营覆灭/伏法/清算，主角核心目标达成），不得留「下一卷再说」的尾巴；
+2. 兑现在册承诺（择要场面化）：${openPromises.length > 0 ? `在册 open 承诺中挑与主线终局最相关的 2-3 条用具体场面兑现（对话/动作/在场者反应），其余用一句终局总括交代（如「余案尽结/各得其所」）——禁止逐条罗列成清单。在册承诺：${openPromises.slice(0, 5).join('')}${openPromises.length > 5 ? ` 等${openPromises.length}条` : ''}` : '（当前无在册 open 承诺）'}；
+3. 回收在册伏笔（择要）：${openForeshadows.length > 0 ? `最重要的伏笔用场面回收，次要的并入终局总括——${openForeshadows.slice(0, 5).join('')}` : '（当前无在册未回收伏笔）'}；
+4. 终局回响与收束句：主要角色结局用 1-2 个具体场景交代（归宿/地位/关系落点），世界新秩序一句话立起；章尾必须是全书收束句（尘埃落定/天下大定/新秩序类），禁止抛出新悬念、新危机、新钩子——末章结尾是句号不是问号。
+【反速通铁律】重头戏（反派伏法/终极对决/主角清算登顶）必须写成具体场面——有人物在场、有对话与动作、有旁观者反应；禁止用「数日后一切尘埃落定」「随后各案陆续了结」类大纲式旁白把重头戏一笔带过（2026-10-08 首版实证：清单一章塞 37 条承诺 → 读者裁判判「大纲式旁白速通」64 分弃读）。`.trim();
+      console.info(`[repair] 第${n}章注入完本收束硬约束（open承诺${openPromises.length}/伏笔${openForeshadows.length}）`);
+    } else if (finalChapter > 0 && n >= finalChapter - 2 && n < finalChapter) {
+      const isPenultimate = n === finalChapter - 1;
+      chapter.outline = `${chapter.outline ?? ''}\n【收束段】本章已进入全书最后三章：开始收拢线索、清算次要反派、兑现积压的承诺与伏笔；禁止再开任何新的长线悬念或新冲突——为末章的完本收束腾出空间。${isPenultimate
+        ? '\n【末章前哨分工】下一章（末章）只承载：终极对决+终局回响+全书收束句。因此本章必须把其余收束工作全部写足写透——京城/中枢的清算与册封、新秩序确立（立制/改制/面圣）、主要配角的结局交代，全部用完整场面（对话/动作/在场反应）呈现，禁止留到末章、禁止大纲式旁白速通（末章单章装不下全部收束——r19 终章两轮实证：清算挤进末章必然走马观花被读者弃读）。'
+        : ''}`.trim();
+      console.info(`[repair] 第${n}章注入收束段铺垫${isPenultimate ? '（末章前哨分工）' : ''}`);
+    }
   }
 
   // ---- 2) 逐章补写（升序，空章走 isEmptyRewrite 全链含判官门禁）----
   const writeStoreBack = (memoriesFallback: typeof project.chapterMemories): void => {
     let memories = memoriesFallback ?? [];
+    // 台账回读（2026-10-07 r19 relay 断链实证）：saveLedger→applyFactLedger 只改
+    // pinia currentProject，session/repair 两层 project 副本都不带——落盘必须
+    // 与记忆一起从 pinia 回读，否则 store 的 numericLedger/timePromises 永远
+    // 停留在补写开始前的旧账（relay 40+ 章出账全部滞留内存丢失的根因）
+    let numericLedger = project.numericLedger;
+    let timePromises = project.timePromises;
     try {
       const store = useProjectStore();
       const current = store.currentProject as Project | null;
       if (current?.chapterMemories?.length) memories = current.chapterMemories;
+      if (current?.numericLedger?.length) numericLedger = current.numericLedger;
+      if (current?.timePromises?.length) timePromises = current.timePromises;
     } catch {
-      /* pinia 读回失败时保留原记忆表 */
+      /* pinia 读回失败时保留原记忆表与旧账 */
     }
-    const projectOut = { ...project, chapters, chapterMemories: memories } as unknown as Record<string, unknown>;
+    const projectOut = {
+      ...project,
+      chapters,
+      chapterMemories: memories,
+      numericLedger,
+      timePromises,
+    } as unknown as Record<string, unknown>;
     writeProjectBack(root, projectOut);
     if (!existsSync(`${options.storePath}.bak`)) {
       copyFileSync(options.storePath, `${options.storePath}.bak`);

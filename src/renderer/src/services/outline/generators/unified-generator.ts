@@ -203,6 +203,17 @@ export function parseMaxTokensCapError(error: unknown): number | null {
   return 0;
 }
 
+/**
+ * 以厂商生成参数为底、覆盖指定字段，并补全 AIGenerationConfig 的必填项。
+ * 缺省值与请求层兜底口径一致（temperature 0.7 / topP 0.9），写回配置不改变既有请求语义。
+ */
+function withGenerationDefaults(
+  base: AIGenerationConfig | undefined,
+  patch: Partial<AIGenerationConfig>,
+): AIGenerationConfig {
+  return { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0, ...base, ...patch };
+}
+
 function matchesDefaultModelSelection(
   provider: {
     id: string;
@@ -729,7 +740,7 @@ export class UnifiedOutlineGenerator {
             effectiveOptions = { ...effectiveOptions, temperature: allowedTemperature };
             effectiveConfig = {
               ...effectiveConfig,
-              generationConfig: { ...effectiveConfig.generationConfig, temperature: allowedTemperature },
+              generationConfig: withGenerationDefaults(effectiveConfig.generationConfig, { temperature: allowedTemperature }),
             };
           } else {
             const original = effectiveConfig.generationConfig?.maxTokens ?? 0;
@@ -741,7 +752,7 @@ export class UnifiedOutlineGenerator {
             this.rememberProviderMaxTokensCap(effectiveConfig, fallback);
             effectiveConfig = {
               ...effectiveConfig,
-              generationConfig: { ...effectiveConfig.generationConfig, maxTokens: fallback },
+              generationConfig: withGenerationDefaults(effectiveConfig.generationConfig, { maxTokens: fallback }),
             };
           }
         }
@@ -967,6 +978,8 @@ export class UnifiedOutlineGenerator {
   }
 
   private getAIConfig(): {
+    /** 厂商配置 id：写回网关约束时按 id 精确定位，不能用 apiKey（多配置可能共用同一 key） */
+    providerId: string;
     provider: ProviderType;
     apiKey: string;
     baseUrl: string;
@@ -995,6 +1008,7 @@ export class UnifiedOutlineGenerator {
     }
 
     return {
+      providerId: providerConfig.id,
       provider: providerConfig.provider as ProviderType,
       apiKey: providerConfig.apiKey,
       baseUrl: providerConfig.baseUrl || getBaseUrl(providerConfig.provider as ProviderType),
@@ -1008,18 +1022,17 @@ export class UnifiedOutlineGenerator {
    * 让后续请求直接用正确值，不再每次靠 400 降级重试。写失败只告警不影响主流程。
    */
   private rememberProviderMaxTokensCap(
-    config: { apiKey: string; generationConfig?: AIGenerationConfig },
+    config: { providerId: string; generationConfig?: AIGenerationConfig },
     cappedMaxTokens: number,
   ): void {
     try {
       const settingsStore = useSettingsStore();
-      const target = settingsStore.aiProviders.find(item => item.apiKey === config.apiKey);
+      const target = settingsStore.aiProviders.find(item => item.id === config.providerId);
       if (!target) return;
       target.maxTokens = cappedMaxTokens;
-      target.generationConfig = {
-        ...target.generationConfig,
+      target.generationConfig = withGenerationDefaults(target.generationConfig, {
         maxTokens: cappedMaxTokens,
-      };
+      });
     } catch (error) {
       console.warn(
         `[UnifiedOutlineGenerator] 记录网关输出上限失败（不影响本次请求）：`,
@@ -1033,17 +1046,14 @@ export class UnifiedOutlineGenerator {
    * 后续请求不再每次先吃一个 400。写失败只告警不影响主流程。
    */
   private rememberProviderTemperatureLock(
-    config: { apiKey: string; generationConfig?: AIGenerationConfig },
+    config: { providerId: string; generationConfig?: AIGenerationConfig },
     temperature: number,
   ): void {
     try {
       const settingsStore = useSettingsStore();
-      const target = settingsStore.aiProviders.find(item => item.apiKey === config.apiKey);
+      const target = settingsStore.aiProviders.find(item => item.id === config.providerId);
       if (!target) return;
-      target.generationConfig = {
-        ...target.generationConfig,
-        temperature,
-      };
+      target.generationConfig = withGenerationDefaults(target.generationConfig, { temperature });
     } catch (error) {
       console.warn(
         `[UnifiedOutlineGenerator] 记录网关温度约束失败（不影响本次请求）：`,

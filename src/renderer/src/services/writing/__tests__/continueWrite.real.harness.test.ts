@@ -129,8 +129,9 @@ describe.skipIf(!isRealAiEnabled())('continueWrite REAL AI · Pipeline 正式路
       // eslint-disable-next-line no-console
       console.log(`[REAL_AI] prose.tail=\n${output.prose.slice(-300)}`);
     },
-    // 与 realStructuredAI 单请求超时（30min）对齐，hung request 不会先撞测试超时
-    1_800_000
+    // 与 realStructuredAI 单请求超时（30min）对齐，hung request 不会先撞测试超时；
+    // MOLIU_TEST_TIMEOUT_MIN 可放宽（分钟），多章慢厂商/网关竞争时必设
+    Number(process.env.MOLIU_TEST_TIMEOUT_MIN || 30) * 60_000
   );
 });
 
@@ -246,6 +247,8 @@ describe.skipIf(!isRealMultiEnabled())('continueWrite REAL AI · 多章批量续
         expect(item.output.longFormResult!.commit.status).toBe('accepted');
       }
     },
-    1_800_000
+    // 2026-10-05 实证：20 章在网关竞争下 ~10min/章，硬编码 30min 在 ch3 杀死整跑。
+    // 默认 30min，MOLIU_TEST_TIMEOUT_MIN 放宽（与 storyflow 大循环墙钟同口径）
+    Number(process.env.MOLIU_TEST_TIMEOUT_MIN || 30) * 60_000
   );
 });

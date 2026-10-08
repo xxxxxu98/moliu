@@ -36,8 +36,38 @@ function jaccard(a, b) {
   return inter / (a.size + b.size - inter || 1);
 }
 
+// ---- 2026-10-05 新增三族的正文侧确定性扫描（数字漂移/时间标记/生理节律）----
+// 离线预检是分析工具不是运行时门禁，允许宽词面网；判定仍由 AI 通读结合语境做。
+const NUM_TOKEN_RE =
+  /([0-9]+(?:\.[0-9]+)?|[一二三四五六七八九十百千万零]{1,8})(万|亿)?(吨|千米|公里|米|公斤|千克|克|斤|两|石|亩|岁|年|天|日|小时|时辰|刻钟|次|届|名|人|个|只|头|条|艘|辆|箱|倍|折|成|点|信用点|学分|灵币|金币|银币)/g;
+const CURRENCY_UNITS = new Set(['信用点', '学分', '灵币', '金币', '银币', '两', '石']);
+// 漂移报告只收敏感单位（金额/重量/倍数/时长/年龄）：只/头/个/次/条等通用量词
+// 的多值是正常场景描写，列出来全是噪音（2026-10-05 首跑实证 16 单位大半无用）
+const SENSITIVE_DRIFT_UNITS = new Set([
+  '吨', '斤', '公斤', '千克', '克', '万', '亿', '倍', '折', '成',
+  '年', '个月', '月', '天', '日', '小时', '时辰', '刻钟', '岁', '点',
+  ...CURRENCY_UNITS,
+]);
+const TIME_MARKER_RE =
+  /(次日|翌日|当夜|当晚|深夜|半夜|凌晨|黎明|清晨|清晨|黄昏|傍晚|入夜|当日|[一二三四五六七八九十\d]+\s*(?:个?天|日|小时|时辰)(?:后|内|之?[前后])?)/g;
+const PHYSIO_RE =
+  /(吃饭|进餐|用餐|吃了|啃[了口个]|扒[了口]饭|馒头|面包|泡面|食堂|早餐|早饭|午饭|晚饭|晚餐|宵夜|喝[水了一口]|水壶|水杯|饥饿|饿得|肚子叫|睡[觉一二个得着]|入睡|补眠|打盹|困意|哈欠|洗漱|梳洗|擦拭|擦把脸|疲惫|疲劳|歇[了口下]|喘息|旧伤|伤口|换药|包扎)/;
+
+function scanChapterExtras(body) {
+  const numericTokens = [];
+  let m;
+  NUM_TOKEN_RE.lastIndex = 0;
+  while ((m = NUM_TOKEN_RE.exec(body)) !== null) {
+    numericTokens.push({ raw: m[0], value: m[1], unit: m[3], ctx: body.slice(Math.max(0, m.index - 10), m.index + m[0].length + 4).replace(/\s/g, '') });
+  }
+  const timeMarkers = [...new Set((body.match(TIME_MARKER_RE) || []).map(s => s.trim()))];
+  const physioHits = (body.match(new RegExp(PHYSIO_RE.source, 'g')) || []).length;
+  return { numericTokens, timeMarkers, physioHits };
+}
+
 function analyzeChapter(file, raw) {
   const body = chapterBody(raw);
+  const extras = scanChapterExtras(body);
   const paras = body.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
   const lens = paras.map(p => p.replace(/\s/g, '').length);
   const mean = lens.reduce((a, b) => a + b, 0) / (lens.length || 1);
@@ -76,6 +106,9 @@ function analyzeChapter(file, raw) {
     narrativeWallRatio: Number(narrativeWallRatio.toFixed(2)),
     sceneChunks: body.split(SCENE_BREAK).map(s => s.trim()).filter(Boolean).length,
     aiWords,
+    numericTokens: extras.numericTokens,
+    timeMarkers: extras.timeMarkers,
+    physioHits: extras.physioHits,
     head: body.slice(0, 150),
     tail: body.slice(-200),
   };
@@ -117,10 +150,57 @@ function parseOutlineNodes(outlineText) {
 }
 
 function runChecks(dir) {
-  const report = { generatedAt: new Date().toISOString(), dir, chapters: [], hookIssues: [], nodeLeaks: [], boundaryOverlaps: [], aiWordTotals: {} };
+  const report = { generatedAt: new Date().toISOString(), dir, chapters: [], hookIssues: [], nodeLeaks: [], boundaryOverlaps: [], aiWordTotals: {}, numericDriftSuspects: [], physioZeros: [], timeMarkerTable: [] };
   const files = listChapterFiles(dir);
   const chapters = files.map(f => analyzeChapter(f, fs.readFileSync(path.join(dir, f), 'utf8')));
   report.chapters = chapters.map(({ head, tail, ...rest }) => rest);
+
+  // ---- 数字漂移候选（2026-10-05 都市文书审实证：债务 30万/300万/30万三说、
+  // 蛮牛两吨/三十吨）：同单位出现多个不同数值 → 列成事实表交 AI 通读复核。
+  // 货币类单位一律列出（金额漂移读者最敏感）；其他单位数值比 ≥2 才列。
+  const byUnit = new Map();
+  for (const c of chapters) {
+    for (const t of c.numericTokens || []) {
+      if (!byUnit.has(t.unit)) byUnit.set(t.unit, []);
+      byUnit.get(t.unit).push({ ch: c.file, value: t.value, ctx: t.ctx });
+    }
+  }
+  const parseNum = v => {
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+    const cn = { 零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+    if (/^[十百千万零一两二三四五六七八九]+$/.test(v)) {
+      // 简化中文数字解析（十/百/千/万 量级），预检用途足够
+      let total = 0, current = 0;
+      for (const ch of v) {
+        if (ch in cn) { current = cn[ch]; if (ch === '十') { total += (current || 1) * 10; current = 0; } }
+        else if (ch === '十') { total += (current || 1) * 10; current = 0; }
+        else if (ch === '百') { total += (current || 1) * 100; current = 0; }
+        else if (ch === '千') { total += (current || 1) * 1000; current = 0; }
+        else if (ch === '万') { total = (total + current) * 10000; current = 0; }
+      }
+      return total + current;
+    }
+    return NaN;
+  };
+  for (const [unit, tokens] of byUnit) {
+    const values = [...new Set(tokens.map(t => t.value))];
+    if (values.length < 2) continue;
+    const nums = values.map(parseNum).filter(Number.isFinite);
+    const spread = nums.length >= 2 ? Math.max(...nums) / Math.min(...nums) : 1;
+    if ((CURRENCY_UNITS.has(unit) || spread >= 2) && SENSITIVE_DRIFT_UNITS.has(unit)) {
+      report.numericDriftSuspects.push({
+        unit,
+        values: tokens.map(t => `${t.ch}:${t.value}${unit}「${t.ctx.slice(0, 24)}」`),
+      });
+    }
+  }
+
+  // ---- 生理节律覆盖：零命中章清单（主角活人感体检）----
+  report.physioZeros = chapters.filter(c => (c.physioHits || 0) === 0).map(c => c.file);
+
+  // ---- 时间标记表：每章的显式时间词（时间流逝可感知性体检）----
+  report.timeMarkerTable = chapters.map(c => ({ ch: c.file, markers: c.timeMarkers || [] }));
 
   // 章界重演:上一章结尾 vs 本章开头 bigram 相似度
   for (let i = 1; i < chapters.length; i += 1) {
@@ -213,6 +293,14 @@ function printSummary(r) {
   const aiSorted = Object.entries(r.aiWordTotals).sort((a, b) => b[1] - a[1]).slice(0, 10);
   console.log(`AI词频Top10: ${aiSorted.map(([w, n]) => `${w}x${n}`).join(' ') || '(无)'}`);
   console.log(`场景切分形态(每章块数): ${sceneShape.join(',')}`);
+  // ---- 2026-10-05 三族新检查 ----
+  console.log(`数字漂移候选(同单位多值,交AI复核): ${(r.numericDriftSuspects || []).length} 个单位`);
+  for (const d of (r.numericDriftSuspects || []).slice(0, 10)) {
+    console.log(`  [${d.unit}] ${d.values.length} 处: ${d.values.slice(0, 6).join(' | ')}${d.values.length > 6 ? ' ...' : ''}`);
+  }
+  const zeroTime = (r.timeMarkerTable || []).filter(t => (t.markers || []).length === 0).map(t => t.ch);
+  console.log(`生理节律零锚点章: ${(r.physioZeros || []).length}/${written.length}${(r.physioZeros || []).length ? ' -> ' + r.physioZeros.join(' ') : ''}`);
+  console.log(`零时间标记章: ${zeroTime.length}/${written.length}${zeroTime.length ? ' -> ' + zeroTime.join(' ') : ''}`);
 }
 
 function diffReports(oldR, newR) {
