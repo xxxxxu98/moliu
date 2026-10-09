@@ -173,6 +173,8 @@ export interface GeneratedChapter {
   CBN?: string;            // 章节起点
   CPNs?: string[];         // 推进节点
   CEN?: string;            // 章节终点
+  /** 章内节拍；旧章纲缺失时不要求 */
+  sceneBeats?: string[];
   mustCover?: string[];    // 必须覆盖节点
   forbiddenZones?: string[]; // 本章禁区
   timeSpan?: string;       // 章节时长

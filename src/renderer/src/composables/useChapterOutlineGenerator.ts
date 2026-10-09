@@ -183,6 +183,8 @@ export interface GeneratedChapter {
   CPNs?: string[];
   /** 章节终点 (CEN) */
   CEN?: string;
+  /** 章内节拍（4-6 步）；旧章纲可以没有 */
+  sceneBeats?: string[];
   /** 必须覆盖节点（≤4个）*/
   mustCover?: string[];
   /** 本章禁区（≤5条）*/
@@ -488,6 +490,7 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
           CBN: chapter.CBN,
           CPNs: chapter.CPNs,
           CEN: chapter.CEN,
+          sceneBeats: chapter.sceneBeats,
           mustCover: chapter.mustCover,
           forbiddenZones: chapter.forbiddenZones,
           timeSpan: chapter.timeSpan,
@@ -567,6 +570,7 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
               chapter.CBN ? `【CBN】${chapter.CBN}` : '',
               chapter.CPNs?.length ? `【CPNs】${chapter.CPNs.join('\n')}` : '',
               chapter.CEN ? `【CEN】${chapter.CEN}` : '',
+              chapter.sceneBeats?.length ? `【节拍】${chapter.sceneBeats.join('\n')}` : '',
               chapter.mustCover?.length ? `【必须覆盖】${chapter.mustCover.join('、')}` : '',
               chapter.forbiddenZones?.length ? `【禁区】${chapter.forbiddenZones.join('、')}` : '',
             ].filter(Boolean).join('\n');

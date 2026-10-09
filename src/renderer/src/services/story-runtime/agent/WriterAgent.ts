@@ -39,6 +39,7 @@ import {
   renderVocabularyRules,
   type VocabularyTier,
 } from '../proseRules';
+import { renderSceneBeatLines } from '../creativeCompass';
 import { MAX_WORD_THRESHOLD, MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
 
 export interface WriterAgentStepInput {
@@ -66,6 +67,8 @@ export interface WriterAgentStepInput {
   characterTitleAnchors?: Array<{ name: string; title: string }>;
   /** 词汇档位（全书唯一）：改稿 brief 与起草同一口径，防改稿把术语密度改飘 */
   vocabularyTier?: VocabularyTier;
+  /** 已渲染的创作罗盘。空串不注入 */
+  creativeCompass?: string;
 }
 
 export interface WriterAgentStepResult extends ChapterReviewOutcome {
@@ -150,11 +153,14 @@ export function buildWriterBrief(input: WriterAgentStepInput, toolkit: AgentTool
   const previousEnding = (input.previousChapterEnding ?? '').trim().slice(-200);
 
   return [
+    ...((input.creativeCompass ?? '').trim() ? [input.creativeCompass?.trim() ?? '', ''] : []),
     '你是这部连载长篇的责编兼改稿作者。本章初稿已写好但未通过审查,你要把它改到通过,而不是重新写一本。',
+    '改稿时按章内节拍补进对话和动作。不要把开场改成已经完成的结果，也不要用临时道具把章末悬念当场拆掉。',
     '你能直接读稿、局部改稿、整章重写、跑与提交门禁完全相同的审查,也能查状态库/旧章原文核实事实。',
     '落库的正文只会是最后一次通过审查的版本:改完不复检等于白改。',
     '',
     `【本章合同】第${chapter.chapterNumber}章《${chapter.title}》`,
+    ...renderSceneBeatLines(chapter.sceneBeats),
     `- 目标:${chapter.goal}`,
     `- 开场(CBN):${chapter.CBN}`,
     `- 推进(CPN):${chapter.CPNs.join(';')}`,

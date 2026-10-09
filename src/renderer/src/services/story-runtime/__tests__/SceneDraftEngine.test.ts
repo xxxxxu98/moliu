@@ -745,7 +745,7 @@ describe('黄金三章专用规则注入', () => {
     expect(request.system).toContain('【第一章·主角人设】');
     expect(request.system).toContain('【第一章·开场钩子】');
     expect(request.system).toContain('【第一章·金手指露出】');
-    expect(request.system).toContain('前 30% 篇幅内必须建立');
+    expect(request.system).toContain('只能嵌在正在发生的动作和对白里');
     expect(request.system).toContain('前 3 段内必须出现');
     // 不应包含第二章或第三章的规则
     expect(request.system).not.toContain('【第二章·');
@@ -852,7 +852,7 @@ describe('黄金三章专用规则注入', () => {
 
       const request = generate.mock.calls[0][0] as { system: string };
       expect(request.system).toContain('【开篇段落强制短促】');
-      expect(request.system).toContain('中位数目标35-40字');
+      expect(request.system).toContain('80～180');
       expect(request.system).toContain('连续叙述段≤2段');
       expect(request.system).toContain('对话占比≥35%');
     });

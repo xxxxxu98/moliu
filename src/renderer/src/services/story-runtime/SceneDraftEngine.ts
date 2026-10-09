@@ -13,6 +13,7 @@ import { CHAPTER_TITLE_PROMPT_RULES, normalizeGeneratedChapterTitle } from '@/se
 import { MAX_WORD_THRESHOLD, MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
 import { renderStatusRules } from '@/services/writing/stateLedger';
 
+import { renderSceneBeatLines } from './creativeCompass';
 import {
   CHAPTER_STRUCTURE_RULES,
   CHAPTER_STYLE_RULES,
@@ -265,6 +266,10 @@ export interface SceneDraftOptions {
    * 缺省 balanced；规则永远注入，只有宽严之分（详见 proseRules.renderVocabularyRules）。
    */
   vocabularyTier?: VocabularyTier;
+  /** 章内节拍。缺省时仍按合同里的 CBN/CPN/CEN 写 */
+  sceneBeats?: string[];
+  /** 已渲染的创作罗盘。空串不注入 */
+  creativeCompass?: string;
 }
 
 export class SceneDraftEngine {
@@ -313,7 +318,7 @@ export class SceneDraftEngine {
             `- 低于 ${minWordCount} 或高于 ${maxWordCount} 都视为不合格草稿`,
             `- 【字数硬要求】这是整章 single-shot 起草，必须落在 ${minWordCount}–${maxWordCount} 字，理想落点 ${targetWordCount}±10%。写不够会触发补字（补出来的段落看不到全书上下文，极易与本章事实冲突并导致整章重写）；写超上限会触发压缩改写（浪费预算，且压缩稿质量低于一次成型——2026-09-29 reg20 实测：单边强调写够下限导致模型系统性超写 ~30%，三章压缩后仍 3600–4100/上限 3540）。按节拍预算控制篇幅：对话、动作、感官细节按需展开，注水与干瘪都不要`,
             `- 禁止无意义注水、重复开场、把同一事件换措辞再写一遍；也禁止把一章写成远超目标的长文`,
-            `- 分段：基准 1～3 句一段（多数 20～90 字，市场主流章节段长中位约 40 字），关键台词/动作/反转可一句话独立成段；忌超长大段堆砌`,
+            '- 分段：关键台词、关键动作、反转可以单独成段；一段连续动作可以写成 80～180 字，超过约 220 字再拆。禁止把一个动作切成等长的一句一段',
           ]
         : [];
     // 角色名白名单：从完整角色库提取（未被 context 压缩筛选），约束模型只用已登记角色名，
@@ -485,7 +490,9 @@ export class SceneDraftEngine {
       purpose: 'scene-draft',
       schemaName: 'SceneDraft',
       system: [
-        '你是长篇小说整章写作引擎。严格服从合同、状态和章节大纲节点，不得采用预检失败的候选事件。',
+        ...((options?.creativeCompass ?? '').trim() ? [options?.creativeCompass?.trim() ?? ''] : []),
+        '你是长篇小说的场景作者。按章内节拍把这场戏演完：开场是已经在进行、还没见分晓的动作，后文顺着因果往下写。合同节点是场面顺序，不是待勾选的清单。不得采用预检失败的候选事件。',
+        ...renderSceneBeatLines(options?.sceneBeats),
         '只输出一个 JSON 对象，不要 Markdown 代码块，不要解释。',
         'JSON 字段必须为：',
         `{"sceneId":"${expectedSceneId}","beatId":"${primaryBeat.id}","chapterTitle":"短标题","paragraphs":["段落1","段落2"],"candidateEvents":[{"id":"..."}]}`,

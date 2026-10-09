@@ -222,6 +222,11 @@ export interface ChapterBlueprint {
   CBN: string;
   CPNs: string[];
   CEN: string;
+  /**
+   * 章内节拍：4-6 个按因果排列的场面步骤。
+   * 旧书没有该字段时不补、不因此判不完整。
+   */
+  sceneBeats?: string[];
   mustCover: string[];
   forbiddenZones: string[];
   hookType: string;

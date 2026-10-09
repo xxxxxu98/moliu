@@ -134,7 +134,7 @@ describe('renderGoldenChapterRules', () => {
     expect(text).toContain('【第一章·主角人设】');
     expect(text).toContain('【第一章·开场钩子】');
     expect(text).toContain('【第一章·金手指露出】');
-    expect(text).toContain('前 30% 篇幅');
+    expect(text).toContain('只能嵌在正在发生的动作和对白里');
     expect(text).toContain('前 3 段内');
   });
 
@@ -177,7 +177,7 @@ describe('renderGoldenChapterRules', () => {
       expect(text).toContain('【节奏密度】');
       expect(text).toContain('【爽点前置】');
       expect(text).toContain('【开篇段落强制短促】');
-      expect(text).toContain('中位数目标35-40字');
+      expect(text).toContain('80～180');
       expect(text).toContain('对话占比≥35%');
     }
   });
@@ -211,8 +211,9 @@ describe('GOLDEN_CHAPTER_CONSTRAINTS', () => {
   });
 
   it('定义了段落长度目标', () => {
-    expect(GOLDEN_CHAPTER_CONSTRAINTS.targetParagraphLength.median).toBe(40);
-    expect(GOLDEN_CHAPTER_CONSTRAINTS.targetParagraphLength.p75).toBe(60);
+    expect(GOLDEN_CHAPTER_CONSTRAINTS.targetParagraphLength.median).toBe(80);
+    expect(GOLDEN_CHAPTER_CONSTRAINTS.targetParagraphLength.p75).toBe(180);
+    expect(GOLDEN_CHAPTER_CONSTRAINTS.targetParagraphLength.splitAt).toBe(220);
   });
 
   it('定义了钩子强度要求', () => {

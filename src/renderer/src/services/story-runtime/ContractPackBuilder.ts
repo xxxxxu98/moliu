@@ -158,6 +158,9 @@ export class ContractPackBuilder {
       CBN: normalized.CBN,
       CPNs: normalized.CPNs,
       CEN: normalized.CEN,
+      ...(node?.sceneBeats && node.sceneBeats.length > 0
+        ? { sceneBeats: node.sceneBeats.map(item => item.trim()).filter(Boolean).slice(0, 6) }
+        : {}),
       mustCover: normalized.mustCover,
       forbidden: unique([
         ...master.forbidden,

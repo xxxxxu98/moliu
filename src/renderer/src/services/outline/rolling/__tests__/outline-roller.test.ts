@@ -756,4 +756,27 @@ describe('inspectRolledBlueprintQuality / findBlueprintRepetition', () => {
       ),
     ).toBe(false);
   });
+
+  it('没有节拍的旧蓝图不因此记缺陷；概要复读 CBN、节拍步数不足要记', () => {
+    const legacy = bpFrom(`### 第70章
+- 标题：夜审账本惊变
+- 概要：三更对完旧账，主簿带人围住库房，章末禁军影子已经压到门口。
+- CBN：三更灯下账页缺角70
+- CPNs：比对旧账发现缺口；主簿带人围库房
+- CEN：禁军影子压到门口
+- mustCover：查清军资缺口
+- 禁区：不得揭示玉印来历`, 70);
+    expect(inspectRolledBlueprintQuality(legacy)).toEqual([]);
+
+    const echoed = { ...legacy, summary: legacy.CBN };
+    expect(inspectRolledBlueprintQuality(echoed).some(issue => issue.kind === 'summary-echoes-cbn')).toBe(true);
+
+    const thin = {
+      ...legacy,
+      sceneBeats: ['三更灯下账页缺角70', '他合上账本'],
+    };
+    const thinIssues = inspectRolledBlueprintQuality(thin);
+    expect(thinIssues.some(issue => issue.kind === 'thin-scene-beats')).toBe(true);
+    expect(thinIssues.some(issue => issue.kind === 'beat-echoes-cbn')).toBe(true);
+  });
 });

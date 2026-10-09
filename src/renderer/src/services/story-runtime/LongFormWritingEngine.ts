@@ -39,6 +39,7 @@ import { SceneDraftEngine } from './SceneDraftEngine';
 import type { WriterAgentStep } from './agent/WriterAgent';
 import type { ChapterReviewOutcome } from './agent/WriterToolkit';
 import { sanitizeSceneDraftParagraphs } from './stripDraftLeakage';
+import { buildInPlaceExpandPrompt, IN_PLACE_EXPAND_SCHEMA } from './inPlaceExpand';
 import {
   buildCondensePrompt,
   buildSupplementPrompt,
@@ -795,6 +796,7 @@ export class LongFormWritingEngine {
         characterTitleAnchors: collectCharacterTitleAnchors(input.state),
         // 词汇档位（全书唯一）：改稿与起草同一口径，防改稿回合把术语密度改飘
         vocabularyTier: writeInput.vocabularyTier,
+        creativeCompass: writeInput.creativeCompass,
       });
       drafts = outcome.drafts;
       facts = outcome.facts;
@@ -926,6 +928,8 @@ export class LongFormWritingEngine {
           stateCard: input.stateCard,
           // 词汇档位（全书唯一）：起草与改稿同一口径（proseRules SSOT 渲染）
           vocabularyTier: writeInput.vocabularyTier,
+          sceneBeats: contracts.chapter.sceneBeats,
+          creativeCompass: writeInput.creativeCompass,
           futureReveals: contracts.chapter.futureReveals ?? [],
           // 大纲链路的章节标题已是正式标题，模型再拟一个也会被 pipeline 丢弃
           existingChapterTitle: isPlaceholderChapterTitle(contracts.chapter.title)
@@ -1031,11 +1035,8 @@ export class LongFormWritingEngine {
   }
 
   /**
-   * 字数归一：超长走 AI 整章压缩改写（文气统一）；偏短走 append-only 补字（在初稿末尾
-   * 续写增量，不重写既有段落，文气衔接优于整章重写压缩）。二者对称：
-   * - 超 long → 整章压缩（保留情节、压缩冗余）
-   * - 偏 short → 追加续写（保留既有正文、补足篇幅）
-   * 补字失败（网络/解析）时保留初稿不抛错，与超长压缩失败「回退原文」对称。
+   * 字数归一：超长走 AI 整章压缩；偏短先把全文放回上下文扩写一次，仍短再 append-only 补字。
+   * 字数上限不变。扩写失败或没有变长时保留初稿，再走补字。
    */
   private async padDraftsToTarget(
     drafts: SceneDraft[],
@@ -1056,9 +1057,95 @@ export class LongFormWritingEngine {
       return this.trimDraftsIfOverTarget(nextDrafts, input);
     }
     if (bounds.status === 'short') {
-      return this.padDraftsIfUnderTarget(nextDrafts, input, bounds);
+      const expanded = await this.expandDraftInPlace(nextDrafts, input);
+      const expandedBounds = checkWordCountBounds(draftsProse(expanded), target);
+      if (expandedBounds.status === 'over') {
+        return this.trimDraftsIfOverTarget(expanded, input);
+      }
+      if (expandedBounds.status === 'short') {
+        return this.padDraftsIfUnderTarget(expanded, input, expandedBounds);
+      }
+      return expanded;
     }
     return nextDrafts;
+  }
+
+  /**
+   * 偏短时先整章扩写一次：已有全文留在上下文里，只在原情节内补场面。
+   * 没变长、解析失败或异常膨胀时退回原文，交给后面的 append-only 补字。
+   */
+  private async expandDraftInPlace(
+    drafts: SceneDraft[],
+    input: LongFormWriteInput,
+  ): Promise<SceneDraft[]> {
+    const target = input.targetWordCount ?? 0;
+    if (target <= 0 || drafts.length === 0) return drafts;
+    const original = draftsProse(drafts);
+    const bounds = checkWordCountBounds(original, target);
+    if (bounds.status !== 'short') return drafts;
+    const beats = [
+      ...(input.contracts.chapter.sceneBeats ?? []),
+      input.contracts.chapter.CBN,
+      ...(input.contracts.chapter.CPNs ?? []),
+      input.contracts.chapter.CEN,
+    ]
+      .map(item => (typeof item === 'string' ? item.trim() : ''))
+      .filter(Boolean);
+    try {
+      const paragraphs = (await this.dependencies.ai.generate<string[]>({
+        purpose: 'scene-draft',
+        schemaName: IN_PLACE_EXPAND_SCHEMA,
+        system: [
+          '你是长篇小说的场景作者。下面这份稿偏短。在原有情节内部补对话、动作和感官，输出完整章节。',
+          '不要新开支线，不要把已写过的场面换措辞再写一遍，不要把章末悬念当场解释掉。',
+          '只输出一个 JSON 对象：{"paragraphs":["段落1","段落2"]}',
+        ].join('\n'),
+        prompt: buildInPlaceExpandPrompt({
+          paragraphs: drafts.flatMap(draft => draft.paragraphs),
+          target,
+          minWords: bounds.minWords,
+          maxWords: bounds.maxWords,
+          title: input.contracts.chapter.title,
+          beats,
+        }),
+        parse: value => {
+          const record =
+            typeof value === 'object' && value !== null && !Array.isArray(value)
+              ? (value as Record<string, unknown>)
+              : {};
+          const raw = record.paragraphs ?? value;
+          const next = sanitizeSceneDraftParagraphs(
+            Array.isArray(raw)
+              ? raw.filter((item): item is string => typeof item === 'string')
+              : typeof raw === 'string'
+                ? raw.split(/\n{2,}/u)
+                : [],
+          );
+          if (next.length === 0) {
+            throw new Error('整章扩写未返回可用段落');
+          }
+          return next;
+        },
+      })) as string[];
+      const expandedProse = paragraphs.join('\n\n');
+      const hardClampChars = Math.max(12000, target * 8);
+      if (
+        drafts.length !== 1 ||
+        expandedProse.length <= original.length ||
+        expandedProse.length > hardClampChars
+      ) {
+        return drafts;
+      }
+      const first = drafts[0];
+      if (!first) return drafts;
+      return [{ ...first, paragraphs }];
+    } catch (error) {
+      console.warn(
+        '[LongFormWritingEngine] 整章扩写失败，改走末尾补字:',
+        error instanceof Error ? error.message : error,
+      );
+      return drafts;
+    }
   }
 
   /**

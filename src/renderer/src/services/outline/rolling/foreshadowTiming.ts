@@ -23,7 +23,10 @@ export interface RolledBlueprintIssue {
     | 'finale-not-closing'
     | 'finale-arc-division'
     | 'fate-release-check'
-    | 'coolpoint-pacing';
+    | 'coolpoint-pacing'
+    | 'summary-echoes-cbn'
+    | 'thin-scene-beats'
+    | 'beat-echoes-cbn';
   detail: string;
 }
 

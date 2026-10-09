@@ -1046,6 +1046,9 @@ class BloatSupplementAI implements StructuredAI {
         })),
       };
     }
+    if (request.schemaName === 'InPlaceChapterExpand') {
+      return { paragraphs: ['这是第一版草稿。'] };
+    }
     if (request.schemaName === 'SupplementParagraphs') {
       this.bloatedSupplementRounds += 1;
       // 混入 JSON 骨架的巨型输出（模拟实测 32 万字符异常）

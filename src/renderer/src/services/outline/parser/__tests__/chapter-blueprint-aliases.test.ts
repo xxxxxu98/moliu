@@ -45,4 +45,23 @@ describe('chapter blueprint field aliases', () => {
     expect(blueprint.summary).toContain('把案子从县衙捅到了州府');
     expect(blueprint.summary).not.toBe(blueprint.CBN);
   });
+
+  it('节拍按顺序保留，不并进 CPN', () => {
+    const [blueprint] = parseChapterBlueprintSection(`
+### 第2章
+- 标题：钳子停在半空
+- 概要：林巡按着假项圈进了诊室，医生的钳子两次停在锁扣上方，他用壳碎片把视线引开，章末钳子仍悬着，真假没揭晓。
+- CBN：止血钳停在锁扣上方。
+- 节拍：钳子悬在锁扣上，人还没出声；他摸到衣领里的壳碎片；医生的手又抬起来；门外传来第二个人的脚步
+- CPNs：把医生的视线引开
+- CEN：钳子仍悬在锁扣上方。
+`);
+    expect(blueprint.sceneBeats).toEqual([
+      '钳子悬在锁扣上，人还没出声',
+      '他摸到衣领里的壳碎片',
+      '医生的手又抬起来',
+      '门外传来第二个人的脚步',
+    ]);
+    expect(blueprint.CPNs).toEqual(['把医生的视线引开']);
+  });
 });

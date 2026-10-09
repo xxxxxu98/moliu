@@ -201,6 +201,10 @@ export function parseChapterBlueprintSection(section: string): ChapterBlueprint[
         extractAliasedFieldValue(block.body, ['CBN', '章首钩子', '章首动作钩子']) ?? ''
       ).trim();
       const CEN = (extractAliasedFieldValue(block.body, ['CEN', '章尾钩子']) ?? '').trim();
+      const sceneBeats = extractAliasedMultiValueField(block.body, ['节拍', 'sceneBeats'])
+        .map(item => item.replace(/^\s*\d+\s*[.、]\s*/u, '').trim())
+        .filter(Boolean)
+        .slice(0, 6);
       // 标题与 CBN 至少有一个非空，否则视为 AI 写残的空块，丢弃
       if (!title && !CBN) return null;
       const CPNs = compactChapterNodes(
@@ -231,6 +235,7 @@ export function parseChapterBlueprintSection(section: string): ChapterBlueprint[
         CBN,
         CPNs: CPNs.length > 0 ? CPNs : (CBN ? [CBN] : []),
         CEN,
+        ...(sceneBeats.length > 0 ? { sceneBeats } : {}),
         mustCover: mustCover.length > 0 ? mustCover : (CBN ? [CBN] : []),
         forbiddenZones,
         hookType: hookType || 'reveal',
@@ -249,7 +254,7 @@ export function sanitizeHookText(value: string | undefined | null): string | und
   const v = (value ?? '').trim();
   if (!v) return undefined;
   if (/^[-•*·]/u.test(v)) return undefined;
-  if (/^(?:爽点类型|CBN|CEN|CPNs|标题|概要|禁区|mustCover|章尾钩子)\s*[:：]/u.test(v)) return undefined;
+  if (/^(?:爽点类型|CBN|CEN|CPNs|节拍|标题|概要|禁区|mustCover|章尾钩子)\s*[:：]/u.test(v)) return undefined;
   return v;
 }
 

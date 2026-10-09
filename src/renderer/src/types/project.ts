@@ -404,6 +404,10 @@ export interface ChapterStructureNodes {
   mustCover?: string[];
   /** 本章禁区 */
   forbiddenZones?: string[];
+  /**
+   * 章内节拍（4-6 步）。旧大纲没有该字段时写作退回 CBN/CPN/CEN。
+   */
+  sceneBeats?: string[];
   /** 章节时长 */
   timeSpan?: string;
 }
@@ -444,6 +448,8 @@ export interface PlotNode {
   mustCover?: string[];
   /** 本章禁区（≤5条）*/
   forbiddenZones?: string[];
+  /** 章内节拍（4-6 步）。旧节点没有该字段时写作退回 CBN/CPN/CEN */
+  sceneBeats?: string[];
   /** 章节时长 */
   timeSpan?: string;
   /** 章节类型（参考 writing-task.ts）*/

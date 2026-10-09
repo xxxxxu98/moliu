@@ -186,6 +186,8 @@ export interface LegacyOutlineNode {
   CEN?: string;
   mustCover?: string[];
   forbiddenZones?: string[];
+  /** 章内节拍；缺省表示旧大纲，写作退回 CBN/CPN/CEN */
+  sceneBeats?: string[];
 }
 
 export interface LegacyChapterMemory {
@@ -262,6 +264,8 @@ export interface ChapterContract {
   CBN: string;
   CPNs: string[];
   CEN: string;
+  /** 章内节拍。空或缺失时起草仍按 CBN/CPN/CEN */
+  sceneBeats?: string[];
   mustCover: string[];
   forbidden: string[];
   timeAnchor?: string;
@@ -795,6 +799,11 @@ export interface LongFormWriteInput {
    * 规则块数据源——本章必须正面承接至少一条，杜绝悬念开而不接。
    */
   recentChapterCliffhangers?: string[];
+  /**
+   * 创作罗盘（卖点/卷目标/开篇钩子拼成的一页）。
+   * 空串或缺失时不注入，避免把空白块塞进可压缩上下文。
+   */
+  creativeCompass?: string;
 }
 
 export interface LongFormWriteResult {

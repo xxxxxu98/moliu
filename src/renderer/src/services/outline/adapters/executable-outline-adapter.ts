@@ -658,6 +658,9 @@ function toChapters(outline: ExecutableOutline): GeneratedChapter[] {
         CBN: chapter.CBN,
         CPNs: chapter.CPNs,
         CEN: chapter.CEN,
+        ...(chapter.sceneBeats && chapter.sceneBeats.length > 0
+          ? { sceneBeats: chapter.sceneBeats }
+          : {}),
         mustCover: chapter.mustCover,
         forbiddenZones: chapter.forbiddenZones,
         // 写作策略

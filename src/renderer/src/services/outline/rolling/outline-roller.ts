@@ -412,10 +412,11 @@ export function buildRollBlueprintPrompt(params: {
 每章必须严格使用以下结构：
 ### 第N章
 - 标题：${titleMinChars}-${titleMaxChars}字的网文口语标题，要有画面/情绪/钩子，抓住本章最刺激的一点（打脸/翻车/反转/期限/秘密/意外）；禁止只写“第N章”。【超 ${titleMaxChars} 字即为格式错误：先砍修饰语和副词，再砍次要信息，宁可短不可超】
-- 概要：40-80字，用一段话交代本章从哪儿起、中间怎么推、落到什么后果，写给作者看的章纲；必须比 CBN 多出信息量，禁止照抄 CBN/标题
-- CBN：${hookMinChars}-${hookMaxChars}字的章首动作钩子，写开篇 10 秒抓人的瞬间画面或冲突，禁止整章剧情概括
+- 概要：80-180字，写给作者看的章纲：本章从哪一个未完成的动作开始、中间因果怎么推、最后停在什么没揭晓的后果上；必须比 CBN 多出中间过程，禁止与 CBN 或标题相同
+- CBN：${hookMinChars}-${hookMaxChars}字。写本章开场已经在进行、结果还没揭晓的动作（手停在半空、门还没开、刀已经抵上但没刺下去）。禁止把本章结果写成开场（杀死、揭穿、结案、爆炸已经发生、身份已经对调完成），禁止整章剧情概括
 - CPNs：${minimumCpns}-${maximumCpns}个本章必须兑现的推进节点，每条独立可写成一个场面，用中文分号分隔
 - CEN：${hookMinChars}-${hookMaxChars}字章尾悬念，要让读者必须点下一章
+- 节拍：4-6个按因果顺序的场面步骤，用中文分号分隔。每条15-60字，写清谁在做什么、这一步还没揭晓什么。第一步必须是未完成的危险或冲突，不得与 CBN 逐字相同，也不得把本章结果放在第一步。击杀、揭穿、爆炸、结案放在中后段。最后一步停在 CEN 的未决悬念上，不得在同章把悬念解释完
 - mustCover：1-3个本章能完成的具体事件，用中文分号分隔，禁止整卷或全书级目标；每个节点必须以【单章】或【跨章】开头——【单章】=本章内可完整兑现的具象事件；【跨章】=本卷主线级目标、本章只能实质推进（如限期+威胁后果类）。标注是硬约定：跨章节点按「实质推进」验收，单章节点的推进不折算。节点用白描事件句描述，禁止写成公文/告示/官令腔的成文短句（如「限各街坊商铺午时开门纳客」）——正文要转述改写，节点给出这种近乎成文的短句等于逼正文逐字照抄。【证据链措辞】节点只约定「场景内可证实的证据链与结论」（如「以X凭据与Y抄本坐实Z被人为改动、指向W经手」），禁止把「亲口承认/亲手所为/当众认罪」级归责断言写成履约条件——归责断言只有在本章同步安排了对应的认罪/对质/供状场面节点时才可写（2026-09-28 r14 ch39 实证：归责节点把履约口径抬到亲手所为，写手只能产出证据链，未履约判定与节点照抄守卫对挤五连拒成洞）
 - 禁区：1-3条本章不得提前泄露的事项；若某条与本章 mustCover 必然冲突（履约所需的当众揭示/关键帮助），在该条开头加【让路】标记，审核会对该条按履约让路处理
 - 章尾钩子文案：给读者看的一句钩子话术，区别于 CEN 的事件描述
@@ -448,6 +449,7 @@ export function buildRollBlueprintPrompt(params: {
 10. 【禁区相容】mustCover 与禁区不得互斥：若某节点要求本章发生某状态变更（下旨/定谳/圈禁/结案/复职等），对应禁区不得禁止该变更发生；确需保留防泄露约束时，只保护更早阶段的揭示，并在该条禁区开头加【让路】标记——禁止产出让写作端两头违约的合同；
 11. 【伏笔时序锁】「活跃伏笔」清单中埋设时点（「埋设N章」的 N）晚于本批任意章号的伏笔，其核心信息（hint 词面及同义表述）禁止出现在本批任何章的 mustCover/CPN/CEN 中——蓝图要求本章揭示而伏笔规定后章才许揭示时，写作端会被迫两头违约（2026-09-10 glm 200 章实证：第 20 章蓝图要求「笔迹比对定性补账出自行家手笔」，伏笔却锁 22 章揭示，正文三连拒成空洞）。确需铺垫时只可用不触及核心词面的暗痕（物件出现/旁人欲言又止），不得给出定性结论。
    【角色登场锁】「角色名单」中标注【N章前禁登场/禁揭示】的角色，在 N 章之前的批次蓝图禁止安排其出场、行动、被点名揭示身份或成为事件主语——写作端有对应的登场禁令防线，蓝图点名即两头违约成空洞（2026-09-20 g38f r8 实证：ch82 蓝图开篇点名 revealTiming=155 章的角色，正文五连拒成洞）。确需其在位的势力影响时，用其代理人/名义/传闻侧写。
+12. 【节拍与钩子】节拍按因果往下演。CEN 的未决悬念不得被同章另一条节拍、mustCover 或禁区当场取消（例如收尾停在钳子悬在假项圈上，禁区又写不许发现假抑制器，或用临时碎片把钩子当场拆掉）。两条对撞时改其中一条。已经写进节拍的动作，后一步不得用替身、误认或无关道具取消。
 ${renderBlueprintVocabularyRule(base.vocabularyTier)}`,
     user: `【故事定位】\n${base.positioning}\n\n【卷纲锚点】\n${base.volumeAnchor}\n\n【已写进度与收束状态】\n${base.writtenState}${plannedTailSection}${endingSection}${fateLockSection}${fakedDeathSection}${phaseSection}${timeAnchorSection}\n\n【活跃伏笔（埋设→回收）】\n${base.activeForeshadows}\n\n【角色名单】\n${base.characterRoster}${finalBatchSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从“### 第${chapterNumbers[0]}章”开始输出。`,
   };
@@ -457,7 +459,7 @@ ${renderBlueprintVocabularyRule(base.vocabularyTier)}`,
 // 响应解析与轻量门禁
 // ============================================
 
-const BLUEPRINT_FIELD_RE = /^-\s*(标题|概要|CBN|CPNs|CEN|mustCover|禁区|章尾钩子文案|爽点类型)\s*[：:]\s*(.*)$/u;
+const BLUEPRINT_FIELD_RE = /^-\s*(标题|概要|CBN|CPNs|CEN|节拍|mustCover|禁区|章尾钩子文案|爽点类型)\s*[：:]\s*(.*)$/u;
 
 function splitList(raw: string): string[] {
   if (typeof raw !== 'string') return [];
@@ -480,6 +482,7 @@ export function parseBlueprintBlocks(raw: string, requested: number[]): Map<numb
     const title = fields.get('标题') ?? '';
     const CBN = fields.get('CBN') ?? '';
     const CEN = fields.get('CEN') ?? '';
+    const sceneBeats = splitList(fields.get('节拍') ?? '');
     if (!title || !CBN || !CEN) continue;
     result.set(chapterNumber, {
       orderIndex: chapterNumber,
@@ -488,6 +491,7 @@ export function parseBlueprintBlocks(raw: string, requested: number[]): Map<numb
       CBN,
       CPNs: splitList(fields.get('CPNs') ?? ''),
       CEN,
+      ...(sceneBeats.length > 0 ? { sceneBeats } : {}),
       mustCover: splitList(fields.get('mustCover') ?? ''),
       forbiddenZones: splitList(fields.get('禁区') ?? ''),
       hookText: sanitizeHookText(fields.get('章尾钩子文案')),
@@ -496,6 +500,43 @@ export function parseBlueprintBlocks(raw: string, requested: number[]): Map<numb
     });
   }
   return result;
+}
+
+function compactBlueprintText(value: string): string {
+  return value.replace(/\s+/gu, '').replace(/[。！？!?，,、；;：:]/gu, '');
+}
+
+/**
+ * 新蓝图的形状缺陷：概要复读 CBN、节拍步数不在 4-6、第一步与 CBN 逐字相同。
+ * 没有节拍字段的旧蓝图不记缺陷，避免续纲修复轮把旧书整批打回。
+ */
+function collectSceneBlueprintShapeIssues(bp: ChapterBlueprint): RolledBlueprintIssue[] {
+  const issues: RolledBlueprintIssue[] = [];
+  const summary = compactBlueprintText(bp.summary ?? '');
+  const cbn = compactBlueprintText(bp.CBN ?? '');
+  if (summary && cbn && summary === cbn) {
+    issues.push({
+      chapterNumber: bp.orderIndex,
+      kind: 'summary-echoes-cbn',
+      detail: `第${bp.orderIndex}章概要与 CBN 相同，章纲没有额外信息`,
+    });
+  }
+  const beats = (bp.sceneBeats ?? []).map(item => item.trim()).filter(Boolean);
+  if (beats.length > 0 && (beats.length < 4 || beats.length > 6)) {
+    issues.push({
+      chapterNumber: bp.orderIndex,
+      kind: 'thin-scene-beats',
+      detail: `第${bp.orderIndex}章节拍应有 4-6 步，当前 ${beats.length} 步`,
+    });
+  }
+  if (beats.length > 0 && cbn && compactBlueprintText(beats[0] ?? '') === cbn) {
+    issues.push({
+      chapterNumber: bp.orderIndex,
+      kind: 'beat-echoes-cbn',
+      detail: `第${bp.orderIndex}章第一步节拍与 CBN 逐字相同，开场没有往下演`,
+    });
+  }
+  return issues;
 }
 
 /** 轻量门禁：章级字段可用性（不含开书门槛的整本检查） */
@@ -524,7 +565,7 @@ export function inspectRolledBlueprintQuality(
   bp: ChapterBlueprint,
   opts?: { isFinale?: boolean; isPenultimateFinale?: boolean },
 ): RolledBlueprintIssue[] {
-  const issues: RolledBlueprintIssue[] = [];
+  const issues: RolledBlueprintIssue[] = [...collectSceneBlueprintShapeIssues(bp)];
   const overScoped = bp.mustCover.find(node => isCrossChapterGoal(node));
   if (overScoped) {
     issues.push({
@@ -766,6 +807,9 @@ export function blueprintToPlotNode(
     CPNs: normalized.CPNs,
     CEN: normalized.CEN,
     mustCover: normalized.mustCover,
+    ...(blueprint.sceneBeats && blueprint.sceneBeats.length > 0
+      ? { sceneBeats: blueprint.sceneBeats }
+      : {}),
     forbiddenZones: blueprint.forbiddenZones,
     purpose: `CBN: ${normalized.CBN}\nCEN: ${normalized.CEN}`,
   };

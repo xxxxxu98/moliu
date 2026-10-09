@@ -39,6 +39,11 @@ import {
 } from './chapterWritePresets';
 import { TYPESETTING_HARD_RULES } from './typesetting';
 import {
+  extractSceneBeatsFromOutline,
+  findRequiredBeatForbiddenClash,
+  renderCreativeCompass,
+} from '@/services/story-runtime/creativeCompass';
+import {
   VOCABULARY_TIER_LABELS,
   normalizeVocabularyTier,
 } from '@/services/story-runtime/proseRules';
@@ -834,6 +839,13 @@ export class ChapterWritingPipeline {
         chapterText: chapterContractText,
         fulfillmentText: chapterFulfillmentText,
       });
+      const plotNode = (input.project.plotOutline ?? []).find(
+        node =>
+          node.type === 'chapter' &&
+          (node.chapterId === input.chapter.id || node.orderIndex === input.chapter.orderIndex),
+      );
+      const plotBeats = (plotNode?.sceneBeats ?? []).map(item => item.trim()).filter(Boolean);
+      const sceneBeats = (plotBeats.length > 0 ? plotBeats : extractSceneBeatsFromOutline(cleanOutline)).slice(0, 6);
       const outlineNode = {
         id: input.chapter.id,
         title: input.chapter.title,
@@ -845,7 +857,29 @@ export class ChapterWritingPipeline {
         CEN: taskBook?.CEN,
         mustCover: taskBook?.mustCover,
         forbiddenZones: chapterForbiddenZones,
+        ...(sceneBeats.length > 0 ? { sceneBeats } : {}),
       };
+      const beatClash = findRequiredBeatForbiddenClash(
+        [...sceneBeats, taskBook?.CEN ?? ''].filter(Boolean),
+        chapterForbiddenZones,
+      );
+      if (beatClash) {
+        return { ...this.fail(beatClash), taskBook };
+      }
+      const meta = input.project.metadata;
+      const coolPatterns = meta?.coolPointDesign?.patterns?.length
+        ? meta.coolPointDesign.patterns
+        : (input.project.coolPointDesign?.patterns ?? []);
+      const creativeCompass = renderCreativeCompass({
+        volumeObjective: volumePlan?.objective,
+        emotionPrimary: meta?.emotionGoal?.primary ?? input.project.emotionGoal?.primary,
+        sellingPoints: (meta?.coreSellingPoints ?? input.project.coreSellingPoints ?? []).map(item => ({
+          name: item.name,
+          description: item.description,
+        })),
+        coolPoints: coolPatterns.map(item => String(item)).slice(0, 4),
+        openingAnchor: chapterNumber <= 3 ? meta?.startupPack?.openingHook : undefined,
+      });
       const contracts = new ContractPackBuilder().build({
         bootstrap,
         volume: {
@@ -1060,6 +1094,7 @@ export class ChapterWritingPipeline {
         mentionEvidence,
         // 作者正典：起草【作者正典】块 + 判官硬约束
         authorCanon,
+        ...(creativeCompass ? { creativeCompass } : {}),
         // 身份锚（r6 实证角色表赵宣=三皇子恭王被写手降格成刑部主事姻亲）：
         // 本章出场角色的角色卡身份首句，正文身份/地位必须与角色卡一致
         characterIdentityAnchors: collectCharacterIdentityAnchors(

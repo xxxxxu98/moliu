@@ -69,11 +69,10 @@ export const NARRATIVE_MEDIAN_CHARS_THRESHOLD = 120;
 export const NARRATIVE_MIN_COUNT = 8;
 
 /**
- * 叙述段「超一屏」判定字数（墙线）。2026-09-29 按市场收紧 200→160：
- * 市场 #1 书 4 章全章最长段 126-141、零段 >150——200+ 字段按市场口径
- * 定义上不应出现；160 = 市场天花板 +15% 余量，防 fail-closed 误杀。
+ * 叙述段「超一屏」判定字数（墙线）。连续动作段允许写到约 180 字，
+ * 超过约 220 字才算墙：给拆炸弹、对质、追逐留一段完整动作，仍拦住真正的墙段。
  */
-export const NARRATIVE_LONG_CHARS = 160;
+export const NARRATIVE_LONG_CHARS = 220;
 
 /**
  * 叙述段过重第二触发线：>NARRATIVE_LONG_CHARS 的墙占叙述段比例上限。
@@ -92,8 +91,8 @@ export const TYPESETTING_HARD_RULES = `## 【强制】手机网文排版【观�
 读者在手机上滑读，一屏只容得下 2～3 个基准段。**请在生成时直接分好段**——系统后处理不会替你拆段/并段。
 
 ### 硬指标（必须遵守）
-1. **一段一拍**：一段只装一个镜头/动作/信息点，镜头转移、执行者更换、时间推进、感官切换就换段；基准 1～3 句一段（多数 20～90 字——当前市场主流章节段长中位仅约 40 字，短段是常态），关键台词/动作/反转可一句话独立成段
-2. **长段是稀缺的减速手段**：只用在场景真正的蓄力点（全章零星几处），禁止为把一个画面写“全”而撑段；多人同场逐人或分组分段，不把多人压进一段
+1. **一段一拍**：一段只装一个镜头/动作/信息点，镜头转移、执行者更换、时间推进、感官切换就换段；关键台词/动作/反转可一句话独立成段，一段连续动作可以写成 80～180 字
+2. **超过约 220 字再拆**：连续动作可以写完，但不要把多个镜头堆进同一段；多人同场逐人或分组分段
 3. **段与段之间空一行**；禁止整章只有少数超长大段
 4. **换人就换行**：多人对话不要塞进同一段；单人短对话可与前后叙述同段
 5. **收引号必须跟在对话句末**，不要把 ” 单独甩到下一行/下一段
@@ -112,7 +111,7 @@ export const TYPESETTING_HARD_RULES = `## 【强制】手机网文排版【观�
 3）上一段对话缺收引号、下一段以 ” 开头。
 
 ### 自检
-一段超过一屏（约 200 字）、或一段内塞了一个以上的镜头 → 自行拆段；若整章几乎每句都独立成段（80% 以上段落不足 20 字）→ 自行合并。`;
+一段超过约 220 字、或一段内塞了一个以上的镜头 → 自行拆段；若整章几乎每句都独立成段（80% 以上段落不足 20 字）→ 自行合并。`;
 
 export interface ParagraphDensityStats {
   paragraphCount: number;
@@ -348,7 +347,7 @@ export function mergeSparseParagraphs(paragraphs: string[]): string[] {
  * 确定性兜底:墙段按语义边界拆开,零AI成本,取代"报high→整章重写烧预算"。
  *
  * 触发阈值(按段类型分档,对齐市场实测——番茄#1书全章最长段126-141字):
- * - 叙述段 > 200 字(NARRATIVE_LONG_CHARS=160 墙线 + 余量)→ 拆
+ * - 叙述段 > 220 字(NARRATIVE_LONG_CHARS)→ 拆
  * - 对话段 > 240 字(话轮密集天然更长)→ 只在话轮边界拆
  *
  * 切分点选择(贪心累积,两个最低累积线):
@@ -363,7 +362,7 @@ export function mergeSparseParagraphs(paragraphs: string[]): string[] {
  * - 无句末标点的极端墙(拆不动)留给 HARD_MAX 门禁报 high
  */
 const SPLIT_MIN_CHUNK_CHARS = 20;
-const SPLIT_NARRATIVE_THRESHOLD = 200;
+const SPLIT_NARRATIVE_THRESHOLD = 220;
 const SPLIT_DIALOGUE_THRESHOLD = 240;
 const SPLIT_SEMANTIC_MIN_ACCUM = 100;
 const SPLIT_SENTENCE_MIN_ACCUM = 150;
@@ -831,7 +830,7 @@ export function buildTypesettingIssues(prose: string): ParagraphDensityIssue[] {
       severity: 'medium',
       description: `叙述段过重：${stats.narrativeParagraphCount} 个叙述段${byMedian}、超一屏（>${NARRATIVE_LONG_CHARS} 字）墙占 ${Math.round(stats.narrativeLongParagraphRatio * 100)}%`,
       suggestion:
-        '拆段不是删内容：把墙段里多余的镜头（第二感官通道、另一个人的动作、追加的比喻）移进新段或删除；基准 1～3 句一段，长段只留给蓄力点',
+        '拆段不是删内容：把墙段里多余的镜头（第二感官通道、另一个人的动作、追加的比喻）移进新段或删除；连续动作可以留在一段里，超过约 220 字再拆',
     });
   }
 

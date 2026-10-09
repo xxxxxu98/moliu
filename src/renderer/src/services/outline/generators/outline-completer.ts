@@ -124,9 +124,11 @@ function listField(values: string[]): string {
 export function serializeBlueprint(blueprint: ChapterBlueprint): string {
   return `### 第${blueprint.orderIndex}章
 - 标题：${blueprint.title}
+- 概要：${blueprint.summary}
 - CBN：${blueprint.CBN}
 - CPNs：${listField(blueprint.CPNs)}
 - CEN：${blueprint.CEN}
+- 节拍：${listField(blueprint.sceneBeats ?? [])}
 - mustCover：${listField(blueprint.mustCover)}
 - 禁区：${listField(blueprint.forbiddenZones)}
 - 章尾钩子文案：${blueprint.hookText ?? ''}
@@ -378,10 +380,11 @@ function buildChapterCompletionPrompt(
 每章必须严格使用以下结构：
 ### 第N章
 - 标题：${titleMinChars}-${titleMaxChars}字的网文口语标题，要有画面/情绪/钩子，抓住本章最刺激的一点（打脸/翻车/反转/期限/秘密/意外）；禁止只写“第N章”。【超 ${titleMaxChars} 字即为格式错误：先砍修饰语和副词，再砍次要信息，宁可短不可超】
-- 概要：40-80字，用一段话交代本章从哪儿起、中间怎么推、落到什么后果，写给作者看的章纲；必须比 CBN 多出信息量，禁止照抄 CBN/标题
-- CBN：${hookMinChars}-${hookMaxChars}字的章首动作钩子，写开篇 10 秒抓人的瞬间画面或冲突，禁止整章剧情概括；必须以句号/叹号等终止符收尾
+- 概要：80-180字，写给作者看的章纲：本章从哪一个未完成的动作开始、中间因果怎么推、最后停在什么没揭晓的后果上；必须比 CBN 多出中间过程，禁止与 CBN 或标题相同
+- CBN：${hookMinChars}-${hookMaxChars}字。写本章开场已经在进行、结果还没揭晓的动作（手停在半空、门还没开、刀已经抵上但没刺下去）。禁止把本章结果写成开场（杀死、揭穿、结案、爆炸已经发生、身份已经对调完成），禁止整章剧情概括；必须以句号/叹号等终止符收尾
 - CPNs：${minimumCpns}-${maximumCpns}个本章必须兑现的推进节点，每条独立可写成一个场面，用中文分号分隔
 - CEN：${hookMinChars}-${hookMaxChars}字章尾悬念，要让读者必须点下一章；必须以终止符收尾
+- 节拍：4-6个按因果顺序的场面步骤，用中文分号分隔。每条15-60字，写清谁在做什么、这一步还没揭晓什么。第一步必须是未完成的危险或冲突，不得与 CBN 逐字相同，也不得把本章结果放在第一步。击杀、揭穿、爆炸、结案放在中后段。最后一步停在 CEN 的未决悬念上，不得在同章把悬念解释完
 - mustCover：1-3个本章能完成的具体事件，用中文分号分隔，禁止整卷或全书级目标（如“完成…逆转”“实现…复兴”）；【证据链措辞】节点只约定「场景内可证实的证据链与结论」（如「以X凭据与Y抄本坐实Z被人为改动、指向W经手」），禁止把「亲口承认/亲手所为/当众认罪」级归责断言写成履约条件——归责断言只有在本章同步安排了对应的认罪/对质/供状场面节点时才可写（2026-09-28 r14 ch39 实证：归责节点把履约口径抬到亲手所为，写手只能产出证据链，未履约判定与节点照抄守卫对挤五连拒成洞）
 - 禁区：1-3条本章不得提前泄露的事项
 - 章尾钩子文案：给读者看的一句钩子话术，区别于 CEN 的事件描述
@@ -394,6 +397,7 @@ function buildChapterCompletionPrompt(
 5. 所有字段都不得留空，禁止使用括号补充说明；
 6. 地点必须使用“registeredLocations”里已登记的地点名，禁止自创新地名或同义变体（如已登记「江城市」就不得写「南江市」）；需要新场景时写成已登记地点的下属区域（如「江城市·南郊冷库」）；
 7. 【伏笔时序锁】「本批伏笔时序禁令」清单列出的伏笔，其核心信息禁止出现在本批蓝图的 mustCover/CPNs/CEN 中——蓝图要求本章揭示而伏笔规定后章才许揭示时，写作端会被迫两头违约（拒稿成洞）。确需铺垫只可用不触及核心词面的暗痕（物件出现/旁人欲言又止），不得给出定性结论。
+8. 【节拍与钩子】节拍按因果往下演。CEN 的未决悬念不得被同章另一条节拍、mustCover 或禁区当场取消。两条对撞时改其中一条。已经写进节拍的动作，后一步不得用替身、误认或无关道具取消。
 “existingChapterCanon”是不可改写的既有事实：新章不得重置期限、重复破案/入狱/升职等已完成事件，不得让已倒台或被羁押的反派无解释恢复原职。
 ${renderBlueprintVocabularyRule(vocabularyTier)}`,
     user: `【故事上下文】\n${compactContext(outline, direction, chapterNumbers)}${foreshadowEmbargoSection}${revealLockSection}${reviewSection}${phaseSection}${timeAnchorSection}\n\n【只需补写的章号】\n${chapterNumbers.join('、')}${issueSection}\n\n直接从”### 第${chapterNumbers[0]}章”开始输出。`,

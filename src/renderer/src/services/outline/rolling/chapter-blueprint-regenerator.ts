@@ -191,6 +191,9 @@ export function blueprintToChapterUpdate(blueprint: ChapterBlueprint): {
     `【CBN】${blueprint.CBN}`,
     ...(blueprint.CPNs.length ? [`【CPNs】${blueprint.CPNs.join('\n')}`] : []),
     `【CEN】${blueprint.CEN}`,
+    ...(blueprint.sceneBeats && blueprint.sceneBeats.length > 0
+      ? [`【节拍】${blueprint.sceneBeats.join('\n')}`]
+      : []),
     ...(blueprint.mustCover.length ? [`【必须覆盖】${blueprint.mustCover.join('、')}`] : []),
     ...(blueprint.forbiddenZones.length ? [`【禁区】${blueprint.forbiddenZones.join('、')}`] : []),
   ].join('\n');
@@ -220,6 +223,9 @@ export function applyBlueprintToPlotNode(
     CPNs: blueprint.CPNs,
     CEN: blueprint.CEN,
     mustCover: blueprint.mustCover,
+    ...(blueprint.sceneBeats && blueprint.sceneBeats.length > 0
+      ? { sceneBeats: blueprint.sceneBeats }
+      : {}),
     keyEvents: blueprint.mustCover,
     description: blueprint.summary || target.description,
   };
