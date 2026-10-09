@@ -10,6 +10,8 @@
 | [development-guidelines.md](./development-guidelines.md) | **开发规范唯一权威源（SSOT）** — 代码风格、目录结构、IPC、测试等 |
 | [reference-projects.md](./reference-projects.md) | 参考开源网文项目功能映射（编写网文功能前必看） |
 | [prd.md](./prd.md) | 产品需求与产品定位 |
+| [../LICENSE](../LICENSE) | 墨流源代码的 MIT 协议 |
+| [../NOTICE](../NOTICE) | 随仓库分发的第三方 Skill 协议与版权 |
 | [quality-ledger/](./quality-ledger/) | 可上线大循环 findings 台账与跨轮收敛表（`npm run findings:converge` 生成） |
 | [unified-state-ledger.md](./unified-state-ledger.md) | 统一实体状态账本方案（第 0 阶段已落地，其余待评审；全部落地后并入正式文档） |
 

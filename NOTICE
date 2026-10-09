@@ -1,0 +1,40 @@
+墨流（Moliu）第三方声明
+
+墨流自身的源代码、文档与配置模板以根目录 LICENSE 中的 MIT 协议授权，
+版权所有 (c) 2026 春秋。
+
+下列目录是随仓库分发的第三方 Agent Skill，不适用根目录 MIT 对它们自身的授权。
+使用或再分发这些目录时，以各目录内的许可证和下面的版权声明为准。
+
+1. .agents/skills/electron
+   来源：https://github.com/teachingai/full-stack-skills
+   （许可证文件当前位于 https://github.com/partme-ai/full-stack-skills ）
+   协议：Apache License 2.0（全文见该目录 LICENSE.txt）
+   Copyright 2026 PartME.AI
+
+2. .agents/skills/frontend-design
+   来源：https://github.com/anthropics/skills
+   协议：Apache License 2.0（全文见该目录 LICENSE.txt）
+
+3. .agents/skills/find-skills
+   来源：https://github.com/vercel-labs/skills
+   协议：MIT（全文见该目录 LICENSE）
+   Copyright (c) 2026 Vercel, Inc.
+
+4. .agents/skills/ui-ux-pro-max
+   来源：https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
+   协议：MIT（全文见该目录 LICENSE）
+   Copyright (c) 2024 Next Level Builder
+
+5. .agents/skills/vue-best-practices
+   来源：https://github.com/vuejs-ai/skills （skills-lock 中记为 hyf0/vue-skills）
+   协议：MIT（全文见该目录 LICENSE）
+   Copyright (c) 2025 hyf0, Serko <https://github.com/serkodev>
+
+6. .agents/skills/web-design-guidelines
+   来源：https://github.com/vercel-labs/agent-skills
+   元数据作者：vercel
+   随附副本没有独立许可证文件。再分发前请向上游核对协议。
+
+墨流自写的 Storyflow 技能（storyflow-auto-loop、storyflow-book-review、
+storyflow-release-loop）属于墨流，随根目录 MIT 协议分发。
