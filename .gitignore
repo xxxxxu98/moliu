@@ -88,8 +88,9 @@ typings/
 # Vite
 .vite/
 
-# Electron-Forge
+# Electron-Forge 与 Vite 构建产物
 out/
+dist/
 
 # Electron / Chromium 临时用户数据（本地调试产生）
 .qa14*/
