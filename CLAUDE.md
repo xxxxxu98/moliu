@@ -10,7 +10,7 @@
 1. **完整阅读** [`docs/north-star.md`](docs/north-star.md) —— 项目终极目标（可投稿网文八层质量目标）。**一切代码围绕此目标**，动手前先回答「这个改动推进了哪一层」
 2. **完整阅读** [`docs/development-guidelines.md`](docs/development-guidelines.md) —— 项目唯一开发规范
 2. **检查相关技能**：查看 `.agents/skills/` 目录下的技能文件（如 `vue-best-practices`、`electron`、`frontend-design` 等）
-3. **编写网文功能前**：查阅 [`docs/reference-projects.md`](docs/reference-projects.md)，参考 `reference/` 下的开源 AI 网文项目（webnovel-writer、oh-story），借鉴架构思路与提示词
+3. **编写网文功能前**：查阅 [`docs/reference-projects.md`](docs/reference-projects.md)，按其中的上游仓库借鉴架构思路与提示词
 4. **参考已有实现**：动手前先在 `src/` 中搜索相似功能，复用既有模式
 5. **始终用中文回答**
 

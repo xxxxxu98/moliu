@@ -3,7 +3,7 @@
  *
  * 职责：补齐古言、宫斗宅斗、豪门总裁、甜宠、年代、狗血言情、种田等女频主流题材的
  * 钩子 / 爽点 / 雷区约束，修正开题中心女频题材长期匹配不到 Profile 的缺口。
- * 来源：reference/webnovel-writer-master/webnovel-writer/templates/genres/ 的核心卖点与常见雷区。
+ * 来源：webnovel-writer 题材模板的核心卖点与常见雷区（上游见 docs/reference-projects.md，不随本仓库分发）。
  * 约束：只能追加在基础 Profile 之后（见 genre-profiles-extended.ts 同名约束）。
  */
 

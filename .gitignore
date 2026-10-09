@@ -121,15 +121,10 @@ test.md
 prebuilds/better-sqlite3/
 prebuilds/*.tar.gz
 
-# temp/ 整体不入库（临时产物，规范 §16.5）；以下白名单为长期回读资产
+# 第三方参考仓库不入库。需要对照时自行克隆，见 docs/reference-projects.md
+reference/
+
+# temp/ 整体不入库（书审、回放、矩阵、正文都只留本机）。
+# 唯一例外：可上线大循环的配置模板，克隆后复制成 continue-write.real.config.json 即可开跑。
 temp/*
-!temp/replay-cases/
-!temp/book-review/
-temp/book-review/*
-!temp/book-review/baseline*/
-!temp/book-review/juezheng*/
-!temp/book-review/xcjz*/
-!temp/book-review/500ch*/
-!temp/book-review/fix*/
-!temp/book-review/r17-blindtest/
-!temp/book-review/p0reg20/
+!temp/continue-write.real.config.example.json

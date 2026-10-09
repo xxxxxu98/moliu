@@ -7,7 +7,7 @@
 
 1. **完整阅读** `docs/development-guidelines.md` —— 项目唯一开发规范
 2. **检查相关技能**：`.agents/skills/` 目录下的技能文件
-3. **编写网文功能前**：查阅 `docs/reference-projects.md`，参考 `reference/` 下的开源 AI 网文项目（webnovel-writer、oh-story），借鉴架构思路与提示词
+3. **编写网文功能前**：查阅 `docs/reference-projects.md`，按其中的上游仓库借鉴架构思路与提示词
 4. **参考已有实现**：先在 `src/` 搜索相似功能复用
 5. **始终用中文回答**
 
@@ -35,4 +35,4 @@ Electron 41 + Vue 3 (Composition API) + TypeScript 5.7 + Naive UI + Pinia + UnoC
 
 - 详细规则、示例、目录结构、测试规范等全部以
   **`docs/development-guidelines.md`** 为准（唯一权威源，SSOT）。
-- 参考项目功能映射：**`docs/reference-projects.md`**（编写网文功能前必看，`reference/` 下开源 AI 网文项目）。
+- 参考项目功能映射：**`docs/reference-projects.md`**（编写网文功能前必看；上游仓库自行克隆，不要放进本仓库）。

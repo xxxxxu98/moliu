@@ -1431,7 +1431,7 @@ app.commandLine.appendSwitch('disable-features', 'CrossSiteDocumentBlockingAlway
 - `ai-traces/` 不整目录永保：`npm run temp:clean` 按天裁剪过期 `.jsonl`（默认 3 天）；整目录删除需显式 `--dir ai-traces`。
 - `npm run temp:clean -- --purge` 忽略保留窗口，删除全部轮次产物（`storyflow-matrix-*` 整目录、`ai-traces` 整目录、书审近期轮次与断点等）。KEEP 配置与 `book-review` 基线白名单（`baseline` / `juezheng` / `xcjz` / `500ch` / `fixN`）仍保留。
 - 冒烟/大循环产物必须归档到带时间戳的目录，不污染工作区。
-- 调试日志、临时 QA 产物禁止提交进 git。
+- 调试日志、临时 QA 产物禁止提交进 git。`temp/` 里只有 `continue-write.real.config.example.json` 入库；书审目录、回放用例、矩阵归档和章节正文只留本机。
 
 ### 16.6 文档与代码同步
 

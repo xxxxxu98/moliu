@@ -3,7 +3,7 @@
  *
  * 职责：补齐 GENRE_PROFILES 基础 10 类之外的主流题材（高武、系统流、无限流、规则怪谈等），
  * 供开题种子注入题材专属钩子 / 爽点 / 雷区约束。
- * 来源：reference/webnovel-writer-master/webnovel-writer/templates/genres/ 的核心卖点与常见雷区。
+ * 来源：webnovel-writer 题材模板的核心卖点与常见雷区（上游见 docs/reference-projects.md，不随本仓库分发）。
  * 约束：只能追加在基础 Profile 之后（EmotionGenreStep 取前 8 个展示，且 matchGenreProfile 按顺序部分匹配）。
  */
 

@@ -1,18 +1,18 @@
 # 参考项目（Reference Projects）
 
-> 本地参考仓库位于项目根目录 `reference/`，均为开源 AI 网文写作项目。
+> 参考项目不随墨流仓库分发。需要对照实现时，按下面的 GitHub 地址自行克隆到本机任意目录。
 > **编写网文相关功能时，应优先查阅这些项目的对应实现，借鉴设计思路与提示词。**
 >
-> ⚠️ 仅作参考与启发，**不要直接复制其代码或依赖**（技术栈不同：墨流为 Electron + Vue + TS，参考项目多为 Claude Code 插件 / Python）。重点学习：架构思路、提示词工程、网文领域知识。
+> ⚠️ 仅作参考与启发，**不要直接复制其代码或依赖，也不要把克隆下来的仓库放回本仓库**（技术栈不同：墨流为 Electron + Vue + TS，参考项目多为 Claude Code 插件 / Python；webnovel-writer 为 GPL v3）。重点学习：架构思路、提示词工程、网文领域知识。
 
 ---
 
 ## 参考项目速览
 
-| 项目 | 本地路径 | 技术形态 | 核心价值 |
+| 项目 | 上游仓库 | 技术形态 | 核心价值 |
 |------|----------|----------|----------|
-| [webnovel-writer](#1-webnovel-writer) | `reference/webnovel-writer-master/` | Claude Code 插件 + Python (RAG) | 长篇连载的设定/伏笔一致性管理、追读力系统 |
-| [oh-story-claudecode](#2-oh-story-claudecode) | `reference/oh-story-claudecode-main/` | Claude Code skill 包 | 网文全流程（扫榜/拆文/写作/去AI味）+ 丰富的领域知识库 |
+| [webnovel-writer](#1-webnovel-writer) | https://github.com/lingfengQAQ/webnovel-writer | Claude Code 插件 + Python (RAG) | 长篇连载的设定/伏笔一致性管理、追读力系统 |
+| [oh-story-claudecode](#2-oh-story-claudecode) | https://github.com/worldwonderer/oh-story-claudecode | Claude Code skill 包 | 网文全流程（扫榜/拆文/写作/去AI味）+ 丰富的领域知识库 |
 
 ---
 
@@ -93,7 +93,7 @@
 
 ### ✅ 应该做的
 
-1. **编写网文功能前**，先查 `reference/` 对应模块的实现与提示词
+1. **编写网文功能前**，先按本文的上游仓库对照对应模块的实现与提示词
 2. **借鉴设计思路**：架构分层、状态管理、提示词工程、领域模型
 3. **对比差异**：墨流是 Electron 桌面应用，参考项目多为 CLI/插件，注意适配
 4. 在代码注释中标注参考来源（如 `// 参考自 webnovel-writer 的追读力系统设计`）
@@ -111,5 +111,5 @@
 
 ---
 
-> **维护**：新增参考项目时，请将仓库放入 `reference/`，并在本文件补充"功能映射表"。
+> **维护**：新增参考项目时，只在本文件补充上游地址和功能映射表，不要把上游仓库提交进墨流。
 > 墨流自研代码始终遵循 [`development-guidelines.md`](./development-guidelines.md)。文档索引见 [`README.md`](./README.md)。
