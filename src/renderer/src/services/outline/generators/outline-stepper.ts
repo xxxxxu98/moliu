@@ -15,7 +15,7 @@
  * 后续 completeIncompleteOutline / reviewAndFixOutline / repairChapterBlueprints 流程。
  *
  * 步级重试：瞬态错误（429/网络/5xx）按指数退避重试，非瞬态（含长度截断）不重试。
- * 硬必需步（骨架/卷纲/启动包）失败上抛，触发外层整体重试；
+ * 硬必需步失败上抛。外层只有瞬态错误会再跑一遍，且跳过已经拼进 rawText 的步骤。
  * 软步（角色伏笔/节奏包装）失败跳过并记 warning，由 completeIncompleteOutline 兜底或接受缺失。
  */
 import type { GenerateOptions } from './unified-generator';
@@ -53,6 +53,10 @@ export interface GenerateOutlineStepsParams {
   wordCountRange: string;
   callStructuredTextMode: StructuredTextCaller;
   onProgress?: (message: string) => void;
+  /** 上次尝试已拼好的方案。外层瞬态重试时传入，已有段的步骤不再请求。 */
+  resumeRawText?: string;
+  /** 每完成一步就交回当前 rawText，供外层在抛错后续跑 */
+  onCheckpoint?: (rawText: string) => void;
 }
 
 export interface GenerateOutlineStepsResult {
@@ -164,11 +168,21 @@ export async function generateExpandedOutlineInSteps(
     wordCountRange,
     callStructuredTextMode,
     onProgress,
+    resumeRawText,
+    onCheckpoint,
   } = params;
 
   const maxAttempts = Math.max(1, options.maxRetries ?? 2);
   const warnings: string[] = [];
-  let rawText = '';
+  let rawText = resumeRawText?.trim() ?? '';
+
+  const publishCheckpoint = (): void => {
+    onCheckpoint?.(rawText);
+  };
+
+  /** 本步每个段头都已在累计文本里，瞬态重试时不再请求这一步 */
+  const stepAlreadyPresent = (step: OutlineGenerationStep): boolean =>
+    step.sections.every(section => hasSectionHeader(rawText, section.aliases));
 
   const runStep = async (
     step: OutlineGenerationStep,
@@ -198,7 +212,7 @@ export async function generateExpandedOutlineInSteps(
       // 无 signal 的 AbortError 是网关断流，走 required/soft 分支的常规处理
       if (isAbortedError(error, options.signal)) throw error;
       if (step.required) {
-        // 硬必需步失败：上抛触发外层 runWithRetry 整体重试（降温）
+        // 硬必需步失败上抛。长度截断不在步内重试；瞬态错误由外层带着 checkpoint 续跑。
         throw error;
       }
       // 软步失败：记 warning 并跳过，由下游 completeIncompleteOutline 兜底或接受缺失
@@ -217,23 +231,30 @@ export async function generateExpandedOutlineInSteps(
   const tailSteps = forkIndex > 0 ? OUTLINE_GENERATION_STEPS.slice(forkIndex) : [];
 
   for (const step of headSteps) {
+    if (stepAlreadyPresent(step)) {
+      onProgress?.(`${step.progressMessage}（沿用已生成段落）`);
+      continue;
+    }
     onProgress?.(step.progressMessage);
     const generated = await runStep(step, rawText);
     if (generated) {
       rawText = stitchStepSections(rawText, generated, step.sections, warnings);
     }
+    publishCheckpoint();
   }
 
-  if (tailSteps.length > 0 && concurrency > 1 && tailSteps.length > 1) {
+  const pendingTailSteps = tailSteps.filter(step => !stepAlreadyPresent(step));
+
+  if (pendingTailSteps.length > 0 && concurrency > 1 && pendingTailSteps.length > 1) {
     onProgress?.(
-      `并行生成启动包 / 角色伏笔 / 节奏包装（${tailSteps.length} 路，并发上限 ${concurrency}）...`,
+      `并行生成启动包 / 角色伏笔 / 节奏包装（${pendingTailSteps.length} 路，并发上限 ${concurrency}）...`,
     );
     // 所有尾部步骤共享同一份骨架+卷纲快照（产出段互不相交）；按并发上限分批并行，
     // 每批内并行、批间串行，保证在途请求数不超过 MOLIU_OUTLINE_STEP_CONCURRENCY。
     const tailSnapshot = rawText;
-    const settled: Array<{ step: (typeof tailSteps)[number]; generated: string }> = [];
-    for (let index = 0; index < tailSteps.length; index += concurrency) {
-      const batch = tailSteps.slice(index, index + concurrency);
+    const settled: Array<{ step: (typeof pendingTailSteps)[number]; generated: string }> = [];
+    for (let index = 0; index < pendingTailSteps.length; index += concurrency) {
+      const batch = pendingTailSteps.slice(index, index + concurrency);
       const results = await Promise.all(
         batch.map(async step => ({ step, generated: await runStep(step, tailSnapshot) })),
       );
@@ -244,13 +265,15 @@ export async function generateExpandedOutlineInSteps(
         rawText = stitchStepSections(rawText, generated, step.sections, warnings);
       }
     }
+    publishCheckpoint();
   } else {
-    for (const step of tailSteps) {
+    for (const step of pendingTailSteps) {
       onProgress?.(step.progressMessage);
       const generated = await runStep(step, rawText);
       if (generated) {
         rawText = stitchStepSections(rawText, generated, step.sections, warnings);
       }
+      publishCheckpoint();
     }
   }
 

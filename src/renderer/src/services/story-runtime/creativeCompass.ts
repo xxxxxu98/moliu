@@ -11,10 +11,12 @@ export interface CreativeCompassSource {
   coolPoints?: string[];
   /** 只在前三章传入，避免后章被开篇钩子拖回去 */
   openingAnchor?: string;
+  /** 只在前三章传入的开题合同（钩子 / 爽点 / 题材雷区原文） */
+  openingContract?: string;
   avoid?: string[];
 }
 
-/** 把已有书级信息收成写手开头的一页。四项都空则不注入。 */
+/** 把已有书级信息收成写手开头的一页。目标、卖点、钩子、合同、禁区都空则不注入。 */
 export function renderCreativeCompass(source: CreativeCompassSource): string {
   const keep = [
     ...(source.sellingPoints ?? []).map(item =>
@@ -30,8 +32,9 @@ export function renderCreativeCompass(source: CreativeCompassSource): string {
     .filter(Boolean)
     .join('；');
   const anchor = (source.openingAnchor ?? '').trim();
+  const contract = (source.openingContract ?? '').trim();
   const avoid = (source.avoid ?? []).map(item => item.trim()).filter(Boolean).slice(0, 4);
-  if (!goal && keep.length === 0 && !anchor && avoid.length === 0) {
+  if (!goal && keep.length === 0 && !anchor && !contract && avoid.length === 0) {
     return '';
   }
   const lines = ['【创作罗盘】这一页比本章节点更靠前：写法可以换，这本书在追的东西不能换。'];
@@ -39,6 +42,7 @@ export function renderCreativeCompass(source: CreativeCompassSource): string {
   if (keep.length > 0) lines.push(`必须保留：${keep.join('；')}`);
   if (avoid.length > 0) lines.push(`必须避免：${avoid.join('；')}`);
   if (anchor) lines.push(`开篇锚点：${anchor}`);
+  if (contract) lines.push(`开题合同：${contract}`);
   return lines.join('\n');
 }
 

@@ -324,7 +324,7 @@ ${node.keyPoints.map(p => `- ${p}`).join('\n')}`).join('\n\n')}
     hasExistingContent: boolean
   ): string {
     const isFirstChapter = orderIndex === 0 && !hasExistingContent;
-    const effectiveType = chapterType || (isFirstChapter ? 'world_intro' : 'normal');
+    const effectiveType = chapterType || (isFirstChapter ? 'conflict' : 'normal');
 
     const strategies: Record<ChapterType, string> = {
       world_intro: `【本章写作策略：世界观/背景介绍】
@@ -372,7 +372,7 @@ ${node.keyPoints.map(p => `- ${p}`).join('\n')}`).join('\n\n')}
 - 不需要额外解释，读者就能产生情绪`,
 
       conflict: `【本章写作策略：冲突展开】
-本章是冲突发展的阶段：
+本章开场已经在冲突里。前三章禁止先写时代背景、世界格局或社会结构说明书。
 1. 矛盾升级：逐步推进冲突的规模和激烈程度
 2. 障碍增加：为主角设置更多障碍和困难
 3. 人物关系：发展和深化人物之间的矛盾或对立
@@ -840,9 +840,8 @@ ${CHAPTER_TYPE_HINTS}
 9. 每章的时间线设计（时间跨度、倒计时等）
 
 **重要提醒**：
-- **第一章必须是 'world_intro' 或 'plot_setup' 类型**，用于介绍故事背景和世界观
-- 如果是玄幻/奇幻题材，前2-3章应包含 world_intro 类型，介绍世界观设定
-- 如果是都市/现实题材，前1-2章应包含 world_intro 或 character_intro 类型
+- **第一章必须是 'conflict' 类型**，开场已经在冲突中，禁止先写背景说明书
+- 前三章内至少安排一次核心爽点兑现，不要把爽点推迟到建置结束之后
 - 故事中段可以有 transitional 类型作为节奏调节
 - 高潮章节使用 climax 类型，并在 coolPoint 中标记 isClimax: true
 - 结局章节使用 ending 类型
@@ -857,7 +856,7 @@ ${CHAPTER_TYPE_HINTS}
   "chapters": [
     {
       "title": "第一章：xxx",
-      "chapterType": "world_intro",
+      "chapterType": "conflict",
       "outline": "本章大纲概述...",
       "keyEvents": ["关键事件1", "关键事件2"],
       "foreshadows": ["伏笔1", "伏笔2"],

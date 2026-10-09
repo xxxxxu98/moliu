@@ -26,7 +26,13 @@ function makeBlueprint(orderIndex: number): ChapterBlueprint {
 
 function makeOutline(): ExecutableOutline {
   return {
-    startupPack30: { openingHook: '账本少了一页，门外催罪声已经到了。' },
+    startupPack30: {
+      openingHook: '账本少了一页，门外催罪声已经到了。',
+      firstConflictCycle: '门外催罪当场对质',
+      firstConflictStartChapter: 1,
+      firstMajorCoolPoint: '当众翻出少掉的那一页',
+      firstMajorCoolPointChapter: 2,
+    },
     keyCharacters: Array.from(
       { length: OUTLINE_COMPLETENESS_POLICY.minimumKeyCharacters },
       (_, index) => ({ id: `character-${index}`, name: `角色${index}` }),
@@ -87,6 +93,28 @@ describe('inspectOutlineCompleteness', () => {
     const result = inspectOutlineCompleteness(outline);
 
     expect(result.blockers.map(blocker => blocker.kind)).toContain('opening-hook');
+  });
+
+  it('第一轮冲突未从第 1 章开始，或爽点章不在前三章时阻断应用', () => {
+    const missing = makeOutline();
+    missing.startupPack30.firstConflictCycle = '';
+    missing.startupPack30.firstConflictStartChapter = null;
+    missing.startupPack30.firstMajorCoolPoint = '';
+    missing.startupPack30.firstMajorCoolPointChapter = null;
+
+    const missingResult = inspectOutlineCompleteness(missing);
+    expect(missingResult.canApply).toBe(false);
+    expect(missingResult.blockers.map(blocker => blocker.kind)).toEqual(
+      expect.arrayContaining(['opening-conflict', 'opening-cool-point']),
+    );
+
+    const late = makeOutline();
+    late.startupPack30.firstConflictStartChapter = 4;
+    late.startupPack30.firstMajorCoolPointChapter = 8;
+    const lateResult = inspectOutlineCompleteness(late);
+    expect(lateResult.blockers.map(blocker => blocker.kind)).toEqual(
+      expect.arrayContaining(['opening-conflict', 'opening-cool-point']),
+    );
   });
 
   // ---------- 2026-09-12 g38f r3/reg 新守卫受害样本 ----------

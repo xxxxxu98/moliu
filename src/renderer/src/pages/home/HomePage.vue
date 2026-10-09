@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import ProjectList from '@/components/home/ProjectList.vue';
@@ -10,28 +10,15 @@ import { useProjectStore } from '@/stores/project.store';
 
 type HomeTab = 'bookshelf' | 'discovery';
 
-const HOME_TAB_STORAGE_KEY = 'moliu:home:active-tab';
-
 const { t } = useI18n();
 const projectStore = useProjectStore();
 
 const showCreateDialog = ref(false);
+/** 进入首页时默认选中书架 */
 const activeTab = ref<HomeTab>('bookshelf');
 
 onMounted(async () => {
-  const saved = localStorage.getItem(HOME_TAB_STORAGE_KEY);
-  if (saved === 'bookshelf' || saved === 'discovery') {
-    activeTab.value = saved;
-  }
   await projectStore.loadProjects();
-});
-
-watch(activeTab, (tab) => {
-  try {
-    localStorage.setItem(HOME_TAB_STORAGE_KEY, tab);
-  } catch {
-    // ignore
-  }
 });
 
 const totalWordCount = computed(() => {

@@ -9,6 +9,7 @@ import {
   buildWindowedOutlineText,
   buildEnhancedDesignPrompt,
 } from '@/services/writing/OutlineContextBuilder';
+import { formatTopicDiscoveryOpeningContract } from '@/services/inspiration/topic-discovery.service';
 
 /**
  * AI 服务 Composable
@@ -138,6 +139,7 @@ ${c.content || '（本章暂无内容）'}`;
       coreSellingPoints: project.coreSellingPoints,
       startupPack: project.metadata?.startupPack,
       storyScale: project.metadata?.storyScale,
+      topicOpeningContract: formatTopicDiscoveryOpeningContract(project.metadata?.topicDiscoverySeed),
     });
 
     return {

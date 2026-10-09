@@ -16,7 +16,12 @@ import {
   LENGTH_LABEL,
   PLATFORM_LABEL,
 } from './prompts/topic-discovery-prompts';
-import { buildGenreSeedHint, buildMixGenreHints } from './genre-seed-context';
+import {
+  buildGenreSeedHint,
+  buildGenreSeedHintById,
+  buildMixGenreHints,
+  formatGenreSeedHint,
+} from './genre-seed-context';
 import type {
   EntryDifficulty,
   GenreInsightCard,
@@ -177,7 +182,11 @@ function applySeedDefaults(
     ...seed,
     platform: seed.platform ?? defaults.platform,
     length: seed.length ?? defaults.length,
-    genreProfileId: seed.genreProfileId ?? defaults.genreProfileId,
+    // 每条种子按自己的题材匹配 Profile。整批盖锁定题材会把混出来的 genre 绑错约束。
+    genreProfileId:
+      seed.genreProfileId ??
+      buildGenreSeedHint(seed.genre)?.profileId ??
+      defaults.genreProfileId,
   }));
 }
 
@@ -646,6 +655,38 @@ export async function refreshGenreInsights(
   }
 }
 
+/** 解析种子应带入大纲的题材约束：已标 id 优先，否则按题材名再匹配 */
+function resolveSeedGenreHint(seed: Pick<StorySeedCard, 'genre' | 'genreProfileId'>): GenreSeedHint | null {
+  if (seed.genreProfileId) {
+    const byId = buildGenreSeedHintById(seed.genreProfileId);
+    if (byId) return byId;
+  }
+  return buildGenreSeedHint(seed.genre);
+}
+
+/**
+ * 前三章写作可直接拼进创作罗盘的开题合同。
+ * 只拼接已落库字段与 Profile 原文，不做语义裁决。
+ */
+export function formatTopicDiscoveryOpeningContract(
+  seed: TopicDiscoveryProjectSeed | undefined,
+): string {
+  if (!seed) return '';
+  const hint = resolveSeedGenreHint(seed);
+  return [
+    seed.hook?.trim() ? `开篇钩子：${seed.hook.trim()}` : '',
+    seed.coolPoint?.trim() ? `核心爽点：${seed.coolPoint.trim()}` : '',
+    seed.sellPoint?.trim() ? `卖点：${seed.sellPoint.trim()}` : '',
+    hint && hint.preferredHooks.length > 0 ? `题材钩子偏好：${hint.preferredHooks.join('、')}` : '',
+    hint && hint.preferredCoolPoints.length > 0
+      ? `题材爽点偏好：${hint.preferredCoolPoints.join('、')}`
+      : '',
+    hint && hint.commonRisks.length > 0 ? `题材雷区：${hint.commonRisks.join('；')}` : '',
+  ]
+    .filter(Boolean)
+    .join('；');
+}
+
 /** 将种子拼成方向生成用的 prompt */
 export function buildPromptFromSeed(seed: StorySeedCard): string {
   const platform = seed.platform ?? 'general';
@@ -654,6 +695,7 @@ export function buildPromptFromSeed(seed: StorySeedCard): string {
     length === 'short'
       ? '请基于以上种子生成适合短篇完结的创作方向（强情绪弧、可快速兑现）。'
       : '请基于以上种子生成可长篇连载的创作方向。';
+  const hint = resolveSeedGenreHint(seed);
 
   return [
     `【开题种子】${seed.title}`,
@@ -667,7 +709,8 @@ export function buildPromptFromSeed(seed: StorySeedCard): string {
     seed.sellPoint ? `【核心卖点】${seed.sellPoint}` : '',
     seed.mechanism ? `【核心机制】${seed.mechanism}` : '',
     seed.brokenTrope ? `【破套路】${seed.brokenTrope}` : '',
-    seed.genreProfileId ? `【题材Profile】${seed.genreProfileId}` : '',
+    hint ? `【题材Profile】${hint.profileId}` : '',
+    ...(hint ? formatGenreSeedHint(hint) : []),
     seed.riskNote ? `【注意】${seed.riskNote}` : '',
     lengthHint,
   ]

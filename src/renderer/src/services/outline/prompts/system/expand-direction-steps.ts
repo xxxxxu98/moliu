@@ -18,6 +18,7 @@ import { OUTLINE_COMPLETENESS_POLICY } from '@/services/outline/validation/outli
 import {
   SHARED_PREAMBLE,
   SHARED_FORMAT_RULES,
+  SKELETON_FORMAT_RULES,
   SECTION_STORY_POSITIONING,
   SECTION_STORY_ENGINE,
   SECTION_GOLDFINGER,
@@ -152,6 +153,7 @@ ${sectionNames.map(name => `- 「## ${name}」`).join('\n')}
 function buildStepSystem(
   sections: StepSectionDef[],
   extraGuidance: string,
+  formatRules: string = SHARED_FORMAT_RULES,
 ): string {
   const templates = sections.map(section => section.template).join('\n\n');
   const focus = buildFocusInstruction(sections.map(section => section.canonical));
@@ -165,7 +167,7 @@ ${extraGuidance}
 
 ${templates}
 
-${SHARED_FORMAT_RULES}`;
+${formatRules}`;
 }
 
 function formatDirection(direction: OutlineDirection): string {
@@ -233,7 +235,7 @@ export function buildSkeletonStepPrompt(ctx: StepBuildContext): BuiltPrompt {
 - 「世界与势力规划」至少 3 个核心地点、3 个关键势力、3 条世界规则，不要用卷标题充当地点名。
 - 【题材边界】${genreBoundary}`;
 
-  const system = buildStepSystem(SKELETON_SECTIONS, extraGuidance);
+  const system = buildStepSystem(SKELETON_SECTIONS, extraGuidance, SKELETON_FORMAT_RULES);
   const user = `请将下面这个已选中的创作方向，展开为方案骨架（仅本步要求的段落）。
 
 ${formatScaleGuidance(ctx.wordCountRange)}
@@ -309,6 +311,8 @@ export function buildStartupStepPrompt(ctx: StepBuildContext): BuiltPrompt {
 
   const extraGuidance = `本步只生成「## 前${STARTUP_CHAPTER_COUNT}章启动包」。
 - 开篇钩子 30 字以内、单场景动作钩子。
+- 「第一轮冲突起始章」只写 1：第 1 章必须已经在冲突中。
+- 「第一次强记忆爽点章」只写 1、2 或 3，表示该爽点兑现章。
 - 必出事件：单章可兑现、同一场景链合并为一条、禁止括号、每条 8-30 字。
 - 区块高潮密度：每 5 章区块最多 2 个核心转折。
 - 必须给满 ${Math.ceil(STARTUP_CHAPTER_COUNT / 5)} 个 5 章区块（1-5 / 6-10 / …）。

@@ -86,6 +86,8 @@ describe('expand-direction-steps 分步 builder', () => {
     expect(built.system).toContain('## 四幕结构');
     expect(built.system).toContain('## 世界与势力规划');
     expect(built.system).toContain('本次只需输出以下 6 个二级标题段');
+    expect(built.system).not.toContain('至少输出 10 个关键角色');
+    expect(built.system).toContain('本步不要写关键角色分层');
     // 骨架步的 user 含种子
     expect(built.user).toContain('一个法医穿越的故事');
     expect(built.user).toContain('验尸官破奇案');
@@ -111,6 +113,8 @@ describe('expand-direction-steps 分步 builder', () => {
     expect(built.system).toContain('### 1-5章');
     expect(built.system).toContain(`### 46-${STARTUP_CHAPTER_COUNT}章`);
     expect(built.system).toContain('本次只需输出以下 1 个二级标题段');
+    expect(built.system).toContain('第一轮冲突起始章');
+    expect(built.system).toContain('第一次强记忆爽点章');
   });
 
   it('步4 角色伏笔：system 含角色段与伏笔段模板', () => {

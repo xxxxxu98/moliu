@@ -710,6 +710,23 @@ describe('parseExpandedOutline · 单章蓝图（chapterBlueprints）解析', ()
     expect(outline!.chapterBlueprints).toBeUndefined();
   });
 
+  it('启动包自标注章号只认整数字段，不从爽点句子里抽章号', () => {
+    const plain = parseExpandedOutline(buildSampleOutline());
+    expect(plain!.startupPack30.firstMajorCoolPoint).toContain('做空');
+    expect(plain!.startupPack30.firstMajorCoolPointChapter).toBeNull();
+    expect(plain!.startupPack30.firstConflictStartChapter).toBeNull();
+
+    const annotated = parseExpandedOutline(
+      buildSampleOutline().replace(
+        '- 第一次强记忆爽点：第3章做空自家公司。\n- 第一轮冲突闭环：1-30章完成首轮闭环。',
+        '- 第一次强记忆爽点：第3章做空自家公司。\n- 第一次强记忆爽点章：3\n- 第一轮冲突闭环：1-30章完成首轮闭环。\n- 第一轮冲突起始章：1',
+      ),
+    );
+    expect(annotated!.startupPack30.firstMajorCoolPointChapter).toBe(3);
+    expect(annotated!.startupPack30.firstConflictStartChapter).toBe(1);
+    expect(annotated!.startupPack30.firstMajorCoolPoint).toContain('做空');
+  });
+
   it('单章蓝图段存在但章节块为空（只有标题没字段）时返回空数组', () => {
     const base = buildSampleOutline();
     const withEmpty = base.replace(

@@ -101,6 +101,20 @@ export function splitNamedSections(raw: string, headings: string[]): Record<stri
   }, {});
 }
 
+/**
+ * 解析生成侧自标注的章号。
+ * 只接受整数字段或「第N章」，不从句子里抽取章号。
+ */
+export function parseAnnotatedChapterIndex(raw: string | null | undefined): number | null {
+  const text = (raw ?? '').trim();
+  if (!text) return null;
+  const match = /^(?:第\s*)?(\d{1,2})(?:\s*章)?$/u.exec(text);
+  if (!match) return null;
+  const value = Number(match[1]);
+  if (!Number.isInteger(value) || value < 1) return null;
+  return value;
+}
+
 export function extractFieldValue(block: string, fieldName: string): string | null {
   // 字段行归一化容忍（qwen-3.8-2b / lfm2.5-2.6b 实测形态，2026-09-10 方向卡全灭根因）：
   // - markdown 粗体包裹：`**标题：** 值`（闭合星号紧跟冒号后）与 `**一句话卖点**：`（lfm 形态，闭合星号在冒号前）；

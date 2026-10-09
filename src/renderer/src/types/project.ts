@@ -142,7 +142,11 @@ export interface ProjectStartupPack {
   promiseToReader: string;
   protagonistFirstImpression: string;
   firstMajorCoolPoint: string;
+  /** 生成侧自标注：第一次强记忆爽点兑现章，1～3 */
+  firstMajorCoolPointChapter?: number | null;
   firstConflictCycle: string;
+  /** 生成侧自标注：第一轮冲突起始章，开篇协议要求为 1 */
+  firstConflictStartChapter?: number | null;
   chapterBlocks: Array<{
     range: string;
     objective: string;

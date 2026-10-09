@@ -227,7 +227,11 @@ export interface GeneratedStartupPack {
   promiseToReader: string;          // 对读者的承诺
   protagonistFirstImpression: string; // 主角第一印象
   firstMajorCoolPoint: string;      // 首个大爽点
+  /** 生成侧自标注：第一次强记忆爽点兑现章，1～3 */
+  firstMajorCoolPointChapter?: number | null;
   firstConflictCycle: string;       // 首个冲突循环
+  /** 生成侧自标注：第一轮冲突起始章，开篇协议要求为 1 */
+  firstConflictStartChapter?: number | null;
   chapterBlocks: GeneratedStartupChapterBlock[];
 }
 

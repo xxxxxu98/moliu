@@ -245,4 +245,44 @@ describe('parseDirections', () => {
     expect(result[0].premise).toContain('万历');
     expect(result[1].premise).toContain('侍郎');
   });
+
+  it('旧格式没有档位和补强时，不从承载力正文猜档位', () => {
+    const result = parseDirections(fullBlock(1, '凡人修仙', '凡人逆袭'));
+
+    expect(result[0]?.longformCapacityTier).toBeNull();
+    expect(result[0]?.longformGaps).toEqual([]);
+  });
+
+  it('只接受自标注的英文档位，并把补强短语拆开', () => {
+    const raw = `## 方向方案1
+- 标题：凡人修仙
+- 一句话卖点：凡人逆袭
+- premise：故事前提里写满地图、反派、升级
+- 核心冲突：资源与权力的争夺
+- 长篇承载力：地图持续扩张，反派很多，升级很快
+- 长篇承载力档位：strong
+- 长篇补强：补势力梯度、补长期悬念、补地图、补第四个`;
+
+    const result = parseDirections(raw);
+
+    expect(result[0]?.longformCapacityTier).toBe('strong');
+    expect(result[0]?.longformGaps).toEqual(['补势力梯度', '补长期悬念', '补地图']);
+    expect(result[0]?.longformCapacityNote).toContain('地图');
+  });
+
+  it('档位写成句子或补强写「无」时，档位为空、补强为空列表', () => {
+    const raw = `## 方向方案1
+- 标题：凡人修仙
+- 一句话卖点：凡人逆袭
+- premise：故事前提
+- 核心冲突：资源与权力的争夺
+- 长篇承载力：这个方向承载力很强
+- 长篇承载力档位：很强
+- 长篇补强：无`;
+
+    const result = parseDirections(raw);
+
+    expect(result[0]?.longformCapacityTier).toBeNull();
+    expect(result[0]?.longformGaps).toEqual([]);
+  });
 });

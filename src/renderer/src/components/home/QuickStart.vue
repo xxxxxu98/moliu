@@ -23,7 +23,7 @@ import type { OutlineDirection } from "@/services/outline/types/direction";
 import type { ExecutableOutline } from "@/services/outline/types/executable-outline";
 import { useOutlineGenerator } from "@/composables/useOutlineGenerator";
 import { useProjectCreator } from "@/composables/useProjectCreator";
-import { buildWordCountBreakdown } from "@/services/outline/utils";
+import { buildDirectionScaleHint } from "@/services/outline/utils/direction-scale-hint";
 import StepWizard from "./new/StepWizard.vue";
 import DirectionResultPanel from "./DirectionResultPanel.vue";
 import TemplateMarketList from "./TemplateMarketList.vue";
@@ -37,19 +37,6 @@ import type { HookType, CoolPointType } from "@/types/evaluation";
 // ============================================================
 // Types
 // ============================================================
-
-interface DirectionScaleHint {
-  targetWordCountLabel: string;
-  estimatedChapterCount: number;
-  suggestedVolumeCount: number;
-  estimatedChaptersPerVolume: number;
-  startupPhaseRatio: string;
-  longformCapacityScore: number;
-  longformCapacityLabel: string;
-  longformCapacityTone: 'strong' | 'medium' | 'cautious';
-  improvementSuggestions: string[];
-  enhancementBrief: string;
-}
 
 interface WizardData {
   emotionGenre: {
@@ -206,92 +193,6 @@ const inputStatus = computed(() => {
 const isPromptTooLong = computed(
   () => activeTab.value === "custom" && prompt.value.trim().length > MAX_PROMPT_LENGTH,
 );
-
-function buildDirectionScaleHint(wordCountRange: string, direction: OutlineDirection) {
-  const breakdown = buildWordCountBreakdown(wordCountRange);
-  const {
-    estimatedChapterCount,
-    suggestedVolumeCount,
-    estimatedChaptersPerVolume,
-    startupPhaseRatio,
-  } = breakdown;
-  const longformText = [
-    direction.longformCapacityNote,
-    direction.protagonistArc,
-    direction.coreConflict,
-    direction.recommendedReason,
-    direction.premise,
-    direction.oneLiner,
-  ].filter(Boolean).join(' ');
-
-  const capacityDimensions = [
-    /(地图|地域|副本|疆域|远行|扩张|世界|城市|大陆|星域|秘境)/,
-    /(势力|宗门|组织|阵营|朝堂|资本|家族|集团|联盟|敌对)/,
-    /(关系|羁绊|爱恨|师徒|搭档|团队|背叛|亲情|友情|情感)/,
-    /(秘密|真相|谜团|身份|悬念|伏笔|阴谋|线索|反转)/,
-    /(升级|成长|进阶|突破|多阶段|长线|递进|阶梯|层级|迭代)/,
-  ];
-  const dimensionScore = capacityDimensions.reduce(
-    (score, pattern) => score + (pattern.test(longformText) ? 8 : 0),
-    0,
-  );
-  const recommendationBonus = direction.recommendationScore > 0
-    ? Math.round((Math.min(100, direction.recommendationScore) - 70) * 0.2)
-    : 0;
-  const weaknessPenalty = /(单线|重复|容易后劲不足|设定单薄|节奏失控|中后期乏力|缺少|不足)/.test(longformText)
-    ? 10
-    : 0;
-  const longformCapacityScore = Math.max(
-    50,
-    Math.min(98, 55 + dimensionScore + recommendationBonus - weaknessPenalty),
-  );
-
-  const longformCapacityTone: DirectionScaleHint['longformCapacityTone'] = longformCapacityScore >= 88
-    ? 'strong'
-    : longformCapacityScore >= 76
-      ? 'medium'
-      : 'cautious';
-
-  const longformCapacityLabel = longformCapacityTone === 'strong'
-    ? '长篇承载力强'
-    : longformCapacityTone === 'medium'
-      ? '长篇承载力稳'
-      : '长篇承载力待加强';
-
-  const improvementSuggestions: string[] = [];
-  if (!capacityDimensions[0].test(longformText)) {
-    improvementSuggestions.push('补一条地图扩张线，避免故事长期困在单场景');
-  }
-  if (!capacityDimensions[1].test(longformText)) {
-    improvementSuggestions.push('增加反派梯度或势力博弈，让中后期冲突持续升级');
-  }
-  if (!capacityDimensions[2].test(longformText)) {
-    improvementSuggestions.push('补强人物关系变量，为30章后持续制造新张力');
-  }
-  if (!capacityDimensions[3].test(longformText)) {
-    improvementSuggestions.push('埋入长期悬念或身份真相，给后续章节稳定钩子');
-  }
-  if (!capacityDimensions[4].test(longformText)) {
-    improvementSuggestions.push('设计分阶段成长阶梯，让主角能力与目标持续递进');
-  }
-
-  const enhancementBrief = improvementSuggestions.length
-    ? `请在保持当前方向核心卖点不变的前提下，重点补强以下长篇能力缺口：${improvementSuggestions.slice(0, 3).join('；')}。同时确保前30章只完成开局承诺与第一轮冲突闭环，把更大的地图、势力、关系和悬念递进留到30章之后。`
-    : '请在保持当前方向核心卖点不变的前提下，进一步放大长线升级空间、势力博弈层次、人物关系变量和长期悬念，让它更适合百万字持续推进。';
-
-  return {
-    targetWordCountLabel: wordCountRange,
-    estimatedChapterCount,
-    suggestedVolumeCount,
-    estimatedChaptersPerVolume,
-    startupPhaseRatio,
-    longformCapacityScore,
-    longformCapacityLabel,
-    longformCapacityTone,
-    improvementSuggestions: improvementSuggestions.slice(0, 3),
-    enhancementBrief,
-  };
-}
 
 const directionCards = computed(() => {
   return generatedDirections.value

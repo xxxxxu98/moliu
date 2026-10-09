@@ -65,6 +65,16 @@ function toHint(profile: GenreProfile): GenreSeedHint {
 }
 
 /**
+ * 按已落库的 Profile id 取 hint。id 对不上时返回 null，不猜题材。
+ */
+export function buildGenreSeedHintById(profileId: string): GenreSeedHint | null {
+  const id = profileId.trim();
+  if (!id) return null;
+  const profile = getGenreProfile(id);
+  return profile ? toHint(profile) : null;
+}
+
+/**
  * 按题材名匹配 Profile hint。
  * 优先使用题材标签声明的 profileId；无可靠匹配时返回 null（不强行套用默认都市）。
  */

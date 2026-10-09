@@ -633,6 +633,24 @@ describe('generateExpandedOutlineInSteps 分步编排', () => {
     ).rejects.toThrow('长度上限截断');
   });
 
+  it('已有骨架时跳过骨架请求，只从卷纲继续', async () => {
+    const callStructuredTextMode = vi.fn(async () => {
+      throw new Error('卷纲生成失败');
+    });
+
+    await expect(
+      generateExpandedOutlineInSteps({
+        seed: '法医穿越',
+        direction: DIRECTION,
+        options: BASE_OPTIONS,
+        wordCountRange: '100万-200万字',
+        resumeRawText: STEP_RESPONSES[0],
+        callStructuredTextMode,
+      }),
+    ).rejects.toThrow('卷纲生成失败');
+    expect(callStructuredTextMode).toHaveBeenCalledTimes(1);
+  });
+
   it('硬步（卷纲）失败：上抛错误', async () => {
     let callIndex = 0;
     const callStructuredTextMode = vi.fn(async () => {

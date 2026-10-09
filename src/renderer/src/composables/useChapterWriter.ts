@@ -28,6 +28,7 @@ import {
   buildWindowedOutlineText,
   buildEnhancedDesignPrompt,
 } from '@/services/writing/OutlineContextBuilder';
+import { formatTopicDiscoveryOpeningContract } from '@/services/inspiration/topic-discovery.service';
 import {
   extractChapterMemory,
   buildCharacterStateTable,
@@ -146,7 +147,7 @@ export interface UseChapterWriterReturn {
 function extractChapterTypeFromOutline(outline: string, orderIndex: number): ChapterType {
   if (!outline) {
     if (orderIndex === 0) {
-      return 'world_intro';
+      return 'conflict';
     }
     return 'normal';
   }
@@ -221,7 +222,7 @@ function extractChapterTypeFromOutline(outline: string, orderIndex: number): Cha
   }
 
   if (orderIndex === 0) {
-    return 'world_intro';
+    return 'conflict';
   }
 
   return 'normal';
@@ -526,6 +527,7 @@ export function useChapterWriter(): UseChapterWriterReturn {
       coreSellingPoints: project.coreSellingPoints,
       startupPack: project.metadata?.startupPack,
       storyScale: project.metadata?.storyScale,
+      topicOpeningContract: formatTopicDiscoveryOpeningContract(project.metadata?.topicDiscoverySeed),
       writingStyle: writingStyle as any,
     });
 

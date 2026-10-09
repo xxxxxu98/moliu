@@ -64,6 +64,8 @@ export interface EnhancedProjectContext {
   coreSellingPoints?: CoreSellingPoint[];
   /** 启动包（首页大纲产出，覆盖前 OUTLINE_COMPLETENESS_POLICY.startupChapterCount 章） */
   startupPack?: ProjectStartupPack;
+  /** 开题合同原文，只在前三章注入 */
+  topicOpeningContract?: string;
   /** 故事规模规划（P2-4：接通 startupPhaseRatio 消费，让续写端感知开篇占比） */
   storyScale?: {
     startupPhaseRatio?: string;
@@ -506,7 +508,9 @@ ${ctx.coreSellingPoints.map((p) => `- ${p.name}：${p.description}`).join('\n')}
 - 对读者的承诺：${sp.promiseToReader || '（暂无）'}
 - 主角第一印象：${sp.protagonistFirstImpression || '（暂无）'}
 - 首个大爽点：${sp.firstMajorCoolPoint || '（暂无）'}
+- 首个大爽点兑现章：${sp.firstMajorCoolPointChapter ?? '（未标注）'}
 - 首个冲突循环：${sp.firstConflictCycle || '（暂无）'}
+- 首个冲突起始章：${sp.firstConflictStartChapter ?? '（未标注）'}
 ${scaleHint}
 ${sp.chapterBlocks?.length ? sp.chapterBlocks.map((b) => {
       const zoneText = b.forbiddenZones?.length
@@ -515,6 +519,12 @@ ${sp.chapterBlocks?.length ? sp.chapterBlocks.map((b) => {
       return `- 第${b.range}章：${b.objective}（节奏：${b.pacing === 'fast' ? '快' : '中'}；读者期待：${b.readerExpectation || '无'}${zoneText}）`;
     }).join('\n') : ''}
 当前是第 ${currentChapterNo} 章，请严格落实启动包对应的承诺与节奏。开篇 ${startupChapterCount} 章是黄金留存窗口，必须强力推进主角处境、立人设、埋冲突、铺爽点。`);
+  }
+
+  if (ctx.topicOpeningContract?.trim() && currentChapterNo <= 3) {
+    sections.push(`## 【开题合同】
+${ctx.topicOpeningContract.trim()}
+前三章必须守住这份合同里的钩子、爽点和题材雷区。`);
   }
 
   return sections.join('\n\n');

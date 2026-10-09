@@ -6,5 +6,6 @@ export {
   buildFallbackStorySeeds,
   buildFallbackGenreInsights,
   buildPromptFromSeed,
+  formatTopicDiscoveryOpeningContract,
   insightToSeedConstraints,
 } from './topic-discovery.service';

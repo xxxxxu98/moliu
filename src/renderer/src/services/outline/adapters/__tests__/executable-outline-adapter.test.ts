@@ -341,11 +341,11 @@ describe('inferChapterType - Bug 2 ending/resolution 判定修复', () => {
     expect(result.chapters[4].chapterType).toBe('resolution');
   });
 
-  it('前 3 章建置类型不变', () => {
+  it('前 3 章是冲突开局', () => {
     const result = mapExecutableOutlineToGeneratedOutline(makeOutline());
-    expect(result.chapters[0].chapterType).toBe('world_intro');
-    expect(result.chapters[1].chapterType).toBe('character_intro');
-    expect(result.chapters[2].chapterType).toBe('plot_setup');
+    expect(result.chapters[0].chapterType).toBe('conflict');
+    expect(result.chapters[1].chapterType).toBe('conflict');
+    expect(result.chapters[2].chapterType).toBe('conflict');
   });
 });
 
@@ -404,10 +404,10 @@ describe('splitStartupBlocksToChapters - 章号不跳号（globalChapterNo 修�
     // 标题同样
     expect(result.chapters[5].title).toBe('第6章');
     expect(result.chapters[9].title).toBe('第10章');
-    // 前 3 章建置类型不因跳号而错位
-    expect(result.chapters[0].chapterType).toBe('world_intro');
-    expect(result.chapters[1].chapterType).toBe('character_intro');
-    expect(result.chapters[2].chapterType).toBe('plot_setup');
+    // 前 3 章冲突类型不因跳号而错位
+    expect(result.chapters[0].chapterType).toBe('conflict');
+    expect(result.chapters[1].chapterType).toBe('conflict');
+    expect(result.chapters[2].chapterType).toBe('conflict');
   });
 });
 
@@ -458,8 +458,8 @@ describe('toChapters chapterBlueprints 分支 - AI 单章蓝图', () => {
     expect(ch1.pacingStrategy).toBe('confront');
     // hook 优先 hookText（文案），而非把 hookType 枚举当文案
     expect(ch1.hook).toBe('暗处目光已至');
-    // chapterType 仍由 inferChapterType 派生（首章 = world_intro）
-    expect(ch1.chapterType).toBe('world_intro');
+    // chapterType 仍由 inferChapterType 派生（首章 = conflict）
+    expect(ch1.chapterType).toBe('conflict');
   });
 
   it('chapterBlueprints 为空时回退 splitStartupBlocksToChapters', () => {

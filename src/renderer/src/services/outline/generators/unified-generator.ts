@@ -412,6 +412,9 @@ export class UnifiedOutlineGenerator {
     options?: GenerateOptions & { enhancementBrief?: string },
     onProgress?: (message: string) => void,
   ): Promise<ExpandedOutlineResult> {
+    // 瞬态失败续跑时保留已成功步骤的 rawText。步骤正常返回后清空，
+    // 结构不完整的降温重试仍整份重来。
+    let stepCheckpoint = '';
     const result = await this.runWithRetry<ExpandedOutlineResult>(
       async (attempt, temperature) => {
         const opts = {
@@ -432,10 +435,15 @@ export class UnifiedOutlineGenerator {
           options: opts,
           enhancementBrief: opts.enhancementBrief,
           wordCountRange,
+          resumeRawText: stepCheckpoint,
+          onCheckpoint: text => {
+            stepCheckpoint = text;
+          },
           callStructuredTextMode: (system, user, callOptions) =>
             this.callStructuredTextMode(system, user, callOptions, 'outline-expand'),
           onProgress,
         });
+        stepCheckpoint = '';
         let rawText = stepped.rawText;
         let outline = parseExpandedOutline(rawText);
 
@@ -448,24 +456,42 @@ export class UnifiedOutlineGenerator {
           let completeness = inspectOutlineCompleteness(outline);
           if (hasStructuralOutlineBlockers(completeness)) {
             onProgress?.('主方案已就绪，正在分批拆解单章蓝图...');
-            try {
-              const completed = await completeIncompleteOutline({
-                rawText,
-                outline,
-                direction,
-                options: opts,
-                callStructuredTextMode: (system, user, callOptions) =>
-                  this.callStructuredTextMode(system, user, callOptions, 'outline-expand'),
-                onProgress,
-              });
+            let completed: Awaited<ReturnType<typeof completeIncompleteOutline>> | null = null;
+            let completionError: unknown;
+            for (let completionAttempt = 1; completionAttempt <= 2; completionAttempt += 1) {
+              try {
+                completed = await completeIncompleteOutline({
+                  rawText,
+                  outline,
+                  direction,
+                  options: opts,
+                  callStructuredTextMode: (system, user, callOptions) =>
+                    this.callStructuredTextMode(system, user, callOptions, 'outline-expand'),
+                  onProgress,
+                });
+                completionError = undefined;
+                break;
+              } catch (error) {
+                if (isUserCancelled(error, opts.signal)) throw error;
+                completionError = error;
+                if (completionAttempt < 2 && isTransientError(error)) {
+                  onProgress?.('单章蓝图补全被中断，只重试补全...');
+                  continue;
+                }
+                break;
+              }
+            }
+            if (completionError || !completed) {
+              const message =
+                completionError instanceof Error
+                  ? completionError.message
+                  : String(completionError ?? '未知错误');
+              warnings.push(`分段补全失败，50章蓝图未完成：${message.slice(0, 160)}`);
+            } else {
               rawText = completed.rawText;
               outline = completed.outline;
               warnings.push(...completed.warnings);
               completeness = inspectOutlineCompleteness(outline);
-            } catch (error) {
-              if (isUserCancelled(error, opts.signal)) throw error;
-              const message = error instanceof Error ? error.message : String(error);
-              warnings.push(`分段补全失败：${message.slice(0, 160)}`);
             }
           }
           severelyTruncated = hasStructuralOutlineBlockers(completeness);

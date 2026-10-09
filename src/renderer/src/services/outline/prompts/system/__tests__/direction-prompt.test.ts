@@ -32,5 +32,7 @@ describe('buildDirectionPrompt', () => {
     expect(prompt.system).toContain('标题风格多样性');
     expect(prompt.system).toContain('冒号格式与不带冒号的短句式都要出现');
     expect(prompt.system).toContain('禁止三张卡全部使用同一格式');
+    expect(prompt.system).toContain('长篇承载力档位');
+    expect(prompt.system).toContain('只能写 strong、medium、cautious');
   });
 });

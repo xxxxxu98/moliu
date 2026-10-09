@@ -420,7 +420,7 @@ function inferHookType(hook?: string): string | undefined {
  * 这里把“是否全书最后一章 / 是否所在区间块最后 1 章”拆成两个显式布尔，
  * 避免章号与区间大小混在一起比较。
  *
- * @param chapterNo           绝对章号（1-based），仅用于前 3 章建置类型
+ * @param chapterNo           绝对章号（1-based），仅用于前 3 章开篇冲突类型
  * @param isLastChapter       是否全书最后一章
  * @param isBlockLastChapter  是否所在启动块的最后 1 章
  * @param coolPoints          本块爽点文案，用于关键词识别
@@ -443,10 +443,8 @@ function inferChapterType(
   if (coolText.includes('高潮') || coolText.includes('决战') || coolText.includes('巅峰')) {
     return 'climax';
   }
-  // 第 1-3 章：开篇建置（网文惯例）
-  if (chapterNo === 1) return 'world_intro';
-  if (chapterNo === 2) return 'character_intro';
-  if (chapterNo === 3) return 'plot_setup';
+  // 前三章是留存窗口：结构协议要求已经在冲突里，不用章号去标背景介绍。
+  if (chapterNo >= 1 && chapterNo <= 3) return 'conflict';
   // 区间末章且为解决类
   if (isBlockLastChapter && (coolText.includes('解决') || coolText.includes('收'))) {
     return 'resolution';
@@ -534,7 +532,7 @@ function splitStartupBlocksToChapters(outline: ExecutableOutline): GeneratedChap
       // 当 AI 输出的区间不连续（如 1-5 / 11-15）时，第二块的第一章 chapterNo
       // 会从 11 起跳，标题变成"第 11 章"但它其实是全书第 6 章；
       // 更糟的是 inferChapterType 用 chapterNo 判定前 3 章建置类型，
-      // 跳号会让 world_intro/character_intro/plot_setup 全部错位。
+      // 跳号会让前三章的 conflict 标到错误的章上。
       const chapterNo = globalChapterNo;
       const isBlockLastChapter = i === blockSize - 1;
       const isLastChapter = isLastBlock && isBlockLastChapter;

@@ -22,6 +22,8 @@ export const OUTLINE_COMPLETENESS_POLICY = {
 
 export type OutlineCompletenessBlockerKind =
   | 'opening-hook'
+  | 'opening-conflict'
+  | 'opening-cool-point'
   | 'chapter-count'
   | 'character-count'
   | 'foreshadow-count'
@@ -556,6 +558,41 @@ function inspectBlueprintOpeningRepetition(
 }
 
 /**
+ * 开篇协议：冲突从第 1 章开始，第一次强记忆爽点落在前三章。
+ * 只认启动包里的自标注整数字段，不从爽点句子里猜章号。
+ */
+function inspectOpeningProtocol(outline: ExecutableOutline): OutlineCompletenessBlocker[] {
+  const pack = outline.startupPack30;
+  const blockers: OutlineCompletenessBlocker[] = [];
+  if (!(pack?.firstConflictCycle ?? '').trim()) {
+    blockers.push({
+      kind: 'opening-conflict',
+      message: '启动包缺少「第一轮冲突闭环」。第 1 章必须已经在冲突中。',
+    });
+  }
+  if (pack?.firstConflictStartChapter !== 1) {
+    blockers.push({
+      kind: 'opening-conflict',
+      message: `第一轮冲突起始章必须为 1（当前：${pack?.firstConflictStartChapter ?? '未标注'}）。`,
+    });
+  }
+  if (!(pack?.firstMajorCoolPoint ?? '').trim()) {
+    blockers.push({
+      kind: 'opening-cool-point',
+      message: '启动包缺少「第一次强记忆爽点」。前三章内必须安排一次爽点兑现。',
+    });
+  }
+  const coolPointChapter = pack?.firstMajorCoolPointChapter;
+  if (coolPointChapter == null || coolPointChapter < 1 || coolPointChapter > 3) {
+    blockers.push({
+      kind: 'opening-cool-point',
+      message: `第一次强记忆爽点章必须是 1～3 的整数（当前：${coolPointChapter ?? '未标注'}）。`,
+    });
+  }
+  return blockers;
+}
+
+/**
  * 只检查“能否安全应用”的硬条件；内容质量问题仍由 outline-reviewer 负责。
  */
 export function inspectOutlineCompleteness(
@@ -571,6 +608,8 @@ export function inspectOutlineCompleteness(
       message: `前${OUTLINE_COMPLETENESS_POLICY.startupChapterCount}章启动包缺少开篇钩子，不能用于生产续写`,
     });
   }
+
+  blockers.push(...inspectOpeningProtocol(outline));
 
   if (blueprints.length !== OUTLINE_COMPLETENESS_POLICY.startupChapterCount) {
     blockers.push({

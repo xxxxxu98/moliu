@@ -250,6 +250,8 @@ describe('topic-discovery.service', () => {
       expect(prompt).toContain('长篇');
       expect(prompt).toContain('核心卖点');
       expect(prompt).toContain('血脉觉醒');
+      expect(prompt).toContain('题材专属约束');
+      expect(prompt).toContain('【题材Profile】fantasy');
     });
 
     it('uses short-form direction hint for short seeds', () => {
@@ -430,6 +432,46 @@ describe('topic-discovery.service', () => {
         refreshStorySeeds({ count: 2, signal: controller.signal }, chat),
       ).rejects.toMatchObject({ name: 'AbortError' });
       expect(chat).toHaveBeenCalled();
+    });
+
+    it('按每条种子自己的题材匹配 Profile', async () => {
+      settingsState.aiProviders = [
+        {
+          id: 'p1',
+          provider: 'openai',
+          modelName: 'gpt-4o',
+          enabled: true,
+          apiKey: 'test-key',
+        },
+      ];
+      settingsState.defaultModel = { providerId: 'p1', modelName: 'gpt-4o' };
+      const chat = vi.fn(async () =>
+        JSON.stringify({
+          seeds: [
+            {
+              title: '凡骨登仙',
+              oneLiner: '资质平庸的少年在宗门大比前夜被迫对赌。',
+              genre: '玄幻',
+              hook: '退婚当场',
+              coolPoint: '当众打脸',
+              audience: 'male',
+            },
+            {
+              title: '深夜出租屋',
+              oneLiner: '程序员在加班夜发现公司账本能改写现实。',
+              genre: '都市',
+              hook: '加班夜',
+              coolPoint: '当众揭账',
+              audience: 'male',
+            },
+          ],
+        }),
+      );
+
+      const batch = await refreshStorySeeds({ count: 2, genre: '玄幻' }, chat);
+      expect(batch.source).toBe('ai');
+      expect(batch.items.find(item => item.genre === '玄幻')?.genreProfileId).toBe('fantasy');
+      expect(batch.items.find(item => item.genre === '都市')?.genreProfileId).toBe('urban');
     });
   });
 

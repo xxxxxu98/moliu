@@ -22,6 +22,8 @@ function parseDirectionBlock(block: string, index: number): OutlineDirection | n
   const riskNotes = extractMultiValueField(block, '风险提示');
   const recommendedReason = extractFieldValue(block, '推荐理由') ?? '';
   const longformCapacityNote = extractFieldValue(block, '长篇承载力') ?? '';
+  const longformCapacityTier = parseCapacityTier(extractFieldValue(block, '长篇承载力档位'));
+  const longformGaps = parseCapacityGaps(extractFieldValue(block, '长篇补强'));
 
   // 推荐分：仅在模型真的给出数字时采用。
   // 旧实现回落到 `80 - index * 5` 伪造分数，会让"未给出评分"的方向被当作高推荐分，
@@ -59,7 +61,29 @@ function parseDirectionBlock(block: string, index: number): OutlineDirection | n
     recommendationScore,
     recommendedReason,
     longformCapacityNote,
+    longformCapacityTier,
+    longformGaps,
   };
+}
+
+/** 只接受模型自标注的三个英文档位，不从承载力句子里猜强弱。 */
+function parseCapacityTier(
+  raw: string | null,
+): 'strong' | 'medium' | 'cautious' | null {
+  const text = (raw ?? '').trim().toLowerCase();
+  if (text === 'strong' || text === 'medium' || text === 'cautious') return text;
+  return null;
+}
+
+/** 把模型用顿号写出的补强列表拆开。「无」表示没有缺口。 */
+function parseCapacityGaps(raw: string | null): string[] {
+  const text = (raw ?? '').trim();
+  if (!text || text === '无' || text === '暂无') return [];
+  return text
+    .split(/[、；;]/u)
+    .map(item => item.trim())
+    .filter(Boolean)
+    .slice(0, 3);
 }
 
 function parseSingleFallbackBlock(raw: string): OutlineDirection[] {

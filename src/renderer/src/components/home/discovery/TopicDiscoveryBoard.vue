@@ -24,19 +24,16 @@ import {
   Shuffle,
   Puzzle,
 } from 'lucide-vue-next';
-import { useTopicDiscoveryStore, favoriteSeedKey } from '@/stores/topicDiscovery.store';
+import { useTopicDiscoveryStore } from '@/stores/topicDiscovery.store';
 import { useDirectionSessionStore } from './directionSession.store';
 import { PLAY_MODES } from '@/services/inspiration/play-modes';
-import { useOutlineGenerator } from '@/composables/useOutlineGenerator';
-import { useProjectCreator } from '@/composables/useProjectCreator';
+import { useTopicOpeningPipeline } from '@/composables/useTopicOpeningPipeline';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
-import { buildWordCountBreakdown } from '@/services/outline/utils';
 import { mapExecutableOutlineToGeneratedOutline } from '@/services/outline/adapters/executable-outline-adapter';
+import { buildDirectionScaleHint } from '@/services/outline/utils/direction-scale-hint';
 import { genreTags } from '@/data/inspirations';
 import { BRAIN_GENRES } from '@/services/inspiration/fallback/genre-pool';
 import { OPENING_HOOKS, UNEXPECTED_TWISTS } from '@/services/inspiration/fallback/hook-twist-pool';
-import { LENGTH_LABEL } from '@/services/inspiration/prompts/topic-discovery-prompts';
-import { buildTopicDiscoveryProjectSeed } from '@/services/inspiration/topic-discovery.service';
 import type { OutlineDirection } from '@/services/outline/types/direction';
 import type { GeneratedOutline } from '@/types/inspiration';
 import type {
@@ -91,25 +88,9 @@ const {
   activeInsightContext,
 } = storeToRefs(discovery);
 
-const {
-  isGenerating,
-  error: generationError,
-  progress: generationProgress,
-  warnings: outlineWarnings,
-  generateDirections,
-  expandDirection,
-  cancel: cancelGeneration,
-  wasCancelled,
-} = useOutlineGenerator();
-
-const {
-  isCreating,
-  error: projectCreateError,
-  createProject: doCreateProject,
-  reset: resetProjectState,
-} = useProjectCreator();
-
 const selectedWordCountRange = ref(DEFAULT_WORD_COUNT_RANGE);
+const opening = useTopicOpeningPipeline(selectedWordCountRange);
+const { isGenerating, isProcessing, generationProgress } = opening;
 const freePrompt = ref('');
 const showFavorites = ref(false);
 
@@ -121,8 +102,6 @@ const isDiceRolling = ref(false);
 
 /** 当前玩法下的方向卡会话 */
 const currentSession = computed(() => sessionStore.getSession(activeTab.value));
-/** 当前正在跑方向生成/展开的玩法 */
-const pipelineTab = ref<TopicDiscoveryTab | null>(null);
 
 const MODE_UI: Record<TopicDiscoveryTab, { icon: typeof Sparkles; accent: string }> = {
   seeds: { icon: Sparkles, accent: 'teal' },
@@ -148,17 +127,12 @@ const hasActiveFilters = computed(
     !!activeInsightContext.value,
 );
 
-const isProcessing = computed((): boolean => {
-  return Boolean(isGenerating.value) || Boolean(isCreating.value);
-});
-
 const isPipelineActiveOnCurrentTab = computed((): boolean => {
-  return pipelineTab.value === activeTab.value && isProcessing.value;
+  return opening.isPipelineActiveOn(activeTab.value);
 });
 
 const pipelineError = computed((): string | null => {
-  if (pipelineTab.value !== activeTab.value) return null;
-  return generationError.value || projectCreateError.value || null;
+  return opening.pipelineErrorOn(activeTab.value);
 });
 
 const showsSeedGrid = computed(
@@ -212,50 +186,6 @@ const seedGridEmpty = computed(() => {
   };
 });
 
-function buildDirectionScaleHint(wordCountRange: string, direction: OutlineDirection) {
-  const breakdown = buildWordCountBreakdown(wordCountRange);
-  const estimatedChapterCount = Math.max(30, Math.round(breakdown.targetWordCount / 3000));
-  const suggestedVolumeCount = Math.max(3, Math.round(estimatedChapterCount / 40));
-  const estimatedChaptersPerVolume = Math.round(estimatedChapterCount / suggestedVolumeCount);
-  const longformText = [
-    direction.premise,
-    direction.coreConflict,
-    direction.protagonistArc,
-    direction.oneLiner,
-  ].join(' ');
-
-  const checks = [
-    /地图|世界|城|域|位面|星球/,
-    /反派|势力|家族|宗门|帝国|组织/,
-    /关系|羁绊|爱人|师徒|兄弟|对手/,
-    /悬念|秘密|身份|真相|伏笔/,
-    /升级|境界|等级|成长|阶段/,
-  ];
-  const hit = checks.filter(re => re.test(longformText)).length;
-  const longformCapacityScore = 60 + hit * 8 + Math.min(12, direction.recommendationScore);
-
-  const longformCapacityTone =
-    longformCapacityScore >= 88 ? 'strong' : longformCapacityScore >= 76 ? 'medium' : 'cautious';
-
-  return {
-    targetWordCountLabel: wordCountRange,
-    estimatedChapterCount,
-    suggestedVolumeCount,
-    estimatedChaptersPerVolume,
-    startupPhaseRatio: '约前 20% 完成开局兑现',
-    longformCapacityScore,
-    longformCapacityLabel:
-      longformCapacityTone === 'strong'
-        ? '长篇承载力强'
-        : longformCapacityTone === 'medium'
-          ? '长篇承载力稳'
-          : '长篇承载力待加强',
-    longformCapacityTone: longformCapacityTone as 'strong' | 'medium' | 'cautious',
-    improvementSuggestions: [] as string[],
-    enhancementBrief: '请在保持当前方向核心卖点不变的前提下，进一步放大长线升级空间与冲突层次。',
-  };
-}
-
 const directionCards = computed(() =>
   currentSession.value.directions.map((direction, index) => ({
     id: direction.id,
@@ -301,15 +231,18 @@ const canSubmitPrompt = computed((): boolean => {
   return freePrompt.value.trim().length >= 8 && !isProcessing.value;
 });
 
+let diceToken = 0;
+
 onMounted(() => {
-  discovery.loadPersistedSeeds();
-  discovery.loadPersistedInsights();
-  discovery.loadPersistedFavorites();
+  discovery.hydratePersisted();
   window.addEventListener('keydown', handleGlobalKeydown);
 });
 
 onUnmounted(() => {
+  diceToken += 1;
   window.removeEventListener('keydown', handleGlobalKeydown);
+  discovery.cancelRefresh();
+  opening.cancel();
 });
 
 function handleGlobalKeydown(event: KeyboardEvent): void {
@@ -327,9 +260,7 @@ function handleGlobalKeydown(event: KeyboardEvent): void {
 
 function handleCancelGeneration(): void {
   if (!isGenerating.value) return;
-  cancelGeneration();
-  const tab = pipelineTab.value ?? activeTab.value;
-  sessionStore.setEnhanceTarget(tab, null);
+  opening.cancel();
   message.info(t('topicDiscovery.generationCancelled'));
 }
 
@@ -376,35 +307,7 @@ async function generateFromPrompt(
   prompt: string,
   tab: TopicDiscoveryTab = activeTab.value,
 ): Promise<void> {
-  pipelineTab.value = tab;
-  const session = sessionStore.getSession(tab);
-
-  sessionStore.setPrompt(tab, prompt);
-  // 成功前保留旧方向卡，取消/失败时不把列表清空
-  sessionStore.setEnhanceTarget(tab, null);
-  resetProjectState();
-
-  const directions = await generateDirections(prompt, {
-    wordCountRange: selectedWordCountRange.value,
-  });
-
-  if (wasCancelled.value) {
-    return;
-  }
-  // 被更新的请求取代：静默退出，由新请求写结果
-  if (directions.length === 0 && isGenerating.value) {
-    return;
-  }
-
-  if (directions.length === 0) {
-    message.error(generationError.value || t('topicDiscovery.directionFailed'));
-    return;
-  }
-
-  sessionStore.setDirections(tab, directions);
-  sessionStore.setSelectedDirection(tab, directions[0] ?? null);
-  sessionStore.setExpandedOutline(tab, null);
-  sessionStore.setSelectedOutline(tab, null);
+  await opening.generateFromPrompt(prompt, tab);
 }
 
 async function adoptSeed(seed: StorySeedCard, fromTab?: TopicDiscoveryTab): Promise<void> {
@@ -452,62 +355,14 @@ async function handleAdoptInsight(insight: GenreInsightCard): Promise<void> {
 }
 
 function selectDirection(direction: OutlineDirection): void {
-  const tab = activeTab.value;
-  sessionStore.setSelectedDirection(tab, direction);
-  sessionStore.setEnhanceTarget(tab, null);
-  sessionStore.setExpandedOutline(tab, null);
-  sessionStore.setSelectedOutline(tab, null);
+  opening.selectDirection(activeTab.value, direction);
 }
 
 async function handleExpandDirection(options?: {
   enhancementBrief?: string;
   directionId?: string;
 }): Promise<void> {
-  const tab = activeTab.value;
-  const session = sessionStore.getSession(tab);
-  if (!session.selectedDirection || !session.prompt) return;
-
-  pipelineTab.value = tab;
-  const isEnhancing = !!options?.enhancementBrief;
-  sessionStore.setEnhanceTarget(
-    tab,
-    isEnhancing ? (options?.directionId ?? session.selectedDirection.id) : null,
-  );
-
-  const outline = await expandDirection(session.prompt, session.selectedDirection, {
-    wordCountRange: selectedWordCountRange.value,
-    enhancementBrief: options?.enhancementBrief,
-  });
-
-  sessionStore.setEnhanceTarget(tab, null);
-
-  if (wasCancelled.value) {
-    return;
-  }
-  if (!outline) {
-    // 展开失败必须可见：首次展开时页面上还没有大纲，OutlineDisplay 不会渲染，
-    // pipelineError 无处展示——这里必须主动 toast，否则网关/模型故障被静默吞掉。
-    if (!isGenerating.value && generationError.value) {
-      message.error(generationError.value.slice(0, 200));
-    }
-    return;
-  }
-
-  // 大纲生成成功但带软质量警告（审查回退/补全失败等）：不阻塞应用，
-  // 但必须让用户知道成品有已知瑕疵，避免静默带病落库。
-  if (outlineWarnings.value.length > 0) {
-    message.warning(
-      `大纲已生成，但有 ${outlineWarnings.value.length} 条质量提示：${outlineWarnings.value[0].slice(0, 80)}`,
-    );
-  }
-
-  sessionStore.setExpandedOutline(tab, outline);
-  sessionStore.setSelectedOutline(
-    tab,
-    mapExecutableOutlineToGeneratedOutline(outline, {
-      targetWordCountRange: selectedWordCountRange.value,
-    }),
-  );
+  await opening.expandSelectedDirection(activeTab.value, options);
 }
 
 async function handleEnhanceDirection(
@@ -532,26 +387,7 @@ async function handleFreePromptGenerate(): Promise<void> {
 }
 
 async function handleCreateProject(): Promise<void> {
-  const tab = activeTab.value;
-  const session = sessionStore.getSession(tab);
-  const outlineToCreate =
-    session.selectedOutline ??
-    (session.expandedOutline
-      ? mapExecutableOutlineToGeneratedOutline(session.expandedOutline, {
-          targetWordCountRange: selectedWordCountRange.value,
-        })
-      : null);
-  if (!outlineToCreate) return;
-  pipelineTab.value = tab;
-
-  const topicDiscoverySeed = session.selectedSeedSnapshot
-    ? buildTopicDiscoveryProjectSeed(
-        session.selectedSeedSnapshot,
-        session.seedSourceTab ?? tab,
-      )
-    : undefined;
-
-  await doCreateProject(outlineToCreate, { topicDiscoverySeed });
+  await opening.createProjectFromSession(activeTab.value);
 }
 
 function onSwitchTab(tab: TopicDiscoveryTab): void {
@@ -597,10 +433,15 @@ function toggleMixElement(name: string): void {
 async function rollDice(): Promise<void> {
   if (isDiceRolling.value || isRefreshing.value || isProcessing.value) return;
   isDiceRolling.value = true;
+  const token = ++diceToken;
 
   const diceGenres = [...BRAIN_GENRES.map(g => g.name), ...genreTags.map(tag => tag.name)];
   const frames = 8;
   for (let i = 0; i < frames; i += 1) {
+    if (token !== diceToken) {
+      isDiceRolling.value = false;
+      return;
+    }
     diceRoll.value = {
       genre: pickRandom(diceGenres),
       hook: pickRandom(OPENING_HOOKS),
@@ -609,6 +450,10 @@ async function rollDice(): Promise<void> {
     await new Promise<void>(resolve => {
       window.setTimeout(resolve, 45 + i * 18);
     });
+  }
+  if (token !== diceToken) {
+    isDiceRolling.value = false;
+    return;
   }
 
   diceRoll.value = {

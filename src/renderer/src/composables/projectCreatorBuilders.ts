@@ -77,7 +77,9 @@ export function buildStartupPackFromOutline(
     promiseToReader: outline.startupPack30.promiseToReader || '',
     protagonistFirstImpression: outline.startupPack30.protagonistFirstImpression || '',
     firstMajorCoolPoint: outline.startupPack30.firstMajorCoolPoint || '',
+    firstMajorCoolPointChapter: outline.startupPack30.firstMajorCoolPointChapter ?? null,
     firstConflictCycle: outline.startupPack30.firstConflictCycle || '',
+    firstConflictStartChapter: outline.startupPack30.firstConflictStartChapter ?? null,
     chapterBlocks: (outline.startupPack30.chapterBlocks || []).map((b) => ({
       range: b.range,
       objective: b.objective,

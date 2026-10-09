@@ -21,6 +21,7 @@ import type {
 import {
   extractFieldValue,
   extractMultiValueField,
+  parseAnnotatedChapterIndex,
   isLikelyCharacterName,
   normalizeGeneratedText,
   splitByHeading,
@@ -866,7 +867,13 @@ export function parseExpandedOutline(raw: string): ExecutableOutline | null {
       promiseToReader: extractFieldValue(startupSection, '对读者的承诺') ?? '',
       protagonistFirstImpression: extractFieldValue(startupSection, '主角第一印象') ?? '',
       firstMajorCoolPoint: extractFieldValue(startupSection, '第一次强记忆爽点') ?? '',
+      firstMajorCoolPointChapter: parseAnnotatedChapterIndex(
+        extractFieldValue(startupSection, '第一次强记忆爽点章'),
+      ),
       firstConflictCycle: extractFieldValue(startupSection, '第一轮冲突闭环') ?? '',
+      firstConflictStartChapter: parseAnnotatedChapterIndex(
+        extractFieldValue(startupSection, '第一轮冲突起始章'),
+      ),
       chapterBlocks,
     },
     worldBuilding,

@@ -43,6 +43,7 @@ import {
   findRequiredBeatForbiddenClash,
   renderCreativeCompass,
 } from '@/services/story-runtime/creativeCompass';
+import { formatTopicDiscoveryOpeningContract } from '@/services/inspiration/topic-discovery.service';
 import {
   VOCABULARY_TIER_LABELS,
   normalizeVocabularyTier,
@@ -879,6 +880,10 @@ export class ChapterWritingPipeline {
         })),
         coolPoints: coolPatterns.map(item => String(item)).slice(0, 4),
         openingAnchor: chapterNumber <= 3 ? meta?.startupPack?.openingHook : undefined,
+        openingContract:
+          chapterNumber <= 3
+            ? formatTopicDiscoveryOpeningContract(meta?.topicDiscoverySeed)
+            : undefined,
       });
       const contracts = new ContractPackBuilder().build({
         bootstrap,

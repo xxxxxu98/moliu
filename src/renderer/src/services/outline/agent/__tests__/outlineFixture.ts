@@ -159,7 +159,9 @@ export function buildOutlineFixture(options: FixtureOptions = {}): string {
 - 对读者的承诺：每章都有翻案反转
 - 主角第一印象：胆大心细的验尸官
 - 第一次强记忆爽点：当众验出真凶
+- 第一次强记忆爽点章：2
 - 第一轮冲突闭环：洗清自身杀人嫌疑
+- 第一轮冲突起始章：1
 
 ### 1-${total}章
 - 目标：建立验尸金手指与首轮冤案

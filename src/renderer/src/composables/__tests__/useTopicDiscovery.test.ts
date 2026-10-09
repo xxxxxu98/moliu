@@ -352,6 +352,78 @@ describe('useTopicDiscovery', () => {
     expect(discovery.lockedPlatform).toBeNull();
   });
 
+  it('restores radar insight context on a fresh pinia', async () => {
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
+    const { refreshGenreInsights } = await import('@/services/inspiration/topic-discovery.service');
+
+    vi.mocked(refreshGenreInsights).mockResolvedValueOnce({
+      items: [
+        {
+          id: 'i-radar',
+          name: '规则怪谈',
+          lifecycle: 'rising',
+          audience: 'general',
+          reason: '传播强',
+          opportunity: '用职场规则做生存副本',
+          hotTags: ['规则', '职场'],
+          riskLevel: 'medium',
+          platform: 'fanqie',
+          length: 'short',
+        },
+      ],
+      source: 'ai',
+      generatedAt: new Date().toISOString(),
+    });
+
+    const first = useTopicDiscovery();
+    await first.refreshInsights();
+    first.selectInsight(first.insights[0]!);
+
+    setActivePinia(createPinia());
+    const second = useTopicDiscovery();
+    second.hydratePersisted();
+
+    expect(second.insights[0]?.id).toBe('i-radar');
+    expect(second.selectedInsightId).toBe('i-radar');
+    expect(second.activeInsightContext?.opportunity).toContain('职场规则');
+    expect(second.activeInsightContext?.hotTags).toEqual(['规则', '职场']);
+    expect(second.lockedGenre).toBe('规则怪谈');
+  });
+
+  it('drops malformed persisted insight context', async () => {
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
+
+    localStorage.setItem(
+      'moliu:topic-discovery:v2',
+      JSON.stringify({
+        version: 2,
+        insights: [
+          {
+            id: 'i-radar',
+            name: '规则怪谈',
+            lifecycle: 'rising',
+            audience: 'general',
+            reason: '传播强',
+            opportunity: '用职场规则做生存副本',
+            hotTags: ['规则'],
+            riskLevel: 'medium',
+          },
+        ],
+        insightNameHistory: [],
+        insightsSource: 'ai',
+        insightsWarning: null,
+        selectedInsightId: 'missing',
+        activeInsightContext: { name: '规则怪谈', opportunity: 12 },
+        savedAt: 't',
+      }),
+    );
+
+    const discovery = useTopicDiscovery();
+    expect(discovery.loadPersistedInsights()).toBe(true);
+    expect(discovery.activeInsightContext).toBeNull();
+    expect(discovery.selectedInsightId).toBeNull();
+  });
+
   it('persists buckets separately and migrates legacy single-bucket cache', async () => {
     const { useTopicDiscoveryStore: useTopicDiscovery } = await import('@/stores/topicDiscovery.store');
 

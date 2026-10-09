@@ -24,6 +24,13 @@ describe('renderCreativeCompass', () => {
     expect(text).toContain('必须保留：自己查自己：猎人与猎物是同一人');
     expect(text).toContain('开篇锚点：刀已经抵上，还没刺下去');
   });
+
+  it('前三章开题合同单独成行', () => {
+    const text = renderCreativeCompass({
+      openingContract: '开篇钩子：刀已经抵上；题材雷区：战力崩塌（严格遵循战力表）',
+    });
+    expect(text).toContain('开题合同：开篇钩子：刀已经抵上');
+  });
 });
 
 describe('章内节拍', () => {

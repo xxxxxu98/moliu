@@ -17,11 +17,14 @@ import {
   refreshStorySeeds,
 } from '@/services/inspiration/topic-discovery.service';
 import type {
+  EntryDifficulty,
   FavoriteSeed,
   GenreInsightCard,
+  GenreLifecycleHint,
   InsightSeedContext,
   RefreshGenreInsightsOptions,
   RefreshStorySeedsOptions,
+  RiskLevel,
   StorySeedCard,
   ToggleFavoriteResult,
   TopicAudience,
@@ -77,6 +80,9 @@ interface PersistedV2State {
   insightNameHistory: string[];
   insightsSource: TopicDiscoverySource | null;
   insightsWarning: string | null;
+  /** 当前选中的雷达洞察；刷新页面后用来恢复切入上下文 */
+  selectedInsightId?: string | null;
+  activeInsightContext?: InsightSeedContext | null;
   savedAt: string;
 }
 
@@ -268,6 +274,8 @@ export const useTopicDiscoveryStore = defineStore('topicDiscovery', () => {
       insightNameHistory: insightNameHistory.value,
       insightsSource: insightsMeta.insightsSource,
       insightsWarning: insightsMeta.insightsWarning,
+      selectedInsightId: selectedInsightId.value,
+      activeInsightContext: activeInsightContext.value,
       savedAt: new Date().toISOString(),
     } satisfies PersistedV2State);
     // 清理 v1 旧键，避免被误读
@@ -403,20 +411,95 @@ export const useTopicDiscoveryStore = defineStore('topicDiscovery', () => {
       .slice(0, 8);
   }
 
+  const AUDIENCES = new Set<TopicAudience>(['general', 'male', 'female']);
+  const PLATFORMS = new Set<TopicPlatform>([
+    'qidian',
+    'fanqie',
+    'jinjiang',
+    'qimao',
+    'zhihu',
+    'general',
+  ]);
+  const LENGTHS = new Set<TopicLength>(['long', 'short']);
+  const LIFECYCLES = new Set<GenreLifecycleHint>([
+    'emerging',
+    'rising',
+    'peak',
+    'declining',
+    'saturated',
+  ]);
+  const RISKS = new Set<RiskLevel>(['low', 'medium', 'high']);
+  const DIFFICULTIES = new Set<EntryDifficulty>(['low', 'medium', 'high']);
+
+  function asEnum<T extends string>(value: unknown, allowed: Set<T>): T | undefined {
+    return typeof value === 'string' && allowed.has(value as T) ? (value as T) : undefined;
+  }
+
+  /** 雷达切入上下文只保留字段齐全的快照，畸形数据直接丢掉。 */
+  function sanitizeInsightContext(value: unknown): InsightSeedContext | null {
+    if (!value || typeof value !== 'object') return null;
+    const row = value as Partial<InsightSeedContext>;
+    const audience = asEnum(row.audience, AUDIENCES);
+    const riskLevel = asEnum(row.riskLevel, RISKS);
+    const lifecycle = asEnum(row.lifecycle, LIFECYCLES);
+    if (
+      typeof row.name !== 'string' ||
+      !row.name.trim() ||
+      typeof row.opportunity !== 'string' ||
+      typeof row.reason !== 'string' ||
+      !audience ||
+      !riskLevel ||
+      !lifecycle ||
+      !Array.isArray(row.hotTags)
+    ) {
+      return null;
+    }
+    const hotTags = row.hotTags.filter((tag): tag is string => typeof tag === 'string');
+    const platform = asEnum(row.platform, PLATFORMS);
+    const length = asEnum(row.length, LENGTHS);
+    const entryDifficulty = asEnum(row.entryDifficulty, DIFFICULTIES);
+    const namePatterns = Array.isArray(row.namePatterns)
+      ? row.namePatterns.filter((item): item is string => typeof item === 'string')
+      : undefined;
+    return {
+      name: row.name.trim(),
+      audience,
+      opportunity: row.opportunity,
+      reason: row.reason,
+      hotTags,
+      riskLevel,
+      lifecycle,
+      ...(typeof row.riskNote === 'string' ? { riskNote: row.riskNote } : {}),
+      ...(platform ? { platform } : {}),
+      ...(length ? { length } : {}),
+      ...(entryDifficulty ? { entryDifficulty } : {}),
+      ...(namePatterns && namePatterns.length > 0 ? { namePatterns } : {}),
+    };
+  }
+
+  function restoreInsightSelection(v2: PersistedV2State): void {
+    activeInsightContext.value = sanitizeInsightContext(v2.activeInsightContext);
+    const id = typeof v2.selectedInsightId === 'string' ? v2.selectedInsightId : null;
+    selectedInsightId.value = id && insights.value.some(item => item.id === id) ? id : null;
+  }
+
   function loadPersistedInsights(): boolean {
     const v2 = readJson<PersistedV2State>(V2_STORAGE_KEY);
-    if (v2?.version === 2 && Array.isArray(v2.insights) && v2.insights.length > 0) {
-      insights.value = sanitizeInsights(v2.insights);
-      insightNameHistory.value = Array.isArray(v2.insightNameHistory)
-        ? v2.insightNameHistory.filter((n): n is string => typeof n === 'string').slice(0, MAX_HISTORY)
-        : [];
-      insightsMeta = {
-        insightsSource: v2.insightsSource ?? null,
-        insightsWarning: v2.insightsWarning ?? null,
-      };
-      if (activeTab.value === 'radar') {
-        applyTabMeta('radar');
+    if (v2?.version === 2) {
+      if (Array.isArray(v2.insights) && v2.insights.length > 0) {
+        insights.value = sanitizeInsights(v2.insights);
+        insightNameHistory.value = Array.isArray(v2.insightNameHistory)
+          ? v2.insightNameHistory.filter((n): n is string => typeof n === 'string').slice(0, MAX_HISTORY)
+          : [];
+        insightsMeta = {
+          insightsSource: v2.insightsSource ?? null,
+          insightsWarning: v2.insightsWarning ?? null,
+        };
+        if (activeTab.value === 'radar') {
+          applyTabMeta('radar');
+        }
       }
+      restoreInsightSelection(v2);
       return insights.value.length > 0;
     }
 
@@ -448,6 +531,47 @@ export const useTopicDiscoveryStore = defineStore('topicDiscovery', () => {
       return favorites.value.length > 0;
     }
     return false;
+  }
+
+  /**
+   * 一次读完 v2 快照，恢复种子、洞察、收藏和雷达切入上下文。
+   * 没有 v2 时再走各块的 v1 迁移。
+   */
+  function hydratePersisted(): void {
+    const v2 = readJson<PersistedV2State>(V2_STORAGE_KEY);
+    if (v2?.version === 2) {
+      if (v2.buckets && typeof v2.buckets === 'object') {
+        for (const key of SEED_PLAY_TABS) {
+          hydrateBucket(key, v2.buckets[key]);
+        }
+        lockedGenre.value = v2.lockedGenre ?? null;
+        lockedAudience.value = v2.lockedAudience ?? null;
+        lockedPlatform.value = v2.lockedPlatform ?? null;
+        lockedLength.value = v2.lockedLength ?? null;
+      }
+      if (Array.isArray(v2.insights) && v2.insights.length > 0) {
+        insights.value = sanitizeInsights(v2.insights);
+        insightNameHistory.value = Array.isArray(v2.insightNameHistory)
+          ? v2.insightNameHistory.filter((name): name is string => typeof name === 'string').slice(0, MAX_HISTORY)
+          : [];
+        insightsMeta = {
+          insightsSource: v2.insightsSource ?? null,
+          insightsWarning: v2.insightsWarning ?? null,
+        };
+      }
+      if (Array.isArray(v2.favorites)) {
+        favorites.value = sanitizeFavorites(v2.favorites);
+      }
+      restoreInsightSelection(v2);
+      applyTabMeta(activeTab.value);
+      return;
+    }
+
+    const migratedSeeds = migrateFromV1();
+    loadPersistedInsights();
+    loadPersistedFavorites();
+    if (migratedSeeds) persistSnapshot();
+    applyTabMeta(activeTab.value);
   }
 
   // ============ 收藏 ============
@@ -898,6 +1022,7 @@ export const useTopicDiscoveryStore = defineStore('topicDiscovery', () => {
     loadPersistedSeeds,
     loadPersistedInsights,
     loadPersistedFavorites,
+    hydratePersisted,
     selectInsight,
     adoptInsightAndRefreshSeeds,
     setLockedGenre,

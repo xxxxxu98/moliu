@@ -172,7 +172,14 @@ export interface StartupPack30 {
   promiseToReader: string;
   protagonistFirstImpression: string;
   firstMajorCoolPoint: string;
+  /**
+   * 生成侧自标注：第一次强记忆爽点的兑现章。
+   * 只接受模板里的整数字段，不从爽点句子里抽章号。
+   */
+  firstMajorCoolPointChapter?: number | null;
   firstConflictCycle: string;
+  /** 生成侧自标注：第一轮冲突从第几章开始。开篇协议要求为 1。 */
+  firstConflictStartChapter?: number | null;
   chapterBlocks: StartupChapterBlock[];
 }
 
