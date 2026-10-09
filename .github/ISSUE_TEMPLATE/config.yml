@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 安全问题
+    url: https://github.com/xxxxxu98/moliu/security/advisories/new
+    about: 密钥泄露和可利用漏洞不要开公开 Issue，请走私人漏洞报告。详见 SECURITY.md。

@@ -1462,9 +1462,13 @@ const legacyLib: any = require('legacy-lib')
 
 | 文档 | 说明 |
 |------|------|
-| [README.md](./README.md) | 文档索引与快速开始 |
+| [README.md](./README.md) | 文档索引 |
+| [getting-started.md](./getting-started.md) | 环境、运行、测试与打包 |
+| [architecture.md](./architecture.md) | 当前实现架构 |
 | [reference-projects.md](./reference-projects.md) | 参考开源网文项目映射 |
-| [prd.md](./prd.md) | 产品需求 |
+| [prd.md](./prd.md) | 产品愿景（不等于已实现） |
+| [../CONTRIBUTING.md](../CONTRIBUTING.md) | 贡献流程 |
+| [../SECURITY.md](../SECURITY.md) | 密钥与漏洞报告 |
 
 ### C. 外部资源
 
@@ -1476,6 +1480,6 @@ const legacyLib: any = require('legacy-lib')
 
 ---
 
-> **版本**: v1.2.0
-> **最后更新**: 2026-08-29
+> **版本**: v1.2.1
+> **最后更新**: 2026-10-09
 > **维护者**: 墨流开发团队

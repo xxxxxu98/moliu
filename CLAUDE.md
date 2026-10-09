@@ -131,5 +131,7 @@ endOfLine: lf   bracketSpacing: true
 
 - 项目终极目标：[`docs/north-star.md`](docs/north-star.md) ← **一切开发围绕此目标**
 - 开发规范：[`docs/development-guidelines.md`](docs/development-guidelines.md) **← 唯一权威源**
+- 当前架构：[`docs/architecture.md`](docs/architecture.md) ← 以代码现状为准，不以 PRD 愿景代替
 - 参考项目：[`docs/reference-projects.md`](docs/reference-projects.md) ← 编写网文功能前必看
-- 产品需求：[`docs/prd.md`](docs/prd.md)
+- 产品愿景：[`docs/prd.md`](docs/prd.md)
+- 贡献与安全：[`CONTRIBUTING.md`](CONTRIBUTING.md)、[`SECURITY.md`](SECURITY.md)

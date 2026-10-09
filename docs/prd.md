@@ -2,7 +2,8 @@
 
 ## 产品需求文档 (PRD) v1.0
 
-> 产品定位与功能愿景。实现细节与编码规范以 [`development-guidelines.md`](./development-guidelines.md) 为准；文档索引见 [`README.md`](./README.md)。
+> 产品定位与功能愿景，不是当前实现清单。向量检索、知识图谱、多模型投票等尚未落地的设计，以 [`architecture.md`](./architecture.md) 的「和愿景的差别」为准。
+> 编码规范见 [`development-guidelines.md`](./development-guidelines.md)，文档索引见 [`README.md`](./README.md)。
 
 ## 一、产品概述
 

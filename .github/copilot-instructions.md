@@ -35,4 +35,5 @@ Electron 41 + Vue 3 (Composition API) + TypeScript 5.7 + Naive UI + Pinia + UnoC
 
 - 详细规则、示例、目录结构、测试规范等全部以
   **`docs/development-guidelines.md`** 为准（唯一权威源，SSOT）。
+- 当前实现架构：**`docs/architecture.md`**（不以 `docs/prd.md` 的愿景代替现状）。
 - 参考项目功能映射：**`docs/reference-projects.md`**（编写网文功能前必看；上游仓库自行克隆，不要放进本仓库）。
