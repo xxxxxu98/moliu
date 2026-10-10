@@ -28,6 +28,7 @@ import { useTopicDiscoveryStore } from '@/stores/topicDiscovery.store';
 import { useDirectionSessionStore } from './directionSession.store';
 import { PLAY_MODES } from '@/services/inspiration/play-modes';
 import { useTopicOpeningPipeline } from '@/composables/useTopicOpeningPipeline';
+import { formatRadarDisclaimer } from '@/services/inspiration/rank-scan-result';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 import { mapExecutableOutlineToGeneratedOutline } from '@/services/outline/adapters/executable-outline-adapter';
 import { buildDirectionScaleHint } from '@/services/outline/utils/direction-scale-hint';
@@ -77,6 +78,8 @@ const {
   source,
   seeds,
   insights,
+  rankScan,
+  rankScanApplied,
   favorites,
   favoriteCount,
   maxFavorites,
@@ -117,6 +120,10 @@ const playModes: PlayModeOption[] = PLAY_MODES.map(mode => ({
   id: mode.id,
   ...MODE_UI[mode.id],
 }));
+
+const radarDisclaimer = computed(() =>
+  formatRadarDisclaimer(rankScan.value, rankScanApplied.value, t),
+);
 
 const hasActiveFilters = computed(
   () =>
@@ -641,6 +648,7 @@ async function rollDice(): Promise<void> {
       :selected-insight-id="selectedInsightId"
       :disabled="isProcessing"
       :refresh-label="refreshButtonLabel"
+      :disclaimer="radarDisclaimer"
       @select="handleAdoptInsight"
       @refresh="handleRefresh"
     />

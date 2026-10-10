@@ -6,6 +6,10 @@ import Store from 'electron-store';
 import { testConnection } from './main/services/ai-client';
 import { encryptApiKey, decryptApiKey, isEncrypted } from './main/crypto';
 import {
+  registerRankScanHandlers,
+  type RankScanHandlerRegistration,
+} from './main/ipc/rank-scan-handlers';
+import {
   registerStoryRuntimeHandlers,
   type StoryRuntimeHandlerRegistration,
 } from './main/ipc/story-runtime-handlers';
@@ -201,6 +205,7 @@ if (started) {
 }
 
 let storyRuntimeRegistration: StoryRuntimeHandlerRegistration | undefined;
+let rankScanRegistration: RankScanHandlerRegistration | undefined;
 
 /**
  * Story Runtime IPC 必须与其它 ipcMain.handle 一样在模块加载时注册。
@@ -213,6 +218,17 @@ function ensureStoryRuntimeHandlers(): void {
 }
 
 ensureStoryRuntimeHandlers();
+
+/**
+ * 榜单采集与其它 ipcMain.handle 一样在模块加载时注册。
+ * 只挂在 ready 上时，主进程热更新不会再次 ready，渲染侧会找不到 rank:scan。
+ */
+function ensureRankScanHandlers(): void {
+  rankScanRegistration?.dispose();
+  rankScanRegistration = registerRankScanHandlers();
+}
+
+ensureRankScanHandlers();
 
 const createWindow = () => {
   // Create the browser window.
@@ -703,12 +719,17 @@ app.on('ready', () => {
   if (!storyRuntimeRegistration) {
     ensureStoryRuntimeHandlers();
   }
+  if (!rankScanRegistration) {
+    ensureRankScanHandlers();
+  }
   createWindow();
 });
 
 app.on('before-quit', () => {
   storyRuntimeRegistration?.dispose();
   storyRuntimeRegistration = undefined;
+  rankScanRegistration?.dispose();
+  rankScanRegistration = undefined;
 });
 
 // Quit when all windows are closed, except on macOS.

@@ -2,6 +2,7 @@
  * 灵感种子 / 题材雷达 提示词
  */
 
+import type { RankChannel, RankEntry, RankScanResult } from '@/types/rank-scan';
 import type {
   InsightSeedContext,
   RefreshGenreInsightsOptions,
@@ -198,12 +199,7 @@ export function buildStorySeedsUserPrompt(options: RefreshStorySeedsOptions): st
   return lines.join('\n');
 }
 
-export function buildGenreInsightsSystemPrompt(): string {
-  return `你是网文市场风向顾问，按「扫榜报告」结构输出题材洞察（参考起点/番茄/晋江等平台经验）。
-只输出 JSON，不要 markdown 代码块，不要解释。
-重要：分析基于行业经验与内置趋势方法论，非实时榜单抓取；请给出可开题的模式判断，而非虚构具体排行名次。
-
-JSON 格式：
+const INSIGHT_JSON_SHAPE = `JSON 格式：
 {"insights":[{"name":"题材名","lifecycle":"emerging|rising|peak|declining|saturated","audience":"general|male|female","platform":"qidian|fanqie|jinjiang|qimao|zhihu|general","platformBias":["qidian","fanqie"],"length":"long|short","entryDifficulty":"low|medium|high","reason":"为何值得关注（热度/模式）","opportunity":"开题切入建议","hotTags":["标签1","标签2"],"namePatterns":["书名或卖点模式"],"riskLevel":"low|medium|high","riskNote":"可选风险"}]}
 
 要求（对齐扫榜五维）：
@@ -215,6 +211,63 @@ JSON 格式：
 - hotTags 2-4 个；namePatterns 1-2 条（命名或卖点句式）
 - 同批题材不要重复
 - platform / length 尽量贴合用户筛选`;
+
+const RANK_BOARD_LABEL: Record<string, string> = {
+  'qidian-yuepiao': '起点月票榜',
+  'qidian-newbook': '起点新书榜',
+  'qimao-hot-male': '七猫男生大热榜',
+  'qimao-hot-female': '七猫女生大热榜',
+  'qimao-new-male': '七猫男生新书榜',
+  'qimao-new-female': '七猫女生新书榜',
+  'jinjiang-income': '晋江收入金榜',
+};
+
+const RANK_CHANNEL_LABEL: Record<RankChannel, string> = {
+  male: '男频',
+  female: '女频',
+  mixed: '综合',
+  unknown: '未标注频道',
+};
+
+function formatRankEntry(entry: RankEntry): string {
+  const parts = [`${entry.rank}. 《${entry.title}》`];
+  if (entry.author) parts.push(entry.author);
+  if (entry.genre) parts.push(entry.genre);
+  if (entry.tags.length > 0) parts.push(entry.tags.join('·'));
+  if (entry.wordCount) parts.push(entry.wordCount);
+  if (entry.blurb) parts.push(entry.blurb);
+  return parts.join(' / ');
+}
+
+/** 把榜单样本收成提示词段落。只转写字段，不在这里归纳风口 */
+export function formatRankScanPrompt(scan: RankScanResult): string {
+  const blocks = scan.boards
+    .filter(board => board.entries.length > 0)
+    .map(board => {
+      const label = RANK_BOARD_LABEL[board.boardId] ?? board.boardId;
+      const lines = board.entries.map(entry => formatRankEntry(entry));
+      return [`[${label} / ${RANK_CHANNEL_LABEL[board.channel]}]`, ...lines].join('\n');
+    });
+  return [
+    `实时榜单样本（采集时间 ${scan.fetchedAt}）。只根据这些样本里反复出现的题材、标签和书名模式归纳。`,
+    '单本上榜只是线索。禁止编造样本里没有的名次、月票、在读或热度数字。样本没覆盖的平台不要写成已扫榜。',
+    ...blocks,
+  ].join('\n');
+}
+
+export function buildGenreInsightsSystemPrompt(options?: { useLiveRanks?: boolean }): string {
+  if (options?.useLiveRanks) {
+    return `你是网文市场风向顾问。用户消息里附有刚刚采集的公开榜单样本，按「扫榜报告」结构输出题材洞察。
+只输出 JSON，不要 markdown 代码块，不要解释。
+重要：结论必须能在样本中找到重复出现的模式。禁止把模型记忆里的旧榜单写成这次的采集结果。
+
+${INSIGHT_JSON_SHAPE}`;
+  }
+  return `你是网文市场风向顾问，按「扫榜报告」结构输出题材洞察（参考起点/番茄/晋江等平台经验）。
+只输出 JSON，不要 markdown 代码块，不要解释。
+重要：分析基于行业经验与内置趋势方法论，非实时榜单抓取；请给出可开题的模式判断，而非虚构具体排行名次。
+
+${INSIGHT_JSON_SHAPE}`;
 }
 
 export function buildGenreInsightsUserPrompt(options: RefreshGenreInsightsOptions): string {
@@ -240,6 +293,11 @@ export function buildGenreInsightsUserPrompt(options: RefreshGenreInsightsOption
   }
 
   lines.push('覆盖上升期、高峰期与蓝海机会；可行性优先于盲目追热。');
-  lines.push('再次提醒：非实时榜单，请基于模式与经验判断。');
+  if (options.rankScan?.availability === 'live' && options.rankScan.sampleCount > 0) {
+    lines.push(formatRankScanPrompt(options.rankScan));
+    lines.push('再次提醒：上面是本次采集的公开榜单，不要改写成未采集平台的实时排名。');
+  } else {
+    lines.push('再次提醒：非实时榜单，请基于模式与经验判断。');
+  }
   return lines.join('\n');
 }

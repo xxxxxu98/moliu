@@ -16,6 +16,8 @@ import {
   refreshGenreInsights,
   refreshStorySeeds,
 } from '@/services/inspiration/topic-discovery.service';
+import { sanitizeRankScanResult } from '@/services/inspiration/rank-scan-result';
+import type { RankScanResult } from '@/types/rank-scan';
 import type {
   EntryDifficulty,
   FavoriteSeed,
@@ -80,6 +82,9 @@ interface PersistedV2State {
   insightNameHistory: string[];
   insightsSource: TopicDiscoverySource | null;
   insightsWarning: string | null;
+  /** 雷达最近一次榜单样本；旧快照没有该字段 */
+  rankScan?: RankScanResult | null;
+  rankScanApplied?: boolean;
   /** 当前选中的雷达洞察；刷新页面后用来恢复切入上下文 */
   selectedInsightId?: string | null;
   activeInsightContext?: InsightSeedContext | null;
@@ -175,6 +180,8 @@ export const useTopicDiscoveryStore = defineStore('topicDiscovery', () => {
   });
 
   const insights = ref<GenreInsightCard[]>([]);
+  const rankScan = ref<RankScanResult | null>(null);
+  const rankScanApplied = ref(false);
 
   const lockedGenre = ref<string | null>(null);
   const lockedAudience = ref<TopicAudience | null>(null);
@@ -213,6 +220,11 @@ export const useTopicDiscoveryStore = defineStore('topicDiscovery', () => {
     if (error instanceof DOMException && error.name === 'AbortError') return true;
     if (error instanceof Error && error.name === 'AbortError') return true;
     return false;
+  }
+
+  function applyPersistedRankScan(scan: unknown, applied: unknown): void {
+    rankScan.value = sanitizeRankScanResult(scan);
+    rankScanApplied.value = applied === true && rankScan.value?.availability === 'live';
   }
 
   // ============ Getters ============
@@ -274,6 +286,8 @@ export const useTopicDiscoveryStore = defineStore('topicDiscovery', () => {
       insightNameHistory: insightNameHistory.value,
       insightsSource: insightsMeta.insightsSource,
       insightsWarning: insightsMeta.insightsWarning,
+      rankScan: rankScan.value,
+      rankScanApplied: rankScanApplied.value,
       selectedInsightId: selectedInsightId.value,
       activeInsightContext: activeInsightContext.value,
       savedAt: new Date().toISOString(),
@@ -495,6 +509,7 @@ export const useTopicDiscoveryStore = defineStore('topicDiscovery', () => {
           insightsSource: v2.insightsSource ?? null,
           insightsWarning: v2.insightsWarning ?? null,
         };
+        applyPersistedRankScan(v2.rankScan, v2.rankScanApplied);
         if (activeTab.value === 'radar') {
           applyTabMeta('radar');
         }
@@ -513,6 +528,7 @@ export const useTopicDiscoveryStore = defineStore('topicDiscovery', () => {
         insightsSource: legacy.source ?? null,
         insightsWarning: legacy.warning ?? null,
       };
+      applyPersistedRankScan(null, false);
       return insights.value.length > 0;
     }
     return false;
@@ -558,6 +574,7 @@ export const useTopicDiscoveryStore = defineStore('topicDiscovery', () => {
           insightsSource: v2.insightsSource ?? null,
           insightsWarning: v2.insightsWarning ?? null,
         };
+        applyPersistedRankScan(v2.rankScan, v2.rankScanApplied);
       }
       if (Array.isArray(v2.favorites)) {
         favorites.value = sanitizeFavorites(v2.favorites);
@@ -813,6 +830,8 @@ export const useTopicDiscoveryStore = defineStore('topicDiscovery', () => {
       insights.value = batch.items;
       source.value = batch.source;
       warning.value = batch.warning ?? null;
+      rankScan.value = sanitizeRankScanResult(batch.rankScan);
+      rankScanApplied.value = batch.rankScanApplied === true && rankScan.value?.availability === 'live';
       insightsMeta = {
         insightsSource: batch.source,
         insightsWarning: batch.warning ?? null,
@@ -968,6 +987,8 @@ export const useTopicDiscoveryStore = defineStore('topicDiscovery', () => {
       seedBuckets[key] = createEmptyBucket();
     }
     insights.value = [];
+    rankScan.value = null;
+    rankScanApplied.value = false;
     lockedGenre.value = null;
     lockedAudience.value = null;
     lockedPlatform.value = null;
@@ -994,6 +1015,8 @@ export const useTopicDiscoveryStore = defineStore('topicDiscovery', () => {
     source,
     seedBuckets,
     insights,
+    rankScan,
+    rankScanApplied,
     favorites,
     lockedGenre,
     lockedAudience,

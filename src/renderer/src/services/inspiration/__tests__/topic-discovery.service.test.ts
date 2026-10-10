@@ -11,6 +11,7 @@ import {
   buildPromptFromSeed,
   insightToSeedConstraints,
   refreshStorySeeds,
+  refreshGenreInsights,
   inferEntryDifficulty,
   mapPlatformBiasList,
   buildTopicDiscoveryProjectSeed,
@@ -21,6 +22,21 @@ import {
   buildGenreInsightsSystemPrompt,
 } from '@/services/inspiration/prompts/topic-discovery-prompts';
 import type { GenreInsightCard, StorySeedCard } from '@/types/topic-discovery';
+import type { RankScanResult } from '@/types/rank-scan';
+
+const scanPublicRanksMock = vi.hoisted(() =>
+  vi.fn(async () => ({
+    availability: 'unavailable' as const,
+    fetchedAt: 't',
+    sampleCount: 0,
+    boards: [],
+    failure: 'no-channel' as const,
+  })),
+);
+
+vi.mock('@/services/inspiration/rank-scan-client', () => ({
+  scanPublicRanks: scanPublicRanksMock,
+}));
 
 const settingsState: {
   aiProviders: Array<{
@@ -360,6 +376,114 @@ describe('topic-discovery.service', () => {
       expect(prompt).toContain('platformBias');
       expect(prompt).toContain('namePatterns');
       expect(prompt).toContain('非实时榜单');
+    });
+
+    it('puts live ranking rows into the radar prompt and stops calling them non-live', () => {
+      const rankScan: RankScanResult = {
+        availability: 'live',
+        fetchedAt: '2026-10-10T03:28:00.000Z',
+        sampleCount: 1,
+        boards: [
+          {
+            site: 'qidian',
+            boardId: 'qidian-yuepiao',
+            channel: 'male',
+            status: 'ok',
+            entries: [
+              {
+                rank: 1,
+                title: '夜无疆',
+                author: '辰东',
+                genre: '玄幻',
+                tags: ['玄幻', '东方玄幻'],
+                wordCount: '413万字',
+                blurb: '太阳落下',
+              },
+            ],
+          },
+        ],
+      };
+      const user = buildGenreInsightsUserPrompt({ count: 2, platform: 'qidian', rankScan });
+      const system = buildGenreInsightsSystemPrompt({ useLiveRanks: true });
+      expect(user).toContain('夜无疆');
+      expect(user).toContain('起点月票榜');
+      expect(user).not.toContain('非实时榜单');
+      expect(system).toContain('公开榜单样本');
+      expect(system).not.toContain('非实时榜单');
+    });
+  });
+
+  describe('refreshGenreInsights rank samples', () => {
+    const liveScan: RankScanResult = {
+      availability: 'live',
+      fetchedAt: '2026-10-10T03:28:00.000Z',
+      sampleCount: 1,
+      boards: [
+        {
+          site: 'qidian',
+          boardId: 'qidian-yuepiao',
+          channel: 'male',
+          status: 'ok',
+          entries: [
+            {
+              rank: 1,
+              title: '夜无疆',
+              author: '辰东',
+              genre: '玄幻',
+              tags: ['玄幻'],
+              wordCount: '1万字',
+              blurb: '',
+            },
+          ],
+        },
+      ],
+    };
+
+    beforeEach(() => {
+      scanPublicRanksMock.mockClear();
+      settingsState.aiProviders = [
+        {
+          id: 'p1',
+          provider: 'openai',
+          modelName: 'gpt-4o',
+          enabled: true,
+          apiKey: 'test-key',
+        },
+      ];
+      settingsState.defaultModel = { providerId: 'p1', modelName: 'gpt-4o' };
+    });
+
+    it('feeds collected titles to the model and marks the batch as rank-backed', async () => {
+      const chat = vi.fn(async (_system: string, user: string) => {
+        expect(user).toContain('夜无疆');
+        return JSON.stringify({
+          insights: [
+            {
+              name: '东方玄幻',
+              lifecycle: 'peak',
+              audience: 'male',
+              reason: '月票榜反复出现东方玄幻',
+              opportunity: '用家族修仙做差异',
+              hotTags: ['东方玄幻'],
+              riskLevel: 'medium',
+            },
+          ],
+        });
+      });
+
+      const batch = await refreshGenreInsights({ rankScan: liveScan, platform: 'qidian' }, chat);
+      expect(batch.rankScanApplied).toBe(true);
+      expect(batch.source).toBe('ai');
+      expect(scanPublicRanksMock).not.toHaveBeenCalled();
+    });
+
+    it('does not scan when no model is configured', async () => {
+      settingsState.aiProviders = [];
+      settingsState.defaultModel = null;
+      const batch = await refreshGenreInsights({ platform: 'qidian' });
+      expect(batch.source).toBe('fallback');
+      expect(batch.rankScanApplied).toBe(false);
+      expect(scanPublicRanksMock).not.toHaveBeenCalled();
     });
   });
 

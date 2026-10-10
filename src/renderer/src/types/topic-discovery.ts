@@ -163,6 +163,8 @@ export interface RefreshGenreInsightsOptions {
   temperature?: number;
   /** 取消在飞 HTTP 请求 */
   signal?: AbortSignal;
+  /** 已采集的公开榜单。有样本时洞察只根据样本归纳 */
+  rankScan?: import('./rank-scan').RankScanResult;
 }
 
 export type TopicDiscoverySource = 'ai' | 'fallback';
@@ -172,6 +174,10 @@ export interface TopicDiscoveryBatch<T> {
   source: TopicDiscoverySource;
   generatedAt: string;
   warning?: string;
+  /** 本次刷新附带的榜单样本；种子玩法不填 */
+  rankScan?: import('./rank-scan').RankScanResult;
+  /** 洞察是否按榜单样本生成。采集到了但模型失败时为 false */
+  rankScanApplied?: boolean;
 }
 
 /** 跨玩法收藏的灵感种子快照 */

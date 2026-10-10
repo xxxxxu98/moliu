@@ -1,4 +1,9 @@
 <script setup lang="ts">
+/**
+ * 题材雷达洞察卡列表。
+ * 脚注由父组件传入：有榜单样本时说明采集时间，否则沿用经验判断文案。
+ */
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RefreshCw } from 'lucide-vue-next';
 import {
@@ -15,6 +20,7 @@ const props = defineProps<{
   selectedInsightId: string | null;
   disabled: boolean;
   refreshLabel: string;
+  disclaimer?: string;
 }>();
 
 const emit = defineEmits<{
@@ -23,6 +29,9 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const disclaimerText = computed(
+  () => props.disclaimer?.trim() || t('topicDiscovery.radarDisclaimer'),
+);
 </script>
 
 <template>
@@ -133,7 +142,7 @@ const { t } = useI18n();
     </div>
     <p class="text-sm text-center text-gray-400">
       {{ t('topicDiscovery.radarHint') }}
-      · {{ t('topicDiscovery.radarDisclaimer') }}
+      · {{ disclaimerText }}
     </p>
   </div>
 </template>

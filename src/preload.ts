@@ -44,6 +44,11 @@ export interface ElectronAPI {
   saveSettings: (settings: unknown) => Promise<unknown>;
   getAIProviders: () => Promise<unknown>;
   saveAIProviders: (providers: unknown) => Promise<unknown>;
+
+  /** 题材雷达：主进程采集公开榜单样本 */
+  scanRanks: (
+    request: import('./renderer/src/types/rank-scan').RankScanRequest,
+  ) => Promise<import('./renderer/src/types/rank-scan').RankScanResult>;
 }
 
 const api: ElectronAPI = {
@@ -110,6 +115,8 @@ const api: ElectronAPI = {
   saveSettings: (settings: unknown) => ipcRenderer.invoke('settings:save', settings),
   getAIProviders: () => ipcRenderer.invoke('ai-providers:get'),
   saveAIProviders: (providers: unknown) => ipcRenderer.invoke('ai-providers:save', providers),
+
+  scanRanks: request => ipcRenderer.invoke('rank:scan', request),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', api);

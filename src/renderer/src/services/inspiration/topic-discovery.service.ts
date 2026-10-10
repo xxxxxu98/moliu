@@ -1,5 +1,6 @@
 /**
- * 开题中心服务：AI 刷新灵感种子 / 题材洞察，失败时本地降级
+ * 开题中心服务：AI 刷新灵感种子 / 题材洞察，失败时本地降级。
+ * 题材雷达在有模型时先采集公开榜单，样本只进洞察提示词；采不到则仍按经验判断。
  */
 
 import { robustJsonParse } from '@/utils/json-parser';
@@ -8,6 +9,7 @@ import { useSettingsStore } from '@/stores/settings.store';
 import { AIServiceFactory } from '@/services/ai/factory';
 import { getBaseUrl, type ProviderType } from '@/config/ai-providers';
 import { buildCreativeSeeds } from './engines/local-engine';
+import { scanPublicRanks } from './rank-scan-client';
 import {
   buildGenreInsightsSystemPrompt,
   buildGenreInsightsUserPrompt,
@@ -22,6 +24,7 @@ import {
   buildMixGenreHints,
   formatGenreSeedHint,
 } from './genre-seed-context';
+import type { RankScanResult } from '@/types/rank-scan';
 import type {
   EntryDifficulty,
   GenreInsightCard,
@@ -599,6 +602,26 @@ export async function refreshStorySeeds(
   }
 }
 
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new DOMException('Aborted', 'AbortError');
+  }
+}
+
+/**
+ * 有模型时才采集榜单。没配置 AI 时本地卡片用不上样本，不必让刷新多等一轮网络。
+ * 调用方已传入 rankScan 时不再走 IPC。
+ */
+async function resolveRankScan(options: RefreshGenreInsightsOptions): Promise<RankScanResult> {
+  if (options.rankScan) return options.rankScan;
+  throwIfAborted(options.signal);
+  return scanPublicRanks({
+    platform: options.platform,
+    audience: options.audience,
+    length: options.length,
+  });
+}
+
 export async function refreshGenreInsights(
   options: RefreshGenreInsightsOptions = {},
   chatFn: ChatFn = defaultChat,
@@ -617,13 +640,22 @@ export async function refreshGenreInsights(
       source: 'fallback',
       generatedAt,
       warning: '未配置 AI，已使用本地题材风向。配置后可刷新生成新洞察。',
+      rankScanApplied: false,
     };
   }
 
+  const rankScan = await resolveRankScan(options);
+  throwIfAborted(options.signal);
+  const useLiveRanks = rankScan.availability === 'live' && rankScan.sampleCount > 0;
+  const promptOptions: RefreshGenreInsightsOptions = {
+    ...options,
+    rankScan: useLiveRanks ? rankScan : undefined,
+  };
+
   try {
     const raw = await chatFn(
-      buildGenreInsightsSystemPrompt(),
-      buildGenreInsightsUserPrompt(options),
+      buildGenreInsightsSystemPrompt(useLiveRanks ? { useLiveRanks: true } : undefined),
+      buildGenreInsightsUserPrompt(promptOptions),
       temperature,
       options.signal,
     );
@@ -638,9 +670,11 @@ export async function refreshGenreInsights(
         source: 'fallback',
         generatedAt,
         warning: 'AI 返回无法解析，已降级为本地题材数据。',
+        rankScan,
+        rankScanApplied: false,
       };
     }
-    return { items, source: 'ai', generatedAt };
+    return { items, source: 'ai', generatedAt, rankScan, rankScanApplied: useLiveRanks };
   } catch (err) {
     if (isAbortError(err) || options.signal?.aborted) {
       throw err instanceof Error ? err : new DOMException('Aborted', 'AbortError');
@@ -651,6 +685,8 @@ export async function refreshGenreInsights(
       source: 'fallback',
       generatedAt,
       warning: `AI 刷新失败（${message}），已使用本地题材数据。`,
+      rankScan,
+      rankScanApplied: false,
     };
   }
 }

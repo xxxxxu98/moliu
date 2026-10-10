@@ -644,4 +644,63 @@ describe('useTopicDiscovery', () => {
     expect(discovery.seeds[0]?.title).toBe('合法');
     expect(discovery.seedTitleHistory).toEqual(['合法']);
   });
+
+  it('restores live rank samples with the radar insights', async () => {
+    const { useTopicDiscoveryStore: useTopicDiscovery } = await import(
+      '@/stores/topicDiscovery.store'
+    );
+    const { refreshGenreInsights } = await import('@/services/inspiration/topic-discovery.service');
+    vi.mocked(refreshGenreInsights).mockResolvedValueOnce({
+      items: [
+        {
+          id: 'i-live',
+          name: '东方玄幻',
+          lifecycle: 'peak',
+          audience: 'male',
+          reason: '月票榜重复出现',
+          opportunity: '家族修仙',
+          hotTags: ['东方玄幻'],
+          riskLevel: 'medium',
+        },
+      ],
+      source: 'ai',
+      generatedAt: 't',
+      rankScanApplied: true,
+      rankScan: {
+        availability: 'live',
+        fetchedAt: '2026-10-10T03:28:00.000Z',
+        sampleCount: 1,
+        boards: [
+          {
+            site: 'qidian',
+            boardId: 'qidian-yuepiao',
+            channel: 'male',
+            status: 'ok',
+            entries: [
+              {
+                rank: 1,
+                title: '夜无疆',
+                author: '辰东',
+                genre: '玄幻',
+                tags: ['玄幻'],
+                wordCount: '1万字',
+                blurb: '',
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const first = useTopicDiscovery();
+    await first.refreshInsights();
+    expect(first.rankScanApplied).toBe(true);
+    expect(first.rankScan?.sampleCount).toBe(1);
+
+    setActivePinia(createPinia());
+    const second = useTopicDiscovery();
+    second.hydratePersisted();
+    expect(second.rankScanApplied).toBe(true);
+    expect(second.rankScan?.boards[0]?.entries[0]?.title).toBe('夜无疆');
+  });
 });
