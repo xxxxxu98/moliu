@@ -7,7 +7,8 @@
  * 全军覆没——账记了、查账的只认旧币种。本模块按命运系统 agent 化同款路径收编：
  * 契约 15/17 结构化出账（AI 归一「对象+数值+单位」「承诺+期限+动作」），本模块
  * 只做确定性投影/合并/格式化（结构运算与字符串包含匹配，不做语义判定——语义
- * 归判官），单位是自由字符串，题材无关。
+ * 归判官），单位是自由字符串，题材无关。同对象正典锁定首次确立值，异值只有
+ * 提取侧标了勘误才覆盖。
  */
 
 import type { ChapterMemory, NumericLedgerEntry, TimePromiseEntry } from '@/types/project';
@@ -51,6 +52,7 @@ function eventNumeric(event: StoryEvent): NumericLedgerEntry | null {
     amount: numeric.amount,
     unit,
     nature: String(numeric.nature ?? '').trim() || undefined,
+    revision: numeric.revision === 'correct' || numeric.revision === 'establish' ? numeric.revision : undefined,
     chapterIndex: event.chapter || 0,
     evidence: event.evidence?.[0] ?? undefined,
   };
@@ -111,18 +113,36 @@ export function projectTimeLedger(facts: ExtractedFacts): TimeLedgerProjection {
   return projection;
 }
 
-/** 同对象只保留章号最新一条（口径正典；措辞漂移的旧句被新句覆盖） */
+/**
+ * 提取合同规定的勘误标注。只认枚举和合同固定短语，不读正文判断「这句是不是勘误」。
+ * nature「勘误后新值」是契约 15 既有自标注，revision=correct 是同一语义的显式枚举。
+ */
+const CANON_CORRECTION_NATURE = '勘误后新值';
+
+/** 该条目是否被提取侧标成「允许覆盖正典」的勘误 */
+export function isNumericCanonCorrection(entry: NumericLedgerEntry): boolean {
+  return entry.revision === 'correct' || entry.nature === CANON_CORRECTION_NATURE;
+}
+
+/**
+ * 同对象正典锁定首次确立的数值与单位。
+ * 后章抽出的不同数值默认丢弃，避免写错的数变成下一章的正典（r16：十二丈填平六丈后被写成十丈并固化）。
+ * 只有提取侧标了勘误（revision=correct 或 nature=勘误后新值）才替换。同值复述不改确立章。
+ */
 export function mergeNumericLedger(
   existing: NumericLedgerEntry[],
   additions: NumericLedgerEntry[]
 ): NumericLedgerEntry[] {
   const byObject = new Map<string, NumericLedgerEntry>();
   for (const entry of [...existing, ...additions]) {
-    const key = entry.object;
-    const prev = byObject.get(key);
-    if (!prev || entry.chapterIndex >= prev.chapterIndex) {
-      byObject.set(key, entry);
+    const prev = byObject.get(entry.object);
+    if (!prev) {
+      byObject.set(entry.object, entry);
+      continue;
     }
+    const sameValue = prev.amount === entry.amount && prev.unit === entry.unit;
+    if (sameValue) continue;
+    if (isNumericCanonCorrection(entry)) byObject.set(entry.object, entry);
   }
   return [...byObject.values()].sort((a, b) => a.chapterIndex - b.chapterIndex);
 }
@@ -219,7 +239,7 @@ export function formatNumericAnchorLines(
     .map(item => item.entry);
   if (rows.length === 0) return [];
   return [
-    `以下为各关键数字对象的最新既成值（同对象旧值已作废；条目间疑似同对象不同值时，以章号最新者为准，引用旧值必须写出勘误过程）。同一对象在本章内多次出现的数额必须一致；涉及乘除换算（单价×数量、比例×基数、年数×岁入）先笔算核验再落笔——乘积与总量声明对不上、同账两说，判官将直接拒稿`,
+    `以下为各关键数字对象首次确立的正典（后章未标勘误的不同数值已丢弃，不得当成新正典）。同一对象在本章内多次出现的数额必须一致；要改口必须先写出勘误、清点或查实虚报的场面。涉及乘除换算（单价×数量、比例×基数、年数×岁入）先笔算核验再落笔——乘积与总量声明对不上、同账两说，判官将直接拒稿`,
     ...rows.map(
       entry =>
         `第${entry.chapterIndex}章既成「${entry.object}＝${entry.amount}${entry.unit}` +

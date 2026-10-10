@@ -39,11 +39,15 @@ export interface PacingScannableBlueprint {
   CPNs?: string[] | string;
   mustCover?: string[] | string;
   coolPointType?: string;
+  /** 本章 CEN 最迟承接章（1 基）。缺省不参与到期检测 */
+  suspenseDueOrder?: number;
+  /** 本章承接的前序 CEN 章号（1 基） */
+  resolvesSuspenseFrom?: number;
 }
 
 export interface PacingIssue {
   chapterNumber: number;
-  kind: 'suspense-dangling' | 'suspense-pileup' | 'coolpoint-streak' | 'coolpoint-missing';
+  kind: 'suspense-dangling' | 'suspense-pileup' | 'suspense-overdue' | 'coolpoint-streak' | 'coolpoint-missing';
   detail: string;
 }
 
@@ -168,6 +172,41 @@ export function findSuspenseDanglingIssues(
 }
 
 /**
+ * 结构化悬念到期：只认蓝图自标注的章号，不猜正文是否把悬念接住了。
+ * 到期章的蓝图还没生成时不报。到期章等于本章（当章揭晓）不要求后章承接。
+ * 窗口内任一章的「承接悬念章」指向开钩章，即算接住。
+ */
+export function findOverdueSuspenseIssues(
+  blueprints: PacingScannableBlueprint[],
+): PacingIssue[] {
+  const usable = blueprints
+    .filter(bp => bp.orderIndex > 0)
+    .sort((a, b) => a.orderIndex - b.orderIndex);
+  if (usable.length === 0) return [];
+  const maxOrder = usable[usable.length - 1].orderIndex;
+  const issues: PacingIssue[] = [];
+  for (const bp of usable) {
+    const due = bp.suspenseDueOrder;
+    if (typeof due !== 'number' || !Number.isInteger(due) || due <= bp.orderIndex) continue;
+    if (due > maxOrder) continue;
+    const paid = usable.some(
+      follower =>
+        follower.orderIndex > bp.orderIndex &&
+        follower.orderIndex <= due &&
+        follower.resolvesSuspenseFrom === bp.orderIndex,
+    );
+    if (!paid) {
+      issues.push({
+        chapterNumber: bp.orderIndex,
+        kind: 'suspense-overdue',
+        detail: `第${bp.orderIndex}章把悬念到期章标成第${due}章，但第${bp.orderIndex + 1}到第${due}章都没有「承接悬念章：${bp.orderIndex}」。请在到期章或之前写上承接，或把到期章后移`,
+      });
+    }
+  }
+  return issues;
+}
+
+/**
  * 爽点节奏扫描(纯计数):
  * - 连续 ≥3 章 coolPointType 逐字相同 → 同质化(读者对同款爽点疲劳)
  * - 连续 ≥2 章 coolPointType 缺失 → 纪律松脱(prompt 已要求每章标注)
@@ -271,6 +310,7 @@ export function findPacingIssues(
       window: options?.suspenseWindow,
       minCarryChars: options?.minCarryChars,
     }),
+    ...findOverdueSuspenseIssues(blueprints),
     ...findCoolPointPacingIssues(blueprints, {
       streakLimit: options?.coolPointStreakLimit,
       missingLimit: options?.coolPointMissingLimit,

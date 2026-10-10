@@ -139,7 +139,13 @@ describe('命运提取合同护栏', () => {
     expect(system).toContain('关键数字既成宣告必出 event');
     expect(system).toContain('numeric-fact');
     expect(system).toContain('必带结构化 numeric 字段');
+    expect(system).toContain('revision');
+    expect(system).toContain('未标 correct 的异值不会覆盖正典');
     expect(system).toContain('不限于任何题材或单位');
+    expect(system).toContain('era-fact');
+    expect(system).toContain('未标 correct 的异名不会覆盖正典');
+    expect(system).toContain('reveal-identity');
+    expect(system).toContain('未标 reveal-identity 的异身份不会覆盖正典');
     // 契约 17：时间承诺/时间流逝结构化出账
     expect(system).toContain('时间承诺与时间流逝必出 event');
     expect(system).toContain('time-promise');

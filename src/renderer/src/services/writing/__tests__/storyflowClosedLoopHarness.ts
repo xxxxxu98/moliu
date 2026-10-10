@@ -9,6 +9,8 @@
  * 3. 建章：由 createProject 内联执行 useChapterOutlineGenerator.createChapters（含结构化节点落库）
  * 4. 批量续写：runContinueWriteChapters（mode:'batch' = BATCH_CONTINUE_PRESET，
  *    与 useBatchWriter / 批量 UI 同路径，指数退避重试 + 门禁）
+ * 5. MOLIU_RESUME_STORYFLOW=1：项目库与 StoryRuntime 落在 temp/storyflow-checkpoints/，
+ *    墙钟杀进程后从第一篇空章接上。这是同一次生成的续跑，不调用 storyflow-repair-empty。
  *
  * 测试环境桩（仅替换环境副作用，业务代码全部真实）：
  * - window.electronAPI：文件实现（模拟主进程 moliu-projects.json，并执行冷读取）
@@ -22,7 +24,7 @@ import { createPinia, getActivePinia, setActivePinia } from 'pinia';
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
 import {
@@ -146,6 +148,10 @@ export interface StoryflowArtifactPaths {
   outlinePath: string;
   proseDir: string;
   resumeOutlinePath: string;
+  /** 续写项目库。放在检查点目录内，冒烟跑前按 storyflow- 前缀清 temp 顶层时不会被删。 */
+  resumeStorePath: string;
+  /** 续写 StoryRuntime 目录，与项目库同一检查点，进程被杀后仍可打开。 */
+  resumeRuntimePath: string;
 }
 
 export function resolveStoryflowArtifactPaths(): StoryflowArtifactPaths {
@@ -171,7 +177,64 @@ export function resolveStoryflowArtifactPaths(): StoryflowArtifactPaths {
       'storyflow-checkpoints',
       `${suffix || 'default'}.outline.json`
     ),
+    resumeStorePath: join(
+      tempDir,
+      'storyflow-checkpoints',
+      `${suffix || 'default'}.project-store.json`
+    ),
+    resumeRuntimePath: join(
+      tempDir,
+      'storyflow-checkpoints',
+      `${suffix || 'default'}.story-runtime`
+    ),
   };
+}
+
+/**
+ * 第一篇尚未落正文的章节号（1-based）。
+ * 只看 content trim 后是否为空，不判断正文写得好不好。
+ * 章节按 orderIndex 排序；全部已有正文时返回「章数 + 1」。
+ */
+export function firstUnwrittenChapterNumber(
+  chapters: ReadonlyArray<{ orderIndex: number; content?: string | null }>,
+): number {
+  const ordered = [...chapters].sort((left, right) => left.orderIndex - right.orderIndex);
+  for (const chapter of ordered) {
+    if ((chapter.content ?? '').trim().length === 0) {
+      return chapter.orderIndex + 1;
+    }
+  }
+  return ordered.length + 1;
+}
+
+/**
+ * 项目库里是否已经有至少一章正文。空章节不算，避免半成品建章被当成可续写的书。
+ */
+export function storyflowStoreHasWrittenProse(
+  projects: ReadonlyArray<{
+    chapters?: ReadonlyArray<{ orderIndex: number; content?: string | null }>;
+  }>,
+): boolean {
+  return projects.some(project => firstUnwrittenChapterNumber(project.chapters ?? []) > 1);
+}
+
+/**
+ * 续写开关打开且库内已有正文时才保留项目库；否则清空，让新开书走原来的建章路径。
+ */
+export function shouldKeepStoryflowStore(
+  resumeRequested: boolean,
+  projects: ReadonlyArray<{
+    chapters?: ReadonlyArray<{ orderIndex: number; content?: string | null }>;
+  }>,
+): boolean {
+  return resumeRequested && storyflowStoreHasWrittenProse(projects);
+}
+
+/**
+ * 从 fromChapter 写到 requestedTotal（含）还要写几章。结果 ≤0 表示请求范围内已经没有空章。
+ */
+export function storyflowChaptersRemaining(requestedTotal: number, fromChapter: number): number {
+  return requestedTotal - fromChapter + 1;
 }
 
 /**
@@ -246,13 +309,21 @@ interface FileProjectStorage {
   get(id: string): Project | undefined;
   coldReload(id: string): Project | undefined;
   save(project: Project): void;
+  list(): Project[];
 }
 
-/** 文件版 electronAPI：每次读写都经过 JSON 序列化，支持销毁 renderer 状态后的冷读取。 */
-function installFileElectronAPI(runId: string): FileProjectStorage {
+/**
+ * 文件版 electronAPI：每次读写都经过 JSON 序列化，支持销毁 renderer 状态后的冷读取。
+ * preserveExisting 只在库内已有正文时跳过清空；普通冒烟仍用带时间戳的新文件并清空。
+ */
+function installFileElectronAPI(
+  runId: string,
+  options?: { preserveExisting?: boolean; storePath?: string },
+): FileProjectStorage {
   const tempDir = join(process.cwd(), 'temp');
   mkdirSync(tempDir, { recursive: true });
-  const storePath = join(tempDir, `${runId}.project-store.json`);
+  const storePath = options?.storePath ?? join(tempDir, `${runId}.project-store.json`);
+  mkdirSync(dirname(storePath), { recursive: true });
   const readProjects = (): Project[] => {
     if (!existsSync(storePath)) return [];
     const payload = JSON.parse(readFileSync(storePath, 'utf8')) as { projects?: Project[] };
@@ -261,9 +332,38 @@ function installFileElectronAPI(runId: string): FileProjectStorage {
   const writeProjects = (projects: Project[]): void => {
     writeFileSync(storePath, JSON.stringify({ projects }, null, 2), 'utf8');
   };
-  writeProjects([]);
-  // 记忆文件存储：projectId -> (filePath -> content)，支持 save/load/list/delete 往返
+  const keepStore = shouldKeepStoryflowStore(options?.preserveExisting === true, readProjects());
+  if (!keepStore) {
+    writeProjects([]);
+  }
+  // 记忆文件存储：projectId -> (filePath -> content)，支持 save/load/list/delete 往返。
+  // 续写时落到项目库旁的侧车：进程内 Map 会随墙钟一起消失，下一轮必须还能读到。
+  // 只有沿用已有正文时才读侧车；空库重开时不能把上一本书的记忆灌进新项目。
+  const memorySidecarPath = `${storePath}.memory.json`;
+  const persistMemory = options?.preserveExisting === true;
   const memoryStore = new Map<string, Map<string, string>>();
+  if (persistMemory && keepStore && existsSync(memorySidecarPath)) {
+    try {
+      const raw = JSON.parse(readFileSync(memorySidecarPath, 'utf8')) as Record<
+        string,
+        Record<string, string>
+      >;
+      for (const [projectId, files] of Object.entries(raw)) {
+        if (!files || typeof files !== 'object') continue;
+        memoryStore.set(projectId, new Map(Object.entries(files)));
+      }
+    } catch {
+      // 侧车损坏不阻断续写；章节记忆仍在项目 JSON 上。
+    }
+  }
+  const flushMemory = (): void => {
+    if (!persistMemory) return;
+    const payload: Record<string, Record<string, string>> = {};
+    for (const [projectId, files] of memoryStore) {
+      payload[projectId] = Object.fromEntries(files);
+    }
+    writeFileSync(memorySidecarPath, JSON.stringify(payload), 'utf8');
+  };
   const api = {
     listProjects: async (): Promise<Project[]> => readProjects().map(cloneProject),
     getProject: async (id: string): Promise<Project | null> => {
@@ -308,6 +408,7 @@ function installFileElectronAPI(runId: string): FileProjectStorage {
         memoryStore.set(data.projectId, proj);
       }
       proj.set(data.filePath, data.content);
+      flushMemory();
       return { success: true };
     },
     loadMemoryFile: async (data: { projectId: string; filePath: string }): Promise<string | null> =>
@@ -325,6 +426,7 @@ function installFileElectronAPI(runId: string): FileProjectStorage {
       filePath: string;
     }): Promise<{ success: boolean; error?: string }> => {
       memoryStore.get(data.projectId)?.delete(data.filePath);
+      flushMemory();
       return { success: true };
     },
   };
@@ -338,6 +440,7 @@ function installFileElectronAPI(runId: string): FileProjectStorage {
       const snapshot = cloneProject(project);
       writeProjects([...projects.filter(item => item.id !== project.id), snapshot]);
     },
+    list: () => readProjects().map(cloneProject),
   };
 }
 
@@ -609,6 +712,55 @@ function buildCriticalProjectHash(project: Project): string {
   return createHash('sha256').update(JSON.stringify(critical)).digest('hex');
 }
 
+/** 冷读项目库，确认关键字段在序列化往返后不变。 */
+function verifyPersistedProject(
+  storage: FileProjectStorage,
+  projectId: string,
+): ProjectStorageVerification {
+  const persistedProject = storage.get(projectId);
+  if (!persistedProject) {
+    throw new Error('storyflow 闭环失败：建章后项目未写入主进程存储');
+  }
+  const persistedChapterNodes = persistedProject.plotOutline.filter(node => node.type === 'chapter');
+  const firstHash = buildCriticalProjectHash(persistedProject);
+  const coldReloadedProject = storage.coldReload(projectId);
+  if (!coldReloadedProject) {
+    throw new Error('storyflow 闭环失败：冷启动后无法重新读取项目');
+  }
+  const coldHash = buildCriticalProjectHash(coldReloadedProject);
+  if (firstHash !== coldHash) {
+    throw new Error(
+      `storyflow 闭环失败：冷启动前后关键数据哈希不一致（${firstHash} != ${coldHash}）`,
+    );
+  }
+  return {
+    chapterCount: persistedProject.chapters.length,
+    plotChapterCount: persistedChapterNodes.length,
+    linkedPlotChapterCount: persistedChapterNodes.filter(node => Boolean(node.chapterId)).length,
+    structuredPlotChapterCount: persistedChapterNodes.filter(node =>
+      Boolean(node.CBN && node.CPNs?.length && node.CEN && node.mustCover?.length),
+    ).length,
+    characterCount: persistedProject.characters.length,
+    foreshadowCount: persistedProject.foreshadows.length,
+    volumeCount: persistedProject.volumes.length,
+    // 章纲正文（结构化节点块之外的描述文本）：建章时只读 chapter.outline 而大纲链路
+    // 用的是 chapter.summary，会让每章只剩 CBN/CPNs/CEN，续写合同拿不到章纲描述。
+    chapterOutlineTextCount: persistedProject.chapters.filter(
+      chapter => (chapter.outline ?? '').split('--- 结构化节点 ---')[0].trim().length > 0,
+    ).length,
+    coldReloadVerified: true,
+    criticalDataHash: coldHash,
+    completeCharacterProfileCount: persistedProject.characters.filter(character =>
+      Boolean(
+        character.profile &&
+          Array.isArray(character.profile.personality) &&
+          Array.isArray(character.profile.relationships),
+      ),
+    ).length,
+    positioningPersisted: Boolean(persistedProject.metadata?.outlinePositioning),
+  };
+}
+
 /** 注入真实 AI 配置到 settingsStore（UnifiedOutlineGenerator.getAIConfig 依赖它） */
 export function injectSettingsStore(cfg: ResolvedRealAiConfig): void {
   // 复用当前 active Pinia（每章 hydrate 后已 setActivePinia）；
@@ -665,17 +817,25 @@ export async function runStoryflowClosedLoop(
   // ---------- 0. 配置与测试环境桩 ----------
   const cfg = resolveContinueWriteRealConfig();
   injectSettingsStore(cfg);
-  const projectStorage = installFileElectronAPI(`${runIdPrefix}-${Date.now()}`);
+  const artifactPaths = resolveStoryflowArtifactPaths();
+  const resumeRequested = /^(?:1|true|yes)$/iu.test(
+    process.env.MOLIU_RESUME_STORYFLOW?.trim() ?? ''
+  );
+  // 续写用稳定检查点库：冒烟脚本按 storyflow- 前缀清 temp 顶层，检查点目录在白名单里。
+  // 未开续写仍用时间戳文件并清空，避免测试互相踩到上一轮正文。
+  const projectStorage = installFileElectronAPI(
+    resumeRequested ? `${runIdPrefix}-resume` : `${runIdPrefix}-${Date.now()}`,
+    {
+      preserveExisting: resumeRequested,
+      storePath: resumeRequested ? artifactPaths.resumeStorePath : undefined,
+    },
+  );
 
   // ---------- 1. 开题中心大纲生成（真实 AI fetch，与 TopicDiscoveryBoard prompt 玩法同路径） ----------
   // 传 trace.runId 让大纲阶段的 prompt/响应落盘 temp/ai-traces/，便于人工评估单章蓝图产出质量。
   // MOLIU_OUTLINE_CACHE：调试续写阶段时复用上一轮 ExecutableOutline，跳过 30-40 分钟的
   // 大纲生成。默认不开启，完整冒烟仍然全程真实生成。
   const outlineCachePath = process.env.MOLIU_OUTLINE_CACHE?.trim();
-  const artifactPaths = resolveStoryflowArtifactPaths();
-  const resumeRequested = /^(?:1|true|yes)$/iu.test(
-    process.env.MOLIU_RESUME_STORYFLOW?.trim() ?? ''
-  );
   let direction: OutlineDirection | null = null;
   const outlineWarnings: string[] = [];
   const phaseTimings = {
@@ -779,29 +939,50 @@ export async function runStoryflowClosedLoop(
       // 检查点损坏时按未命中处理并重新生成；不能让可选加速能力阻断真实 smoke。
     }
   }
-  let executableOutline =
-    explicitCachedOutline ?? resumableOutline ?? (await generateExecutableOutline());
-  // 拆章同文终检：AI 拆章偶发整块复制（reg20 实证 ch18-50 同文 33 章），适配层是
-  // 纯映射修不了内容，唯一治本是重新拆章——含缓存/续跑大纲（脏缓存不值得省一次拆章）。
-  // 只重试一次：再失败说明模型当前拆章能力异常，带着警告放行让书审/裁判暴露问题。
-  const duplicateScan = detectDuplicateChapterCbn(
-    mapExecutableOutlineToGeneratedOutline(executableOutline).chapters
-  );
-  const duplicateCovered = duplicateScan.reduce((sum, g) => sum + g.chapters.length, 0);
-  if (duplicateCovered >= 3) {
-    outlineWarnings.push(
-      `[拆章同文] 初版蓝图 ${duplicateCovered} 章 CBN 同文（最大组 ${duplicateScan[0].chapters.length} 章），重新拆章一次`
-    );
-    executableOutline = await generateExecutableOutline();
-    const rescan = detectDuplicateChapterCbn(
-      mapExecutableOutlineToGeneratedOutline(executableOutline).chapters
-    );
-    const rescanCovered = rescan.reduce((sum, g) => sum + g.chapters.length, 0);
-    if (rescanCovered > 0) {
-      outlineWarnings.push(
-        `[拆章同文] 重新拆章后仍有 ${rescanCovered} 章 CBN 同文，模型拆章质量异常，需人工核查`
+  const writingProject = resumeRequested
+    ? projectStorage.list().find(item => firstUnwrittenChapterNumber(item.chapters ?? []) > 1)
+    : undefined;
+  let executableOutline = explicitCachedOutline ?? resumableOutline ?? null;
+  if (writingProject) {
+    // 已有正文时禁止重新拆章：generateExecutableOutline 会覆盖检查点，续写合同就和已写章节对不上。
+    if (!executableOutline) {
+      const writtenThrough = firstUnwrittenChapterNumber(writingProject.chapters ?? []) - 1;
+      throw new Error(
+        `storyflow 续写失败：项目 ${writingProject.id} 已写到第 ${writtenThrough} 章，但大纲检查点不可用（${artifactPaths.resumeOutlinePath}）。检查点需存在，且提示词、字数区间、厂商和模型与本次一致。已有正文保留在检查点目录，不会重建项目。`,
       );
     }
+    outlineWarnings.push(
+      `[续写] 复用项目 ${writingProject.id}，从第 ${firstUnwrittenChapterNumber(writingProject.chapters ?? [])} 章继续，不重建大纲与项目`,
+    );
+  } else {
+    if (!executableOutline) {
+      executableOutline = await generateExecutableOutline();
+    }
+    // 拆章同文终检：AI 拆章偶发整块复制（reg20 实证 ch18-50 同文 33 章），适配层是
+    // 纯映射修不了内容，唯一治本是重新拆章——含缓存/续跑大纲（脏缓存不值得省一次拆章）。
+    // 只重试一次：再失败说明模型当前拆章能力异常，带着警告放行让书审/裁判暴露问题。
+    const duplicateScan = detectDuplicateChapterCbn(
+      mapExecutableOutlineToGeneratedOutline(executableOutline).chapters
+    );
+    const duplicateCovered = duplicateScan.reduce((sum, g) => sum + g.chapters.length, 0);
+    if (duplicateCovered >= 3) {
+      outlineWarnings.push(
+        `[拆章同文] 初版蓝图 ${duplicateCovered} 章 CBN 同文（最大组 ${duplicateScan[0].chapters.length} 章），重新拆章一次`
+      );
+      executableOutline = await generateExecutableOutline();
+      const rescan = detectDuplicateChapterCbn(
+        mapExecutableOutlineToGeneratedOutline(executableOutline).chapters
+      );
+      const rescanCovered = rescan.reduce((sum, g) => sum + g.chapters.length, 0);
+      if (rescanCovered > 0) {
+        outlineWarnings.push(
+          `[拆章同文] 重新拆章后仍有 ${rescanCovered} 章 CBN 同文，模型拆章质量异常，需人工核查`
+        );
+      }
+    }
+  }
+  if (!executableOutline) {
+    throw new Error('storyflow 闭环失败：大纲为空');
   }
 
   const generatedOutline = mapExecutableOutlineToGeneratedOutline(executableOutline);
@@ -813,26 +994,38 @@ export async function runStoryflowClosedLoop(
   }
 
   // ---------- 2. 应用大纲（真实 useProjectCreator.createProject 链路） ----------
+  // 已有正文的续写跳过 createProject：那会在检查点库里再塞一本空书，并从第 1 章重写。
   const applyStartedAt = Date.now();
-  const projectCreator = useProjectCreator();
-  const projectId = await projectCreator.createProject(generatedOutline, {});
-  if (!projectId) {
-    throw new Error(
-      `storyflow 闭环失败：应用大纲失败（createProject 返回 null，${projectCreator.error.value}）`
-    );
+  const projectStore = useProjectStore();
+  let projectId: string;
+  let createdChapterIds: string[];
+  let project: Project;
+  if (writingProject) {
+    projectId = writingProject.id;
+    const loaded = await projectStore.loadProject(projectId);
+    if (!loaded) {
+      throw new Error(`storyflow 续写失败：无法载入已有项目 ${projectId}`);
+    }
+    createdChapterIds = projectStore.chapters.map(chapter => chapter.id);
+  } else {
+    const projectCreator = useProjectCreator();
+    const createdId = await projectCreator.createProject(generatedOutline, {});
+    if (!createdId) {
+      throw new Error(
+        `storyflow 闭环失败：应用大纲失败（createProject 返回 null，${projectCreator.error.value}）`
+      );
+    }
+    projectId = createdId;
+    // 建章已并入 createProject（首页各入口只调 createProject，冒烟必须走同一条路径，
+    // 这里再补一次就会把每章建两遍，反而测不出真实链路）。
+    createdChapterIds = projectStore.chapters.map(chapter => chapter.id);
+    if (createdChapterIds.length !== outlineChapters.length) {
+      throw new Error(
+        `storyflow 闭环失败：建章数量不符（期望 ${outlineChapters.length}，实际 ${createdChapterIds.length}）`
+      );
+    }
   }
   phaseTimings.applyOutlineMs = Date.now() - applyStartedAt;
-
-  // ---------- 3. 建章 ----------
-  // 建章已并入 createProject（首页各入口只调 createProject，冒烟必须走同一条路径，
-  // 这里再补一次就会把每章建两遍，反而测不出真实链路）。
-  const projectStore = useProjectStore();
-  const createdChapterIds = projectStore.chapters.map(chapter => chapter.id);
-  if (createdChapterIds.length !== outlineChapters.length) {
-    throw new Error(
-      `storyflow 闭环失败：建章数量不符（期望 ${outlineChapters.length}，实际 ${createdChapterIds.length}）`
-    );
-  }
 
   const rawProject = projectStore.currentProject;
   if (!rawProject) {
@@ -840,7 +1033,7 @@ export async function runStoryflowClosedLoop(
   }
   // 深拷贝去 Vue 响应式代理（与 useProjectCreator 内做法一致）。
   // 用独立 refs 覆盖一次，保证传给续写层的是保存成功后的完整项目快照。
-  let project = JSON.parse(
+  project = JSON.parse(
     JSON.stringify({
       ...rawProject,
       chapters: projectStore.chapters,
@@ -854,50 +1047,7 @@ export async function runStoryflowClosedLoop(
   }
 
   // 从模拟主进程存储重新读取序列化快照，不能用 renderer 当前对象自证持久化成功。
-  const persistedProject = projectStorage.get(projectId);
-  if (!persistedProject) {
-    throw new Error('storyflow 闭环失败：建章后项目未写入主进程存储');
-  }
-  const persistedChapterNodes = persistedProject.plotOutline.filter(
-    node => node.type === 'chapter'
-  );
-  const firstHash = buildCriticalProjectHash(persistedProject);
-  const coldReloadedProject = projectStorage.coldReload(projectId);
-  if (!coldReloadedProject) {
-    throw new Error('storyflow 闭环失败：冷启动后无法重新读取项目');
-  }
-  const coldHash = buildCriticalProjectHash(coldReloadedProject);
-  if (firstHash !== coldHash) {
-    throw new Error(
-      `storyflow 闭环失败：冷启动前后关键数据哈希不一致（${firstHash} != ${coldHash}）`
-    );
-  }
-  const projectStorageVerification: ProjectStorageVerification = {
-    chapterCount: persistedProject.chapters.length,
-    plotChapterCount: persistedChapterNodes.length,
-    linkedPlotChapterCount: persistedChapterNodes.filter(node => Boolean(node.chapterId)).length,
-    structuredPlotChapterCount: persistedChapterNodes.filter(node =>
-      Boolean(node.CBN && node.CPNs?.length && node.CEN && node.mustCover?.length)
-    ).length,
-    characterCount: persistedProject.characters.length,
-    foreshadowCount: persistedProject.foreshadows.length,
-    volumeCount: persistedProject.volumes.length,
-    // 章纲正文（结构化节点块之外的描述文本）：建章时只读 chapter.outline 而大纲链路
-    // 用的是 chapter.summary，会让每章只剩 CBN/CPNs/CEN，续写合同拿不到章纲描述。
-    chapterOutlineTextCount: persistedProject.chapters.filter(
-      chapter => (chapter.outline ?? '').split('--- 结构化节点 ---')[0].trim().length > 0
-    ).length,
-    coldReloadVerified: true,
-    criticalDataHash: coldHash,
-    completeCharacterProfileCount: persistedProject.characters.filter(character =>
-      Boolean(
-        character.profile &&
-        Array.isArray(character.profile.personality) &&
-        Array.isArray(character.profile.relationships)
-      )
-    ).length,
-    positioningPersisted: Boolean(persistedProject.metadata?.outlinePositioning),
-  };
+  const projectStorageVerification = verifyPersistedProject(projectStorage, projectId);
 
   // 启动包当前为 50 章；80 章长跑必须在正式续写前补齐后续槽位并写入文件存储。
   // 滚动模式（MOLIU_STORYFLOW_ROLL_MODE，默认 pre）：
@@ -1106,10 +1256,24 @@ export async function runStoryflowClosedLoop(
       }
     },
   };
+  const writeFromChapter = writingProject
+    ? firstUnwrittenChapterNumber(project.chapters ?? [])
+    : 1;
+  const chaptersToWrite = storyflowChaptersRemaining(chapterCount, writeFromChapter);
+  if (chaptersToWrite <= 0) {
+    throw new Error(
+      `storyflow 续写失败：请求写到第 ${chapterCount} 章，已有正文写到第 ${writeFromChapter - 1} 章，没有剩余章节`,
+    );
+  }
+  if (writingProject) {
+    console.log(
+      `[storyflow:resume] 从第 ${writeFromChapter} 章续写，本轮再写 ${chaptersToWrite} 章（目标第 ${chapterCount} 章）`,
+    );
+  }
   const result = await runContinueWriteChapters({
     project,
-    fromChapter: 1,
-    chapterCount,
+    fromChapter: writeFromChapter,
+    chapterCount: chaptersToWrite,
     targetWordCount,
     persistTrace: true,
     // 蓝图再生调用器（2026-09-13 r4 ch187 齐王命运冲突五连拒成洞补齐）：
@@ -1127,6 +1291,14 @@ export async function runStoryflowClosedLoop(
     mode: 'batch',
     ai,
     plotOutlineClient,
+    // 续写从第一轮就用稳定 runtime 目录：墙钟杀掉进程时 dispose 不会跑，库还在；
+    // 下一轮打开同一目录。普通冒烟仍用临时目录，结束即删，避免测试互相污染。
+    ...(resumeRequested
+      ? {
+          runtimeUserDataPath: artifactPaths.resumeRuntimePath,
+          preserveRuntimeOnDispose: true,
+        }
+      : {}),
     // 每章 hydrate 会重置 Pinia（setActivePinia(createPinia())），导致开头的
     // injectSettingsStore(cfg) 注入的 AI 配置失活。此处通过回调在每章 hydrate 后重新注入，
     // 让记忆提取（enhanceWithAI → useAIService → useSettingsStore）能读到 provider，

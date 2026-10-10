@@ -213,6 +213,40 @@ describe('extractedFactsSchema 顶层缺失字段软兜底', () => {
     expect(parsed.deltas[0].operation).toBe('set');
     expect(typeof parsed.deltas[0].evidence).toBe('string');
   });
+
+  it('delta.transition 只保留合法枚举，非法值丢弃且不拒整条', () => {
+    const raw = {
+      events: [],
+      deltas: [
+        {
+          operation: 'set',
+          path: 'characters.hero.attributes.status',
+          value: '下狱',
+          transition: 'recapture',
+          evidence: '再次收监',
+        },
+        {
+          operation: 'set',
+          path: 'characters.hero.attributes.status',
+          value: '死亡',
+          transition: '随便写',
+          evidence: '气绝',
+        },
+        {
+          operation: 'set',
+          path: 'characters.hero.attributes.identity',
+          value: '当朝三皇子恭王',
+          transition: 'reveal-identity',
+          evidence: '当众揭晓',
+        },
+      ],
+      evidence: [],
+    };
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.deltas[0].transition).toBe('recapture');
+    expect(parsed.deltas[1].transition).toBeUndefined();
+    expect(parsed.deltas[2].transition).toBe('reveal-identity');
+  });
 });
 
 describe('extractedFactsSchema evidence 嵌套数组容错', () => {
@@ -412,7 +446,7 @@ describe('契约 15/17 结构化字段透传（2026-10-05 数字/时间台账）
           causes: [],
           effects: [],
           evidence: ['连本带利，三百万信用点'],
-          numeric: { object: '周巡家欠金刚重工债务总额', amount: 3000000, unit: '信用点', nature: '连本带利总额' },
+          numeric: { object: '周巡家欠金刚重工债务总额', amount: 3000000, unit: '信用点', nature: '连本带利总额', revision: 'establish' },
         },
         {
           id: 'e2',
@@ -436,6 +470,7 @@ describe('契约 15/17 结构化字段透传（2026-10-05 数字/时间台账）
       amount: 3000000,
       unit: '信用点',
       nature: '连本带利总额',
+      revision: 'establish',
     });
     expect(parsed.events[1].time).toEqual({
       promise: '十六强开赛前还清三百万债务',
@@ -467,5 +502,44 @@ describe('契约 15/17 结构化字段透传（2026-10-05 数字/时间台账）
     expect(parsed.events[0].summary).toBe('债务总额三十万');
     // zod optional 失配 → 字段被剥离而非整事件/整章失败（元素级软兜底语义不变）
     expect(parsed.events[0].numeric).toBeUndefined();
+  });
+});
+
+describe('契约 19 纪年字段透传', () => {
+  it('era-fact 的合法 era 保留，非法年份剥离且不拒整条事件', () => {
+    const raw = {
+      events: [
+        {
+          id: 'e1',
+          chapter: 12,
+          sceneId: 's1',
+          type: 'era-fact',
+          summary: '天兴二十一年',
+          participants: [],
+          causes: [],
+          effects: [],
+          evidence: ['天兴二十一年春'],
+          era: { name: '天兴', year: 21, revision: 'establish' },
+        },
+        {
+          id: 'e2',
+          chapter: 13,
+          sceneId: 's1',
+          type: 'era-fact',
+          summary: '坏年份',
+          participants: [],
+          causes: [],
+          effects: [],
+          evidence: ['坏年份'],
+          era: { name: '天兴', year: 0 },
+        },
+      ],
+      deltas: [],
+      evidence: [],
+    };
+    const parsed = parseSchema(extractedFactsSchema, raw, '事实提取结果');
+    expect(parsed.events[0].era).toEqual({ name: '天兴', year: 21, revision: 'establish' });
+    expect(parsed.events[1].summary).toBe('坏年份');
+    expect(parsed.events[1].era).toBeUndefined();
   });
 });

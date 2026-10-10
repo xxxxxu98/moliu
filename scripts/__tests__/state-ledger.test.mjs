@@ -164,3 +164,16 @@ test('空输入与无状态章不产生噪音', () => {
   const noChanges = buildLedgerFromMemories([mem(5, [])]);
   assert.equal(noChanges.entries.length, 0);
 });
+
+test('身份协议：未标 reveal-identity 不入账，标了才进入快照', () => {
+  const invented = mem(24, [['赵宣', '身份:刑部主事的姻亲', '降格']]);
+  assert.equal(buildLedgerFromMemories([invented]).entries.length, 0);
+  const reveal = mem(24, [['赵宣', '身份:当朝三皇子恭王', '当众揭晓']]);
+  reveal.characterStateChanges[0].transition = 'reveal-identity';
+  const built = buildLedgerFromMemories([reveal]);
+  assert.equal(built.entries.length, 1);
+  assert.equal(built.entries[0].attribute, 'identity');
+  assert.equal(built.entries[0].transition, 'reveal-identity');
+  const snap = snapshotAt(built.entries, 25);
+  assert.equal(snap.get('赵宣').identity, '当朝三皇子恭王');
+});

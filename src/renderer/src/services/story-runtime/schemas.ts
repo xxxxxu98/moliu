@@ -279,11 +279,13 @@ export const storyEventSchema = z.object({
       if (typeof rec.amount !== 'number' || !Number.isFinite(rec.amount)) return undefined;
       if (typeof rec.object !== 'string' || !rec.object.trim()) return undefined;
       if (typeof rec.unit !== 'string' || !rec.unit.trim()) return undefined;
+      const revision = rec.revision === 'establish' || rec.revision === 'correct' ? rec.revision : undefined;
       return {
         object: rec.object,
         amount: rec.amount,
         unit: rec.unit,
         ...(typeof rec.nature === 'string' && rec.nature.trim() ? { nature: rec.nature } : {}),
+        ...(revision ? { revision } : {}),
       };
     },
     z
@@ -292,6 +294,7 @@ export const storyEventSchema = z.object({
         amount: z.number(),
         unit: z.string().min(1),
         nature: z.string().optional(),
+        revision: z.enum(['establish', 'correct']).optional(),
       })
       .optional()
   ),
@@ -317,13 +320,65 @@ export const storyEventSchema = z.object({
       })
       .optional()
   ),
+  // 契约 19：年号+年份。形态损坏时剥离 era，事件本体照常通过。
+  era: z.preprocess(
+    (v) => {
+      if (v == null || typeof v !== 'object') return undefined;
+      const rec = v as Record<string, unknown>;
+      const name = typeof rec.name === 'string' ? rec.name.trim() : '';
+      if (!name || name.length > 8 || /[\r\n]/.test(name)) return undefined;
+      if (typeof rec.year !== 'number' || !Number.isInteger(rec.year) || rec.year <= 0 || rec.year > 9999) {
+        return undefined;
+      }
+      const revision = rec.revision === 'establish' || rec.revision === 'correct' ? rec.revision : undefined;
+      return {
+        name,
+        year: rec.year,
+        ...(revision ? { revision } : {}),
+      };
+    },
+    z
+      .object({
+        name: z.string().min(1),
+        year: z.number().int().positive(),
+        revision: z.enum(['establish', 'correct']).optional(),
+      })
+      .optional()
+  ),
 });
+
+/** 与 stateLedger.TransitionKind 保持同一组字面量；非法值预处理成缺省，不拒整条 delta。 */
+const LEDGER_TRANSITION_LITERALS = [
+  'death',
+  'faked-death',
+  'death-revealed-fake',
+  'arrest',
+  'release',
+  'bail',
+  'escape',
+  'recapture',
+  'transfer',
+  'dismiss',
+  'appoint',
+  'restore',
+  'reveal-identity',
+] as const;
+
+const ledgerTransitionSchema = z.preprocess(
+  value =>
+    typeof value === 'string' &&
+    (LEDGER_TRANSITION_LITERALS as readonly string[]).includes(value)
+      ? value
+      : undefined,
+  z.enum(LEDGER_TRANSITION_LITERALS).optional(),
+);
 
 export const stateDeltaSchema = z.object({
   operation: z.enum(['set', 'add', 'remove', 'increment']),
   path: z.string().min(1),
   value: jsonValueSchema.optional(),
   evidence: z.string().min(1),
+  transition: ledgerTransitionSchema.optional(),
 });
 
 /** 命运漏登复检结果：只补 deltas，事件本身已由首轮提取产出 */

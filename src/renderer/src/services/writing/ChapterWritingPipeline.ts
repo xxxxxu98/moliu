@@ -89,7 +89,7 @@ import type {
 } from '@/services/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 import { classifyError, type ErrorKind } from '@/utils/ai-error-classify';
-import { collectCharacterIdentityAnchors, collectEraAnchors, collectFakedDeathCharacters, collectFateForbiddenZones, collectFateStatusAnchors, overlayCharacterFates, overlayCharacterTitles } from '@/services/writing/extract-plot-memory';
+import { collectCharacterIdentityAnchors, collectFakedDeathCharacters, collectFateForbiddenZones, collectFateStatusAnchors, overlayCharacterFates, overlayCharacterTitles } from '@/services/writing/extract-plot-memory';
 import {
   collectTimelineMarks,
   formatNumericAnchorLines,
@@ -100,9 +100,10 @@ import {
   projectTimeLedger,
   resolveTimePromisesByText,
 } from '@/services/writing/numericLedger';
+import { formatEraAnchorLines, mergeEraLedger, projectEraLedgerEntries } from '@/services/writing/eraLedger';
 import { buildMentionEvidence } from '@/services/writing/mentionIndex';
 import { contentFingerprint } from './utils';
-import { buildStateCardRows, isStateCardEnabled } from '@/services/writing/stateLedger';
+import { buildStateCardRows, buildStateForbiddenZones, applyLedgerSnapshotToEntities, isLedgerTransition, isStateCardEnabled, ledgerFakedDeathRoster, resolvePublicIdentities } from '@/services/writing/stateLedger';
 import { stripStructuredNodeBlock } from '@/services/outline/parser/utils';
 import type { SceneChunk } from '@/types/story-runtime';
 
@@ -786,22 +787,23 @@ export class ChapterWritingPipeline {
       // 早期章时若不截断，会把后文终态（如第 136 章下狱）压到第 20 章的校验
       // 视图上，正常早期剧情被终态误审 fact_conflict（2026-09-10 glm 200 章
       // ch20 补写三连拒的第二重根因）。正常顺序写作时全部记忆天然 < 本章，无副作用。
-      const fateOverlay = overlayCharacterFates(
-        state.entities,
-        (input.project.chapterMemories ?? []).filter(
-          memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
-        ),
+      const memoriesBeforeChapter = (input.project.chapterMemories ?? []).filter(
+        memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
       );
-      if (fateOverlay.applied > 0) state.entities = fateOverlay.entities;
-      // 头衔锚接线（契约 14）：最新头衔映射到 entities.attributes.title，
-      // 起草 prompt 的称谓锚由此读取——正文官职/品级必须与最近一次入账一致
-      const titleOverlay = overlayCharacterTitles(
-        state.entities,
-        (input.project.chapterMemories ?? []).filter(
-          memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
-        ),
-      );
-      if (titleOverlay.applied > 0) state.entities = titleOverlay.entities;
+      if (isStateCardEnabled()) {
+        // 快照折叠：后章下狱不能把死亡洗成在押，假死不能留着死亡残留。
+        const ledgerOverlay = applyLedgerSnapshotToEntities(
+          state.entities,
+          memoriesBeforeChapter,
+          chapterNumber,
+        );
+        if (ledgerOverlay.applied > 0) state.entities = ledgerOverlay.entities;
+      } else {
+        const fateOverlay = overlayCharacterFates(state.entities, memoriesBeforeChapter);
+        if (fateOverlay.applied > 0) state.entities = fateOverlay.entities;
+        const titleOverlay = overlayCharacterTitles(state.entities, memoriesBeforeChapter);
+        if (titleOverlay.applied > 0) state.entities = titleOverlay.entities;
+      }
 
       const chapterForbiddenZones = assembleChapterForbiddenZones(
         taskBook?.forbiddenZones,
@@ -1027,11 +1029,9 @@ export class ChapterWritingPipeline {
         ...(writerAgent ? { writerAgent } : {}),
       });
       throwIfAborted(input.signal);
-      // 记忆按目标章截断的统一变量（era/numeric/fakedDeath/fateStatus/状态卡共源）：
+      // 记忆按目标章截断的统一变量（fakedDeath/fateStatus/状态卡共源）：
       // 与 overlayCharacterFates 同口径，补写/重写早期章时不被后文终态误伤
-      const memoriesUpToChapter = (input.project.chapterMemories ?? []).filter(
-        memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
-      );
+      const memoriesUpToChapter = memoriesBeforeChapter;
       // —— 竞品借鉴三件（2026-10-05）——
       // 作者手改检测：上一章正文指纹与提取时不一致 → 重提取记忆/台账
       await this.reextractStalePreviousChapter(input, chapterNumber, ai, memoriesUpToChapter);
@@ -1080,9 +1080,8 @@ export class ChapterWritingPipeline {
           })
           .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
           .map(node => `第${(node.orderIndex ?? 0) + 1}章：「${(node.CEN ?? '').trim()}」`),
-        // 纪年锚（r5 实证纪年五套互斥+真实年号混入）：近章既成纪年叙述注入起草
-        // prompt，正文纪年必须与之连续；真实年号另有黑名单守卫拦截
-        eraAnchors: collectEraAnchors(memoriesUpToChapter),
+        // 纪年锚只读结构化账。账为空时起草走「未确立年号」。真实年号另有黑名单守卫。
+        eraAnchors: formatEraAnchorLines(input.project.eraLedger ?? []),
         // 数字锚（2026-10-05 台账化重构：契约 15 结构化出账 → 项目 numericLedger，
         // 旧 collectNumericAnchors 单位词表正则退役——都市文信用点/吨/天全漏实证）：
         // 起草【数字锚】与判官【数字一致】共源注入
@@ -1100,23 +1099,35 @@ export class ChapterWritingPipeline {
         // 作者正典：起草【作者正典】块 + 判官硬约束
         authorCanon,
         ...(creativeCompass ? { creativeCompass } : {}),
-        // 身份锚（r6 实证角色表赵宣=三皇子恭王被写手降格成刑部主事姻亲）：
-        // 本章出场角色的角色卡身份首句，正文身份/地位必须与角色卡一致
-        characterIdentityAnchors: collectCharacterIdentityAnchors(
-          input.project.characters ?? [],
-          contracts.chapter.allowedCharacterNames ?? [],
-        ),
-        // 假死纪律（r8 实证：假死被登死亡后三道防线锁死主角 48 章）：
-        // 假死在册角色不进终态禁令，写作侧按隐匿活着处理
-        fakedDeathCharacters: collectFakedDeathCharacters(memoriesUpToChapter),
-        // 命运状态正典（2026-09-24 g38f 500ch S1/S2：在押凭空自由/去职照常行使）：
-        // 每角色最新命运状态注入【命运状态正典】，正文处理须先与该状态自洽。
-        // 第 2 阶段读侧接管（unified-state-ledger）：MOLIU_STATE_CARD=1 时改注
-        // 状态账本折叠的【实体状态卡】——「最晚一条原始状态」视图读不到被押地/
-        // 头衔行覆盖的终态（r8-S1-05 顾宪诚形态），账本快照是单一真相源
+        // 身份锚：状态卡开启时并进状态卡。角色卡首句是正典，
+        // 只有更早章节的 reveal-identity 才替换。关闭状态卡时仍单独注入。
+        characterIdentityAnchors: isStateCardEnabled()
+          ? []
+          : collectCharacterIdentityAnchors(
+              input.project.characters ?? [],
+              contracts.chapter.allowedCharacterNames ?? [],
+            ),
+        fakedDeathCharacters: isStateCardEnabled()
+          ? ledgerFakedDeathRoster(memoriesUpToChapter, chapterNumber)
+          : collectFakedDeathCharacters(memoriesUpToChapter),
+        // 命运状态正典（2026-09-24 g38f 500ch S1/S2：在押凭空自由/去职照常行使）。
+        // 状态卡默认开启：账本快照替换「最晚一条原始状态」（r8-S1-05 顾宪诚形态）。
+        // MOLIU_STATE_CARD=0 时退回 fateStatusAnchors。
         fateStatusAnchors: collectFateStatusAnchors(memoriesUpToChapter),
         ...(isStateCardEnabled()
-          ? { stateCard: buildStateCardRows(memoriesUpToChapter, chapterNumber) }
+          ? {
+              stateCard: buildStateCardRows(
+                memoriesUpToChapter,
+                chapterNumber,
+                16,
+                resolvePublicIdentities(
+                  input.project.characters ?? [],
+                  memoriesUpToChapter,
+                  chapterNumber,
+                  contracts.chapter.allowedCharacterNames ?? [],
+                ),
+              ),
+            }
           : {}),
         // 未回收伏笔的判官候选，口径见 buildPayoffCandidates（已到埋设点，非回收时点）
         payoffCandidates: buildPayoffCandidates(input.project.foreshadows, chapterNumber),
@@ -1196,19 +1207,21 @@ export class ChapterWritingPipeline {
         console.warn('[Pipeline] accepted commit 的记忆投影失败，可由 outbox 重放:', error);
       }
 
-      // 事实台账投影（2026-10-05 契约 15/17）：本章结构化 numeric-fact / time-promise
-      // 事件合并进项目级台账——下一章的【数字锚】/【期限承诺】注入依赖它。
+      // 事实台账投影（2026-10-05 契约 15/17，2026-10-10 契约 19）：本章结构化
+      // numeric-fact / time-promise / era-fact 事件合并进项目级台账。
       // best-effort：失败只 warning，不影响本章提交（下一章注入缺新账由判官
       // ledger-gap 反向检查兜底提示）。
       const numericEntries = projectNumericLedgerEntries(result.facts);
       const timeProjection = projectTimeLedger(result.facts);
+      const eraEntries = projectEraLedgerEntries(result.facts);
       // 判官确认的承诺兑现流转（2026-10-08 r19 实证 37/40 永远开放的解药）
       const judgeResolvedTexts = result.report.resolvedTimePromiseTexts ?? [];
       if (
         numericEntries.length > 0 ||
         timeProjection.opens.length > 0 ||
         timeProjection.resolves.length > 0 ||
-        judgeResolvedTexts.length > 0
+        judgeResolvedTexts.length > 0 ||
+        eraEntries.length > 0
       ) {
         try {
           await this.memoryClient?.saveLedger?.({
@@ -1216,6 +1229,7 @@ export class ChapterWritingPipeline {
             numericEntries,
             timeProjection,
             judgeResolvedPromiseTexts: judgeResolvedTexts,
+            eraEntries,
           });
           // 双保险：store 适配器改 currentProject，这里同步 input.project 供本章后
           // 续注入/落盘立即生效（repair 侧两层 project 可能非同引用）
@@ -1544,11 +1558,18 @@ export class ChapterWritingPipeline {
       await this.memoryClient?.extractAndSave(prev.id, chapterNumber - 1, prose);
       const numericEntries = projectNumericLedgerEntries(facts);
       const timeProjection = projectTimeLedger(facts);
-      if (numericEntries.length > 0 || timeProjection.opens.length > 0 || timeProjection.resolves.length > 0) {
+      const eraEntries = projectEraLedgerEntries(facts);
+      if (
+        numericEntries.length > 0 ||
+        timeProjection.opens.length > 0 ||
+        timeProjection.resolves.length > 0 ||
+        eraEntries.length > 0
+      ) {
         await this.memoryClient?.saveLedger?.({
           chapterNumber: chapterNumber - 1,
           numericEntries,
           timeProjection,
+          eraEntries,
         });
         // 双保险：store 适配器改的是 currentProject，这里同步改 input.project，
         // 保证本章注入立即吃到重提取的账（两个对象可能不是同一引用）
@@ -1558,6 +1579,9 @@ export class ChapterWritingPipeline {
           timeProjection,
           chapterNumber - 1
         );
+        if (eraEntries.length > 0) {
+          input.project.eraLedger = mergeEraLedger(input.project.eraLedger ?? [], eraEntries);
+        }
       }
     } catch (error) {
       console.warn('[Pipeline] 手改章重提取失败（按旧账继续，不阻断续写）:', error);
@@ -1608,12 +1632,9 @@ export function mergeChapterBlueprintText(
 }
 
 /**
- * 本章禁区装配：大纲防剧透禁区 + 命运禁入条目（2026-09-12 g38f 200 章 S1 实证：
- * collectFateForbiddenZones 此前零调用——写手/判官提示词从未收到「X已于第N章死亡」
- * 禁令，严开礼 ch179 撞柱气绝后 ch186 按过期滚纲节点复活越狱一次过审）。与防剧透
- * 禁区同面注入：判官读到即按 fact_conflict 拒稿，连续履约失败触发蓝图再生（滚纲
- * 命运锁在再生提示里生效），形成自愈环。记忆按目标章截断（与 overlayCharacterFates
- * 同口径），补写/重写早期章时不被后文终态误伤。
+ * 本章禁区装配：大纲防剧透禁区 + 命运禁入条目。状态卡默认开启时，禁区与
+ * 【实体状态卡】读同一份账本快照（死亡不被后章下狱洗白）。MOLIU_STATE_CARD=0
+ * 时退回 collectFateForbiddenZones。记忆按目标章截断，补写早期章不被后文终态误伤。
  */
 export function assembleChapterForbiddenZones(
   taskBookZones: string[] | null | undefined,
@@ -1624,12 +1645,12 @@ export function assembleChapterForbiddenZones(
     ...(project.characters ?? []).map(character => character.name),
     ...(project.characters ?? []).flatMap(character => character.aliases ?? []),
   ];
-  const fateZones = collectFateForbiddenZones(
-    (project.chapterMemories ?? []).filter(
-      memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
-    ),
-    roster,
+  const memoriesUpToChapter = (project.chapterMemories ?? []).filter(
+    memory => (memory.chapterIndex ?? 0) + 1 <= chapterNumber,
   );
+  const fateZones = isStateCardEnabled()
+    ? buildStateForbiddenZones(memoriesUpToChapter, chapterNumber, roster)
+    : collectFateForbiddenZones(memoriesUpToChapter, roster);
   return [...(taskBookZones ?? []), ...fateZones];
 }
 
@@ -1659,18 +1680,23 @@ function mapStatusDeltasToStateChanges(
     const isStatus = path.endsWith('.attributes.status');
     const isTitle = path.endsWith('.attributes.title');
     const isCustody = path.endsWith('.attributes.custody');
-    if (!isStatus && !isTitle && !isCustody) continue;
+    const isIdentity = path.endsWith('.attributes.identity');
+    if (!isStatus && !isTitle && !isCustody && !isIdentity) continue;
     const entityId = path.split('.')[1] ?? '';
     const entity = state?.entities?.[entityId];
     const name = String(entity?.name || entityId).trim();
     if (!name) continue;
     const value = String((delta as { value?: unknown }).value ?? '').trim();
     if (!value) continue;
-    const prefix = isTitle ? '头衔:' : isCustody ? '押地:' : '';
+    const prefix = isTitle ? '头衔:' : isCustody ? '押地:' : isIdentity ? '身份:' : '';
+    const explicitTransition = (delta as { transition?: unknown }).transition;
     out.push({
       characterName: name,
       stateType: 'status',
       state: `${prefix}${value}`,
+      ...(typeof explicitTransition === 'string' && isLedgerTransition(explicitTransition)
+        ? { transition: explicitTransition }
+        : {}),
       detail: String(
         Array.isArray((delta as { evidence?: unknown }).evidence)
           ? ((delta as unknown as { evidence?: string[] }).evidence ?? []).join(' ')

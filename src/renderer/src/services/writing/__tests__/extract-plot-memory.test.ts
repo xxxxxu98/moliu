@@ -4,8 +4,6 @@
 
 import { describe, it, expect } from 'vitest';
 import {
-  collectEraAnchors,
-  parseChineseYear,
   extractChapterMemory,
   safeExtractChapterMemory,
   buildCharacterStateTable,
@@ -642,53 +640,6 @@ describe('假死在册（collectFakedDeathCharacters，g38f r8 主角假死线�
       memoryWith([{ characterName: '陆九霄', stateType: 'status', state: '揭晓', detail: '当众现身' }], 175),
     ]);
     expect(faked).toHaveLength(0);
-  });
-});
-
-describe('collectEraAnchors 当前年份锚（r11 三洞失败签名：纪年跨度/未来年份族）', () => {
-  const eraMemory = (chapterIndex: number, corePlot: string): ChapterMemory =>
-    ({
-      chapterId: `c${chapterIndex}`,
-      chapterTitle: `第${chapterIndex}章`,
-      chapterIndex,
-      corePlot,
-      keyEvents: [],
-      locations: [],
-      characterStateChanges: [],
-      revealedForeshadows: [],
-      newForeshadows: [],
-      emotionalTone: '未知',
-      wordCount: 0,
-      createdAt: new Date().toISOString(),
-    }) as ChapterMemory;
-
-  it('parseChineseYear：一~九十九换算（含十/十二/二十/二十三）', () => {
-    expect(parseChineseYear('天德九年')).toBe(9);
-    expect(parseChineseYear('天德十年')).toBe(10);
-    expect(parseChineseYear('天德十二年')).toBe(12);
-    expect(parseChineseYear('天德二十年')).toBe(20);
-    expect(parseChineseYear('天德二十三年')).toBe(23);
-    expect(parseChineseYear('无年份数字')).toBeNull();
-  });
-
-  it('当前年份锚：最晚章年份为当前年，头行带换算规则与未来年份禁令', () => {
-    // 锚正则要求年号前有 ≥2 字上文（行首裸年号不召回），年号显示取尾部两字
-    const anchors = collectEraAnchors([
-      eraMemory(3, '转眼已是天德三年，春闱开仓放粮'),
-      eraMemory(87, '翻开旧档：今年适逢天德十二年，盐课账目浮现'),
-    ]);
-    expect(anchors[0]).toContain('当前纪年「天德12年」');
-    expect(anchors[0]).toContain('跨度＝(Y−X)年');
-    expect(anchors[0]).toContain('不得大于12');
-    expect(anchors.some(l => l.includes('第87章纪年「'))).toBe(true);
-  });
-
-  it('无纪年锚时返回空数组（SceneDraftEngine 走未确立年号分支）', () => {
-    expect(collectEraAnchors([eraMemory(5, '普通剧情')])).toHaveLength(0);
-  });
-
-  it('真实明朝年号不注入锚', () => {
-    expect(collectEraAnchors([eraMemory(5, '永乐三年的旧事')])).toHaveLength(0);
   });
 });
 

@@ -24,6 +24,7 @@ export interface RolledBlueprintIssue {
     | 'finale-arc-division'
     | 'fate-release-check'
     | 'coolpoint-pacing'
+    | 'suspense-overdue'
     | 'summary-echoes-cbn'
     | 'thin-scene-beats'
     | 'beat-echoes-cbn';

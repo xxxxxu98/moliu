@@ -29,9 +29,9 @@ r4 到 r9 每轮都在给同一族问题打补丁：命运锁、押地账、头�
 | 命运禁区 `collectFateForbiddenZones` | 同上 | 模板文案 | 无 | 写手、判官提示词 |
 | 押地 `custody` delta | `押地:X` 前缀字符串 | ~~只记录无消费方~~ → 第 0 阶段起作为在押证据并入命运表 | 半套（不校验转移事件） | 命运表、禁区 |
 | 头衔 `collectCharacterTitles` | `头衔:X` 前缀字符串 | 取最晚值 | **无**（去职后复现头衔不校验） | overlay |
-| 身份 `collectCharacterIdentityAnchors` | 提取身份字段 | 取最晚值 | 无 | 写手提示词 |
+| 身份 `identity` | 角色卡首句；揭晓 delta `身份:` | 角色卡为正典；只有 `reveal-identity` 才替换 | 揭晓才改公开身份 | 状态卡 |
 | 假死 `collectFakedDeathCharacters` | `假死` / `揭晓` | 在册/揭晓 | 半套 | 滚纲、SceneDraft |
-| 纪年 `collectEraAnchors` | 正文与记忆文本 | **正则召回** | 无 | 写手提示词 |
+| 纪年 `eraLedger` | 提取侧 `era-fact` | 首次年号为正典；~~正则召回~~（2026-10-10 已删） | 年份只向后；异名须改元标注 | 写手、判官 |
 | 数字 `collectNumericAnchors` | 记忆文本 | **正则召回** | 无 | 写手提示词 |
 
 ## 3. 根因
@@ -152,9 +152,9 @@ interface LedgerEntry {
 
 ### 第 2 阶段：读侧接管（🟡 第一切片 2026-09-25 已落地，验收待回放+回归）
 
-- 已落地：TS 正典实现 `src/renderer/src/services/writing/stateLedger.ts`（与影子版规则同步，第 3 阶段后影子版退役）+ `buildStateCardRows` 状态卡 + `MOLIU_STATE_CARD=1` 功能开关（默认关闭，读 env 走 `readPositiveIntEnv`）。开关开启时 `ChapterWritingPipeline` 注入状态卡，`SceneDraftEngine` 以【实体状态卡】整块替换【命运状态正典】（renderStatusRules，卡的折叠视图是「最晚值」视图的超集，双块并存会稀释注意力）。
-- 测试：`src/renderer/src/services/writing/__tests__/stateLedger.test.ts`（12 用例）。
-- 未做（验收前须补）：命运禁区文案（collectFateForbiddenZones）与 overlay 五路的状态卡替换、4 个回放用例验收、20 章快速回归对照。
+- 已落地：TS 正典实现 `src/renderer/src/services/writing/stateLedger.ts`。**2026-10-10 起默认开启**（`MOLIU_STATE_CARD=0` 退回旧通道）。开启时：状态卡替换命运正典块；禁区、runtime 实体命运/头衔（`applyLedgerSnapshotToEntities`）、假死名单、公开身份都读同一份快照。起草提示词里的终态禁令、头衔锚、假死纪律、身份锚在状态卡在场时不再各出一块。
+- 公开身份：角色卡首句是正典。只有更早章节带 `reveal-identity` 的揭晓才替换。未标揭晓的「身份:」字符串不入账。判官与写作侧读同一份状态卡。
+- 未做（验收前须补）：4 个回放用例验收、20 章快速回归对照。
 - 验收口径（原目标）：4 个回放用例全部 pass，20 章快速回归 S1=0，且 `state.*` 类 S2 不高于基线；状态卡替代五路 overlay 注入。
 
 ### 第 1 阶段：影子账本（原规格存档，已按上节落地）
@@ -165,14 +165,16 @@ interface LedgerEntry {
 
 ### 第 3 阶段：写侧契约重构
 
-- 提取契约改为状态转移表；仲裁接入 `ledger-gap` 和违规。
-- 退役旧锚函数与相关提示词条款；FactExtractor 提示词长度应明显下降。
-- 验收：100 章终验，findings 中 `state.*` 类 S1、S2 为 0。
+- 2026-10-10 起读侧认提取枚举：`StateDelta.transition` / `CharacterStateChange.transition`。账本仅在枚举与 `state` 同一族时采用（在押可标 `recapture`；公开身份揭晓只认 `reveal-identity`）；对不上的枚举丢弃，旧字符串记忆照旧迁移。
+- 未做：把契约 7–14 收成一张短表并退役旧锚函数。那些条款是历次漏账反例，未做整书对照前不删，避免提示词一短就回到「事件有而账无」。契约 20 只追加身份揭晓，不替换 7–14。
+- 验收仍是：100 章终验里 `state.*` 类 S1、S2 为 0。
 
 ### 第 4 阶段：书级事实账（纪年、数字）
 
-- 纪年、数量、金额改由提取侧结构化输出，去掉 `collectEraAnchors`、`collectNumericAnchors` 的正则召回。
-- 对应 findings 分类 `time.era`、`number.ledger`。
+- 数字正典已落地（2026-10-10）：同一对象首次确立的数值为准，只有勘误标注才覆盖。`collectNumericAnchors` 已退役。
+- 纪年结构化路径已落地（2026-10-10）：提取侧 `era-fact` 写入 `Project.eraLedger`。首次年号是正典，同一年号的年份只向后走，另一个年号只有 `revision: "correct"`（正文写出改元）才替换，并在注入行里保留旧年号。起草和判官只读 `formatEraAnchorLines`。
+- `collectEraAnchors` 与中文年份正则已删除。账为空时起草走「未确立年号」，禁止发明年号。
+- 验收仍是：100 章终验里 `time.era`、`number.ledger` 为 0。
 
 ## 8. 与收敛循环的衔接
 

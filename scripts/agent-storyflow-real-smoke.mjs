@@ -49,8 +49,9 @@ const cleanupCfg = smokeCleanupConfig(runSuffix);
 cleanupSmokeArtifacts('smoke:storyflow:real', cleanupCfg.artifacts, {
   prefixes: cleanupCfg.prefixes,
   tracePrefixes: cleanupCfg.tracePrefixes,
-// 自动断点独立于本轮诊断产物；只有 MOLIU_RESUME_STORYFLOW=1 才会读取，
-// 默认新跑仍不会被旧大纲掩盖。
+// 自动断点（大纲、续写项目库、StoryRuntime）在 storyflow-checkpoints/，
+// 只有 MOLIU_RESUME_STORYFLOW=1 才会读取。默认新跑仍不会被旧大纲掩盖。
+// 长跑要在第一轮就打开这个开关，墙钟杀掉后才能从第一篇空章接上。
 // storyflow-matrix 是 multi 矩阵的归档目录：无后缀单跑的前缀清理 'storyflow-'
 // 会递归删掉整个矩阵归档（2026-08-15 实测：并发单跑启动清理，把矩阵已归档的
 // 4 个厂商目录连带 run.log 全部抹掉），必须白名单保护。

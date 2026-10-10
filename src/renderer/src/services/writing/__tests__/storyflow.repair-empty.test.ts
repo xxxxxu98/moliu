@@ -264,12 +264,14 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<Re
     // 停留在补写开始前的旧账（relay 40+ 章出账全部滞留内存丢失的根因）
     let numericLedger = project.numericLedger;
     let timePromises = project.timePromises;
+    let eraLedger = project.eraLedger;
     try {
       const store = useProjectStore();
       const current = store.currentProject as Project | null;
       if (current?.chapterMemories?.length) memories = current.chapterMemories;
       if (current?.numericLedger?.length) numericLedger = current.numericLedger;
       if (current?.timePromises?.length) timePromises = current.timePromises;
+      if (current?.eraLedger?.length) eraLedger = current.eraLedger;
     } catch {
       /* pinia 读回失败时保留原记忆表与旧账 */
     }
@@ -279,6 +281,7 @@ export async function runRepairEmptyChapters(options: RepairOptions): Promise<Re
       chapterMemories: memories,
       numericLedger,
       timePromises,
+      eraLedger,
     } as unknown as Record<string, unknown>;
     writeProjectBack(root, projectOut);
     if (!existsSync(`${options.storePath}.bak`)) {

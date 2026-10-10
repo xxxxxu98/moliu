@@ -9,7 +9,7 @@
  *
  * @typedef {Object} LedgerEntry
  * @property {string} entityId
- * @property {'vital'|'custody'|'custodyPlace'|'office'} attribute
+ * @property {'vital'|'custody'|'custodyPlace'|'office'|'identity'} attribute
  * @property {string} value
  * @property {number} fromChapter
  * @property {string} transition

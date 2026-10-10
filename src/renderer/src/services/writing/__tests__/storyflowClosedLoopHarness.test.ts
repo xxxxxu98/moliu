@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest';
 import type { Project, PlotNode } from '@/types/project';
 import {
   ensureStoryflowWritingCapacity,
+  firstUnwrittenChapterNumber,
   parseExecutableOutlineCache,
+  resolveStoryflowArtifactPaths,
+  shouldKeepStoryflowStore,
+  storyflowChaptersRemaining,
+  storyflowStoreHasWrittenProse,
   summarizeWriterRun,
 } from './storyflowClosedLoopHarness';
 
@@ -234,5 +239,51 @@ describe('summarizeWriterRun', () => {
       byTool: { run_checks: 1, revise_paragraphs: 1 },
       ms: 1200,
     });
+  });
+});
+
+describe('storyflow 长跑续写定位', () => {
+  it('按 orderIndex 找第一篇空白章节，纯空白也算未写', () => {
+    expect(
+      firstUnwrittenChapterNumber([
+        { orderIndex: 2, content: '' },
+        { orderIndex: 0, content: '已经落笔' },
+        { orderIndex: 1, content: '  \n' },
+      ]),
+    ).toBe(2);
+  });
+
+  it('全部已有正文时返回下一章章号', () => {
+    expect(
+      firstUnwrittenChapterNumber([
+        { orderIndex: 0, content: '甲' },
+        { orderIndex: 1, content: '乙' },
+      ]),
+    ).toBe(3);
+    expect(firstUnwrittenChapterNumber([])).toBe(1);
+  });
+
+  it('没有正文或未开续写时不保留项目库', () => {
+    const written = [{ chapters: [{ orderIndex: 0, content: '有正文' }] }];
+    const empty = [{ chapters: [{ orderIndex: 0, content: '' }] }];
+    expect(storyflowStoreHasWrittenProse(written)).toBe(true);
+    expect(storyflowStoreHasWrittenProse(empty)).toBe(false);
+    expect(shouldKeepStoryflowStore(true, written)).toBe(true);
+    expect(shouldKeepStoryflowStore(true, empty)).toBe(false);
+    expect(shouldKeepStoryflowStore(false, written)).toBe(false);
+  });
+
+  it('剩余章数含起始章，写满后为 0', () => {
+    expect(storyflowChaptersRemaining(200, 187)).toBe(14);
+    expect(storyflowChaptersRemaining(200, 1)).toBe(200);
+    expect(storyflowChaptersRemaining(200, 201)).toBe(0);
+  });
+
+  it('续写库和 runtime 落在检查点目录，不在会被 storyflow- 前缀清掉的 temp 顶层', () => {
+    const paths = resolveStoryflowArtifactPaths();
+    expect(paths.resumeStorePath).toContain('storyflow-checkpoints');
+    expect(paths.resumeStorePath.endsWith('.project-store.json')).toBe(true);
+    expect(paths.resumeRuntimePath).toContain('storyflow-checkpoints');
+    expect(paths.resumeRuntimePath.endsWith('.story-runtime')).toBe(true);
   });
 });

@@ -1002,6 +1002,7 @@ export class LongFormWritingEngine {
             authorCanon: input.authorCanon ?? [],
             // 假死例外（判官侧）：假死=活着隐匿中，活体活动不报复活冲突
             fakedDeathCharacters: input.fakedDeathCharacters ?? [],
+            stateCard: input.stateCard ?? [],
           }),
         { label: 'semantic-review', maxRetries: 2 }
       );

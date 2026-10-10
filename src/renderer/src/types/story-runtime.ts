@@ -60,6 +60,8 @@ export interface StoryEvent {
     amount: number;
     unit: string;
     nature?: string;
+    /** establish=首次确立；correct=仅勘误场面。未标 correct 的异值不覆盖正典 */
+    revision?: 'establish' | 'correct';
   };
   /**
    * 时间承诺结构化出账（契约 17/18，2026-10-05）：type="time-promise"（期限承诺）
@@ -70,6 +72,12 @@ export interface StoryEvent {
     promise: string;
     due?: string;
     action: 'open' | 'fulfilled' | 'renegotiated';
+  };
+  /** era-fact 的结构化纪年。name 是年号，year 是该年号下的年份。 */
+  era?: {
+    name: string;
+    year: number;
+    revision?: 'establish' | 'correct';
   };
 }
 
@@ -102,6 +110,11 @@ export interface StateDelta {
   path: string;
   value?: JsonValue;
   evidence: string;
+  /**
+   * 状态转移枚举。只对命运/头衔/押地 delta 有意义；
+   * 与 value 对不上的值在解析时丢弃，不让整条 delta 失败。
+   */
+  transition?: string;
 }
 
 export interface ProvisionalStateOverlay {
@@ -541,6 +554,11 @@ export interface ChapterJudgeInput {
   authorCanon?: string[];
   /** 假死在册角色名单（假死=活着隐匿中，非死亡）：其活体活动不报 fact_conflict */
   fakedDeathNames?: string[];
+  /**
+   * 与写作侧同一份实体状态卡。在场时生死、羁押、头衔、公开身份以卡为准，
+   * 高于 stateDigest 里被后章记录盖住的单条状态。
+   */
+  stateCard?: string[];
 }
 
 export interface ChapterJudge {
@@ -767,10 +785,10 @@ export interface LongFormWriteInput {
    */
   fateStatusAnchors?: Array<{ name: string; status: string; chapterIndex: number }>;
   /**
-   * 实体状态卡（unified-state-ledger 第 2 阶段读侧接管，MOLIU_STATE_CARD=1）：
+   * 实体状态卡（unified-state-ledger 读侧接管，默认开启；MOLIU_STATE_CARD=0 退回旧通道）：
    * 状态账本按章折叠的分组视图（在押含押地/已死/假死/去职/现任头衔）。
-   * 在场时 SceneDraftEngine 用它替换【命运状态正典】块——「最晚一条原始状态」
-   * 视图读不到被押地/头衔行覆盖的终态（r8-S1-05 顾宪诚形态）。
+   * 在场时 SceneDraftEngine 用它替换【命运状态正典】块，判官读同一份卡。
+   * 「最晚一条原始状态」视图读不到被押地/头衔行覆盖的终态（r8-S1-05 顾宪诚形态）。
    */
   stateCard?: string[];
   payoffCandidates?: Array<{ id: string; hint: string }>;

@@ -3,17 +3,22 @@
  *
  * 覆盖：迁移映射（命运五态/押地/头衔/解除族）、状态机跨属性不变量、
  * ledger-gap 候选、快照折叠、状态卡分组视图、renderStatusRules 双通道
- * 切换与 MOLIU_STATE_CARD 开关默认关闭。
+ * 切换与 MOLIU_STATE_CARD 默认开启（0 或非法值关闭）。
  */
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import type { ChapterMemory } from '@/types/project';
+import type { StoryEntity } from '@/types/story-runtime';
 
 import {
   buildLedgerFromMemories,
   snapshotAt,
   buildStateCardRows,
+  buildStateForbiddenZones,
+  applyLedgerSnapshotToEntities,
+  ledgerFakedDeathRoster,
   isStateCardEnabled,
   renderStatusRules,
+  resolvePublicIdentities,
 } from '../stateLedger';
 
 /** 最小章记忆（只填账本消费的字段，其余按需覆盖） */
@@ -151,6 +156,102 @@ describe('状态卡与渲染通道', () => {
   });
 });
 
+describe('账本快照写入实体', () => {
+  const entity = (id: string, name: string, attributes: Record<string, string> = {}): StoryEntity => ({
+    id,
+    kind: 'character',
+    name,
+    aliases: [],
+    attributes,
+    knownBy: [],
+    sourceTrace: [],
+  });
+
+  it('后章下狱不能把死亡洗成在押，押地残留一并清掉', () => {
+    const result = applyLedgerSnapshotToEntities(
+      { a: entity('a', '齐泰', { status: '下狱', custody: '天牢' }) },
+      [mem(20, [['齐泰', '死亡', '饮鸩']]), mem(30, [['齐泰', '下狱', '误记']])],
+      40,
+    );
+    expect(result.entities.a.attributes.status).toBe('死亡');
+    expect(result.entities.a.attributes.custody).toBeUndefined();
+  });
+
+  it('假死清掉死亡残留；揭晓后离开假死名单', () => {
+    const hidden = [mem(10, [['陆九霄', '假死', '金蝉']])];
+    const applied = applyLedgerSnapshotToEntities(
+      { a: entity('a', '陆九霄', { status: '死亡' }) },
+      hidden,
+      20,
+    );
+    expect(applied.entities.a.attributes.status).toBeUndefined();
+    expect(ledgerFakedDeathRoster(hidden, 20)).toEqual([{ name: '陆九霄', chapterIndex: 10 }]);
+    expect(ledgerFakedDeathRoster([...hidden, mem(15, [['陆九霄', '揭晓', '当众']])], 20)).toEqual([]);
+  });
+
+  it('去职清头衔，任命写入头衔；快照没有的人保留角色卡头衔', () => {
+    const result = applyLedgerSnapshotToEntities(
+      {
+        a: entity('a', '薛怀德', { title: '户部左侍郎' }),
+        b: entity('b', '沈万思'),
+        c: entity('c', '路人', { title: '角色卡头衔' }),
+      },
+      [
+        mem(10, [['薛怀德', '头衔:户部左侍郎', '掌印']]),
+        mem(20, [['薛怀德', '去职', '罚俸']]),
+        mem(30, [['沈万思', '头衔:九品典吏', '入账']]),
+        mem(12, [['顾宪诚', '下狱', '定谳']]),
+        mem(14, [['顾宪诚', '押地:相府书斋', '看管']]),
+      ],
+      40,
+    );
+    expect(result.entities.a.attributes.title).toBeUndefined();
+    expect(result.entities.a.attributes.status).toBe('去职');
+    expect(result.entities.b.attributes.title).toBe('九品典吏');
+    expect(result.entities.c.attributes.title).toBe('角色卡头衔');
+  });
+
+  it('在押把关押地写进实体', () => {
+    const result = applyLedgerSnapshotToEntities(
+      { a: entity('a', '顾宪诚') },
+      [mem(12, [['顾宪诚', '下狱', '定谳']]), mem(14, [['顾宪诚', '押地:相府书斋', '看管']])],
+      20,
+    );
+    expect(result.entities.a.attributes.status).toBe('下狱');
+    expect(result.entities.a.attributes.custody).toBe('相府书斋');
+  });
+});
+
+describe('显式转移枚举', () => {
+  it('下狱可以标 recapture；死亡标 release 仍按 death 入账', () => {
+    const held = mem(8, [['赵恒', '下狱', '再收监']]);
+    held.characterStateChanges[0].transition = 'recapture';
+    const dead = mem(9, [['齐泰', '死亡', '饮鸩']]);
+    dead.characterStateChanges[0].transition = 'release';
+    const { entries } = buildLedgerFromMemories([held, dead]);
+    expect(entries.find(entry => entry.entityId === '赵恒')?.transition).toBe('recapture');
+    expect(entries.find(entry => entry.entityId === '齐泰')).toMatchObject({
+      value: 'dead',
+      transition: 'death',
+    });
+  });
+
+  it('越狱之后的下狱仍记 recapture，显式 arrest 盖不掉', () => {
+    const again = mem(12, [['赵恒', '下狱', '抓回']]);
+    again.characterStateChanges[0].transition = 'arrest';
+    const { entries } = buildLedgerFromMemories([
+      mem(10, [['赵恒', '下狱', '初押']]),
+      mem(11, [['赵恒', '越狱', '脱走']]),
+      again,
+    ]);
+    expect(entries.filter(entry => entry.entityId === '赵恒').map(entry => entry.transition)).toEqual([
+      'arrest',
+      'escape',
+      'recapture',
+    ]);
+  });
+});
+
 describe('MOLIU_STATE_CARD 开关', () => {
   const KEY = 'MOLIU_STATE_CARD';
   const original = process.env[KEY];
@@ -163,16 +264,74 @@ describe('MOLIU_STATE_CARD 开关', () => {
     else process.env[KEY] = original;
   });
 
-  it('默认关闭：未设/非法值时不启用', () => {
-    expect(isStateCardEnabled()).toBe(false);
+  it('默认开启：未设置时启用；0 或非法值关闭', () => {
+    expect(isStateCardEnabled()).toBe(true);
     process.env[KEY] = '0';
     expect(isStateCardEnabled()).toBe(false);
     process.env[KEY] = 'abc';
     expect(isStateCardEnabled()).toBe(false);
   });
 
-  it('=1 时启用（读侧接管第 2 阶段功能开关）', () => {
+  it('=1 时启用', () => {
     process.env[KEY] = '1';
     expect(isStateCardEnabled()).toBe(true);
+  });
+});
+
+describe('公开身份', () => {
+  const characters = [
+    { name: '赵宣', description: '当朝三皇子恭王。后续夺嫡。' },
+    { name: '沈辞', description: '户部度支司官员。' },
+  ];
+
+  it('角色卡首句是正典，未标揭晓的身份字符串不覆盖', () => {
+    const invented = mem(24, [['赵宣', '身份:户部右侍郎的姻亲、刑部主事', '正文降格']]);
+    const anchors = resolvePublicIdentities(characters, [invented], 25, ['赵宣', '沈辞']);
+    expect(anchors).toEqual([
+      { name: '赵宣', identity: '当朝三皇子恭王' },
+      { name: '沈辞', identity: '户部度支司官员' },
+    ]);
+    expect(buildLedgerFromMemories([invented]).entries.some(entry => entry.attribute === 'identity')).toBe(false);
+  });
+
+  it('揭晓才替换角色卡，并且从下一章起生效', () => {
+    const reveal = mem(24, [['赵宣', '身份:当朝三皇子恭王本人', '当众揭晓']]);
+    reveal.characterStateChanges[0].transition = 'reveal-identity';
+    expect(resolvePublicIdentities(characters, [reveal], 24, ['赵宣'])[0]?.identity).toBe('当朝三皇子恭王');
+    const next = resolvePublicIdentities(characters, [reveal], 25, ['赵宣', '陆修远']);
+    expect(next).toEqual([{ name: '赵宣', identity: '当朝三皇子恭王本人' }]);
+    const rows = buildStateCardRows([], 25, 16, next);
+    expect(rows.some(row => row.includes('公开身份') && row.includes('赵宣＝当朝三皇子恭王本人'))).toBe(true);
+  });
+});
+
+describe('buildStateForbiddenZones', () => {
+  it('死亡不被后章下狱洗白，且不在名单内的名字不进禁区', () => {
+    const zones = buildStateForbiddenZones(
+      [
+        mem(178, [['严开礼', '死亡', '撞柱气绝']]),
+        mem(180, [['严开礼', '下狱', '打入死牢']]),
+        mem(10, [['路人甲', '死亡', '气绝']]),
+      ],
+      186,
+      ['严开礼'],
+    );
+    expect(zones).toHaveLength(1);
+    expect(zones[0]).toContain('严开礼');
+    expect(zones[0]).toContain('第178章');
+    expect(zones[0]).toContain('死亡');
+    expect(zones[0]).toContain('状态账本正典');
+    expect(zones[0]).not.toContain('下狱');
+  });
+
+  it('在押者带押地；目标章之前的账才可见', () => {
+    const memories = [
+      mem(113, [['顾宪诚', '下狱', '三法司定谳下狱']]),
+      mem(134, [['顾宪诚', '押地:相府书斋', '押回相府看管']]),
+    ];
+    const later = buildStateForbiddenZones(memories, 142, ['顾宪诚']);
+    expect(later[0]).toContain('在押');
+    expect(later[0]).toContain('相府书斋');
+    expect(buildStateForbiddenZones(memories, 100, ['顾宪诚'])).toHaveLength(0);
   });
 });

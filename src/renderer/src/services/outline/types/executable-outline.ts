@@ -240,6 +240,13 @@ export interface ChapterBlueprint {
   /** 章尾钩子文案（给读者看的「话术感」短句），区别于 hookType（枚举） */
   hookText?: string;
   coolPointType?: string;
+  /**
+   * 本章 CEN 最迟在第几章被承接（1 基章号，含该章）。
+   * 缺省表示旧蓝图没标，检测器不据此报到期。
+   */
+  suspenseDueOrder?: number;
+  /** 本章承接的是哪一章的 CEN（1 基章号）。0 或空表示本章不承接旧悬念 */
+  resolvesSuspenseFrom?: number;
   involvedCharacters?: string[];
   /** 蓝图自带节奏策略（release/confront 等），未填时由下游兜底 */
   pacingStrategy?: string;

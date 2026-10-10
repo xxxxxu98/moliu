@@ -701,6 +701,43 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
     expect(bareSystem).not.toContain('【数字一致】');
   });
 
+  it('stateCard 注入时判官与写作侧读同一份卡', async () => {
+    let capturedSystem = '';
+    let capturedPrompt = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        capturedPrompt = String(request.prompt ?? '');
+        return emptyJudgePayload();
+      }),
+    };
+    await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+      stateCard: ['在押/在逃：顾宪诚（第113章起在押，现押于相府书斋）'],
+    });
+    expect(capturedSystem).toContain('【实体状态卡】');
+    expect(capturedSystem).toContain('状态卡冲突');
+    expect(capturedPrompt).toContain('顾宪诚');
+
+    let bareSystem = '';
+    const bare: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        bareSystem = request.system ?? '';
+        return emptyJudgePayload();
+      }),
+    };
+    await new AIChapterJudge(bare).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+    });
+    expect(bareSystem).not.toContain('【实体状态卡】');
+  });
+
   it('2026-10-05 台账三规则：数字入账常驻，期限一致/时间轴连续随输入注入', async () => {
     // 都市文书审实证：债务三百万→三十万蒸发判官无台账可比；三次承诺「三天后
     // 开赛」次日开打零拦截；15 章零时间锚读者无法感知时间流逝

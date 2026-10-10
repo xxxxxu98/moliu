@@ -157,7 +157,8 @@ export class AIChapterJudge implements ChapterJudge {
           ]
         : [];
 
-    // 纪年/数字跨章一致性（写作侧同源锚的判官侧第二道）：锚外年号=自创年号、
+    // 纪年/数字跨章一致性（写作侧同源锚的判官侧第二道）。eraAnchors 来自纪年台账。
+    // 锚外年号=自创年号、
     // 既成数值无勘误剧情改写=数字蒸发，都是 g38f r6 全文通读的最大 S1 簇
     const eraAnchors = (input.eraAnchors ?? []).filter(Boolean);
     const numericFacts = (input.numericFacts ?? []).filter(Boolean);
@@ -169,7 +170,7 @@ export class AIChapterJudge implements ChapterJudge {
     }
     if (numericFacts.length > 0) {
       consistencyRules.push(
-        '- 【数字一致】输入的 numericFacts 是数字台账在册的既成事实（对象＝数值单位，同对象以章号最新为准）。正文引用同一对象的数额/数量与既成数值不一致，且未写出勘误、清点更正、查实虚报等剧情性修正过程的，必须报 fact_conflict 且 severity=critical，description 注明「数字蒸发/改写：既成X，本章写成Y」（2026-09-17 g38f r6 实证：同一笔盐税五套口径、太仓存粮四万石无解释改四十万石；2026-10-05 都市文实证：债务既成三百万信用点被无勘误写成三十万、战宠既成三十吨前章写两吨）；正文明示了勘误/清点过程的不算'
+        '- 【数字一致】输入的 numericFacts 是数字台账的正典（对象＝数值单位，同对象以首次确立值为准，未标勘误的后章数值不是正典）。正文引用同一对象的数额/数量与正典不一致，且未写出勘误、清点更正、查实虚报等剧情性修正过程的，必须报 fact_conflict 且 severity=critical，description 注明「数字蒸发/改写：既成X，本章写成Y」（2026-09-17 g38f r6 实证：同一笔盐税五套口径、太仓存粮四万石无解释改四十万石；2026-10-05 都市文实证：债务既成三百万信用点被无勘误写成三十万、战宠既成三十吨前章写两吨；2026-09-30 r16：十二丈溃口填平六丈后无勘误写成十丈并被后章固化）；正文明示了勘误/清点过程的不算'
       );
     }
     consistencyRules.push(
@@ -207,6 +208,12 @@ export class AIChapterJudge implements ChapterJudge {
     if (fakedDeathNames.length > 0) {
       consistencyRules.push(
         `- 【假死例外】输入的 fakedDeathNames（${fakedDeathNames.join('、')}）处于假死在册状态——假死是活着的隐匿状态，不是死亡：其在本章活体活动、行动、说话一律合法，禁止因「前文已死」报 fact_conflict 或复活类 issue；但其未经揭晓（当众现身/真相大白场面）就以原身份公开现身于公众场合的，报 logic_gap 且 severity=high，description 注明「假死未揭晓公开现身」（2026-09-20 g38f r8 实证：主角假死被当真死，判官连续拦截活体登场，写手被迫写成空袍道具 48 章）`
+      );
+    }
+    const stateCard = (input.stateCard ?? []).map(row => row.trim()).filter(Boolean);
+    if (stateCard.length > 0) {
+      consistencyRules.push(
+        '- 【实体状态卡】输入的 stateCard 与写作侧是同一份账本快照，优先级高于 stateDigest 里被后章记录盖住的单条状态。已死、在押、在逃、保释、去职、现任头衔、公开身份以卡为准：正文让卡上已死者活体出场、在押者无释放或越狱交代就自由行动、去职者行使原职权、称谓与现任头衔不符、公开身份被降格或另造同名姻亲，必须报 fact_conflict 且 severity=critical，description 注明「状态卡冲突：X」。正文写出了释放、越狱、揭晓或任命场面的不算（2026-09-23 r8-S1-05：顾宪诚在押被后章记录洗掉，写手按自由人写，判官当时看不到在押）'
       );
     }
     consistencyRules.push(
@@ -299,6 +306,7 @@ export class AIChapterJudge implements ChapterJudge {
         ...(mentionEvidence.length > 0 ? { mentionEvidence } : {}),
         ...(authorCanon.length > 0 ? { authorCanon } : {}),
         ...(fakedDeathNames.length > 0 ? { fakedDeathNames } : {}),
+        ...(stateCard.length > 0 ? { stateCard } : {}),
       }),
       parse: value => parseSchema(chapterJudgeResultSchema, normalizeTopLevelObjectShape(value), '章节语义审查结果'),
     });

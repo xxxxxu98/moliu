@@ -23,7 +23,9 @@ description: Storyflow 可上线验收大循环。把「真实 AI 生成整本�
 > r9 教训：同一份 S2 清单仅改标签就从 5 变 0；审法与读者裁判缺失照样写了 READY。
 > 与 north-star 对齐的两条：S2>0 阻断（验收门 3）；本轮用过 `storyflow-repair-empty`
 > 补写即阻断（验收门 1 人工零干预）——补写仍可用来拿到完整书审材料，但该轮判定必为
-> NOT READY，要上线判定须零补写重跑。
+> NOT READY，要上线判定须零补写重跑。墙钟杀进程后用 `MOLIU_RESUME_STORYFLOW=1` 重启
+> 同一冒烟，是运行器从第一篇空章接上（项目库与 StoryRuntime 在 `temp/storyflow-checkpoints/`），
+> 不算补写，不记人工干预。这个开关必须在长跑开始前就打开，第一轮也走检查点目录。
 
 > **2026-09-02 agent 化重构**：命运事件的「入账」全权归写作侧 AI 提取合同
 > （FactExtractor 契约 7-10：死亡/驾崩/下狱/去职/定罪族命运宣告——含一句带过、

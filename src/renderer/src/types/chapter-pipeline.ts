@@ -6,7 +6,7 @@
  * ChapterCommitService），这里不含任何执行逻辑。
  */
 
-import type { ChapterMemory, CharacterStateChange, NumericLedgerEntry, TimePromiseEntry } from '@/types/project';
+import type { ChapterMemory, CharacterStateChange, EraLedgerEntry, NumericLedgerEntry, TimePromiseEntry } from '@/types/project';
 
 // ============================================================
 // 落库 / 记忆端口（注入式，冒烟与 App 提供不同介质的实现）
@@ -41,8 +41,8 @@ export interface MemoryClient {
   ): Promise<ChapterMemory | null>;
   /**
    * 跨章事实台账投影（2026-10-05 契约 15/17，可选端口）：把本章 FactExtractor
-   * 的结构化 numeric-fact / time-promise 事件合并进项目级 numericLedger /
-   * timePromises 并落盘。测试假实现可缺省（可选招呼），生产适配器在
+   * 的结构化 numeric-fact / time-promise / era-fact 事件合并进项目级 numericLedger /
+   * timePromises / eraLedger 并落盘。测试假实现可缺省（可选招呼），生产适配器在
    * chapterPersistenceAdapters 提供。
    */
   saveLedger?(input: {
@@ -54,6 +54,8 @@ export interface MemoryClient {
     };
     /** 判官逐章确认已兑现的承诺文本（2026-10-08 兑现闭环）：流转台账 open→fulfilled */
     judgeResolvedPromiseTexts?: string[];
+    /** 契约 19：本章 era-fact 投影。缺省表示本章没有新纪年。 */
+    eraEntries?: EraLedgerEntry[];
   }): Promise<void>;
 }
 

@@ -20,7 +20,8 @@ export interface Project {
    * 数字事实台账（2026-10-05 都市校园文书审实证：债务总额 30 万/300 万/30 万三说、
    * 战宠两吨/三十吨漂移、3200+1000 算成「万出头」——旧数字锚正则单位表只认古代
    * 计量（石两兵亩箱贯斛斗文），现代/科幻/修真题材数字全军覆没。改由 FactExtractor
-   * 契约 15 结构化出账，本台账为起草【数字锚】与判官【数字一致】的共源真值）。
+   * 契约 15 结构化出账，本台账为起草【数字锚】与判官【数字一致】的共源真值。
+   * 同对象锁定首次确立值，只有提取侧标了勘误才覆盖）。
    */
   numericLedger?: NumericLedgerEntry[];
   /**
@@ -29,6 +30,11 @@ export interface Project {
    * 入账，兑现/显式改期时流转状态；起草与判官注入待兑现清单。
    */
   timePromises?: TimePromiseEntry[];
+  /**
+   * 纪年台账（契约 19）。首次确立的年号是正典，异名只有改元标注才替换，
+   * 同一年号的年份只向后走。有账时起草与判官读这里，不再从记忆正文回抽年号。
+   */
+  eraLedger?: EraLedgerEntry[];
   modelConfig?: ModelConfig;
   createdAt: string;
   updatedAt: string;
@@ -466,6 +472,10 @@ export interface PlotNode {
   isClimax?: boolean;
   /** 预期爽点数 */
   expectedCoolPoints?: number;
+  /** 本章 CEN 最迟承接章（1 基）。旧节点没有该字段时不参与到期检测 */
+  suspenseDueOrder?: number;
+  /** 本章承接的前序 CEN 章号（1 基） */
+  resolvesSuspenseFrom?: number;
 }
 
 export type PlotNodeType = 'act' | 'subplot' | 'chapter' | 'foreshadow';
@@ -515,6 +525,11 @@ export interface NumericLedgerEntry {
   unit: string;
   /** 性质（如「本金」「连本带利总额」「勘误后新值」「自重」） */
   nature?: string;
+  /**
+   * 提取侧自标注：establish=首次确立；correct=正文已写出勘误场面。
+   * 未标 correct 的异值不得覆盖正典（确定性代码只认这个枚举，不读正文）。
+   */
+  revision?: 'establish' | 'correct';
   /** 确立章号（1-based） */
   chapterIndex: number;
   /** 正文证据原句 */
@@ -535,6 +550,26 @@ export interface TimePromiseEntry {
   status: 'open' | 'fulfilled' | 'renegotiated';
   /** 兑现/改期章号 */
   resolvedChapterIndex?: number;
+  evidence?: string;
+}
+
+/** 纪年台账：年号正典与当前年份。异名只有改元才换。 */
+export interface EraLedgerEntry {
+  /** 年号，不含「年」字 */
+  eraName: string;
+  /** 该年号下的年份，阿拉伯数字 */
+  year: number;
+  /** 这条记录的章号（1-based） */
+  chapterIndex: number;
+  /** 改元前的年号。只有发生过改元的当前条才有。 */
+  previousEraName?: string;
+  /** 改元章号 */
+  reignChangeChapter?: number;
+  /**
+   * 仅投影入账时使用：correct 表示正文写出了改元或年份勘误。
+   * 合并后不再依赖它覆盖正典。
+   */
+  revision?: 'establish' | 'correct';
   evidence?: string;
 }
 
@@ -632,8 +667,13 @@ export interface CharacterStateChange {
   characterName: string;
   /** 状态类型 */
   stateType: 'appearance' | 'emotion' | 'ability' | 'relationship' | 'location' | 'status';
-  /** 状态描述 */
+  /** 状态描述。旧书是「死亡 / 下狱 / 头衔:X / 押地:X」；新提取可同时带 transition。 */
   state: string;
+  /**
+   * 提取侧转移枚举（death、arrest、recapture 等）。
+   * 缺省或与 state 对不上时，账本仍按 state 字符串迁移。
+   */
+  transition?: string;
   /** 详细变化 */
   detail: string;
 }

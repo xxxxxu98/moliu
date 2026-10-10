@@ -46,6 +46,8 @@ export interface ContinuityValidationInput {
   authorCanon?: string[];
   /** 假死在册角色：透传判官做假死例外（活体活动合法，不报复活类冲突） */
   fakedDeathCharacters?: Array<{ name: string; chapterIndex: number }>;
+  /** 与写作侧同一份实体状态卡 */
+  stateCard?: string[];
 }
 
 export interface ContinuityValidatorOptions {
@@ -282,7 +284,8 @@ export class ContinuityValidator {
       input.timelineMarks ?? [],
       input.breathBeatRequired ?? false,
       input.mentionEvidence ?? [],
-      input.authorCanon ?? []
+      input.authorCanon ?? [],
+      input.stateCard ?? []
     );
 
     const blockingCount = issues.filter(issue => issue.severity === 'blocking').length;
@@ -326,7 +329,8 @@ export class ContinuityValidator {
     timelineMarks: string[] = [],
     breathBeatRequired = false,
     mentionEvidence: string[] = [],
-    authorCanon: string[] = []
+    authorCanon: string[] = [],
+    stateCard: string[] = []
   ): Promise<{ resolvedForeshadowIds: string[]; resolvedTimePromiseTexts: string[] }> {
     // 判官确认已回收的伏笔 id / 已兑现的承诺文本（严证据门：判官未列出/判定
     // 失败一律返回空，让进度统计保持 buried/open 而非误标）
@@ -392,6 +396,7 @@ export class ContinuityValidator {
           ...(fakedDeathCharacters.length > 0
             ? { fakedDeathNames: fakedDeathCharacters.map(item => item.name) }
             : {}),
+          ...(stateCard.length > 0 ? { stateCard } : {}),
         });
 
         for (const item of judgment.fulfillment) {

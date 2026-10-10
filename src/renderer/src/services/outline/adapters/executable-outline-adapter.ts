@@ -667,6 +667,10 @@ function toChapters(outline: ExecutableOutline): GeneratedChapter[] {
         pacingStrategy: chapter.pacingStrategy ?? 'confront',
         isClimax,
         expectedCoolPoints: chapter.coolPointType ? 1 : undefined,
+        ...(chapter.suspenseDueOrder !== undefined ? { suspenseDueOrder: chapter.suspenseDueOrder } : {}),
+        ...(chapter.resolvesSuspenseFrom !== undefined
+          ? { resolvesSuspenseFrom: chapter.resolvesSuspenseFrom }
+          : {}),
       };
     });
   }

@@ -20,7 +20,8 @@
  *
  * 残留差异（有意，冒烟环境约束）：
  * - 循环控制不复刻：真实从第一个空章节开始 / 跳过已有内容 / 无空章节自动建章 /
- *   完结判断 / 暂停恢复 —— 均为 UI 交互面；冒烟以「清空全部章节 + ensureLocalChapterSlots 预补槽」等价替代
+ *   完结判断 / 暂停恢复 —— 均为 UI 交互面；默认冒烟仍从第 1 章写满预补槽。
+ *   闭环在 MOLIU_RESUME_STORYFLOW=1 时从第一个空章续写，runtime 目录留在检查点旁。
  * - 每章重新 hydrate Pinia 并新建 pipeline 实例；LongForm 路径无跨章状态，行为等价
  * - AI 来自 temp 配置文件而非 active provider，且包 RecordingStructuredAI 录制轨迹
  */
@@ -106,13 +107,30 @@ export interface StoryRuntimeVerification {
   events: number;
 }
 
-function createStoryRuntimeForHarness(): {
+function createStoryRuntimeForHarness(options?: {
+  userDataPath?: string;
+  preserveOnDispose?: boolean;
+}): {
   api: StoryRuntimeAPI;
   backend: HarnessRuntimeBackend;
   userDataPath?: string;
   dispose: () => void;
 } {
-  const userDataPath = fs.mkdtempSync(path.join(os.tmpdir(), 'moliu-cw-runtime-'));
+  const preserve = options?.preserveOnDispose === true;
+  const userDataPath =
+    options?.userDataPath ?? fs.mkdtempSync(path.join(os.tmpdir(), 'moliu-cw-runtime-'));
+  if (options?.userDataPath) {
+    fs.mkdirSync(userDataPath, { recursive: true });
+  }
+  // 续写目录是检查点的一部分，打开失败也不能删，否则下一轮接不上已提交的事实。
+  const removeDir = (): void => {
+    if (preserve) return;
+    try {
+      fs.rmSync(userDataPath, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
+  };
   try {
     // 与 App IPC 共用 StoryRuntimeRepository；静态 import 交给 Vite 解析 @main 别名。
     const live = createNodeStoryRuntimeApi(userDataPath);
@@ -124,19 +142,11 @@ function createStoryRuntimeForHarness(): {
       userDataPath,
       dispose: () => {
         live.dispose();
-        try {
-          fs.rmSync(userDataPath, { recursive: true, force: true });
-        } catch {
-          /* ignore */
-        }
+        removeDir();
       },
     };
   } catch (error) {
-    try {
-      fs.rmSync(userDataPath, { recursive: true, force: true });
-    } catch {
-      /* ignore */
-    }
+    removeDir();
     const reason = error instanceof Error ? error.message : String(error);
     // eslint-disable-next-line no-console
     console.warn(
@@ -758,13 +768,20 @@ export function openContinueWriteSession(options: {
   plotOutlineClient?: {
     updateChapterTitle(input: ChapterTitleUpdate): Promise<void>;
   };
+  /** 指定 StoryRuntime 目录。续写时用检查点路径，进程被杀后下一轮仍能打开已提交事实。 */
+  runtimeUserDataPath?: string;
+  /** 为 true 时 dispose 不删除 runtime 目录。 */
+  preserveRuntimeOnDispose?: boolean;
 }): ContinueWriteSession {
   let project: Project = {
     ...options.project,
     chapters: [...(options.project.chapters ?? [])],
     plotOutline: [...(options.project.plotOutline ?? [])],
   };
-  const runtimeHandle = createStoryRuntimeForHarness();
+  const runtimeHandle = createStoryRuntimeForHarness({
+    userDataPath: options.runtimeUserDataPath,
+    preserveOnDispose: options.preserveRuntimeOnDispose,
+  });
   const runtime = new StoryRuntimeClient(runtimeHandle.api);
   let disposed = false;
 
@@ -798,6 +815,10 @@ export function openContinueWriteSession(options: {
         currentFromPinia?.timePromises && currentFromPinia.timePromises.length > 0
           ? currentFromPinia.timePromises
           : project.timePromises,
+      eraLedger:
+        currentFromPinia?.eraLedger && currentFromPinia.eraLedger.length > 0
+          ? currentFromPinia.eraLedger
+          : project.eraLedger,
       chapterMemories:
         currentFromPinia?.chapterMemories && currentFromPinia.chapterMemories.length > 0
           ? currentFromPinia.chapterMemories
@@ -1131,6 +1152,10 @@ export async function runContinueWriteChapters(options: {
   }) => Promise<void>;
   /** 跑道阈值；与生产 OUTLINE_ROLL_RUNWAY_THRESHOLD 对齐（默认 10） */
   runwayThreshold?: number;
+  /** 续写 StoryRuntime 目录；缺省仍用临时目录，结束即删。 */
+  runtimeUserDataPath?: string;
+  /** 与 runtimeUserDataPath 配套：dispose 时保留目录，供下一轮续写打开。 */
+  preserveRuntimeOnDispose?: boolean;
 }): Promise<{
   runtimeBackend: HarnessRuntimeBackend;
   runtimeVerification: StoryRuntimeVerification;
@@ -1150,6 +1175,8 @@ export async function runContinueWriteChapters(options: {
   const session = openContinueWriteSession({
     project: options.project,
     plotOutlineClient: options.plotOutlineClient,
+    runtimeUserDataPath: options.runtimeUserDataPath,
+    preserveRuntimeOnDispose: options.preserveRuntimeOnDispose,
   });
   const chapters: ContinueWriteChapterRunResult[] = [];
   // 履约域失败记账（与生产 useBatchWriter 同构）：连续 ≥2 次触发单章蓝图再生，

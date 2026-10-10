@@ -2,7 +2,7 @@
  * 统一实体状态账本·第 1 阶段影子实现（docs/unified-state-ledger.md §7）。
  *
  * 纯函数：从 project-store 的 chapterMemories（characterStateChanges 字符串协议：
- * 命运五态 / 押地:X / 头衔:X / 解除族规范化值）迁移成「实体 × 属性 × 转移」条目，
+ * 命运五态 / 押地:X / 头衔:X / 身份:X / 解除族规范化值）迁移成「实体 × 属性 × 转移」条目，
  * 用确定性状态机校验转移合法性，并按章折叠快照。
  *
  * 影子期纪律（第 1 阶段）：不接管任何生产链路，只由 storyflow-triage /
@@ -15,13 +15,14 @@
  */
 
 /** 账本属性：每个属性一条独立时间线（location 第 1 期不启用，见 §9.2） */
-export const LEDGER_ATTRIBUTES = ['vital', 'custody', 'custodyPlace', 'office'];
+export const LEDGER_ATTRIBUTES = ['vital', 'custody', 'custodyPlace', 'office', 'identity'];
 
 /** 转移类别：迁移自现有字符串协议时按值族映射，确定性代码只认枚举 */
 export const TRANSITION_KINDS = [
   'death', 'faked-death', 'death-revealed-fake',
   'arrest', 'release', 'bail', 'escape', 'recapture', 'transfer',
   'dismiss', 'appoint', 'restore',
+  'reveal-identity',
 ];
 
 /**
@@ -54,6 +55,7 @@ const RELEASE_STATE_MAP = {
 const CUSTODY_PLACE_PREFIX = '押地:';
 const TITLE_PREFIX = '頭衔:';
 const TITLE_PREFIX_CN = '头衔:';
+const IDENTITY_PREFIX = '身份:';
 const EMPTY_CUSTODY_PLACE = new Set(['无', '无押地', '暂无', '未知']);
 
 /**
@@ -99,6 +101,11 @@ export function buildLedgerFromMemories(memories) {
       } else if (state.startsWith(TITLE_PREFIX) || state.startsWith(TITLE_PREFIX_CN)) {
         const title = state.slice(state.startsWith(TITLE_PREFIX) ? TITLE_PREFIX.length : TITLE_PREFIX_CN.length).trim();
         if (title) mapped = { attribute: 'office', value: title, transition: 'appoint' };
+      } else if (state.startsWith(IDENTITY_PREFIX)) {
+        const identity = state.slice(IDENTITY_PREFIX.length).trim().slice(0, 50);
+        if (identity && change.transition === 'reveal-identity') {
+          mapped = { attribute: 'identity', value: identity, transition: 'reveal-identity' };
+        }
       } else if (state === '揭晓') {
         // 假死揭晓：faked-dead → alive 的唯一合法转移
         mapped = { attribute: 'vital', value: 'alive', transition: 'death-revealed-fake' };
@@ -184,6 +191,11 @@ export function validateLedgerTransitions(entries) {
           // none→none（幂等重复去职条目）不算违规：ch34 齐泰双去职形态实测为噪音
           if (prev.value === 'none' && entry.value !== 'none' && !['appoint', 'restore'].includes(entry.transition)) {
             push('去职后复职缺 appoint/restore 转移');
+          }
+          break;
+        case 'identity':
+          if (entry.transition !== 'reveal-identity') {
+            push('身份变更必须走 reveal-identity');
           }
           break;
       }

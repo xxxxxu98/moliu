@@ -6,6 +6,7 @@ import { describe, it, expect } from 'vitest';
 
 import {
   findSuspenseDanglingIssues,
+  findOverdueSuspenseIssues,
   findCoolPointPacingIssues,
   findPacingIssues,
   SUSPENSE_CARRY_WINDOW,
@@ -311,5 +312,39 @@ describe('悬念堆积失衡(P2.2 联动编排,2026-10-03)', () => {
     const issues = findSuspenseDanglingIssues(blueprints);
     expect(issues.filter(i => i.kind === 'suspense-dangling')).toHaveLength(0);
     expect(issues.some(i => i.kind === 'suspense-pileup')).toBe(false);
+  });
+});
+
+describe('findOverdueSuspenseIssues', () => {
+  it('未标到期章时不报', () => {
+    expect(findOverdueSuspenseIssues([bp(1), bp(2), bp(3)])).toHaveLength(0);
+  });
+
+  it('到期章还没生成时不报', () => {
+    expect(
+      findOverdueSuspenseIssues([
+        bp(1, { suspenseDueOrder: 4 }),
+        bp(2),
+        bp(3),
+      ]),
+    ).toHaveLength(0);
+  });
+
+  it('到期窗口内没有承接标注则报，写上承接章号则放过', () => {
+    const open = bp(2, { suspenseDueOrder: 4 });
+    expect(findOverdueSuspenseIssues([bp(1), open, bp(3), bp(4)])).toHaveLength(1);
+    const paid = findOverdueSuspenseIssues([
+      bp(1),
+      open,
+      bp(3),
+      bp(4, { resolvesSuspenseFrom: 2 }),
+    ]);
+    expect(paid).toHaveLength(0);
+  });
+
+  it('到期章等于本章（当章揭晓）不要求后章承接', () => {
+    expect(
+      findOverdueSuspenseIssues([bp(1, { suspenseDueOrder: 1 }), bp(2)]),
+    ).toHaveLength(0);
   });
 });

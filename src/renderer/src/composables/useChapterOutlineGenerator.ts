@@ -203,6 +203,10 @@ export interface GeneratedChapter {
   isClimax?: boolean;
   /** 预期爽点数 */
   expectedCoolPoints?: number;
+  /** 本章 CEN 最迟承接章（1 基） */
+  suspenseDueOrder?: number;
+  /** 本章承接的前序 CEN 章号（1 基） */
+  resolvesSuspenseFrom?: number;
 }
 
 export interface UseChapterOutlineGeneratorReturn {
@@ -500,6 +504,8 @@ export function useChapterOutlineGenerator(): UseChapterOutlineGeneratorReturn {
           pacingStrategy: chapter.pacingStrategy as PlotNode['pacingStrategy'],
           isClimax: chapter.isClimax,
           expectedCoolPoints: chapter.expectedCoolPoints,
+          suspenseDueOrder: chapter.suspenseDueOrder,
+          resolvesSuspenseFrom: chapter.resolvesSuspenseFrom,
           purpose: chapter.CBN ? `CBN: ${chapter.CBN}\nCEN: ${chapter.CEN || '待定'}` : undefined,
         } as PlotNode;
       });

@@ -12,6 +12,7 @@ import type { ChapterMemory, CharacterStateChange } from '@/types/project';
 import type { Chapter } from '@/types/project';
 import type { StoryEntity } from '@/types/story-runtime';
 import { getMemoryManager } from './memory-manager';
+import { firstIdentitySentence } from './stateLedger';
 
 /**
  * 主函数：从章节内容提取情节记忆
@@ -760,69 +761,11 @@ export function collectCharacterTitles(memories: ChapterMemory[]): CharacterTitl
 }
 
 /**
- * 纪年锚（2026-09-16 r5 全文通读实证：纪年五套架空+八种真实年号混入互斥）：
- * 从近章记忆文本确定性抽取「年号+数字年」叙述句（候选网，真实明朝年号在
- * 写作层另有黑名单守卫拦截），取最近 N 条供写作 prompt 注入——正文纪年必须
- * 与近章既成纪年连续。抽取的是原文叙述不是语义判定，属软提示非禁令。
+ * 纪年锚已于 2026-10-10 退役（collectEraAnchors + 中文年份正则删除）：
+ * 从记忆正文回抽年号无法区分叙述、引语和自创年号。替代链路：契约 19
+ * era-fact → 项目级 eraLedger（services/writing/eraLedger.ts）→ 起草与判官注入。
+ * 账为空时起草走「未确立年号」，禁止发明年号。
  */
-const ERA_NARRATIVE_RE = /[^\s。！？"」』]{2,4}(?:元|正|嘉|永|天|成|弘|万|历|宣|德|庆|和|平|安|贞|佑|兴|宁|定|光|熹|崇)[^\s。！？"」』]{0,2}[一二三四五六七八九十百零]{1,4}年/g;
-const REAL_MING_ERAS_FILTER = new Set(['洪武','建文','永乐','洪熙','宣德','正统','景泰','天顺','成化','弘治','正德','嘉靖','隆庆','万历','泰昌','天启','崇祯']);
-
-/** 中文年份（一~一百内）→ 阿拉伯数；解析失败返回 null。跨度换算是格式层算术 */
-const CN_DIGIT: Record<string, number> = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
-export function parseChineseYear(text: string): number | null {
-  const m = text.match(/([一二三四五六七八九十]{1,3})年/);
-  if (!m) return null;
-  const s = m[1];
-  if (s === '十') return 10;
-  const tenIdx = s.indexOf('十');
-  if (tenIdx < 0) return CN_DIGIT[s] ?? null;
-  const tens = tenIdx === 0 ? 1 : CN_DIGIT[s[0]] ?? 0;
-  const ones = tenIdx === s.length - 1 ? 0 : CN_DIGIT[s[tenIdx + 1]] ?? 0;
-  return tens * 10 + ones;
-}
-
-export function collectEraAnchors(
-  memories: ChapterMemory[],
-  maxAnchors = 4,
-): string[] {
-  const anchors: Array<{ chapterIndex: number; text: string }> = [];
-  const memorySorted = [...memories].sort((a, b) => a.chapterIndex - b.chapterIndex);
-  for (const memory of memorySorted) {
-    const text = `${memory.corePlot || ''}\n${(memory.keyEvents ?? []).join('\n')}`;
-    for (const match of text.matchAll(ERA_NARRATIVE_RE)) {
-      const token = match[0];
-      const eraName = token.replace(/[一二三四五六七八九十百零]{1,4}年$/, '');
-      if (REAL_MING_ERAS_FILTER.has(eraName)) continue; // 真实年号不注入锚
-      // 与已收锚同一年号只保留最新章
-      const dupIdx = anchors.findIndex(a => a.text.replace(/[一二三四五六七八九十百零]{1,4}年$/, '') === eraName);
-      if (dupIdx >= 0) {
-        anchors[dupIdx] = { chapterIndex: memory.chapterIndex, text: token };
-      } else {
-        anchors.push({ chapterIndex: memory.chapterIndex, text: token });
-      }
-    }
-  }
-  const lines = anchors
-    .sort((a, b) => b.chapterIndex - a.chapterIndex)
-    .slice(0, maxAnchors)
-    .map(a => `第${a.chapterIndex}章纪年「${a.text}」`);
-  if (lines.length === 0) return [];
-  // 当前年份锚（r11 实证三洞失败签名全在纪年跨度/未来年份族：ch42「天德四年至
-  // 天德十二年＝整整二十年」9 年当 20 年、ch35 借据落款写至「天德二十年」而当前
-  // 十二年、ch91 元年起整十年而当前九年）。锚定「最晚章提及的年份」为当前年，
-  // 给出换算规则与未来年份禁令——跨度算术是格式层，规则可确定性给出。
-  // 锚 token 会带 ≤4 字上文（「已是天德十二年」），年号显示取去年份后的尾部两字
-  // （架空年号全书统一两字：天德/景和/建安…）。
-  const dominant = anchors.slice().sort((a, b) => b.chapterIndex - a.chapterIndex)[0];
-  const stripped = dominant.text.replace(/[一二三四五六七八九十百零]{1,4}年$/, '');
-  const eraDisplay = stripped.length >= 2 ? stripped.slice(-2) : stripped;
-  const year = parseChineseYear(dominant.text);
-  const currentLine = year != null
-    ? `当前纪年「${eraDisplay}${year}年」（第${dominant.chapterIndex}章确立）：任何纪年跨度先换算——「${eraDisplay}X年至${eraDisplay}Y年」的跨度＝(Y−X)年，禁止凭「二十年来/十年间」类笼统表述替代换算；正文与文书中出现的年份数字不得大于${year}（当前年份之后的历史不存在，回溯性文书/借据/旧账的落款年份同样不得越界）`
-    : `当前纪年「${dominant.text}」（第${dominant.chapterIndex}章确立）：纪年跨度按年份差换算，文书落款年份不得晚于当前年份`;
-  return [currentLine, ...lines];
-}
 
 /**
  * 数字锚已于 2026-10-05 退役（collectNumericAnchors + NUMERIC_UNIT_RE 删除）：
@@ -892,10 +835,7 @@ export function collectCharacterIdentityAnchors(
   for (const character of characters) {
     const name = (character.name ?? '').trim();
     if (!name || !allowed.has(name)) continue;
-    const identity = (character.description ?? '')
-      .split(/[。；;]/)[0]
-      .trim()
-      .slice(0, 50);
+    const identity = firstIdentitySentence(character.description);
     if (!identity) continue;
     out.push({ name, identity });
     if (out.length >= maxAnchors) break;

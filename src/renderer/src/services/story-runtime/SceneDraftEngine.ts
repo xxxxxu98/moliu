@@ -238,7 +238,7 @@ export interface SceneDraftOptions {
    */
   fateStatusAnchors?: Array<{ name: string; status: string; chapterIndex: number }>;
   /**
-   * 实体状态卡（unified-state-ledger 第 2 阶段读侧接管，MOLIU_STATE_CARD=1）：
+   * 实体状态卡（unified-state-ledger 读侧接管，默认开启；MOLIU_STATE_CARD=0 退回旧通道）：
    * 从状态账本折叠的分组视图（在押含押地/已死/假死/去职/现任头衔）。在场时
    * 替换【命运状态正典】块——「最晚一条原始状态」视图读不到被押地/头衔行
    * 覆盖的终态（r8-S1-05 顾宪诚形态），状态卡是单一真相源。
@@ -368,9 +368,11 @@ export class SceneDraftEngine {
         ]
       : [];
     // 死亡族终态禁令：死者只能向后引用（回忆/遗物/丧仪/档案），不得以任何存活形态出场
-    const terminalFateCharacters = (options?.terminalFateCharacters ?? []).filter(
-      item => item.name && item.status
-    );
+    // 状态卡在场时，终态禁令、头衔锚、假死纪律已经写在卡里，再各出一块会把同一事实说两遍。
+    const useStateCard = (options?.stateCard ?? []).some(row => row.trim().length > 0);
+    const terminalFateCharacters = useStateCard
+      ? []
+      : (options?.terminalFateCharacters ?? []).filter(item => item.name && item.status);
     const terminalFateRules = terminalFateCharacters.length > 0
       ? [
           '- 【命运终态禁令】以下角色在既成事实中已死亡，禁止以任何「仍然存活」的形态出现——不得现身、行动、说话、下旨，也不得在对话/急报/密报/传闻中被描述为刚刚还在活动（如病危、晕厥、遇袭待救）：',
@@ -379,9 +381,10 @@ export class SceneDraftEngine {
         ]
       : [];
     // 头衔锚：正文称谓与最近入账头衔一致（契约 14）
-    const characterTitleAnchors = (options?.characterTitleAnchors ?? []).filter(
-      item => item.name && item.title
-    );    const titleAnchorRules = characterTitleAnchors.length > 0
+    const characterTitleAnchors = useStateCard
+      ? []
+      : (options?.characterTitleAnchors ?? []).filter(item => item.name && item.title);
+    const titleAnchorRules = characterTitleAnchors.length > 0
       ? [
           '- 【头衔锚】以下是各角色当前（最近一次既成任命）的官职/头衔/品级，正文与对话中的称谓、自称、品级、补服袍色必须与之一致；禁止使用旧头衔、凭空新头衔或品级跳变（升迁/降黜只能发生在正文写明任命之后）：',
           ...characterTitleAnchors.map(item => `  - ${item.name}：${item.title}`),
@@ -398,9 +401,9 @@ export class SceneDraftEngine {
         ]
       : [];
     // 假死纪律（r8 实证：假死被当死亡，主角 48 章无法活体登场）
-    const fakedDeathCharacters = (options?.fakedDeathCharacters ?? []).filter(
-      item => item.name
-    );
+    const fakedDeathCharacters = useStateCard
+      ? []
+      : (options?.fakedDeathCharacters ?? []).filter(item => item.name);
     const fakedDeathRules = fakedDeathCharacters.length > 0
       ? [
           '- 【假死纪律】以下角色处于假死状态（外界认为已死，实际活着）——这是活着的隐匿状态，不是死亡：',
@@ -523,7 +526,7 @@ export class SceneDraftEngine {
         '- 【皇统叙事】在位皇帝只能以「皇帝/陛下/今上/圣上/年号+帝」称呼，「先帝/先皇/大行皇帝」只能用于已驾崩者——上下文显示皇帝仍在世（颁诏/视朝/病重未死）时严禁称其先帝（2026-09-19 g38f r7 实证：老皇帝在位期间五处被称先帝）。驾崩必须有叙述场面（病榻托孤/遗诏宣读/讣告/丧仪任一），不得零叙述直接写新帝即位。「东宫/太子」指代必须单一稳定，不得在「现任储君」与「已废太子」间漂移。涉及「自X年起N年」的年数叙述，落笔前与当前年份验算跨度（r7 实证：「自嘉定三年起整整七年」而当年仅嘉定四年）',
         ...(options?.numericFacts ?? []).length > 0
           ? [
-              '- 【数字锚·既成名录】以下是台账在册的既成数字事实（对象＝数值单位，同对象旧值已作废），本章引用同一对象的数值必须与之一致：',
+              '- 【数字锚·既成名录】以下是台账锁定的正典数字（对象＝数值单位，同对象以首次确立值为准），本章引用同一对象的数值必须与之一致，未写勘误场面不得改口：',
               ...(options?.numericFacts ?? []).map(item => `  - ${item}`),
             ]
           : [],

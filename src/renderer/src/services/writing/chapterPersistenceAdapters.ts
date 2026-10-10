@@ -125,16 +125,22 @@ export function createChapterMemoryClient(): MemoryClient {
       return memory;
     },
     /**
-     * 跨章事实台账投影（契约 15/17 结构化出账）：合并进项目 numericLedger /
-     * timePromises 并落盘。applyFactLedger 先改内存真源（下一章注入立即可见），
+     * 跨章事实台账投影（契约 15/17/19 结构化出账）：合并进项目 numericLedger /
+     * timePromises / eraLedger 并落盘。applyFactLedger 先改内存真源（下一章注入立即可见），
      * 落盘失败只 warn——harness 无 App 环境时 window.electronAPI 不存在属预期，
      * 与记忆投影同属 best-effort（2026-10-05 实测：内存态注入已生效，落盘在
      * App 内才有意义）。
      */
-    async saveLedger({ chapterNumber, numericEntries, timeProjection, judgeResolvedPromiseTexts }) {
+    async saveLedger({ chapterNumber, numericEntries, timeProjection, judgeResolvedPromiseTexts, eraEntries }) {
       const project = projectStore.currentProject;
       if (!project) return;
-      projectStore.applyFactLedger(numericEntries, timeProjection, chapterNumber, judgeResolvedPromiseTexts ?? []);
+      projectStore.applyFactLedger(
+        numericEntries,
+        timeProjection,
+        chapterNumber,
+        judgeResolvedPromiseTexts ?? [],
+        eraEntries ?? []
+      );
       try {
         await projectStore.saveCurrentProject();
       } catch (error) {

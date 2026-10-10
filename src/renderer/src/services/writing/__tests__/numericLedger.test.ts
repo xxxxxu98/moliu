@@ -81,22 +81,39 @@ describe('projectNumericLedgerEntries（契约 15 结构化出账投影）', () 
   });
 });
 
-describe('mergeNumericLedger（口径正典：同对象最新章覆盖）', () => {
-  it('同对象新值覆盖旧值，不同对象并存，按章号升序', () => {
+describe('mergeNumericLedger（正典锁定首次确立值）', () => {
+  it('未标勘误的异值不覆盖正典，不同对象并存，按确立章升序', () => {
     const existing: NumericLedgerEntry[] = [
-      { object: '债务总额', amount: 300000, unit: '信用点', chapterIndex: 3 },
+      { object: '龙王渡溃口宽度', amount: 12, unit: '丈', chapterIndex: 19 },
       { object: '铁皮蛮牛自重', amount: 2, unit: '吨', chapterIndex: 5 },
     ];
     const merged = mergeNumericLedger(existing, [
-      { object: '债务总额', amount: 3000000, unit: '信用点', chapterIndex: 10, nature: '连本带利总额' },
+      { object: '龙王渡溃口宽度', amount: 10, unit: '丈', chapterIndex: 21, revision: 'establish' },
     ]);
     expect(merged).toHaveLength(2);
-    expect(merged.find(e => e.object === '债务总额')?.amount).toBe(3000000);
+    expect(merged.find(e => e.object === '龙王渡溃口宽度')).toMatchObject({ amount: 12, chapterIndex: 19 });
     expect(merged[0].chapterIndex).toBeLessThanOrEqual(merged[1].chapterIndex);
   });
 
-  it('同章重投影幂等（重写轮不重复入账）', () => {
+  it('revision=correct 或 nature=勘误后新值才替换正典', () => {
+    const existing: NumericLedgerEntry[] = [
+      { object: '债务总额', amount: 300000, unit: '信用点', chapterIndex: 3 },
+    ];
+    const byRevision = mergeNumericLedger(existing, [
+      { object: '债务总额', amount: 3000000, unit: '信用点', chapterIndex: 10, revision: 'correct' },
+    ]);
+    expect(byRevision.find(e => e.object === '债务总额')?.amount).toBe(3000000);
+
+    const byNature = mergeNumericLedger(existing, [
+      { object: '债务总额', amount: 280000, unit: '信用点', chapterIndex: 12, nature: '勘误后新值' },
+    ]);
+    expect(byNature.find(e => e.object === '债务总额')?.amount).toBe(280000);
+  });
+
+  it('同值复述不改确立章；同章重投影幂等', () => {
     const entry: NumericLedgerEntry = { object: '债务总额', amount: 3000000, unit: '信用点', chapterIndex: 10 };
+    const echoed = mergeNumericLedger([entry], [{ ...entry, chapterIndex: 15 }]);
+    expect(echoed).toEqual([entry]);
     const merged = mergeNumericLedger([entry], [{ ...entry }]);
     expect(merged.filter(e => e.object === '债务总额')).toHaveLength(1);
   });
@@ -109,7 +126,7 @@ describe('formatNumericAnchorLines（注入行）', () => {
       { object: '周巡家欠金刚重工债务总额', amount: 3000000, unit: '信用点', chapterIndex: 10, nature: '连本带利总额' },
     ];
     const lines = formatNumericAnchorLines(ledger, 15);
-    expect(lines[0]).toContain('最新既成值');
+    expect(lines[0]).toContain('首次确立的正典');
     expect(lines.some(l => l.includes('第10章既成「周巡家欠金刚重工债务总额＝3000000信用点（连本带利总额）」'))).toBe(true);
     expect(lines.some(l => l.includes('第6章既成「铁皮蛮牛自重＝30吨」'))).toBe(true);
     // 目标章自身与未来章的账不入注入

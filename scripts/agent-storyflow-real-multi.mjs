@@ -31,13 +31,15 @@
  * - 每厂商全程真实 AI（默认 80 章，耗时随模型而变）；快速回归先 MOLIU_CHAPTER_COUNT=1。
  * - 设 MOLIU_OUTLINE_CACHE=temp/outline.shared.json 可让所有厂商共用同一份缓存大纲，
  *   只对比写作阶段的厂商差异（大纲阶段不重复跑）。
- * - 设 MOLIU_RESUME_STORYFLOW=1 可复用同厂商、同模型、同种子、同字数区间的自动大纲检查点；
- *   默认仍全新生成，避免真实大纲回归被旧缓存掩盖。
+ * - 设 MOLIU_RESUME_STORYFLOW=1 后，大纲检查点、项目库和 StoryRuntime 都留在
+ *   temp/storyflow-checkpoints/。墙钟杀进程后用同一环境变量再跑，从第一篇空章接上，
+ *   不调用 storyflow-repair-empty。未设置时仍全新生成，避免旧大纲掩盖回归。
  * - 单厂商失败（配置错/断言挂/进程崩）不中断矩阵：记录失败继续其它；
  *   任一厂商失败最终退出码非 0。厂商配置在跑前统一预检，ID 写错立即报出可用列表。
  */
 import { spawn } from 'node:child_process';
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -231,6 +233,21 @@ function archiveRunArtifacts(providerId, suffixOverride) {
     if (name.startsWith(storePrefix) && name.endsWith('.project-store.json')) {
       moveInto(join(TEMP_DIR, name), join(dest, name));
     }
+  }
+  // 续写项目库在检查点目录里，不能 move，否则下一轮接不上。复制一份进归档供 triage 读正文。
+  const resumeOn = /^(?:1|true|yes)$/iu.test(process.env.MOLIU_RESUME_STORYFLOW?.trim() ?? '');
+  const checkpointStore = join(
+    TEMP_DIR,
+    'storyflow-checkpoints',
+    `${suffix || 'default'}.project-store.json`,
+  );
+  if (resumeOn && existsSync(checkpointStore)) {
+    const destName = suffix
+      ? `storyflow-${suffix}-resume.project-store.json`
+      : 'storyflow-resume.project-store.json';
+    const destStore = join(dest, destName);
+    copyFileSync(checkpointStore, destStore);
+    moved.push(destStore);
   }
   return moved;
 }

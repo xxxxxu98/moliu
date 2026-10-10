@@ -179,6 +179,16 @@ function parseStartupBlock(block: string, range: string): StartupChapterBlock {
 }
 
 /**
+ * 章号字段只接受正整数。0 表示「本章不承接旧悬念」。非数字是模型没按格式写，丢弃而不是猜。
+ */
+function parseChapterOrderField(body: string, names: string[]): number | undefined {
+  const raw = (extractAliasedFieldValue(body, names) ?? '').trim();
+  if (!/^\d+$/u.test(raw)) return undefined;
+  const value = Number(raw);
+  return value > 0 ? value : undefined;
+}
+
+/**
  * 解析「## 单章蓝图」段：逐章产出 ChapterBlueprint（title/CBN/CPNs/CEN/mustCover/禁区/钩子/爽点）。
  *
  * 容错策略与其它 parse*Section 一致：AI 漏写或写残时返回空数组（调用方据此回退到 splitStartupBlocksToChapters）。
@@ -224,6 +234,8 @@ export function parseChapterBlueprintSection(section: string): ChapterBlueprint[
       const hookText = sanitizeHookText(hookTextRaw);
       const hookType = (extractFieldValue(block.body, '爽点类型') ?? '').trim();
       const coolPointType = hookType || undefined;
+      const suspenseDueOrder = parseChapterOrderField(block.body, ['悬念到期章']);
+      const resolvesSuspenseFrom = parseChapterOrderField(block.body, ['承接悬念章']);
       // 章纲描述：summary 会成为 plotOutline.description 与 chapter.outline 的正文段。
       // 只回退 CBN 时，章纲描述与结构化节点里的 CBN 逐字重复，等于整章章纲零信息增量。
       const summary = (
@@ -242,6 +254,8 @@ export function parseChapterBlueprintSection(section: string): ChapterBlueprint[
         hookType: hookType || 'reveal',
         hookText: hookText || undefined,
         coolPointType,
+        ...(suspenseDueOrder !== undefined ? { suspenseDueOrder } : {}),
+        ...(resolvesSuspenseFrom !== undefined ? { resolvesSuspenseFrom } : {}),
       };
     })
     .filter((item): item is ChapterBlueprint => item !== null);

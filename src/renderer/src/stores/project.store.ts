@@ -4,9 +4,10 @@ import type {
   Project, Volume, Chapter, Character, WorldSchema, Foreshadow, PlotNode, LocationLevel, RuleCategory, FactionRelation,
   EmotionGoal, ConflictDesign, CoolPointDesign, StoryLines
 } from '@/types/project';
-import type { ChapterMemory, PlotThread, CharacterArc, MemoryConfig, NumericLedgerEntry, TimePromiseEntry } from '@/types/project';
+import type { ChapterMemory, PlotThread, CharacterArc, MemoryConfig, NumericLedgerEntry, TimePromiseEntry, EraLedgerEntry } from '@/types/project';
 import { DEFAULT_MEMORY_CONFIG } from '@/types/project';
 import { mergeNumericLedger, mergeTimePromises, resolveTimePromisesByText } from '@/services/writing/numericLedger';
+import { mergeEraLedger } from '@/services/writing/eraLedger';
 
 export const useProjectStore = defineStore('project', () => {
   // State
@@ -443,7 +444,7 @@ export const useProjectStore = defineStore('project', () => {
 
   /**
    * 跨章事实台账合并入账（2026-10-05 数字/时间台账 agent 化）：
-   * FactExtractor 契约 15/17 结构化出账 → numericLedger/timePromises。
+   * FactExtractor 契约 15/17/19 结构化出账 → numericLedger/timePromises/eraLedger。
    * 只改内存真源不落盘——调用方（记忆投影适配器）随后的 saveCurrentProject
    * 会通过 spread 把台账一并持久化，避免一次生成双写盘。
    */
@@ -454,7 +455,8 @@ export const useProjectStore = defineStore('project', () => {
       resolves: Array<{ promise: string; action: 'fulfilled' | 'renegotiated'; evidence?: string }>;
     },
     chapterNumber: number,
-    judgeResolvedTexts: string[] = []
+    judgeResolvedTexts: string[] = [],
+    eraEntries: EraLedgerEntry[] = []
   ) {
     const project = currentProject.value;
     if (!project) return;
@@ -463,6 +465,9 @@ export const useProjectStore = defineStore('project', () => {
     }
     if (timeProjection.opens.length > 0 || timeProjection.resolves.length > 0) {
       project.timePromises = mergeTimePromises(project.timePromises ?? [], timeProjection, chapterNumber);
+    }
+    if (eraEntries.length > 0) {
+      project.eraLedger = mergeEraLedger(project.eraLedger ?? [], eraEntries);
     }
     // 判官确认的承诺兑现流转（2026-10-08）：37/40 永远开放的解药
     if (judgeResolvedTexts.length > 0 && (project.timePromises ?? []).length > 0) {

@@ -45,6 +45,7 @@ import {
 } from '../validation/revealTiming';
 import {
   findSuspenseDanglingIssues,
+  findOverdueSuspenseIssues,
   findCoolPointPacingIssues,
   SUSPENSE_CARRY_WINDOW,
 } from '../validation/pacingLedger';
@@ -416,6 +417,8 @@ export function buildRollBlueprintPrompt(params: {
 - CBN：${hookMinChars}-${hookMaxChars}字。写本章开场已经在进行、结果还没揭晓的动作（手停在半空、门还没开、刀已经抵上但没刺下去）。禁止把本章结果写成开场（杀死、揭穿、结案、爆炸已经发生、身份已经对调完成），禁止整章剧情概括
 - CPNs：${minimumCpns}-${maximumCpns}个本章必须兑现的推进节点，每条独立可写成一个场面，用中文分号分隔
 - CEN：${hookMinChars}-${hookMaxChars}字章尾悬念，要让读者必须点下一章
+- 悬念到期章：一个正整数。本章 CEN 要跨章才揭晓时，填最迟揭晓的章号；本章就能揭晓则填本章章号
+- 承接悬念章：一个正整数，表示本章兑现哪一章的 CEN；本章不承接旧悬念则写 0
 - 节拍：4-6个按因果顺序的场面步骤，用中文分号分隔。每条15-60字，写清谁在做什么、这一步还没揭晓什么。第一步必须是未完成的危险或冲突，不得与 CBN 逐字相同，也不得把本章结果放在第一步。击杀、揭穿、爆炸、结案放在中后段。最后一步停在 CEN 的未决悬念上，不得在同章把悬念解释完
 - mustCover：1-3个本章能完成的具体事件，用中文分号分隔，禁止整卷或全书级目标；每个节点必须以【单章】或【跨章】开头——【单章】=本章内可完整兑现的具象事件；【跨章】=本卷主线级目标、本章只能实质推进（如限期+威胁后果类）。标注是硬约定：跨章节点按「实质推进」验收，单章节点的推进不折算。节点用白描事件句描述，禁止写成公文/告示/官令腔的成文短句（如「限各街坊商铺午时开门纳客」）——正文要转述改写，节点给出这种近乎成文的短句等于逼正文逐字照抄。【证据链措辞】节点只约定「场景内可证实的证据链与结论」（如「以X凭据与Y抄本坐实Z被人为改动、指向W经手」），禁止把「亲口承认/亲手所为/当众认罪」级归责断言写成履约条件——归责断言只有在本章同步安排了对应的认罪/对质/供状场面节点时才可写（2026-09-28 r14 ch39 实证：归责节点把履约口径抬到亲手所为，写手只能产出证据链，未履约判定与节点照抄守卫对挤五连拒成洞）
 - 禁区：1-3条本章不得提前泄露的事项；若某条与本章 mustCover 必然冲突（履约所需的当众揭示/关键帮助），在该条开头加【让路】标记，审核会对该条按履约让路处理
@@ -811,6 +814,10 @@ export function blueprintToPlotNode(
       ? { sceneBeats: blueprint.sceneBeats }
       : {}),
     forbiddenZones: blueprint.forbiddenZones,
+    ...(blueprint.suspenseDueOrder !== undefined ? { suspenseDueOrder: blueprint.suspenseDueOrder } : {}),
+    ...(blueprint.resolvesSuspenseFrom !== undefined
+      ? { resolvesSuspenseFrom: blueprint.resolvesSuspenseFrom }
+      : {}),
     purpose: `CBN: ${normalized.CBN}\nCEN: ${normalized.CEN}`,
   };
 }
@@ -1041,6 +1048,11 @@ export async function rollOutlineForward(params: RollOutlineParams): Promise<Rol
         kind: 'coolpoint-pacing' as const,
         detail: issue.detail,
       })),
+    ...findOverdueSuspenseIssues([...blueprints.values()]).map(issue => ({
+      chapterNumber: issue.chapterNumber,
+      kind: 'suspense-overdue' as const,
+      detail: issue.detail,
+    })),
   ];
   // 悬念悬空(2026-10-01 P1.1):词面是承接的下限证据——换措辞承接会漏报、
   // 氛围型钩子会误报,只进 warnings 观察项供 triage/书审聚合,不进修复轮

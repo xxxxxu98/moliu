@@ -64,4 +64,25 @@ describe('chapter blueprint field aliases', () => {
     ]);
     expect(blueprint.CPNs).toEqual(['把医生的视线引开']);
   });
+
+  it('悬念到期章与承接悬念章只收正整数，0 和非数字丢弃', () => {
+    const [kept, dropped] = parseChapterBlueprintSection(`
+### 第2章
+- 标题：夜审粮仓
+- CBN：沈青梧回到县衙，发现粮仓封条已被人换过。
+- CEN：账房暗格里露出半枚州府官印。
+- 悬念到期章：4
+- 承接悬念章：0
+### 第3章
+- 标题：封条对不上
+- CBN：沈青梧把新旧封条摊在灯下。
+- CEN：更夫指向仓后的侧门。
+- 悬念到期章：明天
+- 承接悬念章：2
+`);
+    expect(kept.suspenseDueOrder).toBe(4);
+    expect(kept.resolvesSuspenseFrom).toBeUndefined();
+    expect(dropped.suspenseDueOrder).toBeUndefined();
+    expect(dropped.resolvesSuspenseFrom).toBe(2);
+  });
 });

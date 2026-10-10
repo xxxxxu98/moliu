@@ -360,6 +360,33 @@ describe('SceneDraftEngine.draft', () => {
     expect(prompt.writingRules.terminalFateCharacters).toEqual(['赵乾（已驾崩）', '孙茂才（已死亡）']);
   });
 
+  it('状态卡在场时不再另出终态禁令、头衔锚、假死纪律', async () => {
+    const generate = vi.fn(async () => ({
+      paragraphs: ['开篇。'],
+      candidateEvents: allowed,
+    }));
+    const ai: StructuredAI = { generate };
+    const engine = new SceneDraftEngine(ai);
+    const plan: ScenePlan = {
+      chapterNumber: 20,
+      beats: [{ ...beat, candidateEvents: allowed }],
+      prechecks: [],
+    };
+    const context: ContextPack = { blocks: [], totalTokenEstimate: 0, omitted: [] };
+    await engine.draft(plan, context, {
+      stateCard: ['已死（仅可回忆）：齐泰（第20章死亡）'],
+      terminalFateCharacters: [{ name: '齐泰', status: '死亡' }],
+      characterTitleAnchors: [{ name: '沈万思', title: '九品典吏' }],
+      fakedDeathCharacters: [{ name: '陆九霄', chapterIndex: 10 }],
+    });
+    const request = generate.mock.calls[0][0] as { system: string };
+    expect(request.system).toContain('【实体状态卡】');
+    expect(request.system).toContain('齐泰（第20章死亡）');
+    expect(request.system).not.toContain('【命运终态禁令】');
+    expect(request.system).not.toContain('【头衔锚】');
+    expect(request.system).not.toContain('【假死纪律】');
+  });
+
   it('repair 模式显式解锁冲突发明内容的整体删除', async () => {
     // 同上 ch184 死锁根因：重写指令「未涉及情节保持稳定」把首稿自发发明的
     // 复活钩子当稳定基底保留 5 轮。修复模式必须给 fact_conflict 指向的场景
