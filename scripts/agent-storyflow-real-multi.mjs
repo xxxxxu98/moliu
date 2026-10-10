@@ -51,6 +51,7 @@ import {
 import { join, resolve, sep } from 'node:path';
 
 import { sanitizeRunSuffix, storyflowArtifactNames } from './storyflow-run-suffix.mjs';
+import { cumulativeChaptersWritten } from './storyflow-triage.mjs';
 
 const TEMP_DIR = join(process.cwd(), 'temp');
 const TRACE_DIR = join(TEMP_DIR, 'ai-traces');
@@ -272,7 +273,7 @@ function buildMatrixRow(providerMeta, exitCode, wallMs) {
       const requested = Number.isFinite(Number(s.requestedChapterCount))
         ? Number(s.requestedChapterCount)
         : batch.length;
-      row.chaptersAccepted = `${batch.filter(item => item.accepted).length}/${requested}`;
+      row.chaptersAccepted = `${cumulativeChaptersWritten(s)}/${requested}`;
       row.status = s.status ?? null;
       row.wordsMin = words.length ? Math.min(...words) : null;
       row.wordsAvg = words.length

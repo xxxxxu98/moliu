@@ -8,7 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { scanLedgerDeathResurrection } from '../storyflow-triage.mjs';
+import { cumulativeChaptersWritten, scanLedgerDeathResurrection } from '../storyflow-triage.mjs';
 
 const mem = (chapterIndex, changes) => ({ chapterIndex, characterStateChanges: changes });
 const ch = (n, text) => ({ n, text });
@@ -123,4 +123,26 @@ test('空台账/空正文 → 无候选不抛错', () => {
     resurrections: [],
     multiDeaths: [],
   });
+});
+
+test('续写摘要用全书已写章数，不用本轮 batch 条数', () => {
+  assert.equal(
+    cumulativeChaptersWritten({
+      postWritePersistence: { writtenChapterCount: 20 },
+      batch: [
+        { ch: 8, accepted: true },
+        { ch: 20, accepted: true },
+      ],
+    }),
+    20,
+  );
+  assert.equal(
+    cumulativeChaptersWritten({
+      batch: [
+        { ch: 1, accepted: true },
+        { ch: 2, accepted: false },
+      ],
+    }),
+    1,
+  );
 });

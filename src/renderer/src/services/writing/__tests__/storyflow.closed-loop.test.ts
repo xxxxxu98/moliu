@@ -25,6 +25,8 @@ import {
   DEFAULT_STORYFLOW_CHAPTER_COUNT,
   resolveStoryflowArtifactPaths,
   runStoryflowClosedLoop,
+  storyflowBatchChapterNumber,
+  storyflowRunCoversRequestedEnd,
   summarizeWriterRun,
 } from './storyflowClosedLoopHarness';
 import {
@@ -149,9 +151,12 @@ function writeClosedLoopArtifacts(
 
   // 每章正文落盘，供人工/读者视角评估
   mkdirSync(PROSE_DIR, { recursive: true });
+  const batchChapterNumbers = result.chapterRunResults.map((r, i) =>
+    storyflowBatchChapterNumber(r.chapterNumber, i),
+  );
   result.chapterRunResults.forEach((r, i) => {
     writeFileSync(
-      join(PROSE_DIR, `ch${String(i + 1).padStart(2, '0')}.txt`),
+      join(PROSE_DIR, `ch${String(batchChapterNumbers[i]).padStart(2, '0')}.txt`),
       r.output.prose,
       'utf8'
     );
@@ -203,9 +208,9 @@ function writeClosedLoopArtifacts(
   };
   // 章事件密度聚合（2026-10-01 P1.2）：低密度章（<2 事件）是流水章信号，
   // 清单落 summary 供 triage 与读者评审判读
-  const eventCounts = result.chapterRunResults.map((r, i) => {
+  const eventCounts = batchChapterNumbers.map(chapterNumber => {
     const m = (result.project.chapterMemories ?? []).find(
-      mem => (mem.chapterIndex ?? 0) === i + 1
+      mem => (mem.chapterIndex ?? 0) === chapterNumber
     );
     return m?.keyEvents?.length ?? 0;
   });
@@ -216,7 +221,7 @@ function writeClosedLoopArtifacts(
         : 0,
     chapterMinimum: eventCounts.length > 0 ? Math.min(...eventCounts) : 0,
     lowChapters: eventCounts
-      .map((count, idx) => (count < 2 ? idx + 1 : null))
+      .map((count, idx) => (count < 2 ? (batchChapterNumbers[idx] ?? null) : null))
       .filter((n): n is number => n !== null),
   };
   const summary = {
@@ -229,7 +234,8 @@ function writeClosedLoopArtifacts(
     promptChars: promptContext.prompt.length,
     requestedChapterCount: envInt('MOLIU_CHAPTER_COUNT', DEFAULT_STORYFLOW_CHAPTER_COUNT),
     phaseTimings: result.phaseTimings,
-    completedChapters: result.chapterRunResults.length,
+    completedChapters: result.postWritePersistence.writtenChapterCount,
+    thisRunChapters: result.chapterRunResults.length,
     chapters: outlineChapters.length,
     outlinePath: OUTLINE_PATH,
     proseDir: PROSE_DIR,
@@ -268,11 +274,11 @@ function writeClosedLoopArtifacts(
       // 章节关键事件（语义判定归 agent，此处只做确定性计数）。每章 <2 个事件
       // 是流水章信号——只观察不阻断，交读者评审 pacing 维度终审
       const chapterMemory = (result.project.chapterMemories ?? []).find(
-        m => (m.chapterIndex ?? 0) === i + 1
+        m => (m.chapterIndex ?? 0) === batchChapterNumbers[i]
       );
       const eventCount = chapterMemory?.keyEvents?.length ?? 0;
       return {
-        ch: i + 1,
+        ch: batchChapterNumbers[i],
         accepted: r.output.success,
         title: r.output.title,
         words: r.output.prose.length,
@@ -408,7 +414,8 @@ describe.runIf(isRealAiEnabled())('storyflow 闭环（真实 AI）：大纲生�
 
       // ---------- ③ 批量续写断言 ----------
       // 默认 80 章覆盖更长连续正文；P0 快速回归可通过 MOLIU_CHAPTER_COUNT 缩到 1 章。
-      expect(result.chapterRunResults.length).toBe(chapterCount);
+      const chapterNumbers = result.chapterRunResults.map(chapter => chapter.chapterNumber);
+      expect(storyflowRunCoversRequestedEnd(chapterNumbers, chapterCount)).toBe(true);
       const failed = result.chapterRunResults.filter(r => !r.output.success);
       expect(failed).toEqual([]);
       for (const chapter of result.chapterRunResults) {

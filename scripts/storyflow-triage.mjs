@@ -374,6 +374,19 @@ function parseSummary(dir, acc) {
   return s;
 }
 
+/**
+ * 全书已落库章数。续写摘要的 batch 只含本轮新章，条数会小于请求章数；
+ * postWritePersistence.writtenChapterCount 才是从第 1 章累计到当前的章数。
+ * @param {object | null | undefined} summary
+ * @returns {number}
+ */
+export function cumulativeChaptersWritten(summary) {
+  const written = Number(summary?.postWritePersistence?.writtenChapterCount);
+  if (Number.isInteger(written) && written > 0) return written;
+  const batch = Array.isArray(summary?.batch) ? summary.batch : [];
+  return batch.filter(item => item?.accepted).length;
+}
+
 // ---------- 单厂商聚合 ----------
 function triageProvider(providerId, meta) {
   const dir = join(MATRIX_DIR, providerId);
@@ -783,8 +796,8 @@ function triageProvider(providerId, meta) {
     exitCode: meta.exitCode,
     wallMinutes: meta.wallMinutes,
     chaptersAccepted: requested
-      ? `${acceptedChapters.size}/${requested}`
-      : String(acceptedChapters.size),
+      ? `${cumulativeChaptersWritten(summary)}/${requested}`
+      : String(cumulativeChaptersWritten(summary)),
     words: words.length
       ? {
           min: Math.min(...words),

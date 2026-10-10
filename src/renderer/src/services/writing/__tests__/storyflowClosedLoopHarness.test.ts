@@ -7,7 +7,9 @@ import {
   parseExecutableOutlineCache,
   resolveStoryflowArtifactPaths,
   shouldKeepStoryflowStore,
+  storyflowBatchChapterNumber,
   storyflowChaptersRemaining,
+  storyflowRunCoversRequestedEnd,
   storyflowStoreHasWrittenProse,
   summarizeWriterRun,
 } from './storyflowClosedLoopHarness';
@@ -277,6 +279,19 @@ describe('storyflow 长跑续写定位', () => {
     expect(storyflowChaptersRemaining(200, 187)).toBe(14);
     expect(storyflowChaptersRemaining(200, 1)).toBe(200);
     expect(storyflowChaptersRemaining(200, 201)).toBe(0);
+  });
+
+  it('续写结果用全书章号，本轮只需覆盖到请求末章', () => {
+    expect(storyflowBatchChapterNumber(8, 0)).toBe(8);
+    expect(storyflowBatchChapterNumber(undefined, 0)).toBe(1);
+    expect(storyflowRunCoversRequestedEnd([1, 2, 3], 3)).toBe(true);
+    expect(storyflowRunCoversRequestedEnd([8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], 20)).toBe(
+      true,
+    );
+    expect(storyflowRunCoversRequestedEnd([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], 20)).toBe(
+      false,
+    );
+    expect(storyflowRunCoversRequestedEnd([8, 10], 10)).toBe(false);
   });
 
   it('续写库和 runtime 落在检查点目录，不在会被 storyflow- 前缀清掉的 temp 顶层', () => {

@@ -238,6 +238,44 @@ export function storyflowChaptersRemaining(requestedTotal: number, fromChapter: 
 }
 
 /**
+ * 本轮结果对应的全书章号。
+ * 续写时 chapterRunResults 只含本轮新写的章，用数组下标会把第 8 章记成第 1 章，
+ * triage 因此把已落库的后章当成未恢复（reg20 续写实证：第 20 章已接受仍被标红）。
+ */
+export function storyflowBatchChapterNumber(
+  chapterNumber: number | undefined,
+  index: number,
+): number {
+  if (typeof chapterNumber === 'number' && Number.isInteger(chapterNumber) && chapterNumber > 0) {
+    return chapterNumber;
+  }
+  return index + 1;
+}
+
+/**
+ * 本轮章号必须是以 requestedTotal 收尾的连续区间。
+ * 首轮是 1..N；续写是 from..N。本轮条数可以小于 N，全书是否写满另看 writtenChapterCount。
+ */
+export function storyflowRunCoversRequestedEnd(
+  chapterNumbers: readonly number[],
+  requestedTotal: number,
+): boolean {
+  if (!Number.isInteger(requestedTotal) || requestedTotal <= 0 || chapterNumbers.length === 0) {
+    return false;
+  }
+  const unique = [...new Set(chapterNumbers)].sort((a, b) => a - b);
+  if (unique.length !== chapterNumbers.length) return false;
+  if (unique.some(n => !Number.isInteger(n) || n <= 0)) return false;
+  const min = unique[0];
+  const max = unique[unique.length - 1];
+  if (max !== requestedTotal || min !== requestedTotal - unique.length + 1) return false;
+  for (let i = 1; i < unique.length; i += 1) {
+    if (unique[i] !== unique[i - 1] + 1) return false;
+  }
+  return true;
+}
+
+/**
  * 解析 MOLIU_OUTLINE_CACHE。
  * 支持裸 ExecutableOutline，或检查点包 `{version,prompt,…,outline}`。
  * 旧 GeneratedOutline（title/volumes/chapters、无 storyEngine）必须拒绝：
