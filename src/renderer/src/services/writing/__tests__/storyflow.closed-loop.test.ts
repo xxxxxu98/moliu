@@ -72,6 +72,13 @@ function envInt(name: string, fallback: number): number {
   return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
 }
 
+// MOLIU_RESUME_STORYFLOW=1 时 runtime 检查点库跨进程持久累计：断电后重写同一章、
+// 修复轮重提交都会追加 accepted 记录（2026-10-10 g38f20ch 断电续跑实测 accepted=23 >
+// 请求 20），acceptedDrafts 只能保下限；单进程一次跑完才精确等于请求章数。
+const isResumeRun = /^(?:1|true|yes)$/iu.test(
+  process.env.MOLIU_RESUME_STORYFLOW?.trim() ?? '',
+);
+
 /**
  * 开题提示可配置：MOLIU_STORYFLOW_PROMPT_FILE（文件路径，读取全文 trim）>
  * MOLIU_STORYFLOW_PROMPT（内联文本）> 默认一句话。
@@ -435,7 +442,11 @@ describe.runIf(isRealAiEnabled())('storyflow 闭环（真实 AI）：大纲生�
       expect(result.runtimeBackend).toBe('sqlite');
       expect(result.runtimeVerification.health.ok).toBe(true);
       expect(result.runtimeVerification.health.pendingOutbox).toBe(0);
-      expect(result.runtimeVerification.acceptedDrafts).toBe(chapterCount);
+      if (isResumeRun) {
+        expect(result.runtimeVerification.acceptedDrafts).toBeGreaterThanOrEqual(chapterCount);
+      } else {
+        expect(result.runtimeVerification.acceptedDrafts).toBe(chapterCount);
+      }
       expect(result.runtimeVerification.latestSnapshotChapter).toBe(chapterCount);
       expect(result.runtimeVerification.sceneChunks).toBeGreaterThanOrEqual(chapterCount);
       expect(result.runtimeVerification.events).toBeGreaterThan(0);

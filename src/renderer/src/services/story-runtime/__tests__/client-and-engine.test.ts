@@ -18,6 +18,7 @@ import {
 import { detectRealEraNameIssues } from '../LongFormWritingEngine';
 import { salvageStaleMustCover } from '../LongFormWritingEngine';
 import { trimEdgeOverflowToBound, applyDeterministicGates } from '../LongFormWritingEngine';
+import { mergeFateDeltasAcrossRounds } from '../LongFormWritingEngine';
 import { parseStoryPatch } from '../patches';
 import { StoryRuntimeClient } from '../StoryRuntimeClient';
 import { makeBootstrap, makeContracts, makeState } from './testFixtures';
@@ -1302,5 +1303,68 @@ describe('擦边超写修复（2026-10-01 p1reg20 ch10 五连拒实证）', () =
     expect(
       report.issues.some(i => i.id.startsWith('word-count-over:') && i.severity === 'blocking')
     ).toBe(true);
+  });
+});
+
+
+describe('mergeFateDeltasAcrossRounds（命运 delta 跨改稿轮保锚）', () => {
+  const statusDelta = (entity: string, value: string) => ({
+    operation: 'set' as const,
+    path: `characters.${entity}.attributes.status`,
+    value,
+    transition: value === '获释' ? 'release' : 'arrest',
+    evidence: '宣告原句',
+  });
+
+  it('r21 ch11 复现：初稿出获释、改稿重提取为空 → 保住获释 delta', () => {
+    const initial = {
+      events: [],
+      deltas: [statusDelta('顾珩', '获释')],
+      evidence: ['原句'],
+    };
+    const final = { events: [], deltas: [], evidence: ['原句'] };
+    const merged = mergeFateDeltasAcrossRounds(initial, final);
+    expect(merged.deltas).toHaveLength(1);
+    expect(merged.deltas[0]?.value).toBe('获释');
+  });
+
+  it('最终轮对同实体同属性重出 delta 时以最终轮为准（不重复、不回旧值）', () => {
+    const initial = {
+      events: [],
+      deltas: [statusDelta('顾珩', '获释'), statusDelta('周泰', '下狱')],
+      evidence: [],
+    };
+    const final = {
+      events: [],
+      deltas: [statusDelta('顾珩', '下狱')],
+      evidence: [],
+    };
+    const merged = mergeFateDeltasAcrossRounds(initial, final);
+    const gu = merged.deltas.filter(d => d.path.includes('顾珩'));
+    expect(gu).toHaveLength(1);
+    expect(gu[0]?.value).toBe('下狱');
+    // 周泰未在最终轮重出 → 保留
+    expect(merged.deltas.some(d => d.path.includes('周泰'))).toBe(true);
+  });
+
+  it('非命运族 delta（inventory/numeric）不参与合并', () => {
+    const initial = {
+      events: [],
+      deltas: [
+        { operation: 'set' as const, path: 'inventory.char-1.断首私印', value: 1 },
+        statusDelta('顾珩', '获释'),
+      ],
+      evidence: [],
+    };
+    const final = { events: [], deltas: [], evidence: [] };
+    const merged = mergeFateDeltasAcrossRounds(initial, final);
+    expect(merged.deltas).toHaveLength(1);
+    expect(merged.deltas[0]?.path).toContain('attributes.status');
+  });
+
+  it('初稿无 delta 或初稿缺失时原样返回最终轮', () => {
+    const final = { events: [], deltas: [statusDelta('周泰', '下狱')], evidence: [] };
+    expect(mergeFateDeltasAcrossRounds(undefined, final)).toBe(final);
+    expect(mergeFateDeltasAcrossRounds({ events: [], deltas: [], evidence: [] }, final)).toBe(final);
   });
 });

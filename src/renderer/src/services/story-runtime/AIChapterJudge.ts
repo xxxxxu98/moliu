@@ -22,6 +22,68 @@ function emptyResult(): ChapterJudgeResult {
   return { fulfillment: [], forbidden: [], issues: [] };
 }
 
+/** 数字正典注入行的固定格式（formatNumericAnchorLines 生成）：第N章既成「对象＝数值单位…」 */
+const NUMERIC_ANCHOR_ROW_RE = /^第(\d+)章既成「(.+?)＝(-?\d+(?:\.\d+)?)([^（」]*)/u;
+
+interface ParsedNumericAnchor {
+  chapterIndex: number;
+  object: string;
+  amount: number;
+  unit: string;
+}
+
+function parseNumericAnchorRows(rows: string[]): ParsedNumericAnchor[] {
+  const anchors: ParsedNumericAnchor[] = [];
+  for (const row of rows) {
+    const match = row.match(NUMERIC_ANCHOR_ROW_RE);
+    if (match) {
+      anchors.push({
+        chapterIndex: Number(match[1]),
+        object: match[2],
+        amount: Number(match[3]),
+        unit: match[4].trim(),
+      });
+    }
+  }
+  return anchors;
+}
+
+/**
+ * 本章提取的 numeric-fact × 台账同单位异值的定向必检对（2026-10-11 r21 回放 recur
+ * 三轮实证：背景行式提示判官可无视——「暗转出塞秋粮＝1000000斤」与「私调江南细白粮
+ * ＝1200000斤」两账并存零拦截成 S1。词面相似度原理性无效（对象措辞 bigram 零重叠），
+ * 唯一可靠路径是确定性配对 + 判官逐条必答）。产出注入判官一致性规则，
+ * 每对要求显式裁决「是否同一物证/账目」，定罪仍归判官（语义终审）。
+ */
+export function buildNumericConflictProbes(
+  events: ReadonlyArray<{ numeric?: { object: string; amount: number; unit: string } }>,
+  numericFacts: readonly string[],
+  maxProbes = 6,
+): string[] {
+  const anchors = parseNumericAnchorRows(numericFacts);
+  if (anchors.length === 0) return [];
+  const probes: string[] = [];
+  for (const event of events) {
+    const numeric = event.numeric;
+    if (!numeric) continue;
+    const unit = String(numeric.unit ?? '').trim();
+    const amount = Number(numeric.amount);
+    if (!unit || !Number.isFinite(amount)) continue;
+    const conflicting = anchors
+      .filter(anchor => anchor.unit === unit && anchor.amount !== amount)
+      .slice(0, 4);
+    if (conflicting.length === 0) continue;
+    probes.push(
+      `「${numeric.object}＝${amount}${unit}」↔ 既有 ` +
+        conflicting
+          .map(anchor => `「${anchor.object}＝${anchor.amount}${anchor.unit}」（第${anchor.chapterIndex}章既成）`)
+          .join('、')
+    );
+    if (probes.length >= maxProbes) break;
+  }
+  return probes;
+}
+
 /**
  * 零宽/控制类不可见字符（ZWSP/ZWNJ/ZWJ/LRM/RLM/word joiner/BOM）。
  * 大纲产出实测在 mustCover 节点末尾混入 U+200B：trim 与 \s 均不匹配它，
@@ -170,8 +232,19 @@ export class AIChapterJudge implements ChapterJudge {
     }
     if (numericFacts.length > 0) {
       consistencyRules.push(
-        '- 【数字一致】输入的 numericFacts 是数字台账的正典（对象＝数值单位，同对象以首次确立值为准，未标勘误的后章数值不是正典）。正文引用同一对象的数额/数量与正典不一致，且未写出勘误、清点更正、查实虚报等剧情性修正过程的，必须报 fact_conflict 且 severity=critical，description 注明「数字蒸发/改写：既成X，本章写成Y」（2026-09-17 g38f r6 实证：同一笔盐税五套口径、太仓存粮四万石无解释改四十万石；2026-10-05 都市文实证：债务既成三百万信用点被无勘误写成三十万、战宠既成三十吨前章写两吨；2026-09-30 r16：十二丈溃口填平六丈后无勘误写成十丈并被后章固化）；正文明示了勘误/清点过程的不算'
+        '- 【数字一致】输入的 numericFacts 是数字台账的正典（对象＝数值单位，同对象以首次确立值为准，未标勘误的后章数值不是正典）。正文引用同一对象的数额/数量与正典不一致，且未写出勘误、清点更正、查实虚报等剧情性修正过程的，必须报 fact_conflict 且 severity=critical，description 注明「数字蒸发/改写：既成X，本章写成Y」（2026-09-17 g38f r6 实证：同一笔盐税五套口径、太仓存粮四万石无解释改四十万石；2026-10-05 都市文实证：债务既成三百万信用点被无勘误写成三十万、战宠既成三十吨前章写两吨；2026-09-30 r16：十二丈溃口填平六丈后无勘误写成十丈并被后章固化）；正文明示了勘误/清点过程的不算。同一对象的判定不能只看字面措辞：单位相同、指涉同一物证/同一账目/同一批物资的相近对象（如「暗转出塞秋粮」与「私调江南细白粮」是同一张批条上的同一笔粮、同一债务换个说法），即便对象措辞不同，数值与正典冲突而无勘误场面同样报 fact_conflict 并注明「疑似同对象改口」（2026-10-10 r21 实证：无头批条既成百万斤，第10章改写成一百二十万斤并换对象措辞，两账并存零拦截）'
       );
+      // 定向必检（2026-10-11 r21 回放 recur 三轮实证：背景行式提示判官可无视，
+      // 同单位异值必须逐条升级为必答裁决）。对为本章提取的 numeric-fact 与台账
+      // 同单位异值定向配对，判官必须显式回答「是否同一对象」。
+      const numericProbes = buildNumericConflictProbes(input.facts?.events ?? [], numericFacts);
+      if (numericProbes.length > 0) {
+        consistencyRules.push(
+          '- 【必检·数字异值对裁决】以下每一对都必须显式裁决，不得跳过：' +
+            numericProbes.join('；') +
+            '。裁决口径：若本章对象与既有对象实际指同一物证/同一账目/同一批物资（措辞不同、换说法、粮种/去向描述变化都算同一对象），而数值不同且正文未写勘误、清点、查实虚报场面——必须报 fact_conflict 且 severity=critical，description 注明「疑似同对象改口：既成X，本章写成Y」；确属不同对象（如两批不同物资、两笔不同账目）则不报，但要在判定的对应检查项里写明区分依据'
+        );
+      }
     }
     consistencyRules.push(
       '- 【数字入账】（2026-10-05 台账反向检查）本章正文首次确立、且对后续剧情有约束力的新数字事实（金额/债务/价格、度量/吨位、数量/编制、期限/天数、比率/赔率——不限题材单位，判据是「后续章节引用它会错」），若既不在 numericFacts 台账中、也不在 extractedFacts 的 numeric-fact 事件里——报 logic_gap 且 severity=medium，description 注明「新数字未入账：对象X＝数值Y」（记账由提取层补齐，此处只提示不要求重写）；纯修辞数字（「一日不见如隔三秋」）与一次性场景描写（「数米深的坑」）不算'

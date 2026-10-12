@@ -109,18 +109,27 @@ export function createRealStructuredAI(
         ? AbortSignal.any([signal, timeoutController.signal])
         : timeoutController.signal;
       try {
+        // RawText 契约是纯文本透传（消费方如蓝图再生的 parseBlueprintBlocks 按
+        // markdown 章节块自行解析）：parseStructuredJson 会把恰好可解析为 JSON 的
+        // 文本转成对象，恒等 parse 再把对象传给文本解析器直接崩溃——2026-10-12
+        // r22b ch7 补写实证「蓝图再生请求失败：raw.matchAll is not a function」。
+        // RawText 不追加 JSON 指令、不开 jsonMode、不做 JSON 解析。
+        const isRawText = request.schemaName === 'RawText';
         const raw = await service.complete(request.prompt, {
           system: [
             request.system,
             `schemaName=${request.schemaName}`,
-            '只输出合法 JSON 对象，不要 Markdown 代码块，不要前后解释文字。',
+            isRawText
+              ? '按 system 指令的原生文本格式输出，不要 JSON。'
+              : '只输出合法 JSON 对象，不要 Markdown 代码块，不要前后解释文字。',
           ].join('\n'),
           temperature: request.purpose === 'scene-draft' ? 0.65 : 0.2,
           signal: combined,
-          jsonMode: true,
+          jsonMode: !isRawText,
         });
-        const parsed = parseStructuredJson(raw, request.schemaName);
-        const result = request.parse(parsed);
+        const result = isRawText
+          ? request.parse(raw)
+          : request.parse(parseStructuredJson(raw, request.schemaName));
         // 把模型原始文本挂在返回对象上供 RecordingStructuredAI 写入 trace.rawResponse。
         // recorder 会读取后剥离该字段，下游消费方零感知；非对象返回值（如基本类型）忽略。
         // 与 ChapterWritingPipeline.createStructuredAIFromActiveProvider 同口径。

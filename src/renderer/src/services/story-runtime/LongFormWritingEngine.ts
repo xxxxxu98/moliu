@@ -12,6 +12,7 @@ import type {
   SceneChunk,
   SceneDraft,
   ScenePlan,
+  StateDelta,
   StoryEntity,
   StoryState,
   StructuredAI,
@@ -174,6 +175,39 @@ export function trimEdgeOverflowToBound(prose: string, maxWords: number): string
   const cleaned = paragraphs.filter(Boolean);
   if (cleaned.length === 0 || countWords(cleaned.join('\n\n')) > maxWords) return null;
   return cleaned.join('\n\n');
+}
+
+/**
+ * 命运族 delta 的跨改稿轮保锚合并（2026-10-10 r21 取证：ch11 初稿提取出了顾珩
+ * 「获释」delta，改稿后最后一次重提取不再输出，outcome.facts 整体覆盖初稿 facts →
+ * 章记忆 characterStateChanges 断供 → 状态账本永远停在「下狱」，判官连续
+ * fact_conflict（首过率 20%），写手被旧状态污染在 ch17/20 写出与 ch10 开枷脱罪
+ * 直接矛盾的「待罪之身/深陷死牢」）。命运/头衔/押地/身份 delta 是跨章正典锚：
+ * 最终轮对同实体同属性重出 delta 时以最终轮为准；最终轮没重出的保留先前轮条目
+ * ——丢锚（状态卡旧值引发冲突风暴）远比保锚（弱态误留可由后章纠正）危险。
+ * 数字/库存等每章重建的增量不参与合并。
+ */
+function fateDeltaKey(delta: StateDelta): string | null {
+  const match = String(delta?.path ?? '').match(
+    /^characters\.([^.]+)\.attributes\.(status|custody|title|identity)$/u,
+  );
+  return match ? `${match[1]}|${match[2]}` : null;
+}
+
+export function mergeFateDeltasAcrossRounds(
+  initial: ExtractedFacts | undefined,
+  final: ExtractedFacts,
+): ExtractedFacts {
+  if (!initial?.deltas?.length) return final;
+  const finalKeys = new Set(
+    final.deltas.map(fateDeltaKey).filter((key): key is string => Boolean(key)),
+  );
+  const preserved = initial.deltas.filter(delta => {
+    const key = fateDeltaKey(delta);
+    return key && !finalKeys.has(key);
+  });
+  if (preserved.length === 0) return final;
+  return { ...final, deltas: [...final.deltas, ...preserved] };
 }
 
 function draftsProse(drafts: SceneDraft[]): string {
@@ -760,6 +794,8 @@ export class LongFormWritingEngine {
       ...realEraIssueIdsBefore,
     ];
     const weakSignalDriven = !shouldRewrite(report) && weakSignalIssueIds.length > 0;
+    // 初稿提取的命运族 delta 在改稿后可能被重提取静默丢失（见 mergeFateDeltasAcrossRounds 注释）
+    const initialFacts = facts;
     if (
       (shouldRewrite(report) || weakSignalIssueIds.length > 0) &&
       maxRewriteRounds > 0 &&
@@ -799,7 +835,7 @@ export class LongFormWritingEngine {
         creativeCompass: writeInput.creativeCompass,
       });
       drafts = outcome.drafts;
-      facts = outcome.facts;
+      facts = mergeFateDeltasAcrossRounds(initialFacts, outcome.facts);
       report = outcome.report;
       rewriteRounds = outcome.checksUsed;
       writerSummary = {

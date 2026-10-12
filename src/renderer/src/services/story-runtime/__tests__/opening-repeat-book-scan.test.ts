@@ -28,8 +28,17 @@ const REPAIRED_REPEAT_PAIRS = new Set([
   '141.txt→142.txt',
 ]);
 
+/** 实证产物受 temp 按天裁剪约束：目录可能在而章节 txt 已被清（2026-10-10 r21 轮实测
+ *  目录空壳导致 0≠200 硬失败）。完整 200 章在场时才有实证意义，产物过期即 skip。 */
+const bookFilesReady = (() => {
+  if (!existsSync(BOOK_DIR)) return false;
+  return (
+    readdirSync(BOOK_DIR).filter(name => /^\d{3}\.txt$/.test(name)).length >= 200
+  );
+})();
+
 describe('句/子句首逐字复读检测·r17 全书实证扫描', () => {
-  it.runIf(existsSync(BOOK_DIR))('200 对章界:9 处存量复读已修复归零,防线零误杀', () => {
+  it.runIf(bookFilesReady)('200 对章界:9 处存量复读已修复归零,防线零误杀', () => {
     const files = readdirSync(BOOK_DIR)
       .filter(name => /^\d{3}\.txt$/.test(name))
       .sort();

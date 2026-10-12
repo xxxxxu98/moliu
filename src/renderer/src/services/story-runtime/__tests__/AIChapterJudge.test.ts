@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { StructuredAI, StructuredAIRequest } from '@/types/story-runtime';
 
-import { AIChapterJudge } from '../AIChapterJudge';
+import { AIChapterJudge, buildNumericConflictProbes } from '../AIChapterJudge';
 import { AIFulfillmentJudge } from '../AIFulfillmentJudge';
 
 describe('AIChapterJudge', () => {
@@ -889,3 +889,40 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
 function emptyJudgePayload() {
   return { fulfillment: [], forbidden: [], issues: [] };
 }
+
+describe('buildNumericConflictProbes（数字异值对定向必检）', () => {
+  const anchorRows = [
+    '以下为各关键数字对象首次确立的正典',
+    '第7章既成「通惠仓暗转出塞秋粮总量＝1000000斤」',
+    '第9章既成「通惠仓三年漕粮亏空总额＝30000石」',
+    '第8章既成「验粮大秤秤砣暗注熟铅量＝24两」',
+  ];
+
+  it('r21 批条场景：同单位异值 → 生成必检对（措辞零重叠也命中）', () => {
+    const events = [
+      { numeric: { object: '私调江南细白粮总额', amount: 1200000, unit: '斤' } },
+    ];
+    const probes = buildNumericConflictProbes(events, anchorRows);
+    expect(probes).toHaveLength(1);
+    expect(probes[0]).toContain('私调江南细白粮总额＝1200000斤');
+    expect(probes[0]).toContain('通惠仓暗转出塞秋粮总量＝1000000斤');
+    expect(probes[0]).toContain('第7章既成');
+  });
+
+  it('数值与正典一致或单位不同 → 不产必检对', () => {
+    const events = [
+      { numeric: { object: '暗转出塞秋粮总量', amount: 1000000, unit: '斤' } },
+      { numeric: { object: '某批军饷', amount: 24, unit: '万两' } },
+    ];
+    expect(buildNumericConflictProbes(events, anchorRows)).toHaveLength(0);
+  });
+
+  it('非 numeric 事件与无法解析的行不参与；上限 6 对', () => {
+    const many = Array.from({ length: 10 }, (_, i) => ({
+      numeric: { object: `新对象${i}`, amount: i + 1, unit: '斤' },
+    }));
+    expect(buildNumericConflictProbes(many, anchorRows)).toHaveLength(6);
+    expect(buildNumericConflictProbes([{ summary: '普通事件' } as never], anchorRows)).toHaveLength(0);
+    expect(buildNumericConflictProbes([{ numeric: { object: 'x', amount: 1, unit: '斤' } }], ['不是正典行'])).toHaveLength(0);
+  });
+});

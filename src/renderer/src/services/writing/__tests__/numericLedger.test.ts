@@ -134,7 +134,7 @@ describe('formatNumericAnchorLines（注入行）', () => {
     expect(formatNumericAnchorLines([], 15)).toHaveLength(0);
   });
 
-  it('超过 12 条时保留章号最新的 12 条', () => {
+  it('超过 12 条时保留章号最新的 12 条；同单位多值组摘要行插在头部之后', () => {
     const ledger: NumericLedgerEntry[] = Array.from({ length: 15 }, (_, i) => ({
       object: `对象${i}`,
       amount: i,
@@ -142,9 +142,21 @@ describe('formatNumericAnchorLines（注入行）', () => {
       chapterIndex: i + 1,
     }));
     const lines = formatNumericAnchorLines(ledger, 99);
-    expect(lines).toHaveLength(13); // 头部 + 12 行
-    expect(lines[1]).toContain('第15章既成'); // 最新在前
+    // 头部 + 同单位多值警告行（15 条同单位异值）+ 12 行
+    expect(lines).toHaveLength(14);
+    expect(lines[1]).toContain('单位「个」在台账中存在 15 个不同数值');
+    expect(lines[2]).toContain('第15章既成'); // 最新在前
     expect(lines.some(l => l.includes('第1章既成'))).toBe(false);
+    // 同单位单一数值时无警告行（15 条不同单位各一值）
+    const single = Array.from({ length: 15 }, (_, i) => ({
+      object: `对象${i}`,
+      amount: i,
+      unit: `单位${i}`,
+      chapterIndex: i + 1,
+    }));
+    const singleLines = formatNumericAnchorLines(single, 99);
+    expect(singleLines).toHaveLength(13); // 头部 + 12 行
+    expect(singleLines.some(l => l.includes('在台账中存在'))).toBe(false);
   });
 });
 

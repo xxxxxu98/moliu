@@ -228,8 +228,8 @@ export function formatNumericAnchorLines(
   relevanceHint?: string
 ): string[] {
   const hintBigrams = bigramSet(relevanceHint ?? '');
-  const rows = ledger
-    .filter(entry => entry.chapterIndex < chapterNumber)
+  const eligible = ledger.filter(entry => entry.chapterIndex < chapterNumber);
+  const rows = eligible
     .map(entry => ({
       entry,
       score: saliencyScore(`${entry.object} ${entry.nature ?? ''}`, hintBigrams),
@@ -238,9 +238,43 @@ export function formatNumericAnchorLines(
     .slice(0, MAX_NUMERIC_ROWS)
     .map(item => item.entry);
   if (rows.length === 0) return [];
+  // 同单位条目相邻展示：同单位异值的相近对象（同一物证/账目的不同措辞）一眼可见，
+  // 写手在引用其中任何一个前必须先核对是否同一笔账（2026-10-10 r21 实证：无头批条
+  // 「暗转出塞秋粮＝1000000斤」与「私调江南细白粮＝1200000斤」两账并存零拦截成 S1）。
+  const orderedRows = [...rows].sort(
+    (a, b) => a.unit.localeCompare(b.unit) || b.chapterIndex - a.chapterIndex
+  );
+  // 同单位多值组摘要（2026-10-11 r21 回放实证：判官输入里正典 1000000 斤与正文
+  // 1200000 斤并存仍零拦截——「暗转出塞秋粮」与「私调江南细白粮」这类同一物证的
+  // 措辞变体 bigram 零重叠，词面相似度防线无效。改为确定性枚举同单位全部异值，
+  // 语义终审归判官/写手：模型看得到同单位全部账目，自行判断哪些指同一对象）。
+  const unitAmounts = new Map<string, { amount: number; objects: string[] }[]>();
+  for (const entry of eligible) {
+    const list = unitAmounts.get(entry.unit) ?? [];
+    const existing = list.find(item => item.amount === entry.amount);
+    if (existing) {
+      if (!existing.objects.includes(entry.object)) existing.objects.push(entry.object);
+    } else {
+      list.push({ amount: entry.amount, objects: [entry.object] });
+    }
+    unitAmounts.set(entry.unit, list);
+  }
+  const multiValueWarnings: string[] = [];
+  for (const [unit, list] of unitAmounts) {
+    if (list.length < 2) continue;
+    multiValueWarnings.push(
+      `单位「${unit}」在台账中存在 ${list.length} 个不同数值：` +
+        list
+          .sort((a, b) => a.amount - b.amount)
+          .map(item => `${item.amount}${unit}（${item.objects.slice(0, 3).join('／')}${item.objects.length > 3 ? '等' : ''}）`)
+          .join('；') +
+        '。若本章正文引用的数字对象与其中任何既有对象实际指同一物证/同一账目/同一批物资（措辞不同也算），数值必须与最早确立的正典一致；否则必须先写出勘误、清点或查实虚报的场面'
+    );
+  }
   return [
-    `以下为各关键数字对象首次确立的正典（后章未标勘误的不同数值已丢弃，不得当成新正典）。同一对象在本章内多次出现的数额必须一致；要改口必须先写出勘误、清点或查实虚报的场面。涉及乘除换算（单价×数量、比例×基数、年数×岁入）先笔算核验再落笔——乘积与总量声明对不上、同账两说，判官将直接拒稿`,
-    ...rows.map(
+    `以下为各关键数字对象首次确立的正典（后章未标勘误的不同数值已丢弃，不得当成新正典）。同一对象在本章内多次出现的数额必须一致；单位相同的多条对象若实际指同一物证/同一账目（措辞不同也算同一对象），数值必须与最早确立的正典一致，改口必须先写出勘误、清点或查实虚报的场面。涉及乘除换算（单价×数量、比例×基数、年数×岁入）先笔算核验再落笔——乘积与总量声明对不上、同账两说，判官将直接拒稿`,
+    ...multiValueWarnings,
+    ...orderedRows.map(
       entry =>
         `第${entry.chapterIndex}章既成「${entry.object}＝${entry.amount}${entry.unit}` +
         (entry.nature ? `（${entry.nature}）` : '') +
