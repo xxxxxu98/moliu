@@ -13,7 +13,7 @@ import { dirname } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import { isRealAiEnabled, readRealAiEnvConfig, createRealStructuredAI } from './realStructuredAI';
-import { ReaderQualityJudge } from '@/services/story-runtime/readerQualityJudge';
+import { READER_EVALUATION_VERSION, ReaderQualityJudge } from '@/services/story-runtime/readerQualityJudge';
 import type { Project } from '@/types/project';
 
 vi.mock('vue-router', () => ({
@@ -117,11 +117,12 @@ async function runReaderReeval(options: ReeValOptions): Promise<StoredChapterEva
       previousTail = prose.slice(-400);
       continue;
     }
-    const record: StoredChapterEval & { summary: string } = {
+    const record: StoredChapterEval & { summary: string; caliber: string } = {
       chapter: n,
       score: evaluation.score,
       continueReading: evaluation.continueReading,
       summary: (evaluation.summary ?? '').slice(0, 120),
+      caliber: READER_EVALUATION_VERSION,
     };
     const dims = Object.entries(evaluation.dimensions) as [string, number][];
     const low = dims.sort((a, b) => a[1] - b[1])[0];
@@ -137,7 +138,7 @@ async function runReaderReeval(options: ReeValOptions): Promise<StoredChapterEva
       context,
       outline: (project.plotOutline ?? chapters.map(c => c.outline)).slice(0, 120),
     });
-    appendFileSync(options.outPath, `${JSON.stringify({ outline: true, score: outlineEvaluation.score, wouldStartReading: outlineEvaluation.wouldStartReading })}\n`, 'utf8');
+    appendFileSync(options.outPath, `${JSON.stringify({ outline: true, score: outlineEvaluation.score, wouldStartReading: outlineEvaluation.wouldStartReading, caliber: READER_EVALUATION_VERSION })}\n`, 'utf8');
     console.info(`[reader-reeval] 大纲 score=${outlineEvaluation.score} wouldStart=${outlineEvaluation.wouldStartReading}`);
   }
 
@@ -156,6 +157,7 @@ async function runReaderReeval(options: ReeValOptions): Promise<StoredChapterEva
   if (scores.length > 0) {
     const summary = {
       evaluated: scores.length,
+      caliber: READER_EVALUATION_VERSION,
       average: Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)),
       median: Number(scores[Math.floor(scores.length / 2)].toFixed(1)),
       minimum: scores[0],

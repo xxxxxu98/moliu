@@ -811,6 +811,7 @@ function triageProvider(providerId, meta) {
     readerMetrics: summary?.readerEvaluation?.metrics ?? null,
     readerOutlineScore: summary?.readerEvaluation?.outline?.score ?? null,
     readerIndependent: summary?.readerEvaluation?.evaluator?.independentFromWriter ?? null,
+    readerEvalVersion: summary?.readerEvaluation?.version ?? summary?.evaluationVersion ?? null,
     phaseTimings: summary?.phaseTimings ?? null,
     runtimeBackend: summary?.runtimeBackend ?? null,
     verdict,
@@ -943,9 +944,20 @@ export function runDiff(oldReport, newReport) {
   for (const current of newReport.providers ?? []) {
     const previous = (oldReport.providers ?? []).find(old => old.model === current.model);
     if (!previous) continue;
+    // 口径不同的读者分数不可比（r17 实证：reeval 与原轮口径不同直接对比出错误结论）
+    const caliberMismatch =
+      previous.readerEvalVersion != null &&
+      current.readerEvalVersion != null &&
+      previous.readerEvalVersion !== current.readerEvalVersion;
+    if (caliberMismatch) {
+      console.log(
+        `  [口径] ${current.model} 读者评审口径 ${previous.readerEvalVersion} → ${current.readerEvalVersion}，读者分数不参与回归对比`
+      );
+    }
     const oldReader = previous.readerMetrics;
     const newReader = current.readerMetrics;
     if (
+      !caliberMismatch &&
       oldReader?.chapterAverage != null &&
       newReader?.chapterAverage != null &&
       oldReader.chapterAverage - newReader.chapterAverage > 5
@@ -955,6 +967,7 @@ export function runDiff(oldReport, newReport) {
       );
     }
     if (
+      !caliberMismatch &&
       previous.readerOutlineScore != null &&
       current.readerOutlineScore != null &&
       previous.readerOutlineScore - current.readerOutlineScore > 5

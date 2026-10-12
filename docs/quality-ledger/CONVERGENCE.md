@@ -4,20 +4,20 @@
 
 ## 各轮概览
 
-| 轮次 | 书 | 章数 | 审法 | S1 | S2 | 计算判定 |
-| --- | --- | --- | --- | --- | --- | --- |
-| r7 | 治世能臣：社畜的内阁升迁录 | 200 | full-read-4ch | 13 | 31 | NOT READY（5 项阻断） |
-| r8 | 做个天子孤臣 | 200 | full-read-4ch | 7 | 25 | NOT READY（9 项阻断） |
-| r9a | 执宪：法务社畜的诛心弹劾录 | 154 | unverified | 0 | 0 | NOT READY（4 项阻断） |
-| r9b | 大乾第一做账人 | 78 | unverified | 0 | 0 | NOT READY（5 项阻断） |
-| r10b | 天子账房：现代精算师的夺嫡阳谋 | 200 | full-read-4ch | 8 | 28 | NOT READY（6 项阻断） |
-| r10a | 度支权臣：用现代审计搞垮门阀 | 200 | full-read-4ch | 10 | 27 | NOT READY（7 项阻断） |
-| r12 | 算力平天下：从假账小吏到国朝首辅 | 200 | full-read-4ch | 12 | 36 | NOT READY（9 项阻断） |
-| r14 | 铁算盘入朝：我只想做完预算，却成了皇权的刀 | 50 | full-read-4ch | 2 | 9 | NOT READY（8 项阻断） |
-| r16 | 工部死囚：从治水项目经理到帝师 | 200 | full-read | 11 | 53 | NOT READY（6 项阻断） |
-| r21 | 考成天下：社畜的户部算账录 | 20 | full-read-4ch | 4 | 18 | NOT READY（5 项阻断） |
-| r22a | 度支风云：现代审计的九品登顶路 | 50 | full-read-4ch | 10 | 11 | NOT READY（8 项阻断） |
-| r22b | 六部稽核录：小吏的升迁账本 | 50 | full-read-4ch | 10 | 13 | NOT READY（6 项阻断） |
+| 轮次 | 书 | 章数 | 审法 | 口径 | S1 | S2 | 计算判定 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| r7 | 治世能臣：社畜的内阁升迁录 | 200 | full-read-4ch | reader-eval-v1 | 13 | 31 | NOT READY（5 项阻断） |
+| r8 | 做个天子孤臣 | 200 | full-read-4ch | reader-eval-v1 | 7 | 25 | NOT READY（9 项阻断） |
+| r9a | 执宪：法务社畜的诛心弹劾录 | 154 | unverified | reader-eval-v1 | 0 | 0 | NOT READY（4 项阻断） |
+| r9b | 大乾第一做账人 | 78 | unverified | reader-eval-v1 | 0 | 0 | NOT READY（5 项阻断） |
+| r10b | 天子账房：现代精算师的夺嫡阳谋 | 200 | full-read-4ch | reader-eval-v1 | 8 | 28 | NOT READY（6 项阻断） |
+| r10a | 度支权臣：用现代审计搞垮门阀 | 200 | full-read-4ch | reader-eval-v1 | 10 | 27 | NOT READY（7 项阻断） |
+| r12 | 算力平天下：从假账小吏到国朝首辅 | 200 | full-read-4ch | reader-eval-v1 | 12 | 36 | NOT READY（9 项阻断） |
+| r14 | 铁算盘入朝：我只想做完预算，却成了皇权的刀 | 50 | full-read-4ch | reader-eval-v1 | 2 | 9 | NOT READY（8 项阻断） |
+| r16 | 工部死囚：从治水项目经理到帝师 | 200 | full-read | reader-eval-v1 | 11 | 53 | NOT READY（6 项阻断） |
+| r21 | 考成天下：社畜的户部算账录 | 20 | full-read-4ch | reader-eval-v1 | 4 | 18 | NOT READY（5 项阻断） |
+| r22a | 度支风云：现代审计的九品登顶路 | 50 | full-read-4ch | reader-eval-v1 | 10 | 11 | NOT READY（8 项阻断） |
+| r22b | 六部稽核录：小吏的升迁账本 | 50 | full-read-4ch | reader-eval-v1 | 10 | 13 | NOT READY（6 项阻断） |
 
 ## 分类收敛矩阵
 

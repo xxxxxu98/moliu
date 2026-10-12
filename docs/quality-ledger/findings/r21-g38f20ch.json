@@ -10,7 +10,8 @@
     "chaptersRead": 20,
     "writerModel": "anti-gravity/gemini-3.8-flash-high (provider-1787044972770)",
     "reviewerModel": "anti-gravity/gemini-3.8-flash-high (同通道自评+4通读agent)",
-    "independentReviewer": false
+    "independentReviewer": false,
+    "caliber": "reader-eval-v1"
   },
   "gates": {
     "precheckRedlines": 0,
@@ -37,12 +38,22 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [7, 8, 10],
+      "chapters": [
+        7,
+        8,
+        10
+      ],
       "entity": "无头批条·粮数",
       "summary": "同一张核心物证批条，数额从ch7/ch8的「百万斤」变为ch10的「一百二十万斤」，且大纲全篇无一百二十万斤设定",
       "evidence": [
-        { "chapter": 8, "quote": "承平二年九月廿三……百万斤暗转出塞，勿留册档！" },
-        { "chapter": 10, "quote": "那正是此前……调运一百二十万斤细白粮的无头批条" }
+        {
+          "chapter": 8,
+          "quote": "承平二年九月廿三……百万斤暗转出塞，勿留册档！"
+        },
+        {
+          "chapter": 10,
+          "quote": "那正是此前……调运一百二十万斤细白粮的无头批条"
+        }
       ],
       "replayCase": "r21-S1-01"
     },
@@ -52,12 +63,21 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [7, 10],
+      "chapters": [
+        7,
+        10
+      ],
       "entity": "无头批条·内容",
       "summary": "ch10对同一批条的粮种/去向/引文全部漂移：顺天秋粮「暗转出塞」变成「江南细白粮送卢沟桥南别库」，引用的「截留直隶秋粮十之三」原文中根本不存在，证据链闭环建立在与前文不符的物证上",
       "evidence": [
-        { "chapter": 7, "quote": "九月廿三，直隶顺天各仓分截秋粮入通惠，百万斤暗转出塞" },
-        { "chapter": 10, "quote": "无头批条上那行『截留直隶秋粮十之三』的极细紫毫……私调江南细白粮至卢沟桥南别库" }
+        {
+          "chapter": 7,
+          "quote": "九月廿三，直隶顺天各仓分截秋粮入通惠，百万斤暗转出塞"
+        },
+        {
+          "chapter": 10,
+          "quote": "无头批条上那行『截留直隶秋粮十之三』的极细紫毫……私调江南细白粮至卢沟桥南别库"
+        }
       ],
       "replayCase": "r21-S1-02"
     },
@@ -67,13 +87,24 @@
       "class": "state.custody",
       "status": "final",
       "rootLayer": "extraction",
-      "chapters": [17],
+      "chapters": [
+        17
+      ],
       "entity": "顾珩",
       "summary": "叙述直陈顾珩「身上仍系着待罪之身」并配置狱卒锁链押护，与ch10「死罪立时撤销，开枷除锁」正式脱罪直接矛盾且驱动场景行为",
       "evidence": [
-        { "chapter": 17, "quote": "顾珩虽奉大理寺勘合暂摄查账之权，身上仍系着待罪之身" },
-        { "chapter": 17, "quote": "两名佩刀的大理寺狱卒分立案几左右，铁锁链搭在案角" },
-        { "chapter": 10, "quote": "之死罪立时撤销，开枷除锁" }
+        {
+          "chapter": 17,
+          "quote": "顾珩虽奉大理寺勘合暂摄查账之权，身上仍系着待罪之身"
+        },
+        {
+          "chapter": 17,
+          "quote": "两名佩刀的大理寺狱卒分立案几左右，铁锁链搭在案角"
+        },
+        {
+          "chapter": 10,
+          "quote": "之死罪立时撤销，开枷除锁"
+        }
       ],
       "replayCase": "r21-S1-03"
     },
@@ -83,11 +114,16 @@
       "class": "state.custody",
       "status": "final",
       "rootLayer": "extraction",
-      "chapters": [20],
+      "chapters": [
+        20
+      ],
       "entity": "顾珩",
       "summary": "章末叙述称顾珩「深陷死牢的待罪小吏」，与当前在通惠仓值房自由指挥封证的画面对撞，读者可感知",
       "evidence": [
-        { "chapter": 20, "quote": "深陷死牢的待罪小吏，凭着一柄透镜与几册烂账，将部堂高官与夺嫡藩王生生穿透" }
+        {
+          "chapter": 20,
+          "quote": "深陷死牢的待罪小吏，凭着一柄透镜与几册烂账，将部堂高官与夺嫡藩王生生穿透"
+        }
       ],
       "replayCase": "r21-S1-04"
     },
@@ -97,12 +133,21 @@
       "class": "number.arithmetic",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [7, 9],
+      "chapters": [
+        7,
+        9
+      ],
       "entity": "石斤折算",
       "summary": "ch7称「百万斤折合官粮一万六千余石」隐含60斤/石，ch9明确全书口径「百二十斤一石」（百万斤仅合8333石），差近一倍",
       "evidence": [
-        { "chapter": 7, "quote": "百万斤，折合官粮便是整整一万六千余石！" },
-        { "chapter": 9, "quote": "三年九万三千石出入，依百二十斤一石折算" }
+        {
+          "chapter": 7,
+          "quote": "百万斤，折合官粮便是整整一万六千余石！"
+        },
+        {
+          "chapter": 9,
+          "quote": "三年九万三千石出入，依百二十斤一石折算"
+        }
       ]
     },
     {
@@ -111,12 +156,20 @@
       "class": "state.title",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [8],
+      "chapters": [
+        8
+      ],
       "entity": "周泰·官职状态",
       "summary": "ch8章内状态倒挂：开头即称周泰「虽被革职待审」，同章结尾正卿才宣判较轻的「停职收监」，革职早于停职出现",
       "evidence": [
-        { "chapter": 8, "quote": "通惠仓主事周泰虽被革职待审，仍穿一身除去补子的青布长袍" },
-        { "chapter": 8, "quote": "主事周泰停职收监，听候三法司严讯！" }
+        {
+          "chapter": 8,
+          "quote": "通惠仓主事周泰虽被革职待审，仍穿一身除去补子的青布长袍"
+        },
+        {
+          "chapter": 8,
+          "quote": "主事周泰停职收监，听候三法司严讯！"
+        }
       ]
     },
     {
@@ -125,12 +178,20 @@
       "class": "outline.contract",
       "status": "final",
       "rootLayer": "outline",
-      "chapters": [9],
+      "chapters": [
+        9
+      ],
       "entity": "周泰·后段大纲",
       "summary": "ch9正文已写周泰「革职+死囚重枷+打入死牢」，提前兑付大纲ch34/35节点（大纲ch34周泰仍在公堂暴起行凶被制伏）；且ch9私账呈堂与大纲ch18/19起获私账节点重复，续写ch21+将撞死牢周泰再上公堂",
       "evidence": [
-        { "chapter": 9, "quote": "即刻革去周泰官职，除去补服顶戴，戴死囚重枷打入死牢！" },
-        { "chapter": 34, "quote": "（大纲）差役当堂制伏暴起行凶的周泰" }
+        {
+          "chapter": 9,
+          "quote": "即刻革去周泰官职，除去补服顶戴，戴死囚重枷打入死牢！"
+        },
+        {
+          "chapter": 34,
+          "quote": "（大纲）差役当堂制伏暴起行凶的周泰"
+        }
       ]
     },
     {
@@ -139,11 +200,16 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [10],
+      "chapters": [
+        10
+      ],
       "entity": "「二十二分」",
       "summary": "ch10「顺着二十二分度支司暗调的线索」中「二十二分」无任何前文来源（前文口径为三成二分雀鼠耗、ch9为二十四笔暗账），疑为脱字或数字漂移",
       "evidence": [
-        { "chapter": 10, "quote": "准备顺着二十二分度支司暗调的线索继续下挖" }
+        {
+          "chapter": 10,
+          "quote": "准备顺着二十二分度支司暗调的线索继续下挖"
+        }
       ]
     },
     {
@@ -152,13 +218,27 @@
       "class": "state.identity",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [4, 6, 8, 10],
+      "chapters": [
+        4,
+        6,
+        8,
+        10
+      ],
       "entity": "顾珩·自称",
       "summary": "待罪死囚顾珩ch4同章内自称「下官」与「草民」横跳；ch6/ch8自称「下官」，ch10对同一大理寺正卿改称「学生」（无门生关系铺垫），同章又自称「顾某」",
       "evidence": [
-        { "chapter": 4, "quote": "周主事若觉得那面官牌是下官栽赃" },
-        { "chapter": 4, "quote": "草民在。顾珩垂首应道" },
-        { "chapter": 10, "quote": "躬身肃立：『学生在。』" }
+        {
+          "chapter": 4,
+          "quote": "周主事若觉得那面官牌是下官栽赃"
+        },
+        {
+          "chapter": 4,
+          "quote": "草民在。顾珩垂首应道"
+        },
+        {
+          "chapter": 10,
+          "quote": "躬身肃立：『学生在。』"
+        }
       ]
     },
     {
@@ -167,12 +247,21 @@
       "class": "time.sequence",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [1, 2],
+      "chapters": [
+        1,
+        2
+      ],
       "entity": "行刑时限",
       "summary": "周泰ch1称「今日辰时前必须正法结案」，ch2改口「巳时初刻问斩吉时」，且已至巳时仍未斩、无人再提超时",
       "evidence": [
-        { "chapter": 1, "quote": "今日辰时前若不将首犯正法结案" },
-        { "chapter": 2, "quote": "若误了巳时初刻的问斩吉时" }
+        {
+          "chapter": 1,
+          "quote": "今日辰时前若不将首犯正法结案"
+        },
+        {
+          "chapter": 2,
+          "quote": "若误了巳时初刻的问斩吉时"
+        }
       ]
     },
     {
@@ -181,12 +270,21 @@
       "class": "structure.arc",
       "status": "final",
       "rootLayer": "outline",
-      "chapters": [1, 5],
+      "chapters": [
+        1,
+        5
+      ],
       "entity": "幕后黑手指向",
       "summary": "ch1全知叙述明写周泰背后是「通政使大人」，全书再无此线（已grep核实），ch5实证指向户部度支司，伏笔断线",
       "evidence": [
-        { "chapter": 1, "quote": "以及他背后那位手眼通天的通政使大人" },
-        { "chapter": 5, "quote": "度支司印……户部公堂的最深处" }
+        {
+          "chapter": 1,
+          "quote": "以及他背后那位手眼通天的通政使大人"
+        },
+        {
+          "chapter": 5,
+          "quote": "度支司印……户部公堂的最深处"
+        }
       ]
     },
     {
@@ -195,13 +293,27 @@
       "class": "state.custody",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [2, 3, 4, 5],
+      "chapters": [
+        2,
+        3,
+        4,
+        5
+      ],
       "entity": "顾珩·刑具",
       "summary": "颈上刑具在「铁枷」与「木枷」间来回横跳（ch2铁枷→ch3熟铁包角木枷→ch4铁枷→ch5章内两种并存），无换枷交代",
       "evidence": [
-        { "chapter": 2, "quote": "换上一副厚重铁枷" },
-        { "chapter": 3, "quote": "二十余斤重的熟铁包角木枷" },
-        { "chapter": 5, "quote": "拖着沉重的精铁死囚木枷" }
+        {
+          "chapter": 2,
+          "quote": "换上一副厚重铁枷"
+        },
+        {
+          "chapter": 3,
+          "quote": "二十余斤重的熟铁包角木枷"
+        },
+        {
+          "chapter": 5,
+          "quote": "拖着沉重的精铁死囚木枷"
+        }
       ]
     },
     {
@@ -210,12 +322,21 @@
       "class": "state.title",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [6, 17],
+      "chapters": [
+        6,
+        17
+      ],
       "entity": "马崇礼品级",
       "summary": "马崇礼ch6为「正五品」、ch17为「从五品」品级横跳，且大纲ch39预设四品郎中",
       "evidence": [
-        { "chapter": 6, "quote": "正五品绯色云雁官袍的中年官员" },
-        { "chapter": 17, "quote": "身着从五品绯色官袍的马崇礼" }
+        {
+          "chapter": 6,
+          "quote": "正五品绯色云雁官袍的中年官员"
+        },
+        {
+          "chapter": 17,
+          "quote": "身着从五品绯色官袍的马崇礼"
+        }
       ]
     },
     {
@@ -224,13 +345,27 @@
       "class": "state.location",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [12, 13, 14, 15],
+      "chapters": [
+        12,
+        13,
+        14,
+        15
+      ],
       "entity": "甲字主库/七号大囤",
       "summary": "ch13戳穿的是「甲字主库」百米粮山，ch14-15同一座山无过渡改称「七号大囤/七号库」，且ch12三号大库又被称「主库粮山」，同一实体三套指称漂移",
       "evidence": [
-        { "chapter": 13, "quote": "通惠仓最宏阔的甲字主库前，已然火把连绵成阵" },
-        { "chapter": 14, "quote": "既然想活命，就交代清楚这七号大囤的机关" },
-        { "chapter": 12, "quote": "哥，这处便是未过火的主库粮山" }
+        {
+          "chapter": 13,
+          "quote": "通惠仓最宏阔的甲字主库前，已然火把连绵成阵"
+        },
+        {
+          "chapter": 14,
+          "quote": "既然想活命，就交代清楚这七号大囤的机关"
+        },
+        {
+          "chapter": 12,
+          "quote": "哥，这处便是未过火的主库粮山"
+        }
       ]
     },
     {
@@ -239,12 +374,21 @@
       "class": "state.location",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [14, 15],
+      "chapters": [
+        14,
+        15
+      ],
       "entity": "通惠仓方位",
       "summary": "通惠仓方位口径矛盾：ch14与ch15台词均说「城东高阜」，ch15叙述又写「京城北郊」，同章自相冲突",
       "evidence": [
-        { "chapter": 14, "quote": "按照工部营造官则，通惠仓建在城东高阜之地" },
-        { "chapter": 15, "quote": "更遑论潜入京城北郊的通惠官仓地底" }
+        {
+          "chapter": 14,
+          "quote": "按照工部营造官则，通惠仓建在城东高阜之地"
+        },
+        {
+          "chapter": 15,
+          "quote": "更遑论潜入京城北郊的通惠官仓地底"
+        }
       ]
     },
     {
@@ -253,12 +397,21 @@
       "class": "prose.anachronism",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [13, 14],
+      "chapters": [
+        13,
+        14
+      ],
       "entity": "大虞律例·亏空刑罚",
       "summary": "相邻两章对「亏空逾万石」的律例刑罚表述打架：ch13称凌迟处死株连九族，ch14称斩监候、以沙充粮才夷三族",
       "evidence": [
-        { "chapter": 13, "quote": "亏空备荒主库逾万石者，按谋反大逆论处，凌迟处死，株连九族" },
-        { "chapter": 14, "quote": "官粮亏空逾万石者斩监候，以泥沙充作漕粮欺瞒御览者……夷灭三族" }
+        {
+          "chapter": 13,
+          "quote": "亏空备荒主库逾万石者，按谋反大逆论处，凌迟处死，株连九族"
+        },
+        {
+          "chapter": 14,
+          "quote": "官粮亏空逾万石者斩监候，以泥沙充作漕粮欺瞒御览者……夷灭三族"
+        }
       ]
     },
     {
@@ -267,11 +420,16 @@
       "class": "state.custody",
       "status": "final",
       "rootLayer": "extraction",
-      "chapters": [19],
+      "chapters": [
+        19
+      ],
       "entity": "顾珩",
       "summary": "叙述直陈「眼前这个待罪小吏」，状态回跳（顾珩ch10已脱罪）",
       "evidence": [
-        { "chapter": 19, "quote": "更料不到眼前这个待罪小吏，能从成千上万个枯燥数字里硬生生将他当年的分赃轨迹刨了出来" }
+        {
+          "chapter": 19,
+          "quote": "更料不到眼前这个待罪小吏，能从成千上万个枯燥数字里硬生生将他当年的分赃轨迹刨了出来"
+        }
       ]
     },
     {
@@ -280,11 +438,16 @@
       "class": "state.custody",
       "status": "final",
       "rootLayer": "extraction",
-      "chapters": [20],
+      "chapters": [
+        20
+      ],
       "entity": "顾珩",
       "summary": "老吏对白以「大理寺羁押的」描述顾珩当前状态，与其多日自由查案的事实不符",
       "evidence": [
-        { "chapter": 20, "quote": "一个大理寺羁押的待罪掌固，真当自己能翻出天来？" }
+        {
+          "chapter": 20,
+          "quote": "一个大理寺羁押的待罪掌固，真当自己能翻出天来？"
+        }
       ]
     },
     {
@@ -293,11 +456,16 @@
       "class": "state.custody",
       "status": "final",
       "rootLayer": "extraction",
-      "chapters": [19],
+      "chapters": [
+        19
+      ],
       "entity": "顾珩",
       "summary": "佥事对白称「枷锁未脱」「断头签子还在头上悬着」，与ch10开枷、撤死罪的既定事实硬冲突且叙述未纠正",
       "evidence": [
-        { "chapter": 19, "quote": "你不过是个枷锁未脱的从九品待罪掌固，大理寺的断头签子还在头上悬着" }
+        {
+          "chapter": 19,
+          "quote": "你不过是个枷锁未脱的从九品待罪掌固，大理寺的断头签子还在头上悬着"
+        }
       ]
     },
     {
@@ -306,13 +474,26 @@
       "class": "structure.arc",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [16, 17, 19],
+      "chapters": [
+        16,
+        17,
+        19
+      ],
       "entity": "督粮道调拨副页",
       "summary": "锁死佥事的核心物证「调拨副页」来源断层：ch16仅掉落无官印皮纸、调令被押粮官带走，ch17/19却使用有佥事花押官防的副页且称「从押粮官身上缴获」",
       "evidence": [
-        { "chapter": 19, "quote": "此前从督粮道押粮官身上缴获的调拨公文副页" },
-        { "chapter": 16, "quote": "手忙脚乱地将那份火漆调令强行往腰间的皮质公文封套里塞去" },
-        { "chapter": 16, "quote": "纸页抖开，没有官府大印" }
+        {
+          "chapter": 19,
+          "quote": "此前从督粮道押粮官身上缴获的调拨公文副页"
+        },
+        {
+          "chapter": 16,
+          "quote": "手忙脚乱地将那份火漆调令强行往腰间的皮质公文封套里塞去"
+        },
+        {
+          "chapter": 16,
+          "quote": "纸页抖开，没有官府大印"
+        }
       ]
     },
     {
@@ -321,12 +502,22 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [18, 19, 20],
+      "chapters": [
+        18,
+        19,
+        20
+      ],
       "entity": "汇通银庄",
       "summary": "同一钱庄名称漂移：ch18/20均作「汇通银庄」，ch19一处作「汇通钱庄」",
       "evidence": [
-        { "chapter": 19, "quote": "余下五万两打入汇通钱庄专用户头" },
-        { "chapter": 18, "quote": "专供大宗银钱交割的汇通银庄存根" }
+        {
+          "chapter": 19,
+          "quote": "余下五万两打入汇通钱庄专用户头"
+        },
+        {
+          "chapter": 18,
+          "quote": "专供大宗银钱交割的汇通银庄存根"
+        }
       ]
     },
     {
@@ -335,13 +526,25 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [16, 18],
+      "chapters": [
+        16,
+        18
+      ],
       "entity": "亏空总量",
       "summary": "ch18新增「五年雀鼠耗累计私盗四万八千石」与主案「亏空细白米整整三万石」总量关系未做勾稽调和（4.8万>3万）；同段落又写「官场遮掩了数十年」与「五年」直接冲突",
       "evidence": [
-        { "chapter": 18, "quote": "五年下来……通惠仓被私盗转运的细白米，便累计达到了整整四万八千石" },
-        { "chapter": 16, "quote": "如今通惠官仓亏空细白米整整三万石" },
-        { "chapter": 18, "quote": "官场遮掩了数十年、被奉为不成文规矩的火耗与鼠耗" }
+        {
+          "chapter": 18,
+          "quote": "五年下来……通惠仓被私盗转运的细白米，便累计达到了整整四万八千石"
+        },
+        {
+          "chapter": 16,
+          "quote": "如今通惠官仓亏空细白米整整三万石"
+        },
+        {
+          "chapter": 18,
+          "quote": "官场遮掩了数十年、被奉为不成文规矩的火耗与鼠耗"
+        }
       ]
     },
     {
@@ -350,12 +553,22 @@
       "class": "state.custody",
       "status": "final",
       "rootLayer": "extraction",
-      "chapters": [12, 16, 17],
+      "chapters": [
+        12,
+        16,
+        17
+      ],
       "entity": "顾珩",
       "summary": "脱罪后敌方/叙述仍以「待罪掌固」相称的口径未更新（ch12叙述层一处、ch16/17对白蔑称），观感漂移",
       "evidence": [
-        { "chapter": 12, "quote": "甚至被一个从九品待罪掌固当面圈出笔迹纰漏的消息" },
-        { "chapter": 16, "quote": "好一个伶牙俐齿的待罪掌固！" }
+        {
+          "chapter": 12,
+          "quote": "甚至被一个从九品待罪掌固当面圈出笔迹纰漏的消息"
+        },
+        {
+          "chapter": 16,
+          "quote": "好一个伶牙俐齿的待罪掌固！"
+        }
       ]
     },
     {
@@ -364,13 +577,27 @@
       "class": "state.title",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [1, 2, 17, 20],
+      "chapters": [
+        1,
+        2,
+        17,
+        20
+      ],
       "entity": "袍制-品级体系",
       "summary": "袍服-品级体系不协：齐元修ch1从六品却ch2着绯袍（绯袍为五品档）；马崇礼ch17从五品着绯袍且ch20私印用「四品以上堂官专用」印泥未作破绽点明",
       "evidence": [
-        { "chapter": 1, "quote": "一身从六品鹭鸶补服的大理寺监刑官齐元修" },
-        { "chapter": 2, "quote": "绯色官袍大袖带翻了案头的令签筒" },
-        { "chapter": 20, "quote": "这是京城四品以上堂官专用的上等朱砂印泥" }
+        {
+          "chapter": 1,
+          "quote": "一身从六品鹭鸶补服的大理寺监刑官齐元修"
+        },
+        {
+          "chapter": 2,
+          "quote": "绯色官袍大袖带翻了案头的令签筒"
+        },
+        {
+          "chapter": 20,
+          "quote": "这是京城四品以上堂官专用的上等朱砂印泥"
+        }
       ]
     },
     {
@@ -379,13 +606,31 @@
       "class": "prose.anachronism",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [4, 7, 10, 12, 13, 15, 17, 20],
+      "chapters": [
+        4,
+        7,
+        10,
+        12,
+        13,
+        15,
+        17,
+        20
+      ],
       "entity": "现代词群",
       "summary": "叙述/对白现代词出戏群：实物过载/物流/偷换概念（ch4对白）、阿拉伯数字（ch7）、潜意识惯性/物理留痕（ch10）、零蛋（ch12）、冰冷数据（ch13）、物理层面的闭环（ch15）、现代复式记账法/古代官署（ch17）、现代穿透式审计（ch20）；另有百米/余米现代计量混入（ch13/14）",
       "evidence": [
-        { "chapter": 4, "quote": "仓场主事若连基本的实物过载都弄不明白" },
-        { "chapter": 7, "quote": "笔锋便在左栏飞快落下一串阿拉伯数字折算出的苏州码子" },
-        { "chapter": 20, "quote": "但换作现代穿透式审计的眼光，资金的流动绝不会凭空消解" }
+        {
+          "chapter": 4,
+          "quote": "仓场主事若连基本的实物过载都弄不明白"
+        },
+        {
+          "chapter": 7,
+          "quote": "笔锋便在左栏飞快落下一串阿拉伯数字折算出的苏州码子"
+        },
+        {
+          "chapter": 20,
+          "quote": "但换作现代穿透式审计的眼光，资金的流动绝不会凭空消解"
+        }
       ]
     },
     {
@@ -394,13 +639,33 @@
       "class": "prose.slop",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [1, 2, 4, 5, 6, 8, 9, 15, 19, 20],
+      "chapters": [
+        1,
+        2,
+        4,
+        5,
+        6,
+        8,
+        9,
+        15,
+        19,
+        20
+      ],
       "entity": "复读与同构",
       "summary": "复述/复读群：焦壳设定解释三次、三成二分老鼠论证ch6/8/9三遍同构、吃硬饼场景ch2/5近复刻、踉跄后退原句两现、回廊老吏讥讽→打脸桥段ch11/14同构、ch15「刺骨」同句两现、ch19/20「字字如刀」跨章复用",
       "evidence": [
-        { "chapter": 6, "quote": "这天下哪里的老鼠，吃公粮时能按着朝廷官历，一分一厘都咬得严丝合缝？" },
-        { "chapter": 8, "quote": "世上可有通晓官历、按月按厘吃粮的老鼠？" },
-        { "chapter": 15, "quote": "刺骨的深秋泥水冰冷刺骨" }
+        {
+          "chapter": 6,
+          "quote": "这天下哪里的老鼠，吃公粮时能按着朝廷官历，一分一厘都咬得严丝合缝？"
+        },
+        {
+          "chapter": 8,
+          "quote": "世上可有通晓官历、按月按厘吃粮的老鼠？"
+        },
+        {
+          "chapter": 15,
+          "quote": "刺骨的深秋泥水冰冷刺骨"
+        }
       ]
     },
     {
@@ -409,12 +674,21 @@
       "class": "structure.offscreen",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [9, 10],
+      "chapters": [
+        9,
+        10
+      ],
       "entity": "大秤·实证环节",
       "summary": "ch9章题承诺「一杆大秤称碎遮羞布」，实写仅口述灌铅从未实际剖秤称量；ch10判词引用「剖秤起获铅块」的读者未见过程，关键实证动作被跨章省略",
       "evidence": [
-        { "chapter": 9, "quote": "秤砣被掏空灌铅，实重足有一百三十二斤" },
-        { "chapter": 10, "quote": "剖秤起获铅块，力证通惠官仓大火前实物早已被盗运一空" }
+        {
+          "chapter": 9,
+          "quote": "秤砣被掏空灌铅，实重足有一百三十二斤"
+        },
+        {
+          "chapter": 10,
+          "quote": "剖秤起获铅块，力证通惠官仓大火前实物早已被盗运一空"
+        }
       ]
     },
     {
@@ -423,12 +697,21 @@
       "class": "structure.arc",
       "status": "final",
       "rootLayer": "infra",
-      "chapters": [5, 6],
+      "chapters": [
+        5,
+        6
+      ],
       "entity": "ch5铜算筹暗号线",
       "summary": "断电重写界ch5→ch6：ch5尾核心发现（铜算筹暗号对上死牢刻痕、三万石分账两成四分/七分/一分）在ch6-10正文零承接，线索整体悬置",
       "evidence": [
-        { "chapter": 5, "quote": "死牢墙缝里的暗号与暗格私账里的定额，将周泰、转运巡检乃至整座仓场的欺瞒铁证，以无可辩驳的数理逻辑焊死在了一起" },
-        { "chapter": 6, "quote": "顾珩此前被提解出狱时，便已暗中托付姜云娘……即刻奔赴大理寺值房求取监刑差官的强推关防" }
+        {
+          "chapter": 5,
+          "quote": "死牢墙缝里的暗号与暗格私账里的定额，将周泰、转运巡检乃至整座仓场的欺瞒铁证，以无可辩驳的数理逻辑焊死在了一起"
+        },
+        {
+          "chapter": 6,
+          "quote": "顾珩此前被提解出狱时，便已暗中托付姜云娘……即刻奔赴大理寺值房求取监刑差官的强推关防"
+        }
       ]
     },
     {
@@ -437,12 +720,22 @@
       "class": "continuity.boundary",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [1, 2, 4],
+      "chapters": [
+        1,
+        2,
+        4
+      ],
       "entity": "章界位置/物理矛盾",
       "summary": "齐元修ch1末已绕出公案立于台下、ch2开头又从三丈外公案后起身；顾珩ch1双手反剪捆死却把灰拍在数步之外、颈骨错位后仍咆哮；ch4戴二十斤重枷双手捧物高举过头顶",
       "evidence": [
-        { "chapter": 1, "quote": "齐元修掀袍厉喝，快步绕出公案" },
-        { "chapter": 2, "quote": "三丈外的公案后传来一声惊堂木暴响。大理寺监刑官霍然起身" }
+        {
+          "chapter": 1,
+          "quote": "齐元修掀袍厉喝，快步绕出公案"
+        },
+        {
+          "chapter": 2,
+          "quote": "三丈外的公案后传来一声惊堂木暴响。大理寺监刑官霍然起身"
+        }
       ]
     },
     {
@@ -451,12 +744,20 @@
       "class": "state.location",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [4],
+      "chapters": [
+        4
+      ],
       "entity": "河道名称",
       "summary": "同章内同一码头出闸记录挂在两条河名下：漕粮「从通惠河水路运入」，水龙簿却在「金水河码头」",
       "evidence": [
-        { "chapter": 4, "quote": "从通惠河水路运入甲字库" },
-        { "chapter": 4, "quote": "通惠仓外金水河码头的过闸验粮水龙簿" }
+        {
+          "chapter": 4,
+          "quote": "从通惠河水路运入甲字库"
+        },
+        {
+          "chapter": 4,
+          "quote": "通惠仓外金水河码头的过闸验粮水龙簿"
+        }
       ]
     },
     {
@@ -465,12 +766,20 @@
       "class": "time.sequence",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [5],
+      "chapters": [
+        5
+      ],
       "entity": "私账年限vs亏空年限",
       "summary": "ch5相邻段落「整整五年六十个月」每月定耗，却称三万石亏空系「三年三十六个月」蚕食所致，章内无调和",
       "evidence": [
-        { "chapter": 5, "quote": "整整五年，六十个月" },
-        { "chapter": 5, "quote": "早在三年三十六个月里，通过这种每月定额三成二分的折损蚕食" }
+        {
+          "chapter": 5,
+          "quote": "整整五年，六十个月"
+        },
+        {
+          "chapter": 5,
+          "quote": "早在三年三十六个月里，通过这种每月定额三成二分的折损蚕食"
+        }
       ]
     },
     {
@@ -479,12 +788,21 @@
       "class": "structure.arc",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [16, 17],
+      "chapters": [
+        16,
+        17
+      ],
       "entity": "三万石消失环节",
       "summary": "ch16顾珩定性粮食「在河道间凭空消失」（打击督粮道），ch17-20查明为仓内假平粜经暗渠盗出，两套定性冲突且未标注前者为早期误判",
       "evidence": [
-        { "chapter": 16, "quote": "粮食是在从通州起运、至通惠仓交割的河道间凭空消失的" },
-        { "chapter": 17, "quote": "粮食借暗渠拖走卖给私商" }
+        {
+          "chapter": 16,
+          "quote": "粮食是在从通州起运、至通惠仓交割的河道间凭空消失的"
+        },
+        {
+          "chapter": 17,
+          "quote": "粮食借暗渠拖走卖给私商"
+        }
       ]
     },
     {
@@ -493,12 +811,22 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [17, 18, 19],
+      "chapters": [
+        17,
+        18,
+        19
+      ],
       "entity": "三万石出库节奏",
       "summary": "ch17称二年九月至三年二月分八批开除，ch18记为三年二月开除三万石，ch19又写成二月初四批单次日一次接引三万石，出库节奏三种口径",
       "evidence": [
-        { "chapter": 17, "quote": "承平二年九月至三年二月，周泰去职前，通惠仓假借平准法平抑物价之名，连发八道销粮签押" },
-        { "chapter": 19, "quote": "次日，周泰私记写得清清楚楚：丰泰粮行接引蓟镇细白米三万石" }
+        {
+          "chapter": 17,
+          "quote": "承平二年九月至三年二月，周泰去职前，通惠仓假借平准法平抑物价之名，连发八道销粮签押"
+        },
+        {
+          "chapter": 19,
+          "quote": "次日，周泰私记写得清清楚楚：丰泰粮行接引蓟镇细白米三万石"
+        }
       ]
     },
     {
@@ -507,11 +835,18 @@
       "class": "structure.arc",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [16, 17, 20],
+      "chapters": [
+        16,
+        17,
+        20
+      ],
       "entity": "姜云娘",
       "summary": "姜云娘持续工具化：传密令、端饼翻册、ch20以事后补叙成建制送出算房情报（含银庄内部流水），无自身动机线",
       "evidence": [
-        { "chapter": 20, "quote": "此前你在大理寺牢内写下密信交与我，让我带着信物去找车马行与外城算房" }
+        {
+          "chapter": 20,
+          "quote": "此前你在大理寺牢内写下密信交与我，让我带着信物去找车马行与外城算房"
+        }
       ]
     },
     {
@@ -520,11 +855,16 @@
       "class": "structure.arc",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [20],
+      "chapters": [
+        20
+      ],
       "entity": "单筒西洋水晶聚光镜",
       "summary": "解开局中关键道具凭空从袖袋摸出、前文零铺垫，且「西洋」在架空大虞语境出戏",
       "evidence": [
-        { "chapter": 20, "quote": "抽拉开来，赫然是一柄仅有拇指粗细的单筒西洋水晶聚光镜" }
+        {
+          "chapter": 20,
+          "quote": "抽拉开来，赫然是一柄仅有拇指粗细的单筒西洋水晶聚光镜"
+        }
       ]
     },
     {
@@ -533,11 +873,16 @@
       "class": "ending.closure",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [20],
+      "chapters": [
+        20
+      ],
       "entity": "章末钩子",
       "summary": "50章书第20章以氛围句封卷、证据封装+大捷定格形成卷末完结感，未埋指向ch21的危机征兆",
       "evidence": [
-        { "chapter": 20, "quote": "宛如一道已然撕裂夜空的血色裂痕……泛着令人骨髓生寒的灼热煞气" }
+        {
+          "chapter": 20,
+          "quote": "宛如一道已然撕裂夜空的血色裂痕……泛着令人骨髓生寒的灼热煞气"
+        }
       ]
     },
     {
@@ -546,12 +891,21 @@
       "class": "continuity.boundary",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [18, 19],
+      "chapters": [
+        18,
+        19
+      ],
       "entity": "督粮道佥事",
       "summary": "ch18末在场名单无佥事，ch19开篇已在场拍案，仅以一句对白事后补交代，十余名按刀随从夜间直入重防大仓无交涉",
       "evidence": [
-        { "chapter": 19, "quote": "那只骨节突出的粗粝大手便带着风声猛然拍落" },
-        { "chapter": 19, "quote": "佥事大人深夜冒风从通州赶来" }
+        {
+          "chapter": 19,
+          "quote": "那只骨节突出的粗粝大手便带着风声猛然拍落"
+        },
+        {
+          "chapter": 19,
+          "quote": "佥事大人深夜冒风从通州赶来"
+        }
       ]
     },
     {
@@ -560,11 +914,16 @@
       "class": "state.identity",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [15],
+      "chapters": [
+        15
+      ],
       "entity": "顾珩·声线",
       "summary": "顾珩ch15下令用粗口自称「老子」，与其通篇冷峻平稳声线违和（11-15唯一一处）",
       "evidence": [
-        { "chapter": 15, "quote": "把暗槽底部的淤泥全部给老子翻一遍" }
+        {
+          "chapter": 15,
+          "quote": "把暗槽底部的淤泥全部给老子翻一遍"
+        }
       ]
     },
     {
@@ -573,11 +932,17 @@
       "class": "structure.arc",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [6, 7],
+      "chapters": [
+        6,
+        7
+      ],
       "entity": "军令状",
       "summary": "ch7马崇礼称顾珩「既立下军令状」，但ch6实写顾珩从未立军令状，仅有单方一个时辰限令",
       "evidence": [
-        { "chapter": 7, "quote": "你既立下军令状，缺了一笔账无法核定实数，休怪本部院依律定你欺官之罪" }
+        {
+          "chapter": 7,
+          "quote": "你既立下军令状，缺了一笔账无法核定实数，休怪本部院依律定你欺官之罪"
+        }
       ]
     },
     {
@@ -586,11 +951,16 @@
       "class": "state.identity",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [10],
+      "chapters": [
+        10
+      ],
       "entity": "姜云娘·称谓",
       "summary": "姜云娘ch6-9对顾珩无亲昵称谓，ch10首次开口即唤「哥」并眼眶微红，剧情仅约三日，情感升温缺铺垫",
       "evidence": [
-        { "chapter": 10, "quote": "递过一方浸了金创药汁的布巾，眼眶微红却抿着唇没掉眼泪：『哥，脖子上的伤得先压住。』" }
+        {
+          "chapter": 10,
+          "quote": "递过一方浸了金创药汁的布巾，眼眶微红却抿着唇没掉眼泪：『哥，脖子上的伤得先压住。』"
+        }
       ]
     },
     {
@@ -599,12 +969,21 @@
       "class": "state.custody",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [1, 2],
+      "chapters": [
+        1,
+        2
+      ],
       "entity": "关押地称谓",
       "summary": "ch1周泰口中「大理寺诏狱」与ch2起实际「大理寺重犯死牢」称谓不统一",
       "evidence": [
-        { "chapter": 1, "quote": "大理寺诏狱里的铁梨夹棍" },
-        { "chapter": 2, "quote": "押回大理寺重犯死牢收押待审" }
+        {
+          "chapter": 1,
+          "quote": "大理寺诏狱里的铁梨夹棍"
+        },
+        {
+          "chapter": 2,
+          "quote": "押回大理寺重犯死牢收押待审"
+        }
       ]
     },
     {
@@ -613,11 +992,16 @@
       "class": "structure.arc",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [5],
+      "chapters": [
+        5
+      ],
       "entity": "死牢墙缝刻痕",
       "summary": "ch5以「当时他以为」回填顾珩在死牢石缝见刻痕的记忆，但ch2/ch3死牢场景无铺垫段落，属回溯式补伏笔",
       "evidence": [
-        { "chapter": 5, "quote": "当时他以为那是死囚濒死时抠出的指痕" }
+        {
+          "chapter": 5,
+          "quote": "当时他以为那是死囚濒死时抠出的指痕"
+        }
       ]
     },
     {
@@ -626,11 +1010,16 @@
       "class": "structure.arc",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [5],
+      "chapters": [
+        5
+      ],
       "entity": "铜算筹来源",
       "summary": "姜云娘称贴身藏着「前任掌固死前在死牢石缝里留下的账签」，但她未进过死牢，物证流转无交代",
       "evidence": [
-        { "chapter": 5, "quote": "还有前任掌固死前在死牢石缝里留下的账签，我一直贴身藏着" }
+        {
+          "chapter": 5,
+          "quote": "还有前任掌固死前在死牢石缝里留下的账签，我一直贴身藏着"
+        }
       ]
     },
     {
@@ -639,12 +1028,21 @@
       "class": "outline.contract",
       "status": "final",
       "rootLayer": "outline",
-      "chapters": [3, 4],
+      "chapters": [
+        3,
+        4
+      ],
       "entity": "大纲时间节点",
       "summary": "大纲ch3 CPN标「当日午后」行刺、ch4标「当日未时」，正文实际为二更夜与破晓；ch4大纲「当堂宣判免除死刑」未履行（正文仅予查账宽限，免死延至ch10）",
       "evidence": [
-        { "chapter": 3, "quote": "正当远处城楼隐约传来二更鼓响之时" },
-        { "chapter": 4, "quote": "通惠仓临时勘验公堂外，天光刚破晓" }
+        {
+          "chapter": 3,
+          "quote": "正当远处城楼隐约传来二更鼓响之时"
+        },
+        {
+          "chapter": 4,
+          "quote": "通惠仓临时勘验公堂外，天光刚破晓"
+        }
       ]
     },
     {
@@ -653,11 +1051,17 @@
       "class": "structure.arc",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [2, 4],
+      "chapters": [
+        2,
+        4
+      ],
       "entity": "当值手录私藏",
       "summary": "重犯收押死牢未经搜身即贴身携带半年手录底联，历经入牢、行刺均未被发现，流转无交代",
       "evidence": [
-        { "chapter": 4, "quote": "从贴身的粗布夹层中扯出一卷被油纸包裹得严严实实的油布包" }
+        {
+          "chapter": 4,
+          "quote": "从贴身的粗布夹层中扯出一卷被油纸包裹得严严实实的油布包"
+        }
       ]
     },
     {
@@ -666,11 +1070,16 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [11],
+      "chapters": [
+        11
+      ],
       "entity": "定耗三成二分",
       "summary": "三成二分（32%）乘九万三千石为29760石，与「正好抹平三万石」存在约240石差，「正好」措辞过满",
       "evidence": [
-        { "chapter": 11, "quote": "不多不少，正好在账目上抹平这三万石巨额亏空" }
+        {
+          "chapter": 11,
+          "quote": "不多不少，正好在账目上抹平这三万石巨额亏空"
+        }
       ]
     },
     {
@@ -679,11 +1088,16 @@
       "class": "prose.anachronism",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [13],
+      "chapters": [
+        13
+      ],
       "entity": "密折",
       "summary": "ch11/ch13算手台词均称「密信」，ch13叙事独写「密折」——密折系上奏御前文书，在押死囚递「密折」口径错位",
       "evidence": [
-        { "chapter": 13, "quote": "通过密折暗中点拨训练的精悍心腹" }
+        {
+          "chapter": 13,
+          "quote": "通过密折暗中点拨训练的精悍心腹"
+        }
       ]
     },
     {
@@ -692,12 +1106,21 @@
       "class": "outline.contract",
       "status": "final",
       "rootLayer": "outline",
-      "chapters": [15, 16],
+      "chapters": [
+        15,
+        16
+      ],
       "entity": "督粮道/漕运总督",
       "summary": "ch15尾塘报盖「通州督粮道」血印，骑士却喊「漕运总督大营出大事」，两套机构混用（ch16后统一为督粮道）",
       "evidence": [
-        { "chapter": 15, "quote": "通州漕运总督大营出大事了" },
-        { "chapter": 15, "quote": "加盖了通州督粮道鲜红血印的火急塘报" }
+        {
+          "chapter": 15,
+          "quote": "通州漕运总督大营出大事了"
+        },
+        {
+          "chapter": 15,
+          "quote": "加盖了通州督粮道鲜红血印的火急塘报"
+        }
       ]
     }
   ]

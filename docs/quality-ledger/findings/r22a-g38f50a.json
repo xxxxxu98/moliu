@@ -10,7 +10,8 @@
     "chaptersRead": 50,
     "writerModel": "anti-gravity/gemini-3.8-flash-high (provider-1787044972770)",
     "reviewerModel": "anti-gravity/gemini-3.8-flash-high (同通道自评+4通读agent)",
-    "independentReviewer": false
+    "independentReviewer": false,
+    "caliber": "reader-eval-v1"
   },
   "gates": {
     "precheckRedlines": 0,
@@ -27,7 +28,9 @@
       "mainUnresolved": 0,
       "closureSignals": 0
     },
-    "humanIntervention": ["ch37 storyflow-repair-empty 定点补写（attempt 1 成功过审，3451 字）"],
+    "humanIntervention": [
+      "ch37 storyflow-repair-empty 定点补写（attempt 1 成功过审，3451 字）"
+    ],
     "blindTest": null
   },
   "findings": [
@@ -37,13 +40,28 @@
       "class": "state.custody",
       "status": "final",
       "rootLayer": "extraction",
-      "chapters": [10, 17, 18, 36, 39],
+      "chapters": [
+        10,
+        17,
+        18,
+        36,
+        39
+      ],
       "entity": "陆崇仁",
       "summary": "陆崇仁ch10摘冠锁拿下狱→ch15-17仍自由布置眼线/联名密折→ch18再次以首次口吻被锁拿扯冠→ch36囚袍入堂ch39又被当堂扯下乌纱补服，同一人被褫夺三次",
       "evidence": [
-        { "chapter": 10, "quote": "卸去陆崇仁顶戴花翎与官服大印，暂押大理寺偏厅严加看管" },
-        { "chapter": 17, "quote": "户部左侍郎陆崇仁联名通政司，六百里加急呈递江南夏粮报捷密折" },
-        { "chapter": 18, "quote": "户部左侍郎陆崇仁已被内廷缇骑当场锁拿，连那顶二品梁冠都被扯落" }
+        {
+          "chapter": 10,
+          "quote": "卸去陆崇仁顶戴花翎与官服大印，暂押大理寺偏厅严加看管"
+        },
+        {
+          "chapter": 17,
+          "quote": "户部左侍郎陆崇仁联名通政司，六百里加急呈递江南夏粮报捷密折"
+        },
+        {
+          "chapter": 18,
+          "quote": "户部左侍郎陆崇仁已被内廷缇骑当场锁拿，连那顶二品梁冠都被扯落"
+        }
       ],
       "replayCase": "r22a-S1-01"
     },
@@ -53,14 +71,32 @@
       "class": "state.fate",
       "status": "final",
       "rootLayer": "extraction",
-      "chapters": [18, 21, 24, 27, 41],
+      "chapters": [
+        18,
+        21,
+        24,
+        27,
+        41
+      ],
       "entity": "沈淮安",
       "summary": "主角「昭雪开释+授正七品清查司主事+除尽镣铐」全套仪式在ch18与ch21整段重演、ch41第三次授同一官职；ch24/27又无事件回退在押囚服——命运台账完全不同步，ch1「定罪」终态误登（fate-adjudicate ledger-error 0.98）+状态账断供的下游爆发",
       "evidence": [
-        { "chapter": 18, "quote": "着即昭雪沉冤，尽除刑具，开释无罪" },
-        { "chapter": 21, "quote": "着沈淮安起复为正七品度支清查司主事，佩獬豸铜印" },
-        { "chapter": 24, "quote": "在刑部案卷中仍属待决在押之身" },
-        { "chapter": 27, "quote": "老掌柜冷眼扫向沈淮安的囚服" }
+        {
+          "chapter": 18,
+          "quote": "着即昭雪沉冤，尽除刑具，开释无罪"
+        },
+        {
+          "chapter": 21,
+          "quote": "着沈淮安起复为正七品度支清查司主事，佩獬豸铜印"
+        },
+        {
+          "chapter": 24,
+          "quote": "在刑部案卷中仍属待决在押之身"
+        },
+        {
+          "chapter": 27,
+          "quote": "老掌柜冷眼扫向沈淮安的囚服"
+        }
       ],
       "replayCase": "r22a-S1-02"
     },
@@ -70,13 +106,26 @@
       "class": "state.location",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [43, 44, 46],
+      "chapters": [
+        43,
+        44,
+        46
+      ],
       "entity": "沈淮安",
       "summary": "ch43亥时沈淮安在陆宅地窖（正七品官袍）亲历死士袭击拾残页，ch44丑时却写他同时身处数里外诏狱死牢囚衣镣铐，且称密函系一个时辰前经探视的裴慎送出——而裴慎当时在陆宅现场；ch46沿用错误设定",
       "evidence": [
-        { "chapter": 43, "quote": "沈淮安站起身，整了整身上的正七品官袍，抬步跨入梯阶" },
-        { "chapter": 44, "quote": "与此同时，数里之外的北镇抚司诏狱死牢内，油灯如豆" },
-        { "chapter": 44, "quote": "早在一个时辰前，他便通过探视的裴慎……送出了铁窗" }
+        {
+          "chapter": 43,
+          "quote": "沈淮安站起身，整了整身上的正七品官袍，抬步跨入梯阶"
+        },
+        {
+          "chapter": 44,
+          "quote": "与此同时，数里之外的北镇抚司诏狱死牢内，油灯如豆"
+        },
+        {
+          "chapter": 44,
+          "quote": "早在一个时辰前，他便通过探视的裴慎……送出了铁窗"
+        }
       ],
       "replayCase": "r22a-S1-03"
     },
@@ -86,13 +135,27 @@
       "class": "state.custody",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [41, 44, 45, 46],
+      "chapters": [
+        41,
+        44,
+        45,
+        46
+      ],
       "entity": "沈淮安·在押状态",
       "summary": "ch41密旨已「特赦免前罪、革除囚籍」当场解镣换七品补服，ch44回退死牢囚衣「依旧戴罪候旨」，ch45囚衣提押，ch46再演一遍「开锁抹去待决囚籍」赦免戏——先赦后押再赦",
       "evidence": [
-        { "chapter": 41, "quote": "特赦免前罪，革除囚籍，擢授正七品度支清查司主事" },
-        { "chapter": 44, "quote": "他依旧戴罪候旨……却不得踏出禁门半步" },
-        { "chapter": 46, "quote": "沈淮安自太仓署获罪以来的待决囚籍……被天子亲口抹去" }
+        {
+          "chapter": 41,
+          "quote": "特赦免前罪，革除囚籍，擢授正七品度支清查司主事"
+        },
+        {
+          "chapter": 44,
+          "quote": "他依旧戴罪候旨……却不得踏出禁门半步"
+        },
+        {
+          "chapter": 46,
+          "quote": "沈淮安自太仓署获罪以来的待决囚籍……被天子亲口抹去"
+        }
       ]
     },
     {
@@ -101,12 +164,20 @@
       "class": "state.custody",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [50],
+      "chapters": [
+        50
+      ],
       "entity": "沈淮安·获释事件",
       "summary": "ch50章首闪回把获释事件整体改写为「金殿之上宋廷章力保、锦衣缇骑当着满朝文武砸开重枷当堂无罪释放」——正文实为ch41诏狱密旨开镣+ch46偏殿密召开轻镣，从无金殿/满朝文武/砸枷情节；同段「户部死牢」「三十斤死囚木枷」再错",
       "evidence": [
-        { "chapter": 50, "quote": "命锦衣缇骑当着满朝文武的面砸开沈淮安身上的重枷脚镣" },
-        { "chapter": 50, "quote": "他还是户部死牢里待决的九品充军死囚，颈项上套着三十斤重死囚木枷" }
+        {
+          "chapter": 50,
+          "quote": "命锦衣缇骑当着满朝文武的面砸开沈淮安身上的重枷脚镣"
+        },
+        {
+          "chapter": 50,
+          "quote": "他还是户部死牢里待决的九品充军死囚，颈项上套着三十斤重死囚木枷"
+        }
       ]
     },
     {
@@ -115,12 +186,22 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [14, 15, 25],
+      "chapters": [
+        14,
+        15,
+        25
+      ],
       "entity": "黑金总量",
       "summary": "ch14/15两度御前断言八十万石变卖「所得数百万两」，与黑金链定稿冲突一个数量级（四庄分吞30万+私盐50万=80万两；按自给折色率八十万石至多约五十万两），后文从未修正",
       "evidence": [
-        { "chapter": 15, "quote": "八十万石官粮早在运河码头被折价变卖，所得数百万两赃银" },
-        { "chapter": 25, "quote": "汇通吞银十万，丰益八万，泰和七万，同庆五万" }
+        {
+          "chapter": 15,
+          "quote": "八十万石官粮早在运河码头被折价变卖，所得数百万两赃银"
+        },
+        {
+          "chapter": 25,
+          "quote": "汇通吞银十万，丰益八万，泰和七万，同庆五万"
+        }
       ],
       "replayCase": "r22a-S1-06"
     },
@@ -130,12 +211,22 @@
       "class": "time.sequence",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [30, 31, 36],
+      "chapters": [
+        30,
+        31,
+        36
+      ],
       "entity": "三司会审时辰",
       "summary": "ch30-35共13处钉死会审于午时且ch31明言「天子章程半个时辰都不改」，ch36却被连夜提前两时辰改辰时，与前设直接相抵",
       "evidence": [
-        { "chapter": 31, "quote": "明日午时三司会审，天子金口玉言定下的章程，半个时辰都不会为你改动" },
-        { "chapter": 36, "quote": "硬生生将堂审提前两个时辰，逼定在第九日辰时整" }
+        {
+          "chapter": 31,
+          "quote": "明日午时三司会审，天子金口玉言定下的章程，半个时辰都不会为你改动"
+        },
+        {
+          "chapter": 36,
+          "quote": "硬生生将堂审提前两个时辰，逼定在第九日辰时整"
+        }
       ]
     },
     {
@@ -144,12 +235,22 @@
       "class": "state.identity",
       "status": "final",
       "rootLayer": "infra",
-      "chapters": [33, 37, 38],
+      "chapters": [
+        33,
+        37,
+        38
+      ],
       "entity": "老库官（人证）",
       "summary": "补写章ch37人证与ch33调包内应被ch38并成一人却三处矛盾：羁押来源（刑部大牢vs清查司当场锁拿）、管库年限（四十年vs近三十年）、在堂状态（ch37已瘫堂中ch38又被拖入）——补写缝合伤",
       "evidence": [
-        { "chapter": 37, "quote": "刑部大牢中提审的太仓署老粮吏，乃是在仓中管库四十年的老账房" },
-        { "chapter": 38, "quote": "那正是世代盘踞太仓署近三十年、此前企图在账房调包飞钱底册的老库官" }
+        {
+          "chapter": 37,
+          "quote": "刑部大牢中提审的太仓署老粮吏，乃是在仓中管库四十年的老账房"
+        },
+        {
+          "chapter": 38,
+          "quote": "那正是世代盘踞太仓署近三十年、此前企图在账房调包飞钱底册的老库官"
+        }
       ]
     },
     {
@@ -158,12 +259,21 @@
       "class": "state.location",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [33, 34],
+      "chapters": [
+        33,
+        34
+      ],
       "entity": "《通源兑讫》真账",
       "summary": "真账位置跨章漂移：ch33真盐引汇票在西侧暗间、账房木匣内即底册，ch34却称一切真证「自始至终」封存地下冰窖、地面账房从来全是假的",
       "evidence": [
-        { "chapter": 33, "quote": "林疏桐从西侧暗间捧出真正的盐引汇票" },
-        { "chapter": 34, "quote": "所有真正的《通源兑讫》底册与盐引存根，自始至终都被秘密封存在地下夹层的冰窖之中" }
+        {
+          "chapter": 33,
+          "quote": "林疏桐从西侧暗间捧出真正的盐引汇票"
+        },
+        {
+          "chapter": 34,
+          "quote": "所有真正的《通源兑讫》底册与盐引存根，自始至终都被秘密封存在地下夹层的冰窖之中"
+        }
       ]
     },
     {
@@ -172,12 +282,20 @@
       "class": "state.location",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [35],
+      "chapters": [
+        35
+      ],
       "entity": "内廷残纸",
       "summary": "章末残纸「贴身收入衣襟内侧」四行之后又「案头横陈」，核心道具章内位置自相矛盾",
       "evidence": [
-        { "chapter": 35, "quote": "沈淮安将残纸重新折叠收好，贴身收入衣襟内侧" },
-        { "chapter": 35, "quote": "案头那张被烈火舔舐过的内廷残纸在烛影下无声横陈" }
+        {
+          "chapter": 35,
+          "quote": "沈淮安将残纸重新折叠收好，贴身收入衣襟内侧"
+        },
+        {
+          "chapter": 35,
+          "quote": "案头那张被烈火舔舐过的内廷残纸在烛影下无声横陈"
+        }
       ]
     },
     {
@@ -186,13 +304,27 @@
       "class": "state.title",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [3, 18, 39, 44],
+      "chapters": [
+        3,
+        18,
+        39,
+        44
+      ],
       "entity": "陆崇仁品级",
       "summary": "陆崇仁品级三品/二品漂移贯穿全书：ch3/39剥服处正三品、ch18梁冠/ch33/38/39褫夺令二品，ch39同场景两品级并存；ch44右侍郎正三品孔雀补服证实侍郎=三品",
       "evidence": [
-        { "chapter": 3, "quote": "身着正三品绯色孔雀补服" },
-        { "chapter": 39, "quote": "当堂褫夺陆崇仁二品顶戴花翎" },
-        { "chapter": 44, "quote": "身着正三品绯色孔雀补服……正是户部右侍郎" }
+        {
+          "chapter": 3,
+          "quote": "身着正三品绯色孔雀补服"
+        },
+        {
+          "chapter": 39,
+          "quote": "当堂褫夺陆崇仁二品顶戴花翎"
+        },
+        {
+          "chapter": 44,
+          "quote": "身着正三品绯色孔雀补服……正是户部右侍郎"
+        }
       ]
     },
     {
@@ -201,12 +333,21 @@
       "class": "prose.anachronism",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [10, 39],
+      "chapters": [
+        10,
+        39
+      ],
       "entity": "官制杂糅",
       "summary": "明制体系（缇骑/驾帖/补服/乌纱）中混用清制「顶戴花翎」（ch10/39）、唐宋制「银鱼袋」（ch46），ch39判词内清制顶戴与明制双梁五花乌纱帽同场",
       "evidence": [
-        { "chapter": 10, "quote": "卸去陆崇仁顶戴花翎与官服大印" },
-        { "chapter": 10, "quote": "陆崇仁头顶的三品乌纱被当场摘下" }
+        {
+          "chapter": 10,
+          "quote": "卸去陆崇仁顶戴花翎与官服大印"
+        },
+        {
+          "chapter": 10,
+          "quote": "陆崇仁头顶的三品乌纱被当场摘下"
+        }
       ]
     },
     {
@@ -215,12 +356,21 @@
       "class": "time.sequence",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [14, 16],
+      "chapters": [
+        14,
+        16
+      ],
       "entity": "乙库五万石案年份",
       "summary": "同一笔乙库五万石水浸核销案，ch14定档「去岁六月」ch16御前改口「前年六月」",
       "evidence": [
-        { "chapter": 14, "quote": "去岁六月初九，度支司自乙库调运五万石所谓霉变粮出京" },
-        { "chapter": 16, "quote": "前年六月，太仓乙库核销水浸粮整整五万石" }
+        {
+          "chapter": 14,
+          "quote": "去岁六月初九，度支司自乙库调运五万石所谓霉变粮出京"
+        },
+        {
+          "chapter": 16,
+          "quote": "前年六月，太仓乙库核销水浸粮整整五万石"
+        }
       ]
     },
     {
@@ -229,12 +379,21 @@
       "class": "time.sequence",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [17, 19],
+      "chapters": [
+        17,
+        19
+      ],
       "entity": "报捷折夏粮口径",
       "summary": "陆崇仁折自称「去岁江南大熟」且四百二十万石已运抵，沈淮安拆折逻辑全按今岁推演（五月初五新麦刚过淮安），去岁粮与今岁时限互斥且ch19-22沿用固化",
       "evidence": [
-        { "chapter": 17, "quote": "去岁江南大熟，各省起运夏粮实收四百二十万石" },
-        { "chapter": 17, "quote": "如今不过是五月初五！江南的新麦此刻若真在运河上" }
+        {
+          "chapter": 17,
+          "quote": "去岁江南大熟，各省起运夏粮实收四百二十万石"
+        },
+        {
+          "chapter": 17,
+          "quote": "如今不过是五月初五！江南的新麦此刻若真在运河上"
+        }
       ]
     },
     {
@@ -243,12 +402,22 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [16, 21, 24],
+      "chapters": [
+        16,
+        21,
+        24
+      ],
       "entity": "八十万石亏空构成",
       "summary": "亏空定性漂移：ch14/16「十年积弊累计铸成」vs ch21/24「去岁单年起运四百二十万与见库三百四十万的差额」",
       "evidence": [
-        { "chapter": 16, "quote": "十年积弊层层盘剥，最终铸成了太仓八十万石官粮亏空的无底黑洞" },
-        { "chapter": 21, "quote": "去岁各省起运夏粮实收额记着四百二十万石，太仓实际见库陈米充其量只有三百四十万石" }
+        {
+          "chapter": 16,
+          "quote": "十年积弊层层盘剥，最终铸成了太仓八十万石官粮亏空的无底黑洞"
+        },
+        {
+          "chapter": 21,
+          "quote": "去岁各省起运夏粮实收额记着四百二十万石，太仓实际见库陈米充其量只有三百四十万石"
+        }
       ]
     },
     {
@@ -257,12 +426,20 @@
       "class": "number.arithmetic",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [38],
+      "chapters": [
+        38
+      ],
       "entity": "折色折银率",
       "summary": "同章折银比率三套口径并存：8万石对3万两（0.375两/石）、820石对800两（约1两/石）、3万石对30万两（10两/石）",
       "evidence": [
-        { "chapter": 38, "quote": "万安仓虚报水浸核销良麦八万石，对应户部拔出折色银三万两" },
-        { "chapter": 38, "quote": "万安仓侵吞正粮八百二十石，折银八百两" }
+        {
+          "chapter": 38,
+          "quote": "万安仓虚报水浸核销良麦八万石，对应户部拔出折色银三万两"
+        },
+        {
+          "chapter": 38,
+          "quote": "万安仓侵吞正粮八百二十石，折银八百两"
+        }
       ]
     },
     {
@@ -271,12 +448,21 @@
       "class": "state.title",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [19, 12],
+      "chapters": [
+        19,
+        12
+      ],
       "entity": "补服品级映射",
       "summary": "自建补子品级表内部冲突：孔雀补ch3/17为三品，ch12提刑官「正四品绯色孔雀补服」、ch19五品掌印郎中「绯袍云雁补」（云雁四品纹五品应白鹇）、ch42七品「孔雀青袍」",
       "evidence": [
-        { "chapter": 12, "quote": "一名身着正四品绯色孔雀补服的官员迈过门槛" },
-        { "chapter": 19, "quote": "身着正五品绯色云雁锦袍，头戴梁冠" }
+        {
+          "chapter": 12,
+          "quote": "一名身着正四品绯色孔雀补服的官员迈过门槛"
+        },
+        {
+          "chapter": 19,
+          "quote": "身着正五品绯色云雁锦袍，头戴梁冠"
+        }
       ]
     },
     {
@@ -285,12 +471,21 @@
       "class": "state.fate",
       "status": "needs-verify",
       "rootLayer": "writer",
-      "chapters": [9, 21],
+      "chapters": [
+        9,
+        21
+      ],
       "entity": "周主事",
       "summary": "ch8-9太仓副使周主事当堂自尽「彻底断了生机」，ch21又出现活着的「户部度支司值守的周主事」且用「正是」指认——疑死人复活或同名混淆；ch11职名已漂移「太仓主事」",
       "evidence": [
-        { "chapter": 9, "quote": "便笔直栽倒在血泊之中，彻底断了生机" },
-        { "chapter": 21, "quote": "正是户部度支司值守的周主事" }
+        {
+          "chapter": 9,
+          "quote": "便笔直栽倒在血泊之中，彻底断了生机"
+        },
+        {
+          "chapter": 21,
+          "quote": "正是户部度支司值守的周主事"
+        }
       ]
     },
     {
@@ -299,11 +494,17 @@
       "class": "time.sequence",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [39, 41],
+      "chapters": [
+        39,
+        41
+      ],
       "entity": "陆崇仁下狱时辰",
       "summary": "ch39未时定谳、ch40申时囚车赴大理寺死牢，ch41两处称「陆崇仁午时刚被打入死牢」，提前两个时辰",
       "evidence": [
-        { "chapter": 41, "quote": "陆崇仁午时刚被打入死牢，外头早已乱了阵脚" }
+        {
+          "chapter": 41,
+          "quote": "陆崇仁午时刚被打入死牢，外头早已乱了阵脚"
+        }
       ]
     },
     {
@@ -312,12 +513,20 @@
       "class": "continuity.boundary",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [49],
+      "chapters": [
+        49
+      ],
       "entity": "外江大闸水流",
       "summary": "同一破闸场景两口：副官冲「逆流而来」的钦差主船咆哮，随后主船「借着顺流而下的万钧冲力」撞闸",
       "evidence": [
-        { "chapter": 49, "quote": "冲着逆流而来的钦差主船厉声咆哮" },
-        { "chapter": 49, "quote": "三桅主船吃水深沉，借着顺流而下的万钧冲力" }
+        {
+          "chapter": 49,
+          "quote": "冲着逆流而来的钦差主船厉声咆哮"
+        },
+        {
+          "chapter": 49,
+          "quote": "三桅主船吃水深沉，借着顺流而下的万钧冲力"
+        }
       ]
     },
     {
@@ -326,12 +535,20 @@
       "class": "number.setting",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [50],
+      "chapters": [
+        50
+      ],
       "entity": "死龙湾距离",
       "summary": "ch49末与ch50章首均称死龙湾在前方三十里，ch50同章两句对白间无航行过渡，爆炸声却发自「前方三里外」",
       "evidence": [
-        { "chapter": 50, "quote": "目光冷峻地望向前方三十里外水雾翻腾的峡口" },
-        { "chapter": 50, "quote": "前方三里外的死龙湾主航道深处，猝然传出一声震天撼地的轰鸣" }
+        {
+          "chapter": 50,
+          "quote": "目光冷峻地望向前方三十里外水雾翻腾的峡口"
+        },
+        {
+          "chapter": 50,
+          "quote": "前方三里外的死龙湾主航道深处，猝然传出一声震天撼地的轰鸣"
+        }
       ]
     },
     {
@@ -340,12 +557,22 @@
       "class": "outline.contract",
       "status": "final",
       "rootLayer": "outline",
-      "chapters": [33, 36, 38],
+      "chapters": [
+        33,
+        36,
+        38
+      ],
       "entity": "陆崇仁私记凭引",
       "summary": "ch33起获的防构陷反证（私记凭引）在ch36-38会审全程零出示，陆崇仁当堂反咬自导自演时无此凭引应对，兑现链断裂",
       "evidence": [
-        { "chapter": 33, "quote": "若不在今夜彻底起获其私记，明日午时三司会审，其党羽便能咬定这是构陷" },
-        { "chapter": 36, "quote": "昨夜太仓署走水，分明是他为了坐实伪证暗中纵火自导自演" }
+        {
+          "chapter": 33,
+          "quote": "若不在今夜彻底起获其私记，明日午时三司会审，其党羽便能咬定这是构陷"
+        },
+        {
+          "chapter": 36,
+          "quote": "昨夜太仓署走水，分明是他为了坐实伪证暗中纵火自导自演"
+        }
       ]
     },
     {
@@ -354,12 +581,24 @@
       "class": "structure.repeat",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [14, 16, 22, 25, 1],
+      "chapters": [
+        14,
+        16,
+        22,
+        25,
+        1
+      ],
       "entity": "四柱法设定复述",
       "summary": "「旧管新收开除实在」科普整段复述至少五遍（ch1/2/5/6/9/14/16/22/25），「前世顶级事务所合伙人」身份复述四次，密度过高",
       "evidence": [
-        { "chapter": 16, "quote": "旧管加新收，等于开除加实在。每一本账册拿出来，账面总数皆严丝合缝" },
-        { "chapter": 25, "quote": "旧式四柱清册仅录旧管、新收、开除与实在" }
+        {
+          "chapter": 16,
+          "quote": "旧管加新收，等于开除加实在。每一本账册拿出来，账面总数皆严丝合缝"
+        },
+        {
+          "chapter": 25,
+          "quote": "旧式四柱清册仅录旧管、新收、开除与实在"
+        }
       ]
     },
     {
@@ -368,12 +607,24 @@
       "class": "prose.anachronism",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [14, 16, 17, 31, 34],
+      "chapters": [
+        14,
+        16,
+        17,
+        31,
+        34
+      ],
       "entity": "「现代」入对白/叙述",
       "summary": "「现代借贷平衡之法」「现代运筹与仓储审计」等出现在御前对白（古人零反应），叙述层「现代财务审计」「资产保全逻辑」未加前世标记直用",
       "evidence": [
-        { "chapter": 17, "quote": "现代运筹与仓储审计，第一重便要核验在途物资与流转时限" },
-        { "chapter": 31, "quote": "现代财务审计中，所有仓皇补造的对冲假账" }
+        {
+          "chapter": 17,
+          "quote": "现代运筹与仓储审计，第一重便要核验在途物资与流转时限"
+        },
+        {
+          "chapter": 31,
+          "quote": "现代财务审计中，所有仓皇补造的对冲假账"
+        }
       ]
     },
     {
@@ -382,11 +633,18 @@
       "class": "structure.offscreen",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [17, 18, 20],
+      "chapters": [
+        17,
+        18,
+        20
+      ],
       "entity": "反派倒台场面",
       "summary": "第一反派陆崇仁锁拿全程幕后转述（ch18一句带过）核心爽点落空；ch20封禁户部高潮由配角裴慎独完成主角缺场（大纲既定）",
       "evidence": [
-        { "chapter": 18, "quote": "陆崇仁已被内廷缇骑当场锁拿，连那顶二品梁冠都被扯落下来" }
+        {
+          "chapter": 18,
+          "quote": "陆崇仁已被内廷缇骑当场锁拿，连那顶二品梁冠都被扯落下来"
+        }
       ]
     },
     {
@@ -395,12 +653,24 @@
       "class": "structure.repeat",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [8, 11, 12, 33, 34],
+      "chapters": [
+        8,
+        11,
+        12,
+        33,
+        34
+      ],
       "entity": "套路复读群",
       "summary": "疲惫段落近逐字三遍（ch8/11/12）、两波死士「开箱中计」同构复刻（ch33/34）、ch34末与ch35开篇70字场景近逐字复读、ch35章末60字判定句机械复读两遍",
       "evidence": [
-        { "chapter": 33, "quote": "中计了！箱子里全是石头！" },
-        { "chapter": 34, "quote": "中计了！箱子里根本没有账！" }
+        {
+          "chapter": 33,
+          "quote": "中计了！箱子里全是石头！"
+        },
+        {
+          "chapter": 34,
+          "quote": "中计了！箱子里根本没有账！"
+        }
       ]
     },
     {
@@ -409,12 +679,22 @@
       "class": "state.title",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [36, 38, 44],
+      "chapters": [
+        36,
+        38,
+        44
+      ],
       "entity": "沈淮安品级口径",
       "summary": "主角正七品自ch18定，但ch26/36叙述与敌方仍称「九品仓吏/九品胥吏」贬称与品级冲突",
       "evidence": [
-        { "chapter": 36, "quote": "竟被一个九品仓吏用纸墨底细生生拆穿" },
-        { "chapter": 38, "quote": "不过是个戴罪受审的七品清查司主事" }
+        {
+          "chapter": 36,
+          "quote": "竟被一个九品仓吏用纸墨底细生生拆穿"
+        },
+        {
+          "chapter": 38,
+          "quote": "不过是个戴罪受审的七品清查司主事"
+        }
       ]
     },
     {
@@ -423,12 +703,20 @@
       "class": "other",
       "status": "final",
       "rootLayer": "infra",
-      "chapters": [37],
+      "chapters": [
+        37
+      ],
       "entity": "补写章口径伤",
       "summary": "补写章ch37向ch38漏出四处口径伤：裴慎佩刀雁翎→绣春刀、深秋→初秋、遮布黑麻→灰麻、架高丈余→丈二",
       "evidence": [
-        { "chapter": 37, "quote": "裴慎手按绣春刀柄" },
-        { "chapter": 26, "quote": "右手已扣住腰间雁翎刀的鲨皮刀柄" }
+        {
+          "chapter": 37,
+          "quote": "裴慎手按绣春刀柄"
+        },
+        {
+          "chapter": 26,
+          "quote": "右手已扣住腰间雁翎刀的鲨皮刀柄"
+        }
       ]
     },
     {
@@ -437,12 +725,23 @@
       "class": "time.sequence",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [26, 27, 30, 31],
+      "chapters": [
+        26,
+        27,
+        30,
+        31
+      ],
       "entity": "时点复读群",
       "summary": "ch26「今晨出逃」vs ch27「昨夜连夜运出」暗车；ch30清晨与ch31巳时均称弹章「半个时辰前」递到；ch3申时地牢ch4改称「昨夜」",
       "evidence": [
-        { "chapter": 27, "quote": "你昨夜派人连夜运出八辆暗车" },
-        { "chapter": 26, "quote": "今晨汇通后院出逃的八辆暗车已被缇骑拦截" }
+        {
+          "chapter": 27,
+          "quote": "你昨夜派人连夜运出八辆暗车"
+        },
+        {
+          "chapter": 26,
+          "quote": "今晨汇通后院出逃的八辆暗车已被缇骑拦截"
+        }
       ]
     },
     {
@@ -451,12 +750,23 @@
       "class": "state.identity",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [6, 7, 2, 12],
+      "chapters": [
+        6,
+        7,
+        2,
+        12
+      ],
       "entity": "着装/称谓漂移",
       "summary": "ch6九品公服→ch7/8囚服无更衣；裴慎叙述层副千户、对白层百户/千户三样称谓；ch1午时三刻行刑配清晨闲汉氛围",
       "evidence": [
-        { "chapter": 6, "quote": "沈淮安身着九品副仓吏的粗布公服" },
-        { "chapter": 7, "quote": "粗布囚服后背早已被冷汗浸透成深色" }
+        {
+          "chapter": 6,
+          "quote": "沈淮安身着九品副仓吏的粗布公服"
+        },
+        {
+          "chapter": 7,
+          "quote": "粗布囚服后背早已被冷汗浸透成深色"
+        }
       ]
     },
     {
@@ -465,11 +775,17 @@
       "class": "structure.arc",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [13, 16],
+      "chapters": [
+        13,
+        16
+      ],
       "entity": "悬空线索群",
       "summary": "提刑官ch13被锁拿后全书零交代（收押/审判/口供全缺）；ch16章末「三份明黄密折」重墨钩子ch17起被取代全书未拆阅",
       "evidence": [
-        { "chapter": 16, "quote": "御案正中赫然端正叠放着三份以明黄熟绫封边的密折" }
+        {
+          "chapter": 16,
+          "quote": "御案正中赫然端正叠放着三份以明黄熟绫封边的密折"
+        }
       ]
     },
     {
@@ -478,11 +794,18 @@
       "class": "prose.slop",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [43, 46, 50],
+      "chapters": [
+        43,
+        46,
+        50
+      ],
       "entity": "台词/节奏",
       "summary": "ch46「瞎了你们的狗眼」与冷峻人设违和；ch50章首5段闪回拖沓+火船逼近停表对话",
       "evidence": [
-        { "chapter": 46, "quote": "瞎了你们的狗眼！" }
+        {
+          "chapter": 46,
+          "quote": "瞎了你们的狗眼！"
+        }
       ]
     },
     {
@@ -491,11 +814,17 @@
       "class": "other",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [12, 13],
+      "chapters": [
+        12,
+        13
+      ],
       "entity": "毒理设定",
       "summary": "砒霜参汤泼地烧融青砖出焦坑、银匙验毒变乌黑——砒霜无腐蚀性且银器试毒不成立，与硬核技术流定位相悖",
       "evidence": [
-        { "chapter": 13, "quote": "坚硬的青石地砖竟被生生烧融出一片焦黑坑洼" }
+        {
+          "chapter": 13,
+          "quote": "坚硬的青石地砖竟被生生烧融出一片焦黑坑洼"
+        }
       ]
     },
     {
@@ -504,11 +833,18 @@
       "class": "outline.contract",
       "status": "final",
       "rootLayer": "outline",
-      "chapters": [1, 8, 11],
+      "chapters": [
+        1,
+        8,
+        11
+      ],
       "entity": "纲文偏差",
       "summary": "outline ch1「秋决前三日」与正文当日斩立决矛盾；ch8「周主事交出私藏收粮底册」未兑现（底册全书未再出现）；outline「京畿兵马司」正文「京畿巡捕营」",
       "evidence": [
-        { "chapter": 1, "quote": "今三法司勘核无误，请得朱批，斩立决" }
+        {
+          "chapter": 1,
+          "quote": "今三法司勘核无误，请得朱批，斩立决"
+        }
       ]
     },
     {
@@ -517,11 +853,16 @@
       "class": "number.arithmetic",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [22],
+      "chapters": [
+        22
+      ],
       "entity": "徽墨定额",
       "summary": "定额「整年至多三十五斤」与「前年三十六斤，皆合旧制」同段矛盾",
       "evidence": [
-        { "chapter": 22, "quote": "前年三十六斤，皆合旧制" }
+        {
+          "chapter": 22,
+          "quote": "前年三十六斤，皆合旧制"
+        }
       ]
     },
     {
@@ -530,11 +871,17 @@
       "class": "state.identity",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [4, 5],
+      "chapters": [
+        4,
+        5
+      ],
       "entity": "关押地转移",
       "summary": "ch4结尾太仓署公堂看管，ch5开篇「从刑部天牢暗中提解」转移无交代，且刑部早被密旨排除",
       "evidence": [
-        { "chapter": 5, "quote": "午后裴慎奉密旨将他从刑部天牢暗中提解" }
+        {
+          "chapter": 5,
+          "quote": "午后裴慎奉密旨将他从刑部天牢暗中提解"
+        }
       ]
     },
     {
@@ -543,11 +890,17 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [39, 44],
+      "chapters": [
+        39,
+        44
+      ],
       "entity": "「七十二」模板复用",
       "summary": "全案30万两定稿整72笔过桥，ch44单笔两万两也「折成七十二笔」以整概零，ch49复用「七十二艘驳船」",
       "evidence": [
-        { "chapter": 44, "quote": "折成了七十二笔私盐飞钱" }
+        {
+          "chapter": 44,
+          "quote": "折成了七十二笔私盐飞钱"
+        }
       ]
     },
     {
@@ -556,11 +909,16 @@
       "class": "state.identity",
       "status": "needs-verify",
       "rootLayer": "writer",
-      "chapters": [1],
+      "chapters": [
+        1
+      ],
       "entity": "沈淮安履历",
       "summary": "「三天前刚穿越成副仓吏」与定罪文书「任职三载」张力（需脑补穿越进已任职三年的身体）",
       "evidence": [
-        { "chapter": 1, "quote": "三天前，他刚穿越成大景朝户部太仓署的九品副仓吏" }
+        {
+          "chapter": 1,
+          "quote": "三天前，他刚穿越成大景朝户部太仓署的九品副仓吏"
+        }
       ]
     }
   ]

@@ -20,6 +20,7 @@ import {
   buildConvergenceMatrix,
   computeReleaseVerdict,
   countFindings,
+  detectCaliberSignals,
   detectEscalationSignals,
   validateFindingsDoc,
 } from './findings-lib.mjs';
@@ -51,6 +52,7 @@ export function renderVerdictReport(doc, validation, verdict) {
     '',
     `- 结论：**${verdict.ready ? 'READY' : 'NOT READY'}**`,
     `- 审法：${doc.review?.method ?? '未声明'}，通读 ${doc.review?.chaptersRead ?? '?'}/${doc.chapters ?? '?'} 章，独立审稿=${doc.review?.independentReviewer === true}`,
+    `- 评审口径：${doc.review?.caliber ?? '未标注（读者分数不可跨轮对比）'}`,
     `- 终稿计数：S1=${counts.S1} S2=${counts.S2} S3=${counts.S3} S4=${counts.S4}；待核实=${counts.needsVerify}；过程已兜住（不计）=${counts.caught}`,
     '',
     '## 阻断项',
@@ -76,7 +78,7 @@ export function renderConvergenceReport(docs, matrix, signals) {
   const summary = docs.map(doc => {
     const counts = countFindings(doc);
     const verdict = computeReleaseVerdict(doc);
-    return `| ${doc.round} | ${doc.book} | ${doc.chapters} | ${doc.review?.method ?? '?'} | ${counts.S1} | ${counts.S2} | ${verdict.ready ? 'READY' : `NOT READY（${verdict.blockers.length} 项阻断）`} |`;
+    return `| ${doc.round} | ${doc.book} | ${doc.chapters} | ${doc.review?.method ?? '?'} | ${doc.review?.caliber ?? '未标注'} | ${counts.S1} | ${counts.S2} | ${verdict.ready ? 'READY' : `NOT READY（${verdict.blockers.length} 项阻断）`} |`;
   });
   return [
     '# 可上线大循环跨轮收敛表',
@@ -85,8 +87,8 @@ export function renderConvergenceReport(docs, matrix, signals) {
     '',
     '## 各轮概览',
     '',
-    '| 轮次 | 书 | 章数 | 审法 | S1 | S2 | 计算判定 |',
-    '| --- | --- | --- | --- | --- | --- | --- |',
+    '| 轮次 | 书 | 章数 | 审法 | 口径 | S1 | S2 | 计算判定 |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- |',
     ...summary,
     '',
     '## 分类收敛矩阵',
@@ -143,7 +145,7 @@ function runConverge(args) {
   }
   const docs = entries.map(entry => entry.doc);
   const matrix = buildConvergenceMatrix(docs);
-  const signals = detectEscalationSignals(docs);
+  const signals = [...detectEscalationSignals(docs), ...detectCaliberSignals(docs)];
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, renderConvergenceReport(docs, matrix, signals), 'utf8');
   console.log(`[findings] rounds=${docs.length} classes=${matrix.rows.length} signals=${signals.length}`);

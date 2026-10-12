@@ -10,7 +10,8 @@
     "chaptersRead": 50,
     "writerModel": "anti-gravity/gemini-3.8-flash-high (provider-1787044972770)",
     "reviewerModel": "anti-gravity/gemini-3.8-flash-high (同通道自评+4通读agent)",
-    "independentReviewer": false
+    "independentReviewer": false,
+    "caliber": "reader-eval-v1"
   },
   "gates": {
     "precheckRedlines": 0,
@@ -27,7 +28,9 @@
       "mainUnresolved": 0,
       "closureSignals": 1
     },
-    "humanIntervention": ["ch7 storyflow-repair-empty 定点补写 3 次尝试全部失败（数字冲突1250/25800×2 + JSON解析×1），空章保留"],
+    "humanIntervention": [
+      "ch7 storyflow-repair-empty 定点补写 3 次尝试全部失败（数字冲突1250/25800×2 + JSON解析×1），空章保留"
+    ],
     "blindTest": null
   },
   "findings": [
@@ -37,12 +40,20 @@
       "class": "continuity.boundary",
       "status": "final",
       "rootLayer": "model",
-      "chapters": [7],
+      "chapters": [
+        7
+      ],
       "entity": "第7章（空章）",
       "summary": "第7章整章缺失：数字防线三连拒成洞（平粜折银1250两写成1200两×多轮）、补写3次也因新数字漂移（25800→24000）耗尽——g38f数字纪律不足叠加蓝图再生RawText bug（已修），致6→8章剧情断层（掌固被捕/自尽前因缺失、惊堂木钩子悬置）",
       "evidence": [
-        { "chapter": 6, "quote": "那方沉重的紫檀惊堂木被他牢牢悬在半空，将落未落。" },
-        { "chapter": 8, "quote": "裴怀玉玄色官靴的硬木靴尖已裹挟着烈风，正狠狠踢向度支司掌固仰起的下颌" }
+        {
+          "chapter": 6,
+          "quote": "那方沉重的紫檀惊堂木被他牢牢悬在半空，将落未落。"
+        },
+        {
+          "chapter": 8,
+          "quote": "裴怀玉玄色官靴的硬木靴尖已裹挟着烈风，正狠狠踢向度支司掌固仰起的下颌"
+        }
       ],
       "replayCase": "r22b-S1-01"
     },
@@ -52,14 +63,34 @@
       "class": "state.custody",
       "status": "final",
       "rootLayer": "extraction",
-      "chapters": [19, 20, 24, 28, 34, 35, 38],
+      "chapters": [
+        19,
+        20,
+        24,
+        28,
+        34,
+        35,
+        38
+      ],
       "entity": "崔文泰",
       "summary": "反派羁押状态反复重置：ch19剥袍冠打入大理寺重牢、ch20地牢全招→ch24-25自由端坐度支司主事（自称「尚不能锁拿五品堂官」推翻已发生拘押）→ch28再次锁拿戴枷→ch34自由闯暗窖→ch35就地看押→ch38度支司自由撕榜——大纲要求其自由活动至ch39，正文ch19提前写死后反复回滚",
       "evidence": [
-        { "chapter": 19, "quote": "剥去崔文泰官袍冠带，打入大理寺重牢严加看管" },
-        { "chapter": 24, "quote": "没有朝廷夺职明旨，大理寺尚不能在堂上直接锁拿五品堂官" },
-        { "chapter": 34, "quote": "身上正五品绯色云雁锦袍被外头的风雪打得半湿" },
-        { "chapter": 38, "quote": "度支司郎中崔文泰冠带歪斜……跌跌撞撞从内廊冲了出来" }
+        {
+          "chapter": 19,
+          "quote": "剥去崔文泰官袍冠带，打入大理寺重牢严加看管"
+        },
+        {
+          "chapter": 24,
+          "quote": "没有朝廷夺职明旨，大理寺尚不能在堂上直接锁拿五品堂官"
+        },
+        {
+          "chapter": 34,
+          "quote": "身上正五品绯色云雁锦袍被外头的风雪打得半湿"
+        },
+        {
+          "chapter": 38,
+          "quote": "度支司郎中崔文泰冠带歪斜……跌跌撞撞从内廊冲了出来"
+        }
       ],
       "replayCase": "r22b-S1-02"
     },
@@ -69,13 +100,26 @@
       "class": "state.fate",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [20, 24, 25],
+      "chapters": [
+        20,
+        24,
+        25
+      ],
       "entity": "三万两赃款去向",
       "summary": "同一笔三万两存在三个互斥版本：ch20断言已在通州码头熔铸足金运入京畿暗庄→ch24供词称兑成会票银票由死士走水路解往扬州→ch25却从京师度支司架阁库暗格起获六张五千两母票且自称「与供认分毫不差」——物证同时身在两地，且「化整为零打散兑换」与六张整额大票不符",
       "evidence": [
-        { "chapter": 20, "quote": "共计三万两亏空银，早已在通州码头分批熔铸成足金" },
-        { "chapter": 24, "quote": "暗中走水路出京，连夜解往扬州了" },
-        { "chapter": 25, "quote": "每张银票面额五千两，足足六张，总额整整三万两，与田广茂供认的倒卖粮款分毫不差" }
+        {
+          "chapter": 20,
+          "quote": "共计三万两亏空银，早已在通州码头分批熔铸成足金"
+        },
+        {
+          "chapter": 24,
+          "quote": "暗中走水路出京，连夜解往扬州了"
+        },
+        {
+          "chapter": 25,
+          "quote": "每张银票面额五千两，足足六张，总额整整三万两，与田广茂供认的倒卖粮款分毫不差"
+        }
       ],
       "replayCase": "r22b-S1-03"
     },
@@ -85,12 +129,22 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [16, 17, 24],
+      "chapters": [
+        16,
+        17,
+        24
+      ],
       "entity": "船闸勘验读数",
       "summary": "同一航次闸口勘验两套矛盾说法：ch16/17官船空船过闸、七闸实粮仅一万六千石（粮在通州码头私卖）vs ch24八十艘船过张家湾闸吃水六尺二寸满载四万六千石（粮在途中消失）——作案机制与勘验读数互相打架",
       "evidence": [
-        { "chapter": 16, "quote": "差了两万六千石！官船根本没有运粮，他们是空船过闸" },
-        { "chapter": 24, "quote": "过张家湾闸口时吃水深达六尺二寸，实打实满载四万六千石" }
+        {
+          "chapter": 16,
+          "quote": "差了两万六千石！官船根本没有运粮，他们是空船过闸"
+        },
+        {
+          "chapter": 24,
+          "quote": "过张家湾闸口时吃水深达六尺二寸，实打实满载四万六千石"
+        }
       ]
     },
     {
@@ -99,12 +153,22 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [1, 2, 12],
+      "chapters": [
+        1,
+        2,
+        12
+      ],
       "entity": "平粜银三千两记账机制",
       "summary": "全案立案根基自相矛盾：ch1-2为「新收未入账、四柱差三千两」，ch12改写为「新收已记、开除虚列运费三千两两两抵消净额为零」——二者不可并存，核心翻盘逻辑失去成立前提",
       "evidence": [
-        { "chapter": 1, "quote": "回笼的三千两现银，在你的新收项里，根本就没入账！" },
-        { "chapter": 12, "quote": "新收项堂堂正正记着通州平粜现银三千两，开除项却在同日列入采买耗损与解送运费折银三千两" }
+        {
+          "chapter": 1,
+          "quote": "回笼的三千两现银，在你的新收项里，根本就没入账！"
+        },
+        {
+          "chapter": 12,
+          "quote": "新收项堂堂正正记着通州平粜现银三千两，开除项却在同日列入采买耗损与解送运费折银三千两"
+        }
       ]
     },
     {
@@ -113,12 +177,21 @@
       "class": "time.era",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [16, 21],
+      "chapters": [
+        16,
+        21
+      ],
       "entity": "厘金水票纪年",
       "summary": "核心物证水票底存签发于承平八年四月至十月，但案件锚定八年十月、舞弊发生「去岁」即七年四月——用今年度水票证明去年四月运粮，证据年份整体错位一年",
       "evidence": [
-        { "chapter": 16, "quote": "承平八年四月至十月，整整七个月的水路关防底根" },
-        { "chapter": 21, "quote": "去岁承平七年四月这批新粮受潮" }
+        {
+          "chapter": 16,
+          "quote": "承平八年四月至十月，整整七个月的水路关防底根"
+        },
+        {
+          "chapter": 21,
+          "quote": "去岁承平七年四月这批新粮受潮"
+        }
       ]
     },
     {
@@ -127,12 +200,21 @@
       "class": "time.sequence",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [20, 21],
+      "chapters": [
+        20,
+        21
+      ],
       "entity": "账厅地砖敲击场景",
       "summary": "ch20结尾「深宵账厅」地砖下敲击，ch21同一敲击声「骤然歇止」的连续场景却标注「酉时刚过」，时间倒退数个时辰无跨天交代",
       "evidence": [
-        { "chapter": 20, "quote": "在这死寂无人的深宵账厅地砖之下" },
-        { "chapter": 21, "quote": "那串三长两短的沉闷叩击声骤然歇止。酉时刚过，暮色深沉" }
+        {
+          "chapter": 20,
+          "quote": "在这死寂无人的深宵账厅地砖之下"
+        },
+        {
+          "chapter": 21,
+          "quote": "那串三长两短的沉闷叩击声骤然歇止。酉时刚过，暮色深沉"
+        }
       ]
     },
     {
@@ -141,12 +223,22 @@
       "class": "number.arithmetic",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [27, 28, 29],
+      "chapters": [
+        27,
+        28,
+        29
+      ],
       "entity": "承运库岁修五万两火耗",
       "summary": "验算错误：五万两九八纹银换九成广造银，差额应为50000×8%=4000两，正文写4500两并在ch28/29复述两遍",
       "evidence": [
-        { "chapter": 27, "quote": "五万两九八银换成九成烂银，火耗差额高达四千五百两" },
-        { "chapter": 29, "quote": "以九成烂银掉包内库五万两岁修款，火耗私吞四千五百两" }
+        {
+          "chapter": 27,
+          "quote": "五万两九八银换成九成烂银，火耗差额高达四千五百两"
+        },
+        {
+          "chapter": 29,
+          "quote": "以九成烂银掉包内库五万两岁修款，火耗私吞四千五百两"
+        }
       ]
     },
     {
@@ -155,12 +247,22 @@
       "class": "continuity.boundary",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [48, 49, 50],
+      "chapters": [
+        48,
+        49,
+        50
+      ],
       "entity": "陈敬官袍/罪籍状态",
       "summary": "ch48已换袍授官销罪籍、ch49末着孔雀绿官袍遇刺，ch50开头却回溯为「粗麻囚衫……依旧是通州亏空案的待决死囚」重演换袍与销罪全套流程——疑旧版开头未与ch48/49改稿对齐",
       "evidence": [
-        { "chapter": 48, "quote": "陈敬脱去身上污损破旧的青布囚衣，由狱卒服侍着换上轻软挺括的锦缎绿袍" },
-        { "chapter": 50, "quote": "身上仍套着那袭未及换下的粗麻囚衫……在刑部案底上便依旧是通州亏空案的待决死囚" }
+        {
+          "chapter": 48,
+          "quote": "陈敬脱去身上污损破旧的青布囚衣，由狱卒服侍着换上轻软挺括的锦缎绿袍"
+        },
+        {
+          "chapter": 50,
+          "quote": "身上仍套着那袭未及换下的粗麻囚衫……在刑部案底上便依旧是通州亏空案的待决死囚"
+        }
       ],
       "replayCase": "r22b-S1-09"
     },
@@ -170,12 +272,20 @@
       "class": "state.location",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [50],
+      "chapters": [
+        50
+      ],
       "entity": "徐恪赴扬州路线",
       "summary": "前文明确「四十骑护送徐恪与算学班底走旱路官道」、陈敬走水路，半炷香后徐恪却带班底「鱼贯奔入后舱」登船，同章自相矛盾",
       "evidence": [
-        { "chapter": 50, "quote": "四十骑护送徐恪与算学班底走旱路官道，日夜兼程疾行" },
-        { "chapter": 50, "quote": "徐恪领着精选出来的算学老吏……鱼贯奔入后舱" }
+        {
+          "chapter": 50,
+          "quote": "四十骑护送徐恪与算学班底走旱路官道，日夜兼程疾行"
+        },
+        {
+          "chapter": 50,
+          "quote": "徐恪领着精选出来的算学老吏……鱼贯奔入后舱"
+        }
       ]
     },
     {
@@ -184,12 +294,22 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [16, 17, 18],
+      "chapters": [
+        16,
+        17,
+        18
+      ],
       "entity": "私卖官粮总数",
       "summary": "被私卖官粮数两个数字并存：ch16「差两万六千石/过卡仅一万六千石」vs ch17起「多出三万石」并经ch18/20/23/24/25全部坐实为三万石（账面四万二千与运力四万六千两套基数未闭合）",
       "evidence": [
-        { "chapter": 16, "quote": "差了两万六千石！" },
-        { "chapter": 18, "quote": "真正被运走的是去岁四月私调官船吞没的三万石粮食" }
+        {
+          "chapter": 16,
+          "quote": "差了两万六千石！"
+        },
+        {
+          "chapter": 18,
+          "quote": "真正被运走的是去岁四月私调官船吞没的三万石粮食"
+        }
       ]
     },
     {
@@ -198,12 +318,20 @@
       "class": "number.arithmetic",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [17],
+      "chapters": [
+        17
+      ],
       "entity": "纤夫工钱折算运力",
       "summary": "招牌推理验算不闭合：按自设参数「十名纤夫挽五百石船」1.5万人次应为75万石运力（或4.6万石仅需920人次），无论如何得不出正文宣称的四万六千石",
       "evidence": [
-        { "chapter": 17, "quote": "一艘标准五百石官漕船逆水行舟需配纤夫十名" },
-        { "chapter": 17, "quote": "足以拉动拖拽整整四万六千石载重的庞大船队" }
+        {
+          "chapter": 17,
+          "quote": "一艘标准五百石官漕船逆水行舟需配纤夫十名"
+        },
+        {
+          "chapter": 17,
+          "quote": "足以拉动拖拽整整四万六千石载重的庞大船队"
+        }
       ]
     },
     {
@@ -212,12 +340,20 @@
       "class": "number.arithmetic",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [24],
+      "chapters": [
+        24
+      ],
       "entity": "运粮船队载量",
       "summary": "八十艘五百石官船满载应为四万石整，正文称「实打实满载四万六千石」，船数×载量与总载量对不上；满载吃水六尺与六尺二寸并存",
       "evidence": [
-        { "chapter": 24, "quote": "永丰粮栈领官船八十艘自通州起运" },
-        { "chapter": 24, "quote": "实打实满载四万六千石" }
+        {
+          "chapter": 24,
+          "quote": "永丰粮栈领官船八十艘自通州起运"
+        },
+        {
+          "chapter": 24,
+          "quote": "实打实满载四万六千石"
+        }
       ]
     },
     {
@@ -226,12 +362,21 @@
       "class": "time.era",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [14, 24],
+      "chapters": [
+        14,
+        24
+      ],
       "entity": "季节时令",
       "summary": "全案锚定承平八年十月深秋（秋寒/白霜），ch24公堂晨风写作「早春刺骨」，季节冲突",
       "evidence": [
-        { "chapter": 14, "quote": "太仓大院笼罩在一片深沉的秋寒之中" },
-        { "chapter": 24, "quote": "早春刺骨的晨风扫过青砖地坪" }
+        {
+          "chapter": 14,
+          "quote": "太仓大院笼罩在一片深沉的秋寒之中"
+        },
+        {
+          "chapter": 24,
+          "quote": "早春刺骨的晨风扫过青砖地坪"
+        }
       ]
     },
     {
@@ -240,12 +385,22 @@
       "class": "state.custody",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [44, 46, 47],
+      "chapters": [
+        44,
+        46,
+        47
+      ],
       "entity": "陈敬死罪/吏职口径",
       "summary": "ch44判词当堂开释死罪并革去九品吏职，ch46叙述与ch47帝王台词仍称「待决死罪」「九品抄书吏」，与ch45「待勘重犯」口径亦不一致",
       "evidence": [
-        { "chapter": 44, "quote": "着即当堂开释其谋反与盗卖死罪，除掉其戴罪死囚身份" },
-        { "chapter": 47, "quote": "你是一介戴罪待决的九品抄书吏" }
+        {
+          "chapter": 44,
+          "quote": "着即当堂开释其谋反与盗卖死罪，除掉其戴罪死囚身份"
+        },
+        {
+          "chapter": 47,
+          "quote": "你是一介戴罪待决的九品抄书吏"
+        }
       ]
     },
     {
@@ -254,12 +409,22 @@
       "class": "structure.arc",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [25, 26, 27],
+      "chapters": [
+        25,
+        26,
+        27
+      ],
       "entity": "四海通母票",
       "summary": "伏笔断线：ch25末私抽头张双鱼暗戳母票藏枷内暗袋并伪造副件回填、ch26确认贴身藏票，ch27-38母票彻底消失未回收",
       "evidence": [
-        { "chapter": 25, "quote": "将盖有清晰暗戳的头张母票抽入掌心" },
-        { "chapter": 26, "quote": "正紧紧抵着那张藏在坐堂枷暗夹里的银票母票" }
+        {
+          "chapter": 25,
+          "quote": "将盖有清晰暗戳的头张母票抽入掌心"
+        },
+        {
+          "chapter": 26,
+          "quote": "正紧紧抵着那张藏在坐堂枷暗夹里的银票母票"
+        }
       ]
     },
     {
@@ -268,11 +433,18 @@
       "class": "structure.arc",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [38, 42, 50],
+      "chapters": [
+        38,
+        42,
+        50
+      ],
       "entity": "沈青萝",
       "summary": "主要角色沈青萝ch38参与誊抄布卷后全程蒸发，公审收官、封官、遇刺、扬州启程各节点零出现零交代",
       "evidence": [
-        { "chapter": 38, "quote": "沈青萝在一旁将浸泡明矾水的陶盆端起" }
+        {
+          "chapter": 38,
+          "quote": "沈青萝在一旁将浸泡明矾水的陶盆端起"
+        }
       ]
     },
     {
@@ -281,12 +453,21 @@
       "class": "structure.repeat",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [46, 47],
+      "chapters": [
+        46,
+        47
+      ],
       "entity": "新法三策",
       "summary": "ch46末口头陈述完整给出内帑/国帑分立+借贷记账方案且天子已震动，ch47呈疏策一策二近乎原样复述、天子反应仍写成初闻",
       "evidence": [
-        { "chapter": 46, "quote": "那便先分内廷与外朝。内帑归承运库，国帑归度支司" },
-        { "chapter": 47, "quote": "其二，预算分列，内帑与国库彻底划清界限" }
+        {
+          "chapter": 46,
+          "quote": "那便先分内廷与外朝。内帑归承运库，国帑归度支司"
+        },
+        {
+          "chapter": 47,
+          "quote": "其二，预算分列，内帑与国库彻底划清界限"
+        }
       ]
     },
     {
@@ -295,12 +476,22 @@
       "class": "structure.offscreen",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [21, 24, 23],
+      "chapters": [
+        21,
+        24,
+        23
+      ],
       "entity": "田广茂归案/狱中受策",
       "summary": "ch21田广茂撞门逃脱后ch24开场已在押受审，抓捕全程幕后跳场；ch23书吏称依陈敬「昨夜在牢中密授方略」但昨夜陈敬在粮栈水牢从未回牢——时点与信息来源双双落空",
       "evidence": [
-        { "chapter": 21, "quote": "田广茂趁乱撞开后堂黑漆铁门，连滚带爬往后院深处逃窜" },
-        { "chapter": 23, "quote": "他们依着你昨夜在牢中密授的方略" }
+        {
+          "chapter": 21,
+          "quote": "田广茂趁乱撞开后堂黑漆铁门，连滚带爬往后院深处逃窜"
+        },
+        {
+          "chapter": 23,
+          "quote": "他们依着你昨夜在牢中密授的方略"
+        }
       ]
     },
     {
@@ -309,12 +500,22 @@
       "class": "prose.anachronism",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [17, 24, 25],
+      "chapters": [
+        17,
+        24,
+        25
+      ],
       "entity": "台词现代词",
       "summary": "土著角色台词现代词：裴怀玉当堂说「数据闭环」×2、陈敬台词「吃水吨位/载重吨位」——「数据」「吨」为现代概念",
       "evidence": [
-        { "chapter": 24, "quote": "物证在此，数据闭环，你若再敢干扰公堂" },
-        { "chapter": 17, "quote": "三万石精粮吃水吨位，你烧得掉么" }
+        {
+          "chapter": 24,
+          "quote": "物证在此，数据闭环，你若再敢干扰公堂"
+        },
+        {
+          "chapter": 17,
+          "quote": "三万石精粮吃水吨位，你烧得掉么"
+        }
       ]
     },
     {
@@ -323,11 +524,16 @@
       "class": "other",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [25],
+      "chapters": [
+        25
+      ],
       "entity": "母票调包副件",
       "summary": "戴枷双手众人眼皮下瞬间抽母票藏「木枷内侧贴肉暗袋」并当场毛笔抄录制成「毫无瑕疵核验副件」瞒过在场官员与火漆封箱——操作玄学",
       "evidence": [
-        { "chapter": 25, "quote": "提笔飞速抄录票号、签押与暗戳方位，制成一张毫无瑕疵的核验副件" }
+        {
+          "chapter": 25,
+          "quote": "提笔飞速抄录票号、签押与暗戳方位，制成一张毫无瑕疵的核验副件"
+        }
       ]
     },
     {
@@ -336,12 +542,23 @@
       "class": "state.title",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [3, 10, 12, 13],
+      "chapters": [
+        3,
+        10,
+        12,
+        13
+      ],
       "entity": "崔文泰资历/清账年限",
       "summary": "崔文泰资历三口径（执掌度支司七年/经营二十余年/执掌太仓三十年）；太仓清账范围ch11-12五年底册→ch13十年一千四百卷→ch10近三十年总簿",
       "evidence": [
-        { "chapter": 3, "quote": "崔郎中执掌度支司七年" },
-        { "chapter": 10, "quote": "本官乃正五品度支司郎中，执掌太仓三十年" }
+        {
+          "chapter": 3,
+          "quote": "崔郎中执掌度支司七年"
+        },
+        {
+          "chapter": 10,
+          "quote": "本官乃正五品度支司郎中，执掌太仓三十年"
+        }
       ]
     },
     {
@@ -350,12 +567,21 @@
       "class": "number.setting",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [37, 38],
+      "chapters": [
+        37,
+        38
+      ],
       "entity": "五份卷宗清单",
       "summary": "五份卷宗去向两章口径不一：ch37密阁+都察院+刑部+内阁+公榜（无户部），ch38都察院+刑部+户部+内阁+正堂——户部凭空出现、密阁份消失",
       "evidence": [
-        { "chapter": 37, "quote": "一份留大理寺密阁；一份差快马送交都察院铁面御史" },
-        { "chapter": 38, "quote": "分送都察院、刑部、户部、内阁首辅值房" }
+        {
+          "chapter": 37,
+          "quote": "一份留大理寺密阁；一份差快马送交都察院铁面御史"
+        },
+        {
+          "chapter": 38,
+          "quote": "分送都察院、刑部、户部、内阁首辅值房"
+        }
       ]
     },
     {
@@ -364,12 +590,29 @@
       "class": "structure.repeat",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [22, 23, 24, 32, 33, 34, 35, 36, 37, 38],
+      "chapters": [
+        22,
+        23,
+        24,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38
+      ],
       "entity": "复述群",
       "summary": "设定/账目复述过密：阴阳账六钱差价推导ch22/23/24三遍、三万一千二百一十两及四笔明细ch32-38七章连诵至少完整四遍、单式流水之弊ch4/6/10/12/13五度讲解",
       "evidence": [
-        { "chapter": 24, "quote": "每石私赚六钱差价，三万石粮食凭空套现出一万八千两暴利" },
-        { "chapter": 38, "quote": "截留足色纯银整整三万一千二百一十两" }
+        {
+          "chapter": 24,
+          "quote": "每石私赚六钱差价，三万石粮食凭空套现出一万八千两暴利"
+        },
+        {
+          "chapter": 38,
+          "quote": "截留足色纯银整整三万一千二百一十两"
+        }
       ]
     },
     {
@@ -378,12 +621,23 @@
       "class": "prose.leak",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [5, 8, 40, 49],
+      "chapters": [
+        5,
+        8,
+        40,
+        49
+      ],
       "entity": "旁白现代词",
       "summary": "现代审计术语以旁白成段泄漏（企业财务暴雷案/审计组/财务总监/现代穿透审计/洗钱网络），脱离人物内心独白框架",
       "evidence": [
-        { "chapter": 5, "quote": "前世经手过上百起企业财务暴雷案，那些突然向审计组递上优厚犒劳的财务总监" },
-        { "chapter": 49, "quote": "地下配额与洗钱网络，在古代盐政上体现得淋漓尽致" }
+        {
+          "chapter": 5,
+          "quote": "前世经手过上百起企业财务暴雷案，那些突然向审计组递上优厚犒劳的财务总监"
+        },
+        {
+          "chapter": 49,
+          "quote": "地下配额与洗钱网络，在古代盐政上体现得淋漓尽致"
+        }
       ]
     },
     {
@@ -392,11 +646,18 @@
       "class": "other",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [26, 35, 49],
+      "chapters": [
+        26,
+        35,
+        49
+      ],
       "entity": "反派降智桥段",
       "summary": "崔文泰当众喊「肃王殿下绝不会容你活过今夜」自爆靠山；ch35死士携王府腰牌、ch49死士软甲明绣四爪金丝蟒纹——同型「送证据」桥段复用",
       "evidence": [
-        { "chapter": 49, "quote": "露出内衬贴身软甲上暗绣的四爪金丝蟒纹。那是唯有肃王府内院死士方能配用的私兵暗记" }
+        {
+          "chapter": 49,
+          "quote": "露出内衬贴身软甲上暗绣的四爪金丝蟒纹。那是唯有肃王府内院死士方能配用的私兵暗记"
+        }
       ]
     },
     {
@@ -405,12 +666,24 @@
       "class": "state.location",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [28, 31, 32, 37, 38],
+      "chapters": [
+        28,
+        31,
+        32,
+        37,
+        38
+      ],
       "entity": "陈敬关押地/裴怀玉兵器",
       "summary": "陈敬关押地混称（羁押值房/监房/死牢深处/狱后院秘房）；裴怀玉佩剑与雁翎刀在同人腰间反复横跳（ch25-35剑、ch31-37刀）",
       "evidence": [
-        { "chapter": 25, "quote": "秋水般的剑刃出鞘半寸" },
-        { "chapter": 31, "quote": "按着腰间雁翎刀柄" }
+        {
+          "chapter": 25,
+          "quote": "秋水般的剑刃出鞘半寸"
+        },
+        {
+          "chapter": 31,
+          "quote": "按着腰间雁翎刀柄"
+        }
       ]
     },
     {
@@ -419,11 +692,20 @@
       "class": "time.sequence",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [5, 6, 8, 25, 34],
+      "chapters": [
+        5,
+        6,
+        8,
+        25,
+        34
+      ],
       "entity": "时辰群",
       "summary": "时辰错误群：ch8「昨夜死牢截杀」实为两夜前；ch25「日头移至正南已近巳时」自相矛盾+章末「晨雾」；ch34五更寅时两现一日间隔被压缩",
       "evidence": [
-        { "chapter": 25, "quote": "日头移至正南，已近巳时" }
+        {
+          "chapter": 25,
+          "quote": "日头移至正南，已近巳时"
+        }
       ]
     },
     {
@@ -432,12 +714,24 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [1, 2, 4, 12, 13],
+      "chapters": [
+        1,
+        2,
+        4,
+        12,
+        13
+      ],
       "entity": "粮数/粮价口径",
       "summary": "平粜分项数字ch1→ch2漂移（丰益1750→1800两、截留37.5→50两、顺义vs通州县衙）；粳米数一万二千石→四千石；同期米价0.25/0.67/1两/石三档并存",
       "evidence": [
-        { "chapter": 1, "quote": "丰益仓平粜得银一千七百五十两" },
-        { "chapter": 2, "quote": "丰益仓平粜粳米七千石，折银一千八百两" }
+        {
+          "chapter": 1,
+          "quote": "丰益仓平粜得银一千七百五十两"
+        },
+        {
+          "chapter": 2,
+          "quote": "丰益仓平粜粳米七千石，折银一千八百两"
+        }
       ]
     },
     {
@@ -446,12 +740,22 @@
       "class": "structure.offscreen",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [2, 10, 11],
+      "chapters": [
+        2,
+        10,
+        11
+      ],
       "entity": "章界缺口",
       "summary": "ch1→2徐恪复报四柱且数字已变；ch10→11铜匙从崔怀中到门吏之手无交代、十二名护院对峙凭空消失",
       "evidence": [
-        { "chapter": 10, "quote": "铜匙就在本官怀中！今日除非踏着本官的尸首过去" },
-        { "chapter": 11, "quote": "那柄尺许长的黄铜钥匙已被他发力拧偏了半寸" }
+        {
+          "chapter": 10,
+          "quote": "铜匙就在本官怀中！今日除非踏着本官的尸首过去"
+        },
+        {
+          "chapter": 11,
+          "quote": "那柄尺许长的黄铜钥匙已被他发力拧偏了半寸"
+        }
       ]
     },
     {
@@ -460,11 +764,17 @@
       "class": "number.ledger",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [4, 13],
+      "chapters": [
+        4,
+        13
+      ],
       "entity": "兵粮冲销数额复用",
       "summary": "ch13十年审计累计「悬空冲销兵粮两万五千八百两」与ch4本案单笔完全同数，疑口径直接复用",
       "evidence": [
-        { "chapter": 13, "quote": "悬空冲销兵粮两万五千八百两" }
+        {
+          "chapter": 13,
+          "quote": "悬空冲销兵粮两万五千八百两"
+        }
       ]
     },
     {
@@ -473,12 +783,22 @@
       "class": "state.identity",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [45, 48, 50],
+      "chapters": [
+        45,
+        48,
+        50
+      ],
       "entity": "囚衣材质/宫门专名",
       "summary": "囚衣材质粗布/青布→粗麻漂移；「皇极殿/奉天门/承天门」三套宫门专名混用（ch49同章两门）；ch50「战马三十匹，校尉四十人」配不出「四十骑」",
       "evidence": [
-        { "chapter": 49, "quote": "户部侍郎在奉天门外哭谏" },
-        { "chapter": 49, "quote": "抬往承天门外当众验看" }
+        {
+          "chapter": 49,
+          "quote": "户部侍郎在奉天门外哭谏"
+        },
+        {
+          "chapter": 49,
+          "quote": "抬往承天门外当众验看"
+        }
       ]
     },
     {
@@ -487,11 +807,17 @@
       "class": "other",
       "status": "final",
       "rootLayer": "writer",
-      "chapters": [13, 8],
+      "chapters": [
+        13,
+        8
+      ],
       "entity": "措辞",
       "summary": "「大理石暗库」疑为「大理寺」讹误语义悬空；「堂堂空气」生造搭配；ch29下官/草民自称漂移",
       "evidence": [
-        { "chapter": 13, "quote": "全被郎中大人调进了大理石暗库的分库房" }
+        {
+          "chapter": 13,
+          "quote": "全被郎中大人调进了大理石暗库的分库房"
+        }
       ]
     }
   ]

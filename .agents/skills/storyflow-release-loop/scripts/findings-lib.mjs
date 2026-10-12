@@ -15,6 +15,21 @@
 export const FINDINGS_SCHEMA_VERSION = 'findings/v1';
 
 /**
+ * 读者评审口径（与 src 端 ReaderQualityJudge.READER_EVALUATION_VERSION 同源，须两端同步）。
+ * review.caliber 记为「口径id」或「口径id:裁判模型」；跨轮读者分数（大纲/章均/中位/最低）
+ * 只认同口径 id 才可比——r17 实证：reeval 大纲分与原轮口径不同，直接对比得出错误结论。
+ */
+export const REVIEW_CALIBER_CURRENT = 'reader-eval-v1';
+/** 已知口径 id：review.caliber 必须等于其中之一或以「id:」开头 */
+export const KNOWN_REVIEW_CALIBERS = Object.freeze(['reader-eval-v1']);
+
+/** 取 caliber 字符串的口径 id 部分（「reader-eval-v1:某模型」→「reader-eval-v1」） */
+export function caliberIdOf(caliber) {
+  if (typeof caliber !== 'string' || !caliber) return null;
+  return KNOWN_REVIEW_CALIBERS.find(id => caliber === id || caliber.startsWith(`${id}:`)) ?? null;
+}
+
+/**
  * 固定问题分类表：key 为 `域.子类`，value 为中文释义。
  * state.* 是「实体属性变化缺转移事件」族，统一状态账本的直接治理对象。
  */
@@ -126,6 +141,13 @@ function validateReview(review, errors, warnings) {
   if (!Number.isInteger(review.chaptersRead)) errors.push('review.chaptersRead 必须为整数');
   if (review.independentReviewer !== true) {
     warnings.push('审稿模型与写作模型同源（independentReviewer!=true），结论存在自评偏差');
+  }
+  if (!isNonEmptyString(review.caliber)) {
+    warnings.push('review.caliber 未标注：读者分数口径不可追溯（默认按 reader-eval-v1 假定，新文档应补标）');
+  } else if (caliberIdOf(review.caliber) === null) {
+    errors.push(
+      `review.caliber 非法：${review.caliber}（须为已知口径 ${KNOWN_REVIEW_CALIBERS.join('/')}，可带「:裁判模型」后缀）`
+    );
   }
 }
 
@@ -372,4 +394,34 @@ function measureUpstreamShare(doc) {
     if (UPSTREAM_LAYERS.includes(finding.rootLayer)) upstream += weightOf(finding);
   }
   return { total, upstream, ratio: total > 0 ? upstream / total : 0 };
+}
+
+/**
+ * 口径信号：跨轮读者分数可比性检查（r17 实证：reeval 大纲分与原轮口径不同，
+ * 直接对比得出错误结论）。不同口径 id 的分数不可直接对比；未标注轮不计入混用判定。
+ * @param {object[]} docs 已按时间升序排列的 findings 文档
+ * @returns {Array<{ kind: string, message: string }>}
+ */
+export function detectCaliberSignals(docs) {
+  const signals = [];
+  const byCaliber = new Map();
+  for (const doc of docs) {
+    const raw = doc.review?.caliber;
+    if (typeof raw !== 'string' || !raw) continue;
+    // 按原始前缀分组而非已知表过滤：未登记进 KNOWN_REVIEW_CALIBERS 的新口径
+    // （validate 会拦截新文档，但历史文档可能已被改标）也要参与混用判定
+    const id = raw.split(':')[0];
+    if (!id) continue;
+    const rounds = byCaliber.get(id) ?? [];
+    rounds.push(doc.round);
+    byCaliber.set(id, rounds);
+  }
+  if (byCaliber.size > 1) {
+    const parts = [...byCaliber.entries()].map(([id, rounds]) => `${id}：${rounds.join('、')}`);
+    signals.push({
+      kind: 'caliber-mix',
+      message: `读者评审口径混用（${parts.join('；')}）——不同口径的读者分数不可跨轮直接对比，趋势结论只认同口径相邻轮`,
+    });
+  }
+  return signals;
 }

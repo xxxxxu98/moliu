@@ -176,6 +176,41 @@ describe('detectEscalationSignals', () => {
   });
 });
 
+describe('口径版本化（review.caliber）', () => {
+  test('未知口径 id 报错，缺失只警告，带裁判模型后缀合法', () => {
+    const bad = lib.validateFindingsDoc(
+      makeDoc({ review: { method: 'full-read', chaptersRead: 100, independentReviewer: true, caliber: 'foo-v9' } })
+    );
+    assert.ok(bad.errors.some(e => e.includes('review.caliber 非法')));
+    const missing = lib.validateFindingsDoc(makeDoc());
+    assert.equal(missing.errors.length, 0);
+    assert.ok(missing.warnings.some(w => w.includes('review.caliber 未标注')));
+    const suffixed = lib.validateFindingsDoc(
+      makeDoc({ review: { method: 'full-read', chaptersRead: 100, independentReviewer: true, caliber: 'reader-eval-v1:gemini-3.7' } })
+    );
+    assert.equal(suffixed.errors.length, 0);
+  });
+
+  test('detectCaliberSignals：口径混用出信号，同 id 不同裁判模型不混用，未标注不计入', () => {
+    const docAt = calibers => makeDoc({ review: { method: 'full-read', chaptersRead: 100, independentReviewer: true, ...calibers } });
+    const mixed = lib.detectCaliberSignals([
+      docAt({ caliber: 'reader-eval-v1' }),
+      docAt({ caliber: 'reader-eval-v2' }),
+    ]);
+    assert.ok(mixed.some(s => s.kind === 'caliber-mix'));
+    const sameIdDiffJudge = lib.detectCaliberSignals([
+      docAt({ caliber: 'reader-eval-v1:modelA' }),
+      docAt({ caliber: 'reader-eval-v1:modelB' }),
+    ]);
+    assert.equal(sameIdDiffJudge.length, 0);
+    const withUnmarked = lib.detectCaliberSignals([
+      makeDoc(),
+      docAt({ caliber: 'reader-eval-v1' }),
+    ]);
+    assert.equal(withUnmarked.length, 0);
+  });
+});
+
 describe('findings-ledger converge CLI', () => {
   test('按 reviewedAt 排序汇总并落盘收敛表', t => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'findings-ledger-'));
