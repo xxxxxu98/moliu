@@ -164,10 +164,18 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
     rawMarkdown.value = '';
 
     try {
+      const generateOptions = buildGenerateOptions(options, signal);
       const result = await getGenerator().expandDirection(
         prompt,
         direction,
-        { ...buildGenerateOptions(options, signal), enhancementBrief: options?.enhancementBrief },
+        {
+          ...generateOptions,
+          enhancementBrief: options?.enhancementBrief,
+          // 读者判官闭环（2026-10-12 ⑥）：大纲分四连破线的解法。MOLIU_OUTLINE_READER_JUDGE=0 可关
+          ...(process.env.MOLIU_OUTLINE_READER_JUDGE === '0'
+            ? {}
+            : { readerOutlineJudge: getGenerator().createReaderOutlineJudge(generateOptions) }),
+        },
         msg => {
           if (currentId === generationId) {
             progress.value = msg;

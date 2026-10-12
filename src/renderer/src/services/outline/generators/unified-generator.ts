@@ -32,6 +32,11 @@ import {
 } from '../validation/outlineCompleteness';
 import { completeIncompleteOutline, sanitizeOutlineHookLengths } from './outline-completer';
 import { runOutlineRepairAgent } from '../agent/OutlineAgent';
+import { runOutlineReaderJudgeLoop } from './outline-reader-judge-loop';
+import type { OutlineReaderJudgePort } from '../types/executable-outline';
+import { ReaderQualityJudge } from '@/services/story-runtime/readerQualityJudge';
+import type { StructuredAI, StructuredAIRequest } from '@/types/story-runtime';
+import { robustJsonParse } from '@/utils/json-parser';
 import type { AgentLoopTransport, AgentMessage } from '@/services/story-runtime/agent/AgentLoopRunner';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
 import { readPositiveIntEnv } from '@/utils/env';
@@ -310,6 +315,12 @@ export interface GenerateOptions {
     model?: string;
     provider?: string;
   };
+  /**
+   * 读者判官端口（2026-10-12 ⑥ 判官反向闭环）：注入后在 agent 收束、出口门禁前
+   * 跑「判官首评→blocking 驱动修复→复评」。不注入零开销跳过（现有单测/无判官
+   * 场景行为不变）。App/冒烟可用 createReaderOutlineJudge() 构造。
+   */
+  readerOutlineJudge?: OutlineReaderJudgePort;
 }
 
 /**
@@ -530,6 +541,49 @@ export class UnifiedOutlineGenerator {
           severelyTruncated = !repaired.completeness.canApply;
           blockers = repaired.completeness.blockers.map(blocker => blocker.message);
         }
+
+        // 读者判官闭环（2026-10-12 ⑥ 判官反向闭环）：确定性门禁测不出「读者不想看」，
+        // 大纲分四连破线的解法是把正文层「判官+findings+重写解锁」复制到这一层。
+        // best-effort：判官不可用/复评失败只降级 warning；修复把结构改坏才回 fail-closed。
+        let readerEvaluation: ExpandedOutlineResult['readerEvaluation'];
+        if (outline && !severelyTruncated && opts.readerOutlineJudge) {
+          const loop = await runOutlineReaderJudgeLoop({
+            rawText,
+            outline,
+            judge: opts.readerOutlineJudge,
+            context: { title: direction.title, positioning: direction.oneLiner },
+            repair: async repairInput => {
+              const repairedByJudge = await runOutlineRepairAgent({
+                rawText: repairInput.rawText,
+                outline: repairInput.outline,
+                direction,
+                transport: this.createAgentTransport(opts),
+                signal: opts.signal,
+                onProgress,
+                readerFeedback: repairInput.readerFeedback,
+              });
+              return {
+                rawText: repairedByJudge.rawText,
+                outline: repairedByJudge.outline,
+                canApply: repairedByJudge.completeness.canApply,
+                blockers: repairedByJudge.completeness.blockers.map(blocker => blocker.message),
+                warnings: repairedByJudge.warnings,
+              };
+            },
+            signal: opts.signal,
+            onProgress,
+          });
+          rawText = loop.rawText;
+          outline = loop.outline;
+          warnings.push(...loop.warnings);
+          if (loop.severelyTruncated) {
+            severelyTruncated = true;
+            blockers = loop.blockers ?? blockers;
+          } else if (loop.blockers) {
+            blockers = loop.blockers;
+          }
+          readerEvaluation = loop.summary;
+        }
         for (const blocker of blockers) {
           if (!warnings.includes(blocker)) warnings.push(blocker);
         }
@@ -542,6 +596,7 @@ export class UnifiedOutlineGenerator {
           canApply: Boolean(outline) && !severelyTruncated,
           blockers,
           warnings: outline ? warnings : ['未能完整解析主方案，建议重新生成或微调方向描述'],
+          ...(readerEvaluation ? { readerEvaluation } : {}),
         };
       },
       (result) => result.outline !== null && !result.severelyTruncated,
@@ -683,6 +738,33 @@ export class UnifiedOutlineGenerator {
         }
         return content;
       },
+    };
+  }
+
+  /**
+   * 构造大纲读者判官端口（2026-10-12 ⑥ 判官反向闭环）：ReaderQualityJudge +
+   * 与 agent 同一请求层的 StructuredAI 适配器（purpose=reader-outline-judge，
+   * 温度 0.2、流式读回/超时/max_tokens 降级/trace 全复用）。
+   * App 与冒烟都从这里拿判官（单轨），再经 expandDirection options 注入。
+   */
+  createReaderOutlineJudge(options?: GenerateOptions): OutlineReaderJudgePort {
+    const opts = { ...this.defaultOptions, ...options };
+    const judgeAi: StructuredAI = {
+      generate: async <T>(request: StructuredAIRequest<T>) => {
+        const content = await this.requestAgentContent(
+          [
+            { role: 'system', content: request.system },
+            { role: 'user', content: request.prompt },
+          ],
+          { ...opts, temperature: 0.2, signal: (request as { signal?: AbortSignal }).signal ?? opts.signal },
+        );
+        if (!content) throw new Error('读者判官 API 未返回内容');
+        return robustJsonParse(content) as unknown;
+      },
+    };
+    const judge = new ReaderQualityJudge(judgeAi);
+    return {
+      evaluateOutline: async input => judge.evaluateOutline(input),
     };
   }
 

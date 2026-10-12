@@ -26,6 +26,14 @@ import { OUTLINE_COMPLETENESS_POLICY } from '../validation/outlineCompleteness';
 import { OPENING_HOOK_LIMIT } from '../generators/outline-reviewer';
 import { OutlineToolkit, type CheckedOutlineRevision, type OutlineCheckOutcome } from './OutlineToolkit';
 
+/** 读者判官 findings（⑥ 判官反向闭环）：由生成链在首评 blocking 后注入修复回合 */
+export interface OutlineReaderFeedback {
+  score: number;
+  wouldStartReading: boolean;
+  summary?: string;
+  issues: Array<{ id: string; severity: string; description: string; blocking: boolean; suggestion?: string }>;
+}
+
 export interface OutlineRepairAgentInput {
   rawText: string;
   outline: ExecutableOutline;
@@ -36,6 +44,11 @@ export interface OutlineRepairAgentInput {
   loopOptions?: AgentLoopOptions;
   signal?: AbortSignal;
   onProgress?: (message: string) => void;
+  /**
+   * 读者判官反馈（2026-10-12 ⑥）：判官首评有 blocking 问题时注入，问题进 kickoff
+   * 且修复优先级最高。确定性门禁全绿但读者问题 blocking 时也必须跑修复回合。
+   */
+  readerFeedback?: OutlineReaderFeedback;
 }
 
 export interface OutlineRepairAgentResult extends OutlineCheckOutcome {
@@ -163,6 +176,29 @@ function checkToKickoff(checked: CheckedOutlineRevision, checksRemaining: number
   });
 }
 
+/** 读者判官 findings → kickoff 附加节（⑥ 判官反向闭环）。无 blocking 问题时返回空串 */
+export function readerFeedbackToKickoffSection(feedback: OutlineReaderFeedback | undefined): string {
+  if (!feedback) return '';
+  const blocking = feedback.issues.filter(issue => issue.blocking).slice(0, 12);
+  if (blocking.length === 0) return '';
+  return JSON.stringify({
+    readerJudge: {
+      score: feedback.score,
+      wouldStartReading: feedback.wouldStartReading,
+      ...(feedback.summary ? { summary: feedback.summary.slice(0, 200) } : {}),
+      blockingIssues: blocking.map(issue => ({
+        id: issue.id,
+        severity: issue.severity,
+        description: issue.description.slice(0, 200),
+        ...(issue.suggestion ? { suggestion: issue.suggestion.slice(0, 160) } : {}),
+      })),
+      blockingOmitted: Math.max(0, feedback.issues.filter(issue => issue.blocking).length - 12),
+      instruction:
+        '读者判官（真实读者视角）裁定的问题，修复优先级高于一切门禁黄签：按 suggestion 定位对应章节/段落（get_chapters/get_section），改写后必须 run_checks 复检。判官问题多为卖点/钩子/节奏/情绪层面的内容缺陷，不是格式问题。',
+    },
+  });
+}
+
 /**
  * 跑一轮大纲修复 agent。初稿已通过门禁且零质检问题时不发任何 AI 请求直接返回。
  * 用户取消(AbortError)与工具致命错误原样上抛;其余收束原因(stall/budget/protocol-error)
@@ -178,8 +214,10 @@ export async function runOutlineRepairAgent(
   });
   const initial = toolkit.recordCheck();
   const warnings: string[] = [];
+  const readerBlocking = (input.readerFeedback?.issues ?? []).filter(issue => issue.blocking).length;
 
-  if (initial.completeness.canApply && initial.qualityIssues.length === 0) {
+  // 确定性门禁全绿且零质检问题、且读者判官无 blocking 问题 → 零成本跳过
+  if (initial.completeness.canApply && initial.qualityIssues.length === 0 && readerBlocking === 0) {
     return {
       rawText: initial.snapshot.rawText,
       outline: initial.snapshot.outline,
@@ -196,16 +234,19 @@ export async function runOutlineRepairAgent(
   }
 
   input.onProgress?.(
-    `大纲 agent 开始修复:${initial.completeness.blockers.length} 项 blockers,${initial.qualityIssues.length} 项质检问题`
+    `大纲 agent 开始修复:${initial.completeness.blockers.length} 项 blockers,${initial.qualityIssues.length} 项质检问题${readerBlocking > 0 ? `,读者判官 blocking×${readerBlocking}` : ''}`
   );
   const runner = new AgentLoopRunner(input.transport, toolkit, {
     ...OUTLINE_AGENT_DEFAULT_OPTIONS,
     ...input.loopOptions,
     signal: input.signal,
   });
+  const readerKickoff = readerFeedbackToKickoffSection(input.readerFeedback);
   const session: AgentSession<OutlineFinish> = {
     systemPrompt: buildOutlineBrief(input.direction, toolkit),
-    kickoffMessage: checkToKickoff(initial, toolkit.checksRemaining()),
+    kickoffMessage: readerKickoff
+      ? `${checkToKickoff(initial, toolkit.checksRemaining())}\n${readerKickoff}`
+      : checkToKickoff(initial, toolkit.checksRemaining()),
     wrapUpPrompt: OUTLINE_WRAP_UP_PROMPT,
     protocolHint: OUTLINE_PROTOCOL_HINT,
     // get_section 要回喂整段正文(角色段可达万字),默认 3600 字符会截断

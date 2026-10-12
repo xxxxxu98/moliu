@@ -906,7 +906,16 @@ export async function runStoryflowClosedLoop(
     const expandedResult = await generator.expandDirection(prompt, direction, {
       wordCountRange,
       trace: { runId: outlineTraceRunId, model: cfg.model, provider: cfg.provider },
+      // 读者判官闭环（2026-10-12 ⑥）：release-loop 在这里闭环大纲分；MOLIU_OUTLINE_READER_JUDGE=0 可关
+      ...(process.env.MOLIU_OUTLINE_READER_JUDGE === '0'
+        ? {}
+        : { readerOutlineJudge: generator.createReaderOutlineJudge({ trace: { runId: outlineTraceRunId, model: cfg.model, provider: cfg.provider } }) }),
     });
+    if (expandedResult.readerEvaluation) {
+      console.info(
+        `[storyflow] 大纲读者判官闭环：score=${expandedResult.readerEvaluation.score} wouldStart=${expandedResult.readerEvaluation.wouldStartReading} blocking=${expandedResult.readerEvaluation.blockingIssues} rounds=${expandedResult.readerEvaluation.judgeRounds} repaired=${expandedResult.readerEvaluation.repaired}`
+      );
+    }
     phaseTimings.outlineExpandMs += Date.now() - expandStartedAt;
     const expanded = expandedResult.outline;
     outlineWarnings.push(...(expandedResult.warnings ?? []));

@@ -311,4 +311,48 @@ export interface ExpandedOutlineResult {
    * 重试耗尽后只会通过 partialOutline 返回诊断数据，outline 保持 null，禁止应用。
    */
   severelyTruncated?: boolean;
+  /**
+   * 读者判官闭环结论（2026-10-12 ⑥ 判官反向闭环）：注入 readerOutlineJudge 时才有。
+   * 大纲分是 r7-r9 四连破线的唯一未收敛层——确定性门禁密度再高也测不出「读者不想看」。
+   */
+  readerEvaluation?: OutlineReaderEvaluationSummary;
+}
+
+/**
+ * 大纲读者判官端口：结构兼容 story-runtime 的 ReaderQualityJudge.evaluateOutline
+ * （duck typing，避免 outline 层硬依赖）。由生成链注入；不注入则闭环零开销跳过。
+ */
+export interface OutlineReaderJudgePort {
+  evaluateOutline(input: {
+    context: { title?: string; genre?: string; targetReader?: string; positioning?: string };
+    outline: unknown;
+  }): Promise<{
+    version: string;
+    score: number;
+    wouldStartReading: boolean;
+    confidence: number;
+    issues: Array<{
+      id: string;
+      severity: string;
+      description: string;
+      blocking: boolean;
+      suggestion?: string;
+    }>;
+    summary?: string;
+  }>;
+}
+
+/** 读者判官闭环的落档摘要（进 ExpandedOutlineResult.readerEvaluation） */
+export interface OutlineReaderEvaluationSummary {
+  version: string;
+  score: number;
+  wouldStartReading: boolean;
+  confidence: number;
+  /** blocking=true 的问题数（驱动修复轮的信号源） */
+  blockingIssues: number;
+  totalIssues: number;
+  /** 判官实际调用次数（首评 + 修复后复评） */
+  judgeRounds: number;
+  /** 是否因判官 blocking 触发过修复回合 */
+  repaired: boolean;
 }
