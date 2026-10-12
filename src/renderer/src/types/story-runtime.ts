@@ -1,6 +1,8 @@
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
+import type { RejectionLessonEntry } from './project';
+
 /**
  * 全书词汇可读性档位。大纲定位层产出，写作层执行：档位只调节术语密度与
  * 处理方式（hardcore 允许专业词但须当场大白话落地 / balanced 默认 /
@@ -822,6 +824,12 @@ export interface LongFormWriteInput {
    * 空串或缺失时不注入，避免把空白块塞进可压缩上下文。
    */
   creativeCompass?: string;
+  /**
+   * 历史拒稿教训（2026-10-12 数据飞轮零成本版）：项目级账本的高频拒因族，
+   * 起草【历史拒稿教训】反例区与改稿 brief 共用（writing/rejectionLessons SSOT）。
+   * 由 ChapterWritingPipeline 从 project.rejectionLessons 筛选（复发≥2）后传入。
+   */
+  rejectionLessons?: RejectionLessonEntry[];
 }
 
 export interface LongFormWriteResult {
@@ -838,4 +846,10 @@ export interface LongFormWriteResult {
   research?: ResearchRunSummary;
   /** 改稿 agent 回合摘要（未注入 writerAgent 或初稿即通过时为 undefined） */
   writer?: WriterRunSummary;
+  /**
+   * 进入改稿分支时的初审问题清单快照（未改稿时为 undefined）。
+   * 供上层累计「历史拒稿教训」账本——初稿被拒的问题是写手的真实坏习惯，
+   * 改稿修掉了也仍值得反例注入（2026-10-12 反例注入第一期）。
+   */
+  initialReviewIssues?: ContinuityIssue[];
 }

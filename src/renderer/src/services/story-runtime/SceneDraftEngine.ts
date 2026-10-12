@@ -12,6 +12,12 @@ import type {
 import { CHAPTER_TITLE_PROMPT_RULES, normalizeGeneratedChapterTitle } from '@/services/writing/chapterTitle';
 import { MAX_WORD_THRESHOLD, MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
 import { renderStatusRules } from '@/services/writing/stateLedger';
+import {
+  LESSON_FAMILIES,
+  renderRejectionLessonRules,
+  topRejectionLessons,
+} from '@/services/writing/rejectionLessons';
+import type { RejectionLessonEntry } from '@/types/project';
 
 import { renderSceneBeatLines } from './creativeCompass';
 import {
@@ -270,6 +276,12 @@ export interface SceneDraftOptions {
   sceneBeats?: string[];
   /** 已渲染的创作罗盘。空串不注入 */
   creativeCompass?: string;
+  /**
+   * 历史拒稿教训（反例注入，数据飞轮零成本版）：本书高频拒因族渲染成
+   * 【历史拒稿教训】反例区（writing/rejectionLessons 是渲染与归一 SSOT）。
+   * 只收复发≥2 的族（topRejectionLessons 已筛），空数组零注入。
+   */
+  rejectionLessons?: RejectionLessonEntry[];
 }
 
 export class SceneDraftEngine {
@@ -510,6 +522,8 @@ export class SceneDraftEngine {
         ...previousEndingRules,
         ...CHAPTER_STYLE_RULES,
         ...renderVocabularyRules(options?.vocabularyTier),
+        // 历史拒稿反例区（与词汇档位同通道注入；高频族=本书写手的已知坏习惯）
+        ...renderRejectionLessonRules(options?.rejectionLessons),
         '- paragraphs 数组元素只能是小说正文，禁止写入 sceneId/beatId/candidateEvents 等字段名，禁止写入 ] } : 等 JSON 骨架',
         '- candidateEvents 只填 id 列表（从 allowedCandidateEventIds 中选），禁止重复粘贴 summary',
         ...wordCountRules,
@@ -592,6 +606,16 @@ export class SceneDraftEngine {
           allowedAppearanceNames,
           terminalFateCharacters: terminalFateCharacters.map(item => `${item.name}（已${item.status}）`),
           futureReveals: options?.futureReveals ?? [],
+          ...(topRejectionLessons(options?.rejectionLessons).length > 0
+            ? {
+                antiExamples: topRejectionLessons(options?.rejectionLessons).map(entry => {
+                  const family = LESSON_FAMILIES.find(item => item.key === entry.key);
+                  return family
+                    ? `${family.directive}（复发${entry.count}次）`
+                    : `切勿重犯（复发${entry.count}次）：${entry.lastMessage.slice(0, 60)}`;
+                }),
+              }
+            : {}),
         },
         titleHints: existingChapterTitle
           ? { fixedTitle: existingChapterTitle }

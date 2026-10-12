@@ -147,5 +147,19 @@ export function createChapterMemoryClient(): MemoryClient {
         console.warn('[chapterPersistenceAdapters] 事实台账已入内存态，落盘失败（无 App 环境属预期）:', error);
       }
     },
+    /**
+     * 历史拒稿教训账本（2026-10-12 反例注入）：合并结果写回项目并落盘。
+     * 与 saveLedger 同 best-effort 口径——内存态已由管道同步进 input.project。
+     */
+    async saveRejectionLessons(lessons) {
+      const project = projectStore.currentProject;
+      if (!project) return;
+      project.rejectionLessons = lessons;
+      try {
+        await projectStore.saveCurrentProject();
+      } catch (error) {
+        console.warn('[chapterPersistenceAdapters] 拒稿教训已入内存态，落盘失败（无 App 环境属预期）:', error);
+      }
+    },
   };
 }

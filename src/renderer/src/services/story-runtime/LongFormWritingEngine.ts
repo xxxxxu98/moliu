@@ -846,6 +846,8 @@ export class LongFormWritingEngine {
         characterTitleAnchors: collectCharacterTitleAnchors(input.state),
         // 词汇档位（全书唯一）：改稿与起草同一口径，防改稿回合把术语密度改飘
         vocabularyTier: writeInput.vocabularyTier,
+        // 历史拒稿教训（反例注入）：改稿 brief 同 SSOT 渲染，防改稿把坏习惯改回来
+        rejectionLessons: writeInput.rejectionLessons,
         creativeCompass: writeInput.creativeCompass,
       });
       drafts = outcome.drafts;
@@ -917,6 +919,7 @@ export class LongFormWritingEngine {
       rewriteRounds,
       ...(researchSummary ? { research: researchSummary } : {}),
       ...(writerSummary ? { writer: writerSummary } : {}),
+      ...(initialReviewSnapshot ? { initialReviewIssues: initialReviewSnapshot.report.issues } : {}),
     };
   }
 
@@ -1003,6 +1006,8 @@ export class LongFormWritingEngine {
           stateCard: input.stateCard,
           // 词汇档位（全书唯一）：起草与改稿同一口径（proseRules SSOT 渲染）
           vocabularyTier: writeInput.vocabularyTier,
+          // 历史拒稿教训（反例注入）：起草与改稿同通道
+          rejectionLessons: writeInput.rejectionLessons,
           sceneBeats: contracts.chapter.sceneBeats,
           creativeCompass: writeInput.creativeCompass,
           futureReveals: contracts.chapter.futureReveals ?? [],

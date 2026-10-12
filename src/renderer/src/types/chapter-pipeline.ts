@@ -6,7 +6,7 @@
  * ChapterCommitService），这里不含任何执行逻辑。
  */
 
-import type { ChapterMemory, CharacterStateChange, EraLedgerEntry, NumericLedgerEntry, TimePromiseEntry } from '@/types/project';
+import type { ChapterMemory, CharacterStateChange, EraLedgerEntry, NumericLedgerEntry, RejectionLessonEntry, TimePromiseEntry } from '@/types/project';
 
 // ============================================================
 // 落库 / 记忆端口（注入式，冒烟与 App 提供不同介质的实现）
@@ -57,6 +57,12 @@ export interface MemoryClient {
     /** 契约 19：本章 era-fact 投影。缺省表示本章没有新纪年。 */
     eraEntries?: EraLedgerEntry[];
   }): Promise<void>;
+  /**
+   * 历史拒稿教训账本（可选端口，2026-10-12 反例注入第一期）：把合并后的
+   * 账本写回项目并落盘（store 适配器在 chapterPersistenceAdapters 提供）。
+   * 失败 best-effort——管道已同步内存态，落盘失败只影响跨会话延续。
+   */
+  saveRejectionLessons?(lessons: RejectionLessonEntry[]): Promise<void>;
 }
 
 // ============================================================

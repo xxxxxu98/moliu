@@ -83,6 +83,7 @@ import {
   stripStateForChapterRewrite,
 } from '@/services/story-runtime';
 import { TrainingPairRecorder } from '@/services/story-runtime/TrainingPairRecorder';
+import { mergeRejectionLessons, topRejectionLessons } from '@/services/writing/rejectionLessons';
 import type {
   AgentLoopTransport,
   AgentResearchStep,
@@ -1137,6 +1138,8 @@ export class ChapterWritingPipeline {
           : {}),
         // 未回收伏笔的判官候选，口径见 buildPayoffCandidates（已到埋设点，非回收时点）
         payoffCandidates: buildPayoffCandidates(input.project.foreshadows, chapterNumber),
+        // 历史拒稿教训（2026-10-12 反例注入第一期）：复发≥2 的高频拒因族进起草/改稿反例区
+        rejectionLessons: topRejectionLessons(input.project.rejectionLessons ?? []),
       });
       // headless 跑进程可能在批量结束后即退出：每章写完即等待偏好对落盘队列清空
       await trainingPairRecorder?.flush();
@@ -1148,6 +1151,20 @@ export class ChapterWritingPipeline {
         )
       );
       const gateResult = this.toGateResult(result.report);
+      // 历史拒稿教训累计（反例注入第一期）：初稿被拒问题（写手真实坏习惯，改掉了也
+      // 值得反例警示）+ 终审残留问题，同族合并计数。best-effort，不影响本章结果。
+      try {
+        const lessonIssues = [...(result.initialReviewIssues ?? []), ...result.report.issues];
+        const nextLessons = mergeRejectionLessons(
+          input.project.rejectionLessons,
+          lessonIssues,
+          chapterNumber
+        );
+        input.project.rejectionLessons = nextLessons;
+        await this.memoryClient?.saveRejectionLessons?.(nextLessons);
+      } catch (error) {
+        console.warn('[Pipeline] 拒稿教训账本更新失败（不影响本章）:', error);
+      }
       const generatedShortTitle =
         result.drafts.map(d => d.chapterTitle?.trim()).find(Boolean) ?? null;
       const shouldApplyGeneratedTitle =

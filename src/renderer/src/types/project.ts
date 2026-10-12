@@ -35,6 +35,12 @@ export interface Project {
    * 同一年号的年份只向后走。有账时起草与判官读这里，不再从记忆正文回抽年号。
    */
   eraLedger?: EraLedgerEntry[];
+  /**
+   * 历史拒稿教训账本（2026-10-12 数据飞轮第一期）：每章审查出的 blocking/
+   * 弱信号问题按族签名累计，高频族渲染进起草/改稿 prompt 反例区。
+   * 归一与合并逻辑见 services/writing/rejectionLessons.ts。
+   */
+  rejectionLessons?: RejectionLessonEntry[];
   modelConfig?: ModelConfig;
   createdAt: string;
   updatedAt: string;
@@ -514,6 +520,19 @@ export interface ProviderConfig {
 // ============================================
 // 跨章事实台账（数字/时间，2026-10-05 agent 化改造）
 // ============================================
+
+/** 历史拒稿教训条目：同族拒因的累计复发记录（反例注入账本） */
+export interface RejectionLessonEntry {
+  /** 问题族签名（rejectionLessons.lessonKeyOf 归一；未匹配族为 other:前缀） */
+  key: string;
+  /** 累计复发次数 */
+  count: number;
+  /** 最近一次判官/门禁原文（≤120 字），作为反例例证 */
+  lastMessage: string;
+  /** 最近一次复发章号 */
+  lastChapter: number;
+  lastAt: string;
+}
 
 /** 数字事实台账条目：AI 归一的结构化「对象+数值+单位」，题材无关 */
 export interface NumericLedgerEntry {

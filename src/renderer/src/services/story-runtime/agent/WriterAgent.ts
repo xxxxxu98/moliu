@@ -41,6 +41,8 @@ import {
 } from '../proseRules';
 import { renderSceneBeatLines } from '../creativeCompass';
 import { MAX_WORD_THRESHOLD, MIN_WORD_THRESHOLD } from '@/services/writing/supplement';
+import { renderRejectionLessonRules } from '@/services/writing/rejectionLessons';
+import type { RejectionLessonEntry } from '@/types/project';
 
 export interface WriterAgentStepInput {
   chapterNumber: number;
@@ -69,6 +71,11 @@ export interface WriterAgentStepInput {
   vocabularyTier?: VocabularyTier;
   /** 已渲染的创作罗盘。空串不注入 */
   creativeCompass?: string;
+  /**
+   * 历史拒稿教训（反例注入）：改稿与起草同一 SSOT 渲染——高频拒因族在改稿
+   * brief 里同样亮出，防改稿回合把起草时规避过的坏习惯改回来。
+   */
+  rejectionLessons?: RejectionLessonEntry[];
 }
 
 export interface WriterAgentStepResult extends ChapterReviewOutcome {
@@ -183,6 +190,7 @@ export function buildWriterBrief(input: WriterAgentStepInput, toolkit: AgentTool
     ...CHAPTER_STRUCTURE_RULES,
     ...CHAPTER_STYLE_RULES,
     ...renderVocabularyRules(input.vocabularyTier),
+    ...renderRejectionLessonRules(input.rejectionLessons),
     '',
     '【可用工具】',
     renderToolList(toolkit),

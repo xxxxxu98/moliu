@@ -360,6 +360,69 @@ describe('LongFormWritingEngine', () => {
     expect(commitChapter).toHaveBeenCalledOnce();
   });
 
+  it('rejectionLessons 注入起草 prompt：system 反例区 + writingRules.antiExamples，单次复发不注入', async () => {
+    const captured: Array<{ system: string; prompt: string }> = [];
+    const facts: FactExtractor = {
+      extract: async () => ({ events: [], deltas: [], evidence: [] }),
+    };
+    const ai: StructuredAI = {
+      async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
+        if (request.purpose === 'chapter-judge' || request.purpose === 'fulfillment-check') {
+          const payload = JSON.parse(request.prompt) as {
+            mustCover?: string[];
+            forbiddenZones?: string[];
+          };
+          return {
+            fulfillment: (payload.mustCover ?? []).map(node => ({
+              node, fulfilled: true, evidence: ['语义履约'], reason: '放行',
+            })),
+            forbidden: (payload.forbiddenZones ?? []).map(zone => ({
+              zone, violated: false, evidence: [], reason: '未触发',
+            })),
+            issues: [],
+          };
+        }
+        captured.push({ system: request.system, prompt: request.prompt });
+        const payload = JSON.parse(request.prompt) as { primaryBeatId?: string };
+        const beatId = payload.primaryBeatId ?? 'unknown';
+        return {
+          sceneId: `${beatId}:scene`,
+          beatId,
+          paragraphs: ['林夜经历了守卫盘查。'],
+          candidateEvents: [],
+        };
+      },
+    };
+    const engine = new LongFormWritingEngine({
+      ai,
+      factExtractor: facts,
+      commitPort: {
+        commitChapter: async () => ({ commitId: 'c-lesson', revision: 1, acceptedAt: '2026-01-02T00:00:00.000Z' }),
+      },
+    });
+    await engine.write({
+      projectId: 'project-lesson',
+      contracts: makeContracts(),
+      state: makeState(),
+      recentScenes: [],
+      retrievedScenes: [],
+      styleGuidance: ['克制'],
+      maxContextTokens: 10_000,
+      rejectionLessons: [
+        { key: 'forbidden-zone', count: 3, lastMessage: '触发本章禁区：御剑入城', lastChapter: 4, lastAt: '2026-10-12T00:00:00Z' },
+        { key: 'rhythm-uniform', count: 1, lastMessage: '段落节奏均匀化（cv=0.12）', lastChapter: 4, lastAt: '2026-10-12T00:00:00Z' },
+      ],
+    });
+    expect(captured.length).toBeGreaterThan(0);
+    expect(captured[0].system).toContain('【历史拒稿教训】');
+    expect(captured[0].system).toContain('已复发 3 次');
+    // 单次复发（count=1）未过阈值：不注入，防把噪声当模式
+    expect(captured[0].system).not.toContain('已复发 1 次');
+    const writingRules = (JSON.parse(captured[0].prompt) as { writingRules: { antiExamples?: string[] } }).writingRules;
+    expect(writingRules.antiExamples).toHaveLength(1);
+    expect(writingRules.antiExamples![0]).toContain('禁区');
+  });
+
   it('write() 真走裁而不弃接线：陈旧裁剪触发 AI 改写回填且不抛错（2026-10-01 r17 回归）', async () => {
     // r17 实证：salvage 接线曾在 write() 里引用构造器参数名 dependencies 而非
     // this.dependencies——98 章后首次触发陈旧度裁剪即 ReferenceError，三连重试
