@@ -11,6 +11,7 @@ import type {
 } from '@/types/story-runtime';
 
 import { LongFormWritingEngine } from '../../LongFormWritingEngine';
+import type { TrainingPairRecord } from '../../TrainingPairRecorder';
 import {
   createWriterAgentStep,
   type WriterAgentStepInput,
@@ -165,6 +166,58 @@ describe('LongFormWritingEngine × WriterAgent', () => {
     expect(result.commit.status).toBe('accepted');
     expect(result.writer).toBeUndefined();
     expect(transport.calls).toHaveLength(0);
+  });
+
+  it('偏好对采样：拒→改→过产出 rejected-then-accepted（初审快照在 rejected 侧），首过零回调', async () => {
+    const pairs: TrainingPairRecord[] = [];
+    const transport = new ScriptedTransport([
+      call('get_draft'),
+      call('revise_paragraphs', { edits: [{ index: 1, text: '守卫盘查之后,林夜牵马步行入城。' }] }),
+      call('run_checks'),
+      finish,
+    ]);
+    const engine = new LongFormWritingEngine({
+      ai: new ForbiddenDraftAI(),
+      factExtractor: facts,
+      commitPort: {
+        commitChapter: async () => ({ commitId: 'c-pair', revision: 1, acceptedAt: '2026-01-02T00:00:00.000Z' }),
+      },
+      writerAgent: createWriterAgentStep(transport),
+      onTrainingPair: record => pairs.push(record),
+    });
+    const result = await engine.write(baseInput());
+    expect(result.commit.status).toBe('accepted');
+    expect(pairs).toHaveLength(1);
+    expect(pairs[0].pairKind).toBe('rejected-then-accepted');
+    expect(pairs[0].chapterNumber).toBe(2);
+    expect(pairs[0].rejected.stage).toBe('initial-review');
+    expect(pairs[0].rejected.prose).toContain('御剑入城');
+    expect(pairs[0].rejected.issues.some(i => i.severity === 'blocking')).toBe(true);
+    expect(pairs[0].accepted?.prose).toContain('牵马步行');
+
+    // 初稿即过：无对比信号，不产出偏好对
+    const firstPassPairs: TrainingPairRecord[] = [];
+    const passingAI: StructuredAI = {
+      async generate<T>(request: StructuredAIRequest<T>) {
+        const forbidden = new ForbiddenDraftAI();
+        const value = (await forbidden.generate(request)) as { paragraphs?: string[] };
+        if (Array.isArray(value.paragraphs)) {
+          value.paragraphs = ['林夜来到城门。', '守卫盘查之后,林夜步行入城。', '林夜通过城门。'];
+        }
+        return value;
+      },
+    };
+    const firstPassEngine = new LongFormWritingEngine({
+      ai: passingAI,
+      factExtractor: facts,
+      commitPort: {
+        commitChapter: async () => ({ commitId: 'c2', revision: 1, acceptedAt: '2026-01-02T00:00:00.000Z' }),
+      },
+      writerAgent: createWriterAgentStep(new ScriptedTransport([])),
+      onTrainingPair: record => firstPassPairs.push(record),
+    });
+    await firstPassEngine.write(baseInput());
+    expect(firstPassPairs).toHaveLength(0);
   });
 
   it('agent 改稿后不复检就反复 finish → stall,回退到初审稿并 rejected', async () => {

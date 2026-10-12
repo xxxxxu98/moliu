@@ -82,6 +82,7 @@ import {
   StoryRuntimeClient,
   stripStateForChapterRewrite,
 } from '@/services/story-runtime';
+import { TrainingPairRecorder } from '@/services/story-runtime/TrainingPairRecorder';
 import type {
   AgentLoopTransport,
   AgentResearchStep,
@@ -1021,12 +1022,17 @@ export class ChapterWritingPipeline {
           onSummary: summary => recordingTransport?.recordSummary({ kind: 'writer', ...summary }),
         });
       }
+      // 偏好对采样（数据飞轮）：MOLIU_TRAINING_PAIRS_DIR/1 开启，按项目落 JSONL；未设置零开销
+      const trainingPairRecorder = TrainingPairRecorder.fromEnv(input.project.id);
       const engine = new LongFormWritingEngine({
         ai,
         factExtractor: new AIFactExtractor(ai),
         commitPort: runtime,
         ...(researchStep ? { research: researchStep } : {}),
         ...(writerAgent ? { writerAgent } : {}),
+        ...(trainingPairRecorder
+          ? { onTrainingPair: record => trainingPairRecorder.record(record) }
+          : {}),
       });
       throwIfAborted(input.signal);
       // 记忆按目标章截断的统一变量（fakedDeath/fateStatus/状态卡共源）：
@@ -1132,6 +1138,8 @@ export class ChapterWritingPipeline {
         // 未回收伏笔的判官候选，口径见 buildPayoffCandidates（已到埋设点，非回收时点）
         payoffCandidates: buildPayoffCandidates(input.project.foreshadows, chapterNumber),
       });
+      // headless 跑进程可能在批量结束后即退出：每章写完即等待偏好对落盘队列清空
+      await trainingPairRecorder?.flush();
       // coerce 已清洗段落；出口兜底：剥 schema 残留 → 确定性去重（治章末台词重复）→ 排版归一化
       // dedupProse 内部已含 normalizeWebnovelParagraphs，无需外层再调
       const prose = dedupProse(

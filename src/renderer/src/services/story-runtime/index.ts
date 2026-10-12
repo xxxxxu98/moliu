@@ -26,6 +26,7 @@ export * from './proseDedup';
 export * from './RecordingStructuredAI';
 export * from './SceneBeatPlanner';
 export * from './SceneDraftEngine';
+export * from './TrainingPairRecorder';
 export * from './schemas';
 export * from './stateOverlay';
 export * from './StoryRuntimeClient';

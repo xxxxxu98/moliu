@@ -40,6 +40,11 @@ import { SceneDraftEngine } from './SceneDraftEngine';
 import type { WriterAgentStep } from './agent/WriterAgent';
 import type { ChapterReviewOutcome } from './agent/WriterToolkit';
 import { sanitizeSceneDraftParagraphs } from './stripDraftLeakage';
+import {
+  buildTrainingPairRecord,
+  type BuildTrainingPairInput,
+  type TrainingPairRecord,
+} from './TrainingPairRecorder';
 import { buildInPlaceExpandPrompt, IN_PLACE_EXPAND_SCHEMA } from './inPlaceExpand';
 import {
   buildCondensePrompt,
@@ -117,6 +122,11 @@ export interface LongFormWritingEngineDependencies {
    * 抛错原样冒泡:审查链不可用必须让批量层停章,不能静默回落。
    */
   writerAgent?: WriterAgentStep;
+  /**
+   * 偏好对采样（数据飞轮第一期）：改稿轮或拒稿章在这里拿到
+   * 「初稿+初审拒因 / 终稿+终审结果」对比样本。回调抛错不影响主链。
+   */
+  onTrainingPair?: (record: TrainingPairRecord) => void;
 }
 
 /** 审查链输入:初稿与每次改稿共用,保证 agent 的 run_checks 与提交门禁同口径 */
@@ -796,11 +806,15 @@ export class LongFormWritingEngine {
     const weakSignalDriven = !shouldRewrite(report) && weakSignalIssueIds.length > 0;
     // 初稿提取的命运族 delta 在改稿后可能被重提取静默丢失（见 mergeFateDeltasAcrossRounds 注释）
     const initialFacts = facts;
-    if (
+    const rewriteEligible =
       (shouldRewrite(report) || weakSignalIssueIds.length > 0) &&
       maxRewriteRounds > 0 &&
-      this.dependencies.writerAgent
-    ) {
+      Boolean(this.dependencies.writerAgent);
+    // 偏好对采样：初审快照（只有进入改稿的章才有「拒→过」对比价值）
+    const initialReviewSnapshot = rewriteEligible
+      ? { prose: draftsProse(drafts), report }
+      : undefined;
+    if (rewriteEligible) {
       // 改稿只走 agent：模型读问题清单、查事实、局部改稿、复检，blocking=0 才 finish。
       // 未注入 writerAgent（假 AI 单测）时不整章重写，带着初审结果直接提交。
       // 均匀化触发的改稿预算加倍至 2 轮：gemini 终验实测 11/196 章 CV<0.14 且
@@ -881,6 +895,17 @@ export class LongFormWritingEngine {
       facts,
       report,
     });
+    this.emitTrainingPair({
+      projectId: input.projectId,
+      chapterNumber: contracts.chapter.chapterNumber,
+      rewriteRounds,
+      enteredRewrite: Boolean(initialReviewSnapshot),
+      initialReport: initialReviewSnapshot?.report,
+      initialProse: initialReviewSnapshot?.prose,
+      finalReport: report,
+      finalProse: draftsProse(drafts),
+      finalStatus: commit.status,
+    });
     return {
       plan,
       context,
@@ -893,6 +918,20 @@ export class LongFormWritingEngine {
       ...(researchSummary ? { research: researchSummary } : {}),
       ...(writerSummary ? { writer: writerSummary } : {}),
     };
+  }
+
+  /** 偏好对采样出口：构造失败/回调抛错只告警，绝不影响写作主链 */
+  private emitTrainingPair(input: BuildTrainingPairInput): void {
+    if (!this.dependencies.onTrainingPair) return;
+    try {
+      const record = buildTrainingPairRecord(input);
+      if (record) this.dependencies.onTrainingPair(record);
+    } catch (error) {
+      console.warn(
+        `[LongFormWritingEngine] ch${input.chapterNumber} 偏好对采样失败（不影响主链）：`,
+        error
+      );
+    }
   }
 
   /** Step A：整章起草 + 补字。瞬态错误（网络/截断）步骤级重试，持久错误冒泡。 */

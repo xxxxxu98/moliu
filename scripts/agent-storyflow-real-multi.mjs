@@ -315,6 +315,8 @@ function launchRun(meta) {
         ...process.env,
         MOLIU_AI_PROVIDER_ID: meta.id,
         MOLIU_RUN_SUFFIX: RUN_SUFFIX_OVERRIDE || sanitizeRunSuffix(meta.id),
+        // 偏好对采样（数据飞轮第一期）：改稿轮拒/过对比样本随矩阵产物落盘
+        MOLIU_TRAINING_PAIRS_DIR: join(dest, 'training-pairs'),
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
