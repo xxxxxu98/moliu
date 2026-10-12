@@ -22,6 +22,7 @@ import {
   countFindings,
   detectCaliberSignals,
   detectEscalationSignals,
+  resolveReaderJudgeGate,
   validateFindingsDoc,
 } from './findings-lib.mjs';
 
@@ -67,8 +68,8 @@ export function renderVerdictReport(doc, validation, verdict) {
   return `${lines.join('\n')}\n`;
 }
 
-/** 渲染跨轮收敛报告（中文 markdown） */
-export function renderConvergenceReport(docs, matrix, signals) {
+/** 渲染跨轮收敛报告（中文 markdown）。gate 为实际生效的读者门禁（口径随报告落档） */
+export function renderConvergenceReport(docs, matrix, signals, gate = undefined) {
   const header = ['分类', ...matrix.rounds].join(' | ');
   const divider = ['---', ...matrix.rounds.map(() => '---')].join(' | ');
   const rows = matrix.rows.map(row => {
@@ -77,13 +78,17 @@ export function renderConvergenceReport(docs, matrix, signals) {
   });
   const summary = docs.map(doc => {
     const counts = countFindings(doc);
-    const verdict = computeReleaseVerdict(doc);
+    const verdict = computeReleaseVerdict(doc, gate);
     return `| ${doc.round} | ${doc.book} | ${doc.chapters} | ${doc.review?.method ?? '?'} | ${doc.review?.caliber ?? '未标注'} | ${counts.S1} | ${counts.S2} | ${verdict.ready ? 'READY' : `NOT READY（${verdict.blockers.length} 项阻断）`} |`;
   });
+  const gateNote = gate
+    ? `> 读者门禁口径：${JSON.stringify(gate)}（来自 thresholds.json；判定随实际生效阈值计算）`
+    : '';
   return [
     '# 可上线大循环跨轮收敛表',
     '',
     '> 本文件由 `findings-ledger.mjs converge` 生成，勿手改。单元格为「终稿 S1/S2」计数，`·` 为 0。',
+    ...(gateNote ? ['', gateNote] : []),
     '',
     '## 各轮概览',
     '',
@@ -120,7 +125,8 @@ function runValidate(args) {
   if (!file) throw new Error('用法: findings-ledger.mjs validate <findings.json>');
   const doc = readJson(resolve(file));
   const validation = validateFindingsDoc(doc);
-  const verdict = computeReleaseVerdict(doc);
+  const { gate, source } = resolveReaderJudgeGate(DEFAULT_LEDGER_DIR);
+  const verdict = computeReleaseVerdict(doc, gate);
   mkdirSync(VERDICT_OUT_DIR, { recursive: true });
   const outPath = join(VERDICT_OUT_DIR, `${basename(file, '.json')}.verdict.md`);
   writeFileSync(outPath, renderVerdictReport(doc, validation, verdict), 'utf8');
@@ -146,8 +152,9 @@ function runConverge(args) {
   const docs = entries.map(entry => entry.doc);
   const matrix = buildConvergenceMatrix(docs);
   const signals = [...detectEscalationSignals(docs), ...detectCaliberSignals(docs)];
+  const { gate } = resolveReaderJudgeGate(dir);
   mkdirSync(dirname(out), { recursive: true });
-  writeFileSync(out, renderConvergenceReport(docs, matrix, signals), 'utf8');
+  writeFileSync(out, renderConvergenceReport(docs, matrix, signals, gate), 'utf8');
   console.log(`[findings] rounds=${docs.length} classes=${matrix.rows.length} signals=${signals.length}`);
   console.log(`[findings] signals: ${signals.map(signal => signal.kind).join(',') || 'none'}`);
   console.log(`[findings] report: ${out}`);

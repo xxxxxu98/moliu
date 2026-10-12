@@ -34,7 +34,12 @@
     "bootstrap:fact-ledger": "node scripts/bootstrap-fact-ledger.mjs",
     "test:regression-advisor": "node --test scripts/__tests__/regression-advisor.test.mjs",
     "replay:from-finding": "node scripts/storyflow-replay-from-finding.mjs",
-    "regression:advisor": "node scripts/storyflow-regression-advisor.mjs"
+    "regression:advisor": "node scripts/storyflow-regression-advisor.mjs",
+    "test:model-probe": "node --test scripts/__tests__/model-probe-and-thresholds.test.mjs",
+    "test:attribution": "node --test scripts/__tests__/attribution.test.mjs",
+    "probe:model": "node scripts/storyflow-model-probe.mjs",
+    "thresholds": "node .agents/skills/storyflow-release-loop/scripts/thresholds.mjs",
+    "attribution": "node .agents/skills/storyflow-release-loop/scripts/attribution.mjs"
   },
   "keywords": [
     "electron",

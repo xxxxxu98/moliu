@@ -2,6 +2,8 @@
 
 > 本文件由 `findings-ledger.mjs converge` 生成，勿手改。单元格为「终稿 S1/S2」计数，`·` 为 0。
 
+> 读者门禁口径：{"outline":85,"mean":85,"median":86,"min":65}（来自 thresholds.json；判定随实际生效阈值计算）
+
 ## 各轮概览
 
 | 轮次 | 书 | 章数 | 审法 | 口径 | S1 | S2 | 计算判定 |

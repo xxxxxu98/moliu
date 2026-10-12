@@ -10,6 +10,8 @@
  * - 只有 status=final（终稿实锤）计数；caught（过程已兜住）不是 Finding，
  *   needs-verify（待取样核实）视同未关闭，阻断上线。
  */
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 /** findings.json 当前 schema 版本 */
 export const FINDINGS_SCHEMA_VERSION = 'findings/v1';
@@ -82,9 +84,14 @@ export const FULL_READ_METHODS = Object.freeze(['full-read', 'full-read-4ch']);
 
 /**
  * 读者裁判硬门禁（2026-09-13 复冻值，与 SKILL.md 退出条件同源）。
- * 数值变更属于质量门调整，必须人工确认后同步 SKILL.md。
+ * 这是兜底冻结值：实际上限以 docs/quality-ledger/thresholds.json 的 active 为准
+ * （有界自治：±2 内自动生效、硬下限不可逾越，见 thresholds.mjs）。
  */
 export const READER_JUDGE_GATE = Object.freeze({ outline: 85, mean: 85, median: 86, min: 65 });
+/** 有界自治硬下限：任何方式（含人工批准）都不得低于此线 */
+export const READER_JUDGE_GATE_FLOOR = Object.freeze({ outline: 80, mean: 80, median: 80, min: 60 });
+/** 自动生效允许的单次变动幅度（超出须人工批准） */
+export const READER_JUDGE_GATE_MAX_DELTA = 2;
 
 /** 升级信号阈值（只在全读轮之间计算，未验证轮的 0 不可比） */
 export const ESCALATION = Object.freeze({
@@ -95,6 +102,24 @@ export const ESCALATION = Object.freeze({
   /** 最新全读轮 S1 根因落在上游层的占比达到此值 → 停止写作侧补丁 */
   upstreamRatio: 0.5,
 });
+
+/**
+ * 解析实际生效的读者门禁：thresholds.json（与 findings/ 同级）的 active.readerJudge
+ * 优先，缺省/损坏回退冻结常量。返回 {gate, source} 供判定报告标注口径来源。
+ * @param {string} ledgerDir findings 台账目录（docs/quality-ledger/findings）
+ */
+export function resolveReaderJudgeGate(ledgerDir) {
+  const thresholdsPath = join(dirname(String(ledgerDir)), 'thresholds.json');
+  try {
+    const doc = JSON.parse(readFileSync(thresholdsPath, 'utf8'));
+    if (doc?.schemaVersion === 'thresholds/v1' && doc?.active?.readerJudge) {
+      return { gate: doc.active.readerJudge, source: 'thresholds.json' };
+    }
+  } catch {
+    /* 无文件或损坏：回退冻结值 */
+  }
+  return { gate: READER_JUDGE_GATE, source: 'frozen-constant' };
+}
 
 const isNonEmptyString = value => typeof value === 'string' && value.trim().length > 0;
 
@@ -209,7 +234,7 @@ export function countFindings(doc) {
  * @param {object} doc findings 文档
  * @returns {{ ready: boolean, blockers: string[], warnings: string[] }}
  */
-export function computeReleaseVerdict(doc) {
+export function computeReleaseVerdict(doc, gate = READER_JUDGE_GATE) {
   const blockers = [];
   const warnings = [];
   const counts = countFindings(doc);
@@ -229,7 +254,7 @@ export function computeReleaseVerdict(doc) {
   if (!Number.isInteger(gates.fateRealResurrection)) blockers.push('命运 AI 裁决结果缺失');
   else if (gates.fateRealResurrection > 0) blockers.push(`命运裁决真复活 × ${gates.fateRealResurrection}`);
 
-  collectReaderJudgeBlockers(gates.readerJudge, blockers);
+  collectReaderJudgeBlockers(gates.readerJudge, blockers, gate);
   collectEndingBlockers(gates.ending, blockers);
 
   const interventions = Array.isArray(gates.humanIntervention) ? gates.humanIntervention : null;
@@ -246,12 +271,12 @@ export function computeReleaseVerdict(doc) {
   return { ready: blockers.length === 0, blockers, warnings };
 }
 
-function collectReaderJudgeBlockers(readerJudge, blockers) {
+function collectReaderJudgeBlockers(readerJudge, blockers, gate = READER_JUDGE_GATE) {
   if (!readerJudge || typeof readerJudge !== 'object') {
     blockers.push('读者裁判四指标缺失');
     return;
   }
-  for (const [key, threshold] of Object.entries(READER_JUDGE_GATE)) {
+  for (const [key, threshold] of Object.entries(gate)) {
     const value = readerJudge[key];
     if (typeof value !== 'number') blockers.push(`读者裁判 ${key} 缺失`);
     else if (value < threshold) blockers.push(`读者裁判 ${key}=${value} < ${threshold}`);

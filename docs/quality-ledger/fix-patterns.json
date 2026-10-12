@@ -1,0 +1,152 @@
+{
+  "schemaVersion": "fix-patterns/v1",
+  "note": "分类→历史修法检索表（归因四分诊自动化的数据层）。mechanism 是修法摘要；modules 是落点模块（相对仓库根）；rounds 是修法引入/加固轮次。新修复落地时必须同步登记本表——这是「同一个坑不允许摔两次」纪律的机器可读形态。",
+  "patterns": [
+    {
+      "class": "state.fate",
+      "expectedRootLayers": ["extraction", "writer"],
+      "fixes": [
+        { "round": "r2", "mechanism": "台账死亡候选网：死亡入账+后章正文提及→复活候选（triage state-ledger）", "modules": ["scripts/state-ledger.mjs"] },
+        { "round": "r7", "mechanism": "vital gap 召回：死亡完成体无 vital 条目→ledger-gap 候选（周文彬形态）", "modules": ["scripts/state-ledger.mjs"] },
+        { "round": "r8", "mechanism": "假死协议：假死→揭晓合法链，假死后 arrest 报 vital 矛盾", "modules": ["scripts/state-ledger.mjs"] },
+        { "round": "r21", "mechanism": "命运族 delta 跨改稿轮保锚 mergeFateDeltasAcrossRounds（获释 delta 被重提取静默丢失→状态账永押）", "modules": ["src/renderer/src/services/story-runtime/LongFormWritingEngine.ts"] }
+      ]
+    },
+    {
+      "class": "state.custody",
+      "expectedRootLayers": ["extraction", "writer"],
+      "fixes": [
+        { "round": "r8", "mechanism": "影子状态账本：押地刷新/他人解除不连带/快照保持 in押（顾宪诚形态）", "modules": ["scripts/state-ledger.mjs"] },
+        { "round": "r21", "mechanism": "命运族 delta 保锚 + 判官必检（顾珩获释 delta 丢失族）", "modules": ["src/renderer/src/services/story-runtime/LongFormWritingEngine.ts"] }
+      ]
+    },
+    {
+      "class": "state.title",
+      "expectedRootLayers": ["extraction", "writer"],
+      "fixes": [
+        { "round": "r4", "mechanism": "头衔锚（契约 14）：最近入账官职/头衔注入起草+改稿+判官", "modules": ["src/renderer/src/services/story-runtime/SceneDraftEngine.ts", "src/renderer/src/services/story-runtime/agent/WriterAgent.ts"] },
+        { "round": "r10", "mechanism": "头衔协议：去职→appoint 新衔合法，office 与 custody 独立时间线", "modules": ["scripts/state-ledger.mjs"] }
+      ]
+    },
+    {
+      "class": "state.identity",
+      "expectedRootLayers": ["extraction", "writer"],
+      "fixes": [
+        { "round": "r6", "mechanism": "身份锚：角色卡身份首句注入（赵宣=恭王被降格形态）", "modules": ["src/renderer/src/services/writing/ChapterWritingPipeline.ts"] },
+        { "round": "r10", "mechanism": "身份协议：未标 reveal-identity 不入账，标了才进快照", "modules": ["scripts/state-ledger.mjs"] }
+      ]
+    },
+    {
+      "class": "state.location",
+      "expectedRootLayers": ["extraction", "writer"],
+      "fixes": [
+        { "round": "r10", "mechanism": "提及证据（mentionEvidence）：判官跨章仲裁的逐字原文兜底", "modules": ["src/renderer/src/services/writing/ChapterWritingPipeline.ts"] }
+      ]
+    },
+    {
+      "class": "number.ledger",
+      "expectedRootLayers": ["extraction", "writer"],
+      "fixes": [
+        { "round": "r6", "mechanism": "数字锚：既成大额数字名录注入起草+判官", "modules": ["src/renderer/src/services/writing/numericLedger.ts"] },
+        { "round": "r10", "mechanism": "契约 15 台账化：FactExtractor 结构化出账，同对象首值锁正典仅勘误可覆盖", "modules": ["src/renderer/src/services/writing/numericLedger.ts"] },
+        { "round": "r21", "mechanism": "同单位异值确定性枚举 + 判官定向必检对 buildNumericConflictProbes（措辞变体同对象零拦截形态）", "modules": ["src/renderer/src/services/writing/numericLedger.ts", "src/renderer/src/services/story-runtime/AIChapterJudge.ts"] }
+      ]
+    },
+    {
+      "class": "number.arithmetic",
+      "expectedRootLayers": ["writer"],
+      "fixes": [
+        { "round": "r7", "mechanism": "乘除验算指令：单价×数量/比例×基数落笔前笔算（一箱六十锭×五十万箱差500倍形态）", "modules": ["src/renderer/src/services/story-runtime/SceneDraftEngine.ts"] }
+      ]
+    },
+    {
+      "class": "number.setting",
+      "expectedRootLayers": ["extraction", "writer"],
+      "fixes": [
+        { "round": "r10", "mechanism": "契约 15 台账化覆盖设定类数字（兵力/船数/长度）", "modules": ["src/renderer/src/services/writing/numericLedger.ts"] }
+      ]
+    },
+    {
+      "class": "time.era",
+      "expectedRootLayers": ["writer", "extraction"],
+      "fixes": [
+        { "round": "r5", "mechanism": "纪年锚：既成纪年注入（五套纪年互斥形态）+ 真实年号黑名单守卫", "modules": ["src/renderer/src/services/story-runtime/SceneDraftEngine.ts", "src/renderer/src/services/story-runtime/contractHealth.ts"] },
+        { "round": "r10", "mechanism": "契约 19 纪年台账：首立年号正典，异名须改元标注", "modules": ["src/renderer/src/services/writing/eraLedger.ts"] }
+      ]
+    },
+    {
+      "class": "time.sequence",
+      "expectedRootLayers": ["extraction", "writer"],
+      "fixes": [
+        { "round": "r10", "mechanism": "契约 17 时间承诺台账 + timelineMarks 时间轴注入（时间流逝连续性）", "modules": ["src/renderer/src/services/writing/numericLedger.ts"] }
+      ]
+    },
+    {
+      "class": "continuity.boundary",
+      "expectedRootLayers": ["writer"],
+      "fixes": [
+        { "round": "r9", "mechanism": "章界重演预检（上章尾 vs 本章头 bigram jaccard）+ 开场重演确定性门禁 blocking", "modules": [".agents/skills/storyflow-book-review/scripts/book-precheck.mjs", "src/renderer/src/services/story-runtime/LongFormWritingEngine.ts"] }
+      ]
+    },
+    {
+      "class": "structure.arc",
+      "expectedRootLayers": ["outline", "blueprint"],
+      "fixes": [
+        { "round": "r14", "mechanism": "悬念账本 P1.1：近 3 章 CEN 注入【未闭合悬念承接】（悬念开而不接形态）", "modules": ["src/renderer/src/services/writing/ChapterWritingPipeline.ts"] },
+        { "round": "r16", "mechanism": "履约失败蓝图再生 BlueprintRepairLedger + 滚动续纲 ensureOutlineRunway", "modules": ["src/renderer/src/composables/useBatchWriter.ts", "src/renderer/src/services/outline/rolling/chapter-blueprint-regenerator.ts"] }
+      ]
+    },
+    {
+      "class": "structure.offscreen",
+      "expectedRootLayers": ["outline"],
+      "fixes": [
+        { "round": "r7", "mechanism": "皇统叙事规则：驾崩/处决/登基必须有叙述场面，零叙述跳结果违规", "modules": ["src/renderer/src/services/story-runtime/SceneDraftEngine.ts"] }
+      ]
+    },
+    {
+      "class": "structure.repeat",
+      "expectedRootLayers": ["extraction"],
+      "fixes": [
+        { "round": "r8", "mechanism": "循环计数：同实体状态往返≥3 次→structure.repeat 信号", "modules": ["scripts/state-ledger.mjs"] },
+        { "round": "r16", "mechanism": "healChapterContract 已兑现去重 + 陈旧节拍裁剪", "modules": ["src/renderer/src/services/story-runtime/contractHealth.ts"] }
+      ]
+    },
+    {
+      "class": "outline.contract",
+      "expectedRootLayers": ["outline"],
+      "fixes": [
+        { "round": "r3", "mechanism": "大纲确定性校验 13 类 issue（占位事件/模板CBN/破折号区间/钩子截断等）", "modules": ["src/renderer/src/services/outline/generators/outline-reviewer.ts"] }
+      ]
+    },
+    {
+      "class": "prose.leak",
+      "expectedRootLayers": ["writer"],
+      "fixes": [
+        { "round": "r14", "mechanism": "stripDraftLeakage：结构化输出 JSON 骨架残留剥离", "modules": ["src/renderer/src/services/story-runtime/stripDraftLeakage.ts"] }
+      ]
+    },
+    {
+      "class": "prose.anachronism",
+      "expectedRootLayers": ["writer"],
+      "fixes": [
+        { "round": "r7", "mechanism": "真实历史年号黑名单确定性门禁（warning 驱动定向改写）", "modules": ["src/renderer/src/services/story-runtime/contractHealth.ts"] }
+      ]
+    },
+    {
+      "class": "prose.slop",
+      "expectedRootLayers": ["writer", "model"],
+      "fixes": [
+        { "round": "r9", "mechanism": "AI 词频预检（20 词表）+ 段落 CV<0.15 红线", "modules": [".agents/skills/storyflow-book-review/scripts/book-precheck.mjs"] },
+        { "round": "r9", "mechanism": "均匀化/叙述墙弱信号驱动定向改稿（预算加倍 2 轮）", "modules": ["src/renderer/src/services/story-runtime/LongFormWritingEngine.ts"] },
+        { "round": "r10", "mechanism": "群众反应相位/呼吸拍确定性轮换（同构复读治理）", "modules": ["src/renderer/src/services/story-runtime/SceneDraftEngine.ts"] }
+      ]
+    },
+    {
+      "class": "ending.closure",
+      "expectedRootLayers": ["outline"],
+      "fixes": [
+        { "round": "r12", "mechanism": "ending-audit：章节完整性+伏笔台账口径（planned 不进分母/假回收单列/提前回收豁免）", "modules": ["scripts/__tests__/ending-audit.test.mjs"] }
+      ]
+    }
+  ]
+}
