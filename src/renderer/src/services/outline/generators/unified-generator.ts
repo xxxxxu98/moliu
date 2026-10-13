@@ -757,6 +757,8 @@ export class UnifiedOutlineGenerator {
             { role: 'user', content: request.prompt },
           ],
           { ...opts, temperature: 0.2, signal: (request as { signal?: AbortSignal }).signal ?? opts.signal },
+          undefined,
+          'reader-outline-judge',
         );
         if (!content) throw new Error('读者判官 API 未返回内容');
         return robustJsonParse(content) as unknown;
@@ -772,11 +774,12 @@ export class UnifiedOutlineGenerator {
     messages: AgentMessage[],
     options: GenerateOptions,
     signal?: AbortSignal,
+    purpose: OutlineTracePurpose = 'outline-agent',
   ): Promise<string> {
     const data = await this.requestChatCompletion(
       messages,
       { ...options, temperature: 0.2, signal: signal ?? options.signal },
-      'outline-agent',
+      purpose,
     );
     const content = data.choices?.[0]?.message?.content;
     return typeof content === 'string' ? content : '';

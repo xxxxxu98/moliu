@@ -19,7 +19,8 @@ export type OutlineTracePurpose =
   | 'outline-direction'  // generateDirections()
   | 'outline-expand'     // expandDirection()
   | 'outline-agent'      // OutlineAgent 多轮修复回合（每轮一条）
-  | 'outline-roll';      // rollOutlineForward() 滚动续纲批次
+  | 'outline-roll'       // rollOutlineForward() 滚动续纲批次
+  | 'reader-outline-judge'; // 大纲读者判官闭环（2026-10-12 ⑥），与 StructuredAI purpose 同名
 
 export interface OutlineTraceRecord {
   seq: number;
