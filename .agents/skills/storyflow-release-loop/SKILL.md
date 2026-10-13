@@ -10,7 +10,8 @@ description: Storyflow 可上线验收大循环。把「真实 AI 生成整本�
 
 ```
 我的全书通读 Findings S1/S2 清零 + book-precheck 红线清零 + fate.contradiction-candidate 经 AI 裁决(fate-adjudicate.mjs)确认的 S1=0
-+ 读者裁判硬门禁达线（2026-09-13 复冻：大纲≥85 / 均值≥85 / 章节中位≥86 / 最低≥65；
++ 读者裁判硬门禁达线（数值 SSOT=docs/quality-ledger/thresholds.json，2026-09-13 复冻：大纲≥85 / 均值≥85 / 章节中位≥86 / 最低≥65；
+  阈值变更走 thresholds.mjs 有界自治：±2 内自动生效、硬下限不可逾越、更大变动须人工批准；
   首轮触线黄签、同 provider 连续两轮红签——中位 87 只有历史最佳轮过线，
   长跑健康分布 85.6-86.3，86 是健康/劣化分离面）
 + ending-audit 完本指标过关（章节完整 + 伏笔无 main 级未回收 + 完本收束：
@@ -54,6 +55,13 @@ node scripts/agent-storyflow-real-multi.mjs --list
 （显式 `MOLIU_READER_JUDGE_PROVIDER_ID=<id>`）；规模默认 **100 章级**
 （`MOLIU_CHAPTER_COUNT` 可调，首次打通流程用 1~20 章即可）；产物隔离目录命名
 `temp/storyflow-matrix-<tag><N>ch/`。
+**自改进器官（2026-10-12 起，随矩阵跑自动生效）**：
+- **大纲读者判官闭环**默认开启——大纲生成后 AI 判官首评，blocking/不愿开读驱动
+  修复 agent 带判官 findings 改写再复评（`MOLIU_OUTLINE_READER_JUDGE=0` 可关）；
+  run.log 里搜「大纲读者判官闭环」看 score/blocking/rounds。
+- **偏好对采样**自动落 `<matrix>/<providerId>/training-pairs/*.jsonl`——改稿轮的
+  拒稿/过审对比样本（DPO 攒料，勿当 temp 垃圾清扫）。
+- **拒稿反例注入**自动生效——项目级历史拒因族复发≥2 时注入起草/改稿反例区。
 **agent 检索回合已生产常开（2026-09-02，docs/agent-architecture-refactor.md P1）**：无环境开关，
 冒烟与 App 同链（验收数据见 docs/agent-loop-refactor.md：墙钟 -13%/章、降级率 0%、检索均 4.2 轮）；
 长跑放低峰执行，晚高峰网关单轮固定 ~33s 延迟会污染墙钟数据。
@@ -148,9 +156,19 @@ node .agents/skills/storyflow-release-loop/scripts/fate-adjudicate.mjs "<matrix�
 ```bash
 node .agents/skills/storyflow-release-loop/scripts/findings-ledger.mjs validate docs/quality-ledger/findings/<文件>.json
 # → temp/findings-ledger/<文件>.verdict.md：schema 错误 + 计算判定 READY/NOT READY + 阻断项
+#   （读者门禁实际生效值读 thresholds.json，判定随 SSOT 重算）
+node .agents/skills/storyflow-release-loop/scripts/attribution.mjs docs/quality-ledger/findings/<文件>.json
+# → <轮次>.attribution.md：按 fix-patterns.json 检索历史修法，三态分诊——
+#   recurred-after-fix（有修法仍复发=换机制信号，§8 候选）/ first-appearance（先查
+#   已有修法为何未覆盖）/ novel-class（唯一需要 AI 通读归因的）。修复落地后必须
+#   同步登记 fix-patterns.json（「同一个坑不允许摔两次」的机器可读形态）。
+npm run replay:from-finding -- docs/quality-ledger/findings/<文件>.json --make
+# → 终稿 S1 自动生成回放 spec + make（探针问题按分类表生成，替代手写 spec；
+#   旧轮 temp 已清时只写 spec 不 make，换书重跑时再用）
 npm run findings:converge
 # → docs/quality-ledger/CONVERGENCE.md：跨轮分类收敛矩阵 + 升级信号（见第 5.5 步）
 npm run test:findings-ledger   # 台账工具自身回归
+npm run test:attribution       # 归因检索与修法表完整性回归
 ```
 
 schema（`findings/v1`，字段口径以 `scripts/findings-lib.mjs` 为准）：
@@ -160,6 +178,7 @@ schema（`findings/v1`，字段口径以 `scripts/findings-lib.mjs` 为准）：
   "schemaVersion": "findings/v1", "round": "r10", "book": "书名",
   "reviewedAt": "ISO时间", "matrixDir": "temp/storyflow-matrix-xxx", "chapters": 200,
   "review": { "method": "full-read-4ch", "chaptersRead": 200,
+              "caliber": "reader-eval-v1",
               "writerModel": "...", "reviewerModel": "...", "independentReviewer": false },
   "gates": { "precheckRedlines": 0, "fateRealResurrection": 0,
              "readerJudge": { "outline": 0, "mean": 0, "median": 0, "min": 0, "independentFromWriter": false },
@@ -187,6 +206,9 @@ schema（`findings/v1`，字段口径以 `scripts/findings-lib.mjs` 为准）：
   S1=0；抽样轮写 `sampled`，其计数不进收敛比较。
 - 同源审稿（independentReviewer=false）只出警告不阻断；**终验轮建议审稿 agent 与读者裁判
   换独立模型**（是否改为硬门禁待用户拍板）。
+- **review.caliber 必须标注**（reader-eval-v1，可带「:裁判模型」后缀）——跨轮读者分数
+  只认同口径可比（r17 实证：reeval 与原轮口径不同直接对比出错误结论）；
+  converge 会输出 caliber-mix 信号，triage --diff 跨口径自动跳过读者分数对比。
 
 **严重度锚定样例**（判档有分歧时对照，均取自历史全读轮终稿实锤）：
 
@@ -199,7 +221,10 @@ schema（`findings/v1`，字段口径以 `scripts/findings-lib.mjs` 为准）：
 
 判档口径：同一问题跨多章出现按最严重一处定档；「过程告警已被重写修掉」不定档（caught）。
 
-## 第 5 步：归因四分诊（继承 book-review，附加本循环实测根因库）
+## 第 5 步：归因四分诊（第 4 步 attribution.mjs 先跑，本表处理 novel-class 与复核）
+
+先看 `attribution.mjs` 的三态输出：`recurred-after-fix` 直接进第 5.5 步换机制流程；
+`first-appearance` 按下表查已有修法为何未覆盖；只有 `novel-class` 才从这里开始人工/AI 归因。
 
 | 类别 | 动作 | 本循环已验证的实例 |
 |---|---|---|
@@ -248,21 +273,31 @@ schema（`findings/v1`，字段口径以 `scripts/findings-lib.mjs` 为准）：
 
 | 信号 | 含义 | 本轮动作 |
 |---|---|---|
-| `persistent-class` | 同一类连续 2 个全读轮出现 S1，上轮针对它的修复无效 | 禁止再对该类加同层补丁；改机制（该类属 state.* 时走统一状态账本，见 docs/unified-state-ledger.md） |
-| `upstream-root` | 最新全读轮 S1 过半根因在大纲/蓝图层 | 本轮不加写作侧/判官侧防线，修复预算全部投大纲/蓝图层（其规则改动按权限边界先报用户） |
+| `persistent-class` | 同一类连续 2 个全读轮出现 S1，上轮针对它的修复无效 | 禁止再对该类加同层补丁；改机制（该类属 state.* 时走统一状态账本，见 docs/unified-state-ledger.md）。怀疑模型能力上限时用 `npm run probe:model -- probe <providerId>` 跑 reg20 基准探测，`probe:model -- table` 出候选模型对比表（首过率/读者四指标/红签名/延迟） |
+| `upstream-root` | 最新全读轮 S1 过半根因在大纲/蓝图层 | 本轮不加写作侧/判官侧防线，修复预算全部投大纲/蓝图层（其规则改动按权限边界先报用户）。大纲层改动走判官闭环验证（第 1 步已默认开启） |
 | `shape-shift` | 最新轮 S1 过半是新类 | 暂停逐形态修复，先归纳共性根因再动手 |
 | `unverified-zero` / `review-downgrade` | S1 归零但审法或规模不可比 | 不得宣布收敛；下一轮同口径全读复核 |
+| `caliber-mix` | 跨轮读者评审口径不一致 | 混口径轮的读者分数趋势结论作废，只认同口径相邻轮比较 |
 
 没有信号时按第 5 步四分诊正常修复。每条修复必须能指向 Finding id，修完在第 6 步第 0 级
 用对应回放用例证明。
 
 ## 第 6 步：三级真实回归
 
+第 0.5 级（修复提交后先查表，秒级）：**影响面路由**。修复面覆盖写作管线行为时，
+不要默认拉 100 章终验——按改动文件查表定级：
+
+```bash
+npm run regression:advisor -- --base HEAD~1   # 或 --staged / --files f1,f2
+# L1=确定性套件 / L2=+回放用例 / L3=+reg20 / L3+=+100章终验（仅编排/状态层结构改动）
+# 100 章要 ~2160 分钟，不是每个修复都配得上它；路由表在脚本内 ROUTES，新模块落位同步更新
+```
+
 第零级（每次修复后先跑，分钟级）：**章节回放**。把 S1 固化为回放用例——取成书
 project-store 截断到「写第 N 章之前」，用当前代码只重跑 N..N+W-1 章（走
 runContinueWriteChapters，与矩阵同一入口），再由 AI 探针判定缺陷是否复现。
 200 章才暴露的后半本问题（在押回潮、皇统过渡）不必等 1000 分钟重跑，20 章快速回归
-也复现不了它们。
+也复现不了它们。新 S1 优先走第 4 步的 `replay:from-finding` 自动生成，手写 spec 只兜底：
 
 ```bash
 # 建用例：spec 写文件（中文探针走文件，规避命令行编码），字段见脚本头注释
@@ -301,14 +336,16 @@ verdict/首过率不劣化。快速回归通过 ≠ 完成。
 ```
 ## 第 N 轮
 - 对象：<书名/矩阵目录/章数/耗时>
-- 工程层：<accepted、首过率、裁判分概览>
+- 工程层：<accepted、首过率、裁判分概览；大纲判官闭环 score/blocking/repaired>
 - 书审：<审法 + S1 xN / S2 xN / S3 xN 一句话各>（只列终稿实锤；caught 另列不计数）
 - 台账：<findings.json 路径 + validate 计算判定 READY/NOT READY + 阻断项>
+- 归因：<attribution.mjs 三态计数 recurred/first/novel + novel 项的根因结论>
 - 升级信号：<converge 输出的信号及本轮据此选择的修复方向>
-- 根因：<提取断供/守卫缺失/措辞缺口…对应文件:行 + Finding id>
-- 修复：<文件+一句话+测试结果>
-- 待批：<暂停点类事项清单及建议>
-- 回归：<回放用例 pass/recur/hole + 两级矩阵结果/diff 摘要>
+- 根因：<提取断供/守卫缺失/措辞缺口…对应文件:行 + Finding id；修复已登记 fix-patterns.json>
+- 修复：<文件+一句话+测试结果 + regression:advisor 定的回归等级>
+- 待批：<暂停点类事项清单及建议；阈值变更走 thresholds.mjs 的记录在这里引用>
+- 回归：<回放用例 pass/recur/hole（含 replay:from-finding 自动生成的）+ 各级矩阵结果/diff 摘要>
+- 数据飞轮：<training-pairs 新增对数 + 拒稿反例注入的族与计数（无则写 无）>
 - 下一步：<继续 / 终验 / 停止原因>
 ```
 
