@@ -1,0 +1,402 @@
+{
+  "schemaVersion": "findings/v1",
+  "round": "r23",
+  "book": "算死草：从户部书办到当朝首辅",
+  "reviewedAt": "2026-10-13T20:30:00+08:00",
+  "matrixDir": "temp/storyflow-matrix-r23organs20ch",
+  "chapters": 20,
+  "review": {
+    "method": "full-read-4ch",
+    "chaptersRead": 20,
+    "caliber": "reader-eval-v1",
+    "writerModel": "gemini-3.8-flash-high",
+    "reviewerModel": "zcode-agent-4way",
+    "independentReviewer": true
+  },
+  "gates": {
+    "precheckRedlines": 0,
+    "fateRealResurrection": 0,
+    "readerJudge": {
+      "outline": null,
+      "mean": null,
+      "median": null,
+      "min": null,
+      "independentFromWriter": true,
+      "note": "25条评审全部死于网关配额耗尽（Resource has been exhausted）；裁判已自动选独立通道gemini-3.7-flash-high。待配额恢复后 storyflow-reader-reeval.mjs 离线补测"
+    },
+    "ending": {
+      "complete": false,
+      "mainUnresolved": 0,
+      "closureSignals": 4,
+      "note": "20/50章提前停产（20章轮预期，stoppedEarly）；伏笔0条main级未回收"
+    },
+    "humanIntervention": [],
+    "blindTest": null
+  },
+  "findings": [
+    {
+      "id": "r23-S1-01", "severity": "S1", "class": "number.ledger", "status": "final", "rootLayer": "writer",
+      "chapters": [17, 18, 19], "entity": "周炳三千九百两赃款的支取钱庄与时间",
+      "summary": "同一笔三千九百两赃银：ch17为百川柜坊三笔存根（前年三月/八月与去年四月支取）且泰和米行前年四月与去年五月已用款置产完毕；ch18/19却改为汇通钱庄天字第七号『本月十二日』提取后拆借入泰和米行再转为同一批田产货栈——钱庄主体与支取时间全线对撞，且构成前年置产先于本月付款的时序倒挂",
+      "evidence": [
+        { "chapter": 17, "quote": "这三联存根写得清清楚楚：前年三月支取一千二百两，前年八月支取一千五百两，去年四月支取一千二百两！" },
+        { "chapter": 18, "quote": "通州汇通钱庄『天字第七号』柜存，本月十二日午时三刻提取官印大锭三百枚，每枚足色五十两，共计一万五千两！其中三千九百两正是由你周炳亲手画押、拆借分流，打入泰和米行户头，再转为两顷六十亩私产水田！" },
+        { "chapter": 19, "quote": "三千九百两官银入库泰和米行，随即兑出运河码头货栈两座、城郊水浇田两顷六十亩！" }
+      ]
+    },
+    {
+      "id": "r23-S2-01", "severity": "S2", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [2, 3, 4], "entity": "定更长香/一个时辰赌约",
+      "summary": "申时点燃、限一个时辰燃尽的定更长香直到亥时二更才熄灭（燃烧四小时以上），第3章结尾酉时『香已燃至最后一寸』与第4章开头亥时二更『彻底熄灭』本是同一连续场景却隔两个时辰，军令状时间参数全面失真",
+      "evidence": [
+        { "chapter": 2, "quote": "本官限你在一个时辰内、此香燃尽之前逐笔平账，交出一份分毫不差的总清账！" },
+        { "chapter": 4, "quote": "高墙外传来亥时二更梆子声，青铜香炉里那支定更长香的最后一点火星彻底熄灭。" }
+      ]
+    },
+    {
+      "id": "r23-S2-02", "severity": "S2", "class": "number.arithmetic", "status": "final", "rootLayer": "writer",
+      "chapters": [3, 4], "entity": "五万四千两三年折色总差额",
+      "summary": "第3章列举的三笔差额（六千+一万+一万=两万六千两）与总结论『左盘少算两万四千+右盘虚报三万两=五万四千两』无法咬合，且与『入库折色官银两万四千两已入账冲抵』互斥；五万四千两在第4章被当铁数沿用",
+      "evidence": [
+        { "chapter": 3, "quote": "前年三月，入库折色官银两万四千两，冲抵出库损耗一万八千两，差额六千两。" },
+        { "chapter": 3, "quote": "账面上左盘少算了两万四千两现银，右盘凭空多出了三万两虚报损耗！两端对冲，差额整整五万四千两白银！" },
+        { "chapter": 4, "quote": "三年折色差额五万四千两，分毫都按成例送进了京里，本官何时截留过半文钱？！" }
+      ]
+    },
+    {
+      "id": "r23-S2-03", "severity": "S2", "class": "prose.anachronism", "status": "final", "rootLayer": "writer",
+      "chapters": [4], "entity": "沈淮对白",
+      "summary": "对白直接说出『关联方交易穿透』『逆向成本核验』『挂靠京商』等纯现代审计术语，无古语包装，对白出口即违规且出戏最强",
+      "evidence": [
+        { "chapter": 4, "quote": "真正的查账之术讲究关联方交易穿透与逆向成本核验。" },
+        { "chapter": 4, "quote": "通州城外挂靠京商的永丰、泰和、广源三家米行，明面是接盘潮米的客商" }
+      ]
+    },
+    {
+      "id": "r23-S2-04", "severity": "S2", "class": "structure.offscreen", "status": "final", "rootLayer": "writer",
+      "chapters": [2, 3, 4, 5], "entity": "两名刑部缇骑",
+      "summary": "两名缇骑第2章末明确留在廊下『两不相帮』，自第3章周炳封门起至第5章天亮整夜再无一字交代去向；执法见证者在夜探纵火、私刑威胁等关键危机中无声蒸发",
+      "evidence": [
+        { "chapter": 2, "quote": "说罢，两名缇骑退至门外廊下垂手肃立，彻底摆出两不相帮的架势。" },
+        { "chapter": 5, "quote": "铁栓拉开，麻脸书吏拎着风灯跨入，龅牙书吏与四名拄水火棍的值夜差役紧随其后。" }
+      ]
+    },
+    {
+      "id": "r23-S2-05", "severity": "S2", "class": "outline.contract", "status": "needs-verify", "rootLayer": "writer",
+      "chapters": [3, 4], "entity": "崔敬",
+      "summary": "崔敬在大纲第12章才首次正面接见沈淮，但正文第3章已提前暗访仓场并递出密档且周炳已知晓崔敬介入；需在第11-14章核实『已暗助却公开逐客拒见』及贵人知情连锁是否被圆住",
+      "evidence": [
+        { "chapter": 3, "quote": "户部右侍郎崔敬负手立在阴影之中，身上宝蓝暗纹锦袍微泛幽光" },
+        { "chapter": 4, "quote": "方才东侧耳房门缝里有人给你塞了本深青色册子。交出来，再亲手把桌上三叠凭单扔进油里" }
+      ]
+    },
+    {
+      "id": "r23-S2-06", "severity": "S2", "class": "continuity.boundary", "status": "needs-verify", "rootLayer": "outline",
+      "chapters": [5, 6], "entity": "甲字廒纵火/松明火把",
+      "summary": "第5章CEN已到『黑衣人高举燃烧的松明火把』点火迫在眉睫（子时后），大纲第6章CBN却是『次日卯时火油正顺米堆缝隙往下渗』（约六小时后且回退到泼油阶段），中间六小时纵火者悬置",
+      "evidence": [
+        { "chapter": 5, "quote": "为首那名黑衣人已高高举起了手中熊熊燃烧的松明火把！" }
+      ]
+    },
+    {
+      "id": "r23-S2-07", "severity": "S2", "class": "time.sequence", "status": "final", "rootLayer": "outline",
+      "chapters": [8, 9, 10], "entity": "纵火当日的时辰日锚",
+      "summary": "ch8明写『当日巳时』且与周炳举单同一连续动作，ch9/10却标『已交次日午时』『次日未时』且称大火为『昨夜』，而纵火发生在当日清晨卯时——卯→巳→午→未实为同一天，日锚凭空多出一日（大纲ch9/10 CBN原即误标次日，ch8已改当日而未同步）",
+      "evidence": [
+        { "chapter": 8, "quote": "当日巳时，冬阳破开重重铅云，照在神京通州仓场焦黑的晒谷场上" },
+        { "chapter": 9, "quote": "日头不知不觉挪到了头顶正中，日光惨白地铺在通州仓场的晒谷场上，已交次日午时" },
+        { "chapter": 10, "quote": "而在仓场最西北面、堆满潮湿柴草的偏僻角落，天色已交次日未时" }
+      ]
+    },
+    {
+      "id": "r23-S2-08", "severity": "S2", "class": "number.ledger", "status": "final", "rootLayer": "writer",
+      "chapters": [8], "entity": "甲字廒中央主垛灰层厚度",
+      "summary": "同一处中央主垛灰烬厚度前文铁尺实测『三寸四分』（校尉目验不足四寸相合），十余段后改口『八分残灰』，同章自相矛盾；灰烬丈量是本章核心戏",
+      "evidence": [
+        { "chapter": 8, "quote": "这里的残存灰烬厚度，仅有三寸四分。" },
+        { "chapter": 8, "quote": "除中央主垛勉强积有八分残灰，四周偏廒灰层薄如蝉翼" }
+      ]
+    },
+    {
+      "id": "r23-S2-09", "severity": "S2", "class": "state.identity", "status": "final", "rootLayer": "writer",
+      "chapters": [6, 10], "entity": "寄库钱庄名单",
+      "summary": "徐老账报『汇通、昌盛、永丰三家大钱庄』，两段后第三张银单实为『神京广源钱庄』，而永丰自ch6起是米行名；沈淮又总称『通州三大钱庄』与神京广源表述打架",
+      "evidence": [
+        { "chapter": 10, "quote": "这是汇通、昌盛、永丰三家大钱庄的寄库银单！" },
+        { "chapter": 10, "quote": "第三张银单，出票日期七月初九，神京广源钱庄寄库银五千八百两" }
+      ]
+    },
+    {
+      "id": "r23-S2-10", "severity": "S2", "class": "number.ledger", "status": "final", "rootLayer": "writer",
+      "chapters": [14, 15], "entity": "百川柜坊316两贴水",
+      "summary": "ch14明言柜坊从15800两中净吃316两手续银，但同章及ch15黑板仍按3900+11900=15800全额切割，316两无出处，收支恰差316两",
+      "evidence": [
+        { "chapter": 14, "quote": "这一万五千八百两银子里，你们净吃下三百一十六两手续银，充当洗银的脚力钱" },
+        { "chapter": 15, "quote": "石笔向下拉出实线，记下总数：实收折色现银总额，一万五千八百两整" }
+      ]
+    },
+    {
+      "id": "r23-S2-11", "severity": "S2", "class": "state.identity", "status": "final", "rootLayer": "writer",
+      "chapters": [14, 15], "entity": "百川柜坊兑银存根物证形态",
+      "summary": "定案核心物证由ch14的半张黄麻纸（仅花押）变为ch15当堂出示的三张三联存根（花押+官防私章），形态与印押内容前后不符",
+      "evidence": [
+        { "chapter": 14, "quote": "陆微霜站起身来，将那半截黄麻纸存根推向案沿" },
+        { "chapter": 15, "quote": "百川柜坊兑现底册三联骑缝存根！……上面有你周炳的验押花押，更盖着正八品管仓主事的官防私章" }
+      ]
+    },
+    {
+      "id": "r23-S2-12", "severity": "S2", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [12, 15], "entity": "通州仓粮洗劫时点",
+      "summary": "同一批31600石：ch12称『半月前被洗劫一空』，ch15黑板坐实出库与划拨发生在前年五至九月，时点相差一年以上",
+      "evidence": [
+        { "chapter": 12, "quote": "通州官仓甲字库三万一千六百石储备陈粮，实已于半月前被洗劫一空" },
+        { "chapter": 15, "quote": "前年五月甲字廒出库陈粮八千石；前年六月甲字廒出库陈粮一万两千石；前年七月甲字廒出库陈粮一万一千六百石" }
+      ]
+    },
+    {
+      "id": "r23-S2-13", "severity": "S2", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [11, 15], "entity": "周炳三笔截留时点",
+      "summary": "截留发生于前年三月（早于前年五月首笔变现）与去年四月（晚于前年九月『全数划拨』），与15800两资金池的形成与划转时序算术冲突",
+      "evidence": [
+        { "chapter": 15, "quote": "前年三月虚报永丰米行骡车脚价，私扣白银一千二百两" },
+        { "chapter": 15, "quote": "去年四月虚报大水淹仓损耗，冒领车脚贴补白银一千二百两" },
+        { "chapter": 11, "quote": "在巨款回流京城的路上，周炳以虚报骡车脚价、驳船水脚与大水淹仓等名目，分三笔截留了三千九百两分肥银" }
+      ]
+    },
+    {
+      "id": "r23-S2-14", "severity": "S2", "class": "state.identity", "status": "final", "rootLayer": "writer",
+      "chapters": [11, 14, 15], "entity": "分肥米行名称口径",
+      "summary": "3900两分肥通道：ch14称借『永丰两家米行』名义分三次提取，ch15拆为永丰米行与泰和米行两家不同字号，第二家名称对不上",
+      "evidence": [
+        { "chapter": 14, "quote": "余下的三千九百两，则借永丰两家米行的虚耗运费名义，分三次提成了足色现银" },
+        { "chapter": 15, "quote": "前年八月伪造泰和米行驳船水脚单，私扣白银一千五百两" }
+      ]
+    },
+    {
+      "id": "r23-S2-15", "severity": "S2", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [12, 13], "entity": "崔敬履历年数",
+      "summary": "主持度支『十数载』（ch12叙述）与自述『主掌三十载』（ch13）冲突；『三十年前廷杖除名苦熬三十年重回中枢』与『踏入户部三十年』难以并存",
+      "evidence": [
+        { "chapter": 12, "quote": "他主持天下度支十数载，看惯了各省送来的糊涂烂账" },
+        { "chapter": 13, "quote": "老夫主掌天下钱粮度支三十载，见过的烂账堆起来能填平什刹海" },
+        { "chapter": 13, "quote": "大人三十年前因直言度支亏空被廷杖除名，苦熬三十年才重回户部中枢" }
+      ]
+    },
+    {
+      "id": "r23-S2-16", "severity": "S2", "class": "number.arithmetic", "status": "final", "rootLayer": "writer",
+      "chapters": [18, 19], "entity": "柜存提取额与折色总额",
+      "summary": "柜存提取三百枚五十两官锭=一万五千两，但同句并排的折色总额与分拆（11900+3900）=一万五千八百两，差八百两无任何解释",
+      "evidence": [
+        { "chapter": 18, "quote": "提取官印大锭三百枚，每枚足色五十两，共计一万五千两" },
+        { "chapter": 19, "quote": "借方入账，折色变现白银一万五千八百两；贷方出账，一万一千九百两划归内府采办暗汇，余下整整三千九百两" }
+      ]
+    },
+    {
+      "id": "r23-S2-17", "severity": "S2", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [20], "entity": "沈淮穿越至洗脱罪责总时长",
+      "summary": "ch20称『整整七日七夜』，但按时标链（ch1当日午后→ch6次日卯时→ch14次日辰时→ch16当日午时→ch19当日酉时→ch20次日平旦）全程仅约四日，凭空多出三日",
+      "evidence": [
+        { "chapter": 20, "quote": "自穿越到这具身躯、接下通州必死假账以来，整整七日七夜悬在顶梁之上的铡刀，终于在这一刻彻底崩解。" }
+      ]
+    },
+    {
+      "id": "r23-S2-18", "severity": "S2", "class": "state.custody", "status": "final", "rootLayer": "writer",
+      "chapters": [19, 20], "entity": "周炳的关押地点与提审权限",
+      "summary": "ch19判词将周炳打入『户部大牢候决、移交刑部定谳』，ch20崔敬明言刑部勘合『正要遣人提调』（移交未毕），同章刑部差役却已『奉签』进死牢提审并发现其死于死牢最底层——勘合未发刑部先审、户部大牢变刑部死牢，口径互斥",
+      "evidence": [
+        { "chapter": 19, "quote": "着即重枷锁拿，正式打入户部大牢候决，移交刑部定谳处斩！" },
+        { "chapter": 20, "quote": "刑房弟兄今晨奉签前去死牢提审在押的周炳，狱卒刚刚打开死牢最底层的玄铁锁链，周炳已然倒在牢房深处服下剧毒鹤顶红" }
+      ]
+    },
+    {
+      "id": "r23-S3-01", "severity": "S3", "class": "prose.anachronism", "status": "final", "rootLayer": "writer",
+      "chapters": [2, 3, 5], "entity": "沈淮对白（教学场景）",
+      "summary": "对白多次直接使用现代会计术语出口（借贷平衡/等额对冲/复式借贷/备查工作底稿/证据链），有伴随解释降低出戏度，轻档违规",
+      "evidence": [
+        { "chapter": 3, "quote": "这叫分流对冲，复式借贷。" },
+        { "chapter": 5, "quote": "这三页纸叫备查工作底稿，是把凭单、推算过程与证据链编号归档的底册" }
+      ]
+    },
+    {
+      "id": "r23-S3-02", "severity": "S3", "class": "state.title", "status": "final", "rootLayer": "writer",
+      "chapters": [1, 2], "entity": "刑部差役/缇骑称谓",
+      "summary": "同一对刑部拿人人员第1章通篇称『差役』，第2章起无过渡改称『缇骑』（跟随大纲标题所致）",
+      "evidence": [
+        { "chapter": 1, "quote": "两名身穿皂色公服、腰挂刑部铜牌的差役堵在案前。" },
+        { "chapter": 2, "quote": "案前的络腮胡缇骑见正正赶来，连忙迎上前" }
+      ]
+    },
+    {
+      "id": "r23-S3-03", "severity": "S3", "class": "time.sequence", "status": "final", "rootLayer": "writer",
+      "chapters": [1, 5], "entity": "沈淮挣脱时点",
+      "summary": "挣脱绞索发生在第1章『当日午后』，第5章回溯为『从申时挣脱算起』，时点后移约一个时辰",
+      "evidence": [
+        { "chapter": 1, "quote": "当日午后昏惨惨的日光透过神京通州仓场账房的破窗照进来" },
+        { "chapter": 5, "quote": "从申时挣脱算起，他滴米未进，连续高强度心算，身体已到强弩之末。" }
+      ]
+    },
+    {
+      "id": "r23-S3-04", "severity": "S3", "class": "number.arithmetic", "status": "final", "rootLayer": "writer",
+      "chapters": [5], "entity": "九月初盘仓实存数",
+      "summary": "『扣除一万两千石潮米折色，廒内竟只剩一万两千石』扣除项与结余同值，字面总实存两万四千石，与紧邻口径『九月初剩一万两千石恰少三万一千六百石』打架",
+      "evidence": [
+        { "chapter": 5, "quote": "可到了九月初期末实存，扣除本月还未出仓的一万两千石潮米折色，廒内竟只剩一万两千石！" }
+      ]
+    },
+    {
+      "id": "r23-S3-05", "severity": "S3", "class": "continuity.boundary", "status": "final", "rootLayer": "writer",
+      "chapters": [1, 2], "entity": "周炳进场动作",
+      "summary": "第1章结尾管事主官已『大步踏雪跨过门槛』，第2章开头重新演一遍『按刀跨入账房门槛』进场动作，轻度章界重演",
+      "evidence": [
+        { "chapter": 1, "quote": "按着腰间刀柄大步踏雪跨过门槛，阴冷的目光越过两名刑部差役" },
+        { "chapter": 2, "quote": "管仓主事周炳便按刀跨入账房门槛，阴鸷的目光扫过满屋狼藉。" }
+      ]
+    },
+    {
+      "id": "r23-S3-06", "severity": "S3", "class": "number.ledger", "status": "final", "rootLayer": "writer",
+      "chapters": [8], "entity": "甲字廒官账存量口径",
+      "summary": "周炳称仓内存粮『四万余石』全毁，沈淮复述其『三24400/三万两千四百石』，11200石差额全章无核销交代（可作反派信口开脱解读，观感级）",
+      "evidence": [
+        { "chapter": 8, "quote": "甲字廒存有朝廷四万余石漕粮，方才这把大火全仓尽毁！" },
+        { "chapter": 8, "quote": "周主事口口声声说，甲字廒起火前堆着三万两千四百石陈米" }
+      ]
+    },
+    {
+      "id": "r23-S3-07", "severity": "S3", "class": "state.identity", "status": "final", "rootLayer": "writer",
+      "chapters": [14], "entity": "都察院/督察院",
+      "summary": "ch14同一章并存『督察院』与『都察院』两种写法，错字级机构名漂移",
+      "evidence": [
+        { "chapter": 14, "quote": "钱庄拆借本无罪，但贵坊在账下做了两重手脚，足以引来督察院抄没家私" }
+      ]
+    },
+    {
+      "id": "r23-S3-08", "severity": "S3", "class": "structure.offscreen", "status": "final", "rootLayer": "writer",
+      "chapters": [11, 13], "entity": "周炳移交过程",
+      "summary": "巡防营『不敢擅放周炳』且无人护送进京，周炳却于当夜无交代地出现在户部刑房夹道，移交主体、令文与押解过程全程offscreen",
+      "evidence": [
+        { "chapter": 11, "quote": "巡防营校尉被那枚司礼监赤金私印吓破了胆，既不敢擅放周炳，更不敢派出一兵一卒护送他们进京" },
+        { "chapter": 13, "quote": "周炳已被移交户部，今夜关在刑房夹道，明日当堂清算" }
+      ]
+    },
+    {
+      "id": "r23-S3-09", "severity": "S3", "class": "continuity.boundary", "status": "final", "rootLayer": "writer",
+      "chapters": [13, 14], "entity": "沈淮禁足令执行",
+      "summary": "崔敬明令升堂前『半步不得踏出户部大门』，ch14沈淮潜出角门赴柜坊且自认『翻墙』，但既无守卫察觉也无任何后果",
+      "evidence": [
+        { "chapter": 13, "quote": "今夜你与那老账房宿在账房偏院，明日升堂前，半步不得踏出户部大门" },
+        { "chapter": 14, "quote": "沈书办不在堂前候审，翻墙钻进我这地下柜坊，当真嫌脖子上的脑袋太稳当" }
+      ]
+    },
+    {
+      "id": "r23-S3-10", "severity": "S3", "class": "continuity.boundary", "status": "final", "rootLayer": "writer",
+      "chapters": [13, 15], "entity": "暂挂借款口径",
+      "summary": "暂挂借款由ch13『现定性为户部主动清查』变为ch15当庭宣称『账房早有暂挂借款备查』，一夜之间凭空出现既存档案且观审都察院无质疑",
+      "evidence": [
+        { "chapter": 13, "quote": "将那一万一千九百两定为户部主动清查出的暂挂借款" },
+        { "chapter": 15, "quote": "充作通州仓场代垫内库冬炭折色预支款，度支司账房早有暂挂借款备查" }
+      ]
+    },
+    {
+      "id": "r23-S3-11", "severity": "S3", "class": "state.location", "status": "final", "rootLayer": "writer",
+      "chapters": [13, 14], "entity": "玄铁主筹失窃地点",
+      "summary": "ch13黑影在『大堂正中央的九宫大算案』开盒抽筹，ch14开场复述为失窃发生在『架阁库内』，案发地点漂移",
+      "evidence": [
+        { "chapter": 13, "quote": "黑影没有去碰架格上的账簿，而是猫腰摸向了大堂正中央的九宫大算案" },
+        { "chapter": 14, "quote": "昨夜度支司架阁库内阴风透骨，沉香木盒底层定盘的玄铁主筹，已被潜入的黑影悄然抽走" }
+      ]
+    },
+    {
+      "id": "r23-S3-12", "severity": "S3", "class": "structure.repeat", "status": "final", "rootLayer": "writer",
+      "chapters": [18, 19], "entity": "汇通钱庄证据宣读",
+      "summary": "ch18结尾已完整宣读天字第七号/三百枚/五十两/一万五千两全套证据，ch19开头隔数段原样重宣，连读观感拖沓（真重演点，非triage所报ch18开场）",
+      "evidence": [
+        { "chapter": 18, "quote": "通州汇通钱庄『天字第七号』柜存，本月十二日午时三刻提取官印大锭三百枚" },
+        { "chapter": 19, "quote": "汇通钱庄天字第七号柜存提取官印大锭三百枚，共计一万五千两，分流去向明明白白！" }
+      ]
+    },
+    {
+      "id": "r23-S3-13", "severity": "S3", "class": "number.ledger", "status": "final", "rootLayer": "writer",
+      "chapters": [20], "entity": "结案文牒折银总数",
+      "summary": "堂审反复坐实三万一千六百石/一万五千八百两，ch20正式结案宣判却降为『三万石/一万五千两』，正式公文与堂审铁证数字缩水八百两无交代",
+      "evidence": [
+        { "chapter": 20, "quote": "此批仓粮早在运河水次仓外，便被原管仓主事周炳私自签署霉变伪条截留，以每石五钱折银一万五千两" },
+        { "chapter": 19, "quote": "按每石五钱折银一万五千八百两" }
+      ]
+    },
+    {
+      "id": "r23-S3-14", "severity": "S3", "class": "state.fate", "status": "final", "rootLayer": "writer",
+      "chapters": [20], "entity": "周炳『昨日画押伏法』表述",
+      "summary": "『伏法』本义伏刑而死，崔敬称周炳『昨日当堂画押伏法』与同章后文暴毙被当祸事报信的场面相扰，易误读为昨日已死今晨又死",
+      "evidence": [
+        { "chapter": 20, "quote": "该项亏空，已由查封之田产货栈悉数抵充国库，追赃定谳，周炳本人亦已于昨日当堂画押伏法。" }
+      ]
+    },
+    {
+      "id": "r23-S4-01", "severity": "S4", "class": "state.identity", "status": "final", "rootLayer": "writer",
+      "chapters": [16, 17, 18, 19], "entity": "皇子府象牙签形制",
+      "summary": "同一柄象牙签『系着明黄双股宫穗』与『挂着明黄丝绦』、『斜插茶盘边』与『静静横陈』两处形制漂移",
+      "evidence": [
+        { "chapter": 16, "quote": "那一柄系着明黄双股宫穗的半尺象牙签斜插在茶盘边" },
+        { "chapter": 18, "quote": "那里静静横放着一柄挂着明黄丝绦的皇子府象牙签" }
+      ]
+    },
+    {
+      "id": "r23-S4-02", "severity": "S4", "class": "prose.anachronism", "status": "final", "rootLayer": "writer",
+      "chapters": [16], "entity": "损耗率计量表述",
+      "summary": "同章混用传统分厘与现代小数（『三成一分六厘』=『三十一点六分厘』），『分厘』缀小数点系生造；又并用『百分之二至百分之三』现代百分数",
+      "evidence": [
+        { "chapter": 16, "quote": "四点五分厘的天灾极限，而你通州甲字廒的损耗率，高达三十一点六分厘！高出百年大灾极限整整七倍！" }
+      ]
+    },
+    {
+      "id": "r23-S4-03", "severity": "S4", "class": "prose.leak", "status": "final", "rootLayer": "writer",
+      "chapters": [18], "entity": "旁白穿越者身份泄漏",
+      "summary": "全知旁白直接以『现代审计人』定性沈淮眼神并整段展开其现代审计经历，跳出古代叙事框架（内心独白可容，旁白定性出戏）",
+      "evidence": [
+        { "chapter": 18, "quote": "沈淮眼帘微垂，眸中泛着现代审计人特有的冷静与锐利。" }
+      ]
+    },
+    {
+      "id": "r23-S4-04", "severity": "S4", "class": "structure.arc", "status": "final", "rootLayer": "writer",
+      "chapters": [18], "entity": "萧景安带话支线",
+      "summary": "萧景安命大管事『给沈淮带两句话』并交付象牙印信，但ch19-20及后续大纲均无带话执行或落空的任何交代，支线悬空",
+      "evidence": [
+        { "chapter": 18, "quote": "你去前头偏厅，给沈淮带两句话。" }
+      ]
+    },
+    {
+      "id": "r23-S4-05", "severity": "S4", "class": "state.location", "status": "final", "rootLayer": "writer",
+      "chapters": [12, 15], "entity": "甲字廒/甲字库称谓",
+      "summary": "同一仓储单位ch12作『甲字库』，ch13/15均作『甲字廒』，建议统一",
+      "evidence": [
+        { "chapter": 12, "quote": "通州官仓甲字库三万一千六百石储备陈粮，实已于半月前被洗劫一空" },
+        { "chapter": 15, "quote": "前年五月甲字廒出库陈粮八千石" }
+      ]
+    },
+    {
+      "id": "r23-S4-06", "severity": "S4", "class": "structure.repeat", "status": "final", "rootLayer": "writer",
+      "chapters": [12, 13], "entity": "崔敬震撼节拍",
+      "summary": "崔敬『掌度支数十年从未见过此等账法』的惊叹节拍在ch12叙述与ch13台词中原样重复，建议差异化",
+      "evidence": [
+        { "chapter": 12, "quote": "何曾见过这等借贷平衡、层层穿透的记账法度" },
+        { "chapter": 13, "quote": "见过的烂账堆起来能填平什刹海，却从未见过这等古怪算式" }
+      ]
+    },
+    {
+      "id": "r23-S4-07", "severity": "S4", "class": "prose.leak", "status": "final", "rootLayer": "writer",
+      "chapters": [14], "entity": "周炳称谓格式",
+      "summary": "『管仓主事·正八品周炳』档案标签式写法混入小说叙述文",
+      "evidence": [
+        { "chapter": 14, "quote": "在押的管仓主事·正八品周炳戴着沉重的四十斤榆木生铁重枷" }
+      ]
+    },
+    {
+      "id": "r23-S4-08", "severity": "S4", "class": "structure.offscreen", "status": "final", "rootLayer": "writer",
+      "chapters": [14, 15], "entity": "黑板备置与主筹情报来源",
+      "summary": "一丈二宽大黑板与石笔在禁足一夜后随取随有零铺垫；沈淮清晨即知主筹被抽的情报来源未交代",
+      "evidence": [
+        { "chapter": 15, "quote": "徐老账抹去额头虚汗，领着四名库役合力抬进一架一丈二宽的大木屏" }
+      ]
+    }
+  ]
+}
