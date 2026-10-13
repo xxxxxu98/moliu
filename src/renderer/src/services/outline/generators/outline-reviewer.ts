@@ -39,7 +39,8 @@ export type OutlineQualityIssueKind =
   | 'unknown-character-reference'
   | 'protagonist-name-mismatch'
   | 'foreshadow-setup-forbidden-conflict'
-  | 'coolpoint-plan-misaligned';
+  | 'coolpoint-plan-misaligned'
+  | 'cbn-day-anchor-inflation';
 
 export interface OutlineQualityIssue {
   kind: OutlineQualityIssueKind;
@@ -510,6 +511,35 @@ export function inspectOutlineQuality(outline: ExecutableOutline): OutlineQualit
         detail:
           `爽点计划「${cool.description.slice(0, 24)}…」挂第${cool.suggestedChapter}章，但该章蓝图与其零词面关联` +
           `——爽点没落进蓝图读者就吃不到；把该爽点场面写进该章 mustCover，或把 suggestedChapter 改到真正承载它的章`,
+      });
+    }
+  }
+
+  // 14. CBN 日锚膨胀（2026-10-13 r23-S2-07 实证：ch8「当日巳时」→ch9「次日午时」
+  // →ch10「次日未时」，相邻章各标「次日」而时辰仅推进一个，日锚凭空多出一日——
+  // 大纲日锚与正文时辰链脱节，写手照抄即成 time.sequence S2）。判据：相邻两章
+  // CBN 均带「当日/次日」日锚+时辰，本章标「次日」而时辰较上章仅在 -1~+2 个
+  // 时辰内微动（真跨夜是戌时→次日卯时这类大幅回绕，不误伤）。
+  const HOUR_STEMS = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+  const cbnDayAnchor = (cbn: string): { day: 0 | 1; hour: number } | null => {
+    const text = (cbn ?? '').trim();
+    const dayMatch = text.match(/^(当日|次日|翌日)/u);
+    if (!dayMatch) return null;
+    const hourMatch = text.slice(0, 14).match(/([子丑寅卯辰巳午未申酉戌亥])时/u);
+    if (!hourMatch) return null;
+    return { day: dayMatch[1] === '当日' ? 0 : 1, hour: HOUR_STEMS.indexOf(hourMatch[1]) };
+  };
+  for (let i = 0; i + 1 < chapterBlueprints.length; i += 1) {
+    const prev = cbnDayAnchor(chapterBlueprints[i].CBN ?? '');
+    const cur = cbnDayAnchor(chapterBlueprints[i + 1].CBN ?? '');
+    if (!prev || !cur) continue;
+    const hourDelta = cur.hour - prev.hour;
+    if (cur.day === 1 && hourDelta >= -1 && hourDelta <= 2) {
+      issues.push({
+        kind: 'cbn-day-anchor-inflation',
+        chapterOrder: chapterBlueprints[i + 1].orderIndex,
+        detail:
+          `第${chapterBlueprints[i + 1].orderIndex}章 CBN「${(chapterBlueprints[i + 1].CBN ?? '').slice(0, 18)}」标「次日」但时辰较上章「${(chapterBlueprints[i].CBN ?? '').slice(0, 18)}」仅推进 ${hourDelta} 个时辰——日锚凭空多一日（r23 实证：ch9「次日午时」→ch10「次日未时」成 time.sequence S2）。改为「当日」承接，或把时辰真正拉开到跨天`,
       });
     }
   }

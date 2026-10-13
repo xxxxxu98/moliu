@@ -467,6 +467,37 @@ describe('inspectOutlineQuality', () => {
   });
 });
 
+describe('CBN 日锚膨胀（cbn-day-anchor-inflation，2026-10-13 r23-S2-07 实证）', () => {
+  const outlineOf = (cbns: string[]) => {
+    const outline = makeDirtyOutline();
+    outline.chapterBlueprints = cbns.map((cbn, idx) => makeBlueprint(idx + 1, { CBN: cbn }));
+    return outline;
+  };
+  const inflationIssues = (outline: ExecutableOutline) =>
+    inspectOutlineQuality(outline).filter(i => i.kind === 'cbn-day-anchor-inflation');
+
+  it('相邻章标「次日」而时辰仅微进 → 报（r23 ch9→ch10 形态：次日午时→次日未时）', () => {
+    const issues = inflationIssues(
+      outlineOf(['当日巳时，周炳对质', '次日午时，灰烬清点', '次日未时，沈淮躲藏'])
+    );
+    expect(issues.length).toBeGreaterThanOrEqual(1);
+    expect(issues.some(i => i.chapterOrder === 3 && i.detail.includes('次日未时'))).toBe(true);
+  });
+
+  it('真跨夜（戌时→次日卯时）不误报', () => {
+    expect(
+      inflationIssues(outlineOf(['当日戌时，夜探账房', '次日卯时，晨鼓破晓']))
+    ).toHaveLength(0);
+  });
+
+  it('同日推进、无日锚、无时辰的 CBN 不报', () => {
+    expect(
+      inflationIssues(outlineOf(['当日申时，文书砸面', '当日酉时，倒箱对质']))
+    ).toHaveLength(0);
+    expect(inflationIssues(outlineOf(['沈淮踏入仓场', '次日，风声更紧']))).toHaveLength(0);
+  });
+});
+
 describe('parseChapterRange', () => {
   it('解析 "1-5章" / "11~15章"', () => {
     expect(parseChapterRange('1-5章')).toEqual({ start: 1, end: 5 });

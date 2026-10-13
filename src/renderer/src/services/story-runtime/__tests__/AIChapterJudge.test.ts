@@ -701,6 +701,67 @@ describe('chapter-judge 响应软兜底（2026-08-18 gemini-3.6 20 章矩阵 ch2
     expect(bareSystem).not.toContain('【数字一致】');
   });
 
+  it('同额存证行注入时出必检互洽规则（r23-S1-01 三千九百两三版本对撞实证）', async () => {
+    let capturedSystem = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        return emptyJudgePayload();
+      }),
+    };
+    await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+      numericFacts: [
+        '同额存证｜3900两 有 3 章各自入账：第14章「借永丰米行提现」原句「余下的三千九百两，则借永丰米行」；第17章「百川柜坊存根」原句「前年三月支取一千二百两」；第18章「汇通钱庄柜存」原句「汇通钱庄天字第七号，本月十二日提取」',
+        '第14章既成「周炳私吞赃款＝3900两」',
+      ],
+    });
+    expect(capturedSystem).toContain('【必检·同额存证互洽裁决】');
+    expect(capturedSystem).toContain('来源机构');
+    expect(capturedSystem).toContain('同额叙事冲突');
+    expect(capturedSystem).toContain('汇通钱庄');
+
+    // 无同额存证行时规则不注入
+    let bareSystem = '';
+    const ai2: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        bareSystem = request.system ?? '';
+        return emptyJudgePayload();
+      }),
+    };
+    await new AIChapterJudge(ai2).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+      numericFacts: ['第14章既成「周炳私吞赃款＝3900两」'],
+    });
+    expect(bareSystem).not.toContain('【必检·同额存证互洽裁决】');
+  });
+
+  it('timelineMarks 注入时带总跨度验算指令（r23 七日七夜 vs 实际四日实证）', async () => {
+    let capturedSystem = '';
+    const ai: StructuredAI = {
+      generate: vi.fn(async <T>(request: StructuredAIRequest<T>): Promise<unknown> => {
+        capturedSystem = request.system ?? '';
+        return emptyJudgePayload();
+      }),
+    };
+    await new AIChapterJudge(ai).judge({
+      mustCover: ['节点A'],
+      forbiddenZones: [],
+      chapterText: '正文',
+      checkDeepSemantic: true,
+      timelineMarks: ['第14章：当夜·账房', '第15章：次日午时·公堂'],
+    });
+    expect(capturedSystem).toContain('【时间轴连续】');
+    expect(capturedSystem).toContain('总跨度验算');
+    expect(capturedSystem).toContain('跨度声明失真');
+  });
+
   it('stateCard 注入时判官与写作侧读同一份卡', async () => {
     let capturedSystem = '';
     let capturedPrompt = '';

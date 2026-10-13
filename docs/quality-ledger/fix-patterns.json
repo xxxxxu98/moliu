@@ -49,7 +49,8 @@
       "fixes": [
         { "round": "r6", "mechanism": "数字锚：既成大额数字名录注入起草+判官", "modules": ["src/renderer/src/services/writing/numericLedger.ts"] },
         { "round": "r10", "mechanism": "契约 15 台账化：FactExtractor 结构化出账，同对象首值锁正典仅勘误可覆盖", "modules": ["src/renderer/src/services/writing/numericLedger.ts"] },
-        { "round": "r21", "mechanism": "同单位异值确定性枚举 + 判官定向必检对 buildNumericConflictProbes（措辞变体同对象零拦截形态）", "modules": ["src/renderer/src/services/writing/numericLedger.ts", "src/renderer/src/services/story-runtime/AIChapterJudge.ts"] }
+        { "round": "r21", "mechanism": "同单位异值确定性枚举 + 判官定向必检对 buildNumericConflictProbes（措辞变体同对象零拦截形态）", "modules": ["src/renderer/src/services/writing/numericLedger.ts", "src/renderer/src/services/story-runtime/AIChapterJudge.ts"] },
+        { "round": "r23", "mechanism": "同额存证组（换机制）：同 amount 跨章条目成组亮给判官必检叙事属性互洽（来源机构/支取时点/去向/物证形态）——数值防线锁不住叙事事实属性（3900两三版本对撞实证）", "modules": ["src/renderer/src/services/writing/numericLedger.ts", "src/renderer/src/services/story-runtime/AIChapterJudge.ts"] }
       ]
     },
     {
@@ -78,7 +79,8 @@
       "class": "time.sequence",
       "expectedRootLayers": ["extraction", "writer"],
       "fixes": [
-        { "round": "r10", "mechanism": "契约 17 时间承诺台账 + timelineMarks 时间轴注入（时间流逝连续性）", "modules": ["src/renderer/src/services/writing/numericLedger.ts"] }
+        { "round": "r10", "mechanism": "契约 17 时间承诺台账 + timelineMarks 时间轴注入（时间流逝连续性）", "modules": ["src/renderer/src/services/writing/numericLedger.ts"] },
+        { "round": "r23", "mechanism": "判官总跨度验算指令：正文 N日/N夜/半月前类跨度声明须与时间轴推算核验（七日七夜 vs 实际四日、半月前 vs 前年实证）", "modules": ["src/renderer/src/services/story-runtime/AIChapterJudge.ts"] }
       ]
     },
     {
@@ -115,7 +117,8 @@
       "class": "outline.contract",
       "expectedRootLayers": ["outline"],
       "fixes": [
-        { "round": "r3", "mechanism": "大纲确定性校验 13 类 issue（占位事件/模板CBN/破折号区间/钩子截断等）", "modules": ["src/renderer/src/services/outline/generators/outline-reviewer.ts"] }
+        { "round": "r3", "mechanism": "大纲确定性校验 13 类 issue（占位事件/模板CBN/破折号区间/钩子截断等）", "modules": ["src/renderer/src/services/outline/generators/outline-reviewer.ts"] },
+        { "round": "r23", "mechanism": "CBN 日锚膨胀校验 cbn-day-anchor-inflation：相邻章标「次日」而时辰仅微进（-1~+2）即报——日锚凭空多一日（ch9 次日午时→ch10 次日未时实证）", "modules": ["src/renderer/src/services/outline/generators/outline-reviewer.ts"] }
       ]
     },
     {

@@ -75,6 +75,16 @@ describe('replay-from-finding 桥', () => {
     assert.equal(skipped.length, 3);
   });
 
+  test('finding.id 已含轮次前缀时不重复加 round（r23 形态）', () => {
+    const { specs } = bridge.buildReplaySpecs({
+      round: 'r23',
+      findings: [
+        { id: 'r23-S1-01', severity: 'S1', status: 'final', class: 'number.ledger', summary: '同额叙事冲突', chapters: [18], evidence: [{ chapter: 18, quote: '汇通钱庄' }] },
+      ],
+    });
+    assert.equal(specs[0].id, 'r23-S1-01');
+  });
+
   test('findLargestProjectStore：多 store 取体积最大；空目录返回 null', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'replay-bridge-'));
     try {

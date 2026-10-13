@@ -271,9 +271,15 @@ export function formatNumericAnchorLines(
         '。若本章正文引用的数字对象与其中任何既有对象实际指同一物证/同一账目/同一批物资（措辞不同也算），数值必须与最早确立的正典一致；否则必须先写出勘误、清点或查实虚报的场面'
     );
   }
+  // 同额存证组（2026-10-13 r23-S1-01 实证：同一笔 3900 两赃款，ch14 叙「借永丰米行
+  // 运费名义提现」、ch17 叙「百川柜坊三联存根前年支取」、ch18 叙「汇通钱庄天字第七号
+  // 本月十二日提取」——数值全对（数值口径防线全绿）但来源机构/支取时点/去向互撞成 S1。
+  // 数值防线锁不住叙事事实属性；evidence 原句在账，把同额跨章条目成组亮给判官必检。
+  const narrativePairs = collectNarrativeFactPairs(eligible);
   return [
     `以下为各关键数字对象首次确立的正典（后章未标勘误的不同数值已丢弃，不得当成新正典）。同一对象在本章内多次出现的数额必须一致；单位相同的多条对象若实际指同一物证/同一账目（措辞不同也算同一对象），数值必须与最早确立的正典一致，改口必须先写出勘误、清点或查实虚报的场面。涉及乘除换算（单价×数量、比例×基数、年数×岁入）先笔算核验再落笔——乘积与总量声明对不上、同账两说，判官将直接拒稿`,
     ...multiValueWarnings,
+    ...narrativePairs,
     ...orderedRows.map(
       entry =>
         `第${entry.chapterIndex}章既成「${entry.object}＝${entry.amount}${entry.unit}` +
@@ -281,6 +287,46 @@ export function formatNumericAnchorLines(
         `」`
     ),
   ];
+}
+
+/** 同额存证注入上限：组数过多会被判官当背景噪音无视 */
+const MAX_NARRATIVE_FACT_PAIRS = 4;
+
+/**
+ * 同额存证组（r23-S1-01 换机制修复）：同 amount+unit 且跨章（≥2 个不同章）的台账
+ * 条目成组，每组渲染一行「同额存证」——判官必检这些条目若指同一笔账，其来源机构/
+ * 支取时点/去向/物证形态的叙述是否互洽。纯确定性分组，语义终审归判官
+ * （与 r21 同单位异值枚举同款打法：词面相似度路线已被实证无效）。
+ */
+export function collectNarrativeFactPairs(
+  eligible: NumericLedgerEntry[]
+): string[] {
+  const groups = new Map<string, NumericLedgerEntry[]>();
+  for (const entry of eligible) {
+    if (!entry.evidence) continue;
+    const key = `${entry.amount}|${entry.unit}`;
+    const list = groups.get(key) ?? [];
+    list.push(entry);
+    groups.set(key, list);
+  }
+  const pairs: string[] = [];
+  const multiChapter = [...groups.values()]
+    .filter(list => new Set(list.map(entry => entry.chapterIndex)).size >= 2)
+    .sort((a, b) => b.length - a.length)
+    .slice(0, MAX_NARRATIVE_FACT_PAIRS);
+  for (const list of multiChapter) {
+    const distinctChapters = [...new Set(list.map(entry => entry.chapterIndex))].sort((a, b) => a - b);
+    const citations = distinctChapters
+      .map(chapterIndex => {
+        const entry = list.find(item => item.chapterIndex === chapterIndex)!;
+        return `第${chapterIndex}章「${entry.object}」原句「${(entry.evidence ?? '').slice(0, 60)}」`;
+      })
+      .join('；');
+    pairs.push(
+      `同额存证｜${list[0].amount}${list[0].unit} 有 ${distinctChapters.length} 章各自入账：${citations}`
+    );
+  }
+  return pairs;
 }
 
 /**

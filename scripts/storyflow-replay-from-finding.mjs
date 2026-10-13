@@ -71,6 +71,12 @@ function sanitizeId(value) {
   return String(value).replace(/[^\w.-]+/gu, '-').replace(/^-+|-+$/g, '') || 'finding';
 }
 
+/** finding.id 已含轮次前缀（如 r23-S1-01）时不重复加 round 前缀 */
+function specIdOf(round, findingId) {
+  const id = sanitizeId(findingId);
+  return id.startsWith(`${sanitizeId(round)}-`) ? id : sanitizeId(`${round}-${findingId}`);
+}
+
 /** 由 findings 文档构造回放 spec 列表（导出供测试）。返回 {specs, skipped: [{id, reason}]} */
 export function buildReplaySpecs(doc) {
   const specs = [];
@@ -91,7 +97,7 @@ export function buildReplaySpecs(doc) {
       continue;
     }
     specs.push({
-      id: sanitizeId(label),
+      id: specIdOf(doc.round, finding.id),
       findingId: String(finding.id),
       sourceStore: null, // 由 CLI 按 matrixDir 解析
       fromChapter: Math.max(1, evidence.chapter - 1),

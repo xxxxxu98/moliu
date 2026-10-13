@@ -275,6 +275,31 @@ describe('formatTimePromiseLines / collectTimelineMarks', () => {
     expect(projected[0].status).toBe('open');
     expect(promises[0].status).toBe('fulfilled');
   });
+
+  it('同额存证组（r23-S1-01 换机制）：同额跨章条目成组进注入行，单章/无证据不成组', () => {
+    const ledger: NumericLedgerEntry[] = [
+      { object: '周炳私吞赃款', amount: 3900, unit: '两', chapterIndex: 14, evidence: '余下的三千九百两，则借永丰米行的虚耗运费名义提出' },
+      { object: '周炳私挪官印大锭', amount: 3900, unit: '两', chapterIndex: 18, evidence: '汇通钱庄天字第七号柜存本月十二日提取' },
+      { object: '周炳落入私囊赃款', amount: 3900, unit: '两', chapterIndex: 17, evidence: '百川柜坊三联存根，前年三月支取' },
+      // 同章两条不成组（跨章才成组）
+      { object: '同章另一条', amount: 3900, unit: '两', chapterIndex: 18, evidence: '同章补充叙述' },
+      // 无 evidence 不进组
+      { object: '无证据条目', amount: 3900, unit: '两', chapterIndex: 12 },
+      // 不同额不成组
+      { object: '另一笔账', amount: 15800, unit: '两', chapterIndex: 5, evidence: '一万五千八百两折色现银' },
+    ];
+    const lines = formatNumericAnchorLines(ledger, 20);
+    const pairLines = lines.filter(l => l.startsWith('同额存证｜'));
+    expect(pairLines).toHaveLength(1);
+    expect(pairLines[0]).toContain('3900两');
+    expect(pairLines[0]).toContain('第14章');
+    expect(pairLines[0]).toContain('第17章');
+    expect(pairLines[0]).toContain('第18章');
+    // 各章取一条代表原句（同章多条只引一次）
+    expect(pairLines[0].match(/第18章/g)?.length).toBe(1);
+    expect(pairLines[0]).toContain('永丰米行');
+    expect(pairLines[0]).toContain('汇通钱庄');
+  });
 });
 
 describe('契约 18 剧情预告（plot-promise，2026-10-05 首轮对手预告落空实证）', () => {
