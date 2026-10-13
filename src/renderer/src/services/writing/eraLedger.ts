@@ -122,9 +122,17 @@ export function mergeEraLedger(
   return kept;
 }
 
-/** 起草与判官共用的纪年锚行。空账返回空数组，起草侧按「未确立年号」处理。 */
-export function formatEraAnchorLines(entries: EraLedgerEntry[]): string[] {
-  const canon = entries[entries.length - 1];
+/**
+ * 起草与判官共用的纪年锚行。空账返回空数组，起草侧按「未确立年号」处理。
+ * chapterNumber（补写/回排检查点投影，2026-10-12 ⑦）：提供时只重放该章之前确立的
+ * 纪年——补写第 5 章不得看到第 40 章的改元（glm53f「补写状态基底错位」形态之一）。
+ */
+export function formatEraAnchorLines(entries: EraLedgerEntry[], chapterNumber?: number): string[] {
+  const upto =
+    typeof chapterNumber === 'number' && chapterNumber > 0
+      ? entries.filter(entry => entry.chapterIndex < chapterNumber)
+      : entries;
+  const canon = upto[upto.length - 1];
   if (!canon) return [];
   const lines = [
     `当前纪年「${canon.eraName}${canon.year}年」（第${canon.chapterIndex}章确立）：「${canon.eraName}X年至${canon.eraName}Y年」的跨度＝(Y−X)年；正文与文书中的年份不得大于${canon.year}`,

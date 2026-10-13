@@ -99,4 +99,31 @@ describe('formatEraAnchorLines', () => {
     const empty: EraLedgerEntry[] = [];
     expect(formatEraAnchorLines(empty)).toEqual([]);
   });
+
+  it('补写检查点投影：chapterNumber 截断到该章前确立的纪年（2026-10-12 ⑦）', () => {
+    const ledger: EraLedgerEntry[] = [
+      { eraName: '天兴', year: 20, chapterIndex: 3 },
+      { eraName: '天兴', year: 24, chapterIndex: 40 },
+    ];
+    // 补写第 5 章：只应看到第 3 章确立的天兴二十年，不得泄漏第 40 章的推进
+    const patching = formatEraAnchorLines(ledger, 5);
+    expect(patching[0]).toContain('天兴20年');
+    expect(patching.join()).not.toContain('24');
+    // 常规续写（第 41 章）：最新正典可见
+    expect(formatEraAnchorLines(ledger, 41)[0]).toContain('天兴24年');
+    // 截断后为空（第 2 章之前无纪年）→ 未确立年号
+    expect(formatEraAnchorLines(ledger, 2)).toEqual([]);
+    // 不传 chapterNumber：保持旧行为（全书最新正典）
+    expect(formatEraAnchorLines(ledger)[0]).toContain('天兴24年');
+  });
+
+  it('改元信息在截断后不提前泄漏：改元前的补写只见旧年号', () => {
+    const ledger: EraLedgerEntry[] = mergeEraLedger(
+      [{ eraName: '天兴', year: 20, chapterIndex: 3 }],
+      [{ eraName: '永昌', year: 1, chapterIndex: 40, revision: 'correct' }]
+    );
+    const patching = formatEraAnchorLines(ledger, 10);
+    expect(patching.join()).toContain('天兴20年');
+    expect(patching.join()).not.toContain('永昌');
+  });
 });

@@ -1088,7 +1088,9 @@ export class ChapterWritingPipeline {
           .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
           .map(node => `第${(node.orderIndex ?? 0) + 1}章：「${(node.CEN ?? '').trim()}」`),
         // 纪年锚只读结构化账。账为空时起草走「未确立年号」。真实年号另有黑名单守卫。
-        eraAnchors: formatEraAnchorLines(input.project.eraLedger ?? []),
+        // 按章号投影（2026-10-12 ⑦ 检查点重放）：补写/回排早期章不得看到未来章的
+        // 改元与年份推进（glm53f「补写状态基底错位」形态）。
+        eraAnchors: formatEraAnchorLines(input.project.eraLedger ?? [], chapterNumber),
         // 数字锚（2026-10-05 台账化重构：契约 15 结构化出账 → 项目 numericLedger，
         // 旧 collectNumericAnchors 单位词表正则退役——都市文信用点/吨/天全漏实证）：
         // 起草【数字锚】与判官【数字一致】共源注入

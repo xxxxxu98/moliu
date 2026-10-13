@@ -10,6 +10,7 @@ import { describe, it, expect } from 'vitest';
 import {
   projectNumericLedgerEntries,
   projectTimeLedger,
+  projectTimePromisesForChapter,
   mergeNumericLedger,
   mergeTimePromises,
   resolveTimePromisesByText,
@@ -247,6 +248,32 @@ describe('formatTimePromiseLines / collectTimelineMarks', () => {
     ];
     const lines = formatNumericAnchorLines(ledger, 15);
     expect(lines.some(l => l.includes('3000000信用点'))).toBe(true);
+  });
+
+  it('补写检查点投影：第 R 章兑现的承诺在补写第 N<R 章时仍是 open（2026-10-12 ⑦）', () => {
+    const promises: TimePromiseEntry[] = [
+      // 第 12 章兑现——补写第 9 章时点应回到 open（status 是全书跑完的后视镜）
+      { promise: '秋决前呈上漕运铁证', due: '十日内', createdChapterIndex: 4, status: 'fulfilled', resolvedChapterIndex: 12 },
+      // 第 8 章已兑现——补写第 9 章时保持 fulfilled
+      { promise: '旧账已清', createdChapterIndex: 2, status: 'fulfilled', resolvedChapterIndex: 8 },
+      // 无兑现章号的历史数据：保守沿用当前 status
+      { promise: '无法回放的老承诺', createdChapterIndex: 3, status: 'renegotiated' },
+    ];
+    const lines = formatTimePromiseLines(promises, 9);
+    expect(lines.some(l => l.includes('秋决前呈上漕运铁证'))).toBe(true);
+    expect(lines.some(l => l.includes('旧账已清'))).toBe(false);
+    expect(lines.some(l => l.includes('无法回放'))).toBe(false);
+    // 常规续写第 13 章：第 12 章已兑现，不再注入
+    expect(formatTimePromiseLines(promises, 13).some(l => l.includes('秋决前呈上漕运铁证'))).toBe(false);
+  });
+
+  it('projectTimePromisesForChapter 纯投影不修改原数组', () => {
+    const promises: TimePromiseEntry[] = [
+      { promise: 'p', createdChapterIndex: 1, status: 'fulfilled', resolvedChapterIndex: 10 },
+    ];
+    const projected = projectTimePromisesForChapter(promises, 5);
+    expect(projected[0].status).toBe('open');
+    expect(promises[0].status).toBe('fulfilled');
   });
 });
 

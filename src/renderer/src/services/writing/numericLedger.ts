@@ -283,6 +283,25 @@ export function formatNumericAnchorLines(
   ];
 }
 
+/**
+ * 承诺状态的章时点投影（补写/回排检查点，2026-10-12 ⑦）：第 R 章兑现的承诺，
+ * 在补写第 N<R 章时仍应是 open——终态 status 是全书跑完后的后视镜，不是当章时点。
+ * 无 resolvedChapterIndex 的历史数据无法回放，保守沿用当前 status（与旧行为一致）。
+ */
+export function projectTimePromisesForChapter(
+  promises: TimePromiseEntry[],
+  chapterNumber: number
+): TimePromiseEntry[] {
+  return promises.map(entry => {
+    if (entry.status === 'open') return entry;
+    // 无兑现章号的历史数据无法回放，保守沿用当前 status（与旧行为一致）
+    if (entry.resolvedChapterIndex == null) return entry;
+    // 兑现发生在目标章之后：当章时点仍是 open
+    if (entry.resolvedChapterIndex >= chapterNumber) return { ...entry, status: 'open' as const };
+    return entry;
+  });
+}
+
 /** 时间承诺台账 → 待兑现清单注入行（写作侧【期限承诺】与判官【期限一致】共源）。
  * 期限承诺（deadline）与剧情预告（plot）统一列出：前者按期限约束，后者按
  * 兑现点约束（正文越过预告的应兑现点而未兑现且无否定交代即违约）。 */
@@ -291,7 +310,7 @@ export function formatTimePromiseLines(
   chapterNumber: number,
   relevanceHint?: string
 ): string[] {
-  const open = promises.filter(
+  const open = projectTimePromisesForChapter(promises, chapterNumber).filter(
     entry => entry.status === 'open' && entry.createdChapterIndex < chapterNumber
   );
   if (open.length === 0) return [];
