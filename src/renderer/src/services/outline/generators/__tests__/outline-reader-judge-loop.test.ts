@@ -77,6 +77,27 @@ describe('runOutlineReaderJudgeLoop', () => {
     expect(result.rawText).toBe(RAW);
   });
 
+  it('r23 缺口回归：score<门禁（无 blocking 也愿开读）→ 同样触发修复；修复后仍差线 → 黄签不阻断', async () => {
+    const judge = makeJudge([
+      judgement({ score: 83.8 }),
+      judgement({ score: 84.2 }),
+    ]);
+    const repair = vi.fn(async () => repairedResult());
+    const result = await runOutlineReaderJudgeLoop({ ...baseInput(), judge, repair });
+    expect(repair).toHaveBeenCalledOnce();
+    expect(result.summary).toMatchObject({ score: 84.2, repaired: true });
+    expect(result.severelyTruncated).toBe(false);
+    expect(result.warnings.some(w => w.includes('84.2 < 85 门禁未达线'))).toBe(true);
+  });
+
+  it('score≥gate 且无 blocking → 过（gate 生效边界：恰好 85 不触发修复）', async () => {
+    const judge = makeJudge([judgement({ score: 85 })]);
+    const repair = vi.fn();
+    const result = await runOutlineReaderJudgeLoop({ ...baseInput(), judge, repair });
+    expect(repair).not.toHaveBeenCalled();
+    expect(result.summary?.score).toBe(85);
+  });
+
   it('首评 blocking → 修复 → 复评通过：finds 传入修复、采用修复稿、rounds=2', async () => {
     const judge = makeJudge([judgement({ score: 72, blocking: 2, wouldStartReading: false }), judgement({ score: 86, blocking: 0 })]);
     const REPAIRED_RAW = buildOutlineFixture({ chapterOverrides: { 1: { CBN: '命案现场当场验尸打脸县丞' } } });

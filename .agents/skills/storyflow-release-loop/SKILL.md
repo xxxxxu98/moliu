@@ -69,8 +69,13 @@ node scripts/agent-storyflow-real-multi.mjs --list
 ## 第 1 步：真实生成（后台）
 
 ```bash
-set MOLIU_CHAPTER_COUNT=100&& set MOLIU_READER_JUDGE_PROVIDER_ID=<id>&& set MOLIU_STORYFLOW_MATRIX_DIR=temp\storyflow-matrix-agif100ch&& node scripts/agent-storyflow-real-multi.mjs <id>
+set MOLIU_CHAPTER_COUNT=100&& set MOLIU_READER_JUDGE_PROVIDER_ID=<id>&& set MOLIU_STORYFLOW_RUN_SUFFIX=<tag>&& set MOLIU_STORYFLOW_MATRIX_DIR=temp\storyflow-matrix-<tag><N>ch&& node scripts/agent-storyflow-real-multi.mjs <id>
 ```
+
+**MOLIU_STORYFLOW_RUN_SUFFIX 必须设**（r23 实证：不设时 runner 会用 providerId 当后缀，
+`MOLIU_RESUME_STORYFLOW=1` 的检查点目录按后缀命名——同 provider 第二轮直接续上上一轮的
+旧书检查点，新书变成同大纲重 roll；且注意它是 runner 层变量，写成 harness 层的
+MOLIU_RUN_SUFFIX 会被覆盖）。
 
 run_in_background 跑，期间做第 3 步的工具准备。规模联动规则见 auto-loop SKILL.md。
 geo-block 已知形态看 auto-loop「已知噪音」，长窗口杀批次→结论是换通道而非加退避。

@@ -16,6 +16,13 @@ import type {
   OutlineReaderJudgePort,
 } from '../types/executable-outline';
 
+/**
+ * 大纲读者分采纳门禁默认值（r23 实证缺口修复：判官首评「通过」≠ 大纲分达线——
+ * g38f20reg2 首评通过但 reeval 83.8<85）。与 docs/quality-ledger/thresholds.json
+ * 的 readerJudge.outline 同源，数值改动须两端同步（src 不直接读 docs 文件）。
+ */
+export const OUTLINE_SCORE_GATE_DEFAULT = 85;
+
 export interface ReaderJudgeLoopRepairResult {
   rawText: string;
   outline: ExecutableOutline;
@@ -29,7 +36,9 @@ export interface ReaderJudgeLoopInput {
   outline: ExecutableOutline;
   judge: OutlineReaderJudgePort;
   context: { title?: string; genre?: string; targetReader?: string; positioning?: string };
-  /** 修复回执：拿到判官 findings 驱动 OutlineToolkit 修复（重写解锁） */
+  /**
+   * 修复回执：拿到判官 findings 驱动 OutlineToolkit 修复（重写解锁）
+   */
   repair: (input: {
     rawText: string;
     outline: ExecutableOutline;
@@ -42,6 +51,14 @@ export interface ReaderJudgeLoopInput {
   }) => Promise<ReaderJudgeLoopRepairResult>;
   signal?: AbortSignal;
   onProgress?: (message: string) => void;
+  /**
+   * 大纲分采纳门禁（r23 实证缺口修复：判官首评「无 blocking+愿意开读」≠ 大纲分达线
+   * ——g38f20reg2 生成期首评通过，事后 reeval 大纲 83.8<85。默认 85，与
+   * docs/quality-ledger/thresholds.json 的 readerJudge.outline 同源，改动须两端同步。
+   * 分数未达线同样触发修复轮；修复后仍未达线不阻断（fail-closed 仍由确定性门禁
+   * 把关），落黄签 warning 供上层决策。
+   */
+  outlineScoreGate?: number;
 }
 
 export interface ReaderJudgeLoopResult {
@@ -107,10 +124,12 @@ export async function runOutlineReaderJudgeLoop(
     };
   }
 
+  const gate = input.outlineScoreGate ?? OUTLINE_SCORE_GATE_DEFAULT;
   const blocking = first.issues.filter(issue => issue.blocking);
-  const pass = blocking.length === 0 && first.wouldStartReading !== false;
+  const gateMiss = first.score < gate;
+  const pass = blocking.length === 0 && first.wouldStartReading !== false && !gateMiss;
   if (pass) {
-    input.onProgress?.(`读者判官首评通过：score=${first.score}，无 blocking 问题`);
+    input.onProgress?.(`读者判官首评通过：score=${first.score}≥${gate}，无 blocking 问题`);
     return {
       rawText: input.rawText,
       outline: input.outline,
@@ -121,7 +140,7 @@ export async function runOutlineReaderJudgeLoop(
   }
 
   input.onProgress?.(
-    `读者判官首评：score=${first.score}，blocking×${blocking.length}${first.wouldStartReading === false ? '，wouldStartReading=false' : ''}——驱动大纲修复回合`
+    `读者判官首评：score=${first.score}${gateMiss ? `（<${gate} 门禁未达线）` : ''}，blocking×${blocking.length}${first.wouldStartReading === false ? '，wouldStartReading=false' : ''}——驱动大纲修复回合`
   );
   const repaired = await input.repair({
     rawText: input.rawText,
@@ -167,6 +186,11 @@ export async function runOutlineReaderJudgeLoop(
   } else {
     warnings.push(
       `读者判官闭环：修复后未见改善（score ${first.score}→${second.score}，blocking ${blocking.length}→${secondBlocking.length}）——best-effort 保留修复稿，下一轮开题换方向而非再修`
+    );
+  }
+  if (second.score < gate) {
+    warnings.push(
+      `大纲读者分 ${second.score} < ${gate} 门禁未达线（best-effort 不阻断生成；上线判定按 thresholds 口径计阻断，需换方向重开题而非继续修）`
     );
   }
   return {
