@@ -17,12 +17,12 @@
     "precheckRedlines": 0,
     "fateRealResurrection": 0,
     "readerJudge": {
-      "outline": null,
-      "mean": null,
-      "median": null,
-      "min": null,
-      "independentFromWriter": true,
-      "note": "25条评审全部死于网关配额耗尽（Resource has been exhausted）；裁判已自动选独立通道gemini-3.7-flash-high。待配额恢复后 storyflow-reader-reeval.mjs 离线补测"
+      "outline": 83.8,
+      "mean": 87.9,
+      "median": 88.4,
+      "min": 82.4,
+      "independentFromWriter": false,
+      "note": "生成期评审死于配额后离线补测（storyflow-reader-reeval，用户指定反重力gemini-3.8通道，reader-eval-v1口径，20章+大纲全量，弃读0）。章节三项过线；大纲83.8<85未达线。机制缺口发现：本轮大纲系检查点复用（g38f20reg2生成期判官闭环首评通过wouldStartReading=true），但事后reeval大纲分83.8——判官闭环采纳条件（无blocking+愿意开读）与thresholds大纲门禁（score≥85）不一致，判官首评通过≠大纲分达线，闭环pass条件应对齐thresholds（下轮修复项）"
     },
     "ending": {
       "complete": false,
