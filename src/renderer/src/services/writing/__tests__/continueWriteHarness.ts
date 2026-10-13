@@ -958,6 +958,15 @@ export function openContinueWriteSession(options: {
       const writingStyle: WritingStyle =
         chapterOptions.writingStyle ?? (mode === 'batch' ? 'humorous' : 'concise');
       let output: ChapterWriteOutput;
+      // 反例账本回写真源（2026-10-13 g38f20reg2 实证修复）：projectWithOutline 是每章
+      // 浅拷贝，pipeline 的 rejectionLessons 累计写在副本上——不回写则跨章失忆，且
+      // 首过末章的空 merge 会经 saveRejectionLessons 把 file store 覆盖成 []
+      // （实测 8 个改稿章后账本仍为空）。生产链传 currentProject 同引用无此问题。
+      const syncRejectionLessons = () => {
+        if (projectWithOutline.rejectionLessons) {
+          project.rejectionLessons = projectWithOutline.rejectionLessons;
+        }
+      };
 
       if (mode === 'smart') {
         // WritingOrchestratorV2.run：不显式传 previousChapter，由 PreflightService 上下文提供衔接
@@ -991,6 +1000,7 @@ export function openContinueWriteSession(options: {
         });
       }
 
+      syncRejectionLessons();
       await recording.flush();
       syncProjectFromStore();
 
