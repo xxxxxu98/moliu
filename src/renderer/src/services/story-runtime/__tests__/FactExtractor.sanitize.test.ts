@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { sanitizeUnconfirmedDeathDeltas } from '../FactExtractor';
+import { sanitizeUnconfirmedDeathDeltas, sanitizeUnconfirmedVerdictDeltas } from '../FactExtractor';
 import type { ExtractedFacts } from '@/types/story-runtime';
 
 function makeFacts(
@@ -105,5 +105,39 @@ describe('sanitizeUnconfirmedDeathDeltas', () => {
     );
     const out = sanitizeUnconfirmedDeathDeltas(facts, ENTITIES);
     expect(out.deltas).toHaveLength(0);
+  });
+});
+
+describe('sanitizeUnconfirmedVerdictDeltas（定罪完成体判据）', () => {
+  const verdictDelta = (value: string, evidence: string) => ({
+    operation: 'set' as const,
+    path: 'characters.char-1.attributes.status',
+    value,
+    evidence,
+  });
+
+  it('r22a ch1 形态：斩立决朱批（过程态）→ 定罪 delta 被丢弃', () => {
+    const facts = makeFacts([
+      verdictDelta('定罪', '今三法司勘核无误，请得朱批，斩立决'),
+    ]);
+    const out = sanitizeUnconfirmedVerdictDeltas(facts);
+    expect(out.deltas).toHaveLength(0);
+  });
+
+  it('当堂定谳完成体 → 保留', () => {
+    const facts = makeFacts([
+      verdictDelta('定罪', '三法司当堂定谳，罪名成立，即行收监'),
+    ]);
+    const out = sanitizeUnconfirmedVerdictDeltas(facts);
+    expect(out.deltas).toHaveLength(1);
+  });
+
+  it('非定罪 value 与无证据定罪（不确定保守保留）不受影响', () => {
+    const facts = makeFacts([
+      verdictDelta('下狱', '押入死牢'),
+      verdictDelta('定罪', ''),
+    ]);
+    const out = sanitizeUnconfirmedVerdictDeltas(facts);
+    expect(out.deltas).toHaveLength(2);
   });
 });

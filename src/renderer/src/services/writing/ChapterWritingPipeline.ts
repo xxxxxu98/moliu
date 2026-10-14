@@ -1198,12 +1198,15 @@ export class ChapterWritingPipeline {
       // 占位标题时把「第N章 短标题」拼到正文头，经 persistence 提取落库（正文不含标题行）。
       let summaryProjectionError: unknown = null;
       let memoryProjectionError: unknown = null;
+      // 持久化正文与记忆提取正文必须同口径（2026-10-12 r22 双 50 章取证：两者分叉时
+      // contentFingerprint 恒不一致，下一章的作者手改重提取每章必触发，而该路径不传
+      // 状态参数，全书命运/羁押/头衔 delta 被逐章洗空——A 书 50 章仅存 ch1 一条）。
+      const contentForPersist =
+        shouldApplyGeneratedTitle && generatedShortTitle
+          ? prependTitleLineForPersist(chapterNumber, generatedShortTitle, prose)
+          : prose;
       try {
         if (this.persistence?.replace) {
-          const contentForPersist =
-            shouldApplyGeneratedTitle && generatedShortTitle
-              ? prependTitleLineForPersist(chapterNumber, generatedShortTitle, prose)
-              : prose;
           await this.persistence.replace(input.chapter.id, contentForPersist);
         }
         // 回写 plotOutline 章节节点标题：落库的 Chapter.title 已是短标题，
@@ -1228,7 +1231,7 @@ export class ChapterWritingPipeline {
       const aiStateChanges = mapStatusDeltasToStateChanges(result.facts, state);
       const aiEvents = mapEventsToKeyEvents(result.facts);
       try {
-        await this.memoryClient?.extractAndSave(input.chapter.id, chapterNumber, prose, aiStateChanges, aiEvents);
+        await this.memoryClient?.extractAndSave(input.chapter.id, chapterNumber, contentForPersist, aiStateChanges, aiEvents);
       } catch (error) {
         memoryProjectionError = error;
         console.warn('[Pipeline] accepted commit 的记忆投影失败，可由 outbox 重放:', error);
@@ -1582,7 +1585,28 @@ export class ChapterWritingPipeline {
           fulfilledNodes: [],
         },
       });
-      await this.memoryClient?.extractAndSave(prev.id, chapterNumber - 1, prose);
+      // 重提取不得洗空状态账（2026-10-12 r22 取证：本路径曾不传 aiStateChanges，
+      // 一旦触发（含误触发）该章命运/羁押/头衔 delta 即被覆盖为空，全书状态账断供）。
+      // 口径：重提取出的新 delta 在前；新轮没出的保留旧账（提取不稳定的兜底）——
+      // extractAndSave 内部 merge 按 name|state 去重保首条。
+      const characterEntities = Object.fromEntries(
+        (input.project.characters ?? [])
+          .filter((character): character is { id: string; name: string } =>
+            Boolean(character?.id && character?.name))
+          .map(character => [character.id, { name: character.name }]),
+      );
+      const reextractedChanges = mapStatusDeltasToStateChanges(
+        facts,
+        { entities: characterEntities } as Parameters<typeof mapStatusDeltasToStateChanges>[1],
+      );
+      const aiEvents = mapEventsToKeyEvents(facts);
+      await this.memoryClient?.extractAndSave(
+        prev.id,
+        chapterNumber - 1,
+        prose,
+        [...reextractedChanges, ...(prevMemory.characterStateChanges ?? [])],
+        aiEvents,
+      );
       const numericEntries = projectNumericLedgerEntries(facts);
       const timeProjection = projectTimeLedger(facts);
       const eraEntries = projectEraLedgerEntries(facts);

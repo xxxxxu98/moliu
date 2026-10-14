@@ -179,7 +179,7 @@ export class AIFactExtractor implements FactExtractor {
         + 'evidence 直接引用该宣告原句（含摘要句），不需要血腥结果词也可出账。',
         '8) 群像命运逐个入账：「顾成化全族伏诛」「齐王一党亦已伏诛」「当堂剥去X一品补服」等集体宣告，角色表名单内每个被波及者各出一条 status delta，禁止只写 event 不写 delta。同章多个角色各有独立的命运宣告句时同样逐一扫描：每个具名角色都要各出一条 delta，禁止只登主犯或合并登账（2026-09-17 g38f r6 实证：ch102 赵宣与孙茂才同章各自画押收监，只登了赵宣，孙茂才 ch111 即自由持刀出场无人拦截；ch80 江万贯「四十斤死囚重枷套死、塞入囚车直奔行辕大牢羁押」完成体在文却整章零 delta，ch88 抄家被重复执行）',
         '8b) 事件-账目一致性自检（2026-09-19 g38f r7 实证：ch189 事件摘要明写「周文彬在西市口被斩首处决且首级悬于正阳门阙楼」却零 delta——死亡账未登，两章后「死士救出周文彬」全程无人拦截，死刑无声回滚）：输出前逐条核对你自己的 events——任何 summary 含死亡族（斩首/处决/枭首/伏诛/毙命/气绝/驾崩等完成体，含物理描写形态「洞穿喉管」「割喉」「归于死寂」「殒命」「断了气/没了声息」）、下狱族（收监/押入/枷锁/囚车等）、去职族（革职/罢免/削爵等）语汇的，必须确认 deltas 中已存在该角色的对应 status delta；事件有而账无是最优先级错误，发现即补 delta。首级悬门/枭首示众/斩首处决都是死亡的教科书完成体，必须登「死亡」（2026-09-27 g38f r12 实证：ch158「洞穿了周德安高高仰起的喉管…彻底归于死寂」漏登死亡，ch172 死人复活活到完本无人拦）。',
-        '9) 禁止出账的情形只有三类：假设/盘算/条件（只要/若是/一旦…便会）、威胁/命令/判决宣布（给我杀了他/判斩立决——判决宣布≠行刑完成）、修辞转喻（勘合上的「人头落地」）。此外一律出账；「只是叙述带过」「只是摘要」「拿不准」都不是不出账的理由——拿不准时重读原句判断是否既成，仍拿不准才只产 event。',
+        '9) 禁止出账的情形只有三类：假设/盘算/条件（只要/若是/一旦…便会）、威胁/命令/判决宣布（给我杀了他/判斩立决——判决宣布≠行刑完成）、修辞转喻（勘合上的「人头落地」）。此外一律出账；「只是叙述带过」「只是摘要」「拿不准」都不是不出账的理由——拿不准时重读原句判断是否既成，仍拿不准才只产 event。判决宣布≠定罪同理（2026-10-12 r22a 实证：ch1『三法司勘核无误，请得朱批，斩立决』被登成 status「定罪」终态，主角此后 49 章被禁入规则锁死，写手被迫反复重演开释授官）：value「定罪」只许在判决生效完成体场面出账（当堂定谳/宣判罪名成立/定罪下狱/判词落定），待斩/待勘/候审/待决/收押待审/案子未决都是过程态——过程态禁止出任何 status delta，最多产 event。',
         '10) 死者归属以宣告主语为准：「X发现Y已气绝」只登记Y；发现者/转述者/报信人不登记。同句出现的活人不连带登记。',
         '11) 逆转宣告必检必出账（2026-09-03 反重力 100 章实测：主角第9章「打入死牢」正常出账，第13章正文「迈出死牢大门」获释却不入账，状态摘要永远停留「下狱」，ch33/94 连续 fact_conflict 重试耗尽拖死全跑——逆向命运只进不出是台账单向阀）：此前处于死亡以外逆境终态（下狱/去职/定罪/退学/开除/封杀等一切命运族）的角色出现【既成逆转】时必须出 status delta 覆盖旧值，逆转同样按世界观语义判（复学/解封/复出/撤销处分与获释/复职同权），一句带过也算：'
         + '获释族（获释/出狱/放出/开释/无罪开释/走出牢门/迈出死牢/解除监禁→value「获释」）；'
@@ -203,7 +203,7 @@ export class AIFactExtractor implements FactExtractor {
         + '覆盖范围是本章出场的每一个角色，不只主角（2026-09-19 g38f r7 实证：配角温廷翰全书 ≥6 次换职——翰林修撰/通政使/东宫侍读学士/都察院右副都御史往返横跳——零入账，头衔锚全程空转）：凡本章任何角色（含配角）被以与既有头衔不同的官职/职务/品级称呼（对白称呼/自称/旁白头衔均算），即视为头衔变更信号，必须出该角色的 title delta。'
         + 'evidence 直接引用任命原句。此台账供写作侧头衔锚注入——正文头衔必须与最近一次入账头衔一致。',
         '15) 关键数字既成宣告必出 event 且必带结构化 numeric 字段（2026-09-17 g38f r6 实证：同一笔盐税五套口径、存粮四万石改四十万石；2026-10-05 都市校园文书审再实证：债务总额三十万/三百万/三十万三说、战宠两吨/三十吨漂移、3200+1000 被写成「万出头」——旧口径只认银两粮饷类历史账目且拍扁成句子，现代/科幻/修真题材的金钱/度量/期限数字全漏）：本章正文中首次确立或勘误更正、且对后续剧情有约束力的数字事实必须出一条 event：type 固定 "numeric-fact"，除 summary（完整可引用句）外必须带 numeric 字段 {"object":"账目对象名词短语","amount":数值纯数字（中文数字换算成阿拉伯数字，如三百万→3000000）,"unit":"单位","nature":"性质","revision":"establish或correct"}。范围不限于任何题材或单位：金额/债务/价格/工资、度量/吨位/体重/规模、数量/编制/人数/兵力、期限/天数/次数/届数、比率/赔率/倍数等皆算——信用点、灵石、吨、天、条、倍、局与银两、石、兵完全同权；判据是「后续章节引用它会错」而非数值大小。纯修辞数字（「一日不见如隔三秋」）与一次性场景描写（「数米深的坑」）不算。evidence 引宣告原句。同一数字复述性提及不重出。revision 只许两个值：本章首次确立该对象填 "establish"；只有正文写出勘误、清点更正或查实虚报的场面才许 "correct"，同时 nature 注明「勘误后新值」。没有勘误场面时，即使本章数字和台账不同，也必须填 "establish"——未标 correct 的异值不会覆盖正典（2026-09-30 r16：十二丈溃口填平六丈后无勘误写成十丈，错误值被收成后章正典）。object 写法跨章稳定是比对生命线：第10章「周巡家欠金刚重工债务总额」第15章不得改写成「高利贷欠款」。',
-        '16) 关键实物终态必出账（2026-09-30 g38f r16 全文通读实证：定江号 ch18 注水坐底锁死决口、ch21 称七具沉箱全数粉碎、ch22 却完好停泊被再次凿沉——核心道具沉没后复活无解释，判官 stateDigest 无据可拦）：本章出现具名关键实物（舰船/闸门/堤坝/军械/账册/信物/库藏等）的既成终态变更时，必须出 items.<实体id>.attributes.status 的 status delta（value=终态，如「沉没」「焚毁」「解体」「炸毁」「查抄」「移交」「封存」「损毁」），一句带过也算；实体 id 取 entityCatalog 中 kind=item 的登记实体（无登记实体时不出 delta 只产 event）。完成体门槛与命运族一致：实际发生为准，「下令焚毁」是命令不是既成；威胁/计划/假设语境不出账。此账供判官 stateDigest 判「上章已销毁/已移交的物品本章再次出现」类 fact_conflict——判官合同已有此检查维度，缺的正是数据源。',
+        '16) 关键实物终态必出账（2026-09-30 g38f r16 全文通读实证：定江号 ch18 注水坐底锁死决口、ch21 称七具沉箱全数粉碎、ch22 却完好停泊被再次凿沉——核心道具沉没后复活无解释，判官 stateDigest 无据可拦）：本章出现具名关键实物（舰船/闸门/堤坝/军械/账册/信物/库藏等）的既成终态变更时，必须出 items.<实体id>.attributes.status 的 status delta（value=终态，如「沉没」「焚毁」「解体」「炸毁」「查抄」「移交」「封存」「损毁」），一句带过也算；实体 id 取 entityCatalog 中 kind=item 的登记实体（无登记实体时不出 delta 只产 event）。完成体门槛与命运族一致：实际发生为准，「下令焚毁」是命令不是既成；威胁/计划/假设语境不出账。此账供判官 stateDigest 判「上章已销毁/已移交的物品本章再次出现」类 fact_conflict——判官合同已有此检查维度，缺的正是数据源。资金/赃款去向与关键勘验读数同属关键实物状态（2026-10-12 r22b 实证：同一笔三万两被写成熔金入京畿/兑票下扬州/架阁库起获三个互斥版本、船闸勘验被写成空船与满载两种读数，数值防线拦不住叙事层矛盾）：赃款/大宗钱物的既成转移去向（熔铸/兑成票据/解往某地/藏于某处）、具名物证的当前位置变更、关键勘验读数（吃水/称重/清点数）首次确立时，必须各出一条 event（type 固定 "item-fact"，summary 完整含对象+去向/读数+数值+地点），供后章核对去向一致性——后续章节对同一笔钱/同一读数写出不同去向或数值且无勘误场面，判官将按 fact_conflict 拒稿。',
         '17) 时间承诺与时间流逝必出 event 且必带结构化 time 字段（2026-10-05 都市校园文书审实证：正文三次承诺「三天后十六强开赛」，实际次日凌晨开打零拦截；全书 15 章正文与 35 章大纲几乎零时间标记，读者无法感知时间流逝）：本章正文立下明确期限/倒计时/约定时点（「三天后」「开赛前」「七日内」「明日正午」「日落前」）时必须出一条 event：type 固定 "time-promise"，time 字段 {"promise":"承诺内容（谁在何时对何事立下的期限）","due":"期限描述","action":"open"}；正文兑现既有承诺或显式改期/解除时，再出一条 time-promise 事件，time.action 填 "fulfilled" 或 "renegotiated"，promise 引用原承诺内容。此外，正文明确交代时间流逝（当夜/次日清晨/三日后/黎明/黄昏/入夜）时出一条 type "time-passage" 的 event，summary 写「时间流逝：从X到Y」，无需 time 字段。威胁性的「三天后打断你的腿」也算期限承诺（open）；假设句（「若是三日内…」）不算。',
         '18) 跨章剧情预告必出 event 且必带结构化 time 字段（2026-10-05 都市文书审实证：第2章情报明确预告「第一轮对手是赵天霸赞助的钛合金巨神象」，实际首轮对手是蛮牛、赵天霸全书消失——正文发明的跨章承诺无台账，后续章节无从兑现也无从否定）：本章正文（含对话情报/预言/宣告/情报贩子爆料）对未来章节做出具体预告——对手或敌人身份、人物将登场或回归、事件将发生（「下一轮的对手是X」「他迟早会回来拿回Y」「Z大人三日后亲自到场」）——必须出一条 event：type 固定 "plot-promise"，time 字段 {"promise":"预告内容（谁预告了什么）","due":"兑现时点描述（若有）","action":"open"}；正文兑现该预告、或显式否定/变故（情报有误/计划取消/人物变卦）时再出一条 plot-promise 事件，time.action 填 "fulfilled" 或 "renegotiated"，promise 引用原预告内容。内心期望与假设（「要是…就好了」）不算，须是叙述或对话中的明确宣告；威胁走契约 17。',
         '19) 纪年既成宣告必出 event 且必带结构化 era 字段（2026-09-17 g38f r6：全书「天兴」之下后 50 章自创「建元/建昭」；r7 永宁帝被写成永宁三年）：本章正文首次写出年号加年份，或同一年号的年份向后推进，或正文写出改元、新帝即位并颁新年号的场面时，必须出一条 event：type 固定 "era-fact"，era 字段 {"name":"年号","year":阿拉伯数字年份,"revision":"establish或correct"}。name 只写年号本身（如「天兴」），不要带「年」字，不要把帝号或地名当成新年号。year 是该年号下的年份（二十一年→21）。同一年号年份向后推进填 "establish"；只有正文写出改元或新帝颁新年号的场面才许 "correct" 并换 name。没有改元场面时，即使本章出现了另一个年号，也必须仍用已确立的 name 并填 "establish"——未标 correct 的异名不会覆盖正典。相对时间（三年前、去岁）和真实历史年号不算本书纪年。复述同一年不重出。',
@@ -222,14 +222,18 @@ export class AIFactExtractor implements FactExtractor {
       }),
       parse: value =>
         ensureTopLevelEvidence(
-          sanitizeUnconfirmedDeathDeltas(
-            parseSchema(extractedFactsSchema, value, '事实提取结果'),
-            state.entities
+          sanitizeUnconfirmedVerdictDeltas(
+            sanitizeUnconfirmedDeathDeltas(
+              parseSchema(extractedFactsSchema, value, '事实提取结果'),
+              state.entities
+            )
           )
         ),
     });
     const facts = ensureTopLevelEvidence(
-      sanitizeUnconfirmedDeathDeltas(parseSchema(extractedFactsSchema, raw, '事实提取结果'), state.entities)
+      sanitizeUnconfirmedVerdictDeltas(
+        sanitizeUnconfirmedDeathDeltas(parseSchema(extractedFactsSchema, raw, '事实提取结果'), state.entities)
+      )
     );
     return implyCustodyClearOnReversal(
       await this.recheckUnledgeredFate(facts, input, state.entities, entityCatalog)
@@ -322,6 +326,28 @@ const HYPOTHETICAL_SENTENCE_RE =
  * 下狱/定罪/去职等可逆终态不经此闸：其逆转（获释/复职/平反）由契约 11 的
  * 逆转宣告出账覆盖，死亡保持不可逆（防误报闸 + 真复活走 fate-adjudicate）。
  */
+/** 定罪完成体判据（r22a 实证 2026-10-12：ch1『三法司勘核无误请得朱批斩立决』的判决宣布
+ * 被登成 status「定罪」终态，主角 49 章被禁入规则锁死，写手被迫反复重演开释授官）。
+ * value「定罪」仅在证据含判决生效完成体时保留；证据是过程态（待斩/待勘/候审/
+ * 斩立决等未决表述）且无完成体线索时丢弃该 delta（保守：完成体线索存在即保留）。 */
+const VERDICT_CONFIRMED_CUE_RE = /(定谳|定罪|宣判|判词|罪名成立|定案|当堂判|定罪下狱|论罪)/u;
+const VERDICT_PENDING_CUE_RE = /(待斩|待勘|候审|待决|待审|收押待审|斩立决|问斩|处决|未决)/u;
+
+export function sanitizeUnconfirmedVerdictDeltas(facts: ExtractedFacts): ExtractedFacts {
+  const kept = facts.deltas.filter(delta => {
+    const isVerdictStatus =
+      /attributes\.status$/u.test(String(delta.path || '')) &&
+      String((delta as unknown as { value?: unknown }).value ?? '').trim() === '定罪';
+    if (!isVerdictStatus) return true;
+    const evidence = (delta as unknown as { evidence?: string | string[] }).evidence;
+    const own = Array.isArray(evidence) ? evidence.join('\n') : String(evidence ?? '');
+    if (VERDICT_CONFIRMED_CUE_RE.test(own)) return true;
+    return !VERDICT_PENDING_CUE_RE.test(own);
+  });
+  if (kept.length === facts.deltas.length) return facts;
+  return { ...facts, deltas: kept };
+}
+
 export function sanitizeUnconfirmedDeathDeltas(
   facts: ExtractedFacts,
   entities?: Record<string, { id: string; name: string; aliases?: string[] }>
