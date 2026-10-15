@@ -172,9 +172,7 @@ export function useOutlineGenerator(): UseOutlineGeneratorReturn {
           ...generateOptions,
           enhancementBrief: options?.enhancementBrief,
           // 读者判官闭环（2026-10-12 ⑥）：大纲分四连破线的解法。MOLIU_OUTLINE_READER_JUDGE=0 可关
-          ...(process.env.MOLIU_OUTLINE_READER_JUDGE === '0'
-            ? {}
-            : { readerOutlineJudge: getGenerator().createReaderOutlineJudge(generateOptions) }),
+          readerOutlineJudge: getGenerator().resolveDefaultReaderOutlineJudge(generateOptions),
         },
         msg => {
           if (currentId === generationId) {

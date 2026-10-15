@@ -1,4 +1,5 @@
 import type { ContinuityIssue, ContinuityReport } from '@/types/story-runtime';
+import { readStringEnv } from '@/utils/env';
 
 /**
  * 偏好对（training pair）导出通道：把「判官拒稿 + 结构化拒因 + 改后过审稿」
@@ -167,8 +168,8 @@ export class TrainingPairRecorder {
    * 开启默认目录；headless 矩阵跑由 runner 注入前者。未设置时返回 null（完全关闭）。
    */
   static fromEnv(runTag?: string): TrainingPairRecorder | null {
-    const dir = process.env.MOLIU_TRAINING_PAIRS_DIR?.trim();
-    const enabled = process.env.MOLIU_TRAINING_PAIRS === '1';
+    const dir = readStringEnv('MOLIU_TRAINING_PAIRS_DIR');
+    const enabled = readStringEnv('MOLIU_TRAINING_PAIRS') === '1';
     if (!dir && !enabled) return null;
     return new TrainingPairRecorder({ dir: dir || undefined, runTag });
   }

@@ -29,7 +29,7 @@ import { dirname, join } from 'node:path';
 import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
 import {
   mapExecutableOutlineToGeneratedOutline,
-  detectDuplicateChapterCbn,
+  summarizeDuplicateChapterCbn,
 } from '@/services/outline/adapters/executable-outline-adapter';
 import { inspectOutlineCompleteness } from '@/services/outline/validation/outlineCompleteness';
 import { volumeAssignmentSourceFromProject, volumeIdForChapter } from '@/services/outline/volumeAssignment';
@@ -898,18 +898,18 @@ export async function runStoryflowClosedLoop(
         `storyflow 闭环失败：大纲方向生成为空（generateDirections 未返回任何方向，${dirResult.warnings?.[0] ?? ''}）`
       );
     }
-    direction = [...dirResult.directions].sort(
-      (a, b) => b.recommendationScore - a.recommendationScore
-    )[0];
+    // 用户选择（数据面）：取 App 首页默认预选的第一个方向
+    direction = dirResult.directions[0];
 
     const expandStartedAt = Date.now();
-    const expandedResult = await generator.expandDirection(prompt, direction, {
+    const expandOptions = {
       wordCountRange,
       trace: { runId: outlineTraceRunId, model: cfg.model, provider: cfg.provider },
-      // 读者判官闭环（2026-10-12 ⑥）：release-loop 在这里闭环大纲分；MOLIU_OUTLINE_READER_JUDGE=0 可关
-      ...(process.env.MOLIU_OUTLINE_READER_JUDGE === '0'
-        ? {}
-        : { readerOutlineJudge: generator.createReaderOutlineJudge({ trace: { runId: outlineTraceRunId, model: cfg.model, provider: cfg.provider } }) }),
+    };
+    // 读者判官开关与拆章同文重拆都在 generator 内（与 useOutlineGenerator 同一入口）
+    const expandedResult = await generator.expandDirection(prompt, direction, {
+      ...expandOptions,
+      readerOutlineJudge: generator.resolveDefaultReaderOutlineJudge(expandOptions),
     });
     if (expandedResult.readerEvaluation) {
       console.info(
@@ -1004,27 +1004,15 @@ export async function runStoryflowClosedLoop(
   } else {
     if (!executableOutline) {
       executableOutline = await generateExecutableOutline();
-    }
-    // 拆章同文终检：AI 拆章偶发整块复制（reg20 实证 ch18-50 同文 33 章），适配层是
-    // 纯映射修不了内容，唯一治本是重新拆章——含缓存/续跑大纲（脏缓存不值得省一次拆章）。
-    // 只重试一次：再失败说明模型当前拆章能力异常，带着警告放行让书审/裁判暴露问题。
-    const duplicateScan = detectDuplicateChapterCbn(
-      mapExecutableOutlineToGeneratedOutline(executableOutline).chapters
-    );
-    const duplicateCovered = duplicateScan.reduce((sum, g) => sum + g.chapters.length, 0);
-    if (duplicateCovered >= 3) {
-      outlineWarnings.push(
-        `[拆章同文] 初版蓝图 ${duplicateCovered} 章 CBN 同文（最大组 ${duplicateScan[0].chapters.length} 章），重新拆章一次`
-      );
-      executableOutline = await generateExecutableOutline();
-      const rescan = detectDuplicateChapterCbn(
-        mapExecutableOutlineToGeneratedOutline(executableOutline).chapters
-      );
-      const rescanCovered = rescan.reduce((sum, g) => sum + g.chapters.length, 0);
-      if (rescanCovered > 0) {
+    } else {
+      // 特殊情况（调试加速）：缓存/续跑大纲没经过 generator 的拆章同文重拆，
+      // 同文超阈值时整体重新生成（新生成路径的重拆已在 expandDirection 内完成）
+      const duplicate = summarizeDuplicateChapterCbn(executableOutline);
+      if (duplicate.covered >= 3) {
         outlineWarnings.push(
-          `[拆章同文] 重新拆章后仍有 ${rescanCovered} 章 CBN 同文，模型拆章质量异常，需人工核查`
+          `[拆章同文] 缓存大纲 ${duplicate.covered} 章 CBN 同文（最大组 ${duplicate.largestGroup} 章），弃用缓存重新生成`
         );
+        executableOutline = await generateExecutableOutline();
       }
     }
   }
@@ -1032,7 +1020,9 @@ export async function runStoryflowClosedLoop(
     throw new Error('storyflow 闭环失败：大纲为空');
   }
 
-  const generatedOutline = mapExecutableOutlineToGeneratedOutline(executableOutline);
+  const generatedOutline = mapExecutableOutlineToGeneratedOutline(executableOutline, {
+    targetWordCountRange: wordCountRange,
+  });
   const outlineChapters = generatedOutline.chapters;
   if (!outlineChapters || outlineChapters.length < 2) {
     throw new Error(
@@ -1097,12 +1087,17 @@ export async function runStoryflowClosedLoop(
   const projectStorageVerification = verifyPersistedProject(projectStorage, projectId);
 
   // 启动包当前为 50 章；80 章长跑必须在正式续写前补齐后续槽位并写入文件存储。
-  // 滚动模式（MOLIU_STORYFLOW_ROLL_MODE，默认 pre）：
-  // - pre：开跑前一次性滚动补齐（快，占位兜底；中段触发的质量路径不覆盖）
-  // - mid：开跑前只建空章不建大纲节点，细纲全部由 onRunwayLow 中段触发补——
-  //   与生产 useBatchWriter.ensureOutlineRunwayAsync（写到 40 章跑道<10 时带着
-  //   40 章 digest 滚动）完全同构，覆盖「承接已写状态滚动续纲」的核心质量路径。
-  const rollMode = (process.env.MOLIU_STORYFLOW_ROLL_MODE?.trim() || 'pre') as 'pre' | 'mid';
+  // 滚动模式（MOLIU_STORYFLOW_ROLL_MODE，默认 mid）：
+  // - mid（生产同构，默认）：开跑前只建空章不建大纲节点，细纲由 onRunwayLow 中段触发补——
+  //   与 useBatchWriter.ensureOutlineRunwayAsync（跑道<阈值时带着已写章 digest 滚动）
+  //   同一 rollOutlineForward 与 computeOutlineRunway 口径；滚动没补到的章不造占位节点
+  //   （App 也没有），由 pipeline 的位置兜底/无细纲降级如实暴露。
+  // - pre（非生产调试选项，显式声明的特殊情况）：开跑前一次性滚动补齐+占位兜底，
+  //   只用于隔离写作阶段问题，不能作为上线判定依据。
+  const rollMode = (process.env.MOLIU_STORYFLOW_ROLL_MODE?.trim() || 'mid') as 'pre' | 'mid';
+  if (rollMode === 'pre') {
+    outlineWarnings.push('[滚动续纲] pre 模式为非生产调试路径（开跑前一次性滚动+占位兜底），本轮结果不作上线判定');
+  }
   const chapterNodesBeforeRoll = project.plotOutline.filter(node => node.type === 'chapter').length;
   const rollNeeded = chapterCount > chapterNodesBeforeRoll;
   let outlineRoll: StoryflowOutlineRollReport | undefined;
@@ -1391,35 +1386,12 @@ export async function runStoryflowClosedLoop(
             });
             phaseTimings.outlineRollMs += Date.now() - rollStartedAt;
 
-            // 滚动没补到的章（模型失败/前缀截断）落占位节点兜底：mid 模式只预建了空章，
-            // 这些章若无节点，位置兜底取不到 → 无细纲降级（诚实但浪费了本轮已建章位）。
-            let placeholderFilled = 0;
-            const nodeIndexes = new Set(
-              liveProject.plotOutline
-                .filter(node => node.type === 'chapter')
-                .map(node => node.orderIndex)
-            );
-            for (let index = 0; index < chapterCount; index += 1) {
-              if (nodeIndexes.has(index)) continue;
-              const chapter = liveProject.chapters[index];
-              liveProject.plotOutline.push({
-                id: `plot-storyflow-mid-${projectId}-${index}`,
-                title: chapter?.title || `第${index + 1}章`,
-                description: `滚动续写槽位：承接第${index}章既有状态，由续写引擎根据当前合同推进主线。`,
-                type: 'chapter',
-                orderIndex: index,
-                chapterId: chapter?.id,
-              });
-              placeholderFilled += 1;
-            }
-
             if (outlineRoll) {
               outlineRoll.rolledCount += rollResult.appendedCount;
               outlineRoll.rolledToChapter = Math.max(
                 outlineRoll.rolledToChapter,
                 rollResult.toChapter
               );
-              outlineRoll.placeholderCount += placeholderFilled;
               outlineRoll.warnings.push(...rollResult.warnings);
             } else {
               outlineRoll = {
@@ -1427,13 +1399,13 @@ export async function runStoryflowClosedLoop(
                 rolledFromChapter: rollResult.fromChapter,
                 rolledToChapter: rollResult.toChapter,
                 rolledCount: rollResult.appendedCount,
-                placeholderCount: placeholderFilled,
+                placeholderCount: 0,
                 warnings: [...rollResult.warnings],
               };
             }
             console.log(
               `[storyflow:roll] 中段滚动落地：真滚 ${rollResult.appendedCount} 章` +
-                `（第 ${rollResult.fromChapter}-${rollResult.toChapter} 章），占位兜底 ${placeholderFilled} 章`
+                `（第 ${rollResult.fromChapter}-${rollResult.toChapter} 章）`
             );
             outlineWarnings.push(
               ...rollResult.warnings.map(w => `[中段滚动@${writtenThrough}章] ${w}`)
@@ -1443,6 +1415,11 @@ export async function runStoryflowClosedLoop(
       : {}),
   });
   phaseTimings.continueWriteMs = Date.now() - continueWriteStartedAt;
+  if (result.stop) {
+    console.error(
+      `[storyflow] 批量在第 ${result.stop.chapterNumber} 章停止（${result.stop.reason}）：${result.stop.error.slice(0, 200)}`
+    );
+  }
   phaseTimings.totalMs =
     phaseTimings.outlineDirectionsMs +
     phaseTimings.outlineExpandMs +

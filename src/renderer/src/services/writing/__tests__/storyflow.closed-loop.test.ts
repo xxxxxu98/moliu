@@ -429,7 +429,9 @@ describe.runIf(isRealAiEnabled())('storyflow 闭环（真实 AI）：大纲生�
         // prose 为最终正文（含补写增量）。字数口径与门禁一致:严格 ok,或
         // 擦边超写在宽限带内(≤1.5%×上限,warning 放行落库——2026-10-01
         // p1reg20 ch10 实证设计的合法形态,引擎与门禁均认,测试同口径)
-        const bounds = checkWordCountBounds(chapter.output.prose, targetWordCount);
+        // 每章按自己的动态字数目标判（与 App 同一 resolveBatchChapterWordTarget）
+        expect(chapter.targetWordCount).toBeGreaterThan(0);
+        const bounds = checkWordCountBounds(chapter.output.prose, chapter.targetWordCount!);
         const edgeOverflowAllowed =
           bounds.status === 'over' &&
           bounds.currentWords - bounds.maxWords <=

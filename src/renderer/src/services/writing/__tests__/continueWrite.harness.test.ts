@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { classifyChapterRunFailure } from '../batchChapterRunner';
 import {
   assertHarnessInvariants,
-  classifyChapterRunFailure,
   makeMalformedChapter1Contracts,
   makeSyntheticHarnessProject,
   runContinueWriteChapters,
@@ -150,27 +150,31 @@ describe('classifyChapterRunFailure（与 useBatchWriter 分类优先级对齐�
     expect(classified.retryable).toBe(false);
   });
 
-  it('管线级故障熔断：连续 3 章以相同错误耗尽即中止整批（2026-10-01 r17 实证）', async () => {
-    // r17 实证：salvage 接线 ReferenceError 让 102/200 章每章 3 连拒后「跳过继续」，
-    // 无声成洞跑了 10 小时才被发现。熔断把损失锁死在 3 章内；错误互不相同的
-    // 常规内容失败（每章 lastError 不同）不受影响。
+  it('单章重试耗尽即停整批，失败章标记 failed（与 useBatchWriter 同口径）', async () => {
+    // r17 实证：跳过继续让 salvage ReferenceError 102/200 章无声成洞；
+    // 与 App 统一为首章耗尽即停，后续章不再在失败章之上产出。
     const { project } = makeSyntheticHarnessProject({ chapterCount: 5 });
     const boom = {
       async generate() {
         throw new Error('salvage stub: dependencies is not defined');
       },
     } as never;
-    await expect(
-      runContinueWriteChapters({
-        project,
-        fromChapter: 1,
-        chapterCount: 5,
-        targetWordCount: 800,
-        runIdPrefix: 'continue-write-streak-breaker',
-        persistTrace: false,
-        mode: 'batch',
-        ai: boom,
-      }),
-    ).rejects.toThrow('疑似管线级故障');
+    const result = await runContinueWriteChapters({
+      project,
+      fromChapter: 1,
+      chapterCount: 5,
+      targetWordCount: 800,
+      runIdPrefix: 'continue-write-stop-on-exhaust',
+      persistTrace: false,
+      mode: 'batch',
+      ai: boom,
+    });
+    expect(result.stop).toMatchObject({ chapterNumber: 1, reason: 'exhausted' });
+    expect(result.chapters).toHaveLength(1);
+    expect(result.chapters[0].output.success).toBe(false);
+    const failed = result.project.chapters.find(item => item.orderIndex === 0);
+    expect(failed?.writeStatus).toBe('failed');
+    expect(failed?.lastError).toContain('dependencies is not defined');
+    expect(result.project.chapters.filter(item => item.writeStatus === 'failed')).toHaveLength(1);
   }, 30_000);
 });

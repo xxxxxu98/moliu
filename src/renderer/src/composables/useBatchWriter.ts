@@ -5,7 +5,8 @@
  * 选项通过 BATCH_CONTINUE_PRESET 统一（跳过预检、开启任务书与自动补字）。
  * 本 composable 只保留批量特有的控制逻辑：
  * 1. 循环控制（暂停/恢复/停止响应）
- * 2. 指数退避重试（单章失败重试本章，耗尽则停止整个批量）
+ * 2. 单章定局交给 runBatchChapter（与真实冒烟 harness 共用：分级重试/蓝图再生/伏笔熔断），
+ *    耗尽则停止整个批量
  * 3. 完结判断（checkEndingReadiness，"写到完结"模式）
  * 4. 进度统计（writtenChapters / writtenWords）
  * 5. 创建新章节（无空章节时自动 createNewChapter）
@@ -30,12 +31,7 @@ import {
   type ReviewStrictness,
 } from '@/services/review/blocking-review.service';
 import { WritingError, ErrorCode } from '@/types/errors';
-import {
-  classifyError,
-  retryBackoffDelayMs,
-  type ErrorKind,
-  type ClassifiedError,
-} from '@/utils/ai-error-classify';
+import type { ErrorKind } from '@/utils/ai-error-classify';
 import { createEndingPerceptionEngine } from '@/services/writing/ending-perception-engine';
 import {
   useReportGenerator,
@@ -43,14 +39,18 @@ import {
 } from '@/services/writing/review/report-generator';
 import {
   useChapterWritingPipeline,
+  type ChapterWriteOutput,
 } from '@/services/writing/ChapterWritingPipeline';
 import {
   BATCH_CONTINUE_PRESET,
   resolveChapterWriteOptions,
 } from '@/services/writing/chapterWritePresets';
 import {
-  calculateDynamicWordCount,
-} from '@/services/writing/dynamicWordCount';
+  classifyChapterRunFailure,
+  PERSISTENT_MAX_RETRIES,
+  runBatchChapter,
+  type BatchChapterAttemptInput,
+} from '@/services/writing/batchChapterRunner';
 import {
   useFailureRecovery,
   type PipelineStep,
@@ -68,8 +68,6 @@ import {
   blueprintToChapterUpdate,
   BlueprintRepairLedger,
   inspectChapterBlueprintDefects,
-  isFulfillmentDomainFailure,
-  regenerateChapterBlueprint,
 } from '@/services/outline/rolling/chapter-blueprint-regenerator';
 import { volumeAssignmentSourceFromProject, volumeIdForChapter } from '@/services/outline/volumeAssignment';
 import { UnifiedOutlineGenerator } from '@/services/outline/generators/unified-generator';
@@ -118,31 +116,6 @@ function getStrictnessLabel(strictness: ReviewStrictness): string {
     default:
       return strictness;
   }
-}
-
-/**
- * 可中止的 sleep：退避期间若 signal abort 则立即 reject（AbortError），
- * 避免用户点击"停止"后还要等满退避时间。
- * signal 为空时退化为普通 setTimeout。
- */
-function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
-  if (!signal) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-  if (signal.aborted) {
-    return Promise.reject(new DOMException('Aborted', 'AbortError'));
-  }
-  return new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      signal.removeEventListener('abort', onAbort);
-      resolve();
-    }, ms);
-    const onAbort = (): void => {
-      clearTimeout(timer);
-      reject(new DOMException('Aborted', 'AbortError'));
-    };
-    signal.addEventListener('abort', onAbort, { once: true });
-  });
 }
 
 /**
@@ -372,12 +345,6 @@ interface InternalWritingState {
   currentStrictness: ReviewStrictness; // 当前使用的严格度
   reviewAttempts: number; // 当前章节审查尝试次数
   currentChapter: number; // 当前处理的章节索引
-  /**
-   * 当前章节重试的反馈种子：从上一轮失败门禁的 critical 问题提取，
-   * 透传到 pipeline.seedRevisionHints 让重试定向重写而非盲目重跑（与
-   * continueWriteHarness 对齐）。章节成功后清空，不跨章节沿用。
-   */
-  currentRevisionHints: string[] | undefined;
 }
 
 // ============================================
@@ -386,7 +353,7 @@ interface InternalWritingState {
 // 注：原 buildCharactersInfo / buildActiveForeshadows / buildRecentChaptersFullText /
 // generateTaskBook / buildEnhancedOutline / performBlockingReview / performPolish /
 // performCommit / extractMemoryAfterApply / saveChapterContent 等内联辅助函数，
-// 已于 v3.1 随 executeChapterWriting 委托 ChapterWritingPipeline 一并移除——
+// 已于 v3.1 随单章执行委托 ChapterWritingPipeline 一并移除——
 // 单章上下文构建/任务书/起草/门禁/润色/提交/记忆提取均由共享管道 + 下沉的
 // persistence/memoryClient 适配器统一处理。
 
@@ -600,7 +567,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
     currentStrictness: 'normal',
     reviewAttempts: 0,
     currentChapter: 0,
-    currentRevisionHints: undefined,
   };
 
   // 单章蓝图再生账本：履约域失败连续 ≥2 次后触发蓝图体检/再生（每章最多 1 次）
@@ -861,44 +827,33 @@ export function useBatchWriter(): UseBatchWriterReturn {
   }
 
   /**
-   * 执行单章写作（核心逻辑）—— v3.1 委托给共享管道
+   * 单章单次尝试 —— 委托共享管道（ChapterWritingPipeline）。
    *
-   * 老版本（内联 9 步流水线：TaskBook→起草→blockingReview→润色→保存→Commit→记忆→伏笔）
-   * 已由 ChapterWritingPipeline + 下沉的 persistence/memoryClient 适配器统一取代。
+   * 重试/退避/失败教训种子/伏笔熔断/蓝图再生由 runBatchChapter 统一编排
+   * （与真实冒烟 harness 同一份），本函数只做：
+   * 1. 调管道执行单章（字数目标与重试种子由执行器给出）
+   * 2. 映射管道输出到批量 UI 状态（pipelineStep/blockingIssues/strictnessHistory）
+   * 3. 失败时登记恢复项
    *
-   * 审查范式：引擎内严格连续性校验 + 判官（重写取最佳供诊断，全失败则停止）
-   *
-   * 本函数只做：
-   * 1. 调管道执行单章
-   * 2. 映射管道输出到批量 UI 状态（pipelineStep/progress/blockingIssues/reports）
-   * 3. 进度统计
+   * 审查范式：引擎内严格连续性校验 + 判官（重写取最佳供诊断，全失败则不提交）
    */
-  async function executeChapterWriting(
+  async function runChapterAttempt(
     chapterIndex: number,
+    attempt: BatchChapterAttemptInput,
     options: {
       useTaskBook: boolean;
       useReview: boolean;
       writingStyle: string;
-      wordsPerChapter: number;
       requireBlockingPass: boolean;
     }
-  ): Promise<boolean> {
+  ): Promise<ChapterWriteOutput> {
     try {
+      // 每次尝试重新取章节：蓝图再生会经 updateChapter 替换章节对象
       const chapters = projectStore.sortedChapters;
-
-      if (chapterIndex >= chapters.length) {
-        return false;
-      }
-
       const chapter = chapters[chapterIndex];
-
-      // 跳过已有内容的章节
-      if (chapter.content && chapter.content.trim().length > 0) {
-        return true;
+      if (!chapter) {
+        throw new WritingError(`第${chapterIndex + 1}章不存在`, ErrorCode.AI_GENERATION_FAILED);
       }
-
-      currentChapterIndex.value = chapterIndex;
-      currentChapterTitle.value = chapter.title;
 
       const project = projectStore.currentProject!;
       const prevChapter = chapterIndex > 0 ? chapters[chapterIndex - 1] : null;
@@ -914,32 +869,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
 
       currentPipelineStep.value = '写作中';
 
-      // 动态字数目标计算：根据章节位置、内容密度调整字数目标
-      const chapterNumber = chapterIndex + 1;
-      const totalChapters = project.metadata?.plannedChapterCount 
-        ?? project.plotOutline?.length 
-        ?? 100;
-      const plotNode = project.plotOutline?.[chapterIndex];
-      
-      const dynamicWordCount = calculateDynamicWordCount({
-        chapterNumber,
-        totalChapters,
-        plotNode: plotNode ? {
-          CBN: plotNode.CBN,
-          CPNs: plotNode.CPNs,
-          CEN: plotNode.CEN,
-          mustCover: plotNode.mustCover,
-        } : undefined,
-        baseWordCount: options.wordsPerChapter,
-      });
-
-      console.log(
-        `[批量写作] 第${chapterNumber}章字数目标: ${dynamicWordCount} 字 ` +
-        `(基准: ${options.wordsPerChapter}, 节点数: ${plotNode ? 
-          [plotNode.CBN, ...(plotNode.CPNs || []), ...(plotNode.mustCover || [])].filter(Boolean).length : 
-          0})`
-      );
-
       // 委托共享管道执行单章（批量预设：跳过预检，开启补字）。
       // v3.1 管道的真实开关面是 useTaskBook/enablePreflight/enableSupplement/maxRewriteRounds；
       // 旧 UI 旋钮按语义映射接线（此前四个旋钮收参后被直接忽略，关审查实际照跑）：
@@ -952,14 +881,14 @@ export function useBatchWriter(): UseBatchWriterReturn {
       const result = await pipeline.execute({
         project,
         chapter,
-        targetWordCount: dynamicWordCount, // 使用动态计算的字数目标
+        targetWordCount: attempt.targetWordCount,
         writingStyle: options.writingStyle as any,
         ...writeOptions,
         maxRewriteRounds: options.useReview === false ? 0 : undefined,
         previousChapter,
         signal: internalState.abortController?.signal,
-        // 上一轮失败留下的门禁反馈种子：让重试带教训定向重写，而非盲目重跑（提升成功率）
-        seedRevisionHints: internalState.currentRevisionHints,
+        seedRevisionHints: attempt.seedRevisionHints,
+        foreshadowExemptions: attempt.foreshadowExemptions,
       });
 
       if (result.supplementRounds > 0) {
@@ -993,89 +922,59 @@ export function useBatchWriter(): UseBatchWriterReturn {
       }
 
       if (!result.success || result.forceAccepted || result.gateResult?.passed === false) {
-        // 失败：记录恢复项，抛出让上层重试。
-        // 携带 errorKind/retryable，供批量层决定是否退避重试（瞬态）或直接跳过（持久）。
+        // 失败：登记恢复项，失败输出原样交回执行器分级重试
         const failureMessage = result.error
           || (result.forceAccepted || result.gateResult?.passed === false
             ? '严格门禁未通过，章节未提交'
             : '写作失败');
-        const failureKind: ErrorKind = result.errorKind ?? classifyError(failureMessage).kind;
-        const failureRetryable: boolean = result.retryable ?? classifyError(failureMessage).retryable;
+        const classified = classifyChapterRunFailure(
+          result,
+          failureMessage,
+          internalState.abortController?.signal
+        );
         recoveryManager.registerFailure(
           chapter.id,
           chapterIndex + 1,
           'draft' as PipelineStep,
           failureMessage,
           undefined,
-          { errorKind: failureKind, retryable: failureRetryable }
-        );
-        // 提取门禁 critical 问题作为下一轮重试的反馈种子（对齐 continueWriteHarness seedRevisionHints）：
-        // 重试时透传到 pipeline.seedRevisionHints，让模型带着上一轮 blocking 问题定向重写，
-        // 而非盲目重跑同样的失败路径。仅 review/wordcount 类失败会产出 gateResult；
-        // 网络/超时类失败 gateResult 为 null，此时保留上一轮 hints（通常为 undefined，无需 seed）。
-        // 用 allIssues（扁平合并数组，与上面 blockingIssues 映射同字段）而非 gates.flatMap——
-        // 语义等价且对 mock/部分 gateResult 更健壮。
-        if (result.gateResult) {
-          const revisionHints = (result.gateResult.allIssues ?? [])
-            .filter(issue => issue.severity === 'critical')
-            .map(issue => issue.description)
-            .filter((desc): desc is string => Boolean(desc))
-            .slice(0, 5);
-          internalState.currentRevisionHints =
-            revisionHints.length > 0 ? revisionHints : undefined;
-        }
-        // 履约域失败记账：连续 ≥2 次 → 下一轮重试前触发单章蓝图再生（根治方案①）。
-        // 此前坏蓝图只能靠履约重试硬扛；现在把失败归因反转到蓝图本身。
-        if (isFulfillmentDomainFailure(failureMessage)) {
-          const failures = blueprintRepairLedger.recordFailure(chapter.id);
-          console.warn(
-            `[批量写作] 第${chapterIndex + 1}章履约域失败（累计 ${failures} 次），达阈值后触发蓝图体检/再生`
-          );
-        }
-        throw new WritingError(
-          failureMessage,
-          ErrorCode.AI_GENERATION_FAILED,
-          { details: { errorKind: failureKind, retryable: failureRetryable } }
+          { errorKind: classified.kind, retryable: classified.retryable }
         );
       }
-
-      // 成功：清章节失败标记
-      if (chapter.writeStatus === 'failed' || chapter.lastError || chapter.lastErrorKind) {
-        void projectStore.updateChapter(chapter.id, {
-          writeStatus: 'success',
-          lastError: undefined,
-          lastErrorKind: undefined,
-          lastErrorAt: undefined,
-        }).catch(() => {
-          // 状态字段写入失败不影响主流程
-        });
-      }
-
-      // 成功：清空重试反馈种子（下一章从头开始，不沿用本章的失败教训）
-      internalState.currentRevisionHints = undefined;
-      blueprintRepairLedger.resetChapter(chapter.id);
-
-      // 进度统计
-      progress.value.writtenChapters++;
-      progress.value.writtenWords += result.prose.length;
-
-      // 重置流水线状态
-      internalState.pipeline.reset();
-      internalState.currentReviewResult = null;
-      blockingIssues.value = [];
-      currentPipelineStep.value = 'idle';
-
-      return true;
+      return result;
     } catch (err) {
-      // 顶层兜底捕获：记录完整错误并重新抛出
+      // 顶层兜底捕获：记录完整错误并重新抛出（由执行器按 classifyError 分级）
       const errMsg = err instanceof Error ? err.message : String(err);
       const errStack = err instanceof Error ? err.stack : '';
       console.error(
-        `[executeChapterWriting] ❌ 章节 ${chapterIndex + 1} 顶层异常: ${errMsg}`,
+        `[runChapterAttempt] ❌ 章节 ${chapterIndex + 1} 顶层异常: ${errMsg}`,
         errStack
       );
       throw err;
     }
+  }
+
+  /** 单章提交成功后的批量侧收尾：清失败标记、计进度、复位流水线 UI */
+  function recordChapterSuccess(chapterIndex: number, result: ChapterWriteOutput): void {
+    const chapter = projectStore.sortedChapters[chapterIndex];
+    if (chapter && (chapter.writeStatus === 'failed' || chapter.lastError || chapter.lastErrorKind)) {
+      void projectStore.updateChapter(chapter.id, {
+        writeStatus: 'success',
+        lastError: undefined,
+        lastErrorKind: undefined,
+        lastErrorAt: undefined,
+      }).catch((err: unknown) => {
+        console.warn(`[批量写作] 第${chapterIndex + 1}章失败标记清除失败（不影响正文）:`, err);
+      });
+    }
+
+    progress.value.writtenChapters++;
+    progress.value.writtenWords += result.prose.length;
+
+    internalState.pipeline.reset();
+    internalState.currentReviewResult = null;
+    blockingIssues.value = [];
+    currentPipelineStep.value = 'idle';
   }
 
   /**
@@ -1167,7 +1066,6 @@ export function useBatchWriter(): UseBatchWriterReturn {
     internalState.currentStrictness = config.value.initialStrictness;
     internalState.reviewAttempts = 0;
     internalState.currentChapter = 0;
-    internalState.currentRevisionHints = undefined;
     internalState.abortController = new AbortController();
     maxRetries.value = config.value.maxRetries;
     currentRetryCount.value = 0;
@@ -1274,208 +1172,144 @@ export function useBatchWriter(): UseBatchWriterReturn {
           }
         }
 
-        // ========== 单章写作（错误分级重试 + 失败即停） ==========
-        // 瞬态错误（网络/超时/截断/5xx/429）：指数退避重试 maxRetries 次。
-        // 持久错误（schema/审核/auth/4xx）：立即重试 persistentMaxRetries 次（模型带 revisionHints 换写法），不退避。
-        // 用户停止（aborted）：立即停整批。
-        // 单章重试耗尽（无论持久还是瞬态）→ 标记 writeStatus='failed' 后结束整批（质量优先：宁可不写，也不继续产出有问题的章节）。
+        // ========== 单章写作（runBatchChapter：错误分级重试 + 失败即停） ==========
+        // 与真实冒烟 harness 共用同一执行器；单章重试耗尽 → 标记 writeStatus='failed'
+        // 后结束整批（质量优先：宁可不写，也不继续产出有问题的章节）。
+        const chapterForRun = projectStore.sortedChapters[currentIndex];
+        if (!chapterForRun) break;
+        if (!isChapterEmpty(chapterForRun)) {
+          writtenCount++;
+          currentIndex = nextPendingIndex(scopeIds);
+          continue;
+        }
+        currentChapterIndex.value = currentIndex;
+        currentChapterTitle.value = chapterForRun.title;
+        const chapterIndexForRun = currentIndex;
+        const chapterNumberForRun = currentIndex + 1;
         const chapterMaxRetries = config.value.maxRetries;
-        const persistentMaxRetries = 3; // 持久错误重试上限（schema/审核/字数等不可恢复错误给模型换写法的机会）
-        let persistentAttempts = 0; // 持久错误累计次数
-        let chapterSuccess = false;
-        let chapterLastErr = '';
-        let chapterLastErrorKind: ErrorKind = 'unknown';
-        let chapterAttempts = 0; // 实际消耗的重试次数
-        let chapterForceStop = false; // aborted 触发，需立即停整批
-        let chapterReviewUnavailable = false; // 语义审查服务不可用：本章未提交，停批但不记为章节失败
-
-        for (let attempt = 1; attempt <= chapterMaxRetries; attempt++) {
-          // 响应停止
-          if (internalState.shouldStop) { chapterForceStop = true; break; }
-          // 响应暂停（等待期间不消耗重试次数）
-          while (internalState.shouldPause && !internalState.shouldStop) {
-            await new Promise(r => setTimeout(r, 500));
-          }
-          if (internalState.shouldStop) { chapterForceStop = true; break; }
-
-          currentRetryCount.value = attempt;
-
-          try {
-            const success = await executeChapterWriting(currentIndex, {
+        const blueprintGenerator = new UnifiedOutlineGenerator();
+        const outcome = await runBatchChapter({
+          chapterId: chapterForRun.id,
+          chapterNumber: chapterNumberForRun,
+          baseWordCount: config.value.wordsPerChapter,
+          maxRetries: chapterMaxRetries,
+          ledger: blueprintRepairLedger,
+          getProject: () => projectStore.currentProject!,
+          runAttempt: async attemptInput => {
+            if (attemptInput.attempt === 1) {
+              console.log(
+                `[批量写作] 第${chapterNumberForRun}章字数目标: ${attemptInput.targetWordCount} 字（基准 ${config.value.wordsPerChapter}）`
+              );
+            }
+            return runChapterAttempt(chapterIndexForRun, attemptInput, {
               useTaskBook: config.value.useTaskBook,
               useReview: config.value.useReview,
               writingStyle: config.value.writingStyle,
-              wordsPerChapter: config.value.wordsPerChapter,
               requireBlockingPass: config.value.requireBlockingPass,
             });
-
-            if (success) {
-              chapterSuccess = true;
-              chapterAttempts = attempt;
-              writtenCount++;
-              break;
-            }
-          } catch (err) {
-            chapterAttempts = attempt;
-            chapterLastErr = err instanceof Error ? err.message : String(err);
-            // 优先用管道层透传的分类（details.errorKind），fallback 到 message 分类
-            const sig = internalState.abortController?.signal;
-            const detailsKind = (err as WritingError)?.details?.errorKind as ErrorKind | undefined;
-            const detailsRetryable = (err as WritingError)?.details?.retryable as boolean | undefined;
-            const classified: ClassifiedError = detailsKind !== undefined
-              ? { kind: detailsKind, retryable: detailsRetryable ?? false, transient: false, message: chapterLastErr }
-              : classifyError(err, sig);
-            chapterLastErrorKind = classified.kind;
-            const errStack = err instanceof Error ? err.stack : '';
-            console.error(
-              `[批量写作] ❌ 第${currentIndex + 1}章写作失败（第 ${attempt}/${chapterMaxRetries} 次, ${classified.kind}${classified.retryable ? '/可重试' : '/持久'}）: ${chapterLastErr}`,
-              { error: chapterLastErr, stack: errStack, writtenCount, currentIndex, chaptersToWrite, classified }
+          },
+          repairBlueprint: (system, user, temperature) =>
+            blueprintGenerator.callStructuredTextForRoll(system, user, { temperature }),
+          applyRegeneratedBlueprint: async blueprint => {
+            applyBlueprintToPlotNode(
+              projectStore.currentProject!.plotOutline ?? [],
+              chapterNumberForRun,
+              blueprint
             );
-
-            // aborted（用户主动停止）：立即停整批，不进任何重试
-            if (classified.kind === 'aborted') {
-              chapterForceStop = true;
-              error.value = `已停止批量写作`;
-              break;
+            // 同步 Chapter 实体文本字段：pipeline 的 goal/角色白名单来自
+            // chapter.outline/plotSummary，只改 plotOutline 会造成合同半新半旧
+            await projectStore.updateChapter(chapterForRun.id, blueprintToChapterUpdate(blueprint));
+            await projectStore.saveCurrentProject();
+          },
+          signal: internalState.abortController?.signal,
+          shouldStop: () => internalState.shouldStop,
+          waitWhilePaused: async () => {
+            while (internalState.shouldPause && !internalState.shouldStop) {
+              await new Promise(r => setTimeout(r, 500));
             }
-
-            // 截断/空响应（抛异常、无 gateResult）：注入固定引导种子，避免下一轮原样盲发
-            // （与 continueWriteHarness 同兜底；上面 gateResult 分支提不到这类失败的反馈）
-            if (classified.kind === 'truncated') {
-              internalState.currentRevisionHints = [
-                '上一轮 AI 返回了空内容或被截断的 JSON。请务必一次性输出完整的 JSON 对象，paragraphs 数组必须包含完整的正文段落，不要在中途停笔，不要返回空字符串。',
-              ];
-            }
-
-            // 审查基础设施已在章节引擎内部完成步骤级重试。再次整章重跑只会
-            // 重复生成正文和事实提取，因此直接停止当前批次，等待用户重试审查服务。
-            // 审查服务异常：本章未提交，停止批量等待用户重试审查服务。
-            // 不进入「重试耗尽」分支——那里会把本章记为失败并覆盖此提示文案。
-            if (classified.kind === 'review_unavailable') {
-              chapterReviewUnavailable = true;
-              error.value = `第${currentIndex + 1}章语义审查暂时不可用，本章未提交，已停止批量（未重复起草），请稍后重试`;
-              break;
-            }
-
-            // 持久错误（schema/审核/字数/auth/4xx）：给模型 persistentMaxRetries 次换写法机会，不退避（非网络问题）。
-            // 耗尽则跳出重试循环 → 进下面的"结束整批"逻辑。
-            if (!classified.retryable) {
-              // 履约域连续失败 → 单章蓝图再生（根治方案①）：先确定性体检，
-              // 有病或无病都允许以已写状态为基底再生一次蓝图，再继续重试写作。
-              const failedChapterForRepair = projectStore.sortedChapters[currentIndex];
-              if (
-                failedChapterForRepair &&
-                blueprintRepairLedger.shouldTrigger(failedChapterForRepair.id)
-              ) {
-                blueprintRepairLedger.markRegenerated(failedChapterForRepair.id);
-                try {
-                  error.value = `第${currentIndex + 1}章履约连续失败，正在体检并再生本章蓝图...`;
-                  const generator = new UnifiedOutlineGenerator();
-                  const repair = await regenerateChapterBlueprint({
-                    project: projectStore.currentProject!,
-                    chapterNumber: currentIndex + 1,
-                    callStructuredText: (system, user, temperature) =>
-                      generator.callStructuredTextForRoll(system, user, { temperature }),
-                  });
-                  if (repair.blueprint) {
-                    applyBlueprintToPlotNode(
-                      projectStore.currentProject!.plotOutline ?? [],
-                      currentIndex + 1,
-                      repair.blueprint
-                    );
-                    // 同步 Chapter 实体文本字段：pipeline 的 goal/角色白名单来自
-                    // chapter.outline/plotSummary，只改 plotOutline 会造成合同半新半旧
-                    const failedChapterForSync = projectStore.sortedChapters[currentIndex];
-                    if (failedChapterForSync) {
-                      await projectStore.updateChapter(
-                        failedChapterForSync.id,
-                        blueprintToChapterUpdate(repair.blueprint)
-                      );
-                    }
-                    await projectStore.saveCurrentProject();
-                    const defectSummary = repair.defects.length > 0
-                      ? `（体检缺陷：${repair.defects.map(d => d.kind).join('、')}）`
-                      : '';
-                    console.warn(
-                      `[批量写作] 第${currentIndex + 1}章蓝图已再生${defectSummary}，继续重写正文`,
-                      repair.defects.map(d => d.detail)
-                    );
-                    error.value = `第${currentIndex + 1}章蓝图已再生${defectSummary}，重试写作...`;
-                    // 蓝图换了，上一轮针对旧合同的失败教训作废
-                    internalState.currentRevisionHints = undefined;
-                  } else {
-                    console.warn(
-                      `[批量写作] 第${currentIndex + 1}章蓝图再生未成功：${repair.error}`,
-                      repair.defects
-                    );
-                  }
-                } catch (repairErr) {
-                  console.warn(`[批量写作] 第${currentIndex + 1}章蓝图再生异常（不影响原重试路径）:`, repairErr);
+          },
+          onEvent: event => {
+            switch (event.type) {
+              case 'attempt-start':
+                currentRetryCount.value = event.attempt;
+                break;
+              case 'attempt-failed': {
+                const { classified } = event;
+                console.error(
+                  `[批量写作] ❌ 第${chapterNumberForRun}章写作失败（第 ${event.attempt}/${event.maxRetries} 次, ${classified.kind}${classified.retryable ? '/可重试' : '/持久'}）: ${event.message}`,
+                  { writtenCount, currentIndex: chapterIndexForRun, chaptersToWrite, classified }
+                );
+                if (event.next === 'retry-now') {
+                  error.value = `第${chapterNumberForRun}章持久错误（${classified.kind}，第 ${event.persistentAttempts}/${PERSISTENT_MAX_RETRIES} 次），立即重试…`;
+                } else if (event.next === 'backoff') {
+                  error.value = `第${chapterNumberForRun}章失败（第 ${event.attempt}/${event.maxRetries} 次，${classified.kind}），${Math.round((event.waitMs ?? 0) / 1000)}s 后重试…`;
                 }
-              }
-              persistentAttempts += 1;
-              if (persistentAttempts >= persistentMaxRetries) {
-                error.value = `第${currentIndex + 1}章持久错误（${classified.kind}）连续 ${persistentMaxRetries} 次，结束批量写作`;
                 break;
               }
-              error.value = `第${currentIndex + 1}章持久错误（${classified.kind}，第 ${persistentAttempts}/${persistentMaxRetries} 次），立即重试…`;
-              continue; // 不退避，直接下一轮（模型会带 revisionHints 重新起草）
+              case 'fulfillment-failure':
+                console.warn(
+                  `[批量写作] 第${chapterNumberForRun}章履约域失败（累计 ${event.failures} 次），达阈值后触发蓝图体检/再生`
+                );
+                break;
+              case 'foreshadow-exempted':
+                console.warn(
+                  `[批量写作] 第${chapterNumberForRun}章伏笔时序熔断：伏笔「${event.prefix}…」连续 ${event.rejects} 次提前揭示拒稿，本章豁免该伏笔时点禁令（源头应修蓝图）`
+                );
+                break;
+              case 'blueprint-regenerating':
+                error.value = `第${chapterNumberForRun}章履约连续失败，正在体检并再生本章蓝图...`;
+                break;
+              case 'blueprint-regenerated': {
+                const defectSummary = event.defectKinds.length > 0
+                  ? `（体检缺陷：${event.defectKinds.join('、')}）`
+                  : '';
+                console.warn(`[批量写作] 第${chapterNumberForRun}章蓝图已再生${defectSummary}，继续重写正文`);
+                error.value = `第${chapterNumberForRun}章蓝图已再生${defectSummary}，重试写作...`;
+                break;
+              }
+              case 'blueprint-regeneration-failed':
+                console.warn(`[批量写作] 第${chapterNumberForRun}章蓝图再生未成功（不影响原重试路径）：${event.error}`);
+                break;
             }
+          },
+        });
 
-            // 瞬态错误：仍有重试机会则指数退避（4/8/16/30s 封顶；429 限流走 15/30/60/120s，
-            // 短退避下账户级限流只会连吃 429 耗尽重试额度——实测 ARK 6/6 模块全触发）
-            if (attempt < chapterMaxRetries) {
-              const waitMs = retryBackoffDelayMs(classified.kind, attempt); // 默认 base=4000, max=30000
-              const waitSeconds = Math.round(waitMs / 1000);
-              error.value = `第${currentIndex + 1}章失败（第 ${attempt}/${chapterMaxRetries} 次，${classified.kind}），${waitSeconds}s 后重试…`;
-              // 退避期间响应 abort（避免退避中途用户停止还要等满）
-              await abortableSleep(waitMs, internalState.abortController?.signal).catch(() => {
-                chapterForceStop = true;
-              });
-              if (chapterForceStop) break;
-            }
-          }
-        }
-
-        // 重置重试计数（无重试时为 0）
         currentRetryCount.value = 0;
 
-        // 用户主动停止：停整批
-        if (chapterForceStop) {
+        if (outcome.status === 'success') {
+          writtenCount++;
+          recordChapterSuccess(chapterIndexForRun, outcome.output);
+        } else if (outcome.status === 'stopped') {
+          // 用户停止 / 中止：停整批
+          if (outcome.aborted) error.value = '已停止批量写作';
           internalState.shouldStop = true;
           break;
-        }
-
-        // 审查服务不可用：停整批，本章保持空白（不标记失败），错误文案保留给用户
-        if (chapterReviewUnavailable) {
+        } else if (outcome.status === 'review_unavailable') {
+          // 审查服务不可用：停整批，本章保持空白（不标记失败），错误文案保留给用户
+          error.value = `第${chapterNumberForRun}章语义审查暂时不可用，本章未提交，已停止批量（未重复起草），请稍后重试`;
           internalState.shouldStop = true;
           break;
-        }
-
-        // 单章重试耗尽（持久/瞬态）：标记 writeStatus='failed'，结束整批（质量优先）
-        if (!chapterSuccess) {
-          const failedChapter = projectStore.sortedChapters[currentIndex];
-          const failedId = failedChapter?.id ?? `unknown-${currentIndex}`;
-          const failedTitle = failedChapter?.title ?? `第${currentIndex + 1}章`;
+        } else {
+          // 单章重试耗尽（持久/瞬态）：标记 writeStatus='failed'，结束整批（质量优先）
           failedChapters.value.push({
-            index: currentIndex,
-            id: failedId,
-            title: failedTitle,
-            error: chapterLastErr,
-            errorKind: chapterLastErrorKind,
-            attempts: chapterAttempts,
+            index: chapterIndexForRun,
+            id: chapterForRun.id,
+            title: chapterForRun.title ?? `第${chapterNumberForRun}章`,
+            error: outcome.lastError,
+            errorKind: outcome.lastErrorKind,
+            attempts: outcome.attempts,
           });
-          void projectStore.updateChapter(failedId, {
+          void projectStore.updateChapter(chapterForRun.id, {
             writeStatus: 'failed',
-            lastError: chapterLastErr,
-            lastErrorKind: chapterLastErrorKind,
+            lastError: outcome.lastError,
+            lastErrorKind: outcome.lastErrorKind,
             lastErrorAt: new Date().toISOString(),
-          }).catch(() => {
-            // 状态字段写入失败不阻断批量
+          }).catch((err: unknown) => {
+            console.warn(`[批量写作] 第${chapterNumberForRun}章失败标记写入失败:`, err);
           });
-          error.value = `第${currentIndex + 1}章重试耗尽（${chapterLastErrorKind}），结束批量写作`;
+          error.value = `第${chapterNumberForRun}章重试耗尽（${outcome.lastErrorKind}），结束批量写作`;
           internalState.shouldStop = true;
-          break; // 结束整批，不再继续下一章
+          break;
         }
 
         // 写到完结模式：每写完一章后重新检查完结条件（同样用全书已写章数）
@@ -1526,7 +1360,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
    * 重试失败章节队列（P2-3）。
    *
    * 把指定（或全部 writeStatus==='failed'）章节的状态重置为 pending，
-   * 然后跑一轮只针对这些章的批量（复用 executeChapterWriting + 分级重试）。
+   * 然后跑一轮只针对这些章的批量（复用 runBatchChapter 分级重试）。
    * 不会触碰已成功或正常的空章节。
    *
    * @param failedIds 指定重试的章节 ID；不传则重试所有 writeStatus==='failed' 的章节
@@ -1552,7 +1386,7 @@ export function useBatchWriter(): UseBatchWriterReturn {
       return;
     }
 
-    // 重置这些章节的失败标记，让 executeChapterWriting / getNextChapterIndex 能再次选中。
+    // 重置这些章节的失败标记，让 nextPendingIndex 能再次选中。
     // updateChapter 是 async（会落盘），但这里需要等它完成后再启动批量，否则 getNextChapterIndex
     // 可能读到旧的 writeStatus==='failed' 而跳过。
     await Promise.all(targets.map(ch =>

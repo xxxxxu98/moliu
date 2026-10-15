@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { StructuredAI, StructuredAIRequest } from '@/types/story-runtime';
 
-import { AIChapterJudge, buildNumericConflictProbes } from '../AIChapterJudge';
+import { AIChapterJudge, buildNumericConflictProbes, buildTotalConsistencyProbes } from '../AIChapterJudge';
 import { AIFulfillmentJudge } from '../AIFulfillmentJudge';
 
 describe('AIChapterJudge', () => {
@@ -972,7 +972,7 @@ describe('buildNumericConflictProbes（数字异值对定向必检）', () => {
 
   it('数值与正典一致或单位不同 → 不产必检对', () => {
     const events = [
-      { numeric: { object: '暗转出塞秋粮总量', amount: 1000000, unit: '斤' } },
+      { numeric: { object: '通惠仓暗转出塞秋粮总量', amount: 1000000, unit: '斤' } },
       { numeric: { object: '某批军饷', amount: 24, unit: '万两' } },
     ];
     expect(buildNumericConflictProbes(events, anchorRows)).toHaveLength(0);
@@ -985,5 +985,52 @@ describe('buildNumericConflictProbes（数字异值对定向必检）', () => {
     expect(buildNumericConflictProbes(many, anchorRows)).toHaveLength(6);
     expect(buildNumericConflictProbes([{ summary: '普通事件' } as never], anchorRows)).toHaveLength(0);
     expect(buildNumericConflictProbes([{ numeric: { object: 'x', amount: 1, unit: '斤' } }], ['不是正典行'])).toHaveLength(0);
+  });
+});
+
+describe('buildNumericConflictProbes·buildTotalConsistencyProbes（同额异述与总额守恒）', () => {
+  const anchorRows = [
+    '以下为各关键数字对象首次确立的正典',
+    '第14章既成「太仓亏空四笔合计＝560000两」',
+    '第20章既成「内帑密调北境银＝640000两」',
+    '第24章既成「宣府冬衣虚报耗羡＝80000两」',
+  ];
+
+  it('r23 形态A：同额异对象（56万的另一种对象措辞）→ 异值对必检', () => {
+    const events = [
+      { numeric: { object: '三项亏空合计', amount: 560000, unit: '两' } },
+    ];
+    const probes = buildNumericConflictProbes(events, anchorRows);
+    expect(probes.some(p => p.includes('三项亏空合计＝560000两') && p.includes('「太仓亏空四笔合计＝560000两」（第14章既成）'))).toBe(true);
+  });
+
+  it('r23 形态B：构成重构（70万+50万 vs 账上56万+64万，加总同为120万）→ 守恒必检', () => {
+    const events = [
+      { numeric: { object: '通衢钱庄洗银总额', amount: 700000, unit: '两' } },
+      { numeric: { object: '飞印悬空调银', amount: 500000, unit: '两' } },
+    ];
+    const probes = buildTotalConsistencyProbes(events, anchorRows);
+    expect(probes).toHaveLength(1);
+    expect(probes[0]).toContain('合计 1200000两');
+    expect(probes[0]).toContain('太仓亏空四笔合计');
+    expect(probes[0]).toContain('内帑密调北境银');
+    expect(probes[0]).toContain('构成重构');
+  });
+
+  it('合法复述不误报：同对象同额不配对；单条新账不触发守恒', () => {
+    const soleAnchor = ['第14章既成「太仓亏空四笔合计＝560000两」'];
+    const repeat = [
+      { numeric: { object: '太仓亏空四笔合计', amount: 560000, unit: '两' } },
+    ];
+    expect(buildNumericConflictProbes(repeat, soleAnchor)).toHaveLength(0);
+    expect(buildTotalConsistencyProbes(repeat, soleAnchor)).toHaveLength(0);
+  });
+
+  it('构成与既有对象重叠（复述+新条目混合）→ 保守不报守恒', () => {
+    const mixed = [
+      { numeric: { object: '太仓亏空四笔合计', amount: 560000, unit: '两' } },
+      { numeric: { object: '飞印悬空调银', amount: 640000, unit: '两' } },
+    ];
+    expect(buildTotalConsistencyProbes(mixed, anchorRows)).toHaveLength(0);
   });
 });

@@ -1,53 +1,20 @@
+/**
+ * 真实冒烟的 AI 注入点：用 temp 配置文件凭证构造 StructuredAI 与 agent 多轮 transport。
+ *
+ * 与 App 的唯一差异是 AI 服务来源（配置文件 vs active provider）；单次请求的
+ * system 拼装/温度/超时/jsonMode/解析全部复用 structuredRequest.executeStructuredRequest。
+ */
 import type { ProviderType } from '@/config/ai-providers';
 import { AIServiceFactory } from '@/services/ai/factory';
 import type { AgentLoopTransport } from '@/services/story-runtime';
-import {
-  AI_AUXILIARY_REQUEST_TIMEOUT_MS,
-  AI_SINGLE_REQUEST_TIMEOUT_MS,
-} from '@/services/writing/chapterWritePresets';
+import { AI_AUXILIARY_REQUEST_TIMEOUT_MS } from '@/services/writing/chapterWritePresets';
+import { executeStructuredRequest } from '@/services/writing/structuredRequest';
 import type { StructuredAI, StructuredAIRequest } from '@/types/story-runtime';
-import { robustJsonParse } from '@/utils/json-parser';
 
 import {
   resolveContinueWriteRealConfig,
   type ResolvedRealAiConfig,
 } from './continueWriteRealConfig';
-
-function parseStructuredJson(raw: string, schemaName?: string): unknown {
-  const trimmed = raw.trim().replace(/^```(?:json)?\s*/iu, '').replace(/\s*```$/u, '');
-  const parsed = robustJsonParse(trimmed, { expectedType: 'object', enableCompletion: true });
-  if (parsed.success && parsed.data !== undefined) {
-    return parsed.data;
-  }
-  const asArray = robustJsonParse(trimmed, { expectedType: 'array', enableCompletion: true });
-  if (asArray.success && asArray.data !== undefined) {
-    return asArray.data;
-  }
-  if (
-    schemaName === 'SupplementParagraphs' &&
-    trimmed.length >= 20 &&
-    !/^[{[]/u.test(trimmed) &&
-    !/^```/u.test(trimmed)
-  ) {
-    return {
-      paragraphs: trimmed
-        .split(/\n+/u)
-        .map(item => item.trim())
-        .filter(Boolean),
-    };
-  }
-  const detail = parsed.warnings?.slice(-2).join('；') || asArray.warnings?.slice(-2).join('；');
-  // 附上 AI 原始返回片段，让 trace 能直接定位模型输出（此前只记录解析摘要，无法排查）。
-  // 剥离控制字符，避免模型输出中的换行/转义注入日志或 UI。
-  const rawSnippet = `\n--- AI 原始返回（前 300 字）---\n${trimmed
-    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/gu, '')
-    .slice(0, 300)}`;
-  throw new Error(
-    (detail
-      ? `AI 返回的结构化 JSON 无法解析：${detail}`
-      : 'AI 未返回可解析的结构化 JSON') + rawSnippet
-  );
-}
 
 export type RealAiEnvConfig = Pick<
   ResolvedRealAiConfig,
@@ -66,6 +33,10 @@ export function readRealAiEnvConfig(): RealAiEnvConfig {
   };
 }
 
+/**
+ * 构造真实 StructuredAI。不包 withTransientRetry（App 无此层）：瞬态重试由
+ * LongFormWritingEngine 步骤级重试 + 批量层错误分级重试兜住，与生产一致。
+ */
 export function createRealStructuredAI(
   config: RealAiEnvConfig,
   signal?: AbortSignal
@@ -76,74 +47,14 @@ export function createRealStructuredAI(
     config.baseUrl,
     config.model,
     undefined,
-    // 仅冒烟配置了输出上限（MOLIU_AI_MAX_TOKENS）时透传，未配置保持 undefined（不下发）
+    // 镜像 App 厂商 generationConfig.maxTokens：仅该厂商在 App 设置里配置了才透传
     config.maxTokens
       ? { temperature: 0.7, topP: 0.9, frequencyPenalty: 0, presencePenalty: 0, maxTokens: config.maxTokens }
       : undefined,
   );
-
-  // 对齐 ChapterWritingPipeline.createStructuredAIFromActiveProvider：
-  // 直接调 service.complete，不包 withTransientRetry（真实 App 无此层）。
-  // 瞬态重试由 LongFormWritingEngine.runStepWithTransientRetry（步骤级）+
-  // 批量层错误分级重试兜住，与生产一致。
-  // 超时护栏作为环境保护（防 AI hang 死拖垮整个冒烟到 vitest 超时）。
-  // scene-draft 单章需生成 2000 字以上正文，部分慢模型（如 deepseek-v4-flash）单次请求
-  // 实测可达 3-5 分钟甚至更长，过短的超时会误杀正常长输出（曾连续触发 socket hang up）。
-  // 与生产路径（createStructuredAIFromActiveProvider）共用 AI_SINGLE_REQUEST_TIMEOUT_MS，
-  // 避免「测试能跑通、生产超时」的不对称；瞬态失败仍由上层重试兜住。
-  // 注意：依赖此 AI 的 vitest 用例超时必须 ≥ 此值，否则 hung request 会先撞测试超时。
   return {
     async generate<T>(request: StructuredAIRequest<T>): Promise<unknown> {
-      if (signal?.aborted) {
-        throw new DOMException('Aborted', 'AbortError');
-      }
-      const timeoutController = new AbortController();
-      const requestTimeoutMs = request.purpose === 'scene-draft'
-        ? AI_SINGLE_REQUEST_TIMEOUT_MS
-        : AI_AUXILIARY_REQUEST_TIMEOUT_MS;
-      const timeoutTimer = setTimeout(
-        () => timeoutController.abort(),
-        requestTimeoutMs,
-      );
-      const combined = signal
-        ? AbortSignal.any([signal, timeoutController.signal])
-        : timeoutController.signal;
-      try {
-        // RawText 契约是纯文本透传（消费方如蓝图再生的 parseBlueprintBlocks 按
-        // markdown 章节块自行解析）：parseStructuredJson 会把恰好可解析为 JSON 的
-        // 文本转成对象，恒等 parse 再把对象传给文本解析器直接崩溃——2026-10-12
-        // r22b ch7 补写实证「蓝图再生请求失败：raw.matchAll is not a function」。
-        // RawText 不追加 JSON 指令、不开 jsonMode、不做 JSON 解析。
-        const isRawText = request.schemaName === 'RawText';
-        const raw = await service.complete(request.prompt, {
-          system: [
-            request.system,
-            `schemaName=${request.schemaName}`,
-            isRawText
-              ? '按 system 指令的原生文本格式输出，不要 JSON。'
-              : '只输出合法 JSON 对象，不要 Markdown 代码块，不要前后解释文字。',
-          ].join('\n'),
-          temperature: request.purpose === 'scene-draft' ? 0.65 : 0.2,
-          signal: combined,
-          jsonMode: !isRawText,
-        });
-        const result = isRawText
-          ? request.parse(raw)
-          : request.parse(parseStructuredJson(raw, request.schemaName));
-        // 把模型原始文本挂在返回对象上供 RecordingStructuredAI 写入 trace.rawResponse。
-        // recorder 会读取后剥离该字段，下游消费方零感知；非对象返回值（如基本类型）忽略。
-        // 与 ChapterWritingPipeline.createStructuredAIFromActiveProvider 同口径。
-        if (result && (typeof result === 'object' || typeof result === 'function')) {
-          try {
-            (result as Record<string, unknown>).__rawResponse = raw;
-          } catch {
-            /* 只读属性则忽略，不阻塞主流程 */
-          }
-        }
-        return result;
-      } finally {
-        clearTimeout(timeoutTimer);
-      }
+      return executeStructuredRequest(service, request, signal);
     },
   };
 }
@@ -199,6 +110,7 @@ export function createRealAgentLoopTransport(
   };
 }
 
+/** REAL_AI=1/true/yes 时启用真实 AI 冒烟 */
 export function isRealAiEnabled(): boolean {
   const flag = (process.env.REAL_AI || '').trim().toLowerCase();
   return flag === '1' || flag === 'true' || flag === 'yes';

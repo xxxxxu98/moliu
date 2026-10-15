@@ -77,6 +77,13 @@ set MOLIU_CHAPTER_COUNT=100&& set MOLIU_READER_JUDGE_PROVIDER_ID=<id>&& set MOLI
 旧书检查点，新书变成同大纲重 roll；且注意它是 runner 层变量，写成 harness 层的
 MOLIU_RUN_SUFFIX 会被覆盖）。
 
+与 App 同口径的两条运行语义（2026-10-15 统一）：
+- **单章重试耗尽即停整批**（`runBatchChapter`，App 与 harness 同一执行器）：失败章标 `writeStatus=failed`，
+  summary 里 `failed` 非空即本轮不可上线；后续章不会在失败章之上继续产出。洞的回收走
+  `storyflow-repair-empty.mjs` 补写或修因后续跑（`MOLIU_RESUME_STORYFLOW=1`）。
+- **细纲默认 mid 中段滚动**（与 `ensureOutlineRunwayAsync` 同口径，无占位节点）。
+  `MOLIU_STORYFLOW_ROLL_MODE=pre` 与 `MOLIU_OUTLINE_CACHE` 只是调试加速，其结果不作上线判定。
+
 run_in_background 跑，期间做第 3 步的工具准备。规模联动规则见 auto-loop SKILL.md。
 geo-block 已知形态看 auto-loop「已知噪音」，长窗口杀批次→结论是换通道而非加退避。
 

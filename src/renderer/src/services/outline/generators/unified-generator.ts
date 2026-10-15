@@ -39,7 +39,14 @@ import type { StructuredAI, StructuredAIRequest } from '@/types/story-runtime';
 import { robustJsonParse } from '@/utils/json-parser';
 import type { AgentLoopTransport, AgentMessage } from '@/services/story-runtime/agent/AgentLoopRunner';
 import { DEFAULT_WORD_COUNT_RANGE } from '@/services/ai/unified.service';
-import { readPositiveIntEnv } from '@/utils/env';
+import { readPositiveIntEnv, readStringEnv } from '@/utils/env';
+import { summarizeDuplicateChapterCbn } from '../adapters/executable-outline-adapter';
+
+/**
+ * 拆章同文重拆阈值：初版蓝图 ≥3 章 CBN 逐字相同即重新展开一次。
+ * AI 拆章偶发整块复制（reg20 实证 ch18-50 同文 33 章），适配层是纯映射修不了内容。
+ */
+const DUPLICATE_CBN_RESPLIT_THRESHOLD = 3;
 import { shouldDisableZhipuThinking } from '@/utils/zhipuThinking';
 import { readWithIdleTimeout } from '@/utils/streamIdleWatchdog';
 
@@ -417,7 +424,42 @@ export class UnifiedOutlineGenerator {
     );
   }
 
+  /**
+   * 展开主方案为可执行大纲。单次展开后做拆章同文终检：≥阈值章 CBN 逐字相同时
+   * 同方向重新展开一次（App 与冒烟同一入口）；重拆失败沿用初版并带警告。
+   */
   async expandDirection(
+    prompt: string,
+    direction: OutlineDirection,
+    options?: GenerateOptions & { enhancementBrief?: string },
+    onProgress?: (message: string) => void,
+  ): Promise<ExpandedOutlineResult> {
+    const first = await this.expandDirectionOnce(prompt, direction, options, onProgress);
+    const duplicates = summarizeDuplicateChapterCbn(first.outline);
+    if (!first.outline || duplicates.covered < DUPLICATE_CBN_RESPLIT_THRESHOLD) {
+      return first;
+    }
+    const note =
+      `[拆章同文] 初版蓝图 ${duplicates.covered} 章 CBN 同文（最大组 ${duplicates.largestGroup} 章），重新拆章一次`;
+    onProgress?.('检测到章节蓝图整块同文，正在重新拆章...');
+    const retry = await this.expandDirectionOnce(prompt, direction, options, onProgress);
+    if (!retry.outline) {
+      return { ...first, warnings: [`${note}；重新拆章失败，沿用初版`, ...(first.warnings ?? [])] };
+    }
+    const rescanned = summarizeDuplicateChapterCbn(retry.outline);
+    return {
+      ...retry,
+      warnings: [
+        note,
+        ...(rescanned.covered > 0
+          ? [`[拆章同文] 重新拆章后仍有 ${rescanned.covered} 章 CBN 同文，模型拆章质量异常，需人工核查`]
+          : []),
+        ...(retry.warnings ?? []),
+      ],
+    };
+  }
+
+  private async expandDirectionOnce(
     prompt: string,
     direction: OutlineDirection,
     options?: GenerateOptions & { enhancementBrief?: string },
@@ -768,6 +810,15 @@ export class UnifiedOutlineGenerator {
     return {
       evaluateOutline: async input => judge.evaluateOutline(input),
     };
+  }
+
+  /**
+   * 默认大纲读者判官：生产常开，仅 MOLIU_OUTLINE_READER_JUDGE=0 时关闭（返回 undefined）。
+   * App 与冒烟都经此取判官，开关口径只有一处。
+   */
+  resolveDefaultReaderOutlineJudge(options?: GenerateOptions): OutlineReaderJudgePort | undefined {
+    if (readStringEnv('MOLIU_OUTLINE_READER_JUDGE') === '0') return undefined;
+    return this.createReaderOutlineJudge(options);
   }
 
   private async requestAgentContent(

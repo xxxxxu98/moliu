@@ -709,6 +709,18 @@ export function detectDuplicateChapterCbn(
     .sort((a, b) => b.chapters.length - a.chapters.length);
 }
 
+/** 拆章同文汇总：同文组覆盖章数与最大组章数（outline 为空时均为 0） */
+export function summarizeDuplicateChapterCbn(
+  outline: ExecutableOutline | null | undefined
+): { covered: number; largestGroup: number } {
+  if (!outline) return { covered: 0, largestGroup: 0 };
+  const groups = detectDuplicateChapterCbn(mapExecutableOutlineToGeneratedOutline(outline).chapters);
+  return {
+    covered: groups.reduce((sum, group) => sum + group.chapters.length, 0),
+    largestGroup: groups[0]?.chapters.length ?? 0,
+  };
+}
+
 function toForeshadows(outline: ExecutableOutline): GeneratedForeshadow[] {
   if (outline.foreshadowPlan.length > 0) {
     return outline.foreshadowPlan.map((foreshadow) => ({

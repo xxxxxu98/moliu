@@ -69,8 +69,15 @@ export function buildNumericConflictProbes(
     const unit = String(numeric.unit ?? '').trim();
     const amount = Number(numeric.amount);
     if (!unit || !Number.isFinite(amount)) continue;
+    const ownObject = String(numeric.object ?? '').trim();
+    // 同单位异值（疑似同对象改口）与同额异对象（同额异述：同一笔账换对象措辞
+    // 重新立户——r23 实证 56 万两「四笔合计」vs「三项合计」两种对象名并存）都配对；
+    // 同对象同额是合法复述不配对。
     const conflicting = anchors
-      .filter(anchor => anchor.unit === unit && anchor.amount !== amount)
+      .filter(anchor => anchor.unit === unit)
+      .filter(anchor =>
+        anchor.amount !== amount
+        || (anchor.amount === amount && anchor.object !== ownObject))
       .slice(0, 4);
     if (conflicting.length === 0) continue;
     probes.push(
@@ -80,6 +87,72 @@ export function buildNumericConflictProbes(
           .join('、')
     );
     if (probes.length >= maxProbes) break;
+  }
+  return probes;
+}
+
+/**
+ * 总额守恒检测（2026-10-15 r23 实证 number.ledger 第 3 轮 persistent 的机制修复）：
+ * 同单位下，本章新增账目的加总与台账既有条目某子集的加总相等、但构成条目对象
+ * 完全不同——「构成重构」签名（r23：旧 56万+64万=120万 在 ch38 被整写为
+ * 70万+50万=120万，两套拆分并存账面，数值防线因对象名不同零拦截）。产出一对
+ * 「总额等值、构成互斥」的定向必检，判官裁决是否同一笔总账、正文有无勘误场面。
+ */
+export function buildTotalConsistencyProbes(
+  events: ReadonlyArray<{ numeric?: { object: string; amount: number; unit: string } }>,
+  numericFacts: readonly string[],
+  maxProbes = 3,
+): string[] {
+  const anchors = parseNumericAnchorRows(numericFacts);
+  if (anchors.length < 2) return [];
+  const probes: string[] = [];
+  const units = new Set<string>();
+  for (const event of events) {
+    const unit = String(event.numeric?.unit ?? '').trim();
+    if (unit) units.add(unit);
+  }
+  for (const unit of units) {
+    const newItems = events
+      .map(event => event.numeric)
+      .filter(numeric =>
+        numeric && String(numeric.unit ?? '').trim() === unit && Number.isFinite(Number(numeric.amount)))
+      .map(numeric => ({
+        object: String(numeric!.object ?? '').trim(),
+        amount: Number(numeric!.amount),
+      }));
+    if (newItems.length < 2) continue;
+    const total = newItems.reduce((sum, item) => sum + item.amount, 0);
+    if (!Number.isFinite(total) || total <= 0) continue;
+    const newObjects = new Set(newItems.map(item => item.object));
+    const candidates = anchors.filter(anchor => anchor.unit === unit);
+    // 组合爆炸保护：同单位条目过多时只取章号最近的 20 条
+    const pool = candidates.length > 20
+      ? [...candidates].sort((a, b) => b.chapterIndex - a.chapterIndex).slice(0, 20)
+      : candidates;
+    let matched: typeof anchors | null = null;
+    const search = (start: number, picked: typeof anchors, sum: number): boolean => {
+      if (picked.length >= 2 && sum === total) {
+        if (picked.every(item => !newObjects.has(item.object))) {
+          matched = [...picked];
+          return true;
+        }
+      }
+      if (picked.length >= 4 || sum > total) return false;
+      for (let i = start; i < pool.length; i += 1) {
+        picked.push(pool[i]);
+        if (search(i + 1, picked, sum + pool[i].amount)) return true;
+        picked.pop();
+      }
+      return false;
+    };
+    search(0, [], 0);
+    if (matched) {
+      probes.push(
+        `本章新账 ${newItems.map(item => `「${item.object}＝${item.amount}${unit}」`).join('＋')} 合计 ${total}${unit}，` +
+        `与台账既有 ${matched.map(anchor => `「${anchor.object}＝${anchor.amount}${unit}」（第${anchor.chapterIndex}章）`).join('＋')} 合计同为 ${total}${unit}——若两套拆分指同一笔总账，属构成重构，正文必须先写出勘误、复核或重述场面`
+      );
+      if (probes.length >= maxProbes) break;
+    }
   }
   return probes;
 }
@@ -242,7 +315,17 @@ export class AIChapterJudge implements ChapterJudge {
         consistencyRules.push(
           '- 【必检·数字异值对裁决】以下每一对都必须显式裁决，不得跳过：' +
             numericProbes.join('；') +
-            '。裁决口径：若本章对象与既有对象实际指同一物证/同一账目/同一批物资（措辞不同、换说法、粮种/去向描述变化都算同一对象），而数值不同且正文未写勘误、清点、查实虚报场面——必须报 fact_conflict 且 severity=critical，description 注明「疑似同对象改口：既成X，本章写成Y」；确属不同对象（如两批不同物资、两笔不同账目）则不报，但要在判定的对应检查项里写明区分依据'
+            '。裁决口径：若本章对象与既有对象实际指同一物证/同一账目/同一批物资（措辞不同、换说法、粮种/去向描述变化都算同一对象），而数值不同且正文未写勘误、清点、查实虚报场面——必须报 fact_conflict 且 severity=critical，description 注明「疑似同对象改口：既成X，本章写成Y」；同额但对象不同的两笔账同样必须裁决是否同一笔总账的同额异述（2026-10-14 r23 实证：56万两以「四笔合计」与「三项合计」两种对象并存）；确属不同对象（如两批不同物资、两笔不同账目）则不报，但要在判定的对应检查项里写明区分依据'
+        );
+      }
+      // 总额守恒（2026-10-15 r23 第 3 轮 number.ledger persistent 的机制修复）：
+      // 同单位下新旧账目加总等值而构成互斥＝构成重构签名，判官必答。
+      const totalProbes = buildTotalConsistencyProbes(input.facts?.events ?? [], numericFacts);
+      if (totalProbes.length > 0) {
+        consistencyRules.push(
+          '- 【必检·总额守恒】以下每一组都必须显式裁决，不得跳过：' +
+            totalProbes.join('；') +
+            '。裁决口径：同一笔总账（总亏空/总赃款/总兵力等）的构成拆分一经确立，后章改写构成（增删构成笔、换拆分口径）而总额不变，同样必须以勘误、复核、重算场面明示——无场面直接按新拆分叙述报 fact_conflict 且 severity=critical，description 注明「构成重构：旧构成X，本章写成Y」；确属两笔独立总账（各自成立、互不包含）则不报，并写明区分依据（2026-10-14 r23 实证：120万两亏空在 ch38 由「56万+64万」整体重构为「70万+50万」，两套拆分并存到完本零拦截）'
         );
       }
       // 同额存证必检（2026-10-13 r23-S1-01 换机制修复：同一笔 3900 两赃款数值全对

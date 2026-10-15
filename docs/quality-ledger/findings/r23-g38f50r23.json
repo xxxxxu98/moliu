@@ -1,0 +1,387 @@
+{
+  "schemaVersion": "findings/v1",
+  "round": "r23",
+  "book": "算学挽天倾：社畜账房的夺嫡算盘",
+  "reviewedAt": "2026-10-14T22:00:00+08:00",
+  "matrixDir": "temp/storyflow-matrix-g38f50r23",
+  "chapters": 50,
+  "review": {
+    "method": "full-read-4ch",
+    "chaptersRead": 50,
+    "writerModel": "anti-gravity/gemini-3.8-flash-high (provider-1787044972770)",
+    "reviewerModel": "anti-gravity/gemini-3.8-flash-high (同通道自评+4通读agent)",
+    "independentReviewer": false
+  },
+  "gates": {
+    "precheckRedlines": 0,
+    "fateRealResurrection": 0,
+    "readerJudge": {
+      "outline": 85.1,
+      "mean": 86.6,
+      "median": 87.4,
+      "min": 0,
+      "independentFromWriter": false
+    },
+    "ending": {
+      "complete": true,
+      "mainUnresolved": 0,
+      "closureSignals": 1
+    },
+    "humanIntervention": ["ch26 storyflow-repair-empty 定点补写（attempt 1 成功过审，2938 字）"],
+    "blindTest": null
+  },
+  "findings": [
+    {
+      "id": "r23-S1-01",
+      "severity": "S1",
+      "class": "number.ledger",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [13, 14, 17, 18, 19, 24, 25],
+      "entity": "56万/53.6万核心账目",
+      "summary": "全书核心账目 56万（四笔含漕粮2.4万）与 53.6万（三笔不含漕粮）两个口径在12处章节间漂移：ch14/17'三项合计五十六万'算术错置（8+15.6+30=53.6），ch18'通朔流转恰是五十三万六千'，ch16/25又按56万口径——总额口径系统性失守",
+      "evidence": [
+        { "chapter": 14, "quote": "三项亏空合计五十六万两，其中整整五十三万六千两白银" },
+        { "chapter": 18, "quote": "经通朔商号地下流转的银两总数，恰是五十三万六千两" }
+      ],
+      "replayCase": "r23-S1-01"
+    },
+    {
+      "id": "r23-S1-02",
+      "severity": "S1",
+      "class": "number.ledger",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [35, 36, 38, 46],
+      "entity": "120万两总亏空构成",
+      "summary": "总亏空120万两的构成在ch36→38整体重构：前文口径56万（崔洗钱）+64万（内帑密调），ch38起变为70万（钱庄）+50万（飞印悬空），两组构成互斥且56万四笔口径在收官段凭空消失；70万赃银去向 ch38 全归钱庄 vs ch46 三成/四成/三成三分拆",
+      "evidence": [
+        { "chapter": 27, "quote": "五十六万两被崔秉忠洗入地下钱庄，六十四万两被内帑密调北境" },
+        { "chapter": 38, "quote": "三十万加二十万，再加二十万，不多不少，正好是整整七十万两白银" }
+      ],
+      "replayCase": "r23-S1-02"
+    },
+    {
+      "id": "r23-S1-03",
+      "severity": "S1",
+      "class": "state.identity",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [38, 46, 47],
+      "entity": "通衢钱庄/通朔商号",
+      "summary": "洗钱主体实体混同：前文通衢钱庄吞吐70万、通朔商号仅转存20万，ch46起70万整体归属漂到通朔名下且改称钱庄，熔炉也从西市钱庄后院八座变为京郊四处",
+      "evidence": [
+        { "chapter": 38, "quote": "通衢钱庄这条暗渠，自承平二十六年起，累计吞吐洗劫太仓真银七十万两" },
+        { "chapter": 46, "quote": "崔秉忠洗入通朔商号的那七十万两太仓官银，根本没走寻常官道" }
+      ]
+    },
+    {
+      "id": "r23-S1-04",
+      "severity": "S1",
+      "class": "time.sequence",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [1, 2, 9, 10, 13, 19, 35, 36],
+      "entity": "四笔账目日期簇",
+      "summary": "核心账目日期三簇互斥：修缮支拨 ch1-2'去岁腊月十五'vs ch10/13'去岁十月十九'vs ch19'去岁十一月'vs ch36'二十六年三月'；盐引兑银 ch1'今年正月'vs ch9/10'去岁十月'；宣府冬衣 ch35'去岁十月初六'vs ch36'承平二十五年'——日期倒挂翻案的核心证据随之失效",
+      "evidence": [
+        { "chapter": 2, "quote": "受料官验讫入库的日期，分明是去岁腊月十五日" },
+        { "chapter": 10, "quote": "去岁十月十九，工部承造司修缮太仓库房虚增银十八万两" }
+      ],
+      "replayCase": "r23-S1-04"
+    },
+    {
+      "id": "r23-S1-05",
+      "severity": "S1",
+      "class": "time.sequence",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [12, 13, 14, 18, 19, 20, 26, 27, 28],
+      "entity": "大校/验库死限",
+      "summary": "大校死限两次无声跨日：第五日正午死限倒数后无声作废平移第六日，第七日辰初又滑至第八日——与每次顺延均明写传旨的机制自相矛盾；第10日26/27/28章'最后三日'倒计时不随日期递减",
+      "evidence": [
+        { "chapter": 13, "quote": "距离正午三法司联合大校启封的死限，已不足半个时辰" },
+        { "chapter": 14, "quote": "明日正午太仓大校盘库" }
+      ]
+    },
+    {
+      "id": "r23-S1-06",
+      "severity": "S1",
+      "class": "number.arithmetic",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [1, 3, 6, 12],
+      "entity": "宣府冬衣借贷差额",
+      "summary": "同一笔冬衣银借贷两端缺口三种口径：ch1/12为8万两、ch3称16万两、ch6称12万两——招牌审计数字随讲随变",
+      "evidence": [
+        { "chapter": 1, "quote": "凭空少了八万两白银" },
+        { "chapter": 3, "quote": "借贷两端相差整整十六万两" },
+        { "chapter": 6, "quote": "借贷两端相差整整十二万两白银" }
+      ]
+    },
+    {
+      "id": "r23-S1-07",
+      "severity": "S1",
+      "class": "structure.repeat",
+      "status": "final",
+      "rootLayer": "extraction",
+      "chapters": [19, 21, 24],
+      "entity": "周晏洗冤-平反弧线",
+      "summary": "洗冤弧线跑了两遍：ch19已判'死囚身份烟消云散'+脱镣，ch21-24又回退'在押待查/嫌疑未清'重审，ch24再正式'无罪开释'——长表公堂戏+四笔复述+三法司定谳在ch19/ch24整段重演",
+      "evidence": [
+        { "chapter": 19, "quote": "在押待决的死囚身份，在十米长表的铁证之下，烟消云散" },
+        { "chapter": 21, "quote": "他自昨夜被羁押于西值房待查，仍系在押之身" },
+        { "chapter": 24, "quote": "即刻洗脱罪名，无罪开释，官复原职" }
+      ],
+      "replayCase": "r23-S1-07"
+    },
+    {
+      "id": "r23-S1-08",
+      "severity": "S1",
+      "class": "state.location",
+      "status": "final",
+      "rootLayer": "extraction",
+      "chapters": [40, 41, 42, 47],
+      "entity": "崔秉忠关押地",
+      "summary": "ch40整章押送入刑部诏狱（西市北巷）、ch41沿用；自ch42起连续五章改为大理寺监房——监狱归属反复矛盾",
+      "evidence": [
+        { "chapter": 40, "quote": "直抵坐落于西市北巷深处的刑部诏狱重地" },
+        { "chapter": 42, "quote": "崔秉忠昨夜在大理寺监房铁槛前，已经把通衢钱庄侵吞的七十万两全盘认下" }
+      ]
+    },
+    {
+      "id": "r23-S1-09",
+      "severity": "S1",
+      "class": "continuity.boundary",
+      "status": "final",
+      "rootLayer": "infra",
+      "chapters": [26, 27],
+      "entity": "太仓石渠白浆事件",
+      "summary": "补写章ch26白浆于第十日清晨涌出，ch27张守成却称'昨夜排出'且以'昨夜暴雨'为诱因——章界两侧时点与成因矛盾，而暴雨迟至ch28夜才落下（补写缝合伤）",
+      "evidence": [
+        { "chapter": 27, "quote": "若非昨夜暴雨渗水入石渠，生石灰受潮外溢化浆" },
+        { "chapter": 28, "quote": "夜雨终于倾盆砸落" }
+      ]
+    },
+    {
+      "id": "r23-S1-10",
+      "severity": "S1",
+      "class": "continuity.boundary",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [29, 30],
+      "entity": "草席尸体身份",
+      "summary": "ch29结尾同一尸身腰牌为'巡捕营亲兵独有的缠枝暗纹'，ch30开篇即认定为'太仓主库的值守校尉'佩度支司守库铜标——死者身份在章界翻转且无解释",
+      "evidence": [
+        { "chapter": 29, "quote": "赫然露出了巡捕营亲兵独有的缠枝暗纹" },
+        { "chapter": 30, "quote": "不必翻验面貌了，他是太仓主库的值守校尉" }
+      ]
+    },
+    {
+      "id": "r23-S1-11",
+      "severity": "S1",
+      "class": "number.ledger",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [39, 42, 47, 48, 49],
+      "entity": "50万两北运批次/终态",
+      "summary": "同一笔50万两运银三重口径：ch39分五批跨秋冬、ch42招供九月初七子夜一批三十六车、ch47改称去岁八月出关九月抵黑山；终态实物ch48'白银运抵黑山熔铸为甲'vs ch49'百炼苏钢四万斤锻造成甲'直接矛盾",
+      "evidence": [
+        { "chapter": 39, "quote": "太仓奉你的度支特许飞印，分五批运出足色官银五十万两" },
+        { "chapter": 48, "quote": "实物全数运抵开平与黑山，熔铸为一千二百副防寒玄铁重铠" },
+        { "chapter": 49, "quote": "黑山铁冶所百炼苏钢四万斤，已全数锻造成宣化前锋一千二百副步战玄铁重铠" }
+      ]
+    },
+    {
+      "id": "r23-S1-12",
+      "severity": "S1",
+      "class": "time.sequence",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [27, 28, 35, 36],
+      "entity": "御前时限与沙漏",
+      "summary": "ch35未时初刻限'一个时辰'核清流向，ch36/37/38时辰戳依次申初、申正、酉初——全程近四个时辰而沙漏仍余沙未尽；宣府冬衣拨付年份 ch35'去岁'vs ch36'承平二十五年'（距今数十年）同日两说",
+      "evidence": [
+        { "chapter": 35, "quote": "一个时辰后沙漏滴尽" },
+        { "chapter": 38, "quote": "第十二日酉初的梆子声自宫城角楼荡开" }
+      ]
+    },
+    {
+      "id": "r23-S2-01",
+      "severity": "S2",
+      "class": "state.custody",
+      "status": "final",
+      "rootLayer": "extraction",
+      "chapters": [25, 26, 30, 31],
+      "entity": "周晏在押状态",
+      "summary": "ch25已注销替罪文书'叙复'，ch26起却复称'戴罪在押/待决在押'直至ch32刑环不离身——脱罪与在押口径反复（r22 同族但已从S1降至S2：不再三次重演全套仪式，仅称谓层残留）",
+      "evidence": [
+        { "chapter": 25, "quote": "构陷之罪全数撤销。度支司从九品录事之职，即刻叙复" },
+        { "chapter": 30, "quote": "作为待决在押的户部从九品录事" }
+      ]
+    },
+    {
+      "id": "r23-S2-02",
+      "severity": "S2",
+      "class": "number.ledger",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [18, 19, 20, 29, 32, 34],
+      "entity": "平王凭文对账额/主库现银规模",
+      "summary": "凭文对账额两套（53.6+2.4−8=48万 vs 53.6−8=45.6万'一厘不差'）；太仓主库现银规模三变（120万分摊36分库 vs 尽在主库36架 vs 架上仅36万两假银）",
+      "evidence": [
+        { "chapter": 18, "quote": "加上码头套取的两万四千两，扣除钱有福截留的八万两……正合平王私调凭文上的全额" },
+        { "chapter": 19, "quote": "余款四十五万六千两全数走漕运北上，与平王府私调凭文上的实收数目一厘不差" }
+      ]
+    },
+    {
+      "id": "r23-S2-03",
+      "severity": "S2",
+      "class": "time.sequence",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [2, 8, 9, 10, 13, 26],
+      "entity": "日程/时辰/季节群",
+      "summary": "太仓大校第九日未时末刻死限ch10无声蒸发；五日内天气烈日/寒雾/燥热打架；'昨夜死牢截杀'实为两夜前；ch26'昨夜暴雨'未发生（补写伤）；ch33末崔被锁颈ch34开头即暴起（受制状态章界重演）",
+      "evidence": [
+        { "chapter": 9, "quote": "特旨将原定辰时的太仓大校延后至未时末刻" },
+        { "chapter": 10, "quote": "硬是将三法司大校死死压在明日" }
+      ]
+    },
+    {
+      "id": "r23-S2-04",
+      "severity": "S2",
+      "class": "state.title",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [30, 32, 33, 40, 50],
+      "entity": "品级/服色/兵器口径群",
+      "summary": "崔秉忠补服云雁（30/32）vs 锦鸡（33）；周晏ch40已赐从六品ch50却称'越过正七品与从六品两重门槛'；张守成佩刀/佩剑在四章反复横跳；高怀德'司礼监总管'与'内廷掌印'混称；户部/度支部混称",
+      "evidence": [
+        { "chapter": 33, "quote": "打湿了胸前的锦鸡补子" },
+        { "chapter": 50, "quote": "整整越过正七品与从六品两重门槛" }
+      ]
+    },
+    {
+      "id": "r23-S2-05",
+      "severity": "S2",
+      "class": "structure.arc",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [16, 18, 22, 24, 25, 30, 35],
+      "entity": "圣驾亲临/验库爽点",
+      "summary": "圣驾将于大校之日亲临太仓当面破锁验库的铺垫在25/26/30章反复出现，第12日辰时大校现场实无圣驾（帝至未时才移跸公署偏殿）；验库大校五次以'传旨顺延'同一装置推迟，核心爽点区间内未兑现",
+      "evidence": [
+        { "chapter": 30, "quote": "明日辰时文武百官与圣驾亲临大校" },
+        { "chapter": 35, "quote": "圣驾已移跸度支公署行宫偏殿" }
+      ]
+    },
+    {
+      "id": "r23-S2-06",
+      "severity": "S2",
+      "class": "structure.repeat",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [14, 15, 17, 18, 20],
+      "entity": "授权/复述节拍重演",
+      "summary": "崔秉忠'低头—授权'节拍ch14/ch15连续两章重演（全权复核公文近同措辞两授）；ch18对已在ch16辨认过的金丝贡宣ch20再'初次'惊认",
+      "evidence": [
+        { "chapter": 14, "quote": "着令周晏戴枷核算，全权复核太仓三年大校一切出入底册" },
+        { "chapter": 15, "quote": "着令从九品录事周晏，戴枷总揽太仓三年出入底册复核大权" }
+      ]
+    },
+    {
+      "id": "r23-S2-07",
+      "severity": "S2",
+      "class": "continuity.boundary",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [7, 8, 12, 13, 24, 25],
+      "entity": "章界缺口群",
+      "summary": "ch7末锦衣卫砸门ch8进门的是司礼监宦官（锦衣卫凭空消失）；ch12→13刑具铁镣突变死囚木枷；ch24末'高公公与大内密使候你'ch25密阁内仅张守成；ch48末'文华殿候旨'ch49帝亲赴度支公署",
+      "evidence": [
+        { "chapter": 7, "quote": "锦衣卫北镇抚司巡夜，奉旨搜捕户部要犯" },
+        { "chapter": 8, "quote": "跨过门槛的并非巡捕营死士，而是一名身披灰鼠皮斗篷的司礼监随堂宦官" }
+      ]
+    },
+    {
+      "id": "r23-S3-01",
+      "severity": "S3",
+      "class": "structure.repeat",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [3, 5, 7, 9, 10, 12, 13, 32, 33, 34, 35, 38, 42, 44, 45, 48, 50],
+      "entity": "设定/账目复述群",
+      "summary": "'有借必有贷'与四柱说明至少7章整段复述；四笔56万/53.6万逐章重报；四万斤重量推导ch42/44近乎原文重复；'抖如筛糠'等崩溃套语多章复用；31210同款连诵未复现但50万两推导两遍",
+      "evidence": [
+        { "chapter": 5, "quote": "天下财赋无非借贷二字。有借必有贷，借贷必平衡" }
+      ]
+    },
+    {
+      "id": "r23-S3-02",
+      "severity": "S3",
+      "class": "prose.anachronism",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [10, 16, 17, 19, 22, 23, 25, 26, 28, 45, 50],
+      "entity": "现代词群",
+      "summary": "'现代'定语入叙述/对白反复（现代穿透式审计/现代防身术/风控核查）；古人陈敬德脱口'体外循环'；'十米长表'现代计量入章题；ch16当众泄露'前世已经死过一回'无后续处置",
+      "evidence": [
+        { "chapter": 16, "quote": "为了给大厂权贵背锅，老子前世已经死过一回" },
+        { "chapter": 19, "quote": "第19章 十米长表铁证锁侍郎" }
+      ]
+    },
+    {
+      "id": "r23-S3-03",
+      "severity": "S3",
+      "class": "time.era",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [32, 43, 50],
+      "entity": "朝代专名混用",
+      "summary": "'宣德四年'明代年号串入虚构大梁纪年（承平）；两江总督/厘税（清代）、神机营（明代）混用",
+      "evidence": [
+        { "chapter": 32, "quote": "宣德四年重修大库，地基下铺设了三层条石与糯米灰浆夯土" }
+      ]
+    },
+    {
+      "id": "r23-S3-04",
+      "severity": "S3",
+      "class": "state.identity",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [4, 5, 6, 7, 13, 30, 31],
+      "entity": "刑具/着装链",
+      "summary": "周晏刑具腕铁索→木枷→铁木枷→卸镣留腕链→凭空死囚木枷（戴卸无交代）；着装青布官衫→粗布长衫一夜翻转；关押地偏厢值房金砖vs西值房青砖",
+      "evidence": [
+        { "chapter": 13, "quote": "周晏戴着厚重的死囚木枷静立不动" }
+      ]
+    },
+    {
+      "id": "r23-S4-01",
+      "severity": "S4",
+      "class": "other",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [13, 14, 23, 35],
+      "entity": "文字讹误群",
+      "summary": "'数斗木枷''单向流水流水''赫然赫然钤盖''连退两晚''修缮太库'等成串讹误；章题'千两纹银'与正文'一万两'差十倍",
+      "evidence": [
+        { "chapter": 14, "quote": "大梁旧例只记单向流水流水" }
+      ]
+    },
+    {
+      "id": "r23-S4-02",
+      "severity": "S4",
+      "class": "outline.contract",
+      "status": "final",
+      "rootLayer": "outline",
+      "chapters": [6, 8, 10, 17, 21, 24],
+      "entity": "纲文偏差群",
+      "summary": "大纲时点与正文错位（ch8巳时→辰时、ch10申时→亥时）；ch17'账簿夹缝凸起/青铜腰牌'承诺未兑现；张守成大纲寺丞/少卿与正文推官漂移；ch14拓本钩子悬置11章",
+      "evidence": [
+        { "chapter": 17, "quote": "大纲CEN：账簿夹缝里，竟滑落半枚内廷采办司特有的青铜腰牌" }
+      ]
+    }
+  ]
+}

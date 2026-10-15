@@ -8,7 +8,11 @@
  * 1. 大纲生成：UnifiedOutlineGenerator.generateDirections → expandDirection（与开题中心 prompt 玩法同路径）
  * 2. 应用大纲：useProjectCreator.createProject（真实 buildPlotOutline 等构建链）
  * 3. 建章：useChapterOutlineGenerator.createChapters
- * 4. 批量续写：runContinueWriteChapters（BATCH_CONTINUE，与 useBatchWriter 同路径）
+ * 4. 批量续写：runContinueWriteChapters（BATCH_CONTINUE；单章定局与 useBatchWriter 共用
+ *    runBatchChapter，重试耗尽即停整批；细纲默认 mid 中段滚动，与 ensureOutlineRunwayAsync 同口径）
+ *
+ * 与 App 的差异（单一注入点，数据面）：AI 凭证来自 temp 配置文件、存储为文件版 electronAPI；
+ * MOLIU_STORYFLOW_ROLL_MODE=pre / MOLIU_OUTLINE_CACHE 为显式声明的非生产调试选项，结果不作上线判定。
  *
  * 产物：
  * - temp/storyflow.closed-loop.summary.json
