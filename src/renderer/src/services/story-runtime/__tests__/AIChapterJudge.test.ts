@@ -1034,3 +1034,29 @@ describe('buildNumericConflictProbes·buildTotalConsistencyProbes（同额异述
     expect(buildTotalConsistencyProbes(mixed, anchorRows)).toHaveLength(0);
   });
 });
+
+describe('同额存证组行解析（防线互盲修复）', () => {
+  const groupRows = [
+    '同额存证｜1000石 有 6 章各自入账：第2章「太仓甲字七号仓霉烂正粮申报漂没数」原句「今日午初」；第4章「甲字七号仓假漂没粮食」原句「照壁上」',
+    '同额存证｜40000两 有 6 章各自入账：第18章「太仓侵吞官粮折银」原句「两万六千石官粮折银四万两」；第24章「通州假漂没官粮折银总额」原句「那两万一千石官粮折银四万两」',
+  ];
+
+  it('组行内每对（章,对象）成为等值 anchor——同额异基数可配对', () => {
+    const events = [
+      { numeric: { object: '两淮盐税赃银', amount: 40000, unit: '两' } },
+    ];
+    const probes = buildNumericConflictProbes(events, groupRows);
+    expect(probes.length).toBeGreaterThan(0);
+    expect(probes[0]).toContain('两淮盐税赃银＝40000两');
+    expect(probes[0]).toContain('「太仓侵吞官粮折银＝40000两」（第18章既成）');
+  });
+
+  it('组行 anchor 参与守恒检测', () => {
+    const probes = buildTotalConsistencyProbes(
+      [{ numeric: { object: '甲仓报损', amount: 600, unit: '石' } }, { numeric: { object: '乙仓报损', amount: 400, unit: '石' } }],
+      ['同额存证｜1000石 有 2 章各自入账：第2章「太仓甲字七号仓霉烂申报数」原句「x」；第4章「甲字七号仓假漂没」原句「y」'],
+    );
+    expect(probes).toHaveLength(1);
+    expect(probes[0]).toContain('合计 1000石');
+  });
+});

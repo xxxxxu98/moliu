@@ -1,0 +1,287 @@
+{
+  "schemaVersion": "findings/v1",
+  "round": "r24",
+  "book": "账房升官录：社畜算翻了夺嫡局",
+  "reviewedAt": "2026-10-15T20:00:00+08:00",
+  "matrixDir": "temp/storyflow-matrix-g38f50r24",
+  "chapters": 50,
+  "review": {
+    "method": "full-read-4ch",
+    "chaptersRead": 50,
+    "writerModel": "anti-gravity/gemini-3.8-flash-high (provider-1787044972770)",
+    "reviewerModel": "anti-gravity/gemini-3.8-flash-high (同通道自评+4通读agent)",
+    "independentReviewer": false
+  },
+  "gates": {
+    "precheckRedlines": 0,
+    "fateRealResurrection": 0,
+    "readerJudge": {
+      "outline": 85.6,
+      "mean": 87.2,
+      "median": 87.8,
+      "min": 79,
+      "independentFromWriter": false
+    },
+    "ending": {
+      "complete": true,
+      "mainUnresolved": 0,
+      "closureSignals": 0
+    },
+    "humanIntervention": [],
+    "blindTest": null
+  },
+  "findings": [
+    {
+      "id": "r24-S1-01",
+      "severity": "S1",
+      "class": "number.ledger",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [16, 23],
+      "entity": "太仓亏空总额",
+      "summary": "全书立轴的三万石亏空（3万=4千+2.6万）在ch23借贷总表被把通州三万石与太仓挂账两万六千石并列为两笔、合计五万六千石——总额口径直接翻倍（并列重复计入形态）",
+      "evidence": [
+        { "chapter": 16, "quote": "太仓账面上死死压着的三万石亏空，除去周泰私调四方粮栈的四千石，其余两万六千石" },
+        { "chapter": 23, "quote": "左侧借方：通州漕粮实入三万石、太仓挂账两万六千石，合计五万六千石。" }
+      ],
+      "replayCase": "r24-S1-01"
+    },
+    {
+      "id": "r24-S1-02",
+      "severity": "S1",
+      "class": "number.ledger",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [18, 24, 25, 28, 30],
+      "entity": "四万两折银基数",
+      "summary": "同一笔四万两赃银在「两万六千石折银」（ch18/25/28借方）与「两万一千石折银」（ch24/28叙事/ch30）两口径间互斥——同额（4万两）异基数（石）漂移贯穿中段至收官",
+      "evidence": [
+        { "chapter": 25, "quote": "太仓亏空两万六千石，折银四万两" },
+        { "chapter": 30, "quote": "两万一千石正粮亏空，将官粮折银四万两挪入城外私仓挂账" }
+      ],
+      "replayCase": "r24-S1-02"
+    },
+    {
+      "id": "r24-S1-03",
+      "severity": "S1",
+      "class": "state.title",
+      "status": "final",
+      "rootLayer": "extraction",
+      "chapters": [47, 48, 49, 50],
+      "entity": "沈淮安官职",
+      "summary": "ch47已破格擢升从七品户部主事并赐绿袍官印、ch48沿用，ch49→50同夜连续场景中官服、腰牌、自称与百官称呼全部回退为九品司仓主簿（亦系两条ledger-error命运候选的根源）",
+      "evidence": [
+        { "chapter": 47, "quote": "特打破九品迁转旧例，破格擢升沈淮安为从七品户部主事" },
+        { "chapter": 50, "quote": "微臣户部太仓署司仓主簿沈淮安，叩见陛下" }
+      ],
+      "replayCase": "r24-S1-03"
+    },
+    {
+      "id": "r24-S1-04",
+      "severity": "S1",
+      "class": "continuity.boundary",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [1, 2, 4],
+      "entity": "沈淮安/值房封锁",
+      "summary": "ch1周泰下令锁死值房「一只苍蝇都不准放出去」，ch2沈却称半个时辰前亲赴甲字七号仓查验，ch4又称申正前借点验贴出八份榜文——被看死期间的外出取证全程无交代",
+      "evidence": [
+        { "chapter": 1, "quote": "把门看死！一只苍蝇都不准放出去！" },
+        { "chapter": 2, "quote": "下官半个时辰前亲自去过甲字七号仓！" }
+      ]
+    },
+    {
+      "id": "r24-S1-05",
+      "severity": "S1",
+      "class": "time.sequence",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [2, 8],
+      "entity": "案发日期链",
+      "summary": "日期链互斥：ch2甲字七号仓假霉烂为案发当日午初、ch8锚定当日=永昌十七年七月十三，同章却当庭引用七月十八的冬防大营入库实册——用五天后才应存在的文书作铁证",
+      "evidence": [
+        { "chapter": 8, "quote": "永昌十七年七月十三，甲字七号仓上报霉烂正粮一千石" },
+        { "chapter": 8, "quote": "冬防大营七月十八的入库实册上，偏偏多出了三万石无源新糙米" }
+      ]
+    },
+    {
+      "id": "r24-S1-06",
+      "severity": "S1",
+      "class": "state.fate",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [8, 9],
+      "entity": "周泰/下颌伤势",
+      "summary": "ch8末周泰被当堂卸下巴拖入死牢，ch9开场即完整流利长篇认罪对答并高喊幕后指使——物理状态跨章矛盾无复位交代",
+      "evidence": [
+        { "chapter": 8, "quote": "给我卸了他的下巴，重枷锁死，即刻打入刑部死牢" },
+        { "chapter": 9, "quote": "下官认罪！通州那三万石漕粮并未沉江" }
+      ]
+    },
+    {
+      "id": "r24-S1-07",
+      "severity": "S1",
+      "class": "state.location",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [25, 30],
+      "entity": "景明铜牌来源",
+      "summary": "核心物证获取场景被改写：ch25系公堂刺客咬蜡毒发铜牌自齿槽脱落，ch30却称「数日前在太仓后渠伏击中截获」——地点与时间双重错误",
+      "evidence": [
+        { "chapter": 25, "quote": "染满黑血的铜铸密牌跌落在冰凉地砖之上" },
+        { "chapter": 30, "quote": "那是数日前在太仓后渠伏击中，从端王行刺死士口中截获的青铜密牌" }
+      ]
+    },
+    {
+      "id": "r24-S1-08",
+      "severity": "S1",
+      "class": "continuity.boundary",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [31, 32],
+      "entity": "两丈资金穿透巨图",
+      "summary": "章界重演：ch31末巨图已「落下最后一笔朱砂注记」完工焊死，ch32却称「尚未完工」「只画了一半」因断墨停工，且重唱ch31已画过的账目分录",
+      "evidence": [
+        { "chapter": 31, "quote": "沈淮安落下最后一笔朱砂注记，搁下紫毫……将二十年烂账焊死在纸上" },
+        { "chapter": 32, "quote": "晨光斜穿雕花窗棂，洒在尚未完工的大图上" }
+      ]
+    },
+    {
+      "id": "r24-S2-01",
+      "severity": "S2",
+      "class": "number.ledger",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [19, 23],
+      "entity": "城西一万石/收官同额异述群",
+      "summary": "同额异述群：城西一万石ch19太仓出库粳米vs ch23通州调拨糙粮；漂没额「三万石尽沉江」变「两万一千石」；五千石构成「虚挂四千+粮栈一千」变「霉烂五千+粮栈一千」；内廷实收「百余石」变「仅百石」",
+      "evidence": [
+        { "chapter": 19, "quote": "太仓出库上等粳米一万石，名目是拨付城西私庄充作冬防" },
+        { "chapter": 23, "quote": "通州转运糙粮一万石，实拨城西私庄！" }
+      ]
+    },
+    {
+      "id": "r24-S2-02",
+      "severity": "S2",
+      "class": "time.sequence",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [17, 20, 22, 24, 44, 45, 47],
+      "entity": "日程/时辰群",
+      "summary": "时间轴漂移群：第五日整日凭空消失（ch21三更→ch22第六日丑时）；大盘点承诺两度跳票无交代；ch44晨曦收尾ch45回拨子时；传旨卯正三刻西暖阁交接实际未时文华殿；季节七月盛夏vs深秋物候互斥；红丸「去岁冬起」vs「吃了整整三年」",
+      "evidence": [
+        { "chapter": 17, "quote": "第四日辰时初刻，内城朱雀坊的晨雾尚未散尽" },
+        { "chapter": 22, "quote": "更夫敲过四记梆子，夜色沉入第六日丑时最晦暗的当口" }
+      ]
+    },
+    {
+      "id": "r24-S2-03",
+      "severity": "S2",
+      "class": "state.custody",
+      "status": "final",
+      "rootLayer": "extraction",
+      "chapters": [12, 25],
+      "entity": "孙典吏",
+      "summary": "孙典吏（连同柴房杂役）自ch12押入柴房后至ch25零提审、零移交、零释放——羁押线断档（非重复登）",
+      "evidence": [
+        { "chapter": 12, "quote": "塞住他的嘴，押去柴房单独看管" }
+      ]
+    },
+    {
+      "id": "r24-S2-04",
+      "severity": "S2",
+      "class": "structure.arc",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [41, 47],
+      "entity": "西山青泉别业/3.2万两",
+      "summary": "ch41圣旨命同查西山别业（暗窖私钱私炉兵甲）后无下文，3.2万两赃银去向至ch50未交代、收官资产清单未含",
+      "evidence": [
+        { "chapter": 41, "quote": "西山别业的地窖中更藏着尚未铸完的私钱私炉与兵甲器械" }
+      ]
+    },
+    {
+      "id": "r24-S2-05",
+      "severity": "S2",
+      "class": "continuity.boundary",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [37, 38, 25, 26, 19, 20],
+      "entity": "章界道具/状态群",
+      "summary": "章界回退群：端王蟠龙玉佩ch37碎裂ch38复完好；ch25刺杀毒刀劈砍ch26概括为「落箭刺杀」；ch19→20血痕句原句级重演；ch31→32巨图完工变半成品（已列S1）",
+      "evidence": [
+        { "chapter": 37, "quote": "蟠龙玉佩撞在桌角，啪的一声碎裂跌落" },
+        { "chapter": 38, "quote": "腰间悬挂的蟠龙玉佩在剧烈起伏的胸膛上撞击作响" }
+      ]
+    },
+    {
+      "id": "r24-S3-01",
+      "severity": "S3",
+      "class": "structure.repeat",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [16, 17, 18, 19, 20, 21, 23, 25, 39, 40, 41, 43, 44, 45, 46, 47],
+      "entity": "核心账目/设定复述群",
+      "summary": "同一组核心数字（2.6万石/4万两/64张飞钱/8千两）在16章内近原文复读十次以上；复式记账原理与令签描写多章整段复述；「冷茶+半块干粮」细节三连复用",
+      "evidence": [
+        { "chapter": 21, "quote": "汇通号六十四张空头飞钱彼此勾稽，底册与分录全在下官手里" },
+        { "chapter": 45, "quote": "汇通暗庄六十四张空头飞钱连环对冲" }
+      ]
+    },
+    {
+      "id": "r24-S3-02",
+      "severity": "S3",
+      "class": "prose.anachronism",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [4, 7, 16, 17, 20, 27, 28, 36, 39, 41, 42],
+      "entity": "现代词群",
+      "summary": "叙述旁白（非主角内心）反复使用「现代穿透式风控核查」「中央清算机制」「危化品」「资金链路」「职业敏锐度」等；差役等古人对白口吐「虚造的时序和亏空差额」",
+      "evidence": [
+        { "chapter": 16, "quote": "在精通现代穿透式风控核查的沈淮安眼中" },
+        { "chapter": 27, "quote": "沈淮安处理过太多以防潮填料伪装危化品的走私案" }
+      ]
+    },
+    {
+      "id": "r24-S3-03",
+      "severity": "S3",
+      "class": "number.setting",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [1, 3, 13, 18, 37, 38],
+      "entity": "制度数字群",
+      "summary": "漂没法定上限一成vs三成两说；私吞斩刑千石vs三千石两说；一石一筹制度下三万石漂没仅三千枚伪筹无人质疑；积弊年限二十年vs三十年混用",
+      "evidence": [
+        { "chapter": 1, "quote": "准许漕粮在江河转运中有一成左右的合理漂没损耗" },
+        { "chapter": 3, "quote": "太祖旧规损耗不过三成，逾者斩监候" }
+      ]
+    },
+    {
+      "id": "r24-S4-01",
+      "severity": "S4",
+      "class": "state.title",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [14, 18, 28, 34, 50],
+      "entity": "称谓/机构名群",
+      "summary": "周泰「太仓署令/仓场署令/仓正」三称；「督察院/都察院」两种写法；巡按/巡盐御史混用；主角九品/从九品混用；四品鹭鸶/六品青雀补子映射错乱",
+      "evidence": [
+        { "chapter": 14, "quote": "前任仓场署令周泰如此" },
+        { "chapter": 19, "quote": "这位曾不可一世的太仓署令已不成人样" }
+      ]
+    },
+    {
+      "id": "r24-S4-02",
+      "severity": "S4",
+      "class": "prose.leak",
+      "status": "final",
+      "rootLayer": "writer",
+      "chapters": [38, 46, 49],
+      "entity": "标点/文字瑕疵",
+      "summary": "「哗，！」「当啷，！」逗叹连用、「流水流水账」重字等成串瑕疵",
+      "evidence": [
+        { "chapter": 38, "quote": "哗，！" }
+      ]
+    }
+  ]
+}

@@ -45,6 +45,28 @@ function parseNumericAnchorRows(rows: string[]): ParsedNumericAnchor[] {
       });
     }
   }
+  // 「同额存证｜<amount><unit> 有 N 章各自入账：第X章「对象」原句「…」；…」组行
+  // （numericLedger.collectNarrativeFactPairs 产物）：行内每对 (章, 对象) 都是一个
+  // 等值 anchor。此前只认「第N章既成「obj＝amount unit」」行，组行被静默丢弃——
+  // r24 实证 4 万两六条全在组行里，异值对/守恒配对全程看不到（防线互盲）。
+  const groupRe = /同额存证｜(-?\d+(?:\.\d+)?)([^｜\s]+)\s*有\s*\d+\s*章各自入账/u;
+  const pairRe = /第(\d+)章「([^」]+)」/gu;
+  for (const row of rows) {
+    const head = row.match(groupRe);
+    if (!head) continue;
+    const amount = Number(head[1]);
+    const unit = head[2];
+    if (!Number.isFinite(amount) || !unit) continue;
+    let pair: RegExpExecArray | null;
+    while ((pair = pairRe.exec(row)) !== null) {
+      anchors.push({
+        chapterIndex: Number(pair[1]),
+        object: pair[2].trim(),
+        amount,
+        unit,
+      });
+    }
+  }
   return anchors;
 }
 
@@ -131,7 +153,8 @@ export function buildTotalConsistencyProbes(
       : candidates;
     let matched: typeof anchors | null = null;
     const search = (start: number, picked: typeof anchors, sum: number): boolean => {
-      if (picked.length >= 2 && sum === total) {
+      // picked>=1：本章新账（≥2条构成）与既有单条总额等值也是「拆分重构」形态
+      if (picked.length >= 1 && sum === total) {
         if (picked.every(item => !newObjects.has(item.object))) {
           matched = [...picked];
           return true;
